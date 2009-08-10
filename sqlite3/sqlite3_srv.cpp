@@ -594,8 +594,8 @@ CoreObject *DBIServiceSQLite3::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "SQLite3" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "SQLite3" ) {
-      vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
-                                      .desc( "SQLite3 DBI driver was not found" ) ) );
+      throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
+                                      .desc( "SQLite3 DBI driver was not found" ) );
       return 0;
    }
 

@@ -55,8 +55,8 @@ FALCON_FUNC DBIConnect( VMachine *vm )
 {
    Item *paramsI = vm->param(0);
    if (  paramsI == 0 || ! paramsI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .extra( "S" ) );
       return;
    }
 
@@ -282,8 +282,8 @@ FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm )
 {
    Item *objI = vm->param( 0 );
    if ( objI == 0 || ! objI->isObject() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "O" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "O" ) );
       return;
    }
 
@@ -305,9 +305,9 @@ FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm )
 
          memFree( cTypes );
          memFree( cNames );
-         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE, __LINE__ )
+         throw new DBIError( ErrorParam( DBI_ERROR_BASE, __LINE__ )
                                  .desc( "Could not retrieve column value" )
-                                 .extra( indexString ) ) );
+                                 .extra( indexString ) );
       }
 
       obj->setProperty( cNames[cIdx], i );
@@ -370,12 +370,12 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
    String sql = "insert into " + *i_table->asString() + "(";
    String vals = ") values (";
 
-   DictIterator* iter = i_data->asDict()->first();
+   Iterator iter( &i_data->asDict()->items() );
    bool bDone = false;
-   while( iter->isValid() )
+   while( iter.hasCurrent() )
    {
       String temp;
-      if( iter->getCurrentKey().isString()  )
+      if( iter.getCurrentKey().isString()  )
       {
          if ( ! bDone )
          {
@@ -386,8 +386,8 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
             vals += ", ";
          }
 
-         sql += *iter->getCurrentKey().asString();
-         if ( ! dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp ) )
+         sql += *iter.getCurrentKey().asString();
+         if ( ! dbh_itemToSqlValue( dbh, &iter.getCurrent(), temp ) )
          {
             bDone = false;
             break;
@@ -395,9 +395,8 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
          vals += temp;
       }
 
-      iter->next();
+      iter.next();
    }
-   delete iter;
 
    sql += vals + ");";
    if ( bDone )
@@ -470,16 +469,16 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
    String sql = "update " + *i_table->asString() + " set ";
    String where = "where ";
 
-   DictIterator* iter = i_data->asDict()->first();
+   Iterator iter( &i_data->asDict()->items() );
    bool bDone = false;
    bool bWhereDone = false;
 
-   while( iter->isValid() )
+   while( iter.hasCurrent() )
    {
       String temp;
-      if( iter->getCurrentKey().isString()  )
+      if( iter.getCurrentKey().isString()  )
       {
-         if ( iter->getCurrentKey().isOob() )
+         if ( iter.getCurrentKey().isOob() )
          {
             // a key value
             if ( ! bWhereDone )
@@ -489,8 +488,8 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
             else {
                where += " and ";
             }
-            dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
-            where += *iter->getCurrentKey().asString() + "="+temp;
+            dbh_itemToSqlValue( dbh, &iter.getCurrent(), temp );
+            where += *iter.getCurrentKey().asString() + "="+temp;
          }
          else
          {
@@ -502,14 +501,13 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
                sql += ", ";
             }
 
-            dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
-            sql += *iter->getCurrentKey().asString() + "="+temp;
+            dbh_itemToSqlValue( dbh, &iter.getCurrent(), temp );
+            sql += *iter.getCurrentKey().asString() + "="+temp;
          }
       }
 
-      iter->next();
+      iter.next();
    }
-   delete iter;
 
    /*throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .extra( sql + "\n" + where ) );*/
@@ -591,13 +589,13 @@ FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
 
    String sql = "delete from " + *i_table->asString() + " where ";
 
-   DictIterator* iter = i_data->asDict()->first();
+   Iterator iter( &i_data->asDict()->items() );
    bool bWhereDone = false;
 
-   while( iter->hasNext() )
+   while( iter.hasCurrent() )
    {
       String temp;
-      if( iter->getCurrentKey().isString()  )
+      if( iter.getCurrentKey().isString()  )
       {
          if ( ! bWhereDone )
          {
@@ -606,15 +604,14 @@ FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
          else {
             sql += " and ";
          }
-         sql += *iter->getCurrentKey().asString();
+         sql += *iter.getCurrentKey().asString();
 
-         dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
-         sql += *iter->getCurrentKey().asString() + "="+temp;
+         dbh_itemToSqlValue( dbh, &iter.getCurrent(), temp );
+         sql += *iter.getCurrentKey().asString() + "="+temp;
       }
 
-      iter->next();
+      iter.next();
    }
-   delete iter;
 
    if ( bWhereDone )
    {
@@ -677,8 +674,8 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    if ( trans == NULL ) {
       String errorMessage;
       dbh->getDefaultTransaction()->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_error, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_error, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 
@@ -714,8 +711,8 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
    else {
       Item *sequenceNameI = vm->param( 0 );
       if ( sequenceNameI == 0 || ! sequenceNameI->isString() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                           .extra( "S" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                           .extra( "S" ) );
          return;
       }
       String sequenceName = *sequenceNameI->asString();
@@ -754,9 +751,9 @@ FALCON_FUNC DBIBaseTrans_getLastError( VMachine *vm )
    String value;
    dbi_status retval = dbt->getLastError( value );
    if ( retval != dbi_ok ) {
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( "Unknown error" )
-                                      .extra( "Could not get last error message " ) ) );
+                                      .extra( "Could not get last error message " ) );
       return;
    }
 
@@ -833,8 +830,8 @@ FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
 
    Item *i_blobID = vm->param( 0 );
    if ( i_blobID == 0 || ! i_blobID->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S") );
       return;
    }
 
@@ -843,8 +840,8 @@ FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
    if ( stream == 0 ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 
@@ -897,8 +894,8 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
       ( i_options != 0 && ! i_options->isString() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("[S|M],[S]") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("[S|M],[S]") );
       return;
    }
 
@@ -917,8 +914,8 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
    {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 
@@ -952,9 +949,9 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
       {
          String errorMessage;
          dbt->getLastError( errorMessage );
-         vm->raiseModError( new DBIError(
+         throw new DBIError(
                ErrorParam( DBI_ERROR_BASE + (int32)dbstream->lastError(), __LINE__ )
-                  .desc( errorMessage ) ) );
+                  .desc( errorMessage ) );
       }
 
       // anyhow close and delete
@@ -999,8 +996,8 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       ( i_maxlen != 0 && ! i_maxlen->isOrdinal() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S,[S|M],[N]") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S,[S|M],[N]") );
       return;
    }
 
@@ -1013,8 +1010,8 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
    if ( stream == 0 ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 
@@ -1055,9 +1052,9 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
    {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError(
+      throw new DBIError(
             ErrorParam( DBI_ERROR_BASE + (int32)stream->lastError(), __LINE__ )
-               .desc( errorMessage ) ) );
+               .desc( errorMessage ) );
    }
 
    stream->close();
@@ -1092,8 +1089,8 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
       ( i_maxlen != 0 && ! i_maxlen->isOrdinal() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S,[S|M],[N]") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S,[S|M],[N]") );
       return;
    }
 
@@ -1105,7 +1102,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
    if ( i_startFrom < 0 || maxlen <= 0 )
    {
       // nothing to write?
-      vm->raiseModError( new AccessError( ErrorParam( e_charRange, __LINE__ ) ) );
+      throw new AccessError( ErrorParam( e_charRange, __LINE__ ) );
       return;
    }
 
@@ -1115,8 +1112,8 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
    if ( stream == 0 ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 
@@ -1131,7 +1128,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
          stream->close();
          delete stream;
          // nothing to write?
-         vm->raiseModError( new AccessError( ErrorParam( e_charRange, __LINE__ ) ) );
+         throw new AccessError( ErrorParam( e_charRange, __LINE__ ) );
          return;
       }
 
@@ -1142,8 +1139,8 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
    {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
    }
 
    stream->close();
@@ -1187,8 +1184,8 @@ FALCON_FUNC DBIBaseTrans_commit( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 }
@@ -1225,8 +1222,8 @@ FALCON_FUNC DBIBaseTrans_rollback( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) );
       return;
    }
 }
@@ -1288,8 +1285,8 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       {
          String errorMessage;
          dbr->getLastError( errorMessage );
-         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
-                                         .desc( errorMessage ) ) );
+         throw new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
+                                         .desc( errorMessage ) );
          return ;
       }
    }
@@ -1340,14 +1337,14 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       {
       String errorMessage;
       dbr->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
-                                    .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
+                                    .desc( errorMessage ) );
       return;
       }
    }
 
    int cCount = dbr->getColumnCount();
-   CoreDict *dict = new PageDict(  cCount );
+   PageDict *dict = new PageDict(  cCount );
    char **cNames = (char **) memAlloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = recordset_getTypes( dbr );
 
@@ -1370,7 +1367,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    memFree( cTypes );
    memFree( cNames );
 
-   vm->retval( dict );
+   vm->retval( new CoreDict( dict ) );
 }
 
 /*#
@@ -1395,8 +1392,8 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
 
    Item *oI = vm->param( 0 );
    if ( oI == 0 || ! oI->isObject() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "0" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "0" ) );
       return;
    }
 
@@ -1418,7 +1415,6 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
    }
 
    int cCount = dbr->getColumnCount();
-   CoreDict *dict = new PageDict( cCount );
    char **cNames = (char **) memAlloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = recordset_getTypes( dbr );
 
@@ -1533,8 +1529,8 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
         ( stringBuf != 0 && ! stringBuf->isString() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "N,[S]") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "N,[S]") );
       return;
    }
 
@@ -1555,8 +1551,8 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
       vm->retnil();
    else if ( retval != dbi_ok )
    {
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-            .desc( "Error while reading the recordset" ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+            .desc( "Error while reading the recordset" ) );
    }
    else
       vm->retval( value ); // we know it's a garbage string
@@ -1596,8 +1592,8 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
 
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "N" ) );
       return;
    }
 
@@ -1633,8 +1629,8 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
 
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("N") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("N") );
       return;
    }
 
@@ -1668,8 +1664,8 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
 
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("N") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("N") );
       return;
    }
 
@@ -1703,8 +1699,8 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
 
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("N") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("N") );
       return;
    }
 
@@ -1743,8 +1739,8 @@ static void internal_asDate_or_time( VMachine *vm, int mode )
         )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "N,[TimeStamp]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "N,[TimeStamp]" ) );
       return;
    }
 
@@ -1901,8 +1897,8 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
    String value;
    dbi_status retval = dbr->getLastError( value );
    if ( retval != dbi_ok ) {
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-            .desc( "Could not get last error message" ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+            .desc( "Could not get last error message" ) );
       return;
    }
 
@@ -1991,9 +1987,9 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError(
+         throw new DBIError(
             ErrorParam( DBI_ERROR_BASE +dbi_invalid_type, __LINE__ )
-                                         .desc( errorMessage ) ) );
+                                         .desc( errorMessage ) );
          return;
       }
 
@@ -2045,9 +2041,9 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError(
+         throw new DBIError(
                ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
-                                         .desc( errorMessage ) ) );
+                                         .desc( errorMessage ) );
          return;
       }
 
@@ -2059,10 +2055,10 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    if ( ! self->getProperty( *primaryKey, primaryKeyValueI )
          || dbh_itemToSqlValue( dbh, &primaryKeyValueI, value ) == 0 ) {
 
-      vm->raiseModError( new DBIError(
+      throw new DBIError(
             ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
                         .desc( "Invalid type for primary key" )
-                        .extra(*primaryKey) ) );
+                        .extra(*primaryKey) );
       return;
    }
 

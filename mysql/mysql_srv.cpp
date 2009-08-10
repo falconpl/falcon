@@ -651,8 +651,8 @@ CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "MySQL" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "MySQL" ) {
-      vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
-                                      .desc( "MySQL DBI driver was not found" ) ) );
+      throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
+               .desc( "MySQL DBI driver was not found" ) );
       return 0;
    }
 

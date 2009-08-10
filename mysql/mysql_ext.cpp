@@ -58,8 +58,8 @@ FALCON_FUNC MySQL_init( VMachine *vm )
    Item *i_connParams = vm->param(0);
    if ( i_connParams != 0 && ! i_connParams->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                          .extra("[S]") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                          .extra("[S]") );
       return;
    }
 
@@ -74,10 +74,10 @@ FALCON_FUNC MySQL_init( VMachine *vm )
    if ( dbh == 0 )
    {
       if ( connectErrorMessage.length() == 0 )
-         connectErrorMessage = "An unknown error has occured during connect";
+         connectErrorMessage = "An unknown error has occurred during connect";
 
-      vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
-                                       .desc( connectErrorMessage ) ) );
+      throw new DBIError( ErrorParam( status, __LINE__ )
+                                       .desc( connectErrorMessage ) );
       return ;
    }
 

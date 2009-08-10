@@ -58,8 +58,8 @@ DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt )
       String errorMessage;
       dbt->getLastError( errorMessage );
 
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                       .desc( errorMessage ) ) );
+      throw  new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                       .desc( errorMessage ) );
    }
 
    dbi_status nextStatus = recSet->next();
@@ -149,8 +149,8 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
 
    Item *sqlI = vm->param( startAt );
    if ( sqlI == 0 || ! sqlI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S") );
       return 0;
    }
 
@@ -183,9 +183,9 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
 
          if ( colonPos == sql.length() - 1 )
          {
-            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
+            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                         __LINE__ )
-                                            .desc( "Stray : charater at the end of query" ) ) );
+                     .desc( "Stray : charater at the end of query" ) );
             return 0;
          }
          else
@@ -213,9 +213,9 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
                }
 
                if ( i == 0 ) {
-                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
-                                                  .desc( "Word expansion was not found in dictionary/object" )
-                                                  .extra( word ) ) );
+                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
+                             .desc( "Word expansion was not found in dictionary/object" )
+                             .extra( word ) );
                   return 0;
                }
 
@@ -227,10 +227,10 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
                int pIdx = atoi( asTmp.c_str() );
 
                if ( pIdx == 0 ) {
-                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
+                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                               __LINE__ )
-                                                  .desc( "Failed to parse colon expansion" )
-                                                  .extra( "from: " + sql.subString( colonPos ) ) ) );
+                          .desc( "Failed to parse colon expansion" )
+                          .extra( "from: " + sql.subString( colonPos ) ) );
                   return 0;
                }
 
@@ -242,9 +242,9 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
                if ( i == 0 )
                {
                   errorMessage.writeNumber( (int64) pIdx );
-                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
-                                                  .desc("Positional expansion out of range")
-                                                  .extra( errorMessage ) ) );
+                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
+                       .desc("Positional expansion out of range")
+                       .extra( errorMessage ) );
                   return 0;
                }
             }
@@ -253,9 +253,9 @@ int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
          String value;
          if ( dbh_itemToSqlValue( dbh, i, value ) == 0 )
          {
-            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_type_error, __LINE__ )
+            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_type_error, __LINE__ )
                      .desc( "Failed to expand a value due to it being an unknown type" )
-                     .extra( "from: " + sql.subString( colonPos ) ) ) );
+                     .extra( "from: " + sql.subString( colonPos ) ) );
             return 0;
          }
 
@@ -388,12 +388,12 @@ int dbr_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
       errorMessage.writeNumber( (int64) cIdx );
       errorMessage += ") is out of range";
 
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_column_range_error, __LINE__ )
-                                      .desc( errorMessage ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_column_range_error, __LINE__ )
+                                      .desc( errorMessage ) );
       return 0;
    } else if ( dbr->getRowIndex() == -1 ) {
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
-                                      .desc( "Invalid current row index" ) ) );
+      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
+                                      .desc( "Invalid current row index" ) );
       return 0;
    }
 
@@ -415,8 +415,8 @@ void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
       Item *trI = vm->param( 0 );
       if ( trI == 0 || ! trI->isObject() || ! trI->asObject()->derivedFrom( "DBITransaction" ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "DBITransaction" ) ) );
+         throw  new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "DBITransaction" ) );
          return;
       }
       CoreObject *trO = trI->asObject();
@@ -437,8 +437,8 @@ void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
    else {
       String errorMessage;
       tr->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-               .desc( errorMessage ) ) );
+      throw  new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+               .desc( errorMessage ) );
    }
 }
 
@@ -467,8 +467,8 @@ int dbr_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNa
       return cIdx;
    } else if ( ! persistI.isArray() ) {
       // They gave a _persist property, but it's not an array
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .extra( "_persist.type()!=A" ) ) );
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "_persist.type()!=A" ) );
       return 0;
    } else {
       // They gave a _persist property, trust it
@@ -479,8 +479,8 @@ int dbr_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNa
          const Item &pi = persist->at( cIdx );
          if ( ! pi.isString() )
          {
-            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
-                                            .desc( "There was a non-string item in the \"_persist\" property" ) ) );
+            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
+                     .desc( "There was a non-string item in the \"_persist\" property" ) );
             return 0;
          }
          else
