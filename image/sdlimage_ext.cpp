@@ -322,7 +322,7 @@ FALCON_FUNC img_isXPM ( VMachine *vm )
 FALCON_FUNC img_GetError ( VMachine *vm )
 {
    // Returns the available error
-   vm->retval( IMG_GetError () );
+   vm->retval( new CoreString(IMG_GetError ()) );
 }
 
 /*#

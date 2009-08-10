@@ -222,7 +222,7 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
       return;
    }
 
-   long index = i_index != 0 ? i_index->forceInteger() : 0;
+   long index = i_index != 0 ? ((long)i_index->forceInteger()) : 0;
    AutoCString file( *i_filename->asString() );
 
    ::TTF_Font *fnt = ::TTF_OpenFontIndex( file.c_str(),
