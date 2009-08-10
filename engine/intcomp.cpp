@@ -286,10 +286,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       Symbol *sym = *(Symbol **) iter.currentValue();
       // try to link undefined symbols.
 
-      if ( sym->isUndefined() &&
-         (m_lmodule->globals().length() <= sym->itemId() ||
-          m_lmodule->globals()[ sym->itemId() ].isNil() )
-          )
+      if ( sym->isUndefined() )
       {
          try
          {
