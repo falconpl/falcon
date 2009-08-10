@@ -651,8 +651,8 @@ CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "PgSQL" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" ) {
-      vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
-                                      .desc( "PgSQL DBI driver was not found" ) ) );
+      throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
+                                      .desc( "PgSQL DBI driver was not found" ) );
       return 0;
    }
 
