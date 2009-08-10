@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 27b
+* Category: methods
+* Subcategory:
+* Short: Method array
+* Description:
+*   Check if methods created through arrays can still be seen as arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// bom methods
+class Test
+    a = [{x,y=> y = x}, "new value" ]
+end
+
+t = Test()
+
+if t.a.typeId() != MethodType: failure( "Not a method" )
+val = nil
+t.a( $val )
+if val != "new value": failure( "Method call" )
+if t.a[1] != "new value": failure( "Method as array - read access")
+m= t.a
+m[1] = "changed"
+t.a( $val )
+if val != "changed": failure( "Method as array - write access")
+
+
+success()
+
+/* End of file */
+
+
+
+

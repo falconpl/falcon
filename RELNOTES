@@ -87,10 +87,6 @@ version. In details:
     generated when returning closures (i.e. mangling the returned array)
     must be reviewed.
 
-  - Callable arrays stored in object properties are now retrieved as functions,
-    or more precisely, as methods. This makes impossible (at the moment) to
-    mangle with their contents once stored.
-
   - Strings and memory buffers are not anymore supported by iterators and by
     the for/in loop. It is actually possible to have this interface back
     for them, but this way to access them is highly inefficient. So, it's

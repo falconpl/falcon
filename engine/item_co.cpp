@@ -1599,6 +1599,17 @@ void co_deep_getindex( const Item &item, const Item &idx, Item &result )
    item.asDeepItem()->readIndex( idx, result );
 }
 
+void co_method_getindex( const Item &item, const Item &idx, Item &result )
+{
+   if ( ! item.asMethodFunc()->isFunc() )
+   {
+      // an array
+      dyncast<CoreArray*>(item.asMethodFunc())->readIndex( idx, result );
+   }
+   else
+      throw new AccessError( ErrorParam( e_arracc ).extra( "LDV" ) );
+}
+
 void co_ref_getindex( const Item &item, const Item &idx, Item &result )
 {
    item.asReference()->origin().getIndex( idx, result );
@@ -1689,6 +1700,17 @@ void co_string_setindex( const Item &item, const Item &idx, Item &result )
 void co_deep_setindex( Item &item, const Item &idx, Item &result )
 {
    item.asDeepItem()->writeIndex( idx, result );
+}
+
+void co_method_setindex( const Item &item, const Item &idx, Item &result )
+{
+   if ( ! item.asMethodFunc()->isFunc() )
+   {
+      // an array
+      dyncast<CoreArray*>(item.asMethodFunc())->writeIndex( idx, result );
+   }
+   else
+      throw new AccessError( ErrorParam( e_arracc ).extra( "STV" ) );
 }
 
 void co_ref_setindex( Item &item, const Item &idx, Item &result )
@@ -2482,8 +2504,8 @@ void* MethodCommOpsTable[] = {
    (void*) co_method_compare,
 
    // set deep
-   (void*) co_fail,
-   (void*) co_fail,
+   (void*) co_method_getindex,
+   (void*) co_method_setindex,
    (void*) co_method_getproperty,
    (void*) co_fail,
 
