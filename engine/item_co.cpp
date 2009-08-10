@@ -208,6 +208,16 @@ void co_lbind_add( const Item& first, const Item& second, Item& third )
    ref.add( second, third );
 }
 
+void co_method_add( const Item& first, const Item& second, Item& third )
+{
+   if ( ! first.asMethodFunc()->isFunc() )
+   {
+      co_array_add( dyncast<CoreArray*>(first.asMethodFunc()), second, third );
+   }
+   else
+      throw new TypeError( ErrorParam( e_invop ).extra( "ADD" ) );
+}
+
 //=============================================================
 // Sub
 //
@@ -347,6 +357,16 @@ void co_ref_sub( const Item& first, const Item& second, Item& third )
 {
    Item& ref = first.asReference()->origin();
    ref.sub( second, third );
+}
+
+void co_method_sub( const Item& first, const Item& second, Item& third )
+{
+   if ( ! first.asMethodFunc()->isFunc() )
+   {
+      co_array_sub( dyncast<CoreArray*>(first.asMethodFunc()), second, third );
+   }
+   else
+      throw new TypeError( ErrorParam( e_invop ).extra( "ADD" ) );
 }
 
 //=============================================================
@@ -2486,8 +2506,8 @@ void* ClsMethodCommOpsTable[] = {
 };
 
 void* MethodCommOpsTable[] = {
-   (void*) co_fail,
-   (void*) co_fail,
+   (void*) co_method_add,
+   (void*) co_method_sub,
    (void*) co_fail,
    (void*) co_fail,
    (void*) co_fail,

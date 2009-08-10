@@ -171,6 +171,7 @@ FALCON_FUNC MemoryBuffer_wordSize( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_ptr( VMachine *vm );
 
 FALCON_FUNC Method_source( ::Falcon::VMachine *vm );
+FALCON_FUNC Method_base( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm );

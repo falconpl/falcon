@@ -546,6 +546,7 @@ Module* core_module_init()
    method_meta->exported( false );
    method_meta->getClassDef()->setMetaclassFor( FLC_ITEM_METHOD );
    self->addClassMethod( method_meta, "source", &Falcon::core::Method_source );
+   self->addClassMethod( method_meta, "base", &Falcon::core::Method_base );
    self->addClassMethod( method_meta, "attributes", &Falcon::core::Method_attributes );
 
 

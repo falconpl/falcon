@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 27c
+* Category: methods
+* Subcategory:
+* Short: Method array add/sub
+* Description:
+*   Check if methods created through arrays can still be seen as arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// bom methods
+class Test
+    a = [{x,y=> y = x}, "new value" ]
+end
+
+t = Test()
+
+if t.a.typeId() != MethodType: failure( "Not a method" )
+val = nil
+t.a( $val )
+if val != "new value": failure( "Method call" )
+
+t.a += "Item"
+
+if t.a[2] != "Item": failure( "Method-array addition" )
+m = t.a
+if (m - ["Item"]).len() != 2: failure( "Method-array removal" )
+
+success()
+
+/* End of file */
+
+
+
+

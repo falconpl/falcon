@@ -87,6 +87,13 @@ version. In details:
     generated when returning closures (i.e. mangling the returned array)
     must be reviewed.
 
+  - Callable arrays stored in object properties are now retrieved as functions,
+    or more precisely, as methods. It is possible to obtain the original
+    array extracting it through the "callable()" method of the Method items,
+    and operators in methods mimics those in arrays, but this may introduce
+    some incompatibility with old code storing callabe items in arrays inside
+    instances.
+
   - Strings and memory buffers are not anymore supported by iterators and by
     the for/in loop. It is actually possible to have this interface back
     for them, but this way to access them is highly inefficient. So, it's
