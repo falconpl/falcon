@@ -46,7 +46,6 @@ public:
        deendianize( code, codeSize, true );
    }
 
-   static void deendianize( Module* mod );
    static void convertEndianity( uint32 paramType, byte* targetArea, bool into=false );
    static uint32 advanceParam( uint32 paramType );
 };

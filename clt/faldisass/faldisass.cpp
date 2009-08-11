@@ -186,48 +186,48 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
                ( opnum == 2 && ( opcode == P_FORK || opcode == P_TRAN ) )
                )
             {
-               write_label( output, endianInt32( *((int32*) (instruction + offset ))) );
+               write_label( output, *((int32*) (instruction + offset )) );
                return;
             }
          }
          temp = "0x";
-         temp.writeNumberHex( endianInt32( *((int32*) (instruction + offset ))) );
+         temp.writeNumberHex( *((int32*) (instruction + offset )) );
          output->writeString( temp );
       break;
 
 
       case P_PARAM_INT32:
-         temp.writeNumber( (int64) endianInt32(*((int32*) (instruction + offset ))));
+         temp.writeNumber( (int64) *((int32*) (instruction + offset )));
          output->writeString( temp );
          break;
 
       case P_PARAM_NOTUSED: return;
 
-      case P_PARAM_STRID: write_string( output, endianInt32(*((int32*) (instruction + offset ))), mod ); break;
-      case P_PARAM_LBIND: output->writeString( "$" + *mod->getString( endianInt32(*((int32*) (instruction + offset ))))); break;
+      case P_PARAM_STRID: write_string( output, *((int32*) (instruction + offset )), mod ); break;
+      case P_PARAM_LBIND: output->writeString( "$" + *mod->getString( *((int32*) (instruction + offset )))); break;
 
       case P_PARAM_NUM:
-         temp.writeNumber( endianNum( *((numeric*) (instruction + offset ) ) ));
+         temp.writeNumber( loadNum( instruction + offset ));
          output->writeString(temp );
          break;
       case P_PARAM_NIL: output->writeString( "NIL" ); break;
       case P_PARAM_TRUE: output->writeString( "T" ); break;
       case P_PARAM_FALSE: output->writeString( "F" ); break;
       case P_PARAM_INT64:
-         temp.writeNumber( (int64) endianInt64(*((int64*) (instruction + offset ))) );
+         temp.writeNumber( (int64) loadInt64(instruction + offset) );
          output->writeString(temp );
       break;
       case P_PARAM_GLOBID:
-         write_symbol( output, "G", endianInt32(*((int32*) (instruction + offset ))) );
+         write_symbol( output, "G", *((int32*) (instruction + offset )) );
       break;
       case P_PARAM_LOCID:
-         write_symbol( output, "L", endianInt32(*((int32*) (instruction + offset ))) );
+         write_symbol( output, "L", *((int32*) (instruction + offset )) );
       break;
       case P_PARAM_PARID:
-         write_symbol( output, "P", endianInt32(*((int32*) (instruction + offset ))) );
+         write_symbol( output, "P", *((int32*) (instruction + offset )) );
       break;
 
-      case P_PARAM_NTD64: write_label_long( output, endianInt64(*((int64*) (instruction + offset ))) ); break;
+      case P_PARAM_NTD64: write_label_long( output, loadInt64((instruction + offset )) ); break;
       case P_PARAM_REGA: output->writeString( "A" ); break;
       case P_PARAM_REGB: output->writeString( "B" ); break;
       case P_PARAM_REGS1: output->writeString( "S1" ); break;
@@ -626,7 +626,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          iPos += advance;
          code += advance;
 
-         uint64 sw_count = (uint64) endianInt64( *((int64 *) (code - sizeof(int64))));
+         uint64 sw_count = (uint64) loadInt64( code - sizeof(int64) );
 
          uint16 sw_int = (int16) (sw_count >> 48);
          uint16 sw_rng = (int16) (sw_count >> 32);
@@ -639,7 +639,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
             if ( ! options.m_isomorphic )
                out->writeString( "\t\t" );
             out->writeString( ".case NIL, " );
-            write_label( out, endianInt32( *reinterpret_cast<int32 *>(code) ) );
+            write_label( out, *reinterpret_cast<int32 *>(code) );
             out->writeString( "\n" );
          }
          iPos += sizeof( int32 );
@@ -652,11 +652,11 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
                out->writeString( "\t\t" );
             out->writeString( ".case " );
             String temp;
-            temp.writeNumber( (int64)  endianInt64( *reinterpret_cast<int64 *>(code) ) );
+            temp.writeNumber( (int64)  loadInt64( code ) );
             out->writeString( temp + ", " );
             code += sizeof( int64 );
             iPos += sizeof( int64 );
-            write_label( out, endianInt32(  *reinterpret_cast<int32 *>( code ) ));
+            write_label( out, *reinterpret_cast<int32 *>( code ) );
             out->writeString( "\n" );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
@@ -671,13 +671,13 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
                out->writeString( "\t\t" );
             out->writeString( ".case " );
             String temp;
-            temp.writeNumber(  (int64) endianInt32( *reinterpret_cast<int32 *>(code) ) );
+            temp.writeNumber(  (int64)  *reinterpret_cast<int32 *>(code) );
             temp += ":";
-            temp.writeNumber(  (int64) endianInt32( *reinterpret_cast<int32 *>(code+ sizeof(int32)) ) );
+            temp.writeNumber(  (int64) *reinterpret_cast<int32 *>(code+ sizeof(int32) ) );
             out->writeString( temp + ", " );
             code += sizeof( int64 );
             iPos += sizeof( int64 );
-            write_label( out, endianInt32( *reinterpret_cast<int32 *>( code ) ) );
+            write_label( out, *reinterpret_cast<int32 *>( code )  );
             out->writeString( "\n" );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
@@ -690,11 +690,11 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
             if ( ! options.m_isomorphic )
                out->writeString( "\t\t" );
             out->writeString( ".case " );
-            write_string( out, endianInt32( *reinterpret_cast<int32 *>(code)), module );
+            write_string( out,  *reinterpret_cast<int32 *>(code), module );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
             out->writeString( ", " );
-            write_label( out, endianInt32( *reinterpret_cast<int32 *>( code ) ) );
+            write_label( out, *reinterpret_cast<int32 *>( code ) );
             out->writeString( "\n" );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
@@ -708,7 +708,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
                out->writeString( "\t\t" );
 
             out->writeString( ".case " );
-            int32 symId = endianInt32( *reinterpret_cast<int32 *>(code) );
+            int32 symId =  *reinterpret_cast<int32 *>(code);
             Symbol *sym = module->getSymbol( symId );
             if( sym == 0 )
             {
@@ -721,7 +721,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
 
             code += sizeof( int32 );
             iPos += sizeof( int32 );
-            write_label( out, endianInt32( *reinterpret_cast<int32 *>( code ) ) );
+            write_label( out, *reinterpret_cast<int32 *>( code ) );
             out->writeString( "\n" );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
@@ -765,11 +765,11 @@ void Analizer( FuncDef *fd, t_labelMap &labels )
       switch( opcode )
       {
          case P_FORK:
-            labels[ endianInt32( *(uint32 *)(code + sizeof(int32)*2 ) ) ] = 0;
+            labels[ *(uint32 *)(code + sizeof(int32)*2 ) ] = 0;
          break;
 
          case P_TRAN:
-            labels[ endianInt32( *(uint32 *)(code + sizeof(int32)*2 ) ) ] = 0;
+            labels[ *(uint32 *)(code + sizeof(int32)*2 ) ] = 0;
          // do not break; fallback
 
          case P_SWCH:
@@ -781,7 +781,7 @@ void Analizer( FuncDef *fd, t_labelMap &labels )
          case P_IFF :
          case P_ONCE:
          case P_TRAV:
-            labels[ endianInt32( *(uint32 *)(code + sizeof(int32)) ) ] = 0;
+            labels[  *(uint32 *)(code + sizeof(int32)) ] = 0;
          break;
       }
 
@@ -793,7 +793,7 @@ void Analizer( FuncDef *fd, t_labelMap &labels )
       {
          //special swch handling
          code += sizeof( int32 ) * 3;  // remove instro and two operands
-         uint64 sw_count = (uint64) endianInt64( *((int64 *) (code)));
+         uint64 sw_count = (uint64) loadInt64(code);
 
          uint16 sw_int = (int16) (sw_count >> 48);
          uint16 sw_rng = (int16) (sw_count >> 32);

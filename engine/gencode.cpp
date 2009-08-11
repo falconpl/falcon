@@ -306,7 +306,7 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_num:
       {
-         numeric dval = endianNum( stmt->asNumeric() );
+         numeric dval = stmt->asNumeric();
          m_outTemp->write( &dval, sizeof( dval ) );
       }
       break;

@@ -924,7 +924,7 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
             {
                int fserr = (int) temp_binary->lastError();
                delete temp_binary;
-               module->decref();
+               mod->decref();
                raiseError( e_file_output, tguri.get(), fserr );
             }
          }

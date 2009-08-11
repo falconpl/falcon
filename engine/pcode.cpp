@@ -245,29 +245,6 @@ void PCODE::deendianize( byte* code, uint32 codeSize, bool into )
    }
 }
 
-
-void PCODE::deendianize( Module* mod )
-{
-   const SymbolTable &symtab = mod->symbolTable();
-
-
-   // now, the symbol table must be traversed.
-   MapIterator iter = symtab.map().begin();
-   while( iter.hasCurrent() )
-   {
-      Symbol *sym = *(Symbol **) iter.currentValue();
-
-      if ( sym->isFunction() )
-      {
-         FuncDef* fd = sym->getFuncDef();
-         deendianize( fd->code(), fd->codeSize() );
-      }
-
-      // next symbol
-      iter.next();
-   }
-}
-
 }
 
 /* end of pcode.cpp */
