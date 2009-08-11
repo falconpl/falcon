@@ -135,6 +135,7 @@ different systems.
 
 	   #define FALCON_MODULE_TYPE \
 	      extern "C" __declspec(dllexport) ::Falcon::Module *
+      #define LLFMT    "ll"
 	#endif
 
    /* Other Windonws specific system defines */
