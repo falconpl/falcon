@@ -38,15 +38,18 @@ void PCODE::convertEndianity( uint32 paramType, byte* targetArea, bool into )
       case P_PARAM_INT64:
       case P_PARAM_NTD64:
       {
-         uint64 value64 = grabInt64( targetArea );
-
          // high part - low part
          if(into)
          {
-            *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32)(value64 >> 32);
-            *reinterpret_cast<uint32 *>(targetArea) = (uint32) value64;
+            // load from our straight int 
+            uint64 value64 = loadInt64( targetArea );
+            // endianize each subpart, and invert their position.
+            *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = endianInt32((uint32)(value64 >> 32));
+            *reinterpret_cast<uint32 *>(targetArea) = (uint32) endianInt32(value64 & 0xFFFFFFFF);
          }
          else {
+            // load from different endianity
+            uint64 value64 = grabInt64( targetArea );
             *reinterpret_cast<uint32 *>(targetArea) = (uint32)(value64 >> 32);
             *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32) value64;
          }
@@ -142,31 +145,23 @@ void PCODE::deendianize( byte* code, uint32 codeSize, bool into )
          iPos -= sizeof(int64);
 
          uint16 sw_int, sw_rng, sw_str, sw_obj;
+         uint64 value64;
 
          if ( into )
          {
-            // Natural order: |int|rng|str|obj|
-            // On LE order: |obj|str|rng|int|
-            uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-            sw_obj = (int16) (sw_count1 >> 16);
-            sw_str = (int16) (sw_count1 & 0xFFFF);
-            iPos += sizeof( uint32 );
-
-            sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-            sw_rng = (int16) (sw_count1 >> 16);
-            sw_int = (int16) (sw_count1 & 0xFFFF);
-            iPos += sizeof( uint32 );
+            // we have just destroyed our int64 switch value, which must be inverted
+            value64 = grabInt64( code+iPos );
          }
          else {
-            uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-            sw_int = (int16) (sw_count1 >> 16);
-            sw_rng = (int16) (sw_count1 & 0xFFFF);
-            iPos += sizeof( uint32 );
-            sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-            sw_str = (int16) (sw_count1 >> 16);
-            sw_obj = (int16) (sw_count1 & 0xFFFF);
-            iPos += sizeof( uint32 );
+            // we have just correctly decoded our integer from the stream.
+            value64 = loadInt64( code + iPos );
          }
+
+         sw_int = (int16) (value64 >> 48);
+         sw_rng = (int16) ((value64 >> 32) & 0xFFFF);
+         sw_str = (int16) ((value64 >> 16) & 0xFFFF);
+         sw_obj = (int16) (value64 & 0xFFFF);
+         iPos += sizeof( uint64 );
 
          // Endianize the nil landing
          *reinterpret_cast<uint32 *>(code+iPos) = endianInt32( *reinterpret_cast<uint32 *>(code+iPos) );
