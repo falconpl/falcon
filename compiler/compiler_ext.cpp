@@ -23,6 +23,7 @@
 #include <falcon/rosstream.h>
 #include <falcon/attribmap.h>
 #include <falcon/lineardict.h>
+#include <falcon/pcode.h>
 
 #include "compiler_ext.h"
 #include "compiler_mod.h"
@@ -314,6 +315,10 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    try
    {
       mod = iface->loader().loadSource( input, *name, *name );
+      // a good moment for a de-endianization
+      #if FALCON_LITTLE_ENDIAN != 1
+         PCODE::deendianize( mod );
+      #endif
       internal_link( vm, mod, iface );
       // don't decref, on success internal_link does.
    }
