@@ -4001,7 +4001,7 @@ void VMachine::expandTRAV( uint32 count, Iterator& iter )
          }
 
          CoreArray* source = current.asArray();
-         for( int p = 0; p < count; p++ )
+         for( uint32 p = 0; p < count; p++ )
          {
             *getNextTravVar() = source->items()[p];
          }
