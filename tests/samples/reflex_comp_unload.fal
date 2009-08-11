@@ -41,7 +41,7 @@ try
    
    // and now, unload
    sourceMod.unload()
-   
+  return 
    // as we have references to them, we should still be able to access it
    GC.perform(true)
    func( "Again from main" )

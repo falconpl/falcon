@@ -51,7 +51,7 @@ if GC.usedMem == mem or items == GC.items
 end
 
 other_string = instance.mth()
-
+return
 // unload
 mod.unload()
 

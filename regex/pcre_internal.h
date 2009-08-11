@@ -1702,14 +1702,12 @@ extern const uschar _pcre_OP_lengths[];
 one of the exported public functions. They have to be "external" in the C
 sense, but are not part of the PCRE public API. */
 
-extern BOOL         _pcre_is_newline(const uschar *, int, const uschar *,
-                      int *, BOOL);
+extern BOOL _pcre_is_newline(USPTR ptr, int type, USPTR endptr, int *lenptr, BOOL utf8); 
 extern int          _pcre_ord2utf8(int, uschar *);
 extern real_pcre   *_pcre_try_flipped(const real_pcre *, real_pcre *,
                       const pcre_study_data *, pcre_study_data *);
 extern int          _pcre_valid_utf8(const uschar *, int);
-extern BOOL         _pcre_was_newline(const uschar *, int, const uschar *,
-                      int *, BOOL);
+extern BOOL _pcre_was_newline(USPTR ptr, int type, USPTR endptr, int *lenptr, BOOL utf8); 
 extern BOOL         _pcre_xclass(int, const uschar *);
 
 
