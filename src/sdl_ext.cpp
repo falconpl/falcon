@@ -381,7 +381,7 @@ FALCON_FUNC sdl_VideoModeOK( ::Falcon::VMachine *vm )
 
    if ( ( i_width == 0 || ! i_width->isOrdinal() ) ||
         ( i_height == 0 || ! i_height->isOrdinal() ) ||
-        ( i_bpp != 0 && ! i_height->isOrdinal() ) ||
+        ( i_bpp != 0 && ! i_bpp->isOrdinal() ) ||
         ( i_flags != 0 && ! i_flags->isOrdinal() )
       )
    {
@@ -443,7 +443,7 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
 
    if ( ( i_width == 0 || ! i_width->isOrdinal() ) ||
         ( i_height == 0 || ! i_height->isOrdinal() ) ||
-        ( i_bpp != 0 && ! i_height->isOrdinal() ) ||
+        ( i_bpp != 0 && ! i_bpp->isOrdinal() ) ||
         ( i_flags != 0 && ! i_flags->isOrdinal() )
       )
    {
