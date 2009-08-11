@@ -396,7 +396,7 @@ public:
    /** Load a source.
 
       Tries to load a file that is directly considered a source file. This is just
-      a front-end to loadSource( Stream ).
+      a front-end to loadSource( Stream*,const String &, const String & ).
 
       This function sets the module name and path accordingly to the \b file
       parameter. The caller may know better and reset the module logical
@@ -412,12 +412,17 @@ public:
 
    /** Compile the source from an input stream.
 
-       The input stream must be already correctly transcoded.
-       Also, this function doesn't set the the module name/path
-       pair; that must be done by the caller.
+      This function sets the module name and path accordingly to the \b file
+      parameter. The caller may know better and reset the module logical
+      name once a valid module is returned.
 
-       Finally, notice that this function doesn't load the translation
+       \note Notice that this function doesn't load the translation
        table.
+
+      Also, this function tries to save the generated module in a .fam file,
+      if saveModules is set to true; if saveMandatory is also true, the function
+      will raise an error if the compiled module can't be properly saved.
+
        \throw Error or appropriate subclass on error.
        \param in the file from which to load the file.
        \param uri the complete URI of the source file from which the stream is open,

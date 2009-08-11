@@ -21,7 +21,7 @@
 namespace Falcon {
 
 
-void PCODE::convertEndianity( uint32 paramType, byte* targetArea )
+void PCODE::convertEndianity( uint32 paramType, byte* targetArea, bool into )
 {
    switch( paramType )
    {
@@ -41,8 +41,15 @@ void PCODE::convertEndianity( uint32 paramType, byte* targetArea )
          uint64 value64 = grabInt64( targetArea );
 
          // high part - low part
-         *reinterpret_cast<uint32 *>(targetArea) = (uint32)(value64 >> 32);
-         *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32) value64;
+         if(into)
+         {
+            *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32)(value64 >> 32);
+            *reinterpret_cast<uint32 *>(targetArea) = (uint32) value64;
+         }
+         else {
+            *reinterpret_cast<uint32 *>(targetArea) = (uint32)(value64 >> 32);
+            *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32) value64;
+         }
       }
       break;
 
@@ -100,8 +107,7 @@ uint32 PCODE::advanceParam( uint32 paramType )
    return offset;
 }
 
-
-void PCODE::deendianize( byte* code, uint32 codeSize )
+void PCODE::deendianize( byte* code, uint32 codeSize, bool into )
 {
    uint32 iPos =0;
    byte opcode;
@@ -113,7 +119,7 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
       iPos += 4;
       if( code[ iStart + 1 ] != 0 )
       {
-         convertEndianity( code[ iStart + 1 ], code + iPos );
+         convertEndianity( code[ iStart + 1 ], code + iPos, into );
          iPos += advanceParam( code[iStart + 1] );
 
          if( code[ iStart + 2 ] != 0 )
@@ -135,18 +141,36 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
          // get the switch table (aready de-endianized in the above step)
          iPos -= sizeof(int64);
 
-         uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-         uint16 sw_int = (int16) (sw_count1 >> 16);
-         uint16 sw_rng = (int16) (sw_count1 & 0xFFFF);
-         iPos += sizeof( uint32 );
-         sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
-         uint16 sw_str = (int16) (sw_count1 >> 16);
-         uint16 sw_obj = (int16) (sw_count1 & 0xFFFF);
-         iPos += sizeof( uint32 );
+         uint16 sw_int, sw_rng, sw_str, sw_obj;
 
-         // Endianize the nil landing
-         *reinterpret_cast<uint32 *>(code+iPos) = endianInt32( *reinterpret_cast<uint32 *>(code+iPos) );
-         iPos += sizeof( uint32 );
+         if ( into )
+         {
+            // Natural order: |int|rng|str|obj|
+            // On LE order: |obj|str|rng|int|
+            uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+            sw_obj = (int16) (sw_count1 >> 16);
+            sw_str = (int16) (sw_count1 & 0xFFFF);
+            iPos += sizeof( uint32 );
+
+            sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+            sw_rng = (int16) (sw_count1 >> 16);
+            sw_int = (int16) (sw_count1 & 0xFFFF);
+            iPos += sizeof( uint32 );
+         }
+         else {
+            uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+            sw_int = (int16) (sw_count1 >> 16);
+            sw_rng = (int16) (sw_count1 & 0xFFFF);
+            iPos += sizeof( uint32 );
+            sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+            sw_str = (int16) (sw_count1 >> 16);
+            sw_obj = (int16) (sw_count1 & 0xFFFF);
+            iPos += sizeof( uint32 );
+
+            // Endianize the nil landing
+            *reinterpret_cast<uint32 *>(code+iPos) = endianInt32( *reinterpret_cast<uint32 *>(code+iPos) );
+            iPos += sizeof( uint32 );
+         }
 
          // endianize the integer table
          while( sw_int > 0 )
@@ -154,8 +178,16 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
             // the int64 value
             uint64 value64 = grabInt64( code+iPos );
             // high part - low part
-            *reinterpret_cast<uint32 *>(code+iPos) = (uint32)(value64 >> 32);
-            *reinterpret_cast<uint32 *>(code+iPos+sizeof(uint32)) = (uint32) value64;
+            if( into )
+            {
+               *reinterpret_cast<uint32 *>(code+iPos+sizeof(uint32)) = (uint32)(value64 >> 32);
+               *reinterpret_cast<uint32 *>(code+iPos) = (uint32) value64;
+            }
+            else {
+               *reinterpret_cast<uint32 *>(code+iPos) = (uint32)(value64 >> 32);
+               *reinterpret_cast<uint32 *>(code+iPos+sizeof(uint32)) = (uint32) value64;
+            }
+
             iPos += sizeof( int64 );
             // and the landing
             *reinterpret_cast<int32 *>(code+iPos) = endianInt32( *reinterpret_cast<int32 *>(code+iPos) );

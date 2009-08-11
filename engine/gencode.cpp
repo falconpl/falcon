@@ -82,7 +82,7 @@ void GenCode::c_jmptag::define( uint32 id )
 
    uint32 current_pos = (uint32) m_stream->tell();
    m_defs[id] = current_pos + m_offset;
-   uint32 value = endianInt32( current_pos + m_offset );
+   uint32 value = current_pos + m_offset;
 
    ListElement *iter = m_queries[id].begin();
    while( iter != 0 )
@@ -116,7 +116,7 @@ void GenCode::c_jmptag::defineElif( uint32 id )
    uint32 current_pos = (uint32) m_stream->tell();
    uint32 cp = current_pos + m_offset;
    m_elifDefs.set( &cp, id );
-   uint32 value = endianInt32( current_pos + m_offset );
+   uint32 value = current_pos + m_offset;
    List *lst = (List *) m_elifQueries.at(id);
    ListElement *iter = lst->begin();
    while( iter != 0 )
@@ -255,7 +255,7 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
 
       case e_parSYM:
       {
-         uint32 out = endianInt32( m_content.sym->itemId() );
+         uint32 out = m_content.sym->itemId();
          owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
@@ -264,14 +264,14 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
       case e_parNTD32:
       case e_parINT32:
       {
-         uint32 out = endianInt32( m_content.immediate );
+         uint32 out = m_content.immediate;
          owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
 
       case e_parNTD64:
       {
-         uint64 out = endianInt64( m_content.immediate64 );
+         uint64 out = m_content.immediate64;
          owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
@@ -292,14 +292,14 @@ void GenCode::gen_operand( const Value *stmt )
       {
          uint32 symid;
          const Symbol *sym = stmt->asSymbol();
-         symid = endianInt32( sym->itemId() );
+         symid = sym->itemId();
          m_outTemp->write( &symid, sizeof( symid ) );
       }
       break;
 
       case Value::t_imm_integer:
       {
-         int64 ival = endianInt64( stmt->asInteger() );
+         int64 ival = stmt->asInteger();
          m_outTemp->write( &ival, sizeof( ival ) );
       }
       break;
@@ -313,14 +313,14 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_string:
       {
-         uint32 strid = (uint32) endianInt32( stmt->asString()->id() );
+         uint32 strid = (uint32) stmt->asString()->id();
          m_outTemp->write( &strid, sizeof( strid ) );
       }
       break;
 
       case Value::t_lbind:
       {
-         uint32 strid = (uint32) endianInt32( stmt->asLBind()->id() );
+         uint32 strid = (uint32) stmt->asLBind()->id();
          m_outTemp->write( &strid, sizeof( strid ) );
       }
       break;
@@ -425,21 +425,21 @@ void GenCode::gen_var( const VarDef &def )
    {
       case VarDef::t_int:
       {
-         int64 ival = endianInt64( def.asInteger() );
+         int64 ival = def.asInteger();
          m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
 
       case VarDef::t_num:
       {
-         numeric num = endianNum( def.asNumeric() );
+         numeric num = def.asNumeric();
          m_outTemp->write( reinterpret_cast< const char *>( &num ), sizeof( num ) );
       }
       break;
 
       case VarDef::t_string:
       {
-         int32 id = endianInt32( def.asString()->id() );
+         int32 id = def.asString()->id();
          m_outTemp->write( reinterpret_cast< const char *>( &id ), sizeof( id ) );
       }
       break;
@@ -447,7 +447,7 @@ void GenCode::gen_var( const VarDef &def )
       case VarDef::t_symbol:
       {
          const Symbol *sym = def.asSymbol();
-         int32 ival = endianInt32( sym->itemId() );
+         int32 ival = sym->itemId();
          m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
@@ -824,7 +824,7 @@ void GenCode::gen_statement( const Statement *stmt )
          {
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
-            int64 value = endianInt64( first->asInteger() );
+            int64 value = first->asInteger();
             m_outTemp->write( &value, sizeof(value ) );
             tag.addQuerySwitchBlock( second, 0 );
             m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -837,8 +837,8 @@ void GenCode::gen_statement( const Statement *stmt )
          {
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
-            int32 start = endianInt32( (uint32) first->asRange()->rangeStart()->asInteger() );
-            int32 end = endianInt32( (uint32) first->asRange()->rangeEnd()->asInteger() );
+            int32 start = (uint32) first->asRange()->rangeStart()->asInteger();
+            int32 end = (uint32) first->asRange()->rangeEnd()->asInteger();
             m_outTemp->write( &start, sizeof( start ) );
             m_outTemp->write( &end, sizeof( end ) );
             tag.addQuerySwitchBlock( second, 0 );
@@ -852,7 +852,7 @@ void GenCode::gen_statement( const Statement *stmt )
          {
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
-            int32 strid = endianInt32( first->asString()->id() );
+            int32 strid = first->asString()->id();
             m_outTemp->write( &strid, sizeof( strid ) );
             tag.addQuerySwitchBlock( second, 0 );
             m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -868,7 +868,7 @@ void GenCode::gen_statement( const Statement *stmt )
             {
                uint32 second = *(int32 *) iter.currentValue();
                Symbol *sym = val->asSymbol();
-               int32 objid = endianInt32( sym->id() );
+               int32 objid = sym->id();
                m_outTemp->write( &objid, sizeof( objid ) );
                tag.addQuerySwitchBlock( second, 0 );
                m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -1125,7 +1125,7 @@ void GenCode::gen_statement( const Statement *stmt )
          // the landing is here
          uint32 curpos = (uint32) m_outTemp->tell();
          m_outTemp->seekBegin( tryRefPos );
-         tryRefPos = endianInt32( curpos );
+         tryRefPos = curpos;
          m_outTemp->write( reinterpret_cast< const char *>(&tryRefPos), sizeof( tryRefPos ) );
          m_outTemp->seekBegin( curpos );
 
@@ -1161,7 +1161,7 @@ void GenCode::gen_statement( const Statement *stmt )
                {
                   Value *first = *(Value **) iter.currentKey();
                   uint32 second = *(int32 *) iter.currentValue();
-                  int64 value = endianInt64( first->asInteger() );
+                  int64 value = first->asInteger();
                   m_outTemp->write( &value, sizeof(value ) );
                   tag.addQuerySwitchBlock( second, 0 );
                   m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -1177,7 +1177,7 @@ void GenCode::gen_statement( const Statement *stmt )
                   {
                      uint32 second = *(int32 *) iter.currentValue();
                      Symbol *sym = val->asSymbol();
-                     int32 objid = endianInt32( sym->id() );
+                     int32 objid = sym->id();
                      m_outTemp->write( &objid, sizeof( objid ) );
                      tag.addQuerySwitchBlock( second, 0 );
                      m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -1234,7 +1234,7 @@ void GenCode::gen_statement( const Statement *stmt )
             // tell the TRY jumper where to jump when we are out of TRY
             curpos = (uint32) m_outTemp->tell();
             m_outTemp->seekBegin( tryEndRefPos );
-            tryEndRefPos = endianInt32( curpos );
+            tryEndRefPos = curpos;
             m_outTemp->write( reinterpret_cast< const char *>(&tryEndRefPos), sizeof( tryEndRefPos ) );
             m_outTemp->seekBegin( curpos );
          }
@@ -2215,7 +2215,7 @@ void GenCode::gen_funcall( const Expression *exp, bool fork )
       // landing for fork
       uint32 curpos = (uint32) m_outTemp->tell();
       m_outTemp->seekBegin( fork_pos );
-      fork_pos = endianInt32( curpos );
+      fork_pos = curpos;
       m_outTemp->write( &fork_pos, sizeof( fork_pos ) );
       m_outTemp->seekBegin( curpos );
    }

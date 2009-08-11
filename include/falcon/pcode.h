@@ -32,10 +32,22 @@ public:
     *
     * \param code the raw pcode sequence
     * \param codeSize the size in bytes of the code sequence.
+    * \param into true to actually endianize the code.
     */
-   static void deendianize( byte* code, uint32 codeSize );
+   static void deendianize( byte* code, uint32 codeSize, bool into = false );
+
+   /** Rotates endianity in IDs and numbers inside the PCode.
+    *
+    * \param code the raw pcode sequence
+    * \param codeSize the size in bytes of the code sequence.
+    */
+   static void endianize( byte* code, uint32 codeSize )
+   {
+       deendianize( code, codeSize, true );
+   }
+
    static void deendianize( Module* mod );
-   static void convertEndianity( uint32 paramType, byte* targetArea );
+   static void convertEndianity( uint32 paramType, byte* targetArea, bool into=false );
    static uint32 advanceParam( uint32 paramType );
 };
 

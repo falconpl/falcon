@@ -20,6 +20,11 @@
 #include <falcon/stream.h>
 #include <falcon/attribmap.h>
 
+#if FALCON_LITTLE_ENDIAN != 1
+#include <falcon/pcode.h>
+#endif
+
+
 namespace Falcon
 {
 
@@ -310,7 +315,19 @@ bool FuncDef::save( Stream *out ) const
    out->write( &codeSize, sizeof( codeSize ) );
    if ( m_codeSize > 0 )
    {
-      out->write( m_code, m_codeSize );
+      // On little endian platforms, save an endianized copy of the code.
+      #if FALCON_LITTLE_ENDIAN != 1
+         byte* ecode = (byte*) memAlloc( m_codeSize );
+         memcpy( ecode, m_code, m_codeSize );
+         PCODE::endianize( ecode, m_codeSize );
+         bool res = out->write( ecode, m_codeSize );
+         memFree( ecode );
+      #else
+         bool res = out->write( m_code, m_codeSize );
+      #endif
+
+      if ( ! res )
+         return false;
    }
 
    if ( m_attributes !=  0)
@@ -368,6 +385,15 @@ bool FuncDef::load( Module *mod, Stream *in )
       // it's essential to check for errors now.
       if ( ! in->good() )
          return false;
+
+      // de-endianize the code on little endian platforms.
+      #if FALCON_LITTLE_ENDIAN != 1
+      if( ret != 0 )
+      {
+         PCODE::deendianize( m_code, m_codeSize );
+      }
+      #endif
+
    } 
 
    in->read( &basePC, sizeof( basePC ) );

@@ -31,10 +31,6 @@
 #include <falcon/streambuffer.h>
 #include <falcon/stdstreams.h>
 
-#if FALCON_LITTLE_ENDIAN != 1
-#include <falcon/pcode.h>
-#endif
-
 #include <memory>
 
 
@@ -769,14 +765,6 @@ Module *ModuleLoader::loadModule( Stream *in )
    if(c1 =='F' && c2 =='M')
    {
       Module *ret = loadModule_select_ver( in );
-
-      #if FALCON_LITTLE_ENDIAN != 1
-      if( ret != 0 )
-      {
-         PCODE::deendianize( ret );
-      }
-      #endif
-
       return ret;
    }
 
@@ -857,42 +845,6 @@ Module *ModuleLoader::loadSource( const String &file )
       throw;
    }
 
-   mod->name( modName );
-   mod->path( file );
-
-   // if the base load source worked, save the result (if configured to do so).
-   if ( m_saveModule )
-   {
-      URI tguri( file );
-      fassert( tguri.isValid() );
-      VFSProvider* vfs = Engine::getVFS( tguri.scheme() );
-      fassert( vfs != 0 );
-
-      // don't save on remote systems if saveRemote is false
-      if ( vfs->protocol() == "file" || m_saveRemote )
-      {
-         tguri.pathElement().setExtension( "fam" );
-         // Standard creations params are ok.
-         Stream *temp_binary = vfs->create( tguri, VFSProvider::CParams() );
-         if ( temp_binary == 0 || ! mod->save( temp_binary ) )
-         {
-            if ( m_saveMandatory )
-            {
-               int fserr = (int) temp_binary->lastError();
-               delete temp_binary;
-               mod->decref();
-               raiseError( e_file_output, tguri.get(), fserr );
-            }
-         }
-
-         delete temp_binary;
-      }
-   }
-
-   #if FALCON_LITTLE_ENDIAN != 1
-      PCODE::deendianize( mod );
-   #endif
-
    return mod;
 }
 
@@ -949,9 +901,37 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
    // import the binary stream in the module;
    delete temp_binary;
 
-   #if FALCON_LITTLE_ENDIAN != 1
-      PCODE::deendianize( mod );
-   #endif
+   module->name( name );
+   module->path( path );
+
+   // if the base load source worked, save the result (if configured to do so).
+   if ( m_saveModule )
+   {
+      URI tguri( path );
+      fassert( tguri.isValid() );
+      VFSProvider* vfs = Engine::getVFS( tguri.scheme() );
+      fassert( vfs != 0 );
+
+      // don't save on remote systems if saveRemote is false
+      if ( vfs->protocol() == "file" || m_saveRemote )
+      {
+         tguri.pathElement().setExtension( "fam" );
+         // Standard creations params are ok.
+         Stream *temp_binary = vfs->create( tguri, VFSProvider::CParams() );
+         if ( temp_binary == 0 || ! module->save( temp_binary ) )
+         {
+            if ( m_saveMandatory )
+            {
+               int fserr = (int) temp_binary->lastError();
+               delete temp_binary;
+               module->decref();
+               raiseError( e_file_output, tguri.get(), fserr );
+            }
+         }
+
+         delete temp_binary;
+      }
+   }
 
    return module;
 }
