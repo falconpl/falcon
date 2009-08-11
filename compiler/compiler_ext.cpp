@@ -312,14 +312,18 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
 
    Module *mod = 0;
 
+   bool bSave = iface->loader().saveModules();
    try
    {
+      iface->loader().saveModules( false );
       mod = iface->loader().loadSource( input, *name, *name );
+      iface->loader().saveModules( bSave );
       internal_link( vm, mod, iface );
       // don't decref, on success internal_link does.
    }
    catch(Error* err)
    {
+      iface->loader().saveModules( bSave );
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
