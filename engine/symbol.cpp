@@ -22,6 +22,7 @@
 
 #if FALCON_LITTLE_ENDIAN != 1
 #include <falcon/pcode.h>
+#include <string.h>
 #endif
 
 
@@ -388,10 +389,7 @@ bool FuncDef::load( Module *mod, Stream *in )
 
       // de-endianize the code on little endian platforms.
       #if FALCON_LITTLE_ENDIAN != 1
-      if( ret != 0 )
-      {
-         PCODE::deendianize( m_code, m_codeSize );
-      }
+      PCODE::deendianize( m_code, m_codeSize );
       #endif
 
    } 

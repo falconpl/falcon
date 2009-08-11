@@ -630,10 +630,6 @@ bool testScript( ScriptData *script,
 
    try
    {
-      // a good moment for a de-endianization
-      #if FALCON_LITTLE_ENDIAN != 1
-         PCODE::deendianize( scriptModule );
-      #endif
       runtime.addModule( scriptModule );
    }
    catch (Error *err)
