@@ -949,6 +949,10 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
    // import the binary stream in the module;
    delete temp_binary;
 
+   #if FALCON_LITTLE_ENDIAN != 1
+      PCODE::deendianize( mod );
+   #endif
+
    return module;
 }
 
