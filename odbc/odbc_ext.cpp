@@ -48,9 +48,8 @@ FALCON_FUNC ODBC_init( VMachine *vm )
    Item *i_connParams = vm->param(0);
    if ( i_connParams != 0 && ! i_connParams->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                          .extra("[S]") ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                          .extra("[S]") );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -67,9 +66,8 @@ FALCON_FUNC ODBC_init( VMachine *vm )
       if ( connectErrorMessage.length() == 0 ) 
          connectErrorMessage = "An unknown error has occurred during connect";
       
-      vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
-                                       .desc( connectErrorMessage ) ) );
-      return ;
+      throw new DBIError( ErrorParam( status, __LINE__ )
+                                       .desc( connectErrorMessage ) );
    }
    
    self->setUserData( dbh );

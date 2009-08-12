@@ -772,8 +772,8 @@ CoreObject *DBIServiceODBC::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "ODBC" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "ODBC" ) {
-      vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
-                                      .desc( "ODBC DBI driver was not found" ) ) );
+      throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
+                                      .desc( "ODBC DBI driver was not found" ) );
       return 0;
    }
 

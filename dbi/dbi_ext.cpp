@@ -260,7 +260,7 @@ FALCON_FUNC DBIBaseTrans_queryOneDict( VMachine *vm )
    memFree( cTypes );
    memFree( cNames );
 
-   vm->retval( dict );
+   vm->retval( new CoreDict(dict) );
 }
 
 /*#
