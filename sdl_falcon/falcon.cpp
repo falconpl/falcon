@@ -18,6 +18,7 @@
 
    Consider this a relatively complex example of an embedding application.
 */
+
 #include "SDL_main.h"
 
 #include "falcon.h"
@@ -30,6 +31,9 @@
 #include <iostream>
 #include <stdio.h>
 
+#ifndef NDEBUG
+#include <falcon/trace.h>
+#endif
 
 using namespace Falcon;
 using namespace std;
@@ -248,6 +252,13 @@ bool AppFalcon::setup( int argc, char* argv[] )
       }
 
       Engine::setEncodings( srcEncoding, ioEncoding );
+#ifndef NDEBUG
+      if ( m_options.trace_file != "" )
+      {
+         AutoCString trace_file(m_options.trace_file);
+         TRACE_ON( trace_file.c_str() );
+      }
+#endif
    }
 
 
@@ -296,7 +307,8 @@ Stream* AppFalcon::openOutputStream( const String &ext )
             Sys::falconConvertWinFname( m_options.input );
          #endif
          URI uri_input( m_options.input );
-         uri_input.pathElement().setExtension( ext );
+         uri_input.pathElement().setFilename( uri_input.pathElement().getFile() +
+            "." + ext );
          FileStream* fout = new FileStream;
          if ( ! fout->create( uri_input.get(), BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite ) )
          {
@@ -374,7 +386,7 @@ void AppFalcon::compileTLTable()
       if ( ! mod->saveTableTemplate( out, ioEncoding == "" ? "C" : ioEncoding ) )
          throw String( "can't write on output stream." );
    }
-   catch( const String & )
+   catch( ... )
    {
       delete out;
       mod->decref();
@@ -429,21 +441,37 @@ void AppFalcon::generateAssembly()
 
 void AppFalcon::generateTree()
 {
-   ModuleLoader ml;
+   Compiler comp;
    // the load path is not relevant, as we load by file name or stream
    // apply options
-   ml.compileTemplate( m_options.parse_ftd );
-   ml.saveModules( false );
-   ml.alwaysRecomp( true );
+   Stream* in = 0;
 
    // will throw Error* on failure
-   Module* mod = loadInput( ml );
+   if ( m_options.input != "" && m_options.input != "-" )
+   {
+      #ifdef WIN32
+         Sys::falconConvertWinFname( m_options.input );
+      #endif
+      FileStream* fs = new FileStream();
+      fs->open( m_options.input );
+      in = fs;
+   }
+   else
+   {
+      String ioEncoding = getSrcEncoding();
+      Transcoder *tcin = TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+                                             new StreamBuffer( new StdInStream), true );
+      in = tcin;
+   }
 
    // try to open the oputput stream.
    Stream* out = 0;
+   Module *mod = new Module;
 
    try
    {
+      comp.compile( mod, in );
+
       String ioEncoding = getIoEncoding();
       out = AddSystemEOL(
          TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
@@ -451,17 +479,19 @@ void AppFalcon::generateTree()
 
       // Ok, we have the output stream.
       GenTree gtree(out);
-      gtree.generate( ml.compiler().sourceTree() );
+      gtree.generate( comp.sourceTree() );
       if ( ! out->good() )
          throw String( "can't write on output stream." );
    }
    catch( const String & )
    {
+      delete in;
       delete out;
       mod->decref();
       throw;
    }
 
+   delete in;
    delete out;
    mod->decref();
 }
@@ -548,6 +578,7 @@ void AppFalcon::prepareLoader( ModuleLoader &ml )
    // should we forcefully consider input as ftd?
    modLoader->compileTemplate ( m_options.parse_ftd );
 
+   Engine::setSearchPath( modLoader->getSearchPath() );
 }
 
 
@@ -635,9 +666,11 @@ void AppFalcon::runModule()
 
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
-   vmachine->launchAtLink ( true );
-   if ( vmachine->link( &runtime ) && vmachine->launch() )
+   vmachine->launchAtLink( true );
+   if ( vmachine->link( &runtime ) )
    {
+      vmachine->launch();
+
       if ( vmachine->regA().isInteger() )
          exitval( ( int32 ) vmachine->regA().asInteger() );
    }
