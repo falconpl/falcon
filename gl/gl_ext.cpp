@@ -87,8 +87,7 @@ namespace Ext {
       Item *i_attr = vm->param(0);
       Item *i_value = vm->param(1);
       if ( ( i_attr == 0 || ! i_attr->isOrdinal() ) ||
-           ( i_value == 0 || ! i_value->isReference() ) || 
-           ( (i_value->dereference()) == 0 || ! i_value->dereference()->isOrdinal() )
+           ( i_value == 0 || ! vm->paramByRef() || !i_value->isOrdinal() ) || 
          )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
@@ -96,9 +95,9 @@ namespace Ext {
          return;
       }
       SDL_GLattr attr = (SDL_GLattr)i_attr->forceInteger();
-      int * value = (int *)i_value->dereference()->forceInteger();
-      int retval = ::SDL_GL_GetAttribute(attr, value);
-      *i_value = (int64) *value;
+      int value = (int)i_value->forceInteger();
+      int retval = ::SDL_GL_GetAttribute(attr, &value);
+      *i_value = (int64) value;
       vm->retval(retval);
    }
 
