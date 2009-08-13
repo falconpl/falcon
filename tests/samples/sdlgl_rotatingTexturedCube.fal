@@ -1,0 +1,147 @@
+import SDL from sdl as SDL
+import IMAGE from sdlimage as IMAGE
+import from sdlgl as gl
+import GL from sdlgl as GL
+import from sdlglu as glu
+import GLU from sdlglu as GLU
+width = 640
+height = 480
+screen = nil
+rotationx = 0
+rotationy = 0
+rotvelx = 0
+rotvely = 0
+texture = nil
+teximage = nil
+
+function InitGraphics()
+   global screen
+   global texture
+   SDL.Init(SDL.INIT_VIDEO)
+   screen = SDL.SetVideoMode(width,height,32,SDL.OPENGL)
+   gl.Viewport(0,0,width,height)
+   gl.MatrixMode(GL.PROJECTION)
+   gl.LoadIdentity()
+   glu.Perspective(45.0, width / height, 1.0, 100.0)
+   gl.MatrixMode(GL.MODELVIEW)
+   
+   gl.SetAttribute(GL.RED_SIZE, 5)
+   gl.SetAttribute(GL.GREEN_SIZE, 5)
+   gl.SetAttribute(GL.BLUE_SIZE, 5)
+   gl.SetAttribute(GL.DEPTH_SIZE, 16)
+   gl.SetAttribute(GL.DOUBLEBUFFER, 1)
+   
+   teximage = IMAGE.Load("NeHe.bmp", "BMP")
+   texture = gl.GenTextures(1)
+   gl.BindTexture(GL.TEXTURE_2D, texture[0])
+   gl.TexImage2D(GL.TEXTURE_2D, 0, 3, teximage.w, teximage.h, 0, GL.RGB, GL.UNSIGNED_BYTE, teximage.pixels)
+   gl.TexParameteri(GL.TEXTURE_2D,GL.TEXTURE_MIN_FILTER,GL.LINEAR)
+   gl.TexParameteri(GL.TEXTURE_2D,GL.TEXTURE_MAG_FILTER,GL.LINEAR)
+   teximage = nil
+   
+   gl.Enable(GL.TEXTURE_2D)
+   gl.ShadeModel(GL.SMOOTH)
+   gl.ClearColor(0, 0, 0, 1)
+   gl.ClearDepth(1)
+   gl.Enable(GL.DEPTH_TEST)
+   gl.DepthFunc(GL.LEQUAL)
+   gl.Hint(GL.PERSPECTIVE_CORRECTION_HINT, GL.NICEST)
+end
+
+function DrawGraphics()
+   gl.Clear(GL.COLOR_BUFFER_BIT || GL.DEPTH_BUFFER_BIT);
+   
+   // Set location in front of camera
+   gl.LoadIdentity()
+   gl.Translate(0, 0, -10)
+   rotationx += rotvelx
+   rotationy += rotvely
+   gl.Rotate(rotationx, 0,1,0)
+   gl.Rotate(rotationy, 1,0,0)
+   
+   gl.BindTexture(GL.TEXTURE_2D, texture[0]);
+   
+   
+   //Draw a Cube
+   gl.Begin(GL.QUADS)
+   // Front Face
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d(-1.0, -1.0,  1.0)	// Bottom Left Of The Texture and Quad
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d( 1.0, -1.0,  1.0)	// Bottom Right Of The Texture and Quad
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d( 1.0,  1.0,  1.0)	// Top Right Of The Texture and Quad
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d(-1.0,  1.0,  1.0)	// Top Left Of The Texture and Quad
+   // Back Face
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d(-1.0, -1.0, -1.0)	// Bottom Right Of The Texture and Quad
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d(-1.0,  1.0, -1.0)	// Top Right Of The Texture and Quad
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d( 1.0,  1.0, -1.0)	// Top Left Of The Texture and Quad
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d( 1.0, -1.0, -1.0)	// Bottom Left Of The Texture and Quad
+   // Top Face
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d(-1.0,  1.0, -1.0)	// Top Left Of The Texture and Quad
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d(-1.0,  1.0,  1.0)	// Bottom Left Of The Texture and Quad
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d( 1.0,  1.0,  1.0)	// Bottom Right Of The Texture and Quad
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d( 1.0,  1.0, -1.0)	// Top Right Of The Texture and Quad
+   // Bottom Face
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d(-1.0, -1.0, -1.0)	// Top Right Of The Texture and Quad
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d( 1.0, -1.0, -1.0)	// Top Left Of The Texture and Quad
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d( 1.0, -1.0,  1.0)	// Bottom Left Of The Texture and Quad
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d(-1.0, -1.0,  1.0)	// Bottom Right Of The Texture and Quad
+   // Right face
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d( 1.0, -1.0, -1.0)	// Bottom Right Of The Texture and Quad
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d( 1.0,  1.0, -1.0)	// Top Right Of The Texture and Quad
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d( 1.0,  1.0,  1.0)	// Top Left Of The Texture and Quad
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d( 1.0, -1.0,  1.0)	// Bottom Left Of The Texture and Quad
+   // Left Face
+   gl.TexCoord2d(0.0, 0.0); gl.Vertex3d(-1.0, -1.0, -1.0)	// Bottom Left Of The Texture and Quad
+   gl.TexCoord2d(1.0, 0.0); gl.Vertex3d(-1.0, -1.0,  1.0)	// Bottom Right Of The Texture and Quad
+   gl.TexCoord2d(1.0, 1.0); gl.Vertex3d(-1.0,  1.0,  1.0)	// Top Right Of The Texture and Quad
+   gl.TexCoord2d(0.0, 1.0); gl.Vertex3d(-1.0,  1.0, -1.0)	// Top Left Of The Texture and Quad
+   
+   gl.End()
+
+   // Show the frame
+   gl.SwapBuffers()
+end
+
+object events
+   events = ["sdl_Quit",
+             "sdl_Expose",
+             "sdl_KeyDown"]
+   init
+      for event in self.events: subscribe( event, self )
+   end
+   
+   function on_sdl_Quit( state, x, y, xrel, yrel )
+      > "== Quit! =="
+      exit(0)
+   end
+   
+   function on_sdl_Expose()
+      gl.SwapBuffers();
+   end
+   
+   function on_sdl_KeyDown(state, scancode, sym, mod, unicode)
+      if sym == SDLK.ESCAPE
+         > "== Quit! =="
+         exit(0)
+      elif sym == SDLK.LEFT
+         rotvelx -= 0.1
+      elif sym == SDLK.RIGHT
+         rotvelx += 0.1
+      elif sym == SDLK.UP
+         rotvely += 0.1
+      elif sym == SDLK.DOWN
+         rotvely -= 0.1
+      end
+   end
+end
+
+try
+   InitGraphics()
+   SDL.StartEvents()
+   while true
+      DrawGraphics()
+      sleep(0.001)
+   end
+   SDL.StopEvents()
+catch in e
+   > e
+end

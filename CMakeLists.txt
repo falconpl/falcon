@@ -27,6 +27,9 @@ ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(ttf)
 ADD_SUBDIRECTORY(image)
 ADD_SUBDIRECTORY(mixer)
+ADD_SUBDIRECTORY(gl)
+ADD_SUBDIRECTORY(glu)
+ADD_SUBDIRECTORY(glext)
 
 #Add the sdl_falcon framework executable on macosx
 if(APPLE)
