@@ -87,7 +87,7 @@ namespace Ext {
       Item *i_attr = vm->param(0);
       Item *i_value = vm->param(1);
       if ( ( i_attr == 0 || ! i_attr->isOrdinal() ) ||
-           ( i_value == 0 || ! vm->paramByRef() || !i_value->isOrdinal() ) || 
+           ( i_value == 0 || ! vm->isParamByRef(1) || !i_value->isOrdinal() )
          )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
