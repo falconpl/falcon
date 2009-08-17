@@ -72,9 +72,9 @@ SET( SRC_FILES
    )
 
 # Target
-ADD_LIBRARY( dynlib MODULE
+ADD_LIBRARY( dynlib_fm MODULE
    ${SRC_FILES}
 )
 
-TARGET_LINK_LIBRARIES( dynlib falcon_engine ${SYS_LIBS})
-FALCON_INSTALL_MODULE( dynlib )
+TARGET_LINK_LIBRARIES( dynlib_fm falcon_engine ${SYS_LIBS})
+FALCON_INSTALL_MODULE( dynlib_fm )

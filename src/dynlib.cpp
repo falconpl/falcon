@@ -21,14 +21,11 @@
 */
 
 #include <falcon/module.h>
-#include <falcon/objectmanager.h>
 #include "dynlib_ext.h"
 #include "dynlib_mod.h"
 #include "dynlib_st.h"
 
 #include "version.h"
-
-static Falcon::DynFuncManager dyn_func_manager;
 
 /*#
    @main Dynamic Library Loader.
@@ -255,12 +252,9 @@ static Falcon::DynFuncManager dyn_func_manager;
    @see limitMembufW
 */
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
-
-   // set the static engine data
-   data.set();
 
    // initialize the module
    Falcon::Module *self = new Falcon::Module();
@@ -324,7 +318,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Callable function API
    //
    Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::Dyn_dummy_init ); // actually, raises
-   dynfunc_cls->getClassDef()->setObjectManager( &dyn_func_manager );
    dynfunc_cls->setWKS( true );
    self->addClassMethod( dynfunc_cls, "call", Falcon::Ext::DynFunction_call );
    self->addClassMethod( dynfunc_cls, "isSafe", Falcon::Ext::DynFunction_isSafe );

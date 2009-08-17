@@ -20,6 +20,7 @@
 */
 
 #include <falcon/engine.h>
+#include <string.h>
 #include "dynlib_mod.h"
 #include "dynlib_ext.h"
 #include "dynlib_st.h"
@@ -82,45 +83,26 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
    if ( i_mb == 0 || ! i_mb->isMemBuf() ||
         ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("M,N") ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("M,N") );
    }
 
    MemBuf* mb = i_mb->asMemBuf();
 
-   // This since VM version 0.9
-   #if FALCON_VERSION_NUM > 0x00080C
    if( i_size != 0 )
    {
-      mb->size( (uint32) i_size->forceInteger() );
+      mb->resize( (uint32) i_size->forceInteger() );
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s++ )
       {
          if ( mb->get( s ) == 0 )
          {
-            mb->size( s );
+            mb->resize( s );
             break;
          }
       }
    }
-   #else
-   if( i_size != 0 )
-   {
-      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false );
-   }
-   else {
-      for ( uint32 s = 0; s < mb->size(); s++ )
-      {
-         if ( mb->get( s ) == 0 )
-         {
-            mb = new MemBuf_1( vm, mb->data(), s, false );
-            break;
-         }
-      }
-   }
-   #endif
 
    vm->retval( mb );
 }
@@ -182,18 +164,15 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    if ( i_mb == 0 || ! i_mb->isMemBuf() ||
         ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("M,N") ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("M,N") );
    }
 
    MemBuf* mb = i_mb->asMemBuf();
 
-   // This since VM version 0.9
-   #if FALCON_VERSION_NUM > 0x00080C
    if( i_size != 0 )
    {
-      mb->size( (uint32) i_size->forceInteger() );
+      mb->resize( (uint32) i_size->forceInteger() );
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s++ )
@@ -202,29 +181,11 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
 
          if ( data[s] == 0 )
          {
-            mb->size( s * sizeof(wchar_t) );
+            mb->resize( s * sizeof(wchar_t) );
             break;
          }
       }
    }
-   #else
-   if( i_size != 0 )
-   {
-      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false );
-   }
-   else {
-      for ( uint32 s = 0; s < mb->size(); s++ )
-      {
-         wchar_t* data = (wchar_t*) mb->data();
-
-         if ( data[s] == 0 )
-         {
-            mb = new MemBuf_1( vm, mb->data(), s * sizeof(wchar_t), false );
-            break;
-         }
-      }
-   }
-   #endif
 
    vm->retval( mb );
 }
@@ -250,8 +211,6 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    This function returns the inner data of a Falcon string to be used in
    managed structures. As such, it is quite dangerous, and should be used 
    only when the remote functions is taking this data as read-only.
-   
-   To pass mutable strings, please use @a stringCopyPtr function.
 */
 
 FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
@@ -259,8 +218,8 @@ FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
    Item* i_str = vm->param(0);
    if ( i_str == 0 || ! i_str->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "S" ) ));
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "S" ) );
       return;
    }
    
@@ -289,8 +248,8 @@ FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm )
    Item* i_str = vm->param(0);
    if ( i_str == 0 || ! i_str->isMemBuf() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "M" ) ));
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M" ) );
       return;
    }
    
@@ -315,12 +274,11 @@ FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm )
    
    if ( i_ptr == 0 || ! i_ptr->isInteger() ||  i_size == 0 || ! i_size->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "M,I" ) ));
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M,I" ) );
    }
    
-   vm->retval( new MemBuf_1( vm, (byte*) i_ptr->asInteger(), (uint32) i_size->asInteger(), false )  );
+   vm->retval( new MemBuf_1( (byte*) i_ptr->asInteger(), (uint32) i_size->asInteger(), 0 )  );
 }
 
 /*#
@@ -344,9 +302,8 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
       || i_offset == 0 || ! i_offset->isInteger() 
       || i_size == 0 || ! i_size->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "M|I,I,I" ) ));
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,I" ) );
    }
    
    byte *data;
@@ -359,8 +316,7 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
    else
    {
       if ( offset > i_struct->asMemBuf()->size() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
       }
       
       data = i_struct->asMemBuf()->data();
@@ -375,8 +331,7 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
       case 4: ret = *((uint32*)(data + offset)); break;
       case 8: ret = *((int64*)(data + offset)); break;
       default:
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
    }
 
    vm->retval( ret );
@@ -407,9 +362,8 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
       || i_size == 0 || ! i_size->isInteger()
       || i_data == 0 || ! i_data->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "M|I,I,I,I" ) ));
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,I,I" ) );
    }
    
    byte *data;
@@ -422,8 +376,7 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
    else
    {
       if ( offset > i_struct->asMemBuf()->size() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
       }
       
       data = i_struct->asMemBuf()->data();
@@ -438,8 +391,7 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
       case 4: *((uint32*)(data + offset)) = (uint32)ret; break;
       case 8: *((int64*)(data + offset)) = ret; break;
       default:
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
    }
 
    vm->retval( ret );
@@ -461,9 +413,8 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
    if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
       || i_value == 0 || ! i_value->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "M|I,I,[I]" ) ));
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,[I]" ) );
    }
    
    uint32 size;
@@ -477,9 +428,8 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
       {
          if ( ! i_size->isInteger() )
          {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "M|I,I,[I]" ) ));
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "M|I,I,[I]" ) );
          }
          
          size = (uint32) i_size->asInteger();
@@ -494,9 +444,8 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
       
       if ( i_size == 0 || ! i_size->isInteger() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "M|I,I,[I]" ) ));
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "M|I,I,[I]" ) );
       }
       
       data = (byte*) i_struct->asInteger();
@@ -531,8 +480,8 @@ FALCON_FUNC  derefPtr( ::Falcon::VMachine *vm )
 
    if ( i_ptr == 0 || ! i_ptr->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra("I") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("I") );
       return;
    }
 
@@ -559,7 +508,7 @@ FALCON_FUNC  derefPtr( ::Falcon::VMachine *vm )
 FALCON_FUNC  dynExt( ::Falcon::VMachine *vm )
 {
    const char* ext = Sys::dynlib_get_dynlib_ext();
-   GarbageString *gs = new GarbageString( vm, ext );
+   CoreString *gs = new CoreString( ext );
    gs->bufferize();
    vm->retval( ext );
 }
@@ -588,8 +537,8 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
    Item *i_path = vm->param(0);
    if( i_path == 0 || ! i_path->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S") );
       return;
    }
 
@@ -600,15 +549,15 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
       int32 nErr;
       if( Sys::dynlib_get_error( nErr, errorContent ) )
       {
-         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE, __LINE__ )
+         throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE, __LINE__ )
                   .desc( FAL_STR( dle_load_error ) )
                   .sysError( (uint32) nErr )
-                  .extra( *i_path->asString() + " - " + errorContent) ) );
+                  .extra( *i_path->asString() + " - " + errorContent) );
       }
       else {
-         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE, __LINE__ )
+         throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE, __LINE__ )
                   .desc( FAL_STR( dle_load_error ) )
-                  .extra( *i_path->asString() + " - " + FAL_STR( dle_unknown_error )) ) );
+                  .extra( *i_path->asString() + " - " + FAL_STR( dle_unknown_error )) );
       }
 
       return;
@@ -630,17 +579,15 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
       (i_pmask != 0 && ! i_pmask->isString() )
     )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S,[S],[S]") ) );
-      return 0;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S,[S],[S]") );
    }
 
    void *hlib = vm->self().asObject()->getUserData();
    if( hlib == 0 )
    {
-      vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+1, __LINE__ )
-         .desc( FAL_STR( dle_already_unloaded ) ) ) );
-      return 0;
+      throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+1, __LINE__ )
+         .desc( FAL_STR( dle_already_unloaded ) ) );
    }
 
    void *sym_handle = Sys::dynlib_get_address( hlib, *i_symbol->asString() );
@@ -660,9 +607,9 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    {
       if ( ! addr->parseReturn( *i_rettype->asString() ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
-         .desc( FAL_STR( dyl_invalid_rmask ) ) ) );
-         return 0;
+         delete addr;
+         throw new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
+         .desc( FAL_STR( dyl_invalid_rmask ) ) );
       }
    }
 
@@ -671,9 +618,9 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    {
       if ( ! addr->parseParams( *i_pmask->asString() ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
-         .desc( FAL_STR( dyl_invalid_pmask ) ) ) );
-         return 0;
+         delete addr;
+         throw new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
+         .desc( FAL_STR( dyl_invalid_pmask ) ) );
       }
    }
 
@@ -731,9 +678,9 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
 
    if ( shouldRaise )
    {
-      vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__ )
+      throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__ )
          .desc( FAL_STR( dle_symbol_not_found ) )
-         .extra( *vm->param(0)->asString() ) ) );  // shouldRaise tells us we have a correct parameter.
+         .extra( *vm->param(0)->asString() ) );  // shouldRaise tells us we have a correct parameter.
    }
    else {
       vm->retval( obj );
@@ -782,20 +729,19 @@ FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm )
    void *hlib = vm->self().asObject()->getUserData();
    if( hlib == 0 )
    {
-      vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+1, __LINE__ )
-         .desc( FAL_STR( dle_already_unloaded ) ) ) );
+      throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+1, __LINE__ )
+         .desc( FAL_STR( dle_already_unloaded ) ) );
    }
 
    int res = Sys::dynlib_unload( hlib );
    if( res != 0 )
    {
-      vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+2, __LINE__ )
+      throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+2, __LINE__ )
          .desc( FAL_STR( dle_unload_fail ) )
-         .sysError( res ) ) );
-      return;
+         .sysError( res ) );
    }
 
-   vm->self().asObject()->setUserData(0);
+   vm->self().asObject()->setUserData((void*)0);
 }
 
 //======================================================
@@ -812,8 +758,8 @@ FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm )
 FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
 {
    // this can't be called directly, so it just raises an error
-   vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+3, __LINE__ )
-         .desc( FAL_STR( dle_cant_instance ) ) ) );
+   throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+3, __LINE__ )
+         .desc( FAL_STR( dle_cant_instance ) ) );
 }
 
 
@@ -822,9 +768,9 @@ static void s_raiseType( VMachine *vm, uint32 pid, const String &extra )
 {
    String sPid;
    sPid.writeNumber( (int64) pid );
-   vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
+   throw new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
          .desc( FAL_STR( dyl_param_mismatch ) )
-         .extra( sPid ) ) );
+         .extra( sPid ) );
 }
 
 inline void s_raiseType( VMachine* vm, uint32 pid )
@@ -861,13 +807,13 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    uint32 paramCount = vm->paramCount();
    if ( paramCount > F_DYNLIB_MAX_PARAMS )
    {
-       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR( dyl_toomany_pars ) ) ) );
-      return;
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( FAL_STR( dyl_toomany_pars ) ) );
    }
 
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
-
+   FunctionAddress *fa = dyncast<FunctionAddress *>(vm->self().asObject()->getFalconData());
+   Falcon::Error* error = 0;
+   
    // push buffer - this will go directly in the call stack.
    byte stackbuf[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
    uint32 stackbuf_pos = F_DYNLIB_MAX_PARAMS * 8;  // we're starting from the end so to be able to push forward.
@@ -922,9 +868,9 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             {
                String temp;
                temp.writeNumber( (int64) p );
-               vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+4, __LINE__ )
+               error = new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+4, __LINE__ )
                   .desc( FAL_STR( dle_cant_guess_param ) )
-                  .extra( temp ) ));
+                  .extra( temp ) );
             }
             goto cleanup;
          }
@@ -937,9 +883,9 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             String temp;
             temp.writeNumber( (int64) p );
 
-            vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+            error = new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
                   .desc( FAL_STR( dle_too_many ) )
-                  .extra( temp ) ));
+                  .extra( temp ) );
             goto cleanup;
          }
          
@@ -960,9 +906,9 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                String temp;
                temp.writeNumber( (int64) p );
 
-               vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+               error = new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
                   .desc( FAL_STR( dle_not_byref ) )
-                  .extra( temp ) ));
+                  .extra( temp ) );
 
                goto cleanup;
             }
@@ -991,9 +937,8 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             // Parameter count is not matching.
             if ( paramCount > F_DYNLIB_MAX_PARAMS )
             {
-                vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                        .extra( FAL_STR( dyl_toomany_pars ) ) ) );
-               return;
+                error = new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                        .extra( FAL_STR( dyl_toomany_pars ) ) );
             }
             break;
 
@@ -1273,10 +1218,9 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    {
       String temp;
       temp.writeNumber( (int64) p );
-
-      vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+10, __LINE__ )
+      error = new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+10, __LINE__ )
             .desc( FAL_STR( dle_too_few ) )
-            .extra( temp ) ));
+            .extra( temp ) );
       goto cleanup;
    }
 
@@ -1316,14 +1260,15 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
          case F_DYNLIB_PTYPE_SZ:
             {
-               GarbageString *str = UTF8GarbageString( vm, (const char *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
+               CoreString *str = new CoreString;
+               str->fromUTF8( (const char *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
                vm->retval( str );
             }
             break;
 
          case F_DYNLIB_PTYPE_WZ:
             {
-               GarbageString *str = new GarbageString( vm, (const wchar_t *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ), -1 );
+               CoreString *str = new CoreString( (const wchar_t *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ), -1 );
                vm->retval( str );
             }
             break;
@@ -1331,7 +1276,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_MB:
             {
                byte *data = (byte *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
-               MemBuf *mb = new MemBuf_1( vm, data, 0x7FFFFFFF );  // allow to mangle with memory ad lib.
+               MemBuf *mb = new MemBuf_1( data, 0x7FFFFFFF, memFree );  // allow to mangle with memory ad lib.
                vm->retval( mb );
             }
             break;
@@ -1400,7 +1345,8 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_SZ:
             {
             pos -= sizeof(char*);
-            GarbageString *str = UTF8GarbageString( vm, *(const char **) (ptrbuf+pos) );
+            CoreString *str = new CoreString;
+            str->fromUTF8( *(const char **) (ptrbuf+pos) );
             param->setString( str );
             }
             break;
@@ -1408,7 +1354,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_WZ:
             {
             pos -= sizeof(wchar_t*);
-            GarbageString *str = new GarbageString( vm, *(const wchar_t **) (ptrbuf+pos), -1 );
+            CoreString *str = new CoreString( *(const wchar_t **) (ptrbuf+pos), -1 );
             param->setString( str );
             }
             break;
@@ -1417,7 +1363,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             {
             pos -= sizeof(void*);
             // it was originally a membuf, or we'd rised
-            MemBuf *mb = new MemBuf_1( vm, *(byte**)(ptrbuf + pos), 0x7FFFFFFF, false );
+            MemBuf *mb = new MemBuf_1( *(byte**)(ptrbuf + pos), 0x7FFFFFFF, false );
             param->setMemBuf( mb );
             }
             break;
@@ -1453,6 +1399,9 @@ cleanup:
    {
       delete wsPlaces[i];
    }
+
+   if ( error != 0 )
+      throw error;
 }
 
 /*#
@@ -1465,7 +1414,7 @@ cleanup:
 */
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
 {
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   FunctionAddress *fa = dyncast<FunctionAddress *>(vm->self().asObject()->getFalconData());
 
    String ret = fa->name();
    if ( fa->m_bGuessParams ) {
@@ -1526,7 +1475,7 @@ FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  DynFunction_isSafe( ::Falcon::VMachine *vm )
 {
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   FunctionAddress *fa = dyncast<FunctionAddress *>(vm->self().asObject()->getFalconData());
    vm->regA().setBoolean( !fa->m_bGuessParams );
 }
 
@@ -1540,7 +1489,7 @@ FALCON_FUNC  DynFunction_isSafe( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  DynFunction_parameters( ::Falcon::VMachine *vm )
 {
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   FunctionAddress *fa = dyncast<FunctionAddress *>(vm->self().asObject()->getFalconData());
    if( fa->m_bGuessParams )
       vm->retnil();
    else
@@ -1557,7 +1506,7 @@ FALCON_FUNC  DynFunction_parameters( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
 {
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   FunctionAddress *fa = dyncast<FunctionAddress *>(vm->self().asObject()->getFalconData());
    if( fa->m_bGuessParams )
       vm->retnil();
    else
@@ -1594,7 +1543,7 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
    if( vm->self().asObject()->getProperty( "pseudoClass", pseudoClass ) &&
          pseudoClass.isString() )
    {
-      vm->retval( new GarbageString( vm, "DynOpaque: " + *pseudoClass.asString() ) );
+      vm->retval( new CoreString( "DynOpaque: " + *pseudoClass.asString() ) );
    }
    else
    {

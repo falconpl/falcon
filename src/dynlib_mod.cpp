@@ -29,7 +29,7 @@ FunctionAddress::~FunctionAddress()
    delete[] m_safetyParams;
 }
 
-void FunctionAddress::gcMark( VMachine * )
+void FunctionAddress::gcMark( uint32 )
 {
    // nothing to mark
 }
@@ -342,38 +342,6 @@ bool FunctionAddress::parseReturn( const String &rval )
    }
 
    return true;
-}
-
-
-/*
-void FunctionAddress::call( VMachine *vm, int32 firstParam ) const
-{
-}
-*/
-
-//===========================================
-// DynFunc manager
-//
-bool DynFuncManager::isFalconData() const
-{
-   return true;
-}
-
-void *DynFuncManager::onInit( Falcon::VMachine * )
-{
-   return 0;
-}
-
-void DynFuncManager::onDestroy( Falcon::VMachine *, void *user_data )
-{
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>( user_data );
-   delete fa;
-}
-
-void *DynFuncManager::onClone( Falcon::VMachine *, void *user_data )
-{
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>( user_data );
-   return fa->clone();
 }
 
 

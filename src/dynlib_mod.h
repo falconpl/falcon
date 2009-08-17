@@ -123,7 +123,8 @@ public:
    /** Overrides from falcon data.
       Actually, does nothing.
    */
-   virtual void gcMark( VMachine *mp );
+   virtual void gcMark( uint32 );
+
 
    /** Overrides from falcon data.
       Supports complete cloning of the underlying data.
@@ -228,21 +229,6 @@ public:
    byte parsedReturn() const { return m_parsedReturn; }
 };
 
-
-// our internal dynamic function class handler
-class DynFuncManager: public Falcon::ObjectManager
-{
-public:
-   // we derived it from falcon data
-   virtual bool isFalconData() const;
-
-   // our inner object doesn't need cache data.
-
-   // it cannot create new data directly
-   virtual void *onInit( Falcon::VMachine * );
-   virtual void onDestroy( Falcon::VMachine *, void *user_data );
-   virtual void *onClone( Falcon::VMachine *vm, void *user_data );
-};
 
 
 /**

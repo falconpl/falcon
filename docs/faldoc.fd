@@ -10,7 +10,7 @@
 
 Title = DynLib
 Author = Giancarlo Niccolai
-Version = 0.9.2
+Version = 0.9.5
 
 ################################################
 # Faldoc Input settings
@@ -37,6 +37,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=DynLib-docs-0.9.2
+Output.html.directory=DynLib-docs-0.9.5
 Output.html.url=.
 Output.html.doctitle=DynLib module Function Reference
