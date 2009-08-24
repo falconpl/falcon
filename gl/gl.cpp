@@ -25,6 +25,7 @@
 
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <gl.h>
 
 /*#
    @module sdlopengl OpenGL
