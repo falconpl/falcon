@@ -1378,6 +1378,77 @@ FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function arrayNM
+   @brief Force an array to be non-method.
+   @param array the array that should not be transformed into a method.
+   @return The same array passed as parameter.
+
+   Callable arrays stored in objects become methods when they are accessed.
+   At times, this is not desirable. Suppose it is necessary to store a list
+   of items, possibly functions, in an object, and that random access is needed.
+
+   In this case, an array is a good storage, but it's useful to tell Falcon
+   that this array is never to be considered a method for the host object.
+   Consider the following case:
+
+   @code
+   class WithArrays( a )
+      asMethod = a
+      asArray= arrayNM( a.clone() )  // or a.clone().NM()
+   end
+
+   wa = WithArrays( [ printl, 'hello' ] )
+
+   // this is ok
+   for item in wa.asArray: > "Item in this array: ", item
+
+   // this will raise an error
+   for item in wa.asMethod: > "Item in this array: ", item
+
+   @endcode
+
+   The array is cloned in this example as the function modifies
+   the array itself, which becomes non-methodic, and returns it
+   without copying it. So, if not copied, in this example also
+   asMethod would have been non-methodic.
+*/
+
+/*#
+   @method NM Array
+   @brief Force an array to be non-method.
+   @return The This array
+
+   @see arrayNM
+*/
+
+FALCON_FUNC  mth_arrayNM( ::Falcon::VMachine *vm )
+{
+   Item *i_array;
+
+   if( vm->self().isMethodic() )
+   {
+      i_array = &vm->self();
+   }
+   else
+   {
+      i_array = vm->param(0);
+
+      if ( i_array == 0 || ! i_array->isArray() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "A" ) );
+      }
+   }
+
+
+   CoreArray *array = i_array->asArray();
+   array->canBeMethod(false);
+   vm->retval( array );
+}
+
+
 }}
 
 /* end of array_ext.cpp */

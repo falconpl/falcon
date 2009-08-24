@@ -47,6 +47,7 @@ class FALCON_DYN_CLASS CoreArray: public DeepItem, public CallPoint
    CoreDict *m_bindings;
    CoreObject *m_table;
    uint32 m_tablePos;
+   bool m_canBeMethod;
 
    CoreArray( Item *buffer, uint32 size, uint32 alloc );
 
@@ -218,6 +219,8 @@ public:
    virtual void readIndex( const Item &pos, Item &target );
    virtual void writeIndex( const Item &pos, const Item &target );
 
+   virtual void canBeMethod( bool b ) { m_canBeMethod = b; }
+   virtual bool canBeMethod() const { return m_canBeMethod; }
 };
 
 }

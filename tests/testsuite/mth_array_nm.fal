@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 27e
+* Category: methods
+* Subcategory:
+* Short: Non-method arrays
+* Description:
+*   Check if methods created through arrays can still be seen as arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// bom methods
+class Test
+    a = arrayNM( [{x,y=> y = x}, "new value" ] )
+    b = [printl, print].NM()
+end
+
+t = Test()
+if t.a.typeId() != ArrayType: failure( "arrayNM" )
+if t.b.typeId() != ArrayType: failure( "self.NM" )
+
+if t.a[1] != "new value": failure( "arrayNM - content" )
+if t.b[1] != print: failure( "self.NM - content" )
+
+success()
+
+/* End of file */

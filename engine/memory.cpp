@@ -163,6 +163,12 @@ size_t gcMemAllocated()
    return val;
 }
 
+void gcMemShutdown()
+{
+	delete s_gcMutex;
+	s_gcMutex = 0;
+}
+
 //============================================================
 // Global function pointers.
 //

@@ -32,7 +32,7 @@ namespace Falcon
 #include <falcon/eng_messages.h>
 #undef FLC_DECLARE_ENGINE_MSG
 
-StringTable * engineStrings;
+StringTable * engineStrings = 0;
 
 namespace Engine
 {
@@ -41,6 +41,11 @@ namespace Engine
    static String* s_sIOEnc = 0;
    static String* s_sSrcEnc = 0;
    static String* s_searchPath = 0;
+
+   /** Release language data. */
+   void releaseLanguage();
+   /** Release encoding data. */
+   void releaseEncodings();
 
    bool addVFS( const String &name, VFSProvider *prv )
    {
@@ -105,9 +110,9 @@ namespace Engine
       delete memPool;
       memPool = 0;
 
-      delete engineStrings;
-      engineStrings = 0;
-
+	  releaseLanguage();
+	  releaseEncodings();
+	  
       // clear all the service ( and VSF );
       s_mtx.lock();
       if( s_serviceMap )
@@ -122,6 +127,10 @@ namespace Engine
          s_serviceMap = 0;
       }
       s_mtx.unlock();
+
+	  traits::releaseTraits();
+
+	  gcMemShutdown(); 
    }
 
 
@@ -149,24 +158,45 @@ namespace Engine
       engineStrings = new StringTable;
       if( language == "C" )
       {
+		 
+		  {	//THIS IS FOR DEBUGGING PURPOSE!!!
+			  String* test = new String( "This is a test!" );
+				test->exported( true );
+				engineStrings->add( test );
+		  }	//END OF DEBUGGING CODE!!!
+		 
          #define  FLC_REALIZE_ENGINE_MSG
          #include <falcon/eng_messages.h>
+		 #undef FLC_REALIZE_ENGINE_MSG
          return true;
       }
       // ... signal that we didn't found the language.
       return false;
    }
 
+   void releaseLanguage()
+   {
+	   delete engineStrings;
+	   engineStrings = 0;
+   }
+
    void setEncodings( const String &sSrcEnc, const String &sIOEnc )
    {
       s_mtx.lock();
-      delete s_sSrcEnc;
-      delete s_sIOEnc;
-      s_sSrcEnc = new String(sSrcEnc);
+      
+	  releaseEncodings();
+	  
+	  s_sSrcEnc = new String(sSrcEnc);
       s_sIOEnc = new String(sIOEnc);
       s_sSrcEnc->bufferize();
       s_sIOEnc->bufferize();
       s_mtx.unlock();
+   }
+
+   void releaseEncodings()
+   {
+	   delete s_sSrcEnc;
+	   delete s_sIOEnc;
    }
 
    void getEncodings( String &sSrcEnc, String &sIOEnc )

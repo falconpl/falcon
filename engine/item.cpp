@@ -569,7 +569,7 @@ bool Item::methodize( const Item &self )
       {
          CoreArray& arr = *asArray();
          // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
-         if ( arr.length() > 0 && arr[0].asArray() != &arr && arr[0].isCallable() )
+         if ( arr.canBeMethod() && arr.length() > 0 && arr[0].asArray() != &arr && arr[0].isCallable() )
          {
             data->setMethod( self, &arr );
             return true;

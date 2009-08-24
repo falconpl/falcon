@@ -58,7 +58,10 @@ namespace Falcon {
 */
 FALCON_DYN_SYM  void gcMemAccount( size_t memSize );
 FALCON_DYN_SYM  void gcMemUnaccount( size_t memSize );
-   
+
+/** Call once Falcon is shut down. */
+FALCON_DYN_SYM  void gcMemShutdown();
+
 /** Return the total memory allocated by the GC system. */
 FALCON_DYN_SYM  size_t gcMemAllocated();
    

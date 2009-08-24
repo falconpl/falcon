@@ -423,6 +423,7 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp ).asSymbol()->
       addParam("source")->addParam("filter");
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
+   self->addClassMethod( array_meta, "NM", &Falcon::core::mth_arrayNM );
 
    //==================================================================
    // Dict class
@@ -1104,6 +1105,8 @@ Module* core_module_init()
    self->addExtFunc( "arrayFill", &Falcon::core::mth_arrayFill )->
       addParam("array")->addParam("item");
    self->addExtFunc( "arrayCompact", &Falcon::core::mth_arrayCompact )->
+      addParam("array");
+   self->addExtFunc( "arrayNM", &Falcon::core::mth_arrayNM )->
       addParam("array");
 
    //=======================================================================

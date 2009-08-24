@@ -1,3 +1,7 @@
+Falcon (0.9.4.2)
+  * fixed: After engine shutdown, some permanent memory object was not
+           cleaned (Thanks claim).
+  
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
            any class in a property would have generated a class method when

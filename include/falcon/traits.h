@@ -93,6 +93,7 @@ namespace traits {
       extern FALCON_DYN_SYM IntTraits &t_int();
       extern FALCON_DYN_SYM StringPtrTraits &t_stringptr();
       extern FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own();
+	  void FALCON_DYN_SYM releaseTraits();
 }
 
 }

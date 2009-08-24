@@ -198,11 +198,38 @@ bool StringTraits::owning() const
 
 
 namespace traits {
-      FALCON_DYN_SYM StringTraits &t_string() { static StringTraits* dt = new StringTraits; return *dt; }
-      FALCON_DYN_SYM VoidpTraits &t_voidp() { static VoidpTraits* dt = new VoidpTraits; return *dt; }
-      FALCON_DYN_SYM IntTraits &t_int() { static IntTraits *dt = new IntTraits; return *dt; }
-      FALCON_DYN_SYM StringPtrTraits &t_stringptr() { static StringPtrTraits *dt = new StringPtrTraits; return *dt; }
-      FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own() { static StringPtrOwnTraits *dt = new StringPtrOwnTraits; return *dt; }
+
+	 StringTraits* string_dt = 0;
+	 VoidpTraits* voidp_dp = 0;
+	 IntTraits* int_dp = 0;
+	 StringPtrTraits* stringptr_dp = 0;
+	 StringPtrOwnTraits* stringptr_own_dp = 0;
+
+
+      FALCON_DYN_SYM StringTraits &t_string() { if( !string_dt ) string_dt = new StringTraits; return *string_dt; }
+      FALCON_DYN_SYM VoidpTraits &t_voidp() { if( !voidp_dp ) voidp_dp = new VoidpTraits; return *voidp_dp; }
+      FALCON_DYN_SYM IntTraits &t_int() { if( !int_dp ) int_dp = new IntTraits; return *int_dp; }
+      FALCON_DYN_SYM StringPtrTraits &t_stringptr() { if( !stringptr_dp ) stringptr_dp = new StringPtrTraits; return *stringptr_dp; }
+      FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own() { if( !stringptr_own_dp ) stringptr_own_dp = new StringPtrOwnTraits; return *stringptr_own_dp; }
+
+	  void releaseTraits()
+	  {
+		  delete string_dt;
+		  string_dt = 0;
+
+		  delete voidp_dp;
+		  voidp_dp = 0;
+
+		  delete int_dp;
+		  int_dp = 0;
+
+		  delete stringptr_dp;
+		  stringptr_dp = 0;
+
+		  delete stringptr_own_dp;
+		  stringptr_own_dp = 0;
+
+	  }
 }
 
 }
