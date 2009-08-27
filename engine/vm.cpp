@@ -3305,27 +3305,6 @@ bool VMachine::callCoroFrame( const Item &callable, int32 pSize )
 
 void VMachine::postMessage( VMMessage *msg )
 {
-   // can we post now?
-   /*
-   if ( m_baton.tryAcquire() )
-   {
-      processMessage( msg );
-
-      try {
-         execFrame();
-      }
-      catch( Error* err )
-      {
-         // forward the error to this VM for sync management
-         msg = new VMMessage( "error" );
-         msg->error( err );
-      }
-
-      m_baton.release();
-      return;
-   }
-   */
-
    // ok, we can't do it now; post the message
    m_mtx_mesasges.lock();
 

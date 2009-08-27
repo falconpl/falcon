@@ -32,8 +32,7 @@ namespace Falcon {
 CoreArray::CoreArray():
    m_bindings(0),
    m_table(0),
-   m_tablePos(0),
-   m_canBeMethod(false)
+   m_tablePos(0)
 {
    m_itemarray.owner( this );
 }
@@ -41,10 +40,9 @@ CoreArray::CoreArray():
 
 CoreArray::CoreArray( const CoreArray& other ):
    m_itemarray( other.m_itemarray ),
-   m_canBeMethod( other.m_canBeMethod )
+   m_table( other.m_table ),
+   m_tablePos( other.m_tablePos )
 {
-   m_table = other.m_table;
-   m_tablePos = other.m_tablePos;
    m_itemarray.owner( this );
 
    if ( other.m_bindings != 0 )

@@ -46,8 +46,16 @@ class FALCON_DYN_CLASS CoreArray: public DeepItem, public CallPoint
    ItemArray m_itemarray;
    CoreDict *m_bindings;
    CoreObject *m_table;
+   /** Position in a table.
+    *
+    *  This indicator is also used to determine if an array can be a method.
+    *
+    *  Table arrays can never be methods (as they refer to the table they are
+    *  stored in), so when m_table != 0, arrays are never methodic.
+    *
+    *  When m_table == 0, m_tablePos != 0 indicates a non-methodic array.
+    */
    uint32 m_tablePos;
-   bool m_canBeMethod;
 
    CoreArray( Item *buffer, uint32 size, uint32 alloc );
 
@@ -219,8 +227,21 @@ public:
    virtual void readIndex( const Item &pos, Item &target );
    virtual void writeIndex( const Item &pos, const Item &target );
 
-   virtual void canBeMethod( bool b ) { m_canBeMethod = b; }
-   virtual bool canBeMethod() const { return m_canBeMethod; }
+   /** Determines if this array can be seen as a method in a class.
+    *
+    * If the array is part of a table, it can never be a method, and
+    * this setting is ignored.
+    *
+    */
+   void canBeMethod( bool b ) {
+      if ( m_table == 0 )
+         m_tablePos = b ? 0 : (uint32) -1;
+   }
+
+   /** Returns true if this array should be considered a method when callable and stored in a property.
+    *
+    */
+   bool canBeMethod() const { return m_table == 0 && m_tablePos == 0; }
 };
 
 }

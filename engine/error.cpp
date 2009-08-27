@@ -557,7 +557,7 @@ CoreObject *ErrorObject::clone() const
 // Factory function
 //
 
-CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool )
 {
       return new ErrorObject( cls, (Error *) user_data );
 }

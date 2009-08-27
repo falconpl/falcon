@@ -1757,7 +1757,6 @@ public:
       On output, the VM will be ready to run (call the run() function); if no context
       is willing to run yet, there this method will set the eventSleep (hadSleepRequest()
       will return true), and the sleep request time will be propery set.
-      \see returnOnSleep()
    */
    void electContext();
 
