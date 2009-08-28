@@ -1,4 +1,4 @@
-<File id="_1" name="" scope="" context="" fullname="" members="_352 _38 _340 _10 _389 _58 _142 _44 _138 _200 _560 _420 _344 _609 _34 _17 _225 _55 _81 _461 _435 _550 _92 _251 _312 _357 _486 _79 _170 _573 _230 _378 _564 _417 _190 _15 _315 _13 _578 _245 _403 _96 _46 _567 _588 _29 _53 _597 _553 _326 _468 _547 _581 _362 _495 _186 _475 _348 _526 _132 _98 _77 _423 _309 _330 _591 _188 _48 _235 _594 _51 _36 _278 _300 _303 _387 _70 _20 _256 _296 _7 _213 _318 _373 _412 _306 _184 _371 _481 _27 _585 _505 _576 _262 _289 _515 _570 _24 _149 _2 _126 _31 _177 _83 _156 _442 _322 _336 _42 _267 _430 _556 _406 _163 _292 _88 _272 _22 _394 _409 _112 _427 _452 _283 _240 _105 _334 _119 _211 _64 _537 _41 _224 _6 _210 _5 _405 " >
+<File id="_1" name="" scope="" context="" fullname="" members="_352 _303 _190 _596 _24 _112 _98 _563 _454 _184 _590 _142 _105 _603 _371 _608 _344 _409 _578 _357 _20 _540 _306 _312 _2 _262 _88 _200 _53 _569 _44 _336 _163 _609 _48 _571 _46 _278 _566 _55 _479 _549 _348 _7 _498 _474 _13 _423 _330 _373 _38 _256 _420 _389 _406 _605 _126 _240 _245 _508 _64 _553 _435 _70 _79 _606 _543 _322 _17 _132 _362 _300 _430 _96 _546 _584 _149 _81 _211 _530 _77 _340 _309 _213 _188 _403 _326 _607 _296 _394 _36 _15 _51 _334 _412 _58 _119 _27 _31 _83 _138 _225 _581 _387 _445 _488 _29 _186 _42 _378 _557 _235 _170 _574 _417 _289 _560 _461 _10 _468 _230 _599 _601 _251 _292 _283 _34 _156 _315 _318 _427 _272 _519 _587 _22 _92 _267 _593 _177 _41 _224 _6 _210 _5 _405 " >
 <Enum id="_352" name="enum_1" scope="" context="" fullname="enum_1" access="public" >
 <Enumerator id="_353" name="gdDisposalUnknown" scope="" context="" fullname="::gdDisposalUnknown" value="0+1" >
 </Enumerator>
@@ -9,286 +9,10 @@
 <Enumerator id="_356" name="gdDisposalRestorePrevious" scope="" context="" fullname="::gdDisposalRestorePrevious" value="0+1+1+1+1" >
 </Enumerator>
 </Enum>
-<Function id="_38" name="gdImageCreateFromJpegPtr" scope="" context="" fullname="gdImageCreateFromJpegPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_39" name="size" scope="" context="" type_name="int" type_base="int" >
+<Function id="_303" name="gdImagePaletteCopy" scope="" context="" fullname="gdImagePaletteCopy" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_304" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_40" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_340" name="gdImageJpeg" scope="" context="" fullname="gdImageJpeg" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_341" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_342" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-<Argument id="_343" name="quality" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_10" name="gdImageCreateTrueColor" scope="" context="" fullname="gdImageCreateTrueColor" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_11" name="sx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_12" name="sy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_389" name="gdImageGifAnimBeginPtr" scope="" context="" fullname="gdImageGifAnimBeginPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_390" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_391" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_392" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_393" name="Loops" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_58" name="gdImageCreateFromGd2Part" scope="" context="" fullname="gdImageCreateFromGd2Part" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_59" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-<Argument id="_60" name="srcx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_61" name="srcy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_62" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_63" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_142" name="gdImageChar" scope="" context="" fullname="gdImageChar" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_143" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_144" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_145" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_146" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_147" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_148" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_44" name="gdImageCreateFromGd" scope="" context="" fullname="gdImageCreateFromGd" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_45" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_138" name="gdImageBoundsSafe" scope="" context="" fullname="gdImageBoundsSafe" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_139" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_140" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_141" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_200" name="gdImageStringFT" scope="" context="" fullname="gdImageStringFT" member_of="" access="public" type_name="char*" type_base="char" indirections="1" >
-<Argument id="_201" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_202" name="brect" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_203" name="fg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_204" name="fontlist" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-<Argument id="_205" name="ptsize" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_206" name="angle" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_207" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_208" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_209" name="string" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-</Function>
-<Function id="_560" name="gdImageSetStyle" scope="" context="" fullname="gdImageSetStyle" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_561" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_562" name="style" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_563" name="noOfPixels" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_420" name="gdImagePngPtr" scope="" context="" fullname="gdImagePngPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_421" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_422" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-</Function>
-<Function id="_344" name="gdImageJpegCtx" scope="" context="" fullname="gdImageJpegCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_345" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_346" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-<Argument id="_347" name="quality" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_609" name="gdImageSharpen" scope="" context="" fullname="gdImageSharpen" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_610" name="im" scope="" context="" type_name="gdImagePtr" type_base="gdImagePtr" >
-</Argument>
-<Argument id="_611" name="pct" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_34" name="gdImageCreateFromJpeg" scope="" context="" fullname="gdImageCreateFromJpeg" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_35" name="infile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_17" name="gdImageCreateFromPngPtr" scope="" context="" fullname="gdImageCreateFromPngPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_18" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_19" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_225" name="gdImagePolygon" scope="" context="" fullname="gdImagePolygon" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_226" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_227" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
-</Argument>
-<Argument id="_228" name="n" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_229" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_55" name="gdImageCreateFromGd2Ptr" scope="" context="" fullname="gdImageCreateFromGd2Ptr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_56" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_57" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_81" name="gdImageDestroy" scope="" context="" fullname="gdImageDestroy" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_82" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-</Function>
-<Function id="_435" name="gdImageEllipse" scope="" context="" fullname="gdImageEllipse" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_436" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_437" name="cx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_438" name="cy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_439" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_440" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_441" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_550" name="gdImageSetTile" scope="" context="" fullname="gdImageSetTile" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_551" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_552" name="tile" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-</Function>
-<Function id="_92" name="gdImageGetTrueColorPixel" scope="" context="" fullname="gdImageGetTrueColorPixel" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_93" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_94" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_95" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_251" name="gdImageColorClosest" scope="" context="" fullname="gdImageColorClosest" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_252" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_253" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_254" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_255" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_312" name="gdImagePngCtx" scope="" context="" fullname="gdImagePngCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_313" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_314" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_357" name="gdImageGifAnimBegin" scope="" context="" fullname="gdImageGifAnimBegin" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_358" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_359" name="outFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-<Argument id="_360" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_361" name="Loops" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_486" name="gdImageCopy" scope="" context="" fullname="gdImageCopy" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_487" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_488" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_489" name="dstX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_490" name="dstY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_491" name="srcX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_492" name="srcY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_493" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_494" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_79" name="gdImageCreateFromXpm" scope="" context="" fullname="gdImageCreateFromXpm" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_80" name="filename" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-</Function>
-<Function id="_170" name="gdImageString16" scope="" context="" fullname="gdImageString16" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_171" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_172" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_173" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_174" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_175" name="s" scope="" context="" type_name="unsigned short*" type_base="unsigned short" indirections="1" >
-</Argument>
-<Argument id="_176" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_573" name="gdImageSaveAlpha" scope="" context="" fullname="gdImageSaveAlpha" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_574" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_575" name="saveAlphaArg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_230" name="gdImageOpenPolygon" scope="" context="" fullname="gdImageOpenPolygon" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_231" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_232" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
-</Argument>
-<Argument id="_233" name="n" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_234" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_378" name="gdImageGifAnimAddCtx" scope="" context="" fullname="gdImageGifAnimAddCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_379" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_380" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-<Argument id="_381" name="LocalCM" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_382" name="LeftOfs" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_383" name="TopOfs" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_384" name="Delay" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_385" name="Disposal" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_386" name="previm" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-</Function>
-<Function id="_564" name="gdImageSetThickness" scope="" context="" fullname="gdImageSetThickness" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_565" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_566" name="thickness" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_417" name="gdImageGifPtr" scope="" context="" fullname="gdImageGifPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_418" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_419" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+<Argument id="_305" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
 <Function id="_190" name="gdImageStringTTF" scope="" context="" fullname="gdImageStringTTF" member_of="" access="public" type_name="char*" type_base="char" indirections="1" >
@@ -311,24 +35,446 @@
 <Argument id="_199" name="string" scope="" context="" type_name="char*" type_base="char" indirections="1" >
 </Argument>
 </Function>
-<Function id="_15" name="gdImageCreateFromPngCtx" scope="" context="" fullname="gdImageCreateFromPngCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_16" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Function id="_596" name="gdImageRed" scope="" context="" fullname="gdImageRed" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_597" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_598" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_315" name="gdImageGifCtx" scope="" context="" fullname="gdImageGifCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_316" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_24" name="gdImageCreateFromGifPtr" scope="" context="" fullname="gdImageCreateFromGifPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_25" name="size" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_317" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_26" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_112" name="gdImageRectangle" scope="" context="" fullname="gdImageRectangle" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_113" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_114" name="x1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_115" name="y1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_116" name="x2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_117" name="y2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_118" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_98" name="gdImageLine" scope="" context="" fullname="gdImageLine" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_99" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_100" name="x1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_101" name="y1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_102" name="x2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_103" name="y2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_104" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_563" name="gdImageAlphaBlending" scope="" context="" fullname="gdImageAlphaBlending" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_564" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_565" name="alphaBlendingArg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_454" name="gdImageEllipse" scope="" context="" fullname="gdImageEllipse" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_455" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_456" name="cx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_457" name="cy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_458" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_459" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_460" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_184" name="gdFontCacheSetup" scope="" context="" fullname="gdFontCacheSetup" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_185" name="" scope="" context="" type_name="void" type_base="void" >
+</Argument>
+</Function>
+<Function id="_590" name="gdImageBlue" scope="" context="" fullname="gdImageBlue" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_591" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_592" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_142" name="gdImageChar" scope="" context="" fullname="gdImageChar" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_143" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_144" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_145" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_146" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_147" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_148" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_105" name="gdImageDashedLine" scope="" context="" fullname="gdImageDashedLine" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_106" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_107" name="x1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_108" name="y1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_109" name="x2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_110" name="y2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_111" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_603" name="gdImageTrueColor" scope="" context="" fullname="gdImageTrueColor" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_604" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_371" name="gdImageGifAnimEnd" scope="" context="" fullname="gdImageGifAnimEnd" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_372" name="outFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_608" name="gdFontGetLarge" scope="" context="" fullname="gdFontGetLarge" member_of="" access="public" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Function>
+<Function id="_344" name="gdImageJpegCtx" scope="" context="" fullname="gdImageJpegCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_345" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_346" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_347" name="quality" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_409" name="gdImageGd" scope="" context="" fullname="gdImageGd" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_410" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_411" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_578" name="gdNewSSCtx" scope="" context="" fullname="gdNewSSCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_579" name="in" scope="" context="" type_name="gdSourceStruct*" type_base="gdSourceStruct" indirections="1" >
+</Argument>
+<Argument id="_580" name="out" scope="" context="" type_name="gdSkin*" type_base="gdSkin" indirections="1" >
+</Argument>
+</Function>
+<Function id="_357" name="gdImageGifAnimBegin" scope="" context="" fullname="gdImageGifAnimBegin" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_358" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_359" name="outFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+<Argument id="_360" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_361" name="Loops" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_20" name="gdImageCreateFromGif" scope="" context="" fullname="gdImageCreateFromGif" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_21" name="fd" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_540" name="gdImageSetBrush" scope="" context="" fullname="gdImageSetBrush" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_541" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_542" name="brush" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_306" name="gdImageGif" scope="" context="" fullname="gdImageGif" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_307" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_308" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_312" name="gdImagePngCtx" scope="" context="" fullname="gdImagePngCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_313" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_314" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_2" name="gdAlphaBlend" scope="" context="" fullname="gdAlphaBlend" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_3" name="dest" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_4" name="src" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_262" name="gdImageColorClosestHWB" scope="" context="" fullname="gdImageColorClosestHWB" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_263" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_264" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_265" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_266" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_88" name="gdImageGetPixel" scope="" context="" fullname="gdImageGetPixel" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_89" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_90" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_91" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_200" name="gdImageStringFT" scope="" context="" fullname="gdImageStringFT" member_of="" access="public" type_name="char*" type_base="char" indirections="1" >
+<Argument id="_201" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_202" name="brect" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_203" name="fg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_204" name="fontlist" scope="" context="" type_name="char*" type_base="char" indirections="1" >
+</Argument>
+<Argument id="_205" name="ptsize" scope="" context="" type_name="double" type_base="double" >
+</Argument>
+<Argument id="_206" name="angle" scope="" context="" type_name="double" type_base="double" >
+</Argument>
+<Argument id="_207" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_208" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_209" name="string" scope="" context="" type_name="char*" type_base="char" indirections="1" >
+</Argument>
+</Function>
+<Function id="_53" name="gdImageCreateFromGd2Ctx" scope="" context="" fullname="gdImageCreateFromGd2Ctx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_54" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_569" name="gdNewFileCtx" scope="" context="" fullname="gdNewFileCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_570" name="" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_44" name="gdImageCreateFromGd" scope="" context="" fullname="gdImageCreateFromGd" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_45" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_336" name="gdImageWBMPPtr" scope="" context="" fullname="gdImageWBMPPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_337" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_338" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_339" name="fg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_163" name="gdImageStringUp" scope="" context="" fullname="gdImageStringUp" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_164" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_165" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_166" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_167" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_168" name="s" scope="" context="" type_name="unsigned char*" type_base="unsigned char" indirections="1" >
+</Argument>
+<Argument id="_169" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_609" name="gdFontGetGiant" scope="" context="" fullname="gdFontGetGiant" member_of="" access="public" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Function>
+<Function id="_48" name="gdImageCreateFromGdPtr" scope="" context="" fullname="gdImageCreateFromGdPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_49" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_50" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_571" name="gdNewDynamicCtx" scope="" context="" fullname="gdNewDynamicCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_572" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_573" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_46" name="gdImageCreateFromGdCtx" scope="" context="" fullname="gdImageCreateFromGdCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_47" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_278" name="gdImageColorResolve" scope="" context="" fullname="gdImageColorResolve" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_279" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_280" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_281" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_282" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_566" name="gdImageSaveAlpha" scope="" context="" fullname="gdImageSaveAlpha" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_567" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_568" name="saveAlphaArg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_55" name="gdImageCreateFromGd2Ptr" scope="" context="" fullname="gdImageCreateFromGd2Ptr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_56" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_57" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_479" name="gdImageCopy" scope="" context="" fullname="gdImageCopy" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_480" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_481" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_482" name="dstX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_483" name="dstY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_484" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_485" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_486" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_487" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_549" name="gdImageSetAntiAliasedDontBlend" scope="" context="" fullname="gdImageSetAntiAliasedDontBlend" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_550" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_551" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_552" name="dont_blend" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_348" name="gdImageJpegPtr" scope="" context="" fullname="gdImageJpegPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_349" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_350" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_351" name="quality" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_7" name="gdImageCreate" scope="" context="" fullname="gdImageCreate" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_8" name="sx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_9" name="sy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_498" name="gdImageCopyMergeGray" scope="" context="" fullname="gdImageCopyMergeGray" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_499" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_500" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_501" name="dstX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_502" name="dstY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_503" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_504" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_505" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_506" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_507" name="pct" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_474" name="gdImageFill" scope="" context="" fullname="gdImageFill" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_475" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_476" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_477" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_478" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
 <Function id="_13" name="gdImageCreateFromPng" scope="" context="" fullname="gdImageCreateFromPng" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 <Argument id="_14" name="fd" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
 </Argument>
 </Function>
-<Function id="_578" name="gdNewDynamicCtx" scope="" context="" fullname="gdNewDynamicCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-<Argument id="_579" name="size" scope="" context="" type_name="int" type_base="int" >
+<Function id="_423" name="gdImagePngPtrEx" scope="" context="" fullname="gdImagePngPtrEx" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_424" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_580" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_425" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_426" name="level" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_330" name="gdImageWBMPCtx" scope="" context="" fullname="gdImageWBMPCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_331" name="image" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_332" name="fg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_333" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_373" name="gdImageGifAnimBeginCtx" scope="" context="" fullname="gdImageGifAnimBeginCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_374" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_375" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_376" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_377" name="Loops" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_38" name="gdImageCreateFromJpegPtr" scope="" context="" fullname="gdImageCreateFromJpegPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_39" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_40" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_256" name="gdImageColorClosestAlpha" scope="" context="" fullname="gdImageColorClosestAlpha" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_257" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_258" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_259" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_260" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_261" name="a" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_420" name="gdImagePngPtr" scope="" context="" fullname="gdImagePngPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_421" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_422" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+</Function>
+<Function id="_389" name="gdImageGifAnimBeginPtr" scope="" context="" fullname="gdImageGifAnimBeginPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_390" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_391" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_392" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_393" name="Loops" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_406" name="gdImagePngToSink" scope="" context="" fullname="gdImagePngToSink" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_407" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_408" name="out" scope="" context="" type_name="gdSkin*" type_base="gdSkin" indirections="1" >
+</Argument>
+</Function>
+<Function id="_605" name="gdFontGetTiny" scope="" context="" fullname="gdFontGetTiny" member_of="" access="public" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Function>
+<Function id="_126" name="gdImageSetClip" scope="" context="" fullname="gdImageSetClip" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_127" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_128" name="x1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_129" name="y1" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_130" name="x2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_131" name="y2" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_240" name="gdImageColorAllocate" scope="" context="" fullname="gdImageColorAllocate" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_241" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_242" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_243" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_244" name="b" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
 <Function id="_245" name="gdImageColorAllocateAlpha" scope="" context="" fullname="gdImageColorAllocateAlpha" member_of="" access="public" type_name="int" type_base="int" >
@@ -343,102 +489,118 @@
 <Argument id="_250" name="a" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_403" name="gdImageGifAnimEndPtr" scope="" context="" fullname="gdImageGifAnimEndPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_404" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+<Function id="_508" name="gdImageCopyResized" scope="" context="" fullname="gdImageCopyResized" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_509" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_510" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_511" name="dstX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_512" name="dstY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_513" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_514" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_515" name="dstW" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_516" name="dstH" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_517" name="srcW" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_518" name="srcH" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_96" name="gdImageAABlend" scope="" context="" fullname="gdImageAABlend" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_97" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_64" name="gdImageCreateFromGd2PartCtx" scope="" context="" fullname="gdImageCreateFromGd2PartCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_65" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_66" name="srcx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_67" name="srcy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_68" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_69" name="h" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_46" name="gdImageCreateFromGdCtx" scope="" context="" fullname="gdImageCreateFromGdCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_47" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_567" name="gdImageInterlace" scope="" context="" fullname="gdImageInterlace" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_568" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_569" name="interlaceArg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_588" name="gdDPExtractData" scope="" context="" fullname="gdDPExtractData" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_589" name="ctx" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-<Argument id="_590" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-</Function>
-<Function id="_29" name="gdImageCreateFromWBMPCtx" scope="" context="" fullname="gdImageCreateFromWBMPCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_30" name="infile" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_53" name="gdImageCreateFromGd2Ctx" scope="" context="" fullname="gdImageCreateFromGd2Ctx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_54" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_597" name="gdImageStringFTCircle" scope="" context="" fullname="gdImageStringFTCircle" member_of="" access="public" type_name="char*" type_base="char" indirections="1" >
-<Argument id="_598" name="im" scope="" context="" type_name="gdImagePtr" type_base="gdImagePtr" >
-</Argument>
-<Argument id="_599" name="cx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_600" name="cy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_601" name="radius" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_602" name="textRadius" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_603" name="fillPortion" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_604" name="font" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-<Argument id="_605" name="points" scope="" context="" type_name="double" type_base="double" >
-</Argument>
-<Argument id="_606" name="top" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-<Argument id="_607" name="bottom" scope="" context="" type_name="char*" type_base="char" indirections="1" >
-</Argument>
-<Argument id="_608" name="fgcolor" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_553" name="gdImageSetAntiAliased" scope="" context="" fullname="gdImageSetAntiAliased" member_of="" access="public" type_name="void" type_base="void" >
+<Function id="_553" name="gdImageSetStyle" scope="" context="" fullname="gdImageSetStyle" member_of="" access="public" type_name="void" type_base="void" >
 <Argument id="_554" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_555" name="c" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_555" name="style" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_556" name="noOfPixels" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_326" name="gdImageWBMP" scope="" context="" fullname="gdImageWBMP" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_327" name="image" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_435" name="gdImageFilledArc" scope="" context="" fullname="gdImageFilledArc" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_436" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_328" name="fg" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_437" name="cx" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_329" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+<Argument id="_438" name="cy" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-</Function>
-<Function id="_468" name="gdImageFilledEllipse" scope="" context="" fullname="gdImageFilledEllipse" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_469" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_439" name="w" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_470" name="cx" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_440" name="h" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_471" name="cy" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_441" name="s" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_472" name="w" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_442" name="e" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_473" name="h" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_443" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_474" name="color" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_444" name="style" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_547" name="gdImageSetBrush" scope="" context="" fullname="gdImageSetBrush" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_548" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_70" name="gdImageCreateFromGd2PartPtr" scope="" context="" fullname="gdImageCreateFromGd2PartPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_71" name="size" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_549" name="brush" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_72" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+<Argument id="_73" name="srcx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_74" name="srcy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_75" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_76" name="h" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_581" name="gdNewDynamicCtxEx" scope="" context="" fullname="gdNewDynamicCtxEx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-<Argument id="_582" name="size" scope="" context="" type_name="int" type_base="int" >
+<Function id="_79" name="gdImageCreateFromXpm" scope="" context="" fullname="gdImageCreateFromXpm" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_80" name="filename" scope="" context="" type_name="char*" type_base="char" indirections="1" >
 </Argument>
-<Argument id="_583" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Function>
+<Function id="_606" name="gdFontGetSmall" scope="" context="" fullname="gdFontGetSmall" member_of="" access="public" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Function>
+<Function id="_543" name="gdImageSetTile" scope="" context="" fullname="gdImageSetTile" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_544" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_584" name="freeFlag" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_545" name="tile" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_322" name="gdImagePngCtxEx" scope="" context="" fullname="gdImagePngCtxEx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_323" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_324" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_325" name="level" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_17" name="gdImageCreateFromPngPtr" scope="" context="" fullname="gdImageCreateFromPngPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_18" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_19" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_132" name="gdImageGetClip" scope="" context="" fullname="gdImageGetClip" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_133" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_134" name="x1P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_135" name="y1P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_136" name="x2P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+<Argument id="_137" name="y2P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
 </Argument>
 </Function>
 <Function id="_362" name="gdImageGifAnimAdd" scope="" context="" fullname="gdImageGifAnimAdd" member_of="" access="public" type_name="void" type_base="void" >
@@ -459,232 +621,96 @@
 <Argument id="_370" name="previm" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_495" name="gdImageCopyMerge" scope="" context="" fullname="gdImageCopyMerge" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_496" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_497" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_498" name="dstX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_499" name="dstY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_500" name="srcX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_501" name="srcY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_502" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_503" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_504" name="pct" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_186" name="gdFontCacheShutdown" scope="" context="" fullname="gdFontCacheShutdown" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_187" name="" scope="" context="" type_name="void" type_base="void" >
-</Argument>
-</Function>
-<Function id="_475" name="gdImageFillToBorder" scope="" context="" fullname="gdImageFillToBorder" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_476" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_477" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_478" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_479" name="border" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_480" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_348" name="gdImageJpegPtr" scope="" context="" fullname="gdImageJpegPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_349" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_350" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_351" name="quality" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_526" name="gdImageCopyResampled" scope="" context="" fullname="gdImageCopyResampled" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_527" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_528" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_529" name="dstX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_530" name="dstY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_531" name="srcX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_532" name="srcY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_533" name="dstW" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_534" name="dstH" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_535" name="srcW" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_536" name="srcH" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_132" name="gdImageGetClip" scope="" context="" fullname="gdImageGetClip" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_133" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_134" name="x1P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_135" name="y1P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_136" name="x2P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_137" name="y2P" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-</Function>
-<Function id="_98" name="gdImageLine" scope="" context="" fullname="gdImageLine" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_99" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_100" name="x1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_101" name="y1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_102" name="x2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_103" name="y2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_104" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_77" name="gdImageCreateFromXbm" scope="" context="" fullname="gdImageCreateFromXbm" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_78" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_423" name="gdImagePngPtrEx" scope="" context="" fullname="gdImagePngPtrEx" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_424" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_425" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_426" name="level" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_309" name="gdImagePng" scope="" context="" fullname="gdImagePng" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_310" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_311" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_330" name="gdImageWBMPCtx" scope="" context="" fullname="gdImageWBMPCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_331" name="image" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_332" name="fg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_333" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_591" name="gdImageCompare" scope="" context="" fullname="gdImageCompare" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_592" name="im1" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_593" name="im2" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-</Function>
-<Function id="_188" name="gdFreeFontCache" scope="" context="" fullname="gdFreeFontCache" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_189" name="" scope="" context="" type_name="void" type_base="void" >
-</Argument>
-</Function>
-<Function id="_48" name="gdImageCreateFromGdPtr" scope="" context="" fullname="gdImageCreateFromGdPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_49" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_50" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_235" name="gdImageFilledPolygon" scope="" context="" fullname="gdImageFilledPolygon" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_236" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_237" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
-</Argument>
-<Argument id="_238" name="n" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_239" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_594" name="gdImageSquareToCircle" scope="" context="" fullname="gdImageSquareToCircle" member_of="" access="public" type_name="gdImagePtr" type_base="gdImagePtr" >
-<Argument id="_595" name="im" scope="" context="" type_name="gdImagePtr" type_base="gdImagePtr" >
-</Argument>
-<Argument id="_596" name="radius" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_51" name="gdImageCreateFromGd2" scope="" context="" fullname="gdImageCreateFromGd2" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_52" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_36" name="gdImageCreateFromJpegCtx" scope="" context="" fullname="gdImageCreateFromJpegCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_37" name="infile" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-</Function>
-<Function id="_278" name="gdImageColorResolve" scope="" context="" fullname="gdImageColorResolve" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_279" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_280" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_281" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_282" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
 <Function id="_300" name="gdImageColorTransparent" scope="" context="" fullname="gdImageColorTransparent" member_of="" access="public" type_name="void" type_base="void" >
 <Argument id="_301" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 <Argument id="_302" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_303" name="gdImagePaletteCopy" scope="" context="" fullname="gdImagePaletteCopy" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_304" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_430" name="gdImageGd2Ptr" scope="" context="" fullname="gdImageGd2Ptr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_431" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_305" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_432" name="cs" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-</Function>
-<Function id="_387" name="gdImageGifAnimEndCtx" scope="" context="" fullname="gdImageGifAnimEndCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_388" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_433" name="fmt" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-</Function>
-<Function id="_70" name="gdImageCreateFromGd2PartPtr" scope="" context="" fullname="gdImageCreateFromGd2PartPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_71" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_72" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-<Argument id="_73" name="srcx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_74" name="srcy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_75" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_76" name="h" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_434" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
 </Argument>
 </Function>
-<Function id="_20" name="gdImageCreateFromGif" scope="" context="" fullname="gdImageCreateFromGif" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_21" name="fd" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+<Function id="_96" name="gdImageAABlend" scope="" context="" fullname="gdImageAABlend" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_97" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_256" name="gdImageColorClosestAlpha" scope="" context="" fullname="gdImageColorClosestAlpha" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_257" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_546" name="gdImageSetAntiAliased" scope="" context="" fullname="gdImageSetAntiAliased" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_547" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_258" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_259" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_260" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_261" name="a" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_548" name="c" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_296" name="gdImageTrueColorToPalette" scope="" context="" fullname="gdImageTrueColorToPalette" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_297" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_584" name="gdImageCompare" scope="" context="" fullname="gdImageCompare" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_585" name="im1" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_298" name="ditherFlag" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_299" name="colorsWanted" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_586" name="im2" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_7" name="gdImageCreate" scope="" context="" fullname="gdImageCreate" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_8" name="sx" scope="" context="" type_name="int" type_base="int" >
+<Function id="_149" name="gdImageCharUp" scope="" context="" fullname="gdImageCharUp" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_150" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_9" name="sy" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_151" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_152" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_153" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_154" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_155" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_81" name="gdImageDestroy" scope="" context="" fullname="gdImageDestroy" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_82" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_211" name="gdFTUseFontConfig" scope="" context="" fullname="gdFTUseFontConfig" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_212" name="flag" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_530" name="gdImageCopyRotated" scope="" context="" fullname="gdImageCopyRotated" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_531" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_532" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_533" name="dstX" scope="" context="" type_name="double" type_base="double" >
+</Argument>
+<Argument id="_534" name="dstY" scope="" context="" type_name="double" type_base="double" >
+</Argument>
+<Argument id="_535" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_536" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_537" name="srcWidth" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_538" name="srcHeight" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_539" name="angle" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_77" name="gdImageCreateFromXbm" scope="" context="" fullname="gdImageCreateFromXbm" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_78" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_340" name="gdImageJpeg" scope="" context="" fullname="gdImageJpeg" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_341" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_342" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+<Argument id="_343" name="quality" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_309" name="gdImagePng" scope="" context="" fullname="gdImagePng" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_310" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_311" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
 </Argument>
 </Function>
 <Function id="_213" name="gdImageStringFTEx" scope="" context="" fullname="gdImageStringFTEx" member_of="" access="public" type_name="char*" type_base="char" indirections="1" >
@@ -709,336 +735,30 @@
 <Argument id="_223" name="strex" scope="" context="" type_name="gdFTStringExtraStruct*" type_base="gdFTStringExtraStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_318" name="gdImagePngEx" scope="" context="" fullname="gdImagePngEx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_319" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_320" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-<Argument id="_321" name="level" scope="" context="" type_name="int" type_base="int" >
+<Function id="_188" name="gdFreeFontCache" scope="" context="" fullname="gdFreeFontCache" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_189" name="" scope="" context="" type_name="void" type_base="void" >
 </Argument>
 </Function>
-<Function id="_373" name="gdImageGifAnimBeginCtx" scope="" context="" fullname="gdImageGifAnimBeginCtx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_374" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_375" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-<Argument id="_376" name="GlobalCM" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_377" name="Loops" scope="" context="" type_name="int" type_base="int" >
+<Function id="_403" name="gdImageGifAnimEndPtr" scope="" context="" fullname="gdImageGifAnimEndPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_404" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
 </Argument>
 </Function>
-<Function id="_412" name="gdImageGd2" scope="" context="" fullname="gdImageGd2" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_413" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_326" name="gdImageWBMP" scope="" context="" fullname="gdImageWBMP" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_327" name="image" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_414" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+<Argument id="_328" name="fg" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_415" name="cs" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_416" name="fmt" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_329" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
 </Argument>
 </Function>
-<Function id="_306" name="gdImageGif" scope="" context="" fullname="gdImageGif" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_307" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_308" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
+<Function id="_607" name="gdFontGetMediumBold" scope="" context="" fullname="gdFontGetMediumBold" member_of="" access="public" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
 </Function>
-<Function id="_184" name="gdFontCacheSetup" scope="" context="" fullname="gdFontCacheSetup" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_185" name="" scope="" context="" type_name="void" type_base="void" >
+<Function id="_296" name="gdImageTrueColorToPalette" scope="" context="" fullname="gdImageTrueColorToPalette" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_297" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-</Function>
-<Function id="_371" name="gdImageGifAnimEnd" scope="" context="" fullname="gdImageGifAnimEnd" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_372" name="outFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+<Argument id="_298" name="ditherFlag" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-</Function>
-<Function id="_481" name="gdImageFill" scope="" context="" fullname="gdImageFill" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_482" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_483" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_484" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_485" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_27" name="gdImageCreateFromWBMP" scope="" context="" fullname="gdImageCreateFromWBMP" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_28" name="inFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_585" name="gdNewSSCtx" scope="" context="" fullname="gdNewSSCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-<Argument id="_586" name="in" scope="" context="" type_name="gdSourceStruct*" type_base="gdSourceStruct" indirections="1" >
-</Argument>
-<Argument id="_587" name="out" scope="" context="" type_name="gdSkin*" type_base="gdSkin" indirections="1" >
-</Argument>
-</Function>
-<Function id="_505" name="gdImageCopyMergeGray" scope="" context="" fullname="gdImageCopyMergeGray" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_506" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_507" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_508" name="dstX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_509" name="dstY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_510" name="srcX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_511" name="srcY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_512" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_513" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_514" name="pct" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_576" name="gdNewFileCtx" scope="" context="" fullname="gdNewFileCtx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-<Argument id="_577" name="" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
-</Argument>
-</Function>
-<Function id="_262" name="gdImageColorClosestHWB" scope="" context="" fullname="gdImageColorClosestHWB" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_263" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_264" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_265" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_266" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_289" name="gdImageColorDeallocate" scope="" context="" fullname="gdImageColorDeallocate" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_290" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_291" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_515" name="gdImageCopyResized" scope="" context="" fullname="gdImageCopyResized" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_516" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_517" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_518" name="dstX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_519" name="dstY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_520" name="srcX" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_521" name="srcY" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_522" name="dstW" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_523" name="dstH" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_524" name="srcW" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_525" name="srcH" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_570" name="gdImageAlphaBlending" scope="" context="" fullname="gdImageAlphaBlending" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_571" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_572" name="alphaBlendingArg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_24" name="gdImageCreateFromGifPtr" scope="" context="" fullname="gdImageCreateFromGifPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_25" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_26" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_149" name="gdImageCharUp" scope="" context="" fullname="gdImageCharUp" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_150" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_151" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_152" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_153" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_154" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_155" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_2" name="gdAlphaBlend" scope="" context="" fullname="gdAlphaBlend" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_3" name="dest" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_4" name="src" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_126" name="gdImageSetClip" scope="" context="" fullname="gdImageSetClip" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_127" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_128" name="x1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_129" name="y1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_130" name="x2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_131" name="y2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_31" name="gdImageCreateFromWBMPPtr" scope="" context="" fullname="gdImageCreateFromWBMPPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_32" name="size" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_33" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
-</Argument>
-</Function>
-<Function id="_177" name="gdImageStringUp16" scope="" context="" fullname="gdImageStringUp16" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_178" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_179" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_180" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_181" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_182" name="s" scope="" context="" type_name="unsigned short*" type_base="unsigned short" indirections="1" >
-</Argument>
-<Argument id="_183" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_83" name="gdImageSetPixel" scope="" context="" fullname="gdImageSetPixel" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_84" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_85" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_86" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_87" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_156" name="gdImageString" scope="" context="" fullname="gdImageString" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_157" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_158" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_159" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_160" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_161" name="s" scope="" context="" type_name="unsigned char*" type_base="unsigned char" indirections="1" >
-</Argument>
-<Argument id="_162" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_442" name="gdImageFilledArc" scope="" context="" fullname="gdImageFilledArc" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_443" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_444" name="cx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_445" name="cy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_446" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_447" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_448" name="s" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_449" name="e" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_450" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_451" name="style" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_322" name="gdImagePngCtxEx" scope="" context="" fullname="gdImagePngCtxEx" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_323" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_324" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
-</Argument>
-<Argument id="_325" name="level" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_336" name="gdImageWBMPPtr" scope="" context="" fullname="gdImageWBMPPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_337" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_338" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-<Argument id="_339" name="fg" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_42" name="gdImageCreateFromPngSource" scope="" context="" fullname="gdImageCreateFromPngSource" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_43" name="in" scope="" context="" type_name="gdSourceStruct*" type_base="gdSourceStruct" indirections="1" >
-</Argument>
-</Function>
-<Function id="_267" name="gdImageColorExact" scope="" context="" fullname="gdImageColorExact" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_268" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_269" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_270" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_271" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_430" name="gdImageGd2Ptr" scope="" context="" fullname="gdImageGd2Ptr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_431" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_432" name="cs" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_433" name="fmt" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_434" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-</Function>
-<Function id="_556" name="gdImageSetAntiAliasedDontBlend" scope="" context="" fullname="gdImageSetAntiAliasedDontBlend" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_557" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_558" name="c" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_559" name="dont_blend" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_406" name="gdImagePngToSink" scope="" context="" fullname="gdImagePngToSink" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_407" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_408" name="out" scope="" context="" type_name="gdSkin*" type_base="gdSkin" indirections="1" >
-</Argument>
-</Function>
-<Function id="_163" name="gdImageStringUp" scope="" context="" fullname="gdImageStringUp" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_164" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_165" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
-</Argument>
-<Argument id="_166" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_167" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_168" name="s" scope="" context="" type_name="unsigned char*" type_base="unsigned char" indirections="1" >
-</Argument>
-<Argument id="_169" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_292" name="gdImageCreatePaletteFromTrueColor" scope="" context="" fullname="gdImageCreatePaletteFromTrueColor" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_293" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_294" name="ditherFlag" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_295" name="colorsWanted" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_88" name="gdImageGetPixel" scope="" context="" fullname="gdImageGetPixel" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_89" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_90" name="x" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_91" name="y" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_272" name="gdImageColorExactAlpha" scope="" context="" fullname="gdImageColorExactAlpha" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_273" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_274" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_275" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_276" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_277" name="a" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_22" name="gdImageCreateFromGifCtx" scope="" context="" fullname="gdImageCreateFromGifCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_23" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_299" name="colorsWanted" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
 <Function id="_394" name="gdImageGifAnimAddPtr" scope="" context="" fullname="gdImageGifAnimAddPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
@@ -1059,88 +779,42 @@
 <Argument id="_402" name="previm" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_409" name="gdImageGd" scope="" context="" fullname="gdImageGd" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_410" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_411" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+<Function id="_36" name="gdImageCreateFromJpegCtx" scope="" context="" fullname="gdImageCreateFromJpegCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_37" name="infile" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
 </Argument>
 </Function>
-<Function id="_112" name="gdImageRectangle" scope="" context="" fullname="gdImageRectangle" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_113" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_114" name="x1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_115" name="y1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_116" name="x2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_117" name="y2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_118" name="color" scope="" context="" type_name="int" type_base="int" >
+<Function id="_15" name="gdImageCreateFromPngCtx" scope="" context="" fullname="gdImageCreateFromPngCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_16" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
 </Argument>
 </Function>
-<Function id="_427" name="gdImageGdPtr" scope="" context="" fullname="gdImageGdPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
-<Argument id="_428" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_429" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
-</Argument>
-</Function>
-<Function id="_452" name="gdImageArc" scope="" context="" fullname="gdImageArc" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_453" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_454" name="cx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_455" name="cy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_456" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_457" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_458" name="s" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_459" name="e" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_460" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_283" name="gdImageColorResolveAlpha" scope="" context="" fullname="gdImageColorResolveAlpha" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_284" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_285" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_286" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_287" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_288" name="a" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_240" name="gdImageColorAllocate" scope="" context="" fullname="gdImageColorAllocate" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_241" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_242" name="r" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_243" name="g" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_244" name="b" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
-<Function id="_105" name="gdImageDashedLine" scope="" context="" fullname="gdImageDashedLine" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_106" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_107" name="x1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_108" name="y1" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_109" name="x2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_110" name="y2" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_111" name="color" scope="" context="" type_name="int" type_base="int" >
+<Function id="_51" name="gdImageCreateFromGd2" scope="" context="" fullname="gdImageCreateFromGd2" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_52" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
 </Argument>
 </Function>
 <Function id="_334" name="gdFree" scope="" context="" fullname="gdFree" member_of="" access="public" type_name="void" type_base="void" >
 <Argument id="_335" name="m" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+</Function>
+<Function id="_412" name="gdImageGd2" scope="" context="" fullname="gdImageGd2" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_413" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_414" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+<Argument id="_415" name="cs" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_416" name="fmt" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_58" name="gdImageCreateFromGd2Part" scope="" context="" fullname="gdImageCreateFromGd2Part" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_59" name="in" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+<Argument id="_60" name="srcx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_61" name="srcy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_62" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_63" name="h" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
 <Function id="_119" name="gdImageFilledRectangle" scope="" context="" fullname="gdImageFilledRectangle" member_of="" access="public" type_name="void" type_base="void" >
@@ -1157,40 +831,376 @@
 <Argument id="_125" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
-<Function id="_211" name="gdFTUseFontConfig" scope="" context="" fullname="gdFTUseFontConfig" member_of="" access="public" type_name="int" type_base="int" >
-<Argument id="_212" name="flag" scope="" context="" type_name="int" type_base="int" >
+<Function id="_27" name="gdImageCreateFromWBMP" scope="" context="" fullname="gdImageCreateFromWBMP" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_28" name="inFile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
 </Argument>
 </Function>
-<Function id="_64" name="gdImageCreateFromGd2PartCtx" scope="" context="" fullname="gdImageCreateFromGd2PartCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-<Argument id="_65" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Function id="_31" name="gdImageCreateFromWBMPPtr" scope="" context="" fullname="gdImageCreateFromWBMPPtr" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_32" name="size" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_66" name="srcx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_67" name="srcy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_68" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_69" name="h" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_33" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
 </Argument>
 </Function>
-<Function id="_537" name="gdImageCopyRotated" scope="" context="" fullname="gdImageCopyRotated" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_538" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Function id="_83" name="gdImageSetPixel" scope="" context="" fullname="gdImageSetPixel" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_84" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_539" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_85" name="x" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_540" name="dstX" scope="" context="" type_name="double" type_base="double" >
+<Argument id="_86" name="y" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_541" name="dstY" scope="" context="" type_name="double" type_base="double" >
+<Argument id="_87" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_542" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Function>
+<Function id="_138" name="gdImageBoundsSafe" scope="" context="" fullname="gdImageBoundsSafe" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_139" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_543" name="srcY" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_140" name="x" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_544" name="srcWidth" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_141" name="y" scope="" context="" type_name="int" type_base="int" >
 </Argument>
-<Argument id="_545" name="srcHeight" scope="" context="" type_name="int" type_base="int" >
+</Function>
+<Function id="_225" name="gdImagePolygon" scope="" context="" fullname="gdImagePolygon" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_226" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
-<Argument id="_546" name="angle" scope="" context="" type_name="int" type_base="int" >
+<Argument id="_227" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
+</Argument>
+<Argument id="_228" name="n" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_229" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_581" name="gdDPExtractData" scope="" context="" fullname="gdDPExtractData" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_582" name="ctx" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_583" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+</Function>
+<Function id="_387" name="gdImageGifAnimEndCtx" scope="" context="" fullname="gdImageGifAnimEndCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_388" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_445" name="gdImageArc" scope="" context="" fullname="gdImageArc" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_446" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_447" name="cx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_448" name="cy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_449" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_450" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_451" name="s" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_452" name="e" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_453" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_488" name="gdImageCopyMerge" scope="" context="" fullname="gdImageCopyMerge" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_489" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_490" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_491" name="dstX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_492" name="dstY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_493" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_494" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_495" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_496" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_497" name="pct" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_29" name="gdImageCreateFromWBMPCtx" scope="" context="" fullname="gdImageCreateFromWBMPCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_30" name="infile" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_186" name="gdFontCacheShutdown" scope="" context="" fullname="gdFontCacheShutdown" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_187" name="" scope="" context="" type_name="void" type_base="void" >
+</Argument>
+</Function>
+<Function id="_42" name="gdImageCreateFromPngSource" scope="" context="" fullname="gdImageCreateFromPngSource" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_43" name="in" scope="" context="" type_name="gdSourceStruct*" type_base="gdSourceStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_378" name="gdImageGifAnimAddCtx" scope="" context="" fullname="gdImageGifAnimAddCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_379" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_380" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+<Argument id="_381" name="LocalCM" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_382" name="LeftOfs" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_383" name="TopOfs" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_384" name="Delay" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_385" name="Disposal" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_386" name="previm" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_557" name="gdImageSetThickness" scope="" context="" fullname="gdImageSetThickness" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_558" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_559" name="thickness" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_235" name="gdImageFilledPolygon" scope="" context="" fullname="gdImageFilledPolygon" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_236" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_237" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
+</Argument>
+<Argument id="_238" name="n" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_239" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_170" name="gdImageString16" scope="" context="" fullname="gdImageString16" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_171" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_172" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_173" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_174" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_175" name="s" scope="" context="" type_name="unsigned short*" type_base="unsigned short" indirections="1" >
+</Argument>
+<Argument id="_176" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_574" name="gdNewDynamicCtxEx" scope="" context="" fullname="gdNewDynamicCtxEx" member_of="" access="public" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+<Argument id="_575" name="size" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_576" name="data" scope="" context="" type_name="void*" type_base="void" indirections="1" >
+</Argument>
+<Argument id="_577" name="freeFlag" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_417" name="gdImageGifPtr" scope="" context="" fullname="gdImageGifPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_418" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_419" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+</Function>
+<Function id="_289" name="gdImageColorDeallocate" scope="" context="" fullname="gdImageColorDeallocate" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_290" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_291" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_560" name="gdImageInterlace" scope="" context="" fullname="gdImageInterlace" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_561" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_562" name="interlaceArg" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_461" name="gdImageFilledEllipse" scope="" context="" fullname="gdImageFilledEllipse" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_462" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_463" name="cx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_464" name="cy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_465" name="w" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_466" name="h" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_467" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_10" name="gdImageCreateTrueColor" scope="" context="" fullname="gdImageCreateTrueColor" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_11" name="sx" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_12" name="sy" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_468" name="gdImageFillToBorder" scope="" context="" fullname="gdImageFillToBorder" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_469" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_470" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_471" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_472" name="border" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_473" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_230" name="gdImageOpenPolygon" scope="" context="" fullname="gdImageOpenPolygon" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_231" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_232" name="p" scope="" context="" type_name="gdPointStruct*" type_base="gdPointStruct" indirections="1" >
+</Argument>
+<Argument id="_233" name="n" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_234" name="c" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_599" name="gdImageSX" scope="" context="" fullname="gdImageSX" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_600" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_601" name="gdImageSY" scope="" context="" fullname="gdImageSY" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_602" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+</Function>
+<Function id="_251" name="gdImageColorClosest" scope="" context="" fullname="gdImageColorClosest" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_252" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_253" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_254" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_255" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_292" name="gdImageCreatePaletteFromTrueColor" scope="" context="" fullname="gdImageCreatePaletteFromTrueColor" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_293" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_294" name="ditherFlag" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_295" name="colorsWanted" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_283" name="gdImageColorResolveAlpha" scope="" context="" fullname="gdImageColorResolveAlpha" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_284" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_285" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_286" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_287" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_288" name="a" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_34" name="gdImageCreateFromJpeg" scope="" context="" fullname="gdImageCreateFromJpeg" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_35" name="infile" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+</Function>
+<Function id="_156" name="gdImageString" scope="" context="" fullname="gdImageString" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_157" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_158" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_159" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_160" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_161" name="s" scope="" context="" type_name="unsigned char*" type_base="unsigned char" indirections="1" >
+</Argument>
+<Argument id="_162" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_315" name="gdImageGifCtx" scope="" context="" fullname="gdImageGifCtx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_316" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_317" name="out" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_318" name="gdImagePngEx" scope="" context="" fullname="gdImagePngEx" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_319" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_320" name="out" scope="" context="" type_name="FILE*" type_base="FILE" indirections="1" >
+</Argument>
+<Argument id="_321" name="level" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_427" name="gdImageGdPtr" scope="" context="" fullname="gdImageGdPtr" member_of="" access="public" type_name="void*" type_base="void" indirections="1" >
+<Argument id="_428" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_429" name="size" scope="" context="" type_name="int*" type_base="int" indirections="1" >
+</Argument>
+</Function>
+<Function id="_272" name="gdImageColorExactAlpha" scope="" context="" fullname="gdImageColorExactAlpha" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_273" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_274" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_275" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_276" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_277" name="a" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_519" name="gdImageCopyResampled" scope="" context="" fullname="gdImageCopyResampled" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_520" name="dst" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_521" name="src" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_522" name="dstX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_523" name="dstY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_524" name="srcX" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_525" name="srcY" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_526" name="dstW" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_527" name="dstH" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_528" name="srcW" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_529" name="srcH" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_587" name="gdImageAlpha" scope="" context="" fullname="gdImageAlpha" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_588" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_589" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_22" name="gdImageCreateFromGifCtx" scope="" context="" fullname="gdImageCreateFromGifCtx" member_of="" access="public" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+<Argument id="_23" name="in" scope="" context="" type_name="gdIOCtx*" type_base="gdIOCtx" indirections="1" >
+</Argument>
+</Function>
+<Function id="_92" name="gdImageGetTrueColorPixel" scope="" context="" fullname="gdImageGetTrueColorPixel" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_93" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_94" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_95" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_267" name="gdImageColorExact" scope="" context="" fullname="gdImageColorExact" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_268" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_269" name="r" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_270" name="g" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_271" name="b" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_593" name="gdImageGreen" scope="" context="" fullname="gdImageGreen" member_of="" access="public" type_name="int" type_base="int" >
+<Argument id="_594" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_595" name="color" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+</Function>
+<Function id="_177" name="gdImageStringUp16" scope="" context="" fullname="gdImageStringUp16" member_of="" access="public" type_name="void" type_base="void" >
+<Argument id="_178" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
+</Argument>
+<Argument id="_179" name="f" scope="" context="" type_name="gdFontStruct*" type_base="gdFontStruct" indirections="1" >
+</Argument>
+<Argument id="_180" name="x" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_181" name="y" scope="" context="" type_name="int" type_base="int" >
+</Argument>
+<Argument id="_182" name="s" scope="" context="" type_name="unsigned short*" type_base="unsigned short" indirections="1" >
+</Argument>
+<Argument id="_183" name="color" scope="" context="" type_name="int" type_base="int" >
 </Argument>
 </Function>
 <TypeAlias id="_41" name="gdSource" scope="" context="" fullname="gdSource" type_name="gdSourceStruct" type_base="gdSourceStruct" >

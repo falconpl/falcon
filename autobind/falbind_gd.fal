@@ -41,38 +41,175 @@ module_version = VersionInfo( 1, 0, 0 )
 prologue= '
 extern "C" {
    #include <gd.h>
+   #include <gdfontt.h>
+   #include <gdfonts.h>
+   #include <gdfontmb.h>
+   #include <gdfontl.h>
+   #include <gdfontg.h>
+}
+
+/********************************************************
+  Falcon Stream to gd bridge
+*********************************************************/
+
+#include <falcon/memory.h>
+#include <falcon/stream.h>
+
+typedef struct tag_Stream_gdIOCtx
+{
+   gdIOCtx ctx;
+   Falcon::Stream* stream; 
+   bool okToDelete;
+} StreamCtx;
+
+
+static int StreamIOCtx_getC(struct gdIOCtx *ctx)
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   Falcon::uint32 val;
+   if ( ! sctx->stream->get( val ) )
+      return -1;
+      
+   return (int) val;
+}
+
+
+static int StreamIOCtx_getBuf( struct gdIOCtx *ctx, void *data, int wanted )
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   if ( sctx->stream->eof() )
+      return 0;
+
+   return (int) sctx->stream->read( (Falcon::byte*)data, wanted );
+}
+
+static void StreamIOCtx_putC( struct gdIOCtx *ctx, int c)
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   sctx->stream->put( c );
+}
+
+
+static int StreamIOCtx_putBuf( struct gdIOCtx *ctx, const void *data, int wanted)
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   return sctx->stream->write( (Falcon::byte*) data, wanted );
+}
+
+static int StreamIOCtx_seek(struct gdIOCtx *ctx, const int pos)
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   return sctx->stream->seekBegin( pos );
+}
+
+static long StreamIOCtx_tell(struct gdIOCtx *ctx )
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   return (long) sctx->stream->tell();
+}
+
+static void StreamIOCtx_free(struct gdIOCtx *ctx)
+{
+   StreamCtx* sctx = (StreamCtx*) ctx;
+   if ( sctx->okToDelete )
+       delete sctx->stream;
+   Falcon::memFree( sctx );
+}
+
+static gdIOCtx* CreateStreamIOCtx( Falcon::Stream* stream, bool okToDelete )
+{
+   StreamCtx* sctx = (StreamCtx*) Falcon::memAlloc( sizeof( StreamCtx ) );
+   sctx->ctx.getC = StreamIOCtx_getC;
+   sctx->ctx.getBuf = StreamIOCtx_getBuf;
+   sctx->ctx.putC = StreamIOCtx_putC;
+   sctx->ctx.putBuf = StreamIOCtx_putBuf;
+   sctx->ctx.seek = StreamIOCtx_seek;
+   sctx->ctx.tell = StreamIOCtx_tell;
+   sctx->ctx.gd_free = StreamIOCtx_free;
+
+   sctx->stream = stream;
+   sctx->okToDelete = okToDelete;
+   return (gdIOCtx*) sctx;
 }
 '
 
 /* epilogue of the module to be generated */
-epilogue = '/* Done with falbind */'
+epilogue = '
+/* Done with falbind */
+'
+
+/*********************************************
+   Synthethizes IOCtx parameters from stream
+**********************************************/
+object TypeSynthIOCtx from TypeInfo( "gdIOCtx*" )
+
+   function onCheckType( count )
+      Output.write( "   vm->param(" + count + ")->isOfClass(\"Stream\")" );
+   end
+
+   function onLoadParam( count, varname )
+      Output.write( @'
+   gdIOCtx* $varname = (gdIOCtx*) CreateStreamIOCtx(
+         dyncast<Stream*>(vm->param($count)->asObject()->getFalconData()),
+         false );'+"\n")
+   end
+
+   function onMakeCall( count, varname )
+      Output.write( varname );
+   end
+
+   function onMakeReturn( varname )
+      raise CodeError(1000,"gdIOCtx* used as return value")
+   end
+
+   function onMakeLeadout( count, varname )
+      Output.write( @'   $varname->gd_free($varname);'+"\n" )
+   end
+   
+   function toParamDesc()
+      return "Stream"
+   end
+
+end
+
 
 /* Reflection for fucntions.
 */
 binding = .[
-   // Don't support deprecated functions
+   // Deprecated functions
+   // --- We don't support it.
    RuleIgnore( "gdImagePngToSink" )
    RuleIgnore( "gdNewSSCtx" )
-   
+   RuleIgnore( "gdImageStringTTF" )
+   // --- end of deprecated functions
+
+   // ignore destroy (part of the GdImage pseudoclass)
    RuleIgnore( "gdImageDestroy$" )
-   //RuleFunc( "gdImageCreateFrom(.+)Ctx", "gdImageCreateFrom(\\1)" )
-   RuleIgnore( "gdImageCreateFrom(.+)Ctx" )
-   RuleFunc( "gdImageCreateFrom(.+)Ptr", "gdImageCreateFrom\\1Ptr" )
-   RuleIgnore( "gdImage(Jpeg|WBMP|Png|PngEx|Gif|GifAnimBegin|GifAnimAdd|GifAnimEnd|Gd2|Gd)(Ctx|CtxEx)?$" )
-   
-   RuleIgnore( "gdImageDestroy$" )
+
+   // We will use CTX functions to load from streams.
+   // So we convert their name stripping CTX...
+   RulePseudoMethod( "gdImageCreateFrom(.+?)CtxEx", "GdImage", "gdImage", "CreateFrom\\1Ex" )
+   RulePseudoMethod( "gdImageCreateFrom(.+?)Ctx", "GdImage", "gdImage", "CreateFrom\\1" )
+
+   //... while ignoring pointer and stdio.h FILE* based functions.
    RuleIgnore( "gdImageCreateFrom(.+)" )
+   
+   //... Same thing for save functions; we'll use just CTX, as methods.
+   RuleIgnore( "gdImage(Jpeg|WBMP|Png|Png|PngPtr|Gif|GifAnimBegin|GifAnimAdd|GifAnimEnd|Gd2|Gd)(Ptr)?(Ex)?$" )
 
-   // UBUNTU version of gd2 is a bit broken. -- it doesn't export gdDrawEllipse
+   // UBUNTU version of gd2 is a bit broken. -- it doesn't export gdImageEllipse
    RuleIgnore( "gdImageEllipse" )
-
+   
+   RuleFunc( "gdImageTrueColor$" )
 
    RuleFunc( "gdFontGet(.+)", "gdFontGet\\1" )
 
    RulePseudoInit( "gdImageCreate$", "GdImage" )
+   RulePseudoMethod( "gdImage(.+)CtxEx", "GdImage", "gdImage", "\\1Ex" )
    RulePseudoMethod( "gdImage(.+)Ctx", "GdImage", "gdImage", "\\1" )
    RulePseudoMethod( "gdImage(.+)", "GdImage", "gdImage", "\\1" )
 
+   // Ignore the rest -- for now.
    RuleIgnore( ".*" )
 ]
 
@@ -81,20 +218,19 @@ binding = .[
 types = .[
    RulePseudoClass( "^gdImage$", "GdImage", "gdImageDestroy" )
 
+   RuleTypeOpaque( "void*", "ImageDataPtr", nil )
+   
    // fonts are never destroyed
    RuleTypeOpaque( "gdFont$", "GdFont", nil )
    RuleTypeOpaque( "gdPoint$", "GdPoint", nil )
    RuleTypeOpaque( "gdFTStringExtra$", "gdFTStringExtra", nil )
    RuleTypeOpaque( "gdSkin$", "gdSkin", nil )
-   
-   //RuleTypeOpaque( "gdIOCtx$", "Stream", nil )
 ]
 
 TypeInfo.alias( "gdImageStruct", "gdImage" )
 TypeInfo.alias( "gdImagePtr", "gdImage*" )
 TypeInfo.alias( "gdImageStruct*", "gdImage*" )
 
-TypeInfo.alias( "gdFontStruct", "gdFont" )
 TypeInfo.alias( "gdFontStruct*", "gdFont*" )
 
 TypeInfo.alias( "gdPointStruct", "gdPoint" )
