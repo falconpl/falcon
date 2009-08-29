@@ -13,6 +13,11 @@ extern "C" {
 
 #include <falcon/memory.h>
 #include <falcon/stream.h>
+#include <falcon/error.h>
+
+#ifndef FALCON_ERROR_GD_BASE
+   #define FALCON_ERROR_GD_BASE 2330
+#endif
 
 typedef struct tag_Stream_gdIOCtx
 {
@@ -244,6 +249,35 @@ static CoreObject* _falbind_GdImage_factory( const CoreClass* cgen, void* ud, bo
    return new _falbind_GdImage(cgen, ud, bDeser);
 }
 
+/**************************************
+   Custom error class GdError
+***************************************/
+
+class GdError: public ::Falcon::Error
+{
+public:
+   GdError():
+      Error( "GdError" )
+   {}
+
+   GdError( const ErrorParam &params  ):
+      Error( "GdError", params )
+      {}
+};
+
+static void  GdError_init ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new GdError );
+
+   ::Falcon::core::Error_init( vm );
+}
+
+/**************************************
+   End of GdError
+***************************************/
+
 
 static void _falbind_GdImage_PaletteCopy( VMachine *vm )
 {
@@ -417,6 +451,12 @@ static void _falbind_gdImageTrueColor( VMachine *vm )
 
 gdImage* im = (gdImage*) vm->param(0)->asObject()->getUserData();
    int __funcreturn__ = gdImageTrueColor( im );
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+2, __LINE__ )
+         .desc( "Error in creating the image" ) );
+   }
+   
    vm->retval( (int64)__funcreturn__);
 }
 
@@ -447,6 +487,12 @@ static void _falbind_GdImage_Jpeg( VMachine *vm )
    int quality = (int) vm->param(1)->forceInteger();
 gdImageJpegCtx( im, out, quality );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -482,6 +528,12 @@ static void _falbind_GdImage_Png( VMachine *vm )
          false );
 gdImagePngCtx( im, out );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -525,39 +577,137 @@ static void _falbind_GdImage_GetPixel( VMachine *vm )
 }
 
 
-static void _falbind_GdImage_StringFT( VMachine *vm )
-{
-   _falbind_GdImage* self = dyncast<_falbind_GdImage*>( vm->self().asObject() );
+/* Custom binding for gdImageStringFT/FTEx */
 
-   if ( ( vm->param(0) == 0 || !(   (vm->param(0)->isOrdinal() && vm->isParamByRef(0))))
-        ||( vm->param(1) == 0 || !(   vm->param(1)->isOrdinal()))
-        ||( vm->param(2) == 0 || !(   vm->param(2)->isString()))
-        ||( vm->param(3) == 0 || !(   vm->param(3)->isOrdinal()))
-        ||( vm->param(4) == 0 || !(   vm->param(4)->isOrdinal()))
-        ||( vm->param(5) == 0 || !(   vm->param(5)->isOrdinal()))
-        ||( vm->param(6) == 0 || !(   vm->param(6)->isOrdinal()))
-        ||( vm->param(7) == 0 || !(   vm->param(7)->isString()))
-   ) {
+static void _falbind_GDImage_stringFT( Falcon::VMachine* vm )
+{
+   // parameter retrival
+   Falcon::Item *i_fg = vm->param(0);
+   Falcon::Item *i_fontname = vm->param(1);
+   Falcon::Item *i_ptsize = vm->param(2);
+   Falcon::Item *i_angle = vm->param(3);
+   Falcon::Item *i_x = vm->param(4);
+   Falcon::Item *i_y = vm->param(5);
+   Falcon::Item *i_string = vm->param(6);
+   Falcon::Item *i_extra = vm->param(7);  // optional parameter for FtEX
+
+   if( i_fg == 0 || ! i_fg->isOrdinal() ||
+       i_fontname == 0 || ! i_fontname->isString() ||
+       i_ptsize == 0 || !( i_ptsize->isNil() || i_ptsize->isOrdinal() ) ||
+       i_angle == 0 || !( i_angle->isNil() || i_angle->isOrdinal() ) ||
+       i_x == 0 || i_x->isOrdinal() ||
+       i_y == 0 || i_y->isOrdinal() ||
+       i_string == 0 || i_string->isOrdinal() ||
+       (i_extra != 0 && ! (i_extra->isBoolean() || i_extra->isDict() ) )
+       )
+   {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-          .extra( "$N,N,S,N,N,N,N,S" ) );
+          .extra( "N,S,N,N,N,N,S,[B|D]" ) );
    }
 
-   gdImageStruct* im = self->get();
-  int brect = (int) vm->param(0)->forceInteger();
-   int fg = (int) vm->param(1)->forceInteger();
-   AutoCString autoc_fontlist( *vm->param(2)->asString() );
-   char* fontlist = (char*) autoc_fontlist.c_str();
-double ptsize = (double) vm->param(3)->forceNumeric();
-double angle = (double) vm->param(4)->forceNumeric();
-   int x = (int) vm->param(5)->forceInteger();
-   int y = (int) vm->param(6)->forceInteger();
-   AutoCString autoc_string( *vm->param(7)->asString() );
-   char* string = (char*) autoc_string.c_str();
-   char* __funcreturn__ = gdImageStringFT( im,    &brect, fg, fontlist, ptsize, angle, x, y, string );
-   *vm->param(0) = (int64) brect;
-   vm->retval( new CoreString( __funcreturn__, -1 ));
-}
+   // a bit of data to be readied.
 
+   gdImagePtr img;
+   bool return_brect;
+   bool extra;
+   int brect[8];
+
+   int fg = i_fg->forceInteger();
+   Falcon::AutoCString fname( *i_fontname->asString() );
+   const char* fontname = fname.c_str();
+   int ptsize = i_ptsize->forceInteger();
+   int angle = i_angle->forceInteger();
+   int x = i_x->forceInteger();
+   int y = i_y->forceInteger();
+   Falcon::AutoCString str( *i_string->asString() );
+   const char* string = str.c_str();
+
+   char* res;  // if zero, we failed.
+
+   // first, determine if we're called statically -- in this case, we use
+   // NULL parameter for img, to get a dry execution for bounds calculation.
+   if ( vm->self().isObject() )
+   {
+      _falbind_GdImage* self = dyncast<_falbind_GdImage*>( vm->self().asObject() );
+      img = self->get();
+      return_brect = i_extra != 0 && i_extra->isBoolean() && i_extra->asBoolean();
+   }
+   else {
+      // called as static -- dry execution.
+      img = 0;
+      return_brect = true;
+   }
+
+   extra = i_extra != 0 && i_extra->isDict();
+
+   // we're ready for the call
+   if( extra )
+   {
+      Falcon::CoreDict* d = i_extra->asDict();
+      Falcon::AutoCString* cs_xshow = 0;
+      Falcon::AutoCString* cs_fontpath = 0;
+      
+      // we must extract extra parameters.
+      gdFTStringExtra xp;
+      Falcon::Item* i_flags = d->find( "flags" );
+      xp.flags = (int)(i_flags != 0 ? i_flags->forceInteger() : 0);
+      Falcon::Item* i_spacing = d->find( "linespacing" );
+      xp.linespacing = i_spacing != 0 ? i_spacing->forceNumeric() : 0.0;
+      Falcon::Item* i_charmap = d->find( "charmap" );
+      xp.charmap = (int) (i_charmap != 0 ? i_charmap->forceInteger() : 0);
+      Falcon::Item* i_hdpi = d->find( "hdpi" );
+      xp.hdpi = (int) (i_hdpi != 0 ? i_hdpi->forceInteger() : 0);
+      Falcon::Item* i_vdpi = d->find( "vdpi" );
+      xp.vdpi = (int) (i_hdpi != 0 ? i_vdpi->forceInteger() : 0);
+
+      Item* i_xshow = d->find( "xshow" );
+      if ( i_xshow->isString() )
+      {
+         cs_xshow = new AutoCString( *i_xshow->asString() );
+         xp.xshow = const_cast<char*>(cs_xshow->c_str());
+      }
+      else
+         xp.xshow = 0;
+         
+      Item* i_fontpath = d->find( "fontpath" );
+      if ( i_fontpath->isString() )
+      {
+         cs_fontpath = new AutoCString( *i_fontpath->asString() );
+         xp.fontpath = const_cast<char*>(cs_fontpath->c_str());
+      }
+      else
+         xp.xshow = 0;
+
+      // finally, we got to determine if we need to return brecht
+      if ( img != 0 && d->find( "brect" ) != 0 )
+         return_brect = true;
+
+      // we can make the call
+      res = gdImageStringFTEx( img, brect, fg, const_cast<char*>(fontname), ptsize, angle, x, y, const_cast<char*>(string), &xp );
+
+      delete cs_xshow;
+      delete cs_fontpath;
+   }
+   else {
+      // no, it's a standard call
+      res = gdImageStringFT( img, brect, fg, const_cast<char*>(fontname), ptsize, angle, x, y, const_cast<char*>(string) );
+   }
+
+   // error?
+   if ( res == 0 )
+   {
+      throw new GdError( Falcon::ErrorParam( FALCON_ERROR_GD_BASE, __LINE__ ) );
+   }
+   if ( return_brect )
+   {
+      Falcon::CoreArray* ca = new Falcon::CoreArray( 8 );
+      for ( Falcon::uint32 i = 0; i < 8; i ++ )
+         ca->append( (Falcon::int64) brect[i] );
+      vm->retval( ca );
+   }
+   else
+      vm->retnil();
+}
 
 static void _falbind_GdImage_CreateFromGd2( VMachine *vm )
 {
@@ -572,6 +722,12 @@ static void _falbind_GdImage_CreateFromGd2( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromGd2Ctx( in );
    in->gd_free(in);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -623,6 +779,12 @@ static void _falbind_GdImage_CreateFromGd( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromGdCtx( in );
    in->gd_free(in);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -723,6 +885,12 @@ static void _falbind_GdImage_init( VMachine *vm )
    int sx = (int) vm->param(0)->forceInteger();
    int sy = (int) vm->param(1)->forceInteger();
    gdImage* __funcreturn__ = gdImageCreate( sx, sy );
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+2, __LINE__ )
+         .desc( "Error in creating the image" ) );
+   }
+   
    vm->self().asObject()->setUserData( __funcreturn__ );
 }
 
@@ -795,6 +963,12 @@ static void _falbind_GdImage_WBMP( VMachine *vm )
          false );
 gdImageWBMPCtx( image, fg, out );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(1)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -818,6 +992,12 @@ static void _falbind_GdImage_GifAnimBegin( VMachine *vm )
    int Loops = (int) vm->param(2)->forceInteger();
 gdImageGifAnimBeginCtx( im, out, GlobalCM, Loops );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -971,6 +1151,12 @@ static void _falbind_GdImage_CreateFromGd2Part( VMachine *vm )
    int h = (int) vm->param(4)->forceInteger();
    gdImage* __funcreturn__ = gdImageCreateFromGd2PartCtx( in, srcx, srcy, w, h );
    in->gd_free(in);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -1067,6 +1253,12 @@ static void _falbind_GdImage_PngEx( VMachine *vm )
    int level = (int) vm->param(1)->forceInteger();
 gdImagePngCtxEx( im, out, level );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -1208,42 +1400,6 @@ gdImageCopyRotated( dst, src, dstX, dstY, srcX, srcY, srcWidth, srcHeight, angle
 }
 
 
-static void _falbind_GdImage_StringFTEx( VMachine *vm )
-{
-   _falbind_GdImage* self = dyncast<_falbind_GdImage*>( vm->self().asObject() );
-
-   if ( ( vm->param(0) == 0 || !(   (vm->param(0)->isOrdinal() && vm->isParamByRef(0))))
-        ||( vm->param(1) == 0 || !(   vm->param(1)->isOrdinal()))
-        ||( vm->param(2) == 0 || !(   vm->param(2)->isString()))
-        ||( vm->param(3) == 0 || !(   vm->param(3)->isOrdinal()))
-        ||( vm->param(4) == 0 || !(   vm->param(4)->isOrdinal()))
-        ||( vm->param(5) == 0 || !(   vm->param(5)->isOrdinal()))
-        ||( vm->param(6) == 0 || !(   vm->param(6)->isOrdinal()))
-        ||( vm->param(7) == 0 || !(   vm->param(7)->isString()))
-        ||( vm->param(8) == 0 || !(   vm->param(8)->isObject() && vm->param(8)->asObjectSafe()->derivedFrom("gdFTStringExtra")))
-   ) {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-          .extra( "$N,N,S,N,N,N,N,S,gdFTStringExtra" ) );
-   }
-
-   gdImageStruct* im = self->get();
-  int brect = (int) vm->param(0)->forceInteger();
-   int fg = (int) vm->param(1)->forceInteger();
-   AutoCString autoc_fontlist( *vm->param(2)->asString() );
-   char* fontlist = (char*) autoc_fontlist.c_str();
-double ptsize = (double) vm->param(3)->forceNumeric();
-double angle = (double) vm->param(4)->forceNumeric();
-   int x = (int) vm->param(5)->forceInteger();
-   int y = (int) vm->param(6)->forceInteger();
-   AutoCString autoc_string( *vm->param(7)->asString() );
-   char* string = (char*) autoc_string.c_str();
-gdFTStringExtra* strex = (gdFTStringExtra*) vm->param(8)->asObject()->getUserData();
-   char* __funcreturn__ = gdImageStringFTEx( im,    &brect, fg, fontlist, ptsize, angle, x, y, string, strex );
-   *vm->param(0) = (int64) brect;
-   vm->retval( new CoreString( __funcreturn__, -1 ));
-}
-
-
 static void _falbind_gdFontGetMediumBold( VMachine *vm )
 {
    gdFont* __funcreturn__ = gdFontGetMediumBold(  );
@@ -1283,6 +1439,12 @@ static void _falbind_GdImage_CreateFromJpeg( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromJpegCtx( infile );
    infile->gd_free(infile);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -1301,6 +1463,12 @@ static void _falbind_GdImage_CreateFromPng( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromPngCtx( in );
    in->gd_free(in);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -1402,6 +1570,12 @@ static void _falbind_GdImage_GifAnimEnd( VMachine *vm )
          false );
 gdImageGifAnimEndCtx( out );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -1476,6 +1650,12 @@ static void _falbind_GdImage_CreateFromWBMP( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromWBMPCtx( infile );
    infile->gd_free(infile);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -1509,6 +1689,12 @@ static void _falbind_GdImage_GifAnimAdd( VMachine *vm )
 gdImage* previm = (gdImage*) vm->param(6)->asObject()->getUserData();
 gdImageGifAnimAddCtx( im, out, LocalCM, LeftOfs, TopOfs, Delay, Disposal, previm );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -1545,31 +1731,6 @@ gdPoint* p = (gdPoint*) vm->param(0)->asObject()->getUserData();
    int n = (int) vm->param(1)->forceInteger();
    int c = (int) vm->param(2)->forceInteger();
 gdImageFilledPolygon( im, p, n, c );
-}
-
-
-static void _falbind_GdImage_String16( VMachine *vm )
-{
-   _falbind_GdImage* self = dyncast<_falbind_GdImage*>( vm->self().asObject() );
-
-   if ( ( vm->param(0) == 0 || !(   vm->param(0)->isObject() && vm->param(0)->asObjectSafe()->derivedFrom("GdFont")))
-        ||( vm->param(1) == 0 || !(   vm->param(1)->isOrdinal()))
-        ||( vm->param(2) == 0 || !(   vm->param(2)->isOrdinal()))
-        ||( vm->param(3) == 0 || !(   (vm->param(3)->isOrdinal() && vm->isParamByRef(3))))
-        ||( vm->param(4) == 0 || !(   vm->param(4)->isOrdinal()))
-   ) {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-          .extra( "GdFont,N,N,$N,N" ) );
-   }
-
-   gdImageStruct* im = self->get();
-gdFont* f = (gdFont*) vm->param(0)->asObject()->getUserData();
-   int x = (int) vm->param(1)->forceInteger();
-   int y = (int) vm->param(2)->forceInteger();
-  unsigned short s = (unsigned short) vm->param(3)->forceInteger();
-   int color = (int) vm->param(4)->forceInteger();
-gdImageString16( im, f, x, y,    &s, color );
-   *vm->param(3) = (int64) s;
 }
 
 
@@ -1813,6 +1974,12 @@ static void _falbind_GdImage_Gif( VMachine *vm )
          false );
 gdImageGifCtx( im, out );
    out->gd_free(out);
+
+   if( !dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good() ) {
+      throw new IoError( ErrorParam( FALCON_ERROR_GD_BASE+3, __LINE__ )
+         .desc( "I/O error while writing the image" ) );
+   }
+   
 }
 
 
@@ -1901,6 +2068,12 @@ static void _falbind_GdImage_CreateFromGif( VMachine *vm )
          false );
    gdImage* __funcreturn__ = gdImageCreateFromGifCtx( in );
    in->gd_free(in);
+
+   if( __funcreturn__ == 0  ) {
+      throw new GdError( ErrorParam( FALCON_ERROR_GD_BASE+1, __LINE__ )
+         .desc( "Invalid image format" ) );
+   }
+   
    CoreObject* co___funcreturn__ = vm->findWKI( "GdImage" )->asClass()->createInstance(__funcreturn__);
    vm->retval( co___funcreturn__ );
 }
@@ -2013,7 +2186,14 @@ FALCON_MODULE_DECL
    sym_GdImage->setWKS( true );
    sym_GdImage->getClassDef()->factory( &_falbind_GdImage_factory );
 
-   self->addClassMethod( sym_GdImage, "PaletteCopy", &_falbind_GdImage_PaletteCopy ).asSymbol()
+   //****************************************
+   // Error class GdError
+   //
+   Falcon::Symbol *GdError_base_error_class = self->addExternalRef( "Error" );
+   Falcon::Symbol *GdError_error_class = self->addClass( "GdError", &GdError_init );
+   GdError_error_class->setWKS( true );
+   GdError_error_class->getClassDef()->addInheritance(  new Falcon::InheritDef( GdError_base_error_class ) );
+      self->addClassMethod( sym_GdImage, "PaletteCopy", &_falbind_GdImage_PaletteCopy ).asSymbol()
       ->addParam( "src" );
    self->addClassMethod( sym_GdImage, "Red", &_falbind_GdImage_Red ).asSymbol()
       ->addParam( "color" );
@@ -2042,8 +2222,9 @@ FALCON_MODULE_DECL
       ->addParam( "r" )->addParam( "g" )->addParam( "b" );
    self->addClassMethod( sym_GdImage, "GetPixel", &_falbind_GdImage_GetPixel ).asSymbol()
       ->addParam( "x" )->addParam( "y" );
-   self->addClassMethod( sym_GdImage, "StringFT", &_falbind_GdImage_StringFT ).asSymbol()
-      ->addParam( "brect" )->addParam( "fg" )->addParam( "fontlist" )->addParam( "ptsize" )->addParam( "angle" )->addParam( "x" )->addParam( "y" )->addParam( "string" );
+   self->addClassMethod( sym_GdImage, "StringFT", &_falbind_GDImage_stringFT ).asSymbol()
+      ->addParam( "fg" )->addParam( "fontname" )->addParam( "ptsize" )->addParam( "angle" )->
+      addParam( "x" )->addParam( "y" )->addParam( "string" )->addParam("extra");
    self->addClassMethod( sym_GdImage, "CreateFromGd2", &_falbind_GdImage_CreateFromGd2 ).asSymbol()
       ->addParam( "in" );
    self->addClassMethod( sym_GdImage, "StringUp", &_falbind_GdImage_StringUp ).asSymbol()
@@ -2105,8 +2286,6 @@ FALCON_MODULE_DECL
       ->addParam( "f" )->addParam( "x" )->addParam( "y" )->addParam( "c" )->addParam( "color" );
    self->addClassMethod( sym_GdImage, "CopyRotated", &_falbind_GdImage_CopyRotated ).asSymbol()
       ->addParam( "src" )->addParam( "dstX" )->addParam( "dstY" )->addParam( "srcX" )->addParam( "srcY" )->addParam( "srcWidth" )->addParam( "srcHeight" )->addParam( "angle" );
-   self->addClassMethod( sym_GdImage, "StringFTEx", &_falbind_GdImage_StringFTEx ).asSymbol()
-      ->addParam( "brect" )->addParam( "fg" )->addParam( "fontlist" )->addParam( "ptsize" )->addParam( "angle" )->addParam( "x" )->addParam( "y" )->addParam( "string" )->addParam( "strex" );
    self->addExtFunc( "gdFontGetMediumBold", &_falbind_gdFontGetMediumBold );
    self->addClassMethod( sym_GdImage, "TrueColorToPalette", &_falbind_GdImage_TrueColorToPalette ).asSymbol()
       ->addParam( "ditherFlag" )->addParam( "colorsWanted" );
@@ -2136,8 +2315,6 @@ FALCON_MODULE_DECL
       ->addParam( "thickness" );
    self->addClassMethod( sym_GdImage, "FilledPolygon", &_falbind_GdImage_FilledPolygon ).asSymbol()
       ->addParam( "p" )->addParam( "n" )->addParam( "c" );
-   self->addClassMethod( sym_GdImage, "String16", &_falbind_GdImage_String16 ).asSymbol()
-      ->addParam( "f" )->addParam( "x" )->addParam( "y" )->addParam( "s" )->addParam( "color" );
    self->addClassMethod( sym_GdImage, "ColorDeallocate", &_falbind_GdImage_ColorDeallocate ).asSymbol()
       ->addParam( "color" );
    self->addClassMethod( sym_GdImage, "Interlace", &_falbind_GdImage_Interlace ).asSymbol()

@@ -1,0 +1,22 @@
+load gd2
+
+fin = InputStream( "test.jpg" )
+img = GdImage.CreateFromJpeg( fin )
+fin.close()
+
+> "Image size: ", img.SX(), "x", img.SY()
+imgcopy = GdImage.CreateTrueColor(  img.SX(), img.SY() )
+imgcopy.CopyRotated( img,
+                     img.SX()/2, img.SY()/2,
+                     0, 0, img.SX(), img.SY(),
+                     45 )
+                     
+imgcopy.FilledRectangle( 1,1,50,30, 0x304050 )
+// traditional string
+white = img.ColorAllocate(255, 255, 255);
+fnt_small = gdFontGetSmall()
+imgcopy.String( fnt_small, 100,20, "Hello world", white );
+
+fout = OutputStream( "testout.jpg" )
+imgcopy.Jpeg( fout, 95 )
+fout.close()
