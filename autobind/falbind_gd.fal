@@ -324,8 +324,26 @@ function decl_gdImageStringFT()
 end
 
 automatic = .[
-   RuleErrorClass( "GdError" )
+   RuleErrorClass( "GdError" ),
+
+   RuleConstantInt( "gdAntiAliased" ),
+   RuleConstantInt( "gdBrushed" ),
+   RuleConstantInt( "gdMaxColors" ),
+   RuleConstantInt( "gdStyled" ),
+   RuleConstantInt( "gdStyledBrushed" ),
+   RuleConstantInt( "gdDashSize" ),
+   RuleConstantInt( "gdTiled" ),
+   
+   RuleConstantInt( "gdFTEX_LINESPACE" ),
+   RuleConstantInt( "gdFTEX_CHARMAP" ),
+   RuleConstantInt( "gdFTEX_RESOLUTION" ),
+   RuleConstantInt( "gdFTEX_DISABLE_KERNING" ),
+   RuleConstantInt( "gdFTEX_XSHOW" ),
+   RuleConstantInt( "gdFTEX_RETURNFONTPATHNAME" ),
+   RuleConstantInt( "gdFTEX_FONTPATHNAME" ),
+   RuleConstantInt( "gdFTEX_FONTCONFIG" )
 ]
+
 
 io_write_check = BaseErrorControl(
    {=>"!dyncast<Stream*>(vm->param(0)->asObject()->getFalconData())->good()"},

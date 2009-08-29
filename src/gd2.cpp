@@ -2193,7 +2193,22 @@ FALCON_MODULE_DECL
    Falcon::Symbol *GdError_error_class = self->addClass( "GdError", &GdError_init );
    GdError_error_class->setWKS( true );
    GdError_error_class->getClassDef()->addInheritance(  new Falcon::InheritDef( GdError_base_error_class ) );
-      self->addClassMethod( sym_GdImage, "PaletteCopy", &_falbind_GdImage_PaletteCopy ).asSymbol()
+      self->addConstant( "gdAntiAliased", (int64) gdAntiAliased, true );
+   self->addConstant( "gdBrushed", (int64) gdBrushed, true );
+   self->addConstant( "gdMaxColors", (int64) gdMaxColors, true );
+   self->addConstant( "gdStyled", (int64) gdStyled, true );
+   self->addConstant( "gdStyledBrushed", (int64) gdStyledBrushed, true );
+   self->addConstant( "gdDashSize", (int64) gdDashSize, true );
+   self->addConstant( "gdTiled", (int64) gdTiled, true );
+   self->addConstant( "gdFTEX_LINESPACE", (int64) gdFTEX_LINESPACE, true );
+   self->addConstant( "gdFTEX_CHARMAP", (int64) gdFTEX_CHARMAP, true );
+   self->addConstant( "gdFTEX_RESOLUTION", (int64) gdFTEX_RESOLUTION, true );
+   self->addConstant( "gdFTEX_DISABLE_KERNING", (int64) gdFTEX_DISABLE_KERNING, true );
+   self->addConstant( "gdFTEX_XSHOW", (int64) gdFTEX_XSHOW, true );
+   self->addConstant( "gdFTEX_RETURNFONTPATHNAME", (int64) gdFTEX_RETURNFONTPATHNAME, true );
+   self->addConstant( "gdFTEX_FONTPATHNAME", (int64) gdFTEX_FONTPATHNAME, true );
+   self->addConstant( "gdFTEX_FONTCONFIG", (int64) gdFTEX_FONTCONFIG, true );
+   self->addClassMethod( sym_GdImage, "PaletteCopy", &_falbind_GdImage_PaletteCopy ).asSymbol()
       ->addParam( "src" );
    self->addClassMethod( sym_GdImage, "Red", &_falbind_GdImage_Red ).asSymbol()
       ->addParam( "color" );
