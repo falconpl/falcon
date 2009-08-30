@@ -1,0 +1,61 @@
+load gd2
+
+name = "gdTest_stringFT.png"
+fonts = [
+   "Times New Roman",
+   "Times",
+   "Arial",
+   "FreeSans",
+   "Sans",
+   "System",
+   // falback to a safe font.
+   "./FreeSansBoldOblique.ttf" ]
+
+// if we have an arg, add it on top
+if args.len() > 0: fonts[0:0] = args[0]
+
+for font in fonts
+   try
+      brect = GdImage.StringFT( 0, font, 14, 0,
+                      0, 0, "Hello 0 times." )
+      > "Using font \"", font, "\""
+      break
+   catch GdError in e
+      // no good, try another font
+      > "Can't find font \"", font, "\"..."
+   end
+end
+
+if not brect
+   > "Please, specify a full path to a valid TTF font on the command line."
+   > "Can't find any suitable font. Terminating"
+   return 0
+end
+
+try
+   /* create an image big enough for the string plus a little whitespace */
+   w = brect[2]-brect[6] + 6;
+   h = (brect[3]-brect[7])*5 + 16;
+   img = GdImage.CreateTrueColor( w, h )
+   
+   blue = img.ColorResolve( 10, 10, 90 )
+   white = img.ColorResolve( 0xff, 0xff, 0xff )
+   img.FilledRectangle( 0, 0, img.SX(), img.SY(), blue )
+ 
+   for i = 1 to 5
+       img.StringFT( white, font, 14, 0, 3, i *(brect[3]-brect[7]+2) +1, "Hello " + i + " times." )
+   end
+
+   > "Writing image "+ name
+   out = OutputStream( name )
+   img.Png( out )
+   out.close()
+   > "Write complete"
+
+catch IoError in e
+   > "Can't create image " + name
+   > e
+catch GdError in e
+   > "Error in creating the image."
+   > e
+end

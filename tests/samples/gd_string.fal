@@ -1,0 +1,29 @@
+load gd2
+
+name = "gdTest_string.png"
+
+try
+   img = GdImage( 200, 200 )
+
+   blue = img.ColorAllocate( 10, 10, 90 )
+   white = img.ColorAllocate( 0xff, 0xff, 0xff )
+
+   font = gdFontGetMediumBold()
+
+   for i = 1 to 10
+       img.String( font, 5, i * 15 + 2, "Hello " + i + " times.", white )
+   end
+
+    > "Writing image "+ name
+   out = OutputStream( name )
+   img.Png( out )
+   out.close()
+   > "Write complete"
+   
+catch IoError in e
+   > "Can't create image " + name
+   > e
+catch GdError in e
+   > "Error in creating the image."
+   > e
+end

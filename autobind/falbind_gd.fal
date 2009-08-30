@@ -199,9 +199,9 @@ static void _falbind_GDImage_stringFT( Falcon::VMachine* vm )
        i_fontname == 0 || ! i_fontname->isString() ||
        i_ptsize == 0 || !( i_ptsize->isNil() || i_ptsize->isOrdinal() ) ||
        i_angle == 0 || !( i_angle->isNil() || i_angle->isOrdinal() ) ||
-       i_x == 0 || i_x->isOrdinal() ||
-       i_y == 0 || i_y->isOrdinal() ||
-       i_string == 0 || i_string->isOrdinal() ||
+       i_x == 0 || !i_x->isOrdinal() ||
+       i_y == 0 || !i_y->isOrdinal() ||
+       i_string == 0 || ! i_string->isString() ||
        (i_extra != 0 && ! (i_extra->isBoolean() || i_extra->isDict() ) )
        )
    {
@@ -298,9 +298,12 @@ static void _falbind_GDImage_stringFT( Falcon::VMachine* vm )
    }
 
    // error?
-   if ( res == 0 )
+   if ( res != 0 )
    {
-      throw new GdError( Falcon::ErrorParam( FALCON_ERROR_GD_BASE, __LINE__ ) );
+      throw new GdError(
+         Falcon::ErrorParam( FALCON_ERROR_GD_BASE, __LINE__ )
+         .desc( "Error in StringFT" )
+         .extra( res ) );
    }
    if ( return_brect )
    {
@@ -333,6 +336,12 @@ automatic = .[
    RuleConstantInt( "gdStyledBrushed" ),
    RuleConstantInt( "gdDashSize" ),
    RuleConstantInt( "gdTiled" ),
+
+   RuleConstantInt( "gdArc" ),
+   RuleConstantInt( "gdChord" ),
+   RuleConstantInt( "gdPie" ),
+   RuleConstantInt( "gdNoFill" ),
+   RuleConstantInt( "gdEdged" ),
    
    RuleConstantInt( "gdFTEX_LINESPACE" ),
    RuleConstantInt( "gdFTEX_CHARMAP" ),

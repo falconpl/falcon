@@ -1,71 +1,144 @@
 
-                        The Falcon Programming Language
+                      The Falcon Programming Language
 
-                              Skeleton Module
+                             LibGD binding "GD2"
+
+                                Version 1.0
 
 
-This directory contains a skeleton Falcon Module. The module defines a minimal
-module meant as a minimal development base to help speed up module writing
-startup phase.
+  This module is an automatically generated module wrapping LibGD graphic
+image manipulation library. The gd2 module for Falcon is created through
+static linkage with libGD fully configured with Jpeg, TrueType, FontConfig
+and every other optional package support.
 
-The skeleton module is divided into several files to provide better
-customizability:
+  Project Development is ongoing at:
+     http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=gd2
 
-fmodskel.cpp - The main module file; here exported the module object is
-	created and exported functions are defined.
+  LibGD can be found at: 
+      http://www.libgd.org/
 
-fmodskel_ext.cpp/.h - this files declare and define the extension (script
-   interface) functions. Add new functions here.
 
-fmodskel_mod.cpp/.h - this files declare and define the module internal
-   logic. If the module is extremely symple, or if it has not an internal
-   logic that may be exported or treated separately with resepect to the
-   extension functions, you may remove this files.
+OVERALL DESCRIPTION
+===================
 
-fmodskel_srv.cpp/.h - this files declares the service exported by the module.
-   A service is a re-publishing of the internal logic (mod) towards C++
-   application via a fully virtual class. The service is published to the
-   module and to all the VM where the module is linked. Applications may
-   then load the module and access the service by knowing only its name
-   and including the header file. In this way it is possible to reuse the
-   internal logic that scripts may access also through C++ code.
+  The "gd2" module is mainly generated through an automatic process binding
+the contents of the LibGD version 2 as a set of Falcon classes.
 
-fmodskel_st.cpp/.h - this files are the string table for module
-   internationalization. See the directions in the files to get more
-   details on how to use this table to provide translations for
-   binary falcon modules.
+   All the functions named gdImage* are available under the GdImage class,
+with their name stripped of the gdImage prefix and the case left unchanged.
 
-Other than these, there are project files/make files working on the supported
-platform, and a set of "template" files to be used when creating new sources.
+   So, for example, the gdImageFillRectangle function is exposed in gd2 module
+as GdImage.FillRectangle.
 
-To configure this files and start a new project, copy the directory, enter
-it and use the falcon script "falconeer.fal".
+  When LibGD the LibGD function accept a first parameter consisting of a
+gdImage pointer, that becomes a non-static method of the GdImage class in
+the module. When the function doesn't accept a gdImage parameter, it's
+found as a static method of the GdImage class. For example:
 
-Falconeer is a Falcon utility that is shipped with development packages in of
-every supported platform. On systems where scripts can be given execution
-rights (i.e. Linux, Bsd, Macosx ecc. ) you may call directly
+   // gdImageCreateTrueColor doesn't need a gdImage*
+   img = GdImage.CreateTrueColor(100, 100)
 
-   $ falconeer.fal
+   // gdImageFillRectangle( gdImage* im, ... ) -> img.FillRectangle
+   img.FillRectangle( 10, 10, 50, 50 , 4 )
 
-from the command prompt. Systems as MS-Windows will require the interpreter
-to load the script from the right path. A "configure.bat" script is provided
-as a sample; it can be changed so to call falconeer with the proper parametrs.
+  The the GdImage() Falcon class constructor maps to the gdImageCreate()
+function, while the GdImage.CreateTrueColor() static method returns an
+instance of GdImage class (exactly as a factory function). The class
+instance is accounted by the garbage collector, so gdImageDestroy function
+is not available (it's called directly by the garbage collector when needed).
 
-On systems provided with "man" utility a falconeer.fal man page is shipped
-with every Falcon installation; in other systems, you may load the script
-without arguments to have a short inline help.
+  Load and save from and to different file formats is managed exclusively
+through Falcon streams; loading and saving functions named gdImage*Ctx and
+gdImage*Ptr are not available, but their functionality is replicated by passing
+a memory based Stream or overloading the Stream class.
 
-The script changes the names of the modules, and the supported development
-platforms project settings so to match the project name that you have set.
+  Standard LibGD font functions as gdFontGetLarge() and gdFontGetSmall() return
+an "opaque entity" of type GdFont, which can be passed to the GdImage.String()
+methods.
 
-Once configured with Falconeer, the module in this directory may be
-immediately compiled and tested. The module provides a single RTL function
-called "skeleton()" that returns 0, and publish that function through a
-Service interface which just calls it and rerturns its value.
+  Informative macros operating on images and named after the gdImage* scheme
+are available as GdImage class methods, while numeric macros are available
+in the global namespace named exactly as reported in the LibGD documentation.
 
-Once configured the skeleton module, you may remove unneded files and add
-new ones.
 
-To install a module, just copy it in one of the directories listed in the
-FALCON_LOAD_PATH environment variables.
+ERROR REPORTING
+===============
+
+  Errors in creating images, converting them, storing them and so on are
+reported through the raising of a GdError instance. The GdError class is
+directly derived from Error.
+
+
+MISSING FUNCTIONS
+=================
+
+  - gdImageDestroy is not available (gdImage* are managed by the garbage
+    collector).
+
+  - gdImageString16 and gdImageString16Up are unavailable as they are
+    superseded by GdImage.String() method, accepting any Falcon string.
+
+  - GdFont type is opaque and it's not possible to access to its fields.
+
+  - Functions marked as "deprecated" in LibGD documentation are not
+    supported.
+
+  - Currently, gdImageEllipse() is not available in the LibGD version
+    shipped with some relevant GNU/Linux distributions. We're working
+    at a way to circumvent this, but at the moment GdImage.Ellipse() is
+    not available.
+
+   - gdFontCacheSetup() and gdFontCacheShutdown() are declared to be
+     internally managed by other GD functions, and are not exposed
+     to the "gd2" module yet.
+
+
+SPECIAL BINDINGS
+================
+
+  The two functions gdImageStringFT() and gdImageStringFTEx() are merged into
+one unique GdImage.StringFT method. They Are declared in the LibGD
+documentation as:
+
+ char *gdImageStringFT(gdImagePtr im, int *brect,
+         int fg, char *fontname, double ptsize, double angle, int x, int y,
+         char *string)
+
+and
+
+  char *gdImageStringFTEx(gdImagePtr im, int *brect,
+         int fg, char *fontname, double ptsize, double angle, int x, int y,
+         char *string, gdFTStringExtraPtr strex)
+
+are both exposed as
+
+  GdImage.StringFT( fg, fontname, ptsize, angle, x, y, string, [extra] )
+
+Where "extra" is an optional parameter which can be:
+
+  - a boolean true: in this case StringFT returns the brect array containing
+    4 pairs of x,y coordinates (8 integer numbers).
+
+  - A dictionary, where the keys correspond to the name of the fields in the
+    gdFTStringExtra structure. In this case the 8-integer array indicating
+    the rendering coordinates will be returned if the dictionary contains
+    also a "brect" string key associated with a "true" boolean value.
+
+  In the C version of LibGD, both functions allow to pre-calculate the size of
+a text rendering by passing NULL in place of the gdImagePtr parameter. The
+GdImage.StringFT() method in "gd2" module can be called statically (on the
+class GdImage) to achieve the same result. In that case, the method will
+always return the brect 8-integer vector, ignoring the value set in
+the "extra" parameter.
+
+  If an error condition is detected, a GdError instance is raised.
+
+
+COPYRIGHT
+=========
+
+  LibGD is copyright (C) of its owners Thomas Boutell, Pierre A. Joye
+and others.
+
+  The "gd2" Falcon module is copyright (C) of Giancarlo Niccolai, 2009
 

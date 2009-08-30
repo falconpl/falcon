@@ -9,7 +9,7 @@ end
 > "Loading PNG image ", imgname
 try
    fin = InputStream( imgname )
-   img = GdImage.CreateFromJpeg( fin )
+   img = GdImage.CreateFromPng( fin )
    fin.close()
 
    > "Loaded PNG image"
