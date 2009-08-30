@@ -1,0 +1,31 @@
+             The Falcon Programming Language
+                http://www.falconpl.org
+
+Falcon is currently distributed under a dual licensing scheme GPL/FPLL.
+
+The GPL licensing scheme is provided to ensure compatibilty with
+Open Source and Free Software products. It's a relative strict license
+which is not particularly adequate for virtual machine based scripting
+languge interpreters and engines, but it can be chosen to develop
+pure GPL applications or to favor integration with already
+existing GPL embedding applications.
+
+The Falcon Programming Language License is specifically designed
+around the concept of an open source scripting language engine.
+It grants usability of the covered source in commercial applications,
+as it supports applying different and incompatible licenses to
+embedding and extension elements, while ensuring the openness of
+the core engine and of any work derived directly from it.
+
+Falcon 0.8.10 and followings are released under one of GPLv2 or
+FPLLv1.1, at your choice.
+
+The GPLv2 license can be found at:
+   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+The FPLLv1.1 license can be found at:
+   http://www.falconpl.org?page_id=license_1_1
+
+Copyright owners:
+      (C) 2003-2008 Giancarlo Niccolai
+
