@@ -18,6 +18,41 @@ and every other optional package support.
       http://www.libgd.org/
 
 
+BUILDING
+========
+
+  This module builds as a standard Falcon Module. You need a complete
+installation of the LibGD version 2.1.x or following and of Falcon version
+0.9.2 and following, other than CMAKE which is used as a build tool.
+
+  You can get CMAKE at:
+
+   http://www.cmake.org
+
+  If your LibGD installation is not in a standard location (/usr/include,
+/usr/lib, etc.), you will need to tweak by hand src/CMakeList.txt
+adding proper entries as:
+
+   INCLUDE_DIRECTORIES( "<path>" )
+   LINK_DIRECTORIES( "<lib path>" )
+
+  Once you are sure you have CMAKE and falcon-conf in the system PATH, and
+that you have LibGD development libraries in standard location or after
+adding their position in src/CMakeList.txt, you can build the module by
+simply creating a directory "build" under or besides the root path
+of this module, entering it and calling:
+
+  $ cmake <path_to_source>
+  $ make
+  $ make install
+
+where <path_to_source> is the relative path to the topmost directory of
+the source of this module.
+
+  On some systems, you may be required to install the module as a super
+user or administrator.
+
+
 OVERALL DESCRIPTION
 ===================
 
