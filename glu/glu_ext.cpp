@@ -65,6 +65,56 @@ namespace Ext {
 
       ::gluPerspective(fovy, aspect, zNear, zFar);
    }
+
+   FALCON_FUNC openglu_Build2DMipmaps( VMachine *vm )
+   {
+      Item *i_target = vm->param(0);
+      Item *i_components = vm->param(1);
+      Item *i_width = vm->param(2);
+      Item *i_height = vm->param(3);
+      Item *i_format = vm->param(4);
+      Item *i_type = vm->param(5);
+      Item *i_pixels = vm->param(6);
+      if ( ( i_target == 0 || !i_target->isOrdinal() ) ||
+           ( i_components == 0 || !i_components->isOrdinal() ) ||
+           ( i_width == 0 || !i_width->isOrdinal() ) ||
+           ( i_height == 0 || !i_height->isOrdinal() ) ||
+           ( i_format == 0 || !i_format->isOrdinal() ) ||
+           ( i_type == 0 || !i_type->isOrdinal() ) ||
+           ( i_pixels == 0 || !i_pixels->isMemBuf() )
+         )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "N,N,N,N,N,N,M" ) ) ;
+         return;
+      }
+      
+      GLenum  target = (GLenum ) i_target->forceInteger();
+      GLint  components = (GLint ) i_components->forceInteger();
+      GLsizei width = (GLsizei) i_width->forceInteger();
+      GLsizei height = (GLsizei) i_height->forceInteger();
+      GLenum  format = (GLenum ) i_format->forceInteger();
+      GLenum  type = (GLenum ) i_type->forceInteger();
+      const GLvoid *pixels = (const GLvoid *) i_pixels->asMemBuf()->data();
+      ::gluBuild2DMipmaps(target, components, width, height, format, type, pixels);
+   }
+
+   FALCON_FUNC openglu_ErrorString( VMachine *vm )
+   {
+      Item *i_errCode = vm->param(0);
+      if ( (i_errCode == 0 || !i_errCode->isOrdinal() )
+         )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "N" ) ) ;
+         return;
+      }
+      GLenum errCode = (GLenum) i_errCode->forceInteger();
+      const GLubyte *error_string = ::gluErrorString(errCode);
+      String *s_error_string = new String((char *)error_string);
+      vm->retval(s_error_string);
+
+   }
    
 }
 }

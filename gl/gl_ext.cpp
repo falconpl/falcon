@@ -322,7 +322,7 @@ namespace Ext {
       CoreArray *i_textures = new CoreArray(num);
       for (int i = 0; i < num; i++)
       {
-         i_textures->append(Item(textures[i]));
+         i_textures->append(Item((int64)textures[i]));
       }
       delete [] textures;
       vm->retval(i_textures);
@@ -470,6 +470,12 @@ namespace Ext {
       GLenum  type = (GLenum ) i_type->forceInteger();
       const GLvoid *pixels = (const GLvoid *) i_pixels->asMemBuf()->data();
       ::glTexImage2D (target, level, internalformat, width, height, border, format, type, pixels);
+   }
+
+   FALCON_FUNC opengl_GetError( VMachine *vm )
+   {
+      GLenum error = ::glGetError();
+      vm->retval((int64)error);
    }
 
 }

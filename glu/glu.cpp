@@ -58,11 +58,10 @@ FALCON_MODULE_DECL
    {
      
       self->addExtFunc( "Perspective", Falcon::Ext::openglu_Perspective );
+      self->addExtFunc( "Build2DMipmaps", Falcon::Ext::openglu_Build2DMipmaps );
+      self->addExtFunc( "ErrorString", Falcon::Ext::openglu_ErrorString );
       
-   }
-   {
-      Falcon::Symbol *c_sdlopenglext = self->addClass( "glext" );
-
+      
    }
    {
       Falcon::Symbol *c_sdlglu = self->addClass( "GLU" );

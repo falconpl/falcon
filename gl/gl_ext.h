@@ -51,6 +51,7 @@ namespace Ext {
    FALCON_FUNC opengl_BindTexture( VMachine *vm );
    FALCON_FUNC opengl_TexParameteri( VMachine *vm );
    FALCON_FUNC opengl_TexImage2D( VMachine *vm );
+   FALCON_FUNC opengl_GetError( VMachine *vm );
 
 }
 }

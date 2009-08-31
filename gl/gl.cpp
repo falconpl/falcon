@@ -25,7 +25,7 @@
 
 #include <SDL.h>
 #include <SDL_opengl.h>
-#include <gl.h>
+
 
 /*#
    @module sdlopengl OpenGL
@@ -89,7 +89,8 @@ FALCON_MODULE_DECL
       self->addExtFunc( "BindTexture", Falcon::Ext::opengl_BindTexture );
       self->addExtFunc( "TexParameteri", Falcon::Ext::opengl_TexParameteri );
       self->addExtFunc( "TexImage2D", Falcon::Ext::opengl_TexImage2D );
-      //self->addExtFunc( "", Falcon::Ext:: );
+      self->addExtFunc( "GetError", Falcon::Ext::opengl_GetError );
+      //self->addExtFunc( "GetError", Falcon::Ext::opengl_GetError );
    }
    {
       Falcon::Symbol *c_sdlgl = self->addClass( "GL" );

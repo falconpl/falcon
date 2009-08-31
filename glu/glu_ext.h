@@ -28,7 +28,8 @@ namespace Ext {
 
 //TODO: Put openGL functions here once bound
    FALCON_FUNC openglu_Perspective( VMachine *vm );
-   
+   FALCON_FUNC openglu_Build2DMipmaps( VMachine *vm );
+   FALCON_FUNC openglu_ErrorString( VMachine *vm );
 
 }
 }

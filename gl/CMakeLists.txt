@@ -11,6 +11,7 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 Find_Package ( SDL REQUIRED )
+Find_package ( OpenGL REQUIRED )
 INCLUDE_DIRECTORIES( ${SDL_INCLUDE_DIR} )
 
 # Inclusion settings
@@ -27,7 +28,7 @@ ADD_LIBRARY( ${SDLGL} MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES( ${SDLGL} falcon_engine ${SDL_LIBRARY} opengl32)
+TARGET_LINK_LIBRARIES( ${SDLGL} falcon_engine ${SDL_LIBRARY} ${OPENGL_LIBRARY})
 
 SET_TARGET_PROPERTIES( ${SDLGL}
    PROPERTIES PREFIX "")
