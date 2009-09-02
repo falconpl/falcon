@@ -145,21 +145,230 @@ Module* core_module_init()
       of generic VM comparisons, including relational operators
       (<, >, <=, >=, ==, !=) and generic ordering criterions, for example in
       @a Dictionary insertions and @a arraySort.
+   */
 
-      @prop add__ Overrides +
-      @prop sub__ Overrides -
-      @prop mul__ Overrides *
-      @prop div__ Overrides /
-      @prop mod__ Overrides %
-      @prop pow__ Overrides **
-      @prop neg__ Overrides negate (prefix -)
-      @prop inc__ Overrides ++ (prefix)
-      @prop dec__ Overrides -- (prefix)
-      @prop incpost__ Overrides postfix ++
-      @prop decpost__ Overrides posrfix --
-      @prop call__ Overrides () call operator.
-      @prop setIndex__ Overrides accessor [] in write mode. Will receive 2 parameters (index, set value)
-      @prop getIndex__ Overrides accessor [] in read mode. Will receive 1 parameter (index)
+   /*#
+    @method add__ BOM
+    @brief Overrides binary addition operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self + @b operand.
+
+    If an object or instance re-defines this method,
+    when a "+" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method sub__ BOM
+    @brief Overrides binary subtraction operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self - @b operand.
+
+    If an object or instance re-defines this method,
+    when a "-" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method mul__ BOM
+    @brief Overrides binary multiplication operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self * @b operand.
+
+    If an object or instance re-defines this method,
+    when a "*" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method div__ BOM
+    @brief Overrides binary division operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self / @b operand.
+
+    If an object or instance re-defines this method,
+    when a "/" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method mod__ BOM
+    @brief Overrides modulo operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self % @b operand.
+
+    If an object or instance re-defines this method,
+    when a "%" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method pow__ BOM
+    @brief Overrides power operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self ** @b operand.
+
+    If an object or instance re-defines this method,
+    when a "**" operation is performed on this object,
+    the method gets called.
+
+    This includes self-target operations as +=, -= and so on; in
+    this latter case, the return value of the function will also
+    be immediately assigned to this object.
+
+    @note There is no guarantee that the @b operand type
+    is the same of this item.
+   */
+
+   /*#
+    @method inc__ BOM
+    @brief Overrides increment unary prefix operand.
+    @param operand The second operand in the expression.
+    @return The value of ++ @b self.
+
+    If an object or instance re-defines this method,
+    when a "++" prefix operation is performed on this object,
+    the method gets called.
+
+    The implementation should modify the object, and return
+    itself modified (or value representing this object after
+    modification).
+   */
+
+   /*#
+    @method dec__ BOM
+    @brief Overrides decrement unary prefix operand.
+    @param operand The second operand in the expression.
+    @return The value of -- @b self.
+
+    If an object or instance re-defines this method,
+    when a "--" prefix operation is performed on this object,
+    the method gets called.
+
+    The implementation should modify the object, and return
+    itself modified (or value representing this object after
+    modification).
+   */
+
+   /*#
+    @method incpost__ BOM
+    @brief Overrides increment unary postifx operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self ++.
+
+    If an object or instance re-defines this method,
+    when a "++" postfix operation is performed on this object,
+    the method gets called.
+
+    The implementation should keep an unmodified copy of this
+    object, modify this instance and return the previous one,
+    or a value representing the previous status of this object.
+   */
+
+   /*#
+    @method decpost__ BOM
+    @brief Overrides decrement unary postfix operand.
+    @param operand The second operand in the expression.
+    @return The value of @b self --.
+
+    If an object or instance re-defines this method,
+    when a "--" postfix operation is performed on this object,
+    the method gets called.
+
+    The implementation should keep an unmodified copy of this
+    object, modify this instance and return the previous one,
+    or a value representing the previous status of this object.
+   */
+
+   /*#
+    @method getIndex__ BOM
+    @brief Overrides array access operator []
+    @param index The index of the desired item.
+    @return The value of @b self [@b index].
+
+    If an object or instance re-defines this method,
+    when a "[]" array access operator is called to read
+    a value from a given index, this method gets called.
+
+    The @b index value may be of any type.
+
+    The function should return a value or throw an AccessError
+    if the @b index is considered invalid.
+   */
+
+   /*#
+    @method setIndex__ BOM
+    @brief Overrides array write operator []
+    @param index The index of the desired item.
+    @param value The value that must be set.
+    @return The value of (@b self [@b index] = @b value).
+
+    If an object or instance re-defines this method,
+    when a "[]" array access operator is called to write
+    a value to a given index, this method gets called.
+
+    The @b index value may be of any type.
+
+    The function should return the same value that is being
+    assigned, but the return value can be freely changed.
+   */
+
+   /*#
+    @method call__ BOM
+    @brief Overrides call operator "self()".
+    @param ... The parameters passed to the original call.
+    @return The value of @b self( ... ).
+
+    If an object or instance re-defines this method,
+    when this object is accessed through the call operator,
+    then this method is called instead.
+
+    This allows to create functors, as in the following example:
+
+    @code
+    object sum
+       function call__( a, b )
+         return a+b
+       end
+    end
+
+    > sum( 2, 2 )       // 4
+    @endcode
    */
 
    Falcon::Symbol *bom_meta = self->addClass( "%FBOM" );

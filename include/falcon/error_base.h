@@ -46,7 +46,7 @@
 #define FALCON_PDF_ERROR_BASE             2200
 #define FALCON_ERROR_DYNLIB_BASE          2250
 #define FALCON_ERROR_DBUS_BASE            2300
-
+#define FALCON_ERROR_GD_BASE              2330
 
 #define FALCON_USER_ERROR_BASE   10000
 
