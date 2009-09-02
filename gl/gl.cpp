@@ -1123,8 +1123,8 @@ FALCON_MODULE_DECL
       self->addClassProperty( c_sdlgl, "EXT_vertex_array" ).setInteger( GL_EXT_vertex_array );
       self->addClassProperty( c_sdlgl, "EXT_bgra" ).setInteger( GL_EXT_bgra );
       self->addClassProperty( c_sdlgl, "EXT_paletted_texture" ).setInteger( GL_EXT_paletted_texture );
-      self->addClassProperty( c_sdlgl, "WIN_swap_hint" ).setInteger( GL_WIN_swap_hint );
-      self->addClassProperty( c_sdlgl, "WIN_draw_range_elements" ).setInteger( GL_WIN_draw_range_elements );
+      //self->addClassProperty( c_sdlgl, "WIN_swap_hint" ).setInteger( GL_WIN_swap_hint );
+      //self->addClassProperty( c_sdlgl, "WIN_draw_range_elements" ).setInteger( GL_WIN_draw_range_elements );
       // GL_WIN_phong_shading
       // GL_WIN_specular_fog
 
@@ -1170,7 +1170,7 @@ FALCON_MODULE_DECL
       /* EXT_paletted_texture */
 
       /* These must match the GL_COLOR_TABLE_*_SGI enumerants */
-      self->addClassProperty( c_sdlgl, "COLOR_TABLE_FORMAT_EXT" ).setInteger( GL_COLOR_TABLE_FORMAT_EXT );
+      /*self->addClassProperty( c_sdlgl, "COLOR_TABLE_FORMAT_EXT" ).setInteger( GL_COLOR_TABLE_FORMAT_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_WIDTH_EXT" ).setInteger( GL_COLOR_TABLE_WIDTH_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_RED_SIZE_EXT" ).setInteger( GL_COLOR_TABLE_RED_SIZE_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_GREEN_SIZE_EXT" ).setInteger( GL_COLOR_TABLE_GREEN_SIZE_EXT );
@@ -1178,7 +1178,7 @@ FALCON_MODULE_DECL
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_ALPHA_SIZE_EXT" ).setInteger( GL_COLOR_TABLE_ALPHA_SIZE_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_LUMINANCE_SIZE_EXT" ).setInteger( GL_COLOR_TABLE_LUMINANCE_SIZE_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_TABLE_INTENSITY_SIZE_EXT" ).setInteger( GL_COLOR_TABLE_INTENSITY_SIZE_EXT );
-
+      */
       self->addClassProperty( c_sdlgl, "COLOR_INDEX1_EXT" ).setInteger( GL_COLOR_INDEX1_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_INDEX2_EXT" ).setInteger( GL_COLOR_INDEX2_EXT );
       self->addClassProperty( c_sdlgl, "COLOR_INDEX4_EXT" ).setInteger( GL_COLOR_INDEX4_EXT );
@@ -1187,8 +1187,8 @@ FALCON_MODULE_DECL
       self->addClassProperty( c_sdlgl, "COLOR_INDEX16_EXT" ).setInteger( GL_COLOR_INDEX16_EXT );
 
       /* WIN_draw_range_elements */
-      self->addClassProperty( c_sdlgl, "MAX_ELEMENTS_VERTICES_WIN" ).setInteger( GL_MAX_ELEMENTS_VERTICES_WIN );
-      self->addClassProperty( c_sdlgl, "MAX_ELEMENTS_INDICES_WIN" ).setInteger( GL_MAX_ELEMENTS_INDICES_WIN );
+      //self->addClassProperty( c_sdlgl, "MAX_ELEMENTS_VERTICES_WIN" ).setInteger( GL_MAX_ELEMENTS_VERTICES_WIN );
+      //self->addClassProperty( c_sdlgl, "MAX_ELEMENTS_INDICES_WIN" ).setInteger( GL_MAX_ELEMENTS_INDICES_WIN );
 
       /* WIN_phong_shading */
       self->addClassProperty( c_sdlgl, "PHONG_WIN" ).setInteger( GL_PHONG_WIN );

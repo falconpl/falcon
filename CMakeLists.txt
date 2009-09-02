@@ -24,13 +24,17 @@ INCLUDE_DIRECTORIES( ${SDL_INCLUDE_DIR} )
 
 option(WITH_GL "Build also GL, GLX and GLU modules" OFF)
 
+###############################àà
+# Echo config
+Message( "GL support: ${WITH_GL}" )
+
 # Project directories
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(ttf)
 ADD_SUBDIRECTORY(image)
 ADD_SUBDIRECTORY(mixer)
 
-IF( ${WITH_GL} )
+IF( WITH_GL )
 ADD_SUBDIRECTORY(gl)
 ADD_SUBDIRECTORY(glu)
 ADD_SUBDIRECTORY(glext)
