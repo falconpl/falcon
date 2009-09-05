@@ -30,6 +30,7 @@ namespace Falcon {
 
 class Garbageable;
 class GarbageableBase;
+class GarbageLock;
 
 /** Storage pit for garbageable data.
    Garbage items can be removed acting directly on them.
@@ -144,6 +145,29 @@ protected:
    
    mutable Mutex m_mtx_gen;
 
+   RampMode* m_ramp[RAMP_MODE_COUNT];
+   RampMode* m_curRampMode;
+   int m_curRampID;
+
+   Mutex m_mtxRequest;
+   Event m_eGCPerformed;
+   bool m_bRequestSweep;
+
+   /** Mutex for locked items ring. */
+   Mutex m_mtx_lockitem;
+
+   /** Locked and non reclaimable items are stored in this ring.  */
+   GarbageLock *m_lockRoot;
+
+   /** Generation at which locked items have been marked. *
+    *
+    */
+   uint32 m_lockGen;
+
+   //==================================================
+   // Private functions
+   //==================================================
+
    bool markVM( VMachine *vm );
    void gcSweep();
 
@@ -170,15 +194,7 @@ protected:
 
    void promote( uint32 oldgen, uint32 curgen );
    void advanceGeneration( VMachine* vm, uint32 oldGeneration );
-
-   RampMode* m_ramp[RAMP_MODE_COUNT];
-   RampMode* m_curRampMode;
-   int m_curRampID;
-
-   Mutex m_mtxRequest;
-   Event m_eGCPerformed;
-   bool m_bRequestSweep;
-
+   void markLocked();
 
 public:
    enum constants {
@@ -329,6 +345,41 @@ public:
    void accountItems( int itemCount );
 
    void performGC();
+
+   /** Locks garbage data.
+
+       Puts the given item in the availability pool. Garbage sensible
+       objects in that pool and objects reachable from them will be marked
+       as available even if there isn't any VM related entity pointing to them.
+
+       For performance reasons, a copy of the item stored in a GarbageItem
+       is returned. The calling application save that pointer and pass it
+       to unlock() when the item can be released.
+
+       It is not necessary to unlock the locked items: at VM destruction
+       they will be correctly destroyed.
+
+       Both the scripts (the VM) and the application may use the data in the
+       returned GarbageItem and modify it at will.
+
+       \param locked entity to be locked.
+       \return a relocable item pointer that can be used to access the deep data.
+   */
+   GarbageLock *lock( const Item &locked );
+
+    /** Unlocks garbage data.
+
+       Moves a locked garbage sensible item back to the normal pool,
+       where it will be removed if it is not reachable by the VM.
+
+       \note after calling this method, the \b locked parameter becomes
+          invalid and cannot be used anymore.
+
+       \see lock
+
+       \param locked entity to be unlocked.
+   */
+   void unlock( GarbageLock *locked );
 };
 
 

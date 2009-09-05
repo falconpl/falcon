@@ -38,6 +38,7 @@ class Sequence;
 class FalconData;
 
 /** Base core object class.
+
    To create your own objects, derive from this class and reimplement:
 
    \code

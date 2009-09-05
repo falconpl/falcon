@@ -29,6 +29,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/membuf.h>
 #include <falcon/garbagepointer.h>
+#include <falcon/garbagelock.h>
 
 
 #include <string>
@@ -58,7 +59,8 @@ MemPool::MemPool():
    m_allocatedMem( 0 ),
    m_th(0),
    m_bLive(false),
-   m_bRequestSweep( false )
+   m_bRequestSweep( false ),
+   m_lockGen( 0 )
 {
    m_vmRing = 0;
 
@@ -66,6 +68,11 @@ MemPool::MemPool():
    m_garbageRoot = new GarbageableBase;
    m_garbageRoot->nextGarbage( m_garbageRoot );
    m_garbageRoot->prevGarbage( m_garbageRoot );
+
+   // Use a ring also for the garbageLock system.
+   m_lockRoot = new GarbageLock(Item());
+   m_lockRoot->next( m_lockRoot );
+   m_lockRoot->prev( m_lockRoot );
 
    // separate the newly allocated items to allow allocations during sweeps.
    m_newRoot = new GarbageableBase;
@@ -94,6 +101,17 @@ MemPool::~MemPool()
    clearRing( m_garbageRoot );
    delete m_newRoot;
    delete m_garbageRoot;
+
+   // delete the garbage lock ring.
+   GarbageLock *ge = m_lockRoot->next();
+   while( ge != m_lockRoot )
+   {
+      GarbageLock *gnext = ge->next();
+      delete ge;
+      ge = gnext;
+   }
+   delete ge;
+
 
    // VMs are not mine, and they should be already dead since long.
    for( uint32 ri = 0; ri < RAMP_MODE_COUNT; ri++ )
@@ -343,8 +361,6 @@ void MemPool::accountItems( int itemCount )
 
 bool MemPool::markVM( VMachine *vm )
 {
-   vm->markLocked();
-
    // mark all the messaging system.
    vm->markSlots( generation() );
 
@@ -818,7 +834,12 @@ void* MemPool::run()
          m_mtx_vms.unlock();
          m_mtxRequest.unlock();
 
+         // before sweeping, mark -- eventually -- the locked items.
+         markLocked();
+
+         // all is marked, we can sweep
          gcSweep();
+
          // should we notify about the sweep being complete?
 
          if ( bPriority )
@@ -932,6 +953,66 @@ void MemPool::promote( uint32 oldgen, uint32 curgen )
    }
 }
 
+
+GarbageLock *MemPool::lock( const Item& itm )
+{
+   GarbageLock* ptr = new GarbageLock( itm );
+
+   m_mtx_lockitem.lock();
+   ptr->next( m_lockRoot->next() );
+   ptr->prev( m_lockRoot );
+   m_lockRoot->next()->prev( ptr );
+   m_lockRoot->next( ptr );
+   m_mtx_lockitem.unlock();
+
+   markItem( itm );
+
+   return ptr;
+}
+
+
+void MemPool::unlock( GarbageLock *ptr )
+{
+   fassert( ptr != m_lockRoot );
+
+   // frirst: remove the item from the availability pool
+   m_mtx_lockitem.lock();
+   ptr->next()->prev( ptr->prev() );
+   ptr->prev()->next( ptr->next() );
+   m_mtx_lockitem.unlock();
+
+   delete ptr;
+}
+
+
+void MemPool::markLocked()
+{
+   fassert( m_lockRoot != 0 );
+
+   // is there any VM keeping the locked items alive?
+   if ( m_mingen <= m_lockGen )
+      return;
+
+   m_lockGen = m_generation;
+
+   // Lock root never changes.
+   GarbageLock *rlock = this->m_lockRoot;
+   GarbageLock *lock = rlock;
+   do
+   {
+      // The root item never needs to be marked
+      m_mtx_lockitem.lock();
+      lock = lock->next();
+      m_mtx_lockitem.unlock();
+
+      // if a new item is inserted now, NP:
+      // it gets marked with current generation.
+      // If it gets deleted, it will just get an extra mark
+      // and live for an extra turn.
+      memPool->markItem( lock->item() );
+
+   } while( lock != rlock );
+}
 
 }
 

@@ -1,6 +1,14 @@
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not
-           cleaned (Thanks claim).
+           cleaned (Thanks Klaim).
+  * fixed: Added method Array.NM and arrayNM function to declare "never
+           methodic" arrays, that is, arrays meant to store data and
+           that aren't to be seen as methods even when they are in
+           properties.
+  * minor: Moved VMachine::lock() (GarbageLock managemnt) from VMachine to
+           memPool. This allow easier moving of data across VMs. Should
+           require recompilation of just a small subset of embedding
+           applications.     
   
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
