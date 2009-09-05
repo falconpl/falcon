@@ -167,8 +167,8 @@ void *ThreadImpl::run()
    setRunningThread( this );
    
    // hold a lock to the item, as it cannot be taken in the vm.
-   GarbageLock *tiLock = m_vm->lock( m_threadInstance );
-   GarbageLock *mthLock = m_vm->lock( m_method );
+   GarbageLock *tiLock = memPool->lock( m_threadInstance );
+   GarbageLock *mthLock = memPool->lock( m_method );
 
    // Perform the call.
    try {
@@ -181,8 +181,8 @@ void *ThreadImpl::run()
    }
 
    // unlock the threads objects
-   m_vm->unlock( tiLock );
-   m_vm->unlock( mthLock );
+   memPool->unlock( tiLock );
+   memPool->unlock( mthLock );
    m_vm->finalize();  // and we won't use it anymore
    
    m_thstatus.terminated();

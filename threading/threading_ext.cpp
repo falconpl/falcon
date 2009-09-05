@@ -795,16 +795,21 @@ FALCON_FUNC Thread_toString( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
-   
+
    // if we have no VM Thread object for this thread yet...
    CoreString* cs = new CoreString( "Thread \"" );
    *cs += thread->name();
    *cs += "\" ";
    cs->writeNumber( (int64) thread->getID() );
-   *cs += " [0x";
-   cs->writeNumberHex( thread->getSystemID() );
-   *cs += "]";
-   
+   if ( thread->getSystemID() != 0 )
+   {
+      *cs += " [0x";
+      cs->writeNumberHex( thread->getSystemID() );
+      *cs += "]";
+   }
+   else {
+      *cs += " [not started]";
+   }
    vm->retval( cs );
 }
 

@@ -87,7 +87,7 @@ public:
    const String& name() const { return m_name; }
    void name( const String &name ) { m_name = name; }
    
-   uint64 getSystemID() const { return m_sth->getID(); }
+   uint64 getSystemID() const { return m_sth == 0 ? 0 : m_sth->getID(); }
    bool equal( const ThreadImpl &other ) const { return m_sth->equal( other.m_sth ); }
    bool isCurrentThread() const { return m_sth->isCurrentThread(); }
 

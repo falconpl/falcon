@@ -365,7 +365,7 @@ FALCON_MODULE_DECL
    //=================================================================
    // Thread class.
    //
-   Falcon::Symbol *c_thread = self->addClass( "Thread", Falcon::Ext::Thread_init );
+   Falcon::Symbol *c_thread = self->addClass( "Thread", &Falcon::Ext::Thread_init );
    c_thread->getClassDef()->addInheritance( new Falcon::InheritDef( c_waitable ) );
    c_thread->setWKS( true );
    self->addClassMethod( c_thread, "start", Falcon::Ext::Thread_start );
