@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: confparser.cpp
+   FILE: logging.cpp
 
-   The configuration parser module.
+   The logging module.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2006-05-09 15:50
+   Begin: Sat, 05 Sep 2009 17:21:00 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2006: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -17,9 +17,9 @@
    The confparser module - main file.
 */
 #include <falcon/module.h>
-#include "confparser_ext.h"
-#include "confparser_mod.h"
-#include "confparser_st.h"
+#include "logging_ext.h"
+#include "logging_mod.h"
+#include "logging_st.h"
 
 #include "version.h"
 /*#
@@ -126,56 +126,25 @@ FALCON_MODULE_DECL
    // setup DLL engine common data
 
    Falcon::Module *self = new Falcon::Module();
-   self->name( "confparser" );
+   self->name( "logging" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    //====================================
    // Message setting
-   #include "confparser_st.h"
+   #include "logging_st.h"
 
 
-   Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
+   //Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
    //
 
-   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
-      addParam("stream");
-   self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write ).asSymbol()->
-      addParam("stream");
-   self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getOne", Falcon::Ext::ConfParser_getOne ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getMultiple", Falcon::Ext::ConfParser_getMultiple ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getSections", Falcon::Ext::ConfParser_getSections );
-   self->addClassMethod( c_cparser, "getKeys", Falcon::Ext::ConfParser_getKeys ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "getCategoryKeys", Falcon::Ext::ConfParser_getCategoryKeys ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "getCategory", Falcon::Ext::ConfParser_getCategory ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "removeCategory", Falcon::Ext::ConfParser_removeCategory ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "getDictionary", Falcon::Ext::ConfParser_getDictionary ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "add", Falcon::Ext::ConfParser_add ).asSymbol()->
-      addParam("key")->addParam("value")->addParam("section");
-   self->addClassMethod( c_cparser, "set", Falcon::Ext::ConfParser_set ).asSymbol()->
-      addParam("key")->addParam("value")->addParam("section");
-   self->addClassMethod( c_cparser, "remove", Falcon::Ext::ConfParser_remove ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "addSection", Falcon::Ext::ConfParser_addSection ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "removeSection", Falcon::Ext::ConfParser_removeSection ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "clearMain", Falcon::Ext::ConfParser_clearMain );
-   self->addClassProperty( c_cparser, "errorLine" );
-   self->addClassProperty( c_cparser, "error" );
+/*   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
+      addParam("stream");*/
+   //self->addClassProperty( c_cparser, "errorLine" );
 
    return self;
 }
 
-/* end of confparser.cpp */
+/* end of logging.cpp */
 

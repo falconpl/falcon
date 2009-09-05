@@ -1,6 +1,7 @@
-Feathers (0.9.4.2)
+Feathers (0.9.4.1)
   * fixed: Crash in Thread.toString() when the thread isn't started.
-  
+  * added: logging module
+ 
 Feathers (0.9.4)
   * major: Added support for interactive compiler in Compiler module.
   * fixed: In threading throwing some errors before releasing the
