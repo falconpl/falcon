@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: cobject.h
+   FILE: coreobject.h
 
    Base class for all the strict OOP available in falcon.
    -------------------------------------------------------------------
@@ -13,9 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Base class for all the strict OOP available in falcon.
-*/
 
 #ifndef flc_cobject_H
 #define flc_cobject_H
@@ -81,7 +78,7 @@ class FalconData;
    \code
    Symbol *my_class = self->addClass( "MyClass", my_class_init );
    my_class->getClassDef()->factory( &MyClassFactory );
-   \code
+   \endcode
 
    Three standard subclasses with their respective factories are provided.
    - FalconObject is the standard CoreObject containing falcon Item instances in each property and
