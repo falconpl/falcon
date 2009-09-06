@@ -40,6 +40,7 @@
 #include <falcon/cclass.h>
 #include <falcon/cclass.h>
 #include <falcon/coreobject.h>
+#include <falcon/corecarrier.h>
 #include <falcon/falconobject.h>
 #include <falcon/crobject.h>
 #include <falcon/reflectobject.h>

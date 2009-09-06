@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/coreobject.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 
