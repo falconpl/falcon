@@ -127,11 +127,24 @@ FALCON_FUNC  LogArea_add( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  GeneralLog_init( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  LogChannel_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm );
+
+// ==============================================
+// Generic area functions
+// ==============================================
+FALCON_FUNC  glog( ::Falcon::VMachine *vm );
+FALCON_FUNC  glogf( ::Falcon::VMachine *vm );
+FALCON_FUNC  gloge( ::Falcon::VMachine *vm );
+FALCON_FUNC  glogw( ::Falcon::VMachine *vm );
+FALCON_FUNC  glogi( ::Falcon::VMachine *vm );
+FALCON_FUNC  glogd( ::Falcon::VMachine *vm );
 
 }
 }

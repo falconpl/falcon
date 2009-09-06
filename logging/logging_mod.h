@@ -154,6 +154,9 @@ public:
    LogChannelStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL );
 
    virtual ~LogChannelStream();
+
+   bool flushAll() const { return m_bFlushAll; }
+   void flushAll( bool b ) { m_bFlushAll = b; }
 };
 
 }

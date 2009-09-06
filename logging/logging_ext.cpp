@@ -37,6 +37,12 @@
 namespace Falcon {
 namespace Ext {
 
+FALCON_FUNC  GeneralLog_init( ::Falcon::VMachine *vm )
+{
+   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   cc->carried( new LogArea( "general" ) );
+}
+
 // ==============================================
 // Class LogArea
 // ==============================================
@@ -246,6 +252,204 @@ FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method LogChannelStream
+   @brief Reads or set the flush all mode.
+   @optparam setting True to have the stream flushed at each write.
+   @return The current status setting.
+
+   Stream based channels are usually writing data on buffered streams.
+   The default behavior is that of flushing the buffer as soon as a log line is
+   written. For some tasks where a large amount of log is written, this may
+   be an overkill.
+*/
+FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
+{
+   Item *i_setting = vm->param(0);
+
+   CoreCarrier<LogChannelStream>* cc = dyncast< CoreCarrier<LogChannelStream>* >(vm->self().asObject());
+
+   // always save the level
+   vm->retval( cc->carried()->flushAll() );
+
+   if( i_setting != 0 )
+   {
+      // and eventually change it.
+      cc->carried()->flushAll( i_setting->asBoolean() );
+   }
+}
+
+static CoreObject* s_getGenLog( VMachine* vm )
+{
+   LiveModule* lmod = vm->currentLiveModule();
+   if( lmod->userItems().length() == 0 )
+   {
+      Item* i_genlog = vm->findWKI( "GeneralLog" );
+      fassert( i_genlog != 0 );
+      fassert( i_genlog->isOfClass( "%GeneralLog" ) );
+      lmod->userItems().append( *i_genlog );
+      return i_genlog->asObjectSafe();
+   }
+
+   return lmod->userItems()[0].asObjectSafe();
+}
+
+/*#
+   @function glog
+   @brief Shortcut to log on the generic area.
+   @param level The level of the log entry.
+   @param message The message to be logged.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area.
+
+   It is provided in this module for improved performance.
+*/
+
+FALCON_FUNC  glog( ::Falcon::VMachine *vm )
+{
+   Item *i_level = vm->param(0);
+   Item *i_message = vm->param(1);
+
+   if ( i_level == 0 || ! i_level->isOrdinal()
+        || i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "N,S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log(i_level->forceInteger(), *i_message->asString() );
+
+}
+
+/*#
+   @function glogf
+   @brief Shortcut to log a fatal error on the generic area.
+   @param message The message to be logged at fatal level.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the fatal error level.
+
+   It is provided in this module for improved performance.
+*/
+
+FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log( LOGLEVEL_FATAL, *i_message->asString() );
+}
+
+/*#
+   @function gloge
+   @brief Shortcut to log an error on the generic area.
+   @param message The message to be logged at error level.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the error level.
+
+   It is provided in this module for improved performance.
+*/
+
+FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log( LOGLEVEL_ERROR, *i_message->asString() );
+}
+
+/*#
+   @function glogw
+   @brief Shortcut to log a warning on the generic area.
+   @param message The message to be logged at warn level.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the warn level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log( LOGLEVEL_WARN, *i_message->asString() );
+}
+
+/*#
+   @function glogi
+   @brief Shortcut to log an information message on the generic area.
+   @param message The message to be logged at info level.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the info level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "N,S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log( LOGLEVEL_INFO, *i_message->asString() );
+}
+
+/*#
+   @function glogd
+   @brief Shortcut to log a debug message on the generic area.
+   @param message The message to be logged at debug level.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the debug level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_FUNC  glogd( ::Falcon::VMachine *vm )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "N,S" ) );
+   }
+
+   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   genlog->log( LOGLEVEL_DEBUG, *i_message->asString() );
+}
 
 }
 }

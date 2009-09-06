@@ -72,7 +72,18 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_logarea, "log", &Falcon::Ext::LogArea_log ).asSymbol()->
       addParam("level")->addParam("message");
 
-   //self->addClassProperty( c_cparser, "errorLine" );
+   //====================================
+   // General log area
+
+   /*# @object GeneralLog
+       @from LogArea
+       @brief General logging area.
+
+       This is the default log area used by the @a log function.
+   */
+   Falcon::Symbol *o_genlog = self->addSingleton( "GeneralLog", &Falcon::Ext::GeneralLog_init, true );
+   o_genlog->getInstance()->getClassDef()->addInheritance( new Falcon::InheritDef( c_logarea) );
+   o_genlog->setWKS( true );
 
    //====================================
    // Class LogChannel
@@ -93,6 +104,20 @@ FALCON_MODULE_DECL
    c_logcs->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelStream> );
    c_logcs->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
 
+   self->addClassMethod( c_logcs, "flushAll", &Falcon::Ext::LogChannelStream_flushAll ).asSymbol()->
+      addParam("setting");
+
+
+   //====================================
+   // Generic log function
+   //
+   self->addExtFunc( "glog", &Falcon::Ext::glog )->
+      addParam( "level" )->addParam( "message" );
+   self->addExtFunc( "glogf", &Falcon::Ext::glogf )->addParam( "message" );
+   self->addExtFunc( "gloge", &Falcon::Ext::gloge )->addParam( "message" );
+   self->addExtFunc( "glogw", &Falcon::Ext::glogw )->addParam( "message" );
+   self->addExtFunc( "glogi", &Falcon::Ext::glogi )->addParam( "message" );
+   self->addExtFunc( "glogd", &Falcon::Ext::glogd )->addParam( "message" );
 
    return self;
 }
