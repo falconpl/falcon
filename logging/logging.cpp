@@ -22,102 +22,24 @@
 #include "logging_st.h"
 
 #include "version.h"
+
+
+namespace Falcon {
+
+template class CoreCarrier<LogArea>;
+template class CoreCarrier<LogChannel>;
+template class CoreCarrier<LogChannelStream>;
+
+template CoreObject* CoreCarrier_Factory<LogArea>( const CoreClass *cls, void *data, bool );
+template CoreObject* CoreCarrier_Factory<LogChannel>( const CoreClass *cls, void *data, bool );
+template CoreObject* CoreCarrier_Factory<LogChannelStream>( const CoreClass *cls, void *data, bool );
+
+}
+
 /*#
-   @module feather_configparser Configuration Parser
-   @brief Advanced configuration file parser (with sections and key categorization support).
+   @module feather_logging Logging support
+   @brief Multithread enabled logging facility.
 
-   The ConfParser module is meant as a simple but powerful interface to .INI
-   like configuration files, with some extra features that allows to bring a bit
-   forward the traditional configuration file model and to circumvent some
-   arbitrary limitation that makes using human readable configuration files a bit
-   difficult in some complex configuration contexts.
-
-   ConfParser module also maintains comments and tries respect the layout of the
-   original INI file, so that it stays familiar for the user after a modify that
-   has been caused by the Falcon module.
-
-   @section confparser_ini_fformat Ini file format
-
-   The ConfParser module parses INI files in the following format:
-   @code
-   ; Comment lines
-   ; Comment lines...
-
-   Key = value
-   category.key = value
-
-   [section_name]
-   Key = value
-   category.key = value
-   Comments may be started either with ";" or "#" characters, and the colon ":" may be used instead of "=". So the above file may be rewritten in the more UNIX style:
-   # Comment lines
-   # Comment lines...
-
-   Key: value
-   category.key: value
-
-   [section_name]
-   Key: value
-   category.key: value
-   @endcode
-
-   Values may be enclosed in quotes; in this case, Falcon escape sequences are
-   correctly parsed. As comments starting with ";" or "#" may be placed
-   also after a value, if a value itself contains one of those characters it
-   should be enclosed by quotes, or part of the value will be considered a comment.
-
-   For example:
-
-   @code
-   Key: "A complex value containing\nescapes # and comment" ; real comment
-   @endcode
-
-   @subsection confparser_multiple_values Multiple values
-
-   Although it would be possible to put arbitrary lists into strings to save
-   them on configuration files, and expand them in the program when reading them
-   back, it is possible to store array of values in configuration files by
-   declaring multiple times the same key.
-
-   For example:
-   @code
-   Key = value1
-   Key = value2
-   Key = value3
-   @endcode
-
-   This will result in the three values to be returned in an array when the
-   value of "Key" is asked.
-
-   @subsection confparser_key_cat Key categories
-
-   Keys can be categorized; tree-like or even recursive key groups can be
-   represented with dots separating the key hierarchy elements.
-   In example, the configuration of a complex program can be saved like that:
-
-   @code
-   ...
-   UserPref.files.MaxSize = 100
-   UserPref.files.DefaultDir = "/home/$user"
-   ...
-   ...
-   UserPref.cache.MaxSize = 250
-   UserPref.cache.path = "/var/cache/prog.cache"
-   ...
-   @endcode
-   This lessen the need for traditional ini file "sections". Support for
-   sections is provided both for backward compatibility with a well known file
-   structure and because it still can be useful where it is known that one
-   hierarchical level is enough for the configuration needs of an application.
-
-   Sections are portion of ini files separated by the rest of it by an header in
-   square brackets; the keys that are defined from the beginning of file to the
-   first section heading, if present, are considered to belong to the "main"
-   section. The main section can't be directly addressed, as it has not a name. All
-   the methods accessing or manipulating keys have an extra optional parameter that
-   can address a specific section by it's name. If the parameter is not specified,
-   or if the parameter has nil value, then the methods will operate on the main
-   section.
 */
 FALCON_MODULE_DECL
 {
@@ -135,13 +57,42 @@ FALCON_MODULE_DECL
    // Message setting
    #include "logging_st.h"
 
-
-   //Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
+   //====================================
+   // Class Log Area
    //
 
-/*   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
-      addParam("stream");*/
+   Falcon::Symbol *c_logarea = self->addClass( "LogArea", &Falcon::Ext::LogArea_init )
+         ->addParam("name");
+   c_logarea->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogArea> );
+
+   self->addClassMethod( c_logarea, "add", &Falcon::Ext::LogArea_add ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_logarea, "remove", &Falcon::Ext::LogArea_remove ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_logarea, "log", &Falcon::Ext::LogArea_log ).asSymbol()->
+      addParam("level")->addParam("message");
+
    //self->addClassProperty( c_cparser, "errorLine" );
+
+   //====================================
+   // Class LogChannel
+
+   // Init prevents direct initialization. -- it's an abstract class.
+   Falcon::Symbol *c_logc = self->addClass( "LogChannel", &Falcon::Ext::LogChannel_init );
+
+   self->addClassMethod( c_logc, "level", &Falcon::Ext::LogChannel_level ).asSymbol()->
+      addParam("level");
+   self->addClassMethod( c_logc, "format", &Falcon::Ext::LogChannel_format ).asSymbol()->
+      addParam("format");
+
+   //====================================
+   // Class LogChannelStream
+   //
+   Falcon::Symbol *c_logcs = self->addClass( "LogChannelStream", &Falcon::Ext::LogChannelStream_init )
+         ->addParam("level")->addParam("format");
+   c_logcs->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelStream> );
+   c_logcs->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
+
 
    return self;
 }

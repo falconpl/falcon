@@ -82,22 +82,8 @@ protected:
    virtual ~LogChannel();
 public:
 
-   LogChannel( uint32 l = LOGLEVEL_ALL ):
-      m_refCount( 1 ),
-      m_msg_head(0),
-      m_msg_tail(0),
-      m_terminate(false),
-      m_level( l )
-      {}
-
-   LogChannel( const String &format, uint32 l = LOGLEVEL_ALL ):
-      m_refCount( 1 ),
-      m_msg_head(0),
-      m_msg_tail(0),
-      m_terminate(false),
-      m_level( l ),
-      m_format(format)
-      {}
+   LogChannel( uint32 l = LOGLEVEL_ALL );
+   LogChannel( const String &format, uint32 l = LOGLEVEL_ALL );
 
    void level( uint32 l ) { m_level = l; }
    uint32 level() const { return m_level; }
@@ -160,18 +146,12 @@ class FALCON_DYN_CLASS LogChannelStream: public LogChannel
 {
 protected:
    Stream* m_stream;
+   bool m_bFlushAll;
    void writeLogEntry( const String& entry );
 
 public:
-   LogChannelStream( Stream* s, int level=LOGLEVEL_ALL ):
-      LogChannel( level ),
-      m_stream( s )
-      {}
-
-   LogChannelStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL ):
-      LogChannel( fmt, level ),
-      m_stream( s )
-      {}
+   LogChannelStream( Stream* s, int level=LOGLEVEL_ALL );
+   LogChannelStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL );
 
    virtual ~LogChannelStream();
 };

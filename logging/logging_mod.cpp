@@ -16,8 +16,31 @@
 
 #include "logging_mod.h"
 #include <falcon/stream.h>
+#include <falcon/error.h>
 
 namespace Falcon {
+
+LogChannel::LogChannel( uint32 l ):
+   m_refCount( 1 ),
+   m_msg_head(0),
+   m_msg_tail(0),
+   m_terminate(false),
+   m_level( l )
+   {
+      start();
+   }
+
+LogChannel::LogChannel( const String &format, uint32 l ):
+   m_refCount( 1 ),
+   m_msg_head(0),
+   m_msg_tail(0),
+   m_terminate(false),
+   m_level( l ),
+   m_format(format)
+   {
+      start();
+   }
+
 
 LogChannel::~LogChannel()
 {
@@ -208,15 +231,29 @@ void LogArea::removeChannel( LogChannel* chn )
    m_mtx_chan.unlock();
 }
 
-
 //==========================================================
 // Stream writing to a channel
 //==========================================================
 
+LogChannelStream::LogChannelStream( Stream* s, int level ):
+   LogChannel( level ),
+   m_stream( s ),
+   m_bFlushAll( true )
+   {}
+
+LogChannelStream::LogChannelStream( Stream* s, const String &fmt, int level ):
+   LogChannel( fmt, level ),
+   m_stream( s ),
+   m_bFlushAll( true )
+   {}
 
 void LogChannelStream::writeLogEntry( const String& entry )
 {
    m_stream->writeString(entry);
+   m_stream->writeString("\n");
+
+   if( m_bFlushAll )
+      m_stream->flush();
 }
 
 LogChannelStream::~LogChannelStream()
