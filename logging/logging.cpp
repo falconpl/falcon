@@ -17,6 +17,7 @@
    The confparser module - main file.
 */
 #include <falcon/module.h>
+#include <falcon/corecarrier.h>
 #include "logging_ext.h"
 #include "logging_mod.h"
 #include "logging_st.h"
@@ -118,6 +119,17 @@ FALCON_MODULE_DECL
    self->addExtFunc( "glogw", &Falcon::Ext::glogw )->addParam( "message" );
    self->addExtFunc( "glogi", &Falcon::Ext::glogi )->addParam( "message" );
    self->addExtFunc( "glogd", &Falcon::Ext::glogd )->addParam( "message" );
+
+   //=====================================
+   // Constants
+   //
+   self->addConstant( "LOGF", (Falcon::int64) LOGLEVEL_FATAL );
+   self->addConstant( "LOGE", (Falcon::int64) LOGLEVEL_ERROR );
+   self->addConstant( "LOGW", (Falcon::int64) LOGLEVEL_WARN );
+   self->addConstant( "LOGI", (Falcon::int64) LOGLEVEL_INFO );
+   self->addConstant( "LOGD", (Falcon::int64) LOGLEVEL_DEBUG );
+   self->addConstant( "LOGD1", (Falcon::int64) LOGLEVEL_D1 );
+   self->addConstant( "LOGD2", (Falcon::int64) LOGLEVEL_D2 );
 
    return self;
 }

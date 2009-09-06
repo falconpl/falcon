@@ -20,6 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/mt.h>
 #include <falcon/string.h>
+#include <falcon/timestamp.h>
 
 namespace Falcon
 {
@@ -48,16 +49,23 @@ class FALCON_DYN_CLASS LogChannel: public Runnable
    Event m_message_incoming;
    SysThread* m_thread;
 
+   TimeStamp m_ts;
+   numeric m_startedAt;
+
    class LogMessage
    {
    public:
       String m_areaName;
+      String m_modName;
+      String m_caller;
       int m_level;
       String m_msg;
       LogMessage* m_next;
 
-      LogMessage( const String& areaName, int level, const String& msg ):
-         m_areaName(msg),
+      LogMessage( const String& areaName, const String& modname, const String& caller, int level, const String& msg ):
+         m_areaName( areaName ),
+         m_modName( modname ),
+         m_caller( caller ),
          m_level( level ),
          m_msg( msg ),
          m_next(0)
@@ -67,10 +75,20 @@ class FALCON_DYN_CLASS LogChannel: public Runnable
    LogMessage* m_msg_head;
    LogMessage* m_msg_tail;
    bool m_terminate;
+   bool m_bTsReady;
+
+   void updateTS()
+   {
+      if( ! m_bTsReady )
+      {
+         m_bTsReady = true;
+         m_ts.currentTime();
+      }
+   }
 
    void start();
    void stop();
-
+   bool expandMessage( LogMessage* msg, const String& fmt, String& target );
 
 
 protected:
@@ -88,13 +106,20 @@ public:
    void level( uint32 l ) { m_level = l; }
    uint32 level() const { return m_level; }
 
-   void format( const String& fmt ) { m_format = fmt; }
-   const String&  format() const { return m_format; }
+   void setFormat( const String& fmt );
+   void getFormat( String& fmt );
 
    void incref();
    void decref();
+   void log( uint32 level, const String& msg ) { log( "", "", level, msg ); }
    void log( LogArea* area, uint32 level, const String& msg );
+   void log( const String& tgt, const String& source, uint32 level, const String& msg )
+   {
+      log( tgt, source, "", level, msg );
+   }
+   void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg );
    virtual void* run();
+
 };
 
 /** Area for logging.
@@ -130,7 +155,17 @@ public:
       m_head_chan( 0 )
    {}
 
-   void log( uint32 level, const String& msg );
+   void log( uint32 level, const String& msg )
+   {
+      log( level, "", "", msg );
+   }
+
+   void log( uint32 level, const String& source, const String& msg )
+   {
+      log( level, source, "", msg );
+   }
+
+   void log( uint32 level, const String& source, const String& func, const String& msg );
 
    void incref();
    void decref();

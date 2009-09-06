@@ -19,6 +19,7 @@
 
 
 #include <falcon/fassert.h>
+#include <falcon/corecarrier.h>
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/carray.h>
@@ -37,9 +38,20 @@
 namespace Falcon {
 namespace Ext {
 
+static void s_log( LogArea* a, uint32 lev, VMachine* vm, const String& msg )
+{
+   StackFrame* sf = vm->currentFrame();
+
+   a->log( lev,
+         sf->m_module->module()->name(),
+         sf->m_symbol->name(),
+         msg );
+
+}
+
 FALCON_FUNC  GeneralLog_init( ::Falcon::VMachine *vm )
 {
-   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
    cc->carried( new LogArea( "general" ) );
 }
 
@@ -65,7 +77,7 @@ FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm )
             .extra( "S" ) );
    }
 
-   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(self);
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(self);
    cc->carried( new LogArea( *i_aname->asString() ) );
 }
 
@@ -85,7 +97,7 @@ FALCON_FUNC  LogArea_add( ::Falcon::VMachine *vm )
             .extra( "LogChannel" ) );
    }
 
-   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
    CoreCarrier<LogChannel>* chn = static_cast< CoreCarrier<LogChannel>* >( i_chn->asObjectSafe() );
    cc->carried()->addChannel( chn->carried() );
 }
@@ -107,8 +119,8 @@ FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm )
             .extra( "LogChannel" ) );
    }
 
-   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   CoreCarrier<LogChannel>* chn = dyncast< CoreCarrier<LogChannel>* >( i_chn->asObjectSafe() );
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   CoreCarrier<LogChannel>* chn = static_cast< CoreCarrier<LogChannel>* >( i_chn->asObjectSafe() );
    cc->carried()->removeChannel( chn->carried() );
 }
 
@@ -117,6 +129,23 @@ FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm )
    @brief Sends a log entry to all the registred channels.
    @param level The level of the log entry.
    @param message The message to be logged.
+
+   The @b level parameter can be an integer number, or one of the following
+   conventional constants representing levels:
+
+   - @b LOGF: failure; the application met a total failure condition and
+              is going to halt.
+   - @b LOGE: error; the application met an error condition, possibly dangerous
+              enough to cause future termination or malfunction, but not
+              dangerous enough to justify immediate exit.
+   - @b LOGW: warning; the application met an unusual condition that that should
+              be noted and known by other applications, developers or users
+              checking for possible problems.
+   - @b LOGI: infromation; the application wants to indicate that a normal or
+              expected event actually happened.
+   - @b LOGD: debug; A message useful to track debugging and development information.
+   - @b LOGD1: lower debug; debug used for very low level, and specialized debugging.
+   - @b LOGD2: still lower debug.
 */
 FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm )
 {
@@ -131,9 +160,8 @@ FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm )
             .extra( "N,S" ) );
    }
 
-   CoreCarrier<LogArea>* cc = dyncast< CoreCarrier<LogArea>* >(vm->self().asObject());
-
-   cc->carried()->log( i_level->forceInteger(), *i_message->asString() );
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   s_log( cc->carried(), i_level->forceInteger(), vm, *i_message->asString() );
 }
 
 /*#
@@ -167,7 +195,7 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
 {
    Item *i_level = vm->param(0);
 
-   CoreCarrier<LogChannel>* cc = dyncast< CoreCarrier<LogChannel>* >(vm->self().asObject());
+   CoreCarrier<LogChannel>* cc = (CoreCarrier<LogChannel>*)(vm->self().asObject());
 
    // always save the level
    vm->retval( (int64) cc->carried()->level() );
@@ -192,14 +220,44 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
    @optparam format the new format to set (a string).
    @return The current log message format (a string).
 
+   The message @b format is a template string filled with informations from
+   the logging system. Some loggin subsystems (as the MS-Windows Event Logger,
+   or as the Posix SYSLOG system) fill autonomously informations on behalf of
+   the application, while others (file and stream based loggers) require a format
+   to print meaningful informations as the timestamp.
+
+   The format string can contain the following escape codes:
+   - %a: Application area requesting the log (name of the LogArea).
+   - %d: date in YYYY-MM-DD format.
+   - %f: Function calling the log request.
+   - %l: Log level as a numeric integer.
+   - %L: Letter representing the log level (one character).
+   - %M: Name of the module requesting the log.
+   - %m: Log message.
+   - %R: date in RFC2822 format (as "Sun, 06 Sep 2009 18:16:20 +0200")
+   - %s: Milliseconds since the start of the program (in SSSSS.MMM format).
+   - %S: Milliseconds since the start of the program (absolute).
+   - %t: timestamp in HH:MM:SS.mmm format.
+   - %T: timestamp in YYYY-MM-DD HH:MM:SS.mmm format.
+
+   - %%: The "%" character.
+
+
+   For example, the pattern "%t\t(%m) %L\t%m" will print something like
+   @code
+      13:22:18.344    (testbind) D   Debug message from testbind.
+   @endcode
+
 */
 FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm )
 {
    Item *i_format = vm->param(0);
-   CoreCarrier<LogChannel>* cc = dyncast< CoreCarrier<LogChannel>* >(vm->self().asObject());
+   CoreCarrier<LogChannel>* cc = (CoreCarrier<LogChannel>*)(vm->self().asObject());
 
    // always save the level
-   vm->retval( new CoreString( cc->carried()->format() ) );
+   CoreString* ret = new CoreString();
+   cc->carried()->getFormat( *ret );
+   vm->retval( ret );
 
    if( i_format != 0 )
    {
@@ -211,7 +269,7 @@ FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm )
       }
 
       // and eventually change it.
-      cc->carried()->format( *i_format->asString() );
+      cc->carried()->setFormat( *i_format->asString() );
    }
 }
 
@@ -221,6 +279,12 @@ FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm )
    @param stream the stream where to log.
    @param level the log level.
    @optparam format a format for the log.
+
+   If given, the @b format parameter is used to configure how each log entry
+   will look once rendered on the final stream. Seel @a LogChannel.format for
+   a detailed description.
+
+   @see LogChannel.format
 */
 FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm )
 {
@@ -238,8 +302,8 @@ FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm )
             .extra( "Stream,N,[S]" ) );
    }
 
-   CoreCarrier<LogChannelStream>* cc = dyncast< CoreCarrier<LogChannelStream>* >(vm->self().asObject());
-   Stream* s = dyncast<Stream*>(i_stream->asObjectSafe()->getFalconData());
+   CoreCarrier<LogChannelStream>* cc = (CoreCarrier<LogChannelStream>*)(vm->self().asObject());
+   Stream* s = static_cast<Stream*>(i_stream->asObjectSafe()->getFalconData());
    uint32 l = (uint32) i_level->forceInteger();
 
    if( i_format == 0 )
@@ -253,7 +317,7 @@ FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method LogChannelStream
+   @method flushAll LogChannelStream
    @brief Reads or set the flush all mode.
    @optparam setting True to have the stream flushed at each write.
    @return The current status setting.
@@ -267,7 +331,7 @@ FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
 {
    Item *i_setting = vm->param(0);
 
-   CoreCarrier<LogChannelStream>* cc = dyncast< CoreCarrier<LogChannelStream>* >(vm->self().asObject());
+   CoreCarrier<LogChannelStream>* cc = (CoreCarrier<LogChannelStream>*)(vm->self().asObject());
 
    // always save the level
    vm->retval( cc->carried()->flushAll() );
@@ -304,6 +368,24 @@ static CoreObject* s_getGenLog( VMachine* vm )
    that is, on the default log area.
 
    It is provided in this module for improved performance.
+
+   The @b level parameter can be an integer number, or one of the following
+   conventional constants representing levels:
+
+   - @b LOGF: failure; the application met a total failure condition and
+              is going to halt.
+   - @b LOGE: error; the application met an error condition, possibly dangerous
+              enough to cause future termination or malfunction, but not
+              dangerous enough to justify immediate exit.
+   - @b LOGW: warning; the application met an unusual condition that that should
+              be noted and known by other applications, developers or users
+              checking for possible problems.
+   - @b LOGI: infromation; the application wants to indicate that a normal or
+              expected event actually happened.
+   - @b LOGD: debug; A message useful to track debugging and development information.
+   - @b LOGD1: lower debug; debug used for very low level, and specialized debugging.
+   - @b LOGD2: still lower debug.
+
 */
 
 FALCON_FUNC  glog( ::Falcon::VMachine *vm )
@@ -319,9 +401,24 @@ FALCON_FUNC  glog( ::Falcon::VMachine *vm )
             .extra( "N,S" ) );
    }
 
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log(i_level->forceInteger(), *i_message->asString() );
+   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   s_log( genlog, (uint32) i_level->forceInteger(), vm, *i_message->asString() );
 
+}
+
+void s_genericLog( VMachine* vm, uint32 level )
+{
+   Item *i_message = vm->param(0);
+
+   if ( i_message == 0 || !i_message->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S" ) );
+   }
+
+   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   s_log( genlog, level, vm, *i_message->asString() );
 }
 
 /*#
@@ -337,17 +434,7 @@ FALCON_FUNC  glog( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
 {
-   Item *i_message = vm->param(0);
-
-   if ( i_message == 0 || !i_message->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S" ) );
-   }
-
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log( LOGLEVEL_FATAL, *i_message->asString() );
+   s_genericLog( vm, LOGLEVEL_FATAL );
 }
 
 /*#
@@ -363,17 +450,7 @@ FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
 {
-   Item *i_message = vm->param(0);
-
-   if ( i_message == 0 || !i_message->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S" ) );
-   }
-
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log( LOGLEVEL_ERROR, *i_message->asString() );
+   s_genericLog( vm, LOGLEVEL_ERROR );
 }
 
 /*#
@@ -388,17 +465,7 @@ FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
 {
-   Item *i_message = vm->param(0);
-
-   if ( i_message == 0 || !i_message->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S" ) );
-   }
-
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log( LOGLEVEL_WARN, *i_message->asString() );
+   s_genericLog( vm, LOGLEVEL_WARN );
 }
 
 /*#
@@ -413,17 +480,7 @@ FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
 {
-   Item *i_message = vm->param(0);
-
-   if ( i_message == 0 || !i_message->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "N,S" ) );
-   }
-
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log( LOGLEVEL_INFO, *i_message->asString() );
+   s_genericLog( vm, LOGLEVEL_INFO );
 }
 
 /*#
@@ -438,17 +495,7 @@ FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  glogd( ::Falcon::VMachine *vm )
 {
-   Item *i_message = vm->param(0);
-
-   if ( i_message == 0 || !i_message->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "N,S" ) );
-   }
-
-   LogArea* genlog = dyncast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   genlog->log( LOGLEVEL_DEBUG, *i_message->asString() );
+   s_genericLog( vm, LOGLEVEL_DEBUG );
 }
 
 }
