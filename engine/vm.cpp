@@ -792,10 +792,10 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
       // export also the instance, if it is not already exported.
       if ( sym->isInstance() )
       {
-         sym = sym->getInstance();
-         if ( ! sym->exported() ) {
-            SymModule tmp( &globs[ sym->itemId() ], livemod, sym );
-            m_globalSyms.insert( &sym->name(), &tmp );
+         Symbol* tsym = sym->getInstance();
+         if ( ! tsym->exported() ) {
+            SymModule tmp( &globs[ tsym->itemId() ], livemod, tsym );
+            m_globalSyms.insert( &tsym->name(), &tmp );
          }
       }
    }
@@ -924,7 +924,7 @@ bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
       if ( obj->isWKS() )
       {
          SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &obj->name() );
-         fassert( tmp != 0 ); // we just added it
+         fassert ( tmp != 0 );
          tmp->liveModule()->wkitems()[ tmp->wkiid() ] = co;
       }
    }

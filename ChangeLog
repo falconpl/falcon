@@ -8,7 +8,12 @@ Falcon (0.9.4.1)
   * minor: Moved VMachine::lock() (GarbageLock managemnt) from VMachine to
            memPool. This allow easier moving of data across VMs. Should
            require recompilation of just a small subset of embedding
-           applications.     
+           applications.
+  * fixed: VMachine::currentLiveModule() returned a const LiveModule by error.
+  * fixed: VMachine::setWKS wasn't properly working on singletons, due to a
+           glitch in the code.
+  * minor: Added a userItems() vector in LiveModule, that can be used safely
+           by extensions and embeddings.
   
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and

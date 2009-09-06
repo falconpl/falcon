@@ -118,11 +118,9 @@ void LiveModule::gcMark( uint32 mk )
             m_strings[i]->mark( mk );
       }
 
-      for( uint32 j = 0; j < globals().length(); j++ )
-         memPool->markItem( globals()[ j ] );
-   
-      for( uint32 k = 0; k < wkitems().length(); k++ )
-         memPool->markItem( wkitems()[ k ] );
+      globals().gcMark( mk );
+      wkitems().gcMark( mk );
+      userItems().gcMark( mk );
    }
 }
 

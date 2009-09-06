@@ -78,6 +78,8 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    bool m_bAlive;
    bool m_needsCompleteLink;
 
+   ItemArray m_userItems;
+
 public:
    typedef enum {
       init_none,
@@ -151,6 +153,21 @@ public:
    void needsCompleteLink( bool l ) { m_needsCompleteLink = l; }
    
    void gcMark( uint32 mark );
+
+   /** Returns the user items of this live modules.
+    *
+    * Modules often need a module-global storage. However, the virtual
+    * machine doesn't offer this space, and using global variables requires
+    * a bit of gym to get the variable ID and the item in the live
+    * module global array.
+    *
+    * The module functions, at extension level (i.e. the C++ implementations)
+    * can take advantage of this item array which is dedicated to them.
+    *
+    * The array is also autonomously GC marked.
+    */
+   ItemArray& userItems() { return m_userItems; }
+   const ItemArray& userItems() const { return m_userItems; }
 };
 
 

@@ -1013,7 +1013,7 @@ public:
    const Module *currentModule() const { return m_currentContext->lmodule()->module(); }
 
    /** Returns the module in which the execution is currently taking place. */
-   const LiveModule *currentLiveModule() const { return m_currentContext->lmodule(); }
+   LiveModule *currentLiveModule() const { return m_currentContext->lmodule(); }
 
    /** Find a linked module with a given name.
       Returns a pointer to the linked live module if the name exists, or 0 if the named module
