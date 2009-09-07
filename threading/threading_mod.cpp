@@ -21,6 +21,7 @@
 #include <falcon/fassert.h>
 #include <falcon/coreobject.h>
 #include <falcon/vm.h>
+#include <falcon/garbagelock.h>
 
 #include "threading_mod.h"
 
@@ -167,8 +168,8 @@ void *ThreadImpl::run()
    setRunningThread( this );
    
    // hold a lock to the item, as it cannot be taken in the vm.
-   GarbageLock *tiLock = memPool->lock( m_threadInstance );
-   GarbageLock *mthLock = memPool->lock( m_method );
+   GarbageLock tiLock( m_threadInstance );
+   GarbageLock mthLock( m_method );
 
    // Perform the call.
    try {
@@ -180,11 +181,7 @@ void *ThreadImpl::run()
       m_lastError = err;
    }
 
-   // unlock the threads objects
-   memPool->unlock( tiLock );
-   memPool->unlock( mthLock );
    m_vm->finalize();  // and we won't use it anymore
-   
    m_thstatus.terminated();
 
    return 0;
