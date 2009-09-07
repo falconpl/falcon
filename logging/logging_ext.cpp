@@ -161,7 +161,7 @@ FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm )
    }
 
    CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   s_log( cc->carried(), i_level->forceInteger(), vm, *i_message->asString() );
+   s_log( cc->carried(), (uint32) i_level->forceInteger(), vm, *i_message->asString() );
 }
 
 /*#

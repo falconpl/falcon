@@ -40,7 +40,7 @@ class LogArea;
 class Stream;
 
 /** Abstract base class for logging channels. */
-class FALCON_DYN_CLASS LogChannel: public Runnable
+class LogChannel: public Runnable
 {
    volatile int m_refCount;
    friend class LogArea;
@@ -125,7 +125,7 @@ public:
 /** Area for logging.
  *
  */
-class FALCON_DYN_CLASS LogArea
+class LogArea
 {
    volatile int m_refCount;
    String m_name;
@@ -177,7 +177,7 @@ public:
 };
 
 
-class FALCON_DYN_CLASS LogChannelStream: public LogChannel
+class LogChannelStream: public LogChannel
 {
 protected:
    Stream* m_stream;
