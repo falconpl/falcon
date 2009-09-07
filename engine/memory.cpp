@@ -136,9 +136,9 @@ void gcMemAccount( size_t mem )
    if( s_gcMutex == 0 )
       s_gcMutex = new Mutex;
 
-   s_gcMutex->lock();
+   /*s_gcMutex->lock();
    s_allocatedMem += mem;
-   s_gcMutex->unlock();
+   s_gcMutex->unlock();*/
 }
 
 void gcMemUnaccount( size_t mem )

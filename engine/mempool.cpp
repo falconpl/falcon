@@ -70,7 +70,7 @@ MemPool::MemPool():
    m_garbageRoot->prevGarbage( m_garbageRoot );
 
    // Use a ring also for the garbageLock system.
-   m_lockRoot = new GarbageLock(Item());
+   m_lockRoot = new GarbageLock( true );
    m_lockRoot->next( m_lockRoot );
    m_lockRoot->prev( m_lockRoot );
 
@@ -954,10 +954,8 @@ void MemPool::promote( uint32 oldgen, uint32 curgen )
 }
 
 
-GarbageLock *MemPool::lock( const Item& itm )
+void MemPool::addGarbageLock( GarbageLock* ptr )
 {
-   GarbageLock* ptr = new GarbageLock( itm );
-
    m_mtx_lockitem.lock();
    ptr->next( m_lockRoot->next() );
    ptr->prev( m_lockRoot );
@@ -965,23 +963,17 @@ GarbageLock *MemPool::lock( const Item& itm )
    m_lockRoot->next( ptr );
    m_mtx_lockitem.unlock();
 
-   markItem( itm );
-
-   return ptr;
+   markItem( ptr->item() );
 }
 
 
-void MemPool::unlock( GarbageLock *ptr )
+void MemPool::removeGarbageLock( GarbageLock *ptr )
 {
-   fassert( ptr != m_lockRoot );
-
    // frirst: remove the item from the availability pool
    m_mtx_lockitem.lock();
    ptr->next()->prev( ptr->prev() );
    ptr->prev()->next( ptr->next() );
    m_mtx_lockitem.unlock();
-
-   delete ptr;
 }
 
 
@@ -1012,6 +1004,29 @@ void MemPool::markLocked()
       memPool->markItem( lock->item() );
 
    } while( lock != rlock );
+}
+
+//=======================================================================
+// Garbage Lock
+//=======================================================================
+GarbageLock::GarbageLock( bool )
+{
+}
+
+GarbageLock::GarbageLock()
+{
+	memPool->addGarbageLock( this );
+}
+
+GarbageLock::GarbageLock( const Item &itm ):
+	m_item(itm)
+{
+	memPool->addGarbageLock( this );
+}
+
+GarbageLock::~GarbageLock()
+{
+	memPool->removeGarbageLock( this );
 }
 
 }
