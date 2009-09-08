@@ -27,14 +27,16 @@
 namespace Falcon {
 namespace core {
 
-void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, bool add = true, bool addLine=true );
+void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, Item* i_stream, bool add = true, bool addLine=true );
 
-void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, bool add, bool addline )
+void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, Item* i_stream, bool add, bool addline )
 {
 
    uint32 count;
    int32 i;
-   Stream *stream = vm->stdErr();
+   Stream *stream = i_stream != 0 ?
+         dyncast<Stream*>(i_stream->asObjectSafe()->getFalconData()) :
+         vm->stdErr();
 
    // return if we reached the maximum level.
    if ( maxLevel >= 0 && level > maxLevel )
@@ -178,7 +180,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          stream->writeString( "{\n" );
 
          for( count = 0; count < arr->length(); count++ ) {
-            inspect_internal( vm, & ((*arr)[count]), level + 1, maxLevel, maxSize, true, true );
+            inspect_internal( vm, & ((*arr)[count]), level + 1, maxLevel, maxSize, i_stream, true, true );
          }
 
          for ( i = 0; i < level; i ++ )
@@ -208,9 +210,9 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          Iterator iter( &dict->items() );
          while( iter.hasCurrent() )
          {
-            inspect_internal( vm, &iter.getCurrentKey(), level + 1, maxLevel, maxSize, true, false );
+            inspect_internal( vm, &iter.getCurrentKey(), level + 1, maxLevel, maxSize, i_stream, true, false );
             stream->writeString( " => " );
-            inspect_internal( vm, &iter.getCurrent(), level + 1, maxLevel, maxSize, false, true );
+            inspect_internal( vm, &iter.getCurrent(), level + 1, maxLevel, maxSize, i_stream, false, true );
             iter.next();
          }
          for ( i = 0; i < level; i ++ )
@@ -244,7 +246,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
             stream->writeString( propName + " => " );
             Item dummy;
             arr->getProperty( propName, dummy);
-            inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, false, true );
+            inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, i_stream, false, true );
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -267,7 +269,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          Item itemp;
          elem->getMethodItem( itemp );
 
-         inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
+         inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, i_stream, true, true );
          for ( i = 0; i < level; i ++ )
          {
             stream->writeString("   ");
@@ -309,7 +311,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
 
       case FLC_ITEM_REFERENCE:
          stream->writeString( "Ref to " );
-         inspect_internal( vm, elem->dereference(), level + 1, maxLevel, maxSize, false, true );
+         inspect_internal( vm, elem->dereference(), level + 1, maxLevel, maxSize, i_stream, false, true );
       break;
 
       default:
@@ -328,6 +330,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
    @param item The item to be inspected.
    @optparam depth Maximum inspect depth.
    @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
+   @optparam stream Different stream where to send the dump.
    @brief Displays the deep contents of an item.
 
    This is mainly a debugging function that prints all the available
@@ -368,20 +371,22 @@ FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
    Item *i_item = vm->param(0);
    Item *i_depth = vm->param(1);
    Item *i_maxLen = vm->param(2);
+   Item *i_stream = vm->param(3);
 
    if ( i_item == 0
       || ( i_depth != 0 && ! i_depth->isNil() && ! i_depth->isOrdinal() )
-      || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() ) )
+      || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() )
+      || ( i_stream != 0 && ! i_stream->isNil() && ! i_stream->isOfClass("Stream") ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,[N],[N]") );
+         extra("X,[N],[N],[Stream]") );
    }
 
    int32 depth = (int32) (i_depth == 0 || i_depth->isNil() ? 3 : i_depth->forceInteger());
    int32 maxlen = (int32) (i_maxLen == 0 || i_maxLen->isNil() ? 60 : i_maxLen->forceInteger());
 
-   inspect_internal( vm, i_item, 0, depth, maxlen );
+   inspect_internal( vm, i_item, 0, depth, maxlen, i_stream );
 }
 
 

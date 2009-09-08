@@ -14,6 +14,7 @@ Falcon (0.9.4.1)
            glitch in the code.
   * minor: Added a userItems() vector in LiveModule, that can be used safely
            by extensions and embeddings.
+  * minor: Added a "stream" parameter to redirect dump to another stream.
   
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
