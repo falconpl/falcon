@@ -10,6 +10,8 @@ INCLUDE_DIRECTORIES(.)
 IF(WIN32)
    SET( SYS_RC logging.rc )
    SET( SYS_SRC logging_mod_win.cpp )
+ELSE(WIN32)
+   SET( SYS_SRC logging_mod_syslog.cpp )
 ENDIF(WIN32)
 
 # Target
