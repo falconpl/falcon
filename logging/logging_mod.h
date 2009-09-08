@@ -68,8 +68,8 @@ protected:
       String m_caller;
       int m_level;
       String m_msg;
+      uint32 m_code;
       LogMessage* m_next;
-	  uint32 m_code;
 
       LogMessage( const String& areaName, const String& modname, const String& caller, int level, const String& msg, uint32 code = 0 ):
          m_areaName( areaName ),
@@ -77,7 +77,7 @@ protected:
          m_caller( caller ),
          m_level( level ),
          m_msg( msg ),
-		 m_code( code ),
+         m_code( code ),
          m_next(0)
          {}
    };
