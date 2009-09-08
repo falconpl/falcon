@@ -38,14 +38,15 @@
 namespace Falcon {
 namespace Ext {
 
-static void s_log( LogArea* a, uint32 lev, VMachine* vm, const String& msg )
+static void s_log( LogArea* a, uint32 lev, VMachine* vm, const String& msg, uint32 code )
 {
    StackFrame* sf = vm->currentFrame();
 
    a->log( lev,
          sf->m_module->module()->name(),
          sf->m_symbol->name(),
-         msg );
+         msg,
+		 code );
 
 }
 
@@ -129,6 +130,7 @@ FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm )
    @brief Sends a log entry to all the registred channels.
    @param level The level of the log entry.
    @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
 
    The @b level parameter can be an integer number, or one of the following
    conventional constants representing levels:
@@ -151,17 +153,20 @@ FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm )
 {
    Item *i_level = vm->param(0);
    Item *i_message = vm->param(1);
+   Item *i_code = vm->param(2);
 
    if ( i_level == 0 || ! i_level->isOrdinal()
-        || i_message == 0 || !i_message->isString() )
+        || i_message == 0 || !i_message->isString()
+		|| ( i_code != 0 && ! i_code->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin(e_orig_runtime)
-            .extra( "N,S" ) );
+			.extra( "N,S,[N]" ) );
    }
 
    CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   s_log( cc->carried(), (uint32) i_level->forceInteger(), vm, *i_message->asString() );
+   uint32 code = (uint32) (i_code != 0 ? i_code->forceInteger() : 0);
+   s_log( cc->carried(), (uint32) i_level->forceInteger(), vm, *i_message->asString(), code );
 }
 
 /*#
@@ -228,6 +233,8 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
 
    The format string can contain the following escape codes:
    - %a: Application area requesting the log (name of the LogArea).
+   - %c: Numeric code as passed in the "code" optional parameter.
+   - %C: Numeric code as passed in the "code" optional parameter, zero padded to 5 digits.
    - %d: date in YYYY-MM-DD format.
    - %f: Function calling the log request.
    - %l: Log level as a numeric integer.
@@ -343,6 +350,71 @@ FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @class LogChannelSyslog
+   @brief Logs on the local system logger facility.
+   @param identity Name of the application as known by the logging system.
+   @param facility Numeric facility or log type code.
+   @param level the log level.
+   @optparam format a format for the log.
+
+   This class provides a generic logging interface towards the system logger
+   facility. On POSIX systems, this is represented by "syslog", and generically
+   handled by the SysLog daemon. On MS-Windows systems, messages logged through
+   this channel are sent to the Event Logger.
+
+   Identity is the name under which the logging application presents itself to the
+   logging system. This is used by the logging system to sort or specially mark
+   the messages coming from this application.
+
+   The facility code is a generic application type, and is used to send more relevant
+   logs to more visible files. Under MS-Windows, the facility code is sent untranslated
+   in the "message category" field of the event logger, and it's application specific. 
+   In doubt, it's safe to use 0.
+
+   If given, the @b format parameter is used to configure how each log entry
+   will look once rendered on the final stream. Seel @a LogChannel.format for
+   a detailed description.
+
+   @see LogChannel.format
+*/
+FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
+{
+   Item *i_identity = vm->param(0);
+   Item *i_facility = vm->param(1);
+   Item *i_level = vm->param(2);
+   Item *i_format = vm->param(3);
+
+   if( i_identity == 0 || ! i_identity->isString()
+	   || i_facility == 0 || ! i_facility->isOrdinal()
+       || i_level == 0 || ! i_level->isOrdinal()
+       || ( i_format != 0 && ! i_format->isString() )
+       )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S,N,N,[S]" ) );
+   }
+
+   CoreCarrier<LogChannelSyslog>* cc = (CoreCarrier<LogChannelSyslog>*)(vm->self().asObject());
+   uint32 f = (uint32) i_facility->forceInteger();
+   uint32 l = (uint32) i_level->forceInteger();
+
+   try
+   {
+	   cc->carried( new LogChannelSyslog(*i_identity->asString(), f, l) );
+
+       if( i_format != 0 )
+	      cc->carried()->setFormat( *i_format->asString() );
+   }
+   catch( Error* err )
+   {
+	   err->errorDescription( FAL_STR( msg_log_openres ) );
+	  throw;
+   }
+}
+
+
 static CoreObject* s_getGenLog( VMachine* vm )
 {
    LiveModule* lmod = vm->currentLiveModule();
@@ -363,6 +435,7 @@ static CoreObject* s_getGenLog( VMachine* vm )
    @brief Shortcut to log on the generic area.
    @param level The level of the log entry.
    @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
 
    This method is equivalent to call @b log on the @a GeneralLog object,
    that is, on the default log area.
@@ -392,9 +465,12 @@ FALCON_FUNC  glog( ::Falcon::VMachine *vm )
 {
    Item *i_level = vm->param(0);
    Item *i_message = vm->param(1);
+   Item *i_code = vm->param(2);
 
    if ( i_level == 0 || ! i_level->isOrdinal()
-        || i_message == 0 || !i_message->isString() )
+        || i_message == 0 || !i_message->isString()
+		|| (i_code != 0 && ! i_code->isOrdinal() )
+		)
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin(e_orig_runtime)
@@ -402,29 +478,35 @@ FALCON_FUNC  glog( ::Falcon::VMachine *vm )
    }
 
    LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   s_log( genlog, (uint32) i_level->forceInteger(), vm, *i_message->asString() );
+   uint32 code = (uint32)( i_code == 0 ? 0 : i_code->forceInteger() );
+   s_log( genlog, (uint32) i_level->forceInteger(), vm, *i_message->asString(), code );
 
 }
 
 void s_genericLog( VMachine* vm, uint32 level )
 {
    Item *i_message = vm->param(0);
+   Item *i_code = vm->param(1);
 
-   if ( i_message == 0 || !i_message->isString() )
+   if ( i_message == 0 || ! i_message->isString()
+	    || (i_code != 0 && ! i_code->isOrdinal() )
+	   )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin(e_orig_runtime)
-            .extra( "S" ) );
+            .extra( "S,[N]" ) );
    }
 
    LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   s_log( genlog, level, vm, *i_message->asString() );
+   uint32 code = (uint32)( i_code == 0 ? 0 : i_code->forceInteger() );
+   s_log( genlog, level, vm, *i_message->asString(), code );
 }
 
 /*#
    @function glogf
    @brief Shortcut to log a fatal error on the generic area.
    @param message The message to be logged at fatal level.
+   @optparam code A numeric code representing an application specific message ID.
 
    This method is equivalent to call @b log on the @a GeneralLog object,
    that is, on the default log area, indicating the fatal error level.
@@ -439,6 +521,7 @@ FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
 
 /*#
    @function gloge
+   @optparam code A numeric code representing an application specific message ID.
    @brief Shortcut to log an error on the generic area.
    @param message The message to be logged at error level.
 
@@ -457,6 +540,7 @@ FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
    @function glogw
    @brief Shortcut to log a warning on the generic area.
    @param message The message to be logged at warn level.
+   @optparam code A numeric code representing an application specific message ID.
 
    This method is equivalent to call @b log on the @a GeneralLog object,
    that is, on the default log area, indicating the warn level.
@@ -472,6 +556,7 @@ FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
    @function glogi
    @brief Shortcut to log an information message on the generic area.
    @param message The message to be logged at info level.
+   @optparam code A numeric code representing an application specific message ID.
 
    This method is equivalent to call @b log on the @a GeneralLog object,
    that is, on the default log area, indicating the info level.
@@ -487,6 +572,7 @@ FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
    @function glogd
    @brief Shortcut to log a debug message on the generic area.
    @param message The message to be logged at debug level.
+   @optparam code A numeric code representing an application specific message ID.
 
    This method is equivalent to call @b log on the @a GeneralLog object,
    that is, on the default log area, indicating the debug level.

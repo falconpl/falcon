@@ -88,17 +88,17 @@ void LogChannel::decref()
    }
 }
 
-void LogChannel::log( LogArea* area, uint32 level, const String& msg )
+void LogChannel::log( LogArea* area, uint32 level, const String& msg, uint32 code )
 {
-   log( area->name(), "", level, msg );
+   log( area->name(), "", level, msg, code );
 }
 
-void LogChannel::log( const String& area, const String& mod, const String& func, uint32 l, const String& msg )
+void LogChannel::log( const String& area, const String& mod, const String& func, uint32 l, const String& msg, uint32 code )
 {
    if ( l <= m_level )
    {
       // delegate formatting to the other thread.
-      LogMessage* lmsg = new LogMessage( area, mod, func, l, msg );
+      LogMessage* lmsg = new LogMessage( area, mod, func, l, msg, code );
 
       m_msg_mtx.lock();
       if ( m_msg_tail == 0 )
@@ -137,11 +137,11 @@ void* LogChannel::run()
          String target;
          if( expandMessage( msg, fmt, target ) )
          {
-            writeLogEntry( target );
+            writeLogEntry( target, msg );
          }
          else
          {
-            writeLogEntry( msg->m_msg );
+            writeLogEntry( msg->m_msg, msg );
          }
 
          delete msg;
@@ -229,6 +229,20 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
       case 's':
          distance = Sys::Time::seconds() - m_startedAt;
          temp.writeNumber( (int64) (distance*1000) );
+         target.change( pos, pos + 2, temp );
+         break;
+
+      case 'c':
+		 temp.writeNumber( (int64) msg->m_code );
+         target.change( pos, pos + 2, temp );
+         break;
+
+      case 'C':
+		 temp.writeNumber( (int64) msg->m_code );
+		 {
+		 for( int i = temp.length(); i < 5; i ++ )
+			 temp.prepend( '0' );
+		 }
          target.change( pos, pos + 2, temp );
          break;
 
@@ -324,13 +338,13 @@ LogArea::~LogArea()
 }
 
 
-void LogArea::log( uint32 level, const String& source, const String& func, const String& msg )
+void LogArea::log( uint32 level, const String& source, const String& func, const String& msg, uint32 code )
 {
    m_mtx_chan.lock();
    ChannelCarrier* cc = m_head_chan;
    while( cc != 0 )
    {
-      cc->m_channel->log( this->name(), source, func, level, msg );
+      cc->m_channel->log( this->name(), source, func, level, msg, code );
       cc = cc->m_next;
    }
    m_mtx_chan.unlock();
@@ -414,7 +428,7 @@ LogChannelStream::LogChannelStream( Stream* s, const String &fmt, int level ):
    m_bFlushAll( true )
    {}
 
-void LogChannelStream::writeLogEntry( const String& entry )
+void LogChannelStream::writeLogEntry( const String& entry, LogChannel::LogMessage* )
 {
    m_stream->writeString(entry);
    m_stream->writeString("\n");

@@ -21,6 +21,13 @@
 #include <falcon/mt.h>
 #include <falcon/string.h>
 #include <falcon/timestamp.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_LOGGING_ERROR_BASE
+   #define FALCON_LOGGING_ERROR_BASE         1200
+#endif
+
+#define FALCON_LOGGING_ERROR_OPEN  (FALCON_LOGGING_ERROR_BASE + 0)
 
 namespace Falcon
 {
@@ -52,6 +59,7 @@ class LogChannel: public Runnable
    TimeStamp m_ts;
    numeric m_startedAt;
 
+protected:
    class LogMessage
    {
    public:
@@ -61,17 +69,20 @@ class LogChannel: public Runnable
       int m_level;
       String m_msg;
       LogMessage* m_next;
+	  uint32 m_code;
 
-      LogMessage( const String& areaName, const String& modname, const String& caller, int level, const String& msg ):
+      LogMessage( const String& areaName, const String& modname, const String& caller, int level, const String& msg, uint32 code = 0 ):
          m_areaName( areaName ),
          m_modName( modname ),
          m_caller( caller ),
          m_level( level ),
          m_msg( msg ),
+		 m_code( code ),
          m_next(0)
          {}
    };
 
+private:
    LogMessage* m_msg_head;
    LogMessage* m_msg_tail;
    bool m_terminate;
@@ -96,28 +107,30 @@ protected:
    String m_format;
 
    /** Override this to send a pre-formatted message to the output device */
-   virtual void writeLogEntry( const String& entry ) = 0;
+   virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg ) = 0;
    virtual ~LogChannel();
 public:
 
    LogChannel( uint32 l = LOGLEVEL_ALL );
    LogChannel( const String &format, uint32 l = LOGLEVEL_ALL );
 
-   void level( uint32 l ) { m_level = l; }
-   uint32 level() const { return m_level; }
+   inline void level( uint32 l ) { m_level = l; }
+   inline uint32 level() const { return m_level; }
 
-   void setFormat( const String& fmt );
-   void getFormat( String& fmt );
+   virtual void setFormat( const String& fmt );
+   virtual void getFormat( String& fmt );
 
-   void incref();
-   void decref();
-   void log( uint32 level, const String& msg ) { log( "", "", level, msg ); }
-   void log( LogArea* area, uint32 level, const String& msg );
-   void log( const String& tgt, const String& source, uint32 level, const String& msg )
+   virtual void incref();
+   virtual void decref();
+
+   virtual void log( LogArea* area, uint32 level, const String& msg, uint32 code = 0 );
+
+   inline void log( uint32 level, const String& msg, uint32 code = 0 ) { log( "", "", level, msg, code ); }
+   inline void log( const String& tgt, const String& source, uint32 level, const String& msg, uint32 code = 0 )
    {
       log( tgt, source, "", level, msg );
    }
-   void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg );
+   virtual void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code = 0 );
    virtual void* run();
 
 };
@@ -125,7 +138,7 @@ public:
 /** Area for logging.
  *
  */
-class LogArea
+class LogArea: public BaseAlloc
 {
    volatile int m_refCount;
    String m_name;
@@ -155,25 +168,25 @@ public:
       m_head_chan( 0 )
    {}
 
-   void log( uint32 level, const String& msg )
+   virtual void log( uint32 level, const String& msg, uint32 code = 0 )
    {
-      log( level, "", "", msg );
+      log( level, "", "", msg, code );
    }
 
-   void log( uint32 level, const String& source, const String& msg )
+   virtual void log( uint32 level, const String& source, const String& msg, uint32 code = 0 )
    {
-      log( level, source, "", msg );
+      log( level, source, "", msg, code );
    }
 
-   void log( uint32 level, const String& source, const String& func, const String& msg );
+   virtual void log( uint32 level, const String& source, const String& func, const String& msg, uint32 code = 0 );
 
-   void incref();
-   void decref();
+   virtual void incref();
+   virtual void decref();
 
-   const String& name() const { return m_name; }
+   virtual const String& name() const { return m_name; }
 
-   void addChannel( LogChannel* chn );
-   void removeChannel( LogChannel* chn );
+   virtual void addChannel( LogChannel* chn );
+   virtual void removeChannel( LogChannel* chn );
 };
 
 
@@ -182,16 +195,38 @@ class LogChannelStream: public LogChannel
 protected:
    Stream* m_stream;
    bool m_bFlushAll;
-   void writeLogEntry( const String& entry );
+   virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
+   virtual ~LogChannelStream();
 
 public:
    LogChannelStream( Stream* s, int level=LOGLEVEL_ALL );
    LogChannelStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL );
 
-   virtual ~LogChannelStream();
 
-   bool flushAll() const { return m_bFlushAll; }
-   void flushAll( bool b ) { m_bFlushAll = b; }
+   inline bool flushAll() const { return m_bFlushAll; }
+   inline void flushAll( bool b ) { m_bFlushAll = b; }
+};
+
+/** Logging for Syslog (POSIX) or Event Logger (MS-Windows). 
+
+*/
+class LogChannelSyslog: public LogChannel
+{
+private:
+   void* m_sysdata;
+
+protected:
+   String m_identity;
+   uint32 m_facility;
+   
+   virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
+   virtual void init();
+   
+   virtual ~LogChannelSyslog();
+
+public:
+   LogChannelSyslog( const String& identity, uint32 facility = 0, int level=LOGLEVEL_ALL );
+   LogChannelSyslog( const String& identity, const String &fmt, uint32 facility = 0, int level=LOGLEVEL_ALL );
 };
 
 }

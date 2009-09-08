@@ -16,6 +16,7 @@
 
 #include <falcon/message_defs.h>
 
-FAL_MODSTR( log_msg_cut, "Killing backlog due to excessive delay." );
+FAL_MODSTR( msg_log_openres, "Cannot open the logging resource." );
+FAL_MODSTR( msg_log_cut, "Killing backlog due to excessive delay." );
 
 /* logging_st.h */

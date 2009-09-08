@@ -30,10 +30,12 @@ namespace Falcon {
 template class CoreCarrier<LogArea>;
 template class CoreCarrier<LogChannel>;
 template class CoreCarrier<LogChannelStream>;
+template class CoreCarrier<LogChannelSyslog>;
 
 template CoreObject* CoreCarrier_Factory<LogArea>( const CoreClass *cls, void *data, bool );
 template CoreObject* CoreCarrier_Factory<LogChannel>( const CoreClass *cls, void *data, bool );
 template CoreObject* CoreCarrier_Factory<LogChannelStream>( const CoreClass *cls, void *data, bool );
+template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls, void *data, bool );
 
 }
 
@@ -104,11 +106,22 @@ FALCON_MODULE_DECL
          ->addParam("level")->addParam("format");
    c_logcs->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelStream> );
    c_logcs->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
-
+   
    self->addClassMethod( c_logcs, "flushAll", &Falcon::Ext::LogChannelStream_flushAll ).asSymbol()->
       addParam("setting");
 
+   //====================================
+   // Class LogChannelSyslog
+   //
+   Falcon::Symbol *c_logsyslog = self->addClass( "LogChannelSyslog", &Falcon::Ext::LogChannelSyslog_init )
+         ->addParam("identity")->addParam("facility")->addParam("level")->addParam("format");
+   c_logsyslog->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelSyslog> );
+   c_logsyslog->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
 
+
+
+
+   FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm );
    //====================================
    // Generic log function
    //

@@ -27,13 +27,6 @@
 
 #include <falcon/error_base.h>
 
-#ifndef FALCON_LOGGING_ERROR_BASE
-   #define FALCON_LOGGING_ERROR_BASE         1200
-#endif
-/*
-#define FALCP_ERR_INVFORMAT  (FALCON_LOGGING_ERROR_BASE + 0)
-#define FALCP_ERR_STORE      (FALCON_LOGGING_ERROR_BASE + 1)
-*/
 namespace Falcon {
 
 //=====================================================
@@ -58,6 +51,8 @@ FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm );
 
 // ==============================================
 // Generic area functions
