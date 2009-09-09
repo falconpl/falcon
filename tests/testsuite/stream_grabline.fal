@@ -1,0 +1,64 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 130b
+* Category: rtl
+* Subcategory: stream
+* Short: Grabline compliance.
+* Description:
+*   Grabline is a tricky function. This test cheks if it:
+*   1) correctly reads empty lines.
+*   2) correctly returns the last line when it meets an EOF.
+*   3) does not return an extra line when meeting an EOF right after EOL.
+*   4) returns an oob(0) at end as expected.
+* [/Description]
+*
+****************************************************************************/
+
+//=====================
+// Test on last line truncated
+//
+
+s = StringStream( '
+First line
+
+Third line')
+
+lines = []
+while (line = s.grabLine()) != 0
+   lines += line
+end
+
+// was the last line an oob(0) ?
+if not isoob( line ): failure( "Last return not oob" )
+
+if lines.len() != 3: failure( "EOF on the last line - count" )
+if lines[0] != "First line": failure( "Content, first line" )
+if lines[1] != "": failure( "Content, empty line" )
+if lines[2] != "Third line": failure( "Content, last line" )
+
+//=====================
+// Test on EOL+EOF
+//
+
+s = StringStream( '
+First line
+
+Third line
+')
+
+lines = []
+while (line = s.grabLine()) != 0
+   lines += line
+end
+
+// was the last line an oob(0) ?
+if not isoob( line ): failure( "EOL+EOF - Last return not oob" )
+
+if lines.len() != 3: failure( "EOL+EOF - count" )
+if lines[0] != "First line": failure( "EOL+EOF - Content, first line" )
+if lines[1] != "": failure( "EOL+EOF - Content, empty line" )
+if lines[2] != "Third line": failure( "EOL+EOF - Content, last line" )
+
+/* end of test */

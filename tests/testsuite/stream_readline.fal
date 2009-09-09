@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 130a
+* Category: rtl
+* Subcategory: stream
+* Short: Readline compliance.
+* Description:
+*   Readline is a tricky function. This test cheks if it:
+*   1) correctly reads empty lines.
+*   2) correctly returns the last line when it meets an EOF.
+*   3) does not return an extra line when meeting an EOF right after EOL
+* [/Description]
+*
+****************************************************************************/
+
+line = ""
+
+//=================================
+// Test for empty line
+//
+
+s = StringStream( '
+First line
+
+Third line')
+
+count = 0
+while s.readLine( line, 1024 )
+   if ++count == 2
+      if line != "": failure( "Empty line" )
+   end
+end
+
+if count != 3: failure( "last line" )
+
+//=================================
+// Test for EOL + EOF
+//
+
+s = StringStream( '
+First line
+
+Third line
+')
+
+lines = []
+while s.readLine( line, 1024 )
+   lines += line
+end
+
+if lines.len() != 3: failure( "EOL + EOF" )
+if lines[0] != "First line": failure( "Content, first line" )
+if lines[1] != "": failure( "Content, empty line" )
+if lines[2] != "Third line": failure( "Content, last line" )
+
+success()
+
+/* end of test */

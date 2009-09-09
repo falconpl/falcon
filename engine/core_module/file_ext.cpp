@@ -458,11 +458,21 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    @brief Reads a line of text encoded data.
    @param buffer A string that will be filled with read data.
    @optparam size Maximum count of characters to be read before to return anyway.
-   @return Amount of data actually read.
+   @return True if a line was read, false otherwise.
    @raise IoError on system errors.
 
    This function works as @a Stream.readText, but if a new line is encountered,
    the read terminates. Returned string does not contain the EOL sequence.
+   Also, the returned string may be empty if the line was empty.
+   
+   At EOL, the function returns false. Example:
+
+   @code
+   s = InputStream( "file.txt" )
+   line = strBuffer(4096)
+   while s.readLine( line ): > "LINE: ", s
+   s.close()
+   @endcode
 */
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 {
@@ -506,7 +516,15 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
       }
    }
 
+   // anyhow, reset the string.
    str->size(0);
+
+   // well, if we're eof before starting, then we can't read.
+   if ( file->eof() )
+   {
+	  vm->regA().setBoolean(false);
+	  return;
+   }
 
    // we're idling while using VM memory, but we know we're keeping the data structure constant.
    vm->idle();
@@ -542,18 +560,56 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
       s_breakage( file );
    }
 
-   vm->retval( (int64) pos );
+   // even if we read an empty line AND then we hit eof, we must return true,
+   // so the program knows that the last line is empty.
+   vm->regA().setBoolean( getOk || pos > 0 );
 }
 
 /*#
    @method grabLine Stream
    @brief Grabs a line of text encoded data.
-   @param size Maximum count of characters to be read before to return anyway.
-   @return A string containing the read line.
+   @optparam size Maximum count of characters to be read before to return anyway.
+   @return A string containing the read line, or oob(0) when the file is over.
    @raise IoError on system errors.
 
    This function works as @a Stream.grabText, but if a new line is encountered,
    the read terminates. Returned string does not contain the EOL sequence.
+
+   At EOL, the function returns an oob(0), which in normal tests is translated
+   as "false", and that can be used to build sequences.
+
+   @note An empty line is returned as an empty string. Please, notice that empty
+   lines are returned as empty strings, and that empty strings, in Falcon, assume
+   "false" value when logically evaluated. On loops where not checking for an
+   explicit EOF to be hit in the stream, you will need to check for the returned
+   value to be != 0, or not out of band.
+
+   For example, a normal loop may look like:
+   @code
+   s = InputStream( "file.txt" )
+   while (l = s.grabLine()) != 0
+      > "LINE: ", l
+   end	
+   s.close()
+   @endcode
+
+   But it is possible to use the fuinction also in for/in loops:
+   @code
+   s = InputStream( "file.txt" )
+   for line in s.grabLine: > "LINE: ", line
+   s.close()
+   @endcode
+
+   Or even comprehensions:
+   @code
+   s = InputStream( "file.txt" )
+   lines_in_file = List().comp( s.grabLine )
+   s.close()
+   @endcode
+
+   @note As @a Stream.readLine recycles a pre-allocated buffer provided
+   as parameter it is more efficient than grabLine, unless you need to
+   store each line for further processing later on.
 */
 FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
 {
@@ -574,6 +630,14 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
             .origin( e_orig_runtime )
             .extra( vm->moduleString( rtl_zero_size ) ) );
+   }
+
+   // if the stream is at eof, we must return oob(0).
+   if ( file->eof() )
+   {
+      vm->retval( (int64) 0 );
+	  vm->regA().setOob( true );
+	  return;
    }
 
    CoreString *str = new CoreString;
@@ -610,10 +674,21 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
 
    vm->unidle();
 
-   if ( ! getOk && ! file->eof() )
+   if ( ! getOk )
    {
-      s_breakage( file );
+	  if ( ! file->eof() )
+	  {
+		s_breakage( file );
+	  }
+	  // a last line with some data?
+	  else if( pos == 0 )
+	  {
+		  // no? -- consider it null
+		  vm->retval( (int64) 0 );
+		  vm->regA().setOob( true );
+	  }
    }
+   // otherwise, let the returned string to go.
 
 }
 

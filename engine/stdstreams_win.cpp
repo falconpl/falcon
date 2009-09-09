@@ -119,10 +119,7 @@ Stream *DefaultTextTranscoder( Stream *underlying, bool own )
 
 Stream *AddSystemEOL( Stream *underlying, bool own )
 {
-   Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-   wincoder->setUnderlying( underlying, own );
-
-   return wincoder;
+   return new TranscoderEOL( underlying, own );
 }
 
 }
