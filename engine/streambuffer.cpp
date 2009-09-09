@@ -85,9 +85,12 @@ bool StreamBuffer::refill()
       m_stream->seekBegin( m_filePos );
       m_bReseek = false;
    }
+   else {
+      m_filePos += m_bufLen;
+   }
 
    m_bufPos = 0;
-   m_filePos = m_stream->tell();
+
    int32 readIn = m_stream->read( m_buffer, m_bufSize );
    if ( readIn < 0 )
    {
