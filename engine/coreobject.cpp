@@ -112,7 +112,6 @@ bool CoreObject::defaultProperty( const String &key, Item &prop ) const
    if ( pt.findKey( key, pos ) )
    {
       prop = *pt.getValue(pos);
-      prop.methodize( const_cast<CoreObject *>(this) );
       return true;
    }
 
