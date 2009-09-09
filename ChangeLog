@@ -14,6 +14,13 @@ Falcon (0.9.4.1)
            glitch in the code.
   * minor: Added a userItems() vector in LiveModule, that can be used safely
            by extensions and embeddings.
+  * fixed: Stream.readLine and Stream.grabLine were not returning the last line
+           when it was broken by an EOF.
+  * minor: Better return behavior of Stream.readLine: now returns false at EOF
+           when it can't read anything.
+  * minor: Better return behavior of Stream.grabLine: now it returns an oob(0)
+           when hitting EOF after last read; this allows to use it directly
+           in comprehensions and for/in loops.
   * minor: Added a "stream" parameter to redirect dump to another stream.
   
 Falcon (0.9.4)
