@@ -18,6 +18,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/filestat.h>
+#include <falcon/complex.h>
 
 namespace Falcon {
 
@@ -649,6 +650,51 @@ public:
 
 CoreObject* FileStatObjectFactory( const CoreClass *cls, void *user_data, bool bDeserializing );
 CoreObject* PathObjectFactory( const CoreClass *me, void *uri, bool dyn );
+
+/**********************************************
+ * Carrier of complex number objects.
+ */
+
+class CoreComplex : public CoreObject
+{
+   Complex m_complex;
+
+public:
+
+   CoreComplex ( const CoreClass *cls ):
+       CoreObject( cls )
+   { }
+
+   CoreComplex ( const Complex &origin, const CoreClass* cls ):
+      CoreObject( cls ),
+      m_complex( origin )
+   {}
+
+   CoreComplex ( const CoreComplex &other ):
+      CoreObject( other ),
+      m_complex( other.m_complex )
+      {}
+
+   virtual ~CoreComplex ();
+
+   virtual void gcMark( uint32 ) { }
+   virtual CoreObject *clone( void ) const { return new CoreComplex( *this ); }
+
+   virtual bool hasProperty( const String &key ) const;
+   virtual bool setProperty( const String &key, const Item &ret );
+   virtual bool getProperty( const String &key, Item &ret ) const;
+
+   const Complex &complex() const { return m_complex; }
+   Complex &complex() { return m_complex; }
+};
+
+CoreObject *Complex_Factory( const CoreClass *cls, void *, bool );
+
+FALCON_FUNC Complex_init( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_toString( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_abs( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_add__( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_mul__( ::Falcon::VMachine *vm );
 
 }}
 

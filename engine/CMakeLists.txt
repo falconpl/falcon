@@ -112,6 +112,7 @@ SET( CORE_MODULE_SOURCES
    core_module/array_ext.cpp
    core_module/attrib_ext.cpp
    core_module/cmdlineparser.cpp
+   core_module/complex_ext.cpp
    core_module/core_module.cpp
    core_module/coroutine_ext.cpp
    core_module/dict_ext.cpp
@@ -163,6 +164,7 @@ ADD_LIBRARY( falcon_engine SHARED
    cacheobject.cpp
    crobject.cpp
    compiler.cpp
+   complex.cpp
    corearray.cpp
    coreclass.cpp
    coredict.cpp

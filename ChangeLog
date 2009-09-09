@@ -24,7 +24,10 @@ Falcon (0.9.4.1)
   * minor: Added a "stream" parameter to redirect dump to another stream.
   * fixed: Some operations on buffered streams didn't update correctly the tell()
            indicator.
-  
+  * fixed: overloading was not working when returning defaultProperty() in
+           synthetic classes.
+  * added: Complex class.
+ 
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
            any class in a property would have generated a class method when

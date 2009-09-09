@@ -165,7 +165,7 @@ int64 BaseFileStream::tell()
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
-   int32 pos = (int32) lseek( data->m_handle, 0, SEEK_CUR );
+   int64 pos = (int64) lseek( data->m_handle, 0, SEEK_CUR );
 
    if( pos < 0 ) {
       setError( errno );

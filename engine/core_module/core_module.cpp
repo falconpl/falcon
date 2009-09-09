@@ -1245,6 +1245,23 @@ Module* core_module_init()
       addParam("x")->addParam("y");
 
    //=======================================================================
+   // RTL complex api
+   //=======================================================================
+   Falcon::Symbol *c_complex = self->addClass( "Complex", &Falcon::core::Complex_init );
+   c_complex->getClassDef()->factory( Falcon::core::Complex_Factory );
+
+   self->addClassProperty( c_complex, "real" );
+   self->addClassProperty( c_complex, "imag" );
+
+   self->addClassMethod( c_complex, "add__", &Falcon::core::Complex_add__ ).asSymbol()->
+      addParam( "complex" );
+   self->addClassMethod( c_complex, "mul__", &Falcon::core::Complex_mul__ ).asSymbol()->
+      addParam( "complex" );
+   self->addClassMethod( c_complex, "abs", &Falcon::core::Complex_abs );
+
+   self->addClassMethod( c_complex, "toString", &Falcon::core::Complex_toString );
+
+   //=======================================================================
    // RTL string api
    //=======================================================================
    self->addExtFunc( "strFill", &Falcon::core::mth_strFill )
