@@ -80,7 +80,6 @@ bool StreamBuffer::refill()
    if ( ! flush() )
       return false;
 
-   // If we're correct, m_filePos should be true after flush
    if( m_bReseek )
    {
       m_stream->seekBegin( m_filePos );
@@ -88,6 +87,7 @@ bool StreamBuffer::refill()
    }
 
    m_bufPos = 0;
+   m_filePos = m_stream->tell();
    int32 readIn = m_stream->read( m_buffer, m_bufSize );
    if ( readIn < 0 )
    {

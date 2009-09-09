@@ -22,6 +22,8 @@ Falcon (0.9.4.1)
            when hitting EOF after last read; this allows to use it directly
            in comprehensions and for/in loops.
   * minor: Added a "stream" parameter to redirect dump to another stream.
+  * fixed: Some operations on buffered streams didn't update correctly the tell()
+           indicator.
   
 Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
