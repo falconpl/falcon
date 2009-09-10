@@ -465,7 +465,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    the read terminates. Returned string does not contain the EOL sequence.
    Also, the returned string may be empty if the line was empty.
    
-   At EOL, the function returns false. Example:
+   At EOF, the function returns false. Example:
 
    @code
    s = InputStream( "file.txt" )
@@ -575,7 +575,7 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    This function works as @a Stream.grabText, but if a new line is encountered,
    the read terminates. Returned string does not contain the EOL sequence.
 
-   At EOL, the function returns an oob(0), which in normal tests is translated
+   At EOF, the function returns an oob(0), which in normal tests is translated
    as "false", and that can be used to build sequences.
 
    @note An empty line is returned as an empty string. Please, notice that empty
