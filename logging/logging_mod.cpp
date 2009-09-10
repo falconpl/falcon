@@ -16,6 +16,7 @@
 
 #include "logging_mod.h"
 #include <falcon/stream.h>
+#include <falcon/fstream.h>
 #include <falcon/error.h>
 #include <falcon/time_sys.h>
 
@@ -413,7 +414,7 @@ void LogArea::removeChannel( LogChannel* chn )
 }
 
 //==========================================================
-// Stream writing to a channel
+// Stream writing to a stream channel
 //==========================================================
 
 LogChannelStream::LogChannelStream( Stream* s, int level ):
@@ -440,6 +441,158 @@ void LogChannelStream::writeLogEntry( const String& entry, LogChannel::LogMessag
 LogChannelStream::~LogChannelStream()
 {
    delete m_stream;
+}
+
+//==========================================================
+// Stream writing to a rotor file
+//==========================================================
+
+LogChannelFiles::LogChannelFiles( const String& path, int level ):
+   LogChannel( level ),
+   m_stream(0),
+   m_bFlushAll( false ),
+   m_path( path ),
+   m_maxSize( 0 ),
+   m_maxCount( 0 ),
+   m_bOverwrite( 0 ),
+   m_maxDays( 0 ),
+   m_isOpen( false )
+{
+
+}
+
+
+LogChannelFiles::LogChannelFiles( const String& path, const String &fmt, int level ):
+   LogChannel( fmt, level ),
+   m_stream(0),
+   m_bFlushAll( false ),
+   m_path( path ),
+   m_maxSize( 0 ),
+   m_maxCount( 0 ),
+   m_bOverwrite( 0 ),
+   m_maxDays( 0 ),
+   m_isOpen( false )
+{
+
+}
+
+
+LogChannelFiles::~LogChannelFiles()
+{
+   delete m_stream;
+}
+
+
+void LogChannelFiles::log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code )
+{
+   if ( ! m_isOpen )
+   {
+      m_isOpen = true;
+      open();
+   }
+
+   LogChannel::log( tgt, source, function, level, msg, code );
+}
+
+void LogChannelFiles::open()
+{
+   delete m_stream; // just incase it was already open and we want to reopen it.
+   m_stream = new FileStream();
+
+   String fname;
+   expandPath( 0, fname );
+
+   if ( ! m_bOverwrite )
+   {
+      // can we open it?
+      if( m_stream->open( fname, FileStream::e_omReadWrite ) )
+         return;
+   }
+
+   // ok try to create
+   if( ! m_stream->create( fname,
+         FileStream::e_aUserWrite | FileStream::e_aUserRead | FileStream::e_aGroupRead | FileStream::e_aOtherRead,
+         FileStream::e_smShareRead ) )
+   {
+      throw new IoError( ErrorParam( e_file_output, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( fname )
+            .sysError( m_stream->lastError() ) );
+   }
+}
+
+
+void LogChannelFiles::expandPath( int32 number, String& path )
+{
+   path = m_path;
+
+   uint32 pos = path.find( "%" );
+   if( pos != String::npos )
+   {
+
+      // if number == 0, we must do no expansion
+      if ( number == 0 )
+         return;
+   }
+
+   String temp;
+   if ( m_maxCount == 0 )
+   {
+      // expand "%" into ""
+      temp = "";
+   }
+   else
+   {
+      temp.writeNumber((int64) number);
+      uint32 count;
+      if ( m_maxCount > 100000000 )
+         count = 9;
+      else if ( m_maxCount > 10000000 )
+         count = 8;
+      else if( m_maxCount > 1000000 )
+         count = 7;
+      else if( m_maxCount > 100000 )
+         count = 6;
+      else if( m_maxCount > 10000 )
+         count = 5;
+      else if( m_maxCount > 1000 )
+         count = 4;
+      else if( m_maxCount > 100 )
+         count = 3;
+      else if( m_maxCount > 10 )
+         count = 2;
+      else
+         count = 1;
+
+      while( temp.length() < count )
+      {
+         temp.prepend(0);
+      }
+   }
+
+   // change, or eventually append the number
+   if ( pos != String::npos )
+   {
+      path.change( pos, 1, temp );
+   }
+   else {
+      path.append( "." );
+      path.append( temp );
+   }
+
+}
+
+
+void LogChannelFiles::writeLogEntry( const String& entry, LogMessage* pOrigMsg )
+{
+   // for now, just write.
+   // TODO roll files.
+   m_stream->writeString( entry );
+   m_stream->writeString( "\n" );
+
+   if ( m_bFlushAll )
+      m_stream->flush();
+
 }
 
 }

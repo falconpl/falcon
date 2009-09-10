@@ -45,6 +45,7 @@ namespace Falcon
 
 class LogArea;
 class Stream;
+class FileStream;
 
 /** Abstract base class for logging channels. */
 class LogChannel: public Runnable
@@ -207,9 +208,48 @@ public:
    inline void flushAll( bool b ) { m_bFlushAll = b; }
 };
 
-/** Logging for Syslog (POSIX) or Event Logger (MS-Windows). 
+class LogChannelFiles: public LogChannel
+{
+protected:
+   FileStream* m_stream;
+   bool m_bFlushAll;
 
-*/
+   String m_path;
+   int64 m_maxSize;
+   int32 m_maxCount;
+   bool m_bOverwrite;
+   int32 m_maxDays;
+   bool m_isOpen;
+
+   virtual void expandPath( int32 number, String& path );
+   virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
+   virtual ~LogChannelFiles();
+
+public:
+   LogChannelFiles( const String& path, int level=LOGLEVEL_ALL );
+   LogChannelFiles( const String& path, const String &fmt, int level=LOGLEVEL_ALL );
+
+   /** Overloads the base log request opening the channel if necessary */
+   virtual void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code = 0 );
+
+   /** Opens the log. May log an IoError. */
+   virtual void open();
+
+   inline LogChannelFiles& flushAll( bool b ) { m_bFlushAll = b; return *this;}
+   inline LogChannelFiles& maxSize( int64 ms ) { m_maxSize = ms; return *this;}
+   inline LogChannelFiles& maxCount( int32 mc ) { m_maxCount = mc; return *this;}
+   inline LogChannelFiles& overwrite( bool ow ) { m_bOverwrite = ow; return *this;}
+   inline LogChannelFiles& maxDays( int32 md ) { m_maxDays = md; return *this;}
+
+   inline bool flushAll() const { return m_bFlushAll; }
+   inline int64 maxSize() const { return m_maxSize; }
+   inline int32 maxCount() const { return m_maxCount;}
+   inline bool overwrite() const { return m_bOverwrite;}
+   inline int32 maxDays() const { return m_maxDays;}
+};
+
+
+/** Logging for Syslog (POSIX) or Event Logger (MS-Windows).  */
 class LogChannelSyslog: public LogChannel
 {
 private:
