@@ -54,6 +54,23 @@ FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  LogChannelFiles_open( ::Falcon::VMachine *vm );
+reflectionFuncDecl LogChannelFiles_flushAll_to;
+reflectionFuncDecl LogChannelFiles_flushAll_from;
+
+reflectionFuncDecl LogChannelFiles_path_from;
+
+reflectionFuncDecl LogChannelFiles_maxSize_to;
+reflectionFuncDecl LogChannelFiles_maxSize_from;
+reflectionFuncDecl LogChannelFiles_maxCount_to;
+reflectionFuncDecl LogChannelFiles_maxCount_from;
+reflectionFuncDecl LogChannelFiles_overwrite_to;
+reflectionFuncDecl LogChannelFiles_overwrite_from;
+reflectionFuncDecl LogChannelFiles_maxDays_to;
+reflectionFuncDecl LogChannelFiles_maxDays_from;
+
+
 // ==============================================
 // Generic area functions
 // ==============================================

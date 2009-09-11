@@ -246,6 +246,7 @@ public:
    inline int32 maxCount() const { return m_maxCount;}
    inline bool overwrite() const { return m_bOverwrite;}
    inline int32 maxDays() const { return m_maxDays;}
+   inline const String& path() const { return m_path;}
 };
 
 
@@ -258,10 +259,10 @@ private:
 protected:
    String m_identity;
    uint32 m_facility;
-   
+
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
    virtual void init();
-   
+
    virtual ~LogChannelSyslog();
 
 public:

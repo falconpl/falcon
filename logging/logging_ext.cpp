@@ -369,7 +369,7 @@ FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
 
    The facility code is a generic application type, and is used to send more relevant
    logs to more visible files. Under MS-Windows, the facility code is sent untranslated
-   in the "message category" field of the event logger, and it's application specific. 
+   in the "message category" field of the event logger, and it's application specific.
    In doubt, it's safe to use 0.
 
    If given, the @b format parameter is used to configure how each log entry
@@ -429,6 +429,93 @@ static CoreObject* s_getGenLog( VMachine* vm )
 
    return lmod->userItems()[0].asObjectSafe();
 }
+
+
+FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  LogChannelFiles_open( ::Falcon::VMachine *vm );
+
+void LogChannelFiles_flushAll_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   cc->carried()->flushAll( property.isTrue() );
+}
+
+void LogChannelFiles_flushAll_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   property = cc->carried()->flushAll();
+}
+
+void LogChannelFiles_path_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   // path is readonly for the logging thread
+   property = new CoreString( cc->carried()->path() );
+}
+
+
+void LogChannelFiles_maxSize_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   property = cc->carried()->maxSize();
+}
+
+void LogChannelFiles_maxSize_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   if (! property.isOrdinal() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin(e_orig_runtime)
+         .extra( "N" ) );
+   cc->carried()->maxSize( property.forceInteger() );
+}
+
+void LogChannelFiles_maxCount_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   property = (int64) cc->carried()->maxCount();
+}
+
+void LogChannelFiles_maxCount_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   if (! property.isOrdinal() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin(e_orig_runtime)
+         .extra( "N" ) );
+   cc->carried()->maxCount( (uint32) property.forceInteger() );
+}
+
+void LogChannelFiles_overwrite_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   property = cc->carried()->overwrite();
+}
+
+void LogChannelFiles_overwrite_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   cc->carried()->overwrite( property.isTrue() );
+}
+
+void LogChannelFiles_maxDays_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+   property = (int64) cc->carried()->maxDays();
+}
+
+void LogChannelFiles_maxDays_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
+
+   if (! property.isOrdinal() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin(e_orig_runtime)
+         .extra( "N" ) );
+   cc->carried()->maxDays((uint32) property.forceInteger());
+}
+
+
 
 /*#
    @function glog
@@ -583,6 +670,7 @@ FALCON_FUNC  glogd( ::Falcon::VMachine *vm )
 {
    s_genericLog( vm, LOGLEVEL_DEBUG );
 }
+
 
 }
 }
