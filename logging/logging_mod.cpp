@@ -19,6 +19,8 @@
 #include <falcon/fstream.h>
 #include <falcon/error.h>
 #include <falcon/time_sys.h>
+#include <falcon/sys.h>
+#include <falcon/filestat.h>
 
 namespace Falcon {
 
@@ -115,6 +117,41 @@ void LogChannel::log( const String& area, const String& mod, const String& func,
       m_message_incoming.set();
    }
 }
+
+
+void LogChannel::pushFront( LogMessage* lmsg )
+{
+   m_msg_mtx.lock();
+   if ( m_msg_tail == 0 )
+   {
+      m_msg_head = m_msg_tail = lmsg;
+   }
+   else
+   {
+      lmsg->m_next = m_msg_head;
+      m_msg_head = lmsg;
+   }
+   m_msg_mtx.unlock();
+   m_message_incoming.set();
+}
+
+
+void LogChannel::pushBack( LogMessage* lmsg )
+{
+   m_msg_mtx.lock();
+   if ( m_msg_tail == 0 )
+   {
+      m_msg_head = m_msg_tail = lmsg;
+   }
+   else
+   {
+      m_msg_tail->m_next = lmsg;
+      m_msg_tail = lmsg;
+   }
+   m_msg_mtx.unlock();
+   m_message_incoming.set();
+}
+
 
 
 void* LogChannel::run()
@@ -502,6 +539,8 @@ void LogChannelFiles::open()
    String fname;
    expandPath( 0, fname );
 
+   m_opendate.currentTime();
+
    if ( ! m_bOverwrite )
    {
       // can we open it?
@@ -527,13 +566,6 @@ void LogChannelFiles::expandPath( int32 number, String& path )
    path = m_path;
 
    uint32 pos = path.find( "%" );
-   if( pos != String::npos )
-   {
-
-      // if number == 0, we must do no expansion
-      if ( number == 0 )
-         return;
-   }
 
    String temp;
    if ( m_maxCount == 0 )
@@ -583,16 +615,114 @@ void LogChannelFiles::expandPath( int32 number, String& path )
 }
 
 
+void LogChannelFiles::reset()
+{
+   pushBack( new LogMessage( "", "", ".", 0, "", 0 ) );
+
+}
+
+
+void LogChannelFiles::rotate()
+{
+   pushBack( new LogMessage( "", "", ".", 0, "", 1 ) );
+}
+
+
 void LogChannelFiles::writeLogEntry( const String& entry, LogMessage* pOrigMsg )
 {
+   // special management
+   // if the source of the message is ".", then we have a special order
+   if( pOrigMsg->m_caller == "." )
+   {
+      // roll?
+      if ( pOrigMsg->m_code == 1 )
+      {
+         // if flushing all, we don't need to do it now.
+         // But the setting may change across the threads...
+         // so better stay on the bright side.
+         m_stream->flush();
+         inner_rotate();
+      }
+      else
+      {
+         m_stream->truncate(0);
+      }
+
+      return;
+   }
+
    // for now, just write.
    // TODO roll files.
    m_stream->writeString( entry );
    m_stream->writeString( "\n" );
 
-   if ( m_bFlushAll )
+   if( m_maxSize > 0 && m_stream->tell() > m_maxSize )
+   {
       m_stream->flush();
+      inner_rotate();
+   }
+   else if( m_maxDays > 0 )
+   {
+      TimeStamp maxDate = m_opendate;
+      maxDate.add( m_maxDays );
+      // are we greater than the last calculated timestamp?
+      if( maxDate.compare( m_ts ) > 0 )
+      {
+         m_stream->flush();
+         inner_rotate();
+         m_opendate.currentTime();
+      }
+   }
+   else if ( m_bFlushAll )
+   {
+      m_stream->flush();
+   }
+}
 
+
+void LogChannelFiles::inner_rotate()
+{
+
+   if ( m_maxCount > 0 )
+   {
+      m_stream->close();
+      delete m_stream;
+
+      // find the maximum file
+      int maxNum;
+      for( maxNum = 1; maxNum <= m_maxCount; maxNum++ )
+      {
+         FileStat::e_fileType ft;
+         String fname;
+         expandPath( maxNum, fname );
+
+         if( ! Sys::fal_fileType( fname, ft ) )
+            break;
+      }
+
+      while( maxNum > 0 )
+      {
+         String from, into;
+         expandPath( maxNum, from );
+         expandPath( --maxNum, into );
+
+         int32 fsStatus;
+         Sys::fal_move( from, into, fsStatus );
+      }
+
+      String fname;
+      expandPath( 0, fname );
+
+      m_stream = new FileStream;
+      // TODO? -- signal an error to the other thread?
+      m_stream->create( fname,
+            FileStream::e_aUserWrite | FileStream::e_aUserRead | FileStream::e_aGroupRead | FileStream::e_aOtherRead,
+            FileStream::e_smShareRead );
+   }
+   else
+   {
+      m_stream->truncate(0);
+   }
 }
 
 }

@@ -57,10 +57,13 @@ class LogChannel: public Runnable
    Event m_message_incoming;
    SysThread* m_thread;
 
+protected:
+
    TimeStamp m_ts;
    numeric m_startedAt;
 
 protected:
+
    class LogMessage
    {
    public:
@@ -82,6 +85,9 @@ protected:
          m_next(0)
          {}
    };
+
+   virtual void pushFront( LogMessage* lm );
+   virtual void pushBack( LogMessage* lm );
 
 private:
    LogMessage* m_msg_head;
@@ -208,8 +214,14 @@ public:
    inline void flushAll( bool b ) { m_bFlushAll = b; }
 };
 
+
 class LogChannelFiles: public LogChannel
 {
+private:
+   void inner_rotate();
+   TimeStamp m_opendate;
+
+
 protected:
    FileStream* m_stream;
    bool m_bFlushAll;
@@ -220,6 +232,7 @@ protected:
    bool m_bOverwrite;
    int32 m_maxDays;
    bool m_isOpen;
+
 
    virtual void expandPath( int32 number, String& path );
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
@@ -232,8 +245,14 @@ public:
    /** Overloads the base log request opening the channel if necessary */
    virtual void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code = 0 );
 
-   /** Opens the log. May log an IoError. */
+   /** Opens the log. May throw an IoError. */
    virtual void open();
+
+   /** Truncates the log. May throw an IoError. */
+   virtual void reset();
+
+   /** Perform a rollover. */
+   virtual void rotate();
 
    inline LogChannelFiles& flushAll( bool b ) { m_bFlushAll = b; return *this;}
    inline LogChannelFiles& maxSize( int64 ms ) { m_maxSize = ms; return *this;}
