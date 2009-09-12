@@ -255,8 +255,10 @@ public:
 
    /** Returns true if the class provides a certain property.
       Should not account Object metaclass properties, unless explicitly overloaded.
+      \param prop The property to be searched.
+      \return true if the generator class provides this property.
    */
-   virtual bool hasProperty( const String &key ) const;
+   virtual bool hasProperty( const String &prop ) const;
 
    /** Creates a shallow copy of this item.
       Will return zero if this item has a non-cloneable user-defined data,
@@ -299,11 +301,11 @@ public:
       The copy is shallow; strings, arrays and complex data inside
       the original property are shared.
 
-      \param key the property to be found
-      \param ret an item containing the object proerty copy.
+      \param prop the property to be found
+      \param value an item containing the object proerty copy.
       \return true if the property can be found, false otherwise
    */
-   virtual bool getProperty( const String &key, Item &ret ) const = 0;
+   virtual bool getProperty( const String &prop, Item &value ) const = 0;
 
    /** Returns a method from an object.
        This function searches for the required property; if it's found,
