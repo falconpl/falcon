@@ -167,7 +167,7 @@ class LogArea: public BaseAlloc
    };
 
    ChannelCarrier* m_head_chan;
-   Mutex m_mtx_chan;
+   mutable Mutex m_mtx_chan;
 
 public:
    LogArea( const String& name ):
@@ -176,17 +176,17 @@ public:
       m_head_chan( 0 )
    {}
 
-   virtual void log( uint32 level, const String& msg, uint32 code = 0 )
+   virtual void log( uint32 level, const String& msg, uint32 code = 0 ) const
    {
       log( level, "", "", msg, code );
    }
 
-   virtual void log( uint32 level, const String& source, const String& msg, uint32 code = 0 )
+   virtual void log( uint32 level, const String& source, const String& msg, uint32 code = 0 ) const
    {
       log( level, source, "", msg, code );
    }
 
-   virtual void log( uint32 level, const String& source, const String& func, const String& msg, uint32 code = 0 );
+   virtual void log( uint32 level, const String& source, const String& func, const String& msg, uint32 code = 0 ) const;
 
    virtual void incref();
    virtual void decref();
@@ -195,6 +195,7 @@ public:
 
    virtual void addChannel( LogChannel* chn );
    virtual void removeChannel( LogChannel* chn );
+   virtual int minlog() const;
 };
 
 

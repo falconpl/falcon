@@ -376,7 +376,7 @@ LogArea::~LogArea()
 }
 
 
-void LogArea::log( uint32 level, const String& source, const String& func, const String& msg, uint32 code )
+void LogArea::log( uint32 level, const String& source, const String& func, const String& msg, uint32 code ) const
 {
    m_mtx_chan.lock();
    ChannelCarrier* cc = m_head_chan;
@@ -388,6 +388,21 @@ void LogArea::log( uint32 level, const String& source, const String& func, const
    m_mtx_chan.unlock();
 }
 
+int LogArea::minlog() const
+{
+   int ml = -1;
+   m_mtx_chan.lock();
+   ChannelCarrier* cc = m_head_chan;
+   while( cc != 0 )
+   {
+      if ( ml < (int) cc->m_channel->level() )
+         ml = cc->m_channel->level();
+      cc = cc->m_next;
+   }
+   m_mtx_chan.unlock();
+
+   return ml;
+}
 
 void LogArea::incref()
 {
@@ -605,7 +620,7 @@ void LogChannelFiles::expandPath( int32 number, String& path )
    // change, or eventually append the number
    if ( pos != String::npos )
    {
-      path.change( pos, 1, temp );
+      path.change( pos, pos+1, temp );
    }
    else {
       path.append( "." );

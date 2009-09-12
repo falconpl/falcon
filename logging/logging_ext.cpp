@@ -83,6 +83,37 @@ FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method minlog LogArea
+   @brief Determines what is the minimum log severity active on this area.
+   @return A number representing a log severity, or -1
+
+   This function returns the log level accepted by the registered channel
+   that is logging the least severe level.
+
+   Notice that severity and numerical values of the logging levels are
+   in inverse order. So, the highest severity, which is "fatal", has
+   an absolute value of 0, the "error" level has a value of 1 and so on.
+
+   So, to check for the log level you wish to use to be actually streamed
+   by some of the registered channel, you have to:
+
+   @code
+     if level <= GenericLog.minlog()
+        // ok, someone will log my entry
+        GenericLog.log( level, "entry" )
+     end
+   @endcode
+
+   @see gminlog
+*/
+FALCON_FUNC  LogArea_minlog( ::Falcon::VMachine *vm )
+{
+   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
+   vm->retval( (int64) cc->carried()->minlog() );
+}
+
+
+/*#
    @method add LogArea
    @brief Adds a channel to this log area.
    @param channel The channel to be added.
@@ -242,7 +273,7 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
    - %M: Name of the module requesting the log.
    - %m: Log message.
    - %R: date in RFC2822 format (as "Sun, 06 Sep 2009 18:16:20 +0200")
-   - %s: Milliseconds since the start of the program (in SSSSS.MMM format).
+   - %s: Milliseconds since the start of the program in seconds and fractions.
    - %S: Milliseconds since the start of the program (absolute).
    - %t: timestamp in HH:MM:SS.mmm format.
    - %T: timestamp in YYYY-MM-DD HH:MM:SS.mmm format.
@@ -250,11 +281,36 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
    - %%: The "%" character.
 
 
-   For example, the pattern "%t\t(%m) %L\t%m" will print something like
+   For example, the pattern "%t\t%L (%M)\t%m" will print something like
    @code
-      13:22:18.344    (testbind) D   Debug message from testbind.
+      13:22:18.344   D (testbind)   Debug message from testbind.
    @endcode
 
+   The module also provides some standard log format code that can be useful
+   in the most common situations as constants defined at toplevel. They
+   are the following:
+
+   - @b LOGFMT_TRACE: "[%s %M.%f]\t%m" -- this is useful for logs meant to trace
+     application progress and perform debug sessions. It indicates how many seconds
+     and fractions have passed and the function calling sending the log message.
+
+   - @b LOGFMT_ERROR: "%T\t%L%C\t[%a]\t%m" --  this format indicates the complete
+     date and time at which an error took place, the error level and code
+     (padded to 5 digits), the area that generated this error and the message.
+
+   - @b LOGFMT_ERRORP: "%T\t%L%C\t[%a:%M.%f]\t%m" -- This format is the same as
+     LOGFMT_ERROR, but it adds the name of the module and function that generated
+     the log to the area description.
+
+   - @b LOGFMT_ERRORT: "%T\t%L%C\t[%M.%f]\t%m" -- This format is the same as
+     LOGFMT_ERRORP, but it doesn't report the log area generating the log.
+     Useful if you know that you will be using the general area only.
+
+   - @b LOGFMT_ENTRY: "%T\t(%L) %m" -- Simpler format, reporting the day and time in
+     which a log entry is generated, the log level and the message.
+
+   - @b LOGFMT_ENTRYP: "%T\t(%L)  [%a]%m" -- Like LOGFMT_ENTRY, but reporting
+     also the log area.
 */
 FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm )
 {
@@ -666,6 +722,20 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
 //=================================================================
 // Proxy log functions
 //=================================================================
+
+/*#
+   @function gminlog
+   @brief Determines what is the minimum log severity active on the GeneircLog area.
+   @return A number representing a log severity, or -1
+
+   This function is actually a shortcut to @a LogArea.minlog applied on @a GenericLog.
+*/
+FALCON_FUNC  gminlog( ::Falcon::VMachine *vm )
+{
+   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
+   vm->retval( (int64) genlog->minlog() );
+}
+
 
 /*#
    @function glog

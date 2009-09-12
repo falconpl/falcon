@@ -42,6 +42,7 @@ FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogArea_add( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm );
 FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm );
+FALCON_FUNC  LogArea_minlog( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  GeneralLog_init( ::Falcon::VMachine *vm );
 
@@ -62,6 +63,7 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm );
 // ==============================================
 // Generic area functions
 // ==============================================
+FALCON_FUNC  gminlog( ::Falcon::VMachine *vm );
 FALCON_FUNC  glog( ::Falcon::VMachine *vm );
 FALCON_FUNC  glogf( ::Falcon::VMachine *vm );
 FALCON_FUNC  gloge( ::Falcon::VMachine *vm );
