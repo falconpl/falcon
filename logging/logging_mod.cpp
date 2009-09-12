@@ -78,7 +78,6 @@ CoreObject* LogChannelFilesFactory( const CoreClass *cls, void *data, bool )
    return new LogChannelFilesCarrier( cls, (LogChannelFiles*) data );
 }
 
-
 }
 
 /* end of logging_mod.cpp */

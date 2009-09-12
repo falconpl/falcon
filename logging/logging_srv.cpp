@@ -261,13 +261,13 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
 
       case 'S':
          distance = Sys::Time::seconds() - m_startedAt;
-         temp.writeNumber( distance, "%.3g" );
+         temp.writeNumber( distance, "%.3f" );
          target.change( pos, pos + 2, temp );
          break;
 
       case 's':
          distance = Sys::Time::seconds() - m_startedAt;
-         temp.writeNumber( (int64) (distance*1000) );
+         temp.writeNumber( (int64) (distance*1000), "%d" );
          target.change( pos, pos + 2, temp );
          break;
 
