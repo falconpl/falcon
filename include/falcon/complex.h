@@ -49,8 +49,8 @@ public:
 
 	~Complex ( ) {}
 
-	inline numeric real() const { return m_real; }
-	inline numeric imag() const { return m_imag; }
+   inline numeric real() const { return m_real; }
+   inline numeric imag() const { return m_imag; }
    inline void real( numeric r ) { m_real = r; }
    inline void imag( numeric i ) { m_imag = i; }
 
@@ -58,54 +58,55 @@ public:
    // Math operators
    //
 
-	inline Complex operator +( const Complex &other )
-	{
-	   return Complex( m_real + other.m_real, m_imag + other.m_imag );
-	}
+   inline Complex operator +( const Complex &other )
+   {
+      return Complex( m_real + other.m_real, m_imag + other.m_imag );
+   }
 
-	inline Complex operator -( const Complex &other )
-	{
+   inline Complex operator -( const Complex &other )
+   {
       return Complex( m_real - other.m_real, m_imag - other.m_imag );
    }
 
-	// (ac−bd,bc+ad)
-	inline Complex operator *( const Complex &other )
+   // (ac−bd,bc+ad)
+   inline Complex operator *( const Complex &other )
    {
       return Complex( m_real * other.m_real - m_imag * other.m_imag,
                       m_imag * other.m_real + m_real * other.m_imag );
    }
 
 	//(ac+bd+i(bc-ad))/(c2+d2)
-	inline Complex operator /( const Complex &other )
+   inline Complex operator /( const Complex &other )
    {
-	   numeric divisor =  other.m_real*other.m_real + other.m_imag * other.m_imag;
-	   if ( divisor == 0 )
-	      throw_div_by_zero(); // don't want this inline.
+      numeric divisor =  other.m_real*other.m_real + other.m_imag * other.m_imag;
+      if ( divisor == 0 )
+         throw_div_by_zero(); // don't want this inline.
 
       return Complex(
                (m_real * other.m_real + m_imag * other.m_imag) / divisor,
                (m_imag * other.m_real - m_real * other.m_imag) / divisor );
    }
 
-	numeric abs() const;
-
-	//=============================================
+   numeric abs() const;
+   Complex conj() const;
+   
+   //=============================================
    // Assignment operators
    //
 
-	inline Complex &operator =( const Complex &other )
-	{
-	   m_real = other.m_real;
-	   m_imag = other.m_imag;
-	   return *this;
-	}
-
-	inline Complex& operator +=( const Complex &other )
+   inline Complex &operator =( const Complex &other )
    {
-	   m_real += other.m_real;
-	   m_imag += other.m_imag;
-	   return *this;
-	}
+      m_real = other.m_real;
+      m_imag = other.m_imag;
+      return *this;
+   }
+
+   inline Complex& operator +=( const Complex &other )
+   {
+      m_real += other.m_real;
+      m_imag += other.m_imag;
+      return *this;     
+   }
 
    inline Complex& operator -=( const Complex &other )
    {

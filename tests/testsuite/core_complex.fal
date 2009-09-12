@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 131
+* Category: rtl
+* Subcategory: core
+* Short: Complex() test
+* Description:
+* Test for Complex() function.
+* [/Description]
+*
+****************************************************************************/
+
+if Complex( ) != Complex( ): failure( "Complex( )" )
+if Complex( 1 ).real != 1: failure( "Complex( 1 )" )
+if Complex( 0, -5 ).imag != -5: failure( "Complex( 0, -5)" )
+if Complex( 0.3, 1.3 ) != 0: failure( "Complex( 0.3 )" )
+if Complex( 1234567891234,0 ).real != 1234567891234: failure( "Complex( 1234567891234, 0 )" )
+if Complex( 0,-1234567891234 ).imag != -1234567891234: failure( "Complex( 0,-1234567891234 )" )
+if Complex( 1, 0 ).abs() != 1.0: failure( "Complex( 1, 0 ) " )
+if Complex( 0, -1 ).abs() != 1.0: failure( "Complex( 0, -1 ) " )
+if Complex( 2, 3 ).toString() != "2 , 3i": failure( "Complex().toString()" )
+success()
+
+if int( "-1" ) != -1: failure( "int( \"-1\" )" )
+if int( "0.3" ) != 0: failure( "int( \"0.3\" )" )
+if int( "15.2" ) != 15: failure( "int( \"15.2\" )" )
+if int( "-15.2" ) != -15: failure( "int( \"-15.2\" )" )
+if int( "1234567891234" ) != 1234567891234: failure( "int( \"1234567891234\" )" )
+if int( "-1234567891234" ) != -1234567891234: failure( "int( \"-1234567891234\" )" )
+
+success()
+
+/* End of file */

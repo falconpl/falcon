@@ -37,8 +37,14 @@ void Complex::throw_div_by_zero()
 
 numeric Complex::abs() const
 {
-  return sqrt( m_real * m_real + m_imag * m_imag );
+   return sqrt( m_real * m_real + m_imag * m_imag );
 }
+
+Complex Complex::conj() const
+{
+   return Complex( m_real, m_imag * -1 );
+}
+
 }
 
 

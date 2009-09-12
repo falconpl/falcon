@@ -173,6 +173,24 @@ FALCON_FUNC Complex_div__( ::Falcon::VMachine *vm )
    vm->retval( new CoreComplex( (*one) / two, gen ) );
 }
 
+FALCON_FUNC Complex_compare( ::Falcon::VMachine *vm )
+{
+   Complex *one, two;
+   const CoreClass* gen;
+   s_operands( vm, one, two, gen );
+   if ( (*one) < two )
+      vm->retval( -1 );
+   if ( (*one) > two )
+      vm->retval( 1 );
+   vm->retval( 0 );
+}
+
+FALCON_FUNC Complex_conj( ::Falcon::VMachine *vm )
+{
+   CoreComplex *self = dyncast<CoreComplex *>( vm->self().asObject() );
+   vm->retval( new CoreComplex( self->complex().conj(), self->generator() ) );
+}
+
 
 }
 }

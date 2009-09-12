@@ -1261,7 +1261,10 @@ Module* core_module_init()
       addParam( "complex" );
    self->addClassMethod( c_complex, "div__", &Falcon::core::Complex_div__ ).asSymbol()->
       addParam( "complex" );
+   self->addClassMethod( c_complex, "compare", &Falcon::core::Complex_compare ).asSymbol()->
+      addParam( "complex" );
    self->addClassMethod( c_complex, "abs", &Falcon::core::Complex_abs );
+   self->addClassMethod( c_complex, "conj", &Falcon::core::Complex_conj );
 
    self->addClassMethod( c_complex, "toString", &Falcon::core::Complex_toString );
 
