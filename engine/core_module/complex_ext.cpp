@@ -87,17 +87,20 @@ FALCON_FUNC Complex_init( ::Falcon::VMachine *vm )
    Item *i_real = vm->param(0);
    Item *i_imag = vm->param(1);
 
-   if ( i_real == 0 || ! i_real->isOrdinal()
-    || i_imag == 0 || ! i_imag->isOrdinal()
+   if ( ( i_real != 0 && ! i_real->isOrdinal() )
+     || ( i_imag != 0 && ! i_imag->isOrdinal() )
     )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
           .origin( e_orig_runtime )
-          .extra( "N,N" ) );
+          .extra( "[N,N]" ) );
    }
 
-    CoreComplex *c = dyncast<CoreComplex *> ( vm->self().asObject() );
-    c->complex() = Complex( i_real->forceNumeric(), i_imag->forceNumeric() );
+   CoreComplex *c = dyncast<CoreComplex *> ( vm->self().asObject() );
+   c->complex() = Complex(
+      ( i_real != 0 ) ? i_real->forceNumeric() : 0 ,
+      ( i_imag != 0 ) ? i_imag->forceNumeric() : 0 
+   );
 }
 
 FALCON_FUNC Complex_toString( ::Falcon::VMachine *vm )
@@ -118,39 +121,58 @@ FALCON_FUNC Complex_abs( ::Falcon::VMachine *vm )
     vm->retval( self->complex().abs() );
 }
 
-static void s_operands( VMachine* vm, Complex* &one, Complex*& two, const CoreClass* &gen )
+static void s_operands( VMachine* vm, Complex* &one, Complex& two, const CoreClass* &gen )
 {
    Item *i_obj = vm->param( 0 );
-    
-   if ( i_obj == 0 || ! i_obj->isOfClass( "Complex" ) )
+   bool is_ordinal = i_obj->isOrdinal();
+
+   if ( i_obj == 0 || ! ( i_obj->isOfClass( "Complex" ) || is_ordinal ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "Complex" ) );
    }
 
    CoreComplex *self = dyncast<CoreComplex *>( vm->self().asObject() );
-   CoreComplex *other = dyncast<CoreComplex *>( i_obj->asObject() );
+   if ( is_ordinal )
+      two.real( i_obj->forceNumeric() );
+   else
+      two = (dyncast<CoreComplex *>( i_obj->asObject() ))->complex();
    one = &self->complex();
-   two = &other->complex();
    gen = self->generator();
 }
 
 FALCON_FUNC Complex_add__( ::Falcon::VMachine *vm )
 {
-   Complex *one, *two;
+   Complex *one, two;
    const CoreClass* gen;
    s_operands( vm, one, two, gen );
-   vm->retval( new CoreComplex( (*one) + (*two), gen ) );
+   vm->retval( new CoreComplex( (*one) + two, gen ) );
 }
 
+FALCON_FUNC Complex_sub__( ::Falcon::VMachine *vm )
+{
+   Complex *one, two;
+   const CoreClass* gen;
+   s_operands( vm, one, two, gen );
+   vm->retval( new CoreComplex( (*one) - two, gen ) );
+}
 
 FALCON_FUNC Complex_mul__( ::Falcon::VMachine *vm )
 {
-   Complex *one, *two;
+   Complex *one, two;
    const CoreClass* gen;
    s_operands( vm, one, two, gen );
-   vm->retval( new CoreComplex( (*one) * (*two), gen ) );
+   vm->retval( new CoreComplex( (*one) * two, gen ) );
 }
+
+FALCON_FUNC Complex_div__( ::Falcon::VMachine *vm )
+{
+   Complex *one, two;
+   const CoreClass* gen;
+   s_operands( vm, one, two, gen );
+   vm->retval( new CoreComplex( (*one) / two, gen ) );
+}
+
 
 }
 }

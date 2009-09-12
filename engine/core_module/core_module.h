@@ -694,7 +694,9 @@ FALCON_FUNC Complex_init( ::Falcon::VMachine *vm );
 FALCON_FUNC Complex_toString( ::Falcon::VMachine *vm );
 FALCON_FUNC Complex_abs( ::Falcon::VMachine *vm );
 FALCON_FUNC Complex_add__( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_sub__( ::Falcon::VMachine *vm );
 FALCON_FUNC Complex_mul__( ::Falcon::VMachine *vm );
+FALCON_FUNC Complex_div__( ::Falcon::VMachine *vm );
 
 }}
 
