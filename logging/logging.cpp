@@ -31,13 +31,12 @@ template class CoreCarrier<LogArea>;
 template class CoreCarrier<LogChannel>;
 template class CoreCarrier<LogChannelStream>;
 template class CoreCarrier<LogChannelSyslog>;
-template class CoreCarrier<LogChannelFiles>;
+
 
 template CoreObject* CoreCarrier_Factory<LogArea>( const CoreClass *cls, void *data, bool );
 template CoreObject* CoreCarrier_Factory<LogChannel>( const CoreClass *cls, void *data, bool );
 template CoreObject* CoreCarrier_Factory<LogChannelStream>( const CoreClass *cls, void *data, bool );
 template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls, void *data, bool );
-template CoreObject* CoreCarrier_Factory<LogChannelFiles>( const CoreClass *cls, void *data, bool );
 
 }
 
@@ -123,25 +122,19 @@ FALCON_MODULE_DECL
    //====================================
    // Class LogChannelFiles
    //
-   Falcon::Symbol *c_logfiles = self->addClass( "LogChannelFiles", &Falcon::Ext::LogChannelSyslog_init )
+   Falcon::Symbol *c_logfiles = self->addClass( "LogChannelFiles", &Falcon::Ext::LogChannelFiles_init )
          ->addParam("path")->addParam("level")->addParam("format");
-   c_logfiles->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelFiles> );
+   c_logfiles->getClassDef()->factory( &Falcon::LogChannelFilesFactory );
    c_logfiles->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
 
    self->addClassMethod( c_logfiles, "open", &Falcon::Ext::LogChannelFiles_open ).
       setReadOnly(true);
-   self->addClassProperty( c_logfiles, "flushAll" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_flushAll_from, &Falcon::Ext::LogChannelFiles_flushAll_to);
-   self->addClassProperty( c_logfiles, "maxSize" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_maxSize_from, &Falcon::Ext::LogChannelFiles_maxSize_to);
-  self->addClassProperty( c_logfiles, "maxCount" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_maxCount_from, &Falcon::Ext::LogChannelFiles_maxCount_to);
-   self->addClassProperty( c_logfiles, "maxDays" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_maxDays_from, &Falcon::Ext::LogChannelFiles_maxDays_to);
-   self->addClassProperty( c_logfiles, "path" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_path_from );
-   self->addClassProperty( c_logfiles, "overwrite" ).setReflectFunc(
-      &Falcon::Ext::LogChannelFiles_overwrite_from, &Falcon::Ext::LogChannelFiles_overwrite_to);
+   self->addClassProperty( c_logfiles, "flushAll" );
+   self->addClassProperty( c_logfiles, "maxSize" );
+  self->addClassProperty( c_logfiles, "maxCount" );
+   self->addClassProperty( c_logfiles, "maxDays" );
+   self->addClassProperty( c_logfiles, "path" );
+   self->addClassProperty( c_logfiles, "overwrite" );
 
    //====================================
    // Generic log function

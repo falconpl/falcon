@@ -623,17 +623,7 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    @brief When true, all the log operations cause an immediate flush of the
    underlying stream.
 */
-void LogChannelFiles_flushAll_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   cc->carried()->flushAll( property.isTrue() );
-}
 
-void LogChannelFiles_flushAll_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   property = cc->carried()->flushAll();
-}
 
 /*#
    @property path LogChannelFiles
@@ -641,12 +631,6 @@ void LogChannelFiles_flushAll_to(CoreObject *instance, void *user_data, Item &pr
 
    This property is read-only.
 */
-void LogChannelFiles_path_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   // path is readonly for the logging thread
-   property = new CoreString( cc->carried()->path() );
-}
 
 /*#
    @property maxSize LogChannelFiles
@@ -654,21 +638,6 @@ void LogChannelFiles_path_from(CoreObject *instance, void *user_data, Item &prop
 
    Zero means disabled; that is, the size of the log file is unlimited.
 */
-void LogChannelFiles_maxSize_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   property = cc->carried()->maxSize();
-}
-
-void LogChannelFiles_maxSize_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   if (! property.isOrdinal() )
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .origin(e_orig_runtime)
-         .extra( "N" ) );
-   cc->carried()->maxSize( property.forceInteger() );
-}
 
 /*#
    @property maxCount LogChannelFiles
@@ -677,21 +646,6 @@ void LogChannelFiles_maxSize_to(CoreObject *instance, void *user_data, Item &pro
    Zero means that the file is never rolled back; eventually, when hitting a limit,
    it is truncated from the beginning and the log starts all over.
 */
-void LogChannelFiles_maxCount_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   property = (int64) cc->carried()->maxCount();
-}
-
-void LogChannelFiles_maxCount_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   if (! property.isOrdinal() )
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .origin(e_orig_runtime)
-         .extra( "N" ) );
-   cc->carried()->maxCount( (uint32) property.forceInteger() );
-}
 
 /*#
    @property overwrite LogChannelFiles
@@ -700,17 +654,7 @@ void LogChannelFiles_maxCount_to(CoreObject *instance, void *user_data, Item &pr
    The default for this property is false. This means that the default
    behavior is that to append log entries to the previously existing ones.
 */
-void LogChannelFiles_overwrite_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   property = cc->carried()->overwrite();
-}
 
-void LogChannelFiles_overwrite_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   cc->carried()->overwrite( property.isTrue() );
-}
 
 /*#
    @property maxDays LogChannelFiles
@@ -718,22 +662,6 @@ void LogChannelFiles_overwrite_to(CoreObject *instance, void *user_data, Item &p
 
    Zero means disabled.
 */
-void LogChannelFiles_maxDays_from(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-   property = (int64) cc->carried()->maxDays();
-}
-
-void LogChannelFiles_maxDays_to(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
-{
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( instance );
-
-   if (! property.isOrdinal() )
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .origin(e_orig_runtime)
-         .extra( "N" ) );
-   cc->carried()->maxDays((uint32) property.forceInteger());
-}
 
 //=================================================================
 // Proxy log functions

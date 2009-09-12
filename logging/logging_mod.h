@@ -22,6 +22,7 @@
 #include <falcon/string.h>
 #include <falcon/timestamp.h>
 #include <falcon/error_base.h>
+#include <falcon/corecarrier.h>
 
 #ifndef FALCON_LOGGING_ERROR_BASE
    #define FALCON_LOGGING_ERROR_BASE         1200
@@ -268,6 +269,20 @@ public:
    inline const String& path() const { return m_path;}
 };
 
+class LogChannelFilesCarrier: public CoreCarrier<LogChannelFiles>
+{
+public:
+   LogChannelFilesCarrier( const CoreClass* gen, LogChannelFiles *data );
+   LogChannelFilesCarrier( const LogChannelFilesCarrier& other );
+   virtual ~LogChannelFilesCarrier();
+
+   virtual bool setProperty( const String &prop, const Item &value );
+   virtual bool getProperty( const String &key, Item &ret ) const;
+   virtual CoreObject *clone() const;
+
+};
+
+CoreObject* LogChannelFilesFactory( const CoreClass *cls, void *data, bool );
 
 /** Logging for Syslog (POSIX) or Event Logger (MS-Windows).  */
 class LogChannelSyslog: public LogChannel
