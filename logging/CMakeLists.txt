@@ -9,9 +9,9 @@ INCLUDE_DIRECTORIES(.)
 
 IF(WIN32)
    SET( SYS_RC logging.rc )
-   SET( SYS_SRC logging_mod_win.cpp )
+   SET( SYS_SRC logging_srv_win.cpp )
 ELSE(WIN32)
-   SET( SYS_SRC logging_mod_syslog.cpp )
+   SET( SYS_SRC logging_srv_syslog.cpp )
 ENDIF(WIN32)
 
 # Target
@@ -19,6 +19,7 @@ ADD_LIBRARY( logging_fm MODULE
    logging.cpp
    logging_ext.cpp
    logging_mod.cpp
+   logging_srv.cpp
    logging_st.cpp
    ${SYS_SRC}
    ${SYS_RC}

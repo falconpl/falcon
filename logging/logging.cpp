@@ -24,6 +24,7 @@
 
 #include "version.h"
 
+static Falcon::LogService s_theLogService;
 
 namespace Falcon {
 
@@ -290,6 +291,11 @@ FALCON_MODULE_DECL
    self->addConstant( "LOGD", (Falcon::int64) LOGLEVEL_DEBUG );
    self->addConstant( "LOGD1", (Falcon::int64) LOGLEVEL_D1 );
    self->addConstant( "LOGD2", (Falcon::int64) LOGLEVEL_D2 );
+
+   //======================================
+   // Subscribe the service
+   //
+   self->publishService( &s_theLogService );
 
    return self;
 }
