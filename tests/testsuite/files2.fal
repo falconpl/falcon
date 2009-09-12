@@ -35,14 +35,15 @@ try
    file.seek( 0 )
    if file.tell() != 0: failure( "Tell after seek" )
    if file.read( buffer, 11 ) != 11 or buffer != "Hello world": failure( "Read back" )
-   file.readLine( buffer, bufsize ) // discards the first \n
 
-   if file.readLine( buffer, bufsize ) != len( "Next line 1" ): failure( "readline 1" )
-   if buffer != "Next line 1": failure( "readline 2" )
-   if file.readLine( buffer, bufsize ) != len( "Next line 2" ): failure( "readline 2" )
-   if buffer != "Next line 2": failure( "readline 2" )
-   if file.readLine( buffer, bufsize ) != len( "Next line 3" ): failure( "readline 3" )
-   if buffer != "Next line 3": failure( "readline 3" )
+   file.readLine( buffer, bufsize ) // discards the first \n
+   
+   if not file.readLine( buffer, bufsize ): failure( "readline 1" )
+   if buffer != "Next line 1": failure( "readline 1 - content" )
+   if not file.readLine( buffer, bufsize ): failure( "readline 2" )
+   if buffer != "Next line 2": failure( "readline 2 - content " )
+   if not file.readLine( buffer, bufsize ): failure( "readline 3" )
+   if buffer != "Next line 3": failure( "readline 3 - content " )
 
    if not file.eof(): failure( "Should be at eof" )
 

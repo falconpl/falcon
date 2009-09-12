@@ -38,17 +38,16 @@ try
    fileLen = file.tell()
    file.seek( 0 )
    if file.tell() != 0: failure( "Tell after seek" )
-   if file.read( $buffer, 11 ) != 11 or buffer != "Hello world": failure( "Read back" )
+   if file.read( buffer, 11 ) != 11 or buffer != "Hello world": failure( "Read back" )
 
-   file.readLine( $buffer ) // discards the first \n
+   file.readLine( buffer ) // discards the first \n
 
-   if file.readLine( $buffer ) != len( "Next line 1" ): failure( "readline 1" )
-   if buffer != "Next line 1": failure( "readline 2" )
-   if file.readLine( $buffer ) != len( "Next line 2" ): failure( "readline 2" )
-   if buffer != "Next line 2": failure( "readline 2" )
-   if file.readLine( $buffer ) != len( "Next line 3" ): failure( "readline 3" )
-   if buffer != "Next line 3": failure( "readline 3" )
-
+   if not file.readLine( buffer ): failure( "readline 1" )
+   if buffer != "Next line 1": failure( "readline 1 - content" )
+   if not file.readLine( buffer ): failure( "readline 2" )
+   if buffer != "Next line 2": failure( "readline 2 - content " )
+   if not file.readLine( buffer ): failure( "readline 3" )
+   if buffer != "Next line 3": failure( "readline 3 - content " )
    if not file.eof(): failure( "Should be at eof" )
 
    file.seek( 0 )
@@ -57,7 +56,7 @@ try
    if file.tell() != fileLen: failure( "Return to end position" )
 
    if file.eof(): failure( "early eof" )
-   if file.read( $buffer ) != 0: failure( "read at end of file" )
+   if file.read( buffer ) != 0: failure( "read at end of file" )
    if buffer != "": failure( "Buffer not reset" )
    if not file.eof(): failure( "Eof not detected." )
 
@@ -67,7 +66,7 @@ try
    // 5 spaces.
    buffer = strBuffer(5)
 
-   if file.read( $buffer ) != 5 or buffer != "world": failure( "seekCur" )
+   if file.read( buffer ) != 5 or buffer != "world": failure( "seekCur" )
    file.close()
 
 catch in error
