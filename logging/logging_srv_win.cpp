@@ -39,6 +39,7 @@ LogChannelSyslog::LogChannelSyslog( const String& identity, const String &fmt, u
 
 LogChannelSyslog::~LogChannelSyslog()
 {
+   stop();
    CloseEventLog( (HANDLE) m_sysdata );
 }
 

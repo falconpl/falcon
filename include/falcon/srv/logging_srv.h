@@ -99,13 +99,13 @@ private:
    }
 
    void start();
-   void stop();
    bool expandMessage( LogMessage* msg, const String& fmt, String& target );
 
 protected:
    uint32 m_level;
    String m_format;
 
+   virtual void stop();
    /** Override this to send a pre-formatted message to the output device */
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg ) = 0;
    virtual ~LogChannel();

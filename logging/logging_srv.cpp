@@ -69,13 +69,17 @@ void LogChannel::start()
 
 void LogChannel::stop()
 {
-   m_msg_mtx.lock();
-   m_terminate = true;
-   m_message_incoming.set();
-   m_msg_mtx.unlock();
+   if ( m_thread !=0 )
+   {
+      m_msg_mtx.lock();
+      m_terminate = true;
+      m_message_incoming.set();
+      m_msg_mtx.unlock();
 
-   void* res;
-   m_thread->join( res );
+      void* res;
+      m_thread->join( res );
+      m_thread =  0;
+   }
 }
 
 
@@ -493,6 +497,7 @@ void LogChannelStream::writeLogEntry( const String& entry, LogChannel::LogMessag
 
 LogChannelStream::~LogChannelStream()
 {
+   stop();
    delete m_stream;
 }
 
@@ -532,6 +537,7 @@ LogChannelFiles::LogChannelFiles( const String& path, const String &fmt, int lev
 
 LogChannelFiles::~LogChannelFiles()
 {
+   stop();
    delete m_stream;
 }
 
