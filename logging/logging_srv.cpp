@@ -109,6 +109,13 @@ void LogChannel::log( const String& area, const String& mod, const String& func,
       LogMessage* lmsg = new LogMessage( area, mod, func, l, msg, code );
 
       m_msg_mtx.lock();
+      if ( m_terminate)
+      {
+         delete lmsg;
+         m_msg_mtx.unlock();
+         return;
+      }
+
       if ( m_msg_tail == 0 )
       {
          m_msg_head = m_msg_tail = lmsg;
@@ -166,7 +173,10 @@ void* LogChannel::run()
       m_message_incoming.wait(-1);
       m_msg_mtx.lock();
       if( m_terminate )
+      {
+         m_msg_mtx.unlock();
          break;
+      }
 
       // copy the format for multiple usage
       String fmt = m_format;
@@ -175,6 +185,8 @@ void* LogChannel::run()
       {
          LogMessage* msg = m_msg_head;
          m_msg_head = m_msg_head->m_next;
+         if ( m_msg_head == 0 )
+            m_msg_tail = 0;
          m_msg_mtx.unlock();
 
          String target;
@@ -191,8 +203,6 @@ void* LogChannel::run()
          m_msg_mtx.lock();
       }
 
-      // we emptied the queue.
-      m_msg_tail =0;
       m_msg_mtx.unlock();
    }
 
