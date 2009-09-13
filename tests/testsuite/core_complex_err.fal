@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 131b
+* Category: rtl
+* Subcategory: core
+* Short: Complex() error test
+* Description:
+* Tests on error detection in complex class-
+* [/Description]
+*
+****************************************************************************/
+
+// Check if the constructor detects invalid parameters.
+try
+   Complex( 'a', 0 )
+   failure( "Wrong first parameter not detected" )
+catch ParamError
+   // ok
+end
+
+// Check if the constructor detects invalid parameters.
+try
+   Complex( 0, 'b' )
+   failure( "Wrong second parameter not detected" )
+catch ParamError
+   // ok
+end
+
+// Check if we generate a math error on divisions by zero.
+try
+   divisor = Complex( 0, 0 )
+   d = Complex( 2, 3 )
+   n = d / divisor
+   // an error in the code should make this test to crash.
+   failure( "division by zero not detected" )
+catch MathError
+   // ok
+end
+
+success()
+
+/* End of file */

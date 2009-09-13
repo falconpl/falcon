@@ -2,12 +2,12 @@
 * Falcon test suite
 *
 *
-* ID: 131
+* ID: 131a
 * Category: rtl
 * Subcategory: core
 * Short: Complex() test
 * Description:
-* Test for Complex() function.
+* Basic tests for Complex() class.
 * [/Description]
 *
 ****************************************************************************/
@@ -21,14 +21,10 @@ if Complex( 0,-1234567891234 ).imag != -1234567891234: failure( "Complex( 0,-123
 if Complex( 1, 0 ).abs() != 1.0: failure( "Complex( 1, 0 ) " )
 if Complex( 0, -1 ).abs() != 1.0: failure( "Complex( 0, -1 ) " )
 if Complex( 2, 3 ).toString() != "2 , 3i": failure( "Complex().toString()" )
-success()
-
-if int( "-1" ) != -1: failure( "int( \"-1\" )" )
-if int( "0.3" ) != 0: failure( "int( \"0.3\" )" )
-if int( "15.2" ) != 15: failure( "int( \"15.2\" )" )
-if int( "-15.2" ) != -15: failure( "int( \"-15.2\" )" )
-if int( "1234567891234" ) != 1234567891234: failure( "int( \"1234567891234\" )" )
-if int( "-1234567891234" ) != -1234567891234: failure( "int( \"-1234567891234\" )" )
+if Complex( 2, 3 ) + Complex(1,2) != Complex(3,5): failure( "Complex() + operator" )
+if Complex( 2, 3 ) - Complex(1,2) != Complex(1,1): failure( "Complex() - operator" )
+if Complex( 2, 3 ) * Complex(1,2) != Complex(-4,7): failure( "Complex() * operator" )
+if Complex( 2, 3 ) / Complex(1,2) != Complex(1.6,-0.2): failure( "Complex() /  operator" )
 
 success()
 
