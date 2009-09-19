@@ -95,9 +95,9 @@ public:
 
    } e_commops;
 
-   /** Serialization / deserializzation error code.
+   /** Serialization / deserialization error code.
       This value is returned by serialization and deserialization
-      functions to communicate what whent wrong.
+      functions to communicate what went wrong.
    */
    typedef enum {
       /** All was fine. */

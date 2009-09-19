@@ -709,7 +709,7 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
    When the output buffer is a string, a size parameter can be given; otherwise
    the whole binary contents of the stream are written. A start position may
    optionally be given too; this allows to iterate through writes and send part
-   of the data that couldent be send previously without extracting substrings or
+   of the data that coulden't be send previously without extracting substrings or
    copying the memory buffers.
 
    MemBuf items can participate to stream binary writes through their internal

@@ -158,16 +158,9 @@ namespace Engine
       engineStrings = new StringTable;
       if( language == "C" )
       {
-		 
-		  {	//THIS IS FOR DEBUGGING PURPOSE!!!
-			  String* test = new String( "This is a test!" );
-				test->exported( true );
-				engineStrings->add( test );
-		  }	//END OF DEBUGGING CODE!!!
-		 
          #define  FLC_REALIZE_ENGINE_MSG
          #include <falcon/eng_messages.h>
-		 #undef FLC_REALIZE_ENGINE_MSG
+         #undef FLC_REALIZE_ENGINE_MSG
          return true;
       }
       // ... signal that we didn't found the language.
@@ -184,9 +177,9 @@ namespace Engine
    {
       s_mtx.lock();
       
-	  releaseEncodings();
-	  
-	  s_sSrcEnc = new String(sSrcEnc);
+      releaseEncodings();
+
+      s_sSrcEnc = new String(sSrcEnc);
       s_sIOEnc = new String(sIOEnc);
       s_sSrcEnc->bufferize();
       s_sIOEnc->bufferize();

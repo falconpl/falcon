@@ -966,6 +966,83 @@ public:
 
     void writeNumber( int64 number, const String &format );
 
+    /** Cumulative version of writeNumber.
+     *
+     * This method can be used to concatenate strings and number such as for
+     * String s = String( "You got ").N( msg_count ).A( " messages " );
+     */
+    inline String& N( int64 number )
+    {
+       writeNumber( number );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& N( int32 number )
+    {
+       writeNumber( (int64) number );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& N( int64 number, const String& format )
+    {
+       writeNumber( (int64) number, format );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& N( double number )
+    {
+       writeNumber( number );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& N( double number, const String& format )
+    {
+       writeNumber( number, format );
+       return *this;
+    }
+
+    /** Cumulative version of append.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+
+    inline String& A( const String& str ) { append(str); return *this; }
+
+    /** Cumulative version of append.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& A( int chr )  { append((uint32)chr); return *this; }
+
+    /** Cumulative version of append.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& A( uint32 chr ) { append(chr); return *this; }
+
     /** Checks the position to be in the string, and eventually changes it if it's negative.
       This is just a nice inline shortuct so that the string constructor for substrings
       can be called safely.
