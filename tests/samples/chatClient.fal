@@ -24,13 +24,15 @@ class ClientTCPSocket( address, port ) from TCPSocket( address, port )
    data = ""
 
    function _readline()
-      readIn = self.recv( 1024 )
+      readIn = ""
+      self.recv( readIn, 1024 )
       return readIn
    end
 
    function readline()
-      readIn = self.recv( 1024 )
-	  return readIn
+      readIn = ""
+      self.recv( readIn, 1024 )
+      return readIn
    end
 end
 

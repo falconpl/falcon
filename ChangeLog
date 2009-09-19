@@ -1,6 +1,8 @@
 Feathers (0.9.4.1)
   * fixed: Crash in Thread.toString() when the thread isn't started.
   * added: logging module
+  * minor: Removed buffer creation semantic in .recv() calls in Socket.
+           Also, now MemBuf variables can be correctly used.           
  
 Feathers (0.9.4)
   * major: Added support for interactive compiler in Compiler module.

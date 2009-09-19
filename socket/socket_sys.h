@@ -234,7 +234,7 @@ public:
       If socket is closed on the other side, returns 0.
    */
    int32 recv( byte *buffer, int32 size );
-   int32 send( byte *buffer, int32 size );
+   int32 send( const byte *buffer, int32 size );
    bool closeRead();
    bool closeWrite();
    bool close();

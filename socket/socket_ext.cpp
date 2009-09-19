@@ -23,6 +23,7 @@
 #include <falcon/carray.h>
 #include <falcon/stream.h>
 #include <falcon/memory.h>
+#include <falcon/membuf.h>
 #include <errno.h>
 
 #include "socket_sys.h"
@@ -650,18 +651,25 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    case the sent data may get corrupted as a transmission may deliver only part
    of a character or of a number stored in a memory buffer.
 
-   If a @b size parameter is not specified, the method will try to send the whole
-   content of the buffer, otherwise it will send at maximum size bytes. If a
-   @b start parameter is specified, then the data sent will be taken starting
-   from that position in the buffer (counting in bytes from the start).
+   When using a @b MemBuf item type, the function will try to send the data
+   between @a MemBuf.position and @a MemBuf.limit. After a correct write,
+   the position is moved forward accordingly to the amount of bytes sent.
 
-   This is useful when sending big buffers in several steps, so that
+   If a @b size parameter is not specified, the method will try to send the whole
+   content of the buffer, otherwise it will send at maximum size bytes.
+
+   If a @b start parameter is specified, then the data sent will be taken starting
+   from that position in the buffer (counting in bytes from the start). This is
+   useful when sending big buffers in several steps, so that
    it is not necessary to create substrings for each send, sparing both
    CPU and memory.
 
+   @note The @b start and @b count parameters are ignored when using a memory
+   buffer.
+
    The returned value may be 0 in case of timeout, otherwise it will be a
    number between 1 and the requested size. Programs should never assume
-   that a succesful @b send has sent all the data.
+   that a successful @b send has sent all the data.
 
    In case of error, a @a NetError is raised.
 
@@ -672,29 +680,55 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
-   Item *data = vm->param( 0 );
+   Item *i_data = vm->param( 0 );
    Item *length = vm->param( 1 );
    Item *start = vm->param( 2 );
-   if ( data == 0 || ! data->isString() ||
-       ( length != 0 && ! length->isOrdinal() ) ||
-       ( start != 0 && ! start->isOrdinal() )
+
+   if ( i_data == 0 || ! ( i_data->isString() || i_data->isMemBuf() )
+        || ( length != 0 && ! length->isOrdinal() )
+        || ( start != 0 && ! start->isOrdinal() )
       )
    {
-      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [I], [I]" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|M, [I], [I]" ) );
    }
 
-   String *dataStr = data->asString();
-   int32 start_pos = start == 0 ? 0 : (int32) start->forceInteger();
-   if ( start_pos < 0 ) start_pos = 0;
-   int32 count = length == 0 ? -1 : (int32) length->forceInteger();
+   int32 start_pos;
+   int32 count;
+   const byte *data;
 
-   if ( count < 0 || count + start_pos > (int32) dataStr->size() ) {
-      count = dataStr->size() - start_pos;
+   if( i_data->isMemBuf() )
+   {
+      MemBuf* mb = i_data->asMemBuf();
+      data = mb->data();
+      start_pos = mb->position();
+      count = mb->limit() - start_pos;
+
+      if ( count == 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+               extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
+   }
+   else
+   {
+      String *dataStr = i_data->asString();
+      data = dataStr->getRawStorage();
+
+      start_pos = start == 0 ? 0 : (int32) start->forceInteger();
+      if ( start_pos < 0 ) start_pos = 0;
+      count = length == 0 ?
+               dataStr->size()-start_pos :
+               (int32) length->forceInteger();
+
+      if ( count < 0 || count + start_pos > (int32) dataStr->size() ) {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+                        extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
    }
 
    vm->idle();
-   int32 res = tcps->send( dataStr->getRawStorage() + start_pos, count );
+   int32 res = tcps->send( data + start_pos, count );
    vm->unidle();
    
    if( res == -1 ) {
@@ -704,43 +738,213 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
          .sysError( (uint32) tcps->lastError() ) );
    }
    else if ( res == -2 )
+   {
       self->setProperty( "timedOut", Item( true ) );
+      vm->retval(0);
+   }
    else
+   {
+      vm->retval( res );
+      if ( i_data->isMemBuf() )
+      {
+         MemBuf* mb = i_data->asMemBuf();
+         mb->position( mb->position() + res );
+      }
       self->setProperty( "timedOut", Item( false ) );
+   }
 
-   vm->retval( (int64) res );
 }
+
+static int s_recv_tcp( VMachine* vm, byte* data, int size, Sys::Address& )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   vm->idle();
+   size = tcps->recv( data, size );
+   vm->unidle();
+
+   return size;
+}
+
+static int s_recv_udp( VMachine* vm, byte* data, int size, Sys::Address& a)
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::UDPSocket *udps = (Sys::UDPSocket *) self->getUserData();
+
+   vm->idle();
+   size = udps->recvFrom( data, size, a );
+   vm->unidle();
+
+   return size;
+}
+
+
+static void  s_recv_result( VMachine* vm, int size, const Sys::Address& from )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
+
+   if( size == -1 )
+   {
+      self->setProperty( "lastError", tcps->lastError() ) ;
+
+      throw  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
+         .desc( FAL_STR( sk_msg_errrecv ) )
+         .sysError( (uint32) tcps->lastError() ) );
+   }
+   else if ( size == -2 )
+   {
+      self->setProperty( "timedOut", Item( true ) );
+      vm->retval((int64) 0 );
+   }
+   else
+   {
+      self->setProperty( "timedOut", Item( false ) );
+      vm->retval((int64) size );
+
+      // a bit hackish, but who cares?
+      if( self->hasProperty("remote") )
+      {
+         String temp;
+         from.getAddress( temp );
+         self->setProperty( "remote", temp );
+         from.getService( temp );
+         self->setProperty( "remoteService", temp );
+      }
+   }
+}
+
+static void s_Socket_recv_string( VMachine* vm, Item* i_target, Item* i_size,
+      int (*rf)(VMachine*vm, byte* data, int amount, Sys::Address& )  )
+{
+   String* buffer = i_target->asString();
+   int size;
+
+   if ( i_size != 0 )
+   {
+      size = (int) i_size->forceInteger();
+
+      // ensure we have enough space.
+      if ( size <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+             extra( FAL_STR( sk_msg_zeroread ) ) );
+      }
+
+      buffer->reserve( size );
+   }
+   else
+   {
+      size = buffer->allocated();
+
+      if ( size <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+             extra( FAL_STR( sk_msg_zeroread ) ) );
+      }
+   }
+
+   Sys::Address from;
+   size = rf( vm,  buffer->getRawStorage(), size, from );
+
+   if ( size >= 0 )
+      buffer->size( size );
+
+   s_recv_result( vm, size, from  );
+}
+
+
+static void s_Socket_recv_membuf( VMachine* vm, Item* i_target, Item* i_size,
+      int (*rf)(VMachine*vm, byte* data, int amount, Sys::Address& ) )
+{
+   MemBuf* buffer = i_target->asMemBuf();
+   int size;
+
+   if ( i_size != 0 )
+   {
+      size = (int) i_size->forceInteger();
+
+      // ensure we have enough space.
+      if ( size <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+             extra( FAL_STR( sk_msg_zeroread ) ) );
+      }
+
+      // do we have enough space in the memory buffer?
+      if( buffer->position() + size > buffer->limit() )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+             extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
+   }
+   else
+   {
+      size = buffer->remaining();
+
+      if ( size <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+             extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
+   }
+
+   Sys::Address from;
+   size = rf( vm,  buffer->data(), size, from );
+
+   if ( size > 0 )
+      buffer->position( buffer->position() + size );
+
+   s_recv_result( vm, size, from );
+}
+
 
 /*#
    @method recv TCPSocket
    @brief Reads incoming data.
-   @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
+   @param buffer A pre-allocated buffer to fill.
    @optparam size Maximum size in bytes to be read.
-   @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
-      the amount of bytes actually read.
+   @return Amount of bytes actually read.
    @raise NetError on network error.
 
-   When the @b bufOrSize parameter is a buffer to be filled
-   (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
-   sparing memory and allocation time. If the size parameter is not provided,
-   the maximum amount of bytes that can be stored in the buffer will be used as read size limit,
+   The @b buffer parameter is a buffer to be filled: a @b MemBuf or a an empty
+   string (for example, a string created with @a strBuffer).
 
-   This size won't change between call, even if the actual length of the data stored in the
-   buffer changes.
+   If the @b size parameter is provided, it is used to define how many bytes can
+   be read and stored in the buffer.
 
-   If the size parameter is provided, it is used to define the maximum possible
-   size of data stored in the buffer. If it is not great enough to store the data,
-   it is resized.
+   If the @b buffer parameter is a string, it is automatically resized to fit
+   the incoming data. On a successful read, it's size will be trimmed to the
+   amount of read data, but the internal buffer will be retained; successive reads
+   will reuse the already available data buffer. For example:
 
-   When a target buffer is specified in the @b bufOrSize parameter, the method returns
-   number of bytes that has been
-   actually read. The size may be zero if the opposite side closed the connection,
-   or if the timeout has elapsed. The returned
-   size will presumably be smaller than the maximum, and it will be at maximum the
-   size of a TCP packet that can travel on the current connection.
+   @code
+   str = ""
+   while mySocket.recv( str, 1024 ) > 0
+      > "Read: ", str.len()
+      ... do something with str ...
+   end
+   @endcode
 
-   When a maximum size is specified in the @b bufOrSize parameter, the method
-   returns a newly allocated buffer on success, and nil on failure.
+   This allocates 1024 bytes in str, which is trimmed each time to the amount
+   of data really received, but is never re-allocated during this loop. However, this
+   is more efficient as you spare a parameter in each call, but it makes less
+   evident how much data you want to receive:
+
+   @code
+   str = strBuffer( 1024 )
+
+   while mySocket.recv( str ) > 0
+      > "Read: ", str.len()
+      ... do something with str ...
+   end
+   @endcode
+
+   If the @b buffer parameter is a MemBuf, the read data will be placed at
+   @a MemBuf.position. After a succesful read, up to @a MemBuf.limit bytes are
+   filled, and @a MemBuf.position is advanced. To start processing the data in the
+   buffer, use @a MamBuf.flip().
 
    In case of system error, a NetError is raised.
 
@@ -748,105 +952,22 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
 
-   Item *target = vm->param(0);
-   String *cs_target;
-   // if the third parameter is a not number, the second must be a string;
-   // if the string is missing, we must create a new appropriate target.
-   Item *last = vm->param(1);
-
-
-   int32 size;
-   bool returnTarget;
-
-   if ( target == 0 ) {
+   if( i_target == 0 || ! ( i_target->isString()|| i_target->isMemBuf() )
+       || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
       throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X, [N]" ) );
+         extra( "S|M, [N]" ) );
    }
 
-   if ( last != 0 ) {
-      size = (int32) last->forceInteger();
-      if ( size <= 0 ) {
-         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) );
-      }
-
-      if ( target->isString() )
-      {
-         cs_target = target->asString();
-         // reserve a little size; it is ignored when there's enough space.
-         cs_target->reserve( size );
-      }
-      else {
-         throw  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( FAL_STR( sk_msg_firstnostring ) ) );
-      }
-      returnTarget = false;
-   }
-   // we have only the second parameter.
-   // it MUST be a string or an integer .
-   else if ( target->isString() )
+   if( i_target->isString() )
    {
-      cs_target = target->asString();
-      size = cs_target->allocated();
-
-      if ( size <= 0 ) {
-         size = cs_target->size();
-         if ( size <= 0 ) {
-            throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( FAL_STR( sk_msg_stringnospace ) ) );
-         }
-
-         cs_target->reserve( size ); // force to bufferize
-      }
-
-      returnTarget = false;
-   }
-   else if ( target->isInteger() )
-   {
-      size = (int32) target->forceInteger();
-      if ( size <= 0 ) {
-         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) );
-      }
-      cs_target = new CoreString;
-      cs_target->reserve( size );
-      // no need to store for garbage, as we'll return this.
-      returnTarget = true;
-   }
-   else
-   {
-      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "X, [S|I]" ) );
-   }
-
-   vm->idle();
-   size = tcps->recv( cs_target->getRawStorage(), size );
-   vm->unidle();
-   
-   if( size == -1 ) {
-      self->setProperty( "lastError", tcps->lastError() ) ;
-      throw  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
-         .desc( FAL_STR( sk_msg_errrecv ) )
-         .sysError( (uint32) tcps->lastError() ) );
-   }
-   else if ( size == -2 ) {
-      self->setProperty( "timedOut", Item( true ) );
-      size = -1;
-   }
-   else
-      self->setProperty( "timedOut", Item( false ) );
-
-   if ( size > 0 )
-      cs_target->size( size );
-
-   if ( returnTarget ) {
-      vm->retval( cs_target );
+      s_Socket_recv_string( vm, i_target, i_size, &s_recv_tcp );
    }
    else {
-      vm->retval((int64) size );
+      s_Socket_recv_membuf( vm, i_target, i_size, &s_recv_tcp );
    }
 }
 
@@ -1074,6 +1195,11 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
    case the sent data may get corrupted as a transmission may deliver only part
    of a character or of a number stored in a memory buffer.
 
+   @note If the @b buffer is a MemBuf item, @b size and @b start parameters are
+   ignored, and the buffer @b MemBuf.position and @b MemBuf.limit are used
+   to determine how much data can be received. After a successful receive,
+   the value of @b MemBuf.position is moved forward accordingly.
+
    If a @b size parameter is not specified, the method will try to send the whole
    content of the buffer, otherwise it will send at maximum size bytes. If a
    @b start parameter is specified, then the data sent will be taken starting
@@ -1085,7 +1211,7 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 
    The returned value may be 0 in case of timeout, otherwise it will be a
    number between 1 and the requested size. Programs should never assume
-   that a succesful @b sendTo has sent all the data.
+   that a successful @b sendTo has sent all the data.
 
    In case of error, a @a NetError is raised.
 
@@ -1101,36 +1227,52 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    Item *data = vm->param( 2 );
    Item *length = vm->param( 3 );
    Item *start = vm->param( 4 );
-   if (( addr == 0 || ! addr->isString() ) ||
+
+   if (( addr == 0 || !addr->isString() ) ||
        ( srvc == 0 || ! srvc->isString() ) ||
-       ( data == 0 || ! data->isString() ) ||
+       ( data == 0 || ! ( data->isString() || data->isMemBuf() ) ) ||
        ( length != 0 && ! length->isOrdinal() ) ||
        ( start != 0 && ! start->isOrdinal() )
       )
    {
-      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S, [N], [N]" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|M, S, [N], [N]" ) );
       return;
    }
 
-   String *dataStr = data->asString();
-   int32 start_pos = start == 0 ? 0 : (int32) start->forceInteger();
-   if ( start_pos < 0 ) start_pos = 0;
-   int32 count = length == 0 ? -1 : (int32) length->forceInteger();
+   byte *bData;
+   int32 count;
 
-   if ( count < 0 || count + start_pos > (int32) dataStr->size() ) {
-      count = dataStr->size() - start_pos;
+   if( data->isMemBuf() )
+   {
+      MemBuf* mb = data->asMemBuf();
+      count = mb->remaining();
+      bData = mb->data() + mb->position();
    }
+   else
+   {
+      int32 start_pos = start == 0 ? 0 : (int32) start->forceInteger();
+      if ( start_pos < 0 ) start_pos = 0;
+      count = length == 0 ? -1 : (int32) length->forceInteger();
 
+      String *dataStr = data->asString() + start_pos;
+      if ( count < 0 || count + start_pos > (int32) dataStr->size() )
+      {
+         count = dataStr->size() - start_pos;
+      }
+
+      bData = dataStr->getRawStorage();
+   }
 
    Sys::Address target;
    target.set( *addr->asString(), *srvc->asString() );
    
    vm->idle();
-   int32 res = udps->sendTo( dataStr->getRawStorage() + start_pos, count, target );
+   int32 res = udps->sendTo( bData, count, target );
    vm->unidle();
    
-   if( res == -1 ) {
+   if( res == -1 )
+   {
       self->setProperty( "lastError", udps->lastError() );
       throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
          .desc( FAL_STR( sk_msg_errsend ) )
@@ -1138,21 +1280,29 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
       return;
    }
    else if ( res == -2 )
+   {
       self->setProperty( "timedOut", Item( true ) );
+      vm->retval( (int64) res );
+   }
    else
-      self->setProperty( "timedOut", Item( false ) );
+   {
+      if ( data->isMemBuf() )
+      {
+         data->asMemBuf()->position( data->asMemBuf()->position() + res );
+      }
 
-   vm->retval( (int64) res );
+      self->setProperty( "timedOut", Item( false ) );
+      vm->retval( (int64) res );
+   }
 }
 
 
 /*#
    @method recv UDPSocket
    @brief Reads incoming data.
-   @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
+   @param buffer A pre-allocated buffer to fill.
    @optparam size Maximum size in bytes to be read.
-   @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
-      the amount of bytes actually read.
+   @return the amount of bytes actually read.
    @raise NetError on network error.
 
    This method works as the @a TCPSocket.recv method, with the only
@@ -1163,136 +1313,28 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    of the receiving object are filled with the address and port of the host
    sending the packet.
 
-   When the @b bufOrSize parameter is a buffer to be filled
-   (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
-   sparing memory and allocation time. If the size parameter is not provided,
-   the maximum amount of bytes that can be stored in the buffer will be used as read size limit,
-
-   This size won't change between call, even if the actual length of the data stored in the
-   buffer changes.
-
-   If the size parameter is provided, it is used to define the maximum possible
-   size of data stored in the buffer. If it is not great enough to store the data,
-   it is resized.
-
-   When a target buffer is specified in the @b bufOrSize parameter, the method returns
-   number of bytes that has been
-   actually read. The size may be zero if the opposite side closed the connection,
-   or if the timeout has elapsed. The returned
-   size will presumably be smaller than the maximum, and it will be at maximum the
-   size of a TCP packet that can travel on the current connection.
-
-   When a maximum size is specified in the @b bufOrSize parameter, the method
-   returns a newly allocated buffer on success, and nil on failure.
-
    In case of system error, a NetError is raised.
 
    @see Socket.setTimeout
 */
 FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::UDPSocket *udps = (Sys::UDPSocket *) self->getUserData();
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
 
-   Item *target = vm->param(0);
-   String *cs_target;
-   // if the third parameter is a not number, the second must be a string;
-   // if the string is missing, we must create a new appropriate target.
-   Item *last = vm->param(1);
-
-   int32 size;
-   bool returnTarget;
-
-   if ( target == 0 ) {
+   if( i_target == 0 || ! ( i_target->isString()|| i_target->isMemBuf() )
+       || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
       throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X, [N]" ) );
+         extra( "S|M, [N]" ) );
    }
 
-   if ( last != 0 ) {
-      size = (int32) last->forceInteger();
-      if ( size <= 0 ) {
-         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) );
-         return;
-      }
-
-      if ( target->isString() )
-      {
-         cs_target = target->asString();
-         // reserve a little size; it is ignored when there's enough space.
-         cs_target->reserve( size );
-      }
-      else {
-         throw  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( FAL_STR( sk_msg_firstnostring ) ) );
-      }
-      returnTarget = false;
-   }
-   // we have only the second parameter.
-   // it MUST be a string or an integer .
-   else if ( target->isString() )
+   if( i_target->isString() )
    {
-      cs_target = target->asString();
-      size = cs_target->size();
-
-      if ( size <= 0 ) {
-         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_stringnospace ) ) );
-      }
-
-      cs_target->reserve( size ); // force to bufferize
-      returnTarget = false;
-   }
-   else if ( target->isInteger() )
-   {
-      size = (int32) target->forceInteger();
-      if ( size <= 0 ) {
-         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) );
-      }
-      cs_target = new CoreString;
-      cs_target->reserve( size );
-      // no need to store for garbage, as we'll return this.
-      returnTarget = true;
-   }
-   else
-   {
-      throw new  ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "X, S|I" ) );
-   }
-
-   Sys::Address from;
-   vm->idle();
-   size = udps->recvFrom( cs_target->getRawStorage(), size, from );
-   vm->unidle();
-
-   if( size == -1 ) {
-      self->setProperty( "lastError", udps->lastError() ) ;
-      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
-         .desc( FAL_STR( sk_msg_errsend ) )
-         .sysError( (uint32) udps->lastError() ) );
-   }
-   else if ( size == -2 ) {
-      self->setProperty( "timedOut", Item( true ) );
-      size = -1;
+      s_Socket_recv_string( vm, i_target, i_size, &s_recv_udp );
    }
    else {
-      self->setProperty( "timedOut", Item( false ) );
-      String temp;
-      from.getAddress( temp );
-      self->setProperty( "remote", temp );
-      from.getService( temp );
-      self->setProperty( "remoteService", temp );
-   }
-
-   if ( size > 0 )
-      cs_target->size( size );
-
-   if ( returnTarget ) {
-      vm->retval( cs_target );
-   }
-   else {
-      vm->retval((int64) size );
+      s_Socket_recv_membuf( vm, i_target, i_size, &s_recv_udp );
    }
 }
 
@@ -1393,7 +1435,7 @@ FALCON_FUNC  TCPServer_dispose( ::Falcon::VMachine *vm )
    all the interfaces.
 
    In case the system cannot bind the required address, a NetError is raised.
-   After a succesful @b bind call, @a TCPServer.accept may be called to create TCPSocket that
+   After a successful @b bind call, @a TCPServer.accept may be called to create TCPSocket that
    can serve incoming connections.
 */
 FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
@@ -1401,7 +1443,7 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::ServerSocket *srvs = (Sys::ServerSocket *) self->getUserData();
 
-   // paramters
+   // Parameters
    Item *i_first = vm->param( 0 );
    Item *i_second = vm->param( 1 );
 
@@ -1433,22 +1475,22 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    @method accept TCPServer
    @brief Waits for incoming connections.
    @optparam timeout Optional wait time.
-   @return A new TCPSocket after a succesful connection.
+   @return A new TCPSocket after a successful connection.
    @raise NetError on system error.
 
    This method accepts incoming connection and creates a TCPSocket object that
    can be used to communicate with the remote host. Before calling accept(), it is
-   necessary to have succesfully called bind() to bind the listening application to
+   necessary to have successfully called bind() to bind the listening application to
    a certain local address.
 
    If a timeout is not specified, the function will block until a TCP connection is
-   received. If it is specificed, is a number of millisecond that will be waited
+   received. If it is specified, is a number of millisecond that will be waited
    before returning a nil. Setting the timeout to zero will cause accept to return
    immediately, providing a valid TCPSocket as return value only if an incoming
    connection was already pending.
 
    The wait blocks the VM, and thus, also the other coroutines.
-   If a system error occours during the wait, a NetError is raised.
+   If a system error occurs during the wait, a NetError is raised.
 */
 FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
 {
