@@ -1,12 +1,12 @@
 ##################################################
 # Falcon Programming Language
 #
-# Faltest
 ##################################################
 
 #Engine specific define
 ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
 
+Message( "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
 #Specific system files
 IF(UNIX OR APPLE)
@@ -38,13 +38,20 @@ IF(UNIX OR APPLE)
    IF(APPLE)
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
-         heap_bsd.cpp
+         heap_bsd.cpp 
          dll_mac.cpp )
    ELSE(APPLE)
-      SET( SYS_SPECIFIC
+      IF(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
+	SET( SYS_SPECIFIC
+         ${SYS_SPECIFIC}
+         heap_bsd.cpp
+         dll_dl.cpp )
+      ELSE(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
+        SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
          heap_posix.cpp
          dll_dl.cpp )
+      endif(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
    ENDIF(APPLE)
 
    #We need bison.
@@ -270,10 +277,16 @@ IF(UNIX OR APPLE)
         dl
         pthread )
    ELSE(APPLE)
-      SET(SYS_LIBS
+      IF(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
+        SET(SYS_LIBS
+         pthread
+         )
+      ELSE(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
+        SET(SYS_LIBS
          dl
          pthread
          rt)
+      ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
    ENDIF(APPLE)
 
    TARGET_LINK_LIBRARIES(falcon_engine ${SYS_LIBS})

@@ -74,7 +74,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    init();
 
    m_module = mod;
-   m_module->engineVersion( FALCON_VERSION_NUM );
+   m_module->engineVersion( (FALCON_VERSION_NUM) );
 
    addPredefs();
 
