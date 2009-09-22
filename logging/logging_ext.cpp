@@ -32,7 +32,7 @@
 #include "logging_st.h"
 
 /*#
-   @beginmodule feather_logger
+   @beginmodule feather_logging
 */
 
 namespace Falcon {
@@ -98,9 +98,9 @@ FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm )
    by some of the registered channel, you have to:
 
    @code
-     if level <= GenericLog.minlog()
+     if level <= GeneralLog.minlog()
         // ok, someone will log my entry
-        GenericLog.log( level, "entry" )
+        GeneralLog.log( level, "entry" )
      end
    @endcode
 
@@ -728,7 +728,7 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    @brief Determines what is the minimum log severity active on the GeneircLog area.
    @return A number representing a log severity, or -1
 
-   This function is actually a shortcut to @a LogArea.minlog applied on @a GenericLog.
+   This function is actually a shortcut to @a LogArea.minlog applied on @a GeneralLog.
 */
 FALCON_FUNC  gminlog( ::Falcon::VMachine *vm )
 {

@@ -10,7 +10,7 @@
 
 Title = Falcon Feathers - The Standard Modules Reference.
 Author = The Falcon Committee
-Version = 0.9.4
+Version = 0.9.4.2
 
 ################################################
 # Faldoc Input settings
@@ -19,6 +19,7 @@ Version = 0.9.4
 Input.directory=../compiler
 Input.directory=../confparser
 Input.directory=../funcext
+Input.directory=../logging
 Input.directory=../process
 Input.directory=../mxml
 Input.directory=../regex
@@ -45,7 +46,7 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-feathers-docs.0.9.4
+Output.html.directory=Falcon-feathers-docs.0.9.4.2
 Output.html.url=.
 Output.html.doctitle=Falcon Feathers Function Reference
 
@@ -53,7 +54,7 @@ Output.html.doctitle=Falcon Feathers Function Reference
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=Falcon-feathers-0.9.4.lst
+Output.list.file=Falcon-feathers-0.9.4.2.lst
 Output.list.doctitle=Falcon Feather Modules - Function List
 Output.list.bytype=true
 Output.list.members=true
