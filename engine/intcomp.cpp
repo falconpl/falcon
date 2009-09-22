@@ -32,6 +32,7 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    m_interactive( true )
 {
    m_vm = vm;
+   m_vm->incref();
 
    m_modVersion = 0x010000;
    m_language = "en_EN";
@@ -55,6 +56,7 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
 InteractiveCompiler::~InteractiveCompiler()
 {
    m_module->decref();
+   m_vm->decref();
 }
 
 InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( const String &input )
