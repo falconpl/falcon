@@ -1,4 +1,4 @@
-Feathers (0.9.4.1)
+Feathers (0.9.4.2)
   * fixed: Crash in Thread.toString() when the thread isn't started.
   * added: logging module
   * minor: Removed buffer creation semantic in .recv() calls in Socket.
