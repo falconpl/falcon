@@ -460,7 +460,7 @@ int32 TCPSocket::recv( byte *buffer, int32 size )
    return read;
 }
 
-int32 TCPSocket::send( byte *buffer, int32 size )
+int32 TCPSocket::send( const byte *buffer, int32 size )
 {
    if ( ! writeAvailable( m_timeout ) ) {
       if ( m_lastError != 0 )
