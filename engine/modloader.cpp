@@ -331,7 +331,6 @@ bool ModuleLoader::scanForFile( URI &origUri, VFSProvider* vfs, t_filetype &type
       }
       else if ( vfs->readStats( origUri, fs ) )
       {
-         //type = fileType( *ext );
          type = *ptf;
          return true;
       }

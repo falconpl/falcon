@@ -66,6 +66,41 @@ bool fal_stats( const String &filename, FileStat &sts )
    Sys::falconToWin_fname( fname );
 
 	AutoWString wBuffer( fname );
+   // First, determine if the file exists
+   WIN32_FIND_DATAW wFindData;
+
+   HANDLE hFound = FindFirstFileW( wBuffer.w_str(), &wFindData );
+   if( hFound == INVALID_HANDLE_VALUE )
+   {
+      if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+      {
+         WIN32_FIND_DATAA aFindData;
+         AutoCString cBuffer( fname );
+         
+         hFound = FindFirstFileA( cBuffer.c_str(), &aFindData );
+         
+         if ( hFound == INVALID_HANDLE_VALUE )
+            return false;
+
+         FindClose( hFound );
+
+         // check case sensitive
+         String ffound(aFindData.cFileName);
+         if( fname.subString( fname.length() - ffound.length() ) != ffound )
+            return false;
+      }
+      else
+         return false;
+   }
+   
+   FindClose( hFound );
+
+   // Then, see if the case matches.
+   String ffound(wFindData.cFileName);
+   if( fname.subString( fname.length() - ffound.length() ) != ffound )
+      return false;
+
+   // ok, file exists and with matching case
 
    HANDLE temp = CreateFileW( wBuffer.w_str(),
       GENERIC_READ,
