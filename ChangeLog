@@ -1,3 +1,9 @@
+Falcon (0.9.4.3)
+  * fixed: The context stack was lenghtend, but not resized, when calling an 
+           array. This may have caused direct crashes when calling arrays on 
+           brand new stack frames (a rare, but possible situation).
+  * fixed: Grammar error on def statement caused crash.
+           
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not
            cleaned (Thanks Klaim).

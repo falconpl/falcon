@@ -3489,7 +3489,7 @@ void VMachine::prepareFrame( CoreArray* arr, uint32 paramCount )
    if ( arraySize > 0 )
    {
       // first array element is the called item.
-      this->stack().length( sizeNow + arraySize );
+      this->stack().resize( sizeNow + arraySize );
 
       sizeNow -= paramCount;
       for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )

@@ -327,7 +327,10 @@ base_statement:
 ;
 
 assignment_def_list:
-   atomic_symbol OP_EQ expression {
+   atomic_symbol {
+      COMPILER->raiseError( Falcon::e_syn_def );
+   }
+   | atomic_symbol OP_EQ expression {
       COMPILER->defContext( true );
       COMPILER->defineVal( $1 );
       COMPILER->addStatement( new Falcon::StmtAutoexpr( CURRENT_LINE, new Falcon::Value(
