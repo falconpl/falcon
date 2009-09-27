@@ -28,14 +28,14 @@
 
 namespace Falcon {
 
-class JSON
+class JSON: public BaseAlloc
 {
 public:
    JSON( bool bEncUni = false, bool bPretty=false, bool bReadale = false );
    ~JSON();
 
-   bool encode( const Item& source, Stream* tgt );
-   bool decode( Item& target, Stream* src ) const;
+   virtual bool encode( const Item& source, Stream* tgt );
+   virtual bool decode( Item& target, Stream* src ) const;
 
 private:
    void encode_string( const String& source, Stream* tgt ) const;

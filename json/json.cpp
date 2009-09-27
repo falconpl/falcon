@@ -35,11 +35,13 @@
 */
 
 #include <falcon/module.h>
+#include <falcon/srv/json_srv.h>
 #include "json_ext.h"
 #include "json_st.h"
 
 #include "version.h"
 
+static Falcon::JSONService s_theJSONService;
 
 FALCON_MODULE_DECL
 {
@@ -67,6 +69,11 @@ FALCON_MODULE_DECL
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *jerr_cls = self->addClass( "JSONError", &Falcon::Ext::JSONError_init );
    jerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
+   //======================================
+   // Subscribe the service
+   //
+   self->publishService( &s_theJSONService );
 
    return self;
 }

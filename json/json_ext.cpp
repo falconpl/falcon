@@ -43,7 +43,7 @@ namespace Ext {
    @optparam stream A stream on which to send the encoded result.
    @return a string containing the JSON string, if @b stream is nil
    @throw JSONError if the passed item cannot be turned into a JSON representation.
-   @throw IoError in case of error on target stream .
+   @throw IoError in case of error on target stream.
 
    @code
       
