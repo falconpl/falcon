@@ -40,6 +40,7 @@
 #define FALCON_SOCKET_ERROR_BASE          1170
 #define FALCON_ZLIB_ERROR_BASE            1190
 #define FALCON_LOGGING_ERROR_BASE         1200
+#define FALCON_JSON_ERROR_BASE            1210
 
 #define FALCON_DBI_ERROR_BASE             2000
 #define FALCON_THREADING_ERROR_BASE       2050

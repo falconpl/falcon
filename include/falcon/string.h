@@ -1222,6 +1222,8 @@ public:
    void readProperty( const String &prop, Item &item );
 
    bool isCore() const { return m_bCore; }
+
+   static void uint32ToHex( uint32 number, char *buffer );
 };
 
 

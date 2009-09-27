@@ -1371,7 +1371,7 @@ void String::prepend( uint32 chr )
    setCharAt( 0, chr );
 }
 
-static void uint32ToHex( uint32 number, char *buffer )
+void String::uint32ToHex( uint32 number, char *buffer )
 {
    uint32 divisor = 0x10000000;
    int pos = 0;
