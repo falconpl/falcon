@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: compiler_ext.h
+   FILE: funcext_ext.h
 
-   Compiler module main file - extension definitions.
+   Functional extensions - extension definitions.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab lug 21 2007
@@ -24,14 +24,7 @@
 #include <falcon/module.h>
 #include <falcon/error_base.h>
 
-#ifndef FALCON_COMPILER_ERROR_BASE
-   #define FALCON_COMPILER_ERROR_BASE        1000
-#endif
-
-#define FALCOMP_ERR_UNLOADED   (FALCON_COMPILER_ERROR_BASE + 0)
-
 namespace Falcon {
-
 namespace Ext {
 
 FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm );
@@ -49,10 +42,9 @@ FALCON_FUNC  fe_mul( ::Falcon::VMachine *vm );
 FALCON_FUNC  fe_div( ::Falcon::VMachine *vm );
 FALCON_FUNC  fe_mod( ::Falcon::VMachine *vm );
 
-
 }
 }
 
 #endif
 
-/* end of compiler_ext.h */
+/* end of funcext_ext.h */

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
-   FILE: compiler.cpp
+   FILE: funcext.cpp
 
    funcext module main file
    -------------------------------------------------------------------

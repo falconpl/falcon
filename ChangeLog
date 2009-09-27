@@ -1,3 +1,6 @@
+Feathers (0.9.4.4)
+  * added: JSON module (encoding/decoding JSON).
+  
 Feathers (0.9.4.2)
   * fixed: Crash in Thread.toString() when the thread isn't started.
   * added: logging module

@@ -29,11 +29,11 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "Functional extensions feather module"
+            VALUE "FileDescription", "JSON support feather module"
             VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
-            VALUE "InternalName", "funcext"
+            VALUE "InternalName", "json"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "funcext_fm.dll"
+            VALUE "OriginalFilename", "json_fm.dll"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END
