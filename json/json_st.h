@@ -20,6 +20,8 @@
 #include <falcon/message_defs.h>
 
 FAL_MODSTR( json_msg_non_codeable, "Given object cannot be rendered as json string" );
+FAL_MODSTR( json_msg_non_decodable, "Data is not in json format" );
+FAL_MODSTR( json_msg_non_apply, "JSON Data not applicable to given object." );
 
 #endif
 

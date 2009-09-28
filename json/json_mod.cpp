@@ -261,7 +261,322 @@ void JSON::encode_string( const String &str, Stream* tgt ) const
 
 bool JSON::decode( Item& target, Stream* src ) const
 {
+   String temp;
 
+   enum {
+      st_none,
+      st_number,
+      st_float,
+      st_firstexp,
+      st_exp,
+      st_string,
+      st_escape,
+      st_array,
+      st_object
+   } state;
+
+   state = st_none;
+   uint32 chr;
+   while( src->get( chr ) )
+   {
+      switch( state )
+      {
+         case st_none:
+            switch( chr )
+            {
+               // ignore ws
+               case ' ': case '\t': case '\r': case '\n': continue;
+               case '+': state = st_number; break;
+               case '-': state = st_number; temp.append(chr); break;
+               case '"': state = st_string; break;
+               case '[': state = st_array; break;
+               case '{': state = st_object; break;
+               case '0': case '1': case '2': case '3': case '4':
+               case '5': case '6': case '7': case '8': case '9':
+                  state = st_number; temp.append(chr);
+                  break;
+
+               // try to read true, false or null
+               case 'n':
+                  if ( ! src->get( chr ) || chr != 'u' ) return false;
+                  if ( ! src->get( chr ) || chr != 'l' ) return false;
+                  if ( ! src->get( chr ) || chr != 'l' ) return false;
+                  if ( src->get( chr ) &&
+                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
+                       )
+                     return false;
+
+                  target.setNil();
+                  return true;
+
+               case 't':
+                  if ( ! src->get( chr ) || chr != 'r' ) return false;
+                  if ( ! src->get( chr ) || chr != 'u' ) return false;
+                  if ( ! src->get( chr ) || chr != 'e' ) return false;
+                  if ( src->get( chr ) &&
+                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
+                       )
+                     return false;
+
+                  target.setBoolean( true );
+                  return true;
+
+               case 'f':
+                  if ( ! src->get( chr ) || chr != 'a' ) return false;
+                  if ( ! src->get( chr ) || chr != 'l' ) return false;
+                  if ( ! src->get( chr ) || chr != 's' ) return false;
+                  if ( ! src->get( chr ) || chr != 'e' ) return false;
+                  if ( src->get( chr ) &&
+                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
+                       )
+                     return false;
+
+                  target.setBoolean( false );
+                  return true;
+
+               default:
+                  return false;
+            }
+            break;
+
+         case st_number:  case st_float:
+            if( chr >= '0' || chr <= '9' )
+            {
+               temp.append(chr);
+            }
+            else if( chr == '.' )
+            {
+               if ( state == st_float )
+                  return false;
+
+               state = st_float;
+               temp.append(chr);
+            }
+            else if( chr == 'e' || chr == 'E' )
+            {
+               state = st_firstexp;
+               temp.append(chr);
+            }
+            else if( chr == ',' || chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            {
+               src->unget( chr );
+               return true;
+            }
+            else
+               return false;
+         break;
+
+         case st_firstexp:
+            if( chr >= '0' || chr <= '9' || chr == '-' )
+            {
+               temp.append(chr);
+               state = st_exp;
+            }
+            else
+               return false;
+         break;
+
+         case st_exp:
+            if( chr >= '0' || chr <= '9' || chr == '-' )
+            {
+               temp.append(chr);
+               state = st_exp;
+            }
+            else if( chr == ',' || chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            {
+               src->unget( chr );
+               return true;
+            }
+            return false;
+
+         break;
+
+         case st_string:
+            if ( chr == '"' )
+            {
+               target = new CoreString( temp );
+               return true;
+            }
+            else if ( chr == '\\' )
+            {
+               state = st_escape;
+            }
+            else
+            {
+               temp.append( chr );
+            }
+            break;
+
+         case st_escape:
+            switch( chr )
+            {
+               case '\\': temp.append( '\\' ); break;
+               case 'b': temp.append( '\b' ); break;
+               case 't': temp.append( '\t' ); break;
+               case 'n': temp.append( '\n' ); break;
+               case 'r': temp.append( '\r' ); break;
+               case 'f': temp.append( '\f' ); break;
+               case '/': temp.append( '/' ); break;
+               default:
+                  return false;
+            }
+            break;
+
+         case st_array:
+         {
+            CoreArray* ca = decodeArray( src );
+            if ( ca == 0 )
+            {
+               return false;
+            }
+
+            target = ca;
+            return true;
+         }
+         break;
+
+         case st_object:
+         {
+            CoreDict* cd = decodeDict( src );
+            if ( cd == 0 )
+            {
+               return false;
+            }
+
+            target = cd;
+            return true;
+         }
+         break;
+      }
+   }
+
+   // We must be at eof -- we must have exhausted the
+   if ( state == st_firstexp && state == st_string && state == st_escape )
+   {
+      return false;
+   }
+
+   if ( state == st_number )
+   {
+      int64 number;
+      temp.parseInt( number );
+      target = number;
+   }
+   else if ( state == st_float || state == st_exp )
+   {
+      numeric number;
+      temp.parseDouble( number );
+      target = number;
+   }
+   else
+      return false;
+
+   return true;
+}
+
+
+CoreArray* JSON::decodeArray( Stream* src ) const
+{
+   CoreArray* ca = new CoreArray;
+   uint32 chr;
+
+   bool bComma = false;
+   while( src->get( chr ) )
+   {
+      if( chr == ' ' || chr == '\t' || chr == '\r' || chr != '\n' )
+         continue;
+
+      if ( chr == ']' )
+         return ca;
+
+      if ( bComma )
+      {
+         if ( chr == ',' )
+            bComma = false;
+         else
+            return 0;
+      }
+      else
+      {
+         Item tmp;
+         src->unget( chr );
+         if( ! decode( tmp, src ) )
+         {
+            // dispose all the data.
+            ca->gcMark(0);
+            return 0;
+         }
+         ca->append( tmp );
+         bComma = true;
+      }
+   }
+}
+
+CoreDict* JSON::decodeDict( Stream* src ) const
+{
+   CoreDict* cd = new LinearDict;
+   uint32 chr;
+
+   enum {
+      st_key,
+      st_value,
+      st_comma,
+      st_colon
+   } state;
+
+   state = st_key;
+
+   Item key, value;
+   bool bComma = false;
+   while( src->get( chr ) )
+   {
+      if( chr == ' ' || chr == '\t' || chr == '\r' || chr != '\n' )
+         continue;
+
+      if ( state == st_colon )
+      {
+         if ( chr == ':' )
+            state = st_value;
+         else
+         {
+            cd->gcMark(0);
+            return 0;
+         }
+
+      }
+      else if ( state == st_comma )
+      {
+         if ( chr == '}' )
+            return cd;
+
+         if ( chr == ',' )
+            bComma = false;
+         else
+            return 0;
+      }
+      else if ( state == st_key )
+      {
+         if( ! decode( key, chr ) || tmp.isString() )
+         {
+            // dispose all the data.
+            cd->gcMark(0);
+            return 0;
+         }
+         state = st_colon;
+      }
+      else
+      {
+         if( ! decode( value, chr ) || tmp.isString() )
+         {
+            // dispose all the data.
+            ca->gcMark(0);
+            return 0;
+         }
+         state = st_key;
+         cd->insert( key, value );
+      }
+
+   }
 }
 
 }

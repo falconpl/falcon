@@ -30,7 +30,7 @@
 
 
 /*#
-   @beginmodule feather_funcext
+   @beginmodule feather_json
 */
 
 namespace Falcon {
@@ -45,11 +45,6 @@ namespace Ext {
    @throw JSONError if the passed item cannot be turned into a JSON representation.
    @throw IoError in case of error on target stream.
 
-   @code
-      
-   @endcode
-
-   @note At the moment, the @b at function doesn't support BOM methods.
 */
 
 FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
@@ -80,12 +75,7 @@ FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
    }
 
    JSON encoder;
-   if( ! encoder.encode( *i_item, target ) )
-   {
-      throw new JSONError( ErrorParam( FALCON_JSON_NOT_CODEABLE, __LINE__  )
-            .origin( e_orig_runtime )
-            .desc( FAL_STR(json_msg_non_codeable) ) );
-   }
+   bool result =  encoder.encode( *i_item, target );
 
    if( bDel )
    {
@@ -101,10 +91,75 @@ FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
             sysError( target->lastError() ) );
       }
    }
+
+   if ( ! result )
+   {
+      throw new JSONError( ErrorParam( FALCON_JSON_NOT_CODEABLE, __LINE__  )
+            .origin( e_orig_runtime )
+            .desc( FAL_STR(json_msg_non_codeable) ) );
+   }
+
 }
+
+/*#
+   @function decode
+   @brief Decode an item stored in JSON format.
+   @param source A string or a stream from which to read the JSON data.
+   @return a string containing the JSON string, if @b stream is nil
+   @throw JSONError if the input data cannot be parsed.
+   @throw IoError in case of error on the source stream.
+
+*/
 
 FALCON_FUNC  json_decode ( ::Falcon::VMachine *vm )
 {
+   Item *i_source = vm->param(0);
+
+   Stream* target = 0;
+   bool bDel;
+
+   if ( i_source == 0 || ! (source->isString() || source->isOfClass( "Stream" ))
+        )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            origin( e_orig_runtime ).
+            extra("S|Stream") );
+   }
+
+   if ( i_source->isString() )
+   {
+      bDel = true;
+      target = new ROStringStream(*i_source->asString());
+   }
+   else {
+      bDel = false;
+      target = dyncast<Stream*>( i_source->asObject()->getFalconData() );
+   }
+
+   Item item;
+   JSON encoder;
+   bool result = encoder.decode( item, target );
+
+   // ok also in case of error -- actually better, as it clears garbage
+   vm->retval( item );
+
+   if( bDel )
+   {
+      delete target;
+   }
+   else if( ! target->good() && ! target->eof() )
+   {
+      throw new IoError(  ErrorParam( e_io_error, __LINE__ ).
+         origin( e_orig_runtime ).
+         sysError( target->lastError() ) );
+   }
+
+   if ( ! result )
+   {
+      throw new JSONError( ErrorParam( FALCON_JSON_NOT_DECODABLE, __LINE__  )
+            .origin( e_orig_runtime )
+            .desc( FAL_STR(json_msg_non_decodable) ) );
+   }
 }
 
 FALCON_FUNC  json_apply ( ::Falcon::VMachine *vm )
@@ -114,6 +169,14 @@ FALCON_FUNC  json_apply ( ::Falcon::VMachine *vm )
 //=====================================================
 // JSON Error
 //
+/*#
+   @class JSONError
+   @brief Error generated after error conditions on JSON operations.
+   @optparam code The error code
+   @optparam desc The description for the error code
+   @optparam extra Extra information specifying the error conditions.
+   @from Error( code, desc, extra )
+*/
 FALCON_FUNC  JSONError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
