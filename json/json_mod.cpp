@@ -173,8 +173,8 @@ bool JSON::encode( const Item& source, Stream* tgt  )
          {
             Item prop;
             if ( obj->getProperty( *tab.getKey(i), prop ) &&
-                  prop.isNil() || prop.isOrdinal() || prop.isBoolean()
-                  || prop.isString() || prop.isDict() || prop.isArray() )
+                  (prop.isNil() || prop.isOrdinal() || prop.isBoolean()
+                  || prop.isString() || prop.isDict() || prop.isArray() ))
             {
                tgt->put( '"' );
                encode_string( *tab.getKey( i ), tgt);
@@ -270,9 +270,7 @@ bool JSON::decode( Item& target, Stream* src ) const
       st_firstexp,
       st_exp,
       st_string,
-      st_escape,
-      st_array,
-      st_object
+      st_escape
    } state;
 
    state = st_none;
@@ -289,8 +287,6 @@ bool JSON::decode( Item& target, Stream* src ) const
                case '+': state = st_number; break;
                case '-': state = st_number; temp.append(chr); break;
                case '"': state = st_string; break;
-               case '[': state = st_array; break;
-               case '{': state = st_object; break;
                case '0': case '1': case '2': case '3': case '4':
                case '5': case '6': case '7': case '8': case '9':
                   state = st_number; temp.append(chr);
@@ -334,6 +330,24 @@ bool JSON::decode( Item& target, Stream* src ) const
                   target.setBoolean( false );
                   return true;
 
+               case '{':
+               {
+                  CoreDict* cd = decodeDict( src );
+                  if ( cd == 0 )
+                     return false;
+                  target = cd;
+               }
+               return true;
+
+               case '[':
+               {
+                  CoreArray* ca = decodeArray( src );
+                  if ( ca == 0 )
+                     return false;
+                  target = ca;
+               }
+               return true;
+
                default:
                   return false;
             }
@@ -357,13 +371,24 @@ bool JSON::decode( Item& target, Stream* src ) const
                state = st_firstexp;
                temp.append(chr);
             }
-            else if( chr == ',' || chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            else
             {
                src->unget( chr );
+               if ( state == st_float )
+               {
+                  numeric number;
+                  temp.parseDouble( number );
+                  target = number;
+               }
+               else
+               {
+                  int64 number;
+                  temp.parseInt( number );
+                  target = number;
+               }
                return true;
             }
-            else
-               return false;
+
          break;
 
          case st_firstexp:
@@ -382,9 +407,12 @@ bool JSON::decode( Item& target, Stream* src ) const
                temp.append(chr);
                state = st_exp;
             }
-            else if( chr == ',' || chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            else
             {
                src->unget( chr );
+               numeric number;
+               temp.parseDouble( number );
+               target = number;
                return true;
             }
             return false;
@@ -422,56 +450,10 @@ bool JSON::decode( Item& target, Stream* src ) const
             }
             break;
 
-         case st_array:
-         {
-            CoreArray* ca = decodeArray( src );
-            if ( ca == 0 )
-            {
-               return false;
-            }
-
-            target = ca;
-            return true;
-         }
-         break;
-
-         case st_object:
-         {
-            CoreDict* cd = decodeDict( src );
-            if ( cd == 0 )
-            {
-               return false;
-            }
-
-            target = cd;
-            return true;
-         }
-         break;
       }
    }
 
-   // We must be at eof -- we must have exhausted the
-   if ( state == st_firstexp && state == st_string && state == st_escape )
-   {
-      return false;
-   }
-
-   if ( state == st_number )
-   {
-      int64 number;
-      temp.parseInt( number );
-      target = number;
-   }
-   else if ( state == st_float || state == st_exp )
-   {
-      numeric number;
-      temp.parseDouble( number );
-      target = number;
-   }
-   else
-      return false;
-
-   return true;
+   return false;
 }
 
 
@@ -483,7 +465,7 @@ CoreArray* JSON::decodeArray( Stream* src ) const
    bool bComma = false;
    while( src->get( chr ) )
    {
-      if( chr == ' ' || chr == '\t' || chr == '\r' || chr != '\n' )
+      if( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
          continue;
 
       if ( chr == ']' )
@@ -510,11 +492,17 @@ CoreArray* JSON::decodeArray( Stream* src ) const
          bComma = true;
       }
    }
+
+   // decoding is incomplete
+   // dispose all the data.
+   ca->gcMark(0);
+   return 0;
+
 }
 
 CoreDict* JSON::decodeDict( Stream* src ) const
 {
-   CoreDict* cd = new LinearDict;
+   LinearDict* cd = new LinearDict;
    uint32 chr;
 
    enum {
@@ -530,7 +518,7 @@ CoreDict* JSON::decodeDict( Stream* src ) const
    bool bComma = false;
    while( src->get( chr ) )
    {
-      if( chr == ' ' || chr == '\t' || chr == '\r' || chr != '\n' )
+      if( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
          continue;
 
       if ( state == st_colon )
@@ -540,6 +528,7 @@ CoreDict* JSON::decodeDict( Stream* src ) const
          else
          {
             cd->gcMark(0);
+            delete cd;
             return 0;
          }
 
@@ -547,36 +536,49 @@ CoreDict* JSON::decodeDict( Stream* src ) const
       else if ( state == st_comma )
       {
          if ( chr == '}' )
-            return cd;
+            return new CoreDict( cd );
 
          if ( chr == ',' )
             bComma = false;
          else
+         {
+            cd->gcMark(0);
+            delete cd;
             return 0;
+         }
       }
       else if ( state == st_key )
       {
-         if( ! decode( key, chr ) || tmp.isString() )
+         if( ! decode( key, src ) || key.isString() )
          {
             // dispose all the data.
             cd->gcMark(0);
+            delete cd;
             return 0;
          }
          state = st_colon;
       }
       else
       {
-         if( ! decode( value, chr ) || tmp.isString() )
+         if( ! decode( value, src ) )
          {
             // dispose all the data.
-            ca->gcMark(0);
+            cd->gcMark(0);
+            delete cd;
             return 0;
          }
          state = st_key;
-         cd->insert( key, value );
+         cd->put( key, value );
       }
 
    }
+
+   // decoding is incomplete
+   // dispose all the data.
+   cd->gcMark(0);
+   delete cd;
+   return 0;
+
 }
 
 }

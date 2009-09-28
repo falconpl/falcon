@@ -22,6 +22,7 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 #include <falcon/stringstream.h>
+#include <falcon/rosstream.h>
 
 #include "json_ext.h"
 #include "json_mod.h"
@@ -118,7 +119,7 @@ FALCON_FUNC  json_decode ( ::Falcon::VMachine *vm )
    Stream* target = 0;
    bool bDel;
 
-   if ( i_source == 0 || ! (source->isString() || source->isOfClass( "Stream" ))
+   if ( i_source == 0 || ! (i_source->isString() || i_source->isOfClass( "Stream" ))
         )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
