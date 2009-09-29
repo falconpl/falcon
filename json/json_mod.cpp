@@ -357,7 +357,7 @@ bool JSON::decode( Item& target, Stream* src ) const
             break;
 
          case st_number:  case st_float:
-            if( chr >= '0' || chr <= '9' )
+            if( chr >= '0' && chr <= '9' )
             {
                temp.append(chr);
             }
@@ -395,7 +395,7 @@ bool JSON::decode( Item& target, Stream* src ) const
          break;
 
          case st_firstexp:
-            if( chr >= '0' || chr <= '9' || chr == '-' )
+            if( (chr >= '0' && chr <= '9') || chr == '-' )
             {
                temp.append(chr);
                state = st_exp;
@@ -405,7 +405,7 @@ bool JSON::decode( Item& target, Stream* src ) const
          break;
 
          case st_exp:
-            if( chr >= '0' || chr <= '9' || chr == '-' )
+            if( (chr >= '0' && chr <= '9') || chr == '-' )
             {
                temp.append(chr);
                state = st_exp;
@@ -546,14 +546,15 @@ CoreDict* JSON::decodeDict( Stream* src ) const
    state = st_key;
 
    Item key, value;
-   bool bComma = false;
+
    while( src->get( chr ) )
    {
       if( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
          continue;
 
-      if ( state == st_colon )
+      switch( state )
       {
+      case st_colon:
          if ( chr == ':' )
             state = st_value;
          else
@@ -562,35 +563,37 @@ CoreDict* JSON::decodeDict( Stream* src ) const
             delete cd;
             return 0;
          }
+         break;
 
-      }
-      else if ( state == st_comma )
-      {
+      case st_comma:
          if ( chr == '}' )
             return new CoreDict( cd );
 
          if ( chr == ',' )
-            bComma = false;
+            state = st_key;
          else
          {
             cd->gcMark(0);
             delete cd;
             return 0;
          }
-      }
-      else if ( state == st_key )
-      {
-         if( ! decode( key, src ) || key.isString() )
+         break;
+
+      case st_key:
+         src->unget( chr );
+         if( ! decode( key, src ) ||! key.isString() )
          {
             // dispose all the data.
             cd->gcMark(0);
             delete cd;
             return 0;
          }
+
          state = st_colon;
-      }
-      else
-      {
+         break;
+
+      case st_value:
+         src->unget( chr );
          if( ! decode( value, src ) )
          {
             // dispose all the data.
@@ -598,10 +601,11 @@ CoreDict* JSON::decodeDict( Stream* src ) const
             delete cd;
             return 0;
          }
-         state = st_key;
-         cd->put( key, value );
-      }
 
+         state = st_comma;
+         cd->put( key, value );
+         break;
+      }
    }
 
    // decoding is incomplete
