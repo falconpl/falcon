@@ -14,7 +14,7 @@
 */
 
 /** \file
-   JSON module main file - string table.
+   JSON module - string table.
 */
 
 #define FALCON_REALIZE_STRTAB

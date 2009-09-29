@@ -262,6 +262,8 @@ void JSON::encode_string( const String &str, Stream* tgt ) const
 bool JSON::decode( Item& target, Stream* src ) const
 {
    String temp;
+   uint32 unival;
+   uint32 unicount;
 
    enum {
       st_none,
@@ -270,6 +272,7 @@ bool JSON::decode( Item& target, Stream* src ) const
       st_firstexp,
       st_exp,
       st_string,
+	  st_unistr,
       st_escape
    } state;
 
@@ -445,9 +448,37 @@ bool JSON::decode( Item& target, Stream* src ) const
                case 'r': temp.append( '\r' ); break;
                case 'f': temp.append( '\f' ); break;
                case '/': temp.append( '/' ); break;
+			   case 'u': state = st_unistr; unival = 0; unicount = 0; break;
                default:
                   return false;
             }
+            break;
+
+		case st_unistr:
+			if ( chr >= '0' && chr <= '9' )
+			{
+				unival <<= 4;
+				unival |= (unsigned char) (chr - '0');
+			}
+			else if ( chr >= 'a' && chr <= 'f' )
+			{
+				unival <<= 4;
+				unival |= (unsigned char) (chr - 'a')+10;
+			}
+			else if ( chr >= 'A' && chr <= 'F' )
+			{
+				unival <<= 4;
+				unival |= (unsigned char) (chr - 'A')+10;
+			}
+			else
+				return false;
+
+			if ( ++unicount == 4 )
+			{
+				// complete
+				state = st_string;
+				temp.append( unival );
+			}
             break;
 
       }
