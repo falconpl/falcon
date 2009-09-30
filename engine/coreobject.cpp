@@ -166,6 +166,14 @@ bool CoreObject::getMethodDefault( const String &name, Item &mth ) const
 }
 
 
+bool CoreObject::apply( const ItemDict& dict, bool bRaiseOnError = false )
+{
+}
+
+bool CoreObject::retrieve( ItemDict& dict, bool bRaiseOnError, bool bFillDict, bool bIgnoreMethods ) const
+{
+}
+
 //=======================================================================
 // Deep item overloading
 //=======================================================================

@@ -334,6 +334,49 @@ public:
    */
    const CoreClass *generator() const { return m_generatedBy; }
 
+   /** Apply the given values to this object.
+
+      This function applies the values in dict
+      inside this object, applying repeatedly them via setProperty.
+
+      This function skips writeProperty and calls directly to the virtual
+      setProperty method. This means that VM overrides are uncalled.
+
+      If bRaiseOnError is set to true, a failed setProperty will
+      cause the function to raise an AccessError. Otherwise, the
+      function will ignore the error and proceed, but it will
+      return false when completed.
+
+      \param dict The property => value dictionary to be applied.
+      \param bRaiseOnError if true, raise when a property in dict is not found here.
+      \return true on success, false if some property was not found and
+              bRaiseOnError is false.
+   */
+   bool apply( const ItemDict& dict, bool bRaiseOnError = false );
+
+   /** Retrieves values of properties in this object.
+      This method calls iteratively getProperty to fill the properties
+      that corespond to the keys in dict.
+
+      If bFillDict is true, the object is scanned and its properties
+      are set in the dictionary instead.
+
+      If bIgnoreMethods is true, method proeprties are skipped when
+      bFillDict is true.
+
+      If bRaiseOnError is true the function throws an AccessError when
+      getProperty fails; this setting is ignored when bFillDict is true.
+
+      \param dict The dictionary to be filled.
+      \param bRaiseOnError If true, throw an AccessError when dict contains a key that
+             doesn't match any property.
+      \param bFillDict If true, ignore the contents of dict, and fill it with the
+             actual properties instead.
+      \param bIgnoreMethods When true, copy only data properties.
+      \return True on success, false if bRaiseOnError is false and some keys in dict
+              can't be found as properties of this object.
+   */
+   bool retrieve( ItemDict& dict, bool bRaiseOnError = false, bool bFillDict = false, bool bIgnoreMethods = true ) const;
 
    /** Override deep item accessor.
       By default, it searches a method named "getIndex__" and passes
