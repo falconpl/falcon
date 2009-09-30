@@ -33,6 +33,7 @@ class CoreClass;
 class MemPool;
 class Sequence;
 class FalconData;
+class ItemDict;
 
 /** Base core object class.
 

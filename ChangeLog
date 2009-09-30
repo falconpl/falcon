@@ -3,6 +3,8 @@ Falcon (0.9.4.3)
            array. This may have caused direct crashes when calling arrays on 
            brand new stack frames (a rare, but possible situation).
   * fixed: Grammar error on def statement caused crash.
+  * added: Object.retrieve and Object.apply BOM methods to extract and apply
+           data to objects.
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

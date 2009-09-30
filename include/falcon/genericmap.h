@@ -162,6 +162,12 @@ public:
       return m_map->valueInPage( m_page, m_pagePosition );
    }
 
+   void currentValue( void* source )
+   {
+      m_map->m_valueTraits->copy(
+            m_map->valueInPage( m_page, m_pagePosition ), source );
+   }
+
    bool equal( const MapIterator &other ) const;
 };
 

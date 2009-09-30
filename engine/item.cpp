@@ -607,6 +607,30 @@ bool Item::isCallable() const
    return false;
 }
 
+bool Item::canBeMethod() const
+{
+   if ( isFunction() || isMethod() )
+      return true;
+
+   //a bit more complex: a callable array...
+   if( type() == FLC_ITEM_ARRAY )
+   {
+      CoreArray& arr = *asArray();
+      if ( ! arr.canBeMethod() )
+         return false;
+
+      if ( arr.length() > 0 )
+      {
+         // avoid infinite recursion.
+         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
+         return arr[0].asArray() != &arr && arr[0].isCallable();
+      }
+   }
+
+   // in all the other cases, the item is not callable
+   return false;
+}
+
 const Item &Item::asFutureBind() const {
    return ((GarbageItem*)all.ctx.data.ptr.extra)->origin();
 }

@@ -491,6 +491,9 @@ public:
    */
    bool isCallable() const;
 
+   /** Return true if this is a callable item that is turned into a method when found as property.*/
+   bool canBeMethod() const;
+
    bool isOrdinal() const {
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
    }

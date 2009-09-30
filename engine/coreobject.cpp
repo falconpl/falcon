@@ -166,12 +166,89 @@ bool CoreObject::getMethodDefault( const String &name, Item &mth ) const
 }
 
 
-bool CoreObject::apply( const ItemDict& dict, bool bRaiseOnError = false )
+bool CoreObject::apply( const ItemDict& dict, bool bRaiseOnError )
 {
+   Iterator iter( const_cast<ItemDict*>(&dict) );
+   bool bRes = true;
+
+   while( iter.hasCurrent() )
+   {
+      const Item& key = iter.getCurrentKey();
+      if ( key.isString() )
+      {
+         if ( ! setProperty( *key.asString(), iter.getCurrent() ) )
+         {
+            if( bRaiseOnError )
+            {
+               throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+                     .origin( e_orig_runtime )
+                     .extra( *key.asString() ) );
+            }
+            else
+               bRes = false;
+         }
+      }
+
+      iter.next();
+   }
+
+   return bRes;
 }
+
 
 bool CoreObject::retrieve( ItemDict& dict, bool bRaiseOnError, bool bFillDict, bool bIgnoreMethods ) const
 {
+   if ( bFillDict )
+   {
+      const PropertyTable& names = m_generatedBy->properties();
+      for ( uint32 p = 0; p < names.added(); ++p )
+      {
+         Item prop;
+         if( getProperty( *names.getKey(p), prop ) )
+         {
+            if ( bIgnoreMethods && prop.canBeMethod() )
+               continue;
+
+            dict.put(  *names.getKey(p), prop );
+         }
+      }
+
+      return true;
+   }
+   else
+   {
+      Iterator iter(&dict);
+      bool bRes = true;
+
+      while( iter.hasCurrent() )
+      {
+         const Item& key = iter.getCurrentKey();
+         if ( key.isString() )
+         {
+            Item value;
+            if ( getProperty( *key.asString(), value ) )
+            {
+               iter.data( &value );
+            }
+            else
+            {
+               if( bRaiseOnError )
+               {
+                  throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+                        .origin( e_orig_runtime )
+                        .extra( *key.asString() ) );
+               }
+               else
+                  bRes = false;
+            }
+
+         }
+
+         iter.next();
+      }
+
+      return bRes;
+   }
 }
 
 //=======================================================================

@@ -493,6 +493,8 @@ reflectionFuncDecl FileStats_atime_rfrom;
 
 FALCON_FUNC  fal_include( ::Falcon::VMachine *vm );
 FALCON_FUNC  Object_attributes( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_retrieve( ::Falcon::VMachine *vm );
 FALCON_FUNC  Method_attributes( ::Falcon::VMachine *vm );
 FALCON_FUNC  Class_attributes( ::Falcon::VMachine *vm );
 
