@@ -709,6 +709,8 @@ Module* core_module_init()
       addParam("propName")->addParam("value");
    self->addClassMethod( object_meta, "properties", &Falcon::core::mth_properties );
    self->addClassMethod( object_meta, "comp", &Falcon::core::Object_comp );
+   self->addClassMethod( object_meta, "apply", &Falcon::core::Object_apply );
+   self->addClassMethod( object_meta, "retrieve", &Falcon::core::Object_retrieve );
 
    //==================================================================
    // MemoryBuffer class

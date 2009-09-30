@@ -129,6 +129,7 @@ FALCON_FUNC  Object_attributes ( ::Falcon::VMachine *vm )
    @brief Applies the values in a dictionary to the corresponding properties.
    @param dict A "stamp" dictionary.
    @raise AccessError if some property listed in the dictionary is not defined.
+   @return This same object.
 
    This method applies a "stamp" on this object. The idea is that of copying
    the contents of all the items in the dictionary into the properties of this
@@ -156,6 +157,7 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
 
    CoreObject* self = vm->self().asObject();
    self->apply( i_dict->asDict()->items(), true );
+   vm->retval( self );
 }
 
 /*#
@@ -184,14 +186,13 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
 FALCON_FUNC  Object_retrieve( ::Falcon::VMachine *vm )
 {
    Item* i_dict = vm->param( 0 );
-   Item dummy;
+   CoreDict* dict;
    bool bFillDict;
 
    if( i_dict == 0 )
    {
       bFillDict = true;
-      i_dict = &dummy;
-      dummy = new CoreDict( new LinearDict );
+      dict = new CoreDict( new LinearDict );
    }
    else
    {
@@ -202,12 +203,13 @@ FALCON_FUNC  Object_retrieve( ::Falcon::VMachine *vm )
                .extra( "[D]" ) );
       }
 
+      dict = i_dict->asDict();
       bFillDict = false;
    }
 
    CoreObject* self = vm->self().asObject();
-   self->retrieve( i_dict->asDict()->items(), true, bFillDict, true );
-   vm->retval( i_dict );
+   self->retrieve( dict->items(), true, bFillDict, true );
+   vm->retval( dict );
 }
 
 /*#
