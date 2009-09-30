@@ -36,9 +36,8 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm );
-FALCON_FUNC  json_decode ( ::Falcon::VMachine *vm );
-FALCON_FUNC  json_apply ( ::Falcon::VMachine *vm );
+FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm );
+FALCON_FUNC  JSONdecode ( ::Falcon::VMachine *vm );
 
 class JSONError: public ::Falcon::Error
 {

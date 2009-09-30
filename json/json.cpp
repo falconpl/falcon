@@ -57,21 +57,23 @@ FALCON_MODULE_DECL
    // Message setting
    #include "json_st.h"
 
-   self->addExtFunc( "encode", &Falcon::Ext::json_encode )->
-      addParam("item")->addParam("stream");
+   self->addExtFunc( "JSONencode", &Falcon::Ext::JSONencode )->
+      addParam("item")->addParam("stream")
+      ->addParam( "uenc" )->addParam( "pretty" )->addParam( "readable" );
 
-   self->addExtFunc( "decode", &Falcon::Ext::json_decode )->
+
+   self->addExtFunc( "JSONdecode", &Falcon::Ext::JSONdecode )->
       addParam("source");
 
-   self->addExtFunc( "apply", &Falcon::Ext::json_apply )->
-      addParam("source")->addParam("item");
-
+   //======================================
+   // The error class
+   //
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *jerr_cls = self->addClass( "JSONError", &Falcon::Ext::JSONError_init );
    jerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    //======================================
-   // Subscribe the service
+   // Publish the service
    //
    self->publishService( &s_theJSONService );
 

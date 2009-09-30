@@ -37,21 +37,28 @@
 namespace Falcon {
 namespace Ext {
 
+
 /*#
-   @function encode
+   @method encode JSON
    @brief Encode an item in JSON format.
    @param item the item to be encoded in JSON format.
    @optparam stream A stream on which to send the encoded result.
+   @optparam uenc Encode every character outside the ASCII printable range as \\uXXXX.
+   @optparam pretty Add spacing around separators and puntaction.
+   @optparam readable Put each item in lists on a separate line.
    @return a string containing the JSON string, if @b stream is nil
    @throw JSONError if the passed item cannot be turned into a JSON representation.
    @throw IoError in case of error on target stream.
 
 */
 
-FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
+FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
 {
    Item *i_item = vm->param(0);
    Item *i_stream = vm->param(1);
+   Item *i_uenc = vm->param(2);
+   Item *i_pretty = vm->param(3);
+   Item *i_readable = vm->param(4);
 
    Stream* target = 0;
    bool bDel;
@@ -75,7 +82,11 @@ FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
       target = dyncast<Stream*>( i_stream->asObject()->getFalconData() );
    }
 
-   JSON encoder;
+   bool bUenc = i_uenc != 0 && i_uenc->isTrue();
+   bool bPretty = i_pretty != 0 && i_pretty->isTrue();
+   bool bReadable = i_readable != 0 && i_readable->isTrue();
+
+   JSON encoder( bUenc, bPretty, bReadable );
    bool result =  encoder.encode( *i_item, target );
 
    if( bDel )
@@ -103,7 +114,7 @@ FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @function decode
+   @function JSONdecode
    @brief Decode an item stored in JSON format.
    @param source A string or a stream from which to read the JSON data.
    @return a string containing the JSON string, if @b stream is nil
@@ -112,7 +123,7 @@ FALCON_FUNC  json_encode ( ::Falcon::VMachine *vm )
 
 */
 
-FALCON_FUNC  json_decode ( ::Falcon::VMachine *vm )
+FALCON_FUNC  JSONdecode ( ::Falcon::VMachine *vm )
 {
    Item *i_source = vm->param(0);
 
