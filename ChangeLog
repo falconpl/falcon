@@ -1,5 +1,7 @@
 Feathers (0.9.4.4)
   * added: JSON module (encoding/decoding JSON).
+  * fixed: In logging module, area, module and function names starting with 
+           % caused mess during format.
   
 Feathers (0.9.4.2)
   * fixed: Crash in Thread.toString() when the thread isn't started.

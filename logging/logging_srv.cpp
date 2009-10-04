@@ -301,14 +301,17 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
 
       case 'a':
          target.change( pos, pos + 2, msg->m_areaName );
+         pos += msg->m_areaName.length();
          break;
 
       case 'M':
          target.change( pos, pos + 2, msg->m_modName );
+         pos += msg->m_modName.length();
          break;
 
       case 'f':
          target.change( pos, pos + 2, msg->m_caller );
+         pos += msg->m_caller.length();
          break;
 
       case 'm':
