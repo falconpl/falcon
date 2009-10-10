@@ -41,7 +41,7 @@ namespace Mod {
 DBusWrapper::DBusWrapper()
 {
    m_content = new s_inner_data;
-   m_content->m_refcount = 0;
+   m_content->m_refcount = 1;
    dbus_error_init( &m_content->m_err );
 }
 
@@ -84,7 +84,7 @@ FalconData* DBusWrapper::clone() const
    return new DBusWrapper( *this );
 }
 
-void DBusWrapper::gcMark( VMachine *vm )
+void DBusWrapper::gcMark( uint32 mk )
 {
 }
 
@@ -119,7 +119,7 @@ FalconData* DBusPendingWrapper::clone() const
    return new DBusPendingWrapper( *this );
 }
 
-void DBusPendingWrapper::gcMark( VMachine *vm )
+void DBusPendingWrapper::gcMark( uint32 mk )
 {
 }
 

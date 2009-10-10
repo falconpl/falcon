@@ -41,34 +41,26 @@
 #include "version.h"
 
 /*#
-   @main dbus
+   @main The DBus Falcon Module
 
-   This entry creates the main page of your module documentation.
+	DBus is an inter-application remote procedure call protocol that was designed
+	specifically to write interoperating applications in desktop environments,
+	and across different base technology. It was initially a joint effort of the
+	GNome and KDE desktop environments work groups, and it's now available on a wide
+	set of systems.
 
-   If your project will generate more modules, you may creaete a
-   multi-module documentation by adding a module entry like the
-   following
+	Although it was born as an alternative windowed application remote control system,
+	it is now used on many non-graphical applications as a more standardized and
+	general mean to pass data and invoke other application's functionalities.
 
-   @code
-      \/*#
-         @module module_name Title of the module docs
-         @brief Brief description in module list..
-
-         Some documentation...
-      *\/
-   @endcode
-
-   And use the \@beginmodule <modulename> code at top of the _ext file
-   (or files) where the extensions functions for that modules are
-   documented.
+	The Falcon-DBus module provide Falcon scripts with functions to connect to DBus
+	server (that is, applications providing some functions), and to create a DBus
+	server able to fulfil requests received from other applications.
 */
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
-
-   // set the static engine data
-   data.set();
 
    // initialize the module
    Falcon::Module *self = new Falcon::Module();
@@ -86,7 +78,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Create the dbus class
    //
    Falcon::Symbol* dbus_cls = self->addClass( "DBus", Falcon::Ext::DBus_init );
-   dbus_cls->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( dbus_cls, "signal", Falcon::Ext::DBus_signal ).asSymbol()->
       addParam("path")->addParam("interface")->addParam("name");
    self->addClassMethod( dbus_cls, "invoke", Falcon::Ext::DBus_invoke ).asSymbol()->
@@ -104,7 +95,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol* dbusp_cls = self->addClass( "%DBusPendingCall"); 
    dbusp_cls->exported( false );
    dbusp_cls->setWKS( true );
-   dbusp_cls->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    
    self->addClassMethod( dbusp_cls, "wait", Falcon::Ext::DBusPendingCall_wait );
    self->addClassMethod( dbusp_cls, "cancel", Falcon::Ext::DBusPendingCall_cancel );

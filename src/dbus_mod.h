@@ -74,7 +74,7 @@ public:
    bool connect();
 
    virtual FalconData* clone() const; // just increments the reference counter
-   virtual void gcMark( VMachine *vm );
+   virtual void gcMark( uint32 mk );
 };
 
 /**
@@ -114,7 +114,7 @@ public:
    DBusPendingCall *pending() const { return m_pc; }
 
    virtual FalconData* clone() const; // just increments the reference counter
-   virtual void gcMark( VMachine *vm );
+   virtual void gcMark( uint32 mk );
 };
 
 }
