@@ -54,13 +54,6 @@ CoreTable::~CoreTable()
       memFree( m_biddingVals );
       m_biddingVals = 0;
    }
-
-   for( uint32 i = 0; i < m_pages.size(); i++ )
-   {
-      // allow the pages to get killed.
-      page(i)->mark( 1 );
-   }
-
 }
 
 bool CoreTable::setHeader( CoreArray *header )
@@ -225,7 +218,7 @@ bool CoreTable::removePage( uint32 pos )
    }
 
    // declare the page dead
-   page(pos)->mark(1);
+   page(pos)->gcMark(1);
 
    // are we going to remove the current page?
    if ( m_currentPageId == pos )
@@ -317,12 +310,7 @@ void CoreTable::gcMark( uint32 gen )
    for( i = 0; i < m_pages.size(); i++ )
    {
       CoreArray* page = *(CoreArray**)m_pages.at(i);
-      //page->mark( mark );
-      for ( uint32 iid = 0; iid < page->length(); ++iid )
-      {
-         CoreArray* row = page->at( iid ).asArray();
-         row->gcMark( gen );
-      }
+      page->gcMark( gen );
    }
 }
 

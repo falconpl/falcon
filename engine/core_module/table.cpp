@@ -55,7 +55,6 @@ FALCON_FUNC Table_init( VMachine* vm )
 
    // create the first table
    CoreArray *page = new CoreArray( vm->paramCount() );
-   //page->mark(vm->generation());
    table->insertPage( vm->self().asObject(), page );
    table->setCurrentPage(0);
 
@@ -1191,12 +1190,10 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
    if ( i_data == 0 )
    {
       CoreArray* page = new CoreArray;
-      //page->mark( vm->generation() );
       table->insertPage( vm->self().asObject(), page, pos );
    }
    else {
       CoreArray* page = i_data->asArray()->clone();
-      //page->mark( vm->generation() );
       if ( ! table->insertPage( vm->self().asObject(), page, pos ) )
       {
          throw new ParamError( ErrorParam( e_param_type, __LINE__ )

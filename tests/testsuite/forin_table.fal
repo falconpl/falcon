@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81f
+* Category: tabular
+* Subcategory: forin
+* Short: Table with forin
+* Description:
+*   Tests if a table can be accessed as a sequence in a for/in loop.
+* [/Description]
+*
+****************************************************************************/
+
+function genFunc( )
+   return self.a
+end
+
+t = Table(
+["a", "b", "c"],
+[1, "one", genFunc],
+[2, "two", genFunc],
+[3, "three", genFunc]
+)
+
+col1 = 0
+col2 = ""
+col3 = 0
+
+for row in t
+   col1 += row.a
+   col2 += row.b   
+   col3 += row.c()
+   GC.perform( true )
+end
+
+if col1 != 6: failure( "col1 - value" )
+if col2 != "onetwothree": failure( "col2 - value" )
+if col3 != 6: failure( "col3 - value" )
+
+success()
+
+/* end of file */
