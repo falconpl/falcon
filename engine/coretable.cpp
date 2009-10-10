@@ -48,7 +48,6 @@ CoreTable::CoreTable( const CoreTable& other ):
 {
 }
 
-
 CoreTable::~CoreTable()
 {
    if ( m_biddingVals != 0 ) {

@@ -40,6 +40,7 @@ FALCON_FUNC Table_init( VMachine* vm )
    }
 
    CoreTable* table = new CoreTable();
+
    if( i_heading != 0 )
    {
       if (! table->setHeader( i_heading->asArray() ) )
@@ -60,6 +61,7 @@ FALCON_FUNC Table_init( VMachine* vm )
 
    CoreObject *self = vm->self().asObject();
    self->setUserData( table );
+   table->owner( self );
 
 
    // now we can safely add every other row that has been passed.

@@ -1,4 +1,7 @@
 Falcon (0.9.4.3)
+  * fixed: CoreTables used as sequences in for/in loops didn't mark their 
+           Falcon side Table item as owner. This caused crash with some
+           GC patterns.
   * fixed: The context stack was lenghtend, but not resized, when calling an 
            array. This may have caused direct crashes when calling arrays on 
            brand new stack frames (a rare, but possible situation).
