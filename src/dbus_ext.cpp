@@ -148,7 +148,6 @@ public:
    @class DBus
    @brief Generic interface to the DBUS system.
 
-   TODO
 */
 
 /*#
@@ -734,7 +733,7 @@ FALCON_FUNC  DBusPendingCall_wait( VMachine *vm )
          sleep(...)
          conn.dispatch()
       end
-   @code
+   @endcode
 
 
    If the parameter is set to true a single dispatch loop
@@ -746,7 +745,7 @@ FALCON_FUNC  DBusPendingCall_wait( VMachine *vm )
          sleep(...)
          // no need for conn.dispatch() to be called
       end
-   @code
+   @endcode
 
 */
 FALCON_FUNC  DBusPendingCall_completed( VMachine *vm )
@@ -798,6 +797,7 @@ FALCON_FUNC  DBusPendingCall_cancel( VMachine *vm )
 
 /*#
    @init DBusError
+   @brief Error raised by DBus functions.
    See Core Error class description.
 */
 FALCON_FUNC DBusError_init( VMachine *vm )

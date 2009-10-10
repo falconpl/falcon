@@ -8,9 +8,9 @@
 # Documentation generic data
 ################################################
 
-Title = dbus
+Title = DBus module for Falcon
 Author = Giancarlo Niccolai
-Version = <version>
+Version = 0.1
 
 ################################################
 # Faldoc Input settings
@@ -37,6 +37,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=html
+Output.html.directory=falcon-dbus-0.1-docs
 Output.html.url=.
-Output.html.doctitle=dbus module Function Reference
+Output.html.doctitle=Falcon-dbus module Function Reference

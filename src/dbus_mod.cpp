@@ -1,6 +1,6 @@
 /*
    The Falcon Programming Language
-   FILE: dbus_ext.cpp
+   FILE: dbus_mod.cpp
 
    Falcon - DBUS official binding
    Interface extension functions

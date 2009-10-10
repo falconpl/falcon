@@ -43,19 +43,21 @@
 /*#
    @main The DBus Falcon Module
 
-	DBus is an inter-application remote procedure call protocol that was designed
-	specifically to write interoperating applications in desktop environments,
-	and across different base technology. It was initially a joint effort of the
-	GNome and KDE desktop environments work groups, and it's now available on a wide
-	set of systems.
+   DBus is an inter-application remote procedure call protocol that was designed
+   specifically to write interoperating applications in desktop environments,
+   and across different base technology. It was initially a joint effort of the
+   GNome and KDE desktop environments work groups, and it's now available on a wide
+   set of systems.
 
-	Although it was born as an alternative windowed application remote control system,
-	it is now used on many non-graphical applications as a more standardized and
-	general mean to pass data and invoke other application's functionalities.
+   Although it was born as an alternative windowed application remote control system,
+   it is now used on many non-graphical applications as a more standardized and
+   general mean to pass data and invoke other application's functionalities.
 
-	The Falcon-DBus module provide Falcon scripts with functions to connect to DBus
-	server (that is, applications providing some functions), and to create a DBus
-	server able to fulfil requests received from other applications.
+   The Falcon-DBus module provide Falcon scripts with functions to connect to DBus
+   server (that is, applications providing some functions), and to create a DBus
+   server able to fulfil requests received from other applications.
+
+   @note This version exposes only client-side functions to access DBus server.
 */
 
 FALCON_MODULE_DECL
