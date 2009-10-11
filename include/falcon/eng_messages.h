@@ -263,6 +263,7 @@ FAL_ERRORDECL( e_non_dict_seq, 514, "Given sequence is not a dictionary sequence
 FAL_ERRORDECL( e_miss_iface, 515, "Missing interface: needed method not found");
 FAL_ERRORDECL( e_acc_forbidden, 516, "Access forbidden");
 FAL_ERRORDECL( e_prop_wo, 517, "Tried to read a write-only property" );
+FAL_ERRORDECL( e_prop_loop, 518, "Property accessed inside its accessor" );
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

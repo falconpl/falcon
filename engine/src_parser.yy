@@ -1349,8 +1349,13 @@ func_begin:
                    {
                      pd = new Falcon::VarDef;
                      cd->addProperty( pname, pd );
+                     pd->setReflective( Falcon::e_reflectSetGet, 0xFFFFFFFF );
                    }
-                   pd->setReflective( Falcon::e_reflectSetGet, 0xFFFFFFFF );
+                   else if( ! pd->isReflective() )
+                   {
+                     COMPILER->raiseError(Falcon::e_prop_adef, *pname );
+                   }
+                   
                 }
             }
          }

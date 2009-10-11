@@ -8,6 +8,7 @@ Falcon (0.9.4.3)
   * fixed: Grammar error on def statement caused crash.
   * added: Object.retrieve and Object.apply BOM methods to extract and apply
            data to objects.
+  * major: Added property accessors to classes and objects. 
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

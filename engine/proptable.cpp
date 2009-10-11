@@ -22,6 +22,7 @@
 #include <falcon/fassert.h>
 #include <falcon/error.h>
 #include <falcon/vm.h>
+#include <falcon/corefunc.h>
 
 #include <string.h>
 
@@ -236,20 +237,29 @@ void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &pr
          // We should not have been called if "to" was NO_PROP; we're read only.
          fassert( m_reflection.gs.m_setterId != 0xFFFFFFFF );
          {
+            VMachine* vm = VMachine::getCurrent();
             const Item* call = instance->generator()->properties()
                         .getValue( m_reflection.gs.m_setterId );
 
             fassert( call->isCallable() );
+            if( vm->currentSymbol() == call->asFunction()->symbol() )
+            {
+               // can't be
+               throw new AccessError( ErrorParam( e_prop_loop, __LINE__ )
+                     .origin( e_orig_vm )
+                     .extra( *m_name ));
+            }
 
             Item method = *call;
             method.methodize( instance );
-            VMachine* vm = VMachine::getCurrent();
+
             vm->pushParameter( prop );
             VMachine::getCurrent()->callItemAtomic( method, 1 );
          }
          break;
 
       default:
+         fassert( false );
          break;
    }
 }
@@ -327,17 +337,27 @@ void PropEntry::reflectFrom( CoreObject *instance, void *user_data, Item &prop )
          }
          else
          {
+            VMachine* vm = VMachine::getCurrent();
             const Item* call = instance->generator()->properties()
                         .getValue( m_reflection.gs.m_getterId );
+
+            if( vm->currentSymbol() == call->asFunction()->symbol() )
+            {
+               // can't be
+               throw new AccessError( ErrorParam( e_prop_loop, __LINE__ )
+                     .origin( e_orig_vm )
+                     .extra( *m_name ));
+            }
+
             Item method = *call;
             method.methodize( instance );
-            VMachine* vm = VMachine::getCurrent();
             VMachine::getCurrent()->callItemAtomic( method, 0 );
             prop = vm->regA();
          }
          break;
          
       default:
+         fassert( false );
          break;
    }
 }
