@@ -48,7 +48,8 @@ typedef enum {
    e_reflectULL,
    e_reflectFloat,
    e_reflectDouble,
-   e_reflectFunc
+   e_reflectFunc,
+   e_reflectSetGet
 } t_reflection;
 
 /** Callback function for reflective properties needing complete reflection.

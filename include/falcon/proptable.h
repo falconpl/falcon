@@ -60,6 +60,11 @@ struct PropEntry
          reflectionFunc to;
          reflectionFunc from;
       } rfunc;
+
+      struct {
+         uint32 m_getterId;
+         uint32 m_setterId;
+      } gs;
    } m_reflection;
 
    /** Reflects a single property

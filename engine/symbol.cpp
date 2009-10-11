@@ -725,6 +725,12 @@ bool VarDef::load( Module *mod, Stream *in )
          if ( m_value.val_sym == 0 )
             return false;
       }
+      break;
+
+      case t_reflective:
+         // we can save only set/get reflectors
+         setReflective( e_reflectSetGet, 0xFFFFFFFF );
+         break;
 
       default:
          break;

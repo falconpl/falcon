@@ -20,6 +20,9 @@
 #include <falcon/proptable.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
+#include <falcon/error.h>
+#include <falcon/vm.h>
+
 #include <string.h>
 
 namespace Falcon
@@ -227,7 +230,25 @@ void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &pr
          fassert( m_reflection.rfunc.to != 0 );
          m_reflection.rfunc.to( instance, user_data, *const_cast<Item *>(&prop), *this );
          break;
-         
+
+      case e_reflectSetGet:
+         // reflection is via a private setter function.
+         // We should not have been called if "to" was NO_PROP; we're read only.
+         fassert( m_reflection.gs.m_setterId != 0xFFFFFFFF );
+         {
+            const Item* call = instance->generator()->properties()
+                        .getValue( m_reflection.gs.m_setterId );
+
+            fassert( call->isCallable() );
+
+            Item method = *call;
+            method.methodize( instance );
+            VMachine* vm = VMachine::getCurrent();
+            vm->pushParameter( prop );
+            VMachine::getCurrent()->callItemAtomic( method, 1 );
+         }
+         break;
+
       default:
          break;
    }
@@ -293,6 +314,27 @@ void PropEntry::reflectFrom( CoreObject *instance, void *user_data, Item &prop )
 
       case e_reflectFunc:
          m_reflection.rfunc.from( instance, user_data, prop, *this );
+         break;
+
+      case e_reflectSetGet:
+         // reflection is via a private setter function.
+         // Write only properties are allowed.
+         if(  m_reflection.gs.m_getterId == 0xFFFFFFFF )
+         {
+            throw new AccessError( ErrorParam( e_prop_wo, __LINE__ )
+                  .origin( e_orig_vm )
+                  .extra( *m_name ) );
+         }
+         else
+         {
+            const Item* call = instance->generator()->properties()
+                        .getValue( m_reflection.gs.m_getterId );
+            Item method = *call;
+            method.methodize( instance );
+            VMachine* vm = VMachine::getCurrent();
+            VMachine::getCurrent()->callItemAtomic( method, 0 );
+            prop = vm->regA();
+         }
          break;
          
       default:

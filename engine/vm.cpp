@@ -1002,6 +1002,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 {
    MapIterator iter = pt.begin();
    PropertyTable *table = new PropertyTable( pt.size() );
+   bool bHasSetGet = false;
 
    while( iter.hasCurrent() )
    {
@@ -1017,7 +1018,12 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
       if ( vd->isReflective() )
       {
          e.m_eReflectMode = vd->asReflecMode();
-         e.m_reflection.offset = vd->asReflecOffset();
+
+         // we must keep this information for later.
+         if ( e.m_eReflectMode == e_reflectSetGet )
+            bHasSetGet = true;
+         else
+            e.m_reflection.offset = vd->asReflecOffset();
       }
       else if ( vd->isReflectFunc() )
       {
@@ -1082,6 +1088,38 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
       }
 
       iter.next();
+   }
+
+   // complete setter/getter
+   if( bHasSetGet )
+   {
+      for( uint32 pp = 0; pp < table->added(); ++pp )
+      {
+         PropEntry& pe = table->getEntry(pp);
+         if( pe.m_eReflectMode == e_reflectSetGet )
+         {
+            uint32 pos;
+
+            if( table->findKey(String("__set_") + *pe.m_name, pos ) )
+            {
+               pe.m_reflection.gs.m_setterId = pos;
+            }
+            else
+            {
+               pe.m_reflection.gs.m_setterId = 0xFFFFFFFF;
+               pe.m_bReadOnly = true;
+            }
+
+            if( table->findKey(String("__get_") + *pe.m_name, pos ) )
+            {
+               pe.m_reflection.gs.m_getterId = pos;
+            }
+            else
+            {
+               pe.m_reflection.gs.m_getterId = 0xFFFFFFFF;
+            }
+         }
+      }
    }
 
    table->checkProperties();

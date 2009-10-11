@@ -1340,6 +1340,18 @@ func_begin:
             }
             else {
                 cd->addProperty( $2, new Falcon::VarDef( sym ) );
+                // is this a setter/getter?
+                if( ( $2->find( "__set_" ) == 0 || $2->find( "__get_" ) == 0 ) && $2->length() > 6 )
+                {
+                   Falcon::String *pname = COMPILER->addString( $2->subString( 6 ));
+                   Falcon::VarDef *pd = cd->getProperty( *pname );
+                   if( pd == 0 )
+                   {
+                     pd = new Falcon::VarDef;
+                     cd->addProperty( pname, pd );
+                   }
+                   pd->setReflective( Falcon::e_reflectSetGet, 0xFFFFFFFF );
+                }
             }
          }
 

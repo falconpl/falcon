@@ -50,7 +50,7 @@ bool CRObject::setProperty( const String &propName, const Item &value )
    
       if ( entry.m_eReflectMode != e_reflectNone )
       {
-         fassert( m_user_data != 0 );
+         fassert( m_user_data != 0 || entry.m_eReflectMode == e_reflectSetGet );
          entry.reflectTo( this, m_user_data, value );
          // remember to cache the value.
       }
@@ -80,7 +80,7 @@ bool CRObject::getProperty( const String &propName, Item &ret ) const
       const PropEntry &entry = pt.getEntry(pos);
       if ( entry.m_eReflectMode != e_reflectNone )
       {
-         fassert( m_user_data != 0 );
+         fassert( m_user_data != 0 || entry.m_eReflectMode == e_reflectSetGet );
          // this code allows to modify our cached value.
          entry.reflectFrom( const_cast<CRObject*>( this ), m_user_data, cached );
       }
