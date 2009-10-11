@@ -233,7 +233,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'y': modalGiven(); compile_tltable = true; break;
 
             default:
-               cerr << "falcon: unrecognized option '" << op << endl << endl;
+               cerr << "falcon: unrecognized option '" << op << "'.'"<< endl << endl;
                usage(false);
                m_justinfo = true;
          }
