@@ -1,0 +1,42 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 22j
+* Category: types
+* Subcategory: classes
+* Short: Property accessor
+* Description:
+*    Tests for a complete accessor to work on a virtual property.
+*
+* [/Description]
+*
+****************************************************************************/
+
+class test
+   _private_var = "Initial"
+   count = 0
+   
+   function __set_prop( value )
+      ++self.count
+      self._private_var = value
+   end
+
+   function __get_prop()
+      ++self.count
+      return self._private_var
+   end
+   
+end
+
+t = test()
+
+if t.prop != "Initial": failure( "Initial value" )
+if t.count != 1: failure( "First access" )
+if (t.prop = "NewValue") != "NewValue": failure( "Assign return value" )
+if t.count != 2: failure( "Second access" )
+if t.prop != "NewValue": failure( "Retrieval of new value" )
+if t.count != 3: failure( "Third access" )
+
+success()
+
+/* end of file */

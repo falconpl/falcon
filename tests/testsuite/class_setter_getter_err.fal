@@ -1,0 +1,69 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 22k
+* Category: types
+* Subcategory: classes
+* Short: Property accessor errors
+* Description:
+*    Checks for error raisal in case of dynamic errors in accessing
+*    properties masked by accessors.
+*
+* [/Description]
+*
+****************************************************************************/
+
+class ReadOnly
+   function __get_prop()
+      return "A value"
+   end
+end
+
+class WriteOnly
+   function __set_prop( value )
+      return value
+   end
+end
+
+class AccessItself
+   function __set_prop( value )
+      self.prop = value
+   end
+
+   function __get_prop()
+      return self.prop
+   end
+end
+
+ro = ReadOnly()
+if ro.prop != "A value": failure( "Read only value" )
+try
+   ro.prop = "hello"
+   failure( "Read-only write allowed" )
+catch AccessError
+end
+
+wo = WriteOnly()
+wo.prop = "A value"  // would raise on failure.
+try
+   x = wo.prop
+   failure( "Write-only read allowed" )
+catch AccessError
+end
+
+ai = AccessItself()
+try
+   ai.prop = "some value"
+   failure( "Access itself -- write" )
+catch AccessError
+end
+
+try
+   x = ai.prop
+   failure( "Access itself -- read" )
+catch AccessError
+end
+
+success()
+
+/* end of file */
