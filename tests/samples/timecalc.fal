@@ -1,0 +1,74 @@
+/*
+   FALCON - Samples
+
+   FILE: timecalc.fal
+
+   This test is meant to show overload (toString) and accessor
+   functionalities in classes instances.
+
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai, Maik Beckmann
+   Begin: Sun, 11 Oct 2009 20:41:46 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class Time
+  _time = nil // in seconds
+
+  function __set_hours(var)
+    self._time = var * 3600
+  end
+
+  function __get_hours(var)
+    return self._time / 3600
+  end
+
+  function __set_minutes(var)
+    self._time = var * 60
+  end
+  function __get_minutes(var)
+    return self._time / 60
+  end
+
+  function __set_seconds(var)
+    self._time = var
+  end
+
+  function __get_seconds(var)
+    return self._time
+  end
+
+  function toString()
+     mins = int(self.minutes) % 60
+     secs = self.seconds % 60
+     return @"$(self.hours:.0)h, $(mins)m, $(secs)s"
+  end
+end
+
+> "Time calculator."
+if args.len() == 0
+   > "Please, call with a number optionally followed by 'h' (hours) or 'm' (minutes)"
+   > "Numbers without suffix will be interpreted as seconds"
+   return 0
+end
+
+try
+   time = Time()
+   n = numeric( args[0] )
+   if args[0][-1] == 'h'
+      time.hours = n
+   elif args[0][-1] == 'm'
+      time.minutes = n
+   else
+      time.seconds = n
+   end
+
+   > args[0], " = ", time
+   
+catch TypeError
+   > "Wrong number format \"", args[0], "\""
+end
