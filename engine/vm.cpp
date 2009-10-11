@@ -3660,7 +3660,7 @@ void VMachine::handleRaisedItem( Item& value )
    {
       // create the error that the external application will see.
       Error *err;
-      if ( value.isOfClass( "Error" ) )
+      if ( value.isObject() && value.isOfClass( "Error" ) )
       {
          // in case of an error of class Error, we have already a good error inside of it.
          err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
