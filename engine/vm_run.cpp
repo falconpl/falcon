@@ -241,8 +241,8 @@ void opcodeHandler_PSHN( register VMachine *vm )
 // 3
 void opcodeHandler_RET( register VMachine *vm )
 {
-   vm->callReturn();
    vm->retnil();
+   vm->callReturn();
 }
 
 // 4

@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: coretable.cpp
 
-   Table support Iterface for Falcon.
+   Table support Interface for Falcon.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 20 Sep 2008 15:15:56 +0200

@@ -1,0 +1,105 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 23d
+* Category: statements
+* Subcategory: launch
+* Short: Massive coroutines
+* Description:
+*    Check if coroutines are exited correctly after many loops.
+* [/Description]
+*
+****************************************************************************/
+
+
+const coroCount = 4
+const loopCount = 10000
+//==================================================
+// Global variables
+ended = 0
+counted = 0
+
+
+//=================================================
+// Updater thread
+//
+
+function updater( waiter, coroutineArray )
+   global counted
+   
+   while true
+      //wait for new updates
+      if ended < coroCount
+         waiter.wait()
+         counted++
+      else
+         // a break would do too here.
+         yieldOut()
+      end
+   end
+end
+
+
+//===============================================
+// coroutine class
+//
+class coroutine( param, su, se )
+   id = param
+   sem_updates = su
+   sem_ended = se
+   value = 0
+
+   // =======================
+   // Thread method
+   // (could have any name)
+   function run( param )
+      for i = 1 to loopCount
+         self.value = i
+         self.sem_updates.post()
+      end
+      // access rw the global variable
+      global ended
+      ended ++
+      // warn both listening threads
+      self.sem_updates.post()
+      self.sem_ended.post()
+   end
+end
+
+//========================================================
+// Main program
+
+// our semaphores
+end_semaphore = Semaphore()
+upd_semaphore = Semaphore()
+
+// we save the coroutine objects here
+coro_array = []
+
+for i in [0 : coroCount]
+   coro = coroutine( i, upd_semaphore, end_semaphore )
+   coro_array += coro
+
+   launch coro.run( i )
+end
+
+// Functions can be started normally
+launch updater( upd_semaphore, coro_array )
+
+// wait for all the threads to end
+while ended < coroCount
+   end_semaphore.wait()
+end
+
+if ended != coroCount: failure( "Ended count" )
+if counted == 0: failure( "Updater never called" )
+
+for coro in coro_array
+   if coro.value != loopCount: failure( "Count for coroutine " + coro.id )
+end
+
+success()
+
+/* end of file */
+
