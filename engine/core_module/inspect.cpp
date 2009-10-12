@@ -243,10 +243,21 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
                stream->writeString("   ");
             }
             const String &propName = *pt.getKey( count );
-            stream->writeString( propName + " => " );
-            Item dummy;
-            arr->getProperty( propName, dummy);
-            inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, i_stream, false, true );
+			
+			if ( pt.getEntry(count).m_eReflectMode == e_reflectSetGet && 
+				 pt.getEntry(count).m_reflection.gs.m_getterId == 0xFFFFFFFF 
+				)
+			{
+				stream->writeString( "(" );
+				stream->writeString( propName + ")\n" );
+			}
+			else 
+			{
+				stream->writeString( propName + " => " );
+				Item dummy;
+				arr->getProperty( propName, dummy);
+				inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, i_stream, false, true );
+			}
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -563,16 +574,28 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
          for( count = 0; count < pt.added() ; count++ )
          {
             const String &propName = *pt.getKey( count );
-            Item dummy;
-            arr->getProperty( propName, dummy );
+			
+			// write only?
+			if ( pt.getEntry(count).m_eReflectMode == e_reflectSetGet && 
+				 pt.getEntry(count).m_reflection.gs.m_getterId == 0xFFFFFFFF 
+				)
+			{
+				tgt.A( "(" ).A( propName ).A(")");
+			}
+			else
+			{
+				Item dummy;
+				arr->getProperty( propName, dummy );
 
-            // in describe skip methods.
-            if ( dummy.isFunction() || dummy.isMethod() )
-               continue;
+				// in describe skip methods.
+				if ( dummy.isFunction() || dummy.isMethod() )
+				   continue;
+				
+				tgt += propName + " = ";
 
-            tgt += propName + " = ";
+				describe_internal( vm, tgt, &dummy, level + 1, maxLevel, maxSize );
+			}
 
-            describe_internal( vm, tgt, &dummy, level + 1, maxLevel, maxSize );
             if (count+1 < pt.added())
             {
                tgt += ", ";
