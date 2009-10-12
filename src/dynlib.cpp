@@ -10,7 +10,7 @@
    Begin: Mon, 28 Oct 2008 22:23:29 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2008: The Falcon Comittee
+   (C) Copyright 2008-2009: Giancarlo Niccolai
 
    See the LICENSE file distributed with this package for licensing details.
 */

@@ -59,6 +59,299 @@ namespace Falcon {
 #define F_DYNLIB_PTYPE_BYPTR  0x80
 
 
+
+class ParamType: public BaseAlloc
+{
+public:
+   typedef enum tag_t_type {
+      e_void,
+      e_char,
+      e_uchar,
+      e_short,
+      e_ushort,
+      e_int,
+      e_uint,
+      e_long,
+      e_ulong,
+      e_llong,
+      e_ullong,
+      e_float,
+      e_double,
+      e_ldouble,
+      e_structptr,
+      e_funcptr,
+      e_ptr
+   } t_type;
+
+   typedef enum tag_t_mode {
+      IN,
+      OUT,
+      INOUT
+   } t_mode;
+
+   t_type type() const { return m_type; }
+   t_mode mode() const { return m_mode; }
+
+   bool isConst() const { return m_bConst; }
+   bool isPtr() const { return m_bPtr; }
+   bool isVector() const { return m_bVector; }
+
+   const String& name() const { return m_name; }
+
+private:
+   t_type m_type;
+   t_mode m_mode;
+
+   bool m_bConst;
+   bool m_bPtr;
+   bool m_bVector;
+
+   Falcon::String m_name;
+};
+
+
+class ParamValue: public BaseAlloc
+{
+public:
+   typedef union tag_u_content {
+      char v_char;
+      unsigned char v_uchar;
+      short v_short;
+      unsigned short v_ushort;
+      int v_int;
+      unsigned int v_uint;
+      long v_long;
+      unsigned long v_ulong;
+      int64 v_llong;
+      uint64 v_ullong;
+      float v_float;
+      double v_double;
+      long double v_ldouble;
+      void* v_ptr;
+   } u_content;
+
+   ParamValue():
+      m_ptype( ParamType::e_void )
+      {}
+
+   ParamValue( const ParamValue &other ):
+      m_ptype( other.m_ptype ),
+      m_content( other.m_content )
+   {}
+
+   ParamValue( char p_char ):
+      m_ptype( ParamType::e_char )
+   {
+      m_content.v_char = p_char;
+   }
+
+   ParamValue( unsigned char p_char ):
+      m_ptype( ParamType::e_uchar )
+   {
+      m_content.v_uchar = p_char;
+   }
+
+   ParamValue( short p_short ):
+      m_ptype( ParamType::e_short )
+   {
+      m_content.v_short = p_short;
+   }
+
+   ParamValue( unsigned short p_short ):
+      m_ptype( ParamType::e_ushort )
+   {
+      m_content.v_ushort = p_short;
+   }
+
+   ParamValue( int p_int ):
+      m_ptype( ParamType::e_int )
+   {
+      m_content.v_int = p_int;
+   }
+
+   ParamValue( unsigned int p_int ):
+      m_ptype( ParamType::e_uint )
+   {
+      m_content.v_uint = p_int;
+   }
+
+   ParamValue( long p_long ):
+     m_ptype( ParamType::e_long )
+   {
+     m_content.v_long = p_long;
+   }
+
+   ParamValue( unsigned long p_long ):
+     m_ptype( ParamType::e_ulong )
+   {
+     m_content.v_ulong = p_long;
+   }
+
+   ParamValue( int64 p_llong ):
+     m_ptype( ParamType::e_llong )
+   {
+     m_content.v_llong = p_llong;
+   }
+
+   ParamValue( uint64 p_ullong ):
+     m_ptype( ParamType::e_ullong )
+   {
+     m_content.v_ullong = p_ullong;
+   }
+
+   ParamValue( float p_float ):
+     m_ptype( ParamType::e_float )
+   {
+     m_content.v_float = p_float;
+   }
+
+   ParamValue( double p_double ):
+     m_ptype( ParamType::e_double )
+   {
+     m_content.v_double = p_double;
+   }
+
+   ParamValue( long double p_ld ):
+     m_ptype( ParamType::e_ldouble )
+   {
+     m_content.v_ldouble = p_ld;
+   }
+
+   ParamValue( void* v_ptr ):
+     m_ptype( ParamType::e_ptr )
+   {
+     m_content.v_ptr = v_ptr;
+   }
+
+   void content( char p_char )
+   {
+      m_ptype = ParamType::e_char;
+      m_content.v_char = p_char;
+   }
+
+   void content( unsigned char p_char )
+   {
+      m_ptype = ParamType::e_uchar;
+      m_content.v_uchar = p_char;
+   }
+
+   void content( short p_short )
+   {
+      m_ptype = ParamType::e_short;
+      m_content.v_short = p_short;
+   }
+
+   void content( unsigned short p_short )
+   {
+      m_ptype = ParamType::e_ushort;
+      m_content.v_ushort = p_short;
+   }
+
+   void content( int p_int )
+   {
+      m_ptype = ParamType::e_int;
+      m_content.v_int = p_int;
+   }
+
+   void content( unsigned int p_int )
+   {
+      m_ptype = ParamType::e_uint;
+      m_content.v_uint = p_int;
+   }
+
+   void content( long p_long )
+   {
+      m_ptype = ParamType::e_long;
+      m_content.v_long = p_long;
+   }
+
+   void content( unsigned long p_long )
+   {
+      m_ptype = ParamType::e_ulong;
+      m_content.v_ulong = p_long;
+   }
+
+   void content( int64 p_llong )
+   {
+      m_ptype = ParamType::e_llong;
+      m_content.v_llong = p_llong;
+   }
+
+   void content( uint64 p_ullong )
+   {
+      m_ptype = ParamType::e_ullong;
+      m_content.v_ullong = p_ullong;
+   }
+
+   void content( float p_float )
+   {
+      m_ptype = ParamType::e_float;
+      m_content.v_float = p_float;
+   }
+
+   void content( double p_double )
+   {
+      m_ptype = ParamType::e_double;
+      m_content.v_double = p_double;
+   }
+
+   void content( long double p_ld )
+   {
+      m_ptype = ParamType::e_ldouble;
+      m_content.v_ldouble = p_ld;
+   }
+
+   void content( void* v_ptr )
+   {
+      m_ptype = ParamType::e_ptr;
+      m_content.v_ptr = v_ptr;
+   }
+
+   u_content content() const { return m_content; }
+
+private:
+   ParamType::t_type m_ptype;
+   u_content m_content;
+};
+
+
+class FunctionDef: public FalconData
+{
+   String m_definition;
+   String m_name;
+   ParamType m_return;
+   ParamType *m_params;
+   uint32 m_paramCount;
+
+public:
+
+   FunctionDef();
+
+   FunctionDef( const String& definition ):
+      m_params(0),
+      m_paramCount(0)
+   {
+      parse( definition );
+   }
+
+   FunctionDef( const FunctionDef& other );
+   virtual ~FunctionDef();
+
+   bool isDeclared() const { return m_paramCount != 0xFFFFFFFF; }
+
+   /** Parses a string definition.
+    * Throws ParseError* on error.
+    */
+   void parse( const String& definition );
+
+   int paramCount() const { return m_paramCount; }
+   ParamType* params() const { return m_params; }
+   const ParamType& returnType() const { return m_return; }
+   const String& name() const { return m_name; }
+   const String& definition() const { return m_definition; }
+
+};
+
 class FunctionAddress: public FalconData
 {
    String m_name;
