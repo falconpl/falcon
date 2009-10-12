@@ -219,7 +219,8 @@ class TCPSocket: public Socket
 public:
    TCPSocket( bool ipv6 = false );
    TCPSocket( void *systemData, bool ipv6 = false):
-      Socket( systemData, ipv6 )
+      Socket( systemData, ipv6 ),
+      m_connected( false )
    {}
 
    ~TCPSocket();
