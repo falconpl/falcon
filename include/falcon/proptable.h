@@ -39,11 +39,27 @@ class CoreObject;
 */
 struct PropEntry
 {
+	enum {
+		NO_OFFSET = 0xFFFFFFFF
+	};
+
    /** Name of this property */
    const String *m_name;
 
    /** True if this property is read-only */
    bool m_bReadOnly;
+
+   /** True if this property is write-only. 
+	   
+	   If this property is accessed via accessors, but has only the set accessor,
+	   it cannot be read back (not even at C++ level). Doing so would cause
+	   an access error (for write-only read access).
+
+	   \return true if this property is write-only.
+   */
+   bool isWriteOnly() const { 
+	   return m_eReflectMode == e_reflectSetGet && m_reflection.gs.m_getterId == NO_OFFSET; 
+   }
 
    /** Reflection mode. */
    t_reflection m_eReflectMode;

@@ -234,8 +234,8 @@ void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &pr
 
       case e_reflectSetGet:
          // reflection is via a private setter function.
-         // We should not have been called if "to" was NO_PROP; we're read only.
-         fassert( m_reflection.gs.m_setterId != 0xFFFFFFFF );
+         // We should not have been called if "to" was NO_OFFSET; we're read only.
+		  fassert( m_reflection.gs.m_setterId != PropEntry::NO_OFFSET );
          {
             VMachine* vm = VMachine::getCurrent();
             const Item* call = instance->generator()->properties()
@@ -329,7 +329,7 @@ void PropEntry::reflectFrom( CoreObject *instance, void *user_data, Item &prop )
       case e_reflectSetGet:
          // reflection is via a private setter function.
          // Write only properties are allowed.
-         if(  m_reflection.gs.m_getterId == 0xFFFFFFFF )
+         if(  m_reflection.gs.m_getterId == PropEntry::NO_OFFSET )
          {
             throw new AccessError( ErrorParam( e_prop_wo, __LINE__ )
                   .origin( e_orig_vm )

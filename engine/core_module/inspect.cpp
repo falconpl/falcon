@@ -244,9 +244,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
             }
             const String &propName = *pt.getKey( count );
 			
-			if ( pt.getEntry(count).m_eReflectMode == e_reflectSetGet && 
-				 pt.getEntry(count).m_reflection.gs.m_getterId == 0xFFFFFFFF 
-				)
+			if ( pt.getEntry(count).isWriteOnly() )
 			{
 				stream->writeString( "(" );
 				stream->writeString( propName + ")\n" );
@@ -576,9 +574,7 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
             const String &propName = *pt.getKey( count );
 			
 			// write only?
-			if ( pt.getEntry(count).m_eReflectMode == e_reflectSetGet && 
-				 pt.getEntry(count).m_reflection.gs.m_getterId == 0xFFFFFFFF 
-				)
+			if ( pt.getEntry( count ).isWriteOnly() )
 			{
 				tgt.A( "(" ).A( propName ).A(")");
 			}

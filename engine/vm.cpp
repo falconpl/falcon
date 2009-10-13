@@ -1106,7 +1106,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             }
             else
             {
-               pe.m_reflection.gs.m_setterId = 0xFFFFFFFF;
+               pe.m_reflection.gs.m_setterId = PropEntry::NO_OFFSET;
                pe.m_bReadOnly = true;
             }
 
@@ -1116,7 +1116,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             }
             else
             {
-               pe.m_reflection.gs.m_getterId = 0xFFFFFFFF;
+               pe.m_reflection.gs.m_getterId = PropEntry::NO_OFFSET;
             }
          }
       }
