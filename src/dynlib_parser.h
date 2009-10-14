@@ -134,7 +134,7 @@ class FunctionDef2: public FalconData
 {
    String m_definition;
    String m_name;
-   Parameter m_return;
+   Parameter* m_return;
    ParamList m_params;
 
 public:
@@ -142,11 +142,12 @@ public:
    FunctionDef2();
 
    FunctionDef2( const String& definition ):
+      m_return(0)
    {
       parse( definition );
    }
 
-   FunctionDef2( const FunctionDef& other );
+   FunctionDef2( const FunctionDef2& other );
    virtual ~FunctionDef2();
 
    /** Parses a string definition.
@@ -156,6 +157,8 @@ public:
 
    const String& name() const { return m_name; }
    const String& definition() const { return m_definition; }
+
+   static String normalize( const String& name );
 };
 
 

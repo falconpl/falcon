@@ -17,6 +17,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/fassert.h>
+#include <falcon/tokenizer.h>
 
 #include "dynlib_parser.h"
 
@@ -43,9 +44,6 @@ BaseCType ctypes[] =
    BaseCType( BaseCType::e_char, "char", sizeof(char) ),
    BaseCType( BaseCType::e_unsigned_char, "unsigned char", sizeof(char) ),
    BaseCType( BaseCType::e_signed_char, "signed char", sizeof(char) ),
-   // long decl (old) version before to be sure to parse it
-   BaseCType( BaseCType::e_short, "short int", sizeof(short) ),
-   BaseCType( BaseCType::e_unsigned_short, "unsigned short int", sizeof(short) ),
    // ... then the modern version
    BaseCType( BaseCType::e_short, "short", sizeof(short) ),
    BaseCType( BaseCType::e_unsigned_short, "unsigned short", sizeof(short) ),
@@ -71,6 +69,9 @@ BaseCType ctypes[] =
    BaseCType( BaseCType::e_unsigned_short, "WORD", 2 ),
    BaseCType( BaseCType::e_unsigned_int, "DWORD", 4 ),
    BaseCType( BaseCType::e_unsigned_long, "HANDLE", sizeof(long) ),
+
+   // Finally, varadic params
+   BaseCType( BaseCType::e_varpar, "...", sizeof(void*) )
 
 };
 
@@ -170,20 +171,33 @@ void ParamList::add(Parameter* p)
 //
 //===================================================
 
-FunctionDef2::FunctionDef2( const FunctionDef& other ):
+FunctionDef2::FunctionDef2( const FunctionDef2& other ):
    m_definition( other.m_definition ),
    m_name( other.m_name ),
-   m_return( other.m_return ),
-   m_params( other.m_return )
+   m_params( other.m_params )
 {
+   if ( other.m_return != 0 )
+      m_return = new Parameter( *other.m_return );
+   else
+      m_return = 0;
 }
 
 FunctionDef2::~FunctionDef2()
 {
+   delete m_return;
+}
+
+
+String FunctionDef2::normalize( const String& name )
+{
+   Tokenizer t( TokenizerParams().wsIsToken().returnSep(), "(,);[]", name );
+
+
 }
 
 void FunctionDef2::parse( const String& definition )
 {
+   m_definition = normalize( definition );
 }
 
 
