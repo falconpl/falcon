@@ -23,47 +23,54 @@
 namespace Falcon
 {
 
-BaseCType::BaseCType( e_integral_type id, const char *repr ):
+BaseCType::BaseCType( e_integral_type id, const String& repr, int size ):
    m_id(id),
+   m_size( size ),
+   m_normal_repr( repr )
+{
+}
+
+BaseCType::BaseCType( e_integral_type id, const char *repr, int size ):
+   m_id(id),
+   m_size( size ),
    m_normal_repr( repr )
 {
 }
 
 BaseCType ctypes[] =
 {
-   BaseCType( BaseCType::e_void, "void" ),
-   BaseCType( BaseCType::e_char, "char" ),
-   BaseCType( BaseCType::e_unsigned_char, "unsigned char" ),
-   BaseCType( BaseCType::e_signed_char, "signed char" ),
+   BaseCType( BaseCType::e_void, "void", 0 ),
+   BaseCType( BaseCType::e_char, "char", sizeof(char) ),
+   BaseCType( BaseCType::e_unsigned_char, "unsigned char", sizeof(char) ),
+   BaseCType( BaseCType::e_signed_char, "signed char", sizeof(char) ),
    // long decl (old) version before to be sure to parse it
-   BaseCType( BaseCType::e_short, "short int" ),
-   BaseCType( BaseCType::e_unsigned_short, "unsigned short int" ),
+   BaseCType( BaseCType::e_short, "short int", sizeof(short) ),
+   BaseCType( BaseCType::e_unsigned_short, "unsigned short int", sizeof(short) ),
    // ... then the modern version
-   BaseCType( BaseCType::e_short, "short" ),
-   BaseCType( BaseCType::e_unsigned_short, "unsigned short" ),
-   BaseCType( BaseCType::e_int, "int" ),
-   BaseCType( BaseCType::e_unsigned_int, "unsigned int" ),
-   BaseCType( BaseCType::e_long, "long" ),
-   BaseCType( BaseCType::e_unsigned_long, "unsigned long" ),
-   BaseCType( BaseCType::e_long_long, "long long" ),
-   BaseCType( BaseCType::e_unsigned_long_long, "unsigned long long" ),
-   BaseCType( BaseCType::e_float, "float" ),
-   BaseCType( BaseCType::e_double, "double" ),
-   BaseCType( BaseCType::e_long_double, "long double" ),
+   BaseCType( BaseCType::e_short, "short", sizeof(short) ),
+   BaseCType( BaseCType::e_unsigned_short, "unsigned short", sizeof(short) ),
+   BaseCType( BaseCType::e_int, "int", sizeof(int) ),
+   BaseCType( BaseCType::e_unsigned_int, "unsigned int", sizeof(int) ),
+   BaseCType( BaseCType::e_long, "long", sizeof(long) ),
+   BaseCType( BaseCType::e_unsigned_long, "unsigned long", sizeof(long) ),
+   BaseCType( BaseCType::e_long_long, "long long", sizeof(int64) ),
+   BaseCType( BaseCType::e_unsigned_long_long, "unsigned long long", sizeof(int64) ),
+   BaseCType( BaseCType::e_float, "float", sizeof(float) ),
+   BaseCType( BaseCType::e_double, "double", sizeof(double) ),
+   BaseCType( BaseCType::e_long_double, "long double", sizeof(long double) ),
 
    // tagged types
-   BaseCType( BaseCType::e_struct, "struct *" ),
-   BaseCType( BaseCType::e_unioin, "union *" ),
-   BaseCType( BaseCType::e_enum, "enum *" ),
+   BaseCType( BaseCType::e_struct, "struct *", sizeof(void*) ),
+   BaseCType( BaseCType::e_union, "union *", sizeof(void*) ),
+   BaseCType( BaseCType::e_enum, "enum *", sizeof(void*) ),
 
    // some aliases
-   BaseCType( BaseCType::e_int, "BOOL" ),
-   BaseCType( BaseCType::e_long_long, "__int64" ),
-   BaseCType( BaseCType::e_unsigned_long_long, "unsigned __int64" ),
-   BaseCType( BaseCType::e_unsigned_short, "WORD" ),
-   BaseCType( BaseCType::e_unsigned_int, "DWORD" ),
-   BaseCType( BaseCType::e_unsigned_long, "HANDLE" ),
-
+   BaseCType( BaseCType::e_int, "BOOL", sizeof(int) ),
+   BaseCType( BaseCType::e_long_long, "__int64", sizeof(int64) ),
+   BaseCType( BaseCType::e_unsigned_long_long, "unsigned __int64", sizeof(int64) ),
+   BaseCType( BaseCType::e_unsigned_short, "WORD", 2 ),
+   BaseCType( BaseCType::e_unsigned_int, "DWORD", 4 ),
+   BaseCType( BaseCType::e_unsigned_long, "HANDLE", sizeof(long) ),
 
 };
 
@@ -72,8 +79,7 @@ CType::CType( BaseCType* ct, int pointers, int subs, bool isFunc ):
    m_ctype(ct),
    m_pointers(pointers),
    m_subscript(subs),
-   m_isFuncPtr(isFunc),
-   m_funcParams(0)
+   m_isFuncPtr(isFunc)
 {}
 
 
@@ -82,10 +88,9 @@ CType::CType( BaseCType* ct, const String &tag, int pointers, int subs, bool isF
    m_tag(tag),
    m_pointers(pointers),
    m_subscript(subs),
-   m_isFuncPtr(isFunc),
-   m_funcParams(0)
+   m_isFuncPtr(isFunc)
 {
-   fassert( m_id == e_struct || m_id == e_union || m_id == e_enum );
+   fassert( ct->m_id == BaseCType::e_struct || ct->m_id == BaseCType::e_union || ct->m_id == BaseCType::e_enum );
 }
 
 
@@ -159,5 +164,27 @@ void ParamList::add(Parameter* p)
    m_size++;
    p->m_next = 0; // just to be on the bright side.
 }
+
+
+//===================================================
+//
+//===================================================
+
+FunctionDef2::FunctionDef2( const FunctionDef& other ):
+   m_definition( other.m_definition ),
+   m_name( other.m_name ),
+   m_return( other.m_return ),
+   m_params( other.m_return )
+{
+}
+
+FunctionDef2::~FunctionDef2()
+{
+}
+
+void FunctionDef2::parse( const String& definition )
+{
+}
+
 
 }

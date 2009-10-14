@@ -67,6 +67,7 @@ SET( SRC_FILES
    dynlib_ext.cpp
    dynlib_mod.cpp
    dynlib_st.cpp
+   dynlib_parser.cpp
 
    ${SYS_FILES}
    )

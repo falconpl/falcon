@@ -24,7 +24,24 @@ namespace Falcon
 {
 
 class Parameter;
-class ParamList;
+
+class ParamList
+{
+public:
+   ParamList();
+   ParamList( const ParamList& other );
+   ~ParamList();
+
+   void add(Parameter* p);
+   Parameter* first() const { return m_head; }
+   bool empty() const { return m_size == 0; }
+   int size() const { return m_size; }
+
+private:
+   Parameter* m_head;
+   Parameter* m_tail;
+   int m_size;
+};
 
 class BaseCType
 {
@@ -35,6 +52,8 @@ public:
       e_char,
       e_unsigned_char,
       e_signed_char,
+      e_short,
+      e_unsigned_short,
       e_int,
       e_unsigned_int,
       e_long,
@@ -50,9 +69,11 @@ public:
       e_varpar
    } e_integral_type;
 
-   BaseCType( e_integral_type id, const String& repr );
+   BaseCType( e_integral_type id, const String& repr, int size );
+   BaseCType( e_integral_type id, const char* repr, int size );
 
    e_integral_type m_id;
+   int m_size;
 
    /** Normalized declaration of this type.
     * Tagged types have a terminal "*" that is substituted with exactly a word.
@@ -108,23 +129,35 @@ public:
    Parameter* m_next;
 };
 
-class ParamList
+
+class FunctionDef2: public FalconData
 {
+   String m_definition;
+   String m_name;
+   Parameter m_return;
+   ParamList m_params;
+
 public:
-   ParamList();
-   ParamList( const ParamList& other );
-   ~ParamList();
 
-   void add(Parameter* p);
-   void first() const { return m_head; }
-   bool empty() const { return m_size == 0; }
-   int size() const { return m_size; }
+   FunctionDef2();
 
-private:
-   Parameter* m_head;
-   Parameter* m_tail;
-   int m_size;
+   FunctionDef2( const String& definition ):
+   {
+      parse( definition );
+   }
+
+   FunctionDef2( const FunctionDef& other );
+   virtual ~FunctionDef2();
+
+   /** Parses a string definition.
+    * Throws ParseError* on error.
+    */
+   void parse( const String& definition );
+
+   const String& name() const { return m_name; }
+   const String& definition() const { return m_definition; }
 };
+
 
 }
 
