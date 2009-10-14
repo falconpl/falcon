@@ -17,13 +17,16 @@
 #ifndef DYNLIB_PARSER_H_
 #define DYNLIB_PARSER_H_
 
+#include <falcon/setup.h>
+#include <falcon/string.h>
+
 namespace Falcon
 {
 
 class Parameter;
 class ParamList;
 
-class CType
+class BaseCType
 {
 public:
    typedef enum
@@ -47,39 +50,33 @@ public:
       e_varpar
    } e_integral_type;
 
-   CType( e_integral_type id, const char *repr, int pointers = 0, int subs = 0, bool isFunc = false ):
-      m_id(id),
-      m_normal_repr(repr),
-      m_tag(0),
-      m_pointers(pointers),
-      m_subscript(subs),
-      m_isFuncPtr(isFunc),
-      m_funcParams(0)
-      {}
-
-   CType( e_integral_type id, const char *repr, const char* tag, int pointers = 0, int subs = 0, bool isFunc = false ):
-      m_id(id),
-      m_normal_repr(repr),
-      m_tag(tag),
-      m_pointers(pointers),
-      m_subscript(subs),
-      m_isFuncPtr(isFunc),
-      m_funcParams(0)
-      {
-         fassert( m_id == e_struct || m_id == e_union || m_id == e_enum );
-      }
-
-   CType( const CType& other );
+   BaseCType( e_integral_type id, const String& repr );
 
    e_integral_type m_id;
 
    /** Normalized declaration of this type.
     * Tagged types have a terminal "*" that is substituted with exactly a word.
     * */
-   const char* m_normal_repr;
+   String m_normal_repr;
+};
+
+
+class CType
+{
+public:
+
+   CType( BaseCType* ct, int pointers = 0, int subs = 0, bool isFunc = false );
+
+   CType( BaseCType* ct, const String& tag, int pointers = 0, int subs = 0, bool isFunc = false );
+
+   CType( const CType& other );
+
+   ~CType();
+
+   BaseCType* m_ctype;
 
    /** Tag for tagged types. */
-   const char* m_tag;
+   String m_tag;
 
    /** Number of pointer indirections */
    int m_pointers;
