@@ -12,6 +12,8 @@ Falcon (0.9.4.3)
   * fixed: Raising a class in the error hierarchy caused segfault.
   * fixed: Coroutines terminating with a simple return may have killed a
            useful value in the A register of the swapped-in new coroutine.
+  * fixed: StringStream didn't reset eof() at seek(0).
+  * minor: Better interface and improved features for tokenizer.
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

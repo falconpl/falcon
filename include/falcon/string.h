@@ -1224,6 +1224,10 @@ public:
    bool isCore() const { return m_bCore; }
 
    static void uint32ToHex( uint32 number, char *buffer );
+   static bool isWhiteSpace( uint32 chr )
+   {
+      return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';
+   }
 };
 
 

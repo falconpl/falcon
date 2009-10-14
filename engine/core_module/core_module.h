@@ -568,10 +568,13 @@ FALCON_FUNC  Tokenizer_rewind ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Tokenizer_nextToken ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Tokenizer_next ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Tokenizer_token ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_hasCurrent ( ::Falcon::VMachine *vm );
 
 #define TOKENIZER_OPT_GRROUPSEP 1
 #define TOKENIZER_OPT_BINDSEP 2
 #define TOKENIZER_OPT_TRIM 4
+#define TOKENIZER_OPT_RSEP 8
+#define TOKENIZER_OPT_WSISTOK 16
 
 class UriObject: public CRObject
 {

@@ -1872,6 +1872,8 @@ Module* core_module_init()
    self->addClassProperty( tok_class, "groupsep" ).setInteger( TOKENIZER_OPT_GRROUPSEP );
    self->addClassProperty( tok_class, "bindsep" ).setInteger( TOKENIZER_OPT_BINDSEP );
    self->addClassProperty( tok_class, "trim" ).setInteger( TOKENIZER_OPT_TRIM );
+   self->addClassProperty( tok_class, "retsep" ).setInteger( TOKENIZER_OPT_RSEP );
+   self->addClassProperty( tok_class, "wsAsToken" ).setInteger( TOKENIZER_OPT_WSISTOK );
 
    self->addClassMethod( tok_class, "parse", &Falcon::core::Tokenizer_parse ).asSymbol()->
       addParam("source");
@@ -1879,6 +1881,7 @@ Module* core_module_init()
    self->addClassMethod( tok_class, "next", &Falcon::core::Tokenizer_next );
    self->addClassMethod( tok_class, "nextToken", &Falcon::core::Tokenizer_nextToken );
    self->addClassMethod( tok_class, "token", &Falcon::core::Tokenizer_token );
+   self->addClassMethod( tok_class, "hasCurrent", &Falcon::core::Tokenizer_hasCurrent );
 
    //=======================================================================
    // Table class - tabular programming

@@ -383,10 +383,18 @@ int64 StringStream::seek( int64 pos, Stream::e_whence w )
    }
 
    if ( m_pos > m_b->m_length )
+   {
       m_pos = m_b->m_length;
+      m_status = t_eof;
+   }
    else if ( m_pos < 0 )
+   {
       m_pos = 0;
-      
+      m_status = t_none;
+   }
+   else
+      m_status = t_none;
+
    m_b->m_mtx.unlock();
 
    return m_pos;

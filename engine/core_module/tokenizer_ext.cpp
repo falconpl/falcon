@@ -28,7 +28,7 @@ namespace core {
    @optparam tokLen Maximum length of returned tokens.
    @optparam source The string to be tokenized, or a stream to be read for tokens.
 
-   The tokenizer class is meant to provide simple and efficiente logic to parse incoming
+   The tokenizer class is meant to provide simple and efficient logic to parse incoming
    data (mainly, incoming from string).
 
    The source can also be set at a second time with the @a Tokenizer.parse method.
@@ -38,12 +38,15 @@ namespace core {
 /*#
    @init Tokenizer
    @brief Initializes the tokenizer
+   @raise IoError on errors on the underlying stream.
 
    @b options can be a binary combinations of the following
    - @b Tokenizer.groupsep: Groups different tokens into one. If not given, when a token immediately
         follows another, an empty field is returned.
    - @b Tokenizer.bindsep: Return separators inbound with their token.
    - @b Tokenizer.trim: trim whitespaces away from returned tokens.
+   - @b Tokenizer.wsAsToken: Treat a sequence of whitespaces as a single token.
+   - @b Tokenizer.retsep: Return separators as separate tokens.
 */
 
 FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
@@ -82,6 +85,10 @@ FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
          params.bindSep();
       if( (opts & TOKENIZER_OPT_TRIM) != 0 )
          params.trim();
+      if( (opts & TOKENIZER_OPT_RSEP) != 0 )
+         params.returnSep();
+      if( (opts & TOKENIZER_OPT_WSISTOK) != 0 )
+         params.wsIsToken();
    }
 
    // ... and a maximum length?
@@ -104,7 +111,14 @@ FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
       }
       else
       {
-         self->setUserData( new Tokenizer( params, seps, dyncast<Stream*>(i_source->asObject()->getFalconData() ), false ) );
+         Stream* source = dyncast<Stream*>(i_source->asObject()->getFalconData() );
+         self->setUserData( new Tokenizer( params, seps, source, false ) );
+         if ( ! source->good() )
+         {
+            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+                  .origin( e_orig_runtime )
+                  .sysError( source->lastError() ) );
+         }
       }
    }
    else
@@ -115,8 +129,13 @@ FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
 
 /*#
    @method parse Tokenizer
+   @raise IoError on errors on the underlying stream.
    @brief Changes or set the source data for this tokenizer.
    @param source A string or a stream to be used as a source for the tokenizer.
+
+   The first token is immediately read and set as the current token. If it's not
+   empty, that is, if at least a token can be read, @a Tokenizer.hasToken
+   returns true, and @a Tokenizer.token returns its value.
 */
 
 FALCON_FUNC  Tokenizer_parse ( ::Falcon::VMachine *vm )
@@ -144,7 +163,14 @@ FALCON_FUNC  Tokenizer_parse ( ::Falcon::VMachine *vm )
    }
    else
    {
-      tzer->parse( dyncast<Stream*>(i_source->asObjectSafe()->getFalconData()), false );
+      Stream* source = dyncast<Stream*>(i_source->asObjectSafe()->getFalconData());
+      tzer->parse( source, false );
+      if ( ! source->good() )
+      {
+         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+               .origin( e_orig_runtime )
+               .sysError( source->lastError() ) );
+      }
    }
 }
 
@@ -185,9 +211,10 @@ FALCON_FUNC  Tokenizer_rewind ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Tokenizer_nextToken ( ::Falcon::VMachine *vm )
 {
    Tokenizer* tzer = dyncast<Tokenizer*>( vm->self().asObject()->getFalconData() );
-   if( tzer->next() )
+   if( tzer->hasCurrent() )
    {
       CoreString* ret = new CoreString( tzer->getToken() );
+      tzer->next();
       ret->bufferize();
       vm->retval( ret );
    }
@@ -202,14 +229,13 @@ FALCON_FUNC  Tokenizer_nextToken ( ::Falcon::VMachine *vm )
    @raise IoError on errors on the underlying stream.
    @raise CodeError if called on an unprepared Tokenizer.
 
-   Contrarily to iterators, it is necessary to call this method at least once
-   before @a Tokenizer.token is available.
 
    For example:
    @code
    t = Tokenizer( source|"A string to be tokenized" )
-   while t.next()
+   while t.hasCurrent()
       > "Token: ", t.token()
+      t.next()
    end
    @endcode
 
@@ -229,8 +255,7 @@ FALCON_FUNC  Tokenizer_next ( ::Falcon::VMachine *vm )
    @raise IoError on errors on the underlying stream.
    @raise CodeError if called on an unprepared Tokenizer, or before next().
 
-   Contrarily to iterators, it is necessary to call this @a Tokenizer.next
-   at least once before calling this method.
+   This method returns the current token.
 
    @see Tokenizer.nextToken
    @see Tokenizer.next
@@ -247,6 +272,23 @@ FALCON_FUNC  Tokenizer_token ( ::Falcon::VMachine *vm )
    }
    else
       vm->retnil();
+}
+
+/*#
+   @method hasCurrent Tokenizer
+   @brief Return true if the tokenizer has a current token.
+   @return True if a token is now available, false otherwise.
+
+   Contrarily to iterators, it is necessary to call this @a Tokenizer.next
+   at least once before calling this method.
+
+   @see Tokenizer.nextToken
+   @see Tokenizer.next
+*/
+FALCON_FUNC  Tokenizer_hasCurrent ( ::Falcon::VMachine *vm )
+{
+   Tokenizer* tzer = dyncast<Tokenizer*>( vm->self().asObject()->getFalconData() );
+   vm->regA().setBoolean( tzer->hasCurrent() );
 }
 
 }

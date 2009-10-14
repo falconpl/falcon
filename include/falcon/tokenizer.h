@@ -38,13 +38,17 @@ class FALCON_DYN_CLASS TokenizerParams: public BaseAlloc
    bool m_bBindSep;
    bool m_bTrim;
    int32 m_nMaxToken;
+   bool m_bWsIsToken;
+   bool m_bReturnSep;
 
 public:
    TokenizerParams():
       m_bGroupSep( false ),
       m_bBindSep( false ),
       m_bTrim( false ),
-      m_nMaxToken( -1 )
+      m_nMaxToken( -1 ),
+      m_bWsIsToken( false ),
+      m_bReturnSep( false )
    {}
 
    /** Activate this option to have the Tokenizer return only once for a sequence of separators all alike.
@@ -54,11 +58,31 @@ public:
    */
    TokenizerParams &groupSep( bool mode = true ) { m_bGroupSep = mode; return *this; }
 
-   /** Add the separators to the returned tokens.
+   /** Treat a sequence of whitespaces of any lenght as a single token.
+       This separates words between spaces and other tokens. For example,
+       a text analyzer may use this mode to get words and puntactions
+       with a single "next" call.
+   */
+   TokenizerParams &wsIsToken( bool mode = true ) { m_bWsIsToken = mode; return *this; }
+
+   /** Add the tokens to the non-token previous element.
+
       This adds the separators to the token preceding them when returning the token.
       If grouping is activated, then more than a single separator may be returned.
    */
    TokenizerParams &bindSep( bool mode = true ) { m_bBindSep = mode; return *this; }
+
+   /** Returns found tokens separately.
+       This forces the tokenizer to return each token in a separate call.
+       For example, if "," is a token:
+
+       \code
+         "a, b, c"
+       \endcode
+       would be returned as "a" - "," - " b" - "," - " c".
+    */
+   TokenizerParams &returnSep( bool mode = true ) { m_bReturnSep = mode; return *this; }
+
 
    /** Whitespaces are trimmed from the retuned tokens.
       Whitespaces are tab, space, carrige return and line feed characters. If this
@@ -81,7 +105,9 @@ public:
    bool isGroupSep() const { return m_bGroupSep; }
    bool isBindSep() const { return m_bBindSep; }
    bool isTrim() const { return m_bTrim; }
+   bool isWsToken() const { return m_bWsIsToken; }
    int32 maxToken() const { return m_nMaxToken; }
+   bool isReturnSep() const { return m_bReturnSep; }
 };
 
 
@@ -116,6 +142,9 @@ class FALCON_DYN_CLASS Tokenizer: public Sequence
 
    String m_temp;
    uint32 m_version;
+
+   uint32 m_nextToken;
+   bool m_hasCurrent;
 
 public:
 
@@ -176,6 +205,8 @@ public:
 
    /** Returns true if the tokenizer has been readied with a stream. */
    bool isReady() const { return m_input != 0; }
+
+   bool hasCurrent() const { return m_hasCurrent; }
 
    virtual void append( const Item& itm );
    virtual void prepend( const Item& itm );

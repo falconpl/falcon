@@ -27,10 +27,16 @@ Tokenizer::Tokenizer( TokenizerParams &params, const String &seps, Stream *ins, 
    m_params( params ),
    m_input(ins),
    m_bOwnStream( bOwn ),
-   m_version(0)
+   m_version(0),
+   m_nextToken( 0xFFFFFFFF )
 {
    if ( seps == "" )
       m_separators = " ";
+
+   if ( ins )
+      m_hasCurrent = next();
+   else
+      m_hasCurrent = false;
 }
 
 Tokenizer::Tokenizer( TokenizerParams &params, const String &seps, const String &source ):
@@ -38,10 +44,12 @@ Tokenizer::Tokenizer( TokenizerParams &params, const String &seps, const String 
    m_params( params ),
    m_input( new ROStringStream( source ) ),
    m_bOwnStream( true ),
-   m_version(0)
+   m_version(0),
+   m_nextToken( 0xFFFFFFFF )
 {
    if ( seps == "" )
       m_separators = " ";
+   m_hasCurrent = next();
 }
 
 Tokenizer::Tokenizer( const Tokenizer &other ):
@@ -49,7 +57,8 @@ Tokenizer::Tokenizer( const Tokenizer &other ):
    m_params( other.m_params ),
    m_input( other.m_input != 0 ? dyncast<Stream*>(other.m_input->clone()) : 0 ),
    m_bOwnStream( true ),
-   m_version(other.m_version)
+   m_version(other.m_version),
+   m_nextToken( 0xFFFFFFFF )
 {
 }
 
@@ -65,6 +74,14 @@ bool Tokenizer::next()
    // must be called when ready
    fassert( m_input != 0 );
 
+   if( m_nextToken != 0xFFFFFFFF )
+   {
+      m_temp.size(0);
+      m_temp.append( m_nextToken );
+      m_nextToken = 0xFFFFFFFF;
+      return true;
+   }
+
    if ( m_input->eof() )
       return false;
 
@@ -77,6 +94,14 @@ bool Tokenizer::next()
    while( m_input->get( chr ) )
    {
       bool skip = false;
+
+      if( m_params.isWsToken() && String::isWhiteSpace( chr ) )
+      {
+         if( m_temp.size() == 0 )
+            continue;
+
+         return true;
+      }
 
       // is this character a separator?
       for( uint32 i = 0; i < m_separators.length(); i ++ )
@@ -93,6 +118,16 @@ bool Tokenizer::next()
             // should we pack the thing?
             if( m_params.isBindSep() )
                m_temp+=chr;
+            else if( m_params.isReturnSep() )
+            {
+               if ( m_temp.size() == 0 )
+               {
+                  m_temp.append( chr );
+                  m_hasCurrent = true;
+                  return true;
+               }
+               m_nextToken = chr;
+            }
 
             if ( m_params.isTrim() )
                m_temp.trim();
@@ -120,7 +155,8 @@ bool Tokenizer::next()
    if ( m_params.isTrim() )
       m_temp.trim();
    // ok we can't find any more character; but is this a valid token?
-   return m_temp.size() != 0 || ! m_params.isGroupSep();
+   m_hasCurrent = m_temp.size() != 0 || ! (m_params.isGroupSep() || m_params.isReturnSep());
+   return m_hasCurrent;
 }
 
 bool Tokenizer::empty() const
@@ -134,6 +170,7 @@ void Tokenizer::rewind()
    {
       m_input->seekBegin(0);
       m_version = 0;
+      m_hasCurrent = next();
    }
 }
 
@@ -238,7 +275,7 @@ bool Tokenizer::hasPrev( const Iterator &iter ) const
 
 bool Tokenizer::hasCurrent( const Iterator &iter ) const
 {
-   return isReady();
+   return m_hasCurrent;
 }
 
 
