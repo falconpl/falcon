@@ -187,17 +187,168 @@ FunctionDef2::~FunctionDef2()
    delete m_return;
 }
 
-
-String FunctionDef2::normalize( const String& name )
+bool FunctionDef2::parse( const String& definition )
 {
-   Tokenizer t( TokenizerParams().wsIsToken().returnSep(), "(,);[]", name );
+   enum {
+      e_start,
+      e_spec,
+      e_type,
+      e_tag,
+      e_unsigned,
+      e_signed,
+      e_varadic,
+      e_name
+   } state;
 
+   // do we have a function name?
+   state = e_start;
+   bool bFuncName = false;
 
-}
+   BaseCType::e_integral_type type;
+   BaseCType::e_integral_type spec;
 
-void FunctionDef2::parse( const String& definition )
-{
-   m_definition = normalize( definition );
+   Tokenizer t( TokenizerParams().wsIsToken().returnSep(), "(,);[]", definition );
+
+   while( t.hasCurrent() )
+   {
+      const String& token = t.token();
+
+      switch( state )
+      {
+      case e_start:
+         if( token == "void" )
+         {
+            type = BaseCType::e_void;
+            state = e_type;
+         }
+         else if( token == "int" )
+         {
+            type = BaseCType::e_int;
+            state = e_type;
+         }
+         else if( token == "char" )
+         {
+            type = BaseCType::e_char;
+            state = e_type;
+         }
+         else if( token == "float" )
+         {
+            type = BaseCType::e_float;
+            state = e_type;
+         }
+         else if( token == "double" )
+         {
+            type = BaseCType::e_double;
+            state = e_type;
+         }
+         else if( token == "BOOL" )
+         {
+            type = BaseCType::e_int;
+            state = e_type;
+         }
+         else if( token == "WORD" )
+         {
+            type = BaseCType::e_unsigned_short;
+            state = e_type;
+         }
+         else if( token == "DWORD" )
+         {
+            type = BaseCType::e_unsigned_int;
+            state = e_type;
+         }
+         else if( token == "HANDLE" )
+         {
+            type = BaseCType::e_unsigned_long;
+            state = e_type;
+         }
+         else if( token == "struct" )
+         {
+            type = BaseCType::e_double;
+            state = e_tag;
+         }
+         else if( token == "union" )
+         {
+            type = BaseCType::e_union;
+            state = e_tag;
+         }
+         else if( token == "enum" )
+         {
+            type = BaseCType::e_enum;
+            state = e_tag;
+         }
+         else if( token == "long" )
+         {
+            spec = BaseCType::e_long;
+            state = e_spec;
+         }
+         else if( token == "short" )
+         {
+            spec = BaseCType::e_short;
+            state = e_spec;
+         }
+         else if( token == "unsigned" )
+         {
+               state = e_unsigned;
+         }
+         else if( token == "signed" )
+         {
+               state = e_signed;
+         }
+         else if( token == "..." )
+         {
+            if( ! bFuncName )
+               return false;
+
+            state = e_varadic;
+         }
+            return false;
+         break;
+
+      case e_spec:
+         if( token == "long" )
+         {
+            if ( spec == BaseCType::e_long )
+               spec = BaseCType::e_long_long;
+            else if ( spec == BaseCType::e_unsigned_long )
+               spec = BaseCType::e_unsigned_long_long;
+            else
+               return false;
+            // and stay in this state.
+         }
+         else if ( token == "int" )
+         {
+            type = spec;
+            state = e_type;
+         }
+         else if( token == "double" )
+         {
+            if( spec == BaseCType::e_long )
+            {
+               spec = BaseCType::e_long_double;
+               state = e_type;
+            }
+            else
+               return false;
+         }
+         else if( token == "short" || token == "char" || token == "float" ||
+            token == "struct" || token == "union" || token == "enum" ||
+            token == "void" || token == "..." )
+         {
+            return false;
+         }
+         else {
+            // the token is the parameter/function name.
+            current = new Parameter( spec, name );
+            state = e_name;
+            if ( bFuncName )
+               m_parameters.add( current );
+            else
+               m_name = name;
+               m_return = current;
+
+      }
+   }
+
 }
 
 
