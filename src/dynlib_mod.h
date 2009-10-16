@@ -84,9 +84,9 @@ public:
    } t_type;
 
    typedef enum tag_t_mode {
-      IN,
-      OUT,
-      INOUT
+      _IN,
+      _OUT,
+      _INOUT
    } t_mode;
 
    t_type type() const { return m_type; }

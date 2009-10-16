@@ -510,7 +510,7 @@ FALCON_FUNC  dynExt( ::Falcon::VMachine *vm )
    const char* ext = Sys::dynlib_get_dynlib_ext();
    CoreString *gs = new CoreString( ext );
    gs->bufferize();
-   vm->retval( ext );
+   vm->retval( new CoreString(ext) );
 }
 
 

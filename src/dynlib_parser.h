@@ -153,12 +153,10 @@ public:
    /** Parses a string definition.
     * Throws ParseError* on error.
     */
-   void parse( const String& definition );
+   bool parse( const String& definition );
 
    const String& name() const { return m_name; }
    const String& definition() const { return m_definition; }
-
-   static String normalize( const String& name );
 };
 
 
