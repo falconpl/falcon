@@ -24,6 +24,7 @@ namespace Falcon
 {
 
 class Parameter;
+class Tokenizer;
 
 class ParamList
 {
@@ -37,13 +38,16 @@ public:
    bool empty() const { return m_size == 0; }
    int size() const { return m_size; }
 
+   String toString() const;
+
 private:
    Parameter* m_head;
    Parameter* m_tail;
    int m_size;
 };
 
-class BaseCType
+
+class Parameter
 {
 public:
    typedef enum
@@ -69,32 +73,22 @@ public:
       e_varpar
    } e_integral_type;
 
-   BaseCType( e_integral_type id, const String& repr, int size );
-   BaseCType( e_integral_type id, const char* repr, int size );
+   Parameter( e_integral_type ct, const String& name, int pointers = 0, int subs = 0, bool isFunc = false );
 
-   e_integral_type m_id;
-   int m_size;
+   Parameter( e_integral_type ct, const String& name, const String& tag, int pointers = 0, int subs = 0, bool isFunc = false );
 
-   /** Normalized declaration of this type.
-    * Tagged types have a terminal "*" that is substituted with exactly a word.
-    * */
-   String m_normal_repr;
-};
+   Parameter( const Parameter& other );
 
+   ~Parameter();
 
-class CType
-{
-public:
+   /** Type of this parameter. */
+   e_integral_type m_type;
 
-   CType( BaseCType* ct, int pointers = 0, int subs = 0, bool isFunc = false );
+   /** Name of the parameters.
 
-   CType( BaseCType* ct, const String& tag, int pointers = 0, int subs = 0, bool isFunc = false );
-
-   CType( const CType& other );
-
-   ~CType();
-
-   BaseCType* m_ctype;
+      We don't accept unnamed parameters for practical reasons.
+   */
+   String m_name;
 
    /** Tag for tagged types. */
    String m_tag;
@@ -105,9 +99,6 @@ public:
    /** Array subscript count (-1 for [] ) */
    int m_subscript;
 
-   /** returns the number o indirections (pointers/array subscripts) */
-   int indirections() const { return m_pointers + m_subscript != 0 ? 1:0; }
-
    /** True if this is a function pointer (returning this type)
     * m_pointers will be zero unless this is a pointer to a function pointer.
     * */
@@ -115,22 +106,19 @@ public:
 
    /** If this is a function pointer, it may have one or more function parameters. */
    ParamList m_funcParams;
-};
 
-
-
-class Parameter
-{
-public:
-   Parameter( const CType& t, const char* name );
-
-   CType m_type;
-   const char* m_name;
    Parameter* m_next;
+
+   /** returns the number o indirections (pointers/array subscripts) */
+   int indirections() const { return m_pointers + m_subscript != 0 ? 1:0; }
+
+   String toString() const;
+
+   static String typeToString( e_integral_type type );
 };
 
 
-class FunctionDef2: public FalconData
+class FunctionDef2 //: public FalconData
 {
    String m_definition;
    String m_name;
@@ -139,7 +127,9 @@ class FunctionDef2: public FalconData
 
 public:
 
-   FunctionDef2();
+   FunctionDef2():
+      m_return(0)
+   {}
 
    FunctionDef2( const String& definition ):
       m_return(0)
@@ -157,6 +147,13 @@ public:
 
    const String& name() const { return m_name; }
    const String& definition() const { return m_definition; }
+
+   String toString() const;
+
+private:
+   Parameter* parseNextParam( Tokenizer& tok );
+   Parameter* parseFuncParams( ParamList& params, Tokenizer& tok );
+
 };
 
 

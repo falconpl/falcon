@@ -60,6 +60,8 @@ FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  testParser( ::Falcon::VMachine *vm );
+
 //=====================
 // DynLib Error class
 //=====================

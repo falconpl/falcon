@@ -26,6 +26,8 @@
 #include "dynlib_st.h"
 #include "dynlib_sys.h"
 
+#include "dynlib_parser.h"
+
 namespace Falcon {
 namespace Ext {
 
@@ -1567,6 +1569,22 @@ FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
    vm->retval( ptr );
 }
 
+
+FALCON_FUNC  testParser( ::Falcon::VMachine *vm )
+{
+   Item *i_ptr = vm->param(0);
+
+   if ( i_ptr == 0 || ! i_ptr->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("S") );
+      return;
+   }
+
+   FunctionDef2 fd;
+   fd.parse( *i_ptr->asString() );
+   vm->retval( new CoreString(fd.toString()) );
+}
 
 //======================================================
 // DynLib error

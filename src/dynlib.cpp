@@ -282,6 +282,9 @@ FALCON_MODULE_DECL
 
    self->addClassMethod( dynlib_cls, "unload", Falcon::Ext::DynLib_unload );
 
+   self->addExtFunc( "testParser", Falcon::Ext::testParser )
+         ->addParam( "f" );
+
    //============================================================
    // Helper functions.
    //
