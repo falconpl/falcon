@@ -83,7 +83,10 @@ bool Tokenizer::next()
    }
 
    if ( m_input->eof() )
+   {
+      m_hasCurrent = false;
       return false;
+   }
 
    // reset the input buffer
    m_temp.size(0);
@@ -123,7 +126,6 @@ bool Tokenizer::next()
                if ( m_temp.size() == 0 )
                {
                   m_temp.append( chr );
-                  m_hasCurrent = true;
                   return true;
                }
                m_nextToken = chr;
@@ -216,6 +218,7 @@ void Tokenizer::parse( const String &data )
    m_input = new ROStringStream( data );
    m_bOwnStream = true;
    m_version++;
+   m_hasCurrent = next();
 }
 
 
