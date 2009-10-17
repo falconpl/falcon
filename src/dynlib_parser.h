@@ -151,7 +151,7 @@ public:
    String toString() const;
 
 private:
-   Parameter* parseNextParam( Tokenizer& tok );
+   Parameter* parseNextParam( Tokenizer& tok, bool isFuncName = false);
    Parameter* parseFuncParams( ParamList& params, Tokenizer& tok );
 
 };

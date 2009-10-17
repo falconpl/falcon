@@ -996,14 +996,14 @@ bool FunctionDef2::parse( const String& definition )
 {
    Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],");
    tok.parse( definition );
-   if ( ! tok.next() )
+   if ( ! tok.hasCurrent() )
    {
       return false;
    }
 
    // parse the outer return type; as "(" is found, we get a formingParam in state,
    // and we know we can start the parameter loop
-   m_return = parseNextParam( tok );
+   m_return = parseNextParam( tok, true );
 
    if ( tok.getToken() != "(" )
    {
@@ -1028,7 +1028,7 @@ bool FunctionDef2::parse( const String& definition )
    return false;
 }
 
-Parameter* FunctionDef2::parseNextParam( Tokenizer& tok )
+Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
 {
    FormingParam::state state;
    Parameter *ret = 0;
@@ -1055,6 +1055,10 @@ Parameter* FunctionDef2::parseNextParam( Tokenizer& tok )
       }
 
       tok.next();
+      if( isFuncName && tok.getToken() == "(" )
+      {
+         return new Parameter( state.m_type, state.m_name, state.m_tag, state.m_nPointers );
+      }
    }
 
    return ret;
@@ -1066,7 +1070,7 @@ Parameter* FunctionDef2::parseFuncParams( ParamList& params, Tokenizer& tok )
    while( tok.hasCurrent() && tok.getToken() != ")" )
    {
       Parameter* p = parseNextParam(tok);
-      if( tok.hasCurrent() || (tok.getToken() != "," && tok.getToken() != ")" ) )
+      if( ! ( tok.hasCurrent() && (tok.getToken() == "," || tok.getToken() == ")" ) ) )
       {
          throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
       }
