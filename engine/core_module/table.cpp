@@ -825,7 +825,7 @@ FALCON_FUNC  Table_setColumn ( ::Falcon::VMachine *vm )
    @optparam dflt Default value for the newly inserted columns.
 
    This method creates a new column in the table, inserting or adding
-   a new heading, a new column data and an item in the coresponding
+   a new heading, a new column data and an item in the corresponding
    column position of each array in the table.
 
    If @b dflt parameter is specified, that value is used to fill the
@@ -1105,7 +1105,7 @@ static void internal_bind_or_choice( VMachine *vm )
    @param func Choice function or callable.
    @optparam offer Offer column (number or name).
    @optparam rows Range of rows in which to perform the bidding.
-   @return The winning row, or the coresponding value in the offer column.
+   @return The winning row, or the corresponding value in the offer column.
 
    This method sends all the rows in the table as the sole parameter of
    a function which has to return a numeric value for each row.
@@ -1125,7 +1125,7 @@ static void internal_bind_or_choice( VMachine *vm )
    An out of band nil will force this method to return nil, and an out of band
    number will force the selection of the current row.
 
-   If an @b offer parameter is specified, then the item in the coresponding
+   If an @b offer parameter is specified, then the item in the corresponding
    column (indicated by a numeric index or by column name) is returned.
 
    A @b row range can be used to iterate selectively on one part of the table.
@@ -1166,7 +1166,7 @@ FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm )
    @param column Betting column (number or name).
    @optparam offer Offer column (number or name).
    @optparam rows Range of rows in which to perform the bidding.
-   @return The winning row, or the coresponding value in the offer column.
+   @return The winning row, or the corresponding value in the offer column.
    @raise AccessError if the table or ranges are empty.
 
    This method calls iteratively all the items in a determined column of
@@ -1178,7 +1178,7 @@ FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm )
 
    After the bidding is complete, the row offering the highest value
    is selected and returned, or if the @b offer parameter is specified,
-   the coresponding value in the given column will be returned.
+   the corresponding value in the given column will be returned.
 
    @note If the bidding element is a plain function, it will be called
       as a method of the array, so "self" will be available. In all the
@@ -1344,7 +1344,7 @@ FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
    @method getPage Table
    @brief Returns a copy of a given page in the table.
    @optparam pageId The page to be copied (defaults to the current page).
-   @return An array containings all the rows in the page.
+   @return An array containing all the rows in the page.
 
    While the returned item is a copy, and modifying it doesn't
    cause the change the be reflected on the table, each row
