@@ -18,6 +18,9 @@ Falcon (0.9.4.3)
   * fixed: In tables, Table.insert at bottom didn't work correctly.
   * added: Methods Table.append and Table.set
   * minor: Now tables support [] accessors (accessing a row in current page).
+  * added: TableError class for generic errors in table operations.
+  * minor: Table.find() now accepts an extra default parameter.
+  * fixed: Cleaned and clarified several error messages in table ops.
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

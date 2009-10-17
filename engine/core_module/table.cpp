@@ -108,14 +108,14 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
 
    if ( table->order() != CoreTable::noitem )
    {
-      throw new CodeError( ErrorParam( e_table_aconf, __LINE__ )
+      throw new TableError( ErrorParam( e_table_aconf, __LINE__ )
          .origin( e_orig_runtime )
          .extra( Engine::getMessage(rtl_tabhead_given) ) );
    }
 
    if (! table->setHeader( i_heading->asArray() ) )
    {
-      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+      throw new TableError( ErrorParam( e_param_type, __LINE__ )
          .origin( e_orig_runtime )
          .extra( Engine::getMessage(rtl_invalid_tabhead) ) );
    }
@@ -256,7 +256,7 @@ FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm )
 
    if( table->empty() ) // empty() is virtual
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+      throw new AccessError( ErrorParam( e_table_empty, __LINE__ ).
          origin( e_orig_runtime ) );
    }
 
@@ -277,7 +277,7 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm )
 
    if( table->empty() )  // empty() is virtual
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+      throw new AccessError( ErrorParam( e_table_empty, __LINE__ ).
          origin( e_orig_runtime ) );
    }
 
@@ -290,7 +290,7 @@ static void internal_first_last( VMachine *vm, bool mode )
 
    if( table->empty() )  // empty() is virtual
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+      throw new AccessError( ErrorParam( e_table_empty, __LINE__ ).
          origin( e_orig_runtime ) );
    }
 
@@ -340,7 +340,7 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
       if ( colPos == CoreTable::noitem )
       {
          // there isn't such field
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         throw new AccessError( ErrorParam( e_tabcol_acc, __LINE__ )
             .origin( e_orig_runtime )
             .extra( *i_column->asString() ) );
       }
@@ -352,7 +352,7 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
          String temp;
          temp = "col ";
          temp.writeNumber( (int64) colPos );
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         throw new AccessError( ErrorParam( e_tabcol_acc, __LINE__ )
             .origin( e_orig_runtime )
             .extra( temp ) );
       }
@@ -474,7 +474,7 @@ FALCON_FUNC  Table_set ( ::Falcon::VMachine *vm )
    uint32 pos = (uint32)(i_pos->forceInteger());
    if ( pos >= page->length() )
    {
-      throw new ParamError( ErrorParam( e_arracc, __LINE__ )
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
          .extra( Engine::getMessage( rtl_row_out_of_bounds ) ) );
    }
@@ -555,7 +555,9 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
    @param column The column where to perform the search (either name or 0 based number).
    @param value The value to be found.
    @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
+   @optparam dflt A default value to be returned if the row is not found.
    @return An array (if the column is not specified) or an item.
+   @throw TableError if the item is not found.
 
    The returned array is a "table component", and as such, its size cannot be changed;
    also, it inherits all the table columns, that can be accessed as bindings with the
@@ -563,6 +565,9 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
 
    In case of success, through the BOM method @a Array.tabRow it is possible to retrieve
    the table row position of the returned array.
+
+   In case of failure, a TableError is raised, unless a @a dflt parameter is
+   specified.
 */
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 {
@@ -573,7 +578,7 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 
    if ( i_column == 0 || ! ( i_column->isString() || i_column->isOrdinal() ) ||
         i_value == 0 ||
-        ( i_tcol != 0 && ! (i_tcol->isString()|| i_tcol->isOrdinal()) ) )
+        ( i_tcol != 0 && ! (i_tcol->isString()|| i_tcol->isOrdinal() || i_tcol->isNil()) ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
@@ -592,9 +597,10 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
       return;
    }
 
+   Item value = *i_value; // cache the item, as we may loose the stack
    for ( uint32 i = 0; i < page->length(); i++ )
    {
-      if( page->at(i).asArray()->at(col) == *i_value )
+      if( page->at(i).asArray()->at(col) == value )
       {
          pos = i;
          break;
@@ -604,12 +610,21 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
    if ( pos == CoreTable::noitem )
    {
       // there isn't such field
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-         .origin( e_orig_runtime ));
+      Item* i_dflt = vm->param(3);
+      if( i_dflt != 0 )
+      {
+         vm->retval( *i_dflt );
+         return;
+      }
+
+      throw new TableError( ErrorParam( e_search_eof, __LINE__ )
+            .origin( e_orig_runtime ) );
    }
 
+   // re-get the parameter, as it may has been changed.
+   i_tcol = vm->param(2);
    // we know we have a valid pos here.
-   if( i_tcol == 0 )
+   if( i_tcol == 0 || i_tcol->isNil() )
    {
       Item &itm = (*page)[pos];
       fassert( itm.isArray() );
@@ -654,7 +669,7 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    CoreArray* element = i_element->asArray();
    if ( element->length() != table->order() )
    {
-      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
          .origin( e_orig_runtime )
          .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
    }
@@ -705,7 +720,7 @@ FALCON_FUNC  Table_append ( ::Falcon::VMachine *vm )
    CoreArray* element = i_element->asArray();
    if ( element->length() != table->order() )
    {
-      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
          .origin( e_orig_runtime )
          .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
    }
@@ -1289,7 +1304,7 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
       CoreArray* page = i_data->asArray()->clone();
       if ( ! table->insertPage( vm->self().asObject(), page, pos ) )
       {
-         throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
             .origin( e_orig_runtime )
             .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
       }
@@ -1334,7 +1349,7 @@ FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
    While the returned item is a copy, and modifying it doesn't
    cause the change the be reflected on the table, each row
    returned with it is the actual item stored in the table. So,
-   modifying the nth element of one of the arrays in the returned one
+   modifying the Nth element of one of the arrays in the returned one
    will affect the page.
 
 */
@@ -1365,11 +1380,11 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
 
 /*#
    @method resetColumn Table
-   @brief Applies a value on a colum, eventually setting one or more rows to a different value.
+   @brief Applies a value on a column, eventually setting one or more rows to a different value.
    @param column Column name or number where the value must be applied.
    @optparam resetVal The value that must be set to clear the rows (defaults to nil).
    @optparam row The row (or rows, if a range is given) to be set to @b value.
-   @optparam value The value that must be set in the given row(s) (defaluts to true).
+   @optparam value The value that must be set in the given row(s) (defaults to true).
 
    This method takes a column in the current page and sets all the values in all
    the rows to @b resetVal (or nil if not given).
@@ -1478,6 +1493,7 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
       start += step;
    }
 }
+
 
 }
 }

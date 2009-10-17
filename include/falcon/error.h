@@ -561,6 +561,18 @@ public:
       {}
 };
 
+class TableError: public Error
+{
+public:
+   TableError():
+      Error( "TableError" )
+   {}
+
+   TableError( const ErrorParam &params  ):
+      Error( "TableError", params )
+      {}
+};
+
 
 /** Returns the description of a falcon error.
    In case the error ID is not found, a sensible message will be returned.

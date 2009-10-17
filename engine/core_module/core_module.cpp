@@ -1021,6 +1021,11 @@ Module* core_module_init()
    msgerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    msgerr_cls->setWKS( true );
 
+   Falcon::Symbol *tableerr_cls = self->addClass( "TableError", &Falcon::core::TableError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
+   tableerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   tableerr_cls->setWKS( true );
+
    //=========================================
 
    // Creating the semaphore class -- will be a FalconObject
@@ -1914,7 +1919,7 @@ Module* core_module_init()
    self->addClassMethod( table_class, "columnData", &Falcon::core::Table_columnData ).asSymbol()->
       addParam("column")->addParam("data");
    self->addClassMethod( table_class, "find", &Falcon::core::Table_find ).asSymbol()->
-      addParam("column")->addParam("value")->addParam("tcol");
+      addParam("column")->addParam("value")->addParam("tcol")->addParam("dflt");
    self->addClassMethod( table_class, "insert", &Falcon::core::Table_insert ).asSymbol()->
       addParam("row")->addParam("element");
    self->addClassMethod( table_class, "remove", &Falcon::core::Table_remove ).asSymbol()->

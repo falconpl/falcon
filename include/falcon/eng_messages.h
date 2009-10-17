@@ -246,6 +246,7 @@ FAL_ERRORDECL( e_unrec_file_type, 207, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_unsup, 208, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_invalid, 209, "Unrecognized file type" );
 FAL_ERRORDECL( e_deser_eof, 210, "Hit EOF while deserializing" );
+FAL_ERRORDECL( e_search_eof, 211, "Search operation failed or item not found" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );
@@ -265,6 +266,8 @@ FAL_ERRORDECL( e_miss_iface, 515, "Missing interface: needed method not found");
 FAL_ERRORDECL( e_acc_forbidden, 516, "Access forbidden");
 FAL_ERRORDECL( e_prop_wo, 517, "Tried to read a write-only property" );
 FAL_ERRORDECL( e_prop_loop, 518, "Property accessed inside its accessor" );
+FAL_ERRORDECL( e_table_empty, 519, "Operation on an empty table" );
+FAL_ERRORDECL( e_tabcol_acc, 520, "Table column not found" );
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

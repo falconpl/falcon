@@ -532,6 +532,31 @@ FALCON_FUNC  MessageError_init ( ::Falcon::VMachine *vm )
    Error_init( vm );
 }
 
+/*#
+   @class TableError
+   @brief Error in Table class core operations.
+   @ingroup errors
+   @ingroup general_purpose
+   @optparam code A numeric error code.
+   @optparam description A textual description of the error code.
+   @optparam extra A descriptive message explaining the error conditions.
+   @from Error code, description, extra
+
+   This error is raised when an logic or constraint error is found in
+   access or when modifying tables. It is also the result for some common
+   table operations in case of failure (i.e. @a Table.find).
+
+   @see Table
+*/
+FALCON_FUNC  TableError_init ( ::Falcon::VMachine *vm )
+{
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::TableError );
+
+   Error_init( vm );
+}
+
 }
 }
 

@@ -96,6 +96,7 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  MessageError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TableError_init ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  val_int ( ::Falcon::VMachine *vm );
 FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm );
