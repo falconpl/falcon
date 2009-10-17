@@ -1903,8 +1903,12 @@ Module* core_module_init()
    self->addClassMethod( table_class, "last", &Falcon::core::Table_last );
    self->addClassMethod( table_class, "get", &Falcon::core::Table_get ).asSymbol()->
       addParam("row")->addParam("tcol");
-   self->addClassMethod( table_class, "set", &Falcon::core::Table_set ).asSymbol()->
+   self->addClassMethod( table_class, "getIndex__", &Falcon::core::Table_get ).asSymbol()->
       addParam("row");
+   self->addClassMethod( table_class, "set", &Falcon::core::Table_set ).asSymbol()->
+      addParam("row")->addParam("element");
+   self->addClassMethod( table_class, "setIndex__", &Falcon::core::Table_set ).asSymbol()->
+      addParam("row")->addParam("element");
    self->addClassMethod( table_class, "columnPos", &Falcon::core::Table_columnPos ).asSymbol()->
       addParam("column");
    self->addClassMethod( table_class, "columnData", &Falcon::core::Table_columnData ).asSymbol()->

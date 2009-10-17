@@ -481,6 +481,7 @@ FALCON_FUNC  Table_set ( ::Falcon::VMachine *vm )
 
    page->at(pos) = element;
    element->table( vm->self().asObject() );
+   vm->retval( element );
 }
 
 
