@@ -2,7 +2,7 @@ Falcon (0.9.4.3)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
            Falcon side Table item as owner. This caused crash with some
            GC patterns.
-  * fixed: The context stack was lenghtend, but not resized, when calling an 
+  * fixed: The context stack was lengthened, but not resized, when calling an 
            array. This may have caused direct crashes when calling arrays on 
            brand new stack frames (a rare, but possible situation).
   * fixed: Grammar error on def statement caused crash.
@@ -13,8 +13,7 @@ Falcon (0.9.4.3)
   * fixed: Coroutines terminating with a simple return may have killed a
            useful value in the A register of the swapped-in new coroutine.
   * fixed: StringStream didn't reset eof() at seek(0).
-  * minor: Better interface and improved features for tokenizer.
-  * fixed: Error description for Table.get() out of range was confusing.
+  * minor: Better interface and improved features for Tokenizer class.
   * fixed: In tables, Table.insert at bottom didn't work correctly.
   * added: Methods Table.append and Table.set
   * minor: Now tables support [] accessors (accessing a row in current page).
