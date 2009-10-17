@@ -14,6 +14,9 @@ Falcon (0.9.4.3)
            useful value in the A register of the swapped-in new coroutine.
   * fixed: StringStream didn't reset eof() at seek(0).
   * minor: Better interface and improved features for tokenizer.
+  * fixed: Error description for Table.get() out of range was confusing.
+  * fixed: In tables, Table.insert at bottom didn't work correctly.
+  * added: Methods Table.append and Table.set
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

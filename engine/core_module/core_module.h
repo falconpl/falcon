@@ -539,6 +539,7 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_set ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_columnPos ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm );
@@ -546,6 +547,7 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_append ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Table_setColumn ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_insertColumn ( ::Falcon::VMachine *vm );

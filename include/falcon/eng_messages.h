@@ -84,6 +84,7 @@ FAL_ENGMSG( rtl_uncallable_col, "Given column contains some uncallable items" );
 FAL_ENGMSG( rtl_no_page, "Page ID not present in table" );
 FAL_ENGMSG( rtl_tabhead_given, "Table heading already given" );
 FAL_ENGMSG( rtl_string_empty, "Refill string cannot be empty" );
+FAL_ENGMSG( rtl_row_out_of_bounds, "Row larger than current page size" );
 FAL_ENGMSG( rtl_buffer_full, "Given memory buffer is full" );
 FAL_ENGMSG( rtl_zero_size, "Given size less or equal to zero" );
 

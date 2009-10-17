@@ -419,8 +419,9 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
    uint32 pos = (uint32) i_pos->forceInteger();
    if ( pos >= page->length() )
    {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-         .origin( e_orig_runtime ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( Engine::getMessage( rtl_row_out_of_bounds ) ) );
    }
 
    // Should we also get a single item?
@@ -435,6 +436,53 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
       internal_get_item( table, (*page)[pos].asArray(), vm, i_column );
    }
 }
+
+/*#
+   @method set Table
+   @brief Changes the value of a whole row.
+   @param row a Row number.
+   @param element The new data to be placed at the given row.
+
+   This method changes an existing row placing a completely new
+   value over it.
+*/
+FALCON_FUNC  Table_set ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_pos = vm->param(0);
+   Item* i_element = vm->param(1);
+
+   if (
+        i_pos == 0 || ! i_pos->isOrdinal()
+        || i_element == 0 || ! i_element->isArray()
+        )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N,A" ) );
+   }
+
+   CoreArray* element = i_element->asArray();
+   if ( element->length() != table->order() )
+   {
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
+   }
+
+   CoreArray* page = table->currentPage();
+   uint32 pos = (uint32)(i_pos->forceInteger());
+   if ( pos >= page->length() )
+   {
+      throw new ParamError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( Engine::getMessage( rtl_row_out_of_bounds ) ) );
+   }
+
+   page->at(pos) = element;
+   element->table( vm->self().asObject() );
+}
+
 
 /*#
    @method columnPos Table
@@ -509,10 +557,10 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
    @return An array (if the column is not specified) or an item.
 
    The returned array is a "table component", and as such, its size cannot be changed;
-   also, it inherits all the table clumns, that can be accessed as bindings with the
+   also, it inherits all the table columns, that can be accessed as bindings with the
    dot accessor and will resolve in one of the element in the array.
 
-   In case of success, through the BOM method @a Array.tabRow it is possible to retreive
+   In case of success, through the BOM method @a Array.tabRow it is possible to retrieve
    the table row position of the returned array.
 */
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
@@ -578,7 +626,7 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
    @param row The position where to insert the row.
    @param element The row to be inserted.
    @raise AccessError if the position is out of range.
-   @raise ParamError if the row is not an array with the same lenght of the table order.
+   @raise ParamError if the row is not an array with the same length of the table order.
 
    The element is inserted before the given position.
 
@@ -603,7 +651,6 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreArray* element = i_element->asArray();
-   uint32 pos = (uint32)( i_pos->isNil() ? table->order() : i_pos->forceInteger());
    if ( element->length() != table->order() )
    {
       throw new ParamError( ErrorParam( e_param_type, __LINE__ )
@@ -612,11 +659,59 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreArray* page = table->currentPage();
-   if ( pos > table->order() )
-      pos = table->order();
+   uint32 pos;
+
+   if ( i_pos->isNil() )
+      pos = page->length();
+   else
+   {
+      pos = i_pos->forceInteger();
+
+      // insert a bottom?
+      if( pos > page->length() )
+         pos =  page->length();
+   }
+
 
    page->insert( Item(element), pos );
+   element->table( vm->self().asObject() );
+}
 
+
+/*#
+   @method append Table
+   @brief Adds a row at the end of the current page in the table.
+   @param element The row to be inserted.
+   @raise ParamError if @b element is not an array with the same length of the table order.
+
+   This method adds the element at the end of the page currently selected in this
+   table.
+
+   @note This method is equivalent to Table.insert with @b row set as nil.
+*/
+FALCON_FUNC  Table_append ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_element = vm->param(0);
+
+   if ( i_element == 0 || ! i_element->isArray() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N,A" ) );
+   }
+
+   CoreArray* element = i_element->asArray();
+   if ( element->length() != table->order() )
+   {
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
+   }
+
+   CoreArray* page = table->currentPage();
+
+   page->insert( Item(element), page->length() );
    element->table( vm->self().asObject() );
 }
 
@@ -767,16 +862,13 @@ FALCON_FUNC  Table_insertColumn ( ::Falcon::VMachine *vm )
 
 /*#
    @method removeColumn Table
-   @brief Inserts a column in a table.
+   @brief Removes a column from a table.
    @param column The column name or position to be removed.
    @raise AccessError if the column is not found.
 
-   This method removes column in the table, removing also the coresponding
-   position in the
-
-   If @b dflt parameter is specified, that value is used to fill the
-   newly created columns in the table rows, otherwise the new items
-   will be nil.
+   This method removes column in the table, removing also the item at
+   corresponding position in all the rows of all the pages in this
+   table.
 */
 FALCON_FUNC  Table_removeColumn ( ::Falcon::VMachine *vm )
 {

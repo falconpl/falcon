@@ -1903,6 +1903,8 @@ Module* core_module_init()
    self->addClassMethod( table_class, "last", &Falcon::core::Table_last );
    self->addClassMethod( table_class, "get", &Falcon::core::Table_get ).asSymbol()->
       addParam("row")->addParam("tcol");
+   self->addClassMethod( table_class, "set", &Falcon::core::Table_set ).asSymbol()->
+      addParam("row");
    self->addClassMethod( table_class, "columnPos", &Falcon::core::Table_columnPos ).asSymbol()->
       addParam("column");
    self->addClassMethod( table_class, "columnData", &Falcon::core::Table_columnData ).asSymbol()->
@@ -1913,6 +1915,8 @@ Module* core_module_init()
       addParam("row")->addParam("element");
    self->addClassMethod( table_class, "remove", &Falcon::core::Table_remove ).asSymbol()->
       addParam("row");
+   self->addClassMethod( table_class, "append", &Falcon::core::Table_append ).asSymbol()->
+      addParam("element");
    self->addClassMethod( table_class, "setColumn", &Falcon::core::Table_setColumn ).asSymbol()->
       addParam("column")->addParam("name")->addParam("coldata");
    self->addClassMethod( table_class, "insertColumn", &Falcon::core::Table_insertColumn ).asSymbol()->
