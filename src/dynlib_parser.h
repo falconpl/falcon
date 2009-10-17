@@ -152,7 +152,7 @@ public:
 
 private:
    Parameter* parseNextParam( Tokenizer& tok, bool isFuncName = false);
-   Parameter* parseFuncParams( ParamList& params, Tokenizer& tok );
+   void parseFuncParams( ParamList& params, Tokenizer& tok );
 
 };
 

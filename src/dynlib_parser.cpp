@@ -79,7 +79,7 @@ String Parameter::toString() const
       ret += "(";
       ret += m_name;
       ret += "*)(";
-      m_funcParams.toString();
+      ret += m_funcParams.toString();
       ret += ")";
    }
    else
@@ -399,6 +399,12 @@ class cFP_postsubscript: public FormingParam
 public:
    virtual Parameter* parseNext( const String &next, state& st );
 } FP_postsubscript;
+
+class cFP_paramcomplete: public FormingParam
+{
+public:
+   virtual Parameter* parseNext( const String &next, state& st );
+} FP_paramcomplete;
 
 class cFP_funcdecl: public FormingParam
 {
@@ -870,16 +876,8 @@ Parameter* cFP_subscript::parseNext( const String &next, state& st )
 
    if( next == "]" )
    {
-      if( st.m_forming )
-      {
-         Parameter* p = st.m_forming;
-         st.m_forming = 0;
-         p->m_subscript = -1;
-         return p;
-      }
-
-      // we're done...
-      return new Parameter( st.m_type, st.m_name, st.m_tag, st.m_nPointers, -1 );
+      st.m_nSubscripts = -1;
+      st.nextState = &FP_paramcomplete;
    }
    else if ( next.parseInt( subCount ) )
    {
@@ -893,6 +891,21 @@ Parameter* cFP_subscript::parseNext( const String &next, state& st )
 }
 
 Parameter* cFP_postsubscript::parseNext( const String &next, state& st )
+{
+   int64 subCount;
+
+   if( next == "]" )
+   {
+      st.nextState = &FP_paramcomplete;
+   }
+   else
+      tpe( __LINE__ );
+
+   return 0;
+}
+
+
+Parameter* cFP_paramcomplete::parseNext( const String &next, state& st )
 {
    if( next == ")" || next == "," )
    {
@@ -994,7 +1007,7 @@ FunctionDef2::~FunctionDef2()
 
 bool FunctionDef2::parse( const String& definition )
 {
-   Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],");
+   Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],*");
    tok.parse( definition );
    if ( ! tok.hasCurrent() )
    {
@@ -1025,7 +1038,7 @@ bool FunctionDef2::parse( const String& definition )
    // parse the main paramter list
    parseFuncParams( m_params, tok );
 
-   return false;
+   return true;
 }
 
 Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
@@ -1046,6 +1059,9 @@ Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
          if( tok.next() )
          {
             // this is to skip the initial "(".
+            if ( tok.getToken() != "(" || ! tok.next() )
+               tpe( __LINE__ );
+
             parseFuncParams( state.m_forming->m_funcParams, tok );
          }
       }
@@ -1065,17 +1081,30 @@ Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
 }
 
 
-Parameter* FunctionDef2::parseFuncParams( ParamList& params, Tokenizer& tok )
+void FunctionDef2::parseFuncParams( ParamList& params, Tokenizer& tok )
 {
    while( tok.hasCurrent() && tok.getToken() != ")" )
    {
       Parameter* p = parseNextParam(tok);
-      if( ! ( tok.hasCurrent() && (tok.getToken() == "," || tok.getToken() == ")" ) ) )
+      if( tok.hasCurrent() )
       {
-         throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
+         if (tok.getToken() == ","  )
+         {
+            params.add(p);
+            tok.next();
+            continue;
+         }
+
+         if( tok.getToken() == ")" )
+         {
+            // we're done
+            params.add(p);
+            return;
+         }
       }
-      params.add(p);
-      tok.next();
+
+      // we must be filtered before reaching here.
+      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
    }
 }
 
@@ -1088,7 +1117,11 @@ String FunctionDef2::toString() const
    }
 
    String ret = Parameter::typeToString( m_return->m_type );
+   for ( int i = 0; i < m_return->m_pointers; ++i )
+      ret += "*";
+
    ret += " " + m_name + "(" + m_params.toString() + ")";
+   return ret;
 }
 
 }
