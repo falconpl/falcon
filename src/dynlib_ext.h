@@ -50,11 +50,7 @@ FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm );
-
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm );
-FALCON_FUNC  DynFunction_isSafe( ::Falcon::VMachine *vm );
-FALCON_FUNC  DynFunction_parameters( ::Falcon::VMachine *vm );
-FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm );

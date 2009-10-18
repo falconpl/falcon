@@ -25,311 +25,128 @@
 #include <falcon/setup.h>
 #include <falcon/falcondata.h>
 #include <falcon/error.h>
+#include <falcon/autocstring.h>
+#include <falcon/autowstring.h>
 
+namespace Falcon
+{
 
-namespace Falcon {
-#define F_DYNLIB_MAX_PARAMS   32
+class Parameter;
+class Tokenizer;
 
-// we need some old-type define to be sure to have one-byte specificators.
-/** End of parameters */
-#define F_DYNLIB_PTYPE_END   0
-/** P */
-#define F_DYNLIB_PTYPE_PTR    1
-/** F */
-#define F_DYNLIB_PTYPE_FLOAT  2
-/** D */
-#define F_DYNLIB_PTYPE_DOUBLE 3
-/** I */
-#define F_DYNLIB_PTYPE_I32    4
-/** U */
-#define F_DYNLIB_PTYPE_U32    6
-/** L */
-#define F_DYNLIB_PTYPE_LI     7
-/** S */
-#define F_DYNLIB_PTYPE_SZ     8
-/** W */
-#define F_DYNLIB_PTYPE_WZ     9
-/** M */
-#define F_DYNLIB_PTYPE_MB     10
-/** Anything else */
-#define F_DYNLIB_PTYPE_OPAQUE 11
-/** ... */
-#define F_DYNLIB_PTYPE_VAR    12
-/** By pointer? */
-#define F_DYNLIB_PTYPE_BYPTR  0x80
-
-
-
-class ParamType: public BaseAlloc
+class ParamList
 {
 public:
-   typedef enum tag_t_type {
+   ParamList();
+   ParamList( const ParamList& other );
+   ~ParamList();
+
+   void add(Parameter* p);
+   bool isVaradic() const { return m_bVaradic; }
+
+   Parameter* first() const { return m_head; }
+   bool empty() const { return m_size == 0; }
+   int size() const { return m_size; }
+
+   String toString() const;
+
+private:
+   Parameter* m_head;
+   Parameter* m_tail;
+   int m_size;
+   bool m_bVaradic;
+
+};
+
+
+class Parameter
+{
+public:
+   typedef enum
+   {
       e_void,
       e_char,
-      e_uchar,
+      e_wchar_t,
+      e_unsigned_char,
+      e_signed_char,
       e_short,
-      e_ushort,
+      e_unsigned_short,
       e_int,
-      e_uint,
+      e_unsigned_int,
       e_long,
-      e_ulong,
-      e_llong,
-      e_ullong,
+      e_unsigned_long,
+      e_long_long,
+      e_unsigned_long_long,
       e_float,
       e_double,
-      e_ldouble,
-      e_structptr,
-      e_funcptr,
-      e_ptr
-   } t_type;
+      e_long_double,
+      e_struct,
+      e_union,
+      e_enum,
+      e_varpar
+   } e_integral_type;
 
-   typedef enum tag_t_mode {
-      _IN,
-      _OUT,
-      _INOUT
-   } t_mode;
+   Parameter( e_integral_type ct, bool bConst, const String& name, int pointers = 0, int subs = 0, bool isFunc = false );
 
-   t_type type() const { return m_type; }
-   t_mode mode() const { return m_mode; }
+   Parameter( e_integral_type ct, bool bConst, const String& name, const String& tag, int pointers = 0, int subs = 0, bool isFunc = false );
 
-   bool isConst() const { return m_bConst; }
-   bool isPtr() const { return m_bPtr; }
-   bool isVector() const { return m_bVector; }
+   Parameter( const Parameter& other );
 
-   const String& name() const { return m_name; }
+   ~Parameter();
 
-private:
-   t_type m_type;
-   t_mode m_mode;
+   /** Type of this parameter. */
+   e_integral_type m_type;
+
+   /** Name of the parameters.
+
+      We don't accept unnamed parameters for practical reasons.
+   */
+   String m_name;
+
+   /** Tag for tagged types. */
+   String m_tag;
 
    bool m_bConst;
-   bool m_bPtr;
-   bool m_bVector;
 
-   Falcon::String m_name;
+   /** Number of pointer indirections */
+   int m_pointers;
+
+   /** Array subscript count (-1 for [] ) */
+   int m_subscript;
+
+   /** True if this is a function pointer (returning this type)
+    * m_pointers will be zero unless this is a pointer to a function pointer.
+    * */
+   bool m_isFuncPtr;
+
+   /** If this is a function pointer, it may have one or more function parameters. */
+   ParamList m_funcParams;
+
+   Parameter* m_next;
+
+   /** returns the number o indirections (pointers/array subscripts) */
+   int indirections() const { return m_pointers + m_subscript != 0 ? 1:0; }
+
+   String toString() const;
+
+   static String typeToString( e_integral_type type );
 };
 
-
-class ParamValue: public BaseAlloc
-{
-public:
-   typedef union tag_u_content {
-      char v_char;
-      unsigned char v_uchar;
-      short v_short;
-      unsigned short v_ushort;
-      int v_int;
-      unsigned int v_uint;
-      long v_long;
-      unsigned long v_ulong;
-      int64 v_llong;
-      uint64 v_ullong;
-      float v_float;
-      double v_double;
-      long double v_ldouble;
-      void* v_ptr;
-   } u_content;
-
-   ParamValue():
-      m_ptype( ParamType::e_void )
-      {}
-
-   ParamValue( const ParamValue &other ):
-      m_ptype( other.m_ptype ),
-      m_content( other.m_content )
-   {}
-
-   ParamValue( char p_char ):
-      m_ptype( ParamType::e_char )
-   {
-      m_content.v_char = p_char;
-   }
-
-   ParamValue( unsigned char p_char ):
-      m_ptype( ParamType::e_uchar )
-   {
-      m_content.v_uchar = p_char;
-   }
-
-   ParamValue( short p_short ):
-      m_ptype( ParamType::e_short )
-   {
-      m_content.v_short = p_short;
-   }
-
-   ParamValue( unsigned short p_short ):
-      m_ptype( ParamType::e_ushort )
-   {
-      m_content.v_ushort = p_short;
-   }
-
-   ParamValue( int p_int ):
-      m_ptype( ParamType::e_int )
-   {
-      m_content.v_int = p_int;
-   }
-
-   ParamValue( unsigned int p_int ):
-      m_ptype( ParamType::e_uint )
-   {
-      m_content.v_uint = p_int;
-   }
-
-   ParamValue( long p_long ):
-     m_ptype( ParamType::e_long )
-   {
-     m_content.v_long = p_long;
-   }
-
-   ParamValue( unsigned long p_long ):
-     m_ptype( ParamType::e_ulong )
-   {
-     m_content.v_ulong = p_long;
-   }
-
-   ParamValue( int64 p_llong ):
-     m_ptype( ParamType::e_llong )
-   {
-     m_content.v_llong = p_llong;
-   }
-
-   ParamValue( uint64 p_ullong ):
-     m_ptype( ParamType::e_ullong )
-   {
-     m_content.v_ullong = p_ullong;
-   }
-
-   ParamValue( float p_float ):
-     m_ptype( ParamType::e_float )
-   {
-     m_content.v_float = p_float;
-   }
-
-   ParamValue( double p_double ):
-     m_ptype( ParamType::e_double )
-   {
-     m_content.v_double = p_double;
-   }
-
-   ParamValue( long double p_ld ):
-     m_ptype( ParamType::e_ldouble )
-   {
-     m_content.v_ldouble = p_ld;
-   }
-
-   ParamValue( void* v_ptr ):
-     m_ptype( ParamType::e_ptr )
-   {
-     m_content.v_ptr = v_ptr;
-   }
-
-   void content( char p_char )
-   {
-      m_ptype = ParamType::e_char;
-      m_content.v_char = p_char;
-   }
-
-   void content( unsigned char p_char )
-   {
-      m_ptype = ParamType::e_uchar;
-      m_content.v_uchar = p_char;
-   }
-
-   void content( short p_short )
-   {
-      m_ptype = ParamType::e_short;
-      m_content.v_short = p_short;
-   }
-
-   void content( unsigned short p_short )
-   {
-      m_ptype = ParamType::e_ushort;
-      m_content.v_ushort = p_short;
-   }
-
-   void content( int p_int )
-   {
-      m_ptype = ParamType::e_int;
-      m_content.v_int = p_int;
-   }
-
-   void content( unsigned int p_int )
-   {
-      m_ptype = ParamType::e_uint;
-      m_content.v_uint = p_int;
-   }
-
-   void content( long p_long )
-   {
-      m_ptype = ParamType::e_long;
-      m_content.v_long = p_long;
-   }
-
-   void content( unsigned long p_long )
-   {
-      m_ptype = ParamType::e_ulong;
-      m_content.v_ulong = p_long;
-   }
-
-   void content( int64 p_llong )
-   {
-      m_ptype = ParamType::e_llong;
-      m_content.v_llong = p_llong;
-   }
-
-   void content( uint64 p_ullong )
-   {
-      m_ptype = ParamType::e_ullong;
-      m_content.v_ullong = p_ullong;
-   }
-
-   void content( float p_float )
-   {
-      m_ptype = ParamType::e_float;
-      m_content.v_float = p_float;
-   }
-
-   void content( double p_double )
-   {
-      m_ptype = ParamType::e_double;
-      m_content.v_double = p_double;
-   }
-
-   void content( long double p_ld )
-   {
-      m_ptype = ParamType::e_ldouble;
-      m_content.v_ldouble = p_ld;
-   }
-
-   void content( void* v_ptr )
-   {
-      m_ptype = ParamType::e_ptr;
-      m_content.v_ptr = v_ptr;
-   }
-
-   u_content content() const { return m_content; }
-
-private:
-   ParamType::t_type m_ptype;
-   u_content m_content;
-};
 
 
 class FunctionDef: public FalconData
 {
-   String m_definition;
-   String m_name;
-   ParamType m_return;
-   ParamType *m_params;
-   uint32 m_paramCount;
 
 public:
 
-   FunctionDef();
+   FunctionDef():
+     m_return(0),
+     m_fAddress(0)
+     {}
 
-   FunctionDef( const String& definition ):
-      m_params(0),
-      m_paramCount(0)
+  FunctionDef( const String& definition ):
+     m_return(0),
+     m_fAddress(0)
    {
       parse( definition );
    }
@@ -337,81 +154,6 @@ public:
    FunctionDef( const FunctionDef& other );
    virtual ~FunctionDef();
 
-   bool isDeclared() const { return m_paramCount != 0xFFFFFFFF; }
-
-   /** Parses a string definition.
-    * Throws ParseError* on error.
-    */
-   void parse( const String& definition );
-
-   int paramCount() const { return m_paramCount; }
-   ParamType* params() const { return m_params; }
-   const ParamType& returnType() const { return m_return; }
-   const String& name() const { return m_name; }
-   const String& definition() const { return m_definition; }
-
-};
-
-class FunctionAddress: public FalconData
-{
-   String m_name;
-   byte *m_parsedParams;
-   byte m_parsedReturn;
-
-   /** Array of strings parallel to m_parsedParams where safety input types are stored. */
-   String *m_safetyParams;
-
-   uint32 m_parsedParamsCount;
-   uint32 m_safetyParamsCount;
-
-public:
-   /**
-      Function pointer
-   */
-   void *m_fAddress;
-
-   /**
-      The (original) parameter mask.
-   */
-   String m_paramMask;
-
-   /**
-      The return mask.
-   */
-   String m_returnMask;
-
-   /** Should we guess our params? */
-   bool m_bGuessParams;
-
-   FunctionAddress( const String &name, void *address = 0 ):
-      m_name( name ),
-      m_parsedParams(0),
-      m_parsedReturn( F_DYNLIB_PTYPE_END ),
-      m_safetyParams(0),
-      m_parsedParamsCount(0),
-      m_safetyParamsCount(0),
-      m_fAddress(address),
-      m_bGuessParams( true )
-   {}
-
-   /**
-      Copies an existing function pointer.
-      /TODO
-   */
-   FunctionAddress( const FunctionAddress &other ):
-      m_parsedParams(0),
-      m_parsedReturn( other.m_parsedReturn ),
-      m_safetyParams(0),
-      m_parsedParamsCount(0),
-      m_safetyParamsCount(0),
-      m_fAddress( other.m_fAddress ),
-      m_paramMask( other.m_paramMask ),
-      m_returnMask( other.m_returnMask ),
-      m_bGuessParams( other.m_bGuessParams )
-   {}
-
-   // nothing needed to be done.
-   virtual ~FunctionAddress();
 
    /** Overrides from falcon data.
       Actually, does nothing.
@@ -447,82 +189,231 @@ public:
    /** Return this symbol's name */
    const String &name() const { return m_name; }
 
-   /** Parse and eventually setup parameter masks.
+   /** Parses a string definition.
+    * Throws ParseError* on error.
+    */
+   bool parse( const String& definition );
 
-      The parameter mask is parsed scanning a string containing tokens
-      separated by whitespaces, ',' or ';' (they are the same).
+   /** Returns a representation of this function */
+   String toString() const;
 
-      Each parameter specificator is either a single character or a "pseudoclass" name,
-      which must be an arbitrary name long two characters more.
+   void setFunctionPtr( void* ptr ) { m_fAddress = ptr; }
+   void* functionPtr() const { return m_fAddress; }
 
-      The single character parameter specificator may be one of the following:
+   const ParamList& params() const { return m_params; }
+   ParamList& params() { return m_params; }
 
-      - P - application specific opaque pointer (stored in a Falcon integer item).
-      - F - 32 bit IEEE float format.
-      - D - 64 bit IEEE double format.
-      - I - 32 bit signed integer. This applies also to char and short int types, which
-            are always padded to 32 bit integers when passed as parameters or returned.
-      - U - 32 bit unsigned integer. This applies also to bytes and short unsigned int types, which
-            are always padded to 32 bit integers when passed as parameters or returned.
-      - L - 64 bit integers; as this is the maximum size allowed, sign is not relevant (the sign bit
-            is always placed correctly both in parameter passing and return values).
-      - S - UTF-8 encoded strings.
-      - W - Wide character strings (compatible with UTF-16 in local byte ordering).
-      - M - Memory buffers (MemBuf); this may also contain natively encoded strings.
+private:
 
-      The special "..." token indicates that the function accepts a set of unknown
-      parameters after that point, which will be treated as in unsafe mode.
+   Parameter* parseNextParam( Tokenizer& tok, bool isFuncName = false);
+   void parseFuncParams( ParamList& params, Tokenizer& tok );
 
-      A pseudoclass name serves as a type safety constarint for the loaded library. Return
-      values marked with pseudoclasses will generate a DynOpaque instance that will remember
-      the class name and wrap the transported item. A pseudoclass parameter will check for the
-      parameter passed by the Falcon script at the given position is of class DynOpaque and carrying
-      the required pseudoclass type.
-
-      Prepending a '$' sign in front of the parameter specificator will inform the parameter parsing
-      system to pass the item by pointer to the underlying library.
-      The Falcon script must pass the coresponding  parameter by reference, and after the underlying
-      function returns, a possibly set-up or modified value is taken and stored into the parameter.
-      Return specifiers cannot be prepended with '$'.
-
-      \note Ideographic language users can define pseudoclasses with a single ideographic char,
-      as a pseudoclass name is parsed if the count of characters in a substring is more than one,
-      or if the only character is > 256U.
-   */
-   bool parseParams( const String &params );
+   String m_definition;
+   String m_name;
+   Parameter* m_return;
+   ParamList m_params;
 
    /**
-      Parses the return value type specifier.
-
-      On success, also configures this object's internal data.
+      Function pointer
    */
-   bool parseReturn( const String &rval );
-
-   /** Parses a single parameter, finding its type.
-      \param mask A parameter list format.
-      \param type gets the output type.
-      \param begin First character in the mask to be parsed.
-      \param end last character in the mask to be parsed.
-      \return false if the parameter list is malformed, true (and type filled) on succesful parsing.
-   */
-   bool parseSingleParam( const String &mask, byte &type, uint32 begin=0, uint32 end=String::npos );
-
-   /**
-      Return the decoded nth param.
-   */
-   byte parsedParam( uint32 id ) const { return m_parsedParams[id]; }
-   uint32 parsedParamCount() const { return m_parsedParamsCount; }
-
-   /** Return the nth pseudoclass name being present in the parsed parameters.
-      If pid if out of range or the parameters are not parsed, the function will crash.
-   */
-   const String &pclassParam( uint32 pid ) const { return m_safetyParams[pid]; }
-   uint32 pclassCount() const { return m_safetyParamsCount; }
-
-   byte parsedReturn() const { return m_parsedReturn; }
+   void *m_fAddress;
 };
 
+class ParamValueList;
 
+/** Single parameter value.
+ *
+ * This class is meant to transform a Falcon item, or some
+ * user provided value, into a byte buffer that can be
+ * immediately stored in the stack, or in a register, and
+ * used in machine-level calls.
+ *
+ * This class behavior can be slightly architecture dependent;
+ * for example, the way to store float numbers and the size of
+ * void pointers change across architectures.
+ */
+class ParamValue: public BaseAlloc
+{
+public:
+   /** Creates a parameter value.
+    * If given a parameter type to which refer to,
+    * it will be used during transformations.
+    *
+    * Otherwise, the transformation from falcon Item will use
+    * default settings.
+    */
+   ParamValue( Parameter* type=0 );
+   ~ParamValue();
+
+   /** Transform a falcon Item value.
+    *
+    * It uses the type information to determine if the transformation
+    * is possible, and how to perform it at bit-wise level.
+    *
+    * If the transformation is impossible either because of incompatible
+    * types or because of unsupported translations, returns false.
+    */
+   bool transform( const Item& item );
+
+   /** Prepares to store a void* */
+   void transform( void* value )  {
+      m_buffer.vptr = value;
+      m_size = sizeof( void* );
+   }
+
+   /** Prepares to store a long long */
+   void transform( int64 value ) {
+      m_buffer.vint64 = value;
+      m_size = sizeof( int64 );
+   }
+
+   /** Prepares to store an int long */
+   void transform( int value ) {
+      m_buffer.vint = value;
+      m_size = sizeof( int );
+   }
+
+   /** Prepares to store an int long */
+   void transform( unsigned int value ) {
+      m_buffer.vint = (int) value;
+      m_size = sizeof( int );
+   }
+
+   void transform( long value ) {
+      m_buffer.vlong = value;
+      m_size = sizeof( int );
+   }
+
+   void transform( unsigned long value ) {
+      m_buffer.vlong = (long) value;
+      m_size = sizeof( int );
+   }
+
+
+   /** Prepares to store a char */
+   void transform( char value ) {
+      m_buffer.vint = (int) value;
+      m_size = sizeof( int );
+   }
+
+   /** Prepares to store a char */
+   void transform( unsigned char value ) {
+      m_buffer.vint = (unsigned int) value;
+      m_size = sizeof( int );
+   }
+
+   /** Prepares to store a float */
+   void transform( float value ) {
+      m_buffer.vfloat = value;
+      m_size = 0x80 | sizeof( float );
+   }
+
+   /** Prepares to store a double */
+   void transform( double value ) {
+      m_buffer.vdouble = value;
+      m_size = 0x80 | sizeof( double );
+   }
+
+   /** Prepares to store a long double */
+   void transform( long double value ) {
+      m_buffer.vld = value;
+      m_size = 0x80 | sizeof( long double );
+   }
+
+   /** Prepare to store an UTF-8 CString representation */
+   void makeCString( const String& value );
+
+   /** Prepare to store a wchar_t* representation */
+   void makeWString( const String& value );
+
+   const byte* buffer() const { return m_buffer.vbuffer; }
+   int32 size() const { return m_size; }
+
+   Parameter* parameter() const { return m_param; }
+
+private:
+   friend class ParamValueList;
+
+   // parameter to which we refer to.
+   Parameter* m_param;
+
+   /** buffer where to store the transformed value. */
+   union tag_m_buffer
+   {
+      byte vbuffer[16];
+      void* vptr;
+      int   vint;
+      long  vlong;
+      int64 vint64;
+      float vfloat;
+      double vdouble;
+      long double vld;
+   } m_buffer;
+
+   /* Size in bytes of the transformed value */
+   uint32 m_size;
+
+   /** places where to store the transformed strings */
+   AutoCString* m_cstring;
+
+   /** places where to store the transformed strings */
+   AutoWString* m_wstring;
+
+   /** next parameter value in a chain. */
+   ParamValue* m_next;
+
+   bool transformWithParam( const Item& item );
+   bool transformFree( const Item& item );
+};
+
+/** List of Parameter Values.
+ *
+ * The list is compiled with parameters as they are loaded in the dynlib call.
+ * Once complete, the parameter list creates a pair of parallel arrays
+ * that are used by the system-specific machine level call generator.
+ *
+ * The two arrays store:
+ * - Address of parameter N
+ * - Size in bytes(4-8-16) and "type" (integer/float) of parameter N
+ *
+ * So, the first array is an array of void* pointing to the parameter location,
+ * and the second array is a sequence of integer values that can be used to
+ * determine how much space to push, or what parameter to take.
+ *
+ * About the parameter type, float parameters are separately stored in
+ * stack or in registers under some platforms, so their different nature
+ * must be known.
+ *
+ * Float parameters have the 0x80 bit set.
+ *
+ */
+
+class ParamValueList: public BaseAlloc
+{
+public:
+   ParamValueList();
+   ~ParamValueList();
+
+   /** Adds another parameter value. */
+   void add( ParamValue* v );
+
+   /** Creates the list of pointers to the parameters. */
+   void compile();
+
+   void** params() const { return m_compiledParams; }
+   int* sizes() const { return m_compiledSizes; }
+   uint32 count() const { return m_size; }
+
+private:
+
+   ParamValue* m_head;
+   ParamValue* m_tail;
+
+   uint32 m_size;
+   void** m_compiledParams;
+   int* m_compiledSizes;
+
+};
 
 /**
  * Error for all DynLib errors.

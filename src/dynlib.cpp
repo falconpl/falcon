@@ -40,26 +40,26 @@
    - Allow third party libraries to be directly used without the need
      for an extra development cycle to create a Falcon binding. In example,
      a software developer may write a DLL that binds with its applications
-     in order to deal with some propertary components (i.e. external
+     in order to deal with some proprietary components (i.e. external
      devices), and just use that very same DLL from Falcon without the
      need to write a binding.
 
-   The load and configure operations are nearly costless with respect to
+   The load and configure operations are nearly free with respect to
    load and VM-link a full Falcon binding, and calling a dynamic function
    requires approximately the same time needed to call an external function
    bound in a module.
 
-   The cost of chosing to use DynLib instead of an official Falcon module
+   The cost of choosing to use DynLib instead of an official Falcon module
    lays mainly in three factors:
 
    - Safety: loading foreign functions without C call specification and
      calling them directly may lead to disastrous results in case of
      errors in the parameter call sequence. The best thing that can happen
-     is usually an application crash, the wrost thing is probably
+     is usually an application crash, the worst thing is probably
      data corruption on your storages.
    - Elegance: Usually, a Falcon binding does many things for their users. It
      often provides services that the original library didn't provide, and
-     encapsualtes (or maps) the logical entities exposed by the bound library
+     Encapsulates (or maps) the logical entities exposed by the bound library
      into appropriate Falcon entities. In example, many C structures handled
      by precise sets of functions are often turned into full Falcon classes;
      different functions are merged into one single Falcon
@@ -127,7 +127,7 @@
    As we're just interested in calling the loaded functions, we get the call method from
    the DynFunction instances returned by @b get. GtkInit is called with stubs, so that it
    doesn't try to parse argv. gtkDialogNewWithButtons looks very alike a C call, with
-   0 terminating the list of paramters. The @w entity is then direcly recorded from the
+   0 terminating the list of parameters. The @w entity is then direcly recorded from the
    dialog init routine return, and passed directly to @b gtkDialogRun. Finally,
    @b gtkWidgetDestroy is called to get rid of w; we didn't instruct our garbage collector
    on how to handle that, so we have to take care of it by ourselves.
@@ -138,14 +138,14 @@
    @section Safe Mode
 
    The @b pmask parameter of @a DynLib.get is parsed scanning a string containing tokens
-   separated by whitespaces, ',' or ';' (they are the same). When a parameter mask
-   is specified, a ParamError is raised if the coresponding @b DynFunction.call doesn't
+   separated by whitespace, ',' or ';' (they are the same). When a parameter mask
+   is specified, a ParamError is raised if the corresponding @b DynFunction.call doesn't
    respect the call convention in number or type of passed parameters.
 
-   Each parameter specificator is either a single character or a "pseudoclass" name,
+   Each parameter specifier is either a single character or a "pseudoclass" name,
    which must be an arbitrary name long two characters more.
 
-   The single character parameter specificator may be one of the following:
+   The single character parameter specifier may be one of the following:
 
    - P - application specific opaque pointer (stored in a Falcon integer item).
    - F - 32 bit IEEE float format.
@@ -323,9 +323,6 @@ FALCON_MODULE_DECL
    Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::Dyn_dummy_init ); // actually, raises
    dynfunc_cls->setWKS( true );
    self->addClassMethod( dynfunc_cls, "call", Falcon::Ext::DynFunction_call );
-   self->addClassMethod( dynfunc_cls, "isSafe", Falcon::Ext::DynFunction_isSafe );
-   self->addClassMethod( dynfunc_cls, "parameters", Falcon::Ext::DynFunction_parameters );
-   self->addClassMethod( dynfunc_cls, "retval", Falcon::Ext::DynFunction_retval );
    self->addClassMethod( dynfunc_cls, "toString", Falcon::Ext::DynFunction_toString );
 
    //============================================================

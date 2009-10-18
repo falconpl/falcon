@@ -33,7 +33,7 @@ namespace Sys {
    bool dynlib_get_error( int32 &ecode, String &sError );
 
    void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth );
-   void* dynlib_voidp_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   void* dynlib_voidp_call( void *faddress, void** stack_image, int* sizes );
    int32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth );
    int64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth );
    double dynlib_double_call( void *faddress, byte *stack_image, uint32 stack_depth );

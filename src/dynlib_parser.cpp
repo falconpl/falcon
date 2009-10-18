@@ -19,189 +19,23 @@
 #include <falcon/fassert.h>
 #include <falcon/tokenizer.h>
 #include <falcon/error.h>
+#include <falcon/vm.h>
 
-#include "dynlib_parser.h"
+#include "dynlib_mod.h"
+#include "dynlib_ext.h"
+#include "dynlib_st.h"
 
 namespace Falcon
 {
-
-
-Parameter::Parameter( Parameter::e_integral_type ct, const String& name, int pointers, int subs, bool isFunc ):
-   m_type(ct),
-   m_name( name ),
-   m_pointers(pointers),
-   m_subscript(subs),
-   m_isFuncPtr(isFunc)
-{}
-
-
-Parameter::Parameter( Parameter::e_integral_type ct, const String& name, const String &tag, int pointers, int subs, bool isFunc ):
-   m_type(ct),
-   m_name( name ),
-   m_tag(tag),
-   m_pointers(pointers),
-   m_subscript(subs),
-   m_isFuncPtr(isFunc)
-{
-}
-
-
-Parameter::Parameter( const Parameter& other ):
-   m_type( other.m_type ),
-   m_name( other.m_name ),
-   m_tag(other.m_tag),
-   m_pointers(other.m_pointers),
-   m_subscript(other.m_subscript),
-   m_isFuncPtr(other.m_isFuncPtr),
-   m_funcParams(other.m_funcParams)
-{
-}
-
-Parameter::~Parameter()
-{}
-
-
-String Parameter::toString() const
-{
-   String ret = typeToString( m_type );
-
-   if( m_type == e_struct || m_type == e_union || m_type == e_enum )
-   {
-      ret += " ";
-      ret += m_tag;
-   }
-
-   for( int i = 0; i < m_pointers; ++i )
-      ret += "*";
-
-   if( m_isFuncPtr )
-   {
-      ret += "(";
-      ret += m_name;
-      ret += "*)(";
-      ret += m_funcParams.toString();
-      ret += ")";
-   }
-   else
-   {
-      ret += " ";
-      ret += m_name;
-   }
-
-   if( m_subscript == -1 )
-   {
-      ret += "[]";
-   }
-   else if ( m_subscript > 0 )
-   {
-      ret += "[";
-      ret.N( m_subscript );
-      ret += "]";
-   }
-
-   return ret;
-}
-
-
-String Parameter::typeToString( Parameter::e_integral_type type )
-{
-   switch( type )
-   {
-   case e_void: return "void"; break;
-   case e_char: return "char"; break;
-   case e_unsigned_char: return "unsigned char"; break;
-   case e_signed_char: return "signed char"; break;
-   case e_short: return "short"; break;
-   case e_unsigned_short: return "unsigned short"; break;
-   case e_int: return "int"; break;
-   case e_unsigned_int: return "unsigned int"; break;
-   case e_long: return "long"; break;
-   case e_unsigned_long: return "unsigned long"; break;
-   case e_long_long: return "long long"; break;
-   case e_unsigned_long_long: return "unsigned long long"; break;
-   case e_float: return "float"; break;
-   case e_double: return "double"; break;
-   case e_long_double: return "long double"; break;
-   case e_struct: return "struct"; break;
-   case e_union: return "union"; break;
-   case e_enum: return "enum"; break;
-   case e_varpar: return "..."; break;
-   }
-}
-
-//=======================================================
-//
-
-ParamList::ParamList():
-   m_head(0),
-   m_tail(0),
-   m_size(0)
-   {}
-
-ParamList::ParamList( const ParamList& other ):
-   m_head(0),
-   m_tail(0),
-   m_size(0)
-{
-   Parameter* p = other.m_head;
-   while (p != 0 )
-   {
-      add( new Parameter(*p) );
-      p = p->m_next;
-   }
-}
-
-ParamList::~ParamList()
-{
-   Parameter* p = m_head;
-   while ( p != 0 )
-   {
-      Parameter* old = p;
-      p = p->m_next;
-      delete old;
-   }
-}
-
-void ParamList::add(Parameter* p)
-{
-   if ( m_head == 0 )
-   {
-      m_head = m_tail = p;
-   }
-   else
-   {
-      m_tail->m_next = p;
-      m_tail = p;
-   }
-   m_size++;
-   p->m_next = 0; // just to be on the bright side.
-}
-
-
-String ParamList::toString() const
-{
-   String ret;
-
-   Parameter* child = first();
-   while( child != 0 )
-   {
-      ret += child->toString();
-      child = child->m_next;
-      if ( child != 0 )
-         ret += ", ";
-   }
-
-   return ret;
-}
-
 //===================================================
 // Forming parameter
+// Inner private class that's not visible outside.
 //===================================================
 
 class FormingParam: public BaseAlloc
 {
 public:
-   
+
    class state
    {
    public:
@@ -210,13 +44,17 @@ public:
       Parameter::e_integral_type m_type;
       String m_tag;
       String m_name;
+      bool m_bConst;
+      bool m_bFunc;
       FormingParam* nextState;
       Parameter* m_forming;
-      
+
       state():
          m_nPointers(0),
          m_nSubscripts(0),
          m_type( Parameter::e_void ),
+         m_bConst(false),
+         m_bFunc(false),
          nextState( 0 ),
          m_forming(0)
       {}
@@ -226,20 +64,84 @@ public:
          // this ensures we don't have leaks at throws.
          delete m_forming;
       }
+
+      Parameter* makeParameter()
+      {
+         return new Parameter( m_type, m_bConst, m_name, m_tag, m_nPointers, m_nSubscripts, m_bFunc );
+      }
    };
 
    FormingParam()
    {}
-   
+
    virtual Parameter* parseNext( const String &next, state& st ) = 0;
 
 };
+
+//===================================================
+// Inline utilities for this module.
+//===================================================
+
+inline void tpe( int l )
+{
+   throw new ParseError(
+         ErrorParam( FALCON_DYNLIB_ERROR_BASE, l )
+         .desc( *VMachine::getCurrent()->currentModule()->getString(
+               dyl_invalid_syn ) )
+         );
+}
+
+inline bool isKeyword( const String& next )
+{
+   return
+      next == "const" ||
+      next == "void" ||
+      next == "signed" ||
+      next == "unsigned" ||
+      next == "char" ||
+      next == "wchar_t" ||
+      next == "short" ||
+      next == "int" ||
+      next == "long" ||
+      next == "float" ||
+      next == "double" ||
+      next == "struct" ||
+      next == "union" ||
+      next == "enum" ||
+
+      next == "WORD" ||
+      next == "DWORD" ||
+      next == "HANDLE" ||
+      next == "__int64" ||
+
+      next == "...";
+}
+
+inline bool isPuntaction( const String& next )
+{
+   return
+      next == "." ||
+      next == "," ||
+      next == "(" ||
+      next == ")" ||
+      next == "*";
+}
+
+inline bool isKwordOrPunc( const String& next )
+{
+   return isKeyword( next ) || isPuntaction( next );
+}
+
+//===================================================
+// Forming parameter declarations
+//===================================================
 
 class cFP_start: public FormingParam
 {
 public:
    virtual Parameter* parseNext( const String &next, state& st );
 } FP_start;
+
 
 class cFP_unsigned: public FormingParam
 {
@@ -258,6 +160,12 @@ class cFP_char: public FormingParam
 public:
    virtual Parameter* parseNext( const String &next, state& st );
 } FP_char;
+
+class cFP_wchar_t: public FormingParam
+{
+public:
+   virtual Parameter* parseNext( const String &next, state& st );
+} FP_wchar_t;
 
 class cFP_unsigned_char: public FormingParam
 {
@@ -424,50 +332,6 @@ public:
    virtual Parameter* parseNext( const String &next, state& st );
 } FP_funcdecl_2;
 
-inline void tpe( int l )
-{
-   throw new ParseError( ErrorParam( e_syntax, l ) );
-}
-
-inline bool isKeyword( const String& next )
-{
-   return
-      next == "void" ||
-      next == "signed" ||
-      next == "unsigned" ||
-      next == "char" ||
-      next == "short" ||
-      next == "int" ||
-      next == "long" ||
-      next == "float" ||
-      next == "double" ||
-      next == "struct" ||
-      next == "union" ||
-      next == "enum" ||
-
-      next == "WORD" ||
-      next == "DWORD" ||
-      next == "HANDLE" ||
-      next == "__int64" ||
-
-      next == "...";
-}
-
-inline bool isPuntaction( const String& next )
-{
-   return
-      next == "." ||
-      next == "," ||
-      next == "(" ||
-      next == ")" ||
-      next == "*";
-}
-
-inline bool isKwordOrPunc( const String& next )
-{
-   return isKeyword( next ) || isPuntaction( next );
-}
-
 
 inline void parseTerminal( const String& next, FormingParam::state& st )
 {
@@ -490,10 +354,22 @@ inline void parseTerminal( const String& next, FormingParam::state& st )
    }
 }
 
+//==================================================
+// Forming parameter implementations
+//==================================================
+
 
 Parameter* cFP_start::parseNext( const String &next, FormingParam::state& st )
 {
-   if ( next == "signed" )
+   if ( next == "const" )
+   {
+      if( st.m_bConst )
+         tpe( __LINE__ );
+
+      st.m_bConst = true;
+
+   }
+   else if ( next == "signed" )
    {
       st.nextState = &FP_signed;
    }
@@ -508,6 +384,10 @@ Parameter* cFP_start::parseNext( const String &next, FormingParam::state& st )
    else if ( next == "char" )
    {
       st.nextState = &FP_char;
+   }
+   else if ( next == "wchar_t" )
+   {
+      st.nextState = &FP_wchar_t;
    }
    else if ( next == "short" )
    {
@@ -588,6 +468,7 @@ Parameter* cFP_unsigned::parseNext( const String &next, FormingParam::state& st 
    return 0;
 }
 
+
 Parameter* cFP_signed::parseNext( const String &next, FormingParam::state& st )
 {
    // tentative default type
@@ -609,10 +490,20 @@ Parameter* cFP_signed::parseNext( const String &next, FormingParam::state& st )
    return 0;
 }
 
+
 Parameter* cFP_char::parseNext( const String &next, FormingParam::state& st )
 {
    // tentative default type
    st.m_type = Parameter::e_char;
+   parseTerminal( next, st );
+
+   return 0;
+}
+
+Parameter* cFP_wchar_t::parseNext( const String &next, FormingParam::state& st )
+{
+   // tentative default type
+   st.m_type = Parameter::e_wchar_t;
    parseTerminal( next, st );
 
    return 0;
@@ -858,7 +749,7 @@ Parameter* cFP_postname::parseNext( const String &next, state& st )
       }
 
       // we're done...
-      return new Parameter( st.m_type, st.m_name, st.m_tag, st.m_nPointers );
+      return st.makeParameter();
    }
    else if ( next == "[" )
    {
@@ -918,7 +809,7 @@ Parameter* cFP_paramcomplete::parseNext( const String &next, state& st )
       }
 
       // we're done...
-      return new Parameter( st.m_type, st.m_name, st.m_tag, st.m_nPointers, st.m_nSubscripts );
+      return st.makeParameter();
    }
    else
       tpe( __LINE__ );
@@ -930,8 +821,14 @@ Parameter* cFP_varpar::parseNext( const String &next, state& st )
 {
    if( next == ")" || next == "," )
    {
+      // the only thing that can't be const
+      if( st.m_bConst )
+      {
+         tpe( __LINE__ );
+      }
+
       // we're done... and can't be forming
-      return new Parameter( st.m_type, st.m_name, st.m_tag );
+      return new Parameter( Parameter::e_varpar, false, "" );
    }
    else
       tpe( __LINE__ );
@@ -974,9 +871,11 @@ Parameter* cFP_funcdecl_2::parseNext( const String &next, state& st )
       tpe( __LINE__ );
    else
    {
+      st.m_bFunc = true;
       // seeing the "forming parameter" non-empty, the upper parser will
       // start a sub-parameter list loop.
-      st.m_forming = new Parameter( st.m_type, st.m_name, st.m_tag, st.m_nPointers, 0, true );
+      st.m_forming = st.makeParameter();
+
       // prepare as we should be called after the sub-loop, that is, as post name.
       st.nextState = &FP_postname;
    }
@@ -984,64 +883,11 @@ Parameter* cFP_funcdecl_2::parseNext( const String &next, state& st )
    return 0;
 }
 
+//=================================================
+// Part of the FunctionDef using the private parser
+//
 
-//===================================================
-// Function Definition
-//===================================================
-
-FunctionDef2::FunctionDef2( const FunctionDef2& other ):
-   m_definition( other.m_definition ),
-   m_name( other.m_name ),
-   m_params( other.m_params )
-{
-   if ( other.m_return != 0 )
-      m_return = new Parameter( *other.m_return );
-   else
-      m_return = 0;
-}
-
-FunctionDef2::~FunctionDef2()
-{
-   delete m_return;
-}
-
-bool FunctionDef2::parse( const String& definition )
-{
-   Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],*");
-   tok.parse( definition );
-   if ( ! tok.hasCurrent() )
-   {
-      return false;
-   }
-
-   // parse the outer return type; as "(" is found, we get a formingParam in state,
-   // and we know we can start the parameter loop
-   m_return = parseNextParam( tok, true );
-
-   if ( tok.getToken() != "(" )
-   {
-      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
-   }
-
-   // if we didn't throw, it means we have a return value.
-   // the return will have our name.
-   m_name = m_return->m_name;
-
-   // now we can process the comma separated parameters.
-   tok.next();
-   if( tok.getToken() == ")" )
-   {
-      // we're done.
-      return true;
-   }
-
-   // parse the main paramter list
-   parseFuncParams( m_params, tok );
-
-   return true;
-}
-
-Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
+Parameter* FunctionDef::parseNextParam( Tokenizer& tok, bool isFuncName )
 {
    FormingParam::state state;
    Parameter *ret = 0;
@@ -1073,54 +919,10 @@ Parameter* FunctionDef2::parseNextParam( Tokenizer& tok, bool isFuncName )
       tok.next();
       if( isFuncName && tok.getToken() == "(" )
       {
-         return new Parameter( state.m_type, state.m_name, state.m_tag, state.m_nPointers );
+         return state.makeParameter();
       }
    }
 
-   return ret;
-}
-
-
-void FunctionDef2::parseFuncParams( ParamList& params, Tokenizer& tok )
-{
-   while( tok.hasCurrent() && tok.getToken() != ")" )
-   {
-      Parameter* p = parseNextParam(tok);
-      if( tok.hasCurrent() )
-      {
-         if (tok.getToken() == ","  )
-         {
-            params.add(p);
-            tok.next();
-            continue;
-         }
-
-         if( tok.getToken() == ")" )
-         {
-            // we're done
-            params.add(p);
-            return;
-         }
-      }
-
-      // we must be filtered before reaching here.
-      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
-   }
-}
-
-
-String FunctionDef2::toString() const
-{
-   if ( m_return == 0 )
-   {
-      return m_name;
-   }
-
-   String ret = Parameter::typeToString( m_return->m_type );
-   for ( int i = 0; i < m_return->m_pointers; ++i )
-      ret += "*";
-
-   ret += " " + m_name + "(" + m_params.toString() + ")";
    return ret;
 }
 

@@ -9,7 +9,7 @@
    Begin: Mon, 28 Oct 2008 22:23:29 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2008: The Falcon Comittee
+   (C) Copyright 2008: The Falcon Committee
 
    See the LICENSE file distributed with this package for licensing details.
 */
@@ -19,333 +19,671 @@
    Internal logic functions - implementation.
 */
 
+#include <falcon/fassert.h>
+#include <falcon/tokenizer.h>
+#include <falcon/error.h>
+#include <falcon/membuf.h>
+
 #include "dynlib_mod.h"
 
 namespace Falcon {
 
-FunctionAddress::~FunctionAddress()
+
+
+Parameter::Parameter( Parameter::e_integral_type ct, bool bConst, const String& name, int pointers, int subs, bool isFunc ):
+   m_type(ct),
+   m_name( name ),
+   m_bConst( bConst ),
+   m_pointers(pointers),
+   m_subscript(subs),
+   m_isFuncPtr(isFunc)
+{}
+
+
+Parameter::Parameter( Parameter::e_integral_type ct, bool bConst, const String& name, const String &tag, int pointers, int subs, bool isFunc ):
+   m_type(ct),
+   m_name( name ),
+   m_tag(tag),
+   m_bConst( bConst ),
+   m_pointers(pointers),
+   m_subscript(subs),
+   m_isFuncPtr(isFunc)
 {
-   delete[] m_parsedParams;
-   delete[] m_safetyParams;
 }
 
-void FunctionAddress::gcMark( uint32 )
+
+Parameter::Parameter( const Parameter& other ):
+   m_type( other.m_type ),
+   m_name( other.m_name ),
+   m_tag(other.m_tag),
+   m_bConst( other.m_bConst),
+   m_pointers(other.m_pointers),
+   m_subscript(other.m_subscript),
+   m_isFuncPtr(other.m_isFuncPtr),
+   m_funcParams(other.m_funcParams)
+{
+}
+
+Parameter::~Parameter()
+{}
+
+
+String Parameter::toString() const
+{
+   String ret;
+   if( m_bConst )
+      ret = "const ";
+
+   ret += typeToString( m_type );
+
+   if( m_type == e_struct || m_type == e_union || m_type == e_enum )
+   {
+      ret += " ";
+      ret += m_tag;
+   }
+
+   for( int i = 0; i < m_pointers; ++i )
+      ret += "*";
+
+   if( m_isFuncPtr )
+   {
+      ret += "(";
+      ret += m_name;
+      ret += "*)(";
+      ret += m_funcParams.toString();
+      ret += ")";
+   }
+   else
+   {
+      ret += " ";
+      ret += m_name;
+   }
+
+   if( m_subscript == -1 )
+   {
+      ret += "[]";
+   }
+   else if ( m_subscript > 0 )
+   {
+      ret += "[";
+      ret.N( m_subscript );
+      ret += "]";
+   }
+
+   return ret;
+}
+
+
+String Parameter::typeToString( Parameter::e_integral_type type )
+{
+   String ret;
+
+   switch( type )
+   {
+   case e_void: ret += "void"; break;
+   case e_char: ret += "char"; break;
+   case e_wchar_t: ret += "wchar_t"; break;
+   case e_unsigned_char: ret += "unsigned char"; break;
+   case e_signed_char: ret += "signed char"; break;
+   case e_short: ret += "short"; break;
+   case e_unsigned_short: ret += "unsigned short"; break;
+   case e_int: ret += "int"; break;
+   case e_unsigned_int: ret += "unsigned int"; break;
+   case e_long: ret += "long"; break;
+   case e_unsigned_long: ret += "unsigned long"; break;
+   case e_long_long: ret += "long long"; break;
+   case e_unsigned_long_long: ret += "unsigned long long"; break;
+   case e_float: ret += "float"; break;
+   case e_double: ret += "double"; break;
+   case e_long_double: ret += "long double"; break;
+   case e_struct: ret += "struct"; break;
+   case e_union: ret += "union"; break;
+   case e_enum: ret += "enum"; break;
+   case e_varpar: ret += "..."; break;
+   }
+
+   return ret;
+}
+
+//=======================================================
+//
+
+ParamList::ParamList():
+   m_head(0),
+   m_tail(0),
+   m_size(0),
+   m_bVaradic(false)
+   {}
+
+ParamList::ParamList( const ParamList& other ):
+   m_head(0),
+   m_tail(0),
+   m_size(0),
+   m_bVaradic(false)
+{
+   Parameter* p = other.m_head;
+   while (p != 0 )
+   {
+      add( new Parameter(*p) );
+      p = p->m_next;
+   }
+}
+
+ParamList::~ParamList()
+{
+   Parameter* p = m_head;
+   while ( p != 0 )
+   {
+      Parameter* old = p;
+      p = p->m_next;
+      delete old;
+   }
+}
+
+void ParamList::add(Parameter* p)
+{
+   if ( m_head == 0 )
+   {
+      m_head = m_tail = p;
+   }
+   else
+   {
+      m_tail->m_next = p;
+      m_tail = p;
+   }
+   m_size++;
+   p->m_next = 0; // just to be on the bright side.
+
+   if ( p->m_type == Parameter::e_varpar )
+   {
+      m_bVaradic = true;
+   }
+}
+
+
+String ParamList::toString() const
+{
+   String ret;
+
+   Parameter* child = first();
+   while( child != 0 )
+   {
+      ret += child->toString();
+      child = child->m_next;
+      if ( child != 0 )
+         ret += ", ";
+   }
+
+   return ret;
+}
+
+//===================================================
+// Function Definition
+//===================================================
+
+FunctionDef::FunctionDef( const FunctionDef& other ):
+   m_definition( other.m_definition ),
+   m_name( other.m_name ),
+   m_params( other.m_params ),
+   m_fAddress( other.m_fAddress )
+{
+   if ( other.m_return != 0 )
+      m_return = new Parameter( *other.m_return );
+   else
+      m_return = 0;
+}
+
+FunctionDef::~FunctionDef()
+{
+   delete m_return;
+}
+
+
+bool FunctionDef::parse( const String& definition )
+{
+   Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],*");
+   tok.parse( definition );
+   if ( ! tok.hasCurrent() )
+   {
+      return false;
+   }
+
+   // parse the outer return type; as "(" is found, we get a formingParam in state,
+   // and we know we can start the parameter loop
+   m_return = parseNextParam( tok, true );
+
+   if ( tok.getToken() != "(" )
+   {
+      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
+   }
+
+   // if we didn't throw, it means we have a return value.
+   // the return will have our name.
+   m_name = m_return->m_name;
+
+   // now we can process the comma separated parameters.
+   tok.next();
+   if( tok.getToken() == ")" )
+   {
+      // we're done.
+      return true;
+   }
+
+   // parse the main paramter list
+   parseFuncParams( m_params, tok );
+
+   return true;
+}
+
+void FunctionDef::parseFuncParams( ParamList& params, Tokenizer& tok )
+{
+   while( tok.hasCurrent() && tok.getToken() != ")" )
+   {
+      Parameter* p = parseNextParam(tok);
+      if( tok.hasCurrent() )
+      {
+         if (tok.getToken() == ","  )
+         {
+            params.add(p);
+            tok.next();
+            continue;
+         }
+
+         if( tok.getToken() == ")" )
+         {
+            // we're done
+            params.add(p);
+            return;
+         }
+      }
+
+      // we must be filtered before reaching here.
+      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
+   }
+}
+
+
+String FunctionDef::toString() const
+{
+   if ( m_return == 0 )
+   {
+      return m_name;
+   }
+
+   String ret = Parameter::typeToString( m_return->m_type );
+   for ( int i = 0; i < m_return->m_pointers; ++i )
+      ret += "*";
+
+   ret += " " + m_name + "(" + m_params.toString() + ")";
+   return ret;
+}
+
+
+void FunctionDef::gcMark( uint32 )
 {
    // nothing to mark
 }
 
-FalconData *FunctionAddress::clone() const
+FalconData *FunctionDef::clone() const
 {
-   return new FunctionAddress( *this );
+   return new FunctionDef( *this );
 }
 
-bool FunctionAddress::parseParams( const String &mask )
+//===================================================
+// ParamValues
+//
+
+ParamValue::ParamValue( Parameter* type ):
+   m_param( type ),
+   m_size(0),
+   m_cstring(0),
+   m_wstring(0),
+   m_next(0)
 {
-   m_bGuessParams = false; // we know we have some paramters to parse.
+}
 
-   // delete in case we had some.
-   delete[] m_parsedParams;
-   delete[] m_safetyParams;
 
-   // allocate a sensible amount of data.
-   uint32 plen = mask.length();
+ParamValue::~ParamValue()
+{
+   delete m_cstring;
+   delete m_wstring;
+}
 
-   if ( plen == 0 )
+
+bool ParamValue::transform( const Item& item )
+{
+   // if we have a base parameter, it regulates the item
+   // transformation.
+   if( m_param != 0 )
    {
-      // it's just a declaration of "no parameters"
-      m_parsedParams = new byte[1];
-      m_parsedParams[0] = F_DYNLIB_PTYPE_END;
-      m_parsedParamsCount = 0;
-      m_safetyParams = 0;
-      return true;
+      return transformWithParam( item );
    }
-
-   if( plen < F_DYNLIB_MAX_PARAMS )
+   else
    {
-      // we're pretty sure that the size can't be larger; it's useless to allocate more.
-      m_parsedParams = new byte[plen+1];
+      return transformFree( item );
    }
-   else {
-      m_parsedParams = new byte[F_DYNLIB_MAX_PARAMS+1];
-   }
+}
 
-   // we need some pairs for later creation of safety params.
-   uint32 safeStarts[F_DYNLIB_MAX_PARAMS];
-   uint32 safeEnds[F_DYNLIB_MAX_PARAMS];
-   uint32 safeCount = 0;
 
-   // ok, we can proceed in parsing.
-   uint32 pos = 0;
-   uint32 spos = 0;
-   uint32 parsedTokens = 0;
-   bool empty = true;
-
-   while( pos <= plen && parsedTokens < F_DYNLIB_MAX_PARAMS )
+bool ParamValue::transformWithParam( const Item& item )
+{
+   switch( m_param->m_type )
    {
-      // find the element between whitespaces
-      uint32 chr;
-      if ( pos < plen )
-         chr = mask.getCharAt( pos );
+   case Parameter::e_void:
+      if( m_param->indirections() > 0 )
+      {
+         switch( item.type() )
+         {
+         case FLC_ITEM_NIL: transform( (void*) 0 ); return true;
+         case FLC_ITEM_INT: transform( (void*) item.asInteger() ); return true;
+         case FLC_ITEM_STRING: makeCString(*item.asString() ); return true;
+         case FLC_ITEM_MEMBUF: transform( (void*) item.asMemBuf()->data() ); return true;
+         }
+      }
+      return false;
+
+   case Parameter::e_char:
+      if( m_param->indirections() > 0 )
+      {
+         // char*?
+         if( item.isString() )
+         {
+            makeCString( *item.asString() );
+            return true;
+         }
+         else if ( item.isMemBuf() )
+         {
+            transform( (void*) item.asMemBuf()->data() );
+            return true;
+         }
+      }
       else
-         chr = ' '; // fake an extra space at the end.
-
-      if ( chr == ' ' || chr == ',' || chr == ';' )
       {
-         if ( ! empty )
+         switch( item.type() )
          {
-            // we found the limit of a previous token
-            byte token;
-            if ( ! parseSingleParam( mask, token, spos, pos ) )
-               return false;
+         case FLC_ITEM_INT: transform( (char) item.asInteger() ); return true;
+         case FLC_ITEM_NUM: transform( (char) item.asNumeric() ); return true;
+         case FLC_ITEM_STRING:
+            {
+               String* s = item.asString();
+               if( s->length() >= 1 )
+                  transform( (char) s->getCharAt(0) );
+               else
+                  transform( (char) 0 );
 
-            // ok the token was valid - was it a safety string?
-            if( token == F_DYNLIB_PTYPE_OPAQUE )
-            {
-               // record the string.
-               safeStarts[safeCount] = spos;
-               safeEnds[safeCount] = pos;
-               ++safeCount;
             }
-            else if ( token == (F_DYNLIB_PTYPE_OPAQUE | F_DYNLIB_PTYPE_BYPTR) )
-            {
-               // record the string.
-               safeStarts[safeCount] = spos+1;
-               safeEnds[safeCount] = pos;
-               ++safeCount;
-            }
-            // was it ... -- then the string must be over NOW
-            else if ( token == F_DYNLIB_PTYPE_VAR )
-            {
-               if( pos != plen )
-                  return false;
-            }
-
-            // anyhow accept the token and move on.
-            m_parsedParams[parsedTokens++] = token;
-            empty = true;
+            return true;
          }
-         // else, just ignore.
       }
-      else {
-         if ( empty )
+      return false;
+
+
+   case Parameter::e_wchar_t:
+      if( m_param->indirections() > 0 )
+      {
+         // char*?
+         if( item.isString() )
          {
-            // start a new token.
-            empty = false;
-            spos = pos;
+            makeWString( *item.asString() );
+            return true;
          }
-         // otherwise just ignore.
+         else if ( item.isMemBuf() )
+         {
+            transform( (void*) item.asMemBuf()->data() );
+            return true;
+         }
       }
-
-      ++pos;  // advance
-   }
-
-   // Exited because of excessive tokens?
-   if( pos < plen )
-      return false;
-
-   // close the sequence
-   m_parsedParams[ parsedTokens ] = F_DYNLIB_PTYPE_END;
-   m_parsedParamsCount = parsedTokens;
-
-   // Now create the string vector containing our safety types
-   if( safeCount > 0 )
-   {
-      m_safetyParams = new String[safeCount];
-      m_safetyParamsCount = safeCount;
-      for( uint32 i = 0; i < safeCount; i++ )
+      else
       {
-         m_safetyParams[i] = mask.subString(safeStarts[i], safeEnds[i]);
-      }
-   }
-
-   return true;
-}
-
-
-bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 begin, uint32 end )
-{
-   uint32 pos = begin;
-   byte prefix = 0;
-   byte value = 0;
-
-   typedef enum  {
-      es_begin,
-      es_firstchar,
-      es_symbol,
-      es_firstdot,
-      es_seconddot,
-      es_thirddot,
-      es_maybesym
-   } t_state;
-
-   t_state state = es_begin;
-
-   if ( end > mask.length() )
-      end = mask.length();
-
-   while ( pos < end )
-   {
-      uint32 chr = mask.getCharAt( pos );
-
-      switch( state )
-      {
-         case es_begin:
-            switch( chr )
+         switch( item.type() )
+         {
+         case FLC_ITEM_INT: transform( (int) item.asInteger() ); return true;
+         case FLC_ITEM_NUM: transform( (int) item.asNumeric() ); return true;
+         case FLC_ITEM_STRING:
             {
-               case '$':
-                  if (value != 0 || prefix != 0 )
-                  {
-                     // this wasn't the first character.
-                     return false;
-                  }
+               String* s = item.asString();
+               if( s->length() >= 1 )
+                  transform( (int) s->getCharAt(0) );
+               else
+                  transform( (int) 0 );
 
-                  prefix = F_DYNLIB_PTYPE_BYPTR;
-                  // but don't change the state.
-                  break;
-
-               case 'P':
-                  value = F_DYNLIB_PTYPE_PTR;
-                  state = es_firstchar;
-                  break;
-
-               case 'F':
-                  value = F_DYNLIB_PTYPE_FLOAT;
-                  state = es_firstchar;
-                  break;
-
-               case 'D':
-                  value = F_DYNLIB_PTYPE_DOUBLE;
-                  state = es_firstchar;
-                  break;
-
-               case 'I':
-                  value = F_DYNLIB_PTYPE_I32;
-                  state = es_firstchar;
-                  break;
-
-               case 'U':
-                  value = F_DYNLIB_PTYPE_U32;
-                  state = es_firstchar;
-                  break;
-
-               case 'L':
-                  value = F_DYNLIB_PTYPE_LI;
-                  state = es_firstchar;
-                  break;
-
-               case 'S':
-                  value = F_DYNLIB_PTYPE_SZ;
-                  state = es_firstchar;
-                  break;
-
-               case 'W':
-                  value = F_DYNLIB_PTYPE_WZ;
-                  state = es_firstchar;
-                  break;
-
-               case 'M':
-                  value = F_DYNLIB_PTYPE_MB;
-                  state = es_firstchar;
-                  break;
-
-               case '.':
-                  state = es_firstdot;
-                  break;
-
-               default:
-                  if( chr > 255 )
-                  {
-                     // a wide char - counts as a symbol
-                     state = es_symbol;
-                     value = F_DYNLIB_PTYPE_OPAQUE;
-                  }
-                  else {
-                     state = es_maybesym;
-                  }
             }
-            break;
-
-         case es_maybesym:
-         case es_firstchar:
-            // well, we have a char, so
-            if ( chr == '$' || chr == '.' || chr == ' ' )
-               return false;
-            else {
-               state = es_symbol;
-               value = F_DYNLIB_PTYPE_OPAQUE;
-            }
-            break;
-
-         case es_firstdot:
-            // well, we have a char, so
-            if ( chr != '.' )
-               return false;
-            else
-               state = es_seconddot;
-            break;
-
-         case es_seconddot:
-            // well, we have a char, so
-            if ( chr != '.' )
-               return false;
-            else
-               value = F_DYNLIB_PTYPE_VAR;
-               state = es_thirddot;
-            break;
-
-          case es_thirddot:
-            // nothing should be after a third dot
-            return false;
-
-         case es_symbol:
-            if ( chr < 256 &&
-               ( (chr|32) < 'a' || (chr|32) > 'z' )
-               )
-               return false;
-            break;
+            return true;
+         }
       }
-
-      ++pos;
-   }
-
-   if( state == es_maybesym || pos != end )
-   {
-      // a single character... or an incomplete parsing...
       return false;
+
+
+   case Parameter::e_unsigned_char:
+      if( m_param->indirections() > 0 )
+      {
+         // unsigned char*?
+         if( item.isString() )
+         {
+            transform( (void*) item.asString()->getRawStorage() );
+            return true;
+         }
+         else if ( item.isMemBuf() )
+         {
+            transform( (void*) item.asMemBuf()->data() );
+            return true;
+         }
+      }
+      else
+      {
+         switch( item.type() )
+         {
+         case FLC_ITEM_INT: transform( (unsigned char) item.asInteger() ); return true;
+         case FLC_ITEM_NUM: transform( (unsigned char) item.asNumeric() ); return true;
+         }
+      }
+      return false;
+
+   case Parameter::e_signed_char:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (char) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (char) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_short:
+   case Parameter::e_int:
+      switch( item.type() )
+      {
+      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); return true;
+      case FLC_ITEM_INT: transform( (int) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (int) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_unsigned_short:
+   case Parameter::e_unsigned_int:
+      switch( item.type() )
+      {
+      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); return true;
+      case FLC_ITEM_INT: transform( (unsigned int) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (unsigned int) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (long) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (long) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_unsigned_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (unsigned long) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (unsigned long) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_long_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_unsigned_long_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_float:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (float) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (float) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_double:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (double) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (double) item.asNumeric() ); return true;
+      }
+      return false;
+
+   case Parameter::e_long_double:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (long double) item.asInteger() ); return true;
+      case FLC_ITEM_NUM: transform( (long double) item.asNumeric() ); return true;
+      }
+      return false;
+
+      /*
+   case Parameter::e_struct: ret += "struct"; break;
+   case Parameter::e_union: ret += "union"; break;
+   case Parameter::e_enum: ret += "enum"; break;
+   case Parameter::e_varpar: ret += "..."; break;
+   */
    }
 
-   // we are at the end of input, and all is fine,
-   type = prefix | value;
-   return true;
+   return false;
 }
 
 
-bool FunctionAddress::parseReturn( const String &rval )
+bool ParamValue::transformFree( const Item& item )
 {
-   m_returnMask = rval;
-   m_returnMask.trim();
-
-   if (! parseSingleParam( m_returnMask, m_parsedReturn ) )
-      return false;
-
-   // of course, "..." is not a valid return
-   if ( m_parsedReturn == F_DYNLIB_PTYPE_VAR )
-      return false;
-
-   // and we must consume all the return value
-
-
-   // Return values cannot have byptr specifier
-   if ( (m_parsedReturn & F_DYNLIB_PTYPE_BYPTR) )
+   switch( item.type() )
    {
-      return false;
+   case FLC_ITEM_NIL: transform( (void*) 0 ); return true;
+   case FLC_ITEM_BOOL: transform( item.asBoolean() ? 1 : 0 ); return true;
+   case FLC_ITEM_INT: transform( (int) item.asInteger() ); return true;
+   case FLC_ITEM_NUM: transform( (double) item.asNumeric() ); return true;
+   case FLC_ITEM_STRING: makeCString( *item.asString() ); return true;
+   case FLC_ITEM_MEMBUF: transform( (void*) item.asMemBuf()->data() ); return true;
    }
 
-   return true;
+   return false;
+}
+
+void ParamValue::makeCString( const String& value )
+{
+   delete m_cstring;
+   m_cstring = new AutoCString( value );
+   m_buffer.vptr = const_cast<char*>(m_cstring->c_str());
+   m_size = sizeof( char* );
+}
+
+void ParamValue::makeWString( const String& value )
+{
+   delete m_wstring;
+   m_wstring = new AutoWString( value );
+   m_buffer.vptr = const_cast<wchar_t*>(m_wstring->w_str());
+   m_size = sizeof( wchar_t* );
+}
+
+//===================================================
+// ParamValueList
+//
+
+ParamValueList::ParamValueList():
+   m_head(0),
+   m_tail(0),
+   m_size(0),
+   m_compiledParams(0),
+   m_compiledSizes(0)
+{}
+
+ParamValueList::~ParamValueList()
+{
+   if( m_compiledParams )
+   {
+      memFree( m_compiledParams );
+      memFree( m_compiledSizes );
+   }
+
+   ParamValue* p = m_head;
+   while( p != 0 )
+   {
+      ParamValue* old = p;
+      p = p->m_next;
+      delete old;
+   }
+}
+
+void ParamValueList::add( ParamValue* v )
+{
+   if( m_head == 0 )
+   {
+      m_tail = m_head = v;
+   }
+   else
+   {
+      v->m_next = m_head;
+      m_head = v;
+
+      /*m_tail->m_next = v;
+      m_tail = v;*/
+
+   }
+
+   ++m_size;
+   //v->m_next = 0;
 }
 
 
+void ParamValueList::compile()
+{
+   if( m_compiledParams )
+   {
+      memFree( m_compiledParams );
+      memFree( m_compiledSizes );
+   }
+
+   if ( m_head != 0 )
+   {
+      m_compiledParams = (void**) memAlloc( sizeof(void*) * m_size );
+      m_compiledSizes = (int*) memAlloc( sizeof(int) * (m_size+1) );
+
+      int count = 0;
+      ParamValue* p = m_head;
+      while( p != 0 )
+      {
+         m_compiledParams[count] = const_cast<byte*>(p->buffer());
+         m_compiledSizes[count] = p->size();
+
+         p = p->m_next;
+         ++count;
+      }
+      // add an end marker
+      m_compiledSizes[m_size] = 0;
+   }
 }
 
+}
 
 /* end of dynlib_mod.cpp */

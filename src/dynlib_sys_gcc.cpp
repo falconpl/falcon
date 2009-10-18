@@ -18,22 +18,39 @@
 namespace Falcon {
 namespace Sys {
 
-#define dynlib_call( faddress, stack_image, stack_depth ) \
-   stack_depth /= 4;\
+#define dynlib_call( faddress, parameters, sizes ) \
+   int count = 0; \
    __asm__ __volatile__(\
-      "1: orl   %%ecx, %%ecx\n"\
-      "jz    2f\n"\
-      "movl  (%%esi),%%eax\n"  /* Then, transfer the stack image to the stack */\
-      "pushl %%eax\n"\
-      "addl  $4,%%esi\n"\
-      "decl  %%ecx\n"\
-      "jmp   1b\n"\
-      "2: call  *%%edx\n"         /* perform the call */\
+      "pushl   %%ebx \n" \
+      "pushl   %%esi \n" \
+      "pushl   %%edi \n" \
+      "movl    %%esp, %%edi\n"      /* Create a fake frame */\
+      "1: movl %2, %%esi \n" /* Get next parameter's size */ \
+      "addl    %3, %%esi \n" /* Move count ptrs forward */ \
+      "movl    (%%esi), %%ebx \n"\
+      "andl    $0x7f, %%ebx \n"   /* We're not interested in knowing the value is float */ \
+      "orl     %%ebx, %%ebx \n" /* Check if this was the last size */ \
+      "jz      2f\n"\
+      "movl    %1, %%esi \n" /* Get next parameter */ \
+      "addl    %3, %%esi \n" /* Move count ptrs forward */ \
+      "movl (%%esi), %%esi \n"  /* Go to the N-int buffero position */ \
+      "4: movl (%%esi), %%edx \n"\
+      "pushl   %%edx\n" /* Push them on the stack */ \
+      "addl    $4,%%esi\n" /* Prepare to read next bytes, if we're not done... */ \
+      "subl    $4,%%ebx\n" /* More bytes to be pushed? */ \
+      "jnz     4b\n"       /* yes -- loop again */ \
+      "addl    $4,%3\n"    /* Next parameter (int/ptr size fwd)... */ \
+      "jmp     1b\n"\
+      "2: call  *%0\n"         /* perform the call */\
+      "movl  %%edi, %%esp\n"      /* Restore my fake frame */\
+      "popl  %%edi\n"\
+      "popl  %%esi \n" \
+      "popl  %%ebx \n" \
       "movl  %%ebp, %%esp\n"      /* Restore calling function stack frame */\
       "popl  %%ebp\n"\
-      "ret\n"                     /* really return */\
-      : /* no output */\
-      :"d"(faddress), "S"(stack_image), "c"(stack_depth)  /* input */\
+      "ret\n"                     /* really return */ \
+      : /* no output */ \
+      :"m"(faddress), "m"(parameters), "m"(sizes), "m"(count)  /* input */\
       :"%eax", "%esp"         /* clobbered register */\
    );\
 
@@ -45,9 +62,9 @@ void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth )
    dynlib_call( faddress, stack_image, stack_depth );
 }
 
-void* dynlib_voidp_call( void *faddress, byte *stack_image, uint32 stack_depth )
+void* dynlib_voidp_call( void *faddress, void** parameters, int* sizes )
 {
-   dynlib_call( faddress, stack_image, stack_depth );
+   dynlib_call( faddress, parameters, sizes );
    return 0; // never reached
 }
 
