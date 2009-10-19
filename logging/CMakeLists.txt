@@ -4,18 +4,20 @@
 # CMake configuration file for module "logging"
 ####################################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${falcon_INCLUDE_DIRS}
+)
 
-IF(WIN32)
-   SET( SYS_RC logging.rc )
-   SET( SYS_SRC logging_srv_win.cpp )
-ELSE(WIN32)
-   SET( SYS_SRC logging_srv_syslog.cpp )
-ENDIF(WIN32)
+if(WIN32)
+   set( SYS_RC logging.rc )
+   set( SYS_SRC logging_srv_win.cpp )
+else()
+   set( SYS_SRC logging_srv_syslog.cpp )
+endif()
 
 # Target
-ADD_LIBRARY( logging_fm MODULE
+add_library(logging_fm MODULE
    logging.cpp
    logging_ext.cpp
    logging_mod.cpp
@@ -25,5 +27,4 @@ ADD_LIBRARY( logging_fm MODULE
    ${SYS_RC}
 )
 
-#Link
-FALCON_LINK_MODULE( logging_fm )
+falcon_finalize_module( logging_fm )

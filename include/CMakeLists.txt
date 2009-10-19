@@ -1,5 +1,12 @@
-#Install service directories for services offered by modules
-FILE( GLOB service_headers "falcon/srv/*.h" )
+####################################################################
+# The Falcon Programming language
+#
+# Install service directories for services offered by modules
+####################################################################
 
-INSTALL( FILES ${service_headers}
-   DESTINATION "${FALCON_INSTALL_TREE}/include/falcon/srv")
+file(GLOB service_headers "falcon/srv/*.h" )
+
+install(
+  FILES ${service_headers}
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/falcon/srv
+)

@@ -4,37 +4,37 @@
 # CMake configuration file for module Socket
 ####################################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES( ${TARGET_DIR}/${TARGET_LIB_DIR} )
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${falcon_INCLUDE_DIRS}
+)
 
-IF(UNIX OR MAC)
-   SET(SYS_SPECIFIC socket_sys_unix.cpp)
+if(UNIX OR MAC)
+   set(SYS_SPECIFIC socket_sys_unix.cpp)
 
    # On Solaris, we need also socket lib
-   IF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
-      SET(SYS_SPECIFIC_LIBS /lib/libsocket.so)
-   ENDIF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
+   if( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
+      set(SYS_SPECIFIC_LIBS /lib/libsocket.so)
+   endif( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
 
-ELSE(UNIX OR MAC)
+else(UNIX OR MAC)
    #We must configure socket_sys_win.cpp.in with the correct location of SDK
-   IF( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
-      IF( "${MS_SDK_PATH}" STREQUAL "" )
-         SET( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
-      ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
+   if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles" )
+      if(NOT MS_SDK_PATH)
+         set( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
+      endif()
 
-      IF( "${MS_SDK_PATH}" STREQUAL "" )
-         MESSAGE( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
-      ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
-      INCLUDE_DIRECTORIES(${MS_SDK_PATH})
-   ENDIF("${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
+      if(NOT MS_SDK_PATH)
+         message( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
+      endif()
+      include_directories(${MS_SDK_PATH})
+   endif()
 
-   SET(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
-ENDIF(UNIX OR MAC)
+   set(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
+endif(UNIX OR MAC)
 
 # Target
-ADD_LIBRARY( socket_fm MODULE
+add_library(socket_fm MODULE
    socket.cpp
    socket_ext.cpp
    socket_srv.cpp
@@ -43,10 +43,12 @@ ADD_LIBRARY( socket_fm MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(socket_fm falcon_engine ${SYS_SPECIFIC_LIBS} )
-IF(WIN32)
-   TARGET_LINK_LIBRARIES(socket_fm ws2_32)
-ENDIF(WIN32)
+target_link_libraries(socket_fm 
+  falcon_engine 
+  ${SYS_SPECIFIC_LIBS}
+)
+if(WIN32)
+   target_link_libraries(socket_fm ws2_32)
+endif(WIN32)
 
-#Install
-FALCON_INSTALL_MODULE( socket_fm )
+falcon_install_module( socket_fm )
