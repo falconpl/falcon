@@ -203,6 +203,7 @@ public:
    const ParamList& params() const { return m_params; }
    ParamList& params() { return m_params; }
 
+   Parameter* retparam() const { return m_return; }
 private:
 
    Parameter* parseNextParam( Tokenizer& tok, bool isFuncName = false);
@@ -327,7 +328,14 @@ public:
    void makeWString( const String& value );
 
    const byte* buffer() const { return m_buffer.vbuffer; }
+   byte* buffer() { return m_buffer.vbuffer; }
    int32 size() const { return m_size; }
+
+   /** Prepare the return buffer to receive data from the ASM plugin */
+   bool prepareReturn();
+
+   /** Transforms the data in the return buffer in an item. */
+   bool toItem( Item& target );
 
    Parameter* parameter() const { return m_param; }
 

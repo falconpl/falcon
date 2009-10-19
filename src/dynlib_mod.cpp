@@ -606,6 +606,154 @@ void ParamValue::makeWString( const String& value )
    m_size = sizeof( wchar_t* );
 }
 
+
+bool ParamValue::prepareReturn()
+{
+   fassert( m_param != 0);
+
+   if( m_param->indirections() > 0 )
+   {
+      m_buffer.vint = sizeof( void* );
+      return true;
+   }
+   else switch( m_param->m_type )
+   {
+   case Parameter::e_void: m_buffer.vint = 0; break;
+
+   case Parameter::e_char:
+   case Parameter::e_wchar_t:
+   case Parameter::e_unsigned_char:
+   case Parameter::e_signed_char:
+   case Parameter::e_short:
+   case Parameter::e_unsigned_short:
+   case Parameter::e_int:
+   case Parameter::e_unsigned_int:
+      m_buffer.vint = sizeof(int);
+      break;
+
+   case Parameter::e_long:
+   case Parameter::e_unsigned_long:
+      m_buffer.vint = sizeof(long);
+      break;
+
+   case Parameter::e_long_long:
+   case Parameter::e_unsigned_long_long:
+      m_buffer.vint = sizeof(int64);
+      break;
+
+   case Parameter::e_float:
+      m_buffer.vint = 0x80|sizeof(float);
+      break;
+
+   case Parameter::e_double:
+      m_buffer.vint = 0x80|sizeof(double);
+      break;
+
+   case Parameter::e_long_double:
+      m_buffer.vint = 0x80|sizeof(long double);
+      break;
+
+   default:
+      m_buffer.vint = 0;
+      return false;
+
+   }
+
+   return true;
+}
+
+
+bool ParamValue::toItem( Item& target )
+{
+   fassert( m_param != 0);
+
+   if( m_param->indirections() > 0 )
+   {
+      // todo: create opaque data.
+      if( m_param->m_bConst )
+      {
+         if( m_param->m_type == Parameter::e_char )
+         {
+            CoreString* str = new CoreString;
+            str->fromUTF8( (const char*)(m_buffer.vptr) );
+            target = str;
+            return true;
+         }
+         else if( m_param->m_type == Parameter::e_wchar_t )
+         {
+            CoreString* str = new CoreString( (const wchar_t*)(m_buffer.vptr) );
+            str->bufferize();
+            target = str;
+            return true;
+         }
+      }
+
+      // returnt the data as a pointer
+      target.setInteger( (int64) m_buffer.vptr );
+      return true;
+   }
+   else switch( m_param->m_type )
+   {
+   case Parameter::e_char:
+   case Parameter::e_wchar_t:
+      {
+         CoreString* str = new CoreString;
+         str->append( m_buffer.vint );
+         target = str;
+      }
+      break;
+
+   case Parameter::e_unsigned_char:
+   case Parameter::e_unsigned_short:
+   case Parameter::e_unsigned_int:
+      {
+         unsigned int uint = (unsigned int) m_buffer.vint;
+         target = (int64) uint;
+      }
+      break;
+
+   case Parameter::e_signed_char:
+   case Parameter::e_short:
+   case Parameter::e_int:
+      target = (int64) m_buffer.vint;
+      break;
+
+   case Parameter::e_long:
+      target = (int64) m_buffer.vlong;
+      break;
+
+   case Parameter::e_unsigned_long:
+      {
+         unsigned long ul = (unsigned long) m_buffer.vlong;
+         target = (int64) ul;
+      }
+      break;
+
+   case Parameter::e_long_long:
+   case Parameter::e_unsigned_long_long:
+      target = (int64) m_buffer.vint64;
+      break;
+
+   case Parameter::e_float:
+      target = (numeric) m_buffer.vfloat;
+      break;
+
+   case Parameter::e_double:
+      target = (numeric) m_buffer.vdouble;
+      break;
+
+   case Parameter::e_long_double:
+      target = (numeric) m_buffer.vdouble;
+      break;
+
+   default:
+      return false;
+
+   }
+
+   return true;
+}
+
 //===================================================
 // ParamValueList
 //

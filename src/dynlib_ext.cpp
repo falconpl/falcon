@@ -843,8 +843,21 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    }
 
    pvl.compile();
-   void* ret = Sys::dynlib_voidp_call( fa->functionPtr(), pvl.params(), pvl.sizes() );
-   vm->retval( (int64) ret );
+
+   // now manage the return value
+   if( fa->retparam() == 0 )
+   {
+      byte retbuf[16];
+      *(int*)retbuf = 0;
+      Sys::dynlib_call( fa->functionPtr(), pvl.params(), pvl.sizes(), retbuf );
+   }
+   else
+   {
+      ParamValue pvret( fa->retparam() );
+      pvret.prepareReturn();
+      Sys::dynlib_call( fa->functionPtr(), pvl.params(), pvl.sizes(), pvret.buffer() );
+      pvret.toItem( vm->regA() );
+   }
 }
 
 /*#
