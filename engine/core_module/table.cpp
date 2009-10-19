@@ -557,7 +557,7 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
    @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
    @optparam dflt A default value to be returned if the row is not found.
    @return An array (if the column is not specified) or an item.
-   @throw TableError if the item is not found.
+   @raise TableError if the item is not found.
 
    The returned array is a "table component", and as such, its size cannot be changed;
    also, it inherits all the table columns, that can be accessed as bindings with the
@@ -566,7 +566,7 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
    In case of success, through the BOM method @a Array.tabRow it is possible to retrieve
    the table row position of the returned array.
 
-   In case of failure, a TableError is raised, unless a @a dflt parameter is
+   In case of failure, a TableError is raised, unless a @b dflt parameter is
    specified.
 */
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )

@@ -177,7 +177,7 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
 
    Otherwise, a new dictionary will be filled with all the properties in this object.
 
-   @note, In case of repeated activity, the same dictionary can be used to fetch
+   @note In case of repeated activity, the same dictionary can be used to fetch
    new values to spare memory and CPU.
 
    @see Object.apply

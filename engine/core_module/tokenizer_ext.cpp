@@ -134,7 +134,7 @@ FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
    @param source A string or a stream to be used as a source for the tokenizer.
 
    The first token is immediately read and set as the current token. If it's not
-   empty, that is, if at least a token can be read, @a Tokenizer.hasToken
+   empty, that is, if at least a token can be read, @a Tokenizer.hasCurrent
    returns true, and @a Tokenizer.token returns its value.
 */
 
