@@ -194,8 +194,6 @@ public:
    bool operator <=( const TimeStamp &ts ) const { return this->compare( ts ) <= 0; }
    bool operator >=( const TimeStamp &ts ) const { return this->compare( ts ) >= 0; }
 
-   friend void Sys::Time::timestampFromSystemTime( const SystemTime &sys_time, TimeStamp &ts );
-
    virtual FalconData *clone() const;
 };
 

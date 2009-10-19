@@ -220,16 +220,16 @@ public:
 
    //  A bit of parsing support.
    /** Character is a reserved delimiter under RFC3986 */
-   static bool isResDelim( uint32 chr );
+   inline static bool isResDelim( uint32 chr );
 
    /** Character is main section delimiter under RFC3986 */
-   static bool isMainDelim( uint32 chr );
+   inline static bool isMainDelim( uint32 chr );
 
    /** Character is a general delimiter under RFC3986 */
-   static bool isGenDelim( uint32 chr );
+   inline static bool isGenDelim( uint32 chr );
 
    /** Character is a subdelimiter under RFC4986 */
-   static bool isSubDelim( uint32 chr );
+   inline static bool isSubDelim( uint32 chr );
 
    /** Normalzies the URI sequence.
       Transforms ranges of ALPHA

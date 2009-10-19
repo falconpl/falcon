@@ -20,6 +20,7 @@ Falcon (0.9.4.4)
   * added: TableError class for generic errors in table operations.
   * minor: Table.find() now accepts an extra default parameter.
   * fixed: Cleaned and clarified several error messages in table ops.
+  * fixed: Under windows, FileStat(".") wasn't working.
            
 Falcon (0.9.4.2)
   * fixed: After engine shutdown, some permanent memory object was not

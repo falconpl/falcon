@@ -613,8 +613,8 @@ public:
    bool operator>(const Item &other) const { return compare( other ) > 0; }
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
 
-   Item *dereference();
-   const Item *dereference() const;
+   inline Item *dereference();
+   inline const Item *dereference() const;
 
    /** Turns this item in a method of the given object.
       This is meant to be used by external functions when accessing object properties.
