@@ -1,23 +1,15 @@
+####################################################################
+# The Falcon Programming language
 #
-# Just install include files so that every part of the project can use it.
-#
+# Install header files for module development
+###################################################################
 
-CONFIGURE_FILE(
-         falcon/config.h.in
-         "${FALCON_BUILD_TREE}/core/include/falcon/config.h"
-         ESCAPE_QUOTES
-         @ONLY )
+configure_file( 
+  falcon/config.h.in  ${CMAKE_CURRENT_BINARY_DIR}/falcon/config.h
+  @ONLY 
+)
 
-FILE( GLOB falcon_files "falcon/*.h" )
+file(GLOB falcon_files "falcon/*.h" )
+list(APPEND falcon_files ${CMAKE_CURRENT_BINARY_DIR}/falcon/config.h)
 
-INSTALL( FILES ${falcon_files}
-   DESTINATION "${FALCON_INC_DIR}/falcon")
-
-#Fixes a small bug of CMAKE in FILES install rule.
-IF(WIN32)
-   STRING(REPLACE "\\" "/" FALCON_BUILD_TREE "${FALCON_BUILD_TREE}" )
-ENDIF(WIN32)
-
-INSTALL( FILES "${FALCON_BUILD_TREE}/core/include/falcon/config.h"
-   DESTINATION "${FALCON_INC_DIR}/falcon")
-
+install(FILES ${falcon_files} DESTINATION include/falcon)

@@ -4,8 +4,12 @@
 # Falrun
 ##################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIRECTORY}
+  ${PROJECT_SOURCE_DIR}/include
+)
+
 
 IF(WIN32)
    SET(SYS_RC falrun.rc)
@@ -21,5 +25,4 @@ ADD_EXECUTABLE( falrun
 TARGET_LINK_LIBRARIES(falrun falcon_engine)
 
 #Install
-INSTALL( TARGETS falrun
-      DESTINATION ${FALCON_BIN_DIR} )
+INSTALL( TARGETS falrun ${FALCON_INSTALL_DESTINATIONS} )

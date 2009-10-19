@@ -4,8 +4,11 @@
 # Faldisass
 ##################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIRECTORY}
+  ${PROJECT_SOURCE_DIR}/include
+)
 
 IF(WIN32)
    SET(SYS_RC faldisass.rc)
@@ -21,5 +24,4 @@ ADD_EXECUTABLE( faldisass
 TARGET_LINK_LIBRARIES(faldisass falcon_engine)
 
 #Install
-INSTALL( TARGETS faldisass
-      DESTINATION ${FALCON_BIN_DIR} )
+INSTALL( TARGETS faldisass ${FALCON_INSTALL_DESTINATIONS} )

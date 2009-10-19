@@ -4,8 +4,12 @@
 # Falcon command line
 ##################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIRECTORY}
+  ${PROJECT_SOURCE_DIR}/include
+)
+
 
 IF(WIN32)
    SET( SYSTEM_RC falcon.rc)
@@ -23,5 +27,4 @@ ADD_EXECUTABLE( falcon
 TARGET_LINK_LIBRARIES(falcon falcon_engine)
 
 #Install
-INSTALL( TARGETS falcon
-      DESTINATION ${FALCON_BIN_DIR} )
+INSTALL( TARGETS falcon ${FALCON_INSTALL_DESTINATIONS})

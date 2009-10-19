@@ -3,36 +3,32 @@
 #
 
 IF(UNIX)
-   SET( sys_in_spec falcon-conf )
-   SET( sys_inst_spec "${FALCON_BUILD_TREE}/core/devtools/falcon-conf" )
+   SET(sys_in_spec falcon-conf )
+   SET(sys_inst_spec ${CMAKE_CURRENT_BINARY_DIR}/falcon-conf)
 ENDIF(UNIX)
 
-#Fixes a small bug of CMAKE in FILES install rule.
-IF(WIN32)
-   STRING(REPLACE "\\" "/" FALCON_BUILD_TREE "${FALCON_BUILD_TREE}" )
-ENDIF(WIN32)
+SET(in_files
+  falconeer.fal
+  ${sys_in_spec}
+)
+foreach(item ${in_files} )
+  configure_file(
+    ${item}.in  ${CMAKE_CURRENT_BINARY_DIR}/${item}
+    ESCAPE_QUOTES @ONLY)
+endforeach(item)
 
-SET( in_files
-   falconeer.fal
-   ${sys_in_spec}
-   )
+SET(inst_files
+  "${CMAKE_CURRENT_BINARY_DIR}/falconeer.fal"
+  "fallc.fal"
+  ${sys_inst_spec}
+)
 
-SET( inst_files
-   "${FALCON_BUILD_TREE}/core/devtools/falconeer.fal"
-   "fallc.fal"
-   ${sys_inst_spec}
-   )
 
-FOREACH(item ${in_files} )
-   CONFIGURE_FILE(
-      ${item}.in
-      "${FALCON_BUILD_TREE}/core/devtools/${item}"
-      ESCAPE_QUOTES
-      @ONLY )
-ENDFOREACH(item)
-
-INSTALL(FILES ${inst_files}
-          DESTINATION ${FALCON_BIN_DIR}
-          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                        GROUP_READ GROUP_EXECUTE
-                        WORLD_READ WORLD_EXECUTE )
+INSTALL(
+  FILES ${inst_files}
+  DESTINATION bin
+  PERMISSIONS OWNER_READ OWNER_WRITE 
+              OWNER_EXECUTE
+              GROUP_READ GROUP_EXECUTE
+              WORLD_READ WORLD_EXECUTE
+)

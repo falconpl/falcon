@@ -114,8 +114,8 @@ the build step.
 the automation wit "-inc" and export the variable EXTRA_CMAKE with
 the following values (space spearated):
 
-  -DWITH_INTERNAL_PCRE=ON    (to build internal PCRE)
-  -DWITH_INTERNAL_ZLIB=ON    (to build internal ZLIB)
+  -DFALCON_WITH_INTERNAL_PCRE=ON    (to build internal PCRE)
+  -DFALCON_WITH_INTERNAL_ZLIB=ON    (to build internal ZLIB)
 
 
 

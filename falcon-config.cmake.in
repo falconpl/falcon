@@ -1,0 +1,61 @@
+get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+# OPTIONAL for the case this project is built as a subproject.
+include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
+
+get_filename_component(falcon_INCLUDE_DIR "${SELF_DIR}/../../../include" ABSOLUTE)
+list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
+
+set(falcon_LIBRARIES  falcon_engine)
+
+
+##<See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
+#
+if(WIN32)
+   set(FALCON_LIB_DIR bin)
+   set(FALCON_MOD_INSTALL_DIR bin)
+else()
+   set(FALCON_LIB_DIR lib)
+   set(FALCON_MOD_INSTALL_DIR lib/falcon)
+ENDIF()
+
+# for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
+set(FALCON_INSTALL_DESTINATIONS
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${FALCON_LIB_DIR} 
+  ARCHIVE DESTINATION lib
+)
+# NOTE modules are installed via 
+#   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
+# since they are neither RUNTIME, LIBRARY nor ARCHIVE. 
+
+#In windows, we normally install in c:\falcon
+if(WIN32)
+   #mingw requires -mthreads global option
+   if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+      list(APPEND CMAKE_EXE_LINKER_FLAGS -mthreads )
+      list(APPEND CMAKE_SHARED_LINKER_FLAGS -mthreads )
+      list(APPEND CMAKE_MODULE_LINKER_FLAGS -mthreads )
+   endif()
+endif(WIN32)
+#
+##</See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
+
+function(FALCON_FINALIZE_MODULE tgt )
+   target_link_libraries(${tgt} falcon_engine)
+   falcon_install_module( ${tgt} )
+endfunction(FALCON_FINALIZE_MODULE)
+
+function(FALCON_INSTALL_MODULE tgt )
+  if(APPLE)
+    set_target_properties(${tgt} PROPERTIES 
+      PREFIX ""
+      SUFFIX ".dylib" )
+  else()
+    set_target_properties(${tgt} PROPERTIES 
+      PREFIX "" )
+  endif()
+
+  install( TARGETS ${tgt}
+           DESTINATION ${FALCON_MOD_INSTALL_DIR} )
+endfunction(FALCON_INSTALL_MODULE)

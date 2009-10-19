@@ -32,7 +32,7 @@ usage()
 
 detectSystem()
 {
-	 uname | grep Mac && SYSTEM='mac' || SYSTEM='unix'
+  uname | grep Mac && SYSTEM='mac' || SYSTEM='unix'
 }
 
 if [ -z "$*" ]; then
@@ -45,23 +45,16 @@ FALCONLIB="-lfalcon_engine"
 detectSystem
 
 if [ "$SYSTEM" = "mac" ]; then
-	CFLAGS="-fPIC -dynamiclib -fno-common"
-	LDFLAGS="-module -dload -dynamiclib"
+  CFLAGS="-fPIC -dynamiclib -fno-common"
+  LDFLAGS="-module -dload -dynamiclib"
 else
-	CFLAGS="-fPIC -shared"
-	LDFLAGS="-module -dload -shared"
+  CFLAGS="-fPIC -shared"
+  LDFLAGS="-module -dload -shared"
 fi
 
-#configure for in-build tree
-if [ "x$FALCON_ACTIVE_TREE" = "x" ]; then
-   INC_PATH="@FALCON_FINAL_DESTINATION@/include"
-   LIB_PATH="@FALCON_FINAL_DESTINATION@/@FALCON_FINAL_DESTINATION_LIB@"
-   LIB_LD_PATH="@FINAL_DESTINATION@/@FALCON_FINAL_DESTINATION_LIB@"
-else
-   INC_PATH="$FALCON_ACTIVE_TREE/include"
-   LIB_PATH="$FALCON_ACTIVE_TREE/@FALCON_INSTALL_TREE_LIB@"
-   LIB_LD_PATH="$FALCON_ACTIVE_TREE/@FALCON_INSTALL_TREE_LIB@"
-fi
+INC_PATH="@CMAKE_INSTALL_PREFIX@/include"
+LIB_PATH="@CMAKE_INSTALL_PREFIX@/lib"
+LIB_LD_PATH="@CMAKE_INSTALL_PREFIX@/lib"
 
 INC_FLAGS="-I$INC_PATH"
 LIB_FLAGS="-L$LIB_PATH"

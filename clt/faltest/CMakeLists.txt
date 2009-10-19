@@ -4,8 +4,12 @@
 # Faltest
 ##################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIRECTORY}
+  ${PROJECT_SOURCE_DIR}/include
+)
+
 
 IF(WIN32)
    SET(SYS_RC faltest.rc)
@@ -45,8 +49,7 @@ SET_TARGET_PROPERTIES( testsuite_fm
 ENDIF(APPLE)
 
 #Install
-INSTALL( TARGETS faltest
-      DESTINATION ${FALCON_BIN_DIR} )
+INSTALL( TARGETS faltest ${FALCON_INSTALL_DESTINATIONS})
 
 INSTALL( TARGETS testsuite_fm
-      DESTINATION ${FALCON_MOD_INSTALL} )
+      DESTINATION ${FALCON_MOD_INSTALL_DIR} )
