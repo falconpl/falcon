@@ -39,7 +39,7 @@ namespace Ext {
 
 
 /*#
-   @method encode JSON
+   @function JSONencode
    @brief Encode an item in JSON format.
    @param item the item to be encoded in JSON format.
    @optparam stream A stream on which to send the encoded result.
@@ -47,8 +47,8 @@ namespace Ext {
    @optparam pretty Add spacing around separators and puntaction.
    @optparam readable Put each item in lists on a separate line.
    @return a string containing the JSON string, if @b stream is nil
-   @throw JSONError if the passed item cannot be turned into a JSON representation.
-   @throw IoError in case of error on target stream.
+   @raise JSONError if the passed item cannot be turned into a JSON representation.
+   @raise IoError in case of error on target stream.
 
 */
 
@@ -118,8 +118,8 @@ FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
    @brief Decode an item stored in JSON format.
    @param source A string or a stream from which to read the JSON data.
    @return a string containing the JSON string, if @b stream is nil
-   @throw JSONError if the input data cannot be parsed.
-   @throw IoError in case of error on the source stream.
+   @raise JSONError if the input data cannot be parsed.
+   @raise IoError in case of error on the source stream.
 
 */
 
@@ -174,9 +174,6 @@ FALCON_FUNC  JSONdecode ( ::Falcon::VMachine *vm )
    }
 }
 
-FALCON_FUNC  json_apply ( ::Falcon::VMachine *vm )
-{
-}
 
 //=====================================================
 // JSON Error

@@ -25,6 +25,9 @@ Modules admitted in the Feathers are currently:
    * socket
    * threading
 
+In version 0.9.4.2 we added "logging" and in 0.9.4.4 "json".
+
+
 BUILDING
 ========
 
