@@ -33,10 +33,11 @@ namespace Sys {
       "jz      2f\n"\
       "movl    %1, %%esi \n" /* Get next parameter */ \
       "addl    %3, %%esi \n" /* Move count ptrs forward */ \
-      "movl (%%esi), %%esi \n"  /* Go to the N-int buffero position */ \
-      "4: movl (%%esi), %%edx \n"\
+      "movl    (%%esi), %%esi \n"  /* Go to the N-int buffero position */ \
+      "addl    %%ebx, %%esi \n"  /* Start from bottom */ \
+      "4: subl    $4,%%esi\n" /* Prepare to read next bytes, if we're not done... */ \
+      "movl (%%esi), %%edx \n"\
       "pushl   %%edx\n" /* Push them on the stack */ \
-      "addl    $4,%%esi\n" /* Prepare to read next bytes, if we're not done... */ \
       "subl    $4,%%ebx\n" /* More bytes to be pushed? */ \
       "jnz     4b\n"       /* yes -- loop again */ \
       "addl    $4,%3\n"    /* Next parameter (int/ptr size fwd)... */ \
