@@ -18,8 +18,8 @@ load DynLib
 
 l = DynLib( "user32.dll" )
 k = DynLib( "kernel32.dll" )
-MessageBox = l.get( "MessageBoxW", "I", "P W W I" ).call
-GetLastError = k.get( "GetLastError" ).call
+MessageBox = l.get( "int MessageBoxW( void* wnd, wchar_t* text, wchar_t* caption, unsigned int type)" ).call
+GetLastError = k.get( "int GetLastError()" ).call
 
 n = 4 || 32
 v = MessageBox(  

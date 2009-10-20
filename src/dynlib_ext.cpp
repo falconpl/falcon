@@ -568,7 +568,7 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
 
 
 
-CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
+CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
 {
    Item *i_def = vm->param(0);
 
@@ -594,6 +594,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    // Let the decision to raise something to the caller.
    if( sym_handle == 0 )
    {
+      name = addr->name();
       delete addr;
       shouldRaise = true;
       return 0;
@@ -651,13 +652,14 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
 {
    bool shouldRaise = false;
-   CoreObject *obj = internal_dynlib_get( vm, shouldRaise );
+   String fname;
+   CoreObject *obj = internal_dynlib_get( vm, shouldRaise, fname );
 
    if ( shouldRaise )
    {
       throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__ )
          .desc( FAL_STR( dle_symbol_not_found ) )
-         .extra( *vm->param(0)->asString() ) );  // shouldRaise tells us we have a correct parameter.
+         .extra( fname ) );  // shouldRaise tells us we have a correct parameter.
    }
    else {
       vm->retval( obj );
@@ -682,7 +684,8 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
 FALCON_FUNC  DynLib_query( ::Falcon::VMachine *vm )
 {
    bool shouldRaise = false;
-   CoreObject *obj = internal_dynlib_get( vm, shouldRaise );
+   String fname;
+   CoreObject *obj = internal_dynlib_get( vm, shouldRaise, fname );
 
    if ( shouldRaise )
    {

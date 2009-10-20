@@ -33,138 +33,107 @@ namespace Sys {
 //
 #pragma warning( disable: 4731 )  // we WANT to modify the EBP code.
 
-void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth )
+void dynlib_call( void *faddress, void** parameters, int32* sizes, byte* retval )
 {
-   stack_depth /= 4;
+   int count = 0;
+   
    __asm {
-      mov  esi, stack_image
-      mov  ecx, stack_depth
+      push  ebx           /* Save used registers */
+      push  esi
+      push  edi
+      mov   edi, esp      /* Create a fake frame */
    }
+   
    lbl1:
    __asm {
-      or   ecx, ecx
+      mov   esi, sizes
+      add   esi, count
+      mov   ebx, [esi] 
+      and   ebx, 0x7F      /* We're not interested in knowing the value is float */
+      or    ebx, ebx       /* Check if this was the last size */
       jz    lbl2
-      mov   eax, [esi]
-      push  eax
-      add   esi,4
-      dec   ecx
-      jmp   lbl1
-   }
-   lbl2:
-   __asm {
-      call  faddress
-      mov  esp, ebp
-      pop  ebp
-      ret
-   }
-}
 
-void* dynlib_voidp_call( void *faddress, byte *stack_image, uint32 stack_depth )
-{
-   stack_depth /= 4;
-   __asm {
-      mov  esi, stack_image
-      mov  ecx, stack_depth
+      mov   esi,parameters /* Get next parameter */
+      add   esi, count     /* Move count ptrs forward */
+      mov   esi, [esi]     /* Go to the N-int buffero position */
+      add   esi, ebx       /* Start from bottom */
    }
-   lbl1:
+   
+   lbl4:
    __asm {
-      or   ecx, ecx
-      jz    lbl2
-      mov   eax, [esi]
-      push  eax
-      add   esi,4
-      dec   ecx
+      sub   esi, 4         /* Prepare to read next bytes, if we're not done... */
+      mov   edx, [esi]
+      push  edx            /* Push them on the stack */
+      sub   ebx, 4         /* More bytes to be pushed? */
+      jnz   lbl4           /* yes -- loop again */
+      add   count, 4       /* Next parameter (int/ptr size fwd)... */
       jmp   lbl1
    }
+   
    lbl2:
    __asm {
       call  faddress
-      mov  esp, ebp
-      pop  ebp
-      ret
    }
-   return 0; // never reached
-}
 
-int32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth )
-{
-   stack_depth /= 4;
    __asm {
-      mov  esi, stack_image
-      mov  ecx, stack_depth
-   }
-   lbl1:
-   __asm {
-      or   ecx, ecx
-      jz    lbl2
-      mov   eax, [esi]
-      push  eax
-      add   esi,4
-      dec   ecx
-      jmp   lbl1
-   }
-   lbl2:
-   __asm {
-      call  faddress
-      mov  esp, ebp
-      pop  ebp
-      ret
-   }
-   return 0; // never reached
-}
+      mov   esi, retval
+      mov   ebx, [esi]     
+      or    ebx, ebx       /* No return? */
+      jz    lbl100         /* Go Away */
 
-int64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth )
-{
-   stack_depth /= 4;
-   __asm {
-      mov  esi, stack_image
-      mov  ecx, stack_depth
+      cmp   ebx, 0x8c      /* 0x80 + 0x0c -- long double 80 bits */
+      jne   lbl5
+      mov   [esi], eax
+      mov   4[esi], edx
+      mov   8[esi], ecx
+      jmp   lbl100
    }
-   lbl1:
-   __asm {
-      or   ecx, ecx
-      jz    lbl2
-      mov   eax, [esi]
-      push  eax
-      add   esi,4
-      dec   ecx
-      jmp   lbl1
-   }
-   lbl2:
-   __asm {
-      call  faddress
-      mov  esp, ebp
-      pop  ebp
-      ret
-   }
-   return 0; // never reached
-}
 
-double dynlib_double_call( void *faddress, byte *stack_image, uint32 stack_depth )
-{
-   stack_depth /= 4;
+   lbl5:
    __asm {
-      mov  esi, stack_image
-      mov  ecx, stack_depth
+      cmp   ebx, 0x88 /* 0x80 + 0x8 -- double 64 bits */
+      jne   lbl6
+      fstp  qword ptr [esi]
+      jmp   lbl100
    }
-   lbl1:
+
+   lbl6:
    __asm {
-      or   ecx, ecx
-      jz    lbl2
-      mov   eax, [esi]
-      push  eax
-      add   esi,4
-      dec   ecx
-      jmp   lbl1
+      cmp   ebx, 0x84 /* 0x80 + 0x4 -- float 64 bits */
+      jne   lbl7
+      fstp  dword ptr [esi]
+      jmp   lbl100
    }
-   lbl2:
+  
+   lbl7:
    __asm {
-      call  faddress
-      mov  esp, ebp
-      pop  ebp
-      ret
+      cmp   ebx, 0x08 /* */
+      jne   lbl8
+      mov   [esi], eax
+      mov   4[esi], edx
+      jmp   lbl100
    }
-   return 0.0; // never reached
+
+     
+   lbl8:
+   __asm {
+      cmp   ebx, 0x04 /* */
+      jne   lbl9
+      mov   [esi], eax
+      jmp   lbl100
+   }
+
+   lbl9:
+   __asm {
+      mov  [esi], 0 /* zero the return */
+   }
+
+   lbl100:
+   __asm {
+     pop edi         /* Restore my fake frame */
+     pop esi
+     pop ebx
+   }
 }
 
 }
