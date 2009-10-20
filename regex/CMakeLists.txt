@@ -5,9 +5,9 @@
 ####################################################################
 
 if( WIN32 OR APPLE )
-   option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" off)
-else( WIN32 OR APPLE )
    option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" on)
+else( WIN32 OR APPLE )
+   option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" off)
 endif( WIN32 OR APPLE)
 
 include_directories(
