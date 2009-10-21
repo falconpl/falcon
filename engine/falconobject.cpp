@@ -47,28 +47,29 @@ CoreObject *FalconObject::clone() const
    return fo;
 }
 
-   CoreObject* OpaqueObjectFactory( const CoreClass *cls, void *data, bool bDeserializing )
-   {
-      CoreObject* co =  new FalconObject( cls, bDeserializing );
-      co->setUserData( data );
-      return co;
-   }
-
-   CoreObject* FalconObjectFactory( const CoreClass *cls, void *data, bool bDeserializing )
-   {
-      CoreObject* co =  new FalconObject( cls, bDeserializing );
-      if ( data != 0 )
-         co->setUserData( static_cast<FalconData* >(data) );
-      return co;
-   }
-
-   CoreObject* FalconSequenceFactory( const CoreClass *cls, void *data, bool bDeserializing )
-   {
-      CoreObject* co =  new FalconObject( cls, bDeserializing );
-      if ( data != 0 )
-         co->setUserData( static_cast<Sequence* >(data) );
-      return co;
-   }
+CoreObject* OpaqueObjectFactory( const CoreClass *cls, void *data, bool bDeserializing )
+{
+   CoreObject* co =  new FalconObject( cls, bDeserializing );
+   co->setUserData( data );
+   return co;
 }
+
+CoreObject* FalconObjectFactory( const CoreClass *cls, void *data, bool bDeserializing )
+{
+   CoreObject* co =  new FalconObject( cls, bDeserializing );
+   if ( data != 0 )
+      co->setUserData( static_cast<FalconData* >(data) );
+   return co;
+}
+
+CoreObject* FalconSequenceFactory( const CoreClass *cls, void *data, bool bDeserializing )
+{
+   CoreObject* co =  new FalconObject( cls, bDeserializing );
+   if ( data != 0 )
+      co->setUserData( static_cast<Sequence* >(data) );
+   return co;
+}
+
+} // namespace Falcon
 
 /* end of falconobject.cpp */
