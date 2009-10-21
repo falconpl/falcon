@@ -100,28 +100,29 @@ CoreObject *CRObject::clone() const
 }
 
 //============================================
-   CoreObject* CROpaqueFactory( const CoreClass *cls, void *user_data, bool bDeserial )
-   {
-      CRObject* cro = new CRObject( cls, bDeserial );
-      cro->setUserData( user_data );
-      return cro;
-   }
-   
-   CoreObject* CRFalconFactory( const CoreClass *cls, void *user_data, bool bDeserial )
-   {
-      CRObject* cro = new CRObject( cls, bDeserial );
-      if( user_data != 0 )
-         cro->setUserData( static_cast<FalconData*>(user_data) );
-      return cro;
-   }
-   
-   CoreObject* CRSequenceFactory( const CoreClass *cls, void *user_data, bool bDeserial )
-   {
-      CRObject* cro = new CRObject( cls, bDeserial );
-      if( user_data != 0 )
-         cro->setUserData( static_cast<Sequence*>(user_data) );
-      return cro;
-   }
+CoreObject* CROpaqueFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+{
+   CRObject* cro = new CRObject( cls, bDeserial );
+   cro->setUserData( user_data );
+   return cro;
 }
+
+CoreObject* CRFalconFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+{
+   CRObject* cro = new CRObject( cls, bDeserial );
+   if( user_data != 0 )
+      cro->setUserData( static_cast<FalconData*>(user_data) );
+   return cro;
+}
+
+CoreObject* CRSequenceFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+{
+   CRObject* cro = new CRObject( cls, bDeserial );
+   if( user_data != 0 )
+      cro->setUserData( static_cast<Sequence*>(user_data) );
+   return cro;
+}
+
+} // namespace Falcon
 
 /* end of crobject.cpp */
