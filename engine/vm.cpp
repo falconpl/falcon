@@ -335,7 +335,7 @@ LiveModule* VMachine::link( Runtime *rt )
                        md->isPrivate() ) ) == 0
       )
       {
-         delete lmodList;
+         delete [] lmodList;
          return 0;
       }
 
@@ -348,13 +348,13 @@ LiveModule* VMachine::link( Runtime *rt )
    {
        if ( ! completeModLink( lmodList[ iter ] ) )
        {
-          delete lmodList;
+          delete [] lmodList;
           return 0;
        }
    }
 
    // returns the topmost livemodule
-   delete lmodList;
+   delete [] lmodList;
    return lmod;
 }
 
