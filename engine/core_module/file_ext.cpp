@@ -473,6 +473,11 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    while s.readLine( line ): > "LINE: ", line
    s.close()
    @endcode
+   
+   @note It is possible to obtain a newly allocated line instead of having to
+   provide a target buffer through the @a Stream.grabLine method.
+   
+   @see Stream.grabLine
 */
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 {
