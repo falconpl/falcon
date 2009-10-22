@@ -1773,7 +1773,7 @@ FALCON_FUNC  stdInRaw ( ::Falcon::VMachine *vm )
    in example, piped applications, will recognize that the script has completed
    its output, and will disconnect immediately, while the script may continue to run.
 
-   The stream is write only. Write operations will cause an I/O to be raised.
+   The stream is write only. Read operations will cause an IoError to be raised.
 */
 
 FALCON_FUNC  stdOutRaw ( ::Falcon::VMachine *vm )
