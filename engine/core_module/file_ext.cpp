@@ -470,7 +470,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    @code
    s = InputStream( "file.txt" )
    line = strBuffer(4096)
-   while s.readLine( line ): > "LINE: ", s
+   while s.readLine( line ): > "LINE: ", line
    s.close()
    @endcode
 */
