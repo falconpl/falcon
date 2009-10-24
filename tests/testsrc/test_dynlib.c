@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _MSC_VER
    #define int64 __int64
@@ -194,5 +195,44 @@ void EXPORT call_pRsz( char **sz )
 void EXPORT call_pRwz( wchar_t **wz )
 {
    *wz = wz_data;
+}
+
+
+//===========================================
+// Structures
+//
+
+struct dynlib_s
+{
+   int size;
+   char* name;
+   int count;
+};
+
+struct dynlib_s* EXPORT dynlib_s_make( const char *initval )
+{
+   struct dynlib_s *s = (struct dynlib_s*) malloc( sizeof( struct dynlib_s) );
+   s->size = strlen( initval );
+   s->name = (char*) malloc( sizeof( s->size + 1) );
+   strcpy( s->name, initval );
+   s->count = 0;
+}
+
+int EXPORT dynlib_s_count( struct dynlib_s* s, int count )
+{
+   int res = s->count;
+   s->count += count;
+   return res;
+}
+
+const char* EXPORT dynlib_s_name( struct dynlib_s* s )
+{
+   return s->name;
+}
+
+void dynlib_s_free( struct dynlib_s* s )
+{
+   free( s->name );
+   free( s );
 }
 

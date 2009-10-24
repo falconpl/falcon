@@ -253,24 +253,6 @@ public:
 } FP_void;
 
 
-class cFP_struct: public FormingParam
-{
-public:
-   virtual Parameter* parseNext( const String &next, state& st );
-} FP_struct;
-
-class cFP_union: public FormingParam
-{
-public:
-   virtual Parameter* parseNext( const String &next, state& st );
-} FP_union;
-
-class cFP_enum: public FormingParam
-{
-public:
-   virtual Parameter* parseNext( const String &next, state& st );
-} FP_enum;
-
 class cFP_tagdef: public FormingParam
 {
 public:
@@ -411,15 +393,19 @@ Parameter* cFP_start::parseNext( const String &next, FormingParam::state& st )
    }
    else if ( next == "struct" )
    {
-      st.nextState = &FP_struct;
+      st.m_type = Parameter::e_struct;
+      st.nextState = &FP_tagdef;
    }
    else if ( next == "union" )
    {
-      st.nextState = &FP_union;
+      st.m_type = Parameter::e_union;
+      st.nextState = &FP_tagdef;
    }
    else if ( next == "enum" )
    {
-      st.nextState = &FP_enum;
+      st.m_type = Parameter::e_enum;
+      st.nextState = &FP_tagdef;
+
    }
    else if ( next == "..." )
    {
@@ -684,28 +670,6 @@ Parameter* cFP_void::parseNext( const String &next, FormingParam::state& st )
    return 0;
 }
 
-Parameter* cFP_struct::parseNext( const String &next, FormingParam::state& st )
-{
-   st.m_type = Parameter::e_struct;
-   st.nextState = &FP_tagdef;
-   return 0;
-}
-
-Parameter* cFP_union::parseNext( const String &next, FormingParam::state& st )
-{
-   st.m_type = Parameter::e_union;
-   st.nextState = &FP_tagdef;
-
-   return 0;
-}
-
-Parameter* cFP_enum::parseNext( const String &next, FormingParam::state& st )
-{
-   st.m_type = Parameter::e_enum;
-   st.nextState = &FP_tagdef;
-
-   return 0;
-}
 
 Parameter* cFP_tagdef::parseNext( const String &next, FormingParam::state& st )
 {
