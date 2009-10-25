@@ -85,7 +85,7 @@ public:
 inline void tpe( int l )
 {
    throw new ParseError(
-         ErrorParam( FALCON_DYNLIB_ERROR_BASE, l )
+         ErrorParam( FALCON_DYNLIB_ERROR_BASE+5, l )
          .desc( *VMachine::getCurrent()->currentModule()->getString(
                dyl_invalid_syn ) )
          );

@@ -322,18 +322,18 @@ FALCON_MODULE_DECL
    //
    Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::Dyn_dummy_init ); // actually, raises
    dynfunc_cls->setWKS( true );
-   self->addClassMethod( dynfunc_cls, "call", Falcon::Ext::DynFunction_call );
+   self->addClassMethod( dynfunc_cls, "call__", Falcon::Ext::DynFunction_call );
    self->addClassMethod( dynfunc_cls, "toString", Falcon::Ext::DynFunction_toString );
 
    //============================================================
    // Opaque item mask
    //
-   Falcon::Symbol *dynopaque_cls = self->addClass( "DynOpaque", Falcon::Ext::Dyn_dummy_init );  // actually, raises
+   Falcon::Symbol *dynopaque_cls = self->addClass( "DynOpaque", Falcon::Ext::DynOpaque_dummy_init );  // actually, raises
    // No object manager needed.
    dynopaque_cls->setWKS( true );
-   self->addClassProperty( dynopaque_cls, "pseudoClass" );
+   self->addClassProperty( dynopaque_cls, "type" );
+   self->addClassProperty( dynopaque_cls, "ptr" );
    self->addClassMethod( dynopaque_cls, "toString", Falcon::Ext::DynOpaque_toString );
-   self->addClassMethod( dynopaque_cls, "getData", Falcon::Ext::DynOpaque_getData );
 
 
    //============================================================

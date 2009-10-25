@@ -230,7 +230,7 @@ const char* EXPORT dynlib_s_name( struct dynlib_s* s )
    return s->name;
 }
 
-void dynlib_s_free( struct dynlib_s* s )
+void EXPORT dynlib_s_free( struct dynlib_s* s )
 {
    free( s->name );
    free( s );

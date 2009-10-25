@@ -571,11 +571,13 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
 CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
 {
    Item *i_def = vm->param(0);
+   Item *i_deletor = vm->param(1);
 
-   if( i_def == 0 || ! i_def->isString() )
+   if( i_def == 0 || ! i_def->isString() ||
+       ( i_deletor != 0 && ! i_deletor->isString() ))
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") );
+                  .extra("S,[S]") );
    }
 
    void *hlib = vm->self().asObject()->getUserData();
@@ -586,7 +588,9 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
    }
 
    // will throw in case of error.
-   FunctionDef *addr = new FunctionDef( *i_def->asString() );
+   FunctionDef *addr = i_deletor == 0 ?
+         new FunctionDef( *i_def->asString() ) :
+         new FunctionDef( *i_def->asString(), *i_deletor->asString() );
 
    void *sym_handle = Sys::dynlib_get_address( hlib, addr->name() );
 
@@ -601,6 +605,22 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
    }
 
    addr->setFunctionPtr( sym_handle );
+
+   if( i_deletor != 0 )
+   {
+      void *sym_del = Sys::dynlib_get_address( hlib, addr->deletorName() );
+
+      if( sym_handle == 0 )
+      {
+         name = addr->deletorName();
+         delete addr;
+         shouldRaise = true;
+         return 0;
+      }
+
+      addr->setDeletorPtr( sym_del );
+   }
+
 
    Item* dfc = vm->findWKI( "DynFunction" );
    fassert( dfc != 0 );
@@ -743,20 +763,6 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
 }
 
 
-// Simple utility function to raise an error in case of parameter mismatch in calls
-static void s_raiseType( VMachine *vm, uint32 pid, const String &extra )
-{
-   String sPid;
-   sPid.writeNumber( (int64) pid );
-   throw new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
-         .desc( FAL_STR( dyl_param_mismatch ) )
-         .extra( sPid ) );
-}
-
-inline void s_raiseType( VMachine* vm, uint32 pid )
-{
-   s_raiseType( vm, pid, "" );
-}
 
 /*#
    @method call DynFunction
@@ -859,7 +865,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       ParamValue pvret( fa->retparam() );
       pvret.prepareReturn();
       Sys::dynlib_call( fa->functionPtr(), pvl.params(), pvl.sizes(), pvret.buffer() );
-      pvret.toItem( vm->regA() );
+      pvret.toItem( vm->regA(), fa->deletorPtr() );
    }
 }
 
@@ -896,6 +902,13 @@ FALCON_FUNC  testParser( ::Falcon::VMachine *vm )
 // DynLib opaque
 //======================================================
 
+FALCON_FUNC  DynOpaque_dummy_init( ::Falcon::VMachine *vm )
+{
+   // this can't be called directly, so it just raises an error
+   throw new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+3, __LINE__ )
+         .desc( FAL_STR( dle_cant_instance2 ) ) );
+}
+
 /*#
    @class DynOpaque
    @brief Opaque remote data "pseudo-class" encapsulator.
@@ -917,33 +930,12 @@ FALCON_FUNC  testParser( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
 {
-   Item pseudoClass;
-   vm->self().asObject()->getProperty( "pseudoClass", pseudoClass );
-   if( vm->self().asObject()->getProperty( "pseudoClass", pseudoClass ) &&
-         pseudoClass.isString() )
-   {
-      vm->retval( new CoreString( "DynOpaque: " + *pseudoClass.asString() ) );
-   }
-   else
-   {
-      vm->retval( "Invalid DynOpaque" );
-   }
-}
+   DynOpaque* dy = static_cast<DynOpaque*>( vm->self().asObject());
 
-/*#
-   @method getData DynOpaque
-   @brief Gets the inner opaque pointer.
-   @return A pointer-sized integer containing the dynamic opaque data.
-
-   This functions returns the pointer stored in the safe pseudo-class
-   wrapper. That value can be directly fed into non-prototyped remote
-   functions (i.e. created with @a DynLib.get without parameter specifier),
-   accepting a pointer to remote data in their parameters.
-*/
-FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
-{
-   int64 ptr = (int64) vm->self().asObject()->getUserData();
-   vm->retval( ptr );
+   vm->retval( (new CoreString)->A( "DynOpaque( " ).A( dy->tagName() )
+         .A(", ").N( (int64) dy->data() ).A( dy->deletor() == 0 ? "*":"" )
+         .A(" )")
+         );
 }
 
 

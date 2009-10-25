@@ -141,15 +141,13 @@ public:
 
    FunctionDef():
      m_return(0),
-     m_fAddress(0)
+     m_fAddress(0),
+     m_fDeletor(0)
      {}
 
-  FunctionDef( const String& definition ):
-     m_return(0),
-     m_fAddress(0)
-   {
-      parse( definition );
-   }
+   FunctionDef( const String& definition );
+
+   FunctionDef( const String& definition, const String& deletor );
 
    FunctionDef( const FunctionDef& other );
    virtual ~FunctionDef();
@@ -189,6 +187,9 @@ public:
    /** Return this symbol's name */
    const String &name() const { return m_name; }
 
+   /** Return the deletor function name associated with this function return */
+   const String &deletorName() const { return m_deletorName; }
+
    /** Parses a string definition.
     * Throws ParseError* on error.
     */
@@ -200,24 +201,35 @@ public:
    void setFunctionPtr( void* ptr ) { m_fAddress = ptr; }
    void* functionPtr() const { return m_fAddress; }
 
+   void setDeletorPtr( void* ptr ) { m_fDeletor = ptr; }
+   void* deletorPtr() const { return m_fDeletor; }
+
    const ParamList& params() const { return m_params; }
    ParamList& params() { return m_params; }
 
    Parameter* retparam() const { return m_return; }
+
 private:
 
    Parameter* parseNextParam( Tokenizer& tok, bool isFuncName = false);
    void parseFuncParams( ParamList& params, Tokenizer& tok );
+   bool parseDeletor( const String& definition );
 
    String m_definition;
    String m_name;
    Parameter* m_return;
    ParamList m_params;
+   String m_deletorName;
 
    /**
       Function pointer
    */
    void *m_fAddress;
+
+   /**
+      Pointer of the deletor used for the data created by this function.
+   */
+   void *m_fDeletor;
 };
 
 class ParamValueList;
@@ -335,7 +347,7 @@ public:
    bool prepareReturn();
 
    /** Transforms the data in the return buffer in an item. */
-   bool toItem( Item& target );
+   bool toItem( Item& target, void* deletorPtr = 0 );
 
    Parameter* parameter() const { return m_param; }
 
@@ -421,6 +433,28 @@ private:
    void** m_compiledParams;
    int* m_compiledSizes;
 
+};
+
+
+class DynOpaque: public CoreObject
+{
+public:
+   DynOpaque( const CoreClass* cls, const String &tagName, void* data, void* deletor = 0 );
+   DynOpaque( const DynOpaque &other );
+   virtual ~DynOpaque();
+
+   virtual CoreObject *clone() const;
+   virtual bool setProperty( const String &prop, const Item &value );
+   virtual bool getProperty( const String &prop, Item &value ) const;
+
+   const String& tagName() const { return m_tagName; }
+   void* data() const { return m_opaqueData; }
+   void* deletor() const { return m_deletor; }
+
+private:
+   String m_tagName;
+   void *m_opaqueData;
+   void *m_deletor;
 };
 
 /**

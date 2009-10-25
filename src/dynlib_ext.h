@@ -53,8 +53,8 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  DynOpaque_dummy_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm );
-FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  testParser( ::Falcon::VMachine *vm );
 

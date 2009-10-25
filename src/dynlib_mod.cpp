@@ -23,8 +23,11 @@
 #include <falcon/tokenizer.h>
 #include <falcon/error.h>
 #include <falcon/membuf.h>
+#include <falcon/vm.h>
 
 #include "dynlib_mod.h"
+#include "dynlib_ext.h"
+#include "dynlib_st.h"
 
 namespace Falcon {
 
@@ -221,11 +224,53 @@ String ParamList::toString() const
 // Function Definition
 //===================================================
 
+FunctionDef::FunctionDef( const String& definition ):
+      m_return(0),
+      m_fAddress(0),
+      m_fDeletor(0)
+{
+   try {
+      parse( definition );
+   }
+   catch(...)
+   {
+      delete m_return;
+      throw;
+   }
+}
+
+
+FunctionDef::FunctionDef( const String& definition, const String& deletor ):
+   m_return(0),
+   m_fAddress(0),
+   m_fDeletor(0)
+{
+   try {
+      parse( definition );
+      if( m_return == 0 || m_return->indirections() == 0 ||
+         (m_return->m_type != Parameter::e_union && m_return->m_type != Parameter::e_struct)
+         )
+      {
+         throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
+               .desc( *VMachine::getCurrent()->currentModule()->getString(
+                  dyl_undeletable ) ) );
+      }
+      parseDeletor( deletor );
+   }
+   catch(...)
+   {
+      delete m_return;
+      throw;
+   }
+}
+
+
 FunctionDef::FunctionDef( const FunctionDef& other ):
    m_definition( other.m_definition ),
    m_name( other.m_name ),
    m_params( other.m_params ),
-   m_fAddress( other.m_fAddress )
+   m_fAddress( other.m_fAddress ),
+   m_fDeletor( other.m_fDeletor )
 {
    if ( other.m_return != 0 )
       m_return = new Parameter( *other.m_return );
@@ -254,7 +299,9 @@ bool FunctionDef::parse( const String& definition )
 
    if ( tok.getToken() != "(" )
    {
-      throw new ParseError( ErrorParam( e_syntax, __LINE__ ) );
+      throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+5, __LINE__ )
+            .desc( *VMachine::getCurrent()->currentModule()->getString(
+               dyl_invalid_syn ) ) );
    }
 
    // if we didn't throw, it means we have a return value.
@@ -271,6 +318,64 @@ bool FunctionDef::parse( const String& definition )
 
    // parse the main paramter list
    parseFuncParams( m_params, tok );
+
+   return true;
+}
+
+bool FunctionDef::parseDeletor( const String& definition )
+{
+   Tokenizer tok(TokenizerParams().wsIsToken().returnSep(), "();[],*");
+   tok.parse( definition );
+   if ( ! tok.hasCurrent() )
+   {
+      return false;
+   }
+
+   // parse the outer return type; as "(" is found, we get a formingParam in state,
+   // and we know we can start the parameter loop
+   Parameter* delret = parseNextParam( tok, true );
+   if( delret->m_type != Parameter::e_void )
+   {
+      delete delret;
+      throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__)
+            .desc( *VMachine::getCurrent()->currentModule()->getString(
+                  dyl_invalid_del ) ) );
+   }
+
+   delete delret;
+   if ( tok.getToken() != "(" )
+   {
+      throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+5, __LINE__ )
+                  .desc( *VMachine::getCurrent()->currentModule()->getString(
+                     dyl_invalid_syn ) ) );
+   }
+
+   // if we didn't throw, it means we have a return value.
+   // the return will have our name.
+   m_deletorName = m_return->m_name;
+
+   // now we can process the comma separated parameters.
+   tok.next();
+   if( tok.getToken() == ")" )
+   {
+      throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__)
+         .desc( *VMachine::getCurrent()->currentModule()->getString(
+               dyl_invalid_del ) ) );
+   }
+
+   // parse the main paramter list
+   ParamList pars;
+   parseFuncParams( pars, tok );
+   if ( pars.size() != 1 ||
+         pars.first()->m_type != m_return->m_type ||
+         pars.first()->indirections() == 0 ||
+         pars.first()->indirections() != m_return->indirections()
+      )
+   {
+      throw new ParseError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__)
+               .desc( *VMachine::getCurrent()->currentModule()->getString(
+                     dyl_invalid_del ) ) );
+   }
 
    return true;
 }
@@ -489,6 +594,7 @@ bool ParamValue::transformWithParam( const Item& item )
 
    case Parameter::e_short:
    case Parameter::e_int:
+   case Parameter::e_enum:
       switch( item.type() )
       {
       case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); return true;
@@ -563,12 +669,19 @@ bool ParamValue::transformWithParam( const Item& item )
       }
       return false;
 
-      /*
-   case Parameter::e_struct: ret += "struct"; break;
-   case Parameter::e_union: ret += "union"; break;
-   case Parameter::e_enum: ret += "enum"; break;
-   case Parameter::e_varpar: ret += "..."; break;
-   */
+   case Parameter::e_struct:
+   case Parameter::e_union:
+      if( item.isOfClass( "DynOpaque" ) )
+      {
+         DynOpaque* obj = static_cast<DynOpaque*>( item.asObject() );
+         transform((void *) obj->data() );
+         return true;
+      }
+      return false;
+
+   default:
+      return false;
+
    }
 
    return false;
@@ -663,34 +776,46 @@ bool ParamValue::prepareReturn()
 }
 
 
-bool ParamValue::toItem( Item& target )
+bool ParamValue::toItem( Item& target, void* deletorPtr )
 {
    fassert( m_param != 0);
 
    if( m_param->indirections() > 0 )
    {
-      // todo: create opaque data.
-      if( m_param->m_bConst )
+
+      switch( m_param->m_type )
       {
-         if( m_param->m_type == Parameter::e_char )
+      case Parameter::e_char:
          {
             CoreString* str = new CoreString;
             str->fromUTF8( (const char*)(m_buffer.vptr) );
             target = str;
-            return true;
          }
-         else if( m_param->m_type == Parameter::e_wchar_t )
+         return true;
+
+      case Parameter::e_wchar_t:
          {
             CoreString* str = new CoreString( (const wchar_t*)(m_buffer.vptr) );
             str->bufferize();
             target = str;
-            return true;
          }
+         return true;
+
+      case Parameter::e_struct:
+      case Parameter::e_union:
+         {
+            Item* i_dynop = VMachine::getCurrent()->findWKI( "DynOpaque" );
+            DynOpaque* obj = new DynOpaque( i_dynop->asClass(), m_param->m_tag, m_buffer.vptr, deletorPtr );
+            target = obj;
+         }
+         return true;
+
+      default:
+         // return the data as a pointer
+         target.setInteger( (int64) m_buffer.vptr );
+         return true;
       }
 
-      // returnt the data as a pointer
-      target.setInteger( (int64) m_buffer.vptr );
-      return true;
    }
    else switch( m_param->m_type )
    {
@@ -715,6 +840,7 @@ bool ParamValue::toItem( Item& target )
    case Parameter::e_signed_char:
    case Parameter::e_short:
    case Parameter::e_int:
+   case Parameter::e_enum:
       target = (int64) m_buffer.vint;
       break;
 
@@ -831,6 +957,65 @@ void ParamValueList::compile()
       m_compiledSizes[m_size] = 0;
    }
 }
+
+//==========================================================
+// DynOpaque
+//
+
+DynOpaque::DynOpaque( const CoreClass* cls, const String &tagName, void* data, void* deletor ):
+   CoreObject( cls ),
+   m_tagName( tagName ),
+   m_opaqueData( data ),
+   m_deletor( deletor )
+{
+}
+
+DynOpaque::DynOpaque( const DynOpaque &other ):
+   CoreObject( other ),
+   m_tagName( other.m_tagName ),
+   m_opaqueData( other.m_opaqueData ),
+   m_deletor( other.m_deletor )
+{
+}
+
+DynOpaque::~DynOpaque()
+{
+   if( m_deletor != 0 )
+   {
+      void(*func)(void*) = (void(*)(void*)) m_deletor;
+      func( m_opaqueData );
+   }
+}
+
+CoreObject *DynOpaque::clone() const
+{
+   return new DynOpaque( *this );
+}
+
+bool DynOpaque::setProperty( const String &prop, const Item &value )
+{
+   uint32 pos;
+   if( generator()->properties().findKey( prop, pos ) )
+      readOnlyError( prop );
+   return false;
+}
+
+bool DynOpaque::getProperty( const String &prop, Item &value ) const
+{
+   if( prop == "type" )
+   {
+      value = new CoreString( m_tagName );
+   }
+   else if ( prop == "ptr" )
+   {
+      value = (int64) m_opaqueData;
+   }
+   else
+      return defaultProperty( prop, value );
+
+   return true;
+}
+
 
 }
 
