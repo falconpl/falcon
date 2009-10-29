@@ -8,6 +8,7 @@ list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
 
 set(falcon_LIBRARIES  falcon_engine)
 
+find_program(falcon_EXECUTABLE falcon "${SELF_DIR}/../../../bin")
 
 ##<See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
 #
