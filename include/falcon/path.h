@@ -257,6 +257,44 @@ public:
    bool operator !=( const Path &other ) const { return other.m_path != m_path; }
    bool operator <( const Path &other ) const { return m_path < other.m_path; }
 
+
+   /** Converts an arbitrary MS-Windows Path to URI path.
+    An URI valid path starts either with a filename or with a "/"
+    if absolute. It can't start with a MS-Windows disk or unit
+    specifier as c:\\. Also, it can't contain backslashes.
+
+    This static function transforms the path parameter in place
+    so that it is changed into a valid URI path. For example:
+    \code
+       path\\to\\file.txt  => path/to/file.txt
+       \\path\\to\\file.txt => /path/to/file.txt
+       c:\\path\\to\\file.txt => /c:/path/to/file.txt
+    \endcode
+    @param path the path to be converted on place
+   */
+   static void winToUri( String &path );
+
+   /** Converts an arbitrary URI path into a MS-Windows path.
+    An URI valid path starts either with a filename or with a "/"
+    if absolute. It can't start with a MS-Windows disk or unit
+    specifier as c:\\. Also, it can't contain backslashes.
+
+    This static function transforms the path parameter in place
+    so that it is changed into a valid MSWindows path. For example:
+    \code
+        path/to/file.txt => path\\to\\file.txt
+        /path/to/file.txt => \\path\\to\\file.txt
+        /c:/path/to/file.txt = c:\\path\\to\\file.txt
+    \endcode
+
+      @note This function won't complain nor emit any warning
+      if path is not a valid URI path in the first place.
+      It's pretty dumb, but efficient.
+
+    @param path the path to be converted on place
+    @see getWinFormat
+   */
+   static void uriToWin( String &path );
 };
 
 }

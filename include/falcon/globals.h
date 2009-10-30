@@ -76,9 +76,15 @@ namespace Engine
       This is used by default in new VMs, module loaders and metacompilers.
    */
    FALCON_DYN_SYM void setSearchPath( const String &path );
-   
+
    /** Returns the application-wide default search path by copy. */
    FALCON_DYN_SYM String getSearchPath();
+
+   /** Return global setting for automatic conversion from windows paths */
+   FALCON_DYN_SYM bool getWindowsNamesConversion();
+
+   /** Changes global setting for automatic conversion from windows paths */
+   FALCON_DYN_SYM void setWindowsNamesConversion( bool s );
 
    class AutoInit {
    public:

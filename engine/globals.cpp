@@ -41,6 +41,11 @@ namespace Engine
    static String* s_sIOEnc = 0;
    static String* s_sSrcEnc = 0;
    static String* s_searchPath = 0;
+#ifdef FALCON_SYSTEM_WIN
+   static bool s_bWindowsNamesConversion = true;
+#else
+   static bool s_bWindowsNamesConversion = false;
+#endif
 
    /** Release language data. */
    void releaseLanguage();
@@ -224,6 +229,16 @@ namespace Engine
 
       s_mtx.unlock();
       return "";
+   }
+
+   void setWindowsNamesConversion( bool s )
+   {
+      s_bWindowsNamesConversion = s;
+   }
+
+   bool getWindowsNamesConversion()
+   {
+      return s_bWindowsNamesConversion;
    }
 
 }

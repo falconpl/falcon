@@ -471,4 +471,56 @@ void Path::join( const String &res, const String &loc, const String &name, const
    set(m_path);
 }
 
+
+void Path::winToUri( String &ret )
+{
+   int size = ret.length();
+   ret.bufferize();
+   bool prefix = false;
+
+   for( int i = 0; i < size; i ++ ) {
+      int chr = ret.getCharAt( i );
+      if( chr == '\\' )
+         ret.setCharAt( i, '/' );
+      else if ( chr == ':' )
+         prefix = true;
+   }
+
+   if( prefix && ret.getCharAt(0) != '/' )
+      ret.prepend('/');
+}
+
+
+void Path::uriToWin( String &result )
+{
+   result.bufferize();
+   bool bRem = false;
+
+   for( unsigned int i = 0; i < result.length(); i ++ )
+   {
+      int chr = result.getCharAt( i );
+      if( chr == '/' )
+      {
+         // "/C:" disk specificator?
+         if ( i == 0 )
+            bRem = true;
+         else
+            bRem = false;
+
+         result.setCharAt( i, '\\' );
+      }
+      else if ( chr == ':' )
+      {
+         // was the first "/" to be removed?
+         if ( bRem )
+         {
+            result.remove(0,1);
+            // get I back.
+            i--;
+         }
+      }
+   }
+}
+
+
 }

@@ -83,9 +83,6 @@ FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 namespace Falcon {
 namespace Sys {
    FALCON_DYN_SYM numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st );
-   FALCON_DYN_SYM void falconConvertWinFname( String &ret );
-   FALCON_DYN_SYM void falconToWin_fname( const String &path, const String &extra, String &result );
-   FALCON_DYN_SYM void falconToWin_fname( String &path );
 #endif
 
 }
