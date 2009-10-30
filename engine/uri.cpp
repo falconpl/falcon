@@ -81,11 +81,22 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
    }
 
    m_original = newUri;
+   
+   if ( Engine::getWindowsNamesConversion() )
+   {
+      if ( newUri.find( "\\" ) != String::npos || 
+         (newUri.length() > 2 && newUri.getCharAt(1) == ':' ) 
+         )
+      {
+         Path::winToUri( m_original );
+      }
+   }
+
 
    // We must parse before decoding each element.
    uint32 pStart = 0;
    uint32 pEnd = 0;
-   uint32 len = newUri.length();
+   uint32 len = m_original.length();
 
    typedef enum {
       e_begin,
@@ -104,7 +115,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
 
    while( pEnd < len )
    {
-      uint32 chr = newUri.getCharAt( pEnd );
+      uint32 chr = m_original.getCharAt( pEnd );
       switch ( chr )
       {
          case ':':
@@ -116,7 +127,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                state = e_colon;
             else if ( state == e_host )
             {
-               m_host = newUri.subString( pStart, pEnd );
+               m_host = m_original.subString( pStart, pEnd );
                state = e_port;
                pStart = pEnd + 1;
             }
@@ -137,7 +148,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                   return false;
 
                state = e_postScheme; // like begin, we may have a host or a path
-               m_scheme = newUri.subString( pStart, pEnd-1 ); // removing extra ':'
+               m_scheme = m_original.subString( pStart, pEnd-1 ); // removing extra ':'
                pStart = pEnd+1;
             }
             else if ( state == e_postScheme )
@@ -151,7 +162,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                // we have the full host
                // may be empty (as in file:///path)
                if ( pStart != pEnd )
-                  m_host = newUri.subString( pStart, pEnd );
+                  m_host = m_original.subString( pStart, pEnd );
                // anyhow, start the path from here
                pStart = pEnd;
                state = e_path;
@@ -162,7 +173,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                if ( pStart == pEnd ) // cannot be empty.
                   return false;
 
-               m_port = newUri.subString( pStart, pEnd );
+               m_port = m_original.subString( pStart, pEnd );
                // anyhow, start the path from here
                pStart = pEnd;
                state = e_path;
@@ -175,7 +186,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             {
                // ops, the host wasn't the host, and the port wasn't the port.
                state = e_host;
-               m_userInfo = m_host + ":" + newUri.subString( pStart, pEnd );
+               m_userInfo = m_host + ":" + m_original.subString( pStart, pEnd );
                m_host = "";
                pStart = pEnd + 1;
             }
@@ -185,7 +196,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                if ( bUserGiven )
                   return false;
 
-               m_userInfo = newUri.subString( pStart, pEnd );
+               m_userInfo = m_original.subString( pStart, pEnd );
                pStart = pEnd + 1;
                // state stays host, but signal we have already seen a @ here
                bUserGiven = true;
@@ -201,15 +212,15 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             // can be found in host, port, path and begin state
             if ( state == e_begin || state == e_path )
             {
-               tempPath = newUri.subString( pStart, pEnd );
+               tempPath = m_original.subString( pStart, pEnd );
             }
             else if ( state == e_host )
             {
-               m_host = newUri.subString( pStart, pEnd );
+               m_host = m_original.subString( pStart, pEnd );
             }
             else if ( state == e_port )
             {
-               m_port = newUri.subString( pStart, pEnd );
+               m_port = m_original.subString( pStart, pEnd );
             }
             // cannot be found in e_colon, that would be an error
             else if ( state == e_colon )
@@ -239,7 +250,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             else if ( state == e_colon )
             {
                // if we are in colon state, then previous thing (begin) is to be considered host
-               m_host = newUri.subString( pStart, pEnd - 1 );
+               m_host = m_original.subString( pStart, pEnd - 1 );
                pStart = pEnd;
                state = e_port;
             }
@@ -254,15 +265,15 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
       case e_begin:
       case e_path:
       case e_colon: // colon too, as it may be i.e. C:
-         tempPath = newUri.subString( pStart, pEnd );
+         tempPath = m_original.subString( pStart, pEnd );
       break;
 
       case e_host:
-         m_host = newUri.subString( pStart, pEnd );
+         m_host = m_original.subString( pStart, pEnd );
          break;
 
       case e_port:
-         m_port = newUri.subString( pStart, pEnd );
+         m_port = m_original.subString( pStart, pEnd );
          break;
       // in all other cases, just let it through
       default:

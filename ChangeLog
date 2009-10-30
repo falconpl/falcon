@@ -1,3 +1,8 @@
+Falcon (0.9.4.5)
+  * minor: On windows, stream functions now accept paths also in windows 
+           format. This is controlled by an engine global setting that
+           is ON by default on windows and OFF elsewhere.
+           
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
            Falcon side Table item as owner. This caused crash with some
