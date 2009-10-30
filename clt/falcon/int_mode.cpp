@@ -97,7 +97,7 @@ void IntMode::run()
          
          try
          {
-			comp.lexer()->line( linenum );
+            comp.lexer()->line( linenum );
             lastRet1 = comp.compileNext( codeSlice + line + "\n" );
          }
          catch( Error *err )

@@ -140,7 +140,7 @@ void VMachine::run()
    // declare this as the running machine
    setCurrent();
 
-   while( true )
+   while( ! m_break )
    {
       try {
          // move m_currentContext->pc_next() to the end of instruction and beginning of parameters.
@@ -192,13 +192,7 @@ void VMachine::run()
          }
 
          // Jump to next isntruction.
-
          m_currentContext->pc() = m_currentContext->pc_next();
-      }
-      catch( VMEventReturn & )
-      {
-         //m_currentContext->pc() = m_currentContext->pc_next();
-         return;
       }
       // catches explicitly raised items.
       catch( Item& raised )
@@ -213,6 +207,8 @@ void VMachine::run()
          handleRaisedError( err );
       }
    } // end while -- VM LOOP
+
+   m_break = false;
 }
 
 /****************************************************

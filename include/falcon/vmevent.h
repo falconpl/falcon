@@ -42,7 +42,6 @@ class VMEvent: public BaseAlloc
 public:
    typedef enum {
       evQuit,
-      evReturn,
       evOpLimit,
       evMemLimit,
       evDepthLimit
@@ -69,13 +68,6 @@ class VMEventQuit: public VMEvent
 {
 public:
    VMEventQuit(): VMEvent( evQuit )
-   {}
-};
-
-class VMEventReturn: public VMEvent
-{
-public:
-   VMEventReturn(): VMEvent( evReturn )
    {}
 };
 

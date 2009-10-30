@@ -2,6 +2,8 @@ Falcon (0.9.4.5)
   * minor: On windows, stream functions now accept paths also in windows 
            format. This is controlled by an engine global setting that
            is ON by default on windows and OFF elsewhere.
+  * fixed: Throws to manage return frames was a bit excessive. This
+           wasted lots of time in atomic calls.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

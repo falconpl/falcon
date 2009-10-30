@@ -438,6 +438,9 @@ protected:
    */
    volatile int m_refcount;
 
+   /** True if current frame should break */
+   bool m_break;
+
    /** Finalization hook for MT system. */
    void (*m_onFinalize)(VMachine *vm);
 
@@ -2185,6 +2188,9 @@ public:
     into them.
     * */
    void expandTRAV( uint32 count, Iterator& iter );
+
+   void breakRequest( bool mode ) { m_break = mode; }
+   bool breakRequest() const { return m_break; }
 
 //==========================================================================
 //==========================================================================

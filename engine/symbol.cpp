@@ -324,7 +324,7 @@ bool FuncDef::save( Stream *out ) const
          bool res = out->write( ecode, m_codeSize );
          memFree( ecode );
       #else
-         bool res = out->write( m_code, m_codeSize ) == m_codeSize;
+         bool res = out->write( m_code, m_codeSize ) == (int) m_codeSize;
       #endif
 
       if ( ! res )

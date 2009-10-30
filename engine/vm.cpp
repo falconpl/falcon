@@ -61,7 +61,8 @@ VMachine::VMachine():
    m_baton( this ),
    m_msg_head(0),
    m_msg_tail(0),
-   m_refcount(1)
+   m_refcount(1),
+   m_break(false)
 {
    internal_construct();
    init();
@@ -77,7 +78,8 @@ VMachine::VMachine( bool initItems ):
    m_baton( this ),
    m_msg_head(0),
    m_msg_tail(0),
-   m_refcount(1)
+   m_refcount(1),
+   m_break(false)
 {
    internal_construct();
    if ( initItems )
@@ -1739,7 +1741,7 @@ void VMachine::callReturn()
       }
    }
 
-   bool bBreak = frame.m_break;
+   m_break = frame.m_break;
 
    // Ok, we can unroll the stak.
 
@@ -1761,12 +1763,7 @@ void VMachine::callReturn()
    stack().resize( oldBase );
 
    // if we have nowhere to return...
-   if( bBreak )
-   {
-      m_currentContext->pc() = m_currentContext->pc_next();
-      throw VMEventReturn();
-   }
-   else if( stackBase() == 0 )
+   if( stackBase() == 0 && ! m_break )
    {
       terminateCurrentContext();
    }
@@ -3678,17 +3675,12 @@ void VMachine::handleRaisedItem( Item& value )
    // Enter the stack frame that should handle the error (or raise to the top if uncaught)
    while( stackBase() > tryFrame() )
    {
-      // incase of return request...
-      try {
-         // neutralize post-processors
-         currentFrame()->m_endFrameFunc = 0;
-         callReturn();
-      }
-      catch( VMEventReturn & )
-      {
-         // rethrow the item -- upper VM will have to deliver it to the script
-         throw value;
-      }
+      // neutralize post-processors
+      currentFrame()->m_endFrameFunc = 0;
+      callReturn();
+      // let the VM deal with returns
+      if ( m_break )
+         return;
    }
 
    // we must be out of that loop in a stack area where tryframe is landed.
@@ -3714,15 +3706,13 @@ void VMachine::handleRaisedError( Error* err )
       // Enter the stack frame that should handle the error (or raise to the top if uncaught)
       while( stackBase() > tryFrame() )
       {
-         // incase of return request...
-         try {
-            // neutralize post-processors
-            currentFrame()->m_endFrameFunc = 0;
-            callReturn();
-         }
-         catch( VMEventReturn & )
+         // neutralize post-processors
+         currentFrame()->m_endFrameFunc = 0;
+         callReturn();
+         // let the VM deal with returns
+         if ( m_break )
          {
-            // rethrow the item -- upper VM will have to deliver it to the script
+            m_break = false;
             throw err;
          }
       }
