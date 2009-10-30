@@ -21,6 +21,7 @@
 #include <falcon/memory.h>
 #include <falcon/sys.h>
 #include <falcon/vm_sys_win.h>
+#include <falcon/path.h>
 
 #include <Wincon.h>
 
@@ -477,8 +478,8 @@ bool FileStream::open( const String &filename_flc, t_openMode mode, t_shareMode 
 		shmode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
    // todo: do something about share mode
-	String filename;
-	Sys::falconToWin_fname( filename_flc, "", filename );
+	String filename = filename_flc;
+   Path::uriToWin( filename );
 
 	uint32 bufsize = filename.length() * sizeof( wchar_t ) + sizeof( wchar_t );
 
@@ -547,8 +548,8 @@ bool FileStream::create( const String &filename_flc, t_attributes mode, t_shareM
 		shmode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
    // todo: do something about share mode
-	String filename;
-	Sys::falconToWin_fname( filename_flc, "", filename );
+	String filename = filename_flc;
+   Path::uriToWin( filename );
 
 	uint32 bufsize = filename.length() * sizeof( wchar_t ) + sizeof( wchar_t );
    wchar_t *buffer = ( wchar_t *) memAlloc( bufsize );

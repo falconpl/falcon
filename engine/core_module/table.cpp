@@ -681,7 +681,7 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
       pos = page->length();
    else
    {
-      pos = i_pos->forceInteger();
+      pos = (uint32) i_pos->forceInteger();
 
       // insert a bottom?
       if( pos > page->length() )

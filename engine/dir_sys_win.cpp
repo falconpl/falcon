@@ -22,6 +22,7 @@
 #include <falcon/dir_sys_win.h>
 #include <falcon/time_sys_win.h>
 #include <falcon/timestamp.h>
+#include <falcon/path.h>
 
 #include <cstring>
 
@@ -37,7 +38,7 @@ namespace Sys {
 bool fal_fileType( const String &filename, FileStat::e_fileType &st )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
 
    AutoWString wstrBufName( fname );
 	DWORD attribs = GetFileAttributesW( wstrBufName.w_str() );
@@ -63,7 +64,7 @@ bool fal_fileType( const String &filename, FileStat::e_fileType &st )
 bool fal_stats( const String &filename, FileStat &sts )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
 
 	AutoWString wBuffer( fname );
    // First, determine if the file exists
@@ -200,7 +201,7 @@ bool fal_stats( const String &filename, FileStat &sts )
 bool fal_mkdir( const String &filename, int32 &fsStatus )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
 
    AutoWString wBuffer( fname );
    BOOL res = CreateDirectoryW( wBuffer.w_str(), NULL );
@@ -221,7 +222,7 @@ bool fal_mkdir( const String &filename, int32 &fsStatus )
 bool fal_rmdir( const String &filename, int32 &fsStatus )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
 
    AutoWString wBuffer( fname );
    BOOL res = RemoveDirectoryW( wBuffer.w_str() );
@@ -241,7 +242,7 @@ bool fal_rmdir( const String &filename, int32 &fsStatus )
 bool fal_unlink( const String &filename, int32 &fsStatus )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
 
    AutoWString wBuffer( fname );
    BOOL res = DeleteFileW( wBuffer.w_str() );
@@ -261,9 +262,9 @@ bool fal_unlink( const String &filename, int32 &fsStatus )
 bool fal_move( const String &filename, const String &dest, int32 &fsStatus )
 {
    String fname1 = filename;
-   Sys::falconToWin_fname( fname1 );
+   Path::uriToWin( fname1 );
    String fname2 = dest;
-   Sys::falconToWin_fname( fname2 );
+   Path::uriToWin( fname2 );
 
    AutoWString wBuffer1( fname1 );
    AutoWString wBuffer2( fname2 );
@@ -286,7 +287,7 @@ bool fal_move( const String &filename, const String &dest, int32 &fsStatus )
 bool fal_chdir( const String &filename, int32 &fsStatus )
 {
    String fname = filename;
-   Sys::falconToWin_fname( fname );
+   Path::uriToWin( fname );
    
    AutoWString wBuffer( fname );
 
@@ -327,7 +328,7 @@ bool fal_getcwd( String &cwd, int32 &fsError )
 		}
 
 		cwd.adopt( buffer_c, size, bufSize );
-		Sys::falconConvertWinFname( cwd );
+		Path::winToUri( cwd );
 		return true;
 	}
 
@@ -338,7 +339,7 @@ bool fal_getcwd( String &cwd, int32 &fsError )
    }
 
    cwd.adopt( buffer, size, bufSize );
-   Sys::falconConvertWinFname( cwd );
+   Path::winToUri( cwd );
 
    return true;
 }
@@ -373,8 +374,8 @@ bool fal_writelink( const String &fname, String &link )
 
 ::Falcon::DirEntry *fal_openDir( const String &path, int32 &fsError )
 {
-   String fname;
-   Sys::falconToWin_fname( path, "\\*", fname );
+   String fname = path + "\\*";
+   Path::uriToWin( fname );
 
    AutoWString wBuffer( fname );
 
@@ -427,7 +428,7 @@ bool DirEntry_win::read( String &str )
 	else
 		str.bufferize( ((WIN32_FIND_DATA*) &m_raw_dir)->cFileName );
 
-   Sys::falconConvertWinFname( str );
+   Path::winToUri( str );
    return true;
 }
 

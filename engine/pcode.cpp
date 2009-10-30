@@ -45,7 +45,7 @@ void PCODE::convertEndianity( uint32 paramType, byte* targetArea, bool into )
             uint64 value64 = loadInt64( targetArea );
             // endianize each subpart, and invert their position.
             *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = endianInt32((uint32)(value64 >> 32));
-            *reinterpret_cast<uint32 *>(targetArea) = (uint32) endianInt32(value64 & 0xFFFFFFFF);
+            *reinterpret_cast<uint32 *>(targetArea) = (uint32) endianInt32((uint32)(value64 & 0xFFFFFFFF));
          }
          else {
             // load from different endianity
@@ -175,7 +175,7 @@ void PCODE::deendianize( byte* code, uint32 codeSize, bool into )
                // the int64 value
                uint64 value64 = loadInt64( code+iPos );
                // high part - low part
-               *reinterpret_cast<uint32 *>(code+iPos+sizeof(uint32)) = endianInt32((value64 >> 32));
+               *reinterpret_cast<uint32 *>(code+iPos+sizeof(uint32)) = endianInt32((uint32)(value64 >> 32));
                *reinterpret_cast<uint32 *>(code+iPos) = endianInt32((uint32) value64);
             }
             else {

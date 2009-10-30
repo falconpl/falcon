@@ -18,6 +18,7 @@
 #include <falcon/dll_win.h>
 #include <falcon/memory.h>
 #include <falcon/sys.h>
+#include <falcon/path.h>
 
 namespace Falcon
 {
@@ -33,8 +34,8 @@ bool DllLoader_win::open( const String &dll_name_fal )
       if ( ! FreeLibrary( m_module ) )
          return false;
 
-	String dll_name;
-	Sys::falconToWin_fname( dll_name_fal, "", dll_name );
+	String dll_name = dll_name_fal;
+   Path::uriToWin( dll_name );
 
 	uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
 	wchar_t *dll_name_wc = (wchar_t *) memAlloc( bufsize );

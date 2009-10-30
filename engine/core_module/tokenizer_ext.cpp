@@ -117,7 +117,7 @@ FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm )
          {
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                   .origin( e_orig_runtime )
-                  .sysError( source->lastError() ) );
+                  .sysError( (uint32) source->lastError() ) );
          }
       }
    }
@@ -169,7 +169,7 @@ FALCON_FUNC  Tokenizer_parse ( ::Falcon::VMachine *vm )
       {
          throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .origin( e_orig_runtime )
-               .sysError( source->lastError() ) );
+               .sysError( (uint32) source->lastError() ) );
       }
    }
 }

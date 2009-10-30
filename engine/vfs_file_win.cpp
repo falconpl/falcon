@@ -75,7 +75,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    DWORD oshare = win_paramsToShare( p );
 
    String path = uri.path();
-   Sys::falconToWin_fname( path );
+   Path::uriToWin( path );
    AutoWString wstr( path );
 
    HANDLE handle = CreateFileW( wstr.w_str(),
@@ -139,7 +139,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
    }
 
    String path = uri.path();
-   Sys::falconToWin_fname( path );
+   Path::uriToWin( path );
    AutoWString wstr( path );
 
    HANDLE handle = CreateFileW( wstr.w_str(),
