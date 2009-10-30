@@ -45,7 +45,14 @@ endif(WIN32)
 #
 ## </Subset of falcon-config.cmake>
 
-
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(NOT DISABLE_RPATH)
+  # Always find libfalcon_engone.so in build and install tree, without LD_LIBRARY_PATH.
+  set(CMAKE_SKIP_BUILD_RPATH  false)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false) 
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+endif()
 
 if(WIN32)
    SET( FALCON_HOST_SYSTEM "WINDOWS" )
