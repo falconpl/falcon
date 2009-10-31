@@ -26,7 +26,7 @@ class AppFalcon;
 
 class IntMode
 {
-   void read_line( Stream *in, String &line, uint32 maxSize );
+   void read_line(String &line, const char* prompt);
    AppFalcon *m_owner;
 
 public:

@@ -87,6 +87,7 @@ public:
    virtual ~Transcoder();
 
    virtual t_status status() const { return m_stream->status(); }
+   virtual void status( t_status s ) { m_stream->status( s ); }
    
    virtual bool isTranscoder() const { return true; }
 

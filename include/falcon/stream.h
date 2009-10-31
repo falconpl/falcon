@@ -136,7 +136,7 @@ public:
 
    t_streamType type() const { return m_streamType; }
    virtual t_status status() const { return m_status; }
-   void status( t_status s ) { m_status = s; }
+   virtual void status( t_status s ) { m_status = s; }
 
    uint32 lastMoved() const { return m_lastMoved; }
 

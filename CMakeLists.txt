@@ -6,6 +6,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(Falcon_Core)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 # NOTE The following is alos content of falcon-config.make.in.  We might 
 # seperate it into its own file and generate 

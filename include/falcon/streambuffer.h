@@ -83,6 +83,7 @@ public:
    }
    virtual int64 lastError() const { return m_stream->lastError(); }
    virtual t_status status() const { return m_stream->status(); }
+   virtual void status(t_status s) { return m_stream->status(s); }
    
    /** Disengages this transcoder from the underlying stream. */
    void detach() { m_stream = 0; m_streamOwner = false; }

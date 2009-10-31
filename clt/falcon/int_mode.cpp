@@ -17,25 +17,13 @@
 #include <falcon/intcomp.h>
 #include <falcon/src_lexer.h>
 
+#include <stdio.h>
+
 IntMode::IntMode( AppFalcon* owner ):
    m_owner( owner )
 {}
 
 
-void IntMode::read_line( Stream *in, String &line, uint32 maxSize )
-{
-   line.reserve( maxSize );
-   line.size(0);
-   uint32 chr;
-   while ( line.length() < maxSize && in->get( chr ) )
-   {
-      if ( chr == '\r' )
-         continue;
-      if ( chr == '\n' )
-         break;
-      line += chr;
-   }
-}
 
 void IntMode::run()
 {
@@ -65,6 +53,7 @@ void IntMode::run()
    #endif
 
    stdOut->writeString(" to exit\n" );
+   stdOut->flush();
 
    InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
    String line, pline, codeSlice;
@@ -77,10 +66,7 @@ void IntMode::run()
             )
          ? "... " : ">>> ";
 
-      stdOut->writeString( prompt );
-      stdOut->flush();
-
-      read_line( stdIn, pline, 1024 );
+      read_line(pline, prompt);
       if ( pline.size() > 0 )
       {
          if( pline.getCharAt( pline.length() -1 ) == '\\' )
@@ -105,6 +91,7 @@ void IntMode::run()
             String temp = err->toString();
             err->decref();
             stdOut->writeString( temp );
+            stdOut->flush();
             // in case of error detected at context end, close it.
             line.trim();
             if( line == "end" || line.endsWith( "]" )
@@ -149,6 +136,7 @@ void IntMode::run()
                   comp.vm()->pushParameter( comp.vm()->regA() );
                   comp.vm()->callItem( *describe, 1 );
                   stdOut->writeString( ": " + *comp.vm()->regA().asString() + "\n" );
+                  stdOut->flush();
                }
                // fallthrough
                
