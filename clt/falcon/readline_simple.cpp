@@ -15,6 +15,8 @@
 
 #include "int_mode.h"
 
+using namespace Falcon;
+
 void IntMode::read_line(String &line, const char* prompt)
 {
    m_owner->m_stdOut->writeString(prompt);
