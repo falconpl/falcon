@@ -19,6 +19,8 @@
 
 #include <stdio.h>
 
+using namespace Falcon;
+
 IntMode::IntMode( AppFalcon* owner ):
    m_owner( owner )
 {}

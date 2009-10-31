@@ -45,7 +45,7 @@ AppFalcon::AppFalcon():
    m_script_pos( 0 )
 {
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
-   Falcon::Sys::_dummy_ctrl_c_handler();
+   Sys::_dummy_ctrl_c_handler();
 
    // Prepare the Falcon engine to start.
    Engine::Init();

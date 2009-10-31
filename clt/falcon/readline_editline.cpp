@@ -45,11 +45,9 @@ void IntMode::read_line(String &line, const char* prompt)
    line.reserve( 1024 );
    line.size(0);
 
-   char* buf = readline(prompt);
-
-   if( buf != 0 )
+   if( char* buf = readline(prompt) )
    { 
-     if (buf[0]!=0)
+     if (buf[0] != 0)
      { 
        line += String(buf);
        add_history(buf);

@@ -21,10 +21,11 @@
 #define FALCON_CLT_H
 
 #include <falcon/engine.h>
-using namespace Falcon; // TODO using namespace in a header file, evil!
 
 #include "options.h"
 #include "int_mode.h"
+
+namespace Falcon {
 
 /** Typical embedding applications. */
 class AppFalcon
@@ -87,6 +88,8 @@ public:
    Stream* m_stdErr;
 
 };
+
+} // namespace Falcon
 
 #endif
 

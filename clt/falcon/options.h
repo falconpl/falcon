@@ -23,6 +23,8 @@
 #include <falcon/string.h>
 #include <falcon/genericlist.h>
 
+namespace Falcon {
+
 /** Options storage for falcon compiler
    This class is just a nice place to store options for the compiler and their defaults.
 */
@@ -35,19 +37,19 @@ class FalconOptions
 
 public:
 
-   Falcon::String input;
-   Falcon::String output;
-   Falcon::String load_path;
-   Falcon::String io_encoding;
-   Falcon::String source_encoding;
-   Falcon::String module_language;
+   String input;
+   String output;
+   String load_path;
+   String io_encoding;
+   String source_encoding;
+   String module_language;
 #ifndef NDEBUG
-   Falcon::String trace_file;
+   String trace_file;
 #endif
 
-   Falcon::List preloaded;
-   Falcon::List directives;
-   Falcon::List defines;
+   List preloaded;
+   List directives;
+   List defines;
 
    bool compile_only;
    bool run_only;
@@ -77,6 +79,8 @@ public:
    /** Returns true if the parsed options required an immediate exit. */
    bool wasJustInfo() const { return m_justinfo; }
 };
+
+} // namespace Falcon
 
 #endif
 

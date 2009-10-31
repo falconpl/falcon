@@ -22,6 +22,8 @@
 
 #include "falcon.h"
 
+namespace Falcon {
+
 class AppFalcon;
 
 class IntMode
@@ -34,6 +36,8 @@ public:
 
    void run();
 };
+
+} // namespace Falcon
 
 #endif
 
