@@ -135,7 +135,7 @@ public:
    */
    void setError( int64 errorCode );
 
-   virtual FalconData *clone() const;
+   virtual BaseFileStream *clone() const;
 };
 
 class FALCON_DYN_CLASS FileStream: public BaseFileStream

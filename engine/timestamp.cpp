@@ -971,7 +971,7 @@ void TimeStamp::changeTimezone( TimeZone tz )
    m_timezone = tz;
 }
 
-FalconData *TimeStamp::clone() const
+TimeStamp *TimeStamp::clone() const
 {
    return new TimeStamp( *this );
 }

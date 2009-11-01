@@ -41,7 +41,7 @@ ItemSetElement* ItemSet::duplicateSubTree( ItemSetElement* parent, const ItemSet
 }
 
 
-FalconData *ItemSet::clone() const
+ItemSet *ItemSet::clone() const
 {
    return new ItemSet(*this);
 }

@@ -65,7 +65,7 @@ FileStat::~FileStat() {
 // Reflection
 //
 
-FalconData *FileStat::clone() const
+FileStat *FileStat::clone() const
 {
    FileStat *other = new FileStat( *this );
    return other;

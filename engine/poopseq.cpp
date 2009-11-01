@@ -87,7 +87,7 @@ void PoopSeq::gcMark( uint32 gen )
 }
 
 
-FalconData* PoopSeq::clone() const
+PoopSeq* PoopSeq::clone() const
 {
    return new PoopSeq( *this );
 }

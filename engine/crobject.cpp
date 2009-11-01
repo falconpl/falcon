@@ -94,7 +94,7 @@ bool CRObject::getProperty( const String &propName, Item &ret ) const
    return false;
 }
 
-CoreObject *CRObject::clone() const
+CRObject *CRObject::clone() const
 {
    return new CRObject( *this );
 }

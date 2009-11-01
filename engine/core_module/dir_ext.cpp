@@ -79,7 +79,7 @@ void FileStatObject::gcMark( uint32 mark )
    memPool->markItem( getInnerData()->m_cache_ctime );
 }
 
-CoreObject* FileStatObject::clone() const
+FileStatObject* FileStatObject::clone() const
 {
    return new FileStatObject( *this );
 }

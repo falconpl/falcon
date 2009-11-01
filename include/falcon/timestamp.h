@@ -194,7 +194,7 @@ public:
    bool operator <=( const TimeStamp &ts ) const { return this->compare( ts ) <= 0; }
    bool operator >=( const TimeStamp &ts ) const { return this->compare( ts ) >= 0; }
 
-   virtual FalconData *clone() const;
+   virtual TimeStamp *clone() const;
 };
 
 inline TimeStamp operator + ( const TimeStamp &ts1, const TimeStamp &ts2 )

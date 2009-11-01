@@ -70,7 +70,7 @@ StreamBuffer::~StreamBuffer()
 }
 
 
-FalconData *StreamBuffer::clone() const
+StreamBuffer *StreamBuffer::clone() const
 {
    return new StreamBuffer( *this );
 }

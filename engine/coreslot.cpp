@@ -122,7 +122,7 @@ bool CoreSlot::remove( const Item &subscriber )
    return false;
 }
 
-FalconData *CoreSlot::clone() const
+CoreSlot *CoreSlot::clone() const
 {
    incref();
    return const_cast<CoreSlot*>(this);
@@ -231,7 +231,7 @@ void CoreSlotCarrier::setSlot( CoreSlot* cs )
 }
 
 
-CoreObject *CoreSlotCarrier::clone() const
+CoreSlotCarrier *CoreSlotCarrier::clone() const
 {
    return new CoreSlotCarrier( *this );
 }

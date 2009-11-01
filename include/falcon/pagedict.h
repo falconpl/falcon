@@ -63,7 +63,7 @@ public:
    virtual bool remove( const Item &key );
    virtual void put( const Item &key, const Item &value );
 
-   virtual FalconData *clone() const;
+   virtual PageDict *clone() const;
    virtual void merge( const ItemDict &dict );
    virtual void clear();
    virtual bool empty() const;

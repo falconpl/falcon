@@ -176,7 +176,7 @@ bool Stream::writeString( const String &source, uint32 begin, uint32 end )
 // Overridables
 //
 
-FalconData *Stream::clone() const
+Stream *Stream::clone() const
 {
    return 0;
 }

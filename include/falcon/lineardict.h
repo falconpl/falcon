@@ -82,7 +82,7 @@ public:
    LinearDict();
    LinearDict( uint32 prealloc );
    ~LinearDict();
-   virtual FalconData *clone() const;
+   virtual LinearDict *clone() const;
    virtual void gcMark( uint32 gen );
 
    virtual uint32 length() const;

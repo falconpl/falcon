@@ -52,7 +52,7 @@ ItemList::ItemList( const ItemList &l ):
 
 
 
-FalconData *ItemList::clone() const
+ItemList *ItemList::clone() const
 {
    return new ItemList( *this );
 }

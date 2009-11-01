@@ -43,7 +43,7 @@ public:
    void wait( VMachine *vm, double time = -1.0 );
 
    void unsubscribe( VMContext *ctx );
-   virtual FalconData *clone() const;
+   virtual VMSemaphore *clone() const;
    virtual void gcMark( uint32 mark ) {}
 };
 

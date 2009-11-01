@@ -125,7 +125,7 @@ public:
    /** Deletes the list.
       Items are shallowly destroyed.
    */
-   virtual FalconData *clone() const;
+   virtual ItemSet *clone() const;
 
    /** Gets the first item in the list.
       If the list is empty, you will crash, so use this only when the list is

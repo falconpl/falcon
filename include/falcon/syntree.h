@@ -586,7 +586,7 @@ public:
       Statement( other )
    {}
 
-   Statement *clone() const;
+   StmtNone *clone() const;
 };
 
 
@@ -605,7 +605,7 @@ public:
    SymbolList &getSymbols() { return m_symbols; }
    const SymbolList &getSymbols() const { return m_symbols; }
 
-   virtual Statement *clone() const;
+   virtual StmtGlobal *clone() const;
 };
 
 
@@ -624,7 +624,7 @@ public:
    ~StmtUnref();
 
    Value *symbol() const { return m_symbol; }
-   virtual Statement *clone() const;
+   virtual StmtUnref *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtSelfPrint: public Statement
@@ -641,7 +641,7 @@ public:
 
    ~StmtSelfPrint();
 
-   virtual Statement *clone() const;
+   virtual StmtSelfPrint *clone() const;
 
    ArrayDecl *toPrint() const { return m_toPrint; }
 };
@@ -662,7 +662,7 @@ public:
    virtual ~StmtExpression();
 
    Value *value() const { return m_expr; }
-   virtual Statement *clone() const;
+   virtual StmtExpression *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtFordot: public StmtExpression
@@ -674,7 +674,7 @@ public:
 
    StmtFordot( const StmtFordot &other );
 
-   virtual Statement *clone() const;
+   virtual StmtFordot *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtAutoexpr: public StmtExpression
@@ -686,7 +686,7 @@ public:
 
    StmtAutoexpr( const StmtAutoexpr &other );
 
-   virtual Statement *clone() const;
+   virtual StmtAutoexpr *clone() const;
 };
 
 
@@ -701,7 +701,7 @@ public:
       StmtExpression( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtReturn *clone() const;
 };
 
 
@@ -716,7 +716,7 @@ public:
       StmtExpression( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtLaunch *clone() const;
 };
 
 
@@ -731,7 +731,7 @@ public:
       StmtExpression( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtRaise *clone() const;
 };
 
 
@@ -754,7 +754,7 @@ public:
    ArrayDecl *objects() const { return m_objects; }
    ArrayDecl *attributes() const { return m_attribs; }
 
-   virtual Statement *clone() const;
+   virtual StmtGive *clone() const;
 };
 
 
@@ -784,7 +784,7 @@ public:
       StmtLoopCtl( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtBreak *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtContinue: public StmtLoopCtl
@@ -802,7 +802,7 @@ public:
    {}
 
    bool dropping() const { return m_dropping; }
-   virtual Statement *clone() const;
+   virtual StmtContinue *clone() const;
 };
 
 
@@ -855,7 +855,7 @@ public:
       StmtConditional( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtLoop *clone() const;
 
    void setCondition( Value *cond ) { m_condition = cond; }
 };
@@ -872,7 +872,7 @@ public:
       StmtConditional( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtWhile *clone() const;
 };
 
 
@@ -887,7 +887,7 @@ public:
       StmtConditional( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtElif *clone() const;
 };
 
 
@@ -908,7 +908,7 @@ public:
    const StatementList &elifChildren() const { return m_elseifs; }
    StatementList &elifChildren() { return m_elseifs; }
 
-   virtual Statement *clone() const;
+   virtual StmtIf *clone() const;
 };
 
 
@@ -942,7 +942,7 @@ public:
    Value *source() const { return m_source; }
    ArrayDecl *dest() const { return m_dest; }
 
-   virtual Statement *clone() const;
+   virtual StmtForin *clone() const;
 };
 
 
@@ -957,7 +957,7 @@ public:
       StmtBlock( other )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtCaseBlock *clone() const;
 };
 
 
@@ -1021,7 +1021,7 @@ public:
 
    int currentBlock() const { return m_blocks.size(); }
 
-   virtual Statement *clone() const;
+   virtual StmtSwitch *clone() const;
 };
 
 
@@ -1034,7 +1034,7 @@ public:
    StmtSelect( uint32 line, Value *expr );
    StmtSelect( const StmtSelect &other );
 
-   virtual Statement *clone() const;
+   virtual StmtSelect *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtCatchBlock: public StmtBlock
@@ -1053,7 +1053,7 @@ public:
 
    Value *intoValue() const { return m_into; }
 
-   virtual Statement *clone() const;
+   virtual StmtCatchBlock *clone() const;
 };
 
 
@@ -1100,7 +1100,7 @@ public:
 
    int currentBlock() const { return m_handlers.size(); }
 
-   virtual Statement *clone() const;
+   virtual StmtTry *clone() const;
 };
 
 /** Module statement.
@@ -1113,7 +1113,7 @@ public:
       StmtBlock( line, t_module )
    {}
 
-   virtual Statement *clone() const;
+   virtual StmtModule *clone() const;
 };*/
 
 
@@ -1188,7 +1188,7 @@ public:
    /** Singleton associated to this class, if any. */
    Symbol *singleton() const { return m_singleton; }
    void singleton( Symbol *s ) { m_singleton = s; }
-   virtual Statement *clone() const;
+   virtual StmtClass *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtFunction: public StmtCallable
@@ -1225,7 +1225,7 @@ public:
    void setConstructorFor( const StmtClass *cd ) { m_ctor_for = cd; }
    const StmtClass *constructorFor() const { return m_ctor_for; }
 
-   virtual Statement *clone() const;
+   virtual StmtFunction *clone() const;
 };
 
 class FALCON_DYN_CLASS StmtVarDef: public Statement
@@ -1247,7 +1247,7 @@ public:
    String *name() const { return m_name; }
    Value *value() const { return m_value; }
 
-   virtual Statement *clone() const;
+   virtual StmtVarDef *clone() const;
 };
 
 /** Source File syntactic tree.

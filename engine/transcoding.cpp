@@ -123,7 +123,7 @@ private:
 public:
    virtual const String encoding() const { return "gbk"; }
 
-   virtual FalconData *clone() const
+   virtual TranscoderGBK *clone() const
    {
       return new TranscoderGBK( *this );
    }
@@ -230,7 +230,7 @@ public:
 
      TranscoderCP1252( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "cp1252"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderCP1252 *clone() const;
 };
 
 /** Latin-1 (ISO8859_1) transcoder. */
@@ -243,7 +243,7 @@ public:
 
      TranscoderISO8859_1( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-1"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_1 *clone() const;
 };
 
 class TranscoderISO8859_2: public TranscoderISO_CP
@@ -255,7 +255,7 @@ public:
 
      TranscoderISO8859_2( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-2"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_2 *clone() const;
 };
 
 class TranscoderISO8859_3: public TranscoderISO_CP
@@ -267,7 +267,7 @@ public:
 
      TranscoderISO8859_3( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-3"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_3 *clone() const;
 };
 
 
@@ -280,7 +280,7 @@ public:
 
      TranscoderISO8859_4( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-4"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_4 *clone() const;
 };
 
 class TranscoderISO8859_5: public TranscoderISO_CP
@@ -292,7 +292,7 @@ public:
 
      TranscoderISO8859_5( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-5"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_5 *clone() const;
 };
 
 class TranscoderISO8859_6: public TranscoderISO_CP
@@ -304,7 +304,7 @@ public:
 
      TranscoderISO8859_6( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-6"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_6 *clone() const;
 };
 
 class TranscoderISO8859_7: public TranscoderISO_CP
@@ -316,7 +316,7 @@ public:
 
      TranscoderISO8859_7( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-7"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_7 *clone() const;
 };
 
 class TranscoderISO8859_8: public TranscoderISO_CP
@@ -328,7 +328,7 @@ public:
 
      TranscoderISO8859_8( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-8"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_8 *clone() const;
 };
 
 class TranscoderISO8859_9: public TranscoderISO_CP
@@ -340,7 +340,7 @@ public:
 
      TranscoderISO8859_9( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-9"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_9 *clone() const;
 };
 
 class TranscoderISO8859_10: public TranscoderISO_CP
@@ -352,7 +352,7 @@ public:
 
      TranscoderISO8859_10( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-10"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_10 *clone() const;
 };
 
 class TranscoderISO8859_11: public TranscoderISO_CP
@@ -364,7 +364,7 @@ public:
 
      TranscoderISO8859_11( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-11"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_11 *clone() const;
 };
 
 class TranscoderISO8859_13: public TranscoderISO_CP
@@ -376,7 +376,7 @@ public:
 
      TranscoderISO8859_13( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-13"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_13 *clone() const;
 };
 
 class TranscoderISO8859_14: public TranscoderISO_CP
@@ -388,7 +388,7 @@ public:
 
      TranscoderISO8859_14( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-14"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_14 *clone() const;
 };
 
 class TranscoderISO8859_15: public TranscoderISO_CP
@@ -400,7 +400,7 @@ public:
 
      TranscoderISO8859_15( Stream *s, bool bOwn=false );
      virtual const String encoding() const { return "iso8859-15"; }
-     virtual FalconData *clone() const;
+     virtual TranscoderISO8859_15 *clone() const;
 };
 
 //=============================================================================
@@ -569,7 +569,7 @@ bool TranscoderByte::put( uint32 chr )
    return ( m_stream->write( &b, 1 ) == 1 );
 }
 
-FalconData *TranscoderByte::clone() const
+TranscoderByte *TranscoderByte::clone() const
 {
    return new TranscoderByte( *this );
 }
@@ -620,7 +620,7 @@ bool TranscoderEOL::put( uint32 chr )
    return m_stream->put( chr );
 }
 
-FalconData *TranscoderEOL::clone() const
+TranscoderEOL *TranscoderEOL::clone() const
 {
    return new TranscoderEOL( *this );
 }
@@ -741,7 +741,7 @@ bool TranscoderUTF8::put( uint32 chr )
    return ( m_stream->write( res, resCount ) == (int32) resCount);
 }
 
-FalconData *TranscoderUTF8::clone() const
+TranscoderUTF8 *TranscoderUTF8::clone() const
 {
    return new TranscoderUTF8( *this );
 }
@@ -939,7 +939,7 @@ bool TranscoderUTF16::put( uint32 chr )
    return true;
 }
 
-FalconData *TranscoderUTF16::clone() const
+TranscoderUTF16 *TranscoderUTF16::clone() const
 {
    return new TranscoderUTF16( *this );
 }
@@ -1056,7 +1056,7 @@ TranscoderCP1252::TranscoderCP1252( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_cp1252 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderCP1252::clone() const
+TranscoderCP1252 *TranscoderCP1252::clone() const
 {
    return new TranscoderCP1252( *this );
 }
@@ -1070,7 +1070,7 @@ TranscoderISO8859_1::TranscoderISO8859_1( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_1 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_1::clone() const
+TranscoderISO8859_1 *TranscoderISO8859_1::clone() const
 {
    return new TranscoderISO8859_1( *this );
 }
@@ -1084,7 +1084,7 @@ TranscoderISO8859_2::TranscoderISO8859_2( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_2 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_2::clone() const
+TranscoderISO8859_2 *TranscoderISO8859_2::clone() const
 {
    return new TranscoderISO8859_2( *this );
 }
@@ -1098,7 +1098,7 @@ TranscoderISO8859_3::TranscoderISO8859_3( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_3 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_3::clone() const
+TranscoderISO8859_3 *TranscoderISO8859_3::clone() const
 {
    return new TranscoderISO8859_3( *this );
 }
@@ -1113,7 +1113,7 @@ TranscoderISO8859_4::TranscoderISO8859_4( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_4 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_4::clone() const
+TranscoderISO8859_4 *TranscoderISO8859_4::clone() const
 {
    return new TranscoderISO8859_4( *this );
 }
@@ -1128,7 +1128,7 @@ TranscoderISO8859_5::TranscoderISO8859_5( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_5 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_5::clone() const
+TranscoderISO8859_5 *TranscoderISO8859_5::clone() const
 {
    return new TranscoderISO8859_5( *this );
 }
@@ -1143,7 +1143,7 @@ TranscoderISO8859_6::TranscoderISO8859_6( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_6 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_6::clone() const
+TranscoderISO8859_6 *TranscoderISO8859_6::clone() const
 {
    return new TranscoderISO8859_6( *this );
 }
@@ -1157,7 +1157,7 @@ TranscoderISO8859_7::TranscoderISO8859_7( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_7 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_7::clone() const
+TranscoderISO8859_7 *TranscoderISO8859_7::clone() const
 {
    return new TranscoderISO8859_7( *this );
 }
@@ -1171,7 +1171,7 @@ TranscoderISO8859_8::TranscoderISO8859_8( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_8 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_8::clone() const
+TranscoderISO8859_8 *TranscoderISO8859_8::clone() const
 {
    return new TranscoderISO8859_8( *this );
 }
@@ -1185,7 +1185,7 @@ TranscoderISO8859_9::TranscoderISO8859_9( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_9 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_9::clone() const
+TranscoderISO8859_9 *TranscoderISO8859_9::clone() const
 {
    return new TranscoderISO8859_9( *this );
 }
@@ -1200,7 +1200,7 @@ TranscoderISO8859_10::TranscoderISO8859_10( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_10 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_10::clone() const
+TranscoderISO8859_10 *TranscoderISO8859_10::clone() const
 {
    return new TranscoderISO8859_10( *this );
 }
@@ -1214,7 +1214,7 @@ TranscoderISO8859_11::TranscoderISO8859_11( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_11 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_11::clone() const
+TranscoderISO8859_11 *TranscoderISO8859_11::clone() const
 {
    return new TranscoderISO8859_11( *this );
 }
@@ -1228,7 +1228,7 @@ TranscoderISO8859_13::TranscoderISO8859_13( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_13 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_13::clone() const
+TranscoderISO8859_13 *TranscoderISO8859_13::clone() const
 {
    return new TranscoderISO8859_13( *this );
 }
@@ -1242,7 +1242,7 @@ TranscoderISO8859_14::TranscoderISO8859_14( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_14 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_14::clone() const
+TranscoderISO8859_14 *TranscoderISO8859_14::clone() const
 {
    return new TranscoderISO8859_14( *this );
 }
@@ -1256,7 +1256,7 @@ TranscoderISO8859_15::TranscoderISO8859_15( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_15 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-FalconData *TranscoderISO8859_15::clone() const
+TranscoderISO8859_15 *TranscoderISO8859_15::clone() const
 {
    return new TranscoderISO8859_15( *this );
 }

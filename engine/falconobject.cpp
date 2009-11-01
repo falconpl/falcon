@@ -35,7 +35,7 @@ FalconObject::FalconObject( const FalconObject &other ):
 FalconObject::~FalconObject()
 {}
 
-CoreObject *FalconObject::clone() const
+FalconObject *FalconObject::clone() const
 {
    // create and ask not to create the base copy of the item table.
    FalconObject* fo = new FalconObject( *this );

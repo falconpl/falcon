@@ -37,7 +37,7 @@ void Iterator::gcMark( uint32 mark )
    }
 }
 
-FalconData *Iterator::clone() const
+Iterator *Iterator::clone() const
 {
    return new Iterator( *this );
 }

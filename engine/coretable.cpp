@@ -283,7 +283,7 @@ const Item &CoreTable::back() const
 
 
 
-FalconData *CoreTable::clone() const
+CoreTable *CoreTable::clone() const
 {
    return new CoreTable( *this );
 }

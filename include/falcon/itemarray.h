@@ -64,7 +64,7 @@ public:
    virtual bool empty() const { return m_size == 0; }
 
    virtual void gcMark( uint32 mark );
-   virtual FalconData *clone() const ;
+   virtual ItemArray *clone() const ;
 
    virtual void append( const Item &ndata );
    virtual void prepend( const Item &ndata );

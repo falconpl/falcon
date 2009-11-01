@@ -102,7 +102,7 @@ public:
       m_assertion.setNil(); // so the GC can rip it.
    }
 
-   virtual FalconData *clone() const;
+   virtual CoreSlot *clone() const;
    virtual void gcMark( uint32 mark );
 
    virtual void getIterator( Iterator& tgt, bool tail = false ) const;
@@ -139,7 +139,7 @@ public:
    CoreSlotCarrier( const CoreClass* generator, CoreSlot* cs, bool bSeralizing = false );
    CoreSlotCarrier( const CoreSlotCarrier &other );
    virtual ~CoreSlotCarrier();
-   virtual CoreObject *clone() const;
+   virtual CoreSlotCarrier *clone() const;
 
    /** Change slot after the creation of this carrier (for VMSlot_init) */
    void setSlot( CoreSlot* cs );

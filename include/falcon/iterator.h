@@ -139,7 +139,7 @@ public:
 public:
    virtual ~Iterator();
    virtual void gcMark( uint32 mark );
-   virtual FalconData *clone() const;
+   virtual Iterator *clone() const;
 
    /** Sets a deep deletor for this iterator.
       Should be called by the Sequence::getIterator and Sequence::copyIterator

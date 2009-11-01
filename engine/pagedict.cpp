@@ -117,7 +117,7 @@ void PageDict::merge( const ItemDict &dict )
 }
 
 
-FalconData *PageDict::clone() const
+PageDict *PageDict::clone() const
 {
    PageDict *ret;
 

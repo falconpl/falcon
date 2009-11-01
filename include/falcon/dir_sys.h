@@ -53,7 +53,7 @@ public:
    uint32 lastError() const { return m_lastError; }
 
    // unsupported (for now)
-   virtual FalconData *clone() const { return 0; }
+   virtual DirEntry *clone() const { return 0; }
    virtual void gcMark( uint32 mark ) {}
    
    const String &path() const { return m_path; }

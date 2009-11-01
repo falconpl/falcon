@@ -437,7 +437,7 @@ ItemArray *ItemArray::partition( int32 start, int32 end ) const
 }
 
 
-FalconData *ItemArray::clone() const
+ItemArray *ItemArray::clone() const
 {
    return new ItemArray( *this );
 }

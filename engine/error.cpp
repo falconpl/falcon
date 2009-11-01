@@ -548,7 +548,7 @@ void ErrorObject::gcMark( uint32 mark )
 }
 
 
-CoreObject *ErrorObject::clone() const
+ErrorObject *ErrorObject::clone() const
 {
    return new ErrorObject( m_generatedBy, getError() );
 }
@@ -562,7 +562,6 @@ CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool )
       return new ErrorObject( cls, (Error *) user_data );
 }
 
-}
-}
+}} // namespace Falcon::core 
 
 /* end of error.cpp */

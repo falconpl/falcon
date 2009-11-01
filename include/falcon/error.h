@@ -74,7 +74,7 @@ public:
 
    virtual ~ErrorObject();
    virtual void gcMark( uint32 mark );
-   virtual CoreObject *clone() const;
+   virtual ErrorObject *clone() const;
 };
 
 CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );

@@ -499,7 +499,7 @@ byte * StringStream::closeToBuffer()
    return data;
 }
 
-FalconData *StringStream::clone() const
+StringStream *StringStream::clone() const
 {
    StringStream *sstr = new StringStream( *this );
    return sstr;

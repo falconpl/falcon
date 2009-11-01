@@ -50,7 +50,7 @@ public:
    virtual bool empty() const;
    virtual void append( const Item &data );
    virtual void prepend( const Item &data );
-   virtual FalconData* clone() const;
+   virtual GeneratorSeq* clone() const;
    virtual void gcMark( uint32 gen );
 
    //==============================================================

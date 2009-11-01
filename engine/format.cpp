@@ -1127,7 +1127,7 @@ void Format::setProperty( const String &propName, Item &prop )
 }
 */
 
-FalconData *Format::clone() const
+Format *Format::clone() const
 {
    return new Format( this->originalFormat() );
 }

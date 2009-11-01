@@ -77,7 +77,7 @@ public:
    }
 
 
-   virtual CoreObject *clone() const
+   virtual CoreCarrier *clone() const
    {
       return new CoreCarrier<_T>( *this );
    }

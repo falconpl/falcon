@@ -189,7 +189,7 @@ public:
    */
    virtual void rewind();
 
-   virtual FalconData* clone() const;
+   virtual Tokenizer* clone() const;
    virtual void gcMark( uint32 mark ) { Sequence::gcMark( mark ); }
 
    /** Resets the tokenizer providing new data to be tokenized.

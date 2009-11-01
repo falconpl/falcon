@@ -177,7 +177,7 @@ void Tokenizer::rewind()
 }
 
 
-FalconData* Tokenizer::clone() const
+Tokenizer* Tokenizer::clone() const
 {
    return new Tokenizer( *this );
 }

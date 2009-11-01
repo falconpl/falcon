@@ -109,26 +109,27 @@ bool ReflectObject::getProperty( const String &propName, Item &ret ) const
    return false;
 }
 
-CoreObject* ReflectObject::clone() const
+ReflectObject* ReflectObject::clone() const
 {
    return new ReflectObject( *this );
 }
 
 //============================================
-   CoreObject* ReflectOpaqueFactory( const CoreClass *cls, void *user_data, bool )
-   {
-      return new ReflectObject( cls, user_data );
-   }
-
-   CoreObject* ReflectFalconFactory( const CoreClass *cls, void *user_data, bool )
-   {
-      return new ReflectObject( cls, static_cast<FalconData*>(user_data) );
-   }
-
-   CoreObject* ReflectSequenceFactory( const CoreClass *cls, void *user_data, bool )
-   {
-      return new ReflectObject( cls, static_cast<Sequence*>(user_data) );
-   }
+CoreObject* ReflectOpaqueFactory( const CoreClass *cls, void *user_data, bool )
+{
+  return new ReflectObject( cls, user_data );
 }
+
+CoreObject* ReflectFalconFactory( const CoreClass *cls, void *user_data, bool )
+{
+  return new ReflectObject( cls, static_cast<FalconData*>(user_data) );
+}
+
+CoreObject* ReflectSequenceFactory( const CoreClass *cls, void *user_data, bool )
+{
+  return new ReflectObject( cls, static_cast<Sequence*>(user_data) );
+}
+
+} // namespace Falcon
 
 /* end of cobject.cpp */

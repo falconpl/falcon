@@ -51,7 +51,7 @@ RangeSeq::RangeSeq( int64 s, int64 e, int64 step ):
 RangeSeq::~RangeSeq()
 {}
 
-FalconData* RangeSeq::clone() const
+RangeSeq* RangeSeq::clone() const
 {
    return new RangeSeq( *this );
 }

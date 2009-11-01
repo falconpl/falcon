@@ -48,7 +48,7 @@ public:
 
    PathObject( const PathObject &other );
    virtual ~PathObject();
-   virtual CoreObject *clone() const;
+   virtual PathObject *clone() const;
    Path* getPath() const { return static_cast<Path*>( m_user_data ); }
 };
 
@@ -69,7 +69,7 @@ PathObject::~PathObject()
    delete getPath();
 }
 
-CoreObject *PathObject::clone() const
+PathObject *PathObject::clone() const
 {
    return new PathObject( *this );
 }

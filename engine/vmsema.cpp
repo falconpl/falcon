@@ -67,7 +67,7 @@ void VMSemaphore::unsubscribe( VMContext *ctx )
    }
 }
 
-FalconData *VMSemaphore::clone() const
+VMSemaphore *VMSemaphore::clone() const
 {
    // ! not supported.
    return 0;

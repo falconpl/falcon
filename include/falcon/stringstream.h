@@ -144,7 +144,7 @@ public:
    byte  *closeToBuffer();
 
    virtual int64 lastError() const;
-   virtual FalconData *clone() const;
+   virtual StringStream *clone() const;
    virtual void gcMark( uint32 mark ) {}
 };
 

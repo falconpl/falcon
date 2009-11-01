@@ -335,7 +335,7 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
 }
 
 
-FalconData *LinearDict::clone() const
+LinearDict *LinearDict::clone() const
 {
    LinearDict *ret;
 

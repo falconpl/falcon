@@ -200,7 +200,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "EOL"; }
-   virtual FalconData *clone() const;
+   virtual TranscoderEOL *clone() const;
 };
 
 /** Transparent byte oriented encoder.
@@ -237,7 +237,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "byte"; }
-   virtual FalconData *clone() const;
+   virtual TranscoderByte *clone() const;
 };
 
 /** UTF-8 encoding transcoder. */
@@ -253,7 +253,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "utf-8"; }
-   virtual FalconData *clone() const;
+   virtual TranscoderUTF8 *clone() const;
 };
 
 /** UTF-16 encoding transcoder. */
@@ -312,7 +312,7 @@ public:
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "utf-16"; }
    t_endianity endianity() const { return m_streamEndian; }
-   virtual FalconData *clone() const;
+   virtual TranscoderUTF16 *clone() const;
 };
 
 /** Creates a transcoder for the given encoding.

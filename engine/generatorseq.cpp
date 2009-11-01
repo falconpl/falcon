@@ -46,7 +46,7 @@ GeneratorSeq::~GeneratorSeq()
 {}
 
 
-FalconData* GeneratorSeq::clone() const
+GeneratorSeq* GeneratorSeq::clone() const
 {
    return new GeneratorSeq( *this );
 }

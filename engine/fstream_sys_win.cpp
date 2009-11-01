@@ -434,7 +434,7 @@ void BaseFileStream::setError( int64 errorCode )
       status( (t_status) (((int)status()) & ~(int)Stream::t_error ));
 }
 
-FalconData *BaseFileStream::clone() const
+BaseFileStream *BaseFileStream::clone() const
 {
    BaseFileStream *gs = new BaseFileStream( *this );
    if ( gs->m_fsData == 0 )

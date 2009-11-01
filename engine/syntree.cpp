@@ -470,7 +470,7 @@ Statement::Statement( const Statement &other ):
 // Statement NONE
 //
 
-Statement *StmtNone::clone() const
+StmtNone *StmtNone::clone() const
 {
    return new StmtNone( *this );
 }
@@ -483,7 +483,7 @@ StmtGlobal::StmtGlobal( const StmtGlobal &other ):
    m_symbols( other.m_symbols )
 {}
 
-Statement *StmtGlobal::clone() const
+StmtGlobal *StmtGlobal::clone() const
 {
    return new StmtGlobal( *this );
 }
@@ -502,7 +502,7 @@ StmtUnref::~StmtUnref()
    delete m_symbol;
 }
 
-Statement *StmtUnref::clone() const
+StmtUnref *StmtUnref::clone() const
 {
    return new StmtUnref( *this );
 }
@@ -522,7 +522,7 @@ StmtSelfPrint::~StmtSelfPrint()
    delete m_toPrint;
 }
 
-Statement *StmtSelfPrint::clone() const
+StmtSelfPrint *StmtSelfPrint::clone() const
 {
    return new StmtSelfPrint( *this );
 }
@@ -542,7 +542,7 @@ StmtExpression::~StmtExpression()
    delete m_expr;
 }
 
-Statement *StmtExpression::clone() const
+StmtExpression *StmtExpression::clone() const
 {
    return new StmtExpression( *this );
 }
@@ -554,7 +554,7 @@ StmtAutoexpr::StmtAutoexpr( const StmtAutoexpr &other ):
    StmtExpression( other )
 {}
 
-Statement *StmtAutoexpr::clone() const
+StmtAutoexpr *StmtAutoexpr::clone() const
 {
    return new StmtAutoexpr( *this );
 }
@@ -566,7 +566,7 @@ StmtFordot::StmtFordot( const StmtFordot &other ):
    StmtExpression( other )
 {}
 
-Statement *StmtFordot::clone() const
+StmtFordot *StmtFordot::clone() const
 {
    return new StmtFordot( *this );
 }
@@ -574,7 +574,7 @@ Statement *StmtFordot::clone() const
 // StmtReturn statement
 //
 
-Statement *StmtReturn::clone() const
+StmtReturn *StmtReturn::clone() const
 {
    return new StmtReturn( *this );
 }
@@ -582,7 +582,7 @@ Statement *StmtReturn::clone() const
 // StmtRaise statement
 //
 
-Statement *StmtRaise::clone() const
+StmtRaise *StmtRaise::clone() const
 {
    return new StmtRaise( *this );
 }
@@ -590,7 +590,7 @@ Statement *StmtRaise::clone() const
 // StmtLaunch statement
 //
 
-Statement *StmtLaunch::clone() const
+StmtLaunch *StmtLaunch::clone() const
 {
    return new StmtLaunch( *this );
 }
@@ -613,7 +613,7 @@ StmtGive::~StmtGive()
    delete m_attribs;
 }
 
-Statement *StmtGive::clone() const
+StmtGive *StmtGive::clone() const
 {
    return new StmtGive( *this );
 }
@@ -626,12 +626,12 @@ StmtLoopCtl::StmtLoopCtl( const StmtLoopCtl &other ):
 {
 }
 
-Statement *StmtBreak::clone() const
+StmtBreak *StmtBreak::clone() const
 {
    return new StmtBreak( *this );
 }
 
-Statement *StmtContinue::clone() const
+StmtContinue *StmtContinue::clone() const
 {
    return new StmtContinue( *this );
 }
@@ -661,14 +661,14 @@ StmtConditional::~StmtConditional()
 
 // StmtLoop statement
 //
-Statement *StmtLoop::clone() const
+StmtLoop *StmtLoop::clone() const
 {
    return new StmtLoop( *this );
 }
 
 // StmtWhile statement
 //
-Statement *StmtWhile::clone() const
+StmtWhile *StmtWhile::clone() const
 {
    return new StmtWhile( *this );
 }
@@ -676,7 +676,7 @@ Statement *StmtWhile::clone() const
 // StmtElif statement
 //
 
-Statement *StmtElif::clone() const
+StmtElif *StmtElif::clone() const
 {
    return new StmtElif( *this );
 }
@@ -691,7 +691,7 @@ StmtIf::StmtIf( const StmtIf &other ):
 {
 }
 
-Statement *StmtIf::clone() const
+StmtIf *StmtIf::clone() const
 {
    return new StmtIf( *this );
 }
@@ -715,7 +715,7 @@ StmtForin::~StmtForin()
    delete m_dest;
 }
 
-Statement *StmtForin::clone() const
+StmtForin *StmtForin::clone() const
 {
    return new StmtForin( *this );
 }
@@ -724,7 +724,7 @@ Statement *StmtForin::clone() const
 // StmtCaseBlock statement
 //
 
-Statement *StmtCaseBlock::clone() const
+StmtCaseBlock *StmtCaseBlock::clone() const
 {
    return new StmtCaseBlock( *this );
 }
@@ -905,7 +905,7 @@ void StmtSwitch::addBlock( StmtCaseBlock *sl )
    m_blocks.push_back( sl );
 }
 
-Statement *StmtSwitch::clone() const
+StmtSwitch *StmtSwitch::clone() const
 {
    return new StmtSwitch( *this );
 }
@@ -926,7 +926,7 @@ StmtSelect::StmtSelect( const StmtSelect &other ):
    m_type = t_select;
 }
 
-Statement *StmtSelect::clone() const
+StmtSelect *StmtSelect::clone() const
 {
    return new StmtSelect( *this );
 }
@@ -946,7 +946,7 @@ StmtCatchBlock::~StmtCatchBlock()
    delete m_into;
 }
 
-Statement *StmtCatchBlock::clone() const
+StmtCatchBlock *StmtCatchBlock::clone() const
 {
    return new StmtCatchBlock( *this );
 }
@@ -1021,7 +1021,7 @@ bool StmtTry::addSymbolCase( Value *itm )
    return true;
 }
 
-Statement *StmtTry::clone() const
+StmtTry *StmtTry::clone() const
 {
    return new StmtTry( *this );
 }
@@ -1059,7 +1059,7 @@ StmtClass::~StmtClass()
       delete m_ctor;
 }
 
-Statement *StmtClass::clone() const
+StmtClass *StmtClass::clone() const
 {
    return new StmtClass( *this );
 }
@@ -1076,7 +1076,7 @@ StmtFunction::StmtFunction( const StmtFunction &other ):
 {
 }
 
-Statement *StmtFunction::clone() const
+StmtFunction *StmtFunction::clone() const
 {
    return new StmtFunction( *this );
 }
@@ -1096,7 +1096,7 @@ StmtVarDef::~StmtVarDef()
    delete m_value;
 }
 
-Statement *StmtVarDef::clone() const
+StmtVarDef *StmtVarDef::clone() const
 {
    return new StmtVarDef( *this );
 }

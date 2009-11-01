@@ -593,7 +593,7 @@ public:
 
    UriObject( const UriObject &other );
    virtual ~UriObject();
-   virtual CoreObject *clone() const;
+   virtual UriObject *clone() const;
    virtual bool setProperty( const String &prop, const Item &value );
    virtual void reflectFrom( void *user_data );
    virtual void reflectTo( void *user_data ) const ;
@@ -651,7 +651,7 @@ public:
    virtual ~FileStatObject();
 
    virtual void gcMark( uint32 mark );
-   virtual CoreObject* clone() const;
+   virtual FileStatObject* clone() const;
 
    InnerData* getInnerData() const { return (InnerData*) m_user_data; }
 };

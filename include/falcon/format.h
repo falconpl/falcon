@@ -420,7 +420,7 @@ public:
 
    //=================================================
 
-   virtual FalconData *clone() const;
+   virtual Format *clone() const;
    virtual void gcMark( uint32 mark ) {}
 };
 

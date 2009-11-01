@@ -189,7 +189,7 @@ public:
    /** Deletes the list.
       Items are shallowly destroyed.
    */
-   virtual FalconData *clone() const;
+   virtual CoreTable *clone() const;
 
    virtual const Item &front() const;
    virtual const Item &back() const;

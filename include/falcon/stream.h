@@ -323,7 +323,7 @@ public:
       This version returns 0 and sets error to unsupported;
       subclasses must properly clone the stream.
    */
-   virtual FalconData *clone() const;
+   virtual Stream *clone() const;
 };
 
 

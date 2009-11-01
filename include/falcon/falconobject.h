@@ -38,7 +38,7 @@ public:
 
    virtual ~FalconObject();
 
-   virtual CoreObject *clone() const;
+   virtual FalconObject *clone() const;
 };
 
 }

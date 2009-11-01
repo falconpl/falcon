@@ -57,7 +57,7 @@ public:
    StreamBuffer( const StreamBuffer &other );
    virtual ~StreamBuffer();
    
-   virtual FalconData *clone() const;
+   virtual StreamBuffer *clone() const;
    virtual bool isStreamBuffer() const { return true; }
    
 

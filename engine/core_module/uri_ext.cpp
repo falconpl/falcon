@@ -74,7 +74,7 @@ UriObject::~UriObject()
    delete getUri();
 }
 
-CoreObject *UriObject::clone() const
+UriObject *UriObject::clone() const
 {
    return new UriObject( *this );
 }

@@ -43,7 +43,7 @@ public:
    CRObject( const CRObject &other );
    virtual ~CRObject() {}
 
-   virtual CoreObject *clone() const;
+   virtual CRObject *clone() const;
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
 };

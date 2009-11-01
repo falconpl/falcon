@@ -406,7 +406,7 @@ int32 BaseFileStream::writeAvailable( int32 msec, const Sys::SystemData *sysData
    return 0;
 }
 
-FalconData *BaseFileStream::clone() const
+BaseFileStream *BaseFileStream::clone() const
 {
    BaseFileStream *ge = new BaseFileStream( *this );
    if ( ge->m_fsData == 0 )
