@@ -951,7 +951,6 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
       }
       catch( Error *err )
       {
-         err->extraDescription( "_init" );
          err->origin( e_orig_vm );
          throw;
       }
@@ -1474,7 +1473,7 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
       if ( err->module().size() == 0 )
          err->module( currentModule()->name() );
 
-      if ( err->module().size() == 0 )
+      if ( err->symbol().size() == 0 )
          err->symbol( currentSymbol()->name() );
 
       if( currentSymbol()->isFunction() )

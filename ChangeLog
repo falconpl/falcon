@@ -5,6 +5,8 @@ Falcon (0.9.4.5)
   * fixed: Throws to manage return frames was a bit excessive. This
            wasted lots of time in atomic calls.
   * fixed: Timestamp.dayOfWeek() wasn't working correctly.
+  * fixed: Extra error field was always set to "_init" when raised during
+           the link process in VM.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
