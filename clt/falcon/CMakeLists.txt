@@ -8,15 +8,20 @@ if(WIN32)
    set(readline_SRC readline_simple.cpp)
    set( SYSTEM_RC falcon.rc)
 else()  
-   option(FALCON_WITH_INTERNAL_EDITLINE "" OFF)
-   if(FALCON_WITH_INTERNAL_EDITLINE)
-     add_subdirectory(editline)
-     set(Editline_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/editline/src)
-     set(Editline_LIBRARY edit)
+   option(FALCON_WITHOUT_READLINE "Switch to OFF for readline support." on)
+   if(FALCON_WITHOUT_READLINE)
+     set(readline_SRC readline_simple.cpp)
    else()
-     find_package(Editline REQUIRED)
-   endif()
-   set(readline_SRC readline_editline.cpp)
+     option(FALCON_WITH_INTERNAL_EDITLINE "" OFF)
+     if(FALCON_WITH_INTERNAL_EDITLINE)
+       add_subdirectory(editline)
+       set(Editline_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/editline/src)
+       set(Editline_LIBRARY edit)
+     else()
+       find_package(Editline REQUIRED)
+     endif()
+     set(readline_SRC readline_editline.cpp)
+  endif(FALCON_WITHOUT_READLINE)
 endif(WIN32)
 
 include_directories(
@@ -33,9 +38,9 @@ add_executable( falcon
    ${readline_SRC}
    ${SYSTEM_RC}
 )
-if(FALCON_USE_GPL_READLINE)
+if(EDITLINE_FOUND AND FALCON_WITH_GPL_READLINE)
   set_target_properties(falcon PROPERTIES 
-    COMPILE_DEFINITIONS FALCON_USE_GPL_READLINE
+    COMPILE_DEFINITIONS FALCON_WITH_GPL_READLINE
   )
 endif()
 target_link_libraries(falcon 

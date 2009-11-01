@@ -1,5 +1,5 @@
-option(FALCON_USE_GPL_READLINE "" off)
-if(FALCON_USE_GPL_READLINE)
+option(FALCON_WITH_GPL_READLINE "" off)
+if(FALCON_WITH_GPL_READLINE)
   set(_header readline/readline.h)
   set(_libname readline)
 else()

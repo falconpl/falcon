@@ -15,7 +15,7 @@
 
 #include "int_mode.h"
 #include <cstdio> // FILE
-#ifdef FALCON_USE_GPL_READLINE
+#ifdef FALCON_WITH_GPL_READLINE
 # include <readline/readline.h>
 # include <readline/history.h>
 #else

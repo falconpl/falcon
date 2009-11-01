@@ -45,7 +45,7 @@ void IntMode::run()
 
    stdOut->writeString("\n===NOTICE===\n" );
    stdOut->writeString("Interactive mode is currently UNDER DEVELOPMENT.\n" );
-#ifdef FALCON_USE_GPL_READLINE
+#ifdef FALCON_WITH_GPL_READLINE
    stdOut->writeString("Built with GPLed GNU-Readline. Refer to the README for alternatives.\n" );
 #endif
    
