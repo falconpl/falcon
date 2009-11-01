@@ -33,9 +33,13 @@ add_executable( falcon
    ${readline_SRC}
    ${SYSTEM_RC}
 )
-
+if(FALCON_USE_GPL_READLINE)
+  set_target_properties(falcon PROPERTIES 
+    COMPILE_DEFINITIONS FALCON_USE_GPL_READLINE
+  )
+endif()
 target_link_libraries(falcon 
-  falcon_engine 
+  falcon_engine
   ${Editline_LIBRARY}
 )
 

@@ -14,8 +14,13 @@
 */
 
 #include "int_mode.h"
-#include <cstdio> // missing in older versions of ...
-#include <editline/readline.h>
+#include <cstdio> // FILE
+#ifdef FALCON_USE_GPL_READLINE
+# include <readline/readline.h>
+# include <readline/history.h>
+#else
+# include <editline/readline.h>
+#endif
 
 using namespace Falcon;
 
