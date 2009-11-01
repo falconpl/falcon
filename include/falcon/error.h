@@ -165,7 +165,7 @@ public:
 
    ErrorParam &code( int code ) { m_errorCode = code; return *this; }
    ErrorParam &desc( const String &d ) { m_description = d; return *this; }
-   ErrorParam &extra( const String &e ) { m_extra = e; return *this; }
+   ErrorParam &extra( const String &e ) { m_extra.bufferize(e); return *this; }
    ErrorParam &symbol( const String &sym ) { m_symbol = sym; return *this; }
    ErrorParam &module( const String &mod ) { m_module = mod; return *this; }
    ErrorParam &line( uint32 line ) { m_line = line; return *this; }

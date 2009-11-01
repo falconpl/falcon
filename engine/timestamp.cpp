@@ -457,19 +457,23 @@ int16 TimeStamp::getDaysOfMonth( int16 month ) const
 /** week starting on monday, 0 based. */
 int16 TimeStamp::dayOfWeek() const
 {
+   // consider 1700 the epoch
    if ( m_year < 1700 )
       return -1;
 
+   // compute days since epoch.
    int32 nyears = m_year - 1700;
+   int32 nday = nyears * 365;
 
-   int32 nday = m_year * 365;
-   // add leap years.
-   // Starting from 1700, we have 3 non-leap centuries in a row.
-   nday += (nyears % 4) - (nyears % 100) + (nyears % 400);
+   // add leap years (up to the previous year. This year is  computed in dayOfYear()
+   if( m_year > 1700 )
+      nday += ((nyears-1) / 4) - ((nyears-1) / 100) + ((nyears-1) / 400);
+
    // add day of the year.
    nday += dayOfYear();
-   // add epoch (1st january 1700 was a monday )
-   nday += 1;
+
+   // add epoch (1/1/1700 was a Friday)
+   nday += 4;
 
    nday %= 7;
    return nday;

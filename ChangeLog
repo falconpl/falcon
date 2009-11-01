@@ -4,6 +4,7 @@ Falcon (0.9.4.5)
            is ON by default on windows and OFF elsewhere.
   * fixed: Throws to manage return frames was a bit excessive. This
            wasted lots of time in atomic calls.
+  * fixed: Timestamp.dayOfWeek() wasn't working correctly.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
