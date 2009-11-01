@@ -983,8 +983,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
          extra( "X" ) );
    }
 
-   // minimal match vector
-   int ovector[3];
+   int ovector[300];
 
    // If the source is a string, perform a non-recorded match
    if ( source->isString() )
@@ -1001,7 +1000,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
          0,
          PCRE_NO_UTF8_CHECK,
          ovector,
-         3 );
+         300 );
 
       if ( match )
          vm->retval( (int64) 0 ); // zero means compare ==

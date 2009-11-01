@@ -1,3 +1,7 @@
+Feathers (0.9.4.5)
+  * fixed: Regex.compare never matched (return 0) when using capture 
+           expressions.
+  
 Feathers (0.9.4.4)
   * added: JSON module (encoding/decoding JSON).
   * fixed: In logging module, area, module and function names starting with 
