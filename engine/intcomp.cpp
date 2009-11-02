@@ -223,6 +223,8 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    GenCode gencode( module() );
    gencode.generate( m_root );
 
+   m_lmodule->globals().resize( module()->symbolTable().size() + 1 );
+
    while ( ! m_root->classes().empty() )
    {
       StmtClass *cls = static_cast<StmtClass *>( m_root->classes().front() );
