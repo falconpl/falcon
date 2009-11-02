@@ -41,11 +41,11 @@ extern "C" int s_getc(FILE*)
 
 void IntMode::read_line(String &line, const char* prompt)
 {
-   if(!s_in)
-   {
-     s_in = m_owner->m_stdIn;
-     rl_getc_function = s_getc;
-   }
+//   if(!s_in)
+//   {
+//     s_in = m_owner->m_stdIn;
+//     rl_getc_function = s_getc;
+//   }
            
    line.reserve( 1024 );
    line.size(0);
