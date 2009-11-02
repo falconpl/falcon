@@ -1597,13 +1597,17 @@ bool GetSystemEncoding( String &encoding )
       }
       else {
          // utf variant?
-         pos = encoding.find( "UTF-" );
+         pos = encoding.find( "UTF" );
          if ( pos == csh::npos )
-            pos = encoding.find( "utf-" );
-
-         if ( pos != csh::npos && pos < encoding.length() - 4 )
+            pos = encoding.find( "utf" );
+         
+         uint32 utf_prefix_len=3; 
+         if(pos != csh::npos && encoding.getCharAt(utf_prefix_len) == '-' )
+           utf_prefix_len++;;
+         
+         if ( pos != csh::npos && pos < encoding.length() - utf_prefix_len )
          {
-            encoding = encoding.subString( pos + 4 );
+            encoding = encoding.subString( pos + utf_prefix_len );
             if ( encoding == "8" || encoding == "16" || encoding == "16LE" || encoding == "16BE" )
             {
                encoding = "utf-" + encoding;
