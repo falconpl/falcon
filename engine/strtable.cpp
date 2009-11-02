@@ -23,6 +23,7 @@
 #include <falcon/stream.h>
 #include <falcon/string.h>
 #include <falcon/traits.h>
+#include <falcon/fassert.h>
 
 namespace Falcon {
 
@@ -57,6 +58,8 @@ StringTable::~StringTable()
 
 int32 StringTable::add( String *str )
 {
+   fassert(str);
+   
    if ( str->exported() )
    {
       if ( int32 *pos = (int32 *) m_intMap.find( str ) )
@@ -131,6 +134,8 @@ int32 StringTable::findId( const String &source ) const
 
 bool StringTable::save( Stream *out ) const
 {
+   fassert(out); 
+   
    // write a minimal table if no table is needed.
    uint32 f;
    if ( size() == 0 )
@@ -163,6 +168,8 @@ bool StringTable::save( Stream *out ) const
 
 bool StringTable::load( Stream *in )
 {
+   fassert(in);
+   
    int32 size;
    in->read( &size, sizeof( size ) );
    size = endianInt32( size );
@@ -191,6 +198,8 @@ bool StringTable::load( Stream *in )
 
 bool StringTable::skip( Stream *in ) const
 {
+   fassert(in);
+  
    int32 size;
    in->read( &size, sizeof( size ) );
    size = endianInt32( size );
@@ -213,6 +222,8 @@ bool StringTable::skip( Stream *in ) const
 
 bool StringTable::saveTemplate( Stream *out, const String &moduleName, const String &origLang ) const
 {
+   fassert(out);
+   
    // we shouldn't even have been called if we have no interational strings.
    if( m_internatCount == 0 )
       return true;
@@ -255,6 +266,7 @@ bool StringTable::saveTemplate( Stream *out, const String &moduleName, const Str
 
 void StringTable::build( char **table, bool bInternational )
 {
+   fassert(table);
    char **ptr = table;
    while( *ptr != 0 )
    {
@@ -267,6 +279,7 @@ void StringTable::build( char **table, bool bInternational )
 
 void StringTable::build( wchar_t **table, bool bInternational )
 {
+   fassert(table);
    wchar_t **ptr = table;
    while( *ptr != 0 )
    {
