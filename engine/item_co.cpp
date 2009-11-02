@@ -2472,7 +2472,7 @@ void* ReferenceCommOpsTable[] = {
    (void*) co_ref_setproperty,
 
    //call
-   (void*) co_call_uncallable
+   (void*) co_call_reference
 };
 
 void* ClsMethodCommOpsTable[] = {
