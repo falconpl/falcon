@@ -59,10 +59,16 @@ int32 StringTable::add( String *str )
 {
    if ( str->exported() )
    {
-      int32 *pos = (int32 *) m_intMap.find( str );
-
-      if ( pos != 0 )
+      if ( int32 *pos = (int32 *) m_intMap.find( str ) )
+      {
+         String *tableStr = (String *) m_vector.at( *pos );
+         if (str != tableStr )
+         {
+           delete str;
+           str = tableStr;
+         }
          return *pos;
+      }
 
       int32 id = m_vector.size();
       str->id( id );
@@ -73,10 +79,16 @@ int32 StringTable::add( String *str )
    }
    else
    {
-      int32 *pos = (int32 *) m_map.find( str );
-
-      if ( pos != 0 )
-         return *pos;
+     if ( int32 *pos = (int32 *) m_map.find( str ) )
+     {
+        String *tableStr = (String *) m_vector.at( *pos );
+        if ( str != tableStr )
+        {
+          delete str;
+          str = tableStr;
+        }
+        return *pos;
+     }
 
       int32 id = m_vector.size();
       str->id( id );
