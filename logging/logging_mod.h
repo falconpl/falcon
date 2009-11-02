@@ -40,7 +40,7 @@ public:
 
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
-   virtual CoreObject *clone() const;
+   virtual LogChannelFilesCarrier *clone() const;
 
 };
 

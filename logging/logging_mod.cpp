@@ -68,7 +68,7 @@ bool LogChannelFilesCarrier::getProperty( const String &prop, Item &ret ) const
      return true;
 }
 
-CoreObject *LogChannelFilesCarrier::clone() const
+LogChannelFilesCarrier *LogChannelFilesCarrier::clone() const
 {
    return new LogChannelFilesCarrier( *this );
 }
