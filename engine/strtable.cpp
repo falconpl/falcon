@@ -79,16 +79,16 @@ int32 StringTable::add( String *str )
    }
    else
    {
-     if ( int32 *pos = (int32 *) m_map.find( str ) )
-     {
-        String *tableStr = (String *) m_vector.at( *pos );
-        if ( str != tableStr )
-        {
-          delete str;
-          str = tableStr;
-        }
-        return *pos;
-     }
+      if ( int32 *pos = (int32 *) m_map.find( str ) )
+      {
+         String *tableStr = (String *) m_vector.at( *pos );
+         if ( str != tableStr )
+         {
+            delete str;
+            str = tableStr;
+         }
+         return *pos;
+      }
 
       int32 id = m_vector.size();
       str->id( id );
