@@ -7,6 +7,7 @@ Falcon (0.9.4.5)
   * fixed: Timestamp.dayOfWeek() wasn't working correctly.
   * fixed: Extra error field was always set to "_init" when raised during
            the link process in VM.
+  * minor: Using libedit on unix for a more handy interactive mode.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

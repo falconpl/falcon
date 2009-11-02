@@ -641,8 +641,8 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
    if ( file->eof() )
    {
       vm->retval( (int64) 0 );
-	  vm->regA().setOob( true );
-	  return;
+      vm->regA().setOob( true );
+      return;
    }
 
    CoreString *str = new CoreString;
@@ -681,17 +681,17 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
 
    if ( ! getOk )
    {
-	  if ( ! file->eof() )
-	  {
-		s_breakage( file );
-	  }
-	  // a last line with some data?
-	  else if( pos == 0 )
-	  {
-		  // no? -- consider it null
-		  vm->retval( (int64) 0 );
-		  vm->regA().setOob( true );
-	  }
+      if ( ! file->eof() )
+      {
+         s_breakage( file );
+      }
+      // a last line with some data?
+      else if( pos == 0 )
+      {
+         // no? -- consider it null
+         vm->retval( (int64) 0 );
+         vm->regA().setOob( true );
+      }
    }
    // otherwise, let the returned string to go.
 

@@ -140,9 +140,10 @@ public:
 
    ~AutoCString();
 
-   const char *c_str() const { return m_pData; }
-   operator const char *() const { return m_pData; }
-   bool isValid() const { return m_pData[0] != (char) 255; }
+   const char *c_str() const { return m_pData+3; }
+   const char *bom_str();
+   operator const char *() const { return m_pData+3; }
+   bool isValid() const { return m_pData[3] != (char) 255; }
 
    /** Size of the returned buffer.
       This returns the number of bytes in the returned buffer, not the number

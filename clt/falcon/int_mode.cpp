@@ -33,9 +33,13 @@ void IntMode::run()
    m_owner->prepareLoader( ml );
 
    VMachineWrapper intcomp_vm;
-   intcomp_vm->link( core_module_init() );
+   Module* core_module = core_module_init();
+   intcomp_vm->link( core_module );
+   core_module->decref();
+
    Item* describe = intcomp_vm->findGlobalItem("describe");
    fassert( describe != 0 );
+   GarbageLock gl(*describe);
 
    InteractiveCompiler comp( &ml, intcomp_vm.vm() );
    comp.setInteractive( true );

@@ -38,30 +38,30 @@ AutoCString::AutoCString( const Item &itm )
    }
 
    //if the size is large, we already know we can't try the conversion
-   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
+   if ( (m_len = str->toCString( m_buffer+3, AutoCString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
    Falcon::uint32 len = str->length() * 4 + 4;
-   m_pData = (char *) memAlloc( len );
-   m_len = str->toCString( m_pData, len );
+   m_pData = (char *) memAlloc( len+3 );
+   m_len = str->toCString( m_pData+3, len );
 }
 
 
 AutoCString::AutoCString( const String &str ):
    m_pData(0)
 {
-   if ( (m_len = str.toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
+   if ( (m_len = str.toCString( m_buffer+3, AutoCString_BUF_SPACE-3 ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
    Falcon::uint32 len = str.length() * 4 + 4;
-   m_pData = (char *) memAlloc( len );
-   m_len = str.toCString( m_pData, len );
+   m_pData = (char *) memAlloc( len+3 );
+   m_len = str.toCString( m_pData+3, len );
 }
 
 
@@ -73,17 +73,24 @@ void AutoCString::init_vm_and_format( VMachine *vm, const Item &itm, const Strin
    str = &tempStr;
    vm->itemToString( tempStr, &itm, fmt );
    
-   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
+   if ( (m_len = str->toCString( m_buffer+3, AutoCString_BUF_SPACE-3 ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
    Falcon::uint32 len = str->length() * 4 + 4;
-   m_pData = (char *) memAlloc( len );
-   m_len = str->toCString( m_pData, len );
+   m_pData = (char *) memAlloc( len+3 );
+   m_len = str->toCString( m_pData+3, len );
 }
 
+const char* AutoCString::bom_str()
+{
+   m_pData[0] = 0xEF;
+   m_pData[1] = 0xBB;
+   m_pData[2] = 0xBF;
+   return m_pData;
+}
 
 AutoCString::~AutoCString()
 {
