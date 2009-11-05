@@ -323,6 +323,7 @@ VMachine::~VMachine()
 
 LiveModule* VMachine::link( Runtime *rt )
 {
+   fassert(rt);
    // link all the modules in the runtime from first to last.
    // FIFO order is important.
    uint32 listSize = rt->moduleVector()->size();
