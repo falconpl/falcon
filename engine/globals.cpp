@@ -109,6 +109,11 @@ namespace Engine
       // Ok, we're ready
    }
 
+   void PerformGC()
+   {
+     memPool->performGC();
+   }
+   
    void Shutdown()
    {
 

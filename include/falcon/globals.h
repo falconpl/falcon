@@ -42,6 +42,7 @@ class MemPool;
 namespace Engine
 {
    FALCON_DYN_SYM void Init();
+   FALCON_DYN_SYM void PerformGC();
    FALCON_DYN_SYM void Shutdown();
 
    /** Utility function recording the preferential encodings for sources and VM I/O.
@@ -88,8 +89,8 @@ namespace Engine
 
    class AutoInit {
    public:
-      inline AutoInit() { Init(); }
-      inline ~AutoInit() { Shutdown(); }
+      AutoInit() { Init(); }
+      ~AutoInit() { PerformGC(); Shutdown(); }
    };
 
 }
