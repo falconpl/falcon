@@ -59,197 +59,109 @@
      data corruption on your storages.
    - Elegance: Usually, a Falcon binding does many things for their users. It
      often provides services that the original library didn't provide, and
-     Encapsulates (or maps) the logical entities exposed by the bound library
-     into appropriate Falcon entities. In example, many C structures handled
-     by precise sets of functions are often turned into full Falcon classes;
-     different functions are merged into one single Falcon
+     encapsulates (or maps) the logical entities exposed by the bound library
+     into appropriate Falcon entities. Fir example, many C structures handled
+     by precise set of functions are often turned into full Falcon classes;
+     different functions can be merged into one single Falcon
      call which decides which low-level function must be invoked by analyzing
      its parameters; and so on.
    - Completeness: A full Falcon binding will map possibly incompatible
      concepts, as C pass-by-variable-pointer into Falcon references, or C structure
      mangling into object accessors. Some concepts may not be correctly mapped
-     by the simple integration model provided by DynLib; in example, it will not
-     be possible to read complex values directly placed in structures, as
-     any data returned or to be passed to DynLib loaded functions is opaque.
+     by the simple integration model provided by DynLib.
 
-   The DynLib module allows to lessen this drawbacks by providing
-   some optional type safety and conversion control which can be bound
-   to both parameters and return values, and presenting the imported functions
-   as class instances. In this way, the importing module may wrap the function
-   and control its execution by overloading the call method of the DynFunction
-   class. Also, it may be possible to configure and pass some structured data through
-   MemBufs, which are transferred directly as a memory reference to the foreign
-   functions.
+   \note The DynLib module allows to run foreign code that may not respect the
+   rules under which code controlled by the virtual machine and the Falcon scripting
+   engine enforce on binary modules. Even slight misusage may cause unpredictable 
+   crashes. 
 
-   @section Usage patterns.
 
-   @subsection Unsafe mode.
+   @section gen_usage General usage
 
-   To the simplest, DynLib can load and launch functions trying to guess how to manage
-   their parameters and return values.
+   The DynLib module exposes mainly three entities:
+   - Library interface (@a DynLib). It is used to query and eventually load 
+      remote functions stored in the dynamic library-
+   - Function prototype (@a DynFunction). It represents the function (as described
+     in its C declaration), and can be used to call it.
+   - Opaque structure wrapper (@a DynOpaque). It represents data returned by or
+     sent as a parameter to a DynFunction, which is formatted as a C struct or union.
 
-   As parameters:
-      - Integer numbers are turned into platform specific pointer-sized integers. This
-        allows to store both real integers and opaque pointers into Falcon integers.
-      - Strings are turned into UTF-8 strings (characters in ASCII range are unchanged).
-      - MemBuf are passed as they are.
-      - Floating point numbers are turned into 32 bit integers.
-
-   The return value is always a void* sized integer. This allows both to evaluate
-   integer return codes and to record opaque data returned by the library functions.
-
-   Dspite the simplicity of this model, it is possible to write quite articulated
-   bindings in this way. The following is working sample using GTK+2.x on a
-   UNIX system:
-
-   @code
-      load dynlib
-
-      l = DynLib( "/usr/lib/libgtk-x11-2.0.so" )
-      gtkInit = l.get( "gtk_init" ).call
-      gtkDialogNewWithButtons = l.get( "gtk_dialog_new_with_buttons" ).call
-      gtkDialogRun = l.get( "gtk_dialog_run" ).call
-      gtkWidgetDestroy = l.get( "gtk_widget_destroy" ).call
-
-      gtkInit( 0, 0 )
-      w = gtkDialogNewWithButtons( "Hello world", 0, 1,
-            "Ok", 1,
-            "Cancel", 2,
-            "何か言った？", 3,
-            0 )
-      n = gtkDialogRun( w )
-      > "Dialog result: ", n
-
-      //cleanup
-      gtkWidgetDestroy( w )
-   @endcode
-
-   As we're just interested in calling the loaded functions, we get the call method from
-   the DynFunction instances returned by @b get. GtkInit is called with stubs, so that it
-   doesn't try to parse argv. gtkDialogNewWithButtons looks very alike a C call, with
-   0 terminating the list of parameters. The @w entity is then direcly recorded from the
-   dialog init routine return, and passed directly to @b gtkDialogRun. Finally,
-   @b gtkWidgetDestroy is called to get rid of w; we didn't instruct our garbage collector
-   on how to handle that, so we have to take care of it by ourselves.
-
-   Trying to do anything not fitting this scheme, in example passing a random value to gtkDialogRun
-   will probably crash the application with little information about what went wrong.
-
-   @section Safe Mode
-
-   The @b pmask parameter of @a DynLib.get is parsed scanning a string containing tokens
-   separated by whitespace, ',' or ';' (they are the same). When a parameter mask
-   is specified, a ParamError is raised if the corresponding @b DynFunction.call doesn't
-   respect the call convention in number or type of passed parameters.
-
-   Each parameter specifier is either a single character or a "pseudoclass" name,
-   which must be an arbitrary name long two characters more.
-
-   The single character parameter specifier may be one of the following:
-
-   - P - application specific opaque pointer (stored in a Falcon integer item).
-   - F - 32 bit IEEE float format.
-   - D - 64 bit IEEE double format.
-   - I - 32 bit signed integer. This applies also to char and short int types, which
-         are always padded to 32 bit integers when passed as parameters or returned.
-   - U - 32 bit unsigned integer. This applies also to bytes and short unsigned int types, which
-         are always padded to 32 bit integers when passed as parameters or returned.
-   - L - 64 bit integers; as this is the maximum size allowed, sign is not relevant (the sign bit
-         is always placed correctly both in parameter passing and return values).
-   - S - UTF-8 encoded strings.
-   - W - Wide character strings (compatible with UTF-16 in local byte ordering).
-   - M - Memory buffers (MemBuf); this may also contain natively encoded strings or data structures.
-
-   The special "..." token indicates that the function accepts a set of unknown
-   parameters after that point, which will be treated as in unsafe mode.
-
-   To specify that a function doesn't return a value or can't accept parameters, use an empty
-   string.
-
-   @note Ideographic language users can define pseudoclasses with a single ideographic character,
-   as a pseudoclass name is parsed if the count of characters in a substring is more than one,
-      or if the only character is > 256U.
-
-   A pseudoclass name serves as a type safety constarint for the loaded library. Return
-   values marked with pseudoclasses will generate a DynOpaque instance that will remember
-   the class name and wrap the transported item. A pseudoclass parameter will check for the
-   parameter passed by the Falcon script at the given position is of class DynOpaque and carrying
-   the required pseudoclass type.
-
+   Once loaded a library, it is possible to load DynFunction searching its prototype.
    For example:
 
    @code
-      // declare the function as returning a MyItem pseudo-type, and accepting no parameters.
-      allocate = mylib.get( "allocate", "MyItem", "" ).call
-
-      // functions returns an integer and uses a single MyItem object
-      use = mylib.get( "use", "I", "MyItem" ).call
-
-      // Dispose the MyItem instance
-      dispose = mylib.get( "dispose", "", "MyItem" ).call
-
-      // create an item
-      item = allocate()
-      inspect( item )  // will show that it's encapsulated in a DynOpaque instance
-
-      // use it
-      > "Usage result: ", use( item )
-
-      // and free it
-      dispose( item )
+   load dynlib
+   
+   lib = DynLib( "/usr/lib/checksum.so" )    // or your favorite library
+   func = lib.get( "int checksum( const char* str, int len )" )
+   
+   teststr = "Hello world"
+   > @'CKSUM of "$teststr": ', func( teststr, teststr.len() )
    @endcode
 
-   Prepending a '$' sign in front of the parameter specificator will inform the parameter parsing
-   system to pass the item by pointer to the underlying library. Parameters coresponding to by-pointer
-   definitions must be references (passed by reference or reference items), and DynLib will
-   place adequately converted data coming from the underlying library into them.
-   In every case, @a DynFunction.call copies the data from the underlying library (which
-   cannot be disposed by the script), except for MemBuf and pseudo-class paramers.
+   The type signatures supported by dynlib are all the C types, with optional
+   pointer, array subscript and const signatures. The module takes care of
+   checking for the congruency of the parameters against the declared type
+   signature. More about type conversions are describe in the @a DynFunction
+   reference.
 
-   @note Return specifiers cannot be prepended with '$'.
+   @subsection gen_opaque_types Opaque Types
 
-   In case a MemBuf is passed by pointer,
-      - As input data, the pointer to the MemBuf controlled memory is sent to the remote function.
-      - As output data, the pointer as modified by the remote function is used to create a new
-        MemBuf, with elements long 1 bytes and virtually unterminated (its len() method will
-        report 2^31).
-   So, the original MemBuf is untouched, and the new one, stored in the parameter, will contain
-   the raw memory as the underlying library passed it. The MemBuf created in this way doesn't
-   own that memory, which will not be automatically disposed by the Falcon garbage collector.
-   It is necessary to call the appropriate function from the loaded library disposing the
-   structure when the data is not needed anymore.
+   Many libraries use a pointer to a structure or to a union as a kind of object
+   that is manipulated by various functions in the library, and finally disposed
+   through a specific free function. Falcon provides support for those pseudo
+   types so that they can be seen as opaque variables (whose content can actually
+   be inspected, if necessary), and eventually automatically freed via the
+   Falcon garbage collector.
 
-   If an opaque pseudo-class type is passed by pointer, the original opaque data is then sent to the remote
-   library, and the new pointer as returned by the library gets stored in the opaque item. This
-   changes the original opaque item. Still, the original pointer in the input opaque item is
-   not disposed.
+   When the return value is a pointer to a structure or a union, Falcon returns
+   an instance of a DynOpaque object, storing the returned data, meta-informations
+   about its original name and type, and eventually a reference to a free function
+   to be called when the object goes out of scope. For example:
 
-   For example:
-      @code
-      // Gets a raw error string from the library in iso8859-1 encoding.
-      getErrorString = mylib.get( "getErrorString", "M", "" ).call
+   @code
+   load dynlib
 
-      // the API docs of the library require this string to be freed with disposeErrorString
-      disposeErrorString = mylib.get( "getErrorString", "M", "" ).call
-
-      // get an error in the Falcon world
-      function getMyLibError()
-         mb = getErrorString()
-
-         // convert into a memory buffer correctly sized
-         mb = limitMembuf( mb )
-
-         // transcode
-         error = transcodeFrom( mb, "iso8859-1" )
-
-         // get rid of the error string
-         disposeErrorString( mb )
-         return error
-      end
+   lib = DynLib( "make_data.dll" )    // or your favorite library
+   func = lib.get( 
+      "struct Value* createMe( int size )",     // creator function 
+      "void freeValue( struct Value* v )"       // destructor function
+      )
+   
+   value = func( 1500 )
+   ...
+   ...
    @endcode
 
-   @see limitMembuf
-   @see limitMembufW
+
+   @subsection gen_var_params Variable parameters
+   
+   It is possible to call also functions with variable parameter prototype by using
+   the "..." symbol, like in the following example:
+
+   @code
+   load dynlib
+   stdc = DynLib( "/lib/libc.so.6" )
+   printf = stdc.get( "void printf( const char* format, ... )" )
+
+   printf( "Hello %s\n", "world" )
+   @endcode
+
+   In this case, as the DynLib can't use the declared parameter types as a guide
+   to determine how to convert the input parameters, some rigid Falcon-item-to-C transformations
+   are applied.
+
+    - Integer numbers are turned into platform specific pointer-sized integers. This
+      allows to store both real integers and opaque pointers into Falcon integers.
+    - MemBuf are passed as void *.
+    - Floating point numbers are turned into 64 bit iee floats.
+    - Strings are turned into UTF-8 strings (characters in ASCII range are unchanged). If you
+      need to pass strings encoded in other formats (i.e. as wchar_t*), convert them approriately
+      via TranscodeTo() and then get their data via ptr(), or convert to a MemBuf.
+    - Opaque types are sent as raw pointers
+
+   Other types are not allowed.
+
 */
 
 FALCON_MODULE_DECL
