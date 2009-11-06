@@ -715,8 +715,8 @@ void AppFalcon::run()
 
 int main ( int argc, char *argv[] )
 {
-   StdErrStream serr;
    AppFalcon falcon;
+   StdErrStream serr;
 
    try {
       if ( falcon.setup( argc, argv ) )
