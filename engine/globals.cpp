@@ -116,13 +116,15 @@ namespace Engine
    
    void Shutdown()
    {
-
+     if( s_searchPath != 0 )
+        delete s_searchPath;
+     
       delete memPool;
       memPool = 0;
 
-	  releaseLanguage();
-	  releaseEncodings();
-	  
+      releaseLanguage();
+      releaseEncodings();
+
       // clear all the service ( and VSF );
       s_mtx.lock();
       if( s_serviceMap )
