@@ -161,7 +161,6 @@
     - Opaque types are sent as raw pointers
 
    Other types are not allowed.
-
 */
 
 FALCON_MODULE_DECL
@@ -187,10 +186,10 @@ FALCON_MODULE_DECL
 
    // it has no object manager, as the garbage collector doesn't handle it.
    self->addClassMethod( dynlib_cls, "get", Falcon::Ext::DynLib_get ).asSymbol()
-      ->addParam( "symbol" )->addParam( "rettype" )->addParam( "pmask" );
+      ->addParam( "decl" )->addParam( "deletor" );
 
    self->addClassMethod( dynlib_cls, "query", Falcon::Ext::DynLib_query ).asSymbol()
-      ->addParam( "symbol" )->addParam( "rettype" )->addParam( "pmask" );
+      ->addParam( "decl" )->addParam( "deletor" );
 
    self->addClassMethod( dynlib_cls, "unload", Falcon::Ext::DynLib_unload );
 

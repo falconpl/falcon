@@ -637,13 +637,12 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
 /*#
    @method get DynLib
    @brief Gets a dynamic symbol in this library.
-   @param symbol The symbol to be retrieved.
-   @optparam rettype Function return type (see below).
-   @optparam pmask Function parameter mask (see below).
+   @param decl The C header declaration.
+   @optparam deletor C Header declaration of a function ivoked at collection of generated items.
    @return On success an instance of @a DynFunction class.
    @raise DynLibError if this instance is not valid (i.e. if used after an unload).
-   @raise DynLibError if the @b symbol parameter cannot be resolved in the library.
-   @raise ParamError in case of invalid parameter mask or return type.
+   @raise DynLibError if the function named in @b decl parameter cannot be resolved in the library.
+   @raise ParseError in case of invalid declaration used as @b decl parameter.
 
    On success, the returned @a DynFunction instance has all the needed informations
    to perform calls directed to the foreign library.
@@ -653,9 +652,9 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
    directly the @b call property:
 
    @code
-      allocate = mylib.get( "allocate" ).call
-      use = mylib.get( "use" ).call
-      dispose = mylib.get( "dispose" ).call
+      allocate = mylib.get( "struct THING* allocate()" )
+      use = mylib.get( "void use( struct THING* data )" )
+      dispose = mylib.get( "void dispose( struct THING* data )" )
 
       // create an item
       item = allocate()
@@ -666,6 +665,29 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise, String& name )
       // and free it
       dispose( item )
    @endcode
+
+   @note The @b allocate, @b use and @b dispose items in this examples are
+   DynFunction instances; they can be directly called as they offer a call__()
+   override.
+
+   In cases like the one in this example, it is possible to associate an automatic
+   deletor function directly in the first call:
+
+   @code
+      allocate = mylib.get( "struct THING* allocate()", "void dispose( struct THING* data )" )
+      use = mylib.get( "void use( struct THING* data )" )
+
+      // create an item
+      item = allocate()
+
+      // use it
+      use( item )
+
+      // ...
+   @endcode
+
+   Doing so, the items returned via a function returning opaque data (struct pointers) are
+   automatically deleted when the garbage collector is called.
 
    See the main page of this document for more details on safety.
 */
@@ -689,14 +711,13 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
 /*#
    @method query DynLib
    @brief Gets a dynamic symbol in this library.
-   @param symbol The symbol to be retrieved.
-   @optparam rettype Function return type (see below).
-   @optparam pmask Function parameter mask (see below).
-   @return On success an instance of @a DynFunction class; nil if the @b symbol can't be found.
+   @param decl The C header declaration.
+   @optparam deletor C Header declaration of a function ivoked at collection of generated items.
+   @return On success an instance of @a DynFunction class; nil if the symbol can't be found.
    @raise DynLibError if this instance is not valid (i.e. if used after an unload).
-   @raise ParamError in case of invalid parameter mask or return type.
+   @raise ParseError in case of invalid declaration used as @b decl parameter.
 
-   This function is equivalent to DynLib.get, except for the fact that it returns nil
+   This function is equivalent to @a DynLib.get, except for the fact that it returns nil
    instead of raising an error if the given function is not found. Some program logic
    may prefer a raise when the desired function is not there (as it is supposed to be there),
    other may prefer just to peek at the library for optional content.
@@ -721,7 +742,7 @@ FALCON_FUNC  DynLib_query( ::Falcon::VMachine *vm )
    @brief Unloads a dynamic library from memory.
    @raise DynLibError on failure.
 
-   Using any of the functions retrieved from this library after this call may
+   Using any of the functions loaded from this library after this call may
    cause immediate crash of the host application.
 */
 FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm )
@@ -770,21 +791,6 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
    @optparam ...
    @return Either nil, a Falcon item or an instance of @a DynOpaque.
 
-   The function calls the dynamically loaded function. If the function was loaded by
-   @a DynLib.get with parameter specificators, input parameters are checked for consistency,
-   and a ParamError may be raised if they don't match. Otherwise, the parameters
-   are passed to the underlying remote functions using this conversion:
-
-      - Integer numbers are turned into platform specific pointer-sized integers. This
-        allows to store both real integers and opaque pointers into Falcon integers.
-      - Strings are turned into UTF-8 strings (characters in ASCII range are unchanged).
-      - MemBuf are passed as they are.
-      - Floating point numbers are turned into 32 bit integers.
-
-   If a return specificator was applied in @a DynLib.get, the function return value is
-   determined by the specificator, otherwise a single integer is returned. The integer
-   is sized after the void* size in the host platform, so it may contain either an integer
-   returned as a status value or an opaque pointer to a structure created by the function.
 
    @see DynLib.get
 */
