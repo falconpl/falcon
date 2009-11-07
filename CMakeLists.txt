@@ -4,35 +4,30 @@
 # CMake configuration file for Feather modules
 ####################################################################
 
-PROJECT(PDF)
-SET(FALCON_PROJECT_BASE "modules/pdf")
+cmake_minimum_required(VERSION 2.6)
+project(falcon-module-hpdf)
 
-#Check for environment
-IF($ENV{FALCON_DEVEL_TREE} STREQUAL "" )
-   MESSAGE( FATAL_ERROR "Sorry, Falcon environment not correctly configured" )
-ENDIF($ENV{FALCON_DEVEL_TREE} STREQUAL "")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
-#Include falcon configuration
-INCLUDE("$ENV{FALCON_DEVEL_TREE}/config.cmake")
-#set common include directory
-FALCON_INCLUDE_SETTINGS()
+find_package(falcon REQUIRED)
+find_package(LibHaru REQUIRED)
 
-INCLUDE_DIRECTORIES(BEFORE include)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${falcon_INCLUDE_DIRS}
+  ${LibHaru_INCLUDE_DIRS}
+)
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
 # Target
-ADD_LIBRARY( pdf MODULE
-   # PDF module source
+add_library(pdf_fm MODULE
    pdf.cpp
    pdf_ext.cpp
    pdf_srv.cpp
 )
 
-#Link
-TARGET_LINK_LIBRARIES(pdf falcon_engine hpdf z)
-SET_TARGET_PROPERTIES(pdf PROPERTIES PREFIX "") #Install
-FALCON_MODULE_INSTALL( pdf )
+target_link_libraries(pdf_fm
+  ${LibHaru_LIBRARIES} 
+)
+falcon_finalize_module(pdf_fm)
