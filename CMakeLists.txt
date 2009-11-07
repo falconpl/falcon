@@ -21,13 +21,13 @@ include_directories(
 
 
 # Target
-add_library(pdf_fm MODULE
+add_library(hpdf_fm MODULE
    pdf.cpp
    pdf_ext.cpp
    pdf_srv.cpp
 )
 
-target_link_libraries(pdf_fm
+target_link_libraries(hpdf_fm
   ${LibHaru_LIBRARIES} 
 )
-falcon_finalize_module(pdf_fm)
+falcon_finalize_module(hpdf_fm)
