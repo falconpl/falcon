@@ -329,35 +329,44 @@ LiveModule* VMachine::link( Runtime *rt )
    uint32 listSize = rt->moduleVector()->size();
    LiveModule** lmodList = new LiveModule*[listSize];
    LiveModule* lmod = 0;
-   uint32 iter;
-   for( iter = 0; iter < listSize; ++iter )
-   {
-      ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
-      if ( (lmod = prelink( md->module(),
-                       rt->hasMainModule() && (iter + 1 == listSize),
-                       md->isPrivate() ) ) == 0
-      )
+
+   //Make sure we catch falcon errors to delete lmodList afterwards.
+   try {
+      uint32 iter;
+      for( iter = 0; iter < listSize; ++iter )
       {
-         delete [] lmodList;
-         return 0;
+         ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
+         if ( (lmod = prelink( md->module(),
+                          rt->hasMainModule() && (iter + 1 == listSize),
+                          md->isPrivate() ) ) == 0
+         )
+         {
+            delete [] lmodList;
+            return 0;
+         }
+
+         // use the temporary storage.
+         lmodList[ iter ] = lmod;
       }
 
-      // use the temporary storage.
-      lmodList[ iter ] = lmod;
-   }
+      // now again, do the complete phase.
+      for( iter = 0; iter < listSize; ++iter )
+      {
+          if ( ! completeModLink( lmodList[ iter ] ) )
+          {
+             delete [] lmodList;
+             return 0;
+          }
+      }
 
-   // now again, do the complete phase.
-   for( iter = 0; iter < listSize; ++iter )
+      // returns the topmost livemodule
+      delete [] lmodList;
+   }
+   catch( Error *err )
    {
-       if ( ! completeModLink( lmodList[ iter ] ) )
-       {
-          delete [] lmodList;
-          return 0;
-       }
+      delete [] lmodList;
+      throw err;
    }
-
-   // returns the topmost livemodule
-   delete [] lmodList;
    return lmod;
 }
 
