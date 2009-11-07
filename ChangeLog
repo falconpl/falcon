@@ -1,3 +1,13 @@
+Dynlib (0.9.99)
+   - Major: Changed the DynLib class get() method so that it uses C
+            headers instead of arbitrary parameter/return types.
+   - Major: Removed call() from DynFunction; using the call__ BOM
+            override.
+   - Major: Completely redesigned the parameter type/value system;
+            now it can be used easily by call code under any
+            architecture/asm.
+
+
 Dynlib (0.9.5)
    - Major: Added function set to manipulate C structures:
             stringToPtr, memBufToPtr, memBufFromPtr, setStruct, getStruct
