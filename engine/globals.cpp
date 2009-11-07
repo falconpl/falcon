@@ -52,8 +52,16 @@ namespace Engine
    /** Release encoding data. */
    void releaseEncodings();
 
-   bool addVFS( const String &name, VFSProvider *prv )
+   bool addVFS( VFSProvider *prv )
    {
+      fassert( prv != 0 );
+      return addVFS(prv->protocol(),prv);
+   }
+
+   bool addVFS( const String &protocol, VFSProvider *prv )
+   {
+      fassert( prv != 0 );
+
       s_mtx.lock();
       if ( s_serviceMap == 0 )
       {
@@ -61,7 +69,7 @@ namespace Engine
       }
       else
       {
-         void *oldPrv = s_serviceMap->find( &name );
+         void *oldPrv = s_serviceMap->find( &protocol );
          if( oldPrv != 0 )
          {
             s_mtx.unlock();
@@ -69,7 +77,7 @@ namespace Engine
          }
       }
 
-      s_serviceMap->insert( &name, prv );
+      s_serviceMap->insert( &protocol, prv );
       s_mtx.unlock();
 
       return true;

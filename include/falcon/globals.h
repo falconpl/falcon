@@ -67,7 +67,15 @@ namespace Engine
    */
    FALCON_DYN_SYM void getEncodings( String &sSrcEnc, String &sIOEnc );
 
-   FALCON_DYN_SYM bool addVFS( const String &name, VFSProvider *prv );
+   /** Utility function that adds a VFSProvider to the engine.
+      The engine takes ownership of the instance so 
+      Don't add the same instance more than once!
+
+      \param protocol The protocol which this VFSProvider responds to
+      \param prv The provider that should be added
+   */
+   FALCON_DYN_SYM bool addVFS( const String &protocol, VFSProvider *prv );
+   FALCON_DYN_SYM bool addVFS( VFSProvider *prv );
    FALCON_DYN_SYM VFSProvider* getVFS( const String &name );
 
    FALCON_DYN_SYM const String &getMessage( uint32 id );
