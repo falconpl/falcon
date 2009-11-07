@@ -2,10 +2,21 @@
 
                             Dynamic Library Binder
 
-                                Version 0.9.5
+                                Version 0.9.99
 
-  This is an under-development version; we have released this version as a
-developent stapshot.
+  This is an alpha preview of final 1.0 release. 
+  This release is an alpha release for final 1.0 version. The module is released
+for testing purposes and to allow a wider user base to test it. 
+ 
+  In particular, all the functions in the Structure Support group are being 
+reorganized and moved in the Core module. Part of their functionalities is 
+already available under other names and usage patterns. 
+
+  In this version the following features scheduled for 1.0 are missing: 
+   .Wide support for arbitrary depth data structures. 
+   - Support for arrays of pod types. 
+   - Arbitrary indirection depth. 
+   - Callback support.
 
   To compile it from source, you must have a current binary installation
 of The Falcon Programming Language with development files (or "dev" package
@@ -25,24 +36,25 @@ SOURCE PACKAGE
 INSTALLATION
 ============
 
-  To install this module and make it available to Falcon applications, the binary
-file dynlib.[dll|so|dylib] (the extension depends on your host system) must be 
-copied into the directory containing Falcon module files. The actual destination
-depends on your installation settings, but it will typically be:
+  To install this module and make it available to Falcon applications, the 
+binary file dynlib.[dll|so|dylib] (the extension depends on your host system) 
+must be copied into the directory containing Falcon module files. The actual 
+destination depends on your installation settings, but it will typically be:
       /usr/local/lib/falcon -or-
       /usr/lib/falcon
    on POSIX systems, and
       C:\Program Files\Falcon\bin
    on MS-Windows systems.
   
-  Alternatively , the FALCON_LOAD_PATH environment variable must be set to include 
-also the directory where this module is located.
+  Alternatively, the FALCON_LOAD_PATH environment variable must be set to
+include  also the directory where this module is located.
 
 
 LICENSE
 =======
 
-  This Module is released as Open Source with Dual Licensing. You can chose either
+  This Module is released as Open Source with Dual Licensing. You can chose 
+either
   
   - Falcon Programming Language License 1.1, available at
       http://www.falconpl.org/?page_id=license_1_1
@@ -61,3 +73,4 @@ AUTHORS
   All emails are follwed by falconpl.org
 
   - Giancarlo Niccolai - gc@
+

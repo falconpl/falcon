@@ -34,6 +34,24 @@
    to load dynamic link libraries, or shared objects on UNIX systems,
    and use the functions as if it were standard Falcon functions.
 
+   @section sect_status Status of this release
+
+   This release is an alpha release for final 1.0 version. The module is
+   released for testing purposes and to allow a wider user base to test
+   it.
+
+   In particular, all the functions in the @a structsup group are being
+   reorganized and moved in the Core module. Part of their functionalities
+   is already available under other names and usage patterns.
+
+   In this version the following features scheduled for 1.0 are missing:
+   - Wide support for arbitrary depth data structures.
+   - Support for arrays of pod types.
+   - Arbitrary indirection depth.
+   - callback support.
+
+   @section sect_general Introduction
+
    This module has two goals:
    - Allow Falcon users to access external libraries they may need
       which are not yet covered by Falcon extensions.
@@ -74,6 +92,7 @@
    rules under which code controlled by the virtual machine and the Falcon scripting
    engine enforce on binary modules. Even slight misusage may cause unpredictable 
    crashes. 
+
 
 
    @section gen_usage General usage
