@@ -33,6 +33,215 @@ void pdf_error_handler( HPDF_STATUS errorNo, HPDF_STATUS detailNo, void* user_da
 
 
 /**
+ * PDF
+ */
+
+PDF::PDF( CoreClass const* cls) :
+  CoreObject( cls )
+{
+  m_pdf = HPDF_New( pdf_error_handler, this );
+}
+
+PDF::~PDF()
+{
+  if ( m_pdf )
+    HPDF_Free( m_pdf );
+}
+
+HPDF_Doc PDF::getHandle() const
+{ return m_pdf; }
+
+bool PDF::getProperty( String const& propName, Item& prop ) const
+{
+  if ( propName == "author" )
+    prop = this->author();
+  else if ( propName == "creator" )
+    prop = this->creator() ;
+  else if ( propName == "title" )
+    prop = this->title();
+  else if ( propName == "subject" )
+    prop = this->subject();
+  else if ( propName == "keywords" )
+    prop = this->keywords();
+  else
+    return this->defaultProperty(propName, prop);
+  return true;
+}
+
+bool PDF::setProperty( String const& propName, Item const& prop )
+{
+  if ( propName == "author" )
+    this->author( *prop.asString() );
+  else if ( propName == "creator" )
+    this->creator( *prop.asString() );
+  else if ( propName == "title" )
+    this->title( *prop.asString() );
+  else if ( propName == "subject" )
+    this->subject( *prop.asString() );
+  else if ( propName == "keywords" )
+    this->keywords( *prop.asString() );
+  else if ( propName == "permission" )
+    this->permission( prop.forceInteger() );
+  else if ( propName == "compression" )
+    this->compression( prop.forceInteger() );
+  else if ( propName == "encryption" )
+    this->encryption( prop.forceInteger() );
+  else if ( propName == "userPassword" )
+  {
+    m_userPassword = *prop.asString();
+    if ( m_ownerPassword.length() > 0 )
+    {
+      this->password( m_ownerPassword, m_userPassword );
+      m_ownerPassword = "";
+      m_userPassword = "";
+    }
+  }
+  else if ( propName == "ownerPassword" )
+  {
+    m_ownerPassword = *prop.asString();
+    if ( m_userPassword.length() > 0 )
+    {
+      this->password( m_ownerPassword, m_userPassword );
+      m_ownerPassword = "";
+      m_userPassword = "";
+    }
+  }
+  else
+    return false;
+
+  return true;
+}
+
+int PDF::author( String const& author )
+{
+  AutoCString asAuthor( author );
+  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_AUTHOR, asAuthor.c_str() );
+}
+
+String PDF::author() const
+{
+  String result;
+  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_AUTHOR );
+  if ( s )
+    result.append( s );
+  return result;
+}
+
+int PDF::creator( String const& creator )
+{
+  AutoCString asCreator( creator );
+  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_CREATOR, asCreator.c_str() );
+}
+
+String PDF::creator() const
+{
+  String result;
+  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_CREATOR );
+  if ( s )
+    result.append( s );
+  return result;
+}
+
+int PDF::title( String const& title )
+{
+  AutoCString asTitle( title );
+  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_TITLE, asTitle.c_str() );
+}
+
+String PDF::title() const
+{
+  String result;
+  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_TITLE );
+  if ( s )
+    result.append( s );
+  return result;
+}
+
+int PDF::subject( String const& subject )
+{
+  AutoCString asSubject( subject );
+  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_SUBJECT, asSubject.c_str() );
+}
+
+String PDF::subject() const
+{
+  String result;
+  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_SUBJECT );
+  if ( s )
+    result.append( s );
+  return result;
+}
+
+int PDF::keywords( String const& keywords )
+{
+  AutoCString asKeywords( keywords );
+  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_KEYWORDS, asKeywords.c_str() );
+}
+
+String PDF::keywords() const
+{
+  String result;
+  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_KEYWORDS );
+  if ( s )
+    result.append( s );
+  return result;
+}
+
+int PDF::createDate( TimeStamp const& date )
+{
+  m_createDate = date;
+  return -1; // TODO: tell HPDF_SetDateInfoAttr about it
+}
+
+TimeStamp PDF::createDate() const
+{ return m_createDate; }
+
+int PDF::modifiedDate( TimeStamp const& date )
+{
+  m_modifiedDate = date;
+  return -1; // TODO: tell HPDF_SetDateInfoAttr about it
+}
+
+TimeStamp PDF::modifiedDate() const
+{ return m_modifiedDate; }
+
+int PDF::password( String const& owner, String const& user )
+{
+  AutoCString asOwner( owner );
+  AutoCString asUser( user );
+
+  return HPDF_SetPassword( m_pdf, asOwner.c_str(), asUser.c_str() );
+}
+
+int PDF::permission( int64 permission )
+{ return HPDF_SetPermission( m_pdf, permission ); }
+
+int PDF::encryption( int64 mode )
+{
+  int len = 5;
+  if ( mode == HPDF_ENCRYPT_R3 + 1 )
+  {
+    mode = HPDF_ENCRYPT_R3;
+    len = 16;
+  }
+  return HPDF_SetEncryptionMode( m_pdf, (HPDF_EncryptMode) mode, len );
+}
+
+int PDF::compression( int64 mode )
+{ return HPDF_SetCompressionMode( m_pdf, mode ); }
+
+int PDF::saveToFile( String const& filename ) const
+{
+  AutoCString asFilename( filename );
+  return HPDF_SaveToFile( m_pdf, asFilename.c_str() );
+}
+
+PDF* PDF::clone() const
+{ return 0; }
+
+
+
+/**
  * PDFPage
  */
 
@@ -328,214 +537,6 @@ void PDFPage::pdf(PDF* pdf)
 
 PDF* PDFPage::pdf() const
 { return this->m_pdf; }
-
-
-/**
- * PDF
- */
-
-PDF::PDF( CoreClass const* cls) :
-  CoreObject( cls )
-{
-  m_pdf = HPDF_New( pdf_error_handler, this );
-}
-
-PDF::~PDF()
-{
-  if ( m_pdf )
-    HPDF_Free( m_pdf );
-}
-
-HPDF_Doc PDF::getHandle() const
-{ return m_pdf; }
-
-bool PDF::getProperty( String const& propName, Item& prop ) const
-{
-  if ( propName == "author" )
-    prop = this->author();
-  else if ( propName == "creator" )
-    prop = this->creator() ;
-  else if ( propName == "title" )
-    prop = this->title();
-  else if ( propName == "subject" )
-    prop = this->subject();
-  else if ( propName == "keywords" )
-    prop = this->keywords();
-  else
-    return this->defaultProperty(propName, prop);
-  return true;
-}
-
-bool PDF::setProperty( String const& propName, Item const& prop )
-{
-  if ( propName == "author" )
-    this->author( *prop.asString() );
-  else if ( propName == "creator" )
-    this->creator( *prop.asString() );
-  else if ( propName == "title" )
-    this->title( *prop.asString() );
-  else if ( propName == "subject" )
-    this->subject( *prop.asString() );
-  else if ( propName == "keywords" )
-    this->keywords( *prop.asString() );
-  else if ( propName == "permission" )
-    this->permission( prop.forceInteger() );
-  else if ( propName == "compression" )
-    this->compression( prop.forceInteger() );
-  else if ( propName == "encryption" )
-    this->encryption( prop.forceInteger() );
-  else if ( propName == "userPassword" )
-  {
-    m_userPassword = *prop.asString();
-    if ( m_ownerPassword.length() > 0 )
-    {
-      this->password( m_ownerPassword, m_userPassword );
-      m_ownerPassword = "";
-      m_userPassword = "";
-    }
-  }
-  else if ( propName == "ownerPassword" )
-  {
-    m_ownerPassword = *prop.asString();
-    if ( m_userPassword.length() > 0 )
-    {
-      this->password( m_ownerPassword, m_userPassword );
-      m_ownerPassword = "";
-      m_userPassword = "";
-    }
-  }
-  else
-    return false;
-
-  return true;
-}
-
-int PDF::author( String const& author )
-{
-  AutoCString asAuthor( author );
-  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_AUTHOR, asAuthor.c_str() );
-}
-
-String PDF::author() const
-{
-  String result;
-  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_AUTHOR );
-  if ( s )
-    result.append( s );
-  return result;
-}
-
-int PDF::creator( String const& creator )
-{
-  AutoCString asCreator( creator );
-  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_CREATOR, asCreator.c_str() );
-}
-
-String PDF::creator() const
-{
-  String result;
-  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_CREATOR );
-  if ( s )
-    result.append( s );
-  return result;
-}
-
-int PDF::title( String const& title )
-{
-  AutoCString asTitle( title );
-  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_TITLE, asTitle.c_str() );
-}
-
-String PDF::title() const
-{
-  String result;
-  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_TITLE );
-  if ( s )
-    result.append( s );
-  return result;
-}
-
-int PDF::subject( String const& subject )
-{
-  AutoCString asSubject( subject );
-  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_SUBJECT, asSubject.c_str() );
-}
-
-String PDF::subject() const
-{
-  String result;
-  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_SUBJECT );
-  if ( s )
-    result.append( s );
-  return result;
-}
-
-int PDF::keywords( String const& keywords )
-{
-  AutoCString asKeywords( keywords );
-  return HPDF_SetInfoAttr( m_pdf, HPDF_INFO_KEYWORDS, asKeywords.c_str() );
-}
-
-String PDF::keywords() const
-{
-  String result;
-  const char *s = HPDF_GetInfoAttr( m_pdf, HPDF_INFO_KEYWORDS );
-  if ( s )
-    result.append( s );
-  return result;
-}
-
-int PDF::createDate( TimeStamp const& date )
-{
-  m_createDate = date;
-  return -1; // TODO: tell HPDF_SetDateInfoAttr about it
-}
-
-TimeStamp PDF::createDate() const
-{ return m_createDate; }
-
-int PDF::modifiedDate( TimeStamp const& date )
-{
-  m_modifiedDate = date;
-  return -1; // TODO: tell HPDF_SetDateInfoAttr about it
-}
-
-TimeStamp PDF::modifiedDate() const
-{ return m_modifiedDate; }
-
-int PDF::password( String const& owner, String const& user )
-{
-  AutoCString asOwner( owner );
-  AutoCString asUser( user );
-
-  return HPDF_SetPassword( m_pdf, asOwner.c_str(), asUser.c_str() );
-}
-
-int PDF::permission( int64 permission )
-{ return HPDF_SetPermission( m_pdf, permission ); }
-
-int PDF::encryption( int64 mode )
-{
-  int len = 5;
-  if ( mode == HPDF_ENCRYPT_R3 + 1 )
-  {
-    mode = HPDF_ENCRYPT_R3;
-    len = 16;
-  }
-  return HPDF_SetEncryptionMode( m_pdf, (HPDF_EncryptMode) mode, len );
-}
-
-int PDF::compression( int64 mode )
-{ return HPDF_SetCompressionMode( m_pdf, mode ); }
-
-int PDF::saveToFile( String const& filename ) const
-{
-  AutoCString asFilename( filename );
-  return HPDF_SaveToFile( m_pdf, asFilename.c_str() );
-}
-
-PDF* PDF::clone() const
-{ return 0; }
 
 
 }} // namespace Falcon::Mod
