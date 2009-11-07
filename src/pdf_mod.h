@@ -16,8 +16,8 @@
  * package.
  */
 
-#ifndef FLC_HPDF_H
-#define FLC_HPDF_H
+#ifndef FALCON_MODULE_HPDF_MOD_H
+#define FALCON_MODULE_HPDF_MOD_H
 
 #include <hpdf.h>
 #include <falcon/timestamp.h>
@@ -196,4 +196,4 @@ struct HPDFError:  Error
 
 }} // namespace Falcon::Mod
 
-#endif /* FLC_HPDF_H */
+#endif /* FALCON_MODULE_HPDF_MOD_H */

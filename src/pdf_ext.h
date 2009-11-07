@@ -22,8 +22,8 @@
  * PDF module main file - extension definitions
  */
 
-#ifndef FLC_PDF_EXT_H
-#define FLC_PDF_EXT_H
+#ifndef FALCON_MODULE_HPDF_EXT_H
+#define FALCON_MODULE_HPDF_EXT_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -49,4 +49,4 @@ FALCON_FUNC PDFPage_textOut( VMachine* );
 
 }} // namepsace Falcon::Ext
 
-#endif /* FLC_PDF_EXT_H */
+#endif /* FALCON_MODULE_HPDF_EXT_H */
