@@ -1,7 +1,7 @@
 /****************************************************************************
 * DynLib - Falcon dynamic library loader module - test suite
 *
-* ID: 3d
+* ID: 3c
 * Category: byptr
 * Subcategory:
 * Short: Byptr errors
@@ -18,17 +18,12 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
 
    // String pointer
-   mb = MemBuf(100)
-   f = l.get( "call_pRsz", "", "$S" ).call
+   f = l.get( "void call_pRsz( char** ptr )" )
    try
       f(0)
       failure( "Int" )
    end
    
-   try
-      f("a string")
-      failure( "String" )
-   end
 
    success()
 catch DynLibError in e

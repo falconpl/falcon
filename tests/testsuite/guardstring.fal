@@ -18,8 +18,8 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
 
    // plain string
-   rsz = l.get( "call_rsz", "S", "" ).call
-   check = l.get( "call_psz_ri_check", "I", "S" ).call
+   rsz = l.get( "const char* call_rsz()" )
+   check = l.get( "int call_psz_ri_check( const char* chr )" )
 
    the_string = rsz()
    if the_string != "Hello world"
@@ -43,8 +43,8 @@ try
    end
 
    // wchar_t string
-   rsz = l.get( "call_rwz", "W", "" ).call
-   check = l.get( "call_pwz_ri_check", "I", "W" ).call
+   rsz = l.get( "const wchar_t* call_rwz()" )
+   check = l.get( "int call_pwz_ri_check( const wchar_t* chr )" )
 
    the_string = rsz()
    if the_string != "Hello world"

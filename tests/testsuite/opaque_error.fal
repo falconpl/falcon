@@ -18,11 +18,12 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
 
    // String pointer
-   mb = MemBuf(100)
-   make = l.get( "call_rsz", "AnotherItem", "" ).call
-   test = l.get( "call_psz_ri_check", "I", "MyItem" ).call
+   make = l.get( "struct dynlib_s* dynlib_s_make( const char* name )",
+                 "void dynlib_s_free( struct dynlib_s* s )" )
 
-   data = make()
+   test = l.get( "const char* dynlib_s_name(struct dynlib_s* item)" )
+
+   data = make( "Test" )
    try
       test( 0 )
       failure( "Not filtering an integer" )
@@ -33,10 +34,6 @@ try
       failure( "Not filtering a string" )
    end
 
-   try
-      test( data )
-      failure( "Not filtering another type of data" )
-   end
    
    success()
 catch DynLibError in e

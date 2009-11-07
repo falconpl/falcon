@@ -1,7 +1,7 @@
 /****************************************************************************
 * DynLib - Falcon dynamic library loader module - test suite
 *
-* ID: 0e
+* ID: 0d
 * Category: smoke
 * Subcategory:
 * Short: Pseudoclass
@@ -17,20 +17,21 @@ load dynlib
 try
    // setup
    l = DynLib( "./test_dynlib." + dynExt() )
-   f = l.get( "call_p0_ri", "PData" ).call   // this creates a pseudo class
+   f = l.get( "struct PData* call_p0_ri()" )   // this creates a pseudo class
 
    pdata = f()
+
    // what is pdata?
-   if pdata.toString() != "DynOpaque: PData"
+   if pdata.baseClass() != DynOpaque
       failure( "pseudo class creation" )
    end
 
-   if pdata.pseudoClass != "PData"
+   if pdata.type != "PData"
       failure( "pseudo class value" )
    end
 
    // has pdata the right content?
-   if pdata.getData() != 100
+   if pdata.ptr != 100
       failure( "pseudo class content" )
    end
 

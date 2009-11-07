@@ -17,7 +17,7 @@ load cksum
 try
    // setup
    l = DynLib( "./test_dynlib." + dynExt() )
-   check = l.get( "checksum", "L", "M, I" ).call
+   check = l.get( "long long checksum( void* data, int size )" )
    mb = MemBuf( 40 )
    for i in [0:mb.len()]
       mb[i] = i*2+20

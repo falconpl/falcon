@@ -1,7 +1,7 @@
 /****************************************************************************
 * DynLib - Falcon dynamic library loader module - test suite
 *
-* ID: 0f
+* ID: 0e
 * Category: smoke
 * Subcategory:
 * Short: Error detection
@@ -18,56 +18,43 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
 
    // check an unexisting function via query
-   f = l.query( "Yo!" )
+   f = l.query( "void Yo()" )
    if f != nil: failure( "Found unexisting function" )
 
    // check an unexsting function via get
    try
-      f = l.get( "Yo!" )
+      f = l.get( "void Yo()" )
       failure( "Error not raised by get on unexisting function" )
    catch DynLibError in e
    end
 
    // checks invalid return val
    try
-      f = l.get( "call_p0_ri", "K" )
+      f = l.get( "asdr call_p0_ri()" )
       failure( "Invalid retval not detected" )
-   catch ParamError in e
-   end
-
-   // checks invalid return (by $)
-   try
-      f = l.get( "call_p0_ri", "$I" )
-      failure( "Byref retval not detected" )
-   catch ParamError in e
-   end
-
-   // checks invalid return (multiple)
-   try
-      f = l.get( "call_p0_ri", "I U" )
-      failure( "Multiple retval not detected" )
-   catch ParamError in e
+   catch ParseError in e
    end
 
    // checks invalid param
    try
-      f = l.get( "call_p0_ri", "I", "K" )
+      f = l.get( "int call_p0_ri( asdr name )" )
       failure( "Invalid param not detected" )
-   catch ParamError in e
+   catch ParseError in e
    end
 
-   // checks invalid param in sequence
+      // checks invalid param
    try
-      f = l.get( "call_p0_ri", "I", "I K U" )
-      failure( "Invalid param in sequence not detected" )
-   catch ParamError in e
+      f = l.get( "int call_p0_ri( int )" )
+      failure( "Invalid param not detected" )
+   catch ParseError in e
    end
+
 
    // checks parameter after ...
    try
-      f = l.get( "call_p0_ri", "I", "I ... U" )
+      f = l.get( "int call_p0_ri( void* data, ..., int next)" )
       failure( "Parameter after ... not detected" )
-   catch ParamError in e
+   catch ParseError in e
    end
 
    // type checks in other tests.

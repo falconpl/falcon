@@ -22,7 +22,7 @@ try
    // use a parameterless call to avoid problems in case of messups
 
    // No parameters
-   f = l.get( "call_p0_ri", "I", "" ).call
+   f = l.get( "int call_p0_ri()" )
    try
       f( "p" )
       failure( "Empty params" )
@@ -30,7 +30,7 @@ try
    end
 
    // a parameter with no call
-   f = l.get( "call_p0_ri", "I", "I" ).call
+   f = l.get( "int call_p0_ri( int p1 )" )
    try
       f()
       failure( "Single param not given" )
@@ -57,7 +57,7 @@ try
    catch ParamError in e
    end
 
-   f = l.get( "call_p0_ri", "I", "S" ).call
+   f = l.get( "int call_p0_ri(const char* p)" )
    try
       f( false )
       failure( "String type not filtering (1)" )

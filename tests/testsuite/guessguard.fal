@@ -19,54 +19,34 @@ class cls
    end
 end
 
-attributes: attr
-
 try
    // setup
    l = DynLib( "./test_dynlib." + dynExt() )
    // use a parameterless function so we won't crash on mistakes.
-   f = l.get( "call_p0_ri" ).call
-
-   try
-      f( nil )
-      failure( "Unguessable not guarded: nil" )
-   catch DynLibError in e
-   end
-
-   try
-      f( true )
-      failure( "Unguessable not guarded: boolean" )
-   catch DynLibError in e
-   end
-
+   f = l.get( "void call_p0_ri(...)" )
+   
    try
       f( [1:2] )
       failure( "Unguessable not guarded: range" )
-   catch DynLibError in e
-   end
-
-   try
-      f( attr )
-      failure( "Unguessable not guarded: attributes" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    try
       f( cls )
       failure( "Unguessable not guarded: class" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    try
       f( cls() )
       failure( "Unguessable not guarded: object" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    try
       f( cls().f )
       failure( "Unguessable not guarded: method" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
 

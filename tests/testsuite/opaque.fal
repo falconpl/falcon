@@ -17,17 +17,17 @@ try
    // setup
    l = DynLib( "./test_dynlib." + dynExt() )
 
-   // String pointer
-   mb = MemBuf(100)
-   make = l.get( "call_rsz", "MyItem", "" ).call
-   test = l.get( "call_psz_ri_check", "I", "MyItem" ).call
+   make = l.get( "struct dynlib_s* dynlib_s_make( const char* name )",
+                 "void dynlib_s_free( struct dynlib_s* s )" )
 
-   data = make()
-   if data.toString() != "DynOpaque: MyItem"
+   test = l.get( "const char* dynlib_s_name(struct dynlib_s* item)" )
+
+   data = make( "Myself" )
+   if not data.derivedFrom( DynOpaque )
       failure( "Data not opaqued" )
    end
 
-   if test( data ) != 0
+   if test( data ) != "Myself"
       failure( "Data not correctly used" )
    end
    

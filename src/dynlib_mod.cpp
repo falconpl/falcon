@@ -25,6 +25,8 @@
 #include <falcon/membuf.h>
 #include <falcon/vm.h>
 
+#include <string.h>
+
 #include "dynlib_mod.h"
 #include "dynlib_ext.h"
 #include "dynlib_st.h"
@@ -79,7 +81,10 @@ String Parameter::toString() const
 
    ret += typeToString( m_type );
 
-   if( m_type == e_struct || m_type == e_union || m_type == e_enum )
+   if( m_type == e_varpar )
+      return ret;
+
+   if( m_tag.size() != 0 )
    {
       ret += " ";
       ret += m_tag;
@@ -415,11 +420,8 @@ String FunctionDef::toString() const
       return m_name;
    }
 
-   String ret = Parameter::typeToString( m_return->m_type );
-   for ( int i = 0; i < m_return->m_pointers; ++i )
-      ret += "*";
-
-   ret += " " + m_name + "(" + m_params.toString() + ")";
+   String ret = m_return->toString();
+   ret += "(" + m_params.toString() + ")";
    return ret;
 }
 
@@ -443,7 +445,8 @@ ParamValue::ParamValue( Parameter* type ):
    m_size(0),
    m_cstring(0),
    m_wstring(0),
-   m_next(0)
+   m_next(0),
+   m_itemByRef(0)
 {
 }
 
@@ -584,91 +587,6 @@ bool ParamValue::transformWithParam( const Item& item )
       }
       return false;
 
-   case Parameter::e_signed_char:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (char) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (char) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_short:
-   case Parameter::e_int:
-   case Parameter::e_enum:
-      switch( item.type() )
-      {
-      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); return true;
-      case FLC_ITEM_INT: transform( (int) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (int) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_unsigned_short:
-   case Parameter::e_unsigned_int:
-      switch( item.type() )
-      {
-      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); return true;
-      case FLC_ITEM_INT: transform( (unsigned int) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (unsigned int) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_long:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (long) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (long) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_unsigned_long:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (unsigned long) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (unsigned long) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_long_long:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_unsigned_long_long:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_float:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (float) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (float) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_double:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (double) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (double) item.asNumeric() ); return true;
-      }
-      return false;
-
-   case Parameter::e_long_double:
-      switch( item.type() )
-      {
-      case FLC_ITEM_INT: transform( (long double) item.asInteger() ); return true;
-      case FLC_ITEM_NUM: transform( (long double) item.asNumeric() ); return true;
-      }
-      return false;
-
    case Parameter::e_struct:
    case Parameter::e_union:
       if( item.isOfClass( "DynOpaque" ) )
@@ -679,12 +597,117 @@ bool ParamValue::transformWithParam( const Item& item )
       }
       return false;
 
+   // Number-like parameters; we treat indirections at the end.
+
+   case Parameter::e_signed_char:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (char) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (char) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_short:
+   case Parameter::e_int:
+   case Parameter::e_enum:
+      switch( item.type() )
+      {
+      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); break;
+      case FLC_ITEM_INT: transform( (int) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (int) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+
+   case Parameter::e_unsigned_short:
+   case Parameter::e_unsigned_int:
+      switch( item.type() )
+      {
+      case FLC_ITEM_BOOL: transform( item.isTrue() ? 1 : 0 ); break;
+      case FLC_ITEM_INT: transform( (unsigned int) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (unsigned int) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (long) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (long) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_unsigned_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (unsigned long) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (unsigned long) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_long_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_unsigned_long_long:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (int64) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (int64) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_float:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (float) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (float) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_double:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (double) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (double) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+   case Parameter::e_long_double:
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: transform( (long double) item.asInteger() ); break;
+      case FLC_ITEM_NUM: transform( (long double) item.asNumeric() ); break;
+      default: return false;
+      }
+      break;
+
+
    default:
       return false;
 
    }
 
-   return false;
+   // ok, treat indirections
+   if( m_param->indirections() )
+   {
+      // the transformed value goes in the buffer, and we must point to it.
+      toReference();
+   }
+   return true;
 }
 
 
@@ -775,6 +798,38 @@ bool ParamValue::prepareReturn()
    return true;
 }
 
+void ParamValue::toReference( Item* item )
+{
+   m_itemByRef = item;
+   memcpy( m_target, m_buffer.vbuffer, sizeof( m_target ) );
+   m_buffer.vptr = m_target;
+   m_size = sizeof( void* );
+}
+
+void ParamValue::toReference()
+{
+   memcpy( m_target, m_buffer.vbuffer, sizeof( m_target ) );
+   m_buffer.vptr = m_target;
+   m_size = sizeof( void* );
+}
+
+
+void ParamValue::fromReference()
+{
+   memcpy( m_buffer.vbuffer, m_target, sizeof( m_target ) );
+}
+
+void ParamValue::itemRef( Item* item )
+{
+   m_itemByRef = item;
+}
+
+void ParamValue::derefItem()
+{
+   fromReference();
+   if( m_itemByRef != 0 )
+      toItem( *m_itemByRef );
+}
 
 bool ParamValue::toItem( Item& target, void* deletorPtr )
 {
@@ -809,6 +864,43 @@ bool ParamValue::toItem( Item& target, void* deletorPtr )
             target = obj;
          }
          return true;
+
+      case Parameter::e_signed_char:
+      case Parameter::e_short:
+      case Parameter::e_int:
+         target.setInteger( (int64) m_buffer.vint );
+         break;
+
+      case Parameter::e_unsigned_char:
+      case Parameter::e_unsigned_short:
+      case Parameter::e_unsigned_int:
+        target.setInteger( (int64) ((unsigned) m_buffer.vint) );
+        break;
+
+      case Parameter::e_long:
+        target.setInteger( (int64) m_buffer.vlong );
+        break;
+
+      case Parameter::e_unsigned_long:
+        target.setInteger( (int64) ((unsigned) m_buffer.vlong) );
+        break;
+
+      case Parameter::e_long_long:
+      case Parameter::e_unsigned_long_long:
+         target.setInteger( (int64) m_buffer.vint64 );
+         break;
+
+      case Parameter::e_float:
+         target.setNumeric( m_buffer.vfloat );
+         break;
+
+      case Parameter::e_double:
+         target.setNumeric( m_buffer.vdouble );
+         break;
+
+      case Parameter::e_long_double:
+          target.setNumeric( (numeric) m_buffer.vld );
+          break;
 
       default:
          // return the data as a pointer
@@ -938,10 +1030,11 @@ void ParamValueList::compile()
       memFree( m_compiledSizes );
    }
 
+   m_compiledSizes = (int*) memAlloc( sizeof(int) * (m_size+1) );
+
    if ( m_head != 0 )
    {
       m_compiledParams = (void**) memAlloc( sizeof(void*) * m_size );
-      m_compiledSizes = (int*) memAlloc( sizeof(int) * (m_size+1) );
 
       int count = 0;
       ParamValue* p = m_head;
@@ -955,6 +1048,11 @@ void ParamValueList::compile()
       }
       // add an end marker
       m_compiledSizes[m_size] = 0;
+   }
+   else
+   {
+      m_compiledParams = 0;
+      m_compiledSizes[0] = 0;
    }
 }
 

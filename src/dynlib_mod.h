@@ -351,6 +351,34 @@ public:
 
    Parameter* parameter() const { return m_param; }
 
+   /** Transforms this data in a reference data.
+
+       After transform has operates, data is stored in the internal buffer.
+       But in case of indirections, i.e. if a parameter is i.e. an int*,
+       the value must actually be moved to a target buffer that can be
+       manipulated by the unknown function, and the parameter value buffer
+       must store a void* to it.
+
+       This method moves the value of the buffer into the target, and
+       sets a void* to the target into the parameter value buffer.
+
+    */
+   void toReference();
+   void toReference(Item* item );
+
+   /** Reverse the toReference operation.
+       This function is useful to retrieve a value manipulated by a foreign
+       function.
+
+       Call this before setting back a value in a data passed by reference.
+    */
+   void fromReference();
+
+   ParamValue* next() const { return m_next; }
+
+   void itemRef( Item* item );
+   void derefItem();
+
 private:
    friend class ParamValueList;
 
@@ -370,6 +398,9 @@ private:
       long double vld;
    } m_buffer;
 
+   /** target area for indirected values */
+   byte m_target[16];
+
    /* Size in bytes of the transformed value */
    uint32 m_size;
 
@@ -381,6 +412,8 @@ private:
 
    /** next parameter value in a chain. */
    ParamValue* m_next;
+
+   Item* m_itemByRef;
 
    bool transformWithParam( const Item& item );
    bool transformFree( const Item& item );
@@ -424,6 +457,7 @@ public:
    int* sizes() const { return m_compiledSizes; }
    uint32 count() const { return m_size; }
 
+   ParamValue* first() const { return m_head; }
 private:
 
    ParamValue* m_head;

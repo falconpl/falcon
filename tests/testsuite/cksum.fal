@@ -13,9 +13,9 @@ function checksum( data )
    bitmask = 1 << 8;
    size = data.len();
 
-   converter = data.type() == StringType ? \
-      lambda n => data[*n] : \
-      lambda n => data[n] \
+   converter = data.typeId() == StringType ? \
+      { n => data[*n] }: \
+      { n => data[n] }
 
    pos = 0
    while pos < size
@@ -35,7 +35,7 @@ end
 
 function checksum_32( data )
    ck = checksum( data )
-   ck32 = ck && 0xFFFFFFFF;
+   ck32 = ck && 0xFFFFFFFF
    return ck32
 end
 

@@ -796,14 +796,14 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 {
-   uint32 paramCount = vm->paramCount();
+   int32 paramCount = vm->paramCount();
    FunctionDef *fa = dyncast<FunctionDef *>(vm->self().asObject()->getFalconData());
    ParamList& params = fa->params();
    
    if( vm->paramCount() != params.size() )
    {
       if( ! params.isVaradic()
-         || ( params.isVaradic() && vm->paramCount() +1 < params.size() )
+         || ( params.isVaradic() && paramCount +1 < params.size() )
          )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -811,6 +811,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       }
    }
 
+   bool hasByRef = false;
    ParamValueList pvl;
    if( vm->paramCount() > 0 )
    {
@@ -819,27 +820,14 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       while( p != 0 )
       {
          ParamValue* pv = new ParamValue( p );
-         pvl.add( pv );
-
-         if ( ! pv->transform( *vm->param(count) ) )
-         {
-            String temp = FAL_STR( dyl_param_mismatch );
-            temp.A(" [n. ").N( count+1 ).A("]");
-
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra( temp ));
-         }
-
-         ++count;
-         p = p->m_next;
 
          // have we a varadic parameter?
-         if( p != 0 && p->m_type == Parameter::e_varpar )
+         if( p->m_type == Parameter::e_varpar )
          {
             // transform the rest of the vm parameters autonomously.
             p = 0;
 
-            for( uint32 i = count; i < vm->paramCount(); ++ i )
+            for( int32 i = count; i < vm->paramCount(); ++ i )
             {
                ParamValue* pv = new ParamValue();
                pvl.add( pv );
@@ -853,7 +841,30 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                         .extra( temp ));
                }
             }
+
+            break;
          }
+
+         // a normal parameter?
+         pvl.add( pv );
+         Item* param = vm->param(count);
+         if ( ! pv->transform( *param ) )
+         {
+            String temp = FAL_STR( dyl_param_mismatch );
+            temp.A(" [n. ").N( count+1 ).A("]");
+
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra( temp ));
+         }
+
+         if( vm->isParamByRef( count ) && pv->parameter()->m_pointers > 0 )
+         {
+            hasByRef = true;
+            pv->toReference( param );
+         }
+
+         ++count;
+         p = p->m_next;
       }
    }
 
@@ -872,6 +883,22 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       pvret.prepareReturn();
       Sys::dynlib_call( fa->functionPtr(), pvl.params(), pvl.sizes(), pvret.buffer() );
       pvret.toItem( vm->regA(), fa->deletorPtr() );
+   }
+
+   // if there is some parameter to be turned back as a by reference, do it.
+   if( hasByRef )
+   {
+      ParamValue* pv = pvl.first();
+      while( pv != 0 )
+      {
+         // if it's varadic, we're done
+         if( pv->parameter()->m_type == Parameter::e_varpar )
+            break;
+
+         pv->derefItem();
+
+         pv = pv->next();
+      }
    }
 }
 

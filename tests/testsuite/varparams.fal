@@ -23,14 +23,14 @@ catch DynLibError in e
 end
 
 // use a parameterless call to avoid problems in case of messups
-f = l.get( "call_p0_ri", "I", "..." ).call
+f = l.get( "int call_p0_ri( ... )" )
 // empty test
 f()
 
 // some params test
 f( 1, 2, 3 )
 
-f = l.get( "call_p0_ri", "I", "I, S, ..." ).call
+f = l.get( "int call_p0_ri( int p1, const char* s1, ... ) " )
 
 //minimal call
 f( 1, "hello" )

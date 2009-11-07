@@ -17,7 +17,7 @@ load cksum
 try
    // setup
    l = DynLib( "./test_dynlib." + dynExt() )
-   f = l.get( "checksum" ).call
+   f = l.get( "void* checksum(...)" )
 
    string = "Hello world, this is a checksummed string!"
    r1 = f( string, string.len() )

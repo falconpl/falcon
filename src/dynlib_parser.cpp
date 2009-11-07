@@ -747,8 +747,6 @@ Parameter* cFP_subscript::parseNext( const String &next, state& st )
 
 Parameter* cFP_postsubscript::parseNext( const String &next, state& st )
 {
-   int64 subCount;
-
    if( next == "]" )
    {
       st.nextState = &FP_paramcomplete;
@@ -783,7 +781,7 @@ Parameter* cFP_paramcomplete::parseNext( const String &next, state& st )
 
 Parameter* cFP_varpar::parseNext( const String &next, state& st )
 {
-   if( next == ")" || next == "," )
+   if( next == ")" )
    {
       // the only thing that can't be const
       if( st.m_bConst )

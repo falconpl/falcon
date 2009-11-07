@@ -18,12 +18,12 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
 
    // Integer pointer
-   f = l.get( "call_pRsz", "", "$S" ).call
+   f = l.get( "void call_pRsz( const char** v )" )
    s = ""
    f( $s )
    if s != "Hello world": failure( "$S" )
 
-   f = l.get( "call_pRwz", "", "$W" ).call
+   f = l.get( "void call_pRwz( const wchar_t** v )" )
    s = ""
    f( $s )
    if s != "Hello world": failure( "$W" )
