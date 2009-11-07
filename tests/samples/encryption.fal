@@ -1,4 +1,4 @@
-load pdf
+load hpdf
 
 p = PDF()
 p.ownerPassword = "owner"

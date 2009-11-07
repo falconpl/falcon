@@ -1,4 +1,4 @@
-load pdf
+load hpdf
 
 function drawLine( pg, x, y, label )
     pg.beginText()
