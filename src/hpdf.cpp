@@ -9,7 +9,7 @@
 #include <falcon/module.h>
 
 #include <hpdf.h>
-#include "pdf_ext.h"
+#include "hpdf_ext.h"
 #include "version.h"
 
 FALCON_MODULE_DECL

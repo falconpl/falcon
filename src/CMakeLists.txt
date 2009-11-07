@@ -8,9 +8,9 @@ include_directories(
 
 # Target
 add_library(hpdf_fm MODULE
-   pdf.cpp
-   pdf_ext.cpp
-   pdf_mod.cpp
+   hpdf.cpp
+   hpdf_ext.cpp
+   hpdf_mod.cpp
 )
 
 target_link_libraries(hpdf_fm

@@ -19,8 +19,8 @@
 #include <falcon/engine.h>
 
 #include <hpdf.h>
-#include "pdf_mod.h"
-#include "pdf_ext.h"
+#include "hpdf_mod.h"
+#include "hpdf_ext.h"
 
 namespace Falcon { namespace Ext {
 

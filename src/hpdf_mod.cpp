@@ -19,7 +19,7 @@
 #include <hpdf.h>
 #include <cstdio>
 #include <falcon/engine.h>
-#include "pdf_mod.h"
+#include "hpdf_mod.h"
 
 namespace Falcon { namespace Mod {
 
