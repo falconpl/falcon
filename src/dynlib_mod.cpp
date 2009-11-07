@@ -844,6 +844,7 @@ bool ParamValue::toItem( Item& target, void* deletorPtr )
          {
             CoreString* str = new CoreString;
             str->fromUTF8( (const char*)(m_buffer.vptr) );
+            //str->fromUTF8( "Test" );
             target = str;
          }
          return true;

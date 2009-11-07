@@ -18,7 +18,7 @@ load dynlib
 
 lib = DynLib( "c:/windows/system32/comdlg32" )
 // let's use the 8-bit string version; we could do also with 16 bit, but requeres a couple of tricks
-opendlg = lib.get( "void GetOpenFileNameA( struct FILEDESC* fd)" )
+opendlg = lib.get( "int GetOpenFileNameA( void* data )" )
 
 data = MemBuf( 100, 1 )   // approx sise of the OPENFILENAME structure
 memSet( data, 0, 100 )         // zero all the data
@@ -37,7 +37,7 @@ setStruct( data, 32, 4, 1024 )  // size of the filename
 setStruct( data, 52, 4, 0x8000 )  // Flags
 
 // perform the call
-if opendlg.call( data )
+if opendlg( data )
    limitMembuf( fname )   // transform in a zero terminated string
    > "Selected file: ", strFromMemBuf( fname )
 else

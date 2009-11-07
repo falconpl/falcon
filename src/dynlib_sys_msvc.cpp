@@ -55,7 +55,7 @@ void dynlib_call( void *faddress, void** parameters, int32* sizes, byte* retval 
 
       mov   esi,parameters /* Get next parameter */
       add   esi, count     /* Move count ptrs forward */
-      mov   esi, [esi]     /* Go to the N-int buffero position */
+      mov   esi, [esi]     /* Go to the N-int buffer position */
       add   esi, ebx       /* Start from bottom */
    }
    
@@ -130,6 +130,7 @@ void dynlib_call( void *faddress, void** parameters, int32* sizes, byte* retval 
 
    lbl100:
    __asm {
+     mov esp, edi
      pop edi         /* Restore my fake frame */
      pop esi
      pop ebx

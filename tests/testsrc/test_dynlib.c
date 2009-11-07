@@ -209,28 +209,30 @@ struct dynlib_s
    int count;
 };
 
-struct dynlib_s* EXPORT dynlib_s_make( const char *initval )
+EXPORT struct dynlib_s* dynlib_s_make( const char *initval )
 {
    struct dynlib_s *s = (struct dynlib_s*) malloc( sizeof( struct dynlib_s) );
    s->size = strlen( initval );
    s->name = (char*) malloc( sizeof( s->size + 1) );
-   strcpy( s->name, initval );
+   memcpy( s->name, initval, s->size + 1 );
    s->count = 0;
+   
+   return s;
 }
 
-int EXPORT dynlib_s_count( struct dynlib_s* s, int count )
+EXPORT int dynlib_s_count( struct dynlib_s* s, int count )
 {
    int res = s->count;
    s->count += count;
    return res;
 }
 
-const char* EXPORT dynlib_s_name( struct dynlib_s* s )
+EXPORT const char* dynlib_s_name( struct dynlib_s* s )
 {
    return s->name;
 }
 
-void EXPORT dynlib_s_free( struct dynlib_s* s )
+EXPORT void dynlib_s_free( struct dynlib_s* s )
 {
    free( s->name );
    free( s );
