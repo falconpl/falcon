@@ -4,7 +4,7 @@
  *
  * pdf service main file
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
+ * Authors: Jeremy Cowgar, Maik Beckmann
  * Begin: Thu Jan 3 2007
  * -------------------------------------------------------------------
  * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -16,146 +16,184 @@
  * package.
  */
 
-#ifndef PDF_H
-#define PDF_H
+#ifndef FLC_HPDF_H
+#define FLC_HPDF_H
 
 #include <hpdf.h>
 #include <falcon/timestamp.h>
 
-namespace Falcon
-{
 
-class PDF;
+#define FALCON_HPDF_ERROR_BASE 10100
+
+
+namespace Falcon {
+
 class PDFPage;
 
-class PDFPage : public UserData
+class PDF : public CoreObject
 {
-protected:
-   HPDF_Page m_page;
-   PDF *m_pdf;
-
-   String m_fontName;
-   int m_fontSize;
-
-   int m_pageSize;
-   int m_pageDir;
-   int m_rotate;
-
 public:
-   PDFPage( PDF *pdf );
-   ~PDFPage();
+  PDF(const CoreClass* maker);
+  virtual ~PDF();
 
-   bool isReflective() { return true; }
-   void getProperty( const String &propName, Item &prop );
-   void setProperty( const String &propName, Item &prop );
+  PDF* clone() const;
 
-   HPDF_Page getHandle() { return m_page; }
+  HPDF_Doc getHandle() const;
 
-   int setFontName( const String name );
-   bool fontName( String &name );
-   inline String fontName() { String temp; fontName( temp ); return temp; }
+  bool getProperty( const String &propName, Item &prop ) const;
+  bool setProperty( const String &propName, const Item &prop );
 
-   double fontSize();
-   int fontSize( double size );
-   double width();
-   int width( double w );
-   double height();
-   int height( double h );
-   int size();
-   int size( int size );
-   int direction();
-   int direction( int direction );
-   int rotate();
-   int rotate( int rotate );
-   double x();
-   int x( double x );
-   double y();
-   int y( double y );
-   double textX();
-   int textX( double x );
-   double textY();
-   int textY( double y );
-   double lineWidth();
-   int lineWidth( double w );
-   double charSpace();
-   int charSpace( double s );
-   double wordSpace();
-   int wordSpace( double s );
-   int lineCap();
-   int lineCap( int cap );
-   int lineJoin();
-   int lineJoin( int join );
+  int author( String const& author );
+  String author() const;
 
-   // Graphics
-   int rectangle( double x, double y, double height, double width );
-   int line( double x, double y );
-   int curve( double x1, double y1, double x2, double y2, double x3, double y3 );
-   int curve2( double x1, double y1, double x2, double y2 );
-   int curve3( double x1, double y1, double x2, double y2 );
-   int stroke();
+  int creator( String const& creator );
+  String creator() const;
 
-   // Text
-   int beginText();
-   int endText();
-   double textWidth( const String text );
-   int showText( const String text );
-   int textOut( double x, double y, const String text );
+  int title( String const& title );
+  String title() const;
+
+  int subject( String const& subject );
+  String subject() const;
+
+  int keywords( String const& keywords );
+  String keywords() const;
+
+  int createDate( TimeStamp const& date );
+  TimeStamp createDate() const;
+
+  int modifiedDate( TimeStamp const& date );
+  TimeStamp modifiedDate() const;
+
+  int password( String const& owner, String const& user );
+  int permission( int64 permission );
+  int encryption( int64 mode );
+  int compression( int64 mode );
+
+  PDFPage* addPage();
+
+  int saveToFile( String const& filename ) const;
+
+private:
+  HPDF_Doc m_pdf;
+
+  TimeStamp m_createDate;
+  TimeStamp m_modifiedDate;
+
+  String m_ownerPassword;
+  String m_userPassword;
 };
 
-class PDF : public UserData
+
+
+
+class PDFPage : public CoreObject
 {
-protected:
-   HPDF_Doc m_pdf;
-
-   TimeStamp m_createDate;
-   TimeStamp m_modifiedDate;
-
-   String m_ownerPassword;
-   String m_userPassword;
-
 public:
-   PDF();
-   ~PDF();
+  PDFPage( const CoreClass* maker, PDF *pdf );
+  virtual ~PDFPage();
 
-   HPDF_Doc getHandle() { return m_pdf; }
+  PDFPage* clone() const;
 
-   bool isReflective();
-   void getProperty( const String &propName, Item &prop );
-   void setProperty( const String &propName, Item &prop );
+  void pdf(PDF* pdf);
+  PDF* pdf() const;
 
-   int author( const String author );
-   const String author();
+  bool getProperty( const String &propName, Item &prop ) const;
+  bool setProperty( const String &propName, const Item &prop );
 
-   int creator( const String creator );
-   const String creator();
+  HPDF_Page getHandle() const;
 
-   int title( const String title );
-   const String title();
+  int setFontName( const String &name );
+  bool fontName( String &name ) const;
+  String fontName() const;
 
-   int subject( const String subject );
-   const String subject();
+  double fontSize() const;
+  int fontSize( double size );
 
-   int keywords( const String keywords );
-   const String keywords();
+  double width() const;
+  int width( double w );
 
-   int createDate( const TimeStamp date );
-   const TimeStamp createDate();
+  double height() const;
+  int height( double h );
 
-   int modifiedDate( const TimeStamp date );
-   const TimeStamp modifiedDate();
+  int size() const;
+  int size( int size );
 
-   int password( const String owner, const String user );
-   int permission( int64 permission );
-   int encryption( int64 mode );
-   int compression( int64 mode );
+  int direction() const;
+  int direction( int direction );
 
-   PDFPage *addPage();
+  int rotate() const;
+  int rotate( int rotate );
 
-   int saveToFile( String filename );
+  double x() const;
+  int x( double x );
+
+  double y() const;
+  int y( double y );
+
+  double textX() const;
+  int textX( double x );
+
+  double textY() const;
+  int textY( double y );
+
+  double lineWidth() const;
+  int lineWidth( double w );
+
+  double charSpace() const;
+  int charSpace( double s );
+
+  double wordSpace() const;
+  int wordSpace( double s );
+
+  int lineCap() const;
+  int lineCap( int cap );
+
+  int lineJoin() const;
+  int lineJoin( int join );
+
+  // Graphics
+  int rectangle( double x, double y, double height, double width );
+  int line( double x, double y );
+  int curve( double x1, double y1, double x2, double y2, double x3, double y3 );
+  int curve2( double x1, double y1, double x2, double y2 );
+  int curve3( double x1, double y1, double x2, double y2 );
+  int stroke();
+
+  // Text
+  int beginText();
+  int endText();
+  double textWidth( String const& text );
+  int showText( String const& text );
+  int textOut( double x, double y, String const& text );
+
+private:
+  HPDF_Page m_page;
+  PDF* m_pdf; // the owner of this page
+
+  String m_fontName;
+  int m_fontSize;
+
+  int m_pageSize;
+  int m_pageDir;
+  int m_rotate;
 };
-}
 
-#endif /* PDF_H */
 
-/* end of file pdf.h */
+/** Class to indentify HPDF low level errors.
+ * HPDF C library errors are represented to the falcon engine by instances of
+ * this class */
+struct HPDFError:  Error
+{
+  HPDFError():
+    Error( "HPDFError" )
+  { }
 
+  HPDFError( ErrorParam const& params  ):
+    Error( "HPDFError", params )
+  { }
+};
+
+
+} // namespace Falcon
+
+#endif /* FLC_HPDF_H */

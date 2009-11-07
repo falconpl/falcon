@@ -4,7 +4,7 @@
  *
  * pdf module main file
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
+ * Authors: Jeremy Cowgar, Maik Beckmann
  * Begin: Thu Jan 3 2007
  * -------------------------------------------------------------------
  * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -22,265 +22,222 @@
 #include "pdf.h"
 #include "pdf_ext.h"
 
-namespace Falcon {
-namespace Ext {
+namespace Falcon { namespace Ext {
 
-FALCON_FUNC PDF_init( ::Falcon::VMachine *vm )
+
+/**
+ * PDF
+ */
+
+FALCON_FUNC PDF_addPage( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
+  PDF *self = Falcon::dyncast<PDF*>( vm->self().asObject() );
 
-   PDF *pdf = new PDF();
-   self->setUserData( pdf );
+  Item *cls_item = vm->findWKI( "PDFPage" );
+  fassert( cls_item != 0 );
 
-   vm->retval( self );
+  CoreClass* PDFPage_cls = cls_item->asClass();
+  vm->retval( new PDFPage(PDFPage_cls, self) );
 }
 
-FALCON_FUNC PDF_addPage( ::Falcon::VMachine *vm )
+FALCON_FUNC PDF_saveToFile( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDF *pdf = static_cast<PDF *>( self->getUserData() );
-   PDFPage *page = new PDFPage( pdf );
-   Item *pp_class = vm->findGlobalItem( "PDFPage" );
-   fassert( pp_class != 0 );
-   CoreObject *value = pp_class->asClass()->createInstance();
-   value->setUserData( page );
+  PDF *pdf = dyncast<PDF*>( vm->self().asObject() );
 
-   vm->retval( value );
+  Item *filenameI = vm->param( 0 );
+  if ( filenameI == 0 || ! filenameI->isString() )
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S")) ;
+  }
+
+  vm->retval( pdf->saveToFile( *filenameI->asString() ) );
 }
 
-FALCON_FUNC PDF_saveToFile( ::Falcon::VMachine *vm )
+CoreObject* PDFFactory(const CoreClass *cls, void*, bool)
 {
-   CoreObject *self = vm->self().asObject();
-   PDF *pdf = static_cast<PDF *>( self->getUserData() );
-   Item *filenameI = vm->param( 0 );
-   if ( filenameI == 0 || ! filenameI->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   vm->retval( pdf->saveToFile( *filenameI->asString() ) );
+  return new PDF(cls);
 }
 
-FALCON_FUNC PDFPage_init( ::Falcon::VMachine *vm )
+
+
+/**
+ * PDFPage
+ */
+
+FALCON_FUNC PDFPage_init( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *pdfI = vm->param( 0 );
-   if ( pdfI == 0 || ! pdfI->isObject() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   CoreObject *pdfO = pdfI->asObject();
-   PDF *pdf = static_cast<PDF *>( pdfO->getUserData() );
-   PDFPage *pdfPage = new PDFPage( pdf );
-   self->setUserData( pdfPage );
-
-   vm->retval( self );
+  throw new CodeError( ErrorParam(FALCON_HPDF_ERROR_BASE+2, __LINE__)) ;
 }
 
-FALCON_FUNC PDFPage_rectangle( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_rectangle( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-   Item *xI = vm->param( 0 );
-   Item *yI = vm->param( 1 );
-   Item *wI = vm->param( 2 );
-   Item *hI = vm->param( 3 );
+  PDFPage *pdfPage = dyncast<PDFPage*>( vm->self().asObject() );
 
-   if ( xI == 0 || ! xI->isNumeric() ||
-        yI == 0 || ! yI->isNumeric() ||
-        wI == 0 || ! wI->isNumeric() ||
-        hI == 0 || ! hI->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  Item *xI = vm->param( 0 );
+  Item *yI = vm->param( 1 );
+  Item *wI = vm->param( 2 );
+  Item *hI = vm->param( 3 );
 
-   numeric x = xI->asNumeric(), y = yI->asNumeric();
-   numeric w = wI->asNumeric(), h = hI->asNumeric();
+  if ( vm->paramCount() < 4 ||
+       ! xI->isNumeric() ||  ! yI->isNumeric() ||
+       ! wI->isNumeric() ||  ! hI->isNumeric() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N"));
+  }
 
-   vm->retval( pdfPage->rectangle( x, y, w, h ) );
+  vm->retval( pdfPage->rectangle( xI->asNumeric(), yI->asNumeric(),
+                                  wI->asNumeric(), hI->asNumeric() ) );
 }
 
-FALCON_FUNC PDFPage_line( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_line( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-   Item *xI = vm->param( 0 );
-   Item *yI = vm->param( 1 );
+  PDFPage *pdfPage = dyncast<PDFPage*>( vm->self().asObject() );
 
-   if ( xI == 0 || ! xI->isNumeric() ||
-        yI == 0 || ! yI->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  Item *xI = vm->param( 0 );
+  Item *yI = vm->param( 1 );
 
-   vm->retval( pdfPage->line( xI->asNumeric(), yI->asNumeric() ) );
+  if ( vm->paramCount() < 2 || ! xI->isNumeric() || ! yI->isNumeric() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N"));
+  }
+
+  vm->retval( pdfPage->line( xI->asNumeric(), yI->asNumeric() ) );
 }
 
-FALCON_FUNC PDFPage_curve( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_curve( VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-   Item *x1I = vm->param( 0 );
-   Item *y1I = vm->param( 1 );
-   Item *x2I = vm->param( 2 );
-   Item *y2I = vm->param( 3 );
-   Item *x3I = vm->param( 4 );
-   Item *y3I = vm->param( 5 );
+  PDFPage *self = dyncast<PDFPage*>( vm->self().asObject() );
 
-   if ( x1I == 0 || ! x1I->isNumeric() ||
-       y1I == 0 || ! y1I->isNumeric() ||
-       x2I == 0 || ! x2I->isNumeric() ||
-       y2I == 0 || ! y2I->isNumeric() ||
-       x3I == 0 || ! x3I->isNumeric() ||
-       y3I == 0 || ! y3I->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  Item *x1I = vm->param( 0 );
+  Item *y1I = vm->param( 1 );
+  Item *x2I = vm->param( 2 );
+  Item *y2I = vm->param( 3 );
+  Item *x3I = vm->param( 4 );
+  Item *y3I = vm->param( 5 );
 
-   vm->retval( pdfPage->curve( x1I->asNumeric(), y1I->asNumeric(),
-                               x2I->asNumeric(), y2I->asNumeric(),
-                               x3I->asNumeric(), y3I->asNumeric()) );
+  if ( vm->paramCount() < 6 ||
+       ! x1I->isNumeric() || ! y1I->isNumeric() ||
+       ! x2I->isNumeric() || ! y2I->isNumeric() ||
+       ! x3I->isNumeric() || ! y3I->isNumeric() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N,N,N"));
+  }
+
+  vm->retval( self->curve( x1I->asNumeric(), y1I->asNumeric(),
+                           x2I->asNumeric(), y2I->asNumeric(),
+                           x3I->asNumeric(), y3I->asNumeric() ) );
 }
 
-FALCON_FUNC PDFPage_curve2( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_curve2( VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-   Item *x1I = vm->param( 0 );
-   Item *y1I = vm->param( 1 );
-   Item *x2I = vm->param( 2 );
-   Item *y2I = vm->param( 3 );
+  PDFPage* self = dyncast<PDFPage*>( vm->self().asObject() );
 
-   if ( x1I == 0 || ! x1I->isNumeric() ||
-       y1I == 0 || ! y1I->isNumeric() ||
-       x2I == 0 || ! x2I->isNumeric() ||
-       y2I == 0 || ! y2I->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  Item *x1I = vm->param( 0 );
+  Item *y1I = vm->param( 1 );
+  Item *x2I = vm->param( 2 );
+  Item *y2I = vm->param( 3 );
 
-   vm->retval( pdfPage->curve2( x1I->asNumeric(), y1I->asNumeric(),
-                                x2I->asNumeric(), y2I->asNumeric() ) );
+  if ( vm->paramCount() < 4 ||
+       ! x1I->isNumeric() || ! y1I->isNumeric() ||
+       ! x2I->isNumeric() || ! y2I->isNumeric() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N") );
+  }
+
+  vm->retval( self->curve2( x1I->asNumeric(), y1I->asNumeric(),
+                            x2I->asNumeric(), y2I->asNumeric() ) );
 }
 
 FALCON_FUNC PDFPage_curve3( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-   Item *x1I = vm->param( 0 );
-   Item *y1I = vm->param( 1 );
-   Item *x2I = vm->param( 2 );
-   Item *y2I = vm->param( 3 );
+  PDFPage* self = dyncast<PDFPage*>( vm->self().asObject() );
 
-   if ( x1I == 0 || ! x1I->isNumeric() ||
-       y1I == 0 || ! y1I->isNumeric() ||
-       x2I == 0 || ! x2I->isNumeric() ||
-       y2I == 0 || ! y2I->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  Item *x1I = vm->param( 0 );
+  Item *y1I = vm->param( 1 );
+  Item *x2I = vm->param( 2 );
+  Item *y2I = vm->param( 3 );
 
-   vm->retval( pdfPage->curve3( x1I->asNumeric(), y1I->asNumeric(),
-                                x2I->asNumeric(), y2I->asNumeric() ) );
+  if ( vm->paramCount() < 4 ||
+       ! x1I->isNumeric() || ! y1I->isNumeric() ||
+       ! x2I->isNumeric() || ! y2I->isNumeric() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N"));
+  }
+
+  vm->retval( self->curve3( x1I->asNumeric(), y1I->asNumeric(),
+                            x2I->asNumeric(), y2I->asNumeric() ) );
 }
 
-FALCON_FUNC PDFPage_stroke( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_stroke( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-
-   vm->retval( pdfPage->stroke() );
+  PDFPage* self = dyncast<PDFPage*>( vm->self().asObject() );
+  vm->retval( self->stroke() );
 }
 
-FALCON_FUNC PDFPage_textWidth( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_textWidth( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-   Item *tI = vm->param( 0 );
+  PDFPage* self = dyncast<PDFPage*>( vm->self().asObject() );
+  Item *tI = vm->param( 0 );
 
-   if ( tI == 0 || ! tI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  if ( tI == 0 || ! tI->isString() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("S") );
+  }
 
-   vm->retval( page->textWidth( *tI->asString() ) );
+  vm->retval( self->textWidth( *tI->asString() ) );
 }
 
-FALCON_FUNC PDFPage_beginText( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_beginText( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-
-   vm->retval( page->beginText() );
+  PDFPage* self = dyncast<PDFPage*>( vm->self().asObject() );
+  vm->retval( self->beginText() );
 }
 
-FALCON_FUNC PDFPage_endText( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_endText( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-
-   vm->retval( page->endText() );
+  PDFPage *self = dyncast<PDFPage*>( vm->self().asObject() );
+  vm->retval( self->endText() );
 }
 
-FALCON_FUNC PDFPage_showText( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_showText( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-   Item *tI = vm->param( 0 );
+  PDFPage *pdfPage = dyncast<PDFPage*>( vm->self().asObject() );
+  Item *tI = vm->param( 0 );
 
-   if ( tI == 0 || ! tI->isString())
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  if ( tI == 0 || !tI->isString())
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("S") );
 
-   vm->retval( page->showText( *tI->asString() ) );
+
+  vm->retval( pdfPage->showText( *tI->asString() ) );
 }
 
-FALCON_FUNC PDFPage_textOut( ::Falcon::VMachine *vm )
+FALCON_FUNC PDFPage_textOut( VMachine* vm )
 {
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-   Item *xI = vm->param( 0 );
-   Item *yI = vm->param( 1 );
-   Item *tI = vm->param( 2 );
+  PDFPage *pdfPage = dyncast<PDFPage*>( vm->self().asObject() );
+  Item *xI = vm->param( 0 );
+  Item *yI = vm->param( 1 );
+  Item *tI = vm->param( 2 );
 
-   if ( xI == 0 || ! xI->isNumeric() ||
-        yI == 0 || ! yI->isNumeric() ||
-        tI == 0 || ! tI->isString())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
+  if ( vm->paramCount() < 3 ||
+       !xI->isNumeric() || !yI->isNumeric() || !tI->isString() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,S"));
+  }
 
-   vm->retval( page->textOut( xI->asNumeric(), yI->asNumeric(), *tI->asString() ) );
+  String* text = tI->asString();
+  vm->retval( pdfPage->textOut( xI->asNumeric(), yI->asNumeric(), *text ) );
 }
 
-}
-}
+}} // namespace Falcon::Ext
 
 /* end of file pdf_ext.cpp */
 

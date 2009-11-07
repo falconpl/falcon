@@ -4,7 +4,7 @@
  *
  * PDF module version information
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
+ * Authors: Jeremy Cowgar, Maik Beckmann
  * Begin: Thu Jan 3 2007
  * -------------------------------------------------------------------
  * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -20,7 +20,7 @@
 #define VERSION_H
 
 #define VERSION_MAJOR        1
-#define VERSION_MINOR        0
+#define VERSION_MINOR        1
 #define VERSION_REVISION     0
 
 #endif
