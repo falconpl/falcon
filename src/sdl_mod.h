@@ -116,7 +116,7 @@ public:
    virtual ~SDLSurfaceCarrier_impl();
 
    virtual void gcMark( uint32 );
-   virtual CoreObject* clone() const;
+   virtual SDLSurfaceCarrier_impl* clone() const;
    virtual SDL_Surface* surface() const { return (SDL_Surface*) getUserData(); }
 
    void setPixelCache( MemBuf* mb );
@@ -134,7 +134,7 @@ public:
 
    virtual ~SDLRectCarrier();
    virtual void gcMark( uint32 ) {}
-   virtual CoreObject* clone() const;
+   virtual SDLRectCarrier* clone() const;
    virtual SDL_Rect* rect() const { return (SDL_Rect*) getUserData(); }
 };
 
@@ -148,7 +148,7 @@ public:
 
    virtual ~SDLColorCarrier();
    virtual void gcMark( uint32 ) {}
-   virtual CoreObject* clone() const;
+   virtual SDLColorCarrier* clone() const;
    virtual SDL_Color* color() const { return (SDL_Color*) getUserData(); }
 };
 
@@ -200,7 +200,7 @@ public:
       setUserData( &m_ms );
    }
 
-   virtual CoreObject *clone() const { return new Inst_SdlMouseState( *this ); }
+   virtual Inst_SdlMouseState*clone() const { return new Inst_SdlMouseState( *this ); }
    virtual void gcMark(VMachine*) {}
 };
 

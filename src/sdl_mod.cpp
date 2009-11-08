@@ -91,7 +91,7 @@ SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 }
 
 
-CoreObject *SDLSurfaceCarrier_impl::clone() const
+SDLSurfaceCarrier_impl *SDLSurfaceCarrier_impl::clone() const
 {
    return new SDLSurfaceCarrier_impl( generator(), surface() );
 }
@@ -173,7 +173,7 @@ SDLRectCarrier::~SDLRectCarrier()
    memFree( rect() );
 }
 
-CoreObject* SDLRectCarrier::clone() const
+SDLRectCarrier* SDLRectCarrier::clone() const
 {
    SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
    *r = *rect();
@@ -195,7 +195,7 @@ SDLColorCarrier::~SDLColorCarrier()
    memFree( color() );
 }
 
-CoreObject* SDLColorCarrier::clone() const
+SDLColorCarrier* SDLColorCarrier::clone() const
 {
    SDL_Color* c = (SDL_Color*) memAlloc( sizeof( SDL_Color ) );
    *c = *color();
