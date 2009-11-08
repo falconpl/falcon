@@ -5,7 +5,7 @@
 ####################################################################
 
 #Options common to all the falcon modules
-set(INSTDIR "" CACHE STRING "Overrdies the default install path" )
+set(INSTDIR "" CACHE PATH "Overrdies the default install path" )
 
 #Set the default buid type to Debug
 IF(NOT CMAKE_BUILD_TYPE)
