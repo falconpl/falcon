@@ -596,8 +596,8 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
 
          msg = new VMMessage( "sdl_Resize" );
 
-         vm->pushParameter( (int64) evt.resize.w );
-         vm->pushParameter( (int64) evt.resize.h );
+         msg->addParam( (int64) evt.resize.w );
+         msg->addParam( (int64) evt.resize.h );
       break;
 
       case SDL_VIDEOEXPOSE:
