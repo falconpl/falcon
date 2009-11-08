@@ -5,9 +5,11 @@
 ##################################################
 
 # Inclusion settings
-INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${FALCON_INC_PATH})
-LINK_DIRECTORIES(BEFORE ${FALCON_LIB_PATH})
+INCLUDE_DIRECTORIES(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${FALCON_INC_PATH}
+  ${FALCON_LIB_PATH}
+)
 
 ADD_EXECUTABLE( sdl_falcon
    falcon.cpp
