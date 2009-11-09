@@ -25,6 +25,11 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+// For BSD
+#ifndef MAP_ANONYMOUS
+# define MAP_ANONYMOUS MAP_ANON
+#endif
+
 namespace Falcon
 {
 
