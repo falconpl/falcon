@@ -130,6 +130,12 @@ add_subdirectory(devtools)
 #also performs installation of the include directory
 add_subdirectory(include)
 
+option(FALCON_WITH_TESTING "" on)
+if(FALCON_WITH_TESTING)
+  enable_testing()
+  include(CTest)
+endif()
+
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/falcon-config.cmake.in
