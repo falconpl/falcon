@@ -134,6 +134,7 @@ option(FALCON_WITH_TESTING "" on)
 if(FALCON_WITH_TESTING)
   enable_testing()
   include(CTest)
+  add_subdirectory(tests)
 endif()
 
 
