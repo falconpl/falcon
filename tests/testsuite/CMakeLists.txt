@@ -8,7 +8,7 @@ set(categories
 file(WRITE ${CMAKE_BINARY_DIR}/CTestCustom.cmake "set(CTEST_CUSTOM_MEMCHECK_IGNORE\n")
 
 add_test(testsuite_all ${CMAKE_COMMAND} -P test_driver.cmake) 
-#file(APPEND ${CMAKE_BINARY_DIR}/CTestCustom.cmake "  testsuite_all\n")   
+file(APPEND ${CMAKE_BINARY_DIR}/CTestCustom.cmake "  testsuite_all\n")   
 
 foreach(category ${categories})
   add_test(testsuite_category_${category} ${CMAKE_COMMAND} -Dtest_category=${category} -P test_driver.cmake) 
