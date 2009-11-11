@@ -130,8 +130,8 @@ add_subdirectory(devtools)
 #also performs installation of the include directory
 add_subdirectory(include)
 
-option(FALCON_WITH_TESTING "" on)
-if(FALCON_WITH_TESTING)
+option(FALCON_WITH_CTEST_TESTS "" off)
+if(FALCON_WITH_CTEST_TESTS)
   enable_testing()
   include(CTest)
   add_subdirectory(tests)
