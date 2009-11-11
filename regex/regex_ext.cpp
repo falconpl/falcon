@@ -694,8 +694,9 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
          .extra( errVal ) );
    }
 
-   source->change( data->m_ovector[0], data->m_ovector[1], *dest );
-   vm->retval( source );
+   CoreString* ret = new CoreString(*source);
+   ret->change( data->m_ovector[0], data->m_ovector[1], *dest );
+   vm->retval( ret );
 }
 
 
