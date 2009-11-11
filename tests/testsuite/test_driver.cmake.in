@@ -1,0 +1,26 @@
+find_program(faltest_EXECUTABLE 
+  NAMES faltest
+  HINTS "@CMAKE_INSTALL_PREFIX@/bin"
+  NO_DEFAULT_PATH
+)
+if(NOT faltest_EXECUTABLE)
+  message(FATAL_ERROR "fatest executable not found")
+endif()
+
+if(test_category)
+  set(cmd ${faltest_EXECUTABLE} -c ${test_category})
+else()
+  set(cmd ${faltest_EXECUTABLE} )
+endif()
+
+execute_process(
+  COMMAND ${cmd}
+  WORKING_DIRECTORY @CMAKE_CURRENT_SOURCE_DIR@
+  RESULT_VARIABLE res
+  OUTPUT_VARIABLE out
+  ERROR_VARIABLE err
+)
+
+if(res)
+  message(SEND_ERROR ${out})
+endif()
