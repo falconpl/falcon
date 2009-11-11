@@ -32,7 +32,7 @@ set(categories
   template
 )
 
-add_test(testsuite_all ${CMAKE_INSTALL_PREFIX}/bin/faltest -d ${CMAKE_CURRENT_BINARY_DIR} ) 
+add_test(testsuite_all ${CMAKE_INSTALL_PREFIX}/bin/faltest -d ${CMAKE_CURRENT_SOURCE_DIR} ) 
 
 foreach(category ${categories})
   add_test(testsuite_category_${category} 
