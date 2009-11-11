@@ -36,3 +36,11 @@ add_subdirectory(zlib)
 
 # install headers
 add_subdirectory(include)
+
+option(FALCON_WITH_CTEST_TESTS "" off)
+if(FALCON_WITH_CTEST_TESTS)
+  enable_testing()
+  include(CTest)
+  add_subdirectory(tests)
+endif()
+
