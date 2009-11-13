@@ -31,6 +31,7 @@ namespace Falcon
 class Value;
 class Expression;
 class Compiler;
+class Map;
 
 /** Class storing array declarations in source code.
    This class records the content of [ v1, v2 .. vn ] declarations in
@@ -528,6 +529,7 @@ public:
       t_global,
 
       t_class,
+      t_state,
       t_function,
       t_propdef,
       t_fordot,
@@ -1103,20 +1105,6 @@ public:
    virtual StmtTry *clone() const;
 };
 
-/** Module statement.
-   Actually, this holds an "unnamed block", which may be top-level or anything.
-*/
-/*class FALCON_DYN_CLASS StmtModule: public StmtBlock
-{
-public:
-   StmtModule( uint32 line = 0):
-      StmtBlock( line, t_module )
-   {}
-
-   virtual StmtModule *clone() const;
-};*/
-
-
 
 class FALCON_DYN_CLASS StmtCallable: public Statement
 {
@@ -1143,6 +1131,7 @@ public:
 };
 
 class StmtFunction;
+class StmtState;
 
 class FALCON_DYN_CLASS StmtClass: public StmtCallable
 {
@@ -1154,6 +1143,10 @@ class FALCON_DYN_CLASS StmtClass: public StmtCallable
    Symbol *m_singleton;
    /** set of expressions (values, usually inherit calls) to be prepended to the constructor */
    ArrayDecl m_initExpressions;
+
+   /** Init state */
+   StmtState *m_initState;
+   StatementList m_states;
 public:
 
    StmtClass( uint32 line, Symbol *name ):
@@ -1161,7 +1154,8 @@ public:
       m_ctor(0),
       m_initGiven( false ),
       m_bDeleteCtor( false ),
-      m_singleton(0)
+      m_singleton(0),
+      m_initState(0)
    {}
 
    StmtClass( const StmtClass &other );
@@ -1189,6 +1183,16 @@ public:
    Symbol *singleton() const { return m_singleton; }
    void singleton( Symbol *s ) { m_singleton = s; }
    virtual StmtClass *clone() const;
+
+   /** Return the Statement declaring the init state of this class */
+   StmtState* initState() const { return m_initState; }
+
+   /** Sets the init state of this class. */
+   void initState( StmtState* m ) { m_initState = m; }
+
+   /** Return the Statement declaring the init state of this class */
+   bool addState( StmtState* m_state );
+
 };
 
 class FALCON_DYN_CLASS StmtFunction: public StmtCallable
@@ -1226,6 +1230,35 @@ public:
    const StmtClass *constructorFor() const { return m_ctor_for; }
 
    virtual StmtFunction *clone() const;
+};
+
+
+class StmtState: public Statement
+{
+   const String* m_name;
+   StmtClass* m_owner;
+   Map m_funcs;
+
+public:
+
+   StmtState( const String* name, StmtClass* owner );
+   StmtState( const StmtState& other );
+   virtual ~StmtState();
+   virtual StmtState* clone() const;
+
+   /** Functions subscribed to this state, ordered by alias. */
+   const Map& functions() const  { return m_funcs; }
+
+   /** Functions subscribed to this state, ordered by alias. */
+   Map& functions()  { return m_funcs; }
+
+   /** Just a shortcut to insertion in the map.
+    *    Returns false if the map exists.
+    */
+   bool addFunction( const String* name, Symbol* func );
+
+   const String* name() const { return m_name; }
+   StmtClass* owner() const { return m_owner; }
 };
 
 class FALCON_DYN_CLASS StmtVarDef: public Statement

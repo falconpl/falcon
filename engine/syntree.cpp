@@ -1037,7 +1037,8 @@ StmtCallable::~StmtCallable()
 
 StmtClass::StmtClass( const StmtClass &other ):
    StmtCallable( other ),
-   m_initGiven( other.m_initGiven )
+   m_initGiven( other.m_initGiven ),
+   m_states( other.m_states )
 {
    if ( other.m_ctor == 0 )
    {
@@ -1050,6 +1051,11 @@ StmtClass::StmtClass( const StmtClass &other ):
    }
 
    m_ctor->setConstructorFor( this );
+
+   if( other.m_initState != 0 )
+      m_initState = other.m_initState->clone();
+   else
+      m_initState = 0;
 }
 
 
@@ -1059,11 +1065,69 @@ StmtClass::~StmtClass()
       delete m_ctor;
 }
 
+bool StmtClass::addState( StmtState* state )
+{
+   Statement* f = m_states.front();
+   while( f != 0 )
+   {
+      StmtState* fs = static_cast<StmtState*>( f );
+      if ( * fs->name() == *state->name() )
+         return false;
+      f = static_cast<Statement*>( f->next() );
+   }
+
+   m_states.push_back( state );
+   return true;
+}
+
 StmtClass *StmtClass::clone() const
 {
    return new StmtClass( *this );
 }
 
+//===================================================
+// State statement
+//
+
+StmtState::StmtState( const String* name, StmtClass* owner ):
+      Statement( t_state ),
+      m_name( name ),
+      m_owner( owner ),
+      m_funcs( &traits::t_stringptr(), &traits::t_voidp(), 19 )
+{
+}
+
+
+StmtState::~StmtState()
+{
+}
+
+StmtState::StmtState( const StmtState& other ):
+   Statement( other ),
+   m_name( other.m_name ),
+   m_owner( other.m_owner ),
+   m_funcs( other.m_funcs )
+{
+}
+
+StmtState* StmtState::clone() const
+{
+   return new StmtState( *this );
+}
+
+
+bool StmtState::addFunction( const String* name, Symbol* func )
+{
+   if( m_funcs.find( name ) != 0 )
+      return false;
+
+   m_funcs.insert( name, func );
+   return true;
+}
+
+
+
+//===================================================
 // StmtFunction statement
 //
 

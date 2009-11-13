@@ -1314,6 +1314,15 @@ func_begin:
             Falcon::String complete_name = stmt_cls->symbol()->name() + "." + *$2;
             func_name = COMPILER->addString( complete_name );
          }
+         else if ( parent != 0 && parent->type() == Falcon::Statement::t_state ) 
+         {
+            Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );
+            Falcon::String complete_name =  
+                  stmt_state->owner()->symbol()->name() + "." + 
+                  * stmt_state->name() + "$" + *$2;
+                  
+            func_name = COMPILER->addString( complete_name );
+         }
          else
             func_name = $2;
 
@@ -1333,32 +1342,51 @@ func_begin:
          sym->setFunction( def );
 
          // and eventually add it as a class property
-         if ( parent != 0 && parent->type() == Falcon::Statement::t_class ) {
-            Falcon::StmtClass *stmt_cls = static_cast< Falcon::StmtClass *>( parent );
-            Falcon::ClassDef *cd = stmt_cls->symbol()->getClassDef();
-            if ( cd->hasProperty( *$2 ) ) {
-               COMPILER->raiseError(Falcon::e_prop_adef, *$2 );
+         if ( parent != 0 )
+         {
+            if( parent->type() == Falcon::Statement::t_class ) 
+            {
+               Falcon::StmtClass *stmt_cls = static_cast< Falcon::StmtClass *>( parent );
+               Falcon::ClassDef *cd = stmt_cls->symbol()->getClassDef();
+               if ( cd->hasProperty( *$2 ) ) {
+                  COMPILER->raiseError(Falcon::e_prop_adef, *$2 );
+               }
+               else 
+               {
+                   cd->addProperty( $2, new Falcon::VarDef( sym ) );
+                   // is this a setter/getter?
+                   if( ( $2->find( "__set_" ) == 0 || $2->find( "__get_" ) == 0 ) && $2->length() > 6 )
+                   {
+                      Falcon::String *pname = COMPILER->addString( $2->subString( 6 ));
+                      Falcon::VarDef *pd = cd->getProperty( *pname );
+                      if( pd == 0 )
+                      {
+                        pd = new Falcon::VarDef;
+                        cd->addProperty( pname, pd );
+                        pd->setReflective( Falcon::e_reflectSetGet, 0xFFFFFFFF );
+                      }
+                      else if( ! pd->isReflective() )
+                      {
+                        COMPILER->raiseError(Falcon::e_prop_adef, *pname );
+                      }
+   
+                   }
+               }
             }
-            else {
-                cd->addProperty( $2, new Falcon::VarDef( sym ) );
-                // is this a setter/getter?
-                if( ( $2->find( "__set_" ) == 0 || $2->find( "__get_" ) == 0 ) && $2->length() > 6 )
-                {
-                   Falcon::String *pname = COMPILER->addString( $2->subString( 6 ));
-                   Falcon::VarDef *pd = cd->getProperty( *pname );
-                   if( pd == 0 )
-                   {
-                     pd = new Falcon::VarDef;
-                     cd->addProperty( pname, pd );
-                     pd->setReflective( Falcon::e_reflectSetGet, 0xFFFFFFFF );
-                   }
-                   else if( ! pd->isReflective() )
-                   {
-                     COMPILER->raiseError(Falcon::e_prop_adef, *pname );
-                   }
+         }
+         else if ( parent->type() == Falcon::Statement::t_state ) 
+         {
 
-                }
+            Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );            
+            if( ! stmt_state->addFunction( $2, sym ) )
+            {
+               COMPILER->raiseError(Falcon::e_sm_adef, *$2 );
             }
+            
+            // eventually add a property where to store this thing
+            Falcon::ClassDef *cd = stmt_state->owner()->symbol()->getClassDef();
+            if ( ! cd->hasProperty( *$2 ) )
+               cd->addProperty( $2, new Falcon::VarDef );
          }
 
          Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
@@ -1846,9 +1874,21 @@ class_statement:
          ctor_stmt->statements().push_back( $1 );  // this goes directly in the auto constructor.
       }
    }
+   
+   | state_decl
+      {
+         Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );         
+         if( ! cls->addState( static_cast<Falcon::StmtState *>($1) ) )
+         {
+            const Falcon::String* name = static_cast<Falcon::StmtState *>($1)->name();
+            delete $1;
+            COMPILER->raiseError( Falcon::e_state_adef, *name );
+            
+         }
+      }
+   
    | init_decl
    | attribute_statement
-   | state_decl
 ;
 
 init_decl:
@@ -1936,14 +1976,45 @@ property_decl:
 ;
 
 state_decl:
-   STATE SYMBOL EOL
-      state_statements
-   END EOL {$$=0;}
+   state_heading
+   
+   state_statement_list
+   
+   END EOL 
+      { 
+         $$ = COMPILER->getContext(); 
+         COMPILER->popContext();
+      }
 ;
 
-state_statements:
-   func_decl
-   | state_statements func_decl
+state_heading:
+   STATE SYMBOL EOL
+      {
+         COMPILER->pushContext( 
+            new Falcon::StmtState( $2, 
+                static_cast<Falcon::StmtClass*>( COMPILER->getContext() ) ) ); 
+      }
+  |  STATE INIT EOL
+      {
+         COMPILER->pushContext( 
+            new Falcon::StmtState( COMPILER->addString( "init" ), 
+                static_cast<Falcon::StmtClass*>( COMPILER->getContext() ) ) ); 
+      }
+;
+
+
+state_statement_list:
+   /* nothing */
+   | state_statement_list state_statement
+;
+
+
+state_statement:
+   EOL
+   | func_statement
+      {
+         COMPILER->addStatement( $1 );
+      }
 ;
 
 /*****************************************************
