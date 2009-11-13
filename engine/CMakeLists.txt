@@ -74,12 +74,6 @@ if(UNIX OR APPLE)
       COMMENT "Creating src_parser.cpp"
     )
 
-    add_custom_command(
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/src_parser.hpp
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/src_parser.hpp ${CMAKE_CURRENT_BINARY_DIR}/src_parser.h
-      OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/src_parser.h 
-      COMMENT "Creating src_parser.h"
-    )
   endif(NOT FALCON_SKIP_BISON)
 
 elseif(WIN32)
@@ -236,7 +230,7 @@ add_library(falcon_engine SHARED
   vm_run.cpp
   vmsema.cpp
   #
-  src_parser.h 
+  src_parser.hpp
   src_parser.cpp
   #
   ${CORE_MODULE_SOURCES}
