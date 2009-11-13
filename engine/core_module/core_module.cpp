@@ -148,7 +148,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method add__ BOM
+    @method __add BOM
     @brief Overrides binary addition operand.
     @param operand The second operand in the expression.
     @return The value of @b self + @b operand.
@@ -166,7 +166,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method sub__ BOM
+    @method __sub BOM
     @brief Overrides binary subtraction operand.
     @param operand The second operand in the expression.
     @return The value of @b self - @b operand.
@@ -184,7 +184,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method mul__ BOM
+    @method __mul BOM
     @brief Overrides binary multiplication operand.
     @param operand The second operand in the expression.
     @return The value of @b self * @b operand.
@@ -202,7 +202,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method div__ BOM
+    @method __div BOM
     @brief Overrides binary division operand.
     @param operand The second operand in the expression.
     @return The value of @b self / @b operand.
@@ -220,7 +220,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method mod__ BOM
+    @method __mod BOM
     @brief Overrides modulo operand.
     @param operand The second operand in the expression.
     @return The value of @b self % @b operand.
@@ -238,7 +238,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method pow__ BOM
+    @method __pow BOM
     @brief Overrides power operand.
     @param operand The second operand in the expression.
     @return The value of @b self ** @b operand.
@@ -256,7 +256,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method inc__ BOM
+    @method __inc BOM
     @brief Overrides increment unary prefix operand.
     @param operand The second operand in the expression.
     @return The value of ++ @b self.
@@ -271,7 +271,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method dec__ BOM
+    @method __dec BOM
     @brief Overrides decrement unary prefix operand.
     @param operand The second operand in the expression.
     @return The value of -- @b self.
@@ -286,7 +286,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method incpost__ BOM
+    @method __incpost BOM
     @brief Overrides increment unary postifx operand.
     @param operand The second operand in the expression.
     @return The value of @b self ++.
@@ -301,7 +301,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method decpost__ BOM
+    @method __decpost BOM
     @brief Overrides decrement unary postfix operand.
     @param operand The second operand in the expression.
     @return The value of @b self --.
@@ -316,7 +316,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method getIndex__ BOM
+    @method __getIndex BOM
     @brief Overrides array access operator []
     @param index The index of the desired item.
     @return The value of @b self [@b index].
@@ -332,7 +332,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method setIndex__ BOM
+    @method __setIndex BOM
     @brief Overrides array write operator []
     @param index The index of the desired item.
     @param value The value that must be set.
@@ -349,7 +349,7 @@ Module* core_module_init()
    */
 
    /*#
-    @method call__ BOM
+    @method __call BOM
     @brief Overrides call operator "self()".
     @param ... The parameters passed to the original call.
     @return The value of @b self( ... ).
@@ -362,7 +362,7 @@ Module* core_module_init()
 
     @code
     object sum
-       function call__( a, b )
+       function __call( a, b )
          return a+b
        end
     end
@@ -1260,13 +1260,13 @@ Module* core_module_init()
    self->addClassProperty( c_complex, "real" );
    self->addClassProperty( c_complex, "imag" );
 
-   self->addClassMethod( c_complex, "add__", &Falcon::core::Complex_add__ ).asSymbol()->
+   self->addClassMethod( c_complex, OVERRIDE_OP_ADD, &Falcon::core::Complex_add__ ).asSymbol()->
       addParam( "complex" );
-   self->addClassMethod( c_complex, "sub__", &Falcon::core::Complex_sub__ ).asSymbol()->
+   self->addClassMethod( c_complex, OVERRIDE_OP_SUB, &Falcon::core::Complex_sub__ ).asSymbol()->
       addParam( "complex" );
-   self->addClassMethod( c_complex, "mul__", &Falcon::core::Complex_mul__ ).asSymbol()->
+   self->addClassMethod( c_complex, OVERRIDE_OP_MUL, &Falcon::core::Complex_mul__ ).asSymbol()->
       addParam( "complex" );
-   self->addClassMethod( c_complex, "div__", &Falcon::core::Complex_div__ ).asSymbol()->
+   self->addClassMethod( c_complex, OVERRIDE_OP_DIV, &Falcon::core::Complex_div__ ).asSymbol()->
       addParam( "complex" );
    self->addClassMethod( c_complex, "compare", &Falcon::core::Complex_compare ).asSymbol()->
       addParam( "complex" );
@@ -1908,11 +1908,11 @@ Module* core_module_init()
    self->addClassMethod( table_class, "last", &Falcon::core::Table_last );
    self->addClassMethod( table_class, "get", &Falcon::core::Table_get ).asSymbol()->
       addParam("row")->addParam("tcol");
-   self->addClassMethod( table_class, "getIndex__", &Falcon::core::Table_get ).asSymbol()->
+   self->addClassMethod( table_class, OVERRIDE_OP_GETINDEX, &Falcon::core::Table_get ).asSymbol()->
       addParam("row");
    self->addClassMethod( table_class, "set", &Falcon::core::Table_set ).asSymbol()->
       addParam("row")->addParam("element");
-   self->addClassMethod( table_class, "setIndex__", &Falcon::core::Table_set ).asSymbol()->
+   self->addClassMethod( table_class, OVERRIDE_OP_SETINDEX, &Falcon::core::Table_set ).asSymbol()->
       addParam("row")->addParam("element");
    self->addClassMethod( table_class, "columnPos", &Falcon::core::Table_columnPos ).asSymbol()->
       addParam("column");

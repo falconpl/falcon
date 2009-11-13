@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include <stdio.h>
+
 namespace Falcon {
 
 // Generic fail
@@ -121,7 +122,7 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
    const Item *op2 = second.dereference();
    Item mth;
 
-   if ( source->getMethod( "add__", mth ) )
+   if ( source->getMethod( OVERRIDE_OP_ADD, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -181,7 +182,7 @@ void co_object_add( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "add__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_ADD, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -193,7 +194,7 @@ void co_object_add( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "add__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_ADD ) );
 }
 
 void co_ref_add( const Item& first, const Item& second, Item& third )
@@ -303,7 +304,7 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
    const Item *op2 = second.dereference();
    Item mth;
 
-   if ( source->getMethod( "sub__", mth ) )
+   if ( source->getMethod( OVERRIDE_OP_SUB, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -338,7 +339,7 @@ void co_object_sub( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "sub__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_SUB, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -350,7 +351,7 @@ void co_object_sub( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "sub__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_SUB ) );
 }
 
 void co_ref_sub( const Item& first, const Item& second, Item& third )
@@ -449,7 +450,7 @@ void co_dict_mul( const Item& first, const Item& second, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "mul__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_MUL, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -461,7 +462,7 @@ void co_dict_mul( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "mul__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_MUL ) );
 }
 
 
@@ -470,7 +471,7 @@ void co_object_mul( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "mul__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_MUL, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -482,7 +483,7 @@ void co_object_mul( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "mul__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_MUL ) );
 }
 
 
@@ -600,7 +601,7 @@ void co_dict_div( const Item& first, const Item& second, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "div__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DIV, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -612,7 +613,7 @@ void co_dict_div( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "div__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DIV ) );
 }
 
 
@@ -621,7 +622,7 @@ void co_object_div( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "div__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DIV, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -633,7 +634,7 @@ void co_object_div( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "div__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DIV ) );
 }
 
 void co_ref_div( const Item& first, const Item& second, Item& third )
@@ -744,7 +745,7 @@ void co_dict_mod( const Item& first, const Item& second, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "mod__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_MOD, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -756,7 +757,7 @@ void co_dict_mod( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "mod__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_MOD ) );
 }
 
 
@@ -765,7 +766,7 @@ void co_object_mod( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "mod__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_MOD, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -777,7 +778,7 @@ void co_object_mod( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "mod__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_MOD ) );
 }
 
 void co_ref_mod( const Item& first, const Item& second, Item& third )
@@ -875,7 +876,7 @@ void co_dict_pow( const Item& first, const Item& second, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "pow__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_POW, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -887,7 +888,7 @@ void co_dict_pow( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "pow__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_POW ) );
 }
 
 
@@ -896,7 +897,7 @@ void co_object_pow( const Item& first, const Item& second, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "pow__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_POW, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -908,7 +909,7 @@ void co_object_pow( const Item& first, const Item& second, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "pow__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_POW ) );
 }
 
 void co_ref_pow( const Item& first, const Item& second, Item& third )
@@ -938,7 +939,7 @@ void co_dict_neg( const Item& first, Item& tgt )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "neg__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_NEG, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -949,7 +950,7 @@ void co_dict_neg( const Item& first, Item& tgt )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "neg__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_NEG ) );
 }
 
 
@@ -958,7 +959,7 @@ void co_object_neg( const Item& first, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "neg__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_NEG, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -969,7 +970,7 @@ void co_object_neg( const Item& first, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "neg__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_NEG ) );
 }
 
 void co_ref_neg( const Item& first, Item &tgt )
@@ -1001,7 +1002,7 @@ void co_dict_inc( Item& first, Item &target )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "inc__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_INC, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1012,7 +1013,7 @@ void co_dict_inc( Item& first, Item &target )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "inc__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_INC ) );
 }
 
 
@@ -1021,7 +1022,7 @@ void co_object_inc( Item& first, Item &target )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "inc__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_INC, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1032,7 +1033,7 @@ void co_object_inc( Item& first, Item &target )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "inc__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_INC ) );
 }
 
 void co_ref_inc( Item& first, Item &target )
@@ -1064,7 +1065,7 @@ void co_dict_dec( Item& first, Item &target )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "dec__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DEC, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -1075,7 +1076,7 @@ void co_dict_dec( Item& first, Item &target )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "dec__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DEC ) );
 }
 
 
@@ -1084,7 +1085,7 @@ void co_object_dec( Item& first, Item &target )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "dec__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DEC, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1095,7 +1096,7 @@ void co_object_dec( Item& first, Item &target )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "dec__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DEC ) );
 }
 
 void co_ref_dec( Item& first, Item &target )
@@ -1127,7 +1128,7 @@ void co_dict_incpost( Item& first, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "incpost__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_INCPOST, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1138,7 +1139,7 @@ void co_dict_incpost( Item& first, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "incpost__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_INCPOST ) );
 }
 
 
@@ -1148,7 +1149,7 @@ void co_object_incpost( Item& first, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "incpost__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_INCPOST, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1159,7 +1160,7 @@ void co_object_incpost( Item& first, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "incpost__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_INCPOST ) );
 }
 
 void co_ref_incpost( Item& first, Item &tgt )
@@ -1191,7 +1192,7 @@ void co_dict_decpost( Item& first, Item& third )
    CoreDict *self = first.asDict();
 
    Item mth;
-   if ( self->getMethod( "decpost__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DECPOST, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1202,7 +1203,7 @@ void co_dict_decpost( Item& first, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "decpost__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DECPOST ) );
 }
 
 
@@ -1211,7 +1212,7 @@ void co_object_decpost( Item& first, Item& third )
    CoreObject *self = first.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "decpost__", mth ) )
+   if ( self->getMethod( OVERRIDE_OP_DECPOST, mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
@@ -1222,7 +1223,7 @@ void co_object_decpost( Item& first, Item& third )
       }
    }
 
-   throw new TypeError( ErrorParam( e_invop ).extra( "decpost__" ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( OVERRIDE_OP_DECPOST ) );
 }
 
 void co_ref_decpost( Item& first, Item &tgt )
@@ -2010,7 +2011,7 @@ void co_call_dict( const Item &itm, VMachine *vm, uint32 paramCount )
    CoreDict *self = itm.asDict();
 
    Item *mth;
-   if ( (mth = self->find( "call__" ) ) != 0 && mth->isCallable() )
+   if ( (mth = self->find( OVERRIDE_OP_CALL ) ) != 0 && mth->isCallable() )
    {
       mth->readyFrame( vm, paramCount );
       vm->self() = self;
@@ -2028,7 +2029,7 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
    CoreObject *self = itm.asObjectSafe();
 
    Item mth;
-   if ( self->getProperty( "call__", mth ) && mth.isCallable() )
+   if ( self->getProperty( OVERRIDE_OP_CALL, mth ) && mth.isCallable() )
    {
       mth.readyFrame( vm, paramCount );
       vm->self() = self;

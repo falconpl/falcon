@@ -28,6 +28,21 @@
 #include <falcon/string.h>
 #include <falcon/corerange.h>
 
+#define OVERRIDE_OP_ADD       "__add"
+#define OVERRIDE_OP_SUB       "__sub"
+#define OVERRIDE_OP_MUL       "__mul"
+#define OVERRIDE_OP_DIV       "__div"
+#define OVERRIDE_OP_MOD       "__mod"
+#define OVERRIDE_OP_POW       "__pow"
+#define OVERRIDE_OP_NEG       "__neg"
+#define OVERRIDE_OP_INC       "__inc"
+#define OVERRIDE_OP_DEC       "__dec"
+#define OVERRIDE_OP_INCPOST   "__incpost"
+#define OVERRIDE_OP_DECPOST   "__decpost"
+#define OVERRIDE_OP_CALL      "__call"
+#define OVERRIDE_OP_GETINDEX  "__getIndex"
+#define OVERRIDE_OP_SETINDEX  "__setIndex"
+
 namespace Falcon {
 
 class Symbol;

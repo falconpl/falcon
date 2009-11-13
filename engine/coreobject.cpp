@@ -263,7 +263,7 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 
 void CoreObject::readIndex( const Item &pos, Item &target )
 {
-   if ( getMethod( "getIndex__", target ) )
+   if ( getMethod( OVERRIDE_OP_GETINDEX, target ) )
    {
       VMachine* vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -275,13 +275,13 @@ void CoreObject::readIndex( const Item &pos, Item &target )
       }
    }
 
-   throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "getIndex__" ) );
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( OVERRIDE_OP_GETINDEX ) );
 }
 
 void CoreObject::writeIndex( const Item &pos, const Item &target )
 {
    Item method;
-   if ( getMethod( "setIndex__", method ) )
+   if ( getMethod( OVERRIDE_OP_SETINDEX, method ) )
    {
       VMachine* vm = VMachine::getCurrent();
       if ( vm != 0 )

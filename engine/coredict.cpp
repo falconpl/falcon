@@ -95,7 +95,7 @@ void CoreDict::readIndex( const Item &pos, Item &target )
    if( m_blessed )
    {
       Item *method;
-      if ( (method = find( "getIndex__" ) ) != 0 )
+      if ( (method = find( OVERRIDE_OP_GETINDEX ) ) != 0 )
       {
          Item mth = *method;
          if ( mth.methodize(this) )
@@ -122,7 +122,7 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
    if( m_blessed )
    {
       Item *method;
-      if ( (method = find( "setIndex__" ) ) != 0 )
+      if ( (method = find( OVERRIDE_OP_SETINDEX ) ) != 0 )
       {
          Item mth = *method;
          if ( mth.methodize(this) )
