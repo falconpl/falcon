@@ -67,10 +67,10 @@ if(UNIX OR APPLE)
         ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.yy
       COMMAND 
         ${BISON_EXECUTABLE} -y ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.yy 
-                            -o ${CMAKE_CURRENT_BINARY_DIR}/src_parser.cpp       
+                            -o ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.cpp       
       OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/src_parser.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/src_parser.hpp 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.hpp 
       COMMENT "Creating src_parser.cpp"
     )
 

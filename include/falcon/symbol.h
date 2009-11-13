@@ -461,8 +461,33 @@ public:
    int isMetaclassFor() const { return m_metaclassFor; }
    void setMetaclassFor( int ItemID ) { fassert( ItemID >= 0 && ItemID < FLC_ITEM_COUNT ); m_metaclassFor = ItemID; }
 
+   /** Set this as a "final" class.
+      Final classes can be inherited, but it is not possible to inherit
+      from more than one final class in the whole hierarcy.
+
+      Final classes store binary data that must be uniquely identified
+      by functions in the hierarcy.
+   */
    void setFinal( bool mod )  { m_bFinal = mod; }
+
+   /** Returns true if this class is final.
+   \see setFinal()
+   */
    bool isFinal() const { return m_bFinal; }
+
+   /** Creates a new state for this class.
+
+      States are set of functions that are applied all
+      at the same time to an object. Also, special
+      __enter and __leave functions are called back
+      with the name of the state from which this
+      state is entered or where this state is
+      going to.
+
+      An object enters the "init" state, if provided,
+      after complete instantation.
+   */
+   //StateDecl* addState( const String* stateName );
 };
 
 /** Representation of a VM symbol

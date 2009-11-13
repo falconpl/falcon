@@ -115,6 +115,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token ENUM
 %token TRUE_TOKEN
 %token FALSE_TOKEN
+%token STATE
 
 /* Special token used by the parser to generate a parse print */
 %token <stringp> OUTER_STRING
@@ -170,7 +171,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> func_statement
 %type <fal_stat> self_print_statement
 %type <fal_stat> enum_statement
-%type <fal_stat> class_decl object_decl property_decl export_statement directive_statement
+%type <fal_stat> class_decl object_decl property_decl state_decl export_statement directive_statement
 %type <fal_stat> import_statement
 %type <fal_stat> def_statement
 %type <fal_stat> loop_statement
@@ -541,7 +542,7 @@ forin_statement:
    FOR symbol_list OP_IN expression
       {
          Falcon::StmtForin *f;
-         Falcon::ArrayDecl *decl = $2;     
+         Falcon::ArrayDecl *decl = $2;
          f = new Falcon::StmtForin( LINE, decl, $4 );
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
@@ -1355,7 +1356,7 @@ func_begin:
                    {
                      COMPILER->raiseError(Falcon::e_prop_adef, *pname );
                    }
-                   
+
                 }
             }
          }
@@ -1847,6 +1848,7 @@ class_statement:
    }
    | init_decl
    | attribute_statement
+   | state_decl
 ;
 
 init_decl:
@@ -1933,6 +1935,16 @@ property_decl:
    }
 ;
 
+state_decl:
+   STATE SYMBOL EOL
+      state_statements
+   END EOL {$$=0;}
+;
+
+state_statements:
+   func_decl
+   | state_statements func_decl
+;
 
 /*****************************************************
    ENUM declaration
@@ -2314,7 +2326,7 @@ expression:
                   COMPILER->raiseError( Falcon::e_invop );
                }
                else {
-               
+
                   if ( $4->isInteger() )
                   {
                      Falcon::String str( *$1->asString() );

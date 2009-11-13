@@ -34,7 +34,7 @@
 
 
 // Get the bison generated token defs
-#include "src_parser.h"
+#include "src_parser.hpp"
 
 namespace Falcon {
 
@@ -71,7 +71,7 @@ void SrcLexer::reset()
 {
    resetContexts();
    m_addEol = false; // revert what's done by resetContext
-   
+
    m_prevStat = 0;
    m_character = 0;
    m_state = e_line;
@@ -512,7 +512,7 @@ int SrcLexer::lex_normal()
                      else {
                         m_state = chr == '"' ? e_string : e_litString;
                      }
-                     
+
                      pushContext( ct_string, m_line );
                      m_string.size(0); // remove first char.
                      m_string.exported( true );
@@ -1066,7 +1066,7 @@ int SrcLexer::lex_normal()
 void SrcLexer::checkContexts()
 {
    t_contextType ct = currentContext();
-   
+
    if ( ct == ct_round )
       m_compiler->raiseContextError( e_par_unbal, m_line, contextStart() );
    else if ( ct == ct_square )
@@ -1383,7 +1383,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
                popContext();
                return EOL;
             }
-            else 
+            else
                m_compiler->raiseError( e_graph_close_unbal, m_line );
          }
          else if ( chr == '@' )
@@ -1577,6 +1577,8 @@ int SrcLexer::checkLimitedTokens()
             return FALSE_TOKEN;
          if ( m_string == "fself" )
             return FSELF;
+         if ( m_string == "state" )
+            return STATE;
          if( m_string == "macro" )
          {
             m_string.size(0);
@@ -1673,11 +1675,11 @@ void SrcLexer::resetContexts()
       delete m_topCtx;
       m_topCtx = ctx;
    }
-   
+
    // force to generate a fake eol at next loop
    m_addEol = true;
    m_bIsDirectiveLine = false;
-   
+
    m_state = e_line;
    m_lineFilled = false;
    m_string = "";
@@ -1888,7 +1890,7 @@ bool SrcLexer::popContext()
 {
    if( m_topCtx == 0 )
       return false;
-   
+
    Context* current = m_topCtx;
    m_topCtx = m_topCtx->m_prev;
    delete current;
@@ -1900,22 +1902,22 @@ SrcLexer::t_contextType SrcLexer::currentContext()
 {
    if( m_topCtx == 0 )
       return ct_top;
-   
+
    return m_topCtx->m_ct;
 }
 
-   
+
 int SrcLexer::contextStart()
 {
    if( m_topCtx == 0 )
       return 0;
-   
+
    return m_topCtx->m_oline;
 }
 
 bool SrcLexer::inParCtx()
 {
-   return m_topCtx != 0 &&  
+   return m_topCtx != 0 &&
          ( m_topCtx->m_ct == ct_round || m_topCtx->m_ct == ct_square );
 }
 
