@@ -57,7 +57,7 @@ origin.month = 1
 origin.day = 1
 
 // it was a sunday
-if origin.dayOfWeek() != 0: failure( "Day of week calculation -- 1" )
+if origin.dayOfWeek() != 6: failure( "Day of week calculation -- 1" )
 // adding 30 days we should be at january the 31th
 aday.day = 30
 origin.add( aday )
@@ -66,19 +66,19 @@ if origin.day != 31 or origin.month != 1: failure( "adding 30 days" )
 aday.day = 1
 origin.add( aday )
 if origin.month != 2 or origin.day != 1: failure( "Roll on 2006-2-1" )
-if origin.dayOfWeek() != 3: failure( "Day of week calculation -- 2" )
+if origin.dayOfWeek() != 2: failure( "Day of week calculation -- 2" )
 
 // adding 28 days we roll on march the 1th, a wednesday too
 aday.day = 28
 origin.add( aday )
 if origin.month != 3 or origin.day != 1: failure( "Roll on 2006-3-1" )
-if origin.dayOfWeek() != 3: failure( "Day of week calculation -- 3" )
+if origin.dayOfWeek() != 2: failure( "Day of week calculation -- 3" )
 
 // adding 60 we roll on april 30
 aday.day = 60
 origin.add( aday )
 if origin.month != 4 or origin.day != 30: failure( "Roll on 2006-4-30" )
-if origin.dayOfWeek() != 0: failure( "Day of week calculation -- 4" )
+if origin.dayOfWeek() != 6: failure( "Day of week calculation -- 4" )
 
 // roll by hours:
 aday.day = 0

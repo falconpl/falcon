@@ -299,6 +299,13 @@ public:
    Symbol *base() const { return m_baseClass; }
 };
 
+class StateDecl: public BaseAlloc
+{
+public:
+   StateDecl( const String* sname );
+
+};
+
 /** Class symbol abstraction.
 
    A class symbol has multiple lives: it looks like a function, and if used
@@ -487,7 +494,7 @@ public:
       An object enters the "init" state, if provided,
       after complete instantation.
    */
-   //StateDecl* addState( const String* stateName );
+   StateDecl* addState( const String* stateName );
 };
 
 /** Representation of a VM symbol

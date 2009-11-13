@@ -1439,7 +1439,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
       if( seq == 0 )
       {
          // is it a callable entity?
-         if ( source->asObjectSafe()->hasProperty("call__"))
+         if ( source->asObjectSafe()->hasProperty( OVERRIDE_OP_CALL ))
          {
             seq = new GeneratorSeq( vm, *source );
             GarbagePointer* ptr = new GarbagePointer( seq );

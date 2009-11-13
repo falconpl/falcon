@@ -15,7 +15,7 @@ class Over
    numval = 0
    array = []
 
-   function add__( addend )
+   function __add( addend )
       if addend provides numval
          self.numval += addend.numval
       elif addend.typeId() == NumericType
@@ -26,7 +26,7 @@ class Over
       return self
    end
 
-   function sub__( addend )
+   function __sub( addend )
       if addend provides numval
          self.numval -= addend.numval
       elif addend.typeId() == NumericType
@@ -37,7 +37,7 @@ class Over
       return self
    end
 
-   function mul__( addend )
+   function __mul( addend )
       if addend provides numval
          self.numval *= addend.numval
       elif addend.typeId() == NumericType
@@ -48,7 +48,7 @@ class Over
       return self
    end
 
-   function div__( addend )
+   function __div( addend )
       if addend provides numval
          self.numval /= addend.numval
       elif addend.typeId() == NumericType
@@ -59,7 +59,7 @@ class Over
       return self
    end
 
-   function mod__( addend )
+   function __mod( addend )
       if addend provides numval
          self.numval %= addend.numval
       elif addend.typeId() == NumericType
@@ -70,7 +70,7 @@ class Over
       return self
    end
 
-   function pow__( addend )
+   function __pow( addend )
       if addend provides numval
          self.numval **= addend.numval
       elif addend.typeId() == NumericType
@@ -81,23 +81,23 @@ class Over
       return self
    end
 
-   function neg__()
+   function __neg()
       return -self.numval
    end
 
-   function inc__()
+   function __inc()
       return ++self.numval
    end
 
-   function dec__()
+   function __dec()
       return --self.numval
    end
 
-   function incpost__()
+   function __incpost()
       return self.numval ++
    end
 
-   function decpost__()
+   function __decpost()
       return self.numval--
    end
 

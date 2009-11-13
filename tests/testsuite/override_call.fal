@@ -15,7 +15,7 @@
 class Over()
    inner = nil
 
-   function call__( data )
+   function __call( data )
       self.inner = data
       return data.len()
    end

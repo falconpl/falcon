@@ -15,7 +15,7 @@
 x = bless([
    "inner" => [nil, nil, nil],
 
-   "setIndex__" => function( pos, data );
+   "__setIndex" => function( pos, data );
       if typeOf( pos ) == StringType;
          self.set( pos, data );
       else;
@@ -23,8 +23,8 @@ x = bless([
       end;
       return data;
    end,
-   
-   "getIndex__" => function( pos );
+
+   "__getIndex" => function( pos );
       if typeOf( pos ) == StringType;
          return self.get( pos );
       else;

@@ -15,7 +15,7 @@
 x = bless([
    "inner" => nil,
 
-   "call__" => function( data );
+   "__call" => function( data );
       self.inner = data;
       return data.len();
    end

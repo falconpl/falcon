@@ -15,12 +15,12 @@
 class Over()
    inner = [nil, nil, nil]
 
-   function setIndex__( pos, data )
+   function __setIndex( pos, data )
       self.inner[pos] = data
       return data
    end
-   
-   function getIndex__( pos )
+
+   function __getIndex( pos )
       return self.inner[pos]
    end
 

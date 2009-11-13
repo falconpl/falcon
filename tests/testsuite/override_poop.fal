@@ -17,7 +17,7 @@ o = bless([
    "numval" => 0,
    "array" => [],
 
-   "add__" => function( addend )
+   "__add" => function( addend )
       if addend provides numval
          self.numval += addend.numval
       elif addend.typeId() == NumericType
@@ -28,7 +28,7 @@ o = bless([
       return self
    end,
 
-   "sub__" => function( addend )
+   "__sub" => function( addend )
       if addend provides numval
          self.numval -= addend.numval
       elif addend.typeId() == NumericType
@@ -39,7 +39,7 @@ o = bless([
       return self
    end,
 
-   "mul__" => function( addend )
+   "__mul" => function( addend )
       if addend provides numval
          self.numval *= addend.numval
       elif addend.typeId() == NumericType
@@ -50,7 +50,7 @@ o = bless([
       return self
    end,
 
-   "div__" => function( addend )
+   "__div" => function( addend )
       if addend provides numval
          self.numval /= addend.numval
       elif addend.typeId() == NumericType
@@ -61,7 +61,7 @@ o = bless([
       return self
    end,
 
-   "mod__" => function( addend )
+   "__mod" => function( addend )
       if addend provides numval
          self.numval %= addend.numval
       elif addend.typeId() == NumericType
@@ -72,7 +72,7 @@ o = bless([
       return self
    end,
 
-   "pow__" => function( addend )
+   "__pow" => function( addend )
       if addend provides numval
          self.numval **= addend.numval
       elif addend.typeId() == NumericType
@@ -83,25 +83,25 @@ o = bless([
       return self
    end,
 
-   "neg__" => function()
+   "__neg" => function()
       return -self.numval
    end,
 
-   "inc__" => function()
+   "__inc" => function()
       return ++self.numval
    end,
 
-   "dec__" => function()
+   "__dec" => function()
       return --self.numval
    end,
 
-   "incpost__" => function()
+   "__incpost" => function()
       return self.numval++
    end,
 
-   "decpost__" => function()
+   "__decpost" => function()
       return self.numval--
-   end 
+   end
 ])
 
 
@@ -120,7 +120,7 @@ o = o ** 3
 if o.numval != 8: failure( "Pow override" )
 
 if -o != -8: failure( "Neg override" )
-// prefix op will have the VM return the item itself 
+// prefix op will have the VM return the item itself
 // no matter what we return from the method
 if ++o != 9: failure( "Inc override" )
 if --o != 8: failure( "Dec override" )
