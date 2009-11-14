@@ -542,7 +542,7 @@ static void internal_render( VMachine *vm, int mode )
    Item *i_colorbg = vm->param( 2 );
 
    if( i_string == 0 || ( ! i_string->isString() && ! i_string->isOrdinal() ) ||
-       i_color == 0 && !i_color->isObject() ||
+       (i_color == 0 && !i_color->isObject()) ||
        (mode == 1 && (i_colorbg == 0 || ! i_colorbg->isObject() ))
       )
    {

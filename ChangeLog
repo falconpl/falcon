@@ -1,6 +1,7 @@
 SDL (0.9.13)
    * fixed: Resize event didn't correctly pass its parameters.
-
+   * fixed: Deserialization protocol was not respected by SDL_surface 
+            carrier.
 
 SDL (0.9.12)
    * fixed: Ported to falcon Eagle.

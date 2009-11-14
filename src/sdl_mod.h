@@ -120,6 +120,7 @@ public:
    virtual SDL_Surface* surface() const { return (SDL_Surface*) getUserData(); }
 
    void setPixelCache( MemBuf* mb );
+   bool deserialize( Stream *stream, bool bLive );
 
    friend void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
 };

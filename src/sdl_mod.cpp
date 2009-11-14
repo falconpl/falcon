@@ -22,6 +22,7 @@
 #define FALCON_EXPORT_SERVICE
 #include <falcon/vm.h>
 #include <falcon/membuf.h>
+#include <falcon/stream.h>
 #include "sdl_mod.h"
 
 extern "C" {
@@ -69,11 +70,14 @@ SDLSurfaceCarrier_impl::SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surfac
       m_mbPixelCache( 0 ),
       m_lockCount(0)
 {
-   if ( s->refcount == 1 )
-      gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
+   if( s != 0 )
+   {
+      if ( s->refcount == 1 )
+         gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
 
-   s->refcount++;
-   setUserData( s );
+      s->refcount++;
+      setUserData( s );
+   }
 }
 
 SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
@@ -94,6 +98,25 @@ SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 SDLSurfaceCarrier_impl *SDLSurfaceCarrier_impl::clone() const
 {
    return new SDLSurfaceCarrier_impl( generator(), surface() );
+}
+
+bool SDLSurfaceCarrier_impl::deserialize( Stream *stream, bool bLive )
+{
+   if( bLive )
+   {
+      SDL_Surface* s;
+      if ( stream->read( (byte *) &s, sizeof( s ) ) != sizeof( s ) )
+         return false;
+
+      if ( s->refcount == 1 )
+              gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
+
+      s->refcount++;
+      setUserData( s );
+      return true;
+   }
+
+   return false;
 }
 
 
