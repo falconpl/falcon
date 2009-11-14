@@ -1095,6 +1095,7 @@ StmtState::StmtState( const String* name, StmtClass* owner ):
       m_owner( owner ),
       m_funcs( &traits::t_stringptr(), &traits::t_voidp(), 19 )
 {
+   m_stateDef = new StateDef( name );
 }
 
 
@@ -1108,6 +1109,7 @@ StmtState::StmtState( const StmtState& other ):
    m_owner( other.m_owner ),
    m_funcs( other.m_funcs )
 {
+   m_stateDef = new StateDef( other.m_name );
 }
 
 StmtState* StmtState::clone() const

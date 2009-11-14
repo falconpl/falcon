@@ -234,6 +234,9 @@ FAL_ERRORDECL( e_noeffect, 166, "Statement has no effect (at least in part)" );
 FAL_ERRORDECL( e_ns_clash, 167, "Clash in namespaces aliasing" );
 FAL_ERRORDECL( e_directive_unk, 168, "Unknown directive" );
 FAL_ERRORDECL( e_directive_value, 169, "Invalid value for directive" );
+FAL_ERRORDECL( e_sm_adef, 170, "State member already defined" );
+FAL_ERRORDECL( e_state_adef, 171, "State already defined" );
+FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
 FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );
@@ -247,8 +250,6 @@ FAL_ERRORDECL( e_io_unsup, 208, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_invalid, 209, "Unrecognized file type" );
 FAL_ERRORDECL( e_deser_eof, 210, "Hit EOF while deserializing" );
 FAL_ERRORDECL( e_search_eof, 211, "Search operation failed or item not found" );
-FAL_ERRORDECL( e_sm_adef, 212, "State member already defined" );
-FAL_ERRORDECL( e_state_adef, 213, "State already defined" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );

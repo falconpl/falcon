@@ -787,6 +787,8 @@ public:
       mode raises an unblockable exception, terminating the current script (and leaving it
       in a non-resumable status).
 
+      \note This method won't apply the init state, if existing.
+
       \param sym The class instance to be initialized.
       \param lmod The live module where the symbol must go.
       \throw Error if the instance cannot be created.

@@ -529,6 +529,25 @@ bool ClassDef::inheritsFrom( const String &find_name ) const
    return false;
 }
 
+bool ClassDef::addState( const String *state_name, StateDef* state )
+{
+   if( m_states.find( state_name ) != 0 )
+      return false;
+
+   m_states.insert( state_name, state );
+   return true;
+}
+
+StateDef* ClassDef::addState( const String *state_name )
+{
+   if( m_states.find( state_name ) != 0 )
+      return 0;
+
+   StateDef* state = new StateDef( state_name );
+   m_states.insert( state_name, state );
+   return state;
+}
+
 bool ClassDef::save( Stream *out ) const
 {
    if ( ! FuncDef::save( out ) )
@@ -666,6 +685,7 @@ bool ClassDef::load( Module *mod, Stream *in )
 // vardef
 
 StateDef::StateDef( const String* sname ):
+   m_name( sname ),
    m_functions( &traits::t_stringptr(), &traits::t_voidp() )
 {
 

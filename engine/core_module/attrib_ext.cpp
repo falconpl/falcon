@@ -125,6 +125,47 @@ FALCON_FUNC  Object_attributes ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method setState Object
+   @param nstate The new state into which the object is moved.
+   @brief Change the current active state of an object.
+   @return Return value of the __leave -> __enter sequence, if any, or nil
+   @raise CodeError if the state is not part of the object state.
+
+   This method changes the state of the object, applying a new set of function
+   described in the state section.
+*/
+FALCON_FUNC  Object_setState ( ::Falcon::VMachine *vm )
+{
+   Item* nstate = vm->param(0);
+   if ( nstate == 0 || ! nstate->isString() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "S") );
+
+   // will raise in case of problems.
+   vm->self().asObject()->setState( *nstate->asString() );
+}
+
+
+/*#
+   @method getState Object
+   @brief Return the current state of an object.
+   @return A string representing the current state of an object, or nil if the object is stateless.
+
+   This function returns the current state in which an object is operating.
+
+*/
+
+FALCON_FUNC  Object_getState( ::Falcon::VMachine *vm )
+{
+   CoreObject* obj = vm->self().asObject();
+   if( obj->hasState() )
+      vm->retval( new CoreString( obj->state() ) );
+   else
+      vm->retnil();
+}
+
+/*#
    @method apply Object
    @brief Applies the values in a dictionary to the corresponding properties.
    @param dict A "stamp" dictionary.
@@ -150,7 +191,7 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
 
    if ( i_dict == 0 || ! i_dict->isDict() )
    {
-      throw new AccessError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin(e_orig_runtime)
             .extra( "D") );
    }

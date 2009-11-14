@@ -178,6 +178,29 @@ void GenHAsm::gen_class( const StmtClass *cls )
       m_out->writeString( ".ctor $" + cd->constructor()->name() + "\n" );
    }
 
+   MapIterator state_iter = cd->states().begin();
+   while( state_iter.hasCurrent() )
+   {
+      const StateDef *def = *(const StateDef **) state_iter.currentValue();
+      m_out->writeString( ".state " );
+      const String *key = *( const String **) state_iter.currentKey();
+      m_out->writeString( *key );
+      m_out->writeString( "\n" );
+
+      MapIterator s_iter = def->functions().begin();
+      while( s_iter.hasCurrent() )
+      {
+         m_out->writeString( ".stateitem " );
+         const String *key = *( const String **) s_iter.currentKey();
+         const Symbol *func = *( const Symbol **) s_iter.currentValue();
+         m_out->writeString( *key + " $" + func->name() + "\n" );
+
+         s_iter.next();
+      }
+
+      state_iter.next();
+   }
+
    m_out->writeString( ".endclass\n" );
 }
 

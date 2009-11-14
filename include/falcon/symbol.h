@@ -388,9 +388,6 @@ private:
    */
    Map m_states;
 
-   StateDef* m_initState;
-
-
 public:
    /** Creates a class definition without a constructor.
       This constructor creates a class definition for those classes which doesn't
@@ -518,6 +515,10 @@ public:
       after complete instantation.
    */
    StateDef* addState( const String* stateName );
+   bool addState( const String* stateName, StateDef* state );
+
+   const Map& states() const { return m_states; }
+   Map& states() { return m_states; }
 };
 
 /** Representation of a VM symbol
@@ -668,8 +669,8 @@ public:
    }
 
    /** Sets the symbol import class.
-      Import class is prioritary to export class; that is, if a symbol is imported,
-      exported() will always return false. Also, imported symbols report their type as unknonw,
+      Import class has higher priority than export class; that is, if a symbol is imported,
+      exported() will always return false. Also, imported symbols report their type as unknown,
       no matter what local setting is provided.
       \param exp true if the symbol must be imported, false otherwise.
       \return itself
@@ -704,7 +705,7 @@ public:
       them receives a copy of the original item, but not the original one.
 
       Modules can i.e. change objects and can alter functions, but a copy
-      of the original well knonw items is kept by the VM and is available
+      of the original well known items is kept by the VM and is available
       to C++ extensions.
 
       Well known items are meant to provide language-oriented special features,

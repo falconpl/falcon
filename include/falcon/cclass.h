@@ -29,6 +29,7 @@
 namespace Falcon {
 
 class VMachine;
+class ItemDict;
 
 /** Representation of classes held in VM while executing code.
    The Virtual Machine has his own image of the classes. Classes items
@@ -58,24 +59,16 @@ private:
    /** Locally cached factory. */
    ObjectFactory m_factory;
 
-   /** Configures a newborn instance.
-      This method is called by createInstance on this class and all the subclasses,
-      provided they have non-default object managers.
+   /** Dictionary of dictionaries of states. */
+   ItemDict* m_states;
 
-      If a class has the default object manager (0), then it shares the common property
-      array that makes up the object structure through the PropertyManager class, and no
-      extra configuration is needed.
-
-      This method may call reflected classes constructor to configure their user data, but
-      it won't call the "init" sequence of the object. That is left to the VM or to the
-      user, and should be done after the object is configured.
-   */
-   void configInstance( CoreObject *co );
+   /** Shortcut for the init state to speed up instance creation. */
+   ItemDict* m_initState;
 
 public:
 
    /** Creates an item representation of a live class.
-      The representation of the class nees a bit of extra informations that are provided by the
+      The representation of the class needs a bit of extra informations that are provided by the
       virtual machine, other than the symbol that generated this item.
       The module id is useful as this object often refers to its module in the VM. Having the ID
       recorded here prevents the need to search for the live ID in the VM at critical times.
@@ -129,6 +122,20 @@ public:
    */
    void gcMark( uint32 mark );
 
+   /** Sets a state dictionary for this class.
+    States are usually string -> CoreFunc dictionaries;
+    so, an ItemDict like this will contain a set of String -> CoreDict( string -> CoreFunc );
+
+    This is mainly used by VMachine::link.
+    \note If a previous state dictionary was set, it will be destroyed.
+    \param sd State dictionary
+    \param is Dictionary for the init state, if existing.
+   */
+
+   void states( ItemDict* sd, ItemDict* is = 0 );
+   ItemDict* states() const { return m_states; }
+
+   ItemDict* initState() const { return m_initState; }
 
 };
 

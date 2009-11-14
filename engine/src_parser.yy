@@ -1319,7 +1319,7 @@ func_begin:
             Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );
             Falcon::String complete_name =  
                   stmt_state->owner()->symbol()->name() + "." + 
-                  * stmt_state->name() + "$" + *$2;
+                  * stmt_state->name() + "#" + *$2;
                   
             func_name = COMPILER->addString( complete_name );
          }
@@ -1380,6 +1380,10 @@ func_begin:
                if( ! stmt_state->addFunction( $2, sym ) )
                {
                   COMPILER->raiseError(Falcon::e_sm_adef, *$2 );
+               }
+               else 
+               {
+                  stmt_state->state()->addFunction( $2, sym );
                }
                
                // eventually add a property where to store this thing
@@ -1877,13 +1881,21 @@ class_statement:
    
    | state_decl
       {
+         Falcon::StmtState* ss = static_cast<Falcon::StmtState *>($1);
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );         
          if( ! cls->addState( static_cast<Falcon::StmtState *>($1) ) )
          {
-            const Falcon::String* name = static_cast<Falcon::StmtState *>($1)->name();
+            const Falcon::String* name = ss->name();
+            // we're not using the state we created, afater all.
+            delete ss->state();
             delete $1;
-            COMPILER->raiseError( Falcon::e_state_adef, *name );
-            
+            COMPILER->raiseError( Falcon::e_state_adef, *name ); 
+         }
+         else {
+            // ownership passes on to the classdef
+            cls->symbol()->getClassDef()->addState( ss->name(), ss->state() );
+            cls->symbol()->getClassDef()->addProperty( ss->name(), 
+               new Falcon::VarDef( ss->name() ) );
          }
       }
    
@@ -1990,11 +2002,13 @@ state_decl:
 state_heading:
    STATE SYMBOL EOL
       {
+         Falcon::StmtClass* cls = 
+            static_cast<Falcon::StmtClass*>( COMPILER->getContext() );
+            
          COMPILER->pushContext( 
-            new Falcon::StmtState( $2, 
-                static_cast<Falcon::StmtClass*>( COMPILER->getContext() ) ) ); 
+            new Falcon::StmtState( $2, cls ) ); 
       }
-  |  STATE INIT EOL
+  | STATE INIT EOL
       {
          Falcon::StmtClass* cls = 
             static_cast<Falcon::StmtClass*>( COMPILER->getContext() );
@@ -2017,7 +2031,7 @@ state_statement:
    EOL
    | func_statement
       {
-         COMPILER->addStatement( $1 );
+         COMPILER->addFunction( $1 );
       }
 ;
 

@@ -965,6 +965,12 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
          throw;
       }
    }
+
+   CoreObject* cobj = globs[ obj->itemId() ].dereference()->asObject();
+   if( cobj->generator()->initState() != 0 )
+   {
+      cobj->setState( "init", cobj->generator()->initState() );
+   }
 }
 
 
@@ -1162,6 +1168,46 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
       iter.next();
    }
 
+   // apply the state map
+   // TODO: calculate hierarcy
+   const Map& states = clssym->getClassDef()->states();
+   if( ! states.empty() )
+   {
+      MapIterator siter = states.begin();
+      ItemDict* dict = new LinearDict;
+      ItemDict* initState = 0;
+
+      while ( siter.hasCurrent() )
+      {
+         const StateDef* sd = *(StateDef**) siter.currentValue();
+         ItemDict *sdict = new LinearDict(sd->functions().size());
+         MapIterator fiter = sd->functions().begin();
+
+         while( fiter.hasCurrent() )
+         {
+            const String* fname = *(String**) fiter.currentKey();
+            const Symbol* fsym = *(Symbol**) fiter.currentValue();
+
+            // TODO: see if we can use the const strings here.
+            // TODO: see if we can use the already linked functions here.
+            sdict->put(
+                  new CoreString( *fname ), new CoreFunc( fsym, lmod ) );
+
+            fiter.next();
+         }
+
+         // TODO: See if we can use the const String* form sd->name() here
+         dict->put( new CoreString( sd->name() ), new CoreDict(sdict) );
+         if( sd->name() == "init" )
+            initState = sdict;
+
+         siter.next();
+      }
+
+      cc->states( dict, initState );
+   }
+
+
    // ok, now determine the default object factory, if not provided.
    if( factory != 0 )
    {
@@ -1169,6 +1215,7 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
    }
    else
    {
+      // use one of our standard factories.
       if ( ! cc->properties().isReflective() )
       {
          // a standard falcon object

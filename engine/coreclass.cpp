@@ -20,6 +20,7 @@
 #include <falcon/cclass.h>
 #include <falcon/coreobject.h>
 #include <falcon/vm.h>
+#include <falcon/itemdict.h>
 
 namespace Falcon {
 
@@ -28,7 +29,9 @@ CoreClass::CoreClass( const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
    m_lmod( lmod ),
    m_sym( sym ),
    m_properties( pt ),
-   m_factory(sym->getClassDef()->factory())
+   m_factory(sym->getClassDef()->factory()),
+   m_states( 0 ),
+   m_initState( 0 )
 {
 }
 
@@ -50,6 +53,7 @@ bool CoreClass::derivedFrom( const String &className ) const
 CoreClass::~CoreClass()
 {
    delete m_properties;
+   delete m_states;
 }
 
 
@@ -68,9 +72,24 @@ void CoreClass::gcMark( uint32 gen )
          memPool->markItem( *properties().getValue(i) );
       }
 
+      // and our states
+      if( m_states != 0 )
+      {
+         m_states->gcMark( gen );
+      }
+
       // and our module
       m_lmod->mark( gen );
    }
+}
+
+
+void CoreClass::states( ItemDict* sd, ItemDict* is )
+{
+   delete m_states;
+   m_states = sd;
+   // have we got an init state?
+   m_initState = is;
 }
 
 
@@ -87,6 +106,9 @@ CoreObject *CoreClass::createInstance( void *userdata, bool bDeserial ) const
    // The core object will self configure,
    // eventually calling the user data constructor and creating the property vector.
    CoreObject *instance = m_factory( this, userdata, bDeserial );
+
+   if( m_initState != 0 )
+      instance->apply( *m_initState, true );
 
    return instance;
 }

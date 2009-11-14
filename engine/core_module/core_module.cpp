@@ -710,6 +710,8 @@ Module* core_module_init()
    self->addClassMethod( object_meta, "properties", &Falcon::core::mth_properties );
    self->addClassMethod( object_meta, "comp", &Falcon::core::Object_comp );
    self->addClassMethod( object_meta, "apply", &Falcon::core::Object_apply );
+   self->addClassMethod( object_meta, "getState", &Falcon::core::Object_getState );
+   self->addClassMethod( object_meta, "setState", &Falcon::core::Object_setState );
    self->addClassMethod( object_meta, "retrieve", &Falcon::core::Object_retrieve );
 
    //==================================================================

@@ -33,7 +33,8 @@ CoreObject::CoreObject( const CoreClass *parent ):
    m_user_data( 0 ),
    m_bIsFalconData( false ),
    m_bIsSequence( false ),
-   m_generatedBy( parent )
+   m_generatedBy( parent ),
+   m_state( 0 )
 {
 }
 
@@ -42,7 +43,8 @@ CoreObject::CoreObject( const CoreObject &other ):
    m_user_data( 0 ),
    m_bIsFalconData( other.m_bIsFalconData ),
    m_bIsSequence( other.m_bIsFalconData ),
-   m_generatedBy( other.m_generatedBy )
+   m_generatedBy( other.m_generatedBy ),
+   m_state( 0 )
 {
    if ( m_bIsFalconData )
    {
@@ -57,6 +59,8 @@ CoreObject::CoreObject( const CoreObject &other ):
 
 CoreObject::~CoreObject()
 {
+   delete m_state;
+
    if ( m_bIsFalconData )
       delete static_cast<FalconData *>( m_user_data );
 }
@@ -340,6 +344,36 @@ void CoreObject::writeProperty( const String &prop, const Item &target )
    }
 }
 
+
+void CoreObject::setState( const String& state )
+{
+   Item* stateDict = m_generatedBy->states()->find( Item(const_cast<String*>(&state)) );
+   if ( stateDict == 0 )
+   {
+      throw new CodeError( ErrorParam( e_undef_state, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( state ) );
+   }
+
+   fassert( stateDict->isDict() );
+   if ( m_state == 0 )
+      m_state = new String( state );
+   else
+      m_state->bufferize( state );
+
+   // shouldn't raise if all is ok
+   apply( stateDict->asDict()->items(), true );
+}
+
+void CoreObject::setState( const String& state, ItemDict* stateDict )
+{
+   if ( m_state == 0 )
+      m_state = new String( state );
+   else
+      m_state->bufferize( state );
+
+   apply( *stateDict, true );
+}
 
 }
 

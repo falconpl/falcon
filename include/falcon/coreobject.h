@@ -113,6 +113,10 @@ protected:
    bool m_bIsSequence;
 
    const CoreClass *m_generatedBy;
+
+   /** State name. */
+   String* m_state;
+
    CoreObject( const CoreClass *parent );
    CoreObject( const CoreObject &other );
 
@@ -401,6 +405,18 @@ public:
    */
    virtual void writeProperty( const String &pos, const Item &target );
 
+   /** Enter a given state.
+
+       If the state doesn't exist, will throw a CodeError (state not found) error.
+       If it is found, it will change the state of the object via apply and will
+       set the the current state to the given string.
+    */
+   void setState( const String& state );
+
+   void setState( const String& state, ItemDict* stateDict );
+
+   bool hasState() const { return m_state != 0; }
+   const String& state() const { return *m_state; }
 
 };
 

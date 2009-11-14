@@ -1238,6 +1238,7 @@ class StmtState: public Statement
    const String* m_name;
    StmtClass* m_owner;
    Map m_funcs;
+   StateDef* m_stateDef;
 
 public:
 
@@ -1259,6 +1260,8 @@ public:
 
    const String* name() const { return m_name; }
    StmtClass* owner() const { return m_owner; }
+
+   StateDef* state() const { return m_stateDef; }
 };
 
 class FALCON_DYN_CLASS StmtVarDef: public Statement
