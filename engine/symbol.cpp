@@ -595,7 +595,7 @@ bool ClassDef::save( Stream *out ) const
    // and the state list
    has = endianInt32(m_states.size());
    out->write( &has , sizeof( has ) );
-   MapIterator siter = m_properties.begin();
+   MapIterator siter = m_states.begin();
    while( siter.hasCurrent() )
    {
       const String *key = *(const String **) siter.currentKey();
