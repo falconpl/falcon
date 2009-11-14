@@ -12,6 +12,8 @@ Falcon (0.9.4.5)
            by the GC.
   * fixed: Calling an item referencing a callable item wasn't working.
   * major: overrides are PREFIXED by __, and not suffixed anymore.
+  * fixed: Deserialization of objects didn't dereference the class item;
+           classes coming from remote modules would crash.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

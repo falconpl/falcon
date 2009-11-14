@@ -1996,9 +1996,13 @@ state_heading:
       }
   |  STATE INIT EOL
       {
-         COMPILER->pushContext( 
-            new Falcon::StmtState( COMPILER->addString( "init" ), 
-                static_cast<Falcon::StmtClass*>( COMPILER->getContext() ) ) ); 
+         Falcon::StmtClass* cls = 
+            static_cast<Falcon::StmtClass*>( COMPILER->getContext() );
+         
+         Falcon::StmtState* state = new Falcon::StmtState( COMPILER->addString( "init" ), cls );
+         cls->initState( state );
+         
+         COMPILER->pushContext( state ); 
       }
 ;
 

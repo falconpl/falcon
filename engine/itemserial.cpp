@@ -717,7 +717,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          Item *clitem = &lmod->globals()[ sym->itemId() ];
 
          // Create the core object, but don't fill attribs.
-         CoreObject *object = clitem->asClass()->createInstance(0, true);
+         CoreObject *object = clitem->dereference()->asClass()->createInstance(0, true);
          if ( ! object->deserialize( file, bLive ) )
          {
             return sc_missclass;
