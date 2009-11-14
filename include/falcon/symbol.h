@@ -299,11 +299,26 @@ public:
    Symbol *base() const { return m_baseClass; }
 };
 
-class StateDecl: public BaseAlloc
+class StateDef: public BaseAlloc
 {
-public:
-   StateDecl( const String* sname );
+   const String* m_name;
 
+   /** Functions in this state.
+    * (String*, Symbol*)
+    * Strings and symbol are owned by the module.
+   */
+   Map m_functions;
+
+public:
+   StateDef( const String* sname );
+
+   const String& name() const { return *m_name; }
+   const Map& functions() const { return m_functions; }
+   Map& functions() { return m_functions; }
+   bool addFunction( const String* name, Symbol* func );
+
+   bool load( Module *mod, Stream* in );
+   bool save( Stream* out ) const;
 };
 
 /** Class symbol abstraction.
@@ -367,6 +382,14 @@ private:
    int m_metaclassFor;
 
    bool m_bFinal;
+
+   /** State table.
+         (const String *, StateDef *)
+   */
+   Map m_states;
+
+   StateDef* m_initState;
+
 
 public:
    /** Creates a class definition without a constructor.
@@ -494,7 +517,7 @@ public:
       An object enters the "init" state, if provided,
       after complete instantation.
    */
-   StateDecl* addState( const String* stateName );
+   StateDef* addState( const String* stateName );
 };
 
 /** Representation of a VM symbol

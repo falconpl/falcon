@@ -5283,22 +5283,22 @@ yyreduce:
                    }
                }
             }
-         }
-         else if ( parent->type() == Falcon::Statement::t_state ) 
-         {
-
-            Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );            
-            if( ! stmt_state->addFunction( (yyvsp[(2) - (2)].stringp), sym ) )
+            else if ( parent->type() == Falcon::Statement::t_state ) 
             {
-               COMPILER->raiseError(Falcon::e_sm_adef, *(yyvsp[(2) - (2)].stringp) );
+   
+               Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );            
+               if( ! stmt_state->addFunction( (yyvsp[(2) - (2)].stringp), sym ) )
+               {
+                  COMPILER->raiseError(Falcon::e_sm_adef, *(yyvsp[(2) - (2)].stringp) );
+               }
+               
+               // eventually add a property where to store this thing
+               Falcon::ClassDef *cd = stmt_state->owner()->symbol()->getClassDef();
+               if ( ! cd->hasProperty( *(yyvsp[(2) - (2)].stringp) ) )
+                  cd->addProperty( (yyvsp[(2) - (2)].stringp), new Falcon::VarDef );
             }
-            
-            // eventually add a property where to store this thing
-            Falcon::ClassDef *cd = stmt_state->owner()->symbol()->getClassDef();
-            if ( ! cd->hasProperty( *(yyvsp[(2) - (2)].stringp) ) )
-               cd->addProperty( (yyvsp[(2) - (2)].stringp), new Falcon::VarDef );
          }
-
+         
          Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
          // prepare the statement allocation context
          COMPILER->pushContext( func );

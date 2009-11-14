@@ -439,7 +439,8 @@ ClassDef::ClassDef( ObjectFactory fact ):
    m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
    m_factory( fact ),
    m_metaclassFor( -1 ),
-   m_bFinal( false )
+   m_bFinal( false ),
+   m_states( &traits::t_stringptr(), &traits::t_voidp() )
 {}
 
 ClassDef::ClassDef( Symbol *ext_ctor, ObjectFactory fact ):
@@ -448,7 +449,8 @@ ClassDef::ClassDef( Symbol *ext_ctor, ObjectFactory fact ):
    m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
    m_factory( fact ),
    m_metaclassFor( -1 ),
-   m_bFinal( false )
+   m_bFinal( false ),
+   m_states( &traits::t_stringptr(), &traits::t_voidp() )
 {}
 
 
@@ -468,6 +470,14 @@ ClassDef::~ClassDef()
       InheritDef *def = (InheritDef *) iteri->data();
       delete def;
       iteri = iteri->next();
+   }
+
+   MapIterator iters = m_states.begin();
+   while( iters.hasCurrent() )
+   {
+      StateDef *sd = *(StateDef **) iters.currentValue();
+      delete sd;
+      iters.next();
    }
 }
 
@@ -563,6 +573,21 @@ bool ClassDef::save( Stream *out ) const
       iiter = iiter->next();
    }
 
+   // and the state list
+   has = endianInt32(m_states.size());
+   out->write( &has , sizeof( has ) );
+   MapIterator siter = m_properties.begin();
+   while( siter.hasCurrent() )
+   {
+      const String *key = *(const String **) siter.currentKey();
+      const StateDef *value = *(const StateDef **) siter.currentValue();
+      uint32 id = endianInt32( key->id() );
+      out->write( &id , sizeof( id ) );
+
+      value->save( out );
+      siter.next();
+   }
+
    return true;
 }
 
@@ -615,8 +640,100 @@ bool ClassDef::load( Module *mod, Stream *in )
          return false;
    }
 
+   // and the state list
+   in->read( &value , sizeof( value ) );
+   value = endianInt32( value );
+   for( uint32 i = 0; i < value; i ++ )
+   {
+      uint32 id;
+      in->read( &id , sizeof( id ) );
+      const String *name = mod->getString( endianInt32( id ) );
+      if ( name == 0 )
+         return false;
+
+      StateDef *def = new StateDef( name );
+      // avoid memleak by early insertion
+      m_states.insert( name, def );
+
+      if ( ! def->load( mod, in ) )
+         return false;
+   }
+
    return true;
 }
+
+//===================================================================
+// vardef
+
+StateDef::StateDef( const String* sname ):
+   m_functions( &traits::t_stringptr(), &traits::t_voidp() )
+{
+
+}
+
+bool StateDef::addFunction( const String* name, Symbol* func )
+{
+   if ( m_functions.find( name ) != 0 )
+      return false;
+
+   m_functions.insert( name, func );
+   return true;
+}
+
+
+bool StateDef::save( Stream* out ) const
+{
+   // List the functions
+   uint32 size = endianInt32(m_functions.size());
+   out->write( &size , sizeof( size ) );
+   MapIterator siter = m_functions.begin();
+
+   while( siter.hasCurrent() )
+   {
+     const String *key = *(const String **) siter.currentKey();
+     const Symbol *value = *(const Symbol **) siter.currentValue();
+     uint32 id = endianInt32( key->id() );
+     out->write( &id , sizeof( id ) );
+
+     size = endianInt32( value->id() );
+     out->write( &size, sizeof(size) );
+     siter.next();
+   }
+
+   return out->good();
+}
+
+bool StateDef::load( Module *mod, Stream* in )
+{
+   // List the functions
+   uint32 size;
+   in->read( &size , sizeof( size ) );
+   size = endianInt32( size );
+
+   for( uint32 i = 0; i < size; ++i )
+   {
+
+      int32 val;
+      if( in->read( &val , sizeof( val ) ) != sizeof(val) )
+         return false;
+
+      const String* name = mod->getString(endianInt32( val ));
+      if ( name == 0 )
+         return false;
+
+      if( in->read( &val , sizeof( val ) ) != sizeof(val) )
+         return false;
+
+      Symbol* func = mod->getSymbol(endianInt32( val ));
+      if ( func == 0 )
+         return false;
+
+      m_functions.insert( name, func );
+   }
+
+   return true;
+}
+
 
 //===================================================================
 // vardef
@@ -720,7 +837,7 @@ bool VarDef::load( Module *mod, Stream *in )
       case t_base:
       {
          int32 val;
-         in->read(   &val , sizeof( val ) );
+         in->read( &val , sizeof( val ) );
          m_value.val_sym = mod->getSymbol(endianInt32( val ));
          if ( m_value.val_sym == 0 )
             return false;
