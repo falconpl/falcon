@@ -23,5 +23,7 @@ execute_process(
 
 if(res)
   message("faltest return value: ${res}")
-  message(SEND_ERROR ${out})
+  message("faltest stderr: ${err}")
+  message("faltest stdout: ${out}")
+  message(SEND_ERROR "test(s) failed")
 endif()
