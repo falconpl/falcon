@@ -22,5 +22,6 @@ execute_process(
 )
 
 if(res)
+  message("faltest return value: ${res}")
   message(SEND_ERROR ${out})
 endif()
