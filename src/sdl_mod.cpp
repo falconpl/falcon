@@ -102,17 +102,16 @@ SDLSurfaceCarrier_impl *SDLSurfaceCarrier_impl::clone() const
 
 bool SDLSurfaceCarrier_impl::deserialize( Stream *stream, bool bLive )
 {
+   CacheObject::deserialize(stream,bLive);
    if( bLive )
    {
       SDL_Surface* s;
-      if ( stream->read( (byte *) &s, sizeof( s ) ) != sizeof( s ) )
-         return false;
+      s = (SDL_Surface*) m_user_data;
 
       if ( s->refcount == 1 )
               gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
 
       s->refcount++;
-      setUserData( s );
       return true;
    }
 
