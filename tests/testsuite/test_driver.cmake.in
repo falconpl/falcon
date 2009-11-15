@@ -8,9 +8,9 @@ if(NOT faltest_EXECUTABLE)
 endif()
  
 if(test_category)
-  set(cmd ${faltest_EXECUTABLE} -c ${test_category})
+  set(cmd ${faltest_EXECUTABLE} -v -c ${test_category})
 else()
-  set(cmd ${faltest_EXECUTABLE} )
+  set(cmd ${faltest_EXECUTABLE} -v )
 endif()
 
 execute_process(
