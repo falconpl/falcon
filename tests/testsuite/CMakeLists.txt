@@ -6,7 +6,9 @@ set(categories
 
 # clean this directory from artefacts of former faltest runs
 file(GLOB _fams "*.fam") 
-file(REMOVE ${_fams})
+if(_fams)
+  file(REMOVE ${_fams})
+endif(_fams)
 
 # start memcheck ignore list 
 file(WRITE ${CMAKE_BINARY_DIR}/CTestCustom.cmake "set(CTEST_CUSTOM_MEMCHECK_IGNORE\n")
