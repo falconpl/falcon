@@ -1,0 +1,152 @@
+/*
+   FALCON - Samples
+
+   FILE: bcastRet.fal
+
+   Test showing a bit of mangling in enter-leave of states.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 15 Nov 2009 12:49:14 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class Stateful
+   init
+      > "Stateful.init"
+   end
+
+   function stateless()
+      > "This is the same"
+   end
+
+   function neverSeen()
+      > "Never seen"
+   end
+
+   function _common_enter( orig, leaveval )
+      > "Entering \"", self.getState(), @"\" coming from \"$orig\"."
+      > "Parameter from leave: ", leaveval
+      return random(100)
+   end
+
+   function _common_leave( orig )
+      > "Leaving \"", self.getState(), @"\" to go in \"$orig\"."
+      return random(100)
+   end
+
+
+   state init
+      function __enter( orig, lval ): return self._common_enter( orig, lval )
+      function __leave( dest ): return self._common_leave( dest )
+      
+      function neverSeen()
+         > "never seen - From init"
+      end
+
+      function f1()
+         > "F1 from init"
+      end
+
+      function f2()
+         > "F2 from init"
+      end
+
+   end
+
+   state first
+      function __enter( orig, lval ): return self._common_enter( orig, lval )
+      function __leave( dest ): return self._common_leave( dest )
+      
+      function neverSeen()
+         > "never seen - From first"
+      end
+
+      function f1()
+         > "F1 from first"
+      end
+
+      function f2()
+         > "F2 from first"
+      end
+   end
+
+   state second
+      function __enter( orig, lval ): return self._common_enter( orig, lval )
+      function __leave( dest ): return self._common_leave( dest )
+
+      function neverSeen()
+         > "never seen - From second"
+      end
+
+      function f1()
+         > "F1 from second"
+      end
+
+      function f3()
+         > "F3 from second"
+      end
+   end
+end
+
+class Stateful_sub from Stateful
+   init
+      > "Stateful_sub.init"
+   end
+   
+   state first
+      function f1()
+         > "F1 from first -- in Stateful_sub"
+      end
+   end
+
+   state third
+      function f1()
+         > "F1 from third"
+      end
+   end
+   
+end
+
+> '
+             === Stateful classes test ===
+
+This test just show how class states can be used to control which set
+of function is temporarily in charte in one instance, and how to
+detect state changes via __enter and __leave special functions.
+
+Also, notice that the subclass initialized in the last part of the test
+gets completely constructed (via init) and THEN the __enter in the
+init state of the base class is called. The __enter special method in
+the __init state is actually an handler for the base class to control
+subclasses instantation.
+
+'
+> "Press ENTER to continue...", input()
+
+> "Hello from stateful"
+
+s = Stateful()
+> "Stateful created"
+s.stateless()
+> "S now in ", s.getState()
+s.f1()
+v = s.setState( s.second )
+> "Set State return value: ", v
+> "S now in ", s.getState()
+s.f3()
+v = s.setState( "first" )
+> "Set State return value: ", v
+> "S now in ", s.getState()
+s.neverSeen()
+
+s = Stateful_sub()
+s.setState( "first" )
+s.f1()
+s.setState( "second" )
+s.f1()
+s.setState("third")
+s.f1()
