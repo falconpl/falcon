@@ -5,26 +5,24 @@
 ####################################################################
 cmake_minimum_required(VERSION 2.6)
 
-if( "${FALCON_INC_PATH}" )
-INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
-LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
-endif()
-
-ADD_LIBRARY( test_dynlib MODULE
-   testsrc/test_dynlib.c
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${falcon_INCLUDE_DIRS}
 )
 
-IF(APPLE)
-   SET_TARGET_PROPERTIES(test_dynlib
-      PROPERTIES
-         PREFIX ""
-         SUFFIX ".dylib" )
-ELSE(APPLE)
-   SET_TARGET_PROPERTIES(test_dynlib
-      PROPERTIES PREFIX "")
-ENDIF(APPLE)
+add_library( test_dynlib MODULE
+   testsrc/test_dynlib.c
+)
+# dynlib goes in the testsuite source.# this is because we need it for our 
+# tests.
+set_target_properties(test_dynlib PROPERTIES 
+  PREFIX ""
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testsuite
+)
+      
+if(APPLE)
+  set_target_properties(test_dynlib PROPERTIES
+    SUFFIX ".dylib" )
+endif()
 
-#installation of the dynlib goes in the testsuite source.
-#this is because we need it for our tests.
-INSTALL( TARGETS test_dynlib
-            DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/testsuite )
+add_subdirectory(testsuite)
