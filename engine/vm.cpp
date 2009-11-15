@@ -1162,10 +1162,11 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 
 CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
 {
-   Map props( &traits::t_stringptr(), &traits::t_voidp() ) ;
+   Map props( &traits::t_stringptr(), &traits::t_voidp() );
+   Map states( &traits::t_stringptr(), &traits::t_voidp() );
 
    ObjectFactory factory = 0;
-   if( ! linkSubClass( lmod, clssym, props, &factory ) )
+   if( ! linkSubClass( lmod, clssym, props, states, &factory ) )
       return 0;
 
    CoreClass *cc = new CoreClass( clssym, lmod, createClassTemplate( lmod, props ) );
@@ -1184,8 +1185,6 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
    }
 
    // apply the state map
-   // TODO: calculate hierarcy
-   const Map& states = clssym->getClassDef()->states();
    if( ! states.empty() )
    {
       MapIterator siter = states.begin();
@@ -1256,7 +1255,7 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
 
 
 bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
-      Map &props, ObjectFactory *factory )
+      Map &props, Map &states, ObjectFactory *factory )
 {
    // first sub-instantiates all the inheritances.
    ClassDef *cd = clssym->getClassDef();
@@ -1292,7 +1291,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       if( parent->isClass() )
       {
          // we create the item anew instead of relying on the already linked item.
-         if ( ! linkSubClass( lmod, parent, props, &subFactory ) )
+         if ( ! linkSubClass( lmod, parent, props, states, &subFactory ) )
             return false;
       }
       else if ( parent->isUndefined() )
@@ -1310,7 +1309,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
 
          parent = icls->asClass()->symbol();
          LiveModule *parmod = findModule( parent->module()->name() );
-         if ( ! linkSubClass( parmod, parent, props, &subFactory ) )
+         if ( ! linkSubClass( parmod, parent, props, states, &subFactory ) )
             return false;
       }
       else
@@ -1346,73 +1345,20 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       iter.next();
    }
 
+   // and the same for the states.
+   MapIterator siter = cd->states().begin();
+   while( siter.hasCurrent() )
+   {
+      String *stateName = *(String **) siter.currentKey();
+      Map* stateMap = *(Map **) siter.currentValue();
+      //==========================
+      states.insert( stateName, stateMap );
+      siter.next();
+   }
+
    return true;
 }
 
-#if 0
-bool VMachine::prepare( const String &startSym, uint32 paramCount )
-{
-   // we must have at least one module.
-   LiveModule *curMod;
-
-   if( m_mainModule == 0 ) {
-      // I don't want an assertion, as it may be removed in optimized compilation
-      // while the calling app must still be warned.
-      return false;
-   }
-
-   const Symbol *execSym = m_mainModule->module()->findGlobalSymbol( startSym );
-   if ( execSym == 0 )
-   {
-      SymModule *it_global = (SymModule *) m_globalSyms.find( &startSym );
-      if( it_global == 0 ) {
-         throw new CodeError(
-            ErrorParam( e_undef_sym ).origin( e_orig_vm ).extra( startSym ).
-            symbol( "prepare" ).
-            module( "core.vm" ) );
-         return false;
-      }
-      else {
-         execSym =  it_global->symbol();
-         curMod = it_global->liveModule();
-      }
-   }
-   else
-      curMod = m_mainModule; // module position
-
-   /** \todo allow to call classes at startup. Something like "all-classes" a-la-java */
-   if ( ! execSym->isFunction() ) {
-      new CodeError(
-            ErrorParam( e_non_callable, execSym->declaredAt() ).origin( e_orig_vm ).
-            symbol( execSym->name() ).
-            module( execSym->module()->name() ) );
-   }
-
-   // reset the VM to ready it for execution
-   reset();
-
-   // ok, let's setup execution environment.
-   //const Module *mod = execSym->module();
-	FuncDef *tg_def = execSym->getFuncDef();
-   m_currentContext->pc() = 0;
-   m_currentContext->symbol( execSym );
-   m_currentContext->lmodule( curMod );
-
-	// manage an internal function
-   // ensure against optional parameters.
-   if( paramCount < tg_def->params() )
-   {
-      stack().resize( tg_def->params() - paramCount );
-      paramCount = tg_def->params();
-   }
-
-	// space for locals
-   if ( tg_def->locals() > 0 )
-      stack().resize( tg_def->locals() );
-
-   return true;
-}
-#endif
 
 void VMachine::reset()
 {

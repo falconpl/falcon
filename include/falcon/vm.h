@@ -360,7 +360,7 @@ protected:
    void reschedule( VMContext *ctx );
 
    /** Service recursive function called by LinkClass to create a class. */
-   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, ObjectFactory *factory );
+   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, Map &states, ObjectFactory *factory );
 
    friend class VMContext;
    friend class VMSemaphore;
