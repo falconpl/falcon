@@ -31,7 +31,8 @@ CoreClass::CoreClass( const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
    m_properties( pt ),
    m_factory(sym->getClassDef()->factory()),
    m_states( 0 ),
-   m_initState( 0 )
+   m_initState( 0 ),
+   m_bHasInitEnter( false )
 {
 }
 
@@ -90,6 +91,11 @@ void CoreClass::states( ItemDict* sd, ItemDict* is )
    m_states = sd;
    // have we got an init state?
    m_initState = is;
+
+   String name("__enter");
+   if( is != 0 && is->find( &name ) )
+      m_bHasInitEnter = true;
+
 }
 
 
@@ -108,7 +114,9 @@ CoreObject *CoreClass::createInstance( void *userdata, bool bDeserial ) const
    CoreObject *instance = m_factory( this, userdata, bDeserial );
 
    if( m_initState != 0 )
-      instance->apply( *m_initState, true );
+   {
+      instance->setState( "init", m_initState );
+   }
 
    return instance;
 }

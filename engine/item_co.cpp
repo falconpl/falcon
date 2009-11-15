@@ -2047,6 +2047,26 @@ void co_call_method( const Item &itm, VMachine *vm, uint32 paramCount )
    itm.getMethodItem( vm->self() );
 }
 
+static bool __call_init_enter_last( VMachine *vm )
+{
+   vm->regA() = vm->self();
+   return false;
+}
+
+static bool __call_init_enter( VMachine *vm )
+{
+   Item initEnter;
+   if( vm->self().asObject()->getMethod( "__enter", initEnter ) )
+   {
+      vm->returnHandler(0);
+      vm->callFrame( initEnter, 0 );
+      return true;
+   }
+
+   vm->regA() =  vm->self();
+   return false;
+}
+
 void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    CoreClass *cls = itm.asClass();
@@ -2062,6 +2082,18 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 
       // pop the stack
       vm->stack().resize( vm->stack().length() - paramCount );
+      if( cls->hasInitEnter() )
+      {
+         Item initEnter;
+         if( inst->getProperty( "__enter", initEnter ) && initEnter.isFunction() )
+         {
+            vm->prepareFrame( initEnter.asFunction(), 0 );
+            vm->self() = inst;
+            inst->gcMark( memPool->generation() );
+            vm->returnHandler( __call_init_enter_last );
+         }
+      }
+
       return;
    }
 
@@ -2071,6 +2103,11 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 
    // also return self; we need to tell it to the VM
    vm->requestConstruct();
+
+   if ( cls->hasInitEnter() )
+   {
+      vm->returnHandler( __call_init_enter );
+   }
 }
 
 

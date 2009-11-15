@@ -345,7 +345,46 @@ void CoreObject::writeProperty( const String &prop, const Item &target )
 }
 
 
-void CoreObject::setState( const String& state )
+static bool __leave_handler( VMachine* vm )
+{
+   // clear enter-leave to grant a correct apply
+   CoreObject* self = vm->self().asObject();
+   self->setProperty("__leave", Item());
+   self->setProperty("__enter", Item());
+
+   String* state = vm->param(0)->asString();
+   bool wasInState = self->hasState();
+   String oldStateName;
+
+   if( wasInState )
+   {
+      oldStateName = self->state();
+   }
+   // enter the state
+   self->setState( *state, &vm->param(1)->asDict()->items() );
+
+   // Does the new state have a "__enter" ?
+   Item enterItem;
+   if( self->getMethod("__enter", enterItem ) )
+   {
+      if( wasInState )
+         vm->pushParameter( new CoreString( oldStateName ) );
+      else
+         vm->pushParameter( Item() );
+      vm->pushParameter( vm->regA() );
+      // never return here
+      vm->returnHandler(0);
+      vm->callFrame( enterItem, 2 );
+      // but respect this frame.
+      return true;
+   }
+
+   // else, we're done, just remove this frame
+   return false;
+}
+
+
+void CoreObject::setState( const String& state, VMachine* vm )
 {
    Item* stateDict = m_generatedBy->states()->find( Item(const_cast<String*>(&state)) );
    if ( stateDict == 0 )
@@ -355,14 +394,51 @@ void CoreObject::setState( const String& state )
             .extra( state ) );
    }
 
+   // do we have an active __leave property?
+   Item leaveItem;
+   if( getMethod("__leave", leaveItem ) )
+   {
+      CoreString* csState = new CoreString( state );
+      vm->pushParameter( csState );
+      vm->pushParameter(*stateDict);
+      vm->callFrame( leaveItem, 2 );
+      vm->returnHandler( __leave_handler );
+      return;
+   }
+
+   // no leave? -- apply and see if we have an enter.
+   setProperty("__enter", Item());
+
    fassert( stateDict->isDict() );
+   bool hasOldState;
+   String sOldState;
+
    if ( m_state == 0 )
+   {
+      hasOldState = false;
       m_state = new String( state );
+   }
    else
+   {
+      hasOldState = true;
+      sOldState = *m_state;
       m_state->bufferize( state );
+   }
 
    // shouldn't raise if all is ok
    apply( stateDict->asDict()->items(), true );
+
+   Item enterItem;
+   if( getMethod("__enter", enterItem ) )
+   {
+      if( hasOldState )
+         vm->pushParameter( sOldState );
+      else
+         vm->pushParameter( Item() );
+
+      vm->pushParameter( Item() );
+      vm->callFrame( enterItem, 2 );
+   }
 }
 
 void CoreObject::setState( const String& state, ItemDict* stateDict )

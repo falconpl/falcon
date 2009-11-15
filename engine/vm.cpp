@@ -970,6 +970,21 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
    if( cobj->generator()->initState() != 0 )
    {
       cobj->setState( "init", cobj->generator()->initState() );
+      // If we can't call, we have a wrong init.
+
+      Item enterItem;
+      if( cobj->getMethod("__enter", enterItem ) )
+      {
+         pushParameter(Item());
+         try {
+            callItemAtomic( enterItem, 1 );
+         }
+         catch( Error *err )
+         {
+            err->origin( e_orig_vm );
+            throw;
+         }
+      }
    }
 }
 

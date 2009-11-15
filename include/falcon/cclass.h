@@ -65,6 +65,8 @@ private:
    /** Shortcut for the init state to speed up instance creation. */
    ItemDict* m_initState;
 
+   bool m_bHasInitEnter;
+
 public:
 
    /** Creates an item representation of a live class.
@@ -136,7 +138,7 @@ public:
    ItemDict* states() const { return m_states; }
 
    ItemDict* initState() const { return m_initState; }
-
+   bool hasInitEnter() const { return m_bHasInitEnter; }
 };
 
 }

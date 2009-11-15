@@ -410,8 +410,11 @@ public:
        If the state doesn't exist, will throw a CodeError (state not found) error.
        If it is found, it will change the state of the object via apply and will
        set the the current state to the given string.
+
+       The function will also try to set the
+       __leave -> setState -> __enter sequence.
     */
-   void setState( const String& state );
+   void setState( const String& state, VMachine* vm );
 
    void setState( const String& state, ItemDict* stateDict );
 

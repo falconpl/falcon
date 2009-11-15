@@ -131,6 +131,7 @@ set(CORE_MODULE_SOURCES
   core_module/serialize.cpp
   core_module/set_ext.cpp
   core_module/string_ext.cpp
+  core_module/state_ext.cpp
   core_module/stringstream_ext.cpp
   core_module/sys_ext.cpp
   core_module/table.cpp
