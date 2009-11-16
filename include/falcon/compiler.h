@@ -71,11 +71,11 @@ public:
 
 
 /** FALCON source compiler.
-   This is the class that is responsible to create a syntactic tree
+   This class is responsible for creating a syntactic tree
    given a linear input stream. The stream may be from file, standard
-   input or from a memory buffer; in this phase, the compiler does
+   input or from a memory buffer ( the compiler does
    not need the ability of random file access, so even a network
-   stream may be used.
+   stream may be used ).
 */
 class FALCON_DYN_CLASS Compiler: public BaseAlloc
 {
@@ -436,7 +436,7 @@ public:
    int tempLine() const { return m_tempLine; }
 
    /** Activate "strict" feature.
-      When turned on, the compilre will raise an undefined symbol when assigning this values
+      When turned on, the compiler will raise an undefined symbol when assigning this values
       outside a "def" statement.
    */
    void strictMode( bool breq ) { m_strict = breq; }
@@ -589,7 +589,7 @@ public:
 
    /** Sets this compiler as interactive.
       A compiler meant to run code from the command line has different
-      rules; in example, it can accept autoexpressions without raising
+      rules; for example, it can accept autoexpressions without raising
       a "statement does nothing" error, as the meaning of expressions
       on the command line is just that to be evaluated and their result
       being interactively displayed.
