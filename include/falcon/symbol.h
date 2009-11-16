@@ -669,7 +669,7 @@ public:
    }
 
    /** Sets the symbol import class.
-      Import class has higher priority than export class; that is, if a symbol is imported,
+      Import class has higher priority than export class; that is, if a symbol is imported
       exported() will always return false. Also, imported symbols report their type as unknown,
       no matter what local setting is provided.
       \param exp true if the symbol must be imported, false otherwise.
