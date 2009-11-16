@@ -28,8 +28,8 @@ namespace Falcon
 class ModuleLoader;
 
 /** Interactive compiler.
-   This compiler is meant to incrementally compile, load dependencies and
-   execute on the fly single statements.
+   This compiler performs incremental compiling, loading dependencies and
+   can also execute on the fly single statements.
 
    For this reason, the compiler is provided with a VM and a flexy module;
    the compiler independently creates the module (which may be referenced
@@ -39,7 +39,7 @@ class ModuleLoader;
 
    The compiler may be provided with a VM generated from the outside, or it
    will create a standard VM on its own (which can be configured at a later
-   moment.
+   time.
 */
 class FALCON_DYN_CLASS InteractiveCompiler: public Compiler
 {
