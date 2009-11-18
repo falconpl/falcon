@@ -1,7 +1,7 @@
 /*
    FALCON - Samples
 
-   FILE: bcastRet.fal
+   FILE: stateful.fal
 
    Test showing a bit of mangling in enter-leave of states.
    -------------------------------------------------------------------
