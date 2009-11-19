@@ -689,7 +689,7 @@ FALCON_FUNC ICompiler_compileAll( ::Falcon::VMachine *vm )
    throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
 }
 
-/*#
+/*
    @method reset ICompiler
    @brief Resets the compiler.
 
