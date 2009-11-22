@@ -570,10 +570,10 @@ protected:
    */
    void processMessage( VMMessage* msg );
 
-   bool linkDefinedSymbol( const Symbol *sym, LiveModule *lmod );
-   bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
-   bool completeModLink( LiveModule *lmod );
-   LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
+   virtual bool linkDefinedSymbol( const Symbol *sym, LiveModule *lmod );
+   virtual bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
+   virtual bool completeModLink( LiveModule *lmod );
+   virtual LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
 
    void raiseHardError( int code, const String &expl, int32 line );
 
@@ -665,7 +665,7 @@ public:
       \param rt the runtime to be linked
       \return The topmost module in the runtime turned into a livemoude, or zero on failure.
    */
-   LiveModule* link( Runtime *rt );
+   virtual LiveModule* link( Runtime *rt );
 
    /** Links a single module.
       The last-linked module is usually set as the main module, but it is possible
@@ -691,7 +691,7 @@ public:
                to make the module private (and prevent exports).
       \return 0 time error, the internally built LiveModule instance on success.
    */
-   LiveModule *link( Module *module, bool isMainModule=true, bool bPrivate = false );
+   virtual LiveModule *link( Module *module, bool isMainModule=true, bool bPrivate = false );
 
    /** Links a single symbol on an already existing live module.
       This won't actually link instances and classes which must be post-processed.
@@ -699,7 +699,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkSymbol( const Symbol *sym, LiveModule *lmod );
+   virtual bool linkSymbol( const Symbol *sym, LiveModule *lmod );
 
 
    /** Try to link a dynamic symbol.
@@ -746,7 +746,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkClassSymbol( const Symbol *sym, LiveModule *livemod );
+   virtual bool linkClassSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Links a class instance.
 
@@ -766,7 +766,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkInstanceSymbol( const Symbol *sym, LiveModule *livemod );
+   virtual bool linkInstanceSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Constructs an instance calling its _init method if necessary.
 
@@ -793,7 +793,7 @@ public:
       \param lmod The live module where the symbol must go.
       \throw Error if the instance cannot be created.
    */
-   void initializeInstance( const Symbol *sym, LiveModule *livemod );
+   virtual void initializeInstance( const Symbol *sym, LiveModule *livemod );
 
    /** Links a symbol eventually performing class and instances initializations.
 
@@ -811,7 +811,7 @@ public:
 
       This method should run in atomic mode (see initializeInstance() ).
    */
-   bool linkCompleteSymbol( const Symbol *sym, LiveModule *livemod );
+   virtual bool linkCompleteSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Links a symbol eventually performing class and instances initializations.
 
@@ -830,7 +830,7 @@ public:
       \param moduleName name of the module that has created it and wants it to be
                         inserted in the VM.
    */
-   bool linkCompleteSymbol( Symbol *sym, const String &moduleName );
+   virtual bool linkCompleteSymbol( Symbol *sym, const String &moduleName );
 
    /** Returns the main module, if it exists.
       Returns an instance of the LiveModule class, that is the local representation
@@ -861,7 +861,7 @@ public:
       \param rt the runtime with all the modules to be unlinked
       \return true on success, false on error.
    */
-   bool unlink( const Runtime *rt );
+   virtual bool unlink( const Runtime *rt );
 
    /** Unlinks a module.
 
@@ -883,7 +883,7 @@ public:
       \param module the module to be unlinked.
       \return true on success, false on error.
    */
-   bool unlink( const Module *module );
+   virtual bool unlink( const Module *module );
 
 
    /** Creates a new class live item.
@@ -894,7 +894,7 @@ public:
       \param lmod the live module (module + live data) where this class is generated
       \param clsym the symbol where the class is defined.
    */
-   CoreClass *linkClass( LiveModule *lmod, const Symbol *clsym );
+   virtual CoreClass *linkClass( LiveModule *lmod, const Symbol *clsym );
 
 
    /** Launches the "__main__" symbol.
@@ -954,7 +954,7 @@ public:
       An error will be risen if launch has not been previously called and the routine name
       is not provided.
    */
-   void run();
+   virtual void run();
 
 
    /** Fills an error traceback with the current VM traceback. */
@@ -1704,7 +1704,7 @@ public:
       This resets the VM to execute cleanly a ascript, removing all
       the dirty variables, execution context and the rest.
    */
-   void reset();
+   virtual void reset();
 
    void limitLoops( uint32 l ) { m_opLimit = l; }
    uint32 limitLoops() const { return m_opLimit; }
@@ -1879,7 +1879,7 @@ public:
    /** Get System Specific data.
       \returns system specific data bound with this machine.
    */
-   const Sys::SystemData &systemData() const { return m_systemData; }
+   virtual const Sys::SystemData &systemData() const { return m_systemData; }
 
    /** Get System Specific data (non const).
       \returns system specific data bound with this machine.
@@ -1893,12 +1893,12 @@ public:
       The function checks for the symbol to be exported and/or Well Known before
       actually performing the final export.
    */
-   bool exportSymbol( const Symbol *sym, LiveModule *mod );
+   virtual bool exportSymbol( const Symbol *sym, LiveModule *mod );
 
    /** Exports all symbols in a module.
       To be called when changing the module publicity policy.
    */
-   bool exportAllSymbols( LiveModule *mod );
+   virtual bool exportAllSymbols( LiveModule *mod );
 
    /** Changes the status of launch-at-link mode */
    void launchAtLink( bool mode ) { m_launchAtLink = mode; }
@@ -1988,20 +1988,20 @@ public:
       If the slot doesn't exist, 0 is returned, unless create is set to true.
       In that case, the slot is created anew and returned.
    */
-   CoreSlot* getSlot( const String& slotName, bool create = true );
+   virtual CoreSlot* getSlot( const String& slotName, bool create = true );
 
    /** Removes and dereference a message slot in the VM.
    */
-   void removeSlot( const String& slotName );
+   virtual void removeSlot( const String& slotName );
 
    /** Used by the garbage collector to accunt for items stored as slot callbacks. */
-   void markSlots( uint32 mark );
+   virtual void markSlots( uint32 mark );
 
    /** Comsume the currently broadcast signal.
       This blocks the processing of signals to further listener of the currently broadcasting slot.
       \return true if the signal is consumed, false if there was no signal to consume.
    */
-   bool consumeSignal();
+   virtual bool consumeSignal();
 
    /** Declares an IDLE section.
       In code sections where the VM is idle, it is granted not to change its internal
@@ -2010,13 +2010,13 @@ public:
       \note Calls VM baton release (just candy grammar).
       \see baton()
    */
-   void idle() { m_baton.release(); }
+   virtual void idle() { m_baton.release(); }
 
    /** Declares the end of an idle code section.
       \note Calls VM baton acquire (just candy grammar).
       \see baton()
    */
-   void unidle() { m_baton.acquire(); }
+   virtual void unidle() { m_baton.acquire(); }
 
    /** Enable the Garbage Collector requests on this VM.
 
@@ -2046,7 +2046,7 @@ public:
       - script_path: physical path of the main module.
       - args: filled with argc and argv.
    */
-   void setupScript( int argc, char** argv );
+   virtual void setupScript( int argc, char** argv );
 
 
    /** Class automating idle-unidle fragments.
