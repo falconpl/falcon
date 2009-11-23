@@ -386,8 +386,9 @@ static bool __leave_handler( VMachine* vm )
 
 void CoreObject::setState( const String& state, VMachine* vm )
 {
-   Item* stateDict = m_generatedBy->states()->find( Item(const_cast<String*>(&state)) );
-   if ( stateDict == 0 )
+   ItemDict *states = m_generatedBy->states();
+   Item* stateDict;
+   if ( states == 0 || ( stateDict = states->find( Item(const_cast<String*>(&state)) ) ) )
    {
       throw new CodeError( ErrorParam( e_undef_state, __LINE__ )
             .origin( e_orig_runtime )
