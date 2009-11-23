@@ -15,6 +15,7 @@ Falcon (0.9.4.5)
   * fixed: Deserialization of objects didn't dereference the class item;
            classes coming from remote modules would crash.
   * major: Added states in classes. Now "state" is a keyword.
+  * minor: Added fileExt() and fileUnit() functions for completeness.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

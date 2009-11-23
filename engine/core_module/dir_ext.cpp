@@ -569,7 +569,8 @@ FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
    returned filename includes the host or disk specification, if present. The
    filename does not need to represent a file actually existing in the system.
 
-   @note This function is an interal shortcut to the @a Path class.
+   @note The filename should be in Falcon format (URI convention with forward slashes).
+   @see Path
 */
 
 FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
@@ -598,6 +599,93 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
    else
       vm->retval( new CoreString );
 }
+
+/*#
+   @function fileExt
+   @brief Return the extension in a complete filename.
+   @param fullpath A string containing a path.
+   @return The extension part.
+
+   The function determines the element past a dot after the
+   filename part. Filenames can start with a "."; they are not considered
+   extensions. 
+
+   @note The filename should be in Falcon format (URI convention with forward slashes).
+   @see Path
+*/
+
+FALCON_FUNC  fileExt ( ::Falcon::VMachine *vm )
+{
+   Item *filename = vm->param(0);
+   if ( filename == 0 || ! filename->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
+   }
+
+   String *name = filename->asString();
+   uint32 pos = name->rfind( "/" );
+   uint32 len = name->length();
+   if ( pos + 2 < len )
+   {
+      // there may be an extension.
+      ++pos;
+      // discard initial "."
+      while( pos < len && name->getCharAt( pos ) != '.' )
+      {
+         ++pos;
+      }
+
+      // find a dot here.
+      uint32 pdot = name->find( ".", pos );
+      if ( pdot + 1 < len )
+      {
+         vm->retval( new CoreString( *name, pdot+1 ) );
+         return;
+      }
+   }
+   
+   // else return ""
+   vm->retval( new CoreString );
+}
+
+/*#
+   @function fileUnit
+   @brief Return the unit specificator in a complete filename.
+   @param fullpath A string containing a path.
+   @return The unit specificator part.
+
+   Returns the unit specification in a complete path.
+
+   @see Path
+*/
+
+FALCON_FUNC  fileUnit ( ::Falcon::VMachine *vm )
+{
+   Item *filename = vm->param(0);
+   if ( filename == 0 || ! filename->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
+   }
+
+   String *name = filename->asString();
+   uint32 pos = name->find( ":" );
+   
+   if ( pos != String::npos && pos > 0 )
+   {
+      uint32 start = 0;
+      while( start < pos && name->getCharAt(start) == '/' )
+      {
+         ++start;
+      }
+      
+      vm->retval( new CoreString( *name, start, pos ) );
+      return;
+   }
+   
+   // else return ""
+   vm->retval( new CoreString );
+}
+
 
 /*#
    @class Directory

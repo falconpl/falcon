@@ -86,9 +86,9 @@ void AutoCString::init_vm_and_format( VMachine *vm, const Item &itm, const Strin
 
 const char* AutoCString::bom_str()
 {
-   m_pData[0] = 0xEF;
-   m_pData[1] = 0xBB;
-   m_pData[2] = 0xBF;
+   m_pData[0] = (char)0xEF;
+   m_pData[1] = (char)0xBB;
+   m_pData[2] = (char)0xBF;
    return m_pData;
 }
 

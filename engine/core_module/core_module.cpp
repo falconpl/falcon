@@ -1387,6 +1387,10 @@ Module* core_module_init()
       addParam("path");
    self->addExtFunc( "filePath", &Falcon::core::filePath )->
       addParam("fullpath");
+   self->addExtFunc( "fileExt", &Falcon::core::fileExt )->
+      addParam("fullpath");
+   self->addExtFunc( "fileUnit", &Falcon::core::fileUnit )->
+      addParam("fullpath");
    self->addExtFunc( "fileMove", &Falcon::core::fileMove )->
       addParam("sourcePath")->addParam("destPath");
    self->addExtFunc( "fileRemove", &Falcon::core::fileRemove )->

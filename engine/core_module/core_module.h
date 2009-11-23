@@ -388,6 +388,8 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileRemove ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileName ( ::Falcon::VMachine *vm );
 FALCON_FUNC  filePath ( ::Falcon::VMachine *vm );
+FALCON_FUNC  fileExt ( ::Falcon::VMachine *vm );
+FALCON_FUNC  fileUnit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChmod ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm );
