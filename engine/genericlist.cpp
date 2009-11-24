@@ -52,18 +52,6 @@ void List::clear()
    m_head = m_tail = 0;
 }
 
-uint32 List::size() const
-{
-   uint32 ret = 0;
-   ListElement *elem = m_head;
-   while( elem != 0 )
-   {
-      ret++;
-      elem = elem->next();
-   }
-
-   return ret;
-}
 
 void List::pushFront( const void *data )
 {
@@ -81,6 +69,7 @@ void List::pushFront( const void *data )
       m_head = element;
    }
 
+   m_size++;
    element->prev( 0 );
 }
 
@@ -100,6 +89,7 @@ void List::pushBack( const void *data )
       m_tail = element;
    }
 
+   m_size++;
    element->next( 0 );
 }
 
@@ -120,6 +110,7 @@ void List::pushFront( uint32 data )
       m_head = element;
    }
 
+   m_size++;
    element->prev( 0 );
 }
 
@@ -139,6 +130,7 @@ void List::pushBack( uint32 data )
       m_tail = element;
    }
 
+   m_size++;
    element->next( 0 );
 }
 
@@ -158,6 +150,7 @@ void List::popFront()
       m_deletor( (void *) element->data() );
    }
 
+   m_size--;
    memFree( element );
 }
 
@@ -177,6 +170,7 @@ void List::popBack()
       m_deletor( (void *) element->data() );
    }
 
+   m_size--;
    memFree( element );
 }
 
@@ -194,6 +188,7 @@ void List::insertAfter( ListElement *position, const void *data )
 
    position->next( element );
 
+   m_size++;
    if ( position == m_tail )
       m_tail = element;
 }
@@ -212,6 +207,7 @@ void List::insertBefore( ListElement *position, const void *data )
 
    position->prev( element );
 
+   m_size++;
    if ( position == m_head )
       m_head = element;
 }
@@ -245,6 +241,7 @@ ListElement *List::erase( ListElement *position )
    if( m_deletor != 0 )
       m_deletor( (void *) position->data() );
 
+   m_size--;
    memFree( position );
    return ret;
 }

@@ -5809,7 +5809,7 @@ yyreduce:
             if ( cls->ctorFunction() == 0  )
             {
                Falcon::ClassDef *cd = cls->symbol()->getClassDef();
-               if ( cd->inheritance().size() != 0 )
+               if ( ! cd->inheritance().empty() )
                {
                   COMPILER->buildCtorFor( cls );
                   // COMPILER->addStatement( func ); should be done in buildCtorFor

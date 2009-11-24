@@ -70,6 +70,7 @@ class FALCON_DYN_CLASS List: public BaseAlloc
 {
    ListElement *m_head;
    ListElement *m_tail;
+   uint32 m_size;
 
    void (*m_deletor)( void *);
 
@@ -78,6 +79,7 @@ public:
    List():
       m_head(0),
       m_tail(0),
+      m_size(0),
       m_deletor(0)
    {
    }
@@ -85,6 +87,7 @@ public:
     List( void (*deletor)(void *) ):
       m_head(0),
       m_tail(0),
+      m_size(0),
       m_deletor( deletor )
    {
    }
@@ -110,7 +113,7 @@ public:
    void insertBefore( ListElement *position, const void *data );
 
    ListElement *erase( ListElement *position );
-   uint32 size() const;
+   uint32 size() const {return m_size;}
    void clear();
 
    void deletor( void (*del)( void * ) ) { m_deletor = del; }
