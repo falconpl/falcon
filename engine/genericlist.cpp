@@ -50,6 +50,7 @@ void List::clear()
    }
 
    m_head = m_tail = 0;
+   m_size = 0;
 }
 
 
