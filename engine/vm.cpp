@@ -1287,15 +1287,15 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       const Symbol *parent = def->base();
 
       // iterates in the parent. Where is it?
-      if( parent == clssym )
-      {
-         throw new CodeError( ErrorParam( e_circular_inh, __LINE__ )
-               .origin( e_orig_vm )
-               .extra( clssym->name() ) );
-      }
       // 1) in the same module or 2) in the global modules.
       if( parent->isClass() )
       {
+         // do we have some circular inheritance
+         if ( parent->getClassDef()->checkCircularInheritance( clssym ) )
+             throw new CodeError( ErrorParam( e_circular_inh, __LINE__ )
+                   .origin( e_orig_vm )
+                   .extra( clssym->name() ) );
+
          // we create the item anew instead of relying on the already linked item.
          if ( ! linkSubClass( lmod, parent, props, states, &subFactory ) )
             return false;
@@ -1314,6 +1314,12 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
          }
 
          parent = icls->asClass()->symbol();
+
+         if ( parent->getClassDef()->checkCircularInheritance( clssym ) )
+          throw new CodeError( ErrorParam( e_circular_inh, __LINE__ )
+                .origin( e_orig_vm )
+                .extra( clssym->name() ) );
+
          LiveModule *parmod = findModule( parent->module()->name() );
          if ( ! linkSubClass( parmod, parent, props, states, &subFactory ) )
             return false;

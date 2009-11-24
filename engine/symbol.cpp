@@ -481,6 +481,29 @@ ClassDef::~ClassDef()
    }
 }
 
+
+bool ClassDef::checkCircularInheritance( const Symbol *child ) const
+{
+   if ( child->isClass() && child->getClassDef() == this )
+      return true;
+
+   ListElement *iteri = m_inheritance.begin();
+   while( iteri != 0 )
+   {
+      InheritDef *def = (InheritDef *) iteri->data();
+
+      if( def->base() == child )
+         return true;
+
+      if( def->base()->isClass() && def->base()->getClassDef()->checkCircularInheritance( child ) )
+         return true;
+
+      iteri = iteri->next();
+   }
+
+   return false;
+}
+
 void ClassDef::addProperty( const String *name, VarDef *definition )
 {
    MapIterator iter;

@@ -482,6 +482,9 @@ public:
    */
    bool addInheritance( InheritDef *parent_class );
 
+   /** Checks if a given children of this class compares in the ancestor list. */
+   bool checkCircularInheritance( const Symbol *child ) const;
+
    /** Returns true if one of the base classes of this one has the given name. */
    bool inheritsFrom( const String &find_name ) const;
 
