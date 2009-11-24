@@ -2,10 +2,10 @@
  * FALCON - The Falcon Programming Language.
  * FILE: odbc.cpp
  *
- * Pgsql driver main module
+ * ODBC driver for DBI - main module
  *
  * This is BOTH a driver for the DBI interface AND a standalone
- * MySQL module.
+ * ODBC module.
  * -------------------------------------------------------------------
  * Author: Tiziano De Rubeis
  * Begin: Tue Sep 30 17:00:00 2008

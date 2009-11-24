@@ -81,9 +81,8 @@ FALCON_FUNC DBIConnect( VMachine *vm )
             connectErrorMessage = "An unknown error has occured during connect";
 
          throw new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
-                                          .desc( "Uknown error (**)" )
+                                          .desc( "Connection error" )
                                           .extra( connectErrorMessage ) );
-
       }
 
       // great, we have the database handler open. Now we must create a falcon object to store it.
@@ -676,7 +675,6 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
       dbh->getDefaultTransaction()->getLastError( errorMessage );
       throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_error, __LINE__ )
                                       .desc( errorMessage ) );
-      return;
    }
 
    Item *trclass = vm->findWKI( "%DBITransaction" );

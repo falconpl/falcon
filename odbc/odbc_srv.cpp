@@ -12,6 +12,7 @@
  *
  * See LICENSE file for licensing details.
  */
+
 #define _WIN32_WINNT 0x0500
 #if ! defined( _WIN32_WINNT ) || _WIN32_WINNT < 0x0403
 #undef _WIN32_WINNT
@@ -451,6 +452,7 @@ DBIRecordset *DBITransactionODBC::query( const String &query, int64 &affected, d
 
    if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
    {
+ 	  m_sLastError = GetErrorMessage( SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
       retval = dbi_query_error;
       return NULL;
    }
@@ -461,6 +463,7 @@ DBIRecordset *DBITransactionODBC::query( const String &query, int64 &affected, d
 
    if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
    {
+ 	   m_sLastError = GetErrorMessage( SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
 	   retval = dbi_query_error;
 	   return NULL;
    }
@@ -474,6 +477,7 @@ DBIRecordset *DBITransactionODBC::query( const String &query, int64 &affected, d
 
       if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
 	   {
+ 	       m_sLastError = GetErrorMessage( SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
 		   retval = dbi_query_error;
 		   return NULL;
 	   }
@@ -487,44 +491,52 @@ DBIRecordset *DBITransactionODBC::query( const String &query, int64 &affected, d
 
 
 dbi_status DBITransactionODBC::begin()
-{
-   dbi_status retval;
-   int64 affect;
-   query( "BEGIN", affect, retval );
+{  
+   if( m_inTransaction )
+	   return dbi_transaction_open_error;
 
-   if ( retval == dbi_ok )
-      m_inTransaction = true;
-
-   return retval;
+   m_inTransaction = true;
+   return dbi_ok;
 }
 
 dbi_status DBITransactionODBC::commit()
 {
-   dbi_status retval;
-   int64 affect;
-   query( "COMMIT", affect, retval );
+   SQLRETURN srRet = SQLEndTran( 
+	   SQL_HANDLE_DBC, 
+	   static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
+	   SQL_COMMIT );
 
    m_inTransaction = false;
 
-   return retval;
+   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+	   return dbi_error;
+   
+   return dbi_ok;
 }
 
 dbi_status DBITransactionODBC::rollback()
 {
-   dbi_status retval;
-   int64 affect;
-   query( "ROLLBACK", affect, retval );
+   SQLRETURN srRet = SQLEndTran( 
+	   SQL_HANDLE_DBC, 
+	   static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
+	   SQL_ROLLBACK );
 
    m_inTransaction = false;
-
-   return retval;
+	
+   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+	   return dbi_error;
+   
+   return dbi_ok;
 }
 
 dbi_status DBITransactionODBC::close()
 {
-   // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
-      commit();
+   {
+      dbi_status r = commit();
+	  if( r != dbi_ok )
+		  return r;
+   }
 
    m_inTransaction = false;
 
@@ -561,7 +573,6 @@ DBITransaction *DBIHandleODBC::startTransaction()
    if ( t->begin() != dbi_ok ) {
       // TODO: filter useful information to the script level
       delete t;
-
       return NULL;
    }
 
@@ -587,7 +598,7 @@ DBIHandleODBC::~DBIHandleODBC( )
 
 dbi_status DBIHandleODBC::closeTransaction( DBITransaction *tr )
 {
-   return dbi_ok;
+	return tr->commit();
 }
 
 
@@ -735,6 +746,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 	   return NULL;
    }
 
+   SQLSetConnectAttr( hHdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF, 0 );
+
    retcode = SQLAllocHandle( SQL_HANDLE_STMT, hHdbc, &hHstmt );
 
    if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
@@ -759,6 +772,7 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
 	   return NULL;
    }
+
 
    memFree( connParams );
    ODBCConn* conn = ( ODBCConn* )memAlloc( sizeof( ODBCConn ) );
@@ -795,7 +809,7 @@ String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int Co
 	SQLINTEGER   plm_Rownumber = 0;
 	USHORT      plm_SS_Line;
 	SQLSMALLINT   plm_cbSS_Procname, plm_cbSS_Srvname;
-	SQLCHAR      plm_SS_Procname[MAXNAME], plm_SS_Srvname[MAXNAME];
+	SQLCHAR      plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
 	String sRet = "";
 	char Convert[MAXBUFLEN];
 

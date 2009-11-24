@@ -97,9 +97,6 @@ typedef enum {
    /** failed to expand a value due to it being an unknown type */
    dbi_sql_expand_type_error = 16,
 
-   /** failed to connect to SQL server */
-   dbi_connect_error,
-
    /** There was a non-string item in the "_persist" property. */
    dbi_persist_has_no_string = 17,
 
@@ -117,6 +114,12 @@ typedef enum {
 
    /** The blob cannot be closed/commited. */
    dbi_blob_close_failure = 22,
+
+   /** failed to connect to SQL server */
+   dbi_connect_error = 23,
+   
+   /** failed to create the transaction */
+   dbi_transaction_open_error = 24,
 
    /** an unknown or generic error has occurred */
    dbi_error=99
