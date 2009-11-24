@@ -163,7 +163,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_val> inherit_call
 %type <fal_stat> break_statement continue_statement
 %type <fal_stat> toplevel_statement statement while_statement if_statement
-%type <fal_stat> forin_statement switch_statement fordot_statement
+%type <fal_stat> forin_statement switch_statement fordot_statement forin_header
 %type <fal_stat> select_statement
 %type <fal_stat> try_statement raise_statement return_statement global_statement
 %type <fal_stat> base_statement
@@ -537,51 +537,20 @@ continue_statement:
       }
 ;
 
-
-forin_statement:
+forin_header:
    FOR symbol_list OP_IN expression
       {
-         Falcon::StmtForin *f;
-         Falcon::ArrayDecl *decl = $2;
-         f = new Falcon::StmtForin( LINE, decl, $4 );
-         COMPILER->pushLoop( f );
-         COMPILER->pushContext( f );
-         COMPILER->pushContextSet( &f->children() );
+         $$ = new Falcon::StmtForin( LINE, $2, $4 );
       }
-
-      forin_rest
-
-      {
-         Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
-         COMPILER->popLoop();
-         COMPILER->popContext();
-         COMPILER->popContextSet();
-         $$ = f;
-      }
-
+      
    | FOR atomic_symbol OP_EQ for_to_expr
       {
-         Falcon::StmtForin *f;
          COMPILER->defineVal( $2 );
          Falcon::ArrayDecl *decl = new Falcon::ArrayDecl();
          decl->pushBack( $2 );
-         f = new Falcon::StmtForin( LINE, decl, $4 );
-         COMPILER->pushLoop( f );
-         COMPILER->pushContext( f );
-         COMPILER->pushContextSet( &f->children() );
+         $$ = new Falcon::StmtForin( LINE, decl, $4 );  
       }
-
-      forin_rest
-
-      {
-         Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
-         COMPILER->popLoop();
-         COMPILER->popContext();
-         COMPILER->popContextSet();
-         $$ = f;
-      }
-
-
+   
    | FOR symbol_list OP_IN error EOL
       { delete $2;
          COMPILER->raiseError( Falcon::e_syn_forin );
@@ -593,19 +562,46 @@ forin_statement:
          $$ = 0;
       }
 ;
-
-forin_rest:
-   COLON statement
+   
+forin_statement:
+   
+   forin_header COLON statement
+   {
+      Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>($1);
+      if( $3 != 0 )
       {
-         if ( $2 != 0 )
-            COMPILER->addStatement( $2 );
+         COMPILER->pushLoop( f );
+         COMPILER->pushContext( f );
+         COMPILER->pushContextSet( &f->children() );
+         
+         COMPILER->addStatement( $3 );
+         
+         COMPILER->popLoop();
+         COMPILER->popContext();
+         COMPILER->popContextSet();
       }
+      $$ = f;
+   }
 
-   | EOL
+   | forin_header EOL
+      {
+         Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>($1);
+      
+         COMPILER->pushLoop( f );
+         COMPILER->pushContext( f );
+         COMPILER->pushContextSet( &f->children() );
+      }
       forin_statement_list
       END EOL
+   
+      {
+         Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
+         COMPILER->popLoop();
+         COMPILER->popContext();
+         COMPILER->popContextSet();
+         $$ = f;
+      }
 ;
-
 
 for_to_expr:
    expression OP_TO expression for_to_step_clause

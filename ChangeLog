@@ -18,6 +18,9 @@ Falcon (0.9.4.5)
   * minor: Added fileExt() and fileUnit() functions for completeness.
   * fixed: Immediate circular dependencies in inheritance lists caused
            endless loop in VMachine::link
+  * fixed: Errors in the expression part of for/in statements may have caused 
+           the compiler to lose track of context levels. This caused segfaults
+           on some statements nearby those erroneous for/in decls.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
