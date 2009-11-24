@@ -1287,6 +1287,12 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       const Symbol *parent = def->base();
 
       // iterates in the parent. Where is it?
+      if( parent == clssym )
+      {
+         throw new CodeError( ErrorParam( e_circular_inh, __LINE__ )
+               .origin( e_orig_vm )
+               .extra( clssym->name() ) );
+      }
       // 1) in the same module or 2) in the global modules.
       if( parent->isClass() )
       {

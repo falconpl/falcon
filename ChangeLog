@@ -16,6 +16,8 @@ Falcon (0.9.4.5)
            classes coming from remote modules would crash.
   * major: Added states in classes. Now "state" is a keyword.
   * minor: Added fileExt() and fileUnit() functions for completeness.
+  * fixed: Immediate circular dependencies in inheritance lists caused
+           endless loop in VMachine::link
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

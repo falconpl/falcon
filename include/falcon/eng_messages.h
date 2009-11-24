@@ -237,6 +237,8 @@ FAL_ERRORDECL( e_directive_value, 169, "Invalid value for directive" );
 FAL_ERRORDECL( e_sm_adef, 170, "State member already defined" );
 FAL_ERRORDECL( e_state_adef, 171, "State already defined" );
 FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
+FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
+
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
 FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );
