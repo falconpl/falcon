@@ -90,11 +90,20 @@ int32 BaseFileStream::read( void *buffer, int32 size )
    DWORD result;
    if ( ! ReadFile( data->m_handle, buffer, size, &result, NULL ) ) {
       data->m_lastError = GetLastError();
+      if( data->m_lastError == ERROR_NOACCESS )
+      {
+         // ReadFile returns ERROR_NOACCESS at EOF
+         data->m_lastError = 0;
+         m_status = m_status | Stream::t_eof;
+         return 0;
+      }
+
       m_status = Stream::t_error;
       return -1;
    }
 
-   if ( result == 0 ) {
+   if ( result == 0 ) 
+   {
       m_status = m_status | Stream::t_eof;
    }
 

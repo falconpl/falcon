@@ -210,7 +210,7 @@ FALCON_FUNC mth_strFront( VMachine *vm )
 
 /*#
    @function strBack
-   @brief Returns the first character in a string.
+   @brief Returns the last character(s) in a string.
    @param str The string on which to operate.
    @optparam count Number of characters to be taken (defaults to 1).
    @optparam remove If true, remove also the character.
@@ -220,7 +220,7 @@ FALCON_FUNC mth_strFront( VMachine *vm )
    This function returns a string containing one character from the end of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
 
-   If @b remove is true, then the character is removed and the string is shrinked.
+   If @b remove is true, then the characters are removed and the string is shrinked.
    @see String.front
 
    If @b numeric is true,
