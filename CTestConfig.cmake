@@ -1,4 +1,4 @@
-set(CTEST_PROJECT_NAME "falcon-module-pdf")
+set(CTEST_PROJECT_NAME "falcon-module-hpdf")
 
 set(CTEST_DROP_METHOD "http")
 set(CTEST_DROP_SITE "maikbeckmann.dyndns.org")
