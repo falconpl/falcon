@@ -33,6 +33,8 @@
 */
 
 #include <falcon/engine.h>
+#include <curl/curl.h>
+
 #include "curl_mod.h"
 #include "curl_ext.h"
 #include "curl_st.h"
@@ -42,41 +44,14 @@ namespace Ext {
 
 // The following is a faldoc block for the function
 /*#
-   @function skeleton
-   @brief A basic script function.
-   @return Zero.
-
-   This function just illustrates how to bind the ineer MOD logic
-   with the script. Also, Mod::skeleton(), used by this
-   function, is exported through the "service", so it is
-   possible to call the MOD logic directly from an embedding
-   application, once loaded the module and accessed the service.
+   @function curl_version
+   @brief Returns the version of libcurl
+   @return A string containing the description of the used version-.
 */
 
-FALCON_FUNC  skeleton( ::Falcon::VMachine *vm )
+FALCON_FUNC  curl_version( ::Falcon::VMachine *vm )
 {
-   vm->retval( (int64) Mod::skeleton() );
-}
-
-/*#
-   @function skeletonString
-   @brief A function returning a string in the string table.
-   @return A message that can be internationalized.
-
-   This function returns a string from the string table
-   (see curl_st.h).
-
-   The returned string may be internationalized through
-   the standard falcon internationalization system (the
-   same available for scripts).
-
-   A real module will want to use this system to produce
-   locale-configurable messages (expecially the "extra"
-   field of error descriptions).
-*/
-FALCON_FUNC  skeletonString( ::Falcon::VMachine *vm )
-{
-   vm->retval( FAL_STR( curl_msg_1 ) );
+   vm->retval( new CoreString( ::curl_version() ) );
 }
 
 }

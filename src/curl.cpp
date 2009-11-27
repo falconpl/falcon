@@ -33,12 +33,47 @@
    the Falcon engine.
 */
 
+#include <curl/curl.h>
 #include <falcon/module.h>
 #include "curl_ext.h"
 #include "curl_srv.h"
 #include "curl_st.h"
 
 #include "version.h"
+
+//==================================================
+// Extension of Falcon module
+//==================================================
+
+class CurlModule: public Falcon::Module
+{
+   static int init_count;
+
+public:
+   CurlModule();
+   virtual ~CurlModule();
+};
+
+
+int CurlModule::init_count = 0;
+
+CurlModule::CurlModule():
+   Module()
+{
+   if( init_count == 0 )
+   {
+      curl_global_init( CURL_GLOBAL_ALL );
+   }
+
+   ++init_count;
+}
+
+
+CurlModule::~CurlModule()
+{
+   if( --init_count == 0 )
+      curl_global_cleanup();
+}
 
 /*#
    @main curl
@@ -68,7 +103,7 @@ FALCON_MODULE_DECL
    #define FALCON_DECLARE_MODULE self
 
    // initialize the module
-   Falcon::Module *self = new Falcon::Module();
+   Falcon::Module *self = new CurlModule();
    self->name( "curl" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
@@ -82,8 +117,7 @@ FALCON_MODULE_DECL
    //============================================================
    // Here declare skeleton api
    //
-   self->addExtFunc( "skeleton", Falcon::Ext::skeleton );
-   self->addExtFunc( "skeletonString", Falcon::Ext::skeletonString );
+   self->addExtFunc( "curl_version", Falcon::Ext::curl_version );
 
    //============================================================
    // Publish Skeleton service

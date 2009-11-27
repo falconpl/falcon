@@ -7,10 +7,14 @@
 PROJECT(curl)
 cmake_minimum_required(VERSION 2.6)
 
-find_package( CURL
-   PATHS 
-      ./libcurl
-      )
+if( WIN32)
+	find_package( CURL
+		PATHS
+			./libcurl
+			)
+else()
+	find_package( CURL )
+endif()
 
 if(CURL_FOUND)
    Message( "Found curl in ${CURL_INCLUDE_DIRS}" )

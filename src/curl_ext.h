@@ -40,8 +40,7 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC  skeleton( ::Falcon::VMachine *vm );
-FALCON_FUNC  skeletonString( ::Falcon::VMachine *vm );
+FALCON_FUNC  curl_version( ::Falcon::VMachine *vm );
 
 }
 }
