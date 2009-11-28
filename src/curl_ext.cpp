@@ -116,7 +116,8 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 
 /*#
    @method exec Handle
-   @brief Transfers data from the remote
+   @brief Transfers data from the remote.
+
 */
 
 FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm )
@@ -125,15 +126,210 @@ FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm )
    Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
    CURL* curl = h->handle();
 
+   if ( curl == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
    CURLcode retval = curl_easy_perform(curl);
    if( retval != CURLE_OK )
    {
       String code = FAL_STR( curl_err_desc );
       throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_EXEC, __LINE__ )
-            .desc( FAL_STR( curl_err_init ) )
+            .desc( FAL_STR( curl_err_exec ) )
             .extra( code.A(" ").N(retval) ));
    }
 }
+
+/*#
+   @method setOutConsole Handle
+   @brief Asks for subsequent transfer(s) to be sent to process console (raw stdout).
+
+   This is the default at object creation.
+*/
+FALCON_FUNC  Handle_setOutConsole( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   h->setOnDataStdOut();
+}
+
+/*#
+   @method setOutConsole Handle
+   @brief Asks for subsequent transfer(s) to be stored in a temporary string.
+
+   After @a Handle.exec has been called, the data will be available in
+   a string that can be retrieved via the @a Handle.getData method.
+
+*/
+
+FALCON_FUNC  Handle_setOutString( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   h->setOnDataGetString();
+}
+
+
+/*#
+   @method setOutStream Handle
+   @brief Asks for subsequent transfer(s) to be stored in a given stream.
+   @param stream The stream to be used.
+
+   When called, @a Handle.exec will store incoming data in this stream object
+   via binary Stream.write operations.
+*/
+
+FALCON_FUNC  Handle_setOutStream( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   Item* i_stream = vm->param(0);
+
+   if ( i_stream == 0 || ! i_stream->isOfClass("Stream") )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__)
+            .extra( "Stream" ) );
+   }
+
+   h->setOnDataStream( (Stream*) i_stream->asObjectSafe()->getUserData() );
+}
+
+/*#
+   @method setOutCallback Handle
+   @brief Asks for subsequent transfer(s) to be handled to a given callback.
+   @param cb A callback item that will receive incoming data as a binary string.
+
+   This method instructs this handle to call a given callback when data
+   is received.
+
+   When called, @a Handle.exec will repeatedly call the @b cb item providing
+   a single string as a parameter.
+
+   The string is not encoded in any format, and could be considered filled with binary
+   data.
+*/
+FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   Item* i_cb = vm->param(0);
+
+   if ( i_cb  == 0 || ! i_cb->isCallable() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__)
+            .extra( "C" ) );
+   }
+
+   h->setOnDataCallback( *i_cb );
+}
+
+// not yet active
+/*
+   @method setOutMessage Handle
+   @brief Asks for subsequent transfer(s) to be handled as a message broadcast.
+   @param msg A string representing a message or a VMSlot.
+
+   This method instructs this handle to perform message broadcast when data
+   is received.
+
+   When called, @a Handle.exec will repeatedly broadcast @msg sending two parameters:
+   itself (this Handle object) and the received data, as a binary string.
+
+   The string is not encoded in any format, and could be considered filled with binary
+   data.
+*/
+/*
+FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   Item* i_msg = vm->param(0);
+
+   if ( i_msg  == 0 ||
+         (! i_msg->isString() && ! i_msg->isOfClass("VMSlot") ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__)
+            .extra( "S|VMSlot" ) );
+   }
+
+   if( i_msg->isString() )
+   {
+      h->setOnDataMessage( *i_msg->asString() );
+   }
+   else
+   {
+      CoreSlot* cs = (CoreSlot*) i_msg->asObjectSafe()->getUserData();
+      h->setOnDataMessage( cs->name() );
+   }
+}
+*/
+
+/*#
+   @method cleanup Handle
+   @brief Close a connection and destroys all associated data.
+
+   After this call, the handle is not usable anymore.
+   This is executed also automatically at garbage collection, but
+   the user may be interested in clearing the data as soon as possible.
+*/
+FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+            .desc( FAL_STR( curl_err_pm ) ) );
+
+   h->cleanup();
+}
+
+/*#
+   @method getData Handle
+   @brief Gets data temporarily stored in a string during a transfer.
+   @return A string containing data that has been transfered.
+
+   This function returns the data received in the meanwhile. This data
+   is captured when the @a Handle.setOutString option has been set.
+
+*/
+FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm )
+{
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   CoreString* s = h->getData();
+   if( s != 0 )
+   {
+      vm->retval( s );
+   }
+}
+
 
 /*#
    @class CurlError

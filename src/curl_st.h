@@ -48,7 +48,9 @@
 
 FAL_MODSTR( curl_err_desc, "CURL error code:" );
 FAL_MODSTR( curl_err_init, "Error during intialization" );
+FAL_MODSTR( curl_err_exec, "Error during transfer" );
 FAL_MODSTR( curl_err_resources, "Not enough resources to complete the operation" );
+FAL_MODSTR( curl_err_pm, "Curl handle already closed" );
 
 //... add here your messages, and remove or configure the above one
 

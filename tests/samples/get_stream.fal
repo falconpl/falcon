@@ -1,0 +1,43 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_stream.fal - Shows how to dump remote data to a stream.
+
+   USAGE: get_stream.fal  <URL> <file>
+*/
+
+import from curl
+
+if args.len() != 2
+   > "USAGE: get_stream.fal  <URL> <file>"
+   >
+   return 1
+end
+
+try
+   os = OutputStream( args[1] )
+   h = curl.Handle( args[0] )
+   // we want to receive the data as a stream.
+   h.setOutStream( os )
+
+   > "Starting transfer; writing on file ", args[1]
+   h.exec()
+   > "Transfer complete."
+
+   os.close()
+   h.cleanup()
+
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+catch IoError in e
+   > "Error in creating the output file: "
+   > e
+   return 1
+end
+

@@ -1,0 +1,37 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_string.fal - Shows how to capture remote data in a string.
+
+   USAGE: get_string.fal  <URL>
+*/
+
+import from curl
+
+if args.len() != 1
+   > "USAGE: get_string.fal  <URL>"
+   >
+   return 1
+end
+
+try
+   h = curl.Handle( args[0] )
+   // we want to receive the data as a string
+   h.setOutString()
+
+   > "Starting transfer..."
+   h.exec()
+   > "Transfer complete. Writing the content: "
+   
+   > h.getData()
+
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+end
+

@@ -67,13 +67,15 @@ public:
    static size_t write_string( void *ptr, size_t size, size_t nmemb, void *data);
    static size_t write_callback( void *ptr, size_t size, size_t nmemb, void *data);
 
-   void setOnDataCallback( Item* itm );
+   void setOnDataCallback( const Item& itm );
    void setOnDataStream( Stream* s );
-   void setOnDataSlot( CoreSlot* vms );
+   void setOnDataMessage( const String& msgName );
    void setOnDataGetString();
    void setOnDataStdOut();
 
-   CoreString* receivedString();
+   CoreString* getData();
+
+   void cleanup();
 
 protected:
    /** Callback modes.
@@ -91,10 +93,10 @@ protected:
 private:
    CURL* m_handle;
 
-   Item* m_iDataCallback;
+   Item m_iDataCallback;
    CoreString* m_sReceived;
    Stream* m_dataStream;
-   CoreSlot* m_vmSlot;
+   String m_sSlot;
 
    /** Callback mode, determining which of the method to notify the app is used. */
    t_cbmode m_cbMode;

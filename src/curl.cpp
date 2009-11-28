@@ -124,6 +124,17 @@ FALCON_MODULE_DECL
    easy_class->getClassDef()->factory( &Falcon::Mod::CurlHandle::Factory );
    self->addClassMethod( easy_class, "exec", Falcon::Ext::Handle_exec );
 
+   self->addClassMethod( easy_class, "setOutConsole", Falcon::Ext::Handle_setOutConsole );
+   self->addClassMethod( easy_class, "setOutString", Falcon::Ext::Handle_setOutString );
+   self->addClassMethod( easy_class, "setOutStream", Falcon::Ext::Handle_setOutStream ).asSymbol()
+      ->addParam( "stream" );
+   self->addClassMethod( easy_class, "setOutCallback", Falcon::Ext::Handle_setOutCallback ).asSymbol()
+      ->addParam( "cb" );
+   //self->addClassMethod( easy_class, "setOutMessage", Falcon::Ext::Handle_setOutMessage ).asSymbol()
+   //   ->addParam( "slot" );
+   self->addClassMethod( easy_class, "getData", Falcon::Ext::Handle_getData );
+
+   self->addClassMethod( easy_class, "cleanup", Falcon::Ext::Handle_cleanup );
 
    //============================================================
    // CurlError class

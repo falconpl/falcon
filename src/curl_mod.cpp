@@ -45,10 +45,8 @@ namespace Mod {
 
 CurlHandle::CurlHandle( const CoreClass* cls, bool bDeser ):
    CacheObject( cls, bDeser ),
-   m_iDataCallback(0),
    m_sReceived(0),
    m_dataStream(0),
-   m_vmSlot(0),
    m_cbMode( e_cbmode_stdout )
 {
    if ( bDeser )
@@ -66,7 +64,7 @@ CurlHandle::CurlHandle( const CurlHandle &other ):
    m_iDataCallback( other.m_iDataCallback ),
    m_sReceived(0),
    m_dataStream( other.m_dataStream ),
-   m_vmSlot( other.m_vmSlot ),
+   m_sSlot( other.m_sSlot ),
    m_cbMode( e_cbmode_stdout )
 {
    if ( other.m_handle != 0 )
@@ -87,6 +85,14 @@ CurlHandle* CurlHandle::clone() const
    return new CurlHandle( *this );
 }
 
+void CurlHandle::cleanup()
+{
+   if( m_handle != 0 )
+   {
+      curl_easy_cleanup( m_handle );
+      m_handle = 0;
+   }
+}
 
 bool CurlHandle::serialize( Stream *stream, bool bLive ) const
 {
@@ -120,17 +126,13 @@ bool CurlHandle::deserialize( Stream *stream, bool bLive )
 
 void CurlHandle::gcMark( uint32 mark )
 {
-   if( m_iDataCallback != 0 )
-      memPool->markItem( *m_iDataCallback );
+   memPool->markItem( m_iDataCallback );
 
    if( m_sReceived != 0 )
       m_sReceived->mark( mark );
 
    if( m_dataStream != 0 )
       m_dataStream->gcMark( mark );
-
-   if( m_vmSlot != 0 )
-      m_vmSlot->gcMark( mark );
 
    CacheObject::gcMark( mark );
 }
@@ -150,10 +152,13 @@ size_t CurlHandle::write_stream( void *ptr, size_t size, size_t nmemb, void *dat
 size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
 {
    VMachine* vm = VMachine::getCurrent();
+
    if( vm != 0 )
    {
-      CoreSlot* cs = (CoreSlot*) data;
-      VMMessage* vmmsg = new VMMessage(cs->name());
+      printf( "Received... %d\n", size * nmemb );
+      CurlHandle* cs = (CurlHandle*) data;
+      VMMessage* vmmsg = new VMMessage( cs->m_sSlot );
+      vmmsg->addParam( cs );
       vmmsg->addParam( new CoreString( (const char*) ptr, size * nmemb ) );
       vm->postMessage( vmmsg );
    }
@@ -168,6 +173,7 @@ size_t CurlHandle::write_string( void *ptr, size_t size, size_t nmemb, void *dat
       h->m_sReceived = new CoreString( size * nmemb );
 
    h->m_sReceived->append( String( (const char*) ptr, size * nmemb ) );
+   return size * nmemb;
 }
 
 size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *data)
@@ -175,11 +181,11 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
    VMachine* vm = VMachine::getCurrent();
    if( vm != 0 )
    {
-      Item* callable = (Item*) data;
+      CurlHandle* self = (CurlHandle*) data;
       char* str = (char*) ptr;
       CoreString* cs = new CoreString( str, size*nmemb );
       vm->pushParameter( cs );
-      vm->callItemAtomic( *callable, 1 );
+      vm->callItemAtomic( self->m_iDataCallback, 1 );
    }
 
    // TODO: return the return value of the callback
@@ -187,11 +193,10 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
 }
 
 
-void CurlHandle::setOnDataCallback( Item* itm )
+void CurlHandle::setOnDataCallback( const Item& itm )
 {
    m_sReceived = 0;
    m_dataStream = 0;
-   m_vmSlot = 0;
 
    m_iDataCallback = itm;
    m_cbMode = e_cbmode_callback;
@@ -199,7 +204,7 @@ void CurlHandle::setOnDataCallback( Item* itm )
    if( m_handle != 0 )
    {
       curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_callback );
-      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, m_iDataCallback );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, this );
    }
 
 }
@@ -207,9 +212,8 @@ void CurlHandle::setOnDataCallback( Item* itm )
 
 void CurlHandle::setOnDataStream( Stream* s )
 {
-   m_iDataCallback = 0;
+   m_iDataCallback.setNil();
    m_sReceived = 0;
-   m_vmSlot = 0;
 
    m_dataStream = s;
    m_cbMode = e_cbmode_stream;
@@ -222,19 +226,19 @@ void CurlHandle::setOnDataStream( Stream* s )
 }
 
 
-void CurlHandle::setOnDataSlot( CoreSlot* vms )
+void CurlHandle::setOnDataMessage( const String& msg )
 {
    m_sReceived = 0;
-   m_iDataCallback = 0;
+   m_iDataCallback.setNil();
    m_dataStream = 0;
 
-   m_vmSlot = vms;
+   m_sSlot = msg;
    m_cbMode = e_cbmode_slot;
 
    if( m_handle != 0 )
    {
       curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_msg );
-      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, vms );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, this );
    }
 
 }
@@ -244,9 +248,8 @@ void CurlHandle::setOnDataGetString()
 {
    // the string is initialized by the callback
    m_sReceived = 0;
-   m_iDataCallback = 0;
+   m_iDataCallback.setNil();
    m_dataStream = 0;
-   m_vmSlot = 0;
 
    m_cbMode = e_cbmode_string;
 
@@ -262,9 +265,8 @@ void CurlHandle::setOnDataStdOut()
 {
    // the string is initialized by the callback
    m_sReceived = 0;
-   m_iDataCallback = 0;
+   m_iDataCallback.setNil();
    m_dataStream = 0;
-   m_vmSlot = 0;
 
    m_cbMode = e_cbmode_stdout;
    if( m_handle != 0 )
@@ -274,7 +276,7 @@ void CurlHandle::setOnDataStdOut()
 }
 
 
-CoreString* CurlHandle::receivedString()
+CoreString* CurlHandle::getData()
 {
    CoreString* ret = m_sReceived;
    m_sReceived = 0;
