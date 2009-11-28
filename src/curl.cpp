@@ -36,7 +36,7 @@
 #include <curl/curl.h>
 #include <falcon/module.h>
 #include "curl_ext.h"
-#include "curl_srv.h"
+#include "curl_mod.h"
 #include "curl_st.h"
 
 #include "version.h"
@@ -115,14 +115,23 @@ FALCON_MODULE_DECL
    #include "curl_st.h"
 
    //============================================================
-   // Here declare skeleton api
+   // Here declare CURL - easy api
    //
    self->addExtFunc( "curl_version", Falcon::Ext::curl_version );
 
+   Falcon::Symbol *easy_class = self->addClass( "Handle", Falcon::Ext::Handle_init )
+      ->addParam( "uri" );
+   easy_class->getClassDef()->factory( &Falcon::Mod::CurlHandle::Factory );
+   self->addClassMethod( easy_class, "exec", Falcon::Ext::Handle_exec );
+
+
    //============================================================
-   // Publish Skeleton service
-   //
-   self->publishService( new Falcon::Srv::Skeleton() );
+   // CurlError class
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *ce_cls = self->addClass( "CurlError", Falcon::Ext::CurlError_init );
+   ce_cls->setWKS( true );
+   ce_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
 
    return self;
 }

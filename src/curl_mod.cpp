@@ -32,15 +32,381 @@
    Internal logic functions - implementation.
 */
 
+#include "curl_mod.h"
+#include <falcon/stream.h>
+#include <falcon/vm.h>
+#include <falcon/coreslot.h>
+#include <falcon/vmmsg.h>
+
+#include <stdio.h>
+
 namespace Falcon {
 namespace Mod {
 
-
-
-int skeleton()
+CurlHandle::CurlHandle( const CoreClass* cls, bool bDeser ):
+   CacheObject( cls, bDeser ),
+   m_iDataCallback(0),
+   m_sReceived(0),
+   m_dataStream(0),
+   m_vmSlot(0),
+   m_cbMode( e_cbmode_stdout )
 {
-   return 0;
+   if ( bDeser )
+      m_handle = 0;
+   else
+   {
+      m_handle = curl_easy_init();
+      if (m_handle)
+         curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_stdout );
+   }
 }
+
+CurlHandle::CurlHandle( const CurlHandle &other ):
+   CacheObject( other ),
+   m_iDataCallback( other.m_iDataCallback ),
+   m_sReceived(0),
+   m_dataStream( other.m_dataStream ),
+   m_vmSlot( other.m_vmSlot ),
+   m_cbMode( e_cbmode_stdout )
+{
+   if ( other.m_handle != 0 )
+      m_handle = curl_easy_duphandle( other.m_handle );
+   else
+      m_handle = 0;
+}
+
+CurlHandle::~CurlHandle()
+{
+   if( m_handle != 0 )
+      curl_easy_cleanup( m_handle );
+}
+
+
+CurlHandle* CurlHandle::clone() const
+{
+   return new CurlHandle( *this );
+}
+
+
+bool CurlHandle::serialize( Stream *stream, bool bLive ) const
+{
+   if ( ! bLive )
+   {
+      return false;
+   }
+
+   uint64 ptr = endianInt64( (uint64) m_handle );
+   stream->write( &ptr, sizeof(ptr) );
+
+   return CacheObject::serialize( stream, bLive );
+}
+
+bool CurlHandle::deserialize( Stream *stream, bool bLive )
+{
+   if ( ! bLive )
+      return false;
+
+   fassert( m_handle == 0 );
+
+   uint64 ptr;
+   if( stream->read( &ptr, sizeof(ptr) ) != sizeof(ptr) )
+   {
+      return false;
+   }
+
+   ptr = endianInt64( ptr );
+   m_handle = (CURL*) ptr;
+}
+
+void CurlHandle::gcMark( uint32 mark )
+{
+   if( m_iDataCallback != 0 )
+      memPool->markItem( *m_iDataCallback );
+
+   if( m_sReceived != 0 )
+      m_sReceived->mark( mark );
+
+   if( m_dataStream != 0 )
+      m_dataStream->gcMark( mark );
+
+   if( m_vmSlot != 0 )
+      m_vmSlot->gcMark( mark );
+
+   CacheObject::gcMark( mark );
+}
+
+size_t CurlHandle::write_stdout( void *ptr, size_t size, size_t nmemb, void *)
+{
+   return fwrite( ptr, size, nmemb, stdout );
+}
+
+
+size_t CurlHandle::write_stream( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   Stream* s = (Stream*) data;
+   return s->write( ptr, size * nmemb );
+}
+
+size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   VMachine* vm = VMachine::getCurrent();
+   if( vm != 0 )
+   {
+      CoreSlot* cs = (CoreSlot*) data;
+      VMMessage* vmmsg = new VMMessage(cs->name());
+      vmmsg->addParam( new CoreString( (const char*) ptr, size * nmemb ) );
+      vm->postMessage( vmmsg );
+   }
+
+   return size * nmemb;
+}
+
+size_t CurlHandle::write_string( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   CurlHandle* h = (CurlHandle*) data;
+   if ( h->m_sReceived == 0 )
+      h->m_sReceived = new CoreString( size * nmemb );
+
+   h->m_sReceived->append( String( (const char*) ptr, size * nmemb ) );
+}
+
+size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   VMachine* vm = VMachine::getCurrent();
+   if( vm != 0 )
+   {
+      Item* callable = (Item*) data;
+      char* str = (char*) ptr;
+      CoreString* cs = new CoreString( str, size*nmemb );
+      vm->pushParameter( cs );
+      vm->callItemAtomic( *callable, 1 );
+   }
+
+   // TODO: return the return value of the callback
+   return size * nmemb;
+}
+
+
+void CurlHandle::setOnDataCallback( Item* itm )
+{
+   m_sReceived = 0;
+   m_dataStream = 0;
+   m_vmSlot = 0;
+
+   m_iDataCallback = itm;
+   m_cbMode = e_cbmode_callback;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_callback );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, m_iDataCallback );
+   }
+
+}
+
+
+void CurlHandle::setOnDataStream( Stream* s )
+{
+   m_iDataCallback = 0;
+   m_sReceived = 0;
+   m_vmSlot = 0;
+
+   m_dataStream = s;
+   m_cbMode = e_cbmode_stream;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_stream );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, s );
+   }
+}
+
+
+void CurlHandle::setOnDataSlot( CoreSlot* vms )
+{
+   m_sReceived = 0;
+   m_iDataCallback = 0;
+   m_dataStream = 0;
+
+   m_vmSlot = vms;
+   m_cbMode = e_cbmode_slot;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_msg );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, vms );
+   }
+
+}
+
+
+void CurlHandle::setOnDataGetString()
+{
+   // the string is initialized by the callback
+   m_sReceived = 0;
+   m_iDataCallback = 0;
+   m_dataStream = 0;
+   m_vmSlot = 0;
+
+   m_cbMode = e_cbmode_string;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_string );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, this );
+   }
+}
+
+
+void CurlHandle::setOnDataStdOut()
+{
+   // the string is initialized by the callback
+   m_sReceived = 0;
+   m_iDataCallback = 0;
+   m_dataStream = 0;
+   m_vmSlot = 0;
+
+   m_cbMode = e_cbmode_stdout;
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_stdout );
+   }
+}
+
+
+CoreString* CurlHandle::receivedString()
+{
+   CoreString* ret = m_sReceived;
+   m_sReceived = 0;
+   return ret;
+}
+
+
+CoreObject* CurlHandle::Factory( const CoreClass *cls, void *data, bool deser )
+{
+   return new CurlHandle( cls, deser );
+}
+
+
+
+//==============================================================
+//
+
+CurlMultiHandle::CurlMultiHandle( const CoreClass* cls, bool bDeser ):
+   CacheObject( cls, bDeser )
+{
+   if ( bDeser )
+      m_handle = 0;
+   else
+   {
+      m_handle = curl_multi_init();
+      m_mtx = new Mutex;
+      m_refCount = new int(1);
+   }
+}
+
+
+CurlMultiHandle::CurlMultiHandle( const CurlMultiHandle &other ):
+   CacheObject( other )
+{
+   if( other.m_handle != 0 )
+   {
+      m_mtx = other.m_mtx;
+      m_refCount = other.m_refCount;
+      m_handle = other.m_handle;
+
+      m_mtx->lock();
+      (*m_refCount)++;
+      m_mtx->unlock();
+   }
+   else
+   {
+      m_mtx = new Mutex;
+      m_refCount = 0;
+   }
+
+}
+
+CurlMultiHandle::~CurlMultiHandle()
+{
+   if ( m_handle != 0 )
+   {
+      m_mtx->lock();
+      bool bDelete = --(*m_refCount) == 0;
+      m_mtx->unlock();
+
+      if( bDelete )
+      {
+         delete m_refCount;
+         delete m_mtx;
+         curl_multi_cleanup( m_handle );
+      }
+   }
+}
+
+CurlMultiHandle* CurlMultiHandle::clone() const
+{
+   return new CurlMultiHandle( *this );
+}
+
+bool CurlMultiHandle::serialize( Stream *stream, bool bLive ) const
+{
+   if ( ! bLive )
+      return false;
+
+   // incref immediately
+   m_mtx->lock();
+   (*m_refCount)++;
+   m_mtx->unlock();
+
+   uint64 ptrh = endianInt64( (uint64) m_handle );
+   uint64 ptrm = endianInt64( (uint64) m_mtx );
+   uint64 ptrrc = endianInt64( (uint64) m_refCount );
+   stream->write( &ptrh, sizeof(ptrh) );
+   stream->write( &ptrm, sizeof(ptrm) );
+   stream->write( &ptrrc, sizeof(ptrrc) );
+
+   bool bOk = CacheObject::serialize( stream, bLive );
+
+   if( ! bOk )
+   {
+      m_mtx->lock();
+      (*m_refCount)--;
+      m_mtx->unlock();
+   }
+}
+
+bool CurlMultiHandle::deserialize( Stream *stream, bool bLive )
+{
+   if ( ! bLive )
+      return false;
+
+   fassert( m_handle == 0 );
+
+   uint64 ptrh;
+   uint64 ptrm;
+   uint64 ptrrc;
+
+   if( stream->read( &ptrh, sizeof(ptrh) ) != sizeof( ptrh )  ||
+       stream->read( &ptrm, sizeof(ptrm) ) != sizeof( ptrm )  ||
+       stream->read( &ptrrc, sizeof(ptrrc) ) != sizeof( ptrrc )  )
+   {
+      return false;
+   }
+
+   m_handle = (CURLM*) endianInt64( ptrh );
+   m_mtx = (Mutex*) endianInt64( ptrm );
+   m_refCount = (int*) endianInt64( ptrrc );
+
+}
+
+CoreObject* CurlMultiHandle::Factory( const CoreClass *cls, void *data, bool bDeser )
+{
+   return new CurlMultiHandle( cls, bDeser );
+}
+
+
+
 
 }
 }

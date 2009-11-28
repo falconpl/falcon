@@ -46,7 +46,9 @@
 // FAL_STR( curl_msg_1 ) macro can be used in standard
 // functions as a shortcut.
 
-FAL_MODSTR( curl_msg_1, "An internationalizable message" );
+FAL_MODSTR( curl_err_desc, "CURL error code:" );
+FAL_MODSTR( curl_err_init, "Error during intialization" );
+FAL_MODSTR( curl_err_resources, "Not enough resources to complete the operation" );
 
 //... add here your messages, and remove or configure the above one
 

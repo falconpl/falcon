@@ -37,11 +37,22 @@
 
 #include <falcon/module.h>
 
+#ifndef FALCON_ERROR_CURL_BASE
+#define FALCON_ERROR_CURL_BASE            2350
+#endif
+
+#define FALCON_ERROR_CURL_INIT            (FALCON_ERROR_CURL_BASE+0)
+#define FALCON_ERROR_CURL_EXEC            (FALCON_ERROR_CURL_BASE+1)
+
 namespace Falcon {
 namespace Ext {
 
 FALCON_FUNC  curl_version( ::Falcon::VMachine *vm );
+FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm );
 
+
+FALCON_FUNC  CurlError_init ( ::Falcon::VMachine *vm );
 }
 }
 

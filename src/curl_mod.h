@@ -35,10 +35,107 @@
 #ifndef curl_mod_H
 #define curl_mod_H
 
+#include <falcon/falconobject.h>
+#include <falcon/error.h>
+#include <falcon/coreslot.h>
+#include <curl/curl.h>
+
 namespace Falcon {
 namespace Mod {
 
-int skeleton();
+class CurlHandle: public CacheObject
+{
+public:
+   CurlHandle( const CoreClass* cls, bool bDeser = false );
+   CurlHandle( const CurlHandle &other );
+
+   virtual ~CurlHandle();
+   virtual CurlHandle* clone() const;
+
+   CURL* handle() const { return m_handle; }
+
+   virtual void gcMark( uint32 mark );
+
+   virtual bool serialize( Stream *stream, bool bLive ) const;
+   virtual bool deserialize( Stream *stream, bool bLive );
+
+   static CoreObject* Factory( const CoreClass *cls, void *data, bool );
+
+   static size_t write_stdout( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_stream( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_msg( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_string( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_callback( void *ptr, size_t size, size_t nmemb, void *data);
+
+   void setOnDataCallback( Item* itm );
+   void setOnDataStream( Stream* s );
+   void setOnDataSlot( CoreSlot* vms );
+   void setOnDataGetString();
+   void setOnDataStdOut();
+
+   CoreString* receivedString();
+
+protected:
+   /** Callback modes.
+    *
+    */
+   typedef enum
+   {
+      e_cbmode_stdout,
+      e_cbmode_string,
+      e_cbmode_stream,
+      e_cbmode_slot,
+      e_cbmode_callback
+   } t_cbmode;
+
+private:
+   CURL* m_handle;
+
+   Item* m_iDataCallback;
+   CoreString* m_sReceived;
+   Stream* m_dataStream;
+   CoreSlot* m_vmSlot;
+
+   /** Callback mode, determining which of the method to notify the app is used. */
+   t_cbmode m_cbMode;
+
+};
+
+
+
+class CurlMultiHandle: public CacheObject
+{
+public:
+   CurlMultiHandle( const CoreClass* cls, bool bDeser = false );
+   CurlMultiHandle( const CurlMultiHandle &other );
+
+   virtual ~CurlMultiHandle();
+   virtual CurlMultiHandle* clone() const;
+
+   CURLM* handle() const { return m_handle; }
+
+   virtual bool serialize( Stream *stream, bool bLive ) const;
+   virtual bool deserialize( Stream *stream, bool bLive );
+
+   static CoreObject* Factory( const CoreClass *cls, void *data, bool );
+
+private:
+   CURLM* m_handle;
+   Mutex* m_mtx;
+   int* m_refCount;
+};
+
+class CurlError: public ::Falcon::Error
+{
+public:
+   CurlError():
+      Error( "CurlError" )
+   {}
+
+   CurlError( const ErrorParam &params  ):
+      Error( "CurlError", params )
+      {}
+};
 
 }
 }
