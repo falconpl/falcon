@@ -5,15 +5,15 @@
 
    send.fal - Shows how to send a file to a remote server
 
-   USAGE: send.fal [-u <usernam>] [-p <password>] [-?] <URL> <file>
+   USAGE: send.fal [-u <usernam>] [-p <password>] [-r <newname>] [-?] <URL> <file>
 */
 
 import from curl
 
 try
-   CmdParser.parse()
-   if CmdParser.url == nil or CmdParser.file == nil
-      CmdParser.usage()
+   Options.parse()
+   if Options.url == nil or Options.file == nil
+      Options.usage()
       exit(0)
    end
    
@@ -22,14 +22,25 @@ catch StringType
 end
 
 try
-   is = InputStream( CmdParser.file )
-   h = curl.Handle( URI.encode(CmdParser.url) )
+   
+   is = InputStream( Options.file )
+   h = curl.Handle( URI.encode(Options.url) )
    // we want to receive the data as a stream.
    h.setInStream( is )
    h.setOption( curl.CURLOPT.UPLOAD, true )
 
-   if CmdParser.user: h.setOption( curl.CURLOPT.USERNAME, CmdParser.user )
-   if CmdParser.password: h.setOption( curl.CURLOPT.PASSWORD, CmdParser.password )
+   if Options.user: h.setOption( curl.CURLOPT.USERNAME, Options.user )
+   if Options.password: h.setOption( curl.CURLOPT.PASSWORD, Options.password )
+
+   // if we want to rename the file after it is copied, use FTP quote
+   if Options.newname
+      uri = URI( Options.url )
+      quoted = [
+         "RNFR " + uri.path,
+         "RNTO " + Options.newname ]
+      h.setOption( curl.CURLOPT.POSTQUOTE, quoted )
+   end
+         
 
    > "Starting transfer; reading file ", args[1]
    h.exec()
@@ -51,11 +62,12 @@ catch IoError in e
 end
 
 
- object CmdParser from CmdlineParser
+ object Options from CmdlineParser
 
    url = nil
    file = nil
-
+   
+   newname = nil
    user = nil
    password = nil
    
@@ -63,7 +75,7 @@ end
       switch option
          case "?", "help"
             self.usage()
-         case "u", "p", "l", "long"
+         case "u", "p", "r"
             self.expectValue()
          default
             self.unrecognized( option )
@@ -76,6 +88,8 @@ end
             self.password = value
          case "u"
             self.user = value
+         case "r"
+            self.newname = value
       end
    end
 
@@ -87,17 +101,6 @@ end
       else
          self.usage()
          raise "broken"
-      end
-   end
-
-   function onSwitchOff( sw )
-      switch sw
-         case "k"
-            // set switch k OFF
-         case "n"
-            // set switch n OFF
-         default
-            self.unrecognized( sw )
       end
    end
 

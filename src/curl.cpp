@@ -366,18 +366,21 @@ FALCON_MODULE_DECL
 #ifdef CURLOPT_SSH_KNOWNHOSTS
    self->addClassProperty( copt_class, "SSH_KNOWNHOSTS" ).setInteger(CURLOPT_SSH_KNOWNHOSTS).setReadOnly(true);
 #endif
+
+   // List options
+   self->addClassProperty( copt_class, "HTTPHEADER" ).setInteger(CURLOPT_HTTPHEADER).setReadOnly(true);
+   self->addClassProperty( copt_class, "HTTP200ALIASES" ).setInteger(CURLOPT_HTTP200ALIASES).setReadOnly(true);
+   self->addClassProperty( copt_class, "QUOTE" ).setInteger(CURLOPT_QUOTE).setReadOnly(true);
+   self->addClassProperty( copt_class, "POSTQUOTE" ).setInteger(CURLOPT_POSTQUOTE).setReadOnly(true);
+   self->addClassProperty( copt_class, "PREQUOTE" ).setInteger(CURLOPT_PREQUOTE).setReadOnly(true);
+
    // To be implemented separately
    /*
    CURLOPT_HTTPPOST
    CURLOPT_POSTFIELDS
    CURLOPT_POSTFIELDSIZE
    CURLOPT_COPYPOSTFIELDS
-   CURLOPT_HTTPHEADER
-   CURLOPT_HTTP200ALIASES
 
-   CURLOPT_QUOTE
-   CURLOPT_POSTQUOTE
-   CURLOPT_PREQUOTE
 
    CURLOPT_SSH_KEYFUNCTION
    CURLOPT_SSH_KEYDATA

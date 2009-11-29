@@ -38,6 +38,7 @@
 #include <falcon/coreslot.h>
 #include <falcon/vmmsg.h>
 #include <falcon/membuf.h>
+#include <falcon/autocstring.h>
 
 #include <stdio.h>
 
@@ -77,8 +78,7 @@ CurlHandle::CurlHandle( const CurlHandle &other ):
 
 CurlHandle::~CurlHandle()
 {
-   if( m_handle != 0 )
-      curl_easy_cleanup( m_handle );
+   cleanup();
 }
 
 
@@ -93,6 +93,14 @@ void CurlHandle::cleanup()
    {
       curl_easy_cleanup( m_handle );
       m_handle = 0;
+
+      ListElement* head = m_slists.begin();
+      while( head != 0 )
+      {
+         struct curl_slist* slist = (struct curl_slist*) head->data();
+         curl_slist_free_all( slist );
+         head = head->next();
+      }
    }
 }
 
@@ -349,10 +357,36 @@ size_t CurlHandle::read_stream( void *ptr, size_t size, size_t nmemb, void *data
    return CURL_READFUNC_ABORT;
 }
 
+struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
+{
+   struct curl_slist* sl = NULL;
+
+   for( uint32 pos = 0; pos < ca->length(); ++pos )
+   {
+      Item& current = ca->at(pos);
+      if( ! current.isString() )
+      {
+         if( sl != 0 )
+            m_slists.pushBack( sl );
+         return 0;
+      }
+
+      AutoCString str( current );
+      sl = curl_slist_append( sl, str.c_str() );
+   }
+
+   if( sl != 0 )
+      m_slists.pushBack( sl );
+
+   return sl;
+}
+
+
 CoreObject* CurlHandle::Factory( const CoreClass *cls, void *data, bool deser )
 {
    return new CurlHandle( cls, deser );
 }
+
 
 
 

@@ -74,6 +74,13 @@ public:
 
    void cleanup();
 
+   /** Creates a curl_slist from a Falcon array of strings.
+    *  The list is stored here and destroyed by cleanup().
+    *  Returns zero if some elements of ca are not strings.
+    *
+    */
+   struct curl_slist* slistFromArray( CoreArray* ca );
+
 protected:
    /** Callback modes.
     *
@@ -110,6 +117,9 @@ private:
 
    Item m_iReadCallback;
    Stream* m_readStream;
+
+   // lists of lists to be destroyed at exit.
+   List m_slists;
 };
 
 

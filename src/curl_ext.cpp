@@ -401,11 +401,10 @@ FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm )
 }
 
 
-
-
-static void internal_setOpt( VMachine* vm, CURL* curl, CURLoption iOpt, Item* i_data )
+static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, Item* i_data )
 {
    CURLcode ret;
+   CURL* curl = h->handle();
 
    switch( iOpt )
    {
@@ -574,6 +573,30 @@ static void internal_setOpt( VMachine* vm, CURL* curl, CURLoption iOpt, Item* i_
         }
         break;
 
+    case CURLOPT_HTTPHEADER:
+    case CURLOPT_HTTP200ALIASES:
+    case CURLOPT_QUOTE:
+    case CURLOPT_POSTQUOTE:
+    case CURLOPT_PREQUOTE:
+       {
+          if( ! i_data->isArray() )
+          {
+              throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                    .extra( FAL_STR( curl_err_setopt ) ));
+          }
+
+          CoreArray* items = i_data->asArray();
+          struct curl_slist *slist = h->slistFromArray( items );
+          if ( slist == 0 )
+          {
+               throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                     .extra( FAL_STR( curl_err_setopt ) ));
+          }
+
+          ret = curl_easy_setopt( curl, iOpt, slist );
+       }
+       break;
+
     default:
        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
              .extra( FAL_STR( curl_err_unkopt ) ));
@@ -594,6 +617,9 @@ static void internal_setOpt( VMachine* vm, CURL* curl, CURLoption iOpt, Item* i_
 
    Depending on the option, @b data must be a boolean, a number or
    a string.
+
+   Some options, as CURLOPT.HTTPHEADER, require the data to be an array
+   of strings.
  */
 
 FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
@@ -615,10 +641,8 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
       throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
             .desc( FAL_STR( curl_err_pm ) ) );
 
-   CURL* curl = h->handle();
-
    CURLoption iOpt = (CURLoption) i_option->asInteger();
-   internal_setOpt( vm, curl, iOpt, i_data );
+   internal_setOpt( vm, h, iOpt, i_data );
 }
 
 
@@ -646,8 +670,6 @@ FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
       throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
             .desc( FAL_STR( curl_err_pm ) ) );
 
-   CURL* curl = h->handle();
-
    Iterator iter( &i_opts->asDict()->items() );
    while( iter.hasCurrent() )
    {
@@ -658,7 +680,7 @@ FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
                      .extra( "D[I=>X]" ) );
       }
 
-      internal_setOpt( vm, curl, (CURLoption) opt.asInteger(), &iter.getCurrent() );
+      internal_setOpt( vm, h, (CURLoption) opt.asInteger(), &iter.getCurrent() );
       iter.next();
    }
 }
