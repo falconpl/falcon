@@ -21,7 +21,10 @@ Falcon (0.9.4.5)
   * fixed: Errors in the expression part of for/in statements may have caused 
            the compiler to lose track of context levels. This caused segfaults
            on some statements nearby those erroneous for/in decls.
+  * fixed: for-to construct failed to enter the loop in 0 to 0. Also it didn't
+           loop the correct times when starting and ending in negative ranges.
   * fixed: EOF in ReadFile (windows streams) was not always correctly detected.
+
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 

@@ -795,8 +795,6 @@ void opcodeHandler_GENR( register VMachine *vm )
 
 
    int64 secondOp = operand2->forceIntegerEx();
-   if( operand2->isOob() && secondOp > 0 )
-      secondOp++;
 
    int64 step;
    if ( operand3->isNil() )
@@ -808,7 +806,11 @@ void opcodeHandler_GENR( register VMachine *vm )
       step = operand3->forceIntegerEx();
    }
 
+
    int64 firstOp = operand1->forceIntegerEx();
+
+   if( operand2->isOob() && firstOp <= secondOp )
+      secondOp++;
 
    vm->regA().setRange( new CoreRange(
       firstOp,

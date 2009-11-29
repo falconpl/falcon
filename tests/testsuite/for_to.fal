@@ -43,6 +43,44 @@ end
 
 if a != 1+3+5: failure( "for/to bounds step - 2" )
 
+// for -5 to -4  => should do both
+a = 0
+for i = -5 to -4
+   a += i
+end
+
+if a != -5-4: failure( "For up in negative range" )
+
+// for 0 - 0
+a = 1
+for i = 0 to 0
+   a = i
+end
+
+if a!= 0: failure( "For/to with start == end" )
+
+a = 1
+for i = -1 to -2, 1
+   a = i
+end
+
+if a!= 1: failure( "Empty for/to, increasing" )
+
+a = 1
+for i = 10 to 11, -1
+   a = i
+end
+
+if a!= 1: failure( "Empty for/to, decreasing" )
+
+a = 1
+for i = 10 to 10, -1
+   a = i
+end
+
+if a!= 1: failure( "Empty for/to, decreasing (2)" )
+
+
 // all the other tests are performed by for/in
 success()
 

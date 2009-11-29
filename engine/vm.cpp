@@ -3818,10 +3818,13 @@ void VMachine::periodicChecks()
 
       // perform messages
       m_mtx_mesasges.lock();
-      while( m_msg_head != 0 )
+      if( m_msg_head != 0 )
       {
          VMMessage* msg = m_msg_head;
          m_msg_head = msg->next();
+         if( m_msg_head )
+            m_msg_tail = 0;
+
          // it is ok if m_msg_tail is left dangling.
          m_mtx_mesasges.unlock();
          if ( msg->error() )
@@ -3834,12 +3837,9 @@ void VMachine::periodicChecks()
          else
             processMessage( msg );  // do not delete msg
 
-         // see if we have more messages in the meanwhile
-         m_mtx_mesasges.lock();
       }
-
-      m_msg_tail = 0;
-      m_mtx_mesasges.unlock();
+      else
+         m_mtx_mesasges.unlock();
    }
 }
 
