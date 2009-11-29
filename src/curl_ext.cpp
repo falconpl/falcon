@@ -620,6 +620,13 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
 
    Some options, as CURLOPT.HTTPHEADER, require the data to be an array
    of strings.
+
+   @note CURLOPT.POSTFIELDS family options are not supported directly by
+   this function; use @a Handle.postData function instead.
+
+   @note Callback related options are not supported by this function.
+   Specific functions are provided to setup automated or manual callback
+   facilities (see the various set* methods in this class).
  */
 
 FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
@@ -650,7 +657,6 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
    @method setOptions Handle
    @brief Sets a list of cURL option for this specific handle.
    @param opts A dictionary of options, where each key is an option number, and its value is the option value.
-
 */
 
 FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
@@ -683,6 +689,51 @@ FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
       internal_setOpt( vm, h, (CURLoption) opt.asInteger(), &iter.getCurrent() );
       iter.next();
    }
+}
+
+
+/*#
+   @method postData Handle
+   @brief Sets data to be sent in one unique POST request.
+   @param data A string to be sent as post data.
+
+   This function substitutes the CURLOPT_POSTFIELDS family of options
+   of the C level libcurl. It allows to set a string that will be
+   sent in HTTP post request.
+
+   All the other setOut* methods can be used for the same purpose to
+   take data from streams, callback or even strings, but all the other
+   methods will transfer data in chunks, and require to set the HTTP header
+   transfer-encoding as "chunked" via the CURL.HTTP_HEADERS option, and
+   to use HTTP/1.1 protocol.
+
+   Using this method, the postData will be sent as an unique chunk, so
+   it doesn't require extra header setting and works with any HTTP protocol.
+
+   \note The data will be sent not encoded in any particular format (it will be
+         binary-transmitted as it is in the string memory). If the remote
+         server expects a particular encoding (usually, UTF-8), appropriate
+         transocoding functions must be used in advance.
+*/
+
+FALCON_FUNC  Handle_postData( ::Falcon::VMachine *vm )
+{
+   Item* i_data = vm->param(0);
+
+   if ( i_data == 0 || ! i_data->isString() )
+   {
+     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+           .extra( "S" ) );
+   }
+
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+     throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+           .desc( FAL_STR( curl_err_pm ) ) );
+
+   h->postData( *i_data->asString() );
 }
 
 /*#

@@ -41,6 +41,7 @@
 #include <falcon/autocstring.h>
 
 #include <stdio.h>
+#include <string.h>
 
 namespace Falcon {
 namespace Mod {
@@ -50,7 +51,8 @@ CurlHandle::CurlHandle( const CoreClass* cls, bool bDeser ):
    m_sReceived(0),
    m_dataStream(0),
    m_cbMode( e_cbmode_stdout ),
-   m_readStream(0)
+   m_readStream(0),
+   m_pPostBuffer(0)
 {
    if ( bDeser )
       m_handle = 0;
@@ -101,6 +103,12 @@ void CurlHandle::cleanup()
          curl_slist_free_all( slist );
          head = head->next();
       }
+   }
+
+   if (m_pPostBuffer != 0 )
+   {
+      memFree( m_pPostBuffer );
+      m_pPostBuffer = 0;
    }
 }
 
@@ -380,6 +388,20 @@ struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
 
    return sl;
 }
+
+void CurlHandle::postData( const String& str )
+{
+   if (m_pPostBuffer != 0 )
+      memFree( m_pPostBuffer );
+
+   m_pPostBuffer = memAlloc( str.size() );
+   memcpy(m_pPostBuffer, str.getRawStorage(), str.size() );
+
+   curl_easy_setopt( handle(), CURLOPT_POSTFIELDS, m_pPostBuffer );
+   curl_easy_setopt( handle(), CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t) str.size() );
+}
+
+
 
 
 CoreObject* CurlHandle::Factory( const CoreClass *cls, void *data, bool deser )

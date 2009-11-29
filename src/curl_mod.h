@@ -81,6 +81,15 @@ public:
     */
    struct curl_slist* slistFromArray( CoreArray* ca );
 
+   /** Stores data for post operations.
+    * Saves a copy of the string in a local buffer, that is destroyed
+    * at cleanup(), and sets the POSTFIELDS and CURLOPT_POSTFIELDSIZE_LARGE
+    * options correctly.
+    *
+    * Multiple operations will cause the previous buffer to be discarded.
+    */
+   void postData( const String& str );
+
 protected:
    /** Callback modes.
     *
@@ -120,6 +129,8 @@ private:
 
    // lists of lists to be destroyed at exit.
    List m_slists;
+
+   void* m_pPostBuffer;
 };
 
 

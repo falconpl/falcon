@@ -140,6 +140,8 @@ FALCON_MODULE_DECL
    self->addClassMethod( easy_class, "getData", Falcon::Ext::Handle_getData );
    self->addClassMethod( easy_class, "setOption", Falcon::Ext::Handle_setOption ).asSymbol()
       ->addParam( "option" )->addParam( "data" );
+   self->addClassMethod( easy_class, "postData", Falcon::Ext::Handle_postData ).asSymbol()
+      ->addParam( "data" );
 
    self->addClassMethod( easy_class, "cleanup", Falcon::Ext::Handle_cleanup );
 
@@ -377,10 +379,6 @@ FALCON_MODULE_DECL
    // To be implemented separately
    /*
    CURLOPT_HTTPPOST
-   CURLOPT_POSTFIELDS
-   CURLOPT_POSTFIELDSIZE
-   CURLOPT_COPYPOSTFIELDS
-
 
    CURLOPT_SSH_KEYFUNCTION
    CURLOPT_SSH_KEYDATA
