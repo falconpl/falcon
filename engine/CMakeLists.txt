@@ -158,6 +158,7 @@ add_library(falcon_engine SHARED
   coreobject.cpp
   coreslot.cpp
   coretable.cpp
+  debug.cpp
   deptab.cpp
   error.cpp
   falcondata.cpp
