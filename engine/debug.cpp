@@ -17,12 +17,29 @@
 namespace Falcon
 {
 
-   DebugVMachine::DebugVMachine() : 
-      VMachine(), m_breakPoints(Map(&traits::t_voidp(),&traits::t_List())), m_watches(Map(&traits::t_string(),&traits::t_voidp())),
+   DebugVMachine::DebugVMachine() : VMachine(), 
+      m_breakPoints( Map( &traits::t_voidp(), &traits::t_MapPtr() ) ), 
+      m_watches( Map( &traits::t_string(), &traits::t_voidp() ) ),
       m_step(false), m_stepInto(false), m_stepOut(false)
    {
       callbackLoops(1);
       
+   }
+
+   void DebugVMachine::setBreakPoint(Symbol* func, int32 lineNo)
+   {
+      MapIterator iter;
+      Map *lines;
+      if ( !m_breakPoints.find( static_cast<void*>( func ), iter) )
+      {
+         lines = new Map(&traits::t_voidp(),&traits::t_voidp());
+         m_breakPoints.insert(static_cast<void*>( func ),static_cast<void*>( lines ));
+      }
+      else
+      {
+         lines = static_cast<Map*>( iter.currentValue() );
+      }
+      //lines.
    }
 
    const Map& DebugVMachine::watches() const
