@@ -61,17 +61,14 @@ public:
 
    static CoreObject* Factory( const CoreClass *cls, void *data, bool );
 
-   static size_t write_stdout( void *ptr, size_t size, size_t nmemb, void *data);
-   static size_t write_stream( void *ptr, size_t size, size_t nmemb, void *data);
-   static size_t write_msg( void *ptr, size_t size, size_t nmemb, void *data);
-   static size_t write_string( void *ptr, size_t size, size_t nmemb, void *data);
-   static size_t write_callback( void *ptr, size_t size, size_t nmemb, void *data);
-
-   void setOnDataCallback( const Item& itm );
+   void setOnDataCallback( const Item& callable );
    void setOnDataStream( Stream* s );
    void setOnDataMessage( const String& msgName );
    void setOnDataGetString();
    void setOnDataStdOut();
+
+   void setReadCallback( const Item& callable );
+   void setReadStream( Stream* read );
 
    CoreString* getData();
 
@@ -91,6 +88,16 @@ protected:
    } t_cbmode;
 
 private:
+
+   static size_t write_stdout( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_stream( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_msg( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_string( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t write_callback( void *ptr, size_t size, size_t nmemb, void *data);
+
+   static size_t read_callback( void *ptr, size_t size, size_t nmemb, void *data);
+   static size_t read_stream( void *ptr, size_t size, size_t nmemb, void *data);
+
    CURL* m_handle;
 
    Item m_iDataCallback;
@@ -101,6 +108,8 @@ private:
    /** Callback mode, determining which of the method to notify the app is used. */
    t_cbmode m_cbMode;
 
+   Item m_iReadCallback;
+   Stream* m_readStream;
 };
 
 

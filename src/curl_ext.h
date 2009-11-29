@@ -44,6 +44,7 @@
 #define FALCON_ERROR_CURL_INIT            (FALCON_ERROR_CURL_BASE+0)
 #define FALCON_ERROR_CURL_EXEC            (FALCON_ERROR_CURL_BASE+1)
 #define FALCON_ERROR_CURL_PM              (FALCON_ERROR_CURL_BASE+2)
+#define FALCON_ERROR_CURL_SETOPT          (FALCON_ERROR_CURL_BASE+3)
 
 namespace Falcon {
 namespace Ext {
@@ -55,6 +56,12 @@ FALCON_FUNC  Handle_setOutConsole( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_setOutString( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_setOutStream( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  Handle_setInCallback( ::Falcon::VMachine *vm );
+FALCON_FUNC  Handle_setInStream( ::Falcon::VMachine *vm );
+
+
+FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm );
 //FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm );

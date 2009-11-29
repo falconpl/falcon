@@ -51,6 +51,8 @@ FAL_MODSTR( curl_err_init, "Error during intialization" );
 FAL_MODSTR( curl_err_exec, "Error during transfer" );
 FAL_MODSTR( curl_err_resources, "Not enough resources to complete the operation" );
 FAL_MODSTR( curl_err_pm, "Curl handle already closed" );
+FAL_MODSTR( curl_err_setopt, "Type of parameter incompatible for this option" );
+FAL_MODSTR( curl_err_unkopt, "Unknown option for setOption" );
 
 //... add here your messages, and remove or configure the above one
 

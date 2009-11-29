@@ -37,6 +37,7 @@
 #include <falcon/vm.h>
 #include <falcon/coreslot.h>
 #include <falcon/vmmsg.h>
+#include <falcon/membuf.h>
 
 #include <stdio.h>
 
@@ -47,7 +48,8 @@ CurlHandle::CurlHandle( const CoreClass* cls, bool bDeser ):
    CacheObject( cls, bDeser ),
    m_sReceived(0),
    m_dataStream(0),
-   m_cbMode( e_cbmode_stdout )
+   m_cbMode( e_cbmode_stdout ),
+   m_readStream(0)
 {
    if ( bDeser )
       m_handle = 0;
@@ -127,12 +129,16 @@ bool CurlHandle::deserialize( Stream *stream, bool bLive )
 void CurlHandle::gcMark( uint32 mark )
 {
    memPool->markItem( m_iDataCallback );
+   memPool->markItem( m_iReadCallback );
 
    if( m_sReceived != 0 )
       m_sReceived->mark( mark );
 
    if( m_dataStream != 0 )
       m_dataStream->gcMark( mark );
+
+   if( m_readStream != 0 )
+      m_readStream->gcMark( mark );
 
    CacheObject::gcMark( mark );
 }
@@ -186,10 +192,14 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
       CoreString* cs = new CoreString( str, size*nmemb );
       vm->pushParameter( cs );
       vm->callItemAtomic( self->m_iDataCallback, 1 );
+
+      if( vm->regA().isNil() || (vm->regA().isBoolean() && vm->regA().asBoolean() ) )
+         return size * nmemb;
+      else if( vm->regA().isOrdinal() )
+         return (size_t) vm->regA().forceInteger();
    }
 
-   // TODO: return the return value of the callback
-   return size * nmemb;
+   return 0;
 }
 
 
@@ -275,6 +285,32 @@ void CurlHandle::setOnDataStdOut()
    }
 }
 
+void CurlHandle::setReadCallback( const Item& callable )
+{
+   // the string is initialized by the callback
+   m_iReadCallback = callable;
+   m_readStream = 0;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_READFUNCTION, read_callback );
+      curl_easy_setopt( m_handle, CURLOPT_READDATA, this );
+   }
+}
+
+void CurlHandle::setReadStream( Stream* stream )
+{
+   // the string is initialized by the callback
+   m_iReadCallback.setNil();
+   m_readStream = stream;
+
+   if( m_handle != 0 )
+   {
+      curl_easy_setopt( m_handle, CURLOPT_READFUNCTION, read_stream );
+      curl_easy_setopt( m_handle, CURLOPT_READDATA, this );
+   }
+}
+
 
 CoreString* CurlHandle::getData()
 {
@@ -283,6 +319,35 @@ CoreString* CurlHandle::getData()
    return ret;
 }
 
+size_t CurlHandle::read_callback( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   VMachine* vm = VMachine::getCurrent();
+   if ( vm != 0 )
+   {
+      CurlHandle* h = (CurlHandle *) data;
+      MemBuf_1 m( (byte*) ptr, size* nmemb, 0 );
+      vm->pushParameter( (MemBuf*) &m );
+      vm->callItemAtomic( h->m_iReadCallback, 1 );
+
+      if( vm->regA().isOrdinal() )
+         return (size_t) vm->regA().forceInteger();
+
+   }
+
+   return 0;
+}
+
+
+size_t CurlHandle::read_stream( void *ptr, size_t size, size_t nmemb, void *data)
+{
+   CurlHandle* h = (CurlHandle *) data;
+   if( h->m_readStream != 0 )
+   {
+      return h->m_readStream->read( ptr, size * nmemb );
+   }
+
+   return CURL_READFUNC_ABORT;
+}
 
 CoreObject* CurlHandle::Factory( const CoreClass *cls, void *data, bool deser )
 {
