@@ -181,7 +181,10 @@ size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
       CurlHandle* cs = (CurlHandle*) data;
       VMMessage* vmmsg = new VMMessage( cs->m_sSlot );
       vmmsg->addParam( cs );
-      vmmsg->addParam( new CoreString( (const char*) ptr, size * nmemb ) );
+      CoreString* str = new CoreString;
+      str->adopt( (char*) ptr, (int32) size * nmemb, 0 );
+      str->bufferize();
+      vmmsg->addParam( str );
       vm->postMessage( vmmsg );
    }
 
@@ -194,7 +197,9 @@ size_t CurlHandle::write_string( void *ptr, size_t size, size_t nmemb, void *dat
    if ( h->m_sReceived == 0 )
       h->m_sReceived = new CoreString( size * nmemb );
 
-   h->m_sReceived->append( String( (const char*) ptr, size * nmemb ) );
+   String str;
+   str.adopt( (char*) ptr, (int32) size * nmemb, 0 );
+   h->m_sReceived->append( str );
    return size * nmemb;
 }
 
@@ -204,9 +209,9 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
    if( vm != 0 )
    {
       CurlHandle* self = (CurlHandle*) data;
-      char* str = (char*) ptr;
-      CoreString* cs = new CoreString( str, size*nmemb );
-      vm->pushParameter( cs );
+      CoreString* str = new CoreString;
+      str->adopt( ( char*) ptr, (int32) size * nmemb, 0 );
+      vm->pushParameter( str );
       vm->callItemAtomic( self->m_iDataCallback, 1 );
 
       if( vm->regA().isNil() || (vm->regA().isBoolean() && vm->regA().asBoolean() ) )
