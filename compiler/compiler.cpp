@@ -54,13 +54,13 @@
    c = Compiler()
 
    // try to compile a source string
-   str = "
+   str = '
       function func( a )
-         > 'Hello from compiled source: ', a
+         > "Hello from compiled source: ", a
       end
 
-      > 'The main part of the module'
-   "
+      > "The main part of the module"
+   '
 
    try
       // First param is the module logical name.
