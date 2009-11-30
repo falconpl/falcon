@@ -18,7 +18,7 @@
    @module feather_json json
    @brief JavaScript Object Notation interface.
 
-   This module exposes function to dump and load variables
+   This module exposes functions to dump and load variables
    encoded in JSON format. See @link http://json.org for more details.
 
    The module is meant to be included in a namespace (for example, json);
