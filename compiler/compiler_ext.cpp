@@ -110,7 +110,7 @@ namespace Ext {
    @param dt Directive to be set.
    @param value Value to be given to the directive.
    @return On success, a @a Module instance that contains the loaded module.
-   @raise SyntaxError if the module contains logical srror.
+   @raise SyntaxError if the module contains logical error.
    @raise IoError if the input data is a file stream and there have been a read failure.
 
    Sets a directive as if the scripts that will be loaded by this compiler defined it
@@ -263,7 +263,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    @param modName A logical unique that will be given to the module after compilation.
    @param data The data to compile. It may be a string or a stream valid for input.
    @return On success, a @a Module instance that contains the compiled module.
-   @raise SyntaxError if the module contains logical srror.
+   @raise SyntaxError if the module contains logical error.
    @raise IoError if the input data is a file stream and there have been a read failure.
 
    Tries to compile the module in the @b data parameter. On failure, a SyntaxError
@@ -344,7 +344,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    @brief Loads a module given its logical name.
    @param modName The logical name of the module to be loaded.
    @return On success, a @a Module instance that contains the loaded module.
-   @raise SyntaxError if the module contains logical srror.
+   @raise SyntaxError if the module contains logical error.
    @raise IoError if the input data is a file stream and there have been a read failure.
 
    Tries to load a logically named module scanning for suitable sources, pre-compiled
@@ -396,7 +396,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    @param modPath Relative or absolute path to a loadable Falcon module or source.
    @optparam alias Alias under which the module should be loaded.
    @return On success, a @a Module instance that contains the loaded module.
-   @raise SyntaxError if the module contains logical srror.
+   @raise SyntaxError if the module contains logical error.
    @raise IoError if the input data is a file stream and there have been a read failure.
 
    Loads the given file, trying to perform compilation or loading of the relevant
