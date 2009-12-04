@@ -361,7 +361,7 @@ static bool __leave_handler( VMachine* vm )
       oldStateName = self->state();
    }
    // enter the state
-   self->setState( *state, &vm->param(1)->asDict()->items() );
+   self->setState( *state, &vm->preParam(0)->asDict()->items() );
 
    // Does the new state have a "__enter" ?
    Item enterItem;
@@ -388,7 +388,9 @@ void CoreObject::setState( const String& state, VMachine* vm )
 {
    ItemDict *states = m_generatedBy->states();
    Item* stateDict;
-   if ( states == 0 || ( stateDict = states->find( Item(const_cast<String*>(&state)) ) ) )
+   if ( states == 0 ||
+        ( stateDict = states->find( Item(const_cast<String*>(&state)) ) ) == 0
+        )
    {
       throw new CodeError( ErrorParam( e_undef_state, __LINE__ )
             .origin( e_orig_runtime )
@@ -400,10 +402,9 @@ void CoreObject::setState( const String& state, VMachine* vm )
    if( getMethod("__leave", leaveItem ) )
    {
       CoreString* csState = new CoreString( state );
+      vm->pushParameter(*stateDict); // pre-param 0
       vm->pushParameter( csState );
-      vm->pushParameter(*stateDict);
-      vm->callFrame( leaveItem, 2 );
-      vm->returnHandler( __leave_handler );
+      vm->callFrame( leaveItem, 1, &__leave_handler );
       return;
    }
 

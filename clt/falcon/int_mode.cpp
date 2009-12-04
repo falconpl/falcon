@@ -155,10 +155,10 @@ void IntMode::run()
          }
          
 
-		// maintain previous status if having a compilation error.
-		lastRet = lastRet1;
-		line.size( 0 );
-		linenum++;
+         // maintain previous status if having a compilation error.
+         lastRet = lastRet1;
+         line.size( 0 );
+         linenum++;
       }
       // else just continue.
    }

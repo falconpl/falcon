@@ -3894,7 +3894,7 @@ void VMachine::launch( const String &startSym, uint32 paramCount )
    try
    {
       reset();
-      callItem( *lItem, paramCount, true );
+      callItem( *lItem, paramCount );
    }
    catch( VMEventQuit&  )
    {

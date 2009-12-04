@@ -580,6 +580,16 @@ protected:
    /** Gets the next item in a trav loop */
    Item* getNextTravVar();
 
+   /** Prepare a coroutine context.
+
+     The context is immediately swapped, so any operation performed by
+     the caller is done on the new context. This allow to call an item
+     right after coroutine creation.
+
+     \param paramCount Number of parameters to be passed in the coroutine stack.
+   */
+   VMContext* coPrepare( int32 paramCount );
+
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
    */
@@ -1086,6 +1096,36 @@ public:
       return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).dereference();
    }
 
+   /** Returns the nth pre-paramter passed to the VM.
+      Pre-parameters can be used to pass items to external functions.
+      They are numbered 0...n in reverse push order, and start at the first
+      push before the first real parameter.
+
+      For example;
+
+      \code
+         Item *p0, *p1, *callable;
+         ...
+         vm->pushParameter( (int64) 0 );   // pre-parameter 1
+         vm->pushParameter( vm->self() );  // pre-parameter 0
+         vm->pushParameter( *p0 );
+         vm->pushParameter( *p1 );
+
+         vm->callFrame( *callable, 2 );    // 2 parameters
+      \endcode
+   */
+   Item *preParam( uint32 itemId )
+   {
+      register uint32 params = paramCount();
+      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE - itemId - 1).dereference();
+   }
+
+   /** Const version of preParam */
+   const Item *preParam( uint32 itemId ) const
+   {
+      register uint32 params = paramCount();
+      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE - itemId - 1).dereference();
+   }
 
    /** Returns the nth local item.
       The first variable in the local context is numbered 0.
@@ -1336,21 +1376,18 @@ public:
       does nothing.
 
       Before calling this function, enough parameters must be pushed in the stack
-      using pushParameter() method.
+      using pushParam() method.
 
       The paramCount parameter must be smaller or equal to the size of the stack,
       or an unblockable error will be raised.
 
       \param callable the item to be called.
       \param paramCount the number of elements in the stack to be considered parameters.
-      \param asApp Consider this as falcon application entry point.
-                   If true, the VM will throw a VMQuitEvent autonomously when finished.
       \param mode the item call mode.
    */
-   void callItem( const Item &callable, int32 paramCount, bool asApp = false )
+   void callItem( const Item &callable, int32 paramCount )
    {
       callFrame( callable, paramCount );
-      if ( asApp ) currentFrame()->m_break = false;
       execFrame();
    }
 
@@ -1372,6 +1409,20 @@ public:
       callable.readyFrame( this, paramCount );
    }
 
+   /** Prepares a VM call frame with a return handler.
+       When the code flow will return to the calling run(), or when it will enter
+       run() for the first time, the code in callable will be executed.
+
+       At termination, the vm will immediately call callbackFunc that may create new
+       frames and return true, to ask the VM to continue the evaluation, or return
+       false and terminate this frame, effectively "returning" from the callable.
+   */
+   void callFrame( const Item &callable, int32 paramCount, ext_func_frame_t callbackFunc )
+   {
+      callable.readyFrame( this, paramCount );
+      m_currentContext->returnHandler( callbackFunc );
+   }
+
    /** Prepare a frame for a function call */
    void prepareFrame( CoreFunc* cf, uint32 paramCount );
 
@@ -1383,16 +1434,6 @@ public:
        However, a debug assert is performed.
     */
    void prepareFrame( CoreArray* ca, uint32 paramCount );
-
-   /** Prepare a coroutine context.
-
-     The context is immediately swapped, so any operation performed by
-     the caller is done on the new context. This allow to call an item
-     right after coroutine creation.
-
-     \param paramCount Number of parameters to be passed in the coroutine stack.
-   */
-   VMContext* coPrepare( int32 paramCount );
 
    /** Executes an executable item in a coroutine.
      \param callable The callable routine.
@@ -1514,6 +1555,9 @@ public:
       \param item the item to be passes as a parameter to the next call.
    */
    void pushParameter( const Item &item ) { m_currentContext->pushParameter(item); }
+
+   /** Alias for void pushParameter() */
+   void pushParam( const Item &item ) { m_currentContext->pushParameter(item); }
 
    /** Adds some local space in the current context.
       \param amount how many local variables must be created
