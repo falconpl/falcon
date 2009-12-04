@@ -1,0 +1,42 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39e
+* Category: states
+* Subcategory:
+* Short: State error
+* Description:
+*   Checks detection of errors when applying states.
+* [/Description]
+*
+****************************************************************************/
+
+class Stateful
+   state one
+   end
+
+   state two
+   end
+end
+
+class Stateless
+end
+
+s = Stateful()
+// applying an unexisting state
+try
+   s.setState( "three" )
+   failure( "unexisting state applied" )
+catch
+end
+
+// applying an existing state to a stateless class
+s = Stateless()
+try
+   s.setState( Stateful.one )
+   failure( "Sate applied to stateless instance" )
+catch
+end
+
+success()

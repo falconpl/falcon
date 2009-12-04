@@ -1,0 +1,42 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39d
+* Category: states
+* Subcategory:
+* Short: Init state
+* Description:
+*  Checks correct working of init state.
+* [/Description]
+*
+****************************************************************************/
+
+class Base
+   element = 0
+   
+   init
+      self.element = "started"
+   end
+   
+   state init
+      function __enter(): self.element = "touched"
+      function f1(): return "from init"
+   end
+
+end
+
+
+class Derived from Base
+   init
+      self.element = "changed"
+   end
+end
+
+d1 = Derived()
+
+if d1.f1() != "from init": failure( "Init state not applied" )
+if d1.element != "touched": failure( "Init state not applied after instance init" )
+
+
+success()

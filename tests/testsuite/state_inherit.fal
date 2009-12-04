@@ -1,0 +1,87 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39b
+* Category: states
+* Subcategory:
+* Short: State inheritance
+* Description:
+*  Checks correct working of inheritance when states are involved.
+*  This test doesn't check for basic state functionalities (39a)
+* [/Description]
+*
+****************************************************************************/
+
+
+class Base
+   state one
+      function f1(): return "f1-one-base"
+      function f2(): return "f2-one-base"
+   end
+
+   state two
+      function f1(): return "f1-two-base"
+      function f2(): return "f2-two-base"
+   end
+end
+
+
+class DerivedOne from Base
+   state one
+      function f1(): return "f1-one-d1"
+      function f2(): return "f2-one-d1"
+   end
+
+   // inherit state two
+   
+   state three
+      function f1(): return "f1-three-d1"
+      function f2(): return "f2-three-d1"
+   end
+end
+
+
+class DerivedTwo from Base
+   state one
+      function f1(): return "f1-one-d2"
+      // clears f2
+   end
+
+   state two
+      // clears state two
+   end
+
+end
+
+// we already tested basic
+
+d1 = DerivedOne()
+d1.setState( d1.one )
+if d1.f1() != "f1-one-d1": failure( "f1-one-d1" )
+if d1.f2() != "f2-one-d1": failure( "f2-one-d1" )
+
+d1.setState( d1.two )
+if d1.f1() != "f1-two-base": failure( "f1-two-base" )
+if d1.f2() != "f2-two-base": failure( "f2-two-base" )
+
+d1.setState( d1.three )
+if d1.f1() != "f1-three-d1": failure( "f1-three-d1" )
+if d1.f2() != "f2-three-d1": failure( "f2-three-d1" )
+
+d2 = DerivedTwo()
+d2.f2 = "occupied"
+d2.setState( d2.one )
+
+if d2.f1() != "f1-one-d2": failure( "f1-one-d2" )
+if d2.f2 != "occupied": failure( "clearing function not applied" )
+
+d2.f1 = "occupied"
+
+d2.setState( d2.two )  // the state is empty, so nothing should be done
+if d2.f1 != "occupied": failure( "clearing state not applied - 1" )
+if d2.f2 != "occupied": failure( "clearing state not applied - 2" )
+
+success()
+
+

@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39a
+* Category: states
+* Subcategory: 
+* Short: Basic states
+* Description:
+* Checks basic state functionality (switching to and from states).
+* [/Description]
+*
+****************************************************************************/
+
+
+class Stateful
+   function stateless()
+      return "stateless"
+   end
+
+   function f1()
+      return "f1-stateless"
+   end
+
+   state one
+      function f1(): return "f1-one"
+      function f2(): return "f2-one"
+   end
+
+   state two
+      function f1(): return "f1-two"
+      function f2(): return "f2-two"
+   end
+end
+
+
+s = Stateful()
+if s.stateless() != "stateless": failure( "0:stateless" )
+if s.f1() != "f1-stateless": failure( "0:f1-stateless" )
+
+s.setState( s.one ) 
+if s.stateless() != "stateless": failure( "stateless-one" )
+if s.f1() != "f1-one": failure( "f1-one" )
+if s.f2() != "f2-one": failure( "f1-one" )
+
+s.setState( s.two )
+if s.stateless() != "stateless": failure( "stateless-two" )
+if s.f1() != "f1-two": failure( "f1-two" )
+if s.f2() != "f2-two": failure( "f1-two" )
+
+success()
+
+

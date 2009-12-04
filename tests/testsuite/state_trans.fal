@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39c
+* Category: states
+* Subcategory:
+* Short: State transitions
+* Description:
+*  Check for correct application of enter and leave methods.
+*  This test doesn't check for basic state functionalities (39a)
+* [/Description]
+*
+****************************************************************************/
+
+
+class Stateful
+   state one
+      function __leave( newstate ): return @"leaving to ($newstate)"
+   end
+
+   state two
+      function __enter( oldstate, leave ): return @"coming from ($oldstate) - ($leave)"
+   end
+
+   state three
+   end
+
+end
+
+s = Stateful()
+if s.setState( "one" ) != nil: failure( "No transition" ) 
+if s.setState( s.three ) != "leaving to (three)": failure( "leave transition" )
+if s.setState( s.two ) != "coming from (three) - (Nil)": failure( "enter transition" )
+
+s.setState( s.one )
+if s.setState( s.two ) != "coming from (one) - (leaving to (two))": failure( "enter - leave transition" )
+
+success()
+
+
