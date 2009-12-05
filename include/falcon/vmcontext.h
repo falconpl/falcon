@@ -51,8 +51,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
 
    /** Currently executed symbol.
       May be 0 if the startmodule has not a "__main__" symbol;
-      this should be impossible when things are set up properly
-      \todo, make always nonzeor
+      this should be impossible when things are set up properly.
    */
    const Symbol* m_symbol;
 

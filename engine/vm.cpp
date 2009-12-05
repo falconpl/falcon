@@ -1762,6 +1762,7 @@ void VMachine::callReturn()
    if ( frame.m_endFrameFunc != 0 )
    {
       // reset pc-next to allow re-call of this frame in case of need.
+      m_endFrameNext = m_currentContext->pc_next();
       m_currentContext->pc_next() = m_currentContext->pc();
       // if the frame requires to stay here, return immediately
       if ( frame.m_endFrameFunc( this ) )

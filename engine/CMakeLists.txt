@@ -99,6 +99,7 @@ set(CORE_MODULE_SOURCES
   core_module/attrib_ext.cpp
   core_module/cmdlineparser.cpp
   core_module/complex_ext.cpp
+  core_module/continuation_ext.cpp  
   core_module/core_module.cpp
   core_module/coroutine_ext.cpp
   core_module/dict_ext.cpp
@@ -151,6 +152,7 @@ add_library(falcon_engine SHARED
   crobject.cpp
   compiler.cpp
   complex.cpp
+  continuation.cpp
   corearray.cpp
   coreclass.cpp
   coredict.cpp

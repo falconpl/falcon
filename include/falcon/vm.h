@@ -446,6 +446,10 @@ protected:
 
    /** filtered load path */
    String m_appSearchPath;
+
+   /** Temporary location where next pc is saved before end-frame calls. */
+   uint32 m_endFrameNext;
+
    //=============================================================
    // Private functions
    //
@@ -2237,6 +2241,9 @@ public:
 
    void breakRequest( bool mode ) { m_break = mode; }
    bool breakRequest() const { return m_break; }
+
+   uint32 &endFrameNext() { return m_endFrameNext; }
+   const uint32 endFrameNext() const { return m_endFrameNext; }
 
 //==========================================================================
 //==========================================================================

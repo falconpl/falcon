@@ -1680,10 +1680,18 @@ Module* core_module_init()
    //=======================================================================
    // Directory class
    //=======================================================================
+   Falcon::Symbol *cont_class = self->addClass( "Continuation", &Falcon::core::Continuation_init )
+         ->addParam("item");
+   cont_class->getClassDef()->factory( &Falcon::ContinuationCarrier::factory );
+   self->addClassMethod( cont_class, "__call", &Falcon::core::Continuation_call );
+   self->addClassMethod( cont_class, "reset", &Falcon::core::Continuation_reset );
+
+   //=======================================================================
+   // Directory class
+   //=======================================================================
    Falcon::Symbol *dir_class = self->addClass( "Directory", &Falcon::core::Directory_init )
          ->addParam("path");
    dir_class->setWKS(true);
-   //dir_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    self->addClassMethod( dir_class, "read", &Falcon::core::Directory_read );
    self->addClassMethod( dir_class, "descend", &Falcon::core::Directory_descend ).asSymbol()->
       addParam("dfunc")->addParam("ffunc");

@@ -47,6 +47,7 @@
 #include <falcon/lineardict.h>
 #include <falcon/pagedict.h>
 #include <falcon/membuf.h>
+#include <falcon/continuation.h>
 
 // Falcon String helpers
 #include <falcon/autocstring.h>
