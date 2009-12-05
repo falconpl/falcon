@@ -11,7 +11,7 @@ Falcon distributions. They are granted to be present in a correct falcon
 installation.
 
 Yet, they are handled as a separate project, both for administrative reasons
-and to insolate them from the development of the core system, which may be
+and to isolate them from the development of the core system, which may be
 erratic and cause sudden changes in the interfaces.
 
 Modules admitted in the DBI are currently:

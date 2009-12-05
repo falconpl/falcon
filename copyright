@@ -7,10 +7,10 @@
 Falcon and featured modules are currently distributed under a 
 dual licensing scheme GPL/FPLL.
 
-The GPL licensing scheme is provided to ensure compatibilty with
+The GPL licensing scheme is provided to ensure compatibility with
 Open Source and Free Software products. It's a relative strict license
 which is not particularly adequate for virtual machine based scripting
-languge interpreters and engines, but it can be chosen to develop
+language interpreters and engines, but it can be chosen to develop
 pure GPL applications or to favor integration with already
 existing GPL embedding applications.
 

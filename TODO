@@ -4,7 +4,7 @@ MISCELLANEOUS:
    * Organize the dbi_status listings so that they are in
      some type of logical order. Right now I just keep
      appending to the end as I see the need for a new one
-     thus they are in a very erradic order.
+     thus they are in a very erratic order.
 
 OBJECT PERSISTENCE:
    * Object persistence needs to be rethought. Many potential problems
