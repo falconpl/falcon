@@ -24,6 +24,9 @@ Falcon (0.9.4.5)
   * fixed: for-to construct failed to enter the loop in 0 to 0. Also it didn't
            loop the correct times when starting and ending in negative ranges.
   * fixed: EOF in ReadFile (windows streams) was not always correctly detected.
+  * fixed: Read of multi-byte filenames on POSIX systems caused double-utf8 
+           encoding.
+  
 
            
 Falcon (0.9.4.4)

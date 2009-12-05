@@ -202,7 +202,7 @@ bool fal_getcwd( String &fname, int32 &fsError )
    if ( bufret != 0 )
    {
       val = true;
-      fname.bufferize( bufret );
+      fname.fromUTF8( bufret );
    }
    else
       val = false;
@@ -235,7 +235,7 @@ bool fal_readlink( const String &fname, String &link )
 
    if ( ( len = readlink( filename.c_str(), buf, sizeof(buf) - 1 ) ) != -1) {
       buf[len] = '\0';
-      link.bufferize( buf );
+      link.fromUTF8( buf );
       return true;
    }
    return false;
@@ -295,7 +295,7 @@ bool DirEntry_unix::read( String &res )
       return false;
    }
 
-   res.bufferize( d->d_name );
+   res.fromUTF8( d->d_name );
    return true;
 }
 
