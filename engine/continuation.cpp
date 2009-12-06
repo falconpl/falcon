@@ -24,7 +24,7 @@ Continuation::Continuation( VMachine* vm ):
    m_tgtSymbol(0),
    m_tgtLModule(0),
    m_stackBase(0),
-   m_bPhase(false)
+   m_bComplete( false )
 {
    m_context = vm->currentContext();
 }
@@ -35,7 +35,7 @@ Continuation::Continuation( const Continuation& e ):
    m_stack( e.m_stack ),
    m_tgtSymbol( e.m_tgtSymbol ),
    m_tgtLModule( e.m_tgtLModule ),
-   m_bPhase( false )
+   m_bComplete( e.m_bComplete )
 {
    m_context = e.m_context;
    m_stackLevel = e.m_stackLevel;
@@ -50,14 +50,6 @@ Continuation::~Continuation()
 }
 
 
-void Continuation::callMark()
-{
-   m_stackLevel = m_vm->stackBase();
-   // active phase
-   m_bPhase = true;
-}
-
-
 bool Continuation::jump()
 {
    if ( m_vm->currentContext()->atomicMode() )
@@ -66,8 +58,18 @@ bool Continuation::jump()
             .origin( e_orig_vm ) );
    }
 
+   m_stackLevel = m_vm->stackBase();
+
    if ( m_tgtSymbol != 0 )
    {
+      fassert( m_tgtSymbol->isFunction() )
+      if( m_bComplete )
+      {
+         throw new CodeError( ErrorParam( e_cont_out, __LINE__ )
+               .origin( e_orig_vm )  );
+      }
+      m_bComplete = true;
+
       // remove our frame, or we'll be called twice.
       m_vm->stack().copyOnto( m_stackLevel, m_stack, 0, m_stack.length() );
       m_vm->currentContext()->symbol( m_tgtSymbol );
@@ -77,42 +79,19 @@ bool Continuation::jump()
       return true;
    }
 
+   m_bComplete = true;
    return false;
 }
 
 
-bool Continuation::unroll( VMachine* vm )
-{
-   ContinuationCarrier* cself = dyncast<ContinuationCarrier*>(vm->self().asObject());
-   Continuation* self = cself->cont();
 
-   // Unroll the stack
-   while( vm->stackBase() > self->m_stackLevel )
-   {
-      // neutralize post-processors
-      vm->returnHandler( 0 );
-      vm->callReturn();
-      if ( vm->breakRequest() )
-      {
-         // exit from the C frame, but be sure to be called back
-         vm->returnHandler( Continuation::unroll );
-         return false;
-      }
-   }
-
-   return false;
-}
-
-void Continuation::invoke( const Item& retval )
+void Continuation::suspend( const Item& retval )
 {
    if ( m_vm->currentContext()->atomicMode() )
    {
       throw new CodeError( ErrorParam( e_cont_atomic, __LINE__ )
             .origin( e_orig_vm ) );
    }
-
-   // passive phase
-   m_bPhase = false;
 
    StackFrame* cframe = m_vm->currentFrame();
    m_stack.clear();
@@ -126,6 +105,9 @@ void Continuation::invoke( const Item& retval )
    m_stackBase = cframe->m_stack_base;
    m_vm->regA() = retval;
 
+   // for sure, we need more call
+   m_bComplete = false;
+
    // Unroll the stack
    while( m_vm->stackBase() >= m_stackLevel )
    {
@@ -136,7 +118,8 @@ void Continuation::invoke( const Item& retval )
    }
 }
 
-
+//=============================================================
+// Continuation Carrier
 
 
 ContinuationCarrier::ContinuationCarrier( const CoreClass* cc ):

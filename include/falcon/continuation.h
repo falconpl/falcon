@@ -34,8 +34,6 @@ public:
    Continuation( const Continuation& e );
    virtual ~Continuation();
 
-   void callMark();
-
    /** Applies the continuation on the virtual machine.
        If the continuation is
     */
@@ -47,20 +45,31 @@ public:
     2) returning the given value to the original caller.
     3) applying the original context and unrolling the stack up to the call level.
     */
-   void invoke( const Item& retval );
+   void suspend( const Item& retval );
 
    void reset()
    {
+      m_bComplete = false;
       m_tgtSymbol = 0;
+   }
+
+   /** Returns true if the topmost code in this continuation has been fully executed.
+
+       In other words, it returns false if it has been not yet executed or
+       executed but suspended.
+    * */
+   bool complete() const {
+      return m_tgtSymbol != 0 && m_tgtPC >= m_tgtSymbol->getFuncDef()->codeSize();
+   }
+
+   bool ready() const {
+      return m_tgtSymbol == 0;
    }
 
    const ItemArray& stack() const { return m_stack; }
    ItemArray& stack() { return m_stack; }
 
-   bool phase() const { return m_bPhase; }
-
 private:
-   static bool unroll( VMachine* vm );
 
    VMachine* m_vm;
 
@@ -81,7 +90,9 @@ private:
 
    uint32 m_stackBase;
 
-   bool m_bPhase;
+   bool m_bComplete;
+
+   int32 m_refCount;
 };
 
 
@@ -102,14 +113,16 @@ public:
 
    const Item& ccItem() const { return m_citem; }
    void ccItem( const Item& itm ) { m_citem = itm; }
+   const Item& suspendItem() const  { return m_suspendItem; }
+   Item& suspendItem()  { return m_suspendItem; }
 
    static CoreObject* factory( const CoreClass* cls, void* data, bool deser );
 private:
    Continuation* m_cont;
    Item m_citem;
+   Item m_suspendItem;
    uint32 m_mark;
 };
-
 
 }
 

@@ -1685,6 +1685,8 @@ Module* core_module_init()
    cont_class->getClassDef()->factory( &Falcon::ContinuationCarrier::factory );
    self->addClassMethod( cont_class, "__call", &Falcon::core::Continuation_call );
    self->addClassMethod( cont_class, "reset", &Falcon::core::Continuation_reset );
+   self->addClassMethod( cont_class, "complete", &Falcon::core::Continuation_complete );
+   self->addClassMethod( cont_class, "_suspend", &Falcon::core::Continuation__suspend );
 
    //=======================================================================
    // Directory class

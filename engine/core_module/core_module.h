@@ -469,8 +469,9 @@ FALCON_FUNC  Sequence_prepend ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC Continuation_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC Continuation_call ( ::Falcon::VMachine *vm );
-FALCON_FUNC Continuation_invoke ( ::Falcon::VMachine *vm );
 FALCON_FUNC Continuation_reset ( ::Falcon::VMachine *vm );
+FALCON_FUNC Continuation_complete ( ::Falcon::VMachine *vm );
+FALCON_FUNC Continuation__suspend ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
