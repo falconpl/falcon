@@ -52,7 +52,7 @@ FALCON_FUNC Continuation_call ( ::Falcon::VMachine *vm )
 
       // otherwise, we have to call the item from here.
       vm->pushParam( cc );
-      vm->callItem( cc->ccItem(), 1 );
+      vm->callFrame( cc->ccItem(), 1 );
    }
    else
    {

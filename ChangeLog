@@ -26,7 +26,7 @@ Falcon (0.9.4.5)
   * fixed: EOF in ReadFile (windows streams) was not always correctly detected.
   * fixed: Read of multi-byte filenames on POSIX systems caused double-utf8 
            encoding.
-  
+  * Added: Continuation class, allowing to suspend & resume arbitrary code.
 
            
 Falcon (0.9.4.4)

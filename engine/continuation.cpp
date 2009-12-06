@@ -52,7 +52,7 @@ Continuation::~Continuation()
 
 void Continuation::callMark()
 {
-   m_stackLevel = m_vm->stackBase() - m_vm->currentFrame()->m_param_count -VM_FRAME_SPACE;
+   m_stackLevel = m_vm->stackBase();
    // active phase
    m_bPhase = true;
 }
@@ -77,19 +77,22 @@ bool Continuation::jump()
 
 bool Continuation::unroll( VMachine* vm )
 {
+   ContinuationCarrier* cself = dyncast<ContinuationCarrier*>(vm->self().asObject());
+   Continuation* self = cself->cont();
+
    // Unroll the stack
-   /*while( m_vm->stackBase() > m_stackLevel )
+   while( vm->stackBase() > self->m_stackLevel )
    {
       // neutralize post-processors
-      m_vm->returnHandler( 0 );
-      m_vm->callReturn();
-      if ( m_vm->breakRequest() )
+      vm->returnHandler( 0 );
+      vm->callReturn();
+      if ( vm->breakRequest() )
       {
          // exit from the C frame, but be sure to be called back
-         m_vm->returnHandler( Continuation::unroll );
+         vm->returnHandler( Continuation::unroll );
          return false;
       }
-   }*/
+   }
 
    return false;
 }
@@ -112,17 +115,17 @@ void Continuation::invoke( const Item& retval )
    m_vm->regA() = retval;
 
    // Unroll the stack
-   while( m_vm->stackBase() > m_stackLevel )
+   while( m_vm->stackBase() >= m_stackLevel )
    {
       // neutralize post-processors
       m_vm->returnHandler( 0 );
       m_vm->callReturn();
-      /*if ( m_vm->breakRequest() )
+      if ( m_vm->breakRequest() )
       {
          // exit from the C frame, but be sure to be called back
          m_vm->returnHandler( Continuation::unroll );
          return;
-      }*/
+      }
    }
 }
 
