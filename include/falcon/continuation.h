@@ -79,6 +79,8 @@ private:
 
    uint32 m_tgtPC;
 
+   uint32 m_stackBase;
+
    bool m_bPhase;
 };
 
