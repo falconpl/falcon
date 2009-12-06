@@ -60,6 +60,12 @@ void Continuation::callMark()
 
 bool Continuation::jump()
 {
+   if ( m_vm->currentContext()->atomicMode() )
+   {
+      throw new CodeError( ErrorParam( e_cont_atomic, __LINE__ )
+            .origin( e_orig_vm ) );
+   }
+
    if ( m_tgtSymbol != 0 )
    {
       // remove our frame, or we'll be called twice.
@@ -99,6 +105,12 @@ bool Continuation::unroll( VMachine* vm )
 
 void Continuation::invoke( const Item& retval )
 {
+   if ( m_vm->currentContext()->atomicMode() )
+   {
+      throw new CodeError( ErrorParam( e_cont_atomic, __LINE__ )
+            .origin( e_orig_vm ) );
+   }
+
    // passive phase
    m_bPhase = false;
 
@@ -120,12 +132,7 @@ void Continuation::invoke( const Item& retval )
       // neutralize post-processors
       m_vm->returnHandler( 0 );
       m_vm->callReturn();
-      if ( m_vm->breakRequest() )
-      {
-         // exit from the C frame, but be sure to be called back
-         m_vm->returnHandler( Continuation::unroll );
-         return;
-      }
+      fassert( ! m_vm->breakRequest() );
    }
 }
 
