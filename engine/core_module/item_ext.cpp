@@ -30,7 +30,7 @@ namespace core {
 
 /*#
    @function len
-   @brief Retreives the lenght of a collection
+   @brief Retrieves the length of a collection
    @param item an item of any kind
    @return the count of items in the sequence, or 0.
 
@@ -44,7 +44,7 @@ namespace core {
 /*#
    @method len BOM
 
-   @brief Retreives the lenght of a collection
+   @brief Retrieves the length of a collection
    @return the count of items in the sequence, or 0.
 
    The returned value represent the "size" of this item.
@@ -87,6 +87,40 @@ FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm )
       default:
          vm->retval( 0 );
    }
+}
+
+/*#
+   @function isBound
+   @param item
+
+   @brief Determines if an item is bound or not.
+   @return True if the item is bound.
+
+   @see BOM.bound
+*/
+/*#
+   @method bound BOM
+
+   @brief Determines if an item is bound or not.
+   @return True if the item is bound.
+
+   @see isBound
+*/
+FALCON_FUNC  mth_bound( ::Falcon::VMachine *vm )
+{
+   Item *elem;
+   if ( ! vm->self().isMethodic() )
+   {
+      elem = vm->param( 0 );
+      if ( elem == 0 ) {
+         vm->regA().setBoolean( false );
+         return;
+      }
+   }
+   else
+      elem = &vm->self();
+
+   vm->regA().setBoolean( ! elem->isUnbound() );
 }
 
 

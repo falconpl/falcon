@@ -39,6 +39,7 @@ FALCON_FUNC core_argd( VMachine *vm );
 
 // Methodic functions
 FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_bound( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_compare ( ::Falcon::VMachine *vm );

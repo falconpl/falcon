@@ -101,6 +101,9 @@ Module* core_module_init()
       addParam("item");
    self->addExtFunc( "describe", &Falcon::core::mth_describe )->
       addParam("item")->addParam("depth")->addParam("maxLen");
+   self->addExtFunc( "isBound", &Falcon::core::mth_bound  )->
+      addParam("item");
+
 
 
    /*#
@@ -390,11 +393,17 @@ Module* core_module_init()
    self->addClassMethod( bom_meta, "ptr", &Falcon::core::BOM_ptr );
    self->addClassMethod( bom_meta, "describe", &Falcon::core::mth_describe ).asSymbol()
       ->addParam("depth")->addParam("maxLen");
+   self->addClassMethod( bom_meta, "bound", &Falcon::core::mth_bound );
 
    Falcon::Symbol *nil_meta = self->addClass( "Nil" );
    nil_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    nil_meta->exported( false );
    nil_meta->getClassDef()->setMetaclassFor( FLC_ITEM_NIL );
+
+   Falcon::Symbol *umb_meta = self->addClass( "Unbound" );
+   umb_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
+   umb_meta->exported( false );
+   umb_meta->getClassDef()->setMetaclassFor( FLC_ITEM_UNB );
 
    Falcon::Symbol *bool_meta = self->addClass( "Boolean" );
    bool_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
