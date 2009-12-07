@@ -86,6 +86,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token <stringp> STRING
 
 %token NIL
+%token UNB
 %token END
 %token DEF
 %token WHILE BREAK CONTINUE DROPPING
@@ -2283,6 +2284,7 @@ return_statement:
 
 const_atom_non_minus:
    NIL { $$ = new Falcon::Value(); }
+   | UNB { $$ = new Falcon::Value(); $$->setUnbound(); }
    | TRUE_TOKEN { $$ = new Falcon::Value( true ); }
    | FALSE_TOKEN { $$ = new Falcon::Value( false ); }
    | INTNUM { $$ = new Falcon::Value( $1 ); }
@@ -2292,6 +2294,7 @@ const_atom_non_minus:
 
 const_atom:
    NIL { $$ = new Falcon::Value(); }
+   | UNB { $$ = new Falcon::Value(); $$->setUnbound(); }
    | TRUE_TOKEN { $$ = new Falcon::Value( true ); }
    | FALSE_TOKEN { $$ = new Falcon::Value( false ); }
    | INTNUM_WITH_MINUS { $$ = new Falcon::Value( $1 ); }

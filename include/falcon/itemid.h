@@ -51,9 +51,9 @@
 #define FLC_ITEM_CLSMETHOD    14
 #define FLC_ITEM_METHOD       15
 #define FLC_ITEM_CLASS        16
+#define FLC_ITEM_UNB          17
 
-#define FLC_ITEM_COUNT        17
-
+#define FLC_ITEM_COUNT        18
 #define FLC_ITEM_INVALID      99
 
 #endif

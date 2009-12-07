@@ -790,6 +790,7 @@ void Compiler::addPredefs()
    addIntConstant( "ClassType", FLC_ITEM_CLASS );
    addIntConstant( "MethodType", FLC_ITEM_METHOD );
    addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
+   addIntConstant( "UnboundType", FLC_ITEM_UNB );
 
 }
 

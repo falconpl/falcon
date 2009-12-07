@@ -508,6 +508,7 @@ void GenTree::gen_value( const Value *val )
    switch( val->type() )
    {
       case Value::t_nil: m_out->writeString( "nil" ); break;
+      case Value::t_unbound: m_out->writeString( "unbound" ); break;
       case Value::t_imm_bool:
             m_out->writeString( val->asBool() ? "true": "false" );
       break;

@@ -75,6 +75,10 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          stream->writeString( "Nil" );
       break;
 
+      case FLC_ITEM_UNB:
+            stream->writeString( "_" );
+      break;
+
       case FLC_ITEM_BOOL:
          stream->writeString( elem->asBoolean() ? "true" : "false" );
       break;
@@ -417,6 +421,11 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
       case FLC_ITEM_NIL:
          tgt += "Nil";
       break;
+
+      case FLC_ITEM_UNB:
+         tgt += "_";
+      break;
+
 
       case FLC_ITEM_BOOL:
          tgt += elem->asBoolean() ? "true" : "false";

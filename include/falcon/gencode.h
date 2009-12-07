@@ -31,6 +31,7 @@ class FALCON_DYN_CLASS GenCode: public Generator
    typedef enum {
       e_parND,
       e_parNIL,
+      e_parUND,
       e_parVAL,
       e_parVAR,
       e_parINT32,
@@ -133,6 +134,8 @@ class FALCON_DYN_CLASS GenCode: public Generator
       {
          if ( val->isNil() )
             m_type = e_parNIL;
+         else if( val->isUnbound() )
+            m_type = e_parUND;
          else
             m_content.value = val;
       }

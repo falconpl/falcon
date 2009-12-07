@@ -456,6 +456,10 @@ void Item::toString( String &target ) const
          target = "Nil";
       break;
 
+      case FLC_ITEM_UNB:
+         target = "_";
+      break;
+
       case FLC_ITEM_BOOL:
          target = asBoolean() ? "true" : "false";
       break;

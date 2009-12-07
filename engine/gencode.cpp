@@ -342,6 +342,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
    {
       case e_parND: return P_PARAM_NOTUSED;
       case e_parNIL: return P_PARAM_NIL;
+      case e_parUND: return P_PARAM_UNB;
       case e_parVAL:
       {
          const Value *val = elem.m_content.value;

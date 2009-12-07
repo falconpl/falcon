@@ -220,6 +220,8 @@ public:
 
    void setNil() { type( FLC_ITEM_NIL ); }
 
+   void setUnbound() { type( FLC_ITEM_UNB ); }
+
    Item( const Item &other ) {
       copy( other );
    }
@@ -614,6 +616,7 @@ public:
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isClassMethod() const { return type() == FLC_ITEM_CLSMETHOD; }
    bool isClass() const { return type() == FLC_ITEM_CLASS; }
+   bool isUnbound() const { return type() == FLC_ITEM_UNB; }
    bool isOfClass( const String &className ) const;
 
    bool isMethodic() const { return (flags() & flagIsMethodic) != 0; }

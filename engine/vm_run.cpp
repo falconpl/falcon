@@ -90,6 +90,10 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
          m_imm[bc_pos].setNil();
       return m_imm + bc_pos;
 
+      case P_PARAM_UNB:
+         m_imm[bc_pos].setUnbound();
+      return m_imm + bc_pos;
+
       case P_PARAM_GLOBID:
       {
          register int32 id = *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() );

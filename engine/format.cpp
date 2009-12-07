@@ -471,6 +471,12 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
 
       break;
 
+      case FLC_ITEM_UNB:
+         sBuffer = "_";
+         applyPad( sBuffer );
+         break;
+
+
       //==================================================
       // Parse an integer
       //

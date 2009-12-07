@@ -109,6 +109,7 @@ public:
       t_array_decl,
       t_dict_decl,
       t_range_decl,
+      t_unbound,
 
       t_expression
    } type_t;
@@ -235,6 +236,7 @@ public:
 
    bool isImmediate() const {
       return m_type == t_nil ||
+             m_type == t_unbound ||
              m_type == t_imm_bool ||
              m_type == t_imm_integer ||
              m_type == t_imm_string ||
@@ -271,6 +273,7 @@ public:
    Expression *asExpr() const { return m_content.asExpr; }
 
    void setNil() { m_type = t_nil; }
+   void setUnbound() { m_type = t_unbound; }
    void setBool( bool val ) { m_type = t_imm_bool; m_content.asBool = val; }
    void setInteger( int64 val ) { m_type = t_imm_integer; m_content.asInteger = val; }
    void setNumeric( numeric val ) { m_type = t_imm_num; m_content.asNumeric = val; }
@@ -286,6 +289,7 @@ public:
    void setLBind( String *val ) { m_type = t_lbind; m_content.asString = val; }
 
    bool isNil() const { return m_type == t_nil; }
+   bool isUnbound() const { return m_type == t_unbound; }
    bool isBool() const { return m_type == t_imm_bool; }
    bool isInteger() const { return m_type == t_imm_integer; }
    bool isNumeric() const { return m_type == t_imm_num; }

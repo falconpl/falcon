@@ -300,9 +300,16 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          serialize_class( file, this->asClass() );
       break;
 
-       case FLC_ITEM_CLSMETHOD:
+      case FLC_ITEM_CLSMETHOD:
          serialize_class( file, this->asMethodClass() );
          serialize_function( file, this->asFunction(), bLive );
+      break;
+
+      case FLC_ITEM_UNB:
+      {
+         byte type = FLC_ITEM_UNB;
+         file->write((byte *) &type, 1 );
+      }
       break;
 
       default:
@@ -457,6 +464,10 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       case FLC_ITEM_NIL:
          setNil();
       return sc_ok;
+
+      case FLC_ITEM_UNB:
+         setUnbound();
+         return sc_ok;
 
       case FLC_ITEM_BOOL:
       {

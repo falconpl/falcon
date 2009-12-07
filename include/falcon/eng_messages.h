@@ -238,6 +238,7 @@ FAL_ERRORDECL( e_sm_adef, 170, "State member already defined" );
 FAL_ERRORDECL( e_state_adef, 171, "State already defined" );
 FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
 FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
+FAL_ERRORDECL( e_invop_unb, 174, "Unbound value used in arbitrary operation" );
 
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );

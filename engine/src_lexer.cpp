@@ -1499,6 +1499,11 @@ int SrcLexer::checkLimitedTokens()
 {
    switch( m_string.length() )
    {
+      case 1:
+         if ( m_string == "_" )
+            return UNB;
+      break;
+
       case 2:
          if ( m_string == "or" )
             return OR;

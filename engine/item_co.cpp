@@ -39,8 +39,14 @@ namespace Falcon {
 // Generic fail
 void co_fail()
 {
-   throw new TypeError( ErrorParam( e_invop ).extra( "op" ) );
+   throw new TypeError( ErrorParam( e_invop ) );
 }
+
+void co_fail_unb()
+{
+   throw new TypeError( ErrorParam( e_invop_unb ) );
+}
+
 
 //=============================================================
 // Add
@@ -1239,8 +1245,15 @@ void co_ref_decpost( Item& first, Item &tgt )
 
 int co_nil_compare( const Item& first, const Item& second )
 {
-   if ( second.isReference() )
+   switch( second.type() )
+   {
+   case FLC_ITEM_REFERENCE:
       return co_nil_compare( first, second.asReference()->origin() );
+
+   case FLC_ITEM_UNB:
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
 
    return first.type() - second.type();
 }
@@ -1260,6 +1273,10 @@ int co_bool_compare( const Item& first, const Item& second )
 
       case FLC_ITEM_REFERENCE:
          return co_bool_compare( first, second.asReference()->origin() );
+
+      case FLC_ITEM_UNB:
+         const_cast<Item*>(&second)->copy( first );
+         return 0;
    }
 
    // bool is always lower
@@ -1282,6 +1299,10 @@ int co_int_compare( const Item& first, const Item& second )
 
       case FLC_ITEM_REFERENCE:
          return co_int_compare( first, second.asReference()->origin() );
+
+      case FLC_ITEM_UNB:
+         const_cast<Item*>(&second)->copy( first );
+         return 0;
       }
 
    // lower than the others
@@ -1313,6 +1334,10 @@ int co_num_compare( const Item& first, const Item& second )
 
       case FLC_ITEM_REFERENCE:
          return co_num_compare( first, second.asReference()->origin() );
+
+      case FLC_ITEM_UNB:
+         const_cast<Item*>(&second)->copy( first );
+         return 0;
     }
 
    // lower than the others
@@ -1355,6 +1380,10 @@ int co_range_compare( const Item& first, const Item& second )
 
       case FLC_ITEM_REFERENCE:
          return co_range_compare( first, second.asReference()->origin() );
+
+      case FLC_ITEM_UNB:
+         const_cast<Item*>(&second)->copy( first );
+         return 0;
    }
 
    return -1;
@@ -1362,13 +1391,18 @@ int co_range_compare( const Item& first, const Item& second )
 
 int co_lbind_compare( const Item& first, const Item& second )
 {
-   if ( second.isReference() )
+   switch( second.type() )
    {
+
+   case FLC_ITEM_REFERENCE:
       return co_lbind_compare( first, second.asReference()->origin() );
-   }
-   else if ( second.isLBind() )
-   {
+
+   case FLC_ITEM_LBIND:
       return (int)(first.asLBind() - second.asLBind());
+
+   case FLC_ITEM_UNB:
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
    }
 
    return first.type() - second.type();
@@ -1376,13 +1410,18 @@ int co_lbind_compare( const Item& first, const Item& second )
 
 int co_func_compare( const Item& first, const Item& second )
 {
-   if ( second.isReference() )
+   switch( second.type() )
    {
+
+   case FLC_ITEM_REFERENCE:
       return co_func_compare( first, second.asReference()->origin() );
-   }
-   else if ( second.isFunction() )
-   {
+
+   case FLC_ITEM_FUNC:
       return first.asFunction()->name().compare(second.asFunction()->name());
+
+   case FLC_ITEM_UNB:
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
    }
 
    return first.type() - second.type();
@@ -1397,6 +1436,11 @@ int co_gcptr_compare( const Item& first, const Item& second )
    else if ( second.isGCPointer() )
    {
       return (int)(first.asGCPointer() - second.asGCPointer());
+   }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
    }
 
    return first.type() - second.type();
@@ -1413,6 +1457,11 @@ int co_string_compare( const Item& first, const Item& second )
    {
       return first.asString()->compare( *second.asString() );
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
 
    return first.type() - second.type();
 }
@@ -1428,6 +1477,11 @@ int co_array_compare( const Item& first, const Item& second )
    {
       return (int)(first.asArray() - second.asArray());
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
 
    return (first.type() - second.type());
 }
@@ -1437,6 +1491,12 @@ int co_dict_compare( const Item& first, const Item& second )
 {
    CoreDict *self = first.asDict();
    const Item* psecond = second.dereference();
+
+   if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
 
    Item mth;
    if ( self->getMethod( "compare", mth ) )
@@ -1466,6 +1526,11 @@ int co_object_compare( const Item& first, const Item& second )
    if ( second.isReference() )
    {
       return co_object_compare( first, second.asReference()->origin() );
+   }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
    }
    else
    {
@@ -1507,6 +1572,12 @@ int co_membuf_compare( const Item& first, const Item& second )
    {
       return (int)(first.asMemBuf() - second.asMemBuf());
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
+
 
    return (int)(first.type() - second.type());
 }
@@ -1527,6 +1598,12 @@ int co_clsmethod_compare( const Item& first, const Item& second )
    {
       return (int)(first.asMethodFunc() - second.asMethodFunc());
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
+
 
    return first.type() - second.type();
 }
@@ -1544,6 +1621,12 @@ int co_method_compare( const Item& first, const Item& second )
          return (int)(first.asMethodFunc() - second.asMethodFunc());
       return cp;
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
+
 
    return first.type() - second.type();
 }
@@ -1558,10 +1641,25 @@ int co_class_compare( const Item& first, const Item& second )
    {
       return (int)(first.asClass()->symbol()->name().compare(first.asClass()->symbol()->name()));
    }
+   else if ( second.isUnbound() )
+   {
+      const_cast<Item*>(&second)->copy( first );
+      return 0;
+   }
+
 
    return (int)(first.type() - second.type());
 }
 
+
+int co_unb_compare( const Item& first, const Item& second )
+{
+   if ( second.isReference() )
+      return co_unb_compare( first, second.asReference()->origin() );
+
+   const_cast<Item*>(&first)->copy( second );
+   return 0;
+}
 
 //=============================================================
 // Get Index
@@ -1635,6 +1733,7 @@ void co_ref_getindex( const Item &item, const Item &idx, Item &result )
 {
    item.asReference()->origin().getIndex( idx, result );
 }
+
 
 //=============================================================
 // Set Index
@@ -2109,7 +2208,6 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
       vm->returnHandler( __call_init_enter );
    }
 }
-
 
 //=============================================================
 // Tables declaration
@@ -2602,6 +2700,35 @@ void* ClassCommOpsTable[] = {
 };
 
 
+void* UnbCommOpsTable[] = {
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+
+   // Inc/dec
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+
+   // cfr
+   (void*) co_unb_compare,
+
+   // set deep
+   (void*) co_fail_unb,
+   (void*) co_fail_unb,
+   (void*) co_generic_getproperty,
+   (void*) co_fail_unb,
+
+   //call
+   (void*) co_fail_unb
+
+};
+
 CommOpsTable CommOpsDict[] =
 {
    NilCommOpsTable,
@@ -2620,7 +2747,8 @@ CommOpsTable CommOpsDict[] =
    ReferenceCommOpsTable,
    ClsMethodCommOpsTable,
    MethodCommOpsTable,
-   ClassCommOpsTable
+   ClassCommOpsTable,
+   UnbCommOpsTable
 };
 
 }

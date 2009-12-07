@@ -17,7 +17,7 @@
 #define flc_PCODES_H
 
 #define FALCON_PCODE_VERSION  2
-#define FALCON_PCODE_MINOR  9
+#define FALCON_PCODE_MINOR  10
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -89,6 +89,7 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_REGS1   0x12
 #define P_PARAM_REGL1   0x14
 #define P_PARAM_REGL2   0x15
+#define P_PARAM_UNB     0x16
 
 // Range 1: parameterless ops
 /** END: terminate. */

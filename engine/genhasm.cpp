@@ -1456,7 +1456,11 @@ void GenHAsm::gen_operand( const Value *stmt )
    {
       case Value::t_nil:
          m_out->writeString( "NIL" );
-      break;
+         break;
+
+      case Value::t_unbound:
+         m_out->writeString( "UNB" );
+         break;
 
       case Value::t_symbol:
       {
