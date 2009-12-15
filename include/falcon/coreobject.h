@@ -221,13 +221,13 @@ public:
       - It provides a gcMark() method, called when this Object is marked.
       - Serialization support is available but defaulted to fail.
    */
-   void setUserData( FalconData* fdata ) { m_bIsFalconData = true; m_user_data = fdata; }
+   void setUserData( FalconData* fdata );
 
    /** Set a Sequence as the user data for this object.
       Sequence class is derived from FalconData, and it adds an interface for serial
       access to items.
    */
-   void setUserData( Sequence* sdata ) { m_bIsSequence = true; m_bIsFalconData = true; m_user_data = sdata; }
+   void setUserData( Sequence* sdata );
 
    /** Returns true if this object has the given class among its ancestors. */
    bool derivedFrom( const String &className ) const;

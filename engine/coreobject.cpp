@@ -453,6 +453,24 @@ void CoreObject::setState( const String& state, ItemDict* stateDict )
    apply( *stateDict, true );
 }
 
+void CoreObject::setUserData( FalconData* fdata )
+{
+   fdata->gcMark( mark() );
+   m_bIsSequence = false;
+   m_bIsFalconData = true;
+   m_user_data = fdata;
+}
+
+
+
+void CoreObject::setUserData( Sequence* sdata )
+{
+   sdata->gcMark( mark() );
+   m_bIsSequence = true;
+   m_bIsFalconData = true;
+   m_user_data = sdata;
+}
+
 }
 
 /* end of coreobject.cpp */

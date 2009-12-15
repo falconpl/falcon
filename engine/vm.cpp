@@ -451,6 +451,11 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
       return false;
    }
 
+   // We can now add the module to our list of available modules.
+   m_liveModules.insert( &livemod->name(), livemod );
+   livemod->initialized( LiveModule::init_complete );
+   livemod->mark( generation() );
+
    return livemod;
 }
 
@@ -520,16 +525,20 @@ bool VMachine::completeModLink( LiveModule *livemod )
       obj_iter = obj_iter->next();
    }
 
-   // eventually, call the constructors declared by the instances
-   obj_iter = modObjects.begin();
-
-   // In case we have some objects to link - and while we have no errors,
-   // -- we can't afford calling constructors if everything is not ok.
-   while( success && obj_iter != 0 )
+   if ( success )
    {
-      Symbol *obj = (Symbol *) obj_iter->data();
-      initializeInstance( obj, livemod );
-      obj_iter = obj_iter->next();
+      // eventually, call the constructors declared by the instances
+      obj_iter = modObjects.begin();
+
+      // In case we have some objects to link - and while we have no errors,
+      // -- we can't afford calling constructors if everything is not ok.
+      while( success && obj_iter != 0 )
+      {
+         Symbol *obj = (Symbol *) obj_iter->data();
+         initializeInstance( obj, livemod );
+         obj_iter = obj_iter->next();
+      }
+
    }
 
    // Initializations of module objects is complete; return to non-atomic mode
@@ -551,11 +560,6 @@ bool VMachine::completeModLink( LiveModule *livemod )
       svmap_iter.next();
    }
 
-   // We can now add the module to our list of available modules.
-   m_liveModules.insert( &livemod->name(), livemod );
-
-   livemod->initialized( LiveModule::init_complete );
-   livemod->mark( generation() );
 
    // execute the main code, if we have one
    // -- but only if this is NOT the main module

@@ -29,6 +29,11 @@ Falcon (0.9.4.5)
   * major: Added Continuation class, allowing to suspend & resume arbitrary code.
   * major: Added unbound variables, created with the "_" symbol, as a new 
            "UnboundType" with relative metaclass and item type.
+  * fixed: Garbage collection during link steps (i.e. on sub-module main(), and
+           in instance initialization) would cause a safe crash, as it would
+           destroy the LiveModules that are in the runtime, but not yet linked.
+           Pitifully, this fix is useless, as LiveModules are to be removed in
+           0.9.6.
 
            
 Falcon (0.9.4.4)

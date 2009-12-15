@@ -35,6 +35,7 @@ public:
    Mutex m_mtx;
    
    Buffer():
+      m_membuf(0),
       m_length(0),
       m_lastError(0),
       m_refcount(1)
@@ -79,17 +80,22 @@ StringStream::StringStream( const String &strbuf ):
 {
    m_b->m_allocated = strbuf.size();
    m_b->m_length = strbuf.size();
-   m_b->m_membuf = (byte *) memAlloc( m_b->m_allocated );
-
-   if ( m_b->m_membuf == 0 )
+   if ( m_b->m_allocated != 0 )
    {
-      status( t_error );
-      m_b->m_lastError = -1;
+      m_b->m_membuf = (byte *) memAlloc( m_b->m_allocated );
+
+      if ( m_b->m_membuf == 0 )
+      {
+         status( t_error );
+         m_b->m_lastError = -1;
+      }
+      else {
+         memcpy( m_b->m_membuf, strbuf.getRawStorage(), m_b->m_allocated );
+         status( t_open );
+      }
    }
-   else {
-      memcpy( m_b->m_membuf, strbuf.getRawStorage(), m_b->m_allocated );
-      status( t_open );
-   }
+   else
+      m_b->m_membuf = 0;
 }
 
 StringStream::StringStream( const StringStream &strbuf ):
@@ -220,10 +226,10 @@ bool StringStream::close()
       m_b->m_length = 0;
       byte* mem = m_b->m_membuf;
       m_b->m_membuf = 0;
+      status( t_none );
       m_b->m_mtx.unlock();
       
       memFree(mem);
-      status( t_none );
       return true;
    }
    
@@ -241,7 +247,7 @@ int32 StringStream::read( void *buffer, int32 size )
       return -1;
    }
 
-   if ( m_pos == m_b->m_length ) {
+   if ( m_pos >= m_b->m_length ) {
       m_status = m_status | t_eof;
       m_b->m_mtx.unlock();
       
@@ -351,7 +357,7 @@ bool StringStream::get( uint32 &chr )
       return false;
    }
 
-   if ( m_pos == m_b->m_length ) 
+   if ( m_pos >= m_b->m_length )
    {
       m_b->m_mtx.unlock();
       m_status = m_status | t_eof;

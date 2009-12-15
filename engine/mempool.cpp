@@ -385,7 +385,6 @@ bool MemPool::markVM( VMachine *vm )
 
       markItem( ctx->regA() );
       markItem( ctx->regB() );
-      //markItem( ctx->self() );
       markItem( ctx->latch() );
       markItem( ctx->latcher() );
 
