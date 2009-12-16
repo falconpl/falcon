@@ -34,6 +34,8 @@ Falcon (0.9.4.5)
            destroy the LiveModules that are in the runtime, but not yet linked.
            Pitifully, this fix is useless, as LiveModules are to be removed in
            0.9.6.
+  * fixed: __getIndex() accessor was broken if the expression in the accessor
+           was a complex expression.
 
            
 Falcon (0.9.4.4)

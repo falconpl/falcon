@@ -267,13 +267,14 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 
 void CoreObject::readIndex( const Item &pos, Item &target )
 {
-   if ( getMethod( OVERRIDE_OP_GETINDEX, target ) )
+   Item mth;
+   if ( getMethod( OVERRIDE_OP_GETINDEX, mth ) )
    {
       VMachine* vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
          vm->pushParameter( pos );
-         vm->callItemAtomic( target, 1 );
+         vm->callItemAtomic( mth, 1 );
          target = vm->regA();
          return;
       }
