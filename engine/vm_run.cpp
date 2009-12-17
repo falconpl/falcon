@@ -68,7 +68,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_STRID:
          {
-            String *temp = currentLiveModule()->getString( *reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) );
+			 String *temp = findModule(currentContext()->symbol()->module()->name())->getString( *reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) );
             //m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
             m_imm[bc_pos].setString( temp );
             m_currentContext->pc_next() += sizeof( int32 );
