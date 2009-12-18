@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: ---
+* Category: gc
+* Subcategory: class
+* Short: Garbage collection - intermodule classes
+* Description:
+*   This is the module part of the 51f test
+* [/Description]
+*
+****************************************************************************/
+
+load .gc_module_class_1
+
+class Parent
+   changed = ""
+   data = nil
+   
+   init
+      self.changed = "original"
+      self.data = "1"*10000
+      GC.perform(true)
+      self.data = ""
+      GC.perform(true)
+   end
+end
+
+// create an instance right now.
+parentInstance = Parent()
+
+export
