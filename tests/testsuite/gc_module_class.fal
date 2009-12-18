@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 51f
+* Category: gc
+* Subcategory: class
+* Short: Garbage collection - intermodule classes
+* Description:
+*   This test checks that GC works correctly across subclass
+*   instantation on different modules. It uses gc_module_class_1.fal
+* [/Description]
+*
+****************************************************************************/
+
+load .gc_module_class_1
+
+class Child from Parent
+   init
+      self.changed = ""
+      self.data = ""
+      GC.perform(true)
+   end
+end
+
+if parentInstance.changed !="original": failure( "Creation of original instsance" )
+c = Child()
+if c.changed !="": failure( "Creation of original instsance" )
+
+success()
