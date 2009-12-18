@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 39e
+* Category: states
+* Subcategory:
+* Short: Intermodule state
+* Description:
+*  Checks if states work across modules.
+* [/Description]
+*
+****************************************************************************/
+
+load .state_module_1
+
+class Child from Parent
+end
+
+class Child_init from Parent
+   test = 0
+   
+   init
+      self.test = "init"
+      self.value = "init"
+   end
+end
+
+
+// Try of a test without init.
+c = Child()
+
+if c.value != "enter": failure( "Initless __enter not followed" )
+
+c = Child_init()
+if c.test != "init": failure( "Initful init block not executed" )
+if c.value != "enter": failure( "Initful __enter not followed" )
+
+success()
+
+/* end of file */
+
+

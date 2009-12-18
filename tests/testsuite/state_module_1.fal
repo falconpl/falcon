@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: ---
+* Category: states
+* Subcategory:
+* Short: Intermodule state
+* Description:
+*  Checks if states work across modules -- This is the second part (secondary
+*  module.
+* [/Description]
+*
+****************************************************************************/
+export
+
+class Parent
+   value = 0
+   
+   function _setup()
+      self.value = "enter"
+   end
+
+   state init
+      function __enter()
+         self._setup()
+      end
+   end
+end

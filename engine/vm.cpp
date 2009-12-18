@@ -1197,26 +1197,26 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
 
       while ( siter.hasCurrent() )
       {
-         const StateDef* sd = *(StateDef**) siter.currentValue();
-         ItemDict *sdict = new LinearDict(sd->functions().size());
-         MapIterator fiter = sd->functions().begin();
+         const String* sname = *(String**) siter.currentKey();
+         const Map* sd = *(Map**) siter.currentValue();
+         ItemDict *sdict = new LinearDict(sd->size());
+         MapIterator fiter = sd->begin();
 
          while( fiter.hasCurrent() )
          {
             const String* fname = *(String**) fiter.currentKey();
-            const Symbol* fsym = *(Symbol**) fiter.currentValue();
+            CoreFunc* sfunc = *(CoreFunc**) fiter.currentValue();
 
-            // TODO: see if we can use the const strings here.
-            // TODO: see if we can use the already linked functions here.
             sdict->put(
-                  new CoreString( *fname ), new CoreFunc( fsym, lmod ) );
+                  new CoreString( *fname ), sfunc );
 
             fiter.next();
          }
+         delete sd;
 
          // TODO: See if we can use the const String* form sd->name() here
-         dict->put( new CoreString( sd->name() ), new CoreDict(sdict) );
-         if( sd->name() == "init" )
+         dict->put( new CoreString( *sname ), new CoreDict(sdict) );
+         if( *sname == "init" )
             initState = sdict;
 
          siter.next();
@@ -1366,9 +1366,22 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
    while( siter.hasCurrent() )
    {
       String *stateName = *(String **) siter.currentKey();
-      Map* stateMap = *(Map **) siter.currentValue();
+      StateDef* sd = *(StateDef **) siter.currentValue();
+
+      Map* sfuncs = new Map( &traits::t_stringptr(), &traits::t_voidp() );
+
+      MapIterator fiter = sd->functions().begin();
+      while( fiter.hasCurrent() )
+      {
+         const String* fname = *(String**) fiter.currentKey();
+         const Symbol* fsym = *(Symbol**) fiter.currentValue();
+         CoreFunc* sfunc = new CoreFunc( fsym, lmod );
+         sfuncs->insert( fname, sfunc );
+         fiter.next();
+      }
+
       //==========================
-      states.insert( stateName, stateMap );
+      states.insert( stateName, sfuncs );
       siter.next();
    }
 

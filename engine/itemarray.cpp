@@ -443,7 +443,9 @@ ItemArray *ItemArray::clone() const
 }
 
 
-void ItemArray::resize( uint32 size ) {
+void ItemArray::resize( uint32 size )
+{
+
    if ( size == 0 ) {
       if ( m_data != 0 ) {
          memFree( m_data );
@@ -459,7 +461,12 @@ void ItemArray::resize( uint32 size ) {
    }
    else if ( size > m_size )
       memset( m_data + m_size, 0, esize( size - m_size ) );
-   else {
+   else if ( size == m_size )
+   {
+      return;
+   }
+   else
+   {
       if( m_iterList != 0 )
       {
          m_invalidPoint = size;
