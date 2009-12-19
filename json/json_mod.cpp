@@ -186,15 +186,15 @@ bool JSON::encode( const Item& source, Stream* tgt  )
 
                if( ! encode( prop, tgt ) )
                   return false;
-            }
 
-            if( i+1 < tab.added() )
-            {
-               tgt->put( ',' );
-               if( m_bReadable )
-                  tgt->put( '\n' );
-               else if ( m_bPretty )
-                  tgt->put( ' ' );
+               if( i+1 < tab.added() )
+               {
+                  tgt->put( ',' );
+                  if( m_bReadable )
+                     tgt->put( '\n' );
+                  else if ( m_bPretty )
+                     tgt->put( ' ' );
+               }
             }
 
          }

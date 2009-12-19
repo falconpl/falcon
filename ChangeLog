@@ -3,6 +3,8 @@ Feathers (0.9.4.5)
            expressions.
   * fixed: JSONdecode now allows also unquoted keys in dictionaries
            and accepts '...' as quoting strings.
+  * fixed: JSONEncode was printing an extra "," in object in plavce
+           of not encoded functions.
     
 Feathers (0.9.4.4)
   * added: JSON module (encoding/decoding JSON).
