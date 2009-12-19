@@ -262,18 +262,13 @@ void JSON::encode_string( const String &str, Stream* tgt ) const
 bool JSON::decode( Item& target, Stream* src ) const
 {
    String temp;
-   uint32 unival;
-   uint32 unicount;
 
    enum {
       st_none,
       st_number,
       st_float,
       st_firstexp,
-      st_exp,
-      st_string,
-	  st_unistr,
-      st_escape
+      st_exp
    } state;
 
    state = st_none;
@@ -289,7 +284,17 @@ bool JSON::decode( Item& target, Stream* src ) const
                case ' ': case '\t': case '\r': case '\n': continue;
                case '+': state = st_number; break;
                case '-': state = st_number; temp.append(chr); break;
-               case '"': state = st_string; break;
+               case '"': case '\'':
+                  {
+                     String str;
+                     src->unget(chr);
+                     if ( ! decodeKey( str, src ) )
+                        return false;
+                     target = new CoreString( str );
+                     return true;
+                  }
+                  break;
+
                case '0': case '1': case '2': case '3': case '4':
                case '5': case '6': case '7': case '8': case '9':
                   state = st_number; temp.append(chr);
@@ -422,65 +427,6 @@ bool JSON::decode( Item& target, Stream* src ) const
 
          break;
 
-         case st_string:
-            if ( chr == '"' )
-            {
-               target = new CoreString( temp );
-               return true;
-            }
-            else if ( chr == '\\' )
-            {
-               state = st_escape;
-            }
-            else
-            {
-               temp.append( chr );
-            }
-            break;
-
-         case st_escape:
-            switch( chr )
-            {
-               case '\\': temp.append( '\\' ); break;
-               case 'b': temp.append( '\b' ); break;
-               case 't': temp.append( '\t' ); break;
-               case 'n': temp.append( '\n' ); break;
-               case 'r': temp.append( '\r' ); break;
-               case 'f': temp.append( '\f' ); break;
-               case '/': temp.append( '/' ); break;
-			   case 'u': state = st_unistr; unival = 0; unicount = 0; break;
-               default:
-                  return false;
-            }
-            break;
-
-		case st_unistr:
-			if ( chr >= '0' && chr <= '9' )
-			{
-				unival <<= 4;
-				unival |= (unsigned char) (chr - '0');
-			}
-			else if ( chr >= 'a' && chr <= 'f' )
-			{
-				unival <<= 4;
-				unival |= (unsigned char) (chr - 'a')+10;
-			}
-			else if ( chr >= 'A' && chr <= 'F' )
-			{
-				unival <<= 4;
-				unival |= (unsigned char) (chr - 'A')+10;
-			}
-			else
-				return false;
-
-			if ( ++unicount == 4 )
-			{
-				// complete
-				state = st_string;
-				temp.append( unival );
-			}
-            break;
-
       }
    }
 
@@ -506,6 +452,8 @@ CoreArray* JSON::decodeArray( Stream* src ) const
       {
          if ( chr == ',' )
             bComma = false;
+         else if ( chr == ']' )
+            return ca;
          else
             return 0;
       }
@@ -581,12 +529,16 @@ CoreDict* JSON::decodeDict( Stream* src ) const
 
       case st_key:
          src->unget( chr );
-         if( ! decode( key, src ) ||! key.isString() )
          {
-            // dispose all the data.
-            cd->gcMark(0);
-            delete cd;
-            return 0;
+            String sKey;
+            if( ! decodeKey( sKey, src ) || sKey.size() == 0 )
+            {
+               // dispose all the data.
+               cd->gcMark(0);
+               delete cd;
+               return 0;
+            }
+            key = new CoreString( sKey );
          }
 
          state = st_colon;
@@ -614,6 +566,92 @@ CoreDict* JSON::decodeDict( Stream* src ) const
    delete cd;
    return 0;
 
+}
+
+
+bool JSON::decodeKey( String& tgt, Stream* src ) const
+{
+   // a key may be a symbol or a string
+
+   uint32 chr;
+   if ( ! src->get( chr ) )
+      return false;
+
+   if( chr == '"' || chr == '\'')
+   {
+      uint32 ch1 = chr;
+      uint32 unicount = 4;
+      uint32 unival = 0;
+
+      while( src->get( chr ) && chr != ch1 )
+      {
+         if ( chr == '\\' )
+         {
+            src->get(chr);
+            switch( chr )
+            {
+               case '\\': tgt.append( '\\' ); break;
+               case 'b': tgt.append( '\b' ); break;
+               case 't': tgt.append( '\t' ); break;
+               case 'n': tgt.append( '\n' ); break;
+               case 'r': tgt.append( '\r' ); break;
+               case 'f': tgt.append( '\f' ); break;
+               case '/': tgt.append( '/' ); break;
+               case 'u': unival = 0; unicount = 0; break;
+               default:
+                  return false;
+            }
+         }
+         else if (unicount < 4 )
+         {
+            if ( chr >= '0' && chr <= '9' )
+            {
+               unival <<= 4;
+               unival |= (unsigned char) (chr - '0');
+            }
+            else if ( chr >= 'a' && chr <= 'f' )
+            {
+               unival <<= 4;
+               unival |= (unsigned char) (chr - 'a')+10;
+            }
+            else if ( chr >= 'A' && chr <= 'F' )
+            {
+               unival <<= 4;
+               unival |= (unsigned char) (chr - 'A')+10;
+            }
+            else
+               return false;
+
+            if ( ++unicount == 4 )
+            {
+               tgt.append( unival );
+            }
+         }
+         else
+            tgt.append( chr );
+      }
+
+      // Eof?
+      if ( chr != ch1 )
+         return false;
+   }
+   else
+   {
+      tgt.append( chr );
+
+      while( src->get( chr ) )
+      {
+         if ( chr == '\n' || chr == '\r' || chr == '\t' || chr == ' ' || chr == ',' || chr == ':')
+         {
+            src->unget(chr);
+            return true;
+         }
+         tgt.append( chr );
+      }
+   }
+
+   // this happens at eof; we return true, but other things may return false
+   return true;
 }
 
 }

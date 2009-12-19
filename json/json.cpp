@@ -27,7 +27,7 @@
 
    @code
       import from json
-      > json.encode( ["a", 1, 1.2] )
+      > json.JSONencode( ["a", 1, 1.2] )
    @endcode
 
 
@@ -40,6 +40,7 @@
 #include "json_st.h"
 
 #include "version.h"
+#include <stdio.h>
 
 static Falcon::JSONService s_theJSONService;
 

@@ -1,0 +1,134 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 40a
+* Category: json
+* Subcategory:
+* Short: Json decode
+* Description:
+*        Try to decode a pretty complex json data.
+* [/Description]
+*
+****************************************************************************/
+import from json
+
+mytest = "
+{
+    fsm:{
+        name:'Vending Machine',
+        states:{
+            state:[
+                {
+                    name:'start',
+                    transition:[
+                        {
+                            input:'nickel',
+                            next:'five'
+                        },
+                        {
+                            input:'dime',
+                            next:'ten'
+                        },
+                        {
+                            input:'quarter',
+                            next:'start',
+                            action:'dispense'
+                        }
+                    ]
+                },
+                {
+                    name:'five',
+                    transition:[
+                        {
+                            input:'nickel',
+                            next:'ten'
+                        },
+                        {
+                            input:'dime',
+                            next:'fifteen'
+                        },
+                        {
+                            input:'quarter',
+                            next:'start',
+                            action:'dispense'
+                        }
+                    ]
+                },
+                {
+                    name:'ten',
+                    transition:[
+                        {
+                            input:'nickel',
+                            next:'fifteen'
+                        },
+                        {
+                            input:'dime',
+                            next:'twenty'
+                        },
+                        {
+                            input:'quarter',
+                            next:'start',
+                            action:'dispense'
+                        }
+                    ]
+                },
+                {
+                    name:'fifteen',
+                    transition:[
+                        {
+                            input:'nickel',
+                            next:'twenty'
+                        },
+                        {
+                            input:'dime',
+                            next:'start',
+                            action:'dispense'
+                        },
+                        {
+                            input:'quarter',
+                            next:'start',
+                            action:'dispense'
+                        }
+                    ]
+                },
+                {
+                    name:'twenty',
+                    transition:[
+                        {
+                            input:'nickel',
+                            next:'start',
+                            action:'dispense'
+                        },
+                        {
+                            input:'dime',
+                            next:'start',
+                            action:'dispense'
+                        },
+                        {
+                            input:'quarter',
+                            next:'start',
+                            action:'dispense'
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
+"
+
+try
+   v = json.JSONdecode( mytest )
+catch
+   failure( "Can't decode the string" )
+end
+
+if "fsm" notin v: failure( "toplevel" )
+
+fsm = v["fsm"]
+
+if fsm["name"] != "Vending Machine": failure( "second level" )
+if fsm["states"]["state"].len() != 5: failure( "Third level" )
+
+success()
+/* End of file */

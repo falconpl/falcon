@@ -41,6 +41,7 @@ private:
    void encode_string( const String& source, Stream* tgt ) const;
    CoreArray* decodeArray( Stream* src ) const;
    CoreDict* decodeDict( Stream* src ) const;
+   bool decodeKey( String& tgt, Stream* src ) const;
 
    bool m_bEncUnicode;
    bool m_bPretty;
