@@ -534,10 +534,10 @@ CoreObject* PathObjectFactory( const CoreClass *cr, void *path, bool );
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm ); // static
 FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm ); // static
+FALCON_FUNC  URI_toString ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
-reflectionFuncDecl URI_uri_rfrom;
-reflectionFuncDecl URI_uri_rto;
+
 
 /** Table class */
 FALCON_FUNC  Table_init ( ::Falcon::VMachine *vm );
@@ -590,31 +590,32 @@ FALCON_FUNC  Tokenizer_hasCurrent ( ::Falcon::VMachine *vm );
 #define TOKENIZER_OPT_RSEP 8
 #define TOKENIZER_OPT_WSISTOK 16
 
-class UriObject: public CRObject
+
+class UriObject: public CoreObject
 {
 public:
-   UriObject( const CoreClass *genr, URI* uri, bool bSerial ):
-      CRObject( genr, bSerial )
-   {
-      if ( uri == 0 )
-         uri = new URI();
-      setUserData( uri );
-      reflectFrom( uri );
-   }
+   UriObject( const CoreClass *gen ):
+      CoreObject( gen )
+   {}
+
+   UriObject( const CoreClass *gen, const URI& uri ):
+      CoreObject( gen ),
+      m_uri( uri )
+   {}
 
    UriObject( const UriObject &other );
    virtual ~UriObject();
    virtual UriObject *clone() const;
    virtual bool setProperty( const String &prop, const Item &value );
-   virtual void reflectFrom( void *user_data );
-   virtual void reflectTo( void *user_data ) const ;
+   virtual bool getProperty( const String &prop, Item &value ) const;
 
-   URI* getUri() const { return static_cast<URI*>( m_user_data ); }
+   const URI& uri() const { return m_uri; }
+   URI& uri() { return m_uri; }
+
+   static CoreObject* factory( const CoreClass *cr, void *uri, bool );
+private:
+   URI m_uri;
 };
-
-
-CoreObject* UriObjectFactory( const CoreClass *cr, void *uri, bool );
-
 
 
 /** Class used to manage the file stats.

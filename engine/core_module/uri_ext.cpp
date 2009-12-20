@@ -29,9 +29,12 @@
 namespace Falcon {
 namespace core {
 
-CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
+CoreObject* UriObject::factory( const CoreClass *me, void *uri, bool )
 {
-   return new UriObject( me, static_cast<URI*>( uri ), dyn );
+   if ( uri != 0 )
+      return new UriObject( me, *static_cast<URI*>( uri ) );
+   else
+      return new UriObject( me );
 }
 
 /*# @class URI
@@ -63,15 +66,13 @@ CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
 
 
 UriObject::UriObject( const UriObject &other ):
-   CRObject( other )
+   CoreObject( other ),
+   m_uri( other.uri() )
 {
-   m_user_data = new URI( *other.getUri() );
-   reflectFrom( m_user_data );
 }
 
 UriObject::~UriObject()
 {
-   delete getUri();
 }
 
 UriObject *UriObject::clone() const
@@ -80,76 +81,95 @@ UriObject *UriObject::clone() const
 }
 
 
-inline void stringize( Item &v, const String &s )
+bool UriObject::getProperty( const String &prop, Item &value ) const
 {
-   if( ! v.isString() || ( *v.asString() != s ))
+   if ( prop == "scheme" )
    {
-      if ( s == "" )
-         v.setNil();
-      else
-         v.setString( new CoreString( s ) );
+      value = new CoreString( uri().scheme() );
    }
-}
+   else if ( prop == "userInfo" )
+   {
+      value = new CoreString( uri().userInfo() );
+   }
+   else if ( prop == "path" )
+   {
+      value = new CoreString( uri().path() );
+   }
+   else if ( prop == "host" )
+   {
+      value = new CoreString( uri().host() );
+   }
+   else if ( prop == "port" )
+   {
+      value = new CoreString( uri().port() );
+   }
+   else if ( prop == "query" )
+   {
+      value = new CoreString( uri().query() );
+   }
+   else if ( prop == "fragment" )
+   {
+      value = new CoreString( uri().fragment() );
+   }
+   else if ( prop == "uri" )
+   {
+      value = new CoreString( uri().get(true) );
+   }
+   else
+   {
+      return defaultProperty( prop, value );
+   }
 
-void UriObject::reflectFrom( void *user_data )
-{
-   const URI &uri = *static_cast<URI*>( user_data );
-
-   stringize( *cachedProperty( "scheme" ), uri.scheme() );
-   stringize( *cachedProperty( "userInfo" ), uri.userInfo() );
-   stringize( *cachedProperty( "path" ), uri.path() );
-   stringize( *cachedProperty( "host" ), uri.host() );
-   stringize( *cachedProperty( "port" ), uri.port() );
-   stringize( *cachedProperty( "query" ), uri.query() );
-   stringize( *cachedProperty( "fragment" ), uri.fragment() );
+   return true;
 }
 
 
 bool UriObject::setProperty( const String &prop, const Item &value )
 {
-   URI &uri = *getUri();
-
    if ( prop == "scheme" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.scheme( *value.asString() );
+      uri().scheme( *value.asString() );
    }
    else if ( prop == "userInfo" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.userInfo( *value.asString() );
+      uri().userInfo( *value.asString() );
    }
    else if ( prop == "path" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.path( *value.asString() );
+      uri().path( *value.asString() );
    }
    else if ( prop == "host" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.host( *value.asString() );
+      uri().host( *value.asString() );
    }
    else if ( prop == "port" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.port( *value.asString() );
+      uri().port( *value.asString() );
    }
    else if ( prop == "query" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.query( *value.asString() );
+      uri().query( *value.asString() );
    }
    else if ( prop == "fragment" )
    {
       if ( ! value.isString() ) goto complain;
-      uri.fragment( *value.asString() );
+      uri().fragment( *value.asString() );
    }
-   else {
-      // fallback
-      return CRObject::setProperty( prop, value );
+   else if ( prop == "uri" )
+   {
+      if ( ! value.isString() ) goto complain;
+      uri().parse( *value.asString() );
    }
+   else
+      return false;
 
-   if ( ! uri.isValid() )
+   if ( ! uri().isValid() )
    {
       VMachine* vm = VMachine::getCurrent();
       throw new AccessError( ErrorParam( e_param_range, __LINE__)
@@ -157,7 +177,7 @@ bool UriObject::setProperty( const String &prop, const Item &value )
          .extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
    }
 
-   return CacheObject::setProperty( prop, value );
+   return true;
 
    complain:
       throw new AccessError( ErrorParam( e_param_type, __LINE__)
@@ -165,87 +185,6 @@ bool UriObject::setProperty( const String &prop, const Item &value )
          .extra( "S" ) );
 }
 
-void UriObject::reflectTo( void* user_data ) const
-{
-   URI &uri = *static_cast<URI*>( user_data );
-
-   Item *prop = cachedProperty( "scheme" );
-   if ( prop->isNil() ) uri.scheme( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.scheme( *prop->asString() );
-
-   prop = cachedProperty( "userInfo" );
-   if ( prop->isNil() ) uri.userInfo( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.userInfo( *prop->asString() );
-
-   prop = cachedProperty( "path" );
-   if ( prop->isNil() ) uri.path( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.path( *prop->asString() );
-
-   prop = cachedProperty( "host" );
-   if ( prop->isNil() ) uri.host( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.host( *prop->asString() );
-
-   prop = cachedProperty( "port" );
-   if ( prop->isNil() ) uri.port( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.port( *prop->asString() );
-
-   prop = cachedProperty( "query" );
-   if ( prop->isNil() ) uri.query( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.query( *prop->asString() );
-
-   prop = cachedProperty( "fragment" );
-   if ( prop->isNil() ) uri.fragment( "" );
-   else if ( ! prop->isString() ) goto complain;
-   else uri.port( *prop->asString() );
-
-   if ( ! uri.isValid() )
-   {
-      VMachine* vm = VMachine::getCurrent();
-      throw new CodeError( ErrorParam( e_prop_invalid, __LINE__)
-         .origin( e_orig_runtime )
-         .extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
-   }
-
-complain:
-   throw new CodeError( ErrorParam( e_prop_invalid, __LINE__).origin( e_orig_runtime ) );
-}
-
-
-// Reflective URI method
-void URI_uri_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& )
-{
-   URI &uri = *static_cast<URI *>( user_data );
-   UriObject *instance = dyncast<UriObject*>( co );
-   instance->reflectFrom( user_data );
-
-   FALCON_REFLECT_STRING_FROM( (&uri), get );
-}
-
-
-// Reflective URI method
-void URI_uri_rto(CoreObject *co, void *user_data, Item &property, const PropEntry& )
-{
-   URI &uri = *static_cast<URI *>( user_data );
-   UriObject *instance = dyncast<UriObject*>( co );
-
-   FALCON_REFLECT_STRING_TO( (&uri), parse )
-
-   instance->reflectFrom( user_data );
-
-   if ( ! uri.isValid() )
-   {
-      VMachine* vm = VMachine::getCurrent();
-      throw new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
-   }
-}
 
 /*# @init URI
    @brief Constructor for the URI class.
@@ -256,33 +195,29 @@ void URI_uri_rto(CoreObject *co, void *user_data, Item &property, const PropEntr
 */
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )
 {
-   UriObject *self = dyncast<UriObject*>(vm->self().asObject());
    Item *p0 = vm->param(0);
    Item *i_parse = vm->param(1);
-
 
    // nothing to do
    if ( p0 == 0 )
       return;
 
+   UriObject *self = dyncast<UriObject*>(vm->self().asObject());
+
    // take the URI generated by the factory (can be empty).
-   URI *uri = self->getUri();
    if ( ! p0->isString() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( "[S]" ) );
    }
    else {
-      uri->parse( *p0->asString(), false, (i_parse == 0 || i_parse->isTrue()) );
-      if ( ! uri->isValid() )
+      self->uri().parse( *p0->asString(), false, (i_parse == 0 || i_parse->isTrue()) );
+      if ( !self->uri().isValid() )
       {
          throw new ParamError( ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
             extra( vm->moduleString( rtl_invalid_uri ) ) );
       }
-      else
-         self->reflectFrom( uri );
-
    }
 }
 
@@ -339,6 +274,23 @@ FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
 }
 
 
+/*# @method toString URI
+   @brief Returns a string representing this URI.
+   @return An URI encoded string containing a valid URI.
+
+   Renders the URI into a valid string representation.
+
+   @see URI.uri
+*/
+FALCON_FUNC  URI_toString ( ::Falcon::VMachine *vm )
+{
+   UriObject *self = dyncast<UriObject*>( vm->self().asObject() );
+   URI &uri = self->uri();
+
+   vm->retval( new CoreString( uri.get( true ) ) );
+}
+
+
 /*# @method getFields URI
    @brief Returns fields contained in the query element into a dictionary.
    @return The fields as a dictionary of nil if the query part contains no element.
@@ -347,7 +299,7 @@ FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
 FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
 {
    UriObject *self = dyncast<UriObject*>( vm->self().asObject() );
-   URI &uri = *self->getUri();
+   URI &uri = self->uri();
 
    if ( uri.query().size() == 0 )
    {
@@ -402,7 +354,7 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
 {
    UriObject *self = dyncast<UriObject*>( vm->self().asObject() );
-   URI &uri = *(URI *) self->getUserData();
+   URI &uri = self->uri();
 
    Item *p0 = vm->param(0);
 
@@ -430,7 +382,6 @@ FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
    }
 
    uri.makeQuery();
-   self->reflectFrom( &uri );
 }
 
 }

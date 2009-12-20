@@ -36,6 +36,9 @@ Falcon (0.9.4.5)
            0.9.6.
   * fixed: __getIndex() accessor was broken if the expression in the accessor
            was a complex expression.
+  * fixed: Macros used in per-property reflection was possibly broken under very
+           rare conditions.
+  * fixed: URI reflection was a mess (and slow); cleaned and simplified.
 
            
 Falcon (0.9.4.4)

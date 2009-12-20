@@ -2119,7 +2119,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    }
    else if ( i_uri->isOfClass( "URI" ) )
    {
-      uri = *dyncast<UriObject*>( i_uri->asObjectSafe() )->getUri();
+      uri = dyncast<UriObject*>( i_uri->asObjectSafe() )->uri();
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -2284,14 +2284,14 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
    }
    else if ( i_uri->isOfClass( "URI" ) )
    {
-      uri = *dyncast<UriObject*>( i_uri->asObjectSafe() )->getUri();
+      uri = dyncast<UriObject*>( i_uri->asObjectSafe() )->uri();
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "S|URI, S, [S]" ) );
    }
 
-   // find the appropriage provider.
+   // find the appropriate provider.
    VFSProvider* vfs = Engine::getVFS( uri.scheme() );
    if ( vfs == 0 )
    {

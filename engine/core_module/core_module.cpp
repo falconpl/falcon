@@ -1837,7 +1837,7 @@ Module* core_module_init()
    //=======================================================================
    Falcon::Symbol *uri_class = self->addClass( "URI", &Falcon::core::URI_init )
       ->addParam( "path" )->addParam("decode");
-   uri_class->getClassDef()->factory( Falcon::core::UriObjectFactory );
+   uri_class->getClassDef()->factory( &Falcon::core::UriObject::factory );
    uri_class->setWKS(true);
 
    self->addClassProperty( uri_class, "scheme" );
@@ -1847,8 +1847,9 @@ Module* core_module_init()
    self->addClassProperty( uri_class, "path" );
    self->addClassProperty( uri_class, "query" );
    self->addClassProperty( uri_class, "fragment" );
-   self->addClassProperty( uri_class, "uri" ).
-         setReflectFunc( Falcon::core::URI_uri_rfrom, &Falcon::core::URI_uri_rto );
+   self->addClassProperty( uri_class, "uri" );
+
+   self->addClassMethod( uri_class, "toString", &Falcon::core::URI_toString );
    self->addClassMethod( uri_class, "encode", &Falcon::core::URI_encode ).asSymbol()->
       addParam("string");
    self->addClassMethod( uri_class, "decode", &Falcon::core::URI_decode ).asSymbol()->
