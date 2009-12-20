@@ -173,6 +173,7 @@ String &Error::heading( String &target ) const
    case e_orig_runtime: target += "RT"; break;
    case e_orig_mod: target += "MD"; break;
    case e_orig_script: target += "SS"; break;
+   default: target += "??";
    }
 
    uint32 ecode = (uint32) m_errorCode;
@@ -368,10 +369,7 @@ void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property, co
       case e_orig_mod: origin = "module"; break;
    }
 
-   if ( !property.isString() || origin != *property.asString() )
-   {
-      property = new CoreString( origin );
-   }
+   property = new CoreString( origin );
 }
 
 void Error_module_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )

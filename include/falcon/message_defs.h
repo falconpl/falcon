@@ -121,7 +121,7 @@
 #undef FAL_MODSTR
 #ifdef FALCON_DECLARE_MODULE
    #define FAL_MODSTR( str_id, text ) \
-      str_id = FALCON_DECLARE_MODULE->addString( text, true )->id();
+      str_id = FALCON_DECLARE_MODULE->addStringID( text, true );
 #else
    #ifdef FALCON_REALIZE_STRTAB
       #define FAL_MODSTR( id, text )   unsigned int id;

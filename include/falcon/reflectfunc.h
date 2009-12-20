@@ -99,10 +99,7 @@ typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &pro
    \param accessor the name of the accessor used to read the variable.
 */
 #define FALCON_REFLECT_STRING_FROM( obj, accessor ) \
-   if( ! property.isString() )\
-      property = new CoreString( obj->accessor() );\
-   else\
-      property.asString()->bufferize( obj->accessor() );
+   property = new CoreString( obj->accessor() );
 
 /** Little macro to automatize reflection of strings.
    This stores the data coming from the engine into the object via an accessor.

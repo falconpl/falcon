@@ -327,6 +327,17 @@ String *Module::addString( const String &st, bool exported )
    return ret;
 }
 
+uint32 Module::addStringID( const String &st, bool exported )
+{
+   uint32 ret = stringTable().size();
+   String* s = new String( st );
+   s->exported( exported );
+   s->bufferize();
+   stringTable().add( s );
+
+   return ret;
+}
+
 bool Module::save( Stream *out, bool skipCode ) const
 {
    // save header informations:

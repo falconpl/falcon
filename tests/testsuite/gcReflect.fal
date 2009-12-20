@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 51g
+* Category: gc
+* Subcategory: reflection
+* Short: Garbage collection - reflection
+* Description:
+*   Tests if reflection is correctly considerin garbage collection (i.e.
+*   discarding destroyed data).
+*   The test may crash if something goes wrong.
+* [/Description]
+*
+****************************************************************************/
+
+// we create a reflective class, like... 
+x = TypeError( 100, "Hello" )
+r = "one"
+r *=100
+
+// then we do reflection
+x.message = r
+GC.perform( true )
+sleep(0.01)
+f = x.toString()
+// At this point, a copy of r is in A, and is going to be disposed.
+if "oneone" notin x.message: failure( "Data destroyed" )
+r= nil
+GC.perform( true )
+f = x.toString()
+if "oneone" notin x.message: failure( "Data destroyed" )
+
+success()
+
+
+

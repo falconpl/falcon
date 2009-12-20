@@ -193,6 +193,18 @@ public:
    */
    String *addString( const String &st, bool exported );
 
+   /** Add a string to the module string table, but return its ID.
+       This always adds a new string, even if another
+       identical string already existed.
+
+      \param st the string to be added.
+      \param exported set to true to make this string subject to
+                      internationalization table exports.
+
+       \return The ID in the string table of the newly added string.
+   */
+   uint32 addStringID( const String &st, bool exported );
+
    /** Return a string given an ID in the string table.
       This function doesn't check for out-of-bounds access, so be careful.
 

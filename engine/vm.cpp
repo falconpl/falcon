@@ -960,14 +960,7 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
       ctor.methodize( *globs[ obj->itemId() ].dereference() );
 
       // If we can't call, we have a wrong init.
-      try {
-         callItemAtomic( ctor, 0 );
-      }
-      catch( Error *err )
-      {
-         err->origin( e_orig_vm );
-         throw;
-      }
+      callItemAtomic( ctor, 0 );
    }
 
    CoreObject* cobj = globs[ obj->itemId() ].dereference()->asObject();
@@ -980,14 +973,7 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
       if( cobj->getMethod("__enter", enterItem ) )
       {
          pushParameter(Item());
-         try {
-            callItemAtomic( enterItem, 1 );
-         }
-         catch( Error *err )
-         {
-            err->origin( e_orig_vm );
-            throw;
-         }
+         callItemAtomic( enterItem, 1 );
       }
    }
 }
@@ -3742,8 +3728,6 @@ void VMachine::handleRaisedItem( Item& value )
 
 void VMachine::handleRaisedError( Error* err )
 {
-   err->origin( e_orig_vm );
-
    if( ! err->hasTraceback() )
       fillErrorContext( err, true );
 

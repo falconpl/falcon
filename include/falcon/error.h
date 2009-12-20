@@ -90,6 +90,7 @@ CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDes
 #undef FLC_DECLARE_ERROR_TABLE
 
 typedef enum {
+   e_orig_unknown = 0,
    e_orig_compiler = 1,
    e_orig_assembler = 2,
    e_orig_loader = 3,
@@ -261,7 +262,7 @@ protected:
       m_character( 0 ),
       m_pc( 0 ),
       m_sysError( 0 ),
-      m_origin( e_orig_runtime ),
+      m_origin( e_orig_unknown ),
       m_catchable( true ),
       m_nextError( 0 ),
       m_LastNextError( 0 )
@@ -310,7 +311,7 @@ public:
       m_character( 0 ),
       m_pc( 0 ),
       m_sysError( 0 ),
-      m_origin( e_orig_runtime ),
+      m_origin( e_orig_unknown ),
       m_catchable( true ),
       m_nextError( 0 ),
       m_LastNextError( 0 )
