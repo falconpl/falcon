@@ -237,7 +237,7 @@ public:
    }
 
    // use our cloner
-   virtual CoreObject* clone() const {
+   virtual _falbind_GdImage* clone() const {
       return 0;
    }
 
