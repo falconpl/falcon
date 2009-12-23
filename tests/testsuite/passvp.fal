@@ -1,0 +1,85 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 13p
+* Category: functions
+* Subcategory: varpar
+* Short: Checks for the passvp function.
+* Description:
+*   The passvp function retreives the parameters exceeding the official ones
+*   or eventually calls a function receiving those parameters.
+* [/Description]
+*
+****************************************************************************/
+
+function testpars()
+	ret = ""
+	for i in [0:paramCount()]
+		ret += parameter(i)
+		formiddle: ret+="."
+	end
+	
+	return ret
+end
+
+function first_a(): return passvp()
+function first_p(): return passvp( testpars )
+
+function second_a( one ): return passvp()
+function second_p( one ): return passvp( testpars )
+
+function third_a( one, two ): return passvp()
+function third_p( one, two ): return passvp( testpars )
+
+function extra(): return passvp( .[testpars "begin" ] )
+
+// no formal parameters
+if first_a() != []: failure( "first_a()" )
+if first_p() != "": failure( "first_p()" )
+if first_a( 'one' ) != ["one"]: failure( "first_a('one')" )
+if first_p( 'one' ) != "one": failure( "first_p('one')" )
+if first_a( 'one', 'two' ) != [ 'one', 'two' ]: failure( "first_a( 'one', 'two' )" )
+if first_p( 'one', 'two' ) != "one.two": failure( "first_p( 'one', 'two' )" )
+if first_a( 'one', 'two', 'three' ) != ['one', 'two', 'three']: failure( "first_a('one', 'two', 'three')" )
+if first_p( 'one', 'two', 'three' ) != "one.two.three": failure( "first_p( 'one', 'two', 'three' )" )
+
+// one formal parameters
+if second_a() != []: failure( "second_a()" )
+if second_p() != "": failure( "second_p()" )
+if second_a( 'one' ) != []: failure( "second_a('one')" )
+if second_p( 'one' ) != "": failure( "second_p('one')" )
+if second_a( 'one', 'two' ) != [ 'two' ]: failure( "second_a( 'one', 'two' )" )
+if second_p( 'one', 'two' ) != "two": failure( "second_p( 'one', 'two' )" )
+if second_a( 'one', 'two', 'three' ) != ['two', 'three']: failure( "second_a('one', 'two', 'three')" )
+if second_p( 'one', 'two', 'three' ) != "two.three": failure( "second_p( 'one', 'two', 'three' )" )
+
+// two formal parameters
+if third_a() != []: failure( "third_a()" )
+if third_p() != "": failure( "third_p()" )
+if third_a( 'one' ) != []: failure( "third_a('one')" )
+if third_p( 'one' ) != "": failure( "third_p('one')" )
+if third_a( 'one', 'two' ) != []: failure( "third_a( 'one', 'two' )" )
+if third_p( 'one', 'two' ) != "": failure( "third_p( 'one', 'two' )" )
+if third_a( 'one', 'two', 'three' ) != ['three']: failure( "third_a('one', 'two', 'three')" )
+if third_p( 'one', 'two', 'three' ) != "three": failure( "third_p( 'one', 'two', 'three' )" )
+
+// other kind of callable
+if extra( 'one', 'two', 'three' ) != "begin.one.two.three": failure( "extra" )
+
+// error test
+try
+	passvp()
+	failure( "Passvp called from main" )
+catch GenericError in e
+end
+
+// error test
+try
+	{=> passvp( "hello" )}()
+	failure( "Passvp didn't check the parameter" )
+catch GenericError in e
+end
+
+success()
+
+/* End of file */
