@@ -306,6 +306,80 @@ FALCON_FUNC core_argd( VMachine *vm )
       vm->retval( ret );
 }
 
+/*#
+   @function passvp
+   @inset varparams_support
+   @brief Returns all the undeclared parameters, or passes them to a callable item
+   @optparam citem Callable item on which to pass the parameters.
+   @return An array containing unnamed parameters, or the return value \b citem.
+   
+   This function returns all the parameters passed to this function but not declared
+   in its prototype (variable parameters) in an array.
+   
+   If the host function doesn't receive any extra parameter, this function returns
+   an empty array. This is useful in case the array is immediately added to a direct
+   call.
+   
+   If \b citem is specified, the function calls citem passing all the extra parameters
+   to it.
+*/
+FALCON_FUNC core_passvp( VMachine *vm )
+{
+   if ( vm->stackBase() == 0 )
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
+      
+   // get the previous stack frame.
+   StackFrame *thisFrame = (StackFrame *) &vm->stack()[ vm->stackBase() - VM_FRAME_SPACE ];
+   uint32 oldbase = thisFrame->m_stack_base;
+   
+   if( oldbase == 0 )
+      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
+
+   // ok, do we have an item to call?
+   Item* i_citem = vm->param(0);
+   if ( i_citem != 0 && ! i_citem->isCallable() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra("[C]").origin( e_orig_runtime ) );
+   
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
+   
+   // get the caller function symbol --- it holds the declared parameters
+   const Symbol* sym = thisFrame->m_symbol;
+   unsigned size =  sym->isFunction()? 
+      sym->getFuncDef()->symtab().size() :
+      sym->getExtFuncDef()->parameters()->size();
+   
+   Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count + size ];
+   int pcount = prevFrame->m_param_count - size;
+   
+   if ( i_citem )
+   {
+      int pcount = prevFrame->m_param_count - size;
+      while( size < prevFrame->m_param_count )
+      {
+         vm->pushParam( *first );
+         ++size;
+         // first may be invalidated
+         first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count + size ];
+      }
+      
+      vm->callFrame(*i_citem,  pcount);
+   }
+   else
+   {
+      CoreArray* arr = new CoreArray( pcount );
+      while( size < prevFrame->m_param_count )
+      {
+         arr->append( *first );
+         ++first;
+         ++size;
+      }
+
+      vm->retval( arr );
+   }
+}
+
+
 }
 }
 

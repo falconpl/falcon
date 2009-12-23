@@ -848,6 +848,7 @@ Module* core_module_init()
    self->addExtFunc( "attributes", &Falcon::core::attributes );
    self->addExtFunc( "argv", &Falcon::core::core_argv );
    self->addExtFunc( "argd", &Falcon::core::core_argd );
+   self->addExtFunc( "passvp", &Falcon::core::core_passvp );
 
    self->addExtFunc( "chr", &Falcon::core::chr )->
       addParam("number");

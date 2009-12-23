@@ -36,6 +36,7 @@ FALCON_FUNC GarbagePointer_ptr( VMachine *vm );
 
 FALCON_FUNC core_argv( VMachine *vm );
 FALCON_FUNC core_argd( VMachine *vm );
+FALCON_FUNC core_passvp( VMachine *vm );
 
 // Methodic functions
 FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm );
