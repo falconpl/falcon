@@ -68,16 +68,9 @@ if extra( 'one', 'two', 'three' ) != "begin.one.two.three": failure( "extra" )
 
 // error test
 try
-	passvp()
-	failure( "Passvp called from main" )
-catch GenericError in e
-end
-
-// error test
-try
 	{=> passvp( "hello" )}()
 	failure( "Passvp didn't check the parameter" )
-catch GenericError in e
+catch ParamError in e
 end
 
 success()

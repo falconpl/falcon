@@ -19,7 +19,12 @@ if a > 2: failure( "if >" )
 if a < 0: failure( "if <" )
 if a >= 2: failure( "if >=" )
 if a <= 0: failure( "if <=" )
-if a == 1: success()
+
+// conditional on wide integers
+a = 600851475143
+if a != 600851475143: failure( "if != wide" )
+if a < 1: failure( "if < wide" )
+if a == 600851475143: success()
 failure( "false negative on ==" )
 
 /* End of file */

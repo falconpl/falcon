@@ -1292,7 +1292,13 @@ int co_int_compare( const Item& first, const Item& second )
          return 1;
 
       case FLC_ITEM_INT:
-         return (int)(first.asInteger() - second.asInteger()) ;
+      {
+         // converting the int to a 32 bit integer is not a simple matter
+         int64 v = (first.asInteger() - second.asInteger()) ;
+         if (v==0) return 0;
+         if ( v > 0 ) return 1;
+         return -1;
+      }
 
       case FLC_ITEM_NUM:
          return (int)(((numeric)first.asInteger()) - second.asNumeric());
@@ -1357,24 +1363,24 @@ int co_range_compare( const Item& first, const Item& second )
 
       case FLC_ITEM_RANGE:
       {
-         int diff = (int)(first.asRangeStart() - second.asRangeStart());
+         int64 diff = first.asRangeStart() - second.asRangeStart();
          if ( diff != 0 )
-            return diff;
+            return (int)(diff>>32);
 
          // always greater
          diff =  (first.asRangeIsOpen() ? 1: 0) - (second.asRangeIsOpen() ? 1: 0);
 
          if ( diff != 0 )
-            return diff;
+            return (int)(diff);
 
          if ( first.asRangeIsOpen() )
             return 0;
 
-         diff = (int)(first.asRangeEnd() - second.asRangeEnd());
+         diff = first.asRangeEnd() - second.asRangeEnd();
          if ( diff != 0 )
-            return diff;
+            return (int)(diff>>32);
 
-         return (int)(first.asRangeStep() - second.asRangeStep());
+         return (int)((first.asRangeStep() - second.asRangeStep())>>32);
       }
       break;
 

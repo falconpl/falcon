@@ -46,7 +46,10 @@ Falcon (0.9.4.5)
            prevention during those deep scans is in place too.
   * major: Added the "eq" identity operator, so that 1 eq 1 is true, as a eq a,
            but b = a.clone(); a eq b is false (if a is deep).
-  * fixed: falconeer.fal relied on the old(incorrect) behaviour of regex.replace
+  * fixed: falconeer.fal relied on the old(incorrect) behavior of 
+           regex.replace
+  * fixed: Item compare may not work correctly if applied to ints that were too
+           distant (> int32 range).
 
            
 Falcon (0.9.4.4)
