@@ -138,7 +138,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %left OR
 %left AND
 %right NOT
-%left EEQ NEQ GT LT GE LE
+%left OP_EXEQ EEQ NEQ GT LT GE LE
 %left OP_IN OP_NOTIN PROVIDES
 %right ATSIGN DIESIS
 %left VBAR_VBAR CAP_CAP
@@ -2460,6 +2460,7 @@ expression:
    | expression DECREMENT { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_dec, $1 ) ); }
    | DECREMENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_dec, $2 ) ); }
    | expression EEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eq, $1, $3 ) ); }
+   | expression OP_EXEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_exeq, $1, $3 ) ); }
    | expression GT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_gt, $1, $3 ) ); }
    | expression LT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lt, $1, $3 ) ); }
    | expression GE expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ge, $1, $3 ) ); }

@@ -1475,7 +1475,7 @@ int co_array_compare( const Item& first, const Item& second )
    }
    else if ( second.isArray() )
    {
-      return (int)(first.asArray() - second.asArray());
+      return first.asArray()->compare( *second.asArray() );
    }
    else if ( second.isUnbound() )
    {
@@ -1514,7 +1514,7 @@ int co_dict_compare( const Item& first, const Item& second )
 
    if ( psecond->isDict() )
    {
-      return (int)(first.asDict() - psecond->asDict());
+      return first.asDict()->compare(psecond->asDict());
    }
 
    return first.type() - psecond->type();

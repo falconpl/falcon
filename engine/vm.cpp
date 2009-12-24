@@ -263,6 +263,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_PSHL ] = opcodeHandler_PSHL;
    m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
    m_opHandlers[ P_TRDN ] = opcodeHandler_TRDN;
+   m_opHandlers[ P_EXEQ ] = opcodeHandler_EXEQ;
 
    // Finally, register to the GC system
    memPool->registerVM( this );

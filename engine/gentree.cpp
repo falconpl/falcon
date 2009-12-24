@@ -629,6 +629,7 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_lt: type = 2; name = "<"; break;
       case Expression::t_le: type = 2; name = "<="; break;
       case Expression::t_eq: type = 2; name = "="; break;
+      case Expression::t_exeq: type = 2; name = "eq"; break;
       case Expression::t_neq: type = 2; name = "!="; break;
 
       case Expression::t_has: type = 2; name = "has"; break;

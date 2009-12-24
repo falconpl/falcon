@@ -1545,6 +1545,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_lt: mode = 2; opname = P_LT; break;
       case Expression::t_le: mode = 2; opname = P_LE; break;
       case Expression::t_eq: mode = 2; opname = P_EQ; break;
+      case Expression::t_exeq: mode = 2; opname = P_EXEQ; break;
       case Expression::t_neq: mode = 2; opname = P_NEQ; break;
 
       case Expression::t_in: mode = 2; opname = P_IN; break;

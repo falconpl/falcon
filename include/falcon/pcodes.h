@@ -534,8 +534,12 @@ while it will fill OP2 with an integer item containing 15H.
  *  */
 #define P_TRDN          0x69
 
+/** EXEQ: Exactly equal.
+   Checks for item identity.
+   */
+#define P_EXEQ          0x70
 
-#define FLC_PCODE_COUNT 0x70
+#define FLC_PCODE_COUNT 0x71
 
 #endif
 

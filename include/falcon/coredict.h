@@ -71,6 +71,8 @@ public:
    CoreDict *clone() const { return new CoreDict( *this ); }
    void merge( const CoreDict &dict ) { m_dict->merge( *dict.m_dict ); }
    void clear() { m_dict->clear(); }
+   
+   int compare( const CoreDict* other ) const { return items().compare( other->items() ); } 
 
    /** Performs a find using a static string as a key.
        This wraps the string in a temporary item and calls

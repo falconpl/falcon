@@ -183,6 +183,7 @@ void opcodeHandler_FORB( register VMachine *vm );
 void opcodeHandler_EVAL( register VMachine *vm );
 void opcodeHandler_OOB( register VMachine *vm );
 void opcodeHandler_TRDN( register VMachine *vm );
+void opcodeHandler_EXEQ( register VMachine *vm );
 
 
 class VMachine;
@@ -2367,6 +2368,7 @@ public:
    friend void opcodeHandler_EVAL( register VMachine *vm );
    friend void opcodeHandler_OOB( register VMachine *vm );
    friend void opcodeHandler_TRDN( register VMachine *vm );
+   friend void opcodeHandler_EXEQ( register VMachine *vm );
 };
 
 

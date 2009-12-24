@@ -170,6 +170,84 @@ bool CoreDict::find( const Item &key, Item &value )
    return false;
 }
 
+
+//TODO - move in another file
+int ItemDict::compare( const ItemDict& other, ItemDict::Parentship* parent ) const
+{
+   // really the same.
+   if (&other == this)
+      return 0;
+      
+   // Create the new parentship
+   Parentship current( this, parent );
+   
+   Iterator ithis( const_cast<ItemDict*>(this) );
+   Iterator iother( const_cast<ItemDict*>(&other) );
+   
+   while( ithis.hasCurrent() )
+   {
+      // is the other shorter?
+      if ( ! iother.hasCurrent() )
+      {
+         // we're bigger
+         return 1;
+      }
+      
+      const Item& tkey = ithis.getCurrentKey();
+      const Item& okey = iother.getCurrentKey();
+      int v = checkValue( tkey, okey, current );
+      if ( v != 0 )
+         return v;
+      
+      const Item& tvalue = ithis.getCurrent();
+      const Item& ovalue = iother.getCurrent();
+      v = checkValue( tvalue, ovalue, current );
+      if ( v != 0 )
+         return v;
+      
+      ithis.next();
+      iother.next();
+   }
+   
+   if( iother.hasCurrent() )
+      return -1;
+   
+   //  ok, we're the same
+   return 0;
+}
+
+
+int ItemDict::checkValue( const Item& first, const Item& second, ItemDict::Parentship& current ) const
+{
+   // different dictionaries?
+   if ( first.isDict() && first.isDict() )
+   {
+      const ItemDict* dict = &first.asDict()->items();
+      Parentship *p1 = current.m_parent;
+      // If it is not, we should scan it too.
+      bool bDescend = true;
+      
+      while( p1 != 0 )
+      {
+         if( p1->m_dict == dict )
+         {
+            bDescend = false;
+            break;
+         }
+         p1 = p1->m_parent;
+      }
+      
+      if ( bDescend )
+      {
+         return dict->compare( second.asDict()->items(), &current );
+      }
+      
+      return 0;
+   }
+
+   return first.compare( second );
+}
+
 }
 
 /* end of cdict.cpp */

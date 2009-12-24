@@ -1626,6 +1626,7 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_lt: mode = 2; opname = "LT  "; break;
       case Expression::t_le: mode = 2; opname = "LE  "; break;
       case Expression::t_eq: mode = 2; opname = "EQ  "; break;
+      case Expression::t_exeq: mode = 2; opname = "EXEQ"; break;
       case Expression::t_neq: mode = 2; opname = "NEQ "; break;
 
       case Expression::t_has: mode = 2; opname = "HAS "; break;

@@ -1515,6 +1515,8 @@ int SrcLexer::checkLimitedTokens()
             return OP_TO;
          else if ( m_string == "as" )
             return OP_AS;
+         else if ( m_string == "eq" )
+            return OP_EXEQ;
       break;
 
       case 3:

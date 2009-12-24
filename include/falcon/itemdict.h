@@ -48,6 +48,26 @@ public:
 
    virtual void merge( const ItemDict &dict ) = 0;
    virtual void clear() = 0;
+
+   virtual int compare( const ItemDict& other ) const { return compare( other, 0); }
+   
+private:
+
+   /** Classed used internally to track loops in traversals. */
+   class Parentship
+   {
+   public:
+      const ItemDict* m_dict;
+      Parentship* m_parent;
+      
+      Parentship( const ItemDict* d, Parentship* parent=0 ):
+         m_dict(d),
+         m_parent( parent )
+      {}
+   };
+
+   int compare( const ItemDict& other, Parentship* p ) const;
+   int checkValue( const Item& first, const Item& second, Parentship& current ) const;
 };
 
 }

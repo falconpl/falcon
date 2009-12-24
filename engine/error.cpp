@@ -367,6 +367,7 @@ void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property, co
       case e_orig_script: origin = "script"; break;
       case e_orig_runtime: origin = "runtime"; break;
       case e_orig_mod: origin = "module"; break;
+      default: origin = "unknown";
    }
 
    property = new CoreString( origin );

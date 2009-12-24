@@ -39,6 +39,13 @@ Falcon (0.9.4.5)
   * fixed: Macros used in per-property reflection was possibly broken under very
            rare conditions.
   * fixed: URI reflection was a mess (and slow); cleaned and simplified.
+  * minor: Added function passvp() that can be used to retrieve or pass variable
+           parameters.
+  * major: Now compare() (vm level) checks for deep equality in arrays and
+           dictionaries. The relation [1,2] < [1,3] holds. Circular reference
+           prevention during those deep scans is in place too.
+  * major: Added the "eq" identity operator, so that 1 eq 1 is true, as a eq a,
+           but b = a.clone(); a eq b is false (if a is deep).
 
            
 Falcon (0.9.4.4)

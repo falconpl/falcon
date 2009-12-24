@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,10 +29,9 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -126,33 +126,34 @@
      GT = 342,
      NEQ = 343,
      EEQ = 344,
-     PROVIDES = 345,
-     OP_NOTIN = 346,
-     OP_IN = 347,
-     DIESIS = 348,
-     ATSIGN = 349,
-     CAP_CAP = 350,
-     VBAR_VBAR = 351,
-     AMPER_AMPER = 352,
-     MINUS = 353,
-     PLUS = 354,
-     PERCENT = 355,
-     SLASH = 356,
-     STAR = 357,
-     POW = 358,
-     SHR = 359,
-     SHL = 360,
-     CAP_XOROOB = 361,
-     CAP_ISOOB = 362,
-     CAP_DEOOB = 363,
-     CAP_OOB = 364,
-     CAP_EVAL = 365,
-     TILDE = 366,
-     NEG = 367,
-     AMPER = 368,
-     DECREMENT = 369,
-     INCREMENT = 370,
-     DOLLAR = 371
+     OP_EXEQ = 345,
+     PROVIDES = 346,
+     OP_NOTIN = 347,
+     OP_IN = 348,
+     DIESIS = 349,
+     ATSIGN = 350,
+     CAP_CAP = 351,
+     VBAR_VBAR = 352,
+     AMPER_AMPER = 353,
+     MINUS = 354,
+     PLUS = 355,
+     PERCENT = 356,
+     SLASH = 357,
+     STAR = 358,
+     POW = 359,
+     SHR = 360,
+     SHL = 361,
+     CAP_XOROOB = 362,
+     CAP_ISOOB = 363,
+     CAP_DEOOB = 364,
+     CAP_OOB = 365,
+     CAP_EVAL = 366,
+     TILDE = 367,
+     NEG = 368,
+     AMPER = 369,
+     DECREMENT = 370,
+     INCREMENT = 371,
+     DOLLAR = 372
    };
 #endif
 /* Tokens.  */
@@ -243,47 +244,42 @@
 #define GT 342
 #define NEQ 343
 #define EEQ 344
-#define PROVIDES 345
-#define OP_NOTIN 346
-#define OP_IN 347
-#define DIESIS 348
-#define ATSIGN 349
-#define CAP_CAP 350
-#define VBAR_VBAR 351
-#define AMPER_AMPER 352
-#define MINUS 353
-#define PLUS 354
-#define PERCENT 355
-#define SLASH 356
-#define STAR 357
-#define POW 358
-#define SHR 359
-#define SHL 360
-#define CAP_XOROOB 361
-#define CAP_ISOOB 362
-#define CAP_DEOOB 363
-#define CAP_OOB 364
-#define CAP_EVAL 365
-#define TILDE 366
-#define NEG 367
-#define AMPER 368
-#define DECREMENT 369
-#define INCREMENT 370
-#define DOLLAR 371
+#define OP_EXEQ 345
+#define PROVIDES 346
+#define OP_NOTIN 347
+#define OP_IN 348
+#define DIESIS 349
+#define ATSIGN 350
+#define CAP_CAP 351
+#define VBAR_VBAR 352
+#define AMPER_AMPER 353
+#define MINUS 354
+#define PLUS 355
+#define PERCENT 356
+#define SLASH 357
+#define STAR 358
+#define POW 359
+#define SHR 360
+#define SHL 361
+#define CAP_XOROOB 362
+#define CAP_ISOOB 363
+#define CAP_DEOOB 364
+#define CAP_OOB 365
+#define CAP_EVAL 366
+#define TILDE 367
+#define NEG 368
+#define AMPER 369
+#define DECREMENT 370
+#define INCREMENT 371
+#define DOLLAR 372
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union 
-/* Line 1676 of yacc.c  */
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
-lex_value_t
-{
-
-/* Line 1676 of yacc.c  */
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
-
+typedef union
+#line 61 "/Users/gniccolai/Progetti/falcon/core/engine/src_parser.yy"
+lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
    char * charp;
@@ -296,17 +292,14 @@ lex_value_t
    Falcon::DictDecl *fal_ddecl;
    Falcon::SymbolList *fal_symlist;
    Falcon::List *fal_genericList;
-
-
-
-/* Line 1676 of yacc.c  */
-#line 304 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 298 "/Users/gniccolai/Progetti/falcon/core/engine/src_parser.hpp"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 

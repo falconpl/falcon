@@ -37,7 +37,7 @@ ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
    m_data(0),
-   m_owner( 0 )
+   m_owner(0)
 {}
 
 ItemArray::ItemArray( const ItemArray& other ):
@@ -638,6 +638,70 @@ bool ItemArray::equalIterator( const Iterator &first, const Iterator &second ) c
 bool ItemArray::onCriterion( Iterator* elem ) const
 {
    return elem->position() >= m_invalidPoint;
+}
+
+
+int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) const
+{
+   // really the same.
+   if (&other == this)
+      return 0;
+      
+   // use the size + 1 element to store the parent list
+   Parentship current( this, parent );
+   
+   for ( uint32 i = 0; i < m_size; i ++ )
+   {
+      // is the other shorter?
+      if ( i >= other.m_size )
+      {
+         // we're bigger
+         return 1;
+      }
+         
+      // different arrays?
+      if ( m_data[i].isArray() && other.m_data[i].isArray() )
+      {
+         // check if m_data[i] is in the list of parents.
+         ItemArray* ia = &m_data[i].asArray()->items();
+         Parentship *p1 = parent;
+         // If it is not, we should scan it too.
+         bool bDescend = true;
+         
+         while( p1 != 0 )
+         {
+            if( p1->m_array == ia )
+            {
+               bDescend = false;
+               break;
+            }
+            p1 = p1->m_parent;
+         }
+         
+         if ( bDescend )
+         {
+            int cval = ia->compare( other.m_data[i].asArray()->items(), &current );
+            // if the things below us aren't equal, we're not equal
+            if ( cval != 0 )
+               return cval;
+            // else, check other items.
+         }
+      }
+      else 
+      {
+            int cval = m_data[i].compare( other.m_data[i] );
+            // if the things below us aren't equal, we're not equal
+            if ( cval != 0 )
+               return cval;
+            // else, check other items.
+      }
+   }
+   
+   if( m_size < other.m_size )
+      return -1;
+   
+   //  ok, we're the same
+   return 0;
 }
 
 }

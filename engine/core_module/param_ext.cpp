@@ -363,7 +363,8 @@ FALCON_FUNC core_passvp( VMachine *vm )
          first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count + size ];
       }
       
-      vm->callFrame(*i_citem,  pcount);
+      // size may be > param count in ext funcs.
+      vm->callFrame(*i_citem,  pcount < 0 ? 0 : pcount );
    }
    else
    {

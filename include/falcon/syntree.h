@@ -387,6 +387,7 @@ public:
       t_lt,
       t_le,
       t_eq,
+      t_exeq,
       t_neq,
 
       t_has,
@@ -485,6 +486,7 @@ public:
          case t_le:
          case t_eq:
          case t_neq:
+         case t_exeq:
 
          case t_has:
          case t_hasnt:

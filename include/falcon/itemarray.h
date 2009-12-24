@@ -42,6 +42,22 @@ class FALCON_DYN_CLASS ItemArray: public Sequence
    friend class CoreTable;
 
    ItemArray( Item *buffer, uint32 size, uint32 alloc );
+   
+   /** Classed used internally to track loops in traversals. */
+   class Parentship
+   {
+   public:
+      const ItemArray* m_array;
+      Parentship* m_parent;
+      
+      Parentship( const ItemArray* d, Parentship* parent=0 ):
+         m_array(d),
+         m_parent( parent )
+      {}
+   };
+   
+   int compare( const ItemArray& other, Parentship* parent ) const;
+
 
 public:
    ItemArray();
@@ -81,6 +97,14 @@ public:
    bool insertSpace( uint32 pos, uint32 size );
 
    void resize( uint32 size );
+
+   /* Returns a loop-free deep compare of the array. 
+      The return value is the compare value of the first
+      non-equal items, or -1 in case this array is the
+      same but shorter than the other.
+   */
+   int compare( const ItemArray& other ) const { return compare( other, 0 ); }
+   
    /**
     * Reduce the memory used by this array to exactly its size.
     */

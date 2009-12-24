@@ -1955,6 +1955,15 @@ void opcodeHandler_TRDN( register VMachine *vm )
    }
 }
 
+// 0x70
+void opcodeHandler_EXEQ( register VMachine *vm )
+{
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( operand1->exactlyEqual(*operand2) );
+}
+   
+
 }
 
 /* end of vm_run.cpp */

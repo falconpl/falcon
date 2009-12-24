@@ -651,6 +651,61 @@ CoreObject *Item::asObject() const {
 }
 
 
+
+bool Item::exactlyEqual( const Item& other ) const
+{
+   if ( type() != other.type() )
+   {
+      return false;
+   }
+
+   switch( type() )
+   {
+      case FLC_ITEM_NIL: case FLC_ITEM_UNB:
+         return true;
+      
+      case FLC_ITEM_INT:
+         return asInteger() == other.asInteger();
+      
+      case FLC_ITEM_NUM:
+         return asNumeric() == other.asNumeric();
+         
+      case FLC_ITEM_RANGE:
+         if( asRangeIsOpen() != other.asRangeIsOpen() )
+            return false;
+         if ( asRangeStart() != other.asRangeStart() )
+            return false;
+         if ( asRangeStep() != other.asRangeStep() )
+            return false;
+         if ( ! asRangeIsOpen() &&
+            (asRangeEnd() != other.asRangeEnd() ) )
+            return false;
+         return true;
+      
+      case FLC_ITEM_STRING:
+         return *asString() == *other.asString();
+      
+      case FLC_ITEM_METHOD:
+         if ( asMethodFunc() == other.asMethodFunc() )
+         {
+            return asMethodItem().exactlyEqual(other.asMethodItem() );
+         } 
+         return false;
+      
+      case FLC_ITEM_CLSMETHOD:
+         if ( asObjectSafe()  != other.asObjectSafe() )
+            return false;
+         // fallthrough
+         
+      case FLC_ITEM_FUNC:
+      case FLC_ITEM_CLASS:
+         return asClass() == other.asClass();      
+   }
+   
+   // the default is to check for the voidp element in data
+   return asObjectSafe() == other.asObjectSafe(); 
+}
+
 }
 
 /* end of item.cpp */

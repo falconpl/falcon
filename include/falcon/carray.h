@@ -242,6 +242,11 @@ public:
     *
     */
    bool canBeMethod() const { return m_table == 0 && m_tablePos == 0; }
+   
+   /** Compare two arrays for deep equality.
+      Internally calls item array's compare.
+   */
+   int compare( const CoreArray& other ) { return m_itemarray.compare( other.m_itemarray ); }
 };
 
 }

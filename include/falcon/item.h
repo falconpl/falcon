@@ -165,7 +165,7 @@ protected:
                byte type;
                byte flags;
                byte oldType;
-               byte methodId;
+               byte reserved;
             } bits;
             uint16 half;
             uint32 whole;
@@ -475,7 +475,14 @@ public:
    */
    bool isComposed() const { return isObject() || isArray() || isDict(); }
 
+   /** Returns the item type*/
    byte type() const { return all.ctx.base.bits.type; }
+   
+   /** Changes the item type.
+   
+      Flags are also reset. For example, if this item was OOB before,
+      the OOB flag is cleared.
+   */
    void type( byte nt ) { all.ctx.base.bits.flags = 0; all.ctx.base.bits.type = nt; }
 
    /** Returns the content of the item */
@@ -631,6 +638,8 @@ public:
    bool operator>(const Item &other) const { return compare( other ) > 0; }
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
 
+   bool exactlyEqual( const Item &other ) const;
+   
    inline Item *dereference();
    inline const Item *dereference() const;
 
