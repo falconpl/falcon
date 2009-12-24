@@ -180,8 +180,7 @@ function parse_file( fileName, destName )
    
    // convert the name
    if not destName
-      foutName = fileName
-      chgRegex.replace( foutName, MyParser.prj_name )
+      foutName = chgRegex.replace( fileName, MyParser.prj_name )
    else
       foutName = destName
    end
