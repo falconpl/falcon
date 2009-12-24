@@ -435,7 +435,7 @@ FALCON_FUNC  fe_le ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @function eq
+   @function equal
    @brief Performs a lexicographic check for the first operand being equal to the second.
    @param a First operand
    @param b Second operand

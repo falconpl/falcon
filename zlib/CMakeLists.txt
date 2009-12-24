@@ -21,7 +21,7 @@ if(WIN32)
 endif()
 
 if(FALCON_WITH_INTERNAL_ZLIB)
-  unset(ZLIB_LIBRARY)
+  set(ZLIB_LIBRARY "")
   set(ZLIB_SOURCE
     adler32.c
     compress.c

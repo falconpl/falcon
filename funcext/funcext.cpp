@@ -73,7 +73,7 @@ FALCON_MODULE_DECL
       addParam("a")->addParam("b");
    self->addExtFunc( "lt", Falcon::Ext::fe_lt )->
       addParam("a")->addParam("b");
-   self->addExtFunc( "eq", Falcon::Ext::fe_eq )->
+   self->addExtFunc( "equal", Falcon::Ext::fe_eq )->
       addParam("a")->addParam("b");
    self->addExtFunc( "neq", Falcon::Ext::fe_neq)->
       addParam("a")->addParam("b");
