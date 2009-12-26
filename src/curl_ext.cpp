@@ -39,6 +39,8 @@
 #include "curl_ext.h"
 #include "curl_st.h"
 
+#include <sys/time.h>
+
 namespace Falcon {
 namespace Ext {
 
@@ -51,7 +53,6 @@ static void throw_error( int code, int line, const String& cd, const CURLcode re
          );
 }
 
-// The following is a faldoc block for the function
 /*#
    @function curl_version
    @brief Returns the version of libcurl
@@ -67,6 +68,27 @@ FALCON_FUNC  curl_version( ::Falcon::VMachine *vm )
    @class Handle
    @brief Stores an handle for a CURL (easy) connection.
    @optparam uri A string or an URI to be used to initialize the connection.
+
+   The following is a simple complete program that retrieves the main
+   page of the Falcon programming language site:
+
+   @code
+   import from curl
+
+   try
+      h = curl.Handle( "http://www.falconpl.org" )
+      h.setOutString()
+      h.exec()
+      > "Complete data transfer:", h.getData()
+   catch curl.CurlError in e
+      > "ERROR: ", e
+   end
+   @endcode
+
+   @prop data User available data. Store any data that the client application
+         wants to be related to this handle in this property. It is also possible
+         to derive a child from this
+         class and store more complete behavior there.
 */
 
 FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
@@ -85,6 +107,9 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 
    curl_easy_setopt( curl, CURLOPT_NOPROGRESS, 1 );
    curl_easy_setopt( curl, CURLOPT_NOSIGNAL, 1 );
+
+   // we need ourselves inside the object, so we can handle us back in multiple.
+   curl_easy_setopt( curl, CURLOPT_PRIVATE, h );
 
    Item* i_uri = vm->param(0);
 
@@ -123,6 +148,15 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 /*#
    @method exec Handle
    @brief Transfers data from the remote.
+
+   This function performs the whole transfer towards the target that has been
+   selected via @a Handle.setOutString, @a Handle.setOutStream, @a setOutConsole
+   or @a Handle.setOutCallback routines.
+
+   The call is blocking and normally it cannot be interrupted; however, a
+   timeout can be set through
+
+   @note Internally, this method performs a curl_easy_perform call on the inner
 
 */
 
@@ -638,7 +672,7 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
          || i_data == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "I;X" ) );
+            .extra( "I,X" ) );
    }
 
    // setup our options
@@ -734,6 +768,232 @@ FALCON_FUNC  Handle_postData( ::Falcon::VMachine *vm )
            .desc( FAL_STR( curl_err_pm ) ) );
 
    h->postData( *i_data->asString() );
+}
+
+/*#
+   @method Handle.getInfo
+   @brief Returns informations about the status of this handle.
+   @param option The specific information to be read.
+   @return The value associated with the required information, or
+           nil if the option is not available.
+
+   This method returns one of the informations that can be
+   retrieved from this handle. The option value are stored in the
+   INFO enumeration, and they correspond to the values in the
+   CURLINFO_* set of defines of the libcurl SDK, associated with the
+   curl_easy_getinfo function.
+
+   The type of the returned value depends of the type of information
+   required; in general it may be a number or a string.
+
+   Possible values for @b option are
+
+   - INFO.EFFECTIVE_URL - the last used effective URL.
+   - INFO.RESPONSE_CODE - the last received HTTP or FTP code. This will be zero if no server response
+      code has been received. Note that a proxy's CONNECT response should be read with
+      INFO.HTTP_CONNECTCODE and not this.
+   - INFO.HTTP_CONNECTCODE - the last received proxy response code to a CONNECT request.
+   - INFO.FILETIME - time of the retrieved document (as a Falcon TimeStamp, in GMT). If you get @b nil, it can be because of many reasons
+     (unknown, the server hides it or the server doesn't support the command that tells document time etc)
+     and the time of the document is unknown. Note that you must tell the server to collect this information before the transfer
+     is made, by using the OPT.FILETIME option to @a Handle.setOption or you will unconditionally get a @b nil back.
+   - INFO.TOTAL_TIME - the total time in seconds and fractions for the previous transfer, including name resolving, TCP connect etc.
+   - INFO.NAMELOOKUP_TIME - time, in seconds and fractions, it took from the start until the name resolving was completed.
+   - INFO.CONNECT_TIME - time, in seconds and fraction, it took from the start until the connect to the remote host (or proxy) was completed.
+   - INFO.APPCONNECT_TIME - time, in seconds and fractions, it took from the start until the SSL/SSH connect/handshake to the remote host was completed. This time is most often very near to the PRETRANSFER time, except for cases such as HTTP pippelining where the pretransfer time can be delayed due to waits in line for the pipeline and more. (Added in 7.19.0)
+   - INFO.PRETRANSFER_TIME - time, in seconds and fractions, it took from the start until the file transfer is just about to begin. This includes all pre-transfer commands and negotiations that are specific to the particular protocol(s) involved.
+   - INFO.STARTTRANSFER_TIME - time, in seconds and fractions, it took from the start until the first byte is just about to be transferred. This includes CURLINFO_PRETRANSFER_TIME and also the time the server needs to calculate the result.
+   - INFO.REDIRECT_TIME - total time, in seconds and fractions, it took for all redirection steps include name lookup, connect, pretransfer and transfer before final transaction was started. CURLINFO_REDIRECT_TIME contains the complete execution time for multiple redirections. (Added in 7.9.7)
+   - INFO.REDIRECT_COUNT - total number of redirections that were actually followed.
+   - INFO.REDIRECT_URL - the URL a redirect would take you to if you would enable OPT.FOLLOWLOCATION. This can come very handy if you
+        think using the built-in libcurl redirect logic isn't good enough for you but you would still prefer to avoid implementing
+        all the magic of figuring out the new URL.
+   - INFO.SIZE_UPLOAD - total amount of bytes that were uploaded.
+   - INFO.SIZE_DOWNLOAD - total amount of bytes that were downloaded. The amount is only for the latest transfer and will be reset again for each new transfer.
+   - INFO.SPEED_DOWNLOAD - average download speed that curl measured for the complete download. Measured in bytes/second.
+   - INFO.SPEED_UPLOAD - average upload speed that curl measured for the complete upload. Measured in bytes/second.
+   - INFO.HEADER_SIZE - total size of all the headers received. Measured in number of bytes.
+   - INFO.REQUEST_SIZE - total size of the issued requests. This is so far only for HTTP requests.
+        Note that this may be more than one request if OPT.FOLLOWLOCATION is true.
+   - INFO.SSL_VERIFYRESULT - the certification verification that was requested
+       (using the OPT.SSL_VERIFYPEER option to @a Handle.setOption).
+   - INFO.SSL_ENGINES - Array of OpenSSL crypto-engines supported. Note that engines are normally implemented in
+         separate dynamic libraries. Hence not all the returned engines may be available at run-time.
+   - INFO.CONTENT_LENGTH_DOWNLOAD - content-length of the download. This is the value read from the Content-Length:
+         field. Since 7.19.4, this returns -1 if the size isn't known.
+   - INFO.CONTENT_LENGTH_UPLOAD - specified size of the upload. Since 7.19.4, this returns -1 if the size isn't known.
+   - INFO.CONTENT_TYPE - Pass a pointer to a char pointer to receive the content-type of the downloaded object.
+      This is the value read from the Content-Type: field. If you get @b nil, it means that the server didn't send a valid Content-Type
+      header or that the protocol used doesn't support this.
+
+   - INFO.HTTPAUTH_AVAIL - bitmask indicating the authentication method(s) available. The meaning of the bits is explained in the
+      OPT.HTTPAUTH option for @a Handle.setOption.
+
+   - INFO.PROXYAUTH_AVAIL - bitmask indicating the authentication method(s) available for your proxy authentication.
+   - INFO.OS_ERRNO - @b errno variable from a connect failure. Note that the value is only set on failure, it is not reset upon a
+         successful operation.
+   - INFO.NUM_CONNECTS - count of connections libcurl had to create to achieve the previous transfer
+      (only the successful connects are counted).
+      Combined with INFO.REDIRECT_COUNT you are able to know how many times libcurl successfully reused existing connection(s) or not.
+   - INFO.PRIMARY_IP - IP address of the most recent connection done with this curl handle. This string may be IPv6 if that's enabled.
+   - INFO_COOKIELIST - Returns an array of all the known cookies
+   - INFO_FTP_ENTRY_PATH - FTP entry path. That is the initial path libcurl ended up in when logging on to the remote FTP server.
+      This stores a @b nil if something is wrong.
+   - INFO.CONDITION_UNMET - 1 if the condition provided in the previous request didn't match (see OPT.TIMECONDITION).
+      Alas, if this returns a 1 you know that the reason you didn't get data in return is because it didn't
+      fulfill the condition. The long this argument points to will get a zero stored if the condition instead was met.
+
+*/
+FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
+{
+   Item* i_option = vm->param(0);
+   if( i_option == 0 || ! i_option->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "N" ) );
+   }
+
+   // setup our options
+   Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
+
+   if ( h->handle() == 0 )
+     throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__ )
+           .desc( FAL_STR( curl_err_pm ) ) );
+
+   CURLINFO info = (CURLINFO) i_option->forceInteger();
+   CURLcode cerr = CURLE_OK;
+
+   switch( info )
+   {
+
+   // char*
+   case CURLINFO_EFFECTIVE_URL:
+   case CURLINFO_CONTENT_TYPE:
+   case CURLINFO_PRIMARY_IP:
+   case CURLINFO_FTP_ENTRY_PATH:
+   {
+      char* rv;
+      cerr = curl_easy_getinfo( h->handle(), info, &rv );
+      if( cerr == CURLE_OK && rv != 0 )
+      {
+         CoreString* cs = new CoreString();
+         cs->bufferize( rv );
+         vm->retval( cs );
+      }
+   }
+   break;
+
+   // long
+   case CURLINFO_RESPONSE_CODE:
+   case CURLINFO_HTTP_CONNECTCODE:
+   case CURLINFO_HEADER_SIZE:
+   case CURLINFO_REQUEST_SIZE:
+   case CURLINFO_SSL_VERIFYRESULT:
+   case CURLINFO_HTTPAUTH_AVAIL:
+   case CURLINFO_PROXYAUTH_AVAIL:
+   case CURLINFO_OS_ERRNO:
+   case CURLINFO_NUM_CONNECTS:
+   case CURLINFO_CONDITION_UNMET:
+      {
+         long rv;
+         cerr = curl_easy_getinfo( h->handle(), info, &rv );
+         if( cerr == CURLE_OK )
+         {
+            vm->retval( (int64) rv );
+         }
+      }
+      break;
+
+      // timestamp
+   case CURLINFO_FILETIME:
+      {
+         long rv;
+         cerr = curl_easy_getinfo( h->handle(), info, &rv );
+         if( cerr == CURLE_OK && rv != -1 )
+         {
+            time_t trv = (time_t)rv;
+            TimeStamp* timestamp = new TimeStamp;
+            timestamp->m_timezone = tz_UTC;
+
+            #ifdef FALCON_SYSTEM_WIN
+               struct rtm;
+               struct tm *ftime = gmtime_r( &trv, &tm );
+
+            #else
+               struct tm *ftime = gmtime( &trv );
+            #endif
+
+            timestamp->m_year = ftime->tm_year + 1900;
+            timestamp->m_month = ftime->tm_mon + 1;
+            timestamp->m_day = ftime->tm_mday;
+            timestamp->m_hour = ftime->tm_hour;
+            timestamp->m_minute = ftime->tm_min;
+            timestamp->m_second = ftime->tm_sec;
+            timestamp->m_msec = 0;
+            Item* i_ts = vm->findGlobalItem("TimeStamp");
+            fassert( i_ts->isClass() );
+            vm->retval( i_ts->asClass()->createInstance(timestamp) );
+         }
+      }
+      break;
+
+
+      // double
+   case CURLINFO_TOTAL_TIME:
+   case CURLINFO_NAMELOOKUP_TIME:
+   case CURLINFO_CONNECT_TIME:
+   case CURLINFO_APPCONNECT_TIME:
+   case CURLINFO_PRETRANSFER_TIME:
+   case CURLINFO_STARTTRANSFER_TIME:
+   case CURLINFO_REDIRECT_TIME:
+   case CURLINFO_REDIRECT_COUNT:
+   case CURLINFO_REDIRECT_URL:
+   case CURLINFO_SIZE_UPLOAD:
+   case CURLINFO_SIZE_DOWNLOAD:
+   case CURLINFO_SPEED_DOWNLOAD:
+   case CURLINFO_SPEED_UPLOAD:
+   case CURLINFO_CONTENT_LENGTH_DOWNLOAD:
+   case CURLINFO_CONTENT_LENGTH_UPLOAD:
+      {
+         double rv;
+         cerr = curl_easy_getinfo( h->handle(), info, &rv );
+         if( cerr == CURLE_OK )
+         {
+            vm->retval( (numeric) rv );
+         }
+      }
+      break;
+
+      // slist
+   case CURLINFO_SSL_ENGINES:
+   case CURLINFO_COOKIELIST:
+      {
+         curl_slist* rv;
+         cerr = curl_easy_getinfo( h->handle(), info, &rv );
+         if( cerr == CURLE_OK )
+         {
+            CoreArray* ca = new CoreArray;
+            curl_slist* p = rv;
+            while( p != 0 )
+            {
+               ca->append( new CoreString( p->data, -1 ) );
+               p = p->next;
+            }
+
+            curl_slist_free_all( rv );
+            vm->retval( ca );
+         }
+      }
+      break;
+
+   default:
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) );
+   }
+
+   if( cerr != CURLE_OK )
+   {
+      throw_error( FALCON_ERROR_CURL_GETINFO, __LINE__, FAL_STR( curl_err_getinfo ), cerr );
+   }
 }
 
 /*#

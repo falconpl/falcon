@@ -78,24 +78,40 @@ CurlModule::~CurlModule()
 /*#
    @main curl
 
-   This entry creates the main page of your module documentation.
+   This module provides a tight and complete integration with
+   the @l http://curl.haxx.se/libcurl/ libcurl library.
 
-   If your project will generate more modules, you may creaete a
-   multi-module documentation by adding a module entry like the
-   following
+   Libcurl provides a complete set of RFC Internet protocol
+   clients and allows a Falcon program to download remote
+   files through simple commands.
 
+   The curl Falcon module is structured in a way that allows
+   to handle multiple downloads in a single thread, and even in
+   a simple coroutine, simplifying by orders of magnitude the
+   complexity of sophisticated client programs.
+
+   @section load_request Importing the curl module.
+
+   Since the names of the classes that are declared in this module
+   are short and simple, it is advisable to use the @b import directive
+   to store the module in its own namespace. For example:
    @code
-      \/*#
-         \@module module_name Title of the module docs
-         \@brief Brief description in module list..
+      import from curl
 
-         Some documentation...
-      *\/
-   @endcode
+      h = curl.Handle()
+   @end
 
-   And use the \@beginmodule <modulename> code at top of the _ext file
-   (or files) where the extensions functions for that modules are
-   documented.
+   @section enums Libcurl enumerations.
+
+   The library wrapped by this module, libcurl, uses various sets of @b define
+   directives to specify parameters and configure connection values.
+
+   To reduce the complexity of this module, each set of enumerations is stored
+   in a different Falcon enumerative class. For example, all the options
+   starting with "CURLOPT_" are stored in the CURLOPT enumeration. The option
+   that sets the overall operation timeout for a given curl handle can be set
+   through the CURLOPT.TIMEOUT option (which coresponds to the CURLOPT_TIMEOUT
+   define in the original C API of libcurl).
 */
 
 FALCON_MODULE_DECL
@@ -142,8 +158,11 @@ FALCON_MODULE_DECL
       ->addParam( "option" )->addParam( "data" );
    self->addClassMethod( easy_class, "postData", Falcon::Ext::Handle_postData ).asSymbol()
       ->addParam( "data" );
+   self->addClassMethod( easy_class, "getInfo", Falcon::Ext::Handle_getInfo ).asSymbol()
+      ->addParam( "option" );
 
    self->addClassMethod( easy_class, "cleanup", Falcon::Ext::Handle_cleanup );
+   self->addClassProperty( easy_class, "data" );
 
    //============================================================
    // Enumeration class CURL
@@ -156,7 +175,7 @@ FALCON_MODULE_DECL
    //============================================================
    // Enumeration class COPT
    //
-   Falcon::Symbol *copt_class = self->addClass( "CURLOPT" );
+   Falcon::Symbol *copt_class = self->addClass( "OPT" );
    self->addClassProperty( copt_class, "VERBOSE" ).setInteger(CURLOPT_VERBOSE).setReadOnly(true);
    self->addClassProperty( copt_class, "HEADER" ).setInteger(CURLOPT_HEADER).setReadOnly(true);
    self->addClassProperty( copt_class, "NOPROGRESS" ).setInteger(CURLOPT_NOPROGRESS).setReadOnly(true);
@@ -199,7 +218,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "PROXYTYPE" ).setInteger(CURLOPT_PROXYTYPE).setReadOnly(true);
 
 
-   Falcon::Symbol *cproxy_class = self->addClass( "CURLPROXY" );
+   Falcon::Symbol *cproxy_class = self->addClass( "PROXY" );
    self->addClassProperty( cproxy_class, "HTTP" ).setInteger(CURLPROXY_HTTP).setReadOnly(true);
    self->addClassProperty( cproxy_class, "HTTP_1_0" ).setInteger(CURLPROXY_HTTP_1_0).setReadOnly(true);
    self->addClassProperty( cproxy_class, "SOCKS4" ).setInteger(CURLPROXY_SOCKS4).setReadOnly(true);
@@ -216,13 +235,13 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "NETRC" ).setInteger(CURLOPT_NETRC).setReadOnly(true);
 
 
-   Falcon::Symbol *cnetrc_class = self->addClass( "CURL_NETRC" );
+   Falcon::Symbol *cnetrc_class = self->addClass( "NETRC" );
    self->addClassProperty( cnetrc_class, "OPTIONAL" ).setInteger(CURL_NETRC_OPTIONAL).setReadOnly(true);
    self->addClassProperty( cnetrc_class, "IGNORED" ).setInteger(CURL_NETRC_IGNORED).setReadOnly(true);
 
    self->addClassProperty( copt_class, "HTTPAUTH" ).setInteger(CURLOPT_HTTPAUTH).setReadOnly(true);
 
-   Falcon::Symbol *cauth_class = self->addClass( "CURLAUTH" );
+   Falcon::Symbol *cauth_class = self->addClass( "AUTH" );
    self->addClassProperty( cauth_class, "BASIC" ).setInteger(CURLAUTH_BASIC).setReadOnly(true);
    self->addClassProperty( cauth_class, "DIGEST" ).setInteger(CURLAUTH_DIGEST).setReadOnly(true);
    self->addClassProperty( cauth_class, "DIGEST_IE" ).setInteger(CURLAUTH_DIGEST_IE).setReadOnly(true);
@@ -236,7 +255,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "POSTREDIR" ).setInteger(CURLOPT_POSTREDIR).setReadOnly(true);
    self->addClassProperty( copt_class, "HTTP_VERSION" ).setInteger(CURLOPT_HTTP_VERSION).setReadOnly(true);
 
-   Falcon::Symbol *chttp_class = self->addClass( "CURL_HTTP" );
+   Falcon::Symbol *chttp_class = self->addClass( "HTTP" );
    self->addClassProperty( chttp_class, "VERSION_NONE" ).setInteger(CURL_HTTP_VERSION_NONE).setReadOnly(true);
    self->addClassProperty( chttp_class, "VERSION_1_0" ).setInteger(CURL_HTTP_VERSION_1_0).setReadOnly(true);
    self->addClassProperty( chttp_class, "VERSION_1_1" ).setInteger(CURL_HTTP_VERSION_1_1).setReadOnly(true);
@@ -247,7 +266,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "FTP_RESPONSE_TIMEOUT" ).setInteger(CURLOPT_FTP_RESPONSE_TIMEOUT).setReadOnly(true);
    self->addClassProperty( copt_class, "USE_SSL" ).setInteger(CURLOPT_USE_SSL).setReadOnly(true);
 
-   Falcon::Symbol *cusessl_class = self->addClass( "CURL_USESSL" );
+   Falcon::Symbol *cusessl_class = self->addClass( "USESSL" );
    self->addClassProperty( cusessl_class, "NONE" ).setInteger(CURLUSESSL_NONE).setReadOnly(true);
    self->addClassProperty( cusessl_class, "TRY" ).setInteger(CURLUSESSL_TRY).setReadOnly(true);
    self->addClassProperty( cusessl_class, "CONTROL" ).setInteger(CURLUSESSL_CONTROL).setReadOnly(true);
@@ -255,14 +274,14 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "FTPSSLAUTH" ).setInteger(CURLOPT_FTPSSLAUTH).setReadOnly(true);
 
-   Falcon::Symbol *cftpauth_class = self->addClass( "CURLFTPAUTH" );
+   Falcon::Symbol *cftpauth_class = self->addClass( "FTPAUTH" );
    self->addClassProperty( cftpauth_class, "DEFAULT" ).setInteger(CURLFTPAUTH_DEFAULT).setReadOnly(true);
    self->addClassProperty( cftpauth_class, "SSL" ).setInteger(CURLFTPAUTH_SSL).setReadOnly(true);
    self->addClassProperty( cftpauth_class, "TLS" ).setInteger(CURLFTPAUTH_TLS).setReadOnly(true);
 
    self->addClassProperty( copt_class, "FTP_SSL_CCC" ).setInteger(CURLOPT_FTP_SSL_CCC).setReadOnly(true);
 
-   Falcon::Symbol *cftpssl_ccc_class = self->addClass( "CURLFTPSSL_CCC" );
+   Falcon::Symbol *cftpssl_ccc_class = self->addClass( "FTPSSL_CCC" );
    self->addClassProperty( cftpssl_ccc_class, "NONE" ).setInteger(CURLFTPSSL_CCC_NONE).setReadOnly(true);
    self->addClassProperty( cftpssl_ccc_class, "PASSIVE" ).setInteger(CURLFTPSSL_CCC_PASSIVE).setReadOnly(true);
    self->addClassProperty( cftpssl_ccc_class, "ACTIVE" ).setInteger(CURLFTPSSL_CCC_ACTIVE).setReadOnly(true);
@@ -270,7 +289,7 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "FTP_FILEMETHOD" ).setInteger(CURLOPT_FTP_FILEMETHOD).setReadOnly(true);
 
-   Falcon::Symbol *cftpmethod_class = self->addClass( "CURLFTPMETHOD" );
+   Falcon::Symbol *cftpmethod_class = self->addClass( "FTPMETHOD" );
    self->addClassProperty( cftpmethod_class, "MULTICWD" ).setInteger(CURLFTPMETHOD_MULTICWD).setReadOnly(true);
    self->addClassProperty( cftpmethod_class, "NOCWD" ).setInteger(CURLFTPSSL_CCC_PASSIVE).setReadOnly(true);
    self->addClassProperty( cftpmethod_class, "SINGLECWD" ).setInteger(CURLFTPMETHOD_SINGLECWD).setReadOnly(true);
@@ -278,7 +297,6 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "RESUME_FROM" ).setInteger(CURLOPT_RESUME_FROM).setReadOnly(true);
    self->addClassProperty( copt_class, "INFILESIZE" ).setInteger(CURLOPT_INFILESIZE).setReadOnly(true);
    self->addClassProperty( copt_class, "MAXFILESIZE" ).setInteger(CURLOPT_MAXFILESIZE).setReadOnly(true);
-   self->addClassProperty( copt_class, "TIMECONDITION" ).setInteger(CURLOPT_TIMECONDITION).setReadOnly(true);
    self->addClassProperty( copt_class, "TIMEVALUE" ).setInteger(CURLOPT_TIMEVALUE).setReadOnly(true);
    self->addClassProperty( copt_class, "TIMEOUT" ).setInteger(CURLOPT_TIMEOUT).setReadOnly(true);
    self->addClassProperty( copt_class, "TIMEOUT_MS" ).setInteger(CURLOPT_TIMEOUT_MS).setReadOnly(true);
@@ -289,7 +307,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "CONNECTTIMEOUT_MS" ).setInteger(CURLOPT_CONNECTTIMEOUT_MS).setReadOnly(true);
    self->addClassProperty( copt_class, "IPRESOLVE" ).setInteger(CURLOPT_IPRESOLVE).setReadOnly(true);
 
-   Falcon::Symbol *cipresolve_class = self->addClass( "CURL_IPRESOLVE" );
+   Falcon::Symbol *cipresolve_class = self->addClass( "IPRESOLVE" );
    self->addClassProperty( cipresolve_class, "WHATEVER" ).setInteger(CURL_IPRESOLVE_WHATEVER).setReadOnly(true);
    self->addClassProperty( cipresolve_class, "V4" ).setInteger(CURL_IPRESOLVE_V4).setReadOnly(true);
    self->addClassProperty( cipresolve_class, "V6" ).setInteger(CURL_IPRESOLVE_V6).setReadOnly(true);
@@ -297,7 +315,7 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "SSLVERSION" ).setInteger(CURLOPT_SSLVERSION).setReadOnly(true);
 
-   Falcon::Symbol *csslversion_class = self->addClass( "CURL_SSLVERSION" );
+   Falcon::Symbol *csslversion_class = self->addClass( "SSLVERSION" );
    self->addClassProperty( csslversion_class, "DEFAULT" ).setInteger(CURL_SSLVERSION_DEFAULT).setReadOnly(true);
    self->addClassProperty( csslversion_class, "TLSv1" ).setInteger(CURL_SSLVERSION_TLSv1).setReadOnly(true);
    self->addClassProperty( csslversion_class, "SSLv2" ).setInteger(CURL_SSLVERSION_SSLv2).setReadOnly(true);
@@ -305,7 +323,7 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "SSH_AUTH_TYPES" ).setInteger(CURLOPT_SSH_AUTH_TYPES).setReadOnly(true);
 
-   Falcon::Symbol *cssh_auth_class = self->addClass( "CURLSSH_AUTH" );
+   Falcon::Symbol *cssh_auth_class = self->addClass( "SSH_AUTH" );
    self->addClassProperty( cssh_auth_class, "PUBLICKEY" ).setInteger(CURLSSH_AUTH_PUBLICKEY).setReadOnly(true);
    self->addClassProperty( cssh_auth_class, "PASSWORD" ).setInteger(CURLSSH_AUTH_PASSWORD).setReadOnly(true);
    self->addClassProperty( cssh_auth_class, "HOST" ).setInteger(CURLSSH_AUTH_HOST).setReadOnly(true);
@@ -386,7 +404,52 @@ FALCON_MODULE_DECL
    CURLOPT_SHARE (?)
 
    CURLOPT_TELNETOPTIONS
+   CURLOPT_TIMECONDITION
    */
+
+   //============================================================
+   // Enumeration class CURLINFO
+   //
+   Falcon::Symbol *curlinfo_class = self->addClass( "INFO" );
+   self->addClassProperty( curlinfo_class, "EFFECTIVE_URL" ).setInteger(CURLINFO_EFFECTIVE_URL).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "RESPONSE_CODE" ).setInteger(CURLINFO_RESPONSE_CODE).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "HTTP_CONNECTCODE" ).setInteger(CURLINFO_HTTP_CONNECTCODE).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "FILETIME" ).setInteger(CURLINFO_FILETIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "TOTAL_TIME" ).setInteger(CURLINFO_TOTAL_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "NAMELOOKUP_TIME" ).setInteger(CURLINFO_NAMELOOKUP_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "CONNECT_TIME" ).setInteger(CURLINFO_CONNECT_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "APPCONNECT_TIME" ).setInteger(CURLINFO_APPCONNECT_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "PRETRANSFER_TIME" ).setInteger(CURLINFO_PRETRANSFER_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "STARTTRANSFER_TIME" ).setInteger(CURLINFO_STARTTRANSFER_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "REDIRECT_TIME" ).setInteger(CURLINFO_REDIRECT_TIME).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "REDIRECT_COUNT" ).setInteger(CURLINFO_REDIRECT_COUNT).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "REDIRECT_URL" ).setInteger(CURLINFO_REDIRECT_URL).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SIZE_UPLOAD" ).setInteger(CURLINFO_SIZE_UPLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SIZE_DOWNLOAD" ).setInteger(CURLINFO_SIZE_DOWNLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SPEED_DOWNLOAD" ).setInteger(CURLINFO_SPEED_DOWNLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SPEED_UPLOAD" ).setInteger(CURLINFO_SPEED_UPLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "HEADER_SIZE" ).setInteger(CURLINFO_HEADER_SIZE).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "REQUEST_SIZE" ).setInteger(CURLINFO_REQUEST_SIZE).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SSL_VERIFYRESULT" ).setInteger(CURLINFO_SSL_VERIFYRESULT).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SSL_ENGINES" ).setInteger(CURLINFO_SSL_ENGINES).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "CONTENT_LENGTH_DOWNLOAD" ).setInteger(CURLINFO_CONTENT_LENGTH_DOWNLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "CONTENT_LENGTH_UPLOAD" ).setInteger(CURLINFO_CONTENT_LENGTH_UPLOAD).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "CONTENT_TYPE" ).setInteger(CURLINFO_CONTENT_TYPE).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "HTTPAUTH_AVAIL" ).setInteger(CURLINFO_HTTPAUTH_AVAIL).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "PROXYAUTH_AVAIL" ).setInteger(CURLINFO_PROXYAUTH_AVAIL).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "NUM_CONNECTS" ).setInteger(CURLINFO_NUM_CONNECTS).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "PRIMARY_IP" ).setInteger(CURLINFO_PRIMARY_IP).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "COOKIELIST" ).setInteger(CURLINFO_COOKIELIST).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "FTP_ENTRY_PATH" ).setInteger(CURLINFO_FTP_ENTRY_PATH).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "SSL_ENGINES" ).setInteger(CURLINFO_SSL_ENGINES).setReadOnly(true);
+   self->addClassProperty( curlinfo_class, "CONDITION_UNMET" ).setInteger(CURLINFO_CONDITION_UNMET).setReadOnly(true);
+
+   /**
+    * Separately handled
+    *    CURLINFO_PRIVATE -> CURLOPT_PRIVATE
+    *    CURLINFO_LASTSOCKET -> socket?
+    *    CURLINFO_CERTINFO
+    */
 
    //============================================================
    // CurlError class
