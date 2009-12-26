@@ -344,7 +344,9 @@ Module* AppFalcon::loadInput( ModuleLoader &ml )
       #ifdef WIN32
          Path::winToUri( m_options.input );
       #endif
-      mod = ml.loadFile( m_options.input, ModuleLoader::t_none, true );
+      mod = ml.loadFile( m_options.input,
+            m_options.run_only ? ModuleLoader::t_vmmod : ModuleLoader::t_defaultSource,
+            false );
    }
    else
    {

@@ -398,7 +398,17 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
       // ... if type is t_none, we may anyhow scan for a proper extension.
       if( (type == t_none || type == t_defaultSource) && ! bHadExtension )
       {
+         URI saveUri = origUri;
          bFound = scanForFile( origUri, vfs, tf, foundStats );
+         if ( ! bFound && type == t_defaultSource )
+         {
+            origUri = saveUri;
+
+            // scanforfile may
+            bFound = vfs->readStats( origUri, foundStats );
+            if ( bFound )
+               tf = t_source;
+         }
       }
       else {
          // just check if the file exists.

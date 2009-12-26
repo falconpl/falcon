@@ -50,6 +50,10 @@ Falcon (0.9.4.5)
            regex.replace
   * fixed: Item compare may not work correctly if applied to ints that were too
            distant (> int32 range).
+  * fixed: In falcon command line tool, fixed loading of source files not 
+           terminating with .fal, and when forcing execution of fam files via the
+           -x options.
+           
 
            
 Falcon (0.9.4.4)
