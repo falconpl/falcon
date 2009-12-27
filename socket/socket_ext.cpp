@@ -60,7 +60,7 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
    if ( ::Falcon::Sys::getHostName( *s ) )
       vm->retval( s );
    else {
-      delete s;
+
       throw  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
          .desc( FAL_STR( sk_msg_generic ) )
          .sysError( (uint32) errno ) );
@@ -434,7 +434,7 @@ FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
       vm->retval( s );
       return;
    }
-   delete s;
+
    vm->retnil();
 }
 
@@ -461,7 +461,7 @@ FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm )
       vm->retval( s );
       return;
    }
-   delete s;
+
    vm->retnil();
 }
 
