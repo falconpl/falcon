@@ -2365,7 +2365,7 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                Item prop;
 			   if( itm.isClass() )
 			   {
-				   Falcon::Item* requested = itm.asClass()->properties().getValue( sItemName );
+				   const Falcon::Item* requested = itm.asClass()->properties().getValue( sItemName );
 				   if( requested == 0 )
 					   return false;
 				   prop = *requested;
