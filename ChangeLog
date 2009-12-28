@@ -53,6 +53,7 @@ Falcon (0.9.4.5)
   * fixed: In falcon command line tool, fixed loading of source files not 
            terminating with .fal, and when forcing execution of fam files via the
            -x options.
+  * fixed: indirection didn't work for classes so classnames and enums couldn't be used
            
 
            

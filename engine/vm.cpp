@@ -2360,10 +2360,17 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                if( sItemName.size() == 0 && vmIsWhiteSpace( chr ) )
                   break;
 
-               // access the item. We know it's an object or we wouldn't be in this state.
+               // access the item. We know it's an object or class or we wouldn't be in this state.
                // also, notice that we change the item itself.
                Item prop;
-               if ( !itm.asObjectSafe()->getProperty( sItemName, prop ) )
+			   if( itm.isClass() )
+			   {
+				   Falcon::Item* requested = itm.asClass()->properties().getValue( sItemName );
+				   if( requested == 0 )
+					   return false;
+				   prop = *requested;
+			   }
+               else if ( !itm.asObjectSafe()->getProperty( sItemName, prop ) )
                   return false;
 
                prop.methodize( itm );
@@ -2584,7 +2591,7 @@ resetState:
 
       switch( chr ) {
          case '.':
-            if( itm.isObject() )
+			if( itm.isObject() || itm.isClass() )
                state = dotAccessor;
             else if ( itm.isArray() )
                state = dotArrayAccessor;
