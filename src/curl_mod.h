@@ -36,6 +36,7 @@
 #define curl_mod_H
 
 #include <falcon/falconobject.h>
+#include <falcon/itemarray.h>
 #include <falcon/error.h>
 #include <falcon/coreslot.h>
 #include <curl/curl.h>
@@ -151,10 +152,17 @@ public:
 
    static CoreObject* Factory( const CoreClass *cls, void *data, bool );
 
+   virtual void gcMark( uint32 mark );
+
+   bool addHandle( CurlHandle* h );
+   bool removeHandle( CurlHandle* );
+
 private:
    CURLM* m_handle;
    Mutex* m_mtx;
    int* m_refCount;
+
+   ItemArray m_handles;
 };
 
 class CurlError: public ::Falcon::Error

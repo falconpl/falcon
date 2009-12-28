@@ -54,6 +54,10 @@ FAL_MODSTR( curl_err_pm, "Curl handle already closed" );
 FAL_MODSTR( curl_err_setopt, "Type of parameter incompatible for this option" );
 FAL_MODSTR( curl_err_unkopt, "Unknown option for setOption" );
 FAL_MODSTR( curl_err_getinfo, "Error while reading required information." );
+FAL_MODSTR( curl_err_easy_already_in, "Handle already added" );
+FAL_MODSTR( curl_err_easy_not_in, "Handle currently not present" );
+FAL_MODSTR( curl_err_multi_error, "Error in CURL multiple operation" );
+
 
 //... add here your messages, and remove or configure the above one
 

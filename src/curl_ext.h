@@ -46,6 +46,9 @@
 #define FALCON_ERROR_CURL_PM              (FALCON_ERROR_CURL_BASE+2)
 #define FALCON_ERROR_CURL_SETOPT          (FALCON_ERROR_CURL_BASE+3)
 #define FALCON_ERROR_CURL_GETINFO         (FALCON_ERROR_CURL_BASE+4)
+#define FALCON_ERROR_CURL_HISIN           (FALCON_ERROR_CURL_BASE+5)
+#define FALCON_ERROR_CURL_HNOIN           (FALCON_ERROR_CURL_BASE+6)
+#define FALCON_ERROR_CURL_MULTI           (FALCON_ERROR_CURL_BASE+7)
 
 namespace Falcon {
 namespace Ext {
@@ -67,6 +70,11 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm );
 //FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  Multi_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  Multi_add( ::Falcon::VMachine *vm );
+FALCON_FUNC  Multi_remove( ::Falcon::VMachine *vm );
+FALCON_FUNC  Multi_perform( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  CurlError_init ( ::Falcon::VMachine *vm );

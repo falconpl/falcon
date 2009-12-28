@@ -534,6 +534,41 @@ CoreObject* CurlMultiHandle::Factory( const CoreClass *cls, void *data, bool bDe
 }
 
 
+void CurlMultiHandle::gcMark( uint32 mark )
+{
+   m_handles.gcMark( mark );
+   CacheObject::gcMark( mark );
+}
+
+
+bool CurlMultiHandle::addHandle( CurlHandle* h )
+{
+   for ( int i = 0; i < m_handles.length(); ++i )
+   {
+      if ( m_handles[i].asObjectSafe() == h )
+         return false;
+   }
+
+   m_handles.append( h );
+   curl_multi_add_handle( handle(), h->handle() );
+   return true;
+}
+
+
+bool CurlMultiHandle::removeHandle( CurlHandle* h )
+{
+   for ( int i = 0; i < m_handles.length(); ++i )
+   {
+      if ( m_handles[i].asObjectSafe() == h )
+      {
+         curl_multi_remove_handle( handle(), h->handle() );
+         m_handles.remove( i );
+         return true;
+      }
+   }
+
+   return false;
+}
 
 
 }

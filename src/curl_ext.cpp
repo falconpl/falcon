@@ -53,6 +53,15 @@ static void throw_error( int code, int line, const String& cd, const CURLcode re
          );
 }
 
+static void throw_merror( int code, int line, const String& cd, const CURLMcode retval )
+{
+   String error = String( curl_multi_strerror( retval ) );
+   throw new Mod::CurlError( ErrorParam( code, line )
+         .desc( cd )
+         .extra( error.A(" (").N(retval).A(")") )
+         );
+}
+
 /*#
    @function curl_version
    @brief Returns the version of libcurl
@@ -995,6 +1004,76 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
       throw_error( FALCON_ERROR_CURL_GETINFO, __LINE__, FAL_STR( curl_err_getinfo ), cerr );
    }
 }
+
+
+FALCON_FUNC  Multi_init ( ::Falcon::VMachine *vm )
+{
+
+}
+
+
+FALCON_FUNC  Multi_add ( ::Falcon::VMachine *vm )
+{
+   Item* i_handle = vm->param(0);
+   if( i_handle == 0 || ! i_handle->isOfClass( "Handle" ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                     .extra( "Handle" ) );
+   }
+
+   Mod::CurlMultiHandle* mh = dyncast< Mod::CurlMultiHandle* >(
+                 vm->self().asObject() );
+   Mod::CurlHandle* sh = dyncast< Mod::CurlHandle* >(i_handle->asObjectSafe());
+
+   if( ! mh->addHandle(sh) )
+   {
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_HISIN, __LINE__)
+            .desc( FAL_STR( curl_err_easy_already_in ) ) );
+   }
+}
+
+
+FALCON_FUNC  Multi_remove ( ::Falcon::VMachine *vm )
+{
+   Item* i_handle = vm->param(0);
+   if( i_handle == 0 || ! i_handle->isOfClass( "Handle" ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "Handle" ) );
+   }
+
+   Mod::CurlMultiHandle* mh = dyncast< Mod::CurlMultiHandle* >(
+                   vm->self().asObject() );
+   Mod::CurlHandle* sh = dyncast< Mod::CurlHandle* >(i_handle->asObjectSafe());
+
+   if( ! mh->removeHandle(sh) )
+   {
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_HNOIN, __LINE__)
+            .desc( FAL_STR( curl_err_easy_not_in ) ) );
+   }
+}
+
+
+FALCON_FUNC  Multi_perform ( ::Falcon::VMachine *vm )
+{
+   Mod::CurlMultiHandle* mh = dyncast< Mod::CurlMultiHandle* >(
+                   vm->self().asObject() );
+
+   int rh = 0;
+   CURLMcode ret = curl_multi_perform( mh->handle(), &rh );
+   if ( ret == CURLM_CALL_MULTI_PERFORM )
+   {
+      vm->retval( -1 );
+      return;
+   }
+
+   if ( ret != CURLM_OK )
+   {
+      throw_merror( FALCON_ERROR_CURL_MULTI, __LINE__, FAL_STR( curl_err_multi_error), ret );
+   }
+   vm->retval( rh );
+}
+
 
 /*#
    @class CurlError

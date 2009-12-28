@@ -108,9 +108,9 @@ CurlModule::~CurlModule()
 
    To reduce the complexity of this module, each set of enumerations is stored
    in a different Falcon enumerative class. For example, all the options
-   starting with "CURLOPT_" are stored in the CURLOPT enumeration. The option
+   starting with "CURLOPT_" are stored in the OPT enumeration. The option
    that sets the overall operation timeout for a given curl handle can be set
-   through the CURLOPT.TIMEOUT option (which coresponds to the CURLOPT_TIMEOUT
+   through the OPT.TIMEOUT option (which corresponds to the CURLOPT_TIMEOUT
    define in the original C API of libcurl).
 */
 
@@ -163,6 +163,19 @@ FALCON_MODULE_DECL
 
    self->addClassMethod( easy_class, "cleanup", Falcon::Ext::Handle_cleanup );
    self->addClassProperty( easy_class, "data" );
+
+   //============================================================
+   // Here declare CURL - multi api
+   //
+
+   Falcon::Symbol *multy_class = self->addClass( "Multi", Falcon::Ext::Multi_init );
+   multy_class->getClassDef()->factory( &Falcon::Mod::CurlMultiHandle::Factory );
+   self->addClassMethod( multy_class, "add", Falcon::Ext::Multi_add ).asSymbol()
+      ->addParam( "handle" );
+   self->addClassMethod( multy_class, "remove", Falcon::Ext::Multi_remove ).asSymbol()
+      ->addParam( "handle" );
+   self->addClassMethod( multy_class, "perform", Falcon::Ext::Multi_perform );
+
 
    //============================================================
    // Enumeration class CURL
