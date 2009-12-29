@@ -131,8 +131,8 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
    @raise AccessError if @b number is out of range.
 
    Both assigning a value to a certain parameter and using the paramSet()
-   function will change locally the value of the parameter, b
-   ut this value won't be reflected in the actual parameter that was used to
+   function will change locally the value of the parameter, but
+   this value won't be reflected in the actual parameter that was used to
    call the function, unless the parameter was explicitly passed by reference.
    In some contexts, it may be useful to know if this is the case.
 
