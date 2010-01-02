@@ -18,7 +18,7 @@ class XRegex( expr, pcount ) from Regex(expr)
 
    function replaceAll( str, chg )
       try
-         return Regex.replaceAll( str, chg )
+         return self.Regex.replaceAll( str, chg )
       catch RegexError
          > @i"fallc: Warning, cannot replace variables from $(str)"
          return str
@@ -28,7 +28,7 @@ class XRegex( expr, pcount ) from Regex(expr)
    function grabAll( str )
       s = self.pcount
       try
-         return map( {part => str[part.first() + s : part.last()]},
+         return map( {part => str[part[0] + s : part[1]]},
                self.findAll( str )  )
       catch RegexError
          > @i"fallc: Warning, cannot grab variables from $(str)"

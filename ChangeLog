@@ -54,8 +54,7 @@ Falcon (0.9.4.5)
            terminating with .fal, and when forcing execution of fam files via the
            -x options.
   * fixed: indirection didn't work for classes so classnames and enums couldn't be used
-           
-
+  * fixed: fallc was left behind of a version or so.
            
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
