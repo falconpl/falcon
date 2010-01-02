@@ -1,0 +1,13 @@
+/*
+   Falcon Samples.
+
+   Shows internationalization
+*/
+
+directive lang="en_US"
+
+> i"Hello world!"
+var = "value"
+> @i"The value of var is $(var)"
+> "This string will stay as in the original"
+> i"Goodbye world!"

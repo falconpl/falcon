@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<translation module="intl" from="en_US" into="ja_JP">
+<string id="2">
+<original>Hello world!</original>
+<translated>こんにちは、世界よ！</translated>
+</string>
+<string id="6">
+<original>The value of var is $(var)</original>
+<translated>Varの値は $(var) です。</translated>
+</string>
+<string id="8">
+<original>Goodbye world!</original>
+<translated>さようなら、世界よ！</translated>
+</string>
+</translation>
