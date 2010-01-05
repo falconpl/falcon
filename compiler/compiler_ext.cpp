@@ -72,7 +72,7 @@ namespace Ext {
       default system encoding that Falcon is able to detect. Use one of the
       encoding names known by the Transcoder class.
 
-   @prop launchOnLink If true, the __main__ function (that is, the entry point)
+   @prop launchAtLink If true, the __main__ function (that is, the entry point)
          of the loaded modules is executed before returning it. This allows
          the modules to initalize themselves and set their global variables.
          Notice that this step may be autonomusly performed also by the loader
