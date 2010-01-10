@@ -1,6 +1,5 @@
-TODO for 0.9.6
+TODO for 0.9.8
    
-   - Introduction of iterators on string and membufs.
    - Move dictionary find methods to standard sequences.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    - Provide Stream interface to Sockets.
@@ -8,6 +7,6 @@ TODO for 0.9.6
    - [Desiderata] Submodule-loading (i.e. load core=>strings)
    - Native support for big numbers.
    - Type contracts.
-   - Revision of equality concepts (== equal, === coincident).
+   - New, more flexible compiler/module pair, and revision of the link
+     process.
    
-

@@ -1,80 +1,28 @@
 
                          RELEASE NOTES for Falcon
 
-                               Eagle Release
+                              Chimera Release
 
-                                  0.9.4
+                                  0.9.6
+  
+  "Chimera" version is an intermediate version that bridges Eagle series
+with the next series, in which we should put in the final compiler/module
+assets.
 
-  "Eagle" version represents a strengthening, a bug-fix and formalization of
-the previous version. The initial plan was that of stuffing some of the new
-features we want to introduce in 0.9 release set right in 0.9.4, but as the
-changelog was growing, we decided to concentrate in code cleaning and bug-fix.
-
-  This will give us the time needed to work on modules and extensions through
-a very stable base, and "stable" meant both as with a long lasting interface
-and a robust code.
-
-Code Cleaning
-=============
-
-  As said, the main concern in issuing this release has been that of
-stabilizing the code, both in terms of interface that can be used by the
-engine itself and by third party extensions, and in terms of bug fixing and
-code cleaning. However, this sole operation had the side effect of removing
-a long lasting rust in various parts of the engine, and this earned a
-performance boost of about 15-25% in VM intensive tasks; the most relevant
-performance increase has been registered in the call stack related routines;
-to make an example, the Fibonacci recursive (non-optimized) test, which
-stresses the ability to recursively call functions (with no tail-stack
-optimizations yet) is consistently about 33% faster than in Crane version.
-
-  And this without even introducing a single compile-time or code generation
-time optimization yet. We should start doing those around 0.9.6-8 versions,
-and we expect the major performance increase to be gained there. Also, I
-honestly think there is still a good deal of pure code cleaning in the engine,
-which should result in a further 10-15% direct performance increase.
+  It has been issued as a standalone version to capitalize a number of
+very important achievements, and a very long set of critical bugfixes.
 
 New Features
 ============
 
-  Despite the focus on code cleaning, we have introduced some relevant new
-features:
-
-  - Introduction of generator functions, which are now handled by the for/in
-    loop.
-  - Comprehension (using also generator functions).
-  - Symbol annotations (attributes).
-  - Addition of the Set class.
-  - Improving of stability in interactive mode.
-
-  The star of this release is the long-wished-for feature of "list"
-comprehension, to which a new chapter of the Survival Guide has been
-dedicated. Falcon uses its OOP/functional hybridization to perform comprehension
-on any item or class instance supporting the Sequence VM interface.
-Comprehension is also available for any instance or prototyped object
-exposing an "append" method.
-
-  The Set class is a simple set collection which orderly stores unique
-copies of items.
-
-  Attributes allow to specify compile-time values for modules or prominent
-symbols, which can be used by external tools to query the module contents
-or by the program themselves to configure runtime behavior. For example,
-an organization may require all the modules to be signed by an authority
-through a special attribute, and check the validity of that signature before
-allowing the modules to be loaded and executed. A specialized serialization
-routine or a persistent-storage system may use the attribute informations to
-decide which elements to persistently store and restore.
-
-  Generator functions are simply functions returning one item at a time, to
-be iteratively used in while loops, or automatically used in for/in loops
-and as comprehension source set generators. They just need to return a special
-Out of Band 0 integer item when the generation is terminated.
-
-  The interactive mode, althrough still not perfect, has been improved
-under many aspects. It is now much more robust to user errors, and it recovers
-more gracefully under many situations.
-
+  - Call with continuation (like found in "scheme" language).
+  - Class 'states'.
+  - Passvp function to access variable parameters.
+  - (optional) readline/editline support for interactive mode.
+  - "Unbound" type.
+  - New deep "==", checking deeply language collections by
+    value, so that [1,2] == [1,2] holds true.
+  - New operator "eq" checking strict identity.
 
 Backward incompatibilities
 ==========================
@@ -82,111 +30,10 @@ Backward incompatibilities
   This release introduces some minimal incompatibility with the previous
 version. In details:
 
-  - Closures are not anymore transparent arrays; they are full fledged
-    opaquely closed functions. Code relying on callable arrays to be
-    generated when returning closures (i.e. mangling the returned array)
-    must be reviewed.
-
-  - Callable arrays stored in object properties are now retrieved as functions,
-    or more precisely, as methods. It is possible to obtain the original
-    array extracting it through the "callable()" method of the Method items,
-    and operators in methods mimics those in arrays, but this may introduce
-    some incompatibility with old code storing callabe items in arrays inside
-    instances.
-
-  - Strings and memory buffers are not anymore supported by iterators and by
-    the for/in loop. It is actually possible to have this interface back
-    for them, but this way to access them is highly inefficient. So, it's
-    preferable to encourage more direct techniques to deal with strings
-    and memory buffers. In case this turns out to be a bad decision, we'll
-    activate the support in iterators and for/in loops again in a future
-    release.
-
-  - Closures now can close a symbol in any parent; this may break some code
-    that uses improperly a name of a variable not present in the direct
-    parent, but declared at a higher closure level.
-
-  - Operator '*' on strings now replicates them. Addition of Unicode values
-    is now performed by the '%' operator; so
-
-       a = "abc" * 2      // "abcabc"
-       a = "abc" % 65     // "abcA"
-
-  - Renamed some common string methods:
-      String.backFind => String.rfind 
-      String.backTrim => String.rtrim
-      String.frontTrim => String.ftrim
-
-  - Removed List methods insert() and erase() (now performed via iterators).
-
-
-Minor additions
-===============
-
-  A set of minor, but significant upgrades have been introduced as well to make
-the coding experience more complete and interesting.
-
-  - A "properties()" BOM method has been added; it returns an array containing
-    all the properties declared by instances, and can be used to iterate
-    dynamically over properties and methods (via the getProperty() BOM method).
-
-  - A methodic "describe()" BOM method has been added to all the item types;
-    it performs a compact inspect() rendered to a string that is then returned.
-    It's a bit heavier than toString().
-
-  - bind(), unbind(), bound() and value() methods has been added to late binding
-    items.
-
-  - Added argv() and argd() functions that return respectively a vector and a
-    dictionary with all the parameters passed to a function.
-
-  - Added "add Unicode value" operator for strings ("/"). "A" / 1 => "B",
-    "Z" / -1 => "Y".
-
-  - The Compiler module can be used to access also an incremental compiler;
-    the incremental compiler has its own Virtual Machine sandboxed in, so it
-    is concretely possible to control a separate Falcon Virtual Machine from
-    inside falcon scripts.
-
-
-
-Update 0.9.4.2
-==============
-
-  Version 0.9.4.2 is a minor release meant mainly for maintenance and bugfix.
-A little cleanup has been introduced in some stream-oriented method interface,
-and in arrays stored as properties: the function arrayNM and the method Array.NM
-have been added to ensure arrays are "never methods".
-
-  Newly introduced in this version are "Complex" number class and a "logging"
-module in feathers.
-
-
-
-Update 0.9.4.4
-==============
-
-  With even more work on bugfixes, this version is considered quite stable and
-the last in 0.9.4 series. Most important works was fixing of errors in GC
-control in tables and the correction of a nasty bug in coroutines that caused
-them to be unstable in every program where they was launched and terminated
-randomly.
-
-  In this version, property accessors for objects have been introduced: they
-are script level functions intercepting access to properties.
-
-  Also, Object.apply and Object.extract BOM methods has been added to drive
-the development of "state" keyword in version 0.9.6.
-
-  Much work has been done in clearing up some Table class methods and remove
-some rust that was layered since the last review of the topic in 0.9.2.
-
-  The Tokenizer class has been given a bit more useful cut and some new
-functionality that helps writing general parsers.
-
-  Finally, in feathers the JSON module has been added to the pool of available
-modules, as a driver for the web platform that is under development.
-
+  - 'state' and 'eq' are now keywords. 
+  - All operator overrides in classes and POOP are now renamed; the double
+    underline is now IN FRONT of the operator override name. For example,
+    call__ is now named __call.
 
 
 Usage tips
