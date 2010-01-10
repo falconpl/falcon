@@ -16,19 +16,24 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 #
 ## <Subset of falcon-config.cmake.in>
 #
+
+if ("${FALCON_LIB_DIR}" strequal "")
+   set(FALCON_LIB_DIR lib)
+endif()
+
+if ("${FALCON_MOD_INSTALL}" strequal "")
 if(WIN32)
-   set(FALCON_LIB_DIR bin)
    set(FALCON_MOD_INSTALL_DIR bin)
 else()
-   set(FALCON_LIB_DIR lib)
-   set(FALCON_MOD_INSTALL_DIR lib/falcon)
+   set(FALCON_MOD_INSTALL_DIR "${FALCON_LIB_DIR}/falcon")
 ENDIF()
+endif()
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
 set(FALCON_INSTALL_DESTINATIONS
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION ${FALCON_LIB_DIR} 
-  ARCHIVE DESTINATION lib
+  ARCHIVE DESTINATION ${FALCON_LIB_DIR}
 )
 # NOTE modules are installed via 
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
