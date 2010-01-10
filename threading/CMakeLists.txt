@@ -4,24 +4,25 @@
 # CMake configuration file for module threading
 ####################################################################
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/include
-  ${falcon_INCLUDE_DIRS}
-)
+# Inclusion settings
+INCLUDE_DIRECTORIES(.)
 
 #Specific system files
-if(UNIX OR MAC)
+IF(UNIX OR MAC)
    SET( SYS_SPECIFIC
       systhread_posix.cpp
     )
-elseif(WIN32)
-   set( SYS_SPECIFIC
+
+ELSEIF(WIN32)
+
+   SET( SYS_SPECIFIC
       systhread_win.cpp
     )
-endif()
 
-add_library(threading_fm MODULE
+ENDIF(UNIX OR MAC)
+
+# Target
+ADD_LIBRARY( threading_fm MODULE
    waitable.cpp
    threading.cpp
    threading_ext.cpp
@@ -30,4 +31,11 @@ add_library(threading_fm MODULE
    ${SYS_SPECIFIC}
 )
 
-falcon_finalize_module( threading_fm )
+#Link
+IF(UNIX OR MAC)
+   TARGET_LINK_LIBRARIES(threading_fm falcon_engine pthread )
+ELSEIF(WIN32)
+   TARGET_LINK_LIBRARIES(threading_fm falcon_engine )
+ENDIF(UNIX OR MAC)
+
+FALCON_INSTALL_MODULE( threading_fm )

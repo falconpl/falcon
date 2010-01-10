@@ -4,21 +4,21 @@
 # CMake configuration file for module ConfParser
 ####################################################################
 
-INCLUDE_DIRECTORIES(
-  ${PROJECT_SOURCE_DIR}/include
-  ${falcon_INCLUDE_DIRS}
+# Inclusion settings
+INCLUDE_DIRECTORIES(.)
+
+IF(WIN32)
+   SET( SYS_RC confparser.rc )
+ENDIF(WIN32)
+
+# Target
+ADD_LIBRARY( confparser_fm MODULE
+   confparser.cpp
+   confparser_ext.cpp
+   confparser_mod.cpp
+   confparser_st.cpp
+   ${SYS_RC}
 )
 
-if(WIN32)
-   set( SYS_RC confparser.rc )
-endif(WIN32)
-
-add_library(confparser_fm MODULE
-  confparser.cpp
-  confparser_ext.cpp
-  confparser_mod.cpp
-  confparser_st.cpp
-  ${SYS_RC}
-)
-
-falcon_finalize_module( confparser_fm )
+#Link
+FALCON_LINK_MODULE( confparser_fm )

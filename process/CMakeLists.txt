@@ -4,18 +4,17 @@
 # CMake configuration file for module Process
 ####################################################################
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${falcon_INCLUDE_DIRS}
-)
+# Inclusion settings
+INCLUDE_DIRECTORIES(.)
 
-if(UNIX)
+IF(UNIX)
    SET(SYS_SPECIFIC process_sys_unix.cpp)
-else()
+ELSE(UNIX)
    SET(SYS_SPECIFIC process_sys_win.cpp process.rc)
-endif()
+ENDIF(UNIX)
 
-add_library(process_fm MODULE
+# Target
+ADD_LIBRARY( process_fm MODULE
    process.cpp
    process_ext.cpp
    process_mod.cpp
@@ -23,4 +22,5 @@ add_library(process_fm MODULE
    ${SYS_SPECIFIC}
 )
 
-falcon_finalize_module( process_fm )
+#Link
+FALCON_LINK_MODULE( process_fm )
