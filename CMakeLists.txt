@@ -8,9 +8,13 @@ PROJECT(Falcon_Feathers)
 
 # Find our Find*.cmake files 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
- 
+
+if ( "$ENV{FALCON_ACTIVE_TREE}" STREQUAL "" )
+   Message( FATAL_ERROR "Feathers must be compiled under falcon build environment" )
+endif()
+
 set( falcon_DIR
-   "$ENV{FALCON_LIB_PATH}/falcon/cmake" )
+   "$ENV{FALCON_ACTIVE_TREE}/lib/falcon/cmake" )
    
 find_package(falcon REQUIRED
  HINTS ${CMAKE_INSTALL_PREFIX}

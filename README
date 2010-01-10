@@ -19,6 +19,8 @@ Modules admitted in the Feathers are currently:
    * compiler
    * confparser
    * funcext
+   * json
+   * logging
    * mxml
    * process
    * regex
