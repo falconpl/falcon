@@ -9,18 +9,13 @@ PROJECT(Falcon_Feathers)
 # Find our Find*.cmake files 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
  
-option(FALCON_DEVELOPMENT_MODE 
-  "If ON, only the development installation will be considered by find_package." 
-  off
+set( falcon_DIR
+   "$ENV{FALCON_LIB_PATH}/falcon/cmake" )
+   
+find_package(falcon REQUIRED
+ HINTS ${CMAKE_INSTALL_PREFIX}
+ NO_DEFAULT_PATH # disables all implicit search paths
 )
-if(FALCON_DEVELOPMENT_MODE)
-  find_package(falcon REQUIRED
-    HINTS ${CMAKE_INSTALL_PREFIX}
-    NO_DEFAULT_PATH # disables all implicit search paths
-  )
-else()
-  find_package(falcon REQUIRED)
-endif()
 
 add_subdirectory(compiler)
 add_subdirectory(confparser)
