@@ -223,6 +223,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    GenCode gencode( module() );
    gencode.generate( m_root );
 
+
    m_lmodule->globals().resize( module()->symbolTable().size() + 1 );
 
    while ( ! m_root->classes().empty() )

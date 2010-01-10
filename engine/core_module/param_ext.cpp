@@ -270,10 +270,28 @@ FALCON_FUNC core_argd( VMachine *vm )
    
    If the host function doesn't receive any extra parameter, this function returns
    an empty array. This is useful in case the array is immediately added to a direct
-   call.
+   call. For example:
+
+   @code
+   function receiver( a, b )
+      > "A: ", a
+      > "B: ", b
+      > "Others: ", passvp().describe()
+   end
+
+   receiver( "one", "two", "three", "four" )
+   @endcode
    
-   If \b citem is specified, the function calls citem passing all the extra parameters
-   to it.
+   If @b citem is specified, the function calls citem passing all the extra parameters
+   to it. For example:
+
+   @code
+   function promptPrint( prompt )
+      passvp( .[printl prompt] )
+   end
+
+   promptPrint( "The prompt: ", "arg1", " ", "arg2" )
+   @endcode
 */
 FALCON_FUNC core_passvp( VMachine *vm )
 {
