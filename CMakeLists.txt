@@ -121,6 +121,9 @@ if(NOT CMAKE_INSTALL_PREFIX)
   endif()
 endif()
 
+if(NOT FALCON_FINAL_DESTINATION)
+   SET(FALCON_FINAL_DESTINATION $CMAKE_INSTALL_PREFIX)
+endif()
 
 #
 add_subdirectory(engine)
