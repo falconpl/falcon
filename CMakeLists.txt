@@ -82,7 +82,7 @@ INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
 INCLUDE_DIRECTORIES(BEFORE "$ENV{FALCON_BUILD_TREE}/core/include") # < for config stuff
 
 IF( WIN32 )
-   LINK_DIRECTORIES("${FALCON_BIN_DIR}")
+   LINK_DIRECTORIES("${FALCON_LIB_DIR}")
      
    #mingw requires -mthreads global option
    IF ( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
