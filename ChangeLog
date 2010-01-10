@@ -7,7 +7,10 @@ Feathers (0.9.4.5)
            of not encoded functions.
   * major: Changed name of the 'eq' function (now an operator) in the
            functional module.
-    
+  * fixed: In Socket, getHost, getService and getHostName caused
+           GC segfault in case of error (they destroyed directly the
+           target string).
+           
 Feathers (0.9.4.4)
   * added: JSON module (encoding/decoding JSON).
   * fixed: In logging module, area, module and function names starting with 
