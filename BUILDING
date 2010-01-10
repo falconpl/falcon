@@ -142,3 +142,28 @@ through an automated process, it is better to test if this problem is
 present on your combination of CMAKE/platform.
 
 
+Support for EDITLINE or READLINE in interactive mode
+====================================================
+
+The falcon command line tool can take benefit of an installed readline
+library, or use the internally distributed editline in case readline
+is not available.
+
+Currently, both those library cannot interpret international
+characters correctly, so they are turned off by default.
+
+To compile falcon with readline support use:
+
+   -DFALCON_WITH_READLINE=ON
+
+You will need to have readline installed with development support.
+
+Otherwise, you can use the small editline library, which is shipped
+with falcon using
+
+   -DFALCON_WITH_INTERNAL_EDITLINE=ON
+
+Notice that, in this case, Falcon build system will detect if you
+have a system-wide installation of the edit-line library, and
+use that instead.
+

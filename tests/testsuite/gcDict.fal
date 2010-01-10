@@ -12,7 +12,10 @@
 * [/Description]
 *
 ****************************************************************************/
-print() // create a reusable frame
+
+// ensure the main stack is lage enough
+a = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+a = nil
 
 // Record initial memory requirements
 GC.perform( true )
@@ -38,7 +41,8 @@ if items != GC.items: failure( "dropped - unmatching live items items" )
 //====================================
 // TEST 2
 // drop an array of arrays
-dict = [ 1=>1, 2=>2, 3=>3, 4=>[3=>3, 4=>4], 5=>[5=>5, 6=>6] ]
+//goDeep(10) // create 10 reusable frames
+dict = [ 1=>1, 2=>2, 4=>[3=>3, 4=>4], 5=>[5=>5, 6=>6] ]
 
 // Empty the array...
 dict = nil

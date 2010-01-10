@@ -1363,12 +1363,32 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
          const String* fname = *(String**) fiter.currentKey();
          const Symbol* fsym = *(Symbol**) fiter.currentValue();
          CoreFunc* sfunc = new CoreFunc( fsym, lmod );
-         sfuncs->insert( fname, sfunc );
+
+         CoreFunc **oldFunc = (CoreFunc **) sfuncs->find( fname );
+         if ( oldFunc != 0 )
+         {
+            delete *oldFunc;
+            *oldFunc = sfunc;
+         }
+         else {
+            sfuncs->insert( fname, sfunc );
+         }
+
          fiter.next();
       }
 
       //==========================
-      states.insert( stateName, sfuncs );
+      Map** oldFuncs =(Map**) states.find( stateName );
+      if( oldFuncs != 0 )
+      {
+         delete *oldFuncs;
+         *oldFuncs = sfuncs;
+      }
+      else
+      {
+         states.insert( stateName, sfuncs );
+      }
+
       siter.next();
    }
 
