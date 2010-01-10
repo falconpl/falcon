@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 140a
+* Category: rtl
+* Subcategory: continuation
+* Short: Continuations
+* Description:
+*   Checks for correct working of continuations.
+* [/Description]
+*
+****************************************************************************/
+
+function contd( values, cc )
+   value = ""
+   for i in [0:values.len()]
+      value += values[i]
+      cc( [i,value] )
+   end
+
+   return nil
+end
+
+cc = Continuation( contd )
+
+while (elem = cc( .['a' 'b' 'c' 'd' 'e'] ))
+   t, v = elem
+   switch t
+      case 0
+         if v  != 'a': failure( "Loop 1" )
+      case 1
+         if v  != 'ab': failure( "Loop 2" )
+      case 2
+         if v  != 'abc': failure( "Loop 3" )
+      case 3
+         if v  != 'abcd': failure( "Loop 4" )
+      case 4
+         if v  != 'abcde': failure( "Loop 5" )
+   end
+end
+
+success()
+
+/* End of file */

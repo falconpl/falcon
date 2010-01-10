@@ -13,6 +13,8 @@
 *
 ****************************************************************************/
 
+print() // create a reusable frame
+
 // clean memory -- serialzation may dirty the gc.
 GC.perform( true )
 aliveMem = GC.aliveMem

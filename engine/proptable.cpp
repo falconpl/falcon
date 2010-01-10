@@ -253,7 +253,7 @@ void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &pr
             Item method = *call;
             method.methodize( instance );
 
-            vm->pushParameter( prop );
+            vm->pushParam( prop );
             VMachine::getCurrent()->callItemAtomic( method, 1 );
          }
          break;

@@ -28,7 +28,6 @@ function main(limit)
    the_loop = .[times $the_param
                .[ .[ function( x,y ); x[y] = 0; end  flags &1 ] .[ { x => ++x  } $count ] ]
                ]
-
    for num in [1:limit+1]
 
       for i in [1: 8193]: flags[i] = num
@@ -36,6 +35,7 @@ function main(limit)
       for i in [2:8193]
          if flags[i]
             the_param = [ i+i: 8193: i ]
+            
             the_loop()
          end
       end

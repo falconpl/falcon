@@ -432,7 +432,7 @@ void Compiler::defineVal( Value *val )
          {
             // we're creating the local symbol
             // addlocal must also define the symbol
-            sym = addLocalSymbol( val->asSymdef(), false );
+            sym = addLocalSymbol( *val->asSymdef(), false );
          }
          else {
             // globals symbols that have been added as undefined must stay so.
@@ -445,7 +445,7 @@ void Compiler::defineVal( Value *val )
                   raiseError( e_undef_sym, "", lexer()->previousLine() );
                }
 
-               sym = addGlobalSymbol( val->asSymdef() );
+               sym = addGlobalSymbol( *val->asSymdef() );
                sym->declaredAt( lexer()->previousLine() );
                sym->setGlobal();
             }
@@ -455,7 +455,7 @@ void Compiler::defineVal( Value *val )
       }
       else {
          String symname = *staticPrefix() + "#" + *val->asSymdef();
-         Symbol *gsym = addGlobalSymbol( &symname );
+         Symbol *gsym = addGlobalSymbol( symname );
          AliasMap &map = *(AliasMap*)m_alias.back();
          map.insert( val->asSymdef(), gsym );
          if( gsym->isUndefined() )
@@ -473,7 +473,7 @@ void Compiler::defineVal( Value *val )
 }
 
 
-Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
+Symbol *Compiler::addLocalSymbol( const String &symname, bool parameter )
 {
    // fallback to add global if not in a local table
    FuncDef *func = getFunction();
@@ -481,7 +481,7 @@ Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
       return addGlobalSymbol( symname );
 
    SymbolTable &table = func->symtab();
-   Symbol *sym = table.findByName( *symname );
+   Symbol *sym = table.findByName( symname );
    if( sym == 0 )
    {
       // now we can add the symbol. As we have the string from
@@ -564,7 +564,7 @@ bool Compiler::checkLocalUndefined()
          if (sym == 0)
          {
             // --- import the symbol
-            sym = addGlobalSymbol( val->asSymdef() );
+            sym = addGlobalSymbol( *val->asSymdef() );
          }
 
          val->setSymbol( sym );
@@ -576,14 +576,14 @@ bool Compiler::checkLocalUndefined()
 }
 
 
-Symbol *Compiler::searchLocalSymbol( const String *symname, bool recurse )
+Symbol *Compiler::searchLocalSymbol( const String &symname, bool recurse )
 {
    if( m_functions.empty() )
       return searchGlobalSymbol( symname );
 
    // first search the local symbol aliases
    AliasMap *map = (AliasMap *) m_alias.back();
-   Symbol **sympp = (Symbol **) map->find( symname );
+   Symbol **sympp = (Symbol **) map->find( &symname );
    if ( sympp != 0 )
       return *sympp;
 
@@ -593,7 +593,7 @@ Symbol *Compiler::searchLocalSymbol( const String *symname, bool recurse )
    {
       FuncDef *fd = (FuncDef *)lastFunc->data();
       Symbol *found;
-      if( (found = fd->symtab().findByName( *symname )) )
+      if( (found = fd->symtab().findByName( symname )) )
          return found;
 
       if ( ! recurse )
@@ -606,7 +606,7 @@ Symbol *Compiler::searchLocalSymbol( const String *symname, bool recurse )
    return 0;
 }
 
-Symbol *Compiler::searchOuterSymbol( const String *symname )
+Symbol *Compiler::searchOuterSymbol( const String &symname )
 {
    ListElement *aliasIter = m_alias.end();
    ListElement *funcIter = m_functions.end();
@@ -616,13 +616,13 @@ Symbol *Compiler::searchOuterSymbol( const String *symname )
       AliasMap *map = (AliasMap *) aliasIter->data();
 
       // first search the local symbol aliases
-      Symbol **sympp = (Symbol **) map->find( symname );
+      Symbol **sympp = (Symbol **) map->find( &symname );
       if ( sympp != 0 )
          return *sympp;
 
       // then try in the local symtab or just return 0.
       FuncDef *fd = (FuncDef *) funcIter->data();
-      Symbol *sym = fd->symtab().findByName( *symname );
+      Symbol *sym = fd->symtab().findByName( symname );
       if ( sym != 0 )
          return sym;
 
@@ -634,26 +634,26 @@ Symbol *Compiler::searchOuterSymbol( const String *symname )
 }
 
 
-Symbol *Compiler::searchGlobalSymbol( const String *symname )
+Symbol *Compiler::searchGlobalSymbol( const String &symname )
 {
-   return module()->findGlobalSymbol( *symname );
+   return module()->findGlobalSymbol( symname );
 }
 
 
-Symbol *Compiler::addGlobalSymbol( const String *symname )
+Symbol *Compiler::addGlobalSymbol( const String &symname )
 {
    // is the symbol already defined?
-   Symbol *sym = m_module->findGlobalSymbol( *symname );
+   Symbol *sym = m_module->findGlobalSymbol( symname );
    bool imported = false;
    if( sym == 0 )
    {
       // check if it is authorized.
       // Unauthorized symbols are namespaced symbol not declared in import all clauses
       uint32 dotpos;
-      if( (dotpos = symname->rfind ( "." ) ) != String::npos )
+      if( (dotpos = symname.rfind ( "." ) ) != String::npos )
       {
          // Namespaced symbol
-         String nspace = symname->subString( 0, dotpos );
+         String nspace = symname.subString( 0, dotpos );
          // change self into our name
 
          void **mode = (void **) m_namespaces.find( &nspace );
@@ -666,7 +666,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
             {
                // if we were authorized, the symbol would have been created by
                // the clauses itself.
-               raiseError( e_undef_sym, *symname );
+               raiseError( e_undef_sym, symname );
                // but add it anyhow.
             }
 
@@ -675,7 +675,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
          }
       }
 
-      sym = new Symbol( m_module, m_module->addString( *symname ) );
+      sym = new Symbol( m_module, symname );
       m_module->addGlobalSymbol( sym );
       sym->declaredAt( lexer()->previousLine() );
       sym->imported( imported );
@@ -684,7 +684,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
 }
 
 
-Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
+Symbol *Compiler::addGlobalVar( const String &symname, VarDef *value )
 {
    Symbol *sym = addGlobalSymbol( symname );
    sym->declaredAt( lexer()->previousLine() );
@@ -692,7 +692,7 @@ Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
    return sym;
 }
 
-Symbol *Compiler::globalize( const String *symname )
+Symbol *Compiler::globalize( const String &symname )
 {
    if ( ! isLocalContext() ) {
       // an error should be raised elsewhere.
@@ -701,25 +701,25 @@ Symbol *Compiler::globalize( const String *symname )
 
    // already alaised? raise an error
    AliasMap &map = *(AliasMap *) m_alias.back();
-   Symbol **ptr = (Symbol **) map.find( symname );
+   Symbol **ptr = (Symbol **) map.find( &symname );
    if( ptr != 0 )
    {
-      raiseError( e_global_again, *symname );
+      raiseError( e_global_again, symname );
       return *ptr;
    }
 
    // search for the global symbol that will be aliased
-   Symbol *global = m_module->findGlobalSymbol( *symname );
+   Symbol *global = m_module->findGlobalSymbol( symname );
    if ( global == 0 )
    {
-      global = m_module->addGlobal( *symname, false );
+      global = m_module->addGlobal( symname, false );
       global->declaredAt( lexer()->line() );
       // it's defined in the module, the reference will be overwritten with
       // defineVal() -- else it will be searched outside the module.
       // (eventually causing a link error if not found).
    }
 
-   map.insert( symname, global );
+   map.insert( &symname, global );
    return global;
 }
 
@@ -737,7 +737,7 @@ StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
    String cname = sym->name() + "._init";
 
    // creates an empty symbol
-   Symbol *funcsym = addGlobalSymbol( &cname );
+   Symbol *funcsym = addGlobalSymbol( cname );
    //def->addProperty( addString( "_init" ) , new VarDef( funcsym ) );
 
    // creates the syntree entry for the symbol; we are using the same line as the class.
@@ -1204,7 +1204,7 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
       // -- and check if this is a mis-redefinition
       // raise an error if you try to alias a different module with an alredy existing namespace
       ModuleDepData* mdPrev = m_module->dependencies().findModule( nselfed );
-      if ( mdPrev != 0 && *mdPrev->moduleName() != nspace )
+      if ( mdPrev != 0 && mdPrev->moduleName() != nspace )
       {
          raiseError( e_ns_clash, nselfed, lexer()->previousLine() );
       }
@@ -1212,43 +1212,45 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
 }
 
 
-Symbol *Compiler::importAlias( const String *symName, const String *fromMod, const String *alias, bool filename )
+Symbol *Compiler::importAlias( const String &symName, const String &fromMod, const String &alias, bool filename )
 {
    // add the dependency
-   m_module->addDepend( *fromMod, true, filename );
+   m_module->addDepend( fromMod, true, filename );
 
    // add the alias
-   Falcon::Symbol *sym = new Symbol( m_module, m_module->addString( *alias ) );
+   Falcon::Symbol *sym = new Symbol( m_module, alias );
    m_module->addGlobalSymbol( sym );
    sym->declaredAt( lexer()->previousLine() );
 
    // sets the alias
-   sym->setImportAlias( m_module->addString( *symName ), m_module->addString( *fromMod ), filename );
+   sym->setImportAlias( symName, fromMod, filename );
 
    return sym;
 }
 
 
-void Compiler::importSymbols( List *lst, const String *prefix, const String *alias, bool isFilename )
+void Compiler::importSymbols( List *lst, const String& pre, const String& alias, bool isFilename )
 {
+   String prefix = pre;
+
    // add the namespace if not previously known
-   if ( prefix != 0 )
+   if ( prefix.size() != 0 )
    {
-      if( alias != 0 )
+      if( alias.size() != 0 )
       {
-         addNamespace( *prefix, *alias, false, isFilename );
+         addNamespace( prefix, alias, false, isFilename );
          prefix = alias;
       }
       else {
-         addNamespace( *prefix, "", false, isFilename );
+         addNamespace( prefix, "", false, isFilename );
       }
    }
 
    String fprefix;
-   if( isFilename && alias == 0 && prefix != 0 )
+   if( isFilename && alias.size() == 0 && prefix.size() != 0 )
    {
       // we got to convert "/" into "."
-      Path fconv( *prefix );
+      Path fconv( prefix );
       fprefix = fconv.getLocation() + "." + fconv.getFile();
 
       uint32 pos = 0;
@@ -1264,29 +1266,30 @@ void Compiler::importSymbols( List *lst, const String *prefix, const String *ali
    Falcon::ListElement *li = lst->begin();
 
    while( li != 0 ) {
-      Falcon::String *symName = (String *) li->data();
+      Falcon::String& symName = *(String *) li->data();
 
-      if( prefix != 0 )
+      if( prefix.size() != 0 )
       {
-         if( isFilename && alias == 0 ) {
-            *symName = fprefix + "." + *symName;
+         if( isFilename && alias.size() == 0 ) {
+            symName = fprefix + "." + symName;
          }
-         else if ( prefix->getCharAt(0) == '.' ) {
-            *symName = prefix->subString( 1 ) + "." + *symName;
+         else if ( prefix.getCharAt(0) == '.' ) {
+            symName = prefix.subString( 1 ) + "." + symName;
          }
-         else if ( prefix->find( "self." ) == 0 ) {
-            *symName = prefix->subString(5) + "." + *symName;
+         else if ( prefix.find( "self." ) == 0 ) {
+            symName = prefix.subString(5) + "." + symName;
          }
          else
-            *symName = *prefix + "." + *symName;
+            symName = prefix + "." + symName;
       }
 
-      Falcon::Symbol *sym = new Symbol( m_module, m_module->addString( *symName ) );
+
+      Falcon::Symbol *sym = new Symbol( m_module, symName );
       m_module->addGlobalSymbol( sym );
       sym->declaredAt( lexer()->previousLine() );
       sym->imported(true);
 
-      delete symName;
+      delete &symName;
 
       li = li->next();
    }

@@ -46,7 +46,6 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regBind;
    Item m_regBindP;
 
-   ItemArray m_stack;
    VMSemaphore *m_sleepingOn;
 
    /** Currently executed symbol.
@@ -73,24 +72,28 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    /** Next program counter register.
       This is the next instruction the VM has to execute.
       Call returns and jumps can easily modify the VM execution flow by
-      changing this value, that is normally set just to m_pc + the lenght
+      changing this value, that is normally set just to m_pc + the length
       of the current instruction.
    */
    uint32 m_pc_next;
 
-   /** Stack base is the position of the current stack frame.
-      As there can't be any stack frame at 0, a position of 0 means that the VM is running
-      the global module code.
+   /** Topmost try frame handler.
+    Inside a frame, the m_prevTryFrame points to the previous try frame, and
+    m_tryPos points to the position in the stack of the current frame where
+    the try try is to be restored.
    */
-   uint32 m_stackBase;
-
-   /** Position of the topmost try frame handler. */
-   uint32 m_tryFrame;
+   StackFrame* m_tryFrame;
 
    /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
    bool m_atomicMode;
 
    friend class VMSemaphore;
+
+   /** Stack of stack frames.
+    * The topmost stack frame is that indicated here.
+    */
+   StackFrame *m_frames;
+   StackFrame *m_spareFrames;
 
 public:
    VMContext();
@@ -130,11 +133,7 @@ public:
    uint32& pc_next() { return m_pc_next; }
    const uint32& pc_next() const { return m_pc_next; }
 
-   uint32& stackBase() { return m_stackBase; }
-   const uint32& stackBase() const { return m_stackBase; }
-
-   uint32& tryFrame() { return m_tryFrame; }
-   const uint32& tryFrame() const { return m_tryFrame; }
+   StackFrame* tryFrame() const { return m_tryFrame; }
 
    Item &regA() { return m_regA; }
    const Item &regA() const { return m_regA; }
@@ -153,10 +152,7 @@ public:
    Item &self() { return currentFrame()->m_self; }
    const Item &self() const { return currentFrame()->m_self; }
 
-   /*
-   Item &self() { return m_regS1; }
-   const Item &self() const { return m_regS1; }
-   */
+
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.
    */
@@ -175,8 +171,11 @@ public:
    */
    Item &latcher() { return m_regL2; }
 
-   ItemArray &stack() { return m_stack; }
-   const ItemArray &stack() const { return m_stack; }
+
+   //===========================================
+
+   const ItemArray& stack() const { return m_frames->stack(); }
+   ItemArray& stack() { return m_frames->stack(); }
 
    VMSemaphore *sleepingOn() const { return m_sleepingOn; }
    void sleepOn( VMSemaphore *sl ) { m_sleepingOn = sl; }
@@ -208,15 +207,59 @@ public:
    /** The currently active frame in this context */
    StackFrame* currentFrame() const
    {
-      return (StackFrame *) &m_stack[ stackBase() - VM_FRAME_SPACE ];
+      return m_frames;
+   }
+
+   void setFrames( StackFrame* newTop )
+   {
+      m_frames = newTop;
    }
 
    /** Creates a stack frame taking a certain number of parameters.
-      The frame is created directly in the stack of this context.
+      The stack is created so that it is ready to run the new context;
+      use addFrame to add it at a later moment, or prepareFrame to create
+      it and add it immediately.
+
       \param paramCount number of parameters in the stack
       \param frameEndFunc Callback function to be executed at frame end
+      \return The newly created or recycled stack frame.
    */
-   void createFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 );
+   StackFrame* createFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 );
+
+   /** Creates a stack frame and adds it immediately to the stack list.
+
+      This call is equivalent to addFrame( callFrame( pcount, frameEndFunc) ).
+
+      \param paramCount number of parameters in the stack
+      \param frameEndFunc Callback function to be executed at frame end
+      \return The newly created or recycled stack frame.
+   */
+   inline StackFrame* prepareFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 )
+   {
+      StackFrame* frame = createFrame( pcount, frameEndFunc );
+      addFrame( frame );
+      return frame;
+   }
+
+   /** Adds a prepared stack frame on top of the frame list.
+    *
+    */
+   void addFrame( StackFrame* frame );
+
+   /** Removes the topmost frame.
+    * The frame can be deleted or disposed via disposeFrame for further recycling.
+    * \return The just removed topmost frame or 0 if the frame stack is empty.
+    */
+   StackFrame* popFrame();
+
+   void pushTry( uint32 locationPC );
+   void popTry( bool bMoveTo );
+
+   /** Returns from the current stack frame.
+    Modifies context PC and PCNext, and reutrns true if this is a break context.
+    */
+   bool callReturn();
+
 
    bool atomicMode() const { return m_atomicMode; }
    void atomicMode( bool b ) { m_atomicMode = b; }
@@ -224,8 +267,8 @@ public:
    /** Adds some space in the local stack for local variables. */
    void addLocals( uint32 space )
    {
-      if ( stack().length() < stackBase() + space )
-         stack().resize( stackBase() + space );
+      if ( stack().length() < space )
+         stack().resize( space );
    }
 
    /** Returns the nth local item.
@@ -241,7 +284,7 @@ public:
    */
    const Item *local( uint32 itemId ) const
    {
-      return stack()[ stackBase() + itemId ].dereference();
+      return stack()[ itemId ].dereference();
    }
 
    /** Returns the nth local item.
@@ -252,7 +295,98 @@ public:
    */
    Item *local( uint32 itemId )
    {
-      return stack()[ stackBase() + itemId ].dereference();
+      return stack()[ itemId ].dereference();
+   }
+
+   /** Returns the parameter count for the current function.
+      \note If the method as not a current frame, you'll have a crash.
+      \return parameter count for the current function.
+   */
+   int32 paramCount() const {
+      fassert( m_frames != 0 );
+      return m_frames->m_param_count;
+   }
+
+   /** Returns the nth paramter passed to the VM.
+      Const version of param(uint32).
+   */
+   const Item *param( uint32 itemId ) const
+   {
+      if ( itemId >= m_frames->m_param_count ) return 0;
+      return m_frames->m_params[ itemId ].dereference();
+   }
+
+   /** Returns the nth paramter passed to the VM.
+
+      This is just the noncost version.
+
+      The count is 0 based (0 is the first parameter).
+      If the parameter exists, a pointer to the Item holding the
+      parameter will be returned. If the item is a reference,
+      the referenced item is returned instead (i.e. the parameter
+      is dereferenced before the return).
+
+      The pointer may be modified by the caller, but this will usually
+      have no effect in the calling program unless the parameter has been
+      passed by reference.
+
+      \note Fetched item pointers are valid while the stack doesn't change.
+            Pushes, addLocal(), item calls and VM operations may alter the
+            stack. Using this method again after such operations allows to
+            get a valid pointer to the desired item. Items extracted with
+            this method can be also saved locally in an Item instance, at
+            the cost of a a flat item copy (a few bytes).
+
+      \param itemId the number of the parameter accessed, 0 based.
+      \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
+      \see isParamByRef
+   */
+   Item *param( uint32 itemId )
+   {
+      if ( itemId >= m_frames->m_param_count ) return 0;
+      //return &m_frames->prev()->stack()[ m_frames->prev()->stack().length() - m_frames->m_param_count + itemId];
+      return m_frames->m_params[ itemId ].dereference();
+   }
+
+   /** Returns the nth pre-paramter passed to the VM.
+      Pre-parameters can be used to pass items to external functions.
+      They are numbered 0...n in reverse push order, and start at the first
+      push before the first real parameter.
+
+      For example;
+
+      \code
+         Item *p0, *p1, *callable;
+         ...
+         vm->pushParameter( (int64) 0 );   // pre-parameter 1
+         vm->pushParameter( vm->self() );  // pre-parameter 0
+         vm->pushParameter( *p0 );
+         vm->pushParameter( *p1 );
+
+         vm->callFrame( *callable, 2 );    // 2 parameters
+      \endcode
+   */
+   Item *preParam( uint32 itemId )
+   {
+      if ( itemId >= m_frames->m_param_count ) return 0;
+      return m_frames->m_params[ -1 - itemId ].dereference();
+   }
+
+   /** Const version of preParam */
+   const Item *preParam( uint32 itemId ) const
+   {
+      if ( itemId >= m_frames->m_param_count ) return 0;
+      return m_frames->m_params[ -1 - itemId ].dereference();
+   }
+
+   /** Returns true if the nth element of the current function has been passed by reference.
+      \param itemId the number of the parameter accessed, 0 based.
+      \return true if the parameter exists and has been passed by reference, false otherwise
+   */
+   bool isParamByRef( uint32 itemId ) const
+   {
+      if ( itemId >= m_frames->m_param_count ) return 0;
+      return m_frames->m_params[ itemId ].type() == FLC_ITEM_REFERENCE;
    }
 
    /** Installs a post-processing return frame handler.
@@ -276,14 +410,9 @@ public:
       currentFrame()->m_endFrameFunc = callbackFunc;
    }
 
-
    ext_func_frame_t returnHandler() const
    {
-      if ( stackBase() > VM_FRAME_SPACE )
-      {
-         return currentFrame()->m_endFrameFunc;
-      }
-      return 0;
+      return currentFrame()->m_endFrameFunc;
    }
 
    /** Pushes a parameter for the vm callItem and callFrame functions.
@@ -291,8 +420,14 @@ public:
       \see callFrame
       \param item the item to be passes as a parameter to the next call.
    */
-   void pushParameter( const Item &item ) { stack().append(item); }
+   void pushParam( const Item &item ) { stack().append(item); }
 
+   StackFrame* allocFrame();
+   void disposeFrame( StackFrame* frame );
+   void disposeFrames( StackFrame* first, StackFrame* last );
+   void resetFrames();
+
+   void fillErrorTraceback( Error& err );
 };
 
 }

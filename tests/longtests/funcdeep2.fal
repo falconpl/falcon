@@ -7,7 +7,7 @@
 * Short: Benchmark on deep calls (1000)
 * Description:
 *    Performing repeated function calls and returns, lengthening the
-*    vm stack. This test performs 100 deep calls.
+*    vm stack. This test performs 1000 deep calls.
 * [/Description]
 ****************************************************************************/
 

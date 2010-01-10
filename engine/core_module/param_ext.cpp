@@ -52,19 +52,11 @@ namespace core {
 
 FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 {
-   // temporarily save the call environment.
-   if ( vm->stackBase() == 0 ) {
+   StackFrame *thisFrame = vm->currentFrame();
+   if( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-   }
-   else {
-      StackFrame *thisFrame = vm->currentFrame();
-      if( thisFrame->m_stack_base == 0 ) {
-         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
-      }
 
-      StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
-      vm->retval( (int64) prevFrame->m_param_count );
-   }
+   vm->retval( (int64) thisFrame->prev()->m_param_count );
 }
 
 /*#
@@ -93,32 +85,21 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_param_range ).origin( e_orig_runtime ).extra( "(N)" ) );
    }
 
-   if ( vm->stackBase() == 0 )
-   {
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
+
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = thisFrame->prev();
+
+   // ...while the parameters are below our frame's base.
+   uint32 val = (uint32) number->forceInteger();
+   if( val >= 0 && val < prevFrame->m_param_count )
+   {
+      vm->retval( prevFrame->m_params[val] );
    }
    else {
-      uint32 val = (uint32) number->forceInteger();
-
-      StackFrame *thisFrame = vm->currentFrame();
-      uint32 oldbase = thisFrame->m_stack_base;
-      if( oldbase == 0 ) {
-         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
-         return;
-      }
-
-      // ...but we want the parameter count of our caller.
-      StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
-      // ...while the parameters are below our frame's base.
-
-      if( val >= 0 && val < prevFrame->m_param_count )
-      {
-         val = oldbase - prevFrame->m_param_count - VM_FRAME_SPACE + val;
-         vm->retval( *vm->stackItem( val ).dereference() );
-      }
-      else {
-         vm->retnil();
-      }
+      vm->retnil();
    }
 }
 
@@ -146,30 +127,20 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).extra( "N" ) );
    }
 
-   if ( vm->stackBase() == 0 )
-   {
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-   }
-   else
+
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = thisFrame->prev();
+
+   uint32 val = (uint32) number->forceInteger();
+   if( val >= 0 && val < prevFrame->m_param_count )
    {
-      uint32 val = (uint32) number->forceInteger();
-
-      StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
-      uint32 oldbase = thisFrame->m_stack_base;
-      if( oldbase == 0 ) {
-         throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-      }
-
-      StackFrame *prevFrame = (StackFrame *) &vm->stackItem( oldbase - VM_FRAME_SPACE );
-
-      if( val >= 0 && val < prevFrame->m_param_count )
-      {
-         val = oldbase - prevFrame->m_param_count - VM_FRAME_SPACE + val;
-         vm->regA().setBoolean( vm->stackItem( val ).isReference() ? true: false );
-      }
-      else {
-         vm->regA().setBoolean( false );
-      }
+      vm->regA().setBoolean( prevFrame->m_params[val].isReference() ? true: false );
+   }
+   else {
+      vm->regA().setBoolean( false );
    }
 }
 
@@ -197,27 +168,18 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_param_range ).origin( e_orig_runtime ).extra( "N,X" ) );
    }
 
-   if ( vm->stackBase() == 0 )
-   {
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-   }
-   else
+
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = thisFrame->prev();
+
+
+   uint32 val = (uint32) number->forceInteger();
+   if( val >= 0 && val < prevFrame->m_param_count )
    {
-      uint32 val = (uint32) number->forceInteger();
-
-      StackFrame *thisFrame = vm->currentFrame();
-      uint32 oldbase = thisFrame->m_stack_base;
-      if( oldbase == 0 ) {
-         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
-      }
-
-      StackFrame *prevFrame = (StackFrame *) &vm->stackItem( oldbase - VM_FRAME_SPACE );
-
-      if( val >= 0 && val < prevFrame->m_param_count )
-      {
-         val = oldbase - prevFrame->m_param_count - VM_FRAME_SPACE + val;
-         vm->stackItem( val ).dereference()->copy( *value );
-      }
+      prevFrame->m_params[val].dereference()->copy( *value );
    }
 }
 
@@ -231,22 +193,18 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC core_argv( VMachine *vm )
 {
-   if ( vm->stackBase() == 0 )
-      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-      
-   // get the previous stack frame.
    StackFrame *thisFrame = vm->currentFrame();
-   uint32 oldbase = thisFrame->m_stack_base;
-   if( oldbase == 0 )
-      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
 
    // ...but we want the parameter count of our caller.
-   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
+   StackFrame *prevFrame = thisFrame->prev();
+
    // ...while the parameters are below our frame's base.
    if( prevFrame->m_param_count > 0 )
    {
       CoreArray* arr = new CoreArray(prevFrame->m_param_count);
-      Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count ];
+      Item* first = prevFrame->m_params;
       memcpy( arr->items().elements(), first, arr->items().esize( prevFrame->m_param_count ) );
       arr->length( prevFrame->m_param_count );
       vm->retval( arr );
@@ -265,18 +223,12 @@ FALCON_FUNC core_argv( VMachine *vm )
 */
 FALCON_FUNC core_argd( VMachine *vm )
 {
-   if ( vm->stackBase() == 0 )
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
-      
-   // get the previous stack frame.
-   StackFrame *thisFrame = (StackFrame *) &vm->stack()[ vm->stackBase() - VM_FRAME_SPACE ];
-   uint32 oldbase = thisFrame->m_stack_base;
-   
-   if( oldbase == 0 )
-      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
 
    // ...but we want the parameter count of our caller.
-   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
+   StackFrame *prevFrame = thisFrame->prev();
    
    // get the caller function symbol --- it holds the declared parameters
    const Symbol* sym = thisFrame->m_symbol;
@@ -285,7 +237,7 @@ FALCON_FUNC core_argd( VMachine *vm )
       &sym->getExtFuncDef()->parameters()->map();
       
    CoreDict* ret = 0;
-   Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count ];
+   Item* first = prevFrame->m_params;
       
    // ...while the parameters are below our frame's base.
    MapIterator iter = st->begin();
@@ -325,23 +277,17 @@ FALCON_FUNC core_argd( VMachine *vm )
 */
 FALCON_FUNC core_passvp( VMachine *vm )
 {
-   if ( vm->stackBase() == 0 )
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 || thisFrame->prev() == 0 )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
       
-   // get the previous stack frame.
-   StackFrame *thisFrame = (StackFrame *) &vm->stack()[ vm->stackBase() - VM_FRAME_SPACE ];
-   uint32 oldbase = thisFrame->m_stack_base;
-   
-   if( oldbase == 0 )
-      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
-
    // ok, do we have an item to call?
    Item* i_citem = vm->param(0);
    if ( i_citem != 0 && ! i_citem->isCallable() )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra("[C]").origin( e_orig_runtime ) );
    
    // ...but we want the parameter count of our caller.
-   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
+   StackFrame *prevFrame = thisFrame->prev();
    
    // get the caller function symbol --- it holds the declared parameters
    const Symbol* sym = thisFrame->m_symbol;
@@ -349,30 +295,28 @@ FALCON_FUNC core_passvp( VMachine *vm )
       sym->getFuncDef()->symtab().size() :
       sym->getExtFuncDef()->parameters()->size();
    
-   Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count + size ];
+   Item* first = prevFrame->m_params;
    int pcount = prevFrame->m_param_count - size;
+   if ( pcount < 0 )
+      pcount = 0;
    
    if ( i_citem )
    {
-      int pcount = prevFrame->m_param_count - size;
       while( size < prevFrame->m_param_count )
       {
-         vm->pushParam( *first );
+         vm->pushParam( first[size] );
          ++size;
-         // first may be invalidated
-         first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count + size ];
       }
       
       // size may be > param count in ext funcs.
-      vm->callFrame(*i_citem,  pcount < 0 ? 0 : pcount );
+      vm->callFrame(*i_citem, pcount );
    }
    else
    {
       CoreArray* arr = new CoreArray( pcount );
       while( size < prevFrame->m_param_count )
       {
-         arr->append( *first );
-         ++first;
+         arr->append( first[size] );
          ++size;
       }
 

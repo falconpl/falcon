@@ -13,6 +13,8 @@
 *
 ****************************************************************************/
 
+print() // create a reusable frame
+
 // Record initial memory requirements
 GC.perform( true )
 aliveMem = GC.aliveMem

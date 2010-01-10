@@ -37,10 +37,12 @@ ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
    m_data(0),
+   m_growth( flc_ARRAY_GROWTH ),
    m_owner(0)
 {}
 
 ItemArray::ItemArray( const ItemArray& other ):
+   m_growth( other.m_growth ),
    m_owner( 0 )
 {
    if( other.m_size != 0 )
@@ -60,10 +62,14 @@ ItemArray::ItemArray( const ItemArray& other ):
 
 
 ItemArray::ItemArray( uint32 prealloc ):
+   m_growth( prealloc == 0 ? flc_ARRAY_GROWTH  : prealloc ),
    m_owner( 0 )
 {
-   m_data = (Item *) memAlloc( esize(prealloc) );
-   m_alloc = prealloc;
+   if( m_growth < 4 )
+      m_growth = 4;
+
+   m_data = (Item *) memAlloc( esize(m_growth) );
+   m_alloc = m_growth;
    m_size = 0;
 }
 
@@ -72,6 +78,7 @@ ItemArray::ItemArray( Item *buffer, uint32 size, uint32 alloc ):
    m_alloc(alloc),
    m_size(size),
    m_data(buffer),
+   m_growth( flc_ARRAY_GROWTH ),
    m_owner( 0 )
 {}
 
@@ -98,10 +105,16 @@ void ItemArray::append( const Item &ndata )
    // create enough space to hold the data
    if ( m_alloc <= m_size )
    {
-      m_alloc = m_size + flc_ARRAY_GROWTH;
+      // we don't know where the item is coming from; it may come from also from our thing.
+      Item copy = ndata;
+      m_alloc = m_size + m_growth;
       m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
+      m_data[ m_size ] = copy;
    }
-   m_data[ m_size ] = ndata;
+   else
+   {
+      m_data[ m_size ] = ndata;
+   }
    m_size++;
 }
 
@@ -369,7 +382,7 @@ bool ItemArray::insertSpace( uint32 pos, uint32 size )
       return false;
 
    if ( m_alloc < m_size + size ) {
-      m_alloc = ((m_size + size)/flc_ARRAY_GROWTH+1)*flc_ARRAY_GROWTH;
+      m_alloc = ((m_size + size)/m_growth+1)*m_growth;
       Item *mem = (Item *) memAlloc( esize( m_alloc ) );
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
@@ -445,17 +458,9 @@ ItemArray *ItemArray::clone() const
 
 void ItemArray::resize( uint32 size )
 {
-
-   if ( size == 0 ) {
-      if ( m_data != 0 ) {
-         memFree( m_data );
-         m_data = 0;
-      }
-      m_alloc = 0;
-   }
    // use this request also to force size in shape with alloc.
-   else if ( size > m_alloc ) {
-      m_alloc = (size/flc_ARRAY_GROWTH + 1) *flc_ARRAY_GROWTH;
+   if ( size > m_alloc ) {
+      m_alloc = (size/m_growth + 1) *m_growth;
       m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
       memset( m_data + m_size, 0, esize( m_alloc - m_size ) );
    }
@@ -475,8 +480,6 @@ void ItemArray::resize( uint32 size )
    }
 
    m_size = size;
-   
-   
 }
 
 void ItemArray::compact() {
@@ -495,8 +498,24 @@ void ItemArray::compact() {
    }
 }
 
-void ItemArray::reserve( uint32 size ) {
-   if ( size > m_alloc ) {
+void ItemArray::reserve( uint32 size )
+{
+   if ( size == 0 )
+   {
+      if( m_iterList != 0 )
+      {
+         m_invalidPoint = size;
+         invalidateIteratorOnCriterion();
+      }
+
+      if ( m_data != 0 ) {
+         memFree( m_data );
+         m_data = 0;
+      }
+      m_alloc = 0;
+      m_size = 0;
+   }
+   else if ( size > m_alloc ) {
       m_data = (Item *) memRealloc( m_data, esize( size ) );
       m_alloc = size;
    }

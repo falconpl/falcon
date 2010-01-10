@@ -11,14 +11,16 @@
 * [/Description]
 *
 ****************************************************************************/
+print() // create a reusable frame
+
 // Record initial memory requirements
 GC.perform( true )
 aliveMem = GC.aliveMem
 items = GC.items
 usedMem = GC.usedMem
-
 // perform
 GC.perform( true )
+
 
 if aliveMem != GC.aliveMem: failure( "empty - unmatching allocated memory" )
 if usedMem != GC.usedMem: failure( "empty - unmatching used memory" )

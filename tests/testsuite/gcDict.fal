@@ -12,6 +12,7 @@
 * [/Description]
 *
 ****************************************************************************/
+print() // create a reusable frame
 
 // Record initial memory requirements
 GC.perform( true )

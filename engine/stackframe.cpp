@@ -18,12 +18,85 @@
 */
 
 #include <falcon/stackframe.h>
+#include <falcon/mempool.h>
 
-namespace Falcon {
-void StackFrame_deletor( void *data )
+namespace Falcon
 {
-   StackFrame *sf = (StackFrame *) data;
-   delete sf;
+
+StackFrame::StackFrame( const StackFrame& other ):
+   m_break( other.m_break ),
+   m_ret_pc( other.m_ret_pc ),
+   m_call_pc( other.m_call_pc ),
+   m_param_count( other.m_param_count ),
+   m_try_base( other.m_try_base ),
+   m_symbol( other.m_symbol ),
+   m_module( other.m_module ),
+   m_endFrameFunc( other.m_endFrameFunc ),
+   m_prevTryFrame( other.m_prevTryFrame ),
+   m_self( other.m_self ),
+   m_binding( other.m_binding ),
+   m_params( other.m_params ),
+   m_prev(0),
+   m_stack(other.m_stack)
+{
+
+}
+
+StackFrame* StackFrame::copyDeep( StackFrame** bottom )
+{
+   StackFrame* curTryFrame = 0;
+
+   StackFrame* top = 0;
+   StackFrame* current = 0;
+   StackFrame* orig = this;
+
+   // Copy this frame.
+   while( orig != 0 )
+   {
+      StackFrame* nframe = new StackFrame(*orig);
+      // is this the top frame?
+      if ( top == 0 )
+      {
+         top = nframe;
+         current = nframe;
+      }
+      else
+      {
+         current->prepareParams( nframe, current->m_param_count );
+         current->prev( nframe );
+      }
+
+      // Did we reach a given try frame ?
+      if( orig == curTryFrame )
+      {
+         // then change all the matching fames with this one
+         StackFrame* review = top;
+         while( review != nframe )
+         {
+            if( review->m_prevTryFrame == orig )
+               review->m_prevTryFrame = nframe;
+            review = review->prev();
+         }
+      }
+
+      curTryFrame = nframe->m_prevTryFrame;
+      current = nframe;
+   }
+
+   if ( bottom != 0 )
+      *bottom = current;
+   return top;
+}
+
+void StackFrame::gcMark( uint32 mark )
+{
+   uint32 sl = stackSize();
+   memPool->markItem( m_self );
+   memPool->markItem( m_binding );
+
+   for( uint32 pos = 0; pos < sl; pos++ ) {
+      memPool->markItem( stackItems()[ pos ] );
+   }
 }
 
 }

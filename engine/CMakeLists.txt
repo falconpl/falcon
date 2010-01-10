@@ -211,6 +211,7 @@ add_library(falcon_engine SHARED
   service.cpp
   smba.cpp
   src_lexer.cpp
+  stackframe.cpp
   stream.cpp
   streambuffer.cpp
   string.cpp

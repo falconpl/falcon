@@ -663,7 +663,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
       {
          // ... then find the module in the item
          lmod = findModule( Module::absoluteName(
-               depData->isFile() ? nameSpace: *depData->moduleName(),
+               depData->isFile() ? nameSpace: depData->moduleName(),
                mod->name() ));
 
          // we must convert the name if it contains self or if it starts with "."
@@ -673,16 +673,16 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
    }
    else if ( sym->isImportAlias() )
    {
-      depData = mod->dependencies().findModule( *sym->getImportAlias()->origModule() );
+      depData = mod->dependencies().findModule( sym->getImportAlias()->origModule() );
       // if we linked it, it must exist
       fassert( depData != 0 );
 
       // ... then find the module in the item
       lmod = findModule( Module::absoluteName(
-            *depData->moduleName(), mod->name() ));
+            depData->moduleName(), mod->name() ));
 
       if( lmod != 0 )
-         localSymName = *sym->getImportAlias()->name();
+         localSymName = sym->getImportAlias()->name();
    }
 
    // If we found it it...
@@ -973,7 +973,7 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
       Item enterItem;
       if( cobj->getMethod("__enter", enterItem ) )
       {
-         pushParameter(Item());
+         pushParam(Item());
          callItemAtomic( enterItem, 1 );
       }
    }
@@ -1383,9 +1383,6 @@ void VMachine::reset()
    // reset counters
    resetCounters();
 
-   // reset stackbase
-   stackBase() = 0;
-
    // clear the accounting of sleeping contexts.
    m_sleepingContexts.clear();
 
@@ -1403,10 +1400,8 @@ void VMachine::reset()
    }
    else
    {
-      stack().length(0);
-      m_currentContext->tryFrame() = i_noTryFrame;
+      m_currentContext->resetFrames();
    }
-
 }
 
 const SymModule *VMachine::findGlobalSymbol( const String &name ) const
@@ -1414,87 +1409,43 @@ const SymModule *VMachine::findGlobalSymbol( const String &name ) const
    return (SymModule *) m_globalSyms.find( &name );
 }
 
-void VMachine::fillErrorTraceback( Error &error )
-{
-   fassert( ! error.hasTraceback() );
-
-   const Symbol *csym = currentSymbol();
-   if ( csym != 0 )
-   {
-      uint32 curLine;
-      if( csym->isFunction() )
-      {
-         curLine = csym->module()->getLineAt( csym->getFuncDef()->basePC() + programCounter() );
-      }
-      else {
-         // should have been filled by raise
-         curLine = error.line();
-      }
-
-      error.addTrace( csym->module()->name(), csym->name(),
-         curLine,
-         programCounter() );
-   }
-
-   uint32 base = stackBase();
-
-   while( base != 0 )
-   {
-      StackFrame &frame = *(StackFrame *) &stack()[ base - VM_FRAME_SPACE ];
-      const Symbol *sym = frame.m_symbol;
-      if ( sym != 0 )
-      { // possible when VM has not been initiated from main
-         uint32 line;
-         if( sym->isFunction() )
-            line = sym->module()->getLineAt( sym->getFuncDef()->basePC() + frame.m_call_pc );
-         else
-            line = 0;
-
-         error.addTrace( sym->module()->name(), sym->name(), line, frame.m_call_pc );
-      }
-
-      base = frame.m_stack_base;
-   }
-}
-
-
-
 
 bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
 {
-   if ( stackBase() < VM_FRAME_SPACE )
+   StackFrame* frame = currentFrame();
+
+   if( frame == 0 || frame->m_module == 0 )
       return false;
 
-   StackFrame &frame = *(StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
-   sym = frame.m_symbol;
-   module = frame.m_module->module();
+   sym = frame->m_symbol;
+   module = frame->m_module->module();
    return sym != 0 && module != 0;
 }
 
 bool VMachine::getCallerItem( Item &caller, uint32 level )
 {
-   uint32 sbase = stackBase();
-   while( sbase >= VM_FRAME_SPACE && level > 0 )
+   StackFrame* frame = currentFrame();
+
+   while( frame != 0 || level > 0 )
    {
-      StackFrame &frame = *(StackFrame *) &stack()[ sbase - VM_FRAME_SPACE ];
-      sbase = frame.m_stack_base;
+      frame = frame->prev();
       level--;
    }
 
-   if ( sbase < VM_FRAME_SPACE )
+   if ( frame == 0 || frame->m_module == 0 )
       return false;
 
-   StackFrame &frame = *(StackFrame *) &stack()[ sbase - VM_FRAME_SPACE ];
-   const Symbol* sym = frame.m_symbol;
-   const LiveModule* module = frame.m_module;
+   const Symbol* sym = frame->m_symbol;
+   const LiveModule* module = frame->m_module;
+
    caller = module->globals()[ sym->itemId() ];
    if ( ! caller.isFunction() )
       return false;
 
    // was it a method ?
-   if ( ! frame.m_self.isNil() )
+   if ( ! frame->m_self.isNil() )
    {
-      caller.methodize( frame.m_self );
+      caller.methodize( frame->m_self );
    }
 
    return true;
@@ -1523,7 +1474,7 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 
 void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
 {
-   ((StackFrame *)&stack()[stackBase() - VM_FRAME_SPACE ])->m_endFrameFunc = callbackFunc;
+   currentFrame()->m_endFrameFunc = callbackFunc;
    switch( m_currentContext->pc() )
    {
       case i_pc_call_external_ctor:
@@ -1736,7 +1687,7 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
             int params = 0;
             if( format.size() != 0 )
             {
-               pushParameter( new CoreString(format) );
+               pushParam( new CoreString(format) );
                params = 1;
             }
 
@@ -1753,54 +1704,6 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
    }
    else
       itm->toString( target );
-}
-
-
-void VMachine::callReturn()
-{
-   // Get the stack frame.
-   StackFrame &frame = *currentFrame();
-
-   // if the stack frame requires an end handler...
-   // ... but only if not unrolling a stack because of error...
-   if ( frame.m_endFrameFunc != 0 )
-   {
-      // reset pc-next to allow re-call of this frame in case of need.
-      m_endFrameNext = m_currentContext->pc_next();
-      m_currentContext->pc_next() = m_currentContext->pc();
-      // if the frame requires to stay here, return immediately
-      if ( frame.m_endFrameFunc( this ) )
-      {
-         return;
-      }
-   }
-
-   m_break = frame.m_break;
-
-   // Ok, we can unroll the stak.
-
-   // change symbol
-   m_currentContext->symbol( frame.m_symbol );
-   m_currentContext->pc_next() = frame.m_ret_pc;
-
-   // eventually change active module.
-   m_currentContext->lmodule( frame.m_module );
-
-   // reset try frame
-   m_currentContext->tryFrame() = frame.m_try_base;
-
-   m_currentContext->regBind() = frame.m_binding;
-
-   // reset stack base and resize the stack
-   uint32 oldBase = stackBase() -frame.m_param_count - VM_FRAME_SPACE;
-   stackBase() = frame.m_stack_base;
-   stack().resize( oldBase );
-
-   // if we have nowhere to return...
-   if( stackBase() == 0 && ! m_break )
-   {
-      terminateCurrentContext();
-   }
 }
 
 
@@ -1978,12 +1881,12 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
       switch( sym->type() )
       {
          case Symbol::tlocal:
-            if( *stackItem( stackBase() + VM_FRAME_SPACE +  sym->itemId() ).dereference() == *item )
+            if( *local( sym->itemId() )->dereference() == *item )
                goto success;
          break;
 
          case Symbol::tparam:
-            if( *param( sym->itemId() ) == *item )
+            if( *param( sym->itemId() )->dereference() == *item )
                goto success;
          break;
 
@@ -2020,7 +1923,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
 
       if ( sym->isLocal() )
       {
-         cfr = stackItem( stackBase() + VM_FRAME_SPACE +  sym->itemId() ).dereference();
+         cfr = local( sym->itemId() )->dereference();
       }
       else if ( sym->isParam() )
       {
@@ -2158,37 +2061,6 @@ void VMachine::resetCounters()
 void VMachine::periodicCallback()
 {}
 
-void VMachine::pushTry( uint32 landingPC )
-{
-   Item frame1( (((int64) landingPC) << 32) | (int64) m_currentContext->tryFrame() );
-   m_currentContext->tryFrame() = stack().length();
-   stack().append( frame1 );
-}
-
-void VMachine::popTry( bool moveTo )
-{
-   // If the try frame is wrong or not in current stack frame...
-   if ( stack().length() <= tryFrame() || stackBase() > tryFrame() )
-   {
-      //TODO: raise proper error
-      throw new CodeError( ErrorParam( e_stackuf, currentSymbol()->declaredAt() ).
-         origin( e_orig_vm ).
-         symbol( currentSymbol()->name() ).
-         module( currentLiveModule()->name() ) );
-   }
-
-   // get the frame and resize the stack
-   int64 tf_land = stack()[ tryFrame() ].asInteger();
-   stack().resize( tryFrame() );
-
-   // Change the try frame, and eventually move the PC to the proper position
-   tryFrame() = (uint32) tf_land;
-   if( moveTo )
-   {
-      m_currentContext->pc_next() = (uint32)(tf_land>>32);
-      m_currentContext->pc() = m_currentContext->pc_next();
-   }
-}
 
 // TODO move elsewhere
 inline bool vmIsWhiteSpace( uint32 chr )
@@ -2932,7 +2804,7 @@ static bool vm_func_eval( VMachine *vm )
       }
    }
 
-   vm->pushParameter( vm->regA() );
+   vm->pushParam( vm->regA() );
 
    // fake a call return
    while ( count < arr->length() )
@@ -2942,7 +2814,7 @@ static bool vm_func_eval( VMachine *vm )
       {
          return true;
       }
-      vm->pushParameter( vm->regA() );
+      vm->pushParam( vm->regA() );
       ++count;
    }
 
@@ -2979,7 +2851,6 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
       {
          CoreArray *arr = itm.asArray();
          // prepare for parametric evaluation
-         fassert( stackBase() + paramCount <= stack().length() );
          for( uint32 pi = 1; pi <= paramCount; ++pi )
          {
             String s;
@@ -3026,7 +2897,7 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
                   regBind().flags( 0xF0 );
                }
 
-               pushParameter( regA() );
+               pushParam( regA() );
             }
             // we got nowere to go
             returnHandler( 0 );
@@ -3278,16 +3149,14 @@ void VMachine::markSlots( uint32 mark )
 
 bool VMachine::consumeSignal()
 {
-   uint32 base = stackBase();
+   StackFrame* frame = currentFrame();
 
-   while( base != 0 )
+   while( frame != 0 )
    {
-      StackFrame &frame = *(StackFrame *) &stack()[ base - VM_FRAME_SPACE ];
-      if( frame.m_endFrameFunc == coreslot_broadcast_internal )
+      if( frame->m_endFrameFunc == coreslot_broadcast_internal )
       {
-         frame.m_endFrameFunc = 0;
-         // eventually call the onMessageComplete
-         const Item& msgItem = stack()[base + 4];  // local(4)
+         frame->m_endFrameFunc = 0;
+         const Item& msgItem = frame->localItem(4); // local(4)
          if( msgItem.isInteger() )
          {
             VMMessage* msg = (VMMessage*) msgItem.asInteger();
@@ -3298,7 +3167,7 @@ bool VMachine::consumeSignal()
          return true;
       }
 
-      base = frame.m_stack_base;
+      frame = frame->prev();
    }
 
    return false;
@@ -3409,7 +3278,7 @@ void VMachine::processMessage( VMMessage *msg )
    // Push the message parameters
    for ( uint32 i = 0; i < msg->paramCount(); ++i )
    {
-      sleepCtx->pushParameter( *msg->param(i) );
+      sleepCtx->pushParam( *msg->param(i) );
    }
    // and create a full functional frame.
    sleepCtx->createFrame(msg->paramCount());
@@ -3514,18 +3383,15 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
 
       this->createFrame( paramCount );
 
-      // now we can change the stack base
-      this->stackBase() = this->stack().length();
-
       // space for locals
       if ( tg_def->locals() > 0 )
       {
-         this->stack().resize( this->stackBase() + tg_def->locals() );
+         this->currentFrame()->resizeStack( tg_def->locals() );
 
          // are part of this locals closed?
          if( target->closure() != 0 ) {
             fassert( target->closure()->length() <= tg_def->locals() );
-            this->stack().copyOnto( this->stackBase(), *target->closure() );
+            this->stack().copyOnto( 0, *target->closure() );
          }
       }
 
@@ -3538,9 +3404,6 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
    else
    {
       this->createFrame( paramCount );
-
-      // now we can change the stack base
-      this->stackBase() = this->stack().length();
 
       // so we can have adequate tracebacks.
       this->m_currentContext->lmodule( target->liveModule() );
@@ -3694,7 +3557,7 @@ void VMachine::onIdleTime( numeric seconds )
 void VMachine::handleRaisedItem( Item& value )
 {
    // can someone get it?
-   if( tryFrame() == i_noTryFrame )  // uncaught error raised from scripts...
+   if( currentContext()->tryFrame() == 0 )  // uncaught error raised from scripts...
    {
       // create the error that the external application will see.
       Error *err;
@@ -3714,18 +3577,18 @@ void VMachine::handleRaisedItem( Item& value )
    }
 
    // Enter the stack frame that should handle the error (or raise to the top if uncaught)
-   while( stackBase() > tryFrame() )
+   while( currentFrame()->m_try_base == i_noTryFrame )
    {
       // neutralize post-processors
-      currentFrame()->m_endFrameFunc = 0;
-      callReturn();
+      // currentFrame()->m_endFrameFunc = 0;  -- done by currentContext()->callReturn();
+      m_break = currentContext()->callReturn();
       // let the VM deal with returns
       if ( m_break )
-         return;
+      {
+         m_break = false;
+         throw value;
+      }
    }
-
-   // we must be out of that loop in a stack area where tryframe is landed.
-   fassert ( tryFrame() != i_noTryFrame );
 
    regB() = value;
    // We are in the frame that should handle the error, in one way or another
@@ -3740,14 +3603,14 @@ void VMachine::handleRaisedError( Error* err )
       fillErrorContext( err, true );
 
    // catch it if possible
-   if( err->catchable() && tryFrame() != i_noTryFrame )
+   if( err->catchable() && currentContext()->tryFrame() != 0 )
    {
       // Enter the stack frame that should handle the error (or raise to the top if uncaught)
-      while( stackBase() > tryFrame() )
+      while( currentFrame() != currentContext()->tryFrame() )
       {
          // neutralize post-processors
-         currentFrame()->m_endFrameFunc = 0;
-         callReturn();
+         // currentFrame()->m_endFrameFunc = 0;  -- done by currentFrame()->callReturn();
+         m_break = currentContext()->callReturn();
          // let the VM deal with returns
          if ( m_break )
          {
@@ -3757,9 +3620,9 @@ void VMachine::handleRaisedError( Error* err )
       }
 
       CoreObject *obj = err->scriptize( this );
-      err->decref();
       if ( obj != 0 )
       {
+         err->decref();
          regB() = obj;
          // We are in the frame that should handle the error, in one way or another
          // should we catch it?

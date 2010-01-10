@@ -19,6 +19,7 @@ array[0] = string
 string[0] = "1"
 if array[0] != "0000": failure( "Array write access" )
 
+
 // self addition
 string = "0000"
 array_copy = array

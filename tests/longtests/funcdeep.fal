@@ -11,7 +11,7 @@
 * [/Description]
 ****************************************************************************/
 
-const depth = 1000
+const depth = 100
 loops = (13000000/depth) * timeFactor()
 each = int(loops/10)
 

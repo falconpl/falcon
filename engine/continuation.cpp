@@ -23,7 +23,9 @@ Continuation::Continuation( VMachine* vm ):
    m_vm( vm ),
    m_tgtSymbol(0),
    m_tgtLModule(0),
-   m_stackBase(0),
+   m_callingFrame(0),
+   m_top(0),
+   m_bottom(0),
    m_bComplete( false )
 {
    m_context = vm->currentContext();
@@ -32,21 +34,34 @@ Continuation::Continuation( VMachine* vm ):
 
 Continuation::Continuation( const Continuation& e ):
    m_vm( e.m_vm ),
-   m_stack( e.m_stack ),
    m_tgtSymbol( e.m_tgtSymbol ),
    m_tgtLModule( e.m_tgtLModule ),
    m_bComplete( e.m_bComplete )
 {
+   if( e.m_top != 0 )
+      m_top = e.m_top->copyDeep( &m_bottom );
+   else
+   {
+      m_top = 0;
+      m_bottom = 0;
+   }
+
+   m_callingFrame = e.m_callingFrame;
    m_context = e.m_context;
    m_stackLevel = e.m_stackLevel;
    m_tgtPC = e.m_tgtPC;
-
 }
 
 
 Continuation::~Continuation()
 {
-
+   StackFrame* frame = m_top;
+   while( frame != 0 )
+   {
+      StackFrame* f = frame;
+      frame = frame->prev();
+      delete f;
+   }
 }
 
 
@@ -58,7 +73,7 @@ bool Continuation::jump()
             .origin( e_orig_vm ) );
    }
 
-   m_stackLevel = m_vm->stackBase();
+   m_callingFrame = m_vm->currentFrame();
 
    if ( m_tgtSymbol != 0 )
    {
@@ -70,12 +85,20 @@ bool Continuation::jump()
       }
       m_bComplete = true;
 
-      // remove our frame, or we'll be called twice.
-      m_vm->stack().copyOnto( m_stackLevel, m_stack, 0, m_stack.length() );
+      // engage the previous frame
+      m_bottom->prev( m_callingFrame );
+      for ( uint32 i = 0; i < m_params.length(); ++i )
+         m_callingFrame->stack().append( m_params[i] );
+      m_bottom->prepareParams( m_callingFrame, m_bottom->m_param_count );
+
+      // Set the new frame
+      m_context->setFrames( m_top );
+      m_bottom = m_top = 0;
+
+      // jump
       m_vm->currentContext()->symbol( m_tgtSymbol );
       m_vm->currentContext()->lmodule( m_tgtLModule );
       m_vm->currentContext()->pc_next() = m_tgtPC;
-      m_vm->currentContext()->stackBase() = m_stackBase;
       return true;
    }
 
@@ -93,29 +116,36 @@ void Continuation::suspend( const Item& retval )
             .origin( e_orig_vm ) );
    }
 
-   StackFrame* cframe = m_vm->currentFrame();
-   m_stack.clear();
-   m_stack.copyOnto( m_vm->stack(), m_stackLevel,
-         m_vm->stackBase() - cframe->m_param_count - VM_FRAME_SPACE - m_stackLevel );
+   // find the calling frame.
+   StackFrame* frame = m_vm->currentFrame();
+   while( frame->prev() != m_callingFrame )
+   {
+      frame = frame->prev();
+   }
+
+   // save the original parameters
+   m_params.clear();
+   for( uint32 i = 0; i < frame->m_param_count; i++ )
+   {
+      m_params.append( frame->m_params[i] );
+   }
+
+   // disengage the stack.
+   frame->prev(0);
+   m_bottom = frame;
+   m_top = m_vm->currentFrame();
+   // and remove the parameters
+   m_callingFrame->pop( frame->m_param_count );
+   m_context->setFrames( m_callingFrame );
 
    // the PC will be in our return frame.
-   m_tgtSymbol = cframe->m_symbol;
-   m_tgtLModule = cframe->m_module;
-   m_tgtPC = cframe->m_ret_pc;
-   m_stackBase = cframe->m_stack_base;
+   m_tgtSymbol = m_callingFrame->m_symbol;
+   m_tgtLModule = m_callingFrame->m_module;
+   m_tgtPC = m_callingFrame->m_ret_pc;
    m_vm->regA() = retval;
 
    // for sure, we need more call
    m_bComplete = false;
-
-   // Unroll the stack
-   while( m_vm->stackBase() >= m_stackLevel )
-   {
-      // neutralize post-processors
-      m_vm->returnHandler( 0 );
-      m_vm->callReturn();
-      fassert( ! m_vm->breakRequest() );
-   }
 }
 
 //=============================================================
@@ -170,7 +200,12 @@ void ContinuationCarrier::gcMark( uint32 mark )
    memPool->markItem( m_citem );
    if ( m_cont != 0 )
    {
-      m_cont->stack().gcMark( mark );
+      m_cont->params().gcMark( mark );
+      StackFrame* sf = m_cont->frames();
+      while( sf != 0 )
+      {
+         sf->gcMark( mark );
+      }
    }
 
 }

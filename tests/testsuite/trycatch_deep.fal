@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 20h
+* Category: statements
+* Subcategory: try
+* Short: Deep try
+* Description:
+* This test checks for try/catch to work across deep frame stack calls.
+* [/Description]
+*
+****************************************************************************/
+
+function try_catch( param )
+
+   try
+      raiser( param )
+   catch in e
+      return e
+   end
+
+   return "failed"
+end
+
+function raiser( param )
+   GC.perform(true)
+   if param == 0
+      a = nil
+      a += 1
+   end
+   raiser( param - 1)
+end
+
+if try_catch( 1 ).code != 17: failure( "One" )
+if try_catch( 5 ).code != 17: failure( "Five" )
+if try_catch( 10 ).code != 17: failure( "Ten" )
+
+success()
+
+/* End of file */

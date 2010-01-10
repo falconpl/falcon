@@ -69,12 +69,12 @@ void Runtime::addModule( Module *mod, bool isPrivate )
       while( deps.hasCurrent() )
       {
          const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
-         const String *moduleName = depdata->moduleName();
+         const String &moduleName = depdata->moduleName();
 
          // if we have a provider, skip this module if already found VM
          LiveModule *livemod;
          ModuleDep **olddep;
-         if( m_provider != 0 && (livemod = m_provider->findModule( *moduleName )) != 0 )
+         if( m_provider != 0 && (livemod = m_provider->findModule( moduleName )) != 0 )
          {
             if ( livemod->isPrivate() && ! depdata->isPrivate() )
             {
@@ -88,7 +88,7 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          }
          else {
             // ... or do we have already loaded the module?
-            if( (olddep = (ModuleDep **) m_modules.find( moduleName )) != 0 )
+            if( (olddep = (ModuleDep **) m_modules.find( &moduleName )) != 0 )
             {
                // already in? -- should we broaden the publishing?
                if( (*olddep)->isPrivate() && ! depdata->isPrivate() )
@@ -104,9 +104,9 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          Module *l = 0;
          try {
             if( depdata->isFile() )
-               l = m_loader->loadFile( *moduleName );
+               l = m_loader->loadFile( moduleName );
             else
-               l = m_loader->loadName( *moduleName, mod->name() );
+               l = m_loader->loadName( moduleName, mod->name() );
          }
          catch( Error* e)
          {
@@ -154,13 +154,13 @@ void Runtime::addModule( Module *mod, bool isPrivate )
       while( deps.hasCurrent() )
       {
          const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
-         const String *moduleName = depdata->moduleName();
+         const String &moduleName = depdata->moduleName();
 
          // if the module is missing both from our module list and dependency list
          // add a dependency here
-         if ( m_modules.find( moduleName ) == 0 && m_modPending.find( moduleName ) == 0 )
+         if ( m_modules.find( &moduleName ) == 0 && m_modPending.find( &moduleName ) == 0 )
          {
-            m_modPending.insert( moduleName, &insertAt );
+            m_modPending.insert( &moduleName, &insertAt );
          }
          deps.next();
       }

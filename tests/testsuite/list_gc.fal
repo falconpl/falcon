@@ -17,7 +17,8 @@ class tester( initparam )
    name = initparam
 end
 
-/* Now forin creates an extra reference, will be fixed in 0.9 */
+print() // create a reusable frame
+
 for i in [1 : 11]
 end
 

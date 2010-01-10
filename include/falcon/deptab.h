@@ -31,18 +31,18 @@ class Stream;
 /** Class storing dependency data. */
 class ModuleDepData: public BaseAlloc
 {
-   const String *m_modName;
+   String m_modName;
    bool m_bPrivate;
    bool m_bFile;
 
 public:
-   ModuleDepData( const String *modName, bool bPrivate = false, bool bFile = false ):
+   ModuleDepData( const String modName, bool bPrivate = false, bool bFile = false ):
       m_modName( modName ),
       m_bPrivate( bPrivate ),
       m_bFile( bFile )
    {}
 
-   const String *moduleName() const { return m_modName; }
+   const String &moduleName() const { return m_modName; }
    bool isPrivate() const { return m_bPrivate; }
    bool isFile() const { return m_bFile; }
    void setPrivate( bool mode ) { m_bPrivate = mode; }
@@ -73,14 +73,14 @@ public:
       \param name The logical or physical module name.
       \param bPrivate true if the module is private, false to honor its exports.
    */
-   void addDependency( const String *alias, const String *name, bool bPrivate );
+   void addDependency( const String &alias, const String &name, bool bPrivate, bool bFile=false );
 
    /** Adds a dependency to the table.
       This version of the function adds a dependency with the same physical
       or logical name as the local alias.
    */
-   void addDependency( const String *name, bool bPrivate = false ) {
-      addDependency( name, name, bPrivate );
+   void addDependency( const String &name, bool bPrivate = false, bool bFile = false ) {
+      addDependency( name, name, bPrivate, bFile );
    }
 
    ModuleDepData *findModule( const String &name ) const

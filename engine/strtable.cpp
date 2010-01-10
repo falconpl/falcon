@@ -74,7 +74,6 @@ int32 StringTable::add( String *str )
       }
 
       int32 id = m_vector.size();
-      str->id( id );
       m_vector.push( str );
       m_intMap.insert( str, &id );
       m_internatCount++;
@@ -94,7 +93,6 @@ int32 StringTable::add( String *str )
       }
 
       int32 id = m_vector.size();
-      str->id( id );
       m_vector.push( str );
       m_map.insert( str, &id );
       return id;
@@ -224,7 +222,7 @@ bool StringTable::saveTemplate( Stream *out, const String &moduleName, const Str
 {
    fassert(out);
    
-   // we shouldn't even have been called if we have no interational strings.
+   // we shouldn't even have been called if we have no international strings.
    if( m_internatCount == 0 )
       return true;
 

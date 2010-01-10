@@ -313,14 +313,14 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_string:
       {
-         uint32 strid = (uint32) stmt->asString()->id();
+         uint32 strid = (uint32) m_module->stringTable().findId( *stmt->asString() );
          m_outTemp->write( &strid, sizeof( strid ) );
       }
       break;
 
       case Value::t_lbind:
       {
-         uint32 strid = (uint32) stmt->asLBind()->id();
+         uint32 strid = (uint32) m_module->stringTable().findId( *stmt->asLBind() );
          m_outTemp->write( &strid, sizeof( strid ) );
       }
       break;
@@ -440,7 +440,7 @@ void GenCode::gen_var( const VarDef &def )
 
       case VarDef::t_string:
       {
-         int32 id = def.asString()->id();
+         int32 id = m_module->stringTable().findId( *def.asString() );
          m_outTemp->write( reinterpret_cast< const char *>( &id ), sizeof( id ) );
       }
       break;
@@ -853,7 +853,7 @@ void GenCode::gen_statement( const Statement *stmt )
          {
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
-            int32 strid = first->asString()->id();
+            int32 strid = m_module->stringTable().findId( *first->asString() );
             m_outTemp->write( &strid, sizeof( strid ) );
             tag.addQuerySwitchBlock( second, 0 );
             m_outTemp->write( &dummy, sizeof( dummy ) );
@@ -993,11 +993,13 @@ void GenCode::gen_statement( const Statement *stmt )
       {
          const StmtVarDef *pdef = static_cast<const StmtVarDef *>( stmt );
          if ( pdef->value()->isSimple() ) {
-            gen_pcode( P_STP, e_parS1, c_param_str(pdef->name()->id()), pdef->value() );
+            gen_pcode( P_STP, e_parS1, c_param_str(
+                  m_module->stringTable().findId( *pdef->name() )), pdef->value() );
          }
          else {
             gen_value( pdef->value() );
-            gen_pcode( P_STP, e_parS1, c_param_str(pdef->name()->id()), e_parA );
+            gen_pcode( P_STP, e_parS1, c_param_str(
+                  m_module->stringTable().findId( *pdef->name())), e_parA );
          }
       }
       break;

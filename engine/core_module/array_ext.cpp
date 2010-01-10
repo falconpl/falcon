@@ -27,6 +27,7 @@
 #include <falcon/vm.h>
 #include <falcon/eng_messages.h>
 
+
 #include <string.h>
 
 namespace Falcon {
@@ -690,22 +691,18 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
          .extra( "N,[X]" ) );
    }
 
-   int32 nsize = (int32) item_size->forceInteger();
-   CoreArray *array = new CoreArray( nsize );
-   Item *mem = array->items().elements();
+   uint32 nsize = (uint32) item_size->forceInteger();
 
-   if( i_item == 0 )
+   CoreArray *array = new CoreArray;
+   array->resize( nsize );
+
+   if( i_item != 0 )
    {
-      memset( mem, 0, array->items().esize( nsize ) );
-   }
-   else
-   {
-      for ( int i = 0; i < nsize; i++ ) {
-         mem[i] = *i_item;
+      for ( uint32 i = 0; i < nsize; i++ ) {
+         array->items()[i] = *i_item;
       }
    }
 
-   array->length( nsize );
    vm->retval( array );
 }
 
@@ -1060,7 +1057,7 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
    Item func = *func_x;
    for( int32 i = pos_start; i < pos_end; i++ )
    {
-      vm->pushParameter( elements[i] );
+      vm->pushParam( elements[i] );
       vm->callItemAtomic( func, 1 );
       if ( vm->regA().isTrue() ) {
          vm->retval( i );
@@ -1142,20 +1139,20 @@ static void arraySort_quickSort_flex( VMachine *vm, Item *comparer, Item *array,
    {
       i = ( r + l ) / 2;
 
-      vm->pushParameter( array[l] );
-      vm->pushParameter( array[i] );
+      vm->pushParam( array[l] );
+      vm->pushParam( array[i] );
       vm->callItemAtomic( *comparer, 2 );
 
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array, l , i );
 
-      vm->pushParameter( array[l] );
-      vm->pushParameter( array[r] );
+      vm->pushParam( array[l] );
+      vm->pushParam( array[r] );
       vm->callItemAtomic( *comparer, 2 );
 
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array , l, r );
 
-      vm->pushParameter( array[i] );
-      vm->pushParameter( array[r] );
+      vm->pushParam( array[i] );
+      vm->pushParam( array[r] );
       vm->callItemAtomic( *comparer, 2 );
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array, i, r );
 
@@ -1166,15 +1163,15 @@ static void arraySort_quickSort_flex( VMachine *vm, Item *comparer, Item *array,
       for(;;)
       {
             do {
-               vm->pushParameter( array[++i] );
-               vm->pushParameter( v );
+               vm->pushParam( array[++i] );
+               vm->pushParam( v );
                vm->callItemAtomic( *comparer, 2 );
             }
             while( vm->regA().asInteger() < 0 );
 
             do {
-               vm->pushParameter( array[--j] );
-               vm->pushParameter( v );
+               vm->pushParam( array[--j] );
+               vm->pushParam( v );
                vm->callItemAtomic( *comparer, 2 );
             }
             while( vm->regA().asInteger() > 0 );
@@ -1201,8 +1198,8 @@ static void arraySort_insertionSort_flex( VMachine *vm, Item *comparer, Item *ar
       j = i;
       while ( j > lo0 )
       {
-         vm->pushParameter( array[j-1] );
-         vm->pushParameter( v );
+         vm->pushParam( array[j-1] );
+         vm->pushParam( v );
          vm->callItemAtomic( *comparer, 2 );
 
          if ( vm->regA().asInteger() <= 0 )

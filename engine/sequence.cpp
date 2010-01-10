@@ -28,8 +28,8 @@ inline bool s_appendMe( VMachine *vm, Sequence* me, const Item &source, const It
    }
    else
    {
-      vm->pushParameter( source );
-      vm->pushParameter( vm->self() );
+      vm->pushParam( source );
+      vm->pushParam( vm->self() );
       vm->callItemAtomic(filter,2);
       if ( ! vm->regA().isOob() )
          me->append( vm->regA() );

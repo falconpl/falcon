@@ -67,6 +67,7 @@ if third_p( 'one', 'two', 'three' ) != "three": failure( "third_p( 'one', 'two',
 if extra( 'one', 'two', 'three' ) != "begin.one.two.three": failure( "extra" )
 
 // error test
+
 try
 	{=> passvp( "hello" )}()
 	failure( "Passvp didn't check the parameter" )

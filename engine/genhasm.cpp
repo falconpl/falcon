@@ -249,7 +249,7 @@ void GenHAsm::gen_depTable( const Module *mod )
 
       // only generate non-private data
       if ( ! depdata->isPrivate() )
-         m_out->writeString( ".load " + *depdata->moduleName() + "\n" );
+         m_out->writeString( ".load " + depdata->moduleName() + "\n" );
 
       iter.next();
    }
@@ -304,17 +304,17 @@ void GenHAsm::gen_symbolTable( const Module *mod )
                   fassert( depdata != 0 );
                   if ( depdata->isFile() )
                   {
-                     if( *depdata->moduleName() == modname )
+                     if( depdata->moduleName() == modname )
                         temp += " \"" + modname+"\"";
                      else
-                        temp += " \"" + *depdata->moduleName() +"\" "+ modname;
+                        temp += " \"" + depdata->moduleName() +"\" "+ modname;
                   }
                   else
                   {
-                     if( *depdata->moduleName() == modname )
+                     if( depdata->moduleName() == modname )
                         temp += " " + modname;
                      else
-                        temp += " " + *depdata->moduleName() +" "+ modname;
+                        temp += " " + depdata->moduleName() +" "+ modname;
                   }
                }
                else {
@@ -373,11 +373,11 @@ void GenHAsm::gen_symbolTable( const Module *mod )
          case Symbol::timportalias:
             {
                ImportAlias* ia = sym->getImportAlias();
-               temp =  ".alias " + *ia->name() + " ";
+               temp =  ".alias " + ia->name() + " ";
                temp.writeNumber( (int64) sym->declaredAt() );
                temp.append( " " );
                if ( ia->isOrigFileName() ) temp.append( "\"" );
-               temp.append( *ia->origModule() );
+               temp.append( ia->origModule() );
                if ( ia->isOrigFileName() ) temp.append( "\"" );
                temp.append( " " );
                temp.append( sym->name() );

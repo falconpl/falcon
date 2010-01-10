@@ -963,17 +963,17 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
                      fassert( depdata != 0 );
                      if ( depdata->isFile() )
                      {
-                        if( *depdata->moduleName() == modname )
+                        if( depdata->moduleName() == modname )
                            temp += " \"" + modname+"\"";
                         else
-                           temp += " \"" + *depdata->moduleName() +"\" "+ modname;
+                           temp += " \"" + depdata->moduleName() +"\" "+ modname;
                      }
                      else
                      {
-                        if( *depdata->moduleName() == modname )
+                        if( depdata->moduleName() == modname )
                            temp += " " + modname;
                         else
-                           temp += " " + *depdata->moduleName() +" "+ modname;
+                           temp += " " + depdata->moduleName() +" "+ modname;
                      }
                   }
                   else {
@@ -1046,7 +1046,7 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
    {
       const String *alias = *(const String **) iter.currentKey();
       const ModuleDepData *data = *(const ModuleDepData **) iter.currentValue();
-      str = data->moduleName();
+      str = &data->moduleName();
 
       if ( data->isPrivate() )
       {

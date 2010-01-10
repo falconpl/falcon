@@ -103,7 +103,7 @@ void CoreDict::readIndex( const Item &pos, Item &target )
             VMachine* vm = VMachine::getCurrent();
             if( vm != 0 )
             {
-               vm->pushParameter( pos );
+               vm->pushParam( pos );
                vm->callItemAtomic( mth, 1 );
             }
             return;
@@ -130,8 +130,8 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
             VMachine* vm = VMachine::getCurrent();
             if( vm != 0 )
             {
-               vm->pushParameter( pos );
-               vm->pushParameter( target );
+               vm->pushParam( pos );
+               vm->pushParam( target );
                vm->callItemAtomic( mth, 2 );
                return;
             }

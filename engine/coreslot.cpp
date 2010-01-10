@@ -59,7 +59,7 @@ bool coreslot_broadcast_internal( VMachine *vm )
    int64 pfirst = vm->local(1)->asInteger();
    if( pfirst < 0 )
    {
-      vm->pushParameter( *vm->local( 2 ) );
+      vm->pushParam( *vm->local( 2 ) );
       vm->callFrame( current, 1 );
    }
    else
@@ -67,7 +67,7 @@ bool coreslot_broadcast_internal( VMachine *vm )
       int64 paramCount = vm->local(2)->asInteger();
       for( int32 i = 0; i < paramCount; i++ )
       {
-         vm->pushParameter( *vm->param( (int32)(i + pfirst) ) );
+         vm->pushParam( *vm->param( (int32)(i + pfirst) ) );
       }
       vm->callFrame( current, (int32)paramCount );
    }

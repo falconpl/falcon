@@ -958,9 +958,9 @@ case_element:
    | SYMBOL
       {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( *$1 );
          if( sym == 0 )
-            sym = COMPILER->addGlobalSymbol( $1 );
+            sym = COMPILER->addGlobalSymbol( *$1 );
          Falcon::Value *val = new Falcon::Value( sym );
 
          if ( ! stmt->addSymbolCase( val ) )
@@ -1083,9 +1083,9 @@ selcase_element:
    | SYMBOL
       {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( *$1 );
          if( sym == 0 )
-            sym = COMPILER->addGlobalSymbol( $1 );
+            sym = COMPILER->addGlobalSymbol( *$1 );
          Falcon::Value *val = new Falcon::Value( sym );
 
          if ( ! stmt->addSymbolCase( val ) )
@@ -1233,9 +1233,9 @@ catchcase_element:
    | SYMBOL
       {
          Falcon::StmtTry *stmt = static_cast<Falcon::StmtTry *>(COMPILER->getContext());
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( *$1 );
          if( sym == 0 ) {
-            sym = COMPILER->addGlobalSymbol( $1 );
+            sym = COMPILER->addGlobalSymbol( *$1 );
          }
          Falcon::Value *val = new Falcon::Value( sym );
 
@@ -1305,23 +1305,20 @@ func_begin:
 
          // if we are in a class, I have to create the symbol classname.functionname
          Falcon::Statement *parent = COMPILER->getContext();
-         Falcon::String *func_name;
+         Falcon::String func_name;
          if ( parent != 0 && parent->type() == Falcon::Statement::t_class ) {
             Falcon::StmtClass *stmt_cls = static_cast< Falcon::StmtClass *>( parent );
-            Falcon::String complete_name = stmt_cls->symbol()->name() + "." + *$2;
-            func_name = COMPILER->addString( complete_name );
+            func_name = stmt_cls->symbol()->name() + "." + *$2;
          }
          else if ( parent != 0 && parent->type() == Falcon::Statement::t_state ) 
          {
             Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );
-            Falcon::String complete_name =  
+            func_name =  
                   stmt_state->owner()->symbol()->name() + "." + 
                   * stmt_state->name() + "#" + *$2;
-                  
-            func_name = COMPILER->addString( complete_name );
          }
          else
-            func_name = $2;
+            func_name = *$2;
 
          // find the global symbol for this.
          Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( func_name );
@@ -1380,7 +1377,7 @@ func_begin:
                }
                else 
                {
-                  stmt_state->state()->addFunction( $2, sym );
+                  stmt_state->state()->addFunction( *$2, sym );
                }
                
                // eventually add a property where to store this thing
@@ -1409,13 +1406,13 @@ param_list:
 param_symbol:
    SYMBOL
       {
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( *$1 );
          if ( sym != 0 ) {
             COMPILER->raiseError(Falcon::e_already_def, sym->name() );
          }
          else {
             Falcon::FuncDef *func = COMPILER->getFunction();
-            Falcon::Symbol *sym = new Falcon::Symbol( COMPILER->module(), $1 );
+            Falcon::Symbol *sym = new Falcon::Symbol( COMPILER->module(), *$1 );
             COMPILER->module()->addSymbol( sym );
             func->addParameter( sym );
          }
@@ -1530,12 +1527,12 @@ export_statement:
 export_symbol_list:
    SYMBOL
       {
-         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( *$1 );
          sym->exported(true);
       }
    | export_symbol_list COMMA SYMBOL
       {
-         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $3 );
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( *$3 );
          sym->exported(true);
       }
 ;
@@ -1548,12 +1545,12 @@ import_statement:
       }
    | IMPORT import_symbol_list FROM SYMBOL EOL
       {
-         COMPILER->importSymbols( $2, $4, 0, false );
+         COMPILER->importSymbols( $2, *$4, "", false );
          $$ = 0;
       }
    | IMPORT import_symbol_list FROM STRING EOL
       {
-         COMPILER->importSymbols( $2, $4, 0, true );
+         COMPILER->importSymbols( $2, *$4, "", true );
          $$ = 0;
       }
    | IMPORT import_symbol_list FROM SYMBOL OP_AS SYMBOL EOL
@@ -1564,7 +1561,7 @@ import_statement:
          while( li != 0 ) {
             Falcon::String *symName = (Falcon::String *) li->data();
             if ( counter == 0 )
-               COMPILER->importAlias( symName, $4, $6, false );
+               COMPILER->importAlias( *symName, *$4, *$6, false );
             delete symName;
             li = li->next();
             counter++;
@@ -1584,7 +1581,7 @@ import_statement:
          while( li != 0 ) {
             Falcon::String *symName = (Falcon::String *) li->data();
             if ( counter == 0 )
-               COMPILER->importAlias( symName, $4, $6, true );
+               COMPILER->importAlias( *symName, *$4, *$6, true );
             delete symName;
             li = li->next();
             counter++;
@@ -1597,12 +1594,12 @@ import_statement:
       }
    | IMPORT import_symbol_list FROM SYMBOL OP_IN SYMBOL EOL
       {
-         COMPILER->importSymbols( $2, $4, $6, false );
+         COMPILER->importSymbols( $2, *$4, *$6, false );
          $$ = 0;
       }
    | IMPORT import_symbol_list FROM STRING OP_IN SYMBOL EOL
       {
-         COMPILER->importSymbols( $2, $4, $6, true );
+         COMPILER->importSymbols( $2, *$4, *$6, true );
          $$ = 0;
       }
    | IMPORT SYMBOL error EOL
@@ -1729,11 +1726,11 @@ class_decl:
          // will go in the new symbol table.
 
          // find the global symbol for this.
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( $2 );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( *$2 );
 
          // Not defined?
          if( sym == 0 ) {
-            sym = COMPILER->addGlobalSymbol( $2 );
+            sym = COMPILER->addGlobalSymbol( *$2 );
          }
          else if ( sym->isFunction() || sym->isClass() ) {
             COMPILER->raiseError(Falcon::e_already_def,  sym->name() );
@@ -1818,7 +1815,7 @@ inherit_token:
       {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          // creates or find the symbol.
-         Falcon::Symbol *sym = COMPILER->addGlobalSymbol($1);
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol(*$1);
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
          Falcon::InheritDef *idef = new Falcon::InheritDef(sym);
 
@@ -1944,7 +1941,7 @@ property_decl:
 
       if ( def != 0 ) {
          Falcon::String prop_name = cls->symbol()->name() + "." + *$2;
-         Falcon::Symbol *sym = COMPILER->addGlobalVar( COMPILER->addString(prop_name), def );
+         Falcon::Symbol *sym = COMPILER->addGlobalVar( prop_name, def );
          if( clsdef->hasProperty( *$2 ) )
             COMPILER->raiseError(Falcon::e_prop_adef, *$2 );
          else
@@ -2044,11 +2041,11 @@ enum_statement:
          // will go in the new symbol table.
 
          // find the global symbol for this.
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( $2 );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( *$2 );
 
          // Not defined?
          if( sym == 0 ) {
-            sym = COMPILER->addGlobalSymbol( $2 );
+            sym = COMPILER->addGlobalSymbol( *$2 );
             sym->setEnum( true );
          }
          else if ( sym->isFunction() || sym->isClass() ) {
@@ -2117,15 +2114,15 @@ object_decl:
          // we create a special symbol for the class.
          Falcon::String cl_name = "%";
          cl_name += *$2;
-         Falcon::Symbol *clsym = COMPILER->addGlobalSymbol( COMPILER->addString( cl_name ) );
+         Falcon::Symbol *clsym = COMPILER->addGlobalSymbol( cl_name );
          clsym->setClass( def );
 
          // find the global symbol for this.
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( $2 );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( *$2 );
 
          // Not defined?
          if( sym == 0 ) {
-            sym = COMPILER->addGlobalSymbol( $2 );
+            sym = COMPILER->addGlobalSymbol( *$2 );
          }
          else if ( sym->isFunction() || sym->isClass() ) {
             COMPILER->raiseError(Falcon::e_already_def,  sym->name() );
@@ -2260,7 +2257,7 @@ globalized_symbol:
    SYMBOL
       {
          // we create (or retrieve) a globalized symbol
-         Falcon::Symbol *sym = COMPILER->globalize( $1 );
+         Falcon::Symbol *sym = COMPILER->globalize( *$1 );
 
          // then we add the symbol to the global statement (it's just for symbolic asm generation).
          Falcon::StmtGlobal *glob = static_cast<Falcon::StmtGlobal *>( COMPILER->getContext() );
@@ -2306,7 +2303,7 @@ atomic_symbol:
    SYMBOL
       {
          Falcon::Value *val;
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
+         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( *$1 );
          if( sym == 0 ) {
             val = new Falcon::Value();
             val->setSymdef( $1 );
@@ -2595,12 +2592,11 @@ nameless_func:
          // find the global symbol for this.
          char buf[48];
          sprintf( buf, "_lambda#_id_%d", id );
-         Falcon::String *name = COMPILER->addString( buf );
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
+         Falcon::String name( buf, -1 );
 
          // Not defined?
-         fassert( sym == 0 );
-         sym = COMPILER->addGlobalSymbol( name );
+         fassert( COMPILER->searchGlobalSymbol( name ) == 0 );
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( name );
 
          // anyhow, also in case of error, destroys the previous information to allow a correct parsing
          // of the rest.
@@ -2638,7 +2634,7 @@ nameless_block:
          // find the global symbol for this.
          char buf[48];
          sprintf( buf, "_lambda#_id_%d", id );
-         Falcon::String *name = COMPILER->addString( buf );
+         Falcon::String name( buf, -1 );
          Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
 
          // Not defined?
@@ -2713,12 +2709,11 @@ innerfunc:
          // find the global symbol for this.
          char buf[48];
          sprintf( buf, "_lambda#_id_%d", id );
-         Falcon::String *name = COMPILER->addString( buf );
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
+         Falcon::String name( buf, -1 );
 
          // Not defined?
-         fassert( sym == 0 );
-         sym = COMPILER->addGlobalSymbol( name );
+         fassert( COMPILER->searchGlobalSymbol( name ) == 0 );
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( name );
 
          // anyhow, also in case of error, destroys the previous information to allow a correct parsing
          // of the rest.

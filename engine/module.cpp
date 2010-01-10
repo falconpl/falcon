@@ -74,13 +74,12 @@ DllLoader &Module::dllLoader()
 
 void Module::addDepend( const String &name, const String &module, bool bPrivate, bool bFile )
 {
-   m_depend.insert( addString( name ), new ModuleDepData( addString(module) , bPrivate, bFile ) );
+   m_depend.addDependency( name, module, bPrivate, bFile );
 }
 
 void Module::addDepend( const String &name, bool bPrivate, bool bFile )
 {
-   String *nptr = addString( name );
-   m_depend.insert( nptr, new ModuleDepData( nptr , bPrivate, bFile ) );
+   m_depend.addDependency( name, name, bPrivate, bFile );
 }
 
 
@@ -89,13 +88,7 @@ Symbol *Module::addGlobal( const String &name, bool exp )
    if ( m_symtab.findByName( name ) != 0 )
       return 0;
 
-   String *symName = stringTable().find( name );
-   if( symName == 0 ) {
-      symName = new String( name );
-      stringTable().add( symName );
-   }
-
-   Symbol *sym = new Symbol( this, m_symbols.size(), symName, exp );
+   Symbol *sym = new Symbol( this, m_symbols.size(), name, exp );
    sym->setGlobal( );
    m_symbols.push( sym );
 
@@ -121,8 +114,7 @@ Symbol *Module::addSymbol()
 
 Symbol *Module::addSymbol( const String &name )
 {
-   String *n = addString( name );
-   Symbol *sym = new Symbol( this, m_symbols.size(), n, false );
+   Symbol *sym = new Symbol( this, m_symbols.size(), name, false );
    m_symbols.push( sym );
    return sym;
 }
@@ -151,7 +143,7 @@ void Module::adoptStringTable( StringTable *st, bool bOwn )
 
 Symbol *Module::addConstant( const String &name, int64 value, bool exp )
 {
-   Symbol *sym = new Symbol( this, addString( name ) );
+   Symbol *sym = new Symbol( this, name );
    sym->exported( exp );
    sym->setConst( new VarDef( value ) );
    return addGlobalSymbol( sym );
@@ -159,7 +151,7 @@ Symbol *Module::addConstant( const String &name, int64 value, bool exp )
 
 Symbol *Module::addConstant( const String &name, numeric value, bool exp )
 {
-   Symbol *sym = new Symbol( this, addString( name ) );
+   Symbol *sym = new Symbol( this, name );
    sym->exported( exp );
    sym->setConst( new VarDef( value ) );
    return addGlobalSymbol( sym );
@@ -167,7 +159,7 @@ Symbol *Module::addConstant( const String &name, numeric value, bool exp )
 
 Symbol *Module::addConstant( const String &name, const String &value, bool exp )
 {
-   Symbol *sym = new Symbol( this, addString( name ) );
+   Symbol *sym = new Symbol( this, name );
    sym->exported( exp );
    sym->setConst( new VarDef( addString( value ) ) );
    return addGlobalSymbol( sym );
@@ -206,13 +198,7 @@ Symbol *Module::addClass( const String &name, Symbol *ctor_sym, bool exp )
    if ( m_symtab.findByName( name ) != 0 )
       return 0;
 
-   String *symName = stringTable().find( name );
-   if( symName == 0 ) {
-      symName = new String( name );
-      stringTable().add( symName );
-   }
-
-   Symbol *sym = new Symbol( this, m_symbols.size(), symName, exp );
+   Symbol *sym = new Symbol( this, m_symbols.size(), name, exp );
    sym->setClass( new ClassDef( ctor_sym ) );
    m_symbols.push( sym );
 
@@ -233,8 +219,8 @@ Symbol *Module::addSingleton( const String &name, Symbol *ctor_sym, bool exp )
    // create the class symbol (never exported)
    Symbol *clSym = addClass( clName, ctor_sym, false );
 
-   // create a singletone instance of the class.
-   Symbol *objSym = new Symbol( this, addString( name ) );
+   // create a singleton instance of the class.
+   Symbol *objSym = new Symbol( this, name );
    objSym->setInstance( clSym );
    objSym->exported( exp );
    addGlobalSymbol( objSym );
@@ -376,7 +362,7 @@ bool Module::save( Stream *out, bool skipCode ) const
       iver = endianInt32(1);
       out->write( &iver, sizeof( iver ) );
 
-      if ( ! m_attributes->save( out ) )
+      if ( ! m_attributes->save( this, out ) )
          return false;
    }
    else {

@@ -264,8 +264,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          self->getProperty( "onValue", i_method );
          if ( i_method.methodize( self ) )
          {
-            vm->pushParameter( new CoreString(currentOption) );
-            vm->pushParameter( i_opt );
+            vm->pushParam( new CoreString(currentOption) );
+            vm->pushParam( i_opt );
             vm->callItemAtomic( i_method, 2 );
             state = t_none;
          }
@@ -282,7 +282,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          self->getProperty( "onFree", i_method );
          if ( i_method.methodize( self ) )
          {
-            vm->pushParameter( i_opt );
+            vm->pushParam( i_opt );
             vm->callItemAtomic( i_method, 1 );
          }
          else
@@ -306,11 +306,11 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
             if ( i_method.methodize( self ) )
             {
                if ( passMM && opt.size() == 2 )
-                  vm->pushParameter( i_opt );
+                  vm->pushParam( i_opt );
                else {
                   //Minimal optimization; reuse the same string and memory
                   subParam = opt.subString( 2 );
-                  vm->pushParameter( new CoreString( subParam ) );
+                  vm->pushParam( new CoreString( subParam ) );
                }
 
                vm->callItemAtomic( i_method, 1 );
@@ -342,7 +342,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   self->getProperty( "onSwitchOff", i_method );
                   if ( i_method.methodize( self ) )
                   {
-                     vm->pushParameter( new CoreString(subParam) );
+                     vm->pushParam( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
                  }
                   else
@@ -357,7 +357,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   self->getProperty( "onOption", i_method );
                   if ( i_method.methodize( self ) )
                   {
-                     vm->pushParameter( new CoreString(subParam) );
+                     vm->pushParam( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
                   }
                   else

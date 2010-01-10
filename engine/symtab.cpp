@@ -49,15 +49,6 @@ bool SymbolTable::add( Symbol *sym )
    return true;
 }
 
-bool SymbolTable::add( const String *name, Symbol *sym )
-{
-   if( findByName( *name ) != 0 )
-      return false;
-
-   m_map.insert( name, sym );
-   return true;
-}
-
 bool SymbolTable::remove( const String &name )
 {
    return m_map.erase( &name );
@@ -74,10 +65,7 @@ bool SymbolTable::save( Stream *out ) const
 
    while( iter.hasCurrent() )
    {
-      const String *first = *(const String **) iter.currentKey();
       const Symbol *second = *(const Symbol **) iter.currentValue();
-      value = endianInt32( first->id() );
-      out->write( &value, sizeof(value) );
 
       value = endianInt32( second->id() );
       out->write( &value, sizeof(value) );
@@ -87,7 +75,7 @@ bool SymbolTable::save( Stream *out ) const
    return true;
 }
 
-bool SymbolTable::load( Module *mod, Stream *in )
+bool SymbolTable::load( const Module *mod, Stream *in )
 {
    // get the symtab type.
    int32 value;
@@ -97,13 +85,7 @@ bool SymbolTable::load( Module *mod, Stream *in )
    // preallocate all the symbols;
    for ( int i = 0 ; i < final_size; i ++ )
    {
-      const String *str;
       Symbol *sym;
-      in->read( &value, sizeof(value) );
-      str = mod->getString( endianInt32(value) );
-      if ( str == 0 ) {
-         return false;
-      }
 
       in->read( &value, sizeof(value) );
       sym = mod->getSymbol( endianInt32(value) );
@@ -111,7 +93,7 @@ bool SymbolTable::load( Module *mod, Stream *in )
          return false;
       }
 
-      m_map.insert( str, sym );
+      m_map.insert( &sym->name(), sym );
    }
 
    return true;

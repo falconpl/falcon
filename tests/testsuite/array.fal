@@ -23,7 +23,6 @@ array =  [ 0, 1, 2,
 if len( array ) != 8: failure( "Len core function" )
 if len( [] ) != 0: failure( "Len of empty array" )
 
-
 // minimal access
 if array[2] != 2: failure( "Smoke test" )
 

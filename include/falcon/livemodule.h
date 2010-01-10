@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vmmaps.hm_currentModule
+   FILE: livemodule.h
 
    The Representation of module live data once linked in a VM
    -------------------------------------------------------------------

@@ -32,6 +32,7 @@ class FALCON_DYN_CLASS ItemArray: public Sequence
    uint32 m_alloc;
    uint32 m_size;
    Item *m_data;
+   uint32 m_growth;
    Garbageable* m_owner;
    
    // point starting from which the iterators to this sequence are invalidated (included).

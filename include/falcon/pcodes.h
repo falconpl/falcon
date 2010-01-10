@@ -16,8 +16,8 @@
 #ifndef flc_PCODES_H
 #define flc_PCODES_H
 
-#define FALCON_PCODE_VERSION  2
-#define FALCON_PCODE_MINOR  10
+#define FALCON_PCODE_VERSION  3
+#define FALCON_PCODE_MINOR  0
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -536,7 +536,7 @@ while it will fill OP2 with an integer item containing 15H.
 
 /** EXEQ: Exactly equal.
    Checks for item identity.
-   */
+ */
 #define P_EXEQ          0x70
 
 #define FLC_PCODE_COUNT 0x71

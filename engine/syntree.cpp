@@ -170,7 +170,7 @@ bool Value::isEqualByValue( const Value &other ) const
          break;
 
          case Value::t_symdef:
-            if( asSymdef()->id() == other.asSymdef()->id() )
+            if( asSymdef() == other.asSymdef() )
                return true;
          break;
 
@@ -223,7 +223,7 @@ bool Value::less( const Value &other ) const
          break;
 
          case Value::t_symdef:
-            if( asSymdef()->id() < other.asSymdef()->id() )
+            if( *asSymdef() < *other.asSymdef() )
                return true;
          break;
 

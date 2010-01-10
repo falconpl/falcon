@@ -295,7 +295,6 @@ protected:
    const csh::Base *m_class;
    uint32 m_allocated;
    uint32 m_size;
-   uint32 m_id;
 
    byte *m_storage;
 
@@ -322,7 +321,6 @@ public:
 
    enum constants {
       npos = csh::npos,
-      no_id = 0xFFFFFFFF
    };
 
 
@@ -336,7 +334,6 @@ public:
       m_class( &csh::handler_static ),
       m_allocated( 0 ),
       m_size( 0 ),
-      m_id( no_id ),
       m_storage( 0 ),
       m_bExported( false ),
       m_bCore( false )
@@ -447,7 +444,6 @@ public:
    */
    String( const String &other ):
       m_allocated( 0 ),
-      m_id( no_id ),
       m_bExported( false ),
       m_bCore( false )
    {
@@ -665,9 +661,6 @@ public:
    */
    void shrink() { m_class->shrink( this ); }
 
-
-   uint32 id() const { return m_id; }
-   void id( uint32 val ) { m_id = val; }
 
    uint32 getCharAt( uint32 pos ) const { return m_class->getCharAt( this, pos ); }
    void setCharAt( uint32 pos, uint32 chr ) { m_class->setCharAt( this, pos, chr ); }

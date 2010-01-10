@@ -244,8 +244,8 @@ public:
    bool isReflectFunc() const { return m_val_type == t_reflectFunc; }
    bool isReadOnly() const { return m_bReadOnly; }
 
-   bool save( Stream *out ) const;
-   bool load( Module *mod, Stream *in );
+   bool save( const Module *mod, Stream *out ) const;
+   bool load( const Module *mod, Stream *in );
 };
 
 }

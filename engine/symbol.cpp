@@ -61,6 +61,7 @@ bool Symbol::fromClass( const String &find_name ) const
 
 bool Symbol::load( Stream *in )
 {
+   uint32 strid;
    setUndefined();
    byte type;
    in->read( &type, sizeof( type ) );
@@ -76,13 +77,9 @@ bool Symbol::load( Stream *in )
    in->read( &line, sizeof( line ) );
    m_lineDecl = (int32) endianInt32( line );
 
-
    // the id is not restored, as it is assigned by load order sequence.
-
-   uint32 strid;
-   in->read( &strid, sizeof( strid ) );
-   m_name = m_module->getString( endianInt32( strid ) );
-   if ( m_name == 0 ) {
+   if ( ! m_name.deserialize( in, false ) )
+   {
       return false;
    }
 
@@ -115,7 +112,7 @@ bool Symbol::load( Stream *in )
 
       case tinst:
       {
-         in->read(   &strid , sizeof( strid ) );
+         in->read( &strid , sizeof( strid ) );
          strid = endianInt32( strid );
          Symbol *other = m_module->getSymbol( strid );
          if ( other == 0 )
@@ -126,12 +123,10 @@ bool Symbol::load( Stream *in )
 
       case timportalias:
       {
-         in->read( &strid , sizeof( strid ) );
-         strid = endianInt32( strid );
-         const String *name = m_module->getString( strid );
-         in->read( &strid , sizeof( strid ) );
-         strid = endianInt32( strid );
-         const String *origMod = m_module->getString( strid );
+         String name, origMod;
+         name.deserialize( in, false );
+         origMod.deserialize( in, false );
+
          byte b;
          in->read( &b, 1 );
          setImportAlias( name, origMod, b == 1 );
@@ -153,8 +148,10 @@ bool Symbol::load( Stream *in )
    return true;
 }
 
+
 bool Symbol::save( Stream *out ) const
 {
+   uint32 strid;
    byte type = (byte) m_type;
    byte flags = m_flags;
    int32 line = endianInt32( m_lineDecl );
@@ -165,25 +162,22 @@ bool Symbol::save( Stream *out ) const
    out->write( &line, sizeof( line ) );
    // the ID is not serialized, as it is determined by the module
 
-   uint32 strid = endianInt32( m_name->id() );
-   out->write( &strid, sizeof( strid ) );
+   m_name.serialize( out );
 
    switch( m_type ) {
-      case tfunc: getFuncDef()->save( out ); break;
-      case tclass: getClassDef()->save( out ); break;
+      case tfunc: getFuncDef()->save( m_module, out ); break;
+      case tclass: getClassDef()->save( m_module, out ); break;
       case tvar:
       case tconst:
-      case tprop: getVarDef()->save( out ); break;
+      case tprop: getVarDef()->save( m_module, out ); break;
       case tinst:
          strid = endianInt32( getInstance()->id() );
          out->write( &strid, sizeof( strid ) );
       break;
 
       case timportalias:
-         strid = endianInt32( getImportAlias()->name()->id() );
-         out->write( &strid, sizeof( strid ) );
-         strid = endianInt32( getImportAlias()->origModule()->id() );
-         out->write( &strid, sizeof( strid ) );
+         getImportAlias()->name().serialize( out );
+         getImportAlias()->origModule().serialize( out );
          {
             byte b = getImportAlias()->isOrigFileName() ? 1 : 0;
             out->write( &b, 1 );
@@ -299,7 +293,7 @@ Symbol *FuncDef::addUndefined( Symbol *sym )
 }
 
 
-bool FuncDef::save( Stream *out ) const
+bool FuncDef::save( const Module* mod, Stream *out ) const
 {
    uint16 locs = endianInt16( m_locals );
    uint16 params = endianInt16( m_params );
@@ -335,7 +329,7 @@ bool FuncDef::save( Stream *out ) const
    {
       basePC = endianInt32(1);
       out->write( &basePC, sizeof( basePC ) );
-      m_attributes->save( out );
+      m_attributes->save( mod, out );
    }
    else {
       basePC = endianInt32(0);
@@ -354,7 +348,7 @@ void FuncDef::addAttrib( const String& name, VarDef* vd )
    m_attributes->insertAttrib( name, vd );
 }
 
-bool FuncDef::load( Module *mod, Stream *in )
+bool FuncDef::load( const Module *mod, Stream *in )
 {
    uint16 loc;
    in->read( &loc, sizeof( loc ) );
@@ -417,7 +411,7 @@ bool InheritDef::save( Stream *out ) const
    return true;
 }
 
-bool InheritDef::load( Module *mod, Stream *in )
+bool InheritDef::load( const Module *mod, Stream *in )
 {
    uint32 parentId;
    in->read(  &parentId , sizeof( parentId ) );
@@ -571,9 +565,9 @@ StateDef* ClassDef::addState( const String *state_name )
    return state;
 }
 
-bool ClassDef::save( Stream *out ) const
+bool ClassDef::save( const Module* mod, Stream *out ) const
 {
-   if ( ! FuncDef::save( out ) )
+   if ( ! FuncDef::save( mod, out ) )
       return false;
 
    uint32 has;
@@ -594,12 +588,10 @@ bool ClassDef::save( Stream *out ) const
    MapIterator iter = m_properties.begin();
    while( iter.hasCurrent() )
    {
-      const VarDef *value = *(const VarDef **) iter.currentValue();
       const String *key = *(const String **) iter.currentKey();
-      uint32 id = endianInt32( key->id() );
-      out->write( &id , sizeof( id ) );
-      if ( ! value->save( out ) )
-         return false;
+      const VarDef *value = *(const VarDef **) iter.currentValue();
+      key->serialize( out );
+      value->save( mod, out );
       iter.next();
    }
 
@@ -623,9 +615,7 @@ bool ClassDef::save( Stream *out ) const
    {
       const String *key = *(const String **) siter.currentKey();
       const StateDef *value = *(const StateDef **) siter.currentValue();
-      uint32 id = endianInt32( key->id() );
-      out->write( &id , sizeof( id ) );
-
+      key->serialize( out );
       value->save( out );
       siter.next();
    }
@@ -633,7 +623,7 @@ bool ClassDef::save( Stream *out ) const
    return true;
 }
 
-bool ClassDef::load( Module *mod, Stream *in )
+bool ClassDef::load( const Module *mod, Stream *in )
 {
    if ( ! FuncDef::load( mod, in ) )
       return false;
@@ -705,21 +695,21 @@ bool ClassDef::load( Module *mod, Stream *in )
 }
 
 //===================================================================
-// vardef
+// statedef
 
 StateDef::StateDef( const String* sname ):
    m_name( sname ),
-   m_functions( &traits::t_stringptr(), &traits::t_voidp() )
+   m_functions( &traits::t_stringptr_own(), &traits::t_voidp() )
 {
 
 }
 
-bool StateDef::addFunction( const String* name, Symbol* func )
+bool StateDef::addFunction( const String& name, Symbol* func )
 {
-   if ( m_functions.find( name ) != 0 )
+   if ( m_functions.find( &name ) != 0 )
       return false;
 
-   m_functions.insert( name, func );
+   m_functions.insert( new String(name), func );
    return true;
 }
 
@@ -735,8 +725,7 @@ bool StateDef::save( Stream* out ) const
    {
      const String *key = *(const String **) siter.currentKey();
      const Symbol *value = *(const Symbol **) siter.currentValue();
-     uint32 id = endianInt32( key->id() );
-     out->write( &id , sizeof( id ) );
+     key->serialize( out );
 
      size = endianInt32( value->id() );
      out->write( &size, sizeof(size) );
@@ -746,7 +735,7 @@ bool StateDef::save( Stream* out ) const
    return out->good();
 }
 
-bool StateDef::load( Module *mod, Stream* in )
+bool StateDef::load( const Module *mod, Stream* in )
 {
    // List the functions
    uint32 size;
@@ -755,13 +744,9 @@ bool StateDef::load( Module *mod, Stream* in )
 
    for( uint32 i = 0; i < size; ++i )
    {
-
       int32 val;
-      if( in->read( &val , sizeof( val ) ) != sizeof(val) )
-         return false;
-
-      const String* name = mod->getString(endianInt32( val ));
-      if ( name == 0 )
+      String name;
+      if( ! name.deserialize( in, false ) )
          return false;
 
       if( in->read( &val , sizeof( val ) ) != sizeof(val) )
@@ -771,7 +756,7 @@ bool StateDef::load( Module *mod, Stream* in )
       if ( func == 0 )
          return false;
 
-      m_functions.insert( name, func );
+      addFunction( name, func );
    }
 
    return true;
@@ -781,7 +766,7 @@ bool StateDef::load( Module *mod, Stream* in )
 //===================================================================
 // vardef
 
-bool VarDef::save( Stream *out ) const
+bool VarDef::save( const Module* mod, Stream *out ) const
 {
    int32 type = endianInt32((int32) m_val_type);
    out->write( &type , sizeof( type ) );
@@ -811,7 +796,7 @@ bool VarDef::save( Stream *out ) const
 
       case t_string:
       {
-         uint32 val = endianInt32( asString()->id() );
+         uint32 val = mod->stringTable().findId( *asString() );
          out->write(  &val , sizeof( val ) );
       }
       break;
@@ -831,7 +816,7 @@ bool VarDef::save( Stream *out ) const
    return out->good();
 }
 
-bool VarDef::load( Module *mod, Stream *in )
+bool VarDef::load( const Module *mod, Stream *in )
 {
    setNil();
 

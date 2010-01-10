@@ -26,7 +26,7 @@
 namespace Falcon {
 
 DependTable::DependTable():
-   Map( &traits::t_stringptr(), &traits::t_voidp() )
+   Map( &traits::t_stringptr_own(), &traits::t_voidp() )
 {
 }
 
@@ -49,11 +49,8 @@ bool DependTable::save( Stream *out ) const
       const String *name = *(const String **) iter.currentKey();
       const ModuleDepData *data = *(const ModuleDepData **) iter.currentValue();
 
-      s = endianInt32( name->id() );
-      out->write( &s, sizeof( s ) );
-
-      s = endianInt32( data->moduleName()->id() );
-      out->write( &s, sizeof( s ) );
+      name->serialize( out );
+      data->moduleName().serialize( out );
 
       s = endianInt32( data->isPrivate() ? 1 : 0 );
       out->write( &s, sizeof( s ) );
@@ -76,15 +73,12 @@ bool DependTable::load( Module *mod, Stream *in )
    {
       uint32 id;
 
-      in->read( &id, sizeof( id ) );
-      const String *alias = mod->getString( endianInt32( id ) );
-      if( alias == 0 )
+      String alias, modname;
+      if ( ! alias.deserialize( in, false )
+           || ! modname.deserialize( in, false ) )
+      {
          return false;
-
-      in->read( &id, sizeof( id ) );
-      const String *modname = mod->getString( endianInt32( id ) );
-      if( modname == 0 )
-         return false;
+      }
 
       in->read( &id, sizeof( id ) );
       bool isPrivate = endianInt32(id) != 0;
@@ -92,7 +86,7 @@ bool DependTable::load( Module *mod, Stream *in )
       in->read( &id, sizeof( id ) );
       bool isFile = endianInt32(id) != 0;
 
-      insert( alias, new ModuleDepData( modname, isPrivate, isFile ) );
+      insert( new String(alias), new ModuleDepData( modname, isPrivate, isFile ) );
       --s;
    }
 
@@ -100,9 +94,9 @@ bool DependTable::load( Module *mod, Stream *in )
 }
 
 
-void DependTable::addDependency( const String *alias, const String *name, bool bPrivate )
+void DependTable::addDependency( const String &alias, const String& name, bool bPrivate, bool bFile )
 {
-   insert( alias, new ModuleDepData( name, bPrivate ) );
+   insert( new String(alias), new ModuleDepData( name, bPrivate, bFile ) );
 }
 
 

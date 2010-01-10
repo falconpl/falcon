@@ -592,7 +592,7 @@ bool Item::isCallable() const
 
    if( isObject() )
    {
-      return asObjectSafe()->hasProperty( "call__" );
+      return asObjectSafe()->hasProperty( "__call" );
    }
 
    //a bit more complex: a callable array...
@@ -699,7 +699,7 @@ bool Item::exactlyEqual( const Item& other ) const
          
       case FLC_ITEM_FUNC:
       case FLC_ITEM_CLASS:
-         return asClass() == other.asClass();      
+         return asClass() == other.asClass();
    }
    
    // the default is to check for the voidp element in data

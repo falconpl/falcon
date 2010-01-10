@@ -116,7 +116,7 @@ void PoopSeq::clear()
 
 void PoopSeq::append( const Item& itm )
 {
-   m_vm->pushParameter( itm );
+   m_vm->pushParam( itm );
    m_vm->callItemAtomic( m_appendMth, 1 );
 }
 

@@ -30,6 +30,7 @@ arrayResize( array, 2 )
 if len( array ) != 2: failure( "arrayResize down" )
 
 arrayResize( array, 10 )
+
 try
    if array[9] != nil: failure( "arrayResize clearing" )
    array[9] = 9

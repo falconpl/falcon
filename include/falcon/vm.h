@@ -448,9 +448,6 @@ protected:
    /** filtered load path */
    String m_appSearchPath;
 
-   /** Temporary location where next pc is saved before end-frame calls. */
-   uint32 m_endFrameNext;
-
    //=============================================================
    // Private functions
    //
@@ -545,7 +542,7 @@ protected:
    */
    void createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc = 0 )
    {
-      m_currentContext->createFrame( paramCount, frameEndFunc );
+      m_currentContext->prepareFrame( paramCount, frameEndFunc );
    }
 
    /** Sets the currently running VM.
@@ -973,7 +970,7 @@ public:
 
 
    /** Fills an error traceback with the current VM traceback. */
-   void fillErrorTraceback( Error &error );
+   void fillErrorTraceback( Error &error ) { currentContext()->fillErrorTraceback( error ); }
 
    /** Get the caller of the current symbol.
 
@@ -1004,12 +1001,6 @@ public:
 
    /** Returns the current stack as a reference (const version). */
    const ItemArray &stack() const { return m_currentContext->stack(); }
-
-   /** Returns the current try frame as a reference. */
-   uint32& tryFrame() { return m_currentContext->tryFrame(); }
-
-   /** Returns the current try frame as a reference (const version). */
-   const uint32& tryFrame() const { return m_currentContext->tryFrame(); }
 
    /** Returns a reference to the nth item in the current stack. */
    Item &stackItem( uint32 pos ) { return stack()[ pos ]; }
@@ -1056,7 +1047,7 @@ public:
       \return parameter count for the current function.
    */
    int32 paramCount() const {
-      return ((StackFrame *)&stack()[ stackBase() - VM_FRAME_SPACE ] )->m_param_count;
+      return currentContext()->paramCount();
    }
 
    /** Returns the nth paramter passed to the VM.
@@ -1064,9 +1055,7 @@ public:
    */
    const Item *param( uint32 itemId ) const
    {
-      register uint32 params = paramCount();
-      if ( itemId >= params ) return 0;
-      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).dereference();
+      return currentContext()->param( itemId );
    }
 
    /** Returns the nth paramter passed to the VM.
@@ -1096,9 +1085,7 @@ public:
    */
    Item *param( uint32 itemId )
    {
-      register uint32 params = paramCount();
-      if ( itemId >= params ) return 0;
-      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).dereference();
+      return currentContext()->param( itemId );
    }
 
    /** Returns the nth pre-paramter passed to the VM.
@@ -1121,15 +1108,22 @@ public:
    */
    Item *preParam( uint32 itemId )
    {
-      register uint32 params = paramCount();
-      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE - itemId - 1).dereference();
+      return currentContext()->preParam( itemId );
    }
 
    /** Const version of preParam */
    const Item *preParam( uint32 itemId ) const
    {
-      register uint32 params = paramCount();
-      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE - itemId - 1).dereference();
+      return currentContext()->preParam( itemId );
+   }
+
+   /** Returns true if the nth element of the current function has been passed by reference.
+      \param itemId the number of the parameter accessed, 0 based.
+      \return true if the parameter exists and has been passed by reference, false otherwise
+   */
+   bool isParamByRef( uint32 itemId ) const
+   {
+      return currentContext()->isParamByRef( itemId );
    }
 
    /** Returns the nth local item.
@@ -1157,17 +1151,6 @@ public:
    Item *local( uint32 itemId )
    {
       return m_currentContext->local( itemId );
-   }
-
-   /** Returns true if the nth element of the current function has been passed by reference.
-      \param itemId the number of the parameter accessed, 0 based.
-      \return true if the parameter exists and has been passed by reference, false otherwise
-   */
-   bool isParamByRef( uint32 itemId ) const
-   {
-      register uint32 params = paramCount();
-      if ( itemId >= params ) return false;
-      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).type() == FLC_ITEM_REFERENCE;
    }
 
    const Item &regA() const { return m_currentContext->regA(); }
@@ -1554,15 +1537,9 @@ public:
    */
    ext_func_frame_t returnHandler();
 
-   /** Pushes a parameter for the vm callItem and callFrame functions.
-      \see callItem
-      \see callFrame
-      \param item the item to be passes as a parameter to the next call.
-   */
-   void pushParameter( const Item &item ) { m_currentContext->pushParameter(item); }
-
    /** Alias for void pushParameter() */
-   void pushParam( const Item &item ) { m_currentContext->pushParameter(item); }
+   void pushParam( const Item &item ) { m_currentContext->pushParam(item); }
+   void pushParameter( const Item &item ) { m_currentContext->pushParam(item); }
 
    /** Adds some local space in the current context.
       \param amount how many local variables must be created
@@ -1590,7 +1567,28 @@ public:
    /** Return from the last called subroutine.
       Usually used internally by the opcodes of the VM.
    */
-   void callReturn();
+   void callReturn()
+   {
+      // if the stack frame requires an end handler...
+      // ... but only if not unrolling a stack because of error...
+      if ( currentFrame()->m_endFrameFunc != 0 )
+      {
+         currentContext()->pc_next() = currentContext()->pc();
+         // if the frame requires to stay here, return immediately
+         if ( currentFrame()->m_endFrameFunc( this ) )
+         {
+            return;
+         }
+      }
+
+      m_break = currentContext()->callReturn();
+
+      // if we have nowhere to return...
+      if( currentContext()->currentFrame() == 0 && ! m_break )
+      {
+         terminateCurrentContext();
+      }
+   }
 
    /** Converts an item into a string.
       The string is NOT added to the garbage collecting system,
@@ -1800,10 +1798,10 @@ public:
 
 
    /** Push current try position */
-   void pushTry( uint32 landingPC );
+   void pushTry( uint32 landingPC ) { currentContext()->pushTry( landingPC ); }
 
    /** Pop a try position, eventually changing the frame to the handler. */
-   void popTry( bool moveTo );
+   void popTry( bool moveTo ) { currentContext()->popTry( moveTo ); }
 
    /** Elects a new context ready for execution.
       This method should be called by embedding applications that have performed
@@ -1842,9 +1840,6 @@ public:
       \param source the source item to be referenced
    */
    void referenceItem( Item &target, Item &source );
-
-   const uint32& stackBase() const { return m_currentContext->stackBase(); }
-   uint32& stackBase() { return m_currentContext->stackBase(); }
 
    /** Set user data.
       VM is passed to every extension function, and is also quite used by the
@@ -2242,9 +2237,6 @@ public:
 
    void breakRequest( bool mode ) { m_break = mode; }
    bool breakRequest() const { return m_break; }
-
-   uint32 &endFrameNext() { return m_endFrameNext; }
-   const uint32 endFrameNext() const { return m_endFrameNext; }
 
 //==========================================================================
 //==========================================================================

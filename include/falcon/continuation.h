@@ -66,15 +66,12 @@ public:
       return m_tgtSymbol == 0;
    }
 
-   const ItemArray& stack() const { return m_stack; }
-   ItemArray& stack() { return m_stack; }
+   ItemArray &params() { return m_params; }
+   StackFrame* frames() const { return m_top; }
 
 private:
 
    VMachine* m_vm;
-
-   /** Local copy of the stack */
-   ItemArray m_stack;
 
    VMContext* m_context;
    /** Level at which the stack is created */
@@ -88,7 +85,17 @@ private:
 
    uint32 m_tgtPC;
 
-   uint32 m_stackBase;
+   /** Frame where the call is started. */
+   StackFrame* m_callingFrame;
+
+   /** Current frame when the continuation is called. */
+   StackFrame* m_top;
+
+   /** First frame on top of the calling frame. */
+   StackFrame* m_bottom;
+
+   /** Parameters for the bottom frame (safely stored here) */
+   ItemArray m_params;
 
    bool m_bComplete;
 

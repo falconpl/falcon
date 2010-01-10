@@ -42,8 +42,8 @@ public:
    void insertAttrib( const String& name, VarDef* vd );
    VarDef* findAttrib( const String& name );
 
-   bool save( Stream *out ) const;
-   bool load( Module* mod,  Stream *out );
+   bool save( const Module* mod, Stream *out ) const;
+   bool load( const Module* mod, Stream *out );
 };
 
 }

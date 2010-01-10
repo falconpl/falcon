@@ -296,18 +296,18 @@ public:
     *  \param bRecurse true to bind symbols from any parent, false to search in the local context.
     *  \return The symbol if found or 0 otherwise.
     */
-   Symbol *searchLocalSymbol( const String *symname, bool bRecurse = false );
-   Symbol *searchGlobalSymbol( const String *symname );
-   Symbol *addLocalSymbol( const String *symname, bool parameter );
-   Symbol *addGlobalSymbol( const String *symname );
-   Symbol *searchOuterSymbol( const String *symname );
+   Symbol *searchLocalSymbol( const String &symname, bool bRecurse = false );
+   Symbol *searchGlobalSymbol( const String &symname );
+   Symbol *addLocalSymbol( const String &symname, bool parameter );
+   Symbol *addGlobalSymbol( const String &symname );
+   Symbol *searchOuterSymbol( const String &symname );
 
    /** Creates a symbol that will be an initially defined global variable.
       The global variables may be created with an initial values (i.e. for
       static declarations). This function adds the global symbol for the
       variable and sets it to the default value.
    */
-   Symbol *addGlobalVar( const String *symname, VarDef *value );
+   Symbol *addGlobalVar( const String &symname, VarDef *value );
    bool isLocalContext() { return ! m_functions.empty(); }
 
    /** Seek a constant in the predefined constant list.
@@ -406,7 +406,7 @@ public:
    */
    void defineVal( ArrayDecl *val );
 
-   Symbol  *globalize( const String *str );
+   Symbol  *globalize( const String &str );
 
    /** Checks if the current statemsnt has referenced a locally undefined symbol. */
    bool checkLocalUndefined();
@@ -522,7 +522,7 @@ public:
       \param alias The namespace. If not given, will be the name of the module.
       \param filename if true the module load request is for a direct file name
    */
-   virtual void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
+   virtual void importSymbols( List *lst, const String &prefix=String(), const String &alias=String(), bool filename=false );
 
    /** Import a single aliased symbol from a module.
       This tries to resolve the given symbol in the given symName in the target from module
@@ -533,7 +533,7 @@ public:
       \param filename if true the module load request is for a direct file name.
       \param return The newly added symbol.
    */
-   virtual Symbol* importAlias( const String *symName, const String *fromMod, const String *alias, bool filename=false );
+   virtual Symbol* importAlias( const String &symName, const String &fromMod, const String &alias, bool filename=false );
 
    /** Performs a meta compilation.
       If any data is written on the metacompiler output stream, the

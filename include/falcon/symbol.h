@@ -128,19 +128,19 @@ public:
 
 class FALCON_DYN_CLASS ImportAlias: public BaseAlloc
 {
-   const String *m_name;
-   const String *m_origModule;
+   const String m_name;
+   const String m_origModule;
    bool m_isFileName;
 
 public:
-   ImportAlias( const String* name, const String* origModule, bool bIsFileName = false ):
+   ImportAlias( const String& name, const String& origModule, bool bIsFileName = false ):
       m_name( name ),
       m_origModule( origModule ),
       m_isFileName( bIsFileName )
    {}
 
-   const String *name() const { return m_name; }
-   const String *origModule() const { return m_origModule; }
+   const String &name() const { return m_name; }
+   const String &origModule() const { return m_origModule; }
    bool isOrigFileName() const { return m_isFileName; }
 };
 
@@ -237,8 +237,8 @@ public:
    */
    void recount();
 
-   bool save( Stream *out ) const;
-   bool load( Module *mod, Stream *in );
+   bool save( const Module *mod, Stream *out ) const;
+   bool load( const Module *mod, Stream *in );
 
    void onceItemId( uint32 id ) { m_onceItemId = id; }
    uint32 onceItemId() const { return m_onceItemId; }
@@ -294,7 +294,7 @@ public:
    ~InheritDef();
 
    bool save( Stream *out ) const;
-   bool load( Module *mod, Stream *in );
+   bool load( const Module *mod, Stream *in );
 
    Symbol *base() const { return m_baseClass; }
 };
@@ -315,9 +315,9 @@ public:
    const String& name() const { return *m_name; }
    const Map& functions() const { return m_functions; }
    Map& functions() { return m_functions; }
-   bool addFunction( const String* name, Symbol* func );
+   bool addFunction( const String& name, Symbol* func );
 
-   bool load( Module *mod, Stream* in );
+   bool load( const Module *mod, Stream* in );
    bool save( Stream* out ) const;
 };
 
@@ -431,8 +431,8 @@ public:
    Symbol *constructor() const { return m_constructor; }
 
 
-   bool save( Stream *out ) const;
-   bool load( Module *mod, Stream *in );
+   bool save( const Module* mod, Stream *out ) const;
+   bool load( const Module* mod, Stream *in );
 
    /** Adds a property to a class.
       If the a property with the same name already existed,
@@ -493,10 +493,10 @@ public:
 
    /** Set this as a "final" class.
       Final classes can be inherited, but it is not possible to inherit
-      from more than one final class in the whole hierarcy.
+      from more than one final class in the whole hierarchy.
 
       Final classes store binary data that must be uniquely identified
-      by functions in the hierarcy.
+      by functions in the hierarchy.
    */
    void setFinal( bool mod )  { m_bFinal = mod; }
 
@@ -575,7 +575,7 @@ private:
    int32 m_lineDecl;
 
    /** Symbol name; actually existing in its module definition, so not allocated nor deallocated. */
-   const String *m_name;
+   String m_name;
 
    /** Module where the symbol resides. */
    Module *m_module;
@@ -600,7 +600,7 @@ public:
       \param name the name of the symbol
       \param exp true if this symbol is exported.
    */
-   Symbol( Module *mod, uint32 id, const String *name, bool exp ):
+   Symbol( Module *mod, uint32 id, const String &name, bool exp ):
       m_type( tundef ),
       m_flags(exp ? 1: 0),
       m_id( id ),
@@ -619,7 +619,7 @@ public:
       \param name a String that has been created and stored somewhere safe
                  (i.e. module string table).
    */
-   Symbol( Module *mod, const String *name ):
+   Symbol( Module *mod, const String &name ):
       m_type( tundef ),
       m_flags( 0 ),
       m_id(0),
@@ -639,7 +639,6 @@ public:
       m_flags( 0 ),
       m_id( 0 ),
       m_lineDecl(0),
-      m_name( 0 ),
       m_module( owner )
    {}
 
@@ -652,7 +651,7 @@ public:
       de-allocated. If necessary, the application must keep track of that.
       \param name The new name.
    */
-   void name( const String *name ) { m_name = name; }
+   void name( const String &name ) { m_name = name; }
 
    /** Changes the symbol id.
       \param i the new id.
@@ -757,10 +756,10 @@ public:
    void setInstance( Symbol *base_class ) { clear(); m_type = tinst; m_value.v_symbol = base_class; }
    void setImportAlias( ImportAlias* alias )
       { clear(); m_type = timportalias; m_value.v_importalias = alias; imported(true); }
-   void setImportAlias( const String *name, const String* origModule, bool bIsFileName = false ) {
+   void setImportAlias( const String &name, const String& origModule, bool bIsFileName = false ) {
       setImportAlias( new ImportAlias( name, origModule, bIsFileName ) ); }
 
-   const String &name() const { return *m_name; }
+   const String &name() const { return m_name; }
    uint32 id() const { return m_id; }
    type_t type() const { return m_type; }
    bool exported() const { return (! imported()) && ((m_flags & FLAG_EXPORTED) == FLAG_EXPORTED); }

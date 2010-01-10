@@ -103,14 +103,12 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       break;
 
       case P_PARAM_LOCID:
-         ret = &stackItem( stackBase() +
-               *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
+         ret = local( *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
       case P_PARAM_PARID:
-         ret = &stackItem( stackBase() - paramCount() - VM_FRAME_SPACE +
-               *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
+         ret = param( *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
@@ -303,11 +301,8 @@ void opcodeHandler_GENA( register VMachine *vm )
    // copy the m-topmost items in the stack into the array
    if( size > 0 )
    {
-      Item *data = array->items().elements();
-      int32 base = vm->stack().length() - size;
-      memcpy( data, &vm->stack()[ base ], sizeof(Item)*size );
-      array->length( size );
-      vm->stack().resize( base );
+      array->items().copyOnto( vm->stack(), vm->stack().length() - size,  size );
+      vm->currentFrame()->pop( size );
    }
 }
 
@@ -363,7 +358,7 @@ void opcodeHandler_PSHR( register VMachine *vm )
 // 0E
 void opcodeHandler_POP( register VMachine *vm )
 {
-   if ( vm->stack().length() == vm->stackBase() ) {
+   if ( vm->stack().length() == 0 ) {
       vm->raiseHardError( e_stackuf, "POP", __LINE__ );
       return;
    }
@@ -1515,7 +1510,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
    Item iterItem;
    Iterator* current = new Iterator( seq );
    iterItem.setGCPointer( current );
-   vm->pushParameter( iterItem );
+   vm->pushParam( iterItem );
 
    // the source is safe through back-marking of the iterator on its sequence,
    // and of the sequence on its owner.
@@ -1612,7 +1607,7 @@ void opcodeHandler_CLOS( register VMachine *vm )
 
    if( size > 0 )
    {
-      if ( size + vm->stackBase() > vm->stack().length() )
+      if ( size > vm->stack().length() )
       {
          throw
             new CodeError( ErrorParam( e_stackuf ).origin( e_orig_vm ).extra("CLOS") );

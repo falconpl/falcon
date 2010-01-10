@@ -57,10 +57,10 @@ FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
    int major=0, minor=0, revision=0;
 
    // we don't want our current (core) module version info...
-   StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
-   if( thisFrame->m_stack_base != 0 )
+   StackFrame *thisFrame = vm->currentFrame();
+   if( thisFrame->prev() != 0 )
    {
-      StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
+      StackFrame *prevFrame = thisFrame->prev();
       if ( prevFrame->m_module != 0 )
       {
          prevFrame->m_module->module()->getModuleVersion( major, minor, revision );
@@ -134,13 +134,13 @@ FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
 {
-   if ( vm->stackBase() == 0 )
+   StackFrame *thisFrame = vm->currentFrame();
+   if ( thisFrame == 0 )
    {
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
       // get the calling symbol module
-      StackFrame *thisFrame = vm->currentFrame();
       vm->retval( (bool) (thisFrame->m_module == vm->mainModule() ) );
    }
 }

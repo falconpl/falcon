@@ -71,7 +71,7 @@ VarDef* AttribMap::findAttrib( const String& name )
 }
 
 
-bool AttribMap::save( Stream *out ) const
+bool AttribMap::save( const Module* mod, Stream *out ) const
 {
    uint32 sz = endianInt32( size() );
    out->write( &sz, sizeof( sz ) );
@@ -83,7 +83,7 @@ bool AttribMap::save( Stream *out ) const
       VarDef* value = *(VarDef**) iter.currentValue();
 
       key->serialize( out );
-      value->save( out );
+      value->save( mod, out );
 
       iter.next();
    }
@@ -92,7 +92,7 @@ bool AttribMap::save( Stream *out ) const
 }
 
 
-bool AttribMap::load( Module* mod, Stream *in )
+bool AttribMap::load( const Module* mod, Stream *in )
 {
    uint32 sz;
    in->read( &sz, sizeof( sz ) );

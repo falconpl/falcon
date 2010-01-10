@@ -133,7 +133,7 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -193,7 +193,7 @@ void co_object_add( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -315,7 +315,7 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -350,7 +350,7 @@ void co_object_sub( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -461,7 +461,7 @@ void co_dict_mul( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -482,7 +482,7 @@ void co_object_mul( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -612,7 +612,7 @@ void co_dict_div( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -633,7 +633,7 @@ void co_object_div( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -756,7 +756,7 @@ void co_dict_mod( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -777,7 +777,7 @@ void co_object_mod( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -887,7 +887,7 @@ void co_dict_pow( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -908,7 +908,7 @@ void co_object_pow( const Item& first, const Item& second, Item& third )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParam( *second.dereference() );
          vm->callItemAtomic( mth, 1 );
          third = vm->regA();
          return;
@@ -1510,7 +1510,7 @@ int co_dict_compare( const Item& first, const Item& second )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *psecond );
+         vm->pushParam( *psecond );
          vm->callItemAtomic( mth, 1 );
          if ( ! vm->regA().isNil() )
             return (int) vm->regA().forceInteger();
@@ -1550,7 +1550,7 @@ int co_object_compare( const Item& first, const Item& second )
          Item mth;
          if ( self->getMethod( "compare", mth ) )
          {
-            vm->pushParameter( second );
+            vm->pushParam( second );
             vm->callItemAtomic( mth, 1 );
             if ( vm->regA().isInteger() )
             {

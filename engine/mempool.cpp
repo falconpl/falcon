@@ -387,22 +387,23 @@ bool MemPool::markVM( VMachine *vm )
       markItem( ctx->regB() );
       markItem( ctx->latch() );
       markItem( ctx->latcher() );
+      markItem( ctx->self() );
 
       markItem( vm->regBind() );
       markItem( vm->regBindP() );
 
-      ItemArray& stack = ctx->stack();
-      for( pos = 0; pos < stack.length(); pos++ ) {
-         // an invalid item marks the beginning of the call frame
-         if ( stack[ pos ].type() == FLC_ITEM_INVALID )
-         {
-            StackFrame *frame = (StackFrame*) &stack[ pos ];
-            markItem(frame->m_self);
-            markItem(frame->m_binding);
-            pos += VM_FRAME_SPACE - 1; // pos++
+      StackFrame* sf = ctx->currentFrame();
+      while( sf != 0 )
+      {
+         Item* stackItems = sf->stackItems();
+         uint32 sl = sf->stackSize();
+         markItem( sf->m_self );
+         markItem( sf->m_binding );
+
+         for( pos = 0; pos < sl; pos++ ) {
+            markItem( stackItems[ pos ] );
          }
-         else
-            markItem( stack[ pos ] );
+         sf = sf->prev();
       }
 
       ctx_iter = ctx_iter->next();

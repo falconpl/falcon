@@ -273,7 +273,7 @@ void CoreObject::readIndex( const Item &pos, Item &target )
       VMachine* vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( pos );
+         vm->pushParam( pos );
          vm->callItemAtomic( mth, 1 );
          target = vm->regA();
          return;
@@ -291,8 +291,8 @@ void CoreObject::writeIndex( const Item &pos, const Item &target )
       VMachine* vm = VMachine::getCurrent();
       if ( vm != 0 )
       {
-         vm->pushParameter( pos );
-         vm->pushParameter( target );
+         vm->pushParam( pos );
+         vm->pushParam( target );
          vm->callItemAtomic( method, 2 );
          return;
       }
@@ -369,10 +369,10 @@ static bool __leave_handler( VMachine* vm )
    if( self->getMethod("__enter", enterItem ) )
    {
       if( wasInState )
-         vm->pushParameter( new CoreString( oldStateName ) );
+         vm->pushParam( new CoreString( oldStateName ) );
       else
-         vm->pushParameter( Item() );
-      vm->pushParameter( vm->regA() );
+         vm->pushParam( Item() );
+      vm->pushParam( vm->regA() );
       // never return here
       vm->returnHandler(0);
       vm->callFrame( enterItem, 2 );
@@ -403,8 +403,8 @@ void CoreObject::setState( const String& state, VMachine* vm )
    if( getMethod("__leave", leaveItem ) )
    {
       CoreString* csState = new CoreString( state );
-      vm->pushParameter(*stateDict); // pre-param 0
-      vm->pushParameter( csState );
+      vm->pushParam(*stateDict); // pre-param 0
+      vm->pushParam( csState );
       vm->callFrame( leaveItem, 1, &__leave_handler );
       return;
    }
@@ -435,11 +435,11 @@ void CoreObject::setState( const String& state, VMachine* vm )
    if( getMethod("__enter", enterItem ) )
    {
       if( hasOldState )
-         vm->pushParameter( sOldState );
+         vm->pushParam( sOldState );
       else
-         vm->pushParameter( Item() );
+         vm->pushParam( Item() );
 
-      vm->pushParameter( Item() );
+      vm->pushParam( Item() );
       vm->callFrame( enterItem, 2 );
    }
 }

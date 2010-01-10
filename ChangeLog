@@ -55,7 +55,18 @@ Falcon (0.9.4.5)
            -x options.
   * fixed: indirection didn't work for classes so classnames and enums couldn't be used
   * fixed: fallc was left behind of a version or so.
-           
+  * fixed: Error in array generation when small grow sizes are involved in GENA 
+           opcode.
+  * fixed: Error in array generation when small grow sizes are involved in 
+           arrayBuffer() core function.
+  * fixed: In ItemArray::append( Item& ) the parameter is passed as a pointer. If
+           the array data must be relocate and the item is coming from the array
+           itself, the old memory may be gone by the time the final copy is 
+           performed. This hit particularly hard with PUSH, which puts data on
+           the stack and may get data from local vars and parameters (both in
+           the stack).
+  
+         
 Falcon (0.9.4.4)
   * fixed: CoreTables used as sequences in for/in loops didn't mark their 
            Falcon side Table item as owner. This caused crash with some

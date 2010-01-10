@@ -49,21 +49,6 @@ public:
    */
    bool add( Symbol *sym );
 
-   /** Inserts a symbol in the table with an arbitrary name.
-      This makes possible to add a symbol in the table with a name different from the one
-      the symbol has. It is used i.e. by classes that must access their symbol using a name
-      that is not the "official" one, by instead a "nickname" which refers to the property.
-
-      \note The name will never be deleted by this class. The caller must have a safe way
-      to track the symbol existance and delete the name safely. Usually both official
-      symbol names and alias are stored in the module symbol table, and destroyed with
-      the module (which also destroys the symbol table).
-      \param name the arbitrary alias of this symbol.
-      \param sym the symbol to be added.
-      \return true if the symbol can be added, false if it were already present.
-   */
-   bool add( const String *name, Symbol *sym );
-
    /** Seek a symbol given its name.
       If the symbol with the given name can't be found in the symbol
       table, the function returns null.
@@ -122,7 +107,7 @@ public:
       \param in the input stream where the table must be loaded from.
       \return true if the operation has success, false otherwise.
    */
-   bool load( Module *owner, Stream *in );
+   bool load( const Module *owner, Stream *in );
 
    const Map &map() const { return m_map; }
 };
