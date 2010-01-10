@@ -592,7 +592,7 @@ bool Item::isCallable() const
 
    if( isObject() )
    {
-      return asObjectSafe()->hasProperty( "__call" );
+      return asObjectSafe()->hasProperty( OVERRIDE_OP_CALL );
    }
 
    //a bit more complex: a callable array...

@@ -320,7 +320,7 @@ protected:
 public:
 
    enum constants {
-      npos = csh::npos,
+      npos = csh::npos
    };
 
 
