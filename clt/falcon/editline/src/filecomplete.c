@@ -113,10 +113,10 @@ fn_tilde_expand(const char *txt)
 	if (temp[0] == 0) {
 #if defined(__SUNPRO_C)
 	   pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
-#elif HAVE_GETPW_R_POSIX
+#elif defined(HAVE_GETPW_R_POSIX)
 		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
 			pass = NULL;
-#elif HAVE_GETPW_R_DRAFT
+#elif defined(HAVE_GETPW_R_DRAFT)
 		pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
 #else 
       pass = getpwuid(getuid());
@@ -124,10 +124,10 @@ fn_tilde_expand(const char *txt)
 	} else {
 #if defined(__SUNPRO_C)
       pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
-#elif HAVE_GETPW_R_POSIX
+#elif defined(HAVE_GETPW_R_POSIX)
 		if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
 			pass = NULL;
-#elif HAVE_GETPW_R_DRAFT
+#elif defined(HAVE_GETPW_R_DRAFT)
 		pass = getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf));
 #else
 		pass = getpwnam(temp);
