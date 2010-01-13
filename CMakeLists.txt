@@ -9,20 +9,8 @@ PROJECT(Falcon_Feathers)
 # Find our Find*.cmake files 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-if ( "$ENV{FALCON_ACTIVE_TREE}" STREQUAL ""  )
-else()
-   Message( STATUS "Compiling feathers in development mode under \"$ENV{FALCON_BUILD_NAME}\"" )
-
-   find_path( falcon_DIR
-      falcon-config.cmake
-      PATHS "$ENV{FALCON_ACTIVE_TREE}/*/falcon/cmake" "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake" "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
-      NO_DEFAULT_PATH )
-
-   if ( falcon_DIR )
-      Message( "Falcon package configuration found at ${falcon_DIR}" )
-   else()
-      Message( FATAL_ERROR "Can't find package configuration for development tree." )
-   endif()
+if ( NOT "$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
+   include( "$ENV{FALCON_DEVEL_TREE}/falcon_devmode.cmake" )
 endif()
 
 find_package(falcon REQUIRED )
