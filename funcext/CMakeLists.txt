@@ -4,19 +4,20 @@
 # CMake configuration file for module Funcext
 ####################################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
-
-IF(WIN32)
-   SET( SYS_RC funcext.rc )
-ENDIF(WIN32)
-
-# Target
-ADD_LIBRARY( funcext_fm MODULE
-   funcext.cpp
-   funcext_ext.cpp
-   ${SYS_RC}
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${falcon_INCLUDE_DIRS}
 )
 
-#Link
-FALCON_LINK_MODULE( funcext_fm )
+if(WIN32)
+   SET( SYS_RC funcext.rc )
+endif()
+
+add_library(funcext_fm MODULE
+  funcext.cpp
+  funcext_ext.cpp
+  ${SYS_RC}
+)
+
+falcon_finalize_module( funcext_fm )
+ 

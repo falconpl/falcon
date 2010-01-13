@@ -4,15 +4,16 @@
 # CMake configuration file for module json
 ####################################################################
 
-# Inclusion settings
-INCLUDE_DIRECTORIES(.)
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${falcon_INCLUDE_DIRS}
+)
 
-IF(WIN32)
+if(WIN32)
    SET( SYS_RC json.rc )
-ENDIF(WIN32)
+endif()
 
-# Target
-ADD_LIBRARY( json_fm MODULE
+add_library(json_fm MODULE
    json_st.cpp
    json_mod.cpp
    json_ext.cpp
@@ -21,5 +22,5 @@ ADD_LIBRARY( json_fm MODULE
    ${SYS_RC}
 )
 
-#Link
-FALCON_LINK_MODULE( json_fm )
+falcon_finalize_module( json_fm )
+ 
