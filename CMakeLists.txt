@@ -18,7 +18,11 @@ ELSE(MSVC)
    OPTION(WITH_ODBC "Include ODBC DBI Module" OFF)
 ENDIF(MSVC)
 
-INCLUDE( "falmod.cmake" )
+if ( NOT "$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
+   include( "$ENV{FALCON_DEVEL_TREE}/falcon_devmode.cmake" )
+endif()
+
+find_package(falcon REQUIRED )
 
 INCLUDE_DIRECTORIES(BEFORE include)
 

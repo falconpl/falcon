@@ -327,7 +327,7 @@ FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm )
    @raise DBIError if the query generates an error in the SQL engine.
    @raise ParamError if the data wasn't adequate to be inserted.
 
-   This method automathises the task of creating the "insert" sql query
+   This method automates the task of creating the "insert" sql query
    given some variable data to be inserted. It actually expands into a
    complete SQL "insert" query that is then sent to the engine.
 
@@ -420,11 +420,11 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
    @raise DBIError if the query doesn't return any result.
    @raise ParamError if the data wasn't adequate to update the table.
 
-   This method automathises the task of creating the "update" sql query
+   This method automates the task of creating the "update" sql query
    given some variable data to be inserted. It actually expands into a
    complete SQL "update" query that is then sent to the engine.
 
-   To determine a primary key or set of keys to insolate one (or more)
+   To determine a primary key or set of keys to isolate one (or more)
    records to be updated, declare the keys as OOB strings (i.e. via
    the oob() function). They won't be used in the 'SET' clause,
    and will form a 'where' clause in which they are all required
@@ -541,11 +541,11 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
    @raise DBIError if the query doesn't return any result.
    @raise ParamError if the data wasn't adequate to delete a record.
 
-   This method automathises the task of creating the "update" sql query
+   This method automates the task of creating the "update" sql query
    given some variable data to be inserted. It actually expands into a
    complete SQL "update" query that is then sent to the engine.
 
-   To determine a primary key or set of keys to insolate one (or more)
+   To determine a primary key or set of keys to isolate one (or more)
    records to be updated, declare the keys as OOB strings (i.e. via
    the oob() function). They won't be used in the 'SET' clause,
    and will form a 'where' clause in which they are all required

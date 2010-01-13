@@ -3,17 +3,19 @@
 #
 # CMake configuration file for module DBI - database interface
 ####################################################################
+if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(../include)
-INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
-LINK_DIRECTORIES("${FALCON_LIB_PATH}")
 
-FALCON_DEFINE_MODULE( DBI dbi )
+falcon_define_module( dbi )
+Message( "Adding ${FALCON_MODULE}" )
 
 # Target
-ADD_LIBRARY( ${DBI} MODULE
+ADD_LIBRARY( ${FALCON_MODULE} MODULE
    dbi.cpp
    dbi_ext.cpp
    dbi_mod.cpp
@@ -21,4 +23,4 @@ ADD_LIBRARY( ${DBI} MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( ${DBI} )
+falcon_finalize_module( ${FALCON_MODULE} )
