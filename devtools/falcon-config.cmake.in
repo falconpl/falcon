@@ -40,6 +40,10 @@ endif(WIN32)
 #
 ##</See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
 
+macro( falcon_define_module modname )
+   set( FALCON_MODULE "${modname}_fm" )
+endmacro( falcon_define_module )
+
 function(FALCON_FINALIZE_MODULE tgt )
    target_link_libraries(${tgt} falcon_engine)
    falcon_install_module( ${tgt} )
