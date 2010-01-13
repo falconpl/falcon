@@ -11,11 +11,28 @@ SET(in_files
   falconeer.fal
   ${sys_in_spec}
 )
+
+
 foreach(item ${in_files} )
+  message( "Configuring ${item}" )
   configure_file(
     ${item}.in  ${CMAKE_CURRENT_BINARY_DIR}/${item}
     ESCAPE_QUOTES @ONLY)
 endforeach(item)
+
+# CMake will find it via find_package(falcon [REQUIRED])
+# It supplies include paths, libraries (via falcon-core-targets.cmake)
+# and convenience MACROS.
+#
+message( "Configuring falcon-config.cmake" )
+configure_file(
+  falcon-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
+  @ONLY
+)
+
+########################################################################
+# Install
 
 SET(inst_files
   "${CMAKE_CURRENT_BINARY_DIR}/falconeer.fal"
@@ -26,9 +43,13 @@ SET(inst_files
 
 INSTALL(
   FILES ${inst_files}
-  DESTINATION bin
+  DESTINATION ${FALCON_BIN_DIR}
   PERMISSIONS OWNER_READ OWNER_WRITE 
               OWNER_EXECUTE
               GROUP_READ GROUP_EXECUTE
               WORLD_READ WORLD_EXECUTE
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
+  DESTINATION ${FALCON_MOD_DIR}/cmake
 )

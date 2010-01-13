@@ -12,4 +12,4 @@ configure_file(
 file(GLOB falcon_files "falcon/*.h" )
 list(APPEND falcon_files ${CMAKE_CURRENT_BINARY_DIR}/falcon/config.h)
 
-install(FILES ${falcon_files} DESTINATION include/falcon)
+install(FILES ${falcon_files} DESTINATION ${FALCON_INC_DIR}/falcon)

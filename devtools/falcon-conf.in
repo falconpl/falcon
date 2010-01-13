@@ -1,7 +1,6 @@
 #!/bin/sh
 #
 # Falcon configuration script
-# $Id: falcon-conf.in,v 1.2 2007/08/01 22:08:41 jonnymind Exp $
 #
 # Useful tool to compile falcon modules and embedding applications.
 #
@@ -13,7 +12,7 @@ usage()
 {
    echo "The Falcon Programming Language"
    echo ""
-   echo "Build configuration tool for Falcon @FALCON_VERSION@"
+   echo "Build configuration tool for Falcon @FALCON_VERSION_ID@"
    echo "Usage: $0 params"
    echo "   -c, --cflags         writes CFLAGS for modules"
    echo "   -e, --embed-flags    writes CFLAGS for embedding applications"
@@ -26,6 +25,7 @@ usage()
    echo "   --moddir             write the module installation directory"
    echo "   -p, --ldpath         Path for LD_LIBRARY_PATH"
    echo "   -h, --help           this help"
+   echo "   --cmake              Position of the CMAKE module file"
    echo ""
    echo "Include this script in your makefiles with \$( $0 <params> )"
 }
@@ -52,13 +52,13 @@ else
   LDFLAGS="-module -dload -shared"
 fi
 
-INC_PATH="@FALCON_FINAL_DESTINATION@/include"
-LIB_PATH="@FALCON_FINAL_DESTINATION@/lib"
-LIB_LD_PATH="@FALCON_FINAL_DESTINATION@/lib"
+INC_PATH="@FALCON_FINAL_DEST@/@FALCON_INC_DIR@"
+LIB_PATH="@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@"
+LIB_LD_PATH="@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@"
 
 INC_FLAGS="-I$INC_PATH"
 LIB_FLAGS="-L$LIB_PATH"
-MODDIR="$LIB_PATH/falcon"
+MODDIR="@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@"
 
 while [ -n "$*" ]; do
    case "$1" in
@@ -73,6 +73,7 @@ while [ -n "$*" ]; do
       "-p" | "--ldpath") echo "$LIB_LD_PATH" ;;
       "--libs-only-l") echo "$FALCONLIB" ;;
       "--moddir") echo "$MODDIR";;
+      "--cmake") echo "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake/falcon-config.cmake";;
       "-h" | "--help" | *)
          usage
          exit;;

@@ -3,28 +3,26 @@ get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
-get_filename_component(falcon_INCLUDE_DIR "${SELF_DIR}/../../../include" ABSOLUTE)
+get_filename_component(falcon_INCLUDE_DIR "@FALCON_FINAL_DEST@/@FALCON_INC_DIR@" ABSOLUTE)
 list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
 
 set(falcon_LIBRARIES  falcon_engine)
 
-find_program(falcon_EXECUTABLE falcon "${SELF_DIR}/../../../bin")
+find_program(falcon_EXECUTABLE falcon "@FALCON_FINAL_DEST@/@FALCON_BIN_DIR@")
 
 ##<See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
 #
-if(WIN32)
-   set(FALCON_LIB_DIR bin)
-   set(FALCON_MOD_INSTALL_DIR bin)
-else()
-   set(FALCON_LIB_DIR lib)
-   set(FALCON_MOD_INSTALL_DIR lib/falcon)
-ENDIF()
+set(FALCON_BIN_DIR "@FALCON_INC_DIR@")
+set(FALCON_LIB_DIR "@FALCON_LIB_DIR@")
+set(FALCON_MOD_DIR "@FALCON_MOD_DIR@")
+set(FALCON_INC_DIR "@FALCON_INC_DIR@")
+set(FALCON_MAN_DIR "@FALCON_MAN_DIR@")
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
 set(FALCON_INSTALL_DESTINATIONS
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION ${FALCON_BIN_DIR}
   LIBRARY DESTINATION ${FALCON_LIB_DIR} 
-  ARCHIVE DESTINATION lib
+  ARCHIVE DESTINATION ${FALCON_LIB_DIR} 
 )
 # NOTE modules are installed via 
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
@@ -58,5 +56,5 @@ function(FALCON_INSTALL_MODULE tgt )
   endif()
 
   install( TARGETS ${tgt}
-           DESTINATION ${FALCON_MOD_INSTALL_DIR} )
+           DESTINATION ${FALCON_MOD_DIR} )
 endfunction(FALCON_INSTALL_MODULE)

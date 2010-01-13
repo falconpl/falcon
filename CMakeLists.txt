@@ -1,40 +1,30 @@
-####################################################################
+##############################################################################
 # The Falcon Programming language
 #
 # CMake configuration file for Core falcon
-####################################################################
+##############################################################################
+#
+# CONTROL VARIABLES:
+#
+# CMAKE_INSTALL_PREFIX - Installation directory
+# FALCON_FINAL_DST - Target final destination, if different from
+#                    prefix, where Falcon will be finally installed.
+#                    If not given, will be defaulted to CMAKE_INSTALL_PREFIX
+# FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
+# FALCON_INC_DIR - Prefix for installation of include files.
+# FALCON_MAN_DIR - Prefix for installation of man files.
+# FALCON_LIB_DIR - Prefix for installation of archives and dynamic libraries
+#                  on UNIXes. Defaults to "lib".
+# FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
+#                  $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
+# FALCON_SKIP_BISON - ON to avoid using bison.
+#
+
 cmake_minimum_required(VERSION 2.6)
 project(Falcon_Core)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
-# NOTE The following is alos content of falcon-config.make.in.  We might 
-# seperate it into its own file and generate 
-#   ${CMAKE_BINARY_DIR}/falcon-conf.cmake 
-# our self rather then with configure_file.  For now its to short for 
-# this hassle.
-#
-## <Subset of falcon-config.cmake.in>
-#
-
-if (NOT FALCON_LIB_DIR)
-   set(FALCON_LIB_DIR lib)
-endif()
-
-if (NOT FALCON_MOD_INSTALL_DIR)
-if(WIN32)
-   set(FALCON_MOD_INSTALL_DIR bin)
-else()
-   set(FALCON_MOD_INSTALL_DIR "${FALCON_LIB_DIR}/falcon")
-endif()
-endif()
-
-# for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
-set(FALCON_INSTALL_DESTINATIONS
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION ${FALCON_LIB_DIR} 
-  ARCHIVE DESTINATION ${FALCON_LIB_DIR}
-)
 # NOTE modules are installed via 
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
 # since they are neither RUNTIME, LIBRARY nor ARCHIVE. 
@@ -43,6 +33,7 @@ set(FALCON_INSTALL_DESTINATIONS
 if(WIN32)
    #mingw requires -mthreads global option
    if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+      message( "MINGW make detected, adding -mthreads flag" )
       list(APPEND CMAKE_EXE_LINKER_FLAGS -mthreads )
       list(APPEND CMAKE_SHARED_LINKER_FLAGS -mthreads )
       list(APPEND CMAKE_MODULE_LINKER_FLAGS -mthreads )
@@ -95,8 +86,7 @@ endif(NOT FALCON_SONAME_AGE)
 set(FALCON_VERSION_RC   "${FALCON_VERSION_MAJOR}, ${FALCON_VERSION_MINOR}, ${FALCON_VERSION_REVISION}, ${FALCON_VERSION_PATCH}")
 set(FALCON_VERSION_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}.${FALCON_VERSION_PATCH}")
 
-
-message(STATUS "Compiling Falcon on ${CMAKE_SYSTEM}" )
+message(STATUS "Compiling Falcon ${FALCON_VERSION_ID} on ${CMAKE_SYSTEM}" )
 
 ##############################################################################
 #  Other defaults
@@ -104,7 +94,7 @@ message(STATUS "Compiling Falcon on ${CMAKE_SYSTEM}" )
 include(TestBigEndian)
 
 message(STATUS "Testing endianity on ${CMAKE_SYSTEM}" )
-test_big_endian(falcon_big_endian)
+TEST_BIG_ENDIAN(falcon_big_endian)
 if(falcon_big_endian)
    set(FALCON_LITTLE_ENDIAN 0)
 else(falcon_big_endian)
@@ -123,20 +113,75 @@ if(NOT CMAKE_INSTALL_PREFIX)
     endif()
   else()
     set(CMAKE_INSTALL_PREFIX  "/usr/local" )
-  endif()
+  endif()  
 endif()
 
-if(NOT FALCON_FINAL_DESTINATION)
-   SET(FALCON_FINAL_DESTINATION $CMAKE_INSTALL_PREFIX)
+message( STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}" )
+
+if (NOT FALCON_FINAL_DEST )
+   set( FALCON_FINAL_DEST "${CMAKE_INSTALL_PREFIX}" )
+   message( "Defaulting FALCON_FINAL_DESTINATION to ${FALCON_FINAL_DEST}" )
+else()
+   message( "setting FALCON_FINAL_DESTINATION=${FALCON_FINAL_DEST}" )
 endif()
 
+if (NOT FALCON_LIB_DIR)
+   set(FALCON_LIB_DIR lib)
+endif()
+
+
+if (NOT FALCON_BIN_DIR)
+   set(FALCON_BIN_DIR bin)
+endif()
+
+if (NOT FALCON_INC_DIR)
+   if(WIN32)
+      set(FALCON_INC_DIR "include")
+   else()
+      set(FALCON_INC_DIR "include/falcon-${FALCON_VERSION_ID}")
+   endif()
+endif()
+
+if (NOT FALCON_MOD_DIR )
+   if(WIN32)
+      set(FALCON_MOD_DIR bin)
+   else()
+      set(FALCON_MOD_DIR "${FALCON_LIB_DIR}/falcon")
+   endif()
+endif()
+
+# for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
+set(FALCON_INSTALL_DESTINATIONS
+  RUNTIME DESTINATION ${FALCON_BIN_DIR}
+  LIBRARY DESTINATION ${FALCON_LIB_DIR}
+  ARCHIVE DESTINATION ${FALCON_LIB_DIR}
+)
+
+message( STATUS "Binary prefix: ${FALCON_BIN_DIR}" )
+message( STATUS "Library prefix: ${CMAKE_LIB_DIR}" )
+message( STATUS "Module prefix: ${FALCON_MOD_DIR}" )
+
+if ( NOT WIN32 )
+   if (NOT FALCON_MAN_DIR)
+      set(FALCON_MAN_DIR "share/man/man1")
+   endif()
+   message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
+endif()
+
+#########################################################à
+# Subdirectories
 #
+
 add_subdirectory(engine)
 add_subdirectory(clt)
 add_subdirectory(devtools)
 
 #also performs installation of the include directory
 add_subdirectory(include)
+
+
+#########################################################################
+# Tests?
 
 option(FALCON_WITH_CTEST_TESTS "" off)
 if(FALCON_WITH_CTEST_TESTS)
@@ -145,23 +190,7 @@ if(FALCON_WITH_CTEST_TESTS)
   add_subdirectory(tests)
 endif()
 
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/falcon-config.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
-  @ONLY
-)
-# CMake will find it via find_package(falcon [REQUIRED])
-# It supplies include paths, libraries (via falcon-core-targets.cmake)
-# and convenience MACROS. 
-#
-# TODO We add the -mthread flag to MinGW builds without asking the 
-# module developer, is this ok?
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
-  DESTINATION lib/falcon/cmake
-)
-
 # CMake generated information.  Is used by our falcon-config.cmake
 install(EXPORT falcon-core-targets
-  DESTINATION lib/falcon/cmake
+  DESTINATION ${FALCON_MOD_DIR}/cmake
 )
