@@ -1,31 +1,84 @@
+######################################################################
+# The Falcon Programming Language.
+# CMake module for find_package( falcon )
+######################################################################
+
+
 get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
-get_filename_component(falcon_INCLUDE_DIR "@FALCON_FINAL_DEST@/@FALCON_INC_DIR@" ABSOLUTE)
+#Versioning
+set( falcon_VERSION "@FALCON_VERSION_ID@" )
+set( falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
+
+set( falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
+set( falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
+set( falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
+
+# Prepare Falcon in build environment.
+# Selection of the build prefix (either the final one or a temporary build one) is performed
+# by the caller, simply which falcon-config.cmake module to load. So, our position is relevant.
+if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
+   #If we're below the final destination, then use the final destination as a prefix.
+   if ("${SELF_DIR}" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
+      # When the prefix is the same as the final destination, there isn't a difference.
+      # Warn about this, because the user of test builds may be misleaded.
+      # It is right to be here in case of test (development) builds.
+      Message( STATUS "Falcon module uses local settings (@CMAKE_INSTALL_PREFIX@)" )
+   else()
+      Message( STATUS "Falcon module configured under system-wide installation." )
+   endif()
+   
+   set(falcon_PREFIX "@FALCON_FINAL_DEST@")
+else()
+   Message( STATUS "Falcon module configured under DEVELOPMENT (@CMAKE_INSTALL_PREFIX@) settings" )
+   set(falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
+endif()
+
+#Some shortcut
+set(falcon_BIN_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
+set(falcon_LIB_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
+set(falcon_MOD_DIR "${falcon_PREFIX}/@FALCON_MOD_DIR@")
+set(falcon_INC_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
+set(falcon_MAN_DIR "${falcon_PREFIX}/@FALCON_MAN_DIR@")
+
+#Check if everything is in place.
+find_program(falcon_EXECUTABLE falcon "${falcon_BIN_DIR}")
+find_library(falcon_ENGINE falcon_engine "${falcon_LIB_DIR}")
+find_file(falcon_ENGINE_INC engine.h "${falcon_INC_DIR}" )
+
+get_filename_component(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@" ABSOLUTE)
+get_filename_component(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@" ABSOLUTE)
+get_filename_component(falcon_MODULE_DIR "${falcon_PREFIX}/@FALCON_MOD_DIR@" ABSOLUTE)
+   
+# Prepare Falcon in development environment.
 list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
+list(APPEND falcon_LIBRARY_DIRS  ${falcon_LIBRARY_DIR})
+list(INSERT CMAKE_LIBRARY_PATHS 0 ${falcon_LIBRARY_DIR})
 
-set(falcon_LIBRARIES  falcon_engine)
+set(falcon_LIBRARIES falcon_engine)
 
-find_program(falcon_EXECUTABLE falcon "@FALCON_FINAL_DEST@/@FALCON_BIN_DIR@")
-
-##<See ${PROJECT_SOURCE_DIR}/CMakeLists.txt for dublication of this>
-#
-set(FALCON_BIN_DIR "@FALCON_INC_DIR@")
-set(FALCON_LIB_DIR "@FALCON_LIB_DIR@")
-set(FALCON_MOD_DIR "@FALCON_MOD_DIR@")
-set(FALCON_INC_DIR "@FALCON_INC_DIR@")
-set(FALCON_MAN_DIR "@FALCON_MAN_DIR@")
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(NOT DISABLE_RPATH)
+  # Always find libfalcon_engone.so in build and install tree, without LD_LIBRARY_PATH.
+  set(CMAKE_SKIP_BUILD_RPATH  false)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  # RPATH must always point to the final destination
+  # No matter if we installed directly there or in a temporary prefix
+  set(CMAKE_INSTALL_RPATH "@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+endif()
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
 set(FALCON_INSTALL_DESTINATIONS
-  RUNTIME DESTINATION ${FALCON_BIN_DIR}
-  LIBRARY DESTINATION ${FALCON_LIB_DIR} 
-  ARCHIVE DESTINATION ${FALCON_LIB_DIR} 
+  RUNTIME DESTINATION ${falcon_BIN_DIR}
+  LIBRARY DESTINATION ${falcon_LIB_DIR}
+  ARCHIVE DESTINATION ${falcon_LIB_DIR}
 )
 # NOTE modules are installed via 
-#   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
+#   install(FILES .. DESTINATION ${FALCON_MOD_DIR})
 # since they are neither RUNTIME, LIBRARY nor ARCHIVE. 
 
 #In windows, we normally install in c:\falcon
@@ -45,9 +98,14 @@ macro( falcon_define_module modname )
 endmacro( falcon_define_module )
 
 function(FALCON_FINALIZE_MODULE tgt )
-   target_link_libraries(${tgt} falcon_engine)
+   target_link_libraries(${tgt} ${falcon_LIBRARIES} )
    falcon_install_module( ${tgt} )
 endfunction(FALCON_FINALIZE_MODULE)
+
+function(FALCON_FINALIZE_MODULE2 tgt libs)
+   target_link_libraries(${tgt} ${falcon_LIBRARIES} ${libs} )
+   falcon_install_module( ${tgt} )
+endfunction(FALCON_FINALIZE_MODULE2)
 
 function(FALCON_INSTALL_MODULE tgt )
   if(APPLE)
@@ -60,5 +118,5 @@ function(FALCON_INSTALL_MODULE tgt )
   endif()
 
   install( TARGETS ${tgt}
-           DESTINATION ${FALCON_MOD_DIR} )
+           DESTINATION ${falcon_MOD_DIR} )
 endfunction(FALCON_INSTALL_MODULE)
