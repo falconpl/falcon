@@ -8,5 +8,5 @@ file(GLOB service_headers "falcon/srv/*.h" )
 
 install(
   FILES ${service_headers}
-  DESTINATION ${falcon_INC_DIR}/srv
+  DESTINATION ${falcon_INCLUDE_DIR}/srv
 ) 
