@@ -9,11 +9,11 @@ PROJECT(Falcon_Feathers)
 # Find our Find*.cmake files 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-if ( NOT "$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
-   include( "$ENV{FALCON_DEVEL_TREE}/falcon_devmode.cmake" )
-endif()
-
-find_package(falcon REQUIRED)
+find_package(falcon
+   HINTS "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
+         "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
+         "$ENV{FALCON_ACTIVE_TREE}/cmake"
+   REQUIRED)
 
 add_subdirectory(compiler)
 add_subdirectory(confparser)
