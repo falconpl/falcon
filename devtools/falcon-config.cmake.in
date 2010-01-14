@@ -22,7 +22,7 @@ set( falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
 # by the caller, simply which falcon-config.cmake module to load. So, our position is relevant.
 if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
    #If we're below the final destination, then use the final destination as a prefix.
-   if ("${SELF_DIR}" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
+   if ("@FALCON_FINAL_DEST@" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
       # When the prefix is the same as the final destination, there isn't a difference.
       # Warn about this, because the user of test builds may be misleaded.
       # It is right to be here in case of test (development) builds.
