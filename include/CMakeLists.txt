@@ -8,5 +8,5 @@ file(GLOB service_headers "falcon/srv/*.h" )
 
 install(
   FILES ${service_headers}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/falcon/srv
+  DESTINATION ${falcon_INC_DIR}/srv
 ) 
