@@ -140,16 +140,16 @@ class DBIBlobStream : public Stream
 
 protected:
    DBIBlobStream():
-      m_falconClassName( "DBIBlobStream"),
-      Stream( t_membuf )
+      Stream( t_membuf ),
+      m_falconClassName( "DBIBlobStream")
    {}
 
    /**
       Sets a falcon specific class name that should wrap this subclass.
    */
    DBIBlobStream( const String &className ):
-      m_falconClassName( className ),
-      Stream( t_membuf )
+      Stream( t_membuf ),
+      m_falconClassName( className )
    {}
 
 public:

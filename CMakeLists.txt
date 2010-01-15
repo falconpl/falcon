@@ -3,9 +3,17 @@
 #
 # CMake configuration file for DBI
 ####################################################################
-cmake_minimum_required(VERSION 2.4)
-
+cmake_minimum_required(VERSION 2.6)
 PROJECT(Falcon_DBI)
+
+# The required package
+find_package(falcon
+   HINTS "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
+         "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
+         "$ENV{FALCON_ACTIVE_TREE}/cmake"
+   REQUIRED)
+
+# Options
 OPTION(WITH_MYSQL  "Include MySQL DBI Module" OFF)
 OPTION(WITH_PGSQL  "Include PostgreSQL DBI Module" OFF)
 OPTION(WITH_SQLITE "Include SQLite3 DBI Module" ON)
@@ -18,13 +26,9 @@ ELSE(MSVC)
    OPTION(WITH_ODBC "Include ODBC DBI Module" OFF)
 ENDIF(MSVC)
 
-if ( NOT "$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
-   include( "$ENV{FALCON_DEVEL_TREE}/falcon_devmode.cmake" )
-endif()
-
-find_package(falcon REQUIRED )
 
 INCLUDE_DIRECTORIES(BEFORE include)
+INCLUDE_DIRECTORIES(${falcon_INCLUDE_DIRS})
 
 # Project directories
 ADD_SUBDIRECTORY(dbi)
