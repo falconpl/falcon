@@ -25,9 +25,9 @@ project(Falcon_Core)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
-# NOTE modules are installed via 
+# NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
-# since they are neither RUNTIME, LIBRARY nor ARCHIVE. 
+# since they are neither RUNTIME, LIBRARY nor ARCHIVE.
 
 #In windows, we normally install in c:\falcon
 if(WIN32)
@@ -41,15 +41,6 @@ if(WIN32)
 endif(WIN32)
 #
 ## </Subset of falcon-config.cmake>
-
-option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
-if(NOT DISABLE_RPATH)
-  # Always find libfalcon_engone.so in build and install tree, without LD_LIBRARY_PATH.
-  set(CMAKE_SKIP_BUILD_RPATH  false)
-  set(CMAKE_BUILD_WITH_INSTALL_RPATH false) 
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
-endif()
 
 if(WIN32)
    SET( FALCON_HOST_SYSTEM "WINDOWS" )
@@ -75,7 +66,7 @@ endif()
 # In eample, 1.12.5 means that this lib may be dynlinked against
 # every program using this lib versioned from 1.8 to 1.12.
 include(versioninfo.cmake)
-if(NOT FALCON_SONAME_AGE)    
+if(NOT FALCON_SONAME_AGE)
    # A couple of useful shortcuts
    set(FALCON_SONAME "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}")
    set(FALCON_SONAME_REV "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}")
@@ -113,7 +104,7 @@ if(NOT CMAKE_INSTALL_PREFIX)
     endif()
   else()
     set(CMAKE_INSTALL_PREFIX  "/usr/local" )
-  endif()  
+  endif()
 endif()
 
 message( STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}" )
@@ -166,6 +157,15 @@ if ( NOT WIN32 )
       set(FALCON_MAN_DIR "share/man/man1")
    endif()
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
+endif()
+
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(NOT DISABLE_RPATH)
+  # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
+  set(CMAKE_SKIP_BUILD_RPATH  false)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 endif()
 
 #########################################################à
