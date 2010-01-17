@@ -16,42 +16,58 @@ set( falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
 set( falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
 set( falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
 set( falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
+set( falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 
 # Prepare Falcon in build environment.
-# Selection of the build prefix (either the final one or a temporary build one) is performed
-# by the caller, simply which falcon-config.cmake module to load. So, our position is relevant.
-if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
-   #If we're below the final destination, then use the final destination as a prefix.
-   if ("@FALCON_FINAL_DEST@" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
-      # When the prefix is the same as the final destination, there isn't a difference.
-      # Warn about this, because the user of test builds may be misleaded.
-      # It is right to be here in case of test (development) builds.
-      Message( STATUS "Falcon module uses local settings (@CMAKE_INSTALL_PREFIX@)" )
-   else()
-      Message( STATUS "Falcon module configured under system-wide installation." )
-   endif()
-   
-   set(falcon_PREFIX "@FALCON_FINAL_DEST@")
-   
+
+# Under windows, position is fixed at $INSTALLDIR\bin\cmake
+# OTOH, we don't know where the user will want to install us.
+
+if( WIN32 )
+   set(falcon_PREFIX "${SELF_DIR}/../..")
+   #Will be bin and lib
    set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
    set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
-
+   
+   #This can change depending on the version
    set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
    list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
 else()
-   Message( STATUS "Falcon module configured under DEVELOPMENT ($ENV{FALCON_SRC_TREE}) settings" )
-   set(falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
+   # Selection of the build prefix (either the final one or a temporary build one) is performed
+   # by the caller, simply which falcon-config.cmake module to load. So, our position is relevant.
+   if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
+      #If we're below the final destination, then use the final destination as a prefix.
+      if ("@FALCON_FINAL_DEST@" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
+         # When the prefix is the same as the final destination, there isn't a difference.
+         # Warn about this, because the user of test builds may be misleaded.
+         # It is right to be here in case of test (development) builds.
+         Message( STATUS "Falcon module uses local settings (@CMAKE_INSTALL_PREFIX@)" )
+      else()
+         Message( STATUS "Falcon module configured under system-wide installation." )
+      endif()
+      
+      set(falcon_PREFIX "@FALCON_FINAL_DEST@")
+      
+      set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
+      set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
 
-   set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
-   set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
+      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
+      list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
+   else()
+      Message( STATUS "Falcon module configured under DEVELOPMENT ($ENV{FALCON_SRC_TREE}) settings" )
+      set(falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
 
-   #The output directory doesn't change. However, is not used as include.
-   set(falcon_INCLUDE_DIR "@FALCON_FINAL_DEST@/@FALCON_INC_DIR@")
+      set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
+      set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
 
-   # Use the source directory for include
-   list(APPEND falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
-   # But adds generated include files
-   list(APPEND falcon_INCLUDE_DIRS  "${SELF_DIR}/../include" )
+      #The output directory doesn't change. However, is not used as include.
+      set(falcon_INCLUDE_DIR "@FALCON_FINAL_DEST@/@FALCON_INC_DIR@")
+
+      # Use the source directory for include
+      list(APPEND falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
+      # But adds generated include files
+      list(APPEND falcon_INCLUDE_DIRS  "${SELF_DIR}/../include" )
+   endif()
 endif()
 
 # Fixed output directories
