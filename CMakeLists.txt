@@ -3,14 +3,14 @@
 #
 # CMake configuration file for DBI
 ####################################################################
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 PROJECT(Falcon_DBI)
 
 # The required package
 find_package(falcon
    HINTS "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
          "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
-         "$ENV{FALCON_ACTIVE_TREE}/cmake"
+         "$ENV{FALCON_BIN_PATH}/cmake"
    REQUIRED)
 
 # Options
