@@ -3,7 +3,7 @@
 #
 # CMake configuration file for Feather modules
 ####################################################################
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6.2)
 PROJECT(Falcon_Feathers)
 
 # Find our Find*.cmake files 
