@@ -7,7 +7,7 @@
 # CONTROL VARIABLES:
 #
 # CMAKE_INSTALL_PREFIX - Installation directory
-# FALCON_FINAL_DST - Target final destination, if different from
+# FALCON_FINAL_DEST - Target final destination, if different from
 #                    prefix, where Falcon will be finally installed.
 #                    If not given, will be defaulted to CMAKE_INSTALL_PREFIX
 # FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
