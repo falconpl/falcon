@@ -57,10 +57,10 @@ public:
    Item* m_params;
 
    StackFrame( int preAlloc = pa_default ):
-      m_prev(0),
       m_symbol(0),
       m_module(0),
       m_prevTryFrame(0),
+      m_prev(0),
       m_stack( preAlloc )
    {}
 
