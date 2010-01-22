@@ -15,6 +15,7 @@
 #include <falcon/config.h>
 #include <falcon/rc_version.h>
 
+
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION FALCON_VERSION_RCINFO_N
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
@@ -33,11 +34,11 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "The Falcon command line module runner"
+            VALUE "FileDescription", "The Falcon application packager"
             VALUE "FileVersion", FALCON_VERSION_RCINFO
-            VALUE "InternalName", "falrun"
+            VALUE "InternalName", "falpack"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "falrun.exe"
+            VALUE "OriginalFilename", "falpack.exe"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END

@@ -17,6 +17,7 @@
    Simple Falcon module for test suite.
 */
 
+#include <falcon/config.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/item.h>
@@ -24,8 +25,6 @@
 #include <falcon/testsuite.h>
 #include <falcon/fstream.h>
 #include <falcon/vmevent.h>
-
-#include "version.h"
 
 /************************************************
    Success and failure falcon functions
@@ -176,7 +175,7 @@ FALCON_MODULE_DECL
    Falcon::Module *tsuite = new Falcon::Module();
    tsuite->name( "falcon.testsuite" );
    tsuite->engineVersion( FALCON_VERSION_NUM );
-   tsuite->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+   tsuite->version( FALCON_VERSION_NUM );
 
    tsuite->addExtFunc( "failure", flc_failure );
    tsuite->addExtFunc( "success", flc_success );

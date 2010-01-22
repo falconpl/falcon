@@ -12,12 +12,8 @@
 #include <falcon/config.h>
 #include <falcon/rc_version.h>
 
-// and application versioning
-#include "version.h"
-
-
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION FALCON_MAKE_VERSION_NUMBER( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+ FILEVERSION FALCON_VERSION_RCINFO_N
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -35,12 +31,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Unit test support module"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION )
+            VALUE "FileVersion", FALCON_VERSION_RCINFO
             VALUE "InternalName", "testsuite"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "testsuite.dll"
             VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION
+            VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END
     END
     BLOCK "VarFileInfo"

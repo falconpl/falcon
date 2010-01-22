@@ -17,11 +17,10 @@ MAINICON                ICON                    "resources\\falcon-ico-base.ico"
 #include <falcon/rc_version.h>
 
 // and application versioning
-#include "version.h"
 #define VS_VERSION_INFO 1
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 
+ FILEVERSION FALCON_VERSION_RCINFO_N
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -39,12 +38,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "The Falcon command line compiler"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION )
+            VALUE "FileVersion", FALCON_VERSION_RCINFO
             VALUE "InternalName", "falcon"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "falcon.exe"
             VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION
+            VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END
     END
     BLOCK "VarFileInfo"
