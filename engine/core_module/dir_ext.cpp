@@ -636,7 +636,7 @@ FALCON_FUNC  fileExt ( ::Falcon::VMachine *vm )
       }
 
       // find a dot here.
-      uint32 pdot = name->find( ".", pos );
+      uint32 pdot = name->rfind( ".", pos );
       if ( pdot + 1 < len )
       {
          vm->retval( new CoreString( *name, pdot+1 ) );

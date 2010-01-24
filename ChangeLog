@@ -1,3 +1,7 @@
+Falcon (0.9.6.1)
+  * fixed: Random crash on runtime errors during object init.
+  * fixed: fileExt() returned the file part since first dot.
+  
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 
            format. This is controlled by an engine global setting that
