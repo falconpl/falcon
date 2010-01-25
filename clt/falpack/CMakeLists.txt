@@ -18,6 +18,7 @@ ENDIF(WIN32)
 # Target
 ADD_EXECUTABLE( falpack
    falpack.cpp
+   options.cpp
    ${SYS_RC}
 )
 

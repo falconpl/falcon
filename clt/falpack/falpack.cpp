@@ -14,6 +14,7 @@
 */
 
 #include <falcon/engine.h>
+#include "options.h"
 
 using namespace Falcon;
 
@@ -75,8 +76,16 @@ int main( int argc, char *argv[] )
       stdErr = AddSystemEOL( TranscoderFactory( io_encoding, new StdErrStream, true ), true );
    }
 
-   version();
-   return 255;
+   Options options;
+   ;
+
+   if ( ! options.parse( argc-1, argv+1 ) )
+   {
+      stdOut->writeString( "Fatal: invalid parameters.\n\n" );
+      return 1;
+   }
+
+   return 0;
 }
 
 
