@@ -42,16 +42,35 @@ static void usage()
    stdOut->writeString( "Options:\n" );
    stdOut->writeString( "   -M          Pack also pre-compiled modules.\n" );
    stdOut->writeString( "   -s          Strip sources.\n" );
+   stdOut->writeString( "   -e <enc>    Source files encoding.\n" );
    stdOut->writeString( "   -S          Do not store system files (engine + runner)\n" );
    stdOut->writeString( "   -r          Use falrun instead of falcon as runner\n" );
    stdOut->writeString( "   -P <dir>    Store non-application libraries in this subdirectory\n" );
+   stdOut->writeString( "   -h, -?      This help.\n" );
    stdOut->writeString( "   -L <dir>    Redefine FALCON_LOAD_PATH\n" );
-   stdOut->writeString( "\n" );
-   stdOut->writeString( "Paths must be in falcon file name format: directory separatros must be slashes and\n" );
-   stdOut->writeString( "multiple entries must be entered separed by a semicomma (';')\n" );
+   stdOut->writeString( "   -v          Prints version and exit.\n" );
    stdOut->writeString( "\n" );
    stdOut->flush();
 }
+
+
+//TODO fill this per system
+void transferSysFiles( Options &options )
+{}
+
+
+void transferModules( Options &options )
+{
+   ModuleLoader ml;
+
+   ml.alwaysRecomp( true );
+   ml.saveModules( false );
+
+   if( options.m_sEncoding != "" )
+      ml.sourceEncoding( options.m_sEncoding );
+
+}
+
 
 int main( int argc, char *argv[] )
 {
@@ -77,13 +96,33 @@ int main( int argc, char *argv[] )
    }
 
    Options options;
-   ;
 
    if ( ! options.parse( argc-1, argv+1 ) )
    {
       stdOut->writeString( "Fatal: invalid parameters.\n\n" );
       return 1;
    }
+
+   if( options.m_bVersion )
+   {
+      version();
+   }
+
+   if( options.m_bHelp )
+   {
+      usage();
+   }
+
+   // by default store the application in a subdirectory equal to the name of the
+   // application.
+   Path target( options.m_sMainScript );
+
+   //===============================================================
+   // We need a runtime and a module loader to load all the modules.
+   transferModules( options );
+
+   if( ! options.m_bNoSysFile )
+      transferSysFiles( options );
 
    return 0;
 }

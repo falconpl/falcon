@@ -30,6 +30,9 @@ public:
    String m_sTargetDir;
    String m_sLoadPath;
    String m_sMainScript;
+   String m_sEncoding;
+   bool m_bHelp;
+   bool m_bVersion;
 
    Options();
 
