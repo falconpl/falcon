@@ -207,7 +207,10 @@ class TranscoderISO_CP: public Transcoder
 protected:
    TranscoderISO_CP( Stream *s, bool bOwn=false ):
        Transcoder( s, bOwn )
-       {}
+       {
+          m_nMinUntl = 0x0;
+          m_nMaxUntl = 0x9F;
+       }
 
     TranscoderISO_CP( const TranscoderISO_CP &other );
 
@@ -215,10 +218,41 @@ protected:
        uint32 m_dirTabSize;
        CP_ISO_UINT_TABLE *m_reverseTable;
        uint32 m_revTabSize;
+       uint32 m_nMinUntl;
+       uint32 m_nMaxUntl;
 
 public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
+};
+
+
+class TranscoderOEM: public TranscoderISO_CP
+{
+protected:
+   TranscoderOEM( Stream *s, bool bOwn=false ):
+       TranscoderISO_CP( s, bOwn )
+       {
+          m_nMinUntl = 0x00;
+          m_nMaxUntl = 0x7F;
+       }
+
+    TranscoderOEM( const TranscoderOEM &other );
+public:
+   virtual bool get( uint32 &chr );
+};
+
+
+class TranscoderIBM437:public TranscoderOEM
+{
+public:
+   TranscoderIBM437( const TranscoderIBM437 &other ):
+     TranscoderOEM( other )
+     {}
+
+     TranscoderIBM437( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "IBM437"; }
+     virtual TranscoderIBM437 *clone() const;
 };
 
 class TranscoderCP1252:public TranscoderISO_CP
@@ -944,6 +978,8 @@ TranscoderUTF16 *TranscoderUTF16::clone() const
    return new TranscoderUTF16( *this );
 }
 
+
+
 //=========================================
 // TABLES
 //
@@ -952,7 +988,9 @@ TranscoderISO_CP::TranscoderISO_CP( const TranscoderISO_CP &other ):
    m_directTable( other.m_directTable ),
    m_dirTabSize( other.m_dirTabSize ),
    m_reverseTable( other.m_reverseTable ),
-   m_revTabSize( other.m_revTabSize )
+   m_revTabSize( other.m_revTabSize ),
+   m_nMinUntl( m_nMinUntl ),
+   m_nMaxUntl( m_nMaxUntl )
 {}
 
 bool TranscoderISO_CP::get( uint32 &chr )
@@ -993,7 +1031,7 @@ bool TranscoderISO_CP::put( uint32 chr )
 {
    m_parseStatus = true;
    byte out;
-   if ( chr < 0xA0 )
+   if ( chr >= m_nMinUntl && chr <= m_nMaxUntl )
    {
       out = (byte) chr;
    }
@@ -1045,7 +1083,6 @@ bool TranscoderISO_CP::put( uint32 chr )
    // write the result
    return (m_stream->write( &out, 1 ) == 1);
 }
-
 
 TranscoderCP1252::TranscoderCP1252( Stream *s, bool bOwn ):
    TranscoderISO_CP( s, bOwn )
@@ -1261,6 +1298,62 @@ TranscoderISO8859_15 *TranscoderISO8859_15::clone() const
    return new TranscoderISO8859_15( *this );
 }
 
+
+//=========================================
+// OEM tables (covering 0x0 to 0x20  and 0x80 to 0xff ranges)
+//
+
+TranscoderOEM::TranscoderOEM( const TranscoderOEM &other ):
+   TranscoderISO_CP( other )
+{}
+
+bool TranscoderOEM::get( uint32 &chr )
+{
+   m_parseStatus = true;
+
+   if( popBuffer( chr ) )
+      return true;
+
+   // converting the character into an unicode.
+   byte in;
+   if ( m_stream->read( &in, 1 ) != 1 )
+      return false;
+
+   if ( in >= m_nMinUntl && in <= m_nMaxUntl )
+   {
+      chr = (uint32) in;
+      return true;
+   }
+
+   if ( in >= 0xFF )
+   {
+      chr = (uint32) '?';
+      m_parseStatus = false;
+      return true;
+   }
+
+   chr = chr < m_nMinUntl ? 
+      (uint32) m_directTable[ in ] :
+      (uint32) m_directTable[ in + m_nMinUntl - m_nMaxUntl-1 ];
+
+   return true;
+}
+
+TranscoderIBM437::TranscoderIBM437( Stream *s, bool bOwn ):
+   TranscoderOEM( s, bOwn )
+{
+   m_directTable = s_table_IBM437;
+   m_dirTabSize = sizeof( s_table_IBM437 ) / sizeof( uint16 );
+   m_reverseTable = s_rtable_IBM437;
+   m_revTabSize = sizeof( s_rtable_IBM437 ) / sizeof( CP_ISO_UINT_TABLE );
+}
+
+TranscoderIBM437 *TranscoderIBM437::clone() const
+{
+   return new TranscoderIBM437( *this );
+}
+
+
 //==================================================================
 // Utilities
 
@@ -1284,6 +1377,9 @@ Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own 
 
    if ( encoding == "cp1252" )
       return new TranscoderCP1252( stream, own );
+
+   if ( encoding == "IBM437" )
+      return new TranscoderIBM437( stream, own );
 
    if ( encoding == "iso8859-1" )
       return new TranscoderISO8859_1( stream, own );
@@ -1376,7 +1472,7 @@ bool GetSystemEncodingWin(String &encoding)
    switch (ConsoleInputCP)
    {
    case 37: encoding = "IBM037";	return false;   // IBM EBCDIC US-Canada
-   case 437: encoding = "IBM437";	return false;   // OEM United States
+   case 437: encoding = "IBM437";	return true;   // OEM United States
    case 500: encoding = "IBM500";	return false; 	// IBM EBCDIC International
    case 708: encoding = "ASMO-708";	return false; 	// Arabic (ASMO 708)
    case 709: encoding = "";	return false; 	// Arabic (ASMO-449+, BCON V4)
