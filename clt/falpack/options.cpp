@@ -83,6 +83,7 @@ bool Options::parse( int argc, char* const argv[] )
 
          m_sMainScript.bufferize(word);
       }
+      ++p;
    }
 
    // do we miss the last parameter?

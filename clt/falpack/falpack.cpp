@@ -14,14 +14,13 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/sys.h>
 #include "options.h"
 
 using namespace Falcon;
 
 String load_path;
-Stream *stdIn;
 Stream *stdOut;
-Stream *stdErr;
 String io_encoding;
 bool ignore_defpath = false;
 
@@ -55,11 +54,13 @@ static void usage()
 
 
 //TODO fill this per system
-void transferSysFiles( Options &options )
-{}
+bool transferSysFiles( Options &options )
+{
+   return true;
+}
 
 
-void transferModules( Options &options )
+bool transferModules( Options &options )
 {
    ModuleLoader ml;
 
@@ -69,30 +70,63 @@ void transferModules( Options &options )
    if( options.m_sEncoding != "" )
       ml.sourceEncoding( options.m_sEncoding );
 
+   // prepare the load path.
+   if( options.m_sLoadPath != "" )
+   {
+      ml.addSearchPath( options.m_sLoadPath );
+   }
+   else
+   {
+      // See if we have a FALCON_LOAD_PATH envvar
+      String retVal;
+      if ( Sys::_getEnv( "FALCON_LOAD_PATH", retVal ) )
+      {
+         ml.addSearchPath( retVal );
+      }
+      else
+      {
+         ml.addSearchPath( "." );
+      }
+   }
+   
+   // add script path (always)
+   Path scriptPath( options.m_sMainScript );
+   if( scriptPath.getLocation() != "" )
+      ml.addSearchPath( scriptPath.getLocation() );
+
+   // load the application.
+   Runtime rt( &ml );
+   rt.loadFile( options.m_sMainScript );
+
+   // store it
+   int fsStatus;
+   if ( ! Sys::fal_mkdir( scriptPath.getFile(), fsStatus ) )
+   {
+      stdOut->writeString("Can't create " + scriptPath.getFilename() );
+      return false;
+   }
+
+   return true;
 }
 
 
 int main( int argc, char *argv[] )
 {
-   Falcon::GetSystemEncoding(io_encoding );
+   Falcon::GetSystemEncoding( io_encoding );
 
    if ( io_encoding != "" )
    {
       Transcoder *trans = TranscoderFactory( io_encoding, 0, true );
       if ( trans == 0 )
       {
-         stdOut->writeString( "Fatal: unrecognized encoding '" + io_encoding + "'.\n\n" );
-         return 1;
+         stdOut = new StdOutStream();
+         stdOut->writeString( "Unrecognized system encoding '" + io_encoding + "'; falling back to C.\n\n" );
+         stdOut->flush();
       }
-      delete stdIn ;
-      delete stdOut;
-      delete stdErr;
-
-      trans->setUnderlying( new StdInStream );
-
-      stdIn = AddSystemEOL( trans, true );
-      stdOut = AddSystemEOL( TranscoderFactory( io_encoding, new StdOutStream, true ), true );
-      stdErr = AddSystemEOL( TranscoderFactory( io_encoding, new StdErrStream, true ), true );
+      else
+      {
+         stdOut = AddSystemEOL( TranscoderFactory( io_encoding, new StdOutStream, true ), true );
+      }
    }
 
    Options options;
@@ -113,18 +147,47 @@ int main( int argc, char *argv[] )
       usage();
    }
 
+   if ( ! options.m_sMainScript )
+   {
+      stdOut->writeString( "Nothing to do.\n\n" );
+      return 0;
+   }
+
+   Engine::Init();
+
    // by default store the application in a subdirectory equal to the name of the
    // application.
    Path target( options.m_sMainScript );
 
    //===============================================================
    // We need a runtime and a module loader to load all the modules.
-   transferModules( options );
+   bool bResult;
 
-   if( ! options.m_bNoSysFile )
-      transferSysFiles( options );
+   try
+   {
+      bResult = transferModules( options );
 
-   return 0;
+      if ( bResult )
+      {
+         if( ! options.m_bNoSysFile )
+            bResult = transferSysFiles( options );
+      }
+   }
+   catch( Error* err )
+   {
+      // We had a compile time problem, very probably
+      bResult = false;
+      stdOut->writeString( "Compilation error.\n" );
+      stdOut->writeString( err->toString() );
+      err->decref();
+      stdOut->flush();
+   }
+
+   delete stdOut;
+
+   Engine::Shutdown();
+   
+   return bResult ? 0 : 1;
 }
 
 
