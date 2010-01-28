@@ -59,6 +59,19 @@ bool transferSysFiles( Options &options )
    return true;
 }
 
+bool storeModule( Options& options, Module* mod )
+{
+   //mod->path();
+
+   // store it
+   int fsStatus;
+   if ( ! Sys::fal_mkdir( options.m_sTargetDir, fsStatus, true ) )
+   {
+      stdOut->writeString("Can't create " + options.m_sTargetDir );
+      return false;
+   }
+
+}
 
 bool transferModules( Options &options )
 {
@@ -98,12 +111,11 @@ bool transferModules( Options &options )
    Runtime rt( &ml );
    rt.loadFile( options.m_sMainScript );
 
-   // store it
-   int fsStatus;
-   if ( ! Sys::fal_mkdir( scriptPath.getFile(), fsStatus ) )
+   const ModuleVector* mv = rt.moduleVector();
+   for( uint32 i = 0; i < mv->size(); i ++ )
    {
-      stdOut->writeString("Can't create " + scriptPath.getFilename() );
-      return false;
+      Module *mod = mv->moduleAt(i);
+      storeModule( options, mod );
    }
 
    return true;
@@ -158,6 +170,10 @@ int main( int argc, char *argv[] )
    // by default store the application in a subdirectory equal to the name of the
    // application.
    Path target( options.m_sMainScript );
+   if( options.m_sTargetDir == "" )
+   {
+      options.m_sTargetDir = target.getFile();
+   }
 
    //===============================================================
    // We need a runtime and a module loader to load all the modules.

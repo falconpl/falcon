@@ -976,41 +976,9 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
    }
    const String &strName = *name->asString();
    bool descend = vm->param(1) == 0 ? false : vm->param(1)->isTrue();
-
    int32 fsError = 0;
-   if ( descend )
-   {
-      // find /.. sequences
-      uint32 pos = strName.find( "/" );
-      while( true )
-      {
-         String strPath( strName, 0, pos );
 
-         // stat the file
-         FileStat fstats;
-         // if the file exists...
-         if ( (! Sys::fal_stats( strPath, fstats )) ||
-              fstats.m_type != FileStat::t_dir )
-         {
-            // if it's not a directory, try to create the directory.
-            if ( ! Sys::fal_mkdir( strPath, fsError ) )
-               break;
-         }
-
-         // last loop?
-         if ( pos == String::npos )
-            break;
-
-         pos = strName.find( "/", pos + 1 );
-       }
-   }
-   else
-   {
-      // Just one try; succeed or fail
-      Sys::fal_mkdir( strName, fsError );
-   }
-
-   if ( fsError != 0 )
+   if ( ! Sys::fal_mkdir( strName, fsError, descend ) )
    {
       throw  new IoError( ErrorParam( 1011, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot create directory" ).extra( strName ).
