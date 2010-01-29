@@ -312,7 +312,7 @@ FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
       return;
    }
 
-   FileStat::e_fileType type;
+   FileStat::e_fileType type = FileStat::t_notFound;
 
    Sys::fal_fileType( *name->asString(), type );
    // will already be -1 if not found

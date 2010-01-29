@@ -26,6 +26,12 @@
 namespace Falcon {
 
 FileStat::FileStat():
+   m_type(t_notFound),
+   m_size(0),
+   m_owner(0),
+   m_group(0),
+   m_access(0),
+   m_attribs(0),
    m_ctime( 0 ),
    m_mtime( 0 ),
    m_atime( 0 )
