@@ -131,6 +131,44 @@ bool fal_mkdir( const String &f, int32 &fsStatus )
    return false;
 }
 
+bool fal_mkdir( const String &strName, int32 &fsError, bool descend )
+{
+   if ( descend )
+   {
+      // find /.. sequences
+      uint32 pos = strName.find( "/" );
+      while( true )
+      {
+         String strPath( strName, 0, pos );
+
+         // stat the file
+         FileStat fstats;
+         // if the file exists...
+         if ( (! Sys::fal_stats( strPath, fstats )) ||
+              fstats.m_type != FileStat::t_dir )
+         {
+            // if it's not a directory, try to create the directory.
+            if ( ! Sys::fal_mkdir( strPath, fsError ) )
+               return false;
+         }
+
+         // last loop?
+         if ( pos == String::npos )
+            break;
+
+         pos = strName.find( "/", pos + 1 );
+       }
+
+   }
+   else
+   {
+      // Just one try; succeed or fail
+      return Sys::fal_mkdir( strName, fsError );
+   }
+   
+   return true;
+}
+
 bool fal_rmdir( const String &f, int32 &fsStatus )
 {
    AutoCString filename( f );

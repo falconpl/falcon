@@ -64,6 +64,7 @@ namespace Sys {
 bool FALCON_DYN_SYM fal_fileType( const String &filename, FileStat::e_fileType &st );
 bool FALCON_DYN_SYM fal_stats( const String &filename, FileStat &st );
 bool FALCON_DYN_SYM fal_mkdir( const String &filename, int32 &fsStatus );
+bool FALCON_DYN_SYM fal_mkdir( const String &filename, int32 &fsStatus, bool descend );
 bool FALCON_DYN_SYM fal_unlink( const String &filename, int32 &fsStatus );
 bool FALCON_DYN_SYM fal_rmdir( const String &filename, int32 &fsStatus );
 bool FALCON_DYN_SYM fal_chdir( const String &filename, int32 &fsStatus );
