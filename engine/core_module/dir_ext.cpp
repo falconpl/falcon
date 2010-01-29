@@ -283,22 +283,22 @@ FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
    @function fileType
    @brief Deterimnes the type of a file.
    @param filename Relative or absolute path to a file.
-   @return A valid file type or FILE_TYPE_NOTFOUND if not found.
+   @return A valid file type or FileStat.NOTFOUND if not found.
 
    This function is useful to know what of what kind of system entry
    is a certain file, or if it exists at all, without paying the overhead
    for a full FileStat object being instantiated.
 
    Returned values may be:
-      - FILE_TYPE_NORMAL
-      - FILE_TYPE_DIR
-      - FILE_TYPE_PIPE
-      - FILE_TYPE_LINK
-      - FILE_TYPE_DEVICE
-      - FILE_TYPE_SOCKET
-      - FILE_TYPE_UNKNOWN
+      - FileStat.NORMAL
+      - FileStat.DIR
+      - FileStat.PIPE
+      - FileStat.LINK
+      - FileStat.DEVICE
+      - FileStat.SOCKET
+      - FileStat.UNKNOWN
 
-   or FILE_TYPE_NOTFOUND if the file doesn't exist.
+   or FileStat.NOTFOUND if the file doesn't exist.
 */
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 {
