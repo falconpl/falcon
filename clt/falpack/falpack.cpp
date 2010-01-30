@@ -18,6 +18,8 @@
 #include "options.h"
 #include "utils.h"
 
+#include <vector>
+
 using namespace Falcon;
 
 String load_path;
@@ -45,6 +47,7 @@ static void usage()
    stdOut->writeString( "   -M          Pack also pre-compiled modules.\n" );
    stdOut->writeString( "   -P <dir>    Store non-application libraries in this subdirectory\n" );
    stdOut->writeString( "   -r          Use falrun instead of falcon as runner\n" );
+   stdOut->writeString( "   -R <dir>    Change root for system data into <dir> (dflt: _system)\n" );
    stdOut->writeString( "   -s          Strip sources.\n" );
    stdOut->writeString( "   -S          Do not store system files (engine + runner)\n" );
    stdOut->writeString( "   -v          Prints version and exit.\n" );
@@ -152,8 +155,6 @@ bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
          }
          */
       }
-
-
    }
 
    entry->close();
@@ -234,7 +235,13 @@ bool storeModule( Options& options, Module* mod )
    Path tgtPath;
    tgtPath.setLocation( options.m_sTargetDir );
 
-   message( String("Processing module ").A( mod->path() ) );
+   // normalize module path
+   while( modPath.getLocation().startsWith("./") )
+   {
+      modPath.setLocation( modPath.getLocation().subString(2) );
+   }
+
+   message( String("Processing module ").A( modPath.get() ) );
 
    // strip the main script path from the module path.
    String modloc = modPath.getLocation();
@@ -253,6 +260,26 @@ bool storeModule( Options& options, Module* mod )
    {
       // if it's coming from somewhere else in the loadpath hierarcy,
       // we must store it below the topmost dir.
+      tgtPath.setLocation( tgtPath.get() + "/" + options.m_sSystemRoot );
+
+      // Find the path in LoadPath that caused this module to load,
+      // strip it away and reproduce it below the SystemRoot.
+      // For example, strip /usr/lib/falcon/ from system scripts.
+      std::vector<String> paths;
+      splitPaths( options.m_sLoadPath, paths );
+
+      for( uint32 i = 0; i < paths.size(); ++i )
+      {
+         if( modloc.startsWith( paths[i] ) )
+         {
+            String sSysPath = modloc.subString( paths[i].size() + 1 );
+            if( sSysPath != "" )
+            {
+               tgtPath.setLocation( tgtPath.get() + "/" + sSysPath );
+            }
+            break;
+         }
+      }
    }
 
    // store it
@@ -266,8 +293,7 @@ bool storeModule( Options& options, Module* mod )
    tgtPath.setFilename( modPath.getFilename() );
 
    // should we store just sources, just fam or both?
-   bool result;
-   if( modPath.get() != ".fam" && modPath.get() != DllLoader::dllExt() )
+   if( modPath.getExtension() != "fam" && modPath.getExtension() != DllLoader::dllExt() )
    {
       // it's a source file.
       if ( ! options.m_bStripSources )
@@ -336,19 +362,12 @@ bool storeModule( Options& options, Module* mod )
          else
          {
             // split the resources in ";"
-            String sAllRes = *resources->asString();
-            uint32 pos = 0, pos1;
-            while( (pos1 = sAllRes.find( ";", pos )) != String::npos )
+            std::vector<String> reslist;
+            splitPaths( *resources->asString(), reslist );
+            for ( uint32 i = 0; i < reslist.size(); ++i )
             {
-               String sRes = sAllRes.subString( pos, pos1 );
-               sRes.trim();
-               copyResource( options, sRes, modPath, tgtPath );
-               pos = pos1+1;
+               copyResource( options, reslist[i], modPath, tgtPath );
             }
-
-            String sRes = sAllRes.subString( pos );
-            sRes.trim();
-            copyResource( options, sRes, modPath, tgtPath );
          }
       }
    }
@@ -373,22 +392,17 @@ bool transferModules( Options &options )
    }
    else
    {
-      // See if we have a FALCON_LOAD_PATH envvar
-      String retVal;
-      if ( Sys::_getEnv( "FALCON_LOAD_PATH", retVal ) )
-      {
-         ml.addSearchPath( retVal );
-      }
-      else
-      {
-         ml.addSearchPath( "." );
-      }
+      ml.addFalconPath();
    }
    
    // add script path (always)
    Path scriptPath( options.m_sMainScript );
    if( scriptPath.getLocation() != "" )
       ml.addSearchPath( scriptPath.getLocation() );
+
+   // and communicate to the rest of the program the search path we used.
+   options.m_sLoadPath = ml.getSearchPath();
+   message( "Falcon load path set to: " + options.m_sLoadPath );
 
    // load the application.
    Runtime rt( &ml );

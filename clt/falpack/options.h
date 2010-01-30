@@ -32,6 +32,7 @@ public:
    String m_sMainScript;
    String m_sEncoding;
    String m_sMainScriptPath;
+   String m_sSystemRoot;
    bool m_bHelp;
    bool m_bVersion;
    bool m_bVerbose;

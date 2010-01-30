@@ -28,6 +28,7 @@ Options::Options():
       m_sLoadPath( "" ),
       m_sMainScript( "" ),
       m_sEncoding(""),
+      m_sSystemRoot( "_system" ),
       m_bHelp( false ),
       m_bVersion( false ),
       m_bVerbose( false ),
@@ -70,6 +71,7 @@ bool Options::parse( int argc, char* const argv[] )
          case 'e':  getMe = &m_sEncoding; break;
          case 'P':  getMe = &m_sTargetDir; break;
          case 'L':  getMe = &m_sLoadPath; break;
+         case 'R': getMe = &m_sSystemRoot; break;
 
          default:
             error( String("Invalid option \"").A(word).A("\"") );
