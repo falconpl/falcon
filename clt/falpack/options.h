@@ -5,7 +5,7 @@
    Options for Falcon packager
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 
+   Begin: Sat, 30 Jan 2010 12:42:48 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
@@ -31,8 +31,10 @@ public:
    String m_sLoadPath;
    String m_sMainScript;
    String m_sEncoding;
+   String m_sMainScriptPath;
    bool m_bHelp;
    bool m_bVersion;
+   bool m_bVerbose;
 
    Options();
 

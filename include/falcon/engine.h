@@ -56,6 +56,7 @@
 // Falcon stream helpers
 #include <falcon/stdstreams.h>
 #include <falcon/fstream.h>
+#include <falcon/vfsprovider.h>
 #include <falcon/uri.h>
 
 // compiler and builder

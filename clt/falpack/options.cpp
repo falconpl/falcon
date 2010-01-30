@@ -14,6 +14,7 @@
 */
 
 #include "options.h"
+#include "utils.h"
 
 namespace Falcon
 {
@@ -29,6 +30,7 @@ Options::Options():
       m_sEncoding(""),
       m_bHelp( false ),
       m_bVersion( false ),
+      m_bVerbose( false ),
       m_bIsValid( true )
 {
 }
@@ -63,12 +65,14 @@ bool Options::parse( int argc, char* const argv[] )
          case 'r': m_bUseFalrun = true; break;
          case '?': case 'h': m_bHelp = true; break;
          case 'v': m_bVersion = true; break;
+         case 'V': m_bVerbose = true; break;
 
          case 'e':  getMe = &m_sEncoding; break;
          case 'P':  getMe = &m_sTargetDir; break;
          case 'L':  getMe = &m_sLoadPath; break;
 
          default:
+            error( String("Invalid option \"").A(word).A("\"") );
             m_bIsValid = false;
             return false;
          }
@@ -77,6 +81,7 @@ bool Options::parse( int argc, char* const argv[] )
       {
          if ( m_sMainScript !=  "" )
          {
+            // but it's not an error -- main will tell "nothing to do" and exit.
             m_bIsValid = false;
             return false;
          }
@@ -89,6 +94,15 @@ bool Options::parse( int argc, char* const argv[] )
    // do we miss the last parameter?
    if ( getMe != 0 )
    {
+      error( String("Option \"").A(argv[ argc-1 ]).A("\" needs a parameter.") );
+      m_bIsValid = false;
+      return false;
+   }
+
+   // do we miss both sources and fams?
+   if( m_bStripSources && ! m_bPackFam )
+   {
+      error( String("Options -M and -s are incompatible") );
       m_bIsValid = false;
       return false;
    }
