@@ -1030,7 +1030,6 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    outstream.create( dest, (Falcon::BaseFileStream::t_attributes) 0644, shMode );
    if ( ! outstream.good() )
    {
-      instream.close();
       throw new IoError( ErrorParam( e_io_error, __LINE__ ).
          extra( dest ).
          sysError( (uint32) outstream.lastError() ) );
@@ -1045,8 +1044,6 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    {
       if ( outstream.write( buffer, count ) < 0 )
       {
-         instream.close();
-         outstream.close();
          throw new IoError( ErrorParam( e_io_error, __LINE__ ).
             sysError( (uint32) outstream.lastError() ) );
       }
@@ -1057,9 +1054,6 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
       throw new IoError( ErrorParam( e_io_error, __LINE__ ).
             sysError( (uint32) instream.lastError() ) );
    }
-
-   instream.close();
-   outstream.close();
 }
 
 /*#
