@@ -112,6 +112,7 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          {
             if ( e->module() == "" )
                e->module( moduleName );
+            m_modules.erase( &mod->name() );
             delete dep;
             CodeError* ce = new CodeError(
                   ErrorParam( e_loaderror )
@@ -132,6 +133,7 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          catch( Error* )
          {
             l->decref();
+            m_modules.erase( &mod->name() );
             delete dep;
             throw;
          }

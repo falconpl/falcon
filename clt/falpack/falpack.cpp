@@ -29,6 +29,9 @@ String io_encoding;
 bool ignore_defpath = false;
 
 
+// Forward decl
+bool transferModules( Options &options, const String& mainScript );
+
 static void version()
 {
    stdOut->writeString( "Falcon application packager.\n" );
@@ -191,6 +194,106 @@ bool copyResource( Options& options, const String& resource, const Path& modPath
    return true;
 }
 
+bool copyFtr( const Path& src, const Path &tgt )
+{
+   VFSProvider* file = Engine::getVFS("file");
+   fassert( file != 0 );
+   DirEntry *entry = file->openDir( src.getLocation() );
+   if( entry == 0 )
+   {
+      warning( "Can't open directory " + src.getLocation() );
+      return false;
+   }
+
+   String fname;
+   String module = src.getFile();
+   Path orig( src );
+   Path target( tgt );
+
+   while( entry->read( fname ) )
+   {
+      if( fname.startsWith( module ) && fname.endsWith( ".ftt" ) )
+      {
+         orig.setFilename( fname );
+         target.setFilename( fname );
+         if( ! copyFile( orig.get(), target.get() ) )
+         {
+            warning( "Can't copy source FTT file " + orig.get() );
+         }
+      }
+   }
+
+   entry->close();
+   delete entry;
+
+   return true;
+}
+
+
+void addPlugins( const Options& options_main, const String& parentModule, const String& path )
+{
+   message( "Loading plugin \"" + path +"\" for module " + parentModule );
+
+   Path modPath( parentModule );
+   modPath = modPath.getLocation() + "/" + path;
+
+   if( path.endsWith("*") )
+   {
+      VFSProvider* file = Engine::getVFS("file");
+      fassert( file != 0 );
+      DirEntry *entry = file->openDir( modPath.getLocation() );
+      if( entry == 0 )
+      {
+         warning( "Can't open plugin directory \"" + modPath.getLocation() + "\" for module "
+               + parentModule );
+      }
+
+      String fname;
+      while( entry->read( fname ) )
+      {
+
+         // binary?
+         if ( fname.endsWith(".fam") || fname.endsWith( DllLoader::dllExt() ) )
+         {
+            // go on
+         }
+         // source?
+         else if( fname.endsWith( ".fal" ) || fname.endsWith(".ftd") )
+         {
+            // do we have also the fam?
+            modPath.setFilename( fname );
+            modPath.setExtension( "fam" );
+            FileStat famStats;
+            // wait for the fam
+            if( Sys::fal_stats( modPath.get(), famStats ) )
+            {
+               continue;
+            }
+
+
+         }
+         else
+            continue;
+
+         // copy our options, so that transferModule doesn't pollute them
+         Options options( options_main );
+
+         // ok, transfer the thing
+         modPath.setFilename( fname );
+         transferModules( options, modPath.get() );
+      }
+
+      entry->close();
+      delete entry;
+   }
+   else
+   {
+      // copy our options, so that transferModule doesn't pollute them
+      Options options( options_main );
+      transferModules( options, modPath.get() );
+   }
+}
+
 
 bool storeModule( Options& options, Module* mod )
 {
@@ -313,38 +416,29 @@ bool storeModule( Options& options, Module* mod )
       }
    }
 
-   // and now, the resources.
-   AttribMap* attributes =  mod->attributes();
-   VarDef* resources;
-   if( attributes != 0 && (resources = attributes->findAttrib("resources")) != 0 )
+   // Should we store .ftt as well?
+   if ( ! options.m_bStripSources )
    {
-      message( "Copying resources for module " + mod->path() );
+      copyFtr( modPath, tgtPath );
+   }
 
-      if( resources != 0 )
+   // and now, the resources.
+   std::vector<String> reslist;
+   if( getAttribute( mod, "resources", reslist ) )
+   {
+      for ( uint32 i = 0; i < reslist.size(); ++i )
       {
-         if ( ! resources->isString() || resources->asString()->size() == 0 )
-         {
-            warning( "Module \"" + mod->path() + " has an invalid \"resources\" attribute.\n" );
-         }
-         else
-         {
-            // split the resources in ";"
-            std::vector<String> reslist;
-            splitPaths( *resources->asString(), reslist );
-            for ( uint32 i = 0; i < reslist.size(); ++i )
-            {
-               copyResource( options, reslist[i], modPath, tgtPath );
-            }
-         }
+         copyResource( options, reslist[i], modPath, tgtPath );
       }
    }
 
    return true;
 }
 
-bool transferModules( Options &options )
+
+bool transferModules( Options &options, const String& mainScript )
 {
-   ModuleLoader ml;
+   ModuleLoader ml("");
 
    ml.alwaysRecomp( true );
    ml.saveModules( false );
@@ -363,7 +457,7 @@ bool transferModules( Options &options )
    }
    
    // add script path (always)
-   Path scriptPath( options.m_sMainScript );
+   Path scriptPath( mainScript );
    if( scriptPath.getLocation() != "" )
       ml.addSearchPath( scriptPath.getLocation() );
 
@@ -373,10 +467,7 @@ bool transferModules( Options &options )
 
    // load the application.
    Runtime rt( &ml );
-   rt.loadFile( options.m_sMainScript );
-
-   // add the main script path to the options, so that it can be stripped.
-   options.m_sMainScriptPath = scriptPath.getLocation();
+   rt.loadFile( mainScript );
 
    const ModuleVector* mv = rt.moduleVector();
    for( uint32 i = 0; i < mv->size(); i ++ )
@@ -395,7 +486,20 @@ bool transferModules( Options &options )
          continue;
       }
 
-      storeModule( options, mod );
+      if( ! storeModule( options, mod ) )
+         return false;
+
+      // add the plugins.
+      std::vector<String> reslist;
+      if( getAttribute( mod, "plugins", reslist ) )
+      {
+         for ( uint32 i = 0; i < reslist.size(); ++i )
+         {
+            // adding modules while in the loop is ok:
+            // they are added at the bottom of mv
+            addPlugins( options, mod->path(), reslist[i] );
+         }
+      }
    }
 
    return true;
@@ -458,13 +562,16 @@ int main( int argc, char *argv[] )
       options.m_sTargetDir = target.getFile();
    }
 
+   // add the main script path to the options, so that it can be stripped.
+   options.m_sMainScriptPath = target.getLocation();
+
    //===============================================================
    // We need a runtime and a module loader to load all the modules.
    bool bResult;
 
    try
    {
-      bResult = transferModules( options );
+      bResult = transferModules( options, options.m_sMainScript );
 
       if ( bResult )
       {

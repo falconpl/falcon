@@ -14,7 +14,7 @@
 */
 
 #include "utils.h"
-#include <falcon/fstream.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
@@ -111,6 +111,41 @@ bool copyFile( const String& source, const String& dest )
 }
 
 
+bool getAttribute( Module* mod, const String& name, String& result )
+{
+   AttribMap* attributes =  mod->attributes();
+   VarDef* resources;
+   if( attributes != 0 && (resources = attributes->findAttrib( name ) ) != 0 )
+   {
+      message( "Adding plugins for module " + mod->path() );
+
+      if( resources != 0 )
+      {
+         if ( ! resources->isString() || resources->asString()->size() == 0 )
+         {
+            warning( "Module \"" + mod->path() + " has an invalid \""+name+"\" attribute.\n" );
+         }
+         else
+         {
+            result.bufferize( *resources->asString() );
+            return true;
+         }
+      }
+   }
+
+   return false;
 }
 
+
+bool getAttribute( Module* mod, const String& name, std::vector<String>& result_list )
+{
+   String res;
+   if( ! getAttribute( mod, name, res ) )
+      return false;
+
+   splitPaths( res, result_list );
+   return true;
+}
+
+}
 /* end of utils.cpp */

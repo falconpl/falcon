@@ -162,6 +162,34 @@ example:
     resources: "images/*; images/icons/*"
 .RE
 
+.IP plugins
+.RS
+Similar to the
+.B resources
+attribute, the plugins attribute indicates a single module or a directory
+containing more modules that may be used by the applications as dynamic
+plugins. Differently from the data considered in the
+.B resources
+attribute, the files indicated in the plugins attribute are loaded by
+the loader, and their dependencies, if any, are further resolved and
+become part of the installed application. Also, they are treated as
+any other module in any respect; for example associated translation
+files are copied, and in case
+.B falpack
+is required to strip sources, only the pre-compiled fam modules will
+be saved.
+
+It is possible to store all the modules found in a certain directory
+using the "*" wildcard. 
+
+Similarly to the resources attribute, the plugin attribute doesn't
+descend recursively in sub-directories; to include other modules
+laying below the required directory, that subdirectory must be
+explicitly specified, as in this example:
+
+    plugins: "output/*; output/helpers/*"
+.RE
+
 .IP dynlib
 .RS
 This attribute stores one or more system dynamic library needed for the

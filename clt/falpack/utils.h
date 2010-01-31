@@ -31,7 +31,8 @@ void setVerbose( bool mode );
 
 void splitPaths( const String& path, std::vector<String>& tgt );
 bool copyFile( const String& source, const String& dest );
-
+bool getAttribute( Module* mod, const String& name, String& result );
+bool getAttribute( Module* mod, const String& name, std::vector<String>& result_list );
 
 }
 
