@@ -32,7 +32,7 @@ class Module;
   It's actually just a String -> VarDef specialized map.
 */
 
-class AttribMap: public Map
+class FALCON_DYN_CLASS AttribMap: public Map
 {
 public:
    AttribMap();

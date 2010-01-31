@@ -518,11 +518,12 @@ int main( int argc, char *argv[] )
          stdOut = new StdOutStream();
          stdOut->writeString( "Unrecognized system encoding '" + io_encoding + "'; falling back to C.\n\n" );
          stdOut->flush();
+         stdErr = new StdErrStream;
       }
       else
       {
          stdOut = AddSystemEOL( TranscoderFactory( io_encoding, new StdOutStream, true ), true );
-         stdErr = AddSystemEOL( TranscoderFactory( io_encoding, new StdOutStream, true ), true );
+         stdErr = AddSystemEOL( TranscoderFactory( io_encoding, new StdErrStream, true ), true );
       }
    }
 
@@ -596,4 +597,3 @@ int main( int argc, char *argv[] )
 
 
 /* end of falpack.cpp */
-
