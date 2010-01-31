@@ -1,0 +1,93 @@
+.\" Process this file with
+.\" groff -man -Tascii falrun.1
+.\"
+.TH flcrun 1 "April 2007" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+flcrun \- The Falcon command line execution tool
+
+.SH SYNOPSIS
+
+.B falrun [options] [main_script] [script_options]
+
+.SH DESCRIPTION
+
+The
+.B falrun
+command line tool is a subset of the
+.BR falcon(1)
+command line interpreter which only executes
+pre\-compiled falcon scripts in ".fam" module
+files. This is meant to launch Falcon based
+application which were compiled on a different
+system, and whose source is not shipped.
+
+.SH OPTIONS
+
+.IP \-e\ <enc>
+Set given encoding as default for VM I/O. Unless the scripts
+select a different I/O encoding, the streams that are provided
+to the falcon VM (like the output stream for printf) are encoded
+using the given ISO encoding. This overrides the default encoding
+that is detected by reading the environment settings. In example,
+if your system uses iso\-8859\-1 encoding by default, but you want
+your script to read and write utf\-8 files, use the option
+.B	\-e\ utf\-8
+
+.IP \-h\ or\ \-?
+Prints a brief help on stdout and exits.
+.IP \-L\ <path>
+Changes the default load path. This overrides both the internal
+built in settings and the contents of environment variable
+FALCON_LOAD_PATH. Each directory in the path should be separated
+by ";" and use forward slashes, like this:
+
+.B		falrun \-L "./;/usr/share/falcon_mod;./myapp"
+
+.IP \-p\ <module>
+Preloads the given module as if it were loaded by the main script.
+.IP \-P
+Ignore default load paths and uses only the paths set via the \-L switch.
+.IP \-v
+Prints copyright notice and version and exits.
+
+.SH FILES
+
+.I /usr/lib/libfalcon_engine.so
+.RS
+Default location of the Falcon Engine loadable module.
+.RE
+
+.I /usr/lib/falcon
+.RS
+Default directory containing Falcon binary modules.
+.RE
+
+.SH ENVIRONMENT
+
+.IP FALCON_LOAD_PATH
+Default search path for modules loaded by the scripts.
+
+.IP FALCON_SRC_ENCODING
+Default encoding for the source scripts loaded by falcon (when
+different from the system default).
+
+.IP FALCON_VM_ENCODING
+Default encoding for the VM I/O streams (when different
+from system default).
+
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+.BR faldisass (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.
+

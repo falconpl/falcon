@@ -1,0 +1,201 @@
+.\" Process this file with
+.\" groff -man -Tascii falpack.1
+.\"
+.TH falpack 1 "January 2010" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+falpack \- The falcon application packaging tool
+
+.SH SYNOPSIS
+
+.B falpak [options]
+.I module_file.fam
+
+.SH DESCRIPTION
+
+The
+.B falpack
+command line tool is meant to copy all the modules and other
+dependencies needed for a standalone falcon application to run
+into a target directory. Falpack can copy also the system files needed
+to run the application, making the final application totally
+stand-alone, or just store the needed modules so that a
+local falcon installation can be used to run the application.
+
+.B falpack
+searches for special attributes in the parsed modules
+to store resources data files that an application may require.
+It copies also needed internationalization translation tables,
+and eventually compiles sources into binary .fam modules. It can
+also remove sources from the final installation, so that
+pre-compiled applications only can be shipped. Finally, it creates
+a script that can be used to run the application with a "single click"
+operation on the host platform.
+
+System relevant modules (as i.e. feathers or system-wide
+installed modules) are also stored together with the
+application.
+
+Anyhow, installation of falcon system files (which include
+feather modules) is optional.
+
+System files are copied into a fake root subdirectory (normally called
+.B _system
+). All the modules not lying under the same directory of the
+application "main script" or in deeper trees, are considered
+"system-wide" installed, and it is supposed that the script
+access them via \-L option or via FALCON_LOAD_PATH environment
+variable. They are then stored in the system directory and
+a directory tree is re-created so that the simple addition
+of the fake root to the load path (i.e. "falcon \-L _system") is
+enough to access all of them.
+
+This method allows the application to access modules by logical name
+and by filename, as the filename is made relative to the load path.
+However, modules loaded with absolute filenames must be separately
+installed on the target system so that their position matches
+the required absolute path.
+
+.SH OPTIONS
+
+.IP "-b <module>"
+Blacklists this module (by module name). Using this option it is possible to
+prevent default action on the given module (copy into the application tree or
+the fake root tree). It is possible to specify more blacklisted modules repeating
+this option.
+
+.IP "--bin <dir>"
+Specify directory where falcon binary resides. Useful if falpack is required to
+read an interpreter from a non-default installation, or if it can't find it.
+.B NOTE:
+falpack uses falcon build environment settings. If used under the build environment,
+it will copy files from the active build tree ignoring system wide installations.
+
+.IP "-e <enc>"
+Source files encoding. In case the source file text encoding is different from the
+system default encoding, the module loader may detect syntax errors or fail to load
+the sources; also, if .fam generation is required, the strings in the pre-compiled
+modules.
+
+.IP "-h"
+Usage help. A short in-line summary of options.
+
+.IP "--lib <dir>"
+Specify directory where falcon engine dynamic link library resides. Useful if falpack is required to
+read an interpreter from a non-default installation, or if it can't find it.
+.B NOTE:
+falpack uses falcon build environment settings. If used under the build environment,
+it will copy files from the active build tree ignoring system wide installations.
+
+.IP "-L <dir>"
+Redefine FALCON_LOAD_PATH. In case the main module needs a special load path which
+is not the system default or the one stored in the FALCON_LOAD_PATH environment
+variable. Notice that this setting overwrites system and environment variable settings.
+Also, notice that this load path is intended for local loading and compiling of the
+modules in the application; the modules are then arranged so that this setting is
+not needed in the final application.
+
+.IP "-M"
+Pack also pre-compiled modules. If given, this option will cause .fam modules to be stored
+beside their source files (.fal or .ftd). It is incompatible with the
+.B \-s
+option.
+
+
+.IP "-P <dir>"
+Save the package in this directory. By default, the package is stored in a directory with
+the same name of the main module (its extension stripped), under the current work directory.
+This option overrides the default and allows to store the package at an arbitrary location.
+
+.IP "-r <name>"
+Install <name> instead of "falcon" as interpreter. Useful in case only pre\-compiled modules are
+packaged, where
+.B falrun
+may be employed, or in case of special system-specific interpreter build, as with
+.B sdl_falcon
+MacOSX framework compatible interpreter.
+
+
+.IP "-R <dir>"
+Change fake root for system data into <dir>. If the default name for storage of system
+specific apparels (as binary modules, falcon engine library etc.), which is "_system",
+is not satisfactory, it can be overridden through this option.
+
+.IP "-s"
+Strip sources. Using this option, source falcon files are not copied in the package;
+only the pre-compiled bytecode .fam modules are stored.
+
+.IP "-S"
+Do not store system files. Prevent copying of the falcon interpreter,
+falcon engine dynamic library and feather modules.
+
+.IP "-v"
+Prints version and exit.
+
+.IP "-V"
+Verbose mode. Prints verbose messages of what
+.B falpack
+is doing.
+
+.SH SPECIAL\ ATTRIBUTES
+
+.B falpack
+automatically packages needed ancillary files required by modules,
+as the translation table files (.ftr). However, the modules may
+specify other files to be included through a set of special
+attributes which are interpreted by
+.B falpack
+as it loads and analyzes them.
+
+.IP resources
+.RS
+This attribute can indicate a list of resources that
+should be copied together with the module.
+The attribute needs to be a string, and different resources
+can be separated through a semi comma (;). It is possible also
+to specify file masks using the "*.ext" pattern; whole
+subdirectories can be stored using the "dir/*" pattern. Please,
+notice that this attribute doesn't work recursively; to include
+sub-directories in resource directories, specify all of them. For
+example:
+
+    resources: "images/*; images/icons/*"
+.RE
+
+.IP dynlib
+.RS
+This attribute stores one or more system dynamic library needed for the
+falcon module to run. Depending on the host system, the target location
+may be in the fake root directory or besides the module (depending on how
+the system module loader tries to find the modules). More dependencies
+may be separated with a semi comma (;).
+.RE
+
+.SH BUGS
+Relative paths are not jailed; if the resource attribute or the relative
+path of a loaded module indicates a position above the main script directory
+or above any position in the FALCON_LOAD_PATH specification, the files may
+be copied outside the target package location. Be careful when writing the
+application you want to package so that all the
+needed files can be reached at the same level or below the main script, or
+at the same level or below directories in the load path.
+
+At the moment, it's quite complex to create cross platform packages (except for
+script-only applications which use local falcon installation to run). It is planned
+to provide this support in future via the ability to download pre-compiled modules
+from a central repository.
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+.BR falrun (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.
+

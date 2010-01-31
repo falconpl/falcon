@@ -1,0 +1,89 @@
+.\" Process this file with
+.\" groff -man -Tascii falconeer.fal.1
+.\"
+.TH falconeer.fal 1 "July 2007" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+falconeer.fal \- Falcon skeleton module startup configurator script
+
+.SH SYNOPSIS
+
+.B falconeer.fal \-n moduleName [options]
+
+.SH DESCRIPTION
+
+The
+.B falconeer.fal
+script configures a directory containing the Falcon Skeleton Module
+so that it becomes ready for compilation under all the systems
+supported by Falcon.
+
+Although not mandatory, a developer willing to write native modules
+for Falcon may use this facility to speed up the startup phase and
+begin with an already compilable module.
+
+The configuration consists in the renaming of the module files into
+the module name specified in the command line, and in the update of
+the makefiles and project files provided for the various development
+platform Falcon can be built on.
+
+Other than the project name, the script allows to configure other
+options, that will affect the template variables that will be
+substituted in the modified files.
+
+Once configured and built, the skeleton module provides already a
+.B skeleton()
+symbol that is exported to the VM, and a service that exports that
+function (defined in the fskelmod_mod.cpp file) to C++ applications.
+
+.SH OPTIONS
+
+.IP \-a\ <author>
+Specifies the author name.
+
+.IP \-c\ "<copyright\ owner>"
+Indicates the copyright owner, if different from the author, to be
+set on the copyright line, right beside the copyright year.
+
+.IP \-d\ <Description>
+Sets a brief description of the project.
+
+.IP \-l\ <File>
+Loads a license plate (a long statement indicating the
+license under which the files are distributed) from a template
+file. If not given, the standard FPLL license plate is applied
+to the generated files.
+
+.IP \-n\ <name>
+Sets the (short) name of the project. Files will be renamed
+accordingly to this value, and also the final module name will
+be configured using this setting.
+
+.IP \-p\ <name>
+Sets the main project hood under which the file is created.
+Usually, modules are part of wider projects, or can be
+distributed as sets. If not set, the text
+"The Falcon Programming Language" will be used instead.
+
+.SH BUGS
+The file
+.B version.h
+cannot currently be properly configured. Edit it by hand.
+
+.SH NOTES
+On some systems, falconeer.fal script can be "proxied" with a falconeer
+pseudo command (shell script, batch file and so on).
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.
+

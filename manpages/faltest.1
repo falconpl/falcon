@@ -1,0 +1,326 @@
+.\" Process this file with
+.\" groff -man -Tascii faltest.1
+.\"
+.TH faltest 1 "April 2007" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+faltest \- Falcon unit test interface.
+
+.SH SYNOPSIS
+
+.B faltest [\-d unit_test_dir] [options] [unit_list]
+.I module_file.fam
+
+.SH DESCRIPTION
+
+The
+.B faltest
+command line tool is a powerful interface to the Falcon
+unit testing system.
+
+The basic working principle of faltest is that of taking
+all the .fal script files contained in a directory, compile
+and execute them, eventually keeping track of errors, elapsed
+times and execution failures. After running all the scripts,
+.B faltest
+may print a report on what happened if requested to do so.
+
+A list of one or more unit test may be indicated in the
+.B faltest
+command line after the options. Also, the executed tests
+can be limited to named subsets.
+
+The unit test directory is added to the module load path, so
+.B load
+directives will be resolved searching the required scripts
+in the test path.
+
+.SH UNIT TEST SCRIPTS
+
+Scripts being part of unit test have to start with a common
+header indicating some information about them. The header
+is actually a formatted Falcon comment which is read by
+the faltest utility.
+
+This is a typical header:
+
+.nf
+/**********************************************
+* Falcon test suite
+*
+* ID: 10a
+* Category: cat\-name
+* Subcategory: subcat\-name
+* Short: The short name
+* Description:
+*   Long description of this test
+*   Spanning on many lines...
+* [/Description]
+**********************************************/
+.fi
+
+The header has a free form; faltest recognizes the following
+fields, being inside a comment and eventually preceded by a
+"*".
+
+.B ID:
+.RS
+The only mandatory field, it declares the ID under which this unit
+test is known. It will be used in listing the tests and in
+selecting them as argument of the
+.B faltest
+command line. The id must be an integer number, eventually followed
+by a single lowercase letter. Similar tests should be filed under
+the same ID with a different specification letter.
+
+Scripts not having this field will be ignored by faltest.
+.RE
+
+.B Category:
+.RS
+The name of the category under which this test is filed.
+Faltest can select a subset of scripts to be executed to
+a certain category.
+.RE
+
+.B Subcategory:
+.RS
+The name of the subcategory under which this test is filed.
+Faltest can select a subset of scripts to be executed to
+a certain subcategory.
+.RE
+
+.B Short:
+.RS
+Short description (or symbolic name) for this unit test.
+.RE
+
+.B Description:
+.RS
+A longer description explaining what this test is supposed
+to do. The description always spans on more lines, and is closed
+by a
+.B [/Description]
+tag.
+.RE
+
+.SH THE TESTSUITE MODULE
+
+Falcon system provides a loadable module called "testsuite". The
+module is actually embedded in
+.B faltest
+, and is provided to all the scripts it runs. The module provides
+the following functions:
+
+.B success()
+.RS
+The script is terminated and recorded as a success.
+.RE
+
+.B failure( reason )
+.RS
+The script is terminated and recorded as a failure. An optional
+parameter containing a description of the failure condition may be
+optionally provided; it will be written as part of the report and
+may be used to track which part of the test wasn't working.
+.RE
+
+.B testReflect( item )
+.RS
+Returns the passed item. This is used to test for engine responsiveness
+to external calls and item copy through external functions.
+.RE
+
+.B alive( percent )
+.RS
+In tests running for some human sensible time, this function should be called
+periodically to inform the system and the user that the test is proceeding.
+
+An optional "percent" parameter can be provided. It will be interpreted as a
+value between 1 and 100 representing the amount of test that has been performed
+up to this moment.
+.RE
+
+.B timings( total_time, performed_ops )
+.RS
+In case the execution time is relevant for the test, like in benchmarks,
+this function can be used to communicate back to
+.B faltest
+the time elapsed in the operations being tested and the number of operations
+performed. Those parameters will be recorded and eventually saved in the
+report file, to be used as benchmarks against falcon engine modifications.
+.RE
+
+.B timeFactor()
+.RS
+Lengthy tests are often performed by looping over the operation to be tested
+for a certain time. Benchmarks and performance tests should be written so
+that they can normally complete in a reasonable time, between one and ten
+seconds. In case the user wants the tests to perform longer, in order to obtain
+better statistical data, it can pass the \-f (time factor) option to
+.B faltest
+command line. The time factor will be a number greater than 1, and should be
+used by tests that may perform lengthy operation to customize the number of
+performed tests.
+This function returns as an integer value of the \-f option given to
+.B faltest
+or 1 if the \-f option was not given.
+.RE
+
+.SH OPTIONS
+
+.IP "\-c <cat>"
+Select this category and ignore the rest.
+
+.IP "\-C <subcat>"
+Select this subcategory and ignore the rest.
+
+.IP \-d
+Directory from where to load the unit tests. If not specified,
+it will be the current directory.
+
+.IP "\-f <n>"
+Set time factor to N. Some scripts may use this
+information to perform more loops or lengthy
+operations.
+
+.IP \-h
+Show version and a short help.
+
+.IP \-l
+List the selected tests and exit. Combine with
+.B \-v
+to have the path of the tests, as
+.B \-l
+only lists the script ID, its short name and the category/subcategory pair.
+
+.IP \-m
+Do
+.B not
+compile in memory. Use disk temporary files.
+
+.IP \-M
+Checks for memory leaks. This option makes faltest to report unclaimed memory
+after each script execution, and a final report at the end of the tests. The
+check is extended to all the engine operations, so errors in the engine are
+detected too.
+
+.IP "\-o <file>"
+Write final report to the given output file.
+
+.IP \-s
+Perform module serialization test. Other than compiling the file,
+the module is also saved and then restored before being executed.
+This allows to check for errors in module serialization (that is,
+loading of .fam files). The operation is performed in memory,
+unless the option
+.B \-m
+is also specified.
+
+.IP \-S
+Compile via assembly. This test the correct behavior of
+the assembler generator and compiler instead of the
+binary module generator.
+
+.IP \-t
+Records and display timings. The statistics of compilation,
+linking and execution overall times are recorded and written
+as part of the report.
+
+.IP \-T
+Records timings() calls from scripts. This allows the scripts
+to declare their own performance ratings, and collects the
+results in the final report.
+
+.IP \-v
+Be verbose. Normally, execution and failures are sparsely
+reported. This is because the normal execution mode is meant
+for automated runs. Tests can be executed by automated utilities
+and errors can be reported to system administrator by simple
+checks on the output data.
+
+A developer willing to fix a broken test must run that test
+alone with the
+.B \-v
+enabled. A more complete error report (including compilation
+or execution errors, if they were the cause for the failure)
+will be then visualized. The \-v options also allows to see
+the path of the original script, which is otherwise hidden
+(masked by the testsuite ID).
+
+.IP \-V
+Prints version number and exits.
+
+.SH SAMPLE
+This is a simple and complete example from the Falcon benchmark suite.
+
+.nf
+/*******************************************
+* Falcon direct benchmarks
+*
+* ID: 2a
+* Category: benchmark
+* Subcategory: calls
+* Short: Benchmark on function calls
+* Description:
+*    Performing repeated function calls and returns.
+*    This test calls a function without parameters.
+*
+* [/Description]
+******************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+function toBeCalled()
+end
+
+// getting time
+time = seconds()
+for i = 1 to loops
+
+   // perform the call
+   toBeCalled()
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() \- time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() \- timeAlive
+time \-= timeAlive
+
+timings( time, loops )
+
+/* end of file */
+
+.fi
+
+.SH FILES
+
+.I /usr/lib/libfalcon_engine.so
+.RS
+Default location of the Falcon Engine loadable module.
+.RE
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.

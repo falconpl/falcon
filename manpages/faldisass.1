@@ -1,0 +1,79 @@
+.\" Process this file with
+.\" groff -man -Tascii faldisass.1
+.\"
+.TH faldissass 1 "April 2007" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+faldissass \- The Falcon disassembler
+
+.SH SYNOPSIS
+
+.B faldissass [options]
+.I module_file.fam
+
+.SH DESCRIPTION
+
+The
+.B faldissass
+command line tool disassembles a compiled .fam Falcon module.
+The output human\-readable Falcon Virtual Machine assembly is
+sent to the standard output.
+
+The tool has mainly two working modes. The standard mode
+procues an assembly dump containing the PC counter address
+that will be associated with each instruction in the VM. This
+allows to see exactly on which VM instruction an error
+was raised (as the PC at error raisal is always shown in
+error dumps), or to debug the VM by following the PC register
+in step\-by\-step mode.
+
+The isomorphic mode creates a compilable assembly source that
+can the be feed into the falcon assembler to obtain a compiled
+module. In example, this can be used for VM level hand\-made
+finetuning optimizations.
+
+.SH OPTIONS
+
+.IP \-d
+Dump the dependency table (list of load directives).
+
+.IP \-h
+Show version and a short help.
+
+.IP \-i
+Create an isomorphic version of the original assembly.
+
+.IP \-l
+add line informations.
+
+.IP \-s
+Dump the string table.
+
+.IP \-S
+Write the strings inline instead of using #strid
+
+.IP \-y
+Dump the symbol table.
+
+.SH FILES
+
+.I /usr/lib/libfalcon_engine.so
+.RS
+Default location of the Falcon Engine loadable module.
+.RE
+
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+.BR falrun (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.
+
