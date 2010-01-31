@@ -13,14 +13,21 @@ include_directories(
 
 IF(WIN32)
    SET(SYS_RC falpack.rc)
-ENDIF(WIN32)
+   SET(SYS_SOURCES 
+	falpack_sys_win.cpp )
+ELSE()
+   SET(SYS_SOURCES 
+      falpack_sys_unix.cpp )
+ENDIF()
 
 # Target
 ADD_EXECUTABLE( falpack
    falpack.cpp
    options.cpp
    utils.cpp
+   ${SYS_SOURCES}
    
+   falpack_sys.h
    options.h
    utils.h
    ${SYS_RC}

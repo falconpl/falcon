@@ -17,8 +17,10 @@
 #include <falcon/sys.h>
 #include "options.h"
 #include "utils.h"
+#include "falpack_sys.h"
 
 #include <vector>
+#include <set>
 
 using namespace Falcon;
 
@@ -41,52 +43,22 @@ static void usage()
    stdOut->writeString( "Usage: falpack [options] <main_script>\n" );
    stdOut->writeString( "\n" );
    stdOut->writeString( "Options:\n" );
-   stdOut->writeString( "   -e <enc>    Source files encoding.\n" );
-   stdOut->writeString( "   -h, -?      This help.\n" );
+   stdOut->writeString( "   -b <module> Blacklists this module (by module name)\n" );
+   stdOut->writeString( "   --bin <dir> Specify directory where falcon binary resides\n" );
+   stdOut->writeString( "   -e <enc>    Source files encoding\n" );
+   stdOut->writeString( "   -h, -?      This help\n" );
+   stdOut->writeString( "   --lib <dir> Specify directory where falcon runtime library resides\n" );
    stdOut->writeString( "   -L <dir>    Redefine FALCON_LOAD_PATH\n" );
-   stdOut->writeString( "   -M          Pack also pre-compiled modules.\n" );
-   stdOut->writeString( "   -P <dir>    Store non-application libraries in this subdirectory\n" );
-   stdOut->writeString( "   -r          Use falrun instead of falcon as runner\n" );
+   stdOut->writeString( "   -M          Pack also pre-compiled modules\n" );
+   stdOut->writeString( "   -P <dir>    Save the package in this directory\n" );
+   stdOut->writeString( "   -r <name>   Install <name> instead of \"falcon\" as interpreter\n" );
    stdOut->writeString( "   -R <dir>    Change root for system data into <dir> (dflt: _system)\n" );
-   stdOut->writeString( "   -s          Strip sources.\n" );
+   stdOut->writeString( "   -s          Strip sources\n" );
    stdOut->writeString( "   -S          Do not store system files (engine + runner)\n" );
-   stdOut->writeString( "   -v          Prints version and exit.\n" );
-   stdOut->writeString( "   -V          Verbose mode.\n" );
+   stdOut->writeString( "   -v          Prints version and exit\n" );
+   stdOut->writeString( "   -V          Verbose mode\n" );
    stdOut->writeString( "\n" );
    stdOut->flush();
-}
-
-
-bool copyFile( const String& source, const String& dest )
-{
-   message( String("Copying ").A( source ).A(" => ").A( dest ) );
-
-   // NOTE: streams are closed by the destructor.
-   FileStream instream, outstream;
-
-   instream.open( source, ::Falcon::BaseFileStream::e_omReadOnly );
-   if ( ! instream.good() )
-   {
-      return false;
-   }
-
-   outstream.create( dest, (Falcon::BaseFileStream::t_attributes) 0644 );
-   if ( ! outstream.good() )
-   {
-      return false;
-   }
-
-   byte buffer[8192];
-   int count = 0;
-   while( ( count = instream.read( buffer, 8192) ) > 0 )
-   {
-      if ( outstream.write( buffer, count ) < 0 )
-      {
-         return false;
-      }
-   }
-
-   return true;
 }
 
 bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
@@ -218,14 +190,6 @@ bool copyResource( Options& options, const String& resource, const Path& modPath
 
    return true;
 }
-
-//TODO fill this per system
-bool transferSysFiles( Options &options )
-{
-
-   return true;
-}
-
 
 
 bool storeModule( Options& options, Module* mod )
@@ -415,6 +379,19 @@ bool transferModules( Options &options )
    for( uint32 i = 0; i < mv->size(); i ++ )
    {
       Module *mod = mv->moduleAt(i);
+
+      if( options.isBlackListed(mod->name()) )
+      {
+         message( "Skipping module \"" + mod->name() +  "\" because it's blacklisted" );
+         continue;
+      }
+
+      if( options.m_bNoSysFile && options.isSysModule(mod->name()) )
+      {
+         message( "Skipping module \"" + mod->name() +  "\" because it's a system module" );
+         continue;
+      }
+
       storeModule( options, mod );
    }
 

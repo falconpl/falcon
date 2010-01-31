@@ -149,7 +149,7 @@ set(FALCON_INSTALL_DESTINATIONS
 )
 
 message( STATUS "Binary prefix: ${FALCON_BIN_DIR}" )
-message( STATUS "Library prefix: ${CMAKE_LIB_DIR}" )
+message( STATUS "Library prefix: ${FALCON_LIB_DIR}" )
 message( STATUS "Module prefix: ${FALCON_MOD_DIR}" )
 
 if ( NOT WIN32 )

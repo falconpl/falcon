@@ -4,6 +4,7 @@ Falcon (0.9.6.1)
   * added: Support for OEM - IBM473 code page.
   * fixed: fileType() and FileStat return values were not initialized, cusing
            weird values in case of file not found errors.
+  * added: First version of falpack.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 
