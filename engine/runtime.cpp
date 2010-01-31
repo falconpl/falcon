@@ -111,9 +111,16 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          catch( Error* e)
          {
             if ( e->module() == "" )
-               e->module( mod->path() );
+               e->module( moduleName );
             delete dep;
-            throw e;
+            CodeError* ce = new CodeError(
+                  ErrorParam( e_loaderror )
+                  .module( mod->name() )
+                  .extra( "loading " + moduleName )
+                  .origin( e_orig_loader ) );
+            ce->appendSubError( e );
+            e->decref();
+            throw ce;
          }
 
          fassert( l != 0 );

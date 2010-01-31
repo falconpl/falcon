@@ -647,15 +647,13 @@ bool ClassDef::load( const Module *mod, Stream *in )
    value = endianInt32( value );
    for( uint32 i = 0; i < value; i ++ )
    {
-      uint32 id;
-      in->read(   &id , sizeof( id ) );
-      const String *name = mod->getString( endianInt32( id ) );
-      if ( name == 0 )
+      String key;
+      if ( ! key.deserialize( in ) )
          return false;
 
       VarDef *def = new VarDef();
       // avoid memleak by early insertion
-      m_properties.insert( name, def );
+      m_properties.insert( new String( key ), def );
 
       if ( ! def->load( mod, in ) )
          return false;

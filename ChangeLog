@@ -5,6 +5,9 @@ Falcon (0.9.6.1)
   * fixed: fileType() and FileStat return values were not initialized, cusing
            weird values in case of file not found errors.
   * added: First version of falpack.
+  * fixed: Error in class symbol de-serialization caused failure of fam
+           loading. The default fallback to .fal re-compilation hid the
+           problem.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

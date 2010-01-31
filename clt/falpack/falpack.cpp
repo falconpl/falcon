@@ -271,17 +271,20 @@ bool storeModule( Options& options, Module* mod )
       }
 
       // should we save the fam?
-      if( options.m_bPackFam )
+      if( options.m_bStripSources || options.m_bPackFam )
       {
          tgtPath.setExtension("fam");
          FileStream famFile;
 
          if ( ! famFile.create( tgtPath.get(), (Falcon::BaseFileStream::t_attributes) 0644  )
-             || ! mod->save(&famFile, false) )
+             || ! mod->save(&famFile) )
          {
             error( "Can't create \"" + tgtPath.get() + "\"" );
             return false;
          }
+         famFile.flush();
+         famFile.close();
+
       }
    }
    else
@@ -465,8 +468,7 @@ int main( int argc, char *argv[] )
 
       if ( bResult )
       {
-         if( ! options.m_bNoSysFile )
-            bResult = transferSysFiles( options );
+         bResult = transferSysFiles( options, options.m_bNoSysFile );
       }
    }
    catch( Error* err )

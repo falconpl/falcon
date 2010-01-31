@@ -132,7 +132,7 @@ bool Options::parse( int argc, char* const argv[] )
    }
 
    // do we miss both sources and fams?
-   if( m_bStripSources && ! m_bPackFam )
+   if( m_bStripSources && m_bPackFam )
    {
       error( String("Options -M and -s are incompatible") );
       m_bIsValid = false;

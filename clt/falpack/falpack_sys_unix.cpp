@@ -21,42 +21,45 @@
 namespace Falcon
 {
 
-bool transferSysFiles( Options &options )
+bool transferSysFiles( Options &options, bool bJustScript )
 {
-   Path tgtpath( options.m_sTargetDir + "/" + options.m_sSystemRoot +"/" );
-
    Path binpath, libpath;
 
    binpath.setLocation(
          options.m_sFalconBinDir != "" ? options.m_sFalconBinDir : FALCON_DEFAULT_BIN );
-   libpath.setLocation(
-         options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : FALCON_DEFAULT_LIB );
-
    // copy falcon or falrun
    if ( options.m_sRunner != "" )
       binpath.setFilename( options.m_sRunner );
    else
       binpath.setFilename( "falcon" );
 
-   libpath.setFile( "libfalcon_engine" );
-   libpath.setExtension( DllLoader::dllExt() );
+   libpath.setLocation(
+         options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : FALCON_DEFAULT_LIB );
 
-   tgtpath.setFilename( binpath.getFilename() );
-   if( ! copyFile( binpath.get(), tgtpath.get() ) )
+   if ( ! bJustScript )
    {
-      warning( "Can't copy system file \"" + binpath.get()
-            + "\" into target path \""+ tgtpath.get()+ "\"" );
-      // but continue
-   }
+      Path tgtpath( options.m_sTargetDir + "/" + options.m_sSystemRoot +"/" );
 
-   Sys::fal_chmod( tgtpath.get(), 0755 );
+      libpath.setFile( "libfalcon_engine" );
+      libpath.setExtension( DllLoader::dllExt() );
 
-   tgtpath.setFilename( libpath.getFilename() );
-   if( ! copyFile( libpath.get(), tgtpath.get() ) )
-   {
-      warning( "Can't copy system file \"" + libpath.get()
-            + "\" into target path \""+ tgtpath.get()+ "\"" );
-      // but continue
+      tgtpath.setFilename( binpath.getFilename() );
+      if( ! copyFile( binpath.get(), tgtpath.get() ) )
+      {
+         warning( "Can't copy system file \"" + binpath.get()
+               + "\" into target path \""+ tgtpath.get()+ "\"" );
+         // but continue
+      }
+
+      Sys::fal_chmod( tgtpath.get(), 0755 );
+
+      tgtpath.setFilename( libpath.getFilename() );
+      if( ! copyFile( libpath.get(), tgtpath.get() ) )
+      {
+         warning( "Can't copy system file \"" + libpath.get()
+               + "\" into target path \""+ tgtpath.get()+ "\"" );
+         // but continue
+      }
    }
 
    // now create the startup script
@@ -74,9 +77,16 @@ bool transferSysFiles( Options &options )
    startScript.writeString( "#!/bin/sh\n" );
    startScript.writeString( "CURDIR=`dirname $0`\n" );
    startScript.writeString( "cd \"$CURDIR\"\n" );
-   startScript.writeString( "LD_LIBRARY_PATH=\"" + options.m_sSystemRoot + "\" \\\n" );
-   startScript.writeString( "   \""+options.m_sSystemRoot + "/" + binpath.getFilename() + "\" \\\n" );
-   startScript.writeString( "    -L \"" + options.m_sSystemRoot +";.\" \\\n" );
+   if( bJustScript )
+   {
+      startScript.writeString( "    "+ binpath.getFilename() + " \\\n" );
+   }
+   else
+   {
+      startScript.writeString( "LD_LIBRARY_PATH=\"" + options.m_sSystemRoot + "\" \\\n" );
+      startScript.writeString( "   \""+options.m_sSystemRoot + "/" + binpath.getFilename() + "\" \\\n" );
+      startScript.writeString( "    -L \"" + options.m_sSystemRoot +";.\" \\\n" );
+   }
 
    // we need to discard the extension, so that the runner decides how to run the program.
    Path scriptName( options.m_sMainScript );
@@ -86,6 +96,7 @@ bool transferSysFiles( Options &options )
 
    return true;
 }
+
 
 }
 

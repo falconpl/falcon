@@ -21,7 +21,7 @@ namespace Falcon
 {
 
 class Options;
-bool transferSysFiles( Options &options );
+bool transferSysFiles( Options &options, bool bJustScript );
 
 }
 
