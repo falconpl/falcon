@@ -18,10 +18,14 @@
 # FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
 #                  $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
 # FALCON_SKIP_BISON - ON to avoid using bison.
-#
+# FALCON_WITH_MANPAGES - ON to build and install man pages.
+# FALCON_MAN_DIR - Where manual pages are stored (below prefix)
 
 cmake_minimum_required(VERSION 2.6.2)
 project(Falcon_Core)
+
+option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
+option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
@@ -179,6 +183,10 @@ add_subdirectory(devtools)
 #also performs installation of the include directory
 add_subdirectory(include)
 
+# and man pages
+if (FALCON_WITH_MANPAGES)
+   add_subdirectory(manpages)   
+endif()
 
 #########################################################################
 # Tests?
