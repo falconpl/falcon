@@ -2234,6 +2234,111 @@ bool String::endsWith( const String &str, bool icase ) const
    return true;
 }
 
+bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
+{
+   const String* wcard = &wildcard;
+   const String* cfr = this;
+
+   uint32 wpos = 0, wlen = wcard->length();
+   uint32 cpos = 0, clen = cfr->length();
+
+   uint32 wstarpos = 0xFFFFFFFF;
+
+   while ( cpos < clen )
+   {
+      if( wpos == wlen )
+      {
+         // we have failed the match; but if we had a star, we
+         // may roll back to the starpos and try to match the
+         // rest of the string
+         if ( wstarpos != 0xFFFFFFFF )
+         {
+            wpos = wstarpos;
+         }
+         else {
+            // no way, we're doomed.
+            break;
+         }
+      }
+
+      uint32 wchr = wcard->getCharAt( wpos );
+      uint32 cchr = cfr->getCharAt( cpos );
+
+      switch( wchr )
+      {
+         case '?': // match any character
+            wpos++;
+            cpos++;
+         break;
+
+         case '*':
+         {
+            // mark for restart in case of bad match.
+            wstarpos = wpos;
+
+            // match till the next character
+            wpos++;
+            // eat all * in a row
+            while( wpos < wlen )
+            {
+               wchr = wcard->getCharAt( wpos );
+               if ( wchr != '*' )
+                  break;
+               wpos++;
+            }
+
+            if ( wpos == wlen )
+            {
+               // we have consumed all the chars
+               cpos = clen;
+               break;
+            }
+
+
+            //eat up to next character
+            while( cpos < clen )
+            {
+               cchr = cfr->getCharAt( cpos );
+               if ( cchr == wchr )
+                  break;
+               cpos ++;
+            }
+
+            // we have eaten up the same char? --  then advance also wpos to prepare next loop
+            if ( cchr == wchr )
+            {
+               wpos++;
+               cpos++;
+            }
+            // else, everything must stay as it is, so cpos == clen but wpos != wlen causing fail.
+         }
+         break;
+
+         default:
+            if ( cchr == wchr ||
+                  ( bIcase && cchr < 128 && wchr < 128 && (cchr | 32) == (wchr | 32) )
+               )
+            {
+               cpos++;
+               wpos++;
+            }
+            else
+            {
+               // can we retry?
+               if ( wstarpos != 0xFFFFFFFF )
+                  wpos = wstarpos;
+               else {
+                  // check failed -- we're doomed
+                  return false;
+               }
+            }
+      }
+   }
+
+   // at the end of the loop, the match is ok only if both the cpos and wpos are at the end
+   return wpos == wlen && cpos == clen;
+}
+
 //============================================================
 void string_deletor( void *data )
 {

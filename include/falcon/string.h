@@ -1186,6 +1186,12 @@ public:
    */
    bool endsWith( const String &str, bool icase=false ) const;
 
+   /** Matches this string against a dos-like wildcard.
+      \param wildcard A dos-like wildcard.
+      \param bICase true if this function should ignore the character case of the two strings.
+      \return true if the wildcard matches this string.
+   */
+   bool wildcardMatch( const String& wildcard, bool bICase = false ) const;
 
    /** Alters the character size of this string.
 

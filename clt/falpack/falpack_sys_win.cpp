@@ -14,6 +14,7 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/sys.h>
 #include "falpack_sys.h"
 #include "options.h"
 #include "utils.h"
@@ -21,27 +22,103 @@
 namespace Falcon
 {
 
+bool copyRuntime( const Path& binpath, const Path& tgtpath )
+{
+   message( "Searching VSx CRT in " + binpath.getLocation() );
+
+   // open the binary path in search of "Microsoft.*.CRT"
+   VFSProvider* provider = Engine::getVFS( "file" );
+   fassert( provider != 0 );
+   
+   DirEntry* dir = provider->openDir( binpath.getLocation() );
+   if( dir == 0 )
+   {
+      warning( "Can't search CRT in " + binpath.getLocation() );
+      return false;
+   }
+   
+   String fname;
+   while( dir->read(fname) )
+   {
+      if( fname.wildcardMatch("Microsoft.*.CRT") )
+      {
+         // we're done with dir.
+         delete dir;
+
+         Path source( binpath.getLocation() + "/" + fname + "/");
+         Path target( tgtpath.getLocation() + "/" + fname + "/");
+         
+         // first, create the target path
+         int32 fsStatus;
+         if( ! Sys::fal_mkdir( target.getLocation(), fsStatus, true ) )
+         {
+            warning( "Can't create CRT directory in " + target.getLocation() );
+            return false;
+         }
+
+         // then copy everything inside it.
+         DirEntry* crtdir = provider->openDir( source.getLocation() );
+         if( crtdir == 0 )
+         {
+            warning( "Can't read source CRT directory " + source.getLocation() );
+            return false;
+         }
+
+         //loop copying everything that's not a dir.
+         String sFile;
+         while( crtdir->read( sFile ) )
+         {
+            if( sFile.startsWith(".") )
+               continue;
+
+            source.setFilename( sFile );
+            target.setFilename( sFile );
+            if ( ! copyFile( source.get(), target.get() ) )
+            {
+               delete crtdir;
+               warning( "Can't copy CRT file " + source.get() +  " into " 
+                  + target.get() );
+               return false;
+            }
+         }
+
+         return true;
+      }
+   }
+
+   delete dir;
+   return false;
+}
+                 
+
+
 bool transferSysFiles( Options &options, bool bJustScript )
 {
    Path binpath, libpath;
 
+   // Under windows, the binary path is usually stored in an envvar.
+
+   String envpath;
+   if ( ! Sys::_getEnv( "FALCON_BIN_PATH", envpath ) || envpath == "" )
+      envpath = FALCON_DEFAULT_BIN;
+
    binpath.setLocation(
-         options.m_sFalconBinDir != "" ? options.m_sFalconBinDir : FALCON_DEFAULT_BIN );
+      options.m_sFalconBinDir != "" ? options.m_sFalconBinDir: envpath );
    // copy falcon or falrun
    if ( options.m_sRunner != "" )
       binpath.setFilename( options.m_sRunner );
    else
       binpath.setFilename( "falcon.exe" );
 
+   // our dlls are in bin, under windows.
    libpath.setLocation(
-         options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : FALCON_DEFAULT_LIB );
+         options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : envpath );
 
    if ( ! bJustScript )
    {
-   /*
       Path tgtpath( options.m_sTargetDir + "/" + options.m_sSystemRoot +"/" );
 
-      libpath.setFile( "libfalcon_engine" );
+      libpath.setFile( "falcon_engine" );
       libpath.setExtension( DllLoader::dllExt() );
 
       tgtpath.setFilename( binpath.getFilename() );
@@ -52,8 +129,6 @@ bool transferSysFiles( Options &options, bool bJustScript )
          // but continue
       }
 
-      Sys::fal_chmod( tgtpath.get(), 0755 );
-
       tgtpath.setFilename( libpath.getFilename() );
       if( ! copyFile( libpath.get(), tgtpath.get() ) )
       {
@@ -61,7 +136,9 @@ bool transferSysFiles( Options &options, bool bJustScript )
                + "\" into target path \""+ tgtpath.get()+ "\"" );
          // but continue
       }
-      */
+
+      // and now the visual C runtime, if any
+      copyRuntime( binpath, tgtpath );
    }
 
    // now create the startup script
