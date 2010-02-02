@@ -435,7 +435,7 @@ void Path::setFilename( const String &fname )
 
 bool Path::isAbsolute() const
 {
-   return m_path.size() > 0 && m_path.getCharAt(0) == '/';
+   return m_location.size() > 0 && m_location.getCharAt(0) == '/';
 }
 
 

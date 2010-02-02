@@ -12,6 +12,9 @@ Falcon (0.9.6.1)
   * added: Path.fulloc, Path.winpath, Path.winloc and Path.winfulloc properties
            to the Path class.
   * added: falpack CLT tool.
+  * fixed: Module loader now takes into account also disk specifiers.
+  * fixed: Path::isAbsolute wasn't considering relative paths under disk 
+		   specificators.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

@@ -425,7 +425,7 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
       while ( (! bFound) && path_elem != 0 )
       {
          String *pathp = (String *) path_elem->data();
-         origUri.pathElement().setLocation( *pathp );
+         origUri.pathElement().setFullLocation( *pathp );
          origUri.pathElement().extendLocation( oldPath  );
 
          // If we originally had an extension, we must not add it.
