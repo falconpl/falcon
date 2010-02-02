@@ -101,20 +101,43 @@ PathObject *PathObject::clone() const
    it starts with a "/" it is considered absolute.
 */
 
+
+/*# @property fulloc Path
+   @brief Unit specificator and location.
+   @raise ParamError if assigned to a value that makes the path invalid.
+
+   This property contains the location of this path, including the unit
+   specificator, if present.
+
+   So, in a path like "/C:/path/to/me.txt", the @b fulloc property
+   (notice the two 'l' characters in the name) will have the value of
+   "/C:/path/to", while in a relative path like "relative/file.txt"
+   it will take the same value of @a Path.location.
+
+   Assigning a value to this property means to change the value of
+   both the unit specificator and location at the same time.
+*/
+
 /*# @property file Path
    @brief File part.
    @raise ParamError if assigned to a value that makes the path invalid.
 
-   This is the part of the path that identifies an element in a directory.
-   It includes everything after the last "/" path separator.
+   This element coresponds to the first part of the file element, if it is
+   divided into a filename and an extension by a "." dot.
+
+   @note 
+   If an extension is given, then @b filename is the same as @b file + "." + @b extension 
 */
 
 /*# @property filename Path
    @brief File name part.
    @raise ParamError if assigned to a value that makes the path invalid.
 
-   This element coresponds to the first part of the file element, if it is
-   divided into a filename and an extension by a "." dot.
+   This is the part of the path that identifies an element in a directory.
+   It includes everything after the last "/" path separator.
+   
+   @note 
+   If an extension is given, then @b filename is the same as @b file + "." + @b extension 
 */
 
 /*# @property extension Path
@@ -123,6 +146,9 @@ PathObject *PathObject::clone() const
 
    This element coresponds to the first last of the file element, if it is
    divided into a filename and an extension by a "." dot.
+
+   @note 
+   If an extension is given, then @b filename is the same as @b file + "." + @b extension 
 */
 
 /*# @property path Path
@@ -132,6 +158,49 @@ PathObject *PathObject::clone() const
    This is the complete path referred by this object.
 */
 
+
+/*# @property winpath Path
+   @brief Complete path in MS-Windows format.
+
+   This is the complete path referred by this object, given in MS-Windows
+   format.
+
+   Use this if you need to produce scripts or feed it into external process
+   on windows platforms. Normally, all the I/O functions used by Falcon
+   on any platform understand the RFC3986 format.
+
+   @note The property is read-only; you can anyhow assign a path in MS-Windows
+   format to the @a Path.path property.
+*/
+
+/*# @property winloc Path
+   @brief Complete path in MS-Windows format.
+
+   This is the location element in the complete path, given in MS-Windows
+   format.
+
+   Use this if you need to produce scripts or feed it into external process
+   on windows platforms. Normally, all the I/O functions used by Falcon
+   on any platform understand the RFC3986 format.
+
+   @note The property is read-only; you can anyhow assign a location in MS-Windows
+   format to the @a Path.location property.
+*/
+
+
+/*# @property winfulloc Path
+   @brief Complete path in MS-Windows format.
+
+   This is the full location element in this path (unit specificator + location), 
+   given in MS-Windows format.
+
+   Use this if you need to produce scripts or feed it into external process
+   on windows platforms. Normally, all the I/O functions used by Falcon
+   on any platform understand the RFC3986 format.
+
+   @note The property is read-only; you can anyhow assign a full location in MS-Windows
+   format to the @a Path.fulloc property.
+*/
 
 
 // Reflective URI method
@@ -237,6 +306,28 @@ void Path_location_rto(CoreObject *instance, void *user_data, Item &property, co
    }
 }
 
+// Reflective full location method
+void Path_fullloc_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getFullLocation );
+}
+
+void Path_fullloc_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   // We're setting the path, that is, the property has been written.
+   FALCON_REFLECT_STRING_TO( (&path), setFullLocation );
+
+   if ( ! path.isValid() )
+   {
+      VMachine* vm = VMachine::getCurrent();
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( vm != 0 ? vm->moduleString( rtl_invalid_path ) : "" ) );
+   }
+}
+
 // Reflective path method
 void Path_unit_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
@@ -282,6 +373,31 @@ void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, c
    }
 }
 
+
+
+// Reflective windows method
+void Path_winpath_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getWinFormat );
+}
+
+// Reflective windows method
+void Path_winloc_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getWinLocation );
+}
+
+// Reflective windows method
+void Path_winfulloc_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getFullWinLocation );
+}
+
+
+
 /*#
    @init Path
    @brief Constructor for the Path class.
@@ -303,6 +419,9 @@ void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, c
    @endcode
 
    @b nil can be passed if some part of the specification is not used.
+   
+   The path (or any part of it) may be specified both in RFC3986 format or in 
+   MS-Windows path format.
 
    @note Use the fileNameMerge() function to simply merge elements of a path
    specification into a string.

@@ -120,6 +120,12 @@ public:
    */
    String getLocation() const { String fmt; getLocation( fmt ); return fmt; }
 
+   /** Gets the location part, eventually including the resource specificator if present. */
+   bool getFullLocation( String &str ) const;
+   
+   /** Gets the location part, eventually including the resource specificator if present. */
+   String getFullLocation() const { String fmt; getFullLocation( fmt ); return fmt; }
+
    /** Stores the resource part in a given string.
       If the path has not a location part, the string is also cleaned.
       \param str the string where to store the location part.
@@ -136,6 +142,16 @@ public:
       \return true if the path has a location part.
    */
    bool getWinLocation( String &str ) const;
+
+   /** Get Windows disk specificator + location (windows absolute path).
+
+      \param str the string where to store the location part.
+      \return true if the path has a disk or location part.
+   */
+   bool getFullWinLocation( String &str ) const;
+
+   /** returns the disk specificator + location (windows absolute path) */
+   String getFullWinLocation() const { String fmt; getFullWinLocation( fmt ); return fmt; } 
 
    /** Get the filename part.
       This returns the file and extension parts separated by a '.'
@@ -175,6 +191,20 @@ public:
 
    /** Sets the location part in RFC3986 format. */
    void setLocation( const String &loc );
+
+   /** Sets both the resource and the location in one step. 
+      If the parameter is empty, both location and resource are cleared.
+      
+      If the parameter is just a resource specificator (i.e. "C:" or "/C:"),
+      then the location is cleared.
+      
+      If it's just a location, then the resource is cleared.
+
+      May return false if the parsing of the new content fails.
+      \param floc Full location.
+      \return true if correctly parsed.
+   */
+   bool setFullLocation( const String &floc );
 
    /** Sets the file part. */
    void setFile( const String &file );

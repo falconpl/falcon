@@ -98,6 +98,13 @@ bool transferSysFiles( Options &options, bool bJustScript )
 }
 
 
+bool copyDynlibs( Options& options, const String& modpath, const std::vector<String>& dynlibs )
+{
+
+   return true;
+}
+
+
 }
 
 /* end of falpack_sys_unix.cpp */

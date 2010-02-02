@@ -170,6 +170,7 @@ void Path::getWinFormat( String &str ) const
          str.append( chr );
       else
          str.append( '\\' );
+      ++startPos;
    }
 }
 
@@ -186,6 +187,52 @@ bool Path::getLocation( String &str ) const
    return str.size() != 0;
 }
 
+bool Path::getFullLocation( String &str ) const
+{
+   if( m_device.size() != 0 )
+      str = "/" + m_device + ":" + m_location;
+   else
+      str = m_location;
+
+   return str.size() != 0;
+}
+
+
+bool Path::setFullLocation( const String &str )
+{
+   // full location is disk + path + filename;
+   // we don't know if we have the disk, but we 
+   // know we should have at least the path (unless it's "").
+
+   // It's simpler to add the filename and reparse everything.
+
+   if( str == "" )
+   {
+      m_location = "";
+      m_device = "";
+      return true;
+   }
+   else 
+   {
+      String loc;
+
+      // only the resource?
+      if( str.getCharAt( str.length() - 1 ) == ':' )
+      {
+         // then, don't add a slash which would translate in an absolute location.
+         loc = str + getFilename();
+      }
+      else
+      {
+         // ok, add the slash after the path 
+         // (notice that "//" is correctly parsed into "/")
+         loc = str + "/" + getFilename();
+      }
+
+      return set( loc );
+   }
+}
+
 
 bool Path::getWinLocation( String &str ) const
 {
@@ -200,6 +247,27 @@ bool Path::getWinLocation( String &str ) const
    }
 
    return true;
+}
+
+
+bool Path::getFullWinLocation( String &str ) const
+{
+   if ( m_device != "" )
+   {
+      String loc;
+      if ( getWinLocation( loc ) )
+      {
+         str = m_device + ":" + loc;
+         return true;
+      }
+   }
+   else if ( getWinLocation( str ) )
+   {
+      return true;
+   }
+   
+   // str has been cleaned by getWinLocation()
+   return false;
 }
 
 

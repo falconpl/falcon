@@ -8,6 +8,10 @@ Falcon (0.9.6.1)
   * fixed: Error in class symbol de-serialization caused failure of fam
            loading. The default fallback to .fal re-compilation hid the
            problem.
+  * fixed: In c++ API, Path::getWindowsFormat went in endless loop.
+  * added: Path.fulloc, Path.winpath, Path.winloc and Path.winfulloc properties
+           to the Path class.
+  * added: falpack CLT tool.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

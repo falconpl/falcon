@@ -16,12 +16,16 @@
 #ifndef FALPACK_SYS_H_
 #define FALPACK_SYS_H_
 
+#include <falcon/string.h>
+#include <vector>
 
 namespace Falcon
 {
 
 class Options;
+
 bool transferSysFiles( Options &options, bool bJustScript );
+bool copyDynlibs( Options& options, const String& modpath, const std::vector<String>& dynlibs );
 
 }
 

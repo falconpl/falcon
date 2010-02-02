@@ -519,15 +519,21 @@ reflectionFuncDecl Path_path_rfrom;
 reflectionFuncDecl Path_filename_rfrom;
 reflectionFuncDecl Path_unit_rfrom;
 reflectionFuncDecl Path_location_rfrom;
+reflectionFuncDecl Path_fullloc_rfrom;
 reflectionFuncDecl Path_file_rfrom;
 reflectionFuncDecl Path_extension_rfrom;
+reflectionFuncDecl Path_winpath_rfrom;
+reflectionFuncDecl Path_winloc_rfrom;
+reflectionFuncDecl Path_winfulloc_rfrom;
 
 reflectionFuncDecl Path_path_rto;
 reflectionFuncDecl Path_filename_rto;
 reflectionFuncDecl Path_unit_rto;
 reflectionFuncDecl Path_location_rto;
+reflectionFuncDecl Path_fullloc_rto;
 reflectionFuncDecl Path_file_rto;
 reflectionFuncDecl Path_extension_rto;
+
 CoreObject* PathObjectFactory( const CoreClass *cr, void *path, bool );
 
 

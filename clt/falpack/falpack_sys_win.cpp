@@ -24,16 +24,16 @@ namespace Falcon
 
 bool copyRuntime( const Path& binpath, const Path& tgtpath )
 {
-   message( "Searching VSx CRT in " + binpath.getLocation() );
+   message( "Searching VSx CRT in " + binpath.getFullLocation() );
 
    // open the binary path in search of "Microsoft.*.CRT"
    VFSProvider* provider = Engine::getVFS( "file" );
    fassert( provider != 0 );
    
-   DirEntry* dir = provider->openDir( binpath.getLocation() );
+   DirEntry* dir = provider->openDir( binpath.getFullLocation() );
    if( dir == 0 )
    {
-      warning( "Can't search CRT in " + binpath.getLocation() );
+      warning( "Can't search CRT in " + binpath.getFullLocation() );
       return false;
    }
    
@@ -45,22 +45,22 @@ bool copyRuntime( const Path& binpath, const Path& tgtpath )
          // we're done with dir.
          delete dir;
 
-         Path source( binpath.getLocation() + "/" + fname + "/");
-         Path target( tgtpath.getLocation() + "/" + fname + "/");
+         Path source( binpath.getFullLocation() + "/" + fname + "/");
+         Path target( tgtpath.getFullLocation() + "/" + fname + "/");
          
          // first, create the target path
          int32 fsStatus;
-         if( ! Sys::fal_mkdir( target.getLocation(), fsStatus, true ) )
+         if( ! Sys::fal_mkdir( target.getFullLocation(), fsStatus, true ) )
          {
-            warning( "Can't create CRT directory in " + target.getLocation() );
+            warning( "Can't create CRT directory in " + target.getFullLocation() );
             return false;
          }
 
          // then copy everything inside it.
-         DirEntry* crtdir = provider->openDir( source.getLocation() );
+         DirEntry* crtdir = provider->openDir( source.getFullLocation() );
          if( crtdir == 0 )
          {
-            warning( "Can't read source CRT directory " + source.getLocation() );
+            warning( "Can't read source CRT directory " + source.getFullLocation() );
             return false;
          }
 
@@ -102,7 +102,7 @@ bool transferSysFiles( Options &options, bool bJustScript )
    if ( ! Sys::_getEnv( "FALCON_BIN_PATH", envpath ) || envpath == "" )
       envpath = FALCON_DEFAULT_BIN;
 
-   binpath.setLocation(
+   binpath.setFullLocation(
       options.m_sFalconBinDir != "" ? options.m_sFalconBinDir: envpath );
    // copy falcon or falrun
    if ( options.m_sRunner != "" )
@@ -111,7 +111,7 @@ bool transferSysFiles( Options &options, bool bJustScript )
       binpath.setFilename( "falcon.exe" );
 
    // our dlls are in bin, under windows.
-   libpath.setLocation(
+   libpath.setFullLocation(
          options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : envpath );
 
    if ( ! bJustScript )
@@ -179,6 +179,39 @@ bool transferSysFiles( Options &options, bool bJustScript )
    return true;
 }
 
+
+bool copyDynlibs( Options& options, const String& mp, const std::vector<String>& dynlibs )
+{
+   // On windows, the thing is simple. 
+   // We must add the module named as <module>.dll besides the host module if it's binary, 
+   // or in the Falcon system dir if it's a source module.
+
+   Path modpath( mp );
+   Path targetPath;
+   String ext = modpath.getExtension();
+   ext.lower();
+
+   // binary module ?
+   if( ext == DllLoader::dllExt() )
+      targetPath.setFullLocation( options.m_sTargetDir + "/" + options.m_sSystemRoot );
+   else
+      targetPath = modpath;
+
+   bool retval = true;
+   for ( uint32 i = 0; i < dynlibs.size(); ++i )
+   {
+      modpath.setFilename( dynlibs[i] + "." + DllLoader::dllExt() );
+      targetPath.setFilename( dynlibs[i] + "." +  DllLoader::dllExt() );
+
+      if( ! copyFile( modpath.get(), targetPath.get() ) )
+      {
+         warning( "Cannot copy dynlib resource " + modpath.get() );
+         retval = false;
+      }
+   }
+   
+   return retval;
+}
 
 }
 

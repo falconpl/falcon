@@ -76,10 +76,10 @@ bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
       return false;
    }
 
-   DirEntry *entry = file->openDir( from.getLocation() );
+   DirEntry *entry = file->openDir( from.getFullLocation() );
    if( entry == 0 )
    {
-      warning( "Can't open directory " + from.getLocation() );
+      warning( "Can't open directory " + from.getFullLocation() );
       return false;
    }
 
@@ -92,7 +92,7 @@ bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
       }
 
       FileStat fs;
-      if ( ! Sys::fal_stats( from.getLocation() + "/" + fname, fs ) )
+      if ( ! Sys::fal_stats( from.getFullLocation() + "/" + fname, fs ) )
       {
          continue;
       }
@@ -109,12 +109,12 @@ bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
          }
 
          // TODO: Jail resources under modpath
-         if ( ! copyFile( from.getLocation() + "/" + fname, tgtPath.getLocation() + "/" + fname ) )
+         if ( ! copyFile( from.getFullLocation() + "/" + fname, tgtPath.getFullLocation() + "/" + fname ) )
          {
             warning( "Cannot copy resource " +
-                  from.getLocation() + "/" + fname
+                  from.getFullLocation() + "/" + fname
                   + " into "
-                  + tgtPath.getLocation() + "/" + fname );
+                  + tgtPath.getFullLocation() + "/" + fname );
             entry->close();
             delete entry;
             return false;
@@ -123,7 +123,7 @@ bool copyAllResources( Options& options, const Path& from, const Path& tgtPath )
          /*
          // descend
          Path nfrom( from );
-         nfrom.setLocation( from.getLocation() + "/" + fname );
+         nfrom.setFullLocation( from.getFullLocation() + "/" + fname );
          if( ! copyAllResources( options, nfrom, modPath, tgtPath ) )
          {
             return false;
@@ -150,13 +150,13 @@ bool copyResource( Options& options, const String& resource, const Path& modPath
    if( resPath.isAbsolute() )
    {
       warning( "Resource " + resource + " has an absolute path." );
-      modResPath.setLocation( modPath.getLocation() + resPath.getLocation() );
-      tgtResPath.setLocation( tgtPath.getLocation() + resPath.getLocation() );
+      modResPath.setFullLocation( modPath.getFullLocation() + resPath.getFullLocation() );
+      tgtResPath.setFullLocation( tgtPath.getFullLocation() + resPath.getFullLocation() );
    }
    else
    {
-      modResPath.setLocation( modPath.getLocation() +"/"+ resPath.getLocation() );
-      tgtResPath.setLocation( tgtPath.getLocation() +"/"+ resPath.getLocation() );
+      modResPath.setFullLocation( modPath.getFullLocation() +"/"+ resPath.getFullLocation() );
+      tgtResPath.setFullLocation( tgtPath.getFullLocation() +"/"+ resPath.getFullLocation() );
    }
 
    modResPath.setFilename( resPath.getFilename() );
@@ -164,9 +164,9 @@ bool copyResource( Options& options, const String& resource, const Path& modPath
 
    // create target path
    int32 fsStatus;
-   if( ! Sys::fal_mkdir( tgtResPath.getLocation(), fsStatus, true ) )
+   if( ! Sys::fal_mkdir( tgtResPath.getFullLocation(), fsStatus, true ) )
    {
-      warning( "Cannot create path " + tgtResPath.getLocation()
+      warning( "Cannot create path " + tgtResPath.getFullLocation()
             + " for resource " + modResPath.get() );
 
       return false;
@@ -175,7 +175,7 @@ bool copyResource( Options& options, const String& resource, const Path& modPath
    if( resPath.getFile() == "*" )
    {
      Path from( resPath );
-     from.setLocation( modPath.getLocation() + "/" + from.getLocation() );
+     from.setFullLocation( modPath.getFullLocation() + "/" + from.getFullLocation() );
      if ( ! copyAllResources( options, from, tgtResPath ) )
      {
         return false;
@@ -198,10 +198,10 @@ bool copyFtr( const Path& src, const Path &tgt )
 {
    VFSProvider* file = Engine::getVFS("file");
    fassert( file != 0 );
-   DirEntry *entry = file->openDir( src.getLocation() );
+   DirEntry *entry = file->openDir( src.getFullLocation() );
    if( entry == 0 )
    {
-      warning( "Can't open directory " + src.getLocation() );
+      warning( "Can't open directory " + src.getFullLocation() );
       return false;
    }
 
@@ -235,16 +235,16 @@ void addPlugins( const Options& options_main, const String& parentModule, const 
    message( "Loading plugin \"" + path +"\" for module " + parentModule );
 
    Path modPath( parentModule );
-   modPath = modPath.getLocation() + "/" + path;
+   modPath = modPath.getFullLocation() + "/" + path;
 
    if( path.endsWith("*") )
    {
       VFSProvider* file = Engine::getVFS("file");
       fassert( file != 0 );
-      DirEntry *entry = file->openDir( modPath.getLocation() );
+      DirEntry *entry = file->openDir( modPath.getFullLocation() );
       if( entry == 0 )
       {
-         warning( "Can't open plugin directory \"" + modPath.getLocation() + "\" for module "
+         warning( "Can't open plugin directory \"" + modPath.getFullLocation() + "\" for module "
                + parentModule );
       }
 
@@ -300,18 +300,18 @@ bool storeModule( Options& options, Module* mod )
    // this is the base path for the module
    Path modPath( mod->path() );
    Path tgtPath;
-   tgtPath.setLocation( options.m_sTargetDir );
+   tgtPath.setFullLocation( options.m_sTargetDir );
 
    // normalize module path
-   while( modPath.getLocation().startsWith("./") )
+   while( modPath.getFullLocation().startsWith("./") )
    {
-      modPath.setLocation( modPath.getLocation().subString(2) );
+      modPath.setFullLocation( modPath.getFullLocation().subString(2) );
    }
 
    message( String("Processing module ").A( modPath.get() ) );
 
    // strip the main script path from the module path.
-   String modloc = modPath.getLocation();
+   String modloc = modPath.getFullLocation();
 
    if ( modloc.find( options.m_sMainScriptPath ) == 0 )
    {
@@ -321,13 +321,13 @@ bool storeModule( Options& options, Module* mod )
       {
          modloc = modloc.subString(1);
       }
-      tgtPath.setLocation( tgtPath.get() + "/" + modloc );
+      tgtPath.setFullLocation( tgtPath.get() + "/" + modloc );
    }
    else
    {
       // if it's coming from somewhere else in the loadpath hierarcy,
       // we must store it below the topmost dir.
-      tgtPath.setLocation( tgtPath.get() + "/" + options.m_sSystemRoot );
+      tgtPath.setFullLocation( tgtPath.get() + "/" + options.m_sSystemRoot );
 
       // Find the path in LoadPath that caused this module to load,
       // strip it away and reproduce it below the SystemRoot.
@@ -342,7 +342,7 @@ bool storeModule( Options& options, Module* mod )
             String sSysPath = modloc.subString( paths[i].size() + 1 );
             if( sSysPath != "" )
             {
-               tgtPath.setLocation( tgtPath.get() + "/" + sSysPath );
+               tgtPath.setFullLocation( tgtPath.get() + "/" + sSysPath );
             }
             break;
          }
@@ -351,9 +351,9 @@ bool storeModule( Options& options, Module* mod )
 
    // store it
    int fsStatus;
-   if ( ! Sys::fal_mkdir( tgtPath.getLocation(), fsStatus, true ) )
+   if ( ! Sys::fal_mkdir( tgtPath.getFullLocation(), fsStatus, true ) )
    {
-      error( String("Can't create ") + tgtPath.getLocation() );
+      error( String("Can't create ") + tgtPath.getFullLocation() );
       return false;
    }
 
@@ -432,6 +432,13 @@ bool storeModule( Options& options, Module* mod )
       }
    }
 
+   // and finally, the dynamic libraries associated with this module.
+   std::vector<String> dynliblist;
+   if( getAttribute( mod, "dynlib", dynliblist ) )
+   {
+      copyDynlibs( options, mod->path(), dynliblist );
+   }
+
    return true;
 }
 
@@ -458,8 +465,8 @@ bool transferModules( Options &options, const String& mainScript )
    
    // add script path (always)
    Path scriptPath( mainScript );
-   if( scriptPath.getLocation() != "" )
-      ml.addSearchPath( scriptPath.getLocation() );
+   if( scriptPath.getFullLocation() != "" )
+      ml.addSearchPath( scriptPath.getFullLocation() );
 
    // and communicate to the rest of the program the search path we used.
    options.m_sLoadPath = ml.getSearchPath();
@@ -495,8 +502,6 @@ bool transferModules( Options &options, const String& mainScript )
       {
          for ( uint32 i = 0; i < reslist.size(); ++i )
          {
-            // adding modules while in the loop is ok:
-            // they are added at the bottom of mv
             addPlugins( options, mod->path(), reslist[i] );
          }
       }
@@ -564,7 +569,7 @@ int main( int argc, char *argv[] )
    }
 
    // add the main script path to the options, so that it can be stripped.
-   options.m_sMainScriptPath = target.getLocation();
+   options.m_sMainScriptPath = target.getFullLocation();
 
    //===============================================================
    // We need a runtime and a module loader to load all the modules.

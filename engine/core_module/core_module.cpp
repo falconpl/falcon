@@ -1821,17 +1821,26 @@ Module* core_module_init()
    path_class->setWKS(true);
 
    self->addClassProperty( path_class, "path" ).
-         setReflectFunc( Falcon::core::Path_path_rfrom, &Falcon::core::Path_path_rto );
+         setReflectFunc( &Falcon::core::Path_path_rfrom, &Falcon::core::Path_path_rto );
    self->addClassProperty( path_class, "unit" ).
-         setReflectFunc( Falcon::core::Path_unit_rfrom, &Falcon::core::Path_unit_rto );
+         setReflectFunc( &Falcon::core::Path_unit_rfrom, &Falcon::core::Path_unit_rto );
    self->addClassProperty( path_class, "location" ).
-         setReflectFunc( Falcon::core::Path_location_rfrom, &Falcon::core::Path_location_rto );
+         setReflectFunc( &Falcon::core::Path_location_rfrom, &Falcon::core::Path_location_rto );
+   self->addClassProperty( path_class, "fulloc" ).
+         setReflectFunc( &Falcon::core::Path_fullloc_rfrom, &Falcon::core::Path_fullloc_rto );
    self->addClassProperty( path_class, "file" ).
-         setReflectFunc( Falcon::core::Path_file_rfrom, &Falcon::core::Path_file_rto );
+         setReflectFunc( &Falcon::core::Path_file_rfrom, &Falcon::core::Path_file_rto );
    self->addClassProperty( path_class, "extension" ).
-         setReflectFunc( Falcon::core::Path_extension_rfrom, &Falcon::core::Path_extension_rto );
+         setReflectFunc( &Falcon::core::Path_extension_rfrom, &Falcon::core::Path_extension_rto );
    self->addClassProperty( path_class, "filename" ).
-         setReflectFunc( Falcon::core::Path_filename_rfrom, &Falcon::core::Path_filename_rto );
+         setReflectFunc( &Falcon::core::Path_filename_rfrom, &Falcon::core::Path_filename_rto );
+
+   self->addClassProperty( path_class, "winpath" ).
+         setReflectFunc( &Falcon::core::Path_winpath_rfrom );
+   self->addClassProperty( path_class, "winloc" ).
+         setReflectFunc( &Falcon::core::Path_winloc_rfrom );
+   self->addClassProperty( path_class, "winfulloc" ).
+         setReflectFunc( &Falcon::core::Path_winfulloc_rfrom );
 
    //=======================================================================
    // The path class
