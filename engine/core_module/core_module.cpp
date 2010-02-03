@@ -640,6 +640,8 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
    self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp ).asSymbol()->
       addParam("source")->addParam("filter");
+   self->addClassMethod( array_meta, "comptest", &Falcon::core::Array_comptest );
+   
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
    self->addClassMethod( array_meta, "NM", &Falcon::core::mth_arrayNM );
 

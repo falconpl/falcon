@@ -146,8 +146,47 @@ public:
       \param compounder a range, a sequence or a generator function providing a sequence of data.
       \param filter an optional filter function returning true to accept elemnts, false to discard them
          pass nil if none.
+
+      \TODO: Remove this in the next major release.
    */
    virtual void comprehension( VMachine* vm, const Item& compounder, const Item& filter );
+
+   /**
+      Start a comprehension loop.
+      
+      Creates a stack frame that can be used to iterate ove a multiple comprehension.
+      After the return, push this in the stack (as local variables):
+      - <filter function> (or nil)
+      - <comprehension source 1>
+      - ...
+      - <comprehension source n>
+
+      And then immediately return.
+
+      Local variables needed for accounting will be already pushed by the comprehension
+      startup function, so the stack will probably be partially popualted before
+      this method returns.
+
+      The return frame function will take care to generate the comprehension. 
+      
+      If more than one comprehension source is provided, then each element to be
+      stored in this sequence will be a sequence of this kind, with their components
+      taken one at a time from each source. For example:
+      - Source 1: [a, b, c]
+      - Source 2: List( e, f, g )
+      - This: Set()
+      - Generated elements: Set(a, e), Set(b, f), Set(c, g)
+      
+      The comprehension terminates when the first source is empty.
+
+      If a filter function is provided, then it's called after each element is created
+      and before it is added to this sequence.
+
+      \TODO: Make this virtual in the next major release.
+      \return
+   */
+
+   /* virtual */ bool comprehension_start( VMachine* vm, const Item& filter );
 
    /** The sequence may be bound to an object.
     * If the sequence is bound with a falcon script level object,

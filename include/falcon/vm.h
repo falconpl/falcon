@@ -2175,6 +2175,34 @@ public:
       m_onFinalize = finfunc;
    }
 
+   /** Executes the return frame as soon as the control reaches the VM main loop. 
+      Can be used in conjunction with a fake call frame where the real work
+      is done by the return frame function.
+
+      \code
+      static bool real_handler( VMachine *vm )
+      {
+         //do real work
+         return false; // remove frame?
+      }
+
+      void extension_func( VMachine *vm )
+      {
+         vm->invokeReturnFrame( real_handler );  // prevent executing unexisting code in this frame.
+         vm->addLocals( 5 );
+         
+         // configure local variables...
+
+         // return, and let the VM call the real_handler
+      }
+      \endcode.
+
+   */
+   void invokeReturnFrame( ext_func_frame_t func ) { 
+      createFrame( 0, func );
+      m_currentContext->pc_next() = i_pc_call_external_return; 
+   }
+
    /** Get the default application load path. */
    const String& appSearchPath() const { return m_appSearchPath; }
 

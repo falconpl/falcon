@@ -61,6 +61,13 @@ FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm )
    vm->retval( vm->self() );
 }
 
+FALCON_FUNC  Array_comptest ( ::Falcon::VMachine *vm )
+{
+   // Save the parameters as the stack may change greatly.
+   CoreArray* arr = vm->self().asArray();
+   arr->items().comprehension_start( vm, Item() );
+   vm->retval( vm->self() );
+}
 
 /*#
    @method front Array

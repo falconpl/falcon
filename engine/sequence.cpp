@@ -18,6 +18,8 @@
 #include <falcon/error.h>
 #include <falcon/garbageable.h>
 
+#include "stdio.h"
+
 namespace Falcon {
 
 inline bool s_appendMe( VMachine *vm, Sequence* me, const Item &source, const Item &filter )
@@ -136,6 +138,211 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
                .origin( e_orig_runtime )
                .extra( "A|C|R|Sequence, [C]" ) );
    }
+}
+
+
+#if 0
+static bool append_last_item( VMachine *vm )
+{
+   CoreObject* self = vm->preParam(0)->asObject();
+   self->getSequence()->append( vm->regA() );
+   vm->retval( self );
+   return false;
+}
+
+
+// gets all the items that it can from a comprehension
+static bool comp_get_all_items( const Item& source, const Item& filter, VMachine *vm )
+{
+   switch( source.type() )
+   {
+   case FLC_ITEM_RANGE:
+      {
+         if ( source.asRangeIsOpen() )
+         {
+            throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( "open range" ) );
+         }
+
+         int64 start = source.asRangeStart();
+         int64 end = source.asRangeEnd();
+         int64 step = source.asRangeStep();
+
+         // do we have a filter?
+         if( filter.isNil() )
+         {
+            // no -- it's the simple case. Do all the sequence at once.
+            if ( start == end ) 
+            {
+               if ( step < 0 )
+               {
+                  this->append( start );
+                  return true; // all done.
+               }
+               return;
+            }
+
+            if( start < end )
+            {
+               if ( step < 0 )
+                  return true;
+               if ( step == 0 )
+                  step = 1;
+
+               while( start < end )
+               {
+                  this->append( start );
+                  start += step;
+               }
+            }
+            else {
+               if ( step > 0 )
+                  return false;
+               if ( step == 0 )
+                  step = -1;
+
+               while( start >= end )
+               {
+                  this->append( start );
+                  start += step;
+               }
+            }
+
+            // we have processed all the sequence.
+            return true;
+         }
+         else
+         {
+            // we do have a filter.
+            if ( start == end ) {
+               if ( step < 0 )
+               {
+                  vm->pushParam( vm->self() );  
+                  vm->pushParam( start );  
+                  vm->callFrame( filter, 1 );
+                  vm->returnHandler( append_last_item );
+               }
+               
+               return true;  // nothing more to do
+            }
+
+         if( start < end )
+         {
+            if ( step < 0 )
+               return true;
+            if ( step == 0 )
+               step = 1;
+
+            vm->local( 1 ) = start;
+
+
+               if ( ! s_appendMe( vm, this, start, filter ) )
+                  break;
+               start += step;
+            }
+         }
+         else {
+            if ( step > 0 )
+               return;
+            if ( step == 0 )
+               step = -1;
+
+            while( start >= end )
+            {
+               if ( ! s_appendMe( vm, this, start, filter ) )
+                  break;
+               start += step;
+            }
+         }
+      }
+   }
+   else if ( cmp.isCallable() )
+   {
+      while( true )
+      {
+         vm->callItemAtomic( cmp, 0 );
+         if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+         {
+            return;
+         }
+
+         Item temp = vm->regA();
+         if( ! s_appendMe( vm, this, temp, filter ) )
+            break;
+      }
+   }
+   // todo --- remove this as soon as we have iterators on ItemArrays
+   else if ( cmp.isArray() )
+   {
+      const CoreArray& arr = *cmp.asArray();
+
+      for( uint32 i = 0; i < arr.length(); i ++ )
+      {
+         if ( ! s_appendMe( vm, this, arr[i], filter ) )
+            break;
+      }
+   }
+   else if ( (cmp.isObject() && cmp.asObjectSafe()->getSequence() ) )
+   {
+      //Sequence* seq = cmp.isArray() ? &cmp.asArray()->items() : cmp.asObjectSafe()->getSequence();
+
+      Sequence* seq = cmp.asObjectSafe()->getSequence();
+      Iterator iter( seq );
+      while( iter.hasCurrent() )
+      {
+         if ( ! s_appendMe( vm, this, iter.getCurrent(), filter ) )
+            break;
+         iter.next();
+      }
+   }
+   else {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( "A|C|R|Sequence, [C]" ) );
+   }
+}
+
+#endif
+
+static bool multi_comprehension_next( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - Local counter
+   // 2 - filter
+   // 3 - first comp source
+   // 4 - second cmp source
+   // N-3 - ... nth source.
+
+   uint32 ssize = vm->currentFrame()->stackSize();
+   if ( ssize < 3 )
+      return false;
+   
+   uint32 sources = ssize - 3;
+   if( sources == 1 )
+   {
+      
+   }
+
+   return false;
+
+}
+
+bool Sequence::comprehension_start( VMachine* vm, const Item& filter )
+{
+   // local copy before changing the stack.
+   Item copyFilter = filter;
+   Item selfCpy = vm->self();
+
+   vm->invokeReturnFrame(multi_comprehension_next);  
+   vm->addLocals( 3 );
+   vm->self() = selfCpy;
+   *vm->local(0) = (int64) 0;
+   *vm->local(1) = (int64) 0;
+   *vm->local(2) = filter;
+
+   return true;
 }
 
 void Sequence::gcMark( uint32 gen )
