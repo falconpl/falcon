@@ -195,11 +195,6 @@ FALCON_FUNC  endCritical ( ::Falcon::VMachine *vm )
    The @a Semaphore.post method will raise the count of the semaphore by the given parameter
    (1 is the default if the parameter is not given). However, the calling coroutine
    won't necessarily be swapped out until a @a yield is called.
-*/
-
-/*#
-   @init Semaphore
-   @brief Initializes the semaphore.
 
    By default, the semaphore is initialized to zero; this means that the
    first wait will block the waiting coroutine, unless a @a Semaphore.post

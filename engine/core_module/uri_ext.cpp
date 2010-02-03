@@ -186,13 +186,6 @@ bool UriObject::setProperty( const String &prop, const Item &value )
 }
 
 
-/*# @init URI
-   @brief Constructor for the URI class.
-   @raise ParamError in case the inital URI is malformed.
-
-   Builds the URI object, optionally using the given parameter
-   as a complete URI constructor.
-*/
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )
 {
    Item *p0 = vm->param(0);

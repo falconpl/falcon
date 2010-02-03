@@ -37,6 +37,12 @@ namespace core {
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
 
+   In case the error code is a well known code (i.e. one of the codes
+   known by the engine), the description of the error will be automatically provided.
+
+   To provide an error message without setting the code description, use directly the
+   @a Error.message property after having created the object.
+
    The Error class is used by the virtual machine and by the Falcon Feathers
    functions to communicate to the scripts, and eventually to the embedding
    application, about error conditions. It is also available to extension modules,
@@ -100,17 +106,6 @@ namespace core {
 */
 
 // Separate "code" property to test for @property command
-
-/*#
-   @init Error
-   @brief Initializes the error.
-
-   In case the error code is a well known code (i.e. one of the codes
-   known by the engine), the description of the error will be automatically provided.
-
-   To provide an error message without setting the code description, use directly the
-   @a Error.message property after having created the object.
-*/
 
 FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 {

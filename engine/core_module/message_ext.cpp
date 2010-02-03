@@ -379,10 +379,6 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    @endgroup
 */
 
-/*#
-   @init VMSlot
-   @brief Creates MOP Message slot.
-*/
 FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 {
    Item *i_msg = vm->param( 0 );

@@ -40,20 +40,6 @@ namespace core {
    It is also used by other entities in the RTL to return informations
    about the date (i.e. the @a FileStat).
 
-   @prop year Timestamp year, absolute value.
-   @prop month Month of the year, starting from 1.
-   @prop day Day of month, starting from 1.
-   @prop hour Hour in range 0 - 23.
-   @prop minute Minute in range 0 - 59.
-   @prop second Second in range 0 - 59.
-   @prop msec Millisecond in range 0 - 999.
-   @prop timezone A timezone code (see @a TimeZone class).
-*/
-
-/*#
-   @init TimeStamp
-   @brief Intializes the time stamp.
-
    The instance is created empty and unset, unless the @b date parameter
    is provided. In that case, the new instance is copied from a previously
    created one.
@@ -62,6 +48,15 @@ namespace core {
    the @a TimeStamp.toLongFormat method.
 
    To update the instance with the current system time, use @a TimeStamp.currentTime
+
+   @prop year Timestamp year, absolute value.
+   @prop month Month of the year, starting from 1.
+   @prop day Day of month, starting from 1.
+   @prop hour Hour in range 0 - 23.
+   @prop minute Minute in range 0 - 59.
+   @prop second Second in range 0 - 59.
+   @prop msec Millisecond in range 0 - 999.
+   @prop timezone A timezone code (see @a TimeZone class).
 */
 FALCON_FUNC  TimeStamp_init ( ::Falcon::VMachine *vm )
 {

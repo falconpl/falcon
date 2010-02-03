@@ -47,18 +47,16 @@ namespace core {
    Iterators supports equality tests and provide an equal() method. Two iterators pointing
    to the same element in the same collection are considered equal; so it is possible to
    iterate through all the items between a start and an end.
-*/
 
-/*#
-   @init Iterator
-   @brief Initialize the iterator
+   @section init Initialization
 
    The iterator is normally created at the begin of the sequence.
    If items in the collection can be directly accessed
 
    If @b position is given and true, the iterator starts from the end
-   of the sequence (that is, pointing tho the last valid element in the
+   of the sequence (that is, pointing to the last valid element in the
    sequence), otherwise it points at the first valid element.
+
 */
 
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )

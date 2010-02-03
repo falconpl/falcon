@@ -45,14 +45,9 @@ namespace core {
    if they are instances of classes (or blessed dictionaries) implementing the
    compare() method, that method is used as a comparison criterion.
 
-*/
-
-/*#
-   @init Set
-   @brief Creates and eventually fills the set.
-
-   This constructor creates a set that may be initially
-   filled with the items passed as parameters.
+   If the set constructor is given some parameters, it will be initially filled
+   with those items; if some of them is duplicated, only one item will be then
+   found in the set.
 */
 FALCON_FUNC  Set_init ( ::Falcon::VMachine *vm )
 {

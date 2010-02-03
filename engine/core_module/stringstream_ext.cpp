@@ -46,18 +46,13 @@ namespace core {
    The StringStream is always available for read and write operations, and
    supports seek operations. Writing past the end of the stream will cause
    the StringStream to grow.
-*/
 
-/*#
-   @init StringStream
-   @brief Initializes the StringStream
-
-   If the parameter is a numeric value, the constructor preallocates
+   If the parameter @b buffer is a numeric value, the constructor preallocates
    the given size. Writes up to buffer size won't require re-allocation,
    and the size will be used as a hint to grow the stream buffer sensibly.
 
    If a string is provided, it is used as initial contents of the
-   StringStream; subquesent reads will return the data contained in the string.
+   StringStream; subsequent reads will return the data contained in the string.
 */
 
 FALCON_FUNC  StringStream_init ( ::Falcon::VMachine *vm )

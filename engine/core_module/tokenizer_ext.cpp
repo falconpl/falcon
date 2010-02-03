@@ -33,14 +33,9 @@ namespace core {
 
    The source can also be set at a second time with the @a Tokenizer.parse method.
    @b seps defaults to " " if not given.
-*/
 
-/*#
-   @init Tokenizer
-   @brief Initializes the tokenizer
-   @raise IoError on errors on the underlying stream.
+   The @b options parameter can be a binary combinations of the following values:
 
-   @b options can be a binary combinations of the following
    - @b Tokenizer.groupsep: Groups different tokens into one. If not given, when a token immediately
         follows another, an empty field is returned.
    - @b Tokenizer.bindsep: Return separators inbound with their token.

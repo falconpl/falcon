@@ -704,11 +704,6 @@ FALCON_FUNC  fileUnit ( ::Falcon::VMachine *vm )
    it, but it is better to close the object as soon as possible.
 */
 
-/*#
-   @init Directory
-   @brief Opens a directory entry.
-   @raise IoError on failure.
-*/
 FALCON_FUNC  Directory_init ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);

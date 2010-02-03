@@ -81,6 +81,32 @@ PathObject *PathObject::clone() const
 
    This class offers an object oriented interface to access
    path elements given a complete path, or to build a path from its elements.
+
+   Builds the path object, optionally using the given parameter
+   as a complete path constructor.
+
+   If the parameter is an array, it must have at least four
+   string elements, and it will be used to build the path from
+   its constituents. For example:
+
+   @code
+      unit = "C"
+      location = "/a/path/to"
+      file = "somefile"
+      ext = "anext"
+      p = Path( [ unit, location, file, ext ] )
+   @endcode
+
+   @b nil can be passed if some part of the specification is not used.
+
+   The path (or any part of it) may be specified both in RFC3986 format or in
+   MS-Windows path format.
+
+   @note Use the fileNameMerge() function to simply merge elements of a path
+   specification into a string.
+
+   @see fileNameMerge
+
 */
 
 /*# @property unit Path
@@ -397,37 +423,6 @@ void Path_winfulloc_rfrom(CoreObject *instance, void *user_data, Item &property,
 }
 
 
-
-/*#
-   @init Path
-   @brief Constructor for the Path class.
-   @raise ParamError in case the inital path is malformed.
-
-   Builds the path object, optionally using the given parameter
-   as a complete path constructor.
-
-   If the parameter is an array, it must have at least four
-   string elements, and it will be used to build the path from
-   its constituents. For example:
-
-   @code
-      unit = "C"
-      location = "/a/path/to"
-      file = "somefile"
-      ext = "anext"
-      p = Path( [ unit, location, file, ext ] )
-   @endcode
-
-   @b nil can be passed if some part of the specification is not used.
-   
-   The path (or any part of it) may be specified both in RFC3986 format or in 
-   MS-Windows path format.
-
-   @note Use the fileNameMerge() function to simply merge elements of a path
-   specification into a string.
-   
-   @see fileNameMerge
-*/
 
 FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
 {

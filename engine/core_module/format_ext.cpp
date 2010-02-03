@@ -187,13 +187,6 @@ FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
    }
 }
 
-/*#
-   @init Format
-   @brief Initializes the Format instance with an optional value.
-
-   If an initialization format is provided, the @a Format.parse method is called.
-   Otherwise, it is necessary to call it at least once before performing a formatting.
-*/
 FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
 {
    FalconObject *einst = static_cast<FalconObject*>( vm->self().asObject() );
