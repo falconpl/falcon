@@ -18,6 +18,8 @@
 #include "options.h"
 #include "utils.h"
 
+#include <stdio.h>
+
 namespace Falcon
 {
 
@@ -100,6 +102,79 @@ bool transferSysFiles( Options &options, bool bJustScript )
 
 bool copyDynlibs( Options& options, const String& modpath, const std::vector<String>& dynlibs )
 {
+   // On unix, the thing is a bit more complex.
+   // We need to find the right library via ldd and copy
+   // it.
+   AutoCString command( "ldd " + modpath );
+   FILE* ldin = popen( command.c_str(), "r" );
+
+   if( ldin == NULL )
+   {
+      warning( "Cannot copy required dynlibs for " + modpath + " (Cannot start ldd)" );
+      return false;
+   }
+
+   char buffer[4096];
+   String source;
+   // parallel vector
+   uint32 size = dynlibs.size();
+
+   // file copy destination is always the root of the system path
+   // where we set the LD_LIBRARY_PATH of the startup script.
+   Path targetPath;
+   targetPath.setFullLocation( options.m_sTargetDir + "/" + options.m_sSystemRoot );
+
+   // find our module
+   // we must read entirely LDD output, or we may fail to close it via pclose.
+   while ( fgets( buffer, 4096, ldin ) )
+   {
+      // still something to be found?
+      if( size > 0 )
+      {
+         String line( buffer );
+
+         // search all the libs
+         for ( uint32 i = 0; i < dynlibs.size(); ++i )
+         {
+            if( line.wildcardMatch( "*" + dynlibs[i] + "*."+DllLoader::dllExt() + "*") )
+            {
+               bool done = false;
+               uint32 pos = line.find( "=>" );
+               uint32 pos1 = line.find( "(", pos );
+               if( pos != String::npos && pos1 != String::npos )
+               {
+                  String srcLib = line.subString( pos+2, pos1 );
+                  srcLib.trim();
+                  if( srcLib != "" )
+                  {
+                     Path sourceLib( srcLib );
+                     targetPath.setFilename( sourceLib.getFilename() );
+                     done = copyFile( srcLib, targetPath.get() );
+                  }
+               }
+
+               if( ! done )
+               {
+                  warning( "Cannot extract possible plugin from ldd line " + line );
+               }
+
+               size--;
+            }
+         }
+      }
+
+      // do we have a <lib>?name[-].*.<libext> pattern in the source list?
+   }
+
+   if ( pclose(ldin) == -1 )
+   {
+      warning( "Can't close ldd process for module " + modpath );
+   }
+
+   if( size >  0 )
+   {
+      warning( "Can't resolve all the dynlibs for module " + modpath );
+   }
 
    return true;
 }
