@@ -61,7 +61,7 @@ else()
       set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
 
       #The output directory doesn't change. However, is not used as include.
-      set(falcon_INCLUDE_DIR "@FALCON_FINAL_DEST@/@FALCON_INC_DIR@")
+      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
 
       # Use the source directory for include
       list(APPEND falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
