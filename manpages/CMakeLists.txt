@@ -37,7 +37,3 @@ FOREACH(man ${SRC})
    list( APPEND targets ${mantarget}.gz )
 ENDFOREACH()
 
-ADD_CUSTOM_TARGET( manpages ALL ""
-   SOURCES ${targets} )
-
-
