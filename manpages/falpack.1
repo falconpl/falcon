@@ -213,6 +213,13 @@ script-only applications which use local falcon installation to run). It is plan
 to provide this support in future via the ability to download pre-compiled modules
 from a central repository.
 
+In this version, 
+.B dynlib 
+attribute is not working for MacOSX style framework libraries. However, it will
+work for MacOSX dylib that can be found via the
+.I ldd
+command.
+
 .SH AUTHOR
 
 Giancarlo Niccolai <gc@falconpl.org>
