@@ -17,7 +17,7 @@
 #define flc_PCODES_H
 
 #define FALCON_PCODE_VERSION  3
-#define FALCON_PCODE_MINOR  0
+#define FALCON_PCODE_MINOR  1
 
 /** \page opcode_format Virtual machine opcode format
 

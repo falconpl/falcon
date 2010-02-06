@@ -14,7 +14,10 @@ Falcon (0.9.6.1)
   * added: falpack CLT tool.
   * fixed: Module loader now takes into account also disk specifiers.
   * fixed: Path::isAbsolute wasn't considering relative paths under disk 
-		   specificators.
+           specificators.
+  * fixed: Local symbol tables of functions may have been broken, causing
+           string expansion and other language elements in need of dynamic
+           access to local symbol table to break.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

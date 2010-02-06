@@ -93,6 +93,9 @@ bool SymbolTable::load( const Module *mod, Stream *in )
          return false;
       }
 
+      if ( sym->name().getRawStorage() == 0 ) {
+         return false;
+      }
       m_map.insert( &sym->name(), sym );
    }
 
@@ -121,6 +124,11 @@ bool SymbolVector::save( Stream *out ) const
 
    for( uint32 iter = 0; iter < size(); iter++ )
    {
+      symbolAt( iter )->name().serialize( out );
+   }
+
+   for( uint32 iter = 0; iter < size(); iter++ )
+   {
       if ( ! symbolAt( iter )->save( out ) )
          return false;
    }
@@ -140,6 +148,8 @@ bool SymbolVector::load( Module *owner, Stream *in )
       Symbol *sym = new Symbol(owner);
       sym->id( i );
       set( sym, i );
+      if ( ! sym->name().deserialize( in ) )
+         return false;
    }
 
    for( uint32 iter = 0; iter < size(); iter++ )

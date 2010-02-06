@@ -1793,17 +1793,17 @@ void opcodeHandler_STEX( register VMachine *vm )
 
       case VMachine::return_error_parse_fmt:
          throw
-            new TypeError( ErrorParam( e_fmt_convert ).origin( e_orig_vm ).extra( "STEX" ) );
+            new TypeError( ErrorParam( e_fmt_convert ).origin( e_orig_vm ).extra( "STEX-format" ) );
       break;
 
       case VMachine::return_error_string:
          throw
-            new ParamError( ErrorParam( e_param_strexp_code ).origin( e_orig_vm ).extra( "STEX" ) );
+            new ParamError( ErrorParam( e_param_strexp_code ).origin( e_orig_vm ).extra( "STEX-string" ) );
       break;
 
       case VMachine::return_error_parse:
          throw
-               new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX" ) );
+               new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX-parse" ) );
       break;
 
       default:  // warning no-op

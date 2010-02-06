@@ -760,6 +760,10 @@ public:
       setImportAlias( new ImportAlias( name, origModule, bIsFileName ) ); }
 
    const String &name() const { return m_name; }
+
+   // TODO: Remove this
+   String &name() { return m_name; }
+
    uint32 id() const { return m_id; }
    type_t type() const { return m_type; }
    bool exported() const { return (! imported()) && ((m_flags & FLAG_EXPORTED) == FLAG_EXPORTED); }

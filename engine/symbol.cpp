@@ -78,10 +78,10 @@ bool Symbol::load( Stream *in )
    m_lineDecl = (int32) endianInt32( line );
 
    // the id is not restored, as it is assigned by load order sequence.
-   if ( ! m_name.deserialize( in, false ) )
+   /*if ( ! m_name.deserialize( in, false ) )
    {
       return false;
-   }
+   }*/
 
    switch( type_t( type ) ) {
       case tfunc:
@@ -133,9 +133,13 @@ bool Symbol::load( Stream *in )
       }
       break;
 
+      case tparam:
+        m_type = type_t( type );
+
+        break;
+
       case tundef:
       case tlocal:
-      case tparam:
       case tlocalundef:
          m_type = type_t( type );
 
@@ -162,7 +166,7 @@ bool Symbol::save( Stream *out ) const
    out->write( &line, sizeof( line ) );
    // the ID is not serialized, as it is determined by the module
 
-   m_name.serialize( out );
+   //m_name.serialize( out );
 
    switch( m_type ) {
       case tfunc: getFuncDef()->save( m_module, out ); break;
