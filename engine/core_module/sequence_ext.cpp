@@ -56,9 +56,9 @@ namespace core {
    in the item will be appended to this Sequence.
 
    If @b source is a callable item, it is called repeatedly to generate the sequence.
-   All the items it returns will be appended, untill
-   it declares being terminated by returning an oob(0). The function is called
-   atomically, so it can't perform coroutine swithces or any form of wait.
+   All the items it returns will be appended, until
+   it declares being terminated by returning an oob(0). Continuation objects are
+   also supported.
 
    If a @b filter callable is provided, all the items that should be appended
    are first passed to to it; the item returned by the callable will be used
@@ -99,7 +99,7 @@ FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm )
    if ( vm->param(0) == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "R|A|C|Sequence, C" ) );
+         .extra( "R|A|C|Sequence, [C]" ) );
    }
 
    // Save the parameters as the stack may change greatly.
@@ -107,11 +107,75 @@ FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm )
    fassert( seq != 0 );
 
    Item i_gen = *vm->param(0);
-   Item i_check = vm->param(1) == 0 ? Item(): *vm->param(1);
+   Item i_check = vm->param(1) == 0 ? Item() : *vm->param(1);
 
-   seq->comprehension( vm, i_gen, i_check );
-   vm->retval( vm->self() );
+   seq->comprehension_start( vm, vm->self(), i_check );
+   vm->pushParam( i_gen );
 }
+
+
+/*#
+   @method mcomp Sequence
+   @brief Appends elements to this sequence from multiple sources.
+   @param ... One or more sequences, ranges or a callables generating items.
+   @return This sequence.
+
+   This method works as @a Sequence.comp but it's possible to specify more
+   items and sequences.
+
+   The item that is added to the final sequence is an array containing one
+   item from each generator. The items taken from the first generator will be
+   placed in the first place of the array, the second item in the second place
+   and so on.
+
+   For example, the following
+*/
+FALCON_FUNC  Sequence_mcomp ( ::Falcon::VMachine *vm )
+{
+   // Save the parameters as the stack may change greatly.
+   Sequence* seq = vm->self().asObject()->getSequence();
+   fassert( seq != 0 );
+
+   StackFrame* current = vm->currentFrame();
+   seq->comprehension_start( vm, vm->self(), Item() );
+
+   for( uint32 i = 0; i < current->m_param_count; ++i )
+   {
+      vm->pushParam( current->m_params[i] );
+   }
+}
+
+
+/*#
+   @method mfcomp Sequence
+   @brief Appends elements to this sequence from multiple sources.
+   @param filter A filtering function receiving one item at a time.
+   @param ... One or more sequences, ranges or a callables generating items.
+   @return This sequence.
+*/
+FALCON_FUNC  Sequence_mfcomp ( ::Falcon::VMachine *vm )
+{
+   if ( vm->param(0) == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "C, ..." ) );
+   }
+
+   // Save the parameters as the stack may change greatly.
+   Sequence* seq = vm->self().asObject()->getSequence();
+   fassert( seq != 0 );
+
+   Item i_check = *vm->param(0);
+
+   StackFrame* current = vm->currentFrame();
+   seq->comprehension_start( vm, vm->self(), i_check );
+
+   for( uint32 i = 1; i < current->m_param_count; ++i )
+   {
+      vm->pushParam( current->m_params[i] );
+   }
+}
+
 
 /*#
    @method front Sequence

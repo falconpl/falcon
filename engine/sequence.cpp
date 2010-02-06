@@ -17,10 +17,14 @@
 #include <falcon/vm.h>
 #include <falcon/error.h>
 #include <falcon/garbageable.h>
-
-#include "stdio.h"
+#include <falcon/garbagepointer.h>
+#include <falcon/rangeseq.h>
 
 namespace Falcon {
+
+//===================================================================
+// TODO Remvoe at first major release
+//
 
 inline bool s_appendMe( VMachine *vm, Sequence* me, const Item &source, const Item &filter )
 {
@@ -140,159 +144,113 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
    }
 }
 
+//==========================================================================
+//
 
-#if 0
-static bool append_last_item( VMachine *vm )
+static bool multi_comprehension_generic_single_loop( VMachine* vm );
+static bool multi_comprehension_callable_multiple_loop( VMachine* vm );
+static bool multi_comprehension_filtered_loop( VMachine* vm );
+
+static bool comp_get_all_items_callable_next( VMachine *vm )
 {
-   CoreObject* self = vm->preParam(0)->asObject();
-   self->getSequence()->append( vm->regA() );
-   vm->retval( self );
-   return false;
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - Sequence GC pointer
+   // 2 - filter (nil)
+   // 3 - Source (callable)
+
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done.
+      vm->retval(vm->self());
+      return false;
+   }
+
+   // add the data.
+   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
+
+   // iterate.
+   vm->callFrame( *vm->local(3), 0 );
+   return true;
 }
 
-
 // gets all the items that it can from a comprehension
-static bool comp_get_all_items( const Item& source, const Item& filter, VMachine *vm )
+static bool comp_get_all_items( VMachine *vm, const Item& cmp )
 {
-   switch( source.type() )
+   Sequence* sequence = dyncast<Sequence*>(vm->local(1)->asGCPointer());
+
+   if ( cmp.isRange() )
    {
-   case FLC_ITEM_RANGE:
+      if ( cmp.asRangeIsOpen() )
       {
-         if ( source.asRangeIsOpen() )
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "open range" ) );
+      }
+
+      int64 start = cmp.asRangeStart();
+      int64 end = cmp.asRangeEnd();
+      int64 step = cmp.asRangeStep();
+
+      if ( start == end )
+      {
+         if ( step < 0 )
          {
-            throw new ParamError( ErrorParam( e_param_range, __LINE__ )
-               .origin( e_orig_runtime )
-               .extra( "open range" ) );
+            sequence->append( start );
          }
+         return false; // all done.
+      }
 
-         int64 start = source.asRangeStart();
-         int64 end = source.asRangeEnd();
-         int64 step = source.asRangeStep();
-
-         // do we have a filter?
-         if( filter.isNil() )
-         {
-            // no -- it's the simple case. Do all the sequence at once.
-            if ( start == end ) 
-            {
-               if ( step < 0 )
-               {
-                  this->append( start );
-                  return true; // all done.
-               }
-               return;
-            }
-
-            if( start < end )
-            {
-               if ( step < 0 )
-                  return true;
-               if ( step == 0 )
-                  step = 1;
-
-               while( start < end )
-               {
-                  this->append( start );
-                  start += step;
-               }
-            }
-            else {
-               if ( step > 0 )
-                  return false;
-               if ( step == 0 )
-                  step = -1;
-
-               while( start >= end )
-               {
-                  this->append( start );
-                  start += step;
-               }
-            }
-
-            // we have processed all the sequence.
+      if( start < end )
+      {
+         if ( step < 0 )
             return true;
-         }
-         else
+         if ( step == 0 )
+            step = 1;
+
+         while( start < end )
          {
-            // we do have a filter.
-            if ( start == end ) {
-               if ( step < 0 )
-               {
-                  vm->pushParam( vm->self() );  
-                  vm->pushParam( start );  
-                  vm->callFrame( filter, 1 );
-                  vm->returnHandler( append_last_item );
-               }
-               
-               return true;  // nothing more to do
-            }
-
-         if( start < end )
-         {
-            if ( step < 0 )
-               return true;
-            if ( step == 0 )
-               step = 1;
-
-            vm->local( 1 ) = start;
-
-
-               if ( ! s_appendMe( vm, this, start, filter ) )
-                  break;
-               start += step;
-            }
+            sequence->append( start );
+            start += step;
          }
-         else {
-            if ( step > 0 )
-               return;
-            if ( step == 0 )
-               step = -1;
+      }
+      else {
+         if ( step > 0 )
+            return false;
+         if ( step == 0 )
+            step = -1;
 
-            while( start >= end )
-            {
-               if ( ! s_appendMe( vm, this, start, filter ) )
-                  break;
-               start += step;
-            }
+         while( start >= end )
+         {
+            sequence->append( start );
+            start += step;
          }
       }
    }
    else if ( cmp.isCallable() )
    {
-      while( true )
-      {
-         vm->callItemAtomic( cmp, 0 );
-         if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
-         {
-            return;
-         }
+      // change the frame handler, so that instead of having
+      vm->returnHandler( comp_get_all_items_callable_next );
 
-         Item temp = vm->regA();
-         if( ! s_appendMe( vm, this, temp, filter ) )
-            break;
-      }
+      vm->callFrame( cmp, 0 );
+      // need more calls.
+      return true;
    }
-   // todo --- remove this as soon as we have iterators on ItemArrays
    else if ( cmp.isArray() )
    {
       const CoreArray& arr = *cmp.asArray();
-
       for( uint32 i = 0; i < arr.length(); i ++ )
       {
-         if ( ! s_appendMe( vm, this, arr[i], filter ) )
-            break;
+         sequence->append( arr[i] );
       }
    }
    else if ( (cmp.isObject() && cmp.asObjectSafe()->getSequence() ) )
    {
-      //Sequence* seq = cmp.isArray() ? &cmp.asArray()->items() : cmp.asObjectSafe()->getSequence();
-
-      Sequence* seq = cmp.asObjectSafe()->getSequence();
-      Iterator iter( seq );
+      Sequence* origseq = cmp.asObjectSafe()->getSequence();
+      Iterator iter( origseq );
       while( iter.hasCurrent() )
       {
-         if ( ! s_appendMe( vm, this, iter.getCurrent(), filter ) )
-            break;
+         sequence->append( iter.getCurrent() );
          iter.next();
       }
    }
@@ -301,46 +259,608 @@ static bool comp_get_all_items( const Item& source, const Item& filter, VMachine
                .origin( e_orig_runtime )
                .extra( "A|C|R|Sequence, [C]" ) );
    }
+
+   // we have processed all the sequence.
+   vm->retval( vm->self() );
+   return false;
+}
+
+#if 0
+
+static bool multi_comprehension_generic_multiple_loop_post_filter( VMachine* vm )
+{
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done.
+      vm->retval( vm->self() );
+      return false;
+   }
+
+   // TODO: Change in a generic sequence
+   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
+   vm->returnHandler( &multi_comprehension_generic_multiple_loop );
+   return true;
+}
+
+
+static bool multi_comprehension_generic_multiple_loop_post_call( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - GC Ptr to the sequence
+   // 2 - filter
+   // 3 - first iterator or callable
+   // 4 - second iterator or callable
+   // N-3 - ... nth iterator or callable.
+   // <Sequence where to store the data>
+
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done.
+      vm->retval( vm->self() );
+      return false;
+   }
+
+   if( vm->local(1)->isNil() )
+   {
+      // no filter
+      vm->local( vm->currentFrame()->stackSize()-1 )->asArray()->append( vm->regA() );
+      vm->returnHandler( &multi_comprehension_generic_multiple_loop_post_filter );
+   }
+   else
+   {
+      vm->returnHandler( &multi_comprehension_generic_multiple_loop_post_filter );
+      Item filter = *vm->local(2);
+      vm->pushParam( vm->regA() );
+      vm->pushParam( vm->self() );
+      vm->callFrame( filter, 2 );
+   }
+
+   return true;
+}
+
+
+static bool multi_comprehension_generic_multiple_loop( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - GCPointer to the sequence
+   // 2 - filter
+   // 3 - first iterator
+   // 4 - second iterator
+   // N-3 - ... nth iterator
+   // <Sequence where to store the data>
+
+   uint32 ssize = vm->currentFrame()->stackSize()-4;
+   int64 current = vm->local(0)->asInteger();
+
+   // prepare next loop
+   int64 next = current + 1;
+   if( next > (int64) ssize )
+   {
+      Item item = *vm->local(ssize + 3);
+      *vm->local(ssize + 3) = new CoreArray( ssize );
+
+      // do we have a filter?
+      if( ! vm->local(2)->isNil() )
+      {
+         // prepare for the next loop
+         *vm->local(0) = (int64) 0;
+
+         // call the filter
+         Item filter = *vm->local(2);
+         vm->returnHandler( &multi_comprehension_generic_multiple_loop_post_filter );
+         vm->pushParam( item );
+         vm->pushParam( vm->self() );
+         vm->callFrame( filter, 2 );
+
+         return true;
+      }
+      else
+      {
+         dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( item );
+      }
+
+      next = 1;
+      current = 0;
+   }
+   *vm->local(0) = next;
+
+   // get the element
+   Item* src = vm->local(current+3);
+
+   if ( src->isOob() )
+   {
+      // it's a callable -- we must call it.
+
+      // change the next loop
+      vm->returnHandler( &multi_comprehension_generic_multiple_loop_post_call );
+      vm->callFrame( *src, 0 );
+
+   }
+   else
+   {
+      Iterator* iter = dyncast<Iterator*>( src->asGCPointer() );
+      if ( iter->hasCurrent() )
+      {
+         vm->local(ssize + 3)->asArray()->append( iter->getCurrent() );
+         iter->next();
+      }
+      else
+      {
+         // we're done; we must discard this work-in-progress
+         vm->retval( vm->self() );
+         return false;
+      }
+   }
+
+   // continue
+   return true;
+}
+
+
+static bool multi_comprehension_generic_multiple_loop( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - GCPointer to the sequence
+   // 2 - filter
+   // 3 - first iterator or callable
+   // 4 - second iterator or callable
+   // N-3 - ... nth iterator pr callable
+   // <Sequence where to store the data>
+
+   uint32 ssize = vm->currentFrame()->stackSize()-4;
+   int64 current = vm->local(0)->asInteger();
+
+   // prepare next loop
+   int64 next = current + 1;
+   if( next > (int64) ssize )
+   {
+      Item item = *vm->local(ssize + 3);
+      *vm->local(ssize + 3) = new CoreArray( ssize );
+
+      // do we have a filter?
+      if( ! vm->local(2)->isNil() )
+      {
+         // prepare for the next loop
+         *vm->local(0) = (int64) 0;
+
+         // call the filter
+         Item filter = *vm->local(2);
+         vm->returnHandler( &multi_comprehension_generic_multiple_loop_post_filter );
+         vm->pushParam( item );
+         vm->pushParam( vm->self() );
+         vm->callFrame( filter, 2 );
+
+         return true;
+      }
+      else
+      {
+         dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( item );
+      }
+
+      next = 1;
+      current = 0;
+   }
+   *vm->local(0) = next;
+
+   // get the element
+   Item* src = vm->local(current+3);
+
+   Iterator* iter = dyncast<Iterator*>( src->asGCPointer() );
+   if ( iter->hasCurrent() )
+   {
+      vm->local(ssize + 3)->asArray()->append( iter->getCurrent() );
+      iter->next();
+   }
+   else
+   {
+      // we're done; we must discard this work-in-progress
+      vm->retval( vm->self() );
+      return false;
+   }
+
+   // continue
+   return true;
 }
 
 #endif
 
-static bool multi_comprehension_next( VMachine* vm )
+static bool multi_comprehension_filtered_loop_next( VMachine* vm )
+{
+   Sequence* self = dyncast<Sequence*>(vm->local(1)->asGCPointer());
+
+   Item& regA = vm->regA();
+   // do the last operation was an oob?
+   if( regA.isOob() )
+   {
+      // is it an integer?
+      if( regA.isInteger() )
+      {
+         // Request to stop?
+         if ( regA.asInteger() == 0 )
+         {
+            vm->retval( vm->self() );
+            return false;
+         }
+         else if ( regA.asInteger() != 1 )
+         {
+            self->append( vm->regA() );
+         }
+      }
+      else
+         self->append( vm->regA() );
+   }
+   else
+      self->append( vm->regA() );
+
+   return multi_comprehension_filtered_loop( vm );
+}
+
+
+static bool multi_comprehension_filtered_loop( VMachine* vm )
 {
    // STACK LOCAL :
    // 0 - Global counter
-   // 1 - Local counter
+   // 1 - GCPointer to the sequence
+   // 2 - filter
+   // 3 - first iterator
+   // 4 - second iterator
+   // N-3 - ... nth iterator
+
+   uint32 ssize = vm->currentFrame()->stackSize()-4;
+
+   // create the object to be added.
+   for( uint32 elem = 0; elem < ssize; ++elem )
+   {
+      Iterator* seq = dyncast<Iterator*>(vm->local(elem+3)->asGCPointer());
+      if( ! seq->hasCurrent() )
+      {
+         vm->retval( vm->self() );
+         return false;
+      }
+
+      vm->pushParam( seq->getCurrent() );
+   }
+
+   // advance
+   uint32 pos = ssize;
+   while( pos > 0 )
+   {
+      Iterator* seq = dyncast<Iterator*>(vm->local(pos-1+3)->asGCPointer());
+
+      // can we advance?
+      if( seq->next() )
+         break;
+
+      //--- and advance the previous element.
+      --pos;
+
+      //--- no? reset this element,
+      if( pos > 0 )
+      {
+         // but only if it's not the first. Then, we leave this set.
+         seq->goTop();
+         // leaving the first element set at bottom, we'll terminate at next loop
+      }
+   }
+
+   vm->pushParam( vm->self() );
+   vm->returnHandler( multi_comprehension_filtered_loop_next );
+   vm->callFrame( *vm->local(2), ssize + 1);
+
+   // continue
+   return true;
+}
+
+
+static bool multi_comprehension_generic_single_loop_post_filter( VMachine* vm )
+{
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done.
+      vm->retval( vm->self() );
+      return false;
+   }
+
+   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
+   vm->returnHandler( multi_comprehension_generic_single_loop );
+   return true;
+}
+
+static bool multi_comprehension_generic_single_loop_post_call( VMachine* vm )
+{
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done.
+      vm->retval( vm->self() );
+      return false;
+   }
+
+   // we know we have a filter, or we'd be in the simpler get all case.
+   Item filter = *vm->local(2);
+   vm->returnHandler( multi_comprehension_generic_single_loop_post_filter );
+   vm->pushParam( vm->regA() );
+   vm->pushParam( vm->self() );
+   vm->callFrame( filter, 2 );
+
+   return true;
+}
+
+static bool multi_comprehension_generic_single_loop( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - GCPointer of the sequence
+   // 2 - filter
+   // 3 - iterator or callable
+
+   // get the element
+   Item* src = vm->local(3);
+
+   if ( src->isOob() )
+   {
+      // it's a callable -- we must call it.
+      // change the next loop
+      vm->returnHandler( &multi_comprehension_generic_single_loop_post_call );
+      vm->callFrame( *src, 0 );
+   }
+   else
+   {
+      Iterator* iter = dyncast<Iterator*>( src->asGCPointer() );
+      if ( iter->hasCurrent() )
+      {
+         Item item = iter->getCurrent();
+         iter->next();
+
+         // call the filter --  we know we have it or we'd be in the simpler get all case
+         Item filter = *vm->local(2);
+         vm->returnHandler( &multi_comprehension_generic_single_loop_post_filter );
+         vm->pushParam( item );
+         vm->pushParam( vm->self() );
+         vm->callFrame( filter, 2 );
+      }
+      else
+      {
+         // we're done; we must discard this work-in-progress
+         vm->retval( vm->self() );
+         return false;
+      }
+   }
+
+   // continue
+   return true;
+}
+
+
+static bool multi_comprehension_callable_multiple_loop_next( VMachine* vm )
+{
+   uint32 ssize = vm->currentFrame()->stackSize();
+   Item* array = vm->local( ssize-1 );
+   CoreArray* ca = array->asArray();
+   int64 current = vm->local(0)->asInteger();
+
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      // we're done with this callable. We must store the result in the right place
+      vm->local( current + 3 )->setGCPointer( new Iterator( &ca->items() ) );
+      vm->local(0)->setInteger( current+1 );
+      vm->returnHandler( multi_comprehension_callable_multiple_loop );
+   }
+   else
+   {
+      ca->append( vm->regA() );
+      vm->callFrame( *vm->local(current+3), 0 );
+   }
+
+   return true;
+}
+
+
+static void multi_comprehension_generate_all( VMachine* vm )
+{
+   uint32 ssize = vm->currentFrame()->stackSize()-4;
+   Sequence* self = dyncast<Sequence*>(vm->local(1)->asGCPointer());
+
+   while( true )
+   {
+      // create the object to be added.
+      CoreArray* cret = new CoreArray( ssize );
+      for( uint32 elem = 0; elem < ssize; ++elem )
+      {
+         Iterator* seq = dyncast<Iterator*>(vm->local(elem+3)->asGCPointer());
+         if( ! seq->hasCurrent() )
+            return;
+         cret->append( seq->getCurrent() );
+      }
+
+      // append it
+      self->append( cret );
+
+      // advance
+      uint32 pos = ssize;
+      while( pos > 0 )
+      {
+         Iterator* seq = dyncast<Iterator*>(vm->local(pos-1+3)->asGCPointer());
+
+         // can we advance?
+         if( seq->next() )
+            break;
+
+         //--- no? reset this element,
+         seq->goTop();
+         //--- and advance the previous element.
+         --pos;
+      }
+
+      // did we reset the topmost element?
+      if ( pos == 0)
+         break;
+   }
+
+   vm->retval( vm->self() );
+}
+
+
+static bool multi_comprehension_callable_multiple_loop( VMachine* vm )
+{
+   uint32 ssize = vm->currentFrame()->stackSize()-4;
+   int64 current = vm->local(0)->asInteger();
+
+   while( (! vm->local(current+3)->isOob()) && current < ssize )
+   {
+      ++current;
+   }
+
+   if( current == ssize )
+   {
+      // No filter ?
+      if( vm->local(2)->isNil() )
+      {
+         multi_comprehension_generate_all( vm );
+         return false;
+      }
+
+      // we have run all the runnable generators. Now it's time to pack this up
+      vm->returnHandler( multi_comprehension_filtered_loop );
+
+      // it's useless to wait -- also call it now
+      return multi_comprehension_filtered_loop( vm );
+   }
+
+   Item callable = *vm->local(current+3);
+   // prepare for the next loop
+   vm->local(0)->setInteger( current );
+
+   // ready to accept the reutrn of the function
+   vm->local( ssize + 3 )->setArray( new CoreArray );
+   vm->returnHandler( multi_comprehension_callable_multiple_loop_next );
+
+   // call it
+   vm->callFrame( callable, 0 );
+
+   return true;
+}
+
+
+static bool multi_comprehension_first_loop( VMachine* vm )
+{
+   // STACK LOCAL :
+   // 0 - Global counter
+   // 1 - GCPointer of the sequence
    // 2 - filter
    // 3 - first comp source
    // 4 - second cmp source
    // N-3 - ... nth source.
 
    uint32 ssize = vm->currentFrame()->stackSize();
-   if ( ssize < 3 )
+   if ( ssize < 4 )
       return false;
    
    uint32 sources = ssize - 3;
-   if( sources == 1 )
+   if( sources == 1 && vm->local(2)->isNil() )
    {
-      
+      // we can use the simplified single comprehension system.
+      return comp_get_all_items( vm, *vm->local(3) );
    }
 
-   return false;
+   bool hasCallable = false;
 
+   // No luck; let's proceed with next loop
+   // we must transform all the sources in their iterator,
+   // For callable elements, we just set OOB.
+   for ( uint32 nSrc = 0; nSrc < sources; nSrc ++ )
+   {
+      Item* src = vm->local( 3 + nSrc );
+      if( src->isCallable() )
+      {
+         src->setOob(true);
+         hasCallable = true;
+      }
+      else
+      {
+         src->setOob(false); // just in case
+
+         if ( src->isRange() )
+         {
+            // the iterator will keep alive the range sequence as long as it exists.
+            src->setGCPointer( new Iterator( new RangeSeq( *src->asRange() ) ) );
+         }
+         else if ( src->isArray() )
+         {
+            src->setGCPointer( new Iterator( &src->asArray()->items() ) );
+         }
+         else if ( (src->isObject() && src->asObjectSafe()->getSequence() ) )
+         {
+            src->setGCPointer( new Iterator( src->asObjectSafe()->getSequence() ) ) ;
+         }
+         else {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                     .origin( e_orig_runtime )
+                     .extra( "A|C|R|Sequence, [C]" ) );
+         }
+      }
+   }
+
+   if( sources == 1 )
+   {
+      vm->returnHandler( &multi_comprehension_generic_single_loop );
+
+      // it's useless to wait -- also call it now
+      return multi_comprehension_generic_single_loop( vm );
+   }
+   else
+   {
+      // Todo: add an empty copy of the sequence in self instead.
+      vm->pushParam( Item() );
+
+      if( ! hasCallable )
+      {
+         // No filter ?
+         if( vm->local(2)->isNil() )
+         {
+            multi_comprehension_generate_all( vm );
+            return false;
+         }
+
+         vm->returnHandler( &multi_comprehension_filtered_loop );
+
+         // it's useless to wait -- also call it now
+         return multi_comprehension_filtered_loop( vm );
+      }
+      else
+      {
+         vm->returnHandler( multi_comprehension_callable_multiple_loop );
+
+         // it's useless to wait -- also call it now
+         return multi_comprehension_callable_multiple_loop( vm );
+      }
+   }
 }
 
-bool Sequence::comprehension_start( VMachine* vm, const Item& filter )
+
+bool Sequence::comprehension_start( VMachine* vm, const Item& self, const Item& filter )
 {
+   if( ! (filter.isNil() || filter.isCallable()) )
+   {
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( "filter" ) );
+   }
+
    // local copy before changing the stack.
    Item copyFilter = filter;
-   Item selfCpy = vm->self();
+   Item selfCpy = self;
 
-   vm->invokeReturnFrame(multi_comprehension_next);  
+   // Ask for a new stack frame, with immediate invocation of the return frame.
+   vm->invokeReturnFrame(multi_comprehension_first_loop);
+   // prepare data stub
    vm->addLocals( 3 );
    vm->self() = selfCpy;
-   *vm->local(0) = (int64) 0;
-   *vm->local(1) = (int64) 0;
-   *vm->local(2) = filter;
+   *vm->local(0) = (int64) 0;    // global counter
+   vm->local(1)->setGCPointer( this );
+   *vm->local(2) = filter;       // filter (may be nil)
 
    return true;
 }

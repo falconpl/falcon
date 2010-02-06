@@ -18,6 +18,7 @@ Falcon (0.9.6.1)
   * fixed: Local symbol tables of functions may have been broken, causing
            string expansion and other language elements in need of dynamic
            access to local symbol table to break.
+  * added: mcomp and mfcomp methods to sequences for multiple comprehension.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

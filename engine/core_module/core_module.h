@@ -347,7 +347,8 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Array_comptest( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_mcomp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_mfcomp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_table ( ::Falcon::VMachine *vm );
@@ -372,6 +373,8 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_first( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_last( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_comp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_mcomp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_mfcomp ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm );
@@ -461,6 +464,8 @@ extern reflectionFuncDecl TimeStamp_timezone_rfrom;
 extern reflectionFuncDecl TimeStamp_timezone_rto;
 
 FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_mcomp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_mfcomp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Sequence_front ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Sequence_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Sequence_first ( ::Falcon::VMachine *vm );
@@ -513,6 +518,8 @@ FALCON_FUNC  Method_attributes( ::Falcon::VMachine *vm );
 FALCON_FUNC  Class_attributes( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Object_comp( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_mcomp( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_mfcomp( ::Falcon::VMachine *vm );
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );

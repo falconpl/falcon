@@ -1,10 +1,10 @@
 TODO for 0.9.8
    
+   - URGENT: New GarbagePointer model to allow passing foreign types.
+   - URGENT: virtual constructor in sequences to allow them to build an empty copy.
    - Move dictionary find methods to standard sequences.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    - Provide Stream interface to Sockets.
-   - Add version prefix to include/ install
-   - [Desiderata] Submodule-loading (i.e. load core=>strings)
    - Native support for big numbers.
    - Type contracts.
    - New, more flexible compiler/module pair, and revision of the link

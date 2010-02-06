@@ -250,6 +250,14 @@ public:
    
    Iterator* nextIter() const { return m_next; }
    void nextIter( Iterator* n ) { m_next = n; }
+
+   inline void goTop() {
+      m_owner->getIterator( *this );
+   }
+
+   inline void goBottom() {
+      m_owner->getIterator( *this, true );
+   }
 };
 
 }

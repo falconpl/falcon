@@ -186,7 +186,7 @@ public:
       \return
    */
 
-   /* virtual */ bool comprehension_start( VMachine* vm, const Item& filter );
+   /* virtual */ bool comprehension_start( VMachine* vm, const Item& self, const Item& filter );
 
    /** The sequence may be bound to an object.
     * If the sequence is bound with a falcon script level object,

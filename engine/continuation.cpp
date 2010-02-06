@@ -77,7 +77,7 @@ bool Continuation::jump()
 
    if ( m_tgtSymbol != 0 )
    {
-      fassert( m_tgtSymbol->isFunction() )
+      fassert( m_tgtSymbol->isFunction() || m_tgtSymbol->isExtFunc() );
       if( m_bComplete )
       {
          throw new CodeError( ErrorParam( e_cont_out, __LINE__ )

@@ -48,7 +48,7 @@ FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm )
    if ( vm->param(0) == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "R|A|C|Sequence, C" ) );
+         .extra( "R|A|C|Sequence, [C]" ) );
    }
 
    // Save the parameters as the stack may change greatly.
@@ -57,17 +57,61 @@ FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm )
    Item i_gen = *vm->param(0);
    Item i_check = vm->param(1) == 0 ? Item(): *vm->param(1);
 
-   arr->items().comprehension( vm, i_gen, i_check );
-   vm->retval( vm->self() );
+   arr->items().comprehension_start( vm, vm->self(), i_check );
+   vm->pushParam( i_gen );
+
 }
 
-FALCON_FUNC  Array_comptest ( ::Falcon::VMachine *vm )
+/*#
+   @method mcomp Array
+   @brief Appends multiple elements to this array.
+   @param ... One or more sequences or item generators.
+   @return This array.
+
+   Please, see the description of @a Sequence.mcomp.
+   @see Sequence.mcomp
+*/
+FALCON_FUNC  Array_mcomp ( ::Falcon::VMachine *vm )
 {
-   // Save the parameters as the stack may change greatly.
    CoreArray* arr = vm->self().asArray();
-   arr->items().comprehension_start( vm, Item() );
-   vm->retval( vm->self() );
+   StackFrame* current = vm->currentFrame();
+   arr->items().comprehension_start( vm, vm->self(), Item() );
+
+   for( uint32 i = 0; i < current->m_param_count; ++i )
+   {
+      vm->pushParam( current->m_params[i] );
+   }
 }
+
+/*#
+   @method mfcomp Array
+   @brief Appends multiple elements to this array through a filter.
+   @param filter A filter function receiving each element before its insertion, or nil.
+   @param ... One or more sequences or item generators.
+   @return This array.
+
+   Please, see the description of @a Sequence.mfcomp.
+   @see Sequence.mfcomp
+*/
+FALCON_FUNC  Array_mfcomp ( ::Falcon::VMachine *vm )
+{
+   if ( vm->param(0) == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "C, ..." ) );
+   }
+
+   CoreArray* arr = vm->self().asArray();
+   Item i_check = *vm->param(0);
+   StackFrame* current = vm->currentFrame();
+   arr->items().comprehension_start( vm, vm->self(), i_check );
+
+   for( uint32 i = 1; i < current->m_param_count; ++i )
+   {
+      vm->pushParam( current->m_params[i] );
+   }
+}
+
 
 /*#
    @method front Array

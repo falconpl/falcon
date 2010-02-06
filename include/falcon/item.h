@@ -235,6 +235,12 @@ public:
       all.ctx.data.val32 = tof? 1: 0;
    }
 
+   /** Creates an garbage pointer item */
+   Item( GarbagePointer* val )
+   {
+      setGCPointer( val );
+   }
+
    /** Creates an integer item */
    Item( int16 val )
    {

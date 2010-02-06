@@ -640,7 +640,9 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
    self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp ).asSymbol()->
       addParam("source")->addParam("filter");
-   self->addClassMethod( array_meta, "comptest", &Falcon::core::Array_comptest );
+   self->addClassMethod( array_meta, "mcomp", &Falcon::core::Array_mcomp );
+   self->addClassMethod( array_meta, "mfcomp", &Falcon::core::Array_mfcomp ).asSymbol()->
+         addParam("filter");
    
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
    self->addClassMethod( array_meta, "NM", &Falcon::core::mth_arrayNM );
@@ -674,6 +676,9 @@ Module* core_module_init()
    self->addClassMethod( dict_meta, "last", &Falcon::core::Dictionary_last );
    self->addClassMethod( dict_meta, "comp", &Falcon::core::Dictionary_comp ).asSymbol()->
       addParam( "source" )->addParam( "filter" );
+   self->addClassMethod( dict_meta, "mcomp", &Falcon::core::Dictionary_mcomp );
+   self->addClassMethod( dict_meta, "mfcomp", &Falcon::core::Dictionary_mfcomp ).asSymbol()->
+      addParam( "filter" );
 
 
    self->addClassMethod( dict_meta, "merge", &Falcon::core::mth_dictMerge ).asSymbol()->
@@ -719,7 +724,11 @@ Module* core_module_init()
    self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
    self->addClassMethod( object_meta, "properties", &Falcon::core::mth_properties );
-   self->addClassMethod( object_meta, "comp", &Falcon::core::Object_comp );
+   self->addClassMethod( object_meta, "comp", &Falcon::core::Object_comp ).asSymbol()->
+         addParam("source")->addParam("filter");
+   self->addClassMethod( object_meta, "mcomp", &Falcon::core::Object_mcomp );
+   self->addClassMethod( object_meta, "mfcomp", &Falcon::core::Object_mfcomp ).asSymbol()->
+         addParam("filter");
    self->addClassMethod( object_meta, "apply", &Falcon::core::Object_apply );
    self->addClassMethod( object_meta, "getState", &Falcon::core::Object_getState );
    self->addClassMethod( object_meta, "setState", &Falcon::core::Object_setState );
@@ -1769,6 +1778,9 @@ Module* core_module_init()
 
    self->addClassMethod( sequence_class, "comp", &Falcon::core::Sequence_comp ).asSymbol()->
       addParam("source")->addParam("filter");
+   self->addClassMethod( sequence_class, "mcomp", &Falcon::core::Sequence_mcomp );
+   self->addClassMethod( sequence_class, "mfcomp", &Falcon::core::Sequence_mfcomp ).asSymbol()->
+      addParam("filter");
    self->addClassMethod( sequence_class, "front", &Falcon::core::Sequence_front );
    self->addClassMethod( sequence_class, "back", &Falcon::core::Sequence_back );
    self->addClassMethod( sequence_class, "last", &Falcon::core::Sequence_last );
