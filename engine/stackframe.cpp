@@ -62,8 +62,8 @@ StackFrame* StackFrame::copyDeep( StackFrame** bottom )
       }
       else
       {
-         current->prepareParams( nframe, current->m_param_count );
          current->prev( nframe );
+         current->prepareParams( nframe, current->m_param_count );
       }
 
       // Did we reach a given try frame ?
@@ -79,8 +79,10 @@ StackFrame* StackFrame::copyDeep( StackFrame** bottom )
          }
       }
 
-      curTryFrame = nframe->m_prevTryFrame;
       current = nframe;
+
+      curTryFrame = orig->m_prevTryFrame;
+      orig = orig->prev();
    }
 
    if ( bottom != 0 )

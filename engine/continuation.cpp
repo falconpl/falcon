@@ -39,7 +39,9 @@ Continuation::Continuation( const Continuation& e ):
    m_bComplete( e.m_bComplete )
 {
    if( e.m_top != 0 )
+   {
       m_top = e.m_top->copyDeep( &m_bottom );
+   }
    else
    {
       m_top = 0;
@@ -148,6 +150,24 @@ void Continuation::suspend( const Item& retval )
    m_bComplete = false;
 }
 
+
+bool Continuation::updateSuspendItem( const Item& itm )
+{
+   if ( m_top == 0 )
+      return false;
+
+   StackFrame* t = m_top;
+   while( t->prev() != m_bottom )
+   {
+      t = t->prev();
+   }
+
+   if( t->m_param_count )
+      t->m_params[0] = itm;
+
+   return true;
+}
+
 //=============================================================
 // Continuation Carrier
 
@@ -160,12 +180,17 @@ ContinuationCarrier::ContinuationCarrier( const CoreClass* cc ):
 
 ContinuationCarrier::ContinuationCarrier( const ContinuationCarrier& other ):
    CoreObject( other ),
+   m_citem( other.m_citem ),
    m_mark(0)
 {
    if( other.m_cont != 0 )
       m_cont = new Continuation( *other.m_cont );
    else
       m_cont = 0;
+
+   getMethod("_suspend",  suspendItem() );
+
+   m_cont->updateSuspendItem( suspendItem() );
 }
 
 ContinuationCarrier::~ContinuationCarrier()
@@ -175,7 +200,10 @@ ContinuationCarrier::~ContinuationCarrier()
 
 ContinuationCarrier *ContinuationCarrier::clone() const
 {
-   return new ContinuationCarrier( *this );
+   // for now, uncloneable
+   return 0;
+
+   //return new ContinuationCarrier( *this );
 }
 
 bool ContinuationCarrier::setProperty( const String &prop, const Item &value )
@@ -205,6 +233,7 @@ void ContinuationCarrier::gcMark( uint32 mark )
       while( sf != 0 )
       {
          sf->gcMark( mark );
+         sf = sf->prev();
       }
    }
 

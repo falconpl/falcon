@@ -69,6 +69,9 @@ public:
    ItemArray &params() { return m_params; }
    StackFrame* frames() const { return m_top; }
 
+   // the first parameter of the bottom call...
+   bool updateSuspendItem( const Item& itm );
+
 private:
 
    VMachine* m_vm;

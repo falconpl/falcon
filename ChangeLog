@@ -19,6 +19,11 @@ Falcon (0.9.6.1)
            string expansion and other language elements in need of dynamic
            access to local symbol table to break.
   * added: mcomp and mfcomp methods to sequences for multiple comprehension.
+  * fixed: Comprehension support is now not atomic (and supports 
+           continuations).
+  * fixed: Continuation.clone wasn't correctly working -- currently disabled
+           because causes segfaults.
+           
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 
