@@ -39,7 +39,7 @@ class Stateful
    end
 
 
-   state init
+   [init]
       function __enter( orig, lval ): return self._common_enter( orig, lval )
       function __leave( dest ): return self._common_leave( dest )
       
@@ -57,7 +57,7 @@ class Stateful
 
    end
 
-   state first
+   [first]
       function __enter( orig, lval ): return self._common_enter( orig, lval )
       function __leave( dest ): return self._common_leave( dest )
       
@@ -74,7 +74,7 @@ class Stateful
       end
    end
 
-   state second
+   [second]
       function __enter( orig, lval ): return self._common_enter( orig, lval )
       function __leave( dest ): return self._common_leave( dest )
 
@@ -97,13 +97,13 @@ class Stateful_sub from Stateful
       > "Stateful_sub.init"
    end
    
-   state first
+   [first]
       function f1()
          > "F1 from first -- in Stateful_sub"
       end
    end
 
-   state third
+   [third]
       function f1()
          > "F1 from third"
       end
