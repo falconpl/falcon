@@ -14,7 +14,7 @@ with Chimera is granted as well as backward compatibility with previous
 versions. The only major changes is the removal of the 'state' keyword; the
 functionality is maintained by declaring a state in brackets [...] in the
 body of a class. This helps porting old 0.9.4 code to the new release, and
-has a minor impact on existing code due to the novetly of the 'state'
+has a minor impact on existing code due to the novelty of the 'state'
 keyword.
 
   The most notable addition to this release is the falpack program which
@@ -33,13 +33,13 @@ New Features
     comprehension paradigm.
   - Support for OEM - IBM473 code page.
   - Path class has now new properties to access the unit + location
-    cobination in one step, making easier to write crossplatform
+    combination in one step, making easier to write cross-platform
     applications.
   - Added falpack to the command line tool suite.
 
 
-Critical bugfixes
-=================
+Critical bug fixes
+==================
 
   - Random crash on runtime errors during object init.
   - Error in class symbol de-serialization caused failure of fam loading.
