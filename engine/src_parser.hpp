@@ -90,70 +90,69 @@
      ENUM = 306,
      TRUE_TOKEN = 307,
      FALSE_TOKEN = 308,
-     STATE = 309,
-     OUTER_STRING = 310,
-     CLOSEPAR = 311,
-     OPENPAR = 312,
-     CLOSESQUARE = 313,
-     OPENSQUARE = 314,
-     DOT = 315,
-     OPEN_GRAPH = 316,
-     CLOSE_GRAPH = 317,
-     ARROW = 318,
-     VBAR = 319,
-     ASSIGN_POW = 320,
-     ASSIGN_SHL = 321,
-     ASSIGN_SHR = 322,
-     ASSIGN_BXOR = 323,
-     ASSIGN_BOR = 324,
-     ASSIGN_BAND = 325,
-     ASSIGN_MOD = 326,
-     ASSIGN_DIV = 327,
-     ASSIGN_MUL = 328,
-     ASSIGN_SUB = 329,
-     ASSIGN_ADD = 330,
-     OP_EQ = 331,
-     OP_AS = 332,
-     OP_TO = 333,
-     COMMA = 334,
-     QUESTION = 335,
-     OR = 336,
-     AND = 337,
-     NOT = 338,
-     LE = 339,
-     GE = 340,
-     LT = 341,
-     GT = 342,
-     NEQ = 343,
-     EEQ = 344,
-     OP_EXEQ = 345,
-     PROVIDES = 346,
-     OP_NOTIN = 347,
-     OP_IN = 348,
-     DIESIS = 349,
-     ATSIGN = 350,
-     CAP_CAP = 351,
-     VBAR_VBAR = 352,
-     AMPER_AMPER = 353,
-     MINUS = 354,
-     PLUS = 355,
-     PERCENT = 356,
-     SLASH = 357,
-     STAR = 358,
-     POW = 359,
-     SHR = 360,
-     SHL = 361,
-     CAP_XOROOB = 362,
-     CAP_ISOOB = 363,
-     CAP_DEOOB = 364,
-     CAP_OOB = 365,
-     CAP_EVAL = 366,
-     TILDE = 367,
-     NEG = 368,
-     AMPER = 369,
-     DECREMENT = 370,
-     INCREMENT = 371,
-     DOLLAR = 372
+     OUTER_STRING = 309,
+     CLOSEPAR = 310,
+     OPENPAR = 311,
+     CLOSESQUARE = 312,
+     OPENSQUARE = 313,
+     DOT = 314,
+     OPEN_GRAPH = 315,
+     CLOSE_GRAPH = 316,
+     ARROW = 317,
+     VBAR = 318,
+     ASSIGN_POW = 319,
+     ASSIGN_SHL = 320,
+     ASSIGN_SHR = 321,
+     ASSIGN_BXOR = 322,
+     ASSIGN_BOR = 323,
+     ASSIGN_BAND = 324,
+     ASSIGN_MOD = 325,
+     ASSIGN_DIV = 326,
+     ASSIGN_MUL = 327,
+     ASSIGN_SUB = 328,
+     ASSIGN_ADD = 329,
+     OP_EQ = 330,
+     OP_AS = 331,
+     OP_TO = 332,
+     COMMA = 333,
+     QUESTION = 334,
+     OR = 335,
+     AND = 336,
+     NOT = 337,
+     LE = 338,
+     GE = 339,
+     LT = 340,
+     GT = 341,
+     NEQ = 342,
+     EEQ = 343,
+     OP_EXEQ = 344,
+     PROVIDES = 345,
+     OP_NOTIN = 346,
+     OP_IN = 347,
+     DIESIS = 348,
+     ATSIGN = 349,
+     CAP_CAP = 350,
+     VBAR_VBAR = 351,
+     AMPER_AMPER = 352,
+     MINUS = 353,
+     PLUS = 354,
+     PERCENT = 355,
+     SLASH = 356,
+     STAR = 357,
+     POW = 358,
+     SHR = 359,
+     SHL = 360,
+     CAP_XOROOB = 361,
+     CAP_ISOOB = 362,
+     CAP_DEOOB = 363,
+     CAP_OOB = 364,
+     CAP_EVAL = 365,
+     TILDE = 366,
+     NEG = 367,
+     AMPER = 368,
+     DECREMENT = 369,
+     INCREMENT = 370,
+     DOLLAR = 371
    };
 #endif
 /* Tokens.  */
@@ -208,70 +207,69 @@
 #define ENUM 306
 #define TRUE_TOKEN 307
 #define FALSE_TOKEN 308
-#define STATE 309
-#define OUTER_STRING 310
-#define CLOSEPAR 311
-#define OPENPAR 312
-#define CLOSESQUARE 313
-#define OPENSQUARE 314
-#define DOT 315
-#define OPEN_GRAPH 316
-#define CLOSE_GRAPH 317
-#define ARROW 318
-#define VBAR 319
-#define ASSIGN_POW 320
-#define ASSIGN_SHL 321
-#define ASSIGN_SHR 322
-#define ASSIGN_BXOR 323
-#define ASSIGN_BOR 324
-#define ASSIGN_BAND 325
-#define ASSIGN_MOD 326
-#define ASSIGN_DIV 327
-#define ASSIGN_MUL 328
-#define ASSIGN_SUB 329
-#define ASSIGN_ADD 330
-#define OP_EQ 331
-#define OP_AS 332
-#define OP_TO 333
-#define COMMA 334
-#define QUESTION 335
-#define OR 336
-#define AND 337
-#define NOT 338
-#define LE 339
-#define GE 340
-#define LT 341
-#define GT 342
-#define NEQ 343
-#define EEQ 344
-#define OP_EXEQ 345
-#define PROVIDES 346
-#define OP_NOTIN 347
-#define OP_IN 348
-#define DIESIS 349
-#define ATSIGN 350
-#define CAP_CAP 351
-#define VBAR_VBAR 352
-#define AMPER_AMPER 353
-#define MINUS 354
-#define PLUS 355
-#define PERCENT 356
-#define SLASH 357
-#define STAR 358
-#define POW 359
-#define SHR 360
-#define SHL 361
-#define CAP_XOROOB 362
-#define CAP_ISOOB 363
-#define CAP_DEOOB 364
-#define CAP_OOB 365
-#define CAP_EVAL 366
-#define TILDE 367
-#define NEG 368
-#define AMPER 369
-#define DECREMENT 370
-#define INCREMENT 371
-#define DOLLAR 372
+#define OUTER_STRING 309
+#define CLOSEPAR 310
+#define OPENPAR 311
+#define CLOSESQUARE 312
+#define OPENSQUARE 313
+#define DOT 314
+#define OPEN_GRAPH 315
+#define CLOSE_GRAPH 316
+#define ARROW 317
+#define VBAR 318
+#define ASSIGN_POW 319
+#define ASSIGN_SHL 320
+#define ASSIGN_SHR 321
+#define ASSIGN_BXOR 322
+#define ASSIGN_BOR 323
+#define ASSIGN_BAND 324
+#define ASSIGN_MOD 325
+#define ASSIGN_DIV 326
+#define ASSIGN_MUL 327
+#define ASSIGN_SUB 328
+#define ASSIGN_ADD 329
+#define OP_EQ 330
+#define OP_AS 331
+#define OP_TO 332
+#define COMMA 333
+#define QUESTION 334
+#define OR 335
+#define AND 336
+#define NOT 337
+#define LE 338
+#define GE 339
+#define LT 340
+#define GT 341
+#define NEQ 342
+#define EEQ 343
+#define OP_EXEQ 344
+#define PROVIDES 345
+#define OP_NOTIN 346
+#define OP_IN 347
+#define DIESIS 348
+#define ATSIGN 349
+#define CAP_CAP 350
+#define VBAR_VBAR 351
+#define AMPER_AMPER 352
+#define MINUS 353
+#define PLUS 354
+#define PERCENT 355
+#define SLASH 356
+#define STAR 357
+#define POW 358
+#define SHR 359
+#define SHL 360
+#define CAP_XOROOB 361
+#define CAP_ISOOB 362
+#define CAP_DEOOB 363
+#define CAP_OOB 364
+#define CAP_EVAL 365
+#define TILDE 366
+#define NEG 367
+#define AMPER 368
+#define DECREMENT 369
+#define INCREMENT 370
+#define DOLLAR 371
 
 
 
@@ -302,7 +300,7 @@ lex_value_t
 
 
 /* Line 1676 of yacc.c  */
-#line 306 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
+#line 304 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

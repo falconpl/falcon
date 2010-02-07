@@ -15,15 +15,15 @@
 
 
 class Stateful
-   state one
+   [one]
       function __leave( newstate ): return @"leaving to ($newstate)"
    end
 
-   state two
+   [two]
       function __enter( oldstate, leave ): return @"coming from ($oldstate) - ($leave)"
    end
 
-   state three
+   [three]
    end
 
 end

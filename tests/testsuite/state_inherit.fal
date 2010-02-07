@@ -15,12 +15,12 @@
 
 
 class Base
-   state one
+   [one]
       function f1(): return "f1-one-base"
       function f2(): return "f2-one-base"
    end
 
-   state two
+   [two]
       function f1(): return "f1-two-base"
       function f2(): return "f2-two-base"
    end
@@ -28,14 +28,14 @@ end
 
 
 class DerivedOne from Base
-   state one
+   [one]
       function f1(): return "f1-one-d1"
       function f2(): return "f2-one-d1"
    end
 
    // inherit state two
    
-   state three
+   [three]
       function f1(): return "f1-three-d1"
       function f2(): return "f2-three-d1"
    end
@@ -43,12 +43,12 @@ end
 
 
 class DerivedTwo from Base
-   state one
+   [one]
       function f1(): return "f1-one-d2"
       // clears f2
    end
 
-   state two
+   [two]
       // clears state two
    end
 

@@ -13,11 +13,11 @@
 ****************************************************************************/
 
 class Stateful
-   state one
-   end
+   [one
+   ]
 
-   state two
-   end
+   [two
+   ]
 end
 
 class Stateless

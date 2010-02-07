@@ -19,7 +19,7 @@ class Base
       self.element = "started"
    end
    
-   state init
+   [init]
       function __enter(): self.element = "touched"
       function f1(): return "from init"
    end

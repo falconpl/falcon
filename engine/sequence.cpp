@@ -22,6 +22,20 @@
 
 namespace Falcon {
 
+class FALCON_DYN_CLASS GarbagePointer2: public GarbagePointer
+{
+   FalconData *m_ptr;
+
+public:
+   GarbagePointer2( FalconData *p ):
+         GarbagePointer( p )
+   {
+   }
+
+   virtual ~GarbagePointer2() {}
+   virtual bool finalize() { return false; }
+};
+
 //===================================================================
 // TODO Remvoe at first major release
 //
@@ -644,7 +658,7 @@ static bool multi_comprehension_callable_multiple_loop_next( VMachine* vm )
    if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
    {
       // we're done with this callable. We must store the result in the right place
-      vm->local( current + 3 )->setGCPointer( new Iterator( &ca->items() ) );
+      vm->local( current + 3 )->setGCPointer( new GarbagePointer2( new Iterator( &ca->items()) ) );
       vm->local(0)->setInteger( current+1 );
       vm->returnHandler( multi_comprehension_callable_multiple_loop );
    }
@@ -785,15 +799,18 @@ static bool multi_comprehension_first_loop( VMachine* vm )
          if ( src->isRange() )
          {
             // the iterator will keep alive the range sequence as long as it exists.
-            src->setGCPointer( new Iterator( new RangeSeq( *src->asRange() ) ) );
+            src->setGCPointer( new GarbagePointer2(
+                  new Iterator( new RangeSeq( *src->asRange() ) ) ) );
          }
          else if ( src->isArray() )
          {
-            src->setGCPointer( new Iterator( &src->asArray()->items() ) );
+            src->setGCPointer( new GarbagePointer2(
+                     new Iterator( &src->asArray()->items() ) ) );
          }
          else if ( (src->isObject() && src->asObjectSafe()->getSequence() ) )
          {
-            src->setGCPointer( new Iterator( src->asObjectSafe()->getSequence() ) ) ;
+            src->setGCPointer( new GarbagePointer2(
+                  new Iterator( src->asObjectSafe()->getSequence() ) ) ) ;
          }
          else {
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -859,7 +876,7 @@ bool Sequence::comprehension_start( VMachine* vm, const Item& self, const Item& 
    vm->addLocals( 3 );
    vm->self() = selfCpy;
    *vm->local(0) = (int64) 0;    // global counter
-   vm->local(1)->setGCPointer( this );
+   vm->local(1)->setGCPointer( new GarbagePointer2( this ) );
    *vm->local(2) = filter;       // filter (may be nil)
 
    return true;

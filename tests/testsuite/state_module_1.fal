@@ -21,7 +21,7 @@ class Parent
       self.value = "enter"
    end
 
-   state init
+   [init]
       function __enter()
          self._setup()
       end

@@ -1584,8 +1584,6 @@ int SrcLexer::checkLimitedTokens()
             return FALSE_TOKEN;
          if ( m_string == "fself" )
             return FSELF;
-         if ( m_string == "state" )
-            return STATE;
          if( m_string == "macro" )
          {
             m_string.size(0);

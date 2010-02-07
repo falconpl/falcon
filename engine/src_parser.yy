@@ -116,7 +116,6 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token ENUM
 %token TRUE_TOKEN
 %token FALSE_TOKEN
-%token STATE
 
 /* Special token used by the parser to generate a parse print */
 %token <stringp> OUTER_STRING
@@ -1994,7 +1993,7 @@ state_decl:
 ;
 
 state_heading:
-   STATE SYMBOL EOL
+   OPENSQUARE SYMBOL CLOSESQUARE EOL
       {
          Falcon::StmtClass* cls = 
             static_cast<Falcon::StmtClass*>( COMPILER->getContext() );
@@ -2002,7 +2001,7 @@ state_heading:
          COMPILER->pushContext( 
             new Falcon::StmtState( $2, cls ) ); 
       }
-  | STATE INIT EOL
+  | OPENSQUARE INIT CLOSESQUARE EOL
       {
          Falcon::StmtClass* cls = 
             static_cast<Falcon::StmtClass*>( COMPILER->getContext() );

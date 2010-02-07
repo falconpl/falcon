@@ -64,8 +64,8 @@ FALCON_FUNC  Object_comp ( ::Falcon::VMachine *vm )
    @param ... One or more sequences, ranges or callables generating items.
    @return This object.
 
-   This method extracts one item at a time from the source, and calls repeatedly the
-   @b append method of this object.
+   This method sends the data generated from multiple comprehension,
+   to the append method of this object.
 
    Please, see the description of @a Sequence.comp.
    @see Sequence.mcomp
@@ -95,8 +95,10 @@ FALCON_FUNC  Object_mcomp ( ::Falcon::VMachine *vm )
    @param ... One or more sequences, ranges or callables generating items.
    @return This object.
 
-   This method extracts one item at a time from the source, and calls repeatedly the
-   @b append method of this object.
+   This method performs a filtered multiple comprehension and and calls repeatedly the
+   @b append method of this object, passing the output of the filter function
+   to it each time. If the filter function returns an oob(1), the step is skipped
+   and the @b append method is not called.
 
    Please, see the description of @a Sequence.comp.
    @see Sequence.mfcomp

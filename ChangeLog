@@ -23,7 +23,7 @@ Falcon (0.9.6.1)
            continuations).
   * fixed: Continuation.clone wasn't correctly working -- currently disabled
            because causes segfaults.
-           
+  * major: "state" keyword removed. Now, states are declared with [statename] 
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

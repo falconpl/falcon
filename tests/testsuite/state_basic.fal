@@ -22,12 +22,12 @@ class Stateful
       return "f1-stateless"
    end
 
-   state one
+   [one]
       function f1(): return "f1-one"
       function f2(): return "f2-one"
    end
 
-   state two
+   [two]
       function f1(): return "f1-two"
       function f2(): return "f2-two"
    end

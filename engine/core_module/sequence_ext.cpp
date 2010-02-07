@@ -93,6 +93,10 @@ namespace core {
    sequence-compatible item in self. This means that comprehension needs not to
    be performed on a new, empty sequence; it may be also used to integrate more
    data in already existing sequences.
+
+   @see Array.comp
+   @see Dictionary.comp
+   @see Object.comp
 */
 FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm )
 {
@@ -117,19 +121,73 @@ FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm )
 /*#
    @method mcomp Sequence
    @brief Appends elements to this sequence from multiple sources.
-   @param ... One or more sequences, ranges or a callables generating items.
+   @param ... One or more sequences, ranges or callables generating items.
    @return This sequence.
 
    This method works as @a Sequence.comp but it's possible to specify more
-   items and sequences.
+   items and sequences. Each element in the result set is an array of
+   items in which each element extracted from a source or returned by
+   a generator is combined with all the others.
 
-   The item that is added to the final sequence is an array containing one
-   item from each generator. The items taken from the first generator will be
-   placed in the first place of the array, the second item in the second place
-   and so on.
+   For example, the following operation:
+   @code
+      [].mcomp( [1,2], [3,4] )
+   @endcode
 
-   For example, the following
+   results in:
+
+   @code
+      [ [1,3], [1,4], [2,3], [2,4] ]
+   @endcode
+
+   Generators are called repeatedly until they exhaust all the items they can
+   generate, in the same order as they are declared in the @b mcomp call.
+
+   For example:
+   @code
+      [].mcomp( alphagen, betagen )
+   @endcode
+
+   will first call alphagen until it returns an oob(0), and then call betagen
+   repeatedly.
+
+   @note Calls in this context are not atomic. Suspension, sleep, I/O, and
+   continuations are allowed and supported.
+
+   After all the generators are called, the collected data is mixed with static
+   data coming from other sources. For example:
+
+   @code
+      function make_gen( count, name )
+         i = 0
+         return {=>
+            if i == count: return oob(0)
+            > name, ": ", i
+            return i++
+            }
+      end
+
+      > [].mcomp( ["a","b"], make_gen(2, "first"), make_gen(2, "second") ).describe()
+   @endcode
+
+   will generate the following output:
+
+   @code
+      first: 0
+      first: 1
+      second: 0
+      second: 1
+      [ [ "a", 0, 0], [ "a", 0, 1], [ "a", 1, 0], [ "a", 1, 1],
+         [ "b", 0, 0], [ "b", 0, 1], [ "b", 1, 0], [ "b", 1, 1]]
+   @endcode
+
+   @note The @a Sequence.mfcomp provides a more flexible approach.
+
+   @see Array.mcomp
+   @see Dictionary.mcomp
+   @see Object.mcomp
 */
+
 FALCON_FUNC  Sequence_mcomp ( ::Falcon::VMachine *vm )
 {
    // Save the parameters as the stack may change greatly.
@@ -148,10 +206,73 @@ FALCON_FUNC  Sequence_mcomp ( ::Falcon::VMachine *vm )
 
 /*#
    @method mfcomp Sequence
-   @brief Appends elements to this sequence from multiple sources.
+   @brief Appends elements to this sequence from multiple sources through a filter.
    @param filter A filtering function receiving one item at a time.
-   @param ... One or more sequences, ranges or a callables generating items.
+   @param ... One or more sequences, ranges or callables generating items.
    @return This sequence.
+
+   This function works exactly as @a Sequence.mcomp, with the difference that
+   the elements generated are passed to a filter function for final delivery
+   to the target sequence.
+
+   @note The @b filter parameter is optional; if @b nil is passed to it, this
+   method works exactly as @a Sequence.mcomp.
+
+   For example, the math set operation
+   @code
+      { x*y for x in 1,2,3 and y in 4,5,6 }
+   @endcode
+
+   can be written using mfcomp like the following:
+
+   @code
+      [].mfcomp( {x, y => x*y}, .[1 2 3], .[4 5 6] )
+   @endcode
+
+   which results in
+
+   @code
+        [ 4, 5, 6, 8, 10, 12, 12, 15, 18]
+   @endcode
+
+   The as for @a Sequence.comp, filter receives an extra parameter which is the
+   sequence itself. For example, the following code:
+
+   @code
+      > [].mfcomp( {x, y, seq =>
+                     printl( "Seq is now long: " + seq.len() )
+                     return [seq.len(), x*y]
+                     },
+                  .[1 2 3], .[4 5 6]
+                  ).describe()
+   @endcode
+
+   generates this output:
+
+   @code
+      Seq is now long: 0
+      Seq is now long: 1
+      Seq is now long: 2
+      Seq is now long: 3
+      Seq is now long: 4
+      Seq is now long: 5
+      Seq is now long: 6
+      Seq is now long: 7
+      Seq is now long: 8
+      [ [ 0, 4], [ 1, 5], [ 2, 6], [ 3, 8], [ 4, 10], [ 5, 12], [ 6, 12], [ 7, 15], [ 8, 18]]
+   @endcode
+
+   Notice that it is possible to modify the sequence inside the filter, in case it's needed.
+
+   The filter may return an oob(1) to skip the value, and an oob(0) to terminate the
+   operation. For example, the following code s
+
+   @note The call Sequence.mfcomp( filter, seq ) is equivalent to
+         Sequence.comp( seq, filter ).
+
+   @see Array.mfcomp
+   @see Dictionary.mfcomp
+   @see Object.mfcomp
 */
 FALCON_FUNC  Sequence_mfcomp ( ::Falcon::VMachine *vm )
 {
