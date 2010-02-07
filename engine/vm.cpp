@@ -3293,22 +3293,13 @@ void VMachine::processMessage( VMMessage *msg )
    // create the coroutine, whose first operation will be
    // to call our external return frame.
    VMContext* sleepCtx = coPrepare(0);
-
-   // Push the message parameters
-   // Push the message parameters
-   for ( uint32 i = 0; i < msg->paramCount(); ++i )
-   {
-      sleepCtx->pushParam( *msg->param(i) );
-   }
-   // and create a full functional frame.
-   sleepCtx->createFrame(msg->paramCount());
    
    // force the sleeping context to call the return frame immediately
    sleepCtx->pc_next() = i_pc_call_external_return;
    sleepCtx->pc() = i_pc_call_external_return;
 
    // prepare the broadcast in the frame.
-   slot->prepareBroadcast( sleepCtx, 0, msg->paramCount(), msg );
+   slot->prepareBroadcast( sleepCtx, 0, 0, msg );
 
    // force immediate context rotation
    putAtSleep( m_currentContext );
@@ -3711,11 +3702,11 @@ void VMachine::periodicChecks()
 
       // perform messages
       m_mtx_mesasges.lock();
-      if( m_msg_head != 0 )
+      while( m_msg_head != 0 )
       {
          VMMessage* msg = m_msg_head;
          m_msg_head = msg->next();
-         if( m_msg_head )
+         if( m_msg_head == 0 )
             m_msg_tail = 0;
 
          // it is ok if m_msg_tail is left dangling.
@@ -3730,9 +3721,9 @@ void VMachine::periodicChecks()
          else
             processMessage( msg );  // do not delete msg
 
+         m_mtx_mesasges.lock();
       }
-      else
-         m_mtx_mesasges.unlock();
+      m_mtx_mesasges.unlock();
    }
 }
 

@@ -25,14 +25,18 @@ namespace Falcon {
 bool coreslot_broadcast_internal( VMachine *vm )
 {
    Iterator *ci = static_cast< Iterator *>( vm->local(0)->asGCPointer() );
+   VMMessage* msg = 0;
+   Item *msgItem = vm->local(4);
+   if( msgItem->isInteger() )
+   {
+      msg = (VMMessage*) msgItem->asInteger();
+   }
 
    if ( ! ci->hasCurrent() )
    {
       // were we called after a message?
-      Item *msgItem = vm->local(4);
-      if( msgItem->isInteger() )
+      if( msg != 0 )
       {
-         VMMessage* msg = (VMMessage*) msgItem->asInteger();
          msg->onMsgComplete( true );
          delete msg;
       }
@@ -59,16 +63,32 @@ bool coreslot_broadcast_internal( VMachine *vm )
    int64 pfirst = vm->local(1)->asInteger();
    if( pfirst < 0 )
    {
-      vm->pushParam( *vm->local( 2 ) );
+      Item cache = *vm->local( 2 );
+      vm->pushParam( cache );
       vm->callFrame( current, 1 );
    }
    else
    {
-      int64 paramCount = vm->local(2)->asInteger();
-      for( int32 i = 0; i < paramCount; i++ )
+      int64 paramCount = 0;
+
+      if( msg == 0 )
       {
-         vm->pushParam( *vm->param( (int32)(i + pfirst) ) );
+         paramCount = vm->local(2)->asInteger();
+         for( int32 i = 0; i < paramCount; i++ )
+         {
+            Item cache = *vm->param( (int32)(i + pfirst) );
+            vm->pushParam( cache );
+         }
       }
+      else
+      {
+         paramCount = msg->paramCount();
+         for ( uint32 i = 0; i < paramCount; ++i )
+         {
+            vm->pushParam( *msg->param(i) );
+         }
+      }
+
       vm->callFrame( current, (int32)paramCount );
    }
 
@@ -85,6 +105,9 @@ void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, V
    }
 
    Iterator* iter = new Iterator( this );
+
+   // and create a full functional frame.
+   //vmc->createFrame( pcount );
 
    // we don't need to set the slot as owner, as we're sure it stays in range
    // (slots are marked) on themselves.
