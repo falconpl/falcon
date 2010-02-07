@@ -30,7 +30,7 @@ namespace core {
 /*#
    @class StringStream
    @brief Memory based stream.
-   @optparam buffer
+   @optparam buffer The buffer that will be used as stream
    @from Stream
 
    The StringStream class inherits from stream. It can be used to provide
