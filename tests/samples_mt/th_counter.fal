@@ -28,6 +28,7 @@
 
 load threading
 const threadCount = 3
+const loops = 1000
 
 // ID: a numeric ID (in the panel)
 // counterIn: semaphore that must be acquired to have the right to write
@@ -47,7 +48,7 @@ class MyThread( id, counterIn, counterDone, panel ) from Thread
          if self.panel[0] == -1: break
 
          // start counting like mad
-         for i in [0:1000]
+         for i in [0:loops]
             self.panel[ self.id ] = i
             sleep( 0.01 )
          end
@@ -126,6 +127,11 @@ end
 // ask thread termination
 panel[0] = -1
 counterIn.post( threadCount + 1 )
+
+for th in ths
+   th.stop()
+   Threading.wait( th )
+end
 
 // avoid breaking last output
 tcnt.stop()
