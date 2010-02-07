@@ -3,38 +3,59 @@
 
                               Chimera Release
 
-                                  0.9.6
+                                  0.9.6.2
   
   "Chimera" version is an intermediate version that bridges Eagle series
 with the next series, in which we should put in the final compiler/module
 assets.
 
-  It has been issued as a standalone version to capitalize a number of
-very important achievements, and a very long set of critical bugfixes.
+  This is mainly a critical bugfix release over 0.9.6. Binary compatibility
+with Chimera is granted as well as backward compatibility with previous
+versions. The only major changes is the removal of the 'state' keyword; the
+functionality is maintained by declaring a state in brackets [...] in the
+body of a class. This helps porting old 0.9.4 code to the new release, and
+has a minor impact on existing code due to the novetly of the 'state'
+keyword.
+
+  The most notable addition to this release is the falpack program which
+is a first (fairly experimental, but working) try to generate stand-alone
+falcon applications. Although the final distributable package generated
+by this initial version of falpack consists of a directory tree with
+relevant modules and resources, the final result is ready to go at a simple
+click of the mouse. It's just a first step, but it already simplifies the
+task of preparing and delivering falcon-based applications, and already
+sufficient to fill the most common needs.
 
 New Features
 ============
 
-  - Call with continuation (like found in "scheme" language).
-  - Class 'states'.
-  - Passvp function to access variable parameters.
-  - (optional) readline/editline support for interactive mode.
-  - "Unbound" type.
-  - New deep "==", checking deeply language collections by
-    value, so that [1,2] == [1,2] holds true.
-  - New operator "eq" checking strict identity.
+  - mcomp and mfcomp Sequence methods implement a complete list
+    comprehension paradigm.
+  - Support for OEM - IBM473 code page.
+  - Path class has now new properties to access the unit + location
+    cobination in one step, making easier to write crossplatform
+    applications.
+  - Added falpack to the command line tool suite.
+
+
+Critical bugfixes
+=================
+
+  - Random crash on runtime errors during object init.
+  - Error in class symbol de-serialization caused failure of fam loading.
+  - Local symbol names could be randomly broken in fam files; this caused
+    @ "$local" expressions to randomly break.
+  - Asynchronous message processing was basically broken, but the breakage
+    could be spotted only randomly. This affects only 3d party modules using
+    asynchronous message generation, it doesn't affects scripts.
 
 Backward incompatibilities
 ==========================
 
-  This release introduces some minimal incompatibility with the previous
-version. In details:
-
-  - 'state' and 'eq' are now keywords. 
-  - All operator overrides in classes and POOP are now renamed; the double
-    underline is now IN FRONT of the operator override name. For example,
-    call__ is now named __call.
-
+  - 'state' keyword has been removed. A state can now be declared in a class
+    by the expression [state_name], closed by the 'end' statement. So,
+    'state' can be used again as a user symbol name (actually, this removes
+    a backward incompatibility that was introduced in 0.9.6.0).
 
 Usage tips
 ==========

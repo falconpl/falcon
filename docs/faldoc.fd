@@ -10,7 +10,7 @@
 
 Title = Falcon Core Module
 Author = The Falcon Committee
-Version = 0.9.6
+Version = 0.9.6.2
 
 ################################################
 # Faldoc Input settings
@@ -37,7 +37,7 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.6
+Output.html.directory=Falcon-docs-core.0.9.6.2
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
 
@@ -45,7 +45,7 @@ Output.html.doctitle=Falcon Function Reference
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=coreModule-0.9.6.lst
+Output.list.file=coreModule-0.9.6.2.lst
 Output.list.doctitle=Falcon Core Module - Function List
 Output.list.bytype=true
 Output.list.members=true
