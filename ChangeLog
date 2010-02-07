@@ -26,6 +26,10 @@ Falcon (0.9.6.2)
   * major: "state" keyword removed. Now, states are declared with [statename] 
   * fixed: Asynchronous message processing was basically broken, but the breakage
            could be spotted only at random conditions.
+  * fixed: Addressing issue on sparc64 caused segfault on __leave handling in
+           state transitions.
+  * fixed: the check on VMContext::preParam was totally bogus and
+           may have caused to return 0 even if proper pre-parameter existed.
   
 Falcon (0.9.6)
   * minor: On windows, stream functions now accept paths also in windows 

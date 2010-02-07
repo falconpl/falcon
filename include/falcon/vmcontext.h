@@ -368,15 +368,17 @@ public:
    */
    Item *preParam( uint32 itemId )
    {
-      if ( itemId >= m_frames->m_param_count ) return 0;
-      return m_frames->m_params[ -1 - itemId ].dereference();
+      Item* params = m_frames->m_params;
+      params -= 1 + itemId;
+      return params->dereference();
    }
 
    /** Const version of preParam */
    const Item *preParam( uint32 itemId ) const
    {
-      if ( itemId >= m_frames->m_param_count ) return 0;
-      return m_frames->m_params[ -1 - itemId ].dereference();
+      Item* params = m_frames->m_params;
+      params -= 1 + itemId;
+      return params->dereference();
    }
 
    /** Returns true if the nth element of the current function has been passed by reference.
