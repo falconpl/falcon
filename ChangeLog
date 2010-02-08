@@ -1,3 +1,7 @@
+Falcon (0.9.6.3)
+  * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
+           didn't discard the value.
+
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.
   * fixed: fileExt() returned the file part since first dot.

@@ -571,11 +571,20 @@ static bool multi_comprehension_filtered_loop( VMachine* vm )
 
 static bool multi_comprehension_generic_single_loop_post_filter( VMachine* vm )
 {
-   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   if( vm->regA().isOob() && vm->regA().isInteger() )
    {
-      // we're done.
-      vm->retval( vm->self() );
-      return false;
+      if( vm->regA().asInteger() == 0 )
+      {
+         // we're done.
+         vm->retval( vm->self() );
+         return false;
+      }
+      else if ( vm->regA().asInteger() == 1 )
+      {
+         // don't append
+         vm->returnHandler( multi_comprehension_generic_single_loop );
+         return true;
+      }
    }
 
    dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
