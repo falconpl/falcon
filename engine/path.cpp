@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: uri.cpp
+   FILE: path.cpp
 
-   RFC 3986 - Uniform Resource Identifier - implementation
+   RFC 3986 compliant path-parth - implementation
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 27 Feb 2008 22:05:33 +0100
@@ -125,6 +125,7 @@ bool Path::set( const String &path )
    return true;
 }
 
+
 void Path::compose()
 {
    m_path.size(0);
@@ -150,6 +151,7 @@ void Path::compose()
    if ( m_owner ) m_owner->m_encoded.size(0);
 }
 
+
 void Path::getWinFormat( String &str ) const
 {
    if ( m_path.size() == 0 )
@@ -174,6 +176,7 @@ void Path::getWinFormat( String &str ) const
    }
 }
 
+
 bool Path::getResource( String &str ) const
 {
    str = m_device;
@@ -186,6 +189,7 @@ bool Path::getLocation( String &str ) const
    str = m_location;
    return str.size() != 0;
 }
+
 
 bool Path::getFullLocation( String &str ) const
 {
@@ -277,6 +281,7 @@ bool Path::getFile( String &str ) const
    return str.size() != 0;
 }
 
+
 bool Path::getFilename( String &str ) const
 {
    if ( m_file.size() != 0 )
@@ -290,7 +295,6 @@ bool Path::getFilename( String &str ) const
 
    return false;
 }
-
 
 
 bool Path::getExtension( String &str ) const
@@ -333,6 +337,7 @@ void Path::extendLocation( const String &npath )
 
    compose();
 }
+
 
 void Path::setLocation( const String &loc )
 {
@@ -432,6 +437,7 @@ void Path::setFilename( const String &fname )
       compose();
    }
 }
+
 
 bool Path::isAbsolute() const
 {
@@ -564,11 +570,13 @@ void Path::uriToWin( String &result )
    result.bufferize();
    bool bRem = false;
 
-   for( unsigned int i = 0; i < result.length(); i ++ )
+   unsigned int i = 0;
+   while( i < result.length() )
    {
       int chr = result.getCharAt( i );
-      if( chr == '/' )
+      switch ( chr )
       {
+      case '/':
          // "/C:" disk specificator?
          if ( i == 0 )
             bRem = true;
@@ -576,9 +584,9 @@ void Path::uriToWin( String &result )
             bRem = false;
 
          result.setCharAt( i, '\\' );
-      }
-      else if ( chr == ':' )
-      {
+         break;
+      
+      case ':':
          // was the first "/" to be removed?
          if ( bRem )
          {
@@ -586,9 +594,42 @@ void Path::uriToWin( String &result )
             // get I back.
             i--;
          }
+         break;
+      
+      case '+':
+         result.setCharAt( i, ' ' );
+         break;
+      
+      // hex escape?
+      case '%':
+         {
+            // have we got enough space for 2 chars?
+            if( result.length() < i + 2 )
+            {
+               return;
+            }
+
+            char n1 = result.getCharAt( i+1 );
+            char n2 = result.getCharAt( i+2 );
+            uint32 r = 0;
+            if( n1 >= 'a' && n1 <= 'f' ) r += (n1-'a')*0x10;
+            else if( n1 >= 'A' && n1 <= 'F' ) r += (n1-'A')*0x10;
+            else if( n1 >= '0' && n1 <= '9' ) r += (n1-'0')*0x10;
+
+            if( n2 >= 'a' && n2 <= 'f' ) r += (n2-'a');
+            else if( n1 >= 'A' && n2 <= 'F' ) r += (n2-'A');
+            else if( n2 >= '0' && n2 <= '9' ) r += (n2-'0');
+
+            // remove extra chars
+            result.remove( i, i+2 );
+            // change the transformed one.
+            result.setCharAt( i, r );
+         }
+         break;
       }
+
+      i ++;
    }
 }
-
 
 }

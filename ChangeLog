@@ -1,6 +1,13 @@
 Falcon (0.9.6.3)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
            didn't discard the value.
+  * fixed: Path::uriToWin() (used to post-normalize paths on MS-Windows system)
+           didn't translate '+' into ' ', which meant troubles with filenames
+           including spaces on MS-Windows.
+  * fixed: falpack used the user-provided main script path as-is, without prior
+           normalization, causing all the scripts to be considered 
+           non-applciation (system) when the path was given in non-canonical
+           format.
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.
