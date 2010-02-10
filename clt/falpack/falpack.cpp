@@ -472,9 +472,23 @@ bool transferModules( Options &options, const String& mainScript )
    options.m_sLoadPath = ml.getSearchPath();
    message( "Falcon load path set to: " + options.m_sLoadPath );
 
-   // load the application.
+   // Load the main script alone; It's useful for two reasons:
+   // 1) if the main script fails to laod, we can issue a more precise error
+   // 2) using the path() from the main script we have a normalized representation
+   //    of the topmost directory where the other sub-modules will be found.
+   // Note -- throws on error; for now, we don't use the ability to signal 
+   //         a different error.
+
+   Module* mainMod = ml.loadFile( mainScript );
+
+   // update the script path with the normalized one.
+   options.m_sMainScript = mainMod->path();
+   options.m_sMainScriptPath = Path(mainMod->path()).getFullLocation();
+   message( "Normalized main script path: " + options.m_sMainScriptPath );
+
+   // load the rest of the application.
    Runtime rt( &ml );
-   rt.loadFile( mainScript );
+   rt.addModule( mainMod );
 
    const ModuleVector* mv = rt.moduleVector();
    for( uint32 i = 0; i < mv->size(); i ++ )
@@ -567,9 +581,6 @@ int main( int argc, char *argv[] )
    {
       options.m_sTargetDir = target.getFile();
    }
-
-   // add the main script path to the options, so that it can be stripped.
-   options.m_sMainScriptPath = target.getFullLocation();
 
    //===============================================================
    // We need a runtime and a module loader to load all the modules.
