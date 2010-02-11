@@ -1634,30 +1634,57 @@ void VMachine::electContext()
    // if there is some sleeping context...
    if ( ! m_sleepingContexts.empty() )
    {
-      VMContext *elect = (VMContext *) m_sleepingContexts.front();
-      m_sleepingContexts.popFront();
+      bool bInterrupted = false;
 
-      numeric tgtTime = elect->schedule();
-
-      // changhe the context to the first ready to run.
-      m_currentContext = elect;
-
-      // we must move to the next instruction after the context was swapped.
-      m_currentContext->pc() = m_currentContext->pc_next();
-
-      // tell the context that it is not waiting anymore, if it was.
-      elect->wakeup( false );
-
-      // Is the most ready context willing to sleep?
-      if( tgtTime < 0.0 ||  (tgtTime -= Sys::_seconds()) > 0.0 )
+      while( true )
       {
-         // raise an interrupted error if interrutped.
-         // also, this may wait forever (with a tgtime < 0);
-         // in this case the function may throw a deadlock error
-         onIdleTime( tgtTime );
-      }
+         VMContext *elect = (VMContext *) m_sleepingContexts.front();
+         m_sleepingContexts.popFront();
 
-      m_opCount = 0;
+         // change the context to the first ready to run.
+         m_currentContext = elect;
+
+         // we must move to the next instruction after the context was swapped.
+         m_currentContext->pc() = m_currentContext->pc_next();
+
+         numeric tgtTime = elect->schedule();
+
+         // Is the most ready context willing to sleep?
+         if( tgtTime < 0.0 ||  (tgtTime -= Sys::_seconds()) > 0.0 )
+         {
+            // If we're here after being interrupted, it means we didn't find
+            // a suitable runnable context after an interruption.
+            /*if( bInterrupted )
+            {
+               // Then this is a real interruption, and we got to die.
+               throw new InterruptedError(
+                     ErrorParam( e_interrupted ).origin( e_orig_vm ).
+                     symbol( currentSymbol()->name() ).
+                     module( currentModule()->name() )
+                  );
+            }*/
+
+            // This may wait forever (with a tgtime < 0);
+            // in this case the function may throw a deadlock error
+            bInterrupted = replaceMe_onIdleTime( tgtTime );
+
+            // very probably, the context we selected is not ready to run.
+            // Try again selecting a new context that another thread may have
+            // inserted in the meanwhile.
+            if( bInterrupted )
+            {
+               putAtSleep( m_currentContext );
+               continue;
+            }
+         }
+
+         // tell the context that it is not waiting anymore, if it was.
+         m_currentContext->wakeup( false );
+
+         m_opCount = 0;
+
+         break;
+      }
    }
 }
 
@@ -3278,6 +3305,18 @@ void VMachine::postMessage( VMMessage *msg )
    m_opNextCheck = m_opCount;
 
    m_mtx_mesasges.unlock();
+
+   // can we process the message now?
+   if( m_baton.tryAcquire() )
+   {
+      // this doesn't actually process data,
+      // it just prepares coroutines to process them. -- so it can't throw.
+      processPendingMessages();
+      m_baton.release();
+
+      // wake up the vm, if it was sleeping.
+      m_systemData.interrupt();
+   }
 }
 
 void VMachine::processMessage( VMMessage *msg )
@@ -3302,11 +3341,9 @@ void VMachine::processMessage( VMMessage *msg )
    slot->prepareBroadcast( sleepCtx, 0, 0, msg );
 
    // force immediate context rotation
-   putAtSleep( m_currentContext );
-   m_currentContext = sleepCtx;
-
-   // process immediate execution.
-   //callReturn();
+   /* putAtSleep( m_currentContext );
+   m_currentContext = sleepCtx;*/
+   putAtSleep( sleepCtx );
 }
 
 void VMachine::performGC( bool bWaitForCollect )
@@ -3541,6 +3578,10 @@ void VMachine::setupScript( int argc, char** argv )
 
 void VMachine::onIdleTime( numeric seconds )
 {
+}
+
+bool VMachine::replaceMe_onIdleTime( numeric seconds )
+{
    if ( seconds < 0.0 )
    {
       throw new CodeError(
@@ -3556,12 +3597,11 @@ void VMachine::onIdleTime( numeric seconds )
 
    if ( ! complete )
    {
-      throw new InterruptedError(
-         ErrorParam( e_interrupted ).origin( e_orig_vm ).
-            symbol( currentSymbol()->name() ).
-            module( currentModule()->name() )
-         );
+      m_systemData.resetInterrupt();
+      return true;
    }
+
+   return false;
 }
 
 
@@ -3701,30 +3741,28 @@ void VMachine::periodicChecks()
       }
 
       // perform messages
-      m_mtx_mesasges.lock();
-      while( m_msg_head != 0 )
-      {
-         VMMessage* msg = m_msg_head;
-         m_msg_head = msg->next();
-         if( m_msg_head == 0 )
-            m_msg_tail = 0;
-
-         // it is ok if m_msg_tail is left dangling.
-         m_mtx_mesasges.unlock();
-         if ( msg->error() )
-         {
-            Error* err = msg->error();
-            err->incref();
-            delete msg;
-            throw err;
-         }
-         else
-            processMessage( msg );  // do not delete msg
-
-         m_mtx_mesasges.lock();
-      }
-      m_mtx_mesasges.unlock();
+      processPendingMessages();
    }
+}
+
+
+void VMachine::processPendingMessages()
+{
+   m_mtx_mesasges.lock();
+   while( m_msg_head != 0 )
+   {
+      VMMessage* msg = m_msg_head;
+      m_msg_head = msg->next();
+      if( m_msg_head == 0 )
+         m_msg_tail = 0;
+
+      // it is ok if m_msg_tail is left dangling.
+      m_mtx_mesasges.unlock();
+      processMessage( msg );  // do not delete msg
+
+      m_mtx_mesasges.lock();
+   }
+   m_mtx_mesasges.unlock();
 }
 
 

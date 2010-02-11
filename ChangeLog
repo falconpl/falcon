@@ -8,6 +8,7 @@ Falcon (0.9.6.3)
            normalization, causing all the scripts to be considered 
            non-applciation (system) when the path was given in non-canonical
            format.
+  * minor: Asynchronous messages are now handled more smoothly.
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.

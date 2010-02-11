@@ -53,14 +53,6 @@ VMMessage::~VMMessage()
       m_error->decref();
 }
 
-
-void VMMessage::error( Error* err )
-{
-   err->incref(); 
-   m_error = err; 
-}
-
-
 void VMMessage::addParam( const SafeItem &itm )
 {
    if ( m_params == 0 )

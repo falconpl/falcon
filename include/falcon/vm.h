@@ -561,6 +561,15 @@ protected:
    */
    void setCurrent() const;
 
+   /** Process all the pending messages.
+    * Pending mesasges are sent to the processMessage() method, which
+    * creates a coroutine context ready to be fired as soon as the VM
+    * gets back in action.
+    *
+    * The processing order is not granted.
+    */
+   void processPendingMessages();
+
    /** Processes an incoming message.
       This searches for the slot requierd by the message;
       if it is found, the message is broadcast to the slot in a newly created coroutine,
@@ -2230,6 +2239,8 @@ public:
     */
 
     virtual void onIdleTime( numeric seconds );
+    //TODO: change signature next version
+    bool replaceMe_onIdleTime( numeric seconds );
 
    /** Binds a late binding in the current context.
 
