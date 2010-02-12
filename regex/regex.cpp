@@ -143,37 +143,37 @@ FALCON_MODULE_DECL
    // Regex class
    //
    Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
-   self->addClassMethod( regex_c, "study", Falcon::Ext::Regex_study );
-   self->addClassMethod( regex_c, "match", Falcon::Ext::Regex_match ).asSymbol()->
+   self->addClassMethod( regex_c, "study", &Falcon::Ext::Regex_study );
+   self->addClassMethod( regex_c, "match", &Falcon::Ext::Regex_match ).asSymbol()->
       addParam("string");
-   self->addClassMethod( regex_c, "grab", Falcon::Ext::Regex_grab ).asSymbol()->
+   self->addClassMethod( regex_c, "grab", &Falcon::Ext::Regex_grab ).asSymbol()->
       addParam("string");
-   self->addClassMethod( regex_c, "split", Falcon::Ext::Regex_split ).asSymbol()->
+   self->addClassMethod( regex_c, "split", &Falcon::Ext::Regex_split ).asSymbol()->
       addParam("string")->addParam("count")->addParam("gettoken");
-   self->addClassMethod( regex_c, "find", Falcon::Ext::Regex_find ).asSymbol()->
+   self->addClassMethod( regex_c, "find", &Falcon::Ext::Regex_find ).asSymbol()->
       addParam("string")->addParam("start");
-   self->addClassMethod( regex_c, "findAll", Falcon::Ext::Regex_findAll ).asSymbol()->
+   self->addClassMethod( regex_c, "findAll", &Falcon::Ext::Regex_findAll ).asSymbol()->
       addParam("string")->addParam("start")->addParam("maxcount");
-   self->addClassMethod( regex_c, "findAllOverlapped", Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
+   self->addClassMethod( regex_c, "findAllOverlapped", &Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
       addParam("string")->addParam("start")->addParam("maxcount");
-   self->addClassMethod( regex_c, "replace", Falcon::Ext::Regex_replace ).asSymbol()->
+   self->addClassMethod( regex_c, "replace", &Falcon::Ext::Regex_replace ).asSymbol()->
       addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "replaceAll", Falcon::Ext::Regex_replaceAll ).asSymbol()->
+   self->addClassMethod( regex_c, "replaceAll", &Falcon::Ext::Regex_replaceAll ).asSymbol()->
       addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "subst", Falcon::Ext::Regex_subst ).asSymbol()->
+   self->addClassMethod( regex_c, "subst", &Falcon::Ext::Regex_subst ).asSymbol()->
       addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "capturedCount", Falcon::Ext::Regex_capturedCount );
-   self->addClassMethod( regex_c, "captured", Falcon::Ext::Regex_captured ).asSymbol()->
+   self->addClassMethod( regex_c, "capturedCount", &Falcon::Ext::Regex_capturedCount );
+   self->addClassMethod( regex_c, "captured", &Falcon::Ext::Regex_captured ).asSymbol()->
       addParam("count");
-   self->addClassMethod( regex_c, "compare", Falcon::Ext::Regex_compare ).asSymbol()->
+   self->addClassMethod( regex_c, "compare", &Falcon::Ext::Regex_compare ).asSymbol()->
       addParam("string");
-   self->addClassMethod( regex_c, "version", Falcon::Ext::Regex_version );
+   self->addClassMethod( regex_c, "version", &Falcon::Ext::Regex_version );
 
    //==================================================
    // Error class
 
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *neterr_cls = self->addClass( "RegexError", Falcon::Ext::RegexError_init );
+   Falcon::Symbol *neterr_cls = self->addClass( "RegexError", &Falcon::Ext::RegexError_init );
    neterr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
 

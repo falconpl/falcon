@@ -409,6 +409,12 @@ bool Socket::bind( Address &addr, bool packet, bool broadcast )
       setsockopt( skt, SOL_SOCKET, SO_BROADCAST, (const char *) &iOpt, sizeof( iOpt ));
    }
 
+   // Always useful
+   {
+      int iOpt = 1;
+      setsockopt( skt, SOL_SOCKET, SO_REUSEADDR, (const char *) &iOpt, sizeof( iOpt ));
+   }
+
    int res = ::bind( skt, ai->ai_addr, ai->ai_addrlen );
    d.m_iSystemData = skt;
 

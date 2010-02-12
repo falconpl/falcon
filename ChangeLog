@@ -1,3 +1,6 @@
+Feathers (0.9.6.3)
+  * fixed: Added SO_REUSEADDR to default slocket initialization.
+
 Feathers (0.9.6)
   * fixed: Regex.compare never matched (return 0) when using capture 
            expressions.
