@@ -3403,7 +3403,7 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
          // try to find the parameter
          const String *pname = item.asLBind();
          Symbol *param = symtab == 0 ? 0 : symtab->findByName( *pname );
-         if ( param == 0 ) {
+         if ( param == 0 || ! param->isParam( ) ) {
             throw new CodeError( ErrorParam( e_undef_param, __LINE__ ).extra(*pname) );
          }
 

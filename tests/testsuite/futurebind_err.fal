@@ -1,0 +1,61 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 73c
+* Category: functional
+* Subcategory: fbind
+* Short: future binding errors
+* Description:
+* [/Description]
+*
+****************************************************************************/
+
+function f( x, y )
+   local = nil
+end
+
+try
+   f( local|10 )
+   failure( "Local variable passing not detected" )
+catch
+end
+
+a = .[ f local|10 ]
+try
+   a()
+   failure( "Local variable passing not detected" )
+catch
+end
+
+try
+   eval( a )
+   failure( "Local variable passing not detected ( eval )" )
+catch
+end
+
+v = nil
+try
+   b = .[let $v a]
+   eval( b )
+   failure( "Local variable passing not detected ( eval through let )" )
+catch
+end
+
+try
+   local = lbind( "local", 10 )
+   a = .[ f local ]
+   b = .[ let $v a]
+   eval( b )
+   failure( "Local variable passing not detected ( eval deep - precalc)" )
+catch
+end
+
+try
+   a = .[ f .[lbind "local", 10] ]
+   b = .[let $v a]
+   eval( b )
+   failure( "Local variable passing not detected ( eval deep )" )
+catch
+end
+
+success()
