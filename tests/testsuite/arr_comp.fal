@@ -34,6 +34,13 @@ if a[0] != ord('a'): failure( "Indirect comprehension, 'a'" )
 if a[1] != ord('b'): failure( "Indirect comprehension, 'b'" )
 if a[2] != ord('c'): failure( "Indirect comprehension, 'c'" )
 
+// indirect
+a = [].comp( ['a','b','Z','c'], { letter=> letter > 'Z' ? ord(letter): oob(1) } )
+if a.len() != 3: failure( "Skipping 'Z'" )
+if a[0] != ord('a'): failure( "Skipping 'Z', 'a'" )
+if a[1] != ord('b'): failure( "Skipping 'Z', 'b'" )
+if a[2] != ord('c'): failure( "Skipping 'Z', 'c'" )
+
 // ranged comprehension
 a = [].comp( [ ord('a'): ord('d')], { ln => chr(ln) } )
 if a.len() != 3: failure( "Ranged comprehension, size" )

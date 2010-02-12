@@ -3,7 +3,7 @@
 *
 * ID: 121c
 * Category: comp
-* Subcategory: array
+* Subcategory: 
 * Short: Custom comprehension
 * Description:
 *   Test on custom comprehension.
@@ -23,10 +23,19 @@ end
 ma = MetaArray()
 ma.comp( [0:3], {x=> x*2} )
 
-if ma.array.len() != 3: failure( "Size" )
-if ma.array[0] != 0: failure( "Zero" )
-if ma.array[1] != 2: failure( "One" )
-if ma.array[2] != 4: failure( "Twi" )
+if ma.array.len() != 3: failure( "1 - Size" )
+if ma.array[0] != 0: failure( "1 - Zero" )
+if ma.array[1] != 2: failure( "1 - One" )
+if ma.array[2] != 4: failure( "1 - Two" )
+
+// testing also OOB working
+ma = MetaArray()
+ma.comp( [0:10], {x=> x%2 == 0 ? x*2: oob( x < 5 ? 1:0 ) } )
+
+if ma.array.len() != 3: failure( "2 - Size" )
+if ma.array[0] != 0: failure( "2 - Zero" )
+if ma.array[1] != 4: failure( "2 - One" )
+if ma.array[2] != 8: failure( "2 - Two" )
 
 success()
 

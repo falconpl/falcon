@@ -35,6 +35,13 @@ if a['a'] != ord('a'): failure( "Indirect comprehension, 'a'" )
 if a['b'] != ord('b'): failure( "Indirect comprehension, 'b'" )
 if a['c'] != ord('c'): failure( "Indirect comprehension, 'c'" )
 
+// indirect
+a = [=>].comp( ['c','b',0,'a'], { letter=> letter == 0 ? oob(1) : [letter, ord(letter)] } )
+if a.len() != 3: failure( "Indirect comprehension, size" )
+if a['a'] != ord('a'): failure( "Indirect comprehension, 'a'" )
+if a['b'] != ord('b'): failure( "Indirect comprehension, 'b'" )
+if a['c'] != ord('c'): failure( "Indirect comprehension, 'c'" )
+
 // ranged comprehension
 a = [=>].comp( [ ord('a'): ord('d')], { ln => [chr(ln), ln] } )
 if a.len() != 3: failure( "Ranged comprehension, size" )
