@@ -325,12 +325,12 @@ FALCON_FUNC mth_strBack( VMachine *vm )
    at worst a single element containing a copy of the whole string passed as a
    parameter.
 
-   Contrarily to @a strSplit, this function will "eat up" adjiacent token. While
+   Contrarily to @a strSplit, this function will "eat up" adjacent tokens. While
    @a strSplit is more adequate to parse field-oriented strings (as i.e.
    colon separated fields in configuration files) this function is best employed
    in word extraction.
 
-   @note this function is equivalent to the fbom method String.splittr
+   @note this function is equivalent to the FBOM method String.splittr
 
    @note See @a Tokenizer for a more adequate function to scan extensively
    wide strings.
@@ -379,7 +379,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
 
    limit = count == 0 ? 0xffffffff: (int32) count->forceInteger();
 
-   // Parameter estraction.
+   // Parameter extraction.
    String *tg_str = target->asString();
    uint32 tg_len = target->asString()->length();
 
@@ -405,6 +405,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
 
    uint32 pos = 0;
    uint32 last_pos = 0;
+   bool lastIsEmpty = false;
    // scan the string
    while( limit > 1 && pos <= tg_len - sp_len  )
    {
@@ -421,6 +422,9 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
          // put the item in the array.
          uint32 splitend = pos - sp_len;
          retarr->append( new CoreString( String( *tg_str, last_pos, splitend ) ) );
+
+         lastIsEmpty = (last_pos + 1 >= splitend);
+
          last_pos = pos;
          limit--;
          // skip matching pattern
@@ -441,9 +445,9 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    }
 
    // Residual element?
-   if ( limit >= 1 || last_pos < tg_len ) {
-      uint32 splitend = tg_len;
-      retarr->append( new CoreString( String( *tg_str, last_pos, splitend ) ) );
+   // -- but only if we didn't already put a "" in the array
+   if ( limit >= 1 && ! lastIsEmpty ) {
+      retarr->append( new CoreString( String( *tg_str, last_pos, (uint32) tg_len ) ) );
    }
 
    vm->retval( retarr );

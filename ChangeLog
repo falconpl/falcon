@@ -9,7 +9,11 @@ Falcon (0.9.6.3)
            non-applciation (system) when the path was given in non-canonical
            format.
   * minor: Asynchronous messages are now handled more smoothly.
-  * fixed: future binding (named parameters) "invaded" local variables in target function symbol table. 
+  * fixed: future binding (named parameters) "invaded" local variables in target 
+           function symbol table. 
+  * fixed: strSplitTrimmed (and FBOM.splittr) put an extra empty string at the end
+           of the array when multiple separators was at the end of the parsed
+           input strings.
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.

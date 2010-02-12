@@ -76,11 +76,10 @@ if strarr7[2] != "": failure( "Two final missing - empty (third)" )
 if strarr7[3] != "": failure( "Two final missing - empty (fourth)" )
 
 strarr7 = strSplitTrimmed( "final;one;;", ";" )
-if len( strarr7 ) != 4: failure( "Two final field missing (trimmed) - size" )
+if len( strarr7 ) != 3: failure( "Two final field missing (trimmed) - size" )
 if strarr7[0] != "final": failure( "Two final field missing (trimmed) - first" )
 if strarr7[1] != "one": failure( "Two final field missing (trimmed) - second" )
 if strarr7[2] != "": failure( "Two final field missing (trimmed) - empty (third)" )
-if strarr7[3] != "": failure( "Two final field missing (trimmed) - empty (fourth)" )
 
 //split empty strings
 strarr7 = strSplit( "", ";" )
@@ -99,6 +98,10 @@ if strarr7[0] != "aaa": failure( "shorter split - content" )
 strarr7 = strSplitTrimmed( "aaa", ";;;;;;" )
 if len( strarr7 ) != 1: failure( "shorter split (trimmed) - size" )
 if strarr7[0] != "aaa": failure( "shorter split (trimmed) - content" )
+
+strarr7 = strSplitTrimmed( "*****abc*****def*****ghi*****", "*" )
+// != array works only since falcon 0.9.6
+if strarr7 != ["", "abc", "def", "ghi", ""]: failure( "split trimmed with multiple trims")
 
 success()
 
