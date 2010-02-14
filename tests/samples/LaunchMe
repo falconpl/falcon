@@ -26,20 +26,31 @@ load sdlmixer
 load sdlttf
 load sdlimage
 
-const prefix="/Volumes/Falcon SDL binding module/Resources/"
+//const prefix="/Volumes/Falcon SDL binding module/Resources/"
+const prefix="./"
 
-object MyEventManager from SDLEventHandler
-   quitRequest = false
-   surf1 = SDLRect( 0,20,640,80) 
+object MyEventManager
+   quitRequest = Semaphore()
+   surf1 = SDLRect( 0,20,640,80)
    surf2 = SDLRect( 0,90,640,150)
 
-   function onMouseMotion( state, x, y, xrel, yrel )      
-      static 
+   subs = [
+      "sdl_MouseMotion",
+      "sdl_Quit",
+      "sdl_Expose",
+      "UserEvent" ]
+
+   init
+      for event in self.subs: subscribe( event, self )
+   end
+
+   function on_sdl_MouseMotion( state, x, y, xrel, yrel )
+      static
          saved = SDL.CreateRGBSurface( SDL.HWSURFACE, 640, 60, 32 )
          global font, screen, color
          screen.BlitSurface( self.surf1, saved, nil )
       end
-      
+
       color.r, color.g, color.b = 20, 240, 240
       saved.BlitSurface( nil, screen, self.surf1 )
       dataImage = font.Render_Blended( @ "X=$x, Y=$y, XRel=$xrel, YRel=$yrel", color )
@@ -49,29 +60,29 @@ object MyEventManager from SDLEventHandler
       >> "X=",x, " Y=",y, " Xrel=", xrel, " YRel=",yrel, "       \r"
    end
 
-   function onQuit( state, x, y, xrel, yrel )
+   function on_sdl_Quit( state, x, y, xrel, yrel )
       > strReplicate( " ", 60 )
       > "== Quit! =="
-      self.quitRequest = true
+      self.quitRequest.post(2)
    end
 
-   function onExpose()
+   function on_sdl_Expose()
       global screen
       screen.UpdateRect()
    end
 
-   function onUserEvent( code, item )
-      static 
+   function on_UserEvent( code, item )
+      static
          saved = SDL.CreateRGBSurface( SDL.HWSURFACE, 640, 60, 32 )
          global font, screen, color
          screen.BlitSurface( self.surf2, saved, nil )
       end
-
       saved.BlitSurface( nil, screen, self.surf2 )
-      dataImage = font.Render_Blended( item.toString(), color )
-      dataImage.BlitSurface( nil, screen, self.surf2 )
+      if item
+         dataImage = font.Render_Blended( item.toString(), color )
+         dataImage.BlitSurface( nil, screen, self.surf2 )
+      end
       screen.UpdateRect()
-      > item, strReplicate( " ", 60 )
    end
 end
 
@@ -87,17 +98,15 @@ function blinker( screen )
    color = white
 
    time = 0
-   count = 0
-   while not MyEventManager.quitRequest
-      sleep( 0.8 )
-      gcPerform()
+   send = "Reset..."
+   while not MyEventManager.quitRequest.wait( 0.5 )
       color = (color == white ? black : white )
       screen.FillRect( r, color )
       screen.UpdateRect( r )
       time ++
-      if time > 4
-         time = 0
-         SDLEventHandler.PushUserEvent( 0, "Time event " + (count ++) +"..." )
+      if time % 6 == 0
+         send = send ? "" : "Time ticks " + time
+         broadcast( "UserEvent", 0, send  )
       end
    end
 end
@@ -107,9 +116,10 @@ end
 //
 
 try
-   a = SDL.InitAuto( SDL.INIT_VIDEO || SDL.INIT_AUDIO )
-   SDL.LoadBMP( prefix + "falcon-ico.bmp").SetIcon()
-   SDL.WM_SetCaption( "Falcon LaunchMe general test" )
+
+   autoSDL = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.WM_SetCaption( "Falcon SDL Event Handler Test" )
    screen = SDL.SetVideoMode( 640, 480 )
 
    // draw a cloured band - first hardware
@@ -121,18 +131,21 @@ try
       band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
    end
 
+   launch blinker( screen )
+
    // MUSIC ====================
 
    MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
    music = MIX.LoadMUS( prefix + "fading.ogg" )
    music.Play( loops| -1, fadeIn| 6 )
-   
+
    // FONT ======================
-   a = TTF.InitAuto()
+   autoFont = TTF.InitAuto()
    font = TTF.OpenFont( prefix + "Vera.ttf", 24)
+   font.SetFontStyle( TTF.STYLE_BOLD || TTF.STYLE_ITALIC )
+
    color = SDLColor( 20, 240, 240)
    color.r, color.g, color.b = 20, 240, 240
-   font.SetFontStyle( TTF.STYLE_BOLD || TTF.STYLE_ITALIC )
 
    screen.UpdateRect()
 
@@ -140,6 +153,7 @@ try
    for bid in [0:640]
       pixels[bid] = band.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
    end
+
 
    rect = SDLRect( 0,0,640,1)
    for y in [0:480]
@@ -149,18 +163,27 @@ try
    screen.UpdateRect()
 
    // make a solid rectangle
+
+   // make a solid rectangle
    launch blinker( screen )
-   
+
    > "Trying to load a BMP image:\n"
    img = IMAGE.Load( prefix + "FalconLogo1.bmp" )
    img.BlitSurface( nil, screen, SDLRect(0, 390, 640, 480 ) )
    screen.UpdateRect()
 
+   > "Success! - Now start moving the mouse."
+   > "Click the X on the bar to quit the app."
 
-   while not MyEventManager.quitRequest
-      MyEventManager.WaitEvent()
+   SDL.StartEvents()
+   count = 0
+   while true
+      if MyEventManager.quitRequest.wait(1): break
+      >> count++, "\r"
    end
+   SDL.StopEvents()
 
+   > "Complete."
 catch in e
    > "Test failed: "
    > e

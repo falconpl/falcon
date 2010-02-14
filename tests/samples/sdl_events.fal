@@ -25,7 +25,7 @@
 load sdl
 
 object MyEventManager
-   quitRequest = false
+   quitRequest = Semaphore()
    subs = [
       "sdl_MouseMotion",
       "sdl_Quit",
@@ -35,16 +35,16 @@ object MyEventManager
    init
       for event in self.subs: subscribe( event, self )
    end
-      
-   function on_sdl_MouseMotion( state, x, y, xrel, yrel )
+
+   function on_sdl_MouseMotion( xstate, x, y, xrel, yrel )
       >> "         X=",x, " Y=",y, " Xrel=", xrel, " YRel=",yrel, "       \r"
    end
 
-   function on_sdl_Quit( state, x, y, xrel, yrel )
+   function on_sdl_Quit()
       > strReplicate( " ", 60 )
       > "== Quit! =="
-      self.quitRequest = true
       broadcast( "UserEvent", 0, "I am quit" )
+      self.quitRequest.post(2)
    end
 
    function on_sdl_Expose()
@@ -69,8 +69,7 @@ function blinker( screen )
    color = white
 
    time = 0
-   while not MyEventManager.quitRequest
-      sleep( 0.5 )
+   while not MyEventManager.quitRequest.wait( 0.5 )
       color = (color == white ? black : white )
       screen.FillRect( r, color )
       screen.UpdateRect( r )
@@ -122,12 +121,13 @@ try
 
    SDL.StartEvents()
    count = 0
-   while not MyEventManager.quitRequest
-      sleep(0.01)
+   while true
+      if MyEventManager.quitRequest.wait(1): break
       >> count++, "\r"
-      //SDL.PollEvent()
    end
    SDL.StopEvents()
+
+   > "Complete."
 
 catch in e
    > "Test failed: "
