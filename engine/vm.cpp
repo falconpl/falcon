@@ -3327,6 +3327,7 @@ void VMachine::processMessage( VMMessage *msg )
    {
       msg->onMsgComplete( false );
       delete msg;
+      return;
    }
 
    // create the coroutine, whose first operation will be
