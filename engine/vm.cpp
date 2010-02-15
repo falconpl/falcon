@@ -1446,7 +1446,7 @@ bool VMachine::getCallerItem( Item &caller, uint32 level )
 {
    StackFrame* frame = currentFrame();
 
-   while( frame != 0 || level > 0 )
+   while( frame != 0 && level > 0 )
    {
       frame = frame->prev();
       level--;
