@@ -51,6 +51,10 @@ VMContext::VMContext():
    m_lmodule = 0;
 
    m_frames = allocFrame();
+   // reset stuff for the first frame,
+   // as allocFrame doesn't clear everything for performance reasons.
+   m_frames->m_param_count = 0;
+   m_frames->m_break = false;
 }
 
 VMContext::VMContext( const VMContext& other ):
@@ -75,6 +79,7 @@ VMContext::VMContext( const VMContext& other ):
    // reset stuff for the first frame,
    // as allocFrame doesn't clear everything for performance reasons.
    m_frames->m_param_count = 0;
+   m_frames->m_break = false;
 }
 
 
