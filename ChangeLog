@@ -16,6 +16,8 @@ Falcon (0.9.6.3)
            input strings.
   * fixed: Failing to init the frame in new VMContexts would have caused random
            crashes depending on linkage or memory conditions (thanks Mordae).
+  * fixed: Invalid loop condition caused fself.caller() to segfault (all
+           thanks to fgenesis).
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.

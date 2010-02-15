@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 13f
+* Category: functions
+* Subcategory:
+* Short: Function caller
+* Description:
+* This test calls a function that in turns calls another function
+* that calls the original function with a different argument. It
+* verifies that fself.caller is working properly.
+* [/Description]
+*
+****************************************************************************/
+
+function test1()
+   return fself.caller()(3)
+end
+
+function test( param )
+   if 1 == param
+      return test1()
+   else
+      return 2
+   end
+end
+
+if test(1) != 2: failure( "fself.caller" )
+success()
+
+/* End of file */
