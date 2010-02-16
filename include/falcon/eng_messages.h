@@ -132,7 +132,7 @@ FAL_ERRORDECL( e_prov_name, 35, "Operator ''provides'' must be followed by a sym
 FAL_ERRORDECL( e_init_given, 36, "Constructor already declared" );
 
 FAL_ERRORDECL( e_static_const, 37, "Static member initializers must be a constant expression" );
-FAL_ERRORDECL( e_inv_inherit, 38, "Class inhertits from a symbol that is not a class" );
+FAL_ERRORDECL( e_inv_inherit, 38, "Class inherits from a symbol that is not a class" );
 FAL_ERRORDECL( e_nonsym_ref, 39, "Trying to get a reference from something that's not a symbol" );
 
 FAL_ERRORDECL( e_no_cls_inst, 40, "No internal class found for standalone object" );
