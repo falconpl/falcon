@@ -94,6 +94,13 @@ elseif(WIN32)
   )
 endif()
 
+#####################################################################################
+# Including headers in the source list helps CMAKE to build better IDE project files.
+
+file(GLOB FALCON_HEADERS "../include/falcon/*.h" )
+
+#################
+
 set(CORE_MODULE_SOURCES
   core_module/array_ext.cpp
   core_module/attrib_ext.cpp
@@ -142,6 +149,7 @@ set(CORE_MODULE_SOURCES
   core_module/uri_ext.cpp
   core_module/vminfo_ext.cpp
 )
+
 
 add_library(falcon_engine SHARED
   attribmap.cpp
@@ -238,6 +246,9 @@ add_library(falcon_engine SHARED
   src_parser.hpp
   src_parser.cpp
   #
+  
+  ${FALCON_HEADERS}
+  
   ${CORE_MODULE_SOURCES}
   ${SYS_SPECIFIC}
 )
