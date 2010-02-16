@@ -91,6 +91,7 @@ end
 
 if list.back() != "z": failure( "Setting an item" )
 
+
 // deleting an item
 compose = ""
 for elem in list
@@ -128,6 +129,9 @@ end
 if list.front() != "a" or list.back() != "a"
    failure( "Continue dropping on last" )
 end
+
+// check with fordot - on the same line
+for elem in list: .= "d"
 
 success()
 

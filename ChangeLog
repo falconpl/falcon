@@ -18,6 +18,7 @@ Falcon (0.9.6.3)
            crashes depending on linkage or memory conditions (thanks Mordae).
   * fixed: Invalid loop condition caused fself.caller() to segfault (all
            thanks to fgenesis).
+  * fixed: Fordot statement (.=) couldn't be used after for/in...: (after a colon).
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.

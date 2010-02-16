@@ -565,27 +565,30 @@ forin_header:
    
 forin_statement:
    
-   forin_header COLON statement
+   forin_header COLON 
    {
       Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>($1);
-      if( $3 != 0 )
-      {
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
-         
-         COMPILER->addStatement( $3 );
+    }
+    statement
+    {
+         if( $4 != 0 )
+         {
+            COMPILER->addStatement( $4 );
+         }
          
          COMPILER->popLoop();
          COMPILER->popContext();
          COMPILER->popContextSet();
-      }
-      $$ = f;
+         $$ = $1;
    }
 
    | forin_header EOL
       {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>($1);
+      
       
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
