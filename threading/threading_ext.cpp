@@ -242,12 +242,16 @@ FALCON_FUNC Thread_start( VMachine *vm )
          desc( FAL_STR( th_msg_running ) ) );
    }
 
+   // First link in falcon.core module.
+   Runtime rt;
+   LiveModule *fc = vm->findModule( "falcon.core" );
+   if ( 0 != fc )
+      rt.addModule( const_cast<Module *>(fc->module()) );
+
    // Prelink the modules into the new VM
    const LiveModuleMap &mods = vm->liveModules();
    MapIterator iter = mods.begin();
-   bool success = true;
-   Runtime rt;
-   while( iter.hasCurrent() && success )
+   while( iter.hasCurrent() )
    {
       LiveModule *lmod = *(LiveModule **) iter.currentValue();
       Module *mod = const_cast<Module*>(lmod->module());
@@ -1637,6 +1641,11 @@ FALCON_FUNC Threading_start( VMachine *vm )
    // Create the runtime that will hold all the modules
    ThreadImpl *thread = new ThreadImpl;
    Runtime rt;
+
+   // First link in falcon.core module.
+   LiveModule *fc = vm->findModule( "falcon.core" );
+   if ( 0 != fc )
+      rt.addModule( const_cast<Module *>(fc->module()) );
 
    const LiveModuleMap &mods = vm->liveModules();
    MapIterator iter = mods.begin();
