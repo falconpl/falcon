@@ -248,16 +248,28 @@ FALCON_FUNC Thread_start( VMachine *vm )
    if ( 0 != fc )
       rt.addModule( const_cast<Module *>(fc->module()) );
 
+   // The main module goes after.
+   LiveModule* mainMod = vm->mainModule();
+
    // Prelink the modules into the new VM
    const LiveModuleMap &mods = vm->liveModules();
    MapIterator iter = mods.begin();
    while( iter.hasCurrent() )
    {
       LiveModule *lmod = *(LiveModule **) iter.currentValue();
-      Module *mod = const_cast<Module*>(lmod->module());
-      rt.addModule( mod, lmod->isPrivate() );
+      if( lmod != fc && lmod != mainMod )
+      {
+         Module *mod = const_cast<Module*>(lmod->module());
+         rt.addModule( mod, lmod->isPrivate() );
+      }
+
       iter.next();
    }
+
+   // finally, insert the main module
+   if ( mainMod != 0 )
+      rt.addModule( const_cast<Module*>(mainMod->module()), mainMod->isPrivate() );
+
 
    // Do not set error handler; errors will emerge in the module.
    if ( ! thread->vm().link( &rt ) )
