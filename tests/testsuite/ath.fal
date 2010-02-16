@@ -27,7 +27,8 @@ load zb
 
 class Th from Thread
    function run()
-
+      ab()
+      zb()
       return 0
    end
 end
