@@ -112,7 +112,7 @@ void ModuleLoader::getModuleName( const String &path, String &modName )
 
    int32 dotpos = path.rfind( "." );
    int32 slashpos = path.rfind( "/" );
-   if ( dotpos == -1 )
+   if ( dotpos == -1  || dotpos < slashpos )
       dotpos = path.length();
    // legal also if slashpos < 0
 
