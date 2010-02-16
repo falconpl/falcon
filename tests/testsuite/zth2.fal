@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 51d
+* Category: threading
+* Subcategory:
+* Short: Runtime re-creation (1)
+* Description:
+*    The threading module must create a vm similar to the original one
+*    when starting a new thread. To do that, it creates a new runtime
+*    filling it with the modules coming from the calling VM, and links
+*    it in a new VM.
+*
+*    This test checks that dependency from core and from threading is
+*    correctly restacked. It consists of two scripts, with names at the
+*    opposite spectrum of the module map, so that if correct order is not
+*    granted, a link error will arise.
+*
+*    In this first test, the name of the calling module is the highest.
+* [/Description]
+*
+**************************************************************************/
+
+load threading
+load AB
+load zb
+
+Threading.start({=> return 0}).join()
+success()
+
