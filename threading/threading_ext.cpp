@@ -1652,22 +1652,42 @@ FALCON_FUNC Threading_start( VMachine *vm )
 
    // Create the runtime that will hold all the modules
    ThreadImpl *thread = new ThreadImpl;
-   Runtime rt;
+
+   // refuse to run if running, and atomically change to running.
+   if( ! thread->startable() )
+   {
+      throw new ThreadError( ErrorParam( FALTH_ERR_RUNNING, __LINE__ ).
+         desc( FAL_STR( th_msg_running ) ) );
+   }
 
    // First link in falcon.core module.
+   Runtime rt;
    LiveModule *fc = vm->findModule( "falcon.core" );
    if ( 0 != fc )
       rt.addModule( const_cast<Module *>(fc->module()) );
 
+   // The main module goes after.
+   LiveModule* mainMod = vm->mainModule();
+
+   // Prelink the modules into the new VM
    const LiveModuleMap &mods = vm->liveModules();
    MapIterator iter = mods.begin();
    while( iter.hasCurrent() )
    {
       LiveModule *lmod = *(LiveModule **) iter.currentValue();
-      const Module *mod = lmod->module();
-      rt.addModule( const_cast<Module *>(mod) );
+      if( lmod != fc && lmod != mainMod )
+      {
+         Module *mod = const_cast<Module*>(lmod->module());
+         rt.addModule( mod, lmod->isPrivate() );
+      }
+
       iter.next();
    }
+
+   // finally, insert the main module
+   if ( mainMod != 0 )
+      rt.addModule( const_cast<Module*>(mainMod->module()), mainMod->isPrivate() );
+
 
    // Do not set error handler; errors will emerge in the module.
    if ( ! thread->vm().link( &rt ) )
