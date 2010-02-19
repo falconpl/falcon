@@ -28,6 +28,9 @@
 #include <falcon/types.h>
 #include <falcon/memory.h>
 
+// OS signal handling
+#include <falcon/signals.h>
+
 // Global engine functions and variables
 #include <falcon/globals.h>
 #include <falcon/transcoding.h>

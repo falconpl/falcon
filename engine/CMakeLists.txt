@@ -26,6 +26,7 @@ if(UNIX OR APPLE)
     time_sys_unix.cpp
     vm_sys_posix.cpp
     vfs_file_unix.cpp
+    signals_posix.cpp
   )
 
   #for solaris system flavor, add sys_solaris.cpp
@@ -91,6 +92,7 @@ elseif(WIN32)
     vm_sys_win.cpp
     vfs_file_win.cpp
     falcon_engine.rc
+    signals_win.cpp
   )
 endif()
 
