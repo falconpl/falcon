@@ -283,7 +283,7 @@ void MemPool::electOlderVM()
 
 void MemPool::clearRing( GarbageableBase *ringRoot )
 {
-   TRACE( "Entering sweep %d, allocated %d", gcMemAllocated(), m_allocatedItems );
+   TRACE( "Entering sweep %ld, allocated %ld", (long)gcMemAllocated(), (long)m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
@@ -314,7 +314,7 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
       }
    }
 
-   TRACE( "Sweeping step 1 complete %d", gcMemAllocated() );
+   TRACE( "Sweeping step 1 complete %ld", (long)gcMemAllocated() );
 
    // deleting persistent finalized items.
    while( later_ring != 0 )
@@ -324,14 +324,14 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
       delete current;
       killed++;
    }
-   TRACE( "Sweeping step 2 complete %d", gcMemAllocated() );
+   TRACE( "Sweeping step 2 complete %ld", (long)gcMemAllocated() );
 
    m_mtx_newitem.lock();
    fassert( killed <= m_allocatedItems );
    m_allocatedItems -= killed;
    m_mtx_newitem.unlock();
 
-   TRACE( "Sweeping done, allocated %d (killed %d)", m_allocatedItems, killed );
+   TRACE( "Sweeping done, allocated %ld (killed %ld)", (long)m_allocatedItems, (long)killed );
 }
 
 
@@ -519,7 +519,7 @@ void MemPool::markItem( const Item &item )
 
 void MemPool::gcSweep()
 {
-   TRACE( "Sweeping %d (mingen: %d, gen: %d)", gcMemAllocated(), m_mingen, m_generation );
+   TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
    m_mtx_ramp.lock();
    RampMode *rm = m_curRampMode;
    if( m_curRampMode != 0 )
@@ -633,7 +633,7 @@ void* MemPool::run()
                   memory >= m_thresholdNormal ? 1 :      // normal mode
                   0;                                     // dormient mode
 
-      TRACE( "Working %d (in mode %d)", gcMemAllocated(), state );
+      TRACE( "Working %ld (in mode %d)", (long)gcMemAllocated(), state );
 
       // put the new ring in the garbage ring
       m_mtx_newitem.lock();
@@ -869,7 +869,7 @@ void* MemPool::run()
       }
    }
 
-   TRACE( "Stopping %d", gcMemAllocated() );
+   TRACE( "Stopping %ld", (long)gcMemAllocated() );
    return 0;
 }
 
