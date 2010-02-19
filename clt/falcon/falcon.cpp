@@ -25,6 +25,7 @@
 #include <falcon/genhasm.h>
 #include <falcon/gentree.h>
 #include <falcon/gencode.h>
+#include <falcon/signals.h>
 #include <iostream>
 #include <stdio.h>
 
@@ -46,6 +47,9 @@ AppFalcon::AppFalcon():
 {
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
    Sys::_dummy_ctrl_c_handler();
+
+   // Block all signals in the main thread.
+   BlockSignals();
 
    // Prepare the Falcon engine to start.
    Engine::Init();
@@ -668,6 +672,9 @@ void AppFalcon::runModule()
    vmachine->launchAtLink( true );
    if ( vmachine->link( &runtime ) )
    {
+      // Broadcast OS signals in this VM.
+      vmachine->becomeSignalTarget();
+
       vmachine->launch();
 
       if ( vmachine->regA().isInteger() )

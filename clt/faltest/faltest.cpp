@@ -41,6 +41,7 @@
 #include <falcon/stdstreams.h>
 #include <falcon/transcoding.h>
 #include <falcon/path.h>
+#include <falcon/signals.h>
 
 #if FALCON_LITTLE_ENDIAN != 1
 #include <falcon/pcode.h>
@@ -673,6 +674,9 @@ bool testScript( ScriptData *script,
    if ( opt_timings )
       linkTime = Sys::_seconds();
 
+   // Become target of the OS signals.
+   vmachine->becomeSignalTarget();
+
    try
    {
       try
@@ -881,6 +885,9 @@ int main( int argc, char *argv[] )
 {
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
    Sys::_dummy_ctrl_c_handler();
+
+   /* Block signals same way falcon binary does. */
+   BlockSignals();
 
    Falcon::Engine::Init();
 
