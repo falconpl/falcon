@@ -23,7 +23,7 @@
 #include <falcon/vm_sys_win.h>
 #include <falcon/path.h>
 
-#include <Wincon.h>
+#include <wincon.h>
 
 #ifndef INVALID_SET_FILE_POINTER
    #define INVALID_SET_FILE_POINTER ((DWORD)-1)
