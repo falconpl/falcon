@@ -36,18 +36,27 @@ struct VM_SYS_DATA;
 
 class FALCON_DYN_CLASS SystemData
 {
+protected:
+   /** Parent VM */
+   VMachine *m_vm;
+
 public:
    struct VM_SYS_DATA *m_sysData;
 
    /** Creates the system data.
       This operation is granted to succeed.
    */
-   SystemData();
+   SystemData(VMachine *vm);
 
    /** Destroys VM specific system data.
       Will be performed only at ownwer vm's destruction.
    */
    ~SystemData();
+
+   /** Called from VM::finalize() to stop any activity
+      that may access VM when it's being freed.
+    */
+   void earlyCleanup();
 
    /** Checks wether the VM has been interrupted in a blocking wait or I/O.
       \return true if interrupted.
@@ -75,6 +84,9 @@ public:
       of the underlying system overall architecture where this VM runs.
    */
    static const char *getSystemType();
+
+   /** Send OS signals to parent VM. */
+   bool becomeSignalTarget();
 };
 
 }

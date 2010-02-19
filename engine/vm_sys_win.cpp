@@ -21,8 +21,10 @@
 namespace Falcon {
 namespace Sys {
 
-SystemData::SystemData()
+SystemData::SystemData(VMachine *vm)
 {
+   m_vm = vm;
+
    m_sysData = (struct VM_SYS_DATA*) memAlloc( sizeof( struct VM_SYS_DATA ) );
 
    // create our interrupting event (a manual reset event)
@@ -64,6 +66,17 @@ bool SystemData::sleep( numeric seconds ) const
 const char *SystemData::getSystemType()
 {
    return "WIN";
+}
+
+
+bool SystemData::becomeSignalTarget()
+{
+   /* no-op for now */
+   return true;
+}
+
+void SystemData::earlyCleanup()
+{
 }
 
 }

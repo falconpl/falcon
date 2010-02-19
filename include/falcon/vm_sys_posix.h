@@ -22,6 +22,7 @@ namespace Sys {
 struct VM_SYS_DATA
 {
    int interruptPipe[2];
+   bool isSignalTarget;
 };
 
 }

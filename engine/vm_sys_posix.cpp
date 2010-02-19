@@ -17,6 +17,7 @@
 #include <falcon/vm_sys.h>
 #include <falcon/vm_sys_posix.h>
 #include <falcon/memory.h>
+#include <falcon/signals.h>
 #include <unistd.h>
 #include <poll.h>
 #include <stdio.h>
@@ -30,9 +31,12 @@
 namespace Falcon {
 namespace Sys {
 
-SystemData::SystemData()
+SystemData::SystemData(VMachine *vm)
 {
    m_sysData = (struct VM_SYS_DATA*) memAlloc( sizeof( struct VM_SYS_DATA ) );
+
+   m_vm = vm;
+   m_sysData->isSignalTarget = false;
 
    // create the dup'd suspend pipe.
    if( pipe( m_sysData->interruptPipe ) != 0 )
@@ -120,6 +124,28 @@ bool SystemData::sleep( numeric seconds ) const
 const char *SystemData::getSystemType()
 {
    return "POSIX";
+}
+
+
+bool SystemData::becomeSignalTarget()
+{
+   if ( 0 != signalReceiver )
+      return false;
+
+   m_sysData->isSignalTarget = true;
+   signalReceiver = new SignalReceiver(m_vm);
+   signalReceiver->start();
+
+   return true;
+}
+
+
+void SystemData::earlyCleanup()
+{
+   if ( m_sysData->isSignalTarget ) {
+      delete signalReceiver;
+      signalReceiver = 0;
+   }
 }
 
 }

@@ -977,6 +977,12 @@ public:
    */
    virtual void run();
 
+   /** Become target of OS signals. */
+   bool becomeSignalTarget()
+   {
+      return m_systemData.becomeSignalTarget();
+   }
+
 
    /** Fills an error traceback with the current VM traceback. */
    void fillErrorTraceback( Error &error ) { currentContext()->fillErrorTraceback( error ); }

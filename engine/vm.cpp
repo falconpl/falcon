@@ -53,6 +53,7 @@ VMachine *VMachine::getCurrent()
 
 VMachine::VMachine():
    m_services( &traits::t_string(), &traits::t_voidp() ),
+   m_systemData( this ),
    m_slots( &traits::t_string(), &traits::t_coreslotptr() ),
    m_nextVM(0),
    m_prevVM(0),
@@ -70,6 +71,7 @@ VMachine::VMachine():
 
 VMachine::VMachine( bool initItems ):
    m_services( &traits::t_string(), &traits::t_voidp() ),
+   m_systemData( this ),
    m_slots( &traits::t_string(), &traits::t_coreslotptr() ),
    m_nextVM(0),
    m_prevVM(0),
@@ -290,6 +292,12 @@ void VMachine::finalize()
 {
    // we should have at least 2 refcounts here: one is from the caller and one in the GC.
    fassert( m_refcount >= 2 );
+
+   /*
+    * We are destroying the VM, so disable any things
+    * that may access it when it's being freed.
+    */
+   m_systemData.earlyCleanup();
 
    // disengage from mempool
    if ( memPool != 0 )
