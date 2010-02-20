@@ -375,6 +375,15 @@ public:
       return t;
    }
 
+   static void URLEncodePath( const String &source, String &target );
+   static String URLEncodePath( const String &source )
+   {
+      String t;
+      URLEncodePath( source, t );
+      return t;
+   }
+
+
    /**
      Decode an URI-URL encoded string.
      \param source the string to be decoded.
