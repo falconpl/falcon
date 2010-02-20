@@ -88,9 +88,13 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
 
    bool execAtLink = vm->launchAtLink();
 
+   //! Copy the filename so to be sure to display it correctly in an eventual error.
+   String fileName = *i_file->asString();
+   fileName.bufferize();
+
    // load and link
    try {
-      rt.loadFile( *i_file->asString(), false );
+      rt.loadFile( fileName, false );
       vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
       LiveModule *lmod = vm->link( &rt );
 
@@ -125,7 +129,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    catch(Error* err)
    {
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
-         extra( *vm->param(0)->asString() ) );
+         extra( fileName ) );
 
       ce->appendSubError(err);
       err->decref();
