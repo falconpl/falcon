@@ -631,7 +631,13 @@ void URI::URLEncode( const String &source, String &target )
       {
          target.append( '+' );
       }
-      else if ( chr < 0x20 || chr > 0x7F || isSubDelim( chr ) || chr == '%' )
+      else if ( chr < 0x20 || chr > 0x7F || isResDelim( chr ) ||
+            chr == '%'
+            || chr == '"' || chr == '\'' || chr == '`'
+            || chr == '\\'
+            || chr == '^' || chr == '~'
+            || chr == '{' || chr == '}'
+            || chr == '<' || chr == '>' )
       {
          target.append( '%' );
          target.append( URI::CharToHex( chr >> 4 ) );

@@ -316,6 +316,11 @@ FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strBackTrim ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strReplace ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strReplicate ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strEsq ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strUnesq ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strEscape ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strUnescape ( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  strBuffer ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strUpper ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strLower ( ::Falcon::VMachine *vm );
@@ -328,6 +333,7 @@ FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm );
 FALCON_FUNC  String_join ( ::Falcon::VMachine *vm );
 FALCON_FUNC  String_ptr( VMachine *vm );
 FALCON_FUNC  String_charSize( VMachine *vm );
+
 
 FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm );

@@ -1752,6 +1752,191 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    vm->retval( 0 );
 }
 
+
+inline void internal_escape( int mode, VMachine* vm )
+{
+   Item *i_string;
+   Item *i_onplace;
+
+   // Parameter checking;
+   if( vm->self().isMethodic() )
+   {
+      i_string = &vm->self();
+      i_onplace = vm->param(0);
+   }
+   else
+   {
+      i_string = vm->param(0);
+      i_onplace = vm->param(1);
+      if ( i_string == 0 || ! i_string->isString() )
+         {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .origin( e_orig_runtime )
+                  .extra( "S,B" ) );
+         }
+   }
+
+   String* str;
+
+   if ( mode != 2 && i_onplace != 0 && i_onplace->isTrue() )
+   {
+      str = i_string->asString();
+
+   }
+   else
+   {
+      str = new CoreString( *i_string->asString() );
+   }
+
+   switch( mode )
+   {
+   case 0: //esq
+      str->escapeQuotes();
+      break;
+
+   case 1: //unesq
+      str->unescapeQuotes();
+      break;
+
+   case 2: //escape
+   {
+      CoreString* other = new CoreString( str->size() );
+      if ( i_onplace != 0 && i_onplace->isTrue() ) // actually it means "complete"
+         str->escapeFull( *other );
+      else
+         str->escape( *other );
+
+      vm->retval( other );
+   }
+   return;
+
+
+   case 3: //unescape
+      str->unescape();
+      break;
+   }
+
+   vm->retval( str );
+}
+
+/*#
+   @function strEsq
+   @brief Escape quotes in the given string.
+   @param string the String to be escaped.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new escaped string, if @b inplace is not given, or the @b string parameter
+           if @b inplace is true.
+
+
+   @see String.esq
+   @see strUnesq
+*/
+/*#
+   @method esq String
+   @brief Escapes the quotes in this string.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new escaped string, if @b inplace is not given, or this same string
+           if @b inplace is true.
+
+   @see String.unesq
+   @see strEsq
+*/
+
+FALCON_FUNC  mth_strEsq ( ::Falcon::VMachine *vm )
+{
+   internal_escape( 0, vm );
+}
+
+/*#
+   @function strUnesq
+   @brief Unescape the quotes in given string.
+   @param string the String to be unescaped.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new unescaped string, if @b inplace is not given, or the @b string parameter
+           if @b inplace is true.
+
+   This function transforms all the occourences of '\\"' and '\\'' into a double or
+   single quote, leaving all the other special escape sequences untouched.
+
+   @see String.unesq
+   @see strEsq
+*/
+/*#
+   @method unesq String
+   @brief Escapes the quotes in this string.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new escaped string, if @b inplace is not given, or this same string
+           if @b inplace is true.
+
+   @see String.esq
+   @see strUnesq
+*/
+
+FALCON_FUNC  mth_strUnesq ( ::Falcon::VMachine *vm )
+{
+   internal_escape( 1, vm );
+}
+
+
+/*#
+   @function strEscape
+   @brief Escape quotes and special characters in the string
+   @param string the String to be escaped.
+   @optparam full If true, characters above UNICODE 127 are escaped as well.
+   @return A new escaped string.
+
+
+   @see String.esq
+   @see strUnesq
+*/
+/*#
+   @method escape String
+   @brief Escapes all the special characters in the string.
+   @optparam full If true, characters above UNICODE 127 are escaped as well.
+   @return A new escaped string.
+
+   @see String.esq
+   @see strEsq
+   @see strUnescape
+*/
+
+FALCON_FUNC  mth_strEscape ( ::Falcon::VMachine *vm )
+{
+   internal_escape( 2, vm );
+}
+
+/*#
+   @function strUnescape
+   @brief Unescape quotes and special characters in the string
+   @param string the String to be escaped.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new unescaped string, if @b inplace is not given, or the @b string parameter
+           if @b inplace is true.
+
+
+
+   @see String.esq
+   @see strUnesq
+   @see String.unescape
+*/
+/*#
+   @method unescape String
+   @brief Unescapes all the special characters in the string.
+   @optparam inplace if true, the source string is modified, saving memory.
+   @return A new unescaped string, if @b inplace is not given, or the @b string parameter
+           if @b inplace is true.
+
+
+   @see String.esq
+   @see strEsq
+   @see strEscape
+*/
+
+FALCON_FUNC  mth_strUnescape ( ::Falcon::VMachine *vm )
+{
+   internal_escape( 3, vm );
+}
+
 /*#
    @function strWildcardMatch
    @brief Perform an old-style file-like jolly-based wildcard match.

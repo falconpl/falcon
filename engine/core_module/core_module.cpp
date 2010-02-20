@@ -566,6 +566,14 @@ Module* core_module_init()
       ->addParam("substr")->addParam("repstr")->addParam("start")->addParam("end");
    self->addClassMethod( string_meta,"replicate", &Falcon::core::mth_strReplicate ).asSymbol()
       ->addParam("times");
+   self->addClassMethod( string_meta,"esq", &Falcon::core::mth_strEsq ).asSymbol()
+      ->addParam("inplace");
+   self->addClassMethod( string_meta,"unesq", &Falcon::core::mth_strUnesq ).asSymbol()
+      ->addParam("inplace");
+   self->addClassMethod( string_meta,"escape", &Falcon::core::mth_strEscape ).asSymbol()
+      ->addParam("full");
+   self->addClassMethod( string_meta,"unescape", &Falcon::core::mth_strUnescape ).asSymbol()
+      ->addParam("inplace");
    self->addClassMethod( string_meta, "upper", &Falcon::core::mth_strUpper );
    self->addClassMethod( string_meta, "lower", &Falcon::core::mth_strLower );
    self->addClassMethod( string_meta, "cmpi", &Falcon::core::mth_strCmpIgnoreCase ).asSymbol()
@@ -1321,6 +1329,16 @@ Module* core_module_init()
       addParam("string")->addParam("substr")->addParam("repstr")->addParam("start")->addParam("end");
    self->addExtFunc( "strReplicate", &Falcon::core::mth_strReplicate )->
       addParam("string")->addParam("times");
+
+   self->addExtFunc( "strEsq", &Falcon::core::mth_strEsq )->
+      addParam("string")->addParam("inplace");
+   self->addExtFunc( "strUnesq", &Falcon::core::mth_strUnesq )->
+      addParam("string")->addParam("inplace");
+   self->addExtFunc( "strEscape", &Falcon::core::mth_strEscape )->
+      addParam("string")->addParam("full");
+   self->addExtFunc( "strUnescape", &Falcon::core::mth_strUnesq )->
+      addParam("string")->addParam("inplace");
+
    self->addExtFunc( "strBuffer", &Falcon::core::strBuffer )->
       addParam("size");
    self->addExtFunc( "strUpper", &Falcon::core::mth_strUpper )->

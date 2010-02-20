@@ -317,6 +317,8 @@ protected:
       m_class( cl )
    {}
 
+   void internal_escape( String &strout, bool full ) const;
+
 public:
 
    enum constants {
@@ -820,7 +822,7 @@ public:
 
    /** Escapes a string for external representation.
       Convert special control characters to "\" prefixed characters,
-      so tha the resulting string can be used in a source code to
+      so that the resulting string can be used in a source code to
       regenerate the same string in parsing.
 
       Characters below 0x0008 (backspace) are turned into hexadecimal
@@ -1192,6 +1194,12 @@ public:
       \return true if the wildcard matches this string.
    */
    bool wildcardMatch( const String& wildcard, bool bICase = false ) const;
+
+   /** Makes all the quotes and double quotes in this string to be preceeded by a '\' slash */
+   void escapeQuotes();
+
+   /** Removes all the slashes before quotes. */
+   void unescapeQuotes();
 
    /** Alters the character size of this string.
 

@@ -1384,39 +1384,16 @@ void String::uint32ToHex( uint32 number, char *buffer )
 
 void String::escape( String &strout ) const
 {
-   int len = length();
-   int pos = 0;
-   strout.m_class->reserve( &strout, len ); // prepare for at least len chars
-   strout.size( 0 ); // clear target string
-
-   while( pos < len )
-   {
-      uint32 chat = getCharAt( pos );
-      switch( chat )
-      {
-         case '"':
-            strout += "\\\""; break;
-         case '\r': strout += "\\r"; break;
-         case '\n': strout += "\\n"; break;
-         case '\t': strout += "\\t"; break;
-         case '\b': strout += "\\b"; break;
-         case '\\': strout += "\\\\"; break;
-         default:
-            if ( chat < 8 ) {
-               char bufarea[12];
-               uint32ToHex( chat, bufarea );
-               strout += bufarea;
-            }
-            else{
-               strout += chat;
-            }
-      }
-      pos++;
-   }
-
+   internal_escape( strout, false );
 }
 
 void String::escapeFull( String &strout ) const
+{
+   internal_escape( strout, true );
+}
+
+
+void String::internal_escape( String &strout, bool full ) const
 {
    int len = length();
    int pos = 0;
@@ -1428,16 +1405,19 @@ void String::escapeFull( String &strout ) const
       uint32 chat = getCharAt( pos );
       switch( chat )
       {
-         case '"':  strout += "\\\""; break;
+         case '"':strout += "\\\""; break;
+         case '\'':strout += "\\\'"; break;
          case '\r': strout += "\\r"; break;
          case '\n': strout += "\\n"; break;
          case '\t': strout += "\\t"; break;
          case '\b': strout += "\\b"; break;
          case '\\': strout += "\\\\"; break;
          default:
-            if ( chat < 8 || chat > 127 ) {
-               char bufarea[12];
-               uint32ToHex( chat, bufarea );
+            if ( chat < 8 || (chat >= 128 && full) ) {
+               char bufarea[14];
+               bufarea[0] = '\\';
+               bufarea[1] = 'x';
+               uint32ToHex( chat, bufarea+2 );
                strout += bufarea;
             }
             else{
@@ -2338,6 +2318,60 @@ bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
    // at the end of the loop, the match is ok only if both the cpos and wpos are at the end
    return wpos == wlen && cpos == clen;
 }
+
+void String::escapeQuotes()
+{
+   uint32 len = length();
+   uint32 i = 0;
+
+   while( i < len )
+   {
+      register uint32 chr =  getCharAt(i);
+      switch( chr )
+      {
+      case '\'': case '\"':
+         insert( i, 0, "\\" );
+         i+=2;
+         ++len;
+         break;
+
+      default:
+         ++i;
+      }
+   }
+}
+
+void String::unescapeQuotes()
+{
+   uint32 len = length();
+   uint32 i = 0;
+   bool state = false;
+
+   while( i < len )
+   {
+      register uint32 chr =  getCharAt(i);
+      switch( chr )
+      {
+      case '\'': case '\"':
+         if( state )
+         {
+            remove( i-1, 1 );
+            --len;
+         }
+         break;
+
+      case '\\':
+         state = true;
+         ++i;
+         break;
+
+      default:
+         state = false;
+         ++i;
+      }
+   }
+}
+
 
 //============================================================
 void string_deletor( void *data )
