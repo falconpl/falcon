@@ -295,8 +295,6 @@ bool _unsetEnv( const String &var )
 
 void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
 {
-   tgt.size(0);
-
    #if _MSC_VER < 1400
       char* envstr = GetEnvironmentStringsA();
    #else
@@ -319,9 +317,14 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
       // did we find a variable?
       if( poseq != 0 )
       {
-         String key( envstr + pos, poseq );
-         String value( envstr + poseq, posn );
-         cb( key, value, data );
+         String key, value;
+         key.adopt( envstr + pos, poseq-pos, 0 );
+         value.adopt( envstr + poseq+1, posn-poseq-1, 0 );
+         
+         key.bufferize();
+         value.bufferize();
+
+         cb( key, value, cbData );
       }
 
       // advancing to the next string; if the first char is zero, we exit
