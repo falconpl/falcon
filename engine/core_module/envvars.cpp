@@ -149,6 +149,46 @@ FALCON_FUNC  falcon_unsetenv( ::Falcon::VMachine *vm )
    Sys::_unsetEnv( *i_var->asString() );
 }
 
+/*#
+   @function getEnviron()
+   @brief Return a dictionary containing all the environment variables.
+   @return A dictionary where each key is an environment variable.
+*/
+
+FALCON_FUNC  falcon_getEnviron( ::Falcon::VMachine *vm )
+{
+   String temp;
+   Sys::_getEnvironmentStrings( temp );
+
+   LinearDict* ret = new LinearDict;
+   uint32 pos = 0;
+   uint32 posn = 0;
+   while( temp.getCharAt(posn) != 0 )
+   {
+      // not an error, we check it twice.
+      uint32 poseq = 0;
+      while( temp.getCharAt(posn) != 0 )
+      {
+         if( poseq == 0 && temp.getCharAt(posn) == '=' )
+            poseq = posn;
+         ++posn;
+      }
+
+      // did we find a variable?
+      if( poseq != 0 )
+      {
+         ret->put( new CoreString( temp, pos, poseq ),
+                   new CoreString( temp, poseq+1, posn ) );
+      }
+      ++posn;
+      pos = posn;
+   }
+
+   vm->retval( new CoreDict( ret ) );
+}
+
+
+
 }
 }
 

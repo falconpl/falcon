@@ -248,6 +248,7 @@ FALCON_FUNC  input ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_getenv( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_setenv( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_unsetenv( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_getEnviron( ::Falcon::VMachine *vm );
 FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm );
 FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm );
 FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm );

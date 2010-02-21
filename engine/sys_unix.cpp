@@ -17,6 +17,11 @@
    Short description
 */
 
+extern "C"
+{
+   extern char **environ;
+}
+
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
@@ -175,6 +180,34 @@ bool _unsetEnv( const String &var )
    unsetenv( varBuf );
    memFree( varBuf );
    return result;
+}
+
+bool _getEnvironmentStrings( String& tgt )
+{
+   // do we know which encoding are we using?
+   String enc;
+   bool bTranscode = GetSystemEncoding( enc ) && enc != "C";
+
+   tgt.size(0);
+
+   char** env = environ;
+   while( *env != 0 )
+   {
+      String temp;
+      if( bTranscode )
+         TranscodeFromString( *env, enc, temp );
+      else
+         temp = *env;
+
+      tgt.append( temp );
+      tgt.append( 0 );
+
+      ++env;
+   }
+
+   // close the thing
+   tgt.append( 0 );
+   return true;
 }
 
 }

@@ -293,6 +293,32 @@ bool _unsetEnv( const String &var )
 	#endif
 }
 
+bool _getEnvironmentStrings( String& tgt )
+{
+   tgt.size(0);
+
+   #if _MSC_VER < 1400
+      char* chr = GetEnvironmentStringsA();
+   #else
+      wchar_t* chr = GetEnvironmentStringsW();
+   #endif
+
+      uint32 size = 0;
+      while( chr[size] != 0 || chr[size+1] != 0 )
+         size++;
+
+      tgt.adopt( chr, size, 0 );
+      tgt.bufferze();
+
+   #if _MSC_VER < 1400
+      FreeEnvironmentStringsA( chr );
+   #else
+      FreeEnvironmentStringsW();
+   #endif
+
+   return true;
+}
+
 }
 }
 

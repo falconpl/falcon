@@ -1479,6 +1479,7 @@ Module* core_module_init()
       addParam("varName")->addParam("value");
    self->addExtFunc( "unsetenv", &Falcon::core::falcon_unsetenv )->
       addParam("varName");
+   self->addExtFunc( "getEnviron", &Falcon::core::falcon_getEnviron );
 
    //=======================================================================
    // Messaging API
