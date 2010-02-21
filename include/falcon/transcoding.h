@@ -241,7 +241,7 @@ public:
 };
 
 /** UTF-8 encoding transcoder. */
-class TranscoderUTF8: public Transcoder
+class FALCON_DYN_CLASS TranscoderUTF8: public Transcoder
 {
 public:
    TranscoderUTF8( Stream *s, bool bOwn=false ):
@@ -257,7 +257,7 @@ public:
 };
 
 /** UTF-16 encoding transcoder. */
-class TranscoderUTF16: public Transcoder
+class FALCON_DYN_CLASS TranscoderUTF16: public Transcoder
 {
 public:
    /** Endianity specification, see the constructor. */
