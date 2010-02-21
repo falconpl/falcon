@@ -46,11 +46,17 @@ if(FALCON_WITH_INTERNAL_PCRE)
       pcre_xclass.c
    )
 
-   add_definitions(-DHAVE_CONFIG_H -DPCRE_EXP_DATA_DECL=extern)
+   add_definitions(-DHAVE_CONFIG_H -DPCRE_STATIC -DPCRE_EXP_DATA_DECL=extern)
+   
+   # This is an hack for systems where pcre is already hard-linked inside embedding c programs
+   # Mangle names as C++, so it doesn't get the already-linked system pcre build.
+   if (NOT WIN32)
    set_source_files_properties(
       ${PCRE_SOURCE} PROPERTIES 
       LANGUAGE "CXX"
    )
+   endif()
+   
 else()
    find_package(PCRE REQUIRED)   
    # Force ignoring OUR pcre
