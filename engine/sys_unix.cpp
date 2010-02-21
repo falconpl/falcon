@@ -182,36 +182,38 @@ bool _unsetEnv( const String &var )
    return result;
 }
 
-bool _getEnvironmentStrings( String& tgt )
+void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
 {
    // do we know which encoding are we using?
    String enc;
    bool bTranscode = GetSystemEncoding( enc ) && enc != "C";
-
-   tgt.size(0);
 
    char** env = environ;
    while( *env != 0 )
    {
       String temp;
       if( bTranscode )
-         TranscodeFromString( *env, enc, temp );
+      {
+         if( ! TranscodeFromString( *env, enc, temp ) )
+         {
+            bTranscode = false;
+            temp = *env;
+         }
+      }
       else
          temp = *env;
 
-      tgt.append( temp );
-      tgt.append( 0 );
+      uint32 pos;
+      if ( (pos = temp.find( "=" )) != String::npos )
+      {
+         cb( temp.subString(0,pos), temp.subString(pos), cbData );
+      }
 
       ++env;
    }
-
-   // close the thing
-   tgt.append( 0 );
-   return true;
 }
 
 }
 }
-
 
 /* end of sys_unix.cpp */

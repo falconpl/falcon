@@ -293,30 +293,47 @@ bool _unsetEnv( const String &var )
 	#endif
 }
 
-bool _getEnvironmentStrings( String& tgt )
+void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
 {
    tgt.size(0);
 
    #if _MSC_VER < 1400
-      char* chr = GetEnvironmentStringsA();
+      char* envstr = GetEnvironmentStringsA();
    #else
-      wchar_t* chr = GetEnvironmentStringsW();
+      wchar_t* envstr = GetEnvironmentStringsW();
    #endif
 
-      uint32 size = 0;
-      while( chr[size] != 0 || chr[size+1] != 0 )
-         size++;
+   uint32 pos = 0;
+   uint32 posn = 0;
+   while( envstr[posn] != 0 )
+   {
+      // not an error, we check it twice.
+      uint32 poseq = 0;
+      while( envstr[posn] != 0 )
+      {
+        if( poseq == 0 && envstr[posn] == '=' )
+           poseq = posn;
+        ++posn;
+      }
 
-      tgt.adopt( chr, size, 0 );
-      tgt.bufferze();
+      // did we find a variable?
+      if( poseq != 0 )
+      {
+         String key( envstr + pos, poseq );
+         String value( envstr + poseq, posn );
+         cb( key, value, data );
+      }
+
+      // advancing to the next string; if the first char is zero, we exit
+      ++posn;
+      pos = posn;
+   }
 
    #if _MSC_VER < 1400
-      FreeEnvironmentStringsA( chr );
+      FreeEnvironmentStringsA( envstr );
    #else
-      FreeEnvironmentStringsW();
+      FreeEnvironmentStringsW( envstr );
    #endif
-
-   return true;
 }
 
 }

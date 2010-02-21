@@ -72,15 +72,23 @@ FALCON_DYN_SYM int64 _lastError();
 FALCON_DYN_SYM bool _getEnv( const String &var, String &result );
 FALCON_DYN_SYM bool _setEnv( const String &var, const String &value );
 FALCON_DYN_SYM bool _unsetEnv( const String &var );
-/** Gets all the environemnt string of the calling process.
-   The strings are put in varlist as a sequence of '\0' separated strings;
-   if possible, correct locale encoding is performed before returning the
-   values.
 
-   The sequence is closed by a last '\0\0' pair of null values.
-   \return true on success, false on failure.
+/** Callback for environment variable enumeration.
+ \see _enumerateEnvironment
 */
-FALCON_DYN_SYM bool _getEnvironmentStrings( String &varlist );
+typedef void(*EnvStringCallback)( const String& key, const String& value, void* cbData );
+
+/** Gets all the environemnt string of the calling process.
+
+   Each pair of key/value pair is sent to the cb function for
+   processing. If possible, the strings are already rendered from
+   local encoding.
+
+   The cbData parameter is an arbitrary data that is passed to the CB function
+   for processing.
+
+*/
+FALCON_DYN_SYM void _enumerateEnvironment( EnvStringCallback cb, void* cbData );
 
 FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 
