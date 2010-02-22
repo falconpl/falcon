@@ -14,7 +14,9 @@
 */
 
 #include <falcon/signals_posix.h>
+#include <falcon/lineardict.h>
 #include <unistd.h>
+#include <string.h>
 
 namespace Falcon {
 
@@ -96,7 +98,35 @@ bool SignalReceiver::reset(int signum)
 void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
 {
    VMMessage *m = new VMMessage("os.signal");
-   m->addParam(SafeItem((int32)signum));
+   LinearDict *ld = new LinearDict();
+   CoreDict *cd = new CoreDict(ld);
+
+   ld->put(new CoreString("signo"), (int32)signum);
+   ld->put(new CoreString("errno"), (int32)siginfo->si_errno);
+   ld->put(new CoreString("code"), (int32)siginfo->si_code);
+
+   if (SIGCHLD == signum || (signum >= SIGRTMIN && signum <= SIGRTMAX)) {
+      ld->put(new CoreString("pid"), (int32)siginfo->si_pid);
+      ld->put(new CoreString("uid"), (int32)siginfo->si_uid);
+      ld->put(new CoreString("utime"), (int64)siginfo->si_utime);
+      ld->put(new CoreString("stime"), (int64)siginfo->si_stime);
+   }
+   if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
+      ld->put(new CoreString("overrun"), (int32)siginfo->si_overrun);
+      ld->put(new CoreString("timerid"), (int32)siginfo->si_timerid);
+      ld->put(new CoreString("int"), (int32)siginfo->si_int);
+   }
+   if (SIGCHLD == signum) {
+      ld->put(new CoreString("status"), (int32)siginfo->si_status);
+   }
+   if (SIGPOLL == signum) {
+      ld->put(new CoreString("band"), (int32)siginfo->si_band);
+      ld->put(new CoreString("fd"), (int32)siginfo->si_fd);
+   }
+
+   cd->bless(true);
+
+   m->addParam(SafeItem(cd));
    m_targetVM->postMessage(m);
 }
 
