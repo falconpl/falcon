@@ -22,6 +22,13 @@
 #include "confparser_st.h"
 
 #include "version.h"
+
+#include <falcon/srv/confparser_srv.h>
+
+//TODO: Use new dynamic allocation model
+static Falcon::ConfigFileSrv s_config_srv;
+
+
 /*#
    @module feather_configparser Configuration Parser
    @brief Advanced configuration file parser (with sections and key categorization support).
@@ -173,6 +180,8 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_cparser, "clearMain", Falcon::Ext::ConfParser_clearMain );
    self->addClassProperty( c_cparser, "errorLine" );
    self->addClassProperty( c_cparser, "error" );
+
+   self->publishService( &s_config_srv );
 
    return self;
 }

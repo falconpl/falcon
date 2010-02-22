@@ -4,6 +4,7 @@ Feathers (0.9.6.3)
            routine may have pushed some modules BEFORE it during
            Runtime duplication before thread start, causing weird
            errors during the link step.
+  * added: Confparser service is now published as "CONFIGFILE"
 
 Feathers (0.9.6)
   * fixed: Regex.compare never matched (return 0) when using capture 

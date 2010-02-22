@@ -18,6 +18,7 @@ add_library(confparser_fm MODULE
   confparser_ext.cpp
   confparser_mod.cpp
   confparser_st.cpp
+  confparser_srv.cpp
   ${SYS_RC}
 )
 
