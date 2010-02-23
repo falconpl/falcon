@@ -3,6 +3,7 @@ TODO for 0.9.8
    - URGENT: New service model with service factory function.     
    - URGENT: New GarbagePointer model to allow passing foreign types.
    - URGENT: virtual constructor in sequences to allow them to build an empty copy.
+   - URGENT: Break URI::UserInfo internally in user and password fields.
    - Move dictionary find methods to standard sequences.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    - Provide Stream interface to Sockets.

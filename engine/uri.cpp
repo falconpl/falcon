@@ -563,7 +563,18 @@ const String &URI::get( bool synthQuery ) const
          m_encoded += "/";
 
       if (m_userInfo.size() != 0)
-         m_encoded += URLEncode( m_userInfo ) + "@";
+      {
+         //TODO Break into user and password
+         uint32 pos = m_userInfo.find(":");
+         if( pos != String::npos )
+         {
+            m_encoded += URLEncode( m_userInfo.subString( 0 , pos ) )
+                  + ":"
+                  + URLEncode( m_userInfo.subString( pos+1 ) ) + "@";
+         }
+         else
+            m_encoded += URLEncode( m_userInfo ) + "@";
+      }
 
       if (m_host.size() != 0)
          m_encoded += URLEncode( m_host );
