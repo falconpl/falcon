@@ -852,17 +852,44 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
    if( fs.m_type == FileStat::t_dir )
    {
       // yes? -- prepare the new callback frame
-      vm->pushParameter( (new CoreString( fnext ))->bufferize() );
-      vm->pushParameter( pushed );
-      vm->callFrame( *vm->param(0), 2 );
+      if ( vm->param(0) != 0 && ! vm->param(0)->isNil() )
+      {
+         vm->pushParameter( (new CoreString( fnext ))->bufferize() );
+         vm->pushParameter( pushed );
+         vm->callFrame( *vm->param(0), 2 );
 
-      // prepare the descent
-      vm->returnHandler( &Directory_descend_next_descend );
+         // prepare the descent
+         vm->returnHandler( &Directory_descend_next_descend );
+      }
+      else
+      {
+         // we're in a directory. descend.
+         int32 fsError;
+         DirEntry *dir = Sys::fal_openDir( fnext, fsError );
+         vm->regB().setNil();
+
+         if( dir != 0 )
+         {
+            Item* i_dir = vm->findWKI( "Directory" );
+            fassert( i_dir != 0 && i_dir->isClass() );
+            CoreClass* dircls = i_dir->asClass();
+            CoreObject *self = dircls->createInstance( dir );
+            pushed->append( self );
+
+            return true;
+         }
+
+         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+                  .origin( e_orig_runtime )
+                  .extra( *vm->param(0)->asString() )
+                  .sysError( (uint32) Sys::_lastError() ) );
+
+      }
    }
    else {
       // should we call the file handler?
       Item* i_ffunc = vm->param(1);
-      if ( i_ffunc != 0 )
+      if ( i_ffunc != 0 && ! i_ffunc->isNil() )
       {
          vm->pushParameter( (new CoreString( fnext ))->bufferize() );
          vm->callFrame( *i_ffunc, 1 );
@@ -876,7 +903,7 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
 /*#
    @method descend Directory
    @brief Descends into subdirectories, iteratively calling a function.
-   @param dfunc Function to be called upon directories.
+   @optparam dfunc Function to be called upon directories.
    @optparam ffunc Function to be called upon files.
 
    This function calls iteratively a function on directory entries.
@@ -905,12 +932,20 @@ FALCON_FUNC  Directory_descend ( ::Falcon::VMachine *vm )
    Item *i_dfunc = vm->param(0);
    Item *i_ffunc = vm->param(1);
 
-   if ( i_dfunc == 0 || ! i_dfunc->isCallable()
-        || ( i_ffunc != 0 && ! i_ffunc->isCallable() ) )
+   if ( ( i_dfunc != 0 && ! i_dfunc->isCallable() && ! i_dfunc->isNil() )
+        || ( i_ffunc != 0 && ! i_ffunc->isCallable() && ! i_dfunc->isNil() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "C,[C]" ) );
+         .extra( "[C],[C]" ) );
+      return;
+   }
+
+   // nothing to do?
+   if( (i_dfunc == 0 || i_dfunc->isNil() ) &&
+       (i_ffunc == 0 || i_ffunc->isNil() ))
+   {
+      // should we signal an error? --- I don't think
       return;
    }
 
@@ -922,6 +957,7 @@ FALCON_FUNC  Directory_descend ( ::Falcon::VMachine *vm )
    vm->regA().setNil();
    vm->returnHandler( &Directory_descend_next );
 }
+
 
 /*#
    @method error Directory
