@@ -328,20 +328,26 @@ base_statement:
 ;
 
 assignment_def_list:
-   atomic_symbol {
-      COMPILER->raiseError( Falcon::e_syn_def );
-   }
-   | atomic_symbol OP_EQ expression {
+   assignment_def_list_element
+   | assignment_def_list COMMA assignment_def_list_element 
+;
+
+assignment_def_list_element:
+   atomic_symbol 
+      {
       COMPILER->defContext( true );
       COMPILER->defineVal( $1 );
-      COMPILER->addStatement( new Falcon::StmtAutoexpr( CURRENT_LINE, new Falcon::Value(
-         new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) ) ) );
-   }
-   | assignment_def_list COMMA atomic_symbol OP_EQ expression {
-      COMPILER->defineVal( $3 );
       COMPILER->addStatement( new Falcon::StmtAutoexpr(CURRENT_LINE, new Falcon::Value(
-         new Falcon::Expression( Falcon::Expression::t_assign, $3, $5 ) ) ) );
-   }
+         new Falcon::Expression( Falcon::Expression::t_assign, $1, new Falcon::Value() ) ) ) );
+      } 
+   
+   | atomic_symbol OP_EQ expression
+      {
+      COMPILER->defContext( true );
+      COMPILER->defineVal( $1 );      
+      COMPILER->addStatement( new Falcon::StmtAutoexpr(CURRENT_LINE, new Falcon::Value(
+         new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) ) ) );
+      }
 ;
 
 def_statement:

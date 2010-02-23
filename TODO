@@ -1,5 +1,6 @@
 TODO for 0.9.8
    
+   - URGENT: New service model with service factory function.     
    - URGENT: New GarbagePointer model to allow passing foreign types.
    - URGENT: virtual constructor in sequences to allow them to build an empty copy.
    - Move dictionary find methods to standard sequences.
