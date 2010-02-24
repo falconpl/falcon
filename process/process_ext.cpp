@@ -483,12 +483,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
    This class is meant for finer control of child processes and
    inter process comunication.
-*/
-
-/*#
-   @init Process
-   @brief Starts a child process.
-
+   
    The process named in the @b command argument is started. It is possible to
    provide either a string containing a complete command line, with the process
    name and its arguments, or an array whose first element is the process name,
@@ -505,6 +500,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
                         by just reading the output stream.
    - PROCESS_BG: Put the process in background/hidden mode.
    - PROCESS_USE_SHELL: Use host system shell to launch the process or execute the command.
+
 */
 
 FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
@@ -752,7 +748,7 @@ FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm )
    The returned stream can be used as a Falcon stream,
    but it supports only read operations.
 
-   If the process has been opened with the PROCESS_SINK_OUT,
+   If the process has been opened with the PROCESS_SINK_OUTPUT flag,
    the function will return nil.
 
    @note This function should be called only once per Process class;
