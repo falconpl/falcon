@@ -25,6 +25,8 @@
 namespace Falcon
 {
 
+#define JSONSERVICE_NAME "JSONService"
+
 /** Publishes the JSON converter service as "JSONService".
  *
  */

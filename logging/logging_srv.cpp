@@ -762,7 +762,7 @@ void LogChannelFiles::inner_rotate()
 
 
 LogService::LogService():
-   Service( "LogService" )
+   Service( LOGSERVICE_NAME )
 {
 }
 

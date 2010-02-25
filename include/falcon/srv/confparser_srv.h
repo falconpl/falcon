@@ -19,17 +19,17 @@
 #include <falcon/service.h>
 #include <falcon/string.h>
 
-#define FALCON_CONFIG_FILE_SRV_NAME "CONFIGFILE"
+#define CONFIGFILESERVICE_NAME "ConfigFile"
 
 namespace Falcon {
 
 class ConfigFile;
 
-class ConfigFileSrv: public Service
+class ConfigFileService: public Service
 {
 public:
-   ConfigFileSrv();
-   virtual ~ConfigFileSrv();
+   ConfigFileService();
+   virtual ~ConfigFileService();
 
    virtual bool initialize( const String &fileName, const String &encoding );
    virtual void encoding( const String &encoding );

@@ -284,6 +284,8 @@ public:
 };
 
 
+#define LOGSERVICE_NAME "LogService"
+
 /** Publishes the Log system as "LogService".
  *
  */

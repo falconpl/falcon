@@ -19,86 +19,86 @@
 
 namespace Falcon {
 
-ConfigFileSrv::ConfigFileSrv():
-      Service( FALCON_CONFIG_FILE_SRV_NAME ),
+ConfigFileService::ConfigFileService():
+      Service( CONFIGFILESERVICE_NAME ),
       m_pCf(0)
       {}
 
-ConfigFileSrv::~ConfigFileSrv()
+ConfigFileService::~ConfigFileService()
 {
    delete m_pCf;
 }
 
-bool ConfigFileSrv::initialize( const String &fileName, const String &encoding )
+bool ConfigFileService::initialize( const String &fileName, const String &encoding )
 {
    m_pCf = new ConfigFile( fileName, encoding );
    return true;
 }
 
-void ConfigFileSrv::encoding( const String &encoding ) { m_pCf->encoding( encoding ); }
-const String &ConfigFileSrv::encoding() const { return m_pCf->encoding(); }
-bool ConfigFileSrv::load() { return m_pCf->load(); }
-bool ConfigFileSrv::load( Stream *input ) { return m_pCf->load( input ); }
-bool ConfigFileSrv::save() { return m_pCf->save(); }
-bool ConfigFileSrv::save( Stream *output ) { return m_pCf->save( output ); }
+void ConfigFileService::encoding( const String &encoding ) { m_pCf->encoding( encoding ); }
+const String &ConfigFileService::encoding() const { return m_pCf->encoding(); }
+bool ConfigFileService::load() { return m_pCf->load(); }
+bool ConfigFileService::load( Stream *input ) { return m_pCf->load( input ); }
+bool ConfigFileService::save() { return m_pCf->save(); }
+bool ConfigFileService::save( Stream *output ) { return m_pCf->save( output ); }
 
-const String &ConfigFileSrv::errorMessage() const { return m_pCf->errorMessage(); }
-long ConfigFileSrv::fsError() const { return m_pCf->fsError(); }
-uint32 ConfigFileSrv::errorLine() const { return m_pCf->errorLine(); }
+const String &ConfigFileService::errorMessage() const { return m_pCf->errorMessage(); }
+long ConfigFileService::fsError() const { return m_pCf->fsError(); }
+uint32 ConfigFileService::errorLine() const { return m_pCf->errorLine(); }
 
-bool ConfigFileSrv::getValue( const String &key, String &value )
+bool ConfigFileService::getValue( const String &key, String &value )
 { return m_pCf->getValue( key, value ); }
 
-bool ConfigFileSrv::getValue( const String &section, const String &key, String &value )
+bool ConfigFileService::getValue( const String &section, const String &key, String &value )
 { return m_pCf->getValue( section, key, value ); }
 
-bool ConfigFileSrv::getNextValue( String &value ) { return m_pCf->getNextValue( value ); }
+bool ConfigFileService::getNextValue( String &value ) { return m_pCf->getNextValue( value ); }
 
-bool ConfigFileSrv::getFirstSection( String &section )
+bool ConfigFileService::getFirstSection( String &section )
 { return m_pCf->getFirstSection( section ); }
 
-bool ConfigFileSrv::getNextSection( String &nextSection )
+bool ConfigFileService::getNextSection( String &nextSection )
 { return m_pCf->getNextValue( nextSection ); }
 
-bool ConfigFileSrv::getFirstKey( const String &prefix, String &key )
+bool ConfigFileService::getFirstKey( const String &prefix, String &key )
 { return m_pCf->getFirstKey( prefix, key ); }
 
-void ConfigFileSrv::addSection( const String &section )
+void ConfigFileService::addSection( const String &section )
 { m_pCf->addSection( section ); }
 
-bool ConfigFileSrv::getFirstKey( const String &section, const String &prefix, String &key )
+bool ConfigFileService::getFirstKey( const String &section, const String &prefix, String &key )
 { return m_pCf->getFirstKey( section, prefix, key ); }
 
-bool ConfigFileSrv::getNextKey( String &key )
+bool ConfigFileService::getNextKey( String &key )
 { return m_pCf->getNextKey( key ); }
 
-void ConfigFileSrv::setValue( const String &key, String &value )
+void ConfigFileService::setValue( const String &key, String &value )
 { return m_pCf->setValue( key, value ); }
 
-void ConfigFileSrv::setValue( const String &section, const String &key, const String &value )
+void ConfigFileService::setValue( const String &section, const String &key, const String &value )
 { return m_pCf->setValue( section, key, value ); }
 
-void ConfigFileSrv::addValue( const String &key, const String &value )
+void ConfigFileService::addValue( const String &key, const String &value )
 { return m_pCf->addValue( key, value ); }
 
-void ConfigFileSrv::addValue( const String &section, const String &key, String value )
+void ConfigFileService::addValue( const String &section, const String &key, String value )
 { return m_pCf->addValue( section, key, value ); }
 
-bool ConfigFileSrv::removeValue( const String &key )
+bool ConfigFileService::removeValue( const String &key )
 { return m_pCf->removeValue( key ); }
 
-bool ConfigFileSrv::removeValue( const String &section, const String &key )
+bool ConfigFileService::removeValue( const String &section, const String &key )
 { return m_pCf->removeValue( section, key ); }
 
-bool ConfigFileSrv::removeCategory( const String &category )
+bool ConfigFileService::removeCategory( const String &category )
 { return m_pCf->removeCategory( category ); }
 
-bool ConfigFileSrv::removeCategory( const String &section, const String &category )
+bool ConfigFileService::removeCategory( const String &section, const String &category )
 { return m_pCf->removeCategory( section, category ); }
 
-bool ConfigFileSrv::removeSection( const String &key ) { return m_pCf->removeSection( key ); }
+bool ConfigFileService::removeSection( const String &key ) { return m_pCf->removeSection( key ); }
 
-void ConfigFileSrv::clearMainSection() { m_pCf->clearMainSection(); }
+void ConfigFileService::clearMainSection() { m_pCf->clearMainSection(); }
 
 }
 

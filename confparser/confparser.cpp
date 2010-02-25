@@ -26,7 +26,7 @@
 #include <falcon/srv/confparser_srv.h>
 
 //TODO: Use new dynamic allocation model
-static Falcon::ConfigFileSrv s_config_srv;
+static Falcon::ConfigFileService s_config_srv;
 
 
 /*#

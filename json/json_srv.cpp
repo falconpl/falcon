@@ -26,7 +26,7 @@ namespace Falcon
 {
 
 JSONService::JSONService():
-   Service( "JSONService" )
+   Service( JSONSERVICE_NAME )
 {}
 
 bool JSONService::encode( const Item& itm, String& tgt, bool bEncUni, bool bPretty, bool bReadale )
