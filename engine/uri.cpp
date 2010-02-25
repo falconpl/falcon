@@ -712,7 +712,7 @@ bool URI::URLDecode( const String &source, String &target )
    {
       uint32 chr = source.getCharAt( i );
       // an URL encoded string cannot have raw characters outside defined ranges.
-      if ( chr < 0x20 || chr > 0x7F )
+      if ( chr > 0x7F )
       {
          bOk = false;
          break;
