@@ -230,12 +230,19 @@ Symbol *Module::addSingleton( const String &name, Symbol *ctor_sym, bool exp )
 
 Symbol *Module::addSingleton( const String &name, ext_func_t ctor, bool exp )
 {
-   String ctor_name = name + "._init";
-   Symbol *sym = addExtFunc( ctor_name, ctor, false );
-   if ( sym == 0 )
-      return 0;
+   if( ctor != 0 )
+   {
+      String ctor_name = name + "._init";
+      Symbol *sym = addExtFunc( ctor_name, ctor, false );
+      if ( sym == 0 )
+         return 0;
 
-   return addSingleton( name, sym, exp );
+      return addSingleton( name, sym, exp );
+   }
+   else
+   {
+      return addSingleton( name, (Symbol*)0, exp );
+   }
 }
 
 
