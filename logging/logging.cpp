@@ -256,7 +256,10 @@ FALCON_MODULE_DECL
    // Class LogChannelFiles
    //
    Falcon::Symbol *c_logfiles = self->addClass( "LogChannelFiles", &Falcon::Ext::LogChannelFiles_init )
-         ->addParam("path")->addParam("level")->addParam("format");
+         ->addParam("path")->addParam("level")->addParam("format")
+         ->addParam("maxCount")->addParam("maxSize")->addParam("maxDays")
+         ->addParam("overwrite")->addParam("flushAll");
+
    c_logfiles->getClassDef()->factory( &Falcon::LogChannelFilesFactory );
    c_logfiles->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
 

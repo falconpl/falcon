@@ -5,6 +5,7 @@ Feathers (0.9.6.3)
            Runtime duplication before thread start, causing weird
            errors during the link step.
   * added: Confparser service is now published as "CONFIGFILE"
+  * fixed: LogChannelFiles init was missing parameter declarations.
 
 Feathers (0.9.6)
   * fixed: Regex.compare never matched (return 0) when using capture 
