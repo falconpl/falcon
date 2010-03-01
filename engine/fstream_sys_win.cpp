@@ -90,11 +90,13 @@ int32 BaseFileStream::read( void *buffer, int32 size )
    DWORD result;
    if ( ! ReadFile( data->m_handle, buffer, size, &result, NULL ) ) {
       data->m_lastError = GetLastError();
-      if( data->m_lastError == ERROR_NOACCESS )
+      if( data->m_lastError == ERROR_NOACCESS || 
+         data->m_lastError == ERROR_HANDLE_EOF ||
+         data->m_lastError == ERROR_BROKEN_PIPE )
       {
          // ReadFile returns ERROR_NOACCESS at EOF
          data->m_lastError = 0;
-         m_status = m_status | Stream::t_eof;
+         m_status = Stream::t_eof;
          return 0;
       }
 
@@ -104,7 +106,7 @@ int32 BaseFileStream::read( void *buffer, int32 size )
 
    if ( result == 0 ) 
    {
-      m_status = m_status | Stream::t_eof;
+      m_status = Stream::t_eof;
    }
 
    data->m_lastError = 0;
@@ -640,16 +642,21 @@ StdInStream::StdInStream():
       dupped = GetStdHandle( STD_INPUT_HANDLE );
       if( dupped != INVALID_HANDLE_VALUE )
       {
+         SetConsoleMode( dupped, 0 );
+
+         /*
          SetConsoleMode( dupped,
 			   ENABLE_ECHO_INPUT |
 			   ENABLE_PROCESSED_INPUT );
+            */
       }
    }
    else {
+      SetConsoleMode( dupped, 0 );
 	   // remove the readline mode, as it breaks the WaitForXX functions.
-	   SetConsoleMode( dupped,
+	   /*SetConsoleMode( dupped,
 			ENABLE_ECHO_INPUT |
-			ENABLE_PROCESSED_INPUT );
+			ENABLE_PROCESSED_INPUT );*/
    }
 
    m_fsData = new WinFileSysData( dupped, 0, true, WinFileSysData::e_dirIn );

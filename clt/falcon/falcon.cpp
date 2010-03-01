@@ -616,7 +616,10 @@ void AppFalcon::runModule()
    //===========================================
    // Prepare the virtual machine
    //
-   VMachineWrapper vmachine;
+
+   VMachine* vm = new VMachine( false );
+   VMachineWrapper vmachine(vm);
+
 
    //redirect the VM streams to ours.
    // The machine takes ownership of the streams, so they won't be useable anymore
@@ -625,6 +628,7 @@ void AppFalcon::runModule()
    vmachine->stdIn( m_stdIn );
    vmachine->stdOut( m_stdOut );
    vmachine->stdErr( m_stdErr );
+   vmachine->init();
    // I have given real process streams to the vm
    vmachine->hasProcessStreams( true );
 
