@@ -591,7 +591,7 @@ void LogChannelFiles::open()
       throw new IoError( ErrorParam( e_file_output, __LINE__ )
             .origin( e_orig_runtime )
             .extra( fname )
-            .sysError( m_stream->lastError() ) );
+            .sysError( (int32) m_stream->lastError() ) );
    }
 }
 

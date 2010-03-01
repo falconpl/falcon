@@ -594,7 +594,7 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
             .extra( "S,[N],[S],[N],[N],[N],[B],[B]"));
    }
 
-   uint32 level = i_level == 0 ? LOGLEVEL_ALL : i_level->forceInteger();
+   uint32 level = i_level == 0 ? LOGLEVEL_ALL : (int32) i_level->forceInteger();
    LogChannelFiles* lcf;
    if( i_format == 0 )
       lcf = new LogChannelFiles( *i_path->asString(), level );
@@ -602,13 +602,13 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
       lcf = new LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
 
    if (i_maxCount != 0 && ! i_maxCount->isNil() )
-      lcf->maxCount( i_maxCount->forceInteger() );
+      lcf->maxCount( (int32) i_maxCount->forceInteger() );
 
    if (i_maxSize != 0 && ! i_maxSize->isNil() )
       lcf->maxSize( i_maxSize->forceInteger() );
 
    if (i_maxDays != 0 && ! i_maxDays->isNil() )
-      lcf->maxDays( i_maxDays->forceInteger() );
+      lcf->maxDays( (int32) i_maxDays->forceInteger() );
 
    if (i_overwrite != 0 )
       lcf->overwrite( i_overwrite->isTrue() );

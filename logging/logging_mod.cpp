@@ -33,9 +33,9 @@ LogChannelFilesCarrier::~LogChannelFilesCarrier()
 bool LogChannelFilesCarrier::setProperty( const String &prop, const Item &value )
 {
    if( prop == "maxCount" )
-      carried()->maxCount( value.forceInteger() );
+      carried()->maxCount( (int32) value.forceInteger() );
    else if ( prop == "maxDays" )
-      carried()->maxDays( value.forceInteger() );
+      carried()->maxDays( (int32) value.forceInteger() );
    else if ( prop == "maxSize" )
       carried()->maxSize( value.forceInteger() );
    else if ( prop == "overwrite" )
