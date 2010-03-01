@@ -19,12 +19,16 @@
 
 #include <falcon/module.h>
 #include <falcon/memory.h>
-#include <pcre.h>
 #include "regex_ext.h"
 #include "regex_st.h"
 #include "version.h"
 
 #include <stdio.h>
+
+#undef PCRE_EXP_DATA_DECL
+// create the data function pointers in this code
+#define PCRE_EXP_DATA_DECL
+#include <pcre.h>
 
 
 /*#

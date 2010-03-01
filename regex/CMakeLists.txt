@@ -50,11 +50,11 @@ if(FALCON_WITH_INTERNAL_PCRE)
    
    # This is an hack for systems where pcre is already hard-linked inside embedding c programs
    # Mangle names as C++, so it doesn't get the already-linked system pcre build.
-   if (NOT WIN32)
-   set_source_files_properties(
-      ${PCRE_SOURCE} PROPERTIES 
-      LANGUAGE "CXX"
-   )
+   if(NOT WIN32)
+	   set_source_files_properties(
+		  ${PCRE_SOURCE} PROPERTIES 
+		  LANGUAGE "CXX"
+	   )
    endif()
    
 else()
