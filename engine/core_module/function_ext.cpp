@@ -90,7 +90,9 @@ static void s_caller_internal( VMachine* vm, bool mode )
          CoreArray* arr = new CoreArray( 3 );
          arr->append( sym->name() );
          arr->append( sym->module()->name() );
+         arr->append( sym->module()->path() );
          arr->append( (int64) line );
+         arr->append( (int64) pc );
          vm->retval( arr );
          return;
       }
@@ -123,7 +125,12 @@ FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm )
    @method trace Function
    @brief Gets a trace step in the call stack.
    @optparam level Caller level (starting from zero, the default).
-   @return An array of three items (calling symbol name, module and line count )
+   @return An array containing the data relative to the given trace level.
+
+   The returned data is organized as follows:
+   @code
+   [ 'symbol name', 'module name', 'module path', line_in_module, PC_in_vm]
+   @endcode
 
    @note The method can also be called statically on the Function metaclass.
 */

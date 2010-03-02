@@ -210,7 +210,7 @@ void VMContext::fillErrorTraceback( Error &error )
          else
             line = 0;
 
-         error.addTrace( sym->module()->name(), sym->name(), line, frame->m_call_pc );
+         error.addTrace( sym->module()->name(), sym->module()->path(), sym->name(), line, frame->m_call_pc );
       }
 
       frame = frame->prev();

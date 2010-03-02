@@ -41,6 +41,11 @@ const String &errorDesc( int code )
 
 String &TraceStep::toString( String &target ) const
 {
+   if ( m_modpath.size() )
+   {
+      target += "\"" + m_modpath + "\" "; 
+   }
+
    target += m_module + "." + m_symbol + ":";
    target.writeNumber( (int64) m_line );
    target += "(PC:";
@@ -253,10 +258,15 @@ String &Error::heading( String &target ) const
    return target;
 }
 
-
 void Error::addTrace( const String &module, const String &symbol, uint32 line, uint32 pc )
 {
    m_steps.pushBack( new TraceStep( module, symbol, line, pc ) );
+   m_stepIter = m_steps.begin();
+}
+
+void Error::addTrace( const String &module, const String &modpath, const String &symbol, uint32 line, uint32 pc )
+{
+   m_steps.pushBack( new TraceStep( module, modpath, symbol, line, pc ) );
    m_stepIter = m_steps.begin();
 }
 
