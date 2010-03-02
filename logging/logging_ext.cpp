@@ -596,7 +596,7 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
 
    uint32 level = i_level == 0 ? LOGLEVEL_ALL : (int32) i_level->forceInteger();
    LogChannelFiles* lcf;
-   if( i_format == 0 )
+   if( i_format == 0 || i_format->isNil() )
       lcf = new LogChannelFiles( *i_path->asString(), level );
    else
       lcf = new LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
