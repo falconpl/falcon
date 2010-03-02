@@ -494,6 +494,8 @@ Module* core_module_init()
    self->addClassMethod( func_meta, "name", &Falcon::core::Function_name );
    self->addClassMethod( func_meta, "caller", &Falcon::core::Function_caller ).asSymbol()->
       addParam("level");    //static
+   self->addClassMethod( func_meta, "trace", &Falcon::core::Function_trace ).asSymbol()->
+      addParam("level");    //static
 
    /*#
       @class GarbagePointer

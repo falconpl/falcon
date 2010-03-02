@@ -16,6 +16,7 @@ Falcon (0.9.6.3)
            input strings.
   * fixed: Failing to init the frame in new VMContexts would have caused random
            crashes depending on linkage or memory conditions (thanks Mordae).
+  * added: Function.trace() to get the traceback steps.
   * fixed: Invalid loop condition caused fself.caller() to segfault (all
            thanks to fgenesis).
   * fixed: Fordot statement (.=) couldn't be used after for/in...: (after a colon)

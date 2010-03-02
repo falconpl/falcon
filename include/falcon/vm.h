@@ -987,6 +987,12 @@ public:
    /** Fills an error traceback with the current VM traceback. */
    void fillErrorTraceback( Error &error ) { currentContext()->fillErrorTraceback( error ); }
 
+   /** Returns a single step traceback in the current context. */
+   bool getTraceStep( uint32 level, const Symbol* &sym, uint32& line, uint32 &pc )
+   {
+      return m_currentContext->getTraceStep( level, sym, line, pc );
+   }
+
    /** Get the caller of the current symbol.
 
       If the caller cannot be found (i.e. because the current symbol is

@@ -59,6 +59,7 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Function_trace ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_attributes( ::Falcon::VMachine *vm );
 
 // Iterator class

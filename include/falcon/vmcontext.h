@@ -430,6 +430,9 @@ public:
    void resetFrames();
 
    void fillErrorTraceback( Error& err );
+   
+   //! Gets a step in a traceback.
+   bool getTraceStep( uint32 level, const Symbol* &sym, uint32& line, uint32 &pc );
 };
 
 }

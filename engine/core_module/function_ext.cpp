@@ -39,6 +39,68 @@ FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm )
    }
 }
 
+
+
+static void s_caller_internal( VMachine* vm, bool mode )
+{
+   uint32 level;
+   Item *i_level = vm->param(0);
+
+   if( i_level != 0 )
+   {
+      if( i_level->isOrdinal() )
+      {
+         int64 i64level =  i_level->forceInteger();
+         if( i64level < 0 )
+         {
+            throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin(e_orig_runtime)
+               .extra( ">=0" ) );
+         }
+
+         level = (uint32)i64level+1;
+      }
+      else
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "[N]" ) );
+      }
+   }
+   else {
+      level = 1;
+   }
+
+   if( mode )
+   {
+      Item caller;
+      if ( vm->getCallerItem( caller, level ) )
+      {
+         vm->retval( caller );
+         return;
+      }
+   }
+   else
+   {
+      const Symbol *sym;
+      uint32 line;
+      uint32 pc;
+      if( vm->getTraceStep( level, sym, line, pc ) )
+      {
+         CoreArray* arr = new CoreArray( 3 );
+         arr->append( sym->name() );
+         arr->append( sym->module()->name() );
+         arr->append( (int64) line );
+         vm->retval( arr );
+         return;
+      }
+   }
+
+   // we're not called.
+   vm->retnil();
+}
+
+
 /*#
    @method caller Function
    @brief Gets the direct caller or one of the calling ancestors.
@@ -54,45 +116,21 @@ FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm )
 {
-   // static method.
-   Item caller;
-   uint32 level;
-   Item *i_level = vm->param(0);
+   s_caller_internal( vm, true );
+}
 
-   if( i_level != 0 )
-   {
-      if( i_level->isOrdinal() )
-      {
-         int64 i64level =  i_level->forceInteger();
-         if( i64level < 0 )
-         {
-            throw new ParamError( ErrorParam( e_param_range, __LINE__ )
-               .origin(e_orig_runtime)
-               .extra( "N" ) );
-         }
+/*#
+   @method trace Function
+   @brief Gets a trace step in the call stack.
+   @optparam level Caller level (starting from zero, the default).
+   @return An array of three items (calling symbol name, module and line count )
 
-         level = (uint32)i64level+1;
-      }
-      else
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "N" ) );
-      }
-   }
-   else {
-      level = 1;
-   }
+   @note The method can also be called statically on the Function metaclass.
+*/
 
-   if ( vm->getCallerItem( caller, level ) )
-   {
-      vm->retval( caller );
-   }
-   else
-   {
-      // we're not called.
-      vm->retnil();
-   }
+FALCON_FUNC  Function_trace ( ::Falcon::VMachine *vm )
+{
+   s_caller_internal( vm, false );
 }
 
 }

@@ -1454,13 +1454,13 @@ bool VMachine::getCallerItem( Item &caller, uint32 level )
 {
    StackFrame* frame = currentFrame();
 
-   while( frame != 0 && level > 0 )
+   while( (frame != 0 && frame->m_symbol != 0 ) && level > 0 )
    {
       frame = frame->prev();
       level--;
    }
 
-   if ( frame == 0 || frame->m_module == 0 )
+   if ( frame == 0 || frame->m_symbol == 0 )
       return false;
 
    const Symbol* sym = frame->m_symbol;
