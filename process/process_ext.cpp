@@ -18,7 +18,7 @@
    Process module -- Falcon interface functions
    This is the module implementation file.
 */
-
+#include <cstdio>
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/stream.h>
@@ -330,11 +330,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
          .desc( FAL_STR( proc_msg_prccreate ) )
          .sysError( retval ) );
    }
-
-   if( sys_req->type() == FLC_ITEM_STRING )
-      ::Falcon::Mod::freeArgv( argv );
-   else
-      memFree( argv );
+   
 }
 
 
