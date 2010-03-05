@@ -1524,6 +1524,14 @@ Module* core_module_init()
    self->addClassMethod( vmslot_class, "first", &Falcon::core::VMSlot_first );
    self->addClassMethod( vmslot_class, "last", &Falcon::core::VMSlot_last );
 
+   self->addClassMethod( vmslot_class, "send", &Falcon::core::VMSlot_send ).asSymbol()->
+         addParam("event");
+   self->addClassMethod( vmslot_class, "register", &Falcon::core::VMSlot_register ).asSymbol()->
+         addParam("event")->addParam("callback");
+   self->addClassMethod( vmslot_class, "getEvent", &Falcon::core::VMSlot_getEvent ).asSymbol()->
+         addParam("event");
+
+
    //=======================================================================
    // RTL CLASSES
    //=======================================================================

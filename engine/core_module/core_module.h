@@ -149,6 +149,9 @@ FALCON_FUNC  VMSlot_retract( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_getAssert( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_first( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_last( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_send( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_register( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_getEvent( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm );

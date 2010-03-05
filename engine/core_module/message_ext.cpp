@@ -349,7 +349,7 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
 /*#
    @class VMSlot
    @brief VM Interface for message oriented programming operations.
-   @param name The name of the mesasge managed by this VMSlot.
+   @optparam name The name of the mesasge managed by this VMSlot.
 
    The VMSlot instance is a direct interface to the messaging
    facility of the VM creating it. It is implicitly created by
@@ -373,6 +373,10 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    referenced via @a subscribe function. Slots are considered
    unique by name, so that comparisons on slots are performed
    on their names.
+
+   If the @b name parameter is not given, the slot will be created as
+   "anonymous", and won't be registered with this virtual machine. It will
+   be possible to use it only through its methods.
 */
 
 /*#
@@ -383,15 +387,23 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 {
    Item *i_msg = vm->param( 0 );
 
-   if ( i_msg == 0 || ! i_msg->isString() )
+   if ( i_msg != 0 && ! (i_msg->isString()||i_msg->isNil()) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "S" ) );
+         .extra( "[S]" ) );
    }
 
-   CoreSlot* vms = vm->getSlot( *i_msg->asString(), true );
-   fassert( vms != 0 );
+   CoreSlot* vms;
+   if ( i_msg != 0 && i_msg->isString() )
+   {
+      vms = vm->getSlot( *i_msg->asString(), true );
+      fassert( vms != 0 );
+   }
+   else
+   {
+      vms = new CoreSlot("");
+   }
 
    CoreSlotCarrier* self = dyncast<CoreSlotCarrier *>( vm->self().asObjectSafe() );
    self->setSlot( vms );
@@ -409,6 +421,108 @@ FALCON_FUNC VMSlot_broadcast( ::Falcon::VMachine *vm )
 {
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
    cs->prepareBroadcast( vm->currentContext(), 0, vm->paramCount() );
+}
+
+
+/*#
+   @method send VMSlot
+   @brief Performs an event generation on this slot.
+   @param event Event name.
+   @param ... Extra parameters to be sent to listeners.
+
+   The send method works as broadcast, with two major differences;
+   - In case of objects being subscribed to this slot, the name of the
+     broadcast message is that specified as a parameter, and not that
+     of this slot. This means that automatic marshaling will be performed
+     on methods named like on_<event>, and not on_<self.name>.
+   - Items registered with @a VMSlot.register gets activated only if the
+     @b event name is the same to which they are registered to.
+
+*/
+
+FALCON_FUNC VMSlot_send( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+
+   Item *i_msg = vm->param( 0 );
+   if ( i_msg == 0 || ! i_msg->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
+   }
+
+   // better to cache the name
+   Item iName = *i_msg;
+   cs->prepareBroadcast( vm->currentContext(), 1, vm->paramCount()-1, 0, iName.asString() );
+}
+
+/*#
+   @method register VMSlot
+   @brief Performs broadcast on this slot.
+   @param event Event name.
+   @param handler Handler to associate to this event.
+
+*/
+
+FALCON_FUNC VMSlot_register( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+
+   Item *i_event = vm->param( 0 );
+   Item *i_handler = vm->param( 1 );
+
+   if ( i_event == 0 || ! i_event->isString()
+       || i_handler == 0 || ! (i_handler->isComposed() || i_handler->isCallable() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S,C|O" ) );
+   }
+
+   // Get the child core slot
+   CoreSlot* child = cs->getChild( *i_event->asString(), true );
+   child->append( *i_handler );
+}
+
+/*#
+   @method getEvent VMSlot
+   @brief Returns an event (as a child VMSlot) handled by this slot.
+   @param event Event name.
+   @optparam force Pass true to create the event if it is not existing.
+   @return a VMSlot representing the given event in this slot, or @b nil
+           if not found.
+*/
+
+FALCON_FUNC VMSlot_getEvent( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+
+   Item *i_event = vm->param( 0 );
+   Item *i_force = vm->param( 0 );
+
+   if ( i_event == 0 || ! i_event->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
+   }
+
+   // Get the child core slot
+   CoreSlot* child = cs->getChild( *i_event->asString(),
+         i_force != 0 && i_force->isTrue() ); // force creation if required
+   if( child != 0 )
+   {
+      // found or to be created.
+      Item* icc = vm->findWKI("VMSlot");
+      fassert( icc != 0 );
+      fassert( icc->isClass() );
+      vm->retval( icc->asClass()->createInstance(child) );
+   }
+   else
+   {
+      vm->retnil();
+   }
 }
 
 /*#

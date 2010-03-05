@@ -34,7 +34,7 @@ class VMMessage;
    This class provide abstract support for low level messaging system.
 
    The slot represents an end of the communication process where the incoming
-   message is definitely
+   message is definitely.
 */
 class CoreSlot: public ItemList
 {
@@ -45,12 +45,17 @@ class CoreSlot: public ItemList
    Item m_assertion;
    bool m_bHasAssert;
 
+   Map* m_children;
+
 public:
    CoreSlot( const String &name ):
       m_name( name ),
       m_refcount(1),
-      m_bHasAssert( false )
+      m_bHasAssert( false ),
+      m_children( 0 )
    {}
+
+   virtual ~CoreSlot();
 
    const String& name() const { return m_name; }
 
@@ -64,8 +69,9 @@ public:
       @param pfirst The first parameter in the current call frame that must be repeated.
       @param pcount Parameter count to be passed in the broadcast.
       \param msg The message that caused the slot to be broadcast (can be none if internally broadcast).
+      \param msgName Name of the message that must be broadcast if different from the name of this slot -- used by send.
    */
-   void prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, VMMessage* msg = 0 );
+   void prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, VMMessage* msg = 0, String* nsgName = 0 );
 
    /** Remove a ceratin item from this slot.
       This will remove an item considered equal to the subscriber from this list.
@@ -109,6 +115,11 @@ public:
    virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
 
    virtual void disposeIterator( Iterator& tgt ) const;
+
+   /** Gets or eventually creates a child slot.
+
+    */
+   CoreSlot* getChild( const String& name, bool create = false );
 };
 
 
