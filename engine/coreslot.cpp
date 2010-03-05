@@ -176,7 +176,6 @@ void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, V
       }
    }
 
-
    vmc->returnHandler( &coreslot_broadcast_internal );
 }
 
@@ -252,7 +251,7 @@ void CoreSlot::setAssertion( VMachine* vm, const Item &a )
    setAssertion( a );
    if ( ! empty() )
    {
-      vm->addLocals( 5 ); // Warning -- we add 5 to nil the msg ptr callback at local(4).
+      vm->addLocals( 6 ); // Warning -- we add 5 to nil the msg ptr callback at local(4).
       Iterator* iter = new Iterator( this );
       // we don't need to set the slot as owner, as we're sure it stays in range
       // (slots are marked) on themselves.
@@ -261,6 +260,8 @@ void CoreSlot::setAssertion( VMachine* vm, const Item &a )
       *vm->local(2) = m_assertion;
       *vm->local(3) = new CoreString( m_name );
       // local(4) must stay nil; it's used by broadcast_internal as msg callback pointer.
+      // local(4) must stay nil; it's used by broadcast_internal as msg callback pointer.
+
 
       vm->returnHandler( &coreslot_broadcast_internal );
    }
