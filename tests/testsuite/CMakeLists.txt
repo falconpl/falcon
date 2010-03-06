@@ -1,35 +1,36 @@
 set(categories
-  smoke
-  types
-  comp
-  functional
-  messages
-  basic
-  expressions
-  classes
-  function
-  lambda
-  expression
-  switch
-  rtl
   RTL
-  statements
-  loops
+  basic
+  classes
+  comp
+  expression
+  expressions
   fbom
-  tabular
+  function
+  functional
   functions
   gc
-  modloader
   iterators
+  lambda
+  loops
   macro
   membuf
+  messages
   meta
   methods
+  modloader
   poop
   prototype
   reference
+  rtl
   select
+  smoke
+  statements
+  states
+  switch
+  tabular
   template
+  types
 )
 
 # clean this directory from artefacts of former faltest runs
