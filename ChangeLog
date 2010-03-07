@@ -32,6 +32,7 @@ Falcon (0.9.6.3)
   * added: Event model to VMSlot (children named slots). 
   * fixed: StreamBuffer may cause hangs on partial reads in net-based streams.
   * fixed: clone() and *comp() didn't duplicate strings as semantic would suggest.
+  * added: Now unknown messages are optionally marshalled to "__on_event" in objects.
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.

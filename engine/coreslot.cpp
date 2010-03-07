@@ -50,23 +50,54 @@ bool coreslot_broadcast_internal( VMachine *vm )
 
       // we have a child that wants to get the message too.
       ci = dyncast< Iterator *>( vm->local(5)->asGCPointer() );
-      vm->local(0)->setGCPointer( ci );
+      *vm->local(0) = *vm->local(5);
       vm->local(5)->setNil();
    }
 
    Item current = ci->getCurrent();
+   int baseParamCount = 0;
 
    if ( ! current.isCallable() )
    {
       const String& name = *vm->local(3)->asString();
-      if( name.size() != 0 && current.isComposed() )
+      if( name.size() != 0 )
       {
-         // may throw
-         current.asDeepItem()->readProperty( "on_" + name, current );
+         if( current.isComposed() )
+         {
+            // may throw
+            try {
+               current.asDeepItem()->readProperty( "on_" + name, current );
+            }
+            catch( Error* err )
+            {
+               // see if we can get "__on_event"
+               try
+               {
+                  current.asDeepItem()->readProperty( "__on_event", current );
+                  // yes? -- ignore the previous error.
+                  err->decref();
+                  // and push the event name
+                  vm->pushParam( new CoreString(name) );
+                  baseParamCount = 1;
+               }
+               catch( Error* err1 )
+               {
+                  // no? -- throw the original error
+                  err1->decref();
+                  throw err;
+               }
+            }
+         }
+         else
+         {
+            throw new CodeError( ErrorParam( e_non_callable, __LINE__ ).extra( "broadcast" ) );
+         }
       }
       else
       {
-         throw new CodeError( ErrorParam( e_non_callable, __LINE__ ).extra( "broadcast" ) );
+         // ignore this item.
+         ci->next();
+         return true;
       }
    }
 
@@ -75,7 +106,7 @@ bool coreslot_broadcast_internal( VMachine *vm )
    {
       Item cache = *vm->local( 2 );
       vm->pushParam( cache );
-      vm->callFrame( current, 1 );
+      vm->callFrame( current, 1 + baseParamCount );
    }
    else
    {
@@ -99,7 +130,7 @@ bool coreslot_broadcast_internal( VMachine *vm )
          }
       }
 
-      vm->callFrame( current, (int32)paramCount );
+      vm->callFrame( current, (int32)paramCount + baseParamCount );
    }
 
    ci->next();
@@ -149,9 +180,6 @@ void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, V
 
    Iterator* iter = new Iterator( this );
 
-   // and create a full functional frame.
-   //vmc->createFrame( pcount );
-
    // we don't need to set the slot as owner, as we're sure it stays in range
    // (slots are marked) on themselves.
    vmc->addLocals( 6 );
@@ -166,13 +194,13 @@ void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, V
       vmc->local(4)->setInteger( (int64) msg );
    }
 
-   // have we receiving a named message and do we have a child?
+   // have we received a named message and do we have a child?
    if( msgName != 0 )
    {
       CoreSlot* child = getChild( *msgName, false );
       if( child != 0 )
       {
-         vmc->local(5)->setGCPointer( new Iterator( this ) );
+         vmc->local(5)->setGCPointer( new Iterator(child) );
       }
    }
 
@@ -214,11 +242,6 @@ CoreSlot* CoreSlot::getChild( const String& name, bool create )
 
       // create the children map
       m_children = new Map( &traits::t_string(), &traits::t_coreslotptr() );
-
-      CoreSlot* child = new CoreSlot(name);
-      child->incref(); // we hold a reference in the map
-      m_children->insert( &name, child );
-      return child;
    }
 
    // we have already a map.
@@ -226,8 +249,10 @@ CoreSlot* CoreSlot::getChild( const String& name, bool create )
 
    if( vchild == 0 )
    {
+      if ( ! create )
+         return 0;
+
       CoreSlot* child = new CoreSlot( name );
-      child->incref(); // we hold a reference in the map
       m_children->insert( &name, child );
       return child;
    }
@@ -378,6 +403,8 @@ void CoreSlotPtrTraits::copy( void *targetZone, const void *sourceZone ) const
    CoreSlot *source = (CoreSlot *) sourceZone;
 
    *target = source;
+   if( source != 0 )
+      source->incref();
 }
 
 int CoreSlotPtrTraits::compare( const void *firstz, const void *secondz ) const

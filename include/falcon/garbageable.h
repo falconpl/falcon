@@ -56,7 +56,7 @@ public:
    */
    virtual bool finalize();
 
-   /** Returns an exteem of the size occupied by this object in memory.
+   /** Returns an estimation of the size occupied by this object in memory.
       The final GC size is determined by an heuristic algorithm allocating
       part of the allocated space to the items returning 0 from this call
       (the default), taking away all the memory declared by items not

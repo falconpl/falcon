@@ -216,6 +216,7 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
       fassert( cc_slot != 0 );
       // the factory function takes care of increffing cs
       CoreObject *obj = cc_slot->asClass()->createInstance( cs );
+      cs->decref();
       vm->retval( obj );
    }
 }
@@ -407,6 +408,7 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 
    CoreSlotCarrier* self = dyncast<CoreSlotCarrier *>( vm->self().asObjectSafe() );
    self->setSlot( vms );
+   vms->decref();
 }
 
 
@@ -518,6 +520,7 @@ FALCON_FUNC VMSlot_getEvent( ::Falcon::VMachine *vm )
       fassert( icc != 0 );
       fassert( icc->isClass() );
       vm->retval( icc->asClass()->createInstance(child) );
+      child->decref();
    }
    else
    {
