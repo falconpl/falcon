@@ -148,15 +148,6 @@ static ThreadImpl* checkMainThread( VMachine* vm )
    at a later time.
 */
 
-/*#
-   @init Thread
-   @brief Initializes the thread object.
-   @optparam name A symbolic name for this thread.
-
-   The object can be safely created in any context. What
-   creates the parallel execution evnironment is the
-   @a Thread.start method.
-*/
 FALCON_FUNC Thread_init( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1088,15 +1079,11 @@ FALCON_FUNC Grant_init( VMachine *vm )
    @endcode
 
    Release is a no-op for a barrier.
-*/
 
-/*#
-   @init Barrier
-   @brief Initialize the barrier to either open or closed status.
-
-   By default, the barrier is created in closed status. To create it in
+   @note By default, the barrier is created in closed status. To create it in
    open status, pass the @b mode parameter as a true value.
 */
+
 FALCON_FUNC Barrier_init( VMachine *vm )
 {
    bool bMode = vm->paramCount() > 0 ? vm->param(0)->isTrue() : false;
@@ -1173,11 +1160,6 @@ FALCON_FUNC Barrier_close( VMachine *vm )
    sematic of the well known "Event Variable" in the MS-Windows SDK. Mainly,
    Falcon events allows only to one thread at a time to proceed, and grant
    atomicity of access to data associated with the event.
-*/
-
-/*#
-   @init Event
-   @brief initializes the event variable.
 
    By default, this constructor creates an automatic event,
    whose set status is automatically reset as a thread is able
@@ -1186,6 +1168,7 @@ FALCON_FUNC Barrier_close( VMachine *vm )
    threas could not progress, call this constructor with
    @b mode set to true.
 */
+
 FALCON_FUNC Event_init( VMachine *vm )
 {
    // defaults to true (autoreset)
@@ -1242,13 +1225,8 @@ FALCON_FUNC Event_reset( VMachine *vm )
    We have adopted the "counter" name rather than the more common "semaphore" to
    avoid confusion with the Semaphore class used for coroutines, and also because
    the @b post semantic is merged with the @b release method.
-*/
 
-/*#
-   @init SyncCounter
-   @brief Initializes the sync counter.
-
-   Creates the counter with an initial count that defaults to zero; this means that
+   The counter is created with an initial count that defaults to zero; this means that
    the first thread trying to acquire this structure will block until a @b post
    or @b release is issued.
 
@@ -1276,7 +1254,7 @@ FALCON_FUNC SyncCounter_init( VMachine *vm )
 /*#
    @method post SyncCounter
    @brief Releases the counter or increases the counter by more than one.
-   @optparam count The number of signalations to be posted to this semaphore.
+   @optparam count The number of signals to be posted to this semaphore.
 
    This method acts as release(), but it can be provided an optional parameter
    to give more than one thread the ability to acquire this structure.
@@ -1306,7 +1284,7 @@ FALCON_FUNC SyncCounter_post( VMachine *vm )
    @from Waitable
    @brief Signaler of relevant processing conditions.
 
-   This class implements a syncronized Falcon items FIFO or LIFO queue that can
+   This class implements a synchronized Falcon items FIFO or LIFO queue that can
    be waited on for non-empty status.
 
    A single waiting thread will acquire the queue when it is not empty;
@@ -1316,11 +1294,11 @@ FALCON_FUNC SyncCounter_post( VMachine *vm )
    Holding the queue in acquired status prevents concurrent insertion
    of new items, as well as removal, so it's advisable to release the
    queue as soon as possible, that is, as soon as the items that must be
-   processed are retreived.
+   processed are retrieved.
 
    @note Always remember that items in the queue are serialized copies coming
    from the pushing VMs. Serialization is a relatively expensive operation for
-   non-simple types, and may cause error raisal if the pushed items are not
+   non-simple types, and may cause error raising if the pushed items are not
    serializable.
 */
 
@@ -1744,10 +1722,6 @@ FALCON_FUNC Threading_start( VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init ThreadError
-   @brief Initializes the thread error.
-*/
 FALCON_FUNC  ThreadError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
@@ -1774,10 +1748,6 @@ FALCON_FUNC  ThreadError_init ( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init JoinError
-   @brief Initializes the error.
-*/
 FALCON_FUNC  JoinError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

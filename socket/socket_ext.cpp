@@ -491,15 +491,10 @@ FALCON_FUNC  Socket_getPort( ::Falcon::VMachine *vm )
    @class TCPSocket
    @from Socket
    @brief Provides full TCP connectivity.
+   @raise NetError on underlying network error.
 
    This class is derived from the @a Socket class, but it also provides methods that can be
    used to open connection towards remote hosts.
-*/
-
-/*#
-   @init TCPSocket
-   @brief Allocate system resources for TCP/IP Connectivity.
-   @raise NetError on underlying network error.
 
    The constructor reserves system resources for the socket.
    If the needed system resources are not available, a NetError is Raised.
@@ -1363,25 +1358,22 @@ FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
 /*#
    @class TCPServer
    @brief Encapsulates a TCP network service provider.
+   @raise NetError on system error.
 
    This class is actually a factory of TCPSockets, that are created as incoming
    connections are received. As such, it is not derived from the Socket class.
-
-   @prop lastError Numeric value of system level error that has occoured on the socket.
-      @a socketErrorDesc may be used to get a human-readable description of the error.
-      The error is usually also written in the fsError field of the exceptions,
-      if case they are caught.
-*/
-/*#
-   @init TCPServer
-   @brief Sets up the server.
-   @raise NetError on system error.
 
    The constructor reserves system resources needed to create
    sockets and return a TPCServer object that can be used to
    accept incoming TCP connections.
 
    If the needed system resources are not available, a NetError is raised.
+
+   @prop lastError Numeric value of system level error that has occoured on the socket.
+      @a socketErrorDesc may be used to get a human-readable description of the error.
+      The error is usually also written in the fsError field of the exceptions,
+      if case they are caught.
+
 */
 
 FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm )
@@ -1550,10 +1542,6 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init NetError
-   @brief Initializes the network error.
-*/
 FALCON_FUNC  NetError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

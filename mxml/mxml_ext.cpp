@@ -81,6 +81,27 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
    an XML document must still be valid as an XML element of another document,
    but it implements some data specific for handling documents.
 
+   It is possible to specify a @b encoding parameter which must be one of the
+   encoding names know by Falcon (see the @b TranscoderFactory function in the
+   RTL documentation). In this version, this parameter is ignored if the object
+   is used to deserialize an XML document, but it's used as output encoding (and
+   set in the "encoding" field of the XML heading) when writing the document.
+
+   The @b style parameter requires that a particular formatting is used when
+   writing the document. It can be overridden in the @a MXMLDocument.write method,
+   and if not provided there, the default set in the constructor will be used.
+
+   The @b style parameter must be in @a MXMLStyle enumeration.
+
+   @note It is not necessary to create and serialize a whole XML document to
+   create just XML compliant data representations. Single nodes can be serialized
+   with the @a MXMLNode.serialize method; in this way it is possible to create
+   small xml valid fragments for storage, network streaming, template filling
+   etc. At the same time, it is possible to de-serialize a single XML node
+   through the @a MXMLNode.deserialize method, which tries to decode an XML
+   document fragment configuring the node and eventually re-creating its subtree.
+
+
    @section mxml_doc_struct MXML document structure.
 
    The XML document, as seen by the MXML module, is a tree of nodes. Some nodes have
@@ -136,32 +157,6 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
    be empty.
 */
 
-/*#
-   @init MXMLDocument
-   @brief Creates the document object.
-
-   It is possible to specify a @b encoding parameter which must be one of the
-   encoding names know by Falcon (see the @b TranscoderFactory function in the
-   RTL documentation). In this version, this parameter is ignored if the object
-   is used to deserialize an XML document, but it's used as output encoding (and
-   set in the "encoding" field of the XML heading) when writing the document.
-
-   The @b style parameter requires that a particular formatting is used when
-   writing the document. It can be overridden in the @a MXMLDocument.write method,
-   and if not provided there, the default set in the constructor will be used.
-
-   The @b style paramter must be in @a MXMLStyle enumeration.
-
-   @note It is not necessary to create and serialize a whole XML document to
-   create just XML compliant data representations. Single nodes can be serialized
-   with the @a MXMLNode.serialize method; in this way it is possible to create
-   small xml valid fragments for storage, network streaming, template filling
-   etc. At the same time, it is possible to de-serialize a single XML node
-   through the @a MXMLNode.deserialize method, which tries to decode an XML
-   document fragment configuring the node and eventually re-creating its subtree.
-
-   @see MXMLDocument.deserialize
-*/
 
 FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
 {
@@ -808,6 +803,7 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
    @optparam name Name of the node, if this is a tag node.
    @optparam data Optional data content attached to this node..
    @brief Minimal entity of the XML document.
+   @raise ParamError if the type is invalid.
 
    This class encapsulates a minimal adressable entity in an XML document.
    Nodes can be of different types, some of which, like CDATA, tag and comment nodes
@@ -820,12 +816,6 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
    write mini xml valid fragments which may be used for network transmissions,
    database storage, template filling etc., without the need to build a whole XML
    document and writing the ?xml heading declarator.
-*/
-
-/*#
-   @init MXMLNode
-   @brief Creates a new node of a certain type.
-   @raise ParamError if the type is invalid.
 
    The @b type must be one of the @a MXMLType enumeration elements.
    The @b name of the node is relevant only for Processing Instruction
@@ -834,7 +824,9 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
 
    If the node is created just to be de-serialized, create it as an empty
    comment and then deserialize the node from a stream.
+
 */
+
 
 FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm )
 {
@@ -1596,10 +1588,6 @@ FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm )
    @a MXMLErrorCode enumeration.
 */
 
-/*#
-   @init MXMLError
-   @brief Initializes the process error.
-*/
 FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

@@ -41,12 +41,6 @@ namespace Ext {
    @brief Regular expression binding encapsulation.
    @param pattern The regular expression pattern to be compiled.
    @optparam options Pattern compilation options.
-
-*/
-
-/*#
-   @init Regex
-   @brief Compiles the regular expression patterns and initializes the instance.
    @raise RegexError if the pattern is invalid.
 
    The class constructor creates a Regex instance that can be then used to match, find,
@@ -1036,10 +1030,6 @@ FALCON_FUNC Regex_version( Falcon::VMachine *vm )
    @from Error code, description, extra
 
    See the Error class in the core module.
-*/
-/*#
-   @init RegexError
-   @brief Initializes the regular expression error.
 */
 
 FALCON_FUNC  RegexError_init ( ::Falcon::VMachine *vm )

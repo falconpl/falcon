@@ -1,4 +1,4 @@
-Feathers (0.9.6.3)
+Feathers (0.9.6.4)
   * fixed: Added SO_REUSEADDR to default slocket initialization.
   * fixed: As dependency from core module is implicit, the Thread_start
            routine may have pushed some modules BEFORE it during

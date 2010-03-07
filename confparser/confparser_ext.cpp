@@ -47,6 +47,12 @@ namespace Ext {
    @optparam filename The name of the ini file to be parsed, if it exists.
    @optparam encoding An optional non default encoding which is used for that file.
 
+   The constructor of this class allows to set up a filename for the
+   configuration file that is going to be read and/or written. If the name is not
+   given, @a ConfParser.read and ConfParser.write methods will require a valid Falcon
+   Stream, otherwise, if the stream is not provided, the given file will be opened
+   or written as needed.
+
    @section confparser_key_manage Adding, setting or removing keys
 
    The most direct way to add a new key in an ini configuration file is to use the
@@ -183,17 +189,6 @@ namespace Ext {
    containing all the values.
 */
 
-/*#
-   @init ConfParser
-   
-   @brief Prepares the confparser, and eventually opens a config file.
-
-   The constructor of this class allows to set up a filename for the
-   configuration file that is going to be read and/or written. If the name is not
-   given, @a ConfParser.read and ConfParser.write methods will require a valid Falcon
-   Stream, otherwise, if the stream is not provided, the given file will be opened
-   or written as needed.
-*/
 FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();

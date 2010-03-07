@@ -181,14 +181,10 @@ FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm )
       end
    @endcode
 
+   @note If @b path is not provided, defaults to "."
+   (script current working directory).
 */
 
-/*#
-   @init Compiler
-   @brief Initializes the compiler with a default path.
-   If @b path is not provided, defaults to "." (script current working directory).
-
-*/
 FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 {
    Item *i_path = vm->param( 0 );
@@ -579,12 +575,6 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
     @prop result Item containing last evaluation result.
 */
 
-/*# @init ICompiler
-    @brief Initializes the interactive compiler, eventually setting a path for
-           the module loader.
-
-    If @b path is not given, the default system path is used.
-*/
 
 FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm )
 {

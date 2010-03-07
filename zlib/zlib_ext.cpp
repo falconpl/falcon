@@ -396,11 +396,6 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init ZLibError
-   @brief Initializes the zlib error.
-*/
-
 FALCON_FUNC  ZLibError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

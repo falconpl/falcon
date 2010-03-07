@@ -815,10 +815,6 @@ FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init ProcessError
-   @brief Initializes the process error.
-*/
 FALCON_FUNC  ProcessError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
