@@ -69,10 +69,10 @@ else()
       #The output directory doesn't change. However, is not used as include.
       set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
 
-      # Use the source directory for include
-      list(APPEND falcon_INCLUDE_DIRS "${current_pos}/core/include")
+      # Use the source directory for include -- for first
+      list(INSERT falcon_INCLUDE_DIRS 0 "${current_pos}/core/include")
       # But adds generated include files
-      list(APPEND falcon_INCLUDE_DIRS  "${SELF_DIR}/../include" )
+      list(INSERT falcon_INCLUDE_DIRS  0 "${SELF_DIR}/../include" )
    endif()
 endif()
 
