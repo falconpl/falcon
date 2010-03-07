@@ -78,8 +78,14 @@ void *SignalReceiver::run()
 
    /* Wait... and wait... and wait. */
    while (m_shallRun)
+   {
+   #ifndef MAC_OS_X_VERSION_10_0
       sigwaitinfo(&sigset, NULL);
-
+   #else
+      sigwait(&sigset, NULL);   
+   #endif
+   }
+   
    return 0;
 }
 
@@ -109,6 +115,7 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
    ld->put(new CoreString("errno"), (int32)siginfo->si_errno);
    ld->put(new CoreString("code"), (int32)siginfo->si_code);
 
+#ifndef MAC_OS_X_VERSION_10_0
    if (SIGCHLD == signum || (signum >= SIGRTMIN && signum <= SIGRTMAX)) {
       ld->put(new CoreString("pid"), (int32)siginfo->si_pid);
       ld->put(new CoreString("uid"), (int32)siginfo->si_uid);
@@ -132,6 +139,12 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
       ld->put(new CoreString("band"), (int32)siginfo->si_band);
       ld->put(new CoreString("fd"), (int32)siginfo->si_fd);
    }
+#endif
+#else /* MACOSX */
+      ld->put(new CoreString("pid"), (int32)siginfo->si_pid);
+      ld->put(new CoreString("uid"), (int32)siginfo->si_uid);
+      ld->put(new CoreString("status"), (int32)siginfo->si_status);
+      ld->put(new CoreString("band"), (int32)siginfo->si_band);
 #endif
 
    cd->bless(true);

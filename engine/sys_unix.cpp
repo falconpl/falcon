@@ -17,10 +17,15 @@
    Short description
 */
 
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
 extern "C"
 {
    extern char **environ;
 }
+#endif
 
 #include <unistd.h>
 #include <time.h>
