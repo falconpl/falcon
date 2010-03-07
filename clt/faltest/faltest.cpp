@@ -978,7 +978,7 @@ int main( int argc, char *argv[] )
          }
       }
 
-      Sys::fal_closeDir( entry );;
+      Sys::fal_closeDir( entry );
    }
 
 

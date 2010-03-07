@@ -69,7 +69,7 @@ bool BaseFileStream::close()
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
-   if ( m_status & Stream::t_open ) {
+   if ( open() ) {
       if( ! CloseHandle( data->m_handle ) ) {
          data->m_lastError = GetLastError();
          m_status = Stream::t_error;
@@ -96,17 +96,17 @@ int32 BaseFileStream::read( void *buffer, int32 size )
       {
          // ReadFile returns ERROR_NOACCESS at EOF
          data->m_lastError = 0;
-         m_status = Stream::t_eof;
+         m_status = m_status | Stream::t_eof;
          return 0;
       }
 
-      m_status = Stream::t_error;
+      m_status = m_status | Stream::t_error;
       return -1;
    }
 
    if ( result == 0 ) 
    {
-      m_status = Stream::t_eof;
+      m_status = m_status | Stream::t_eof;
    }
 
    data->m_lastError = 0;
@@ -121,7 +121,7 @@ int32 BaseFileStream::write( const void *buffer, int32 size )
    DWORD result;
    if ( ! WriteFile( data->m_handle, buffer, size, &result, NULL ) ) {
       data->m_lastError = GetLastError();
-      m_status = Stream::t_error;
+      m_status = m_status | Stream::t_error;
       return -1;
    }
 
@@ -170,7 +170,7 @@ int64 BaseFileStream::seek( int64 pos, e_whence whence )
    DWORD npos = (int32) SetFilePointer( data->m_handle, posLow, &posHI, from );
    if( npos == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR ) {
       data->m_lastError = GetLastError();
-      m_status = Stream::t_error;
+      m_status = m_status | Stream::t_error;
       return -1;
    }
    else {
@@ -195,7 +195,7 @@ int64 BaseFileStream::tell()
    DWORD npos = (int32) SetFilePointer( data->m_handle, 0, &posHI, FILE_CURRENT );
    if( npos == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR ) {
       data->m_lastError = GetLastError();
-      m_status = Stream::t_error;
+      m_status = m_status | Stream::t_error;
       return -1;
    }
 
@@ -216,7 +216,7 @@ bool BaseFileStream::truncate( int64 pos )
       SetFilePointer( data->m_handle, posLow, &posHI, FILE_BEGIN );
       if( GetLastError() != NO_ERROR ) {
          data->m_lastError = GetLastError();
-         m_status = Stream::t_error;
+         m_status = m_status | Stream::t_error;
          return false;
       }
    }
@@ -224,7 +224,7 @@ bool BaseFileStream::truncate( int64 pos )
    SetEndOfFile( data->m_handle );
    if( GetLastError() != NO_ERROR ) {
       data->m_lastError = GetLastError();
-      m_status = Stream::t_error;
+      m_status = m_status | Stream::t_error;
       return false;
    }
 
@@ -440,7 +440,7 @@ void BaseFileStream::setError( int64 errorCode )
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
    data->m_lastError = (uint32) errorCode;
    if ( errorCode != 0 )
-      status( t_error );
+      status( status() | t_error );
    else
       status( (t_status) (((int)status()) & ~(int)Stream::t_error ));
 }
