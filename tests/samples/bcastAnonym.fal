@@ -5,7 +5,7 @@
 
    Shows the usage of anonymous slots and "event" broadcasting.
 
-   Events are special mesasges which can be sent on a slot
+   Events are special messages which can be sent on a slot
    regardless of their name. Specific handlers can be registered
    with them through the "register" method, while generic marshalling
    is still possible via standard on_<event> object callback automatic
