@@ -1,5 +1,7 @@
 TODO for 0.9.8
    
+   - URGENT: Change signature of interruption related functions in VM; sleep() must
+             be fixed to respect interrruption protocol.
    - URGENT: New service model with service factory function.     
    - URGENT: New GarbagePointer model to allow passing foreign types.
    - URGENT: virtual constructor in sequences to allow them to build an empty copy.
