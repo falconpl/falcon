@@ -339,7 +339,7 @@ CoreSlotCarrier::CoreSlotCarrier( const CoreClass* generator, CoreSlot* cs, bool
    if( cs != 0 )
    {
       cs->incref();
-      m_user_data = cs;
+      setUserData( cs );
    }
 }
 
