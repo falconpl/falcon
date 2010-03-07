@@ -11,7 +11,7 @@
    With an argument, it will search the key in the main section and
    display its value
    If the argument is in format "+key=value" it will be ADDED.
-   If the argument is in format "key=value" it will be SET.
+   If the argument is in format "o=value" it will be SET.
    With "-key" the given key will be removed.
    Providing also an argument in square brackets, as "[section]" the
    argument will be applied to the given section. "-[section]" will
@@ -60,8 +60,8 @@ for elem in args
    end
 
    if elem[0] == "[" and elem[-1] == "]"
-      section = elem[1:-2]
-      printl( "Operating on section ", section )
+      section = elem[1:-1]
+      printl( @"Operating on section \"$section\"" )
    end
 end
 
@@ -103,7 +103,7 @@ for elem in args
          // removal
          switch elem[1]
             case "["
-               if not parser.removeSection( elem[2:-2] )
+               if not parser.removeSection( elem[2:-1] )
                printl ("Section ", elem[1:], " not found." )
                else
                   printl ("Section ", elem[1:], " deleted." )

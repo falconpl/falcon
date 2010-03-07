@@ -396,7 +396,7 @@ FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm )
 
    if ( i_section != 0 && ! i_section->isNil() )
    {
-      if ( ! cfile->getValue( *i_key->asString(), *i_section->asString(), value ) )
+      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
       {
          vm->retnil();
          return;
@@ -457,7 +457,7 @@ FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm )
 
    if ( i_section != 0 && ! i_section->isNil() )
    {
-      if ( ! cfile->getValue( *i_key->asString(), *i_section->asString(), value ) )
+      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
       {
          vm->retnil();
          return;
@@ -502,7 +502,7 @@ FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
    String value;
    if ( i_section != 0 && ! i_section->isNil() )
    {
-      if ( ! cfile->getValue( *i_key->asString(), *i_section->asString(), value ) )
+      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
       {
          vm->retnil();
          return;
