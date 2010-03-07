@@ -30,6 +30,7 @@ Falcon (0.9.6.3)
   * fixed: URI::URLDecode was a bit too strict; there's no need to filter chars
            under 0x20.
   * added: Event model to VMSlot (children named slots). 
+  * fixed: StreamBuffer may cause hangs on partial reads in net-based streams.
 
 Falcon (0.9.6.2)
   * fixed: Random crash on runtime errors during object init.
