@@ -18,6 +18,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#if !defined(__linux__) || !defined(__sun)
+# define __BSD__
+#endif	
+
 namespace Falcon {
 
 SignalReceiver *signalReceiver = 0;
@@ -108,8 +112,10 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
    if (SIGCHLD == signum || (signum >= SIGRTMIN && signum <= SIGRTMAX)) {
       ld->put(new CoreString("pid"), (int32)siginfo->si_pid);
       ld->put(new CoreString("uid"), (int32)siginfo->si_uid);
+#ifndef __BSD__
       ld->put(new CoreString("utime"), (int64)siginfo->si_utime);
       ld->put(new CoreString("stime"), (int64)siginfo->si_stime);
+#endif
    }
    if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
 #ifdef _POSIX_SOURCE
@@ -121,10 +127,12 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
    if (SIGCHLD == signum) {
       ld->put(new CoreString("status"), (int32)siginfo->si_status);
    }
+#ifndef __BSD__
    if (SIGPOLL == signum) {
       ld->put(new CoreString("band"), (int32)siginfo->si_band);
       ld->put(new CoreString("fd"), (int32)siginfo->si_fd);
    }
+#endif
 
    cd->bless(true);
 
