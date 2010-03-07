@@ -79,7 +79,7 @@ void *SignalReceiver::run()
    /* Wait... and wait... and wait. */
    while (m_shallRun)
    {
-   #ifndef MAC_OS_X_VERSION_10_0
+   #ifndef __APPLE__
       sigwaitinfo(&sigset, NULL);
    #else
       sigwait(&sigset, NULL);   
@@ -115,7 +115,7 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
    ld->put(new CoreString("errno"), (int32)siginfo->si_errno);
    ld->put(new CoreString("code"), (int32)siginfo->si_code);
 
-#ifndef MAC_OS_X_VERSION_10_0
+#ifndef __APPLE__
    if (SIGCHLD == signum || (signum >= SIGRTMIN && signum <= SIGRTMAX)) {
       ld->put(new CoreString("pid"), (int32)siginfo->si_pid);
       ld->put(new CoreString("uid"), (int32)siginfo->si_uid);
