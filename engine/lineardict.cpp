@@ -348,6 +348,17 @@ LinearDict *LinearDict::clone() const
       ret = new LinearDict( m_size );
       ret->length( m_size );
       memcpy( ret->m_data, m_data, esize( m_size ) );
+
+      // duplicate strings
+      for ( uint32 i = 0; i < m_size; ++i )
+      {
+         Item& item = m_data[i].m_value;
+
+         if( item.isString() && item.asString()->isCore() )
+         {
+            item = new CoreString( *item.asString() );
+         }
+      }
    }
 
    return ret;

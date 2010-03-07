@@ -20,11 +20,16 @@ string += "Modify"
 if smod != "Hello world.": failure( "String copy -- insolation" )
 
 // array copy
-array = [ "a", "b", "c" ]
+astr = "a"
+array = [ astr, "b", "c" ]
 amod = array.clone()
 if len( amod ) != 3: failure( "Array copy" )
 array += "element"
 if len( amod ) != 3: failure( "Array copy -- insolation" )
+// string invariancy test
+amod[0][0] = "b"
+if astr != "a": failure( "Invariancy test 1" )
+if array[0] != "a": failure( "Invariancy test 2" )
 
 // dictionary copy
 dict = [ 1 => 1, 2 => 2, 3 => 3 ]

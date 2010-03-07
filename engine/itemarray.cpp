@@ -51,6 +51,17 @@ ItemArray::ItemArray( const ItemArray& other ):
       m_size = other.m_size;
       m_data = (Item *) memAlloc( esize(other.m_size) );
       memcpy( m_data, other.m_data, esize(other.m_size) );
+
+      // duplicate strings
+      for ( uint32 i = 0; i < m_size; ++i )
+      {
+         Item& item = m_data[i];
+
+         if( item.isString() && item.asString()->isCore() )
+         {
+            item = new CoreString( *item.asString() );
+         }
+      }
    }
    else
    {

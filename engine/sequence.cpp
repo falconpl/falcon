@@ -52,7 +52,7 @@ inline bool s_appendMe( VMachine *vm, Sequence* me, const Item &source, const It
       vm->pushParam( vm->self() );
       vm->callItemAtomic(filter,2);
       if ( ! vm->regA().isOob() )
-         me->append( vm->regA() );
+         me->append( vm->regA().isString() ? new CoreString( *vm->regA().asString() ) : vm->regA() );
       else if ( vm->regA().isInteger() && vm->regA().asInteger() == 0 )
          return false;
    }
@@ -181,7 +181,8 @@ static bool comp_get_all_items_callable_next( VMachine *vm )
    }
 
    // add the data.
-   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
+   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append(
+         vm->regA().isString() ? new CoreString( *vm->regA().asString() ) : vm->regA() );
 
    // iterate.
    vm->callFrame( *vm->local(3), 0 );
@@ -255,7 +256,7 @@ static bool comp_get_all_items( VMachine *vm, const Item& cmp )
       const CoreArray& arr = *cmp.asArray();
       for( uint32 i = 0; i < arr.length(); i ++ )
       {
-         sequence->append( arr[i] );
+         sequence->append( arr[i].isString() ? new CoreString( *arr[i].asString() ) : arr[i] );
       }
    }
    else if ( (cmp.isObject() && cmp.asObjectSafe()->getSequence() ) )
@@ -264,7 +265,7 @@ static bool comp_get_all_items( VMachine *vm, const Item& cmp )
       Iterator iter( origseq );
       while( iter.hasCurrent() )
       {
-         sequence->append( iter.getCurrent() );
+         sequence->append( iter.getCurrent().isString() ? new CoreString( *iter.getCurrent().asString() ) : iter.getCurrent() );
          iter.next();
       }
    }
@@ -507,7 +508,7 @@ static bool multi_comprehension_filtered_loop_next( VMachine* vm )
          self->append( vm->regA() );
    }
    else
-      self->append( vm->regA() );
+      self->append( vm->regA().isString() ? new CoreString( *vm->regA().asString() ) : vm->regA() );
 
    return multi_comprehension_filtered_loop( vm );
 }
@@ -587,7 +588,9 @@ static bool multi_comprehension_generic_single_loop_post_filter( VMachine* vm )
       }
    }
 
-   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append( vm->regA() );
+   dyncast<Sequence*>(vm->local(1)->asGCPointer())->append(
+         vm->regA().isString() ?
+               new CoreString( *vm->regA().asString() ) : vm->regA() );
    vm->returnHandler( multi_comprehension_generic_single_loop );
    return true;
 }
@@ -673,7 +676,7 @@ static bool multi_comprehension_callable_multiple_loop_next( VMachine* vm )
    }
    else
    {
-      ca->append( vm->regA() );
+      ca->append( vm->regA().isString() ? new CoreString( *vm->regA().asString() ) : vm->regA() );
       vm->callFrame( *vm->local(current+3), 0 );
    }
 
@@ -695,7 +698,7 @@ static void multi_comprehension_generate_all( VMachine* vm )
          Iterator* seq = dyncast<Iterator*>(vm->local(elem+3)->asGCPointer());
          if( ! seq->hasCurrent() )
             return;
-         cret->append( seq->getCurrent() );
+         cret->append( seq->getCurrent().isString() ? new CoreString( *seq->getCurrent().asString() ) : seq->getCurrent() );
       }
 
       // append it

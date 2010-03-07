@@ -340,6 +340,9 @@ bool StreamBuffer::flush()
    m_bReseek = m_bReseek || m_bufPos != m_bufLen;
    m_changed = false;
    m_bufPos = m_bufLen = 0;
+
+   m_stream->flush();
+
    return true;
 }
 

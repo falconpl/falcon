@@ -110,7 +110,10 @@ void PageDict::merge( const ItemDict &dict )
 
    while( iter.hasCurrent() )
    {
-      put( iter.getCurrentKey(), iter.getCurrent() );
+      Item& current = iter.getCurrent();
+      put( iter.getCurrentKey(),
+            current.isString() && current.asString()->isCore() ?
+                  new CoreString( *current.asString() ) : current );
       iter.next();
    }
    invalidateAllIters();
