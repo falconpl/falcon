@@ -85,7 +85,7 @@ for string in stored
    formiddle: >>", "
    forlast: >"."
 end
-return
+
 // transmit an arbitrary event for test
 (.[ anonym_slot.send "ArbitraryEvent" ] + stored )()
 

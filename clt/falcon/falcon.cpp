@@ -677,7 +677,7 @@ void AppFalcon::runModule()
    if ( vmachine->link( &runtime ) )
    {
       // Broadcast OS signals in this VM.
-      vmachine->becomeSignalTarget();
+      //vmachine->becomeSignalTarget();
 
       vmachine->launch();
 

@@ -675,7 +675,7 @@ bool testScript( ScriptData *script,
       linkTime = Sys::_seconds();
 
    // Become target of the OS signals.
-   vmachine->becomeSignalTarget();
+   // vmachine->becomeSignalTarget();
 
    try
    {

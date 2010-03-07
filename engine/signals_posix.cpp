@@ -112,9 +112,11 @@ void SignalReceiver::deliver(int signum, siginfo_t *siginfo)
       ld->put(new CoreString("stime"), (int64)siginfo->si_stime);
    }
    if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
+#ifdef _POSIX_SOURCE
       ld->put(new CoreString("overrun"), (int32)siginfo->si_overrun);
       ld->put(new CoreString("timerid"), (int32)siginfo->si_timerid);
       ld->put(new CoreString("int"), (int32)siginfo->si_int);
+#endif
    }
    if (SIGCHLD == signum) {
       ld->put(new CoreString("status"), (int32)siginfo->si_status);
