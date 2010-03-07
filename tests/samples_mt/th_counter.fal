@@ -27,8 +27,8 @@
 */
 
 load threading
-const threadCount = 3
-const loops = 1000
+const threadCount = 4
+const loops = 250
 
 // ID: a numeric ID (in the panel)
 // counterIn: semaphore that must be acquired to have the right to write
@@ -45,7 +45,7 @@ class MyThread( id, counterIn, counterDone, panel ) from Thread
          // wait for the counter
          self.wait( self.counterIn )
          // termination condition
-         if self.panel[0] == -1: break
+         if self.panel[0] > loops: break
 
          // start counting like mad
          for i in [0:loops]
@@ -68,7 +68,7 @@ class ControlThread( panel ) from Thread
       for n in [0: self.panel.len()]
          forfirst: >> "\r", strReplicate( " ", 70 ), "\r"
          >> n, ": "
-         if self.panel[n] <= 0
+         if self.panel[n] == 0 || self.panel[n] > loops
             >> "_"
          else
             >> self.panel[n]
@@ -80,7 +80,7 @@ class ControlThread( panel ) from Thread
    function run()
       loop
          try
-            sleep( 0.05 )
+            self.wait( 0.05 )
             self.display()
          catch InterruptedError
             // one last cleanup display
@@ -124,20 +124,18 @@ for count in [0: threadCount]
    end
 end
 
+// avoid breaking last output
+tcnt.stop()
+Threading.wait(tcnt)
+
 // ask thread termination
-panel[0] = -1
+panel[0] = loops + 1
 counterIn.post( threadCount + 1 )
 
 for th in ths
    th.stop()
    Threading.wait( th )
 end
-
-// avoid breaking last output
-tcnt.stop()
-Threading.wait(tcnt)
-
-// for brevity, omit the other stops
 
 >
 > "Main thread complete."
