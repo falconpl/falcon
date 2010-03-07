@@ -3,59 +3,40 @@
 
                               Chimera Release
 
-                                  0.9.6.2
+                                  0.9.6.4
   
   "Chimera" version is an intermediate version that bridges Eagle series
 with the next series, in which we should put in the final compiler/module
 assets.
 
-  This is mainly a critical bugfix release over 0.9.6. Binary compatibility
-with Chimera is granted as well as backward compatibility with previous
-versions. The only major changes is the removal of the 'state' keyword; the
-functionality is maintained by declaring a state in brackets [...] in the
-body of a class. This helps porting old 0.9.4 code to the new release, and
-has a minor impact on existing code due to the novelty of the 'state'
-keyword.
+  This is mainly a critical bugfix release over 0.9.6.2. Backward compatibility
+with previous versions is granted, as well as binary comptatibility of the
+public interface. A minor change has been delivered to the internal API of
+Falcon::CoreSlot class, which is usually not exposed to external modules.
 
-  The most notable addition to this release is the falpack program which
-is a first (fairly experimental, but working) try to generate stand-alone
-falcon applications. Although the final distributable package generated
-by this initial version of falpack consists of a directory tree with
-relevant modules and resources, the final result is ready to go at a simple
-click of the mouse. It's just a first step, but it already simplifies the
-task of preparing and delivering falcon-based applications, and already
-sufficient to fill the most common needs.
+  The most notable addition to this release is an "event oriented" interface
+to the VMSlot class, which allows finer control of scoped broadcasts.
+
 
 New Features
 ============
 
-  - mcomp and mfcomp Sequence methods implement a complete list
-    comprehension paradigm.
-  - Support for OEM - IBM473 code page.
-  - Path class has now new properties to access the unit + location
-    combination in one step, making easier to write cross-platform
-    applications.
-  - Added falpack to the command line tool suite.
+  - Function.trace() to get the traceback steps.
+  - Methodic functions strEsq, strUnesq, strEscape, strUnescape (and
+    similarly named methods in String) helping string transformation in
+    web modules.
+  - Event model to VMSlot (children named slots).
+  - Now unknown messages are optionally marshalled to "__on_event" in objects.
 
 
 Critical bug fixes
 ==================
 
-  - Random crash on runtime errors during object init.
-  - Error in class symbol de-serialization caused failure of fam loading.
-  - Local symbol names could be randomly broken in fam files; this caused
-    @ "$local" expressions to randomly break.
-  - Asynchronous message processing was basically broken, but the breakage
-    could be spotted only randomly. This affects only 3d party modules using
-    asynchronous message generation, it doesn't affects scripts.
-
-Backward incompatibilities
-==========================
-
-  - 'state' keyword has been removed. A state can now be declared in a class
-    by the expression [state_name], closed by the 'end' statement. So,
-    'state' can be used again as a user symbol name (actually, this removes
-    a backward incompatibility that was introduced in 0.9.6.0).
+  - *comp() methods didn't skip the item when oob(1) was returned
+  - Failing to init the frame in new VMContexts would have caused random
+    crashes depending on linkage or memory conditions.
+  - Error reporting in include() may crash.
+  - Invalid loop condition caused fself.caller() to segfault.
 
 Usage tips
 ==========

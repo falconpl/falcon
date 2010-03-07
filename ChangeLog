@@ -1,4 +1,4 @@
-Falcon (0.9.6.3)
+Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
            didn't discard the value.
   * fixed: Path::uriToWin() (used to post-normalize paths on MS-Windows system)
