@@ -1,0 +1,97 @@
+/*
+   FALCON - Samples
+
+   FILE: bcastAnonym.fal
+
+   Shows the usage of anonymous slots and "event" broadcasting.
+
+   Events are special mesasges which can be sent on a slot
+   regardless of their name. Specific handlers can be registered
+   with them through the "register" method, while generic marshalling
+   is still possible via standard on_<event> object callback automatic
+   marshalling.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+//================================================
+// DataBay
+//
+
+class DataBay
+   _data = []
+
+   function on_SetData( data )
+      self._data += data
+      return true
+   end
+
+   function on_GetData()
+       consume()
+       return self._data
+   end
+
+   // generic _on_event catching everything
+   function __on_event( event )
+      printl( @"Received an unhandled event of type \"$event\": ",
+         passvp().describe() )
+   end
+   
+end
+
+// generic callback
+function setDataMarker( data )
+   > "Received: ", data
+end
+
+//==================================================
+
+> "=================== ***** ========================"
+> "Falcon event marshalling test"
+> "=================== ***** ========================"
+>
+> "This test verifies the event semantics for message marshalling"
+> "The arguments you type on the command line will be repeated through an event;"
+> "Then, another event will ask a storage item class to retreive the data."
+if args.len() == 0
+   >
+   >"No arguments provided; please, write something on the command line."
+   return 1
+end
+
+db = DataBay()
+
+// register to an anonymous slot
+anonym_slot = VMSlot()
+anonym_slot.subscribe( db )
+
+// also, adds a specific event listener
+anonym_slot.register( "SetData", setDataMarker )
+
+// Send a specific event
+for data in args: anonym_slot.send( "SetData", data )
+
+// transmit by name
+>> "Arguments replied: "
+stored = anonym_slot.send( "GetData" )
+for string in stored
+   >> string
+   formiddle: >>", "
+   forlast: >"."
+end
+return
+// transmit an arbitrary event for test
+(.[ anonym_slot.send "ArbitraryEvent" ] + stored )()
+
+// verify that a broadcast on an anonymous slot doesn't excite marashalling
+anonym_slot.broadcast()
+
+>
+> "Complete."
+
