@@ -279,11 +279,13 @@ static int s_select_connect( int skt, int32 msec )
    return -1; // error
 }
 
+/*
 Socket::~Socket()
 {
    // ungraceful close.
    terminate();
 }
+*/
 
 void Socket::terminate()
 {

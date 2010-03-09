@@ -32,6 +32,9 @@
 
 #include "socket_sys.h"
 
+#include <falcon/mt.h>
+
+
 namespace Falcon {
 namespace Sys {
 
@@ -325,11 +328,13 @@ static int s_select_connect( SOCKET skt, int32 msec )
    return -1; // error
 }
 
+/*
 Socket::~Socket()
 {
    // ungraceful close.
    terminate();
 }
+*/
 
 void Socket::terminate()
 {
@@ -430,6 +435,7 @@ bool Socket::bind( Address &addr, bool packet, bool broadcast )
    return false;
 }
 
+
 //===============================================
 // TCP Socket
 //===============================================
@@ -448,6 +454,7 @@ TCPSocket::TCPSocket( bool ipv6 )
 TCPSocket::~TCPSocket()
 {
 }
+
 
 int32 TCPSocket::recv( byte *buffer, int32 size )
 {

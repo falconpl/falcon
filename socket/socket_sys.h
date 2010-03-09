@@ -154,27 +154,36 @@ protected:
    int64 m_lastError;
    int32 m_timeout;
    int32 m_boundFamily;
+   volatile int32 *m_refcount;
 
 
    Socket():
       m_lastError(0),
       m_timeout(0),
-      m_boundFamily(0)
+      m_boundFamily(0),
+      m_refcount(0)
    {
       d.m_systemData = 0;
+      m_refcount = (volatile int32*) memAlloc( sizeof(int32) );
+      *m_refcount = 1;
    }
 
    Socket( void *systemData, bool ipv6 = false ):
       m_ipv6(ipv6 ),
       m_lastError(0),
       m_timeout(0),
-      m_boundFamily(0)
+      m_boundFamily(0),
+      m_refcount(0)
    {
       d.m_systemData = systemData;
+      m_refcount = (volatile int32*) memAlloc( sizeof(int32) );
+      *m_refcount = 1;
    }
+      
+   Socket( const Socket& other );
 
 public:
-   ~Socket();
+   virtual ~Socket();
 
    int64 lastError() const { return m_lastError; }
    int32 timeout() const { return m_timeout; }
@@ -197,7 +206,7 @@ public:
    void terminate();
 
    virtual void gcMark( uint32 mk ) {};
-   virtual FalconData *clone() const { return 0; }
+   virtual FalconData *clone() const;
 };
 
 class UDPSocket: public Socket
@@ -222,8 +231,11 @@ public:
       Socket( systemData, ipv6 ),
       m_connected( false )
    {}
+     
+   TCPSocket( const TCPSocket& other );
+   virtual ~TCPSocket();
 
-   ~TCPSocket();
+   virtual FalconData* clone() const;
 
    /** Receive a buffer on the socket.
       The function waits m_timeout milliseconds (or forever if timeout is -1);

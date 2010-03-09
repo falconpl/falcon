@@ -179,5 +179,50 @@ FALCON_MODULE_DECL
    return self;
 }
 
+namespace Falcon{
+namespace Sys{
+
+Socket::Socket( const Socket& other ):
+   m_address( other.m_address ),
+   d(other.d),
+   m_ipv6( other.m_ipv6 ),
+   m_lastError(other.m_lastError),
+   m_timeout(other.m_timeout),
+   m_boundFamily(other.m_boundFamily),
+   m_refcount(other.m_refcount)
+{
+   atomicInc( *other.m_refcount );
+}
+
+FalconData *Socket::clone() const
+{
+   return new Socket(*this);
+}
+
+Socket::~Socket()
+{
+   if( atomicDec( *m_refcount ) == 0 )
+   {      
+      // ungraceful close.
+      terminate();
+      memFree( (void*)m_refcount );
+   }
+}
+
+
+TCPSocket::TCPSocket( const TCPSocket& other ):
+   Socket( other ),
+   m_connected(other.m_connected)
+{
+}
+
+
+FalconData* TCPSocket::clone() const
+{
+   return new TCPSocket(*this);
+}
+}
+}
+
 /* end of socket.cpp */
 
