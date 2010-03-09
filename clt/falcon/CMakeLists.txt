@@ -3,31 +3,25 @@
 #
 # Falcon command line
 ##################################################
-option(FALCON_WITH_READLINE "Switch to ON for readline support." off)
+option(FALCON_WITH_READLINE "Switch to ON for readline support." OFF)
 option(FALCON_WITH_INTERNAL_EDITLINE "" OFF)
-option(FALCON_WITH_EDITLINE "" OFF)
 
 if(WIN32)
    set(readline_SRC readline_simple.cpp)
    set( SYSTEM_RC falcon.rc)
 else()  
-   if(FALCON_WITH_READLINE)
+   if(NOT FALCON_WITH_READLINE)
      set(readline_SRC readline_simple.cpp)
    else()
+     set(readline_SRC readline_editline.cpp)
      if(FALCON_WITH_INTERNAL_EDITLINE)
        add_subdirectory(editline)
-       set(readline_SRC readline_editline.cpp)
        set(Editline_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/editline/src)
        set(Editline_LIBRARY edit)
      else()
-        if(FALCON_WITH_EDITLINE)
-           find_package(Editline REQUIRED)
-           set(readline_SRC readline_editline.cpp)
-        else()
-           set(readline_SRC readline_simple.cpp)
-        endif()
+       find_package(Editline REQUIRED)
      endif()
-  endif(FALCON_WITH_READLINE)
+  endif(NOT FALCON_WITH_READLINE)
 endif(WIN32)
 
 include_directories(
