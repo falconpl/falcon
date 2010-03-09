@@ -90,7 +90,18 @@ bool CoreObject::serialize( Stream *stream, bool bLive ) const
 {
    if( bLive )
    {
-      stream->write( (byte *) &m_user_data, sizeof( m_user_data ) );
+      void* data = 0;
+      if( m_bIsFalconData )
+      {
+         data = getFalconData()->clone();
+      }
+
+      if ( data == 0 )
+      {
+         data = m_user_data;
+      }
+
+      stream->write( (byte *) &data, sizeof( m_user_data ) );
       return true;
    }
    return false;
