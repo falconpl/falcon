@@ -1,0 +1,32 @@
+// simplest test
+
+import from gtk
+
+// initialize gtk
+m = gtk.Main( args )
+
+// custom window
+class MyWindow from gtk.Window
+    // delete callback
+    function on_delete_event()
+        m.quit()
+        return false
+    end
+    // button clicked
+    function on_clicked()
+        > "Yay!"
+    end
+    // constructor
+    init
+        self.title = "Falcon"
+        self.signal_delete_event().subscribe( self )
+        // add a button
+        btn = gtk.Button( "Falcon!" )
+        btn.signal_clicked().subscribe( self )
+        self.add( btn )
+    end
+end
+
+w = MyWindow()
+
+m.run( w )
