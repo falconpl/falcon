@@ -1,3 +1,7 @@
+Falcon (0.9.6.5)
+  * fixed: Default CoreObject clone didn't try to clone the falcon-data even
+           if it was possible to do that.
+
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
            didn't discard the value.
