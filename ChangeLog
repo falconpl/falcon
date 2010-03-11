@@ -1,3 +1,7 @@
+Feathers (0.9.6.5)
+  * fixed: Sockets wasn't cloneable (so they couldn't be sent to
+           other threads).
+
 Feathers (0.9.6.4)
   * fixed: Added SO_REUSEADDR to default slocket initialization.
   * fixed: As dependency from core module is implicit, the Thread_start
