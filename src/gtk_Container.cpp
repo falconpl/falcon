@@ -41,13 +41,11 @@ void Container::modInit( Falcon::Module* mod )
 FALCON_FUNC Container::add( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
-
     if ( !i_wdt || i_wdt->isNil() ||
         !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
     {
         throw_inv_params( "[Widget]" );
     }
-
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();

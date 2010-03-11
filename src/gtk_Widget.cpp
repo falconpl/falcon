@@ -87,6 +87,10 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
  */
 FALCON_FUNC Widget::signal_delete_event( VMARG )
 {
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -114,15 +118,16 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
     {
         it = &iter.getCurrent();
 
-        if ( !it->isCallable()
-            && ( it->isComposed()
-                && !it->asObject()->getMethod( "on_delete_event", *it ) ) )
+        if ( !it->isCallable() )
         {
-            vm->stdOut()->writeString(
-            "[Widget::on_delete_event] invalid callback (expected callable)\n" );
-            return TRUE; // block event
+            if ( !it->isComposed()
+                || !it->asObject()->getMethod( "on_delete_event", *it ) )
+            {
+                vm->stdOut()->writeString(
+                "[Widget::on_delete_event] invalid callback (expected callable)\n" );
+                return TRUE; // block event
+            }
         }
-
         //vm->pushParam( Item( (int64)((GdkEventAny*)ev)->type ) );
         vm->callItem( *it, 0 );
         it = &vm->regA();
@@ -153,6 +158,10 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_show( VMARG )
 {
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -179,13 +188,15 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
     do
     {
         it = &iter.getCurrent();
-        if ( !it->isCallable()
-            && ( it->isComposed()
-                && !it->asObject()->getMethod( "on_show", *it ) ) )
+        if ( !it->isCallable() )
         {
-            vm->stdOut()->writeString(
-            "[Widget::on_show] invalid callback (expected callable)\n" );
-            return;
+            if ( !it->isComposed()
+                || !it->asObject()->getMethod( "on_show", *it ) )
+            {
+                vm->stdOut()->writeString(
+                "[Widget::on_show] invalid callback (expected callable)\n" );
+                return;
+            }
         }
         vm->callItem( *it, 0 );
         iter.next();
@@ -200,6 +211,10 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_hide( VMARG )
 {
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -226,13 +241,15 @@ void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
     do
     {
         it = &iter.getCurrent();
-        if ( !it->isCallable()
-            && ( it->isComposed()
-                && !it->asObject()->getMethod( "on_hide", *it ) ) )
+        if ( !it->isCallable() )
         {
-            vm->stdOut()->writeString(
-            "[Widget::on_hide] invalid callback (expected callable)\n" );
-            return;
+            if ( !it->isComposed()
+                || !it->asObject()->getMethod( "on_hide", *it ) )
+            {
+                vm->stdOut()->writeString(
+                "[Widget::on_hide] invalid callback (expected callable)\n" );
+                return;
+            }
         }
         vm->callItem( *it, 0 );
         iter.next();
@@ -251,7 +268,6 @@ FALCON_FUNC Widget::show( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show( ((GtkWidget*)_obj) );
@@ -268,7 +284,6 @@ FALCON_FUNC Widget::show_now( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_now( ((GtkWidget*)_obj) );
@@ -285,7 +300,6 @@ FALCON_FUNC Widget::hide( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide( ((GtkWidget*)_obj) );
@@ -302,7 +316,6 @@ FALCON_FUNC Widget::show_all( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_all( ((GtkWidget*)_obj) );
@@ -319,7 +332,6 @@ FALCON_FUNC Widget::hide_all( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide_all( ((GtkWidget*)_obj) );
@@ -337,7 +349,6 @@ FALCON_FUNC Widget::activate( VMARG )
     {
         throw_require_no_args();
     }
-
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_activate( ((GtkWidget*)_obj) ) );
@@ -522,8 +533,7 @@ FALCON_FUNC Widget::get_events( VMARG )
     }
     MYSELF;
     GET_OBJ( self );
-    gint i = gtk_widget_get_events( (GtkWidget*)_obj );
-    vm->retval( i );
+    vm->retval( gtk_widget_get_events( (GtkWidget*)_obj ) );
 }
 
 

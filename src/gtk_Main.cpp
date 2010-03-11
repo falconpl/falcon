@@ -53,7 +53,7 @@ FALCON_FUNC Main::init( VMARG )
         throw_inv_params( "A,B" );
     }
 
-    bool setLocale = true; // default is to set locale
+    bool setLocale = true;
 
     if ( i_setLocale )
         setLocale = i_setLocale->asBoolean();
@@ -119,7 +119,6 @@ FALCON_FUNC Main::quit( VMARG )
     {
         throw_require_no_args();
     }
-
     gtk_main_quit();
 }
 
@@ -141,10 +140,6 @@ FALCON_FUNC Main::run( VMARG )
 
     if ( i_win )
     {
-        /*
-         *  call show_all() on passed window
-         */
-
         CoreObject* o_win = i_win->asObject();
         GtkWidget* win = (GtkWidget*)((GData*)o_win->getUserData())->obj();
 

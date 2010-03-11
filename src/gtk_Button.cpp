@@ -135,13 +135,15 @@ void Button::on_clicked( GtkButton* btn, gpointer _vm )
     do
     {
         it = &iter.getCurrent();
-        if ( !it->isCallable()
-            && ( it->isComposed()
-                && !it->asObject()->getMethod( "on_clicked", *it ) ) )
+        if ( !it->isCallable() )
         {
-            vm->stdOut()->writeString(
-            "[Button::on_clicked] invalid callback (expected callable)\n" );
-            return;
+            if ( !it->isComposed()
+                || !it->asObject()->getMethod( "on_clicked", *it ) )
+            {
+                vm->stdOut()->writeString(
+                "[Button::on_clicked] invalid callback (expected callable)\n" );
+                return;
+            }
         }
         vm->callItem( *it, 0 );
         iter.next();
