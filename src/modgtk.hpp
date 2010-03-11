@@ -106,6 +106,26 @@ void internal_release_slot( gpointer );
 
 
 /**
+ *  \brief get internal slot
+ *  \param signame signal name
+ *  \param cb callback function
+ *  \param vm virtual machine
+ */
+void internal_get_slot( const char* signame, void* cb, Falcon::VMachine* vm );
+
+
+/**
+ *  \brief trigger internal slot
+ *  \param obj signal emitter
+ *  \param signame signal name
+ *  \param cbname callback name
+ *  \param vm virtual machine
+ */
+void internal_trigger_slot( GObject* obj, const char* signame,
+        const char* cbname, Falcon::VMachine* vm );
+
+
+/**
  *  \brief common init method for all abstract classes
  */
 FALCON_FUNC abstract_init( VMARG );
@@ -161,6 +181,16 @@ enum GtkErrorIds
     e_init_failure          // failure due to gtk_init* functions
 
 };
+
+
+/**
+ *  \brief struct holding class methods information
+ */
+typedef struct
+{
+    const char* name;
+    FALCON_FUNC (*cb)( Falcon::VMachine* );
+} FGtkMethodTab;
 
 
 

@@ -69,6 +69,47 @@ void internal_release_slot( gpointer cs )
 }
 
 
+void internal_get_slot( const char* signame, void* cb, Falcon::VMachine* vm )
+{
+    MYSELF;
+    GET_OBJ( self );
+    GET_SIGNALS( _obj );
+    CoreSlot* ev = get_signal( _obj, _signals, signame, cb, vm );
+    vm->retval( vm->findWKI( "VMSlot" )->asClass()->createInstance( ev ) );
+}
+
+
+void internal_trigger_slot( GObject* obj, const char* signame,
+        const char* cbname, Falcon::VMachine* vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( signame, false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    Iterator iter( cs );
+    Item* it;
+
+    do
+    {
+        it = &iter.getCurrent();
+        if ( !it->isCallable() )
+        {
+            if ( !it->isComposed()
+                || !it->asObject()->getMethod( cbname, *it ) )
+            {
+                printf( "[%s] invalid callback (expected callable)\n", cbname );
+                return;
+            }
+        }
+        vm->callItem( *it, 0 );
+        iter.next();
+    }
+    while ( iter.hasCurrent() );
+}
+
+
 FALCON_FUNC abstract_init( VMARG )
 {
     MYSELF;
