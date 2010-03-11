@@ -18,7 +18,7 @@ void Window::modInit( Falcon::Module* mod )
     Falcon::Symbol* c_Window = mod->addClass( "Window", &Window::init )
         ->addParam( "type" );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Bin" ) );
     c_Window->getClassDef()->addInheritance( in );
 
     mod->addClassMethod( c_Window, "get_title",     &Window::get_title );

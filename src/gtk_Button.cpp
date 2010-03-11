@@ -18,7 +18,7 @@ void Button::modInit( Falcon::Module* mod )
         ->addParam( "label" )
         ->addParam( "mode" );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Bin" ) );
     c_Button->getClassDef()->addInheritance( in );
 
     mod->addClassProperty( c_Button, "NO_MNEMONIC" ).setInteger( 0 ).setReadOnly( true );
@@ -539,6 +539,8 @@ FALCON_FUNC Button::get_image( VMARG )
         Item* wki = vm->findWKI( "Widget" );
         vm->retval( new Gtk::Widget( wki->asClass(), gwdt ) );
     }
+    else
+        vm->retnil();
 }
 
 
