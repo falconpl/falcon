@@ -26,15 +26,11 @@
  */
 
 #define VMARG           ::Falcon::VMachine* vm
-#define PROPARG         ::Falcon::CoreObject*, void*, ::Falcon::Item&, const Falcon::PropEntry&
-#define MYSELF          ::Falcon::CoreObject* self = vm->self().asObject()
-#define notNil( x )     (x && !x->isNil())
 
-#define GET_VM \
-        ::Falcon::VMachine* _vm = ::Falcon::VMachine::getCurrent()
+#define MYSELF          ::Falcon::CoreObject* self = vm->self().asObject()
 
 #define GET_OBJ( self ) \
-        GObject* _obj = ((Falcon::Gtk::GData*) self->getUserData())->obj()
+        GObject* _obj = ((::Falcon::Gtk::GData*) self->getUserData())->obj()
 
 #define GET_SIGNALS( gobj ) \
         ::Falcon::CoreSlot* _signals = (::Falcon::CoreSlot*) \

@@ -12,6 +12,29 @@ namespace Gtk {
 void Enums::modInit( Falcon::Module* mod )
 {
 /*
+ *  GtkWidgetFlags
+ */
+mod->addConstant( "TOPLEVEL",       (Falcon::int64) GTK_TOPLEVEL );
+mod->addConstant( "NO_WINDOW",      (Falcon::int64) GTK_NO_WINDOW );
+mod->addConstant( "REALIZED",       (Falcon::int64) GTK_REALIZED );
+mod->addConstant( "MAPPED",         (Falcon::int64) GTK_MAPPED );
+mod->addConstant( "VISIBLE",        (Falcon::int64) GTK_VISIBLE );
+mod->addConstant( "SENSITIVE",      (Falcon::int64) GTK_SENSITIVE );
+mod->addConstant( "PARENT_SENSITIVE",(Falcon::int64) GTK_PARENT_SENSITIVE );
+mod->addConstant( "CAN_FOCUS",      (Falcon::int64) GTK_CAN_FOCUS );
+mod->addConstant( "HAS_FOCUS",      (Falcon::int64) GTK_HAS_FOCUS );
+mod->addConstant( "CAN_DEFAULT",    (Falcon::int64) GTK_CAN_DEFAULT );
+mod->addConstant( "HAS_DEFAULT",    (Falcon::int64) GTK_HAS_DEFAULT );
+mod->addConstant( "HAS_GRAB",       (Falcon::int64) GTK_HAS_GRAB );
+mod->addConstant( "RC_STYLE",       (Falcon::int64) GTK_RC_STYLE );
+mod->addConstant( "COMPOSITE_CHILD",(Falcon::int64) GTK_COMPOSITE_CHILD );
+mod->addConstant( "NO_REPARENT",    (Falcon::int64) GTK_NO_REPARENT );
+mod->addConstant( "APP_PAINTABLE",  (Falcon::int64) GTK_APP_PAINTABLE );
+mod->addConstant( "RECEIVES_DEFAULT",(Falcon::int64) GTK_RECEIVES_DEFAULT );
+mod->addConstant( "DOUBLE_BUFFERED",(Falcon::int64) GTK_DOUBLE_BUFFERED );
+mod->addConstant( "NO_SHOW_ALL",    (Falcon::int64) GTK_NO_SHOW_ALL );
+
+/*
  *  GtkWindowType
  */
 mod->addConstant( "WINDOW_TOPLEVEL",    (Falcon::int64) GTK_WINDOW_TOPLEVEL );

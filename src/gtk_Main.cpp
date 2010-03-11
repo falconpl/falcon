@@ -133,13 +133,13 @@ FALCON_FUNC Main::run( VMARG )
 {
     Item* i_win = vm->param( 0 );
 
-    if ( notNil( i_win ) // weird..
+    if ( i_win && !i_win->isNil()
         && !i_win->isOfClass( "gtk.Window" ) && !i_win->isOfClass( "Window" ) )
     {
         throw_inv_params( "[Window]" );
     }
 
-    if ( notNil( i_win ) )
+    if ( i_win )
     {
         /*
          *  call show_all() on passed window

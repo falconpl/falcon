@@ -15,15 +15,55 @@ void Widget::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_Widget = mod->addClass( "Widget", &Gtk::abstract_init );
 
-    mod->addClassMethod( c_Widget, "signal_delete_event",   &Widget::signal_delete_event );
+    c_Widget->setWKS( true );
+    c_Widget->getClassDef()->factory( &Widget::factory );
+
+    mod->addClassMethod( c_Widget, "signal_delete_event",&Widget::signal_delete_event );
     mod->addClassMethod( c_Widget, "signal_show",   &Widget::signal_show );
     mod->addClassMethod( c_Widget, "signal_hide",   &Widget::signal_hide );
 
-    mod->addClassMethod( c_Widget, "show",      &Widget::show );
-    mod->addClassMethod( c_Widget, "show_now",  &Widget::show_now );
-    mod->addClassMethod( c_Widget, "hide",      &Widget::hide );
-    mod->addClassMethod( c_Widget, "show_all",  &Widget::show_all );
-    mod->addClassMethod( c_Widget, "hide_all",  &Widget::hide_all );
+    mod->addClassMethod( c_Widget, "show",          &Widget::show );
+    mod->addClassMethod( c_Widget, "show_now",      &Widget::show_now );
+    mod->addClassMethod( c_Widget, "hide",          &Widget::hide );
+    mod->addClassMethod( c_Widget, "show_all",      &Widget::show_all );
+    mod->addClassMethod( c_Widget, "hide_all",      &Widget::hide_all );
+    mod->addClassMethod( c_Widget, "reparent",      &Widget::reparent );
+    mod->addClassMethod( c_Widget, "is_focus",      &Widget::is_focus );
+    mod->addClassMethod( c_Widget, "grab_focus",    &Widget::grab_focus );
+    mod->addClassMethod( c_Widget, "grab_default",  &Widget::grab_default );
+    mod->addClassMethod( c_Widget, "set_name",      &Widget::set_name );
+    mod->addClassMethod( c_Widget, "get_name",      &Widget::get_name );
+    mod->addClassMethod( c_Widget, "set_sensitive", &Widget::set_sensitive );
+    mod->addClassMethod( c_Widget, "get_toplevel",  &Widget::set_sensitive );
+    mod->addClassMethod( c_Widget, "get_events",    &Widget::get_events );
+    mod->addClassMethod( c_Widget, "is_ancestor",   &Widget::is_ancestor );
+    mod->addClassMethod( c_Widget, "hide_on_delete",&Widget::hide_on_delete );
+}
+
+
+Widget::Widget( const Falcon::CoreClass* gen, const GtkWidget* wdt )
+    :
+    Falcon::CoreObject( gen )
+{
+    if ( wdt )
+        setUserData( new GData( (GObject*) wdt ) );
+}
+
+bool Widget::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    return defaultProperty( s, it );
+}
+
+
+bool Widget::setProperty( const Falcon::String&, const Falcon::Item& )
+{
+    return false;
+}
+
+
+Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bool )
+{
+    return new Widget( gen, (GtkWidget*) wdt );
 }
 
 
@@ -78,7 +118,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
             && ( it->isComposed()
                 && !it->asObject()->getMethod( "on_delete_event", *it ) ) )
         {
-            vm->stdErr()->writeString(
+            vm->stdOut()->writeString(
             "[Widget::on_delete_event] invalid callback (expected callable)\n" );
             return TRUE; // block event
         }
@@ -87,7 +127,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
         vm->callItem( *it, 0 );
         it = &vm->regA();
 
-        if ( notNil( it ) && it->isBoolean() )
+        if ( it && !it->isNil() && it->isBoolean() )
         {
             if ( it->asBoolean() )
                 return TRUE; // block event
@@ -96,7 +136,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
         }
         else
         {
-            vm->stdErr()->writeString(
+            vm->stdOut()->writeString(
             "[Widget::on_delete_event] invalid callback (expected boolean)\n" );
             return TRUE; // block event
         }
@@ -143,7 +183,7 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
             && ( it->isComposed()
                 && !it->asObject()->getMethod( "on_show", *it ) ) )
         {
-            vm->stdErr()->writeString(
+            vm->stdOut()->writeString(
             "[Widget::on_show] invalid callback (expected callable)\n" );
             return;
         }
@@ -190,7 +230,7 @@ void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
             && ( it->isComposed()
                 && !it->asObject()->getMethod( "on_hide", *it ) ) )
         {
-            vm->stdErr()->writeString(
+            vm->stdOut()->writeString(
             "[Widget::on_hide] invalid callback (expected callable)\n" );
             return;
         }
@@ -301,6 +341,233 @@ FALCON_FUNC Widget::activate( VMARG )
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_activate( ((GtkWidget*)_obj) ) );
+}
+
+
+/*#
+    @method reparent gtk.Widget
+    @brief Moves a widget from one container to another.
+    @param new_parent The new parent
+ */
+FALCON_FUNC Widget::reparent( VMARG )
+{
+    Item* i_wdt = vm->param( 0 );
+    if ( !i_wdt || i_wdt->isNil() ||
+        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
+    {
+        throw_inv_params( "Widget" );
+    }
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    gtk_widget_reparent( (GtkWidget*)_obj, (GtkWidget*) wdt );
+}
+
+
+/*#
+    @method is_focus gtk.Widget
+    @brief Determines if the widget is the focus widget within its toplevel.
+    This does not mean that the HAS_FOCUS flag is necessarily set;
+    HAS_FOCUS will only be set if the toplevel widget additionally has the
+    global input focus.
+    @return (boolean)
+ */
+FALCON_FUNC Widget::is_focus( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_widget_is_focus( (GtkWidget*)_obj ) );
+}
+
+
+/*#
+    @method grab_focus gtk.Widget
+    @brief Causes widget to have the keyboard focus for the GtkWindow it's inside.
+    widget must be a focusable widget, such as a GtkEntry; something like GtkFrame won't work.
+    More precisely, it must have the GTK_CAN_FOCUS flag set.
+    Use gtk_widget_set_can_focus() to modify that flag.
+ */
+FALCON_FUNC Widget::grab_focus( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_grab_focus( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method grab_default gtk.Widget
+    @brief Causes widget to become the default widget.
+    widget must have the GTK_CAN_DEFAULT flag set; typically you have to set this flag
+    yourself by calling gtk_widget_set_can_default (widget, TRUE). The default widget
+    is activated when the user presses Enter in a window. Default widgets must be
+    activatable, that is, gtk_widget_activate() should affect them.
+ */
+FALCON_FUNC Widget::grab_default( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_grab_default( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method set_name gtk.Widget
+    @brief Attribute a name to the widget.
+    @param name (string)
+    Widgets can be named, which allows you to refer to them from a gtkrc file.
+    You can apply a style to widgets with a particular name in the gtkrc file.
+    See the documentation for gtkrc files (on the same page as the docs for GtkRcStyle).
+    Note that widget names are separated by periods in paths (see gtk_widget_path()),
+    so names with embedded periods may cause confusion.
+ */
+FALCON_FUNC Widget::set_name( VMARG )
+{
+    Item* i_name = vm->param( 0 );
+    if ( !i_name || i_name->isNil() || !i_name->isString() )
+    {
+        throw_inv_params( "S" );
+    }
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString s( i_name->asString() );
+    gtk_widget_set_name( (GtkWidget*)_obj, s.c_str() );
+}
+
+
+/*#
+    @method get_name gtk.Widget
+    @brief Get the name of the widget.
+    @return (string)
+    See gtk.Widget.set_name() for the significance of widget names.
+ */
+FALCON_FUNC Widget::get_name( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* s = gtk_widget_get_name( (GtkWidget*)_obj );
+    vm->retval( String( s ) );
+}
+
+
+/*#
+    @method set_sensitive gtk.Widget
+    @brief Sets the sensitivity of a widget.
+    A widget is sensitive if the user can interact with it.
+    Insensitive widgets are "grayed out" and the user can't interact with them.
+    Insensitive widgets are known as "inactive", "disabled", or "ghosted" in some other toolkits.
+ */
+FALCON_FUNC Widget::set_sensitive( VMARG )
+{
+    Item* i_sens = vm->param( 0 );
+    if ( !i_sens || i_sens->isNil() || !i_sens->isBoolean() )
+    {
+        throw_inv_params( "B" );
+    }
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_set_sensitive( (GtkWidget*)_obj, i_sens->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method get_toplevel gtk.Widget
+    @brief This function returns the topmost widget in the container hierarchy widget is a part of.
+    @return (widget)
+    If widget has no parent widgets, it will be returned as the topmost widget.
+    No reference will be added to the returned widget; it should not be unreferenced.
+ */
+FALCON_FUNC Widget::get_toplevel( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* gwdt = gtk_widget_get_toplevel( (GtkWidget*)_obj );
+    Item* wki = vm->findWKI( "Widget" );
+    vm->retval( new Widget( wki->asClass(), gwdt ) );
+}
+
+
+/*#
+    @method get_events gtk.Widget
+    @brief Returns the event mask for the widget.
+    @return (integer)
+    (A bitfield containing flags from the GdkEventMask enumeration.)
+    These are the events that the widget will receive.
+ */
+FALCON_FUNC Widget::get_events( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    gint i = gtk_widget_get_events( (GtkWidget*)_obj );
+    vm->retval( i );
+}
+
+
+/*#
+    @method is_ancestor gtk.Widget
+    @brief Determines whether widget is somewhere inside ancestor, possibly with intermediate containers.
+    @return (boolean)
+ */
+FALCON_FUNC Widget::is_ancestor( VMARG )
+{
+    Item* i_wdt = vm->param( 0 );
+    if ( !i_wdt || i_wdt->isNil() ||
+        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
+    {
+        throw_inv_params( "Widget" );
+    }
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    vm->retval( (bool) gtk_widget_is_ancestor( (GtkWidget*)_obj, wdt ) );
+}
+
+
+/*#
+    @method hide_on_delete gtk.Widget
+    @brief Utility function.
+    @return (boolean) always true
+    Intended to be connected to the "delete-event" signal on a GtkWindow.
+    The function calls gtk_widget_hide() on its argument, then returns TRUE.
+    If connected to ::delete-event, the result is that clicking the close button
+    for a window (on the window frame, top right corner usually) will hide but
+    not destroy the window.
+    By default, GTK+ destroys windows when ::delete-event is received.
+ */
+FALCON_FUNC Widget::hide_on_delete( VMARG )
+{
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
+    gboolean b = gtk_widget_hide_on_delete( (GtkWidget*)_obj );
+    vm->retval( (bool) b );
 }
 
 

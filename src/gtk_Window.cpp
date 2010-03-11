@@ -21,8 +21,10 @@ void Window::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
     c_Window->getClassDef()->addInheritance( in );
 
-    mod->addClassProperty( c_Window, "title" )
-        .setReflectFunc( &Window::get_title, &Window::set_title );
+    mod->addClassMethod( c_Window, "get_title",     &Window::get_title );
+    mod->addClassMethod( c_Window, "set_title",     &Window::set_title ).asSymbol()
+        ->addParam( "title" );
+
 }
 
 /*#
@@ -74,25 +76,38 @@ FALCON_FUNC Window::init( VMARG )
 }
 
 
-void Window::get_title( Falcon::CoreObject* o, void*,
-        Falcon::Item& it, const Falcon::PropEntry& )
+/*#
+    @method get_title gtk.Window
+    @brief Get window title
+ */
+FALCON_FUNC Window::get_title( VMARG )
 {
-    GET_OBJ( o );
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+    MYSELF;
+    GET_OBJ( self );
     const gchar* t = gtk_window_get_title( ((GtkWindow*)_obj) );
-    it.setString( t ? new String( t ) : new String() );
+    vm->retval( t ? new String( t ) : new String() );
 }
 
 
-void Window::set_title( Falcon::CoreObject* o, void*,
-        Falcon::Item& it, const Falcon::PropEntry& )
+/*#
+    @method set_title gtk.Window
+    @brief Set window title
+    @param title Window title
+ */
+FALCON_FUNC Window::set_title( VMARG )
 {
-    if ( it.isNil() || !it.isString() )
+    Item* it = vm->param( 0 );
+    if ( !it || it->isNil() || !it->isString() )
     {
         throw_inv_params( "S" );
     }
-
-    GET_OBJ( o );
-    AutoCString s( it.asString() );
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString s( it->asString() );
     gtk_window_set_title( ((GtkWindow*)_obj), s.c_str() );
 }
 

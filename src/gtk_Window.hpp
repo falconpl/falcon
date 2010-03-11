@@ -20,9 +20,9 @@ void modInit( Falcon::Module* );
 
 FALCON_FUNC init( VMARG );
 
-void get_title( PROPARG );
+FALCON_FUNC get_title( VMARG );
 
-void set_title( PROPARG );
+FALCON_FUNC set_title( VMARG );
 
 
 } // Window

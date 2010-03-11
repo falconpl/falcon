@@ -10,38 +10,76 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Widget
+ *  \class Falcon::Gtk::Widget
  */
-namespace Widget {
+class Widget
+    :
+    public Falcon::CoreObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Widget( const Falcon::CoreClass*, const GtkWidget* = 0 );
 
-FALCON_FUNC signal_delete_event( VMARG );
+    ~Widget() {}
 
-gboolean on_delete_event( GtkWidget*, GdkEvent*, gpointer );
+    Falcon::CoreObject* clone() const { return 0; }
 
-FALCON_FUNC signal_show( VMARG );
+    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
-void on_show( GtkWidget*, GdkEvent*, gpointer );
+    bool setProperty( const Falcon::String&, const Falcon::Item& );
 
-FALCON_FUNC signal_hide( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-void on_hide( GtkWidget*, GdkEvent*, gpointer );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC show( VMARG );
+    static FALCON_FUNC signal_delete_event( VMARG );
 
-FALCON_FUNC show_now( VMARG );
+    static gboolean on_delete_event( GtkWidget*, GdkEvent*, gpointer );
 
-FALCON_FUNC hide( VMARG );
+    static FALCON_FUNC signal_show( VMARG );
 
-FALCON_FUNC show_all( VMARG );
+    static void on_show( GtkWidget*, GdkEvent*, gpointer );
 
-FALCON_FUNC hide_all( VMARG );
+    static FALCON_FUNC signal_hide( VMARG );
 
-FALCON_FUNC activate( VMARG );
+    static void on_hide( GtkWidget*, GdkEvent*, gpointer );
 
+    static FALCON_FUNC show( VMARG );
 
-} // Widget
+    static FALCON_FUNC show_now( VMARG );
+
+    static FALCON_FUNC hide( VMARG );
+
+    static FALCON_FUNC show_all( VMARG );
+
+    static FALCON_FUNC hide_all( VMARG );
+
+    static FALCON_FUNC activate( VMARG );
+
+    static FALCON_FUNC reparent( VMARG );
+
+    static FALCON_FUNC is_focus( VMARG );
+
+    static FALCON_FUNC grab_focus( VMARG );
+
+    static FALCON_FUNC grab_default( VMARG );
+
+    static FALCON_FUNC set_name( VMARG );
+
+    static FALCON_FUNC get_name( VMARG );
+
+    static FALCON_FUNC set_sensitive( VMARG );
+
+    static FALCON_FUNC get_toplevel( VMARG );
+
+    static FALCON_FUNC get_events( VMARG );
+
+    static FALCON_FUNC is_ancestor( VMARG );
+
+    static FALCON_FUNC hide_on_delete( VMARG );
+
+};
+
 } // Gtk
 } // Falcon
 
