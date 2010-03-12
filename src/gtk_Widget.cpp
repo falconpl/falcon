@@ -87,10 +87,12 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
  */
 FALCON_FUNC Widget::signal_delete_event( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -158,10 +160,12 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_show( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -211,10 +215,12 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_hide( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GET_SIGNALS( _obj );
@@ -264,10 +270,12 @@ void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::show( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show( ((GtkWidget*)_obj) );
@@ -280,10 +288,12 @@ FALCON_FUNC Widget::show( VMARG )
  */
 FALCON_FUNC Widget::show_now( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_now( ((GtkWidget*)_obj) );
@@ -296,10 +306,12 @@ FALCON_FUNC Widget::show_now( VMARG )
  */
 FALCON_FUNC Widget::hide( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide( ((GtkWidget*)_obj) );
@@ -312,10 +324,12 @@ FALCON_FUNC Widget::hide( VMARG )
  */
 FALCON_FUNC Widget::show_all( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_all( ((GtkWidget*)_obj) );
@@ -328,10 +342,12 @@ FALCON_FUNC Widget::show_all( VMARG )
  */
 FALCON_FUNC Widget::hide_all( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide_all( ((GtkWidget*)_obj) );
@@ -345,10 +361,12 @@ FALCON_FUNC Widget::hide_all( VMARG )
  */
 FALCON_FUNC Widget::activate( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_activate( ((GtkWidget*)_obj) ) );
@@ -363,11 +381,13 @@ FALCON_FUNC Widget::activate( VMARG )
 FALCON_FUNC Widget::reparent( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
         !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
     {
         throw_inv_params( "Widget" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -385,10 +405,12 @@ FALCON_FUNC Widget::reparent( VMARG )
  */
 FALCON_FUNC Widget::is_focus( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_is_focus( (GtkWidget*)_obj ) );
@@ -404,10 +426,12 @@ FALCON_FUNC Widget::is_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_focus( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_grab_focus( (GtkWidget*)_obj );
@@ -424,10 +448,12 @@ FALCON_FUNC Widget::grab_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_default( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_grab_default( (GtkWidget*)_obj );
@@ -447,10 +473,12 @@ FALCON_FUNC Widget::grab_default( VMARG )
 FALCON_FUNC Widget::set_name( VMARG )
 {
     Item* i_name = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_name || i_name->isNil() || !i_name->isString() )
     {
         throw_inv_params( "S" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     AutoCString s( i_name->asString() );
@@ -466,10 +494,12 @@ FALCON_FUNC Widget::set_name( VMARG )
  */
 FALCON_FUNC Widget::get_name( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     const gchar* s = gtk_widget_get_name( (GtkWidget*)_obj );
@@ -487,10 +517,12 @@ FALCON_FUNC Widget::get_name( VMARG )
 FALCON_FUNC Widget::set_sensitive( VMARG )
 {
     Item* i_sens = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_sens || i_sens->isNil() || !i_sens->isBoolean() )
     {
         throw_inv_params( "B" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_widget_set_sensitive( (GtkWidget*)_obj, i_sens->asBoolean() ? TRUE : FALSE );
@@ -506,10 +538,12 @@ FALCON_FUNC Widget::set_sensitive( VMARG )
  */
 FALCON_FUNC Widget::get_toplevel( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_widget_get_toplevel( (GtkWidget*)_obj );
@@ -527,10 +561,12 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
  */
 FALCON_FUNC Widget::get_events( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_widget_get_events( (GtkWidget*)_obj ) );
@@ -545,11 +581,13 @@ FALCON_FUNC Widget::get_events( VMARG )
 FALCON_FUNC Widget::is_ancestor( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
         !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
     {
         throw_inv_params( "Widget" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -570,10 +608,12 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
  */
 FALCON_FUNC Widget::hide_on_delete( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gboolean b = gtk_widget_hide_on_delete( (GtkWidget*)_obj );

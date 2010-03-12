@@ -46,12 +46,12 @@ FALCON_FUNC Window::init( VMARG )
         return;
 
     Item* i_wtype = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( i_wtype && ( i_wtype->isNil() || !i_wtype->isInteger() ) )
     {
         throw_inv_params( "I" );
     }
-
+#endif
     GtkWindowType gwt = GTK_WINDOW_TOPLEVEL;
 
     if ( i_wtype )
@@ -82,10 +82,12 @@ FALCON_FUNC Window::init( VMARG )
  */
 FALCON_FUNC Window::get_title( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     const gchar* t = gtk_window_get_title( ((GtkWindow*)_obj) );
@@ -101,10 +103,12 @@ FALCON_FUNC Window::get_title( VMARG )
 FALCON_FUNC Window::set_title( VMARG )
 {
     Item* it = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !it || it->isNil() || !it->isString() )
     {
         throw_inv_params( "S" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     AutoCString s( it->asString() );

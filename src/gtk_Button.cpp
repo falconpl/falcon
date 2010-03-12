@@ -84,12 +84,12 @@ FALCON_FUNC Button::init( VMARG )
         return;
 
     Item* i_lbl = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( i_lbl && ( i_lbl->isNil() || !i_lbl->isString() ) )
     {
         throw_inv_params( "[S[,I]]" );
     }
-
+#endif
     if ( !i_lbl )
     {
         GtkWidget* btn = gtk_button_new();
@@ -102,11 +102,14 @@ FALCON_FUNC Button::init( VMARG )
     int mode = 0;
 
     Item* i_mode = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
     if ( i_mode && ( i_mode->isNil() || !i_mode->isInteger() ) )
     {
         throw_inv_params( "[S[,I]]" );
     }
-    else if ( i_mode )
+    else
+#endif
+    if ( i_mode )
     {
         mode = i_mode->asInteger();
         if ( mode < 0 || mode > 2 )
@@ -264,10 +267,12 @@ void Button::on_released( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::pressed( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_pressed( (GtkButton*)_obj );
@@ -280,10 +285,12 @@ FALCON_FUNC Button::pressed( VMARG )
  */
 FALCON_FUNC Button::released( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_released( (GtkButton*)_obj );
@@ -296,10 +303,12 @@ FALCON_FUNC Button::released( VMARG )
  */
 FALCON_FUNC Button::clicked( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_clicked( (GtkButton*)_obj );
@@ -312,10 +321,12 @@ FALCON_FUNC Button::clicked( VMARG )
  */
 FALCON_FUNC Button::enter( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_enter( (GtkButton*)_obj );
@@ -328,10 +339,12 @@ FALCON_FUNC Button::enter( VMARG )
  */
 FALCON_FUNC Button::leave( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_leave( (GtkButton*)_obj );
@@ -353,10 +366,12 @@ FALCON_FUNC Button::leave( VMARG )
 FALCON_FUNC Button::set_label( VMARG )
 {
     Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_lbl || i_lbl->isNil() || !i_lbl->isString() )
     {
         throw_inv_params( "S" );
     }
+#endif
     AutoCString s( i_lbl->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -374,10 +389,12 @@ FALCON_FUNC Button::set_label( VMARG )
  */
 FALCON_FUNC Button::get_label( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_button_get_label( (GtkButton*)_obj );
@@ -394,10 +411,12 @@ FALCON_FUNC Button::get_label( VMARG )
 FALCON_FUNC Button::set_use_stock( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
     {
         throw_inv_params( "B" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_set_use_stock( (GtkButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -410,10 +429,12 @@ FALCON_FUNC Button::set_use_stock( VMARG )
  */
 FALCON_FUNC Button::get_use_stock( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_button_get_use_stock( (GtkButton*)_obj ) );
@@ -429,10 +450,12 @@ FALCON_FUNC Button::get_use_stock( VMARG )
 FALCON_FUNC Button::set_use_underline( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
     {
         throw_inv_params( "B" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_set_use_underline( (GtkButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -445,10 +468,12 @@ FALCON_FUNC Button::set_use_underline( VMARG )
  */
 FALCON_FUNC Button::get_use_underline( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_button_get_use_underline( (GtkButton*)_obj ) );
@@ -465,10 +490,12 @@ FALCON_FUNC Button::get_use_underline( VMARG )
 FALCON_FUNC Button::set_focus_on_click( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
     {
         throw_inv_params( "B" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_button_set_focus_on_click( (GtkButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -481,10 +508,12 @@ FALCON_FUNC Button::set_focus_on_click( VMARG )
  */
 FALCON_FUNC Button::get_focus_on_click( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_button_get_focus_on_click( (GtkButton*)_obj ) );
@@ -506,11 +535,13 @@ FALCON_FUNC Button::get_focus_on_click( VMARG )
 FALCON_FUNC Button::set_image( VMARG )
 {
     Item* i_img = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_img || i_img->isNil() ||
         !( i_img->isOfClass( "Widget" ) || i_img->isOfClass( "gtk.Widget" ) ) )
     {
         throw_inv_params( "Widget" );
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* img = (GtkWidget*)((GData*)i_img->asObject()->getUserData())->obj();
@@ -527,10 +558,12 @@ FALCON_FUNC Button::set_image( VMARG )
  */
 FALCON_FUNC Button::get_image( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_button_get_image( (GtkButton*)_obj );

@@ -105,17 +105,20 @@ FALCON_FUNC Label::init( VMARG )
     Item* i_lbl = vm->param( 0 );
     if ( i_lbl )
     {
+#ifndef NO_PARAMETER_CHECK
         if ( i_lbl->isNil() || !i_lbl->isString() )
             throw_inv_params( "[S[,B]]" );
-
+#endif
         AutoCString s( i_lbl->asString() );
         bool mnemo = false;
 
         Item* i_mnemo = vm->param( 1 );
         if ( i_mnemo )
         {
+#ifndef NO_PARAMETER_CHECK
             if ( i_mnemo->isNil() || !i_mnemo->isBoolean() )
                 throw_inv_params( "[S[,B]]" );
+#endif
             mnemo = i_mnemo->asBoolean();
         }
 
@@ -133,8 +136,10 @@ FALCON_FUNC Label::init( VMARG )
 FALCON_FUNC Label::set_text( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -148,8 +153,10 @@ FALCON_FUNC Label::set_text( VMARG )
 FALCON_FUNC Label::set_markup( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -160,8 +167,10 @@ FALCON_FUNC Label::set_markup( VMARG )
 FALCON_FUNC Label::set_markup_with_mnemonic( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -172,8 +181,10 @@ FALCON_FUNC Label::set_markup_with_mnemonic( VMARG )
 FALCON_FUNC Label::set_pattern( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -189,8 +200,10 @@ FALCON_FUNC Label::set_pattern( VMARG )
 FALCON_FUNC Label::set_width_chars( VMARG )
 {
     Item* i_nchars = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_nchars || i_nchars->isNil() || !i_nchars->isInteger() )
         throw_inv_params( "I" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_width_chars( (GtkLabel*)_obj, i_nchars->asInteger() );
@@ -200,8 +213,10 @@ FALCON_FUNC Label::set_width_chars( VMARG )
 FALCON_FUNC Label::set_max_width_chars( VMARG )
 {
     Item* i_nchars = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_nchars || i_nchars->isNil() || !i_nchars->isInteger() )
         throw_inv_params( "I" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_max_width_chars( (GtkLabel*)_obj, i_nchars->asInteger() );
@@ -216,8 +231,10 @@ FALCON_FUNC Label::set_max_width_chars( VMARG )
 FALCON_FUNC Label::set_line_wrap( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_line_wrap( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -233,8 +250,10 @@ FALCON_FUNC Label::set_line_wrap( VMARG )
 
 FALCON_FUNC Label::get_mnemonic_keyval( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_label_get_mnemonic_keyval( (GtkLabel*)_obj ) );
@@ -243,8 +262,10 @@ FALCON_FUNC Label::get_mnemonic_keyval( VMARG )
 
 FALCON_FUNC Label::get_selectable( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_selectable( (GtkLabel*)_obj ) );
@@ -253,8 +274,10 @@ FALCON_FUNC Label::get_selectable( VMARG )
 
 FALCON_FUNC Label::get_text( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( new String( gtk_label_get_text( (GtkLabel*)_obj ) ) );
@@ -268,9 +291,11 @@ FALCON_FUNC Label::select_region( VMARG )
 {
     Item* i_startOffset = vm->param( 0 );
     Item* i_endOffset = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_startOffset || i_startOffset->isNil() || !i_startOffset->isInteger()
         || !i_endOffset || i_endOffset->isNil() || !i_endOffset->isInteger() )
         throw_inv_params( "I,I" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_select_region( (GtkLabel*)_obj,
@@ -281,9 +306,11 @@ FALCON_FUNC Label::select_region( VMARG )
 FALCON_FUNC Label::set_mnemonic_widget( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
         !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
         throw_inv_params( "Widget" );
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -294,8 +321,10 @@ FALCON_FUNC Label::set_mnemonic_widget( VMARG )
 FALCON_FUNC Label::set_selectable( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_selectable( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -305,8 +334,10 @@ FALCON_FUNC Label::set_selectable( VMARG )
 FALCON_FUNC Label::set_text_with_mnemonic( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -323,8 +354,10 @@ FALCON_FUNC Label::set_text_with_mnemonic( VMARG )
 
 FALCON_FUNC Label::get_width_chars( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_label_get_width_chars( (GtkLabel*)_obj ) );
@@ -333,8 +366,10 @@ FALCON_FUNC Label::get_width_chars( VMARG )
 
 FALCON_FUNC Label::get_max_width_chars( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_label_get_max_width_chars( (GtkLabel*)_obj ) );
@@ -343,8 +378,10 @@ FALCON_FUNC Label::get_max_width_chars( VMARG )
 
 FALCON_FUNC Label::get_label( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( new String( gtk_label_get_label( (GtkLabel*)_obj ) ) );
@@ -356,8 +393,10 @@ FALCON_FUNC Label::get_label( VMARG )
 
 FALCON_FUNC Label::get_line_wrap( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_line_wrap( (GtkLabel*)_obj ) );
@@ -369,8 +408,10 @@ FALCON_FUNC Label::get_line_wrap( VMARG )
 
 FALCON_FUNC Label::get_mnemonic_widget( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_label_get_mnemonic_widget( (GtkLabel*)_obj );
@@ -389,8 +430,10 @@ FALCON_FUNC Label::get_mnemonic_widget( VMARG )
 
 FALCON_FUNC Label::get_use_markup( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_use_markup( (GtkLabel*)_obj ) );
@@ -399,8 +442,10 @@ FALCON_FUNC Label::get_use_markup( VMARG )
 
 FALCON_FUNC Label::get_use_underline( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_use_underline( (GtkLabel*)_obj ) );
@@ -409,8 +454,10 @@ FALCON_FUNC Label::get_use_underline( VMARG )
 
 FALCON_FUNC Label::get_single_line_mode( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_single_line_mode( (GtkLabel*)_obj ) );
@@ -419,8 +466,10 @@ FALCON_FUNC Label::get_single_line_mode( VMARG )
 
 FALCON_FUNC Label::get_angle( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_label_get_angle( (GtkLabel*)_obj ) );
@@ -430,8 +479,10 @@ FALCON_FUNC Label::get_angle( VMARG )
 FALCON_FUNC Label::set_label( VMARG )
 {
     Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
         throw_inv_params( "S" );
+#endif
     AutoCString s( i_txt->asString() );
     MYSELF;
     GET_OBJ( self );
@@ -442,8 +493,10 @@ FALCON_FUNC Label::set_label( VMARG )
 FALCON_FUNC Label::set_use_markup( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_use_markup( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -453,8 +506,10 @@ FALCON_FUNC Label::set_use_markup( VMARG )
 FALCON_FUNC Label::set_use_underline( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_use_underline( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -464,8 +519,10 @@ FALCON_FUNC Label::set_use_underline( VMARG )
 FALCON_FUNC Label::set_single_line_mode( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_single_line_mode( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -475,8 +532,10 @@ FALCON_FUNC Label::set_single_line_mode( VMARG )
 FALCON_FUNC Label::set_angle( VMARG )
 {
     Item* i_dbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_dbl || i_dbl->isNil() || !i_dbl->isOrdinal() )
         throw_inv_params( "O" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_angle( (GtkLabel*)_obj, i_dbl->asNumeric() );
@@ -485,8 +544,10 @@ FALCON_FUNC Label::set_angle( VMARG )
 #if GTK_VERSION_MINOR >= 18
 FALCON_FUNC Label::get_current_uri( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     const gchar* uri = gtk_label_get_current_uri( (GtkLabel*)_obj );
@@ -500,8 +561,10 @@ FALCON_FUNC Label::get_current_uri( VMARG )
 FALCON_FUNC Label::set_track_visited_links( VMARG )
 {
     Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_label_set_track_visited_links( (GtkLabel*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -510,8 +573,10 @@ FALCON_FUNC Label::set_track_visited_links( VMARG )
 
 FALCON_FUNC Label::get_track_visited_links( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_label_get_track_visited_links( (GtkLabel*)_obj ) );

@@ -40,10 +40,12 @@ void Bin::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC Bin::get_child( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_bin_get_child( (GtkBin*)_obj );

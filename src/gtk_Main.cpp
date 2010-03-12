@@ -46,13 +46,13 @@ FALCON_FUNC Main::init( VMARG )
 {
     Item* i_args = vm->param( 0 );
     Item* i_setLocale = vm->param( 1 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( ( i_args && ( i_args->isNil() || !i_args->isArray() ) )
         || ( i_setLocale && ( i_setLocale->isNil() || !i_setLocale->isBoolean() ) ) )
     {
         throw_inv_params( "A,B" );
     }
-
+#endif
     bool setLocale = true;
 
     if ( i_setLocale )
@@ -83,11 +83,12 @@ FALCON_FUNC Main::init( VMARG )
         for ( int i=0; i < numargs; ++i )
         {
             it = &arr->at( i );
+#ifndef NO_PARAMETER_CHECK
             if ( !it->isString() )
             {
                 throw_inv_params( "S" );
             }
-
+#endif
             strings[i] = AutoCString( it->asString() );
             cstrings[i] = (char*) strings[i].c_str();
         }
@@ -115,10 +116,12 @@ FALCON_FUNC Main::init( VMARG )
  */
 FALCON_FUNC Main::quit( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
+#endif
     gtk_main_quit();
 }
 
@@ -131,13 +134,13 @@ FALCON_FUNC Main::quit( VMARG )
 FALCON_FUNC Main::run( VMARG )
 {
     Item* i_win = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil()
         && !i_win->isOfClass( "gtk.Window" ) && !i_win->isOfClass( "Window" ) )
     {
         throw_inv_params( "[Window]" );
     }
-
+#endif
     if ( i_win )
     {
         CoreObject* o_win = i_win->asObject();

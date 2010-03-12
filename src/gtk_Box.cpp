@@ -56,7 +56,7 @@ FALCON_FUNC Box::pack_start( VMARG )
     Item* i_expand = vm->param( 1 );
     Item* i_fill = vm->param( 2 );
     Item* i_padding = vm->param( 3 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || i_child->isObject()
         || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
@@ -64,12 +64,12 @@ FALCON_FUNC Box::pack_start( VMARG )
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
         throw_inv_params( "Widget,B,B,I" );
-
+#endif
     int padding = i_padding->asInteger();
-
+#ifndef NO_PARAMETER_CHECK
     if ( padding < 0 )
         throw_inv_params( "Widget,B,B,I" );
-
+#endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
 
     MYSELF;
@@ -85,7 +85,7 @@ FALCON_FUNC Box::pack_end( VMARG )
     Item* i_expand = vm->param( 1 );
     Item* i_fill = vm->param( 2 );
     Item* i_padding = vm->param( 3 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || i_child->isObject()
         || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
@@ -93,12 +93,12 @@ FALCON_FUNC Box::pack_end( VMARG )
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
         throw_inv_params( "Widget,B,B,I" );
-
+#endif
     int padding = i_padding->asInteger();
-
+#ifndef NO_PARAMETER_CHECK
     if ( padding < 0 )
         throw_inv_params( "Widget,B,B,I" );
-
+#endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
 
     MYSELF;
@@ -111,11 +111,11 @@ FALCON_FUNC Box::pack_end( VMARG )
 FALCON_FUNC Box::pack_start_defaults( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
         || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
         throw_inv_params( "Widget" );
-
+#endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
     GET_OBJ( self );
@@ -126,11 +126,11 @@ FALCON_FUNC Box::pack_start_defaults( VMARG )
 FALCON_FUNC Box::pack_end_defaults( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
         || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
         throw_inv_params( "Widget" );
-
+#endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
     GET_OBJ( self );
@@ -140,9 +140,10 @@ FALCON_FUNC Box::pack_end_defaults( VMARG )
 
 FALCON_FUNC Box::get_homogeneous( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
-
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_box_get_homogeneous( (GtkBox*)_obj ) );
@@ -152,10 +153,10 @@ FALCON_FUNC Box::get_homogeneous( VMARG )
 FALCON_FUNC Box::set_homogeneous( VMARG )
 {
     Item* i_bool = vm->param( 0 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "B" );
-
+#endif
     MYSELF;
     GET_OBJ( self );
     gtk_box_set_homogeneous( (GtkBox*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
@@ -164,9 +165,10 @@ FALCON_FUNC Box::set_homogeneous( VMARG )
 
 FALCON_FUNC Box::get_spacing( VMARG )
 {
+#ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
-
+#endif
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_box_get_spacing( (GtkBox*)_obj ) );
@@ -177,12 +179,12 @@ FALCON_FUNC Box::reorder_child( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
     Item* i_pos = vm->param( 1 );
-
+#ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
         || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "Widget" );
-
+#endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
     GET_OBJ( self );
