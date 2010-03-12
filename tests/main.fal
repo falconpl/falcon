@@ -20,10 +20,16 @@ class MyWindow from gtk.Window
     init
         self.set_title( "Falcon" )
         self.signal_delete_event().subscribe( self )
+        // make a vertical box
+        vbox = gtk.VBox()
+        self.add( vbox )
+        // add a label
+        lbl = gtk.Label( "Hello World" )
+        vbox.add( lbl )
         // add a button
         btn = gtk.Button( "Falcon!" )
         btn.signal_clicked().subscribe( self )
-        self.add( btn )
+        vbox.add( btn )
     end
 end
 

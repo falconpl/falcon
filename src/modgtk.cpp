@@ -10,8 +10,10 @@
 #include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_Container.hpp"
+#include "gtk_HBox.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Main.hpp"
+#include "gtk_VBox.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 
@@ -45,6 +47,8 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Button::modInit( self );
                 Falcon::Gtk::Window::modInit( self );
             Falcon::Gtk::Box::modInit( self );
+                Falcon::Gtk::HBox::modInit( self );
+                Falcon::Gtk::VBox::modInit( self );
         Falcon::Gtk::Label::modInit( self );
 
 
