@@ -22,13 +22,13 @@ FALCON_FUNC get_child_ipadding( VMARG );
 
 FALCON_FUNC get_child_secondary( VMARG );
 
-FALCON_FUNC set_spacing( VMARG );
+//FALCON_FUNC set_spacing( VMARG );
 
-FALCON_FUNC set_layout( VMARG );
+//FALCON_FUNC set_layout( VMARG );
 
-FALCON_FUNC set_child_size( VMARG );
+//FALCON_FUNC set_child_size( VMARG );
 
-FALCON_FUNC set_child_ipadding( VMARG );
+//FALCON_FUNC set_child_ipadding( VMARG );
 
 FALCON_FUNC set_child_secondary( VMARG );
 

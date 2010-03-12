@@ -144,7 +144,7 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
     if ( !i_child || i_child->isNil() || !i_child->isObject()
         || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
         || !i_sec || i_sec->isNil() || !i_sec->isBoolean() )
-        throw_inv_params( "Widget" );
+        throw_inv_params( "Widget,B" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
     MYSELF;
