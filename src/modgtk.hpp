@@ -193,6 +193,15 @@ typedef struct
 } MethodTab;
 
 
+/**
+ *  \brief struct holding enums information
+ */
+typedef struct
+{
+    const char* name;
+    Falcon::int64 value;
+} ConstIntTab;
+
 
 } // Gtk
 } // Falcon
