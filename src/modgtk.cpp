@@ -7,6 +7,7 @@
 #include "gtk_enums.hpp"
 
 #include "gtk_Bin.hpp"
+#include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_Container.hpp"
 #include "gtk_Label.hpp"
@@ -43,6 +44,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Bin::modInit( self );
                 Falcon::Gtk::Button::modInit( self );
                 Falcon::Gtk::Window::modInit( self );
+            Falcon::Gtk::Box::modInit( self );
         Falcon::Gtk::Label::modInit( self );
 
 

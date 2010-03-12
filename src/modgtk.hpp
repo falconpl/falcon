@@ -190,7 +190,7 @@ typedef struct
 {
     const char* name;
     FALCON_FUNC (*cb)( Falcon::VMachine* );
-} FGtkMethodTab;
+} MethodTab;
 
 
 

@@ -26,7 +26,7 @@ void Button::modInit( Falcon::Module* mod )
     mod->addClassProperty( c_Button, "STOCK" ).setInteger( 2 ).setReadOnly( true );
 
 
-    FGtkMethodTab methods[] =
+    Gtk::MethodTab methods[] =
     {
     { "signal_activate",    &Button::signal_activate },
     { "signal_activate",    &Button::signal_activate },
@@ -59,7 +59,7 @@ void Button::modInit( Falcon::Module* mod )
     { NULL, NULL }
     };
 
-    for ( FGtkMethodTab* meth = methods; meth->name; ++meth )
+    for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Button, meth->name, meth->cb );
 }
 

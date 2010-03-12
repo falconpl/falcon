@@ -22,7 +22,7 @@ void Label::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Widget" ) );
     c_Label->getClassDef()->addInheritance( in );
 
-    FGtkMethodTab methods[] =
+    Gtk::MethodTab methods[] =
     {
     { "set_text",               &Label::set_text },
 //    { "set_attributes",       &Label::set_attributes },
@@ -75,7 +75,7 @@ void Label::modInit( Falcon::Module* mod )
     { NULL, NULL }
     };
 
-    for ( FGtkMethodTab* meth = methods; meth->name; ++meth )
+    for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Label, meth->name, meth->cb );
 }
 
