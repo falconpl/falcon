@@ -16,6 +16,7 @@
 #include "gtk_Label.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_VBox.hpp"
+#include "gtk_VButtonBox.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 
@@ -51,6 +52,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Box::modInit( self );
                 Falcon::Gtk::ButtonBox::modInit( self );
                     Falcon::Gtk::HButtonBox::modInit( self );
+                    Falcon::Gtk::VButtonBox::modInit( self );
                 Falcon::Gtk::HBox::modInit( self );
                 Falcon::Gtk::VBox::modInit( self );
         Falcon::Gtk::Label::modInit( self );
