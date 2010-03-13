@@ -114,16 +114,16 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
 
     VMachine* vm = (VMachine*) _vm;
     Iterator iter( cs );
-    Item* it;
+    Item it;
 
     do
     {
-        it = &iter.getCurrent();
+        it = iter.getCurrent();
 
-        if ( !it->isCallable() )
+        if ( !it.isCallable() )
         {
-            if ( !it->isComposed()
-                || !it->asObject()->getMethod( "on_delete_event", *it ) )
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_delete_event", it ) )
             {
                 vm->stdOut()->writeString(
                 "[Widget::on_delete_event] invalid callback (expected callable)\n" );
@@ -131,12 +131,12 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
             }
         }
         //vm->pushParam( Item( (int64)((GdkEventAny*)ev)->type ) );
-        vm->callItem( *it, 0 );
-        it = &vm->regA();
+        vm->callItem( it, 0 );
+        it = vm->regA();
 
-        if ( it && !it->isNil() && it->isBoolean() )
+        if ( !it.isNil() && it.isBoolean() )
         {
-            if ( it->asBoolean() )
+            if ( it.asBoolean() )
                 return TRUE; // block event
             else
                 iter.next();
@@ -187,22 +187,22 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
 
     VMachine* vm = (VMachine*) _vm;
     Iterator iter( cs );
-    Item* it;
+    Item it;
 
     do
     {
-        it = &iter.getCurrent();
-        if ( !it->isCallable() )
+        it = iter.getCurrent();
+        if ( !it.isCallable() )
         {
-            if ( !it->isComposed()
-                || !it->asObject()->getMethod( "on_show", *it ) )
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_show", it ) )
             {
                 vm->stdOut()->writeString(
                 "[Widget::on_show] invalid callback (expected callable)\n" );
                 return;
             }
         }
-        vm->callItem( *it, 0 );
+        vm->callItem( it, 0 );
         iter.next();
     }
     while ( iter.hasCurrent() );
@@ -242,22 +242,22 @@ void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
 
     VMachine* vm = (VMachine*) _vm;
     Iterator iter( cs );
-    Item* it;
+    Item it;
 
     do
     {
-        it = &iter.getCurrent();
-        if ( !it->isCallable() )
+        it = iter.getCurrent();
+        if ( !it.isCallable() )
         {
-            if ( !it->isComposed()
-                || !it->asObject()->getMethod( "on_hide", *it ) )
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_hide", it ) )
             {
                 vm->stdOut()->writeString(
                 "[Widget::on_hide] invalid callback (expected callable)\n" );
                 return;
             }
         }
-        vm->callItem( *it, 0 );
+        vm->callItem( it, 0 );
         iter.next();
     }
     while ( iter.hasCurrent() );

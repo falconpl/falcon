@@ -109,21 +109,21 @@ void internal_trigger_slot( GObject* obj, const char* signame,
         return;
 
     Iterator iter( cs );
-    Item* it;
+    Item it;
 
     do
     {
-        it = &iter.getCurrent();
-        if ( !it->isCallable() )
+        it = iter.getCurrent();
+        if ( !it.isCallable() )
         {
-            if ( !it->isComposed()
-                || !it->asObject()->getMethod( cbname, *it ) )
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( cbname, it ) )
             {
                 printf( "[%s] invalid callback (expected callable)\n", cbname );
                 return;
             }
         }
-        vm->callItem( *it, 0 );
+        vm->callItem( it, 0 );
         iter.next();
     }
     while ( iter.hasCurrent() );
