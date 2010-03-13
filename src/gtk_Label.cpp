@@ -19,7 +19,7 @@ void Label::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_Label = mod->addClass( "Label", &Label::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Widget" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Misc" ) );
     c_Label->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
