@@ -54,7 +54,7 @@ FALCON_FUNC Arrow::init( VMARG )
         throw_inv_params( "arrow type, shadow type" );
 #endif
     int type = i_type->asInteger();
-    int shad = i_type->asInteger();
+    int shad = i_shad->asInteger();
 #ifndef NO_PARAMETER_CHECK
     if ( type < 0 || type > 4
         || shad < 0 || shad > 4 )
@@ -83,7 +83,7 @@ FALCON_FUNC Arrow::set( VMARG )
         throw_inv_params( "arrow type, shadow type" );
 #endif
     int type = i_type->asInteger();
-    int shad = i_type->asInteger();
+    int shad = i_shad->asInteger();
 #ifndef NO_PARAMETER_CHECK
     if ( type < 0 || type > 4
         || shad < 0 || shad > 4 )
