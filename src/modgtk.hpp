@@ -189,7 +189,7 @@ enum GtkErrorIds
 typedef struct
 {
     const char* name;
-    FALCON_FUNC (*cb)( Falcon::VMachine* );
+    void (*cb)( Falcon::VMachine* );
 } MethodTab;
 
 
