@@ -76,7 +76,8 @@ FALCON_FUNC Main::init( VMARG )
         const int numargs = arr->length();
         AutoCString* strings = (AutoCString*) memAlloc(
             sizeof( AutoCString ) * numargs );
-        char* cstrings[ numargs + 1 ];
+        char** cstrings = (char**) memAlloc(
+            sizeof( char** ) * ( numargs + 1 ) );
         cstrings[ numargs ] = NULL; // just in case
         Item* it;
 
@@ -96,6 +97,7 @@ FALCON_FUNC Main::init( VMARG )
         check = gtk_init_check( (int*) &numargs, (char***) &cstrings );
 
         memFree( strings );
+        memFree( cstrings );
     }
     else
     {
