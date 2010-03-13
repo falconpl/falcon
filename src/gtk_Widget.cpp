@@ -21,26 +21,35 @@ void Widget::modInit( Falcon::Module* mod )
     c_Widget->setWKS( true );
     c_Widget->getClassDef()->factory( &Widget::factory );
 
-    mod->addClassMethod( c_Widget, "signal_delete_event",&Widget::signal_delete_event );
-    mod->addClassMethod( c_Widget, "signal_show",   &Widget::signal_show );
-    mod->addClassMethod( c_Widget, "signal_hide",   &Widget::signal_hide );
+    Gtk::MethodTab methods[] =
+    {
 
-    mod->addClassMethod( c_Widget, "show",          &Widget::show );
-    mod->addClassMethod( c_Widget, "show_now",      &Widget::show_now );
-    mod->addClassMethod( c_Widget, "hide",          &Widget::hide );
-    mod->addClassMethod( c_Widget, "show_all",      &Widget::show_all );
-    mod->addClassMethod( c_Widget, "hide_all",      &Widget::hide_all );
-    mod->addClassMethod( c_Widget, "reparent",      &Widget::reparent );
-    mod->addClassMethod( c_Widget, "is_focus",      &Widget::is_focus );
-    mod->addClassMethod( c_Widget, "grab_focus",    &Widget::grab_focus );
-    mod->addClassMethod( c_Widget, "grab_default",  &Widget::grab_default );
-    mod->addClassMethod( c_Widget, "set_name",      &Widget::set_name );
-    mod->addClassMethod( c_Widget, "get_name",      &Widget::get_name );
-    mod->addClassMethod( c_Widget, "set_sensitive", &Widget::set_sensitive );
-    mod->addClassMethod( c_Widget, "get_toplevel",  &Widget::set_sensitive );
-    mod->addClassMethod( c_Widget, "get_events",    &Widget::get_events );
-    mod->addClassMethod( c_Widget, "is_ancestor",   &Widget::is_ancestor );
-    mod->addClassMethod( c_Widget, "hide_on_delete",&Widget::hide_on_delete );
+    { "signal_delete_event",    &Widget::signal_delete_event },
+    { "signal_show",            &Widget::signal_show },
+    { "signal_hide",            &Widget::signal_hide },
+
+    { "show",                   &Widget::show },
+    { "show_now",               &Widget::show_now },
+    { "hide",                   &Widget::hide },
+    { "show_all",               &Widget::show_all },
+    { "hide_all",               &Widget::hide_all },
+    { "reparent",               &Widget::reparent },
+    { "is_focus",               &Widget::is_focus },
+    { "grab_focus",             &Widget::grab_focus },
+    { "grab_default",           &Widget::grab_default },
+    { "set_name",               &Widget::set_name },
+    { "get_name",               &Widget::get_name },
+    { "set_sensitive",          &Widget::set_sensitive },
+    { "get_toplevel",           &Widget::set_sensitive },
+    { "get_events",             &Widget::get_events },
+    { "is_ancestor",            &Widget::is_ancestor },
+    { "hide_on_delete",         &Widget::hide_on_delete },
+
+    { NULL, NULL }
+    };
+
+    for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
+        mod->addClassMethod( c_Widget, meth->name, meth->cb );
 }
 
 
@@ -72,38 +81,39 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
 
 /*#
     @class gtk.Widget
-    @brief Abstract class
+    @brief Base class for all widgets
     @raise GtkError on direct instanciation
 
+    GtkWidget is the base class all widgets in GTK+ derive from.
+    It manages the widget lifecycle, states and style.
  */
 
 /*#
     @init gtk.Widget
-    @brief Abstract class
+    @brief Base class for all widgets
     @raise GtkError on direct instanciation
  */
 
 /*#
     @method signal_delete_event gtk.Widget
     @brief Connect a VMSlot to the widget delete_event signal and return it
+
     The callback function must return a boolean, that if is true, will block the event.
+
+    The delete-event signal is emitted if a user requests that a toplevel window
+    is closed. The default handler for this signal destroys the window.
+    Connecting gtk_widget_hide_on_delete() to this signal will cause the window
+    to be hidden instead, so that it can later be shown again without reconstructing it.
  */
 FALCON_FUNC Widget::signal_delete_event( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    GET_SIGNALS( _obj );
-    CoreSlot* cs = get_signal( _obj, _signals,
-        "delete_event", (void*) &Widget::on_delete_event, vm );
-
-    Item* it = vm->findWKI( "VMSlot" );
-    vm->retval( it->asClass()->createInstance( cs ) );
+    Gtk::internal_get_slot( "delete_event", (void*) &Widget::on_delete_event, vm );
 }
 
 
@@ -128,7 +138,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
             if ( !it.isComposed()
                 || !it.asObject()->getMethod( "on_delete_event", it ) )
             {
-                vm->stdOut()->writeString(
+                printf(
                 "[Widget::on_delete_event] invalid callback (expected callable)\n" );
                 return TRUE; // block event
             }
@@ -146,7 +156,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
         }
         else
         {
-            vm->stdOut()->writeString(
+            printf(
             "[Widget::on_delete_event] invalid callback (expected boolean)\n" );
             return TRUE; // block event
         }
@@ -163,52 +173,19 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_show( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    GET_SIGNALS( _obj );
-    CoreSlot* ev = get_signal( _obj, _signals,
-        "show", (void*) &Widget::on_show, vm );
-
-    Item* it = vm->findWKI( "VMSlot" );
-    vm->retval( it->asClass()->createInstance( ev ) );
+    Gtk::internal_get_slot( "show", (void*) &Widget::on_show, vm );
 }
 
 
 void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
 {
-    GET_SIGNALS( obj );
-    CoreSlot* cs = _signals->getChild( "show", false );
-
-    if ( !cs || cs->empty() )
-        return;
-
-    VMachine* vm = (VMachine*) _vm;
-    Iterator iter( cs );
-    Item it;
-
-    do
-    {
-        it = iter.getCurrent();
-        if ( !it.isCallable() )
-        {
-            if ( !it.isComposed()
-                || !it.asObject()->getMethod( "on_show", it ) )
-            {
-                vm->stdOut()->writeString(
-                "[Widget::on_show] invalid callback (expected callable)\n" );
-                return;
-            }
-        }
-        vm->callItem( it, 0 );
-        iter.next();
-    }
-    while ( iter.hasCurrent() );
+    Gtk::internal_trigger_slot( (GObject*) obj, "show", "on_show", (VMachine*)_vm );
 }
 
 
@@ -218,52 +195,19 @@ void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_hide( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
     }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    GET_SIGNALS( _obj );
-    CoreSlot* ev = get_signal( _obj, _signals,
-        "hide", (void*) &Widget::on_hide, vm );
-
-    Item* it = vm->findWKI( "VMSlot" );
-    vm->retval( it->asClass()->createInstance( ev ) );
+    Gtk::internal_get_slot( "hide", (void*) &Widget::on_hide, vm );
 }
 
 
 void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
 {
-    GET_SIGNALS( obj );
-    CoreSlot* cs = _signals->getChild( "hide", false );
-
-    if ( !cs || cs->empty() )
-        return;
-
-    VMachine* vm = (VMachine*) _vm;
-    Iterator iter( cs );
-    Item it;
-
-    do
-    {
-        it = iter.getCurrent();
-        if ( !it.isCallable() )
-        {
-            if ( !it.isComposed()
-                || !it.asObject()->getMethod( "on_hide", it ) )
-            {
-                vm->stdOut()->writeString(
-                "[Widget::on_hide] invalid callback (expected callable)\n" );
-                return;
-            }
-        }
-        vm->callItem( it, 0 );
-        iter.next();
-    }
-    while ( iter.hasCurrent() );
+    Gtk::internal_trigger_slot( (GObject*) obj, "hide", "on_hide", (VMachine*)_vm );
 }
 
 
@@ -273,7 +217,7 @@ void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::show( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -291,7 +235,7 @@ FALCON_FUNC Widget::show( VMARG )
  */
 FALCON_FUNC Widget::show_now( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -309,7 +253,7 @@ FALCON_FUNC Widget::show_now( VMARG )
  */
 FALCON_FUNC Widget::hide( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -327,7 +271,7 @@ FALCON_FUNC Widget::hide( VMARG )
  */
 FALCON_FUNC Widget::show_all( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -345,7 +289,7 @@ FALCON_FUNC Widget::show_all( VMARG )
  */
 FALCON_FUNC Widget::hide_all( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -364,7 +308,7 @@ FALCON_FUNC Widget::hide_all( VMARG )
  */
 FALCON_FUNC Widget::activate( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -408,7 +352,7 @@ FALCON_FUNC Widget::reparent( VMARG )
  */
 FALCON_FUNC Widget::is_focus( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -429,7 +373,7 @@ FALCON_FUNC Widget::is_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_focus( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -451,7 +395,7 @@ FALCON_FUNC Widget::grab_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_default( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -497,7 +441,7 @@ FALCON_FUNC Widget::set_name( VMARG )
  */
 FALCON_FUNC Widget::get_name( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -541,7 +485,7 @@ FALCON_FUNC Widget::set_sensitive( VMARG )
  */
 FALCON_FUNC Widget::get_toplevel( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -564,7 +508,7 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
  */
 FALCON_FUNC Widget::get_events( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
@@ -611,7 +555,7 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
  */
 FALCON_FUNC Widget::hide_on_delete( VMARG )
 {
-#ifndef NO_PARAMETER_CHECK
+#ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
     {
         throw_require_no_args();
