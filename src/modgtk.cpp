@@ -17,6 +17,7 @@
 #include "gtk_Label.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
+#include "gtk_Object.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_Widget.hpp"
@@ -46,20 +47,21 @@ FALCON_MODULE_DECL
 
     Falcon::Gtk::Main::modInit( self );
 
-    Falcon::Gtk::Widget::modInit( self );
-        Falcon::Gtk::Container::modInit( self );
-            Falcon::Gtk::Bin::modInit( self );
-                Falcon::Gtk::Button::modInit( self );
-                Falcon::Gtk::Window::modInit( self );
-            Falcon::Gtk::Box::modInit( self );
-                Falcon::Gtk::ButtonBox::modInit( self );
-                    Falcon::Gtk::HButtonBox::modInit( self );
-                    Falcon::Gtk::VButtonBox::modInit( self );
-                Falcon::Gtk::HBox::modInit( self );
-                Falcon::Gtk::VBox::modInit( self );
-        Falcon::Gtk::Misc::modInit( self );
-            Falcon::Gtk::Arrow::modInit( self );
-            Falcon::Gtk::Label::modInit( self );
+    Falcon::Gtk::Object::modInit( self );
+        Falcon::Gtk::Widget::modInit( self );
+            Falcon::Gtk::Container::modInit( self );
+                Falcon::Gtk::Bin::modInit( self );
+                    Falcon::Gtk::Button::modInit( self );
+                    Falcon::Gtk::Window::modInit( self );
+                Falcon::Gtk::Box::modInit( self );
+                    Falcon::Gtk::ButtonBox::modInit( self );
+                        Falcon::Gtk::HButtonBox::modInit( self );
+                        Falcon::Gtk::VButtonBox::modInit( self );
+                    Falcon::Gtk::HBox::modInit( self );
+                    Falcon::Gtk::VBox::modInit( self );
+            Falcon::Gtk::Misc::modInit( self );
+                Falcon::Gtk::Arrow::modInit( self );
+                Falcon::Gtk::Label::modInit( self );
 
 
 

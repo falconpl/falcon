@@ -15,6 +15,9 @@ void Widget::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_Widget = mod->addClass( "Widget", &Gtk::abstract_init );
 
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Object" ) );
+    c_Widget->getClassDef()->addInheritance( in );
+
     c_Widget->setWKS( true );
     c_Widget->getClassDef()->factory( &Widget::factory );
 
