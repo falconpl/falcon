@@ -282,9 +282,9 @@ public:
 
     //static void on_size_allocate( GtkWidget*, GtkAllocation*, gpointer );
 
-    //static FALCON_FUNC signal_size_request( VMARG );
+    static FALCON_FUNC signal_size_request( VMARG );
 
-    //static void on_size_request( GtkWidget*, GtkRequisition*, gpointer );
+    static void on_size_request( GtkWidget*, GtkRequisition*, gpointer );
 
     //static FALCON_FUNC signal_state_changed( VMARG );
 
@@ -348,9 +348,9 @@ public:
 
     //static FALCON_FUNC draw( VMARG );
 
-    //static FALCON_FUNC size_request( VMARG );
+    static FALCON_FUNC size_request( VMARG );
 
-    //static FALCON_FUNC get_child_requisition( VMARG );
+    static FALCON_FUNC get_child_requisition( VMARG );
 
     //static FALCON_FUNC size_allocate( VMARG );
 
@@ -558,13 +558,13 @@ public:
 
     //static FALCON_FUNC has_screen( VMARG );
 
-    //static FALCON_FUNC get_size_request( VMARG );
+    static FALCON_FUNC get_size_request( VMARG );
 
     //static FALCON_FUNC set_child_visible( VMARG );
 
     //static FALCON_FUNC set_default_visual( VMARG );
 
-    //static FALCON_FUNC set_size_request( VMARG );
+    static FALCON_FUNC set_size_request( VMARG );
 
     //static FALCON_FUNC set_visual( VMARG );
 

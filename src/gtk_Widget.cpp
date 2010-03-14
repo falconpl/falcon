@@ -4,6 +4,8 @@
 
 #include "gtk_Widget.hpp"
 
+#include "gtk_Requisition.hpp"
+
 #include <gtk/gtk.h>
 
 
@@ -83,7 +85,7 @@ void Widget::modInit( Falcon::Module* mod )
     { "signal_show",                    &Widget::signal_show },
     //{ "signal_show_help",               &Widget::signal_show_help },
     //{ "signal_size_allocate",           &Widget::signal_size_allocate },
-    //{ "signal_size_request",            &Widget::signal_size_request },
+    { "signal_size_request",            &Widget::signal_size_request },
     //{ "signal_state_changed",           &Widget::signal_state_changed },
     //{ "signal_style_set",               &Widget::signal_style_set },
     //{ "signal_unmap",                   &Widget::signal_unmap },
@@ -105,6 +107,9 @@ void Widget::modInit( Falcon::Module* mod )
     { "queue_draw",             &Widget::queue_draw },
     { "queue_resize",           &Widget::queue_resize },
     { "queue_resize_no_redraw", &Widget::queue_resize_no_redraw },
+    //{ "draw",                   &Widget::draw },
+    { "size_request",           &Widget::size_request },
+    { "get_child_requisition",  &Widget::get_child_requisition },
 
 
     { "reparent",               &Widget::reparent },
@@ -118,6 +123,11 @@ void Widget::modInit( Falcon::Module* mod )
     { "get_events",             &Widget::get_events },
     { "is_ancestor",            &Widget::is_ancestor },
     { "hide_on_delete",         &Widget::hide_on_delete },
+
+    { "get_size_request",       &Widget::get_size_request },
+    //{ "set_child_visible",      &Widget::set_child_visible },
+    //{ "set_default_visual",     &Widget::set_default_visual },
+    { "set_size_request",       &Widget::set_size_request },
 
     { NULL, NULL }
     };
@@ -702,9 +712,54 @@ void Widget::on_show( GtkWidget* obj, gpointer _vm )
 
 //void Widget::on_size_allocate( GtkWidget*, GtkAllocation*, gpointer );
 
-//FALCON_FUNC Widget::signal_size_request( VMARG );
 
-//void Widget::on_size_request( GtkWidget*, GtkRequisition*, gpointer );
+/*#
+    @method signal_size_request gtk.Widget
+    @brief Connect a VMSlot to the widget size-request signal and return it
+ */
+FALCON_FUNC Widget::signal_size_request( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "size_request", (void*) &Widget::on_size_request, vm );
+}
+
+
+void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "size_request", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*)_vm;
+    Item* wki = vm->findWKI( "Requisition" );
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_size_request", it ) )
+            {
+                printf(
+                "[Widget::on_size_request] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gtk::Requisition( wki->asClass(), req ) );
+        vm->callItem( it, 1 );
+        iter.next();
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 //FALCON_FUNC Widget::signal_state_changed( VMARG );
 
@@ -1009,9 +1064,62 @@ FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
 
 //FALCON_FUNC Widget::draw( VMARG );
 
-//FALCON_FUNC Widget::size_request( VMARG );
 
-//FALCON_FUNC Widget::get_child_requisition( VMARG );
+/*#
+    @method size_request gtk.Widget
+    @brief Get the size "requisition" of the widget.
+    @return gtk.Requisition object
+
+    This function is typically used when implementing a GtkContainer subclass.
+    Obtains the preferred size of a widget. The container uses this information
+    to arrange its child widgets and decide what size allocations to give them
+    with gtk_widget_size_allocate().
+
+    You can also call this function from an application, with some caveats.
+    Most notably, getting a size request requires the widget to be associated
+    with a screen, because font information may be needed. Multihead-aware
+    applications should keep this in mind.
+
+    Also remember that the size request is not necessarily the size a widget
+    will actually be allocated.
+ */
+FALCON_FUNC Widget::size_request( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkRequisition req;
+    gtk_widget_size_request( (GtkWidget*)_obj, &req );
+    Item* wki = vm->findWKI( "Requisition" );
+    vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
+}
+
+
+/*#
+    @method get_child_requisition gtk.Widget
+    @brief This function is only for use in widget implementations.
+
+    Obtains widget->requisition, unless someone has forced a particular geometry
+    on the widget (e.g. with gtk_widget_set_size_request()), in which case it
+    returns that geometry instead of the widget's requisition.
+ */
+FALCON_FUNC Widget::get_child_requisition( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkRequisition req;
+    gtk_widget_get_child_requisition( (GtkWidget*)_obj, &req );
+    Item* wki = vm->findWKI( "Requisition" );
+    vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
+}
+
 
 //FALCON_FUNC Widget::size_allocate( VMARG );
 
@@ -1474,13 +1582,88 @@ FALCON_FUNC Widget::hide_on_delete( VMARG )
 
 //FALCON_FUNC Widget::has_screen( VMARG );
 
-//FALCON_FUNC Widget::get_size_request( VMARG );
+
+/*#
+    @method get_size_request gtk.Widget
+    @brief Get the size requested for the widget
+    @return [ width, height ]
+
+    Gets the size request that was explicitly set for the widget using
+    gtk_widget_set_size_request(). A value of -1 stored in width or height
+    indicates that that dimension has not been set explicitly and the natural
+    requisition of the widget will be used intead. See gtk_widget_set_size_request().
+
+    To get the size a widget will actually use, call gtk_widget_size_request()
+    instead of this function.
+ */
+FALCON_FUNC Widget::get_size_request( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint w, h;
+    gtk_widget_get_size_request( (GtkWidget*)_obj, &w, &h );
+    CoreArray* arr = new CoreArray;
+    arr->append( w );
+    arr->append( h );
+    vm->retval( arr );
+}
+
 
 //FALCON_FUNC Widget::set_child_visible( VMARG );
 
 //FALCON_FUNC Widget::set_default_visual( VMARG );
 
-//FALCON_FUNC Widget::set_size_request( VMARG );
+
+/*#
+    @method set_size_request gtk.Widget
+    @brief Sets the minimum size of a widget
+    @param width (integer)
+    @param height (integer)
+
+    that is, the widget's size request will be width by height.
+    You can use this function to force a widget to be either larger or smaller
+    than it normally would be.
+
+    In most cases, gtk_window_set_default_size() is a better choice for toplevel
+    windows than this function; setting the default size will still allow users
+    to shrink the window. Setting the size request will force them to leave the
+    window at least as large as the size request. When dealing with window sizes,
+    gtk_window_set_geometry_hints() can be a useful function as well.
+
+    Note the inherent danger of setting any fixed size - themes, translations
+    into other languages, different fonts, and user action can all change the
+    appropriate size for a given widget. So, it's basically impossible to hardcode
+    a size that will always be correct.
+
+    The size request of a widget is the smallest size a widget can accept while
+    still functioning well and drawing itself correctly. However in some strange
+    cases a widget may be allocated less than its requested size, and in many
+    cases a widget may be allocated more space than it requested.
+
+    If the size request in a given direction is -1 (unset), then the "natural"
+    size request of the widget will be used instead.
+
+    Widgets can't actually be allocated a size less than 1 by 1, but you can pass
+    0,0 to this function to mean "as small as possible."
+ */
+FALCON_FUNC Widget::set_size_request( VMARG )
+{
+    Item* i_w = vm->param( 0 );
+    Item* i_h = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_w || i_w->isNil() || !i_w->isInteger()
+        || !i_h || i_h->isNil() || !i_h->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_set_size_request( (GtkWidget*)_obj, i_w->asInteger(), i_h->asInteger() );
+}
+
 
 //FALCON_FUNC Widget::set_visual( VMARG );
 

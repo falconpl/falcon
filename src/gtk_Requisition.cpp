@@ -70,7 +70,7 @@ bool Requisition::getProperty( const Falcon::String& s, Falcon::Item& it ) const
     if ( s == "width" )
         it = m_req->width;
     else
-    if ( s == "heigth" )
+    if ( s == "height" )
         it = m_req->height;
     else
         return false;

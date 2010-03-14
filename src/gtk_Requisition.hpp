@@ -14,7 +14,7 @@ namespace Gtk {
  */
 class Requisition
     :
-    Falcon::CoreObject
+    public Falcon::CoreObject
 {
 public:
 
