@@ -139,11 +139,12 @@ void Widget::modInit( Falcon::Module* mod )
 
 Widget::Widget( const Falcon::CoreClass* gen, const GtkWidget* wdt )
     :
-    Falcon::CRObject( gen )
+    Falcon::CRObject( gen, false )
 {
     if ( wdt )
         setUserData( new GData( (GObject*) wdt ) );
 }
+
 
 bool Widget::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
