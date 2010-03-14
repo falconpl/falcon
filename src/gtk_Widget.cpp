@@ -91,12 +91,22 @@ void Widget::modInit( Falcon::Module* mod )
     //{ "signal_unrealize",               &Widget::signal_unrealize },
     //{ "signal_visibility_notify_event", &Widget::signal_visibility_notify_event },
     //{ "signal_window_state_event",      &Widget::signal_window_state_event },
-
+    { "destroy",                &Widget::destroy },
+    { "unparent",               &Widget::unparent },
     { "show",                   &Widget::show },
     { "show_now",               &Widget::show_now },
     { "hide",                   &Widget::hide },
     { "show_all",               &Widget::show_all },
     { "hide_all",               &Widget::hide_all },
+    { "map",                    &Widget::map },
+    { "unmap",                  &Widget::unmap },
+    { "realize",                &Widget::realize },
+    { "unrealize",              &Widget::unrealize },
+    { "queue_draw",             &Widget::queue_draw },
+    { "queue_resize",           &Widget::queue_resize },
+    { "queue_resize_no_redraw", &Widget::queue_resize_no_redraw },
+
+
     { "reparent",               &Widget::reparent },
     { "is_focus",               &Widget::is_focus },
     { "grab_focus",             &Widget::grab_focus },
@@ -725,6 +735,49 @@ void Widget::on_show( GtkWidget* obj, gpointer _vm )
 //gboolean Widget::on_window_state_event( GtkWidget*, GdkEventWindowState*, gpointer );
 
 
+
+/*#
+    @method destroy gtk.Widget
+    @brief Destroys a widget.
+
+    Equivalent to gtk_object_destroy().
+
+    In most cases, only toplevel widgets (windows) require explicit destruction,
+    because when you destroy a toplevel its children will be destroyed as well.
+
+    In Falcon, you should not need to use that method.
+ */
+FALCON_FUNC Widget::destroy( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_destroy( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method unparent gtk.Widget
+    @brief This function is only for use in widget implementations.
+
+    Should be called by implementations of the remove method on GtkContainer,
+    to dissociate a child from the container.
+ */
+FALCON_FUNC Widget::unparent( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_unparent( (GtkWidget*)_obj );
+}
+
+
 /*#
     @method show gtk.Widget
     @brief Flags a widget to be displayed.
@@ -816,6 +869,167 @@ FALCON_FUNC Widget::hide_all( VMARG )
 
 
 /*#
+    @method map gtk.Widget
+    @brief This function is only for use in widget implementations.
+
+    Causes a widget to be mapped if it isn't already.
+ */
+FALCON_FUNC Widget::map( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_map( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method unmap gtk.Widget
+    @brief This function is only for use in widget implementations.
+
+    Causes a widget to be unmapped if it's currently mapped.
+ */
+FALCON_FUNC Widget::unmap( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_unmap( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method realize gtk.Widget
+    @brief Creates the GDK (windowing system) resources associated with a widget.
+
+    For example, widget->window will be created when a widget is realized.
+    Normally realization happens implicitly; if you show a widget and all its parent
+    containers, then the widget will be realized and mapped automatically.
+
+    Realizing a widget requires all the widget's parent widgets to be realized;
+    calling gtk_widget_realize() realizes the widget's parents in addition to widget
+    itself. If a widget is not yet inside a toplevel window when you realize it,
+    bad things will happen.
+
+    This function is primarily used in widget implementations, and isn't very
+    useful otherwise. Many times when you think you might need it, a better
+    approach is to connect to a signal that will be called after the widget is
+    realized automatically, such as GtkWidget::expose-event.
+    Or simply g_signal_connect() to the GtkWidget::realize signal.
+ */
+FALCON_FUNC Widget::realize( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_realize( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method unrealize gtk.Widget
+    @brief This function is only useful in widget implementations.
+
+    Causes a widget to be unrealized (frees all GDK resources associated with
+    the widget, such as widget->window).
+ */
+FALCON_FUNC Widget::unrealize( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_unrealize( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method queue_draw gtk.Widget
+    @brief Equivalent to calling widget.queue_draw_area() for the entire area of a widget.
+ */
+FALCON_FUNC Widget::queue_draw( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_queue_draw( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method queue_resize gtk.Widget
+    @brief This function is only for use in widget implementations.
+
+    Flags a widget to have its size renegotiated; should be called when a widget
+    for some reason has a new size request. For example, when you change the text
+    in a GtkLabel, GtkLabel queues a resize to ensure there's enough space for
+    the new text.
+ */
+FALCON_FUNC Widget::queue_resize( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_queue_resize( (GtkWidget*)_obj );
+}
+
+
+/*#
+    @method queue_resize_no_redraw gtk.Widget
+    @brief This function works like gtk_widget_queue_resize(), except that the widget is not invalidated.
+*/
+FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_queue_resize_no_redraw( (GtkWidget*)_obj );
+}
+
+
+//FALCON_FUNC Widget::draw( VMARG );
+
+//FALCON_FUNC Widget::size_request( VMARG );
+
+//FALCON_FUNC Widget::get_child_requisition( VMARG );
+
+//FALCON_FUNC Widget::size_allocate( VMARG );
+
+//FALCON_FUNC Widget::add_accelerator( VMARG );
+
+//FALCON_FUNC Widget::remomve_accelerator( VMARG );
+
+//FALCON_FUNC Widget::set_accel_path( VMARG );
+
+//FALCON_FUNC Widget::list_accel_closures( VMARG );
+
+//FALCON_FUNC Widget::can_activate_accel( VMARG );
+
+//FALCON_FUNC Widget::event( VMARG );
+
+
+
+/*#
     @method activate gtk.Widget
     @brief For widgets that can be "activated" (buttons, menu items, etc).
     @return boolean
@@ -854,6 +1068,10 @@ FALCON_FUNC Widget::reparent( VMARG )
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     gtk_widget_reparent( (GtkWidget*)_obj, (GtkWidget*) wdt );
 }
+
+
+//FALCON_FUNC Widget::intersect( VMARG );
+
 
 
 /*#
@@ -968,6 +1186,10 @@ FALCON_FUNC Widget::get_name( VMARG )
 }
 
 
+//FALCON_FUNC Widget::set_state( VMARG );
+
+
+
 /*#
     @method set_sensitive gtk.Widget
     @brief Sets the sensitivity of a widget.
@@ -988,6 +1210,25 @@ FALCON_FUNC Widget::set_sensitive( VMARG )
     GET_OBJ( self );
     gtk_widget_set_sensitive( (GtkWidget*)_obj, i_sens->asBoolean() ? TRUE : FALSE );
 }
+
+
+//FALCON_FUNC Widget::set_parent( VMARG );
+
+//FALCON_FUNC Widget::set_parent_window( VMARG );
+
+//FALCON_FUNC Widget::get_parent_window( VMARG );
+
+//FALCON_FUNC Widget::set_uposition( VMARG );
+
+//FALCON_FUNC Widget::set_usize( VMARG );
+
+//FALCON_FUNC Widget::set_events( VMARG );
+
+//FALCON_FUNC Widget::add_events( VMARG );
+
+//FALCON_FUNC Widget::set_extension_events( VMARG );
+
+//FALCON_FUNC Widget::get_extension_events( VMARG );
 
 
 /*#
@@ -1013,6 +1254,15 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
 }
 
 
+//FALCON_FUNC Widget::get_ancestor( VMARG );
+
+//FALCON_FUNC Widget::get_colormap( VMARG );
+
+//FALCON_FUNC Widget::set_colormap( VMARG );
+
+//FALCON_FUNC Widget::get_visual( VMARG );
+
+
 /*#
     @method get_events gtk.Widget
     @brief Returns the event mask for the widget.
@@ -1032,6 +1282,10 @@ FALCON_FUNC Widget::get_events( VMARG )
     GET_OBJ( self );
     vm->retval( gtk_widget_get_events( (GtkWidget*)_obj ) );
 }
+
+
+//FALCON_FUNC Widget::get_pointer( VMARG );
+
 
 
 /*#
@@ -1054,6 +1308,10 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     vm->retval( (bool) gtk_widget_is_ancestor( (GtkWidget*)_obj, wdt ) );
 }
+
+
+//FALCON_FUNC Widget::translate_coordinates( VMARG );
+
 
 
 /*#
@@ -1080,6 +1338,34 @@ FALCON_FUNC Widget::hide_on_delete( VMARG )
     gboolean b = gtk_widget_hide_on_delete( (GtkWidget*)_obj );
     vm->retval( (bool) b );
 }
+
+
+//FALCON_FUNC Widget::set_style( VMARG );
+
+//FALCON_FUNC Widget::set_rc_style( VMARG );
+
+//FALCON_FUNC Widget::ensure_style( VMARG );
+
+//FALCON_FUNC Widget::get_style( VMARG );
+
+//FALCON_FUNC Widget::restore_default_style( VMARG );
+
+//FALCON_FUNC Widget::reset_rc_styles( VMARG );
+
+//FALCON_FUNC Widget::push_colormap( VMARG );
+
+//FALCON_FUNC Widget::pop_colormap( VMARG );
+
+//FALCON_FUNC Widget::set_default_colormap( VMARG );
+
+//FALCON_FUNC Widget::get_default_style( VMARG );
+
+//FALCON_FUNC Widget::get_default_colormap( VMARG );
+
+//FALCON_FUNC Widget::get_default_visual( VMARG );
+
+//FALCON_FUNC Widget::set_direction( VMARG );
+
 
 
 } // Gtk
