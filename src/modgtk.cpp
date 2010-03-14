@@ -20,6 +20,7 @@
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
+#include "gtk_Requisition.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_Widget.hpp"
@@ -54,6 +55,9 @@ FALCON_MODULE_DECL
      */
 
     Falcon::Gtk::Main::modInit( self );
+
+    Falcon::Gtk::Requisition::modInit( self );
+
 
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Widget::modInit( self );
