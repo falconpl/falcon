@@ -58,7 +58,7 @@ FALCON_FUNC Box::pack_start( VMARG )
     Item* i_padding = vm->param( 3 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
-        || i_child->isObject()
+        || !i_child->isObject()
         || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
@@ -87,7 +87,7 @@ FALCON_FUNC Box::pack_end( VMARG )
     Item* i_padding = vm->param( 3 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
-        || i_child->isObject()
+        || !i_child->isObject()
         || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
