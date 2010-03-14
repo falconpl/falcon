@@ -17,8 +17,8 @@ void Object::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_Object = mod->addClass( "Object", &Gtk::abstract_init );
 
-    //Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GInitiallyUnowned" ) );
-    //c_Object->getClassDef()->addInheritance( in );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
+    c_Object->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
     {
