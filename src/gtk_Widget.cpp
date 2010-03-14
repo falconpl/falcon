@@ -163,8 +163,8 @@ bool Widget::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
     GObject* obj = ((GData*)getUserData())->obj();
     AutoCString cstr( s );
-    g_object_set_data( obj, cstr.c_str(), new Item( it ) );
-    return true;    
+    g_object_set_data_full( obj, cstr.c_str(), new Item( it ), &Gtk::delProperty );
+    return true;
 }
 
 

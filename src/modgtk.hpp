@@ -145,6 +145,14 @@ Falcon::CoreSlot* get_signal( GObject* obj, Falcon::CoreSlot* sig,
 
 
 /**
+ *  \brief destroy a property Item
+ *  Function of type GDestroyNotify
+ */
+void delProperty( gpointer );
+
+
+
+/**
  *  \class Falcon::Gtk::GtkError
  */
 class GtkError
