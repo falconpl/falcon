@@ -23,10 +23,74 @@ void Widget::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-
-    { "signal_delete_event",    &Widget::signal_delete_event },
-    { "signal_show",            &Widget::signal_show },
-    { "signal_hide",            &Widget::signal_hide },
+    { "signal_accel_closures_changed",  &Widget::signal_accel_closures_changed },
+    //{ "button_press_event",             &Widget::signal_button_press_event },
+    //{ "button_release_event",           &Widget::signal_button_release_event },
+    { "signal_can_activate_accel",      &Widget::signal_can_activate_accel },
+    //{ "signal_child_notify",            &Widget::signal_child_notify },
+    //{ "signal_client_event",            &Widget::signal_client_event },
+    { "signal_composited_changed",      &Widget::signal_composited_changed },
+    //{ "signal_configure_event",         &Widget::signal_configure_event },
+    //{ "signal_damage_event",            &Widget::signal_damage_event },
+    { "signal_delete_event",            &Widget::signal_delete_event },
+    { "signal_destroy_event",           &Widget::signal_destroy_event },
+    //{ "signal_direction_changed",       &Widget::signal_direction_changed },
+    //{ "signal_drag_begin",              &Widget::signal_drag_begin },
+    //{ "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
+    //{ "signal_drag_data_get",           &Widget::signal_drag_data_get },
+    //{ "signal_drag_data_received",      &Widget::signal_drag_data_received },
+    //{ "signal_drag_drop",               &Widget::signal_drag_drop },
+    //{ "signal_drag_end",                &Widget::signal_drag_end },
+    //{ "signal_drag_failed",             &Widget::signal_drag_failed },
+    //{ "signal_drag_leave",              &Widget::signal_drag_leave },
+    //{ "signal_drag_motion",             &Widget::signal_drag_motion },
+    //{ "signal_enter_notify_event",      &Widget::signal_enter_notify_event },
+    //{ "signal_event",                   &Widget::signal_event },
+    //{ "signal_event_after",             &Widget::signal_event_after },
+    //{ "signal_expose_event",            &widget::signal_expose_event },
+    //{ "signal_focus",                   &Widget::signal_focus },
+    //{ "signal_focus_in_event",          &Widget::signal_focus_in_event },
+    //{ "signal_focus_out_event",         &Widget::signal_focus_out_event },
+    //{ "signal_grab_broken_event",       &Widget::signal_grab_broken_event },
+    //{ "signal_grab_focus",              &Widget::signal_grab_focus },
+    //{ "signal_grab_notify",             &Widget::signal_grab_notify },
+    { "signal_hide",                    &Widget::signal_hide },
+    //{ "signal_hierarchy_changed",       &Widget::signal_hierarchy_changed },
+    //{ "signal_key_press_event",         &Widget::signal_key_press_event },
+    //{ "signal_key_release_event",       &Widget::signal_key_release_event },
+    //{ "signal_keynav_failed",           &Widget::signal_keynav_failed },
+    //{ "signal_leave_notify_event",      &Widget::signal_leave_notify_event },
+    //{ "signal_map",                     &Widget::signal_map },
+    //{ "signal_map_event",               &Widget::signal_map_event },
+    //{ "signal_mnemonic_activate",       &Widget::signal_mnemonic_activate },
+    //{ "signal_motion_notify_event",     &Widget::signal_motion_notify_event },
+    //{ "signal_move_focus",              &Widget::signal_move_focus },
+    //{ "signal_no_expose_event",         &Widget::signal_no_expose_event },
+    //{ "signal_parent_set",              &Widget::signal_parent_set },
+    //{ "signal_popup_menu",              &Widget::signal_popup_menu },
+    //{ "signal_property_notify_event",   &Widget::signal_property_notify_event },
+    //{ "signal_proximity_in_event",      &Widget::signal_proximity_in_event },
+    //{ "signal_proximity_out_event",     &Widget::signal_proximity_out_event },
+    //{ "signal_query_tooltip",           &Widget::signal_query_tooltip },
+    //{ "signal_realize",                 &Widget::signal_realize },
+    //{ "signal_screen_changed",          &Widget::signal_screen_changed },
+    //{ "signal_scroll_event",            &Widget::signal_scroll_event },
+    //{ "signal_selection_clear_event",   &Widget::signal_selection_clear_event },
+    //{ "signal_selection_get",           &Widget::signal_selection_get },
+    //{ "signal_selection_notify_event",  &Widget::signal_selection_notify_event },
+    //{ "signal_selection_received",      &Widget::signal_selection_received },
+    //{ "signal_selection_request_event", &Widget::signal_selection_request_event },
+    { "signal_show",                    &Widget::signal_show },
+    //{ "signal_show_help",               &Widget::signal_show_help },
+    //{ "signal_size_allocate",           &Widget::signal_size_allocate },
+    //{ "signal_size_request",            &Widget::signal_size_request },
+    //{ "signal_state_changed",           &Widget::signal_state_changed },
+    //{ "signal_style_set",               &Widget::signal_style_set },
+    //{ "signal_unmap",                   &Widget::signal_unmap },
+    //{ "signal_unmap_event",             &Widget::signal_unmap_event },
+    //{ "signal_unrealize",               &Widget::signal_unrealize },
+    //{ "signal_visibility_notify_event", &Widget::signal_visibility_notify_event },
+    //{ "signal_window_state_event",      &Widget::signal_window_state_event },
 
     { "show",                   &Widget::show },
     { "show_now",               &Widget::show_now },
@@ -93,6 +157,156 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
     @brief Base class for all widgets
     @raise GtkError on direct instanciation
  */
+
+
+/*#
+    @method signal_accel_closures_changed gtk.Widget
+    @brief Connect a VMSlot to the widget accel_closures_changed signal and return it
+ */
+FALCON_FUNC Widget::signal_accel_closures_changed( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "accel_closures_changed",
+        (void*) &Widget::on_accel_closures_changed, vm );
+}
+
+
+void Widget::on_accel_closures_changed( GtkWidget* wdt, gpointer _vm )
+{
+    Gtk::internal_trigger_slot( (GObject*) wdt, "accel_closures_changed",
+        "on_accel_closures_changed", (VMachine*)_vm );
+}
+
+
+//FALCON_FUNC signal_button_press_event( VMARG );
+
+//gboolean on_button_press_event( GtkWidget*, GdkEventButton*, gpointer );
+
+//FALCON_FUNC signal_button_release_event( VMARG );
+
+//gboolean on_button_release_event( GtkWidget*, GdkEventButton*, gpointer );
+
+
+
+/*#
+    @method signal_can_activate_accel gtk.Widget
+    @brief Connect a VMSlot to the widget can_activate_accel signal and return it
+
+    Determines whether an accelerator that activates the signal identified by
+    signal_id can currently be activated. This signal is present to allow applications
+    and derived widgets to override the default GtkWidget handling for determining
+    whether an accelerator can be activated.
+
+    The callback function must return a boolean (returning true if the signal can
+    be activated). It will get an integer as parameter, that is the ID of a signal
+    installed on widget.
+ */
+FALCON_FUNC Widget::signal_can_activate_accel( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "can_activate_accel",
+        (void*) &Widget::on_can_activate_accel, vm );
+}
+
+
+gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "can_activate_accel", false );
+
+    if ( !cs || cs->empty() )
+        return TRUE; // can activate
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_can_activate_accel", it ) )
+            {
+                printf(
+                "[Widget::on_can_activate_accel] invalid callback (expected callable)\n" );
+                return FALSE; // block event
+            }
+        }
+        vm->pushParam( (int64) signal_id );
+        vm->callItem( it, 1 );
+        it = vm->regA();
+
+        if ( !it.isNil() && it.isBoolean() )
+        {
+            if ( !it.asBoolean() )
+                return FALSE; // block event
+            else
+                iter.next();
+        }
+        else
+        {
+            printf(
+            "[Widget::on_can_activate_accel] invalid callback (expected boolean)\n" );
+            return FALSE; // block event
+        }
+    }
+    while ( iter.hasCurrent() );
+
+    return TRUE; // can activate
+}
+
+
+//FALCON_FUNC Widget::signal_child_notify( VMARG );
+
+//gboolean Widget::on_child_notify( GtkWidget*, GParamSpec*, gpointer );
+
+//FALCON_FUNC Widget::signal_client_event( VMARG );
+
+//gboolean Widget::on_client_event( GtkWidget*, GdkEventClient*, gpointer );
+
+
+/*#
+    @method signal_composited_changed gtk.Widget
+    @brief Connect a VMSlot to the widget composited_changed signal and return it
+
+    The composited-changed signal is emitted when the composited status of
+    widgets screen changes.
+ */
+FALCON_FUNC Widget::signal_composited_changed( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "composited_changed",
+        (void*) &Widget::on_composited_changed, vm );
+}
+
+
+void Widget::on_composited_changed( GtkWidget* obj, gpointer _vm )
+{
+    Gtk::internal_trigger_slot( (GObject*) obj, "composited_changed",
+        "on_composited_changed", (VMachine*)_vm );
+}
+
+
+//FALCON_FUNC Widget::signal_configure_event( VMARG );
+
+//gboolean Widget::on_configure_event( GtkWidget*, GdkEventConfigure*, gpointer );
+
+//FALCON_FUNC signal_damage_event( VMARG );
+
+//gboolean on_damage_event( GtkWidget*, GdkEvent*, gpointer );
+
 
 /*#
     @method signal_delete_event gtk.Widget
@@ -168,25 +382,159 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
 
 
 /*#
-    @method signal_show gtk.Widget
-    @brief Connect a VMSlot to the widget show signal and return it
+    @method signal_destroy_event gtk.Widget
+    @brief Connect a VMSlot to the widget destroy signal and return it
+
+    The callback function must return a boolean, true to stop other handlers from
+    being invoked for the event, false to propagate the event further.
+
+    The destroy-event signal is emitted when a GdkWindow is destroyed.
+    You rarely get this signal, because most widgets disconnect themselves from
+    their window before they destroy it, so no widget owns the window at destroy time.
+
+    To receive this signal, the GdkWindow associated to the widget needs to enable
+    the GDK_STRUCTURE_MASK mask. GDK will enable this mask automatically for all new windows.
  */
-FALCON_FUNC Widget::signal_show( VMARG )
+FALCON_FUNC Widget::signal_destroy_event( VMARG )
 {
 #ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
-    {
         throw_require_no_args();
-    }
 #endif
-    Gtk::internal_get_slot( "show", (void*) &Widget::on_show, vm );
+    Gtk::internal_get_slot( "destroy_event", (void*) &Widget::on_destroy_event, vm );
 }
 
 
-void Widget::on_show( GtkWidget* obj, GdkEvent*, gpointer _vm )
+gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "show", "on_show", (VMachine*)_vm );
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "destroy_event", false );
+
+    if ( !cs || cs->empty() )
+        return FALSE; // propagate event
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_destroy_event", it ) )
+            {
+                printf(
+                "[Widget::on_destroy_event] invalid callback (expected callable)\n" );
+                return TRUE; // block event
+            }
+        }
+        //vm->pushParam( Item( (int64)((GdkEventAny*)ev)->type ) );
+        vm->callItem( it, 0 );
+        it = vm->regA();
+
+        if ( !it.isNil() && it.isBoolean() )
+        {
+            if ( it.asBoolean() )
+                return TRUE; // block event
+            else
+                iter.next();
+        }
+        else
+        {
+            printf(
+            "[Widget::on_destroy_event] invalid callback (expected boolean)\n" );
+            return TRUE; // block event
+        }
+    }
+    while ( iter.hasCurrent() );
+
+    return FALSE; // propagate event
 }
+
+
+//FALCON_FUNC Widget::signal_direction_changed( VMARG );
+
+//void Widget::on_direction_changed( GtkWidget*, GtkTextDirection, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_begin( VMARG );
+
+//void Widget::on_drag_begin( GtkWidget*, GdkDragContext*, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_data_delete( VMARG );
+
+//void Widget::on_drag_data_delete( GtkWidget*, GdkDragContext*, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_data_get( VMARG );
+
+//void Widget::on_drag_data_get( GtkWidget*, GdkDragContext*, GtkSelectionData*, guint, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_data_received( VMARG );
+
+//void Widget::on_drag_data_received( GtkWidget*, GdkDragContext*, gint, gint,
+        //GtkSelectionData*, guint, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_drop( VMARG );
+
+//gboolean Widget::on_drag_drop( GtkWidget*, GdkDragContext*, gint, gint, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_end( VMARG );
+
+//void Widget::on_drag_end( GtkWidget*, GdkDragContext*, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_failed( VMARG );
+
+//gboolean Widget::on_drag_failed( GtkWidget*, GdkDragContext*, GtkDragResult, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_leave( VMARG );
+
+//void Widget::on_drag_leave( GtkWidget*, GdkDragContext*, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_drag_motion( VMARG );
+
+//gboolean Widget::on_drag_motion( GtkWidget*, GdkDragContext*, gint, gint, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_enter_notify_event( VMARG );
+
+//gboolean Widget::on_enter_notify_event( GtkWidget*, GdkEventCrossing*, gpointer );
+
+//FALCON_FUNC Widget::signal_event( VMARG );
+
+//gboolean Widget::on_event( GtkWidget*, GdkEvent*, gpointer );
+
+//FALCON_FUNC Widget::signal_event_after( VMARG );
+
+//void Widget::on_event_after( GtkWidget*, GdkEvent*, gpointer );
+
+//FALCON_FUNC Widget::signal_expose_event( VMARG );
+
+//gboolean Widget::on_expose_event( GtkWidget*, GdkEventExpose*, gpointer );
+
+//FALCON_FUNC Widget::signal_focus( VMARG );
+
+//gboolean Widget::on_focus( GtkWidget*, GtkDirectionType*, gpointer );
+
+//FALCON_FUNC Widget::signal_focus_in_event( VMARG );
+
+//gboolean Widget::on_focus_in_event( GtkWidget*, GdkEventFocus*, gpointer );
+
+//FALCON_FUNC Widget::signal_focus_out_event( VMARG );
+
+//gboolean Widget::on_focus_out_event( GtkWidget*, GdkEventFocus*, gpointer );
+
+//FALCON_FUNC Widget::signal_grab_broken_event( VMARG );
+
+//gboolean Widget::on_grab_broken_event( GtkWidget*, GdkEvent*, gpointer );
+
+//FALCON_FUNC Widget::signal_grab_focus( VMARG );
+
+//void Widget::on_grab_focus( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_grab_notify( VMARG );
+
+//void Widget::on_grab_notify( GtkWidget*, gboolean, gpointer );
 
 
 /*#
@@ -205,10 +553,176 @@ FALCON_FUNC Widget::signal_hide( VMARG )
 }
 
 
-void Widget::on_hide( GtkWidget* obj, GdkEvent*, gpointer _vm )
+void Widget::on_hide( GtkWidget* obj, gpointer _vm )
 {
     Gtk::internal_trigger_slot( (GObject*) obj, "hide", "on_hide", (VMachine*)_vm );
 }
+
+
+
+
+//FALCON_FUNC Widget::signal_hierarchy_changed( VMARG );
+
+//void Widget::on_hierarchy_changed( GtkWidget*, GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_key_press_event( VMARG );
+
+//gboolean Widget::on_key_press_event( GtkWidget*, GdkEventKey*, gpointer );
+
+//FALCON_FUNC Widget::signal_key_release_event( VMARG );
+
+//gboolean Widget::on_key_release_event( GtkWidget*, GdkEventKey*, gpointer );
+
+//FALCON_FUNC Widget::signal_keynav_failed( VMARG );
+
+//gboolean Widget::on_keynav_failed( GtkWidget*, GtkDirectionType, gpointer );
+
+//FALCON_FUNC Widget::signal_leave_notify_event( VMARG );
+
+//gboolean Widget::on_leave_notify_event( GtkWidget*, GdkEventCrossing*, gpointer );
+
+//FALCON_FUNC Widget::signal_map( VMARG );
+
+//void Widget::on_map( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_map_event( VMARG );
+
+//gboolean Widget::on_map_event( GtkWidget*, GdkEvent*, gpointer );
+
+//FALCON_FUNC Widget::signal_mnemonic_activate( VMARG );
+
+//gboolean Widget::on_mnemonic_activate( GtkWidget*, gboolean, gpointer );
+
+//FALCON_FUNC Widget::signal_motion_notify_event( VMARG );
+
+//gboolean Widget::on_motion_notify_event( GtkWidget*, GdkEventMotion*, gpointer );
+
+//FALCON_FUNC Widget::signal_move_focus( VMARG );
+
+//void Widget::on_move_focus( GtkWidget*, GtkDirectionType, gpointer );
+
+//FALCON_FUNC Widget::signal_no_expose_event( VMARG );
+
+//gboolean Widget::on_no_expose_event( GtkWidget*, GdkEventNoExpose*, gpointer );
+
+//FALCON_FUNC Widget::signal_parent_set( VMARG );
+
+//void Widget::on_parent_set( GtkWidget*, GtkObject*, gpointer );
+
+//FALCON_FUNC Widget::signal_popup_menu( VMARG );
+
+//gboolean Widget::on_popup_menu( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_property_notify_event( VMARG );
+
+//gboolean Widget::on_property_notify_event( GtkWidget*, GdkEventProperty*, gpointer );
+
+//FALCON_FUNC Widget::signal_proximity_in_event( VMARG );
+
+//gboolean Widget::on_proximity_in_event( GtkWidget*, GdkEventProximity*, gpointer );
+
+//FALCON_FUNC Widget::signal_proximity_out_event( VMARG );
+
+//gboolean Widget::on_proximity_out_event( GtkWidget*, GdkEventProximity*, gpointer );
+
+//FALCON_FUNC Widget::signal_query_tooltip( VMARG );
+
+//gboolean Widget::on_query_tooltip( GtkWidget*, gint, gint, gboolean, GtkTooltip*, gpointer );
+
+//FALCON_FUNC Widget::signal_realize( VMARG );
+
+//void Widget::on_realize( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_screen_changed( VMARG );
+
+//void Widget::on_screen_changed( GtkWidget*, GdkScreen*, gpointer );
+
+//FALCON_FUNC Widget::signal_scroll_event( VMARG );
+
+//gboolean Widget::on_scroll_event( GtkWidget*, GdkEventScroll*, gpointer );
+
+//FALCON_FUNC Widget::signal_selection_clear_event( VMARG );
+
+//gboolean Widget::on_selection_clear_event( GtkWidget*, GdkEventSelection*, gpointer );
+
+//FALCON_FUNC Widget::signal_selection_get( VMARG );
+
+//void Widget::on_selection_get( GtkWidget*, GtkSelectionData*, guint, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_selection_notify_event( VMARG );
+
+//gboolean Widget::on_selection_notify_event( GtkWidget*, GdkEventSelection*, gpointer );
+
+//FALCON_FUNC Widget::signal_selection_received( VMARG );
+
+//void Widget::on_selection_received( GtkWidget*, GtkSelectionData*, guint, gpointer );
+
+//FALCON_FUNC Widget::signal_selection_request_event( VMARG );
+
+//gboolean Widget::on_selection_request_event( GtkWidget*, GdkEventSelection*, gpointer );
+
+
+/*#
+    @method signal_show gtk.Widget
+    @brief Connect a VMSlot to the widget show signal and return it
+ */
+FALCON_FUNC Widget::signal_show( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+    {
+        throw_require_no_args();
+    }
+#endif
+    Gtk::internal_get_slot( "show", (void*) &Widget::on_show, vm );
+}
+
+
+void Widget::on_show( GtkWidget* obj, gpointer _vm )
+{
+    Gtk::internal_trigger_slot( (GObject*) obj, "show", "on_show", (VMachine*)_vm );
+}
+
+
+//FALCON_FUNC Widget::signal_show_help( VMARG );
+
+//gboolean Widget::on_show_help( GtkWidget*, GtkWidgetHelpType, gpointer );
+
+//FALCON_FUNC Widget::signal_size_allocate( VMARG );
+
+//void Widget::on_size_allocate( GtkWidget*, GtkAllocation*, gpointer );
+
+//FALCON_FUNC Widget::signal_size_request( VMARG );
+
+//void Widget::on_size_request( GtkWidget*, GtkRequisition*, gpointer );
+
+//FALCON_FUNC Widget::signal_state_changed( VMARG );
+
+//void Widget::on_state_changed( GtkWidget*, GtkState, gpointer );
+
+//FALCON_FUNC Widget::signal_style_set( VMARG );
+
+//void Widget::on_style_set( GtkWidget*, GtkStyle*, gpointer );
+
+//FALCON_FUNC Widget::signal_unmap( VMARG );
+
+//void Widget::on_unmap( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_unmap_event( VMARG );
+
+//gboolean Widget::on_unmap_event( GtkWidget*, GdkEvent*, gpointer );
+
+//FALCON_FUNC Widget::signal_unrealize( VMARG );
+
+//void Widget::on_unrealize( GtkWidget*, gpointer );
+
+//FALCON_FUNC Widget::signal_visibility_notify_event( VMARG );
+
+//gboolean Widget::on_visibility_notify_event( GtkWidget*, GdkEventVisibility*, gpointer );
+
+//FALCON_FUNC Widget::signal_window_state_event( VMARG );
+
+//gboolean Widget::on_window_state_event( GtkWidget*, GdkEventWindowState*, gpointer );
 
 
 /*#
