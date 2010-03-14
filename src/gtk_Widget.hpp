@@ -450,6 +450,224 @@ public:
 
     //static FALCON_FUNC set_direction( VMARG );
 
+    //static FALCON_FUNC get_direction( VMARG );
+
+    //static FALCON_FUNC set_default_direction( VMARG );
+
+    //static FALCON_FUNC get_default_direction( VMARG );
+
+    //static FALCON_FUNC shape_combine_mask( VMARG );
+
+    //static FALCON_FUNC input_shape_combine_mask( VMARG );
+
+    //static FALCON_FUNC path( VMARG );
+
+    //static FALCON_FUNC class_path( VMARG );
+
+    //static FALCON_FUNC get_composite_name( VMARG );
+
+    //static FALCON_FUNC modify_style( VMARG );
+
+    //static FALCON_FUNC get_modifier_style( VMARG );
+
+    //static FALCON_FUNC modify_fg( VMARG );
+
+    //static FALCON_FUNC modify_bg( VMARG );
+
+    //static FALCON_FUNC modify_text( VMARG );
+
+    //static FALCON_FUNC modify_base( VMARG );
+
+    //static FALCON_FUNC modify_font( VMARG );
+
+    //static FALCON_FUNC modify_cursor( VMARG );
+
+    //static FALCON_FUNC create_pango_context( VMARG );
+
+    //static FALCON_FUNC get_pango_context( VMARG );
+
+    //static FALCON_FUNC create_pango_layout( VMARG );
+
+    //static FALCON_FUNC widget_render_icon( VMARG );
+
+    //static FALCON_FUNC pop_composite_child( VMARG );
+
+    //static FALCON_FUNC push_composite_child( VMARG );
+
+    //static FALCON_FUNC queue_clear( VMARG );
+
+    //static FALCON_FUNC queue_clear_area( VMARG );
+
+    //static FALCON_FUNC queue_draw_area( VMARG );
+
+    //static FALCON_FUNC reset_shapes( VMARG );
+
+    //static FALCON_FUNC set_app_paintable( VMARG );
+
+    //static FALCON_FUNC set_double_buffered( VMARG );
+
+    //static FALCON_FUNC set_redraw_on_allocate( VMARG );
+
+    //static FALCON_FUNC set_composite_name( VMARG );
+
+    //static FALCON_FUNC set_scroll_adjustments( VMARG );
+
+    //static FALCON_FUNC mnemonic_activate( VMARG );
+
+    //static FALCON_FUNC class_install_style_property( VMARG );
+
+    //static FALCON_FUNC class_install_style_property_parser( VMARG );
+
+    //static FALCON_FUNC class_find_style_property( VMARG );
+
+    //static FALCON_FUNC class_list_style_properties( VMARG );
+
+    //static FALCON_FUNC region_intersect( VMARG );
+
+    //static FALCON_FUNC send_expose( VMARG );
+
+    //static FALCON_FUNC style_get( VMARG );
+
+    //static FALCON_FUNC style_get_property( VMARG );
+
+    //static FALCON_FUNC style_get_valist( VMARG );
+
+    //static FALCON_FUNC style_attach( VMARG );
+
+    //static FALCON_FUNC get_accessible( VMARG );
+
+    //static FALCON_FUNC child_focus( VMARG );
+
+    //static FALCON_FUNC child_notify( VMARG );
+
+    //static FALCON_FUNC freeze_child_notify( VMARG );
+
+    //static FALCON_FUNC get_child_visible( VMARG );
+
+    //static FALCON_FUNC get_parent( VMARG );
+
+    //static FALCON_FUNC get_settings( VMARG );
+
+    //static FALCON_FUNC get_clipboard( VMARG );
+
+    //static FALCON_FUNC get_display( VMARG );
+
+    //static FALCON_FUNC get_root_window( VMARG );
+
+    //static FALCON_FUNC get_screen( VMARG );
+
+    //static FALCON_FUNC has_screen( VMARG );
+
+    //static FALCON_FUNC get_size_request( VMARG );
+
+    //static FALCON_FUNC set_child_visible( VMARG );
+
+    //static FALCON_FUNC set_default_visual( VMARG );
+
+    //static FALCON_FUNC set_size_request( VMARG );
+
+    //static FALCON_FUNC set_visual( VMARG );
+
+    //static FALCON_FUNC thaw_child_notify( VMARG );
+
+    //static FALCON_FUNC set_no_show_all( VMARG );
+
+    //static FALCON_FUNC get_no_show_all( VMARG );
+
+    //static FALCON_FUNC list_mnemonic_labels( VMARG );
+
+    //static FALCON_FUNC add_mnemonic_label( VMARG );
+
+    //static FALCON_FUNC remove_mnemonic_label( VMARG );
+
+    //static FALCON_FUNC get_action( VMARG );
+
+    //static FALCON_FUNC is_composited( VMARG );
+
+    //static FALCON_FUNC error_bell( VMARG );
+
+    //static FALCON_FUNC keynav_failed( VMARG );
+
+    //static FALCON_FUNC get_tooltip_markup( VMARG );
+
+    //static FALCON_FUNC set_tooltip_markup( VMARG );
+
+    //static FALCON_FUNC get_tooltip_text( VMARG );
+
+    //static FALCON_FUNC set_tooltip_text( VMARG );
+
+    //static FALCON_FUNC get_tooltip_window( VMARG );
+
+    //static FALCON_FUNC tooltip_window( VMARG );
+
+    //static FALCON_FUNC get_has_tooltip( VMARG );
+
+    //static FALCON_FUNC set_has_tooltip( VMARG );
+
+    //static FALCON_FUNC trigger_tooltip_query( VMARG );
+
+    //static FALCON_FUNC get_snapshot( VMARG );
+
+    //static FALCON_FUNC get_window( VMARG );
+
+    //static FALCON_FUNC get_allocation( VMARG );
+
+    //static FALCON_FUNC set_allocation( VMARG );
+
+    //static FALCON_FUNC get_app_paintable( VMARG );
+
+    //static FALCON_FUNC get_can_default( VMARG );
+
+    //static FALCON_FUNC set_can_default( VMARG );
+
+    //static FALCON_FUNC get_can_focus( VMARG );
+
+    //static FALCON_FUNC set_can_focus( VMARG );
+
+    //static FALCON_FUNC get_double_buffered( VMARG );
+
+    //static FALCON_FUNC get_has_window( VMARG );
+
+    //static FALCON_FUNC set_has_window( VMARG );
+
+    //static FALCON_FUNC get_sensitive( VMARG );
+
+    //static FALCON_FUNC is_sensitive( VMARG );
+
+    //static FALCON_FUNC get_state( VMARG );
+
+    //static FALCON_FUNC get_visible( VMARG );
+
+    //static FALCON_FUNC set_visible( VMARG );
+
+    //static FALCON_FUNC has_default( VMARG );
+
+    //static FALCON_FUNC has_focus( VMARG );
+
+    //static FALCON_FUNC has_grab( VMARG );
+
+    //static FALCON_FUNC has_rc_style( VMARG );
+
+    //static FALCON_FUNC is_drawable( VMARG );
+
+    //static FALCON_FUNC is_toplevel( VMARG );
+
+    //static FALCON_FUNC set_window( VMARG );
+
+    //static FALCON_FUNC set_receives_default( VMARG );
+
+    //static FALCON_FUNC get_receives_default( VMARG );
+
+    //static FALCON_FUNC set_realized( VMARG );
+
+    //static FALCON_FUNC get_realized( VMARG );
+
+    //static FALCON_FUNC set_mapped( VMARG );
+
+    //static FALCON_FUNC get_mapped( VMARG );
+
+    //static FALCON_FUNC get_requisition( VMARG );
+
 
 };
 

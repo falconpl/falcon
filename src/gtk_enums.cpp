@@ -393,6 +393,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "DOUBLE_BUFFERED",    GTK_DOUBLE_BUFFERED },
     { "NO_SHOW_ALL",        GTK_NO_SHOW_ALL },
 
+    /*
+     *  GtkTextDirection
+     */
+    { "TEXT_DIR_NONE",      GTK_TEXT_DIR_NONE },
+    { "TEXT_DIR_LTR",       GTK_TEXT_DIR_LTR },
+    { "TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
+
 
 #if 0
     /*

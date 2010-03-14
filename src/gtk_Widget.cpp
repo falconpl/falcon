@@ -1366,6 +1366,223 @@ FALCON_FUNC Widget::hide_on_delete( VMARG )
 
 //FALCON_FUNC Widget::set_direction( VMARG );
 
+//FALCON_FUNC Widget::get_direction( VMARG );
+
+//FALCON_FUNC Widget::set_default_direction( VMARG );
+
+//FALCON_FUNC Widget::get_default_direction( VMARG );
+
+//FALCON_FUNC Widget::shape_combine_mask( VMARG );
+
+//FALCON_FUNC Widget::input_shape_combine_mask( VMARG );
+
+//FALCON_FUNC Widget::path( VMARG );
+
+//FALCON_FUNC Widget::class_path( VMARG );
+
+//FALCON_FUNC Widget::get_composite_name( VMARG );
+
+//FALCON_FUNC Widget::modify_style( VMARG );
+
+//FALCON_FUNC Widget::get_modifier_style( VMARG );
+
+//FALCON_FUNC Widget::modify_fg( VMARG );
+
+//FALCON_FUNC Widget::modify_bg( VMARG );
+
+//FALCON_FUNC Widget::modify_text( VMARG );
+
+//FALCON_FUNC Widget::modify_base( VMARG );
+
+//FALCON_FUNC Widget::modify_font( VMARG );
+
+//FALCON_FUNC Widget::modify_cursor( VMARG );
+
+//FALCON_FUNC Widget::create_pango_context( VMARG );
+
+//FALCON_FUNC Widget::get_pango_context( VMARG );
+
+//FALCON_FUNC Widget::create_pango_layout( VMARG );
+
+//FALCON_FUNC Widget::widget_render_icon( VMARG );
+
+//FALCON_FUNC Widget::pop_composite_child( VMARG );
+
+//FALCON_FUNC Widget::push_composite_child( VMARG );
+
+//FALCON_FUNC Widget::queue_clear( VMARG );
+
+//FALCON_FUNC Widget::queue_clear_area( VMARG );
+
+//FALCON_FUNC Widget::queue_draw_area( VMARG );
+
+//FALCON_FUNC Widget::reset_shapes( VMARG );
+
+//FALCON_FUNC Widget::set_app_paintable( VMARG );
+
+//FALCON_FUNC Widget::set_double_buffered( VMARG );
+
+//FALCON_FUNC Widget::set_redraw_on_allocate( VMARG );
+
+//FALCON_FUNC Widget::set_composite_name( VMARG );
+
+//FALCON_FUNC Widget::set_scroll_adjustments( VMARG );
+
+//FALCON_FUNC Widget::mnemonic_activate( VMARG );
+
+//FALCON_FUNC Widget::class_install_style_property( VMARG );
+
+//FALCON_FUNC Widget::class_install_style_property_parser( VMARG );
+
+//FALCON_FUNC Widget::class_find_style_property( VMARG );
+
+//FALCON_FUNC Widget::class_list_style_properties( VMARG );
+
+//FALCON_FUNC Widget::region_intersect( VMARG );
+
+//FALCON_FUNC Widget::send_expose( VMARG );
+
+//FALCON_FUNC Widget::style_get( VMARG );
+
+//FALCON_FUNC Widget::style_get_property( VMARG );
+
+//FALCON_FUNC Widget::style_get_valist( VMARG );
+
+//FALCON_FUNC Widget::style_attach( VMARG );
+
+//FALCON_FUNC Widget::get_accessible( VMARG );
+
+//FALCON_FUNC Widget::child_focus( VMARG );
+
+//FALCON_FUNC Widget::child_notify( VMARG );
+
+//FALCON_FUNC Widget::freeze_child_notify( VMARG );
+
+//FALCON_FUNC Widget::get_child_visible( VMARG );
+
+//FALCON_FUNC Widget::get_parent( VMARG );
+
+//FALCON_FUNC Widget::get_settings( VMARG );
+
+//FALCON_FUNC Widget::get_clipboard( VMARG );
+
+//FALCON_FUNC Widget::get_display( VMARG );
+
+//FALCON_FUNC Widget::get_root_window( VMARG );
+
+//FALCON_FUNC Widget::get_screen( VMARG );
+
+//FALCON_FUNC Widget::has_screen( VMARG );
+
+//FALCON_FUNC Widget::get_size_request( VMARG );
+
+//FALCON_FUNC Widget::set_child_visible( VMARG );
+
+//FALCON_FUNC Widget::set_default_visual( VMARG );
+
+//FALCON_FUNC Widget::set_size_request( VMARG );
+
+//FALCON_FUNC Widget::set_visual( VMARG );
+
+//FALCON_FUNC Widget::thaw_child_notify( VMARG );
+
+//FALCON_FUNC Widget::set_no_show_all( VMARG );
+
+//FALCON_FUNC Widget::get_no_show_all( VMARG );
+
+//FALCON_FUNC Widget::list_mnemonic_labels( VMARG );
+
+//FALCON_FUNC Widget::add_mnemonic_label( VMARG );
+
+//FALCON_FUNC Widget::remove_mnemonic_label( VMARG );
+
+//FALCON_FUNC Widget::get_action( VMARG );
+
+//FALCON_FUNC Widget::is_composited( VMARG );
+
+//FALCON_FUNC Widget::error_bell( VMARG );
+
+//FALCON_FUNC Widget::keynav_failed( VMARG );
+
+//FALCON_FUNC Widget::get_tooltip_markup( VMARG );
+
+//FALCON_FUNC Widget::set_tooltip_markup( VMARG );
+
+//FALCON_FUNC Widget::get_tooltip_text( VMARG );
+
+//FALCON_FUNC Widget::set_tooltip_text( VMARG );
+
+//FALCON_FUNC Widget::get_tooltip_window( VMARG );
+
+//FALCON_FUNC Widget::tooltip_window( VMARG );
+
+//FALCON_FUNC Widget::get_has_tooltip( VMARG );
+
+//FALCON_FUNC Widget::set_has_tooltip( VMARG );
+
+//FALCON_FUNC Widget::trigger_tooltip_query( VMARG );
+
+//FALCON_FUNC Widget::get_snapshot( VMARG );
+
+//FALCON_FUNC Widget::get_window( VMARG );
+
+//FALCON_FUNC Widget::get_allocation( VMARG );
+
+//FALCON_FUNC Widget::set_allocation( VMARG );
+
+//FALCON_FUNC Widget::get_app_paintable( VMARG );
+
+//FALCON_FUNC Widget::get_can_default( VMARG );
+
+//FALCON_FUNC Widget::set_can_default( VMARG );
+
+//FALCON_FUNC Widget::get_can_focus( VMARG );
+
+//FALCON_FUNC Widget::set_can_focus( VMARG );
+
+//FALCON_FUNC Widget::get_double_buffered( VMARG );
+
+//FALCON_FUNC Widget::get_has_window( VMARG );
+
+//FALCON_FUNC Widget::set_has_window( VMARG );
+
+//FALCON_FUNC Widget::get_sensitive( VMARG );
+
+//FALCON_FUNC Widget::is_sensitive( VMARG );
+
+//FALCON_FUNC Widget::get_state( VMARG );
+
+//FALCON_FUNC Widget::get_visible( VMARG );
+
+//FALCON_FUNC Widget::set_visible( VMARG );
+
+//FALCON_FUNC Widget::has_default( VMARG );
+
+//FALCON_FUNC Widget::has_focus( VMARG );
+
+//FALCON_FUNC Widget::has_grab( VMARG );
+
+//FALCON_FUNC Widget::has_rc_style( VMARG );
+
+//FALCON_FUNC Widget::is_drawable( VMARG );
+
+//FALCON_FUNC Widget::is_toplevel( VMARG );
+
+//FALCON_FUNC Widget::set_window( VMARG );
+
+//FALCON_FUNC Widget::set_receives_default( VMARG );
+
+//FALCON_FUNC Widget::get_receives_default( VMARG );
+
+//FALCON_FUNC Widget::set_realized( VMARG );
+
+//FALCON_FUNC Widget::get_realized( VMARG );
+
+//FALCON_FUNC Widget::set_mapped( VMARG );
+
+//FALCON_FUNC Widget::get_mapped( VMARG );
+
+//FALCON_FUNC Widget::get_requisition( VMARG );
 
 
 } // Gtk
