@@ -7,7 +7,7 @@ falcon_define_module( CURRENT_MODULE gtk )
 ##
 #   Sources
 #
-file( GLOB SRC_FILES "modgtk*.cpp" "gtk_*.cpp" )
+file( GLOB SRC_FILES "modgtk*.cpp" "g_*.cpp" "gtk_*.cpp" )
 
 ##
 #   Target

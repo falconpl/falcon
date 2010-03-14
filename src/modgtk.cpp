@@ -4,6 +4,8 @@
 
 #include "modgtk.hpp"
 
+#include "g_Object.hpp"
+
 #include "gtk_enums.hpp"
 
 #include "gtk_Arrow.hpp"
@@ -35,6 +37,12 @@ FALCON_MODULE_DECL
     self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
     #include "modgtk_st.hpp"
+
+    /*
+     *  load glib
+     */
+
+    Falcon::Glib::Object::modInit( self );
 
     /*
      *  load enums
