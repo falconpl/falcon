@@ -14,7 +14,7 @@ namespace Gtk {
  */
 class Widget
     :
-    public Falcon::CoreObject
+    public Falcon::CRObject
 {
 public:
 
@@ -22,7 +22,7 @@ public:
 
     ~Widget() {}
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Falcon::CRObject* clone() const { return 0; }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
