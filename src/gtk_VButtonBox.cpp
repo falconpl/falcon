@@ -53,7 +53,7 @@ FALCON_FUNC VButtonBox::init( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    GtkWidget* wdt = gtk_hbutton_box_new();
+    GtkWidget* wdt = gtk_vbutton_box_new();
     MYSELF;
     Gtk::internal_add_slot( (GObject*) wdt );
     self->setUserData( new GData( (GObject*) wdt ) );
