@@ -54,25 +54,19 @@ else()
       set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
       list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
    else()
-      #make the environment variable FALCON_SRC_TREE to override the topmost dir
-      set( current_pos $ENV{FALCON_SRC_TREE})
-      if( "${current_pos}" STREQUAL "" )
-          set( current_pos "${CMAKE_SOURCE_DIR}" )
-      endif()
-
-      Message( STATUS "Falcon module configured under DEVELOPMENT (${current_pos}) settings" )
       set(falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
-
       set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
       set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
 
+      # If defined, prefer the source directory include files over the installed ones
+      if(DEFINED ENV{FALCON_SRC_TREE})           
+        list(APPEND falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
+        message( STATUS "Falcon module configured under DEVELOPMENT ($ENV{FALCON_SRC_TREE}) settings" )
+      endif()
       #The output directory doesn't change. However, is not used as include.
-      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
-
-      # Use the source directory for include -- for first
-      list(INSERT falcon_INCLUDE_DIRS 0 "${current_pos}/core/include")
+      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")           
       # But adds generated include files
-      list(INSERT falcon_INCLUDE_DIRS  0 "${SELF_DIR}/../include" )
+      list(APPEND falcon_INCLUDE_DIRS "${SELF_DIR}/../../../@FALCON_INC_DIR@" )
    endif()
 endif()
 
@@ -88,7 +82,6 @@ find_file(falcon_ENGINE_INC engine.h "${falcon_INCLUDE_DIR}" )
 # Prepare Falcon in development environment.
 list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
 list(APPEND falcon_LIBRARY_DIRS  ${falcon_LIBRARY_DIR})
-list(INSERT CMAKE_LIBRARY_PATHS 0 ${falcon_LIBRARY_DIR})
 
 set(falcon_LIBRARIES falcon_engine)
 
