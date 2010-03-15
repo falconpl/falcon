@@ -48,77 +48,77 @@ FALCON_FUNC set_default_size( VMARG );
 
 FALCON_FUNC set_gravity( VMARG );
 
-//FALCON_FUNC get_gravity( VMARG );
+FALCON_FUNC get_gravity( VMARG );
 
-//FALCON_FUNC set_position( VMARG );
+FALCON_FUNC set_position( VMARG );
 
-//FALCON_FUNC set_transient_for( VMARG );
+FALCON_FUNC set_transient_for( VMARG );
 
-//FALCON_FUNC set_destroy_with_parent( VMARG );
+FALCON_FUNC set_destroy_with_parent( VMARG );
 
 //FALCON_FUNC set_screen( VMARG );
 
 //FALCON_FUNC get_screen( VMARG );
 
-//FALCON_FUNC is_active( VMARG );
+FALCON_FUNC is_active( VMARG );
 
-//FALCON_FUNC has_toplevel_focus( VMARG );
+FALCON_FUNC has_toplevel_focus( VMARG );
 
 //FALCON_FUNC list_toplevels( VMARG );
 
-//FALCON_FUNC add_mnemonic( VMARG );
+FALCON_FUNC add_mnemonic( VMARG );
 
-//FALCON_FUNC remove_mnemonic( VMARG );
+FALCON_FUNC remove_mnemonic( VMARG );
 
-//FALCON_FUNC mnemonic_activate( VMARG );
+FALCON_FUNC mnemonic_activate( VMARG );
 
 //FALCON_FUNC activate_key( VMARG );
 
 //FALCON_FUNC propagate_key_event( VMARG );
 
-//FALCON_FUNC get_focus( VMARG );
+FALCON_FUNC get_focus( VMARG );
 
-//FALCON_FUNC set_focus( VMARG );
+FALCON_FUNC set_focus( VMARG );
 
-//FALCON_FUNC get_default_widget( VMARG );
+FALCON_FUNC get_default_widget( VMARG );
 
-//FALCON_FUNC set_default( VMARG );
+FALCON_FUNC set_default( VMARG );
 
-//FALCON_FUNC present( VMARG );
+FALCON_FUNC present( VMARG );
 
-//FALCON_FUNC present_with_time( VMARG );
+FALCON_FUNC present_with_time( VMARG );
 
-//FALCON_FUNC iconify( VMARG );
+FALCON_FUNC iconify( VMARG );
 
-//FALCON_FUNC deiconify( VMARG );
+FALCON_FUNC deiconify( VMARG );
 
-//FALCON_FUNC stick( VMARG );
+FALCON_FUNC stick( VMARG );
 
-//FALCON_FUNC unstick( VMARG );
+FALCON_FUNC unstick( VMARG );
 
-//FALCON_FUNC maximize( VMARG );
+FALCON_FUNC maximize( VMARG );
 
-//FALCON_FUNC unmaximize( VMARG );
+FALCON_FUNC unmaximize( VMARG );
 
-//FALCON_FUNC fullscreen( VMARG );
+FALCON_FUNC fullscreen( VMARG );
 
-//FALCON_FUNC unfullscreen( VMARG );
+FALCON_FUNC unfullscreen( VMARG );
 
-//FALCON_FUNC set_keep_above( VMARG );
+FALCON_FUNC set_keep_above( VMARG );
 
-//FALCON_FUNC set_keep_below( VMARG );
+FALCON_FUNC set_keep_below( VMARG );
 
-//FALCON_FUNC begin_resize_drag( VMARG );
+FALCON_FUNC begin_resize_drag( VMARG );
 
-//FALCON_FUNC begin_move_drag( VMARG );
+FALCON_FUNC begin_move_drag( VMARG );
 
-//FALCON_FUNC set_decorated( VMARG );
+FALCON_FUNC set_decorated( VMARG );
 
-//FALCON_FUNC set_deletable( VMARG );
+FALCON_FUNC set_deletable( VMARG );
 
-//FALCON_FUNC set_frame_dimensions( VMARG );
+FALCON_FUNC set_frame_dimensions( VMARG );
 
-//FALCON_FUNC set_has_frame( VMARG );
+FALCON_FUNC set_has_frame( VMARG );
 
 //FALCON_FUNC set_mnemonic_modifier( VMARG );
 

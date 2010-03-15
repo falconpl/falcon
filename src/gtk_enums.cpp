@@ -467,6 +467,39 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_GRAVITY_SOUTH_EAST", GDK_GRAVITY_SOUTH_EAST },
     { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
 
+    /*
+     *  GdkModifierType
+     */
+    { "GDK_SHIFT_MASK",         GDK_SHIFT_MASK },
+    { "GDK_LOCK_MASK",          GDK_LOCK_MASK },
+    { "GDK_CONTROL_MASK",       GDK_CONTROL_MASK },
+    { "GDK_MOD1_MASK",          GDK_MOD1_MASK },
+    { "GDK_MOD2_MASK",          GDK_MOD2_MASK },
+    { "GDK_MOD3_MASK",          GDK_MOD3_MASK },
+    { "GDK_MOD4_MASK",          GDK_MOD4_MASK },
+    { "GDK_MOD5_MASK",          GDK_MOD5_MASK },
+    { "GDK_BUTTON1_MASK",       GDK_BUTTON1_MASK },
+    { "GDK_BUTTON2_MASK",       GDK_BUTTON2_MASK },
+    { "GDK_BUTTON3_MASK",       GDK_BUTTON3_MASK },
+    { "GDK_BUTTON4_MASK",       GDK_BUTTON4_MASK },
+    { "GDK_BUTTON5_MASK",       GDK_BUTTON5_MASK },
+    { "GDK_SUPER_MASK",         GDK_SUPER_MASK },
+    { "GDK_HYPER_MASK",         GDK_HYPER_MASK },
+    { "GDK_META_MASK",          GDK_META_MASK },
+    { "GDK_RELEASE_MASK",       GDK_RELEASE_MASK },
+    { "GDK_MODIFIER_MASK",      GDK_MODIFIER_MASK },
+
+    /*
+     *  GdkWindowEdge
+     */
+    { "GDK_WINDOW_EDGE_NORTH_WEST", GDK_WINDOW_EDGE_NORTH_WEST },
+    { "GDK_WINDOW_EDGE_NORTH",      GDK_WINDOW_EDGE_NORTH },
+    { "GDK_WINDOW_EDGE_NORTH_EAST", GDK_WINDOW_EDGE_NORTH_EAST },
+    { "GDK_WINDOW_EDGE_WEST",       GDK_WINDOW_EDGE_WEST },
+    { "GDK_WINDOW_EDGE_EAST",       GDK_WINDOW_EDGE_EAST },
+    { "GDK_WINDOW_EDGE_SOUTH_WEST", GDK_WINDOW_EDGE_SOUTH_WEST },
+    { "GDK_WINDOW_EDGE_SOUTH",      GDK_WINDOW_EDGE_SOUTH },
+    { "GDK_WINDOW_EDGE_SOUTH_EAST", GDK_WINDOW_EDGE_SOUTH_EAST },
 
 
     { NULL, 0 }
