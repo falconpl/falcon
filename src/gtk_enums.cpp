@@ -401,10 +401,9 @@ void Enums::modInit( Falcon::Module* mod )
     { "TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
 
 
-#if 0
+
     /*
      *  GdkEventType
-     *  we might put Gdk* in another namespace
      */
     { "GDK_NOTHING",        GDK_NOTHING },
     { "GDK_DELETE",         GDK_DELETE },
@@ -453,7 +452,22 @@ void Enums::modInit( Falcon::Module* mod )
     #if GTK_MINOR_VERSION >= 18
     { "GDK_EVENT_LAST",     GDK_EVENT_LAST },
     #endif
-#endif
+
+    /*
+     *  GdkGravity
+     */
+    { "GDK_GRAVITY_NORTH_WEST", GDK_GRAVITY_NORTH_WEST },
+    { "GDK_GRAVITY_NORTH",      GDK_GRAVITY_NORTH },
+    { "GDK_GRAVITY_NORTH_EAST", GDK_GRAVITY_NORTH_EAST },
+    { "GDK_GRAVITY_WEST",       GDK_GRAVITY_WEST },
+    { "GDK_GRAVITY_CENTER",     GDK_GRAVITY_CENTER },
+    { "GDK_GRAVITY_EAST",       GDK_GRAVITY_EAST },
+    { "GDK_GRAVITY_SOUTH_WEST", GDK_GRAVITY_SOUTH_WEST },
+    { "GDK_GRAVITY_SOUTH",      GDK_GRAVITY_SOUTH },
+    { "GDK_GRAVITY_SOUTH_EAST", GDK_GRAVITY_SOUTH_EAST },
+    { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
+
+
 
     { NULL, 0 }
     };
