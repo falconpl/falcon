@@ -18,7 +18,11 @@ class MyWindow from gtk.Window
     end
     // constructor
     init
-        self.set_title( "Falcon" )
+        // set window title
+        //self.set_title( "Falcon" )
+        // set window title using a generic property setter
+        self.set( "title", "Falcon" );
+        // connect to delete-event
         self.signal_delete_event().subscribe( self )
         // make a vertical box
         vbox = gtk.VBox()
