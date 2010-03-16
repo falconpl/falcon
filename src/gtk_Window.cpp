@@ -1528,9 +1528,7 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    const gchar* nam = gtk_window_get_default_icon_name( (GtkWindow*)_obj );
+    const gchar* nam = gtk_window_get_default_icon_name();
     vm->retval( nam ? new String( nam ) : new String() );
 }
 #endif
