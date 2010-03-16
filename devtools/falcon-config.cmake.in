@@ -59,9 +59,9 @@ else()
       set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
 
       # If defined, prefer the source directory include files over the installed ones
-      if(DEFINED ENV{FALCON_SRC_TREE})           
-        list(APPEND falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
-        message( STATUS "Falcon module configured under DEVELOPMENT ($ENV{FALCON_SRC_TREE}) settings" )
+      if(DEFINED FALCON_SRC_TREE)           
+        list(APPEND falcon_INCLUDE_DIRS "${FALCON_SRC_TREE}/core/include")
+        message( STATUS "Falcon module configured under DEVELOPMENT (${FALCON_SRC_TREE}) settings" )
       endif()
       #The output directory doesn't change. However, is not used as include.
       set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")           
