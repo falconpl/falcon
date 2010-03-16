@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(Falcon_dynlib)
 
-find_package(falcon REQUIRED)
+find_package(Falcon REQUIRED)
 
 # Set here project-wide options
 option(WITH_TESTS  "Compile test_dynlib.c to generate the test library" OFF)
