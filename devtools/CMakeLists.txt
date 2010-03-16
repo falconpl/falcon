@@ -26,8 +26,8 @@ endforeach(item)
 #
 message( "Configuring falcon-config.cmake" )
 configure_file(
-  falcon-config.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
+  FalconConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
   @ONLY
 )
 
@@ -50,6 +50,6 @@ INSTALL(
               WORLD_READ WORLD_EXECUTE
 )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/falcon-config.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
   DESTINATION ${FALCON_MOD_DIR}/cmake
 )
