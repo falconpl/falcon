@@ -9,7 +9,7 @@ project(falcon-module-hpdf)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
-find_package(falcon REQUIRED)
+find_package(Falcon REQUIRED)
 find_package(LibHaru REQUIRED)
 
 add_subdirectory(src)
