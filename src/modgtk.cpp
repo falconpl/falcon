@@ -21,6 +21,7 @@
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
 #include "gtk_Requisition.hpp"
+#include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_Widget.hpp"
@@ -64,6 +65,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Container::modInit( self );
                 Falcon::Gtk::Bin::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
+                        Falcon::Gtk::ToggleButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
