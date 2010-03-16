@@ -23,6 +23,9 @@ void Window::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Bin" ) );
     c_Window->getClassDef()->addInheritance( in );
 
+    c_Window->setWKS( true );
+    c_Window->getClassDef()->factory( &Window::factory );
+
     Gtk::MethodTab methods[] =
     {
     //{ "signal_activate_default"      &Window::set_resizable },
@@ -75,58 +78,60 @@ void Window::modInit( Falcon::Module* mod )
     { "set_deletable",      &Window::set_deletable },
     { "set_frame_dimensions",&Window::set_frame_dimensions },
     { "set_has_frame",      &Window::set_has_frame },
-    //{ "set_mnemonic_modifier",        &Window::set_gravity },
-    //{ "set_type_hint",        &Window::set_gravity },
-    //{ "set_skip_taskbar_hint",        &Window::set_gravity },
-    //{ "set_skip_pager_hint",        &Window::set_gravity },
-    //{ "set_urgency_hint",        &Window::set_gravity },
-    //{ "set_accept_focus",        &Window::set_gravity },
-    //{ "set_focus_on_map",        &Window::set_gravity },
-    //{ "set_startup_id",        &Window::set_gravity },
-    //{ "set_role",        &Window::set_gravity },
-    //{ "get_decorated",        &Window::set_gravity },
-    //{ "get_deletable",        &Window::set_gravity },
+    { "set_mnemonic_modifier",&Window::set_mnemonic_modifier },
+    { "set_type_hint",      &Window::set_type_hint },
+    { "set_skip_taskbar_hint",&Window::set_skip_taskbar_hint },
+    { "set_skip_pager_hint",&Window::set_skip_pager_hint },
+    { "set_urgency_hint",   &Window::set_urgency_hint },
+    { "set_accept_focus",   &Window::set_accept_focus },
+    { "set_focus_on_map",   &Window::set_focus_on_map },
+    { "set_startup_id",     &Window::set_startup_id },
+    { "set_role",           &Window::set_role },
+    { "get_decorated",      &Window::get_decorated },
+    { "get_deletable",      &Window::get_deletable },
     //{ "get_default_icon_list",        &Window::set_gravity },
-    //{ "get_default_icon_name",        &Window::set_gravity },
-    //{ "get_default_size",        &Window::set_gravity },
-    //{ "get_destroy_with_parent",        &Window::set_gravity },
-    //{ "get_frame_dimensions",        &Window::set_gravity },
-    //{ "get_has_frame",        &Window::set_gravity },
+#if GTK_MINOR_VERSION >= 16
+    { "get_default_icon_name",&Window::get_default_icon_name },
+#endif
+    { "get_default_size",   &Window::get_default_size },
+    { "get_destroy_with_parent",&Window::get_destroy_with_parent },
+    { "get_frame_dimensions",&Window::get_frame_dimensions },
+    { "get_has_frame",      &Window::get_has_frame },
     //{ "get_icon",        &Window::set_gravity },
     //{ "get_icon_list",        &Window::set_gravity },
-    //{ "get_icon_name",        &Window::set_gravity },
-    //{ "get_mnemonic_modifier",        &Window::set_gravity },
-    //{ "get_modal",        &Window::set_gravity },
-    //{ "get_position",        &Window::set_gravity },
-    //{ "get_role",        &Window::set_gravity },
-    //{ "get_size",        &Window::set_gravity },
-
+    { "get_icon_name",      &Window::get_icon_name },
+    { "get_mnemonic_modifier",&Window::get_mnemonic_modifier },
+    { "get_modal",          &Window::get_modal },
+    { "get_position",       &Window::get_position },
+    { "get_role",           &Window::get_role },
+    { "get_size",           &Window::get_size },
     { "get_title",          &Window::get_title },
-
-    //{ "get_transient_for",        &Window::set_gravity },
-    //{ "get_type_hint",        &Window::set_gravity },
-    //{ "get_skip_taskbar_hint",        &Window::set_gravity },
-    //{ "get_skip_pager_hint",        &Window::set_gravity },
-    //{ "get_urgency_hint",        &Window::set_gravity },
-    //{ "get_accept_focus",        &Window::set_gravity },
-    //{ "get_focus_on_map",        &Window::set_gravity },
+    { "get_transient_for",  &Window::get_transient_for },
+    { "get_type_hint",      &Window::get_type_hint },
+    { "get_skip_taskbar_hint",&Window::get_skip_taskbar_hint },
+    { "get_skip_pager_hint",&Window::get_skip_pager_hint },
+    { "get_urgency_hint",   &Window::get_urgency_hint },
+    { "get_accept_focus",   &Window::get_accept_focus },
+    { "get_focus_on_map",   &Window::get_focus_on_map },
     //{ "get_group",        &Window::set_gravity },
-    //{ "get_window_type",        &Window::set_gravity },
-    //{ "move",        &Window::set_gravity },
-    //{ "parse_geometry",        &Window::set_gravity },
-    //{ "reshow_with_initial_size",        &Window::set_gravity },
-    //{ "resize",        &Window::set_gravity },
+#if GTK_MINOR_VERSION >= 20
+    { "get_window_type",    &Window::get_window_type },
+#endif
+    { "move",               &Window::move },
+    { "parse_geometry",     &Window::parse_geometry },
+    { "reshow_with_initial_size",&Window::reshow_with_initial_size },
+    { "resize",             &Window::resize },
     //{ "set_default_icon_list",        &Window::set_gravity },
     //{ "set_default_icon",        &Window::set_gravity },
     //{ "set_default_icon_from_file",        &Window::set_gravity },
-    //{ "set_default_icon_name",        &Window::set_gravity },
+    { "set_default_icon_name",&Window::set_default_icon_name },
     //{ "set_icon",        &Window::set_gravity },
     //{ "set_icon_list",        &Window::set_gravity },
     //{ "set_icon_from_file",        &Window::set_gravity },
-    //{ "set_icon_name",        &Window::set_gravity },
-    //{ "set_auto_startup_notification",        &Window::set_gravity },
-    //{ "get_opacity",        &Window::set_gravity },
-    //{ "set_opacity",        &Window::set_gravity },
+    { "set_icon_name",        &Window::set_icon_name },
+    { "set_auto_startup_notification",&Window::set_auto_startup_notification },
+    { "get_opacity",        &Window::get_opacity },
+    { "set_opacity",        &Window::set_opacity },
     //{ "get_mnemonics_visible",        &Window::set_gravity },
     //{ "set_mnemonics_visible",        &Window::set_gravity },
 
@@ -136,6 +141,44 @@ void Window::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Window, meth->name, meth->cb );
 }
+
+
+Window::Window( const Falcon::CoreClass* gen, const GtkWindow* win )
+    :
+    Falcon::CoreObject( gen )
+{
+    if ( win )
+        setUserData( new GData( (GObject*) win ) );
+}
+
+
+bool Window::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    GObject* obj = ((GData*)getUserData())->obj();
+    AutoCString cstr( s );
+    Item* itm = (Item*) g_object_get_data( obj, cstr.c_str() );
+    if ( itm )
+        it = *itm;
+    else
+        return defaultProperty( s, it );
+    return true;
+}
+
+
+bool Window::setProperty( const Falcon::String& s, const Falcon::Item& it )
+{
+    GObject* obj = ((GData*)getUserData())->obj();
+    AutoCString cstr( s );
+    g_object_set_data_full( obj, cstr.c_str(), new Item( it ), &Gtk::delProperty );
+    return true;
+}
+
+
+Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bool )
+{
+    return new Window( gen, (GtkWindow*) win );
+}
+
 
 /*#
     @class gtk.Window
@@ -335,9 +378,9 @@ FALCON_FUNC Window::set_modal( VMARG )
     For more control over a window's initial size and how resizing works, investigate
     set_geometry_hints().
 
-    For some uses, gtk_window_resize() is a more appropriate function. resize()
+    For some uses, resize() is a more appropriate function. resize()
     changes the current size of the window, rather than the size to be used on
-    initial display. gtk_window_resize() always affects the window itself, not
+    initial display. resize() always affects the window itself, not
     the geometry widget.
 
     The default size of a window only affects the first time a window is shown;
@@ -1061,7 +1104,7 @@ FALCON_FUNC Window::begin_resize_drag( VMARG )
     if ( !i_edge || !i_button || !i_root_x || !i_root_y || !i_tstamp
         || !i_edge->isInteger() || !i_button->isInteger()
         || !i_root_x->isInteger() || !i_root_y->isInteger() || !i_tstamp->isInteger() )
-        throw_inv_params( "I,I,I,I" );
+        throw_inv_params( "I,I,I,I,I" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -1222,60 +1265,570 @@ FALCON_FUNC Window::set_has_frame( VMARG )
 }
 
 
-//FALCON_FUNC Window::set_mnemonic_modifier( VMARG );
+/*#
+    @method set_mnemonic_modifier gtk.Window
+    @brief Sets the mnemonic modifier for this window.
+    @param modifier the modifier mask used to activate mnemonics on this window. (integer, GdkModifierType)
+ */
+FALCON_FUNC Window::set_mnemonic_modifier( VMARG )
+{
+    Item* i_modif = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_modif || i_modif->isNil() || !i_modif->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_mnemonic_modifier( (GtkWindow*)_obj,
+        (GdkModifierType) i_modif->asInteger() );
+}
 
-//FALCON_FUNC Window::set_type_hint( VMARG );
 
-//FALCON_FUNC Window::set_skip_taskbar_hint( VMARG );
+/*#
+    @method set_type_hint gtk.Window
+    @brief Sets the window type hint.
+    @param hint the window type (integer, GdkWindowTypeHint)
 
-//FALCON_FUNC Window::set_skip_pager_hint( VMARG );
+    By setting the type hint for the window, you allow the window manager to decorate
+    and handle the window in a way which is suitable to the function of the window
+    in your application.
 
-//FALCON_FUNC Window::set_urgency_hint( VMARG );
+    This function should be called before the window becomes visible.
+ */
+FALCON_FUNC Window::set_type_hint( VMARG )
+{
+    Item* i_hint = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_hint || i_hint->isNil() || !i_hint->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_type_hint( (GtkWindow*)_obj,
+        (GdkWindowTypeHint) i_hint->asInteger() );
+}
 
-//FALCON_FUNC Window::set_accept_focus( VMARG );
 
-//FALCON_FUNC Window::set_focus_on_map( VMARG );
+/*#
+    @method set_skip_taskbar_hint gtk.Window
+    @brief Sets the window taskbar hint.
+    @param setting (boolean) true to keep this window from appearing in the task bar
 
-//FALCON_FUNC Window::set_startup_id( VMARG );
+    Windows may set a hint asking the desktop environment not to display the window
+    in the task bar. This function sets this hint.
+ */
+FALCON_FUNC Window::set_skip_taskbar_hint( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_skip_taskbar_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
 
-//FALCON_FUNC Window::set_role( VMARG );
 
-//FALCON_FUNC Window::get_decorated( VMARG );
+/*#
+    @method set_skip_pager_hint gtk.Window
+    @brief Sets the window pager hint.
+    @param setting (boolean) true to keep this window from appearing in the pager
 
-//FALCON_FUNC Window::get_deletable( VMARG );
+    Windows may set a hint asking the desktop environment not to display the window
+    in the pager. This function sets this hint. (A "pager" is any desktop navigation
+    tool such as a workspace switcher that displays a thumbnail representation of
+    the windows on the screen.)
+ */
+FALCON_FUNC Window::set_skip_pager_hint( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_skip_pager_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method set_urgency_hint gtk.Window
+    @brief Sets the window urgency hint.
+    @param setting (boolean) true to mark this window as urgent
+
+    Windows may set a hint asking the desktop environment to draw the users attention
+    to the window. This function sets this hint.
+ */
+FALCON_FUNC Window::set_urgency_hint( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_urgency_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method set_accept_focus gtk.Window
+    @brief Sets the window accept-focus hint.
+    @param setting (boolean) True to let this window receive input focus
+
+    Windows may set a hint asking the desktop environment not to receive the input
+    focus. This function sets this hint.
+ */
+FALCON_FUNC Window::set_accept_focus( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_accept_focus( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method set_focus_on_map gtk.Window
+    @brief Sets the window focus-on-map hint.
+    @param setting (boolean) true to let this window receive input focus on map
+
+    Windows may set a hint asking the desktop environment not to receive the input
+    focus when the window is mapped. This function sets this hint.
+ */
+FALCON_FUNC Window::set_focus_on_map( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_focus_on_map( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method set_startup_id gtk.Window
+    @brief Sets the window startup identifier.
+    @param startup_id a string with startup-notification identifier
+
+    Startup notification identifiers are used by desktop environment to track
+    application startup, to provide user feedback and other features. This function
+    changes the corresponding property on the underlying GdkWindow. Normally,
+    startup identifier is managed automatically and you should only use this
+    function in special cases like transferring focus from other processes.
+    You should use this function before calling present() or any
+    equivalent function generating a window map event.
+
+    This function is only useful on X11, not with other GTK+ targets.
+ */
+FALCON_FUNC Window::set_startup_id( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || i_id->isNil() || !i_id->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString s( i_id->asString() );
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_startup_id( (GtkWindow*)_obj, s.c_str() );
+}
+
+
+/*#
+    @method set_role gtk.Window
+    @brief Sets the window role.
+    @param role unique identifier for the window to be used when restoring a session (string)
+
+    This function is only useful on X11, not with other GTK+ targets.
+
+    In combination with the window title, the window role allows a window manager
+    to identify "the same" window when an application is restarted. So for example
+    you might set the "toolbox" role on your app's toolbox window, so that when the
+    user restarts their session, the window manager can put the toolbox back in
+    the same place.
+
+    If a window already has a unique title, you don't need to set the role, since
+    the WM can use the title to identify the window when restoring the session.
+ */
+FALCON_FUNC Window::set_role( VMARG )
+{
+    Item* i_role = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_role || i_role->isNil() || !i_role->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString s( i_role->asString() );
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_role( (GtkWindow*)_obj, s.c_str() );
+}
+
+
+/*#
+    @method get_decorated gtk.Window
+    @brief Returns whether the window has been set to have decorations such as a title bar via set_decorated().
+    @return (boolean) true if the window has been set to have decorations
+ */
+FALCON_FUNC Window::get_decorated( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_decorated( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_deletable gtk.Window
+    @brief Returns whether the window has been set to have a close button via set_deletable().
+    @return (boolean) true if the window has been set to have a close button
+ */
+FALCON_FUNC Window::get_deletable( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_deletable( (GtkWindow*)_obj ) );
+}
+
 
 //FALCON_FUNC Window::get_default_icon_list( VMARG );
 
-//FALCON_FUNC Window::get_default_icon_name( VMARG );
 
-//FALCON_FUNC Window::get_default_size( VMARG );
+#if GTK_MINOR_VERSION >= 16
+/*#
+    @method get_default_icon_name gtk.Window
+    @brief Gets the window default icon name.
+    @return (string) the fallback icon name for windows
 
-//FALCON_FUNC Window::get_destroy_with_parent( VMARG );
+    Returns the fallback icon name for windows that has been set with set_default_icon_name().
+    The returned string is owned by GTK+ and should not be modified. It is only valid
+    until the next call to set_default_icon_name().
+ */
+FALCON_FUNC Window::get_default_icon_name( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* nam = gtk_window_get_default_icon_name( (GtkWindow*)_obj );
+    vm->retval( nam ? new String( nam ) : new String() );
+}
+#endif
 
-//FALCON_FUNC Window::get_frame_dimensions( VMARG );
 
-//FALCON_FUNC Window::get_has_frame( VMARG );
+/*#
+    @method get_default_size gtk.Window
+    @brief Gets the default size of the window.
+    @return [ width, height ]
+
+    A value of -1 for the width or height indicates that a default size has not
+    been explicitly set for that dimension, so the "natural" size of the window
+    will be used.
+ */
+FALCON_FUNC Window::get_default_size( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint w, h;
+    gtk_window_get_default_size( (GtkWindow*)_obj, &w, &h );
+    CoreArray* arr = new CoreArray;
+    arr->append( w );
+    arr->append( h );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method get_destroy_with_parent gtk.Window
+    @brief Returns whether the window will be destroyed with its transient parent.
+    @return (boolean) true if the window will be destroyed with its transient parent.
+ */
+FALCON_FUNC Window::get_destroy_with_parent( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_destroy_with_parent( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_frame_dimensions gtk.Window
+    @brief Retrieves the dimensions of the frame window for this toplevel.
+    @return array [ left, top, right, bottom ] (integers)
+
+    (Note: this is a special-purpose function intended for the framebuffer port;
+    see set_has_frame(). It will not return the size of the window border drawn
+    by the window manager, which is the normal case when using a windowing system.
+    See gdk_window_get_frame_extents() to get the standard window border extents.)
+
+    See gtk_window_set_has_frame(), gtk_window_set_frame_dimensions().
+ */
+FALCON_FUNC Window::get_frame_dimensions( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint l, t, r, b;
+    gtk_window_get_frame_dimensions( (GtkWindow*)_obj, &l, &t, &r, &b );
+    CoreArray* arr = new CoreArray;
+    arr->append( l );
+    arr->append( t );
+    arr->append( r );
+    arr->append( b );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method get_has_frame gtk.Window
+    @brief Accessor for whether the window has a frame window exterior to window->window.
+    @return (boolean) true if a frame has been added to the window via set_has_frame().
+
+    Gets the value set by set_has_frame().
+ */
+FALCON_FUNC Window::get_has_frame( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_has_frame( (GtkWindow*)_obj ) );
+}
+
 
 //FALCON_FUNC Window::get_icon( VMARG );
 
 //FALCON_FUNC Window::get_icon_list( VMARG );
 
-//FALCON_FUNC Window::get_icon_name( VMARG );
 
-//FALCON_FUNC Window::get_mnemonic_modifier( VMARG );
+/*#
+    @method get_icon_name gtk.Window
+    @brief Returns the name of the themed icon for the window, see set_icon_name().
+    @return the icon name or nil if the window has no themed icon
+ */
+FALCON_FUNC Window::get_icon_name( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* nam = gtk_window_get_icon_name( (GtkWindow*)_obj );
+    if ( nam )
+        vm->retval( new String( nam ) );
+    else
+        vm->retnil();
+}
 
-//FALCON_FUNC Window::get_modal( VMARG );
 
-//FALCON_FUNC Window::get_position( VMARG );
+/*#
+    @method get_mnemonic_modifier gtk.Window
+    @brief Returns the mnemonic modifier for this window.
+    @return the modifier mask used to activate mnemonics on this window. (GdkModifierType)
 
-//FALCON_FUNC Window::get_role( VMARG );
+    See set_mnemonic_modifier().
+ */
+FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_window_get_mnemonic_modifier( (GtkWindow*)_obj ) );
+}
 
-//FALCON_FUNC Window::get_size( VMARG );
+
+/*#
+    @method get_modal gtk.Window
+    @brief Returns whether the window is modal.
+    @return (boolean) true if the window is set to be modal and establishes a grab when shown
+
+    See set_modal().
+ */
+FALCON_FUNC Window::get_modal( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_modal( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_position gtk.Window
+    @brief Gets the window position.
+    @return [ root_x, root_x ]
+
+    This function returns the position you need to pass to gtk_window_move() to
+    keep window in its current position. This means that the meaning of the returned
+    value varies with window gravity. See gtk_window_move() for more details.
+
+    If you haven't changed the window gravity, its gravity will be GDK_GRAVITY_NORTH_WEST.
+    This means that gtk_window_get_position() gets the position of the top-left corner of
+    the window manager frame for the window. gtk_window_move() sets the position of this
+    same top-left corner.
+
+    gtk_window_get_position() is not 100% reliable because the X Window System does not
+    specify a way to obtain the geometry of the decorations placed on a window by the
+    window manager. Thus GTK+ is using a "best guess" that works with most window managers.
+
+    Moreover, nearly all window managers are historically broken with respect to their
+    handling of window gravity. So moving a window to its current position as returned by
+    gtk_window_get_position() tends to result in moving the window slightly. Window managers
+    are slowly getting better over time.
+
+    If a window has gravity GDK_GRAVITY_STATIC the window manager frame is not relevant,
+    and thus gtk_window_get_position() will always produce accurate results. However you
+    can't use static gravity to do things like place a window in a corner of the screen,
+    because static gravity ignores the window manager decorations.
+
+    If you are saving and restoring your application's window positions, you should know
+    that it's impossible for applications to do this without getting it somewhat wrong
+    because applications do not have sufficient knowledge of window manager state.
+    The Correct Mechanism is to support the session management protocol (see the
+    "GnomeClient" object in the GNOME libraries for example) and allow the window
+    manager to save your window sizes and positions.
+
+ */
+FALCON_FUNC Window::get_position( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint x, y;
+    gtk_window_get_position( (GtkWindow*)_obj, &x, &y );
+    CoreArray* arr = new CoreArray;
+    arr->append( x );
+    arr->append( y );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method get_role gtk.Window
+    @brief Returns the role of the window.
+    @return (string) the role of the window if set, or nil.
+
+    See set_role() for further explanation.
+ */
+FALCON_FUNC Window::get_role( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* role = gtk_window_get_role( (GtkWindow*)_obj );
+    if ( role )
+        vm->retval( new String( role ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method get_size gtk.Window
+    @brief Obtains the current size of window.
+    @brief [ width, height ]
+
+    If window is not onscreen, it returns the size GTK+ will suggest to the window
+    manager for the initial window size (but this is not reliably the same as the size
+    the window manager will actually select). The size obtained by gtk_window_get_size()
+    is the last size received in a GdkEventConfigure, that is, GTK+ uses its locally-stored
+    size, rather than querying the X server for the size. As a result, if you call
+    gtk_window_resize() then immediately call gtk_window_get_size(), the size won't have
+    taken effect yet. After the window manager processes the resize request, GTK+ receives
+    notification that the size has changed via a configure event, and the size of the
+    window gets updated.
+
+    Note 1: Nearly any use of this function creates a race condition, because the
+    size of the window may change between the time that you get the size and the
+    time that you perform some action assuming that size is the current size.
+    To avoid race conditions, connect to "configure-event" on the window and adjust
+    your size-dependent state to match the size delivered in the GdkEventConfigure.
+
+    Note 2: The returned size does not include the size of the window manager
+    decorations (aka the window frame or border). Those are not drawn by GTK+ and
+    GTK+ has no reliable method of determining their size.
+
+    Note 3: If you are getting a window size in order to position the window onscreen,
+    there may be a better way. The preferred way is to simply set the window's semantic
+    type with gtk_window_set_type_hint(), which allows the window manager to e.g.
+    center dialogs. Also, if you set the transient parent of dialogs with
+    gtk_window_set_transient_for() window managers will often center the dialog over
+    its parent window. It's much preferred to let the window manager handle these things
+    rather than doing it yourself, because all apps will behave consistently and according
+    to user prefs if the window manager handles it. Also, the window manager can take the
+    size of the window decorations/border into account, while your application cannot.
+
+    In any case, if you insist on application-specified window positioning, there's
+    still a better way than doing it yourself - gtk_window_set_position() will
+    frequently handle the details for you.
+ */
+FALCON_FUNC Window::get_size( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint w, h;
+    gtk_window_get_size( (GtkWindow*)_obj, &w, &h );
+    CoreArray* arr = new CoreArray;
+    arr->append( w );
+    arr->append( h );
+    vm->retval( arr );
+}
 
 
 /*#
     @method get_title gtk.Window
-    @brief Get window title
+    @brief Retrieves the title of the window.
+    @return the title of the window, or nil if none has been set explicitely.
  */
 FALCON_FUNC Window::get_title( VMARG )
 {
@@ -1286,35 +1839,295 @@ FALCON_FUNC Window::get_title( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* t = gtk_window_get_title( ((GtkWindow*)_obj) );
-    vm->retval( t ? new String( t ) : new String() );
+    if ( t )
+        vm->retval( new String( t ) );
+    else
+        vm->retnil();
 }
 
 
-//FALCON_FUNC Window::get_transient_for( VMARG );
+/*#
+    @method get_transient_for gtk.Window
+    @brief Fetches the transient parent for this window.
+    @return (gtk.Window)
+ */
+FALCON_FUNC Window::get_transient_for( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWindow* win = gtk_window_get_transient_for( (GtkWindow*)_obj );
+    if ( win )
+    {
+        Item* wki = vm->findWKI( "Window" );
+        vm->retval( new Gtk::Window( wki->asClass(), win ) );
+    }
+    else
+        vm->retnil();
+}
 
-//FALCON_FUNC Window::get_type_hint( VMARG );
 
-//FALCON_FUNC Window::get_skip_taskbar_hint( VMARG );
+/*#
+    @method get_type_hint gtk.Window
+    @brief Gets the type hint for this window.
+    @return the type hint for window. (integer, GdkWindowTypeHint)
+ */
+FALCON_FUNC Window::get_type_hint( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_window_get_type_hint( (GtkWindow*)_obj ) );
+}
 
-//FALCON_FUNC Window::get_skip_pager_hint( VMARG );
 
-//FALCON_FUNC Window::get_urgency_hint( VMARG );
+/*#
+    @method get_skip_taskbar_hint
+    @brief Gets the value set by set_skip_taskbar_hint()
+    @return true if window shouldn't be in taskbar (boolean)
+ */
+FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_skip_taskbar_hint( (GtkWindow*)_obj ) );
+}
 
-//FALCON_FUNC Window::get_accept_focus( VMARG );
 
-//FALCON_FUNC Window::get_focus_on_map( VMARG );
+/*#
+    @method get_skip_pager_hint gtk.Window
+    @brief Gets the value set by set_skip_pager_hint().
+    @return true if window shouldn't be in pager (boolean)
+ */
+FALCON_FUNC Window::get_skip_pager_hint( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_skip_pager_hint( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_urgency_hint gtk.Window
+    @brief Gets the value set by set_urgency_hint()
+    @return true if window is urgent (boolean)
+ */
+FALCON_FUNC Window::get_urgency_hint( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_urgency_hint( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_accept_focus gtk.Window
+    @brief Gets the value set by set_accept_focus().
+    @return true if window should receive the input focus (boolean)
+ */
+FALCON_FUNC Window::get_accept_focus( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_accept_focus( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method get_focus_on_map gtk.Window
+    @brief Gets the value set by gtk_window_set_focus_on_map().
+    @return true if window should receive the input focus when mapped. (boolean)
+ */
+FALCON_FUNC Window::get_focus_on_map( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_get_focus_on_map( (GtkWindow*)_obj ) );
+}
+
 
 //FALCON_FUNC Window::get_group( VMARG );
 
-//FALCON_FUNC Window::get_window_type( VMARG );
 
-//FALCON_FUNC Window::move( VMARG );
+#if GTK_MINOR_VERSION >= 20
+/*#
+    @method get_window_type gtk.Window
+    @brief Gets the type of the window.
+    @return the type of the window (GtkWindowType)
+ */
+FALCON_FUNC Window::get_window_type( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_window_get_window_type( (GtkWindow*)_obj ) );
+}
+#endif
 
-//FALCON_FUNC Window::parse_geometry( VMARG );
 
-//FALCON_FUNC Window::reshow_with_initial_size( VMARG );
+/*#
+    @method move gtk.Window
+    @brief Asks the window manager to move window to the given position.
+    @param x X coordinate to move window to
+    @param y Y coordinate to move window to
 
-//FALCON_FUNC Window::resize( VMARG );
+    Asks the window manager to move window to the given position. Window managers
+    are free to ignore this; most window managers ignore requests for initial window
+    positions (instead using a user-defined placement algorithm) and honor requests
+    after the window has already been shown.
+
+    Note: the position is the position of the gravity-determined reference point
+    for the window. The gravity determines two things: first, the location of the
+    reference point in root window coordinates; and second, which point on the window
+    is positioned at the reference point.
+
+    By default the gravity is GDK_GRAVITY_NORTH_WEST, so the reference point is
+    simply the x, y supplied to gtk_window_move(). The top-left corner of the window
+    decorations (aka window frame or border) will be placed at x, y. Therefore, to
+    position a window at the top left of the screen, you want to use the default
+    gravity (which is GDK_GRAVITY_NORTH_WEST) and move the window to 0,0.
+
+    To position a window at the bottom right corner of the screen, you would set
+    GDK_GRAVITY_SOUTH_EAST, which means that the reference point is at x + the window
+    width and y + the window height, and the bottom-right corner of the window border
+    will be placed at that reference point. So, to place a window in the bottom right
+    corner you would first set gravity to south east, then write: gtk_window_move
+    (window, gdk_screen_width() - window_width, gdk_screen_height() - window_height)
+    (note that this example does not take multi-head scenarios into account).
+
+    The Extended Window Manager Hints specification at
+    http://www.freedesktop.org/Standards/wm-spec has a nice table of gravities in
+    the "implementation notes" section.
+
+    The gtk_window_get_position() documentation may also be relevant.
+ */
+FALCON_FUNC Window::move( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || i_x->isNil() || !i_x->isInteger()
+        || !i_y || i_y->isNil() || !i_y->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_move( (GtkWindow*)_obj, i_x->asInteger(), i_y->asInteger() );
+}
+
+
+/*#
+    @method parse_geometry gtk.Window
+    @brief Parses a standard X Window System geometry string
+    @param geometry geometry string
+    @return true if string was parsed successfully (boolean)
+
+    Parses a standard X Window System geometry string - see the manual page for X
+    (type 'man X') for details on this. gtk_window_parse_geometry() does work on all
+    GTK+ ports including Win32 but is primarily intended for an X environment.
+
+    If either a size or a position can be extracted from the geometry string,
+    gtk_window_parse_geometry() returns TRUE and calls gtk_window_set_default_size()
+    and/or gtk_window_move() to resize/move the window.
+
+    If gtk_window_parse_geometry() returns TRUE, it will also set the GDK_HINT_USER_POS
+    and/or GDK_HINT_USER_SIZE hints indicating to the window manager that the size/position
+    of the window was user-specified. This causes most window managers to honor the geometry.
+
+    Note that for gtk_window_parse_geometry() to work as expected, it has to be called
+    when the window has its "final" size, i.e. after calling gtk_widget_show_all() on
+    the contents and gtk_window_set_geometry_hints() on the window.
+ */
+FALCON_FUNC Window::parse_geometry( VMARG )
+{
+    Item* i_geom = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_geom || i_geom->isNil() || !i_geom->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString s( i_geom->asString() );
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_window_parse_geometry( (GtkWindow*)_obj, s.c_str() ) );
+}
+
+
+/*#
+    @method reshow_initial_size gtk.Window
+    @breif Hides window, then reshows it, resetting the default size and position of the window.
+
+    Used by GUI builders only.
+ */
+FALCON_FUNC Window::reshow_with_initial_size( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_reshow_with_initial_size( (GtkWindow*)_obj );
+}
+
+
+/*#
+    @method resize gtk.Window
+    @brief Resizes the window as if the user had done so, obeying geometry constraints.
+    @param width width in pixels to resize the window to
+    @param height height in pixels to resize the window to
+
+    The default geometry constraint is that windows may not be smaller than their
+    size request; to override this constraint, call gtk_widget_set_size_request()
+    to set the window's request to a smaller value.
+
+    If gtk_window_resize() is called before showing a window for the first time,
+    it overrides any default size set with gtk_window_set_default_size().
+
+    Windows may not be resized smaller than 1 by 1 pixels.
+ */
+FALCON_FUNC Window::resize( VMARG )
+{
+    Item* i_w = vm->param( 0 );
+    Item* i_h = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_w || i_w->isNil() || !i_w->isInteger()
+        || !i_h || i_h->isNil() || !i_h->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_resize( (GtkWindow*)_obj, i_w->asInteger(), i_h->asInteger() );
+}
+
 
 //FALCON_FUNC Window::set_default_icon_list( VMARG );
 
@@ -1322,7 +2135,26 @@ FALCON_FUNC Window::get_title( VMARG )
 
 //FALCON_FUNC Window::set_default_icon_from_file( VMARG );
 
-//FALCON_FUNC Window::set_default_icon_name( VMARG );
+
+/*#
+    @method set_default_icon_name gtk.Window
+    @brief Sets an icon to be used as fallback.
+    @param name the name of the themed icon
+
+    Sets an icon to be used as fallback for windows that haven't had set_icon_list()
+    called on them from a named themed icon, see set_icon_name().
+ */
+FALCON_FUNC Window::set_default_icon_name( VMARG )
+{
+    Item* i_name = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_name || i_name->isNil() || !i_name->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString s( i_name->asString() );
+    gtk_window_set_default_icon_name( s.c_str() );
+}
+
 
 //FALCON_FUNC Window::set_icon( VMARG );
 
@@ -1330,13 +2162,107 @@ FALCON_FUNC Window::get_title( VMARG )
 
 //FALCON_FUNC Window::set_icon_from_file( VMARG );
 
-//FALCON_FUNC Window::set_icon_name( VMARG );
 
-//FALCON_FUNC Window::set_auto_startup_notification( VMARG );
+/*#
+    @method set_icon_name gtk.Window
+    @brief Sets the icon for the window from a named themed icon.
+    @param the name of the themed icon (or nil)
 
-//FALCON_FUNC Window::get_opacity( VMARG );
+    See the docs for GtkIconTheme for more details.
 
-//FALCON_FUNC Window::set_opacity( VMARG );
+    Note that this has nothing to do with the WM_ICON_NAME property which is
+    mentioned in the ICCCM.
+ */
+FALCON_FUNC Window::set_icon_name( VMARG )
+{
+    Item* i_name = vm->param( 0 );
+    // this method accepts nil
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_name || !( i_name->isNil() || i_name->isString() ) )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    if ( i_name->isString() )
+    {
+        AutoCString s( i_name->asString() );
+        gtk_window_set_icon_name( (GtkWindow*)_obj, s.c_str() );
+    }
+    else
+        gtk_window_set_icon_name( (GtkWindow*)_obj, NULL );
+}
+
+
+/*#
+    @method set_auto_startup_notification gtk.Window
+    @brief Sets the window startup notification.
+    @param setting true to automatically do startup notification (boolean)
+
+    By default, after showing the first GtkWindow, GTK+ calls gdk_notify_startup_complete().
+    Call this function to disable the automatic startup notification. You might do
+    this if your first window is a splash screen, and you want to delay notification
+    until after your real main window has been shown, for example.
+
+    In that example, you would disable startup notification temporarily, show your
+    splash screen, then re-enable it so that showing the main window would automatically
+    result in notification.
+ */
+FALCON_FUNC Window::set_auto_startup_notification( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    gtk_window_set_auto_startup_notification( i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method get_opacity gtk.Window
+    @brief Fetches the requested opacity for this window.
+    @return the requested opacity for this window. (float)
+
+    See set_opacity().
+ */
+FALCON_FUNC Window::get_opacity( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( gtk_window_get_opacity( (GtkWindow*)_obj ) );
+}
+
+
+/*#
+    @method set_opacity gtk.Window
+    @brief Sets the window opacity.
+    @param opacity desired opacity, between 0 and 1 (float)
+
+    Request the windowing system to make window partially transparent, with opacity
+    0 being fully transparent and 1 fully opaque. (Values of the opacity parameter
+    are clamped to the [0,1] range.) On X11 this has any effect only on X screens
+    with a compositing manager running. See gtk_widget_is_composited(). On Windows
+    it should work always.
+
+    Note that setting a window's opacity after the window has been shown causes it
+    to flicker once on Windows.
+ */
+FALCON_FUNC Window::set_opacity( VMARG )
+{
+    Item* i_opac = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_opac || i_opac->isNil() || !i_opac->isNumeric() )
+        throw_inv_params( "N" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_opacity( (GtkWindow*)_obj, i_opac->asNumeric() );
+}
+
 
 //FALCON_FUNC Window::get_mnemonics_visible( VMARG );
 
