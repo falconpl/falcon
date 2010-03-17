@@ -34,6 +34,22 @@ void EntryBuffer::modInit( Falcon::Module* mod )
 #endif
 }
 
+
+EntryBuffer::EntryBuffer( const Falcon::CoreClass* gen, const GtkEntryBuffer* buf )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( buf )
+        setUserData( new GData( (GObject*) buf ) );
+}
+
+
+Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* buf, bool )
+{
+    return new EntryBuffer( gen, (GtkEntryBuffer*) buf );
+}
+
+
 /*#
     @class gtk.EntryBuffer
     @brief Text buffer for GtkEntry
