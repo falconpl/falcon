@@ -8,7 +8,7 @@ cmake_minimum_required( VERSION 2.8 )
 ##
 #   Find Falcon
 #
-find_package( falcon
+find_package( Falcon
     HINTS "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
           "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
           "$ENV{FALCON_BIN_PATH}/cmake"
@@ -25,5 +25,4 @@ include_directories( ${GTK2_INCLUDE_DIRS} )
 ##
 #   Subdirs
 #
-include( "falmod.cmake" )
 add_subdirectory( src )
