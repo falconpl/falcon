@@ -7,7 +7,7 @@ falcon_define_module( CURRENT_MODULE gtk )
 ##
 #   Sources
 #
-set( SRC_FILES 
+set( SRC_FILES
   g_Object.cpp
   gtk_Arrow.cpp
   gtk_Bin.cpp
@@ -71,9 +71,9 @@ set( HDR_FILES
 ##
 #   Target
 #
-add_library( ${CURRENT_MODULE} MODULE 
-  ${SRC_FILES} 
-  ${HDR_FILES} 
+add_library( ${CURRENT_MODULE} MODULE
+  ${SRC_FILES}
+  ${HDR_FILES}
 )
 
 ##
@@ -82,6 +82,7 @@ add_library( ${CURRENT_MODULE} MODULE
 target_link_libraries( ${CURRENT_MODULE}
     falcon_engine
     ${GTK2_LIBRARIES}
+    gobject-2.0
     )
 
 ##
