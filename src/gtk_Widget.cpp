@@ -139,32 +139,10 @@ void Widget::modInit( Falcon::Module* mod )
 
 Widget::Widget( const Falcon::CoreClass* gen, const GtkWidget* wdt )
     :
-    Falcon::CoreObject( gen )
+    Gtk::CoreGObject( gen )
 {
     if ( wdt )
         setUserData( new GData( (GObject*) wdt ) );
-}
-
-
-bool Widget::getProperty( const Falcon::String& s, Falcon::Item& it ) const
-{
-    GObject* obj = ((GData*)getUserData())->obj();
-    AutoCString cstr( s );
-    Item* itm = (Item*) g_object_get_data( obj, cstr.c_str() );
-    if ( itm )
-        it = *itm;
-    else
-        return defaultProperty( s, it );
-    return true;
-}
-
-
-bool Widget::setProperty( const Falcon::String& s, const Falcon::Item& it )
-{
-    GObject* obj = ((GData*)getUserData())->obj();
-    AutoCString cstr( s );
-    g_object_set_data_full( obj, cstr.c_str(), new Item( it ), &Gtk::delProperty );
-    return true;
 }
 
 

@@ -145,11 +145,31 @@ Falcon::CoreSlot* get_signal( GObject* obj, Falcon::CoreSlot* sig,
 
 
 /**
- *  \brief destroy a property Item
- *  Function of type GDestroyNotify
+ *  \class Falcon::Gtk::CoreGObject
+ *  \brief base class for g-items derived from Falcon::CoreObject
  */
-void delProperty( gpointer );
+class CoreGObject
+    :
+    public Falcon::CoreObject
+{
+public:
 
+    CoreGObject( const Falcon::CoreClass* cls )
+        :
+        Falcon::CoreObject( cls )
+    {}
+
+    ~CoreGObject() {}
+
+    Falcon::CoreObject* clone() const { return 0; }
+
+    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
+
+    bool setProperty( const Falcon::String&, const Falcon::Item& );
+
+    static void delProperty( gpointer );
+
+};
 
 
 /**

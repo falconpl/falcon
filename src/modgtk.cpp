@@ -177,7 +177,29 @@ Falcon::CoreSlot* get_signal( GObject* obj, Falcon::CoreSlot* sl,
 }
 
 
-void delProperty( gpointer it )
+bool CoreGObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    GObject* obj = ((GData*)getUserData())->obj();
+    AutoCString cstr( s );
+    Item* itm = (Item*) g_object_get_data( obj, cstr.c_str() );
+    if ( itm )
+        it = *itm;
+    else
+        return defaultProperty( s, it );
+    return true;
+}
+
+
+bool CoreGObject::setProperty( const Falcon::String& s, const Falcon::Item& it )
+{
+    GObject* obj = ((GData*)getUserData())->obj();
+    AutoCString cstr( s );
+    g_object_set_data_full( obj, cstr.c_str(), new Item( it ), &CoreGObject::delProperty );
+    return true;
+}
+
+
+void CoreGObject::delProperty( gpointer it )
 {
     delete (Item*) it;
 }

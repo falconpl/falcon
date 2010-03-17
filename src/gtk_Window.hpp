@@ -14,19 +14,11 @@ namespace Gtk {
  */
 class Window
     :
-    public Falcon::CoreObject
+    public Gtk::CoreGObject
 {
 public:
 
     Window( const Falcon::CoreClass*, const GtkWindow* = 0 );
-
-    ~Window() {}
-
-    Falcon::CoreObject* clone() const { return 0; }
-
-    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
-
-    bool setProperty( const Falcon::String&, const Falcon::Item& );
 
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
