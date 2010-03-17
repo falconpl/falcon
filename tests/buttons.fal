@@ -1,0 +1,44 @@
+import from gtk
+
+m = gtk.Main()
+w = gtk.Window()
+
+class MyButton( row, col ) from gtk.Button
+    _row = 0
+    _col = 0
+    init
+        self._row = row
+        self._col = col
+        self.set_label( @ "$row-$col" )
+        self.signal_clicked().subscribe( self )
+    end
+    function on_clicked()
+        > "Clicked ", self._row, " ", self._col
+    end
+end
+
+class MyTable( numrows, numcols ) from gtk.Table
+    init
+        self.resize( numrows, numcols )
+        i = 0
+        while i < numrows
+            y = 0
+            while y < numcols
+                b = MyButton( i, y )
+                b.signal_clicked().subscribe( self )
+                self.attach_defaults( b, y, y+1, i, i+1 )
+                y += 1
+            end
+            i += 1
+        end
+    end
+    function on_clicked()
+        m.quit()
+    end
+end
+
+tab = MyTable( 5, 5 )
+
+w.add( tab )
+m.run( w )
+

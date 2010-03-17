@@ -76,14 +76,29 @@ void Table::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC Table::init( VMARG )
 {
+    MYSELF;
+
+    if ( self->getUserData() )
+        return;
+
     Item* i_rows = vm->param( 0 );
     Item* i_cols = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_rows || i_rows->isNil() || !i_rows->isInteger()
-        || !i_cols || i_cols->isNil() || !i_cols->isInteger() )
-        throw_inv_params( "I,I[,B]" );
+    if ( i_rows )
+    {
+        if ( i_rows->isNil() || !i_rows->isInteger() )
+            throw_inv_params( "[I,I,B]" );
+    }
+    if ( i_cols )
+    {
+        if ( i_cols->isNil() || !i_cols->isInteger() )
+            throw_inv_params( "[I,I,B]" );
+    }
 #endif
+    int rows = i_rows ? i_rows->asInteger() : 0;
+    int cols = i_cols ? i_cols->asInteger() : 0;
     GtkWidget* wdt;
+
     Item* i_homog = vm->param( 2 );
     if ( i_homog )
     {
@@ -91,13 +106,11 @@ FALCON_FUNC Table::init( VMARG )
         if ( i_homog->isNil() || !i_homog->isBoolean() )
             throw_inv_params( "I,I[,B]" );
 #endif
-        wdt = gtk_table_new( i_rows->asInteger(), i_cols->asInteger(),
-            i_homog->asBoolean() ? TRUE : FALSE );
+        wdt = gtk_table_new( rows, cols, i_homog->asBoolean() ? TRUE : FALSE );
     }
     else
-        wdt = gtk_table_new( i_rows->asInteger(), i_cols->asInteger(), FALSE );
+        wdt = gtk_table_new( rows, cols, FALSE );
 
-    MYSELF;
     Gtk::internal_add_slot( (GObject*) wdt );
     self->setUserData( new GData( (GObject*) wdt ) );
 }
