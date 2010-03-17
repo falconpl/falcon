@@ -19,16 +19,15 @@ void RadioButton::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "CheckButton" ) );
     c_RadioButton->getClassDef()->addInheritance( in );
-#if 0
+
     Gtk::MethodTab methods[] =
     {
-
+    { "signal_group_changed",       &RadioButton::signal_group_changed },
     { NULL, NULL }
     };
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_RadioButton, meth->name, meth->cb );
-#endif
 }
 
 
@@ -114,6 +113,29 @@ FALCON_FUNC RadioButton::init( VMARG )
     Gtk::internal_add_slot( (GObject*) btn );
     self->setUserData( new GData( (GObject*) btn ) );
 }
+
+
+/*#
+    @method signal_group_changed gtk.RadioButton
+    @brief Connect a VMSlot to the button group-changed signal and return it
+ */
+FALCON_FUNC RadioButton::signal_group_changed( VMARG )
+{
+    Gtk::internal_get_slot( "group_changed", (void*) &RadioButton::on_group_changed, vm );
+}
+
+
+void RadioButton::on_group_changed( GtkRadioButton* btn, gpointer _vm )
+{
+    Gtk::internal_trigger_slot( (GObject*) btn, "group_changed",
+        "on_group_changed", (VMachine*)_vm );
+}
+
+
+//FALCON_FUNC get_group( VMARG );
+
+//FALCON_FUNC set_group( VMARG );
+
 
 
 } // Gtk
