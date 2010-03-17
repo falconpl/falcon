@@ -21,6 +21,7 @@
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
+#include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Table.hpp"
 #include "gtk_ToggleButton.hpp"
@@ -69,6 +70,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
+                                Falcon::Gtk::RadioButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
