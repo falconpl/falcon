@@ -30,9 +30,9 @@ public:
 
     static void on_group_changed( GtkRadioButton*, gpointer );
 
-    //static FALCON_FUNC get_group( VMARG );
+    static FALCON_FUNC get_group( VMARG );
 
-    //static FALCON_FUNC set_group( VMARG );
+    static FALCON_FUNC set_group( VMARG );
 
 };
 
