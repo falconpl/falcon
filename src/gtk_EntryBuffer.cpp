@@ -26,6 +26,16 @@ void EntryBuffer::modInit( Falcon::Module* mod )
 #if 0
     Gtk::MethodTab methods[] =
     {
+    //{ "get_text",         &EntryBuffer::get_text },
+    //{ "set_text",         &EntryBuffer::get_text },
+    //{ "get_bytes",         &EntryBuffer::get_text },
+    //{ "get_length",         &EntryBuffer::get_text },
+    //{ "get_max_length",         &EntryBuffer::get_text },
+    //{ "set_max_length",         &EntryBuffer::get_text },
+    //{ "insert_text",         &EntryBuffer::get_text },
+    //{ "delete_text",         &EntryBuffer::get_text },
+    //{ "emit_deleted_text",         &EntryBuffer::get_text },
+    //{ "emit_inserted_text",         &EntryBuffer::get_text },
     { NULL, NULL }
     };
 
@@ -91,6 +101,27 @@ FALCON_FUNC EntryBuffer::init( VMARG )
     Gtk::internal_add_slot( (GObject*) buf );
     self->setUserData( new GData( (GObject*) buf ) );
 }
+
+
+//FALCON_FUNC EntryBuffer::get_text( VMARG );
+
+//FALCON_FUNC EntryBuffer::set_text( VMARG );
+
+//FALCON_FUNC EntryBuffer::get_bytes( VMARG );
+
+//FALCON_FUNC EntryBuffer::get_length( VMARG );
+
+//FALCON_FUNC EntryBuffer::get_max_length( VMARG );
+
+//FALCON_FUNC EntryBuffer::set_max_length( VMARG );
+
+//FALCON_FUNC EntryBuffer::insert_text( VMARG );
+
+//FALCON_FUNC EntryBuffer::delete_text( VMARG );
+
+//FALCON_FUNC EntryBuffer::emit_deleted_text( VMARG );
+
+//FALCON_FUNC EntryBuffer::emit_inserted_text( VMARG );
 
 
 } // Gtk
