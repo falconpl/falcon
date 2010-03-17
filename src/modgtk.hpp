@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "modgtk_st.hpp"
 #include "modgtk_version.hpp"
