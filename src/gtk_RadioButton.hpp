@@ -10,24 +10,33 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::RadioButton
+ *  \class Falcon::Gtk::RadioButton
  */
-namespace RadioButton {
+class RadioButton
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    RadioButton( const Falcon::CoreClass*, const GtkRadioButton* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC signal_group_changed( VMARG );
+    static void modInit( Falcon::Module* );
 
-void on_group_changed( GtkRadioButton*, gpointer );
+    static FALCON_FUNC init( VMARG );
 
-//FALCON_FUNC get_group( VMARG );
+    static FALCON_FUNC signal_group_changed( VMARG );
 
-//FALCON_FUNC set_group( VMARG );
+    static void on_group_changed( GtkRadioButton*, gpointer );
+
+    //static FALCON_FUNC get_group( VMARG );
+
+    //static FALCON_FUNC set_group( VMARG );
+
+};
 
 
-} // RadioButton
 } // Gtk
 } // Falcon
 

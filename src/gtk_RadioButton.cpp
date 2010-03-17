@@ -20,6 +20,9 @@ void RadioButton::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "CheckButton" ) );
     c_RadioButton->getClassDef()->addInheritance( in );
 
+    c_RadioButton->setWKS( true );
+    c_RadioButton->getClassDef()->factory( &RadioButton::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_group_changed",       &RadioButton::signal_group_changed },
@@ -28,6 +31,21 @@ void RadioButton::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_RadioButton, meth->name, meth->cb );
+}
+
+
+RadioButton::RadioButton( const Falcon::CoreClass* gen, const GtkRadioButton* btn )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( btn )
+        setUserData( new GData( (GObject*) btn ) );
+}
+
+
+Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* btn, bool )
+{
+    return new RadioButton( gen, (GtkRadioButton*) btn );
 }
 
 
