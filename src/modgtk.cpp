@@ -13,6 +13,7 @@
 #include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
+#include "gtk_CheckButton.hpp"
 #include "gtk_Container.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
@@ -67,6 +68,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Bin::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
+                            Falcon::Gtk::CheckButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
