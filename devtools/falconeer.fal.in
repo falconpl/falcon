@@ -194,7 +194,6 @@ function parse_file( fileName, destName )
       // read the line
       loop
          fin.readLine( line, 512 )
-         if fin.eof(): break
 
          // scan and substitute the variables
          for key, value in variables
@@ -207,6 +206,8 @@ function parse_file( fileName, destName )
          end
          // now we can write the line
          fout.write( line + "\n" )
+
+         if fin.eof(): break
       end
 
       fin.close()
