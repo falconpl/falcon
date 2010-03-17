@@ -15,6 +15,7 @@
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CheckButton.hpp"
 #include "gtk_Container.hpp"
+#include "gtk_EntryBuffer.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
 #include "gtk_Label.hpp"
@@ -62,7 +63,9 @@ FALCON_MODULE_DECL
 
     Falcon::Gtk::Requisition::modInit( self );
 
-
+#if GTK_VERSION_MINOR >= 18
+    Falcon::Gtk::EntryBuffer::modInit( self );
+#endif
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Widget::modInit( self );
             Falcon::Gtk::Container::modInit( self );
