@@ -70,7 +70,7 @@ FALCON_FUNC ToggleButton::init( VMARG )
     if ( i_lbl )
     {
 #ifndef NO_PARAMETER_CHECK
-        if ( i_lbl->isNil() || i_lbl->isString() )
+        if ( i_lbl->isNil() || !i_lbl->isString() )
             throw_inv_params( "[S,B]" );
 #endif
         AutoCString lbl( i_lbl->asString() );
