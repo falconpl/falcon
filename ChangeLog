@@ -3,6 +3,9 @@ Falcon (0.9.6.5)
            if it was possible to do that.
   * fixed: When importing from namespaces, inheritance (derivedFrom) from 
            classes coming from namespaces wasn't correctly detected.
+  * fixed: In interactive mode (and whenever using the interactive compiler)
+           modules with symbols already known in the VM couldn't be loaded
+           even if stored in their own namespace.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

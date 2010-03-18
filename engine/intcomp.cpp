@@ -344,7 +344,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 void InteractiveCompiler::addNamespace( const String &nspace, const String &alias,
    bool full, bool filename )
 {
-   loadNow( nspace, filename );
+   loadNow( nspace, filename, true );
 
    // create also the standard namespace.
    if ( m_errors == 0 )
@@ -355,7 +355,7 @@ void InteractiveCompiler::addNamespace( const String &nspace, const String &alia
 
 void InteractiveCompiler::addLoad( const String &name, bool isFilename )
 {
-   loadNow( name, isFilename );
+   loadNow( name, isFilename, false );
 
    if ( m_errors == 0 )
    {
@@ -363,7 +363,7 @@ void InteractiveCompiler::addLoad( const String &name, bool isFilename )
    }
 }
 
-void InteractiveCompiler::loadNow( const String &name, bool isFilename )
+void InteractiveCompiler::loadNow( const String &name, bool isFilename, bool bPrivate )
 {
    Module *mod;
    if ( isFilename )
@@ -383,7 +383,7 @@ void InteractiveCompiler::loadNow( const String &name, bool isFilename )
    rt.hasMainModule( false );
    try
    {
-      rt.addModule( mod );
+      rt.addModule( mod, bPrivate );
       m_vm->link( &rt );
    }
    catch( Error* )

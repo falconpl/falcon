@@ -48,7 +48,8 @@ class FALCON_DYN_CLASS InteractiveCompiler: public Compiler
    ModuleLoader *m_loader;
    bool m_interactive;
 
-   void loadNow( const String &name, bool isFilename );
+   void loadNow( const String &name, bool isFilename, bool bPrivate );
+
 public:
 
    /** Create the interactive compiler.
