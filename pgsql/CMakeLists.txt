@@ -7,7 +7,7 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-FALCON_DEFINE_MODULE( pgsql )
+FALCON_DEFINE_MODULE( FALCON_MODULE pgsql )
 
 # Find PgSQL
 SET(PGSQL_INCLUDE_SEARCH_PATH

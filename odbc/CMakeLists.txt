@@ -7,7 +7,7 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-FALCON_DEFINE_MODULE( odbc )
+FALCON_DEFINE_MODULE( FALCON_MODULE odbc )
 
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)

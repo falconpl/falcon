@@ -8,7 +8,7 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-falcon_define_module( mysql )
+falcon_define_module( FALCON_MODULE mysql )
 
 # Find MYSQL
 SET(MYSQL_INCLUDE_SEARCH_PATH

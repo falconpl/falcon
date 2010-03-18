@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.6.2)
 PROJECT(Falcon_DBI)
 
 # The required package
-find_package(falcon
+find_package(Falcon
    HINTS "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
          "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
          "$ENV{FALCON_BIN_PATH}/cmake"

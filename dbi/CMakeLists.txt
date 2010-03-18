@@ -10,7 +10,7 @@ endif(COMMAND cmake_policy)
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 
-falcon_define_module( dbi )
+falcon_define_module( FALCON_MODULE dbi )
 Message( "Adding ${FALCON_MODULE}" )
 
 # Target

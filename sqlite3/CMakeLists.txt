@@ -7,7 +7,7 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-FALCON_DEFINE_MODULE( sqlite3 )
+FALCON_DEFINE_MODULE( FALCON_MODULE sqlite3 )
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
