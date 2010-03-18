@@ -17,6 +17,7 @@ set( SRC_FILES
   gtk_CheckButton.cpp
   gtk_Container.cpp
   gtk_enums.cpp
+  gtk_Entry.cpp
   gtk_EntryBuffer.cpp
   gtk_HBox.cpp
   gtk_HButtonBox.cpp
@@ -50,6 +51,7 @@ set( HDR_FILES
   gtk_CheckButton.hpp
   gtk_Container.hpp
   gtk_enums.hpp
+  gtk_Entry.hpp
   gtk_EntryBuffer.hpp
   gtk_HBox.hpp
   gtk_HButtonBox.hpp
