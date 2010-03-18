@@ -50,6 +50,26 @@ bool CoreClass::derivedFrom( const String &className ) const
    return false;
 }
 
+bool CoreClass::derivedFrom( const Symbol *sym ) const
+{
+   // is this class?
+   if ( m_sym == sym )
+      return true;
+
+   // else, try with the properties/inheritance
+   for( uint32 i = 0; i < properties().added(); ++i )
+   {
+      const Item& p = *properties().getValue(i)->dereference();
+      if( p.isClass() && p.asClass()->derivedFrom( sym ) )
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
 
 CoreClass::~CoreClass()
 {

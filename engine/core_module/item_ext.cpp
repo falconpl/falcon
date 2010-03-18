@@ -1168,24 +1168,39 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
          .origin( e_orig_runtime ).extra( "S|C" ) );
    }
 
-   const String *name;
    if ( i_clsName->isString() )
-      name = i_clsName->asString();
-   else
-      name = &i_clsName->asClass()->symbol()->name();
-
-   switch( self->type() )
    {
-      case FLC_ITEM_OBJECT:
-         vm->regA().setBoolean( (bool)self->asObjectSafe()->derivedFrom( *name ) );
-         break;
+      const String *name = i_clsName->asString();
+   
+      switch( self->type() )
+      {
+         case FLC_ITEM_OBJECT:
+            vm->regA().setBoolean( (bool)self->asObjectSafe()-> derivedFrom( *name ) );
+            break;
 
-      case FLC_ITEM_CLASS:
-         vm->regA().setBoolean( (bool)self->asClass()->derivedFrom( *name ) );
-         break;
+         case FLC_ITEM_CLASS:
+            vm->regA().setBoolean( (bool)self->asClass()->derivedFrom( *name ) );
+            break;
 
-      default:
-         vm->regA().setBoolean( false );
+         default:
+            vm->regA().setBoolean( false );
+      }
+   }
+   else
+   {
+      switch( self->type() )
+      {
+         case FLC_ITEM_OBJECT:
+            vm->regA().setBoolean( (bool)self->asObjectSafe()->generator()->derivedFrom( i_clsName->asClass()->symbol() ) );
+            break;
+
+         case FLC_ITEM_CLASS:
+            vm->regA().setBoolean( (bool)self->asClass()->derivedFrom( i_clsName->asClass()->symbol() ) );
+            break;
+
+         default:
+            vm->regA().setBoolean( false );
+      }
    }
 }
 

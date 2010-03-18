@@ -118,6 +118,20 @@ public:
    */
    bool derivedFrom( const String &className ) const;
 
+
+   /** Returns true if the class is derived from a given symbol.
+      This method checks if this class is compatible with the given symbol,
+      or in other words, if the given symbol is present somewhere in the class
+      hierarcy.
+
+      True is returned also if this class is exactly created from the given
+      symbol.
+
+      \param sym The symbol that has to be checked for parentship.
+      \return true if the class is derived from a class having the given name
+   */
+   bool derivedFrom( const Symbol* sym ) const;
+
    /** Marks the class and its inner data.
       This marks the class, the livemodule it is bound to, the property table data
       and the ancestors.
