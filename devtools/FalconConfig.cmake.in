@@ -20,11 +20,8 @@ set( falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 
 # Prepare Falcon in build environment.
 
-# Under windows, position is fixed at $INSTALLDIR\bin\cmake
-# OTOH, we don't know where the user will want to install us.
-
 if( WIN32 )
-   set(falcon_PREFIX "${SELF_DIR}/../..")
+   set(falcon_PREFIX "${SELF_DIR}/../../..")
    #Will be bin and lib
    set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
    set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
