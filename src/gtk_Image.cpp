@@ -19,7 +19,7 @@ void Image::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Misc" ) );
     c_Image->getClassDef()->addInheritance( in );
-
+#if 0
     Gtk::MethodTab methods[] =
     {
     { NULL, NULL }
@@ -27,7 +27,7 @@ void Image::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Image, meth->name, meth->cb );
-
+#endif
 }
 
 /*#

@@ -6,6 +6,8 @@
 
 #include "g_Object.hpp"
 
+#include "gdk_Pixbuf.hpp"
+
 #include "gtk_enums.hpp"
 
 #include "gtk_Arrow.hpp"
@@ -51,6 +53,12 @@ FALCON_MODULE_DECL
      */
 
     Falcon::Glib::Object::modInit( self );
+
+    /*
+     *  load gdk
+     */
+
+    Falcon::Gdk::Pixbuf::modInit( self );
 
     /*
      *  load enums
