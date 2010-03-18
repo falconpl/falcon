@@ -209,5 +209,5 @@ endif()
 
 # CMake generated information.  Is used by our falcon-config.cmake
 install(EXPORT falcon-core-targets
-  DESTINATION ${FALCON_MOD_DIR}/cmake
+  DESTINATION falcon/lib/cmake
 )
