@@ -46,6 +46,9 @@ void Table::modInit( Falcon::Module* mod )
 /*#
     @class gtk.Table
     @brief Pack widgets in regular patterns
+    @optparam rows The number of rows the new table should have (default 0).
+    @optparam columns The number of columns the new table should have (default 0).
+    @optparam homogeneous (default false) If set to true, all table cells are resized to the size of the cell containing the largest widget.
 
     The GtkTable functions allow the programmer to arrange widgets in rows and columns,
     making it easy to align many widgets next to each other, horizontally and vertically.
@@ -61,18 +64,6 @@ void Table::modInit( Falcon::Module* mod )
 
     set_homogeneous(), can be used to set whether all cells in the table will resize
     themselves to the size of the largest widget in the table.
- */
-
-/*#
-    @init gtk.Table
-    @brief Used to create a new table widget.
-    @optparam rows The number of rows the new table should have (default 0).
-    @optparam columns The number of columns the new table should have (default 0).
-    @optparam homogeneous (default false) If set to true, all table cells are resized to the size of the cell containing the largest widget.
-
-    An initial size must be given by specifying how many rows and columns the table
-    should have, although this can be changed later with resize(). rows and
-    columns must both be in the range 0 .. 65535.
  */
 FALCON_FUNC Table::init( VMARG )
 {

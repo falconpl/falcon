@@ -25,20 +25,14 @@ void CheckButton::modInit( Falcon::Module* mod )
 /*#
     @class gtk.CheckButton
     @brief Create widgets with a discrete toggle button
+    @optparam label (string) the text for the check button.
+    @optparam mnemonic (boolean, default false)
 
     A gtk.CheckButton places a discrete gtk.ToggleButton next to a widget, (usually
     a gtk.Label). See the section on gtk.ToggleButton widgets for more information
     about toggle/check buttons.
 
     The important signal ('toggled') is also inherited from gtk.ToggleButton.
- */
-
-
-/*#
-    @init gtk.CheckButton
-    @brief Creates a new check-button.
-    @optparam label (string) the text for the check button.
-    @optparam mnemonic (boolean, default false)
  */
 FALCON_FUNC CheckButton::init( VMARG )
 {

@@ -54,6 +54,9 @@ Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* bt
 /*#
     @class gtk.RadioButton
     @brief A choice from multiple check buttons
+    @optparam label (string)
+    @optparam mnemonic (boolean, default false)
+    @optparam group_member (another gtk.RadioButton belonging to that group)
 
     A single radio button performs the same basic function as a gtk.CheckButton, as
     its position in the object hierarchy reflects. It is only when multiple radio
@@ -68,14 +71,6 @@ Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* bt
     "toggled" signal, as does the previously selected button. Inside the "toggled"
     handler, get_active() can be used to determine if the button has been selected
     or deselected.
- */
-
-/*#
-    @init gtk.RadioButton
-    @brief Creates a new gtk.RadioButton.
-    @optparam label (string)
-    @optparam mnemonic (boolean, default false)
-    @optparam group_member (another gtk.RadioButton belonging to that group)
  */
 FALCON_FUNC RadioButton::init( VMARG )
 {

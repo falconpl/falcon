@@ -33,6 +33,7 @@ void Image::modInit( Falcon::Module* mod )
 /*#
     @class gtk.Image
     @brief A widget displaying an image
+    @optparam filename a filename (string)
 
     The gtk.Image widget displays an image. Various kinds of object can be displayed
     as an image; most typically, you would load a GdkPixbuf ("pixel buffer") from a
@@ -47,12 +48,6 @@ void Image::modInit( Falcon::Module* mod )
     does not receive events. If you want to receive events on the image, such as
     button clicks, place the image inside a gtk.EventBox, then connect to the event
     signals on the event box.
- */
-
-/*#
-    @init gtk.Image
-    @brief Creates a new gtk.Image.
-    @optparam filename a filename (string)
  */
 FALCON_FUNC Image::init( VMARG )
 {

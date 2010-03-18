@@ -25,15 +25,10 @@ void HBox::modInit( Falcon::Module* mod )
 /*#
     @class gtk.HBox
     @brief Horizontal box
-
-    GtkHBox is a container that organizes child widgets into a single row.
- */
-
-/*#
-    @init gtk.HBox
     @optparam homogeneous (boolean, default true)
     @optparam spacing (integer, default 0)
 
+    GtkHBox is a container that organizes child widgets into a single row.
  */
 FALCON_FUNC HBox::init( VMARG )
 {

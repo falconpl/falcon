@@ -82,16 +82,11 @@ void Label::modInit( Falcon::Module* mod )
 /*#
     @class gtk.Label
     @brief The GtkLabel widget displays a small amount of text.
+    @optparam label (string)
+    @optparam mnemonic (boolean, default false)
 
     As the name implies, most labels are used to label another widget such as
     a GtkButton, a GtkMenuItem, or a GtkOptionMenu.
- */
-
-/*#
-    @init gtk.Label
-    @brief Create a label (optionaly with mnemonic)
-    @optparam label (string)
-    @optparam mnemonic (boolean, default false)
  */
 FALCON_FUNC Label::init( VMARG )
 {

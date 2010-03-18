@@ -27,6 +27,8 @@ void Arrow::modInit( Falcon::Module* mod )
 /*#
     @class gtk.Arrow
     @brief Displays an arrow
+    @optparam arrow_type a valid GtkArrowType (default GTK_ARROW_NONE)
+    @optparam shadow_type a valid GtkShadowType (default GTK_SHADOW_NONE)
 
     GtkArrow should be used to draw simple arrows that need to point in one of
     the four cardinal directions (up, down, left, or right). The style of the
@@ -37,31 +39,33 @@ void Arrow::modInit( Falcon::Module* mod )
     GtkMisc, it can be padded and/or aligned, to fill exactly the space the
     programmer desires.
  */
-
-/*
-    @init gtk.Arrow
-    @brief Creates a new arrow
-    @param arrow_type a valid GtkArrowType
-    @param shadow_type a valid GtkShadowType
- */
 FALCON_FUNC Arrow::init( VMARG )
 {
     Item* i_type = vm->param( 0 );
     Item* i_shad = vm->param( 1 );
+    GtkWidget* wdt;
+    if ( i_type )
+    {
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_type || i_type->isNil() || !i_type->isInteger()
-        || !i_shad || i_shad->isNil() || !i_shad->isInteger() )
-        throw_inv_params( "arrow type, shadow type" );
+        if ( i_type->isNil() || !i_type->isInteger() )
+            throw_inv_params( "[GtkArrowType,GtkShadowType]" );
 #endif
-    int type = i_type->asInteger();
-    int shad = i_shad->asInteger();
+        if ( i_shad )
+        {
 #ifndef NO_PARAMETER_CHECK
-    if ( type < 0 || type > 4
-        || shad < 0 || shad > 4 )
-        throw_inv_params( "out of bounds" );
+            if ( i_shad->isNil() || !i_shad->isInteger() )
+                throw_inv_params( "[GtkArrowType,GtkShadowType]" );
 #endif
+            wdt = gtk_arrow_new( (GtkArrowType) i_type->asInteger(),
+                    (GtkShadowType) i_shad->asInteger() );
+        }
+        else
+            wdt = gtk_arrow_new( (GtkArrowType) i_type->asInteger(),
+                    GTK_SHADOW_NONE );
+    }
+    else
+        wdt = gtk_arrow_new( GTK_ARROW_NONE, GTK_SHADOW_NONE );
     MYSELF;
-    GtkWidget* wdt = gtk_arrow_new( (GtkArrowType) type, (GtkShadowType) shad );
     Gtk::internal_add_slot( (GObject*) wdt );
     self->setUserData( new GData( (GObject*) wdt ) );
 }

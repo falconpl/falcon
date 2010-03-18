@@ -25,15 +25,10 @@ void VBox::modInit( Falcon::Module* mod )
 /*#
     @class gtk.VBox
     @brief Vertical box class
-
-    GtkVBox is a container that organizes child widgets into a single column.
- */
-
-/*#
-    @init gtk.VBox
     @optparam homogeneous (boolean, default true)
     @optparam spacing (integer, default 0)
 
+    GtkVBox is a container that organizes child widgets into a single column.
  */
 FALCON_FUNC VBox::init( VMARG )
 {

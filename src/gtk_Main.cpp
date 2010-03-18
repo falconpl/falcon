@@ -38,10 +38,6 @@ void Main::modInit( Falcon::Module* mod )
     m.run( w )
     @endcode
  */
-
-/*#
-    @init gtk.Main
- */
 FALCON_FUNC Main::init( VMARG )
 {
     Item* i_args = vm->param( 0 );

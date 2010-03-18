@@ -26,14 +26,6 @@ void Requisition::modInit( Falcon::Module* mod )
 }
 
 
-/*#
-    @class gtk.Requisition
-    @brief A gtk.Requisition represents the desired size of a widget.
-    @prop width the widget's desired width
-    @prop heigth the widget's desired height
- */
-
-
 Requisition::Requisition( const Falcon::CoreClass* gen, const GtkRequisition* req )
     :
     Falcon::CoreObject( gen )
@@ -100,10 +92,13 @@ Falcon::CoreObject* Requisition::factory( const Falcon::CoreClass* gen, void* re
 
 
 /*#
-    @init gtk.Requisition
-    @brief Create a gtk.Requisition
+    @class gtk.Requisition
+    @brief A gtk.Requisition represents the desired size of a widget.
     @optparam width
     @optparam height
+
+    @prop width the widget's desired width
+    @prop heigth the widget's desired height
  */
 FALCON_FUNC Requisition::init( VMARG )
 {

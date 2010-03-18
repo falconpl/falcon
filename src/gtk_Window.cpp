@@ -165,10 +165,6 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
 
     @prop title Window title
  */
-
-/*#
-    @init gtk.Window
- */
 FALCON_FUNC Window::init( VMARG )
 {
     MYSELF;

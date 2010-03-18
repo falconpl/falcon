@@ -42,11 +42,6 @@ void HButtonBox::modInit( Falcon::Module* mod )
     your application. The layout/spacing can be altered by the programmer,
     or if desired, by the user to alter the 'feel' of a program to a small degree.
  */
-
-/*#
-    @init gtk.HButtonBox
-    @brief Creates a new horizontal button box.
- */
 FALCON_FUNC HButtonBox::init( VMARG )
 {
 #ifndef NO_PARAMETER_CHECK

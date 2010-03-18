@@ -103,6 +103,7 @@ void Entry::modInit( Falcon::Module* mod )
 /*#
     @class gtk.Entry
     @brief A single line text entry field
+    @optparam buffer The buffer (gtk.EntryBuffer) or text (string) to use for the new gtk.Entry.
 
     The gtk.Entry widget is a single line text entry widget. A fairly large set of
     key bindings are supported by default. If the entered text is longer than the
@@ -133,12 +134,6 @@ void Entry::modInit( Falcon::Module* mod )
     to use a mouse or other pointing device. It is therefore recommended that any
     such functionality should also be available by other means, e.g. via the context
     menu of the entry.
- */
-
-/*#
-    @init gtk.Entry
-    @brief Creates a new entry.
-    @optparam buffer The buffer (gtk.EntryBuffer) or text (string) to use for the new gtk.Entry.
  */
 FALCON_FUNC Entry::init( VMARG )
 {

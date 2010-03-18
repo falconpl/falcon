@@ -72,10 +72,6 @@ void Button::modInit( Falcon::Module* mod )
 
     If no arguments are given, creates an empty button.
  */
-
-/*#
-    @init gtk.Button
- */
 FALCON_FUNC Button::init( VMARG )
 {
     MYSELF;

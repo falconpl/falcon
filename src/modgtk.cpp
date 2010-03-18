@@ -230,12 +230,6 @@ void CoreGObject::delProperty( gpointer it )
 
     See the Error class in the core module.
 */
-
-/*#
-    @init GtkError
-    @brief Initializes the falcon-gtk error
-*/
-
 FALCON_FUNC GtkError_init( VMARG )
 {
     MYSELF;

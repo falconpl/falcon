@@ -40,6 +40,8 @@ void ToggleButton::modInit( Falcon::Module* mod )
 /*#
     @class gtk.ToggleButton
     @brief Create buttons which retain their state
+    @optparam label (string)
+    @optparam mnemonic (boolean, default false)
 
     A GtkToggleButton is a GtkButton which will remain 'pressed-in' when clicked.
     Clicking again will cause the toggle button to return to its normal state.
@@ -48,13 +50,6 @@ void ToggleButton::modInit( Falcon::Module* mod )
     and retrieved using get_active().
 
     To simply switch the state of a toggle button, use toggled().
- */
-
-/*#
-    @init gtk.ToggleButton
-    @brief Creates a new toggle button.
-    @optparam label (string)
-    @optparam mnemonic (boolean, default false)
  */
 FALCON_FUNC ToggleButton::init( VMARG )
 {

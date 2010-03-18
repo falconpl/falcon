@@ -155,16 +155,9 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
 /*#
     @class gtk.Widget
     @brief Base class for all widgets
-    @raise GtkError on direct instanciation
 
     GtkWidget is the base class all widgets in GTK+ derive from.
     It manages the widget lifecycle, states and style.
- */
-
-/*#
-    @init gtk.Widget
-    @brief Base class for all widgets
-    @raise GtkError on direct instanciation
  */
 
 

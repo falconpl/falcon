@@ -62,6 +62,7 @@ Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* bu
 /*#
     @class gtk.EntryBuffer
     @brief Text buffer for GtkEntry
+    @optparam initial_text (string) Optionally, specify initial text to set in the buffer.
 
     The gtk.EntryBuffer class contains the actual text displayed in a gtk.Entry widget.
 
@@ -73,12 +74,6 @@ Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* bu
     stored in an alternate location, such as non-pageable memory, useful in the case
     of important passwords. Or a derived class could integrate with an application's
     concept of undo/redo.
- */
-
-/*#
-    @init gtk.EntryBuffer
-    @brief Create a new gtk.EntryBuffer object.
-    @optparam initial_text (string) Optionally, specify initial text to set in the buffer.
  */
 FALCON_FUNC EntryBuffer::init( VMARG )
 {
