@@ -77,7 +77,7 @@ set(falcon_MAN_DIR "${falcon_PREFIX}/@FALCON_MAN_DIR@")
 #Check if everything is in place.
 find_program(falcon_EXECUTABLE falcon "${falcon_BINARY_DIR}")
 find_library(falcon_ENGINE falcon_engine "${falcon_LIBRARY_DIR}")
-find_file(falcon_ENGINE_INC engine.h "${falcon_INCLUDE_DIR}" )
+find_file(falcon_ENGINE_INC falcon/engine.h "${falcon_INCLUDE_DIR}" )
    
 # Prepare Falcon in development environment.
 list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
