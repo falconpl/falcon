@@ -19,6 +19,7 @@
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
+#include "gtk_Image.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
@@ -86,6 +87,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Entry::modInit( self );
             Falcon::Gtk::Misc::modInit( self );
                 Falcon::Gtk::Arrow::modInit( self );
+                Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
 
 

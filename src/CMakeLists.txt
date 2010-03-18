@@ -21,6 +21,7 @@ set( SRC_FILES
   gtk_EntryBuffer.cpp
   gtk_HBox.cpp
   gtk_HButtonBox.cpp
+  gtk_Image.cpp
   gtk_Label.cpp
   gtk_Main.cpp
   gtk_Misc.cpp
@@ -55,6 +56,7 @@ set( HDR_FILES
   gtk_EntryBuffer.hpp
   gtk_HBox.hpp
   gtk_HButtonBox.hpp
+  gtk_Image.hpp
   gtk_Label.hpp
   gtk_Main.hpp
   gtk_Misc.hpp
