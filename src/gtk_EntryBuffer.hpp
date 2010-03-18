@@ -27,17 +27,17 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
-    //static FALCON_FUNC get_text( VMARG );
+    static FALCON_FUNC get_text( VMARG );
 
-    //static FALCON_FUNC set_text( VMARG );
+    static FALCON_FUNC set_text( VMARG );
 
-    //static FALCON_FUNC get_bytes( VMARG );
+    static FALCON_FUNC get_bytes( VMARG );
 
-    //static FALCON_FUNC get_length( VMARG );
+    static FALCON_FUNC get_length( VMARG );
 
-    //static FALCON_FUNC get_max_length( VMARG );
+    static FALCON_FUNC get_max_length( VMARG );
 
-    //static FALCON_FUNC set_max_length( VMARG );
+    static FALCON_FUNC set_max_length( VMARG );
 
     //static FALCON_FUNC insert_text( VMARG );
 

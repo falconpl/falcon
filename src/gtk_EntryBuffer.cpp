@@ -23,25 +23,24 @@ void EntryBuffer::modInit( Falcon::Module* mod )
 
     c_EntryBuffer->setWKS( true );
     c_EntryBuffer->getClassDef()->factory( &EntryBuffer::factory );
-#if 0
+
     Gtk::MethodTab methods[] =
     {
-    //{ "get_text",         &EntryBuffer::get_text },
-    //{ "set_text",         &EntryBuffer::get_text },
-    //{ "get_bytes",         &EntryBuffer::get_text },
-    //{ "get_length",         &EntryBuffer::get_text },
-    //{ "get_max_length",         &EntryBuffer::get_text },
-    //{ "set_max_length",         &EntryBuffer::get_text },
-    //{ "insert_text",         &EntryBuffer::get_text },
-    //{ "delete_text",         &EntryBuffer::get_text },
-    //{ "emit_deleted_text",         &EntryBuffer::get_text },
-    //{ "emit_inserted_text",         &EntryBuffer::get_text },
+    { "get_text",           &EntryBuffer::get_text },
+    { "set_text",           &EntryBuffer::set_text },
+    { "get_bytes",          &EntryBuffer::get_bytes },
+    { "get_length",         &EntryBuffer::get_length },
+    { "get_max_length",     &EntryBuffer::get_max_length },
+    { "set_max_length",     &EntryBuffer::set_max_length },
+    //{ "insert_text",        &EntryBuffer::insert_text },
+    //{ "delete_text",        &EntryBuffer::delete_text },
+    //{ "emit_deleted_text",  &EntryBuffer::emit_deleted_text },
+    //{ "emit_inserted_text", &EntryBuffer::emit_inserted_text },
     { NULL, NULL }
     };
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_EntryBuffer, meth->name, meth->cb );
-#endif
 }
 
 
@@ -103,17 +102,123 @@ FALCON_FUNC EntryBuffer::init( VMARG )
 }
 
 
-//FALCON_FUNC EntryBuffer::get_text( VMARG );
+/*#
+    @method get_text gtk.EntryBuffer
+    @brief Retrieves the contents of the buffer.
+    @return (string) contents of buffer
 
-//FALCON_FUNC EntryBuffer::set_text( VMARG );
+    The memory pointer returned by this call will not change unless this object
+    emits a signal, or is finalized.
+ */
+FALCON_FUNC EntryBuffer::get_text( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* txt = gtk_entry_buffer_get_text( (GtkEntryBuffer*)_obj );
+    vm->retval( new String( txt ) );
+}
 
-//FALCON_FUNC EntryBuffer::get_bytes( VMARG );
 
-//FALCON_FUNC EntryBuffer::get_length( VMARG );
+/*#
+    @method set_text gtk.EntryBuffer
+    @brief Sets the text in the buffer.
+    @param text the new text
 
-//FALCON_FUNC EntryBuffer::get_max_length( VMARG );
+    This is roughly equivalent to calling delete_text() and insert_text().
+ */
+FALCON_FUNC EntryBuffer::set_text( VMARG )
+{
+    Item* i_txt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString s( i_txt->asString() );
+    gtk_entry_buffer_set_text( (GtkEntryBuffer*)_obj, s.c_str(), strlen( s.c_str() ) );
+}
 
-//FALCON_FUNC EntryBuffer::set_max_length( VMARG );
+
+/*#
+    @method get_bytes gtk.EntryBuffer
+    @brief Retrieves the length in bytes of the buffer.
+    @return The byte length of the buffer.
+
+    See get_length().
+ */
+FALCON_FUNC EntryBuffer::get_bytes( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_entry_buffer_get_bytes( (GtkEntryBuffer*)_obj ) );
+}
+
+
+/*#
+    @method get_length gtk.EntryBuffer
+    @brief Retrieves the length in characters of the buffer.
+    @return The number of characters in the buffer.
+ */
+FALCON_FUNC EntryBuffer::get_length( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_entry_buffer_get_length( (GtkEntryBuffer*)_obj ) );
+}
+
+
+/*#
+    @method get_max_length gtk.EntryBuffer
+    @brief Retrieves the maximum allowed length of the text in buffer.
+    @return the maximum allowed number of characters in GtkEntryBuffer, or 0 if there is no maximum.
+
+    See set_max_length().
+ */
+FALCON_FUNC EntryBuffer::get_max_length( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (int64) gtk_entry_buffer_get_max_length( (GtkEntryBuffer*)_obj ) );
+}
+
+
+/*#
+    @method set_max_length gtk.EntryBuffer
+    @brief Sets the maximum allowed length of the contents of the buffer.
+    @param max_length the maximum length of the entry buffer, or 0 for no maximum.
+
+    If the current contents are longer than the given length, then they will be
+    truncated to fit.
+ */
+FALCON_FUNC EntryBuffer::set_max_length( VMARG )
+{
+    Item* i_len = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_len || i_len->isNil() || !i_len->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_entry_buffer_set_max_length( (GtkEntryBuffer*)_obj, i_len->asInteger() );
+}
+
 
 //FALCON_FUNC EntryBuffer::insert_text( VMARG );
 
