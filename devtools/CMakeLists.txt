@@ -51,5 +51,5 @@ INSTALL(
 )
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
-  DESTINATION ${FALCON_MOD_DIR}/cmake
+  DESTINATION lib/falcon/cmake
 )
