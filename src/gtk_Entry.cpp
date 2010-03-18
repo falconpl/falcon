@@ -256,15 +256,14 @@ FALCON_FUNC Entry::set_text( VMARG )
  */
 FALCON_FUNC Entry::get_text( VMARG )
 {
-    Item* i_txt = vm->param( 0 );
-#ifndef NO_PARAMETER_CHECK
-    if ( !i_txt || i_txt->isNil() || !i_txt->isString() )
-        throw_inv_params( "S" );
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
 #endif
     MYSELF;
     GET_OBJ( self );
-    AutoCString s( i_txt->asString() );
-    gtk_entry_set_text( (GtkEntry*)_obj, s.c_str() );
+    const gchar* txt = gtk_entry_get_text( (GtkEntry*)_obj );
+    vm->retval( txt ? new String ( txt ) : new String() );
 }
 
 
