@@ -210,8 +210,8 @@ FALCON_FUNC GtkError_init ( VMARG );
 enum GtkErrorIds
 {
     e_abstract_class,       // unable to create instance of abstract type
-    e_init_failure          // failure due to gtk_init* functions
-
+    e_init_failure,         // failure due to gtk_init* functions
+    e_inv_property          // invalid property
 };
 
 

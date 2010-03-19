@@ -8,26 +8,37 @@ namespace Falcon {
 namespace Glib {
 
 /**
- *  \namespace Falcon::Glib::Object
+ *  \class Falcon::Glib::Object
  */
-namespace Object {
+class Object
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Object( const Falcon::CoreClass*, const GObject* = 0 );
 
-FALCON_FUNC signal_notify( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-void on_notify( GObject*, GParamSpec*, gpointer );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC set( VMARG );
+    static FALCON_FUNC signal_notify( VMARG );
 
-FALCON_FUNC notify( VMARG );
+    static void on_notify( GObject*, GParamSpec*, gpointer );
 
-FALCON_FUNC freeze_notify( VMARG );
+    static FALCON_FUNC set( VMARG );
 
-FALCON_FUNC thaw_notify( VMARG );
+    static FALCON_FUNC get( VMARG );
+
+    static FALCON_FUNC notify( VMARG );
+
+    static FALCON_FUNC freeze_notify( VMARG );
+
+    static FALCON_FUNC thaw_notify( VMARG );
+
+};
 
 
-} // Object
 } // Glib
 } // Falcon
 

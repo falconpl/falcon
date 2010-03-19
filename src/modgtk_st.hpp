@@ -30,6 +30,6 @@ FAL_MODSTR( gtk_e_init_failure_,        "init function failure" );
 /*
  *  messages for param errors
  */
-FAL_MODSTR( gtk_e_require_no_args_,  "this method does not accept arguments" );
-FAL_MODSTR( gtk_e_inv_window_type_,  "invalid window type" );
-
+FAL_MODSTR( gtk_e_require_no_args_,     "this method does not accept arguments" );
+FAL_MODSTR( gtk_e_inv_window_type_,     "invalid window type" );
+FAL_MODSTR( gtk_e_inv_property_,        "invalid object property" );
