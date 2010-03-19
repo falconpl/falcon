@@ -124,6 +124,19 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_EXPANDER_EXPANDED",      GTK_EXPANDER_EXPANDED },
 
     /*
+     *  GtkImageType
+     */
+    { "GTK_IMAGE_EMPTY",        GTK_IMAGE_EMPTY },
+    { "GTK_IMAGE_PIXMAP",       GTK_IMAGE_PIXMAP },
+    { "GTK_IMAGE_IMAGE",        GTK_IMAGE_IMAGE },
+    { "GTK_IMAGE_PIXBUF",       GTK_IMAGE_PIXBUF },
+    { "GTK_IMAGE_STOCK",        GTK_IMAGE_STOCK },
+    { "GTK_IMAGE_ICON_SET",     GTK_IMAGE_ICON_SET },
+    { "GTK_IMAGE_ANIMATION",    GTK_IMAGE_ANIMATION },
+    { "GTK_IMAGE_ICON_NAME",    GTK_IMAGE_ICON_NAME },
+    { "GTK_IMAGE_GICON",        GTK_IMAGE_GICON },
+
+    /*
      *  GtkIMPreeditStyle
      */
     { "GTK_IM_PREEDIT_NOTHING",     GTK_IM_PREEDIT_NOTHING },
