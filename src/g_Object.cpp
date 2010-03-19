@@ -128,7 +128,6 @@ FALCON_FUNC Object::set( VMARG )
         AutoCString val( i_val->asString() );
         g_object_set( _obj, name.c_str(), val.c_str(), NULL );
     }
-#if 0
     else
     if ( i_val->isObject() )
     {
@@ -139,7 +138,6 @@ FALCON_FUNC Object::set( VMARG )
         GObject* obj = (GObject*)((Gtk::GData*)i_val->asObject()->getUserData())->obj();
         g_object_set( _obj, name.c_str(), obj, NULL );
     }
-#endif
     else
         throw_inv_params( "S,X" );
 }
@@ -204,23 +202,26 @@ FALCON_FUNC Object::get( VMARG )
         {
             s = new String( txt );
             s->bufferize();
+            g_free( txt );
         }
         else
             s = new String;
         vm->retval( s );
-        g_free( txt );
     }
-#if 0
     else
-    if ( spec->value_type == G_TYPE_OBJECT )
+    if ( g_type_is_a( spec->value_type, G_TYPE_OBJECT ) )
     {
         GObject* o;
         g_object_get( _obj, nam.c_str(), &o, NULL );
-        Item* wki = vm->findWKI( "GObject" );
-        vm->retval( new Object( wki->asClass(), o ) );
-        g_object_unref( o );
+        if ( o )
+        {
+            Item* wki = vm->findWKI( "GObject" );
+            vm->retval( new Object( wki->asClass(), o ) );
+            g_object_unref( o );
+        }
+        else
+            vm->retnil();
     }
-#endif
     else
         throw_inv_params( "not implemented" );
 }
