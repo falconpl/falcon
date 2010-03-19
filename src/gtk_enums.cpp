@@ -413,7 +413,12 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TEXT_DIR_LTR",       GTK_TEXT_DIR_LTR },
     { "GTK_TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
 
+    // BEGIN GDK CONSTANTS //
 
+    /*
+     *  GdkColorSpace
+     */
+    { "GDK_COLORSPACE_RGB", GDK_COLORSPACE_RGB },
 
     /*
      *  GdkEventType
@@ -501,6 +506,30 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_META_MASK",          GDK_META_MASK },
     { "GDK_RELEASE_MASK",       GDK_RELEASE_MASK },
     { "GDK_MODIFIER_MASK",      GDK_MODIFIER_MASK },
+
+    /*
+     *  GdkPixbuf version
+     */
+    { "GDK_PIXBUF_MAJOR", GDK_PIXBUF_MAJOR },
+    { "GDK_PIXBUF_MINOR", GDK_PIXBUF_MINOR },
+    { "GDK_PIXBUF_MICRO", GDK_PIXBUF_MICRO },
+
+    /*
+     *  GdkPixbufAlphaMode
+     */
+    { "GDK_PIXBUF_ALPHA_BILEVEL",   GDK_PIXBUF_ALPHA_BILEVEL },
+    { "GDK_PIXBUF_ALPHA_FULL",      GDK_PIXBUF_ALPHA_FULL },
+
+
+    /*
+     *  GdkPixbufError
+     */
+    { "GDK_PIXBUF_ERROR_CORRUPT_IMAGE",         GDK_PIXBUF_ERROR_CORRUPT_IMAGE },
+    { "GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY",   GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY },
+    { "GDK_PIXBUF_ERROR_BAD_OPTION",            GDK_PIXBUF_ERROR_BAD_OPTION },
+    { "GDK_PIXBUF_ERROR_UNKNOWN_TYPE",          GDK_PIXBUF_ERROR_UNKNOWN_TYPE },
+    { "GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION", GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION },
+    { "GDK_PIXBUF_ERROR_FAILED",                GDK_PIXBUF_ERROR_FAILED },
 
     /*
      *  GdkWindowEdge

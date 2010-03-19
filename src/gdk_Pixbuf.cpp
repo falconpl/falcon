@@ -17,15 +17,15 @@ void Pixbuf::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_Pixbuf->getClassDef()->addInheritance( in );
-#if 0
+
     Gtk::MethodTab methods[] =
     {
+    { "version",            &Pixbuf::version },
     { NULL, NULL }
     };
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Pixbuf, meth->name, meth->cb );
-#endif
 }
 
 
@@ -48,6 +48,23 @@ Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bo
     @class gtk.GdkPixbuf
     @brief Information that describes an image.
  */
+
+/*#
+    @method version GdkPixbuf
+    @brief a static function returning the GdkPixbuf version.
+    @return the full version of the gdk-pixbuf library as a string.
+
+    This is the version currently in use by a running program.
+ */
+FALCON_FUNC Pixbuf::version( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    vm->retval( new String( GDK_PIXBUF_VERSION ) );
+}
+
 
 
 } // Gdk
