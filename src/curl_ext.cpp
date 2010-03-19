@@ -1086,10 +1086,6 @@ FALCON_FUNC  Multi_perform ( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-/*#
-   @init CurlError
-   @brief Initializes the process error.
-*/
 FALCON_FUNC  CurlError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

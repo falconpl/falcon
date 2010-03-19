@@ -140,6 +140,8 @@ bool CurlHandle::deserialize( Stream *stream, bool bLive )
 
    ptr = endianInt64( ptr );
    m_handle = (CURL*) ptr;
+
+   return true;
 }
 
 void CurlHandle::gcMark( uint32 mark )
@@ -502,6 +504,8 @@ bool CurlMultiHandle::serialize( Stream *stream, bool bLive ) const
       (*m_refCount)--;
       m_mtx->unlock();
    }
+
+   return true;
 }
 
 bool CurlMultiHandle::deserialize( Stream *stream, bool bLive )
@@ -526,6 +530,7 @@ bool CurlMultiHandle::deserialize( Stream *stream, bool bLive )
    m_mtx = (Mutex*) endianInt64( ptrm );
    m_refCount = (int*) endianInt64( ptrrc );
 
+   return true;
 }
 
 CoreObject* CurlMultiHandle::Factory( const CoreClass *cls, void *data, bool bDeser )
@@ -543,7 +548,7 @@ void CurlMultiHandle::gcMark( uint32 mark )
 
 bool CurlMultiHandle::addHandle( CurlHandle* h )
 {
-   for ( int i = 0; i < m_handles.length(); ++i )
+   for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
       if ( m_handles[i].asObjectSafe() == h )
          return false;
@@ -557,7 +562,7 @@ bool CurlMultiHandle::addHandle( CurlHandle* h )
 
 bool CurlMultiHandle::removeHandle( CurlHandle* h )
 {
-   for ( int i = 0; i < m_handles.length(); ++i )
+   for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
       if ( m_handles[i].asObjectSafe() == h )
       {
