@@ -82,7 +82,11 @@ list(APPEND falcon_LIBRARY_DIRS  ${falcon_LIBRARY_DIR})
 
 set(falcon_LIBRARIES falcon_engine)
 
-option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(NOT WIN32)
+   option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+else()
+   set(DISABLE_RAPTH on)
+endif()
 if(NOT DISABLE_RPATH)
    # Always find libfalcon_engone.so in build and install tree, without LD_LIBRARY_PATH.
    set(CMAKE_SKIP_BUILD_RPATH  false)
