@@ -1147,8 +1147,7 @@ FALCON_FUNC Widget::reparent( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
     {
         throw_inv_params( "GtkWidget" );
     }
@@ -1387,8 +1386,7 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
     {
         throw_inv_params( "GtkWidget" );
     }

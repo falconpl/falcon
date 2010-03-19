@@ -477,7 +477,7 @@ FALCON_FUNC Window::set_transient_for( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil() )
     {
-        if ( !( i_win->isOfClass( "GtkWindow" ) || i_win->isOfClass( "gtk.GtkWindow" ) ) )
+        if ( !IS_DERIVED( i_win, GtkWindow ) )
             throw_inv_params( "GtkWindow" );
     }
 #endif
@@ -576,7 +576,7 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
         || !i_target || i_target->isNil() ||
-        !( i_target->isOfClass( "GtkWidget" ) || i_target->isOfClass( "gtk.GtkWidget" ) ) )
+        !IS_DERIVED( i_target, GtkWidget ) )
         throw_inv_params( "I,GtkWidget" );
 #endif
     MYSELF;
@@ -599,7 +599,7 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
         || !i_target || i_target->isNil() ||
-        !( i_target->isOfClass( "GtkWidget" ) || i_target->isOfClass( "gtk.GtkWidget" ) ) )
+        !IS_DERIVED( i_target, GtkWidget ) )
         throw_inv_params( "I,GtkWidget" );
 #endif
     MYSELF;
@@ -682,7 +682,7 @@ FALCON_FUNC Window::set_focus( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( i_wdt && !i_wdt->isNil() )
     {
-        if ( !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+        if ( !IS_DERIVED( i_wdt, GtkWidget ) )
             throw_inv_params( "GtkWidget" );
     }
 #endif
@@ -735,9 +735,8 @@ FALCON_FUNC Window::set_default( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
-            throw_inv_params( "GtkWidget" );
+    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     MYSELF;
     GET_OBJ( self );

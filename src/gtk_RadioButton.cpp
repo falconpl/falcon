@@ -101,8 +101,7 @@ FALCON_FUNC RadioButton::init( VMARG )
             if ( i_wdt )
             {
 #ifndef NO_PARAMETER_CHECK
-                if ( i_wdt->isNil()
-                    || !( i_wdt->isOfClass( "GtkRadioButton" ) || i_wdt->isOfClass( "gtk.GtkRadioButton" ) ) )
+                if ( i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkRadioButton ) )
                     throw_inv_params( "[S,B,GtkRadioButton]" );
 #endif
                 GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -199,7 +198,7 @@ FALCON_FUNC RadioButton::set_group( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "GtkRadioButton" ) || i_wdt->isOfClass( "gtk.GtkRadioButton" ) ) )
+        !IS_DERIVED( i_wdt, GtkRadioButton ) )
         throw_inv_params( "GtkRadioButton" );
 #endif
     GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();

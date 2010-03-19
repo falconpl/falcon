@@ -134,7 +134,7 @@ FALCON_FUNC Main::run( VMARG )
     Item* i_win = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil()
-        && !i_win->isOfClass( "GtkWindow" ) && !i_win->isOfClass( "gtk.GtkWindow" ) )
+        && !IS_DERIVED( i_win, GtkWindow ) )
     {
         throw_inv_params( "[GtkWindow]" );
     }

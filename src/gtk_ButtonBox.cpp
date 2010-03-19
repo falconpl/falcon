@@ -108,7 +108,7 @@ FALCON_FUNC ButtonBox::get_child_secondary( VMARG )
     Item* i_child = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || i_child->isNil() || !i_child->isObject()
-        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) ) )
+        || !IS_DERIVED( i_child, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
@@ -142,7 +142,7 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
     Item* i_sec = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || i_child->isNil() || !i_child->isObject()
-        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "gtk.GtkWidget" ) )
+        || !IS_DERIVED( i_child, GtkWidget )
         || !i_sec || i_sec->isNil() || !i_sec->isBoolean() )
         throw_inv_params( "GtkWidget,B" );
 #endif

@@ -59,7 +59,7 @@ FALCON_FUNC Box::pack_start( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || !i_child->isObject()
-        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) )
+        || !IS_DERIVED( i_child, GtkWidget )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
@@ -88,7 +88,7 @@ FALCON_FUNC Box::pack_end( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || !i_child->isObject()
-        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) )
+        || !IS_DERIVED( i_child, GtkWidget )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
@@ -113,7 +113,7 @@ FALCON_FUNC Box::pack_start_defaults( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "GtkWidget" ) ) )
+        || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -128,7 +128,7 @@ FALCON_FUNC Box::pack_end_defaults( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "GtkWidget" ) ) )
+        || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
@@ -181,7 +181,7 @@ FALCON_FUNC Box::reorder_child( VMARG )
     Item* i_pos = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
+        || !IS_DERIVED( i_wdt, GtkWidget )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkWidget" );
 #endif

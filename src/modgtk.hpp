@@ -37,6 +37,9 @@
         ::Falcon::CoreSlot* _signals = (::Falcon::CoreSlot*) \
         g_object_get_data( G_OBJECT( gobj ), "_signals" )
 
+#define IS_DERIVED( it, cls ) \
+        ( (it)->isOfClass( #cls ) || (it)->isOfClass( "gtk." #cls ) )
+
 #define throw_inv_params( x ) \
         throw new ::Falcon::ParamError( \
         ::Falcon::ErrorParam( ::Falcon::e_inv_params, __LINE__ ).extra( x ) )

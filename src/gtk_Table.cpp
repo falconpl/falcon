@@ -162,7 +162,7 @@ FALCON_FUNC Table::attach( VMARG )
     Item* i_ypad = vm->param( 8 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil()
-        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
+        || !IS_DERIVED( i_wdt, GtkWidget )
         || !i_left || i_left->isNil() || !i_left->isInteger()
         || !i_right || i_right->isNil() || !i_right->isInteger()
         || !i_top || i_top->isNil() || !i_top->isInteger()
@@ -206,7 +206,7 @@ FALCON_FUNC Table::attach_defaults( VMARG )
     Item* i_bottom = vm->param( 4 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil()
-        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
+        || !IS_DERIVED( i_wdt, GtkWidget )
         || !i_left || i_left->isNil() || !i_left->isInteger()
         || !i_right || i_right->isNil() || !i_right->isInteger()
         || !i_top || i_top->isNil() || !i_top->isInteger()

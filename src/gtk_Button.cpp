@@ -533,7 +533,7 @@ FALCON_FUNC Button::set_image( VMARG )
     Item* i_img = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_img || i_img->isNil() ||
-        !( i_img->isOfClass( "GtkWidget" ) || i_img->isOfClass( "gtk.GtkWidget" ) ) )
+        !IS_DERIVED( i_img, GtkWidget ) )
     {
         throw_inv_params( "GtkWidget" );
     }

@@ -148,9 +148,8 @@ FALCON_FUNC Entry::init( VMARG )
     {
 #ifndef NO_PARAMETER_CHECK
         if ( i_buf->isNil() ||
-            !( i_buf->isString() ||
-            i_buf->isOfClass( "GtkEntryBuffer" ) || i_buf->isOfClass( "gtk.GtkEntryBuffer" ) ) )
-            throw_inv_params( "[EntryBuffer|S]" );
+            !( i_buf->isString() || IS_DERIVED( i_buf, GtkEntryBuffer ) ) )
+            throw_inv_params( "[GtkEntryBuffer|S]" );
 #endif
         if ( i_buf->isString() )
         {
@@ -207,7 +206,7 @@ FALCON_FUNC Entry::set_buffer( VMARG )
     Item* i_buf = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_buf || i_buf->isNil() ||
-        !( i_buf->isOfClass( "GtkEntryBuffer" ) || i_buf->isOfClass( "gtk.GtkEntryBuffer" ) ) )
+        !IS_DERIVED( i_buf, GtkEntryBuffer ) )
         throw_inv_params( "GtkEntryBuffer" );
 #endif
     MYSELF;
