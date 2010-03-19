@@ -15,24 +15,24 @@ namespace Gtk {
  */
 void CheckButton::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_CheckButton = mod->addClass( "CheckButton", &CheckButton::init );
+    Falcon::Symbol* c_CheckButton = mod->addClass( "GtkCheckButton", &CheckButton::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "ToggleButton" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkToggleButton" ) );
     c_CheckButton->getClassDef()->addInheritance( in );
 }
 
 
 /*#
-    @class gtk.CheckButton
+    @class GtkCheckButton
     @brief Create widgets with a discrete toggle button
     @optparam label (string) the text for the check button.
     @optparam mnemonic (boolean, default false)
 
-    A gtk.CheckButton places a discrete gtk.ToggleButton next to a widget, (usually
-    a gtk.Label). See the section on gtk.ToggleButton widgets for more information
+    A GtkCheckButton places a discrete gtk.ToggleButton next to a widget, (usually
+    a GtkLabel). See the section on GtkToggleButton widgets for more information
     about toggle/check buttons.
 
-    The important signal ('toggled') is also inherited from gtk.ToggleButton.
+    The important signal ('toggled') is also inherited from GtkToggleButton.
  */
 FALCON_FUNC CheckButton::init( VMARG )
 {

@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void HButtonBox::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_HButtonBox = mod->addClass( "HButtonBox", &HButtonBox::init );
+    Falcon::Symbol* c_HButtonBox = mod->addClass( "GtkHButtonBox", &HButtonBox::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "ButtonBox" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButtonBox" ) );
     c_HButtonBox->getClassDef()->addInheritance( in );
 #if 0
     Gtk::MethodTab methods[] =
@@ -35,7 +35,7 @@ void HButtonBox::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.HButtonBox
+    @class GtkHButtonBox
     @brief Horizontal button box container.
 
     A button box should be used to provide a consistent layout of buttons throughout

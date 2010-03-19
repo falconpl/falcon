@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void ToggleButton::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_ToggleButton = mod->addClass( "ToggleButton", &ToggleButton::init );
+    Falcon::Symbol* c_ToggleButton = mod->addClass( "GtkToggleButton", &ToggleButton::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Button" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButton" ) );
     c_ToggleButton->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -38,7 +38,7 @@ void ToggleButton::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.ToggleButton
+    @class GtkToggleButton
     @brief Create buttons which retain their state
     @optparam label (string)
     @optparam mnemonic (boolean, default false)
@@ -93,7 +93,7 @@ FALCON_FUNC ToggleButton::init( VMARG )
 
 
 /*#
-    @method signal_toggled gtk.ToggleButton
+    @method signal_toggled GtkToggleButton
     @brief Connect a VMSlot to the button toggled signal and return it
 
     Should be connected if you wish to perform an action whenever the
@@ -112,7 +112,7 @@ void ToggleButton::on_toggled( GtkToggleButton* btn, gpointer _vm )
 
 
 /*#
-    @method set_mode gtk.ToggleButton
+    @method set_mode GtkToggleButton
     @brief Sets whether the button is displayed as a separate indicator and label.
     @param draw_indicator (boolean) if true, draw the button as a separate indicator and label; if false, draw the button like a normal button
 
@@ -136,7 +136,7 @@ FALCON_FUNC ToggleButton::set_mode( VMARG )
 
 
 /*#
-    @method get_mode gtk.ToggleButton
+    @method get_mode GtkToggleButton
     @brief Retrieves whether the button is displayed as a separate indicator and label.
     @return (boolean) true if the togglebutton is drawn as a separate indicator and label.
  */
@@ -153,7 +153,7 @@ FALCON_FUNC ToggleButton::get_mode( VMARG )
 
 
 /*#
-    @method toggled gtk.ToggleButton
+    @method toggled GtkToggleButton
     @brief Emits the toggled signal on the GtkToggleButton.
 
     There is no good reason for an application ever to call this function.
@@ -171,7 +171,7 @@ FALCON_FUNC ToggleButton::toggled( VMARG )
 
 
 /*#
-    @method get_active gtk.ToggleButton
+    @method get_active GtkToggleButton
     @brief Queries a GtkToggleButton and returns its current state.
     @return true if the toggle button is pressed in and false if it is raised.
  */
@@ -188,7 +188,7 @@ FALCON_FUNC ToggleButton::get_active( VMARG )
 
 
 /*#
-    @method set_active gtk.ToggleButton
+    @method set_active GtkToggleButton
     @brief Sets the status of the toggle button.
     @param is_active Set to true if you want the GtkToggleButton to be 'pressed in', and false to raise it.
 
@@ -208,7 +208,7 @@ FALCON_FUNC ToggleButton::set_active( VMARG )
 
 
 /*#
-    @method get_inconsistent gtk.ToggleButton
+    @method get_inconsistent GtkToggleButton
     @brief Gets the value set by set_inconsistent().
     @return (boolean) true if the button is displayed as inconsistent, false otherwise
  */
@@ -225,7 +225,7 @@ FALCON_FUNC ToggleButton::get_inconsistent( VMARG )
 
 
 /*#
-    @method set_inconsistent gtk.ToggleButton
+    @method set_inconsistent GtkToggleButton
     @brief Sets the button consistency state.
     @param setting (boolean) true if state is inconsistent
 

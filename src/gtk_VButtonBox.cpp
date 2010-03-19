@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void VButtonBox::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_VButtonBox = mod->addClass( "VButtonBox", &VButtonBox::init );
+    Falcon::Symbol* c_VButtonBox = mod->addClass( "GtkVButtonBox", &VButtonBox::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "ButtonBox" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButtonBox" ) );
     c_VButtonBox->getClassDef()->addInheritance( in );
 #if 0
     Gtk::MethodTab methods[] =
@@ -35,7 +35,7 @@ void VButtonBox::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.VButtonBox
+    @class GtkVButtonBox
     @brief Vertical button box container.
 
     A button box should be used to provide a consistent layout of buttons throughout

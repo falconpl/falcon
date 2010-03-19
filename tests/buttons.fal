@@ -1,9 +1,9 @@
-import from gtk
+load gtk
 
-m = gtk.Main()
-w = gtk.Window()
+m = GtkMain()
+w = GtkWindow()
 
-class MyButton( row, col ) from gtk.Button
+class MyButton( row, col ) from GtkButton
     _row = 0
     _col = 0
     init
@@ -17,7 +17,7 @@ class MyButton( row, col ) from gtk.Button
     end
 end
 
-class MyTable( numrows, numcols ) from gtk.Table
+class MyTable( numrows, numcols ) from GtkTable
     init
         self.resize( numrows, numcols )
         i = 0

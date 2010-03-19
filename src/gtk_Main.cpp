@@ -13,7 +13,7 @@ namespace Gtk {
 
 void Main::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Main = mod->addClass( "Main", &Main::init )
+    Falcon::Symbol* c_Main = mod->addClass( "GtkMain", &Main::init )
         ->addParam( "args" )
         ->addParam( "set_locale" );
 
@@ -24,7 +24,7 @@ void Main::modInit( Falcon::Module* mod )
 
 
 /*#
-    @class gtk.Main
+    @class GtkMain
     @brief Initialize gtk and prepare the main loop
     @optparam args List of command-line arguments (array of strings)
     @optparam set_locale Set the locale before init (boolean, default true)
@@ -33,8 +33,8 @@ void Main::modInit( Falcon::Module* mod )
 
     @code
     import from gtk
-    m = gtk.Main( args, true )
-    w = gtk.Window()
+    m = GtkMain( args, true )
+    w = GtkWindow()
     m.run( w )
     @endcode
  */
@@ -109,7 +109,7 @@ FALCON_FUNC Main::init( VMARG )
 }
 
 /*#
-    @method quit gtk.Main
+    @method quit GtkMain
     @brief Makes the innermost invocation of the main loop return when it regains control.
  */
 FALCON_FUNC Main::quit( VMARG )
@@ -124,7 +124,7 @@ FALCON_FUNC Main::quit( VMARG )
 }
 
 /*#
-    @method run gtk.Main
+    @method run GtkMain
     @brief Start the event loop.
     @optparam window A window to be shown
     @raise ParamError Invalid window
@@ -134,9 +134,9 @@ FALCON_FUNC Main::run( VMARG )
     Item* i_win = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil()
-        && !i_win->isOfClass( "gtk.Window" ) && !i_win->isOfClass( "Window" ) )
+        && !i_win->isOfClass( "GtkWindow" ) && !i_win->isOfClass( "gtk.GtkWindow" ) )
     {
-        throw_inv_params( "[Window]" );
+        throw_inv_params( "[GtkWindow]" );
     }
 #endif
     if ( i_win )

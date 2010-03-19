@@ -17,9 +17,9 @@ namespace Gtk {
  */
 void Label::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Label = mod->addClass( "Label", &Label::init );
+    Falcon::Symbol* c_Label = mod->addClass( "GtkLabel", &Label::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Misc" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMisc" ) );
     c_Label->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -80,7 +80,7 @@ void Label::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Label
+    @class GtkLabel
     @brief The GtkLabel widget displays a small amount of text.
     @optparam label (string)
     @optparam mnemonic (boolean, default false)
@@ -303,8 +303,8 @@ FALCON_FUNC Label::set_mnemonic_widget( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -412,7 +412,7 @@ FALCON_FUNC Label::get_mnemonic_widget( VMARG )
     GtkWidget* gwdt = gtk_label_get_mnemonic_widget( (GtkLabel*)_obj );
     if ( gwdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), gwdt ) );
     }
     else

@@ -15,9 +15,9 @@ namespace Gtk {
 
 void Widget::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Widget = mod->addClass( "Widget", &Gtk::abstract_init );
+    Falcon::Symbol* c_Widget = mod->addClass( "GtkWidget", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Object" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkObject" ) );
     c_Widget->getClassDef()->addInheritance( in );
 
     c_Widget->setWKS( true );
@@ -153,7 +153,7 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
 
 
 /*#
-    @class gtk.Widget
+    @class GtkWidget
     @brief Base class for all widgets
 
     GtkWidget is the base class all widgets in GTK+ derive from.
@@ -162,7 +162,7 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
 
 
 /*#
-    @method signal_accel_closures_changed gtk.Widget
+    @method signal_accel_closures_changed GtkWidget
     @brief Connect a VMSlot to the widget accel_closures_changed signal and return it
  */
 FALCON_FUNC Widget::signal_accel_closures_changed( VMARG )
@@ -194,7 +194,7 @@ void Widget::on_accel_closures_changed( GtkWidget* wdt, gpointer _vm )
 
 
 /*#
-    @method signal_can_activate_accel gtk.Widget
+    @method signal_can_activate_accel GtkWidget
     @brief Connect a VMSlot to the widget can_activate_accel signal and return it
 
     Determines whether an accelerator that activates the signal identified by
@@ -239,7 +239,7 @@ gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointe
                 || !it.asObject()->getMethod( "on_can_activate_accel", it ) )
             {
                 printf(
-                "[Widget::on_can_activate_accel] invalid callback (expected callable)\n" );
+                "[GtkWidget::on_can_activate_accel] invalid callback (expected callable)\n" );
                 return FALSE; // block event
             }
         }
@@ -257,7 +257,7 @@ gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointe
         else
         {
             printf(
-            "[Widget::on_can_activate_accel] invalid callback (expected boolean)\n" );
+            "[GtkWidget::on_can_activate_accel] invalid callback (expected boolean)\n" );
             return FALSE; // block event
         }
     }
@@ -277,7 +277,7 @@ gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointe
 
 
 /*#
-    @method signal_composited_changed gtk.Widget
+    @method signal_composited_changed GtkWidget
     @brief Connect a VMSlot to the widget composited_changed signal and return it
 
     The composited-changed signal is emitted when the composited status of
@@ -311,7 +311,7 @@ void Widget::on_composited_changed( GtkWidget* obj, gpointer _vm )
 
 
 /*#
-    @method signal_delete_event gtk.Widget
+    @method signal_delete_event GtkWidget
     @brief Connect a VMSlot to the widget delete_event signal and return it
 
     The callback function must return a boolean, that if is true, will block the event.
@@ -355,7 +355,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
                 || !it.asObject()->getMethod( "on_delete_event", it ) )
             {
                 printf(
-                "[Widget::on_delete_event] invalid callback (expected callable)\n" );
+                "[GtkWidget::on_delete_event] invalid callback (expected callable)\n" );
                 return TRUE; // block event
             }
         }
@@ -373,7 +373,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
         else
         {
             printf(
-            "[Widget::on_delete_event] invalid callback (expected boolean)\n" );
+            "[GtkWidget::on_delete_event] invalid callback (expected boolean)\n" );
             return TRUE; // block event
         }
     }
@@ -384,7 +384,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
 
 
 /*#
-    @method signal_destroy_event gtk.Widget
+    @method signal_destroy_event GtkWidget
     @brief Connect a VMSlot to the widget destroy signal and return it
 
     The callback function must return a boolean, true to stop other handlers from
@@ -429,7 +429,7 @@ gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
                 || !it.asObject()->getMethod( "on_destroy_event", it ) )
             {
                 printf(
-                "[Widget::on_destroy_event] invalid callback (expected callable)\n" );
+                "[GtkWidget::on_destroy_event] invalid callback (expected callable)\n" );
                 return TRUE; // block event
             }
         }
@@ -447,7 +447,7 @@ gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
         else
         {
             printf(
-            "[Widget::on_destroy_event] invalid callback (expected boolean)\n" );
+            "[GtkWidget::on_destroy_event] invalid callback (expected boolean)\n" );
             return TRUE; // block event
         }
     }
@@ -540,7 +540,7 @@ gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
 
 
 /*#
-    @method signal_hide gtk.Widget
+    @method signal_hide GtkWidget
     @brief Connect a VMSlot to the widget hide signal and return it
  */
 FALCON_FUNC Widget::signal_hide( VMARG )
@@ -665,7 +665,7 @@ void Widget::on_hide( GtkWidget* obj, gpointer _vm )
 
 
 /*#
-    @method signal_show gtk.Widget
+    @method signal_show GtkWidget
     @brief Connect a VMSlot to the widget show signal and return it
  */
 FALCON_FUNC Widget::signal_show( VMARG )
@@ -696,7 +696,7 @@ void Widget::on_show( GtkWidget* obj, gpointer _vm )
 
 
 /*#
-    @method signal_size_request gtk.Widget
+    @method signal_size_request GtkWidget
     @brief Connect a VMSlot to the widget size-request signal and return it
  */
 FALCON_FUNC Widget::signal_size_request( VMARG )
@@ -718,7 +718,7 @@ void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm 
         return;
 
     VMachine* vm = (VMachine*)_vm;
-    Item* wki = vm->findWKI( "Requisition" );
+    Item* wki = vm->findWKI( "GtkRequisition" );
     Iterator iter( cs );
     Item it;
 
@@ -731,7 +731,7 @@ void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm 
                 || !it.asObject()->getMethod( "on_size_request", it ) )
             {
                 printf(
-                "[Widget::on_size_request] invalid callback (expected callable)\n" );
+                "[GtkWidget::on_size_request] invalid callback (expected callable)\n" );
                 return;
             }
         }
@@ -774,7 +774,7 @@ void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm 
 
 
 /*#
-    @method destroy gtk.Widget
+    @method destroy GtkWidget
     @brief Destroys a widget.
 
     Equivalent to gtk_object_destroy().
@@ -797,7 +797,7 @@ FALCON_FUNC Widget::destroy( VMARG )
 
 
 /*#
-    @method unparent gtk.Widget
+    @method unparent GtkWidget
     @brief This function is only for use in widget implementations.
 
     Should be called by implementations of the remove method on GtkContainer,
@@ -816,7 +816,7 @@ FALCON_FUNC Widget::unparent( VMARG )
 
 
 /*#
-    @method show gtk.Widget
+    @method show GtkWidget
     @brief Flags a widget to be displayed.
  */
 FALCON_FUNC Widget::show( VMARG )
@@ -834,7 +834,7 @@ FALCON_FUNC Widget::show( VMARG )
 
 
 /*#
-    @method show_now gtk.Widget
+    @method show_now GtkWidget
     @brief Shows a widget.
  */
 FALCON_FUNC Widget::show_now( VMARG )
@@ -852,7 +852,7 @@ FALCON_FUNC Widget::show_now( VMARG )
 
 
 /*#
-    @method hide gtk.Widget
+    @method hide GtkWidget
     @brief Reverses the effects of show(), causing the widget to be hidden (invisible to the user).
  */
 FALCON_FUNC Widget::hide( VMARG )
@@ -870,7 +870,7 @@ FALCON_FUNC Widget::hide( VMARG )
 
 
 /*#
-    @method show_all gtk.Widget
+    @method show_all GtkWidget
     @brief Recursively shows a widget, and any child widgets (if the widget is a container).
  */
 FALCON_FUNC Widget::show_all( VMARG )
@@ -888,7 +888,7 @@ FALCON_FUNC Widget::show_all( VMARG )
 
 
 /*#
-    @method hide_all gtk.Widget
+    @method hide_all GtkWidget
     @brief Recursively hides a widget and any child widgets.
  */
 FALCON_FUNC Widget::hide_all( VMARG )
@@ -906,7 +906,7 @@ FALCON_FUNC Widget::hide_all( VMARG )
 
 
 /*#
-    @method map gtk.Widget
+    @method map GtkWidget
     @brief This function is only for use in widget implementations.
 
     Causes a widget to be mapped if it isn't already.
@@ -924,7 +924,7 @@ FALCON_FUNC Widget::map( VMARG )
 
 
 /*#
-    @method unmap gtk.Widget
+    @method unmap GtkWidget
     @brief This function is only for use in widget implementations.
 
     Causes a widget to be unmapped if it's currently mapped.
@@ -942,7 +942,7 @@ FALCON_FUNC Widget::unmap( VMARG )
 
 
 /*#
-    @method realize gtk.Widget
+    @method realize GtkWidget
     @brief Creates the GDK (windowing system) resources associated with a widget.
 
     For example, widget->window will be created when a widget is realized.
@@ -973,7 +973,7 @@ FALCON_FUNC Widget::realize( VMARG )
 
 
 /*#
-    @method unrealize gtk.Widget
+    @method unrealize GtkWidget
     @brief This function is only useful in widget implementations.
 
     Causes a widget to be unrealized (frees all GDK resources associated with
@@ -992,7 +992,7 @@ FALCON_FUNC Widget::unrealize( VMARG )
 
 
 /*#
-    @method queue_draw gtk.Widget
+    @method queue_draw GtkWidget
     @brief Equivalent to calling widget.queue_draw_area() for the entire area of a widget.
  */
 FALCON_FUNC Widget::queue_draw( VMARG )
@@ -1008,7 +1008,7 @@ FALCON_FUNC Widget::queue_draw( VMARG )
 
 
 /*#
-    @method queue_resize gtk.Widget
+    @method queue_resize GtkWidget
     @brief This function is only for use in widget implementations.
 
     Flags a widget to have its size renegotiated; should be called when a widget
@@ -1029,7 +1029,7 @@ FALCON_FUNC Widget::queue_resize( VMARG )
 
 
 /*#
-    @method queue_resize_no_redraw gtk.Widget
+    @method queue_resize_no_redraw GtkWidget
     @brief This function works like gtk_widget_queue_resize(), except that the widget is not invalidated.
 */
 FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
@@ -1048,9 +1048,9 @@ FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
 
 
 /*#
-    @method size_request gtk.Widget
+    @method size_request GtkWidget
     @brief Get the size "requisition" of the widget.
-    @return gtk.Requisition object
+    @return GtkRequisition object
 
     This function is typically used when implementing a GtkContainer subclass.
     Obtains the preferred size of a widget. The container uses this information
@@ -1075,13 +1075,13 @@ FALCON_FUNC Widget::size_request( VMARG )
     GET_OBJ( self );
     GtkRequisition req;
     gtk_widget_size_request( (GtkWidget*)_obj, &req );
-    Item* wki = vm->findWKI( "Requisition" );
+    Item* wki = vm->findWKI( "GtkRequisition" );
     vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
 }
 
 
 /*#
-    @method get_child_requisition gtk.Widget
+    @method get_child_requisition GtkWidget
     @brief This function is only for use in widget implementations.
 
     Obtains widget->requisition, unless someone has forced a particular geometry
@@ -1098,7 +1098,7 @@ FALCON_FUNC Widget::get_child_requisition( VMARG )
     GET_OBJ( self );
     GtkRequisition req;
     gtk_widget_get_child_requisition( (GtkWidget*)_obj, &req );
-    Item* wki = vm->findWKI( "Requisition" );
+    Item* wki = vm->findWKI( "GtkRequisition" );
     vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
 }
 
@@ -1120,7 +1120,7 @@ FALCON_FUNC Widget::get_child_requisition( VMARG )
 
 
 /*#
-    @method activate gtk.Widget
+    @method activate GtkWidget
     @brief For widgets that can be "activated" (buttons, menu items, etc).
     @return boolean
  */
@@ -1139,7 +1139,7 @@ FALCON_FUNC Widget::activate( VMARG )
 
 
 /*#
-    @method reparent gtk.Widget
+    @method reparent GtkWidget
     @brief Moves a widget from one container to another.
     @param new_parent The new parent
  */
@@ -1148,9 +1148,9 @@ FALCON_FUNC Widget::reparent( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
+        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
     {
-        throw_inv_params( "Widget" );
+        throw_inv_params( "GtkWidget" );
     }
 #endif
     MYSELF;
@@ -1165,7 +1165,7 @@ FALCON_FUNC Widget::reparent( VMARG )
 
 
 /*#
-    @method is_focus gtk.Widget
+    @method is_focus GtkWidget
     @brief Determines if the widget is the focus widget within its toplevel.
     This does not mean that the HAS_FOCUS flag is necessarily set;
     HAS_FOCUS will only be set if the toplevel widget additionally has the
@@ -1187,7 +1187,7 @@ FALCON_FUNC Widget::is_focus( VMARG )
 
 
 /*#
-    @method grab_focus gtk.Widget
+    @method grab_focus GtkWidget
     @brief Causes widget to have the keyboard focus for the GtkWindow it's inside.
     widget must be a focusable widget, such as a GtkEntry; something like GtkFrame won't work.
     More precisely, it must have the GTK_CAN_FOCUS flag set.
@@ -1208,7 +1208,7 @@ FALCON_FUNC Widget::grab_focus( VMARG )
 
 
 /*#
-    @method grab_default gtk.Widget
+    @method grab_default GtkWidget
     @brief Causes widget to become the default widget.
     widget must have the GTK_CAN_DEFAULT flag set; typically you have to set this flag
     yourself by calling gtk_widget_set_can_default (widget, TRUE). The default widget
@@ -1230,7 +1230,7 @@ FALCON_FUNC Widget::grab_default( VMARG )
 
 
 /*#
-    @method set_name gtk.Widget
+    @method set_name GtkWidget
     @brief Attribute a name to the widget.
     @param name (string)
     Widgets can be named, which allows you to refer to them from a gtkrc file.
@@ -1256,10 +1256,10 @@ FALCON_FUNC Widget::set_name( VMARG )
 
 
 /*#
-    @method get_name gtk.Widget
+    @method get_name GtkWidget
     @brief Get the name of the widget.
     @return (string)
-    See gtk.Widget.set_name() for the significance of widget names.
+    See GtkWidget.set_name() for the significance of widget names.
  */
 FALCON_FUNC Widget::get_name( VMARG )
 {
@@ -1281,7 +1281,7 @@ FALCON_FUNC Widget::get_name( VMARG )
 
 
 /*#
-    @method set_sensitive gtk.Widget
+    @method set_sensitive GtkWidget
     @brief Sets the sensitivity of a widget.
     A widget is sensitive if the user can interact with it.
     Insensitive widgets are "grayed out" and the user can't interact with them.
@@ -1322,7 +1322,7 @@ FALCON_FUNC Widget::set_sensitive( VMARG )
 
 
 /*#
-    @method get_toplevel gtk.Widget
+    @method get_toplevel GtkWidget
     @brief This function returns the topmost widget in the container hierarchy widget is a part of.
     @return (widget)
     If widget has no parent widgets, it will be returned as the topmost widget.
@@ -1339,7 +1339,7 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_widget_get_toplevel( (GtkWidget*)_obj );
-    Item* wki = vm->findWKI( "Widget" );
+    Item* wki = vm->findWKI( "GtkWidget" );
     vm->retval( new Widget( wki->asClass(), gwdt ) );
 }
 
@@ -1354,7 +1354,7 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
 
 
 /*#
-    @method get_events gtk.Widget
+    @method get_events GtkWidget
     @brief Returns the event mask for the widget.
     @return (integer)
     (A bitfield containing flags from the GdkEventMask enumeration.)
@@ -1379,7 +1379,7 @@ FALCON_FUNC Widget::get_events( VMARG )
 
 
 /*#
-    @method is_ancestor gtk.Widget
+    @method is_ancestor GtkWidget
     @brief Determines whether widget is somewhere inside ancestor, possibly with intermediate containers.
     @return (boolean)
  */
@@ -1388,9 +1388,9 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
+        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
     {
-        throw_inv_params( "Widget" );
+        throw_inv_params( "GtkWidget" );
     }
 #endif
     MYSELF;
@@ -1405,7 +1405,7 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
 
 
 /*#
-    @method hide_on_delete gtk.Widget
+    @method hide_on_delete GtkWidget
     @brief Utility function.
     @return (boolean) always true
     Intended to be connected to the "delete-event" signal on a GtkWindow.
@@ -1566,7 +1566,7 @@ FALCON_FUNC Widget::hide_on_delete( VMARG )
 
 
 /*#
-    @method get_size_request gtk.Widget
+    @method get_size_request GtkWidget
     @brief Get the size requested for the widget
     @return [ width, height ]
 
@@ -1601,7 +1601,7 @@ FALCON_FUNC Widget::get_size_request( VMARG )
 
 
 /*#
-    @method set_size_request gtk.Widget
+    @method set_size_request GtkWidget
     @brief Sets the minimum size of a widget
     @param width (integer)
     @param height (integer)

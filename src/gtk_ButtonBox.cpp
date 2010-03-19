@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void ButtonBox::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_ButtonBox = mod->addClass( "ButtonBox", &Gtk::abstract_init );
+    Falcon::Symbol* c_ButtonBox = mod->addClass( "GtkButtonBox", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Box" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBox" ) );
     c_ButtonBox->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -39,7 +39,7 @@ void ButtonBox::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.ButtonBox
+    @class GtkButtonBox
     @brief Abstract container class.
 
     The primary purpose of this class is to keep track of the various properties
@@ -51,7 +51,7 @@ void ButtonBox::modInit( Falcon::Module* mod )
 
 
 /*#
-    @method get_child_size gtk.ButtonBox
+    @method get_child_size GtkButtonBox
     @brief Retrieves the current width and height of all child widgets in a button box.
     @return Array( minimum width, minimum height )
  */
@@ -73,7 +73,7 @@ FALCON_FUNC ButtonBox::get_child_size( VMARG )
 
 
 /*#
-    @method get_child_ipadding gtk.ButtonBox
+    @method get_child_ipadding GtkButtonBox
     @brief Gets the default number of pixels that pad the buttons in a given button box.
     @return Array( padx, pady )
 
@@ -98,7 +98,7 @@ FALCON_FUNC ButtonBox::get_child_ipadding( VMARG )
 
 
 /*#
-    @method get_child_secondary gtk.ButtonBox
+    @method get_child_secondary GtkButtonBox
     @brief Returns whether child should appear in a secondary group of children.
     @param child (widget)
     @return (boolean)
@@ -108,8 +108,8 @@ FALCON_FUNC ButtonBox::get_child_secondary( VMARG )
     Item* i_child = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || i_child->isNil() || !i_child->isObject()
-        || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
     MYSELF;
@@ -129,7 +129,7 @@ FALCON_FUNC ButtonBox::get_child_secondary( VMARG )
 
 
 /*#
-    @method set_child_secondary gtk.ButtonBox
+    @method set_child_secondary GtkButtonBox
     @brief Sets whether child should appear in a secondary group of children.
     @param widget
     @param is_secondary (boolean)
@@ -142,9 +142,9 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
     Item* i_sec = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || i_child->isNil() || !i_child->isObject()
-        || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
+        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "gtk.GtkWidget" ) )
         || !i_sec || i_sec->isNil() || !i_sec->isBoolean() )
-        throw_inv_params( "Widget,B" );
+        throw_inv_params( "GtkWidget,B" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
     MYSELF;

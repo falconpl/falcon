@@ -16,7 +16,7 @@ namespace Gtk {
  */
 void EntryBuffer::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_EntryBuffer = mod->addClass( "EntryBuffer", &EntryBuffer::init );
+    Falcon::Symbol* c_EntryBuffer = mod->addClass( "GtkEntryBuffer", &EntryBuffer::init );
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_EntryBuffer->getClassDef()->addInheritance( in );
@@ -60,17 +60,17 @@ Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* bu
 
 
 /*#
-    @class gtk.EntryBuffer
+    @class GtkEntryBuffer
     @brief Text buffer for GtkEntry
     @optparam initial_text (string) Optionally, specify initial text to set in the buffer.
 
-    The gtk.EntryBuffer class contains the actual text displayed in a gtk.Entry widget.
+    The GtkEntryBuffer class contains the actual text displayed in a GtkEntry widget.
 
-    A single gtk.EntryBuffer object can be shared by multiple gtk.Entry widgets which
+    A single GtkEntryBuffer object can be shared by multiple GtkEntry widgets which
     will then share the same text content, but not the cursor position, visibility
     attributes, icon etc.
 
-    gtk.EntryBuffer may be derived from. Such a derived class might allow text to be
+    GtkEntryBuffer may be derived from. Such a derived class might allow text to be
     stored in an alternate location, such as non-pageable memory, useful in the case
     of important passwords. Or a derived class could integrate with an application's
     concept of undo/redo.
@@ -98,7 +98,7 @@ FALCON_FUNC EntryBuffer::init( VMARG )
 
 
 /*#
-    @method get_text gtk.EntryBuffer
+    @method get_text GtkEntryBuffer
     @brief Retrieves the contents of the buffer.
     @return (string) contents of buffer
 
@@ -119,7 +119,7 @@ FALCON_FUNC EntryBuffer::get_text( VMARG )
 
 
 /*#
-    @method set_text gtk.EntryBuffer
+    @method set_text GtkEntryBuffer
     @brief Sets the text in the buffer.
     @param text the new text
 
@@ -140,7 +140,7 @@ FALCON_FUNC EntryBuffer::set_text( VMARG )
 
 
 /*#
-    @method get_bytes gtk.EntryBuffer
+    @method get_bytes GtkEntryBuffer
     @brief Retrieves the length in bytes of the buffer.
     @return The byte length of the buffer.
 
@@ -159,7 +159,7 @@ FALCON_FUNC EntryBuffer::get_bytes( VMARG )
 
 
 /*#
-    @method get_length gtk.EntryBuffer
+    @method get_length GtkEntryBuffer
     @brief Retrieves the length in characters of the buffer.
     @return The number of characters in the buffer.
  */
@@ -176,7 +176,7 @@ FALCON_FUNC EntryBuffer::get_length( VMARG )
 
 
 /*#
-    @method get_max_length gtk.EntryBuffer
+    @method get_max_length GtkEntryBuffer
     @brief Retrieves the maximum allowed length of the text in buffer.
     @return the maximum allowed number of characters in GtkEntryBuffer, or 0 if there is no maximum.
 
@@ -195,7 +195,7 @@ FALCON_FUNC EntryBuffer::get_max_length( VMARG )
 
 
 /*#
-    @method set_max_length gtk.EntryBuffer
+    @method set_max_length GtkEntryBuffer
     @brief Sets the maximum allowed length of the contents of the buffer.
     @param max_length the maximum length of the entry buffer, or 0 for no maximum.
 

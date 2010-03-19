@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void RadioButton::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_RadioButton = mod->addClass( "RadioButton", &RadioButton::init );
+    Falcon::Symbol* c_RadioButton = mod->addClass( "GtkRadioButton", &RadioButton::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "CheckButton" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkCheckButton" ) );
     c_RadioButton->getClassDef()->addInheritance( in );
 
     c_RadioButton->setWKS( true );
@@ -52,19 +52,19 @@ Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* bt
 
 
 /*#
-    @class gtk.RadioButton
+    @class GtkRadioButton
     @brief A choice from multiple check buttons
     @optparam label (string)
     @optparam mnemonic (boolean, default false)
-    @optparam group_member (another gtk.RadioButton belonging to that group)
+    @optparam group_member (another GtkRadioButton belonging to that group)
 
-    A single radio button performs the same basic function as a gtk.CheckButton, as
+    A single radio button performs the same basic function as a GtkCheckButton, as
     its position in the object hierarchy reflects. It is only when multiple radio
     buttons are grouped together that they become a different user interface component
     in their own right.
 
     Every radio button is a member of some group of radio buttons. When one is selected,
-    all other radio buttons in the same group are deselected. A gtk.RadioButton is
+    all other radio buttons in the same group are deselected. A GtkRadioButton is
     one way of giving the user a choice from many options.
 
     When an unselected button in the group is clicked the clicked button receives the
@@ -88,7 +88,7 @@ FALCON_FUNC RadioButton::init( VMARG )
     {
 #ifndef NO_PARAMETER_CHECK
         if ( i_lbl->isNil() || !i_lbl->isString() )
-            throw_inv_params( "[S,B,RadioButton]" );
+            throw_inv_params( "[S,B,GtkRadioButton]" );
 #endif
         AutoCString lbl( i_lbl->asString() );
 
@@ -96,14 +96,14 @@ FALCON_FUNC RadioButton::init( VMARG )
         {
 #ifndef NO_PARAMETER_CHECK
             if ( i_mne->isNil() || !i_mne->isBoolean() )
-                throw_inv_params( "[S,B,RadioButton]" );
+                throw_inv_params( "[S,B,GtkRadioButton]" );
 #endif
             if ( i_wdt )
             {
 #ifndef NO_PARAMETER_CHECK
                 if ( i_wdt->isNil()
-                    || !( i_wdt->isOfClass( "RadioButton" ) || i_wdt->isOfClass( "gtk.RadioButton" ) ) )
-                    throw_inv_params( "[S,B,RadioButton]" );
+                    || !( i_wdt->isOfClass( "GtkRadioButton" ) || i_wdt->isOfClass( "gtk.GtkRadioButton" ) ) )
+                    throw_inv_params( "[S,B,GtkRadioButton]" );
 #endif
                 GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();
 
@@ -136,7 +136,7 @@ FALCON_FUNC RadioButton::init( VMARG )
 
 
 /*#
-    @method signal_group_changed gtk.RadioButton
+    @method signal_group_changed GtkRadioButton
     @brief Connect a VMSlot to the button group-changed signal and return it
 
     Emitted when the group of radio buttons that a radio button belongs to changes.
@@ -159,9 +159,9 @@ void RadioButton::on_group_changed( GtkRadioButton* btn, gpointer _vm )
 
 
 /*#
-    @method get_group gtk.RadioButton
+    @method get_group GtkRadioButton
     @brief Retrieves the group assigned to a radio button.
-    @return array containing gtk.RadioButton objects belonging to the group.
+    @return array containing GtkRadioButton objects belonging to the group.
  */
 FALCON_FUNC RadioButton::get_group( VMARG )
 {
@@ -175,7 +175,7 @@ FALCON_FUNC RadioButton::get_group( VMARG )
     GSList* grp = gtk_radio_button_get_group( (GtkRadioButton*)_obj );
     if ( grp && grp->data )
     {
-        Item* wki = vm->findWKI( "RadioButton" );
+        Item* wki = vm->findWKI( "GtkRadioButton" );
         for ( ; grp; grp = grp->next )
         {
             arr->append( new RadioButton( wki->asClass(), (GtkRadioButton*) grp->data ) );
@@ -186,9 +186,9 @@ FALCON_FUNC RadioButton::get_group( VMARG )
 
 
 /*#
-    @method set_group gtk.RadioButton
-    @brief Sets a gtk.RadioButton's group.
-    @param group_member a gtk.RadioButton belonging to the group
+    @method set_group GtkRadioButton
+    @brief Sets a GtkRadioButton's group.
+    @param group_member a GtkRadioButton belonging to the group
 
     It should be noted that this does not change the layout of your interface in
     any way, so if you are changing the group, it is likely you will need to re-arrange
@@ -199,8 +199,8 @@ FALCON_FUNC RadioButton::set_group( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "RadioButton" ) || i_wdt->isOfClass( "gtk.RadioButton" ) ) )
-        throw_inv_params( "RadioButton" );
+        !( i_wdt->isOfClass( "GtkRadioButton" ) || i_wdt->isOfClass( "gtk.GtkRadioButton" ) ) )
+        throw_inv_params( "GtkRadioButton" );
 #endif
     GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();
     GSList* grp = gtk_radio_button_get_group( wdt );

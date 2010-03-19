@@ -14,11 +14,11 @@ namespace Gtk {
 
 void Button::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Button = mod->addClass( "Button", &Button::init )
+    Falcon::Symbol* c_Button = mod->addClass( "GtkButton", &Button::init )
         ->addParam( "label" )
         ->addParam( "mode" );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Bin" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_Button->getClassDef()->addInheritance( in );
 
     mod->addClassProperty( c_Button, "NO_MNEMONIC" ).setInteger( 0 ).setReadOnly( true );
@@ -64,10 +64,10 @@ void Button::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Button
+    @class GtkButton
     @brief A push button
     @optparam label A label string, or a gtk stock id (string)
-    @optparam mode (integer) gtk.Button.NO_MNEMONIC (default), or gtk.Button.MNEMONIC, or gtk.Button.STOCK
+    @optparam mode (integer) GtkButton.NO_MNEMONIC (default), or GtkButton.MNEMONIC, or GtkButton.STOCK
     @raise ParamError Invalid argument
 
     If no arguments are given, creates an empty button.
@@ -136,7 +136,7 @@ FALCON_FUNC Button::init( VMARG )
 
 
 /*#
-    @method signal_activate gtk.Button
+    @method signal_activate GtkButton
     @brief Connect a VMSlot to the button activate signal and return it
 
     The activate signal on GtkButton is an action signal and emitting it causes
@@ -156,7 +156,7 @@ void Button::on_activate( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method signal_clicked gtk.Button
+    @method signal_clicked GtkButton
     @brief Connect a VMSlot to the button clicked signal and return it
 
     Emitted when the button has been activated (pressed and released).
@@ -174,7 +174,7 @@ void Button::on_clicked( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method signal_enter gtk.Button
+    @method signal_enter GtkButton
     @brief Connect a VMSlot to the button enter signal and return it
 
     Emitted when the pointer enters the button.
@@ -195,7 +195,7 @@ void Button::on_enter( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method signal_leave gtk.Button
+    @method signal_leave GtkButton
     @brief Connect a VMSlot to the button leave signal and return it
 
     Emitted when the pointer leaves the button.
@@ -216,7 +216,7 @@ void Button::on_leave( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method signal_pressed gtk.Button
+    @method signal_pressed GtkButton
     @brief Connect a VMSlot to the button pressed signal and return it
 
     Emitted when the button is pressed.
@@ -237,7 +237,7 @@ void Button::on_pressed( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method signal_released gtk.Button
+    @method signal_released GtkButton
     @brief Connect a VMSlot to the button released signal and return it
 
     Emitted when the button is released.
@@ -258,7 +258,7 @@ void Button::on_released( GtkButton* btn, gpointer _vm )
 
 
 /*#
-    @method pressed gtk.Button
+    @method pressed GtkButton
     @brief Emits a "pressed" signal to the given GtkButton.
  */
 FALCON_FUNC Button::pressed( VMARG )
@@ -276,7 +276,7 @@ FALCON_FUNC Button::pressed( VMARG )
 
 
 /*#
-    @method released gtk.Button
+    @method released GtkButton
     @brief Emits a "released" signal to the given GtkButton.
  */
 FALCON_FUNC Button::released( VMARG )
@@ -294,7 +294,7 @@ FALCON_FUNC Button::released( VMARG )
 
 
 /*#
-    @method clicked gtk.Button
+    @method clicked GtkButton
     @brief Emits a "clicked" signal to the given GtkButton.
  */
 FALCON_FUNC Button::clicked( VMARG )
@@ -312,7 +312,7 @@ FALCON_FUNC Button::clicked( VMARG )
 
 
 /*#
-    @method enter gtk.Button
+    @method enter GtkButton
     @brief Emits a "enter" signal to the given GtkButton.
  */
 FALCON_FUNC Button::enter( VMARG )
@@ -330,7 +330,7 @@ FALCON_FUNC Button::enter( VMARG )
 
 
 /*#
-    @method leave gtk.Button
+    @method leave GtkButton
     @brief Emits a "leave" signal to the given GtkButton.
  */
 FALCON_FUNC Button::leave( VMARG )
@@ -353,7 +353,7 @@ FALCON_FUNC Button::leave( VMARG )
 
 
 /*#
-    @method set_label gtk.Button
+    @method set_label GtkButton
     @brief Sets the text of the label of the button.
 
     This text is also used to select the stock item if gtk_button_set_use_stock() is used.
@@ -376,7 +376,7 @@ FALCON_FUNC Button::set_label( VMARG )
 
 
 /*#
-    @method get_label gtk.Button
+    @method get_label GtkButton
     @brief Fetches the text from the label of the button.
 
     If the label text has not been set the return value will be NULL.
@@ -399,7 +399,7 @@ FALCON_FUNC Button::get_label( VMARG )
 
 
 /*#
-    @method set_use_stock gtk.Button
+    @method set_use_stock GtkButton
     @brief Use a stock id.
     If true, the label set on the button is used as a stock id to select the
     stock item for the button.
@@ -420,7 +420,7 @@ FALCON_FUNC Button::set_use_stock( VMARG )
 
 
 /*#
-    @method get_use_stock gtk.Button
+    @method get_use_stock GtkButton
     @brief Returns whether the button label is a stock item.
  */
 FALCON_FUNC Button::get_use_stock( VMARG )
@@ -438,7 +438,7 @@ FALCON_FUNC Button::get_use_stock( VMARG )
 
 
 /*#
-    @method set_use_underline gtk.Button
+    @method set_use_underline GtkButton
     @brief Sets an underline.
     If true, an underline in the text of the button label indicates the next
     character should be used for the mnemonic accelerator key.
@@ -459,7 +459,7 @@ FALCON_FUNC Button::set_use_underline( VMARG )
 
 
 /*#
-    @method get_use_underline gtk.Button
+    @method get_use_underline GtkButton
     @brief Returns whether an embedded underline in the button label indicates a mnemonic.
  */
 FALCON_FUNC Button::get_use_underline( VMARG )
@@ -477,7 +477,7 @@ FALCON_FUNC Button::get_use_underline( VMARG )
 
 
 /*#
-    @method set_focus_on_click gtk.Button
+    @method set_focus_on_click GtkButton
     @brief Sets whether the button will grab focus when it is clicked with the mouse.
 
     Making mouse clicks not grab focus is useful in places like toolbars where
@@ -499,7 +499,7 @@ FALCON_FUNC Button::set_focus_on_click( VMARG )
 
 
 /*#
-    @method get_focus_on_click gtk.Button
+    @method get_focus_on_click GtkButton
     @brief Returns whether the button grabs focus when it is clicked with the mouse.
  */
 FALCON_FUNC Button::get_focus_on_click( VMARG )
@@ -522,7 +522,7 @@ FALCON_FUNC Button::get_focus_on_click( VMARG )
 
 
 /*#
-    @method set_image gtk.Button
+    @method set_image GtkButton
     @brief Set the image of button to the given widget.
 
     Note that it depends on the "gtk-button-images" setting whether the image will
@@ -533,9 +533,9 @@ FALCON_FUNC Button::set_image( VMARG )
     Item* i_img = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_img || i_img->isNil() ||
-        !( i_img->isOfClass( "Widget" ) || i_img->isOfClass( "gtk.Widget" ) ) )
+        !( i_img->isOfClass( "GtkWidget" ) || i_img->isOfClass( "gtk.GtkWidget" ) ) )
     {
-        throw_inv_params( "Widget" );
+        throw_inv_params( "GtkWidget" );
     }
 #endif
     MYSELF;
@@ -546,7 +546,7 @@ FALCON_FUNC Button::set_image( VMARG )
 
 
 /*#
-    @method get_image gtk.Button
+    @method get_image GtkButton
     @brief Gets the widget that is currenty set as the image of button.
 
     This may have been explicitly set by gtk_button_set_image() or constructed by
@@ -565,7 +565,7 @@ FALCON_FUNC Button::get_image( VMARG )
     GtkWidget* gwdt = gtk_button_get_image( (GtkButton*)_obj );
     if ( gwdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), gwdt ) );
     }
     else

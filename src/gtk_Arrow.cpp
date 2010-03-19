@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void Arrow::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Arrow = mod->addClass( "Arrow", &Arrow::init );
+    Falcon::Symbol* c_Arrow = mod->addClass( "GtkArrow", &Arrow::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Misc" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMisc" ) );
     c_Arrow->getClassDef()->addInheritance( in );
 
     mod->addClassMethod( c_Arrow, "set", &Arrow::set );
@@ -25,7 +25,7 @@ void Arrow::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Arrow
+    @class GtkArrow
     @brief Displays an arrow
     @optparam arrow_type a valid GtkArrowType (default GTK_ARROW_NONE)
     @optparam shadow_type a valid GtkShadowType (default GTK_SHADOW_NONE)
@@ -72,7 +72,7 @@ FALCON_FUNC Arrow::init( VMARG )
 
 
 /*#
-    @method set gtk.Arrow
+    @method set GtkArrow
     @brief Sets the direction and style of the GtkArrow.
     @param arrow_type a valid GtkArrowType
     @param shadow_type a valid GtkShadowType
@@ -84,7 +84,7 @@ FALCON_FUNC Arrow::set( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_type || i_type->isNil() || !i_type->isInteger()
         || !i_shad || i_shad->isNil() || !i_shad->isInteger() )
-        throw_inv_params( "arrow type, shadow type" );
+        throw_inv_params( "GtkArrowType,GtkShadowType" );
 #endif
     int type = i_type->asInteger();
     int shad = i_shad->asInteger();

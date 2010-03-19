@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void Misc::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Misc = mod->addClass( "Misc", &Gtk::abstract_init );
+    Falcon::Symbol* c_Misc = mod->addClass( "GtkMisc", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Widget" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Misc->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -34,7 +34,7 @@ void Misc::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Misc
+    @class GtkMisc
     @brief Base class for widgets with alignments and padding.
 
     The GtkMisc widget is an abstract widget which is not useful itself, but is
@@ -50,7 +50,7 @@ void Misc::modInit( Falcon::Module* mod )
  */
 
 /*#
-    @method set_alignment gtk.Misc
+    @method set_alignment GtkMisc
     @brief Sets the alignment of the widget.
     @param xalign the horizontal alignment, from 0 (left) to 1 (right). (float)
     @param yalign the vertical alignment, from 0 (top) to 1 (bottom). (float)
@@ -77,7 +77,7 @@ FALCON_FUNC Misc::set_alignment( VMARG )
 
 
 /*#
-    @method set_padding gtk.Misc
+    @method set_padding GtkMisc
     @brief Sets the amount of space to add around the widget.
     @param xpad the amount of space to add on the left and right of the widget, in pixels.
     @param ypad the amount of space to add on the top and bottom of the widget, in pixels.
@@ -100,7 +100,7 @@ FALCON_FUNC Misc::set_padding( VMARG )
 
 
 /*#
-    @method get_alignment gtk.Misc
+    @method get_alignment GtkMisc
     @brief Gets the X and Y alignment of the widget within its allocation.
     @return [float x, float y]
  */
@@ -118,7 +118,7 @@ FALCON_FUNC Misc::get_alignment( VMARG )
 
 
 /*#
-    @method get_padding gtk.Misc
+    @method get_padding GtkMisc
     @brief Gets the padding in the X and Y directions of the widget.
     @return [int x, int y]
  */

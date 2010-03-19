@@ -15,7 +15,7 @@ namespace Gtk {
  */
 void Requisition::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Requisition = mod->addClass( "Requisition", &Requisition::init )
+    Falcon::Symbol* c_Requisition = mod->addClass( "GtkRequisition", &Requisition::init )
         ->addParam( "width" )->addParam( "height" );
 
     c_Requisition->setWKS( true );
@@ -92,8 +92,8 @@ Falcon::CoreObject* Requisition::factory( const Falcon::CoreClass* gen, void* re
 
 
 /*#
-    @class gtk.Requisition
-    @brief A gtk.Requisition represents the desired size of a widget.
+    @class GtkRequisition
+    @brief A GtkRequisition represents the desired size of a widget.
     @optparam width
     @optparam height
 

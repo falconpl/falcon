@@ -32,7 +32,7 @@ void Object::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.GObject
+    @class GObject
     @brief The base object type
 
     GObject is the fundamental type providing the common attributes and methods
@@ -43,7 +43,7 @@ void Object::modInit( Falcon::Module* mod )
 
 
 /*#
-    @method signal_notify gtk.GObject
+    @method signal_notify GObject
     @brief Connect a VMSlot to the object notify signal and return it
 
     The notify signal is emitted on an object when one of its properties has been
@@ -68,7 +68,7 @@ void Object::on_notify( GObject* obj, GParamSpec* pspec, gpointer _vm )
 
 
 /*#
-    @method set gtk.GObject
+    @method set GObject
     @brief Sets a property on an object.
     @param property_name name of the property to set
     @param value value for the property (nil, integer, boolean, numeric, or string)
@@ -121,7 +121,7 @@ FALCON_FUNC Object::set( VMARG )
 
 
 /*#
-    @method notify gtk.GObject
+    @method notify GObject
     @brief Emits a "notify" signal for the property property_name on object.
     @param property_name (string)
  */
@@ -140,7 +140,7 @@ FALCON_FUNC Object::notify( VMARG )
 
 
 /*#
-    @method freeze_notify gtk.GObject
+    @method freeze_notify GObject
     @brief Increases the freeze count on object.
 
     If the freeze count is non-zero, the emission of "notify" signals on object
@@ -162,7 +162,7 @@ FALCON_FUNC Object::freeze_notify( VMARG )
 
 
 /*#
-    @method thaw_notify gtk.GObject
+    @method thaw_notify GObject
     @brief Reverts the effect of a previous call to freeze_notify().
 
     The freeze count is decreased on object and when it reaches zero, all queued

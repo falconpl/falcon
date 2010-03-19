@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void Image::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Image = mod->addClass( "Image", &Image::init );
+    Falcon::Symbol* c_Image = mod->addClass( "GtkImage", &Image::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Misc" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMisc" ) );
     c_Image->getClassDef()->addInheritance( in );
 #if 0
     Gtk::MethodTab methods[] =
@@ -31,22 +31,22 @@ void Image::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Image
+    @class GtkImage
     @brief A widget displaying an image
     @optparam filename a filename (string)
 
-    The gtk.Image widget displays an image. Various kinds of object can be displayed
+    The GtkImage widget displays an image. Various kinds of object can be displayed
     as an image; most typically, you would load a GdkPixbuf ("pixel buffer") from a
     file, and then display that.
 
     [...]
 
-    gtk.Image is a subclass of gtk.Misc, which implies that you can align it (center,
-    left, right) and add padding to it, using gtk.Misc methods.
+    GtkImage is a subclass of GtkMisc, which implies that you can align it (center,
+    left, right) and add padding to it, using GtkMisc methods.
 
-    gtk.Image is a "no window" widget (has no gdk.Window of its own), so by default
+    GtkImage is a "no window" widget (has no gdk.Window of its own), so by default
     does not receive events. If you want to receive events on the image, such as
-    button clicks, place the image inside a gtk.EventBox, then connect to the event
+    button clicks, place the image inside a GtkEventBox, then connect to the event
     signals on the event box.
  */
 FALCON_FUNC Image::init( VMARG )

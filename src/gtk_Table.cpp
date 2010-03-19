@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void Table::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Table = mod->addClass( "Table", &Table::init );
+    Falcon::Symbol* c_Table = mod->addClass( "GtkTable", &Table::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Table->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -44,7 +44,7 @@ void Table::modInit( Falcon::Module* mod )
 
 
 /*#
-    @class gtk.Table
+    @class GtkTable
     @brief Pack widgets in regular patterns
     @optparam rows The number of rows the new table should have (default 0).
     @optparam columns The number of columns the new table should have (default 0).
@@ -108,7 +108,7 @@ FALCON_FUNC Table::init( VMARG )
 
 
 /*#
-    @method resize gtk.Table
+    @method resize GtkTable
     @brief Resizes the table.
     @param rows The new number of rows.
     @params columns The new number of columns.
@@ -132,7 +132,7 @@ FALCON_FUNC Table::resize( VMARG )
 
 
 /*#
-    @method attach gtk.Table
+    @method attach GtkTable
     @brief Adds a widget to a table.
     @param child The widget to add.
     @param left_attach the column number to attach the left side of a child widget to.
@@ -162,7 +162,7 @@ FALCON_FUNC Table::attach( VMARG )
     Item* i_ypad = vm->param( 8 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) )
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
         || !i_left || i_left->isNil() || !i_left->isInteger()
         || !i_right || i_right->isNil() || !i_right->isInteger()
         || !i_top || i_top->isNil() || !i_top->isInteger()
@@ -171,7 +171,7 @@ FALCON_FUNC Table::attach( VMARG )
         || !i_yopt || i_yopt->isNil() || !i_yopt->isInteger()
         || !i_xpad || i_xpad->isNil() || !i_xpad->isInteger()
         || !i_ypad || i_ypad->isNil() || !i_ypad->isInteger() )
-        throw_inv_params( "Widget,I,I,I,I,I,I,I" );
+        throw_inv_params( "GtkWidget,I,I,I,I,I,I,I" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -184,7 +184,7 @@ FALCON_FUNC Table::attach( VMARG )
 
 
 /*#
-    @method attach_defaults gtk.Table
+    @method attach_defaults GtkTable
     @brief Adds a widget to a table.
     @param child The widget to add.
     @param left_attach the column number to attach the left side of a child widget to.
@@ -206,12 +206,12 @@ FALCON_FUNC Table::attach_defaults( VMARG )
     Item* i_bottom = vm->param( 4 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) )
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
         || !i_left || i_left->isNil() || !i_left->isInteger()
         || !i_right || i_right->isNil() || !i_right->isInteger()
         || !i_top || i_top->isNil() || !i_top->isInteger()
         || !i_bottom || i_bottom->isNil() || !i_bottom->isInteger() )
-        throw_inv_params( "Widget,I,I,I,I" );
+        throw_inv_params( "GtkWidget,I,I,I,I" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -222,7 +222,7 @@ FALCON_FUNC Table::attach_defaults( VMARG )
 
 
 /*#
-    @method set_row_spacing gtk.Table
+    @method set_row_spacing GtkTable
     @brief Changes the space between a given table row and the subsequent row.
     @param row row number whose spacing will be changed.
     @param spacing number of pixels that the spacing should take up.
@@ -243,7 +243,7 @@ FALCON_FUNC Table::set_row_spacing( VMARG )
 
 
 /*#
-    @method set_col_spacing gtk.Table
+    @method set_col_spacing GtkTable
     @brief Alters the amount of space between a given table column and the following column.
     @param column the column whose spacing should be changed.
     @param spacing number of pixels that the spacing should take up.
@@ -264,7 +264,7 @@ FALCON_FUNC Table::set_col_spacing( VMARG )
 
 
 /*#
-    @method set_row_spacings gtk.Table
+    @method set_row_spacings GtkTable
     @brief Sets the space between every row in table equal to spacing.
     @param spacing the number of pixels of space to place between every row in the table.
  */
@@ -282,7 +282,7 @@ FALCON_FUNC Table::set_row_spacings( VMARG )
 
 
 /*#
-    @method set_col_spacings gtk.Table
+    @method set_col_spacings GtkTable
     @brief Sets the space between every column in table equal to spacing.
     @param spacing the number of pixels of space to place between every column in the table.
  */
@@ -300,7 +300,7 @@ FALCON_FUNC Table::set_col_spacings( VMARG )
 
 
 /*#
-    @method set_homogeneous gtk.Table
+    @method set_homogeneous GtkTable
     @brief Changes the homogenous property of table cells, ie. whether all cells are an equal size or not.
     @param homogeneous Set to true to ensure all table cells are the same size. Set to false if this is not your desired behaviour.
  */
@@ -318,7 +318,7 @@ FALCON_FUNC Table::set_homogeneous( VMARG )
 
 
 /*#
-    @method get_default_row_spacing gtk.Table
+    @method get_default_row_spacing GtkTable
     @brief Gets the default row spacing for the table. This is the spacing that will be used for newly added rows.
     @return the default row spacing
  */
@@ -335,7 +335,7 @@ FALCON_FUNC Table::get_default_row_spacing( VMARG )
 
 
 /*#
-    @method get_homogeneous gtk.Table
+    @method get_homogeneous GtkTable
     @brief Returns whether the table cells are all constrained to the same width and height.
     @return (boolean) true if the cells are all constrained to the same size
  */
@@ -352,7 +352,7 @@ FALCON_FUNC Table::get_homogeneous( VMARG )
 
 
 /*#
-    @method get_row_spacing gtk.Table
+    @method get_row_spacing GtkTable
     @brief Gets the amount of space between row row, and row row + 1.
     @param row a row in the table, 0 indicates the first row
     @return the row spacing
@@ -371,7 +371,7 @@ FALCON_FUNC Table::get_row_spacing( VMARG )
 
 
 /*#
-    @method get_col_spacing gtk.Table
+    @method get_col_spacing GtkTable
     @brief Gets the amount of space between column col, and column col + 1.
     @param column a column in the table, 0 indicates the first column
     @return the column spacing
@@ -390,7 +390,7 @@ FALCON_FUNC Table::get_col_spacing( VMARG )
 
 
 /*#
-    @method get_default_col_spacing gtk.Table
+    @method get_default_col_spacing GtkTable
     @brief Gets the default column spacing for the table.
     @return the default column spacing
 

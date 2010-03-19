@@ -15,9 +15,9 @@ namespace Gtk {
 
 void Container::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Container = mod->addClass( "Container", &Gtk::abstract_init );
+    Falcon::Symbol* c_Container = mod->addClass( "GtkContainer", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Widget" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Container->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -64,7 +64,7 @@ void Container::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Container
+    @class GtkContainer
     @brief Abstract container class.
 
     This is the abstract container from which all gtk+ widgets which hold other
@@ -74,7 +74,7 @@ void Container::modInit( Falcon::Module* mod )
  */
 
 /*#
-    @method add gtk.Container
+    @method add GtkContainer
     @brief Add a widget to the container.
     @param widget The widget
  */
@@ -83,9 +83,9 @@ FALCON_FUNC Container::add( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
+        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
     {
-        throw_inv_params( "Widget" );
+        throw_inv_params( "GtkWidget" );
     }
 #endif
     MYSELF;
@@ -96,7 +96,7 @@ FALCON_FUNC Container::add( VMARG )
 
 
 /*#
-    @method remove gtk.Container
+    @method remove GtkContainer
     @brief Removes widget from container. Widget must be inside container.
     @param widget
  */
@@ -105,8 +105,8 @@ FALCON_FUNC Container::remove( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -119,7 +119,7 @@ FALCON_FUNC Container::remove( VMARG )
 
 
 /*#
-    @method get_resize_mode gtk.Container
+    @method get_resize_mode GtkContainer
     @brief Returns the resize mode for the container.
  */
 FALCON_FUNC Container::get_resize_mode( VMARG )
@@ -135,7 +135,7 @@ FALCON_FUNC Container::get_resize_mode( VMARG )
 
 
 /*#
-    @method set_resize_mode gtk.Container
+    @method set_resize_mode GtkContainer
     @brief Sets the resize mode for the container.
 
     The resize mode of a container determines whether a resize request will be passed
@@ -160,7 +160,7 @@ FALCON_FUNC Container::set_resize_mode( VMARG )
 
 
 /*#
-    @method check_resize gtk.Container
+    @method check_resize GtkContainer
     @brief ???
  */
 FALCON_FUNC Container::check_resize( VMARG )
@@ -183,7 +183,7 @@ FALCON_FUNC Container::check_resize( VMARG )
 
 
 /*#
-    @method set_reallocate_redraws gtk.Container
+    @method set_reallocate_redraws GtkContainer
     @brief Sets the reallocate_redraws flag of the container to the given value.
     @param need_redraws (boolean)
 
@@ -205,7 +205,7 @@ FALCON_FUNC Container::set_reallocate_redraws( VMARG )
 
 
 /*#
-    @method get_focus_child gtk.Container
+    @method get_focus_child GtkContainer
     @brief Returns the current focus child widget inside container.
  */
 FALCON_FUNC Container::get_focus_child( VMARG )
@@ -219,7 +219,7 @@ FALCON_FUNC Container::get_focus_child( VMARG )
     GtkWidget* wdt = gtk_container_get_focus_child( (GtkContainer*)_obj );
     if ( wdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), wdt ) );
     }
     else
@@ -228,7 +228,7 @@ FALCON_FUNC Container::get_focus_child( VMARG )
 
 
 /*#
-    @method set_focus_child gtk.Container
+    @method set_focus_child GtkContainer
     @brief Sets, or unsets if child is NULL, the focused child of container.
     @param widget
  */
@@ -237,8 +237,8 @@ FALCON_FUNC Container::set_focus_child( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -257,7 +257,7 @@ FALCON_FUNC Container::set_focus_child( VMARG )
 
 
 /*#
-    @method resize_children gtk.Container
+    @method resize_children GtkContainer
     @brief ???
  */
 FALCON_FUNC Container::resize_children( VMARG )
@@ -273,7 +273,7 @@ FALCON_FUNC Container::resize_children( VMARG )
 
 
 /*#
-    @method child_type gtk.Container
+    @method child_type GtkContainer
     @brief Returns the type of the children supported by the container.
     @return type identifier (integer)
 
@@ -308,7 +308,7 @@ FALCON_FUNC Container::child_type( VMARG )
 
 
 /*#
-    @method get_border_width gtk.Container
+    @method get_border_width GtkContainer
     @brief Retrieves the border width of the container.
     @return (integer)
  */
@@ -325,7 +325,7 @@ FALCON_FUNC Container::get_border_width( VMARG )
 
 
 /*#
-    @method set_border_width gtk.Container
+    @method set_border_width GtkContainer
     @brief Sets the border width of the container.
 
     The border width of a container is the amount of space to leave around the outside

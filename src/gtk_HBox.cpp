@@ -15,15 +15,15 @@ namespace Gtk {
  */
 void HBox::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_HBox = mod->addClass( "HBox", &HBox::init );
+    Falcon::Symbol* c_HBox = mod->addClass( "GtkHBox", &HBox::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Box" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBox" ) );
     c_HBox->getClassDef()->addInheritance( in );
 }
 
 
 /*#
-    @class gtk.HBox
+    @class GtkHBox
     @brief Horizontal box
     @optparam homogeneous (boolean, default true)
     @optparam spacing (integer, default 0)

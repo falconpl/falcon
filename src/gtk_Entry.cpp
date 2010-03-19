@@ -17,9 +17,9 @@ namespace Gtk {
  */
 void Entry::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Entry = mod->addClass( "Entry", &Entry::init );
+    Falcon::Symbol* c_Entry = mod->addClass( "GtkEntry", &Entry::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Widget" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Entry->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -101,11 +101,11 @@ void Entry::modInit( Falcon::Module* mod )
 
 
 /*#
-    @class gtk.Entry
+    @class GtkEntry
     @brief A single line text entry field
-    @optparam buffer The buffer (gtk.EntryBuffer) or text (string) to use for the new gtk.Entry.
+    @optparam buffer The buffer (GtkEntryBuffer) or text (string) to use for the new GtkEntry.
 
-    The gtk.Entry widget is a single line text entry widget. A fairly large set of
+    The GtkEntry widget is a single line text entry widget. A fairly large set of
     key bindings are supported by default. If the entered text is longer than the
     allocation of the widget, the widget will scroll so that the cursor position is visible.
 
@@ -117,11 +117,11 @@ void Entry::modInit( Falcon::Module* mod )
     Caps Lock or input methods might interfere with entering text in a password entry.
     The warning can be turned off with the "caps-lock-warning" property.
 
-    Since 2.16, gtk.Entry has the ability to display progress or activity information
+    Since 2.16, GtkEntry has the ability to display progress or activity information
     behind the text. To make an entry display such information, use
     set_progress_fraction() or set_progress_pulse_step().
 
-    Additionally, gtk.Entry can show icons at either side of the entry. These icons
+    Additionally, GtkEntry can show icons at either side of the entry. These icons
     can be activatable by clicking, can be set up as drag source and can have tooltips.
     To add an icon, use set_icon_from_gicon() or one of the various other
     functions that set an icon from a stock id, an icon name or a pixbuf. To trigger
@@ -149,7 +149,7 @@ FALCON_FUNC Entry::init( VMARG )
 #ifndef NO_PARAMETER_CHECK
         if ( i_buf->isNil() ||
             !( i_buf->isString() ||
-            i_buf->isOfClass( "EntryBuffer" ) || i_buf->isOfClass( "gtk.EntryBuffer" ) ) )
+            i_buf->isOfClass( "GtkEntryBuffer" ) || i_buf->isOfClass( "gtk.GtkEntryBuffer" ) ) )
             throw_inv_params( "[EntryBuffer|S]" );
 #endif
         if ( i_buf->isString() )
@@ -177,9 +177,9 @@ FALCON_FUNC Entry::init( VMARG )
 
 #if GTK_MINOR_VERSION >= 18
 /*#
-    @method get_buffer gtk.Entry
-    @brief Get the gtk.EntryBuffer object which holds the text for this widget.
-    @return A gtk.EntryBuffer object.
+    @method get_buffer GtkEntry
+    @brief Get the GtkEntryBuffer object which holds the text for this widget.
+    @return A GtkEntryBuffer object.
  */
 FALCON_FUNC Entry::get_buffer( VMARG )
 {
@@ -190,7 +190,7 @@ FALCON_FUNC Entry::get_buffer( VMARG )
     MYSELF;
     GET_OBJ( self );
     GtkEntryBuffer* buf = gtk_entry_get_buffer( (GtkEntry*)_obj );
-    Item* wki = vm->findWKI( "EntryBuffer" );
+    Item* wki = vm->findWKI( "GtkEntryBuffer" );
     vm->retval( new EntryBuffer( wki->asClass(), buf ) );
 }
 #endif
@@ -198,17 +198,17 @@ FALCON_FUNC Entry::get_buffer( VMARG )
 
 #if GTK_MINOR_VERSION >= 18
 /*#
-    @method set_buffer gtk.Entry
+    @method set_buffer GtkEntry
     @brief Set the GtkEntryBuffer object which holds the text for this widget.
-    @param buffer (gtk.EntryBuffer)
+    @param buffer (GtkEntryBuffer)
  */
 FALCON_FUNC Entry::set_buffer( VMARG )
 {
     Item* i_buf = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_buf || i_buf->isNil() ||
-        !( i_buf->isOfClass( "EntryBuffer" ) || i_buf->isOfClass( "gtk.EntryBuffer" ) ) )
-        throw_inv_params( "EntryBuffer" );
+        !( i_buf->isOfClass( "GtkEntryBuffer" ) || i_buf->isOfClass( "gtk.GtkEntryBuffer" ) ) )
+        throw_inv_params( "GtkEntryBuffer" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -219,7 +219,7 @@ FALCON_FUNC Entry::set_buffer( VMARG )
 
 
 /*#
-    @method set_text gtk.Entry
+    @method set_text GtkEntry
     @brief Sets the text in the widget to the given value, replacing the current contents.
     @param text the new text
  */
@@ -245,7 +245,7 @@ FALCON_FUNC Entry::set_text( VMARG )
 
 
 /*#
-    @method get_text gtk.Entry
+    @method get_text GtkEntry
     @brief Retrieves the contents of the entry widget.
     @return (string) contents of entry widget.
  */
@@ -263,9 +263,9 @@ FALCON_FUNC Entry::get_text( VMARG )
 
 
 /*#
-    @method get_text_length gtk.Entry
+    @method get_text_length GtkEntry
     @brief Retrieves the current length of the text in entry.
-    @return the current number of characters in gtk.Entry, or 0 if there are none.
+    @return the current number of characters in GtkEntry, or 0 if there are none.
  */
 FALCON_FUNC Entry::get_text_length( VMARG )
 {
@@ -283,7 +283,7 @@ FALCON_FUNC Entry::get_text_length( VMARG )
 
 
 /*#
-    @method set_visiblity gtk.Entry
+    @method set_visiblity GtkEntry
     @brief Sets whether the contents of the entry are visible or not.
     @param visible (boolean) true if the contents of the entry are displayed as plaintext
 
@@ -307,7 +307,7 @@ FALCON_FUNC Entry::set_visibility( VMARG )
 
 
 /*#
-    @method set_invisible_char gtk.Entry
+    @method set_invisible_char GtkEntry
     @brief Sets the entry invisible char
     @param ch (integer) a Unicode character
 
@@ -333,7 +333,7 @@ FALCON_FUNC Entry::set_invisible_char( VMARG )
 
 #if GTK_MINOR_VERSION >= 16
 /*#
-    @method unset_invisible_char gtk.Entry
+    @method unset_invisible_char GtkEntry
     @brief Unsets the invisible char previously set with set_invisible_char(). So that the default invisible char is used again.
  */
 FALCON_FUNC Entry::unset_invisible_char( VMARG )
@@ -353,7 +353,7 @@ FALCON_FUNC Entry::unset_invisible_char( VMARG )
 
 
 /*#
-    @method set_max_length gtk.Entry
+    @method set_max_length GtkEntry
     @brief Sets the maximum allowed length of the contents of the widget.
     @param max the maximum length of the entry, or 0 for no maximum. (other than the maximum length of entries.)
 
@@ -376,7 +376,7 @@ FALCON_FUNC Entry::set_max_length( VMARG )
 
 
 /*#
-    @method get_activates_default gtk.Entry
+    @method get_activates_default GtkEntry
     @brief Retrieves the value set by set_activates_default().
     @return (boolean) true if the entry will activate the default widget
  */

@@ -17,9 +17,9 @@ namespace Gtk {
  */
 void Bin::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Bin = mod->addClass( "Bin", &Gtk::abstract_init );
+    Falcon::Symbol* c_Bin = mod->addClass( "GtkBin", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Bin->getClassDef()->addInheritance( in );
 
     mod->addClassMethod( c_Bin, "get_child",    &Bin::get_child );
@@ -27,7 +27,7 @@ void Bin::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Bin
+    @class GtkBin
     @brief The GtkBin widget is a container with just one child.
 
     It is not very useful itself, but it is useful for deriving subclasses,
@@ -35,7 +35,7 @@ void Bin::modInit( Falcon::Module* mod )
  */
 
 /*#
-    @method get_child gtk.Bin
+    @method get_child GtkBin
     @brief Gets the child of the GtkBin, or Nil if the bin contains no child widget.
  */
 FALCON_FUNC Bin::get_child( VMARG )
@@ -51,7 +51,7 @@ FALCON_FUNC Bin::get_child( VMARG )
     GtkWidget* gwdt = gtk_bin_get_child( (GtkBin*)_obj );
     if ( gwdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), gwdt ) );
     }
     else

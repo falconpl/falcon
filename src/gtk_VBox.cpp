@@ -15,15 +15,15 @@ namespace Gtk {
  */
 void VBox::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_VBox = mod->addClass( "VBox", &VBox::init );
+    Falcon::Symbol* c_VBox = mod->addClass( "GtkVBox", &VBox::init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Box" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBox" ) );
     c_VBox->getClassDef()->addInheritance( in );
 }
 
 
 /*#
-    @class gtk.VBox
+    @class GtkVBox
     @brief Vertical box class
     @optparam homogeneous (boolean, default true)
     @optparam spacing (integer, default 0)

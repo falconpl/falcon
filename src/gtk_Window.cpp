@@ -17,10 +17,10 @@ namespace Gtk {
  */
 void Window::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Window = mod->addClass( "Window", &Window::init )
+    Falcon::Symbol* c_Window = mod->addClass( "GtkWindow", &Window::init )
         ->addParam( "type" );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Bin" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_Window->getClassDef()->addInheritance( in );
 
     c_Window->setWKS( true );
@@ -159,8 +159,8 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
 
 
 /*#
-    @class gtk.Window
-    @optparam type gtk.WINDOW_TOPLEVEL (default) or gtk.WINDOW_POPUP
+    @class GtkWindow
+    @optparam type GTK_WINDOW_TOPLEVEL (default) or GTK_WINDOW_POPUP
     @raise ParamError Invalid window type
 
     @prop title Window title
@@ -215,7 +215,7 @@ FALCON_FUNC Window::init( VMARG )
 
 
 /*#
-    @method set_title gtk.Window
+    @method set_title GtkWindow
     @brief Set window title
     @param title Window title
  */
@@ -236,7 +236,7 @@ FALCON_FUNC Window::set_title( VMARG )
 
 
 /*#
-    @method set_resizable gtk.Window
+    @method set_resizable GtkWindow
     @brief Sets whether the user can resize a window.
     @param resizable true if the user can resize this window
 
@@ -256,7 +256,7 @@ FALCON_FUNC Window::set_resizable( VMARG )
 
 
 /*#
-    @method get_resizable gtk.Window
+    @method get_resizable GtkWindow
     @brief Gets the value set by set_resizable().
     @return (boolean)
  */
@@ -273,7 +273,7 @@ FALCON_FUNC Window::get_resizable( VMARG )
 
 
 /*#
-    @method activate_focus gtk.Window
+    @method activate_focus GtkWindow
     @brief Activates the current focused widget within the window.
     @return (boolean) true if a widget got activated.
  */
@@ -290,7 +290,7 @@ FALCON_FUNC Window::activate_focus( VMARG )
 
 
 /*#
-    @method activate_default gtk.Window
+    @method activate_default GtkWindow
     @brief Activates the default widget for the window
     @return (boolean) true if a widget got activated.
 
@@ -311,7 +311,7 @@ FALCON_FUNC Window::activate_default( VMARG )
 
 
 /*#
-    @method set_modal gtk.Window
+    @method set_modal GtkWindow
     @brief Sets a window modal or non-modal.
 
     Modal windows prevent interaction with other windows in the same application.
@@ -333,7 +333,7 @@ FALCON_FUNC Window::set_modal( VMARG )
 
 
 /*#
-    @method set_default_size gtk.Window
+    @method set_default_size GtkWindow
     @brief Sets the default size of a window.
     @param width width in pixels, or -1 to unset the default width
     @param height height in pixels, or -1 to unset the default height
@@ -383,7 +383,7 @@ FALCON_FUNC Window::set_default_size( VMARG )
 
 
 /*#
-    @method set_gravity gtk.Window
+    @method set_gravity GtkWindow
     @brief Sets window gravity.
     @param gravity a valid GdkGravity value
 
@@ -412,7 +412,7 @@ FALCON_FUNC Window::set_gravity( VMARG )
 
 
 /*#
-    @method get_gravity gtk.Window
+    @method get_gravity GtkWindow
     @brief Gets the value set by set_gravity().
     @return (integer)
  */
@@ -429,7 +429,7 @@ FALCON_FUNC Window::get_gravity( VMARG )
 
 
 /*#
-    @method set_position gtk.Window
+    @method set_position GtkWindow
     @brief Sets a position constraint for this window.
     @param position a position constraint. (GtkWindowPosition)
 
@@ -455,9 +455,9 @@ FALCON_FUNC Window::set_position( VMARG )
 
 
 /*#
-    @method set_transient_for gtk.Window
+    @method set_transient_for GtkWindow
     @brief Sets the window transient for a parent window.
-    @param parent (gtk.Window)
+    @param parent (GtkWindow)
 
     Dialog windows should be set transient for the main application window they
     were spawned from. This allows window managers to e.g. keep the dialog on top
@@ -477,8 +477,8 @@ FALCON_FUNC Window::set_transient_for( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil() )
     {
-        if ( !( i_win->isOfClass( "Window" ) || i_win->isOfClass( "gtk.Window" ) ) )
-            throw_inv_params( "Window" );
+        if ( !( i_win->isOfClass( "GtkWindow" ) || i_win->isOfClass( "gtk.GtkWindow" ) ) )
+            throw_inv_params( "GtkWindow" );
     }
 #endif
     MYSELF;
@@ -491,7 +491,7 @@ FALCON_FUNC Window::set_transient_for( VMARG )
 
 
 /*#
-    @method set_destroy_with_parent gtk.Window
+    @method set_destroy_with_parent GtkWindow
     @brief Destroys the window along with its parent.
     @param setting whether to destroy window with its transient parent (boolean)
 
@@ -518,7 +518,7 @@ FALCON_FUNC Window::set_destroy_with_parent( VMARG )
 
 
 /*#
-    @method is_active gtk.Window
+    @method is_active GtkWindow
     @brief Returns whether the window is part of the current active toplevel.
     @return (boolean) true if the window part of the current active window.
 
@@ -541,7 +541,7 @@ FALCON_FUNC Window::is_active( VMARG )
 
 
 /*#
-    @method has_topelevel_focus gtk.Window
+    @method has_topelevel_focus GtkWindow
     @brief Returns whether the input focus is within this GtkWindow.
     @return (boolean)
 
@@ -564,10 +564,10 @@ FALCON_FUNC Window::has_toplevel_focus( VMARG )
 
 
 /*#
-    @method add_mnemonic gtk.Window
+    @method add_mnemonic GtkWindow
     @brief Adds a mnemonic to this window.
     @param keyval the mnemonic (integer)
-    @param target the widget that gets activated by the mnemonic (gtk.Widget)
+    @param target the widget that gets activated by the mnemonic (GtkWidget)
  */
 FALCON_FUNC Window::add_mnemonic( VMARG )
 {
@@ -576,8 +576,8 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
         || !i_target || i_target->isNil() ||
-        !( i_target->isOfClass( "Widget" ) || i_target->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "I,Widget" );
+        !( i_target->isOfClass( "GtkWidget" ) || i_target->isOfClass( "gtk.GtkWidget" ) ) )
+        throw_inv_params( "I,GtkWidget" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -587,10 +587,10 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 
 
 /*#
-    @method remove_mnemonic gtk.Window
+    @method remove_mnemonic GtkWindow
     @brief Removes a mnemonic from this window.
     @param keyval the mnemonic (integer)
-    @param target the widget that gets activated by the mnemonic (gtk.Widget)
+    @param target the widget that gets activated by the mnemonic (GtkWidget)
  */
 FALCON_FUNC Window::remove_mnemonic( VMARG )
 {
@@ -599,8 +599,8 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
         || !i_target || i_target->isNil() ||
-        !( i_target->isOfClass( "Widget" ) || i_target->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "I,Widget" );
+        !( i_target->isOfClass( "GtkWidget" ) || i_target->isOfClass( "gtk.GtkWidget" ) ) )
+        throw_inv_params( "I,GtkWidget" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -610,7 +610,7 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 
 
 /*#
-    @method mnemonic_activate gtk.Window
+    @method mnemonic_activate GtkWindow
     @brief Activates the targets associated with the mnemonic.
     @param keyval the mnemonic
     @param modifier the modifiers (GdkModifierType)
@@ -638,7 +638,7 @@ FALCON_FUNC Window::mnemonic_activate( VMARG )
 
 
 /*#
-    @method get_focus gtk.Window
+    @method get_focus GtkWindow
     @brief Retrieves the current focused widget within the window.
     @return the currently focused widget, or nil if there is none.
 
@@ -657,7 +657,7 @@ FALCON_FUNC Window::get_focus( VMARG )
     GtkWidget* wdt = gtk_window_get_focus( (GtkWindow*)_obj );
     if ( wdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), wdt ) );
     }
     else
@@ -666,9 +666,9 @@ FALCON_FUNC Window::get_focus( VMARG )
 
 
 /*#
-    @method set_focus gtk.Window
+    @method set_focus GtkWindow
     @brief Sets the focus on a widget.
-    @param focus the focused widget (gtk.Widget)
+    @param focus the focused widget (GtkWidget)
 
     If focus is not the current focus widget, and is focusable, sets it as the
     focus widget for the window. If focus is NULL, unsets the focus widget for
@@ -682,8 +682,8 @@ FALCON_FUNC Window::set_focus( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( i_wdt && !i_wdt->isNil() )
     {
-        if ( !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-            throw_inv_params( "Widget" );
+        if ( !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+            throw_inv_params( "GtkWidget" );
     }
 #endif
     MYSELF;
@@ -696,7 +696,7 @@ FALCON_FUNC Window::set_focus( VMARG )
 
 
 /*#
-    @method get_default_widget gtk.Window
+    @method get_default_widget GtkWindow
     @brief Returns the default widget for window.
     @return the default widget, or nil if there is none.
  */
@@ -711,7 +711,7 @@ FALCON_FUNC Window::get_default_widget( VMARG )
     GtkWidget* wdt = gtk_window_get_default_widget( (GtkWindow*)_obj );
     if ( wdt )
     {
-        Item* wki = vm->findWKI( "Widget" );
+        Item* wki = vm->findWKI( "GtkWidget" );
         vm->retval( new Gtk::Widget( wki->asClass(), wdt ) );
     }
     else
@@ -720,9 +720,9 @@ FALCON_FUNC Window::get_default_widget( VMARG )
 
 
 /*#
-    @method set_default gtk.Window
+    @method set_default GtkWindow
     @brief Sets the default widget.
-    @param default_widget (gtk.Widget)
+    @param default_widget (GtkWidget)
 
     The default widget is the widget that's activated when the user presses Enter
     in a dialog (for example). This function sets or unsets the default widget for
@@ -736,8 +736,8 @@ FALCON_FUNC Window::set_default( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() ||
-        !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-            throw_inv_params( "Widget" );
+        !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) ) )
+            throw_inv_params( "GtkWidget" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -747,7 +747,7 @@ FALCON_FUNC Window::set_default( VMARG )
 
 
 /*#
-    @method present gtk.Window
+    @method present GtkWindow
     @brief Presents a window to the user.
 
     This may mean raising the window in the stacking order, deiconifying it, moving
@@ -777,7 +777,7 @@ FALCON_FUNC Window::present( VMARG )
 
 
 /*#
-    @method present_with_time gtk.Window
+    @method present_with_time GtkWindow
     @brief Presents a window to the user in response to a user interaction.
     @param timestamp the timestamp of the user interaction (typically a button or key press event) which triggered this call
 
@@ -797,7 +797,7 @@ FALCON_FUNC Window::present_with_time( VMARG )
 
 
 /*#
-    @method iconify gtk.Window
+    @method iconify GtkWindow
     @brief Asks to iconify (i.e. minimize) the specified window.
 
     Note that you shouldn't assume the window is definitely iconified afterward,
@@ -824,7 +824,7 @@ FALCON_FUNC Window::iconify( VMARG )
 
 
 /*#
-    @method deiconify gtk.Window
+    @method deiconify GtkWindow
     @brief Asks to deiconify (i.e. unminimize) the specified window.
 
     Note that you shouldn't assume the window is definitely deiconified afterward,
@@ -846,7 +846,7 @@ FALCON_FUNC Window::deiconify( VMARG )
 
 
 /*#
-    @method stick gtk.Window
+    @method stick GtkWindow
     @brief Asks to stick window, which means that it will appear on all user desktops.
 
     Note that you shouldn't assume the window is definitely stuck afterward, because
@@ -871,7 +871,7 @@ FALCON_FUNC Window::stick( VMARG )
 
 
 /*#
-    @method unstick gtk.Window
+    @method unstick GtkWindow
     @brief Asks to unstick window, which means that it will appear on only one of the user's desktops.
 
     Note that you shouldn't assume the window is definitely unstuck afterward,
@@ -893,7 +893,7 @@ FALCON_FUNC Window::unstick( VMARG )
 
 
 /*#
-    @method maximize gtk.Window
+    @method maximize GtkWindow
     @brief Asks to maximize window, so that it becomes full-screen.
 
     Note that you shouldn't assume the window is definitely maximized afterward,
@@ -919,7 +919,7 @@ FALCON_FUNC Window::maximize( VMARG )
 
 
 /*#
-    @method unmaximize gtk.Window
+    @method unmaximize GtkWindow
     @brief Asks to unmaximize window.
 
     Note that you shouldn't assume the window is definitely unmaximized afterward,
@@ -942,7 +942,7 @@ FALCON_FUNC Window::unmaximize( VMARG )
 
 
 /*#
-    @method fullscreen gtk.Window
+    @method fullscreen GtkWindow
     @brief Asks to place window in the fullscreen state.
 
     Note that you shouldn't assume the window is definitely full screen afterward,
@@ -966,7 +966,7 @@ FALCON_FUNC Window::fullscreen( VMARG )
 
 
 /*#
-    @method unfullscreen gtk.Window
+    @method unfullscreen GtkWindow
     @brief Asks to toggle off the fullscreen state for window.
 
     Note that you shouldn't assume the window is definitely not full screen afterward,
@@ -990,7 +990,7 @@ FALCON_FUNC Window::unfullscreen( VMARG )
 
 
 /*#
-    @method set_keep_above gtk.Window
+    @method set_keep_above GtkWindow
     @brief Asks to keep window above, so that it stays on top.
     @param setting whether to keep window above other windows (boolean)
 
@@ -1022,7 +1022,7 @@ FALCON_FUNC Window::set_keep_above( VMARG )
 
 
 /*#
-    @method set_keep_below gtk.Window
+    @method set_keep_below GtkWindow
     @brief Asks to keep window below, so that it stays in bottom.
     @param setting whether to keep window below other windows (boolean)
 
@@ -1054,7 +1054,7 @@ FALCON_FUNC Window::set_keep_below( VMARG )
 
 
 /*#
-    @method begin_resize_drag gtk.Window
+    @method begin_resize_drag GtkWindow
     @brief Starts resizing a window.
     @param edge position of the resize control (integer, GdkWindowEdge)
     @param button mouse button that initiated the drag (integer)
@@ -1089,7 +1089,7 @@ FALCON_FUNC Window::begin_resize_drag( VMARG )
 
 
 /*#
-    @method begin_move_drag gtk.Window
+    @method begin_move_drag GtkWindow
     @brief Starts moving a window.
     @param button mouse button that initiated the drag (integer)
     @param root_x X position where the user clicked to initiate the drag, in root window coordinates (integer)
@@ -1121,7 +1121,7 @@ FALCON_FUNC Window::begin_move_drag( VMARG )
 
 
 /*#
-    @method set_decorated gtk.Window
+    @method set_decorated GtkWindow
     @brief Sets the window decorations.
     @param setting (boolean) true to decorate the window
 
@@ -1149,7 +1149,7 @@ FALCON_FUNC Window::set_decorated( VMARG )
 
 
 /*#
-    @method set_deletable gtk.Window
+    @method set_deletable GtkWindow
     @brief Sets the window deletable.
     @param setting (boolean) true to decorate the window as deletable.
 
@@ -1176,7 +1176,7 @@ FALCON_FUNC Window::set_deletable( VMARG )
 
 
 /*#
-    @method set_frame_dimensions gtk.Window
+    @method set_frame_dimensions GtkWindow
     @brief Sets the window frame dimensions.
     @param left The width of the left border (integer)
     @param top The height of the top border (integer)
@@ -1210,7 +1210,7 @@ FALCON_FUNC Window::set_frame_dimensions( VMARG )
 
 
 /*#
-    @method set_has_frame gtk.Window
+    @method set_has_frame GtkWindow
     @brief Sets the window frame.
     @param setting (boolean)
 
@@ -1240,7 +1240,7 @@ FALCON_FUNC Window::set_has_frame( VMARG )
 
 
 /*#
-    @method set_mnemonic_modifier gtk.Window
+    @method set_mnemonic_modifier GtkWindow
     @brief Sets the mnemonic modifier for this window.
     @param modifier the modifier mask used to activate mnemonics on this window. (integer, GdkModifierType)
  */
@@ -1259,7 +1259,7 @@ FALCON_FUNC Window::set_mnemonic_modifier( VMARG )
 
 
 /*#
-    @method set_type_hint gtk.Window
+    @method set_type_hint GtkWindow
     @brief Sets the window type hint.
     @param hint the window type (integer, GdkWindowTypeHint)
 
@@ -1284,7 +1284,7 @@ FALCON_FUNC Window::set_type_hint( VMARG )
 
 
 /*#
-    @method set_skip_taskbar_hint gtk.Window
+    @method set_skip_taskbar_hint GtkWindow
     @brief Sets the window taskbar hint.
     @param setting (boolean) true to keep this window from appearing in the task bar
 
@@ -1305,7 +1305,7 @@ FALCON_FUNC Window::set_skip_taskbar_hint( VMARG )
 
 
 /*#
-    @method set_skip_pager_hint gtk.Window
+    @method set_skip_pager_hint GtkWindow
     @brief Sets the window pager hint.
     @param setting (boolean) true to keep this window from appearing in the pager
 
@@ -1328,7 +1328,7 @@ FALCON_FUNC Window::set_skip_pager_hint( VMARG )
 
 
 /*#
-    @method set_urgency_hint gtk.Window
+    @method set_urgency_hint GtkWindow
     @brief Sets the window urgency hint.
     @param setting (boolean) true to mark this window as urgent
 
@@ -1349,7 +1349,7 @@ FALCON_FUNC Window::set_urgency_hint( VMARG )
 
 
 /*#
-    @method set_accept_focus gtk.Window
+    @method set_accept_focus GtkWindow
     @brief Sets the window accept-focus hint.
     @param setting (boolean) True to let this window receive input focus
 
@@ -1370,7 +1370,7 @@ FALCON_FUNC Window::set_accept_focus( VMARG )
 
 
 /*#
-    @method set_focus_on_map gtk.Window
+    @method set_focus_on_map GtkWindow
     @brief Sets the window focus-on-map hint.
     @param setting (boolean) true to let this window receive input focus on map
 
@@ -1391,7 +1391,7 @@ FALCON_FUNC Window::set_focus_on_map( VMARG )
 
 
 /*#
-    @method set_startup_id gtk.Window
+    @method set_startup_id GtkWindow
     @brief Sets the window startup identifier.
     @param startup_id a string with startup-notification identifier
 
@@ -1420,7 +1420,7 @@ FALCON_FUNC Window::set_startup_id( VMARG )
 
 
 /*#
-    @method set_role gtk.Window
+    @method set_role GtkWindow
     @brief Sets the window role.
     @param role unique identifier for the window to be used when restoring a session (string)
 
@@ -1450,7 +1450,7 @@ FALCON_FUNC Window::set_role( VMARG )
 
 
 /*#
-    @method get_decorated gtk.Window
+    @method get_decorated GtkWindow
     @brief Returns whether the window has been set to have decorations such as a title bar via set_decorated().
     @return (boolean) true if the window has been set to have decorations
  */
@@ -1467,7 +1467,7 @@ FALCON_FUNC Window::get_decorated( VMARG )
 
 
 /*#
-    @method get_deletable gtk.Window
+    @method get_deletable GtkWindow
     @brief Returns whether the window has been set to have a close button via set_deletable().
     @return (boolean) true if the window has been set to have a close button
  */
@@ -1488,7 +1488,7 @@ FALCON_FUNC Window::get_deletable( VMARG )
 
 #if GTK_MINOR_VERSION >= 16
 /*#
-    @method get_default_icon_name gtk.Window
+    @method get_default_icon_name GtkWindow
     @brief Gets the window default icon name.
     @return (string) the fallback icon name for windows
 
@@ -1509,7 +1509,7 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
 
 
 /*#
-    @method get_default_size gtk.Window
+    @method get_default_size GtkWindow
     @brief Gets the default size of the window.
     @return [ width, height ]
 
@@ -1535,7 +1535,7 @@ FALCON_FUNC Window::get_default_size( VMARG )
 
 
 /*#
-    @method get_destroy_with_parent gtk.Window
+    @method get_destroy_with_parent GtkWindow
     @brief Returns whether the window will be destroyed with its transient parent.
     @return (boolean) true if the window will be destroyed with its transient parent.
  */
@@ -1552,7 +1552,7 @@ FALCON_FUNC Window::get_destroy_with_parent( VMARG )
 
 
 /*#
-    @method get_frame_dimensions gtk.Window
+    @method get_frame_dimensions GtkWindow
     @brief Retrieves the dimensions of the frame window for this toplevel.
     @return array [ left, top, right, bottom ] (integers)
 
@@ -1583,7 +1583,7 @@ FALCON_FUNC Window::get_frame_dimensions( VMARG )
 
 
 /*#
-    @method get_has_frame gtk.Window
+    @method get_has_frame GtkWindow
     @brief Accessor for whether the window has a frame window exterior to window->window.
     @return (boolean) true if a frame has been added to the window via set_has_frame().
 
@@ -1607,7 +1607,7 @@ FALCON_FUNC Window::get_has_frame( VMARG )
 
 
 /*#
-    @method get_icon_name gtk.Window
+    @method get_icon_name GtkWindow
     @brief Returns the name of the themed icon for the window, see set_icon_name().
     @return the icon name or nil if the window has no themed icon
  */
@@ -1628,7 +1628,7 @@ FALCON_FUNC Window::get_icon_name( VMARG )
 
 
 /*#
-    @method get_mnemonic_modifier gtk.Window
+    @method get_mnemonic_modifier GtkWindow
     @brief Returns the mnemonic modifier for this window.
     @return the modifier mask used to activate mnemonics on this window. (GdkModifierType)
 
@@ -1647,7 +1647,7 @@ FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
 
 
 /*#
-    @method get_modal gtk.Window
+    @method get_modal GtkWindow
     @brief Returns whether the window is modal.
     @return (boolean) true if the window is set to be modal and establishes a grab when shown
 
@@ -1666,7 +1666,7 @@ FALCON_FUNC Window::get_modal( VMARG )
 
 
 /*#
-    @method get_position gtk.Window
+    @method get_position GtkWindow
     @brief Gets the window position.
     @return [ root_x, root_x ]
 
@@ -1719,7 +1719,7 @@ FALCON_FUNC Window::get_position( VMARG )
 
 
 /*#
-    @method get_role gtk.Window
+    @method get_role GtkWindow
     @brief Returns the role of the window.
     @return (string) the role of the window if set, or nil.
 
@@ -1742,7 +1742,7 @@ FALCON_FUNC Window::get_role( VMARG )
 
 
 /*#
-    @method get_size gtk.Window
+    @method get_size GtkWindow
     @brief Obtains the current size of window.
     @brief [ width, height ]
 
@@ -1798,7 +1798,7 @@ FALCON_FUNC Window::get_size( VMARG )
 
 
 /*#
-    @method get_title gtk.Window
+    @method get_title GtkWindow
     @brief Retrieves the title of the window.
     @return the title of the window, or nil if none has been set explicitely.
  */
@@ -1819,9 +1819,9 @@ FALCON_FUNC Window::get_title( VMARG )
 
 
 /*#
-    @method get_transient_for gtk.Window
+    @method get_transient_for GtkWindow
     @brief Fetches the transient parent for this window.
-    @return (gtk.Window)
+    @return (GtkWindow)
  */
 FALCON_FUNC Window::get_transient_for( VMARG )
 {
@@ -1834,7 +1834,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
     GtkWindow* win = gtk_window_get_transient_for( (GtkWindow*)_obj );
     if ( win )
     {
-        Item* wki = vm->findWKI( "Window" );
+        Item* wki = vm->findWKI( "GtkWindow" );
         vm->retval( new Gtk::Window( wki->asClass(), win ) );
     }
     else
@@ -1843,7 +1843,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
 
 
 /*#
-    @method get_type_hint gtk.Window
+    @method get_type_hint GtkWindow
     @brief Gets the type hint for this window.
     @return the type hint for window. (integer, GdkWindowTypeHint)
  */
@@ -1877,7 +1877,7 @@ FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
 
 
 /*#
-    @method get_skip_pager_hint gtk.Window
+    @method get_skip_pager_hint GtkWindow
     @brief Gets the value set by set_skip_pager_hint().
     @return true if window shouldn't be in pager (boolean)
  */
@@ -1894,7 +1894,7 @@ FALCON_FUNC Window::get_skip_pager_hint( VMARG )
 
 
 /*#
-    @method get_urgency_hint gtk.Window
+    @method get_urgency_hint GtkWindow
     @brief Gets the value set by set_urgency_hint()
     @return true if window is urgent (boolean)
  */
@@ -1911,7 +1911,7 @@ FALCON_FUNC Window::get_urgency_hint( VMARG )
 
 
 /*#
-    @method get_accept_focus gtk.Window
+    @method get_accept_focus GtkWindow
     @brief Gets the value set by set_accept_focus().
     @return true if window should receive the input focus (boolean)
  */
@@ -1928,7 +1928,7 @@ FALCON_FUNC Window::get_accept_focus( VMARG )
 
 
 /*#
-    @method get_focus_on_map gtk.Window
+    @method get_focus_on_map GtkWindow
     @brief Gets the value set by gtk_window_set_focus_on_map().
     @return true if window should receive the input focus when mapped. (boolean)
  */
@@ -1949,7 +1949,7 @@ FALCON_FUNC Window::get_focus_on_map( VMARG )
 
 #if GTK_MINOR_VERSION >= 20
 /*#
-    @method get_window_type gtk.Window
+    @method get_window_type GtkWindow
     @brief Gets the type of the window.
     @return the type of the window (GtkWindowType)
  */
@@ -1967,7 +1967,7 @@ FALCON_FUNC Window::get_window_type( VMARG )
 
 
 /*#
-    @method move gtk.Window
+    @method move GtkWindow
     @brief Asks the window manager to move window to the given position.
     @param x X coordinate to move window to
     @param y Y coordinate to move window to
@@ -2018,7 +2018,7 @@ FALCON_FUNC Window::move( VMARG )
 
 
 /*#
-    @method parse_geometry gtk.Window
+    @method parse_geometry GtkWindow
     @brief Parses a standard X Window System geometry string
     @param geometry geometry string
     @return true if string was parsed successfully (boolean)
@@ -2054,7 +2054,7 @@ FALCON_FUNC Window::parse_geometry( VMARG )
 
 
 /*#
-    @method reshow_initial_size gtk.Window
+    @method reshow_initial_size GtkWindow
     @breif Hides window, then reshows it, resetting the default size and position of the window.
 
     Used by GUI builders only.
@@ -2072,7 +2072,7 @@ FALCON_FUNC Window::reshow_with_initial_size( VMARG )
 
 
 /*#
-    @method resize gtk.Window
+    @method resize GtkWindow
     @brief Resizes the window as if the user had done so, obeying geometry constraints.
     @param width width in pixels to resize the window to
     @param height height in pixels to resize the window to
@@ -2109,7 +2109,7 @@ FALCON_FUNC Window::resize( VMARG )
 
 
 /*#
-    @method set_default_icon_name gtk.Window
+    @method set_default_icon_name GtkWindow
     @brief Sets an icon to be used as fallback.
     @param name the name of the themed icon
 
@@ -2136,7 +2136,7 @@ FALCON_FUNC Window::set_default_icon_name( VMARG )
 
 
 /*#
-    @method set_icon_name gtk.Window
+    @method set_icon_name GtkWindow
     @brief Sets the icon for the window from a named themed icon.
     @param the name of the themed icon (or nil)
 
@@ -2166,7 +2166,7 @@ FALCON_FUNC Window::set_icon_name( VMARG )
 
 
 /*#
-    @method set_auto_startup_notification gtk.Window
+    @method set_auto_startup_notification GtkWindow
     @brief Sets the window startup notification.
     @param setting true to automatically do startup notification (boolean)
 
@@ -2191,7 +2191,7 @@ FALCON_FUNC Window::set_auto_startup_notification( VMARG )
 
 
 /*#
-    @method get_opacity gtk.Window
+    @method get_opacity GtkWindow
     @brief Fetches the requested opacity for this window.
     @return the requested opacity for this window. (float)
 
@@ -2210,7 +2210,7 @@ FALCON_FUNC Window::get_opacity( VMARG )
 
 
 /*#
-    @method set_opacity gtk.Window
+    @method set_opacity GtkWindow
     @brief Sets the window opacity.
     @param opacity desired opacity, between 0 and 1 (float)
 

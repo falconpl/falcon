@@ -15,7 +15,7 @@ namespace Gtk {
  */
 void Object::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Object = mod->addClass( "Object", &Gtk::abstract_init );
+    Falcon::Symbol* c_Object = mod->addClass( "GtkObject", &Gtk::abstract_init );
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_Object->getClassDef()->addInheritance( in );
@@ -33,7 +33,7 @@ void Object::modInit( Falcon::Module* mod )
 }
 
 /*#
-    @class gtk.Object
+    @class GtkObject
     @brief The base class of the GTK+ type hierarchy
 
     GtkObject is the base class for all widgets, and for a few non-widget objects
@@ -42,7 +42,7 @@ void Object::modInit( Falcon::Module* mod )
  */
 
 /*#
-    @method signal_destroy gtk.Object
+    @method signal_destroy GtkObject
     @brief Connect a VMSlot to the object destroy signal and return it
 
     Signals that all holders of a reference to the GtkObject should release the
@@ -62,7 +62,7 @@ void Object::on_destroy( GObject* obj, gpointer _vm )
 
 
 /*#
-    @method destroy gtk.Object
+    @method destroy GtkObject
     @brief Emits the "destroy" signal.
 
     Important note: Falcon will internally manage destruction of objects.

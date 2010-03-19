@@ -15,9 +15,9 @@ namespace Gtk {
  */
 void Box::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Box = mod->addClass( "Box", &Gtk::abstract_init );
+    Falcon::Symbol* c_Box = mod->addClass( "GtkBox", &Gtk::abstract_init );
 
-    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "Container" ) );
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Box->getClassDef()->addInheritance( in );
 
     Gtk::MethodTab methods[] =
@@ -41,7 +41,7 @@ void Box::modInit( Falcon::Module* mod )
 
 
 /*#
-    @class gtk.Box
+    @class GtkBox
     @brief Box class
 
     GtkBox is an abstract widget which encapsulates functionality for a particular
@@ -59,16 +59,16 @@ FALCON_FUNC Box::pack_start( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || !i_child->isObject()
-        || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
+        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
-        throw_inv_params( "Widget,B,B,I" );
+        throw_inv_params( "GtkWidget,B,B,I" );
 #endif
     int padding = i_padding->asInteger();
 #ifndef NO_PARAMETER_CHECK
     if ( padding < 0 )
-        throw_inv_params( "Widget,B,B,I" );
+        throw_inv_params( "GtkWidget,B,B,I" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
 
@@ -88,16 +88,16 @@ FALCON_FUNC Box::pack_end( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_child || !i_expand || !i_fill || !i_padding
         || !i_child->isObject()
-        || !( i_child->isOfClass( "Widget" ) || i_child->isOfClass( "gtk.Widget" ) )
+        || !( i_child->isOfClass( "GtkWidget" ) || i_child->isOfClass( "GtkWidget" ) )
         || !i_expand->isBoolean()
         || !i_fill->isBoolean()
         || !i_padding->isInteger() )
-        throw_inv_params( "Widget,B,B,I" );
+        throw_inv_params( "GtkWidget,B,B,I" );
 #endif
     int padding = i_padding->asInteger();
 #ifndef NO_PARAMETER_CHECK
     if ( padding < 0 )
-        throw_inv_params( "Widget,B,B,I" );
+        throw_inv_params( "GtkWidget,B,B,I" );
 #endif
     GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
 
@@ -113,8 +113,8 @@ FALCON_FUNC Box::pack_start_defaults( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -128,8 +128,8 @@ FALCON_FUNC Box::pack_end_defaults( VMARG )
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) ) )
-        throw_inv_params( "Widget" );
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "GtkWidget" ) ) )
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
@@ -181,9 +181,9 @@ FALCON_FUNC Box::reorder_child( VMARG )
     Item* i_pos = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
-        || !( i_wdt->isOfClass( "Widget" ) || i_wdt->isOfClass( "gtk.Widget" ) )
+        || !( i_wdt->isOfClass( "GtkWidget" ) || i_wdt->isOfClass( "gtk.GtkWidget" ) )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
-        throw_inv_params( "Widget" );
+        throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
     MYSELF;
