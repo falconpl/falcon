@@ -124,6 +124,17 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_EXPANDER_EXPANDED",      GTK_EXPANDER_EXPANDED },
 
     /*
+     *  GtkIconSize
+     */
+    { "GTK_ICON_SIZE_INVALID",      GTK_ICON_SIZE_INVALID },
+    { "GTK_ICON_SIZE_MENU",         GTK_ICON_SIZE_MENU },
+    { "GTK_ICON_SIZE_SMALL_TOOLBAR",GTK_ICON_SIZE_SMALL_TOOLBAR },
+    { "GTK_ICON_SIZE_LARGE_TOOLBAR",GTK_ICON_SIZE_LARGE_TOOLBAR },
+    { "GTK_ICON_SIZE_BUTTON",       GTK_ICON_SIZE_BUTTON },
+    { "GTK_ICON_SIZE_DND",          GTK_ICON_SIZE_DND },
+    { "GTK_ICON_SIZE_DIALOG",       GTK_ICON_SIZE_DIALOG },
+
+    /*
      *  GtkImageType
      */
     { "GTK_IMAGE_EMPTY",        GTK_IMAGE_EMPTY },
