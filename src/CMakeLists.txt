@@ -90,7 +90,7 @@ add_library( ${CURRENT_MODULE} MODULE
 #   Linking
 #
 target_link_libraries( ${CURRENT_MODULE}
-    falcon_engine
+    ${Falcon_LIBRARIES}
     ${GTK2_LIBRARIES}
     gobject-2.0
     )

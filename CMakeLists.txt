@@ -13,7 +13,7 @@ find_package( Falcon
           "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
           "$ENV{FALCON_BIN_PATH}/cmake"
     REQUIRED )
-include_directories( ${falcon_INCLUDE_DIRS} )
+include_directories( ${Falcon_INCLUDE_DIRS} )
 link_directories( ${FALCON_LIB_PATH} )
 
 ##
