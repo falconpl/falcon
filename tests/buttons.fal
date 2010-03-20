@@ -3,6 +3,13 @@ load gtk
 m = GtkMain()
 w = GtkWindow()
 
+function _quit()
+    m.quit()
+    return false
+end
+
+w.signal_delete_event().subscribe( _quit )
+
 class MyButton( row, col ) from GtkButton
     _row = 0
     _col = 0
