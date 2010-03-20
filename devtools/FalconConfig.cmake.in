@@ -10,28 +10,28 @@ get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
 #Versioning
-set( falcon_VERSION "@FALCON_VERSION_ID@" )
-set( falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
+set( Falcon_VERSION "@FALCON_VERSION_ID@" )
+set( Falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
 
-set( falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
-set( falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
-set( falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
-set( falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
+set( Falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
+set( Falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
+set( Falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
+set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 
 # Prepare Falcon in build environment.
 
 if( WIN32 )
-   set(falcon_PREFIX "${SELF_DIR}/../../..")
+   set(Falcon_PREFIX "${SELF_DIR}/../../..")
    #Will be bin and lib
-   set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
-   set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
+   set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
+   set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
    
    #This can change depending on the version
-   set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
-   list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
+   set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
+   list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
 else()
    # Selection of the build prefix (either the final one or a temporary build one) is performed
-   # by the caller, simply which falcon-config.cmake module to load. So, our position is relevant.
+   # by the caller, simply which FalconConfig.cmake module to load. So, our position is relevant.
    if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
       #If we're below the final destination, then use the final destination as a prefix.
       if ("@FALCON_FINAL_DEST@" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
@@ -43,44 +43,44 @@ else()
          Message( STATUS "Falcon module configured under system-wide installation." )
       endif()
       
-      set(falcon_PREFIX "@FALCON_FINAL_DEST@")
+      set(Falcon_PREFIX "@FALCON_FINAL_DEST@")
       
-      set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
-      set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
+      set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
+      set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
 
-      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")
-      list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
+      set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
+      list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
    else()
-      set(falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
-      set(falcon_BINARY_DIR "${falcon_PREFIX}/@FALCON_BIN_DIR@")
-      set(falcon_LIBRARY_DIR "${falcon_PREFIX}/@FALCON_LIB_DIR@")
+      set(Falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
+      set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
+      set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
 
       # If defined, prefer the source directory include files over the installed ones
       if(DEFINED FALCON_SRC_TREE)           
-        list(APPEND falcon_INCLUDE_DIRS "${FALCON_SRC_TREE}/core/include")
+        list(APPEND Falcon_INCLUDE_DIRS "${FALCON_SRC_TREE}/core/include")
         message( STATUS "Falcon module configured under DEVELOPMENT (${FALCON_SRC_TREE}) settings" )
       endif()
       #The output directory doesn't change. However, is not used as include.
-      set(falcon_INCLUDE_DIR "${falcon_PREFIX}/@FALCON_INC_DIR@")           
+      set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")           
       # But adds generated include files
-      list(APPEND falcon_INCLUDE_DIRS "${SELF_DIR}/../../../@FALCON_INC_DIR@" )
+      list(APPEND Falcon_INCLUDE_DIRS "${SELF_DIR}/../../../@FALCON_INC_DIR@" )
    endif()
 endif()
 
 # Fixed output directories
-set(falcon_MODULE_DIR "${falcon_PREFIX}/@FALCON_MOD_DIR@")
-set(falcon_MAN_DIR "${falcon_PREFIX}/@FALCON_MAN_DIR@")
+set(Falcon_MODULE_DIR "${Falcon_PREFIX}/@FALCON_MOD_DIR@")
+set(Falcon_MAN_DIR "${Falcon_PREFIX}/@FALCON_MAN_DIR@")
 
 #Check if everything is in place.
-find_program(falcon_EXECUTABLE falcon "${falcon_BINARY_DIR}")
-find_library(falcon_ENGINE falcon_engine "${falcon_LIBRARY_DIR}")
-find_file(falcon_ENGINE_INC falcon/engine.h "${falcon_INCLUDE_DIR}" )
+find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
+find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
+find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
    
 # Prepare Falcon in development environment.
-list(APPEND falcon_INCLUDE_DIRS  ${falcon_INCLUDE_DIR})
-list(APPEND falcon_LIBRARY_DIRS  ${falcon_LIBRARY_DIR})
+list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
+list(APPEND Falcon_LIBRARY_DIRS  ${Falcon_LIBRARY_DIR})
 
-set(falcon_LIBRARIES falcon_engine)
+set(Falcon_LIBRARIES falcon_engine)
 
 if(NOT WIN32)
    option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
@@ -104,9 +104,9 @@ endif()
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
 set(FALCON_INSTALL_DESTINATIONS
-  RUNTIME DESTINATION ${falcon_BINARY_DIR}
-  LIBRARY DESTINATION ${falcon_LIBRARY_DIR}
-  ARCHIVE DESTINATION ${falcon_LIBRARY_DIR}
+  RUNTIME DESTINATION ${Falcon_BINARY_DIR}
+  LIBRARY DESTINATION ${Falcon_LIBRARY_DIR}
+  ARCHIVE DESTINATION ${Falcon_LIBRARY_DIR}
 )
 # NOTE modules are installed via 
 #   install(FILES .. DESTINATION ${FALCON_MOD_DIR})
@@ -129,12 +129,12 @@ macro( falcon_define_module varname modname )
 endmacro( falcon_define_module )
 
 function(FALCON_FINALIZE_MODULE tgt )
-   target_link_libraries(${tgt} ${falcon_LIBRARIES} )
+   target_link_libraries(${tgt} ${Falcon_LIBRARIES} )
    falcon_install_module( ${tgt} )
 endfunction(FALCON_FINALIZE_MODULE)
 
 function(FALCON_FINALIZE_MODULE2 tgt libs)
-   target_link_libraries(${tgt} ${falcon_LIBRARIES} ${libs} )
+   target_link_libraries(${tgt} ${Falcon_LIBRARIES} ${libs} )
    falcon_install_module( ${tgt} )
 endfunction(FALCON_FINALIZE_MODULE2)
 
@@ -150,9 +150,16 @@ function(FALCON_INSTALL_MODULE tgt )
 
   #give the ability to store modules in a temporary space
   if ( NOT FALCON_MOD_DIR )
-     set (FALCON_MOD_DIR "${falcon_MODULE_DIR}" )
+     set (FALCON_MOD_DIR "${Falcon_MODULE_DIR}" )
   endif()
    
   install( TARGETS ${tgt}
            DESTINATION ${FALCON_MOD_DIR} )
 endfunction(FALCON_INSTALL_MODULE)
+
+## Backward compatibility definitions
+message(STATUS "The falcon_INCLUDE_DIR(S) and falcon_LIBRARIES variables are deprecated, "
+"replace them with Falcon_INCLUDE_DIR(S) and Falcon_LIBRARIES.")
+set(falcon_INCLUDE_DIR ${Falcon_INCLUDE_DIR})
+set(falcon_INCLUDE_DIRS ${Falcon_INCLUDE_DIRS})
+set(falcon_LIBRARIES ${Falcon_LIBRARIES})
