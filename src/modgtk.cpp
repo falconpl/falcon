@@ -28,6 +28,7 @@
 #include "gtk_Object.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
+#include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
 #include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
@@ -72,6 +73,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Main::modInit( self );
 
     Falcon::Gtk::Requisition::modInit( self );
+    Falcon::Gtk::Stock::modInit( self );
 
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
