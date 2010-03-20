@@ -1,7 +1,7 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${falcon_INCLUDE_DIRS}
+  ${Falcon_INCLUDE_DIRS}
   ${LibHaru_INCLUDE_DIRS}
 )
 
