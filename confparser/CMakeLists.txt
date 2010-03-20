@@ -6,7 +6,7 @@
 
 INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/include
-  ${falcon_INCLUDE_DIRS}
+  ${Falcon_INCLUDE_DIRS}
 )
 
 if(WIN32)

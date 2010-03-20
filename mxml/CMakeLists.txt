@@ -7,7 +7,7 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/include
-  ${falcon_INCLUDE_DIRS}
+  ${Falcon_INCLUDE_DIRS}
 )
 
 if(WIN32)
