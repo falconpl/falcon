@@ -10,6 +10,7 @@
 
 #include "gtk_enums.hpp"
 
+#include "gtk_Action.hpp"
 #include "gtk_Arrow.hpp"
 #include "gtk_Bin.hpp"
 #include "gtk_Box.hpp"
@@ -75,6 +76,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Requisition::modInit( self );
     Falcon::Gtk::Stock::modInit( self );
 
+    Falcon::Gtk::Action::modInit( self );
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
 #endif

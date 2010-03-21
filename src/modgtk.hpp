@@ -235,6 +235,164 @@ typedef struct
 } ConstIntTab;
 
 
+/**
+ *  \brief class to help with arguments checking
+ */
+template<int numStrings>
+class ArgCheck
+{
+
+    Falcon::AutoCString m_strings[ numStrings ];
+
+    Falcon::VMachine*   m_vm;
+
+    const char*     m_spec;
+
+    int     m_p;
+
+public:
+
+    ArgCheck( Falcon::VMachine* vm, const char* spec )
+        :
+        m_vm( vm ),
+        m_spec( spec ),
+        m_p( 0 )
+    {}
+
+    const char* getCString( int index, bool mandatory = true )
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isString() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+                return 0;
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isString() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        m_strings[ m_p ].set( it->asString() );
+        return m_strings[ m_p++ ].c_str();
+    }
+
+    Falcon::int64 getInteger( int index, bool mandatory = true, bool* wasNil = 0 ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isInteger() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+            {
+                if ( wasNil )
+                    *wasNil = true;
+                return 0;
+            }
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isInteger() )
+                throw_inv_params( m_spec );
+#endif
+            if ( wasNil )
+                *wasNil = false;
+        }
+        return it->asInteger();
+    }
+
+    Falcon::numeric getNumeric( int index, bool mandatory = true, bool* wasNil = 0 ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isOrdinal() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+            {
+                if ( wasNil )
+                    *wasNil = true;
+                return 0;
+            }
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isOrdinal() )
+                throw_inv_params( m_spec );
+#endif
+            if ( wasNil )
+                *wasNil = false;
+        }
+        return it->asNumeric();
+    }
+
+    bool getBoolean( int index, bool mandatory = true, bool* wasNil = 0 ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isBoolean() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+            {
+                if ( wasNil )
+                    *wasNil = true;
+                return false;
+            }
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isBoolean() )
+                throw_inv_params( m_spec );
+#endif
+            if ( wasNil )
+                *wasNil = false;
+        }
+        return it->asBoolean();
+    }
+
+    Falcon::CoreObject* getObject( int index, bool mandatory = true ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isObject() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+                return 0;
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isObject() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        return it->asObject();
+    }
+
+    ~ArgCheck() {}
+
+};
+
+
 } // Gtk
 } // Falcon
 

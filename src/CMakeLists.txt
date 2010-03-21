@@ -10,6 +10,7 @@ falcon_define_module( CURRENT_MODULE gtk )
 set( SRC_FILES
   g_Object.cpp
   gdk_Pixbuf.cpp
+  gtk_Action.cpp
   gtk_Arrow.cpp
   gtk_Bin.cpp
   gtk_Box.cpp
@@ -47,6 +48,7 @@ set( SRC_FILES
 set( HDR_FILES
   g_Object.hpp
   gdk_Pixbuf.hpp
+  gtk_Action.hpp
   gtk_Arrow.hpp
   gtk_Bin.hpp
   gtk_Box.hpp
