@@ -130,8 +130,8 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 
    if( i_uri->isString() )
    {
-      String enc = URI::URLEncode( *i_uri->asString() );
-      AutoCString curi( enc );
+      //String enc = URI::URLEncode( *i_uri->asString() );
+      AutoCString curi( *i_uri->asString() );
 
       retval = curl_easy_setopt( curl, CURLOPT_URL, curi.c_str() );
    }
