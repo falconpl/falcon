@@ -51,8 +51,10 @@ class FALCON_DYN_CLASS AutoWString
 
 
 public:
-   AutoWString( const Falcon::String &str );
 
+   AutoWString();
+
+   AutoWString( const Falcon::String &str );
    AutoWString( const Falcon::Item &itm );
 
    AutoWString( Falcon::VMachine *vm, const Falcon::Item &itm ):
@@ -68,6 +70,11 @@ public:
    }
 
    ~AutoWString();
+
+   void set( const Falcon::String &str );
+   void set( const Falcon::Item &itm );
+   void set( Falcon::VMachine *vm, const Falcon::Item &itm );
+   void set( Falcon::VMachine *vm, const Falcon::Item &itm, const Falcon::String &fmt );
 
    const wchar_t *w_str() const { return m_pData; }
    operator const wchar_t *() const { return m_pData; }
