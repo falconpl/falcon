@@ -52,45 +52,51 @@ FALCON_FUNC activate( VMARG );
 
 //FALCON_FUNC get_proxies( VMARG );
 
-//FALCON_FUNC connect_accelerator( VMARG );
+FALCON_FUNC connect_accelerator( VMARG );
 
-//FALCON_FUNC disconnect_accelerator( VMARG );
+FALCON_FUNC disconnect_accelerator( VMARG );
 
-//FALCON_FUNC block_activate( VMARG );
+#if GTK_MINOR_VERSION >= 16
+FALCON_FUNC block_activate( VMARG );
 
-//FALCON_FUNC unblock_activate( VMARG );
+FALCON_FUNC unblock_activate( VMARG );
+#endif
 
 //FALCON_FUNC block_activate_from( VMARG );
 
 //FALCON_FUNC unblock_activate_from( VMARG );
 
-//FALCON_FUNC get_always_show_image( VMARG );
+#if GTK_MINOR_VERSION >= 20
+FALCON_FUNC get_always_show_image( VMARG );
 
-//FALCON_FUNC set_always_show_image( VMARG );
+FALCON_FUNC set_always_show_image( VMARG );
+#endif
 
-//FALCON_FUNC get_accel_path( VMARG );
+FALCON_FUNC get_accel_path( VMARG );
 
-//FALCON_FUNC set_accel_path( VMARG );
+FALCON_FUNC set_accel_path( VMARG );
 
 //FALCON_FUNC get_accel_closure( VMARG );
 
 //FALCON_FUNC set_accel_group( VMARG );
 
-//FALCON_FUNC set_label( VMARG );
+#if GTK_MINOR_VERSION >= 16
 
-//FALCON_FUNC get_label( VMARG );
+FALCON_FUNC set_label( VMARG );
 
-//FALCON_FUNC set_short_label( VMARG );
+FALCON_FUNC get_label( VMARG );
 
-//FALCON_FUNC get_short_label( VMARG );
+FALCON_FUNC set_short_label( VMARG );
 
-//FALCON_FUNC set_tooltip( VMARG );
+FALCON_FUNC get_short_label( VMARG );
 
-//FALCON_FUNC get_tooltip( VMARG );
+FALCON_FUNC set_tooltip( VMARG );
 
-//FALCON_FUNC set_stock_id( VMARG );
+FALCON_FUNC get_tooltip( VMARG );
 
-//FALCON_FUNC get_stock_id( VMARG );
+FALCON_FUNC set_stock_id( VMARG );
+
+FALCON_FUNC get_stock_id( VMARG );
 
 //FALCON_FUNC set_gicon( VMARG );
 
@@ -112,6 +118,7 @@ FALCON_FUNC activate( VMARG );
 
 //FALCON_FUNC get_is_important( VMARG );
 
+#endif // GTK_MINOR_VERSION >= 16
 
 } // Action
 } // Gtk

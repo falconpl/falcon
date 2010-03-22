@@ -38,26 +38,31 @@ void Action::modInit( Falcon::Module* mod )
     //{ "connect_proxy",     &Action::foo },
     //{ "disconnect_proxy",     &Action::foo },
     //{ "get_proxies",     &Action::foo },
-    //{ "connect_accelerator",     &Action::foo },
-    //{ "disconnect_accelerator",     &Action::foo },
-    //{ "block_activate",     &Action::foo },
-    //{ "unblock_activate",     &Action::foo },
+    { "connect_accelerator",    &Action::connect_accelerator },
+    { "disconnect_accelerator", &Action::disconnect_accelerator },
+#if GTK_MINOR_VERSION >= 16
+    { "block_activate",         &Action::block_activate },
+    { "unblock_activate",       &Action::unblock_activate },
+#endif
     //{ "block_activate_from",     &Action::foo },
     //{ "unblock_activate_from",     &Action::foo },
-    //{ "get_always_show_image",     &Action::foo },
-    //{ "set_always_show_image",     &Action::foo },
-    //{ "get_accel_path",     &Action::foo },
-    //{ "set_accel_path",     &Action::foo },
+#if GTK_MINOR_VERSION >= 20
+    { "get_always_show_image",  &Action::get_always_show_image },
+    { "set_always_show_image",  &Action::set_always_show_image },
+#endif
+    { "get_accel_path",         &Action::get_accel_path },
+    { "set_accel_path",         &Action::set_accel_path },
     //{ "get_accel_closure",     &Action::foo },
     //{ "set_accel_group",     &Action::foo },
-    //{ "set_label",     &Action::foo },
-    //{ "get_label",     &Action::foo },
-    //{ "set_short_label",     &Action::foo },
-    //{ "get_short_label",     &Action::foo },
-    //{ "set_tooltip",     &Action::foo },
-    //{ "get_tooltip",     &Action::foo },
-    //{ "set_stock_id",     &Action::foo },
-    //{ "get_stock_id",     &Action::foo },
+#if GTK_MINOR_VERSION >= 16
+    { "set_label",              &Action::set_label },
+    { "get_label",              &Action::get_label },
+    { "set_short_label",        &Action::set_short_label },
+    { "get_short_label",        &Action::get_short_label },
+    { "set_tooltip",            &Action::set_tooltip },
+    { "get_tooltip",            &Action::get_tooltip },
+    { "set_stock_id",           &Action::set_stock_id },
+    { "get_stock_id",           &Action::get_stock_id },
     //{ "set_gicon",     &Action::foo },
     //{ "get_gicon",     &Action::foo },
     //{ "set_icon_name",     &Action::foo },
@@ -68,6 +73,7 @@ void Action::modInit( Falcon::Module* mod )
     //{ "get_visible_vertical",     &Action::foo },
     //{ "set_is_important",     &Action::foo },
     //{ "get_is_important",     &Action::foo },
+#endif
     { NULL, NULL }
     };
 
@@ -312,26 +318,333 @@ FALCON_FUNC Action::activate( VMARG )
 //FALCON_FUNC Action::connect_proxy( VMARG );
 //FALCON_FUNC Action::disconnect_proxy( VMARG );
 //FALCON_FUNC Action::get_proxies( VMARG );
-//FALCON_FUNC Action::connect_accelerator( VMARG );
-//FALCON_FUNC Action::disconnect_accelerator( VMARG );
-//FALCON_FUNC Action::block_activate( VMARG );
-//FALCON_FUNC Action::unblock_activate( VMARG );
+
+
+/*#
+    @method connect_accelerator GtkAction
+    @brief Installs the accelerator for action if action has an accel path and group.
+
+    See set_accel_path() and set_accel_group()
+
+    Since multiple proxies may independently trigger the installation of the accelerator,
+    the action counts the number of times this function has been called and doesn't
+    remove the accelerator until disconnect_accelerator() has been called as many times.
+ */
+FALCON_FUNC Action::connect_accelerator( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_connect_accelerator( (GtkAction*)_obj );
+}
+
+
+/*#
+    @method disconnect_accelerator GtkAction
+    @brief Undoes the effect of one call to connect_accelerator().
+ */
+FALCON_FUNC Action::disconnect_accelerator( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_disconnect_accelerator( (GtkAction*)_obj );
+}
+
+
+#if GTK_MINOR_VERSION >= 16
+/*#
+    @method block_activate GtkAction
+    @brief Disable activation signals from the action
+
+    This is needed when updating the state of your proxy GtkActivatable widget could
+    result in calling gtk_action_activate(), this is a convenience function to avoid
+    recursing in those cases (updating toggle state for instance).
+ */
+FALCON_FUNC Action::block_activate( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_block_activate( (GtkAction*)_obj );
+}
+
+
+/*#
+    @method unblock_activate GtkAction
+    @brief Reenable activation signals from the action
+ */
+FALCON_FUNC Action::unblock_activate( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_unblock_activate( (GtkAction*)_obj );
+}
+#endif // GTK_MINOR_VERSION >= 16
+
 //FALCON_FUNC Action::block_activate_from( VMARG );
 //FALCON_FUNC Action::unblock_activate_from( VMARG );
-//FALCON_FUNC Action::get_always_show_image( VMARG );
-//FALCON_FUNC Action::set_always_show_image( VMARG );
-//FALCON_FUNC Action::get_accel_path( VMARG );
-//FALCON_FUNC Action::set_accel_path( VMARG );
+
+
+#if GTK_MINOR_VERSION >= 20
+/*#
+    @method get_always_show_image GtkAction
+    @brief Returns whether action's menu item proxies will ignore the "gtk-menu-images" setting and always show their image, if available.
+    @return true if the menu item proxies will always show their image
+ */
+FALCON_FUNC Action::get_always_show_image( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_always_show_image( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method set_always_show_image
+    @brief Sets whether action's menu item proxies will ignore the "gtk-menu-images" setting and always show their image, if available.
+
+    Use this if the menu item would be useless or hard to use without their image.
+ */
+FALCON_FUNC Action::set_always_show_image( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_always_show_image( (GtkAction*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+#endif // GTK_MINOR_VERSION >= 20
+
+
+/*#
+    @method get_accel_path GtkAction
+    @brief Returns the accel path for this action.
+    @return the accel path for this action, or nil if none is set.
+ */
+FALCON_FUNC Action::get_accel_path( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* path = gtk_action_get_accel_path( (GtkAction*)_obj );
+    if ( path )
+        vm->retval( new String( path ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_accel_path GtkAction
+    @brief Sets the accel path for this action.
+    @param accel_path the accelerator path (string)
+
+    All proxy widgets associated with the action will have this accel path, so that
+    their accelerators are consistent.
+ */
+FALCON_FUNC Action::set_accel_path( VMARG )
+{
+    Item* i_path = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_path || i_path->isNil() || !i_path->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString path( i_path->asString() );
+    gtk_action_set_accel_path( (GtkAction*)_obj, path.c_str() );
+}
+
+
 //FALCON_FUNC Action::get_accel_closure( VMARG );
 //FALCON_FUNC Action::set_accel_group( VMARG );
-//FALCON_FUNC Action::set_label( VMARG );
-//FALCON_FUNC Action::get_label( VMARG );
-//FALCON_FUNC Action::set_short_label( VMARG );
-//FALCON_FUNC Action::get_short_label( VMARG );
-//FALCON_FUNC Action::set_tooltip( VMARG );
-//FALCON_FUNC Action::get_tooltip( VMARG );
-//FALCON_FUNC Action::set_stock_id( VMARG );
-//FALCON_FUNC Action::get_stock_id( VMARG );
+
+
+#if GTK_MINOR_VERSION >= 16
+/*#
+    @method set_label GtkAction
+    @brief Sets the label of action.
+    @param label the label text to set
+ */
+FALCON_FUNC Action::set_label( VMARG )
+{
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || i_lbl->isNil() || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString lbl( i_lbl->asString() );
+    gtk_action_set_label( (GtkAction*)_obj, lbl.c_str() );
+}
+
+
+/*#
+    @method get_label GtkAction
+    @brief Gets the label text of action.
+    @return the label text
+ */
+FALCON_FUNC Action::get_label( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* lbl = gtk_action_get_label( (GtkAction*)_obj );
+    if ( lbl )
+        vm->retval( new String( lbl ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_short_label GtkAction
+    @brief Sets a shorter label text on action.
+    @param short_label the label text to set
+ */
+FALCON_FUNC Action::set_short_label( VMARG )
+{
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || i_lbl->isNil() || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString lbl( i_lbl->asString() );
+    gtk_action_set_short_label( (GtkAction*)_obj, lbl.c_str() );
+}
+
+
+/*#
+    @method get_short_label GtkAction
+    @brief Gets the short label text of action.
+    @return the short label text
+ */
+FALCON_FUNC Action::get_short_label( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* lbl = gtk_action_get_short_label( (GtkAction*)_obj );
+    if ( lbl )
+        vm->retval( new String( lbl ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_tooltip GtkAction
+    @brief Sets the tooltip text on action
+    @param tooltip the tooltip text
+ */
+FALCON_FUNC Action::set_tooltip( VMARG )
+{
+    Item* i_tip = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_tip || i_tip->isNil() || !i_tip->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString tip( i_tip->asString() );
+    gtk_action_set_tooltip( (GtkAction*)_obj, tip.c_str() );
+}
+
+
+/*#
+    @method get_tooltip GtkAction
+    @brief Gets the tooltip text of action.
+    @return the tooltip text
+ */
+FALCON_FUNC Action::get_tooltip( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* tip = gtk_action_get_tooltip( (GtkAction*)_obj );
+    if ( tip )
+        vm->retval( new String( tip ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_stock_id GtkAction
+    @brief Sets the stock id on action
+    @param stock_id the stock id
+ */
+FALCON_FUNC Action::set_stock_id( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || i_id->isNil() || !i_id->isString() )
+        throw_inv_params( "S" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    AutoCString stid( i_id->asString() );
+    gtk_action_set_stock_id( (GtkAction*)_obj, stid.c_str() );
+}
+
+
+/*#
+    @method get_stock_id GtkAction
+    @brief Gets the stock id of action.
+    @return the stock id
+ */
+FALCON_FUNC Action::get_stock_id( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* id = gtk_action_get_stock_id( (GtkAction*)_obj );
+    if ( id )
+        vm->retval( new String( id ) );
+    else
+        vm->retnil();
+}
+
+
 //FALCON_FUNC Action::set_gicon( VMARG );
 //FALCON_FUNC Action::get_gicon( VMARG );
 //FALCON_FUNC Action::set_icon_name( VMARG );
@@ -343,6 +656,7 @@ FALCON_FUNC Action::activate( VMARG )
 //FALCON_FUNC Action::set_is_important( VMARG );
 //FALCON_FUNC Action::get_is_important( VMARG );
 
+#endif // GTK_MINOR_VERSION >= 16
 
 } // Gtk
 } // Falcon
