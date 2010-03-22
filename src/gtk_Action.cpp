@@ -23,14 +23,14 @@ void Action::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_activate",        &Action::signal_activate },
-    //{ "get_name",     &Action::foo },
-    //{ "is_sensitive",     &Action::foo },
-    //{ "get_sensitive",     &Action::foo },
-    //{ "set_sensitive",     &Action::foo },
-    //{ "is_visible",     &Action::foo },
-    //{ "get_visible",     &Action::foo },
-    //{ "set_visible",     &Action::foo },
-    //{ "activate",     &Action::foo },
+    { "get_name",               &Action::get_name },
+    { "is_sensitive",           &Action::is_sensitive },
+    { "get_sensitive",          &Action::get_sensitive },
+    { "set_sensitive",          &Action::set_sensitive },
+    { "is_visible",             &Action::is_visible },
+    { "get_visible",            &Action::get_visible },
+    { "set_visible",            &Action::set_visible },
+    { "activate",               &Action::activate },
     //{ "create_icon",     &Action::foo },
     //{ "create_menu_item",     &Action::foo },
     //{ "create_tool_item",     &Action::foo },
@@ -151,14 +151,160 @@ void Action::on_activate( GtkAction* act, gpointer _vm )
 }
 
 
-//FALCON_FUNC Action::get_name( VMARG );
-//FALCON_FUNC Action::is_sensitive( VMARG );
-//FALCON_FUNC Action::get_sensitive( VMARG );
-//FALCON_FUNC Action::set_sensitive( VMARG );
-//FALCON_FUNC Action::is_visible( VMARG );
-//FALCON_FUNC Action::get_visible( VMARG );
-//FALCON_FUNC Action::set_visible( VMARG );
-//FALCON_FUNC Action::activate( VMARG );
+/*#
+    @method get_name GtkAction
+    @brief Returns the name of the action.
+    @return the name of the action
+ */
+FALCON_FUNC Action::get_name( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* nam = gtk_action_get_name( (GtkAction*)_obj );
+    vm->retval( nam ? new String( nam ) : new String );
+}
+
+
+/*#
+    @method is_sensitive GtkAction
+    @brief Returns whether the action is effectively sensitive.
+    @return true if the action and its associated action group are both sensitive.
+ */
+FALCON_FUNC Action::is_sensitive( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_is_sensitive( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method get_sensitive GtkAction
+    @brief Returns whether the action itself is sensitive.
+    @return true if the action itself is sensitive.
+
+    Note that this doesn't necessarily mean effective sensitivity.
+    See is_sensitive() for that.
+ */
+FALCON_FUNC Action::get_sensitive( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_sensitive( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method set_sensitive GtkAction
+    @brief Sets the sensitive property of the action to sensitive.
+    @param sensitive true to make the action sensitive
+
+    Note that this doesn't necessarily mean effective sensitivity.
+    See is_sensitive() for that.
+ */
+FALCON_FUNC Action::set_sensitive( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_sensitive( (GtkAction*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method is_visible GtkAction
+    @brief Returns whether the action is effectively visible.
+    @return true if the action and its associated action group are both visible.
+ */
+FALCON_FUNC Action::is_visible( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_is_visible( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method get_visible GtkAction
+    @brief Returns whether the action itself is visible.
+    @return true if the action itself is visible.
+
+    Note that this doesn't necessarily mean effective visibility.
+    See is_sensitive() for that.
+ */
+FALCON_FUNC Action::get_visible( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_visible( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method set_visible GtkAction
+    @brief Sets the visible property of the action to visible.
+    @param true to make the action visible
+
+    Note that this doesn't necessarily mean effective visibility.
+    See is_visible() for that.
+ */
+FALCON_FUNC Action::set_visible( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_visible( (GtkAction*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method activate GtkAction
+    @brief Emits the "activate" signal on the specified action, if it isn't insensitive.
+
+    This gets called by the proxy widgets when they get activated.
+
+    It can also be used to manually activate an action.
+ */
+FALCON_FUNC Action::activate( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_activate( (GtkAction*)_obj );
+}
+
+
 //FALCON_FUNC Action::create_icon( VMARG );
 //FALCON_FUNC Action::create_menu_item( VMARG );
 //FALCON_FUNC Action::create_tool_item( VMARG );

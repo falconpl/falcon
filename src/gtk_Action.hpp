@@ -22,21 +22,21 @@ FALCON_FUNC signal_activate( VMARG );
 
 void on_activate( GtkAction*, gpointer );
 
-//FALCON_FUNC get_name( VMARG );
+FALCON_FUNC get_name( VMARG );
 
-//FALCON_FUNC is_sensitive( VMARG );
+FALCON_FUNC is_sensitive( VMARG );
 
-//FALCON_FUNC get_sensitive( VMARG );
+FALCON_FUNC get_sensitive( VMARG );
 
-//FALCON_FUNC set_sensitive( VMARG );
+FALCON_FUNC set_sensitive( VMARG );
 
-//FALCON_FUNC is_visible( VMARG );
+FALCON_FUNC is_visible( VMARG );
 
-//FALCON_FUNC get_visible( VMARG );
+FALCON_FUNC get_visible( VMARG );
 
-//FALCON_FUNC set_visible( VMARG );
+FALCON_FUNC set_visible( VMARG );
 
-//FALCON_FUNC activate( VMARG );
+FALCON_FUNC activate( VMARG );
 
 //FALCON_FUNC create_icon( VMARG );
 
