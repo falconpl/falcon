@@ -32,9 +32,9 @@ public:
 
     static void on_accel_closures_changed( GtkWidget*, gpointer );
 
-    //static FALCON_FUNC signal_button_press_event( VMARG );
+    static FALCON_FUNC signal_button_press_event( VMARG );
 
-    //static gboolean on_button_press_event( GtkWidget*, GdkEventButton*, gpointer );
+    static gboolean on_button_press_event( GtkWidget*, GdkEventButton*, gpointer );
 
     //static FALCON_FUNC signal_button_release_event( VMARG );
 
@@ -388,9 +388,9 @@ public:
 
     //static FALCON_FUNC set_usize( VMARG );
 
-    //static FALCON_FUNC set_events( VMARG );
+    static FALCON_FUNC set_events( VMARG );
 
-    //static FALCON_FUNC add_events( VMARG );
+    static FALCON_FUNC add_events( VMARG );
 
     //static FALCON_FUNC set_extension_events( VMARG );
 

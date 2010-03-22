@@ -4,6 +4,8 @@
 
 #include "gtk_Widget.hpp"
 
+#include "gdk_EventButton.hpp"
+
 #include "gtk_Requisition.hpp"
 
 #include <gtk/gtk.h>
@@ -26,7 +28,7 @@ void Widget::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_accel_closures_changed",  &Widget::signal_accel_closures_changed },
-    //{ "button_press_event",             &Widget::signal_button_press_event },
+    { "button_press_event",             &Widget::signal_button_press_event },
     //{ "button_release_event",           &Widget::signal_button_release_event },
     { "signal_can_activate_accel",      &Widget::signal_can_activate_accel },
     //{ "signal_child_notify",            &Widget::signal_child_notify },
@@ -119,6 +121,8 @@ void Widget::modInit( Falcon::Module* mod )
     { "set_name",               &Widget::set_name },
     { "get_name",               &Widget::get_name },
     { "set_sensitive",          &Widget::set_sensitive },
+    { "set_events",             &Widget::set_events },
+    { "add_events",             &Widget::add_events },
     { "get_toplevel",           &Widget::set_sensitive },
     { "get_events",             &Widget::get_events },
     { "is_ancestor",            &Widget::is_ancestor },
@@ -183,9 +187,83 @@ void Widget::on_accel_closures_changed( GtkWidget* wdt, gpointer _vm )
 }
 
 
-//FALCON_FUNC signal_button_press_event( VMARG );
+/*#
+    @method signal_button_press_event GtkWidget
+    @brief Connect a VMSlot to the widget button_press_event signal and return it
 
-//gboolean on_button_press_event( GtkWidget*, GdkEventButton*, gpointer );
+    The button-press-event signal will be emitted when a button (typically from a mouse)
+    is pressed.
+
+    To receive this signal, the GdkWindow associated to the widget needs to enable
+    the GDK_BUTTON_PRESS_MASK mask.
+
+    This signal will be sent to the grab widget if there is one.
+
+    Your callback function gets a GdkEventButton as parameter, and must return
+    a boolean, true to stop other handlers from being invoked for the event,
+    false to propagate the event further.
+ */
+FALCON_FUNC Widget::signal_button_press_event( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "button_press_event",
+        (void*) &Widget::on_button_press_event, vm );
+}
+
+
+gboolean Widget::on_button_press_event( GtkWidget* obj, GdkEventButton* ev, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "button_press_event", false );
+
+    if ( !cs || cs->empty() )
+        return FALSE; // propagate event
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkEventButton" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_button_press_event", it ) )
+            {
+                printf(
+                "[GtkWidget::on_button_press_event] invalid callback (expected callable)\n" );
+                return TRUE; // block event
+            }
+        }
+        vm->pushParam( new Gdk::EventButton( wki->asClass(), ev ) );
+        vm->callItem( it, 1 );
+        it = vm->regA();
+
+        if ( !it.isNil() && it.isBoolean() )
+        {
+            if ( it.asBoolean() )
+                return TRUE; // block event
+            else
+                iter.next();
+        }
+        else
+        {
+            printf(
+            "[GtkWidget::on_can_activate_accel] invalid callback (expected boolean)\n" );
+            return TRUE; // block event
+        }
+    }
+    while ( iter.hasCurrent() );
+
+    return FALSE; // propagate event
+}
+
 
 //FALCON_FUNC signal_button_release_event( VMARG );
 
@@ -1311,9 +1389,50 @@ FALCON_FUNC Widget::set_sensitive( VMARG )
 
 //FALCON_FUNC Widget::set_usize( VMARG );
 
-//FALCON_FUNC Widget::set_events( VMARG );
 
-//FALCON_FUNC Widget::add_events( VMARG );
+/*#
+    @method set_events GtkWidget
+    @brief Sets the event mask (see GdkEventMask) for a widget.
+    @param an event mask, see GdkEventMask
+
+    The event mask determines which events a widget will receive. Keep in mind that
+    different widgets have different default event masks, and by changing the event
+    mask you may disrupt a widget's functionality, so be careful. This function must
+    be called while a widget is unrealized. Consider add_events() for
+    widgets that are already realized, or if you want to preserve the existing event
+    mask. This function can't be used with GTK_NO_WINDOW widgets; to get events on
+    those widgets, place them inside a GtkEventBox and receive events on the event box.
+ */
+FALCON_FUNC Widget::set_events( VMARG )
+{
+    Item* i_ev = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_ev || i_ev->isNil() || !i_ev->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_set_events( (GtkWidget*)_obj, i_ev->asInteger() );
+}
+
+
+/*#
+    @method add_events GtkWidget
+    @brief Adds the events in the bitfield events to the event mask for widget.
+    @param events an event mask, see GdkEventMask
+ */
+FALCON_FUNC Widget::add_events( VMARG )
+{
+    Item* i_ev = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_ev || i_ev->isNil() || !i_ev->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_widget_add_events( (GtkWidget*)_obj, i_ev->asInteger() );
+}
+
 
 //FALCON_FUNC Widget::set_extension_events( VMARG );
 
