@@ -28,7 +28,7 @@ void Widget::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_accel_closures_changed",  &Widget::signal_accel_closures_changed },
-    { "button_press_event",             &Widget::signal_button_press_event },
+    { "signal_button_press_event",      &Widget::signal_button_press_event },
     //{ "button_release_event",           &Widget::signal_button_release_event },
     { "signal_can_activate_accel",      &Widget::signal_can_activate_accel },
     //{ "signal_child_notify",            &Widget::signal_child_notify },

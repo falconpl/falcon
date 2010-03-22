@@ -1,0 +1,29 @@
+load gtk
+
+m = GtkMain()
+
+class MyWindow from GtkWindow
+    init
+        self.signal_delete_event().subscribe( self )
+        img = GtkImage.new_from_stock(
+            GTK_STOCK_DIALOG_ERROR, GTK_ICON_SIZE_DIALOG )
+        box = GtkEventBox()
+        box.add( img )
+        box.signal_button_press_event().subscribe( self )
+        self.add( box )
+    end
+    function on_button_press_event( event )
+        // prints the coordinates
+        > event.x, " ", event.y
+        // return true to block event
+        return false
+    end
+    function on_delete_event()
+        m.quit()
+        return false
+    end
+end
+
+w = MyWindow()
+m.run( w )
+
