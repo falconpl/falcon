@@ -36,9 +36,9 @@ public:
 
     static gboolean on_button_press_event( GtkWidget*, GdkEventButton*, gpointer );
 
-    //static FALCON_FUNC signal_button_release_event( VMARG );
+    static FALCON_FUNC signal_button_release_event( VMARG );
 
-    //static gboolean on_button_release_event( GtkWidget*, GdkEventButton*, gpointer );
+    static gboolean on_button_release_event( GtkWidget*, GdkEventButton*, gpointer );
 
     static FALCON_FUNC signal_can_activate_accel( VMARG );
 

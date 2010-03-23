@@ -29,7 +29,7 @@ void Widget::modInit( Falcon::Module* mod )
     {
     { "signal_accel_closures_changed",  &Widget::signal_accel_closures_changed },
     { "signal_button_press_event",      &Widget::signal_button_press_event },
-    //{ "button_release_event",           &Widget::signal_button_release_event },
+    { "signal_button_release_event",    &Widget::signal_button_release_event },
     { "signal_can_activate_accel",      &Widget::signal_can_activate_accel },
     //{ "signal_child_notify",            &Widget::signal_child_notify },
     //{ "signal_client_event",            &Widget::signal_client_event },
@@ -255,7 +255,7 @@ gboolean Widget::on_button_press_event( GtkWidget* obj, GdkEventButton* ev, gpoi
         else
         {
             printf(
-            "[GtkWidget::on_can_activate_accel] invalid callback (expected boolean)\n" );
+            "[GtkWidget::on_button_press_event] invalid callback (expected boolean)\n" );
             return TRUE; // block event
         }
     }
@@ -265,10 +265,78 @@ gboolean Widget::on_button_press_event( GtkWidget* obj, GdkEventButton* ev, gpoi
 }
 
 
-//FALCON_FUNC signal_button_release_event( VMARG );
+/*#
+    @method signal_button_release_event GtkWidget
+    @brief Connect a VMSlot to the widget button_release_event signal and return it
 
-//gboolean on_button_release_event( GtkWidget*, GdkEventButton*, gpointer );
+    The button-release-event signal will be emitted when a button (typically from a mouse)
+    is released.
 
+    To receive this signal, the GdkWindow associated to the widget needs to enable
+    the GDK_BUTTON_RELEASE_MASK mask.
+
+    This signal will be sent to the grab widget if there is one.
+ */
+FALCON_FUNC Widget::signal_button_release_event( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "button_release_event",
+        (void*) &Widget::on_button_release_event, vm );
+}
+
+
+gboolean Widget::on_button_release_event( GtkWidget* obj, GdkEventButton* ev, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "button_release_event", false );
+
+    if ( !cs || cs->empty() )
+        return FALSE; // propagate event
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkEventButton" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_button_release_event", it ) )
+            {
+                printf(
+                "[GtkWidget::on_button_release_event] invalid callback (expected callable)\n" );
+                return TRUE; // block event
+            }
+        }
+        vm->pushParam( new Gdk::EventButton( wki->asClass(), ev ) );
+        vm->callItem( it, 1 );
+        it = vm->regA();
+
+        if ( !it.isNil() && it.isBoolean() )
+        {
+            if ( it.asBoolean() )
+                return TRUE; // block event
+            else
+                iter.next();
+        }
+        else
+        {
+            printf(
+            "[GtkWidget::on_button_release_event] invalid callback (expected boolean)\n" );
+            return TRUE; // block event
+        }
+    }
+    while ( iter.hasCurrent() );
+
+    return FALSE; // propagate event
+}
 
 
 /*#
