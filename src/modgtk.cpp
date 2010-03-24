@@ -28,6 +28,7 @@
 #include "gtk_Fixed.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
+#include "gtk_HPaned.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Main.hpp"
@@ -43,6 +44,7 @@
 #include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
+#include "gtk_VPaned.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 
@@ -113,6 +115,8 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
                 Falcon::Gtk::Paned::modInit( self );
+                    Falcon::Gtk::HPaned::modInit( self );
+                    Falcon::Gtk::VPaned::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
             Falcon::Gtk::Misc::modInit( self );

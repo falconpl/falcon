@@ -29,6 +29,7 @@ set( SRC_FILES
   gtk_Fixed.cpp
   gtk_HBox.cpp
   gtk_HButtonBox.cpp
+  gtk_HPaned.cpp
   gtk_Image.cpp
   gtk_Label.cpp
   gtk_Main.cpp
@@ -44,6 +45,7 @@ set( SRC_FILES
   gtk_ToggleButton.cpp
   gtk_VBox.cpp
   gtk_VButtonBox.cpp
+  gtk_VPaned.cpp
   gtk_Widget.cpp
   gtk_Window.cpp
   modgtk.cpp
@@ -76,6 +78,7 @@ set( HDR_FILES
   gtk_Fixed.hpp
   gtk_HBox.hpp
   gtk_HButtonBox.hpp
+  gtk_HPaned.hpp
   gtk_Image.hpp
   gtk_Label.hpp
   gtk_Main.hpp
@@ -91,6 +94,7 @@ set( HDR_FILES
   gtk_ToggleButton.hpp
   gtk_VBox.hpp
   gtk_VButtonBox.hpp
+  gtk_VPaned.hpp
   gtk_Widget.hpp
   gtk_Window.hpp
   modgtk.hpp
