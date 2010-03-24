@@ -10,7 +10,7 @@ namespace Falcon {
 namespace Gdk {
 
 /**
- *  \class Falcon::Gtk::DragContext
+ *  \class Falcon::Gdk::DragContext
  */
 class DragContext
     :
