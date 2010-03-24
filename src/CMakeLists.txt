@@ -13,6 +13,7 @@ set( SRC_FILES
   gdk_EventButton.cpp
   gdk_Pixbuf.cpp
   gtk_Action.cpp
+  gtk_Alignment.cpp
   gtk_Arrow.cpp
   gtk_Bin.cpp
   gtk_Box.cpp
@@ -56,6 +57,7 @@ set( HDR_FILES
   gdk_EventButton.hpp
   gdk_Pixbuf.hpp
   gtk_Action.hpp
+  gtk_Alignment.hpp
   gtk_Arrow.hpp
   gtk_Bin.hpp
   gtk_Box.hpp

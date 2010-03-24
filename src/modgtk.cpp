@@ -13,6 +13,7 @@
 #include "gtk_enums.hpp"
 
 #include "gtk_Action.hpp"
+#include "gtk_Alignment.hpp"
 #include "gtk_Arrow.hpp"
 #include "gtk_Bin.hpp"
 #include "gtk_Box.hpp"
@@ -93,6 +94,7 @@ FALCON_MODULE_DECL
         Falcon::Gtk::Widget::modInit( self );
             Falcon::Gtk::Container::modInit( self );
                 Falcon::Gtk::Bin::modInit( self );
+                    Falcon::Gtk::Alignment::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
