@@ -452,6 +452,28 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_COLORSPACE_RGB", GDK_COLORSPACE_RGB },
 
     /*
+     *  GdkDragAction
+     */
+    { "GDK_ACTION_DEFAULT", GDK_ACTION_DEFAULT },
+    { "GDK_ACTION_COPY",    GDK_ACTION_COPY },
+    { "GDK_ACTION_MOVE",    GDK_ACTION_MOVE },
+    { "GDK_ACTION_LINK",    GDK_ACTION_LINK },
+    { "GDK_ACTION_PRIVATE", GDK_ACTION_PRIVATE },
+    { "GDK_ACTION_ASK",     GDK_ACTION_ASK },
+
+
+    /*
+     *  GdkDragProtocol
+     */
+    { "GDK_DRAG_PROTO_MOTIF",       GDK_DRAG_PROTO_MOTIF },
+    { "GDK_DRAG_PROTO_XDND",        GDK_DRAG_PROTO_XDND },
+    { "GDK_DRAG_PROTO_ROOTWIN",     GDK_DRAG_PROTO_ROOTWIN },
+    { "GDK_DRAG_PROTO_NONE",        GDK_DRAG_PROTO_NONE },
+    { "GDK_DRAG_PROTO_WIN32_DROPFILES",GDK_DRAG_PROTO_WIN32_DROPFILES },
+    { "GDK_DRAG_PROTO_OLE2",        GDK_DRAG_PROTO_OLE2 },
+    { "GDK_DRAG_PROTO_LOCAL",       GDK_DRAG_PROTO_LOCAL },
+
+    /*
      *  GdkEventMask
      */
     { "GDK_EXPOSURE_MASK",              GDK_EXPOSURE_MASK },

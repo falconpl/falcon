@@ -7,6 +7,7 @@
 #include "g_Object.hpp"
 #include "g_ParamSpec.hpp"
 
+#include "gdk_DragContext.hpp"
 #include "gdk_EventButton.hpp"
 #include "gdk_Pixbuf.hpp"
 
@@ -69,6 +70,7 @@ FALCON_MODULE_DECL
      *  load gdk
      */
 
+    Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
 
