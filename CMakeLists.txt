@@ -1,4 +1,4 @@
-##############################################################################
+#############################################################################
 # The Falcon Programming language
 #
 # CMake configuration file for Core falcon
@@ -6,10 +6,7 @@
 #
 # CONTROL VARIABLES:
 #
-# CMAKE_INSTALL_PREFIX - Installation directory
-# FALCON_FINAL_DEST - Target final destination, if different from
-#                    prefix, where Falcon will be finally installed.
-#                    If not given, will be defaulted to CMAKE_INSTALL_PREFIX
+# CMAKE_INSTALL_PREFIX - Installation prefix
 # FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
 # FALCON_INC_DIR - Prefix for installation of include files.
 # FALCON_MAN_DIR - Prefix for installation of man files.
@@ -116,13 +113,6 @@ endif()
 
 message( STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}" )
 
-if (NOT FALCON_FINAL_DEST )
-   set( FALCON_FINAL_DEST "${CMAKE_INSTALL_PREFIX}" )
-   message( "Defaulting FALCON_FINAL_DESTINATION to ${FALCON_FINAL_DEST}" )
-else()
-   message( "setting FALCON_FINAL_DESTINATION=${FALCON_FINAL_DEST}" )
-endif()
-
 if (NOT FALCON_LIB_DIR)
    set(FALCON_LIB_DIR lib)
 endif()
@@ -176,7 +166,7 @@ if(NOT DISABLE_RPATH)
    if(CMAKE_INSTALL_RPATH)
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
    else()
-      set(CMAKE_INSTALL_RPATH "${FALCON_FINAL_DEST}/${FALCON_LIB_DIR}")
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
    endif()
 endif()

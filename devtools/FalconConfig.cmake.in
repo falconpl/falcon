@@ -4,7 +4,7 @@
 ######################################################################
 
 
-get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
@@ -13,64 +13,30 @@ set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
 set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
 set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
 set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
+set(Falcon_INC_DIR "@FALCON_INC_DIR@")
+
+set(Falcon_PREFIX ${SELF_DIR}/../../..)
+set(Falcon_INCLUDE_DIR ${Falcon_PREFIX}/@FALCON_INC_DIR@)
+set(Falcon_BINARY_DIR {Falcon_PREFIX}/@FALCON_BIN_DIR@)
+set(Falcon_LIBRARY_DIR ${Falcon_PREFIX}/@FALCON_LIB_DIR@)
+set(Falcon_INCLUDE_DIR  ${Falcon_PREFIX}/@FALCON_INC_DIR@)
+# If defined, prefer the source directory include files over the installed ones
+if(DEFINED ENV{FALCON_SRC_TREE})           
+  list(APPEND Falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
+  if(NOT WIN32)
+    message( STATUS "Falcon module configured under DEVELOPMENT (${FALCON_SRC_TREE}) settings" )
+  endif()
+endif()
+list(APPEND Falcon_INCLUDE_DIRS "{Falcon_INCLUDE_DIR}")
 
 #Versioning
 set( Falcon_VERSION "@FALCON_VERSION_ID@" )
 set( Falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
-
+#
 set( Falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
 set( Falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
 set( Falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
 set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
-
-# Prepare Falcon in build environment.
-
-if( WIN32 )
-   set(Falcon_PREFIX "${SELF_DIR}/../../..")
-   #Will be bin and lib
-   set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
-   set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
-   
-   #This can change depending on the version
-   set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
-   list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
-else()
-   # Selection of the build prefix (either the final one or a temporary build one) is performed
-   # by the caller, simply which FalconConfig.cmake module to load. So, our position is relevant.
-   if( "${SELF_DIR}" STREQUAL "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake" )
-      #If we're below the final destination, then use the final destination as a prefix.
-      if ("@FALCON_FINAL_DEST@" STREQUAL "@CMAKE_INSTALL_PREFIX@" )
-         # When the prefix is the same as the final destination, there isn't a difference.
-         # Warn about this, because the user of test builds may be misleaded.
-         # It is right to be here in case of test (development) builds.
-         Message( STATUS "Falcon module uses local settings (@CMAKE_INSTALL_PREFIX@)" )
-      else()
-         Message( STATUS "Falcon module configured under system-wide installation." )
-      endif()
-      
-      set(Falcon_PREFIX "@FALCON_FINAL_DEST@")
-      
-      set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
-      set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
-
-      set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
-      list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
-   else()
-      set(Falcon_PREFIX "@CMAKE_INSTALL_PREFIX@")
-      set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
-      set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
-
-      # If defined, prefer the source directory include files over the installed ones
-      if(DEFINED FALCON_SRC_TREE)           
-        list(APPEND Falcon_INCLUDE_DIRS "${FALCON_SRC_TREE}/core/include")
-        message( STATUS "Falcon module configured under DEVELOPMENT (${FALCON_SRC_TREE}) settings" )
-      endif()
-      #The output directory doesn't change. However, is not used as include.
-      set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")           
-      # But adds generated include files
-      list(APPEND Falcon_INCLUDE_DIRS "${SELF_DIR}/../../../@FALCON_INC_DIR@" )
-   endif()
-endif()
 
 #Check if everything is in place.
 find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
@@ -98,7 +64,7 @@ if(NOT DISABLE_RPATH)
    if(CMAKE_INSTALL_RPATH)
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false)
    else()
-      set(CMAKE_INSTALL_RPATH "@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@")
+      set(CMAKE_INSTALL_RPATH "@CMAKE_INSTALL_PREFIX@/@FALCON_LIB_DIR@")
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
    endif()
 endif()
