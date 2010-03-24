@@ -23,8 +23,8 @@ void Object::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_notify",      &Object::signal_notify },
-    { "set",                &Object::set },
-    { "get",                &Object::get },
+    { "set_property",       &Object::set_property },
+    { "get_property",       &Object::get_property },
     { "notify",             &Object::notify },
     { "freeze_notify",      &Object::freeze_notify },
     { "thaw_notify",        &Object::thaw_notify },
@@ -88,17 +88,17 @@ void Object::on_notify( GObject* obj, GParamSpec* pspec, gpointer _vm )
 
 
 /*#
-    @method set GObject
+    @method set_property GObject
     @brief Sets a property on an object.
     @param property_name name of the property to set
     @param value value for the property (nil, integer, boolean, numeric, or string)
 
     @code
     w = GtkWindow()
-    w.set( "title", "Falcon" )
+    w.set_property( "title", "Falcon" )
     @endcode
  */
-FALCON_FUNC Object::set( VMARG )
+FALCON_FUNC Object::set_property( VMARG )
 {
     Item* i_nam = vm->param( 0 );
     Item* i_val = vm->param( 1 );
@@ -144,12 +144,12 @@ FALCON_FUNC Object::set( VMARG )
 
 
 /*#
-    @method get GObject
+    @method get_property GObject
     @brief Gets a property of an object.
     @param property_name (string)
     @return the property value
  */
-FALCON_FUNC Object::get( VMARG )
+FALCON_FUNC Object::get_property( VMARG )
 {
     Item* i_nam = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK

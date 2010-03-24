@@ -26,9 +26,9 @@ public:
 
     static void on_notify( GObject*, GParamSpec*, gpointer );
 
-    static FALCON_FUNC set( VMARG );
+    static FALCON_FUNC set_property( VMARG );
 
-    static FALCON_FUNC get( VMARG );
+    static FALCON_FUNC get_property( VMARG );
 
     static FALCON_FUNC notify( VMARG );
 
