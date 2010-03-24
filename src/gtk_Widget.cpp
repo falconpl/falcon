@@ -4,6 +4,8 @@
 
 #include "gtk_Widget.hpp"
 
+#include "g_ParamSpec.hpp"
+
 #include "gdk_EventButton.hpp"
 
 #include "gtk_Requisition.hpp"
@@ -31,7 +33,7 @@ void Widget::modInit( Falcon::Module* mod )
     { "signal_button_press_event",      &Widget::signal_button_press_event },
     { "signal_button_release_event",    &Widget::signal_button_release_event },
     { "signal_can_activate_accel",      &Widget::signal_can_activate_accel },
-    //{ "signal_child_notify",            &Widget::signal_child_notify },
+    { "signal_child_notify",            &Widget::signal_child_notify },
     //{ "signal_client_event",            &Widget::signal_client_event },
     { "signal_composited_changed",      &Widget::signal_composited_changed },
     //{ "signal_configure_event",         &Widget::signal_configure_event },
@@ -413,9 +415,57 @@ gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointe
 }
 
 
-//FALCON_FUNC Widget::signal_child_notify( VMARG );
+/*#
+    @method signal_child_notify GtkWidget
+    @brief Connect a VMSlot to the widget child_notify signal and return it
 
-//gboolean Widget::on_child_notify( GtkWidget*, GParamSpec*, gpointer );
+    The child-notify signal is emitted for each child property that has changed
+    on an object. The signal's detail holds the property name.
+ */
+FALCON_FUNC Widget::signal_child_notify( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    Gtk::internal_get_slot( "child_notify",
+        (void*) &Widget::on_child_notify, vm );
+}
+
+
+void Widget::on_child_notify( GtkWidget* obj, GParamSpec* spec, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "child_notify", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GParamSpec" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_child_notify", it ) )
+            {
+                printf(
+                "[GtkWidget::on_child_notify] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Glib::ParamSpec( wki->asClass(), spec ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 //FALCON_FUNC Widget::signal_client_event( VMARG );
 

@@ -44,9 +44,9 @@ public:
 
     static gboolean on_can_activate_accel( GtkWidget*, guint, gpointer );
 
-    //static FALCON_FUNC signal_child_notify( VMARG );
+    static FALCON_FUNC signal_child_notify( VMARG );
 
-    //static gboolean on_child_notify( GtkWidget*, GParamSpec*, gpointer );
+    static void on_child_notify( GtkWidget*, GParamSpec*, gpointer );
 
     //static FALCON_FUNC signal_client_event( VMARG );
 
