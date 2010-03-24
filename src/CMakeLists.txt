@@ -33,6 +33,7 @@ set( SRC_FILES
   gtk_HPaned.cpp
   gtk_Image.cpp
   gtk_Label.cpp
+  gtk_Layout.cpp
   gtk_Main.cpp
   gtk_Misc.cpp
   gtk_Object.cpp
@@ -83,6 +84,7 @@ set( HDR_FILES
   gtk_HPaned.hpp
   gtk_Image.hpp
   gtk_Label.hpp
+  gtk_Layout.hpp
   gtk_Main.hpp
   gtk_Misc.hpp
   gtk_Object.hpp

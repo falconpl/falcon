@@ -32,6 +32,7 @@
 #include "gtk_HPaned.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_Label.hpp"
+#include "gtk_Layout.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
@@ -116,6 +117,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::HBox::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
+                Falcon::Gtk::Layout::modInit( self );
                 Falcon::Gtk::Paned::modInit( self );
                     Falcon::Gtk::HPaned::modInit( self );
                     Falcon::Gtk::VPaned::modInit( self );

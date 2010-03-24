@@ -10,56 +10,65 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Adjustment
+ *  \class Falcon::Gtk::Adjustment
  */
-namespace Adjustment {
+class Adjustment
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC init( VMARG );
+    Adjustment( const Falcon::CoreClass*, const GtkAdjustment* = 0 );
 
-FALCON_FUNC signal_changed( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-void on_changed( GtkAdjustment*, gpointer );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC signal_value_changed( VMARG );
+    static FALCON_FUNC signal_changed( VMARG );
 
-void on_value_changed( GtkAdjustment*, gpointer );
+    static void on_changed( GtkAdjustment*, gpointer );
 
-FALCON_FUNC get_value( VMARG );
+    static FALCON_FUNC signal_value_changed( VMARG );
 
-FALCON_FUNC set_value( VMARG );
+    static void on_value_changed( GtkAdjustment*, gpointer );
 
-FALCON_FUNC clamp_page( VMARG );
+    static FALCON_FUNC get_value( VMARG );
 
-FALCON_FUNC changed( VMARG );
+    static FALCON_FUNC set_value( VMARG );
 
-FALCON_FUNC value_changed( VMARG );
+    static FALCON_FUNC clamp_page( VMARG );
 
-FALCON_FUNC configure( VMARG );
+    static FALCON_FUNC changed( VMARG );
 
-FALCON_FUNC get_lower( VMARG );
+    static FALCON_FUNC value_changed( VMARG );
 
-FALCON_FUNC get_page_increment( VMARG );
+    static FALCON_FUNC configure( VMARG );
 
-FALCON_FUNC get_page_size( VMARG );
+    static FALCON_FUNC get_lower( VMARG );
 
-FALCON_FUNC get_step_increment( VMARG );
+    static FALCON_FUNC get_page_increment( VMARG );
 
-FALCON_FUNC get_upper( VMARG );
+    static FALCON_FUNC get_page_size( VMARG );
 
-FALCON_FUNC set_lower( VMARG );
+    static FALCON_FUNC get_step_increment( VMARG );
 
-FALCON_FUNC set_page_increment( VMARG );
+    static FALCON_FUNC get_upper( VMARG );
 
-FALCON_FUNC set_page_size( VMARG );
+    static FALCON_FUNC set_lower( VMARG );
 
-FALCON_FUNC set_step_increment( VMARG );
+    static FALCON_FUNC set_page_increment( VMARG );
 
-FALCON_FUNC set_upper( VMARG );
+    static FALCON_FUNC set_page_size( VMARG );
+
+    static FALCON_FUNC set_step_increment( VMARG );
+
+    static FALCON_FUNC set_upper( VMARG );
+
+};
 
 
-} // Adjustment
 } // Gtk
 } // Falcon
 

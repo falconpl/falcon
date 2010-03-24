@@ -17,6 +17,9 @@ void Adjustment::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_Adjustment = mod->addClass( "GtkAdjustment", &Adjustment::init );
 
+    c_Adjustment->setWKS( true );
+    c_Adjustment->getClassDef()->factory( &Adjustment::factory );
+
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkObject" ) );
     c_Adjustment->getClassDef()->addInheritance( in );
 
@@ -46,6 +49,22 @@ void Adjustment::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Adjustment, meth->name, meth->cb );
 }
+
+
+Adjustment::Adjustment( const Falcon::CoreClass* gen, const GtkAdjustment* adj )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( adj )
+        setUserData( new GData( (GObject*) adj ) );
+}
+
+
+Falcon::CoreObject* Adjustment::factory( const Falcon::CoreClass* gen, void* adj, bool )
+{
+    return new Adjustment( gen, (GtkAdjustment*) adj );
+}
+
 
 /*#
     @class GtkAdjustment
