@@ -81,6 +81,8 @@ FALCON_FUNC Fixed::put( VMARG )
     Gtk::ArgCheck<0> args( vm, "GtkWidget,I,I" );
 
     CoreObject* o_wdt = args.getObject( 0 );
+    if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
+        throw_inv_params( "GtkWidget,I,I" );
     GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
 
     gint x = args.getInteger( 1 );
@@ -100,9 +102,11 @@ FALCON_FUNC Fixed::put( VMARG )
  */
 FALCON_FUNC Fixed::move( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I" );
+    Gtk::ArgCheck<0> args( vm, "GtkWidget,I,I" );
 
     CoreObject* o_wdt = args.getObject( 0 );
+    if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
+        throw_inv_params( "GtkWidget,I,I" );
     GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
 
     gint x = args.getInteger( 1 );

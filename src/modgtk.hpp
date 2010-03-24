@@ -40,6 +40,9 @@
 #define IS_DERIVED( it, cls ) \
         ( (it)->isOfClass( #cls ) || (it)->isOfClass( "gtk." #cls ) )
 
+#define CoreObject_IS_DERIVED( obj, cls ) \
+        ( (obj)->derivedFrom( #cls ) || (obj)->derivedFrom( "gtk." #cls ) )
+
 #define throw_inv_params( x ) \
         throw new ::Falcon::ParamError( \
         ::Falcon::ErrorParam( ::Falcon::e_inv_params, __LINE__ ).extra( x ) )
