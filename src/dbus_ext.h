@@ -48,12 +48,22 @@ namespace Ext {
    FALCON_FUNC  DBus_signal( VMachine *vm );
    FALCON_FUNC  DBus_invoke( VMachine *vm );
    FALCON_FUNC  DBus_dispatch( VMachine *vm );
+   FALCON_FUNC  DBus_popMessage( VMachine *vm );
    FALCON_FUNC  DBus_addMatch( VMachine *vm );
    FALCON_FUNC  DBus_removeMatch( VMachine *vm );
+   FALCON_FUNC  DBus_requestName( VMachine *vm );
+   FALCON_FUNC  DBus_addFilter( VMachine *vm );
    
    FALCON_FUNC  DBusPendingCall_wait( VMachine *vm );
    FALCON_FUNC  DBusPendingCall_completed( VMachine *vm );
    FALCON_FUNC  DBusPendingCall_cancel( VMachine *vm );
+   
+   FALCON_FUNC  DBusMessage_getDestination( VMachine *vm );
+   FALCON_FUNC  DBusMessage_getSender( VMachine *vm );
+   FALCON_FUNC  DBusMessage_getPath( VMachine *vm );
+   FALCON_FUNC  DBusMessage_getInterface( VMachine *vm );
+   FALCON_FUNC  DBusMessage_getMember( VMachine *vm );
+   FALCON_FUNC  DBusMessage_getArgs( VMachine *vm );
    
    FALCON_FUNC DBusError_init( VMachine *vm );
 }

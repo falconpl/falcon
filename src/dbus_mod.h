@@ -65,8 +65,8 @@ public:
    DBusWrapper( const DBusWrapper & );
    virtual ~DBusWrapper();
    
-   DBusError *error() const { return &m_content->m_err; }
-   DBusConnection *conn() const { return m_content->m_conn; }
+   inline DBusError *error() const { return &m_content->m_err; }
+   inline DBusConnection *conn() const { return m_content->m_conn; }
    
    /** Connects to the DBUS.
       May return false on error -- check error().
@@ -110,12 +110,38 @@ public:
    DBusPendingWrapper( const DBusPendingWrapper & );
    virtual ~DBusPendingWrapper();
    
-   DBusConnection *conn() const { return m_conn; }
-   DBusPendingCall *pending() const { return m_pc; }
+   inline DBusConnection *conn() const { return m_conn; }
+   inline DBusPendingCall *pending() const { return m_pc; }
 
    virtual FalconData* clone() const; // just increments the reference counter
    virtual void gcMark( uint32 mk );
 };
+
+
+class DBusMessageWrapper: public FalconData
+{
+   DBusMessage* m_msg;
+   
+public:
+   DBusMessageWrapper( DBusMessage *msg );
+   DBusMessageWrapper( const DBusMessageWrapper & );
+   virtual ~DBusMessageWrapper( void );
+   
+   inline DBusMessage *msg( void ) const { return m_msg; }
+   
+   virtual FalconData *clone( void ) const;
+   virtual void gcMark( uint32 mk );
+};
+
+typedef struct _dbusHandlerData
+{
+   VMachine *vm;
+   String *interface;
+   String *name;
+   CoreFunc *handler;
+   bool isSignal;
+} DBusHandlerData;
+
 
 }
 }

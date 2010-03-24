@@ -123,6 +123,36 @@ void DBusPendingWrapper::gcMark( uint32 mk )
 {
 }
 
+//=======================================================
+//
+//=======================================================
+
+DBusMessageWrapper::DBusMessageWrapper( DBusMessage *msg ):
+   m_msg( msg )
+{
+   dbus_message_ref( m_msg );
+}
+
+DBusMessageWrapper::DBusMessageWrapper( const DBusMessageWrapper &other ):
+   m_msg ( other.m_msg )
+{
+   dbus_message_ref( m_msg );
+}
+
+DBusMessageWrapper::~DBusMessageWrapper( void )
+{
+   dbus_message_unref( m_msg );
+}
+
+FalconData *DBusMessageWrapper::clone( void ) const
+{
+   return new DBusMessageWrapper( *this );
+}
+
+void DBusMessageWrapper::gcMark( uint32 )
+{
+}
+
 }
 }
 

@@ -86,10 +86,15 @@ FALCON_MODULE_DECL
       addParam("destination")->addParam("path")->addParam("interface")->addParam("name");
    self->addClassMethod( dbus_cls, "dispatch", Falcon::Ext::DBus_dispatch ).asSymbol()->
       addParam("timeout");
+   self->addClassMethod( dbus_cls, "popMessage", Falcon::Ext::DBus_popMessage );
    self->addClassMethod( dbus_cls, "addMatch", Falcon::Ext::DBus_addMatch ).asSymbol()->
       addParam("rule");
    self->addClassMethod( dbus_cls, "removeMatch", Falcon::Ext::DBus_removeMatch ).asSymbol()->
       addParam("rule");
+   self->addClassMethod( dbus_cls, "requestName", Falcon::Ext::DBus_requestName ).asSymbol()->
+      addParam( "name" )->addParam( "flags" );
+   self->addClassMethod( dbus_cls, "addFilter", Falcon::Ext::DBus_addFilter ).asSymbol()->
+      addParam( "interface" )->addParam( "name" )->addParam( "handler" )->addParam( "isSignal" );
       
    //============================================================
    // The pending class.
@@ -102,6 +107,20 @@ FALCON_MODULE_DECL
    self->addClassMethod( dbusp_cls, "cancel", Falcon::Ext::DBusPendingCall_cancel );
    self->addClassMethod( dbusp_cls, "completed", Falcon::Ext::DBusPendingCall_completed ).asSymbol()->
       addParam("dispatch");
+      
+   //============================================================
+   // message class
+   //
+   Falcon::Symbol *dbusmsg_cls = self->addClass( "%DBusMessage" );
+   dbusmsg_cls->exported( false );
+   dbusmsg_cls->setWKS( true );
+   
+   self->addClassMethod( dbusmsg_cls, "getDestination", Falcon::Ext::DBusMessage_getDestination );
+   self->addClassMethod( dbusmsg_cls, "getSender", Falcon::Ext::DBusMessage_getSender );
+   self->addClassMethod( dbusmsg_cls, "getPath", Falcon::Ext::DBusMessage_getPath );
+   self->addClassMethod( dbusmsg_cls, "getInterface", Falcon::Ext::DBusMessage_getInterface );
+   self->addClassMethod( dbusmsg_cls, "getMember", Falcon::Ext::DBusMessage_getMember );
+   self->addClassMethod( dbusmsg_cls, "getArgs", Falcon::Ext::DBusMessage_getArgs );
    
    //============================================================
    // Error for DBUS related ops
@@ -111,8 +130,6 @@ FALCON_MODULE_DECL
       addParam( "code" )->addParam( "desc" )->addParam( "extra" );
    dbierr_cls->setWKS( true );
    dbierr_cls->getClassDef()->addInheritance( new Falcon::InheritDef( error_class ) );
-
-
    
    return self;
 }
