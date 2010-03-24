@@ -9,6 +9,11 @@ get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
+set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
+set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
+set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
+set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
+
 #Versioning
 set( Falcon_VERSION "@FALCON_VERSION_ID@" )
 set( Falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
@@ -66,10 +71,6 @@ else()
       list(APPEND Falcon_INCLUDE_DIRS "${SELF_DIR}/../../../@FALCON_INC_DIR@" )
    endif()
 endif()
-
-# Fixed output directories
-set(Falcon_MODULE_DIR "${Falcon_PREFIX}/@FALCON_MOD_DIR@")
-set(Falcon_MAN_DIR "${Falcon_PREFIX}/@FALCON_MAN_DIR@")
 
 #Check if everything is in place.
 find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
@@ -144,17 +145,12 @@ function(FALCON_INSTALL_MODULE tgt )
       PREFIX ""
       SUFFIX ".dylib" )
   else()
-    set_target_properties(${tgt} PROPERTIES 
+    set_target_properties(${tgt} PROPERTIES
       PREFIX "" )
   endif()
 
-  #give the ability to store modules in a temporary space
-  if ( NOT FALCON_MOD_DIR )
-     set (FALCON_MOD_DIR "${Falcon_MODULE_DIR}" )
-  endif()
-   
   install( TARGETS ${tgt}
-           DESTINATION ${FALCON_MOD_DIR} )
+           DESTINATION @FALCON_MOD_DIR@ )
 endfunction(FALCON_INSTALL_MODULE)
 
 ## Backward compatibility definitions
