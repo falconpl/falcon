@@ -24,6 +24,7 @@
 #include "gtk_Entry.hpp"
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_EventBox.hpp"
+#include "gtk_Fixed.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
 #include "gtk_Image.hpp"
@@ -107,6 +108,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::VButtonBox::modInit( self );
                     Falcon::Gtk::HBox::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
+                Falcon::Gtk::Fixed::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
             Falcon::Gtk::Misc::modInit( self );
