@@ -32,6 +32,7 @@
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
+#include "gtk_Paned.hpp"
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
@@ -109,6 +110,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::HBox::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
+                Falcon::Gtk::Paned::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
             Falcon::Gtk::Misc::modInit( self );

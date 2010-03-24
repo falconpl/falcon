@@ -33,6 +33,7 @@ set( SRC_FILES
   gtk_Main.cpp
   gtk_Misc.cpp
   gtk_Object.cpp
+  gtk_Paned.cpp
   gtk_RadioAction.cpp
   gtk_RadioButton.cpp
   gtk_Requisition.cpp
@@ -78,6 +79,7 @@ set( HDR_FILES
   gtk_Main.hpp
   gtk_Misc.hpp
   gtk_Object.hpp
+  gtk_Paned.hpp
   gtk_RadioAction.hpp
   gtk_RadioButton.hpp
   gtk_Requisition.hpp
