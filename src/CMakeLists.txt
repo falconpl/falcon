@@ -17,6 +17,7 @@ set( SRC_FILES
   gtk_Adjustment.cpp
   gtk_Alignment.cpp
   gtk_Arrow.cpp
+  gtk_AspectFrame.cpp
   gtk_Bin.cpp
   gtk_Box.cpp
   gtk_ButtonBox.cpp
@@ -69,6 +70,7 @@ set( HDR_FILES
   gtk_Adjustment.hpp
   gtk_Alignment.hpp
   gtk_Arrow.hpp
+  gtk_AspectFrame.hpp
   gtk_Bin.hpp
   gtk_Box.hpp
   gtk_ButtonBox.hpp

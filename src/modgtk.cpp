@@ -17,6 +17,7 @@
 #include "gtk_Adjustment.hpp"
 #include "gtk_Alignment.hpp"
 #include "gtk_Arrow.hpp"
+#include "gtk_AspectFrame.hpp"
 #include "gtk_Bin.hpp"
 #include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
@@ -111,6 +112,7 @@ FALCON_MODULE_DECL
                                 Falcon::Gtk::RadioButton::modInit( self );
                     Falcon::Gtk::EventBox::modInit( self );
                     Falcon::Gtk::Frame::modInit( self );
+                        Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
