@@ -5,6 +5,7 @@
 #include "modgtk.hpp"
 
 #include "g_Object.hpp"
+#include "g_ParamSpec.hpp"
 
 #include "gdk_EventButton.hpp"
 #include "gdk_Pixbuf.hpp"
@@ -59,6 +60,7 @@ FALCON_MODULE_DECL
      */
 
     Falcon::Glib::Object::modInit( self );
+    Falcon::Glib::ParamSpec::modInit( self );
 
     /*
      *  load gdk

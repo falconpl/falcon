@@ -1,0 +1,97 @@
+/**
+ *  \file g_ParamSpec.cpp
+ */
+
+#include "g_ParamSpec.hpp"
+
+#include <gtk/gtk.h>
+
+
+namespace Falcon {
+namespace Glib {
+
+/**
+ *  \brief module init
+ */
+void ParamSpec::modInit( Falcon::Module* mod )
+{
+    Falcon::Symbol* c_ParamSpec = mod->addClass( "GParamSpec", &Gtk::abstract_init );
+
+    c_ParamSpec->setWKS( true );
+    c_ParamSpec->getClassDef()->factory( &ParamSpec::factory );
+
+    mod->addClassProperty( c_ParamSpec, "name" );
+    mod->addClassProperty( c_ParamSpec, "flags" );
+    mod->addClassProperty( c_ParamSpec, "value_type" );
+    mod->addClassProperty( c_ParamSpec, "owner_type" );
+}
+
+
+ParamSpec::ParamSpec( const Falcon::CoreClass* gen, const GParamSpec* spec )
+    :
+    Falcon::CoreObject( gen )
+{
+    GParamSpec* m_spec = (GParamSpec*) memAlloc( sizeof( GParamSpec ) );
+
+    if ( !spec )
+        memset( m_spec, 0, sizeof( GParamSpec ) );
+    else
+        memcpy( m_spec, spec, sizeof( GParamSpec ) );
+
+    setUserData( m_spec );
+}
+
+
+ParamSpec::~ParamSpec()
+{
+    GParamSpec* spec = (GParamSpec*) getUserData();
+    if ( spec )
+        memFree( spec );
+}
+
+
+bool ParamSpec::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    GParamSpec* m_spec = (GParamSpec*) getUserData();
+
+    if ( s == "name" )
+        it = new String( m_spec->name );
+    else
+    if ( s == "flags" )
+        it = (int64) m_spec->flags;
+    else
+    if ( s == "value_type" )
+        it = (int64) m_spec->value_type;
+    else
+    if ( s == "owner_type" )
+        it = (int64) m_spec->owner_type;
+    else
+        return false;
+    return true;
+}
+
+
+bool ParamSpec::setProperty( const Falcon::String& s, const Falcon::Item& it )
+{
+    return false;
+}
+
+
+Falcon::CoreObject* ParamSpec::factory( const Falcon::CoreClass* gen, void* spec, bool )
+{
+    return new ParamSpec( gen, (GParamSpec*) spec );
+}
+
+
+/*#
+    @class GParamSpec
+    @brief ?
+    @prop name name of this parameter
+    @prop GParamFlags flags for this parameter
+    @prop the GValue type for this parameter
+    @prop GType type that uses (introduces) this paremeter
+ */
+
+
+} // Glib
+} // Falcon
