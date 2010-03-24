@@ -85,11 +85,19 @@ Falcon::CoreObject* ParamSpec::factory( const Falcon::CoreClass* gen, void* spec
 
 /*#
     @class GParamSpec
-    @brief ?
+    @brief Metadata for parameter specifications
     @prop name name of this parameter
     @prop GParamFlags flags for this parameter
     @prop the GValue type for this parameter
     @prop GType type that uses (introduces) this paremeter
+
+    GParamSpec is an object structure that encapsulates the metadata required to
+    specify parameters, such as e.g. GObject properties.
+
+    Parameter names need to start with a letter (a-z or A-Z). Subsequent characters
+    can be letters, numbers or a '-'. All other characters are replaced by a '-'
+    during construction. The result of this replacement is called the canonical
+    name of the parameter.
  */
 
 

@@ -15,6 +15,26 @@ void Enums::modInit( Falcon::Module* mod )
     Gtk::ConstIntTab intConstants[] =
     {
 
+    // BEGIN GLIB CONSTANTS //
+
+    /*
+     *  GParamFlags
+     */
+    { "G_PARAM_READABLE",       G_PARAM_READABLE },
+    { "G_PARAM_WRITABLE",       G_PARAM_WRITABLE },
+    { "G_PARAM_CONSTRUCT",      G_PARAM_CONSTRUCT },
+    { "G_PARAM_CONSTRUCT_ONLY", G_PARAM_CONSTRUCT_ONLY },
+    { "G_PARAM_LAX_VALIDATION", G_PARAM_LAX_VALIDATION },
+    { "G_PARAM_STATIC_NAME",    G_PARAM_STATIC_NAME },
+#ifndef G_DISABLE_DEPRECATED
+    { "G_PARAM_PRIVATE",        G_PARAM_PRIVATE },
+#endif
+    { "G_PARAM_STATIC_NICK",    G_PARAM_STATIC_NICK },
+    { "G_PARAM_STATIC_BLURB",   G_PARAM_STATIC_BLURB },
+
+
+    // BEGIN GTK CONSTANTS //
+
     /*
      *  GtkAccelFlags
      */
