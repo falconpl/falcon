@@ -27,6 +27,7 @@
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_EventBox.hpp"
 #include "gtk_Fixed.hpp"
+#include "gtk_Frame.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
 #include "gtk_HPaned.hpp"
@@ -109,6 +110,7 @@ FALCON_MODULE_DECL
                             Falcon::Gtk::CheckButton::modInit( self );
                                 Falcon::Gtk::RadioButton::modInit( self );
                     Falcon::Gtk::EventBox::modInit( self );
+                    Falcon::Gtk::Frame::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
