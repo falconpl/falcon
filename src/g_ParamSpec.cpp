@@ -31,14 +31,11 @@ ParamSpec::ParamSpec( const Falcon::CoreClass* gen, const GParamSpec* spec )
     :
     Falcon::CoreObject( gen )
 {
-    GParamSpec* m_spec = (GParamSpec*) memAlloc( sizeof( GParamSpec ) );
-
-    if ( !spec )
-        memset( m_spec, 0, sizeof( GParamSpec ) );
-    else
-        memcpy( m_spec, spec, sizeof( GParamSpec ) );
-
-    setUserData( m_spec );
+    if ( spec )
+    {
+        g_param_spec_ref_sink( (GParamSpec*) spec );
+        setUserData( (void*) spec );
+    }
 }
 
 
@@ -46,7 +43,7 @@ ParamSpec::~ParamSpec()
 {
     GParamSpec* spec = (GParamSpec*) getUserData();
     if ( spec )
-        memFree( spec );
+        g_param_spec_unref( (GParamSpec*) spec );
 }
 
 
