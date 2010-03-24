@@ -23,6 +23,7 @@ set( SRC_FILES
   gtk_ButtonBox.cpp
   gtk_Button.cpp
   gtk_CheckButton.cpp
+  gtk_ComboBox.cpp
   gtk_Container.cpp
   gtk_enums.cpp
   gtk_Entry.cpp
@@ -76,6 +77,7 @@ set( HDR_FILES
   gtk_ButtonBox.hpp
   gtk_Button.hpp
   gtk_CheckButton.hpp
+  gtk_ComboBox.hpp
   gtk_Container.hpp
   gtk_enums.hpp
   gtk_Entry.hpp

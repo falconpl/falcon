@@ -23,6 +23,7 @@
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CheckButton.hpp"
+#include "gtk_ComboBox.hpp"
 #include "gtk_Container.hpp"
 #include "gtk_Entry.hpp"
 #include "gtk_EntryBuffer.hpp"
@@ -110,6 +111,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
                                 Falcon::Gtk::RadioButton::modInit( self );
+                    Falcon::Gtk::ComboBox::modInit( self );
                     Falcon::Gtk::EventBox::modInit( self );
                     Falcon::Gtk::Frame::modInit( self );
                         Falcon::Gtk::AspectFrame::modInit( self );

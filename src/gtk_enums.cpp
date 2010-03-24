@@ -324,6 +324,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_SELECTION_EXTENDED",     GTK_SELECTION_EXTENDED },
 
     /*
+     *  GtkSensitivityType
+     */
+    { "GTK_SENSITIVITY_AUTO",   GTK_SENSITIVITY_AUTO },
+    { "GTK_SENSITIVITY_ON",     GTK_SENSITIVITY_ON },
+    { "GTK_SENSITIVITY_OFF",    GTK_SENSITIVITY_OFF },
+
+    /*
      *  GtkShadowType
      */
     { "GTK_SHADOW_NONE",        GTK_SHADOW_NONE },
