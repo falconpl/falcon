@@ -32,6 +32,7 @@ set( SRC_FILES
   gtk_Entry.cpp
   gtk_EntryBuffer.cpp
   gtk_EventBox.cpp
+  gtk_Expander.cpp
   gtk_Fixed.cpp
   gtk_Frame.cpp
   gtk_HBox.cpp
@@ -89,6 +90,7 @@ set( HDR_FILES
   gtk_Entry.hpp
   gtk_EntryBuffer.hpp
   gtk_EventBox.hpp
+  gtk_Expander.hpp
   gtk_Fixed.hpp
   gtk_Frame.hpp
   gtk_HBox.hpp
