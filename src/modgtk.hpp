@@ -262,7 +262,7 @@ public:
         m_p( 0 )
     {}
 
-    const char* getCString( int index, bool mandatory = true )
+    char* getCString( int index, bool mandatory = true )
     {
         Item* it = m_vm->param( index );
         if ( mandatory )
@@ -282,7 +282,7 @@ public:
 #endif
         }
         m_strings[ m_p ].set( it->asString() );
-        return m_strings[ m_p++ ].c_str();
+        return (char*) m_strings[ m_p++ ].c_str();
     }
 
     Falcon::int64 getInteger( int index, bool mandatory = true, bool* wasNil = 0 ) const

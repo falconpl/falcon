@@ -80,7 +80,7 @@ FALCON_FUNC Expander::init( VMARG )
 {
     Gtk::ArgCheck<1> args( vm, "[S]" );
 
-    char* lbl = (char*) args.getCString( 0, false );
+    char* lbl = args.getCString( 0, false );
     if ( !lbl )
         lbl = (char*)"";
 
@@ -105,7 +105,7 @@ FALCON_FUNC Expander::new_with_mnemonic( VMARG )
 {
     Gtk::ArgCheck<1> args( vm, "S" );
 
-    char* lbl = (char*) args.getCString( 0 );
+    char* lbl = args.getCString( 0 );
 
     GtkWidget* wdt = gtk_expander_new_with_mnemonic( lbl );
     vm->retval( new Gtk::Expander(
@@ -199,7 +199,7 @@ FALCON_FUNC Expander::set_label( VMARG )
 {
     Gtk::ArgCheck<1> args( vm, "S" );
 
-    char* lbl = (char*) args.getCString( 0, false );
+    char* lbl = args.getCString( 0, false );
 
     MYSELF;
     GET_OBJ( self );
@@ -229,7 +229,7 @@ FALCON_FUNC Expander::get_label( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    char* lbl = (char*) gtk_expander_get_label( (GtkExpander*)_obj );
+    const char* lbl = gtk_expander_get_label( (GtkExpander*)_obj );
     if ( lbl )
     {
         String* s = new String( lbl );
