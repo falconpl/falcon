@@ -4,6 +4,7 @@
 
 #include "gtk_Button.hpp"
 
+#include "gtk_Activatable.hpp"
 #include "gtk_Widget.hpp"
 
 #include <gtk/gtk.h>
@@ -61,6 +62,11 @@ void Button::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Button, meth->name, meth->cb );
+
+    /*
+     *  implements GtkActivatable
+     */
+    Gtk::Activatable::clsInit( mod, c_Button );
 }
 
 /*#
