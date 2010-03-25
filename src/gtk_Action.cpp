@@ -20,6 +20,9 @@ void Action::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_Action->getClassDef()->addInheritance( in );
 
+    c_Action->setWKS( true );
+    c_Action->getClassDef()->factory( &Action::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_activate",        &Action::signal_activate },
@@ -80,6 +83,22 @@ void Action::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Action, meth->name, meth->cb );
 }
+
+
+Action::Action( const Falcon::CoreClass* gen, const GtkAction* act )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( act )
+        setUserData( new GData( (GObject*) act ) );
+}
+
+
+Falcon::CoreObject* Action::factory( const Falcon::CoreClass* gen, void* act, bool )
+{
+    return new Action( gen, (GtkAction*) act );
+}
+
 
 /*#
     @class GtkAction
