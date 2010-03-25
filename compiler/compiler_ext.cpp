@@ -140,6 +140,8 @@ FALCON_FUNC BaseCompiler_setDirective( ::Falcon::VMachine *vm )
 
    // in case of problems, an error is already raised.
 }
+
+
 FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm )
 {
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );

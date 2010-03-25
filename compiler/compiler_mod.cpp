@@ -245,6 +245,7 @@ bool ICompilerIface::setProperty( const String &prop, const Item &value )
    return CompilerIface::setProperty( prop, value );
 }
 
+
 bool ICompilerIface::getProperty( const String &prop, Item &ret ) const
 {
    Stream *s = 0;
@@ -303,7 +304,7 @@ FalconData *ModuleCarrier::clone() const
 
 void ModuleCarrier::gcMark( uint32 mk )
 {
-   m_lmodule->mark( mk );
+   m_lmodule->gcMark( mk );
 }
 
 
