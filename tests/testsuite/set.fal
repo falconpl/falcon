@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19a
+* Category: types
+* Subcategory: set
+* Short: Basic set
+* Description:
+* Checks the basic set functionalities with integers
+* [/Description]
+*
+****************************************************************************/
+
+set = Set(1,2,3)
+
+// in
+if not (1 in set): failure( "In operator - positive" )
+if 4 in set: failure( "In operator - negative" )
+
+// notin
+if 1 notin set: failure( "Notin operator - negative" )
+if not 4 notin set: failure( "Notin operator - positive" )
+
+if dict.len() != 3: failure( "Len FBOM" )
+
+success()
+
+/* End of file */
