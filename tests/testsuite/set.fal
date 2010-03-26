@@ -21,7 +21,7 @@ if 4 in set: failure( "In operator - negative" )
 if 1 notin set: failure( "Notin operator - negative" )
 if not 4 notin set: failure( "Notin operator - positive" )
 
-if dict.len() != 3: failure( "Len FBOM" )
+if set.len() != 3: failure( "Len FBOM" )
 
 success()
 
