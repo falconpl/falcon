@@ -47,7 +47,7 @@ void Alignment::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC Alignment::init( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "N,N,N,N" );
+    Gtk::ArgCheck0 args( vm, "N,N,N,N" );
 
     gfloat xalign = args.getNumeric( 0, false );
     gfloat yalign = args.getNumeric( 1, false );
@@ -71,7 +71,7 @@ FALCON_FUNC Alignment::init( VMARG )
  */
 FALCON_FUNC Alignment::set( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "N,N,N,N" );
+    Gtk::ArgCheck0 args( vm, "N,N,N,N" );
 
     gfloat xalign = args.getNumeric( 0 );
     gfloat yalign = args.getNumeric( 1 );
@@ -121,7 +121,7 @@ FALCON_FUNC Alignment::get_padding( VMARG )
  */
 FALCON_FUNC Alignment::set_padding( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I,I,I" );
+    Gtk::ArgCheck0 args( vm, "I,I,I,I" );
 
     gfloat pad_top = args.getInteger( 0 );
     gfloat pad_bot = args.getInteger( 1 );

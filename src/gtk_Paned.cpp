@@ -119,7 +119,7 @@ FALCON_FUNC Paned::add2( VMARG )
  */
 FALCON_FUNC Paned::pack1( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "GtkWidget,B,B" );
+    Gtk::ArgCheck0 args( vm, "GtkWidget,B,B" );
 
     CoreObject* o_wdt = args.getObject( 0 );
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
@@ -144,7 +144,7 @@ FALCON_FUNC Paned::pack1( VMARG )
  */
 FALCON_FUNC Paned::pack2( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "GtkWidget,B,B" );
+    Gtk::ArgCheck0 args( vm, "GtkWidget,B,B" );
 
     CoreObject* o_wdt = args.getObject( 0 );
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )

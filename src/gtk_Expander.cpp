@@ -78,7 +78,7 @@ Falcon::CoreObject* Expander::factory( const Falcon::CoreClass* gen, void* exp, 
  */
 FALCON_FUNC Expander::init( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "[S]" );
+    Gtk::ArgCheck1 args( vm, "[S]" );
 
     char* lbl = args.getCString( 0, false );
     if ( !lbl )
@@ -103,7 +103,7 @@ FALCON_FUNC Expander::init( VMARG )
  */
 FALCON_FUNC Expander::new_with_mnemonic( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S" );
+    Gtk::ArgCheck1 args( vm, "S" );
 
     char* lbl = args.getCString( 0 );
 
@@ -197,7 +197,7 @@ FALCON_FUNC Expander::get_spacing( VMARG )
  */
 FALCON_FUNC Expander::set_label( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S" );
+    Gtk::ArgCheck1 args( vm, "S" );
 
     char* lbl = args.getCString( 0, false );
 
@@ -318,7 +318,7 @@ FALCON_FUNC Expander::get_use_markup( VMARG )
  */
 FALCON_FUNC Expander::set_label_widget( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "[GtkWidget]" );
+    Gtk::ArgCheck0 args( vm, "[GtkWidget]" );
     // this method accepts nil
     GtkWidget* wdt = NULL;
     CoreObject* o_wdt = args.getObject( 0, false );

@@ -58,7 +58,7 @@ void Layout::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC Layout::init( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "[GtkAdjustment,GtkAdjustment]" );
+    Gtk::ArgCheck0 args( vm, "[GtkAdjustment,GtkAdjustment]" );
 
     CoreObject* o_hadj = args.getObject( 0, false );
 #ifndef NO_PARAMETER_CHECK
@@ -90,7 +90,7 @@ FALCON_FUNC Layout::init( VMARG )
  */
 FALCON_FUNC Layout::put( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "GtkWidget,I,I" );
+    Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
     CoreObject* o_wdt = args.getObject( 0 );
 #ifndef NO_PARAMETER_CHECK
@@ -117,7 +117,7 @@ FALCON_FUNC Layout::put( VMARG )
  */
 FALCON_FUNC Layout::move( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "GtkWidget,I,I" );
+    Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
     CoreObject* o_wdt = args.getObject( 0 );
 #ifndef NO_PARAMETER_CHECK
@@ -143,7 +143,7 @@ FALCON_FUNC Layout::move( VMARG )
  */
 FALCON_FUNC Layout::set_size( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I" );
+    Gtk::ArgCheck0 args( vm, "I,I" );
 
     guint width = args.getInteger( 0 );
     guint height = args.getInteger( 1 );

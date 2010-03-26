@@ -70,7 +70,7 @@ void Editable::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
  */
 FALCON_FUNC Editable::select_region( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I" );
+    Gtk::ArgCheck0 args( vm, "I,I" );
 
     gint start = args.getInteger( 0 );
     gint end = args.getInteger( 1 );
@@ -121,7 +121,7 @@ FALCON_FUNC Editable::get_selection_bounds( VMARG )
  */
 FALCON_FUNC Editable::insert_text( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S[,I]" );
+    Gtk::ArgCheck1 args( vm, "S[,I]" );
 
     const char* txt = args.getCString( 0 );
     gint pos = args.getInteger( 1, false );
@@ -147,7 +147,7 @@ FALCON_FUNC Editable::insert_text( VMARG )
  */
 FALCON_FUNC Editable::delete_text( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I" );
+    Gtk::ArgCheck0 args( vm, "I,I" );
 
     gint start = args.getInteger( 0 );
     gint end = args.getInteger( 1 );
@@ -173,7 +173,7 @@ FALCON_FUNC Editable::delete_text( VMARG )
  */
 FALCON_FUNC Editable::get_chars( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "I,I" );
+    Gtk::ArgCheck0 args( vm, "I,I" );
 
     gint start = args.getInteger( 0, false );
     bool wasNil = false;

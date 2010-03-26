@@ -40,7 +40,7 @@ void AspectFrame::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC AspectFrame::init( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "[S,N,N,N,B]" );
+    Gtk::ArgCheck1 args( vm, "[S,N,N,N,B]" );
 
     const char* lbl = args.getCString( 0, false );
     gfloat xalign = args.getNumeric( 1, false );
@@ -66,7 +66,7 @@ FALCON_FUNC AspectFrame::init( VMARG )
  */
 FALCON_FUNC AspectFrame::set( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "N,N,N,B" );
+    Gtk::ArgCheck0 args( vm, "N,N,N,B" );
 
     gfloat xalign = args.getNumeric( 0 );
     gfloat yalign = args.getNumeric( 1 );

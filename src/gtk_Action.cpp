@@ -143,7 +143,7 @@ FALCON_FUNC Action::init( VMARG )
     if ( self->getUserData() )
         return;
 
-    Gtk::ArgCheck<4> args( vm, "S[,S,S,S]" );
+    Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
     const char* nam = args.getCString( 0 );
     const char* lbl = args.getCString( 1, false );
     const char* tooltip = args.getCString( 2, false );

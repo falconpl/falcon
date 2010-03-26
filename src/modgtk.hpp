@@ -396,6 +396,25 @@ public:
 };
 
 
+/*
+ *  typedefs for Gtk::ArgCheck<x>
+ */
+
+#ifndef __GNUC__
+typedef Falcon::Gtk::ArgCheck<1>    ArgCheck0;
+#else
+typedef Falcon::Gtk::ArgCheck<0>    ArgCheck0;
+#endif
+typedef Falcon::Gtk::ArgCheck<1>    ArgCheck1;
+typedef Falcon::Gtk::ArgCheck<2>    ArgCheck2;
+typedef Falcon::Gtk::ArgCheck<3>    ArgCheck3;
+typedef Falcon::Gtk::ArgCheck<4>    ArgCheck4;
+typedef Falcon::Gtk::ArgCheck<5>    ArgCheck5;
+typedef Falcon::Gtk::ArgCheck<6>    ArgCheck6;
+typedef Falcon::Gtk::ArgCheck<7>    ArgCheck7;
+typedef Falcon::Gtk::ArgCheck<8>    ArgCheck8;
+typedef Falcon::Gtk::ArgCheck<9>    ArgCheck9;
+
 } // Gtk
 } // Falcon
 

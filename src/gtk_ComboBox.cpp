@@ -450,7 +450,7 @@ FALCON_FUNC ComboBox::new_text( VMARG )
  */
 FALCON_FUNC ComboBox::append_text( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S" );
+    Gtk::ArgCheck1 args( vm, "S" );
 
     const char* txt = args.getCString( 0 );
 
@@ -471,7 +471,7 @@ FALCON_FUNC ComboBox::append_text( VMARG )
  */
 FALCON_FUNC ComboBox::insert_text( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "I,S" );
+    Gtk::ArgCheck1 args( vm, "I,S" );
 
     gint index = args.getInteger( 0 );
     const char* txt = args.getCString( 1 );
@@ -492,7 +492,7 @@ FALCON_FUNC ComboBox::insert_text( VMARG )
  */
 FALCON_FUNC ComboBox::prepend_text( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S" );
+    Gtk::ArgCheck1 args( vm, "S" );
 
     const char* txt = args.getCString( 0 );
 
@@ -639,7 +639,7 @@ FALCON_FUNC ComboBox::get_add_tearoffs( VMARG )
  */
 FALCON_FUNC ComboBox::set_title( VMARG )
 {
-    Gtk::ArgCheck<1> args( vm, "S" );
+    Gtk::ArgCheck1 args( vm, "S" );
 
     const char* title = args.getCString( 0 );
 

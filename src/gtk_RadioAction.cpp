@@ -72,7 +72,7 @@ FALCON_FUNC RadioAction::init( VMARG )
 {
     MYSELF;
 
-    Gtk::ArgCheck<4> args( vm, "S[,S,S,S]" );
+    Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
 
     const gchar* name = args.getCString( 0 );
     const gchar* label = args.getCString( 1, false );

@@ -91,7 +91,7 @@ Falcon::CoreObject* Adjustment::factory( const Falcon::CoreClass* gen, void* adj
  */
 FALCON_FUNC Adjustment::init( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "[N,N,N,N,N,N]" );
+    Gtk::ArgCheck0 args( vm, "[N,N,N,N,N,N]" );
 
     gdouble value = args.getNumeric( 0, false );
     gdouble lower = args.getNumeric( 1, false );
@@ -270,7 +270,7 @@ FALCON_FUNC Adjustment::value_changed( VMARG )
  */
 FALCON_FUNC Adjustment::configure( VMARG )
 {
-    Gtk::ArgCheck<0> args( vm, "N,N,N,N,N,N" );
+    Gtk::ArgCheck0 args( vm, "N,N,N,N,N,N" );
 
     gdouble value = args.getNumeric( 0 );
     gdouble lower = args.getNumeric( 1 );
