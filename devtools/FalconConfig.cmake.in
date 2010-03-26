@@ -21,19 +21,19 @@ set(Falcon_BINARY_DIR {Falcon_PREFIX}/@FALCON_BIN_DIR@)
 set(Falcon_LIBRARY_DIR ${Falcon_PREFIX}/@FALCON_LIB_DIR@)
 set(Falcon_INCLUDE_DIR  ${Falcon_PREFIX}/@FALCON_INC_DIR@)
 # If defined, prefer the source directory include files over the installed ones
-if(DEFINED ENV{FALCON_SRC_TREE})           
+if(DEFINED ENV{FALCON_SRC_TREE})
   list(APPEND Falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
   if(NOT WIN32)
     message( STATUS "Falcon module configured under DEVELOPMENT (${FALCON_SRC_TREE}) settings" )
   endif()
 endif()
-list(APPEND Falcon_INCLUDE_DIRS "{Falcon_INCLUDE_DIR}")
+list(APPEND Falcon_INCLUDE_DIRS "${Falcon_INCLUDE_DIR}")
 
 #Versioning
 set( Falcon_VERSION "@FALCON_VERSION_ID@" )
 set( Falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
 #
-set( Falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )  
+set( Falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )
 set( Falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
 set( Falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
 set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
@@ -42,7 +42,7 @@ set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
 find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
 find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
-   
+
 # Prepare Falcon in development environment.
 list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
 list(APPEND Falcon_LIBRARY_DIRS  ${Falcon_LIBRARY_DIR})
@@ -75,9 +75,9 @@ set(FALCON_INSTALL_DESTINATIONS
   LIBRARY DESTINATION ${Falcon_LIBRARY_DIR}
   ARCHIVE DESTINATION ${Falcon_LIBRARY_DIR}
 )
-# NOTE modules are installed via 
+# NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_DIR})
-# since they are neither RUNTIME, LIBRARY nor ARCHIVE. 
+# since they are neither RUNTIME, LIBRARY nor ARCHIVE.
 
 #In windows, we normally install in c:\falcon
 if(WIN32)
@@ -107,7 +107,7 @@ endfunction(FALCON_FINALIZE_MODULE2)
 
 function(FALCON_INSTALL_MODULE tgt )
   if(APPLE)
-    set_target_properties(${tgt} PROPERTIES 
+    set_target_properties(${tgt} PROPERTIES
       PREFIX ""
       SUFFIX ".dylib" )
   else()
