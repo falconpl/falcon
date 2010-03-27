@@ -50,6 +50,7 @@ set( SRC_FILES
   gtk_Requisition.cpp
   gtk_Stock.cpp
   gtk_Table.cpp
+  gtk_TextTag.cpp
   gtk_ToggleAction.cpp
   gtk_ToggleButton.cpp
   gtk_VBox.cpp
@@ -108,6 +109,7 @@ set( HDR_FILES
   gtk_Requisition.hpp
   gtk_Stock.hpp
   gtk_Table.hpp
+  gtk_TextTag.hpp
   gtk_ToggleAction.hpp
   gtk_ToggleButton.hpp
   gtk_VBox.hpp
