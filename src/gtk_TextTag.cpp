@@ -32,6 +32,22 @@ void TextTag::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_TextTag, meth->name, meth->cb );
 }
 
+
+TextTag::TextTag( const Falcon::CoreClass* gen, const GtkTextTag* tag )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( tag )
+        setUserData( new GData( (GObject*) tag ) );
+}
+
+
+Falcon::CoreObject* TextTag::factory( const Falcon::CoreClass* gen, void* tag, bool )
+{
+    return new TextTag( gen, (GtkTextTag*) tag );
+}
+
+
 /*#
     @class GtkTextTag
     @brief A tag that can be applied to text in a GtkTextBuffer
