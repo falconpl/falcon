@@ -47,6 +47,8 @@
 #include "gtk_Requisition.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
+#include "gtk_TextBuffer.hpp"
+#include "gtk_TextIter.hpp"
 #include "gtk_TextTag.hpp"
 #include "gtk_TextTagTable.hpp"
 #include "gtk_ToggleAction.hpp"
@@ -94,10 +96,14 @@ FALCON_MODULE_DECL
      *  setup the classes
      */
 
-    Falcon::Gtk::Main::modInit( self );
+    // not GObject based //
 
+    Falcon::Gtk::Main::modInit( self );
     Falcon::Gtk::Requisition::modInit( self );
     Falcon::Gtk::Stock::modInit( self );
+    Falcon::Gtk::TextIter::modInit( self );
+
+    // GObject based //
 
     Falcon::Gtk::Action::modInit( self );
         Falcon::Gtk::ToggleAction::modInit( self );
@@ -139,6 +145,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Arrow::modInit( self );
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
+    Falcon::Gtk::TextBuffer::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
     Falcon::Gtk::TextTagTable::modInit( self );
 
