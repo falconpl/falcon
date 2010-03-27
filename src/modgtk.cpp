@@ -45,6 +45,7 @@
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
+#include "gtk_SpinButton.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
 #include "gtk_TextBuffer.hpp"
@@ -141,6 +142,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::VPaned::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
+                Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Misc::modInit( self );
                 Falcon::Gtk::Arrow::modInit( self );
                 Falcon::Gtk::Image::modInit( self );

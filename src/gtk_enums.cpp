@@ -348,6 +348,23 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_SIDE_RIGHT",     GTK_SIDE_RIGHT },
 
     /*
+     *  GtkSpinButtonUpdatePolicy
+     */
+    { "GTK_UPDATE_ALWAYS",              GTK_UPDATE_ALWAYS },
+    { "GTK_UPDATE_IF_VALID",            GTK_UPDATE_IF_VALID },
+
+    /*
+     *  GtkSpinType
+     */
+    { "GTK_SPIN_STEP_FORWARD",          GTK_SPIN_STEP_FORWARD },
+    { "GTK_SPIN_STEP_FORWARD",          GTK_SPIN_STEP_BACKWARD },
+    { "GTK_SPIN_PAGE_FORWARD",          GTK_SPIN_PAGE_FORWARD },
+    { "GTK_SPIN_PAGE_BACKWARD",         GTK_SPIN_PAGE_BACKWARD },
+    { "GTK_SPIN_HOME",                  GTK_SPIN_HOME },
+    { "GTK_SPIN_END",                   GTK_SPIN_END },
+    { "GTK_SPIN_USER_DEFINED",          GTK_SPIN_USER_DEFINED },
+
+    /*
      *  GtkStateType
      */
     { "GTK_STATE_NORMAL",       GTK_STATE_NORMAL },
