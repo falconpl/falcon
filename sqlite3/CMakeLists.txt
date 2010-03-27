@@ -7,27 +7,40 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-FALCON_DEFINE_MODULE( FALCON_MODULE sqlite3 )
+falcon_define_module( FALCON_MODULE sqlite3 )
 
 # Inclusion settings
-INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(../include)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+)
 
 # Target
-ADD_LIBRARY( ${FALCON_MODULE} MODULE
+add_library( ${FALCON_MODULE} MODULE
    sqlite3.cpp
    sqlite3_ext.cpp
    sqlite3_srv.cpp
    sqlite.c
 )
+#
+set(sqlite_definitions
+  SQLITE_THREADSAFE=1
+  SQLITE_ENABLE_FTS3 
+  SQLITE_SECURE_DELETE
+  SQLITE_ENABLE_MEMORY_MANAGEMENT
+  # SQLITE_ENABLE_COLUMN_METADATA # adds API that is not wrapped right now
+)
+set_source_files_properties( sqlite.c 
+  PROPERTIES 
+    COMPILE_DEFINITIONS "${sqlite_definitions}"
+)
 
 #Link
-
-IF(WIN32)
-   TARGET_LINK_LIBRARIES(${FALCON_MODULE} falcon_engine)
-ELSE(WIN32)
+if(WIN32)
+   target_link_libraries(${FALCON_MODULE} falcon_engine)
+else()
    #Non-win32 builds require pthreads
-   TARGET_LINK_LIBRARIES(${FALCON_MODULE} falcon_engine pthread)
-ENDIF(WIN32)
+   target_link_libraries(${FALCON_MODULE} falcon_engine pthread)
+endif()
 
 falcon_install_module( ${FALCON_MODULE} )
