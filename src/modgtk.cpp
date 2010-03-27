@@ -48,6 +48,7 @@
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
 #include "gtk_TextTag.hpp"
+#include "gtk_TextTagTable.hpp"
 #include "gtk_ToggleAction.hpp"
 #include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
@@ -139,7 +140,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
-
+    Falcon::Gtk::TextTagTable::modInit( self );
 
     return self;
 }
