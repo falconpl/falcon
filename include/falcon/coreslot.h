@@ -36,7 +36,7 @@ class VMMessage;
    The slot represents an end of the communication process where the incoming
    message is definitely.
 */
-class CoreSlot: public ItemList
+class FALCON_DYN_CLASS CoreSlot: public ItemList
 {
    String m_name;
    mutable Mutex m_mtx;
