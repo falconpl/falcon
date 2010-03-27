@@ -21,7 +21,7 @@ class MyWindow from GtkWindow
         // set window title
         //self.set_title( "Falcon" )
         // set window title using a generic property setter
-        self.set( "title", "Falcon" );
+        self.set_property( "title", "Falcon" );
         // connect to delete-event
         self.signal_delete_event().subscribe( self )
         // make a vertical box
