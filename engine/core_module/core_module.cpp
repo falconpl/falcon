@@ -1240,7 +1240,7 @@ Module* core_module_init()
    //=======================================================================
    // RTL math
    //=======================================================================
-
+   self->addConstant("PI", 3.1415926535897932384626433832795);
    self->addExtFunc( "log", &Falcon::core::flc_math_log )->
       addParam("x");
    self->addExtFunc( "exp", &Falcon::core::flc_math_exp )->
