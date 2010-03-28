@@ -7,6 +7,8 @@ Falcon (0.9.6.5)
            modules with symbols already known in the VM couldn't be loaded
            even if stored in their own namespace.
   * fixed: CoreSlot wasn't exported so it couldn't be used in modules.
+  * fixed: "a" * 10000 taking ages because of parser error in first allocation.
+           Thanks fgenesis for this.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

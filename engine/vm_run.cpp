@@ -1142,8 +1142,19 @@ void opcodeHandler_IN( register VMachine *vm )
       break;
 
       case FLC_ITEM_OBJECT:
-         if( operand1->type() == FLC_ITEM_STRING )
-            result = operand2->asObjectSafe()->hasProperty( *operand1->asString() );
+      {
+         // is the object embedding a dictionary interface?
+         Sequence* seq = operand2->asObjectSafe()->getSequence();
+         if( seq != 0 && seq->isDictionary() )
+         {
+            result = static_cast<ItemDict*>(seq)->find(*operand1) != 0 ;
+         }
+         else
+         {
+            if( operand1->type() == FLC_ITEM_STRING )
+               result = operand2->asObjectSafe()->hasProperty( *operand1->asString() );
+         }
+      }
       break;
 
       case FLC_ITEM_CLASS:

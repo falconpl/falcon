@@ -598,9 +598,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
       case FLC_ITEM_ARRAY:
       {
-         if( vm == 0 )
-            return sc_missvm;
-
          int32 val;
          file->read( (byte *) &val, sizeof( val ) );
          e_sercode retval = sc_ok;
@@ -631,9 +628,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
       case FLC_ITEM_DICT:
       {
-         if( vm == 0 )
-            return sc_missvm;
-
          byte blessed;
          file->read( &blessed, 1 );
 

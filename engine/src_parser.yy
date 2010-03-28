@@ -2396,7 +2396,7 @@ expression:
             {
                if ( $4->isInteger() )
                {
-                  Falcon::String str( $1->asString()->length() );
+                  Falcon::String str( $1->asString()->length() * $4->asInteger() );
                   for( int i = 0; i < $4->asInteger(); ++i )
                   {
                      str.append( *$1->asString()  );

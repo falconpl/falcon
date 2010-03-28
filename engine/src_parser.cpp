@@ -6641,7 +6641,7 @@ yyreduce:
             {
                if ( (yyvsp[(4) - (4)].fal_val)->isInteger() )
                {
-                  Falcon::String str( (yyvsp[(1) - (4)].fal_val)->asString()->length() );
+                  Falcon::String str( (yyvsp[(1) - (4)].fal_val)->asString()->length() * (yyvsp[(4) - (4)].fal_val)->asInteger() );
                   for( int i = 0; i < (yyvsp[(4) - (4)].fal_val)->asInteger(); ++i )
                   {
                      str.append( *(yyvsp[(1) - (4)].fal_val)->asString()  );

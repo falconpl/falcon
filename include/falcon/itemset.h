@@ -79,7 +79,7 @@ public:
    as a UserData, but it can be also used alone to store unique
    entities of items.
 
-   The set is internally represented as a binary tree (eventuall
+   The set is internally represented as a binary tree (eventually
    balanced).
 */
 
