@@ -40,6 +40,21 @@ void TextTagTable::modInit( Falcon::Module* mod )
 }
 
 
+TextTagTable::TextTagTable( const Falcon::CoreClass* gen, const GtkTextTagTable* tag )
+    :
+    Gtk::CoreGObject( gen )
+{
+    if ( tag )
+        setUserData( new GData( (GObject*) tag ) );
+}
+
+
+Falcon::CoreObject* TextTagTable::factory( const Falcon::CoreClass* gen, void* tag, bool )
+{
+    return new TextTagTable( gen, (GtkTextTagTable*) tag );
+}
+
+
 /*#
     @class GtkTextTagTable
     @brief Collection of tags that can be used together
