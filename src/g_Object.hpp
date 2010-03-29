@@ -36,6 +36,12 @@ public:
 
     static FALCON_FUNC thaw_notify( VMARG );
 
+    static FALCON_FUNC ref( VMARG );
+
+    static FALCON_FUNC unref( VMARG );
+
+    static FALCON_FUNC ref_sink( VMARG );
+
 };
 
 

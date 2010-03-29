@@ -28,6 +28,9 @@ void Object::modInit( Falcon::Module* mod )
     { "notify",             &Object::notify },
     { "freeze_notify",      &Object::freeze_notify },
     { "thaw_notify",        &Object::thaw_notify },
+    { "ref",                &Object::ref },
+    { "unref",              &Object::unref },
+    { "ref_sink",           &Object::ref_sink },
     { NULL, NULL }
     };
 
@@ -286,6 +289,64 @@ FALCON_FUNC Object::thaw_notify( VMARG )
     MYSELF;
     GET_OBJ( self );
     g_object_thaw_notify( _obj );
+}
+
+
+/*#
+    @method ref GObject
+    @brief Increases the reference count of object.
+    @note Don't use this...
+ */
+FALCON_FUNC Object::ref( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    g_object_ref( _obj );
+}
+
+
+/*#
+    @method unref GObject
+    @brief Decreases the reference count of object.
+    @note Don't use this...
+
+    When its reference count drops to 0, the object is finalized (i.e. its memory is freed).
+ */
+FALCON_FUNC Object::unref( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    g_object_unref( _obj );
+}
+
+
+/*#
+    @method ref_sink GObject
+    @brief Increase the reference count of object, and possibly remove the floating reference, if object has a floating reference.
+    @note Don't use this...
+
+    In other words, if the object is floating, then this call "assumes ownership"
+    of the floating reference, converting it to a normal reference by clearing the
+    floating flag while leaving the reference count unchanged. If the object is not
+    floating, then this call adds a new normal reference increasing the reference count by one.
+ */
+FALCON_FUNC Object::ref_sink( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    g_object_ref_sink( _obj );
 }
 
 
