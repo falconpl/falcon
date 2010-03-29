@@ -9,6 +9,8 @@ Falcon (0.9.6.5)
   * fixed: CoreSlot wasn't exported so it couldn't be used in modules.
   * fixed: "a" * 10000 taking ages because of parser error in first allocation.
            Thanks fgenesis for this.
+  * minor: Added option "-s" in CLT to send error output on stdout, and --cgi
+           option to load "cgi" module and add -s option in one step.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

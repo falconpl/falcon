@@ -50,7 +50,8 @@ FalconOptions::FalconOptions():
 
    compile_tltable( false ),
    interactive( false ),
-   ignore_syspath( false )
+   ignore_syspath( false ),
+   errOnStdout(false)
 {}
 
 
@@ -75,6 +76,7 @@ void FalconOptions::usage( bool deep )
       << "   -t          generate a syntactic tree (for logic debug)" << endl
       << "   -y          write string translation table for the module" << endl
       << "   -x          execute a binary '.fam' module" << endl
+      << "   --cgi       execute in GGI mode" << endl
       << endl
       << "Compilation options (c_opts):" << endl
       << "   -d          Set directive (as <directive>=<value>)" << endl
@@ -101,6 +103,7 @@ void FalconOptions::usage( bool deep )
       << "   -h/-?       display usage" << endl
       << "   -H          this help" << endl
       << "   -o <fn>     output to <fn> instead of [module.xxx]" << endl
+      << "   -s          Send error description to stdOut instead of stdErr" << endl
       << "   -v          print copyright notice and version and exit" << endl
       << "   -w          add an extra console wait after program exit" << endl
       << "" << endl
@@ -224,6 +227,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'P': ignore_syspath = true; break;
             case 'r': recompile_on_load = false; break;
 
+            case 's': errOnStdout = true; break;
             case 'S': modalGiven(); assemble_out = true; break;
             case 't': modalGiven(); tree_out = true; break;
             case 'T': parse_ftd = true; break;
@@ -232,8 +236,19 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'w': wait_after = true; break;
             case 'y': modalGiven(); compile_tltable = true; break;
 
+            case '-':
+               if( String( op+2 ) == "cgi" )
+               {
+                  errOnStdout = true;
+                  preloaded.pushBack( new String( "cgi" ) );
+                  break;
+               }
+
+            // else just fallthrough
+
+
             default:
-               cerr << "falcon: unrecognized option '" << op << "'.'"<< endl << endl;
+               cerr << "falcon: unrecognized option '" << op << "'."<< endl << endl;
                usage(false);
                m_justinfo = true;
          }

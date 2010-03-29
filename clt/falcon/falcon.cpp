@@ -730,6 +730,7 @@ int main ( int argc, char *argv[] )
 {
    AppFalcon falcon;
    StdErrStream serr;
+   StdOutStream sout;
 
    try {
       if ( falcon.setup( argc, argv ) )
@@ -744,8 +745,17 @@ int main ( int argc, char *argv[] )
    {
       String temp;
       err->toString( temp );
-      serr.writeString( "falcon: FATAL - Program terminated with error.\n" );
-      serr.writeString( temp + "\n" );
+      if( falcon.m_options.errOnStdout )
+      {
+         sout.writeString( "falcon: FATAL - Program terminated with error.\n" );
+         sout.writeString( temp + "\n" );
+      }
+      else
+      {
+         serr.writeString( "falcon: FATAL - Program terminated with error.\n" );
+         serr.writeString( temp + "\n" );
+      }
+
       err->decref();
       falcon.exitval( 1 );
    }

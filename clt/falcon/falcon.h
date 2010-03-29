@@ -30,7 +30,6 @@ namespace Falcon {
 /** Typical embedding applications. */
 class AppFalcon
 {
-   FalconOptions m_options;
    int m_exitval;
    int m_errors;
    int m_script_pos;
@@ -87,6 +86,7 @@ public:
    Stream* m_stdOut;
    Stream* m_stdErr;
 
+   FalconOptions m_options;
 };
 
 } // namespace Falcon

@@ -70,6 +70,9 @@ public:
 
    bool ignore_syspath;
 
+   bool errOnStdout;
+
+
    FalconOptions();
 
    void parse( int argc, char **argv, int &script_pos );
