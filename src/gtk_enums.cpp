@@ -386,6 +386,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_LEFT_RIGHT",     GTK_LEFT_RIGHT },
 
     /*
+     *  GtkTextBufferTargetInfo
+     */
+    { "GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS",GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS },
+    { "GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT",  GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT },
+    { "GTK_TEXT_BUFFER_TARGET_INFO_TEXT",       GTK_TEXT_BUFFER_TARGET_INFO_TEXT },
+
+    /*
      *  GtkToolbarStyle
      */
     { "GTK_TOOLBAR_ICONS",      GTK_TOOLBAR_ICONS },
