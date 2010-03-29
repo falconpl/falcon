@@ -49,7 +49,7 @@ EntryBuffer::EntryBuffer( const Falcon::CoreClass* gen, const GtkEntryBuffer* bu
     Gtk::CoreGObject( gen )
 {
     if ( buf )
-        setUserData( new GData( (GObject*) buf ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) buf ) ) );
 }
 
 

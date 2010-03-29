@@ -39,7 +39,7 @@ ComboBoxEntry::ComboBoxEntry( const Falcon::CoreClass* gen, const GtkComboBoxEnt
     Gtk::CoreGObject( gen )
 {
     if ( box )
-        setUserData( new GData( (GObject*) box ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) box ) ) );
 }
 
 

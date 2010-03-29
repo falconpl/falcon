@@ -56,7 +56,7 @@ Adjustment::Adjustment( const Falcon::CoreClass* gen, const GtkAdjustment* adj )
     Gtk::CoreGObject( gen )
 {
     if ( adj )
-        setUserData( new GData( (GObject*) adj ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) adj ) ) );
 }
 
 

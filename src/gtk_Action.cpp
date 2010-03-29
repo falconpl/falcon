@@ -90,7 +90,7 @@ Action::Action( const Falcon::CoreClass* gen, const GtkAction* act )
     Gtk::CoreGObject( gen )
 {
     if ( act )
-        setUserData( new GData( (GObject*) act ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) act ) ) );
 }
 
 

@@ -43,7 +43,7 @@ TextMark::TextMark( const Falcon::CoreClass* gen, const GtkTextMark* mk )
     Gtk::CoreGObject( gen )
 {
     if ( mk )
-        setUserData( new GData( (GObject*) mk ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) mk ) ) );
 }
 
 

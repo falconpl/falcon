@@ -34,7 +34,7 @@ Pixbuf::Pixbuf( const Falcon::CoreClass* gen, const GdkPixbuf* buf )
     Gtk::CoreGObject( gen )
 {
     if ( buf )
-        setUserData( new Gtk::GData( (GObject*) buf ) );
+        setUserData( new Gtk::GData( Gtk::internal_add_slot( (GObject*) buf ) ) );
 }
 
 

@@ -53,7 +53,7 @@ Expander::Expander( const Falcon::CoreClass* gen, const GtkExpander* exp )
     Gtk::CoreGObject( gen )
 {
     if ( exp )
-        setUserData( new GData( (GObject*) exp ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) exp ) ) );
 }
 
 

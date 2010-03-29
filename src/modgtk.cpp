@@ -163,11 +163,13 @@ namespace Gtk {
 
 GObject* internal_add_slot( GObject* obj )
 {
-    Falcon::CoreSlot* cs = new Falcon::CoreSlot( "" );
+    if ( !g_object_get_data( obj, "_signals" ) )
+    {
+        Falcon::CoreSlot* cs = new Falcon::CoreSlot( "" );
 
-    g_object_set_data_full( obj, "_signals", (gpointer) cs,
-        &Gtk::internal_release_slot );
-
+        g_object_set_data_full( obj, "_signals", (gpointer) cs,
+            &Gtk::internal_release_slot );
+    }
     return obj;
 }
 

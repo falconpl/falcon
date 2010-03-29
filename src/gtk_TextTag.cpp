@@ -38,7 +38,7 @@ TextTag::TextTag( const Falcon::CoreClass* gen, const GtkTextTag* tag )
     Gtk::CoreGObject( gen )
 {
     if ( tag )
-        setUserData( new GData( (GObject*) tag ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) tag ) ) );
 }
 
 

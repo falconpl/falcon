@@ -116,7 +116,7 @@ TextBuffer::TextBuffer( const Falcon::CoreClass* gen, const GtkTextBuffer* buf )
     Gtk::CoreGObject( gen )
 {
     if ( buf )
-        setUserData( new GData( (GObject*) buf ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) buf ) ) );
 }
 
 
@@ -702,7 +702,6 @@ FALCON_FUNC TextBuffer::create_mark( VMARG )
     GET_OBJ( self );
     GtkTextMark* mk = gtk_text_buffer_create_mark( (GtkTextBuffer*)_obj,
             name, iter, gravity );
-    Gtk::internal_add_slot( (GObject*) mk );
     vm->retval( new Gtk::TextMark( vm->findWKI( "GtkTextIter" )->asClass(), mk ) );
 }
 

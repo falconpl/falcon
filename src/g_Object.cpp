@@ -41,7 +41,7 @@ Object::Object( const Falcon::CoreClass* gen, const GObject* obj )
     Gtk::CoreGObject( gen )
 {
     if ( obj )
-        setUserData( new Gtk::GData( (GObject*) obj ) );
+        setUserData( new Gtk::GData( Gtk::internal_add_slot( (GObject*) obj ) ) );
 }
 
 

@@ -71,7 +71,7 @@ Image::Image( const Falcon::CoreClass* gen, const GtkImage* img )
     Gtk::CoreGObject( gen )
 {
     if ( img )
-        setUserData( new GData( (GObject*) img ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) img ) ) );
 }
 
 
@@ -174,7 +174,6 @@ FALCON_FUNC Image::new_from_stock( VMARG )
 #endif
     AutoCString s( i_id->asString() );
     GtkWidget* img = gtk_image_new_from_stock( s.c_str(), (GtkIconSize) i_sz->asInteger() );
-    Gtk::internal_add_slot( (GObject*) img );
     Item* wki = vm->findWKI( "GtkImage" );
     vm->retval( new Image( wki->asClass(), (GtkImage*) img ) );
 }

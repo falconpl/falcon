@@ -148,7 +148,7 @@ Widget::Widget( const Falcon::CoreClass* gen, const GtkWidget* wdt )
     Gtk::CoreGObject( gen )
 {
     if ( wdt )
-        setUserData( new GData( (GObject*) wdt ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) wdt ) ) );
 }
 
 

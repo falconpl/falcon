@@ -41,7 +41,7 @@ RadioButton::RadioButton( const Falcon::CoreClass* gen, const GtkRadioButton* bt
     Gtk::CoreGObject( gen )
 {
     if ( btn )
-        setUserData( new GData( (GObject*) btn ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) btn ) ) );
 }
 
 

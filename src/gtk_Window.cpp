@@ -148,7 +148,7 @@ Window::Window( const Falcon::CoreClass* gen, const GtkWindow* win )
     Gtk::CoreGObject( gen )
 {
     if ( win )
-        setUserData( new GData( (GObject*) win ) );
+        setUserData( new GData( Gtk::internal_add_slot( (GObject*) win ) ) );
 }
 
 
