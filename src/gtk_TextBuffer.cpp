@@ -5,6 +5,7 @@
 #include "gtk_TextBuffer.hpp"
 
 #include "gtk_TextIter.hpp"
+#include "gtk_TextMark.hpp"
 #include "gtk_TextTagTable.hpp"
 
 #include <gtk/gtk.h>
@@ -48,15 +49,15 @@ void TextBuffer::modInit( Falcon::Module* mod )
     { "insert_pixbuf",          &TextBuffer::insert_pixbuf },
     //{ "insert_child_anchor",    &TextBuffer::insert_child_anchor },
     //{ "create_child_anchor",    &TextBuffer::create_child_anchor },
-    //{ "create_mark",            &TextBuffer::create_mark },
-    //{ "move_mark",              &TextBuffer::move_mark },
+    { "create_mark",            &TextBuffer::create_mark },
+    { "move_mark",              &TextBuffer::move_mark },
     { "move_mark_by_name",      &TextBuffer::move_mark_by_name },
-    //{ "add_mark",               &TextBuffer::add_mark },
-    //{ "delete_mark",            &TextBuffer::delete_mark },
+    { "add_mark",               &TextBuffer::add_mark },
+    { "delete_mark",            &TextBuffer::delete_mark },
     { "delete_mark_by_name",    &TextBuffer::delete_mark_by_name },
-    //{ "get_mark",               &TextBuffer::get_mark },
-    //{ "get_insert",             &TextBuffer::get_insert },
-    //{ "get_selection_bound",    &TextBuffer::get_selection_bound },
+    { "get_mark",               &TextBuffer::get_mark },
+    { "get_insert",             &TextBuffer::get_insert },
+    { "get_selection_bound",    &TextBuffer::get_selection_bound },
     { "get_has_selection",      &TextBuffer::get_has_selection },
     { "place_cursor",           &TextBuffer::place_cursor },
     { "select_range",           &TextBuffer::select_range },
@@ -662,9 +663,75 @@ FALCON_FUNC TextBuffer::insert_pixbuf( VMARG )
 
 //FALCON_FUNC TextBuffer::create_child_anchor( VMARG );
 
-//FALCON_FUNC TextBuffer::create_mark( VMARG );
 
-//FALCON_FUNC TextBuffer::move_mark( VMARG );
+/*#
+    @method create_mark
+    @brief Creates a mark at position where.
+    @param mark_name name for mark, or nil
+    @param where (GtkTextIter) location to place mark
+    @param left_gravity (boolean) whether the mark has left gravity
+
+    If mark_name is NULL, the mark is anonymous; otherwise, the mark can be retrieved
+    by name using gtk_text_buffer_get_mark(). If a mark has left gravity, and text
+    is inserted at the mark's current location, the mark will be moved to the left
+    of the newly-inserted text. If the mark has right gravity (left_gravity = FALSE),
+    the mark will end up on the right of newly-inserted text. The standard left-to-right
+    cursor is a mark with right gravity (when you type, the cursor stays on the right
+    side of the text you're typing).
+
+    The caller of this function does not own a reference to the returned GtkTextMark,
+    so you can ignore the return value if you like. Marks are owned by the buffer and
+    go away when the buffer does.
+
+    Emits the "mark-set" signal as notification of the mark's initial placement.
+ */
+FALCON_FUNC TextBuffer::create_mark( VMARG )
+{
+    Gtk::ArgCheck1 args( vm, "S,GtkTextIter,B" );
+
+    char* name = args.getCString( 0, false );
+    CoreObject* o_iter = args.getObject( 1 );
+    gboolean gravity = args.getBoolean( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
+        throw_inv_params( "S,GtkTextIter,B" );
+#endif
+    GtkTextIter* iter = (GtkTextIter*)((GData*)o_iter->getUserData())->obj();
+
+    MYSELF;
+    GET_OBJ( self );
+    GtkTextMark* mk = gtk_text_buffer_create_mark( (GtkTextBuffer*)_obj,
+            name, iter, gravity );
+    Gtk::internal_add_slot( (GObject*) mk );
+    vm->retval( new Gtk::TextMark( vm->findWKI( "GtkTextIter" )->asClass(), mk ) );
+}
+
+
+/*#
+    @method move_mark
+    @brief Moves mark to the new location where.
+    @param mark a GtkTextMark
+    @param where new location for mark in buffer
+
+    Emits the "mark-set" signal as notification of the move.
+ */
+FALCON_FUNC TextBuffer::move_mark( VMARG )
+{
+    Item* i_mk = vm->param( 0 );
+    Item* i_iter = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_mk || i_mk->isNil() || !i_mk->isObject()
+        || !IS_DERIVED( i_mk, GtkTextMark )
+        || !i_iter || i_iter->isNil() || !i_iter->isObject()
+        || !IS_DERIVED( i_iter, GtkTextIter ) )
+        throw_inv_params( "GtkTextMark,GtkTextIter" );
+#endif
+    GtkTextMark* mk = (GtkTextMark*)((GData*)i_mk->asObject()->getUserData())->obj();
+    GtkTextIter* iter = (GtkTextIter*)((GData*)i_iter->asObject()->getUserData())->obj();
+    MYSELF;
+    GET_OBJ( self );
+    gtk_text_buffer_move_mark ( (GtkTextBuffer*)_obj, mk, iter );
+}
 
 
 /*#
@@ -692,10 +759,59 @@ FALCON_FUNC TextBuffer::move_mark_by_name( VMARG )
     gtk_text_buffer_move_mark_by_name( (GtkTextBuffer*)_obj, nam, iter );
 }
 
+/*#
+    @method add_mark
+    @brief Adds the mark at position where.
+    @param mark the mark to add
+    @param where location to place mark
 
-//FALCON_FUNC TextBuffer::add_mark( VMARG );
+    The mark must not be added to another buffer, and if its name is not NULL then
+    there must not be another mark in the buffer with the same name.
 
-//FALCON_FUNC TextBuffer::delete_mark( VMARG );
+    Emits the "mark-set" signal as notification of the mark's initial placement.
+ */
+FALCON_FUNC TextBuffer::add_mark( VMARG )
+{
+    Item* i_mk = vm->param( 0 );
+    Item* i_iter = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_mk || i_mk->isNil() || !i_mk->isObject()
+        || !IS_DERIVED( i_mk, GtkTextMark )
+        || !i_iter || i_iter->isNil() || !i_iter->isObject()
+        || !IS_DERIVED( i_iter, GtkTextIter ) )
+        throw_inv_params( "GtkTextMark,GtkTextIter" );
+#endif
+    GtkTextMark* mk = (GtkTextMark*)((GData*)i_mk->asObject()->getUserData())->obj();
+    GtkTextIter* iter = (GtkTextIter*)((GData*)i_iter->asObject()->getUserData())->obj();
+    MYSELF;
+    GET_OBJ( self );
+    gtk_text_buffer_add_mark( (GtkTextBuffer*)_obj, mk, iter );
+}
+
+
+/*#
+    @method delete_mark
+    @brief Deletes mark, so that it's no longer located anywhere in the buffer.
+    @param amrk a GtkTextMark in buffer
+
+    Most operations on mark become invalid, until the mark gets added to a buffer again
+    with gtk_text_buffer_add_mark(). Use gtk_text_mark_get_deleted() to find out
+    if a mark has been removed from its buffer. The "mark-deleted" signal will be
+    emitted as notification after the mark is deleted.
+ */
+FALCON_FUNC TextBuffer::delete_mark( VMARG )
+{
+    Item* i_mk = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_mk || i_mk->isNil() || !i_mk->isObject()
+        || !IS_DERIVED( i_mk, GtkTextMark ) )
+        throw_inv_params( "GtkTextMark" );
+#endif
+    GtkTextMark* mk = (GtkTextMark*)((GData*)i_mk->asObject()->getUserData())->obj();
+    MYSELF;
+    GET_OBJ( self );
+    gtk_text_buffer_delete_mark( (GtkTextBuffer*)_obj, mk );
+}
 
 
 /*#
@@ -717,11 +833,74 @@ FALCON_FUNC TextBuffer::delete_mark_by_name( VMARG )
 }
 
 
-//FALCON_FUNC TextBuffer::get_mark( VMARG );
+/*#
+    @method get_mark
+    @brief Returns the mark named name in buffer buffer, or nil if no such mark exists in the buffer.
+    @param name a mark name
+    @return a GtkTextMark, or nil.
+ */
+FALCON_FUNC TextBuffer::get_mark( VMARG )
+{
+    Gtk::ArgCheck1 args( vm, "S" );
 
-//FALCON_FUNC TextBuffer::get_insert( VMARG );
+    char* name = args.getCString( 0 );
 
-//FALCON_FUNC TextBuffer::get_selection_bound( VMARG );
+    MYSELF;
+    GET_OBJ( self );
+    GtkTextMark* mk = gtk_text_buffer_get_mark( (GtkTextBuffer*)_obj, name );
+    if ( mk )
+        vm->retval( new Gtk::TextMark( vm->findWKI( "GtkTextMark" )->asClass(), mk ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method get_insert
+    @brief Returns the mark that represents the cursor (insertion point).
+    @return (GtkTextMark) insertion point mark.
+
+    Equivalent to calling gtk_text_buffer_get_mark() to get the mark named "insert",
+    but very slightly more efficient, and involves less typing.
+ */
+FALCON_FUNC TextBuffer::get_insert( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkTextMark* mk = gtk_text_buffer_get_insert( (GtkTextBuffer*)_obj );
+    vm->retval( new Gtk::TextMark( vm->findWKI( "GtkTextMark" )->asClass(), mk ) );
+}
+
+
+/*#
+    @method get_selection_bound
+    @brief Returns the mark that represents the selection bound.
+    @return (GtkTextMark) selection bound mark.
+
+    Equivalent to calling get_mark() to get the mark named "selection_bound",
+    but very slightly more efficient, and involves less typing.
+
+    The currently-selected text in buffer is the region between the "selection_bound"
+    and "insert" marks. If "selection_bound" and "insert" are in the same place, then
+    there is no current selection. get_selection_bounds() is another
+    convenient function for handling the selection, if you just want to know whether
+    there's a selection and what its bounds are.
+ */
+FALCON_FUNC TextBuffer::get_selection_bound( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkTextMark* mk = gtk_text_buffer_get_selection_bound( (GtkTextBuffer*)_obj );
+    vm->retval( new Gtk::TextMark( vm->findWKI( "GtkTextMark" )->asClass(), mk ) );
+}
 
 
 /*#

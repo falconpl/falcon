@@ -66,23 +66,23 @@ public:
 
     //static FALCON_FUNC create_child_anchor( VMARG );
 
-    //static FALCON_FUNC create_mark( VMARG );
+    static FALCON_FUNC create_mark( VMARG );
 
-    //static FALCON_FUNC move_mark( VMARG );
+    static FALCON_FUNC move_mark( VMARG );
 
     static FALCON_FUNC move_mark_by_name( VMARG );
 
-    //static FALCON_FUNC add_mark( VMARG );
+    static FALCON_FUNC add_mark( VMARG );
 
-    //static FALCON_FUNC delete_mark( VMARG );
+    static FALCON_FUNC delete_mark( VMARG );
 
     static FALCON_FUNC delete_mark_by_name( VMARG );
 
-    //static FALCON_FUNC get_mark( VMARG );
+    static FALCON_FUNC get_mark( VMARG );
 
-    //static FALCON_FUNC get_insert( VMARG );
+    static FALCON_FUNC get_insert( VMARG );
 
-    //static FALCON_FUNC get_selection_bound( VMARG );
+    static FALCON_FUNC get_selection_bound( VMARG );
 
     static FALCON_FUNC get_has_selection( VMARG );
 
