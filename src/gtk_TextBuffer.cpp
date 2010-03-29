@@ -161,7 +161,7 @@ FALCON_FUNC TextBuffer::init( VMARG )
 
 
 /*#
-    @method get_line_count
+    @method get_line_count GtkTextBuffer
     @brief Obtains the number of lines in the buffer.
     @return number of lines in the buffer
 
@@ -180,7 +180,7 @@ FALCON_FUNC TextBuffer::get_line_count( VMARG )
 
 
 /*#
-    @method get_char_count
+    @method get_char_count GtkTextBuffer
     @brief Gets the number of characters in the buffer.
 
     Note that characters and bytes are not the same, you can't e.g. expect the
@@ -200,7 +200,7 @@ FALCON_FUNC TextBuffer::get_char_count( VMARG )
 
 
 /*#
-    @method get_tag_table
+    @method get_tag_table GtkTextBuffer
     @brief Get the GtkTextTagTable associated with this buffer.
     @return the buffer's tag table.
  */
@@ -218,7 +218,7 @@ FALCON_FUNC TextBuffer::get_tag_table( VMARG )
 
 
 /*#
-    @method insert
+    @method insert GtkTextBuffer
     @brief Inserts len bytes of text at position iter.
     @param iter (GtkTextIter) a position in the buffer
     @param text some text in UTF-8 format
@@ -251,7 +251,7 @@ FALCON_FUNC TextBuffer::insert( VMARG )
 
 
 /*#
-    @method insert_at_cursor
+    @method insert_at_cursor GtkTextBuffer
     @brief Simply calls insert(), using the current cursor position as the insertion point.
     @param text some text in UTF-8 format
     @param len length of text, in bytes
@@ -270,7 +270,7 @@ FALCON_FUNC TextBuffer::insert_at_cursor( VMARG )
 
 
 /*#
-    @method insert_interactive
+    @method insert_interactive GtkTextBuffer
     @brief Like insert(), but the insertion will not occur if iter is at a non-editable location in the buffer.
     @param iter (GtkTextIter) a position in the buffer
     @param text some text in UTF-8 format
@@ -307,7 +307,7 @@ FALCON_FUNC TextBuffer::insert_interactive( VMARG )
 
 
 /*#
-    @method insert_interactive_at_cursor
+    @method insert_interactive_at_cursor GtkTextBuffer
     @brief Calls gtk_text_buffer_insert_interactive() at the cursor position.
     @param text some text in UTF-8 format
     @param len length of text, in bytes
@@ -334,7 +334,7 @@ FALCON_FUNC TextBuffer::insert_interactive_at_cursor( VMARG )
 
 
 /*#
-    @method insert_range
+    @method insert_range GtkTextBuffer
     @brief Copies text, tags, and pixbufs between start and end (the order of start and end doesn't matter) and inserts the copy at iter.
     @param iter (GtkTextIter) a position in buffer
     @param start (GtkTextIter) a position in a GtkTextBuffer
@@ -370,7 +370,7 @@ FALCON_FUNC TextBuffer::insert_range( VMARG )
 
 
 /*#
-    @method insert_range_interactive
+    @method insert_range_interactive GtkTextBuffer
     @brief Like insert(), but the insertion will not occur if iter is at a non-editable location in the buffer.
     @param iter (GtkTextIter) a position in buffer
     @param start (GtkTextIter) a position in a GtkTextBuffer
@@ -416,7 +416,7 @@ FALCON_FUNC TextBuffer::insert_range_interactive( VMARG )
 
 
 /*#
-    @method delete
+    @method delete GtkTextBuffer
     @brief Deletes text between start and end.
     @param start a position in buffer
     @param end another position in buffer
@@ -448,7 +448,7 @@ FALCON_FUNC TextBuffer::delete_( VMARG )
 
 
 /*#
-    @method delete_interactive
+    @method delete_interactive GtkTextBuffer
     @brief Deletes all editable text in the given range.
     @param start a position in buffer
     @param end another position in buffer
@@ -482,7 +482,7 @@ FALCON_FUNC TextBuffer::delete_interactive( VMARG )
 
 
 /*#
-    @method backspace
+    @method backspace GtkTextBuffer
     @brief Performs the appropriate action as if the user hit the delete key with the cursor at the position specified by iter.
     @param iter a position in buffer
     @param interactive whether the deletion is caused by user interaction
@@ -518,7 +518,7 @@ FALCON_FUNC TextBuffer::backspace( VMARG )
 
 
 /*#
-    @method set_text
+    @method set_text GtkTextBuffer
     @brief Deletes current contents of buffer, and inserts text instead.
     @param text UTF-8 text to insert
     @param len length of text in bytes
@@ -539,7 +539,7 @@ FALCON_FUNC TextBuffer::set_text( VMARG )
 
 
 /*#
-    @method get_text
+    @method get_text GtkTextBuffer
     @brief Returns the text in the range [start,end).
     @param start start of range
     @param end end of range
@@ -583,7 +583,7 @@ FALCON_FUNC TextBuffer::get_text( VMARG )
 
 
 /*#
-    @method get_slice
+    @method get_slice GtkTextBuffer
     @brief Returns the text in the range [start,end).
     @param start start of range
     @param end end of range
@@ -628,7 +628,7 @@ FALCON_FUNC TextBuffer::get_slice( VMARG )
 
 
 /*#
-    @method insert_pixbuf
+    @method insert_pixbuf GtkTextBuffer
     @brief Inserts an image into the text buffer at iter.
     @param iter location to insert the pixbuf
     @param pixbuf a GdkPixbuf
@@ -665,7 +665,7 @@ FALCON_FUNC TextBuffer::insert_pixbuf( VMARG )
 
 
 /*#
-    @method create_mark
+    @method create_mark GtkTextBuffer
     @brief Creates a mark at position where.
     @param mark_name name for mark, or nil
     @param where (GtkTextIter) location to place mark
@@ -707,7 +707,7 @@ FALCON_FUNC TextBuffer::create_mark( VMARG )
 
 
 /*#
-    @method move_mark
+    @method move_mark GtkTextBuffer
     @brief Moves mark to the new location where.
     @param mark a GtkTextMark
     @param where new location for mark in buffer
@@ -734,7 +734,7 @@ FALCON_FUNC TextBuffer::move_mark( VMARG )
 
 
 /*#
-    @method move_mark_by_name
+    @method move_mark_by_name GtkTextBuffer
     @brief Moves the mark named name (which must exist) to location where.
     @param name name of a mark
     @param where new location for mark
@@ -759,7 +759,7 @@ FALCON_FUNC TextBuffer::move_mark_by_name( VMARG )
 }
 
 /*#
-    @method add_mark
+    @method add_mark GtkTextBuffer
     @brief Adds the mark at position where.
     @param mark the mark to add
     @param where location to place mark
@@ -789,7 +789,7 @@ FALCON_FUNC TextBuffer::add_mark( VMARG )
 
 
 /*#
-    @method delete_mark
+    @method delete_mark GtkTextBuffer
     @brief Deletes mark, so that it's no longer located anywhere in the buffer.
     @param amrk a GtkTextMark in buffer
 
@@ -814,7 +814,7 @@ FALCON_FUNC TextBuffer::delete_mark( VMARG )
 
 
 /*#
-    @method delete_mark_by_name
+    @method delete_mark_by_name GtkTextBuffer
     @brief Deletes the mark named name; the mark must exist.
     @param name name of a mark in buffer
 
@@ -833,7 +833,7 @@ FALCON_FUNC TextBuffer::delete_mark_by_name( VMARG )
 
 
 /*#
-    @method get_mark
+    @method get_mark GtkTextBuffer
     @brief Returns the mark named name in buffer buffer, or nil if no such mark exists in the buffer.
     @param name a mark name
     @return a GtkTextMark, or nil.
@@ -855,7 +855,7 @@ FALCON_FUNC TextBuffer::get_mark( VMARG )
 
 
 /*#
-    @method get_insert
+    @method get_insert GtkTextBuffer
     @brief Returns the mark that represents the cursor (insertion point).
     @return (GtkTextMark) insertion point mark.
 
@@ -876,7 +876,7 @@ FALCON_FUNC TextBuffer::get_insert( VMARG )
 
 
 /*#
-    @method get_selection_bound
+    @method get_selection_bound GtkTextBuffer
     @brief Returns the mark that represents the selection bound.
     @return (GtkTextMark) selection bound mark.
 
@@ -903,7 +903,7 @@ FALCON_FUNC TextBuffer::get_selection_bound( VMARG )
 
 
 /*#
-    @method get_has_selection
+    @method get_has_selection GtkTextBuffer
     @brief Indicates whether the buffer has some text currently selected.
     @return true if the there is text selected
  */
@@ -920,7 +920,7 @@ FALCON_FUNC TextBuffer::get_has_selection( VMARG )
 
 
 /*#
-    @method place_cursor
+    @method place_cursor GtkTextBuffer
     @brief This function moves the "insert" and "selection_bound" marks simultaneously.
     @param where (GtkTextIter) where to put the cursor
 
@@ -946,7 +946,7 @@ FALCON_FUNC TextBuffer::place_cursor( VMARG )
 
 
 /*#
-    @method select_range
+    @method select_range GtkTextBuffer
     @brief This function moves the "insert" and "selection_bound" marks simultaneously.
     @param ins (GtkTextIter) where to put the "insert" mark
     @param bound (GtkTextIter) where to put the "selection_bound" mark
@@ -977,7 +977,7 @@ FALCON_FUNC TextBuffer::select_range( VMARG )
 
 
 /*#
-    @method apply_tag
+    @method apply_tag GtkTextBuffer
     @brief Emits the "apply-tag" signal on buffer.
     @param tag a GtkTextTag
     @param start one bound of range to be tagged
@@ -1011,7 +1011,7 @@ FALCON_FUNC TextBuffer::apply_tag( VMARG )
 
 
 /*#
-    @method remove_tag
+    @method remove_tag GtkTextBuffer
     @brief Emits the "remove-tag" signal.
     @param tag a GtkTextTag
     @param start one bound of range to be untagged
@@ -1045,7 +1045,7 @@ FALCON_FUNC TextBuffer::remove_tag( VMARG )
 
 
 /*#
-    @method apply_tag_by_name
+    @method apply_tag_by_name GtkTextBuffer
     @brief Calls gtk_text_tag_table_lookup() on the buffer's tag table to get a GtkTextTag, then calls gtk_text_buffer_apply_tag().
     @param name name of a named GtkTextTag
     @param start one bound of range to be tagged
@@ -1073,7 +1073,7 @@ FALCON_FUNC TextBuffer::apply_tag_by_name( VMARG )
 
 
 /*#
-    @method remove_tag_by_name
+    @method remove_tag_by_name GtkTextBuffer
     @brief Calls gtk_text_tag_table_lookup() on the buffer's tag table to get a GtkTextTag, then calls gtk_text_buffer_remove_tag().
     @param name name of a named GtkTextTag
     @param start one bound of range to be untagged
@@ -1101,7 +1101,7 @@ FALCON_FUNC TextBuffer::remove_tag_by_name( VMARG )
 
 
 /*#
-    @method remove_all_tags
+    @method remove_all_tags GtkTextBuffer
     @brief Removes all tags in the range between start and end.
     @param start one bound of range to be untagged
     @param end other bound of range to be untagged
@@ -1134,7 +1134,7 @@ FALCON_FUNC TextBuffer::remove_all_tags( VMARG )
 
 
 /*#
-    @method get_iter_at_line_offset
+    @method get_iter_at_line_offset GtkTextBuffer
     @brief Obtains an iterator pointing to char_offset within the given line.
     @param line_number line number counting from 0
     @param line_offset char offset from start of line
@@ -1162,7 +1162,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_offset( VMARG )
 
 
 /*#
-    @method get_iter_at_offset
+    @method get_iter_at_offset GtkTextBuffer
     @brief Initializes iter to a position char_offset chars from the start of the entire buffer.
     @param char_offset char offset from start of buffer, counting from 0, or -1
     @return (GtkTextIter)
@@ -1187,7 +1187,7 @@ FALCON_FUNC TextBuffer::get_iter_at_offset( VMARG )
 
 
 /*#
-    @method get_iter_at_line
+    @method get_iter_at_line GtkTextBuffer
     @brief Initializes iter to the start of the given line.
     @param line_number line number counting from 0
     @return (GtkTextIter)
@@ -1208,7 +1208,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line( VMARG )
 
 
 /*#
-    @method get_iter_at_line_index
+    @method get_iter_at_line_index GtkTextBuffer
     @brief Obtains an iterator pointing to byte_index within the given line.
     @param line_number line number counting from 0
     @param byte_offset byte index from start of line
@@ -1242,7 +1242,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_index( VMARG )
 
 
 /*#
-    @method get_start_iter
+    @method get_start_iter GtkTextBuffer
     @brief Initialize iter with the first position in the text buffer.
     @return (GtkTextIter)
 
@@ -1264,7 +1264,7 @@ FALCON_FUNC TextBuffer::get_start_iter( VMARG )
 
 
 /*#
-    @method get_end_iter
+    @method get_end_iter GtkTextBuffer
     @brief Initializes iter with the "end iterator," one past the last valid character in the text buffer.
     @return (GtkTextIter)
 
@@ -1288,7 +1288,7 @@ FALCON_FUNC TextBuffer::get_end_iter( VMARG )
 
 
 /*#
-    @method
+    @method get_bounds GtkTextBuffer
     @brief Retrieves the first and last iterators in the buffer, i.e. the entire buffer lies within the range [start,end].
     @return [ GtkTextIter, GtkTextIter ]
  */
@@ -1313,7 +1313,7 @@ FALCON_FUNC TextBuffer::get_bounds( VMARG )
 
 
 /*#
-    @method get_modified
+    @method get_modified GtkTextBuffer
     @brief Indicates whether the buffer has been modified since the last call to set_modified() set the modification flag to false.
     @return true if the buffer has been modified
     Used for example to enable a "save" function in a text editor.
@@ -1331,7 +1331,7 @@ FALCON_FUNC TextBuffer::get_modified( VMARG )
 
 
 /*#
-    @method set_modified
+    @method set_modified GtkTextBuffer
     @brief Used to keep track of whether the buffer has been modified since the last time it was saved.
     @param setting modification flag setting
 
@@ -1353,7 +1353,7 @@ FALCON_FUNC TextBuffer::set_modified( VMARG )
 
 
 /*#
-    @method delete_selection
+    @method delete_selection GtkTextBuffer
     @brief Deletes the range between the "insert" and "selection_bound" marks, that is, the currently-selected text.
     @param interactive whether the deletion is caused by user interaction
     @param default_editable whether the buffer is editable by default
@@ -1386,7 +1386,7 @@ FALCON_FUNC TextBuffer::delete_selection( VMARG )
 
 
 /*#
-    @method get_selection_bounds
+    @method get_selection_bounds GtkTextBuffer
     @brief Returns true if some text is selected; places the bounds of the selection in start and end (if the selection has length 0, then start and end are filled in with the same value).
     @return [ boolean (whether the selection has nonzero length ), (GtkTextIter) start, (GtkTextIter) end ]
 
@@ -1425,7 +1425,7 @@ FALCON_FUNC TextBuffer::get_selection_bounds( VMARG )
 
 
 /*#
-    @method begin_user_action
+    @method begin_user_action GtkTextBuffer
     @brief Called to indicate that the buffer operations between here and a call to gtk_text_buffer_end_user_action() are part of a single user-visible operation.
 
     The operations between begin_user_action() and end_user_action() can then be grouped
@@ -1452,7 +1452,7 @@ FALCON_FUNC TextBuffer::begin_user_action( VMARG )
 
 
 /*#
-    @method end_user_action
+    @method end_user_action GtkTextBuffer
     @brief Should be paired with a call to begin_user_action(). See that function for a full explanation.
  */
 FALCON_FUNC TextBuffer::end_user_action( VMARG )
