@@ -50,6 +50,7 @@
 #include "gtk_Table.hpp"
 #include "gtk_TextBuffer.hpp"
 #include "gtk_TextIter.hpp"
+#include "gtk_TextMark.hpp"
 #include "gtk_TextTag.hpp"
 #include "gtk_TextTagTable.hpp"
 #include "gtk_ToggleAction.hpp"
@@ -148,6 +149,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
     Falcon::Gtk::TextBuffer::modInit( self );
+    Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
     Falcon::Gtk::TextTagTable::modInit( self );
 

@@ -53,6 +53,7 @@ set( SRC_FILES
   gtk_Table.cpp
   gtk_TextBuffer.cpp
   gtk_TextIter.cpp
+  gtk_TextMark.cpp
   gtk_TextTag.cpp
   gtk_TextTagTable.cpp
   gtk_ToggleAction.cpp
@@ -116,6 +117,7 @@ set( HDR_FILES
   gtk_Table.hpp
   gtk_TextBuffer.hpp
   gtk_TextIter.hpp
+  gtk_TextMark.hpp
   gtk_TextTag.hpp
   gtk_TextTagTable.hpp
   gtk_ToggleAction.hpp
