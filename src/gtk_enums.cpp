@@ -393,6 +393,17 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TEXT_BUFFER_TARGET_INFO_TEXT",       GTK_TEXT_BUFFER_TARGET_INFO_TEXT },
 
     /*
+     *  GtkTextWindowType
+     */
+    { "GTK_TEXT_WINDOW_PRIVATE",    GTK_TEXT_WINDOW_PRIVATE },
+    { "GTK_TEXT_WINDOW_WIDGET",     GTK_TEXT_WINDOW_WIDGET },
+    { "GTK_TEXT_WINDOW_TEXT",       GTK_TEXT_WINDOW_TEXT },
+    { "GTK_TEXT_WINDOW_LEFT",       GTK_TEXT_WINDOW_LEFT },
+    { "GTK_TEXT_WINDOW_RIGHT",      GTK_TEXT_WINDOW_RIGHT },
+    { "GTK_TEXT_WINDOW_TOP",        GTK_TEXT_WINDOW_TOP },
+    { "GTK_TEXT_WINDOW_BOTTOM",     GTK_TEXT_WINDOW_BOTTOM },
+
+    /*
      *  GtkToolbarStyle
      */
     { "GTK_TOOLBAR_ICONS",      GTK_TOOLBAR_ICONS },

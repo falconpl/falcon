@@ -20,6 +20,9 @@ void TextIter::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_TextIter = mod->addClass( "GtkTextIter" );
 
+    c_TextIter->setWKS( true );
+    c_TextIter->getClassDef()->factory( &TextIter::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "get_buffer",         &TextIter::get_buffer },

@@ -53,6 +53,7 @@
 #include "gtk_TextMark.hpp"
 #include "gtk_TextTag.hpp"
 #include "gtk_TextTagTable.hpp"
+#include "gtk_TextView.hpp"
 #include "gtk_ToggleAction.hpp"
 #include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
@@ -142,6 +143,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::HPaned::modInit( self );
                     Falcon::Gtk::VPaned::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
+                Falcon::Gtk::TextView::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Misc::modInit( self );

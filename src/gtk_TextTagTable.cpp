@@ -22,6 +22,9 @@ void TextTagTable::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_TextTagTable->getClassDef()->addInheritance( in );
 
+    c_TextTagTable->setWKS( true );
+    c_TextTagTable->getClassDef()->factory( &TextTagTable::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_tag_added",   &TextTagTable::signal_tag_added },

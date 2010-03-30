@@ -22,6 +22,9 @@ void TextMark::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_TextMark->getClassDef()->addInheritance( in );
 
+    c_TextMark->setWKS( true );
+    c_TextMark->getClassDef()->factory( &TextMark::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "set_visible",        &TextMark::set_visible },
