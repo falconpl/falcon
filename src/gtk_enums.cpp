@@ -441,6 +441,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_WINDOW_POPUP",       GTK_WINDOW_POPUP },
 
     /*
+     *  GtkWrapMode
+     */
+    { "GTK_WRAP_NONE",      GTK_WRAP_NONE },
+    { "GTK_WRAP_CHAR",      GTK_WRAP_CHAR },
+    { "GTK_WRAP_WORD",      GTK_WRAP_WORD },
+    { "GTK_WRAP_WORD_CHAR", GTK_WRAP_WORD_CHAR },
+
+    /*
      *  GtkSortType
      */
     { "GTK_SORT_ASCENDING",     GTK_SORT_ASCENDING },

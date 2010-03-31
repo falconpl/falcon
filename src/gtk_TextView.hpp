@@ -53,14 +53,14 @@ public:
     static FALCON_FUNC get_iter_at_location( VMARG );
 
     static FALCON_FUNC get_iter_at_position( VMARG );
-#if 0
+
     static FALCON_FUNC buffer_to_window_coords( VMARG );
 
     static FALCON_FUNC window_to_buffer_coords( VMARG );
 
-    static FALCON_FUNC get_window( VMARG );
+    //static FALCON_FUNC get_window( VMARG );
 
-    static FALCON_FUNC get_window_type( VMARG );
+    //static FALCON_FUNC get_window_type( VMARG );
 
     static FALCON_FUNC set_border_window_size( VMARG );
 
@@ -78,7 +78,7 @@ public:
 
     static FALCON_FUNC move_visually( VMARG );
 
-    static FALCON_FUNC add_child_at_anchor( VMARG );
+    //static FALCON_FUNC add_child_at_anchor( VMARG );
 
     static FALCON_FUNC add_child_in_window( VMARG );
 
@@ -128,16 +128,15 @@ public:
 
     static FALCON_FUNC get_indent( VMARG );
 
-    static FALCON_FUNC set_tabs( VMARG );
+    //static FALCON_FUNC set_tabs( VMARG );
 
-    static FALCON_FUNC get_tabs( VMARG );
+    //static FALCON_FUNC get_tabs( VMARG );
 
     static FALCON_FUNC set_accepts_tab( VMARG );
 
     static FALCON_FUNC get_accepts_tab( VMARG );
 
-    static FALCON_FUNC get_default_attributes( VMARG );
-#endif
+    //static FALCON_FUNC get_default_attributes( VMARG );
 
 };
 
