@@ -101,6 +101,7 @@ FALCON_FUNC  TimeStamp_currentTime ( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    TimeStamp *ts = (TimeStamp *) self->getUserData();
    Falcon::Sys::Time::currentTime( *ts );
+   vm->retval(self);
 }
 
 /*#
