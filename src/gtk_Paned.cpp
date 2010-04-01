@@ -260,11 +260,11 @@ FALCON_FUNC Paned::get_handle_window( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWindow* wdt = gtk_paned_get_handle_window( (GtkPaned*)_obj );
+    GdkWindow* wdt = gtk_paned_get_handle_window( (GtkPaned*)_obj );
     if ( wdt )
-    {
-        Item* wki = vm->findWKI( "GtkWindow" );
-        vm->retval( new Gtk::Window( wki->asClass(), wdt ) );
+    { // TODO
+        //Item* wki = vm->findWKI( "GtkWindow" );
+        //vm->retval( new Gtk::Window( wki->asClass(), wdt ) );
     }
     else
         vm->retnil();
