@@ -163,6 +163,9 @@ if(NOT DISABLE_RPATH)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true) 
+  
+  # Apple equivalent to RPATH is called `install_name'
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
 endif()
 
 #########################################################à
