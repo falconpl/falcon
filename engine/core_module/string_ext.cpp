@@ -458,7 +458,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    @function strSplit
    @brief Subdivides a string in an array of substrings given a token substring.
    @param string The string that must be splitted
-   @param token The token by which the string should be splitted.
+   @optparam token The token by which the string should be splitted.
    @optparam count Optional maximum split count.
    @return An array of strings containing the splitted string.
 
@@ -484,6 +484,10 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    the string, only the first starting from left is considered, while the others
    are returned in the second item, unparsed.
 
+   If the @token is empty or not given, the string is returned as a sequence of
+   1-character strings in an array.
+
+
    @note This function is equivalent to the fbom method @a String.split. The above
    example can be rewritten as:
    @code
@@ -494,9 +498,10 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
 /*#
    @method split String
    @brief Subdivides a string in an array of substrings given a token substring.
-   @param token The token by which the string should be splitted.
+   @optparam token The token by which the string should be splitted.
    @optparam count Optional maximum split count.
    @return An array of strings containing the splitted string.
+
 
    @see strSplit
 */
@@ -520,10 +525,8 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
       count = vm->param(2);
    }
 
-   uint32 limit;
-
-   if ( target == 0 || ! target->isString()
-        || splitstr == 0 || ! splitstr->isString()
+   if ( (target == 0 || ! target->isString())
+        || (splitstr != 0 && ! (splitstr->isString()||splitstr->isNil()))
         || ( count != 0 && ! count->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -531,11 +534,29 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
          .extra( vm->self().isMethodic() ? "S, [N]" : "S, S, [N]" ) );
    }
 
-   limit = count == 0 ? 0xffffffff: (int32) count->forceInteger();
-
    // Parameter estraction.
    String *tg_str = target->asString();
    uint32 tg_len = target->asString()->length();
+   uint32 limit = count == 0 ? 0xffffffff: (int32) count->forceInteger();
+
+   // split in chars?
+   if( splitstr == 0 || splitstr->isNil() )
+   {
+      // split the string in an array.
+      if( limit > tg_len )
+         limit = tg_len;
+
+      CoreArray* ca = new CoreArray( limit );
+      for( uint32 i = 0; i < limit; ++i )
+      {
+         CoreString* elem = new CoreString(1);
+         elem->append( tg_str->getCharAt(i) );
+         ca->append( elem );
+      }
+
+      vm->retval( ca );
+      return;
+   }
 
    String *sp_str = splitstr->asString();
    uint32 sp_len = splitstr->asString()->length();

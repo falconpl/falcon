@@ -11,6 +11,8 @@ Falcon (0.9.6.5)
            Thanks fgenesis for this.
   * minor: Added option "-s" in CLT to send error output on stdout, and --cgi
            option to load "cgi" module and add -s option in one step.
+  * minor: strSplit() returns an array containing all the elements if the token
+           is not given.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
