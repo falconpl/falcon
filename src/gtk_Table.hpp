@@ -8,42 +8,51 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Table
+ *  \class Falcon::Gtk::Table
  */
-namespace Table {
+class Table
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Table( const Falcon::CoreClass*, const GtkTable* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC resize( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC attach( VMARG );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC attach_defaults( VMARG );
+    static FALCON_FUNC resize( VMARG );
 
-FALCON_FUNC set_row_spacing( VMARG );
+    static FALCON_FUNC attach( VMARG );
 
-FALCON_FUNC set_col_spacing( VMARG );
+    static FALCON_FUNC attach_defaults( VMARG );
 
-FALCON_FUNC set_row_spacings( VMARG );
+    static FALCON_FUNC set_row_spacing( VMARG );
 
-FALCON_FUNC set_col_spacings( VMARG );
+    static FALCON_FUNC set_col_spacing( VMARG );
 
-FALCON_FUNC set_homogeneous( VMARG );
+    static FALCON_FUNC set_row_spacings( VMARG );
 
-FALCON_FUNC get_default_row_spacing( VMARG );
+    static FALCON_FUNC set_col_spacings( VMARG );
 
-FALCON_FUNC get_homogeneous( VMARG );
+    static FALCON_FUNC set_homogeneous( VMARG );
 
-FALCON_FUNC get_row_spacing( VMARG );
+    static FALCON_FUNC get_default_row_spacing( VMARG );
 
-FALCON_FUNC get_col_spacing( VMARG );
+    static FALCON_FUNC get_homogeneous( VMARG );
 
-FALCON_FUNC get_default_col_spacing( VMARG );
+    static FALCON_FUNC get_row_spacing( VMARG );
+
+    static FALCON_FUNC get_col_spacing( VMARG );
+
+    static FALCON_FUNC get_default_col_spacing( VMARG );
+
+};
 
 
-} // Table
 } // Gtk
 } // Falcon
 

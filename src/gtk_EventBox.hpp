@@ -8,23 +8,33 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::EventBox
+ *  \class Falcon::Gtk::EventBox
  */
-namespace EventBox {
+class EventBox
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    EventBox( const Falcon::CoreClass*, const GtkEventBox* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC set_above_child( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC get_above_child( VMARG );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC set_visible_window( VMARG );
+    static FALCON_FUNC set_above_child( VMARG );
 
-FALCON_FUNC get_visible_window( VMARG );
+    static FALCON_FUNC get_above_child( VMARG );
 
-} // EventBox
+    static FALCON_FUNC set_visible_window( VMARG );
+
+    static FALCON_FUNC get_visible_window( VMARG );
+
+};
+
+
 } // Gtk
 } // Falcon
 

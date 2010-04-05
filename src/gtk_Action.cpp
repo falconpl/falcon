@@ -87,11 +87,8 @@ void Action::modInit( Falcon::Module* mod )
 
 Action::Action( const Falcon::CoreClass* gen, const GtkAction* act )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( act )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) act ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) act )
+{}
 
 
 Falcon::CoreObject* Action::factory( const Falcon::CoreClass* gen, void* act, bool )
@@ -140,7 +137,7 @@ FALCON_FUNC Action::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
@@ -150,8 +147,7 @@ FALCON_FUNC Action::init( VMARG )
     const char* stock_id = args.getCString( 3, false );
 
     GtkAction* act = gtk_action_new( nam, lbl, tooltip, stock_id );
-    Gtk::internal_add_slot( (GObject*) act );
-    self->setUserData( new GData( (GObject*) act ) );
+    self->setGObject( (GObject*) act );
 }
 
 
@@ -167,12 +163,12 @@ FALCON_FUNC Action::signal_activate( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "activate", (void*) &Action::on_activate, vm );
+    CoreGObject::get_signal( "activate", (void*) &Action::on_activate, vm );
 }
 
 void Action::on_activate( GtkAction* act, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) act, "activate", "on_activate", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) act, "activate", "on_activate", (VMachine*)_vm );
 }
 
 

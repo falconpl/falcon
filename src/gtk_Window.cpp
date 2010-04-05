@@ -145,11 +145,8 @@ void Window::modInit( Falcon::Module* mod )
 
 Window::Window( const Falcon::CoreClass* gen, const GtkWindow* win )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( win )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) win ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) win )
+{}
 
 
 Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bool )
@@ -169,7 +166,7 @@ FALCON_FUNC Window::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_wtype = vm->param( 0 );
@@ -198,8 +195,7 @@ FALCON_FUNC Window::init( VMARG )
     }
 
     GtkWidget* win = gtk_window_new( gwt );
-    Gtk::internal_add_slot( (GObject*) win );
-    self->setUserData( new GData( (GObject*) win ) );
+    self->setGObject( (GObject*) win );
 }
 
 
@@ -485,7 +481,7 @@ FALCON_FUNC Window::set_transient_for( VMARG )
     GET_OBJ( self );
     GtkWindow* win = NULL;
     if ( i_win && !i_win->isNil() )
-        win = (GtkWindow*)((GData*)i_win->asObject()->getUserData())->obj();
+        win = (GtkWindow*) COREGOBJECT( i_win )->getGObject();
     gtk_window_set_transient_for( (GtkWindow*)_obj, win );
 }
 
@@ -581,7 +577,7 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* target = (GtkWidget*)((GData*)i_target->asObject()->getUserData())->obj();
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
     gtk_window_add_mnemonic( (GtkWindow*)_obj, i_keyval->asInteger(), target );
 }
 
@@ -604,7 +600,7 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* target = (GtkWidget*)((GData*)i_target->asObject()->getUserData())->obj();
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
     gtk_window_remove_mnemonic( (GtkWindow*)_obj, i_keyval->asInteger(), target );
 }
 
@@ -690,7 +686,7 @@ FALCON_FUNC Window::set_focus( VMARG )
     GET_OBJ( self );
     GtkWidget* wdt = NULL;
     if ( i_wdt && !i_wdt->isNil() )
-        wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+        wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_window_set_focus( (GtkWindow*)_obj, wdt );
 }
 
@@ -740,7 +736,7 @@ FALCON_FUNC Window::set_default( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_window_set_default( (GtkWindow*)_obj, wdt );
 }
 

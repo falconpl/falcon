@@ -20,6 +20,8 @@ void ToggleAction::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkAction" ) );
     c_ToggleAction->getClassDef()->addInheritance( in );
 
+    c_ToggleAction->getClassDef()->factory( &ToggleAction::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_toggled",     &ToggleAction::signal_toggled },
@@ -34,6 +36,19 @@ void ToggleAction::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ToggleAction, meth->name, meth->cb );
 }
+
+
+ToggleAction::ToggleAction( const Falcon::CoreClass* gen, const GtkToggleAction* action )
+    :
+    Gtk::CoreGObject( gen, (GObject*) action )
+{}
+
+
+Falcon::CoreObject* ToggleAction::factory( const Falcon::CoreClass* gen, void* action, bool )
+{
+    return new ToggleAction( gen, (GtkToggleAction*) action );
+}
+
 
 /*#
     @class GtkToggleAction
@@ -53,7 +68,7 @@ FALCON_FUNC ToggleAction::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
@@ -64,8 +79,7 @@ FALCON_FUNC ToggleAction::init( VMARG )
     const gchar* stock = args.getCString( 3, false );
 
     GtkToggleAction* act = gtk_toggle_action_new( name, label, tooltip, stock );
-    Gtk::internal_add_slot( (GObject*) act );
-    self->setUserData( new GData( (GObject*) act ) );
+    self->setGObject( (GObject*) act );
 }
 
 
@@ -79,13 +93,13 @@ FALCON_FUNC ToggleAction::signal_toggled( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "toggled", (void*) &ToggleAction::on_toggled, vm );
+    CoreGObject::get_signal( "toggled", (void*) &ToggleAction::on_toggled, vm );
 }
 
 
 void ToggleAction::on_toggled( GtkToggleAction* act, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) act, "toggled", "on_toggled", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) act, "toggled", "on_toggled", (VMachine*)_vm );
 }
 
 

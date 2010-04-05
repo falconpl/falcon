@@ -8,22 +8,31 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Misc
+ *  \class Falcon::Gtk::Misc
  */
-namespace Misc {
+class Misc
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Misc( const Falcon::CoreClass*, const GtkMisc* = 0 );
 
-FALCON_FUNC set_alignment( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC set_padding( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC get_alignment( VMARG );
+    static FALCON_FUNC set_alignment( VMARG );
 
-FALCON_FUNC get_padding( VMARG );
+    static FALCON_FUNC set_padding( VMARG );
+
+    static FALCON_FUNC get_alignment( VMARG );
+
+    static FALCON_FUNC get_padding( VMARG );
+
+};
 
 
-} // Misc
 } // Gtk
 } // Falcon
 

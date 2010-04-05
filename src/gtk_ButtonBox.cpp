@@ -20,6 +20,8 @@ void ButtonBox::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBox" ) );
     c_ButtonBox->getClassDef()->addInheritance( in );
 
+    c_ButtonBox->getClassDef()->factory( &ButtonBox::factory );
+
     Gtk::MethodTab methods[] =
     {
     //{ "get_layout",             &ButtonBox::get_layout },
@@ -37,6 +39,18 @@ void ButtonBox::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ButtonBox, meth->name, meth->cb );
 }
+
+
+ButtonBox::ButtonBox( const Falcon::CoreClass* gen, const GtkButtonBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+Falcon::CoreObject* ButtonBox::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new ButtonBox( gen, (GtkButtonBox*) box );
+}
+
 
 /*#
     @class GtkButtonBox
@@ -111,11 +125,10 @@ FALCON_FUNC ButtonBox::get_child_secondary( VMARG )
         || !IS_DERIVED( i_child, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    gboolean b = gtk_button_box_get_child_secondary( (GtkButtonBox*)_obj, child );
-    vm->retval( (bool) b );
+    vm->retval( (bool) gtk_button_box_get_child_secondary( (GtkButtonBox*)_obj, child ) );
 }
 
 
@@ -146,7 +159,7 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
         || !i_sec || i_sec->isNil() || !i_sec->isBoolean() )
         throw_inv_params( "GtkWidget,B" );
 #endif
-    GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_button_box_set_child_secondary( (GtkButtonBox*)_obj, child,

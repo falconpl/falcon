@@ -8,16 +8,25 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::CheckButton
+ *  \class Falcon::Gtk::CheckButton
  */
-namespace CheckButton {
+class CheckButton
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    CheckButton( const Falcon::CoreClass*, const GtkCheckButton* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    static void modInit( Falcon::Module* );
+
+    static FALCON_FUNC init( VMARG );
+
+};
 
 
-} // CheckButton
 } // Gtk
 } // Falcon
 

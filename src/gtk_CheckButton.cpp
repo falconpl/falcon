@@ -19,6 +19,20 @@ void CheckButton::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkToggleButton" ) );
     c_CheckButton->getClassDef()->addInheritance( in );
+
+    c_CheckButton->getClassDef()->factory( &CheckButton::factory );
+}
+
+
+CheckButton::CheckButton( const Falcon::CoreClass* gen, const GtkCheckButton* btn )
+    :
+    Gtk::CoreGObject( gen, (GObject*) btn )
+{}
+
+
+Falcon::CoreObject* CheckButton::factory( const Falcon::CoreClass* gen, void* btn, bool )
+{
+    return new CheckButton( gen, (GtkCheckButton*) btn );
 }
 
 
@@ -38,7 +52,7 @@ FALCON_FUNC CheckButton::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -70,8 +84,7 @@ FALCON_FUNC CheckButton::init( VMARG )
     else
         btn = gtk_check_button_new();
 
-    Gtk::internal_add_slot( (GObject*) btn );
-    self->setUserData( new GData( (GObject*) btn ) );
+    self->setGObject( (GObject*) btn );
 }
 
 

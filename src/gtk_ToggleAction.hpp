@@ -3,37 +3,44 @@
 
 #include "modgtk.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::ToggleAction
+ *  \class Falcon::Gtk::ToggleAction
  */
-namespace ToggleAction {
+class ToggleAction
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    ToggleAction( const Falcon::CoreClass*, const GtkToggleAction* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC signal_toggled( VMARG );
+    static void modInit( Falcon::Module* );
 
-void on_toggled( GtkToggleAction*, gpointer );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC toggled( VMARG );
+    static FALCON_FUNC signal_toggled( VMARG );
 
-FALCON_FUNC set_active( VMARG );
+    static void on_toggled( GtkToggleAction*, gpointer );
 
-FALCON_FUNC get_active( VMARG );
+    static FALCON_FUNC toggled( VMARG );
 
-FALCON_FUNC set_draw_as_radio( VMARG );
+    static FALCON_FUNC set_active( VMARG );
 
-FALCON_FUNC get_draw_as_radio( VMARG );
+    static FALCON_FUNC get_active( VMARG );
+
+    static FALCON_FUNC set_draw_as_radio( VMARG );
+
+    static FALCON_FUNC get_draw_as_radio( VMARG );
+
+};
 
 
-} // ToggleAction
 } // Gtk
 } // Falcon
 

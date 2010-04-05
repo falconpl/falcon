@@ -3,89 +3,95 @@
 
 #include "modgtk.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Button
+ *  \class Falcon::Gtk::Button
  */
-namespace Button {
+class Button
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Button( const Falcon::CoreClass*, const GtkButton* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC signal_activate( VMARG );
+    static void modInit( Falcon::Module* );
 
-void on_activate( GtkButton*, gpointer );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC signal_clicked( VMARG );
+    static FALCON_FUNC signal_activate( VMARG );
 
-void on_clicked( GtkButton*, gpointer );
+    static void on_activate( GtkButton*, gpointer );
 
-FALCON_FUNC signal_enter( VMARG );
+    static FALCON_FUNC signal_clicked( VMARG );
 
-void on_enter( GtkButton*, gpointer );
+    static void on_clicked( GtkButton*, gpointer );
 
-FALCON_FUNC signal_leave( VMARG );
+    static FALCON_FUNC signal_enter( VMARG );
 
-void on_leave( GtkButton*, gpointer );
+    static void on_enter( GtkButton*, gpointer );
 
-FALCON_FUNC signal_pressed( VMARG );
+    static FALCON_FUNC signal_leave( VMARG );
 
-void on_pressed( GtkButton*, gpointer );
+    static void on_leave( GtkButton*, gpointer );
 
-FALCON_FUNC signal_released( VMARG );
+    static FALCON_FUNC signal_pressed( VMARG );
 
-void on_released( GtkButton*, gpointer );
+    static void on_pressed( GtkButton*, gpointer );
 
-FALCON_FUNC pressed( VMARG );
+    static FALCON_FUNC signal_released( VMARG );
 
-FALCON_FUNC released( VMARG );
+    static void on_released( GtkButton*, gpointer );
 
-FALCON_FUNC clicked( VMARG );
+    static FALCON_FUNC pressed( VMARG );
 
-FALCON_FUNC enter( VMARG );
+    static FALCON_FUNC released( VMARG );
 
-FALCON_FUNC leave( VMARG );
+    static FALCON_FUNC clicked( VMARG );
 
-//FALCON_FUNC set_relief( VMARG );
+    static FALCON_FUNC enter( VMARG );
 
-//FALCON_FUNC get_relief( VMARG );
+    static FALCON_FUNC leave( VMARG );
 
-FALCON_FUNC set_label( VMARG );
+    //static FALCON_FUNC set_relief( VMARG );
 
-FALCON_FUNC get_label( VMARG );
+    //static FALCON_FUNC get_relief( VMARG );
 
-FALCON_FUNC set_use_stock( VMARG );
+    static FALCON_FUNC set_label( VMARG );
 
-FALCON_FUNC get_use_stock( VMARG );
+    static FALCON_FUNC get_label( VMARG );
 
-FALCON_FUNC set_use_underline( VMARG );
+    static FALCON_FUNC set_use_stock( VMARG );
 
-FALCON_FUNC get_use_underline( VMARG );
+    static FALCON_FUNC get_use_stock( VMARG );
 
-FALCON_FUNC set_focus_on_click( VMARG );
+    static FALCON_FUNC set_use_underline( VMARG );
 
-FALCON_FUNC get_focus_on_click( VMARG );
+    static FALCON_FUNC get_use_underline( VMARG );
 
-//FALCON_FUNC set_alignment( VMARG );
+    static FALCON_FUNC set_focus_on_click( VMARG );
 
-//FALCON_FUNC get_alignment( VMARG );
+    static FALCON_FUNC get_focus_on_click( VMARG );
 
-FALCON_FUNC set_image( VMARG );
+    //static FALCON_FUNC set_alignment( VMARG );
 
-FALCON_FUNC get_image( VMARG );
+    //static FALCON_FUNC get_alignment( VMARG );
 
-//FALCON_FUNC set_image_position( VMARG );
+    static FALCON_FUNC set_image( VMARG );
 
-//FALCON_FUNC get_image_position( VMARG );
+    static FALCON_FUNC get_image( VMARG );
 
+    //static FALCON_FUNC set_image_position( VMARG );
 
-} // Button
+    //static FALCON_FUNC get_image_position( VMARG );
+
+};
+
 } // Gtk
 } // Falcon
 

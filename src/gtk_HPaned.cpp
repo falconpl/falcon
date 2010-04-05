@@ -19,7 +19,21 @@ void HPaned::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkPaned" ) );
     c_HPaned->getClassDef()->addInheritance( in );
+
+    c_HPaned->getClassDef()->factory( &HPaned::factory );
 }
+
+
+HPaned::HPaned( const Falcon::CoreClass* gen, const GtkHPaned* paned )
+    :
+    Gtk::CoreGObject( gen, (GObject*) paned )
+{}
+
+Falcon::CoreObject* HPaned::factory( const Falcon::CoreClass* gen, void* paned, bool )
+{
+    return new HPaned( gen, (GtkHPaned*) paned );
+}
+
 
 /*#
     @class GtkHPaned
@@ -37,8 +51,7 @@ FALCON_FUNC HPaned::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* wdt = gtk_hpaned_new();
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( (GObject*) wdt );
+    self->setGObject( (GObject*) wdt );
 }
 
 

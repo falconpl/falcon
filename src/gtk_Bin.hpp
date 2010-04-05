@@ -8,16 +8,25 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Bin
+ *  \class Falcon::Gtk::Bin
  */
-namespace Bin {
+class Bin
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Bin( const Falcon::CoreClass*, const GtkBin* = 0 );
 
-FALCON_FUNC get_child( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    static void modInit( Falcon::Module* );
+
+    static FALCON_FUNC get_child( VMARG );
+
+};
 
 
-} // Bin
 } // Gtk
 } // Falcon
 

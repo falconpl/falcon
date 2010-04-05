@@ -40,11 +40,8 @@ void RadioAction::modInit( Falcon::Module* mod )
 
 RadioAction::RadioAction( const Falcon::CoreClass* gen, const GtkRadioAction* act )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( act )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) act ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) act )
+{}
 
 
 Falcon::CoreObject* RadioAction::factory( const Falcon::CoreClass* gen, void* act, bool )
@@ -81,8 +78,7 @@ FALCON_FUNC RadioAction::init( VMARG )
     gint value = args.getInteger( 4 );
 
     GtkRadioAction* act = gtk_radio_action_new( name, label, tooltip, stock, value );
-    Gtk::internal_add_slot( (GObject*) act );
-    self->setUserData( new GData( (GObject*) act ) );
+    self->setGObject( (GObject*) act );
 }
 
 
@@ -103,7 +99,7 @@ FALCON_FUNC RadioAction::signal_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "changed", (void*) &RadioAction::on_changed, vm );
+    CoreGObject::get_signal( "changed", (void*) &RadioAction::on_changed, vm );
 }
 
 

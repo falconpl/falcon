@@ -46,11 +46,8 @@ void EntryBuffer::modInit( Falcon::Module* mod )
 
 EntryBuffer::EntryBuffer( const Falcon::CoreClass* gen, const GtkEntryBuffer* buf )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( buf )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) buf ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) buf )
+{}
 
 
 Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* buf, bool )
@@ -77,7 +74,6 @@ Falcon::CoreObject* EntryBuffer::factory( const Falcon::CoreClass* gen, void* bu
  */
 FALCON_FUNC EntryBuffer::init( VMARG )
 {
-    MYSELF;
     Item* i_txt = vm->param( 0 );
     GtkEntryBuffer* buf;
     if ( i_txt )
@@ -92,8 +88,8 @@ FALCON_FUNC EntryBuffer::init( VMARG )
     else
         buf = gtk_entry_buffer_new( NULL, -1 );
 
-    Gtk::internal_add_slot( (GObject*) buf );
-    self->setUserData( new GData( (GObject*) buf ) );
+    MYSELF;
+    self->setGObject( (GObject*) buf );
 }
 
 

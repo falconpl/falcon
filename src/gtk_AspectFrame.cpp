@@ -20,8 +20,22 @@ void AspectFrame::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkFrame" ) );
     c_AspectFrame->getClassDef()->addInheritance( in );
 
+    c_AspectFrame->getClassDef()->factory( &AspectFrame::factory );
+
     mod->addClassMethod( c_AspectFrame, "set", &AspectFrame::set );
 }
+
+
+AspectFrame::AspectFrame( const Falcon::CoreClass* gen, const GtkAspectFrame* frame )
+    :
+    Gtk::CoreGObject( gen, (GObject*) frame )
+{}
+
+Falcon::CoreObject* AspectFrame::factory( const Falcon::CoreClass* gen, void* frame, bool )
+{
+    return new AspectFrame( gen, (GtkAspectFrame*) frame );
+}
+
 
 /*#
     @class GtkAspectFrame
@@ -51,8 +65,7 @@ FALCON_FUNC AspectFrame::init( VMARG )
     MYSELF;
     GtkWidget* wdt = gtk_aspect_frame_new(
         lbl ? lbl : "", xalign, yalign, ratio, obey );
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

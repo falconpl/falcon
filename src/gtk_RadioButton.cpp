@@ -38,11 +38,8 @@ void RadioButton::modInit( Falcon::Module* mod )
 
 RadioButton::RadioButton( const Falcon::CoreClass* gen, const GtkRadioButton* btn )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( btn )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) btn ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) btn )
+{}
 
 
 Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* btn, bool )
@@ -76,7 +73,7 @@ FALCON_FUNC RadioButton::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -104,7 +101,7 @@ FALCON_FUNC RadioButton::init( VMARG )
                 if ( i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkRadioButton ) )
                     throw_inv_params( "[S,B,GtkRadioButton]" );
 #endif
-                GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();
+                GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();
 
                 if ( i_mne->asBoolean() )
                     btn = gtk_radio_button_new_with_mnemonic_from_widget( wdt, lbl.c_str() );
@@ -129,8 +126,7 @@ FALCON_FUNC RadioButton::init( VMARG )
         btn = gtk_radio_button_new( NULL );
 
     assert( btn );
-    Gtk::internal_add_slot( (GObject*) btn );
-    self->setUserData( new GData( (GObject*) btn ) );
+    self->setGObject( (GObject*) btn );
 }
 
 
@@ -146,13 +142,13 @@ FALCON_FUNC RadioButton::init( VMARG )
  */
 FALCON_FUNC RadioButton::signal_group_changed( VMARG )
 {
-    Gtk::internal_get_slot( "group_changed", (void*) &RadioButton::on_group_changed, vm );
+    CoreGObject::get_signal( "group_changed", (void*) &RadioButton::on_group_changed, vm );
 }
 
 
 void RadioButton::on_group_changed( GtkRadioButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "group_changed",
+    CoreGObject::trigger_slot( (GObject*) btn, "group_changed",
         "on_group_changed", (VMachine*)_vm );
 }
 
@@ -201,7 +197,7 @@ FALCON_FUNC RadioButton::set_group( VMARG )
         !IS_DERIVED( i_wdt, GtkRadioButton ) )
         throw_inv_params( "GtkRadioButton" );
 #endif
-    GtkRadioButton* wdt = (GtkRadioButton*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();
     GSList* grp = gtk_radio_button_get_group( wdt );
     if ( !grp || !grp->data ) // just in case..
         throw_inv_params( "Group not found" );

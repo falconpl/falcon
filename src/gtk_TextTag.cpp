@@ -38,11 +38,8 @@ void TextTag::modInit( Falcon::Module* mod )
 
 TextTag::TextTag( const Falcon::CoreClass* gen, const GtkTextTag* tag )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( tag )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) tag ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) tag )
+{}
 
 
 Falcon::CoreObject* TextTag::factory( const Falcon::CoreClass* gen, void* tag, bool )
@@ -74,8 +71,7 @@ FALCON_FUNC TextTag::init( VMARG )
 
     MYSELF;
     GtkTextTag* tag = gtk_text_tag_new( name );
-    Gtk::internal_add_slot( (GObject*) tag );
-    self->setUserData( new GData( (GObject*) tag ) );
+    self->setGObject( (GObject*) tag );
 }
 
 

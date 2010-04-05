@@ -71,11 +71,8 @@ void ComboBox::modInit( Falcon::Module* mod )
 
 ComboBox::ComboBox( const Falcon::CoreClass* gen, const GtkComboBox* box )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( box )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) box ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
 
 
 Falcon::CoreObject* ComboBox::factory( const Falcon::CoreClass* gen, void* box, bool )
@@ -112,7 +109,7 @@ FALCON_FUNC ComboBox::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
 #ifndef NO_PARAMETER_CHECK
@@ -120,8 +117,7 @@ FALCON_FUNC ComboBox::init( VMARG )
         throw_require_no_args();
 #endif
     GtkWidget* wdt = gtk_combo_box_new();
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 
@@ -140,13 +136,13 @@ FALCON_FUNC ComboBox::signal_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "changed", (void*) &ComboBox::on_changed, vm );
+    CoreGObject::get_signal( "changed", (void*) &ComboBox::on_changed, vm );
 }
 
 
 void ComboBox::on_changed( GtkComboBox* wdt, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) wdt, "changed",
+    CoreGObject::trigger_slot( (GObject*) wdt, "changed",
         "on_changed", (VMachine*)_vm );
 }
 
@@ -166,7 +162,7 @@ FALCON_FUNC ComboBox::signal_move_active( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "move_active", (void*) &ComboBox::on_move_active, vm );
+    CoreGObject::get_signal( "move_active", (void*) &ComboBox::on_move_active, vm );
 }
 
 
@@ -218,13 +214,13 @@ FALCON_FUNC ComboBox::signal_popdown( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "popdown", (void*) &ComboBox::on_popdown, vm );
+    CoreGObject::get_signal( "popdown", (void*) &ComboBox::on_popdown, vm );
 }
 
 
 void ComboBox::on_popdown( GtkComboBox* wdt, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) wdt, "popdown",
+    CoreGObject::trigger_slot( (GObject*) wdt, "popdown",
         "on_popdown", (VMachine*)_vm );
 }
 
@@ -244,13 +240,13 @@ FALCON_FUNC ComboBox::signal_popup( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "popup", (void*) &ComboBox::on_popup, vm );
+    CoreGObject::get_signal( "popup", (void*) &ComboBox::on_popup, vm );
 }
 
 
 void ComboBox::on_popup( GtkComboBox* wdt, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) wdt, "popup",
+    CoreGObject::trigger_slot( (GObject*) wdt, "popup",
         "on_popup", (VMachine*)_vm );
 }
 

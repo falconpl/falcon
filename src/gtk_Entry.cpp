@@ -23,6 +23,8 @@ void Entry::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Entry->getClassDef()->addInheritance( in );
 
+    c_Entry->getClassDef()->factory( &Entry::factory );
+
     Gtk::MethodTab methods[] =
     {
 #if GTK_MINOR_VERSION >= 18
@@ -106,6 +108,18 @@ void Entry::modInit( Falcon::Module* mod )
 }
 
 
+Entry::Entry( const Falcon::CoreClass* gen, const GtkEntry* entry )
+    :
+    Gtk::CoreGObject( gen, (GObject*) entry )
+{}
+
+
+Falcon::CoreObject* Entry::factory( const Falcon::CoreClass* gen, void* entry, bool )
+{
+    return new Entry( gen, (GtkEntry*) entry );
+}
+
+
 /*#
     @class GtkEntry
     @brief A single line text entry field
@@ -145,7 +159,7 @@ FALCON_FUNC Entry::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_buf = vm->param( 0 );
@@ -167,7 +181,7 @@ FALCON_FUNC Entry::init( VMARG )
         else
         {
             GtkEntryBuffer* buf =
-                (GtkEntryBuffer*)((GData*)i_buf->asObject()->getUserData())->obj();
+                (GtkEntryBuffer*) COREGOBJECT( i_buf )->getGObject();
             entry = gtk_entry_new_with_buffer( buf );
         }
 #endif
@@ -175,8 +189,7 @@ FALCON_FUNC Entry::init( VMARG )
     else
         entry = gtk_entry_new();
 
-    Gtk::internal_add_slot( (GObject*) entry );
-    self->setUserData( new GData( (GObject*) entry ) );
+    self->setGObject( (GObject*) entry );
 }
 
 
@@ -217,7 +230,7 @@ FALCON_FUNC Entry::set_buffer( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkEntryBuffer* buf = (GtkEntryBuffer*)((GData*)i_buf->asObject()->getUserData())->obj();
+    GtkEntryBuffer* buf = (GtkEntryBuffer*) COREGOBJECT( i_buf )->getGObject();
     gtk_entry_set_buffer( (GtkEntry*)_obj, buf );
 }
 #endif

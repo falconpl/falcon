@@ -2,10 +2,10 @@
 #define MODGTK_HPP
 
 #include <falcon/autocstring.h>
-#include <falcon/coreobject.h>
 #include <falcon/coreslot.h>
 #include <falcon/error.h>
 #include <falcon/falcondata.h>
+#include <falcon/falconobject.h>
 #include <falcon/garbagelock.h>
 #include <falcon/item.h>
 #include <falcon/module.h>
@@ -13,7 +13,7 @@
 #include <falcon/string.h>
 #include <falcon/vm.h>
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -28,14 +28,18 @@
 
 #define VMARG           ::Falcon::VMachine* vm
 
-#define MYSELF          ::Falcon::CoreObject* self = vm->self().asObject()
+#define MYSELF \
+        Gtk::CoreGObject* self = Falcon::dyncast<Gtk::CoreGObject*>( vm->self().asObjectSafe() )
 
 #define GET_OBJ( self ) \
-        GObject* _obj = ((::Falcon::Gtk::GData*) self->getUserData())->obj()
+        GObject* _obj = self->getGObject()
+
+#define COREGOBJECT( pItem ) \
+        (Falcon::dyncast<Gtk::CoreGObject*>( (pItem)->asObjectSafe() ))
 
 #define GET_SIGNALS( gobj ) \
         ::Falcon::CoreSlot* _signals = (::Falcon::CoreSlot*) \
-        g_object_get_data( G_OBJECT( gobj ), "_signals" )
+        g_object_get_data( G_OBJECT( gobj ), "__signals" )
 
 #define IS_DERIVED( it, cls ) \
         ( (it)->isOfClass( #cls ) || (it)->isOfClass( "gtk." #cls ) )
@@ -63,118 +67,186 @@ namespace Falcon {
 namespace Gtk {
 
 
-/**
- *  \class Falcon::Gtk::GData
- */
-class GData
-    :
-    public Falcon::FalconData
-{
-
-    GObject*    m_obj;
-
-public:
-
-    GData( GObject* obj )
-        :
-        m_obj( obj )
-    {
-        incref();
-    }
-
-    ~GData() { decref(); }
-
-    void gcMark( Falcon::uint32 ) {}
-
-    FalconData* clone() const { return 0; }
-
-    void incref() { if ( m_obj ) g_object_ref_sink( m_obj ); }
-
-    GData* increfed() { incref(); return this; }
-
-    void decref() { if ( m_obj ) g_object_unref( m_obj ); }
-
-    GObject* obj() const { return m_obj; }
-
-};
+class CoreGObject;
+class Signal;
 
 
 /**
- *  \brief install a slot inside user data
- */
-GObject* internal_add_slot( GObject* );
-
-
-/**
- *  \brief release internal slots
- *  Function of type GDestroyNotify to delete internal slots
- */
-void internal_release_slot( gpointer );
-
-
-/**
- *  \brief get internal slot
- *  \param signame signal name
- *  \param cb callback function
- *  \param vm virtual machine
- */
-void internal_get_slot( const char* signame, void* cb, Falcon::VMachine* vm );
-
-
-/**
- *  \brief trigger internal slot
- *  \param obj signal emitter
- *  \param signame signal name
- *  \param cbname callback name
- *  \param vm virtual machine
- */
-void internal_trigger_slot( GObject* obj, const char* signame,
-        const char* cbname, Falcon::VMachine* vm );
-
-
-/**
- *  \brief common init method for all abstract classes
+ *  \brief Common init method for all abstract classes.
  */
 FALCON_FUNC abstract_init( VMARG );
 
 
 /**
- *  \brief get a signal
- *  \param obj signal emitter
- *  \param sig emitter's signals container
- *  \param name signal name
- *  \param cb callback function
- *  \param vm current virtual machine
- *  \return the slot activated by the named signal
- */
-Falcon::CoreSlot* get_signal( GObject* obj, Falcon::CoreSlot* sig,
-                              const char* name, void* cb, Falcon::VMachine* vm );
-
-
-/**
  *  \class Falcon::Gtk::CoreGObject
- *  \brief base class for g-items derived from Falcon::CoreObject
+ *  \brief The base class exposing a GObject.
  */
 class CoreGObject
     :
-    public Falcon::CoreObject
+    public Falcon::FalconObject
 {
+    friend class Gtk::Signal;
+
 public:
 
-    CoreGObject( const Falcon::CoreClass* cls )
-        :
-        Falcon::CoreObject( cls )
-    {}
+    ~CoreGObject() { decref(); }
 
-    ~CoreGObject() {}
+    CoreGObject* clone() const;
 
-    Falcon::CoreObject* clone() const { return 0; }
+    void gcMark( Falcon::uint32 ) {}
+
+    /**
+     *  \brief Get a property.
+     *  Properties are stored in the table of associations of the GObject,
+     *  as garbage-locked items.
+     */
+    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
+
+    /**
+     *  \brief Set a property.
+     *  Stores a garbage-lock in the table of associations of the GObject.
+     */
+    bool setProperty( const Falcon::String&, const Falcon::Item& );
+
+    /**
+     *  \brief Get the GObject.
+     */
+    GObject* getGObject() const { return m_obj; }
+
+    /**
+     *  \brief Set the GObject.
+     */
+    void setGObject( const GObject* obj );
+
+protected:
+
+    CoreGObject( const Falcon::CoreClass*, const GObject* = 0 );
+
+    CoreGObject( const CoreGObject& );
+
+    /**
+     *  \brief Get a signal.
+     *  This is used by derived classes to return a specific signal into the vm.
+     *  \param signame signal name (e.g: "some_event")
+     *  \param cb pointer to callback function
+     *  \param vm virtual machine
+     */
+    static void get_signal( const char* signame, const void* cb, Falcon::VMachine* vm );
+
+    /**
+     *  \brief Trigger internal slot.
+     *  This is used by derived classes to activate a specific signal, without
+     *  any further checking of values returned by callbacks.
+     *  \param obj signal emitter
+     *  \param signame signal name (e.g: "some_event")
+     *  \param cbname callback name (e.g: "on_some_event")
+     *  \param vm virtual machine
+     */
+    static void trigger_slot( GObject* obj, const char* signame,
+                            const char* cbname, Falcon::VMachine* vm );
+
+    /**
+     *  \brief Return the array of garbage locks of the GObject.
+     *  Locks protecting the callback functions are stored in an array.
+     *  This is used just before connecting signals.
+     *  \return the array containing the locks
+     */
+    static GPtrArray* get_locks( GObject* );
+
+    /**
+     *  \brief Lock an item.
+     *  This adds an item to the array of locks.
+     *  \return the new GarbageLock
+     */
+    static Falcon::GarbageLock* lockItem( GObject*, const Falcon::Item& );
+
+private:
+
+    /**
+     *  \brief Add an anonymous VMSlot in the GObject.
+     *  VMSlots are used as a convenience to store the callback functions.
+     */
+    static GObject* add_slots( GObject* );
+
+    /**
+     *  \brief GDestroyNotify function to delete all slots.
+     */
+    static void release_slots( gpointer );
+
+    /**
+     *  \brief GDestroyNotify function for GarbageLock objects.
+     */
+    static void release_lock( gpointer );
+
+    /**
+     *  \brief GDestroyNotify function for the GarbageLock array.
+     */
+    static void release_locks( gpointer );
+
+    void incref() { if ( m_obj ) g_object_ref_sink( m_obj ); }
+
+    void decref() { if ( m_obj ) g_object_unref( m_obj ); }
+
+    GObject*    m_obj;
+
+};
+
+
+/**
+ *  \brief Class managing a signal.
+ */
+class Signal
+    :
+    public Falcon::FalconObject
+{
+    friend class Gtk::CoreGObject;
+
+public:
+
+    ~Signal() { decref(); }
+
+    Signal* clone() const { return 0; }
+
+    void gcMark( Falcon::uint32 ) {}
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
     bool setProperty( const Falcon::String&, const Falcon::Item& );
 
-    static void delProperty( gpointer );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    static void modInit( Falcon::Module* );
+
+    /**
+     *  \brief Get the GObject.
+     */
+    GObject* getGObject() const { return m_obj; }
+
+    /**
+     *  \brief Connect a signal to a callback.
+     */
+    static FALCON_FUNC connect( VMARG );
+
+private:
+
+    /**
+     *  \brief Signal ctor
+     *  \param gobj a GObject
+     *  \param name signal name (e.g: "some_event")
+     *  \param cb pointer to callback function
+     */
+    Signal( const Falcon::CoreClass* cls,
+            const GObject* gobj, const char* name, const void* cb );
+
+    void incref() { if ( m_obj ) g_object_ref_sink( m_obj ); }
+
+    void decref() { if ( m_obj ) g_object_unref( m_obj ); }
+
+    GObject*    m_obj;
+
+    char*     m_name;
+
+    void*     m_cb;
 
 };
 
@@ -388,7 +460,29 @@ public:
                 throw_inv_params( m_spec );
 #endif
         }
-        return it->asObject();
+        return it->asObjectSafe();
+    }
+
+    Gtk::CoreGObject* getCoreGObject( int index, bool mandatory = true ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isObject() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+                return 0;
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isObject() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        return Falcon::dyncast<Gtk::CoreGObject*>( it->asObjectSafe() );
     }
 
     ~ArgCheck() {}

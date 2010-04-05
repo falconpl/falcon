@@ -20,10 +20,25 @@ void Alignment::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_Alignment->getClassDef()->addInheritance( in );
 
+    c_Alignment->getClassDef()->factory( &Alignment::factory );
+
     mod->addClassMethod( c_Alignment, "set",         &Alignment::set );
     mod->addClassMethod( c_Alignment, "get_padding", &Alignment::get_padding );
     mod->addClassMethod( c_Alignment, "set_padding", &Alignment::set_padding );
 }
+
+
+Alignment::Alignment( const Falcon::CoreClass* gen, const GtkAlignment* alignment )
+    :
+    Gtk::CoreGObject( gen, (GObject*) alignment )
+{}
+
+
+Falcon::CoreObject* Alignment::factory( const Falcon::CoreClass* gen, void* alignment, bool )
+{
+    return new Alignment( gen, (GtkAlignment*) alignment );
+}
+
 
 /*#
     @class GtkAlignment
@@ -56,8 +71,7 @@ FALCON_FUNC Alignment::init( VMARG )
 
     MYSELF;
     GtkWidget* wdt = gtk_alignment_new( xalign, yalign, xscale, yscale );
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

@@ -8,18 +8,27 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::AspectFrame
+ *  \class Falcon::Gtk::AspectFrame
  */
-namespace AspectFrame {
+class AspectFrame
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    AspectFrame( const Falcon::CoreClass*, const GtkAspectFrame* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC set( VMARG );
+    static void modInit( Falcon::Module* );
+
+    static FALCON_FUNC init( VMARG );
+
+    static FALCON_FUNC set( VMARG );
+
+};
 
 
-} // AspectFrame
 } // Gtk
 } // Falcon
 

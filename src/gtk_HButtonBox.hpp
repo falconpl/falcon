@@ -8,24 +8,33 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::HButtonBox
+ *  \class Falcon::Gtk::HButtonBox
  */
-namespace HButtonBox {
+class HButtonBox
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    HButtonBox( const Falcon::CoreClass*, const GtkHButtonBox* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-//FALCON_FUNC get_spacing_default( VMARG );
+    static void modInit( Falcon::Module* );
 
-//FALCON_FUNC get_layout_default( VMARG );
+    static FALCON_FUNC init( VMARG );
 
-//FALCON_FUNC set_spacing_default( VMARG );
+    //static FALCON_FUNC get_spacing_default( VMARG );
 
-//FALCON_FUNC set_layout_default( VMARG );
+    //static FALCON_FUNC get_layout_default( VMARG );
+
+    //static FALCON_FUNC set_spacing_default( VMARG );
+
+    //static FALCON_FUNC set_layout_default( VMARG );
+
+};
 
 
-} // HButtonBox
 } // Gtk
 } // Falcon
 

@@ -22,6 +22,8 @@ void Label::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMisc" ) );
     c_Label->getClassDef()->addInheritance( in );
 
+    c_Label->getClassDef()->factory( &Label::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "set_text",               &Label::set_text },
@@ -79,6 +81,19 @@ void Label::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Label, meth->name, meth->cb );
 }
 
+
+Label::Label( const Falcon::CoreClass* gen, const GtkLabel* lbl )
+    :
+    Gtk::CoreGObject( gen, (GObject*) lbl )
+{}
+
+
+Falcon::CoreObject* Label::factory( const Falcon::CoreClass* gen, void* lbl, bool )
+{
+    return new Label( gen, (GtkLabel*) lbl );
+}
+
+
 /*#
     @class GtkLabel
     @brief The GtkLabel widget displays a small amount of text.
@@ -92,7 +107,7 @@ FALCON_FUNC Label::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     GtkWidget* gwdt;
@@ -123,8 +138,7 @@ FALCON_FUNC Label::init( VMARG )
     else
         gwdt = gtk_label_new( NULL );
 
-    Gtk::internal_add_slot( (GObject*) gwdt );
-    self->setUserData( new GData( (GObject*) gwdt ) );
+    self->setGObject( (GObject*) gwdt );
 }
 
 
@@ -308,7 +322,7 @@ FALCON_FUNC Label::set_mnemonic_widget( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_label_set_mnemonic_widget( (GtkLabel*)_obj, wdt );
 }
 

@@ -8,16 +8,25 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::VPaned
+ *  \class Falcon::Gtk::VPaned
  */
-namespace VPaned {
+class VPaned
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    VPaned( const Falcon::CoreClass*, const GtkVPaned* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    static void modInit( Falcon::Module* );
+
+    static FALCON_FUNC init( VMARG );
+
+};
 
 
-} // VPaned
 } // Gtk
 } // Falcon
 

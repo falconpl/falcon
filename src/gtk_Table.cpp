@@ -20,6 +20,8 @@ void Table::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Table->getClassDef()->addInheritance( in );
 
+    c_Table->getClassDef()->factory( &Table::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "resize",                 &Table::resize },
@@ -40,6 +42,18 @@ void Table::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Table, meth->name, meth->cb );
+}
+
+
+Table::Table( const Falcon::CoreClass* gen, const GtkTable* tab )
+    :
+    Gtk::CoreGObject( gen, (GObject*) tab )
+{}
+
+
+Falcon::CoreObject* Table::factory( const Falcon::CoreClass* gen, void* tab, bool )
+{
+    return new Table( gen, (GtkTable*) tab );
 }
 
 
@@ -69,7 +83,7 @@ FALCON_FUNC Table::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_rows = vm->param( 0 );
@@ -102,8 +116,7 @@ FALCON_FUNC Table::init( VMARG )
     else
         wdt = gtk_table_new( rows, cols, FALSE );
 
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 
@@ -173,7 +186,7 @@ FALCON_FUNC Table::attach( VMARG )
         || !i_ypad || i_ypad->isNil() || !i_ypad->isInteger() )
         throw_inv_params( "GtkWidget,I,I,I,I,I,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_table_attach( (GtkTable*)_obj, wdt, i_left->asInteger(), i_right->asInteger(),
@@ -213,7 +226,7 @@ FALCON_FUNC Table::attach_defaults( VMARG )
         || !i_bottom || i_bottom->isNil() || !i_bottom->isInteger() )
         throw_inv_params( "GtkWidget,I,I,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_table_attach_defaults( (GtkTable*)_obj, wdt, i_left->asInteger(), i_right->asInteger(),

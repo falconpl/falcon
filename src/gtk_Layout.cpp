@@ -22,6 +22,8 @@ void Layout::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Layout->getClassDef()->addInheritance( in );
 
+    c_Layout->getClassDef()->factory( &Layout::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "put",            Layout::put },
@@ -39,6 +41,19 @@ void Layout::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Layout, meth->name, meth->cb );
 }
+
+
+Layout::Layout( const Falcon::CoreClass* gen, const GtkLayout* lyt )
+    :
+    Gtk::CoreGObject( gen, (GObject*) lyt )
+{}
+
+
+Falcon::CoreObject* Layout::factory( const Falcon::CoreClass* gen, void* lyt, bool )
+{
+    return new Layout( gen, (GtkLayout*) lyt );
+}
+
 
 /*#
     @class GtkLayout
@@ -60,24 +75,23 @@ FALCON_FUNC Layout::init( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "[GtkAdjustment,GtkAdjustment]" );
 
-    CoreObject* o_hadj = args.getObject( 0, false );
+    CoreGObject* o_hadj = args.getCoreGObject( 0, false );
 #ifndef NO_PARAMETER_CHECK
     if ( o_hadj && !CoreObject_IS_DERIVED( o_hadj, GtkAdjustment ) )
             throw_inv_params( "[GtkAdjustment,GtkAdjustment]" );
 #endif
-    GtkAdjustment* hadj = (GtkAdjustment*)((GData*)o_hadj->getUserData())->obj();
+    GtkAdjustment* hadj = (GtkAdjustment*) o_hadj->getGObject();
 
-    CoreObject* o_vadj = args.getObject( 1, false );
+    CoreGObject* o_vadj = args.getCoreGObject( 1, false );
 #ifndef NO_PARAMETER_CHECK
     if ( o_vadj && !CoreObject_IS_DERIVED( o_vadj, GtkAdjustment ) )
             throw_inv_params( "[GtkAdjustment,GtkAdjustment]" );
 #endif
-    GtkAdjustment* vadj = (GtkAdjustment*)((GData*)o_vadj->getUserData())->obj();
+    GtkAdjustment* vadj = (GtkAdjustment*) o_vadj->getGObject();
 
     MYSELF;
     GtkWidget* wdt = gtk_layout_new( hadj, vadj );
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 
@@ -92,12 +106,12 @@ FALCON_FUNC Layout::put( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( o_wdt && !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -119,12 +133,12 @@ FALCON_FUNC Layout::move( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( o_wdt && !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -242,7 +256,7 @@ FALCON_FUNC Layout::set_hadjustment( VMARG )
 #endif
     GtkAdjustment* adj = NULL;
     if ( i_adj )
-        adj = (GtkAdjustment*)((GData*)i_adj->asObject()->getUserData())->obj();
+        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_layout_set_hadjustment( (GtkLayout*)_obj, adj );
@@ -266,7 +280,7 @@ FALCON_FUNC Layout::set_vadjustment( VMARG )
 #endif
     GtkAdjustment* adj = NULL;
     if ( i_adj )
-        adj = (GtkAdjustment*)((GData*)i_adj->asObject()->getUserData())->obj();
+        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_layout_set_vadjustment( (GtkLayout*)_obj, adj );

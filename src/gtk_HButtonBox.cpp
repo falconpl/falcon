@@ -19,6 +19,9 @@ void HButtonBox::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButtonBox" ) );
     c_HButtonBox->getClassDef()->addInheritance( in );
+
+    c_HButtonBox->getClassDef()->factory( &HButtonBox::factory );
+
 #if 0
     Gtk::MethodTab methods[] =
     {
@@ -33,6 +36,19 @@ void HButtonBox::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_HButtonBox, meth->name, meth->cb );
 #endif
 }
+
+
+HButtonBox::HButtonBox( const Falcon::CoreClass* gen, const GtkHButtonBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+
+Falcon::CoreObject* HButtonBox::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new HButtonBox( gen, (GtkHButtonBox*) box );
+}
+
 
 /*#
     @class GtkHButtonBox
@@ -50,8 +66,7 @@ FALCON_FUNC HButtonBox::init( VMARG )
 #endif
     GtkWidget* wdt = gtk_hbutton_box_new();
     MYSELF;
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

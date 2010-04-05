@@ -8,34 +8,43 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Box
+ *  \class Falcon::Gtk::Box
  */
-namespace Box {
+class Box
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Box( const Falcon::CoreClass*, const GtkBox* = 0 );
 
-FALCON_FUNC pack_start( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC pack_end( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC pack_start_defaults( VMARG );
+    static FALCON_FUNC pack_start( VMARG );
 
-FALCON_FUNC pack_end_defaults( VMARG );
+    static FALCON_FUNC pack_end( VMARG );
 
-FALCON_FUNC get_homogeneous( VMARG );
+    static FALCON_FUNC pack_start_defaults( VMARG );
 
-FALCON_FUNC set_homogeneous( VMARG );
+    static FALCON_FUNC pack_end_defaults( VMARG );
 
-FALCON_FUNC get_spacing( VMARG );
+    static FALCON_FUNC get_homogeneous( VMARG );
 
-FALCON_FUNC reorder_child( VMARG );
+    static FALCON_FUNC set_homogeneous( VMARG );
 
-//FALCON_FUNC query_child_packing( VMARG );
+    static FALCON_FUNC get_spacing( VMARG );
 
-//FALCON_FUNC set_child_packing( VMARG );
+    static FALCON_FUNC reorder_child( VMARG );
+
+    //static FALCON_FUNC query_child_packing( VMARG );
+
+    //static FALCON_FUNC set_child_packing( VMARG );
+
+};
 
 
-} // Box
 } // Gtk
 } // Falcon
 

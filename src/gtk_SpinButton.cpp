@@ -18,13 +18,15 @@ void SpinButton::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkEntry" ) );
     c_SpinButton->getClassDef()->addInheritance( in );
 
-    Gtk::MethodTab methods[] = 
+    c_SpinButton->getClassDef()->factory( &SpinButton::factory );
+
+    Gtk::MethodTab methods[] =
     {
-    { "signal_change_value", &SpinButton::signal_change_value },
-    { "signal_input", &SpinButton::signal_input },
-    { "signal_output", &SpinButton::signal_output },
-    { "signal_value_changed", &SpinButton::signal_value_changed },
-    { "signal_wrapped", &SpinButton::signal_wrapped },
+    { "signal_change_value",&SpinButton::signal_change_value },
+    { "signal_input",       &SpinButton::signal_input },
+    { "signal_output",      &SpinButton::signal_output },
+    { "signal_value_changed",&SpinButton::signal_value_changed },
+    { "signal_wrapped",     &SpinButton::signal_wrapped },
     //{ "set_adjustment",     &SpinButton::set_adjustment },
     //{ "get_adjustment",     &SpinButton::get_adjustment },
     { "set_digits",         &SpinButton::set_digits },
@@ -46,12 +48,25 @@ void SpinButton::modInit( Falcon::Module* mod )
     { "get_update_policy",  &SpinButton::get_update_policy },
     { "get_value",          &SpinButton::get_value },
     { "get_wrap",           &SpinButton::get_wrap },
-    { NULL, NULL }    
+    { NULL, NULL }
     };
 
     for( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_SpinButton, meth->name, meth->cb );
 }
+
+
+SpinButton::SpinButton( const Falcon::CoreClass* gen, const GtkSpinButton* btn )
+    :
+    Gtk::CoreGObject( gen, (GObject*) btn )
+{}
+
+
+Falcon::CoreObject* SpinButton::factory( const Falcon::CoreClass* gen, void* btn, bool )
+{
+    return new SpinButton( gen, (GtkSpinButton*) btn );
+}
+
 
 /*#
     @class gtk.SpinButton
@@ -65,13 +80,13 @@ void SpinButton::modInit( Falcon::Module* mod )
     checked to ensure it is in a given range.
 
     The main properties of a GtkSpinButton are through a GtkAdjustment. See the GtkAdjustment section for more
-    details about an adjustment's properties. 
+    details about an adjustment's properties.
 */
 FALCON_FUNC SpinButton::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_first = vm->param( 0 );
@@ -95,8 +110,8 @@ FALCON_FUNC SpinButton::init( VMARG )
     {
         //TODO add gtk_spin_button_new paramterchecks and types
     }
-    Gtk::internal_add_slot( (GObject*) spinbutton );
-    self->setUserData( new GData( (GObject*) spinbutton ) );
+
+    self->setGObject( (GObject*) spinbutton );
 }
 
 /*#
@@ -110,13 +125,13 @@ FALCON_FUNC SpinButton::signal_change_value( VMARG )
         throw_require_no_args();
 #endif
 
-    Gtk::internal_get_slot( "change_value", (void*) &SpinButton::on_change_value, vm );
+    CoreGObject::get_signal( "change_value", (void*) &SpinButton::on_change_value, vm );
 }
 
 
 void SpinButton::on_change_value( GtkSpinButton* btn, GtkScrollType type, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "change_value", "on_change_value", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "change_value", "on_change_value", (VMachine*)_vm );
 }
 
 /*#
@@ -130,13 +145,13 @@ FALCON_FUNC SpinButton::signal_input( VMARG )
         throw_require_no_args();
 #endif
 
-    Gtk::internal_get_slot( "input", (void*) &SpinButton::on_input, vm );
+    CoreGObject::get_signal( "input", (void*) &SpinButton::on_input, vm );
 }
 
 
 gint SpinButton::on_input( GtkSpinButton* btn, gpointer arg1, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "input", "on_input", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "input", "on_input", (VMachine*)_vm );
 
     return (gint)((VMachine*)_vm)->regA().forceInteger();
 }
@@ -152,13 +167,13 @@ FALCON_FUNC SpinButton::signal_output( VMARG )
         throw_require_no_args();
 #endif
 
-    Gtk::internal_get_slot( "output", (void*) &SpinButton::on_output, vm );
+    CoreGObject::get_signal( "output", (void*) &SpinButton::on_output, vm );
 }
 
 
 gboolean SpinButton::on_output( GtkSpinButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "output", "on_output", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "output", "on_output", (VMachine*)_vm );
 
     return (gboolean)((VMachine*)_vm)->regA().asBoolean();
 }
@@ -174,13 +189,13 @@ FALCON_FUNC SpinButton::signal_value_changed( VMARG )
         throw_require_no_args();
 #endif
 
-    Gtk::internal_get_slot( "value_changed", (void*) &SpinButton::on_value_changed, vm );
+    CoreGObject::get_signal( "value_changed", (void*) &SpinButton::on_value_changed, vm );
 }
 
 
 void SpinButton::on_value_changed( GtkSpinButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "value_changed", "on_value_changed", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "value_changed", "on_value_changed", (VMachine*)_vm );
 }
 
 /*#
@@ -194,19 +209,19 @@ FALCON_FUNC SpinButton::signal_wrapped( VMARG )
         throw_require_no_args();
 #endif
 
-    Gtk::internal_get_slot( "wrapped", (void*) &SpinButton::on_wrapped, vm );
+    CoreGObject::get_signal( "wrapped", (void*) &SpinButton::on_wrapped, vm );
 }
 
 
 void SpinButton::on_wrapped( GtkSpinButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "wrapped", "on_wrapped", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "wrapped", "on_wrapped", (VMachine*)_vm );
 }
 
 /*#
     @method set_digits gtk.SpinButton
     @brief Set the precision to be displayed by spin_button. Up to 20 digit precision is allowed.
-    @param digits 
+    @param digits
 */
 FALCON_FUNC SpinButton::set_digits( VMARG )
 {
@@ -227,7 +242,7 @@ FALCON_FUNC SpinButton::set_digits( VMARG )
 /*#
     @method set_increments gtk.SpinButton
     @brief Sets the step and page increments for spin_button. This affects how quickly the value changes when the spin button's arrows are activated.
-    @param step increment applied for a button 1 press. 
+    @param step increment applied for a button 1 press.
     @param page increment applied for a button 2 press.
 */
 FALCON_FUNC SpinButton::set_increments( VMARG )
@@ -251,7 +266,7 @@ FALCON_FUNC SpinButton::set_increments( VMARG )
 /*#
     @method set_range gtk.SpinButton
     @brief Sets the minimum and maximum allowable values for spin_button
-    @param min minimum allowable value 
+    @param min minimum allowable value
     @param max 	 maximum allowable value
 */
 FALCON_FUNC SpinButton::set_range( VMARG )
@@ -293,10 +308,10 @@ FALCON_FUNC SpinButton::get_value_as_int( VMARG )
 /*#
     @method set_value gtk.SpinButton
     @brief Set the value of spin_button.
-    @param value the new value 
+    @param value the new value
 */
 FALCON_FUNC SpinButton::set_value( VMARG )
-{   
+{
     Item* i_value = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if( !i_value || !i_value->isOrdinal() )
@@ -314,10 +329,10 @@ FALCON_FUNC SpinButton::set_value( VMARG )
 /*#
     @method set_update_policy gtk.SpinButton
     @brief Sets the update behavior of a spin button. This determines whether the spin button is always updated or only when a valid value is set.
-    @param policy A GtkSpinButtonUpdatePolicy value 
+    @param policy A GtkSpinButtonUpdatePolicy value
 */
 FALCON_FUNC SpinButton::set_update_policy( VMARG )
-{   
+{
     Item* i_policy = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if( !i_policy || !i_policy->isInteger() )
@@ -335,10 +350,10 @@ FALCON_FUNC SpinButton::set_update_policy( VMARG )
 /*#
     @method set_numeric gtk.SpinButton
     @brief Sets the flag that determines if non-numeric text can be typed into the spin button.
-    @param numeric flag indicating if only numeric entry is allowed. 
+    @param numeric flag indicating if only numeric entry is allowed.
 */
 FALCON_FUNC SpinButton::set_numeric( VMARG )
-{   
+{
     Item* i_numeric = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if( !i_numeric || !i_numeric->isBoolean() )
@@ -356,11 +371,11 @@ FALCON_FUNC SpinButton::set_numeric( VMARG )
 /*#
     @method spin gtk.SpinButton
     @brief Increment or decrement a spin button's value in a specified direction by a specified amount.
-    @param direction a GtkSpinType indicating the direction to spin. 
-    @param increment step increment to apply in the specified direction. 
+    @param direction a GtkSpinType indicating the direction to spin.
+    @param increment step increment to apply in the specified direction.
 */
 FALCON_FUNC SpinButton::spin( VMARG )
-{  
+{
     Item* i_direction = vm->param( 0 );
     Item* i_increment = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
@@ -380,7 +395,7 @@ FALCON_FUNC SpinButton::spin( VMARG )
 /*#
     @method set_wrap gtk.SpinButton
     @brief Sets the flag that determines if a spin button value wraps around to the opposite limit when the upper or lower limit of the range is exceeded.
-    @param wrap a flag indicating if wrapping behavior is performed. 
+    @param wrap a flag indicating if wrapping behavior is performed.
 */
 FALCON_FUNC SpinButton::set_wrap( VMARG )
 {
@@ -401,7 +416,7 @@ FALCON_FUNC SpinButton::set_wrap( VMARG )
 /*#
     @method set_snap_to_ticks gtk.SpinButton
     @brief Sets the policy as to whether values are corrected to the nearest step increment when a spin button is activated after providing an invalid value.
-    @param snap_to_ticks a flag indicating if invalid values should be corrected. 
+    @param snap_to_ticks a flag indicating if invalid values should be corrected.
 */
 FALCON_FUNC SpinButton::set_snap_to_ticks( VMARG )
 {
@@ -433,14 +448,14 @@ FALCON_FUNC SpinButton::update( VMARG )
 
     MYSELF;
     GET_OBJ( self );
-    
+
     gtk_spin_button_update( (GtkSpinButton*)_obj );
 }
 
 /*#
     @method get_digits gtk.SpinButton
     @brief Fetches the precision of spin_button. See gtk_spin_button_set_digits().
-    @return (integer) the current precision 
+    @return (integer) the current precision
 */
 FALCON_FUNC SpinButton::get_digits( VMARG )
 {
@@ -481,7 +496,7 @@ FALCON_FUNC SpinButton::get_increments( VMARG )
 /*#
     @method get_numeric gtk.SpinButton
     @brief Returns whether non-numeric text can be typed into the spin button. See gtk_spin_button_set_numeric().
-    @return (boolean) TRUE if only numeric text can be entered 
+    @return (boolean) TRUE if only numeric text can be entered
 */
 FALCON_FUNC SpinButton::get_numeric( VMARG )
 {
@@ -522,7 +537,7 @@ FALCON_FUNC SpinButton::get_range( VMARG )
 /*#
     @method get_snap_to_ticks gtk.SpinButton
     @brief Returns whether the values are corrected to the nearest step. See gtk_spin_button_set_snap_to_ticks().
-    @return (boolean) TRUE if values are snapped to the nearest step. 
+    @return (boolean) TRUE if values are snapped to the nearest step.
 */
 FALCON_FUNC SpinButton::get_snap_to_ticks( VMARG )
 {
@@ -576,7 +591,7 @@ FALCON_FUNC SpinButton::get_value( VMARG )
 /*#
     @method get_wrap gtk.SpinButton
     @briefReturns whether the spin button's value wraps around to the opposite limit when the upper or lower limit of the range is exceeded. See gtk_spin_button_set_wrap().
-    @return (boolean) 	 TRUE if the spin button wraps around 
+    @return (boolean) 	 TRUE if the spin button wraps around
 */
 FALCON_FUNC SpinButton::get_wrap( VMARG )
 {
@@ -595,4 +610,4 @@ FALCON_FUNC SpinButton::get_wrap( VMARG )
 } //Falcon
 
 
-    
+

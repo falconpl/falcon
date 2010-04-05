@@ -3,7 +3,6 @@
 
 #include "modgtk.hpp"
 
-#include <gtk/gtk.h>
 
 #if GTK_MINOR_VERSION >= 18
 

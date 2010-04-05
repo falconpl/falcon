@@ -20,6 +20,8 @@ void ToggleButton::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButton" ) );
     c_ToggleButton->getClassDef()->addInheritance( in );
 
+    c_ToggleButton->getClassDef()->factory( &ToggleButton::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_toggled",         &ToggleButton::signal_toggled },
@@ -36,6 +38,19 @@ void ToggleButton::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ToggleButton, meth->name, meth->cb );
 }
+
+
+ToggleButton::ToggleButton( const Falcon::CoreClass* gen, const GtkToggleButton* btn )
+    :
+    Gtk::CoreGObject( gen, (GObject*) btn )
+{}
+
+
+Falcon::CoreObject* ToggleButton::factory( const Falcon::CoreClass* gen, void* btn, bool )
+{
+    return new ToggleButton( gen, (GtkToggleButton*) btn );
+}
+
 
 /*#
     @class GtkToggleButton
@@ -55,7 +70,7 @@ FALCON_FUNC ToggleButton::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -87,8 +102,7 @@ FALCON_FUNC ToggleButton::init( VMARG )
     else
         btn = gtk_toggle_button_new();
 
-    Gtk::internal_add_slot( (GObject*) btn );
-    self->setUserData( new GData( (GObject*) btn ) );
+    self->setGObject( (GObject*) btn );
 }
 
 
@@ -101,13 +115,13 @@ FALCON_FUNC ToggleButton::init( VMARG )
  */
 FALCON_FUNC ToggleButton::signal_toggled( VMARG )
 {
-    Gtk::internal_get_slot( "toggled", (void*) &ToggleButton::on_toggled, vm );
+    CoreGObject::get_signal( "toggled", (void*) &ToggleButton::on_toggled, vm );
 }
 
 
 void ToggleButton::on_toggled( GtkToggleButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "toggled", "on_toggled", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "toggled", "on_toggled", (VMachine*)_vm );
 }
 
 

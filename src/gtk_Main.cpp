@@ -141,9 +141,7 @@ FALCON_FUNC Main::run( VMARG )
 #endif
     if ( i_win )
     {
-        CoreObject* o_win = i_win->asObject();
-        GtkWidget* win = (GtkWidget*)((GData*)o_win->getUserData())->obj();
-
+        GtkWidget* win = (GtkWidget*) COREGOBJECT( i_win )->getGObject();
         gtk_widget_show_all( win );
     }
 

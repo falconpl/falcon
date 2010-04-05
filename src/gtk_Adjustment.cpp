@@ -53,11 +53,8 @@ void Adjustment::modInit( Falcon::Module* mod )
 
 Adjustment::Adjustment( const Falcon::CoreClass* gen, const GtkAdjustment* adj )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( adj )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) adj ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) adj )
+{}
 
 
 Falcon::CoreObject* Adjustment::factory( const Falcon::CoreClass* gen, void* adj, bool )
@@ -103,8 +100,7 @@ FALCON_FUNC Adjustment::init( VMARG )
     MYSELF;
     GtkObject* obj = gtk_adjustment_new( value, lower, upper, step_incr,
             page_incr, page_sz );
-    Gtk::internal_add_slot( (GObject*) obj );
-    self->setUserData( new GData( (GObject*) obj ) );
+    self->setGObject( (GObject*) obj );
 }
 
 
@@ -121,13 +117,13 @@ FALCON_FUNC Adjustment::signal_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "changed", (void*) &Adjustment::on_changed, vm );
+    CoreGObject::get_signal( "changed", (void*) &Adjustment::on_changed, vm );
 }
 
 
 void Adjustment::on_changed( GtkAdjustment* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "changed", "on_changed", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) obj, "changed", "on_changed", (VMachine*)_vm );
 }
 
 
@@ -143,13 +139,13 @@ FALCON_FUNC Adjustment::signal_value_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "value_changed", (void*) &Adjustment::on_value_changed, vm );
+    CoreGObject::get_signal( "value_changed", (void*) &Adjustment::on_value_changed, vm );
 }
 
 
 void Adjustment::on_value_changed( GtkAdjustment* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "value_changed", "on_value_changed", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) obj, "value_changed", "on_value_changed", (VMachine*)_vm );
 }
 
 

@@ -8,34 +8,43 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Layout
+ *  \class Falcon::Gtk::Layout
  */
-namespace Layout {
+class Layout
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Layout( const Falcon::CoreClass*, const GtkLayout* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC put( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC move( VMARG );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC set_size( VMARG );
+    static FALCON_FUNC put( VMARG );
 
-FALCON_FUNC get_size( VMARG );
+    static FALCON_FUNC move( VMARG );
 
-FALCON_FUNC get_hadjustment( VMARG );
+    static FALCON_FUNC set_size( VMARG );
 
-FALCON_FUNC get_vadjustment( VMARG );
+    static FALCON_FUNC get_size( VMARG );
 
-FALCON_FUNC set_hadjustment( VMARG );
+    static FALCON_FUNC get_hadjustment( VMARG );
 
-FALCON_FUNC set_vadjustment( VMARG );
+    static FALCON_FUNC get_vadjustment( VMARG );
 
-//FALCON_FUNC get_bin_window( VMARG );
+    static FALCON_FUNC set_hadjustment( VMARG );
+
+    static FALCON_FUNC set_vadjustment( VMARG );
+
+    //static FALCON_FUNC get_bin_window( VMARG );
+
+};
 
 
-} // Layout
 } // Gtk
 } // Falcon
 

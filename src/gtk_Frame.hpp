@@ -8,32 +8,41 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Frame
+ *  \class Falcon::Gtk::Frame
  */
-namespace Frame {
+class Frame
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Frame( const Falcon::CoreClass*, const GtkFrame* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC set_label( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC set_label_widget( VMARG );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC set_label_align( VMARG );
+    static FALCON_FUNC set_label( VMARG );
 
-FALCON_FUNC set_shadow_type( VMARG );
+    static FALCON_FUNC set_label_widget( VMARG );
 
-FALCON_FUNC get_label( VMARG );
+    static FALCON_FUNC set_label_align( VMARG );
 
-FALCON_FUNC get_label_align( VMARG );
+    static FALCON_FUNC set_shadow_type( VMARG );
 
-FALCON_FUNC get_label_widget( VMARG );
+    static FALCON_FUNC get_label( VMARG );
 
-FALCON_FUNC get_shadow_type( VMARG );
+    static FALCON_FUNC get_label_align( VMARG );
+
+    static FALCON_FUNC get_label_widget( VMARG );
+
+    static FALCON_FUNC get_shadow_type( VMARG );
+
+};
 
 
-} // Frame
 } // Gtk
 } // Falcon
 

@@ -8,22 +8,31 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Object
+ *  \class Falcon::Gtk::Object
  *  \note Most of its C functions/macros are deprecated in favor of equivalent
  *  GObject functions/macros.
  */
-namespace Object {
+class Object
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Object( const Falcon::CoreClass*, const GtkObject* = 0 );
 
-FALCON_FUNC signal_destroy( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-void on_destroy( GObject*, gpointer );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC destroy( VMARG );
+    static FALCON_FUNC signal_destroy( VMARG );
+
+    static void on_destroy( GObject*, gpointer );
+
+    static FALCON_FUNC destroy( VMARG );
+
+};
 
 
-} // Object
 } // Gtk
 } // Falcon
 

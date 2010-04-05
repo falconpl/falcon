@@ -22,6 +22,8 @@ void Button::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_Button->getClassDef()->addInheritance( in );
 
+    c_Button->getClassDef()->factory( &Button::factory );
+
     mod->addClassProperty( c_Button, "NO_MNEMONIC" ).setInteger( 0 ).setReadOnly( true );
     mod->addClassProperty( c_Button, "MNEMONIC" ).setInteger( 1 ).setReadOnly( true );
     mod->addClassProperty( c_Button, "STOCK" ).setInteger( 2 ).setReadOnly( true );
@@ -69,6 +71,18 @@ void Button::modInit( Falcon::Module* mod )
     Gtk::Activatable::clsInit( mod, c_Button );
 }
 
+
+Button::Button( const Falcon::CoreClass* gen, const GtkButton* btn )
+    :
+    Gtk::CoreGObject( gen, (GObject*) btn )
+{}
+
+Falcon::CoreObject* Button::factory( const Falcon::CoreClass* gen, void* btn, bool )
+{
+    return new Button( gen, (GtkButton*) btn );
+}
+
+
 /*#
     @class GtkButton
     @brief A push button
@@ -82,7 +96,7 @@ FALCON_FUNC Button::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -95,8 +109,7 @@ FALCON_FUNC Button::init( VMARG )
     if ( !i_lbl )
     {
         GtkWidget* btn = gtk_button_new();
-        Gtk::internal_add_slot( (GObject*) btn );
-        self->setUserData( new GData( (GObject*) btn ) );
+        self->setGObject( (GObject*) btn );
         return;
     }
 
@@ -136,8 +149,7 @@ FALCON_FUNC Button::init( VMARG )
         return; // not reached
     }
 
-    Gtk::internal_add_slot( (GObject*) btn );
-    self->setUserData( new GData( (GObject*) btn ) );
+    self->setGObject( (GObject*) btn );
 }
 
 
@@ -151,13 +163,13 @@ FALCON_FUNC Button::init( VMARG )
  */
 FALCON_FUNC Button::signal_activate( VMARG )
 {
-    Gtk::internal_get_slot( "activate", (void*) &Button::on_activate, vm );
+    CoreGObject::get_signal( "activate", (void*) &Button::on_activate, vm );
 }
 
 
 void Button::on_activate( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "activate", "on_activate", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "activate", "on_activate", (VMachine*)_vm );
 }
 
 
@@ -169,13 +181,13 @@ void Button::on_activate( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_clicked( VMARG )
 {
-    Gtk::internal_get_slot( "clicked", (void*) &Button::on_clicked, vm );
+    CoreGObject::get_signal( "clicked", (void*) &Button::on_clicked, vm );
 }
 
 
 void Button::on_clicked( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "clicked", "on_clicked", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "clicked", "on_clicked", (VMachine*)_vm );
 }
 
 
@@ -190,13 +202,13 @@ void Button::on_clicked( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_enter( VMARG )
 {
-    Gtk::internal_get_slot( "enter", (void*) &Button::on_enter, vm );
+    CoreGObject::get_signal( "enter", (void*) &Button::on_enter, vm );
 }
 
 
 void Button::on_enter( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "enter", "on_enter", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "enter", "on_enter", (VMachine*)_vm );
 }
 
 
@@ -211,13 +223,13 @@ void Button::on_enter( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_leave( VMARG )
 {
-    Gtk::internal_get_slot( "leave", (void*) &Button::on_leave, vm );
+    CoreGObject::get_signal( "leave", (void*) &Button::on_leave, vm );
 }
 
 
 void Button::on_leave( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "leave", "on_leave", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "leave", "on_leave", (VMachine*)_vm );
 }
 
 
@@ -232,13 +244,13 @@ void Button::on_leave( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_pressed( VMARG )
 {
-    Gtk::internal_get_slot( "pressed", (void*) &Button::on_pressed, vm );
+    CoreGObject::get_signal( "pressed", (void*) &Button::on_pressed, vm );
 }
 
 
 void Button::on_pressed( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "pressed", "on_pressed", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "pressed", "on_pressed", (VMachine*)_vm );
 }
 
 
@@ -253,13 +265,13 @@ void Button::on_pressed( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_released( VMARG )
 {
-    Gtk::internal_get_slot( "released", (void*) &Button::on_released, vm );
+    CoreGObject::get_signal( "released", (void*) &Button::on_released, vm );
 }
 
 
 void Button::on_released( GtkButton* btn, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) btn, "released", "on_released", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) btn, "released", "on_released", (VMachine*)_vm );
 }
 
 
@@ -546,7 +558,7 @@ FALCON_FUNC Button::set_image( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* img = (GtkWidget*)((GData*)i_img->asObject()->getUserData())->obj();
+    GtkWidget* img = (GtkWidget*) COREGOBJECT( i_img )->getGObject();
     gtk_button_set_image( (GtkButton*)_obj, img );
 }
 

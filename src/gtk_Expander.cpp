@@ -50,11 +50,8 @@ void Expander::modInit( Falcon::Module* mod )
 
 Expander::Expander( const Falcon::CoreClass* gen, const GtkExpander* exp )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( exp )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) exp ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) exp )
+{}
 
 
 Falcon::CoreObject* Expander::factory( const Falcon::CoreClass* gen, void* exp, bool )
@@ -86,8 +83,7 @@ FALCON_FUNC Expander::init( VMARG )
 
     MYSELF;
     GtkWidget* wdt = gtk_expander_new( lbl );
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 
@@ -321,12 +317,14 @@ FALCON_FUNC Expander::set_label_widget( VMARG )
     Gtk::ArgCheck0 args( vm, "[GtkWidget]" );
     // this method accepts nil
     GtkWidget* wdt = NULL;
-    CoreObject* o_wdt = args.getObject( 0, false );
+    CoreGObject* o_wdt = args.getCoreGObject( 0, false );
+#ifndef NO_PARAMETER_CHECK
     if ( o_wdt && !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "[GtkWidget]" );
     else
+#endif
     if ( o_wdt )
-        wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+        wdt = (GtkWidget*) o_wdt->getGObject();
 
     MYSELF;
     GET_OBJ( self );

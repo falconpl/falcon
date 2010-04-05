@@ -20,6 +20,8 @@ void Object::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_Object->getClassDef()->addInheritance( in );
 
+    c_Object->getClassDef()->factory( &Object::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "signal_destroy",     &Object::signal_destroy },
@@ -31,6 +33,19 @@ void Object::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Object, meth->name, meth->cb );
 
 }
+
+
+Object::Object( const Falcon::CoreClass* gen, const GtkObject* object )
+    :
+    Gtk::CoreGObject( gen, (GObject*) object )
+{}
+
+
+Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* object, bool )
+{
+    return new Object( gen, (GtkObject*) object );
+}
+
 
 /*#
     @class GtkObject
@@ -51,13 +66,13 @@ void Object::modInit( Falcon::Module* mod )
  */
 FALCON_FUNC Object::signal_destroy( VMARG )
 {
-    Gtk::internal_get_slot( "destroy", (void*) &Object::on_destroy, vm );
+    CoreGObject::get_signal( "destroy", (void*) &Object::on_destroy, vm );
 }
 
 
 void Object::on_destroy( GObject* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "destroy", "on_destroy", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) obj, "destroy", "on_destroy", (VMachine*)_vm );
 }
 
 

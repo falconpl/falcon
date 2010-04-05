@@ -43,11 +43,8 @@ void TextMark::modInit( Falcon::Module* mod )
 
 TextMark::TextMark( const Falcon::CoreClass* gen, const GtkTextMark* mk )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( mk )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) mk ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) mk )
+{}
 
 
 Falcon::CoreObject* TextMark::factory( const Falcon::CoreClass* gen, void* mk, bool )
@@ -104,8 +101,7 @@ FALCON_FUNC TextMark::init( VMARG )
 
     MYSELF;
     GtkTextMark* mk = gtk_text_mark_new( name, gravity );
-    Gtk::internal_add_slot( (GObject*) mk );
-    self->setUserData( new GData( (GObject*) mk ) );
+    self->setGObject( (GObject*) mk );
 }
 
 

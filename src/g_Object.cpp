@@ -41,11 +41,8 @@ void Object::modInit( Falcon::Module* mod )
 
 Object::Object( const Falcon::CoreClass* gen, const GObject* obj )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( obj )
-        setUserData( new Gtk::GData( Gtk::internal_add_slot( (GObject*) obj ) ) );
-}
+    Gtk::CoreGObject( gen, obj )
+{}
 
 
 Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* obj, bool )
@@ -80,13 +77,13 @@ FALCON_FUNC Object::signal_notify( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "notify", (void*) &Object::on_notify, vm );
+    CoreGObject::get_signal( "notify", (void*) &Object::on_notify, vm );
 }
 
 
 void Object::on_notify( GObject* obj, GParamSpec* pspec, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( obj, "notify", "on_notify", (VMachine*)_vm );
+    CoreGObject::trigger_slot( obj, "notify", "on_notify", (VMachine*)_vm );
 }
 
 
@@ -138,7 +135,7 @@ FALCON_FUNC Object::set_property( VMARG )
         if ( !IS_DERIVED( i_val, GObject ) )
             throw_inv_params( "GObject" );
 #endif
-        GObject* obj = (GObject*)((Gtk::GData*)i_val->asObject()->getUserData())->obj();
+        GObject* obj = COREGOBJECT( i_val )->getGObject();
         g_object_set( _obj, name.c_str(), obj, NULL );
     }
     else

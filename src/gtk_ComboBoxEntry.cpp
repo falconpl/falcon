@@ -36,11 +36,8 @@ void ComboBoxEntry::modInit( Falcon::Module* mod )
 
 ComboBoxEntry::ComboBoxEntry( const Falcon::CoreClass* gen, const GtkComboBoxEntry* box )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( box )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) box ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
 
 
 Falcon::CoreObject* ComboBoxEntry::factory( const Falcon::CoreClass* gen, void* box, bool )
@@ -85,8 +82,7 @@ FALCON_FUNC ComboBoxEntry::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* wdt = gtk_combo_box_entry_new();
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

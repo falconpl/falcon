@@ -22,9 +22,24 @@ void Bin::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Bin->getClassDef()->addInheritance( in );
 
+    c_Bin->getClassDef()->factory( &Bin::factory );
+
     mod->addClassMethod( c_Bin, "get_child",    &Bin::get_child );
 
 }
+
+
+Bin::Bin( const Falcon::CoreClass* gen, const GtkBin* bin )
+    :
+    Gtk::CoreGObject( gen, (GObject*) bin )
+{}
+
+
+Falcon::CoreObject* Bin::factory( const Falcon::CoreClass* gen, void* bin, bool )
+{
+    return new Bin( gen, (GtkBin*) bin );
+}
+
 
 /*#
     @class GtkBin

@@ -68,11 +68,8 @@ void Image::modInit( Falcon::Module* mod )
 
 Image::Image( const Falcon::CoreClass* gen, const GtkImage* img )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( img )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) img ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) img )
+{}
 
 
 Falcon::CoreObject* Image::factory( const Falcon::CoreClass* gen, void* img, bool )
@@ -117,8 +114,7 @@ FALCON_FUNC Image::init( VMARG )
         img = gtk_image_new();
 
     MYSELF;
-    Gtk::internal_add_slot( (GObject*) img );
-    self->setUserData( new GData( (GObject*) img ) );
+    self->setGObject( (GObject*) img );
 }
 
 

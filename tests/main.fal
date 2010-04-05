@@ -23,7 +23,7 @@ class MyWindow from GtkWindow
         // set window title using a generic property setter
         self.set_property( "title", "Falcon" );
         // connect to delete-event
-        self.signal_delete_event().subscribe( self )
+        self.signal_delete_event().connect( self )
         // make a vertical box
         vbox = GtkVBox()
         self.add( vbox )
@@ -32,7 +32,7 @@ class MyWindow from GtkWindow
         vbox.add( lbl )
         // add a button
         btn = GtkButton( "Falcon!" )
-        btn.signal_clicked().subscribe( self )
+        btn.signal_clicked().connect( self )
         vbox.add( btn )
     end
 end

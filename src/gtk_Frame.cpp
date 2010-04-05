@@ -22,6 +22,8 @@ void Frame::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_Frame->getClassDef()->addInheritance( in );
 
+    c_Frame->getClassDef()->factory( &Frame::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "set_label",          &Frame::set_label },
@@ -40,6 +42,18 @@ void Frame::modInit( Falcon::Module* mod )
 }
 
 
+Frame::Frame( const Falcon::CoreClass* gen, const GtkFrame* frm )
+    :
+    Gtk::CoreGObject( gen, (GObject*) frm )
+{}
+
+
+Falcon::CoreObject* Frame::factory( const Falcon::CoreClass* gen, void* frm, bool )
+{
+    return new Frame( gen, (GtkFrame*) frm );
+}
+
+
 /*#
     @class GtkFrame
     @brief A bin with a decorative frame and optional label
@@ -53,7 +67,7 @@ FALCON_FUNC Frame::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -69,8 +83,8 @@ FALCON_FUNC Frame::init( VMARG )
     }
     else
         wdt = gtk_frame_new( NULL );
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+
+    self->setGObject( (GObject*) wdt );
 }
 
 
@@ -113,7 +127,7 @@ FALCON_FUNC Frame::set_label_widget( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_frame_set_label_widget( (GtkFrame*)_obj, wdt );

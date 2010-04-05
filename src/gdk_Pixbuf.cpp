@@ -31,11 +31,8 @@ void Pixbuf::modInit( Falcon::Module* mod )
 
 Pixbuf::Pixbuf( const Falcon::CoreClass* gen, const GdkPixbuf* buf )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( buf )
-        setUserData( new Gtk::GData( Gtk::internal_add_slot( (GObject*) buf ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) buf )
+{}
 
 
 Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bool )

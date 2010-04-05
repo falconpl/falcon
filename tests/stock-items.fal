@@ -130,7 +130,7 @@ end
 class MyWindow from GtkWindow
     init
         self.set_title( "Stock Items" )
-        self.signal_delete_event().subscribe( self )
+        self.signal_delete_event().connect( self )
         tab = MyTable()
         self.add( tab )
     end

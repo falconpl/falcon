@@ -20,9 +20,24 @@ void Arrow::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMisc" ) );
     c_Arrow->getClassDef()->addInheritance( in );
 
+    c_Arrow->getClassDef()->factory( &Arrow::factory );
+
     mod->addClassMethod( c_Arrow, "set", &Arrow::set );
 
 }
+
+
+Arrow::Arrow( const Falcon::CoreClass* gen, const GtkArrow* arrow )
+    :
+    Gtk::CoreGObject( gen, (GObject*) arrow )
+{}
+
+
+Falcon::CoreObject* Arrow::factory( const Falcon::CoreClass* gen, void* arrow, bool )
+{
+    return new Arrow( gen, (GtkArrow*) arrow );
+}
+
 
 /*#
     @class GtkArrow
@@ -66,8 +81,7 @@ FALCON_FUNC Arrow::init( VMARG )
     else
         wdt = gtk_arrow_new( GTK_ARROW_NONE, GTK_SHADOW_NONE );
     MYSELF;
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

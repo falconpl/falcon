@@ -20,6 +20,8 @@ void Misc::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Misc->getClassDef()->addInheritance( in );
 
+    c_Misc->getClassDef()->factory( &Misc::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "set_alignment",  &Misc::set_alignment },
@@ -32,6 +34,19 @@ void Misc::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Misc, meth->name, meth->cb );
 }
+
+
+Misc::Misc( const Falcon::CoreClass* gen, const GtkMisc* misc )
+    :
+    Gtk::CoreGObject( gen, (GObject*) misc )
+{}
+
+
+Falcon::CoreObject* Misc::factory( const Falcon::CoreClass* gen, void* misc, bool )
+{
+    return new Misc( gen, (GtkMisc*) misc );
+}
+
 
 /*#
     @class GtkMisc
@@ -110,7 +125,7 @@ FALCON_FUNC Misc::get_alignment( VMARG )
     GET_OBJ( self );
     gfloat x, y;
     gtk_misc_get_alignment( (GtkMisc*)_obj, &x, &y );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 2 );
     arr->append( x );
     arr->append( y );
     vm->retval( arr );
@@ -128,7 +143,7 @@ FALCON_FUNC Misc::get_padding( VMARG )
     GET_OBJ( self );
     gint x, y;
     gtk_misc_get_padding( (GtkMisc*)_obj, &x, &y );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 2 );
     arr->append( x );
     arr->append( y );
     vm->retval( arr );

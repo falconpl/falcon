@@ -3,41 +3,48 @@
 
 #include "modgtk.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Paned
+ *  \class Falcon::Gtk::Paned
  */
-namespace Paned {
+class Paned
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Paned( const Falcon::CoreClass*, const GtkPaned* = 0 );
 
-FALCON_FUNC add1( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC add2( VMARG );
+    static void modInit( Falcon::Module* );
 
-FALCON_FUNC pack1( VMARG );
+    static FALCON_FUNC add1( VMARG );
 
-FALCON_FUNC pack2( VMARG );
+    static FALCON_FUNC add2( VMARG );
 
-FALCON_FUNC get_child1( VMARG );
+    static FALCON_FUNC pack1( VMARG );
 
-FALCON_FUNC get_child2( VMARG );
+    static FALCON_FUNC pack2( VMARG );
 
-FALCON_FUNC set_position( VMARG );
+    static FALCON_FUNC get_child1( VMARG );
 
-FALCON_FUNC get_position( VMARG );
+    static FALCON_FUNC get_child2( VMARG );
+
+    static FALCON_FUNC set_position( VMARG );
+
+    static FALCON_FUNC get_position( VMARG );
 
 #if GTK_MINOR_VERSION >= 20
-FALCON_FUNC get_handle_window( VMARG );
+    static FALCON_FUNC get_handle_window( VMARG );
 #endif
 
+};
 
-} // Paned
+
 } // Gtk
 } // Falcon
 

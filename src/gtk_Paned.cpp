@@ -23,6 +23,8 @@ void Paned::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Paned->getClassDef()->addInheritance( in );
 
+    c_Paned->getClassDef()->factory( &Paned::factory );
+
     mod->addClassMethod( c_Paned, "add1",       &Paned::add1 );
     mod->addClassMethod( c_Paned, "add2",       &Paned::add2 );
     mod->addClassMethod( c_Paned, "pack1",      &Paned::pack1 );
@@ -36,6 +38,19 @@ void Paned::modInit( Falcon::Module* mod )
 #endif
 
 }
+
+
+Paned::Paned( const Falcon::CoreClass* gen, const GtkPaned* paned )
+    :
+    Gtk::CoreGObject( gen, (GObject*) paned )
+{}
+
+
+Falcon::CoreObject* Paned::factory( const Falcon::CoreClass* gen, void* paned, bool )
+{
+    return new Paned( gen, (GtkPaned*) paned );
+}
+
 
 /*#
     @class GtkPaned
@@ -83,7 +98,7 @@ FALCON_FUNC Paned::add1( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_paned_add1( (GtkPaned*)_obj, wdt );
 }
 
@@ -105,7 +120,7 @@ FALCON_FUNC Paned::add2( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_paned_add2( (GtkPaned*)_obj, wdt );
 }
 
@@ -121,10 +136,12 @@ FALCON_FUNC Paned::pack1( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,B,B" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,B,B" );
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+#endif
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gboolean resize = args.getBoolean( 1 );
     gboolean shrink = args.getBoolean( 2 );
@@ -146,10 +163,12 @@ FALCON_FUNC Paned::pack2( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,B,B" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,B,B" );
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+#endif
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gboolean resize = args.getBoolean( 1 );
     gboolean shrink = args.getBoolean( 2 );

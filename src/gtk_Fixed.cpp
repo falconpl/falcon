@@ -20,12 +20,27 @@ void Fixed::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Fixed->getClassDef()->addInheritance( in );
 
+    c_Fixed->getClassDef()->factory( &Fixed::factory );
+
     mod->addClassMethod( c_Fixed, "put",            &Fixed::put );
     mod->addClassMethod( c_Fixed, "move",           &Fixed::move );
     mod->addClassMethod( c_Fixed, "get_has_window", &Fixed::get_has_window );
     mod->addClassMethod( c_Fixed, "set_has_window", &Fixed::set_has_window );
 
 }
+
+
+Fixed::Fixed( const Falcon::CoreClass* gen, const GtkFixed* fxd )
+    :
+    Gtk::CoreGObject( gen, (GObject*) fxd )
+{}
+
+
+Falcon::CoreObject* Fixed::factory( const Falcon::CoreClass* gen, void* fxd, bool )
+{
+    return new Fixed( gen, (GtkFixed*) fxd );
+}
+
 
 /*#
     @class GtkFixed
@@ -65,8 +80,7 @@ FALCON_FUNC Fixed::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* fixed = gtk_fixed_new();
-    Gtk::internal_add_slot( (GObject*) fixed );
-    self->setUserData( new GData( (GObject*) fixed ) );
+    self->setGObject( (GObject*) fixed );
 }
 
 
@@ -80,10 +94,12 @@ FALCON_FUNC Fixed::put( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+#endif
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -104,10 +120,12 @@ FALCON_FUNC Fixed::move( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "GtkWidget,I,I" );
 
-    CoreObject* o_wdt = args.getObject( 0 );
+    CoreGObject* o_wdt = args.getCoreGObject( 0 );
+#ifndef NO_PARAMETER_CHECK
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
-    GtkWidget* wdt = (GtkWidget*)((GData*)o_wdt->getUserData())->obj();
+#endif
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );

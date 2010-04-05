@@ -77,7 +77,7 @@ FALCON_FUNC Activatable::do_set_related_action( VMARG )
         || !IS_DERIVED( i_act, GtkAction ) )
         throw_inv_params( "GtkAction" );
 #endif
-    GtkAction* act = (GtkAction*)((GData*)i_act->asObject()->getUserData())->obj();
+    GtkAction* act = (GtkAction*) COREGOBJECT( i_act )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_activatable_do_set_related_action( (GtkActivatable*)_obj, act );
@@ -138,7 +138,7 @@ FALCON_FUNC Activatable::sync_action_properties( VMARG )
 #endif
     GtkAction* act = NULL;
     if ( i_act )
-        act = (GtkAction*)((GData*)i_act->asObject()->getUserData())->obj();
+        act = (GtkAction*) COREGOBJECT( i_act )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_activatable_sync_action_properties( (GtkActivatable*)_obj, act );
@@ -158,7 +158,7 @@ FALCON_FUNC Activatable::set_related_action( VMARG )
         || !IS_DERIVED( i_act, GtkAction ) )
         throw_inv_params( "GtkAction" );
 #endif
-    GtkAction* act = (GtkAction*)((GData*)i_act->asObject()->getUserData())->obj();
+    GtkAction* act = (GtkAction*) COREGOBJECT( i_act )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_activatable_set_related_action( (GtkActivatable*)_obj, act );

@@ -145,11 +145,8 @@ void Widget::modInit( Falcon::Module* mod )
 
 Widget::Widget( const Falcon::CoreClass* gen, const GtkWidget* wdt )
     :
-    Gtk::CoreGObject( gen )
-{
-    if ( wdt )
-        setUserData( new GData( Gtk::internal_add_slot( (GObject*) wdt ) ) );
-}
+    Gtk::CoreGObject( gen, (GObject*) wdt )
+{}
 
 
 Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bool )
@@ -177,14 +174,14 @@ FALCON_FUNC Widget::signal_accel_closures_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "accel_closures_changed",
+    CoreGObject::get_signal( "accel_closures_changed",
         (void*) &Widget::on_accel_closures_changed, vm );
 }
 
 
 void Widget::on_accel_closures_changed( GtkWidget* wdt, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) wdt, "accel_closures_changed",
+    CoreGObject::trigger_slot( (GObject*) wdt, "accel_closures_changed",
         "on_accel_closures_changed", (VMachine*)_vm );
 }
 
@@ -211,7 +208,7 @@ FALCON_FUNC Widget::signal_button_press_event( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "button_press_event",
+    CoreGObject::get_signal( "button_press_event",
         (void*) &Widget::on_button_press_event, vm );
 }
 
@@ -285,7 +282,7 @@ FALCON_FUNC Widget::signal_button_release_event( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "button_release_event",
+    CoreGObject::get_signal( "button_release_event",
         (void*) &Widget::on_button_release_event, vm );
 }
 
@@ -360,7 +357,7 @@ FALCON_FUNC Widget::signal_can_activate_accel( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "can_activate_accel",
+    CoreGObject::get_signal( "can_activate_accel",
         (void*) &Widget::on_can_activate_accel, vm );
 }
 
@@ -428,7 +425,7 @@ FALCON_FUNC Widget::signal_child_notify( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "child_notify",
+    CoreGObject::get_signal( "child_notify",
         (void*) &Widget::on_child_notify, vm );
 }
 
@@ -485,14 +482,14 @@ FALCON_FUNC Widget::signal_composited_changed( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "composited_changed",
+    CoreGObject::get_signal( "composited_changed",
         (void*) &Widget::on_composited_changed, vm );
 }
 
 
 void Widget::on_composited_changed( GtkWidget* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "composited_changed",
+    CoreGObject::trigger_slot( (GObject*) obj, "composited_changed",
         "on_composited_changed", (VMachine*)_vm );
 }
 
@@ -525,7 +522,7 @@ FALCON_FUNC Widget::signal_delete_event( VMARG )
         throw_require_no_args();
     }
 #endif
-    Gtk::internal_get_slot( "delete_event", (void*) &Widget::on_delete_event, vm );
+    CoreGObject::get_signal( "delete_event", (void*) &Widget::on_delete_event, vm );
 }
 
 
@@ -599,7 +596,7 @@ FALCON_FUNC Widget::signal_destroy_event( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "destroy_event", (void*) &Widget::on_destroy_event, vm );
+    CoreGObject::get_signal( "destroy_event", (void*) &Widget::on_destroy_event, vm );
 }
 
 
@@ -747,13 +744,13 @@ FALCON_FUNC Widget::signal_hide( VMARG )
         throw_require_no_args();
     }
 #endif
-    Gtk::internal_get_slot( "hide", (void*) &Widget::on_hide, vm );
+    CoreGObject::get_signal( "hide", (void*) &Widget::on_hide, vm );
 }
 
 
 void Widget::on_hide( GtkWidget* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "hide", "on_hide", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) obj, "hide", "on_hide", (VMachine*)_vm );
 }
 
 
@@ -872,13 +869,13 @@ FALCON_FUNC Widget::signal_show( VMARG )
         throw_require_no_args();
     }
 #endif
-    Gtk::internal_get_slot( "show", (void*) &Widget::on_show, vm );
+    CoreGObject::get_signal( "show", (void*) &Widget::on_show, vm );
 }
 
 
 void Widget::on_show( GtkWidget* obj, gpointer _vm )
 {
-    Gtk::internal_trigger_slot( (GObject*) obj, "show", "on_show", (VMachine*)_vm );
+    CoreGObject::trigger_slot( (GObject*) obj, "show", "on_show", (VMachine*)_vm );
 }
 
 
@@ -901,7 +898,7 @@ FALCON_FUNC Widget::signal_size_request( VMARG )
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    Gtk::internal_get_slot( "size_request", (void*) &Widget::on_size_request, vm );
+    CoreGObject::get_signal( "size_request", (void*) &Widget::on_size_request, vm );
 }
 
 
@@ -1350,7 +1347,7 @@ FALCON_FUNC Widget::reparent( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_widget_reparent( (GtkWidget*)_obj, (GtkWidget*) wdt );
 }
 
@@ -1630,7 +1627,7 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     vm->retval( (bool) gtk_widget_is_ancestor( (GtkWidget*)_obj, wdt ) );
 }
 

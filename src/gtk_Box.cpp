@@ -20,6 +20,8 @@ void Box::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_Box->getClassDef()->addInheritance( in );
 
+    c_Box->getClassDef()->factory( &Box::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "pack_start",             &Box::pack_start },
@@ -37,6 +39,18 @@ void Box::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Box, meth->name, meth->cb );
+}
+
+
+Box::Box( const Falcon::CoreClass* gen, const GtkBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+
+Falcon::CoreObject* Box::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new Box( gen, (GtkBox*) box );
 }
 
 
@@ -70,7 +84,7 @@ FALCON_FUNC Box::pack_start( VMARG )
     if ( padding < 0 )
         throw_inv_params( "GtkWidget,B,B,I" );
 #endif
-    GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -99,7 +113,7 @@ FALCON_FUNC Box::pack_end( VMARG )
     if ( padding < 0 )
         throw_inv_params( "GtkWidget,B,B,I" );
 #endif
-    GtkWidget* child = (GtkWidget*)((GData*)i_child->asObject()->getUserData())->obj();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -116,7 +130,7 @@ FALCON_FUNC Box::pack_start_defaults( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_pack_start_defaults( (GtkBox*)_obj, wdt );
@@ -131,7 +145,7 @@ FALCON_FUNC Box::pack_end_defaults( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_pack_end_defaults( (GtkBox*)_obj, wdt );
@@ -185,7 +199,7 @@ FALCON_FUNC Box::reorder_child( VMARG )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_reorder_child( (GtkBox*)_obj, wdt, i_pos->asInteger() );

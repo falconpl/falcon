@@ -19,6 +19,9 @@ void VButtonBox::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButtonBox" ) );
     c_VButtonBox->getClassDef()->addInheritance( in );
+
+    c_VButtonBox->getClassDef()->factory( &VButtonBox::factory );
+
 #if 0
     Gtk::MethodTab methods[] =
     {
@@ -33,6 +36,19 @@ void VButtonBox::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_VButtonBox, meth->name, meth->cb );
 #endif
 }
+
+
+VButtonBox::VButtonBox( const Falcon::CoreClass* gen, const GtkVButtonBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+
+Falcon::CoreObject* VButtonBox::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new VButtonBox( gen, (GtkVButtonBox*) box );
+}
+
 
 /*#
     @class GtkVButtonBox
@@ -50,8 +66,7 @@ FALCON_FUNC VButtonBox::init( VMARG )
 #endif
     GtkWidget* wdt = gtk_vbutton_box_new();
     MYSELF;
-    Gtk::internal_add_slot( (GObject*) wdt );
-    self->setUserData( new GData( (GObject*) wdt ) );
+    self->setGObject( (GObject*) wdt );
 }
 
 

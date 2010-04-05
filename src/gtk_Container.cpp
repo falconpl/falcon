@@ -20,6 +20,8 @@ void Container::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkWidget" ) );
     c_Container->getClassDef()->addInheritance( in );
 
+    c_Container->getClassDef()->factory( &Container::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "add",                    &Container::add },
@@ -63,6 +65,19 @@ void Container::modInit( Falcon::Module* mod )
 
 }
 
+
+Container::Container( const Falcon::CoreClass* gen, const GtkContainer* ctn )
+    :
+    Gtk::CoreGObject( gen, (GObject*) ctn )
+{}
+
+
+Falcon::CoreObject* Container::factory( const Falcon::CoreClass* gen, void* ctn, bool )
+{
+    return new Container( gen, (GtkContainer*) ctn );
+}
+
+
 /*#
     @class GtkContainer
     @brief Abstract container class.
@@ -90,7 +105,7 @@ FALCON_FUNC Container::add( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_container_add( (GtkContainer*)_obj, wdt );
 }
 
@@ -108,7 +123,7 @@ FALCON_FUNC Container::remove( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_container_remove( (GtkContainer*)_obj, wdt );
@@ -240,7 +255,7 @@ FALCON_FUNC Container::set_focus_child( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*)((GData*)i_wdt->asObject()->getUserData())->obj();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
     gtk_container_set_focus_child( (GtkContainer*)_obj, wdt );

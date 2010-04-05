@@ -8,18 +8,27 @@ namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::Arrow
+ *  \class Falcon::Gtk::Arrow
  */
-namespace Arrow {
+class Arrow
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    Arrow( const Falcon::CoreClass*, const GtkArrow* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC set( VMARG );
+    static void modInit( Falcon::Module* );
+
+    static FALCON_FUNC init( VMARG );
+
+    static FALCON_FUNC set( VMARG );
+
+};
 
 
-} // Arrow
 } // Gtk
 } // Falcon
 

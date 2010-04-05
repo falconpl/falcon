@@ -3,85 +3,93 @@
 
 #include "modgtk.hpp"
 
-#include <gtk/gtk.h>
 
 namespace Falcon {
 namespace Gtk {
 
 /**
- *  \namespace Falcon::Gtk::SpinButton
+ *  \class Falcon::Gtk::SpinButton
  */
-namespace SpinButton {
+class SpinButton
+    :
+    public Gtk::CoreGObject
+{
+public:
 
-void modInit( Falcon::Module* );
+    SpinButton( const Falcon::CoreClass*, const GtkSpinButton* = 0 );
 
-FALCON_FUNC init( VMARG );
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-FALCON_FUNC signal_change_value( VMARG );
+    static void modInit( Falcon::Module* );
 
-void on_change_value( GtkSpinButton*, GtkScrollType, gpointer );
+    static FALCON_FUNC init( VMARG );
 
-FALCON_FUNC signal_input( VMARG );
+    static FALCON_FUNC signal_change_value( VMARG );
 
-gint on_input( GtkSpinButton*, gpointer, gpointer );
+    static void on_change_value( GtkSpinButton*, GtkScrollType, gpointer );
 
-FALCON_FUNC signal_output( VMARG );
+    static FALCON_FUNC signal_input( VMARG );
 
-gboolean on_output( GtkSpinButton*, gpointer );
+    static gint on_input( GtkSpinButton*, gpointer, gpointer );
 
-FALCON_FUNC signal_value_changed( VMARG );
+    static FALCON_FUNC signal_output( VMARG );
 
-void on_value_changed( GtkSpinButton*, gpointer );
+    static gboolean on_output( GtkSpinButton*, gpointer );
 
-FALCON_FUNC signal_wrapped( VMARG );
+    static FALCON_FUNC signal_value_changed( VMARG );
 
-void on_wrapped( GtkSpinButton*, gpointer );
+    static void on_value_changed( GtkSpinButton*, gpointer );
 
-//FALCON_FUNC set_adjustment( VMARG );
+    static FALCON_FUNC signal_wrapped( VMARG );
 
-//FALCON_FUNC get_adjustment( VMARG );
+    static void on_wrapped( GtkSpinButton*, gpointer );
 
-FALCON_FUNC set_digits( VMARG );
+    //static FALCON_FUNC set_adjustment( VMARG );
 
-FALCON_FUNC set_increments( VMARG );
+    //static FALCON_FUNC get_adjustment( VMARG );
 
-FALCON_FUNC set_range( VMARG );
+    static FALCON_FUNC set_digits( VMARG );
 
-FALCON_FUNC get_value_as_int( VMARG );
+    static FALCON_FUNC set_increments( VMARG );
 
-FALCON_FUNC set_value( VMARG );
+    static FALCON_FUNC set_range( VMARG );
 
-FALCON_FUNC set_update_policy( VMARG );
+    static FALCON_FUNC get_value_as_int( VMARG );
 
-FALCON_FUNC set_numeric( VMARG );
+    static FALCON_FUNC set_value( VMARG );
 
-FALCON_FUNC spin( VMARG );
+    static FALCON_FUNC set_update_policy( VMARG );
 
-FALCON_FUNC set_wrap( VMARG );
+    static FALCON_FUNC set_numeric( VMARG );
 
-FALCON_FUNC set_snap_to_ticks( VMARG );
+    static FALCON_FUNC spin( VMARG );
 
-FALCON_FUNC update( VMARG );
+    static FALCON_FUNC set_wrap( VMARG );
 
-FALCON_FUNC get_digits( VMARG );
+    static FALCON_FUNC set_snap_to_ticks( VMARG );
 
-FALCON_FUNC get_increments( VMARG );
+    static FALCON_FUNC update( VMARG );
 
-FALCON_FUNC get_numeric( VMARG );
+    static FALCON_FUNC get_digits( VMARG );
 
-FALCON_FUNC get_range( VMARG );
+    static FALCON_FUNC get_increments( VMARG );
 
-FALCON_FUNC get_snap_to_ticks( VMARG );
+    static FALCON_FUNC get_numeric( VMARG );
 
-FALCON_FUNC get_update_policy( VMARG );
+    static FALCON_FUNC get_range( VMARG );
 
-FALCON_FUNC get_value( VMARG );
+    static FALCON_FUNC get_snap_to_ticks( VMARG );
 
-FALCON_FUNC get_wrap( VMARG );
+    static FALCON_FUNC get_update_policy( VMARG );
 
-} //SpinButton
-} //Gtk
-} //Falcon
+    static FALCON_FUNC get_value( VMARG );
 
-#endif //!GTK_SPINBUTTON_HPP
+    static FALCON_FUNC get_wrap( VMARG );
 
+};
+
+
+} // Gtk
+} // Falcon
+
+#endif // !GTK_SPINBUTTON_HPP

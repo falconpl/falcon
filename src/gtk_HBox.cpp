@@ -19,6 +19,20 @@ void HBox::modInit( Falcon::Module* mod )
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBox" ) );
     c_HBox->getClassDef()->addInheritance( in );
+
+    c_HBox->getClassDef()->factory( &HBox::factory );
+}
+
+
+HBox::HBox( const Falcon::CoreClass* gen, const GtkHBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+
+Falcon::CoreObject* HBox::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new HBox( gen, (GtkHBox*) box );
 }
 
 
@@ -34,7 +48,7 @@ FALCON_FUNC HBox::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getUserData() )
+    if ( self->getGObject() )
         return;
 
     Item* i_homog = vm->param( 0 );
@@ -60,8 +74,8 @@ FALCON_FUNC HBox::init( VMARG )
         spacing = i_spacing->asInteger();
     }
     GtkWidget* gwdt = gtk_hbox_new( homog, spacing );
-    Gtk::internal_add_slot( (GObject*) gwdt );
-    self->setUserData( new GData( (GObject*) gwdt ) );
+
+    self->setGObject( (GObject*) gwdt );
 }
 
 

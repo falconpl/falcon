@@ -20,6 +20,8 @@ void EventBox::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkBin" ) );
     c_EventBox->getClassDef()->addInheritance( in );
 
+    c_EventBox->getClassDef()->factory( &EventBox::factory );
+
     Gtk::MethodTab methods[] =
     {
     { "set_above_child",        &EventBox::set_above_child },
@@ -32,6 +34,19 @@ void EventBox::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_EventBox, meth->name, meth->cb );
 }
+
+
+EventBox::EventBox( const Falcon::CoreClass* gen, const GtkEventBox* box )
+    :
+    Gtk::CoreGObject( gen, (GObject*) box )
+{}
+
+
+Falcon::CoreObject* EventBox::factory( const Falcon::CoreClass* gen, void* box, bool )
+{
+    return new EventBox( gen, (GtkEventBox*) box );
+}
+
 
 /*#
     @class GtkEventBox
@@ -49,8 +64,7 @@ FALCON_FUNC EventBox::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* box = gtk_event_box_new();
-    Gtk::internal_add_slot( (GObject*) box );
-    self->setUserData( new GData( (GObject*) box ) );
+    self->setGObject( (GObject*) box );
 }
 
 
