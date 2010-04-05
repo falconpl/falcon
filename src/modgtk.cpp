@@ -26,6 +26,7 @@
 #include "gtk_ComboBox.hpp"
 #include "gtk_ComboBoxEntry.hpp"
 #include "gtk_Container.hpp"
+#include "gtk_Dialog.hpp"
 #include "gtk_Entry.hpp"
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_EventBox.hpp"
@@ -132,6 +133,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Frame::modInit( self );
                         Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
+                        Falcon::Gtk::Dialog::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
                         Falcon::Gtk::HButtonBox::modInit( self );

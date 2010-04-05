@@ -27,6 +27,7 @@ set( SRC_FILES
     gtk_ComboBox.cpp
     gtk_ComboBoxEntry.cpp
     gtk_Container.cpp
+    gtk_Dialog.cpp
     gtk_enums.cpp
     gtk_Editable.cpp
     gtk_Entry.cpp
@@ -92,6 +93,7 @@ set( HDR_FILES
     gtk_ComboBox.hpp
     gtk_ComboBoxEntry.hpp
     gtk_Container.hpp
+    gtk_Dialog.hpp
     gtk_enums.hpp
     gtk_Editable.hpp
     gtk_Entry.hpp
