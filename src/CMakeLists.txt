@@ -4,30 +4,48 @@
 # CMake configuration file for curl
 ####################################################################
 
-FALCON_DEFINE_MODULE( CURRENT_MODULE curl )
+# Creates the proper module file name from the project name.
+falcon_define_module( CURRENT_MODULE @PROJECT_NAME@ )
 
+# Inclusion settings
+include_directories(
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${Falcon_INCLUDE_DIRS}
+   ${CURL_INCLUDE_DIR}
+)
 # Enable this include if the project has a private include
-#INCLUDE_DIRECTORIES( "${PROJECT_SOURCE_DIR}/include" )
+#include_directories( ${PROJECT_SOURCE_DIR}/include )
 
-#
-# Falcon generic directories
-#
 
-INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
-INCLUDE_DIRECTORIES(BEFORE "${CURL_INCLUDE_DIR}")
-LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}" )
-
-#sources
-FILE( GLOB SRC_FILES "*.cpp" "*.h" )
-
-# Target
-ADD_LIBRARY( ${CURRENT_MODULE} MODULE
-   ${SRC_FILES}
+# Sources files the module is built from.
+set(SRC_FILES 
+   curl.cpp
+   curl_ext.cpp
+   curl_mod.cpp
+   curl_st.cpp
+   # add more source files starting here:
 )
 
-SET_TARGET_PROPERTIES(${CURRENT_MODULE} PROPERTIES LINKER_LANGUAGE CXX)
+# These are actually not needed by cmake to build. But if omitted they won't be
+# listed in the virtual file tree of Visual Studio.
+set(HDR_FILES
+   curl_ext.h
+   curl_mod.h
+   curl_st.h
+   version.h
+   # add more header files starting here:
+)
 
-TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} falcon_engine)
-TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} "${CURL_LIBRARY}")
-FALCON_INSTALL_MODULE( ${CURRENT_MODULE} )
-#
+# Builds and links from the source files
+add_library( ${CURRENT_MODULE} MODULE
+   ${SRC_FILES}
+   ${HDR_FILES} # optional but useful, see comment above.
+)
+
+# If your module needs some lib more, use the followings:
+target_link_libraries( ${CURRENT_MODULE} 
+   falcon_engine
+   ${CURL_LIBRARY}
+)
+
+falcon_install_module( ${CURRENT_MODULE} )

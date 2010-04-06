@@ -7,28 +7,11 @@
 PROJECT(curl)
 cmake_minimum_required(VERSION 2.6)
 
-if( WIN32)
-	find_package( CURL
-		PATHS
-			./libcurl
-			)
-else()
-	find_package( CURL )
-endif()
+find_package(Falcon REQUIRED)
+find_package(CURL REQUIRED)
 
-if(CURL_FOUND)
-   Message( "Found curl in ${CURL_INCLUDE_DIRS}" )
-else()
-   Message( "Please, specify CURL_INCLUDE_DIRS and CURL_LIBRARY variables" )
-   Message( FATAL_ERROR "Can't find CURL library" )
-endif()
-
-# Set here project-wide options
-# OPTION( WITH_OPT  "An poption" OFF)
-
-INCLUDE( "falmod.cmake" )
-
-#process source directory
-ADD_SUBDIRECTORY(src)
-
-#add other subdirectories here.
+## process source directories
+# add other subdirectories that contain libraries on which the final module depends here..
+#add_subdirectory(awesome_library)
+# ..before the module's source dir:
+add_subdirectory(src)
