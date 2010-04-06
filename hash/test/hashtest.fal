@@ -1,0 +1,165 @@
+// hash module tests
+// every hash should produce the same results on every platform (obviously)
+
+function chsplit(str)
+    s = len(str)
+    if not s: return nil
+    arr = arrayBuffer(s)
+    for i = 0 to s - 1: arr[i] = str[i]
+    return arr
+end
+
+function expect(what, expected, desc)
+    ok = true
+    counter = 0
+    for it in what
+        counter++
+        if(it == expected)
+            > "[", desc, ": ", counter, "] success."
+        else
+            > "[", desc, ": ", counter, "] FAIL! Expected: ", expected, ", got: ", it
+            ok = false
+        end
+    end
+    return ok
+end
+
+// alg: hash class constructor, items: list or array of items to be hashed (preferrably strings or membufs)
+function hash(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    h.finalize()
+    return h.toString()
+end
+
+// only hashes with an output size <= 8 bytes support toInt()
+function hashInt(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    h.finalize()
+    return h.toInt()
+end
+
+function hashBuf(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    h.finalize()
+    return h.toMemBuf()
+end
+
+function li2buf(s, li)
+    pos = 0
+    mb = MemBuf(len(li), s)
+    for e in li: mb[pos++] = e
+    return mb
+end
+
+function bufcmp(a,b)
+    la = len(a)
+    if (la != len(b)) or (a.wordSize() != b.wordSize()): return false
+    for i = 0 to la - 1: if a[i] != b[i]: return false
+    return true
+end
+    
+        
+
+function test_hashes()
+    // verification table
+    table = [ 
+      "" => [
+            [CRC32,         "CRC32",     "00000000"],
+            [Adler32,       "Adler32",   "00000001"],
+            [SHA1Hash,      "SHA1",      "da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+            [SHA224Hash,    "SHA224",    "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f"],
+            [SHA256Hash,    "SHA256",    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
+            [SHA384Hash,    "SHA384",    "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"],
+            [SHA512Hash,    "SHA512",    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"],
+            [MD2Hash,       "MD2",       "8350e5a3e24c153df2275c9f80692773"],
+            [MD4Hash,       "MD4",       "31d6cfe0d16ae931b73c59d7e0c089c0"],
+            [MD5Hash,       "MD5",       "d41d8cd98f00b204e9800998ecf8427e"],
+            [WhirlpoolHash, "Whirlpool", "19fa61d75522a4669b44e39c1d2e1726c530232130d407f89afee0964997f7a73e83be698b288febcf88e3e03c4f0757ea8964e59b63d93708b138cc42a66eb3"],
+            [TigerHash,     "Tiger",     "3293ac630c13f0245f92bbb1766e16167a4e58492dde73f3"]
+            //[RIPEMD160Hash, "RIPEMD160", "9c1185a5c5e9fc54612808977ee8f548b2258d31"]
+            ],
+
+      "abc" => [
+            [CRC32,         "CRC32",     "352441c2"],
+            [Adler32,       "Adler32",   "024d0127"],
+            [SHA1Hash,      "SHA1",      "a9993e364706816aba3e25717850c26c9cd0d89d"],
+            [SHA224Hash,    "SHA224",    "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7"],
+            [SHA256Hash,    "SHA256",    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"],
+            [SHA384Hash,    "SHA384",    "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7"],
+            [SHA512Hash,    "SHA512",    "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"],
+            [MD2Hash,       "MD2",       "da853b0d3f88d99b30283a69e6ded6bb"],
+            [MD4Hash,       "MD4",       "a448017aaf21d8525fc10ae87aa6729d"],
+            [MD5Hash,       "MD5",       "900150983cd24fb0d6963f7d28e17f72"],
+            [WhirlpoolHash, "Whirlpool", "4e2448a4c6f486bb16b6562c73b4020bf3043e3a731bce721ae1b303d97e6d4c7181eebdb6c57e277d0e34957114cbd6c797fc9d95d8b582d225292076d4eef5"],
+            [TigerHash,     "Tiger",     "2aab1484e8c158f2bfb8c5ff41b57a525129131c957b5f93"]
+            //[RIPEMD160Hash, "RIPEMD160", "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"]
+            ],
+            
+      "The quick brown fox jumps over the lazy dog" => [
+            [CRC32,         "CRC32",     "414fa339"],
+            [Adler32,       "Adler32",   "5bdc0fda"],
+            [SHA1Hash,      "SHA1",      "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"],
+            [SHA224Hash,    "SHA224",    "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525"],
+            [SHA256Hash,    "SHA256",    "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"],
+            [SHA384Hash,    "SHA384",    "ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1"],
+            [SHA512Hash,    "SHA512",    "07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6"],
+            [MD2Hash,       "MD2",       "03d85a0d629d2c442e987525319fc471"],
+            [MD4Hash,       "MD4",       "1bee69a46ba811185c194762abaeae90"],
+            [MD5Hash,       "MD5",       "9e107d9d372bb6826bd81d3542a419d6"],
+            [WhirlpoolHash, "Whirlpool", "b97de512e91e3828b40d2b0fdce9ceb3c4a71f9bea8d88e75c4fa854df36725fd2b52eb6544edcacd6f8beddfea403cb55ae31f03ad62a5ef54e42ee82c3fb35"],
+            [TigerHash,     "Tiger",     "6d12a41e72e644f017b6f0e2f7b44c6285f06dd5d2c5b075"]
+            //[RIPEMD160Hash, "RIPEMD160", "37f332f68db77bd9d7edd4969571ad671cf9dd3b"]
+            ]
+      
+    ]
+    
+    good = true
+    for idx, reslist in table
+        > "--- Test for: '", idx, "' ---"
+        for e in reslist
+            alg, desc, result = e
+            a = hash(alg, [idx]) // test with only 1 arg (1x UpdateData() call)
+            b = hash(alg, chsplit(idx)) // hash each char seperately (many UpdateData() calls)
+            if not expect([a,b], result, desc): good = false
+        end
+    end
+    
+    > "--- Checking toInt() methods ---"
+    txt = "The quick brown fox jumps over the lazy dog"
+    if not expect([hashInt(CRC32,   [txt])], 1095738169, "CRC32"): good = false
+    if not expect([hashInt(Adler32, [txt])], 1541148634, "Adler32"): good = false
+    
+    > "--- Checking for correct MemBuf output ---"
+    sha1buf_expected = li2buf(1, .[0xA9 0x99 0x3E 0x36 0x47 0x06 0x81 0x6A 0xBA 0x3E 0x25 0x71 0x78 0x50 0xC2 0x6C 0x9C 0xD0 0xD8 0x9D])
+    sha1buf = hashBuf(SHA1Hash, ["abc"])
+    if not bufcmp(sha1buf, sha1buf_expected)
+        > "[SHA1] FAIL!"
+        >> "Expected: "; inspect(sha1buf_expected)
+        >> "Got:      "; inspect(sha1buf)
+        good = false
+    else
+        > "MemBuf output success."
+    end
+    
+    > "--- Checking membuf input ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    // the memory layout below is in little endian
+    mb1 = hash(SHA1Hash, [li2buf(1, .[0x61 0x62 0x63 0x64 0x41 0x42 0x43 0x44])])
+    mb2 = hash(SHA1Hash, [li2buf(2, .[0x6261 0x6463 0x4241 0x4443])])
+    mb3 = hash(SHA1Hash, [li2buf(3, .[0x636261 0x424164]), li2buf(2, .[0x4443])])
+    mb4 = hash(SHA1Hash, [li2buf(4, .[0x64636261 0x44434241])])
+    if not expect([hash(SHA1Hash, ["abcdABCD"])], expected, "SHA1 string"): good = false
+    if not expect([mb1,mb2,mb3,mb4], expected, "SHA1 MemBuf"): good = false
+    
+    
+    return good
+end
+
+if test_hashes()
+    > "Hash test completed successfully"
+else
+    > "Hash test FAILED!"
+end
