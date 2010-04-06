@@ -31,7 +31,7 @@ void Button::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    { "signal_activate",    &Button::signal_activate },
+    //{ "signal_activate",    &Button::signal_activate },
     { "signal_activate",    &Button::signal_activate },
     { "signal_clicked",     &Button::signal_clicked },
     { "signal_enter",       &Button::signal_enter },
