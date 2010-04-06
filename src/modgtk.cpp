@@ -182,8 +182,6 @@ CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
     Falcon::FalconObject( cls ),
     m_obj( (GObject*) gobj )
 {
-    if ( m_obj )
-        add_slots( m_obj );
     incref();
 }
 
@@ -206,7 +204,7 @@ CoreGObject* CoreGObject::clone() const
 void CoreGObject::setGObject( const GObject* obj )
 {
     assert( !m_obj && obj );
-    m_obj = add_slots( (GObject*) obj );
+    m_obj = (GObject*) obj;
     incref();
 }
 

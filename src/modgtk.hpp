@@ -39,7 +39,7 @@
 
 #define GET_SIGNALS( gobj ) \
         ::Falcon::CoreSlot* _signals = (::Falcon::CoreSlot*) \
-        g_object_get_data( G_OBJECT( gobj ), "__signals" )
+        g_object_get_data( Gtk::CoreGObject::add_slots( (GObject*) gobj ), "__signals" )
 
 #define IS_DERIVED( it, cls ) \
         ( (it)->isOfClass( #cls ) || (it)->isOfClass( "gtk." #cls ) )
@@ -125,6 +125,12 @@ protected:
     CoreGObject( const CoreGObject& );
 
     /**
+     *  \brief Add an anonymous VMSlot in the GObject.
+     *  VMSlots are used as a convenience to store the callback functions.
+     */
+    static GObject* add_slots( GObject* );
+
+    /**
      *  \brief Get a signal.
      *  This is used by derived classes to return a specific signal into the vm.
      *  \param signame signal name (e.g: "some_event")
@@ -161,12 +167,6 @@ protected:
     static Falcon::GarbageLock* lockItem( GObject*, const Falcon::Item& );
 
 private:
-
-    /**
-     *  \brief Add an anonymous VMSlot in the GObject.
-     *  VMSlots are used as a convenience to store the callback functions.
-     */
-    static GObject* add_slots( GObject* );
 
     /**
      *  \brief GDestroyNotify function to delete all slots.
