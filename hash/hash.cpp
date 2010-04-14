@@ -147,7 +147,7 @@
     @brief Calculates a 512 bits long Whirlpool hash
 */
 
-template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, char *name)
+template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, const char *name)
 {
     Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Hash_init<HASH>);
     self->addClassMethod(cls, "update", Falcon::Ext::Hash_update<HASH>);
@@ -199,7 +199,7 @@ Falcon::Module *hash_module_init(void)
    SimpleRegisterHash<Falcon::Mod::MD5Hash>       (self, "MD5Hash"      );
    SimpleRegisterHash<Falcon::Mod::WhirlpoolHash> (self, "WhirlpoolHash");
    SimpleRegisterHash<Falcon::Mod::TigerHash>     (self, "TigerHash"    );
-   
+
    // generate CRC32 table
    Falcon::Mod::CRC32::GenTab();
 
