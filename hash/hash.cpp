@@ -52,25 +52,118 @@
     @beginmodule feathers_hash
 */
 
+/*#
+    @group checksums Checksums
+    @brief Classes providing checksum functions
+
+    This group of classes provides simple checksum functions to verify integrity of arbitrary data.
+    They are NOT meant for use in cryptographic algorithms or @b safe data verification!
+*/
+
+/*#
+    @group weak_hashes Weak hashes
+    @brief Classes providing weak / deprecated hashes
+
+    This group of classes provides hashes that are stronger (and longer) then checksums,
+    but not recommended for serious cryptographic purposes (MD2, MD4, MD5 and partly SHA1 can be considered broken).
+*/
+
+/*#
+    @group strong_hashes Strong hashes
+    @brief Classes providing strong hashes, suitable for cryptography
+
+    Hashes in this group are cryptographically strong and can be used for @b secure verification of data.
+*/
+
+/*#
+    @class CRC32
+    @ingroup checksums
+    @brief Calculates a 32 bits long CRC32 checksum
+*/
+
+/*#
+    @class Adler32
+    @ingroup checksums
+    @brief Calculates a 32 bits long Adler32 checksum
+*/
+
+/*#
+    @class SHA1Hash
+    @ingroup weak_hashes
+    @brief Calculates a 160 bits long SHA-1 hash
+*/
+
+/*#
+    @class MD2Hash
+    @ingroup weak_hashes
+    @brief Calculates a 128 bits long MD2 (Message Digest 2) hash
+*/
+
+/*#
+    @class MD4Hash
+    @ingroup weak_hashes
+    @brief Calculates a 128 bits long MD4 (Message Digest 4) hash
+*/
+
+/*#
+    @class MD5Hash
+    @ingroup weak_hashes
+    @brief Calculates a 128 bits long MD5 (Message Digest 5) hash
+*/
+
+/*#
+    @class SHA224Hash
+    @ingroup strong_hashes
+    @brief Calculates a 224 bits long SHA224 hash (SHA-2 family)
+*/
+
+/*#
+    @class SHA256Hash
+    @ingroup strong_hashes
+    @brief Calculates a 256 bits long SHA256 hash (SHA-2 family)
+*/
+
+/*#
+    @class SHA384Hash
+    @ingroup strong_hashes
+    @brief Calculates a 384 bits long SHA384 hash (SHA-2 family)
+*/
+
+/*#
+    @class SHA512Hash
+    @ingroup strong_hashes
+    @brief Calculates a 512 bits long SHA512 hash (SHA-2 family)
+*/
+
+/*#
+    @class TigerHash
+    @ingroup strong_hashes
+    @brief Calculates a 192 bits long Tiger hash
+*/
+
+/*#
+    @class WhirlpoolHash
+    @ingroup strong_hashes
+    @brief Calculates a 512 bits long Whirlpool hash
+*/
+
 template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, char *name)
 {
     Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Hash_init<HASH>);
     self->addClassMethod(cls, "update", Falcon::Ext::Hash_update<HASH>);
+    self->addClassMethod(cls, "updateInt",   Falcon::Ext::Hash_updateInt<HASH>).asSymbol()->
+        addParam("num")->addParam("bytes");
     self->addClassMethod(cls, "finalize",   Falcon::Ext::Hash_finalize<HASH>);
     self->addClassMethod(cls, "isFinalized",Falcon::Ext::Hash_isFinalized<HASH>);
     self->addClassMethod(cls, "bytes", Falcon::Ext::Hash_bytes<HASH>);
     self->addClassMethod(cls, "bits", Falcon::Ext::Hash_bits<HASH>);
     self->addClassMethod(cls, "toMemBuf",  Falcon::Ext::Hash_toMemBuf<HASH>);
     self->addClassMethod(cls, "toString",   Falcon::Ext::Hash_toString<HASH>);
+
     return cls;
 }
 
-// define this to export hash_module_init() instead of falcon_module_init()
-#ifndef FALCON_MODULE_INLINE
-FALCON_MODULE_DECL
-#else
 Falcon::Module *hash_module_init(void)
-#endif
 {
    #define FALCON_DECLARE_MODULE self
 
@@ -95,6 +188,7 @@ Falcon::Module *hash_module_init(void)
    Falcon::Symbol *adler32_cls = SimpleRegisterHash<Falcon::Mod::Adler32>(self, "Adler32");
    self->addClassMethod(adler32_cls, "toInt", Falcon::Ext::Hash_toInt<Falcon::Mod::Adler32>);
 
+   SimpleRegisterHash<Falcon::Mod::HashBaseFalcon>(self, "HashBase"     );
    SimpleRegisterHash<Falcon::Mod::SHA1Hash>      (self, "SHA1Hash"     );
    SimpleRegisterHash<Falcon::Mod::SHA224Hash>    (self, "SHA224Hash"   );
    SimpleRegisterHash<Falcon::Mod::SHA256Hash>    (self, "SHA256Hash"   );
@@ -110,6 +204,11 @@ Falcon::Module *hash_module_init(void)
    Falcon::Mod::CRC32::GenTab();
 
    return self;
+}
+
+FALCON_MODULE_DECL
+{
+    return hash_module_init();
 }
 
 /* end of hash.cpp */

@@ -1,6 +1,8 @@
 // hash module tests
 // every hash should produce the same results on every platform (obviously)
 
+load hash
+
 function chsplit(str)
     s = len(str)
     if not s: return nil
@@ -154,9 +156,115 @@ function test_hashes()
     if not expect([hash(SHA1Hash, ["abcdABCD"])], expected, "SHA1 string"): good = false
     if not expect([mb1,mb2,mb3,mb4], expected, "SHA1 MemBuf"): good = false
     
+    > "--- Checking sequence hashing ---"
+    arr = [[[["ab"], ["c", "d"], [ ["AB", ["C", "D"] ] ] ]]]
+    li = List("ab", "cd", "A", List("B", "CD"))
+    dict = [ 1 => "ab", 2 => "cd", 3 => [ 1 => "AB", 2 => "CD"] ] // ordered dictionary
+    dictu = [ 2 => "cd", 1 => "ab", 3 => [ 2 => "CD", 1 => "AB"] ] // rely on correct ordering by dict
+    mixed = [ 1 => "a", 2 => List("b", ["c", "d", li2buf(1, .[0x41 0x42 0x43 0x44])])]
+    if not expect([hash(SHA1Hash, [arr])], expected, "SHA1 array"): good = false
+    if not expect([hash(SHA1Hash, [li])], expected, "SHA1 list"): good = false
+    if not expect([hash(SHA1Hash, [dict])], expected, "SHA1 dict"): good = false
+    if not expect([hash(SHA1Hash, [dictu])], expected, "SHA1 dict2"): good = false
+    if not expect([hash(SHA1Hash, [mixed])], expected, "SHA1 mixed"): good = false
+    
+    > "--- Checking references as input ---"
+    val = "abcdABCD"
+    ref1 = $val
+    ref2 = $ref1
+    if not expect([hash(SHA1Hash, [ref1])], expected, "SHA1 ref"): good = false
+    if not expect([hash(SHA1Hash, [ref2])], expected, "SHA1 double-ref"): good = false
+    
+    > "--- Checking updateInt() ---"
+    sha = SHA1Hash()
+    sha.update().update().update() // this should not throw
+    sha.updateInt(0x61, 1).updateInt(0x62, 1).updateInt(0x6463, 2).updateInt(0x44434241, 4) // little endian
+    sha.finalize()
+    if not expect([sha.toString()], expected, "SHA1 int8/int16/int32"): good = false
+    
+    sha = SHA1Hash()
+    sha.updateInt(0x4443424164636261, 8) // little endian
+    sha.finalize()
+    if not expect([sha.toString()], expected, "SHA1 int64"): good = false
+    
+    > "--- Checking for Nil ---"
+    expected = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    if not expect([hash(SHA1Hash, [nil])], expected, "SHA1 nil"): good = false
+    if not expect([hash(SHA1Hash, [nil, [1 => nil], [[nil]], List(nil,[nil, nil])])], expected, "SHA1 nil seq"): good = false
+    
+    > "--- Checking overloadable base for misbehavior ---"
+    hb = HashBase()
+    try
+        t = hb.bits() // bytes() not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.bits() didn't raise an error"
+    catch
+        > "Not overloaded bytes() did throw, good."
+    end
+    try
+        t = hb.update("abc") // not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.update() didn't raise an error"
+    catch
+        > "Not overloaded update() did throw, good."
+    end
+    try
+        hb.finalize() // throws missing interface: internal_finalize() not found
+        good = false
+        > "FAIL! HashBase.finalize() didn't raise an error"
+     catch
+        > "Not overloaded finalize() did throw, good."
+    end
+    try
+        t = hb.toMemBuf() // not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.toMemBuf() didn't raise an error"
+    catch
+        > "Not overloaded toMemBuf() did throw, good."
+    end
+        
+    > "--- Checking custom overloaded function"
+    cx = Checksum16() // class defined below
+    if not expect([cx.bits()], 16, "Checksum16 bits"): good = false
+    cx.update("abcd", "ABCD")
+    cx.finalize()
+    out1 = cx.toString()
+    cx.finalize()
+    out2 = cx.toString()
+    // out1 and out2 must be equal, otherwise there are internal problems
+    if not expect([out1, out2], "cb2d", "Checksum16 double finalize()"): good = false
     
     return good
 end
+
+// own class for a simple checksum, to test HashBase class overloading
+// ** process(buf), internal_finalize() -- have to be defined
+// ** toMemBuf(), bytes() -- have to be overloaded
+class Checksum16 from HashBase
+    val = 0xa374cf9e // state variable, for this checksum an int is sufficient, for hashes a membuf would be a better choice
+    retbuf = nil // our result after finalize()
+    
+    function bytes(): return 2
+    function toMemBuf(): return self.retbuf
+    
+    function process(buf)
+        size = len(buf)
+        for i = 0 to size - 1
+            self.val <<= 1
+            self.val ^= buf.get()
+        end
+    end
+    
+    function internal_finalize()
+        a = (self.val >> 24) && 0xFF
+        b = (self.val >> 16) && 0xFF
+        c = (self.val >> 8) && 0xFF
+        d = self.val && 0xFF
+        self.val = 0
+        self.retbuf = li2buf(1, [a^^c, b^^d])
+    end
+end
+
 
 if test_hashes()
     > "Hash test completed successfully"

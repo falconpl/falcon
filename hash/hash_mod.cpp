@@ -32,8 +32,10 @@
    Internal logic functions - implementation.
 */
 
+#include <falcon/engine.h>
 #include <falcon/autocstring.h>
 #include "hash_mod.h"
+#include "hash_st.h"
 
 
 namespace Falcon {
@@ -65,12 +67,13 @@ void HashBase::UpdateData(MemBuf *buf)
                 .extra( "Unsupported MemBuf word length" ) );
             
     }
-
 }
 
 void HashBase::UpdateData(String *str)
 {
     uint32 len = str->length();
+    if(!len)
+        return;
     uint32 charSize = str->manipulator()->charSize();
     switch(charSize)
     {
@@ -95,6 +98,92 @@ void HashBase::UpdateData(String *str)
         break;
     }
 }
+
+HashBaseFalcon::HashBaseFalcon()
+: _bytes(0)
+{
+    _finalized = false;
+}
+
+void HashBaseFalcon::_GetCallableMethod(Falcon::Item& item, const Falcon::String& name)
+{
+    if(!_vm->self().asObject()->getMethod(name, item))
+    {
+        throw new Falcon::AccessError( 
+            Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
+            .extra( name ) );
+    }
+    if(!item.isCallable())
+    {
+        throw new Falcon::AccessError( 
+        Falcon::ErrorParam( Falcon::e_non_callable, __LINE__ )
+        .extra( name ) );
+    }
+}
+
+void HashBaseFalcon::Finalize(void)
+{
+    if(_finalized)
+        return;
+
+    Falcon::Item m;
+    _GetCallableMethod(m, "internal_finalize");
+    _vm->callItemAtomic(m, 0);
+    _finalized = true; // assume success only if it didn't throw
+}
+
+uint32 HashBaseFalcon::DigestSize(void)
+{
+    if(!_bytes) // cache the byte count so the call has to be made only once
+    {
+        Falcon::Item m;
+        _GetCallableMethod(m, "bytes"); // this is safe since bytes() is overloaded
+        _vm->callItemAtomic(m, 0);
+        _bytes = Falcon::uint32(_vm->regA().forceInteger());
+        if(!_bytes)
+        {
+            throw new Falcon::GenericError( 
+                Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
+                .extra(_vm->moduleString(hash_err_size)));
+        }
+    }
+    return _bytes;
+}
+
+byte *HashBaseFalcon::GetDigest(void)
+{
+    Falcon::Item m;
+    _GetCallableMethod(m, "toMemBuf"); // this is safe since toMemBuf() is overloaded
+    _vm->callItemAtomic(m, 0);
+    Falcon::Item ret = _vm->regA(); // copy item, the check against DigestSize() might overwrite the reference otherwise
+    if( !(ret.isMemBuf() && ret.asMemBuf() && ret.asMemBuf()->wordSize() == 1) )
+    {
+        throw new Falcon::GenericError( 
+            Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
+            .extra(_vm->moduleString(hash_err_not_membuf_1)));
+    }
+
+    // this check is maybe not necessary, but enforces a more correct implementation of overloaded hash classes
+    if( ret.asMemBuf()->length() != DigestSize() )
+    {
+        throw new Falcon::GenericError( 
+            Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
+            .extra(_vm->moduleString(hash_err_membuf_length_differs)));
+    }
+
+    return ret.asMemBuf()->data();
+}
+
+void HashBaseFalcon::UpdateData(byte *ptr, uint32 size)
+{
+    Falcon::Item m;
+    _GetCallableMethod(m, "process");
+    Falcon::MemBuf_1 *mb = new Falcon::MemBuf_1(ptr, size); // adopt pointers (no copy!)
+    _vm->pushParam(mb);
+    _vm->callItemAtomic(m, 1);
+}
+
+
 
 uint32 CRC32::_crcTab[256];
 

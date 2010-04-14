@@ -81,6 +81,23 @@ namespace Mod {
         bool _finalized;
     };
 
+    class HashBaseFalcon : public HashBase
+    {
+    public:
+        HashBaseFalcon();
+        virtual void UpdateData(byte *ptr, uint32 size);
+        virtual void Finalize(void);
+        virtual uint32 DigestSize(void);
+        virtual byte *GetDigest(void);
+
+        inline void SetVM(Falcon::VMachine *vm) { _vm = vm; }
+
+    protected:
+        void _GetCallableMethod(Falcon::Item& item, const Falcon::String& name);
+        Falcon::VMachine *_vm;
+        uint32 _bytes;
+    };
+
     class CRC32 : public HashBase
     {
     public:
