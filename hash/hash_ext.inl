@@ -33,6 +33,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <falcon/engine.h>
 #include "hash_mod.h"
 #include "hash_ext.h"
