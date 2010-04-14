@@ -18,6 +18,7 @@ find_package(Falcon
 add_subdirectory(compiler)
 add_subdirectory(confparser)
 add_subdirectory(funcext)
+add_subdirectory(hash)
 add_subdirectory(json)
 add_subdirectory(logging)
 add_subdirectory(mxml)
