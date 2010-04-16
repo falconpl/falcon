@@ -208,6 +208,8 @@ byte *HashBaseFalcon::GetDigest(void)
 
 void HashBaseFalcon::UpdateData(byte *ptr, uint32 size)
 {
+    if(!size)
+        return;
     Falcon::Item m;
     _GetCallableMethod(m, "process");
     Falcon::MemBuf_1 *mb = new Falcon::MemBuf_1(ptr, size); // adopt pointers (no copy!)

@@ -106,7 +106,7 @@
             state = nil // internal state
             outp = nil
             function bytes(): return 12       // must be overloaded and return a constant integer > 0
-            function toMemBuf(): return outp  // must be overloaded and return a MemBuf with wordSize 1 and length equal to bytes()
+            function toMemBuf(): return self.outp  // must be overloaded and return a MemBuf with wordSize 1 and length equal to bytes()
             function process(buf)             // must be declared, as it is invoked by the module on update() calls
                 // *mangle MemBuf and update state*
             end
