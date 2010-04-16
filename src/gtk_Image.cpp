@@ -169,9 +169,9 @@ FALCON_FUNC Image::new_from_stock( VMARG )
         throw_inv_params( "S,I" );
 #endif
     AutoCString s( i_id->asString() );
-    GtkWidget* img = gtk_image_new_from_stock( s.c_str(), (GtkIconSize) i_sz->asInteger() );
-    Item* wki = vm->findWKI( "GtkImage" );
-    vm->retval( new Image( wki->asClass(), (GtkImage*) img ) );
+    GtkWidget* img = gtk_image_new_from_stock(
+            s.c_str(), (GtkIconSize) i_sz->asInteger() );
+    vm->retval( new Image( vm->self().asClass(), (GtkImage*) img ) );
 }
 
 

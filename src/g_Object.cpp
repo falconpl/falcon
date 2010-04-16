@@ -215,8 +215,7 @@ FALCON_FUNC Object::get_property( VMARG )
         g_object_get( _obj, nam.c_str(), &o, NULL );
         if ( o )
         {
-            Item* wki = vm->findWKI( "GObject" );
-            vm->retval( new Object( wki->asClass(), o ) );
+            vm->retval( new Object( vm->self().asClass(), o ) );
             g_object_unref( o );
         }
         else

@@ -126,6 +126,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_DELETE_WHITESPACE",      GTK_DELETE_WHITESPACE },
 
     /*
+     *  GtkDialogFlags
+     */
+    { "GTK_DIALOG_MODAL",               GTK_DIALOG_MODAL },
+    { "GTK_DIALOG_DESTROY_WITH_PARENT", GTK_DIALOG_DESTROY_WITH_PARENT },
+    { "GTK_DIALOG_NO_SEPARATOR",        GTK_DIALOG_NO_SEPARATOR },
+
+    /*
      *  GtkDirectionType
      */
     { "GTK_DIR_TAB_FORWARD",        GTK_DIR_TAB_FORWARD },
@@ -283,6 +290,21 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_RESIZE_PARENT",      GTK_RESIZE_PARENT },
     { "GTK_RESIZE_QUEUE",       GTK_RESIZE_QUEUE },
     { "GTK_RESIZE_IMMEDIATE",   GTK_RESIZE_IMMEDIATE },
+
+    /*
+     *  GtkResponseType
+     */
+    { "GTK_RESPONSE_NONE",      GTK_RESPONSE_NONE },
+    { "GTK_RESPONSE_REJECT",    GTK_RESPONSE_REJECT },
+    { "GTK_RESPONSE_ACCEPT",    GTK_RESPONSE_ACCEPT },
+    { "GTK_RESPONSE_DELETE_EVENT",GTK_RESPONSE_DELETE_EVENT },
+    { "GTK_RESPONSE_OK",        GTK_RESPONSE_OK },
+    { "GTK_RESPONSE_CANCEL",    GTK_RESPONSE_CANCEL },
+    { "GTK_RESPONSE_CLOSE",     GTK_RESPONSE_CLOSE },
+    { "GTK_RESPONSE_YES",       GTK_RESPONSE_YES },
+    { "GTK_RESPONSE_NO",        GTK_RESPONSE_NO },
+    { "GTK_RESPONSE_APPLY",     GTK_RESPONSE_APPLY },
+    { "GTK_RESPONSE_HELP",      GTK_RESPONSE_HELP },
 
     /*
      *  GtkScrollStep

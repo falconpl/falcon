@@ -25,24 +25,30 @@ void Dialog::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    //{ "new_with_buttons",       &Dialog:: },
+    //{ "new_with_buttons",       &Dialog::new_with_buttons },
     { "run",                    &Dialog::run },
     { "response",               &Dialog::response },
     { "add_button",             &Dialog::add_button },
-#if 0
-    { "add_buttons",            &Dialog:: },
-    { "add_action_widget",        &Dialog:: },
-    { "get_has_separator",        &Dialog:: },
-    { "set_default_response",        &Dialog:: },
-    { "set_has_separator",        &Dialog:: },
-    { "set_response_sensitive",        &Dialog:: },
-    { "get_response_for_widget",        &Dialog:: },
-    { "get_widget_for_response",        &Dialog:: },
-    { "get_action_area",        &Dialog:: },
-    { "get_content_area",        &Dialog:: },
-    //{ "alternative_dialog_button_order",        &Dialog:: },
-    { "set_alternative_button_order",        &Dialog:: },
-    { "set_alternative_button_order_from_array",        &Dialog:: },
+    //{ "add_buttons",            &Dialog::add_buttons },
+    { "add_action_widget",      &Dialog::add_action_widget },
+    { "get_has_separator",      &Dialog::get_has_separator },
+    { "set_default_response",   &Dialog::set_default_response },
+    { "set_has_separator",      &Dialog::set_has_separator },
+    { "set_response_sensitive", &Dialog::set_response_sensitive },
+#if GTK_MINOR_VERSION >= 8
+    { "get_response_for_widget",&Dialog::get_response_for_widget },
+#endif
+#if GTK_MINOR_VERSION >= 20
+    { "get_widget_for_response",&Dialog::get_widget_for_response },
+#endif
+#if GTK_MINOR_VERSION >= 14
+    { "get_action_area",        &Dialog::get_action_area },
+    { "get_content_area",       &Dialog::get_content_area },
+#endif
+#if GTK_MINOR_VERSION >= 6
+    //{ "alternative_dialog_button_order",&Dialog::alternative_dialog_button_order },
+    //{ "set_alternative_button_order",&Dialog::set_alternative_button_order },
+    //{ "set_alternative_button_order_from_array",&Dialog::set_alternative_button_order_from_array },
 #endif
     { NULL, NULL }
     };
@@ -193,33 +199,210 @@ FALCON_FUNC Dialog::add_button( VMARG )
     vm->retval( new Gtk::Widget( vm->findWKI( "Button" )->asClass(), wdt ) );
 }
 
-#if 0
-FALCON_FUNC Dialog::add_buttons( VMARG );
 
-FALCON_FUNC Dialog::add_action_widget( VMARG );
+//FALCON_FUNC Dialog::add_buttons( VMARG );
 
-FALCON_FUNC Dialog::get_has_separator( VMARG );
 
-FALCON_FUNC Dialog::set_default_response( VMARG );
+/*#
+    @method add_action_widget
+    @brief Adds an activatable widget to the action area of a GtkDialog, connecting a signal handler that will emit the "response" signal on the dialog when the widget is activated.
+    @param child an activatable widget
+    @param response_id response ID for child
 
-FALCON_FUNC Dialog::set_has_separator( VMARG );
+    The widget is appended to the end of the dialog's action area. If you want
+    to add a non-activatable widget, simply pack it into the action_area field of
+    the GtkDialog struct.
+ */
+FALCON_FUNC Dialog::add_action_widget( VMARG )
+{
+    Item* i_child = vm->param( 0 );
+    Item* i_id = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_child || i_child->isNil() || !i_child->isObject()
+        || !IS_DERIVED( i_child, GtkWidget )
+        || !i_id || i_id->isNil() || !i_id->isInteger() )
+        throw_inv_params( "GtkWidget,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    gtk_dialog_add_action_widget( (GtkDialog*)_obj, child, i_id->asInteger() );
+}
 
-FALCON_FUNC Dialog::set_response_sensitive( VMARG );
 
-FALCON_FUNC Dialog::get_response_for_widget( VMARG );
+/*#
+    @method get_has_separator
+    @brief Accessor for whether the dialog has a separator.
+    @return true if the dialog has a separator.
+ */
+FALCON_FUNC Dialog::get_has_separator( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_dialog_get_has_separator( (GtkDialog*)_obj ) );
+}
 
-FALCON_FUNC Dialog::get_widget_for_response( VMARG );
 
-FALCON_FUNC Dialog::get_action_area( VMARG );
+/*#
+    @method set_default_response
+    @brief Sets the last widget in the dialog's action area with the given response_id as the default widget for the dialog.
+    @param response_id a response ID
 
-FALCON_FUNC Dialog::get_content_area( VMARG );
+    Pressing "Enter" normally activates the default widget.
+ */
+FALCON_FUNC Dialog::set_default_response( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || i_id->isNil() || !i_id->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_dialog_set_default_response( (GtkDialog*)_obj, i_id->asInteger() );
+}
 
+/*#
+    @method set_has_separator
+    @brief Sets whether the dialog has a separator above the buttons. TRUE by default.
+    @param setting true to have a separator
+ */
+FALCON_FUNC Dialog::set_has_separator( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_dialog_set_has_separator( (GtkDialog*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+/*#
+    @method set_response_sensitive
+    @brief Calls gtk_widget_set_sensitive (widget, setting) for each widget in the dialog's action area with the given response_id.
+    @param response_id a response ID
+    @param setting true for sensitive
+
+    A convenient way to sensitize/desensitize dialog buttons.
+ */
+FALCON_FUNC Dialog::set_response_sensitive( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+    Item* i_bool = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || i_id->isNil() || !i_id->isInteger()
+        || !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+        throw_inv_params( "I,B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_dialog_set_response_sensitive( (GtkDialog*)_obj, i_id->asInteger(),
+            i_bool->asBoolean() ? TRUE : FALSE );
+}
+
+
+#if GTK_MINOR_VERSION >= 8
+/*#
+    @method get_response_for_widget
+    @brief Gets the response id of a widget in the action area of a dialog.
+    @param widget a widget in the action area of dialog
+    @return the response id of widget, or GTK_RESPONSE_NONE if widget doesn't have a response id set.
+ */
+FALCON_FUNC Dialog::get_response_for_widget( VMARG )
+{
+    Item* i_wdt = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_wdt || i_wdt->isNil() || !i_wdt->isObject()
+        || !IS_DERIVED( i_wdt, GtkWidget ) )
+        throw_inv_params( "GtkWidget" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    vm->retval( gtk_dialog_get_response_for_widget( (GtkDialog*)_obj, wdt ) );
+}
+#endif
+
+
+#if GTK_MINOR_VERSION >= 20
+/*#
+    @method get_widget_for_response
+    @brief Gets the widget button that uses the given response ID in the action area of a dialog.
+    @param response_id the response ID used by the dialog widget
+    @return the widget button that uses the given response_id, or nil.
+ */
+FALCON_FUNC Dialog::get_widget_for_response( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || i_id->isNil() || !i_id->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = gtk_dialog_get_widget_for_response( (GtkDialog*)_obj,
+            i_id->asInteger() );
+    if ( !wdt )
+        vm->retnil();
+    else
+        vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
+}
+#endif
+
+
+#if GTK_MINOR_VERSION >= 14
+/*#
+    @method get_action_area
+    @brief Returns the action area of dialog.
+    @return the action area.
+ */
+FALCON_FUNC Dialog::get_action_area( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = gtk_dialog_get_action_area( (GtkDialog*)_obj );
+    vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
+}
+
+
+/*#
+    @method get_content_area
+    @brief Returns the content area of dialog.
+    @return the content area.
+ */
+FALCON_FUNC Dialog::get_content_area( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* wdt = gtk_dialog_get_action_area( (GtkDialog*)_obj );
+    vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
+}
+#endif // GTK_MINOR_VERSION >= 14
+
+
+#if GTK_MINOR_VERSION >= 6
 //FALCON_FUNC Dialog::alternative_dialog_button_order( VMARG );
 
-FALCON_FUNC Dialog::set_alternative_button_order( VMARG );
+//FALCON_FUNC Dialog::set_alternative_button_order( VMARG );
 
-FALCON_FUNC Dialog::set_alternative_button_order_from_array( VMARG );
-#endif
+//FALCON_FUNC Dialog::set_alternative_button_order_from_array( VMARG );
+#endif // GTK_MINOR_VERSION >= 6
+
 
 } // Gtk
 } // Falcon
