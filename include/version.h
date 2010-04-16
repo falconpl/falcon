@@ -14,13 +14,15 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef FALCON_FEATHERS_VERSION_H
+#define FALCON_FEATHERS_VERSION_H
 
-#define VERSION_MAJOR        0
-#define VERSION_MINOR        9 
-#define VERSION_REVISION     4
+#include <falcon/config.h>
 
-#endif
+#define VERSION_MAJOR        FALCON_VERSION_MAJOR
+#define VERSION_MINOR        FALCON_VERSION_MINOR
+#define VERSION_REVISION     FALCON_VERSION_REVISION
+
+#endif // FALCON_FEATHERS_VERSION_H
 
 /* end of version.h */
