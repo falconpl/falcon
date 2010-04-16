@@ -34,6 +34,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
+#include <string.h>
 #include "hash_mod.h"
 #include "hash_st.h"
 
@@ -65,7 +66,7 @@ void HashBase::UpdateData(MemBuf *buf)
             throw new Falcon::TypeError(
                 Falcon::ErrorParam( Falcon::e_param_type, __LINE__ )
                 .extra( "Unsupported MemBuf word length" ) );
-            
+
     }
 }
 
@@ -106,7 +107,7 @@ uint64 HashBase::AsInt(void)
         return 0;
     // this is safe, CRC32 and Adler32 (which are 32 bits) have their own implementation.
     // be sure that GetDigest() ALWAYS returns a buffer >= 8 bytes!
-    return endianInt64(*((uint64*)digest)); 
+    return endianInt64(*((uint64*)digest));
 }
 
 
@@ -126,13 +127,13 @@ void HashBaseFalcon::_GetCallableMethod(Falcon::Item& item, const Falcon::String
 {
     if(!_vm->self().asObject()->getMethod(name, item))
     {
-        throw new Falcon::AccessError( 
+        throw new Falcon::AccessError(
             Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
             .extra( name ) );
     }
     if(!item.isCallable())
     {
-        throw new Falcon::AccessError( 
+        throw new Falcon::AccessError(
         Falcon::ErrorParam( Falcon::e_non_callable, __LINE__ )
         .extra( name ) );
     }
@@ -159,7 +160,7 @@ uint32 HashBaseFalcon::DigestSize(void)
         _bytes = Falcon::uint32(_vm->regA().forceIntegerEx()); // throws if returned not a number
         if(!_bytes)
         {
-            throw new Falcon::GenericError( 
+            throw new Falcon::GenericError(
                 Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
                 .extra(_vm->moduleString(hash_err_size)));
         }
@@ -176,7 +177,7 @@ byte *HashBaseFalcon::GetDigest(void)
     // otherwise, calculate it
     if(!IsFinalized())
     {
-        throw new Falcon::AccessError( 
+        throw new Falcon::AccessError(
             Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
             .extra(_vm->moduleString(hash_err_not_finalized)));
     }
@@ -186,7 +187,7 @@ byte *HashBaseFalcon::GetDigest(void)
     Falcon::Item ret = _vm->regA(); // copy item, the check against DigestSize() might overwrite the reference otherwise
     if( !(ret.isMemBuf() && ret.asMemBuf() && ret.asMemBuf()->wordSize() == 1) )
     {
-        throw new Falcon::GenericError( 
+        throw new Falcon::GenericError(
             Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
             .extra(_vm->moduleString(hash_err_not_membuf_1)));
     }
@@ -195,7 +196,7 @@ byte *HashBaseFalcon::GetDigest(void)
     uint32 s = DigestSize();
     if( ret.asMemBuf()->length() != s )
     {
-        throw new Falcon::GenericError( 
+        throw new Falcon::GenericError(
             Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
             .extra(_vm->moduleString(hash_err_membuf_length_differs)));
     }

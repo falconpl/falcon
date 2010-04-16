@@ -40,7 +40,7 @@
 #include "hash_srv.h"
 #include "hash_st.h"
 
-#include "version.h"
+#include "../include/version.h"
 
 /*#
     @module feather_hash hash
@@ -300,7 +300,7 @@ Falcon::Module *hash_module_init(void)
 
 
    self->addExtFunc("getSupportedHashes", Falcon::Ext::Func_GetSupportedHashes);
-   
+
    // generate CRC32 table
    Falcon::Mod::CRC32::GenTab();
 
