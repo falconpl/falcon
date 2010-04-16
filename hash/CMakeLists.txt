@@ -27,6 +27,7 @@ set(SRC_FILES
   md2.cpp
   md4.cpp
   md5.cpp
+  ripemd.cpp
   sha1.cpp
   sha256_sha224.cpp
   sha512_sha384.cpp
