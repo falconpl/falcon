@@ -96,11 +96,6 @@ elseif(WIN32)
   )
 endif()
 
-#####################################################################################
-# Including headers in the source list helps CMAKE to build better IDE project files.
-
-file(GLOB FALCON_HEADERS "../include/falcon/*.h" )
-
 #################
 
 set(CORE_MODULE_SOURCES

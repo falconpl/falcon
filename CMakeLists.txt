@@ -172,12 +172,13 @@ endif()
 # Subdirectories
 #
 
+#collect the include files in FALCON_HEADER
+add_subdirectory(include)
+#
 add_subdirectory(engine)
 add_subdirectory(clt)
 add_subdirectory(devtools)
 
-#also performs installation of the include directory
-add_subdirectory(include)
 
 # and man pages
 if (FALCON_WITH_MANPAGES)
