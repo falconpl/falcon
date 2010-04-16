@@ -243,7 +243,7 @@
     @brief Calculates a 320 bits long RIPEMD-320 hash (RIPEMD family)
 */
 
-template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, char *name)
+template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, const char *name)
 {
     Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Hash_init<HASH>);
     self->addClassMethod(cls, "update", Falcon::Ext::Hash_update<HASH>);
