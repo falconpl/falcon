@@ -47,6 +47,7 @@
 #include "md5.h"
 #include "whirlpool.h"
 #include "tiger.h"
+#include "ripemd.h"
 
 #define CRC32_DIGEST_LENGTH       4  // 32 bits
 #define ADLER32_DIGEST_LENGTH     4  // 32 bits
@@ -60,6 +61,10 @@
 #define MD5_DIGEST_LENGTH        16  // 128 bits
 #define WHIRLPOOL_DIGEST_LENGTH  64  // 512 bits
 #define TIGER_DIGEST_LENGTH      24  // 192 bits
+#define RIPEMD128_DIGEST_LENGTH  16  // 128 bits
+#define RIPEMD160_DIGEST_LENGTH  20  // 160 bits
+#define RIPEMD256_DIGEST_LENGTH  32  // 256 bits
+#define RIPEMD320_DIGEST_LENGTH  40  // 320 bits
 
 namespace Falcon {
 namespace Mod {
@@ -77,6 +82,10 @@ namespace Mod {
         virtual void Finalize(void) {}
         virtual uint32 DigestSize(void) { return 0; }
         virtual byte *GetDigest(void) { return NULL; }
+
+        // can be overloaded optionally (but MUST be overloaded if DigestSize < 8)
+        virtual uint64 AsInt(void);
+
     protected:
         bool _finalized;
     };
@@ -85,17 +94,21 @@ namespace Mod {
     {
     public:
         HashBaseFalcon();
-        virtual void UpdateData(byte *ptr, uint32 size);
-        virtual void Finalize(void);
-        virtual uint32 DigestSize(void);
-        virtual byte *GetDigest(void);
+        ~HashBaseFalcon();
+        virtual void UpdateData(byte *ptr, uint32 size); // VM call to process() in overloaded falcon class
+        virtual void Finalize(void); // VM call to internal_finalize() in overloaded falcon class
+        virtual uint32 DigestSize(void); // VM call to bytes() in overloaded falcon class
+        virtual byte *GetDigest(void); // VM call to toMemBuf() in overloaded falcon class
+        virtual uint64 AsInt(void);
 
         inline void SetVM(Falcon::VMachine *vm) { _vm = vm; }
 
     protected:
         void _GetCallableMethod(Falcon::Item& item, const Falcon::String& name);
-        Falcon::VMachine *_vm;
-        uint32 _bytes;
+        VMachine *_vm;
+        uint32 _bytes; // caches bytes() value
+        byte *_digest; // stores a copy of toMemBuf() value once called
+        uint64 _intval; // caches toInt() value
     };
 
     class CRC32 : public HashBase
@@ -106,7 +119,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return CRC32_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        inline uint32 AsInt(void) { return _finalized ? _crc : 0; } // special for CRC32
+        uint64 AsInt(void) { return _finalized ? _crc : 0; } // special for CRC32
         static void GenTab(void);
 
     private:
@@ -123,7 +136,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return ADLER32_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        inline uint32 AsInt(void) { return _finalized ? _adler : 0; } // special for Adler32
+        uint64 AsInt(void) { return _finalized ? _adler : 0; } // special for Adler32
 
     private:
         uint32 _adler;
@@ -268,6 +281,46 @@ namespace Mod {
     private:
         tiger_ctx _ctx;
         byte _digest[TIGER_DIGEST_LENGTH];
+    };
+
+    class RIPEMDHashBase : public HashBase
+    {
+    public:
+        void UpdateData(byte *ptr, uint32 size);
+        void Finalize(void);
+        byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
+
+    protected:
+        ripemd_ctx _ctx;
+        byte _digest[RIPEMD320_DIGEST_LENGTH];
+    };
+
+    class RIPEMD128Hash : public RIPEMDHashBase
+    {
+    public:
+        RIPEMD128Hash();
+        uint32 DigestSize(void) { return RIPEMD128_DIGEST_LENGTH; }
+    };
+
+    class RIPEMD160Hash : public RIPEMDHashBase
+    {
+    public:
+        RIPEMD160Hash();
+        uint32 DigestSize(void) { return RIPEMD160_DIGEST_LENGTH; }
+    };
+
+    class RIPEMD256Hash : public RIPEMDHashBase
+    {
+    public:
+        RIPEMD256Hash();
+        uint32 DigestSize(void) { return RIPEMD256_DIGEST_LENGTH; }
+    };
+
+    class RIPEMD320Hash : public RIPEMDHashBase
+    {
+    public:
+        RIPEMD320Hash();
+        uint32 DigestSize(void) { return RIPEMD320_DIGEST_LENGTH; }
     };
 
 

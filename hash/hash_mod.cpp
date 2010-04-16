@@ -99,10 +99,27 @@ void HashBase::UpdateData(String *str)
     }
 }
 
+uint64 HashBase::AsInt(void)
+{
+    byte *digest = GetDigest();
+    if(!digest)
+        return 0;
+    // this is safe, CRC32 and Adler32 (which are 32 bits) have their own implementation.
+    // be sure that GetDigest() ALWAYS returns a buffer >= 8 bytes!
+    return endianInt64(*((uint64*)digest)); 
+}
+
+
 HashBaseFalcon::HashBaseFalcon()
-: _bytes(0)
+: _bytes(0), _digest(NULL), _intval(0)
 {
     _finalized = false;
+}
+
+HashBaseFalcon::~HashBaseFalcon()
+{
+    if(_digest)
+        delete [] _digest;
 }
 
 void HashBaseFalcon::_GetCallableMethod(Falcon::Item& item, const Falcon::String& name)
@@ -139,7 +156,7 @@ uint32 HashBaseFalcon::DigestSize(void)
         Falcon::Item m;
         _GetCallableMethod(m, "bytes"); // this is safe since bytes() is overloaded
         _vm->callItemAtomic(m, 0);
-        _bytes = Falcon::uint32(_vm->regA().forceInteger());
+        _bytes = Falcon::uint32(_vm->regA().forceIntegerEx()); // throws if returned not a number
         if(!_bytes)
         {
             throw new Falcon::GenericError( 
@@ -152,6 +169,17 @@ uint32 HashBaseFalcon::DigestSize(void)
 
 byte *HashBaseFalcon::GetDigest(void)
 {
+    // if we have already cached our digest, return that
+    if(_digest)
+        return _digest;
+
+    // otherwise, calculate it
+    if(!IsFinalized())
+    {
+        throw new Falcon::AccessError( 
+            Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
+            .extra(_vm->moduleString(hash_err_not_finalized)));
+    }
     Falcon::Item m;
     _GetCallableMethod(m, "toMemBuf"); // this is safe since toMemBuf() is overloaded
     _vm->callItemAtomic(m, 0);
@@ -164,14 +192,18 @@ byte *HashBaseFalcon::GetDigest(void)
     }
 
     // this check is maybe not necessary, but enforces a more correct implementation of overloaded hash classes
-    if( ret.asMemBuf()->length() != DigestSize() )
+    uint32 s = DigestSize();
+    if( ret.asMemBuf()->length() != s )
     {
         throw new Falcon::GenericError( 
             Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
             .extra(_vm->moduleString(hash_err_membuf_length_differs)));
     }
 
-    return ret.asMemBuf()->data();
+    // copy the result, in case the GC eats up the MemBuf
+    _digest = new byte[s];
+    memcpy(_digest, ret.asMemBuf()->data(), s);
+    return _digest;
 }
 
 void HashBaseFalcon::UpdateData(byte *ptr, uint32 size)
@@ -182,6 +214,28 @@ void HashBaseFalcon::UpdateData(byte *ptr, uint32 size)
     _vm->pushParam(mb);
     _vm->callItemAtomic(m, 1);
 }
+
+uint64 HashBaseFalcon::AsInt(void)
+{
+    // cached?
+    if(_intval)
+        return _intval;
+
+    // HashBase::AsInt() expects the buffer to be at least 8 bytes long
+    uint32 s = DigestSize();
+    if(s >= sizeof(uint64))
+        return HashBase::AsInt();
+
+    // buffer is smaller, process manually
+    uint64 val = 0;
+    byte *valp = (byte*)&val;
+    byte *digest = GetDigest();
+    for(uint32 i = 0; i < s; ++i)
+        valp[i] = digest[i];
+    _intval = endianInt64(val);
+    return _intval;
+}
+
 
 
 
@@ -455,6 +509,46 @@ void TigerHash::Finalize(void)
     tiger_finalize(&_ctx);
     tiger_digest(&_ctx, _digest);
 }
+
+void RIPEMDHashBase::UpdateData(byte *ptr, uint32 size)
+{
+    ripemd_update(&_ctx, ptr, size);
+}
+
+void RIPEMDHashBase::Finalize(void)
+{
+    if(_finalized)
+        return;
+
+    ripemd_final(&_ctx);
+    ripemd_digest(&_ctx, &_digest[0]);
+    _finalized = true;
+}
+
+RIPEMD128Hash::RIPEMD128Hash()
+{
+    _finalized = false;
+    ripemd128_init(&_ctx);
+}
+
+RIPEMD160Hash::RIPEMD160Hash()
+{
+    _finalized = false;
+    ripemd160_init(&_ctx);
+}
+
+RIPEMD256Hash::RIPEMD256Hash()
+{
+    _finalized = false;
+    ripemd256_init(&_ctx);
+}
+
+RIPEMD320Hash::RIPEMD320Hash()
+{
+    _finalized = false;
+    ripemd320_init(&_ctx);
+}
+
 
 
 

@@ -20,6 +20,7 @@ Input.directory=../compiler
 Input.directory=../confparser
 Input.directory=../funcext
 Input.directory=../logging
+Input.directory=../hash
 Input.directory=../json
 Input.directory=../process
 Input.directory=../mxml
@@ -29,6 +30,7 @@ Input.directory=../threading
 Input.directory=../zlib
 
 Input.wildcard=*.cpp     #we use only...
+Input.wildcard=*.inl     #we use only...
 Input.recursive=false
 
 # Other files may be specified here
