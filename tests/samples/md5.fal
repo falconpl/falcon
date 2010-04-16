@@ -1,0 +1,44 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: md5.fal
+
+   Calculate MD5 checksum of a file
+   Hint: Check the output of this script against `md5sum -b`
+   -------------------------------------------------------------------
+   Author: Maximilian Malek
+   Begin: 16 Apr 2010
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load hash
+
+if args.len() == 0
+    > "Usage: Pass a filename as parameter to calculate its MD5 hash"
+else
+    filename = args[0]
+    bufsize = 65536 // 64 kB block size
+    try
+        file = InputStream(filename)
+    catch
+        > "Error opening file: ", filename
+        return
+    end
+    buf = MemBuf(bufsize, 1)
+    hash = MD5Hash()
+    while not file.eof()
+        bytes = file.read(buf, bufsize) // read the file in blocks
+         // prepare buffer for hashing:
+        buf.position(0) // from the start...
+        buf.limit(bytes) // .. up to the amount of bytes read (if the block was < bufsize)
+        hash.update(buf) // hash the block
+        buf.rewind() // reset position for next read
+    end
+    hash.finalize()
+    > hash // output as hex string
+end

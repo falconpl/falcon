@@ -48,13 +48,13 @@ void HashBase::UpdateData(MemBuf *buf)
     switch(ws)
     {
         case 1:
-            UpdateData(buf->data(), buf->size());
+            UpdateData(buf->data() + buf->position(), buf->limit() - buf->position());
             break;
 
         case 2:
         case 3:
         case 4:
-            for(uint32 i = 0; i < buf->length(); i++)
+            for(uint32 i = buf->position(); i < buf->limit(); i++)
             {
                 int32 c = buf->get(i); // TODO: test this on big endian (conversion done in get(), but not sure if this is correct)
                 UpdateData((byte*)&c, ws);
