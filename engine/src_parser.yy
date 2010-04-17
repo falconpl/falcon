@@ -1314,16 +1314,38 @@ func_begin:
          // if we are in a class, I have to create the symbol classname.functionname
          Falcon::Statement *parent = COMPILER->getContext();
          Falcon::String func_name;
-         if ( parent != 0 && parent->type() == Falcon::Statement::t_class ) {
-            Falcon::StmtClass *stmt_cls = static_cast< Falcon::StmtClass *>( parent );
-            func_name = stmt_cls->symbol()->name() + "." + *$2;
-         }
-         else if ( parent != 0 && parent->type() == Falcon::Statement::t_state ) 
+         if ( parent != 0 )
          {
-            Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );
-            func_name =  
-                  stmt_state->owner()->symbol()->name() + "." + 
-                  * stmt_state->name() + "#" + *$2;
+            switch( parent->type() )
+            {
+            case Falcon::Statement::t_class: 
+               {
+                  Falcon::StmtClass *stmt_cls = static_cast< Falcon::StmtClass *>( parent );
+                  func_name = stmt_cls->symbol()->name() + "." + *$2;
+               }
+               break;
+            
+            case Falcon::Statement::t_state: 
+               {
+                  Falcon::StmtState *stmt_state = static_cast< Falcon::StmtState *>( parent );
+                  func_name =  
+                        stmt_state->owner()->symbol()->name() + "." + 
+                        * stmt_state->name() + "#" + *$2;
+               }
+               break;
+            
+            case Falcon::Statement::t_function: 
+               {
+                  Falcon::StmtFunction *stmt_func = static_cast< Falcon::StmtFunction *>( parent );
+                  func_name =  
+                        stmt_func->name() + "##" + *$2;
+               }
+               break;
+            
+            default: 
+               func_name = *$2;
+                
+            }
          }
          else
             func_name = *$2;

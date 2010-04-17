@@ -214,14 +214,6 @@ void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property
    @prop mtime Last modify time, expressed as a @a TimeStamp instance.
    @prop owner Owner ID of the given file.
    @prop size File size.
-   @prop ftype File type; can be one of the following constants (declared in this class):
-      - NORMAL
-      - DIR
-      - PIPE
-      - LINK
-      - DEVICE
-      - SOCKET
-      - UNKNOWN
 
    Both access and attribs properties are given a value respectively only on
    POSIX or MS-Windows systems; their value is the underlying numeric
@@ -232,6 +224,20 @@ void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property
 
    Times are returned as a @a TimeStamp class instance; the time is always expressed
    as local system time.
+*/
+
+/*# @property ftype FileStat
+   @brief Type of the file.
+
+   Can be one of the following constants (declared in this class):
+
+   - NORMAL
+   - DIR
+   - PIPE
+   - LINK
+   - DEVICE
+   - SOCKET
+   - UNKNOWN
 */
 
 FALCON_FUNC FileStat_init( ::Falcon::VMachine *vm )
