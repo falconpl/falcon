@@ -763,7 +763,13 @@ FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
       format = vm->param(1);
    }
 
-   CoreString *target = new CoreString;
+   if(elem == 0)
+   {
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin( e_orig_runtime ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) );
+   }
+
+   CoreString *target = 0;
 
    if ( format != 0 )
    {
@@ -777,6 +783,7 @@ FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
          }
          else
          {
+            target = new CoreString;
             fmt.format( vm, *elem, *target );
          }
       }
@@ -784,10 +791,10 @@ FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
       {
          throw new ParamError( ErrorParam( e_inv_params )
             .origin( e_orig_runtime ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) );
-         return;
       }
    }
    else {
+      target = new CoreString;
       if ( vm->self().isMethodic() )
       {
          elem->toString( *target );
@@ -1171,7 +1178,7 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
    if ( i_clsName->isString() )
    {
       const String *name = i_clsName->asString();
-   
+
       switch( self->type() )
       {
          case FLC_ITEM_OBJECT:

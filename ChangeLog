@@ -13,6 +13,7 @@ Falcon (0.9.6.5)
            option to load "cgi" module and add -s option in one step.
   * minor: strSplit() returns an array containing all the elements if the token
            is not given.
+  * fixed: toString() crashed when called without a parameter. 
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
