@@ -14,13 +14,13 @@ set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
 set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
 set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
 set(Falcon_INC_DIR "@FALCON_INC_DIR@")
+set(Falcon_ARCH_DIR lib)
 
 set(Falcon_PREFIX ${SELF_DIR}/../../..)
 set(Falcon_INCLUDE_DIR ${Falcon_PREFIX}/@FALCON_INC_DIR@)
 set(Falcon_BINARY_DIR {Falcon_PREFIX}/@FALCON_BIN_DIR@)
 set(Falcon_LIBRARY_DIR ${Falcon_PREFIX}/@FALCON_LIB_DIR@)
 set(Falcon_INCLUDE_DIR  ${Falcon_PREFIX}/@FALCON_INC_DIR@)
-set(FALCON_ARCHIVE_DIR lib)
 
 # If defined, prefer the source directory include files over the installed ones
 if(DEFINED ENV{FALCON_SRC_TREE})
@@ -73,9 +73,9 @@ endif()
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
 set(FALCON_INSTALL_DESTINATIONS
-  RUNTIME DESTINATION ${FALCON_BIN_DIR}
-  LIBRARY DESTINATION ${FALCON_LIB_DIR}
-  ARCHIVE DESTINATION ${FALCON_ARCHIVE_DIR}
+  RUNTIME DESTINATION ${Falcon_BIN_DIR}
+  LIBRARY DESTINATION ${Falcon_LIB_DIR}
+  ARCHIVE DESTINATION ${Falcon_ARCH_DIR}
 )
 # NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_DIR})
