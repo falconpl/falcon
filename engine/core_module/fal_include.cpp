@@ -85,6 +85,12 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    {
       cpl.sourceEncoding( *i_enc->asString() );
    }
+   else
+   {
+      String sEnc, sIoEnc;
+      Engine::getEncodings( sEnc, sIoEnc );
+      cpl.sourceEncoding( sEnc );
+   }
 
    bool execAtLink = vm->launchAtLink();
 
