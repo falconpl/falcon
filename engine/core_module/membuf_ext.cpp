@@ -89,10 +89,10 @@ FALCON_FUNC Make_MemBufFromPtr( ::Falcon::VMachine *vm )
    byte *data = (byte*) i_ptr->asInteger();
    switch( wordSize )
    {
-      case 1: mb = new MemBuf_1( data, (uint32) size, false ); break;
-      case 2: mb = new MemBuf_2( data, (uint32) size, false ); break;
-      case 3: mb = new MemBuf_3( data, (uint32) size, false ); break;
-      case 4: mb = new MemBuf_4( data, (uint32) size, false ); break;
+      case 1: mb = new MemBuf_1( data, (uint32) size, 0 ); break;
+      case 2: mb = new MemBuf_2( data, (uint32) size, 0 ); break;
+      case 3: mb = new MemBuf_3( data, (uint32) size, 0 ); break;
+      case 4: mb = new MemBuf_4( data, (uint32) size, 0 ); break;
    }
    fassert( mb != 0 );
    vm->retval( mb );
