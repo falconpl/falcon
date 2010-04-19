@@ -369,7 +369,7 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
          */
       }
 
-      pos = target.find( "%", pos );
+      pos = target.find( "%", pos + 1 );
 
    }
 
