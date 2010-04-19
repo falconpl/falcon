@@ -25,6 +25,7 @@ set( SRC_FILES
     gtk_ButtonBox.cpp
     gtk_Button.cpp
     gtk_CheckButton.cpp
+    gtk_ColorSelectionDialog.cpp
     gtk_ComboBox.cpp
     gtk_ComboBoxEntry.cpp
     gtk_Container.cpp
@@ -92,6 +93,7 @@ set( HDR_FILES
     gtk_ButtonBox.hpp
     gtk_Button.hpp
     gtk_CheckButton.hpp
+    gtk_ColorSelectionDialog.hpp
     gtk_ComboBox.hpp
     gtk_ComboBoxEntry.hpp
     gtk_Container.hpp

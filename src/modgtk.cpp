@@ -26,6 +26,7 @@
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CheckButton.hpp"
+#include "gtk_ColorSelectionDialog.hpp"
 #include "gtk_ComboBox.hpp"
 #include "gtk_ComboBoxEntry.hpp"
 #include "gtk_Container.hpp"
@@ -140,6 +141,7 @@ FALCON_MODULE_DECL
 #if GTK_MINOR_VERSION >= 6
                             Falcon::Gtk::AboutDialog::modInit( self );
 #endif
+                            Falcon::Gtk::ColorSelectionDialog::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
                         Falcon::Gtk::HButtonBox::modInit( self );
