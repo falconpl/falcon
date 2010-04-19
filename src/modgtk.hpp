@@ -509,6 +509,22 @@ typedef Falcon::Gtk::ArgCheck<7>    ArgCheck7;
 typedef Falcon::Gtk::ArgCheck<8>    ArgCheck8;
 typedef Falcon::Gtk::ArgCheck<9>    ArgCheck9;
 
+
+/**
+ *  \brief Get an array of gchar* from a CoreArray.
+ *  \param arr The core array.
+ *  \param strings (out) The resulting C-strings (as a NULL terminated array).
+ *  \param temp (out) The intermediate auto-C-strings.
+ *  \return The length of the array.
+ *
+ *  \note If arr was non-empty, both strings and temp must be freed with memFree after use.
+ */
+uint32
+getGCharArray( const Falcon::CoreArray* arr,
+        gchar** strings,
+        Falcon::AutoCString** temp );
+
+
 } // Gtk
 } // Falcon
 

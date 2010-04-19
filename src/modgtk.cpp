@@ -13,6 +13,9 @@
 
 #include "gtk_enums.hpp"
 
+#if GTK_MINOR_VERSION >= 6
+#include "gtk_AboutDialog.hpp"
+#endif
 #include "gtk_Action.hpp"
 #include "gtk_Adjustment.hpp"
 #include "gtk_Alignment.hpp"
@@ -134,6 +137,9 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
+#if GTK_MINOR_VERSION >= 6
+                            Falcon::Gtk::AboutDialog::modInit( self );
+#endif
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
                         Falcon::Gtk::HButtonBox::modInit( self );
@@ -386,6 +392,36 @@ FALCON_FUNC Signal::connect( VMARG )
 
     g_signal_connect( G_OBJECT( _obj ), self->m_name,
                       G_CALLBACK( self->m_cb ), vm );
+}
+
+
+uint32
+getGCharArray( const Falcon::CoreArray* arr,
+        gchar** strings,
+        Falcon::AutoCString** temp )
+{
+    const uint32 num = arr->length();
+
+    if ( !num ) return 0;
+
+    uint32 i = 0;
+    *strings = (gchar*) memAlloc( sizeof( gchar* ) * ( num + 1 ) );
+    *temp = (AutoCString*) memAlloc( sizeof( AutoCString ) * num );
+    strings[ num ] = NULL;
+    Item s;
+
+    for ( ; i < num; ++i )
+    {
+        s = arr->at( i );
+#ifndef NO_PARAMETER_CHECK
+        if ( !s.isString() )
+            throw_inv_params( "S" );
+#endif
+        (*temp)[i].set( s.asString() );
+        strings[i] = (gchar*) (*temp)[i].c_str();
+    }
+
+    return num;
 }
 
 

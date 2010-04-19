@@ -13,6 +13,7 @@ set( SRC_FILES
     gdk_DragContext.cpp
     gdk_EventButton.cpp
     gdk_Pixbuf.cpp
+    gtk_AboutDialog.cpp
     gtk_Action.cpp
     gtk_Activatable.cpp
     gtk_Adjustment.cpp
@@ -79,6 +80,7 @@ set( HDR_FILES
     gdk_DragContext.hpp
     gdk_EventButton.hpp
     gdk_Pixbuf.hpp
+    gtk_AboutDialog.hpp
     gtk_Action.hpp
     gtk_Activatable.hpp
     gtk_Adjustment.hpp
