@@ -291,11 +291,11 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
          break;
 
       case 'C':
-       temp.writeNumber( (int64) msg->m_code );
-       {
-       for( int i = temp.length(); i < 5; i ++ )
-          temp.prepend( '0' );
-       }
+         temp.writeNumber( (int64) msg->m_code );
+         {
+            for( int i = temp.length(); i < 5; i ++ )
+               temp.prepend( '0' );
+         }
          target.change( pos, pos + 2, temp );
          break;
 
@@ -316,11 +316,13 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
 
       case 'm':
          target.change( pos, pos + 2, msg->m_msg );
+         pos += msg->m_msg.length();
          break;
 
       case 'l':
          temp.writeNumber( (int64) msg->m_level );
          target.change( pos, pos + 2, temp );
+         pos += temp.length();
          break;
 
       case 'L':
@@ -335,6 +337,7 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
          }
 
          target.change( pos, pos + 2, temp );
+         pos += temp.length();
          break;
 
       case '%':
@@ -369,7 +372,7 @@ bool LogChannel::expandMessage( LogMessage* msg, const String& fmt, String& targ
          */
       }
 
-      pos = target.find( "%", pos + 1 );
+      pos = target.find( "%", pos );
 
    }
 
