@@ -485,6 +485,28 @@ public:
         return Falcon::dyncast<Gtk::CoreGObject*>( it->asObjectSafe() );
     }
 
+    Falcon::CoreArray* getArray( int index, bool mandatory = true ) const
+    {
+        Item* it = m_vm->param( index );
+        if ( mandatory )
+        {
+#ifndef NO_PARAMETER_CHECK
+            if ( !it || it->isNil() || !it->isArray() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        else
+        {
+            if ( !it || it->isNil() )
+                return 0;
+#ifndef NO_PARAMETER_CHECK
+            if ( !it->isArray() )
+                throw_inv_params( m_spec );
+#endif
+        }
+        return it->asArray();
+    }
+
     ~ArgCheck() {}
 
 };
