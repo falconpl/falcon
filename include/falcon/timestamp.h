@@ -195,6 +195,8 @@ public:
    bool operator >=( const TimeStamp &ts ) const { return this->compare( ts ) >= 0; }
 
    virtual TimeStamp *clone() const;
+
+   //TODO: Add serialization
 };
 
 inline TimeStamp operator + ( const TimeStamp &ts1, const TimeStamp &ts2 )
