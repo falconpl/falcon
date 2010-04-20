@@ -15,6 +15,9 @@ Falcon (0.9.6.5)
            is not given.
   * fixed: toString() crashed when called without a parameter.
   * fixed: include() didn't take the engine encodings as the default.
+  * fixed: language level second() was not using the new system independent api 
+           Falcon::Sys::_seconds(). As a result, some embeddings using _second()
+		   may have provided mismatched timings on windows.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
