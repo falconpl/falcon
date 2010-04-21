@@ -20,6 +20,7 @@ Falcon (0.9.6.5)
 		   may have provided mismatched timings on windows.
   * minor: When used with invalid parameters, falpack points out that -h will 
            print help text.
+  * fixed: Sys::fal_mkdir (unix) didn't handle absolute paths proper. 
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

@@ -137,6 +137,7 @@ bool fal_mkdir( const String &strName, int32 &fsError, bool descend )
    {
       // find /.. sequences
       uint32 pos = strName.find( "/" );
+      if(pos == 0) pos = strName.find( "/", 1 ); // an absolute path
       while( true )
       {
          String strPath( strName, 0, pos );
@@ -165,7 +166,7 @@ bool fal_mkdir( const String &strName, int32 &fsError, bool descend )
       // Just one try; succeed or fail
       return Sys::fal_mkdir( strName, fsError );
    }
-   
+
    return true;
 }
 
