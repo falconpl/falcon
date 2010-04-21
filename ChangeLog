@@ -18,6 +18,8 @@ Falcon (0.9.6.5)
   * fixed: language level second() was not using the new system independent api 
            Falcon::Sys::_seconds(). As a result, some embeddings using _second()
 		   may have provided mismatched timings on windows.
+  * minor: When used with invalid parameters, falpack points out that -h will 
+           print help text.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

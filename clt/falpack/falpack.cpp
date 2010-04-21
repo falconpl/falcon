@@ -462,7 +462,7 @@ bool transferModules( Options &options, const String& mainScript )
    {
       ml.addFalconPath();
    }
-   
+
    // add script path (always)
    Path scriptPath( mainScript );
    if( scriptPath.getFullLocation() != "" )
@@ -476,7 +476,7 @@ bool transferModules( Options &options, const String& mainScript )
    // 1) if the main script fails to laod, we can issue a more precise error
    // 2) using the path() from the main script we have a normalized representation
    //    of the topmost directory where the other sub-modules will be found.
-   // Note -- throws on error; for now, we don't use the ability to signal 
+   // Note -- throws on error; for now, we don't use the ability to signal
    //         a different error.
 
    Module* mainMod = ml.loadFile( mainScript );
@@ -550,7 +550,7 @@ int main( int argc, char *argv[] )
 
    if ( ! options.parse( argc-1, argv+1 ) )
    {
-      stdOut->writeString( "Fatal: invalid parameters.\n\n" );
+      stdOut->writeString( "Fatal: invalid parameters.\nUse -h for help.\n\n" );
       return 1;
    }
 
@@ -607,7 +607,7 @@ int main( int argc, char *argv[] )
    delete stdErr;
 
    Engine::Shutdown();
-   
+
    return bResult ? 0 : 1;
 }
 
