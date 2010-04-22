@@ -118,12 +118,6 @@ public:
      */
     void setGObject( const GObject* obj );
 
-protected:
-
-    CoreGObject( const Falcon::CoreClass*, const GObject* = 0 );
-
-    CoreGObject( const CoreGObject& );
-
     /**
      *  \brief Add an anonymous VMSlot in the GObject.
      *  VMSlots are used as a convenience to store the callback functions.
@@ -150,6 +144,12 @@ protected:
      */
     static void trigger_slot( GObject* obj, const char* signame,
                             const char* cbname, Falcon::VMachine* vm );
+
+protected:
+
+    CoreGObject( const Falcon::CoreClass*, const GObject* = 0 );
+
+    CoreGObject( const CoreGObject& );
 
     /**
      *  \brief Return the array of garbage locks of the GObject.

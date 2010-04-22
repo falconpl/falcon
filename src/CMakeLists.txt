@@ -36,6 +36,7 @@ set( SRC_FILES
     gtk_EntryBuffer.cpp
     gtk_EventBox.cpp
     gtk_Expander.cpp
+    gtk_FileChooser.cpp
     gtk_FileChooserDialog.cpp
     gtk_Fixed.cpp
     gtk_Frame.cpp
@@ -105,6 +106,7 @@ set( HDR_FILES
     gtk_EntryBuffer.hpp
     gtk_EventBox.hpp
     gtk_Expander.hpp
+    gtk_FileChooser.hpp
     gtk_FileChooserDialog.hpp
     gtk_Fixed.hpp
     gtk_Frame.hpp

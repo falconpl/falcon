@@ -4,6 +4,8 @@
 
 #include "gtk_FileChooserDialog.hpp"
 
+#include "gtk_FileChooser.hpp"
+
 
 namespace Falcon {
 namespace Gtk {
@@ -26,6 +28,11 @@ void FileChooserDialog::modInit( Falcon::Module* mod )
     mod->addClassMethod( c_FileChooserDialog, "get_color_selection",
                 &FileChooserDialog::get_color_selection );
 #endif
+
+    /*
+     *  implements GtkFileChooser
+     */
+    Gtk::FileChooser::clsInit( mod, c_FileChooserDialog );
 }
 
 
