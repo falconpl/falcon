@@ -29,11 +29,13 @@ bool transferSysFiles( Options &options, bool bJustScript )
 
    binpath.setLocation(
          options.m_sFalconBinDir != "" ? options.m_sFalconBinDir : FALCON_DEFAULT_BIN );
-   // copy falcon or falrun
-   if ( options.m_sRunner != "" )
-      binpath.setFilename( options.m_sRunner );
-   else
-      binpath.setFilename( "falcon" );
+   binpath.setFilename( "falcon" );
+
+   Path runnerPath( options.m_sRunner );
+   if( runnerPath.get() != "" && runnerPath.isValid() )
+   {
+      binpath.setFilename( runnerPath.getFilename() );
+   }
 
    libpath.setLocation(
          options.m_sFalconLibDir != "" ? options.m_sFalconLibDir : FALCON_DEFAULT_LIB );
@@ -81,7 +83,10 @@ bool transferSysFiles( Options &options, bool bJustScript )
    startScript.writeString( "cd \"$CURDIR\"\n" );
    if( bJustScript )
    {
-      startScript.writeString( "    "+ binpath.getFilename() + " \\\n" );
+      if ( runnerPath.isAbsolute() )
+         startScript.writeString( "    "+ runnerPath.get() + " \\\n" );
+      else
+         startScript.writeString( "    "+ binpath.getFilename() + " \\\n" );
    }
    else
    {
