@@ -41,6 +41,7 @@
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
 #include "gtk_HPaned.hpp"
+#include "gtk_HRuler.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
@@ -165,6 +166,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
+                Falcon::Gtk::HRuler::modInit( self );
     Falcon::Gtk::TextBuffer::modInit( self );
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );

@@ -32,15 +32,15 @@ void Ruler::modInit( Falcon::Module* mod )
 }
 
 
-Ruler::Ruler( const Falcon::CoreClass* gen, const GtkRuler* arrow )
+Ruler::Ruler( const Falcon::CoreClass* gen, const GtkRuler* ruler )
     :
-    Gtk::CoreGObject( gen, (GObject*) arrow )
+    Gtk::CoreGObject( gen, (GObject*) ruler )
 {}
 
 
-Falcon::CoreObject* Ruler::factory( const Falcon::CoreClass* gen, void* arrow, bool )
+Falcon::CoreObject* Ruler::factory( const Falcon::CoreClass* gen, void* ruler, bool )
 {
-    return new Ruler( gen, (GtkRuler*) arrow );
+    return new Ruler( gen, (GtkRuler*) ruler );
 }
 
 
