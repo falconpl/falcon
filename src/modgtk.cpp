@@ -67,6 +67,7 @@
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_VPaned.hpp"
+#include "gtk_VRuler.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 
@@ -167,6 +168,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Label::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
+                Falcon::Gtk::VRuler::modInit( self );
     Falcon::Gtk::TextBuffer::modInit( self );
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );

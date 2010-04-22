@@ -69,6 +69,7 @@ set( SRC_FILES
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
     gtk_VPaned.cpp
+    gtk_VRuler.cpp
     gtk_Widget.cpp
     gtk_Window.cpp
     modgtk.cpp
@@ -141,6 +142,7 @@ set( HDR_FILES
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
     gtk_VPaned.hpp
+    gtk_VRuler.hpp
     gtk_Widget.hpp
     gtk_Window.hpp
     modgtk.hpp
