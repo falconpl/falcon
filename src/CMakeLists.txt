@@ -53,6 +53,7 @@ set( SRC_FILES
     gtk_RadioAction.cpp
     gtk_RadioButton.cpp
     gtk_Requisition.cpp
+    gtk_Ruler.cpp
     gtk_SpinButton.cpp
     gtk_Stock.cpp
     gtk_Table.cpp
@@ -123,6 +124,7 @@ set( HDR_FILES
     gtk_RadioAction.hpp
     gtk_RadioButton.hpp
     gtk_Requisition.hpp
+    gtk_Ruler.hpp
     gtk_SpinButton.hpp
     gtk_Stock.hpp
     gtk_Table.hpp

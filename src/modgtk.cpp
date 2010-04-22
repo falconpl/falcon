@@ -51,6 +51,7 @@
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
+#include "gtk_Ruler.hpp"
 #include "gtk_SpinButton.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
@@ -163,6 +164,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Arrow::modInit( self );
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
+            Falcon::Gtk::Ruler::modInit( self );
     Falcon::Gtk::TextBuffer::modInit( self );
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
