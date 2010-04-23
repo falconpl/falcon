@@ -25,7 +25,13 @@ cmake_minimum_required(VERSION 2.6.2)
 project(Falcon_Core)
 
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
-option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
+
+if(WIN32)
+	option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
+else()
+	# Manpages are mandatory on unix
+	option( FALCON_WITH_MANPAGES "Build and install also manpages" ON )
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
