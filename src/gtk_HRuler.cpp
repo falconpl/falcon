@@ -4,6 +4,9 @@
 
 #include "gtk_HRuler.hpp"
 
+#include "gtk_Buildable.hpp"
+//#include "gtk_Orientable.hpp"
+
 
 namespace Falcon {
 namespace Gtk {
@@ -13,18 +16,22 @@ namespace Gtk {
  */
 void HRuler::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Ruler = mod->addClass( "GtkHRuler", &HRuler::init );
+    Falcon::Symbol* c_HRuler = mod->addClass( "GtkHRuler", &HRuler::init );
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkRuler" ) );
-    c_Ruler->getClassDef()->addInheritance( in );
+    c_HRuler->getClassDef()->addInheritance( in );
 
+#if GTK_MINOR_VERSION >= 12
     /*
-     *  implements GtkBuilable
+     *  implements GtkBuildable
      */
-    
+    Gtk::Buildable::clsInit( mod, c_HRuler );
+#endif
+
     /*
      *  implements GtkOrientable
      */
+    //Gtk::Orientable::clsInit( mod, c_HRuler );
 
 }
 
