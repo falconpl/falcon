@@ -43,6 +43,7 @@
 #include "gtk_HPaned.hpp"
 #include "gtk_HRuler.hpp"
 #include "gtk_Image.hpp"
+#include "gtk_Invisible.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
 #include "gtk_Main.hpp"
@@ -162,6 +163,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::TextView::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
+            Falcon::Gtk::Invisible::modInit( self );
             Falcon::Gtk::Misc::modInit( self );
                 Falcon::Gtk::Arrow::modInit( self );
                 Falcon::Gtk::Image::modInit( self );
