@@ -10,6 +10,7 @@
 #include "gdk_DragContext.hpp"
 #include "gdk_EventButton.hpp"
 #include "gdk_Pixbuf.hpp"
+#include "gdk_Screen.hpp"
 
 #include "gtk_enums.hpp"
 
@@ -99,6 +100,7 @@ FALCON_MODULE_DECL
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
+    Falcon::Gdk::Screen::modInit( self );
 
     /*
      *  load enums
