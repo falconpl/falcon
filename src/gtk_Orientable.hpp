@@ -1,0 +1,29 @@
+#ifndef GTK_ORIENTABLE_HPP
+#define GTK_ORIENTABLE_HPP
+
+#include "modgtk.hpp"
+
+#if GTK_MINOR_VERSION >= 16
+
+namespace Falcon {
+namespace Gtk {
+
+/**
+ *  \namespace Falcon::Gtk::Orientable
+ */
+namespace Orientable {
+
+void clsInit( Falcon::Module*, Falcon::Symbol* );
+
+FALCON_FUNC get_orientation( VMARG );
+
+FALCON_FUNC set_orientation( VMARG );
+
+
+} // Orientable
+} // Gtk
+} // Falcon
+
+#endif // GTK_MINOR_VERSION >= 16
+
+#endif // !GTK_ORIENTABLE_HPP

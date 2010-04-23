@@ -5,7 +5,7 @@
 #include "gtk_VRuler.hpp"
 
 #include "gtk_Buildable.hpp"
-//#include "gtk_Orientable.hpp"
+#include "gtk_Orientable.hpp"
 
 
 namespace Falcon {
@@ -28,10 +28,12 @@ void VRuler::modInit( Falcon::Module* mod )
     Gtk::Buildable::clsInit( mod, c_VRuler );
 #endif
 
+#if GTK_MINOR_VERSION >= 16
     /*
      *  implements GtkOrientable
      */
-    //Gtk::Orientable::clsInit( mod, c_VRuler );
+    Gtk::Orientable::clsInit( mod, c_VRuler );
+#endif
 }
 
 

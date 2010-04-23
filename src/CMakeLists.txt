@@ -51,6 +51,7 @@ set( SRC_FILES
     gtk_Main.cpp
     gtk_Misc.cpp
     gtk_Object.cpp
+    gtk_Orientable.cpp
     gtk_Paned.cpp
     gtk_RadioAction.cpp
     gtk_RadioButton.cpp
@@ -125,6 +126,7 @@ set( HDR_FILES
     gtk_Main.hpp
     gtk_Misc.hpp
     gtk_Object.hpp
+    gtk_Orientable.hpp
     gtk_Paned.hpp
     gtk_RadioAction.hpp
     gtk_RadioButton.hpp
