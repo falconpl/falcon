@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 104e
+* Category: RTL
+* Subcategory: dictionaries
+* Short: Dictionary.dop method.
+* Description:
+* Checks the dop method for various modalities.
+* [/Description]
+*
+****************************************************************************/
+
+dict = [=>]
+val = dict.dop( "value", 10 )
+if val != 10: failure( "Simple dop return - 1")
+if "value" notin dict: failure( "Simple dop value creation" )
+if dict["value"] != 10: failure( "Simple dop default setvalue" )
+
+// now that the value is 10, it must not be changed
+val = dict.dop( "value", 11 )
+if val != 10: failure( "Simple dop return - 2")
+if dict["value"] != 10: failure( "Simple dop non default setvalue" )
+
+users = dict.dop( "users", [], { v => v += "one" } )
+if users != ["one"]: failure( "Complex dop return value - 1" )
+if "users" notin dict: failure( "Complex dop value creation" )
+if dict["users"] != ["one"]: failure( "Complex dop default setvalue" )
+
+users = dict.dop( "users", [], { v => v += "two" } )
+
+if users != ["one", "two"]: failure( "Complex dop return value - 2" )
+if dict["users"] != ["one", "two"]: failure( "Complex dop non default setvalue" )
+
+// some error test
+try
+	dict.dop( "a" )
+	failure( "Too few parameters not catched" )
+catch ParamError
+end
+
+try
+	dict.dop( "v", "k", "x" )
+	failure( "Non callable parameter not catched" )
+catch ParamError
+end
+
+
+success()
+
+/* End of file */

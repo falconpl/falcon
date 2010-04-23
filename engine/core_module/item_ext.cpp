@@ -645,6 +645,124 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
    }
 }
 
+
+static bool dop_internal( VMachine* vm )
+{
+   vm->self().asDict()->put( *vm->param(0), vm->regA() );
+   // in A we already have the value
+   return false;
+}
+
+/*#
+   @method dop Dictionary
+   @brief Dictionary default operation.
+   @param key The key to be defaulted.
+   @param dflt The default value to be applied.
+   @optparam oper The operation to be applied.
+   @return The value associated with @b key after the application of the
+      operation.
+   
+   Given the @b key, @b dflt and @b oper parameters, this method 
+   inserts a default value on a dictionary, eventually performing 
+   a default operation. In short, if the @b key is not present in the
+   dictionary, a new key is created and the @dflt value is assigned to
+   it. If a @b oper callable item (function) is given, then the current
+   value associated with the key is passed to it as a parameter; in case
+   that the key still doesn't exist, the @b dflt value is passed instead.
+   In both case, the key is then associated with the return value of the
+   @b oper function.
+   
+   Finally, this method return the value that has just been associated with
+   the dictionary.
+   
+   More coinciserly the method works along the following pseudocode rules:
+   
+   @code
+      function dop of dict, key, dflt and oper
+         if key exists in dict
+            if oper is a callable entity
+               value = oper( dict[key] )
+               dict[key] = value
+            else
+               value = dict[key]
+            end
+         else
+            if oper is a callable entity
+               value = oper( dflt )
+               dict[key] = value
+            else
+               value = oper( dflt )
+            end
+         end
+         
+         return value
+      end
+   @endcode
+
+   This function comes extremely convenient when in need to do some complex
+   operations on a possibly uninitialized dictionary value. Suppose
+   that an application stores the list of currently logged in-users in an
+   array under the "users" key of a given prog_data dictionary. Then,
+   
+   @code
+   // a new user comes in...
+   newcomer = ...
+   users = prog_data.dop( "users", [], { v => v += newcomer } )
+   @endcode
+   
+   In one line, this code creates a "users" entry in prog_data, if it doesn't exists,
+   which is initialized to an empty array. The empty array is then lenghtened and also
+   returned, so that the program has already it handy without having to scan for it
+   in program_data again.
+   
+*/
+
+FALCON_FUNC  Dictionary_dop ( ::Falcon::VMachine *vm )
+{
+   Item *i_key = vm->param(0);
+   Item *i_dflt = vm->param(1);
+   Item *i_oper = vm->param(2);
+   
+   if( i_key == 0|| i_dflt == 0 || 
+      ( i_oper != 0 && ! i_oper->isCallable() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( "X,X,[C]" ) );
+   }
+
+
+   CoreDict *cd = vm->self().asDict();
+   
+   // find our key -- will be 0 if not found
+   Item *i_val = cd->find(*i_key);
+      
+   if( i_oper == 0 )
+   {
+      // if we have no operations, we're done here
+      if( i_val == 0 )
+      {
+         // if the value was not found, set the default
+         cd->put( *i_key, *i_dflt );
+         vm->retval( *i_dflt );
+      }
+      else
+      {
+         // otherwise, don't do anything, but return the found value
+         vm->retval( *i_val );
+      }
+   }
+   else 
+   {
+      // we have to call our function
+  
+      vm->returnHandler( &dop_internal );
+      vm->pushParam( i_val == 0 ? *i_dflt : *i_val );
+      vm->callItem( *vm->param(2), 1 ); // stack may change -- use vm->param
+   }
+}
+
+
+
 /*#
    @function chr
    @brief Returns a string containing a single character that corresponds to the given number.

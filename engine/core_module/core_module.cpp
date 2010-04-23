@@ -714,6 +714,8 @@ Module* core_module_init()
    self->addClassMethod( dict_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
    self->addClassMethod( dict_meta, "properties", &Falcon::core::mth_properties );
+   
+   self->addClassMethod( dict_meta, "dop", &Falcon::core::Dictionary_dop );
 
    //==================================================================
    // Object class
