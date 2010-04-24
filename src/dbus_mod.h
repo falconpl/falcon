@@ -39,7 +39,11 @@
 #include <falcon/types.h>
 #include <falcon/falcondata.h>
 #include <falcon/error.h>
+#include <falcon/mt.h>
+#include <falcon/vm.h>
+#include <falcon/module.h>
 #include <dbus/dbus.h>
+
 
 namespace Falcon {
 namespace Mod {
@@ -129,9 +133,51 @@ public:
    
    inline DBusMessage *msg( void ) const { return m_msg; }
    
+   
    virtual FalconData *clone( void ) const;
    virtual void gcMark( uint32 mk );
 };
+
+
+   
+class FALCON_SERVICE DBusDispatcher: public Runnable
+{
+private:
+   VMachine *m_vm;
+   SysThread *m_th;
+   DBusWrapper *m_wp;
+   
+   Event m_eTerminated;
+public:
+   DBusDispatcher( VMachine *vm, DBusWrapper *wp );
+   virtual ~DBusDispatcher();
+   
+   virtual void *run( );
+   
+   /** Starts the parallel dispatcher. */
+   void start();
+
+   /** Stops the dispatcher
+
+      Synchronously wait for clean termination and destroys this object.
+      You can safely delete this object after this call.
+   */
+   void stop();
+};
+
+/** Initializes application wide data and clear up data at termination.
+
+   This class is meant to prepare the application wide data at module initialization,
+   and to shut down cleanly the dispatcher thread (if started) at application
+   termination.
+*/
+class FALCON_SERVICE DBusModule: public Module
+{
+public:
+   DBusModule();
+   virtual ~DBusModule();
+};
+
 
 typedef struct _dbusHandlerData
 {

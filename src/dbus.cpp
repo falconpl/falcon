@@ -65,7 +65,7 @@ FALCON_MODULE_DECL
    #define FALCON_DECLARE_MODULE self
 
    // initialize the module
-   Falcon::Module *self = new Falcon::Module();
+   Falcon::Module *self = new Falcon::Mod::DBusModule();
    self->name( "dbus" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
@@ -95,6 +95,8 @@ FALCON_MODULE_DECL
       addParam( "name" )->addParam( "flags" );
    self->addClassMethod( dbus_cls, "addFilter", Falcon::Ext::DBus_addFilter ).asSymbol()->
       addParam( "interface" )->addParam( "name" )->addParam( "handler" )->addParam( "isSignal" );
+   self->addClassMethod( dbus_cls, "startDispatch", Falcon::Ext::DBus_startDispatch );
+   self->addClassMethod( dbus_cls, "stopDispatch", Falcon::Ext::DBus_stopDispatch );
       
    //============================================================
    // The pending class.

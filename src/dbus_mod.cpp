@@ -52,7 +52,6 @@ DBusWrapper::DBusWrapper( const DBusWrapper &other )
 }
 
 
-
 DBusWrapper::~DBusWrapper()
 {
    // Won't work great in MT, but we're working at that.

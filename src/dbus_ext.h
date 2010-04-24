@@ -54,6 +54,9 @@ namespace Ext {
    FALCON_FUNC  DBus_requestName( VMachine *vm );
    FALCON_FUNC  DBus_addFilter( VMachine *vm );
    
+   FALCON_FUNC  DBus_startDispatch( VMachine *vm );
+   FALCON_FUNC  DBus_stopDispatch( VMachine *vm );
+   
    FALCON_FUNC  DBusPendingCall_wait( VMachine *vm );
    FALCON_FUNC  DBusPendingCall_completed( VMachine *vm );
    FALCON_FUNC  DBusPendingCall_cancel( VMachine *vm );
