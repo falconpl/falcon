@@ -542,6 +542,12 @@ void Enums::modInit( Falcon::Module* mod )
     // BEGIN GDK CONSTANTS //
 
     /*
+     *  GdkByteOrder
+     */
+    { "GDK_LSB_FIRST",  GDK_LSB_FIRST },
+    { "GDK_MSB_FIRST",  GDK_MSB_FIRST },
+
+    /*
      *  GdkColorSpace
      */
     { "GDK_COLORSPACE_RGB", GDK_COLORSPACE_RGB },
@@ -704,6 +710,16 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_PIXBUF_ERROR_UNKNOWN_TYPE",          GDK_PIXBUF_ERROR_UNKNOWN_TYPE },
     { "GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION", GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION },
     { "GDK_PIXBUF_ERROR_FAILED",                GDK_PIXBUF_ERROR_FAILED },
+
+    /*
+     *  GdkVisualType
+     */
+    { "GDK_VISUAL_STATIC_GRAY",     GDK_VISUAL_STATIC_GRAY },
+    { "GDK_VISUAL_GRAYSCALE",       GDK_VISUAL_GRAYSCALE },
+    { "GDK_VISUAL_STATIC_COLOR",    GDK_VISUAL_STATIC_COLOR },
+    { "GDK_VISUAL_PSEUDO_COLOR",    GDK_VISUAL_PSEUDO_COLOR },
+    { "GDK_VISUAL_TRUE_COLOR",      GDK_VISUAL_TRUE_COLOR },
+    { "GDK_VISUAL_DIRECT_COLOR",    GDK_VISUAL_DIRECT_COLOR },
 
     /*
      *  GdkWindowEdge
