@@ -59,6 +59,8 @@ public:
     static FALCON_FUNC get_screen( VMARG );
 
 
+    GdkVisual* getObject() const { return m_visual; }
+
 private:
 
     GdkVisual*   m_visual;

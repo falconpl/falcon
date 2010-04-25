@@ -11,6 +11,7 @@ set( SRC_FILES
     g_Object.cpp
     g_ParamSpec.cpp
     gdk_Color.cpp
+    gdk_Colormap.cpp
     gdk_DragContext.cpp
     gdk_EventButton.cpp
     gdk_Pixbuf.cpp
@@ -90,6 +91,7 @@ set( HDR_FILES
     g_Object.hpp
     g_ParamSpec.hpp
     gdk_Color.hpp
+    gdk_Colormap.hpp
     gdk_DragContext.hpp
     gdk_EventButton.hpp
     gdk_Pixbuf.hpp

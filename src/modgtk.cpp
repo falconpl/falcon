@@ -8,6 +8,7 @@
 #include "g_ParamSpec.hpp"
 
 #include "gdk_Color.hpp"
+#include "gdk_Colormap.hpp"
 #include "gdk_DragContext.hpp"
 #include "gdk_EventButton.hpp"
 #include "gdk_Pixbuf.hpp"
@@ -100,6 +101,7 @@ FALCON_MODULE_DECL
      */
 
     Falcon::Gdk::Color::modInit( self );
+    Falcon::Gdk::Colormap::modInit( self );
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
