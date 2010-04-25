@@ -28,17 +28,14 @@ namespace Falcon
             int o_rowCount;
             int o_columnCount;
 
-            // FIXME
-            MYSQL_RES *m_res;
-            MYSQL_FIELD *m_fields;
-            MYSQL_ROW m_rowData;
-            unsigned long *m_fieldLengths;
+            ResultSet *ORACLE_RES;
+
+            unsigned long *o_fieldLengths;
 
             static dbi_type getFalconType( int typ );
 
         public:
-            // FIXME
-            DBIRecordsetMySQL( DBIHandle *dbh, MYSQL_RES *res );
+            DBIRecordsetOracle( DBIHandle *dbh, ORACLE_RES *res );
             ~DBIRecordsetOracle();
 
             virtual dbi_status next();
