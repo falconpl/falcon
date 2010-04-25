@@ -63,6 +63,7 @@ set( SRC_FILES
     gtk_Requisition.cpp
     gtk_Ruler.cpp
     gtk_SpinButton.cpp
+    gtk_Statusbar.cpp
     gtk_Stock.cpp
     gtk_Table.cpp
     gtk_TextBuffer.cpp
@@ -143,6 +144,7 @@ set( HDR_FILES
     gtk_Requisition.hpp
     gtk_Ruler.hpp
     gtk_SpinButton.hpp
+    gtk_Statusbar.hpp
     gtk_Stock.hpp
     gtk_Table.hpp
     gtk_TextBuffer.hpp

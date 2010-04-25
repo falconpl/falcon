@@ -59,6 +59,7 @@
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
 #include "gtk_SpinButton.hpp"
+#include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
 #include "gtk_TextBuffer.hpp"
@@ -161,6 +162,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::HButtonBox::modInit( self );
                         Falcon::Gtk::VButtonBox::modInit( self );
                     Falcon::Gtk::HBox::modInit( self );
+                        Falcon::Gtk::Statusbar::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
                 Falcon::Gtk::Layout::modInit( self );
