@@ -100,6 +100,104 @@ FALCON_FUNC Statusbar::init( VMARG )
 
 
 /*#
+    @method signal_text_popped
+    @brief Is emitted whenever a new message is popped off a statusbar's stack.
+ */
+FALCON_FUNC Statusbar::signal_text_popped( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "text_popped", (void*) &Statusbar::on_text_popped, vm );
+}
+
+
+void Statusbar::on_text_popped( GtkStatusbar* obj, guint ctxt_id, gchar* text, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "text_popped", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_text_popped", it ) )
+            {
+                printf(
+                "[GtkStatusbar::on_text_popped] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) ctxt_id );
+        vm->pushParam( new String( text ) );
+        vm->callItem( it, 2 );
+        iter.next();
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+/*#
+    @method signal_text_pushed
+    @brief Is emitted whenever a new message gets pushed onto a statusbar's stack.
+ */
+FALCON_FUNC Statusbar::signal_text_pushed( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "text_pushed", (void*) &Statusbar::on_text_pushed, vm );
+}
+
+
+void Statusbar::on_text_pushed( GtkStatusbar* obj, guint ctxt_id, gchar* text, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "text_pushed", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_text_pushed", it ) )
+            {
+                printf(
+                "[GtkStatusbar::on_text_pushed] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) ctxt_id );
+        vm->pushParam( new String( text ) );
+        vm->callItem( it, 2 );
+        iter.next();
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+/*#
     @method get_context_id GtkStatusbar
     @brief Returns a new context identifier, given a description of the actual context.
     @param context_description textual description of what context the new message is being used in

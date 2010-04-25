@@ -24,6 +24,14 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
+    static FALCON_FUNC signal_text_popped( VMARG );
+
+    static void on_text_popped( GtkStatusbar*, guint, gchar*, gpointer );
+
+    static FALCON_FUNC signal_text_pushed( VMARG );
+
+    static void on_text_pushed( GtkStatusbar*, guint, gchar*, gpointer );
+
     static FALCON_FUNC get_context_id( VMARG );
 
     static FALCON_FUNC push( VMARG );
