@@ -1,0 +1,65 @@
+import from hpdf
+
+function printPage(page, page_num)
+  page.setWidth(800)
+  page.setHeight(800)
+
+  page.beginText()
+  page.moveTextPos(30, 740)
+  buf = "Page:" + page_num
+  page.showText(buf)
+  page.endText()
+end
+
+
+pdf = hpdf.Pdf()
+
+pdf.setCompressionMode(hpdf.COMP_ALL)
+
+// create default-font
+font = pdf.getFont("Helvetica")
+
+pdf.SetPageMode(HPdfPageMode.HPDF_PAGE_MODE_USE_OUTLINE);
+
+// add a new page object
+/* Add 3 pages to the document. */
+page0 = pdf.addPage()
+page0.setFontAndSize (font, 30)
+printPage(page0, 1)
+
+HPdfPage page1 = pdf.AddPage();
+page1.SetFontAndSize(font, 30);
+PrintPage(page1, 2);
+
+page2 = pdf.addPage()
+page2.setFontAndSize(font, 30)
+printPage(page2, 3)
+
+// create outline root
+root = pdf.createOutline(null, "OutlineRoot")
+root.setOpened(true)
+
+outline0 = pdf.createOutline(root, "page1")
+outline1 = pdf.createOutline(root, "page2")
+
+// create outline with test which is ISO8859-2 encoding
+outline2 = pdf.createOutline(root, "ISO8859-2 text ÓÔÕÖ×ØÙ",
+                             pdf.getEncoder("ISO8859-2"))
+
+/* create destination objects on each pages
+ * and link it to outline items.
+ */
+dst = page0.createDestination()
+dst.setXYZ(0, page0.getHeight(), 1)
+outline0.setDestination(dst)
+
+dst = page1.createDestination()
+dst.setXYZ(0, page1.GetHeight(), 1)
+outline1.setDestination(dst)
+
+dst = page2.createDestination()
+dst.setXYZ(0, page2.GetHeight(), 1)
+outline2.setDestination(dst)
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")

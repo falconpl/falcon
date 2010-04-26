@@ -1,16 +1,20 @@
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${Falcon_INCLUDE_DIRS}
   ${LibHaru_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
-# Target
 add_library(hpdf_fm MODULE
    hpdf.cpp
-   hpdf_ext.cpp
-   hpdf_mod.cpp
+   moduleImpl/st.cpp
+   moduleImpl/doc.cpp
+   moduleImpl/page.cpp
+   moduleImpl/font.cpp
+   moduleImpl/error.cpp
+   scriptExtensions/doc.cpp
+   scriptExtensions/page.cpp
+   scriptExtensions/font.cpp
+   scriptExtensions/error.cpp
 )
 
 target_link_libraries(hpdf_fm

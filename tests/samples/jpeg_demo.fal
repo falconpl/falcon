@@ -1,0 +1,53 @@
+import from hpdf
+
+function drawImage(pdf, filename, x, y, text)
+  page = pdf.getCurrentPage()
+
+  jpegFilename = "pngsuite" + "/" + filename
+  image = pdf.loadJpegImageFromFile(jpegFilename)
+
+  // Draw image to the canvas.
+  page.drawImage(image, x, y,
+                 image.getWidth(), image.getHeight)
+
+  // Print the text
+  page.beginText()
+  page.setTextLeading(16)
+  page.moveTextPos(x, y)
+  page.showTextNextLine(filename)
+  page.showTextNextLine(text)
+  page.endText()
+end
+
+pdf = hpdf.Pdf()
+
+pdf.setCompressionMode(hpdf.COMP_ALL)
+
+// create default-font
+font = pdf.getFont("Helvetica")
+
+// add a new page object
+page = pdf.addPage()
+
+page.setWidth(650)
+page.setHeight(500)
+
+dst = page.createDestination()
+dst.setXYZ(0, page.getHeight(), 1)
+pdf.setOpenAction(dst)
+
+page.beginText()
+page.setFontAndSize(font, 20)
+page.moveTextPos(220, page.getHeight() - 70)
+page.showText("PngDemo")
+page.endText()
+
+HPDF_Page_SetFontAndSize (page, font, 12);
+
+draw_image (pdf, "rgb.jpg", 70, HPDF_Page_GetHeight (page) - 410,
+            "24bit color image");
+draw_image (pdf, "gray.jpg", 340, HPDF_Page_GetHeight (page) - 410,
+            "8bit grayscale image");
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")

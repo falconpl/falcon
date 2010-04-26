@@ -1,0 +1,60 @@
+import from hpdf
+
+pdf = hpdf.Pdf()
+
+// add a new page object
+page = pdf.addPage()
+
+page.setHeight(220)
+page.setWidth(200)
+
+// draw pie chart
+//   A: 45% Red
+//   B: 25% Blue
+//   C: 15% green
+//   D: other yellow
+
+// A
+page.setRGBFill(1.0, 0, 0)
+page.moveTo(100, 100)
+page.lineTo(100, 180)
+page.arc(100, 100, 80, 0, 360 * 0.45)
+pos = page.getCurrentPos()
+page.lineTo(100, 100)
+page.fill()
+
+// B 
+page.setRGBFill(0, 0, 1.0)
+page.moveTo(100, 100)
+page.lineTo(pos[0], pos[1])
+page.arc(100, 100, 80, 360 * 0.45, 360 * 0.7)
+pos = page.getCurrentPos()
+page.lineTo(100, 100)
+page.fill()
+
+// C
+page.setRGBFill(0, 1.0, 0)
+page.moveTo(100, 100)
+page.lineTo(pos[0], pos[1])
+page.arc(100, 100, 80, 360 * 0.7, 360 * 0.85)
+pos = page.getCurrentPos()
+page.lineTo(100, 100)
+page.fill()
+
+// D
+page.setRGBFill(1.0, 1.0, 0)
+page.moveTo(100, 100)
+page.lineTo(pos[0], pos[1])
+page.arc(100, 100, 80, 360 * 0.85, 360)
+pos = page.getCurrentPos()
+page.lineTo(100, 100)
+page.fill()
+
+// draw center circle
+page.setGrayStroke(0)
+page.setGrayFill(1)
+page.circle(100, 100, 30)
+page.fill()
+
+pdf.saveToFile(scriptName + ".pdf")
+

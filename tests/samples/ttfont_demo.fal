@@ -1,0 +1,90 @@
+import from hpdf
+
+SAMP_TXT = "The quick brown fox jumps over the lazy dog."
+
+if args.len() < 2
+  print 'usage: ttfont_demo.fal [path to font file] -E(embedding font).'
+  exit(1)
+end
+
+font_name = args[0]
+flg = args[1]
+
+pdf = hpdf.Pdf()
+
+pdf.setCompressionMode(hpdf.OMP_ALL)
+
+// Add a new page object
+page = pdf.addPage()
+
+title_font = pdf.getFont("Helvetica")
+
+if (flg == "-E")
+  embed = true
+else
+  embed = false
+end
+
+detail_font_name = pdf.loadTTFontFromFile(font_name, embed)
+> font_name, ' load OK.[', detail_font_name, ']'
+
+detail_font = pdf.getFont(detail_font_name)
+
+page.setFontAndSize(title_font, 10)
+
+page.beginText()
+
+// Move the position of the text to top of the page
+page.moveTextPos(10, 190)
+page.showText(detail_font_name)
+
+if embed: page.showText("(Embedded Subset)")
+
+page.setFontAndSize(detail_font, 15)
+page.moveTextPos(10, -20)
+page.showText("abcdefghijklmnopqrstuvwxyz")
+page.moveTextPos(0, -20)
+page.showText("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+page.moveTextPos(0, -20)
+page.showText("1234567890")
+page.moveTextPos(0, -20)
+
+page.setFontAndSize(detail_font, 10)
+page.showText(SAMP_TXT)
+page.moveTextPos(0, -18)
+
+page.setFontAndSize(detail_font, 16)
+page.showText(SAMP_TXT)
+page.move_text_pos(0, -27)
+
+page.setFontAndSize(detail_font, 23)
+page.showText(SAMP_TXT)
+page.moveTextPos(0, -36)
+
+page.setFontAndSize(detail_font, 30)
+page.showText(SAMP_TXT)
+page.moveTextPos(0, -36)
+
+tw = page.textWidth(SAMP_TXT)
+page_height = 210
+page_width = tw + 40
+
+page.setWidth(page_width)
+page.setHeight(page_height)
+
+// Finish to print text
+page.endText()
+
+page.setLineWidth(0.5)
+
+page.moveTo(10, page_height - 25)
+page.lineTo(page_width - 10, page_height - 25)
+page.stroke()
+
+page.moveTo(10, page_height - 85)
+page.lineTo(page_width - 10, page_height - 85)
+page.stroke()
+
+pdf.saveToFile(scriptName + ".pdf")
+
+

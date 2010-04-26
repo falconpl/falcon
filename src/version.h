@@ -19,8 +19,8 @@
 #ifndef FALCON_MODULE_HPDF_VERSION_H
 #define FALCON_MODULE_HPDF_VERSION_H
 
-#define VERSION_MAJOR        1
-#define VERSION_MINOR        1
+#define VERSION_MAJOR        2
+#define VERSION_MINOR        0
 #define VERSION_REVISION     0
 
 #endif // FALCON_MODULE_HPDF_VERSION_H

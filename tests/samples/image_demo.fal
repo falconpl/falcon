@@ -1,0 +1,158 @@
+import from hpdf
+
+function ShowDescription(page, x, y, text)
+   page.moveTo(x, y - 10)
+   page.lineTo(x, y + 10)
+   page.moveTo(x - 10, y)
+   page.lineTo(x + 10, y)
+   page.stroke()
+
+   page.setFontAndSize(page.getCurrentFont(), 8)
+   page.setRGBFill(0, 0, 0)
+
+   page.beginText()
+
+   buf = "(x=" + x + ",y=" + y + ")"
+   page.moveTextPos(x - page.TextWidth(buf) - 5, y - 10)
+   page.showText(buf)
+   page.endText()
+
+   page.beginText()
+   page.moveTextPos(x - 20, y - 25)
+   page.showText(text)
+   page.endText()
+end
+
+pdf = hpdf,Pdf()
+
+pdf.setCompressionMode(hpdf.COMP_ALL)
+
+/* create default-font */
+font = pdf.getFont("Helvetica")
+
+/* add a new page object. */
+page = pdf.addPage()
+
+page.setWidth(550)
+page.setHeight(500)
+
+dst = page.createDestination()
+dst.setXYZ(0, page.getHeight(), 1)
+pdf.setOpenAction(dst)
+
+page.beginText()
+page.setFontAndSize(font, 20)
+page.moveTextPos(220, page.getHeight() - 70)
+page.showText("ImageDemo")
+page.endText()
+
+/* load image file. */
+image = pdf.loadPngImageFromFile("pngsuite/basn3p02.png")
+
+/* image1 is masked by image2. */
+image1 = pdf.loadPngImageFromFile("pngsuite/basn3p02.png")
+
+/* image2 is a mask image. */
+image2 = pdf.loadPngImageFromFile("pngsuite/basn0g01.png")
+
+/* image3 is a RGB-color image. we use this image for color-mask
+ * demo.
+ */
+image3 = pdf.loadPngImageFromFile("pngsuite/maskimage.png")
+
+iw = image.getWidth()
+ih = image.getHeight()
+
+page.setLineWidth(0.5)
+
+x = 100
+y = page.getHeight() - 150
+
+/* Draw image to the canvas. (normal-mode with actual size.)*/
+page.drawImage(image, x, y, iw, ih)
+
+showDescription(page, x, y, "Actual Size")
+
+x += 150
+
+/* Scalling image (X direction) */
+page.drawImage(image, x, y, iw * 1.5, ih)
+
+showDescription(page, x, y, "Scalling image (X direction)")
+
+x += 150
+
+/* Scalling image (Y direction). */
+page.drawImage(image, x, y, iw, ih * 1.5)
+showDescription(page, x, y, "Scalling image (Y direction)")
+
+x = 100
+y -= 120
+
+/* Skewing image. */
+angle1 = 10
+angle2 = 20
+rad1 = angle1 / 180 * PI
+rad2 = angle2 / 180 * PI
+
+page.gSave()
+
+page.concat(iw, tan(rad1) * iw, tan(rad2) * ih, ih, x, y)
+
+page.executeXObject(image)
+page.gRestore()
+
+showDescription(page, x, y, "Skewing image")
+
+x += 150
+
+/* Rotating image */
+angle = 30     /* rotation of 30 degrees. */
+rad = angle / 180 * PI /* Calcurate the radian value. */
+
+page.gSave()
+
+page.concat(iw * cos(rad), iw * sin(rad), ih * -sin(rad), ih * cos(rad), x, y)
+
+page.executeXObject(image)
+page.gRestore()
+
+showDescription(page, x, y, "Rotating image")
+
+x += 150;
+
+/* draw masked image. */
+
+/* Set image2 to the mask image of image1 */
+image1.setMaskImage(image2)
+
+page.setRGBFill(0, 0, 0)
+page.beginText()
+page.moveTextPos(x - 6, y + 14)
+page.showText("MASKMASK")
+page.endText()
+
+page.drawImage(image1, x - 3, y - 3, iw + 6, ih + 6)
+
+showDescription(page, x, y, "masked image")
+
+x = 100;
+y -= 120;
+
+/* color mask. */
+page.setRGBFill(0, 0, 0)
+page.beginText()
+page.moveTextPos(x - 6, y + 14)
+page.showText("MASKMASK")
+page.endText()
+
+image3.setColorMask (0, 255, 0, 0, 0, 255)
+page.drawImage(image3, x, y, iw, ih)
+
+showDescription(page, x, y, "Color Mask")
+
+/* save the document to a file */
+pdf.saveToFile(scriptName + ".pdf")
+
+
+

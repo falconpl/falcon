@@ -1,0 +1,284 @@
+import from hpdf
+
+
+function showStripePattern(page, x, y)
+  iy = 0
+
+  while (iy < 50)
+    page.setRGBStroke(0.0, 0.0, 0.5)
+    page.setLineWidth(1)
+    page.moveTo(x, y + iy)
+    page.lineTo(x + page.textWidth("ABCabc123"),y + iy)
+    page.stroke()
+    iy += 3
+  end
+  page.setLineWidth(2.5)
+end
+
+function showDescription (page, x, y, text)
+  fsize = page.getCurrentFontSize()
+  font = page.getCurrentFont()
+  c = page.getRGBFill()
+
+  page.beginText()
+  page.setRGBFill(0, 0, 0)
+  page.setTextRenderingMode(hpdf.TextRenderingMode.FILL)
+  page.setFontAndSize(font, 10)
+  page.textOut(x, y - 12, text)
+  page.endText()
+
+  page.setFontAndSize(font, fsize)
+  page.setRGBFill(c.r, c.g, c.b)
+end
+
+
+page_title = "Text Demo";
+samp_text = "abcdefgABCDEFG123!#$%&+-@?";
+samp_text2 = "The quick brown fox jumps over the lazy dog.";
+
+pdf = hpdf.Doc()
+
+pdf.setCompressionMode(hpdf.COMP_ALL);
+
+/* create default-font */
+font = pdf.getFont("Helvetica")
+
+// add a new page object.
+page = pdf.addPage()
+
+// print the title of the page (with positioning center).
+page.setFontAndSize(font, 24)
+tw = page.textWidth(page_title)
+page.beginText()
+page.textOut((page.getWidth() - tw) / 2,
+             page.getHeight () - 50, page_title)
+page.endText()
+
+page.beginText()
+page.moveTextPos(60, page.getHeight() - 60)
+
+/*
+ * font size
+ */
+fsize = 8;
+while (fsize < 60)
+  // set style and size of font.
+  page.setFontAndSize(font, int(fsize))
+
+  // set the position of the text.
+  page.moveTextPos(0, -5 - fsize)
+
+  // measure the number of characters which included in the page.
+  tlen = page.measureText(samp_text,
+                          page.getWidth() - 120, false)
+
+  page.showText(samp_text[0:tlen])
+
+    /* print the description. */
+  page.moveTextPos(100, -10);
+  page.setFontAndSize(font, 8);
+  page.showText("Fontsize=" + fsize);
+
+  fsize *= 1.5
+end
+
+/*
+ * font color
+ */
+page.setFontAndSize(font, 8)
+page.moveTextPos(0, -30)
+page.showText("Font color")
+
+page.setFontAndSize(font, 18)
+page.moveTextPos(0, -20)
+textLen = len(samp_text)
+rg = function (i)
+  r = i / textLen
+  g = 1 - r
+  ret = r,g
+  return ret
+end  
+for i in [0:textLen]
+  r,g = rg(i)
+  buf = samp_text[i:i+1]
+
+  page.setRGBFill(r, g, 0)
+  page.showText(buf)
+end
+page.moveTextPos(0, -25)
+
+for i in [0:textLen]
+  r,b = rg(i)
+  buf = samp_text[i:i+1]
+  page.setRGBFill(r, 0, b)
+  page.showText(buf)
+end
+page.moveTextPos(0, -25)
+
+for i in [0:textLen]
+  g,b = rg(i)
+  buf = samp_text[i:i+1]
+  page.setRGBFill(0, g, b)
+  page.showText(buf)
+end
+page.endText()
+
+ypos = 450
+
+/*
+ * Font rendering mode
+ */
+page.setFontAndSize(font, 32)
+page.setRGBFill(0.5, 0.5, 0)
+page.setLineWidth(1.5)
+
+// PDF_FILL
+showDescription(page, 60, ypos,
+    "RenderingMode=PDF_FILL")
+page.setTextRenderingMode(hpdf.TextRenderingMode.FILL)
+page.beginText()
+page.textOut(60, ypos, "ABCabc123")
+page.endText()
+
+/*PDF_STROKE */
+showDescription(page, 60, ypos - 50,
+                "RenderingMode=PDF_STROKE")
+page.setTextRenderingMode(hpdf.TextRenderingMode.STROKE)
+page.beginText()
+page.textOut(60, ypos - 50, "ABCabc123")
+page.endText()
+
+// PDF_FILL_THEN_STROKE
+showDescription(page, 60, ypos - 100,
+                "RenderingMode=PDF_FILL_THEN_STROKE");
+page.SetTextRenderingMode(hpdf.TextRenderingMode.FILL_THEN_STROKE)
+page.beginText()
+page.textOut(60, ypos - 100, "ABCabc123")
+page.endText()
+
+// PDF_FILL_CLIPPING 
+showDescription(page, 60, ypos - 150,
+                "RenderingMode=PDF_FILL_CLIPPING")
+page.gSave()
+page.setTextRenderingMode(hpdf.TextRenderingMode.FILL_CLIPPING)
+page.beginText()
+page.textOut(60, ypos - 150, "ABCabc123")
+page.endText()
+showStripePattern(page, 60, ypos - 150)
+page.gRestore()
+
+// PDF_STROKE_CLIPPING
+showDescription(page, 60, ypos - 200,
+                "RenderingMode=PDF_STROKE_CLIPPING")
+page.gSave()
+page.setTextRenderingMode(hpdf.TextRenderingMode.STROKE_CLIPPING)
+page.beginText()
+page.textOut(60, ypos - 200, "ABCabc123")
+page.endText()
+showStripePattern(page, 60, ypos - 200)
+page.gRestore()
+
+// PDF_FILL_STROKE_CLIPPING
+showDescription(page, 60, ypos - 250,
+                "RenderingMode=PDF_FILL_STROKE_CLIPPING");
+page.gSave()
+page.setTextRenderingMode(hpdf.TextRenderingMode.FILL_STROKE_CLIPPING)
+page.beginText()
+page.textOut(60, ypos - 250, "ABCabc123")
+page.endText()
+showStripePattern(page, 60, ypos - 250)
+page.gRestore()
+
+// Reset text attributes
+page.setTextRenderingMode(hpdf.TextRenderingMode.FILL)
+page.setRGBFill(0, 0, 0)
+page.setFontAndSize(font, 30)
+
+
+/*
+ * Rotating text
+ */
+angle1 = 30  // A rotation of 30 degrees.
+rad1 = angle1 / 180 * PI // Calcurate the radian value.
+
+showDescription(page, 320, ypos - 60, "Rotating text")
+page.beginText()
+page.setTextMatrix(cos(rad1), sin(rad1),
+    -sin(rad1), cos(rad1),
+    330, ypos - 60);
+page.showText("ABCabc123");
+page.endText();
+
+
+/*
+ * Skewing text.
+ */
+showDescription(page, 320, ypos - 120, "Skewing text");
+page.beginText();
+
+angle1 = 10
+angle2 = 20
+rad1 = angle1 / 180 * PI
+rad2 = angle2 / 180 * PI
+
+page.setTextMatrix(1, tan(rad1), tan(rad2), 1,
+                   320, ypos - 120)
+page.showText("ABCabc123")
+page.endText()
+
+
+/*
+ * scaling text (X direction)
+ */
+showDescription(page, 320, ypos - 175, "Scaling text (X direction)")
+page.beginText()
+page.setTextMatrix(1.5, 0, 0, 1, 320, ypos - 175)
+page.showText("ABCabc12")
+page.endText()
+
+
+/*
+ * scaling text (Y direction)
+ */
+showDescription(page, 320, ypos - 250, "Scaling text (Y direction)")
+page.beginText()
+page.setTextMatrix(1, 0, 0, 2, 320, ypos - 250)
+page.showText("ABCabc123")
+page.endText()
+
+
+/*
+ * char spacing, word spacing
+ */
+
+showDescription(page, 60, 140, "char-spacing 0")
+showDescription(page, 60, 100, "char-spacing 1.5")
+showDescription(page, 60, 60, "char-spacing 1.5, word-spacing 2.5")
+
+page.setFontAndSize(font, 20)
+page.setRGBFill(0.1, 0.3, 0.1)
+
+// char-spacing 0
+page.beginText();
+page.textOut(60, 140, samp_text2)
+page.bndText()
+
+// char-spacing 1.5
+page.setCharSpace(1.5);
+
+page.beginText()
+page.textOut(60, 100, samp_text2)
+page.endText()
+
+// char-spacing 1.5, word-spacing 3.5
+page.setWordSpace(2.5)
+
+page.beginText()
+page.textOut(60, 60, samp_text2)
+page.endText()
+
+// save the document to a file
+pdf.saveToFile("TextDemo.pdf")
+
+
+

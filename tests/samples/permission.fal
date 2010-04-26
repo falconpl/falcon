@@ -1,0 +1,27 @@
+text = "User cannot print and copy this document."
+owner_passwd = "owner"
+user_passwd = ""
+
+pdf = hpdf.Pdf()
+
+// create default-font
+font = pdf.getFont("Helvetica")
+
+// add a new page object
+page = pdf.addPage()
+
+page.setSize(hpdf.PagesSizes.B5, hpdf.PageDirections.LANDSCAPE)
+
+page.beginText()
+page.setFontAndSize(font, 20)
+tw = page.textWidth(text)
+page.moveTextPos( (page.getWidth() - tw) / 2, (page.getHeight() - 20) / 2)
+page.showText(text)
+page.endText()
+
+pdf.setPassword(owner_passwd, user_passwd)
+pdf.setPermission(hpdf.ENABLE_READ)
+pdf.setEncryptionMode(hpdf.EncryptMode.R3, 16)
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")
