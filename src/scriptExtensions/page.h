@@ -58,8 +58,13 @@ struct Page
   static FALCON_FUNC setTextMatrix( VMachine* );
   static FALCON_FUNC setCharSpace( VMachine* );
   static FALCON_FUNC setWordSpace( VMachine* );
+  static FALCON_FUNC setSize( VMachine* );
+  static FALCON_FUNC textRect( VMachine* );
+  static FALCON_FUNC concat( VMachine* );
+  static FALCON_FUNC setGrayStroke( VMachine* );
+  static FALCON_FUNC circle( VMachine* );
+  static FALCON_FUNC setGrayFill( VMachine* );
 };
-//  FALCON_FUNC PdfPage_setSize( VMachine* );
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
 //  FALCON_FUNC PdfPage_create3DAnnot( VMachine* );
@@ -95,7 +100,6 @@ struct Page
 //  FALCON_FUNC PdfPage_setMiterLimit( VMachine* );
 //  FALCON_FUNC PdfPage_setFlat( VMachine* );
 //  FALCON_FUNC PdfPage_setExtGState( VMachine* );
-//  FALCON_FUNC PdfPage_concat( VMachine* );
 //  FALCON_FUNC PdfPage_closePath( VMachine* );
 //  FALCON_FUNC PdfPage_closePathStroke( VMachine* );
 //  FALCON_FUNC PdfPage_eofill( VMachine* );
@@ -114,16 +118,12 @@ struct Page
 //  FALCON_FUNC PdfPage_moveToNextLine( VMachine* );
 
 //  FALCON_FUNC PdfPage_showTextNextLineEx( VMachine* );
-//  FALCON_FUNC PdfPage_setGrayFill( VMachine* );
-//  FALCON_FUNC PdfPage_setGrayStroke( VMachine* );
 //  FALCON_FUNC PdfPage_setCMYKFill( VMachine* );
 //  FALCON_FUNC PdfPage_setCMYKStroke( VMachine* );
 //  FALCON_FUNC PdfPage_executeXObject( VMachine* );
 //  FALCON_FUNC PdfPage_drawImage( VMachine* );
-//  FALCON_FUNC PdfPage_circle( VMachine* );
 //  FALCON_FUNC PdfPage_ellipse( VMachine* );
 //  FALCON_FUNC PdfPage_arc( VMachine* );
-//  FALCON_FUNC PdfPage_textRect( VMachine* );
 //  FALCON_FUNC PdfPage_setSlideShow( VMachine* );
 
 }}} // Falcon::Ext::hpdf

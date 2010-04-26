@@ -351,7 +351,7 @@ namespace Falcon { namespace Ext { namespace hpdf {
   }
 
   {
-    Falcon::Symbol* fclass = self->addClass( "PageSizes" );
+    Falcon::Symbol* fclass = self->addClass( "PageSize" );
     fclass->setEnum(true);
     self->addClassProperty( fclass, "LETTER" )
       .setInteger(HPDF_PAGE_SIZE_LETTER).setReadOnly(true);
@@ -361,6 +361,8 @@ namespace Falcon { namespace Ext { namespace hpdf {
       .setInteger(HPDF_PAGE_SIZE_A3).setReadOnly(true);
     self->addClassProperty( fclass, "A4" )
       .setInteger(HPDF_PAGE_SIZE_A4).setReadOnly(true);
+    self->addClassProperty( fclass, "A5" )
+      .setInteger(HPDF_PAGE_SIZE_A5).setReadOnly(true);
     self->addClassProperty( fclass, "B4" )
       .setInteger(HPDF_PAGE_SIZE_B4).setReadOnly(true);
     self->addClassProperty( fclass, "B5" )

@@ -1,11 +1,12 @@
 import from hpdf
-
+import printGrid from .grid_sheet as printGrid
 samp_text = "The quick brown fox jumps over the lazy dog. "
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 page = pdf.addPage()
 page.setSize(hpdf.PageSize.A5, hpdf.PageDirection.PORTRAIT)
+printGrid(pdf, page)
 height = page.getHeight()
 
 font = pdf.getFont("Helvetica")
@@ -137,13 +138,13 @@ page.endText()
 page.gRestore()
 
 
-# text along a circle
+// text along a circle
 page.setGrayStroke(0)
 page.circle(210, 190, 145)
 page.circle(210, 190, 113)
 page.stroke()
 
-angle1 = 360.0 / samp_text.length
+angle1 = 360.0 / samp_text.len()
 angle2 = 180.0
 
 page.beginText()
@@ -151,7 +152,7 @@ font = pdf.getFont("Courier-Bold")
 page.setFontAndSize(font, 30)
 
 i = 0
-while i < samp_text.length
+while i < samp_text.len()
   rad1 = (angle2 - 90) / 180 * PI
   rad2 = angle2 / 180 * PI
 
@@ -167,4 +168,4 @@ end
 
 page.endText()
 
-pdf.saveToFile(args[0] + ".pdf")
+pdf.saveToFile(scriptName + ".pdf")
