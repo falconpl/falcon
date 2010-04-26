@@ -82,7 +82,7 @@ function printGrid(pdf, page)
 
   /* Draw virtical text */
   x = 0;
-  while x < width)
+  while ( x < width)
     if x % 50 == 0 and x > 0
       page.beginText()
       page.moveTextPos(x, 5)
@@ -100,12 +100,12 @@ function printGrid(pdf, page)
     x += 5
   end
 
-  page,setGrayFill(0)
+  page.setGrayFill(0)
   page.setGrayStroke(0)
 end
 
 if vmIsMain()
-  pdf = hpdf.Pdf()
+  pdf = hpdf.Doc()
   /* add a new page object. */
   page = pdf.addPage()
   
