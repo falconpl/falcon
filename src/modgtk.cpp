@@ -50,6 +50,7 @@
 #include "gtk_Invisible.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
+#include "gtk_LinkButton.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
@@ -141,6 +142,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Bin::modInit( self );
                     Falcon::Gtk::Alignment::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
+                        Falcon::Gtk::LinkButton::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
                                 Falcon::Gtk::RadioButton::modInit( self );
