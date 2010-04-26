@@ -55,6 +55,7 @@
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
 #include "gtk_Paned.hpp"
+#include "gtk_Progress.hpp"
 #include "gtk_ProgressBar.hpp"
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
@@ -181,8 +182,8 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Arrow::modInit( self );
                 Falcon::Gtk::Image::modInit( self );
                 Falcon::Gtk::Label::modInit( self );
-            //Falcon::Gtk::Progress::modInit( self );
-                //Falcon::Gtk::ProgressBar::modInit( self );
+            Falcon::Gtk::Progress::modInit( self );
+                Falcon::Gtk::ProgressBar::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );
