@@ -60,8 +60,12 @@ void Page::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdfPage, "curveTo3", &curveTo3);
   self->addClassMethod( c_pdfPage, "measureText", &measureText);
   self->addClassMethod( c_pdfPage, "getCurrentFontSize", &getCurrentFontSize);
-  self->addClassMethod( c_pdfPage, "getCurrentFont", &getCurrentFontSize);
+  self->addClassMethod( c_pdfPage, "getCurrentFont", &getCurrentFont);
   self->addClassMethod( c_pdfPage, "getRGBFill", &getRGBFill);
+  self->addClassMethod( c_pdfPage, "setTextRenderingMode", &setTextRenderingMode);
+  self->addClassMethod( c_pdfPage, "setTextMatrix", &setTextMatrix);
+  self->addClassMethod( c_pdfPage, "setCharSpace", &setCharSpace);
+  self->addClassMethod( c_pdfPage, "setWordSpace", &setWordSpace);
 
 }
 
@@ -105,7 +109,7 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
       i_fontSize == 0 || !i_fontSize->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("S,I") );
+                           .extra("O,I") );
   }
 
   Font* font = dyncast<Font*>( i_font->asObject() );
@@ -495,14 +499,15 @@ FALCON_FUNC Page::measureText( VMachine* vm )
                            .extra("S,N,B") );
 
   AutoCString text(*i_text);
-  HPDF_Page_MeasureText( self->handle(), text.c_str(), asNumber(i_width),
-                                         i_wordWrap->asBoolean(), 0);
+  HPDF_UINT ret = HPDF_Page_MeasureText( self->handle(), text.c_str(), asNumber(i_width),
+                                                         i_wordWrap->asBoolean(), 0);
+  vm->retval((int64)ret);
 }
 
 FALCON_FUNC Page::getCurrentFontSize( VMachine* vm )
 {
   Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
-  HPDF_REAL size = HPDF_Page_GetCurrentFontSize( self->handle() );
+  int size = HPDF_Page_GetCurrentFontSize( self->handle() );
   vm->retval(size);
 }
 
@@ -514,13 +519,79 @@ FALCON_FUNC Page::getCurrentFont( VMachine* vm )
   vm->retval(new Mod::hpdf::Font(cls_Font, font));
 }
 
-//FALCON_FUNC Page::getRGBFill( VMachine* vm )
-//{
-//  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
-//  CoreClass* cls_RGBColor = vm->findWKI("RGBColor")->asClass();
-//  HPDF_RGBColor rgbColor = HPDF_Page_GetRGBFill( self->handle() );
-//
-//  vm->retval(new Mod::hpdf::RGBColor(cls_RGBColor, rgbColor));
-//}
+FALCON_FUNC Page::getRGBFill( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+
+  HPDF_RGBColor rgbColor = HPDF_Page_GetRGBFill( self->handle() );
+  LinearDict* itemDict = new LinearDict(3);
+  itemDict->put(Item("r"), Item(rgbColor.r));
+  itemDict->put(Item("g"), Item(rgbColor.g));
+  itemDict->put(Item("b"), Item(rgbColor.b));
+
+  CoreDict* ret = new CoreDict(itemDict);
+  ret->bless(true);
+  vm->retval(ret);
+}
+
+FALCON_FUNC Page::setTextRenderingMode( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_enum = vm->param( 0 );
+
+  if ( !i_enum || !i_enum->isInteger() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("I") );
+
+  HPDF_TextRenderingMode lineJoin = static_cast<HPDF_TextRenderingMode>(i_enum->asInteger());
+  HPDF_Page_SetTextRenderingMode( self->handle(), lineJoin );
+}
+
+FALCON_FUNC Page::setTextMatrix( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_a = vm->param( 0 );
+  Item* i_b = vm->param( 1 );
+  Item* i_c = vm->param( 2 );
+  Item* i_d = vm->param( 3 );
+  Item* i_x = vm->param( 4 );
+  Item* i_y = vm->param( 5 );
+
+  if ( vm->paramCount() < 4
+       || !i_a->isScalar() || !i_b->isScalar()
+       || !i_c->isScalar() || !i_d->isScalar()
+       || !i_x->isScalar() || !i_y->isScalar() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N,N,N") );
+
+  HPDF_Page_SetTextMatrix( self->handle(), asNumber(i_a), asNumber(i_b),
+                                           asNumber(i_c), asNumber(i_d),
+                                           asNumber(i_x), asNumber(i_y));
+
+}
+
+FALCON_FUNC Page::setCharSpace( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_space = vm->param( 0 );
+
+  if ( i_space == 0 || !i_space->isScalar())
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N") );
+
+  HPDF_Page_SetCharSpace( self->handle(), asNumber(i_space));
+}
+
+FALCON_FUNC Page::setWordSpace( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_space = vm->param( 0 );
+
+  if ( i_space == 0 || !i_space->isScalar())
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N") );
+
+  HPDF_Page_SetWordSpace( self->handle(), asNumber(i_space));
+}
 
 }}} // Falcon::Ext::hpdf

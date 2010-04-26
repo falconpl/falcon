@@ -54,6 +54,10 @@ struct Page
   static FALCON_FUNC getCurrentFontSize( VMachine* );
   static FALCON_FUNC getCurrentFont( VMachine* );
   static FALCON_FUNC getRGBFill( VMachine* );
+  static FALCON_FUNC setTextRenderingMode( VMachine* );
+  static FALCON_FUNC setTextMatrix( VMachine* );
+  static FALCON_FUNC setCharSpace( VMachine* );
+  static FALCON_FUNC setWordSpace( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setSize( VMachine* );
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
@@ -87,7 +91,6 @@ struct Page
 //  FALCON_FUNC PdfPage_getGrayStroke( VMachine* );
 //  FALCON_FUNC PdfPage_getStrokingColorSpace( VMachine* );
 //  FALCON_FUNC PdfPage_getFillingColorSpace( VMachine* );
-//  FALCON_FUNC PdfPage_getTextMatrix( VMachine* );
 //  FALCON_FUNC PdfPage_getGStateDepth( VMachine* );
 //  FALCON_FUNC PdfPage_setMiterLimit( VMachine* );
 //  FALCON_FUNC PdfPage_setFlat( VMachine* );
@@ -102,15 +105,12 @@ struct Page
 //  FALCON_FUNC PdfPage_endPath( VMachine* );
 //  FALCON_FUNC PdfPage_eoclip ( VMachine* );
 
-//  FALCON_FUNC PdfPage_setCharSpace( VMachine* );
-//  FALCON_FUNC PdfPage_setWordSpace( VMachine* );
 //  FALCON_FUNC PdfPage_setHorizontalScalling( VMachine* );
 
-//  FALCON_FUNC PdfPage_setTextRenderingMode( VMachine* );
 //  FALCON_FUNC PdfPage_setTextRise( VMachine* );
 //  FALCON_FUNC PdfPage_setTextRaise( VMachine* );
 //  FALCON_FUNC PdfPage_moveTextPos2( VMachine* );
-//  FALCON_FUNC PdfPage_setTextMatrix( VMachine* );
+//  FALCON_FUNC PdfPage_getTextMatrix( VMachine* );
 //  FALCON_FUNC PdfPage_moveToNextLine( VMachine* );
 
 //  FALCON_FUNC PdfPage_showTextNextLineEx( VMachine* );

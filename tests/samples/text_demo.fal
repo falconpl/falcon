@@ -75,7 +75,7 @@ while (fsize < 60)
   page.showText(samp_text[0:tlen])
 
     /* print the description. */
-  page.moveTextPos(100, -10);
+  page.moveTextPos(0, -10);
   page.setFontAndSize(font, 8);
   page.showText("Fontsize=" + fsize);
 
@@ -151,7 +151,7 @@ page.endText()
 // PDF_FILL_THEN_STROKE
 showDescription(page, 60, ypos - 100,
                 "RenderingMode=PDF_FILL_THEN_STROKE");
-page.SetTextRenderingMode(hpdf.TextRenderingMode.FILL_THEN_STROKE)
+page.setTextRenderingMode(hpdf.TextRenderingMode.FILL_THEN_STROKE)
 page.beginText()
 page.textOut(60, ypos - 100, "ABCabc123")
 page.endText()
@@ -261,7 +261,7 @@ page.setRGBFill(0.1, 0.3, 0.1)
 // char-spacing 0
 page.beginText();
 page.textOut(60, 140, samp_text2)
-page.bndText()
+page.endText()
 
 // char-spacing 1.5
 page.setCharSpace(1.5);
@@ -278,7 +278,7 @@ page.textOut(60, 60, samp_text2)
 page.endText()
 
 // save the document to a file
-pdf.saveToFile("TextDemo.pdf")
+pdf.saveToFile(scriptName + ".pdf")
 
 
 
