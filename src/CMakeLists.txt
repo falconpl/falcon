@@ -10,12 +10,16 @@ add_library(hpdf_fm MODULE
    moduleImpl/doc.cpp
    moduleImpl/page.cpp
    moduleImpl/font.cpp
+   moduleImpl/destination.cpp
+   moduleImpl/image.cpp
    moduleImpl/error.cpp
    scriptExtensions/consts.cpp
    scriptExtensions/enums.cpp
    scriptExtensions/doc.cpp
    scriptExtensions/page.cpp
    scriptExtensions/font.cpp
+   scriptExtensions/destination.cpp
+   scriptExtensions/image.cpp
    scriptExtensions/error.cpp
 )
 

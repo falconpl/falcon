@@ -10,6 +10,8 @@
 #include <scriptExtensions/page.h>
 #include <moduleImpl/page.h>
 #include <moduleImpl/font.h>
+#include <moduleImpl/destination.h>
+#include <moduleImpl/image.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -72,6 +74,8 @@ void Page::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdfPage, "setGrayStroke", &setGrayStroke);
   self->addClassMethod( c_pdfPage, "circle", &circle);
   self->addClassMethod( c_pdfPage, "setGrayFill", &setGrayFill);
+  self->addClassMethod( c_pdfPage, "createDestination", &createDestination);
+  self->addClassMethod( c_pdfPage, "drawImage", &drawImage);
 
 }
 
@@ -711,4 +715,38 @@ FALCON_FUNC Page::setGrayFill( VMachine* vm )
   HPDF_Page_SetGrayFill( self->handle(), value);
 }
 
+FALCON_FUNC Page::createDestination( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  CoreClass* cls_Destination = vm->findWKI("Destination")->asClass();
+  HPDF_Destination destination = HPDF_Page_CreateDestination( self->handle() );
+  vm->retval(
+     new Mod::hpdf::Destination(cls_Destination, destination)
+  );
+}
+
+FALCON_FUNC Page::drawImage( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_image = vm->param( 0 );
+  Item* i_x = vm->param( 1 );
+  Item* i_y = vm->param( 2 );
+  Item* i_width = vm->param( 3 );
+  Item* i_height = vm->param( 4 );
+
+  if ( vm->paramCount() < 5
+       || !i_image->isObject()
+       || !i_x->isScalar() || !i_y->isScalar()
+       || !i_width->isScalar() || !i_height->isScalar())
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("O,N,N,N,N") );
+  }
+
+  Mod::hpdf::Image* image = dyncast<Mod::hpdf::Image*>( i_image->asObject() );
+
+  HPDF_Page_DrawImage(self->handle(), image->handle(),
+                                      asNumber(i_x), asNumber(i_y),
+                                      asNumber(i_width), asNumber(i_height));
+}
 }}} // Falcon::Ext::hpdf

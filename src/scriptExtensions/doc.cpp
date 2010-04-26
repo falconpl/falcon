@@ -11,6 +11,8 @@
 #include <moduleImpl/doc.h>
 #include <moduleImpl/page.h>
 #include <moduleImpl/font.h>
+#include <moduleImpl/image.h>
+#include <moduleImpl/destination.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
 
@@ -22,6 +24,9 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdf, "saveToFile", &saveToFile );
   self->addClassMethod( c_pdf, "getFont", &getFont );
   self->addClassMethod( c_pdf, "setCompressionMode", &setCompressionMode );
+  self->addClassMethod( c_pdf, "setOpenAction", &setOpenAction );
+  self->addClassMethod( c_pdf, "getCurrentPage", &getCurrentPage );
+  self->addClassMethod( c_pdf, "loadPngImageFromFile", &loadPngImageFromFile );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -85,5 +90,46 @@ FALCON_FUNC Doc::setCompressionMode( VMachine* vm )
   vm->retval( ret );
 }
 
+FALCON_FUNC Doc::setOpenAction( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
 
+  Item* i_destination = vm->param( 0 );
+  if ( !i_destination || !i_destination->isObject() )
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("O"));
+  }
+  Mod::hpdf::Destination* destination = static_cast<Mod::hpdf::Destination*>(i_destination->asObject());
+  HPDF_SetOpenAction(self->handle(), destination->handle());
+}
+
+FALCON_FUNC Doc::getCurrentPage( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  HPDF_Page currentPage = HPDF_GetCurrentPage(self->handle());
+
+  CoreClass* cls_Page = vm->findWKI("Page")->asClass();
+  Mod::hpdf::Page* f_page = new Mod::hpdf::Page(cls_Page, currentPage);
+  vm->retval( f_page );
+}
+
+FALCON_FUNC Doc::loadPngImageFromFile( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* filenameI = vm->param( 0 );
+  if ( filenameI == 0 || ! filenameI->isString() )
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S"));
+  }
+
+  AutoCString asFilename( *filenameI->asString() );
+  HPDF_Image image = HPDF_LoadPngImageFromFile( self->handle(), asFilename.c_str());
+  CoreClass* cls_Image = vm->findWKI("Image")->asClass();
+  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  vm->retval( f_image );
+}
 }}} // Falcon::Ext::hpdf

@@ -19,6 +19,9 @@ struct Doc
   static FALCON_FUNC saveToFile( VMachine* );
   static FALCON_FUNC getFont( VMachine* );
   static FALCON_FUNC setCompressionMode( VMachine* );
+  static FALCON_FUNC setOpenAction( VMachine* );
+  static FALCON_FUNC getCurrentPage( VMachine* );
+  static FALCON_FUNC loadPngImageFromFile( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 
@@ -32,8 +35,6 @@ struct Doc
 //  FALCON_FUNC PDF_setPageMode( VMachine* );
 //  FALCON_FUNC PDF_getViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_setViewerPreference( VMachine* );
-//  FALCON_FUNC PDF_setOpenAction( VMachine* );
-//  FALCON_FUNC PDF_getCurrentPage( VMachine* );
 //  FALCON_FUNC PDF_insertPage( VMachine* );
 //  FALCON_FUNC PDF_loadType1FontFromFile( VMachine* );
 //  FALCON_FUNC PDF_getTTFontDefFromFile( VMachine* );

@@ -8,7 +8,7 @@ function drawImage(pdf, filename, x, y, text)
 
   // Draw image to the canvas.
   page.drawImage(image, x, y,
-                 image.getWidth(), image.getHeight)
+                 image.getWidth(), image.getHeight())
 
   // Print the text
   page.beginText()
@@ -20,7 +20,7 @@ function drawImage(pdf, filename, x, y, text)
 end
 
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 pdf.setCompressionMode(hpdf.COMP_ALL)
 
@@ -30,11 +30,11 @@ font = pdf.getFont("Helvetica")
 // add a new page object
 page = pdf.addPage()
 
-page.setWith(550)
+page.setWidth(550)
 page.setHeight(650)
 
 dst = page.createDestination()
-dst.setXYZ(0, page.getHeight, 1)
+dst.setXYZ(0, page.getHeight(), 1)
 pdf.setOpenAction(dst)
 
 page.beginText()
@@ -45,38 +45,38 @@ page.endText()
 
 page.setFontAndSize(font, 12)
 
-drawImage("basn0g01.png", 100, page.getHeight() - 150,
+drawImage(pdf, "basn0g01.png", 100, page.getHeight() - 150,
           "1bit grayscale.")
-drawImage("basn0g02.png", 200, page.getHeight() - 150,
+drawImage(pdf, "basn0g02.png", 200, page.getHeight() - 150,
           "2bit grayscale.")
-drawImage("basn0g04.png", 300, page.getHeight() - 150,
+drawImage(pdf, "basn0g04.png", 300, page.getHeight() - 150,
           "4bit grayscale.")
-drawImage("basn0g08.png", 400, page.getHeight() - 150,
+drawImage(pdf, "basn0g08.png", 400, page.getHeight() - 150,
           "8bit grayscale.")
 
-drawImage("basn2c08.png", 100, page.getHeight() - 250,
+drawImage(pdf, "basn2c08.png", 100, page.getHeight() - 250,
           "8bit color.")
-drawImage("basn2c16.png", 200, page.getHeight() - 250,
+drawImage(pdf, "basn2c16.png", 200, page.getHeight() - 250,
           "16bit color.")
 
-drawImage("basn3p01.png", 100, page.getHeight() - 350,
+drawImage(pdf, "basn3p01.png", 100, page.getHeight() - 350,
           "1bit pallet.")
-drawImage("basn3p02.png", 200, page.getHeight() - 350,
+drawImage(pdf, "basn3p02.png", 200, page.getHeight() - 350,
           "2bit pallet.")
-drawImage("basn3p04.png", 300, page.getHeight() - 350,
+drawImage(pdf, "basn3p04.png", 300, page.getHeight() - 350,
           "4bit pallet.")
-drawImage("basn3p08.png", 400, page.getHeight() - 350,
+drawImage(pdf, "basn3p08.png", 400, page.getHeight() - 350,
           "8bit pallet.")
 
-drawImage("basn4a08.png", 100, page.getHeight() - 450,
+drawImage(pdf, "basn4a08.png", 100, page.getHeight() - 450,
           "8bit alpha.")
-drawImage("basn4a16.png", 200, page.getHeight() - 450,
+drawImage(pdf, "basn4a16.png", 200, page.getHeight() - 450,
           "16bit alpha.")
   
-drawImage("basn6a08.png", 100, page.getHeight() - 550,
+drawImage(pdf, "basn6a08.png", 100, page.getHeight() - 550,
           "8bit alpha.")
-drawImage("basn6a16.png", 200, page.getHeight() - 550,
+drawImage(pdf, "basn6a16.png", 200, page.getHeight() - 550,
           "16bit alpha.")
 
 // save the document to a file
-pdf.saveToFile(fname)
+pdf.saveToFile(scriptName + ".pdf")

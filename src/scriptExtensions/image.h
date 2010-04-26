@@ -11,18 +11,23 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 
-namespace Falcon { namespace Ext {
+namespace Falcon { namespace Ext { namespace hpdf {
 
-FALCON_FUNC PDF_Image_init( VMachine* );
+struct Image
+{
+  static void registerExtensions(Falcon::Module*);
 
-FALCON_FUNC PDF_Image_getSize( VMachine* );
-FALCON_FUNC PDF_Image_getSize2( VMachine* );
-FALCON_FUNC PDF_Image_getWidth( VMachine* );
-FALCON_FUNC PDF_Image_getHeight( VMachine* );
-FALCON_FUNC PDF_Image_getBitsPerComponent( VMachine* );
-FALCON_FUNC PDF_Image_getColorSpace( VMachine* );
-FALCON_FUNC PDF_Image_setColorMask( VMachine* );
+  static FALCON_FUNC init( VMachine* );
+  static FALCON_FUNC getWidth( VMachine* );
+  static FALCON_FUNC getHeight( VMachine* );
+};
 
-}} // Falcon::Ext
+//FALCON_FUNC PDF_Image_getSize( VMachine* );
+//FALCON_FUNC PDF_Image_getSize2( VMachine* );
+//FALCON_FUNC PDF_Image_getBitsPerComponent( VMachine* );
+//FALCON_FUNC PDF_Image_getColorSpace( VMachine* );
+//FALCON_FUNC PDF_Image_setColorMask( VMachine* );
+
+}}} // Falcon::Ext::hpdf
 
 #endif /* FALCON_MODULE_HPDF_EXT_IMAGE_H */

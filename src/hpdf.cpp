@@ -16,6 +16,8 @@
 #include "scriptExtensions/page.h"
 #include "scriptExtensions/error.h"
 #include "scriptExtensions/font.h"
+#include "scriptExtensions/image.h"
+#include "scriptExtensions/destination.h"
 //#include "scriptExtensions/outline.h"
 //#include "scriptExtensions/destination.h"
 //#include "scriptExtensions/encoder.h"
@@ -45,6 +47,8 @@ FALCON_MODULE_DECL
   Falcon::Ext::hpdf::Doc::registerExtensions(self);
   Falcon::Ext::hpdf::Page::registerExtensions(self);
   Falcon::Ext::hpdf::Font::registerExtensions(self);
+  Falcon::Ext::hpdf::Destination::registerExtensions(self);
+  Falcon::Ext::hpdf::Image::registerExtensions(self);
 
   return self;
 }

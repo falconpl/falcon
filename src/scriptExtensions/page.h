@@ -64,6 +64,8 @@ struct Page
   static FALCON_FUNC setGrayStroke( VMachine* );
   static FALCON_FUNC circle( VMachine* );
   static FALCON_FUNC setGrayFill( VMachine* );
+  static FALCON_FUNC createDestination( VMachine* );
+  static FALCON_FUNC drawImage( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
@@ -121,7 +123,6 @@ struct Page
 //  FALCON_FUNC PdfPage_setCMYKFill( VMachine* );
 //  FALCON_FUNC PdfPage_setCMYKStroke( VMachine* );
 //  FALCON_FUNC PdfPage_executeXObject( VMachine* );
-//  FALCON_FUNC PdfPage_drawImage( VMachine* );
 //  FALCON_FUNC PdfPage_ellipse( VMachine* );
 //  FALCON_FUNC PdfPage_arc( VMachine* );
 //  FALCON_FUNC PdfPage_setSlideShow( VMachine* );
