@@ -22,6 +22,7 @@ struct Doc
   static FALCON_FUNC setOpenAction( VMachine* );
   static FALCON_FUNC getCurrentPage( VMachine* );
   static FALCON_FUNC loadPngImageFromFile( VMachine* );
+  static FALCON_FUNC loadJpegImageFromFile( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 

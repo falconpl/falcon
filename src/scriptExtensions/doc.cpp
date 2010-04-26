@@ -27,6 +27,7 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdf, "setOpenAction", &setOpenAction );
   self->addClassMethod( c_pdf, "getCurrentPage", &getCurrentPage );
   self->addClassMethod( c_pdf, "loadPngImageFromFile", &loadPngImageFromFile );
+  self->addClassMethod( c_pdf, "loadJpegImageFromFile", &loadJpegImageFromFile );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -128,6 +129,24 @@ FALCON_FUNC Doc::loadPngImageFromFile( VMachine* vm )
 
   AutoCString asFilename( *filenameI->asString() );
   HPDF_Image image = HPDF_LoadPngImageFromFile( self->handle(), asFilename.c_str());
+  CoreClass* cls_Image = vm->findWKI("Image")->asClass();
+  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  vm->retval( f_image );
+}
+
+FALCON_FUNC Doc::loadJpegImageFromFile( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* filenameI = vm->param( 0 );
+  if ( filenameI == 0 || ! filenameI->isString() )
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S"));
+  }
+
+  AutoCString asFilename( *filenameI->asString() );
+  HPDF_Image image = HPDF_LoadJpegImageFromFile( self->handle(), asFilename.c_str());
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
   Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
   vm->retval( f_image );

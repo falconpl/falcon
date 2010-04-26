@@ -3,12 +3,12 @@ import from hpdf
 function drawImage(pdf, filename, x, y, text)
   page = pdf.getCurrentPage()
 
-  jpegFilename = "pngsuite" + "/" + filename
+  jpegFilename = "images" + "/" + filename
   image = pdf.loadJpegImageFromFile(jpegFilename)
 
   // Draw image to the canvas.
   page.drawImage(image, x, y,
-                 image.getWidth(), image.getHeight)
+                 image.getWidth(), image.getHeight())
 
   // Print the text
   page.beginText()
@@ -19,7 +19,7 @@ function drawImage(pdf, filename, x, y, text)
   page.endText()
 end
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 pdf.setCompressionMode(hpdf.COMP_ALL)
 
@@ -42,11 +42,11 @@ page.moveTextPos(220, page.getHeight() - 70)
 page.showText("PngDemo")
 page.endText()
 
-HPDF_Page_SetFontAndSize (page, font, 12);
+page.setFontAndSize(font, 12);
 
-draw_image (pdf, "rgb.jpg", 70, HPDF_Page_GetHeight (page) - 410,
+drawImage (pdf, "rgb.jpg", 70,  page.getHeight() - 410,
             "24bit color image");
-draw_image (pdf, "gray.jpg", 340, HPDF_Page_GetHeight (page) - 410,
+drawImage (pdf, "gray.jpg", 340, page.getHeight() - 410,
             "8bit grayscale image");
 
 // save the document to a file
