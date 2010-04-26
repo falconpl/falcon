@@ -9,6 +9,7 @@ get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
+set(Falcon_APP_DIR "@FALCON_APP_DIR@")
 set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
 set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
 set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
