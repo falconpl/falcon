@@ -32,6 +32,8 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GdkColor* getColor() const { return m_color; }
+
 private:
 
     GdkColor*   m_color;
