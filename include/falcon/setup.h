@@ -104,6 +104,8 @@ different systems.
       #define atoll _atoi64
       #define snprintf _snprintf
       #define LLFMT    "I64"
+      #define I64LIT(x) (x ## i64)
+      #define UI64LIT(x) (x ## ui64)
    #endif
 
    /* Specifics for Gcc/Mingw */
@@ -136,6 +138,8 @@ different systems.
 	   #define FALCON_MODULE_TYPE \
 	      extern "C" __declspec(dllexport) ::Falcon::Module *
       #define LLFMT    "ll"
+      #define I64LIT(x) (x ## LL)
+      #define UI64LIT(x) (x ## ULL)
 	#endif
 
    /* Other Windonws specific system defines */
@@ -169,6 +173,8 @@ different systems.
    #define DEFAULT_TEMP_DIR "/tmp"
    #define FALCON_SYS_EOL "\n"
    #define LLFMT "ll"
+   #define I64LIT(x) (x ## LL)
+   #define UI64LIT(x) (x ## ULL)
 
 #endif
 

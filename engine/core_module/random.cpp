@@ -38,6 +38,30 @@
 namespace Falcon {
 namespace core {
 
+    class RandomCarrier : public FalconData
+    {
+    public:
+        RandomCarrier() {};
+        inline MTRand &getRNG(void) { return mtrand; }
+        virtual RandomCarrier *clone() const { return NULL; } // not cloneable
+        virtual void gcMark( uint32 mark ) {}
+        virtual bool serialize( Stream *stream, bool bLive ) const { return false; }
+        virtual bool deserialize( Stream *stream, bool bLive ) { return false; }
+    private:
+        MTRand mtrand;
+    };
+
+    FALCON_FUNC flc_Random_init( ::Falcon::VMachine *vm )
+    {
+        RandomCarrier *rc = new RandomCarrier();
+        if ( vm->paramCount() )
+        {
+            // throw to indicate there is no other type yet we can use to seed the RNG
+            rc->getRNG().seed( (uint32)vm->param(0)->forceIntegerEx() );
+        }
+        vm->self().asObject()->setUserData(rc);
+    }
+
 /*#
    @function random
    @brief Returns a pseudo random number.
@@ -76,23 +100,25 @@ FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm )
 {
    int32 pcount = vm->paramCount();
    Item *elem1, *elem2;
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
 
    switch( pcount )
    {
       case 0:
-         vm->retval( (numeric) rand() / ((numeric) RAND_MAX + 1e-64) );
+         vm->retval( (numeric) rng.rand() );
       break;
 
       case 1:
          elem1 = vm->param(0);
          if ( elem1->isOrdinal() ) {
-            int64 num = elem1->forceInteger() + 1;
+            int64 num = elem1->forceInteger();
             if ( num < 0 )
-               vm->retval( -(((int64) rand()) % -num) );
+               vm->retval( -((int64) rng.randInt64( (-num) & ~(UI64LIT(1) << 63) )) ); // mask out sign bit and make result negative
             else if ( num == 0 )
                vm->retval( 0 );
             else
-               vm->retval( ((int64) rand()) % num );
+               vm->retval( (int64) rng.randInt64( num & ~(UI64LIT(1) << 63) ) ); // mask out sign bit, result always positive
          }
          else
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -115,14 +141,14 @@ FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm )
             }
             num2 ++;
 
-            vm->retval( num1 + ((int64) rand()) % (num2 - num1) );
+            vm->retval( (int64) (num1 + rng.randInt64(num2 - num1 - 1)) );
          }
          else
-            vm->retval( *vm->param( (rand() % 2) ) );
+            vm->retval( *vm->param( rng.randInt(1) ) );
       break;
 
       default:
-         vm->retval( *vm->param( rand() % pcount ) );
+         vm->retval( *vm->param( rng.randInt(pcount - 1) ) );
    }
 }
 
@@ -151,7 +177,12 @@ FALCON_FUNC  flc_randomChoice( ::Falcon::VMachine *vm )
       break;
 
       default:
-         vm->retval( *vm->param( rand() % pcount ) );
+      {
+         CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+         MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
+
+         vm->retval( *vm->param( rng.randInt(pcount - 1) ) );
+      }
    }
 }
 
@@ -170,6 +201,7 @@ FALCON_FUNC  flc_randomChoice( ::Falcon::VMachine *vm )
 FALCON_FUNC  flc_randomPick ( ::Falcon::VMachine *vm )
 {
    Item *series = vm->param(0);
+ 
 
    if ( series == 0 || ! series->isArray() || series->asArray()->length() == 0 )
    {
@@ -178,8 +210,11 @@ FALCON_FUNC  flc_randomPick ( ::Falcon::VMachine *vm )
             .extra( "A" ) );
    }
 
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG();
+
    CoreArray &source = *series->asArray();
-   vm->retval( source[ rand() % source.length() ] );
+   vm->retval( source[ rng.randInt(source.length() - 1) ] );
 }
 
 /*#
@@ -213,6 +248,9 @@ FALCON_FUNC  flc_randomWalk ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "A,[N]" ) );
    }
 
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
+
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
    if( number < 0 ) number = series->asArray()->length();
 
@@ -222,7 +260,7 @@ FALCON_FUNC  flc_randomWalk ( ::Falcon::VMachine *vm )
 
    if ( slen > 0 ) {
       while( number > 0 ) {
-         array->append( source[ rand() % slen ] );
+         array->append( source[ rng.randInt(slen - 1) ] );
          number--;
       }
    }
@@ -262,6 +300,9 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "A,[N]" ) );
    }
+
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
    
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
    if( number < 1 ) number = series->asArray()->length();
@@ -271,7 +312,7 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    int32 slen = (int32) source.length();
 
    while( number > 0 && slen > 0 ) {
-      uint32 pos = rand() % slen;
+      uint32 pos = rng.randInt(slen - 1);
       array->append( source[ pos ] );
       source.remove( pos );
       slen--;
@@ -311,6 +352,9 @@ FALCON_FUNC  flc_randomDice( ::Falcon::VMachine *vm )
          extra( "N,N") );
    }
 
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
+
    int64 dices = i_dices->forceInteger();
    int64 sides = i_sides == 0 ? 6 : i_sides->forceInteger();
    if( dices < 1 || sides < 2 )
@@ -323,7 +367,7 @@ FALCON_FUNC  flc_randomDice( ::Falcon::VMachine *vm )
    int64 result = 0;
    for( int64 i = 0; i < dices; i ++ )
    {
-      result += 1 + (rand() % sides );
+      result += 1 + rng.randInt64(sides - 1);
    }
 
    vm->retval( result );
@@ -350,22 +394,26 @@ FALCON_FUNC  flc_randomDice( ::Falcon::VMachine *vm )
 FALCON_FUNC  flc_randomSeed ( ::Falcon::VMachine *vm )
 {
    Item *num = vm->param( 0 );
-   unsigned int value;
+   uint32 value;
 
    if ( num == 0 )
    {
-      value = (unsigned int) (Sys::_seconds() * 1000);
+      value = (uint32) (Sys::_seconds() * 1000);
    }
-   else {
+   else
+   {
       if ( ! num->isOrdinal() )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       }
 
-      value = (unsigned int) num->forceInteger();
+      value = (uint32) num->forceInteger();
    }
 
-   srand( value );
+   CoreObject *selfobj = vm->self().isNil() ? NULL : vm->self().asObject();
+   MTRand &rng = selfobj ? ((RandomCarrier*)selfobj->getUserData())->getRNG() : vm->getRNG(); 
+
+   rng.seed( value );
 }
 
 }

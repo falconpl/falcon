@@ -414,6 +414,7 @@ FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  flc_Random_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomChoice ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomPick ( ::Falcon::VMachine *vm );

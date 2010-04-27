@@ -1803,6 +1803,26 @@ Module* core_module_init()
       addParam("path");
 
    //=======================================================================
+   // The Random class
+   //=======================================================================
+
+   Falcon::Symbol *random_class = self->addClass( "Random", &Falcon::core::flc_Random_init )
+       ->addParam("seed");
+   random_class->setWKS( true );
+   self->addClassMethod( random_class, "random", &Falcon::core::flc_random );
+   self->addClassMethod( random_class, "randomChoice", &Falcon::core::flc_randomChoice );
+   self->addClassMethod( random_class, "randomPick", &Falcon::core::flc_randomPick ).asSymbol()->
+       addParam("series");
+   self->addClassMethod( random_class, "randomWalk", &Falcon::core::flc_randomWalk ).asSymbol()->
+       addParam("series")->addParam("size");
+   self->addClassMethod( random_class, "randomGrab", &Falcon::core::flc_randomGrab ).asSymbol()->
+       addParam("series")->addParam("size");
+   self->addClassMethod( random_class, "randomSeed", &Falcon::core::flc_randomSeed ).asSymbol()->
+       addParam("seed");
+   self->addClassMethod( random_class, "randomDice", &Falcon::core::flc_randomDice ).asSymbol()->
+       addParam("dices");
+
+   //=======================================================================
    // The sequence class
    //=======================================================================
    Falcon::Symbol *sequence_class = self->addClass( "Sequence" );

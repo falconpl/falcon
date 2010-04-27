@@ -39,6 +39,7 @@
 #include <falcon/baton.h>
 #include <falcon/livemodule.h>
 #include <falcon/vmcontext.h>
+#include <falcon/MersenneTwister.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
@@ -447,6 +448,9 @@ protected:
 
    /** filtered load path */
    String m_appSearchPath;
+
+   /** random number generator */
+   MTRand _mtrand;
 
    //=============================================================
    // Private functions
@@ -2288,6 +2292,9 @@ public:
 
    void breakRequest( bool mode ) { m_break = mode; }
    bool breakRequest() const { return m_break; }
+
+   /** Returns the Random Number Generator */
+   MTRand& getRNG(void) { return _mtrand; }
 
 //==========================================================================
 //==========================================================================
