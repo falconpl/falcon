@@ -6,6 +6,10 @@ CELL_WIDTH = 20
 CELL_HEIGHT = 20
 CELL_HEADER = 10
 
+> "WARNING: This example doesn't work correctly yet!" 
+> "The falcon string encoding seems to interfere, "
+> "so MemBuf support has to be added to hpdf text output functions."
+
 function drawGraph(page)
   // Draw 16 X 15 cells
 
