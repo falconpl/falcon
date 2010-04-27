@@ -41,6 +41,7 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "setPageMode", &setPageMode );
   self->addClassMethod( c_doc, "loadType1FontFromFile", &loadType1FontFromFile );
   self->addClassMethod( c_doc, "createOutline", &createOutline );
+  self->addClassMethod( c_doc, "setPassword", &setPassword );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -236,8 +237,7 @@ FALCON_FUNC Doc::setPageMode( VMachine* vm )
                        .extra("I"));
   }
 
-  int ret = HPDF_SetPageMode( self->handle(), static_cast<HPDF_PageMode>(i_enum->asInteger()));
-  vm->retval( ret );
+  HPDF_SetPageMode( self->handle(), static_cast<HPDF_PageMode>(i_enum->asInteger()));
 }
 
 FALCON_FUNC Doc::loadType1FontFromFile( VMachine* vm )
@@ -289,4 +289,21 @@ FALCON_FUNC Doc::createOutline( VMachine* vm )
   vm->retval( f_outline );
 }
 
+FALCON_FUNC Doc::setPassword( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_ownerPassword = vm->param( 0 );
+  Item* i_userPassword = vm->param( 1 );
+  if ( !i_ownerPassword || !i_ownerPassword->isString()
+       || !i_userPassword || !i_userPassword->isString())
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S,S"));
+  }
+
+  AutoCString ownerPassword(*i_ownerPassword);
+  AutoCString userPassword(*i_userPassword);
+  HPDF_SetPassword(self->handle(), ownerPassword.c_str(), userPassword.c_str());
+}
 }}} // Falcon::Ext::hpdf

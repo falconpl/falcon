@@ -1,0 +1,28 @@
+import from hpdf
+import printGrid from .grid_sheet as printGrid
+
+text = "This is an encrypt document example.";
+owner_passwd = "owner";
+user_passwd = "user";
+
+
+pdf = hpdf.Doc()
+
+// get default font
+font = pdf.getFont("Helvetica")
+
+page = pdf.addPage()
+page.setSize(hpdf.PageSize.B5, hpdf.PageDirection.LANDSCAPE)
+
+page.beginText()
+page.setFontAndSize(font, 20)
+tw =  page.textWidth(text)
+page.moveTextPos( (page.getWidth() - tw) / 2,
+                  (page.getHeight()  - 20) / 2)
+page.showText(text)
+page.endText()
+
+pdf.setPassword(owner_passwd, user_passwd)
+
+pdf.saveToFile(scriptName + ".pdf")
+

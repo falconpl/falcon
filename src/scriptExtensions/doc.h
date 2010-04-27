@@ -28,6 +28,7 @@ struct Doc
   static FALCON_FUNC setPageMode( VMachine* );
   static FALCON_FUNC loadType1FontFromFile( VMachine* );
   static FALCON_FUNC createOutline( VMachine* );
+  static FALCON_FUNC setPassword( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 
