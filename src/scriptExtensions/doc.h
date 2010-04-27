@@ -29,6 +29,8 @@ struct Doc
   static FALCON_FUNC loadType1FontFromFile( VMachine* );
   static FALCON_FUNC createOutline( VMachine* );
   static FALCON_FUNC setPassword( VMachine* );
+  static FALCON_FUNC setPermission( VMachine* );
+  static FALCON_FUNC setEncryptionMode( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 

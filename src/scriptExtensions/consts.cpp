@@ -19,6 +19,8 @@ void registerConsts(Falcon::Module* self)
   self->addConstant("COMP_IMAGE", (int64) HPDF_COMP_IMAGE);
   self->addConstant("COMP_METADATA", (int64) HPDF_COMP_METADATA);
   self->addConstant("COMP_ALL", (int64) HPDF_COMP_ALL);
+
+  self->addConstant("ENABLE_READ", (int64) HPDF_ENABLE_READ);
 }
 
 }}} // Falcon::Ext::hpdf

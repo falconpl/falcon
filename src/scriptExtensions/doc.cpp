@@ -42,6 +42,8 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "loadType1FontFromFile", &loadType1FontFromFile );
   self->addClassMethod( c_doc, "createOutline", &createOutline );
   self->addClassMethod( c_doc, "setPassword", &setPassword );
+  self->addClassMethod( c_doc, "setPermission", &setPermission );
+  self->addClassMethod( c_doc, "setEncryptionMode", &setEncryptionMode );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -305,5 +307,35 @@ FALCON_FUNC Doc::setPassword( VMachine* vm )
   AutoCString ownerPassword(*i_ownerPassword);
   AutoCString userPassword(*i_userPassword);
   HPDF_SetPassword(self->handle(), ownerPassword.c_str(), userPassword.c_str());
+}
+
+FALCON_FUNC Doc::setPermission( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_permission = vm->param( 0 );
+  if ( !i_permission || !i_permission->isInteger())
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("I"));
+  }
+
+  HPDF_SetPermission(self->handle(), i_permission->asInteger());
+}
+
+FALCON_FUNC Doc::setEncryptionMode( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_encryptionMode = vm->param( 0 );
+  Item* i_keyLength = vm->param( 1 );
+  if ( !i_encryptionMode || !i_encryptionMode->isInteger()
+       || !i_keyLength || !i_keyLength->isInteger() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("I,I"));
+  }
+
+  HPDF_SetEncryptionMode(self->handle(), static_cast<HPDF_EncryptMode>( i_encryptionMode->asInteger()), i_keyLength->asInteger());
 }
 }}} // Falcon::Ext::hpdf

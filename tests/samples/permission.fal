@@ -1,8 +1,10 @@
+import from hpdf
+
 text = "User cannot print and copy this document."
 owner_passwd = "owner"
 user_passwd = ""
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 // create default-font
 font = pdf.getFont("Helvetica")
@@ -10,7 +12,7 @@ font = pdf.getFont("Helvetica")
 // add a new page object
 page = pdf.addPage()
 
-page.setSize(hpdf.PagesSizes.B5, hpdf.PageDirections.LANDSCAPE)
+page.setSize(hpdf.PageSize.B5, hpdf.PageDirection.LANDSCAPE)
 
 page.beginText()
 page.setFontAndSize(font, 20)
