@@ -1,6 +1,6 @@
 import from hpdf
 
-raw_image_data = [
+tmp = [
   0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xfc,
   0xff, 0xff, 0xff, 0xf8, 0xff, 0xff, 0xff, 0xf0,
   0xf3, 0xf3, 0xff, 0xe0, 0xf3, 0xf3, 0xff, 0xc0,
@@ -19,7 +19,10 @@ raw_image_data = [
   0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
 ]
 
-pdf = hpdf.Pdf()
+rawImageData = MemBuf(tmp.len())
+for i in [0:tmp.len()]: rawImageData[i] = tmp[i]
+
+pdf = hpdf.Doc()
 
 pdf.setCompressionMode(hpdf.COMP_ALL)
 
@@ -39,7 +42,7 @@ page.showText("RawImageDemo")
 page.endText()
 
 // load RGB raw-image file
-image = pdf.loadRawImageFromFile("rawimage\\32_32_rgb.dat",
+image = pdf.loadRawImageFromFile("rawimage/32_32_rgb.dat",
                                  32, 32, hpdf.ColorSpace.DEVICE_RGB)
 
 x = 20  
@@ -49,7 +52,7 @@ y = 20
 page.drawImage(image, x, y, 32, 32);
 
 // load GrayScale raw-image file
-image = pdf.loadRawImageFromFile("rawimage\\32_32_gray.dat",
+image = pdf.loadRawImageFromFile("rawimage/32_32_gray.dat",
                                  32, 32, hpdf.ColorSpace.DEVICE_GRAY)
 
 x = 70
@@ -59,7 +62,7 @@ y = 20
 page.drawImage(image, x, y, 32, 32);
 
 // load GrayScale raw-image (1bit) file from memory.
-image = pdf.loadRawImageFromMem(raw_image_data, 32, 32,
+image = pdf.loadRawImageFromMem(rawImageData, 32, 32,
                                 hpdf.ColorSpace.DEVICE_GRAY, 1);
 
 x = 120
@@ -69,5 +72,5 @@ y = 20
 page.drawImage(image, x, y, 32, 32)
 
 // save the document to a file
-pdf.saveToFile("RawImageDemo.pdf")
+pdf.saveToFile(scriptName + ".pdf")
 

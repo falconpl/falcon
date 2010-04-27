@@ -16,6 +16,12 @@
 
 namespace Falcon { namespace Ext { namespace hpdf {
 
+static double asNumber(Item* item)
+{
+  fassert(item || item->isScalar())
+  return item->forceNumeric();
+}
+
 void Doc::registerExtensions(Falcon::Module* self)
 {
   Falcon::Symbol *c_pdf = self->addClass( "Doc" );
@@ -28,6 +34,8 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdf, "getCurrentPage", &getCurrentPage );
   self->addClassMethod( c_pdf, "loadPngImageFromFile", &loadPngImageFromFile );
   self->addClassMethod( c_pdf, "loadJpegImageFromFile", &loadJpegImageFromFile );
+  self->addClassMethod( c_pdf, "loadRawImageFromFile", &loadRawImageFromFile );
+  self->addClassMethod( c_pdf, "loadRawImageFromMem", &loadRawImageFromMem );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -147,6 +155,60 @@ FALCON_FUNC Doc::loadJpegImageFromFile( VMachine* vm )
 
   AutoCString asFilename( *filenameI->asString() );
   HPDF_Image image = HPDF_LoadJpegImageFromFile( self->handle(), asFilename.c_str());
+  CoreClass* cls_Image = vm->findWKI("Image")->asClass();
+  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  vm->retval( f_image );
+}
+
+FALCON_FUNC Doc::loadRawImageFromFile( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_filename = vm->param( 0 );
+  Item* i_width = vm->param( 1 );
+  Item* i_height = vm->param( 2 );
+  Item* i_colorSpace = vm->param( 3 );
+  if ( vm->paramCount() < 4
+       || !i_filename->isString()
+       || !i_width->isScalar() || !i_height->isScalar()
+       || !i_colorSpace->isInteger())
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S,N,N,I"));
+  }
+
+  AutoCString filename( *i_filename );
+  HPDF_Image image = HPDF_LoadRawImageFromFile( self->handle(),
+                                                filename.c_str(),
+                                                asNumber(i_width), asNumber(i_height),
+                                                static_cast<HPDF_ColorSpace>(i_colorSpace->asInteger()));
+  CoreClass* cls_Image = vm->findWKI("Image")->asClass();
+  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  vm->retval( f_image );
+}
+
+FALCON_FUNC Doc::loadRawImageFromMem( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_buf = vm->param( 0 );
+  Item* i_width = vm->param( 1 );
+  Item* i_height = vm->param( 2 );
+  Item* i_colorSpace = vm->param( 3 );
+  if ( vm->paramCount() < 4
+       || !i_buf->isMemBuf()
+       || !i_width->isScalar() || !i_height->isScalar()
+       || !i_colorSpace->isInteger())
+  {
+    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("O,N,N,I"));
+  }
+
+  HPDF_Image image = HPDF_LoadRawImageFromMem( self->handle(),
+                                                i_buf->asMemBuf()->data(),
+                                                asNumber(i_width), asNumber(i_height),
+                                                static_cast<HPDF_ColorSpace>(i_colorSpace->asInteger()),
+                                                1);
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
   Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
   vm->retval( f_image );
