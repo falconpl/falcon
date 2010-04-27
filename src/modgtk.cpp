@@ -40,6 +40,7 @@
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_EventBox.hpp"
 #include "gtk_Expander.hpp"
+#include "gtk_FileChooserButton.hpp"
 #include "gtk_FileChooserDialog.hpp"
 #include "gtk_Fixed.hpp"
 #include "gtk_Frame.hpp"
@@ -168,6 +169,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::HButtonBox::modInit( self );
                         Falcon::Gtk::VButtonBox::modInit( self );
                     Falcon::Gtk::HBox::modInit( self );
+                        Falcon::Gtk::FileChooserButton::modInit( self );
                         Falcon::Gtk::Statusbar::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
