@@ -9,11 +9,8 @@
 #include <hpdf.h>
 #include <scriptExtensions/doc.h>
 #include <moduleImpl/doc.h>
-#include <moduleImpl/page.h>
-#include <moduleImpl/font.h>
-#include <moduleImpl/image.h>
-#include <moduleImpl/destination.h>
-#include <moduleImpl/outline.h>
+#include <moduleImpl/array.h>
+#include <moduleImpl/dict.h>
 #include <moduleImpl/encoder.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -58,7 +55,7 @@ FALCON_FUNC Doc::addPage( VMachine* vm )
   CoreClass* Page_cls = vm->findWKI("Page")->asClass();
   Mod::hpdf::Doc* self = Falcon::dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
   HPDF_Page page = HPDF_AddPage( self->handle() );
-  vm->retval( new Mod::hpdf::Page(Page_cls, page) );
+  vm->retval( new Mod::hpdf::Dict(Page_cls, page) );
 }
 
 FALCON_FUNC Doc::saveToFile( VMachine* vm )
@@ -97,7 +94,7 @@ FALCON_FUNC Doc::getFont( VMachine* vm )
 
   HPDF_Font hpdfFont = HPDF_GetFont( self->handle(), asFilename.c_str(), i_encodingName ? encodingName.c_str() : 0 );
   CoreClass* Font_cls = vm->findWKI("Font")->asClass();
-  Mod::hpdf::Font* font = new Mod::hpdf::Font(Font_cls, hpdfFont);
+  Mod::hpdf::Dict* font = new Mod::hpdf::Dict(Font_cls, hpdfFont);
   vm->retval( font );
 }
 
@@ -125,7 +122,7 @@ FALCON_FUNC Doc::setOpenAction( VMachine* vm )
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("O"));
   }
-  Mod::hpdf::Destination* destination = static_cast<Mod::hpdf::Destination*>(i_destination->asObject());
+  Mod::hpdf::Array* destination = static_cast<Mod::hpdf::Array*>(i_destination->asObject());
   HPDF_SetOpenAction(self->handle(), destination->handle());
 }
 
@@ -136,7 +133,7 @@ FALCON_FUNC Doc::getCurrentPage( VMachine* vm )
   HPDF_Page currentPage = HPDF_GetCurrentPage(self->handle());
 
   CoreClass* cls_Page = vm->findWKI("Page")->asClass();
-  Mod::hpdf::Page* f_page = new Mod::hpdf::Page(cls_Page, currentPage);
+  Mod::hpdf::Dict* f_page = new Mod::hpdf::Dict(cls_Page, currentPage);
   vm->retval( f_page );
 }
 
@@ -154,7 +151,7 @@ FALCON_FUNC Doc::loadPngImageFromFile( VMachine* vm )
   AutoCString asFilename( *filenameI->asString() );
   HPDF_Image image = HPDF_LoadPngImageFromFile( self->handle(), asFilename.c_str());
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
-  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  Mod::hpdf::Dict* f_image = new Mod::hpdf::Dict(cls_Image, image);
   vm->retval( f_image );
 }
 
@@ -172,7 +169,7 @@ FALCON_FUNC Doc::loadJpegImageFromFile( VMachine* vm )
   AutoCString asFilename( *filenameI->asString() );
   HPDF_Image image = HPDF_LoadJpegImageFromFile( self->handle(), asFilename.c_str());
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
-  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  Mod::hpdf::Dict* f_image = new Mod::hpdf::Dict(cls_Image, image);
   vm->retval( f_image );
 }
 
@@ -199,7 +196,7 @@ FALCON_FUNC Doc::loadRawImageFromFile( VMachine* vm )
                                                 asNumber(i_width), asNumber(i_height),
                                                 static_cast<HPDF_ColorSpace>(i_colorSpace->asInteger()));
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
-  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  Mod::hpdf::Dict* f_image = new Mod::hpdf::Dict(cls_Image, image);
   vm->retval( f_image );
 }
 
@@ -226,7 +223,7 @@ FALCON_FUNC Doc::loadRawImageFromMem( VMachine* vm )
                                                 static_cast<HPDF_ColorSpace>(i_colorSpace->asInteger()),
                                                 1);
   CoreClass* cls_Image = vm->findWKI("Image")->asClass();
-  Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
+  Mod::hpdf::Dict* f_image = new Mod::hpdf::Dict(cls_Image, image);
   vm->retval( f_image );
 }
 
@@ -282,14 +279,14 @@ FALCON_FUNC Doc::createOutline( VMachine* vm )
   HPDF_Outline parent = 0;
   HPDF_Encoder encoder = 0;
   if(i_parent)
-    parent = i_parent->isNil() ? 0 : static_cast<Mod::hpdf::Outline*>(i_parent->asObject())->handle();
+    parent = i_parent->isNil() ? 0 : static_cast<Mod::hpdf::Dict*>(i_parent->asObject())->handle();
   if(i_encoder)
     encoder = i_encoder->isNil() ? 0 : static_cast<Mod::hpdf::Encoder*>(i_encoder->asObject())->handle();
 
   AutoCString title(*i_title);
   HPDF_Outline outline = HPDF_CreateOutline( self->handle(), parent, title.c_str(), encoder);
   CoreClass* cls_Outline = vm->findWKI("Outline")->asClass();
-  Mod::hpdf::Outline* f_outline = new Mod::hpdf::Outline(cls_Outline, outline);
+  Mod::hpdf::Dict* f_outline = new Mod::hpdf::Dict(cls_Outline, outline);
   vm->retval( f_outline );
 }
 

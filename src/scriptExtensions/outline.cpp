@@ -8,8 +8,8 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/outline.h>
-#include <moduleImpl/outline.h>
-#include <moduleImpl/destination.h>
+#include <moduleImpl/array.h>
+#include <moduleImpl/dict.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -36,7 +36,7 @@ FALCON_FUNC Outline::init( VMachine* vm )
 
 FALCON_FUNC Outline::setOpened( VMachine* vm )
 {
-  Mod::hpdf::Outline* self = dyncast<Mod::hpdf::Outline*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_opened = vm->param( 0 );
 
   if ( !i_opened || !i_opened->isBoolean() )
@@ -48,14 +48,14 @@ FALCON_FUNC Outline::setOpened( VMachine* vm )
 
 FALCON_FUNC Outline::setDestination( VMachine* vm )
 {
-  Mod::hpdf::Outline* self = dyncast<Mod::hpdf::Outline*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_destination= vm->param( 0 );
 
   if ( !i_destination || !i_destination->isOfClass("Destination") )
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                            .extra("O") );
 
-  Mod::hpdf::Destination* destination = static_cast<Mod::hpdf::Destination*>(i_destination->asObject());
+  Mod::hpdf::Array* destination = static_cast<Mod::hpdf::Array*>(i_destination->asObject());
   HPDF_Outline_SetDestination( self->handle(),  destination->handle());
 }
 

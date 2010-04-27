@@ -8,7 +8,7 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/destination.h>
-#include <moduleImpl/destination.h>
+#include <moduleImpl/array.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -34,7 +34,7 @@ FALCON_FUNC Destination::init( VMachine* vm )
 
 FALCON_FUNC Destination::setXYZ( VMachine* vm )
 {
-  Mod::hpdf::Destination* self = dyncast<Mod::hpdf::Destination*>( vm->self().asObject() );
+  Mod::hpdf::Array* self = dyncast<Mod::hpdf::Array*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
   Item* i_z = vm->param( 2 );

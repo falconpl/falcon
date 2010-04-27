@@ -8,7 +8,7 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include "image.h"
-#include <moduleImpl/image.h>
+#include <moduleImpl/dict.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -35,14 +35,14 @@ FALCON_FUNC Image::init( VMachine* vm )
 
 FALCON_FUNC Image::getWidth( VMachine* vm )
 {
-  Mod::hpdf::Image* self = dyncast<Mod::hpdf::Image*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_REAL ret = HPDF_Image_GetWidth( self->handle() );
   vm->retval(ret);
 }
 
 FALCON_FUNC Image::getHeight( VMachine* vm )
 {
-  Mod::hpdf::Image* self = dyncast<Mod::hpdf::Image*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_REAL ret = HPDF_Image_GetHeight( self->handle() );
   vm->retval(ret);
 }

@@ -8,14 +8,10 @@ add_library(hpdf_fm MODULE
    hpdf.cpp
    moduleImpl/st.cpp
    moduleImpl/doc.cpp
-   moduleImpl/page.cpp
-   moduleImpl/font.cpp
-   moduleImpl/destination.cpp
-   moduleImpl/image.cpp
-   moduleImpl/outline.cpp
    moduleImpl/encoder.cpp
-   moduleImpl/annotation.cpp
    moduleImpl/error.cpp
+   moduleImpl/array.cpp
+   moduleImpl/dict.cpp
    scriptExtensions/consts.cpp
    scriptExtensions/enums.cpp
    scriptExtensions/doc.cpp
@@ -26,6 +22,7 @@ add_library(hpdf_fm MODULE
    scriptExtensions/outline.cpp
    scriptExtensions/encoder.cpp
    scriptExtensions/textannotation.cpp
+   #scriptExtensions/xobject.cpp
    scriptExtensions/error.cpp
 )
 

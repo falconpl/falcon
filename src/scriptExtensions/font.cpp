@@ -8,7 +8,7 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/font.h>
-#include <moduleImpl/font.h>
+#include <moduleImpl/dict.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {

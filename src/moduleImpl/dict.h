@@ -14,18 +14,18 @@
 namespace Falcon { namespace Mod { namespace hpdf {
 
 
-class FALCON_DYN_CLASS Annotation : public CacheObject
+class FALCON_DYN_CLASS Dict : public CacheObject
 {
 public:
-  Annotation(CoreClass const* cls, HPDF_Annotation font);
-  virtual ~Annotation();
+  Dict(CoreClass const* cls, HPDF_Dict dict);
+  virtual ~Dict();
 
-  Annotation* clone() const { return 0; } // not clonable
+  Dict* clone() const { return 0; } // not clonable
 
-  HPDF_Annotation handle() const;
+  HPDF_Dict handle() const;
 
 private:
-  HPDF_Annotation m_annotation;
+  HPDF_Dict m_dict;
 };
 
 

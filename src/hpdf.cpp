@@ -53,6 +53,7 @@ FALCON_MODULE_DECL
   Falcon::Ext::hpdf::Outline::registerExtensions(self);
   Falcon::Ext::hpdf::Encoder::registerExtensions(self);
   Falcon::Ext::hpdf::TextAnnotation::registerExtensions(self);
+  //Falcon::Ext::hpdf::XObject::registerExtensions(self);
 
   return self;
 }

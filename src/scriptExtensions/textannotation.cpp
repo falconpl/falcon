@@ -8,7 +8,7 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/textannotation.h>
-#include <moduleImpl/annotation.h>
+#include <moduleImpl/dict.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -35,7 +35,7 @@ FALCON_FUNC TextAnnotation::init( VMachine* vm )
 
 FALCON_FUNC TextAnnotation::setIcon( VMachine* vm )
 {
-  Mod::hpdf::Annotation* self = dyncast<Mod::hpdf::Annotation*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_enum = vm->param( 0 );
 
   if ( !i_enum || !i_enum->isInteger() )
@@ -47,7 +47,7 @@ FALCON_FUNC TextAnnotation::setIcon( VMachine* vm )
 
 FALCON_FUNC TextAnnotation::setOpened( VMachine* vm )
 {
-  Mod::hpdf::Annotation* self = dyncast<Mod::hpdf::Annotation*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_opened = vm->param( 0 );
 
   if ( !i_opened || !i_opened->isBoolean() )

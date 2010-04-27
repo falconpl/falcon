@@ -5,21 +5,21 @@
  *      Author: maik
  */
 
-#include <moduleImpl/image.h>
+#include <moduleImpl/array.h>
 #include "error.h"
 
 namespace Falcon { namespace Mod { namespace hpdf {
 
 
-Image::Image(CoreClass const* cls, HPDF_Image image) :
+Array::Array(CoreClass const* cls, HPDF_Array array) :
     ::Falcon::CacheObject(cls),
-    m_image(image)
+    m_array(array)
 {
 }
 
-Image::~Image()
+Array::~Array()
 { }
 
-HPDF_Image Image::handle() const { return m_image; }
+HPDF_Array Array::handle() const { return m_array; }
 
 }}} // Falcon::Mod::hpdf

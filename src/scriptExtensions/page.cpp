@@ -8,17 +8,12 @@
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/page.h>
-#include <moduleImpl/page.h>
-#include <moduleImpl/font.h>
-#include <moduleImpl/destination.h>
-#include <moduleImpl/image.h>
+#include <moduleImpl/dict.h>
+#include <moduleImpl/array.h>
 #include <moduleImpl/encoder.h>
-#include <moduleImpl/annotation.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
-
-using ::Falcon::Mod::hpdf::Font;
 
 static double asNumber(Item* item)
 {
@@ -91,19 +86,19 @@ FALCON_FUNC Page::init( VMachine* vm )
 
 FALCON_FUNC Page::beginText( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_BeginText( self->handle() );
 }
 
 FALCON_FUNC Page::endText( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_EndText( self->handle() );
 }
 
 FALCON_FUNC Page::showText( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_text = vm->param( 0 );
 
   if ( i_text == 0 || !i_text->isString())
@@ -116,7 +111,7 @@ FALCON_FUNC Page::showText( VMachine* vm )
 
 FALCON_FUNC Page::setFontAndSize( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_font = vm->param( 0 );
   Item* i_fontSize = vm->param( 1 );
 
@@ -127,14 +122,14 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
                            .extra("O,I") );
   }
 
-  Font* font = dyncast<Font*>( i_font->asObject() );
+  Mod::hpdf::Dict* font = dyncast<Mod::hpdf::Dict*>( i_font->asObject() );
   HPDF_REAL size = asNumber(i_fontSize);
   HPDF_Page_SetFontAndSize( self->handle(), font->handle(), size);
 }
 
 FALCON_FUNC Page::moveTextPos( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
 
@@ -152,14 +147,14 @@ FALCON_FUNC Page::moveTextPos( VMachine* vm )
 
 FALCON_FUNC Page::getHeight( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_REAL ret = HPDF_Page_GetHeight( self->handle() );
   vm->retval(ret);
 }
 
 FALCON_FUNC Page::setHeight( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_height = vm->param( 0 );
 
   if ( i_height == 0 || !i_height->isScalar())
@@ -171,14 +166,14 @@ FALCON_FUNC Page::setHeight( VMachine* vm )
 
 FALCON_FUNC Page::getWidth( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_REAL ret = HPDF_Page_GetWidth( self->handle() );
   vm->retval(ret);
 }
 
 FALCON_FUNC Page::setWidth( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_width = vm->param( 0 );
 
   if ( i_width == 0 || !i_width->isScalar())
@@ -190,14 +185,14 @@ FALCON_FUNC Page::setWidth( VMachine* vm )
 
 FALCON_FUNC Page::getLineWidth( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_REAL ret = HPDF_Page_GetLineWidth( self->handle() );
   vm->retval(ret);
 }
 
 FALCON_FUNC Page::setLineWidth( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_lineWidth = vm->param( 0 );
 
   if ( i_lineWidth == 0 || !i_lineWidth->isScalar())
@@ -209,13 +204,13 @@ FALCON_FUNC Page::setLineWidth( VMachine* vm )
 
 FALCON_FUNC Page::stroke( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_Stroke( self->handle() );
 }
 
 FALCON_FUNC Page::rectangle( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
   Item* i_width = vm->param( 2 );
@@ -234,7 +229,7 @@ FALCON_FUNC Page::rectangle( VMachine* vm )
 
 FALCON_FUNC Page::textWidth( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_text = vm->param( 0 );
 
   if ( i_text == 0 || !i_text->isString())
@@ -248,7 +243,7 @@ FALCON_FUNC Page::textWidth( VMachine* vm )
 
 FALCON_FUNC Page::textOut( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );;
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );;
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
   Item* i_text = vm->param( 2 );
@@ -266,7 +261,7 @@ FALCON_FUNC Page::textOut( VMachine* vm )
 
 FALCON_FUNC Page::moveTo( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
 
@@ -280,7 +275,7 @@ FALCON_FUNC Page::moveTo( VMachine* vm )
 
 FALCON_FUNC Page::lineTo( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
 
@@ -294,7 +289,7 @@ FALCON_FUNC Page::lineTo( VMachine* vm )
 
 FALCON_FUNC Page::setDash( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_dashModes = vm->param( 0 );
   Item* i_phase = vm->param( 1 );
 
@@ -329,7 +324,7 @@ FALCON_FUNC Page::setDash( VMachine* vm )
 
 FALCON_FUNC Page::setRGBStroke( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_r = vm->param( 0 );
   Item* i_g = vm->param( 1 );
   Item* i_b = vm->param( 2 );
@@ -344,7 +339,7 @@ FALCON_FUNC Page::setRGBStroke( VMachine* vm )
 
 FALCON_FUNC Page::setLineCap( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_enum = vm->param( 0 );
 
   if ( !i_enum || !i_enum->isInteger() )
@@ -357,7 +352,7 @@ FALCON_FUNC Page::setLineCap( VMachine* vm )
 
 FALCON_FUNC Page::setLineJoin( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_enum = vm->param( 0 );
 
   if ( !i_enum || !i_enum->isInteger() )
@@ -370,7 +365,7 @@ FALCON_FUNC Page::setLineJoin( VMachine* vm )
 
 FALCON_FUNC Page::setRGBFill( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_r = vm->param( 0 );
   Item* i_g = vm->param( 1 );
   Item* i_b = vm->param( 2 );
@@ -385,37 +380,37 @@ FALCON_FUNC Page::setRGBFill( VMachine* vm )
 
 FALCON_FUNC Page::fill( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_Fill( self->handle() );
 }
 
 FALCON_FUNC Page::fillStroke( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_FillStroke( self->handle() );
 }
 
 FALCON_FUNC Page::gSave( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_GSave( self->handle() );
 }
 
 FALCON_FUNC Page::gRestore( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_GRestore( self->handle() );
 }
 
 FALCON_FUNC Page::clip( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_Clip( self->handle() );
 }
 
 FALCON_FUNC Page::setTextLeading( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_value = vm->param( 0 );
 
   if (!i_value || !i_value->isScalar() )
@@ -430,7 +425,7 @@ FALCON_FUNC Page::setTextLeading( VMachine* vm )
 
 FALCON_FUNC Page::showTextNextLine( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_text = vm->param( 0 );
 
   if ( i_text == 0 || !i_text->isString())
@@ -443,7 +438,7 @@ FALCON_FUNC Page::showTextNextLine( VMachine* vm )
 
 FALCON_FUNC Page::curveTo( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x1 = vm->param( 0 );
   Item* i_y1 = vm->param( 1 );
   Item* i_x2 = vm->param( 2 );
@@ -466,7 +461,7 @@ FALCON_FUNC Page::curveTo( VMachine* vm )
 
 FALCON_FUNC Page::curveTo2( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x1 = vm->param( 0 );
   Item* i_y1 = vm->param( 1 );
   Item* i_x2 = vm->param( 2 );
@@ -484,7 +479,7 @@ FALCON_FUNC Page::curveTo2( VMachine* vm )
 
 FALCON_FUNC Page::curveTo3( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x1 = vm->param( 0 );
   Item* i_y1 = vm->param( 1 );
   Item* i_x2 = vm->param( 2 );
@@ -502,7 +497,7 @@ FALCON_FUNC Page::curveTo3( VMachine* vm )
 
 FALCON_FUNC Page::measureText( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_text = vm->param( 0 );
   Item* i_width = vm->param( 1 );
   Item* i_wordWrap = vm->param( 2 );
@@ -521,22 +516,22 @@ FALCON_FUNC Page::measureText( VMachine* vm )
 
 FALCON_FUNC Page::getCurrentFontSize( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   int size = HPDF_Page_GetCurrentFontSize( self->handle() );
   vm->retval(size);
 }
 
 FALCON_FUNC Page::getCurrentFont( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   CoreClass* cls_Font = vm->findWKI("Font")->asClass();
   HPDF_Font font = HPDF_Page_GetCurrentFont( self->handle() );
-  vm->retval(new Mod::hpdf::Font(cls_Font, font));
+  vm->retval(new Mod::hpdf::Dict(cls_Font, font));
 }
 
 FALCON_FUNC Page::getRGBFill( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
 
   HPDF_RGBColor rgbColor = HPDF_Page_GetRGBFill( self->handle() );
   LinearDict* itemDict = new LinearDict(3);
@@ -551,7 +546,7 @@ FALCON_FUNC Page::getRGBFill( VMachine* vm )
 
 FALCON_FUNC Page::setTextRenderingMode( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_enum = vm->param( 0 );
 
   if ( !i_enum || !i_enum->isInteger() )
@@ -564,7 +559,7 @@ FALCON_FUNC Page::setTextRenderingMode( VMachine* vm )
 
 FALCON_FUNC Page::setTextMatrix( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_a = vm->param( 0 );
   Item* i_b = vm->param( 1 );
   Item* i_c = vm->param( 2 );
@@ -587,7 +582,7 @@ FALCON_FUNC Page::setTextMatrix( VMachine* vm )
 
 FALCON_FUNC Page::setCharSpace( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_space = vm->param( 0 );
 
   if ( i_space == 0 || !i_space->isScalar())
@@ -599,7 +594,7 @@ FALCON_FUNC Page::setCharSpace( VMachine* vm )
 
 FALCON_FUNC Page::setWordSpace( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_space = vm->param( 0 );
 
   if ( i_space == 0 || !i_space->isScalar())
@@ -611,7 +606,7 @@ FALCON_FUNC Page::setWordSpace( VMachine* vm )
 
 FALCON_FUNC Page::setSize( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_size = vm->param( 0 );
   Item* i_direction = vm->param( 1 );
 
@@ -627,7 +622,7 @@ FALCON_FUNC Page::setSize( VMachine* vm )
 
 FALCON_FUNC Page::textRect( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_left = vm->param( 0 );
   Item* i_top = vm->param( 1 );
   Item* i_right = vm->param( 2 );
@@ -654,7 +649,7 @@ FALCON_FUNC Page::textRect( VMachine* vm )
 
 FALCON_FUNC Page::concat( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_a = vm->param( 0 );
   Item* i_b = vm->param( 1 );
   Item* i_c = vm->param( 2 );
@@ -677,7 +672,7 @@ FALCON_FUNC Page::concat( VMachine* vm )
 
 FALCON_FUNC Page::setGrayStroke( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_value = vm->param( 0 );
 
   if (!i_value || !i_value->isScalar() )
@@ -692,7 +687,7 @@ FALCON_FUNC Page::setGrayStroke( VMachine* vm )
 
 FALCON_FUNC Page::circle( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
   Item* i_r = vm->param( 2 );
@@ -707,7 +702,7 @@ FALCON_FUNC Page::circle( VMachine* vm )
 
 FALCON_FUNC Page::setGrayFill( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_value = vm->param( 0 );
 
   if (!i_value || !i_value->isScalar() )
@@ -722,17 +717,17 @@ FALCON_FUNC Page::setGrayFill( VMachine* vm )
 
 FALCON_FUNC Page::createDestination( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   CoreClass* cls_Destination = vm->findWKI("Destination")->asClass();
   HPDF_Destination destination = HPDF_Page_CreateDestination( self->handle() );
   vm->retval(
-     new Mod::hpdf::Destination(cls_Destination, destination)
+     new Mod::hpdf::Array(cls_Destination, destination)
   );
 }
 
 FALCON_FUNC Page::drawImage( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_image = vm->param( 0 );
   Item* i_x = vm->param( 1 );
   Item* i_y = vm->param( 2 );
@@ -748,7 +743,7 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
                            .extra("O,N,N,N,N") );
   }
 
-  Mod::hpdf::Image* image = dyncast<Mod::hpdf::Image*>( i_image->asObject() );
+  Mod::hpdf::Dict* image = dyncast<Mod::hpdf::Dict*>( i_image->asObject() );
 
   HPDF_Page_DrawImage(self->handle(), image->handle(),
                                       asNumber(i_x), asNumber(i_y),
@@ -757,7 +752,7 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
 
 FALCON_FUNC Page::arc( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_x = vm->param( 0 );
   Item* i_y = vm->param( 1 );
   Item* i_r = vm->param( 2 );
@@ -776,7 +771,7 @@ FALCON_FUNC Page::arc( VMachine* vm )
 
 FALCON_FUNC Page::getCurrentPos( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Point point = HPDF_Page_GetCurrentPos( self->handle() );
   LinearDict* itemDict = new LinearDict(2);
   itemDict->put(Item("x"), Item(point.x));
@@ -788,7 +783,7 @@ FALCON_FUNC Page::getCurrentPos( VMachine* vm )
 
 FALCON_FUNC Page::createTextAnnot( VMachine* vm )
 {
-  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   Item* i_rect = vm->param( 0 );
   Item* i_text = vm->param( 1 );
   Item* i_encoder = vm->param( 2 );
@@ -824,7 +819,7 @@ FALCON_FUNC Page::createTextAnnot( VMachine* vm )
   AutoCString text(*i_text);
   CoreClass* cls_TextAnnotation = vm->findWKI("TextAnnotation")->asClass();
   HPDF_Annotation annotation = HPDF_Page_CreateTextAnnot( self->handle(), rect, text.c_str(), encoder);
-  vm->retval(new Mod::hpdf::Annotation(cls_TextAnnotation, annotation));
+  vm->retval(new Mod::hpdf::Dict(cls_TextAnnotation, annotation));
 }
 
 }}} // Falcon::Ext::hpdf
