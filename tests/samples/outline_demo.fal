@@ -12,31 +12,31 @@ function printPage(page, page_num)
 end
 
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 pdf.setCompressionMode(hpdf.COMP_ALL)
 
 // create default-font
 font = pdf.getFont("Helvetica")
 
-pdf.SetPageMode(HPdfPageMode.HPDF_PAGE_MODE_USE_OUTLINE);
+pdf.setPageMode(hpdf.PageMode.USE_OUTLINE);
 
 // add a new page object
-/* Add 3 pages to the document. */
+// Add 3 pages to the document. 
 page0 = pdf.addPage()
-page0.setFontAndSize (font, 30)
+page0.setFontAndSize(font, 30)
 printPage(page0, 1)
 
-HPdfPage page1 = pdf.AddPage();
-page1.SetFontAndSize(font, 30);
-PrintPage(page1, 2);
+page1 = pdf.addPage();
+page1.setFontAndSize(font, 30);
+printPage(page1, 2);
 
 page2 = pdf.addPage()
 page2.setFontAndSize(font, 30)
 printPage(page2, 3)
 
 // create outline root
-root = pdf.createOutline(null, "OutlineRoot")
+root = pdf.createOutline(nil, "OutlineRoot")
 root.setOpened(true)
 
 outline0 = pdf.createOutline(root, "page1")
@@ -54,11 +54,11 @@ dst.setXYZ(0, page0.getHeight(), 1)
 outline0.setDestination(dst)
 
 dst = page1.createDestination()
-dst.setXYZ(0, page1.GetHeight(), 1)
+dst.setXYZ(0, page1.getHeight(), 1)
 outline1.setDestination(dst)
 
 dst = page2.createDestination()
-dst.setXYZ(0, page2.GetHeight(), 1)
+dst.setXYZ(0, page2.getHeight(), 1)
 outline2.setDestination(dst)
 
 // save the document to a file
