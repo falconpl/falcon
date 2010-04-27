@@ -39,7 +39,7 @@
 #include <falcon/baton.h>
 #include <falcon/livemodule.h>
 #include <falcon/vmcontext.h>
-#include <falcon/MersenneTwister.h>
+#include <falcon/mersennetwister.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
