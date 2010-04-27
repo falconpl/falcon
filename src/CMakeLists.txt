@@ -22,7 +22,7 @@ add_library(hpdf_fm MODULE
    scriptExtensions/outline.cpp
    scriptExtensions/encoder.cpp
    scriptExtensions/textannotation.cpp
-   #scriptExtensions/xobject.cpp
+   scriptExtensions/linkannotation.cpp
    scriptExtensions/error.cpp
 )
 

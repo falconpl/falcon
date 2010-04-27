@@ -21,10 +21,10 @@
 #include "scriptExtensions/outline.h"
 #include "scriptExtensions/encoder.h"
 #include "scriptExtensions/textannotation.h"
+#include "scriptExtensions/linkannotation.h"
 //#include "scriptExtensions/encoder.h"
 //#include "scriptExtensions/extgstate.h"
 //#include "scriptExtensions/image.h"
-//#include "scriptExtensions/linkannot.h"
 #include "version.h"
 #include "moduleImpl/st.h"
 
@@ -53,7 +53,7 @@ FALCON_MODULE_DECL
   Falcon::Ext::hpdf::Outline::registerExtensions(self);
   Falcon::Ext::hpdf::Encoder::registerExtensions(self);
   Falcon::Ext::hpdf::TextAnnotation::registerExtensions(self);
-  //Falcon::Ext::hpdf::XObject::registerExtensions(self);
+  Falcon::Ext::hpdf::LinkAnnotation::registerExtensions(self);
 
   return self;
 }
