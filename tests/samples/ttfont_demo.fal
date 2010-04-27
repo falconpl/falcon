@@ -2,17 +2,18 @@ import from hpdf
 
 SAMP_TXT = "The quick brown fox jumps over the lazy dog."
 
-if args.len() < 2
-  print 'usage: ttfont_demo.fal [path to font file] -E(embedding font).'
+if args.len() < 1
+  > 'usage: ttfont_demo.fal [path to font file] -E(embedding font).'
   exit(1)
 end
 
 font_name = args[0]
-flg = args[1]
+flg = nil 
+if args.len() > 1: flg = args[1]
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
-pdf.setCompressionMode(hpdf.OMP_ALL)
+pdf.setCompressionMode(hpdf.COMP_ALL)
 
 // Add a new page object
 page = pdf.addPage()
@@ -55,7 +56,7 @@ page.moveTextPos(0, -18)
 
 page.setFontAndSize(detail_font, 16)
 page.showText(SAMP_TXT)
-page.move_text_pos(0, -27)
+page.moveTextPos(0, -27)
 
 page.setFontAndSize(detail_font, 23)
 page.showText(SAMP_TXT)

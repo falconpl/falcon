@@ -44,6 +44,7 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "setPassword", &setPassword );
   self->addClassMethod( c_doc, "setPermission", &setPermission );
   self->addClassMethod( c_doc, "setEncryptionMode", &setEncryptionMode );
+  self->addClassMethod( c_doc, "loadTTFontFromFile", &loadTTFontFromFile );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -338,4 +339,23 @@ FALCON_FUNC Doc::setEncryptionMode( VMachine* vm )
 
   HPDF_SetEncryptionMode(self->handle(), static_cast<HPDF_EncryptMode>( i_encryptionMode->asInteger()), i_keyLength->asInteger());
 }
+
+FALCON_FUNC Doc::loadTTFontFromFile( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_filename = vm->param( 0 );
+  Item* i_embed = vm->param( 1 );
+  if ( !i_filename || ! i_filename->isString()
+       || !i_embed || ! i_embed->isBoolean() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S,B"));
+  }
+
+  AutoCString filename( *i_filename );
+  char const* c_fontName = HPDF_LoadTTFontFromFile( self->handle(), filename.c_str(), i_embed->asBoolean());
+  vm->retval( String(c_fontName) );
+}
+
 }}} // Falcon::Ext::hpdf

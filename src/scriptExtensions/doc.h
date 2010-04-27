@@ -31,6 +31,8 @@ struct Doc
   static FALCON_FUNC setPassword( VMachine* );
   static FALCON_FUNC setPermission( VMachine* );
   static FALCON_FUNC setEncryptionMode( VMachine* );
+  static FALCON_FUNC loadTTFontFromFile( VMachine* );
+  //static FALCON_FUNC getTTFontDefFromFile( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 
@@ -44,8 +46,6 @@ struct Doc
 //  FALCON_FUNC PDF_getViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_setViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_insertPage( VMachine* );
-//  FALCON_FUNC PDF_getTTFontDefFromFile( VMachine* );
-//  FALCON_FUNC PDF_loadTTFontFromFile( VMachine* );
 //  FALCON_FUNC PDF_loadTTFontFromFile2( VMachine* );
 //  FALCON_FUNC PDF_addPageLabel( VMachine* );
 //  FALCON_FUNC PDF_useJPFonts( VMachine* );
