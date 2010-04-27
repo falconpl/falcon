@@ -67,6 +67,7 @@ set( SRC_FILES
     gtk_RadioButton.cpp
     gtk_Requisition.cpp
     gtk_Ruler.cpp
+    gtk_ScaleButton.cpp
     gtk_SpinButton.cpp
     gtk_Statusbar.cpp
     gtk_Stock.cpp
@@ -153,6 +154,7 @@ set( HDR_FILES
     gtk_RadioButton.hpp
     gtk_Requisition.hpp
     gtk_Ruler.hpp
+    gtk_ScaleButton.hpp
     gtk_SpinButton.hpp
     gtk_Statusbar.hpp
     gtk_Stock.hpp

@@ -63,6 +63,7 @@
 #include "gtk_RadioButton.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
+#include "gtk_ScaleButton.hpp"
 #include "gtk_SpinButton.hpp"
 #include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
@@ -148,6 +149,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ColorButton::modInit( self );
                         Falcon::Gtk::LinkButton::modInit( self );
+                        Falcon::Gtk::ScaleButton::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
                                 Falcon::Gtk::RadioButton::modInit( self );
