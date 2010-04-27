@@ -273,6 +273,8 @@ namespace Falcon { namespace Ext { namespace hpdf {
     self->addClassProperty( fclass, "KEY" )
       .setInteger(HPDF_ANNOT_ICON_KEY).setReadOnly(true);
     self->addClassProperty( fclass, "HELP" )
+      .setInteger(HPDF_ANNOT_ICON_NOTE).setReadOnly(true);
+    self->addClassProperty( fclass, "NOTE" )
       .setInteger(HPDF_ANNOT_ICON_HELP).setReadOnly(true);
     self->addClassProperty( fclass, "NEW_PARAGRAPH" )
       .setInteger(HPDF_ANNOT_ICON_NEW_PARAGRAPH).setReadOnly(true);

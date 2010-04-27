@@ -45,6 +45,7 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "setPermission", &setPermission );
   self->addClassMethod( c_doc, "setEncryptionMode", &setEncryptionMode );
   self->addClassMethod( c_doc, "loadTTFontFromFile", &loadTTFontFromFile );
+  self->addClassMethod( c_doc, "getEncoder", &getEncoder );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -283,7 +284,7 @@ FALCON_FUNC Doc::createOutline( VMachine* vm )
   if(i_parent)
     parent = i_parent->isNil() ? 0 : static_cast<Mod::hpdf::Outline*>(i_parent->asObject())->handle();
   if(i_encoder)
-    encoder = i_encoder->isNil() ? 0 : static_cast<Mod::hpdf::Encoder*>(i_parent->asObject())->handle();
+    encoder = i_encoder->isNil() ? 0 : static_cast<Mod::hpdf::Encoder*>(i_encoder->asObject())->handle();
 
   AutoCString title(*i_title);
   HPDF_Outline outline = HPDF_CreateOutline( self->handle(), parent, title.c_str(), encoder);
@@ -356,6 +357,24 @@ FALCON_FUNC Doc::loadTTFontFromFile( VMachine* vm )
   AutoCString filename( *i_filename );
   char const* c_fontName = HPDF_LoadTTFontFromFile( self->handle(), filename.c_str(), i_embed->asBoolean());
   vm->retval( String(c_fontName) );
+}
+
+FALCON_FUNC Doc::getEncoder( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_encodingName = vm->param( 0 );
+  if ( !i_encodingName || ! i_encodingName->isString() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S"));
+  }
+
+  AutoCString encodingName( *i_encodingName );
+  HPDF_Encoder encoder = HPDF_GetEncoder( self->handle(), encodingName.c_str());
+  CoreClass* cls_Encoder = vm->findWKI("Encoder")->asClass();
+  Mod::hpdf::Encoder* f_encoder = new Mod::hpdf::Encoder(cls_Encoder, encoder);
+  vm->retval( f_encoder );
 }
 
 }}} // Falcon::Ext::hpdf

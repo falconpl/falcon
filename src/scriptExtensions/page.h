@@ -68,11 +68,11 @@ struct Page
   static FALCON_FUNC drawImage( VMachine* );
   static FALCON_FUNC arc( VMachine* );
   static FALCON_FUNC getCurrentPos( VMachine* );
+  static FALCON_FUNC createTextAnnot( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
 //  FALCON_FUNC PdfPage_create3DAnnot( VMachine* );
-//  FALCON_FUNC PdfPage_createTextAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_createLinkAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_createURILinkAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_getGMode( VMachine* );

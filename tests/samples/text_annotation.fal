@@ -9,6 +9,8 @@ rect6 = [210, 150, 350, 200]
 rect7 = [50, 50, 150, 100]
 rect8 = [210, 50, 350, 100]
 
+pdf = hpdf.Doc()
+
 font = pdf.getFont("Times-Roman", "WinAnsiEncoding")
 page = pdf.addPage()
 page.setWidth(400)
@@ -50,42 +52,42 @@ page.createTextAnnot(rect8, "Annotation with ISO8859 text ÓÔÕÖ×ØÙ", encod
 page.setFontAndSize(font, 11)
 
 page.beginText()
-page.moveTextPos(rect1.left + 35, rect1.top - 20)
+page.moveTextPos(rect1[0] + 35, rect1[3] - 20)
 page.showText("Comment Icon.")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect2.left + 35, rect2.top - 20)
+page.moveTextPos(rect2[0] + 35, rect2[3] - 20)
 page.showText("Key Icon")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect3.left + 35, rect3.top - 20)
+page.moveTextPos(rect3[0] + 35, rect3[3] - 20)
 page.showText("Note Icon.")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect4.left + 35, rect4.top - 20)
+page.moveTextPos(rect4[0] + 35, rect4[3] - 20)
 page.showText("Help Icon")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect5.left + 35, rect5.top - 20)
+page.moveTextPos(rect5[0] + 35, rect5[3] - 20)
 page.showText("NewParagraph Icon")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect6.left + 35, rect6.top - 20)
+page.moveTextPos(rect6[0] + 35, rect6[3] - 20)
 page.showText("Paragraph Icon")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect7.left + 35, rect7.top - 20)
+page.moveTextPos(rect7[0] + 35, rect7[3] - 20)
 page.showText("Insert Icon")
 page.endText()
 
 page.beginText()
-page.moveTextPos(rect8.left + 35, rect8.top - 20)
+page.moveTextPos(rect8[0] + 35, rect8[3] - 20)
 page.showText("Text Icon(ISO8859-2 text)")
 page.endText()
 

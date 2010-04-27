@@ -19,7 +19,8 @@
 #include "scriptExtensions/image.h"
 #include "scriptExtensions/destination.h"
 #include "scriptExtensions/outline.h"
-//#include "scriptExtensions/destination.h"
+#include "scriptExtensions/encoder.h"
+#include "scriptExtensions/textannotation.h"
 //#include "scriptExtensions/encoder.h"
 //#include "scriptExtensions/extgstate.h"
 //#include "scriptExtensions/image.h"
@@ -50,6 +51,8 @@ FALCON_MODULE_DECL
   Falcon::Ext::hpdf::Destination::registerExtensions(self);
   Falcon::Ext::hpdf::Image::registerExtensions(self);
   Falcon::Ext::hpdf::Outline::registerExtensions(self);
+  Falcon::Ext::hpdf::Encoder::registerExtensions(self);
+  Falcon::Ext::hpdf::TextAnnotation::registerExtensions(self);
 
   return self;
 }

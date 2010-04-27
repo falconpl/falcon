@@ -12,6 +12,8 @@
 #include <moduleImpl/font.h>
 #include <moduleImpl/destination.h>
 #include <moduleImpl/image.h>
+#include <moduleImpl/encoder.h>
+#include <moduleImpl/annotation.h>
 #include <moduleImpl/error.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
@@ -78,6 +80,7 @@ void Page::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdfPage, "drawImage", &drawImage);
   self->addClassMethod( c_pdfPage, "arc", &arc);
   self->addClassMethod( c_pdfPage, "getCurrentPos", &getCurrentPos);
+  self->addClassMethod( c_pdfPage, "createTextAnnot", &createTextAnnot);
 
 }
 
@@ -781,6 +784,47 @@ FALCON_FUNC Page::getCurrentPos( VMachine* vm )
   CoreDict* ret = new CoreDict(itemDict);
   ret->bless(true);
   vm->retval(ret);
+}
+
+FALCON_FUNC Page::createTextAnnot( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_rect = vm->param( 0 );
+  Item* i_text = vm->param( 1 );
+  Item* i_encoder = vm->param( 2 );
+  if ( vm->paramCount() < 2
+       || !(i_rect->isOfClass("Rect") || i_rect->isArray() )
+       || !i_text->isString()
+       || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("[N],S,O"));
+  }
+
+  HPDF_Rect rect;
+  HPDF_Encoder encoder = 0;
+  if( i_rect->isArray())
+  {
+    CoreArray* array = i_rect->asArray();
+    if( array->length() != 4 )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                             .extra("len([N]) != 4"));
+
+    rect.left = asNumber(&array->at(0));
+    rect.bottom = asNumber(&array->at(1));
+    rect.right = asNumber(&array->at(2));
+    rect.top = asNumber(&array->at(3));
+  }
+  else if(i_rect->isOfClass("Rect"))
+    throw new CodeError( ErrorParam(FALCON_HPDF_ERROR_BASE+2, __LINE__).extra("Not yet implemented"));
+
+  if(i_encoder)
+    encoder = i_encoder->isNil() ? 0 : static_cast<Mod::hpdf::Encoder*>(i_encoder->asObject())->handle();
+
+  AutoCString text(*i_text);
+  CoreClass* cls_TextAnnotation = vm->findWKI("TextAnnotation")->asClass();
+  HPDF_Annotation annotation = HPDF_Page_CreateTextAnnot( self->handle(), rect, text.c_str(), encoder);
+  vm->retval(new Mod::hpdf::Annotation(cls_TextAnnotation, annotation));
 }
 
 }}} // Falcon::Ext::hpdf

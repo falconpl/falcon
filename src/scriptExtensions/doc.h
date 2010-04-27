@@ -32,6 +32,7 @@ struct Doc
   static FALCON_FUNC setPermission( VMachine* );
   static FALCON_FUNC setEncryptionMode( VMachine* );
   static FALCON_FUNC loadTTFontFromFile( VMachine* );
+  static FALCON_FUNC getEncoder( VMachine* );
   //static FALCON_FUNC getTTFontDefFromFile( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
