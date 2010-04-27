@@ -76,6 +76,8 @@ void Page::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdfPage, "setGrayFill", &setGrayFill);
   self->addClassMethod( c_pdfPage, "createDestination", &createDestination);
   self->addClassMethod( c_pdfPage, "drawImage", &drawImage);
+  self->addClassMethod( c_pdfPage, "arc", &arc);
+  self->addClassMethod( c_pdfPage, "getCurrentPos", &getCurrentPos);
 
 }
 
@@ -749,4 +751,36 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
                                       asNumber(i_x), asNumber(i_y),
                                       asNumber(i_width), asNumber(i_height));
 }
+
+FALCON_FUNC Page::arc( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  Item* i_x = vm->param( 0 );
+  Item* i_y = vm->param( 1 );
+  Item* i_r = vm->param( 2 );
+  Item* i_angle1 = vm->param( 3 );
+  Item* i_angle2 = vm->param( 4 );
+
+  if ( vm->paramCount() < 5
+       || !i_x->isScalar() || !i_y->isScalar() || !i_r->isScalar()
+       || !i_angle1->isScalar() || !i_angle2->isScalar())
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N,N") );
+
+  HPDF_Page_Arc( self->handle(), asNumber(i_x), asNumber(i_y), asNumber(i_r),
+                                 asNumber(i_angle1), asNumber(i_angle2));
+}
+
+FALCON_FUNC Page::getCurrentPos( VMachine* vm )
+{
+  Mod::hpdf::Page* self = dyncast<Mod::hpdf::Page*>( vm->self().asObject() );
+  HPDF_Point point = HPDF_Page_GetCurrentPos( self->handle() );
+  LinearDict* itemDict = new LinearDict(2);
+  itemDict->put(Item("x"), Item(point.x));
+  itemDict->put(Item("y"), Item(point.y));
+  CoreDict* ret = new CoreDict(itemDict);
+  ret->bless(true);
+  vm->retval(ret);
+}
+
 }}} // Falcon::Ext::hpdf

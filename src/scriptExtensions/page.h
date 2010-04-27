@@ -66,6 +66,8 @@ struct Page
   static FALCON_FUNC setGrayFill( VMachine* );
   static FALCON_FUNC createDestination( VMachine* );
   static FALCON_FUNC drawImage( VMachine* );
+  static FALCON_FUNC arc( VMachine* );
+  static FALCON_FUNC getCurrentPos( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
@@ -74,7 +76,6 @@ struct Page
 //  FALCON_FUNC PdfPage_createLinkAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_createURILinkAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_getGMode( VMachine* );
-//  FALCON_FUNC PdfPage_getCurrentPos( VMachine* );
 //  FALCON_FUNC PdfPage_getCurrentPos2( VMachine* );
 //  FALCON_FUNC PdfPage_getCurrentTextPos( VMachine* );
 //  FALCON_FUNC PdfPage_getCurrentTextPos2( VMachine* );
@@ -124,7 +125,6 @@ struct Page
 //  FALCON_FUNC PdfPage_setCMYKStroke( VMachine* );
 //  FALCON_FUNC PdfPage_executeXObject( VMachine* );
 //  FALCON_FUNC PdfPage_ellipse( VMachine* );
-//  FALCON_FUNC PdfPage_arc( VMachine* );
 //  FALCON_FUNC PdfPage_setSlideShow( VMachine* );
 
 }}} // Falcon::Ext::hpdf
