@@ -76,6 +76,7 @@ void Page::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_pdfPage, "arc", &arc);
   self->addClassMethod( c_pdfPage, "getCurrentPos", &getCurrentPos);
   self->addClassMethod( c_pdfPage, "createTextAnnot", &createTextAnnot);
+  self->addClassMethod( c_pdfPage, "executeXObject", &executeXObject);
 
 }
 
@@ -820,6 +821,23 @@ FALCON_FUNC Page::createTextAnnot( VMachine* vm )
   CoreClass* cls_TextAnnotation = vm->findWKI("TextAnnotation")->asClass();
   HPDF_Annotation annotation = HPDF_Page_CreateTextAnnot( self->handle(), rect, text.c_str(), encoder);
   vm->retval(new Mod::hpdf::Dict(cls_TextAnnotation, annotation));
+}
+
+FALCON_FUNC Page::executeXObject( VMachine* vm )
+{
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
+  Item* i_xobject = vm->param( 0 );
+
+  if ( !i_xobject || !i_xobject->isObject())
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("O") );
+
+  Mod::hpdf::Dict* xobject = dynamic_cast<Mod::hpdf::Dict*>(i_xobject->asObject());
+  if( !xobject )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("This isn't an hpdf xobject") );
+
+  HPDF_Page_ExecuteXObject( self->handle(), xobject->handle());
 }
 
 }}} // Falcon::Ext::hpdf

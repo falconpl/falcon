@@ -20,13 +20,14 @@ struct Image
   static FALCON_FUNC init( VMachine* );
   static FALCON_FUNC getWidth( VMachine* );
   static FALCON_FUNC getHeight( VMachine* );
+  static FALCON_FUNC setMaskImage( VMachine* );
+  static FALCON_FUNC setColorMask( VMachine* );
 };
 
 //FALCON_FUNC PDF_Image_getSize( VMachine* );
 //FALCON_FUNC PDF_Image_getSize2( VMachine* );
 //FALCON_FUNC PDF_Image_getBitsPerComponent( VMachine* );
 //FALCON_FUNC PDF_Image_getColorSpace( VMachine* );
-//FALCON_FUNC PDF_Image_setColorMask( VMachine* );
 
 }}} // Falcon::Ext::hpdf
 

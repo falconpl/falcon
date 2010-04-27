@@ -1,6 +1,6 @@
 import from hpdf
 
-function ShowDescription(page, x, y, text)
+function showDescription(page, x, y, text)
    page.moveTo(x, y - 10)
    page.lineTo(x, y + 10)
    page.moveTo(x - 10, y)
@@ -13,7 +13,7 @@ function ShowDescription(page, x, y, text)
    page.beginText()
 
    buf = "(x=" + x + ",y=" + y + ")"
-   page.moveTextPos(x - page.TextWidth(buf) - 5, y - 10)
+   page.moveTextPos(x - page.textWidth(buf) - 5, y - 10)
    page.showText(buf)
    page.endText()
 
@@ -23,7 +23,7 @@ function ShowDescription(page, x, y, text)
    page.endText()
 end
 
-pdf = hpdf,Pdf()
+pdf = hpdf.Doc()
 
 pdf.setCompressionMode(hpdf.COMP_ALL)
 

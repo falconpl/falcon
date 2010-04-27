@@ -69,6 +69,7 @@ struct Page
   static FALCON_FUNC arc( VMachine* );
   static FALCON_FUNC getCurrentPos( VMachine* );
   static FALCON_FUNC createTextAnnot( VMachine* );
+  static FALCON_FUNC executeXObject( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
