@@ -70,15 +70,17 @@ struct Page
   static FALCON_FUNC getCurrentPos( VMachine* );
   static FALCON_FUNC createTextAnnot( VMachine* );
   static FALCON_FUNC executeXObject( VMachine* );
+  static FALCON_FUNC getCurrentTextPos( VMachine* );
+  static FALCON_FUNC moveToNextLine( VMachine* );
+  static FALCON_FUNC createLinkAnnot( VMachine* );
+  static FALCON_FUNC createURILinkAnnot( VMachine* );
 };
 //  FALCON_FUNC PdfPage_setRotate( VMachine* );
 //  FALCON_FUNC PdfPage_createDestinatio( VMachine* );
 //  FALCON_FUNC PdfPage_create3DAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_createLinkAnnot( VMachine* );
-//  FALCON_FUNC PdfPage_createURILinkAnnot( VMachine* );
 //  FALCON_FUNC PdfPage_getGMode( VMachine* );
 //  FALCON_FUNC PdfPage_getCurrentPos2( VMachine* );
-//  FALCON_FUNC PdfPage_getCurrentTextPos( VMachine* );
 //  FALCON_FUNC PdfPage_getCurrentTextPos2( VMachine* );
 //  FALCON_FUNC PdfPage_getTransMatrix( VMachine* );
 //  FALCON_FUNC PdfPage_getLineCap( VMachine* );
@@ -119,7 +121,6 @@ struct Page
 //  FALCON_FUNC PdfPage_setTextRaise( VMachine* );
 //  FALCON_FUNC PdfPage_moveTextPos2( VMachine* );
 //  FALCON_FUNC PdfPage_getTextMatrix( VMachine* );
-//  FALCON_FUNC PdfPage_moveToNextLine( VMachine* );
 
 //  FALCON_FUNC PdfPage_showTextNextLineEx( VMachine* );
 //  FALCON_FUNC PdfPage_setCMYKFill( VMachine* );

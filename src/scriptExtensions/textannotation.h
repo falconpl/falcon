@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_HPDF_EXT_ANNOTATION_H
-#define FALCON_MODULE_HPDF_EXT_ANNOTATION_H
+#ifndef FALCON_MODULE_HPDF_EXT_TEXTANNOTATION_H
+#define FALCON_MODULE_HPDF_EXT_TEXTANNOTATION_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -25,4 +25,4 @@ struct TextAnnotation
 
 }}} // Falcon::Ext::hpdf
 
-#endif /* FALCON_MODULE_HPDF_EXT_ANNOTATION_H */
+#endif /* FALCON_MODULE_HPDF_EXT_TEXTANNOTATION_H */
