@@ -11,13 +11,17 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 
-namespace Falcon { namespace Ext {
+namespace Falcon { namespace Ext { namespace hpdf {
 
-FALCON_FUNC PDF_Outline_init( VMachine* );
+struct Outline
+{
+  static void registerExtensions(Falcon::Module*);
 
-FALCON_FUNC PDF_Outline_setOpened( VMachine* );
-FALCON_FUNC PDF_Outline_setDestination( VMachine* );
+  static FALCON_FUNC init( VMachine* );
+  static FALCON_FUNC setOpened( VMachine* );
+  static FALCON_FUNC setDestination( VMachine* );
+};
 
-}} // Falcon::Ext
+}}} // Falcon::Ext
 
 #endif /* FALCON_MODULE_HPDF_EXT_OUTLINE_H */

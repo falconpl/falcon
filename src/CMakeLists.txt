@@ -12,6 +12,8 @@ add_library(hpdf_fm MODULE
    moduleImpl/font.cpp
    moduleImpl/destination.cpp
    moduleImpl/image.cpp
+   moduleImpl/outline.cpp
+   moduleImpl/encoder.cpp
    moduleImpl/error.cpp
    scriptExtensions/consts.cpp
    scriptExtensions/enums.cpp
@@ -20,6 +22,8 @@ add_library(hpdf_fm MODULE
    scriptExtensions/font.cpp
    scriptExtensions/destination.cpp
    scriptExtensions/image.cpp
+   scriptExtensions/outline.cpp
+   scriptExtensions/encoder.cpp
    scriptExtensions/error.cpp
 )
 

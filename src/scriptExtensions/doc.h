@@ -25,6 +25,9 @@ struct Doc
   static FALCON_FUNC loadJpegImageFromFile( VMachine* );
   static FALCON_FUNC loadRawImageFromFile( VMachine* );
   static FALCON_FUNC loadRawImageFromMem( VMachine* );
+  static FALCON_FUNC setPageMode( VMachine* );
+  static FALCON_FUNC loadType1FontFromFile( VMachine* );
+  static FALCON_FUNC createOutline( VMachine* );
 
   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 
@@ -35,11 +38,9 @@ struct Doc
 //  FALCON_FUNC PDF_getPageLayout( VMachine* );
 //  FALCON_FUNC PDF_setPageLayout( VMachine* );
 //  FALCON_FUNC PDF_getPageMode( VMachine* );
-//  FALCON_FUNC PDF_setPageMode( VMachine* );
 //  FALCON_FUNC PDF_getViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_setViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_insertPage( VMachine* );
-//  FALCON_FUNC PDF_loadType1FontFromFile( VMachine* );
 //  FALCON_FUNC PDF_getTTFontDefFromFile( VMachine* );
 //  FALCON_FUNC PDF_loadTTFontFromFile( VMachine* );
 //  FALCON_FUNC PDF_loadTTFontFromFile2( VMachine* );
@@ -48,7 +49,6 @@ struct Doc
 //  FALCON_FUNC PDF_useKRFonts( VMachine* );
 //  FALCON_FUNC PDF_useCNSFonts( VMachine* );
 //  FALCON_FUNC PDF_useCNTFonts( VMachine* );
-//  FALCON_FUNC PDF_createOutline( VMachine* );
 
 }}} // Falcon::Ext::hpdf
 #endif /* FALCON_MODULE_EXT_DOC_H */

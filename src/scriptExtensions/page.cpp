@@ -115,7 +115,7 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
   Item* i_font = vm->param( 0 );
   Item* i_fontSize = vm->param( 1 );
 
-  if (i_font == 0 || !i_font->isObject() ||
+  if (i_font == 0 || !i_font->isOfClass("Font") ||
       i_fontSize == 0 || !i_fontSize->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -735,7 +735,7 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
   Item* i_height = vm->param( 4 );
 
   if ( vm->paramCount() < 5
-       || !i_image->isObject()
+       || !i_image->isOfClass("Image")
        || !i_x->isScalar() || !i_y->isScalar()
        || !i_width->isScalar() || !i_height->isScalar())
   {

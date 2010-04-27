@@ -13,6 +13,8 @@
 #include <moduleImpl/font.h>
 #include <moduleImpl/image.h>
 #include <moduleImpl/destination.h>
+#include <moduleImpl/outline.h>
+#include <moduleImpl/encoder.h>
 
 namespace Falcon { namespace Ext { namespace hpdf {
 
@@ -24,18 +26,21 @@ static double asNumber(Item* item)
 
 void Doc::registerExtensions(Falcon::Module* self)
 {
-  Falcon::Symbol *c_pdf = self->addClass( "Doc" );
-  c_pdf->getClassDef()->factory( &factory );
-  self->addClassMethod( c_pdf, "addPage", &addPage );
-  self->addClassMethod( c_pdf, "saveToFile", &saveToFile );
-  self->addClassMethod( c_pdf, "getFont", &getFont );
-  self->addClassMethod( c_pdf, "setCompressionMode", &setCompressionMode );
-  self->addClassMethod( c_pdf, "setOpenAction", &setOpenAction );
-  self->addClassMethod( c_pdf, "getCurrentPage", &getCurrentPage );
-  self->addClassMethod( c_pdf, "loadPngImageFromFile", &loadPngImageFromFile );
-  self->addClassMethod( c_pdf, "loadJpegImageFromFile", &loadJpegImageFromFile );
-  self->addClassMethod( c_pdf, "loadRawImageFromFile", &loadRawImageFromFile );
-  self->addClassMethod( c_pdf, "loadRawImageFromMem", &loadRawImageFromMem );
+  Falcon::Symbol *c_doc = self->addClass( "Doc" );
+  c_doc->getClassDef()->factory( &factory );
+  self->addClassMethod( c_doc, "addPage", &addPage );
+  self->addClassMethod( c_doc, "saveToFile", &saveToFile );
+  self->addClassMethod( c_doc, "getFont", &getFont );
+  self->addClassMethod( c_doc, "setCompressionMode", &setCompressionMode );
+  self->addClassMethod( c_doc, "setOpenAction", &setOpenAction );
+  self->addClassMethod( c_doc, "getCurrentPage", &getCurrentPage );
+  self->addClassMethod( c_doc, "loadPngImageFromFile", &loadPngImageFromFile );
+  self->addClassMethod( c_doc, "loadJpegImageFromFile", &loadJpegImageFromFile );
+  self->addClassMethod( c_doc, "loadRawImageFromFile", &loadRawImageFromFile );
+  self->addClassMethod( c_doc, "loadRawImageFromMem", &loadRawImageFromMem );
+  self->addClassMethod( c_doc, "setPageMode", &setPageMode );
+  self->addClassMethod( c_doc, "loadType1FontFromFile", &loadType1FontFromFile );
+  self->addClassMethod( c_doc, "createOutline", &createOutline );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -58,7 +63,7 @@ FALCON_FUNC Doc::saveToFile( VMachine* vm )
   Item* filenameI = vm->param( 0 );
   if ( filenameI == 0 || ! filenameI->isString() )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("S"));
   }
 
@@ -71,15 +76,21 @@ FALCON_FUNC Doc::getFont( VMachine* vm )
 {
   Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
 
-  Item* filenameI = vm->param( 0 );
-  if ( !filenameI || ! filenameI->isString() )
+  Item* i_filename = vm->param( 0 );
+  Item* i_encodingName = vm->param( 1 );
+  if ( !i_filename || ! i_filename->isString()
+       || (i_encodingName && !(i_encodingName->isNil() || i_encodingName->isString())) )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S"));
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S,[S]"));
   }
 
-  AutoCString asFilename( *filenameI->asString() );
-  HPDF_Font hpdfFont = HPDF_GetFont( self->handle(), asFilename.c_str(), 0);
+  AutoCString asFilename( *i_filename );
+  AutoCString encodingName;
+  if ( i_encodingName  )
+    encodingName.set(*i_encodingName);
+
+  HPDF_Font hpdfFont = HPDF_GetFont( self->handle(), asFilename.c_str(), i_encodingName ? encodingName.c_str() : 0 );
   CoreClass* Font_cls = vm->findWKI("Font")->asClass();
   Mod::hpdf::Font* font = new Mod::hpdf::Font(Font_cls, hpdfFont);
   vm->retval( font );
@@ -92,7 +103,7 @@ FALCON_FUNC Doc::setCompressionMode( VMachine* vm )
   Item* i_mode = vm->param( 0 );
   if ( i_mode == 0 || ! i_mode->isInteger() )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("I"));
   };
   int ret = HPDF_SetCompressionMode( self->handle(), i_mode->asInteger());
@@ -104,9 +115,9 @@ FALCON_FUNC Doc::setOpenAction( VMachine* vm )
   Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
 
   Item* i_destination = vm->param( 0 );
-  if ( !i_destination || !i_destination->isObject() )
+  if ( !i_destination || !i_destination->isOfClass("Destination") )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("O"));
   }
   Mod::hpdf::Destination* destination = static_cast<Mod::hpdf::Destination*>(i_destination->asObject());
@@ -131,7 +142,7 @@ FALCON_FUNC Doc::loadPngImageFromFile( VMachine* vm )
   Item* filenameI = vm->param( 0 );
   if ( filenameI == 0 || ! filenameI->isString() )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("S"));
   }
 
@@ -149,7 +160,7 @@ FALCON_FUNC Doc::loadJpegImageFromFile( VMachine* vm )
   Item* filenameI = vm->param( 0 );
   if ( filenameI == 0 || ! filenameI->isString() )
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("S"));
   }
 
@@ -173,7 +184,7 @@ FALCON_FUNC Doc::loadRawImageFromFile( VMachine* vm )
        || !i_width->isScalar() || !i_height->isScalar()
        || !i_colorSpace->isInteger())
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("S,N,N,I"));
   }
 
@@ -200,7 +211,7 @@ FALCON_FUNC Doc::loadRawImageFromMem( VMachine* vm )
        || !i_width->isScalar() || !i_height->isScalar()
        || !i_colorSpace->isInteger())
   {
-    throw ParamError( ErrorParam( e_inv_params, __LINE__ )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                        .extra("O,N,N,I"));
   }
 
@@ -213,4 +224,69 @@ FALCON_FUNC Doc::loadRawImageFromMem( VMachine* vm )
   Mod::hpdf::Image* f_image = new Mod::hpdf::Image(cls_Image, image);
   vm->retval( f_image );
 }
+
+FALCON_FUNC Doc::setPageMode( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_enum = vm->param( 0 );
+  if ( i_enum == 0 || ! i_enum->isInteger() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("I"));
+  }
+
+  int ret = HPDF_SetPageMode( self->handle(), static_cast<HPDF_PageMode>(i_enum->asInteger()));
+  vm->retval( ret );
+}
+
+FALCON_FUNC Doc::loadType1FontFromFile( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_afmFilename = vm->param( 0 );
+  Item* i_dataFilename = vm->param( 1 );
+  if ( !i_afmFilename || ! i_afmFilename->isString()
+       || !i_dataFilename || ! i_dataFilename->isString())
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("S,S"));
+  }
+
+  AutoCString afmFilename( *i_afmFilename->asString() );
+  AutoCString dataFilename( *i_dataFilename->asString() );
+  char const* c_fontName = HPDF_LoadType1FontFromFile( self->handle(), afmFilename.c_str(), dataFilename.c_str());
+  vm->retval( String(c_fontName) );
+}
+
+FALCON_FUNC Doc::createOutline( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_parent = vm->param( 0 );
+  Item* i_title = vm->param( 1 );
+  Item* i_encoder = vm->param( 2 );
+  if ( vm->paramCount() < 2
+       || !(i_parent->isOfClass("Outline") || i_parent->isNil() )
+       || !i_title->isString()
+       || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("O,S,O"));
+  }
+
+  HPDF_Outline parent = 0;
+  HPDF_Encoder encoder = 0;
+  if(i_parent)
+    parent = i_parent->isNil() ? 0 : static_cast<Mod::hpdf::Outline*>(i_parent->asObject())->handle();
+  if(i_encoder)
+    encoder = i_encoder->isNil() ? 0 : static_cast<Mod::hpdf::Encoder*>(i_parent->asObject())->handle();
+
+  AutoCString title(*i_title);
+  HPDF_Outline outline = HPDF_CreateOutline( self->handle(), parent, title.c_str(), encoder);
+  CoreClass* cls_Outline = vm->findWKI("Outline")->asClass();
+  Mod::hpdf::Outline* f_outline = new Mod::hpdf::Outline(cls_Outline, outline);
+  vm->retval( f_outline );
+}
+
 }}} // Falcon::Ext::hpdf

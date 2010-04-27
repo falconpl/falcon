@@ -10,7 +10,7 @@ function drawGraph(page)
   // Draw 16 X 15 cells
 
   // Draw vertical line 
-  HPDF_Page_SetLineWidth (page, 0.5);
+  page.setLineWidth(0.5)
 
   for i = 0 to 17
     x = i * CELL_WIDTH + 40;
@@ -52,10 +52,13 @@ function drawFonts(page)
     for j in [1:17]
       y = PAGE_HEIGHT - 55 - ((i - 1) * CELL_HEIGHT);
       x = j * CELL_WIDTH + 50;
-      buf = chr(0)/( (i - 1) * 16 + (j - 1) )
+      shift = (i - 1) * 16 + (j - 1)
+      buf = chr(0)/shift
       if ord(buf) >= 32
         d  = x - page.textWidth(buf) / 2
        page.textOut(d, y, buf)
+        > shift
+        > buf
       end
     end
   end
@@ -63,30 +66,30 @@ function drawFonts(page)
 end
 
 encodings = [
-  "StandardEncoding",
-  "MacRomanEncoding",
-  "WinAnsiEncoding",
-  "ISO8859-2",
-  "ISO8859-3",
-  "ISO8859-4",
-  "ISO8859-5",
-  "ISO8859-9",
-  "ISO8859-10",
-  "ISO8859-13",
-  "ISO8859-14",
-  "ISO8859-15",
-  "ISO8859-16",
-  "CP1250",
-  "CP1251",
-  "CP1252",
-  "CP1254",
-  "CP1257",
-  "KOI8-R",
-  "Symbol-Set",
-  "ZapfDingbats-Set"
+  "StandardEncoding"
+  // "MacRomanEncoding",
+  // "WinAnsiEncoding",
+  // "ISO8859-2",
+  // "ISO8859-3",
+  // "ISO8859-4",
+  // "ISO8859-5",
+  // "ISO8859-9",
+  // "ISO8859-10",
+  // "ISO8859-13",
+  // "ISO8859-14",
+  // "ISO8859-15",
+  // "ISO8859-16",
+  // "CP1250",
+  // "CP1251",
+  // "CP1252",
+  // "CP1254",
+  // "CP1257",
+  // "KOI8-R",
+  // "Symbol-Set",
+  // "ZapfDingbats-Set"
 ]
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 // set compression mode
 pdf.setCompressionMode(hpdf.COMP_ALL)
@@ -98,11 +101,10 @@ pdf.setPageMode( hpdf.PageMode.USE_OUTLINE)
 font = pdf.getFont("Helvetica")
 
 // load font object
-font_name = pdf.loadType1FontFromFile("ype1/a010013l.afm",
+font_name = pdf.loadType1FontFromFile("type1/a010013l.afm",
                                       "type1/a010013l.pfb")
-
 // create outline root
-root = pdf.createOutline( nil, "Encoding list")
+root = pdf.createOutline( nil, "Encoding list", nil)
 root.setOpened(true)
 
 for encoding in encodings
@@ -111,7 +113,7 @@ for encoding in encodings
   page.setHeight(PAGE_HEIGHT)
 
   outline = pdf.createOutline(root, encoding)
-  dst = page.CreateDestination()
+  dst = page.createDestination()
   dst.setXYZ(0, page.getHeight(), 1)
   outline.setDestination(dst)
 

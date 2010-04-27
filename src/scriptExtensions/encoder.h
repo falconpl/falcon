@@ -11,15 +11,19 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 
-namespace Falcon { namespace Ext {
+namespace Falcon { namespace Ext { namespace hpdf {
 
+struct Encoder
+{
+  static void registerExtensions(Falcon::Module*);
 
-FALCON_FUNC PDF_Encoder_init( VMachine* );
+  static FALCON_FUNC init( VMachine* );
 
-FALCON_FUNC PDF_Encoder_getType( VMachine* );
-FALCON_FUNC PDF_Encoder_getByteType( VMachine* );
-FALCON_FUNC PDF_Encoder_getUnicode( VMachine* );
-FALCON_FUNC PDF_Encoder_getWritingMode( VMachine* );
+//  static FALCON_FUNC getType( VMachine* );
+//  static FALCON_FUNC getByteType( VMachine* );
+//  static FALCON_FUNC getUnicode( VMachine* );
+//  static FALCON_FUNC getWritingMode( VMachine* );
+};
 
-}} // Falcon::Ext
+}}} // Falcon::Ext::hpdf
 #endif /* FALCON_MODULE_HPDF_EXT_ENCODER_H */
