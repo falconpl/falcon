@@ -18,10 +18,9 @@ struct Encoder
   static void registerExtensions(Falcon::Module*);
 
   static FALCON_FUNC init( VMachine* );
-
-//  static FALCON_FUNC getType( VMachine* );
-//  static FALCON_FUNC getByteType( VMachine* );
-//  static FALCON_FUNC getUnicode( VMachine* );
+  static FALCON_FUNC getType( VMachine* );
+  static FALCON_FUNC getByteType( VMachine* );
+  static FALCON_FUNC getUnicode( VMachine* );
 //  static FALCON_FUNC getWritingMode( VMachine* );
 };
 

@@ -43,6 +43,15 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "setEncryptionMode", &setEncryptionMode );
   self->addClassMethod( c_doc, "loadTTFontFromFile", &loadTTFontFromFile );
   self->addClassMethod( c_doc, "getEncoder", &getEncoder );
+  self->addClassMethod( c_doc, "setPagesConfiguration", &setPagesConfiguration );
+  self->addClassMethod( c_doc, "useJPEncodings", &useJPEncodings );
+  self->addClassMethod( c_doc, "useJPFonts", &useJPFonts );
+  self->addClassMethod( c_doc, "useKREncodings", &useKREncodings );
+  self->addClassMethod( c_doc, "useKRFonts", &useKRFonts );
+  self->addClassMethod( c_doc, "useCNTEncodings", &useCNTEncodings );
+  self->addClassMethod( c_doc, "useCNTFonts", &useCNTFonts );
+  self->addClassMethod( c_doc, "useCNSEncodings", &useCNSEncodings );
+  self->addClassMethod( c_doc, "useCNSFonts", &useCNSFonts );
 }
 
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
@@ -372,6 +381,68 @@ FALCON_FUNC Doc::getEncoder( VMachine* vm )
   CoreClass* cls_Encoder = vm->findWKI("Encoder")->asClass();
   Mod::hpdf::Encoder* f_encoder = new Mod::hpdf::Encoder(cls_Encoder, encoder);
   vm->retval( f_encoder );
+}
+
+FALCON_FUNC Doc::setPagesConfiguration( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_number = vm->param( 0 );
+  if ( !i_number || ! i_number->isInteger() )
+  {
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("I"));
+  }
+
+  HPDF_SetPagesConfiguration(self->handle(), i_number->asInteger());
+}
+
+FALCON_FUNC Doc::useJPEncodings( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseJPEncodings( self->handle() );
+}
+
+FALCON_FUNC Doc::useJPFonts( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseJPFonts( self->handle() );
+}
+
+FALCON_FUNC Doc::useKREncodings( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseKREncodings( self->handle() );
+}
+
+FALCON_FUNC Doc::useKRFonts( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseKRFonts( self->handle() );
+}
+
+FALCON_FUNC Doc::useCNTEncodings( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseCNTEncodings( self->handle() );
+}
+
+FALCON_FUNC Doc::useCNTFonts( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseCNTFonts( self->handle() );
+}
+
+FALCON_FUNC Doc::useCNSEncodings( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseCNSEncodings( self->handle() );
+}
+
+FALCON_FUNC Doc::useCNSFonts( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+  HPDF_UseCNSFonts( self->handle() );
 }
 
 }}} // Falcon::Ext::hpdf

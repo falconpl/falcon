@@ -21,10 +21,12 @@ static double asNumber(Item* item)
 
 void Encoder::registerExtensions(Falcon::Module* self)
 {
-  Falcon::Symbol* c_encoder = self->addClass( "Encoder", &init );
-  //self->addClassMethod( c_outline, "setXYZ", &setXYZ );
+  Falcon::Symbol* encoder = self->addClass( "Encoder", &init );
+  self->addClassMethod( encoder, "getType", &getType );
+  self->addClassMethod( encoder, "getByteType", &getByteType );
+  self->addClassMethod( encoder, "getUnicode", &getUnicode );
 
-  c_encoder->setWKS( true );
+  encoder->setWKS( true );
 }
 
 FALCON_FUNC Encoder::init( VMachine* vm )
@@ -32,19 +34,41 @@ FALCON_FUNC Encoder::init( VMachine* vm )
   throw new CodeError( ErrorParam(FALCON_HPDF_ERROR_BASE+2, __LINE__));
 }
 
-//FALCON_FUNC Destination::setXYZ( VMachine* vm )
-//{
-//  Mod::hpdf::Destination* self = dyncast<Mod::hpdf::Destination*>( vm->self().asObject() );
-//  Item* i_x = vm->param( 0 );
-//  Item* i_y = vm->param( 1 );
-//  Item* i_z = vm->param( 2 );
-//
-//  if ( vm->paramCount() < 3
-//       || !i_x->isScalar() || !i_y->isScalar() || !i_z->isScalar() )
-//    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-//                           .extra("N,N,N") );
-//
-//  HPDF_Destination_SetXYZ( self->handle(), asNumber(i_x), asNumber(i_y), asNumber(i_z) );
-//}
+FALCON_FUNC Encoder::getType( VMachine* vm )
+{
+  Mod::hpdf::Encoder* self = dyncast<Mod::hpdf::Encoder*>( vm->self().asObject() );
+
+  int ret = HPDF_Encoder_GetType( self->handle() );
+  vm->retval(ret);
+}
+
+FALCON_FUNC Encoder::getByteType( VMachine* vm )
+{
+  Mod::hpdf::Encoder* self = dyncast<Mod::hpdf::Encoder*>( vm->self().asObject() );
+  Item* i_text = vm->param( 0 );
+  Item* i_index = vm->param( 1 );
+
+  if ( !i_text || !i_text->isString()
+       || !i_index->isScalar() || !i_index->isInteger() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("S,I") );
+
+  AutoCString text(*i_text);
+  int ret = HPDF_Encoder_GetByteType( self->handle(), text.c_str(), i_index->asInteger() );
+  vm->retval(ret);
+}
+
+FALCON_FUNC Encoder::getUnicode( VMachine* vm )
+{
+  Mod::hpdf::Encoder* self = dyncast<Mod::hpdf::Encoder*>( vm->self().asObject() );
+  Item* i_code = vm->param( 0 );
+
+  if ( !i_code || !i_code->isInteger() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("I") );
+
+  int ret = HPDF_Encoder_GetUnicode( self->handle(), i_code->asInteger() );
+  vm->retval(ret);
+}
 
 }}} // Falcon::Ext::hpdf
