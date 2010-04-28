@@ -22,6 +22,7 @@ Doc::~Doc()
     HPDF_Free( m_doc );
 }
 
-HPDF_Doc Doc::handle() const { return m_doc; }
+HPDF_Doc Doc::handle() const
+{ return m_doc; }
 
 }}} // Falcon::Mod::hpdf

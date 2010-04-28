@@ -35,14 +35,15 @@ int getVMStringID(int hdf_id)
 void error_handler( HPDF_STATUS errorNo, HPDF_STATUS detailNo, void* user_data )
 {
   using Falcon::int64;
-
   Doc* self = static_cast<Doc*> (user_data);
+
   Falcon::uint32 strId = getVMStringID(errorNo);
   Falcon::String* msg = self->generator()->liveModule()->getString(strId);
-  String errMsg = String("ERROR: ").N((int64)errorNo, "%X").A("("+ *msg +")").A(", detail:").N((int64)detailNo);
+
+  String errMsg = String( "ERROR: " ).N( (int64)errorNo, "%X" ).A( "(" + *msg + ")" )
+                  .A( ", detail:" ).N( (int64)detailNo );
   throw new Error( ErrorParam(FALCON_HPDF_ERROR_BASE+1, __LINE__)
                     .extra(errMsg) );
 }
-
 
 }}} // Falcon::Mod::hpdf

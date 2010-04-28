@@ -10,16 +10,15 @@
 
 namespace Falcon { namespace Mod { namespace hpdf {
 
-
 Array::Array(CoreClass const* cls, HPDF_Array array) :
-    ::Falcon::CacheObject(cls),
-    m_array(array)
-{
-}
+  Falcon::CacheObject(cls),
+  m_array(array)
+{ }
 
 Array::~Array()
 { }
 
-HPDF_Array Array::handle() const { return m_array; }
+HPDF_Array Array::handle() const
+{ return m_array; }
 
 }}} // Falcon::Mod::hpdf
