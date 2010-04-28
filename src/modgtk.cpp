@@ -54,6 +54,7 @@
 #include "gtk_Layout.hpp"
 #include "gtk_LinkButton.hpp"
 #include "gtk_Main.hpp"
+#include "gtk_MessageDialog.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
 #include "gtk_Paned.hpp"
@@ -168,6 +169,7 @@ FALCON_MODULE_DECL
 #endif
                             Falcon::Gtk::ColorSelectionDialog::modInit( self );
                             Falcon::Gtk::FileChooserDialog::modInit( self );
+                            Falcon::Gtk::MessageDialog::modInit( self );
                 Falcon::Gtk::Box::modInit( self );
                     Falcon::Gtk::ButtonBox::modInit( self );
                         Falcon::Gtk::HButtonBox::modInit( self );

@@ -99,6 +99,16 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_BUTTONBOX_CENTER",           GTK_BUTTONBOX_CENTER },
 
     /*
+     *  GtkButtonsType
+     */
+    { "GTK_BUTTONS_NONE",       GTK_BUTTONS_NONE },
+    { "GTK_BUTTONS_OK",         GTK_BUTTONS_OK },
+    { "GTK_BUTTONS_CLOSE",      GTK_BUTTONS_CLOSE },
+    { "GTK_BUTTONS_CANCEL",     GTK_BUTTONS_CANCEL },
+    { "GTK_BUTTONS_YES_NO",     GTK_BUTTONS_YES_NO },
+    { "GTK_BUTTONS_OK_CANCEL",  GTK_BUTTONS_OK_CANCEL },
+
+    /*
      *  GtkCornerType
      */
     { "GTK_CORNER_TOP_LEFT",        GTK_CORNER_TOP_LEFT },
@@ -228,6 +238,15 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_MATCH_TAIL",         GTK_MATCH_TAIL },
     { "GTK_MATCH_EXACT",        GTK_MATCH_EXACT },
     { "GTK_MATCH_LAST",         GTK_MATCH_LAST },
+
+    /*
+     *  GtkMessageType
+     */
+    { "GTK_MESSAGE_INFO",       GTK_MESSAGE_INFO },
+    { "GTK_MESSAGE_WARNING",    GTK_MESSAGE_WARNING },
+    { "GTK_MESSAGE_QUESTION",   GTK_MESSAGE_QUESTION },
+    { "GTK_MESSAGE_ERROR",      GTK_MESSAGE_ERROR },
+    { "GTK_MESSAGE_OTHER",      GTK_MESSAGE_OTHER },
 
     /*
      *  GtkMetricType
