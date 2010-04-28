@@ -98,6 +98,7 @@ set(falcon_files
   falcon/membuf.h
   falcon/memory.h
   falcon/mempool.h
+  falcon/mersennetwister.h
   falcon/message_defs.h
   falcon/modloader.h
   falcon/module.h
