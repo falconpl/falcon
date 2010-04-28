@@ -78,6 +78,7 @@
 #include "gtk_ToggleButton.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
+#include "gtk_VolumeButton.hpp"
 #include "gtk_VPaned.hpp"
 #include "gtk_VRuler.hpp"
 #include "gtk_Widget.hpp"
@@ -150,6 +151,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::ColorButton::modInit( self );
                         Falcon::Gtk::LinkButton::modInit( self );
                         Falcon::Gtk::ScaleButton::modInit( self );
+                            Falcon::Gtk::VolumeButton::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );
                             Falcon::Gtk::CheckButton::modInit( self );
                                 Falcon::Gtk::RadioButton::modInit( self );

@@ -83,6 +83,10 @@ Falcon::CoreObject* ScaleButton::factory( const Falcon::CoreClass* gen, void* bt
  */
 FALCON_FUNC ScaleButton::init( VMARG )
 {
+    MYSELF;
+    if ( self->getGObject() )
+        return;
+
     Gtk::ArgCheck0 args( vm, "GtkIconSize,N,N,N[,A]" );
     int size = args.getInteger( 0 );
     double min = args.getNumeric( 1 );
@@ -90,7 +94,6 @@ FALCON_FUNC ScaleButton::init( VMARG )
     double step = args.getNumeric( 3 );
     CoreArray* a_icons = args.getArray( 4, false );
 
-    MYSELF;
     GtkWidget* wdt;
 
     if ( a_icons && a_icons->length() )

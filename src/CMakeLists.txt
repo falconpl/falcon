@@ -82,6 +82,7 @@ set( SRC_FILES
     gtk_ToggleButton.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
+    gtk_VolumeButton.cpp
     gtk_VPaned.cpp
     gtk_VRuler.cpp
     gtk_Widget.cpp
@@ -169,6 +170,7 @@ set( HDR_FILES
     gtk_ToggleButton.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
+    gtk_VolumeButton.hpp
     gtk_VPaned.hpp
     gtk_VRuler.hpp
     gtk_Widget.hpp
