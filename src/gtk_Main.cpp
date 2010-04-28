@@ -4,8 +4,6 @@
 
 #include "gtk_Main.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -45,9 +43,7 @@ FALCON_FUNC Main::init( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( ( i_args && ( i_args->isNil() || !i_args->isArray() ) )
         || ( i_setLocale && ( i_setLocale->isNil() || !i_setLocale->isBoolean() ) ) )
-    {
         throw_inv_params( "A,B" );
-    }
 #endif
     bool setLocale = true;
 
@@ -69,37 +65,21 @@ FALCON_FUNC Main::init( VMARG )
     if ( i_args )
     {
         CoreArray* arr = i_args->asArray();
-        const int numargs = arr->length();
-        AutoCString* strings = (AutoCString*) memAlloc(
-            sizeof( AutoCString ) * numargs );
-        char** cstrings = (char**) memAlloc(
-            sizeof( char** ) * ( numargs + 1 ) );
-        cstrings[ numargs ] = NULL; // just in case
-        Item* it;
-
-        for ( int i=0; i < numargs; ++i )
+        AutoCString* tmp = NULL;
+        char* cstr = NULL;
+        const int numargs = getGCharArray( arr, &cstr, &tmp );
+        check = gtk_init_check( (int*) &numargs, (char***) &cstr );
+        if ( numargs )
         {
-            it = &arr->at( i );
-#ifndef NO_PARAMETER_CHECK
-            if ( !it->isString() )
-            {
-                throw_inv_params( "S" );
-            }
-#endif
-            strings[i] = AutoCString( it->asString() );
-            cstrings[i] = (char*) strings[i].c_str();
+            memFree( tmp );
+            memFree( cstr );
         }
-
-        check = gtk_init_check( (int*) &numargs, (char***) &cstrings );
-
-        memFree( strings );
-        memFree( cstrings );
     }
     else
     {
         int numargs = 0;
-        char* cstrings[] = { NULL };
-        check = gtk_init_check( (int*) &numargs, (char***) &cstrings );
+        char* cstr[] = { NULL };
+        check = gtk_init_check( (int*) &numargs, (char***) &cstr );
     }
 
     if ( !check )
@@ -107,6 +87,7 @@ FALCON_FUNC Main::init( VMARG )
         throw_gtk_error( e_init_failure, FAL_STR( gtk_e_init_failure_ ) );
     }
 }
+
 
 /*#
     @method quit GtkMain
@@ -116,12 +97,11 @@ FALCON_FUNC Main::quit( VMARG )
 {
 #ifndef NO_PARAMETER_CHECK
     if ( vm->paramCount() )
-    {
         throw_require_no_args();
-    }
 #endif
     gtk_main_quit();
 }
+
 
 /*#
     @method run GtkMain
@@ -135,9 +115,7 @@ FALCON_FUNC Main::run( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( i_win && !i_win->isNil()
         && !IS_DERIVED( i_win, GtkWindow ) )
-    {
         throw_inv_params( "[GtkWindow]" );
-    }
 #endif
     if ( i_win )
     {
@@ -147,6 +125,7 @@ FALCON_FUNC Main::run( VMARG )
 
     gtk_main();
 }
+
 
 } // Gtk
 } // Falcon
