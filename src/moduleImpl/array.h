@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_MODIMPL_XOBJECT_H
-#define FALCON_MODULE_MODIMPL_XOBJECT_H
+#ifndef FALCON_MODULE_HPDF_MODIMPL_ARRAY_H
+#define FALCON_MODULE_HPDF_MODIMPL_ARRAY_H
 
 #include <hpdf.h>
 #include <falcon/cacheobject.h>
@@ -31,4 +31,4 @@ private:
 
 }}} // Falcon::Mod::hpdf
 
-#endif /* FALCON_MODULE_MODIMPL_XOBJECT_H */
+#endif /* FALCON_MODULE_HPDF_MODIMPL_ARRAY_H */

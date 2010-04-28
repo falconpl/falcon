@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_EXT_ERROR_H
-#define FALCON_MODULE_EXT_ERROR_H
+#ifndef FALCON_MODULE_HPDF_EXT_ERROR_H
+#define FALCON_MODULE_HPDF_EXT_ERROR_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -21,4 +21,4 @@ struct Error
 
 }}} // Falcon::Ext::hpdf
 
-#endif // FALCON_MODULE_EXT_ERROR_H
+#endif // FALCON_MODULE_HPDF_EXT_ERROR_H

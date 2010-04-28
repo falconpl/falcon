@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_EXT_DOC_H
-#define FALCON_MODULE_EXT_DOC_H
+#ifndef FALCON_MODULE_HPDF_EXT_DOC_H
+#define FALCON_MODULE_HPDF_EXT_DOC_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -57,9 +57,7 @@ struct Doc
 //  FALCON_FUNC PDF_insertPage( VMachine* );
 //  FALCON_FUNC PDF_loadTTFontFromFile2( VMachine* );
 //  FALCON_FUNC PDF_addPageLabel( VMachine* );
-//  FALCON_FUNC PDF_useKRFonts( VMachine* );
-//  FALCON_FUNC PDF_useCNSFonts( VMachine* );
-//  FALCON_FUNC PDF_useCNTFonts( VMachine* );
 
 }}} // Falcon::Ext::hpdf
-#endif /* FALCON_MODULE_EXT_DOC_H */
+
+#endif /* FALCON_MODULE_HPDF_EXT_DOC_H */

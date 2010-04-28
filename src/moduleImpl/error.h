@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_MODIMPL_ERRORHANDLER_H_
-#define FALCON_MODULE_MODIMPL_ERRORHANDLER_H_
+#ifndef FALCON_MODULE_HPDF_MODIMPL_ERROR_H_
+#define FALCON_MODULE_HPDF_MODIMPL_ERROR_H_
 
 
 #include <falcon/error.h>
@@ -37,4 +37,4 @@ struct FALCON_DYN_CLASS Error : Falcon::Error
 
 }}} // Falcon::Mod::hpdf
 
-#endif /* FALCON_MODULE_MODIMPL_ERRORHANDLER_H_ */
+#endif /* FALCON_MODULE_HPDF_MODIMPL_ERROR_H_ */

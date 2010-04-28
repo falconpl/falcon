@@ -5,8 +5,8 @@
  *      Author: maik
  */
 
-#ifndef FALCON_MODULE_EXT_CONSTS_H
-#define FALCON_MODULE_EXT_CONSTS_H
+#ifndef FALCON_MODULE_HPDF_EXT_CONSTS_H
+#define FALCON_MODULE_HPDF_EXT_CONSTS_H
 
 namespace Falcon { namespace Ext { namespace hpdf {
 
@@ -14,4 +14,4 @@ void registerConsts(Falcon::Module*);
 
 }}} // Falcon::Ext::hpdf
 
-#endif // FALCON_MODULE_EXT_CONSTS_H
+#endif // FALCON_MODULE_HPDF_EXT_CONSTS_H
