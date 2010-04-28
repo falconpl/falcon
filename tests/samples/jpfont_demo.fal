@@ -1,8 +1,8 @@
 const int PAGE_HEIGHT = 210;
-string samp_text = "ƒAƒƒ“ƒ{Ô‚¢‚È‚ ‚¢‚¤‚¦‚¨B•‚‚«‘”‚É¬ƒGƒr‚à‚¨‚æ‚¢‚Å‚éB";
+samp_text = "ƒAƒƒ“ƒ{Ô‚¢‚È‚ ‚¢‚¤‚¦‚¨B•‚‚«‘”‚É¬ƒGƒr‚à‚¨‚æ‚¢‚Å‚éB";
 detail_font = arrayBuffer(16)
 
-pdf = hpdf.Pdf()
+pdf = hpdf.Doc()
 
 /*declaration for using Japanese font, encoding. */
 pdf.useJPEncodings()
@@ -80,12 +80,12 @@ for i = 0 to 15
     p = page.getCurrentTextPos()
 
     /*finish to print text. */
-    page.endText();
+    page.endText()
 
-    page.setLineWidth(0.5f);
+    page.setLineWidth(0.5);
 
     x_pos = 20;
-    for j = 0;  to int(len(samp_text)/2)
+    for j = 0 to int(len(samp_text)/2)
       page.moveTo(x_pos, p.y - 10)
       page.lineTo(x_pos, p.y - 12)
       page.stroke()
