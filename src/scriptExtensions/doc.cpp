@@ -26,6 +26,7 @@ void Doc::registerExtensions(Falcon::Module* self)
   Falcon::Symbol *c_doc = self->addClass( "Doc" );
   c_doc->getClassDef()->factory( &factory );
   self->addClassMethod( c_doc, "addPage", &addPage );
+  self->addClassMethod( c_doc, "insertPage", &insertPage );
   self->addClassMethod( c_doc, "saveToFile", &saveToFile );
   self->addClassMethod( c_doc, "getFont", &getFont );
   self->addClassMethod( c_doc, "setCompressionMode", &setCompressionMode );
@@ -61,10 +62,25 @@ CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
 
 FALCON_FUNC Doc::addPage( VMachine* vm )
 {
-  CoreClass* Page_cls = vm->findWKI("Page")->asClass();
   Mod::hpdf::Doc* self = Falcon::dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
   HPDF_Page page = HPDF_AddPage( self->handle() );
+  CoreClass* Page_cls = vm->findWKI("Page")->asClass();
   vm->retval( new Mod::hpdf::Dict(Page_cls, page) );
+}
+
+FALCON_FUNC Doc::insertPage( VMachine* vm )
+{
+  Mod::hpdf::Doc* self = Falcon::dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
+
+  Item* i_page = vm->param( 0 );
+  if ( i_page == 0 || ! i_page->isOfClass("Page") )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                       .extra("O"));
+
+  Mod::hpdf::Dict* page = static_cast<Mod::hpdf::Dict*>(i_page->asObject());
+  HPDF_Page newPage = HPDF_InsertPage( self->handle(), page->handle());
+  CoreClass* Page_cls = vm->findWKI("Page")->asClass();
+  vm->retval( new Mod::hpdf::Dict(Page_cls, newPage) );
 }
 
 FALCON_FUNC Doc::saveToFile( VMachine* vm )

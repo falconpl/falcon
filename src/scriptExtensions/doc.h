@@ -16,6 +16,7 @@ namespace Falcon { namespace Ext { namespace hpdf {
 struct Doc
 {
   static FALCON_FUNC addPage( VMachine* );
+  static FALCON_FUNC insertPage( VMachine* );
   static FALCON_FUNC saveToFile( VMachine* );
   static FALCON_FUNC getFont( VMachine* );
   static FALCON_FUNC setCompressionMode( VMachine* );
@@ -54,7 +55,6 @@ struct Doc
 //  FALCON_FUNC PDF_getPageMode( VMachine* );
 //  FALCON_FUNC PDF_getViewerPreference( VMachine* );
 //  FALCON_FUNC PDF_setViewerPreference( VMachine* );
-//  FALCON_FUNC PDF_insertPage( VMachine* );
 //  FALCON_FUNC PDF_loadTTFontFromFile2( VMachine* );
 //  FALCON_FUNC PDF_addPageLabel( VMachine* );
 
