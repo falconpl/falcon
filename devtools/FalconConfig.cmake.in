@@ -15,13 +15,12 @@ set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
 set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
 set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
 set(Falcon_INC_DIR "@FALCON_INC_DIR@")
-set(Falcon_ARCH_DIR lib)
+set(Falcon_ARCH_DIR "@FALCON_LIB_DIR@")
 
-set(Falcon_PREFIX ${SELF_DIR}/../../..)
-set(Falcon_INCLUDE_DIR ${Falcon_PREFIX}/@FALCON_INC_DIR@)
-set(Falcon_BINARY_DIR {Falcon_PREFIX}/@FALCON_BIN_DIR@)
-set(Falcon_LIBRARY_DIR ${Falcon_PREFIX}/@FALCON_LIB_DIR@)
-set(Falcon_INCLUDE_DIR  ${Falcon_PREFIX}/@FALCON_INC_DIR@)
+set(Falcon_PREFIX "@FALCON_FINAL_DEST@")
+set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
+set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
+set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
 
 # If defined, prefer the source directory include files over the installed ones
 if(DEFINED ENV{FALCON_SRC_TREE})
