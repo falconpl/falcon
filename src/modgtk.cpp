@@ -84,6 +84,7 @@
 #include "gtk_VRuler.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
+#include "gtk_WindowGroup.hpp"
 
 
 FALCON_MODULE_DECL
@@ -201,6 +202,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
     Falcon::Gtk::TextTagTable::modInit( self );
+    Falcon::Gtk::WindowGroup::modInit( self );
 
     return self;
 }

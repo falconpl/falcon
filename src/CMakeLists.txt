@@ -88,6 +88,7 @@ set( SRC_FILES
     gtk_VRuler.cpp
     gtk_Widget.cpp
     gtk_Window.cpp
+    gtk_WindowGroup.cpp
     modgtk.cpp
     modgtk_st.cpp
     )
@@ -177,6 +178,7 @@ set( HDR_FILES
     gtk_VRuler.hpp
     gtk_Widget.hpp
     gtk_Window.hpp
+    gtk_WindowGroup.hpp
     modgtk.hpp
     modgtk_st.hpp
     modgtk_version.hpp
