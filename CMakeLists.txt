@@ -8,12 +8,12 @@
 #
 # CMAKE_INSTALL_PREFIX - Installation prefix
 # FALCON_FINAL_DEST - Final destination (if != from prefix)
-# FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
-# FALCON_INC_DIR - Prefix for installation of include files.
-# FALCON_MAN_DIR - Prefix for installation of man files.
-# FALCON_LIB_DIR - Prefix for installation of archives and dynamic libraries
+# FALCON_BIN_DIR - Suffix for binary installation. Defaults to "bin"
+# FALCON_INC_DIR - Suffix for installation of include files.
+# FALCON_MAN_DIR - Suffix for installation of man files.
+# FALCON_LIB_DIR - Suffix for installation of archives and dynamic libraries
 #                  on UNIXes. Defaults to "lib".
-# FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
+# FALCON_MOD_DIR - Suffix for installation of modules. Defaults to
 #                  $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
 # FALCON_SKIP_BISON - ON to avoid using bison.
 # FALCON_WITH_MANPAGES - ON to build and install man pages.
