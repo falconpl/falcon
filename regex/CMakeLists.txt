@@ -10,11 +10,6 @@ else( WIN32 OR APPLE )
    option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" off)
 endif( WIN32 OR APPLE)
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
-
 if(WIN32)
    set( SYS_RC regex.rc)
 endif(WIN32)

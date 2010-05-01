@@ -4,10 +4,6 @@
 # CMake configuration file for module "logging"
 ####################################################################
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
 
 if(WIN32)
    set( SYS_RC logging.rc )

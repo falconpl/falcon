@@ -109,12 +109,12 @@ A minimal example would look like the following:
 
    In example:
    @code
-   re = Regex( '^\\s*\\w' )
+   re = Regex( '^\s*\w' )
    @endcode
 
    This would match any word near the beginning of a line, and it is equivalent to:
    @code
-   re = Regex( "^\\\\s*\\\\w" )
+   re = Regex( "^\\s*\\w" )
    @endcode
 
    Of course, the former is more readable and natural when dealing with regular

@@ -4,11 +4,6 @@
 # CMake configuration file for module Socket
 ####################################################################
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
-
 if(UNIX OR MAC)
    set(SYS_SPECIFIC socket_sys_unix.cpp)
 

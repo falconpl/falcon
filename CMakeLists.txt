@@ -3,7 +3,7 @@
 #
 # CMake configuration file for Feather modules
 ####################################################################
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.8)
 PROJECT(Falcon_Feathers)
 
 # Find our Find*.cmake files 
@@ -14,6 +14,11 @@ find_package(Falcon
          "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
          "$ENV{FALCON_ACTIVE_TREE}/cmake"
    REQUIRED)
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include
+  ${Falcon_INCLUDE_DIR}
+)
 
 add_subdirectory(compiler)
 add_subdirectory(confparser)

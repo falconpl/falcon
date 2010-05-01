@@ -4,11 +4,6 @@
 # CMake configuration file for module Process
 ####################################################################
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
-
 if(UNIX)
    SET(SYS_SPECIFIC process_sys_unix.cpp)
 else()

@@ -4,11 +4,6 @@
 # CMake configuration file for module ConfParser
 ####################################################################
 
-INCLUDE_DIRECTORIES(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
-
 if(WIN32)
    set( SYS_RC confparser.rc )
 endif(WIN32)

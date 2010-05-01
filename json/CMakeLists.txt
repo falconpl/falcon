@@ -4,11 +4,6 @@
 # CMake configuration file for module json
 ####################################################################
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
-
 if(WIN32)
    SET( SYS_RC json.rc )
 endif()

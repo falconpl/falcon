@@ -10,7 +10,6 @@ falcon_define_module( CURRENT_MODULE hash )
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${Falcon_INCLUDE_DIRS}
 )
 # Enable this include if the project has a private include
 #include_directories( ${PROJECT_SOURCE_DIR}/include )
