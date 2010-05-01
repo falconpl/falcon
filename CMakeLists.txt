@@ -17,7 +17,7 @@ find_package(Falcon
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIR}
+  ${Falcon_INCLUDE_DIRS}
 )
 
 add_subdirectory(compiler)
