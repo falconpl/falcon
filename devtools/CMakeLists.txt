@@ -24,12 +24,13 @@ endforeach(item)
 # It supplies include paths, libraries (via falcon-core-targets.cmake)
 # and convenience MACROS.
 #
-message( "Configuring falcon-config.cmake" )
+message( "Configuring FalconConfig.cmake" )
 configure_file(
   FalconConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
   @ONLY
 )
+
 
 ########################################################################
 # Install
@@ -50,6 +51,8 @@ INSTALL(
               WORLD_READ WORLD_EXECUTE
 )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
-  DESTINATION lib/falcon/cmake
+install(FILES
+   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
+   modfunctions.cmake
+  DESTINATION ${FALCON_MOD_DIR}/cmake
 )

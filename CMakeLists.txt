@@ -22,6 +22,9 @@
 #                  (should then use command line CMAKE_*_RPATH variables)
 # FALCON_RPATH - Set RPATH or similar variables on the target systems.
 #
+# FALCON_WITH_FEATHERS=<dir> - Build also feathers as a part of this project.
+#                        Use the relative directory to describe where
+#                        Feathers are to be found.
 
 cmake_minimum_required(VERSION 2.6.2)
 project(Falcon_Core)
@@ -214,6 +217,39 @@ add_subdirectory(devtools)
 if (FALCON_WITH_MANPAGES)
    add_subdirectory(manpages)   
 endif()
+
+#########################################################################
+# Feathers?
+#
+
+if( FALCON_WITH_FEATHERS )
+   Message( STATUS "Adding FEATHERS to this build -- from ${FALCON_WITH_FEATHERS}" )
+
+   include( devtools/modfunctions.cmake )
+   
+   #Using temporary prefix to install things here.
+   set(Falcon_PREFIX "${CMAKE_INSTALL_PREFIX}")
+   set(Falcon_BINARY_DIR "${Falcon_PREFIX}/${FALCON_BIN_DIR}")
+   set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
+
+   set(Falcon_APP_DIR "${Falcon_PREFIX}/${FALCON_APP_DIR}")
+   set(Falcon_MOD_DIR "${Falcon_PREFIX}/${FALCON_MOD_DIR}")
+   set(Falcon_BIN_DIR "${Falcon_PREFIX}/${FALCON_BIN_DIR}")
+   set(Falcon_LIB_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
+   set(Falcon_MAN_DIR "${Falcon_PREFIX}/${FALCON_MAN_DIR}")
+   set(Falcon_INC_DIR "${Falcon_PREFIX}/${FALCON_INC_DIR}")
+   set(Falcon_ARCH_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
+
+   #this is the dir during build
+   list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
+   list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+   list( APPEND Falcon_LIBRARIES falcon_engine)
+
+   message( "DIR: ${Falcon_INCLUDE_DIRS}" )
+   
+   add_subdirectory( ${FALCON_WITH_FEATHERS} binary_dir )
+endif()
+
 
 #########################################################################
 # Tests?
