@@ -188,7 +188,7 @@ if(NOT FALCON_DISABLE_RPATH)
   set(CMAKE_SKIP_BUILD_RPATH  false)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
   set(CMAKE_INSTALL_RPATH ${_falcon_rpath})
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true) 
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false) 
   
   # Apple equivalent to RPATH is called `install_name'
   set(CMAKE_INSTALL_NAME_DIR ${_falcon_rpath})
@@ -245,8 +245,6 @@ if( FALCON_WITH_FEATHERS )
    list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" )
    list( APPEND Falcon_LIBRARIES falcon_engine)
 
-   message( "DIR: ${Falcon_INCLUDE_DIRS}" )
-   
    add_subdirectory( ${FALCON_WITH_FEATHERS} binary_dir )
 endif()
 

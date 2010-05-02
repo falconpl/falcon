@@ -229,6 +229,32 @@ bool copyFtr( const Path& src, const Path &tgt )
    return true;
 }
 
+static void relativize( const Path& source, Path& target )
+{
+   if ( ! target.isAbsolute() )
+   {
+      return;
+   }
+
+   String sFull1 = source.getFullLocation();
+   String sFull2 = target.getFullLocation();
+
+   // checking the equality, check also if the last path in sFull2 matches sFull1 completely
+   if( sFull1.length() < sFull2.length() &&
+         sFull2.subString(0, sFull1.length()+1 ) == sFull1 + "/" )
+   {
+      target.setFullLocation( sFull2.subString( sFull1.length() + 1 ) );
+   }
+   else if( sFull1 == sFull2 )
+   {
+      target.setFullLocation( "" );
+   }
+   else
+   {
+      // there is nothing we can do.
+   }
+
+}
 
 void addPlugins( const Options& options_main, const String& parentModule, const String& path )
 {
@@ -237,6 +263,17 @@ void addPlugins( const Options& options_main, const String& parentModule, const 
    Path modPath( parentModule );
    modPath = modPath.getFullLocation() + "/" + path;
 
+   // prepare the target plugin path
+   Path outputPath( modPath );
+   outputPath.setFilename("");
+   Path mainPath;
+   mainPath.setFullLocation( options_main.m_sMainScriptPath );
+   relativize( mainPath, outputPath );
+   outputPath.setFullLocation(
+         options_main.m_sTargetDir +"/"+ outputPath.getLocation() );
+
+
+   // topmost location of the plugin must be
    if( path.endsWith("*") )
    {
       VFSProvider* file = Engine::getVFS("file");
@@ -253,31 +290,48 @@ void addPlugins( const Options& options_main, const String& parentModule, const 
       {
 
          // binary?
-         if ( fname.endsWith(".fam") || fname.endsWith( DllLoader::dllExt() ) )
+         if ( fname.endsWith(".fam") )
          {
-            // go on
-         }
-         // source?
-         else if( fname.endsWith( ".fal" ) || fname.endsWith(".ftd") )
-         {
-            // do we have also the fam?
+            // do we have also a source?
             modPath.setFilename( fname );
-            modPath.setExtension( "fam" );
+            modPath.setExtension( "fal" );
             FileStat famStats;
-            // wait for the fam
+
+            if( Sys::fal_stats( modPath.get(), famStats ) )
+            {
+               // we have already a fal that has been transferred or will be transferred later,
+               // so wait for that.
+               continue;
+               // otherwise, go on transferring the source.
+            }
+
+            // same for ftd
+            modPath.setExtension( "ftd" );
             if( Sys::fal_stats( modPath.get(), famStats ) )
             {
                continue;
             }
 
-
+         }
+         else if( fname.endsWith( DllLoader::dllExt() ) )
+         {
+            //Transfer DLLS as they are.
+         }
+         // source?
+         else if( fname.endsWith( ".fal" ) || fname.endsWith(".ftd") )
+         {
+               // go on, transfer the source.
          }
          else
+         {
+            // we don't know how to manage other plugins
             continue;
+         }
 
          // copy our options, so that transferModule doesn't pollute them
          Options options( options_main );
 
+         options.m_sTargetDir = outputPath.get();
          // ok, transfer the thing
          modPath.setFilename( fname );
          transferModules( options, modPath.get() );
@@ -290,6 +344,7 @@ void addPlugins( const Options& options_main, const String& parentModule, const 
    {
       // copy our options, so that transferModule doesn't pollute them
       Options options( options_main );
+      options.m_sTargetDir = outputPath.get();
       transferModules( options, modPath.get() );
    }
 }
