@@ -28,5 +28,5 @@ function(FALCON_INSTALL_MODULE tgt )
    endif()
 
    install( TARGETS ${tgt}
-            DESTINATION @FALCON_MOD_DIR@ )
+            DESTINATION ${Falcon_MOD_DIR} )
 endfunction(FALCON_INSTALL_MODULE)
