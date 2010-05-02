@@ -42,6 +42,7 @@ public:
    */
    inline Mutex()
    {
+      //TODO: Remove from inline; this as inline is a mess on windows.
       InitializeCriticalSectionAndSpinCount( &m_mtx, 512 );
    }
 
