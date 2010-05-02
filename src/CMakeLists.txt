@@ -52,6 +52,7 @@ set( SRC_FILES
     gtk_HPaned.cpp
     gtk_HRuler.cpp
     gtk_Image.cpp
+    gtk_InfoBar.cpp
     gtk_Invisible.cpp
     gtk_Label.cpp
     gtk_Layout.cpp
@@ -142,6 +143,7 @@ set( HDR_FILES
     gtk_HPaned.hpp
     gtk_HRuler.hpp
     gtk_Image.hpp
+    gtk_InfoBar.hpp
     gtk_Invisible.hpp
     gtk_Label.hpp
     gtk_Layout.hpp

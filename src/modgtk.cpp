@@ -49,6 +49,9 @@
 #include "gtk_HPaned.hpp"
 #include "gtk_HRuler.hpp"
 #include "gtk_Image.hpp"
+#if GTK_MINOR_VERSION >= 18
+#include "gtk_InfoBar.hpp"
+#endif
 #include "gtk_Invisible.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
@@ -177,6 +180,9 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::VButtonBox::modInit( self );
                     Falcon::Gtk::HBox::modInit( self );
                         Falcon::Gtk::FileChooserButton::modInit( self );
+#if GTK_MINOR_VERSION >= 18
+                        Falcon::Gtk::InfoBar::modInit( self );
+#endif
                         Falcon::Gtk::Statusbar::modInit( self );
                     Falcon::Gtk::VBox::modInit( self );
                 Falcon::Gtk::Fixed::modInit( self );
