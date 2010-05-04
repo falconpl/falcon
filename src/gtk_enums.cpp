@@ -240,6 +240,15 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_MATCH_LAST",         GTK_MATCH_LAST },
 
     /*
+     *  GtkMenuDirectionType
+     */
+
+    { "GTK_MENU_DIR_PARENT",    GTK_MENU_DIR_PARENT },
+    { "GTK_MENU_DIR_CHILD",     GTK_MENU_DIR_CHILD },
+    { "GTK_MENU_DIR_NEXT",      GTK_MENU_DIR_NEXT },
+    { "GTK_MENU_DIR_PREV",      GTK_MENU_DIR_PREV },
+
+    /*
      *  GtkMessageType
      */
     { "GTK_MESSAGE_INFO",       GTK_MESSAGE_INFO },
