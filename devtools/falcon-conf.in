@@ -52,13 +52,13 @@ else
   LDFLAGS="-module -dload -shared"
 fi
 
-INC_PATH="@FALCON_FINAL_DEST@/@FALCON_INC_DIR@"
-LIB_PATH="@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@"
-LIB_LD_PATH="@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@"
+INC_PATH="@CMAKE_INSTALL_PREFIX@/@FALCON_INC_DIR@"
+LIB_PATH="@CMAKE_INSTALL_PREFIX@/@FALCON_LIB_DIR@"
+LIB_LD_PATH="@CMAKE_INSTALL_PREFIX@/@FALCON_LIB_DIR@"
 
 INC_FLAGS="-I$INC_PATH"
 LIB_FLAGS="-L$LIB_PATH"
-MODDIR="@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@"
+MODDIR="@CMAKE_INSTALL_PREFIX@/@FALCON_MOD_DIR@"
 
 while [ -n "$*" ]; do
    case "$1" in
@@ -73,7 +73,7 @@ while [ -n "$*" ]; do
       "-p" | "--ldpath") echo "$LIB_LD_PATH" ;;
       "--libs-only-l") echo "$FALCONLIB" ;;
       "--moddir") echo "$MODDIR";;
-      "--cmake") echo "@FALCON_FINAL_DEST@/@FALCON_MOD_DIR@/cmake/FalconConfig.cmake";;
+      "--cmake") echo "@CMAKE_INSTALL_PREFIX@/@FALCON_MOD_DIR@/cmake/FalconConfig.cmake";;
       "-h" | "--help" | *)
          usage
          exit;;

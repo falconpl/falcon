@@ -3,25 +3,25 @@
 # CMake module for find_package( falcon )
 ######################################################################
 
-Message( "Using Falcon CMAKE config file at ${CMAKE_CURRENT_LIST_FILE}" )
 
 get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 # OPTIONAL for the case this project is built as a subproject.
 include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 
-set(Falcon_PREFIX "@FALCON_FINAL_DEST@")
-set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
-set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
-set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
+set(Falcon_APP_DIR "@FALCON_APP_DIR@")
+set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
+set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
+set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
+set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
+set(Falcon_INC_DIR "@FALCON_INC_DIR@")
+set(Falcon_ARCH_DIR lib)
 
-set(Falcon_APP_DIR "${Falcon_PREFIX}/@FALCON_APP_DIR@")
-set(Falcon_MOD_DIR "${Falcon_PREFIX}/@FALCON_MOD_DIR@")
-set(Falcon_BIN_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
-set(Falcon_LIB_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
-set(Falcon_MAN_DIR "${Falcon_PREFIX}/@FALCON_MAN_DIR@")
-set(Falcon_INC_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
-set(Falcon_ARCH_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
+set(Falcon_PREFIX ${SELF_DIR}/../../..)
+set(Falcon_INCLUDE_DIR ${Falcon_PREFIX}/@FALCON_INC_DIR@)
+set(Falcon_BINARY_DIR {Falcon_PREFIX}/@FALCON_BIN_DIR@)
+set(Falcon_LIBRARY_DIR ${Falcon_PREFIX}/@FALCON_LIB_DIR@)
+set(Falcon_INCLUDE_DIR  ${Falcon_PREFIX}/@FALCON_INC_DIR@)
 
 # If defined, prefer the source directory include files over the installed ones
 if(DEFINED ENV{FALCON_SRC_TREE})
@@ -68,7 +68,7 @@ if(NOT DISABLE_RPATH)
    if(CMAKE_INSTALL_RPATH)
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false)
    else()
-      set(CMAKE_INSTALL_RPATH "@FALCON_FINAL_DEST@/@FALCON_LIB_DIR@")
+      set(CMAKE_INSTALL_RPATH "@CMAKE_INSTALL_PREFIX@/@FALCON_LIB_DIR@")
       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
    endif()
 endif()
@@ -93,5 +93,4 @@ if(WIN32)
    endif()
 endif(WIN32)
 #
-
-include(${SELF_DIR}/modfunctions.cmake OPTIONAL)
+include(${SELF_DIR}/modfunctions.cmake)

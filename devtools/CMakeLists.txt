@@ -53,6 +53,7 @@ INSTALL(
 
 install(FILES
    ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
-   modfunctions.cmake
-  DESTINATION ${FALCON_MOD_DIR}/cmake
+   ${CMAKE_CURRENT_BINARY_DIR}/modfunctions.cmake
+   DESTINATION ${FALCON_MOD_DIR}/cmake
 )
+configure_file(modfunctions.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/modfunctions.cmake @ONLY)

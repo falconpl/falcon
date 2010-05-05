@@ -7,24 +7,19 @@
 # CONTROL VARIABLES:
 #
 # CMAKE_INSTALL_PREFIX - Installation prefix
-# FALCON_FINAL_DEST - Final destination (if != from prefix)
-# FALCON_BIN_DIR - Suffix for binary installation. Defaults to "bin"
-# FALCON_INC_DIR - Suffix for installation of include files.
-# FALCON_MAN_DIR - Suffix for installation of man files.
-# FALCON_LIB_DIR - Suffix for installation of archives and dynamic libraries
+# FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
+# FALCON_INC_DIR - Prefix for installation of include files.
+# FALCON_MAN_DIR - Prefix for installation of man files.
+# FALCON_LIB_DIR - Prefix for installation of archives and dynamic libraries
 #                  on UNIXes. Defaults to "lib".
-# FALCON_MOD_DIR - Suffix for installation of modules. Defaults to
+# FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
 #                  $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
 # FALCON_SKIP_BISON - ON to avoid using bison.
 # FALCON_WITH_MANPAGES - ON to build and install man pages.
 # FALCON_MAN_DIR - Where manual pages are stored (below prefix)
-# FALCON_DISABLE_RPATH  - Disable our detected settings for RPATH
-#                  (should then use command line CMAKE_*_RPATH variables)
-# FALCON_RPATH - Set RPATH or similar variables on the target systems.
+# DISABLE_RPATH  - Disable our detected settings for RPATH?
+#                  (should then use command line CMAKE_RPATH* variables)
 #
-# FALCON_WITH_FEATHERS=<dir> - Build also feathers as a part of this project.
-#                        Use the relative directory to describe where
-#                        Feathers are to be found.
 
 cmake_minimum_required(VERSION 2.6.2)
 project(Falcon_Core)
@@ -122,12 +117,7 @@ if(NOT CMAKE_INSTALL_PREFIX)
   endif()
 endif()
 
-if(NOT FALCON_FINAL_DEST)
-   set(FALCON_FINAL_DEST ${CMAKE_INSTALL_PREFIX})
-endif()
-
 message( STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}" )
-message( STATUS "Final destination prefix: ${FALCON_FINAL_DEST}" )
 
 if (NOT FALCON_LIB_DIR)
    set(FALCON_LIB_DIR lib)
@@ -174,31 +164,16 @@ if ( NOT WIN32 )
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
 
-
-#Use specific falcon rpath if externally set
-if(FALCON_RPATH)
-   set ( _falcon_rpath ${FALCON_RPATH} )
-else()
-   set ( _falcon_rpath "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}" )
-endif()
-      
-option(FALCON_DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
-if(NOT FALCON_DISABLE_RPATH)
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(NOT DISABLE_RPATH)
   # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
   set(CMAKE_SKIP_BUILD_RPATH  false)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
-  set(CMAKE_INSTALL_RPATH ${_falcon_rpath})
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false) 
   
   # Apple equivalent to RPATH is called `install_name'
-  set(CMAKE_INSTALL_NAME_DIR ${_falcon_rpath})
-else()
-
-   #If a FALCON_RPATH is on, use it nevertheless
-   if(FALCON_RPATH)
-      set(CMAKE_INSTALL_RPATH ${_falcon_rpath})
-      set(CMAKE_INSTALL_NAME_DIR ${_falcon_rpath})
-   endif()
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
 endif()
 
 #########################################################à
@@ -221,31 +196,16 @@ endif()
 #########################################################################
 # Feathers?
 #
-
 if( FALCON_WITH_FEATHERS )
    Message( STATUS "Adding FEATHERS to this build -- from ${FALCON_WITH_FEATHERS}" )
 
-   include( devtools/modfunctions.cmake )
+   include( ${CMAKE_CURRENT_BINARY_DIR}/devtools/FalconConfig.cmake )
    
-   #Using temporary prefix to install things here.
-   set(Falcon_PREFIX "${CMAKE_INSTALL_PREFIX}")
-   set(Falcon_BINARY_DIR "${Falcon_PREFIX}/${FALCON_BIN_DIR}")
-   set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
-
-   set(Falcon_APP_DIR "${Falcon_PREFIX}/${FALCON_APP_DIR}")
-   set(Falcon_MOD_DIR "${Falcon_PREFIX}/${FALCON_MOD_DIR}")
-   set(Falcon_BIN_DIR "${Falcon_PREFIX}/${FALCON_BIN_DIR}")
-   set(Falcon_LIB_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
-   set(Falcon_MAN_DIR "${Falcon_PREFIX}/${FALCON_MAN_DIR}")
-   set(Falcon_INC_DIR "${Falcon_PREFIX}/${FALCON_INC_DIR}")
-   set(Falcon_ARCH_DIR "${Falcon_PREFIX}/${FALCON_LIB_DIR}")
-
-   #this is the dir during build
-   list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
+   #override settings for the include dirs
+   set( Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
    list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" )
-   list( APPEND Falcon_LIBRARIES falcon_engine)
-
-   add_subdirectory( ${FALCON_WITH_FEATHERS} binary_dir )
+   
+   add_subdirectory( ${FALCON_WITH_FEATHERS} feathers_dir )
 endif()
 
 
