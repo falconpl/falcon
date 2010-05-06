@@ -20,7 +20,7 @@
 #                  (should then use command line CMAKE_RPATH* variables)
 #
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6.2)
 project(Falcon_Core)
 
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
@@ -198,7 +198,7 @@ endif()
 if( FALCON_WITH_FEATHERS )
    Message( STATUS "Adding FEATHERS to this build -- from ${FALCON_WITH_FEATHERS}" )
 
-   include( ${CMAKE_CURRENT_BINARY_DIR}/devtools/FalconConfig.cmake )
+   #include( ${CMAKE_CURRENT_BINARY_DIR}/devtools/FalconConfig.cmake )
    
    #override settings for the include dirs
    set( Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
