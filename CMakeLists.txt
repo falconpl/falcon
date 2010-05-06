@@ -197,8 +197,6 @@ endif()
 #
 if( FALCON_WITH_FEATHERS )
    Message( STATUS "Adding FEATHERS to this build -- from ${FALCON_WITH_FEATHERS}" )
-
-   #include( ${CMAKE_CURRENT_BINARY_DIR}/devtools/FalconConfig.cmake )
    
    #override settings for the include dirs
    set( Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
