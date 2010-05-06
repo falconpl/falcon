@@ -311,10 +311,10 @@ FALCON_FUNC mth_strBack( VMachine *vm )
 /*#
    @function strSplitTrimmed
    @brief Subdivides a string in an array of substrings given a token substring.
-   @param string The string that must be splitted
-   @param token The token by which the string should be splitted.
+   @param string The string that must be split.
+   @param token The token by which the string should be split.
    @optparam count Optional maximum split count.
-   @return An array of strings containing the splitted string.
+   @return An array of strings containing the split string.
 
    This function returns an array of strings extracted from the given parameter.
    The array is filled with strings extracted from the first parameter, by dividing
@@ -339,9 +339,9 @@ FALCON_FUNC mth_strBack( VMachine *vm )
 /*#
    @method splittr String
    @brief Subdivides a string in an array of substrings given a token substring.
-   @param token The token by which the string should be splitted.
+   @param token The token by which the string should be split.
    @optparam count Optional maximum split count.
-   @return An array of strings containing the splitted string.
+   @return An array of strings containing the split string.
 
    @see strSplitTrimmed
 */
@@ -457,10 +457,10 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
 /*#
    @function strSplit
    @brief Subdivides a string in an array of substrings given a token substring.
-   @param string The string that must be splitted
-   @optparam token The token by which the string should be splitted.
+   @param string The string that must be split.
+   @optparam token The token by which the string should be split.
    @optparam count Optional maximum split count.
-   @return An array of strings containing the splitted string.
+   @return An array of strings containing the split string.
 
    This function returns an array of strings extracted from the given parameter.
    The array is filled with strings extracted from the first parameter, by dividing
@@ -498,9 +498,9 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
 /*#
    @method split String
    @brief Subdivides a string in an array of substrings given a token substring.
-   @optparam token The token by which the string should be splitted.
+   @optparam token The token by which the string should be split.
    @optparam count Optional maximum split count.
-   @return An array of strings containing the splitted string.
+   @return An array of strings containing the split string.
 
 
    @see strSplit
