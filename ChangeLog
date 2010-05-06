@@ -22,6 +22,7 @@ Falcon (0.9.6.5)
            print help text.
   * fixed: Sys::fal_mkdir (unix) didn't handle absolute paths proper. 
   * added: Method Dictionary.dop (default operation).
+  * fixed: falpack wasn't correctly storing the plugins in the app subtree.
 
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

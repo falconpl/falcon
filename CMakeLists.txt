@@ -6,7 +6,6 @@
 #
 # CONTROL VARIABLES:
 #
-# CMAKE_INSTALL_PREFIX - Installation prefix
 # FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
 # FALCON_INC_DIR - Prefix for installation of include files.
 # FALCON_MAN_DIR - Prefix for installation of man files.
@@ -21,7 +20,7 @@
 #                  (should then use command line CMAKE_RPATH* variables)
 #
 
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.8)
 project(Falcon_Core)
 
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
