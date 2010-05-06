@@ -285,6 +285,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_ORIENTATION_VERTICAL",   GTK_ORIENTATION_VERTICAL },
 
     /*
+     *  GtkPackDirection
+     */
+    { "GTK_PACK_DIRECTION_LTR",     GTK_PACK_DIRECTION_LTR },
+    { "GTK_PACK_DIRECTION_RTL",     GTK_PACK_DIRECTION_RTL },
+    { "GTK_PACK_DIRECTION_TTB",     GTK_PACK_DIRECTION_TTB },
+    { "GTK_PACK_DIRECTION_BTT",     GTK_PACK_DIRECTION_BTT },
+
+    /*
      *  GtkPackType
      */
     { "GTK_PACK_START",     GTK_PACK_START },
