@@ -30,6 +30,11 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
   @ONLY
 )
+configure_file(
+  FalconConfigVersion.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/FalconConfigVersion.cmake
+  @ONLY
+)
 
 
 ########################################################################
@@ -53,6 +58,7 @@ INSTALL(
 
 install(FILES
    ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
+   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfigVersion.cmake
    ${CMAKE_CURRENT_BINARY_DIR}/modfunctions.cmake
    DESTINATION ${FALCON_CMAKE_DIR}
 )
