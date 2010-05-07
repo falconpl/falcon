@@ -146,7 +146,7 @@ endif()
 if(WIN32)
   set(FALCON_CMAKE_DIR cmake)
 else()
-  set(FALCON_CMAKE_DIR share/falcon/cmake)
+  set(FALCON_CMAKE_DIR share/falcon-${FALCON_VERSION_ID}/cmake)
 endif()
 
 set(FALCON_APP_DIR ${FALCON_MOD_DIR}/apps)
