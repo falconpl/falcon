@@ -143,6 +143,12 @@ if (NOT FALCON_MOD_DIR )
    endif()
 endif()
 
+if(WIN32)
+  set(FALCON_CMAKE_DIR cmake)
+else()
+  set(FALCON_CMAKE_DIR share/falcon/cmake)
+endif()
+
 set(FALCON_APP_DIR ${FALCON_MOD_DIR}/apps)
 
 # for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
@@ -218,5 +224,5 @@ endif()
 
 # CMake generated information.  Is used by our falcon-config.cmake
 install(EXPORT falcon-core-targets
-  DESTINATION lib/falcon/cmake
+  DESTINATION ${FALCON_CMAKE_DIR}
 )
