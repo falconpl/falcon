@@ -53,6 +53,7 @@
 #include "gtk_InfoBar.hpp"
 #endif
 #include "gtk_Invisible.hpp"
+#include "gtk_Item.hpp"
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
 #include "gtk_LinkButton.hpp"
@@ -169,6 +170,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Expander::modInit( self );
                     Falcon::Gtk::Frame::modInit( self );
                         Falcon::Gtk::AspectFrame::modInit( self );
+                    Falcon::Gtk::Item::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
@@ -325,7 +327,7 @@ void CoreGObject::trigger_slot( GObject* obj, const char* signame,
         return;
 
     Iterator iter( cs );
-    Item it;
+    Falcon::Item it;
 
     do
     {
@@ -428,7 +430,7 @@ void Signal::modInit( Falcon::Module* mod )
 
 FALCON_FUNC Signal::connect( VMARG )
 {
-    Item* cb = vm->param( 0 );
+    Falcon::Item* cb = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !cb || cb->isNil() || !( cb->isCallable() || cb->isComposed() ) )
         throw_inv_params( "C" );
@@ -460,7 +462,7 @@ getGCharArray( const Falcon::CoreArray* arr,
     *strings = (gchar*) memAlloc( sizeof( gchar* ) * ( num + 1 ) );
     *temp = (AutoCString*) memAlloc( sizeof( AutoCString ) * num );
     strings[ num ] = NULL;
-    Item s;
+    Falcon::Item s;
 
     for ( ; i < num; ++i )
     {

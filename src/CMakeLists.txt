@@ -54,6 +54,7 @@ set( SRC_FILES
     gtk_Image.cpp
     gtk_InfoBar.cpp
     gtk_Invisible.cpp
+    gtk_Item.cpp
     gtk_Label.cpp
     gtk_Layout.cpp
     gtk_LinkButton.cpp
@@ -148,6 +149,7 @@ set( HDR_FILES
     gtk_Image.hpp
     gtk_InfoBar.hpp
     gtk_Invisible.hpp
+    gtk_Item.hpp
     gtk_Label.hpp
     gtk_Layout.hpp
     gtk_LinkButton.hpp
