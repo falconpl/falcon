@@ -9,8 +9,6 @@ endif(COMMAND cmake_policy)
 cmake_minimum_required(VERSION 2.6)
 PROJECT(Falcon_SDL)
 
-# Check for environment
-INCLUDE( "falmod.cmake" )
 
 # REQUIRED does not work in CMake <=2.4.6 for SDL
 Find_Package ( SDL REQUIRED )
@@ -20,7 +18,13 @@ if ( NOT SDL_FOUND )
    message ( FATAL_ERROR "SDL not found!" )
 endif ( NOT SDL_FOUND )
 
-INCLUDE_DIRECTORIES( ${SDL_INCLUDE_DIR} )
+find_package(Falcon REQUIRED)
+
+INCLUDE_DIRECTORIES( 
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
+   ${Falcon_INCLUDE_DIRS}
+   ${SDL_INCLUDE_DIR} 
+)
 
 option(WITH_GL "Build also GL, GLX and GLU modules" OFF)
 
