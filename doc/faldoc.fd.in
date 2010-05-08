@@ -16,6 +16,7 @@ Version = 0.9.12
 # Faldoc Input settings
 ################################################
 
+Input.basedir=@PROJECT_SOURCE_DIR@/doc
 Input.directory=../src
 Input.directory=../ttf
 Input.directory=../mixer
@@ -39,6 +40,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-sdl-0.9.12-docs
+Output.html.directory=@CMAKE_CURRENT_BINARY_DIR@/html
 Output.html.url=.
 Output.html.doctitle=Falcon SDL Module reference.

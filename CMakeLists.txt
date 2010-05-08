@@ -49,3 +49,7 @@ if(APPLE)
    ADD_SUBDIRECTORY(sdl_falcon)
 endif(APPLE)
 
+option( CREATE_DOCS "Create documentation" OFF )
+if ( CREATE_DOCS )
+   add_subdirectory( doc )
+endif()
