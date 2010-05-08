@@ -57,6 +57,7 @@
 #include "gtk_Layout.hpp"
 #include "gtk_LinkButton.hpp"
 #include "gtk_Main.hpp"
+#include "gtk_Menu.hpp"
 #include "gtk_MenuBar.hpp"
 #include "gtk_MenuShell.hpp"
 #include "gtk_MessageDialog.hpp"
@@ -190,6 +191,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Fixed::modInit( self );
                 Falcon::Gtk::Layout::modInit( self );
                 Falcon::Gtk::MenuShell::modInit( self );
+                    Falcon::Gtk::Menu::modInit( self );
                     Falcon::Gtk::MenuBar::modInit( self );
                 Falcon::Gtk::Paned::modInit( self );
                     Falcon::Gtk::HPaned::modInit( self );

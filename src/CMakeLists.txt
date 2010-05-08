@@ -58,6 +58,7 @@ set( SRC_FILES
     gtk_Layout.cpp
     gtk_LinkButton.cpp
     gtk_Main.cpp
+    gtk_Menu.cpp
     gtk_MenuBar.cpp
     gtk_MenuShell.cpp
     gtk_MessageDialog.cpp
@@ -151,6 +152,7 @@ set( HDR_FILES
     gtk_Layout.hpp
     gtk_LinkButton.hpp
     gtk_Main.hpp
+    gtk_Menu.hpp
     gtk_MenuBar.hpp
     gtk_MenuShell.hpp
     gtk_MessageDialog.hpp
