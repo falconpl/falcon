@@ -85,6 +85,7 @@
 #include "gtk_ToggleAction.hpp"
 #include "gtk_ToggleButton.hpp"
 #include "gtk_Toolbar.hpp"
+#include "gtk_ToolItem.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_VolumeButton.hpp"
@@ -172,6 +173,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Frame::modInit( self );
                         Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Item::modInit( self );
+                    Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
