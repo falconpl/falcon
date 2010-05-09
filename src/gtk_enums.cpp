@@ -493,6 +493,21 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TEXT_WINDOW_BOTTOM",     GTK_TEXT_WINDOW_BOTTOM },
 
     /*
+     *  GtkToolbarChildType
+     */
+    { "GTK_TOOLBAR_CHILD_SPACE",        GTK_TOOLBAR_CHILD_SPACE },
+    { "GTK_TOOLBAR_CHILD_BUTTON",       GTK_TOOLBAR_CHILD_BUTTON },
+    { "GTK_TOOLBAR_CHILD_TOGGLEBUTTON", GTK_TOOLBAR_CHILD_TOGGLEBUTTON },
+    { "GTK_TOOLBAR_CHILD_TOGGLEBUTTON", GTK_TOOLBAR_CHILD_TOGGLEBUTTON },
+    { "GTK_TOOLBAR_CHILD_WIDGET",       GTK_TOOLBAR_CHILD_WIDGET },
+
+    /*
+     *  GtkToolbarSpaceStyle
+     */
+    { "GTK_TOOLBAR_SPACE_EMPTY",    GTK_TOOLBAR_SPACE_EMPTY },
+    { "GTK_TOOLBAR_SPACE_LINE",     GTK_TOOLBAR_SPACE_LINE },
+
+    /*
      *  GtkToolbarStyle
      */
     { "GTK_TOOLBAR_ICONS",      GTK_TOOLBAR_ICONS },
