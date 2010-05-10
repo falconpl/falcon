@@ -60,6 +60,7 @@
 #include "gtk_Main.hpp"
 #include "gtk_Menu.hpp"
 #include "gtk_MenuBar.hpp"
+#include "gtk_MenuItem.hpp"
 #include "gtk_MenuShell.hpp"
 #include "gtk_MessageDialog.hpp"
 #include "gtk_Misc.hpp"
@@ -173,6 +174,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Frame::modInit( self );
                         Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Item::modInit( self );
+                        Falcon::Gtk::MenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
