@@ -18,6 +18,7 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
    dbi.cpp
    dbi_ext.cpp
    dbi_mod.cpp
+   dbi_st.cpp
    dbiloaderimpl.cpp
 )
 

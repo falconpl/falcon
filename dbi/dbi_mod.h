@@ -51,6 +51,16 @@ private:
       Param( const String& name, String& output ):
          m_name( name ),
          m_output( output ),
+         m_szOutput( 0 ),
+         m_cstrOut(0),
+         m_pNext(0)
+         {}
+
+      Param( const String& name, String& output, const char** szOut ):
+         m_name( name ),
+         m_output( output ),
+         m_szOutput( szOutput ),
+         m_cstrOut(0),
          m_pNext(0)
          {}
 
@@ -64,6 +74,8 @@ private:
 
       String m_name;
       String &m_output;
+      const char** m_szOutput;
+      AutoCString* m_cstrOut;
       Param* m_pNext;
    };
 
@@ -74,6 +86,9 @@ private:
 protected:
    /** Function adding a parse parameter */
    void addParameter( const String& name, String& value );
+
+   /** Function adding a parse parameter and its c-string value */
+   void addParameter( const String& name, String& value, const char** szValue );
 
 public:
    DBIConnParams();
@@ -87,6 +102,12 @@ public:
    String m_sHost;
    String m_sPort;
    String m_sDb;
+
+   const char* m_szUser;
+   const char* m_szPassword;
+   const char* m_szHost;
+   const char* m_szPort;
+   const char* m_szDb;
 };
 
 }

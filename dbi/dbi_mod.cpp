@@ -145,11 +145,11 @@ DBIConnParams::DBIConnParams():
    m_pFirst(0)
 {
    // add the default parameters
-   addParameter( "uid", m_sUser );
-   addParameter( "pwd", m_sPassword );
-   addParameter( "db", m_sDb );
-   addParameter( "port", m_sPort );
-   addParameter( "host", m_sHost );
+   addParameter( "uid", m_sUser, m_szUser );
+   addParameter( "pwd", m_sPassword, m_szPassword );
+   addParameter( "db", m_sDb, m_szDb );
+   addParameter( "port", m_sPort, m_szPort );
+   addParameter( "host", m_sHost, m_szHost );
 }
 
 
@@ -170,6 +170,14 @@ DBIConnParams::~DBIConnParams()
 void DBIConnParams::addParameter( const String& name, String& value )
 {
    Param* p = new Param( name, value );
+   p->m_pNext = m_pFirst;
+   m_pFirst = p;
+}
+
+
+void DBIConnParams::addParameter( const String& name, String& value, const char **szValue )
+{
+   Param* p = new Param( name, value, szValue );
    p->m_pNext = m_pFirst;
    m_pFirst = p;
 }
@@ -220,13 +228,30 @@ bool DBIConnParams::parsePart( const String& strPart )
          if( p->m_output == "" )
          {
             p->m_output = "''";
+            if( p->m_szOutput != 0 )
+               *p->m_szOutput = ""; // given but empty
          }
+         else
+         {
+            if( p->m_szOutput != 0 )
+            {
+               p->m_cstrOut = new AutoCString( p->m_output );
+               *p->m_szOutput = p->m_cstrOut->c_str();
+            }
+         }
+
          return true;
       }
    }
 
    // not found... it's an invalid key
    return false;
+}
+
+
+DBIConnParams::Param::~Param()
+{
+   delete m_cstrOut;
 }
 
 }

@@ -33,7 +33,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbh, MYSQL_RES *res )
       m_res( res ),
       m_stmt(0)
 {
-   m_row = 0; // BOF
+   m_row = -1; // BOF
    m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
@@ -44,7 +44,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_STMT *stmt )
        m_res( 0 ),
        m_stmt(stmt)
 {
-   m_row = 0; // BOF
+   m_row = -1; // BOF
    m_rowCount = mysql_stmt_num_rows( stmt ); // Only valid when using mysql_store_result instead of use_result
    m_res = mysql_stmt_result_metadata(stmt);
    m_columnCount = mysql_num_fields( m_res );
@@ -193,7 +193,7 @@ virtual DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affe
       }
    }
 
-   
+
 
 }
 
@@ -284,7 +284,7 @@ DBITransaction *DBIHandleMySQL::startTransaction( bool bAuto, const String& name
 
    return t;
 }
-   
+
 DBIHandleMySQL::DBIHandleMySQL()
 {
    m_conn = NULL;
@@ -344,7 +344,8 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
 
    // add MySQL specific parameters
    String sSocket, sFlags;
-   connParams.addParameter( "socket", sSocket );
+   char *szSocket;
+   connParams.addParameter( "socket", sSocket, &szSocket );
    connParams.addParameter( "flags", sFlags );
 
    MYSQL *conn = mysql_init( NULL );
@@ -364,26 +365,17 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
       );
    }
 
-   const char *szHost, *szUser, *szPasswd, *szDb, *szPort, *szSocket;
-
-   AutoCString cHost( connParams.m_sHost );
-   AutoCString cUser( connParams.m_sUser );
-   AutoCString cPassword( connParams.m_sPassword );
-   AutoCString cDb( connParams.m_sDb );
-   AutoCString cPassword( connParams.m_sPassword );
-   AutoCString cSocket( sSocket );
-
    long szFlags = 0;
-   szHost = connParams.m_sHost == "''" ? 0: cHost.c_str();
-   szUser = connParams.m_sHost == "''" ? 0: cHost.c_str();
-   szPasswd = connParams.m_sHost == "''" ? 0: cHost.c_str();
-   szDb = connParams.m_sHost == "''" ? 0: cHost.c_str();
-   szPort = connParams.m_sPort == "''" ? 0: cPort.c_str();
-   szSocket = sSocket == "''" ? 0: cSocket.c_str();
+   // TODO parse flags
 
-
-   if ( mysql_real_connect( conn, szHost, szUser, szPasswd, szDb, szPort == 0 ? 0 : atoi( szPort ),
-                           szSocket, 0 ) == NULL )
+   if ( mysql_real_connect( conn,
+         connParams.m_szHost,
+         connParams.m_szUser,
+         connParamsm_szPasswd,
+         connParams.m_szDb,
+         connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
+         szSocket, 0 ) == NULL
+      )
    {
       String errorMessage = mysql_error( conn );
       errorMessage.bufferize();
