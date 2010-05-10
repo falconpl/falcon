@@ -29,88 +29,49 @@ namespace Ext {
 // DBI Generic
 //=====================
 
-FALCON_FUNC DBIConnect( VMachine *vm );
+void DBIConnect( VMachine *vm );
 
 //=====================
 // DBIBaseTrans
 //=====================
 
-FALCON_FUNC DBIBaseTrans_query( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_queryOne( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_queryOneArray( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_queryOneDict( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_commit( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_rollback( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_getLastError( VMachine *vm );
-
-FALCON_FUNC DBIBaseTrans_insert( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_update( VMachine *vm );
-FALCON_FUNC DBIBaseTrans_delete( VMachine *vm );
-FALCON_FUNC DBITransaction_close( VMachine *vm );
+void Transaction_query( VMachine *vm );
+void Transaction_call( VMachine *vm );
+void Transaction_prepare( VMachine *vm );
+void Transaction_execute( VMachine *vm );
+void Transaction_commit( VMachine *vm );
+void Transaction_rollback( VMachine *vm );
+void Transaction_tropen( VMachine *vm );
+void Transaction_close( VMachine *vm );
+void Transaction_getLastID( VMachine *vm );
 
 //=====================
 // DBI Handle
 //=====================
 
-FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
-FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
-FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm );
-FALCON_FUNC DBIHandle_close( VMachine *vm );
-
-//=====================
-// DBI Transaction
-//=====================
-
-FALCON_FUNC DBITransaction_openBlob( VMachine *vm );
-FALCON_FUNC DBITransaction_createBlob( VMachine *vm );
-FALCON_FUNC DBITransaction_readBlob( VMachine *vm );
-FALCON_FUNC DBITransaction_writeBlob( VMachine *vm );
+void Handle_tropen( VMachine *vm );
+void Handle_close( VMachine *vm );
 
 
 //=====================
 // DBI Recordset
 //=====================
 
-FALCON_FUNC DBIRecordset_next( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm );
-FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm );
-FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm );
-FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm );
-FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm );
-FALCON_FUNC DBIRecordset_asString( VMachine *vm );
-FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm );
-FALCON_FUNC DBIRecordset_asInteger( VMachine *vm );
-FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm );
-FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm );
-FALCON_FUNC DBIRecordset_asDate( VMachine *vm );
-FALCON_FUNC DBIRecordset_asTime( VMachine *vm );
-FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm );
-FALCON_FUNC DBIRecordset_asBlobID( VMachine *vm );
-FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
-FALCON_FUNC DBIRecordset_close( VMachine *vm );
+void Recordset_discard( VMachine *vm );
+void Recordset_fetch( VMachine *vm );
+void Recordset_do( VMachine *vm );
 
-//=====================
-// DBI Record class
-//=====================
-
-FALCON_FUNC DBIRecord_init( VMachine *vm );
-FALCON_FUNC DBIRecord_insert( VMachine *vm );
-FALCON_FUNC DBIRecord_update( VMachine *vm );
-FALCON_FUNC DBIRecord_delete( VMachine *vm );
-
-//=====================
-// DBI Blob Stream
-//=====================
-FALCON_FUNC DBIBlobStream_getBlobID( VMachine *vm );
+void Recordset_getCurrentRow( VMachine *vm );
+void Recordset_getRowCount( VMachine *vm );
+void Recordset_getColumnCount( VMachine *vm );
+void Recordset_getColumnNames( VMachine *vm );
+void Recordset_close( VMachine *vm );
 
 //=====================
 // DBI Error class
 //=====================
 
-FALCON_FUNC DBIError_init( VMachine *vm );
+void DBIError_init( VMachine *vm );
 
 }
 }

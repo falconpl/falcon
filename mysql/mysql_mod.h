@@ -31,62 +31,58 @@ protected:
    int m_columnCount;
 
    MYSQL_RES *m_res;
-   MYSQL_FIELD *m_fields;
-   MYSQL_ROW m_rowData;
-   unsigned long *m_fieldLengths;
+   MYSQL_STMT *m_stmt;
+   MYSQL_FIELD* m_fields;
 
    static dbi_type getFalconType( int typ );
 
 public:
-   DBIRecordsetMySQL( DBIHandle *dbh, MYSQL_RES *res );
+   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res );
+   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_STMT *stmt );
    ~DBIRecordsetMySQL();
 
-   virtual dbi_status next();
-   virtual int getRowCount();
-   virtual int getRowIndex();
+   virtual bool fetchRow();
+   virtual int64 getRowIndex();
+   virtual int64 getRowCount();
    virtual int getColumnCount();
-   virtual dbi_status getColumnNames( char *names[] );
-   virtual dbi_status getColumnTypes( dbi_type *types );
-   virtual dbi_status asString( const int columnIndex, String &value );
-   virtual dbi_status asBoolean( const int columnIndex, bool &value );
-   virtual dbi_status asInteger( const int columnIndex, int32 &value );
-   virtual dbi_status asInteger64( const int columnIndex, int64 &value );
-   virtual dbi_status asNumeric( const int columnIndex, numeric &value );
-   virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asBlobID( const int columnIndex, String &value );
+   virtual bool getColumnName( int nCol, String& name );
+   virtual bool getColumnValue( int nCol, Item& value );
+   virtual bool discard( int64 ncount );
    virtual void close();
-   virtual dbi_status getLastError( String &description );
+
 };
 
 
 class DBITransactionMySQL : public DBITransaction
 {
+private:
+   void begin();
+
 protected:
    bool m_inTransaction;
+   MYSQL_STMT* m_statement;
 
 public:
    DBITransactionMySQL( DBIHandle *dbh );
 
-   virtual DBIRecordset *query( const String &query, int64 &affected_rows, dbi_status &retval );
-   virtual dbi_status begin();
-   virtual dbi_status commit();
-   virtual dbi_status rollback();
-   virtual dbi_status close();
-   virtual dbi_status getLastError( String &description );
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void prepare( const String &query );
+   virtual void execute( const ItemArray& params );
 
-   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
-   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
-      bool bBinary = false );
+   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
+   virtual void close();
+
+   DBIHandleMySQL* getMySql() const { return static_cast<DBIHandleMySQL*>( m_dbh ); }
 };
 
 class DBIHandleMySQL : public DBIHandle
 {
 protected:
    MYSQL *m_conn;
-
-   DBITransactionMySQL *m_connTr;
 
 public:
    DBIHandleMySQL();
@@ -95,14 +91,11 @@ public:
 
    MYSQL *getConn() { return m_conn; }
 
-   virtual DBITransaction *startTransaction();
-   virtual dbi_status closeTransaction( DBITransaction *tr );
-   virtual int64 getLastInsertedId();
-   virtual int64 getLastInsertedId( const String &value );
-   virtual dbi_status getLastError( String &description );
-   virtual dbi_status escapeString( const String &value, String &escaped );
-   virtual dbi_status close();
-   virtual DBITransaction* getDefaultTransaction();
+   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
+   virtual void close();
+
+   // Throws a DBI error, using the last error code and description.
+   void throwError( const char* file, int line, int code );
 };
 
 class DBIServiceMySQL : public DBIService
@@ -110,9 +103,8 @@ class DBIServiceMySQL : public DBIService
 public:
    DBIServiceMySQL() : DBIService( "DBI_mysql" ) {}
 
-   virtual dbi_status init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent,
-                               dbi_status &retval, String &errorMessage );
+   virtual void init();
+   virtual DBIHandle *connect( const String &parameters, bool persistent );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 

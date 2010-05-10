@@ -69,18 +69,9 @@ FALCON_FUNC MySQL_init( VMachine *vm )
    const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
 
    DBIHandleMySQL *dbh = static_cast<DBIHandleMySQL *>(
-      theMySQLService.connect( params, false, status, connectErrorMessage ) );
-
-   if ( dbh == 0 )
-   {
-      if ( connectErrorMessage.length() == 0 )
-         connectErrorMessage = "An unknown error has occurred during connect";
-
-      throw new DBIError( ErrorParam( status, __LINE__ )
-                                       .desc( connectErrorMessage ) );
-      return ;
-   }
-
+      theMySQLService.connect( params, false ) );
+   // it's the service that must throw on error.
+   fassert( dbh != 0 );
    self->setUserData( dbh );
 }
 

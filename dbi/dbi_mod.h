@@ -17,23 +17,77 @@
 #define FALCON_DBI_MOD_H
 
 #include <dbiservice.h>
-
+#include <falcon/string.h>
 
 namespace Falcon {
 
-dbi_type *recordset_getTypes( DBIRecordset *recSet );
-
-DBIRecordset *dbh_query_base( DBITransaction* dbh, const String &sql );
 int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value );
 int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 );
-DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt = 0 );
+void dbh_escapeString( const String& input, String& value );
+void dbh_throwError( const char* file, int line, int code, const String& desc );
+
 void dbh_return_recordset( VMachine *vm, DBIRecordset *rec );
 
+/** An utility used by many drivers to break connection strings.
+   uid=
+   pwd=
+   host=
+   port=
+   db=
+*/
+class DBIConnParams
+{
 
-int dbr_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item );
-int dbr_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx );
-void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql );
-int dbr_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount );
+private:
+   /** A Specification of a connection parameter.
+
+      The parameter is a pair of a parameter name (as "uid" or "pwd") and
+      of the output parameter, that is a pointer to a string that will be filled
+      with the parameter name.
+   */
+   class Param
+   {
+   public:
+      Param( const String& name, String& output ):
+         m_name( name ),
+         m_output( output ),
+         m_pNext(0)
+         {}
+
+      ~Param();
+
+      /** Parses an input string.
+       * @param value A string in format <name>=<value> or <name>=
+       * @return True if the name matches (case insensitive) the name of this parameter.
+       */
+      bool parse( const String& value );
+
+      String m_name;
+      String &m_output;
+      Param* m_pNext;
+   };
+
+   Param* m_pFirst;
+
+   bool parsePart( const String& strPart );
+
+protected:
+   /** Function adding a parse parameter */
+   void addParameter( const String& name, String& value );
+
+public:
+   DBIConnParams();
+   ~DBIConnParams();
+
+   bool parse( const String& connStr );
+
+   // Base parameters known by all systems.
+   String m_sUser;
+   String m_sPassword;
+   String m_sHost;
+   String m_sPort;
+   String m_sDb;
+};
 
 }
 

@@ -14,6 +14,7 @@
  */
 
 #include "dbi.h"
+#include "dbi_st.h"
 #include <falcon/module.h>
 
 namespace Falcon
@@ -56,13 +57,17 @@ DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName 
       // from the module
       serv = static_cast<DBIService *>( mod->getService(  "DBI_" + provName ) );
 
-      if ( serv->init() != dbi_ok )
+      if ( serv == 0 )
       {
-         // we should raise an error here...
-         return 0;
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ )
+               .desc( FAL_STR( dbi_msg_driver_not_found ) )
+               .extra( "DBI_" + provName )
+         );
       }
+
    }
 
+   serv->init();
    return serv;
 }
 

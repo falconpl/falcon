@@ -24,81 +24,6 @@
 namespace Falcon
 {
 
-DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt )
-{
-   CoreObject *self = vm->self().asObject();
-   
-   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
-   DBIHandle* dbh;
-   DBITransaction* dbt;
-   
-   if ( dbiitem->isHandle() )
-   {
-      dbh = static_cast<DBIHandle*>(dbiitem);
-      dbt = dbh->getDefaultTransaction();
-   }
-   else {
-      dbt = static_cast<DBITransaction*>(dbiitem);
-      dbh = dbt->getHandle();
-   }
-
-   String sql;
-   dbh_realSqlExpand( vm, dbh, sql, startAt );
-
-   dbi_status retval;
-   int64 affected;
-   DBIRecordset *recSet = dbt->query( sql, affected, retval );
-   if ( recSet == NULL ) {
-      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_no_results, __LINE__ )
-            .desc( "No results from query")
-            .extra( "queryOne" ) );
-   }
-
-   if ( retval != dbi_ok ) {
-      String errorMessage;
-      dbt->getLastError( errorMessage );
-
-      throw  new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                       .desc( errorMessage ) );
-   }
-
-   dbi_status nextStatus = recSet->next();
-   if ( nextStatus != dbi_ok ) {
-      vm->retnil();
-      return NULL;
-   }
-
-   return recSet;
-}
-
-DBIRecordset *dbh_query_base( DBITransaction* dbt, const String &sql )
-{
-   dbi_status retval;
-   int64 affected;
-   DBIRecordset *recSet = dbt->query( sql, affected, retval );
-
-   if ( retval != dbi_ok ) {
-      String errorMessage;
-      dbt->getLastError( errorMessage );
-
-      throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-                                       .desc( errorMessage ) );
-   }
-
-   return recSet;
-}
-
-
-dbi_type *recordset_getTypes( DBIRecordset *recSet )
-{
-   if (recSet == NULL )
-      return NULL;
-   dbi_type *cTypes = (dbi_type *) memAlloc( sizeof( dbi_type ) * recSet->getColumnCount() );
-   recSet->getColumnTypes( cTypes );
-   return cTypes;
-}
-
-
 int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
    switch( i->type() ) {
@@ -115,7 +40,7 @@ int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
          return 1;
 
       case FLC_ITEM_STRING:
-         dbh->escapeString( *i->asString(), value );
+         dbh_escapeString( *i->asString(), value );
          value.prepend( "'" );
          value.append( "'" );
          return 1;
@@ -143,131 +68,6 @@ int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 }
 
 
-int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
-{
-   String errorMessage;
-
-   Item *sqlI = vm->param( startAt );
-   if ( sqlI == 0 || ! sqlI->isString() ) {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") );
-      return 0;
-   }
-
-   sql = *sqlI->asString();
-   sql.bufferize();
-
-   startAt++;
-
-   uint32 colonPos = sql.find( ":", 0 );
-
-   if ( colonPos != csh::npos )
-   {
-      // Check param 'startAt', if a dict or object, we treat things special
-      CoreDict *dict = NULL;
-      CoreObject *obj = NULL;
-
-      Item *psI = vm->param( startAt );
-      if ( psI != 0 ) {
-         if ( psI->isDict() )
-            dict = psI->asDict();
-         else if ( psI->isObject() )
-            obj = psI->asObject();
-      }
-
-      while ( colonPos != csh::npos )
-      {
-         Item *i = 0;
-         Item i_dummy;
-         int colonSize = 1;
-
-         if ( colonPos == sql.length() - 1 )
-         {
-            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
-                                                        __LINE__ )
-                     .desc( "Stray : charater at the end of query" ) );
-            return 0;
-         }
-         else
-         {
-            if ( sql.getCharAt( colonPos + 1 ) == ':' ) {
-               sql.remove( colonPos, 1 );
-               colonPos = sql.find( ":", colonPos + 1 );
-               continue;
-            }
-
-            uint32 commaPos = sql.find( ",", colonPos );
-            uint32 spacePos = sql.find( " ", colonPos );
-            uint32 ePos = commaPos < spacePos ? commaPos : spacePos;
-
-            if ( dict != NULL || obj != NULL )
-            {
-               String word = sql.subString( colonPos + 1, ePos );
-               if ( dict != NULL ) {
-                  // Reading from the dict
-                  Item wordI( &word );
-                  i = dict->find( wordI );
-               } else {
-                  // Must be obj
-                  i = obj->getProperty( word, i_dummy ) ? &i_dummy : 0;
-               }
-
-               if ( i == 0 ) {
-                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
-                             .desc( "Word expansion was not found in dictionary/object" )
-                             .extra( word ) );
-                  return 0;
-               }
-
-               colonSize += word.length();
-            }
-            else
-            {
-               AutoCString asTmp( sql.subString( colonPos + 1, ePos ) );
-               int pIdx = atoi( asTmp.c_str() );
-
-               if ( pIdx == 0 ) {
-                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
-                                                              __LINE__ )
-                          .desc( "Failed to parse colon expansion" )
-                          .extra( "from: " + sql.subString( colonPos ) ) );
-                  return 0;
-               }
-
-               if ( pIdx > 99 ) colonSize++; // it is 3 digits !?!?
-               if ( pIdx > 9 ) colonSize++;  // it is 2 digits
-               colonSize++;                  // it exists
-               i = vm->param( pIdx + ( startAt - 1 ) );
-
-               if ( i == 0 )
-               {
-                  errorMessage.writeNumber( (int64) pIdx );
-                  throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
-                       .desc("Positional expansion out of range")
-                       .extra( errorMessage ) );
-                  return 0;
-               }
-            }
-         }
-
-         String value;
-         if ( dbh_itemToSqlValue( dbh, i, value ) == 0 )
-         {
-            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_type_error, __LINE__ )
-                     .desc( "Failed to expand a value due to it being an unknown type" )
-                     .extra( "from: " + sql.subString( colonPos ) ) );
-            return 0;
-         }
-
-         sql.insert( colonPos, colonSize, value );
-         colonPos += value.length();
-         colonPos = sql.find( ":", colonPos );
-      }
-   }
-
-   return 1;
-}
-
 
 void dbh_return_recordset( VMachine *vm, DBIRecordset *rec )
 {
@@ -279,216 +79,154 @@ void dbh_return_recordset( VMachine *vm, DBIRecordset *rec )
    vm->retval( oth );
 }
 
-/******************************************************************************
- * Local Helper Functions - DBR recordset handle
- *****************************************************************************/
 
-int dbr_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item )
+void dbh_escapeString( const String& input, String& value )
 {
-   switch ( typ )
-   {
-      case dbit_string: {
-         String value;
-         dbi_status retval = dbr->asString( cIdx, value );
-         switch ( retval )
-         {
-            case dbi_ok: {
-               CoreString *gsValue = new CoreString;
-               gsValue->bufferize( value );
+   uint32 len = input.length();
+   uint32 pos = 0;
+   value.reserve( len + 8 );
 
-               item.setString( gsValue );
-            }
+   while( pos < len )
+   {
+      uint32 chr = input.getCharAt(pos);
+      switch( chr )
+      {
+         case '\\':
+            value.append(chr);
+            value.append(chr);
             break;
 
-            case dbi_nil_value:
-               break;
+         case '\'':
+            value.append( '\\' );
+            value.append( '\'' );
+            break;
 
-            default:
-               // TODO: handle error
-               return 0;
-         }
+         case '"':
+            value.append( '\\' );
+            value.append( '"' );
+            break;
+
+         default:
+            value.append( chr );
       }
-      break;
-
-      case dbit_integer: {
-         int32 value;
-         if ( dbr->asInteger( cIdx, value ) != dbi_nil_value )
-            item.setInteger( (int64) value );
-      }
-      break;
-
-      case dbit_boolean: {
-         bool value;
-         if ( dbr->asBoolean( cIdx, value ) != dbi_nil_value ) {
-            item.setBoolean( value );
-         }
-      }
-
-      case dbit_integer64: {
-         int64 value;
-         if ( dbr->asInteger64( cIdx, value ) != dbi_nil_value )
-            item.setInteger( value );
-      }
-      break;
-
-      case dbit_numeric: {
-         numeric value;
-         if ( dbr->asNumeric( cIdx, value ) != dbi_nil_value )
-            item.setNumeric( value );
-      }
-      break;
-
-      case dbit_date: {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-
-      case dbit_time: {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-
-      case dbit_datetime: {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-
-      default:
-         return 0;
+      ++pos;
    }
 
-   return 1;
 }
 
-int dbr_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
+void dbh_throwError( const char* file, int line, int code, const String& desc )
 {
-   if ( cIdx >= dbr->getColumnCount() ) {
-      String errorMessage = "Column index (";
-      errorMessage.writeNumber( (int64) cIdx );
-      errorMessage += ") is out of range";
+   VMachine* vm = VMachine::getCurrent();
 
-      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_column_range_error, __LINE__ )
-                                      .desc( errorMessage ) );
-      return 0;
-   } else if ( dbr->getRowIndex() == -1 ) {
-      throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
-                                      .desc( "Invalid current row index" ) );
-      return 0;
+   if ( vm != 0 )
+   {
+      int msgId = code - FALCON_DBI_ERROR_BASE - 1;
+
+      throw new DBIError( ErrorParam( code, line )
+             .desc( vm->moduleString( msgId ) )
+             .module( file )
+             .extra( desc )
+          );
    }
+   else
+   {
+      throw new DBIError( ErrorParam( code, line )
+         .desc( "Unknown error code" )
+         .module( file )
+         .extra( desc )
+      );
+   }
+}
 
-   return 1;
+//============================================================
+// Connection parameter parser
+//============================================================
+DBIConnParams::DBIConnParams():
+   m_pFirst(0)
+{
+   // add the default parameters
+   addParameter( "uid", m_sUser );
+   addParameter( "pwd", m_sPassword );
+   addParameter( "db", m_sDb );
+   addParameter( "port", m_sPort );
+   addParameter( "host", m_sHost );
 }
 
 
-void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
+DBIConnParams::~DBIConnParams()
 {
-   dbi_status retval;
-   int64 affectedRows;
-   DBIRecordset* rs;
-   
-   DBITransaction* tr;
-   
-   if ( vm->paramCount() == 0 )
-      tr = dbh->getDefaultTransaction();
-   else {
-      Item *trI = vm->param( 0 );
-      if ( trI == 0 || ! trI->isObject() || ! trI->asObject()->derivedFrom( "DBITransaction" ) )
+   Param* p = m_pFirst;
+   while( p != 0 )
+   {
+      Param* old = p;
+      p = p->m_pNext;
+      delete old;
+   }
+
+   m_pFirst = 0;
+}
+
+
+void DBIConnParams::addParameter( const String& name, String& value )
+{
+   Param* p = new Param( name, value );
+   p->m_pNext = m_pFirst;
+   m_pFirst = p;
+}
+
+
+bool DBIConnParams::parse( const String& connStr )
+{
+   uint32 pos = 0;
+
+   // find next ";"
+   uint32 pos1 = connStr.find(";");
+
+   do
+   {
+      pos1 = connStr.find( ";", pos );
+      String part = connStr.subString( pos, pos1 );
+      pos = pos1 + 1;
+
+      if ( ! parsePart( part ) )
       {
-         throw  new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "DBITransaction" ) );
-         return;
+         return false;
       }
-      CoreObject *trO = trI->asObject();
-      tr = static_cast<DBITransaction *>( trO->getUserData() );
    }
-   
-   rs = tr->query( sql, affectedRows, retval );
-   
-   // we don't expect a return recordset
-   #ifndef NDEBUG   
-      fassert( rs == 0 );
-   #else
-      delete rs; // can be 0
-   #endif
-      
-   if ( retval == dbi_ok )
-      vm->retval( affectedRows );
-   else {
-      String errorMessage;
-      tr->getLastError( errorMessage );
-      throw  new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
-               .desc( errorMessage ) );
-   }
+   while( pos1 != String::npos );
+
+   return true;
 }
 
-int dbr_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
+
+bool DBIConnParams::parsePart( const String& strPart )
 {
-   Item persistI;
+   // Break the record <key>=<value>
+   uint32 pos = strPart.find( "=" );
+   if ( pos == String::npos )
+      return false;
 
-   if ( ! self->getProperty( "_persist", persistI ) || persistI.isNil() ) {
-      // No _persist, loop through all public properties
-      const PropertyTable &pt = self->generator()->properties();
-      int pCount = pt.size();
-      int cIdx = 0;
+   String key = strPart.subString(0,pos);
+   key.trim();
 
-      for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
-         const String &p = *pt.getEntry( pIdx ).m_name;
-         if ( p.getCharAt( 0 ) != '_' ) {
-            Item i;
-            self->getProperty( p, i );
-            if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
-               columnNames[cIdx] = p;
-               cIdx++;
-            }
-         }
-      }
-
-      return cIdx;
-   } else if ( ! persistI.isArray() ) {
-      // They gave a _persist property, but it's not an array
-      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "_persist.type()!=A" ) );
-      return 0;
-   } else {
-      // They gave a _persist property, trust it
-      CoreArray *persist = persistI.asArray();
-      int cCount = persist->length();
-
-      for ( int cIdx=0; cIdx < cCount; cIdx++) {
-         const Item &pi = persist->at( cIdx );
-         if ( ! pi.isString() )
+   Param* p = m_pFirst;
+   while( p != 0 )
+   {
+      if ( p->m_name.compareIgnoreCase( key ) == 0 )
+      {
+         // Found!
+         p->m_output = strPart.subString( pos + 1 );
+         // use this convention to declare an empty, but given value.
+         if( p->m_output == "" )
          {
-            throw  new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
-                     .desc( "There was a non-string item in the \"_persist\" property" ) );
-            return 0;
+            p->m_output = "''";
          }
-         else
-            columnNames[cIdx] = *pi.asString();
+         return true;
       }
-
-      return cCount;
    }
+
+   // not found... it's an invalid key
+   return false;
 }
 
 }

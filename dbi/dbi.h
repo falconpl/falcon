@@ -19,8 +19,6 @@
 #include "../include/dbiservice.h"
 #include <falcon/modloader.h>
 
-#define DBI_ERROR_BASE 1300
-
 namespace Falcon
 {
 
