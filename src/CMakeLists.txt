@@ -30,6 +30,7 @@ set( SRC_FILES
     gtk_Button.cpp
     gtk_Buildable.cpp
     gtk_CheckButton.cpp
+    gtk_CheckMenuItem.cpp
     gtk_ColorButton.cpp
     gtk_ColorSelectionDialog.cpp
     gtk_ComboBox.cpp
@@ -129,6 +130,7 @@ set( HDR_FILES
     gtk_Button.hpp
     gtk_Buildable.hpp
     gtk_CheckButton.hpp
+    gtk_CheckMenuItem.hpp
     gtk_ColorButton.hpp
     gtk_ColorSelectionDialog.hpp
     gtk_ComboBox.hpp

@@ -30,6 +30,7 @@
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CheckButton.hpp"
+#include "gtk_CheckMenuItem.hpp"
 #include "gtk_ColorButton.hpp"
 #include "gtk_ColorSelectionDialog.hpp"
 #include "gtk_ComboBox.hpp"
@@ -175,6 +176,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::AspectFrame::modInit( self );
                     Falcon::Gtk::Item::modInit( self );
                         Falcon::Gtk::MenuItem::modInit( self );
+                            Falcon::Gtk::CheckMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
