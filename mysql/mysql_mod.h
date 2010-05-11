@@ -53,32 +53,6 @@ public:
 };
 
 
-class DBITransactionMySQL : public DBITransaction
-{
-private:
-   void begin();
-
-protected:
-   bool m_inTransaction;
-   MYSQL_STMT* m_statement;
-
-public:
-   DBITransactionMySQL( DBIHandle *dbh );
-
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void prepare( const String &query );
-   virtual void execute( const ItemArray& params );
-
-   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
-   virtual void begin();
-   virtual void commit();
-   virtual void rollback();
-   virtual void close();
-
-   DBIHandleMySQL* getMySql() const { return static_cast<DBIHandleMySQL*>( m_dbh ); }
-};
-
 class DBIHandleMySQL : public DBIHandle
 {
 protected:
@@ -97,6 +71,35 @@ public:
    // Throws a DBI error, using the last error code and description.
    void throwError( const char* file, int line, int code );
 };
+
+
+class DBITransactionMySQL : public DBITransaction
+{
+private:
+   //void m_begin();
+
+protected:
+   bool m_inTransaction;
+   MYSQL_STMT* m_statement;
+
+public:
+   DBITransactionMySQL( DBIHandle *dbh, bool bAutoCommit=false );
+
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void prepare( const String &query );
+   virtual void execute( const ItemArray& params );
+
+   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
+   virtual void close();
+   virtual int64 getLastInsertedId( const String& name = "" );
+
+   DBIHandleMySQL* getMySql() const { return static_cast<DBIHandleMySQL*>( m_dbh ); }
+};
+
 
 class DBIServiceMySQL : public DBIService
 {

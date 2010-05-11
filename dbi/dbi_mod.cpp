@@ -145,11 +145,11 @@ DBIConnParams::DBIConnParams():
    m_pFirst(0)
 {
    // add the default parameters
-   addParameter( "uid", m_sUser, m_szUser );
-   addParameter( "pwd", m_sPassword, m_szPassword );
-   addParameter( "db", m_sDb, m_szDb );
-   addParameter( "port", m_sPort, m_szPort );
-   addParameter( "host", m_sHost, m_szHost );
+   addParameter( "uid", m_sUser, &m_szUser );
+   addParameter( "pwd", m_sPassword, &m_szPassword );
+   addParameter( "db", m_sDb, &m_szDb );
+   addParameter( "port", m_sPort, &m_szPort );
+   addParameter( "host", m_sHost, &m_szHost );
 }
 
 

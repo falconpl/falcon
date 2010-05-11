@@ -204,7 +204,7 @@ class DBITransaction: public FalconData
 public:
    DBITransaction( DBIHandle *dbh, bool bAutoCommit = false );
    virtual ~DBITransaction();
-   
+
    /** Launches a query (an SQL operation bound to return a recordset).
     *
     * \param sql SQL query to execute
@@ -214,7 +214,7 @@ public:
     *     NULL if the query has an error.
     */
    virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
-   
+
    /** Launches a SQL operation not bound to return any recordset.
     *
     * If the statement actually returns a recordset, it is discarded.
@@ -224,7 +224,7 @@ public:
     * \param params An array of items that will be used to expand query variables.
     */
    virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
-   
+
    /** Prepare/execute step1
     */
    virtual void prepare( const String &query )=0;
@@ -235,7 +235,7 @@ public:
 
    /** Commits operations. */
    virtual void commit()=0;
-   
+
    /** Rollback the transaction. */
    virtual void rollback()=0;
 
@@ -286,7 +286,7 @@ public:
    //virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "", bool bBinary = false )=0;
 
    /** Starts a sub-transaction */
-   DBITransaction* startTransaction( bool bAutocommit=false, const String& name = "" );
+   virtual DBITransaction* startTransaction( bool bAutocommit=false, const String& name = "" ) =0;
 
    /** Get the DBIHandle associated with this transaction.
        */

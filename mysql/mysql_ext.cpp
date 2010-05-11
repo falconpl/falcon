@@ -64,7 +64,7 @@ FALCON_FUNC MySQL_init( VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   dbi_status status;
+   //dbi_status status;
    String connectErrorMessage;
    const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
 

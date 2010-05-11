@@ -56,7 +56,7 @@ private:
          m_pNext(0)
          {}
 
-      Param( const String& name, String& output, const char** szOut ):
+      Param( const String& name, String& output, const char** szOutput ):
          m_name( name ),
          m_output( output ),
          m_szOutput( szOutput ),
@@ -83,14 +83,14 @@ private:
 
    bool parsePart( const String& strPart );
 
-protected:
+public:
    /** Function adding a parse parameter */
    void addParameter( const String& name, String& value );
 
    /** Function adding a parse parameter and its c-string value */
    void addParameter( const String& name, String& value, const char** szValue );
 
-public:
+
    DBIConnParams();
    ~DBIConnParams();
 

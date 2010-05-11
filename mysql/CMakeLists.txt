@@ -47,6 +47,7 @@ MESSAGE(STATUS "Found mysql client library, ${MYSQL_LIBRARY}")
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(../include)
+INCLUDE_DIRECTORIES(../dbi)
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE

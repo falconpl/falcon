@@ -28,8 +28,8 @@ namespace Falcon
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbh, MYSQL_RES *res )
-    : DBIRecordset( dbh ),
+DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res )
+    : DBIRecordset( dbt ),
       m_res( res ),
       m_stmt(0)
 {
@@ -40,7 +40,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbh, MYSQL_RES *res )
 }
 
 DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_STMT *stmt )
-    : DBIRecordset( dbh ),
+    : DBIRecordset( dbt ),
        m_res( 0 ),
        m_stmt(stmt)
 {
@@ -116,24 +116,25 @@ bool DBIRecordsetMySQL::getColumnValue( int nCol, Item& value )
    {
       return false;
    }
-
+#if 0 // TODO
    switch( m_fields[nCol].type )
    {
 
    }
 
    value.fromUTF8( m_rowData[columnIndex] );
+#endif
    return true;
 }
 
 
-int DBIRecordsetMySQL::getRowCount()
+int64 DBIRecordsetMySQL::getRowCount()
 {
    return m_rowCount;
 }
 
 
-int DBIRecordsetMySQL::getRowIndex()
+int64 DBIRecordsetMySQL::getRowIndex()
 {
    return m_row;
 }
@@ -161,11 +162,11 @@ DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, bool bAutoCommit )
     : DBITransaction( dbh, bAutoCommit ),
     m_statement(0)
 {
-   begin();
+   begin();// which one?
 }
 
 
-virtual DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
@@ -198,7 +199,7 @@ virtual DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affe
 }
 
 
-virtual void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
+void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
@@ -214,13 +215,13 @@ virtual void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, 
 }
 
 
-virtual void DBITransactionMySQL::prepare( const String &query )
+void DBITransactionMySQL::prepare( const String &query )
 {
 
 }
 
 
-virtual void DBITransactionMySQL::execute( const ItemArray& params )
+void DBITransactionMySQL::execute( const ItemArray& params )
 {
 
 }
@@ -229,8 +230,10 @@ virtual void DBITransactionMySQL::execute( const ItemArray& params )
 void DBITransactionMySQL::begin()
 {
    int64 dummy;
-   call( "BEGIN", dummy );
-   mysql_autocommit( m_dbh, m_bAutoCommit );
+   ItemArray arr;
+   call( "BEGIN", dummy, arr );
+   MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
+   mysql_autocommit( conn, m_bAutoCommit );
    m_inTransaction = true;
 }
 
@@ -240,14 +243,16 @@ void DBITransactionMySQL::begin()
 void DBITransactionMySQL::commit()
 {
    int64 dummy;
-   call( "COMMIT", dummy );
+   ItemArray arr;
+   call( "COMMIT", dummy, arr );
    m_inTransaction = false;
 }
 
-dbi_status DBITransactionMySQL::rollback()
+void DBITransactionMySQL::rollback()
 {
    int64 dummy;
-   call( "ROLLBACK", dummy );
+   ItemArray arr;
+   call( "ROLLBACK", dummy, arr );
    m_inTransaction = false;
 }
 
@@ -257,6 +262,12 @@ void DBITransactionMySQL::close()
       commit();
 
    m_inTransaction = false;
+}
+
+int64 DBITransactionMySQL::getLastInsertedId( const String& name )
+{
+    // TODO
+    return -1;
 }
 
 
@@ -270,7 +281,7 @@ DBIHandleMySQL::~DBIHandleMySQL()
 
 DBITransaction *DBIHandleMySQL::startTransaction( bool bAuto, const String& name )
 {
-   DBITransactionMySQL *t = new DBITransactionMySQL( this, bAuto, name );
+   DBITransactionMySQL *t = new DBITransactionMySQL( this, bAuto );
 
    try
    {
@@ -297,12 +308,12 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
    mysql_set_character_set( m_conn, "utf8" );
 }
 
-
+#if 0
 int64 DBIHandleMySQL::getLastInsertedId( const String& sequenceName )
 {
    return mysql_insert_id( m_conn );
 }
-
+#endif
 
 void DBIHandleMySQL::close()
 {
@@ -315,17 +326,18 @@ void DBIHandleMySQL::close()
 void DBIHandleMySQL::throwError( const char* file, int line, int code )
 {
    const char *errorMessage = mysql_error( m_conn );
+   String extra; // dummy
 
    if ( errorMessage != NULL )
    {
       String description;
-      description.N( mysql_errno( m_conn ) ).A(": ");
+      description.N( (int64) mysql_errno( m_conn ) ).A(": ");
       description.A( errorMessage );
       dbh_throwError( file, line, code, extra );
    }
    else
    {
-      dbh_throwError( file, line, code );
+      dbh_throwError( file, line, code, extra );
    }
 }
 
@@ -344,7 +356,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
 
    // add MySQL specific parameters
    String sSocket, sFlags;
-   char *szSocket;
+   const char *szSocket;
    connParams.addParameter( "socket", sSocket, &szSocket );
    connParams.addParameter( "flags", sFlags );
 

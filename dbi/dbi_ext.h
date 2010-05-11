@@ -59,7 +59,7 @@ void Handle_close( VMachine *vm );
 
 void Recordset_discard( VMachine *vm );
 void Recordset_fetch( VMachine *vm );
-void Recordset_do( VMachine *vm );
+//void Recordset_do( VMachine *vm );
 
 void Recordset_getCurrentRow( VMachine *vm );
 void Recordset_getRowCount( VMachine *vm );

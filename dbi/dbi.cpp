@@ -29,7 +29,7 @@
  - <a target="_new" href="http://mysql.com/">MySQL</a>
  - <a target="_new" href="http://sqlite.org/">SQLite</a>
  - <a target="_new" href="http://it.wikipedia.org/wiki/ODBC">ODBC</a>
- 
+
  One or more database libraries are required to make DBI useful.
 
  @beginmodule dbi
@@ -109,8 +109,8 @@ FALCON_MODULE_DECL
          addParam( "count" );
    self->addClassMethod( rs_class, "fetch",&Falcon::Ext::Recordset_fetch ).asSymbol()->
             addParam( "item" )->addParam( "count" );
-   self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
-            addParam( "item" );
+   //self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
+   //         addParam( "item" );
 
    self->addClassMethod( rs_class, "getCurrentRow", &Falcon::Ext::Recordset_getCurrentRow );
    self->addClassMethod( rs_class, "getRowCount", &Falcon::Ext::Recordset_getRowCount );
