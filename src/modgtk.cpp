@@ -50,6 +50,7 @@
 #include "gtk_HPaned.hpp"
 #include "gtk_HRuler.hpp"
 #include "gtk_Image.hpp"
+#include "gtk_ImageMenuItem.hpp"
 #if GTK_MINOR_VERSION >= 18
 #include "gtk_InfoBar.hpp"
 #endif
@@ -177,6 +178,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Item::modInit( self );
                         Falcon::Gtk::MenuItem::modInit( self );
                             Falcon::Gtk::CheckMenuItem::modInit( self );
+                            Falcon::Gtk::ImageMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
