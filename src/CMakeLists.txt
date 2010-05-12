@@ -77,6 +77,7 @@ set( SRC_FILES
     gtk_Requisition.cpp
     gtk_Ruler.cpp
     gtk_ScaleButton.cpp
+    gtk_SeparatorMenuItem.cpp
     gtk_SpinButton.cpp
     gtk_Statusbar.cpp
     gtk_Stock.cpp
@@ -178,6 +179,7 @@ set( HDR_FILES
     gtk_Requisition.hpp
     gtk_Ruler.hpp
     gtk_ScaleButton.hpp
+    gtk_SeparatorMenuItem.hpp
     gtk_SpinButton.hpp
     gtk_Statusbar.hpp
     gtk_Stock.hpp

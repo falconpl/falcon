@@ -75,6 +75,7 @@
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
 #include "gtk_ScaleButton.hpp"
+#include "gtk_SeparatorMenuItem.hpp"
 #include "gtk_SpinButton.hpp"
 #include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
@@ -179,6 +180,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::MenuItem::modInit( self );
                             Falcon::Gtk::CheckMenuItem::modInit( self );
                             Falcon::Gtk::ImageMenuItem::modInit( self );
+                            Falcon::Gtk::SeparatorMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
