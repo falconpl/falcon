@@ -80,6 +80,7 @@
 #include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
+#include "gtk_TearoffMenuItem.hpp"
 #include "gtk_TextBuffer.hpp"
 #include "gtk_TextIter.hpp"
 #include "gtk_TextMark.hpp"
@@ -181,6 +182,7 @@ FALCON_MODULE_DECL
                             Falcon::Gtk::CheckMenuItem::modInit( self );
                             Falcon::Gtk::ImageMenuItem::modInit( self );
                             Falcon::Gtk::SeparatorMenuItem::modInit( self );
+                            Falcon::Gtk::TearoffMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );

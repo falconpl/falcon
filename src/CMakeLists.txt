@@ -82,6 +82,7 @@ set( SRC_FILES
     gtk_Statusbar.cpp
     gtk_Stock.cpp
     gtk_Table.cpp
+    gtk_TearoffMenuItem.cpp
     gtk_TextBuffer.cpp
     gtk_TextIter.cpp
     gtk_TextMark.cpp
@@ -184,6 +185,7 @@ set( HDR_FILES
     gtk_Statusbar.hpp
     gtk_Stock.hpp
     gtk_Table.hpp
+    gtk_TearoffMenuItem.hpp
     gtk_TextBuffer.hpp
     gtk_TextIter.hpp
     gtk_TextMark.hpp
