@@ -92,6 +92,7 @@
 #include "gtk_ToggleButton.hpp"
 #include "gtk_Toolbar.hpp"
 #include "gtk_ToolItem.hpp"
+#include "gtk_ToolItemGroup.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_VolumeButton.hpp"
@@ -215,7 +216,10 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::VPaned::modInit( self );
                 Falcon::Gtk::Table::modInit( self );
                 Falcon::Gtk::TextView::modInit( self );
-                Falcon::Gtk::Toolbar::modInit(self );
+                Falcon::Gtk::Toolbar::modInit( self );
+#if GTK_MINOR_VERSION >= 20
+                Falcon::Gtk::ToolItemGroup::modInit( self );
+#endif
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Invisible::modInit( self );

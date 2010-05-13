@@ -94,6 +94,7 @@ set( SRC_FILES
     gtk_ToggleButton.cpp
     gtk_Toolbar.cpp
     gtk_ToolItem.cpp
+    gtk_ToolItemGroup.cpp
     gtk_ToolShell.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
@@ -198,6 +199,7 @@ set( HDR_FILES
     gtk_ToggleButton.hpp
     gtk_Toolbar.hpp
     gtk_ToolItem.hpp
+    gtk_ToolItemGroup.hpp
     gtk_ToolShell.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
