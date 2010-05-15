@@ -20,6 +20,7 @@
 #include <falcon/engine.h>
 #include "mysql_mod.h"
 #include "dbi_mod.h"
+#include "dbi_st.h"
 
 namespace Falcon
 {
@@ -158,11 +159,9 @@ void DBIRecordsetMySQL::close()
  * Transaction class
  *****************************************************************************/
 
-DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, bool bAutoCommit )
-    : DBITransaction( dbh, bAutoCommit ),
-    m_statement(0)
+DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings )
+    : DBITransaction( dbh, settings )
 {
-   begin();// which one?
 }
 
 
@@ -233,7 +232,7 @@ void DBITransactionMySQL::begin()
    ItemArray arr;
    call( "BEGIN", dummy, arr );
    MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
-   mysql_autocommit( conn, m_bAutoCommit );
+   mysql_autocommit( conn, m_settings->m_bAutocommit );
    m_inTransaction = true;
 }
 
@@ -271,6 +270,11 @@ int64 DBITransactionMySQL::getLastInsertedId( const String& name )
 }
 
 
+DBITransaction *DBITransactionMySQL::startTransaction( const String& settings )
+{
+   throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NO_SUBTRANS, __LINE__ ) );
+}
+
 /******************************************************************************
  * DB Handler class
  *****************************************************************************/
@@ -279,9 +283,35 @@ DBIHandleMySQL::~DBIHandleMySQL()
    DBIHandleMySQL::close();
 }
 
-DBITransaction *DBIHandleMySQL::startTransaction( bool bAuto, const String& name )
+bool DBIHandleMySQL::setTransOpt( const String& params )
 {
-   DBITransactionMySQL *t = new DBITransactionMySQL( this, bAuto );
+   return m_settings.parse( params );
+}
+
+const DBISettingParams* DBIHandleMySQL::transOpt() const
+{
+   return &m_settings;
+}
+
+DBITransaction *DBIHandleMySQL::startTransaction( const String &options )
+{
+   DBITransactionMySQL* t;
+
+   if ( options == "" )
+   {
+      t = new DBITransactionMySQL( this, new DBISettingParams( m_settings ) );
+   }
+   else
+   {
+      DBISettingParams* settings = new DBISettingParams;
+      if (! settings->parse( options ) )
+      {
+         delete settings;
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS ).extra( options ) );
+      }
+
+      t = new DBITransactionMySQL( this, settings );
+   }
 
    try
    {
@@ -364,26 +394,23 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
 
    if ( conn == NULL )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__)
-            .desc( FAL_STR( dbi_msg_nomem ) )
-            );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
    }
 
    if( ! connParams.parse( parameters ) )
    {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-         .desc( FAL_STR( dbi_msg_connparams ) )
          .extra( parameters )
       );
    }
 
-   long szFlags = 0;
+   //long szFlags = 0;
    // TODO parse flags
 
    if ( mysql_real_connect( conn,
          connParams.m_szHost,
          connParams.m_szUser,
-         connParamsm_szPasswd,
+         connParams.m_szPassword,
          connParams.m_szDb,
          connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
          szSocket, 0 ) == NULL
@@ -394,7 +421,6 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
       mysql_close( conn );
 
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
-              .desc( FAL_STR( dbi_msg_connect ) )
               .extra( errorMessage )
            );
    }
@@ -407,8 +433,7 @@ CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
    Item *cl = vm->findWKI( "MySQL" );
    if ( cl == 0 || ! cl->isClass() )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ )
-               .desc( FAL_STR( dbi_msg_connect ) ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
    }
 
    CoreObject *obj = cl->asClass()->createInstance();

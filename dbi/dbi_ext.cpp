@@ -24,7 +24,7 @@
 #include "dbi_mod.h"
 #include "dbi_st.h"
 
-#include <dbiservice.h>
+#include <falcon/srv/dbi_service.h>
 
 /*#
    @beginmodule dbi
@@ -39,24 +39,28 @@ namespace Ext {
  *****************************************************************************/
 
 /*#
- @function DBIConnect
- @brief Connect to a database server.
- @param String SQL connection string.
- @return an instance of @a DBIHandle.
+   @function DBIConnect
+   @brief Connect to a database server.
+   @param conn SQL connection string.
+   @optparam trops Default transaction options to be applied to
+                 transactions created with the returned handle.
+   @return an instance of @a DBIHandle.
+   @raise DBIError if the connection fails.
 
- Known connection strings are:
-  - <code>pgsql:normal postgresql connection string</code>
-  - <code>sqlite3:sqlite_db_filename.db</code>
-  - <code>mysql:normal mysql connection string</code>
+   See @a Handle.trops for @b tropts values
+
+
 */
 
 void DBIConnect( VMachine *vm )
 {
    Item *paramsI = vm->param(0);
-   if (  paramsI == 0 || ! paramsI->isString() ) {
+   Item *i_tropts = vm->param(1);
+   if (  paramsI == 0 || ! paramsI->isString()
+         || ( i_tropts != 0 && ! i_tropts->isString() ) )
+   {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .extra( "S" ) );
-      return;
+                                         .extra( "S,[S]" ) );
    }
 
    String *params = paramsI->asString();
@@ -64,20 +68,35 @@ void DBIConnect( VMachine *vm )
    String connString = "";
    uint32 colonPos = params->find( ":" );
 
-   if ( colonPos != csh::npos ) {
+   if ( colonPos != csh::npos )
+   {
       provName = params->subString( 0, colonPos );
       connString = params->subString( colonPos + 1 );
    }
 
-   DBIService *provider = theDBIService.loadDbProvider( vm, provName );
-   // if it's 0, the service has already raised an error in the vm and we have nothing to do.
-   fassert( provider != 0 );
+   DBIHandle *hand = 0;
+   try
+   {
+      DBIService *provider = theDBIService.loadDbProvider( vm, provName );
+      // if it's 0, the service has already raised an error in the vm and we have nothing to do.
+      fassert( provider != 0 );
 
-   DBIHandle *hand = provider->connect( connString, false );
+      hand = provider->connect( connString, false );
+      if( i_tropts != 0 )
+      {
+         hand->setTransOpt( *i_tropts->asString() );
+      }
 
-   // great, we have the database handler open. Now we must create a falcon object to store it.
-   CoreObject *instance = provider->makeInstance( vm, hand );
-   vm->retval( instance );
+      // great, we have the database handler open. Now we must create a falcon object to store it.
+      CoreObject *instance = provider->makeInstance( vm, hand );
+      vm->retval( instance );
+   }
+   catch( DBIError* error )
+   {
+      dbh_addErrorDescription( vm, error );
+      delete hand;
+      throw error;
+   }
 }
 
 
@@ -149,7 +168,15 @@ static void internal_query_call( VMachine* vm, bool isQuery )
 
 void Transaction_query( VMachine *vm )
 {
-   internal_query_call( vm, true );
+   try
+   {
+      internal_query_call( vm, true );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 /*#
@@ -162,7 +189,15 @@ void Transaction_query( VMachine *vm )
 
 void Transaction_call( VMachine *vm )
 {
-   internal_query_call( vm, false );
+   try
+   {
+      internal_query_call( vm, false );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 /*#
@@ -184,7 +219,15 @@ void Transaction_prepare( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->prepare( *i_sql->asString() );
+   try
+   {
+      dbt->prepare( *i_sql->asString() );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 
@@ -205,7 +248,16 @@ void Transaction_execute( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->execute( params );
+
+   try
+   {
+      dbt->execute( params );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 
@@ -224,19 +276,42 @@ void Transaction_close( VMachine *vm )
 /*#
    @method tropen Transaction
    @brief Start a new sub-transaction of this transaction.
+   @optparam options A string containing the transaction options.
    @throw DBIError if the database engine doesn't support sub-transactions.
 
    Some database drivers allow to open sub-transactions whose effects are limited to the
    parent transaction, until it is finally committed in the database.
 
    If the database doesn't support sub-transactions, an error will be raised.
+
+   If the @b options parameter is not specified, the options are inherited from the
+   parent options; otherwise the specified options are applied (defaults are @b not taken
+   from the parent transaction, but from the system defaults). See @a Handle.trops for
+   a description of the transaction options, or refer to the driver manual for driver-specific
+   options.
 */
 
 void Transaction_tropen( VMachine *vm )
 {
+   Item* i_options = vm->param(0);
+   if( i_options != 0 && ! i_options->isString() )
+   {
+      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
+            .extra( "[S]") );
+   }
+
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   internal_tropen( vm, dbt->startTransaction() );
+
+   try
+   {
+      internal_tropen( vm, dbt->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 /*#
@@ -316,18 +391,106 @@ void Transaction_rollback( VMachine *vm )
  **********************************************************/
 
 /*#
- @method tropen Handle
- @brief Start a transaction.
- @return an instance of @a Transaction
+   @method trops Handle
+   @biref Sets the default options for transaction created by this handle.
+   @param options The string containing the transaction options.
+   @raise DBIError if the otpions are invalid.
 
- This method returns a new transaction.
+   This method sets the default options that are used to create new transactions
+   (i.e. that are applied when @a Handle.tropen is called without specifying
+   per-transaction options).
+
+   The options are set using a string where the settings are specified as <setting>=<value>
+   pairs.
+
+   Common options to all drivers include the followings:
+
+    - prefetch: number of records to be pre-fetched at each query. The value
+             may be "all" to wholly fetch queries locally, "none" to prefetch
+             none or an arbitrary number of rows to be read from the server.
+             By default, it's "all".
+    - autocommit: Performs a transaction commit after each sql command.
+                  Can be "on" or "off"; it's "off" by default.
+    - cursor: Number of records returned by a query that should trigger the creation of a
+              server side cursor. Can be "none" to prevent creation of server
+              side cursor (the default) "all" to always create a cursor or an arbitrary
+              number to create a server side cursor only if the query returns at least
+              the indicated number of rows.
+    - name: Some engine allow to create named transactions that can be directly referenced
+            in SQL Statements from other transactions. If this feature is supported by the
+            engine, the transaction receives this name, otherwise the option is ignored.
+
+    Different database drivers may specify more transaction options; refer to their documentation
+    for further parameters.
+*/
+
+void Handle_trops( VMachine *vm )
+{
+   Item* i_options = vm->param(0);
+
+   if( i_options == 0 || ! i_options->isString() )
+   {
+      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
+           .extra( "S") );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   if ( ! dbh->setTransOpt( i_options == 0 ? "" : *i_options->asString() ) )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS )
+            .desc(FAL_STR( dbi_msg_option_error ) )
+            .extra( *i_options->asString() )
+            );
+   }
+}
+
+
+/*#
+   @method tropen Handle
+   @brief Start a transaction.
+   @optparam options A string containing transaction options.
+   @return an instance of @a Transaction.
+   @raise DBIError if the database cannot open the transaction.
+   @raise ParamError if the options are invalid cannot open the transaction.
+
+   This method returns a new transaction. The transaction is the base object through
+   which the user can issue queries and other SQL commands to the database.
+
+   SQL database engines that doesn't support transaction will raise an error if
+   more than one transaction is open; however, it is granted that at least a transaction
+   can be validly open on all the DB engines.
+
+   If the @b options parameter is not specified, the options are inherited from the
+   general options; otherwise the specified options are applied. Defaults are @b not taken
+   from the general settings, but from the system defaults; this means that it's necessary
+   to re-specify all the options in the option string even if previously specified.
+
+   See @a Handle.trops for a description of the transaction options, or refer to the driver
+   manual for driver-specific options.
 */
 
 void Handle_tropen( VMachine *vm )
 {
+   Item* i_options = vm->param(0);
+   if( i_options != 0 && ! i_options->isString() )
+   {
+      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
+           .extra( "[S]") );
+   }
+
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-   internal_tropen( vm, dbh->startTransaction() );
+   try
+   {
+      internal_tropen( vm, dbh->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
+   }
+   catch( Error* e )
+   {
+      dbh_addErrorDescription( vm, e );
+      throw;
+   }
 }
 
 /*#

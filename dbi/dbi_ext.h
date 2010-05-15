@@ -50,6 +50,7 @@ void Transaction_getLastID( VMachine *vm );
 //=====================
 
 void Handle_tropen( VMachine *vm );
+void Handle_trops( VMachine *vm );
 void Handle_close( VMachine *vm );
 
 

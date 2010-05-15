@@ -26,6 +26,8 @@ FAL_MODSTR( dbi_msg_connparams, "Malformed or invalid connection parameter strin
 FAL_MODSTR( dbi_msg_connect, "Connection to database failed" );
 FAL_MODSTR( dbi_msg_query, "Database query error" );
 FAL_MODSTR( dbi_msg_query_empty, "Query didn't return any result" );
-
+FAL_MODSTR( dbi_msg_option_error, "Unrecognized or invalid options" );
+FAL_MODSTR( dbi_msg_no_subtrans, "DBEngine doesn't support sub-transactions" );
+FAL_MODSTR( dbi_msg_no_multitrans, "DBEngine doesn't support multiple transactions" );
 
 /* dbi_st.h */

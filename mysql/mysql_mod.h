@@ -16,7 +16,7 @@
 #ifndef DBI_MYSQL_H
 #define DBI_MYSQL_H
 
-#include "../include/dbiservice.h"
+#include <falcon/srv/dbi_service.h>
 
 #include <mysql.h>
 
@@ -57,15 +57,19 @@ class DBIHandleMySQL : public DBIHandle
 {
 protected:
    MYSQL *m_conn;
+   DBISettingParams m_settings;
 
 public:
    DBIHandleMySQL();
    DBIHandleMySQL( MYSQL *conn );
    virtual ~DBIHandleMySQL();
 
+   virtual bool setTransOpt( const String& params );
+   virtual const DBISettingParams* transOpt() const;
+
    MYSQL *getConn() { return m_conn; }
 
-   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
+   virtual DBITransaction* startTransaction( const String& options );
    virtual void close();
 
    // Throws a DBI error, using the last error code and description.
@@ -75,22 +79,19 @@ public:
 
 class DBITransactionMySQL : public DBITransaction
 {
-private:
-   //void m_begin();
-
 protected:
    bool m_inTransaction;
    MYSQL_STMT* m_statement;
 
 public:
-   DBITransactionMySQL( DBIHandle *dbh, bool bAutoCommit=false );
+   DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings );
 
    virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void prepare( const String &query );
    virtual void execute( const ItemArray& params );
 
-   virtual DBITransaction* startTransaction( bool bAutocommit = false, const String& name = "" );
+   virtual DBITransaction* startTransaction( const String& settings );
    virtual void begin();
    virtual void commit();
    virtual void rollback();

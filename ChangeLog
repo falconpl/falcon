@@ -1,27 +1,2 @@
-Version 0.9.10
-  * fixed: Ported to Falcon Eagle.
-
-Version 0.9.8
-  * major: More ergonomic approach to transaction/database handle separation
-           on C++ side of the service code.
-  * fixed: SQLLite query wasn't executing the query code.
-  * fixed: Uninit variables in ODBC driver code may have caused text queries
-           to crash
-  * fixed: Sqllite3 step logic made the first row from queries to be discared
-
-
-Version 0.9.6
-  * major: More ergonomic approach to transaction/database handle separation
-           on C++ side of the service code.
-  * fixed: SQLLite query wasn't executing the query code.
-  * fixed: Uninit variables in ODBC driver code may have caused text queries
-           to crash
-
-Version 0.9.4
-  * fixed: updated to Falcon Albatros
-
-Version 0.9.2
-  * Fixed: Escaping escaped UTF8 one level too much.
-  * Major: added BLOB support (still to be finalized).
-  * Performance: Added optional re-useable parameters for strings and
-                 timestamps.
+DBI( 1.0 )
+  * First official release

@@ -15,7 +15,8 @@
 
 #include "dbi.h"
 #include "dbi_st.h"
-#include <falcon/module.h>
+
+#include <falcon/srv/dbi_service.h>
 
 namespace Falcon
 {

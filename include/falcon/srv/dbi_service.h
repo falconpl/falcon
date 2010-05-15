@@ -1,6 +1,6 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: dbiservice.h
+ * FILE: dbi_service.h
  *
  * DBI service that DBI drivers inherit from and implement
  * -------------------------------------------------------------------
@@ -8,7 +8,7 @@
  * Begin: Sun, 23 Dec 2007 19:22:38 +0100
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2007-2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -35,6 +35,9 @@
 #define FALCON_DBI_ERROR_CONNECT          (FALCON_DBI_ERROR_BASE+5)
 #define FALCON_DBI_ERROR_QUERY            (FALCON_DBI_ERROR_BASE+6)
 #define FALCON_DBI_ERROR_QUERY_EMPTY      (FALCON_DBI_ERROR_BASE+7)
+#define FALCON_DBI_ERROR_OPTPARAMS        (FALCON_DBI_ERROR_BASE+8)
+#define FALCON_DBI_ERROR_NO_SUBTRANS      (FALCON_DBI_ERROR_BASE+9)
+#define FALCON_DBI_ERROR_NO_MULTITRANS    (FALCON_DBI_ERROR_BASE+10)
 
 namespace Falcon
 {
@@ -58,6 +61,214 @@ typedef enum {
    dbit_blob
 }
 dbi_type;
+
+
+
+/** An utility used by many drivers to break connection strings.
+   Base class for more specific
+*/
+class DBIParams
+{
+
+protected:
+   /** A Specification of a connection parameter.
+
+      The parameter is a pair of a parameter name (as "uid" or "pwd") and
+      of the output parameter, that is a pointer to a string that will be filled
+      with the parameter name.
+   */
+   class Param
+   {
+   public:
+      Param( const String& name, String& output ):
+         m_name( name ),
+         m_output( output ),
+         m_szOutput( 0 ),
+         m_cstrOut(0),
+         m_pNext(0)
+         {}
+
+      Param( const String& name, String& output, const char** szOutput ):
+         m_name( name ),
+         m_output( output ),
+         m_szOutput( szOutput ),
+         m_cstrOut(0),
+         m_pNext(0)
+         {}
+
+      ~Param();
+
+      /** Parses an input string.
+       * @param value A string in format <name>=<value> or <name>=
+       * @return True if the name matches (case insensitive) the name of this parameter.
+       */
+      bool parse( const String& value );
+
+      String m_name;
+      String &m_output;
+      const char** m_szOutput;
+      AutoCString* m_cstrOut;
+      Param* m_pNext;
+   };
+
+   Param* m_pFirst;
+
+   bool parsePart( const String& strPart );
+
+   DBIParams();
+
+public:
+   virtual ~DBIParams();
+
+   /** Function adding a parse parameter */
+   virtual void addParameter( const String& name, String& value );
+
+   /** Function adding a parse parameter and its c-string value */
+   virtual void addParameter( const String& name, String& value, const char** szValue );
+
+   /** Parse the parameter=value string */
+   virtual bool parse( const String& connStr );
+};
+
+
+/** Parameter parser for the settings string.
+
+    The setting string is used at DBIConnect,
+    Connection.setOptions and Connection.tropen;
+    they determine the behavior of db fetches, and may
+    be implemented differently by different database drivers.
+
+    Setting options are:
+
+    - prefetch: number of records to be pre-fetched at each query. The value
+                may be "all" to wholly fetch queries locally, "none" to prefetch
+                none or an arbitrary number of rows to be read from the server.
+                By default, it's "all".
+    - autocommit: Performs a transaction commit after each sql command.
+                  Can be "on" or "off"; it's "off" by default.
+    - cursor: Number of records returned by a query that should trigger the creation of a
+              server side cursor. Can be "none" to prevent creation of server
+              side cursor (the default) "all" to always create a cursor or an arbitrary
+              number to create a server side cursor only if the query returns at least
+              the indicated number of rows.
+    - name: Some engine allow to create named transactions that can be directly referenced
+            in SQL Statements from other transactions. If this feature is supported by the
+            engine, the transaction receives this name, otherwise the option is ignored.
+
+    After a complete local prefetch, all the records
+    are moved to the client, so it's possible to issue another query returning a different
+    recordset. If moving all the returned rows to the client is not feasible, but it's still
+    necessary to fetch rows from a query and performing other queries based on the retrieved
+    results, then it's necessary to create a cursor on the server side. Many SQL engines allow
+    to specify to open the cursor directly on the SQL statement, but this option is given
+    to provide the user with the ability to access this feature without using engine-specific
+    SQL.
+
+    Notice that server-side cursor and complete local prefetch are alternative methods
+    to make the recordset consistent across different queries in the same transaction,
+    so it's pretty useless to use both of them at the same time.
+
+    This class transforms the given options in C variables that can easily be read by
+    the drivers. Also, drivers can add their own option parsing code by overriding the
+    DBIConnection::parseOptions method.
+*/
+
+class DBISettingParams: public DBIParams
+{
+private:
+   String m_sCursor;
+   String m_sAutocommit;
+   String m_sPrefetch;
+
+   static const bool defaultAutocommit = false;
+   static const int defaultCursor = -1;
+   static const int defaultPrefetch = -1;
+
+public:
+   DBISettingParams();
+   DBISettingParams( const DBISettingParams & other );
+   virtual ~DBISettingParams();
+
+   /** Specific parse analizying the options */
+   virtual bool parse( const String& connStr );
+
+   /** True if the transaction should be autocommit, false otherwise. */
+   bool m_bAutocommit;
+
+   /** Cursor invocation treshold.
+    * Will be -1 if cursor should be never used, 0 if always used,
+    * a positive number for a given treshold.
+    */
+   int64 m_nCursorThreshold;
+
+   /** Number of rows to be pre-fetched after queries.
+      Will be -1 if recordset must be completely prefetched, 0 to disable pre-fetching
+      and a positive number to ask for prefetching of that many rows.
+   */
+   int64 m_nPrefetch;
+
+   /** Name for this transaction. */
+   String m_sName;
+
+};
+
+
+/** An utility used by many drivers to break connection strings.
+
+   This is just an utility class that a driver may use to break connection
+   strings into parameters for its DB system. A driver is free not to use
+   it if, for example, it thinks it should pass the string as-is to the
+   underlying DB system.
+
+   The format of the string respects ODBC standards ("parameter=value;..."),
+   so the connection stings for systems that don't rely on that to initialize the connections
+   (as, for example SQLlite and MySQL) looks like ODBC connection, giving
+   a flavor of portability of the connection string across different system.
+
+   The utility works like this: a set of parameters are declared via the
+   method addParameter(); other than the parameter name, this method allows
+   to declare a parameter value, that is, a locally defined string where
+   the parameter value will be placed if found, and optionally a C zero terminated
+   string where to put the AutoCString result (converting the string in utf-8),
+   in case the driver needs this  feature.
+
+   If the required parameter is not found in the parsed string, the string is left
+   empty, and the C ZTstring, if provided, is set to a null pointer. If it's found,
+   but empty, then the string is set to a pair of double quotes (""), and the c ZTString,
+   if provided, is set to an empty string.
+
+   To ensure a minimal coherence across different drivers, and to reduce the effort of the
+   implementers, a minimal set of common parameters are added by the constructor of this
+   class. The variables where the parameter values are placed are provided by the class
+   as well. Namely:
+
+   - uid= The user id for the connection (values placed in m_sUser and m_szUser).
+   - pwd= Password for the connection (values placed in m_sPassword and m_szPassword).
+   - db= Name of the DB to open (values in m_sDb and m_szDb).
+   - host= Host where to perform the connection (values placed in m_sHost and m_szHost).
+   - port= TCP Port where the server is listening (values in m_sPort and m_szPort).
+*/
+class DBIConnParams: public DBIParams
+{
+public:
+   DBIConnParams( bool bNoDefaults = false );
+   virtual ~DBIConnParams();
+
+   // Base parameters known by all systems.
+   String m_sUser;
+   String m_sPassword;
+   String m_sHost;
+   String m_sPort;
+   String m_sDb;
+
+   const char* m_szUser;
+   const char* m_szPassword;
+   const char* m_szHost;
+   const char* m_szPort;
+   const char* m_szDb;
+};
+
+
 
 #if 0
 /**
@@ -196,13 +407,20 @@ protected:
  * DBITransactions may live either inside the DBIHandle class that originated them
  * (representing the "default" transaction of the DB), or can be stored into
  * wrapping CoreObjects for scripts.
+ *
+ * Transaction subclasses must also keep tracks of the parameter they receive.
+ * Parameters are set via an instance of the DBISettingParams, which are owned
+ * and deleted by the DBITransaction instance on exit.
+ *
+ * Subclasses may use different instances of DBISettingsParams. However, it shouldn't
+ * be allowed to change the parameters after the transaction creation.
  */
 
 class DBITransaction: public FalconData
 {
 
 public:
-   DBITransaction( DBIHandle *dbh, bool bAutoCommit = false );
+   DBITransaction( DBIHandle *dbh, DBISettingParams* params );
    virtual ~DBITransaction();
 
    /** Launches a query (an SQL operation bound to return a recordset).
@@ -286,24 +504,20 @@ public:
    //virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "", bool bBinary = false )=0;
 
    /** Starts a sub-transaction */
-   virtual DBITransaction* startTransaction( bool bAutocommit=false, const String& name = "" ) =0;
+   virtual DBITransaction* startTransaction( const String& options ) =0;
 
    /** Get the DBIHandle associated with this transaction.
        */
    DBIHandle *getHandle() const { return m_dbh; }
 
-   /** Gets the autocommit status of this transaction.
-    *
-    * @return autocommit status.
-    */
-   bool isAutoCommit() const { return m_bAutoCommit; }
+   virtual const DBISettingParams* params() const { return m_settings; }
 
    virtual void gcMark( uint32 ) {};
    virtual FalconData* clone() const { return 0; }
 
 protected:
    DBIHandle *m_dbh;
-   bool m_bAutoCommit;
+   DBISettingParams* m_settings;
 };
 
 
@@ -329,6 +543,18 @@ public:
    DBIHandle() {}
    virtual ~DBIHandle() {}
 
+   /** Sets the common transaction options.
+    *
+    *    Used to change the default values for transaction creation.
+    *
+    * @param params Parameters for the transaction (see DBISettingParams).
+    * @return true on success, false on parse error
+    */
+   virtual bool setTransOpt( const String& params ) = 0;
+
+   /** Return the transaction settings used as the default options by this connection. */
+   virtual const DBISettingParams* transOpt() const = 0;
+
    /**
     * Starts a new transaction.
     *
@@ -337,7 +563,7 @@ public:
     * \return a DBITransaction instance on success,
     *         0 on error (use getLastError to determine what happened).
     */
-   virtual DBITransaction *startTransaction( bool bAutoCommit = false, const String& name = "" )=0;
+   virtual DBITransaction *startTransaction( const String& options )=0;
 
     /**
     * Close the connection with the Database.
@@ -347,6 +573,7 @@ public:
 
    virtual void gcMark( uint32 ) {}
    virtual FalconData* clone() const { return 0; }
+
 };
 
 
@@ -373,6 +600,7 @@ public:
     * module to initialize global data.
     */
    virtual void init()=0;
+
 
    /**
     * Initialization hook
@@ -449,6 +677,7 @@ public:
       Error( "DBIError", params )
       {}
 };
+
 
 }
 

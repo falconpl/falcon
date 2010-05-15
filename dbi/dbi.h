@@ -16,8 +16,8 @@
 #ifndef DBI_H
 #define DBI_H
 
-#include "../include/dbiservice.h"
 #include <falcon/modloader.h>
+#include <falcon/srv/dbi_service.h>
 
 namespace Falcon
 {

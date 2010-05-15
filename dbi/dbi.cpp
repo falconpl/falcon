@@ -55,7 +55,7 @@ FALCON_MODULE_DECL
 
    // main factory function
    self->addExtFunc( "connect", &Falcon::Ext::DBIConnect )->
-      addParam("params");
+      addParam("params")->addParam("trops");
 
 
 
@@ -76,7 +76,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( trans_class, "rollback", &Falcon::Ext::Transaction_rollback );
    self->addClassMethod( trans_class, "close", &Falcon::Ext::Transaction_close );
    self->addClassMethod( trans_class, "tropen", &Falcon::Ext::Transaction_tropen ).asSymbol()
-         ->addParam("autocommit")->addParam("name");
+         ->addParam("options");
    self->addClassMethod( trans_class, "getLastID",          &Falcon::Ext::Transaction_getLastID ).asSymbol()
          ->addParam("name");
 
@@ -91,8 +91,10 @@ FALCON_MODULE_DECL
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%Handle", false );
    handler_class->setWKS( true );
+   self->addClassMethod( handler_class, "trops", &Falcon::Ext::Handle_trops ).asSymbol()
+      ->addParam("options");
    self->addClassMethod( handler_class, "tropen", &Falcon::Ext::Handle_tropen ).asSymbol()
-      ->addParam("autocommit")->addParam("name");
+      ->addParam("options");
    self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );
 
 
