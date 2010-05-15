@@ -5,10 +5,11 @@
 ####################################################################
 
 if( WIN32 OR APPLE )
-   option(FALCON_WITH_INTERNAL_ZLIB "Use internal zlib library" ON)
+   set(_zlib_default ON)
 else( WIN32 OR APPLE )
-   option(FALCON_WITH_INTERNAL_ZLIB "Use internal zlib library" OFF)
+   set(_zlib_default OFF)
 endif( WIN32 OR APPLE)
+option(FALCON_WITH_INTERNAL_ZLIB "Use internal zlib library" ${_zlib_default})
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
