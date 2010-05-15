@@ -5,10 +5,11 @@
 ####################################################################
 
 if( WIN32 OR APPLE )
-   option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" on)
+   set(_pcre_default ON)
 else( WIN32 OR APPLE )
-   option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" off)
+   set(_pcre_default OFF)
 endif( WIN32 OR APPLE)
+option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" ${_pcre_default})
 
 if(WIN32)
    set( SYS_RC regex.rc)
