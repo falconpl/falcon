@@ -29,5 +29,7 @@ FAL_MODSTR( dbi_msg_query_empty, "Query didn't return any result" );
 FAL_MODSTR( dbi_msg_option_error, "Unrecognized or invalid options" );
 FAL_MODSTR( dbi_msg_no_subtrans, "DBEngine doesn't support sub-transactions" );
 FAL_MODSTR( dbi_msg_no_multitrans, "DBEngine doesn't support multiple transactions" );
+FAL_MODSTR( dbi_msg_unprep_exec, "Called 'execute' without having previously called 'prepare'" );
+FAL_MODSTR( dbi_msg_bind_mix, "Input variables in 'execute' differs from previously bound ones" );
 
 /* dbi_st.h */
