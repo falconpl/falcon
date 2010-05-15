@@ -21,10 +21,9 @@
 
 #include "dbi.h"
 #include "dbi_ext.h"
-#include "dbi_mod.h"
 #include "dbi_st.h"
 
-#include <falcon/srv/dbi_service.h>
+#include <falcon/dbi_common.h>
 
 /*#
    @beginmodule dbi
@@ -93,7 +92,6 @@ void DBIConnect( VMachine *vm )
    }
    catch( DBIError* error )
    {
-      dbh_addErrorDescription( vm, error );
       delete hand;
       throw error;
    }
@@ -168,15 +166,7 @@ static void internal_query_call( VMachine* vm, bool isQuery )
 
 void Transaction_query( VMachine *vm )
 {
-   try
-   {
-      internal_query_call( vm, true );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   internal_query_call( vm, true );
 }
 
 /*#
@@ -189,15 +179,7 @@ void Transaction_query( VMachine *vm )
 
 void Transaction_call( VMachine *vm )
 {
-   try
-   {
-      internal_query_call( vm, false );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   internal_query_call( vm, false );
 }
 
 /*#
@@ -219,15 +201,7 @@ void Transaction_prepare( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   try
-   {
-      dbt->prepare( *i_sql->asString() );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   dbt->prepare( *i_sql->asString() );
 }
 
 
@@ -248,16 +222,7 @@ void Transaction_execute( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-
-   try
-   {
-      dbt->execute( params );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   dbt->execute( params );
 }
 
 
@@ -302,16 +267,7 @@ void Transaction_tropen( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-
-   try
-   {
-      internal_tropen( vm, dbt->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   internal_tropen( vm, dbt->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
 }
 
 /*#
@@ -482,15 +438,7 @@ void Handle_tropen( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-   try
-   {
-      internal_tropen( vm, dbh->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
-   }
-   catch( Error* e )
-   {
-      dbh_addErrorDescription( vm, e );
-      throw;
-   }
+   internal_tropen( vm, dbh->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
 }
 
 /*#

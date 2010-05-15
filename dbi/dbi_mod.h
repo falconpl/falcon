@@ -27,7 +27,6 @@ void dbh_escapeString( const String& input, String& value );
 void dbh_throwError( const char* file, int line, int code, const String& desc );
 
 void dbh_return_recordset( VMachine *vm, DBIRecordset *rec );
-void dbh_addErrorDescription( VMachine *vm, Error* error );
 
 }
 

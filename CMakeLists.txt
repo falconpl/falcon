@@ -31,6 +31,7 @@ INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
 
 # Project directories
+ADD_SUBDIRECTORY(dbi_common)
 ADD_SUBDIRECTORY(dbi)
 
 # DBI Drivers

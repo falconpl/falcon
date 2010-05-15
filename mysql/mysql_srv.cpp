@@ -159,42 +159,65 @@ void DBIRecordsetMySQL::close()
  * Transaction class
  *****************************************************************************/
 
-DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings )
-    : DBITransaction( dbh, settings )
+DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings ):
+      DBITransaction( dbh, settings ),
+      m_statement(0)
 {
+}
+
+
+virtual DBITransactionMySQL::~DBITransactionMySQL()
+{
+   if ( m_statement != 0 )
+   {
+      removeBindings();
+      mysql_stmt_close( m_statement );
+   }
 }
 
 
 DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
+   MYSQL *conn = getMySql();
+
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
    {
-      MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
-
       AutoCString asQuery( sql );
       if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
       {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+         conn->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
 
       if ( mysql_field_count( conn ) > 0 )
       {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
          affectedRows = (int64) mysql_affected_rows( conn );
 
          // Get or use the result?
-         MYSQL_RES* res = mysql_store_result( conn );
+         MYSQL_RES* res;
+         if ( m_settings->m_nPrefetch == 0 )
+         {
+            res = mysql_use_result( conn );
+         }
+         else
+         {
+            res = mysql_store_result( conn );
+         }
+
          return new DBIRecordsetMySQL( this, res );
       }
       else
       {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
+         conn->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
+         return 0; // to make the compiler happy
       }
    }
-
-
-
+   else
+   {
+      // prepare and execute
+      prepare( sql );
+      return execute_query( params, true );
+   }
 }
 
 
@@ -203,7 +226,7 @@ void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const It
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
    {
-      MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
+      MYSQL *conn = getMySql();
 
       AutoCString asQuery( sql );
       if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
@@ -211,20 +234,65 @@ void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const It
          getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
    }
+   else
+   {
+     // prepare and execute
+     prepare( sql );
+     execute( params );
+   }
 }
 
 
 void DBITransactionMySQL::prepare( const String &query )
 {
+   // setup the statement.
+   if ( m_statement != 0 )
+   {
+      mysql_stmt_close( m_statement );
+      removeBindings();
+   }
 
+   m_statement = mysql_init( getMySql() );
+   if( m_statement == 0 )
+   {
+      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
+   }
+
+   AutoCString cquery( query );
+   if( mysql_stmt_prepare( m_statement, cquery.c_str(), cquery.length() ) != 0 )
+   {
+      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+   }
+
+   // ok, the statement is prepared.
 }
 
 
 void DBITransactionMySQL::execute( const ItemArray& params )
 {
+   if ( m_statement == 0 )
+   {
+      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNPREP_EXEC );
+   }
+
+   if( m_bindings == 0 )
+   {
+      makeBindings( params );
+   }
+
 
 }
 
+
+void DBITransactionMySQL::makeBindings( params )
+{
+
+}
+
+DBIRecordsetMySQL* DBITransactionMySQL::execute_query( const ItemArray& params )
+{
+
+}
 
 void DBITransactionMySQL::begin()
 {

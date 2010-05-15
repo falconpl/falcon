@@ -79,12 +79,29 @@ public:
 
 class DBITransactionMySQL : public DBITransaction
 {
+private:
+
+   /** Execute a prepared statement, but expect a query result. */
+   DBIRecordsetMySQL* execute_query( const ItemArray& params );
+
+   void removeBindings();
+   void makeBindings( const ItemArray& params );
+   void updateBindings( const ItemArray& params );
+
+   MYSQL_BIND* m_my_bind;
+
+   class FalconBind
+   {
+
+   };
+
 protected:
    bool m_inTransaction;
    MYSQL_STMT* m_statement;
 
 public:
    DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings );
+   virtual ~DBITransactionMySQL();
 
    virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );

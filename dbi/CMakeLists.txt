@@ -17,11 +17,11 @@ Message( "Adding ${FALCON_MODULE}" )
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
    dbi.cpp
    dbi_ext.cpp
-   dbi_mod.cpp
    dbi_st.cpp
    dbi_service.cpp
    dbiloaderimpl.cpp
 )
 
 #Link
-falcon_finalize_module( ${FALCON_MODULE} )
+TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  dbi_common falcon_engine )
+falcon_install_module( ${FALCON_MODULE}  )
