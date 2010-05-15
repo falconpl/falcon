@@ -1,0 +1,45 @@
+/*#
+  @main Binding for libHaru, a pdf creation library.
+  
+  libHaru is a free, cross platform, open source library for generating PDF files. 
+  
+  @section hpdf_overview Overview
+  
+  The basic entities libHaru provides you with to create a pdf document are:
+  <ul>
+    <li> Text </li>
+    <li> Images </li>
+    <li> Lines and curves </li>
+    <li> Outlines:
+       A list of nodes that outline the structuer of a document.  They
+       can have a destionation set to them, so they act as links to
+       i.e. chapter titles.  A table of contents is an example for an outline. 
+    </li>
+    <li> Annotations:
+       <ul> 
+         <li> Text annotations ( sticky notes ) </li>
+         <li> Link annotations ( a hyperlink to a destination in the current doc ) </li>
+         <li> URI link annotations ( a hyperlink to a web page ) </li>
+       </ul> 
+    </li>
+    <li> Destinations:
+       A view to a page that is displayed if
+       <ul>
+         <li> An link annotation that is associatd with it is clicked </li>
+         <li> An outline item ( i.e. table of contents ) that is associated 
+              with it is clicked. </li>
+       </ul>
+     </li>
+  </ul>
+
+  Related to @b text are
+    - Fonts and font-size
+    - Encoding
+  Encoding is a strong feature in libHaru.  It supports Korian,
+  Japanese and Chinese encoding sets.
+  @note The encoding support in the falcon module is weak due to my
+  lack of expertise.  But I will catch up eventually :)
+
+  The @a hpdf_tutorial will show you how to create pdfs right away.
+  
+*/

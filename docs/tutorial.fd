@@ -1,0 +1,48 @@
+/*#
+  @page hpdf_tutorial Tutorial
+  
+  @section hpdf_blank_pdf Creating a blank pdf
+  
+  First of all, we have to tell falcon that we like to use hpdf.  This is
+  done by
+    @code
+    import from hpdf
+    @endcode
+  Then we create an pdf document
+    @code
+    pdfDoc = hpdf.Doc()
+    @endcode
+  What is returned by <code> hpdf.Doc() </code> is a handle which represents the
+  just created pdf document.
+  
+  If we would stop here we would have actually created an invalid pdf,
+  since it must contain at least one page. Thus by blank we actually
+  mean the pdf contains a single empty page. We do so by 
+    @code
+    page = pdfDoc.addPage()
+    @endcode
+  As you can see we used the document handle that has been returned by
+  <code> hpdf.Doc() </code> . <code> pdfDoc.addPage() </code> returns an handle as well, but
+  this one prepresent the page we just added. We won't do anything
+  with it right now, since we want to keep the page empty.
+  
+  The last step is to write the pdf, which we just created in memory,
+  to the disk
+    @code
+    pdfDoc.saveToFile("blank.pdf")
+    @endcode
+
+  This is the complete code
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()    
+    pdfDoc.saveToFile("blank.pdf")
+    @endcode
+  you can put into a file, i.e. called @b blank.fal and run it via
+    @code
+    $ falcon blank.fal
+    @endcode
+  Open the just created @b blank.pdf to test if it is actually a pdf
+  with a single empty page. 
+*/
