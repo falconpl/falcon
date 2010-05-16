@@ -71,10 +71,21 @@ void DBIError::describeError()
       this->errorDescription( "Called 'execute' without having previously called 'prepare'" );
       break;
 
-   case FALCON_DBI_ERROR_BIND_MIX:
-      this->errorDescription( "Input variables in 'execute' differs from previously bound ones" );
+   case FALCON_DBI_ERROR_BIND_SIZE:
+      this->errorDescription( "Input variables in 'execute' and statement parameters have different size" );
       break;
 
+   case FALCON_DBI_ERROR_BIND_MIX:
+      this->errorDescription( "Input variables passed in 'execute' cannot be bound to the statement" );
+      break;
+
+   case FALCON_DBI_ERROR_EXEC:
+      this->errorDescription( "Error during an 'execute' on a prepared statement" );
+      break;
+
+   case FALCON_DBI_ERROR_FETCH:
+      this->errorDescription( "Failed to fetch part of the recordset" );
+      break;
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

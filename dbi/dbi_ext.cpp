@@ -209,6 +209,8 @@ void Transaction_prepare( VMachine *vm )
    @method execute Transaction
    @brief Executes a repeated statement.
    @optparam ... The data to be passed to the repeated statement.
+   @return Number of rows affected by the command.
+
    @throw DBIError if the database engine reports an error.
 */
 
@@ -222,7 +224,9 @@ void Transaction_execute( VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->execute( params );
+   int64 affected;
+   dbt->execute( params, affected );
+   vm->retval( affected );
 }
 
 

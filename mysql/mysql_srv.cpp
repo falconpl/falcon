@@ -18,6 +18,7 @@
 #include <errmsg.h>
 
 #include <falcon/engine.h>
+#include <falcon/dbi_error.h>
 #include "mysql_mod.h"
 #include "dbi_mod.h"
 #include "dbi_st.h"
@@ -25,31 +26,117 @@
 namespace Falcon
 {
 
+class DBITimeConverter_MYSQL_TIME: public DBITimeConverter
+{
+public:
+   virtual void convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const;
+} DBITimeConverter_MYSQL_TIME_impl;
+
+void DBITimeConverter_MYSQL_TIME::convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const
+{
+   fassert( bufsize >= sizeof( MYSQL_TIME ) );
+
+   MYSQL_TIME* mtime = (MYSQL_TIME*) buffer;
+   mtime->year = (unsigned int) ts->m_year;
+   mtime->month = (unsigned int) ts->m_month;
+   mtime->day = (unsigned int) ts->m_day;
+   mtime->hour = (unsigned int) ts->m_hour;
+   mtime->minute = (unsigned int) ts->m_minute;
+   mtime->second = (unsigned int) ts->m_second;
+   mtime->second_part = (unsigned int) ts->m_msec;
+   mtime->neg = 0;
+
+   bufsize = sizeof( MYSQL_TIME );
+}
+
+
+/******************************************************************************
+ * (Input) bindings class
+ *****************************************************************************/
+
+DBIBindMySQL::DBIBindMySQL():
+      m_mybind(0)
+{}
+
+DBIBindMySQL::~DBIBindMySQL()
+{
+   memFree( m_mybind );
+}
+
+
+void DBIBindMySQL::onFirstBinding( int size )
+{
+   m_mybind = (MYSQL_BIND*) memAlloc( sizeof(MYSQL_BIND) * size );
+   memset( m_mybind, 0, sizeof(MYSQL_BIND) * size );
+}
+
+
+void DBIBindMySQL::onItemChanged( int num )
+{
+   DBIBindItem& item = m_ibind[num];
+   MYSQL_BIND& myitem = m_mybind[num];
+
+   switch( item.type() )
+   {
+   // set to null
+   case DBIBindItem::t_nil:
+      myitem.buffer_type = MYSQL_TYPE_NULL;
+      *((my_bool*) item.data()) = 1;
+      break;
+
+   case DBIBindItem::t_bool:
+      myitem.buffer_type = MYSQL_TYPE_BIT;
+      myitem.buffer = item.asBoolPtr();
+      myitem.buffer_length = 1;
+      break;
+
+   case DBIBindItem::t_int:
+      myitem.buffer_type = MYSQL_TYPE_LONGLONG;
+      myitem.buffer = item.asIntegerPtr();
+      myitem.buffer_length = sizeof( int64 );
+      break;
+
+   case DBIBindItem::t_double:
+      myitem.buffer_type = MYSQL_TYPE_DOUBLE;
+      myitem.buffer = item.asDoublePtr();
+      myitem.buffer_length = sizeof( double );
+      break;
+
+    case DBIBindItem::t_string:
+         myitem.buffer_type = MYSQL_TYPE_STRING;
+         myitem.buffer = (void*) item.asString();
+         myitem.buffer_length = item.asStringLen();
+         break;
+
+    case DBIBindItem::t_buffer:
+         myitem.buffer_type = MYSQL_TYPE_BLOB;
+         myitem.buffer = item.asBuffer();
+         myitem.buffer_length = item.asStringLen();
+         break;
+
+    case DBIBindItem::t_time:
+         myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
+         myitem.buffer = item.databuffer();
+         myitem.buffer_length = sizeof( MYSQL_TIME );
+         break;
+   }
+}
+
+
+
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res )
+DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res, MYSQL_STMT *stmt )
     : DBIRecordset( dbt ),
       m_res( res ),
-      m_stmt(0)
+      m_stmt( stmt )
 {
    m_row = -1; // BOF
    m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
-}
-
-DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_STMT *stmt )
-    : DBIRecordset( dbt ),
-       m_res( 0 ),
-       m_stmt(stmt)
-{
-   m_row = -1; // BOF
-   m_rowCount = mysql_stmt_num_rows( stmt ); // Only valid when using mysql_store_result instead of use_result
-   m_res = mysql_stmt_result_metadata(stmt);
-   m_columnCount = mysql_num_fields( m_res );
-   m_fields = mysql_fetch_fields( m_res );
 }
 
 DBIRecordsetMySQL::~DBIRecordsetMySQL()
@@ -166,58 +253,53 @@ DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* sett
 }
 
 
-virtual DBITransactionMySQL::~DBITransactionMySQL()
+DBITransactionMySQL::~DBITransactionMySQL()
 {
    if ( m_statement != 0 )
    {
-      removeBindings();
       mysql_stmt_close( m_statement );
+      m_statement = 0;
    }
+
+   delete m_inBind;
 }
 
 
 DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-   MYSQL *conn = getMySql();
+   // prepare and execute -- will create a new m_statement
+   prepare( sql );
+   execute( params, affectedRows );
 
-   // if we don't have var params, we can use the standard query, after proper escape.
-   if ( params.length() == 0 )
+   // We want a result recordset
+   MYSQL_RES* meta = mysql_stmt_result_metadata( m_statement );
+   if( meta == 0 )
    {
-      AutoCString asQuery( sql );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         conn->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      if ( mysql_field_count( conn ) > 0 )
-      {
-         affectedRows = (int64) mysql_affected_rows( conn );
-
-         // Get or use the result?
-         MYSQL_RES* res;
-         if ( m_settings->m_nPrefetch == 0 )
-         {
-            res = mysql_use_result( conn );
-         }
-         else
-         {
-            res = mysql_store_result( conn );
-         }
-
-         return new DBIRecordsetMySQL( this, res );
-      }
-      else
-      {
-         conn->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
-         return 0; // to make the compiler happy
-      }
+      // the query didn't return a recorset
+      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
    }
    else
    {
-      // prepare and execute
-      prepare( sql );
-      return execute_query( params, true );
+      DBIRecordsetMySQL* recset = new DBIRecordsetMySQL( this, meta, m_statement );
+
+      // ok. Do the user wanted all the result back?
+      if( m_settings->m_nPrefetch < 0 )
+      {
+         if( ! mysql_stmt_store_result( m_statement ) )
+         {
+            m_statement = 0;
+            delete recset;
+            mysql_free_result( meta );
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+         }
+      }
+
+      // pass the ownership of the statement to the recordset.
+      m_statement = 0;
+      return recset;
    }
+
+   return 0; // to make the compiler happy
 }
 
 
@@ -226,7 +308,7 @@ void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const It
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
    {
-      MYSQL *conn = getMySql();
+      MYSQL *conn = getMySql()->getConn();
 
       AutoCString asQuery( sql );
       if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
@@ -238,21 +320,23 @@ void DBITransactionMySQL::call( const String &sql, int64 &affectedRows, const It
    {
      // prepare and execute
      prepare( sql );
-     execute( params );
+     execute( params, affectedRows );
    }
 }
 
 
 void DBITransactionMySQL::prepare( const String &query )
 {
+   delete m_inBind;
+   m_inBind = 0;
+
    // setup the statement.
    if ( m_statement != 0 )
    {
       mysql_stmt_close( m_statement );
-      removeBindings();
    }
 
-   m_statement = mysql_init( getMySql() );
+   m_statement = mysql_stmt_init( getMySql()->getConn() );
    if( m_statement == 0 )
    {
       getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
@@ -264,35 +348,71 @@ void DBITransactionMySQL::prepare( const String &query )
       getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
    }
 
-   // ok, the statement is prepared.
+   // prepare the attributes as suggested by our parameters.
+   unsigned long setting = m_settings->m_nCursorThreshold == 0  ?
+         CURSOR_TYPE_READ_ONLY : CURSOR_TYPE_NO_CURSOR;
+
+   mysql_stmt_attr_set( m_statement, STMT_ATTR_CURSOR_TYPE, &setting );
+
+   if( m_settings->m_nPrefetch > 0 )
+   {
+      setting = (unsigned long) m_settings->m_nPrefetch;
+      mysql_stmt_attr_set( m_statement, STMT_ATTR_PREFETCH_ROWS, &setting );
+   }
+   else if ( m_settings->m_nPrefetch == -1 )
+   {
+      setting = (unsigned long) 0xFFFFFFFF;
+      mysql_stmt_attr_set( m_statement, STMT_ATTR_PREFETCH_ROWS, &setting );
+   }
 }
 
 
-void DBITransactionMySQL::execute( const ItemArray& params )
+void DBITransactionMySQL::execute( const ItemArray& params, int64 &affectedRows )
 {
    if ( m_statement == 0 )
    {
       getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNPREP_EXEC );
    }
 
-   if( m_bindings == 0 )
+   // should we bind with the statement?
+   if ( m_inBind == 0 )
    {
-      makeBindings( params );
+      if( params.length() != mysql_stmt_param_count( m_statement ) )
+      {
+         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      }
+
+      // Do we have some parameter to bind?
+      if( params.length() > 0 )
+      {
+         // params.lengh() == 0 is possible with totally static selects,
+         // or other statements that will be run usually just once.
+         // Inserts or other repetitive statements will have at least 1, so
+         // this branch won't be repeatedly checked in the fast path.
+         m_inBind = new DBIBindMySQL;
+         m_inBind->bind( params );
+
+         if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
+         {
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
+         }
+      }
+   }
+   else
+   {
+      m_inBind->bind( params );
    }
 
+   if( mysql_stmt_execute( m_statement ) != 0 )
+   {
+      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_EXEC );
+   }
 
+   // row count?
+   affectedRows = mysql_stmt_affected_rows( m_statement );
 }
 
 
-void DBITransactionMySQL::makeBindings( params )
-{
-
-}
-
-DBIRecordsetMySQL* DBITransactionMySQL::execute_query( const ItemArray& params )
-{
-
-}
 
 void DBITransactionMySQL::begin()
 {

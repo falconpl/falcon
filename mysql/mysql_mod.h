@@ -16,12 +16,31 @@
 #ifndef DBI_MYSQL_H
 #define DBI_MYSQL_H
 
+#include <falcon/dbi_common.h>
 #include <falcon/srv/dbi_service.h>
 
 #include <mysql.h>
 
 namespace Falcon
 {
+
+class DBIBindMySQL: public DBIBind
+{
+
+public:
+   DBIBindMySQL();
+
+   virtual ~DBIBindMySQL();
+
+   virtual void onFirstBinding( int size );
+   virtual void onItemChanged( int num );
+
+   MYSQL_BIND* mybindings() const { return m_mybind; }
+
+private:
+   MYSQL_BIND* m_mybind;
+};
+
 
 class DBIRecordsetMySQL : public DBIRecordset
 {
@@ -34,11 +53,10 @@ protected:
    MYSQL_STMT *m_stmt;
    MYSQL_FIELD* m_fields;
 
-   static dbi_type getFalconType( int typ );
+   //static dbi_type getFalconType( int typ );
 
 public:
-   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res );
-   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_STMT *stmt );
+   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res, MYSQL_STMT *stmt );
    ~DBIRecordsetMySQL();
 
    virtual bool fetchRow();
@@ -79,25 +97,10 @@ public:
 
 class DBITransactionMySQL : public DBITransaction
 {
-private:
-
-   /** Execute a prepared statement, but expect a query result. */
-   DBIRecordsetMySQL* execute_query( const ItemArray& params );
-
-   void removeBindings();
-   void makeBindings( const ItemArray& params );
-   void updateBindings( const ItemArray& params );
-
-   MYSQL_BIND* m_my_bind;
-
-   class FalconBind
-   {
-
-   };
-
 protected:
    bool m_inTransaction;
    MYSQL_STMT* m_statement;
+   DBIBindMySQL* m_inBind;
 
 public:
    DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings );
@@ -106,7 +109,7 @@ public:
    virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void prepare( const String &query );
-   virtual void execute( const ItemArray& params );
+   virtual void execute( const ItemArray& params, int64 &affectedRows );
 
    virtual DBITransaction* startTransaction( const String& settings );
    virtual void begin();

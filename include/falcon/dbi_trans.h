@@ -83,7 +83,7 @@ public:
 
    /** prepare/execute step2
    */
-   virtual void execute( const ItemArray& params )=0;
+   virtual void execute( const ItemArray& params, int64 &affectedRows )=0;
 
    /** Commits operations. */
    virtual void commit()=0;
