@@ -7,7 +7,7 @@ endif()
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/html/index.html
   COMMAND ${Falcon_faldoc_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
-  DEPENDS main.fd tutorial.fd
+  DEPENDS faldoc.fd.in main.fd tutorial.fd ${scriptExtensions_SRCS}
 ) 
 add_custom_target(create_docs ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/html/index.html)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ DESTINATION share/doc/falcon/modules/hpdf/html)

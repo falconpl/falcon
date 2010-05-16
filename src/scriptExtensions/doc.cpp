@@ -55,11 +55,21 @@ void Doc::registerExtensions(Falcon::Module* self)
   self->addClassMethod( c_doc, "useCNSFonts", &useCNSFonts );
 }
 
+/*#
+   @class Doc
+   @brief Used to operate on a document object.
+*/
+
 CoreObject* Doc::factory(CoreClass const* cls, void*, bool)
 {
   return new Mod::hpdf::Doc(cls);
 }
 
+/*#
+  @method addPage Doc
+  @brief Creates a new page and adds it after the last page of a document.
+  @return A new @a Page instance.
+ */
 FALCON_FUNC Doc::addPage( VMachine* vm )
 {
   Mod::hpdf::Doc* self = Falcon::dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
@@ -67,7 +77,12 @@ FALCON_FUNC Doc::addPage( VMachine* vm )
   CoreClass* Page_cls = vm->findWKI("Page")->asClass();
   vm->retval( new Mod::hpdf::Dict(Page_cls, page) );
 }
-
+/*#
+  @method insertPage Doc
+  @brief Creates a new page and inserts it just before the specified page.
+  @param page The page in front of which the new page will be inserted.
+  @return A new @a Page instance.
+*/
 FALCON_FUNC Doc::insertPage( VMachine* vm )
 {
   Mod::hpdf::Doc* self = Falcon::dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
@@ -75,7 +90,7 @@ FALCON_FUNC Doc::insertPage( VMachine* vm )
   Item* i_page = vm->param( 0 );
   if ( i_page == 0 || ! i_page->isOfClass("Page") )
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("O"));
+                       .extra("Page"));
 
   Mod::hpdf::Dict* page = static_cast<Mod::hpdf::Dict*>(i_page->asObject());
   HPDF_Page newPage = HPDF_InsertPage( self->handle(), page->handle());
@@ -99,6 +114,14 @@ FALCON_FUNC Doc::saveToFile( VMachine* vm )
   vm->retval( ret );
 }
 
+/*#
+  @method getFont Doc
+  @brief Gets a font object for the specified font name.
+  @param fontName A @link "http://libharu.org/wiki/Documentation/Fonts#Base14_Fonts" "valid font name".
+  @optparam encodingName A @link "http://libharu.org/wiki/Documentation/Encodings" "valid encoding name".
+  @return A @a Font instance.
+
+  */
 FALCON_FUNC Doc::getFont( VMachine* vm )
 {
   Mod::hpdf::Doc* self = dyncast<Mod::hpdf::Doc*>( vm->self().asObject() );
@@ -145,7 +168,7 @@ FALCON_FUNC Doc::setOpenAction( VMachine* vm )
   if ( !i_destination || !i_destination->isOfClass("Destination") )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("O"));
+                       .extra("Destination"));
   }
   Mod::hpdf::Array* destination = static_cast<Mod::hpdf::Array*>(i_destination->asObject());
   HPDF_SetOpenAction(self->handle(), destination->handle());
@@ -239,7 +262,7 @@ FALCON_FUNC Doc::loadRawImageFromMem( VMachine* vm )
        || !i_colorSpace->isInteger())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("O,N,N,I"));
+                       .extra("M,N,N,I"));
   }
 
   HPDF_Image image = HPDF_LoadRawImageFromMem( self->handle(),
@@ -298,7 +321,7 @@ FALCON_FUNC Doc::createOutline( VMachine* vm )
        || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("O,S,O"));
+                           .extra("Outline,S,[Encoder]"));
   }
 
   HPDF_Outline parent = 0;

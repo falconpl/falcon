@@ -417,6 +417,16 @@ namespace Falcon { namespace Ext { namespace hpdf {
   }
 
   {
+    /*#
+       @enum TextAlignment
+       @brief Specifies the text alignment to be used.
+
+       Possible valuse:
+        - LEFT
+        - RIGHT
+        - CENTER
+        - JUSTIFY
+     */
     Falcon::Symbol* fclass = self->addClass( "TextAlignment" );
     fclass->setEnum(true);
     self->addClassProperty( fclass, "LEFT" )

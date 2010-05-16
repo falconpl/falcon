@@ -84,23 +84,45 @@ void Page::registerExtensions(Falcon::Module* self)
 
 }
 
+/*#
+   @class Page
+   @brief Used to manipulate an individual page.
+   @raise CodeError when tried to be constructed directly.
+
+   @a Doc.addPage or @a Doc.insertPage create a page.
+
+*/
+
 FALCON_FUNC Page::init( VMachine* vm )
 {
   throw new CodeError( ErrorParam(FALCON_HPDF_ERROR_BASE+2, __LINE__));
 }
 
+/*#
+   @method beginText Page
+   @brief Marks the start of a text object and sets the text position to [0,0].
+ */
 FALCON_FUNC Page::beginText( VMachine* vm )
 {
   Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_BeginText( self->handle() );
 }
 
+/*#
+   @method endText Page
+   @brief Ends the current text object.
+ */
 FALCON_FUNC Page::endText( VMachine* vm )
 {
   Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
   HPDF_Page_EndText( self->handle() );
 }
 
+/*#
+   @method showText Page
+   @brief Prints text at the current position on the page.
+   @param text String to be displayed
+*/
 FALCON_FUNC Page::showText( VMachine* vm )
 {
   Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
@@ -114,6 +136,76 @@ FALCON_FUNC Page::showText( VMachine* vm )
   HPDF_Page_ShowText( self->handle(), text.c_str());
 }
 
+
+/*#
+   @method textOut Page
+   @brief Prints text on the specified position.
+   @param xPos x position measured from the left
+   @param yPos y position measured from the bottom
+   @param text A string that is to be displayed
+
+   Foo.
+*/
+FALCON_FUNC Page::textOut( VMachine* vm )
+{
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
+  Item* i_x = vm->param( 0 );
+  Item* i_y = vm->param( 1 );
+  Item* i_text = vm->param( 2 );
+
+  if ( vm->paramCount() < 3
+       || !i_x->isScalar() || !i_y->isScalar()
+       || !i_text->isString() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,S") );
+
+  AutoCString text(*i_text);
+  HPDF_Page_TextOut( self->handle(), asNumber(i_x), asNumber(i_y), text.c_str());
+}
+
+/*#
+   @method textRect Page
+   @brief Prints the text inside the specified region.
+   @param left x coordinate of the top-left corner of the region to output text.
+   @param top y coordinate of the top-left corner of the region to output text.
+   @param right x coordinate of the right-bottom corner of the region to output text.
+   @param bottom y coordinate of the right-bottom corner of the region to output text.
+   @param text String to display
+   @param align @a TextAlignment
+ */
+FALCON_FUNC Page::textRect( VMachine* vm )
+{
+  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
+  Item* i_left = vm->param( 0 );
+  Item* i_top = vm->param( 1 );
+  Item* i_right = vm->param( 2 );
+  Item* i_bottom = vm->param( 3 );
+  Item* i_text = vm->param( 4 );
+  Item* i_align = vm->param( 5 );
+
+  if ( vm->paramCount() < 6
+       || !i_left->isScalar() || !i_top->isScalar()
+       || !i_right->isScalar() || !i_bottom->isScalar()
+       || !i_text->isString() || !i_align->isInteger() )
+    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                           .extra("N,N,N,N,S,I") );
+
+  AutoCString text(*i_text);
+  HPDF_TextAlignment align = static_cast<HPDF_TextAlignment>(i_align->asInteger());
+  HPDF_Page_TextRect( self->handle(), asNumber(i_left), asNumber(i_top),
+                                      asNumber(i_right), asNumber(i_bottom),
+                                      text.c_str(),
+                                      align,
+                                      0);
+
+}
+
+/*#
+  @method setFontAndSize Page
+  @brief Self explanatory.
+  @param font An instance of @a Font.
+  @param size An integer that specifies the pt size.
+ */
 FALCON_FUNC Page::setFontAndSize( VMachine* vm )
 {
   Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
@@ -124,7 +216,7 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
       i_fontSize == 0 || !i_fontSize->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("O,I") );
+                           .extra("Font,I") );
   }
 
   Mod::hpdf::Dict* font = dyncast<Mod::hpdf::Dict*>( i_font->asObject() );
@@ -244,24 +336,6 @@ FALCON_FUNC Page::textWidth( VMachine* vm )
   AutoCString text(*i_text);
   HPDF_REAL width = HPDF_Page_TextWidth( self->handle(), text.c_str());
   vm->retval(width);
-}
-
-FALCON_FUNC Page::textOut( VMachine* vm )
-{
-  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );;
-  Item* i_x = vm->param( 0 );
-  Item* i_y = vm->param( 1 );
-  Item* i_text = vm->param( 2 );
-
-  if ( vm->paramCount() < 3
-       || !i_x->isScalar() || !i_y->isScalar()
-       || !i_text->isString() )
-    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("N,N,N,N") );
-
-  AutoCString text(*i_text);
-  HPDF_Page_TextOut( self->handle(), asNumber(i_x), asNumber(i_y),
-                                                 text.c_str());
 }
 
 FALCON_FUNC Page::moveTo( VMachine* vm )
@@ -625,32 +699,6 @@ FALCON_FUNC Page::setSize( VMachine* vm )
   HPDF_Page_SetSize( self->handle(), size, direction);
 }
 
-FALCON_FUNC Page::textRect( VMachine* vm )
-{
-  Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
-  Item* i_left = vm->param( 0 );
-  Item* i_top = vm->param( 1 );
-  Item* i_right = vm->param( 2 );
-  Item* i_bottom = vm->param( 3 );
-  Item* i_text = vm->param( 4 );
-  Item* i_align = vm->param( 5 );
-
-  if ( vm->paramCount() < 6
-       || !i_left->isScalar() || !i_top->isScalar()
-       || !i_right->isScalar() || !i_bottom->isScalar()
-       || !i_text->isString() || !i_align->isInteger() )
-    throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("N,N,N,N,S,I") );
-
-  AutoCString text(*i_text);
-  HPDF_TextAlignment align = static_cast<HPDF_TextAlignment>(i_align->asInteger());
-  HPDF_Page_TextRect( self->handle(), asNumber(i_left), asNumber(i_top),
-                                      asNumber(i_right), asNumber(i_bottom),
-                                      text.c_str(),
-                                      align,
-                                      0);
-
-}
 
 FALCON_FUNC Page::concat( VMachine* vm )
 {
@@ -745,7 +793,7 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
        || !i_width->isScalar() || !i_height->isScalar())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("O,N,N,N,N") );
+                           .extra("Image,N,N,N,N") );
   }
 
   Mod::hpdf::Dict* image = dyncast<Mod::hpdf::Dict*>( i_image->asObject() );
@@ -798,7 +846,7 @@ FALCON_FUNC Page::createTextAnnot( VMachine* vm )
        || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("[N],S,O"));
+                           .extra("A{4N},S,[Encoder]"));
   }
 
   HPDF_Rect rect;
@@ -872,7 +920,7 @@ FALCON_FUNC Page::createLinkAnnot( VMachine* vm )
        || !i_destination || !i_destination->isOfClass("Destination") )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("[N],O"));
+                           .extra("A{4N},Destination"));
   }
 
   HPDF_Rect rect;
@@ -881,7 +929,8 @@ FALCON_FUNC Page::createLinkAnnot( VMachine* vm )
     CoreArray* array = i_rect->asArray();
     if( array->length() != 4 )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                             .extra("len([N]) != 4"));
+                             .extra("A{4N},Destination")
+                             .extra("len(param_0) != 4"));
 
     rect.left = asNumber(&array->at(0));
     rect.bottom = asNumber(&array->at(1));

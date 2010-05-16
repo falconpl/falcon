@@ -14,7 +14,7 @@
     @endcode
   What is returned by <code> hpdf.Doc() </code> is a handle which represents the
   just created pdf document.
-  
+    
   If we would stop here we would have actually created an invalid pdf,
   since it must contain at least one page. Thus by blank we actually
   mean the pdf contains a single empty page. We do so by 
@@ -44,5 +44,60 @@
     $ falcon blank.fal
     @endcode
   Open the just created @b blank.pdf to test if it is actually a pdf
-  with a single empty page. 
+  with a single empty page.
+
+  @section hpdf_text Putting text onto a page
+
+  @subsection hpdf_text_hello_world Hello World!
+
+  There are three methods to to put text to a page
+  <ul>
+    <li> @a Page.showText </li>
+    <li> @a Page.textOut </li>
+    <li> @a Page.textRect </li>
+  </ul>
+
+  The one with the simplest signature is @a Page.showText, which we'll
+  use to create the simplest possible code snippet to put
+  "Hello World!" at a page.
+    @code
+    import from hpdf
+    pdfDoc = hpdfDoc()
+    page = pdfDoc.addPage()
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), 10)  // (1)
+    page.beginText() // (2) a text object begins
+    page.showText("Hello World!")
+    page.endText() // (2') we are done putting text into this text object
+    pageDoc.saveToFile("helloWorld.pdf")
+    @endcode
+  Run the code and open the pdf.  It will show
+    @code
+    ...            ...
+    .                .
+    .                .
+
+    .                .
+    .Hello World!   ...
+    @endcode
+  "Hello World!" was put at the default position/coordinates which is
+  (0,0). As you can see the origin of a page coordinate system is the
+  bottom-left corner.
+
+  You will have noticed the use of the additional functions
+  <ul>
+    <li> @a Doc.getFont </li>
+    <li> @a Page.setFontAndSize </li>  
+    <li> @a Page.beginText </li>
+    <li> @a Page.endText </li>
+  </ul>
+
+  Setting a font and a font size via Doc.setFontAndSize is mandatory
+  before using one of the three text function.  As is puttig them
+  between Page.beginText() and Page.endText() calls, since in a pdf a
+  piece of text is enclosed by an entity called "text object".  These
+  two state functions are used to create such an anonymous text
+  object.
+  
+  foo
 */
+  

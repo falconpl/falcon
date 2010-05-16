@@ -19,6 +19,13 @@ void Font::registerExtensions(Falcon::Module* self)
   c_pdfFont->setWKS( true );
 }
 
+/*#
+  @class Font
+  @brief todo.
+
+  Font objects are returned by @a Doc.getFont.
+ */
+
 FALCON_FUNC Font::init( VMachine* vm )
 {
   throw new CodeError( ErrorParam(FALCON_HPDF_ERROR_BASE+2, __LINE__));
