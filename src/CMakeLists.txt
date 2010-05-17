@@ -78,6 +78,7 @@ set( SRC_FILES
     gtk_Range.cpp
     gtk_Requisition.cpp
     gtk_Ruler.cpp
+    gtk_Scale.cpp
     gtk_ScaleButton.cpp
     gtk_SeparatorMenuItem.cpp
     gtk_SpinButton.cpp
@@ -184,6 +185,7 @@ set( HDR_FILES
     gtk_Range.hpp
     gtk_Requisition.hpp
     gtk_Ruler.hpp
+    gtk_Scale.hpp
     gtk_ScaleButton.hpp
     gtk_SeparatorMenuItem.hpp
     gtk_SpinButton.hpp

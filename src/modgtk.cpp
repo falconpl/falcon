@@ -76,6 +76,7 @@
 #include "gtk_Range.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
+#include "gtk_Scale.hpp"
 #include "gtk_ScaleButton.hpp"
 #include "gtk_SeparatorMenuItem.hpp"
 #include "gtk_SpinButton.hpp"
@@ -231,6 +232,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Progress::modInit( self );
                 Falcon::Gtk::ProgressBar::modInit( self );
             Falcon::Gtk::Range::modInit( self );
+                Falcon::Gtk::Scale::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );
