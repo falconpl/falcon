@@ -197,17 +197,17 @@
     fontSize = 10
     page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
     page.beginText()
-    page.textOut(0, page.getHeight() - fontSize,"Wikidia says:")
-    page.textRect(0, page.getHeight() - 2*fontSize, 
-                  page.getWidth(), 4*fontSize, 
+    page.textRect(0,               page.getHeight(), 
+                  page.getWidth(), page.getHeight() - 3*fontSize, 
         'Paragraphos (from Gr.  παράγραφος, paragraphos  from para "beside" and ' +
         'graphein "to write") literally meant in ancient Greek papyri anything  ' +
         'that was written beside the main text, e.g. marginal note or sign to ' +
         'mark the close or beginning of a sentence.',
       hpdf.TextAlignment.LEFT)
+    page.endText()
     pdfDoc.saveToFile("helloWorld.pdf")
     @endcode
-  @note libharu cannot handle utf8, so the greek letter will be messed
+  @note libharu cannot handle utf8, so the greek letters will be messed
     up :(
     
   
