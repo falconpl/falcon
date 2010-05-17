@@ -14,6 +14,7 @@ add_library( dbi_common STATIC
    dbi_bind.cpp
    dbi_error.cpp
    dbi_handle.cpp
+   dbi_outbind.cpp
    dbi_params.cpp
    dbi_recordset.cpp
    dbi_trans.cpp
@@ -22,6 +23,7 @@ add_library( dbi_common STATIC
    ../include/falcon/dbi_bind.h
    ../include/falcon/dbi_error.h
    ../include/falcon/dbi_handle.h
+   ../include/falcon/dbi_outbind.h
    ../include/falcon/dbi_params.h
    ../include/falcon/dbi_recordset.h
    ../include/falcon/dbi_trans.h

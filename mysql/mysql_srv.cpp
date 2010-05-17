@@ -26,6 +26,10 @@
 namespace Falcon
 {
 
+/******************************************************************************
+ * Private class used to convert timestamp to MySQL format.
+ *****************************************************************************/
+
 class DBITimeConverter_MYSQL_TIME: public DBITimeConverter
 {
 public:
@@ -34,16 +38,16 @@ public:
 
 void DBITimeConverter_MYSQL_TIME::convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const
 {
-   fassert( bufsize >= sizeof( MYSQL_TIME ) );
+   fassert( ((unsigned)bufsize) >= sizeof( MYSQL_TIME ) );
 
    MYSQL_TIME* mtime = (MYSQL_TIME*) buffer;
-   mtime->year = (unsigned int) ts->m_year;
-   mtime->month = (unsigned int) ts->m_month;
-   mtime->day = (unsigned int) ts->m_day;
-   mtime->hour = (unsigned int) ts->m_hour;
-   mtime->minute = (unsigned int) ts->m_minute;
-   mtime->second = (unsigned int) ts->m_second;
-   mtime->second_part = (unsigned int) ts->m_msec;
+   mtime->year = (unsigned) ts->m_year;
+   mtime->month = (unsigned) ts->m_month;
+   mtime->day = (unsigned) ts->m_day;
+   mtime->hour = (unsigned) ts->m_hour;
+   mtime->minute = (unsigned) ts->m_minute;
+   mtime->second = (unsigned) ts->m_second;
+   mtime->second_part = (unsigned) ts->m_msec;
    mtime->neg = 0;
 
    bufsize = sizeof( MYSQL_TIME );
@@ -102,27 +106,25 @@ void DBIBindMySQL::onItemChanged( int num )
       myitem.buffer_length = sizeof( double );
       break;
 
-    case DBIBindItem::t_string:
-         myitem.buffer_type = MYSQL_TYPE_STRING;
-         myitem.buffer = (void*) item.asString();
-         myitem.buffer_length = item.asStringLen();
-         break;
+   case DBIBindItem::t_string:
+      myitem.buffer_type = MYSQL_TYPE_STRING;
+      myitem.buffer = (void*) item.asString();
+      myitem.buffer_length = item.asStringLen();
+      break;
 
-    case DBIBindItem::t_buffer:
-         myitem.buffer_type = MYSQL_TYPE_BLOB;
-         myitem.buffer = item.asBuffer();
-         myitem.buffer_length = item.asStringLen();
-         break;
+   case DBIBindItem::t_buffer:
+      myitem.buffer_type = MYSQL_TYPE_BLOB;
+      myitem.buffer = item.asBuffer();
+      myitem.buffer_length = item.asStringLen();
+      break;
 
-    case DBIBindItem::t_time:
-         myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
-         myitem.buffer = item.databuffer();
-         myitem.buffer_length = sizeof( MYSQL_TIME );
-         break;
+   case DBIBindItem::t_time:
+      myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
+      myitem.buffer = item.databuffer();
+      myitem.buffer_length = sizeof( MYSQL_TIME );
+      break;
    }
 }
-
-
 
 /******************************************************************************
  * Recordset class
@@ -229,14 +231,10 @@ int64 DBIRecordsetMySQL::getRowIndex()
 
 void DBIRecordsetMySQL::close()
 {
-   if ( m_res != NULL ) {
+   if ( m_res != 0 && m_stmt != 0 ) {
       mysql_free_result( m_res );
-      m_res = NULL;
-   }
-
-   if ( m_stmt != 0 )
-   {
       mysql_stmt_close( m_stmt );
+      m_res = 0;
       m_stmt = 0;
    }
 }
