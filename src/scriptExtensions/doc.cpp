@@ -77,6 +77,7 @@ FALCON_FUNC Doc::addPage( VMachine* vm )
   CoreClass* Page_cls = vm->findWKI("Page")->asClass();
   vm->retval( new Mod::hpdf::Dict(Page_cls, page) );
 }
+
 /*#
   @method insertPage Doc
   @brief Creates a new page and inserts it just before the specified page.
@@ -90,7 +91,7 @@ FALCON_FUNC Doc::insertPage( VMachine* vm )
   Item* i_page = vm->param( 0 );
   if ( i_page == 0 || ! i_page->isOfClass("Page") )
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("Page"));
+                           .extra("hpdf.Page"));
 
   Mod::hpdf::Dict* page = static_cast<Mod::hpdf::Dict*>(i_page->asObject());
   HPDF_Page newPage = HPDF_InsertPage( self->handle(), page->handle());
@@ -106,7 +107,7 @@ FALCON_FUNC Doc::saveToFile( VMachine* vm )
   if ( filenameI == 0 || ! filenameI->isString() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S"));
+                          .extra("S"));
   }
 
   AutoCString asFilename( *filenameI->asString() );
@@ -132,7 +133,7 @@ FALCON_FUNC Doc::getFont( VMachine* vm )
        || (i_encodingName && !(i_encodingName->isNil() || i_encodingName->isString())) )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S,[S]"));
+                          .extra("S,[S]"));
   }
 
   AutoCString asFilename( *i_filename );
@@ -154,7 +155,7 @@ FALCON_FUNC Doc::setCompressionMode( VMachine* vm )
   if ( i_mode == 0 || ! i_mode->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("I"));
+                          .extra("I"));
   };
   int ret = HPDF_SetCompressionMode( self->handle(), i_mode->asInteger());
   vm->retval( ret );
@@ -168,7 +169,7 @@ FALCON_FUNC Doc::setOpenAction( VMachine* vm )
   if ( !i_destination || !i_destination->isOfClass("Destination") )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("Destination"));
+                       .extra("hpdf.Destination"));
   }
   Mod::hpdf::Array* destination = static_cast<Mod::hpdf::Array*>(i_destination->asObject());
   HPDF_SetOpenAction(self->handle(), destination->handle());
@@ -193,7 +194,7 @@ FALCON_FUNC Doc::loadPngImageFromFile( VMachine* vm )
   if ( filenameI == 0 || ! filenameI->isString() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S"));
+                           .extra("S"));
   }
 
   AutoCString asFilename( *filenameI->asString() );
@@ -283,7 +284,7 @@ FALCON_FUNC Doc::setPageMode( VMachine* vm )
   if ( i_enum == 0 || ! i_enum->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("I"));
+                          .extra("I"));
   }
 
   HPDF_SetPageMode( self->handle(), static_cast<HPDF_PageMode>(i_enum->asInteger()));
@@ -299,7 +300,7 @@ FALCON_FUNC Doc::loadType1FontFromFile( VMachine* vm )
        || !i_dataFilename || ! i_dataFilename->isString())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S,S"));
+                          .extra("S,S"));
   }
 
   AutoCString afmFilename( *i_afmFilename->asString() );
@@ -321,7 +322,7 @@ FALCON_FUNC Doc::createOutline( VMachine* vm )
        || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("Outline,S,[Encoder]"));
+                           .extra("Outline,S,[hpdf.Encoder]"));
   }
 
   HPDF_Outline parent = 0;
@@ -348,7 +349,7 @@ FALCON_FUNC Doc::setPassword( VMachine* vm )
        || !i_userPassword || !i_userPassword->isString())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S,S"));
+                          .extra("S,S"));
   }
 
   AutoCString ownerPassword(*i_ownerPassword);
@@ -364,7 +365,7 @@ FALCON_FUNC Doc::setPermission( VMachine* vm )
   if ( !i_permission || !i_permission->isInteger())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("I"));
+                          .extra("I"));
   }
 
   HPDF_SetPermission(self->handle(), i_permission->asInteger());
@@ -380,7 +381,7 @@ FALCON_FUNC Doc::setEncryptionMode( VMachine* vm )
        || !i_keyLength || !i_keyLength->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("I,I"));
+                          .extra("I,I"));
   }
 
   HPDF_SetEncryptionMode(self->handle(), static_cast<HPDF_EncryptMode>( i_encryptionMode->asInteger()), i_keyLength->asInteger());
@@ -396,7 +397,7 @@ FALCON_FUNC Doc::loadTTFontFromFile( VMachine* vm )
        || !i_embed || ! i_embed->isBoolean() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S,B"));
+                          .extra("S,B"));
   }
 
   AutoCString filename( *i_filename );
@@ -412,7 +413,7 @@ FALCON_FUNC Doc::getEncoder( VMachine* vm )
   if ( !i_encodingName || ! i_encodingName->isString() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("S"));
+                          .extra("S"));
   }
 
   AutoCString encodingName( *i_encodingName );
@@ -430,7 +431,7 @@ FALCON_FUNC Doc::setPagesConfiguration( VMachine* vm )
   if ( !i_number || ! i_number->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                       .extra("I"));
+                          .extra("I"));
   }
 
   HPDF_SetPagesConfiguration(self->handle(), i_number->asInteger());

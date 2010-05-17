@@ -216,7 +216,7 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
       i_fontSize == 0 || !i_fontSize->isInteger() )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("Font,I") );
+                           .extra("hpdf.Font,I") );
   }
 
   Mod::hpdf::Dict* font = dyncast<Mod::hpdf::Dict*>( i_font->asObject() );
@@ -224,6 +224,15 @@ FALCON_FUNC Page::setFontAndSize( VMachine* vm )
   HPDF_Page_SetFontAndSize( self->handle(), font->handle(), size);
 }
 
+/*#
+  @method moveTextPos Page
+  @brief Changes the current text position, using the specified offset values.
+  @param xOffset x offset to new text position.
+  @param yOffset y offset to new text position.
+
+  If the current text position is (x1, y1), the new text position will be
+  (x1 + xOffset, y1 + yOffset).
+ */
 FALCON_FUNC Page::moveTextPos( VMachine* vm )
 {
   Mod::hpdf::Dict* self = dyncast<Mod::hpdf::Dict*>( vm->self().asObject() );
@@ -793,7 +802,7 @@ FALCON_FUNC Page::drawImage( VMachine* vm )
        || !i_width->isScalar() || !i_height->isScalar())
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("Image,N,N,N,N") );
+                           .extra("hpdf.Image,N,N,N,N") );
   }
 
   Mod::hpdf::Dict* image = dyncast<Mod::hpdf::Dict*>( i_image->asObject() );
@@ -846,7 +855,7 @@ FALCON_FUNC Page::createTextAnnot( VMachine* vm )
        || (i_encoder && !(i_encoder->isOfClass("Encoder") || i_encoder->isNil())) )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("A{4N},S,[Encoder]"));
+                           .extra("A{4N},S,[hpdf.Encoder]"));
   }
 
   HPDF_Rect rect;
@@ -920,7 +929,7 @@ FALCON_FUNC Page::createLinkAnnot( VMachine* vm )
        || !i_destination || !i_destination->isOfClass("Destination") )
   {
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                           .extra("A{4N},Destination"));
+                           .extra("A{4N},hpdf.Destination"));
   }
 
   HPDF_Rect rect;
