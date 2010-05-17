@@ -73,6 +73,7 @@
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_RadioMenuItem.hpp"
+#include "gtk_Range.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
 #include "gtk_ScaleButton.hpp"
@@ -229,6 +230,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Label::modInit( self );
             Falcon::Gtk::Progress::modInit( self );
                 Falcon::Gtk::ProgressBar::modInit( self );
+            Falcon::Gtk::Range::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );

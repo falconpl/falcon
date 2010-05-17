@@ -75,6 +75,7 @@ set( SRC_FILES
     gtk_RadioAction.cpp
     gtk_RadioButton.cpp
     gtk_RadioMenuItem.cpp
+    gtk_Range.cpp
     gtk_Requisition.cpp
     gtk_Ruler.cpp
     gtk_ScaleButton.cpp
@@ -180,6 +181,7 @@ set( HDR_FILES
     gtk_RadioAction.hpp
     gtk_RadioButton.hpp
     gtk_RadioMenuItem.hpp
+    gtk_Range.hpp
     gtk_Requisition.hpp
     gtk_Ruler.hpp
     gtk_ScaleButton.hpp
