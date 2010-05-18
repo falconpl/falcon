@@ -101,6 +101,7 @@
 #include "gtk_VolumeButton.hpp"
 #include "gtk_VPaned.hpp"
 #include "gtk_VRuler.hpp"
+#include "gtk_VScale.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 #include "gtk_WindowGroup.hpp"
@@ -235,6 +236,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Range::modInit( self );
                 Falcon::Gtk::Scale::modInit( self );
                     Falcon::Gtk::HScale::modInit( self );
+                    Falcon::Gtk::VScale::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );
