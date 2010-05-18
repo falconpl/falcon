@@ -53,6 +53,7 @@ set( SRC_FILES
     gtk_HPaned.cpp
     gtk_HRuler.cpp
     gtk_HScale.cpp
+    gtk_HScrollbar.cpp
     gtk_Image.cpp
     gtk_ImageMenuItem.cpp
     gtk_InfoBar.cpp
@@ -163,6 +164,7 @@ set( HDR_FILES
     gtk_HPaned.hpp
     gtk_HRuler.hpp
     gtk_HScale.hpp
+    gtk_HScrollbar.hpp
     gtk_Image.hpp
     gtk_ImageMenuItem.hpp
     gtk_InfoBar.hpp

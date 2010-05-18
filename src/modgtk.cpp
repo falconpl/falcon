@@ -50,6 +50,7 @@
 #include "gtk_HPaned.hpp"
 #include "gtk_HRuler.hpp"
 #include "gtk_HScale.hpp"
+#include "gtk_HScrollbar.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_ImageMenuItem.hpp"
 #if GTK_MINOR_VERSION >= 18
@@ -239,6 +240,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::HScale::modInit( self );
                     Falcon::Gtk::VScale::modInit( self );
                 Falcon::Gtk::Scrollbar::modInit( self );
+                    Falcon::Gtk::HScrollbar::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );
