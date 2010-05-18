@@ -79,6 +79,7 @@
 #include "gtk_Ruler.hpp"
 #include "gtk_Scale.hpp"
 #include "gtk_ScaleButton.hpp"
+#include "gtk_Scrollbar.hpp"
 #include "gtk_SeparatorMenuItem.hpp"
 #include "gtk_SpinButton.hpp"
 #include "gtk_Statusbar.hpp"
@@ -237,6 +238,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Scale::modInit( self );
                     Falcon::Gtk::HScale::modInit( self );
                     Falcon::Gtk::VScale::modInit( self );
+                Falcon::Gtk::Scrollbar::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );
