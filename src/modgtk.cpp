@@ -104,6 +104,7 @@
 #include "gtk_VPaned.hpp"
 #include "gtk_VRuler.hpp"
 #include "gtk_VScale.hpp"
+#include "gtk_VScrollbar.hpp"
 #include "gtk_Widget.hpp"
 #include "gtk_Window.hpp"
 #include "gtk_WindowGroup.hpp"
@@ -241,6 +242,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::VScale::modInit( self );
                 Falcon::Gtk::Scrollbar::modInit( self );
                     Falcon::Gtk::HScrollbar::modInit( self );
+                    Falcon::Gtk::VScrollbar::modInit( self );
             Falcon::Gtk::Ruler::modInit( self );
                 Falcon::Gtk::HRuler::modInit( self );
                 Falcon::Gtk::VRuler::modInit( self );

@@ -107,6 +107,7 @@ set( SRC_FILES
     gtk_VPaned.cpp
     gtk_VRuler.cpp
     gtk_VScale.cpp
+    gtk_VScrollbar.cpp
     gtk_Widget.cpp
     gtk_Window.cpp
     gtk_WindowGroup.cpp
@@ -218,6 +219,7 @@ set( HDR_FILES
     gtk_VPaned.hpp
     gtk_VRuler.hpp
     gtk_VScale.hpp
+    gtk_VScrollbar.hpp
     gtk_Widget.hpp
     gtk_Window.hpp
     gtk_WindowGroup.hpp
