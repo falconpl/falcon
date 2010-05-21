@@ -85,6 +85,22 @@ if not 10 notin arr2: failure( "Notin operator - negative" )
 arr2.resize(-1)  // as 0
 if arr2.len() > 0: failure( "Resize negative" )
 
+
+// unpacking
+array = [1,2]
+a,b = array
+if a != 1 or b != 2: failure( "unpacking" )
+// should raise an AccessError
+throw = false
+try
+  a,b,c = array
+  a,b,c = [1,2]
+catch AccessError
+  throw = true
+end
+if not throw: failure( "invalid unpack statement" ) 
+
+
 success()
 
 /* End of file */
