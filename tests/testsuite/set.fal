@@ -13,6 +13,7 @@
 
 set = Set(1,2,3)
 
+/* not yet implemented.
 // in
 if not (1 in set): failure( "In operator - positive" )
 if 4 in set: failure( "In operator - negative" )
@@ -20,6 +21,7 @@ if 4 in set: failure( "In operator - negative" )
 // notin
 if 1 notin set: failure( "Notin operator - negative" )
 if not 4 notin set: failure( "Notin operator - positive" )
+*/
 
 if set.len() != 3: failure( "Len FBOM" )
 

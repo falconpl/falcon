@@ -39,6 +39,23 @@ function receiveArray()
    if var3 != [3:4]: failure( "third item indirect" )
 end
 
+
+
+try
+   a = ['a', 'b' ]
+   var1, var2, var3 = a
+   failure( "Exception in delayed unpacking not raised - 2" )
+catch
+end
+
+
+try
+   a = ['a', 'b', 'c', 'd']
+   var1, var2, var3 = a
+   failure( "Exception in delayed unpacking not raised - 2" )
+catch
+end
+
 receiveArray()
 success()
 
