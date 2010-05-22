@@ -19,6 +19,7 @@
 #include <falcon/string.h>
 
 #include <falcon/dbi_bind.h>
+#include <falcon/dbi_outbind.h>
 #include <falcon/dbi_error.h>
 #include <falcon/dbi_handle.h>
 #include <falcon/dbi_params.h>

@@ -12,6 +12,7 @@ endif(COMMAND cmake_policy)
 
 add_library( dbi_common STATIC
    dbi_bind.cpp
+   dbi_common.cpp
    dbi_error.cpp
    dbi_handle.cpp
    dbi_outbind.cpp

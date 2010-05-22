@@ -55,6 +55,13 @@ protected:
 
    //static dbi_type getFalconType( int typ );
 
+   // Binding data
+   MYSQL_BIND* m_pMyBind;
+   DBIOutBind* m_pOutBind;
+
+   // used to keep track of blobs that must be zeroed before fetch
+   int* m_pBlobId;
+   int m_nBlobCount;
 public:
    DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res, MYSQL_STMT *stmt );
    ~DBIRecordsetMySQL();

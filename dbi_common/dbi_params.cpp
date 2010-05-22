@@ -114,6 +114,7 @@ bool DBIParams::parsePart( const String& strPart )
 
          return true;
       }
+      p = p->m_pNext;
    }
 
    // not found... it's an invalid key
@@ -214,7 +215,12 @@ bool DBISettingParams::parse( const String& connStr )
 // Connection parameter parser
 //============================================================
 
-DBIConnParams::DBIConnParams( bool bNoDef )
+DBIConnParams::DBIConnParams( bool bNoDef ):
+      m_szUser(0),
+      m_szPassword(0),
+      m_szHost(0),
+      m_szPort(0),
+      m_szDb(0)
 {
    if( ! bNoDef )
    {
@@ -225,6 +231,11 @@ DBIConnParams::DBIConnParams( bool bNoDef )
       addParameter( "port", m_sPort, &m_szPort );
       addParameter( "host", m_sHost, &m_szHost );
    }
+}
+
+
+DBIConnParams::~DBIConnParams()
+{
 }
 
 }

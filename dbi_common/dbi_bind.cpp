@@ -67,7 +67,7 @@ char* DBIStringConverter_UTF8::convertString( const String& str, char* target, i
    return ret;
 }
 
-DBIStringConverter_UTF8 DBIStringConverter_UTF8_inst;
+DBIStringConverter_UTF8 DBIStringConverter_UTF8_impl;
 
 //=========================================================
 // Single item binding converter
@@ -208,7 +208,7 @@ void DBIBind::bind( const ItemArray& arr,
       bFirst = false;
       nSize = m_size;
 
-      if( nSize != arr.length() )
+      if( ((uint32)nSize) != arr.length() )
       {
          // time to explode.
          throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ )

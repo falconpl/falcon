@@ -30,8 +30,10 @@ namespace Falcon {
 DBIOutBindItem::DBIOutBindItem():
    m_allocated( bufsize ),
    m_allBlockSizes( 0 ),
-   m_memory( m_stdBuffer )
+   m_memory( m_stdBuffer ),
+   m_headBlock(0)
 {
+   m_nLength.llspace = 0;
 }
 
 
@@ -138,6 +140,26 @@ void* DBIOutBindItem::alloc( unsigned size )
    return m_memory;
 }
 
+
+void* DBIOutBindItem::reserve( unsigned size )
+{
+   if( m_headBlock != 0 )
+      consolidate();
+
+   if( m_allocated >= size )
+      return m_memory;
+
+   if( m_memory == 0 || m_memory == m_stdBuffer )
+   {
+      m_memory  = memAlloc( size );
+   }
+   else
+   {
+      m_memory = memRealloc( m_memory, size );
+   }
+
+   return m_memory;
+}
 
 void* DBIOutBindItem::getMemory()
 {

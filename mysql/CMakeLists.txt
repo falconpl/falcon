@@ -53,7 +53,7 @@ INCLUDE_DIRECTORIES(../dbi)
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
    mysql.cpp
    mysql_ext.cpp
-   mysql_srv.cpp
+   mysql_mod.cpp
 )
 
 # Link

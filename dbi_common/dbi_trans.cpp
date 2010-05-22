@@ -36,7 +36,7 @@ FalconData *DBITransaction::clone() const
 }
 
 
-void DBITransaction::gcMark( uint32 )
+void DBITransaction::gcMark( uint32 v )
 {
 }
 

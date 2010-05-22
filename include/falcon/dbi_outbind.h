@@ -34,7 +34,7 @@ class ItemArray;
     Each item may be used mainly in two ways:
 
     - A total memory may be allocated with alloc(). The amount of allocated memory
-      can then be accessed with allocated() and the memory can be retreived with
+      can then be accessed with allocated() and the memory can be retrieved with
       memory();
 
     - Otherwise, more blocks can be allocated via allocBlock(), and once read, their
@@ -114,6 +114,19 @@ public:
    */
    void* alloc( unsigned size );
 
+   /** Ensure that at least size bytes are available.
+
+      This method ensures that the memory in this object
+      can store at least size bytes. The main difference with
+      alloc() is that memory is not relocated if enough
+      data can be stored in the previously allocated
+      memory.
+
+      Also, the method will automatically call consolidate if needed.
+       \return the area suitable for the allocation
+   */
+   void* reserve( unsigned size );
+
    /** Returns the amount of allocated memory.
 
        At creation, it reports the size of the default buffer.
@@ -150,6 +163,19 @@ public:
        the method returns 0.
    */
    void* getMemory();
+
+   /** Extra memory space where to store length. */
+
+   typedef union tag_extraLength
+   {
+      unsigned int ispace;
+      unsigned long lspace;
+      uint64 llspace;
+   }
+   t_extra;
+
+   t_extra m_nLength;
+
 
 private:
    static const int bufsize = 16;

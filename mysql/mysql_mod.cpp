@@ -1,11 +1,11 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: mysql_srv.cpp
+ * FILE: mysql_mod.cpp
  *
  * MySQL Falcon service/driver
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
- * Begin: Wed Jan 02 21:35:18 2008
+ * Author: Giancarlo Niccolai
+ * Begin: Sat, 22 May 2010 14:44:49 +0200
  *
  * -------------------------------------------------------------------
  * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -20,8 +20,6 @@
 #include <falcon/engine.h>
 #include <falcon/dbi_error.h>
 #include "mysql_mod.h"
-#include "dbi_mod.h"
-#include "dbi_st.h"
 
 namespace Falcon
 {
@@ -139,50 +137,63 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res, MYSQL
    m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
+
+   // bind the output values
+   m_pMyBind = (MYSQL_BIND*) memAlloc( sizeof( MYSQL_BIND ) * m_columnCount );
+   memset( m_pMyBind, 0, sizeof( MYSQL_BIND ) * m_columnCount );
+   m_pOutBind = new DBIOutBind( m_columnCount );
+
+   // keep track of blobs: they myst be zeroed before each fetch
+   m_pBlobId = new int[m_columnCount];
+   m_nBlobCount = 0;
+
+   for ( int c = 0; c < m_columnCount; c++ )
+   {
+      // blob field? -- we need to know its length.
+      MYSQL_FIELD& field = m_fields[c];
+      DBIOutBindItem& ob = m_pOutBind->at(c);
+      MYSQL_BIND& mb = m_pMyBind[c];
+
+      mb.buffer_type = field.type;
+      // Accept to blob in sizes < 1024
+      if( field.length >= 1024 && (
+            field.type == MYSQL_TYPE_TINY_BLOB ||
+            field.type == MYSQL_TYPE_BLOB ||
+            field.type == MYSQL_TYPE_MEDIUM_BLOB ||
+            field.type == MYSQL_TYPE_LONG_BLOB )
+         )
+      {
+         // if we have a large blob, fetch it separately
+         m_pBlobId[m_nBlobCount++] = c;
+      }
+      else
+      {
+         mb.buffer_length = field.length + 1;
+         mb.buffer = ob.reserve( field.length + 1 );
+      }
+
+      mb.length = &ob.m_nLength.lspace;
+   }
+
+   if( mysql_stmt_bind_result( m_stmt, m_pMyBind ) != 0 )
+   {
+      static_cast< DBIHandleMySQL *>(m_trh->getHandle())
+            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
+   }
+
 }
 
 DBIRecordsetMySQL::~DBIRecordsetMySQL()
 {
    if ( m_res != NULL )
       close();
+
+   memFree( m_pMyBind );
+   delete m_pOutBind;
+   delete[] m_pBlobId;
 }
 
-/*
-dbi_type DBIRecordsetMySQL::getFalconType( int typ )
-{
-   switch ( typ )
-   {
-   case MYSQL_TYPE_TINY:
-   case MYSQL_TYPE_SHORT:
-   case MYSQL_TYPE_LONG:
-   case MYSQL_TYPE_INT24:
-   case MYSQL_TYPE_BIT:
-   case MYSQL_TYPE_YEAR:
-      return dbit_integer;
 
-   case MYSQL_TYPE_LONGLONG:
-      return dbit_integer64;
-
-   case MYSQL_TYPE_DECIMAL:
-   case MYSQL_TYPE_NEWDECIMAL:
-   case MYSQL_TYPE_FLOAT:
-   case MYSQL_TYPE_DOUBLE:
-      return dbit_numeric;
-
-   case MYSQL_TYPE_DATE:
-      return dbit_date;
-
-   case MYSQL_TYPE_TIME:
-      return dbit_time;
-
-   case MYSQL_TYPE_DATETIME: // TODO: MYSQL_TYPE_TIMESTAMP ?!?
-      return dbit_datetime;
-
-   default:
-      return dbit_string;
-   }
-}
-*/
 
 int DBIRecordsetMySQL::getColumnCount()
 {
@@ -202,18 +213,166 @@ bool DBIRecordsetMySQL::getColumnName( int nCol, String& name )
 
 bool DBIRecordsetMySQL::getColumnValue( int nCol, Item& value )
 {
-   if ( m_row == 0 || nCol < 0 || nCol >= m_columnCount )
+   if ( m_row == -1 || nCol < 0 || nCol >= m_columnCount )
    {
       return false;
    }
-#if 0 // TODO
-   switch( m_fields[nCol].type )
-   {
 
+   // if the field is nil, return nil
+   if( m_pMyBind->is_null_value )
+   {
+      value.setNil();
+      return true;
    }
 
-   value.fromUTF8( m_rowData[columnIndex] );
-#endif
+   unsigned long dlen = m_pOutBind->at(nCol).m_nLength.lspace;
+
+   switch( m_fields[nCol].type )
+   {
+   case MYSQL_TYPE_NULL:
+      value.setNil();
+      break;
+
+   case MYSQL_TYPE_TINY:
+      value.setInteger( (*(char*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_YEAR:
+   case MYSQL_TYPE_SHORT:
+      value.setInteger( (*(short*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_INT24:
+   case MYSQL_TYPE_LONG:
+   case MYSQL_TYPE_ENUM:
+   case MYSQL_TYPE_GEOMETRY:
+      value.setInteger( (*(int32*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_LONGLONG:
+      value.setInteger( (*(int64*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_FLOAT:
+      value.setNumeric( (*(float*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_DOUBLE:
+      value.setNumeric( (*(double*) m_pOutBind->at(nCol).memory() ) );
+      break;
+
+   case MYSQL_TYPE_DECIMAL:
+   case MYSQL_TYPE_NEWDECIMAL:
+      {
+         // encoding is utf-8, and values are in range < 127
+         String sv = (char*)m_pOutBind->at(nCol).memory();
+         double dv=0.0;
+         sv.parseDouble(dv);
+         value.setNumeric(dv);
+      }
+      break;
+
+   case MYSQL_TYPE_DATE:
+   case MYSQL_TYPE_TIME:
+   case MYSQL_TYPE_DATETIME:
+   case MYSQL_TYPE_TIMESTAMP:
+   case MYSQL_TYPE_NEWDATE:
+      {
+         VMachine* vm = VMachine::getCurrent();
+         if( vm == 0 )
+         {
+            return false;
+         }
+         CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
+         MYSQL_TIME* mtime = (MYSQL_TIME*) m_pOutBind->at(nCol).memory();
+         TimeStamp* ts = new TimeStamp;
+
+         ts->m_year = mtime->year;
+         ts->m_month = mtime->month;
+         ts->m_day = mtime->day;
+         ts->m_hour = mtime->hour;
+         ts->m_minute = mtime->minute;
+         ts->m_second = mtime->second;
+         ts->m_msec = mtime->second_part;
+
+         ots->setUserData( ts );
+         value = ots;
+      }
+      break;
+
+   // string types
+   case MYSQL_TYPE_BIT:
+   case MYSQL_TYPE_STRING:
+   case MYSQL_TYPE_VARCHAR:
+   case MYSQL_TYPE_VAR_STRING:
+      // text?
+      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
+      {
+         value = new MemBuf_1( (byte*) m_pOutBind->at(nCol).memory(), dlen );
+      }
+      else
+      {
+         ((char*)m_pOutBind->at(nCol).memory())[ dlen ] = 0;
+         CoreString* res = new CoreString;
+         res->fromUTF8( (char*) m_pOutBind->at(nCol).memory() );
+         value = res;
+      }
+   break;
+
+   case MYSQL_TYPE_TINY_BLOB:
+   case MYSQL_TYPE_BLOB:
+   case MYSQL_TYPE_MEDIUM_BLOB:
+   case MYSQL_TYPE_LONG_BLOB:
+      // read the missing memory -- and be sure to alloc
+      if( dlen != 0 )
+      {
+         m_pOutBind->at(nCol).alloc( dlen );
+         m_pMyBind[nCol].buffer_length = dlen;
+         m_pMyBind[nCol].buffer = m_pOutBind->at(nCol).memory();
+         if(  mysql_stmt_fetch_column( m_stmt, m_pMyBind + nCol, nCol, 0 ) != 0 )
+         {
+            static_cast< DBIHandleMySQL *>(m_trh->getHandle())
+                  ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+         }
+      }
+
+      // text?
+      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
+      {
+         // give ownership
+         if( dlen == 0 )
+         {
+            value = new MemBuf_1( 0, 0 );
+         }
+         else
+         {
+            value = new MemBuf_1(
+               (byte*) m_pOutBind->at(nCol).getMemory(),
+               dlen,
+               memFree );
+         }
+      }
+      else
+      {
+         if( dlen == 0 )
+         {
+            value = new CoreString( "" );
+         }
+         else
+         {
+            ((char*)m_pOutBind->at(nCol).memory())[ dlen ] = 0;
+            CoreString* res = new CoreString;
+            res->fromUTF8( (char*) m_pMyBind[nCol].buffer );
+            value = res;
+         }
+      }
+      break;
+
+   default:
+      static_cast< DBIHandleMySQL *>(m_trh->getHandle())
+                        ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+   }
+
    return true;
 }
 
@@ -227,6 +386,60 @@ int64 DBIRecordsetMySQL::getRowCount()
 int64 DBIRecordsetMySQL::getRowIndex()
 {
    return m_row;
+}
+
+bool DBIRecordsetMySQL::discard( int64 ncount )
+{
+   // we have all the records. We may seek
+   if( m_trh->params()->m_nPrefetch == -1 )
+   {
+      mysql_stmt_data_seek( m_stmt, (uint64) ncount + (m_row == 0 ? 0 : m_row+1) );
+   }
+   else
+   {
+      for ( int64 i = 0; i < ncount; ++i )
+      {
+         int res = mysql_stmt_fetch( m_stmt );
+         if( res == MYSQL_NO_DATA )
+            return false;
+         if( res == 1 )
+         {
+            static_cast< DBIHandleMySQL *>(m_trh->getHandle())
+                                    ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+         }
+      }
+   }
+
+   return true;
+}
+
+bool DBIRecordsetMySQL::fetchRow()
+{
+   // first, zero excessively long blobs.
+   for( int i = 0; i < m_nBlobCount; ++i  )
+   {
+      MYSQL_BIND& bind = m_pMyBind[ m_pBlobId[i] ];
+      bind.buffer_length = 0;
+      *bind.length = 0;
+      bind.buffer = 0;
+   }
+
+   // then do the real fetch
+   int res = mysql_stmt_fetch( m_stmt );
+   if( res == 1 )
+   {
+      // there's an error.
+      static_cast< DBIHandleMySQL *>(m_trh->getHandle())
+            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+   }
+   else if ( res == MYSQL_NO_DATA )
+   {
+      return false;
+   }
+
+   // we have the values
+   m_row++;
+   return true;
 }
 
 void DBIRecordsetMySQL::close()
@@ -246,7 +459,8 @@ void DBIRecordsetMySQL::close()
 
 DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings ):
       DBITransaction( dbh, settings ),
-      m_statement(0)
+      m_statement(0),
+      m_inBind(0)
 {
 }
 
@@ -278,22 +492,25 @@ DBIRecordset *DBITransactionMySQL::query( const String &sql, int64 &affectedRows
    }
    else
    {
-      DBIRecordsetMySQL* recset = new DBIRecordsetMySQL( this, meta, m_statement );
-
       // ok. Do the user wanted all the result back?
       if( m_settings->m_nPrefetch < 0 )
       {
-         if( ! mysql_stmt_store_result( m_statement ) )
+         if( mysql_stmt_store_result( m_statement ) != 0 )
          {
-            m_statement = 0;
-            delete recset;
             mysql_free_result( meta );
+            mysql_stmt_close( m_statement );
+            m_statement = 0;
+            // throw now
             getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
          }
       }
 
       // pass the ownership of the statement to the recordset.
+      MYSQL_STMT* stmt = m_statement;
       m_statement = 0;
+      // -- may throw
+      DBIRecordsetMySQL* recset = new DBIRecordsetMySQL( this, meta, stmt );
+
       return recset;
    }
 
@@ -549,11 +766,11 @@ void DBIHandleMySQL::throwError( const char* file, int line, int code )
       String description;
       description.N( (int64) mysql_errno( m_conn ) ).A(": ");
       description.A( errorMessage );
-      dbh_throwError( file, line, code, extra );
+      dbi_throwError( file, line, code, extra );
    }
    else
    {
-      dbh_throwError( file, line, code, extra );
+      dbi_throwError( file, line, code, extra );
    }
 }
 
@@ -572,7 +789,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
 
    // add MySQL specific parameters
    String sSocket, sFlags;
-   const char *szSocket;
+   const char *szSocket = 0;
    connParams.addParameter( "socket", sSocket, &szSocket );
    connParams.addParameter( "flags", sFlags );
 

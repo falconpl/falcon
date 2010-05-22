@@ -86,6 +86,11 @@ void DBIError::describeError()
    case FALCON_DBI_ERROR_FETCH:
       this->errorDescription( "Failed to fetch part of the recordset" );
       break;
+
+   case FALCON_DBI_ERROR_UNHANDLED_TYPE:
+      this->errorDescription( "Unhandled field type in return dataset" );
+      break;
+
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

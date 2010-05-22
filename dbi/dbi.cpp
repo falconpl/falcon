@@ -89,7 +89,7 @@ FALCON_MODULE_DECL
     */
 
    // create the base class DBIHandler for falcon
-   Falcon::Symbol *handler_class = self->addClass( "%Handle", false );
+   Falcon::Symbol *handler_class = self->addClass( "%Handle", true );
    handler_class->setWKS( true );
    self->addClassMethod( handler_class, "trops", &Falcon::Ext::Handle_trops ).asSymbol()
       ->addParam("options");

@@ -30,7 +30,7 @@ FalconData *DBIRecordset::clone() const
 }
 
 
-void DBIRecordset::gcMark( uint32 )
+void DBIRecordset::gcMark( uint32 v )
 {
 }
 

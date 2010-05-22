@@ -23,10 +23,8 @@ namespace Falcon
 {
 
 DBILoaderImpl::DBILoaderImpl():
-   DBILoader( "DBILOADER" ),
-   m_loader("")
+   DBILoader( "DBILOADER" )
 {
-   m_loader.addFalconPath();
 }
 
 DBILoaderImpl::~DBILoaderImpl()
@@ -34,23 +32,30 @@ DBILoaderImpl::~DBILoaderImpl()
 
 DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName )
 {
+   ModuleLoader* loader = new ModuleLoader("");
    DBIService *serv = static_cast<DBIService *>( vm->getService( "DBI_" + provName ) );
+   loader->addFalconPath();
+
    Module *mod = 0;
    if ( serv == 0 )
    {
       // ok, let's try to load the service
-      mod = m_loader.loadName( provName );
       try {
+         mod = loader->loadName( provName );
          vm->link( mod );
       }
       catch( Error * )
       {
-         mod->decref();
+         delete loader;
+         if ( mod != 0 )
+            mod->decref();
          throw;
       }
 
       // the VM has linked the module, we get rid of it.
       mod->decref();
+      delete loader;
+
       //NOTE: we must actually have a local map, as we may be fed with different VMs.
       //We should load only one module for each type, and give to each VM a pre-loaded
       // module, if available.

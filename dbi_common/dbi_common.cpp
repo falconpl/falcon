@@ -17,6 +17,7 @@
 #include <falcon/vm.h>
 #include <falcon/item.h>
 #include <falcon/error.h>
+#include <falcon/timestamp.h>
 
 /******************************************************************************
  * Local Helper Functions - DBH database handle
@@ -40,7 +41,7 @@ int dbi_itemToSqlValue( const Item &item, String &value )
          return true;
 
       case FLC_ITEM_STRING:
-         dbh_escapeString( *item.asString(), value );
+         dbi_escapeString( *item.asString(), value );
          value.prepend( "'" );
          value.append( "'" );
          return true;

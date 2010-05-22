@@ -27,8 +27,6 @@ namespace Falcon
  */
 class DBILoaderImpl: public DBILoader
 {
-   ModuleLoader m_loader;
-
 public:
    DBILoaderImpl();
    ~DBILoaderImpl();
