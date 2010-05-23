@@ -102,6 +102,11 @@ public:
     */
    virtual void close()=0;
 
+   /** Returns the SQL statement needed to call stored procedures
+    * @return
+    */
+   virtual String callSP( const String& sp ) const = 0;
+
    virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
 };

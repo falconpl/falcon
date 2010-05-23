@@ -649,6 +649,16 @@ void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const Item
       {
          throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
+
+      // discard eventual recordsets
+      while ( mysql_next_result( conn ) )
+      {
+         MYSQL_RES* rec = mysql_use_result( conn );
+         if( rec != 0 )
+         {
+            mysql_free_result(rec);
+         }
+      }
    }
    else
    {
@@ -764,6 +774,12 @@ void DBIHandleMySQL::throwError( const char* file, int line, int code )
    }
 }
 
+String DBIHandleMySQL::callSP( const String& s ) const
+{
+   return "CALL " + s;
+}
+
+
 /******************************************************************************
  * Main service class
  *****************************************************************************/
@@ -798,7 +814,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
       );
    }
 
-   //long szFlags = 0;
+   long szFlags = CLIENT_MULTI_STATEMENTS;
    // TODO parse flags
 
    if ( mysql_real_connect( conn,
@@ -807,7 +823,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
          connParams.m_szPassword,
          connParams.m_szDb,
          connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
-         szSocket, 0 ) == NULL
+         szSocket, szFlags ) == NULL
       )
    {
       String errorMessage = mysql_error( conn );

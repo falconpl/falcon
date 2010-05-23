@@ -115,6 +115,7 @@ public:
    virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
+   virtual String callSP( const String& s ) const;
 
    MYSQL *getConn() { return m_conn; }
 

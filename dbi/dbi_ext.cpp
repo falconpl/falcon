@@ -367,6 +367,27 @@ void Handle_prepare( VMachine *vm )
 }
 
 
+/*#
+   @method callsp Handle
+   @brief Adds the "call", "exec" or other non-standard SQL element to
+   @param sql The SQL query
+   @throw DBIError if the database engine reports an error.
+*/
+
+void Handle_callsp( VMachine *vm )
+{
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S" ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+   vm->retval( new CoreString( dbt->callSP(*i_sql->asString()) ) );
+}
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
