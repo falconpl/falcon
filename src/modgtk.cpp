@@ -96,6 +96,7 @@
 #include "gtk_ToggleAction.hpp"
 #include "gtk_ToggleButton.hpp"
 #include "gtk_Toolbar.hpp"
+#include "gtk_ToolButton.hpp"
 #include "gtk_ToolItem.hpp"
 #include "gtk_ToolItemGroup.hpp"
 #include "gtk_VBox.hpp"
@@ -194,6 +195,7 @@ FALCON_MODULE_DECL
                             Falcon::Gtk::SeparatorMenuItem::modInit( self );
                             Falcon::Gtk::TearoffMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
+                        Falcon::Gtk::ToolButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
