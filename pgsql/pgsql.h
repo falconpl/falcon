@@ -57,7 +57,7 @@ public:
    virtual dbi_status getLastError( String &description );
 };
 
-class DBITransactionPgSQL : public DBITransaction
+class DBITransactionPgSQL : public DBIStatement
 {
 protected:
    bool m_inTransaction;
@@ -90,14 +90,14 @@ public:
 
    PGconn *getPGconn() { return m_conn; }
 
-   virtual DBITransaction *startTransaction();
-   virtual dbi_status closeTransaction( DBITransaction *tr );
+   virtual DBIStatement *startTransaction();
+   virtual dbi_status closeTransaction( DBIStatement *tr );
    virtual int64 getLastInsertedId();
    virtual int64 getLastInsertedId( const String &value );
    virtual dbi_status getLastError( String &description );
    virtual dbi_status escapeString( const String &value, String &escaped );
    virtual dbi_status close();
-   virtual DBITransaction* getDefaultTransaction();
+   virtual DBIStatement* getDefaultTransaction();
 };
 
 class DBIServicePgSQL : public DBIService

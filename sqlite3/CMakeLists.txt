@@ -17,10 +17,18 @@ include_directories(
 
 # Target
 add_library( ${FALCON_MODULE} MODULE
-   sqlite3.cpp
+   sqlite3_fm.cpp
+   sqlite3_mod.cpp
    sqlite3_ext.cpp
    sqlite3_srv.cpp
-   sqlite.c
+   sqlite3.c
+   
+   #Headers for IDE 
+   sqlite3_ext.h  
+   sqlite3_mod.h  
+   version.h
+   sqlite3.h
+
 )
 #
 set(sqlite_definitions

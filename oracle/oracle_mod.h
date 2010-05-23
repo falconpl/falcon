@@ -58,7 +58,7 @@ namespace Falcon
     };
 
 
-    class DBITransactionOracle : public DBITransaction
+    class DBITransactionOracle : public DBIStatement
     {
         protected:
             bool o_inTransaction;
@@ -94,14 +94,14 @@ namespace Falcon
 
             Connection *getConn() { return o_conn; }
 
-            virtual DBITransaction *startTransaction();
-            virtual dbi_status closeTransaction( DBITransaction *tr );
+            virtual DBIStatement *startTransaction();
+            virtual dbi_status closeTransaction( DBIStatement *tr );
             virtual int64 getLastInsertedId();
             virtual int64 getLastInsertedId( const String &value );
             virtual dbi_status getLastError( String &description );
             virtual dbi_status escapeString( const String &value, String &escaped );
             virtual dbi_status close();
-            virtual DBITransaction* getDefaultTransaction();
+            virtual DBIStatement* getDefaultTransaction();
     };
 
     class DBIServiceOracle : public DBIService

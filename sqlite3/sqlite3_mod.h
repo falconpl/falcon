@@ -1,27 +1,40 @@
 /*
- * FALCON - The Falcon Programming Language.
- * FILE: sqlite3.h
- *
- * SQLite3 driver main module interface
- * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
- * Begin: Wed Jan 02 16:47:15 2008
- *
- * -------------------------------------------------------------------
- * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
- *
- * See LICENSE file for licensing details.
- */
+   FALCON - The Falcon Programming Language.
+   FILE: sqlite3_mod.h
 
-#ifndef DBI_SQLITE3_MOD_H
-#define DBI_SQLITE3_MOD_H
+   SQLite3 driver main module interface
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 23 May 2010 18:23:20 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+#ifndef FALCON_DBI_SQLITE3_MOD_H
+#define FALCON_DBI_SQLITE3_MOD_H
 
 #include <sqlite3.h>
 
-#include "../include/dbiservice.h"
-
 namespace Falcon
 {
+
+class Sqlite3InBind: public DBIInBind
+{
+
+public:
+   Sqlite3InBind();
+   virtual ~Sqlite3InBind();
+
+   virtual void onFirstBinding( int size );
+   virtual void onItemChanged( int num );
+
+private:
+};
+
 
 class DBIRecordsetSQLite3 : public DBIRecordset
 {
@@ -32,32 +45,21 @@ protected:
    sqlite3_stmt *m_res;
    bool m_bHasRow;
 
-   static dbi_type getFalconType( int typ );
-
 public:
-   DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res, bool bHasRow = false );
-   ~DBIRecordsetSQLite3();
+   DBIRecordsetSQLite3( DBIStatement *dbt, sqlite3_stmt* stmt );
+   virtual ~DBIRecordsetSQLite3();
 
-   virtual dbi_status next();
-   virtual int getRowCount();
-   virtual int getRowIndex();
+   virtual bool fetchRow();
+   virtual int64 getRowIndex();
+   virtual int64 getRowCount();
    virtual int getColumnCount();
-   virtual dbi_status getColumnNames( char *names[] );
-   virtual dbi_status getColumnTypes( dbi_type *types );
-   virtual dbi_status asString( const int columnIndex, String &value );
-   virtual dbi_status asBoolean( const int columnIndex, bool &value );
-   virtual dbi_status asInteger( const int columnIndex, int32 &value );
-   virtual dbi_status asInteger64( const int columnIndex, int64 &value );
-   virtual dbi_status asNumeric( const int columnIndex, numeric &value );
-   virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asBlobID( const int columnIndex, String &value );
+   virtual bool getColumnName( int nCol, String& name );
+   virtual bool getColumnValue( int nCol, Item& value );
+   virtual bool discard( int64 ncount );
    virtual void close();
-   virtual dbi_status getLastError( String &description );
 };
 
-class DBITransactionSQLite3 : public DBITransaction
+class DBITransactionSQLite3 : public DBIStatement
 {
 protected:
    bool m_inTransaction;
@@ -65,15 +67,21 @@ protected:
 public:
    DBITransactionSQLite3( DBIHandle *dbh );
 
-   virtual DBIRecordset *query( const String &query, int64 &affected, dbi_status &retval );
-   virtual dbi_status begin();
-   virtual dbi_status commit();
-   virtual dbi_status rollback();
-   virtual dbi_status close();
-   virtual dbi_status getLastError( String &description );
-   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
-   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
-      bool bBinary = false );
+   virtual ~DBITransactionSQLite3();
+
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void prepare( const String &query );
+   virtual void execute( const ItemArray& params, int64 &affectedRows );
+
+   virtual DBIStatement* startTransaction( const String& settings );
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
+   virtual void close();
+   virtual int64 getLastInsertedId( const String& name = "" );
+
+   DBIHandleSQLite3* getSQLite() const { return static_cast<DBIHandleSQLite3*>( m_dbh ); }
 };
 
 class DBIHandleSQLite3 : public DBIHandle
@@ -81,23 +89,17 @@ class DBIHandleSQLite3 : public DBIHandle
 protected:
    sqlite3 *m_conn;
 
-   DBITransactionSQLite3 *m_connTr;
-
 public:
    DBIHandleSQLite3();
    DBIHandleSQLite3( sqlite3 *conn );
    virtual ~DBIHandleSQLite3();
 
+   virtual bool setTransOpt( const String& params );
+   virtual const DBISettingParams* transOpt() const;
+   virtual DBIStatement* startTransaction( const String& options );
+   virtual void close();
+
    sqlite3 *getConn() { return m_conn; }
-
-   virtual DBITransaction *startTransaction();
-   virtual DBITransaction *getDefaultTransaction();
-   virtual dbi_status closeTransaction( DBITransaction *tr );
-   virtual int64 getLastInsertedId();
-   virtual int64 getLastInsertedId( const String &value );
-
-   virtual dbi_status escapeString( const String &value, String &escaped );
-   virtual dbi_status close();
 };
 
 class DBIServiceSQLite3 : public DBIService
@@ -105,17 +107,16 @@ class DBIServiceSQLite3 : public DBIService
 public:
    DBIServiceSQLite3() : DBIService( "DBI_sqlite3" ) {}
 
-   virtual dbi_status init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent,
-                               dbi_status &retval, String &errorMessage );
+   virtual void init();
+   virtual DBIHandle *connect( const String &parameters, bool persistent );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 
+extern DBIServiceSQLite3 theSQLite3Service;
+
 }
 
-extern Falcon::DBIServiceSQLite3 theSQLite3Service;
 
-#endif /* DBI_SQLITE3_H */
+#endif
 
 /* end of sqlite3.h */
-

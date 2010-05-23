@@ -32,7 +32,7 @@ class VMachine;
 class String;
 class ItemArray;
 
-class DBITransaction;
+class DBIStatement;
 class DBIHandle;
 
 typedef enum {

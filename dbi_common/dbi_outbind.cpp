@@ -27,17 +27,16 @@ namespace Falcon {
 //=============================================================
 
 
-DBIOutBindItem::DBIOutBindItem():
+DBIOutBind::DBIOutBind():
    m_allocated( bufsize ),
    m_allBlockSizes( 0 ),
    m_memory( m_stdBuffer ),
    m_headBlock(0)
 {
-   m_nLength.llspace = 0;
 }
 
 
-DBIOutBindItem::~DBIOutBindItem()
+DBIOutBind::~DBIOutBind()
 {
    if( m_memory != 0 && m_memory != m_stdBuffer )
    {
@@ -60,7 +59,7 @@ DBIOutBindItem::~DBIOutBindItem()
 }
 
 
-void* DBIOutBindItem::allocBlock( unsigned size )
+void* DBIOutBind::allocBlock( unsigned size )
 {
    fassert( sizeof(long) == sizeof(void*) );
    long* lblock = (long*) memAlloc( size + (sizeof(long)*2));
@@ -85,7 +84,7 @@ void* DBIOutBindItem::allocBlock( unsigned size )
    return lblock;
 }
 
-void DBIOutBindItem::setBlockSize( void* block, unsigned size )
+void DBIOutBind::setBlockSize( void* block, unsigned size )
 {
    long* lblock = (long*) block;
    lblock -= 2;
@@ -94,7 +93,7 @@ void DBIOutBindItem::setBlockSize( void* block, unsigned size )
 }
 
 
-void* DBIOutBindItem::consolidate()
+void* DBIOutBind::consolidate()
 {
    if( m_memory != 0 && m_memory != m_stdBuffer )
    {
@@ -126,7 +125,7 @@ void* DBIOutBindItem::consolidate()
 }
 
 
-void* DBIOutBindItem::alloc( unsigned size )
+void* DBIOutBind::alloc( unsigned size )
 {
    if( m_memory == 0 || m_memory == m_stdBuffer )
    {
@@ -141,7 +140,7 @@ void* DBIOutBindItem::alloc( unsigned size )
 }
 
 
-void* DBIOutBindItem::reserve( unsigned size )
+void* DBIOutBind::reserve( unsigned size )
 {
    if( m_headBlock != 0 )
       consolidate();
@@ -161,7 +160,7 @@ void* DBIOutBindItem::reserve( unsigned size )
    return m_memory;
 }
 
-void* DBIOutBindItem::getMemory()
+void* DBIOutBind::getMemory()
 {
    if( m_memory == 0 || m_memory == m_stdBuffer )
    {
@@ -174,21 +173,6 @@ void* DBIOutBindItem::getMemory()
    return mem;
 }
 
-//=============================================================
-// Output bind vector.
-//=============================================================
-
-DBIOutBind::DBIOutBind( int size )
-{
-   m_obind = new DBIOutBindItem[ size ];
-   m_size = size;
-}
-
-
-DBIOutBind::~DBIOutBind()
-{
-   delete[] m_obind;
-}
 
 }
 

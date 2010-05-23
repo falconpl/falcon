@@ -140,7 +140,7 @@ private:
    String m_sAutocommit;
    String m_sPrefetch;
 
-   static const bool defaultAutocommit = false;
+   static const bool defaultAutocommit = true;
    static const int defaultCursor = -1;
    static const int defaultPrefetch = -1;
 

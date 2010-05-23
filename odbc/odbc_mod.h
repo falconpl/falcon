@@ -112,7 +112,7 @@ namespace Falcon
 	};
 
 
-	class DBITransactionODBC : public DBITransaction
+	class DBITransactionODBC : public DBIStatement
 	{
 	protected:
 	   bool m_inTransaction;
@@ -146,9 +146,9 @@ namespace Falcon
 
 		ODBCConn *getConn() { return m_conn; }
 
-		virtual DBITransaction *startTransaction();
-		virtual DBITransaction *getDefaultTransaction();
-		virtual dbi_status closeTransaction( DBITransaction *tr );
+		virtual DBIStatement *startTransaction();
+		virtual DBIStatement *getDefaultTransaction();
+		virtual dbi_status closeTransaction( DBIStatement *tr );
 		virtual int64 getLastInsertedId();
 		virtual int64 getLastInsertedId( const String &value );
 		virtual dbi_status escapeString( const String &value, String &escaped );

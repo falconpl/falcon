@@ -350,14 +350,14 @@ namespace Falcon
      * Transaction class
      *****************************************************************************/
 
-    DBITransactionMySQL::DBITransactionOracle( DBIHandle *dbh )
-        : DBITransaction( dbh )
+    DBIStatementMySQL::DBITransactionOracle( DBIHandle *dbh )
+        : DBIStatement( dbh )
     {
         o_inTransaction = false;
     }
 
     // FIXME
-    DBIRecordset *DBITransactionMySQL::query( const String &query, int64 &affectedRows, dbi_status &retval )
+    DBIRecordset *DBIStatementMySQL::query( const String &query, int64 &affectedRows, dbi_status &retval )
     {
         retval = dbi_ok;
 
@@ -482,7 +482,7 @@ namespace Falcon
         DBIHandleOracle::close();
     }
 
-    DBITransaction *DBIHandleOracle::startTransaction()
+    DBIStatement *DBIHandleOracle::startTransaction()
     {
         DBITransactionOracle *t = new DBITransactionOracle( this );
         if ( t->begin() != dbi_ok ) {
@@ -495,7 +495,7 @@ namespace Falcon
         return t;
     }
 
-    DBITransaction* DBIHandleOracle::getDefaultTransaction()
+    DBIStatement* DBIHandleOracle::getDefaultTransaction()
     {
         return o_connTr == NULL ? (o_connTr = new DBITransactionOracle( this )): o_connTr;
     }
@@ -512,7 +512,7 @@ namespace Falcon
         o_connTr = NULL;
     }
 
-    dbi_status DBIHandleOracle::closeTransaction( DBITransaction *tr )
+    dbi_status DBIHandleOracle::closeTransaction( DBIStatement *tr )
     {
         return dbi_ok;
     }

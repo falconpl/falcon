@@ -35,22 +35,19 @@ void DBIConnect( VMachine *vm );
 // DBIBaseTrans
 //=====================
 
-void Transaction_query( VMachine *vm );
-void Transaction_call( VMachine *vm );
-void Transaction_prepare( VMachine *vm );
-void Transaction_execute( VMachine *vm );
-void Transaction_commit( VMachine *vm );
-void Transaction_rollback( VMachine *vm );
-void Transaction_tropen( VMachine *vm );
-void Transaction_close( VMachine *vm );
-void Transaction_getLastID( VMachine *vm );
+void Statement_execute( VMachine *vm );
+void Statement_reset( VMachine *vm );
+void Statement_close( VMachine *vm );
 
 //=====================
 // DBI Handle
 //=====================
 
-void Handle_tropen( VMachine *vm );
-void Handle_trops( VMachine *vm );
+void Handle_query( VMachine *vm );
+void Handle_options( VMachine *vm );
+void Handle_prepare( VMachine *vm );
+void Handle_perform( VMachine *vm );
+void Handle_getLastID( VMachine *vm );
 void Handle_close( VMachine *vm );
 
 
@@ -60,7 +57,7 @@ void Handle_close( VMachine *vm );
 
 void Recordset_discard( VMachine *vm );
 void Recordset_fetch( VMachine *vm );
-//void Recordset_do( VMachine *vm );
+void Recordset_do( VMachine *vm );
 
 void Recordset_getCurrentRow( VMachine *vm );
 void Recordset_getRowCount( VMachine *vm );

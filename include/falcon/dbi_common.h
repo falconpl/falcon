@@ -18,13 +18,13 @@
 
 #include <falcon/string.h>
 
-#include <falcon/dbi_bind.h>
+#include <falcon/dbi_inbind.h>
 #include <falcon/dbi_outbind.h>
 #include <falcon/dbi_error.h>
 #include <falcon/dbi_handle.h>
 #include <falcon/dbi_params.h>
 #include <falcon/dbi_recordset.h>
-#include <falcon/dbi_trans.h>
+#include <falcon/dbi_stmt.h>
 
 namespace Falcon {
 

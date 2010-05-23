@@ -379,7 +379,7 @@ dbi_status DBIRecordsetPgSQL::asBlobID( const int columnIndex, String &value )
  *****************************************************************************/
 
 DBITransactionPgSQL::DBITransactionPgSQL( DBIHandle *dbh )
-    : DBITransaction( dbh )
+    : DBIStatement( dbh )
 {
    m_inTransaction = false;
 }
@@ -506,12 +506,12 @@ DBIHandlePgSQL::~DBIHandlePgSQL()
 }
 
 
-DBITransaction* DBIHandlePgSQL::getDefaultTransaction()
+DBIStatement* DBIHandlePgSQL::getDefaultTransaction()
 {
    return m_connTr == NULL ? (m_connTr = new DBITransactionPgSQL( this )) : m_connTr;
 }
 
-DBITransaction *DBIHandlePgSQL::startTransaction()
+DBIStatement *DBIHandlePgSQL::startTransaction()
 {
    DBITransactionPgSQL *t = new DBITransactionPgSQL( this );
    if ( t->begin() != dbi_ok ) {
@@ -536,7 +536,7 @@ DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
    m_connTr = NULL;
 }
 
-dbi_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr )
+dbi_status DBIHandlePgSQL::closeTransaction( DBIStatement *tr )
 {
    return dbi_ok;
 }

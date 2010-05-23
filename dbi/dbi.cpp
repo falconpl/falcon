@@ -54,54 +54,44 @@ FALCON_MODULE_DECL
    #include "dbi_st.h"
 
    // main factory function
-   self->addExtFunc( "connect", &Falcon::Ext::DBIConnect )->
-      addParam("params")->addParam("trops");
-
+   self->addExtFunc( "DBIConnect", &Falcon::Ext::DBIConnect )->
+      addParam("params")->addParam("queryops");
 
 
    /*#
-      @class Transaction
+      @class Statement
       @brief Base for database operation
    */
-   Falcon::Symbol *trans_class = self->addClass( "%Transaction", false ); // private class
-   trans_class->setWKS( true );
-   self->addClassMethod( trans_class, "query", &Falcon::Ext::Transaction_query ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( trans_class, "call", &Falcon::Ext::Transaction_call ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( trans_class, "prepare", &Falcon::Ext::Transaction_prepare ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( trans_class, "execute", &Falcon::Ext::Transaction_execute );
-   self->addClassMethod( trans_class, "commit", &Falcon::Ext::Transaction_commit );
-   self->addClassMethod( trans_class, "rollback", &Falcon::Ext::Transaction_rollback );
-   self->addClassMethod( trans_class, "close", &Falcon::Ext::Transaction_close );
-   self->addClassMethod( trans_class, "tropen", &Falcon::Ext::Transaction_tropen ).asSymbol()
-         ->addParam("options");
-   self->addClassMethod( trans_class, "getLastID",          &Falcon::Ext::Transaction_getLastID ).asSymbol()
-         ->addParam("name");
-
+   Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
+   stmt_class->setWKS( true );
+   self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
+   self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
+   self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
 
    /*#
     @class Handle
     @brief DBI connection handle returned by @a connect.
-
-    You will not instantiate this class directly, instead, you must use @a DBIConnect.
     */
 
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%Handle", true );
    handler_class->setWKS( true );
-   self->addClassMethod( handler_class, "trops", &Falcon::Ext::Handle_trops ).asSymbol()
+   self->addClassMethod( handler_class, "options", &Falcon::Ext::Handle_options ).asSymbol()
       ->addParam("options");
-   self->addClassMethod( handler_class, "tropen", &Falcon::Ext::Handle_tropen ).asSymbol()
-      ->addParam("options");
+   self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
+         addParam("sql");
+   self->addClassMethod( handler_class, "perform", &Falcon::Ext::Handle_perform ).asSymbol()->
+         addParam("sql");
+   self->addClassMethod( handler_class, "prepare", &Falcon::Ext::Handle_prepare ).asSymbol()->
+         addParam("sql");
    self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );
+   self->addClassMethod( handler_class, "getLastID",  &Falcon::Ext::Handle_getLastID ).asSymbol()
+         ->addParam("name");
 
 
    /*#
     @class Recordset
     @brief Represent a collection of database records as required from @a DBIBaseTrans.query.
-    You will not instantiate this class directly, instead, you must use @a DBIBaseTrans.query.
     */
 
    // create the base class DBIRecordset for falcon
@@ -111,8 +101,8 @@ FALCON_MODULE_DECL
          addParam( "count" );
    self->addClassMethod( rs_class, "fetch",&Falcon::Ext::Recordset_fetch ).asSymbol()->
             addParam( "item" )->addParam( "count" );
-   //self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
-   //         addParam( "item" );
+   self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
+            addParam( "cb" )->addParam( "item" );
 
    self->addClassMethod( rs_class, "getCurrentRow", &Falcon::Ext::Recordset_getCurrentRow );
    self->addClassMethod( rs_class, "getRowCount", &Falcon::Ext::Recordset_getRowCount );

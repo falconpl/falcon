@@ -51,11 +51,11 @@ class ItemArray;
     In this case, getMemory() would return 0; so, if you need to get the memory
     even if small, use allocate() before getMemory().
 */
-class DBIOutBindItem: public BaseAlloc
+class DBIOutBind: public BaseAlloc
 {
 public:
-   DBIOutBindItem();
-   ~DBIOutBindItem();
+   DBIOutBind();
+   ~DBIOutBind();
 
    /** Allocates a new block of given size.
 
@@ -164,22 +164,18 @@ public:
    */
    void* getMemory();
 
-   /** Extra memory space where to store length. */
+   /** Extra memory space where to store extra data.
 
-   typedef union tag_extraLength
-   {
-      unsigned int ispace;
-      unsigned long lspace;
-      uint64 llspace;
-   }
-   t_extra;
+       Many engines require extra allocation space to receive output informations
+       from the database queries. Length and is_null state are the most common
+       output data which requires a local storage where the engine places them.
 
-   t_extra m_nLength;
-
+       The base class doesn't define them; engines may overload this class, and
+       use this structure as they prefer.
+   */
 
 private:
    static const int bufsize = 16;
-
    char m_stdBuffer[ bufsize ];
 
    unsigned m_allocated;
@@ -188,35 +184,7 @@ private:
 
    void* m_headBlock;
    void* m_tailBlock;
-};
 
-/** Simple class helping in output bindings.
-
-   The process of transforming output database bound variables into
-   Falcon item is totally demanded to the final driver.
-
-   However, a set of useful common operations are placed in this class,
-   so to minimize the development effort in each driver.
-
-   Mainly, this class takes care of managing the memory where the output
-   variables must be stored, eventually providing growing memory support
-   (i.e. to fully read blob records in chunks).
-*/
-class DBIOutBind: public BaseAlloc
-{
-public:
-   DBIOutBind( int size );
-   virtual ~DBIOutBind();
-
-   DBIOutBindItem& at( int n ) { return m_obind[n]; }
-   const DBIOutBindItem& at( int n ) const { return m_obind[n]; }
-
-   DBIOutBindItem& operator []( int n ) { return m_obind[n]; }
-   const DBIOutBindItem& operator []( int n ) const { return m_obind[n]; }
-
-protected:
-   DBIOutBindItem* m_obind;
-   int m_size;
 };
 
 }

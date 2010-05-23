@@ -17,8 +17,8 @@
 
 namespace Falcon {
 
-DBIRecordset::DBIRecordset( DBITransaction* generator ):
-      m_trh( generator )
+DBIRecordset::DBIRecordset( DBIHandle* generator ):
+      m_dbh( generator )
 {}
 
 DBIRecordset::~DBIRecordset()

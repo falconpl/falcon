@@ -17,13 +17,15 @@
 #define FALCON_DBI_HANDLE_H_
 
 #include <falcon/falcondata.h>
+#include <falcon/string.h>
 
 namespace Falcon
 {
 
-class String;
-class DBITransaction;
+class DBIStatement;
+class DBIRecordset;
 class DBISettingParams;
+class ItemArray;
 
 /**
  * Base class for handlers.
@@ -54,20 +56,45 @@ public:
     * @param params Parameters for the transaction (see DBISettingParams).
     * @return true on success, false on parse error
     */
-   virtual bool setTransOpt( const String& params ) = 0;
+   virtual void options( const String& params ) = 0;
 
    /** Return the transaction settings used as the default options by this connection. */
-   virtual const DBISettingParams* transOpt() const = 0;
+   virtual const DBISettingParams* options() const = 0;
 
-   /**
-    * Starts a new transaction.
+
+   /** Launches a query (an SQL operation bound to return a recordset).
     *
-    * If more than one transaction is asked for non-transactional dbs, a
-    * s_single_transaction error is set in the class, and 0 is returned.
-    * \return a DBITransaction instance on success,
-    *         0 on error (use getLastError to determine what happened).
+    * \param sql SQL query to execute
+    * \param affectedRows number of rows affected by the query.
+    * \param params An array of items that will be used to expand query variables.
+    * \return DBIRecordset if there is an output recordset.
+    *     NULL if the query has an error.
     */
-   virtual DBITransaction *startTransaction( const String& options )=0;
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
+
+   /** Launches a SQL operation not bound to return any recordset.
+    *
+    * If the statement actually returns a recordset, it is discarded.
+    *
+    * \param sql SQL statement to execute.
+    * \param affectedRows number of columns affected by the statement.
+    * \param params An array of items that will be used to expand query variables.
+    */
+   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
+
+   /** Prepare/execute step1
+    */
+   virtual DBIStatement* prepare( const String &query )=0;
+
+   /** Returns the last inserted ID.
+   *
+   *  Many engines provide this feature so that the last inserted ID auto-generated
+   *  number in the last inserted translation can be retrieved.
+   *
+   *  Return -1 if the engine doesn't provide this feature; 0 is the common return
+   *  value when no auto-increment ID has been inserted.
+   */
+   virtual int64 getLastInsertedId( const String& name = "" )=0;
 
     /**
     * Close the connection with the Database.

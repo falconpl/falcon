@@ -5,10 +5,10 @@
  * DBI Falcon extension interface
  * -------------------------------------------------------------------
  * Author: Giancarlo Niccolai and Jeremy Cowgar
- * Begin: Sun, 23 Dec 2007 22:02:37 +0100
+ * Begin: Sun, 23 May 2010 20:17:58 +0200
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2007,2008: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -83,7 +83,7 @@ void DBIConnect( VMachine *vm )
       hand = provider->connect( connString, false );
       if( i_tropts != 0 )
       {
-         hand->setTransOpt( *i_tropts->asString() );
+         hand->options( *i_tropts->asString() );
       }
 
       // great, we have the database handler open. Now we must create a falcon object to store it.
@@ -99,114 +99,12 @@ void DBIConnect( VMachine *vm )
 
 
 /**********************************************************
-   Base transactional class
+   Statement class
  **********************************************************/
 
-static void internal_tropen( VMachine* vm, DBITransaction* trans )
-{
-   Item *trclass = vm->findWKI( "%Transaction" );
-   fassert( trclass != 0 && trclass->isClass() );
-
-   CoreObject *oth = trclass->asClass()->createInstance();
-   oth->setUserData( trans );
-   vm->retval( oth );
-}
-
-
-static void internal_query_call( VMachine* vm, bool isQuery )
-{
-   Item* i_sql = vm->param(0);
-
-   if ( i_sql == 0 || ! i_sql->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S, ..." ) );
-   }
-
-   CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   int64 ar;
-
-   ItemArray params( vm->paramCount() - 1 );
-   for( int32 i = 1; i < vm->paramCount(); i++)
-   {
-      params.append( *vm->param(i) );
-   }
-
-   if( isQuery )
-   {
-      DBIRecordset* res;
-      res = dbt->query( *i_sql->asString(), ar, params );
-      fassert( res != 0 ); // else, query must raise.
-
-      Item* rset_item = vm->findWKI( "%Recordset" );
-      fassert( rset_item != 0 );
-      fassert( rset_item->isClass() );
-
-      CoreObject* rset = rset_item->asClass()->createInstance();
-      rset->setUserData( res );
-
-      vm->retval( rset );
-   }
-   else
-   {
-      dbt->call( *i_sql->asString(), ar, params );
-   }
-}
 
 /*#
-   @method query Transaction
-   @brief Execute a SQL query bound to return a recordset.
-   @param sql The SQL query
-   @optparam ... Parameters for the query
-   @return an instance of @a Recordset
-   @throw DBIError if the database engine reports an error.
-
-*/
-
-void Transaction_query( VMachine *vm )
-{
-   internal_query_call( vm, true );
-}
-
-/*#
-   @method call Transaction
-   @brief Execute a SQL statement ignoring eventual recordsets.
-   @param sql The SQL query
-   @optparam ... Parameters for the query
-   @throw DBIError if the database engine reports an error.
-*/
-
-void Transaction_call( VMachine *vm )
-{
-   internal_query_call( vm, false );
-}
-
-/*#
-   @method prepare Transaction
-   @brief Prepares a repeated statement.
-   @param sql The SQL query
-   @throw DBIError if the database engine reports an error.
-*/
-
-void Transaction_prepare( VMachine *vm )
-{
-   Item* i_sql = vm->param(0);
-
-   if ( i_sql == 0 || ! i_sql->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S, ..." ) );
-   }
-
-   CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->prepare( *i_sql->asString() );
-}
-
-
-/*#
-   @method execute Transaction
+   @method execute Statement
    @brief Executes a repeated statement.
    @optparam ... The data to be passed to the repeated statement.
    @return Number of rows affected by the command.
@@ -214,7 +112,7 @@ void Transaction_prepare( VMachine *vm )
    @throw DBIError if the database engine reports an error.
 */
 
-void Transaction_execute( VMachine *vm )
+void Statement_execute( VMachine *vm )
 {
    ItemArray params( vm->paramCount() );
    for( int32 i = 0; i < vm->paramCount(); i++)
@@ -223,127 +121,40 @@ void Transaction_execute( VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   int64 affected;
-   dbt->execute( params, affected );
-   vm->retval( affected );
+   DBIStatement *dbt = static_cast<DBIStatement *>( self->getUserData() );
+   vm->retval( dbt->execute( params ) );
 }
 
 
 /*#
- @method close Transaction
- @brief Close the current transaction.
- */
+   @method reset Statement
+   @brief Resets this statement
+   @throw DBIError if the statement cannot be reset.
 
-void Transaction_close( VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->close();
-}
+   Some Database engines allow to reset a statement and retry to issue (execute) it
+   without re-creating it anew.
 
-/*#
-   @method tropen Transaction
-   @brief Start a new sub-transaction of this transaction.
-   @optparam options A string containing the transaction options.
-   @throw DBIError if the database engine doesn't support sub-transactions.
-
-   Some database drivers allow to open sub-transactions whose effects are limited to the
-   parent transaction, until it is finally committed in the database.
-
-   If the database doesn't support sub-transactions, an error will be raised.
-
-   If the @b options parameter is not specified, the options are inherited from the
-   parent options; otherwise the specified options are applied (defaults are @b not taken
-   from the parent transaction, but from the system defaults). See @a Handle.trops for
-   a description of the transaction options, or refer to the driver manual for driver-specific
-   options.
+   If the database engine doesn't support this feature, a DBIError will be throw.
 */
 
-void Transaction_tropen( VMachine *vm )
+void Statement_reset( VMachine *vm )
 {
-   Item* i_options = vm->param(0);
-   if( i_options != 0 && ! i_options->isString() )
-   {
-      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
-            .extra( "[S]") );
-   }
-
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   internal_tropen( vm, dbt->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
+   DBIStatement *dbt = static_cast<DBIStatement *>( self->getUserData() );
+   dbt->reset();
 }
 
 /*#
- @method getLastID Transaction
- @brief Get the ID of the last record inserted.
- @optparam name A sequence name that is known by the engine.
- @return Integer
-
- This is database dependent but so widely used, it is included in the DBI module. Some
- databases such as MySQL only support getting the last inserted ID globally in the
- database server while others like PostgreSQL allow you to get the last inserted ID of
- any table. Thus, it is suggested that you always supply the sequence id as which to
- query. DBI drivers such as MySQL are programmed to ignore the extra information and
- return simply the last ID inserted into the database.
+ @method close Statement
+ @brief Close this statement.
  */
 
-void Transaction_getLastID( VMachine *vm )
+void Statement_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbh = static_cast<DBITransaction *>( self->getUserData() );
-
-   if ( vm->paramCount() == 0 )
-      vm->retval( dbh->getLastInsertedId() );
-   else {
-      Item *sequenceNameI = vm->param( 0 );
-      if ( sequenceNameI == 0 || ! sequenceNameI->isString() ) {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                           .extra( "S" ) );
-         return;
-      }
-      String sequenceName = *sequenceNameI->asString();
-      vm->retval( dbh->getLastInsertedId( sequenceName ) );
-   }
+   DBIStatement *dbt = static_cast<DBIStatement *>( self->getUserData() );
+   dbt->close();
 }
-
-
-/*#
- @method commit Transaction
- @brief Commit the  to the database.
- @raise DBIError on failure
- 
- This method is available also on the database handler (main ),
- even if it's -oriented, because some engine can provide a
- commit/rollback feature while not providing a full parallel  support.
- 
- This does not close the . You can perform a commit at safe steps within
- the  if necessary.
- */
-
-void Transaction_commit( VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->commit();
-}
-
-/*#
- @method rollback Transaction
- @brief Rollback the  (undo) to last commit point.
- @raise DBIError on failure
-
- This does not close the . You can rollback and try another operation
- within the same  as many times as you wish.
- */
-
-void Transaction_rollback( VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   dbt->rollback();
-}
-
 
 
 /**********************************************************
@@ -351,10 +162,10 @@ void Transaction_rollback( VMachine *vm )
  **********************************************************/
 
 /*#
-   @method trops Handle
-   @biref Sets the default options for transaction created by this handle.
+   @method options Handle
+   @biref Sets the default options for SQL operations performed on this handle.
    @param options The string containing the transaction options.
-   @raise DBIError if the otpions are invalid.
+   @raise DBIError if the options are invalid.
 
    This method sets the default options that are used to create new transactions
    (i.e. that are applied when @a Handle.tropen is called without specifying
@@ -384,7 +195,7 @@ void Transaction_rollback( VMachine *vm )
     for further parameters.
 */
 
-void Handle_trops( VMachine *vm )
+void Handle_options( VMachine *vm )
 {
    Item* i_options = vm->param(0);
 
@@ -397,53 +208,10 @@ void Handle_trops( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
-   if ( ! dbh->setTransOpt( i_options == 0 ? "" : *i_options->asString() ) )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS )
-            .desc(FAL_STR( dbi_msg_option_error ) )
-            .extra( *i_options->asString() )
-            );
-   }
+   dbh->options( i_options == 0 ? "" : *i_options->asString() );
 }
 
 
-/*#
-   @method tropen Handle
-   @brief Start a transaction.
-   @optparam options A string containing transaction options.
-   @return an instance of @a Transaction.
-   @raise DBIError if the database cannot open the transaction.
-   @raise ParamError if the options are invalid cannot open the transaction.
-
-   This method returns a new transaction. The transaction is the base object through
-   which the user can issue queries and other SQL commands to the database.
-
-   SQL database engines that doesn't support transaction will raise an error if
-   more than one transaction is open; however, it is granted that at least a transaction
-   can be validly open on all the DB engines.
-
-   If the @b options parameter is not specified, the options are inherited from the
-   general options; otherwise the specified options are applied. Defaults are @b not taken
-   from the general settings, but from the system defaults; this means that it's necessary
-   to re-specify all the options in the option string even if previously specified.
-
-   See @a Handle.trops for a description of the transaction options, or refer to the driver
-   manual for driver-specific options.
-*/
-
-void Handle_tropen( VMachine *vm )
-{
-   Item* i_options = vm->param(0);
-   if( i_options != 0 && ! i_options->isString() )
-   {
-      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
-           .extra( "[S]") );
-   }
-
-   CoreObject *self = vm->self().asObject();
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-   internal_tropen( vm, dbh->startTransaction( i_options == 0 ? "" : *i_options->asString() ) );
-}
 
 /*#
  @method close DBIHandle
@@ -457,11 +225,194 @@ void Handle_close( VMachine *vm )
    dbh->close();
 }
 
+/*#
+   @method getLastID Handle
+   @brief Get the ID of the last record inserted.
+   @optparam name A sequence name that is known by the engine.
+   @return Integer
+
+   This is database dependent but so widely used, it is included in the DBI module. Some
+   databases such as MySQL only support getting the last inserted ID globally in the
+   database server while others like PostgreSQL allow you to get the last inserted ID of
+   any table. Thus, it is suggested that you always supply the sequence id as which to
+   query. DBI drivers such as MySQL are programmed to ignore the extra information and
+   return simply the last ID inserted into the database.
+*/
+
+void Handle_getLastID( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   if ( vm->paramCount() == 0 )
+      vm->retval( dbh->getLastInsertedId() );
+   else {
+      Item *sequenceNameI = vm->param( 0 );
+      if ( sequenceNameI == 0 || ! sequenceNameI->isString() ) {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                           .extra( "S" ) );
+         return;
+      }
+      String sequenceName = *sequenceNameI->asString();
+      vm->retval( dbh->getLastInsertedId( sequenceName ) );
+   }
+}
+
+
+static void internal_stmt_open( VMachine* vm, DBIStatement* trans )
+{
+   Item *trclass = vm->findWKI( "%Statement" );
+   fassert( trclass != 0 && trclass->isClass() );
+
+   CoreObject *oth = trclass->asClass()->createInstance();
+   oth->setUserData( trans );
+   vm->retval( oth );
+}
+
+
+static void internal_query_call( VMachine* vm, bool isQuery )
+{
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S, ..." ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+   int64 ar;
+
+   ItemArray params( vm->paramCount() - 1 );
+   for( int32 i = 1; i < vm->paramCount(); i++)
+   {
+      params.append( *vm->param(i) );
+   }
+
+   if( isQuery )
+   {
+      DBIRecordset* res;
+      res = dbt->query( *i_sql->asString(), ar, params );
+      fassert( res != 0 ); // else, query must raise.
+
+      Item* rset_item = vm->findWKI( "%Recordset" );
+      fassert( rset_item != 0 );
+      fassert( rset_item->isClass() );
+
+      CoreObject* rset = rset_item->asClass()->createInstance();
+      rset->setUserData( res );
+
+      vm->retval( rset );
+   }
+   else
+   {
+      dbt->perform( *i_sql->asString(), ar, params );
+   }
+}
+
+/*#
+   @method query Handle
+   @brief Execute a SQL query bound to return a recordset.
+   @param sql The SQL query
+   @optparam ... Parameters for the query
+   @return an instance of @a Recordset
+   @throw DBIError if the database engine reports an error.
+
+*/
+
+void Handle_query( VMachine *vm )
+{
+   internal_query_call( vm, true );
+}
+
+/*#
+   @method perform Handle
+   @brief Execute a SQL statement ignoring eventual recordsets.
+   @param sql The SQL query
+   @optparam ... Parameters for the query
+   @throw DBIError if the database engine reports an error.
+
+   Call this instead of query() when willing to perform SQL statements
+   that are not supposed to return a recordset, or whose recordset must
+   be ignored even if returned.
+*/
+
+void Handle_perform( VMachine *vm )
+{
+   internal_query_call( vm, false );
+}
+
+/*#
+   @method prepare Handle
+   @brief Prepares a repeated statement.
+   @param sql The SQL query
+   @throw DBIError if the database engine reports an error.
+*/
+
+void Handle_prepare( VMachine *vm )
+{
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S, ..." ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+   DBIStatement* stmt = dbt->prepare( *i_sql->asString() );
+   internal_stmt_open(vm, stmt);
+}
 
 
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
+
+static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target )
+{
+   int count = dbr->getColumnCount();
+
+   if( target.isArray() )
+   {
+      CoreArray* aret = target.asArray();
+      aret->resize( count );
+      for ( int i = 0; i < count; i++ )
+      {
+         dbr->getColumnValue( i, aret->items()[i] );
+      }
+      vm->retval( aret );
+   }
+   else if( target.isDict() )
+   {
+      CoreDict* dret = target.asDict();
+      for ( int i = 0; i < count; i++ )
+      {
+         String fieldName;
+         dbr->getColumnName( i, fieldName );
+         Item* value = dret->find( Item(&fieldName) );
+         if( value == 0 )
+         {
+            Item v;
+            dbr->getColumnValue( i, v );
+            CoreString* key = new CoreString(fieldName);
+            key->bufferize();
+            dret->put( key, v );
+         }
+         else
+         {
+            dbr->getColumnValue( i, *value );
+         }
+      }
+      vm->retval( dret );
+   }
+   else
+   {
+      // todo the table
+   }
+}
 
 /*#
    @method fetch Recordset
@@ -515,48 +466,9 @@ void Recordset_fetch( VMachine *vm )
       return;
    }
 
-
-   if( i_data->isArray() )
-   {
-      int count = dbr->getColumnCount();
-      CoreArray* aret = i_data->asArray();
-      aret->resize( count );
-      for ( int i = 0; i < count; i++ )
-      {
-         dbr->getColumnValue( i, aret->items()[i] );
-      }
-      vm->retval( aret );
-   }
-   else if( i_data->isDict() )
-   {
-      int count = dbr->getColumnCount();
-      CoreDict* dret = i_data->asDict();
-      for ( int i = 0; i < count; i++ )
-      {
-         String fieldName;
-         dbr->getColumnName( i, fieldName );
-         Item* value = dret->find( Item(&fieldName) );
-         if( value == 0 )
-         {
-            Item v;
-            dbr->getColumnValue( i, v );
-            CoreString* key = new CoreString(fieldName);
-            key->bufferize();
-            dret->put( key, v );
-         }
-         else
-         {
-            dbr->getColumnValue( i, *value );
-         }
-      }
-      vm->retval( dret );
-   }
-   else
-   {
-      // todo the table
-   }
-
+   internal_record_fetch( vm, dbr, *i_data );
 }
+
 
 /*#
     @method discard Recordset
@@ -659,6 +571,91 @@ void Recordset_close( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
    dbr->close();
+}
+
+static bool Recordset_do_next( VMachine* vm )
+{
+   if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+   {
+      return false;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   if( ! dbr->fetchRow() )
+   {
+      return false;
+   }
+
+   // copy, as we may disrupt the stack
+   Item i_callable = *vm->param(0);
+
+   if( vm->paramCount() == 1 )
+   {
+      int count = dbr->getColumnCount();
+      for ( int i = 0; i < count; i++ )
+      {
+         Item value;
+         dbr->getColumnValue( i, value );
+         vm->pushParam( value );
+      }
+
+      vm->callFrame( i_callable, count );
+   }
+   else
+   {
+      internal_record_fetch( vm, dbr, *vm->param(1) );
+      vm->pushParam( vm->regA() );
+      vm->regA().setNil();
+      vm->callFrame( i_callable, 1 );
+   }
+}
+
+/*#
+   @method do Recordset
+   @brief Calls back a function for each row in the recordset.
+   @param cb The callback function that must be called for each row.
+   @optparam item A fetchable item that will be filled and then passed to @b cb.
+   @throw DBIError if the database engine reports an error.
+
+   This method calls back a given @b cb callable item fetching one row at a time
+   from the recordset, and then passing the data to @b cb either as parameters or
+   as a single item.
+
+   If @b item is not given, all the field values in the recordset are passed
+   directly as parameters of the given @b cb function. If it is given, then
+   that @b item is filled along the rules of @b Recordset.fetch and then
+   it is passed to the @b cb item.
+
+   The @b item may be:
+   - An Array.
+   - A Dictionary.
+   - A Table.
+
+   The @b cb method may return an oob(0) value to interrupt the processing of the
+   recordset.
+
+   @b The recordset is not rewinded before starting to call @b cb. Any previously
+   fetched data won't be passed to @b cb.
+*/
+
+void Recordset_do( VMachine *vm )
+{
+   Item* i_callable = vm->param(0);
+   Item* i_extra = vm->param(1);
+   if( i_callable == 0 || ! i_callable->isCallable()
+       || ( i_extra != 0
+            && ! ( i_extra->isArray() || i_extra->isDict() || i_extra->isOfClass("Table") )
+            )
+     )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                              .extra( "C,[A|D|Table]" ) );
+   }
+
+   vm->regA().setNil();
+   vm->returnHandler( Recordset_do_next );
 }
 
 //======================================================

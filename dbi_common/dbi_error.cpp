@@ -91,6 +91,11 @@ void DBIError::describeError()
       this->errorDescription( "Unhandled field type in return dataset" );
       break;
 
+   case FALCON_DBI_ERROR_RESET:
+      this->errorDescription( "Error while resetting a statement" );
+      break;
+
+
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

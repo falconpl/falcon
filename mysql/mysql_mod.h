@@ -1,14 +1,14 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: mysql.h
+ * FILE: mysql_mod.h
  *
  * MySQL driver main module interface
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
- * Begin: Wed Jan 02 21:35:18 2008
+ * Author: Giancarlo Niccolai
+ * Begin: Sun, 23 May 2010 16:58:53 +0200
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -24,13 +24,13 @@
 namespace Falcon
 {
 
-class DBIBindMySQL: public DBIBind
+class MyDBIInBind: public DBIInBind
 {
 
 public:
-   DBIBindMySQL();
+   MyDBIInBind();
 
-   virtual ~DBIBindMySQL();
+   virtual ~MyDBIInBind();
 
    virtual void onFirstBinding( int size );
    virtual void onItemChanged( int num );
@@ -41,6 +41,22 @@ private:
    MYSQL_BIND* m_mybind;
 };
 
+
+class MyDBIOutBind: public DBIOutBind
+{
+public:
+   MyDBIOutBind():
+      bIsNull( false ),
+      nLength( 0 )
+   {}
+
+   ~MyDBIOutBind() {}
+
+   my_bool bIsNull;
+   unsigned long nLength;
+};
+
+class DBIHandleMySQL;
 
 class DBIRecordsetMySQL : public DBIRecordset
 {
@@ -53,18 +69,17 @@ protected:
    MYSQL_STMT *m_stmt;
    MYSQL_FIELD* m_fields;
 
-   //static dbi_type getFalconType( int typ );
-
    // Binding data
    MYSQL_BIND* m_pMyBind;
-   DBIOutBind* m_pOutBind;
+   MyDBIOutBind* m_pOutBind;
 
    // used to keep track of blobs that must be zeroed before fetch
    int* m_pBlobId;
    int m_nBlobCount;
+
 public:
-   DBIRecordsetMySQL( DBITransaction *dbt, MYSQL_RES *res, MYSQL_STMT *stmt );
-   ~DBIRecordsetMySQL();
+   DBIRecordsetMySQL( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQL_STMT *stmt );
+   virtual ~DBIRecordsetMySQL();
 
    virtual bool fetchRow();
    virtual int64 getRowIndex();
@@ -84,48 +99,46 @@ protected:
    MYSQL *m_conn;
    DBISettingParams m_settings;
 
+   MYSQL_STMT* my_prepare( const String &query );
+   int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params );
+
 public:
    DBIHandleMySQL();
    DBIHandleMySQL( MYSQL *conn );
    virtual ~DBIHandleMySQL();
 
-   virtual bool setTransOpt( const String& params );
-   virtual const DBISettingParams* transOpt() const;
+   virtual void options( const String& params );
+   virtual const DBISettingParams* options() const;
+   virtual void close();
+
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIStatement* prepare( const String &query );
+   virtual int64 getLastInsertedId( const String& name = "" );
 
    MYSQL *getConn() { return m_conn; }
-
-   virtual DBITransaction* startTransaction( const String& options );
-   virtual void close();
 
    // Throws a DBI error, using the last error code and description.
    void throwError( const char* file, int line, int code );
 };
 
 
-class DBITransactionMySQL : public DBITransaction
+class DBIStatementMySQL : public DBIStatement
 {
 protected:
-   bool m_inTransaction;
    MYSQL_STMT* m_statement;
-   DBIBindMySQL* m_inBind;
+   MyDBIInBind* m_inBind;
 
 public:
-   DBITransactionMySQL( DBIHandle *dbh, DBISettingParams* settings );
-   virtual ~DBITransactionMySQL();
+   DBIStatementMySQL( DBIHandle *dbh, MYSQL_STMT* stmt );
+   virtual ~DBIStatementMySQL();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void prepare( const String &query );
-   virtual void execute( const ItemArray& params, int64 &affectedRows );
-
-   virtual DBITransaction* startTransaction( const String& settings );
-   virtual void begin();
-   virtual void commit();
-   virtual void rollback();
+   virtual int64 execute( const ItemArray& params );
+   virtual void reset();
    virtual void close();
-   virtual int64 getLastInsertedId( const String& name = "" );
 
    DBIHandleMySQL* getMySql() const { return static_cast<DBIHandleMySQL*>( m_dbh ); }
+   MYSQL_STMT* my_statement() const { return m_statement; }
 };
 
 

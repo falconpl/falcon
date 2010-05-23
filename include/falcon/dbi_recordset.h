@@ -20,7 +20,7 @@
 
 namespace Falcon {
 
-class DBITransaction;
+class DBIHandle;
 class Item;
 
 /**
@@ -34,7 +34,7 @@ class DBIRecordset : public FalconData
 {
 
 public:
-   DBIRecordset( DBITransaction* generator );
+   DBIRecordset( DBIHandle *dbt );
    virtual ~DBIRecordset();
 
    /** Move to the next record
@@ -69,6 +69,22 @@ public:
     */
    virtual bool getColumnValue( int nCol, Item& value )=0;
 
+   /** Returns the full description of a field in the recordset.
+
+      @note To be introduced in the next version.
+
+      Returns a blessed dictionary which gives informations about a
+      column in the recordset.
+
+      The minimal information that every driver should return is:
+      - "name" - the name of the field
+      - "size" - Size of the field. 0 can be returned for numeric types or for blobs.
+      - "type" - Basic SQL type of the field.
+      - "full_type" - SQL type that can be used in a CREATE/ALTER table statement to recreate the field.
+      - "native_type" - Native type ID for the engine.
+    */
+   //virtual CoreDict* getColumnDescription( int nCol )=0;
+
    /** Gets a type in the recordset.
     */
    //virtual dbi_status getColumnType( int nCol, dbi_type& type )=0;
@@ -88,7 +104,7 @@ public:
    virtual void gcMark( uint32 );
 
 protected:
-   DBITransaction* m_trh;
+   DBIHandle* m_dbh;
 };
 
 }

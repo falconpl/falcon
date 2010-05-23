@@ -438,7 +438,7 @@ dbi_status DBIRecordsetODBC::bind( int ord, int type )
  *****************************************************************************/
 
 DBITransactionODBC::DBITransactionODBC( DBIHandle *dbh )
-    : DBITransaction( dbh )
+    : DBIStatement( dbh )
 {
    m_inTransaction = false;
 }
@@ -567,7 +567,7 @@ DBIBlobStream *DBITransactionODBC::createBlob( dbi_status &status, const String 
  * DB Handler class
  *****************************************************************************/
 
-DBITransaction *DBIHandleODBC::startTransaction()
+DBIStatement *DBIHandleODBC::startTransaction()
 {
    DBITransactionODBC *t = new DBITransactionODBC( this );
    if ( t->begin() != dbi_ok ) {
@@ -596,13 +596,13 @@ DBIHandleODBC::~DBIHandleODBC( )
 	close( );
 }
 
-dbi_status DBIHandleODBC::closeTransaction( DBITransaction *tr )
+dbi_status DBIHandleODBC::closeTransaction( DBIStatement *tr )
 {
 	return tr->commit();
 }
 
 
-DBITransaction *DBIHandleODBC::getDefaultTransaction()
+DBIStatement *DBIHandleODBC::getDefaultTransaction()
 {
    if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionODBC( this );
