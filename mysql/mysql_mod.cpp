@@ -750,18 +750,17 @@ void DBIHandleMySQL::close()
 void DBIHandleMySQL::throwError( const char* file, int line, int code )
 {
    const char *errorMessage = mysql_error( m_conn );
-   String extra; // dummy
 
    if ( errorMessage != NULL )
    {
       String description;
       description.N( (int64) mysql_errno( m_conn ) ).A(": ");
       description.A( errorMessage );
-      dbi_throwError( file, line, code, extra );
+      dbi_throwError( file, line, code, description );
    }
    else
    {
-      dbi_throwError( file, line, code, extra );
+      dbi_throwError( file, line, code, "" );
    }
 }
 
