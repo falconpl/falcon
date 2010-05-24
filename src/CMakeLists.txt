@@ -98,6 +98,7 @@ set( SRC_FILES
     gtk_TextView.cpp
     gtk_ToggleAction.cpp
     gtk_ToggleButton.cpp
+    gtk_ToggleToolButton.cpp
     gtk_Toolbar.cpp
     gtk_ToolButton.cpp
     gtk_ToolItem.cpp
@@ -212,6 +213,7 @@ set( HDR_FILES
     gtk_TextView.hpp
     gtk_ToggleAction.hpp
     gtk_ToggleButton.hpp
+    gtk_ToggleToolButton.hpp
     gtk_Toolbar.hpp
     gtk_ToolButton.hpp
     gtk_ToolItem.hpp

@@ -96,6 +96,7 @@
 #include "gtk_TextView.hpp"
 #include "gtk_ToggleAction.hpp"
 #include "gtk_ToggleButton.hpp"
+#include "gtk_ToggleToolButton.hpp"
 #include "gtk_Toolbar.hpp"
 #include "gtk_ToolButton.hpp"
 #include "gtk_ToolItem.hpp"
@@ -198,6 +199,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::ToolItem::modInit( self );
                         Falcon::Gtk::ToolButton::modInit( self );
                             Falcon::Gtk::MenuToolButton::modInit( self );
+                            Falcon::Gtk::ToggleToolButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
