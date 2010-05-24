@@ -67,6 +67,7 @@ set( SRC_FILES
     gtk_MenuBar.cpp
     gtk_MenuItem.cpp
     gtk_MenuShell.cpp
+    gtk_MenuToolButton.cpp
     gtk_MessageDialog.cpp
     gtk_Misc.cpp
     gtk_Object.cpp
@@ -180,6 +181,7 @@ set( HDR_FILES
     gtk_MenuBar.hpp
     gtk_MenuItem.hpp
     gtk_MenuShell.hpp
+    gtk_MenuToolButton.hpp
     gtk_MessageDialog.hpp
     gtk_Misc.hpp
     gtk_Object.hpp

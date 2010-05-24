@@ -66,6 +66,7 @@
 #include "gtk_MenuBar.hpp"
 #include "gtk_MenuItem.hpp"
 #include "gtk_MenuShell.hpp"
+#include "gtk_MenuToolButton.hpp"
 #include "gtk_MessageDialog.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
@@ -196,6 +197,7 @@ FALCON_MODULE_DECL
                             Falcon::Gtk::TearoffMenuItem::modInit( self );
                     Falcon::Gtk::ToolItem::modInit( self );
                         Falcon::Gtk::ToolButton::modInit( self );
+                            Falcon::Gtk::MenuToolButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
