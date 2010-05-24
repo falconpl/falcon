@@ -1,15 +1,15 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: dbi_common.h
-  
+
    Database Interface - Helper/inner functions for DBI base.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 13 Apr 2009 18:56:48 +0200
-  
+
    -------------------------------------------------------------------
    (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
-  
+
    See LICENSE file for licensing details.
 */
 
@@ -32,10 +32,9 @@ class String;
 class VMachine;
 class Item;
 
-int dbi_itemToSqlValue( const Item &item, String &value );
+bool dbi_itemToSqlValue( const Item &item, String &value );
 void dbi_escapeString( const String& input, String& value );
-void dbi_throwError( const char* file, int line, int code, const String& desc );
-void dbi_return_recordset( VMachine *vm, DBIRecordset *rec );
+bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr );
 
 }
 

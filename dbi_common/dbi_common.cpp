@@ -25,7 +25,7 @@
 namespace Falcon
 {
 
-int dbi_itemToSqlValue( const Item &item, String &value )
+bool dbi_itemToSqlValue( const Item &item, String &value )
 {
    switch( item.type() ) {
       case FLC_ITEM_BOOL:
@@ -69,18 +69,6 @@ int dbi_itemToSqlValue( const Item &item, String &value )
 }
 
 
-
-void dbi_return_recordset( VMachine *vm, DBIRecordset *rec )
-{
-   Item *rsclass = vm->findWKI( "%DBIRecordset" );
-   fassert( rsclass != 0 && rsclass->isClass() );
-
-   CoreObject *oth = rsclass->asClass()->createInstance();
-   oth->setUserData( rec );
-   vm->retval( oth );
-}
-
-
 void dbi_escapeString( const String& input, String& value )
 {
    uint32 len = input.length();
@@ -112,31 +100,44 @@ void dbi_escapeString( const String& input, String& value )
       }
       ++pos;
    }
-
 }
 
-void dbi_throwError( const char* file, int line, int code, const String& desc )
+
+bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr )
 {
-   VMachine* vm = VMachine::getCurrent();
+   output.reserve( input.size() );
+   output.size(0);
+   String temp;
 
-   if ( vm != 0 )
-   {
-      int msgId = code - FALCON_DBI_ERROR_BASE - 1;
+   uint32 iCount = 0;
+   uint32 pos = 0;
+   uint32 pos1 = input.find( "?" );
 
-      throw new DBIError( ErrorParam( code, line )
-             .desc( vm->moduleString( msgId ) )
-             .module( file )
-             .extra( desc )
-          );
-   }
-   else
+   while( pos1 != String::npos )
    {
-      throw new DBIError( ErrorParam( code, line )
-         .desc( "Unknown error code" )
-         .module( file )
-         .extra( desc )
-      );
+      // too many ?
+      if ( iCount >= arr.length() )
+         return false;
+
+      // can convert?
+      if ( ! dbi_itemToSqlValue( arr[iCount++], temp ) )
+         return false;
+
+      // go!
+      output += input.subString( pos, pos1 );
+      output += temp;
+
+      // search next
+      pos = pos1 + 1;
+      pos1 = input.find( "?", pos );
    }
+
+   // did we miss some elements in the array?
+   if ( iCount != arr.length() )
+      return false;
+
+   output += pos.subString( pos );
+   return true;
 }
 
 
