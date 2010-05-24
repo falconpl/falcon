@@ -51,6 +51,9 @@ INCLUDE_DIRECTORIES(../dbi)
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
+
+   ${dbi_common_files}
+
    mysql.cpp
    mysql_ext.cpp
    mysql_mod.cpp
@@ -62,5 +65,5 @@ IF(MSVC)
   SET_TARGET_PROPERTIES(${FALCON_MODULE}  PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
 ENDIF(MSVC)
 
-TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  dbi_common falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
+TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
 falcon_install_module( ${FALCON_MODULE}  )

@@ -30,8 +30,29 @@ ENDIF(MSVC)
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
 
+#Common files
+set( dbi_common_files
+   ../dbi_common/dbi_common.cpp
+   ../dbi_common/dbi_error.cpp
+   ../dbi_common/dbi_handle.cpp
+   ../dbi_common/dbi_inbind.cpp
+   ../dbi_common/dbi_outbind.cpp
+   ../dbi_common/dbi_params.cpp
+   ../dbi_common/dbi_recordset.cpp
+   ../dbi_common/dbi_stmt.cpp
+
+   # Header files are useful for IDEs
+   ../include/falcon/dbi_error.h
+   ../include/falcon/dbi_handle.h
+   ../include/falcon/dbi_inbind.h
+   ../include/falcon/dbi_outbind.h
+   ../include/falcon/dbi_params.h
+   ../include/falcon/dbi_recordset.h
+   ../include/falcon/dbi_stmt.h
+)
+
+
 # Project directories
-ADD_SUBDIRECTORY(dbi_common)
 ADD_SUBDIRECTORY(dbi)
 
 # DBI Drivers

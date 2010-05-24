@@ -17,6 +17,8 @@ include_directories(
 
 # Target
 add_library( ${FALCON_MODULE} MODULE
+   ${dbi_common_files}
+
    sqlite3_fm.cpp
    sqlite3_mod.cpp
    sqlite3_ext.cpp

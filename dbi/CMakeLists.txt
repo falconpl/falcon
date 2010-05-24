@@ -15,6 +15,9 @@ Message( "Adding ${FALCON_MODULE}" )
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
+
+   ${dbi_common_files}
+
    dbi.cpp
    dbi_ext.cpp
    dbi_st.cpp
@@ -23,5 +26,5 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  dbi_common falcon_engine )
+TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine )
 falcon_install_module( ${FALCON_MODULE}  )
