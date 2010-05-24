@@ -46,10 +46,10 @@ AppFalcon::AppFalcon():
    m_script_pos( 0 )
 {
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
-   Sys::_dummy_ctrl_c_handler();
+   //Sys::_dummy_ctrl_c_handler();
 
    // Block all signals in the main thread.
-   BlockSignals();
+   //BlockSignals();
 
    // Prepare the Falcon engine to start.
    Engine::Init();
