@@ -84,15 +84,15 @@ FALCON_FUNC ToolButton::init( VMARG )
     if ( self->getGObject() )
         return;
 
-    const char* spec = "[GtkMisc,S]";
+    const char* spec = "[GtkWidget,S]";
     Gtk::ArgCheck1 args( vm, spec );
     CoreGObject* o_ico = args.getCoreGObject( 0, false );
     const gchar* lbl = args.getCString( 1, false );
 #ifndef NO_PARAMETER_CHECK
-    if ( o_ico && !CoreObject_IS_DERIVED( o_ico, GtkMisc ) )
+    if ( o_ico && !CoreObject_IS_DERIVED( o_ico, GtkWidget ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* ico = (GtkWidget*) o_ico->getGObject();
+    GtkWidget* ico = o_ico ? (GtkWidget*) o_ico->getGObject() : NULL;
     self->setGObject( (GObject*) gtk_tool_button_new( ico, lbl ) );
 }
 
