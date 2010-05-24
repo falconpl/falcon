@@ -76,6 +76,7 @@
 #include "gtk_RadioAction.hpp"
 #include "gtk_RadioButton.hpp"
 #include "gtk_RadioMenuItem.hpp"
+#include "gtk_RadioToolButton.hpp"
 #include "gtk_Range.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
@@ -200,6 +201,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::ToolButton::modInit( self );
                             Falcon::Gtk::MenuToolButton::modInit( self );
                             Falcon::Gtk::ToggleToolButton::modInit( self );
+                                Falcon::Gtk::RadioToolButton::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
