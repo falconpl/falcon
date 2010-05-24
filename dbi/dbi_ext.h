@@ -49,7 +49,7 @@ void Handle_prepare( VMachine *vm );
 void Handle_perform( VMachine *vm );
 void Handle_getLastID( VMachine *vm );
 void Handle_close( VMachine *vm );
-void Handle_callsp( VMachine *vm );
+void Handle_call( VMachine *vm );
 
 
 //=====================

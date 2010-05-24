@@ -80,7 +80,7 @@ FALCON_MODULE_DECL
       ->addParam("options");
    self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
          addParam("sql");
-   self->addClassMethod( handler_class, "callsp", &Falcon::Ext::Handle_callsp ).asSymbol()->
+   self->addClassMethod( handler_class, "call", &Falcon::Ext::Handle_call ).asSymbol()->
          addParam("sql");
    self->addClassMethod( handler_class, "perform", &Falcon::Ext::Handle_perform ).asSymbol()->
          addParam("sql");

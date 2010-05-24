@@ -270,7 +270,7 @@ static void internal_stmt_open( VMachine* vm, DBIStatement* trans )
 }
 
 
-static void internal_query_call( VMachine* vm, bool isQuery )
+static void internal_query_call( VMachine* vm, int mode )
 {
    Item* i_sql = vm->param(0);
 
@@ -290,12 +290,25 @@ static void internal_query_call( VMachine* vm, bool isQuery )
       params.append( *vm->param(i) );
    }
 
-   if( isQuery )
-   {
-      DBIRecordset* res;
-      res = dbt->query( *i_sql->asString(), ar, params );
-      fassert( res != 0 ); // else, query must raise.
+   DBIRecordset* res = 0;
 
+   switch (mode)
+   {
+   case 0:  // query
+      res = dbt->query( *i_sql->asString(), ar, params );
+      break;
+
+   case 1: // perform
+      dbt->perform( *i_sql->asString(), ar, params );
+      break;
+
+   case 2:  // call;
+      res = dbt->call( *i_sql->asString(), ar, params );
+      break;
+   }
+
+   if( res !=0 )
+   {
       Item* rset_item = vm->findWKI( "%Recordset" );
       fassert( rset_item != 0 );
       fassert( rset_item->isClass() );
@@ -307,7 +320,7 @@ static void internal_query_call( VMachine* vm, bool isQuery )
    }
    else
    {
-      dbt->perform( *i_sql->asString(), ar, params );
+      vm->retnil();
    }
 }
 
@@ -323,7 +336,7 @@ static void internal_query_call( VMachine* vm, bool isQuery )
 
 void Handle_query( VMachine *vm )
 {
-   internal_query_call( vm, true );
+   internal_query_call( vm, 0 );
 }
 
 /*#
@@ -340,7 +353,7 @@ void Handle_query( VMachine *vm )
 
 void Handle_perform( VMachine *vm )
 {
-   internal_query_call( vm, false );
+   internal_query_call( vm, 1 );
 }
 
 /*#
@@ -368,25 +381,15 @@ void Handle_prepare( VMachine *vm )
 
 
 /*#
-   @method callsp Handle
-   @brief Adds the "call", "exec" or other non-standard SQL element to
+   @method call Handle
    @param sql The SQL query
+   @optparam ... Parameters for the query
    @throw DBIError if the database engine reports an error.
 */
 
-void Handle_callsp( VMachine *vm )
+void Handle_call( VMachine *vm )
 {
-   Item* i_sql = vm->param(0);
-
-   if ( i_sql == 0 || ! i_sql->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S" ) );
-   }
-
-   CoreObject *self = vm->self().asObject();
-   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
-   vm->retval( new CoreString( dbt->callSP(*i_sql->asString()) ) );
+   internal_query_call( vm, 2 );
 }
 /******************************************************************************
  * Recordset class

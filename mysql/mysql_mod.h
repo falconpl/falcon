@@ -58,7 +58,7 @@ public:
 
 class DBIHandleMySQL;
 
-class DBIRecordsetMySQL : public DBIRecordset
+class DBIRecordsetMySQL: public DBIRecordset
 {
 protected:
    int m_row;
@@ -66,8 +66,24 @@ protected:
    int m_columnCount;
 
    MYSQL_RES *m_res;
-   MYSQL_STMT *m_stmt;
    MYSQL_FIELD* m_fields;
+
+   bool m_bCanSeek;
+public:
+   DBIRecordsetMySQL( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
+   virtual ~DBIRecordsetMySQL();
+
+   virtual int64 getRowIndex();
+   virtual int64 getRowCount();
+   virtual int getColumnCount();
+   virtual bool getColumnName( int nCol, String& name );
+   virtual void close();
+};
+
+class DBIRecordsetMySQL_STMT: public DBIRecordsetMySQL
+{
+protected:
+   MYSQL_STMT *m_stmt;
 
    // Binding data
    MYSQL_BIND* m_pMyBind;
@@ -78,18 +94,28 @@ protected:
    int m_nBlobCount;
 
 public:
-   DBIRecordsetMySQL( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQL_STMT *stmt );
-   virtual ~DBIRecordsetMySQL();
+   DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek = false );
+   virtual ~DBIRecordsetMySQL_STMT();
 
    virtual bool fetchRow();
-   virtual int64 getRowIndex();
-   virtual int64 getRowCount();
-   virtual int getColumnCount();
-   virtual bool getColumnName( int nCol, String& name );
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
+};
 
+
+class DBIRecordsetMySQL_RES : public DBIRecordsetMySQL
+{
+protected:
+   MYSQL_ROW m_rowData;
+
+public:
+   DBIRecordsetMySQL_RES( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
+   virtual ~DBIRecordsetMySQL_RES();
+
+   virtual bool fetchRow();
+   virtual bool getColumnValue( int nCol, Item& value );
+   virtual bool discard( int64 ncount );
 };
 
 
@@ -113,9 +139,9 @@ public:
 
    virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
-   virtual String callSP( const String& s ) const;
 
    MYSQL *getConn() { return m_conn; }
 

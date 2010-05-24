@@ -82,6 +82,14 @@ public:
     */
    virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
 
+   /** Calls a stored procedure.
+    *
+    * \param sql SQL statement to execute.
+    * \param affectedRows number of columns affected by the statement.
+    * \param params An array of items that will be used to expand query variables.
+    */
+   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
+
    /** Prepare/execute step1
     */
    virtual DBIStatement* prepare( const String &query )=0;
@@ -101,11 +109,6 @@ public:
     * This tells the DB API that this database will not be used anymore.
     */
    virtual void close()=0;
-
-   /** Returns the SQL statement needed to call stored procedures
-    * @return
-    */
-   virtual String callSP( const String& sp ) const = 0;
 
    virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
