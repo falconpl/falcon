@@ -479,7 +479,6 @@ void DBIRecordsetMySQL_STMT::close()
  * Recordset class --- when using query.
  *****************************************************************************/
 
-
 DBIRecordsetMySQL_RES::DBIRecordsetMySQL_RES( DBIHandleMySQL *dbh, MYSQL_RES *res, bool bCanSeek )
     : DBIRecordsetMySQL( dbh, res, bCanSeek )
 {
@@ -540,14 +539,17 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
       break;
 
    case MYSQL_TYPE_DATE:
+      value = makeTimestamp( String(data) + " 00:00:00");
+      break;
+
    case MYSQL_TYPE_TIME:
+      value = makeTimestamp( String( "0000-00-00 " ) + String(data) );
+      break;
+
    case MYSQL_TYPE_DATETIME:
    case MYSQL_TYPE_TIMESTAMP:
    case MYSQL_TYPE_NEWDATE:
-      {
-         // TODO: parse timestamp
-         value = new CoreString( data, -1 );
-      }
+      value = makeTimestamp( String(data) );
       break;
 
    // string types
@@ -561,8 +563,10 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_LONG_BLOB:      // text?
       if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
       {
-         byte* mem = (byte*) memAlloc( m_res->lengths[nCol] );
-         value = new MemBuf_1( mem, m_res->lengths[nCol], memFree );
+         unsigned long* lengths = mysql_fetch_lengths( m_res );
+         byte* mem = (byte*) memAlloc( lengths[nCol] );
+         memcpy( mem, data, lengths[nCol] );
+         value = new MemBuf_1( mem, lengths[nCol], memFree );
       }
       else
       {
@@ -580,6 +584,38 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
 
    return true;
 }
+
+
+CoreObject* DBIRecordsetMySQL_RES::makeTimestamp( const String& str )
+{
+   VMachine* vm = VMachine::getCurrent();
+   if( vm == 0 )
+   {
+      static_cast< DBIHandleMySQL *>(m_dbh)
+            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+   }
+   CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
+   TimeStamp* ts = new TimeStamp;
+
+   int64 ival;
+   str.subString(0,4).parseInt(ival);
+   ts->m_year = ival;
+   str.subString(5,7).parseInt(ival);
+   ts->m_month = ival;
+   str.subString(8,10).parseInt(ival);
+   ts->m_day = ival;
+   str.subString(11,13).parseInt(ival);
+   ts->m_hour = ival;
+   str.subString(14,16).parseInt(ival);
+   ts->m_minute = ival;
+   str.subString(17).parseInt(ival);
+   ts->m_second = ival;
+   ts->m_msec = 0;
+
+   ots->setUserData( ts );
+   return ots;
+}
+
 
 bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 {
@@ -621,6 +657,50 @@ bool DBIRecordsetMySQL_RES::fetchRow()
 
    // we have the values
    m_row++;
+   return true;
+}
+
+
+/******************************************************************************
+ * Recordset class --- when using query + direct string output.
+ *****************************************************************************/
+
+DBIRecordsetMySQL_RES_STR::DBIRecordsetMySQL_RES_STR( DBIHandleMySQL *dbh, MYSQL_RES *res, bool bCanSeek )
+    : DBIRecordsetMySQL_RES( dbh, res, bCanSeek )
+{
+}
+
+DBIRecordsetMySQL_RES_STR::~DBIRecordsetMySQL_RES_STR()
+{
+}
+
+
+bool DBIRecordsetMySQL_RES_STR::getColumnValue( int nCol, Item& value )
+{
+   if ( m_row == -1 || nCol < 0 || nCol >= m_columnCount )
+   {
+      return false;
+   }
+
+   const char* data = m_rowData[nCol];
+   if( data == 0 || m_fields[nCol].type == MYSQL_TYPE_NULL )
+   {
+      value.setNil();
+   }
+   else if( m_fields[nCol].charsetnr == 63 && IS_LONGDATA(m_fields[nCol].type ) ) // sic -- from manual
+   {
+      unsigned long* lengths = mysql_fetch_lengths( m_res );
+      byte* mem = (byte*) memAlloc( lengths[nCol] );
+      memcpy( mem, data, lengths[nCol] );
+      value = new MemBuf_1( mem, lengths[nCol], memFree );
+   }
+   else
+   {
+      CoreString* vs = new CoreString;
+      vs->fromUTF8( data );
+      value = vs;
+   }
+
    return true;
 }
 
@@ -732,7 +812,8 @@ void DBIHandleMySQL::options( const String& params )
    }
    else
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_OPTPARAMS );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+            .extra( params ) );
    }
 }
 
@@ -759,6 +840,27 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
 
 DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
+   // do we want to fetch strings?
+   if( options()->m_bFetchStrings )
+   {
+      MYSQL *conn = getConn();
+      String temp;
+      sqlExpand( sql, temp, params );
+
+      AutoCString asQuery( temp );
+      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      {
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+      }
+
+      MYSQL_RES* rec =  options()->m_nPrefetch < 0 ?
+         mysql_store_result( conn ) :
+         mysql_use_result( conn );
+
+      affectedRows = mysql_affected_rows( conn );
+      return new DBIRecordsetMySQL_RES_STR( this, rec );
+   }
+
    // prepare and execute -- will create a new m_statement
    MYSQL_STMT* stmt = my_prepare( sql );
    MYSQL_RES* meta = 0;
@@ -820,13 +922,24 @@ void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const Item
       }
 
       // discard eventual recordsets
-      while ( mysql_next_result( conn ) )
+      // mysql_next_result returns
+      //    0 if there are more results,
+      //    -1 if there aren't any other result
+      //    1 in case of errors
+
+      int res;
+      while ( (res = mysql_next_result( conn )) == 0 )
       {
          MYSQL_RES* rec = mysql_use_result( conn );
          if( rec != 0 )
          {
             mysql_free_result(rec);
          }
+      }
+
+      if( res == 1 )
+      {
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
    }
    else
@@ -855,14 +968,17 @@ void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const Item
 DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    MYSQL *conn = getConn();
+   String temp;
 
-   AutoCString asQuery( "call " + sql );
+   sqlExpand( sql, temp, params );
+   AutoCString asQuery( "call " + temp );
    if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
    }
 
-   if ( mysql_next_result( conn ) == 0 )
+
+   if ( mysql_next_result( conn ) == -1 )
    {
       return 0;
    }
@@ -874,8 +990,10 @@ DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, cons
    else
       rec = mysql_use_result( conn );
 
+   affectedRows = mysql_affected_rows( conn );
+
    // discard eventual other recordsets
-   while ( mysql_next_result( conn ) )
+   while ( mysql_next_result( conn ) != -1 )
    {
       MYSQL_RES* rec1 = mysql_use_result( conn );
       if( rec != 0 )
@@ -884,7 +1002,9 @@ DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, cons
       }
    }
 
-   return new DBIRecordsetMySQL_RES( this, rec );
+   return options()->m_bFetchStrings ?
+         new DBIRecordsetMySQL_RES_STR( this, rec ) :
+         new DBIRecordsetMySQL_RES( this, rec );
 }
 
 MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
@@ -980,11 +1100,14 @@ void DBIHandleMySQL::throwError( const char* file, int line, int code )
       String description;
       description.N( (int64) mysql_errno( m_conn ) ).A(": ");
       description.A( errorMessage );
-      dbi_throwError( file, line, code, description );
+      throw new DBIError( ErrorParam( code, line )
+            .extra(description)
+            .module( file ) );
    }
    else
    {
-      dbi_throwError( file, line, code, "" );
+      throw new DBIError( ErrorParam( code, line )
+                  .module( file ) );
    }
 }
 

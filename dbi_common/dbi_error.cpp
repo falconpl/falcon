@@ -95,6 +95,9 @@ void DBIError::describeError()
       this->errorDescription( "Error while resetting a statement" );
       break;
 
+   case FALCON_DBI_ERROR_BIND_INTERNAL:
+      this->errorDescription( "Internal SQL expansion failed" );
+      break;
 
       // by default, do nothing -- let the base system to put an appropriate description
    }

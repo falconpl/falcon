@@ -5,8 +5,7 @@ dbh = DBIConnect( "
    uid=falcon;
    db=testdb")
 
-dbh.options("autocommit=off")
-dbh.perform("set autocommit = 0")
+dbh.options("strings=on;prefetch=none")
 dbh.perform("BEGIN")
 
 //dbh.perform( " delete from test_table" )

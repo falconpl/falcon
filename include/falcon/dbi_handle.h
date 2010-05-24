@@ -104,12 +104,21 @@ public:
    */
    virtual int64 getLastInsertedId( const String& name = "" )=0;
 
-    /**
+   /**
     * Close the connection with the Database.
     * This tells the DB API that this database will not be used anymore.
     */
    virtual void close()=0;
 
+   /**
+    * Utility performing direct sql expansion.
+    *
+    * This utility transforms question marks into values (properly formatted and escaped)
+    * to be used in SQL statements.
+    *
+    * Will throw an adequate DBI error in case of expansion error.
+    */
+   virtual void sqlExpand( const String& sql, String& tgt, const ItemArray& values );
    virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
 };

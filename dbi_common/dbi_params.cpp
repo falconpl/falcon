@@ -133,19 +133,20 @@ DBIParams::Param::~Param()
 DBISettingParams::DBISettingParams():
       m_bAutocommit( defaultAutocommit ),
       m_nCursorThreshold( defaultCursor ),
-      m_nPrefetch( defaultPrefetch )
+      m_nPrefetch( defaultPrefetch ),
+      m_bFetchStrings( defaultFetchStrings )
 {
    addParameter( "autocommit", m_sAutocommit );
    addParameter( "cursor", m_sCursor );
    addParameter( "prefetch", m_sPrefetch );
-   addParameter( "name", m_sName );
+   addParameter( "strings", m_sFetchStrings );
 }
 
 DBISettingParams::DBISettingParams( const DBISettingParams & other):
    m_bAutocommit( other.m_bAutocommit ),
    m_nCursorThreshold( other.m_nCursorThreshold ),
    m_nPrefetch( other.m_nPrefetch ),
-   m_sName( other.m_sName )
+   m_bFetchStrings( other.m_bFetchStrings )
 {
    // we don't care about the parameter parsing during the copy.
 }
@@ -172,6 +173,19 @@ bool DBISettingParams::parse( const String& connStr )
       m_bAutocommit = false;
    }
    else if ( m_sAutocommit != "" && m_sAutocommit != "\"\"" )
+   {
+      return false;
+   }
+
+   if( m_sFetchStrings.compareIgnoreCase("on") == 0 )
+   {
+      m_bFetchStrings = true;
+   }
+   else if( m_sFetchStrings.compareIgnoreCase("off") == 0 )
+   {
+      m_bFetchStrings = false;
+   }
+   else if ( m_sFetchStrings != "" && m_sFetchStrings != "\"\"" )
    {
       return false;
    }
@@ -203,10 +217,6 @@ bool DBISettingParams::parse( const String& connStr )
       if ( ! m_sCursor.parseInt( m_nCursorThreshold ) )
          return false;
    }
-
-   // sanitize the transaction name
-   if ( m_sName == "\"\"" )
-      m_sName = "";
 
    return true;
 }

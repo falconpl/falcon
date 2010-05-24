@@ -126,6 +126,7 @@ bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr )
       // go!
       output += input.subString( pos, pos1 );
       output += temp;
+      temp.size(0);
 
       // search next
       pos = pos1 + 1;
@@ -136,7 +137,7 @@ bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr )
    if ( iCount != arr.length() )
       return false;
 
-   output += pos.subString( pos );
+   output += input.subString( pos );
    return true;
 }
 

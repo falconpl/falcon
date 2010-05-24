@@ -111,9 +111,11 @@ public:
               side cursor (the default) "all" to always create a cursor or an arbitrary
               number to create a server side cursor only if the query returns at least
               the indicated number of rows.
-    - name: Some engine allow to create named transactions that can be directly referenced
-            in SQL Statements from other transactions. If this feature is supported by the
-            engine, the transaction receives this name, otherwise the option is ignored.
+    - strings: If "on", all the values are returned as a string. Can be useful if
+               the engine provides this mode natively and if the recordset is needed
+               just for dump on an output device. Using this option in this case will
+               reduce unneeded transformations into Falcon data and then into the
+               external representationss
 
     After a complete local prefetch, all the records
     are moved to the client, so it's possible to issue another query returning a different
@@ -139,10 +141,12 @@ private:
    String m_sCursor;
    String m_sAutocommit;
    String m_sPrefetch;
+   String m_sFetchStrings;
 
    static const bool defaultAutocommit = true;
    static const int defaultCursor = -1;
    static const int defaultPrefetch = -1;
+   static const bool defaultFetchStrings = false;
 
 public:
    DBISettingParams();
@@ -167,8 +171,8 @@ public:
    */
    int64 m_nPrefetch;
 
-   /** Name for this transaction. */
-   String m_sName;
+   /** True if the transaction should be autocommit, false otherwise. */
+   bool m_bFetchStrings;
 
 };
 

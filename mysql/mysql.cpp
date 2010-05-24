@@ -38,11 +38,12 @@ FALCON_MODULE_DECL
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( "dbi" );
+   self->addDepend( "dbi", "dbi", true, false );
 
    // also, we declare a MySQL class, which derives from DBIHandler which
    // is in the DBI module.
-   Falcon::Symbol *dbh_class = self->addExternalRef( "%Handle" ); // it's external
+   Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
+   dbh_class->imported( true );
    Falcon::Symbol *mysql_class = self->addClass( "MySQL", Falcon::Ext::MySQL_init );
    mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    mysql_class->setWKS( true );

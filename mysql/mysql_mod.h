@@ -108,6 +108,7 @@ class DBIRecordsetMySQL_RES : public DBIRecordsetMySQL
 {
 protected:
    MYSQL_ROW m_rowData;
+   CoreObject* makeTimestamp( const String& str );
 
 public:
    DBIRecordsetMySQL_RES( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
@@ -116,6 +117,15 @@ public:
    virtual bool fetchRow();
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
+};
+
+class DBIRecordsetMySQL_RES_STR: public DBIRecordsetMySQL_RES
+{
+public:
+   DBIRecordsetMySQL_RES_STR( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
+   virtual ~DBIRecordsetMySQL_RES_STR();
+
+   virtual bool getColumnValue( int nCol, Item& value );
 };
 
 
