@@ -24,7 +24,7 @@ void ToolItemGroup::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkContainer" ) );
     c_ToolItemGroup->getClassDef()->addInheritance( in );
 
-    //c_ToolItemGroup->setWKS( true );
+    c_ToolItemGroup->setWKS( true );
     c_ToolItemGroup->getClassDef()->factory( &ToolItemGroup::factory );
 
     Gtk::MethodTab methods[] =

@@ -515,6 +515,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TOOLBAR_BOTH",       GTK_TOOLBAR_BOTH },
     { "GTK_TOOLBAR_BOTH_HORIZ", GTK_TOOLBAR_BOTH_HORIZ },
 
+#if GTK_MINOR_VERSION >= 20
+    /*
+     *  GtkToolPaletteDragTargets
+     */
+    { "GTK_TOOL_PALETTE_DRAG_ITEMS",    GTK_TOOL_PALETTE_DRAG_ITEMS },
+    { "GTK_TOOL_PALETTE_DRAG_GROUPS",   GTK_TOOL_PALETTE_DRAG_GROUPS },
+#endif
+
     /*
      *  GtkUpdateType
      */

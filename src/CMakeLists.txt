@@ -104,6 +104,7 @@ set( SRC_FILES
     gtk_ToolButton.cpp
     gtk_ToolItem.cpp
     gtk_ToolItemGroup.cpp
+    gtk_ToolPalette.cpp
     gtk_ToolShell.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
@@ -220,6 +221,7 @@ set( HDR_FILES
     gtk_ToolButton.hpp
     gtk_ToolItem.hpp
     gtk_ToolItemGroup.hpp
+    gtk_ToolPalette.hpp
     gtk_ToolShell.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
