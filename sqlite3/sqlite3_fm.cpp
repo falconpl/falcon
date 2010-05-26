@@ -37,11 +37,11 @@ FALCON_MODULE_DECL
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( "dbi" );
+   self->addDepend( "dbi", "dbi", true, false );
 
    // also, we declare a SQLite3 class, which derives from DBIHandler which
    // is in the DBI module.
-   Falcon::Symbol *dbh_class = self->addExternalRef( "%Handle" ); // it's external
+   Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
    Falcon::Symbol *sqlite3_class = self->addClass( "SQLite3", Falcon::Ext::SQLite3_init );
    sqlite3_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    sqlite3_class->setWKS( true );

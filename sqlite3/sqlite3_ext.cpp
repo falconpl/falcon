@@ -37,10 +37,6 @@ namespace Ext
 /*#
    @init SQLite3
    @brief Connects to a SQLite3 database.
-
-   The @b connect string is directly passed to the low level
-   @link "http://www.sqlite.org/capi3ref.html#sqlite3_open" sqlite3_open() function
-   of the SQLITE API.
 */
 
 FALCON_FUNC SQLite3_init( VMachine *vm )

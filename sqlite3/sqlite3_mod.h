@@ -1,4 +1,4 @@
-/*
+d/*
    FALCON - The Falcon Programming Language.
    FILE: sqlite3_mod.h
 
@@ -49,55 +49,61 @@ public:
    DBIRecordsetSQLite3( DBIStatement *dbt, sqlite3_stmt* stmt );
    virtual ~DBIRecordsetSQLite3();
 
-   virtual bool fetchRow();
    virtual int64 getRowIndex();
    virtual int64 getRowCount();
    virtual int getColumnCount();
    virtual bool getColumnName( int nCol, String& name );
+   virtual void close();
+   
+   virtual bool fetchRow();
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
-};
 
-class DBITransactionSQLite3 : public DBIStatement
+};
+ 
+ 
+class DBIStatementSQLite3: public DBIStatement
 {
 protected:
-   bool m_inTransaction;
+   sqlite3_stmt* m_statement;
+   Sqlite3InBind* m_inBind;
 
 public:
-   DBITransactionSQLite3( DBIHandle *dbh );
+   DBIStatementSQLite3( DBIHandle *dbh, sqlite3_stmt* stmt );
+   virtual ~DBIStatementMySQL();
 
-   virtual ~DBITransactionSQLite3();
-
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void call( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void prepare( const String &query );
-   virtual void execute( const ItemArray& params, int64 &affectedRows );
-
-   virtual DBIStatement* startTransaction( const String& settings );
-   virtual void begin();
-   virtual void commit();
-   virtual void rollback();
+   virtual int64 execute( const ItemArray& params );
+   virtual void reset();
    virtual void close();
-   virtual int64 getLastInsertedId( const String& name = "" );
 
-   DBIHandleSQLite3* getSQLite() const { return static_cast<DBIHandleSQLite3*>( m_dbh ); }
+   DBIHandleSQLite3* getMySql() const { return static_cast<DBIHandleSQLite3*>( m_dbh ); }
+   sqlite3_stmt* sqlite3_statement() const { return m_statement; }
 };
+
 
 class DBIHandleSQLite3 : public DBIHandle
 {
 protected:
    sqlite3 *m_conn;
+   DBISettingParams m_settings;
 
 public:
    DBIHandleSQLite3();
    DBIHandleSQLite3( sqlite3 *conn );
    virtual ~DBIHandleSQLite3();
 
-   virtual bool setTransOpt( const String& params );
-   virtual const DBISettingParams* transOpt() const;
-   virtual DBIStatement* startTransaction( const String& options );
+   virtual void options( const String& params );
+   virtual const DBISettingParams* options() const;
    virtual void close();
+
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIStatement* prepare( const String &query );
+   virtual int64 getLastInsertedId( const String& name = "" );
+
+   MYSQL *getConn() { return m_conn; }
 
    sqlite3 *getConn() { return m_conn; }
 };
