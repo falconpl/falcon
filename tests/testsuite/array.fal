@@ -94,7 +94,6 @@ if a != 1 or b != 2: failure( "unpacking" )
 throw = false
 try
   a,b,c = array
-  a,b,c = [1,2]
 catch AccessError
   throw = true
 end
