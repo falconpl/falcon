@@ -28,9 +28,9 @@ public:
 
     static void on_change_value( GtkSpinButton*, GtkScrollType, gpointer );
 
-    static FALCON_FUNC signal_input( VMARG );
+    //static FALCON_FUNC signal_input( VMARG );
 
-    static gint on_input( GtkSpinButton*, gpointer, gpointer );
+    //static gint on_input( GtkSpinButton*, gpointer, gpointer );
 
     static FALCON_FUNC signal_output( VMARG );
 
@@ -44,15 +44,21 @@ public:
 
     static void on_wrapped( GtkSpinButton*, gpointer );
 
-    //static FALCON_FUNC set_adjustment( VMARG );
+    static FALCON_FUNC configure( VMARG );
 
-    //static FALCON_FUNC get_adjustment( VMARG );
+    static FALCON_FUNC new_with_range( VMARG );
+
+    static FALCON_FUNC set_adjustment( VMARG );
+
+    static FALCON_FUNC get_adjustment( VMARG );
 
     static FALCON_FUNC set_digits( VMARG );
 
     static FALCON_FUNC set_increments( VMARG );
 
     static FALCON_FUNC set_range( VMARG );
+
+    //static FALCON_FUNC get_value_as_float( VMARG );
 
     static FALCON_FUNC get_value_as_int( VMARG );
 

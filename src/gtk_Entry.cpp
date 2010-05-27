@@ -4,10 +4,9 @@
 
 #include "gtk_Entry.hpp"
 
+#include "gtk_Buildable.hpp"
 #include "gtk_Editable.hpp"
 #include "gtk_EntryBuffer.hpp"
-
-#include <gtk/gtk.h>
 
 
 namespace Falcon {
@@ -101,10 +100,9 @@ void Entry::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Entry, meth->name, meth->cb );
 
-    /*
-     *  implements GtkEditable
-     */
+    Gtk::Buildable::clsInit( mod, c_Entry );
     Gtk::Editable::clsInit( mod, c_Entry );
+    //Gtk::CellEditable::clsInit( c_Entry );
 }
 
 
