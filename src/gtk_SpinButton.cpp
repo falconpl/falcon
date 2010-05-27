@@ -1,5 +1,5 @@
 /**
- *  \file GtkSpinButton.cpp
+ *  \file gtk_SpinButton.cpp
  */
 
 #include "gtk_SpinButton.hpp"
@@ -242,7 +242,7 @@ void SpinButton::on_wrapped( GtkSpinButton* btn, gpointer _vm )
 
 
 /*#
-    @method configure
+    @method configure GtkSpinButton
     @brief Changes the properties of an existing spin button.
     @param adjustment a GtkAdjustment, or nil.
     @param climb_rate the new climb rate.
@@ -273,7 +273,7 @@ FALCON_FUNC SpinButton::configure( VMARG )
 
 
 /*#
-    @method new_with_range
+    @method new_with_range GtkSpinButton
     @brief This is a convenience constructor that allows creation of a numeric GtkSpinButton without manually creating an adjustment.
     @param min Minimum allowable value
     @param max Maximum allowable value
@@ -307,7 +307,7 @@ FALCON_FUNC SpinButton::new_with_range( VMARG )
 
 
 /*#
-    @method set_adjustment
+    @method set_adjustment GtkSpinButton
     @brief Replaces the GtkAdjustment associated with spin_button.
     @param adjustment a GtkAdjustment to replace the existing adjustment
  */
@@ -326,7 +326,7 @@ FALCON_FUNC SpinButton::set_adjustment( VMARG )
 
 
 /*#
-    @method get_adjustment
+    @method get_adjustment GtkSpinButton
     @brief Get the adjustment associated with a GtkSpinButton
     @return the GtkAdjustment of spin_button
  */
