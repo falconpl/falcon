@@ -104,11 +104,14 @@ Falcon::CoreObject* ToolItem::factory( const Falcon::CoreClass* gen, void* itm, 
  */
 FALCON_FUNC ToolItem::init( VMARG )
 {
+    MYSELF;
+    if ( self->getGObject() )
+        return;
+
 #ifdef STRICT_PARAMETER_CHECK
     if ( vm->paramCount() )
         throw_require_no_args();
 #endif
-    MYSELF;
     self->setGObject( (GObject*) gtk_tool_item_new() );
 }
 

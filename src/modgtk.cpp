@@ -84,6 +84,7 @@
 #include "gtk_ScaleButton.hpp"
 #include "gtk_Scrollbar.hpp"
 #include "gtk_SeparatorMenuItem.hpp"
+#include "gtk_SeparatorToolItem.hpp"
 #include "gtk_SpinButton.hpp"
 #include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
@@ -205,6 +206,7 @@ FALCON_MODULE_DECL
                             Falcon::Gtk::MenuToolButton::modInit( self );
                             Falcon::Gtk::ToggleToolButton::modInit( self );
                                 Falcon::Gtk::RadioToolButton::modInit( self );
+                        Falcon::Gtk::SeparatorToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
 #if GTK_MINOR_VERSION >= 6
