@@ -44,19 +44,20 @@ public:
 
     static FALCON_FUNC activate( VMARG );
 
-    //static FALCON_FUNC create_icon( VMARG );
+    static FALCON_FUNC create_icon( VMARG );
 
-    //static FALCON_FUNC create_menu_item( VMARG );
+    static FALCON_FUNC create_menu_item( VMARG );
 
-    //static FALCON_FUNC create_tool_item( VMARG );
+    static FALCON_FUNC create_tool_item( VMARG );
 
-    //static FALCON_FUNC create_menu( VMARG );
+    static FALCON_FUNC create_menu( VMARG );
 
-    //static FALCON_FUNC connect_proxy( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC connect_proxy( VMARG );
+    static FALCON_FUNC disconnect_proxy( VMARG );
+#endif
 
-    //static FALCON_FUNC disconnect_proxy( VMARG );
-
-    //static FALCON_FUNC get_proxies( VMARG );
+    static FALCON_FUNC get_proxies( VMARG );
 
     static FALCON_FUNC connect_accelerator( VMARG );
 
@@ -68,9 +69,10 @@ public:
     static FALCON_FUNC unblock_activate( VMARG );
 #endif
 
-    //static FALCON_FUNC block_activate_from( VMARG );
-
-    //static FALCON_FUNC unblock_activate_from( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC block_activate_from( VMARG );
+    static FALCON_FUNC unblock_activate_from( VMARG );
+#endif
 
 #if GTK_MINOR_VERSION >= 20
     static FALCON_FUNC get_always_show_image( VMARG );
@@ -108,21 +110,21 @@ public:
 
     //static FALCON_FUNC get_gicon( VMARG );
 
-    //static FALCON_FUNC set_icon_name( VMARG );
+    static FALCON_FUNC set_icon_name( VMARG );
 
-    //static FALCON_FUNC get_icon_name( VMARG );
+    static FALCON_FUNC get_icon_name( VMARG );
 
-    //static FALCON_FUNC set_visible_horizontal( VMARG );
+    static FALCON_FUNC set_visible_horizontal( VMARG );
 
-    //static FALCON_FUNC get_visible_horizontal( VMARG );
+    static FALCON_FUNC get_visible_horizontal( VMARG );
 
-    //static FALCON_FUNC set_visible_vertical( VMARG );
+    static FALCON_FUNC set_visible_vertical( VMARG );
 
-    //static FALCON_FUNC get_visible_vertical( VMARG );
+    static FALCON_FUNC get_visible_vertical( VMARG );
 
-    //static FALCON_FUNC set_is_important( VMARG );
+    static FALCON_FUNC set_is_important( VMARG );
 
-    //static FALCON_FUNC get_is_important( VMARG );
+    static FALCON_FUNC get_is_important( VMARG );
 
 #endif // GTK_MINOR_VERSION >= 16
 

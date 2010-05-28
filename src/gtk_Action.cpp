@@ -4,7 +4,12 @@
 
 #include "gtk_Action.hpp"
 
-#include <gtk/gtk.h>
+#include "gtk_Buildable.hpp"
+#include "gtk_Image.hpp"
+#include "gtk_Menu.hpp"
+#include "gtk_MenuItem.hpp"
+#include "gtk_ToolItem.hpp"
+#include "gtk_Widget.hpp"
 
 
 namespace Falcon {
@@ -34,29 +39,33 @@ void Action::modInit( Falcon::Module* mod )
     { "get_visible",            &Action::get_visible },
     { "set_visible",            &Action::set_visible },
     { "activate",               &Action::activate },
-    //{ "create_icon",     &Action::foo },
-    //{ "create_menu_item",     &Action::foo },
-    //{ "create_tool_item",     &Action::foo },
-    //{ "create_menu",     &Action::foo },
-    //{ "connect_proxy",     &Action::foo },
-    //{ "disconnect_proxy",     &Action::foo },
-    //{ "get_proxies",     &Action::foo },
+    { "create_icon",            &Action::create_icon },
+    { "create_menu_item",       &Action::create_menu_item },
+    { "create_tool_item",       &Action::create_tool_item },
+    { "create_menu",            &Action::create_menu },
+#if 0 // deprecated
+    { "connect_proxy",          &Action::connect_proxy },
+    { "disconnect_proxy",       &Action::disconnect_proxy },
+#endif
+    { "get_proxies",            &Action::get_proxies },
     { "connect_accelerator",    &Action::connect_accelerator },
     { "disconnect_accelerator", &Action::disconnect_accelerator },
 #if GTK_MINOR_VERSION >= 16
     { "block_activate",         &Action::block_activate },
     { "unblock_activate",       &Action::unblock_activate },
 #endif
-    //{ "block_activate_from",     &Action::foo },
-    //{ "unblock_activate_from",     &Action::foo },
+#if 0 // deprecated
+    { "block_activate_from",    &Action::block_activate_from },
+    { "unblock_activate_from",  &Action::unblock_activate_from },
+#endif
 #if GTK_MINOR_VERSION >= 20
     { "get_always_show_image",  &Action::get_always_show_image },
     { "set_always_show_image",  &Action::set_always_show_image },
 #endif
     { "get_accel_path",         &Action::get_accel_path },
     { "set_accel_path",         &Action::set_accel_path },
-    //{ "get_accel_closure",     &Action::foo },
-    //{ "set_accel_group",     &Action::foo },
+    //{ "get_accel_closure",     &Action::get_accel_closure },
+    //{ "set_accel_group",       &Action::set_accel_group },
 #if GTK_MINOR_VERSION >= 16
     { "set_label",              &Action::set_label },
     { "get_label",              &Action::get_label },
@@ -66,22 +75,24 @@ void Action::modInit( Falcon::Module* mod )
     { "get_tooltip",            &Action::get_tooltip },
     { "set_stock_id",           &Action::set_stock_id },
     { "get_stock_id",           &Action::get_stock_id },
-    //{ "set_gicon",     &Action::foo },
-    //{ "get_gicon",     &Action::foo },
-    //{ "set_icon_name",     &Action::foo },
-    //{ "get_icon_name",     &Action::foo },
-    //{ "set_visible_horizontal",     &Action::foo },
-    //{ "get_visible_horizontal",     &Action::foo },
-    //{ "set_visible_vertical",     &Action::foo },
-    //{ "get_visible_vertical",     &Action::foo },
-    //{ "set_is_important",     &Action::foo },
-    //{ "get_is_important",     &Action::foo },
+    //{ "set_gicon",              &Action::set_gicon },
+    //{ "get_gicon",              &Action::get_gicon },
+    { "set_icon_name",          &Action::set_icon_name },
+    { "get_icon_name",          &Action::get_icon_name },
+    { "set_visible_horizontal", &Action::set_visible_horizontal },
+    { "get_visible_horizontal", &Action::get_visible_horizontal },
+    { "set_visible_vertical",   &Action::set_visible_vertical },
+    { "get_visible_vertical",   &Action::get_visible_vertical },
+    { "set_is_important",       &Action::set_is_important },
+    { "get_is_important",       &Action::get_is_important },
 #endif
     { NULL, NULL }
     };
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Action, meth->name, meth->cb );
+
+    Gtk::Buildable::clsInit( mod, c_Action );
 }
 
 
@@ -153,9 +164,7 @@ FALCON_FUNC Action::init( VMARG )
 
 /*#
     @method signal_activate GtkAction
-    @brief Connect a VMSlot to the action activate signal and return it
-
-    The "activate" signal is emitted when the action is activated.
+    @brief The "activate" signal is emitted when the action is activated.
  */
 FALCON_FUNC Action::signal_activate( VMARG )
 {
@@ -165,6 +174,7 @@ FALCON_FUNC Action::signal_activate( VMARG )
 #endif
     CoreGObject::get_signal( "activate", (void*) &Action::on_activate, vm );
 }
+
 
 void Action::on_activate( GtkAction* act, gpointer _vm )
 {
@@ -186,7 +196,10 @@ FALCON_FUNC Action::get_name( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* nam = gtk_action_get_name( (GtkAction*)_obj );
-    vm->retval( nam ? new String( nam ) : new String );
+    if ( nam )
+        vm->retval( UTF8String( nam ) );
+    else
+        vm->retnil();
 }
 
 
@@ -326,13 +339,120 @@ FALCON_FUNC Action::activate( VMARG )
 }
 
 
-//FALCON_FUNC Action::create_icon( VMARG );
-//FALCON_FUNC Action::create_menu_item( VMARG );
-//FALCON_FUNC Action::create_tool_item( VMARG );
-//FALCON_FUNC Action::create_menu( VMARG );
-//FALCON_FUNC Action::connect_proxy( VMARG );
-//FALCON_FUNC Action::disconnect_proxy( VMARG );
-//FALCON_FUNC Action::get_proxies( VMARG );
+/*#
+    @method create_icon GtkAction
+    @brief This function is intended for use by action implementations to create icons displayed in the proxy widgets.
+    @param icon_size the size of the icon that should be created (GtkIconSize).
+    @return a widget that displays the icon for this action (GtkImage).
+ */
+FALCON_FUNC Action::create_icon( VMARG )
+{
+    Item* i_sz = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_sz || !i_sz->isInteger() )
+        throw_inv_params( "GtkIconSize" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* ico = gtk_action_create_icon( (GtkAction*)_obj,
+                                             (GtkIconSize) i_sz->asInteger() );
+    vm->retval( new Gtk::Image( vm->findWKI( "GtkImage" )->asClass(), (GtkImage*) ico ) );
+}
+
+
+/*#
+    @method create_menu_item GtkAction
+    @brief Creates a menu item widget that proxies for the given action.
+    @return a menu item connected to the action (GtkMenuItem).
+ */
+FALCON_FUNC Action::create_menu_item( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* itm = gtk_action_create_menu_item( (GtkAction*)_obj );
+    vm->retval( new Gtk::MenuItem( vm->findWKI( "GtkMenuItem" )->asClass(),
+                                   (GtkMenuItem*) itm ) );
+}
+
+
+/*#
+    @method create_tool_item GtkAction
+    @brief Creates a toolbar item widget that proxies for the given action.
+    @return a toolbar item connected to the action (GtkToolItem).
+ */
+FALCON_FUNC Action::create_tool_item( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* itm = gtk_action_create_tool_item( (GtkAction*)_obj );
+    vm->retval( new Gtk::ToolItem( vm->findWKI( "GtkToolItem" )->asClass(),
+                                   (GtkToolItem*) itm ) );
+}
+
+
+/*#
+    @method create_menu GtkAction
+    @brief If action provides a GtkMenu widget as a submenu for the menu item or the toolbar item it creates, this function returns an instance of that menu.
+    @return the menu item provided by the action (GtkMenu), or nil.
+ */
+FALCON_FUNC Action::create_menu( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GtkWidget* menu = gtk_action_create_menu( (GtkAction*)_obj );
+    if ( menu )
+        vm->retval( new Gtk::Menu( vm->findWKI( "GtkMenu" )->asClass(), (GtkMenu*) menu ) );
+    else
+        vm->retnil();
+}
+
+
+#if 0 // deprecated
+FALCON_FUNC Action::connect_proxy( VMARG );
+FALCON_FUNC Action::disconnect_proxy( VMARG );
+#endif
+
+
+/*#
+    @method get_proxies GtkAction
+    @brief Returns the proxy widgets for an action.
+    @return an array of proxy widgets (GtkWidget).
+
+    See also gtk_widget_get_action().
+ */
+FALCON_FUNC Action::get_proxies( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GSList* lst = gtk_action_get_proxies( (GtkAction*)_obj );
+    int cnt = 0;
+    GSList* el;
+    for ( el = lst; el; el = el->next ) ++cnt;
+    CoreArray* arr = new CoreArray( cnt );
+    if ( cnt )
+    {
+        Item* wki = vm->findWKI( "GtkWidget" );
+        for ( el = lst; el; el = el->next )
+            arr->append( new Gtk::Widget( wki->asClass(), (GtkWidget*) el->data ) );
+    }
+    vm->retval( arr );
+}
 
 
 /*#
@@ -410,8 +530,11 @@ FALCON_FUNC Action::unblock_activate( VMARG )
 }
 #endif // GTK_MINOR_VERSION >= 16
 
-//FALCON_FUNC Action::block_activate_from( VMARG );
-//FALCON_FUNC Action::unblock_activate_from( VMARG );
+
+#if 0 // deprecated
+FALCON_FUNC Action::block_activate_from( VMARG );
+FALCON_FUNC Action::unblock_activate_from( VMARG );
+#endif
 
 
 #if GTK_MINOR_VERSION >= 20
@@ -467,7 +590,7 @@ FALCON_FUNC Action::get_accel_path( VMARG )
     GET_OBJ( self );
     const gchar* path = gtk_action_get_accel_path( (GtkAction*)_obj );
     if ( path )
-        vm->retval( new String( path ) );
+        vm->retval( UTF8String( path ) );
     else
         vm->retnil();
 }
@@ -534,7 +657,7 @@ FALCON_FUNC Action::get_label( VMARG )
     GET_OBJ( self );
     const gchar* lbl = gtk_action_get_label( (GtkAction*)_obj );
     if ( lbl )
-        vm->retval( new String( lbl ) );
+        vm->retval( UTF8String( lbl ) );
     else
         vm->retnil();
 }
@@ -574,7 +697,7 @@ FALCON_FUNC Action::get_short_label( VMARG )
     GET_OBJ( self );
     const gchar* lbl = gtk_action_get_short_label( (GtkAction*)_obj );
     if ( lbl )
-        vm->retval( new String( lbl ) );
+        vm->retval( UTF8String( lbl ) );
     else
         vm->retnil();
 }
@@ -614,7 +737,7 @@ FALCON_FUNC Action::get_tooltip( VMARG )
     GET_OBJ( self );
     const gchar* tip = gtk_action_get_tooltip( (GtkAction*)_obj );
     if ( tip )
-        vm->retval( new String( tip ) );
+        vm->retval( UTF8String( tip ) );
     else
         vm->retnil();
 }
@@ -654,7 +777,7 @@ FALCON_FUNC Action::get_stock_id( VMARG )
     GET_OBJ( self );
     const gchar* id = gtk_action_get_stock_id( (GtkAction*)_obj );
     if ( id )
-        vm->retval( new String( id ) );
+        vm->retval( UTF8String( id ) );
     else
         vm->retnil();
 }
@@ -662,14 +785,150 @@ FALCON_FUNC Action::get_stock_id( VMARG )
 
 //FALCON_FUNC Action::set_gicon( VMARG );
 //FALCON_FUNC Action::get_gicon( VMARG );
-//FALCON_FUNC Action::set_icon_name( VMARG );
-//FALCON_FUNC Action::get_icon_name( VMARG );
-//FALCON_FUNC Action::set_visible_horizontal( VMARG );
-//FALCON_FUNC Action::get_visible_horizontal( VMARG );
-//FALCON_FUNC Action::set_visible_vertical( VMARG );
-//FALCON_FUNC Action::get_visible_vertical( VMARG );
-//FALCON_FUNC Action::set_is_important( VMARG );
-//FALCON_FUNC Action::get_is_important( VMARG );
+
+
+/*#
+    @method set_icon_name GtkAction
+    @brief Sets the icon name on action
+    @param icon_name the icon name to set
+ */
+FALCON_FUNC Action::set_icon_name( VMARG )
+{
+    Gtk::ArgCheck1 args( vm, "S" );
+    const gchar* nm = args.getCString( 0 );
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_icon_name( (GtkAction*)_obj, nm );
+}
+
+
+/*#
+    @method get_icon_name GtkAction
+    @brief Gets the icon name of action.
+    @return the icon name.
+ */
+FALCON_FUNC Action::get_icon_name( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    const gchar* nm = gtk_action_get_icon_name( (GtkAction*)_obj );
+    if ( nm )
+        vm->retval( UTF8String( nm ) );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_visible_horizontal GtkAction
+    @brief Sets whether action is visible when horizontal
+    @param visible_horizontal whether the action is visible horizontally
+ */
+FALCON_FUNC Action::set_visible_horizontal( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_visible_horizontal( (GtkAction*)_obj, (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_visible_horizontal GtkAction
+    @brief Checks whether action is visible when horizontal
+    @return whether action is visible when horizontal
+ */
+FALCON_FUNC Action::get_visible_horizontal( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_visible_horizontal( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method set_visible_vertical GtkAction
+    @brief Sets whether action is visible when vertical
+    @param visible_vertical whether the action is visible vertically
+ */
+FALCON_FUNC Action::set_visible_vertical( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_visible_vertical( (GtkAction*)_obj, (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_visible_vertical GtkAction
+    @brief Checks whether action is visible when horizontal
+    @return whether action is visible when horizontal
+ */
+FALCON_FUNC Action::get_visible_vertical( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_visible_vertical( (GtkAction*)_obj ) );
+}
+
+
+/*#
+    @method set_is_important GtkAction
+    @brief Sets whether the action is important.
+    @param is_important TRUE to make the action important
+
+    This attribute is used primarily by toolbar items to decide whether to show
+    a label or not.
+ */
+FALCON_FUNC Action::set_is_important( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_action_set_is_important( (GtkAction*)_obj, (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_is_important GtkAction
+    @brief Checks whether action is important or not
+    @return whether action is important
+ */
+FALCON_FUNC Action::get_is_important( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_action_get_is_important( (GtkAction*)_obj ) );
+}
 
 #endif // GTK_MINOR_VERSION >= 16
 
