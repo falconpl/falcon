@@ -30,6 +30,12 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GdkEventButton* getObject() const { return (GdkEventButton*) &m_eventButton; }
+
+private:
+
+    GdkEventButton  m_eventButton;
+
 };
 
 

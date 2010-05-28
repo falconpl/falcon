@@ -4,8 +4,6 @@
 
 #include "gdk_EventButton.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gdk {
@@ -39,55 +37,46 @@ EventButton::EventButton( const Falcon::CoreClass* gen, const GdkEventButton* ev
     :
     Falcon::CoreObject( gen )
 {
-    GdkEventButton* m_ev = (GdkEventButton*) memAlloc( sizeof( GdkEventButton ) );
-
     if ( !ev )
-        memset( m_ev, 0, sizeof( GdkEventButton ) );
+        memset( &m_eventButton, 0, sizeof( GdkEventButton ) );
     else
-        memcpy( m_ev, ev, sizeof( GdkEventButton ) );
-
-    setUserData( m_ev );
+        memcpy( &m_eventButton, ev, sizeof( GdkEventButton ) );
 }
 
 
 EventButton::~EventButton()
 {
-    GdkEventButton* ev = (GdkEventButton*) getUserData();
-    if ( ev )
-        memFree( ev );
 }
 
 
 bool EventButton::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
-    GdkEventButton* m_ev = (GdkEventButton*) getUserData();
-
     if ( s == "type" )
-        it = m_ev->type;
+        it = m_eventButton.type;
     else
     if ( s == "send_event" )
-        it = (bool) m_ev->send_event;
+        it = (bool) m_eventButton.send_event;
     else
     if ( s == "time" )
-        it = m_ev->time;
+        it = m_eventButton.time;
     else
     if ( s == "x" )
-        it = m_ev->x;
+        it = m_eventButton.x;
     else
     if ( s == "y" )
-        it = m_ev->y;
+        it = m_eventButton.y;
     else
     if ( s == "state" )
-        it = m_ev->state;
+        it = m_eventButton.state;
     else
     if ( s == "button" )
-        it = m_ev->button;
+        it = m_eventButton.button;
     else
     if ( s == "x_root" )
-        it = m_ev->x_root;
+        it = m_eventButton.x_root;
     else
     if ( s == "y_root" )
-        it = m_ev->y_root;
+        it = m_eventButton.y_root;
     else
         return false;
     return true;
