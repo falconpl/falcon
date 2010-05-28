@@ -35,28 +35,26 @@ void DragContext::modInit( Falcon::Module* mod )
 
 DragContext::DragContext( const Falcon::CoreClass* gen, const GdkDragContext* ctxt )
     :
-    Falcon::CoreObject( gen )
+    Falcon::CoreObject( gen ),
+    m_ctxt( NULL )
 {
     if ( ctxt )
     {
-        gdk_drag_context_ref( (GdkDragContext*) ctxt );
-        setUserData( (void*) ctxt );
+        m_ctxt = (GdkDragContext*) ctxt;
+        gdk_drag_context_ref( m_ctxt );
     }
 }
 
 
 DragContext::~DragContext()
 {
-    GdkDragContext* ctxt = (GdkDragContext*) getUserData();
-    if ( ctxt )
-        gdk_drag_context_unref( ctxt );
+    if ( m_ctxt )
+        gdk_drag_context_unref( m_ctxt );
 }
 
 
 bool DragContext::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
-    GdkDragContext* m_ctxt = (GdkDragContext*) getUserData();
-
     if ( s == "protocol" )
         it = m_ctxt->protocol;
     else

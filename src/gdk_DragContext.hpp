@@ -30,6 +30,12 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GdkDragContext* getObject() const { return m_ctxt; }
+
+private:
+
+    GdkDragContext* m_ctxt;
+
 };
 
 
