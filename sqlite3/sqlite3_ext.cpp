@@ -28,50 +28,46 @@ namespace Ext
 {
 
 /*#
-      @class SQLite3
-      @brief Direct interface to SQLite3 database.
-      @param connect String containing connection parameters.
-*/
-
-
-/*#
-   @init SQLite3
-   @brief Connects to a SQLite3 database.
+   @class SQLite3
+   @brief Direct interface to SQLite3 database.
+   @param connect String containing connection parameters.
+   @optparam options Default statement options for this connection.
 */
 
 FALCON_FUNC SQLite3_init( VMachine *vm )
 {
-   Item *i_connParams = vm->param(0);
-   if ( i_connParams != 0 && ! i_connParams->isString() )
+   Item *paramsI = vm->param(0);
+   Item *i_tropts = vm->param(1);
+   if (  paramsI == 0 || ! paramsI->isString()
+         || ( i_tropts != 0 && ! i_tropts->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                          .extra("[S]") );
-      return;
+                                         .extra( "S,[S]" ) );
    }
 
-   CoreObject *self = vm->self().asObject();
-   dbi_status status;
-   String connectErrorMessage;
-   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+   String *params = paramsI->asString();
 
-   DBIHandleSQLite3 *dbh = static_cast<DBIHandleSQLite3 *>(
-      theSQLite3Service.connect( params, false, status, connectErrorMessage ) );
-
-   if ( dbh == 0 )
+   DBIHandle *hand = 0;
+   try
    {
-      if ( connectErrorMessage.length() == 0 )
-         connectErrorMessage = "An unknown error has occured during connect";
+      hand = theSQLite3Service.connect( *params );
+      if( i_tropts != 0 )
+      {
+         hand->options( *i_tropts->asString() );
+      }
 
-      throw new DBIError( ErrorParam( status, __LINE__ )
-                                       .desc( connectErrorMessage ) );
-      return ;
+      // great, we have the database handler open. Now we must create a falcon object to store it.
+      CoreObject *instance = theSQLite3Service.makeInstance( vm, hand );
+      vm->retval( instance );
    }
-
-   self->setUserData( dbh );
+   catch( DBIError* error )
+   {
+      delete hand;
+      throw error;
+   }
 }
 
 } /* namespace Ext */
 } /* namespace Falcon */
 
 /* end of sqlite3_ext.cpp */
-

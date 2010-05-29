@@ -35,7 +35,7 @@ void DBIServiceSQLite3::init()
 {
 }
 
-DBIHandle *DBIServiceSQLite3::connect( const String &parameters, bool persistent )
+DBIHandle *DBIServiceSQLite3::connect( const String &parameters )
 {
    // Parse the connection string.
    DBIConnParams connParams;

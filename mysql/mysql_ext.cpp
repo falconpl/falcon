@@ -44,24 +44,35 @@ namespace Ext
 
 FALCON_FUNC MySQL_init( VMachine *vm )
 {
-   Item *i_connParams = vm->param(0);
-   if ( i_connParams != 0 && ! i_connParams->isString() )
+   Item *paramsI = vm->param(0);
+   Item *i_tropts = vm->param(1);
+   if (  paramsI == 0 || ! paramsI->isString()
+         || ( i_tropts != 0 && ! i_tropts->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                          .extra("[S]") );
-      return;
+                                         .extra( "S,[S]" ) );
    }
 
-   CoreObject *self = vm->self().asObject();
-   //dbi_status status;
-   String connectErrorMessage;
-   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+   String *params = paramsI->asString();
 
-   DBIHandleMySQL *dbh = static_cast<DBIHandleMySQL *>(
-      theMySQLService.connect( params, false ) );
-   // it's the service that must throw on error.
-   fassert( dbh != 0 );
-   self->setUserData( dbh );
+   DBIHandle *hand = 0;
+   try
+   {
+      hand = theMySQLService.connect( *params );
+      if( i_tropts != 0 )
+      {
+         hand->options( *i_tropts->asString() );
+      }
+
+      // great, we have the database handler open. Now we must create a falcon object to store it.
+      CoreObject *instance = theMySQLService.makeInstance( vm, hand );
+      vm->retval( instance );
+   }
+   catch( DBIError* error )
+   {
+      delete hand;
+      throw error;
+   }
 }
 
 } /* namespace Ext */

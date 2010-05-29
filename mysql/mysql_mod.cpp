@@ -413,6 +413,9 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
 
 bool DBIRecordsetMySQL_STMT::discard( int64 ncount )
 {
+   if( m_res == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+
    // we have all the records. We may seek
    if( m_bCanSeek )
    {
@@ -438,6 +441,9 @@ bool DBIRecordsetMySQL_STMT::discard( int64 ncount )
 
 bool DBIRecordsetMySQL_STMT::fetchRow()
 {
+   if( m_res == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+
    // first, zero excessively long blobs.
    for( int i = 0; i < m_nBlobCount; ++i  )
    {
@@ -619,6 +625,9 @@ CoreObject* DBIRecordsetMySQL_RES::makeTimestamp( const String& str )
 
 bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 {
+   if( m_res == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+
    // we have all the records. We may seek
    if( m_dbh->options()->m_nPrefetch == -1 )
    {
@@ -651,6 +660,9 @@ bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 
 bool DBIRecordsetMySQL_RES::fetchRow()
 {
+   if( m_res == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+
    m_rowData = mysql_fetch_row( m_res );
    if ( m_rowData == 0 )
       return false;
@@ -725,10 +737,8 @@ DBIStatementMySQL::~DBIStatementMySQL()
 
 int64 DBIStatementMySQL::execute( const ItemArray& params )
 {
-   if ( m_statement == 0 )
-   {
-      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNPREP_EXEC );
-   }
+   if( m_statement == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
    // should we bind with the statement?
    if ( m_inBind == 0 )
@@ -771,10 +781,8 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
 
 void DBIStatementMySQL::reset()
 {
-   if ( m_statement == 0 )
-   {
-      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNPREP_EXEC );
-   }
+   if( m_statement == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
    if( mysql_stmt_reset( m_statement ) != 0 )
    {
@@ -840,6 +848,9 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
 
 DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    // do we want to fetch strings?
    if( options()->m_bFetchStrings )
    {
@@ -910,6 +921,9 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
 
 void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
    {
@@ -967,6 +981,9 @@ void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const Item
 
 DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    MYSQL *conn = getConn();
    String temp;
 
@@ -1009,6 +1026,9 @@ DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, cons
 
 MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    MYSQL_STMT* stmt = mysql_stmt_init( getConn() );
    if( stmt == 0 )
    {
@@ -1044,6 +1064,8 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 
 int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params )
 {
+   fassert( m_conn != 0 );
+
    if( params.length() != mysql_stmt_param_count( stmt ) )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
@@ -1079,12 +1101,18 @@ DBIStatement* DBIHandleMySQL::prepare( const String &query )
 
 int64 DBIHandleMySQL::getLastInsertedId( const String& sequenceName )
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    return mysql_insert_id( m_conn );
 }
 
 
 void DBIHandleMySQL::begin()
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    if( mysql_query( m_conn, "BEGIN" ) != 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
@@ -1094,6 +1122,9 @@ void DBIHandleMySQL::begin()
 
 void DBIHandleMySQL::commit()
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    if( mysql_query( m_conn, "COMMIT" ) != 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
@@ -1103,6 +1134,9 @@ void DBIHandleMySQL::commit()
 
 void DBIHandleMySQL::rollback()
 {
+   if( m_conn == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
    if( mysql_query( m_conn, "ROLLBACK" ) != 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
@@ -1147,6 +1181,8 @@ void DBIHandleMySQL::close()
 
 void DBIHandleMySQL::throwError( const char* file, int line, int code )
 {
+   fassert( m_conn != 0 );
+
    const char *errorMessage = mysql_error( m_conn );
 
    if ( errorMessage != NULL )
@@ -1174,7 +1210,7 @@ void DBIServiceMySQL::init()
 {
 }
 
-DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent )
+DBIHandle *DBIServiceMySQL::connect( const String &parameters )
 {
    MYSQL *conn = mysql_init( NULL );
 

@@ -137,11 +137,9 @@ public:
     *
     * \note add doc on connection parameters
     * \param parameters the connection parameters.
-    * \param persistent true if the DBIHandle may be one already served DBI handle,
-    *    false if it should anyhow be created anew.
     * \return a configured DBIHandle or 0 on error.
     */
-   virtual DBIHandle *connect( const String &parameters, bool persistent )=0;
+   virtual DBIHandle *connect( const String &parameters )=0;
 
    /**
     * Creates an instance of database handle for Falcon scripts.

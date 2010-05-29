@@ -103,6 +103,18 @@ void DBIError::describeError()
       this->errorDescription( "Error in issuing standard transactional command" );
       break;
 
+   case FALCON_DBI_ERROR_CLOSED_STMT:
+      this->errorDescription( "Statement already closed" );
+      break;
+
+   case FALCON_DBI_ERROR_CLOSED_RSET:
+      this->errorDescription( "Recordset already closed" );
+      break;
+
+   case FALCON_DBI_ERROR_CLOSED_DB:
+      this->errorDescription( "DB already closed" );
+      break;
+
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

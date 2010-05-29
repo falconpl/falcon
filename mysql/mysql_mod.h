@@ -192,7 +192,7 @@ public:
    DBIServiceMySQL() : DBIService( "DBI_mysql" ) {}
 
    virtual void init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent );
+   virtual DBIHandle *connect( const String &parameters );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 

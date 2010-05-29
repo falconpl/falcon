@@ -42,7 +42,7 @@ namespace Ext {
    @function DBIConnect
    @brief Connect to a database server.
    @param conn SQL connection string.
-   @optparam trops Default transaction options to be applied to
+   @optparam queryops Default transaction options to be applied to
                  transactions created with the returned handle.
    @return an instance of @a Handle.
    @raise DBIError if the connection fails.
@@ -78,7 +78,7 @@ void DBIConnect( VMachine *vm )
       // if it's 0, the service has already raised an error in the vm and we have nothing to do.
       fassert( provider != 0 );
 
-      hand = provider->connect( connString, false );
+      hand = provider->connect( connString );
       if( i_tropts != 0 )
       {
          hand->options( *i_tropts->asString() );

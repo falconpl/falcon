@@ -54,7 +54,7 @@ FALCON_MODULE_DECL
    #include "dbi_st.h"
 
    // main factory function
-   self->addExtFunc( "DBIConnect", &Falcon::Ext::DBIConnect )->
+   self->addExtFunc( "connect", &Falcon::Ext::DBIConnect )->
       addParam("params")->addParam("queryops");
 
 
