@@ -27,30 +27,19 @@ namespace Ext
 {
 
 /*#
-      @class MySQL
-      @brief Direct interface to MySQL database.
-      @param connect String containing connection parameters.
+   @class MySQL
+   @brief Direct interface to MySQL database.
+   @param connect String containing connection parameters.
 
-*/
+   The connect string uses the standard connection values:
+   - uid: user id
+   - pwd: password
+   - db: database where to connect
+   - host: host where to connect (defaults to localhost)
+   - port: prot where to connect (defaults to mysql standard port)
 
-
-/*#
-   @init MySQL
-   @brief Connects to a MySQL database.
-
-
-   The string is in the following format:
-   @code
-      <host>,<user>,<passwd>,<db>,<port>,<unixSocket>,<clientFlags>
-   @endcode
-
-   All the parameters are optional except for port or user. To pass an empty
-   parameter, just use two commas one beside anoter. In example, to connect
-   to a database "mydb" at localhost as "root" user without password, use:
-
-   @code
-      localost,root,,mydb
-   @endcode
+   Other than that, mysql presents the following driver-specific parameters
+   - socket: UNIX socket name for UNIX-socket based MySQL connections.
 */
 
 FALCON_FUNC MySQL_init( VMachine *vm )

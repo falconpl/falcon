@@ -473,80 +473,138 @@ DBIBlobStream *DBITransactionSQLite3::createBlob( dbi_status &status, const Stri
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleSQLite3::~DBIHandleSQLite3()
-{
-   close();
-}
-
-DBIStatement *DBIHandleSQLite3::startTransaction()
-{
-   DBITransactionSQLite3 *t = new DBITransactionSQLite3( this );
-   if ( t->begin() != dbi_ok ) {
-      // TODO: filter useful information to the script level
-      delete t;
-      return NULL;
-   }
-
-   return t;
-}
-
 DBIHandleSQLite3::DBIHandleSQLite3()
 {
    m_conn = NULL;
-   m_connTr = NULL;
 }
 
 DBIHandleSQLite3::DBIHandleSQLite3( sqlite3 *conn )
 {
    m_conn = conn;
-   m_connTr = NULL;
 }
 
-dbi_status DBIHandleSQLite3::closeTransaction( DBIStatement *tr )
+DBIHandleSQLite3::~DBIHandleSQLite3()
 {
-   return dbi_ok;
+   close();
 }
 
-DBIStatement *DBIHandleSQLite3::getDefaultTransaction()
+void DBIHandleSQLite3::options( const String& params )
 {
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionSQLite3( this );
+   if( m_settings.parse( params ) )
+   {
+      // To turn off the autocommit.
+      sqlite3_exec( m_conn, "BEGIN TRANSACTION", 0, 0, 0 );
+   }
+   else
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+            .extra( params ) );
+   }
+}
+
+const DBIHandleSQLite3* DBIHandleMySQL::options() const
+{
+   return &m_settings;
+}
+
+DBIRecordset *DBIHandleSQLite3::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+   AutoCString zSql( sql );
+   sqlite3_stmt* pStmt;
+   int res = sqlite3_prepare16_v2( m_conn, zSql.c_str(), zSql.length(), &pStmt, 0 );
+
+
+}
+
+void DBIHandleSQLite3::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+
+}
+
+
+DBIRecordset* DBIHandleSQLite3::call( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+
+}
+
+
+DBIStatement* DBIHandleSQLite3::prepare( const String &query )
+{
+
+}
+
+
+void DBIHandleSQLite3::begin()
+{
+   char* error;
+   int res = sqlite3_exec( m_conn, "START TRANSACTION", 0, 0, &error );
+   if( res != 0 )
+      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+}
+
+void DBIHandleSQLite3::commit()
+{
+   char* error;
+   int res = sqlite3_exec( m_conn, "COMMIT", 0, 0, &error );
+   if( res != 0 )
+      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+}
+
+
+void DBIHandleSQLite3::rollback()
+{
+   char* error;
+   int res = sqlite3_exec( m_conn, "ROLLBACK", 0, 0, &error );
+   if( res != 0 )
+      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+}
+
+
+void DBIHandleSQLite3::selectLimited( const String& query,
+      int64 nBegin, int64 nCount, String& result )
+{
+   String sBegin, sCount;
+
+   if ( nBegin > 0 )
+   {
+      sBegin = " OFFSET ";
+      sBegin.N( nBegin );
    }
 
-   return m_connTr;
+   if( nCount > 0 )
+   {
+      sCount.N( nCount );
+   }
+
+   result = "SELECT " + query;
+
+   if( nCount != 0 || nBegin != 0 )
+   {
+      result += "LIMIT " + sCount + sBegin;
+   }
 }
 
 
-int64 DBIHandleSQLite3::getLastInsertedId()
+void DBIHandleSQLite3::throwError( int falconError, int sql3Error, const char* edesc )
 {
-   // PostgreSQL requires a sequence name
+   String err = String("(").N(sql3Error).A(")").A(edesc);
+
+   throw new DBIError( ErrorParam(falconError, __LINE__ )
+         .extra(err) );
+}
+
+
+int64 DBIHandleSQLite3::getLastInsertedId( const String& )
+{
    return sqlite3_last_insert_rowid( m_conn );
 }
 
-int64 DBIHandleSQLite3::getLastInsertedId( const String& sequenceName )
-{
-   // SQLite3 does not support insert id's by name
-   return sqlite3_last_insert_rowid( m_conn );
-}
-
-dbi_status DBIHandleSQLite3::escapeString( const String &value, String &escaped )
-{
-   if ( value.length() == 0 )
-      return dbi_ok;
-
-   AutoCString asValue( value );
-
-   char *cTo = sqlite3_mprintf( "%q", asValue.c_str() );
-   escaped.fromUTF8(cTo);
-
-   sqlite3_free( cTo );
-
-   return dbi_ok;
-}
 
 void DBIHandleSQLite3::close()
 {
-   if ( m_conn != NULL ) {
+   if ( m_conn != NULL )
+   {
+      sqlite3_exec( m_conn, "ROLLBACK", 0, 0, 0 );
       sqlite3_close( m_conn );
       m_conn = NULL;
    }

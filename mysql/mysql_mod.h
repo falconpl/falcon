@@ -160,8 +160,6 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-
-
    MYSQL *getConn() { return m_conn; }
 
    // Throws a DBI error, using the last error code and description.

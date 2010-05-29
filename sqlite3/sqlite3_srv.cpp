@@ -26,6 +26,11 @@ namespace Falcon
  * Main service class
  *****************************************************************************/
 
+DBIServiceSQLite3::DBIServiceSQLite3():
+   DBIService( "DBI_sqlite3" )
+{}
+
+
 void DBIServiceSQLite3::init()
 {
 }

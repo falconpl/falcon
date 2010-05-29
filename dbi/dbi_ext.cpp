@@ -44,11 +44,8 @@ namespace Ext {
    @param conn SQL connection string.
    @optparam trops Default transaction options to be applied to
                  transactions created with the returned handle.
-   @return an instance of @a DBIHandle.
+   @return an instance of @a Handle.
    @raise DBIError if the connection fails.
-
-   See @a Handle.trops for @b tropts values
-
 
 */
 
@@ -110,7 +107,7 @@ void DBIConnect( VMachine *vm )
    @optparam ... The data to be passed to the repeated statement.
    @return Number of rows affected by the command.
 
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
 */
 
 void Statement_execute( VMachine *vm )
@@ -130,7 +127,7 @@ void Statement_execute( VMachine *vm )
 /*#
    @method reset Statement
    @brief Resets this statement
-   @throw DBIError if the statement cannot be reset.
+   @raise DBIError if the statement cannot be reset.
 
    Some Database engines allow to reset a statement and retry to issue (execute) it
    without re-creating it anew.
@@ -146,9 +143,13 @@ void Statement_reset( VMachine *vm )
 }
 
 /*#
- @method close Statement
- @brief Close this statement.
- */
+    @method close Statement
+    @brief Close this statement.
+
+    Statements are automatically closed when the statement object
+    is garbage collected, but calling explicitly this helps to
+    reclaim data as soon as it is not necessary anymore.
+*/
 
 void Statement_close( VMachine *vm )
 {
@@ -164,7 +165,7 @@ void Statement_close( VMachine *vm )
 
 /*#
    @method options Handle
-   @biref Sets the default options for SQL operations performed on this handle.
+   @brief Sets the default options for SQL operations performed on this handle.
    @param options The string containing the transaction options.
    @raise DBIError if the options are invalid.
 
@@ -219,7 +220,7 @@ void Handle_options( VMachine *vm )
 
 /*#
    @method begin Handle
-   @biref Issues a "begin work", "start transaction" or other appropriate command.
+   @brief Issues a "begin work", "start transaction" or other appropriate command.
    @raise DBIError in case of error in starting the transaction.
 
    This method helps creating code portable across different database engines.
@@ -240,7 +241,7 @@ void Handle_begin( VMachine *vm )
 
 /*#
    @method commit Handle
-   @biref Issues a "commit work" command.
+   @brief Issues a "commit work" command.
    @raise DBIError in case of error in starting the transaction.
 
    This method helps creating code portable across different database engines.
@@ -261,8 +262,8 @@ void Handle_commit( VMachine *vm )
 }
 
 /*#
-   @method commit Handle
-   @biref Issues a "rollback work" command.
+   @method rollback Handle
+   @brief Issues a "rollback work" command.
    @raise DBIError in case of error in starting the transaction.
 
    This method helps creating code portable across different database engines.
@@ -284,7 +285,7 @@ void Handle_rollback( VMachine *vm )
 
 /*#
    @method lselect Handle
-   @biref Returns a "select" query configured to access a sub-recordset.
+   @brief Returns a "select" query configured to access a sub-recordset.
    @param sql The query (excluded the "select" command).
    @optparam begin The first row to be returned (0 based).
    @optparam count The number of rows to be returned.
@@ -461,7 +462,7 @@ static void internal_query_call( VMachine* vm, int mode )
    @param sql The SQL query
    @optparam ... Parameters for the query
    @return an instance of @a Recordset
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
 
 */
 
@@ -475,7 +476,7 @@ void Handle_query( VMachine *vm )
    @brief Execute a SQL statement ignoring eventual recordsets.
    @param sql The SQL query
    @optparam ... Parameters for the query
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
 
    Call this instead of query() when willing to perform SQL statements
    that are not supposed to return a recordset, or whose recordset must
@@ -491,7 +492,7 @@ void Handle_perform( VMachine *vm )
    @method prepare Handle
    @brief Prepares a repeated statement.
    @param sql The SQL query
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
 */
 
 void Handle_prepare( VMachine *vm )
@@ -513,9 +514,17 @@ void Handle_prepare( VMachine *vm )
 
 /*#
    @method call Handle
+   @brief Calls a SQL stored procedure.
    @param sql The SQL query
-   @optparam ... Parameters for the query
-   @throw DBIError if the database engine reports an error.
+   @optparam ... Parameters for the stored procedure.
+   @raise DBIError if the database engine reports an error.
+
+   Some engines have a special syntax for calling stored procedures which
+   may return a recordset.
+
+   This method asks the underlying driver to call the required stored procedure.
+   If the SP generates a recordset, a @a Recordset object is returned, otherwise
+   the method returns nil.
 */
 
 void Handle_call( VMachine *vm )
@@ -577,7 +586,12 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
             iaCols.append( fieldName );
          }
 
+#ifdef FALCON_DBI_TEMP_HACK
+         CoreArray* tempArray = new CoreArray( iaCols );
+         if( ! tbl->setHeader( tempArray ) )
+#else
          if( ! tbl->setHeader( iaCols ) )
+#endif
          {
             throw new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ )
                   .extra("Incompatible table columns" ) );
@@ -612,7 +626,7 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
    @brief Fetches a record and advances to the next.
    @optparam item Where to store the fetched record.
    @optparam count Number of rows fetched when @b item is a Table.
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
    @return The @b item passed as a paramter filled with fetched data or
       nil when the recordset is terminated.
 
@@ -669,7 +683,7 @@ void Recordset_fetch( VMachine *vm )
     @param count The number of records to be skipped.
     @return true if successful, false if the recordset is over.
 
-    This skips the next @count records.
+    This skips the next @b count records.
 */
 
 void Recordset_discard( VMachine *vm )
@@ -713,11 +727,16 @@ void Recordset_getColumnNames( VMachine *vm )
 }
 
 /*#
- @method getRowCount DBIRecordset
- @brief Return the number of columns in the recordset.
- @return An integer number >= 0 if the number of the current row is known,
+   @method getCurrentRow DBIRecordset
+   @brief Returns the number of the current row.
+   @return An integer number >= 0 if the number of the current row is known,
     -1 if the driver can't access this information.
- */
+
+    This method returns how many rows have been fetched before the current
+    one. It will be -1 if the method @a Recordset.fetch has still not been called,
+    0 if the current row is the first one, 1 for the second and so on.
+
+*/
 
 void Recordset_getCurrentRow( VMachine *vm )
 {
@@ -727,9 +746,9 @@ void Recordset_getCurrentRow( VMachine *vm )
 }
 
 /*#
- @method getRowCount DBIRecordset
- @brief Return the number of rows in the recordset.
- @return  An integer number >= 0 if the number of the current row is known,
+   @method getRowCount DBIRecordset
+   @brief Return the number of rows in the recordset.
+   @return  An integer number >= 0 if the number of the row count row is known,
     -1 if the driver can't access this information.
  */
 
@@ -812,7 +831,7 @@ static bool Recordset_do_next( VMachine* vm )
    @brief Calls back a function for each row in the recordset.
    @param cb The callback function that must be called for each row.
    @optparam item A fetchable item that will be filled and then passed to @b cb.
-   @throw DBIError if the database engine reports an error.
+   @raise DBIError if the database engine reports an error.
 
    This method calls back a given @b cb callable item fetching one row at a time
    from the recordset, and then passing the data to @b cb either as parameters or

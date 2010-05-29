@@ -18,6 +18,8 @@ d/*
 #define FALCON_DBI_SQLITE3_MOD_H
 
 #include <sqlite3.h>
+#include <falcon/dbi_common.h>
+#include <falcon/srv/dbi_service.h>
 
 namespace Falcon
 {
@@ -53,12 +55,11 @@ public:
    virtual int64 getRowCount();
    virtual int getColumnCount();
    virtual bool getColumnName( int nCol, String& name );
-   virtual void close();
-   
    virtual bool fetchRow();
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
+
 
 };
  
@@ -71,13 +72,12 @@ protected:
 
 public:
    DBIStatementSQLite3( DBIHandle *dbh, sqlite3_stmt* stmt );
-   virtual ~DBIStatementMySQL();
+   virtual ~DBIStatementSQLite3();
 
    virtual int64 execute( const ItemArray& params );
    virtual void reset();
    virtual void close();
 
-   DBIHandleSQLite3* getMySql() const { return static_cast<DBIHandleSQLite3*>( m_dbh ); }
    sqlite3_stmt* sqlite3_statement() const { return m_statement; }
 };
 
@@ -103,15 +103,21 @@ public:
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
-   MYSQL *getConn() { return m_conn; }
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
 
+   virtual void selectLimited( const String& query,
+         int64 nBegin, int64 nCount, String& result );
+
+   static void throwError( int falconError, int sql3Error, const char* edesc );
    sqlite3 *getConn() { return m_conn; }
 };
 
 class DBIServiceSQLite3 : public DBIService
 {
 public:
-   DBIServiceSQLite3() : DBIService( "DBI_sqlite3" ) {}
+   DBIServiceSQLite3();
 
    virtual void init();
    virtual DBIHandle *connect( const String &parameters, bool persistent );
