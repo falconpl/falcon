@@ -61,6 +61,47 @@ public:
    /** Return the transaction settings used as the default options by this connection. */
    virtual const DBISettingParams* options() const = 0;
 
+   virtual void begin() = 0;
+   virtual void commit() = 0;
+   virtual void rollback() = 0;
+
+   /** Writes a select query with limited bounds that is valid for the engine.
+
+       This method should create a "select" query adding the commands and/or the
+       parameters needed by the engine to limit the resultset to a specified part
+       part of the dataset.
+
+       The query parameter must be a complete query EXCEPT for the "select" command,
+       which is added by the engine. It must NOT terminate with a ";", which, in case
+       of need is added by the engine.
+
+       For example, the following query
+       @code
+          SELECT field1, field2 FROM mytable WHERE key = 2;
+       @endcode
+
+       should be passed as
+       @code
+          field1, field2 FROM mytable WHERE key = 2
+       @endcode
+
+       An engine must at least add the "select" command and return the modified
+       query i8n the result output parameter. If supported, it must modify
+       the query so that it contains informations to skip the records selected
+       up to nBegin (0 based), and to return nCount rows.
+
+       The nCount parameter will be 0 to indicate "from nBegin to the end".
+       It's not possible to return the n-last elements; to do that, reverse the
+       query ordering logic.
+
+     @param query The SQL statement stripped of the initial "select" and of the final ";"
+     @param nBegin First row to be returned (0-based).
+     @param nCount Number of rows to be returned in the recordset.
+     @param result The SQL query statement correctly modified for the engine to parse it.
+   */
+   virtual void selectLimited( const String& query,
+         int64 nBegin, int64 nCount, String& result ) = 0;
+
 
    /** Launches a query (an SQL operation bound to return a recordset).
     *

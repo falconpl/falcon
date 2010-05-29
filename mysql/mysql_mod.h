@@ -153,6 +153,15 @@ public:
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
+
+   virtual void selectLimited( const String& query,
+         int64 nBegin, int64 nCount, String& result );
+
+
+
    MYSQL *getConn() { return m_conn; }
 
    // Throws a DBI error, using the last error code and description.

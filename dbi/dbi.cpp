@@ -89,7 +89,12 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );
    self->addClassMethod( handler_class, "getLastID",  &Falcon::Ext::Handle_getLastID ).asSymbol()
          ->addParam("name");
+   self->addClassMethod( handler_class, "begin", &Falcon::Ext::Handle_begin );
+   self->addClassMethod( handler_class, "commit", &Falcon::Ext::Handle_commit );
+   self->addClassMethod( handler_class, "rollback", &Falcon::Ext::Handle_rollback );
 
+   self->addClassMethod( handler_class, "lselect", &Falcon::Ext::Handle_lselect ).asSymbol()
+         ->addParam("sql")->addParam("begin")->addParam("count");
 
    /*#
     @class Recordset

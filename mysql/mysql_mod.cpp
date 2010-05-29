@@ -1083,9 +1083,63 @@ int64 DBIHandleMySQL::getLastInsertedId( const String& sequenceName )
 }
 
 
+void DBIHandleMySQL::begin()
+{
+   if( mysql_query( m_conn, "BEGIN" ) != 0 )
+   {
+      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+   }
+}
+
+
+void DBIHandleMySQL::commit()
+{
+   if( mysql_query( m_conn, "COMMIT" ) != 0 )
+   {
+      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+   }
+}
+
+
+void DBIHandleMySQL::rollback()
+{
+   if( mysql_query( m_conn, "ROLLBACK" ) != 0 )
+   {
+      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+   }
+}
+
+
+void DBIHandleMySQL::selectLimited( const String& query,
+      int64 nBegin, int64 nCount, String& result )
+{
+   String sBegin, sCount;
+
+   if ( nBegin > 0 )
+   {
+      sBegin = " OFFSET ";
+      sBegin.N( nBegin );
+   }
+
+   if( nCount > 0 )
+   {
+      sCount.N( nCount );
+   }
+
+   result = "SELECT " + query;
+
+   if( nCount != 0 || nBegin != 0 )
+   {
+      result += "LIMIT " + sCount + sBegin;
+   }
+}
+
+
 void DBIHandleMySQL::close()
 {
-   if ( m_conn != NULL ) {
+   if ( m_conn != NULL )
+   {
+      mysql_query( m_conn, "ROLLBACK" );
       mysql_close( m_conn );
       m_conn = NULL;
    }

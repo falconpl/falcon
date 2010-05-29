@@ -51,6 +51,10 @@ void Handle_getLastID( VMachine *vm );
 void Handle_close( VMachine *vm );
 void Handle_call( VMachine *vm );
 
+void Handle_begin( VMachine *vm );
+void Handle_commit( VMachine *vm );
+void Handle_rollback( VMachine *vm );
+void Handle_lselect( VMachine *vm );
 
 //=====================
 // DBI Recordset

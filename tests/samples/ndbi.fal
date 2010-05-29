@@ -1,6 +1,6 @@
-load dbi
+import from dbi
 
-dbh = DBIConnect( "
+dbh = dbi.DBIConnect( "
    mysql:
    uid=falcon;
    db=testdb")

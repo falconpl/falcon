@@ -99,6 +99,10 @@ void DBIError::describeError()
       this->errorDescription( "Internal SQL expansion failed" );
       break;
 
+   case FALCON_DBI_ERROR_TRANSACTION:
+      this->errorDescription( "Error in issuing standard transactional command" );
+      break;
+
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

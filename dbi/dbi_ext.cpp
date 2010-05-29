@@ -18,6 +18,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/error.h>
+#include <falcon/coretable.h>
 
 #include "dbi.h"
 #include "dbi_ext.h"
@@ -168,8 +169,7 @@ void Statement_close( VMachine *vm )
    @raise DBIError if the options are invalid.
 
    This method sets the default options that are used to create new transactions
-   (i.e. that are applied when @a Handle.tropen is called without specifying
-   per-transaction options).
+   or performing statements.
 
    The options are set using a string where the settings are specified as <setting>=<value>
    pairs.
@@ -187,9 +187,15 @@ void Statement_close( VMachine *vm )
               side cursor (the default) "all" to always create a cursor or an arbitrary
               number to create a server side cursor only if the query returns at least
               the indicated number of rows.
-    - name: Some engine allow to create named transactions that can be directly referenced
-            in SQL Statements from other transactions. If this feature is supported by the
-            engine, the transaction receives this name, otherwise the option is ignored.
+    - strings: All the data in the resultset is returned as a string, without
+              transformation into Falcon items. In case the data is queried
+              to just perform a direct output without particular needs for string
+              formatting, or if the needed data formatting is performed by the engine,
+              this option may improve performance considerably.
+              Also, some data types may be not easily
+              represented by Falcon types, and having the native engine representation
+              may be crucial. If the database engine doesn't offer this option natively,
+              the driver may ignore it or emulate it.
 
     Different database drivers may specify more transaction options; refer to their documentation
     for further parameters.
@@ -208,10 +214,135 @@ void Handle_options( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
-   dbh->options( i_options == 0 ? "" : *i_options->asString() );
+   dbh->options( *i_options->asString() );
 }
 
+/*#
+   @method begin Handle
+   @biref Issues a "begin work", "start transaction" or other appropriate command.
+   @raise DBIError in case of error in starting the transaction.
 
+   This method helps creating code portable across different database engines.
+   It just issues the correct command for the database engine to start a transaction.
+
+   It is not mandatory to manage transactions through this method, and this method
+   can be intermixed with direct calls to @a Handle.perform calling the database
+   engine commands directly.
+
+   If the database engine doesn't support transaction, the command is ignored.
+*/
+void Handle_begin( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   dbh->begin();
+}
+
+/*#
+   @method commit Handle
+   @biref Issues a "commit work" command.
+   @raise DBIError in case of error in starting the transaction.
+
+   This method helps creating code portable across different database engines.
+   It just issues the correct command for the database engine to commit the
+   current transaction.
+
+   It is not mandatory to manage transactions through this method, and this method
+   can be intermixed with direct calls to @a Handle.perform calling the database
+   engine commands directly.
+
+   If the database engine doesn't support transaction, the command is ignored.
+*/
+void Handle_commit( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   dbh->commit();
+}
+
+/*#
+   @method commit Handle
+   @biref Issues a "rollback work" command.
+   @raise DBIError in case of error in starting the transaction.
+
+   This method helps creating code portable across different database engines.
+   It just issues the correct command for the database engine to roll back the
+   current transaction.
+
+   It is not mandatory to manage transactions through this method, and this method
+   can be intermixed with direct calls to @a Handle.perform calling the database
+   engine commands directly.
+
+   If the database engine doesn't support transaction, the command is ignored.
+*/
+void Handle_rollback( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   dbh->rollback();
+}
+
+/*#
+   @method lselect Handle
+   @biref Returns a "select" query configured to access a sub-recordset.
+   @param sql The query (excluded the "select" command).
+   @optparam begin The first row to be returned (0 based).
+   @optparam count The number of rows to be returned.
+   @return A fully configured sql command that can be fed into @a Handle.query
+
+   This method should create a "select" query adding the commands and/or the
+    parameters needed by the engine to limit the resultset to a specified part
+    part of the dataset.
+
+    The query parameter must be a complete query EXCEPT for the "select" command,
+    which is added by the engine. It must NOT terminate with a ";", which, in case
+    of need is added by the engine.
+
+    For example, to limit the following query to rows 5-14 (row 5 is the 6th row):
+    @code
+       SELECT field1, field2 FROM mytable WHERE key = ?;
+    @endcode
+
+    write this Falcon code:
+    @code
+       // dbh is a DBI handle
+       rset = dbh.query(
+                   dbh.lselect( "field1, field2 FROM mytable WHERE key = ?", 5, 10 ),
+                   "Key value" )
+    @endcode
+
+    The @b count parameter can be 0 or @b nil to indicate "from @b begin to the end".
+    It's not possible to return the n-last elements; to do that, reverse the
+    query ordering logic.
+
+    @note If the engine doesn't support limited recordsets, the limit parameters are
+    ignored.
+*/
+void Handle_lselect( VMachine *vm )
+{
+   Item* i_sql = vm->param(0);
+   Item* i_nBegin = vm->param(0);
+   Item* i_nCount = vm->param(0);
+
+   if( i_sql == 0 || ! i_sql->isString()
+      || ( i_nBegin != 0 && ! (i_nBegin->isOrdinal() || i_nBegin->isNil() ) )
+      || ( i_nCount != 0 && ! i_nCount->isOrdinal() )
+         )
+   {
+      throw new ParamError(ErrorParam( e_inv_params, __LINE__ )
+           .extra( "S,[N],[N]") );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   CoreString* result = new CoreString;
+   dbh->selectLimited( *i_sql->asString(),
+         i_nBegin == 0 ? 0 : i_nBegin->forceInteger(),
+         i_nCount == 0 ? 0 : i_nCount->forceInteger(), *result );
+
+   vm->retval( result );
+}
 
 /*#
  @method close DBIHandle
@@ -434,7 +565,45 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
    }
    else
    {
-      // todo the table
+      CoreTable* tbl = dyncast<CoreTable*>(vm->self().asObject()->getFalconData());
+      ItemArray iaCols( count );
+
+      if( tbl->order() == CoreTable::noitem )
+      {
+         String fieldName[count];
+         for( int i = 0; i < count; ++ i )
+         {
+            dbr->getColumnName( i, fieldName[i] );
+            iaCols.append( fieldName );
+         }
+
+         if( ! tbl->setHeader( iaCols ) )
+         {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ )
+                  .extra("Incompatible table columns" ) );
+         }
+      }
+      else
+      {
+         if( tbl->order() != (unsigned) count )
+         {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ )
+                              .extra("Incompatible table columns" ) );
+         }
+      }
+
+      // put in the values
+      do {
+         CoreArray* row = new CoreArray();
+         row->resize( count );
+
+         for( int i = 0; i < count; ++ i )
+         {
+            dbr->getColumnValue( i, row->at( i ) );
+         }
+         tbl->insertRow( row );
+      }
+      while( dbr->fetchRow() );
    }
 }
 
@@ -634,6 +803,8 @@ static bool Recordset_do_next( VMachine* vm )
       vm->regA().setNil();
       vm->callFrame( i_callable, 1 );
    }
+
+   return true;
 }
 
 /*#
@@ -681,6 +852,8 @@ void Recordset_do( VMachine *vm )
    vm->regA().setNil();
    vm->returnHandler( Recordset_do_next );
 }
+
+
 
 //======================================================
 // DBI error
