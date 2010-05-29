@@ -101,17 +101,17 @@ public:
 /*
  *  email hook stuff
  */
-extern Falcon::GarbageLock*     email_hook_func_item;
-extern Falcon::GarbageLock*     email_hook_data_item;
-void email_hook_func( GtkAboutDialog*, const gchar*, gpointer );
+extern Falcon::GarbageLock*     about_dialog_email_hook_func_item;
+extern Falcon::GarbageLock*     about_dialog_email_hook_data_item;
+void about_dialog_email_hook_func( GtkAboutDialog*, const gchar*, gpointer );
 
 
 /*
  *  url hook stuff
  */
-extern Falcon::GarbageLock*     url_hook_func_item;
-extern Falcon::GarbageLock*     url_hook_data_item;
-void url_hook_func( GtkAboutDialog*, const gchar*, gpointer );
+extern Falcon::GarbageLock*     about_dialog_url_hook_func_item;
+extern Falcon::GarbageLock*     about_dialog_url_hook_data_item;
+void about_dialog_url_hook_func( GtkAboutDialog*, const gchar*, gpointer );
 
 
 } // Gtk

@@ -733,36 +733,36 @@ FALCON_FUNC AboutDialog::set_email_hook( VMARG )
         throw_inv_params( "[C,X]" );
 #endif
     // release anything previously set
-    if ( email_hook_func_item )
+    if ( about_dialog_email_hook_func_item )
     {
         gtk_about_dialog_set_email_hook( NULL, NULL, NULL );
-        delete email_hook_func_item;
-        email_hook_func_item = NULL;
-        delete email_hook_data_item;
-        email_hook_data_item = NULL;
+        delete about_dialog_email_hook_func_item;
+        about_dialog_email_hook_func_item = NULL;
+        delete about_dialog_email_hook_data_item;
+        about_dialog_email_hook_data_item = NULL;
     }
     // set new func, if any
     if ( !i_func->isNil() )
     {
-        email_hook_func_item = new Falcon::GarbageLock( *i_func );
-        email_hook_data_item = new Falcon::GarbageLock( *i_data );
-        gtk_about_dialog_set_email_hook( &email_hook_func, NULL, NULL );
+        about_dialog_email_hook_func_item = new Falcon::GarbageLock( *i_func );
+        about_dialog_email_hook_data_item = new Falcon::GarbageLock( *i_data );
+        gtk_about_dialog_set_email_hook( &about_dialog_email_hook_func, NULL, NULL );
     }
 }
 
-Falcon::GarbageLock*    email_hook_func_item = NULL;
-Falcon::GarbageLock*    email_hook_data_item = NULL;
+Falcon::GarbageLock*    about_dialog_email_hook_func_item = NULL;
+Falcon::GarbageLock*    about_dialog_email_hook_data_item = NULL;
 
-void email_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+void about_dialog_email_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
 {
-    assert( email_hook_func_item && email_hook_data_item );
+    assert( about_dialog_email_hook_func_item && about_dialog_email_hook_data_item );
 
     VMachine* vm = VMachine::getCurrent();
 
     vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
     vm->pushParam( UTF8String( link ) );
-    vm->pushParam( email_hook_data_item->item() );
-    vm->callItem( email_hook_func_item->item(), 3 );
+    vm->pushParam( about_dialog_email_hook_data_item->item() );
+    vm->callItem( about_dialog_email_hook_func_item->item(), 3 );
 }
 
 
@@ -788,36 +788,36 @@ FALCON_FUNC AboutDialog::set_url_hook( VMARG )
         throw_inv_params( "[C,X]" );
 #endif
     // release anything previously set
-    if ( url_hook_func_item )
+    if ( about_dialog_url_hook_func_item )
     {
         gtk_about_dialog_set_url_hook( NULL, NULL, NULL );
-        delete url_hook_func_item;
-        url_hook_func_item = NULL;
-        delete url_hook_data_item;
-        url_hook_data_item = NULL;
+        delete about_dialog_url_hook_func_item;
+        about_dialog_url_hook_func_item = NULL;
+        delete about_dialog_url_hook_data_item;
+        about_dialog_url_hook_data_item = NULL;
     }
     // set new func, if any
     if ( !i_func->isNil() )
     {
-        url_hook_func_item = new Falcon::GarbageLock( *i_func );
-        url_hook_data_item = new Falcon::GarbageLock( *i_data );
-        gtk_about_dialog_set_url_hook( &url_hook_func, NULL, NULL );
+        about_dialog_url_hook_func_item = new Falcon::GarbageLock( *i_func );
+        about_dialog_url_hook_data_item = new Falcon::GarbageLock( *i_data );
+        gtk_about_dialog_set_url_hook( &about_dialog_url_hook_func, NULL, NULL );
     }
 }
 
-Falcon::GarbageLock*    url_hook_func_item = NULL;
-Falcon::GarbageLock*    url_hook_data_item = NULL;
+Falcon::GarbageLock*    about_dialog_url_hook_func_item = NULL;
+Falcon::GarbageLock*    about_dialog_url_hook_data_item = NULL;
 
-void url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+void about_dialog_url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
 {
-    assert( url_hook_func_item && url_hook_data_item );
+    assert( about_dialog_url_hook_func_item && about_dialog_url_hook_data_item );
 
     VMachine* vm = VMachine::getCurrent();
 
     vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
     vm->pushParam( UTF8String( link ) );
-    vm->pushParam( url_hook_data_item->item() );
-    vm->callItem( url_hook_func_item->item(), 3 );
+    vm->pushParam( about_dialog_url_hook_data_item->item() );
+    vm->callItem( about_dialog_url_hook_func_item->item(), 3 );
 }
 
 
