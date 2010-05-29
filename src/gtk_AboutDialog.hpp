@@ -88,14 +88,30 @@ public:
     static FALCON_FUNC get_logo_icon_name( VMARG );
 
     static FALCON_FUNC set_logo_icon_name( VMARG );
-#if 0
+
     static FALCON_FUNC set_email_hook( VMARG );
 
-    static FALCON_FUNC show_about_dialog( VMARG );
-
     static FALCON_FUNC set_url_hook( VMARG );
-#endif
+
+    //static FALCON_FUNC show_about_dialog( VMARG );
+
 };
+
+
+/*
+ *  email hook stuff
+ */
+extern Falcon::GarbageLock*     email_hook_func_item;
+extern Falcon::GarbageLock*     email_hook_data_item;
+void email_hook_func( GtkAboutDialog*, const gchar*, gpointer );
+
+
+/*
+ *  url hook stuff
+ */
+extern Falcon::GarbageLock*     url_hook_func_item;
+extern Falcon::GarbageLock*     url_hook_data_item;
+void url_hook_func( GtkAboutDialog*, const gchar*, gpointer );
 
 
 } // Gtk

@@ -8,8 +8,10 @@
 
 #include "gdk_Pixbuf.hpp"
 
+
 namespace Falcon {
 namespace Gtk {
+
 
 /**
  *  \brief module init
@@ -21,8 +23,8 @@ void AboutDialog::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkDialog" ) );
     c_AboutDialog->getClassDef()->addInheritance( in );
 
-    //c_AboutDialog->setWKS( true );
-    //c_AboutDialog->getClassDef()->factory( &AboutDialog::factory );
+    c_AboutDialog->setWKS( true );
+    c_AboutDialog->getClassDef()->factory( &AboutDialog::factory );
 
     Gtk::MethodTab methods[] =
     {
@@ -60,11 +62,9 @@ void AboutDialog::modInit( Falcon::Module* mod )
     { "set_logo",           &AboutDialog::set_logo },
     { "get_logo_icon_name", &AboutDialog::get_logo_icon_name },
     { "set_logo_icon_name", &AboutDialog::set_logo_icon_name },
-#if 0
     { "set_email_hook",     &AboutDialog::set_email_hook },
     { "set_url_hook",       &AboutDialog::set_url_hook },
-    { "show_about_dialog",  &AboutDialog::show_about_dialog },
-#endif
+    //{ "show_about_dialog",  &AboutDialog::show_about_dialog },
     { NULL, NULL }
     };
 
@@ -112,8 +112,7 @@ FALCON_FUNC AboutDialog::init( VMARG )
         throw_require_no_args();
 #endif
     MYSELF;
-    GtkWidget* dlg = gtk_about_dialog_new();
-    self->setGObject( (GObject*) dlg );
+    self->setGObject( (GObject*) gtk_about_dialog_new() );
 }
 
 
@@ -134,7 +133,7 @@ FALCON_FUNC AboutDialog::get_name( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_name( (GtkAboutDialog*)_obj );
-    vm->retval( new String( nm ) );
+    vm->retval( UTF8String( nm ) );
 }
 
 
@@ -173,7 +172,7 @@ FALCON_FUNC AboutDialog::get_program_name( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_program_name( (GtkAboutDialog*)_obj );
-    vm->retval( new String( nm ) );
+    vm->retval( UTF8String( nm ) );
 }
 
 
@@ -209,7 +208,7 @@ FALCON_FUNC AboutDialog::get_version( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* ver = gtk_about_dialog_get_version( (GtkAboutDialog*)_obj );
-    vm->retval( new String( ver ) );
+    vm->retval( UTF8String( ver ) );
 }
 
 
@@ -242,7 +241,7 @@ FALCON_FUNC AboutDialog::get_copyright( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* cr = gtk_about_dialog_get_copyright( (GtkAboutDialog*)_obj );
-    vm->retval( new String( cr ) );
+    vm->retval( UTF8String( cr ) );
 }
 
 
@@ -277,7 +276,7 @@ FALCON_FUNC AboutDialog::get_comments( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* com = gtk_about_dialog_get_comments( (GtkAboutDialog*)_obj );
-    vm->retval( new String( com ) );
+    vm->retval( UTF8String( com ) );
 }
 
 
@@ -312,13 +311,13 @@ FALCON_FUNC AboutDialog::get_license( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* lic = gtk_about_dialog_get_license( (GtkAboutDialog*)_obj );
-    vm->retval( new String( lic ) );
+    vm->retval( UTF8String( lic ) );
 }
 
 
 /*#
     @method set_license GtkAboutDialog
-    @brief Sets the license information to be displayed in the secondary license dialog. 
+    @brief Sets the license information to be displayed in the secondary license dialog.
     @param license the license information or nil.
 
     If license is nil, the license button is hidden.
@@ -365,7 +364,8 @@ FALCON_FUNC AboutDialog::set_wrap_license( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_about_dialog_set_wrap_license( (GtkAboutDialog*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_about_dialog_set_wrap_license( (GtkAboutDialog*)_obj,
+                                       (gboolean) i_bool->asBoolean() );
 }
 #endif // GTK_MINOR_VERSION >= 8
 
@@ -373,7 +373,7 @@ FALCON_FUNC AboutDialog::set_wrap_license( VMARG )
 /*#
     @method get_website GtkAboutDialog
     @brief Returns the website URL.
-    @return The website URL. 
+    @return The website URL.
  */
 FALCON_FUNC AboutDialog::get_website( VMARG )
 {
@@ -384,7 +384,7 @@ FALCON_FUNC AboutDialog::get_website( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* web = gtk_about_dialog_get_website( (GtkAboutDialog*)_obj );
-    vm->retval( new String( web ) );
+    vm->retval( UTF8String( web ) );
 }
 
 
@@ -392,7 +392,7 @@ FALCON_FUNC AboutDialog::get_website( VMARG )
     @method set_website
     @brief Sets the URL to use for the website link.
     @param a URL string starting with "http://" (or nil).
-    
+
     Note that that the hook functions need to be set up before calling this function.
  */
 FALCON_FUNC AboutDialog::set_website( VMARG )
@@ -419,7 +419,7 @@ FALCON_FUNC AboutDialog::get_website_label( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_about_dialog_get_website_label( (GtkAboutDialog*)_obj );
-    vm->retval( new String( lbl ) );
+    vm->retval( UTF8String( lbl ) );
 }
 
 
@@ -458,7 +458,7 @@ FALCON_FUNC AboutDialog::get_authors( VMARG )
         ++sz;
     CoreArray* arr = new CoreArray( sz );
     for ( i=0; i < sz; ++i )
-        arr->append( new String( authors[i] ) );
+        arr->append( UTF8String( authors[i] ) );
     vm->retval( arr );
 }
 
@@ -510,7 +510,7 @@ FALCON_FUNC AboutDialog::get_artists( VMARG )
         ++sz;
     CoreArray* arr = new CoreArray( sz );
     for ( i=0; i < sz; ++i )
-        arr->append( new String( artists[i] ) );
+        arr->append( UTF8String( artists[i] ) );
     vm->retval( arr );
 }
 
@@ -562,7 +562,7 @@ FALCON_FUNC AboutDialog::get_documenters( VMARG )
         ++sz;
     CoreArray* arr = new CoreArray( sz );
     for ( i=0; i < sz; ++i )
-        arr->append( new String( documenters[i] ) );
+        arr->append( UTF8String( documenters[i] ) );
     vm->retval( arr );
 }
 
@@ -608,7 +608,7 @@ FALCON_FUNC AboutDialog::get_translator_credits( VMARG )
     MYSELF;
     GET_OBJ( self );
     const gchar* cred = gtk_about_dialog_get_translator_credits( (GtkAboutDialog*)_obj );
-    vm->retval( new String( cred ) );
+    vm->retval( UTF8String( cred ) );
 }
 
 
@@ -688,7 +688,7 @@ FALCON_FUNC AboutDialog::get_logo_icon_name( VMARG )
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_logo_icon_name( (GtkAboutDialog*)_obj );
     if ( nm )
-        vm->retval( new String( nm ) );
+        vm->retval( UTF8String( nm ) );
     else
         vm->retnil();
 }
@@ -711,11 +711,118 @@ FALCON_FUNC AboutDialog::set_logo_icon_name( VMARG )
 }
 
 
-#if 0
-FALCON_FUNC AboutDialog::set_email_hook( VMARG );
-FALCON_FUNC AboutDialog::set_url_hook( VMARG );
-FALCON_FUNC AboutDialog::show_about_dialog( VMARG );
+/*#
+    @method set_email_hook GtkAboutDialog
+    @brief Installs a global function to be called whenever the user activates an email link in an about dialog.
+    @param func a function to call when an email link is activated, or nil.
+    @param data data to pass to func, or nil.
+
+    The function will get the dialog object as first parameter, the activated link
+    as second parameter (string), and user data as third parameter.
+
+    Since 2.18 there exists a default function which uses gtk_show_uri().
+    To deactivate it, you can pass NULL for func.
+ */
+FALCON_FUNC AboutDialog::set_email_hook( VMARG )
+{
+    Item* i_func = vm->param( 0 );
+    Item* i_data = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_func || !( i_func->isNil() || i_func->isCallable() )
+        || !i_data )
+        throw_inv_params( "[C,X]" );
 #endif
+    // release anything previously set
+    if ( email_hook_func_item )
+    {
+        gtk_about_dialog_set_email_hook( NULL, NULL, NULL );
+        delete email_hook_func_item;
+        email_hook_func_item = NULL;
+        delete email_hook_data_item;
+        email_hook_data_item = NULL;
+    }
+    // set new func, if any
+    if ( !i_func->isNil() )
+    {
+        email_hook_func_item = new Falcon::GarbageLock( *i_func );
+        email_hook_data_item = new Falcon::GarbageLock( *i_data );
+        gtk_about_dialog_set_email_hook( &email_hook_func, NULL, NULL );
+    }
+}
+
+Falcon::GarbageLock*    email_hook_func_item = NULL;
+Falcon::GarbageLock*    email_hook_data_item = NULL;
+
+void email_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+{
+    assert( email_hook_func_item && email_hook_data_item );
+
+    VMachine* vm = VMachine::getCurrent();
+
+    vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
+    vm->pushParam( UTF8String( link ) );
+    vm->pushParam( email_hook_data_item->item() );
+    vm->callItem( email_hook_func_item->item(), 3 );
+}
+
+
+/*#
+    @method set_url_hook GtkAboutDialog
+    @brief Installs a global function to be called whenever the user activates a URL link in an about dialog.
+    @param func a function to call when a URL link is activated, or nil.
+    @param data data to pass to func, or nil.
+
+    The function will get the dialog object as first parameter, the activated link
+    as second parameter (string), and user data as third parameter.
+
+    Since 2.18 there exists a default function which uses gtk_show_uri().
+    To deactivate it, you can pass NULL for func.
+ */
+FALCON_FUNC AboutDialog::set_url_hook( VMARG )
+{
+    Item* i_func = vm->param( 0 );
+    Item* i_data = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_func || !( i_func->isNil() || i_func->isCallable() )
+        || !i_data )
+        throw_inv_params( "[C,X]" );
+#endif
+    // release anything previously set
+    if ( url_hook_func_item )
+    {
+        gtk_about_dialog_set_url_hook( NULL, NULL, NULL );
+        delete url_hook_func_item;
+        url_hook_func_item = NULL;
+        delete url_hook_data_item;
+        url_hook_data_item = NULL;
+    }
+    // set new func, if any
+    if ( !i_func->isNil() )
+    {
+        url_hook_func_item = new Falcon::GarbageLock( *i_func );
+        url_hook_data_item = new Falcon::GarbageLock( *i_data );
+        gtk_about_dialog_set_url_hook( &url_hook_func, NULL, NULL );
+    }
+}
+
+Falcon::GarbageLock*    url_hook_func_item = NULL;
+Falcon::GarbageLock*    url_hook_data_item = NULL;
+
+void url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+{
+    assert( url_hook_func_item && url_hook_data_item );
+
+    VMachine* vm = VMachine::getCurrent();
+
+    vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
+    vm->pushParam( UTF8String( link ) );
+    vm->pushParam( url_hook_data_item->item() );
+    vm->callItem( url_hook_func_item->item(), 3 );
+}
+
+
+//FALCON_FUNC AboutDialog::show_about_dialog( VMARG );
+
 
 } // Gtk
 } // Falcon
