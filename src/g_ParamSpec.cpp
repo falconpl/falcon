@@ -4,8 +4,6 @@
 
 #include "g_ParamSpec.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Glib {
@@ -29,30 +27,30 @@ void ParamSpec::modInit( Falcon::Module* mod )
 
 ParamSpec::ParamSpec( const Falcon::CoreClass* gen, const GParamSpec* spec )
     :
-    Falcon::CoreObject( gen )
+    Falcon::CoreObject( gen ),
+    m_spec( NULL )
 {
     if ( spec )
     {
-        g_param_spec_ref_sink( (GParamSpec*) spec );
-        setUserData( (void*) spec );
+        m_spec = (GParamSpec*) spec;
+        g_param_spec_ref_sink( m_spec );
     }
 }
 
 
 ParamSpec::~ParamSpec()
 {
-    GParamSpec* spec = (GParamSpec*) getUserData();
-    if ( spec )
-        g_param_spec_unref( (GParamSpec*) spec );
+    if ( m_spec )
+        g_param_spec_unref( m_spec );
 }
 
 
 bool ParamSpec::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
-    GParamSpec* m_spec = (GParamSpec*) getUserData();
+    assert( m_spec );
 
     if ( s == "name" )
-        it = new String( m_spec->name );
+        it = UTF8String( m_spec->name );
     else
     if ( s == "flags" )
         it = (int64) m_spec->flags;

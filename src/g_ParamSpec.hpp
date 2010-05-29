@@ -30,6 +30,12 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GParamSpec* getSpec() const { return (GParamSpec*) m_spec; }
+
+private:
+
+    GParamSpec* m_spec;
+
 };
 
 
