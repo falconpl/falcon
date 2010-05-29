@@ -48,6 +48,12 @@ public:
 
     static void on_released( GtkButton*, gpointer );
 
+    static FALCON_FUNC new_with_label( VMARG );
+
+    static FALCON_FUNC new_with_mnemonic( VMARG );
+
+    static FALCON_FUNC new_from_stock( VMARG );
+
     static FALCON_FUNC pressed( VMARG );
 
     static FALCON_FUNC released( VMARG );
@@ -58,9 +64,9 @@ public:
 
     static FALCON_FUNC leave( VMARG );
 
-    //static FALCON_FUNC set_relief( VMARG );
+    static FALCON_FUNC set_relief( VMARG );
 
-    //static FALCON_FUNC get_relief( VMARG );
+    static FALCON_FUNC get_relief( VMARG );
 
     static FALCON_FUNC set_label( VMARG );
 
@@ -78,19 +84,20 @@ public:
 
     static FALCON_FUNC get_focus_on_click( VMARG );
 
-    //static FALCON_FUNC set_alignment( VMARG );
+    static FALCON_FUNC set_alignment( VMARG );
 
-    //static FALCON_FUNC get_alignment( VMARG );
+    static FALCON_FUNC get_alignment( VMARG );
 
     static FALCON_FUNC set_image( VMARG );
 
     static FALCON_FUNC get_image( VMARG );
 
-    //static FALCON_FUNC set_image_position( VMARG );
+    static FALCON_FUNC set_image_position( VMARG );
 
-    //static FALCON_FUNC get_image_position( VMARG );
+    static FALCON_FUNC get_image_position( VMARG );
 
 };
+
 
 } // Gtk
 } // Falcon
