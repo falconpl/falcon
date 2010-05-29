@@ -132,7 +132,11 @@ public:
 
    CoreArray *currentPage() const { return m_currentPage; }
    uint32 currentPageId() const { return m_currentPageId; }
+
+   //TODO: Transform in ItemArray&
    bool setHeader( CoreArray *header );
+   bool setHeader( const ItemArray& header );
+
    uint32 getHeaderPos( const String &name ) const;
    Item *getHeaderData( uint32 pos ) const;
 

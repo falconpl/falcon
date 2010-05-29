@@ -58,20 +58,26 @@ CoreTable::~CoreTable()
 
 bool CoreTable::setHeader( CoreArray *header )
 {
+   return setHeader( header->items() );
+}
+
+
+bool CoreTable::setHeader( const ItemArray& header )
+{
    if ( m_order != noitem )
    {
-      if( m_order != header->length() )
+      if( m_order != header.length() )
          return false;
    }
 
-   uint32 len = header->length();
+   uint32 len = header.length();
    m_headerData.reserve( len );
    m_headerData.resize(0);
    m_heading.clear();
 
    for( uint32 i = 0; i < len; i++ )
    {
-      const Item &itm = (*header)[i];
+      const Item &itm = header[i];
 
       // we accept only strings and future bindings
       if ( itm.isFutureBind() )
@@ -92,7 +98,6 @@ bool CoreTable::setHeader( CoreArray *header )
    m_order = len;
    return true;
 }
-
 
 bool CoreTable::insertRow(  CoreArray *ca, uint32 pos, uint32 page )
 {
