@@ -24,6 +24,10 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
+    static FALCON_FUNC new_with_label( VMARG );
+
+    static FALCON_FUNC new_with_mnemonic( VMARG );
+
 };
 
 

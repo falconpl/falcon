@@ -4,8 +4,6 @@
 
 #include "gtk_CheckButton.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -20,7 +18,11 @@ void CheckButton::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkToggleButton" ) );
     c_CheckButton->getClassDef()->addInheritance( in );
 
+    c_CheckButton->setWKS( true );
     c_CheckButton->getClassDef()->factory( &CheckButton::factory );
+
+    mod->addClassMethod( c_CheckButton, "new_with_label",   &CheckButton::new_with_label );
+    mod->addClassMethod( c_CheckButton, "new_with_mnemonic",&CheckButton::new_with_mnemonic );
 }
 
 
@@ -39,8 +41,6 @@ Falcon::CoreObject* CheckButton::factory( const Falcon::CoreClass* gen, void* bt
 /*#
     @class GtkCheckButton
     @brief Create widgets with a discrete toggle button
-    @optparam label (string) the text for the check button.
-    @optparam mnemonic (boolean, default false)
 
     A GtkCheckButton places a discrete gtk.ToggleButton next to a widget, (usually
     a GtkLabel). See the section on GtkToggleButton widgets for more information
@@ -51,40 +51,56 @@ Falcon::CoreObject* CheckButton::factory( const Falcon::CoreClass* gen, void* bt
 FALCON_FUNC CheckButton::init( VMARG )
 {
     MYSELF;
-
     if ( self->getGObject() )
         return;
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    self->setGObject( (GObject*) gtk_check_button_new() );
+}
 
+
+/*#
+    @method new_with_label GtkCheckButton
+    @brief Creates a new GtkCheckButton with a GtkLabel to the right of it.
+    @param label the text for the check button.
+    @return a new GtkCheckButton
+ */
+FALCON_FUNC CheckButton::new_with_label( VMARG )
+{
     Item* i_lbl = vm->param( 0 );
-    Item* i_mne = vm->param( 1 );
-    GtkWidget* btn;
-
-    if ( i_lbl )
-    {
 #ifndef NO_PARAMETER_CHECK
-        if ( i_lbl->isNil() || i_lbl->isString() )
-            throw_inv_params( "[S,B]" );
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
 #endif
-        AutoCString lbl( i_lbl->asString() );
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_check_button_new_with_label( lbl.c_str() );
+    vm->retval( new Gtk::CheckButton( vm->findWKI( "GtkCheckButton" )->asClass(),
+                                      (GtkCheckButton*) btn ) );
+}
 
-        if ( i_mne )
-        {
+
+/*#
+    @method new_with_mnemonic GtkCheckButton
+    @brief Creates a new GtkCheckButton containing a label.
+    @param label The text of the button, with an underscore in front of the mnemonic character
+    @return a new GtkCheckButton
+
+    The label will be created using gtk_label_new_with_mnemonic(), so underscores
+    in label indicate the mnemonic for the check button.
+ */
+FALCON_FUNC CheckButton::new_with_mnemonic( VMARG )
+{
+    Item* i_lbl = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-            if ( i_mne->isNil() || !i_mne->isBoolean() )
-                throw_inv_params( "[S,B]" );
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
 #endif
-            if ( i_mne->asBoolean() )
-                btn = gtk_check_button_new_with_mnemonic( lbl.c_str() );
-            else
-                btn = gtk_check_button_new_with_label( lbl.c_str() );
-        }
-        else
-            btn = gtk_check_button_new_with_label( lbl.c_str() );
-    }
-    else
-        btn = gtk_check_button_new();
-
-    self->setGObject( (GObject*) btn );
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_check_button_new_with_mnemonic( lbl.c_str() );
+    vm->retval( new Gtk::CheckButton( vm->findWKI( "GtkCheckButton" )->asClass(),
+                                      (GtkCheckButton*) btn ) );
 }
 
 
