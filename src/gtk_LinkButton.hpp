@@ -30,7 +30,7 @@ public:
 
     static FALCON_FUNC set_uri( VMARG );
 
-    //static FALCON_FUNC set_uri_hook( VMARG );
+    static FALCON_FUNC set_uri_hook( VMARG );
 
 #if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC get_visited( VMARG );
@@ -38,6 +38,14 @@ public:
     static FALCON_FUNC set_visited( VMARG );
 #endif
 };
+
+
+/*
+ *  uri hook stuff
+ */
+extern Falcon::GarbageLock*     link_button_uri_hook_func_item;
+extern Falcon::GarbageLock*     link_button_uri_hook_data_item;
+void link_button_uri_hook_func( GtkLinkButton*, const gchar*, gpointer );
 
 
 } // Gtk

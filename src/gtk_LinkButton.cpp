@@ -26,7 +26,7 @@ void LinkButton::modInit( Falcon::Module* mod )
     { "new_with_label", &LinkButton::new_with_label },
     { "get_uri",        &LinkButton::get_uri },
     { "set_uri",        &LinkButton::set_uri },
-    //{ "set_uri_hook",   &LinkButton::set_uri_hook },
+    { "set_uri_hook",   &LinkButton::set_uri_hook },
 #if GTK_MINOR_VERSION >= 14
     { "get_visited",    &LinkButton::get_visited },
     { "set_visited",    &LinkButton::set_visited },
@@ -54,7 +54,7 @@ Falcon::CoreObject* LinkButton::factory( const Falcon::CoreClass* gen, void* btn
 /*#
     @class GtkLinkButton
     @brief Create buttons bound to a URL
-    @optparam uri a valid URI
+    @param uri a valid URI string
 
     A GtkLinkButton is a GtkButton with a hyperlink, similar to the one used by
     web browsers, which triggers an action when clicked. It is useful to show
@@ -72,16 +72,19 @@ Falcon::CoreObject* LinkButton::factory( const Falcon::CoreClass* gen, void* btn
  */
 FALCON_FUNC LinkButton::init( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    char* uri = args.getCString( 0 );
+    Item* i_uri = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_uri || !i_uri->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString uri( i_uri->asString() );
     MYSELF;
-    GtkWidget* wdt = gtk_link_button_new( uri );
-    self->setGObject( (GObject*) wdt );
+    self->setGObject( (GObject*) gtk_link_button_new( uri.c_str() ) );
 }
 
 
 /*#
-    @method new_with_label
+    @method new_with_label GtkLinkButton
     @brief Creates a new GtkLinkButton containing a label.
     @param uri a valid URI
     @param label the text of the button (or nil).
@@ -89,17 +92,17 @@ FALCON_FUNC LinkButton::init( VMARG )
  */
 FALCON_FUNC LinkButton::new_with_label( VMARG )
 {
-    Gtk::ArgCheck2 args( vm, "S[,S]" );
-    char* uri = args.getCString( 0 );
-    char* lbl = args.getCString( 1, false );
-    GtkWidget* wdt = gtk_link_button_new_with_label( uri, lbl );
-    vm->retval( new Gtk::LinkButton(
-            vm->findWKI( "GtkLinkButton" )->asClass(), (GtkLinkButton*) wdt ) );
+    Gtk::ArgCheck2 args( vm, "S,[S]" );
+    const gchar* uri = args.getCString( 0 );
+    const gchar* lbl = args.getCString( 1, false );
+    GtkWidget* btn = gtk_link_button_new_with_label( uri, lbl );
+    vm->retval( new Gtk::LinkButton( vm->findWKI( "GtkLinkButton" )->asClass(),
+                                     (GtkLinkButton*) btn ) );
 }
 
 
 /*#
-    @method get_uri
+    @method get_uri GtkLinkButton
     @brief Retrieves the URI set using gtk_link_button_set_uri().
     @return a valid URI
  */
@@ -111,13 +114,13 @@ FALCON_FUNC LinkButton::get_uri( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    const char* uri = gtk_link_button_get_uri( (GtkLinkButton*)_obj );
-    vm->retval( new String( uri ) );
+    const gchar* uri = gtk_link_button_get_uri( (GtkLinkButton*)_obj );
+    vm->retval( UTF8String( uri ) );
 }
 
 
 /*#
-    @method set_uri
+    @method set_uri GtkLinkButton
     @brief Sets uri as the URI where the GtkLinkButton points.
     @param uri a valid URI.
 
@@ -126,19 +129,72 @@ FALCON_FUNC LinkButton::get_uri( VMARG )
 FALCON_FUNC LinkButton::set_uri( VMARG )
 {
     Gtk::ArgCheck1 args( vm, "S" );
-    char* uri = args.getCString( 0 );
+    const gchar* uri = args.getCString( 0 );
     MYSELF;
     GET_OBJ( self );
     gtk_link_button_set_uri( (GtkLinkButton*)_obj, uri );
 }
 
 
-//FALCON_FUNC LinkButton::set_uri_hook( VMARG );
+/*#
+    @method set_uri_hook GtkLinkButton
+    @brief Sets func as the function that should be invoked every time a user clicks a GtkLinkButton.
+    @param func a function called each time a GtkLinkButton is clicked, or NULL.
+    @param user data to be passed to func, or NULL.
+
+    This function is called before every callback registered for the "clicked" signal.
+
+    The function will get the button object as first parameter, the activated link
+    as second parameter (string), and user data as third parameter.
+
+    If no uri hook has been set, GTK+ defaults to calling gtk_show_uri().
+ */
+FALCON_FUNC LinkButton::set_uri_hook( VMARG )
+{
+    Item* i_func = vm->param( 0 );
+    Item* i_data = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_func || !( i_func->isNil() || i_func->isCallable() )
+        || !i_data )
+        throw_inv_params( "[C,X]" );
+#endif
+    // release anything previously set
+    if ( link_button_uri_hook_func_item )
+    {
+        gtk_link_button_set_uri_hook( NULL, NULL, NULL );
+        delete link_button_uri_hook_func_item;
+        link_button_uri_hook_func_item = NULL;
+        delete link_button_uri_hook_data_item;
+        link_button_uri_hook_data_item = NULL;
+    }
+    // set new func, if any
+    if ( !i_func->isNil() )
+    {
+        link_button_uri_hook_func_item = new Falcon::GarbageLock( *i_func );
+        link_button_uri_hook_data_item = new Falcon::GarbageLock( *i_data );
+        gtk_link_button_set_uri_hook( &link_button_uri_hook_func, vm, NULL );
+    }
+}
+
+Falcon::GarbageLock*    link_button_uri_hook_func_item = NULL;
+Falcon::GarbageLock*    link_button_uri_hook_data_item = NULL;
+
+void link_button_uri_hook_func( GtkLinkButton* btn, const gchar* link, gpointer _vm )
+{
+    assert( link_button_uri_hook_func_item && link_button_uri_hook_data_item );
+
+    VMachine* vm = (VMachine*) _vm;
+
+    vm->pushParam( new Gtk::LinkButton( vm->findWKI( "GtkLinkButton")->asClass(), btn ) );
+    vm->pushParam( UTF8String( link ) );
+    vm->pushParam( link_button_uri_hook_data_item->item() );
+    vm->callItem( link_button_uri_hook_func_item->item(), 3 );
+}
 
 
 #if GTK_MINOR_VERSION >= 14
 /*#
-    @method get_visited
+    @method get_visited GtkLinkButton
     @brief Retrieves the 'visited' state of the URI where the GtkLinkButton points.
     @return TRUE if the link has been visited, FALSE otherwise
 
@@ -160,7 +216,7 @@ FALCON_FUNC LinkButton::get_visited( VMARG )
 
 
 /*#
-    @method set_visited
+    @method set_visited GtkLinkButton
     @brief Sets the 'visited' state of the URI where the GtkLinkButton points.
     @param visited the new 'visited' state
  */
@@ -168,14 +224,16 @@ FALCON_FUNC LinkButton::set_visited( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isInteger() )
+    if ( !i_bool || !i_bool->isInteger() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_link_button_set_visited( (GtkLinkButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_link_button_set_visited( (GtkLinkButton*)_obj,
+                                 (gboolean) i_bool->asBoolean() );
 }
 #endif // GTK_MINOR_VERSION >= 14
+
 
 } // Gtk
 } // Falcon
