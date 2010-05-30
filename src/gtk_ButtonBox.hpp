@@ -22,7 +22,11 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    //static FALCON_FUNC get_layout( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC get_spacing( VMARG );
+#endif
+
+    static FALCON_FUNC get_layout( VMARG );
 
     static FALCON_FUNC get_child_size( VMARG );
 
@@ -30,13 +34,16 @@ public:
 
     static FALCON_FUNC get_child_secondary( VMARG );
 
-    //static FALCON_FUNC set_spacing( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC set_spacing( VMARG );
+#endif
 
-    //static FALCON_FUNC set_layout( VMARG );
+    static FALCON_FUNC set_layout( VMARG );
 
-    //static FALCON_FUNC set_child_size( VMARG );
-
-    //static FALCON_FUNC set_child_ipadding( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC set_child_size( VMARG );
+    static FALCON_FUNC set_child_ipadding( VMARG );
+#endif
 
     static FALCON_FUNC set_child_secondary( VMARG );
 
