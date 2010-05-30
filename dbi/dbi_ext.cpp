@@ -579,23 +579,21 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
 
       if( tbl->order() == CoreTable::noitem )
       {
-         String fieldName[count];
+         String* fieldName = new String[count];
          for( int i = 0; i < count; ++ i )
          {
             dbr->getColumnName( i, fieldName[i] );
             iaCols.append( fieldName );
          }
 
-#ifdef FALCON_DBI_TEMP_HACK
-         CoreArray* tempArray = new CoreArray( iaCols );
-         if( ! tbl->setHeader( tempArray ) )
-#else
          if( ! tbl->setHeader( iaCols ) )
-#endif
          {
+            delete[] fieldName;
             throw new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ )
                   .extra("Incompatible table columns" ) );
          }
+
+         delete[] fieldName;
       }
       else
       {
