@@ -38,9 +38,9 @@ public:
 
     static FALCON_FUNC reorder_child( VMARG );
 
-    //static FALCON_FUNC query_child_packing( VMARG );
+    static FALCON_FUNC query_child_packing( VMARG );
 
-    //static FALCON_FUNC set_child_packing( VMARG );
+    static FALCON_FUNC set_child_packing( VMARG );
 
 };
 
