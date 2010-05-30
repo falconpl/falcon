@@ -4,8 +4,6 @@
 
 #include "gtk_RadioButton.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -26,6 +24,8 @@ void RadioButton::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_group_changed",       &RadioButton::signal_group_changed },
+    { "new_with_label",             &RadioButton::new_with_label },
+    { "new_with_mnemonic",          &RadioButton::new_with_mnemonic },
     { "get_group",                  &RadioButton::get_group },
     { "set_group",                  &RadioButton::set_group },
     { NULL, NULL }
@@ -51,9 +51,7 @@ Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* bt
 /*#
     @class GtkRadioButton
     @brief A choice from multiple check buttons
-    @optparam label (string)
-    @optparam mnemonic (boolean, default false)
-    @optparam group_member (another GtkRadioButton belonging to that group)
+    @param radio_group_member an existing GtkRadioButton, or nil if you are creating a new group.
 
     A single radio button performs the same basic function as a GtkCheckButton, as
     its position in the object hierarchy reflects. It is only when multiple radio
@@ -71,70 +69,25 @@ Falcon::CoreObject* RadioButton::factory( const Falcon::CoreClass* gen, void* bt
  */
 FALCON_FUNC RadioButton::init( VMARG )
 {
+    Item* i_grp = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_grp || !( i_grp->isNil() || ( i_grp->isObject()
+        && IS_DERIVED( i_grp, GtkRadioButton ) ) ) )
+        throw_inv_params( "[GtkRadioButton]" );
+#endif
+    GtkRadioButton* grp = i_grp->isNil() ? NULL
+                        : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+    GtkWidget* btn = grp ? gtk_radio_button_new_from_widget( grp )
+                    : gtk_radio_button_new( NULL );
     MYSELF;
-
-    if ( self->getGObject() )
-        return;
-
-    Item* i_lbl = vm->param( 0 );
-    Item* i_mne = vm->param( 1 );
-    Item* i_wdt = vm->param( 2 );
-    GtkWidget* btn = NULL;
-
-    if ( i_lbl )
-    {
-#ifndef NO_PARAMETER_CHECK
-        if ( i_lbl->isNil() || !i_lbl->isString() )
-            throw_inv_params( "[S,B,GtkRadioButton]" );
-#endif
-        AutoCString lbl( i_lbl->asString() );
-
-        if ( i_mne )
-        {
-#ifndef NO_PARAMETER_CHECK
-            if ( i_mne->isNil() || !i_mne->isBoolean() )
-                throw_inv_params( "[S,B,GtkRadioButton]" );
-#endif
-            if ( i_wdt )
-            {
-#ifndef NO_PARAMETER_CHECK
-                if ( i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkRadioButton ) )
-                    throw_inv_params( "[S,B,GtkRadioButton]" );
-#endif
-                GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();
-
-                if ( i_mne->asBoolean() )
-                    btn = gtk_radio_button_new_with_mnemonic_from_widget( wdt, lbl.c_str() );
-                else
-                    btn = gtk_radio_button_new_with_label_from_widget( wdt, lbl.c_str() );
-            }
-            else
-            {
-                btn = gtk_radio_button_new( NULL );
-                gtk_button_set_label( (GtkButton*) btn, lbl.c_str() );
-                if ( i_mne->asBoolean() )
-                    gtk_button_set_use_underline( (GtkButton*) btn, TRUE );
-            }
-        }
-        else
-        {
-            btn = gtk_radio_button_new( NULL );
-            gtk_button_set_label( (GtkButton*) btn, lbl.c_str() );
-        }
-    }
-    else
-        btn = gtk_radio_button_new( NULL );
-
-    assert( btn );
     self->setGObject( (GObject*) btn );
 }
 
 
 /*#
     @method signal_group_changed GtkRadioButton
-    @brief Connect a VMSlot to the button group-changed signal and return it
+    @brief Emitted when the group of radio buttons that a radio button belongs to changes.
 
-    Emitted when the group of radio buttons that a radio button belongs to changes.
     This is emitted when a radio button switches from being alone to being part of
     a group of 2 or more buttons, or vice-versa, and when a button is moved from
     one group of 2 or more buttons to a different one, but not when the composition
@@ -142,6 +95,10 @@ FALCON_FUNC RadioButton::init( VMARG )
  */
 FALCON_FUNC RadioButton::signal_group_changed( VMARG )
 {
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
     CoreGObject::get_signal( "group_changed", (void*) &RadioButton::on_group_changed, vm );
 }
 
@@ -154,9 +111,64 @@ void RadioButton::on_group_changed( GtkRadioButton* btn, gpointer _vm )
 
 
 /*#
+    @method new_with_label GtkRadioButton
+    @brief Creates a new GtkRadioButton with a text label, adding it to the same group as radio_group_member.
+    @param radio_group_member widget to get radio group from, or nil if you are creating a new group.
+    @param label the text label to display next to the radio button.
+ */
+FALCON_FUNC RadioButton::new_with_label( VMARG )
+{
+    Item* i_grp = vm->param( 0 );
+    Item* i_lbl = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_grp || !( i_grp->isNil() || ( i_grp->isObject()
+        && IS_DERIVED( i_grp, GtkRadioButton ) ) )
+        || !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "[GtkRadioButton],S" );
+#endif
+    GtkRadioButton* grp = i_grp->isNil() ? NULL
+                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = grp ? gtk_radio_button_new_with_label_from_widget( grp, lbl.c_str() )
+                    : gtk_radio_button_new_with_label( NULL, lbl.c_str() );
+    vm->retval( new Gtk::RadioButton( vm->findWKI( "GtkRadioButton" )->asClass(),
+                                      (GtkRadioButton*) btn ) );
+}
+
+
+/*#
+    @method new_with_mnemonic GtkRadioButton
+    @brief Creates a new GtkRadioButton containing a label.
+    @param radio_group_member widget to get radio group from, or nil if you are creating a new group.
+    @param label the text of the button, with an underscore in front of the mnemonic character
+
+    The label will be created using gtk_label_new_with_mnemonic(), so underscores
+    in label indicate the mnemonic for the button.
+ */
+FALCON_FUNC RadioButton::new_with_mnemonic( VMARG )
+{
+    Item* i_grp = vm->param( 0 );
+    Item* i_lbl = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_grp || !( i_grp->isNil() || ( i_grp->isObject()
+        && IS_DERIVED( i_grp, GtkRadioButton ) ) )
+        || !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "[GtkRadioButton],S" );
+#endif
+    GtkRadioButton* grp = i_grp->isNil() ? NULL
+                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = grp ? gtk_radio_button_new_with_mnemonic_from_widget( grp, lbl.c_str() )
+                    : gtk_radio_button_new_with_mnemonic( NULL, lbl.c_str() );
+    vm->retval( new Gtk::RadioButton( vm->findWKI( "GtkRadioButton" )->asClass(),
+                                      (GtkRadioButton*) btn ) );
+}
+
+
+/*#
     @method get_group GtkRadioButton
     @brief Retrieves the group assigned to a radio button.
-    @return array containing GtkRadioButton objects belonging to the group.
+    @return an array containing GtkRadioButton objects belonging to the group.
  */
 FALCON_FUNC RadioButton::get_group( VMARG )
 {
@@ -166,15 +178,16 @@ FALCON_FUNC RadioButton::get_group( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    CoreArray* arr = new CoreArray;
     GSList* grp = gtk_radio_button_get_group( (GtkRadioButton*)_obj );
-    if ( grp && grp->data )
+    GSList* el;
+    int cnt = 0;
+    for ( el = grp; el; el = el->next ) ++cnt;
+    CoreArray* arr = new CoreArray( cnt );
+    if ( cnt )
     {
         Item* wki = vm->findWKI( "GtkRadioButton" );
-        for ( ; grp; grp = grp->next )
-        {
-            arr->append( new RadioButton( wki->asClass(), (GtkRadioButton*) grp->data ) );
-        }
+        for ( el = grp; el; el = el->next )
+            arr->append( new Gtk::RadioButton( wki->asClass(), (GtkRadioButton*) grp->data ) );
     }
     vm->retval( arr );
 }
@@ -199,8 +212,7 @@ FALCON_FUNC RadioButton::set_group( VMARG )
 #endif
     GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();
     GSList* grp = gtk_radio_button_get_group( wdt );
-    if ( !grp || !grp->data ) // just in case..
-        throw_inv_params( "Group not found" );
+    assert( grp && grp->data );
     MYSELF;
     GET_OBJ( self );
     gtk_radio_button_set_group( (GtkRadioButton*)_obj, grp );
