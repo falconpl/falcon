@@ -102,6 +102,7 @@ set(falcon_files
   falcon/message_defs.h
   falcon/modloader.h
   falcon/module.h
+  falcon/modulecache.h
   falcon/mt.h
   falcon/mt_posix.h
   falcon/mt_win.h

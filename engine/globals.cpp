@@ -24,7 +24,7 @@
 #include <falcon/mempool.h>
 #include <falcon/vfs_file.h>
 #include <falcon/strtable.h>
-
+#include <falcon/modulecache.h>
 
 namespace Falcon
 {
@@ -41,6 +41,8 @@ namespace Engine
    static String* s_sIOEnc = 0;
    static String* s_sSrcEnc = 0;
    static String* s_searchPath = 0;
+   static ModuleCache* s_moduleCache = 0;
+
 #ifdef FALCON_SYSTEM_WIN
    static bool s_bWindowsNamesConversion = true;
 #else
@@ -129,6 +131,9 @@ namespace Engine
      
       delete memPool;
       memPool = 0;
+
+      delete s_moduleCache;
+      s_moduleCache = 0;
 
       releaseLanguage();
       releaseEncodings();
@@ -256,6 +261,26 @@ namespace Engine
       return s_bWindowsNamesConversion;
    }
 
+   void cacheModules( bool tmode )
+   {
+      s_mtx.lock();
+      if ( tmode )
+      {
+         if ( s_moduleCache == 0 )
+            s_moduleCache = new ModuleCache;
+      }
+      else
+      {
+         delete s_moduleCache;
+         s_moduleCache = 0;
+      }
+      s_mtx.unlock();
+   }
+
+   ModuleCache* getModuleCache()
+   {
+      return s_moduleCache;
+   }
 }
 
 }

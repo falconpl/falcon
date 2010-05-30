@@ -26,6 +26,7 @@ class MemPool;
 class StringTable;
 class VFSProvider;
 class String;
+class ModuleCache;
 
 FALCON_DYN_SYM extern void * (*memAlloc) ( size_t );
 FALCON_DYN_SYM extern void (*memFree) ( void * );
@@ -94,6 +95,12 @@ namespace Engine
 
    /** Changes global setting for automatic conversion from windows paths */
    FALCON_DYN_SYM void setWindowsNamesConversion( bool s );
+
+   /** Turn on automatic module caching. */
+   FALCON_DYN_SYM void cacheModules( bool tmode );
+
+   /** Public module cache. */
+   FALCON_DYN_SYM ModuleCache* getModuleCache();
 
    class AutoInit {
    public:

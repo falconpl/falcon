@@ -202,6 +202,7 @@ add_library(falcon_engine SHARED
   mempool.cpp
   modloader.cpp
   module.cpp
+  modulecache.cpp
   pagedict.cpp
   path.cpp
   pcode.cpp

@@ -33,9 +33,7 @@ class VFSProvider;
 /** Module Loader support.
 
    This class enables embedding applications and falcon VM (and thus, Falcon scripts)
-   to load modueles.
-
-
+   to load modules.
 */
 class FALCON_DYN_CLASS ModuleLoader: public BaseAlloc
 {
@@ -390,6 +388,8 @@ public:
       \param path A path from which to load the module.
       \return a newly allocated module on success.
       \throw Error or appropriate subclass on error.
+
+      TODO: make virtual
    */
    Module *loadModule( const String &file );
 

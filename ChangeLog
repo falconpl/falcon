@@ -24,7 +24,9 @@ Falcon (0.9.6.5)
   * added: Method Dictionary.dop (default operation).
   * fixed: falpack wasn't correctly storing the plugins in the app subtree.
   * fixed: Immediate array unpack was causing an assert in case of wrong sizes.
-
+  * added: Module cache acting directly in ModuleLoader. Should be reviewed for
+           finer control in next version.
+            
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
            didn't discard the value.
