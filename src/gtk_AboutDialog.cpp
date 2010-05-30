@@ -746,18 +746,18 @@ FALCON_FUNC AboutDialog::set_email_hook( VMARG )
     {
         about_dialog_email_hook_func_item = new Falcon::GarbageLock( *i_func );
         about_dialog_email_hook_data_item = new Falcon::GarbageLock( *i_data );
-        gtk_about_dialog_set_email_hook( &about_dialog_email_hook_func, NULL, NULL );
+        gtk_about_dialog_set_email_hook( &about_dialog_email_hook_func, vm, NULL );
     }
 }
 
 Falcon::GarbageLock*    about_dialog_email_hook_func_item = NULL;
 Falcon::GarbageLock*    about_dialog_email_hook_data_item = NULL;
 
-void about_dialog_email_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+void about_dialog_email_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer _vm )
 {
     assert( about_dialog_email_hook_func_item && about_dialog_email_hook_data_item );
 
-    VMachine* vm = VMachine::getCurrent();
+    VMachine* vm = (VMachine*) _vm;
 
     vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
     vm->pushParam( UTF8String( link ) );
@@ -801,18 +801,18 @@ FALCON_FUNC AboutDialog::set_url_hook( VMARG )
     {
         about_dialog_url_hook_func_item = new Falcon::GarbageLock( *i_func );
         about_dialog_url_hook_data_item = new Falcon::GarbageLock( *i_data );
-        gtk_about_dialog_set_url_hook( &about_dialog_url_hook_func, NULL, NULL );
+        gtk_about_dialog_set_url_hook( &about_dialog_url_hook_func, vm, NULL );
     }
 }
 
 Falcon::GarbageLock*    about_dialog_url_hook_func_item = NULL;
 Falcon::GarbageLock*    about_dialog_url_hook_data_item = NULL;
 
-void about_dialog_url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer )
+void about_dialog_url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointer _vm )
 {
     assert( about_dialog_url_hook_func_item && about_dialog_url_hook_data_item );
 
-    VMachine* vm = VMachine::getCurrent();
+    VMachine* vm = (VMachine*) _vm;
 
     vm->pushParam( new Gtk::AboutDialog( vm->findWKI( "GtkAboutDialog")->asClass(), dlg ) );
     vm->pushParam( UTF8String( link ) );
