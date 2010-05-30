@@ -4,8 +4,6 @@
 
 #include "gtk_ToggleButton.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -20,18 +18,21 @@ void ToggleButton::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkButton" ) );
     c_ToggleButton->getClassDef()->addInheritance( in );
 
+    c_ToggleButton->setWKS( true );
     c_ToggleButton->getClassDef()->factory( &ToggleButton::factory );
 
     Gtk::MethodTab methods[] =
     {
-    { "signal_toggled",         &ToggleButton::signal_toggled },
-    { "set_mode",               &ToggleButton::set_mode },
-    { "get_mode",               &ToggleButton::get_mode },
-    { "toggled",                &ToggleButton::toggled },
-    { "get_active",             &ToggleButton::get_active },
-    { "set_active",             &ToggleButton::set_active },
-    { "get_inconsistent",       &ToggleButton::get_inconsistent },
-    { "set_inconsistent",       &ToggleButton::set_inconsistent },
+    { "signal_toggled",     &ToggleButton::signal_toggled },
+    { "new_with_label",     &ToggleButton::new_with_label },
+    { "new_with_mnemonic",  &ToggleButton::new_with_mnemonic },
+    { "set_mode",           &ToggleButton::set_mode },
+    { "get_mode",           &ToggleButton::get_mode },
+    { "toggled",            &ToggleButton::toggled },
+    { "get_active",         &ToggleButton::get_active },
+    { "set_active",         &ToggleButton::set_active },
+    { "get_inconsistent",   &ToggleButton::get_inconsistent },
+    { "set_inconsistent",   &ToggleButton::set_inconsistent },
     { NULL, NULL }
     };
 
@@ -55,8 +56,6 @@ Falcon::CoreObject* ToggleButton::factory( const Falcon::CoreClass* gen, void* b
 /*#
     @class GtkToggleButton
     @brief Create buttons which retain their state
-    @optparam label (string)
-    @optparam mnemonic (boolean, default false)
 
     A GtkToggleButton is a GtkButton which will remain 'pressed-in' when clicked.
     Clicking again will cause the toggle button to return to its normal state.
@@ -69,52 +68,26 @@ Falcon::CoreObject* ToggleButton::factory( const Falcon::CoreClass* gen, void* b
 FALCON_FUNC ToggleButton::init( VMARG )
 {
     MYSELF;
-
     if ( self->getGObject() )
         return;
-
-    Item* i_lbl = vm->param( 0 );
-    Item* i_mne = vm->param( 1 );
-    GtkWidget* btn;
-
-    if ( i_lbl )
-    {
-#ifndef NO_PARAMETER_CHECK
-        if ( i_lbl->isNil() || !i_lbl->isString() )
-            throw_inv_params( "[S,B]" );
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
 #endif
-        AutoCString lbl( i_lbl->asString() );
-
-        if ( i_mne )
-        {
-#ifndef NO_PARAMETER_CHECK
-            if ( i_mne->isNil() || !i_mne->isBoolean() )
-                throw_inv_params( "[S,B]" );
-#endif
-            if ( i_mne->asBoolean() )
-                btn = gtk_toggle_button_new_with_mnemonic( lbl.c_str() );
-            else
-                btn = gtk_toggle_button_new_with_label( lbl.c_str() );
-        }
-        else
-            btn = gtk_toggle_button_new_with_label( lbl.c_str() );
-    }
-    else
-        btn = gtk_toggle_button_new();
-
-    self->setGObject( (GObject*) btn );
+    self->setGObject( (GObject*) gtk_toggle_button_new() );
 }
 
 
 /*#
     @method signal_toggled GtkToggleButton
-    @brief Connect a VMSlot to the button toggled signal and return it
-
-    Should be connected if you wish to perform an action whenever the
-    GtkToggleButton's state is changed.
+    @brief Should be connected if you wish to perform an action whenever the GtkToggleButton's state is changed.
  */
 FALCON_FUNC ToggleButton::signal_toggled( VMARG )
 {
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
     CoreGObject::get_signal( "toggled", (void*) &ToggleButton::on_toggled, vm );
 }
 
@@ -122,6 +95,49 @@ FALCON_FUNC ToggleButton::signal_toggled( VMARG )
 void ToggleButton::on_toggled( GtkToggleButton* btn, gpointer _vm )
 {
     CoreGObject::trigger_slot( (GObject*) btn, "toggled", "on_toggled", (VMachine*)_vm );
+}
+
+
+/*#
+    @method new_with_label GtkToggleButton
+    @brief Creates a new toggle button with a text label.
+    @param label a string containing the message to be placed in the toggle button.
+    @return a new toggle button.
+ */
+FALCON_FUNC ToggleButton::new_with_label( VMARG )
+{
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_toggle_button_new_with_label( lbl.c_str() );
+    vm->retval( new Gtk::ToggleButton( vm->findWKI( "GtkToggleButton" )->asClass(),
+                                       (GtkToggleButton*) btn ) );
+}
+
+
+/*#
+    @method new_with_mnemonic GtkToggleButton
+    @brief Creates a new GtkToggleButton containing a label.
+    @param label the text of the button, with an underscore in front of the mnemonic character
+    @return a new toggle button.
+
+    The label will be created using gtk_label_new_with_mnemonic(), so underscores
+    in label indicate the mnemonic for the button.
+ */
+FALCON_FUNC ToggleButton::new_with_mnemonic( VMARG )
+{
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_toggle_button_new_with_mnemonic( lbl.c_str() );
+    vm->retval( new Gtk::ToggleButton( vm->findWKI( "GtkToggleButton" )->asClass(),
+                                       (GtkToggleButton*) btn ) );
 }
 
 
@@ -140,12 +156,12 @@ FALCON_FUNC ToggleButton::set_mode( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_toggle_button_set_mode( (GtkToggleButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_toggle_button_set_mode( (GtkToggleButton*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -212,12 +228,12 @@ FALCON_FUNC ToggleButton::set_active( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_toggle_button_set_active( (GtkToggleButton*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_toggle_button_set_active( (GtkToggleButton*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -255,13 +271,13 @@ FALCON_FUNC ToggleButton::set_inconsistent( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
     gtk_toggle_button_set_inconsistent( (GtkToggleButton*)_obj,
-        i_bool->asBoolean() ? TRUE : FALSE );
+                                        (gboolean) i_bool->asBoolean() );
 }
 
 

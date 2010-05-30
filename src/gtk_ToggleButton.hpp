@@ -28,6 +28,10 @@ public:
 
     static void on_toggled( GtkToggleButton*, gpointer );
 
+    static FALCON_FUNC new_with_label( VMARG );
+
+    static FALCON_FUNC new_with_mnemonic( VMARG );
+
     static FALCON_FUNC set_mode( VMARG );
 
     static FALCON_FUNC get_mode( VMARG );
