@@ -32,6 +32,7 @@ void Adjustment::modInit( Falcon::Module* mod )
     { "clamp_page",         &Adjustment::clamp_page },
     { "changed",            &Adjustment::changed },
     { "value_changed",      &Adjustment::value_changed },
+#if GTK_MINOR_VERSION >= 14
     { "configure",          &Adjustment::configure },
     { "get_lower",          &Adjustment::get_lower },
     { "get_page_increment", &Adjustment::get_page_increment },
@@ -43,6 +44,7 @@ void Adjustment::modInit( Falcon::Module* mod )
     { "set_page_size",      &Adjustment::set_page_size },
     { "set_step_increment", &Adjustment::set_step_increment },
     { "set_upper",          &Adjustment::set_upper },
+#endif // GTK_MINOR_VERSION >= 14
     { NULL, NULL }
     };
 
@@ -250,6 +252,7 @@ FALCON_FUNC Adjustment::value_changed( VMARG )
 }
 
 
+#if GTK_MINOR_VERSION >= 14
 /*#
     @method configure GtkAdjustment
     @brief Sets all properties of the adjustment at once.
@@ -480,7 +483,7 @@ FALCON_FUNC Adjustment::set_upper( VMARG )
     GET_OBJ( self );
     gtk_adjustment_set_upper( (GtkAdjustment*)_obj, i_upp->asNumeric() );
 }
-
+#endif // GTK_MINOR_VERSION >= 14
 
 } // Gtk
 } // Falcon

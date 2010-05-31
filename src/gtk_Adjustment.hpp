@@ -42,6 +42,7 @@ public:
 
     static FALCON_FUNC value_changed( VMARG );
 
+#if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC configure( VMARG );
 
     static FALCON_FUNC get_lower( VMARG );
@@ -63,6 +64,7 @@ public:
     static FALCON_FUNC set_step_increment( VMARG );
 
     static FALCON_FUNC set_upper( VMARG );
+#endif // GTK_MINOR_VERSION >= 14
 
 };
 
