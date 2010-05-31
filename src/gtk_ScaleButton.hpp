@@ -53,9 +53,10 @@ public:
 
     static FALCON_FUNC get_minus_button( VMARG );
 
-    //static FALCON_FUNC set_orientation( VMARG );
-
-    //static FALCON_FUNC get_orientation( VMARG );
+#if 0 // deprecated
+    static FALCON_FUNC set_orientation( VMARG );
+    static FALCON_FUNC get_orientation( VMARG );
+#endif
 #endif
 
 };

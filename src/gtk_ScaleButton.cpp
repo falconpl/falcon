@@ -4,9 +4,7 @@
 
 #include "gtk_ScaleButton.hpp"
 
-#include "gtk_Activatable.hpp"
 #include "gtk_Adjustment.hpp"
-#include "gtk_Buildable.hpp"
 #include "gtk_Orientable.hpp"
 #include "gtk_Widget.hpp"
 
@@ -29,20 +27,22 @@ void ScaleButton::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    { "signal_popdown",        &ScaleButton::signal_popdown },
-    { "signal_popup",        &ScaleButton::signal_popup },
-    { "signal_value_changed",        &ScaleButton::signal_value_changed },
-    { "set_adjustment",        &ScaleButton::set_adjustment },
-    { "set_icons",        &ScaleButton::set_icons },
-    { "set_value",        &ScaleButton::set_value },
-    { "get_adjustment",        &ScaleButton::get_adjustment },
-    { "get_value",        &ScaleButton::get_value },
+    { "signal_popdown",     &ScaleButton::signal_popdown },
+    { "signal_popup",       &ScaleButton::signal_popup },
+    { "signal_value_changed",&ScaleButton::signal_value_changed },
+    { "set_adjustment",     &ScaleButton::set_adjustment },
+    { "set_icons",          &ScaleButton::set_icons },
+    { "set_value",          &ScaleButton::set_value },
+    { "get_adjustment",     &ScaleButton::get_adjustment },
+    { "get_value",          &ScaleButton::get_value },
 #if GTK_MINOR_VERSION >= 14
-    { "get_popup",        &ScaleButton::get_popup },
-    { "get_plus_button",        &ScaleButton::get_plus_button },
-    { "get_minus_button",        &ScaleButton::get_minus_button },
-    //{ "set_orientation",        &ScaleButton::set_orientation },
-    //{ "set_orientation",        &ScaleButton::set_orientation },
+    { "get_popup",          &ScaleButton::get_popup },
+    { "get_plus_button",    &ScaleButton::get_plus_button },
+    { "get_minus_button",   &ScaleButton::get_minus_button },
+#if 0 // deprecated
+    { "set_orientation",    &ScaleButton::set_orientation },
+    { "set_orientation",    &ScaleButton::set_orientation },
+#endif
 #endif
     { NULL, NULL }
     };
@@ -50,8 +50,6 @@ void ScaleButton::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ScaleButton, meth->name, meth->cb );
 
-    Gtk::Activatable::clsInit( mod, c_ScaleButton );
-    Gtk::Buildable::clsInit( mod, c_ScaleButton );
     Gtk::Orientable::clsInit( mod, c_ScaleButton );
 }
 
@@ -75,7 +73,7 @@ Falcon::CoreObject* ScaleButton::factory( const Falcon::CoreClass* gen, void* bt
     @param min the minimum value of the scale (usually 0)
     @param max the maximum value of the scale (usually 100)
     @param step the stepping of value when a scroll-wheel event, or up/down arrow event occurs (usually 2)
-    @optparam icons a list of icons (or nil).
+    @param icons an array of icon names (strings), or nil if you want to set the list later with set_icons().
 
     GtkScaleButton provides a button which pops up a scale widget. This kind of
     widget is commonly used for volume controls in multimedia applications, and
@@ -87,11 +85,11 @@ FALCON_FUNC ScaleButton::init( VMARG )
     if ( self->getGObject() )
         return;
 
-    Gtk::ArgCheck0 args( vm, "GtkIconSize,N,N,N[,A]" );
+    Gtk::ArgCheck0 args( vm, "GtkIconSize,N,N,N,[A]" );
     int size = args.getInteger( 0 );
-    double min = args.getNumeric( 1 );
-    double max = args.getNumeric( 2 );
-    double step = args.getNumeric( 3 );
+    gdouble min = args.getNumeric( 1 );
+    gdouble max = args.getNumeric( 2 );
+    gdouble step = args.getNumeric( 3 );
     CoreArray* a_icons = args.getArray( 4, false );
 
     GtkWidget* wdt;
@@ -114,7 +112,7 @@ FALCON_FUNC ScaleButton::init( VMARG )
 
 
 /*#
-    @method signal_popdown
+    @method signal_popdown GtkScaleButton
     @brief The popdown signal is a keybinding signal which gets emitted to popdown the scale widget.
 
     The default binding for this signal is Escape.
@@ -136,7 +134,7 @@ void ScaleButton::on_popdown( GtkScaleButton* obj, gpointer _vm )
 
 
 /*#
-    @method signal_popup
+    @method signal_popup GtkScaleButton
     @brief The popup signal is a keybinding signal which gets emitted to popup the scale widget.
 
     The default bindings for this signal are Space, Enter and Return.
@@ -150,6 +148,7 @@ FALCON_FUNC ScaleButton::signal_popup( VMARG )
     CoreGObject::get_signal( "popup", (void*) &ScaleButton::on_popup, vm );
 }
 
+
 void ScaleButton::on_popup( GtkScaleButton* obj, gpointer _vm )
 {
     CoreGObject::trigger_slot( (GObject*) obj, "popup", "on_popup", (VMachine*)_vm );
@@ -157,7 +156,7 @@ void ScaleButton::on_popup( GtkScaleButton* obj, gpointer _vm )
 
 
 /*#
-    @method signal_value_changed
+    @method signal_value_changed GtkScaleButton
     @brief The value-changed signal is emitted when the value field has changed.
  */
 FALCON_FUNC ScaleButton::signal_value_changed( VMARG )
@@ -204,7 +203,7 @@ void ScaleButton::on_value_changed( GtkScaleButton* obj, gdouble value, gpointer
 
 
 /*#
-    @method set_adjustment
+    @method set_adjustment GtkScaleButton
     @brief Sets the GtkAdjustment to be used as a model for the GtkScaleButton's scale.
     @param adjustment a GtkAdjustment
  */
@@ -224,9 +223,9 @@ FALCON_FUNC ScaleButton::set_adjustment( VMARG )
 
 
 /*#
-    @method set_icons
+    @method set_icons GtkScaleButton
     @brief Sets the icons to be used by the scale button.
-    @param icons a NULL-terminated array of icon names
+    @param icons an array of icon names (strings).
  */
 FALCON_FUNC ScaleButton::set_icons( VMARG )
 {
@@ -253,7 +252,7 @@ FALCON_FUNC ScaleButton::set_icons( VMARG )
 
 
 /*#
-    @method set_value
+    @method set_value GtkScaleButton
     @brief Sets the current value of the scale.
     @param value new value of the scale button
 
@@ -266,7 +265,7 @@ FALCON_FUNC ScaleButton::set_value( VMARG )
     Item* i_val = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_val || !i_val->isOrdinal() )
-        throw_inv_params( "O" );
+        throw_inv_params( "N" );
 #endif
     MYSELF;
     GET_OBJ( self );
@@ -275,7 +274,7 @@ FALCON_FUNC ScaleButton::set_value( VMARG )
 
 
 /*#
-    @method get_adjustment
+    @method get_adjustment GtkScaleButton
     @brief Gets the GtkAdjustment associated with the GtkScaleButton's scale.
     @return the adjustment associated with the scale
  */
@@ -293,7 +292,7 @@ FALCON_FUNC ScaleButton::get_adjustment( VMARG )
 
 
 /*#
-    @method get_value
+    @method get_value GtkScaleButton
     @brief Gets the current value of the scale button.
     @return current value of the scale button
  */
@@ -311,9 +310,9 @@ FALCON_FUNC ScaleButton::get_value( VMARG )
 
 #if GTK_MINOR_VERSION >= 14
 /*#
-    @method get_popup
+    @method get_popup GtkScaleButton
     @brief Retrieves the popup of the GtkScaleButton.
-    @return the popup of the GtkScaleButton (GtkWidget*).
+    @return the popup of the GtkScaleButton (as a GtkWidget).
  */
 FALCON_FUNC ScaleButton::get_popup( VMARG )
 {
@@ -329,9 +328,9 @@ FALCON_FUNC ScaleButton::get_popup( VMARG )
 
 
 /*#
-    @method get_plus_button
+    @method get_plus_button GtkScaleButton
     @brief Retrieves the plus button of the GtkScaleButton.
-    @return the plus button of the GtkScaleButton.
+    @return the plus button of the GtkScaleButton (as a GtkWidget).
  */
 FALCON_FUNC ScaleButton::get_plus_button( VMARG )
 {
@@ -347,9 +346,9 @@ FALCON_FUNC ScaleButton::get_plus_button( VMARG )
 
 
 /*#
-    @method get_minus_button
+    @method get_minus_button GtkScaleButton
     @brief Retrieves the minus button of the GtkScaleButton.
-    @return the minus button of the GtkScaleButton.
+    @return the minus button of the GtkScaleButton (as a GtkWidget).
  */
 FALCON_FUNC ScaleButton::get_minus_button( VMARG )
 {
@@ -364,9 +363,10 @@ FALCON_FUNC ScaleButton::get_minus_button( VMARG )
 }
 
 
-//FALCON_FUNC ScaleButton::set_orientation( VMARG );
-
-//FALCON_FUNC ScaleButton::get_orientation( VMARG );
+#if 0 // deprecated
+FALCON_FUNC ScaleButton::set_orientation( VMARG );
+FALCON_FUNC ScaleButton::get_orientation( VMARG );
+#endif
 
 #endif // GTK_MINOR_VERSION >= 14
 
