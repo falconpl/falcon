@@ -100,9 +100,11 @@ public:
 
     static FALCON_FUNC get_focus_on_click( VMARG );
 
+#if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC set_button_sensitivity( VMARG );
 
     static FALCON_FUNC get_button_sensitivity( VMARG );
+#endif
 
 };
 
