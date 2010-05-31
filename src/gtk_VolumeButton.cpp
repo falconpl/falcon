@@ -19,8 +19,6 @@ void VolumeButton::modInit( Falcon::Module* mod )
     c_VolumeButton->getClassDef()->addInheritance( in );
 
     c_VolumeButton->getClassDef()->factory( &VolumeButton::factory );
-
-    // GtkBuildable, GtkActivatable and GtkOrientable, added in GtkScaleButton.
 }
 
 
