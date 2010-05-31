@@ -63,7 +63,10 @@ Falcon::CoreObject* ColorButton::factory( const Falcon::CoreClass* gen, void* bt
     an allows to open a color selection dialog to change the color. It is
     suitable widget for selecting a color in a preference dialog.
 
-    This returns a widget in the form of a small button containing a swatch representing the current selected color. When the button is clicked, a color-selection dialog will open, allowing the user to select a color. The swatch will be updated to reflect the new color when the user finishes.
+    This returns a widget in the form of a small button containing a swatch
+    representing the current selected color. When the button is clicked,
+    a color-selection dialog will open, allowing the user to select a color.
+    The swatch will be updated to reflect the new color when the user finishes.
  */
 FALCON_FUNC ColorButton::init( VMARG )
 {
@@ -119,8 +122,8 @@ FALCON_FUNC ColorButton::new_with_color( VMARG )
 #endif
     const GdkColor* clr = Falcon::dyncast<Gdk::Color*>( i_clr->asObjectSafe() )->getColor();
     GtkWidget* wdt = gtk_color_button_new_with_color( clr );
-    vm->retval( new Gtk::ColorButton(
-            vm->findWKI( "GtkColorButton" )->asClass(), (GtkColorButton*) wdt ) );
+    vm->retval( new Gtk::ColorButton( vm->findWKI( "GtkColorButton" )->asClass(),
+                                      (GtkColorButton*) wdt ) );
 }
 
 
@@ -212,7 +215,7 @@ FALCON_FUNC ColorButton::set_use_alpha( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_color_button_set_use_alpha( (GtkColorButton*)_obj, i_bool->asBoolean() );
+    gtk_color_button_set_use_alpha( (GtkColorButton*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -240,11 +243,15 @@ FALCON_FUNC ColorButton::get_use_alpha( VMARG )
  */
 FALCON_FUNC ColorButton::set_title( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    const char* title = args.getCString( 0 );
+    Item* i_title = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_title || !i_title->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString title( i_title->asString() );
     MYSELF;
     GET_OBJ( self );
-    gtk_color_button_set_title( (GtkColorButton*)_obj, title );
+    gtk_color_button_set_title( (GtkColorButton*)_obj, title.c_str() );
 }
 
 
@@ -262,7 +269,7 @@ FALCON_FUNC ColorButton::get_title( VMARG )
     MYSELF;
     GET_OBJ( self );
     const char* title = gtk_color_button_get_title( (GtkColorButton*)_obj );
-    vm->retval( new String( title ) );
+    vm->retval( UTF8String( title ) );
 }
 
 
