@@ -71,6 +71,7 @@
 #include "gtk_MessageDialog.hpp"
 #include "gtk_Misc.hpp"
 #include "gtk_Object.hpp"
+#include "gtk_OptionMenu.hpp"
 #include "gtk_Paned.hpp"
 #include "gtk_Progress.hpp"
 #include "gtk_ProgressBar.hpp"
@@ -185,6 +186,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::ColorButton::modInit( self );
                         Falcon::Gtk::FontButton::modInit( self );
                         Falcon::Gtk::LinkButton::modInit( self );
+                        Falcon::Gtk::OptionMenu::modInit( self );
                         Falcon::Gtk::ScaleButton::modInit( self );
                             Falcon::Gtk::VolumeButton::modInit( self );
                         Falcon::Gtk::ToggleButton::modInit( self );

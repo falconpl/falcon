@@ -72,6 +72,7 @@ set( SRC_FILES
     gtk_MessageDialog.cpp
     gtk_Misc.cpp
     gtk_Object.cpp
+    gtk_OptionMenu.cpp
     gtk_Orientable.cpp
     gtk_Paned.cpp
     gtk_Progress.cpp
@@ -191,6 +192,7 @@ set( HDR_FILES
     gtk_MessageDialog.hpp
     gtk_Misc.hpp
     gtk_Object.hpp
+    gtk_OptionMenu.hpp
     gtk_Orientable.hpp
     gtk_Paned.hpp
     gtk_Progress.hpp
