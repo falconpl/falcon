@@ -42,7 +42,9 @@ public:
 
     static FALCON_FUNC set_reallocate_redraws( VMARG );
 
+#if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC get_focus_child( VMARG );
+#endif
 
     static FALCON_FUNC set_focus_child( VMARG );
 
