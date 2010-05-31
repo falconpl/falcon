@@ -81,14 +81,15 @@ FALCON_FUNC MessageDialog::init( VMARG )
     int flags = args.getInteger( 1 );
     int type = args.getInteger( 2 );
     int buttons = args.getInteger( 3 );
-    char* msg = args.getCString( 4, false );
+    const gchar* msg = args.getCString( 4, false );
 #ifndef NO_PARAMETER_CHECK
     if ( o_parent && !CoreObject_IS_DERIVED( o_parent, GtkWindow ) )
         throw_inv_params( spec );
 #endif
     GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getGObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new( parent,
-        (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons, msg );
+        (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
+        msg ); // can emit a warning, safely ignore.
     MYSELF;
     self->setGObject( (GObject*) wdt );
 }
@@ -119,14 +120,15 @@ FALCON_FUNC MessageDialog::new_with_markup( VMARG )
     int flags = args.getInteger( 1 );
     int type = args.getInteger( 2 );
     int buttons = args.getInteger( 3 );
-    char* msg = args.getCString( 4, false );
+    const gchar* msg = args.getCString( 4, false );
 #ifndef NO_PARAMETER_CHECK
     if ( o_parent && !CoreObject_IS_DERIVED( o_parent, GtkWindow ) )
         throw_inv_params( spec );
 #endif
     GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getGObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new_with_markup( parent,
-        (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons, msg );
+        (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
+        msg ); // can emit a warning, safely ignore.
     vm->retval( new Gtk::MessageDialog(
             vm->findWKI( "GtkMessageDialog" )->asClass(), (GtkMessageDialog*) wdt ) );
 }
