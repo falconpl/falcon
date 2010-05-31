@@ -44,6 +44,7 @@
 #include "gtk_FileChooserButton.hpp"
 #include "gtk_FileChooserDialog.hpp"
 #include "gtk_Fixed.hpp"
+#include "gtk_FontButton.hpp"
 #include "gtk_Frame.hpp"
 #include "gtk_HBox.hpp"
 #include "gtk_HButtonBox.hpp"
@@ -182,6 +183,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::Alignment::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ColorButton::modInit( self );
+                        Falcon::Gtk::FontButton::modInit( self );
                         Falcon::Gtk::LinkButton::modInit( self );
                         Falcon::Gtk::ScaleButton::modInit( self );
                             Falcon::Gtk::VolumeButton::modInit( self );
