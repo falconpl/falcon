@@ -8,7 +8,7 @@ function _quit()
     return false
 end
 
-w.signal_delete_event().subscribe( _quit )
+w.signal_delete_event().connect( _quit )
 
 class MyButton( row, col ) from GtkButton
     _row = 0
@@ -17,7 +17,7 @@ class MyButton( row, col ) from GtkButton
         self._row = row
         self._col = col
         self.set_label( @ "$row-$col" )
-        self.signal_clicked().subscribe( self )
+        self.signal_clicked().connect( self )
     end
     function on_clicked()
         > "Clicked ", self._row, " ", self._col
@@ -32,7 +32,6 @@ class MyTable( numrows, numcols ) from GtkTable
             y = 0
             while y < numcols
                 b = MyButton( i, y )
-                b.signal_clicked().subscribe( self )
                 self.attach_defaults( b, y, y+1, i, i+1 )
                 y += 1
             end
