@@ -59,7 +59,10 @@ void MenuItem::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_MenuItem, meth->name, meth->cb );
 
+#if GTK_MINOR_VERSION >= 16
     Gtk::Activatable::clsInit( mod, c_MenuItem );
+#endif
+
 }
 
 
