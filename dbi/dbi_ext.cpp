@@ -322,8 +322,8 @@ void Handle_rollback( VMachine *vm )
 void Handle_lselect( VMachine *vm )
 {
    Item* i_sql = vm->param(0);
-   Item* i_nBegin = vm->param(0);
-   Item* i_nCount = vm->param(0);
+   Item* i_nBegin = vm->param(1);
+   Item* i_nCount = vm->param(2);
 
    if( i_sql == 0 || ! i_sql->isString()
       || ( i_nBegin != 0 && ! (i_nBegin->isOrdinal() || i_nBegin->isNil() ) )
