@@ -181,7 +181,9 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_FILE_CHOOSER_ERROR_NONEXISTENT",GTK_FILE_CHOOSER_ERROR_NONEXISTENT },
     { "GTK_FILE_CHOOSER_ERROR_BAD_FILENAME",GTK_FILE_CHOOSER_ERROR_BAD_FILENAME },
     { "GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS",GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS },
+#if 0 // temporarily disabled until is found which version
     { "GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME",GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME },
+#endif
 
     /*
      *  GtkIconSize
@@ -205,7 +207,9 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_IMAGE_ICON_SET",     GTK_IMAGE_ICON_SET },
     { "GTK_IMAGE_ANIMATION",    GTK_IMAGE_ANIMATION },
     { "GTK_IMAGE_ICON_NAME",    GTK_IMAGE_ICON_NAME },
+#if GTK_MINOR_VERSION >= 14
     { "GTK_IMAGE_GICON",        GTK_IMAGE_GICON },
+#endif
 
     /*
      *  GtkIMPreeditStyle
