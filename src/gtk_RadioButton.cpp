@@ -206,8 +206,7 @@ FALCON_FUNC RadioButton::set_group( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() ||
-        !IS_DERIVED( i_wdt, GtkRadioButton ) )
+    if ( !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkRadioButton ) )
         throw_inv_params( "GtkRadioButton" );
 #endif
     GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();

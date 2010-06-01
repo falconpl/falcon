@@ -128,11 +128,15 @@ FALCON_FUNC LinkButton::get_uri( VMARG )
  */
 FALCON_FUNC LinkButton::set_uri( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    const gchar* uri = args.getCString( 0 );
+    Item* i_uri = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_uri || !i_uri->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString uri( i_uri->asString() );
     MYSELF;
     GET_OBJ( self );
-    gtk_link_button_set_uri( (GtkLinkButton*)_obj, uri );
+    gtk_link_button_set_uri( (GtkLinkButton*)_obj, uri.c_str() );
 }
 
 
@@ -224,7 +228,7 @@ FALCON_FUNC LinkButton::set_visited( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || !i_bool->isInteger() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;

@@ -72,7 +72,10 @@ void ToolItem::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_ToolItem, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_ToolItem );
+#if GTK_MINOR_VERSION >= 16
     Gtk::Activatable::clsInit( mod, c_ToolItem );
+#endif
+
 }
 
 

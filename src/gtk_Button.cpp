@@ -62,7 +62,10 @@ void Button::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Button, meth->name, meth->cb );
 
+#if GTK_MINOR_VERSION >= 16
     Gtk::Activatable::clsInit( mod, c_Button );
+#endif
+
 }
 
 
@@ -244,10 +247,15 @@ void Button::on_released( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::new_with_label( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    const gchar* lbl = args.getCString( 0 );
-    GtkWidget* btn = gtk_button_new_with_label( lbl );
-    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(), (GtkButton*) btn ) );
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_button_new_with_label( lbl.c_str() );
+    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(),
+                                 (GtkButton*) btn ) );
 }
 
 
@@ -264,10 +272,15 @@ FALCON_FUNC Button::new_with_label( VMARG )
  */
 FALCON_FUNC Button::new_with_mnemonic( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    const gchar* lbl = args.getCString( 0 );
-    GtkWidget* btn = gtk_button_new_with_mnemonic( lbl );
-    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(), (GtkButton*) btn ) );
+    Item* i_lbl = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_lbl || !i_lbl->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString lbl( i_lbl->asString() );
+    GtkWidget* btn = gtk_button_new_with_mnemonic( lbl.c_str() );
+    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(),
+                                 (GtkButton*) btn ) );
 }
 
 
@@ -284,10 +297,15 @@ FALCON_FUNC Button::new_with_mnemonic( VMARG )
  */
 FALCON_FUNC Button::new_from_stock( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    const gchar* stock = args.getCString( 0 );
-    GtkWidget* btn = gtk_button_new_from_stock( stock );
-    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(), (GtkButton*) btn ) );
+    Item* i_stock = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_stock || !i_stock->isString() )
+        throw_inv_params( "S" );
+#endif
+    AutoCString stock( i_stock->asString() );
+    GtkWidget* btn = gtk_button_new_from_stock( stock.c_str() );
+    vm->retval( new Gtk::Button( vm->findWKI( "GtkButton" )->asClass(),
+                                 (GtkButton*) btn ) );
 }
 
 
@@ -421,13 +439,13 @@ FALCON_FUNC Button::set_label( VMARG )
 {
     Item* i_lbl = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_lbl || i_lbl->isNil() || !i_lbl->isString() )
+    if ( !i_lbl || !i_lbl->isString() )
         throw_inv_params( "S" );
 #endif
-    AutoCString s( i_lbl->asString() );
+    AutoCString lbl( i_lbl->asString() );
     MYSELF;
     GET_OBJ( self );
-    gtk_button_set_label( (GtkButton*)_obj, s.c_str() );
+    gtk_button_set_label( (GtkButton*)_obj, lbl.c_str() );
 }
 
 
@@ -468,7 +486,7 @@ FALCON_FUNC Button::set_use_stock( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
@@ -506,7 +524,7 @@ FALCON_FUNC Button::set_use_underline( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
@@ -544,7 +562,7 @@ FALCON_FUNC Button::set_focus_on_click( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
@@ -609,8 +627,8 @@ FALCON_FUNC Button::get_alignment( VMARG )
     gfloat x, y;
     gtk_button_get_alignment( (GtkButton*)_obj, &x, &y );
     CoreArray* arr = new CoreArray( 2 );
-    arr->append( x );
-    arr->append( y );
+    arr->append( (numeric) x );
+    arr->append( (numeric) y );
     vm->retval( arr );
 }
 
@@ -627,8 +645,7 @@ FALCON_FUNC Button::set_image( VMARG )
 {
     Item* i_img = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_img || i_img->isNil() || !( i_img->isObject()
-        && IS_DERIVED( i_img, GtkWidget ) ) )
+    if ( !i_img || !( i_img->isObject() && IS_DERIVED( i_img, GtkWidget ) ) )
         throw_inv_params( "GtkWidget" );
 #endif
     MYSELF;

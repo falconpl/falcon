@@ -38,6 +38,21 @@ if (WIN32)
 else (WIN32)
     find_package( GTK2 REQUIRED )
     include_directories( ${GTK2_INCLUDE_DIRS} )
+
+    # eReader includes
+    #include_directories( BEFORE
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/include/gtk-2.0
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/lib/gtk-2.0/include
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/include/glib-2.0
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/lib/glib-2.0/include
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/include/pango-1.0
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/include/cairo
+    #    /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi/usr/include/atk-1.0
+    #    )
+    #
+    # eReader libs
+    ## todo?
+
 endif (WIN32)
 
 ##
