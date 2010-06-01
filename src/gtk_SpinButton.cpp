@@ -106,7 +106,8 @@ FALCON_FUNC SpinButton::init( VMARG )
 #endif
     GtkAdjustment* adj = i_adj->isNil() ? NULL
                     : (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
-    GtkWidget* btn = gtk_spin_button_new( adj, i_rate->asNumeric(), i_digits->asInteger() );
+    GtkWidget* btn = gtk_spin_button_new(
+                    adj, i_rate->forceNumeric(), i_digits->forceInteger() );
     MYSELF;
     self->setGObject( (GObject*) btn );
 }
@@ -268,7 +269,7 @@ FALCON_FUNC SpinButton::configure( VMARG )
     MYSELF;
     GET_OBJ( self );
     gtk_spin_button_configure( (GtkSpinButton*)_obj,
-                               adj, i_rate->asNumeric(), i_digits->asInteger() );
+                               adj, i_rate->forceNumeric(), i_digits->forceInteger() );
 }
 
 
@@ -300,7 +301,7 @@ FALCON_FUNC SpinButton::new_with_range( VMARG )
         throw_inv_params( "N,N,N" );
 #endif
     GtkWidget* btn = gtk_spin_button_new_with_range(
-                    i_min->asNumeric(), i_max->asNumeric(), i_step->asNumeric() );
+                    i_min->forceNumeric(), i_max->forceNumeric(), i_step->forceNumeric() );
     vm->retval( new Gtk::SpinButton( vm->findWKI( "GtkSpinButton" )->asClass(),
                                      (GtkSpinButton*) btn ) );
 }
