@@ -136,6 +136,7 @@ void* DBIOutBind::alloc( unsigned size )
       m_memory = memRealloc( m_memory, size );
    }
 
+   m_allocated = size;
    return m_memory;
 }
 
@@ -157,6 +158,7 @@ void* DBIOutBind::reserve( unsigned size )
       m_memory = memRealloc( m_memory, size );
    }
 
+   m_allocated = size;
    return m_memory;
 }
 

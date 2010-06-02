@@ -144,6 +144,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandleMySQL *dbh, MYSQL_RES *res, bool 
       m_bCanSeek( bCanSeek )
 {
    m_row = -1; // BOF
+   m_rowCount = -1; // default -- not known
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
 }
@@ -215,7 +216,17 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
 
       mb.buffer_type = field.type;
       // Accept to blob in sizes < 1024
-      if( field.length >= 1024 && (
+      if( field.type == MYSQL_TYPE_DATE ||
+          field.type == MYSQL_TYPE_TIME ||
+          field.type == MYSQL_TYPE_DATETIME ||
+          field.type == MYSQL_TYPE_TIMESTAMP ||
+          field.type == MYSQL_TYPE_NEWDATE
+      )
+      {
+         mb.buffer_length = sizeof( MYSQL_TIME );
+         mb.buffer = ob.reserve( mb.buffer_length );
+      }
+      else if( field.length >= 1024 && (
             field.type == MYSQL_TYPE_TINY_BLOB ||
             field.type == MYSQL_TYPE_BLOB ||
             field.type == MYSQL_TYPE_MEDIUM_BLOB ||
@@ -328,7 +339,6 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
          {
             return false;
          }
-         CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
          MYSQL_TIME* mtime = (MYSQL_TIME*) outbind.memory();
          TimeStamp* ts = new TimeStamp;
 
@@ -340,6 +350,7 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
          ts->m_second = mtime->second;
          ts->m_msec = mtime->second_part;
 
+         CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
          ots->setUserData( ts );
          value = ots;
       }
