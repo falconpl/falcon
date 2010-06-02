@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 11c
+* Category: sqlite
+* Subcategory:
+* Short: SQLite query multiple
+* Description:
+* Performs a simple query that should return 10 records
+*  -- USES the table created by the first test and the data from test 10d
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+data = []
+for i in [0:10]
+   mb = MemBuf(10)
+   for j = 0 to 9: mb[j] = (j+i+65)
+   data += [[ i+10, "Text blob " + i, mb, 24589.21345/(i+1)]]
+end
+
+
+try
+   conn = dbi.connect( "sqlite3:db=testsuite.db" )
+   rs = conn.query("select key, tblob, bblob, number from TestTable where key >= 10 and key < 20")
+
+   if rs.getColumnCount() != 4
+      failure( "Can't get columns: " + rs.getColumnCount() )
+   end
+
+   // sqlite doesn't return the count of rows
+   if rs.getRowCount() != -1
+      failure( "Can't get row count: " + rs.getRowCount() )
+   end
+
+   // fetch array
+   arr = []
+   count = 0
+   while rs.fetch( arr )
+      // Sqlite will return binary blobs as strings
+      if arr[0] != data[count][0] or arr[1] != data[count][1] or \
+            arr[3] != data[count][3]
+         failure( "Consistency check at step " + count )
+      end
+      ++count
+   end
+
+   if count != 10
+      failure( "Fetched records " + count )
+   end
+
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end
