@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 22a
+* Category: mysql
+* Subcategory:
+* Short: MySQL query with option
+* Description:
+* Performs a simple query with special options for fetching only strings
+*  -- USES the table created by the first test and the data fromd test 10b
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str,
+      "strings=on" )
+   rs = conn.query("select kv, tblob, number, ts from TestTable where kv = 1")
+
+   if rs.getColumnCount() != 4
+      failure( "Can't get columns: " + rs.getColumnCount() )
+   end
+
+   // sqlite doesn't return the count of rows
+   if rs.getRowCount() != 1
+      failure( "Can't get row count: " + rs.getRowCount() )
+   end
+
+   // fetch array -- with all strings
+   arr = rs.fetch( [] )
+   if arr.len() != 4: failure( "Fetched columns number" )
+   if arr[0] != "1": failure( "Value of field 1" )
+   if arr[1] != 'A textual blob': failure( "Value of field 2" )
+   if arr[2] != "101.243": failure( "Value of field 3" )
+   if arr[3].len() != 19 or arr[3][0] != "2": failure( "Value of field 4" )
+   
+   rs.close()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end
