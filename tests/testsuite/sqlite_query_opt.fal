@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 12a
+* Category: sqlite
+* Subcategory:
+* Short: SQLite query with option
+* Description:
+* Performs a simple query with special options for 
+*  -- USES the table created by the first test and the data fromd test 10b
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+try
+   // enable strings on
+   conn = dbi.connect( "sqlite3:db=testsuite.db",
+      "strings=on" )
+      
+   rs = conn.query("select * from TestTable where key = 1")
+
+   if rs.getColumnCount() != 4
+      failure( "Can't get columns: " + rs.getColumnCount() )
+   end
+
+   // sqlite doesn't return the count of rows
+   if rs.getRowCount() != -1
+      failure( "Can't get row count: " + rs.getRowCount() )
+   end
+
+   // fetch array -- with all strings
+   arr = rs.fetch( [] )
+   if arr.len() != 4: failure( "Fetched columns number" )
+   if arr[0] != "1": failure( "Value of field 1" )
+   if arr[1] != 'A textual blob': failure( "Value of field 2" )
+   if arr[2] != 'A binary blob': failure( "Value of field 3" )
+   if arr[3] != "101.243": failure( "Value of field 4" )
+
+   rs.close()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

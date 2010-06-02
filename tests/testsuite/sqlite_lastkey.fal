@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 13b
+* Category: sqlite
+* Subcategory:
+* Short: Checks automatic ID insertion
+* Description:
+*   Verifies that the system is able to detect the last ID generated in the
+*   current transaction.
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+try
+   GC.perform(true)
+   // enable strings on
+   conn = dbi.connect( "sqlite3:db=testsuite.db",
+      "autocommit=off" )
+
+   conn.begin()
+   
+   conn.perform( "
+      insert into TestTable( tblob, number)
+      values( 'The desired value', 10.3 )" )
+
+   rs = conn.query( "select tblob from testtable where key=?",
+      conn.getLastID() )
+   if rs.fetch([])[0] != 'The desired value'
+      failure( "Fetched another record" )
+   end
+   rs.close()
+   
+   conn.commit()
+
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

@@ -25,7 +25,9 @@ end
 
 try
    conn = dbi.connect( "sqlite3:db=testsuite.db" )
-   rs = conn.query("select key, tblob, bblob, number from TestTable where key >= 10 and key < 20")
+   rs = conn.query(
+      "select key, tblob, bblob, number from TestTable where key >= ? and key < ?",
+      10, 20 )
 
    if rs.getColumnCount() != 4
       failure( "Can't get columns: " + rs.getColumnCount() )

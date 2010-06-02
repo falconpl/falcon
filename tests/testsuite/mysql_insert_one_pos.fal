@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 20c
+* Category: mysql
+* Subcategory:
+* Short: MySQL indirect record insertion
+* Description:
+*  Insert one position
+*  -- USES the table created by the first test
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str )
+
+   mb = MemBuf(10)
+   for i = 0 to 9: mb[i] = i+65
+
+   conn.perform("
+      insert into TestTable( vint, fixchar, vchar, tblob, bblob, number, ts )
+      values( ?, ?, ?, ?, ?, ?, ? )",
+      2, "fixchar", "varchar", "New data for text blob", mb, 24.45, CurrentTime() )
+
+   conn.commit()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

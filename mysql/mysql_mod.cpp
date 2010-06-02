@@ -118,7 +118,7 @@ void MyDBIInBind::onItemChanged( int num )
 
    case DBIBindItem::t_time:
       myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
-      myitem.buffer = item.databuffer();
+      myitem.buffer = item.userbuffer();
       myitem.buffer_length = sizeof( MYSQL_TIME );
       break;
    }
@@ -134,7 +134,6 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandleMySQL *dbh, MYSQL_RES *res, bool 
       m_bCanSeek( bCanSeek )
 {
    m_row = -1; // BOF
-   m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
 }
@@ -232,6 +231,7 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
       dbh->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
    }
 
+   m_rowCount = mysql_stmt_affected_rows( m_stmt );
 }
 
 DBIRecordsetMySQL_STMT::~DBIRecordsetMySQL_STMT()
@@ -488,6 +488,7 @@ void DBIRecordsetMySQL_STMT::close()
 DBIRecordsetMySQL_RES::DBIRecordsetMySQL_RES( DBIHandleMySQL *dbh, MYSQL_RES *res, bool bCanSeek )
     : DBIRecordsetMySQL( dbh, res, bCanSeek )
 {
+   m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
 }
 
 DBIRecordsetMySQL_RES::~DBIRecordsetMySQL_RES()
@@ -756,7 +757,7 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
          // Inserts or other repetitive statements will have at least 1, so
          // this branch won't be repeatedly checked in the fast path.
          m_inBind = new MyDBIInBind;
-         m_inBind->bind( params );
+         m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
 
          if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
          {
@@ -1074,7 +1075,7 @@ int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const
    // Do we have some parameter to bind?
    if( params.length() > 0 )
    {
-      bindings.bind( params );
+      bindings.bind( params, DBITimeConverter_MYSQL_TIME_impl );
 
       if( mysql_stmt_bind_param( stmt, bindings.mybindings() ) != 0 )
       {

@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 20a
+* Category: mysql
+* Subcategory:
+* Short: MySQL table creation
+* Description:
+*  Tests table creation in MySQL. The table is then used in all the MySQL
+*  category to perform further tests, so this script should be called before
+*  the other tests are performed
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str )
+
+   // Creating a table with ALL the basic datatypes known by the engine.
+   // Interpolated datatypes are not necessary in our tests.
+   conn.perform("
+      create table TestTable(
+         kv           INTEGER PRIMARY KEY AUTO_INCREMENT,
+         vint         INTEGER,
+         fixchar      char(25),
+         vchar        varchar(25),
+         tblob        TEXT,
+         bblob        BLOB,
+         number       REAL,
+         ts           TimeStamp
+         ) ENGINE=InnoDB
+      ")
+
+   conn.commit()
+   conn.close()
+   success()
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end
+

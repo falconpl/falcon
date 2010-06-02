@@ -180,9 +180,7 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
       return false;
    }
 
-   sqlite3_value *sv = sqlite3_column_value( m_stmt, nCol );
-
-   switch ( sqlite3_value_type( sv ) )
+   switch ( sqlite3_column_type(m_stmt, nCol) )
    {
    case SQLITE_NULL:
       value.setNil();
@@ -191,30 +189,30 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_INTEGER:
       if( m_bAsString )
       {
-         value = new CoreString( (const char*)sqlite3_value_text( sv ), -1 );
+         value = new CoreString( (const char*)sqlite3_column_text(m_stmt, nCol), -1 );
       }
       else
       {
-         value.setInteger( sqlite3_value_int64( sv ) );
+         value.setInteger( sqlite3_column_int64(m_stmt, nCol) );
       }
       return true;
 
    case SQLITE_FLOAT:
       if( m_bAsString )
       {
-         value = new CoreString( (const char*)sqlite3_value_text( sv ), -1 );
+         value = new CoreString( (const char*)sqlite3_column_text( m_stmt, nCol ), -1 );
       }
       else
       {
-         value.setNumeric( sqlite3_value_double( sv ) );
+         value.setNumeric( sqlite3_column_double( m_stmt, nCol ) );
       }
       return true;
 
    case SQLITE_BLOB:
       {
-         int len =  sqlite3_value_bytes( sv );
+         int len =  sqlite3_column_bytes( m_stmt, nCol );
          MemBuf* mb = new MemBuf_1( len );
-         memcpy( mb->data(), (byte*) sqlite3_value_blob( sv ), len );
+         memcpy( mb->data(), (byte*) sqlite3_column_blob( m_stmt, nCol ), len );
          value = mb;
       }
       return true;
@@ -223,7 +221,7 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_TEXT:
       {
          CoreString* cs = new CoreString;
-         cs->fromUTF8( (const char*) sqlite3_value_text( sv ) );
+         cs->fromUTF8( (const char*) sqlite3_column_text( m_stmt, nCol ) );
          value = cs;
       }
       return true;
@@ -358,20 +356,20 @@ DBIRecordset *DBIHandleSQLite3::query( const String &sql, int64 &affectedRows, c
 void DBIHandleSQLite3::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    sqlite3_stmt* pStmt = int_prepare( sql );
-   affectedRows = -1;
    int_execute( pStmt, params );
+   affectedRows = sqlite3_changes( m_conn );
 }
 
 
 DBIRecordset* DBIHandleSQLite3::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-   affectedRows = -1;
 
    sqlite3_stmt* pStmt = int_prepare( sql );
    int count = sqlite3_column_count( pStmt );
    if( count == 0 )
    {
       int_execute( pStmt, params );
+      affectedRows = sqlite3_changes( m_conn );
       return 0;
    }
    else
@@ -438,11 +436,14 @@ void DBIHandleSQLite3::begin()
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   char* error;
-   int res = sqlite3_exec( m_conn, "START TRANSACTION", 0, 0, &error );
-   if( res != 0 )
-      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
-   m_bInTrans = true;
+   if( !m_bInTrans )
+   {
+      char* error;
+      int res = sqlite3_exec( m_conn, "BEGIN TRANSACTION", 0, 0, &error );
+      if( res != 0 )
+         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+      m_bInTrans = true;
+   }
 }
 
 void DBIHandleSQLite3::commit()
