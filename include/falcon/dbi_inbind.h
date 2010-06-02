@@ -139,9 +139,9 @@ public:
    /** Return a void pointer to the stored data. */
    void* data() { return &m_cdata.v_int64; }
    void* databuffer() {
-      if(  m_type != t_string )
-         return &m_cdata.v_int64;
-      return m_cdata.v_string;
+      if(  m_type == t_string || m_type == t_buffer || m_type == t_time )
+         return m_cdata.v_buffer;
+      return &m_cdata.v_int64;
    }
 
    bool isNil();

@@ -28,7 +28,7 @@ class MyDBIInBind: public DBIInBind
 {
 
 public:
-   MyDBIInBind();
+   MyDBIInBind( MYSQL_STMT* stmt );
 
    virtual ~MyDBIInBind();
 
@@ -39,6 +39,7 @@ public:
 
 private:
    MYSQL_BIND* m_mybind;
+   MYSQL_STMT* m_stmt;
 };
 
 

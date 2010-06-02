@@ -56,8 +56,9 @@ void DBITimeConverter_MYSQL_TIME::convertTime( TimeStamp* ts, void* buffer, int&
  * (Input) bindings class
  *****************************************************************************/
 
-MyDBIInBind::MyDBIInBind():
-      m_mybind(0)
+MyDBIInBind::MyDBIInBind( MYSQL_STMT* stmt ):
+      m_mybind(0),
+      m_stmt( stmt )
 {}
 
 MyDBIInBind::~MyDBIInBind()
@@ -112,13 +113,22 @@ void MyDBIInBind::onItemChanged( int num )
 
    case DBIBindItem::t_buffer:
       myitem.buffer_type = MYSQL_TYPE_BLOB;
+      // Blobs in prepared statements are treated strangely:
+      // The first push is ok, but the other require either rebind or
+      // send_long_data to be called on the statement.
+      // It seems that stmt_param_bind calls send_long_data on its own to
+      // circumvent a bug -- so, the next time YOU must call it in its place.
+      if ( myitem.buffer != 0 )
+      {
+         mysql_stmt_send_long_data( m_stmt, num, (const char*) item.asBuffer(), item.asStringLen() );
+      }
       myitem.buffer = item.asBuffer();
       myitem.buffer_length = item.asStringLen();
       break;
 
    case DBIBindItem::t_time:
       myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
-      myitem.buffer = item.userbuffer();
+      myitem.buffer = item.asBuffer();
       myitem.buffer_length = sizeof( MYSQL_TIME );
       break;
    }
@@ -756,7 +766,7 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
          // or other statements that will be run usually just once.
          // Inserts or other repetitive statements will have at least 1, so
          // this branch won't be repeatedly checked in the fast path.
-         m_inBind = new MyDBIInBind;
+         m_inBind = new MyDBIInBind( m_statement );
          m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
 
          if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
@@ -767,7 +777,7 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
    }
    else
    {
-      m_inBind->bind( params );
+      m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
    }
 
    if( mysql_stmt_execute( m_statement ) != 0 )
@@ -879,7 +889,7 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
 
    try
    {
-      MyDBIInBind bindings;
+      MyDBIInBind bindings(stmt);
       affectedRows = my_execute( stmt, bindings, params );
 
       // We want a result recordset
@@ -959,9 +969,9 @@ void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const Item
    }
    else
    {
-     MyDBIInBind bindings;
-
      MYSQL_STMT* stmt = my_prepare( sql );
+     MyDBIInBind bindings (stmt);
+
      // prepare and execute
      try {
         affectedRows = my_execute(

@@ -129,6 +129,7 @@ void DBIBindItem::set(const Item& value, const DBITimeConverter& tc, const DBISt
             TimeStamp* ts = static_cast<TimeStamp*>( obj->getFalconData() );
             m_buflen = bufsize;
             tc.convertTime( ts, m_buffer, m_buflen );
+            m_cdata.v_buffer = m_buffer;
             break;
          }
       }
