@@ -1,0 +1,31 @@
+import from dbi
+
+dbh = dbi.DBIConnect( "
+   mysql:
+   uid=falcon;
+   db=testdb")
+
+dbh.options("strings=on;prefetch=none")
+dbh.perform("BEGIN")
+
+//dbh.perform( " delete from test_table" )
+
+dbh.perform( "
+   insert into test_table( f_chr, f_str, f_text, f_blob, f_int, f_double, f_dec )
+   values (?,?,?, ?,?,?, ?)",
+   "Hello", "World", "here", "Some binary data", 100, 23.4, "123.2" )
+
+stmt = dbh.prepare( "
+   insert into test_table( f_chr, f_str, f_text, f_blob, f_int, f_double, f_dec )
+   values (?,?,?, ?,?,?, ?)")
+
+stmt.execute( "Hello2", "World2", "here2", "Some binary data2", 101, 24.4, "123.22" )
+   
+r = dbh.query( "select * from test_table" )
+dict = r.fetch( [=>] )
+inspect( dict )
+
+r.do( { n => > n.describe() }, [] )
+
+dbh.perform( "rollback" )
+dbh.close()

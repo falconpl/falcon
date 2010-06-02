@@ -1,0 +1,15 @@
+load dbi
+
+dbh = DBIConnect( "
+   mysql:
+   uid=root;
+   pwd=my%pc;
+   db=TicketDB")
+
+r = dbh.call( "sp_component_insert(?, ?)",
+   "Un'altro modulo", "Un'altra descrizione")
+> "RETURNED: " + (v = r.fetch([=>])).describe()
+
+dbh.query( "select * from tModules" ).do( {d=> >d.describe()}, [=>] )
+
+dbh.close()
