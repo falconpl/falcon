@@ -55,7 +55,6 @@ DBIHandle *DBIServiceSQLite3::connect( const String &parameters )
    }
    else if ( result != SQLITE_OK )
    {
-      sqlite3_close( conn );
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
               .extra( sqlite3_errmsg( conn ) )
            );

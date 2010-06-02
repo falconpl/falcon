@@ -16,8 +16,11 @@
 import from dbi
 
 try
+
+   GC.perform(true)
+   
    conn = dbi.connect( "sqlite3:db=testsuite.db" )
-   stmt = conn.perform("drop table TestTable")
+   conn.perform("drop table TestTable")
    conn.commit()
    conn.close()
    success()

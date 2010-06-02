@@ -173,8 +173,9 @@ void DBIBindItem::clear()
 // Bindings for a whole ItemArray
 //=========================================================
 
-DBIInBind::DBIInBind():
+DBIInBind::DBIInBind( bool bAc ):
       m_ibind(0),
+      m_bAlwaysChange( bAc ),
       m_size(0)
 {
 }
@@ -228,7 +229,7 @@ void DBIInBind::bind( const ItemArray& arr,
       bi.set( arr[i], tc, sc );
 
       // first time around, or changed buffer?
-      if( bi.type() != type || bFirst || bi.databuffer() != buffer || bi.length() != len )
+      if( m_bAlwaysChange || bi.type() != type || bFirst || bi.databuffer() != buffer || bi.length() != len )
       {
          // let the engine determine if the type is compatible with the type of colunn
          onItemChanged( i );

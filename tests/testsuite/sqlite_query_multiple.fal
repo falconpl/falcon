@@ -51,7 +51,8 @@ try
    if count != 10
       failure( "Fetched records " + count )
    end
-
+   
+   rs.close()
    conn.close()
    success()
 

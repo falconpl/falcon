@@ -574,7 +574,7 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
    }
    else
    {
-      CoreTable* tbl = dyncast<CoreTable*>(vm->self().asObject()->getFalconData());
+      CoreTable* tbl = dyncast<CoreTable*>(target.asObject()->getFalconData());
       ItemArray iaCols( count );
 
       if( tbl->order() == CoreTable::noitem )
@@ -616,6 +616,8 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
          tbl->insertRow( row );
       }
       while( dbr->fetchRow() );
+
+      vm->retval( target );
    }
 }
 

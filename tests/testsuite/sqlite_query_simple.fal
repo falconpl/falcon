@@ -45,6 +45,7 @@ try
    if dict['bblob'] != 'A binary blob': failure( "Value of field 3" )
    if dict['number'] != 101.243: failure( "Value of field 4" )
 
+   rs.close()
    conn.close()
    success()
 

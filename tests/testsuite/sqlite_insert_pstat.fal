@@ -32,7 +32,8 @@ try
    for elem in data
       (.[ stmt.execute ] + elem)()
    end
-   
+
+   stmt.close()
    conn.commit()
    conn.close()
    success()

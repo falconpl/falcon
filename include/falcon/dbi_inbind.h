@@ -216,7 +216,14 @@ private:
 class DBIInBind: public BaseAlloc
 {
 public:
-   DBIInBind();
+   /** Creates a input binding.
+    *
+    *  Some engines (e.g. sqlite) bind the input buffer BY VALUE; this
+    *  requires a complete rebind at each step.
+    *
+    * @param bAlwaysChange rebind at each step.
+    */
+   DBIInBind( bool bAlwaysChange = false );
    virtual ~DBIInBind();
 
    virtual void bind( const ItemArray& arr,
@@ -243,6 +250,7 @@ public:
 
 protected:
    DBIBindItem* m_ibind;
+   bool m_bAlwaysChange;
    int m_size;
 };
 

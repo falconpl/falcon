@@ -62,8 +62,6 @@ public:
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
-
-
 };
  
  
@@ -90,6 +88,7 @@ class DBIHandleSQLite3 : public DBIHandle
 protected:
    sqlite3 *m_conn;
    DBISettingParams m_settings;
+   bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
    void int_execute( sqlite3_stmt* pStmt, const ItemArray& params );

@@ -43,6 +43,7 @@ try
       failure( "Fetched records " + count )
    end
 
+   rs.close()
    conn.close()
    success()
 

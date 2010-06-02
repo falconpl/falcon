@@ -24,6 +24,7 @@ namespace Falcon
  *****************************************************************************/
 
 Sqlite3InBind::Sqlite3InBind( sqlite3_stmt* stmt ):
+      DBIInBind(true),  // always changes binding
       m_stmt(stmt)
 {}
 
@@ -46,29 +47,29 @@ void Sqlite3InBind::onItemChanged( int num )
    {
    // set to null
    case DBIBindItem::t_nil:
-      sqlite3_bind_null( m_stmt, num );
+      sqlite3_bind_null( m_stmt, num+1 );
       break;
 
    case DBIBindItem::t_bool:
    case DBIBindItem::t_int:
-      sqlite3_bind_int64( m_stmt, num, item.asInteger() );
+      sqlite3_bind_int64( m_stmt, num+1, item.asInteger() );
       break;
 
    case DBIBindItem::t_double:
-      sqlite3_bind_double( m_stmt, num, item.asDouble() );
+      sqlite3_bind_double( m_stmt, num+1, item.asDouble() );
       break;
 
    case DBIBindItem::t_string:
-      sqlite3_bind_text( m_stmt, num, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
       break;
 
    case DBIBindItem::t_buffer:
-      sqlite3_bind_blob( m_stmt, num, item.asBuffer(), item.asStringLen(), SQLITE_STATIC );
+      sqlite3_bind_blob( m_stmt, num+1, item.asBuffer(), item.asStringLen(), SQLITE_STATIC );
       break;
 
    // the time has normally been decoded in the buffer
    case DBIBindItem::t_time:
-      sqlite3_bind_text( m_stmt, num, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
       break;
    }
 }
@@ -259,7 +260,17 @@ int64 DBIStatementSQLite3::execute( const ItemArray& params )
          && res != SQLITE_DONE
          && res != SQLITE_ROW )
    {
-      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_FETCH, res );
+      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_EXEC, res );
+   }
+
+   // SQLite doesn't distinguish between fetch and insert statements; we do.
+   // Exec never returns a recordset; instead, it is used to insert and re-issue
+   // repeatedly statemnts. This is accomplished by Sqllite by issuing a reset
+   // after each step.
+   res = sqlite3_reset( m_statement );
+   if( res != SQLITE_OK )
+   {
+      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_EXEC, res );
    }
 
    return 0;
@@ -273,7 +284,7 @@ void DBIStatementSQLite3::reset()
    int res = sqlite3_reset( m_statement );
    if( res != SQLITE_OK )
    {
-      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_FETCH, res );
+      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_RESET, res );
    }
 }
 
@@ -290,12 +301,14 @@ void DBIStatementSQLite3::close()
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleSQLite3::DBIHandleSQLite3()
+DBIHandleSQLite3::DBIHandleSQLite3():
+      m_bInTrans(false)
 {
    m_conn = NULL;
 }
 
-DBIHandleSQLite3::DBIHandleSQLite3( sqlite3 *conn )
+DBIHandleSQLite3::DBIHandleSQLite3( sqlite3 *conn ):
+      m_bInTrans(false)
 {
    m_conn = conn;
    sqlite3_extended_result_codes(conn, 1 );
@@ -311,7 +324,10 @@ void DBIHandleSQLite3::options( const String& params )
    if( m_settings.parse( params ) )
    {
       // To turn off the autocommit.
-      sqlite3_exec( m_conn, "BEGIN TRANSACTION", 0, 0, 0 );
+      if( ! m_settings.m_bAutocommit )
+      {
+         begin();
+      }
    }
    else
    {
@@ -333,7 +349,7 @@ DBIRecordset *DBIHandleSQLite3::query( const String &sql, int64 &affectedRows, c
    {
       throw new DBIError( ErrorParam(FALCON_DBI_ERROR_QUERY_EMPTY, __LINE__ ) );
    }
-   affectedRows = 0;
+   affectedRows = -1;
 
    // the bindings must stay with the recordset...
    return new DBIRecordsetSQLite3( this, pStmt, params );
@@ -342,14 +358,14 @@ DBIRecordset *DBIHandleSQLite3::query( const String &sql, int64 &affectedRows, c
 void DBIHandleSQLite3::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    sqlite3_stmt* pStmt = int_prepare( sql );
-   affectedRows = 0;
+   affectedRows = -1;
    int_execute( pStmt, params );
 }
 
 
 DBIRecordset* DBIHandleSQLite3::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-   affectedRows = 0;
+   affectedRows = -1;
 
    sqlite3_stmt* pStmt = int_prepare( sql );
    int count = sqlite3_column_count( pStmt );
@@ -380,7 +396,7 @@ sqlite3_stmt* DBIHandleSQLite3::int_prepare( const String &sql ) const
 
    AutoCString zSql( sql );
    sqlite3_stmt* pStmt = 0;
-   int res = sqlite3_prepare16_v2( m_conn, zSql.c_str(), zSql.length(), &pStmt, 0 );
+   int res = sqlite3_prepare_v2( m_conn, zSql.c_str(), zSql.length(), &pStmt, 0 );
    if( res != SQLITE_OK )
    {
       throwError( FALCON_DBI_ERROR_QUERY, res );
@@ -426,6 +442,7 @@ void DBIHandleSQLite3::begin()
    int res = sqlite3_exec( m_conn, "START TRANSACTION", 0, 0, &error );
    if( res != 0 )
       throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+   m_bInTrans = true;
 }
 
 void DBIHandleSQLite3::commit()
@@ -433,10 +450,16 @@ void DBIHandleSQLite3::commit()
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   char* error;
-   int res = sqlite3_exec( m_conn, "COMMIT", 0, 0, &error );
-   if( res != 0 )
-      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+   // Sqlite doesn't ignore COMMIT out of transaction.
+   // We do; so we must filter them
+   if( m_bInTrans )
+   {
+      char* error;
+      int res = sqlite3_exec( m_conn, "COMMIT", 0, 0, &error );
+      if( res != 0 )
+         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+      m_bInTrans = false;
+   }
 }
 
 
@@ -445,10 +468,16 @@ void DBIHandleSQLite3::rollback()
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   char* error;
-   int res = sqlite3_exec( m_conn, "ROLLBACK", 0, 0, &error );
-   if( res != 0 )
-      throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+   // Sqlite doesn't ignore COMMIT out of transaction.
+   // We do; so we must filter them
+   if( m_bInTrans )
+   {
+      char* error;
+      int res = sqlite3_exec( m_conn, "ROLLBACK", 0, 0, &error );
+      if( res != 0 )
+         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
+      m_bInTrans = false;
+   }
 }
 
 
@@ -562,7 +591,12 @@ void DBIHandleSQLite3::close()
 {
    if ( m_conn != NULL )
    {
-      sqlite3_exec( m_conn, "ROLLBACK", 0, 0, 0 );
+      if( m_bInTrans )
+      {
+         sqlite3_exec( m_conn, "ROLLBACK", 0, 0, 0 );
+         m_bInTrans = false;
+      }
+
       sqlite3_close( m_conn );
       m_conn = NULL;
    }
