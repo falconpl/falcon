@@ -16,7 +16,37 @@
 #include <falcon/modulecache.h>
 #include <falcon/traits.h>
 
+#include <falcon/basealloc.h>
+#include <falcon/timestamp.h>
+#include <falcon/sys.h>
+
+
 namespace Falcon {
+
+class CacheEntry: public BaseAlloc
+{
+public:
+   CacheEntry( Module* mod, const TimeStamp& tsDate ):
+      m_module( mod ),
+      m_ts( tsDate )
+      {}
+
+   ~CacheEntry()
+   {
+      m_module->decref();
+   }
+
+   void change( Module* mod, const TimeStamp& tsDate )
+   {
+      m_module->decref();
+      mod->incref();
+      m_module = mod;
+      m_ts = tsDate;
+   }
+
+   Module* m_module;
+   TimeStamp m_ts;
+};
 
 ModuleCache::ModuleCache():
       m_modMap( &traits::t_string(), &traits::t_voidp() )
@@ -27,28 +57,46 @@ ModuleCache::~ModuleCache()
    MapIterator iter = m_modMap.begin();
    while( iter.hasCurrent() )
    {
-      Module* mod = *(Module**) iter.currentValue();
-      mod->decref();
+      CacheEntry* mod = *(CacheEntry**) iter.currentValue();
+      delete mod;
       iter.next();
    }
 }
 
 Module* ModuleCache::add( const String& muri, Module* module )
 {
+   FileStat fm;
+   bool gotStats = Sys::fal_stats( muri, fm );
+
    m_mtx.lock();
    void* data = m_modMap.find( &muri );
    if( data != 0 )
    {
-      Module* mod1 = *(Module**) data;
-      mod1->incref();
-      m_mtx.unlock();
+      CacheEntry* mod_cache = *(CacheEntry**) data;
 
-      module->decref();
-      return mod1;
+
+      // New module?
+      // -- if I can't get the stats, in doubt, change it
+      if( ! gotStats || fm.m_mtime->compare( mod_cache->m_ts ) > 0 )
+      {
+         mod_cache->change( module, *fm.m_mtime );
+         m_mtx.unlock();
+
+         return module;
+      }
+      else
+      {
+         Module* mod1 = mod_cache->m_module;
+         mod1->incref();
+         m_mtx.unlock();
+
+         module->decref();
+         return mod1;
+      }
    }
    else
    {
-      m_modMap.insert( &muri, module );
+      m_modMap.insert( &muri, new CacheEntry( module, *fm.m_mtime ) );
       module->incref();
       m_mtx.unlock();
       return module;
@@ -62,11 +110,11 @@ bool ModuleCache::remove( const String& muri )
    m_mtx.lock();
    if( m_modMap.find( &muri, iter ) )
    {
-      Module* mod = *(Module**) iter.currentValue();
+      CacheEntry* mod = *(CacheEntry**) iter.currentValue();
       m_modMap.erase( iter );
       m_mtx.unlock();
 
-      mod->decref();
+      delete mod;
       return true;
    }
 
@@ -76,11 +124,22 @@ bool ModuleCache::remove( const String& muri )
 
 Module* ModuleCache::find( const String& muri )
 {
+   FileStat fm;
+   bool gotStats = Sys::fal_stats( muri, fm );
+
    m_mtx.lock();
    void* data = m_modMap.find( &muri );
    if( data != 0 )
    {
-      Module* mod = *(Module**) data;
+      CacheEntry* emod = *(CacheEntry**) data;
+      if ( !gotStats || fm.m_mtime->compare( emod->m_ts ) > 0 )
+      {
+         // ignore the find
+         m_mtx.unlock();
+         return 0;
+      }
+
+      Module* mod = emod->m_module;
       mod->incref();
       m_mtx.unlock();
 
