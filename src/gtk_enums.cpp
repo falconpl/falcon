@@ -153,6 +153,12 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_DIR_RIGHT",              GTK_DIR_RIGHT },
 
     /*
+     *  GtkEntryIconPosition
+     */
+    { "GTK_ENTRY_ICON_PRIMARY",     GTK_ENTRY_ICON_PRIMARY },
+    { "GTK_ENTRY_ICON_SECONDARY",   GTK_ENTRY_ICON_SECONDARY },
+
+    /*
      *  GtkExpanderStyle
      */
     { "GTK_EXPANDER_COLLAPSED",     GTK_EXPANDER_COLLAPSED },
