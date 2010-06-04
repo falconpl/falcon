@@ -4,11 +4,13 @@
 
 #include "gtk_Entry.hpp"
 
+//#include "gdk_Event.hpp"
 #include "gdk_Pixbuf.hpp"
 #include "gtk_Adjustment.hpp"
-#include "gtk_Buildable.hpp"
+//#include "gtk_CellEditable.hpp"
 #include "gtk_Editable.hpp"
 #include "gtk_EntryBuffer.hpp"
+#include "gtk_Menu.hpp"
 
 
 namespace Falcon {
@@ -29,6 +31,25 @@ void Entry::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
+    { "signal_activate",        &Entry::signal_activate },
+    { "signal_backspace",       &Entry::signal_backspace },
+    { "signal_copy_clipboard",  &Entry::signal_copy_clipboard },
+    { "signal_cut_clipboard",   &Entry::signal_cut_clipboard },
+    { "signal_delete_from_cursor",&Entry::signal_delete_from_cursor },
+#if 0
+#if GTK_MINOR_VERSION >= 16
+    { "signal_icon_press",      &Entry::signal_icon_press },
+    { "signal_icon_release",    &Entry::signal_icon_release },
+#endif
+#endif
+    { "signal_insert_at_cursor",&Entry::signal_insert_at_cursor },
+    { "signal_move_cursor",     &Entry::signal_move_cursor },
+    { "signal_paste_clipboard", &Entry::signal_paste_clipboard },
+    { "signal_populate_popup",  &Entry::signal_populate_popup },
+#if GTK_MINOR_VERSION >= 20
+    { "signal_preedit_changed", &Entry::signal_preedit_changed },
+#endif
+    { "signal_toggle_overwrite",&Entry::signal_toggle_overwrite },
     { "new_with_buffer",        &Entry::new_with_buffer },
     { "new_with_max_length",    &Entry::new_with_max_length },
 #if GTK_MINOR_VERSION >= 18
@@ -56,70 +77,73 @@ void Entry::modInit( Falcon::Module* mod )
 #endif
     { "set_max_length",         &Entry::set_max_length },
     { "get_activates_default",  &Entry::get_activates_default },
-    { "get_has_frame",        &Entry::get_has_frame },
+    { "get_has_frame",          &Entry::get_has_frame },
     //{ "get_inner_border",        &Entry::foo },
     { "get_width_chars",        &Entry::get_width_chars },
-    { "set_activates_default",        &Entry::set_activates_default },
-    { "set_has_frame",        &Entry::set_has_frame },
+    { "set_activates_default",  &Entry::set_activates_default },
+    { "set_has_frame",          &Entry::set_has_frame },
     //{ "set_inner_border",        &Entry::set_inner_border },
     { "set_width_chars",        &Entry::set_width_chars },
-    { "get_invisible_char",        &Entry::get_invisible_char },
-    { "set_alignment",        &Entry::set_alignment },
-    { "get_alignment",        &Entry::get_alignment },
+    { "get_invisible_char",     &Entry::get_invisible_char },
+    { "set_alignment",          &Entry::set_alignment },
+    { "get_alignment",          &Entry::get_alignment },
 #if GTK_MINOR_VERSION >= 14
-    { "set_overwrite_mode",        &Entry::set_overwrite_mode },
-    { "get_overwrite_mode",        &Entry::get_overwrite_mode },
+    { "set_overwrite_mode",     &Entry::set_overwrite_mode },
+    { "get_overwrite_mode",     &Entry::get_overwrite_mode },
 #endif
     //{ "get_layout",        &Entry::foo },
-    { "get_layout_offsets",        &Entry::get_layout_offsets },
-    { "layout_index_to_text_index",        &Entry::layout_index_to_text_index },
-    { "text_index_to_layout_index",        &Entry::text_index_to_layout_index },
-    { "get_max_length",        &Entry::get_max_length },
-    { "get_visibility",        &Entry::get_visibility },
+    { "get_layout_offsets",     &Entry::get_layout_offsets },
+    { "layout_index_to_text_index",&Entry::layout_index_to_text_index },
+    { "text_index_to_layout_index",&Entry::text_index_to_layout_index },
+    { "get_max_length",         &Entry::get_max_length },
+    { "get_visibility",         &Entry::get_visibility },
     //{ "set_completion",        &Entry::foo },
     //{ "get_completion",        &Entry::foo },
-    { "set_cursor_hadjustment",        &Entry::set_cursor_hadjustment },
-    { "get_cursor_hadjustment",        &Entry::get_cursor_hadjustment },
+    { "set_cursor_hadjustment", &Entry::set_cursor_hadjustment },
+    { "get_cursor_hadjustment", &Entry::get_cursor_hadjustment },
 #if GTK_MINOR_VERSION >= 16
-    { "set_progress_fraction",        &Entry::set_progress_fraction },
-    { "get_progress_fraction",        &Entry::get_progress_fraction },
-    { "set_progress_pulse_step",        &Entry::set_progress_pulse_step },
-    { "get_progress_pulse_step",        &Entry::get_progress_pulse_step },
-    { "progress_pulse",        &Entry::progress_pulse },
+    { "set_progress_fraction",  &Entry::set_progress_fraction },
+    { "get_progress_fraction",  &Entry::get_progress_fraction },
+    { "set_progress_pulse_step",&Entry::set_progress_pulse_step },
+    { "get_progress_pulse_step",&Entry::get_progress_pulse_step },
+    { "progress_pulse",         &Entry::progress_pulse },
 #endif
 #if GTK_MINOR_VERSION >= 22
     //{ "im_context_filter_keypress",     &Entry::im_context_filter_keypress },
     //{ "reset_im_context",     &Entry::foo },
 #endif
-    { "set_icon_from_pixbuf",        &Entry::set_icon_from_pixbuf },
-    { "set_icon_from_stock",        &Entry::set_icon_from_stock },
-    { "set_icon_from_icon_name",        &Entry::set_icon_from_icon_name },
+#if GTK_MINOR_VERSION >= 16
+    { "set_icon_from_pixbuf",   &Entry::set_icon_from_pixbuf },
+    { "set_icon_from_stock",    &Entry::set_icon_from_stock },
+    { "set_icon_from_icon_name",&Entry::set_icon_from_icon_name },
     //{ "set_icon_from_gicon",        &Entry::foo },
-    { "get_icon_storage_type",        &Entry::get_icon_storage_type },
+    { "get_icon_storage_type",  &Entry::get_icon_storage_type },
     { "get_icon_pixbuf",        &Entry::get_icon_pixbuf },
-    { "get_icon_stock",        &Entry::get_icon_stock },
-    { "get_icon_name",        &Entry::get_icon_name },
+    { "get_icon_stock",         &Entry::get_icon_stock },
+    { "get_icon_name",          &Entry::get_icon_name },
     //{ "get_icon_gicon",        &Entry::foo },
-    //{ "set_icon_activatable",        &Entry::foo },
-    //{ "get_icon_activatable",        &Entry::foo },
-    //{ "set_icon_sensitive",        &Entry::foo },
-    //{ "get_icon_sensitive",        &Entry::foo },
-    //{ "get_icon_at_pos",        &Entry::foo },
+    { "set_icon_activatable",   &Entry::set_icon_activatable },
+    { "get_icon_activatable",   &Entry::get_icon_activatable },
+    { "set_icon_sensitive",     &Entry::set_icon_sensitive },
+    { "get_icon_sensitive",     &Entry::get_icon_sensitive },
+    { "get_icon_at_pos",        &Entry::get_icon_at_pos },
     //{ "set_icon_tooltip_text",        &Entry::foo },
     //{ "get_icon_tooltip_text",        &Entry::foo },
     //{ "set_icon_tooltip_markup",        &Entry::foo },
     //{ "get_icon_tooltip_markup",        &Entry::foo },
     //{ "set_icon_drag_source",        &Entry::foo },
     //{ "get_current_icon_drag_source",        &Entry::foo },
+#endif
+#if GTK_MINOR_VERSION >= 20
     //{ "get_icon_window",        &Entry::foo },
     //{ "get_text_window",        &Entry::foo },
+#endif
     { NULL, NULL }
     };
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Entry, meth->name, meth->cb );
 
-    Gtk::Buildable::clsInit( mod, c_Entry );
     Gtk::Editable::clsInit( mod, c_Entry );
     //Gtk::CellEditable::clsInit( c_Entry );
 }
@@ -183,7 +207,507 @@ FALCON_FUNC Entry::init( VMARG )
     self->setGObject( (GObject*) gtk_entry_new() );
 }
 
-//SIGNALS HERE
+
+/*#
+    @method signal_activate
+    @brief A keybinding signal which gets emitted when the user activates the entry.
+
+    Applications should not connect to it, but may emit it with
+    g_signal_emit_by_name() if they need to control activation programmatically.
+
+    The default bindings for this signal are all forms of the Enter key.
+ */
+FALCON_FUNC Entry::signal_activate( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "activate", (void*) &Entry::on_activate, vm );
+}
+
+
+void Entry::on_activate( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "activate", "on_activate", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_backspace
+    @brief The backspace signal is a keybinding signal which gets emitted when the user asks for it.
+
+    The default bindings for this signal are Backspace and Shift-Backspace.
+ */
+FALCON_FUNC Entry::signal_backspace( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "backspace", (void*) &Entry::on_backspace, vm );
+}
+
+
+void Entry::on_backspace( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "backspace", "on_backspace", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_copy_clipboard
+    @brief The copy-clipboard signal is a keybinding signal which gets emitted to copy the selection to the clipboard.
+
+    The default bindings for this signal are Ctrl-c and Ctrl-Insert.
+ */
+FALCON_FUNC Entry::signal_copy_clipboard( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "copy_clipboard", (void*) &Entry::on_copy_clipboard, vm );
+}
+
+
+void Entry::on_copy_clipboard( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "copy_clipboard", "on_copy_clipboard", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_cut_clipboard
+    @brief The cut-clipboard signal is a keybinding signal which gets emitted to cut the selection to the clipboard.
+
+    The default bindings for this signal are Ctrl-x and Shift-Delete.
+ */
+FALCON_FUNC Entry::signal_cut_clipboard( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "cut_clipboard", (void*) &Entry::on_cut_clipboard, vm );
+}
+
+
+void Entry::on_cut_clipboard( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "cut_clipboard", "on_cut_clipboard", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_delete_from_cursor
+    @brief The delete-from-cursor signal is a keybinding signal which gets emitted when the user initiates a text deletion.
+
+    If the type is GTK_DELETE_CHARS, GTK+ deletes the selection if there is one,
+    otherwise it deletes the requested number of characters.
+
+    The default bindings for this signal are Delete for deleting a character
+    and Ctrl-Delete for deleting a word.
+ */
+FALCON_FUNC Entry::signal_delete_from_cursor( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "delete_from_cursor", (void*) &Entry::on_delete_from_cursor, vm );
+}
+
+
+void Entry::on_delete_from_cursor( GtkEntry* obj, GtkDeleteType type, gint count, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "delete_from_cursor", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_delete_from_cursor", it ) )
+            {
+                printf(
+                "[GtkEntry::on_delete_from_cursor] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) type );
+        vm->pushParam( count );
+        vm->callItem( it, 2 );
+    }
+    while ( iter.hasCurrent() );
+}
+
+#if 0 // todo: missing GdkEvent
+#if GTK_MINOR_VERSION >= 16
+/*#
+    @method signal_icon_press
+    @brief The ::icon-press signal is emitted when an activatable icon is clicked.
+ */
+FALCON_FUNC Entry::signal_icon_press( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "icon_press", (void*) &Entry::on_icon_press, vm );
+}
+
+
+void Entry::on_icon_press( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* ev, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "icon_press", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkEvent" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_icon_press", it ) )
+            {
+                printf(
+                "[GtkEntry::on_icon_press] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) pos );
+        vm->pushParam( new Gdk::Event( wki->asClass(), ev ) );
+        vm->callItem( it, 2 );
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+/*#
+    @method signal_icon_release
+    @brief The icon-release signal is emitted on the button release from a mouse click over an activatable icon.
+ */
+FALCON_FUNC Entry::signal_icon_release( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "icon_release", (void*) &Entry::on_icon_release, vm );
+}
+
+
+void Entry::on_icon_release( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* ev, gpointer _vm );
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "icon_release", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkEvent" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_icon_release", it ) )
+            {
+                printf(
+                "[GtkEntry::on_icon_release] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) pos );
+        vm->pushParam( new Gdk::Event( wki->asClass(), ev ) );
+        vm->callItem( it, 2 );
+    }
+    while ( iter.hasCurrent() );
+}
+#endif // GTK_MINOR_VERSION >= 16
+#endif
+
+/*#
+    @method signal_insert_at_cursor
+    @brief The insert-at-cursor signal is a keybinding signal which gets emitted when the user initiates the insertion of a fixed string at the cursor.
+
+    This signal has no default bindings.
+ */
+FALCON_FUNC Entry::signal_insert_at_cursor( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "insert_at_cursor", (void*) &Entry::on_insert_at_cursor, vm );
+}
+
+
+void Entry::on_insert_at_cursor( GtkEntry* obj, gchar* string, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "insert_at_cursor", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_insert_at_cursor", it ) )
+            {
+                printf(
+                "[GtkEntry::on_insert_at_cursor] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( UTF8String( string ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+/*#
+    @method signal_move_cursor
+    @brief The move-cursor signal is a keybinding signal which gets emitted when the user initiates a cursor movement.
+
+    If the cursor is not visible in entry, this signal causes the viewport to
+    be moved instead.
+
+    Applications should not connect to it, but may emit it with
+    g_signal_emit_by_name() if they need to control the cursor programmatically.
+
+    The default bindings for this signal come in two variants, the variant with
+    the Shift modifier extends the selection, the variant without the Shift
+    modifer does not. There are too many key combinations to list them all here.
+
+    - Arrow keys move by individual characters/lines
+    - Ctrl-arrow key combinations move by words/paragraphs
+    - Home/End keys move to the ends of the buffer
+
+ */
+FALCON_FUNC Entry::signal_move_cursor( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "move_cursor", (void*) &Entry::on_move_cursor, vm );
+}
+
+
+void Entry::on_move_cursor( GtkEntry* obj, GtkMovementStep step, gint cnt, gboolean extend, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "move_cursor", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_move_cursor", it ) )
+            {
+                printf(
+                "[GtkEntry::on_move_cursor] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) step );
+        vm->pushParam( cnt );
+        vm->pushParam( (bool) extend );
+        vm->callItem( it, 3 );
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+/*#
+    @method signal_paste_clipboard
+    @brief The paste-clipboard signal is a keybinding signal which gets emitted to paste the contents of the clipboard into the text view.
+
+    The default bindings for this signal are Ctrl-v and Shift-Insert.
+ */
+FALCON_FUNC Entry::signal_paste_clipboard( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "paste_clipboard", (void*) &Entry::on_paste_clipboard, vm );
+}
+
+
+void Entry::on_paste_clipboard( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "paste_clipboard", "on_paste_clipboard", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_populate_popup
+    @brief The populate-popup signal gets emitted before showing the context menu of the entry.
+
+    If you need to add items to the context menu, connect to this signal and
+    append your menuitems to the menu.
+ */
+FALCON_FUNC Entry::signal_populate_popup( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "populate_popup", (void*) &Entry::on_populate_popup, vm );
+}
+
+
+void Entry::on_populate_popup( GtkEntry* obj, GtkMenu* menu, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "populate_popup", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GtkMenu" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_populate_popup", it ) )
+            {
+                printf(
+                "[GtkEntry::on_populate_popup] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gtk::Menu( wki->asClass(), menu ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+#if GTK_MINOR_VERSION >= 20
+/*#
+    @method signal_preedit_changed
+    @brief If an input method is used, the typed text will not immediately be committed to the buffer. So if you are interested in the text, connect to this signal.
+ */
+FALCON_FUNC Entry::signal_preedit_changed( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "preedit_changed", (void*) &Entry::on_preedit_changed, vm );
+}
+
+
+void Entry::on_preedit_changed( GtkEntry* obj, gchar* preedit, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "preedit_changed", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_preedit_changed", it ) )
+            {
+                printf(
+                "[GtkEntry::on_preedit_changed] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( UTF8String( preedit ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+#endif // GTK_MINOR_VERSION >= 20
+
+
+/*#
+    @method signal_toggle_overwrite
+    @brief The toggle-overwrite signal is a keybinding signal which gets emitted to toggle the overwrite mode of the entry.
+
+    The default bindings for this signal is Insert.
+ */
+FALCON_FUNC Entry::signal_toggle_overwrite( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "toggle_overwrite", (void*) &Entry::on_toggle_overwrite, vm );
+}
+
+
+void Entry::on_toggle_overwrite( GtkEntry* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "toggle_overwrite", "on_toggle_overwrite", (VMachine*)_vm );
+}
 
 
 #if GTK_MINOR_VERSION >= 18
@@ -1120,35 +1644,256 @@ FALCON_FUNC Entry::get_icon_name( VMARG )
 }
 
 
-
 //FALCON_FUNC Entry::get_icon_gicon( VMARG );
 
-//FALCON_FUNC Entry::set_icon_activatable( VMARG );
 
-//FALCON_FUNC Entry::get_icon_activatable( VMARG );
+/*#
+    @method set_icon_activatable
+    @brief Sets whether the icon is activatable.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @param activatable TRUE if the icon should be activatable.
+ */
+FALCON_FUNC Entry::set_icon_activatable( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+    Item* i_bool = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger()
+        || !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "GtkEntryIconPosition,B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_entry_set_icon_activatable( (GtkEntry*)_obj,
+                                    (GtkEntryIconPosition) i_pos->asInteger(),
+                                    (gboolean) i_bool->asBoolean() );
+}
 
-//FALCON_FUNC Entry::set_icon_sensitive( VMARG );
 
-//FALCON_FUNC Entry::get_icon_sensitive( VMARG );
+/*#
+    @method get_icon_activatable
+    @brief Returns whether the icon is activatable.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @return TRUE if the icon is activatable.
+ */
+FALCON_FUNC Entry::get_icon_activatable( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger() )
+        throw_inv_params( "GtkEntryIconPosition" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_entry_get_icon_activatable( (GtkEntry*)_obj,
+                                (GtkEntryIconPosition) i_pos->asInteger() ) );
+}
 
-//FALCON_FUNC Entry::get_icon_at_pos( VMARG );
 
-//FALCON_FUNC Entry::set_icon_tooltip_text( VMARG );
+/*#
+    @method set_icon_sensitive
+    @brief Sets the sensitivity for the specified icon.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @param sensitive Specifies whether the icon should appear sensitive or insensitive
+ */
+FALCON_FUNC Entry::set_icon_sensitive( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+    Item* i_bool = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger()
+        || !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "GtkEntryIconPosition,B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_entry_set_icon_sensitive( (GtkEntry*)_obj,
+                                  (GtkEntryIconPosition) i_pos->asInteger(),
+                                  (gboolean) i_bool->asBoolean() );
+}
 
-//FALCON_FUNC Entry::get_icon_tooltip_text( VMARG );
 
-//FALCON_FUNC Entry::set_icon_tooltip_markup( VMARG );
+/*#
+    @method get_icon_sensitive
+    @brief Returns whether the icon appears sensitive or insensitive.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @return TRUE if the icon is sensitive.
+ */
+FALCON_FUNC Entry::get_icon_sensitive( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger() )
+        throw_inv_params( "GtkEntryIconPosition" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_entry_get_icon_sensitive( (GtkEntry*)_obj,
+                                (GtkEntryIconPosition) i_pos->asInteger() ) );
+}
 
-//FALCON_FUNC Entry::get_icon_tooltip_markup( VMARG );
+
+/*#
+    @method get_icon_at_pos
+    @brief Finds the icon at the given position and return its index.
+    @param x the x coordinate of the position to find
+    @param y the y coordinate of the position to find
+    @return the index of the icon at the given position, or -1.
+
+    If x, y doesn't lie inside an icon, -1 is returned. This function is
+    intended for use in a "query-tooltip" signal handler.
+ */
+FALCON_FUNC Entry::get_icon_at_pos( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( gtk_entry_get_icon_at_pos( (GtkEntry*)_obj,
+                                           i_x->asInteger(), i_y->asInteger() ) );
+}
+
+
+/*#
+    @method set_icon_tooltip_text
+    @brief Sets tooltip as the contents of the tooltip for the icon at the specified position.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @param tooltip the contents of the tooltip for the icon, or NULL.
+
+    Use NULL for tooltip to remove an existing tooltip.
+ */
+FALCON_FUNC Entry::set_icon_tooltip_text( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+    Item* i_tip = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger()
+        || !i_tip || !( i_tip->isNil() || i_tip->isString() ) )
+        throw_inv_params( "GtkEntryIconPosition,[S]" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    if ( i_tip->isString() )
+    {
+        AutoCString tip( i_tip->asString() );
+        gtk_entry_set_icon_tooltip_text( (GtkEntry*)_obj,
+                                         (GtkEntryIconPosition) i_pos->asInteger(),
+                                         tip.c_str() );
+    }
+    else
+        gtk_entry_set_icon_tooltip_text( (GtkEntry*)_obj,
+                                         (GtkEntryIconPosition) i_pos->asInteger(),
+                                         NULL );
+}
+
+
+/*#
+    @method get_icon_tooltip_text
+    @brief Gets the contents of the tooltip on the icon at the specified position in entry.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @return the tooltip text, or NULL.
+ */
+FALCON_FUNC Entry::get_icon_tooltip_text( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger() )
+        throw_inv_params( "GtkEntryIconPosition" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gchar* txt = gtk_entry_get_icon_tooltip_text( (GtkEntry*)_obj,
+                                    (GtkEntryIconPosition) i_pos->asInteger() );
+    if ( txt )
+    {
+        vm->retval( UTF8String( txt ) );
+        g_free( txt );
+    }
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method set_icon_tooltip_markup
+    @brief Sets tooltip as the contents of the tooltip for the icon at the specified position.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @param tooltip the contents of the tooltip for the icon, or NULL.
+
+    tooltip is assumed to be marked up with the Pango text markup language.
+
+    Use NULL for tooltip to remove an existing tooltip.
+
+    See also gtk_widget_set_tooltip_markup() and gtk_enty_set_icon_tooltip_text().
+ */
+FALCON_FUNC Entry::set_icon_tooltip_markup( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+    Item* i_tip = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->asInteger()
+        || !i_tip || !( i_tip->isNil() || i_tip->isString() ) )
+        throw_inv_params( "GtkEntryIconPosition,[S]" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    if ( i_tip->isString() )
+    {
+        AutoCString tip( i_tip->asString() );
+        gtk_entry_set_icon_tooltip_markup( (GtkEntry*)_obj,
+                                           (GtkEntryIconPosition) i_pos->asInteger(),
+                                           tip.c_str() );
+    }
+    else
+        gtk_entry_set_icon_tooltip_markup( (GtkEntry*)_obj,
+                                           (GtkEntryIconPosition) i_pos->asInteger(),
+                                           NULL );
+}
+
+
+/*#
+    @method get_icon_tooltip_markup
+    @brief Gets the contents of the tooltip on the icon at the specified position in entry.
+    @param icon_pos Icon position (GtkEntryIconPosition).
+    @return the tooltip text, or NULL.
+ */
+FALCON_FUNC Entry::get_icon_tooltip_markup( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isInteger() )
+        throw_inv_params( "GtkEntryIconPosition" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gchar* txt = gtk_entry_get_icon_tooltip_markup( (GtkEntry*)_obj,
+                                    (GtkEntryIconPosition) i_pos->asInteger() );
+    if ( txt )
+    {
+        vm->retval( UTF8String( txt ) );
+        g_free( txt );
+    }
+    else
+        vm->retnil();
+}
+
+
 
 //FALCON_FUNC Entry::set_icon_drag_source( VMARG );
 
 //FALCON_FUNC Entry::get_current_icon_drag_source( VMARG );
-
-//FALCON_FUNC Entry::get_icon_window( VMARG );
 #endif // GTK_MINOR_VERSION >= 16
 
+#if GTK_MINOR_VERSION >= 20
+//FALCON_FUNC Entry::get_icon_window( VMARG );
+
 //FALCON_FUNC Entry::get_text_window( VMARG );
+#endif
 
 
 } // Gtk

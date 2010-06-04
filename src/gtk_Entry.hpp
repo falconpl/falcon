@@ -24,7 +24,63 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
-    //SIGNALS HERE
+    static FALCON_FUNC signal_activate( VMARG );
+
+    static void on_activate( GtkEntry*, gpointer );
+
+    static FALCON_FUNC signal_backspace( VMARG );
+
+    static void on_backspace( GtkEntry*, gpointer );
+
+    static FALCON_FUNC signal_copy_clipboard( VMARG );
+
+    static void on_copy_clipboard( GtkEntry*, gpointer );
+
+    static FALCON_FUNC signal_cut_clipboard( VMARG );
+
+    static void on_cut_clipboard( GtkEntry*, gpointer );
+
+    static FALCON_FUNC signal_delete_from_cursor( VMARG );
+
+    static void on_delete_from_cursor( GtkEntry*, GtkDeleteType, gint, gpointer );
+
+#if 0 // todo: missing GdkEvent
+#if GTK_MINOR_VERSION >= 16
+    static FALCON_FUNC signal_icon_press( VMARG );
+
+    static void on_icon_press( GtkEntry*, GtkEntryIconPosition, GdkEvent*, gpointer );
+
+    static FALCON_FUNC signal_icon_release( VMARG );
+
+    static void on_icon_release( GtkEntry*, GtkEntryIconPosition, GdkEvent*, gpointer );
+#endif
+#endif
+
+    static FALCON_FUNC signal_insert_at_cursor( VMARG );
+
+    static void on_insert_at_cursor( GtkEntry*, gchar*, gpointer );
+
+    static FALCON_FUNC signal_move_cursor( VMARG );
+
+    static void on_move_cursor( GtkEntry*, GtkMovementStep, gint, gboolean, gpointer );
+
+    static FALCON_FUNC signal_paste_clipboard( VMARG );
+
+    static void on_paste_clipboard( GtkEntry*, gpointer );
+
+    static FALCON_FUNC signal_populate_popup( VMARG );
+
+    static void on_populate_popup( GtkEntry*, GtkMenu*, gpointer );
+
+#if GTK_MINOR_VERSION >= 20
+    static FALCON_FUNC signal_preedit_changed( VMARG );
+
+    static void on_preedit_changed( GtkEntry*, gchar*, gpointer );
+#endif
+
+    static FALCON_FUNC signal_toggle_overwrite( VMARG );
+
+    static void on_toggle_overwrite( GtkEntry*, gpointer );
 
 #if GTK_MINOR_VERSION >= 18
     static FALCON_FUNC new_with_buffer( VMARG );
@@ -154,32 +210,34 @@ public:
 
     //static FALCON_FUNC get_icon_gicon( VMARG );
 
-    //static FALCON_FUNC set_icon_activatable( VMARG );
+    static FALCON_FUNC set_icon_activatable( VMARG );
 
-    //static FALCON_FUNC get_icon_activatable( VMARG );
+    static FALCON_FUNC get_icon_activatable( VMARG );
 
-    //static FALCON_FUNC set_icon_sensitive( VMARG );
+    static FALCON_FUNC set_icon_sensitive( VMARG );
 
-    //static FALCON_FUNC get_icon_sensitive( VMARG );
+    static FALCON_FUNC get_icon_sensitive( VMARG );
 
-    //static FALCON_FUNC get_icon_at_pos( VMARG );
+    static FALCON_FUNC get_icon_at_pos( VMARG );
 
-    //static FALCON_FUNC set_icon_tooltip_text( VMARG );
+    static FALCON_FUNC set_icon_tooltip_text( VMARG );
 
-    //static FALCON_FUNC get_icon_tooltip_text( VMARG );
+    static FALCON_FUNC get_icon_tooltip_text( VMARG );
 
-    //static FALCON_FUNC set_icon_tooltip_markup( VMARG );
+    static FALCON_FUNC set_icon_tooltip_markup( VMARG );
 
-    //static FALCON_FUNC get_icon_tooltip_markup( VMARG );
+    static FALCON_FUNC get_icon_tooltip_markup( VMARG );
 
     //static FALCON_FUNC set_icon_drag_source( VMARG );
 
     //static FALCON_FUNC get_current_icon_drag_source( VMARG );
-
-    //static FALCON_FUNC get_icon_window( VMARG );
 #endif // GTK_MINOR_VERSION >= 16
 
+#if GTK_MINOR_VERSION >= 20
+    //static FALCON_FUNC get_icon_window( VMARG );
+
     //static FALCON_FUNC get_text_window( VMARG );
+#endif
 
 };
 
