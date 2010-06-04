@@ -36,9 +36,23 @@ public:
 
     static FALCON_FUNC set_title( VMARG );
 
+    static FALCON_FUNC set_wmclass( VMARG );
+
+#if 0 // deprecated
+    static FALCON_FUNC set_policy( VMARG );
+#endif
+
     static FALCON_FUNC set_resizable( VMARG );
 
     static FALCON_FUNC get_resizable( VMARG );
+
+    //static FALCON_FUNC add_accel_group( VMARG );
+
+    //static FALCON_FUNC remove_accel_group( VMARG );
+
+#if 0 // deprecated
+    static FALCON_FUNC position( VMARG );
+#endif
 
     static FALCON_FUNC activate_focus( VMARG );
 
@@ -84,7 +98,9 @@ public:
 
     static FALCON_FUNC set_focus( VMARG );
 
+#if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC get_default_widget( VMARG );
+#endif
 
     static FALCON_FUNC set_default( VMARG );
 

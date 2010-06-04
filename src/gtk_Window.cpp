@@ -6,8 +6,6 @@
 
 #include "gtk_Widget.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -34,8 +32,17 @@ void Window::modInit( Falcon::Module* mod )
     //{ "signal_keys_changed"      &Window::set_resizable },
     //{ "signal_set_focus"          &Window::set_resizable },
     { "set_title",          &Window::set_title },
+    { "set_wmclass",        &Window::set_wmclass },
+#if 0 // deprecated
+    { "set_policy",         &Window::set_policy },
+#endif
     { "set_resizable",      &Window::set_resizable },
     { "get_resizable",      &Window::get_resizable },
+    //{ "add_accel_group",    &Window::add_accel_group },
+    //{ "remove_accel_group", &Window::remove_accel_group },
+#if 0 // deprecated
+    { "position",           &Window::position },
+#endif
     { "activate_focus",     &Window::activate_focus },
     { "activate_default",   &Window::activate_default },
     { "set_modal",          &Window::set_modal },
@@ -58,7 +65,9 @@ void Window::modInit( Falcon::Module* mod )
     //{ "propagate_key_event",        &Window::set_gravity },
     { "get_focus",          &Window::get_focus },
     { "set_focus",          &Window::set_focus },
+#if GTK_MINOR_VERSION >= 14
     { "get_default_widget", &Window::get_default_widget },
+#endif
     { "set_default",        &Window::set_default },
     { "present",            &Window::present },
     { "present_with_time",  &Window::present_with_time },
@@ -158,44 +167,31 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
 /*#
     @class GtkWindow
     @optparam type GTK_WINDOW_TOPLEVEL (default) or GTK_WINDOW_POPUP
-    @raise ParamError Invalid window type
 
-    @prop title Window title
+    Toplevel which can contain other widgets.
+
+    Creates a new GtkWindow, which is a toplevel window that can contain other
+    widgets. Nearly always, the type of the window should be GTK_WINDOW_TOPLEVEL.
+    If you're implementing something like a popup menu from scratch (which is
+    a bad idea, just use GtkMenu), you might use GTK_WINDOW_POPUP.
+    GTK_WINDOW_POPUP is not for dialogs, though in some other toolkits dialogs
+    are called "popups". In GTK+, GTK_WINDOW_POPUP means a pop-up menu or pop-up
+    tooltip. On X11, popup windows are not controlled by the window manager.
  */
 FALCON_FUNC Window::init( VMARG )
 {
     MYSELF;
-
     if ( self->getGObject() )
         return;
 
     Item* i_wtype = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( i_wtype && ( i_wtype->isNil() || !i_wtype->isInteger() ) )
-    {
-        throw_inv_params( "I" );
-    }
+    if ( i_wtype && !i_wtype->isInteger() )
+        throw_inv_params( "GtkWindowType" );
 #endif
-    GtkWindowType gwt = GTK_WINDOW_TOPLEVEL;
-
-    if ( i_wtype )
-    {
-        const int wtype = i_wtype->asInteger();
-
-        switch ( wtype )
-        {
-        case GTK_WINDOW_TOPLEVEL:
-            break;
-        case GTK_WINDOW_POPUP:
-            gwt = GTK_WINDOW_POPUP;
-            break;
-        default:
-            throw_inv_params( FAL_STR( gtk_e_inv_window_type_ ) );
-        }
-    }
-
-    GtkWidget* win = gtk_window_new( gwt );
-    self->setGObject( (GObject*) win );
+    GtkWindowType gwt = i_wtype ? (GtkWindowType) i_wtype->asInteger()
+                        : GTK_WINDOW_TOPLEVEL;
+    self->setGObject( (GObject*) gtk_window_new( gwt ) );
 }
 
 
@@ -212,23 +208,64 @@ FALCON_FUNC Window::init( VMARG )
 
 /*#
     @method set_title GtkWindow
-    @brief Set window title
-    @param title Window title
+    @brief Sets the title of the GtkWindow.
+    @param title title of the window
+
+    The title of a window will be displayed in its title bar; on the X Window
+    System, the title bar is rendered by the window manager, so exactly how the
+    title appears to users may vary according to a user's exact configuration.
+    The title should help a user distinguish this window from other windows they
+    may have open. A good title might include the application name and current
+    document filename, for example.
  */
 FALCON_FUNC Window::set_title( VMARG )
 {
-    Item* it = vm->param( 0 );
+    Item* i_title = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !it || it->isNil() || !it->isString() )
-    {
+    if ( !i_title || !i_title->isString() )
         throw_inv_params( "S" );
-    }
 #endif
     MYSELF;
     GET_OBJ( self );
-    AutoCString s( it->asString() );
-    gtk_window_set_title( ((GtkWindow*)_obj), s.c_str() );
+    AutoCString title( i_title->asString() );
+    gtk_window_set_title( (GtkWindow*)_obj, title.c_str() );
 }
+
+
+/*#
+    @method set_wmclass GtkWindow
+    @brief Don't use this function.
+    @param wmclass_name window name hint
+    @param wmclass_class window class hint
+
+    It sets the X Window System "class" and "name" hints for a window. According
+    to the ICCCM, you should always set these to the same value for all windows
+    in an application, and GTK+ sets them to that value by default, so calling
+    this function is sort of pointless. However, you may want to call
+    gtk_window_set_role() on each window in your application, for the benefit of
+    the session manager. Setting the role allows the window manager to restore
+    window positions when loading a saved session.
+ */
+FALCON_FUNC Window::set_wmclass( VMARG )
+{
+    Item* i_nm = vm->param( 0 );
+    Item* i_cl = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_nm || !i_nm->isString()
+        || !i_cl || !i_cl->isString() )
+        throw_inv_params( "S,S" );
+#endif
+    AutoCString nm( i_nm->asString() );
+    AutoCString cl( i_cl->asString() );
+    MYSELF;
+    GET_OBJ( self );
+    gtk_window_set_wmclass( (GtkWindow*)_obj, nm.c_str(), cl.c_str() );
+}
+
+
+#if 0 // deprecated
+FALCON_FUNC Window::set_policy( VMARG );
+#endif
 
 
 /*#
@@ -242,19 +279,19 @@ FALCON_FUNC Window::set_resizable( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_resizable( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_resizable( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
 /*#
     @method get_resizable GtkWindow
     @brief Gets the value set by set_resizable().
-    @return (boolean)
+    @return TRUE if the user can resize the window
  */
 FALCON_FUNC Window::get_resizable( VMARG )
 {
@@ -266,6 +303,16 @@ FALCON_FUNC Window::get_resizable( VMARG )
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_resizable( (GtkWindow*)_obj ) );
 }
+
+
+//FALCON_FUNC Window::add_accel_group( VMARG );
+
+//FALCON_FUNC Window::remove_accel_group( VMARG );
+
+
+#if 0 // deprecated
+FALCON_FUNC Window::position( VMARG );
+#endif
 
 
 /*#
@@ -319,12 +366,12 @@ FALCON_FUNC Window::set_modal( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_modal( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_modal( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -365,8 +412,8 @@ FALCON_FUNC Window::set_default_size( VMARG )
     Item* i_w = vm->param( 0 );
     Item* i_h = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_w || i_w->isNil() || !i_w->isInteger()
-        || !i_h || i_h->isNil() || !i_h->isInteger() )
+    if ( !i_w || !i_w->isInteger()
+        || !i_h || !i_h->isInteger() )
         throw_inv_params( "I,I" );
 #endif
     MYSELF;
@@ -393,7 +440,7 @@ FALCON_FUNC Window::set_gravity( VMARG )
 {
     Item* i_grav = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_grav || i_grav->isNil() || !i_grav->isInteger() )
+    if ( !i_grav || !i_grav->isInteger() )
         throw_inv_params( "GdkGravity" );
 #endif
     int grav = i_grav->asInteger();
@@ -436,7 +483,7 @@ FALCON_FUNC Window::set_position( VMARG )
 {
     Item* i_pos = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_pos || i_pos->isNil() || !i_pos->isInteger() )
+    if ( !i_pos || !i_pos->isInteger() )
         throw_inv_params( "GtkWindowPosition" );
 #endif
     int pos = i_pos->asInteger();
@@ -453,7 +500,7 @@ FALCON_FUNC Window::set_position( VMARG )
 /*#
     @method set_transient_for GtkWindow
     @brief Sets the window transient for a parent window.
-    @param parent (GtkWindow)
+    @param parent parent window, or NULL.
 
     Dialog windows should be set transient for the main application window they
     were spawned from. This allows window managers to e.g. keep the dialog on top
@@ -469,19 +516,15 @@ FALCON_FUNC Window::set_position( VMARG )
 FALCON_FUNC Window::set_transient_for( VMARG )
 {
     Item* i_win = vm->param( 0 );
-    // this method accepts nil
 #ifndef NO_PARAMETER_CHECK
-    if ( i_win && !i_win->isNil() )
-    {
-        if ( !IS_DERIVED( i_win, GtkWindow ) )
-            throw_inv_params( "GtkWindow" );
-    }
+    if ( !i_win || !( i_win->isNil() || ( i_win->isObject()
+        && IS_DERIVED( i_win, GtkWindow ) ) ) )
+        throw_inv_params( "[GtkWindow]" );
 #endif
+    GtkWindow* win = i_win->isNil() ? NULL
+                    : (GtkWindow*) COREGOBJECT( i_win )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    GtkWindow* win = NULL;
-    if ( i_win && !i_win->isNil() )
-        win = (GtkWindow*) COREGOBJECT( i_win )->getGObject();
     gtk_window_set_transient_for( (GtkWindow*)_obj, win );
 }
 
@@ -499,12 +542,12 @@ FALCON_FUNC Window::set_destroy_with_parent( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_destroy_with_parent( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_destroy_with_parent( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -562,7 +605,7 @@ FALCON_FUNC Window::has_toplevel_focus( VMARG )
 /*#
     @method add_mnemonic GtkWindow
     @brief Adds a mnemonic to this window.
-    @param keyval the mnemonic (integer)
+    @param keyval the mnemonic character
     @param target the widget that gets activated by the mnemonic (GtkWidget)
  */
 FALCON_FUNC Window::add_mnemonic( VMARG )
@@ -570,22 +613,23 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
     Item* i_keyval = vm->param( 0 );
     Item* i_target = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
-        || !i_target || i_target->isNil() ||
-        !IS_DERIVED( i_target, GtkWidget ) )
-        throw_inv_params( "I,GtkWidget" );
+    if ( !i_keyval || !i_keyval->isString()
+        || !i_target || !i_target->isObject() || !IS_DERIVED( i_target, GtkWidget ) )
+        throw_inv_params( "S,GtkWidget" );
 #endif
+    String* chr = i_keyval->asString();
+    guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
-    gtk_window_add_mnemonic( (GtkWindow*)_obj, i_keyval->asInteger(), target );
+    gtk_window_add_mnemonic( (GtkWindow*)_obj, keyval, target );
 }
 
 
 /*#
     @method remove_mnemonic GtkWindow
     @brief Removes a mnemonic from this window.
-    @param keyval the mnemonic (integer)
+    @param keyval the mnemonic character
     @param target the widget that gets activated by the mnemonic (GtkWidget)
  */
 FALCON_FUNC Window::remove_mnemonic( VMARG )
@@ -593,22 +637,23 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
     Item* i_keyval = vm->param( 0 );
     Item* i_target = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
-        || !i_target || i_target->isNil() ||
-        !IS_DERIVED( i_target, GtkWidget ) )
-        throw_inv_params( "I,GtkWidget" );
+    if ( !i_keyval || !i_keyval->isString()
+        || !i_target || !i_target->isObject() || !IS_DERIVED( i_target, GtkWidget ) )
+        throw_inv_params( "S,GtkWidget" );
 #endif
+    String* chr = i_keyval->asString();
+    guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
-    gtk_window_remove_mnemonic( (GtkWindow*)_obj, i_keyval->asInteger(), target );
+    gtk_window_remove_mnemonic( (GtkWindow*)_obj, keyval, target );
 }
 
 
 /*#
     @method mnemonic_activate GtkWindow
     @brief Activates the targets associated with the mnemonic.
-    @param keyval the mnemonic
+    @param keyval the mnemonic character
     @param modifier the modifiers (GdkModifierType)
     @return true if the activation is done.
  */
@@ -617,14 +662,16 @@ FALCON_FUNC Window::mnemonic_activate( VMARG )
     Item* i_keyval = vm->param( 0 );
     Item* i_modif = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_keyval || i_keyval->isNil() || !i_keyval->isInteger()
-        || !i_modif || i_modif->isNil() || !i_modif->isInteger() )
-        throw_inv_params( "I,GdkModifierType" );
+    if ( !i_keyval || !i_keyval->isString()
+        || !i_modif || !i_modif->isInteger() )
+        throw_inv_params( "S,GdkModifierType" );
 #endif
+    String* chr = i_keyval->asString();
+    guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
     MYSELF;
     GET_OBJ( self );
     gtk_window_mnemonic_activate( (GtkWindow*)_obj,
-        i_keyval->asInteger(), (GdkModifierType) i_modif->asInteger() );
+                                  keyval, (GdkModifierType) i_modif->asInteger() );
 }
 
 
@@ -652,10 +699,7 @@ FALCON_FUNC Window::get_focus( VMARG )
     GET_OBJ( self );
     GtkWidget* wdt = gtk_window_get_focus( (GtkWindow*)_obj );
     if ( wdt )
-    {
-        Item* wki = vm->findWKI( "GtkWidget" );
-        vm->retval( new Gtk::Widget( wki->asClass(), wdt ) );
-    }
+        vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
     else
         vm->retnil();
 }
@@ -664,7 +708,7 @@ FALCON_FUNC Window::get_focus( VMARG )
 /*#
     @method set_focus GtkWindow
     @brief Sets the focus on a widget.
-    @param focus the focused widget (GtkWidget)
+    @param focus widget to be the new focus widget, or NULL to unset any focus widget for the toplevel window.
 
     If focus is not the current focus widget, and is focusable, sets it as the
     focus widget for the window. If focus is NULL, unsets the focus widget for
@@ -674,23 +718,20 @@ FALCON_FUNC Window::get_focus( VMARG )
 FALCON_FUNC Window::set_focus( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
-    // this method accepts nil
 #ifndef NO_PARAMETER_CHECK
-    if ( i_wdt && !i_wdt->isNil() )
-    {
-        if ( !IS_DERIVED( i_wdt, GtkWidget ) )
-            throw_inv_params( "GtkWidget" );
-    }
+    if ( !i_wdt || !( i_wdt->isNil() || ( i_wdt->isObject()
+        && IS_DERIVED( i_wdt, GtkWidget ) ) ) )
+        throw_inv_params( "[GtkWidget]" );
 #endif
+    GtkWidget* wdt = i_wdt->isNil() ? NULL
+                    : (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = NULL;
-    if ( i_wdt && !i_wdt->isNil() )
-        wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_window_set_focus( (GtkWindow*)_obj, wdt );
 }
 
 
+#if GTK_MINOR_VERSION >= 14
 /*#
     @method get_default_widget GtkWindow
     @brief Returns the default widget for window.
@@ -706,19 +747,17 @@ FALCON_FUNC Window::get_default_widget( VMARG )
     GET_OBJ( self );
     GtkWidget* wdt = gtk_window_get_default_widget( (GtkWindow*)_obj );
     if ( wdt )
-    {
-        Item* wki = vm->findWKI( "GtkWidget" );
-        vm->retval( new Gtk::Widget( wki->asClass(), wdt ) );
-    }
+        vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
     else
         vm->retnil();
 }
+#endif
 
 
 /*#
     @method set_default GtkWindow
     @brief Sets the default widget.
-    @param default_widget (GtkWidget)
+    @param default_widget widget to be the default, or NULL to unset the default widget for the toplevel.
 
     The default widget is the widget that's activated when the user presses Enter
     in a dialog (for example). This function sets or unsets the default widget for
@@ -731,12 +770,14 @@ FALCON_FUNC Window::set_default( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
-        throw_inv_params( "GtkWidget" );
+    if ( !i_wdt || !( i_wdt->isNil() || ( i_wdt->isObject()
+        && IS_DERIVED( i_wdt, GtkWidget ) ) ) )
+        throw_inv_params( "[GtkWidget]" );
 #endif
+    GtkWidget* wdt = i_wdt->isNil() ? NULL
+                    : (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     gtk_window_set_default( (GtkWindow*)_obj, wdt );
 }
 
@@ -782,7 +823,7 @@ FALCON_FUNC Window::present_with_time( VMARG )
 {
     Item* i_time = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_time || i_time->isNil() || !i_time->isInteger() )
+    if ( !i_time || !i_time->isInteger() )
         throw_inv_params( "I" );
 #endif
     MYSELF;
@@ -1007,12 +1048,12 @@ FALCON_FUNC Window::set_keep_above( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_keep_above( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_keep_above( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1039,12 +1080,12 @@ FALCON_FUNC Window::set_keep_below( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_keep_below( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_keep_below( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1077,9 +1118,12 @@ FALCON_FUNC Window::begin_resize_drag( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_begin_resize_drag( (GtkWindow*)_obj, (GdkWindowEdge) i_edge->asInteger(),
-        i_button->asInteger(), i_root_x->asInteger(), i_root_y->asInteger(),
-        i_tstamp->asInteger() );
+    gtk_window_begin_resize_drag( (GtkWindow*)_obj,
+                                  (GdkWindowEdge) i_edge->asInteger(),
+                                  i_button->asInteger(),
+                                  i_root_x->asInteger(),
+                                  i_root_y->asInteger(),
+                                  i_tstamp->asInteger() );
 }
 
 
@@ -1110,8 +1154,11 @@ FALCON_FUNC Window::begin_move_drag( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_begin_move_drag( (GtkWindow*)_obj, i_button->asInteger(),
-        i_root_x->asInteger(), i_root_y->asInteger(), i_tstamp->asInteger() );
+    gtk_window_begin_move_drag( (GtkWindow*)_obj,
+                                i_button->asInteger(),
+                                i_root_x->asInteger(),
+                                i_root_y->asInteger(),
+                                i_tstamp->asInteger() );
 }
 
 
@@ -1128,18 +1175,19 @@ FALCON_FUNC Window::begin_move_drag( VMARG )
     when called on a window that is already visible, so you should call it before
     calling gtk_window_show().
 
-    On Windows, this function always works, since there's no window manager policy involved.
+    On Windows, this function always works, since there's no window manager
+    policy involved.
  */
 FALCON_FUNC Window::set_decorated( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_decorated( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_decorated( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1161,12 +1209,12 @@ FALCON_FUNC Window::set_deletable( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_deletable( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_deletable( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1199,8 +1247,11 @@ FALCON_FUNC Window::set_frame_dimensions( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_frame_dimensions( (GtkWindow*)_obj, i_left->asInteger(),
-        i_top->asInteger(), i_right->asInteger(), i_bottom->asInteger() );
+    gtk_window_set_frame_dimensions( (GtkWindow*)_obj,
+                                     i_left->asInteger(),
+                                     i_top->asInteger(),
+                                     i_right->asInteger(),
+                                     i_bottom->asInteger() );
 }
 
 
@@ -1225,38 +1276,38 @@ FALCON_FUNC Window::set_has_frame( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_has_frame( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_has_frame( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
 /*#
     @method set_mnemonic_modifier GtkWindow
     @brief Sets the mnemonic modifier for this window.
-    @param modifier the modifier mask used to activate mnemonics on this window. (integer, GdkModifierType)
+    @param modifier the modifier mask used to activate mnemonics on this window. (GdkModifierType)
  */
 FALCON_FUNC Window::set_mnemonic_modifier( VMARG )
 {
     Item* i_modif = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_modif || i_modif->isNil() || !i_modif->isInteger() )
+    if ( !i_modif || !i_modif->isInteger() )
         throw_inv_params( "I" );
 #endif
     MYSELF;
     GET_OBJ( self );
     gtk_window_set_mnemonic_modifier( (GtkWindow*)_obj,
-        (GdkModifierType) i_modif->asInteger() );
+                                      (GdkModifierType) i_modif->asInteger() );
 }
 
 
 /*#
     @method set_type_hint GtkWindow
     @brief Sets the window type hint.
-    @param hint the window type (integer, GdkWindowTypeHint)
+    @param hint the window type (GdkWindowTypeHint)
 
     By setting the type hint for the window, you allow the window manager to decorate
     and handle the window in a way which is suitable to the function of the window
@@ -1268,13 +1319,13 @@ FALCON_FUNC Window::set_type_hint( VMARG )
 {
     Item* i_hint = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_hint || i_hint->isNil() || !i_hint->isInteger() )
+    if ( !i_hint || !i_hint->isInteger() )
         throw_inv_params( "I" );
 #endif
     MYSELF;
     GET_OBJ( self );
     gtk_window_set_type_hint( (GtkWindow*)_obj,
-        (GdkWindowTypeHint) i_hint->asInteger() );
+                              (GdkWindowTypeHint) i_hint->asInteger() );
 }
 
 
@@ -1290,12 +1341,12 @@ FALCON_FUNC Window::set_skip_taskbar_hint( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_skip_taskbar_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_skip_taskbar_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1313,12 +1364,12 @@ FALCON_FUNC Window::set_skip_pager_hint( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_skip_pager_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_skip_pager_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1334,12 +1385,12 @@ FALCON_FUNC Window::set_urgency_hint( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_urgency_hint( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_urgency_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1355,12 +1406,12 @@ FALCON_FUNC Window::set_accept_focus( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_accept_focus( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_accept_focus( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1376,12 +1427,12 @@ FALCON_FUNC Window::set_focus_on_map( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_focus_on_map( (GtkWindow*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_focus_on_map( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1404,13 +1455,13 @@ FALCON_FUNC Window::set_startup_id( VMARG )
 {
     Item* i_id = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_id || i_id->isNil() || !i_id->isString() )
+    if ( !i_id || !i_id->isString() )
         throw_inv_params( "S" );
 #endif
-    AutoCString s( i_id->asString() );
+    AutoCString id( i_id->asString() );
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_startup_id( (GtkWindow*)_obj, s.c_str() );
+    gtk_window_set_startup_id( (GtkWindow*)_obj, id.c_str() );
 }
 
 
@@ -1434,13 +1485,13 @@ FALCON_FUNC Window::set_role( VMARG )
 {
     Item* i_role = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_role || i_role->isNil() || !i_role->isString() )
+    if ( !i_role || !i_role->isString() )
         throw_inv_params( "S" );
 #endif
-    AutoCString s( i_role->asString() );
+    AutoCString role( i_role->asString() );
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_role( (GtkWindow*)_obj, s.c_str() );
+    gtk_window_set_role( (GtkWindow*)_obj, role.c_str() );
 }
 
 
@@ -1498,7 +1549,7 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
         throw_require_no_args();
 #endif
     const gchar* nam = gtk_window_get_default_icon_name();
-    vm->retval( nam ? new String( nam ) : new String() );
+    vm->retval( nam ? UTF8String( nam ) : UTF8String( "" ) );
 }
 #endif
 
@@ -1506,7 +1557,7 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
 /*#
     @method get_default_size GtkWindow
     @brief Gets the default size of the window.
-    @return [ width, height ]
+    @return an array [ default width, default height ]
 
     A value of -1 for the width or height indicates that a default size has not
     been explicitly set for that dimension, so the "natural" size of the window
@@ -1522,7 +1573,7 @@ FALCON_FUNC Window::get_default_size( VMARG )
     GET_OBJ( self );
     gint w, h;
     gtk_window_get_default_size( (GtkWindow*)_obj, &w, &h );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
     vm->retval( arr );
@@ -1549,7 +1600,7 @@ FALCON_FUNC Window::get_destroy_with_parent( VMARG )
 /*#
     @method get_frame_dimensions GtkWindow
     @brief Retrieves the dimensions of the frame window for this toplevel.
-    @return array [ left, top, right, bottom ] (integers)
+    @return an array [ left, top, right, bottom ]
 
     (Note: this is a special-purpose function intended for the framebuffer port;
     see set_has_frame(). It will not return the size of the window border drawn
@@ -1568,7 +1619,7 @@ FALCON_FUNC Window::get_frame_dimensions( VMARG )
     GET_OBJ( self );
     gint l, t, r, b;
     gtk_window_get_frame_dimensions( (GtkWindow*)_obj, &l, &t, &r, &b );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 4 );
     arr->append( l );
     arr->append( t );
     arr->append( r );
@@ -1616,7 +1667,7 @@ FALCON_FUNC Window::get_icon_name( VMARG )
     GET_OBJ( self );
     const gchar* nam = gtk_window_get_icon_name( (GtkWindow*)_obj );
     if ( nam )
-        vm->retval( new String( nam ) );
+        vm->retval( UTF8String( nam ) );
     else
         vm->retnil();
 }
@@ -1663,7 +1714,7 @@ FALCON_FUNC Window::get_modal( VMARG )
 /*#
     @method get_position GtkWindow
     @brief Gets the window position.
-    @return [ root_x, root_x ]
+    @return an array [ root_x, root_y ]
 
     This function returns the position you need to pass to gtk_window_move() to
     keep window in its current position. This means that the meaning of the returned
@@ -1706,7 +1757,7 @@ FALCON_FUNC Window::get_position( VMARG )
     GET_OBJ( self );
     gint x, y;
     gtk_window_get_position( (GtkWindow*)_obj, &x, &y );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 2 );
     arr->append( x );
     arr->append( y );
     vm->retval( arr );
@@ -1716,7 +1767,7 @@ FALCON_FUNC Window::get_position( VMARG )
 /*#
     @method get_role GtkWindow
     @brief Returns the role of the window.
-    @return (string) the role of the window if set, or nil.
+    @return the role of the window if set, or nil.
 
     See set_role() for further explanation.
  */
@@ -1730,7 +1781,7 @@ FALCON_FUNC Window::get_role( VMARG )
     GET_OBJ( self );
     const gchar* role = gtk_window_get_role( (GtkWindow*)_obj );
     if ( role )
-        vm->retval( new String( role ) );
+        vm->retval( UTF8String( role ) );
     else
         vm->retnil();
 }
@@ -1739,7 +1790,7 @@ FALCON_FUNC Window::get_role( VMARG )
 /*#
     @method get_size GtkWindow
     @brief Obtains the current size of window.
-    @brief [ width, height ]
+    @brief an array [ width, height ]
 
     If window is not onscreen, it returns the size GTK+ will suggest to the window
     manager for the initial window size (but this is not reliably the same as the size
@@ -1785,7 +1836,7 @@ FALCON_FUNC Window::get_size( VMARG )
     GET_OBJ( self );
     gint w, h;
     gtk_window_get_size( (GtkWindow*)_obj, &w, &h );
-    CoreArray* arr = new CoreArray;
+    CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
     vm->retval( arr );
@@ -1805,9 +1856,9 @@ FALCON_FUNC Window::get_title( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    const gchar* t = gtk_window_get_title( ((GtkWindow*)_obj) );
+    const gchar* t = gtk_window_get_title( (GtkWindow*)_obj );
     if ( t )
-        vm->retval( new String( t ) );
+        vm->retval( UTF8String( t ) );
     else
         vm->retnil();
 }
@@ -1816,7 +1867,7 @@ FALCON_FUNC Window::get_title( VMARG )
 /*#
     @method get_transient_for GtkWindow
     @brief Fetches the transient parent for this window.
-    @return (GtkWindow)
+    @return the transient parent for this window, or NULL if no transient parent has been set.
  */
 FALCON_FUNC Window::get_transient_for( VMARG )
 {
@@ -1828,10 +1879,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
     GET_OBJ( self );
     GtkWindow* win = gtk_window_get_transient_for( (GtkWindow*)_obj );
     if ( win )
-    {
-        Item* wki = vm->findWKI( "GtkWindow" );
-        vm->retval( new Gtk::Window( wki->asClass(), win ) );
-    }
+        vm->retval( new Gtk::Window( vm->findWKI( "GtkWindow" )->asClass(), win ) );
     else
         vm->retnil();
 }
@@ -1840,7 +1888,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
 /*#
     @method get_type_hint GtkWindow
     @brief Gets the type hint for this window.
-    @return the type hint for window. (integer, GdkWindowTypeHint)
+    @return the type hint for window. (GdkWindowTypeHint)
  */
 FALCON_FUNC Window::get_type_hint( VMARG )
 {
@@ -2002,8 +2050,8 @@ FALCON_FUNC Window::move( VMARG )
     Item* i_x = vm->param( 0 );
     Item* i_y = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_x || i_x->isNil() || !i_x->isInteger()
-        || !i_y || i_y->isNil() || !i_y->isInteger() )
+    if ( !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
     MYSELF;
@@ -2038,13 +2086,13 @@ FALCON_FUNC Window::parse_geometry( VMARG )
 {
     Item* i_geom = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_geom || i_geom->isNil() || !i_geom->isString() )
+    if ( !i_geom || !i_geom->isString() )
         throw_inv_params( "S" );
 #endif
-    AutoCString s( i_geom->asString() );
+    AutoCString geom( i_geom->asString() );
     MYSELF;
     GET_OBJ( self );
-    vm->retval( (bool) gtk_window_parse_geometry( (GtkWindow*)_obj, s.c_str() ) );
+    vm->retval( (bool) gtk_window_parse_geometry( (GtkWindow*)_obj, geom.c_str() ) );
 }
 
 
@@ -2086,8 +2134,8 @@ FALCON_FUNC Window::resize( VMARG )
     Item* i_w = vm->param( 0 );
     Item* i_h = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_w || i_w->isNil() || !i_w->isInteger()
-        || !i_h || i_h->isNil() || !i_h->isInteger() )
+    if ( !i_w || !i_w->isInteger()
+        || !i_h || !i_h->isInteger() )
         throw_inv_params( "I,I" );
 #endif
     MYSELF;
@@ -2115,11 +2163,11 @@ FALCON_FUNC Window::set_default_icon_name( VMARG )
 {
     Item* i_name = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_name || i_name->isNil() || !i_name->isString() )
+    if ( !i_name || !i_name->isString() )
         throw_inv_params( "S" );
 #endif
-    AutoCString s( i_name->asString() );
-    gtk_window_set_default_icon_name( s.c_str() );
+    AutoCString name( i_name->asString() );
+    gtk_window_set_default_icon_name( name.c_str() );
 }
 
 
@@ -2143,17 +2191,16 @@ FALCON_FUNC Window::set_default_icon_name( VMARG )
 FALCON_FUNC Window::set_icon_name( VMARG )
 {
     Item* i_name = vm->param( 0 );
-    // this method accepts nil
 #ifndef NO_PARAMETER_CHECK
     if ( !i_name || !( i_name->isNil() || i_name->isString() ) )
-        throw_inv_params( "S" );
+        throw_inv_params( "[S]" );
 #endif
     MYSELF;
     GET_OBJ( self );
     if ( i_name->isString() )
     {
-        AutoCString s( i_name->asString() );
-        gtk_window_set_icon_name( (GtkWindow*)_obj, s.c_str() );
+        AutoCString name( i_name->asString() );
+        gtk_window_set_icon_name( (GtkWindow*)_obj, name.c_str() );
     }
     else
         gtk_window_set_icon_name( (GtkWindow*)_obj, NULL );
@@ -2178,10 +2225,10 @@ FALCON_FUNC Window::set_auto_startup_notification( VMARG )
 {
     Item* i_bool = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
+    if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    gtk_window_set_auto_startup_notification( i_bool->asBoolean() ? TRUE : FALSE );
+    gtk_window_set_auto_startup_notification( (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -2222,12 +2269,12 @@ FALCON_FUNC Window::set_opacity( VMARG )
 {
     Item* i_opac = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_opac || i_opac->isNil() || !i_opac->isNumeric() )
+    if ( !i_opac || !i_opac->isOrdinal() )
         throw_inv_params( "N" );
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_window_set_opacity( (GtkWindow*)_obj, i_opac->asNumeric() );
+    gtk_window_set_opacity( (GtkWindow*)_obj, i_opac->forceNumeric() );
 }
 
 
