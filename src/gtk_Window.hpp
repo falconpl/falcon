@@ -24,15 +24,25 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
-    //static FALCON_FUNC signal_activate_default( VMARG );
+    static FALCON_FUNC signal_activate_default( VMARG );
 
-    //static FALCON_FUNC signal_activate_focus( VMARG );
+    static void on_activate_default( GtkWindow*, gpointer );
+
+    static FALCON_FUNC signal_activate_focus( VMARG );
+
+    static void on_activate_focus( GtkWindow*, gpointer );
 
     //static FALCON_FUNC signal_frame_event( VMARG );
 
-    //static FALCON_FUNC signal_keys_changed( VMARG );
+    //static void on_frame_event( GtkWindow*, GdkEvent*, gpointer );
 
-    //static FALCON_FUNC signal_set_focus( VMARG );
+    static FALCON_FUNC signal_keys_changed( VMARG );
+
+    static void on_keys_changed( GtkWindow*, gpointer );
+
+    static FALCON_FUNC signal_set_focus( VMARG );
+
+    static void on_set_focus( GtkWindow*, GtkWidget*, gpointer );
 
     static FALCON_FUNC set_title( VMARG );
 

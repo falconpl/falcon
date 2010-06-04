@@ -4,6 +4,7 @@
 
 #include "gtk_Window.hpp"
 
+//#include "gdk_Event.hpp"
 #include "gtk_Widget.hpp"
 
 
@@ -26,11 +27,11 @@ void Window::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    //{ "signal_activate_default"      &Window::set_resizable },
-    //{ "signal_activate_focus"      &Window::set_resizable },
-    //{ "signal_frame_event"      &Window::set_resizable },
-    //{ "signal_keys_changed"      &Window::set_resizable },
-    //{ "signal_set_focus"          &Window::set_resizable },
+    { "signal_activate_default",&Window::signal_activate_default },
+    { "signal_activate_focus",&Window::signal_activate_focus },
+    //{ "signal_frame_event",&Window::signal_frame_event },
+    { "signal_keys_changed",&Window::signal_keys_changed },
+    { "signal_set_focus",   &Window::signal_set_focus },
     { "set_title",          &Window::set_title },
     { "set_wmclass",        &Window::set_wmclass },
 #if 0 // deprecated
@@ -195,15 +196,120 @@ FALCON_FUNC Window::init( VMARG )
 }
 
 
-//FALCON_FUNC Window::signal_activate_default( VMARG );
+/*#
+    @method signal_activate_default GtkWindow
+    @brief The ::activate-default signal is a keybinding signal which gets emitted when the user activates the default widget of window.
+ */
+FALCON_FUNC Window::signal_activate_default( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "activate_default", (void*) &Window::on_activate_default, vm );
+}
 
-//FALCON_FUNC Window::signal_activate_focus( VMARG );
+
+void Window::on_activate_default( GtkWindow* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "activate_default",
+                               "on_activate_default", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_activate_focus GtkWindow
+    @brief The activate-focus signal is a keybinding signal which gets emitted when the user activates the currently focused widget of window.
+ */
+FALCON_FUNC Window::signal_activate_focus( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "activate_focus", (void*) &Window::on_activate_focus, vm );
+}
+
+
+void Window::on_activate_focus( GtkWindow* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "activate_focus",
+                               "on_activate_focus", (VMachine*)_vm );
+}
+
 
 //FALCON_FUNC Window::signal_frame_event( VMARG );
 
-//FALCON_FUNC Window::signal_keys_changed( VMARG );
+//void Window::on_frame_event( GtkWindow* obj, GdkEvent* ev, gpointer _vm );
 
-//FALCON_FUNC Window::signal_set_focus( VMARG );
+
+/*#
+    @method signal_keys_changed GtkWindow
+    @brief The keys-changed signal gets emitted when the set of accelerators or mnemonics that are associated with window changes.
+ */
+FALCON_FUNC Window::signal_keys_changed( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "keys_changed", (void*) &Window::on_keys_changed, vm );
+}
+
+
+void Window::on_keys_changed( GtkWindow* obj, gpointer _vm )
+{
+    CoreGObject::trigger_slot( (GObject*) obj, "keys_changed",
+                               "on_keys_changed", (VMachine*)_vm );
+}
+
+
+/*#
+    @method signal_set_focus GtkWindow
+    @brief .
+ */
+FALCON_FUNC Window::signal_set_focus( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    CoreGObject::get_signal( "set_focus", (void*) &Window::on_set_focus, vm );
+}
+
+
+void Window::on_set_focus( GtkWindow* obj, GtkWidget* wdt, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "set_focus", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GtkWidget" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_set_focus", it ) )
+            {
+                printf(
+                "[GtkWindow::on_set_focus] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gtk::Widget( wki->asClass(), wdt ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
 
 
 /*#
@@ -1903,7 +2009,7 @@ FALCON_FUNC Window::get_type_hint( VMARG )
 
 
 /*#
-    @method get_skip_taskbar_hint
+    @method get_skip_taskbar_hint GtkWindow
     @brief Gets the value set by set_skip_taskbar_hint()
     @return true if window shouldn't be in taskbar (boolean)
  */
