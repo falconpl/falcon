@@ -38,7 +38,7 @@ if ( WIN32 ) # Windoze, using env var GTK_ROOT
     set( GTK2_CAIRO_LIBRARY "$ENV{GTK_ROOT}/lib/cairo.lib" )
     set( GTK2_PANGO_LIBRARY "$ENV{GTK_ROOT}/lib/pango-1.0.lib" )
 
-    find_package( GTK2 REQUIRED )
+    find_package( GTK2 2.12 REQUIRED )
 
     set( GTK2_LIBRARIES "${GTK2_LIBRARIES};$ENV{GTK_ROOT}/lib/gobject-2.0.lib" )
 
@@ -70,7 +70,7 @@ else() # Linux
 
     else() # normal linux
 
-        find_package( GTK2 REQUIRED )
+        find_package( GTK2 2.12 REQUIRED )
         include_directories( ${GTK2_INCLUDE_DIRS} )
 
     endif()
