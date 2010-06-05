@@ -129,7 +129,7 @@ bool Visual::getProperty( const Falcon::String& s, Falcon::Item& it ) const
     if ( s == "blue_prec" )
         it = m_visual->blue_prec;
     else
-        return false;
+        return defaultProperty( s, it );
     return true;
 }
 
