@@ -93,7 +93,7 @@ bool Colormap::getProperty( const Falcon::String& s, Falcon::Item& it ) const
             return false;
     }
     else
-        return false;
+        return defaultProperty( s, it );
     return true;
 }
 
