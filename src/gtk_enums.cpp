@@ -619,6 +619,19 @@ void Enums::modInit( Falcon::Module* mod )
     // BEGIN GDK CONSTANTS //
 
     /*
+     *  GdkAxisUse
+     */
+    { "GDK_AXIS_IGNORE",    GDK_AXIS_IGNORE },
+    { "GDK_AXIS_X",         GDK_AXIS_X },
+    { "GDK_AXIS_Y",         GDK_AXIS_Y },
+    { "GDK_AXIS_PRESSURE",  GDK_AXIS_PRESSURE },
+    { "GDK_AXIS_XTILT",     GDK_AXIS_XTILT },
+    { "GDK_AXIS_YTILT",     GDK_AXIS_YTILT },
+    { "GDK_AXIS_WHEEL",     GDK_AXIS_WHEEL },
+    { "GDK_AXIS_LAST",      GDK_AXIS_LAST },
+
+
+    /*
      *  GdkByteOrder
      */
     { "GDK_LSB_FIRST",  GDK_LSB_FIRST },
