@@ -4,6 +4,7 @@
 
 #include "gdk_Event.hpp"
 
+#include "gdk_EventButton.hpp"
 //#include "gdk_Screen.hpp"
 
 #undef MYSELF
@@ -27,6 +28,7 @@ void Event::modInit( Falcon::Module* mod )
     //mod->addClassProperty( c_Event, "window" );
     mod->addClassProperty( c_Event, "send_event" );
 
+    mod->addClassMethod( c_Event, "get_real_event", &Event::get_real_event );
     mod->addClassMethod( c_Event, "events_pending", &Event::events_pending );
     mod->addClassMethod( c_Event, "peek",           &Event::peek );
     mod->addClassMethod( c_Event, "get",            &Event::get );
@@ -141,6 +143,81 @@ FALCON_FUNC Event::init( VMARG )
 #endif
     self->setEvent( (GdkEvent*) gdk_event_new( (GdkEventType) i_type->asInteger() ),
                     true );
+}
+
+
+/*#
+    @method get_real_event
+    @brief Get a copy of the event cast to its real derived-type.
+    @return one of the Gdk event types.
+    @note This is Falcon specific.
+
+    In classes already derived from GdkEvent, this is of course not of much use.
+ */
+FALCON_FUNC Event::get_real_event( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    switch ( self->getEvent()->type )
+    {
+#if 0
+    case GDK_NOTHING:
+    case GDK_DELETE:
+    case GDK_DESTROY:
+    case GDK_EXPOSE:
+    case GDK_MOTION_NOTIFY:
+#endif
+    case GDK_BUTTON_PRESS:
+    case GDK_2BUTTON_PRESS:
+    case GDK_3BUTTON_PRESS:
+    case GDK_BUTTON_RELEASE:
+    {
+        vm->retval( new Gdk::EventButton( vm->findWKI( "GdkEventButton" )->asClass(),
+                                          (GdkEventButton*) self->getEvent() ) );
+        return;
+    }
+#if 0
+    case GDK_KEY_PRESS:
+    case GDK_KEY_RELEASE:
+    case GDK_ENTER_NOTIFY:
+    case GDK_LEAVE_NOTIFY:
+    case GDK_FOCUS_CHANGE:
+    case GDK_CONFIGURE:
+    case GDK_MAP:
+    case GDK_UNMAP:
+    case GDK_PROPERTY_NOTIFY:
+    case GDK_SELECTION_CLEAR:
+    case GDK_SELECTION_REQUEST:
+    case GDK_SELECTION_NOTIFY:
+    case GDK_PROXIMITY_IN:
+    case GDK_PROXIMITY_OUT:
+    case GDK_DRAG_ENTER:
+    case GDK_DRAG_LEAVE:
+    case GDK_DRAG_MOTION:
+    case GDK_DRAG_STATUS:
+    case GDK_DROP_START:
+    case GDK_DROP_FINISHED:
+    case GDK_CLIENT_EVENT:
+    case GDK_VISIBILITY_NOTIFY:
+    case GDK_NO_EXPOSE:
+    case GDK_SCROLL:
+    case GDK_WINDOW_STATE:
+    case GDK_SETTING:
+    case GDK_OWNER_CHANGE:
+    case GDK_GRAB_BROKEN:
+#if GTK_MINOR_VERSION >= 14
+    case GDK_DAMAGE:
+#endif
+#if 0 // not reached
+    case GDK_EVENT_LAST:
+#endif
+#endif
+    default:
+        return; // not reached
+    }
 }
 
 

@@ -34,6 +34,8 @@ public:
 
     void setEvent( const GdkEvent*, const bool transfer = false );
 
+    static FALCON_FUNC get_real_event( VMARG );
+
     static FALCON_FUNC init( VMARG );
 
     static FALCON_FUNC events_pending( VMARG );
