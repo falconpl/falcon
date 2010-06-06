@@ -8,7 +8,7 @@ namespace Falcon {
 namespace Gdk {
 
 /**
- *  \class Falcon::Gtk::EventButton
+ *  \class Falcon::Gdk::EventButton
  */
 class EventButton
     :
