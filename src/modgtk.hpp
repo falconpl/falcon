@@ -4,12 +4,10 @@
 #include <falcon/autocstring.h>
 #include <falcon/coreslot.h>
 #include <falcon/error.h>
-#include <falcon/falcondata.h>
 #include <falcon/falconobject.h>
 #include <falcon/garbagelock.h>
 #include <falcon/item.h>
 #include <falcon/module.h>
-#include <falcon/stream.h>
 #include <falcon/string.h>
 #include <falcon/vm.h>
 
