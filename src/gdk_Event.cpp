@@ -147,7 +147,7 @@ FALCON_FUNC Event::init( VMARG )
 
 
 /*#
-    @method get_real_event
+    @method get_real_event GdkEvent
     @brief Get a copy of the event cast to its real derived-type.
     @return one of the Gdk event types.
     @note This is Falcon specific.
@@ -222,7 +222,7 @@ FALCON_FUNC Event::get_real_event( VMARG )
 
 
 /*#
-    @method events_pending
+    @method events_pending GdkEvent
     @brief Checks if any events are ready to be processed for any display.
     @return TRUE if any events are pending.
  */
@@ -237,7 +237,7 @@ FALCON_FUNC Event::events_pending( VMARG )
 
 
 /*#
-    @method peek
+    @method peek GdkEvent
     @brief If there is an event waiting in the event queue of some open display, returns it.
     @return the first GdkEvent on some event queue, or NULL if no events are in any queues.
 
@@ -258,7 +258,7 @@ FALCON_FUNC Event::peek( VMARG )
 
 
 /*#
-    @method get
+    @method get GdkEvent
     @brief Checks all open displays for a GdkEvent to process, to be processed on, fetching events from the windowing system if necessary.
     @return the next GdkEvent to be processed, or NULL if no events are pending.
 
@@ -284,7 +284,7 @@ FALCON_FUNC Event::get_graphics_expose( VMARG );
 
 
 /*#
-    @method put
+    @method put GdkEvent
     @brief Appends a copy of the given event onto the front of the event queue for event->any.window's display, or the default event queue if event->any.window is NULL.
 
     See gdk_display_put_event().
@@ -301,7 +301,7 @@ FALCON_FUNC Event::put( VMARG )
 
 
 /*#
-    @method copy
+    @method copy GdkEvent
     @brief Copies a GdkEvent, copying or incrementing the reference count of the resources associated with it (e.g. GdkWindow's and strings).
     @return a copy of the event.
  */
@@ -318,7 +318,7 @@ FALCON_FUNC Event::copy( VMARG )
 
 
 /*#
-    @method get_time
+    @method get_time GdkEvent
     @brief Returns the time stamp from event, if there is one; otherwise returns GDK_CURRENT_TIME.
     @return time stamp field from event
  */
@@ -334,7 +334,7 @@ FALCON_FUNC Event::get_time( VMARG )
 
 
 /*#
-    @method get_state
+    @method get_state GdkEvent
     @brief If the event contains a "state" field, returns it. Otherwise returns an empty state (0).
     @return the state (GdkModifierType).
  */
@@ -352,7 +352,7 @@ FALCON_FUNC Event::get_state( VMARG )
 
 
 /*#
-    @method get_axis
+    @method get_axis GdkEvent
     @brief Extract the axis value for a particular axis use from an event structure.
     @param axis_use the axis use to look for (GdkAxisUse).
     @return the value found or nil if the specified axis was not found.
@@ -376,7 +376,7 @@ FALCON_FUNC Event::get_axis( VMARG )
 
 
 /*#
-    @method get_coords
+    @method get_coords GdkEvent
     @brief Extract the event window relative x/y coordinates from an event.
     @return an array ( window x coordinate, window y coordinate ), or nil if the event did not deliver event window coordinates.
  */
@@ -402,7 +402,7 @@ FALCON_FUNC Event::get_coords( VMARG )
 
 
 /*#
-    @method get_root_coords
+    @method get_root_coords GdkEvent
     @brief Extract the root window relative x/y coordinates from an event.
     @return an array ( window x coordinate, window y coordinate ), or nil if the event did not deliver root window coordinates
  */
@@ -428,7 +428,7 @@ FALCON_FUNC Event::get_root_coords( VMARG )
 
 
 /*#
-    @method get_show_events
+    @method get_show_events GdkEvent
     @brief Gets whether event debugging output is enabled.
     @return TRUE if event debugging output is enabled.
  */
@@ -443,7 +443,7 @@ FALCON_FUNC Event::get_show_events( VMARG )
 
 
 /*#
-    @method set_show_events
+    @method set_show_events GdkEvent
     @brief Sets whether a trace of received events is output.
     @param show_events TRUE to output event debugging information.
 
