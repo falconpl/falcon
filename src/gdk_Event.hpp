@@ -70,7 +70,7 @@ public:
     static FALCON_FUNC get_screen( VMARG );
 #endif
 
-private:
+protected:
 
     GdkEvent*   m_event;
 

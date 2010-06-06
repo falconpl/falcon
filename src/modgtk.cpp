@@ -149,7 +149,7 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Colormap::modInit( self );
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::Event::modInit( self );
-    Falcon::Gdk::EventButton::modInit( self );
+        Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
     Falcon::Gdk::Rectangle::modInit( self );
     Falcon::Gdk::Screen::modInit( self );

@@ -4,6 +4,9 @@
 
 #include "gdk_EventButton.hpp"
 
+#undef MYSELF
+#define MYSELF Gdk::EventButton* self = Falcon::dyncast<Gdk::EventButton*>( vm->self().asObjectSafe() )
+
 
 namespace Falcon {
 namespace Gdk {
@@ -13,18 +16,18 @@ namespace Gdk {
  */
 void EventButton::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_EventButton = mod->addClass( "GdkEventButton", &Gtk::abstract_init );
+    Falcon::Symbol* c_EventButton = mod->addClass( "GdkEventButton", &EventButton::init );
+
+    Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GdkEvent" ) );
+    c_EventButton->getClassDef()->addInheritance( in );
 
     c_EventButton->setWKS( true );
     c_EventButton->getClassDef()->factory( &EventButton::factory );
 
-    mod->addClassProperty( c_EventButton, "type" );
-    //mod->addClassProperty( c_EventButton, "window" );
-    mod->addClassProperty( c_EventButton, "send_event" );
     mod->addClassProperty( c_EventButton, "time" );
     mod->addClassProperty( c_EventButton, "x" );
     mod->addClassProperty( c_EventButton, "y" );
-    //mod->addClassProperty( c_EventButton, "axis" );
+    //mod->addClassProperty( c_EventButton, "axes" );
     mod->addClassProperty( c_EventButton, "state" );
     mod->addClassProperty( c_EventButton, "button" );
     //mod->addClassProperty( c_EventButton, "device" );
@@ -33,14 +36,11 @@ void EventButton::modInit( Falcon::Module* mod )
 }
 
 
-EventButton::EventButton( const Falcon::CoreClass* gen, const GdkEventButton* ev )
+EventButton::EventButton( const Falcon::CoreClass* gen,
+                          const GdkEventButton* ev, const bool transfer )
     :
-    Falcon::CoreObject( gen )
+    Gdk::Event( gen, (GdkEvent*) ev, transfer )
 {
-    if ( !ev )
-        memset( &m_eventButton, 0, sizeof( GdkEventButton ) );
-    else
-        memcpy( &m_eventButton, ev, sizeof( GdkEventButton ) );
 }
 
 
@@ -51,34 +51,33 @@ EventButton::~EventButton()
 
 bool EventButton::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
-    if ( s == "type" )
-        it = m_eventButton.type;
-    else
-    if ( s == "send_event" )
-        it = (bool) m_eventButton.send_event;
-    else
     if ( s == "time" )
-        it = m_eventButton.time;
+        it = ((GdkEventButton*)m_event)->time;
     else
     if ( s == "x" )
-        it = m_eventButton.x;
+        it = ((GdkEventButton*)m_event)->x;
     else
     if ( s == "y" )
-        it = m_eventButton.y;
+        it = ((GdkEventButton*)m_event)->y;
+#if 0 // todo
+    else
+    if ( s == "axes" )
+        it = m_event->axis;
+#endif
     else
     if ( s == "state" )
-        it = m_eventButton.state;
+        it = ((GdkEventButton*)m_event)->state;
     else
     if ( s == "button" )
-        it = m_eventButton.button;
+        it = ((GdkEventButton*)m_event)->button;
     else
     if ( s == "x_root" )
-        it = m_eventButton.x_root;
+        it = ((GdkEventButton*)m_event)->x_root;
     else
     if ( s == "y_root" )
-        it = m_eventButton.y_root;
+        it = ((GdkEventButton*)m_event)->y_root;
     else
-        return false;
+        return Gdk::Event::getProperty( s, it );
     return true;
 }
 
@@ -95,9 +94,17 @@ Falcon::CoreObject* EventButton::factory( const Falcon::CoreClass* gen, void* ev
 }
 
 
+void EventButton::setEvent( const GdkEventButton* ev, const bool transfer )
+{
+    Gdk::Event::setEvent( (GdkEvent*) ev, transfer );
+}
+
+
 /*#
     @class GdkEventButton
     @brief Used for button press and button release events.
+    @param One type of the event-button types (GDK_BUTTON_PRESS, GDK_2BUTTON_PRESS, GDK_3BUTTON_PRESS or GDK_BUTTON_RELEASE).
+
     @prop type the type of the event (GDK_BUTTON_PRESS, GDK_2BUTTON_PRESS, GDK_3BUTTON_PRESS or GDK_BUTTON_RELEASE).
     @prop window TODO the window which received the event.
     @prop send_event TRUE if the event was sent explicitly (e.g. using XSendEvent).
@@ -110,6 +117,8 @@ Falcon::CoreObject* EventButton::factory( const Falcon::CoreClass* gen, void* ev
     @prop device TODO the device where the event originated.
     @prop x_root the x coordinate of the pointer relative to the root of the screen.
     @prop y_root the y coordinate of the pointer relative to the root of the screen.
+
+    @note In Falcon, this class inherits from GdkEvent.
 
     The type field will be one of GDK_BUTTON_PRESS, GDK_2BUTTON_PRESS, GDK_3BUTTON_PRESS,
     and GDK_BUTTON_RELEASE.
@@ -143,6 +152,18 @@ Falcon::CoreObject* EventButton::factory( const Falcon::CoreClass* gen, void* ev
     second of the first. For a triple click to occur, the third button press must
     also occur within 1/2 second of the first button press.
  */
+FALCON_FUNC EventButton::init( VMARG )
+{
+    Item* i_tp = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_tp || !i_tp->isInteger() )
+        throw_inv_params( "GdkEventType" );
+#endif
+    // todo: check for correct event type
+    MYSELF;
+    self->setEvent( (GdkEventButton*) gdk_event_new( (GdkEventType) i_tp->asInteger() ),
+                    true );
+}
 
 
 } // Gdk

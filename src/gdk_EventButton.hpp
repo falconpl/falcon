@@ -3,6 +3,8 @@
 
 #include "modgtk.hpp"
 
+#include "gdk_Event.hpp"
+
 
 namespace Falcon {
 namespace Gdk {
@@ -12,11 +14,12 @@ namespace Gdk {
  */
 class EventButton
     :
-    public Falcon::CoreObject
+    public Gdk::Event
 {
 public:
 
-    EventButton( const Falcon::CoreClass*, const GdkEventButton* = 0 );
+    EventButton( const Falcon::CoreClass*,
+                 const GdkEventButton* = 0, const bool transfer = false );
 
     ~EventButton();
 
@@ -30,11 +33,11 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkEventButton* getObject() const { return (GdkEventButton*) &m_eventButton; }
+    GdkEventButton* getEvent() const { return (GdkEventButton*) m_event; }
 
-private:
+    void setEvent( const GdkEventButton*, const bool transfer = false );
 
-    GdkEventButton  m_eventButton;
+    static FALCON_FUNC init( VMARG );
 
 };
 
