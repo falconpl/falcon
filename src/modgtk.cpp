@@ -31,6 +31,7 @@
 #include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
+#include "gtk_CellRenderer.hpp"
 #include "gtk_CheckButton.hpp"
 #include "gtk_CheckMenuItem.hpp"
 #include "gtk_ColorButton.hpp"
@@ -249,6 +250,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::ToolItemGroup::modInit( self );
                 Falcon::Gtk::ToolPalette::modInit( self );
 #endif
+            Falcon::Gtk::CellRenderer::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Invisible::modInit( self );
