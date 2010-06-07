@@ -224,8 +224,56 @@
    > "Data in the fourth row: " + dbr.fetch( Table() )[3].describe()
    @endcode
 
-
-
+   @section dbi_value_types Database and Falcon values
+   
+   Databases have different, often non-standard data-types that must be mapped into Falcon item types
+   when they must be translated into SQL parameters or when they are returned as SQL query results.
+   
+   DBI transform database data types into falcon items, and eventually into Falcon standard language
+   class instances, using the nearest data type. The following list indicates how data coming from
+   and going to the database is transformed in/to Falcon item types.
+   
+   - @b nil: This values indicates a NULL database value.
+   - @b integer: Falcon 64-bit integers are used for all the integer-based operations. When they
+                 are used as parameters to be stored in fields with smaller precision, the values
+		 may be truncated.
+   - @b numeric: Falcon 64-bit floating point values are used to store REAL, FLOAT and DOUBLE data types,
+                 as well as fixed-point data types as DECIMAL or FIXED. If the precision of the underlying
+		 database type is smaller than the IEEE 64 bit floating point variable type (a C double
+		 data type), then the value may be truncated or may lose precision. If it has a greater
+		 precision than the Falcon data type, then it's the Falcon output variable the one that
+		 may get truncated. In that case, consider using the "string" parameter for the database
+		 connection (see below).
+    - @b string: Text based fields as fixed or variable length CHAR fields or text-oriented blobs can be
+                 updated using string values and are saved in output to Falcon strings. If the database
+		 support text encoding, then the transforamation between Falcon strings and underlying
+		 encoding is transparent (in both the directions).  If the encoding is not supported, or
+		 the field is a binary-oriented CHAR or encoding neutral, then the data retrieved in the
+		 string must be transcoded by the Falcon application with the usual means (using a transcoded
+		 string stream or using the transcodeTo/transcodeFrom string methods).
+    - @b MemBuf: Falcon memory buffers can be used to store binary data into binary blobs, and are created
+                 when reading binary blob fields from the database. Usually, they can also be sent to
+		 text fields, in which case they will be stored in the database as binary sequences without
+		 any database conversion.
+    - @b TimeStamp: Falcon TimeStamp standard class instances can be used to store date and time related
+                 datatype, and they are created when retrieving this kind of fields. Timezones
+		 are ignored, and they are not restored when reading informations from the database.
+		 When storing values into database fields that reprsent time-related values but provide just
+		 part of the information reported by TimeStamp, extra data is discarded. When reading
+		 fields containing only partial time information, unexpressed data is zeroed. So, when
+		 reading a DATE sql field, the hour, minute, second and millisecond fields of the resulting
+		 TimeStamp instance are zeroed.
+     - @b Object: When presenting any other object as an input field in a SQL statement, the Object.toString
+                 method is applied and the result is sent to the database driver instead.
+		 
+   The "string=on" option can be specified in the connection parameter or database handle option (see @a Handle.options) 
+   to have
+   all the results of the queries returned as string values, except for NULL and binary blobs, that are still
+   returned as @b nil and @b MemBuf items. If the underlying engine supports this method
+   natively and the extracted data should just be represented on output, or if the database engine provides
+   some information that cannot be easily determined after the automatic Value-to-Item translation, this
+   modality may be extremely useful.
+   
    @beginmodule dbi
 */
 
@@ -254,18 +302,33 @@ FALCON_MODULE_DECL
 
    /*#
       @class Statement
-      @brief Base for database operation
+      @brief Prepared statements abstraction class
+      
+      This class represents a statement prepared through the 
+      @a Handle.prepare method which is ready to be excecuted 
+      multiple times.
+      
+      When done, use the @a Statement.close method to release the 
+      resources and refresh the database connection status.
+      
+      @note Closing the database handle while the statement is still open and in use 
+      may lead to various kind of errors. It's a thing that should be generally avoided.
    */
    Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
    stmt_class->setWKS( true );
    self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
-   self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
+   //self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
    self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
 
    /*#
     @class Handle
     @brief DBI connection handle returned by @a connect.
-    */
+   
+    This is the main database interface connection abstraction,
+    which allows to issue SQL statements and inspect
+    the result of SQL queries.
+    
+   */
 
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%Handle", true );
@@ -291,9 +354,32 @@ FALCON_MODULE_DECL
          ->addParam("sql")->addParam("begin")->addParam("count");
 
    /*#
-    @class Recordset
-    @brief Represent a collection of database records as required from @a DBIBaseTrans.query.
-    */
+      @class Recordset
+      @brief Data retuned by SQL queries.
+
+      The recordset class abstracts a set of data returned by SQL queries.
+      
+      Data can be fetched row by row into Falcon arrays or dictionaries by
+      the @a Recordset.fetch method. In the first case, the value extracted
+      from each column is returned in the corresponding position of the 
+      returned array (the first column value at array position [0], the second
+      column value in the array [1] and so on).
+      
+      When fetching a dictionary, it will be filled with column names and values
+      respectively as the key corresponding value entries.
+      
+      The @a Recordset.fetch method can also be used to retrieve all the recordset
+      contents (or part of it) into a Falcon Table.
+      
+      Returned values can be of various falcon item types or classes; see the 
+      @a dbi_value_types section for further details.
+      
+      Other than fetching data, the @a Recordset class can be used to retrieve general
+      informations about the recordset (as the returned column size and names).
+      
+      @note Closing the database handle while the recordset is still open and in use 
+      may lead to various kind of errors. It's a thing that should be generally avoided.
+   */
 
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rs_class = self->addClass( "%Recordset", false ); // private class
