@@ -17,8 +17,12 @@
    MS-Windows system specific interface to sockets.
 */
 
+
+#define _WIN32_WINNT 0x0403 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+#include <falcon/mt.h>
 
 #ifdef __MINGW32__
    #define _inline __inline
@@ -28,12 +32,9 @@
    #include <Wspiapi.h>
 #endif
 
-#include <windows.h>
+
 
 #include "socket_sys.h"
-
-#include <falcon/mt.h>
-
 
 namespace Falcon {
 namespace Sys {
