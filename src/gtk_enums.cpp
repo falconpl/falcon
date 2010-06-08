@@ -758,6 +758,12 @@ void Enums::modInit( Falcon::Module* mod )
 #endif
 
     /*
+     *  GdkFillRule
+     */
+    { "GDK_EVEN_ODD_RULE",  GDK_EVEN_ODD_RULE },
+    { "GDK_WINDING_RULE",   GDK_WINDING_RULE },
+
+    /*
      *  GdkGravity
      */
     { "GDK_GRAVITY_NORTH_WEST", GDK_GRAVITY_NORTH_WEST },
