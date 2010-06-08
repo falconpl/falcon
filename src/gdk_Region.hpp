@@ -53,12 +53,14 @@ public:
 
     static FALCON_FUNC equal( VMARG );
 
+#if GTK_MINOR_VERSION >= 18
     static FALCON_FUNC rect_equal( VMARG );
+#endif
 
     static FALCON_FUNC point_in( VMARG );
 
     static FALCON_FUNC rect_in( VMARG );
-#if 0
+
     static FALCON_FUNC offset( VMARG );
 
     static FALCON_FUNC shrink( VMARG );
@@ -72,9 +74,10 @@ public:
     static FALCON_FUNC subtract( VMARG );
 
     static FALCON_FUNC xor_( VMARG );
-
+#if 0 // todo
     static FALCON_FUNC spans_intersect_foreach( VMARG );
 #endif
+
 private:
 
     GdkRegion*  m_region;

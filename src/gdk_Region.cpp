@@ -30,24 +30,26 @@ void Region::modInit( Falcon::Module* mod )
     { "copy",           &Region::copy },
     { "rectangle",      &Region::rectangle },
 #if 0 // not used
-    { "destroy",    &Region:: },
+    { "destroy",        &Region::destroy },
 #endif
     { "get_clipbox",    &Region::get_clipbox },
     { "get_rectangles", &Region::get_rectangles },
     { "empty",          &Region::empty },
     { "equal",          &Region::equal },
+#if GTK_MINOR_VERSION >= 18
     { "rect_equal",     &Region::rect_equal },
+#endif
     { "point_in",       &Region::point_in },
     { "rect_in",        &Region::rect_in },
-#if 0
-    { "offset",    &Region:: },
-    { "shrink",    &Region:: },
-    { "union_with_rect",    &Region:: },
-    { "intersect",    &Region:: },
-    { "union_",    &Region:: },
-    { "subtract",    &Region:: },
-    { "xor_",    &Region:: },
-    { "spans_intersect_foreach",    &Region:: },
+    { "offset",         &Region::offset },
+    { "shrink",         &Region::shrink },
+    { "union_with_rect",&Region::union_with_rect },
+    { "union_with_rect",&Region::union_with_rect },
+    { "union",          &Region::union_ },
+    { "subtract",       &Region::subtract },
+    { "xor",            &Region::xor_ },
+#if 0 // todo
+    { "spans_intersect_foreach",&Region::spans_intersect_foreach },
 #endif
     { NULL, NULL }
     };
@@ -111,7 +113,7 @@ FALCON_FUNC Region::init( VMARG )
 
 
 /*#
-    @method polygon
+    @method polygon GdkRegion
     @brief Creates a new GdkRegion using the polygon defined by a number of points.
     @param points an array of GdkPoint
     @param fill_rule specifies which pixels are included in the region when the polygon overlaps itself (GdkFillRule).
@@ -161,7 +163,7 @@ FALCON_FUNC Region::polygon( VMARG )
 
 
 /*#
-    @method copy
+    @method copy GdkRegion
     @brief Copies region, creating an identical new region.
     @return a new region identical to region
  */
@@ -179,7 +181,7 @@ FALCON_FUNC Region::copy( VMARG )
 
 
 /*#
-    @method rectangle
+    @method rectangle GdkRegion
     @brief Creates a new region containing the area rectangle.
     @param rectangle a GdkRectangle
     @return a new region
@@ -204,7 +206,7 @@ FALCON_FUNC Region::destroy( VMARG );
 
 
 /*#
-    @method get_clipbox
+    @method get_clipbox GdkRegion
     @brief Obtains the smallest rectangle which includes the entire GdkRegion.
     @return a GdkRectangle
  */
@@ -222,7 +224,7 @@ FALCON_FUNC Region::get_clipbox( VMARG )
 
 
 /*#
-    @method get_rectangles
+    @method get_rectangles GdkRegion
     @brief Obtains the area covered by the region as a list of rectangles.
     @return an array of GdkRectangle
  */
@@ -250,7 +252,7 @@ FALCON_FUNC Region::get_rectangles( VMARG )
 
 
 /*#
-    @method empty
+    @method empty GdkRegion
     @brief Finds out if the GdkRegion is empty.
     @return TRUE if region is empty.
  */
@@ -266,7 +268,7 @@ FALCON_FUNC Region::empty( VMARG )
 
 
 /*#
-    @method equal
+    @method equal GdkRegion
     @brief Finds out if the two regions are the same.
     @param region a GdkRegion
     @return TRUE if this and region are equal.
@@ -284,8 +286,9 @@ FALCON_FUNC Region::equal( VMARG )
 }
 
 
+#if GTK_MINOR_VERSION >= 18
 /*#
-    @method rect_equal
+    @method rect_equal GdkRegion
     @brief Finds out if a regions is the same as a rectangle.
     @param rectangle a GdkRectangle
     @return TRUE if region and rectangle are equal.
@@ -301,10 +304,11 @@ FALCON_FUNC Region::rect_equal( VMARG )
     MYSELF;
     vm->retval( (bool) gdk_region_rect_equal( self->getRegion(), rec ) );
 }
+#endif
 
 
 /*#
-    @method point_in
+    @method point_in GdkRegion
     @brief Finds out if a point is in a region.
     @param x the x coordinate of a point
     @param y the y coordinate of a point
@@ -326,7 +330,7 @@ FALCON_FUNC Region::point_in( VMARG )
 
 
 /*#
-    @method rect_in
+    @method rect_in GdkRegion
     @brief Tests whether a rectangle is within a region.
     @param rectangle a GdkRectangle
     @return GDK_OVERLAP_RECTANGLE_IN, GDK_OVERLAP_RECTANGLE_OUT, or GDK_OVERLAP_RECTANGLE_PART, depending on whether the rectangle is inside, outside, or partly inside the GdkRegion, respectively.
@@ -344,23 +348,149 @@ FALCON_FUNC Region::rect_in( VMARG )
 }
 
 
-#if 0
-FALCON_FUNC Region::offset( VMARG );
-
-FALCON_FUNC Region::shrink( VMARG );
-
-FALCON_FUNC Region::union_with_rect( VMARG );
-
-FALCON_FUNC Region::intersect( VMARG );
-
-FALCON_FUNC Region::union_( VMARG );
-
-FALCON_FUNC Region::subtract( VMARG );
-
-FALCON_FUNC Region::xor_( VMARG );
-
-FALCON_FUNC Region::spans_intersect_foreach( VMARG );
+/*#
+    @method offset GdkRegion
+    @brief Moves a region the specified distance.
+    @param dx the distance to move the region horizontally
+    @param dy the distance to move the region vertically
+ */
+FALCON_FUNC Region::offset( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "I,I" );
 #endif
+    MYSELF;
+    gdk_region_offset( self->getRegion(), i_x->asInteger(), i_y->asInteger() );
+}
+
+
+/*#
+    @method shrink GdkRegion
+    @brief Resizes a region by the specified amount. Positive values shrink the region. Negative values expand it.
+    @param dx the number of pixels to shrink the region horizontally
+    @param dy the number of pixels to shrink the region vertically
+ */
+FALCON_FUNC Region::shrink( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    gdk_region_shrink( self->getRegion(), i_x->asInteger(), i_y->asInteger() );
+}
+
+
+/*#
+    @method union_with_rect GdkRegion
+    @brief Sets the area of region to the union of the areas of region and rect.
+    @param rect a GdkRectangle
+
+    The resulting area is the set of pixels contained in either region or rect.
+ */
+FALCON_FUNC Region::union_with_rect( VMARG )
+{
+    Item* i_rec = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_rec || !i_rec->isObject() || !IS_DERIVED( i_rec, GdkRectangle ) )
+        throw_inv_params( "GdkRectangle" );
+#endif
+    GdkRectangle* rec = dyncast<Gdk::Rectangle*>( i_rec->asObjectSafe() )->getRectangle();
+    MYSELF;
+    gdk_region_union_with_rect( self->getRegion(), rec );
+}
+
+
+/*#
+    @method intersect GdkRegion
+    @brief Sets the area of this instance to its intersection with the area of source.
+    @param source a GdkRegion
+
+    The resulting area is the set of pixels contained in both this region and source2.
+ */
+FALCON_FUNC Region::intersect( VMARG )
+{
+    Item* i_src = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
+        throw_inv_params( "GdkRegion" );
+#endif
+    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
+    MYSELF;
+    gdk_region_intersect( self->getRegion(), src );
+}
+
+
+/*#
+    @method union GdkRegion
+    @brief Sets the area of this instance to the union of the areas this region and source.
+    @param source a GdkRegion
+
+    The resulting area is the set of pixels contained in either this region or source.
+ */
+FALCON_FUNC Region::union_( VMARG )
+{
+    Item* i_src = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
+        throw_inv_params( "GdkRegion" );
+#endif
+    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
+    MYSELF;
+    gdk_region_union( self->getRegion(), src );
+}
+
+
+/*#
+    @method subtract GdkRegion
+    @brief Subtracts the area of source from the area of this instance.
+    @param source another GdkRegion
+
+    The resulting area is the set of pixels contained in this region but not in source.
+ */
+FALCON_FUNC Region::subtract( VMARG )
+{
+    Item* i_src = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
+        throw_inv_params( "GdkRegion" );
+#endif
+    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
+    MYSELF;
+    gdk_region_subtract( self->getRegion(), src );
+}
+
+
+/*#
+    @method xor GdkRegion
+    @brief Sets the area of this instance to the exclusive-OR of the areas of this region and source.
+    @param source another GdkRegion
+
+    The resulting area is the set of pixels contained in one or the other of
+    the two sources but not in both.
+ */
+FALCON_FUNC Region::xor_( VMARG )
+{
+    Item* i_src = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
+        throw_inv_params( "GdkRegion" );
+#endif
+    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
+    MYSELF;
+    gdk_region_xor( self->getRegion(), src );
+}
+
+
+//FALCON_FUNC Region::spans_intersect_foreach( VMARG );
+
 
 } // Gdk
 } // Falcon
