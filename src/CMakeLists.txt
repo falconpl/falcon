@@ -19,6 +19,7 @@ set( SRC_FILES
     gdk_Pixbuf.cpp
     gdk_Point.cpp
     gdk_Rectangle.cpp
+    gdk_Region.cpp
     gdk_Screen.cpp
     gdk_Visual.cpp
     gtk_AboutDialog.cpp
@@ -144,6 +145,7 @@ set( HDR_FILES
     gdk_Pixbuf.hpp
     gdk_Point.hpp
     gdk_Rectangle.hpp
+    gdk_Region.hpp
     gdk_Screen.hpp
     gdk_Visual.hpp
     gtk_AboutDialog.hpp

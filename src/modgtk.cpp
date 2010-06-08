@@ -16,6 +16,7 @@
 #include "gdk_Pixbuf.hpp"
 #include "gdk_Point.hpp"
 #include "gdk_Rectangle.hpp"
+#include "gdk_Region.hpp"
 #include "gdk_Screen.hpp"
 #include "gdk_Visual.hpp"
 
@@ -157,6 +158,7 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Pixbuf::modInit( self );
     Falcon::Gdk::Point::modInit( self );
     Falcon::Gdk::Rectangle::modInit( self );
+    Falcon::Gdk::Region::modInit( self );
     Falcon::Gdk::Screen::modInit( self );
     Falcon::Gdk::Visual::modInit( self );
 
