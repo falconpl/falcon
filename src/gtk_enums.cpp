@@ -800,6 +800,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_MODIFIER_MASK",      GDK_MODIFIER_MASK },
 
     /*
+     *  GdkOverlapType
+     */
+    { "GDK_OVERLAP_RECTANGLE_IN",   GDK_OVERLAP_RECTANGLE_IN },
+    { "GDK_OVERLAP_RECTANGLE_OUT",  GDK_OVERLAP_RECTANGLE_OUT },
+    { "GDK_OVERLAP_RECTANGLE_PART", GDK_OVERLAP_RECTANGLE_PART },
+
+    /*
      *  GdkPixbuf version
      */
     { "GDK_PIXBUF_MAJOR", GDK_PIXBUF_MAJOR },
