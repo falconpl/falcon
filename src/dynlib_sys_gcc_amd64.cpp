@@ -1,12 +1,12 @@
 /*
    The Falcon Programming Language
-   FILE: dynlib_sys_gcc.cpp
+   FILE: dynlib_sys_gcc_amd64.cpp
 
    Direct dynamic library interface for Falcon
    System specific extensions - GCC on intel32
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 08 Nov 2008 21:40:34 +0100
+   Begin:
 
    -------------------------------------------------------------------
    (C) Copyright 2010 Giancarlo Niccolai
@@ -95,38 +95,7 @@ void dynlib_call( void *faddress, void** parameters, int* sizes, byte* retval )
    );
 }
 
-/*
- Test functions for different platforms.
-
-static int64 _lld()
-{
-   return (int64) 257;
-}
-
-
-static float _fd()
-{
-   return (float) 1.5;
-}
-
-
-static double _d()
-{
-   static char buffer[sizeof(double)];
-   double ldl = 1.5;
-   *(double *)(buffer) = ldl;
-   return ldl;
-}
-
-static long double _ld()
-{
-   static char buffer[sizeof(long double)];
-   long double ldl = 1.5;
-   *(long double *)(buffer) = ldl;
-   return ldl;
-}
-*/
 }
 }
 
-/* end of dynlib_sys_gcc.cpp */
+/* end of dynlib_sys_gcc_amd64.cpp */
