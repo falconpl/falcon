@@ -22,6 +22,7 @@ set( SRC_FILES
     gdk_Region.cpp
     gdk_Screen.cpp
     gdk_Visual.cpp
+    gdk_Window.cpp
     gtk_AboutDialog.cpp
     gtk_Action.cpp
     gtk_Activatable.cpp
@@ -148,6 +149,7 @@ set( HDR_FILES
     gdk_Region.hpp
     gdk_Screen.hpp
     gdk_Visual.hpp
+    gdk_Window.hpp
     gtk_AboutDialog.hpp
     gtk_Action.hpp
     gtk_Activatable.hpp

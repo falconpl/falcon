@@ -19,6 +19,7 @@
 #include "gdk_Region.hpp"
 #include "gdk_Screen.hpp"
 #include "gdk_Visual.hpp"
+#include "gdk_Window.hpp"
 
 #include "gtk_enums.hpp"
 
@@ -153,6 +154,7 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Colormap::modInit( self );
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::Drawable::modInit( self );
+        Falcon::Gdk::Window::modInit( self );
     Falcon::Gdk::Event::modInit( self );
         Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );

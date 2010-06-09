@@ -841,6 +841,25 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_VISUAL_DIRECT_COLOR",    GDK_VISUAL_DIRECT_COLOR },
 
     /*
+     *  GdkWindowAttributesType
+     */
+    { "GDK_WA_TITLE",       GDK_WA_TITLE },
+    { "GDK_WA_X",           GDK_WA_X },
+    { "GDK_WA_Y",           GDK_WA_Y },
+    { "GDK_WA_CURSOR",      GDK_WA_CURSOR },
+    { "GDK_WA_COLORMAP",    GDK_WA_COLORMAP },
+    { "GDK_WA_VISUAL",      GDK_WA_VISUAL },
+    { "GDK_WA_WMCLASS",     GDK_WA_WMCLASS },
+    { "GDK_WA_NOREDIR",     GDK_WA_NOREDIR },
+    { "GDK_WA_TYPE_HINT",   GDK_WA_TYPE_HINT },
+
+    /*
+     *  GdkWindowClass
+     */
+    { "GDK_INPUT_OUTPUT",   GDK_INPUT_OUTPUT },
+    { "GDK_INPUT_ONLY",     GDK_INPUT_ONLY },
+
+    /*
      *  GdkWindowEdge
      */
     { "GDK_WINDOW_EDGE_NORTH_WEST", GDK_WINDOW_EDGE_NORTH_WEST },
@@ -851,6 +870,32 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_WINDOW_EDGE_SOUTH_WEST", GDK_WINDOW_EDGE_SOUTH_WEST },
     { "GDK_WINDOW_EDGE_SOUTH",      GDK_WINDOW_EDGE_SOUTH },
     { "GDK_WINDOW_EDGE_SOUTH_EAST", GDK_WINDOW_EDGE_SOUTH_EAST },
+
+    /*
+     *  GdkWindowHints
+     */
+    { "GDK_HINT_POS",           GDK_HINT_POS },
+    { "GDK_HINT_MIN_SIZE",      GDK_HINT_MIN_SIZE },
+    { "GDK_HINT_MAX_SIZE",      GDK_HINT_MAX_SIZE },
+    { "GDK_HINT_BASE_SIZE",     GDK_HINT_BASE_SIZE },
+    { "GDK_HINT_ASPECT",        GDK_HINT_ASPECT },
+    { "GDK_HINT_RESIZE_INC",    GDK_HINT_RESIZE_INC },
+    { "GDK_HINT_WIN_GRAVITY",   GDK_HINT_WIN_GRAVITY },
+    { "GDK_HINT_USER_POS",      GDK_HINT_USER_POS },
+    { "GDK_HINT_USER_SIZE",     GDK_HINT_USER_SIZE },
+
+    /*
+     *  GdkWindowType
+     */
+    { "GDK_WINDOW_ROOT",        GDK_WINDOW_ROOT },
+    { "GDK_WINDOW_TOPLEVEL",    GDK_WINDOW_TOPLEVEL },
+    { "GDK_WINDOW_CHILD",       GDK_WINDOW_CHILD },
+    { "GDK_WINDOW_DIALOG",      GDK_WINDOW_DIALOG },
+    { "GDK_WINDOW_TEMP",        GDK_WINDOW_TEMP },
+    { "GDK_WINDOW_FOREIGN",     GDK_WINDOW_FOREIGN },
+#if GTK_MINOR_VERSION >= 18
+    { "GDK_WINDOW_OFFSCREEN",   GDK_WINDOW_OFFSCREEN },
+#endif
 
     /*
      *  GdkWindowTypeHint
