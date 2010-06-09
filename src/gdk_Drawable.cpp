@@ -6,6 +6,7 @@
 
 #include "gdk_Colormap.hpp"
 //#include "gdk_Display.hpp"
+#include "gdk_Region.hpp"
 #include "gdk_Screen.hpp"
 #include "gdk_Visual.hpp"
 
@@ -41,9 +42,9 @@ void Drawable::modInit( Falcon::Module* mod )
     { "get_colormap",       &Drawable::get_colormap },
     { "get_depth",          &Drawable::get_depth },
     { "get_size",           &Drawable::get_size },
+    { "get_clip_region",    &Drawable::get_clip_region },
+    { "get_visible_region", &Drawable::get_visible_region },
 #if 0
-    { "get_clip_region",    &Drawable:: },
-    { "get_visible_region",    &Drawable:: },
     { "draw_point",    &Drawable:: },
     { "draw_points",    &Drawable:: },
     { "draw_line",    &Drawable:: },
@@ -247,9 +248,53 @@ FALCON_FUNC Drawable::get_size( VMARG )
 }
 
 
+/*#
+    @method get_clip_region
+    @brief Computes the region of a drawable that potentially can be written to by drawing primitives.
+    @return a GdkRegion.
+
+    This region will not take into account the clip region for the GC, and may
+    also not take into account other factors such as if the window is obscured
+    by other windows, but no area outside of this region will be affected by
+    drawing primitives.
+ */
+FALCON_FUNC Drawable::get_clip_region( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GdkRegion* reg = gdk_drawable_get_clip_region( (GdkDrawable*)_obj );
+    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), reg,
+                                 true ) );
+}
+
+
+/*#
+    @method get_visible_region
+    @brief Computes the region of a drawable that is potentially visible.
+    @return a GdkRegion.
+
+    This does not necessarily take into account if the window is obscured by
+    other windows, but no area outside of this region is visible.
+ */
+FALCON_FUNC Drawable::get_visible_region( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GdkRegion* reg = gdk_drawable_get_visible_region( (GdkDrawable*)_obj );
+    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), reg,
+                                 true ) );
+}
+
+
 #if 0
-FALCON_FUNC Drawable::get_clip_region( VMARG );
-FALCON_FUNC Drawable::get_visible_region( VMARG );
 FALCON_FUNC Drawable::draw_point( VMARG );
 FALCON_FUNC Drawable::draw_points( VMARG );
 FALCON_FUNC Drawable::draw_line( VMARG );

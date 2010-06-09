@@ -42,11 +42,11 @@ public:
     static FALCON_FUNC get_depth( VMARG );
 
     static FALCON_FUNC get_size( VMARG );
-#if 0
+
     static FALCON_FUNC get_clip_region( VMARG );
 
     static FALCON_FUNC get_visible_region( VMARG );
-
+#if 0
     static FALCON_FUNC draw_point( VMARG );
 
     static FALCON_FUNC draw_points( VMARG );
