@@ -4,7 +4,7 @@
  *
  * DBI Falcon extension interface
  * -------------------------------------------------------------------
- * Author: Giancarlo Niccolai and Jeremy Cowgar
+ * Author: Giancarlo
  * Begin: Sun, 23 May 2010 20:17:58 +0200
  *
  * -------------------------------------------------------------------
@@ -39,14 +39,22 @@ namespace Ext {
  *****************************************************************************/
 
 /*#
-   @function DBIConnect
-   @brief Connect to a database server.
+   @function connect
+   @brief Connect to a database server through a DBI driver.
    @param conn SQL connection string.
    @optparam queryops Default transaction options to be applied to
-                 transactions created with the returned handle.
+                 operations performed on the returned handler returned handle.
    @return an instance of @a Handle.
    @raise DBIError if the connection fails.
 
+  This function acts as a front-end to dynamically determine the DBI driver
+  that should be used to connect to a determined database.
+  
+  The @b conn connection string is in the format described in @a dbi_load.
+  An optional parameter @b queryops can be given to change some default
+  value in the connection.
+  
+  @see Handle.options
 */
 
 void DBIConnect( VMachine *vm )
@@ -106,8 +114,15 @@ void DBIConnect( VMachine *vm )
    @brief Executes a repeated statement.
    @optparam ... The data to be passed to the repeated statement.
    @return Number of rows affected by the command.
-
    @raise DBIError if the database engine reports an error.
+   
+   This method executes a statement that has been prepared through
+   the @a Handle.prepare method. If the prepared statement
+   could return a recordset, it is discarded (immediately closed
+   server-side before it can reach the script). To receive a recordset
+   use @a Statement.query
+   
+   @see Handle.prepare
 */
 
 void Statement_execute( VMachine *vm )
@@ -132,7 +147,7 @@ void Statement_execute( VMachine *vm )
    Some Database engines allow to reset a statement and retry to issue (execute) it
    without re-creating it anew.
 
-   If the database engine doesn't support this feature, a DBIError will be throw.
+   If the database engine doesn't support this feature, a DBIError will be thrown.
 */
 
 void Statement_reset( VMachine *vm )
@@ -348,7 +363,10 @@ void Handle_lselect( VMachine *vm )
 /*#
  @method close DBIHandle
  @brief Close the database handle.
- */
+ 
+  Every further operation on this object or on any related object will
+  cause an exception to be raised.
+*/
 
 void Handle_close( VMachine *vm )
 {
@@ -361,7 +379,7 @@ void Handle_close( VMachine *vm )
    @method getLastID Handle
    @brief Get the ID of the last record inserted.
    @optparam name A sequence name that is known by the engine.
-   @return Integer
+   @return The value of the last single-field numeric key inserted in this transaction.
 
    This is database dependent but so widely used, it is included in the DBI module. Some
    databases such as MySQL only support getting the last inserted ID globally in the
@@ -493,6 +511,13 @@ void Handle_perform( VMachine *vm )
    @brief Prepares a repeated statement.
    @param sql The SQL query
    @raise DBIError if the database engine reports an error.
+
+  This method creates a "prepared statement" that can be iteratively
+  called with different parameters to perform multiple time the same
+  operations. 
+  
+  Typically, the SQL statement will be a non-query data statement meant
+  
 */
 
 void Handle_prepare( VMachine *vm )

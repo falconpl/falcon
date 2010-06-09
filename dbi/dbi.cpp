@@ -317,7 +317,7 @@ FALCON_MODULE_DECL
    Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
    stmt_class->setWKS( true );
    self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
-   //self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
+   self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
    self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
 
    /*#
