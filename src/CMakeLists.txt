@@ -18,6 +18,7 @@ set( SRC_FILES
     gdk_Event.cpp
     gdk_EventButton.cpp
     gdk_Pixbuf.cpp
+    gdk_Pixmap.cpp
     gdk_Point.cpp
     gdk_Rectangle.cpp
     gdk_Region.cpp
@@ -146,6 +147,7 @@ set( HDR_FILES
     gdk_Event.hpp
     gdk_EventButton.hpp
     gdk_Pixbuf.hpp
+    gdk_Pixmap.hpp
     gdk_Point.hpp
     gdk_Rectangle.hpp
     gdk_Region.hpp
