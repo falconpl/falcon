@@ -14,6 +14,7 @@
 #include "gdk_Drawable.hpp"
 #include "gdk_Event.hpp"
 #include "gdk_EventButton.hpp"
+#include "gdk_GC.hpp"
 #include "gdk_Pixbuf.hpp"
 #include "gdk_Pixmap.hpp"
 #include "gdk_Point.hpp"
@@ -160,6 +161,7 @@ FALCON_MODULE_DECL
         Falcon::Gdk::Window::modInit( self );
     Falcon::Gdk::Event::modInit( self );
         Falcon::Gdk::EventButton::modInit( self );
+    Falcon::Gdk::GC::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
     Falcon::Gdk::Pixmap::modInit( self );
     Falcon::Gdk::Point::modInit( self );
