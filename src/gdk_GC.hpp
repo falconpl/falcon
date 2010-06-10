@@ -23,14 +23,22 @@ public:
     static void modInit( Falcon::Module* );
 
     static FALCON_FUNC init( VMARG );
-#if 0
+
     static FALCON_FUNC new_with_values( VMARG );
+
     static FALCON_FUNC get_screen( VMARG );
+
+#if 0 // unused
     static FALCON_FUNC ref( VMARG );
     static FALCON_FUNC unref( VMARG );
     static FALCON_FUNC destroy( VMARG );
+#endif
+
     static FALCON_FUNC set_values( VMARG );
+
     static FALCON_FUNC get_values( VMARG );
+
+#if 0 // todo
     static FALCON_FUNC set_foreground( VMARG );
     static FALCON_FUNC set_background( VMARG );
     static FALCON_FUNC set_rgb_fg_color( VMARG );

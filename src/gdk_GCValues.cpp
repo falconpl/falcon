@@ -18,7 +18,7 @@ void GCValues::modInit( Falcon::Module* mod )
 {
     Falcon::Symbol* c_GCValues = mod->addClass( "GdkGCValues" );
 
-    //c_GCValues->setWKS( true );
+    c_GCValues->setWKS( true );
     c_GCValues->getClassDef()->factory( &GCValues::factory );
 
     mod->addClassProperty( c_GCValues, "foreground" );

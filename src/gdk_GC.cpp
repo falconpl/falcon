@@ -4,6 +4,9 @@
 
 #include "gdk_GC.hpp"
 
+#include "gdk_GCValues.hpp"
+#include "gdk_Screen.hpp"
+
 
 namespace Falcon {
 namespace Gdk {
@@ -18,19 +21,21 @@ void GC::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GObject" ) );
     c_GC->getClassDef()->addInheritance( in );
 
-    //c_GC->setWKS( true );
+    c_GC->setWKS( true );
     c_GC->getClassDef()->factory( &GC::factory );
 
     Gtk::MethodTab methods[] =
     {
-#if 0
     { "new_with_values",        &GC::new_with_values },
     { "get_screen",             &GC::get_screen },
+#if 0 // unused
     { "ref",                    &GC::ref },
     { "unref",                  &GC::unref },
     { "destroy",                &GC::destroy },
+#endif
     { "set_values",             &GC::set_values },
     { "get_values",             &GC::get_values },
+#if 0
     { "set_foreground",         &GC::set_foreground },
     { "set_background",         &GC::set_background },
     { "set_rgb_fg_color",       &GC::set_rgb_fg_color },
@@ -104,14 +109,107 @@ FALCON_FUNC GC::init( VMARG )
 }
 
 
-#if 0
-FALCON_FUNC GC::new_with_values( VMARG );
-FALCON_FUNC GC::get_screen( VMARG );
+/*#
+    @method new_with_values
+    @brief Create a new GC with the given initial values.
+    @param drawable a GdkDrawable. The created GC must always be used with drawables of the same depth as this one.
+    @param values a structure containing initial values for the GC (GdkGCValues).
+    @param values_mask a bit mask indicating which fields in values are set (GdkGCValuesMask).
+    @return the new graphics context.
+ */
+FALCON_FUNC GC::new_with_values( VMARG )
+{
+    Item* i_draw = vm->param( 0 );
+    Item* i_val = vm->param( 1 );
+    Item* i_mask = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_draw || !i_draw->isObject() || !IS_DERIVED( i_draw, GdkDrawable )
+        || !i_val || !i_val->isObject() || !IS_DERIVED( i_val, GdkGCValues )
+        || !i_mask || !i_mask->isInteger() )
+        throw_inv_params( "GdkGCValues,GdkGCValuesMask" );
+#endif
+    GdkDrawable* draw = (GdkDrawable*) COREGOBJECT( i_draw )->getGObject();
+    GdkGCValues* val = dyncast<Gdk::GCValues*>( i_val->asObjectSafe() )->getGCValues();
+    GdkGC* gc = gdk_gc_new_with_values( draw, val, (GdkGCValuesMask) i_mask->asInteger() );
+    vm->retval( new Gdk::GC( vm->findWKI( "GdkGC" )->asClass(), gc ) );
+}
+
+
+/*#
+    @method get_screen
+    @brief Gets the GdkScreen for which gc was created
+    @return the GdkScreen for gc.
+ */
+FALCON_FUNC GC::get_screen( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GdkScreen* screen = gdk_gc_get_screen( (GdkGC*)_obj );
+    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), screen ) );
+}
+
+
+#if 0 // not used
 FALCON_FUNC GC::ref( VMARG );
 FALCON_FUNC GC::unref( VMARG );
 FALCON_FUNC GC::destroy( VMARG );
-FALCON_FUNC GC::set_values( VMARG );
-FALCON_FUNC GC::get_values( VMARG );
+#endif
+
+
+/*#
+    @method set_values
+    @brief Sets attributes of a graphics context in bulk.
+    @param values struct containing the new values (GdkGCValues).
+    @param values_mask mask indicating which struct fields are to be used (GdkGCValuesMask).
+
+    For each flag set in values_mask, the corresponding field will be read from
+    values and set as the new value for gc. If you're only setting a few values
+    on gc, calling individual "setter" functions is likely more convenient.
+ */
+FALCON_FUNC GC::set_values( VMARG )
+{
+    Item* i_val = vm->param( 0 );
+    Item* i_mask = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_val || !i_val->isObject() || !IS_DERIVED( i_val, GdkGCValues )
+        || !i_mask || !i_mask->isInteger() )
+        throw_inv_params( "GdkGCValues,GdkGCValuesMask" );
+#endif
+    GdkGCValues* val = dyncast<Gdk::GCValues*>( i_val->asObjectSafe() )->getGCValues();
+    MYSELF;
+    GET_OBJ( self );
+    gdk_gc_set_values( (GdkGC*)_obj, val, (GdkGCValuesMask) i_mask->asInteger() );
+}
+
+
+/*#
+    @method get_values
+    @brief Retrieves the current values from a graphics context.
+    @return the GdkGCValues structure in which to store the results.
+
+    Note that only the pixel values of the values->foreground and
+    values->background are filled, use gdk_colormap_query_color() to obtain the
+    rgb values if you need them.
+ */
+FALCON_FUNC GC::get_values( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    GdkGCValues val;
+    gdk_gc_get_values( (GdkGC*)_obj, &val );
+    vm->retval( new Gdk::GCValues( vm->findWKI( "GdkGCValues" )->asClass(), &val ) );
+}
+
+
+#if 0
 FALCON_FUNC GC::set_foreground( VMARG );
 FALCON_FUNC GC::set_background( VMARG );
 FALCON_FUNC GC::set_rgb_fg_color( VMARG );
