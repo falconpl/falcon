@@ -850,6 +850,48 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_WINDING_RULE",   GDK_WINDING_RULE },
 
     /*
+     *  GdkFunction
+     */
+    { "GDK_COPY",           GDK_COPY },
+    { "GDK_INVERT",         GDK_INVERT },
+    { "GDK_XOR",            GDK_XOR },
+    { "GDK_CLEAR",          GDK_CLEAR },
+    { "GDK_AND",            GDK_AND },
+    { "GDK_AND_REVERSE",    GDK_AND_REVERSE },
+    { "GDK_AND_INVERT",     GDK_AND_INVERT },
+    { "GDK_NOOP",           GDK_NOOP },
+    { "GDK_OR",             GDK_OR },
+    { "GDK_EQUIV",          GDK_EQUIV },
+    { "GDK_OR_REVERSE",     GDK_OR_REVERSE },
+    { "GDK_COPY_INVERT",    GDK_COPY_INVERT },
+    { "GDK_OR_INVERT",      GDK_OR_INVERT },
+    { "GDK_NAND",           GDK_NAND },
+    { "GDK_NOR",            GDK_NOR },
+    { "GDK_SET",            GDK_SET },
+
+    /*
+     *  GdkGCValuesMask
+     */
+    { "GDK_GC_FOREGROUND",      GDK_GC_FOREGROUND },
+    { "GDK_GC_BACKGROUND",      GDK_GC_BACKGROUND },
+    { "GDK_GC_FONT",            GDK_GC_FONT },
+    { "GDK_GC_FUNCTION",        GDK_GC_FUNCTION },
+    { "GDK_GC_FILL",            GDK_GC_FILL },
+    { "GDK_GC_TILE",            GDK_GC_TILE },
+    { "GDK_GC_STIPPLE",         GDK_GC_STIPPLE },
+    { "GDK_GC_CLIP_MASK",       GDK_GC_CLIP_MASK },
+    { "GDK_GC_SUBWINDOW",       GDK_GC_SUBWINDOW },
+    { "GDK_GC_TS_X_ORIGIN",     GDK_GC_TS_X_ORIGIN },
+    { "GDK_GC_TS_Y_ORIGIN",     GDK_GC_TS_Y_ORIGIN },
+    { "GDK_GC_CLIP_X_ORIGIN",   GDK_GC_CLIP_X_ORIGIN },
+    { "GDK_GC_CLIP_Y_ORIGIN",   GDK_GC_CLIP_Y_ORIGIN },
+    { "GDK_GC_EXPOSURES",       GDK_GC_EXPOSURES },
+    { "GDK_GC_LINE_WIDTH",      GDK_GC_LINE_WIDTH },
+    { "GDK_GC_LINE_STYLE",      GDK_GC_LINE_STYLE },
+    { "GDK_GC_CAP_STYLE",       GDK_GC_CAP_STYLE },
+    { "GDK_GC_JOIN_STYLE",      GDK_GC_JOIN_STYLE },
+
+    /*
      *  GdkGravity
      */
     { "GDK_GRAVITY_NORTH_WEST", GDK_GRAVITY_NORTH_WEST },
