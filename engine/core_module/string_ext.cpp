@@ -484,7 +484,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    the string, only the first starting from left is considered, while the others
    are returned in the second item, unparsed.
 
-   If the @token is empty or not given, the string is returned as a sequence of
+   If the @b token is empty or not given, the string is returned as a sequence of
    1-character strings in an array.
 
 

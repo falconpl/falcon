@@ -97,7 +97,7 @@ bool transferSysFiles( Options &options, bool bJustScript )
 
    // we need to discard the extension, so that the runner decides how to run the program.
    Path scriptName( options.m_sMainScript );
-   startScript.writeString( "    \"" + scriptName.getFile() +"\" \"$*\"" );
+   startScript.writeString( "    \"" + scriptName.getFile() +"\" $*" );
 
    startScript.flush();
 

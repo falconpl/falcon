@@ -427,7 +427,7 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
       Receiver.display()   // show the count
    @endcode
 
-   The @a VSMlot.send  method works similarly to the @a VMSlot.broadcast method,
+   The @a VMSlot.send  method works similarly to the @a VMSlot.broadcast method,
    but it allows to specify an arbitrary event name. Callbacks subscribed to this
    slot would be called for @i every event, be it generated through a broadcast or
    via a send call.
