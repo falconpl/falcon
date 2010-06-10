@@ -66,7 +66,7 @@ Region::Region( const Falcon::CoreClass* gen,
     m_region( NULL )
 {
     if ( region )
-        m_region = transfer ? (GdkRegion*) region : gdk_region_copy( region );
+        m_region = transfer ? (GdkRegion*) region : gdk_region_copy( (GdkRegion*) region );
     else
         m_region = gdk_region_new();
 }
