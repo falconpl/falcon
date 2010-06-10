@@ -64,7 +64,7 @@ Event::Event( const Falcon::CoreClass* gen, const GdkEvent* ev, const bool trans
     if ( ev )
     {
         if ( !transfer )
-            m_event = gdk_event_copy( ev );
+            m_event = gdk_event_copy( (GdkEvent*) ev );
         else
             m_event = (GdkEvent*) ev;
     }
@@ -113,7 +113,7 @@ void Event::setEvent( const GdkEvent* ev, const bool transfer )
     assert( !m_event );
 
     if ( !transfer )
-        m_event = gdk_event_copy( ev );
+        m_event = gdk_event_copy( (GdkEvent*) ev );
     else
         m_event = (GdkEvent*) ev;
 }
