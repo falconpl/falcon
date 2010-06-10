@@ -654,6 +654,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_MSB_FIRST",  GDK_MSB_FIRST },
 
     /*
+     *  GdkCapStyle
+     */
+    { "GDK_CAP_NOT_LAST",       GDK_CAP_NOT_LAST },
+    { "GDK_CAP_BUTT",           GDK_CAP_BUTT },
+    { "GDK_CAP_ROUND",          GDK_CAP_ROUND },
+    { "GDK_CAP_PROJECTING",     GDK_CAP_PROJECTING },
+
+    /*
      *  GdkColorSpace
      */
     { "GDK_COLORSPACE_RGB", GDK_COLORSPACE_RGB },
