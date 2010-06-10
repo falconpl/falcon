@@ -914,6 +914,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
 
     /*
+     *  GdkJoinStyle
+     */
+    { "GDK_JOIN_MITER",     GDK_JOIN_MITER },
+    { "GDK_JOIN_ROUND",     GDK_JOIN_ROUND },
+    { "GDK_JOIN_BEVEL",     GDK_JOIN_BEVEL },
+
+    /*
      *  GdkLineStyle
      */
     { "GDK_LINE_SOLID",         GDK_LINE_SOLID },
