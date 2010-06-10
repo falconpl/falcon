@@ -906,6 +906,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
 
     /*
+     *  GdkLineStyle
+     */
+    { "GDK_LINE_SOLID",         GDK_LINE_SOLID },
+    { "GDK_LINE_ON_OFF_DASH",   GDK_LINE_ON_OFF_DASH },
+    { "GDK_LINE_DOUBLE_DASH",   GDK_LINE_DOUBLE_DASH },
+
+    /*
      *  GdkModifierType
      */
     { "GDK_SHIFT_MASK",         GDK_SHIFT_MASK },
