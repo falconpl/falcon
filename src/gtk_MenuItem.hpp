@@ -62,7 +62,9 @@ public:
 
     static FALCON_FUNC set_accel_path( VMARG );
 
+#if GTK_MINOR_VERSION >= 14
     static FALCON_FUNC get_accel_path( VMARG );
+#endif
 
     static FALCON_FUNC select( VMARG );
 

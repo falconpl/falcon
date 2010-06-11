@@ -44,7 +44,9 @@ void MenuItem::modInit( Falcon::Module* mod )
     { "get_submenu",            &MenuItem::get_submenu },
     //{ "remove_submenu",       &MenuItem::remove_submenu },
     { "set_accel_path",         &MenuItem::set_accel_path },
+#if GTK_MINOR_VERSION >= 14
     { "get_accel_path",         &MenuItem::get_accel_path },
+#endif
     { "select",                 &MenuItem::select },
     { "deselect",               &MenuItem::deselect },
     { "activate",               &MenuItem::activate },
@@ -368,6 +370,7 @@ FALCON_FUNC MenuItem::set_accel_path( VMARG )
 }
 
 
+#if GTK_MINOR_VERSION >= 14
 /*#
     @method get_accel_path GtkMenuItem
     @brief Retrieve the accelerator path that was previously set on menu_item.
@@ -387,6 +390,7 @@ FALCON_FUNC MenuItem::get_accel_path( VMARG )
     else
         vm->retnil();
 }
+#endif
 
 
 /*#
