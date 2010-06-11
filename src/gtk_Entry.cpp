@@ -50,7 +50,9 @@ void Entry::modInit( Falcon::Module* mod )
     { "signal_preedit_changed", &Entry::signal_preedit_changed },
 #endif
     { "signal_toggle_overwrite",&Entry::signal_toggle_overwrite },
+#if GTK_MINOR_VERSION >= 18
     { "new_with_buffer",        &Entry::new_with_buffer },
+#endif
     { "new_with_max_length",    &Entry::new_with_max_length },
 #if GTK_MINOR_VERSION >= 18
     { "get_buffer",             &Entry::get_buffer },
