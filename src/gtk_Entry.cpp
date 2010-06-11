@@ -7,7 +7,7 @@
 //#include "gdk_Event.hpp"
 #include "gdk_Pixbuf.hpp"
 #include "gtk_Adjustment.hpp"
-//#include "gtk_CellEditable.hpp"
+#include "gtk_CellEditable.hpp"
 #include "gtk_Editable.hpp"
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_Menu.hpp"
@@ -145,7 +145,7 @@ void Entry::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Entry, meth->name, meth->cb );
 
     Gtk::Editable::clsInit( mod, c_Entry );
-    //Gtk::CellEditable::clsInit( c_Entry );
+    Gtk::CellEditable::clsInit( mod, c_Entry );
 }
 
 

@@ -4,7 +4,7 @@
 
 #include "gtk_ComboBox.hpp"
 
-#include <gtk/gtk.h>
+#include "gtk_CellEditable.hpp"
 
 
 namespace Falcon {
@@ -68,6 +68,8 @@ void ComboBox::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ComboBox, meth->name, meth->cb );
+
+    Gtk::CellEditable::clsInit( mod, c_ComboBox );
 }
 
 

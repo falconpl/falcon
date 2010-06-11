@@ -5,6 +5,7 @@
 #include "gtk_SpinButton.hpp"
 
 #include "gtk_Adjustment.hpp"
+#include "gtk_CellEditable.hpp"
 
 
 namespace Falcon {
@@ -59,6 +60,8 @@ void SpinButton::modInit( Falcon::Module* mod )
 
     for( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_SpinButton, meth->name, meth->cb );
+
+    Gtk::CellEditable::clsInit( mod, c_SpinButton );
 }
 
 
