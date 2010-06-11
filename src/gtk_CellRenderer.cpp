@@ -4,6 +4,7 @@
 
 #include "gtk_CellRenderer.hpp"
 
+#include "gdk_Event.hpp"
 #include "gdk_Rectangle.hpp"
 
 
@@ -30,9 +31,9 @@ void CellRenderer::modInit( Falcon::Module* mod )
     { "signal_editing_started",     &CellRenderer::signal_editing_started },
 #endif
     { "get_size",                   &CellRenderer::get_size },
-#if 0 // todo
     { "render",                     &CellRenderer::render },
     { "activate",                   &CellRenderer::activate },
+#if 0 // todo
     { "start_editing",              &CellRenderer::start_editing },
     { "editing_canceled",           &CellRenderer::editing_canceled },
     { "stop_editing",               &CellRenderer::stop_editing },
@@ -186,7 +187,7 @@ FALCON_FUNC CellRenderer::get_size( VMARG )
     vm->retval( arr );
 }
 
-#if 0
+
 /*#
     @method render
     @brief Invokes the virtual render function of the GtkCellRenderer.
@@ -222,12 +223,93 @@ FALCON_FUNC CellRenderer::render( VMARG )
         throw_inv_params( "GdkWindow,GtkWidget,GdkRectangle,"
                           "GdkRectangle,GdkRectangle,GtkCellRendererState" );
 #endif
+    GdkWindow* win = (GdkWindow*) COREGOBJECT( i_win )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
+    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
+    GdkRectangle* expo_area = dyncast<Gdk::Rectangle*>( i_expo_area->asObjectSafe() )->getRectangle();
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_render( (GtkCellRenderer*)_obj,
+                              win,
+                              wdt,
+                              back_area,
+                              cell_area,
+                              expo_area,
+                              (GtkCellRendererState) i_flags->asInteger() );
+}
+
+
+/*#
+    @method activate
+    @brief Passes an activate event to the cell renderer for possible processing.
+    @param event a GdkEvent
+    @param widget widget that received the event (GtkWidget).
+    @param path widget-dependent string representation of the event location; e.g. for GtkTreeView, a string representation of GtkTreePath
+    @param background_area background area as passed to gtk_cell_renderer_render() (GdkRectangle).
+    @param cell_area cell area as passed to gtk_cell_renderer_render() (GdkRectangle)
+    @param flags render flags (GtkCellRendererState)
+    @return TRUE if the event was consumed/handled
+
+    Some cell renderers may use events; for example, GtkCellRendererToggle
+    toggles when it gets a mouse click.
+ */
+FALCON_FUNC CellRenderer::activate( VMARG )
+{
+    Item* i_ev = vm->param( 0 );
+    Item* i_wdt = vm->param( 1 );
+    Item* i_path = vm->param( 2 );
+    Item* i_back_area = vm->param( 3 );
+    Item* i_cell_area = vm->param( 4 );
+    Item* i_flags = vm->param( 5 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_ev || !i_ev->isObject() || !IS_DERIVED( i_ev, GdkEvent )
+        || !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkWidget )
+        || !i_path || !i_path->isString()
+        || !i_back_area || !i_back_area->isObject() || !IS_DERIVED( i_back_area, GdkRectangle )
+        || !i_cell_area || !i_cell_area->isObject() || !IS_DERIVED( i_cell_area, GdkRectangle )
+        || !i_flags || !i_flags->isInteger() )
+        throw_inv_params( "GdkEvent,GtkWidget,S,GdkRectangle,"
+                          "GdkRectangle,GtkCellRendererState" );
+#endif
+    GdkEvent* ev = dyncast<Gdk::Event*>( i_ev->asObjectSafe() )->getEvent();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    AutoCString path( i_path->asString() );
+    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
+    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool)
+    gtk_cell_renderer_activate( (GtkCellRenderer*)_obj,
+                                ev,
+                                wdt,
+                                path.c_str(),
+                                back_area,
+                                cell_area,
+                                (GtkCellRendererState) i_flags->asInteger() ) );
+}
+
+
+#if 0
+/*#
+    @method start_editing
+    @brief Passes an activate event to the cell renderer for possible processing.
+    @param event a GdkEvent
+    @param widget widget that received the event (GtkWidget).
+    @param path widget-dependent string representation of the event location; e.g. for GtkTreeView, a string representation of GtkTreePath
+    @param background_area background area as passed to gtk_cell_renderer_render() (GdkRectangle).
+    @param cell_area cell area as passed to gtk_cell_renderer_render() (GdkRectangle)
+    @param flags render flags (GtkCellRendererState)
+    @return A new GtkCellEditable, or NULL
+
+ */
+FALCON_FUNC CellRenderer::start_editing( VMARG )
+{
 
 }
 
 
-FALCON_FUNC CellRenderer::activate( VMARG );
-FALCON_FUNC CellRenderer::start_editing( VMARG );
+
 FALCON_FUNC CellRenderer::editing_canceled( VMARG );
 FALCON_FUNC CellRenderer::stop_editing( VMARG );
 FALCON_FUNC CellRenderer::get_fixed_size( VMARG );

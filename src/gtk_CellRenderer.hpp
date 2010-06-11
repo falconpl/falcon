@@ -31,11 +31,11 @@ public:
     //static void on_editing_started( GtkCellRenderer*, GtkCellEditable*, gchar*, gpointer );
 
     static FALCON_FUNC get_size( VMARG );
-#if 0
+
     static FALCON_FUNC render( VMARG );
 
     static FALCON_FUNC activate( VMARG );
-
+#if 0
     static FALCON_FUNC start_editing( VMARG );
 
     static FALCON_FUNC editing_canceled( VMARG );
