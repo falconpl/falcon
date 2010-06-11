@@ -50,7 +50,9 @@ void ScaleButton::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ScaleButton, meth->name, meth->cb );
 
+#if GTK_MINOR_VERSION >= 16
     Gtk::Orientable::clsInit( mod, c_ScaleButton );
+#endif
 }
 
 
