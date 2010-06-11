@@ -39,6 +39,7 @@
 #include "gtk_Box.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
+#include "gtk_CellEditable.hpp"
 #include "gtk_CellRenderer.hpp"
 #include "gtk_CheckButton.hpp"
 #include "gtk_CheckMenuItem.hpp"
@@ -183,6 +184,7 @@ FALCON_MODULE_DECL
 
     // not GObject based //
 
+    Falcon::Gtk::CellEditable::modInit( self );
     Falcon::Gtk::Main::modInit( self );
     Falcon::Gtk::Requisition::modInit( self );
     Falcon::Gtk::Signal::modInit( self );

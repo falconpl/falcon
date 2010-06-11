@@ -39,6 +39,7 @@ set( SRC_FILES
     gtk_ButtonBox.cpp
     gtk_Button.cpp
     gtk_Buildable.cpp
+    gtk_CellEditable.cpp
     gtk_CellRenderer.cpp
     gtk_CheckButton.cpp
     gtk_CheckMenuItem.cpp
@@ -170,6 +171,7 @@ set( HDR_FILES
     gtk_ButtonBox.hpp
     gtk_Button.hpp
     gtk_Buildable.hpp
+    gtk_CellEditable.hpp
     gtk_CellRenderer.hpp
     gtk_CheckButton.hpp
     gtk_CheckMenuItem.hpp
