@@ -168,11 +168,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_DIR_LEFT",               GTK_DIR_LEFT },
     { "GTK_DIR_RIGHT",              GTK_DIR_RIGHT },
 
+#if GTK_MINOR_VERSION >= 16
     /*
      *  GtkEntryIconPosition
      */
     { "GTK_ENTRY_ICON_PRIMARY",     GTK_ENTRY_ICON_PRIMARY },
     { "GTK_ENTRY_ICON_SECONDARY",   GTK_ENTRY_ICON_SECONDARY },
+#endif
 
     /*
      *  GtkExpanderStyle
