@@ -32,8 +32,10 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
     { "get_show_hidden",        &FileChooser::get_show_hidden },
     { "set_do_overwrite_confirmation",&FileChooser::set_do_overwrite_confirmation },
     { "get_do_overwrite_confirmation",&FileChooser::get_do_overwrite_confirmation },
+#if GTK_MINOR_VERSION >= 18
     { "set_create_folders",     &FileChooser::set_create_folders },
     { "get_create_folders",     &FileChooser::get_create_folders },
+#endif
     { "set_current_name",       &FileChooser::set_current_name },
     { "get_filename",           &FileChooser::get_filename },
     { "set_filename",           &FileChooser::set_filename },
@@ -73,6 +75,7 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
     { "add_shortcut_folder_uri",        &FileChooser:: },
     { "remove_shortcut_folder_uri",        &FileChooser:: },
     { "list_shortcut_folder_uris",        &FileChooser:: },
+#if GTK_MINOR_VERSION >= 14
     { "get_current_folder_file",        &FileChooser:: },
     { "get_file",        &FileChooser:: },
     { "get_files",        &FileChooser:: },
@@ -81,6 +84,7 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
     { "set_current_folder_file",        &FileChooser:: },
     { "set_file",        &FileChooser:: },
     { "unselect_file",        &FileChooser:: },
+#endif // GTK_MINOR_VERSION >= 14
 #endif
     { NULL, NULL }
     };
@@ -507,6 +511,7 @@ FALCON_FUNC FileChooser::get_do_overwrite_confirmation( VMARG )
 }
 
 
+#if GTK_MINOR_VERSION >= 18
 /*#
     @method set_create_folders GtkFileChooser
     @brief Sets whether file choser will offer to create new folders.
@@ -543,6 +548,7 @@ FALCON_FUNC FileChooser::get_create_folders( VMARG )
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_create_folders( (GtkFileChooser*)_obj ) );
 }
+#endif // GTK_MINOR_VERSION >= 18
 
 
 /*#
@@ -1158,6 +1164,7 @@ FALCON_FUNC FileChooser::list_shortcut_folders( VMARG );
 FALCON_FUNC FileChooser::add_shortcut_folder_uri( VMARG );
 FALCON_FUNC FileChooser::remove_shortcut_folder_uri( VMARG );
 FALCON_FUNC FileChooser::list_shortcut_folder_uris( VMARG );
+#if GTK_MINOR_VERSION >= 14
 FALCON_FUNC FileChooser::get_current_folder_file( VMARG );
 FALCON_FUNC FileChooser::get_file( VMARG );
 FALCON_FUNC FileChooser::get_files( VMARG );
@@ -1166,6 +1173,7 @@ FALCON_FUNC FileChooser::select_file( VMARG );
 FALCON_FUNC FileChooser::set_current_folder_file( VMARG );
 FALCON_FUNC FileChooser::set_file( VMARG );
 FALCON_FUNC FileChooser::unselect_file( VMARG );
+#endif // GTK_MINOR_VERSION >= 14
 #endif
 
 } // Gtk
