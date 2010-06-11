@@ -69,7 +69,9 @@ void Range::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Range, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_Range );
+#if GTK_MINOR_VERSION >= 16
     Gtk::Orientable::clsInit( mod, c_Range );
+#endif
 }
 
 
