@@ -26,19 +26,21 @@ public:
 
     static void on_editing_canceled( GtkCellRenderer*, gpointer );
 
-    //static FALCON_FUNC signal_editing_started( VMARG );
+    static FALCON_FUNC signal_editing_started( VMARG );
 
-    //static void on_editing_started( GtkCellRenderer*, GtkCellEditable*, gchar*, gpointer );
+    static void on_editing_started( GtkCellRenderer*, GtkCellEditable*, gchar*, gpointer );
 
     static FALCON_FUNC get_size( VMARG );
 
     static FALCON_FUNC render( VMARG );
 
     static FALCON_FUNC activate( VMARG );
-#if 0
+
     static FALCON_FUNC start_editing( VMARG );
 
+#if 0 // deprecated
     static FALCON_FUNC editing_canceled( VMARG );
+#endif
 
     static FALCON_FUNC stop_editing( VMARG );
 
@@ -46,6 +48,7 @@ public:
 
     static FALCON_FUNC set_fixed_size( VMARG );
 
+#if GTK_MINOR_VERSION >= 18
     static FALCON_FUNC get_visible( VMARG );
 
     static FALCON_FUNC set_visible( VMARG );
@@ -61,7 +64,8 @@ public:
     static FALCON_FUNC get_padding( VMARG );
 
     static FALCON_FUNC set_padding( VMARG );
-#endif
+#endif // GTK_MINOR_VERSION >= 18
+
 };
 
 

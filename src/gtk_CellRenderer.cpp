@@ -6,6 +6,7 @@
 
 #include "gdk_Event.hpp"
 #include "gdk_Rectangle.hpp"
+#include "gtk_CellEditable.hpp"
 
 
 namespace Falcon {
@@ -33,12 +34,14 @@ void CellRenderer::modInit( Falcon::Module* mod )
     { "get_size",                   &CellRenderer::get_size },
     { "render",                     &CellRenderer::render },
     { "activate",                   &CellRenderer::activate },
-#if 0 // todo
     { "start_editing",              &CellRenderer::start_editing },
+#if 0 // deprecated
     { "editing_canceled",           &CellRenderer::editing_canceled },
+#endif
     { "stop_editing",               &CellRenderer::stop_editing },
     { "get_fixed_size",             &CellRenderer::get_fixed_size },
     { "set_fixed_size",             &CellRenderer::set_fixed_size },
+#if GTK_MINOR_VERSION >= 18
     { "get_visible",                &CellRenderer::get_visible },
     { "set_visible",                &CellRenderer::set_visible },
     { "get_sensitive",              &CellRenderer::get_sensitive },
@@ -47,7 +50,7 @@ void CellRenderer::modInit( Falcon::Module* mod )
     { "set_alignment",              &CellRenderer::set_alignment },
     { "get_padding",                &CellRenderer::get_padding },
     { "set_padding",                &CellRenderer::set_padding },
-#endif
+#endif // GTK_MINOR_VERSION >= 18
     { NULL, NULL }
     };
 
@@ -102,7 +105,7 @@ Falcon::CoreObject* CellRenderer::factory( const Falcon::CoreClass* gen, void* e
 
 
 /*#
-    @method signal_editing_canceled
+    @method signal_editing_canceled GtkCellRenderer
     @brief This signal gets emitted when the user cancels the process of editing a cell.
 
     For example, an editable cell renderer could be written to cancel editing
@@ -125,9 +128,9 @@ void CellRenderer::on_editing_canceled( GtkCellRenderer* obj, gpointer _vm )
     CoreGObject::trigger_slot( (GObject*) obj, "editing_canceled", "on_editing_canceled", (VMachine*)_vm );
 }
 
-#if 0 // todo (GtkCellEditable)
+
 /*#
-    @method signal_editing_started
+    @method signal_editing_started GtkCellRenderer
     @brief This signal gets emitted when a cell starts to be edited.
 
     The intended use of this signal is to do special setup on editable,
@@ -146,11 +149,44 @@ FALCON_FUNC CellRenderer::signal_editing_started( VMARG )
 }
 
 
-//void CellRenderer::on_editing_started( GtkCellRenderer*, GtkCellEditable*, gchar*, gpointer );
-#endif
+void CellRenderer::on_editing_started( GtkCellRenderer* obj,
+                                       GtkCellEditable* editable, gchar* path, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "editing_started", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GtkCellEditable" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_editing_started", it ) )
+            {
+                printf(
+                "[GtkCellRenderer::on_editing_started] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gtk::CellEditable( wki->asClass(), editable ) );
+        vm->pushParam( UTF8String( path ) );
+        vm->callItem( it, 2 );
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 /*#
-    @method get_size
+    @method get_size GtkCellRenderer
     @brief Obtains the width and height needed to render the cell.
     @param widget the widget the renderer is rendering to
     @param cell_area The area a cell will be allocated (GdkRectangle), or nil.
@@ -189,7 +225,7 @@ FALCON_FUNC CellRenderer::get_size( VMARG )
 
 
 /*#
-    @method render
+    @method render GtkCellRenderer
     @brief Invokes the virtual render function of the GtkCellRenderer.
     @param window a GdkDrawable to draw to
     @param widget the widget owning window
@@ -241,7 +277,7 @@ FALCON_FUNC CellRenderer::render( VMARG )
 
 
 /*#
-    @method activate
+    @method activate GtkCellRenderer
     @brief Passes an activate event to the cell renderer for possible processing.
     @param event a GdkEvent
     @param widget widget that received the event (GtkWidget).
@@ -290,9 +326,8 @@ FALCON_FUNC CellRenderer::activate( VMARG )
 }
 
 
-#if 0
 /*#
-    @method start_editing
+    @method start_editing GtkCellRenderer
     @brief Passes an activate event to the cell renderer for possible processing.
     @param event a GdkEvent
     @param widget widget that received the event (GtkWidget).
@@ -305,24 +340,282 @@ FALCON_FUNC CellRenderer::activate( VMARG )
  */
 FALCON_FUNC CellRenderer::start_editing( VMARG )
 {
-
+    Item* i_ev = vm->param( 0 );
+    Item* i_wdt = vm->param( 1 );
+    Item* i_path = vm->param( 2 );
+    Item* i_back_area = vm->param( 3 );
+    Item* i_cell_area = vm->param( 4 );
+    Item* i_flags = vm->param( 5 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_ev || !i_ev->isObject() || !IS_DERIVED( i_ev, GdkEvent )
+        || !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkWidget )
+        || !i_path || !i_path->isString()
+        || !i_back_area || !i_back_area->isObject() || !IS_DERIVED( i_back_area, GdkRectangle )
+        || !i_cell_area || !i_cell_area->isObject() || !IS_DERIVED( i_cell_area, GdkRectangle )
+        || !i_flags || !i_flags->isInteger() )
+        throw_inv_params( "GdkEvent,GtkWidget,S,GdkRectangle,"
+                          "GdkRectangle,GtkCellRendererState" );
+#endif
+    GdkEvent* ev = dyncast<Gdk::Event*>( i_ev->asObjectSafe() )->getEvent();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    AutoCString path( i_path->asString() );
+    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
+    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
+    MYSELF;
+    GET_OBJ( self );
+    GtkCellEditable* editable =
+    gtk_cell_renderer_start_editing( (GtkCellRenderer*)_obj,
+                                     ev,
+                                     wdt,
+                                     path.c_str(),
+                                     back_area,
+                                     cell_area,
+                                     (GtkCellRendererState) i_flags->asInteger() );
+    if ( editable )
+        vm->retval( new Gtk::CellEditable( vm->findWKI( "GtkCellEditable" )->asClass(),
+                                           editable ) );
+    else
+        vm->retnil();
 }
 
 
-
+#if 0 // deprecated
 FALCON_FUNC CellRenderer::editing_canceled( VMARG );
-FALCON_FUNC CellRenderer::stop_editing( VMARG );
-FALCON_FUNC CellRenderer::get_fixed_size( VMARG );
-FALCON_FUNC CellRenderer::set_fixed_size( VMARG );
-FALCON_FUNC CellRenderer::get_visible( VMARG );
-FALCON_FUNC CellRenderer::set_visible( VMARG );
-FALCON_FUNC CellRenderer::get_sensitive( VMARG );
-FALCON_FUNC CellRenderer::set_sensitive( VMARG );
-FALCON_FUNC CellRenderer::get_alignment( VMARG );
-FALCON_FUNC CellRenderer::set_alignment( VMARG );
-FALCON_FUNC CellRenderer::get_padding( VMARG );
-FALCON_FUNC CellRenderer::set_padding( VMARG );
 #endif
+
+
+/*#
+    @method stop_editing GtkCellRenderer
+    @brief Informs the cell renderer that the editing is stopped.
+    @param canceled TRUE if the editing has been canceled
+
+    If canceled is TRUE, the cell renderer will emit the "editing-canceled" signal.
+
+    This function should be called by cell renderer implementations in
+    response to the "editing-done" signal of GtkCellEditable.
+ */
+FALCON_FUNC CellRenderer::stop_editing( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_stop_editing( (GtkCellRenderer*)_obj,
+                                    (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_fixed_size GtkCellRenderer
+    @brief Fills in width and height with the appropriate size of cell.
+    @return an array ( fixed width of the cell, fixed height of the cell ).
+ */
+FALCON_FUNC CellRenderer::get_fixed_size( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint w, h;
+    gtk_cell_renderer_get_fixed_size( (GtkCellRenderer*)_obj, &w, &h );
+    CoreArray* arr = new CoreArray( 2 );
+    arr->append( w );
+    arr->append( h );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method set_fixed_size GtkCellRenderer
+    @brief Sets the renderer size to be explicit, independent of the properties set.
+    @param width the width of the cell renderer, or -1
+    @param height the height of the cell renderer, or -1
+ */
+FALCON_FUNC CellRenderer::set_fixed_size( VMARG )
+{
+    Item* i_w = vm->param( 0 );
+    Item* i_h = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_w || !i_w->isInteger()
+        || !i_h || !i_h->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_set_fixed_size( (GtkCellRenderer*)_obj,
+                                      i_w->asInteger(),
+                                      i_h->asInteger() );
+}
+
+
+#if GTK_MINOR_VERSION >= 18
+/*#
+    @method get_visible GtkCellRenderer
+    @brief Returns the cell renderer's visibility.
+    @return TRUE if the cell renderer is visible
+ */
+FALCON_FUNC CellRenderer::get_visible( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_cell_renderer_get_visible( (GtkCellRenderer*)_obj ) );
+}
+
+
+/*#
+    @method set_visible GtkCellRenderer
+    @brief Sets the cell renderer's visibility.
+    @param visible the visibility of the cell
+ */
+FALCON_FUNC CellRenderer::set_visible( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_set_visible( (GtkCellRenderer*)_obj,
+                                   (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_sensitive GtkCellRenderer
+    @brief Returns the cell renderer's sensitivity.
+    @return TRUE if the cell renderer is sensitive
+ */
+FALCON_FUNC CellRenderer::get_sensitive( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    vm->retval( (bool) gtk_cell_renderer_get_sensitive( (GtkCellRenderer*)_obj ) );
+}
+
+
+/*#
+    @method set_sensitive GtkCellRenderer
+    @brief Sets the cell renderer's sensitivity.
+    @param sensitive the sensitivity of the cell
+ */
+FALCON_FUNC CellRenderer::set_sensitive( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_set_sensitive( (GtkCellRenderer*)_obj,
+                                     (gboolean) i_bool->asBoolean() );
+}
+
+
+/*#
+    @method get_alignment GtkCellRenderer
+    @brief Returns xalign and yalign of the cell.
+    @return an array ( x alignment, y alignment )
+ */
+FALCON_FUNC CellRenderer::get_alignment( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gfloat x, y;
+    gtk_cell_renderer_get_alignment( (GtkCellRenderer*)_obj, &x, &y );
+    CoreArray* arr = new CoreArray( 2 );
+    arr->append( (numeric) x );
+    arr->append( (numeric) y );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method set_alignment GtkCellRenderer
+    @brief Sets the renderer's alignment within its available space.
+    @param x the x alignment of the cell renderer
+    @param y the y alignment of the cell renderer
+ */
+FALCON_FUNC CellRenderer::set_alignment( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || !i_x->isOrdinal()
+        || !i_y || !i_y->isOrdinal() )
+        throw_inv_params( "N,N" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_set_alignment( (GtkCellRenderer*)_obj,
+                                     i_x->forceNumeric(),
+                                     i_y->forceNumeric() );
+}
+
+
+/*#
+    @method get_padding GtkCellRenderer
+    @brief Returns xpad and ypad of the cell.
+    @return an array ( x padding, y padding )
+ */
+FALCON_FUNC CellRenderer::get_padding( VMARG )
+{
+#ifdef STRICT_PARAMETER_CHECK
+    if ( vm->paramCount() )
+        throw_require_no_args();
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gint x, y;
+    gtk_cell_renderer_get_padding( (GtkCellRenderer*)_obj, &x, &y );
+    CoreArray* arr = new CoreArray( 2 );
+    arr->append( x );
+    arr->append( y );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method set_padding GtkCellRenderer
+    @brief Sets the renderer's padding.
+    @param xpad the x padding of the cell renderer
+    @param ypad the y padding of the cell renderer
+ */
+FALCON_FUNC CellRenderer::set_padding( VMARG )
+{
+    Item* i_x = vm->param( 0 );
+    Item* i_y = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "I,I" );
+#endif
+    MYSELF;
+    GET_OBJ( self );
+    gtk_cell_renderer_set_padding( (GtkCellRenderer*)_obj,
+                                   i_x->asInteger(),
+                                   i_y->asInteger() );
+}
+#endif // GTK_MINOR_VERSION >= 18
+
 
 } // Gtk
 } // Falcon
