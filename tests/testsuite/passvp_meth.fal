@@ -1,0 +1,70 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 13q
+* Category: functions
+* Subcategory: varpar
+* Short: Checks for the passvp function - on methods.
+* Description:
+*   The passvp function retreives the parameters exceeding the official ones
+*   or eventually calls a function receiving those parameters.
+*   This test checks if everything is ok also on methods.
+* [/Description]
+*
+****************************************************************************/
+
+function testpars()
+   ret = ""
+   for i in [0:paramCount()]
+      ret += parameter(i)
+      formiddle: ret+="."
+   end
+
+   return ret
+end
+
+
+object tobj
+   function first_a(): return passvp()
+   function first_p(): return passvp( testpars )
+
+   function second_a( one ): return passvp()
+   function second_p( one ): return passvp( testpars )
+
+   function third_a( one, two ): return passvp()
+   function third_p( one, two ): return passvp( testpars )
+end
+
+// no formal parameters
+if tobj.first_a() != []: failure( "first_a()" )
+if tobj.first_p() != "": failure( "first_p()" )
+if tobj.first_a( 'one' ) != ["one"]: failure( "first_a('one')" )
+if tobj.first_p( 'one' ) != "one": failure( "first_p('one')" )
+if tobj.first_a( 'one', 'two' ) != [ 'one', 'two' ]: failure( "first_a( 'one', 'two' )" )
+if tobj.first_p( 'one', 'two' ) != "one.two": failure( "first_p( 'one', 'two' )" )
+if tobj.first_a( 'one', 'two', 'three' ) != ['one', 'two', 'three']: failure( "first_a('one', 'two', 'three')" )
+if tobj.first_p( 'one', 'two', 'three' ) != "one.two.three": failure( "first_p( 'one', 'two', 'three' )" )
+
+// one formal parameters
+if tobj.second_a() != []: failure( "second_a()" )
+if tobj.second_p() != "": failure( "second_p()" )
+if tobj.second_a( 'one' ) != []: failure( "second_a('one')" )
+if tobj.second_p( 'one' ) != "": failure( "second_p('one')" )
+if tobj.second_a( 'one', 'two' ) != [ 'two' ]: failure( "second_a( 'one', 'two' )" )
+if tobj.second_p( 'one', 'two' ) != "two": failure( "second_p( 'one', 'two' )" )
+if tobj.second_a( 'one', 'two', 'three' ) != ['two', 'three']: failure( "second_a('one', 'two', 'three')" )
+if tobj.second_p( 'one', 'two', 'three' ) != "two.three": failure( "second_p( 'one', 'two', 'three' )" )
+
+// two formal parameters
+if tobj.third_a() != []: failure( "third_a()" )
+if tobj.third_p() != "": failure( "third_p()" )
+if tobj.third_a( 'one' ) != []: failure( "third_a('one')" )
+if tobj.third_p( 'one' ) != "": failure( "third_p('one')" )
+if tobj.third_a( 'one', 'two' ) != []: failure( "third_a( 'one', 'two' )" )
+if tobj.third_p( 'one', 'two' ) != "": failure( "third_p( 'one', 'two' )" )
+if tobj.third_a( 'one', 'two', 'three' ) != ['three']: failure( "third_a('one', 'two', 'three')" )
+if tobj.third_p( 'one', 'two', 'three' ) != "three": failure( "third_p( 'one', 'two', 'three' )" )
+
+success()
+
+/* End of file */
