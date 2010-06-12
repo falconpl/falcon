@@ -310,7 +310,7 @@ FALCON_FUNC core_passvp( VMachine *vm )
    // get the caller function symbol --- it holds the declared parameters
    const Symbol* sym = thisFrame->m_symbol;
    unsigned size =  sym->isFunction()? 
-      sym->getFuncDef()->symtab().size() :
+      sym->getFuncDef()->params() :
       sym->getExtFuncDef()->parameters()->size();
    
    Item* first = prevFrame->m_params;

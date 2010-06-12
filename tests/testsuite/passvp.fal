@@ -22,16 +22,30 @@ function testpars()
 	return ret
 end
 
-function first_a(): return passvp()
+function first_a()
+   a = 0 // create a non-param symbol
+   return passvp()
+end
+
 function first_p(): return passvp( testpars )
 
 function second_a( one ): return passvp()
-function second_p( one ): return passvp( testpars )
+function second_p( one )
+   a = 0 // create a non-param symbol
+   return passvp( testpars )
+end
 
-function third_a( one, two ): return passvp()
+function third_a( one, two )
+   n = 0
+   return passvp()
+end
+
 function third_p( one, two ): return passvp( testpars )
 
-function extra(): return passvp( .[testpars "begin" ] )
+function extra()
+   n = 0
+   return passvp( .[testpars "begin" ] )
+end
 
 // no formal parameters
 if first_a() != []: failure( "first_a()" )

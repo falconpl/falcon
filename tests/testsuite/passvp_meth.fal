@@ -25,9 +25,17 @@ end
 
 
 object tobj
-   function first_a(): return passvp()
-   function first_p(): return passvp( testpars )
-
+   function first_a()
+      a = 0 // create a non-param symbol
+      return passvp()
+   end
+   
+   function first_p()
+      a = 0 // create a non-param symbol
+      b = 0
+      return passvp( testpars )
+   end
+   
    function second_a( one ): return passvp()
    function second_p( one ): return passvp( testpars )
 
