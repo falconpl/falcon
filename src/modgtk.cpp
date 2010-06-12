@@ -481,7 +481,7 @@ Signal::Signal( const Falcon::CoreClass* cls,
 bool Signal::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
     if ( s == "name" )
-        it = Falcon::String( m_name );
+        it = UTF8String( m_name );
     else
         return defaultProperty( s, it );
     return true;
