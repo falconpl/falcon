@@ -149,6 +149,8 @@ FALCON_MODULE_DECL
      *  load glib
      */
 
+    g_type_init();
+
     Falcon::Glib::Object::modInit( self );
     Falcon::Glib::ParamSpec::modInit( self );
 
