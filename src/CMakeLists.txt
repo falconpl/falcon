@@ -75,6 +75,7 @@ set( SRC_FILES
     gtk_Label.cpp
     gtk_Layout.cpp
     gtk_LinkButton.cpp
+    gtk_ListStore.cpp
     gtk_Main.cpp
     gtk_Menu.cpp
     gtk_MenuBar.cpp
@@ -207,6 +208,7 @@ set( HDR_FILES
     gtk_Label.hpp
     gtk_Layout.hpp
     gtk_LinkButton.hpp
+    gtk_ListStore.hpp
     gtk_Main.hpp
     gtk_Menu.hpp
     gtk_MenuBar.hpp

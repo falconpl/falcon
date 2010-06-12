@@ -74,6 +74,7 @@
 #include "gtk_Label.hpp"
 #include "gtk_Layout.hpp"
 #include "gtk_LinkButton.hpp"
+#include "gtk_ListStore.hpp"
 #include "gtk_Main.hpp"
 #include "gtk_Menu.hpp"
 #include "gtk_MenuBar.hpp"
@@ -199,6 +200,7 @@ FALCON_MODULE_DECL
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
 #endif
+    Falcon::Gtk::ListStore::modInit( self );
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Adjustment::modInit( self );
         Falcon::Gtk::Widget::modInit( self );
