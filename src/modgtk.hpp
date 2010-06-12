@@ -161,13 +161,10 @@ protected:
      *  \brief Lock an item.
      *  This adds an item to the table of locks.
      *  \param obj The GObject
-     *  \param key The name of the signal
      *  \param it The callable
      *  \return the new GarbageLock
      */
-    static Falcon::GarbageLock* lockItem( GObject* obj,
-            const char* key,
-            const Falcon::Item& it );
+    static Falcon::GarbageLock* lockItem( GObject* obj, const Falcon::Item& it );
 
 private:
 
