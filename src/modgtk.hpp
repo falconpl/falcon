@@ -150,19 +150,24 @@ protected:
     CoreGObject( const CoreGObject& );
 
     /**
-     *  \brief Return the array of garbage locks of the GObject.
-     *  Locks protecting the callback functions are stored in an array.
+     *  \brief Return the hash table of garbage locks of the GObject.
+     *  Locks protecting the callback functions are stored in a hash table.
      *  This is used just before connecting signals.
-     *  \return the array containing the locks
+     *  \return the hash table containing the locks
      */
-    static GPtrArray* get_locks( GObject* );
+    static GHashTable* get_locks( GObject* );
 
     /**
      *  \brief Lock an item.
-     *  This adds an item to the array of locks.
+     *  This adds an item to the table of locks.
+     *  \param obj The GObject
+     *  \param key The name of the signal
+     *  \param it The callable
      *  \return the new GarbageLock
      */
-    static Falcon::GarbageLock* lockItem( GObject*, const Falcon::Item& );
+    static Falcon::GarbageLock* lockItem( GObject* obj,
+            const char* key,
+            const Falcon::Item& it );
 
 private:
 
@@ -177,7 +182,7 @@ private:
     static void release_lock( gpointer );
 
     /**
-     *  \brief GDestroyNotify function for the GarbageLock array.
+     *  \brief GDestroyNotify function for the GarbageLock table.
      */
     static void release_locks( gpointer );
 

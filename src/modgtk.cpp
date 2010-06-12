@@ -424,17 +424,22 @@ void CoreGObject::trigger_slot( GObject* obj, const char* signame,
 }
 
 
-GPtrArray* CoreGObject::get_locks( GObject* obj )
+GHashTable* CoreGObject::get_locks( GObject* obj )
 {
-    GPtrArray* arr;
-    if ( !( arr = (GPtrArray*) g_object_get_data( obj, "__locks" ) ) )
+    GHashTable* tbl;
+    if ( !( tbl = (GHashTable*) g_object_get_data( obj, "__locks" ) ) )
     {
-        arr = g_ptr_array_new_with_free_func( &CoreGObject::release_lock );
+        tbl = g_hash_table_new_full(
+            &g_str_hash,
+            &g_str_equal,
+            NULL,
+            &CoreGObject::release_lock );
 
-        g_object_set_data_full( obj, "__locks", (gpointer) arr,
+        g_object_set_data_full( obj, "__locks",
+            (gpointer) tbl,
             &CoreGObject::release_locks );
     }
-    return arr;
+    return tbl;
 }
 
 
@@ -444,17 +449,19 @@ void CoreGObject::release_lock( gpointer glock )
 }
 
 
-void CoreGObject::release_locks( gpointer arr )
+void CoreGObject::release_locks( gpointer htbl )
 {
-    g_ptr_array_free( (GPtrArray*) arr, TRUE );
+    g_hash_table_unref( (GHashTable*) htbl );
 }
 
 
-GarbageLock* CoreGObject::lockItem( GObject* obj, const Falcon::Item& it )
+GarbageLock* CoreGObject::lockItem( GObject* obj,
+        const char* key,
+        const Falcon::Item& it )
 {
     GarbageLock* lock = new Falcon::GarbageLock( it );
-    GPtrArray* arr = get_locks( obj );
-    g_ptr_array_add( arr, (gpointer) lock );
+    GHashTable* tbl = get_locks( obj );
+    g_hash_table_insert( tbl, (gpointer) key, (gpointer) lock );
     return lock;
 }
 
@@ -518,7 +525,7 @@ FALCON_FUNC Signal::connect( VMARG )
     Falcon::CoreSlot* cs = _signals->getChild( self->m_name, true );
     cs->append( *cb );
 
-    CoreGObject::lockItem( _obj, *cb );
+    CoreGObject::lockItem( _obj, self->m_name, *cb );
 
     g_signal_connect( G_OBJECT( _obj ), self->m_name,
                       G_CALLBACK( self->m_cb ), vm );
