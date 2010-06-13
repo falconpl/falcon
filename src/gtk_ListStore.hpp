@@ -23,18 +23,35 @@ public:
     static void modInit( Falcon::Module* );
 
     static FALCON_FUNC init( VMARG );
-#if 0
+
     static FALCON_FUNC set_column_types( VMARG );
+
     static FALCON_FUNC set( VMARG );
+
+#if 0 // unused
     static FALCON_FUNC set_valist( VMARG );
+#endif
+
     static FALCON_FUNC set_value( VMARG );
+
+#if 0 // unused
     static FALCON_FUNC set_valuesv( VMARG );
+#endif
+
     static FALCON_FUNC remove( VMARG );
+
     static FALCON_FUNC insert( VMARG );
+
     static FALCON_FUNC insert_before( VMARG );
+
     static FALCON_FUNC insert_after( VMARG );
+
     static FALCON_FUNC insert_with_values( VMARG );
+
+#if 0 // unused
     static FALCON_FUNC insert_with_valuesv( VMARG );
+#endif
+#if 0
     static FALCON_FUNC prepend( VMARG );
     static FALCON_FUNC append( VMARG );
     static FALCON_FUNC clear( VMARG );
