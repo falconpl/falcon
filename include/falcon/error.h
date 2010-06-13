@@ -109,6 +109,7 @@ class FALCON_DYN_CLASS TraceStep: public BaseAlloc
    String m_modpath;
 
 public:
+   //TODO: Remove this version in the next version.
    TraceStep( const String &module, const String symbol, uint32 line, uint32 pc ):
       m_module( module ),
       m_symbol( symbol ),

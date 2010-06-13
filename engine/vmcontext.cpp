@@ -193,9 +193,9 @@ void VMContext::fillErrorTraceback( Error &error )
          curLine = error.line();
       }
 
-      error.addTrace( csym->module()->name(), csym->name(),
+      error.addTrace( csym->module()->name(), csym->module()->path(), csym->name(),
          curLine,
-         pc() );
+         pc());
    }
 
    StackFrame* frame = currentFrame();

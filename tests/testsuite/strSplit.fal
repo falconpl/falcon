@@ -103,6 +103,10 @@ strarr7 = strSplitTrimmed( "*****abc*****def*****ghi*****", "*" )
 // != array works only since falcon 0.9.6
 if strarr7 != ["", "abc", "def", "ghi", ""]: failure( "split trimmed with multiple trims")
 
+strarr7 = strSplitTrimmed( "a*****abc*****def*****ghi*****di*di1", "*" )
+// != array works only since falcon 0.9.6
+if strarr7 != ["a", "abc", "def", "ghi", "di", "di1"]: failure( "split trimmed with multiple trims - ending")
+
 success()
 
 /* End of file */
