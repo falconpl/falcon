@@ -121,6 +121,7 @@
 #if GTK_MINOR_VERSION >= 20
 #include "gtk_ToolPalette.hpp"
 #endif
+#include "gtk_TreeIter.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_VolumeButton.hpp"
@@ -193,6 +194,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Signal::modInit( self );
     Falcon::Gtk::Stock::modInit( self );
     Falcon::Gtk::TextIter::modInit( self );
+    Falcon::Gtk::TreeIter::modInit( self );
 
     // GObject based //
 

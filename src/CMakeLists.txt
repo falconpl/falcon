@@ -122,6 +122,7 @@ set( SRC_FILES
     gtk_ToolItemGroup.cpp
     gtk_ToolPalette.cpp
     gtk_ToolShell.cpp
+    gtk_TreeIter.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
     gtk_VolumeButton.cpp
@@ -255,6 +256,7 @@ set( HDR_FILES
     gtk_ToolItemGroup.hpp
     gtk_ToolPalette.hpp
     gtk_ToolShell.hpp
+    gtk_TreeIter.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
     gtk_VolumeButton.hpp
