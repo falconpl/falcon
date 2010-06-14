@@ -122,6 +122,7 @@
 #include "gtk_ToolPalette.hpp"
 #endif
 #include "gtk_TreeIter.hpp"
+#include "gtk_TreeStore.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
 #include "gtk_VolumeButton.hpp"
@@ -298,6 +299,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
     Falcon::Gtk::TextTagTable::modInit( self );
+    Falcon::Gtk::TreeStore::modInit( self );
     Falcon::Gtk::WindowGroup::modInit( self );
 
     return self;
