@@ -577,6 +577,12 @@ void Enums::modInit( Falcon::Module* mod )
 #endif
 
     /*
+     *  GtkTreeModelFlags
+     */
+    { "GTK_TREE_MODEL_ITERS_PERSIST",   GTK_TREE_MODEL_ITERS_PERSIST },
+    { "GTK_TREE_MODEL_LIST_ONLY",       GTK_TREE_MODEL_LIST_ONLY },
+
+    /*
      *  GtkUpdateType
      */
     { "GTK_UPDATE_CONTINUOUS",      GTK_UPDATE_CONTINUOUS },
