@@ -6,7 +6,7 @@
 
 #include "gtk_Buildable.hpp"
 #include "gtk_TreeIter.hpp"
-//#include "gtk_TreeModel.hpp"
+#include "gtk_TreeModel.hpp"
 //#include "gtk_TreeDragDest.hpp"
 //#include "gtk_TreeDragSource.hpp"
 //#include "gtk_TreeSortable.hpp"
@@ -62,7 +62,7 @@ void ListStore::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_ListStore, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_ListStore );
-    //Gtk::TreeModel::clsInit( mod, c_Liststore );
+    Gtk::TreeModel::clsInit( mod, c_ListStore );
     //Gtk::TreeDragDest::clsInit( mod, c_ListStore );
     //Gtk::TreeDragSource::clsInit( mod, c_ListStore );
     //Gtk::TreeSortable::clsInit( mod, c_ListStore );
