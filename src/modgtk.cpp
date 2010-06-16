@@ -122,6 +122,7 @@
 #include "gtk_ToolPalette.hpp"
 #endif
 #include "gtk_TreeIter.hpp"
+#include "gtk_TreePath.hpp"
 #include "gtk_TreeStore.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
@@ -196,6 +197,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Stock::modInit( self );
     Falcon::Gtk::TextIter::modInit( self );
     Falcon::Gtk::TreeIter::modInit( self );
+    Falcon::Gtk::TreePath::modInit( self );
 
     // GObject based //
 

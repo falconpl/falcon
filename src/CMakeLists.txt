@@ -123,6 +123,7 @@ set( SRC_FILES
     gtk_ToolPalette.cpp
     gtk_ToolShell.cpp
     gtk_TreeIter.cpp
+    gtk_TreePath.cpp
     gtk_TreeStore.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
@@ -258,6 +259,7 @@ set( HDR_FILES
     gtk_ToolPalette.hpp
     gtk_ToolShell.hpp
     gtk_TreeIter.hpp
+    gtk_TreePath.hpp
     gtk_TreeStore.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
