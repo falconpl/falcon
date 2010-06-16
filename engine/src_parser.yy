@@ -1672,12 +1672,12 @@ import_statement:
          COMPILER->addNamespace( *$3, "", true, true );
          $$ = 0;
       }
-   | IMPORT FROM SYMBOL OP_AS SYMBOL EOL
+   | IMPORT FROM SYMBOL OP_IN SYMBOL EOL
       {
          COMPILER->addNamespace( *$3, *$5, true, false );
          $$ = 0;
       }
-   | IMPORT FROM STRING OP_AS SYMBOL EOL
+   | IMPORT FROM STRING OP_IN SYMBOL EOL
       {
          COMPILER->addNamespace( *$3, *$5, true, true );
          $$ = 0;
