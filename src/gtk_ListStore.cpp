@@ -9,7 +9,7 @@
 #include "gtk_TreeModel.hpp"
 //#include "gtk_TreeDragDest.hpp"
 //#include "gtk_TreeDragSource.hpp"
-//#include "gtk_TreeSortable.hpp"
+#include "gtk_TreeSortable.hpp"
 
 
 namespace Falcon {
@@ -65,7 +65,7 @@ void ListStore::modInit( Falcon::Module* mod )
     Gtk::TreeModel::clsInit( mod, c_ListStore );
     //Gtk::TreeDragDest::clsInit( mod, c_ListStore );
     //Gtk::TreeDragSource::clsInit( mod, c_ListStore );
-    //Gtk::TreeSortable::clsInit( mod, c_ListStore );
+    Gtk::TreeSortable::clsInit( mod, c_ListStore );
 }
 
 
