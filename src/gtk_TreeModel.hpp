@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_TREEMODEL( pItem ) \
+        ((GtkTreeModel*) COREGOBJECT( pItem )->getGObject())
+
 
 namespace Falcon {
 namespace Gtk {
