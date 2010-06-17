@@ -125,6 +125,7 @@ set( SRC_FILES
     gtk_TreeIter.cpp
     gtk_TreeModel.cpp
     gtk_TreePath.cpp
+    gtk_TreeRowReference.cpp
     gtk_TreeStore.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
@@ -262,6 +263,7 @@ set( HDR_FILES
     gtk_TreeIter.hpp
     gtk_TreeModel.hpp
     gtk_TreePath.hpp
+    gtk_TreeRowReference.hpp
     gtk_TreeStore.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
