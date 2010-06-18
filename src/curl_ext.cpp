@@ -1005,6 +1005,19 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+	@class Multi
+	@brief Interface to CURL multi_* operations.
+
+	The Multi interface is meant to perform multiple CURL connections
+	handled by a single application.
+
+	A @b Multi instance lifetime is usually like the following:
+	- Add one or more pre-configured @a Handle instances.
+	- Call the @a Multi.perform() to start all the transfers.
+	-
+
+*/
 
 FALCON_FUNC  Multi_init ( ::Falcon::VMachine *vm )
 {
