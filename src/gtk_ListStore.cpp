@@ -114,7 +114,7 @@ FALCON_FUNC ListStore::init( VMARG )
     gint ncol = arr->length();
     GtkListStore* lst;
     if ( ncol == 0 )
-        lst = gtk_list_store_newv( 0, NULL );
+        throw_inv_params( "Non-empty array" ); // todo: translate
     else
     {
         GType* types = (GType*) memAlloc( sizeof( GType ) * ncol );
