@@ -564,7 +564,11 @@ getGCharArray( const Falcon::CoreArray* arr,
         s = arr->at( i );
 #ifndef NO_PARAMETER_CHECK
         if ( !s.isString() )
+        {
+            memFree( *strings );
+            memFree( *temp );
             throw_inv_params( "S" );
+        }
 #endif
         (*temp)[i].set( s.asString() );
         strings[i] = (gchar*) (*temp)[i].c_str();
