@@ -124,6 +124,7 @@ set( SRC_FILES
     gtk_ToolShell.cpp
     gtk_TreeIter.cpp
     gtk_TreeModel.cpp
+    gtk_TreeModelSort.cpp
     gtk_TreePath.cpp
     gtk_TreeRowReference.cpp
     gtk_TreeSortable.cpp
@@ -263,6 +264,7 @@ set( HDR_FILES
     gtk_ToolShell.hpp
     gtk_TreeIter.hpp
     gtk_TreeModel.hpp
+    gtk_TreeModelSort.hpp
     gtk_TreePath.hpp
     gtk_TreeRowReference.hpp
     gtk_TreeSortable.hpp
