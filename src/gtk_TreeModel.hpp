@@ -28,6 +28,8 @@ public:
 
     static void clsInit( Falcon::Module*, Falcon::Symbol* );
 
+    static bool implementedBy( const Falcon::Item* );
+
     static FALCON_FUNC signal_row_changed( VMARG );
 
     static void on_row_changed( GtkTreeModel*, GtkTreePath*, GtkTreeIter*, gpointer );

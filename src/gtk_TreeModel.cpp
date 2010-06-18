@@ -85,6 +85,17 @@ Falcon::CoreObject* TreeModel::factory( const Falcon::CoreClass* gen, void* mode
 }
 
 
+bool TreeModel::implementedBy( const Falcon::Item* it )
+{
+    if (   IS_DERIVED( it, GtkListStore )
+        || IS_DERIVED( it, GtkTreeModelFilter )
+        || IS_DERIVED( it, GtkTreeModelSort )
+        || IS_DERIVED( it, GtkTreeStore ) )
+        return true;
+    return false;
+}
+
+
 /*#
     @class GtkTreeModel
     @brief The GtkTreeModel interface defines a generic tree interface for use by the GtkTreeView widget.

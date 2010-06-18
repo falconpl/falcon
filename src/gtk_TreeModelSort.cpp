@@ -80,7 +80,7 @@ FALCON_FUNC TreeModelSort::init( VMARG )
 {
     Item* i_mdl = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_mdl || !i_mdl->isObject() || !IS_DERIVED( i_mdl, GtkTreeModel ) )
+    if ( !i_mdl || !i_mdl->isObject() || !Gtk::TreeModel::implementedBy( i_mdl ) )
         throw_inv_params( "GtkTreeModel" );
 #endif
     GtkTreeModel* mdl = GET_TREEMODEL( i_mdl );
