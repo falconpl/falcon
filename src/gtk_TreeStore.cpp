@@ -103,7 +103,7 @@ FALCON_FUNC TreeStore::init( VMARG )
     gint ncol = arr->length();
     GtkTreeStore* tree;
     if ( ncol == 0 )
-        tree = gtk_tree_store_newv( 0, NULL );
+        throw_inv_params( "Non-empty array" ); // todo: translate
     else
     {
         GType* types = (GType*) memAlloc( sizeof( GType ) * ncol );
