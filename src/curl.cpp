@@ -79,7 +79,7 @@ CurlModule::~CurlModule()
    @main curl
 
    This module provides a tight and complete integration with
-   the @l http://curl.haxx.se/libcurl/ libcurl library.
+   the @link "http://curl.haxx.se/libcurl/" libcurl library.
 
    Libcurl provides a complete set of RFC Internet protocol
    clients and allows a Falcon program to download remote
@@ -90,6 +90,18 @@ CurlModule::~CurlModule()
    a simple coroutine, simplifying by orders of magnitude the
    complexity of sophisticated client programs.
 
+   @section code_status Status of this binding.
+
+   Currently the @b curl module presents a minimal interface to the
+   underlying libCURL. The library is actually served through Falcon-wise
+   objects and structures. Some of the most advanced features in the
+   library are still not bound, but you'll find everything you need to
+   upload or download files, send POST http requests, get transfer information
+   and basically manage multiplexed transfers.
+
+   More advance binding is scheduled for the next version of this library,
+   that will take advantage of a new binding engine in Falcon 0.9.8.
+
    @section load_request Importing the curl module.
 
    Since the names of the classes that are declared in this module
@@ -99,7 +111,7 @@ CurlModule::~CurlModule()
       import from curl
 
       h = curl.Handle()
-   @end
+   @endcode
 
    @section enums Libcurl enumerations.
 
@@ -171,9 +183,9 @@ FALCON_MODULE_DECL
    Falcon::Symbol *multy_class = self->addClass( "Multi", Falcon::Ext::Multi_init );
    multy_class->getClassDef()->factory( &Falcon::Mod::CurlMultiHandle::Factory );
    self->addClassMethod( multy_class, "add", Falcon::Ext::Multi_add ).asSymbol()
-      ->addParam( "handle" );
+      ->addParam( "h" );
    self->addClassMethod( multy_class, "remove", Falcon::Ext::Multi_remove ).asSymbol()
-      ->addParam( "handle" );
+      ->addParam( "h" );
    self->addClassMethod( multy_class, "perform", Falcon::Ext::Multi_perform );
 
 

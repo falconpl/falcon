@@ -157,9 +157,12 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 /*#
    @method exec Handle
    @brief Transfers data from the remote.
+   @return self (to put this call in a chain)
+   @raise CurlError on error
+
 
    This function performs the whole transfer towards the target that has been
-   selected via @a Handle.setOutString, @a Handle.setOutStream, @a setOutConsole
+   selected via @a Handle.setOutString, @a Handle.setOutStream, @a Handle.setOutConsole
    or @a Handle.setOutCallback routines.
 
    The call is blocking and normally it cannot be interrupted; however, a
@@ -184,11 +187,13 @@ FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm )
    {
       throw_error( FALCON_ERROR_CURL_EXEC, __LINE__, FAL_STR( curl_err_exec ), retval );
    }
+   vm->retval( vm->self() );
 }
 
 /*#
    @method setOutConsole Handle
    @brief Asks for subsequent transfer(s) to be sent to process console (raw stdout).
+   @return self (to put this call in a chain)
 
    This is the default at object creation.
 */
@@ -205,8 +210,10 @@ FALCON_FUNC  Handle_setOutConsole( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method setOutConsole Handle
+   @method setOutString Handle
    @brief Asks for subsequent transfer(s) to be stored in a temporary string.
+   @return self (to put this call in a chain)
+
 
    After @a Handle.exec has been called, the data will be available in
    a string that can be retrieved via the @a Handle.getData method.
@@ -223,6 +230,7 @@ FALCON_FUNC  Handle_setOutString( ::Falcon::VMachine *vm )
             .desc( FAL_STR( curl_err_pm ) ) );
 
    h->setOnDataGetString();
+   vm->retval( vm->self() );
 }
 
 
@@ -230,6 +238,7 @@ FALCON_FUNC  Handle_setOutString( ::Falcon::VMachine *vm )
    @method setOutStream Handle
    @brief Asks for subsequent transfer(s) to be stored in a given stream.
    @param stream The stream to be used.
+   @return self (to put this call in a chain)
 
    When called, @a Handle.exec will store incoming data in this stream object
    via binary Stream.write operations.
@@ -253,12 +262,14 @@ FALCON_FUNC  Handle_setOutStream( ::Falcon::VMachine *vm )
    }
 
    h->setOnDataStream( (Stream*) i_stream->asObjectSafe()->getUserData() );
+   vm->retval( vm->self() );
 }
 
 /*#
    @method setOutCallback Handle
    @brief Asks for subsequent transfer(s) to be handled to a given callback.
    @param cb A callback item that will receive incoming data as a binary string.
+   @return self (to put this call in a chain)
 
    This method instructs this handle to call a given callback when data
    is received.
@@ -287,6 +298,7 @@ FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm )
    }
 
    h->setOnDataCallback( *i_cb );
+   vm->retval( vm->self() );
 }
 
 // not yet active
@@ -294,6 +306,7 @@ FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm )
    @method setOutMessage Handle
    @brief Asks for subsequent transfer(s) to be handled as a message broadcast.
    @param msg A string representing a message or a VMSlot.
+   @return self (to put this call in a chain)
 
    This method instructs this handle to perform message broadcast when data
    is received.
@@ -303,6 +316,7 @@ FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm )
 
    The string is not encoded in any format, and could be considered filled with binary
    data.
+   vm->retval( vm->self() );
 */
 /*
 FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm )
@@ -359,6 +373,7 @@ FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm )
    @method setInCallback Handle
    @brief Asks for subsequent uploads to be handled to a given callback.
    @param cb A callback item that will write data in an incoming MemBuf
+   @return self (to put this call in a chain)
 
    This method instructs this handle to call a given callback when new
    data can be uploaded to the remote side.
@@ -390,6 +405,7 @@ FALCON_FUNC  Handle_setInCallback( ::Falcon::VMachine *vm )
    }
 
    h->setReadCallback( *i_cb );
+   vm->retval( vm->self() );
 }
 
 
@@ -397,6 +413,7 @@ FALCON_FUNC  Handle_setInCallback( ::Falcon::VMachine *vm )
    @method setInStream Handle
    @brief Asks for subsequent upload(s) to read data from the given stream.
    @param stream The stream to be used.
+   @return self (to put this call in a chain)
 
    When called, @a Handle.exec will read data to be uploaded from this
    stream.
@@ -420,6 +437,7 @@ FALCON_FUNC  Handle_setInStream( ::Falcon::VMachine *vm )
    }
 
    h->setReadStream( (Stream*) i_stream->asObjectSafe()->getUserData() );
+   vm->retval( vm->self() );
 }
 
 /*#
@@ -649,6 +667,7 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
    {
       throw_error( FALCON_ERROR_CURL_SETOPT, __LINE__, FAL_STR( curl_err_setopt ), ret );
    }
+
 }
 
 
@@ -657,6 +676,7 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
    @brief Sets a cURL option for this specific handle.
    @param option The option to be set (an enumeration).
    @param data The value to be set.
+   @return self (to put this call in a chain)
 
    Depending on the option, @b data must be a boolean, a number or
    a string.
@@ -693,6 +713,7 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
 
    CURLoption iOpt = (CURLoption) i_option->asInteger();
    internal_setOpt( vm, h, iOpt, i_data );
+   vm->retval( vm->self() );
 }
 
 
@@ -700,6 +721,7 @@ FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm )
    @method setOptions Handle
    @brief Sets a list of cURL option for this specific handle.
    @param opts A dictionary of options, where each key is an option number, and its value is the option value.
+   @return self (to put this call in a chain)
 */
 
 FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
@@ -732,6 +754,7 @@ FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
       internal_setOpt( vm, h, (CURLoption) opt.asInteger(), &iter.getCurrent() );
       iter.next();
    }
+   vm->retval( vm->self() );
 }
 
 
@@ -753,7 +776,7 @@ FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm )
    Using this method, the postData will be sent as an unique chunk, so
    it doesn't require extra header setting and works with any HTTP protocol.
 
-   \note The data will be sent not encoded in any particular format (it will be
+   @note The data will be sent not encoded in any particular format (it will be
          binary-transmitted as it is in the string memory). If the remote
          server expects a particular encoding (usually, UTF-8), appropriate
          transocoding functions must be used in advance.
@@ -780,7 +803,7 @@ FALCON_FUNC  Handle_postData( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method Handle.getInfo
+   @method getInfo Handle
    @brief Returns informations about the status of this handle.
    @param option The specific information to be read.
    @return The value associated with the required information, or
@@ -1005,29 +1028,9 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    }
 }
 
-/*#
-	@class Multi
-	@brief Interface to CURL multi_* operations.
 
-	The Multi interface is meant to perform multiple CURL connections
-	handled by a single application.
-
-	A @b Multi instance lifetime is usually like the following:
-	- Add one or more pre-configured @a Handle instances.
-	- Call the @a Multi.perform() to start all the transfers.
-	-
-
-*/
-
-FALCON_FUNC  Multi_init ( ::Falcon::VMachine *vm )
+static void internal_handle_add( VMachine*vm, Item* i_handle )
 {
-
-}
-
-
-FALCON_FUNC  Multi_add ( ::Falcon::VMachine *vm )
-{
-   Item* i_handle = vm->param(0);
    if( i_handle == 0 || ! i_handle->isOfClass( "Handle" ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -1045,6 +1048,67 @@ FALCON_FUNC  Multi_add ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+	@class Multi
+	@brief Interface to CURL multi_* operations.
+	@optparam ... @a Handle instances to be immediately added.
+
+	The Multi interface is meant to perform multiple CURL connections
+	handled by a single application.
+
+	A @b Multi instance lifetime is usually like the following:
+	- Add one or more pre-configured @a Handle instances.
+	- Loop on  @a Multi.perform() up to when it returns 0 indicating that all transfers are complete.
+
+   For example, a minimal operation may be like the following:
+   @code
+   import from curl
+   h1 = curl.Handle( "http://www.falconpl.org" ).setOutString()
+   h2 = curl.Handle( "http://www.google.com" ).setOutString()
+
+   hm = curl.Multi( h1, h2 )
+   loop
+       v = hm.perform()
+       > "Currently ", v, " transfers ongoing."
+       sleep(0.1)
+   end v == 0
+
+   > h1.getData()
+   > h2.getData()
+   @endcode
+*/
+
+FALCON_FUNC  Multi_init ( ::Falcon::VMachine *vm )
+{
+   for ( int i = 0; i < vm->paramCount(); ++i )
+   {
+      internal_handle_add( vm, vm->param(i) );
+   }
+}
+
+
+/*#
+   @method add Multi
+   @brief Adds an @a Handle instance to the multi interface.
+   @param h The @a Handle instance to be added.
+
+   Adds a handle to an existing curl multihandle.
+*/
+
+FALCON_FUNC  Multi_add ( ::Falcon::VMachine *vm )
+{
+   Item* i_handle = vm->param(0);
+   internal_handle_add( vm, i_handle );
+}
+
+
+/*#
+   @method remove Multi
+   @brief Adds an @a Handle instance to the multi interface.
+   @param h The @a Handle instance to be added.
+
+   Adds a handle to an existing curl multihandle.
+*/
 
 FALCON_FUNC  Multi_remove ( ::Falcon::VMachine *vm )
 {
@@ -1067,18 +1131,26 @@ FALCON_FUNC  Multi_remove ( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method perform Multi
+   @brief Starts or proceeds with the transfers.
+   @return The count of remaining operations to be handled.
+
+   The calling application should call repeatedly this method
+   until it returns 0, indicating that all the transfers are
+   compelete.
+*/
 FALCON_FUNC  Multi_perform ( ::Falcon::VMachine *vm )
 {
    Mod::CurlMultiHandle* mh = dyncast< Mod::CurlMultiHandle* >(
                    vm->self().asObject() );
 
    int rh = 0;
-   CURLMcode ret = curl_multi_perform( mh->handle(), &rh );
-   if ( ret == CURLM_CALL_MULTI_PERFORM )
-   {
-      vm->retval( -1 );
-      return;
+   CURLMcode ret;
+   do{
+      ret = curl_multi_perform( mh->handle(), &rh );
    }
+   while ( ret == CURLM_CALL_MULTI_PERFORM );
 
    if ( ret != CURLM_OK )
    {

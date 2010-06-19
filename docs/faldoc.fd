@@ -10,7 +10,7 @@
 
 Title = curl
 Author = Giancarlo Niccolai
-Version = <version>
+Version = 1.0
 
 ################################################
 # Faldoc Input settings
@@ -37,6 +37,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=html
+Output.html.directory=falcon-curl-1.0
 Output.html.url=.
 Output.html.doctitle=curl module Function Reference

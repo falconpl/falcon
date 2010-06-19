@@ -5,6 +5,8 @@
 
    get_multiple.fal - Captures multiple files.
 
+   Uses a loop to determine end of multiple transfers.
+
    USAGE: get_multiple.fal  <URL1> <URL2> ... <URLN>
 */
 
@@ -21,11 +23,12 @@ class Storer( uri, id )
    file = nil
    uri = uri
    handle = nil
+   id = id
    
    init
       self.handle = curl.Handle( uri )
-      self.file = OutputStream( @"get_multiple_dump_$(id:2.0r)" )
       self.handle.setOutCallback( self.onData )
+      self.file = OutputStream( @"get_multiple_dump_$(id:r2p0)" )
    end
    
    function onData( data )
@@ -34,7 +37,6 @@ class Storer( uri, id )
 end
 
 handles = []
-
 multi = curl.Multi()
 
 try
@@ -45,8 +47,18 @@ try
    end
    
    > "Starting transfer..."
-   multi.perform()
-   sleep(1)
+   loop
+      v = multi.perform()
+      >> v, ": "
+      for h in handles
+         >> h.id, "(", h.handle.getInfo(curl.INFO.SIZE_DOWNLOAD)
+         >> ")"
+         formiddle: >>", "
+      end
+      >> "\r"
+      sleep(0.1)
+   end v == 0
+   >
    > "Transfer complete."
 
    return 0
