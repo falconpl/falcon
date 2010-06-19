@@ -122,6 +122,7 @@
 #include "gtk_ToolPalette.hpp"
 #endif
 #include "gtk_TreeIter.hpp"
+#include "gtk_TreeModelFilter.hpp"
 #include "gtk_TreeModelSort.hpp"
 #include "gtk_TreePath.hpp"
 #include "gtk_TreeRowReference.hpp"
@@ -304,6 +305,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
     Falcon::Gtk::TextTagTable::modInit( self );
+    Falcon::Gtk::TreeModelFilter::modInit( self );
     Falcon::Gtk::TreeModelSort::modInit( self );
     Falcon::Gtk::TreeStore::modInit( self );
     Falcon::Gtk::WindowGroup::modInit( self );
