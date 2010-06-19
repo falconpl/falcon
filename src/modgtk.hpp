@@ -166,17 +166,17 @@ protected:
      */
     static Falcon::GarbageLock* lockItem( GObject* obj, const Falcon::Item& it );
 
+    /**
+     *  \brief GDestroyNotify function for GarbageLock objects.
+     */
+    static void release_lock( gpointer );
+
 private:
 
     /**
      *  \brief GDestroyNotify function to delete all slots.
      */
     static void release_slots( gpointer );
-
-    /**
-     *  \brief GDestroyNotify function for GarbageLock objects.
-     */
-    static void release_lock( gpointer );
 
     /**
      *  \brief GDestroyNotify function for the GarbageLock table.
