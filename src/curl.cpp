@@ -146,9 +146,12 @@ FALCON_MODULE_DECL
    // Here declare CURL - easy api
    //
    self->addExtFunc( "curl_version", Falcon::Ext::curl_version );
+   self->addExtFunc( "dload", Falcon::Ext::curl_dload )->
+         addParam("uri")->addParam("stream");
 
    Falcon::Symbol *easy_class = self->addClass( "Handle", Falcon::Ext::Handle_init )
       ->addParam( "uri" );
+   easy_class->setWKS(true);
    easy_class->getClassDef()->factory( &Falcon::Mod::CurlHandle::Factory );
    self->addClassMethod( easy_class, "exec", Falcon::Ext::Handle_exec );
 

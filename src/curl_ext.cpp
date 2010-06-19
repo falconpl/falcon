@@ -62,6 +62,57 @@ static void throw_merror( int code, int line, const String& cd, const CURLMcode 
          );
 }
 
+static void internal_curl_init( VMachine* vm, Mod::CurlHandle* h, Item* i_uri )
+{
+   CURL* curl = h->handle();
+
+   // we had a general init error from curl
+   if ( curl == 0 )
+   {
+      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_INIT, __LINE__ )
+                  .desc( FAL_STR( curl_err_init ) )
+                  .extra( FAL_STR( curl_err_resources ) ));
+   }
+
+   curl_easy_setopt( curl, CURLOPT_NOPROGRESS, 1 );
+   curl_easy_setopt( curl, CURLOPT_NOSIGNAL, 1 );
+
+   // we need ourselves inside the object, so we can handle us back in multiple.
+   curl_easy_setopt( curl, CURLOPT_PRIVATE, h );
+
+
+   // no parameter? -- nothing to do
+   if( i_uri == 0 )
+      return;
+
+   CURLcode retval;
+
+   if( i_uri->isString() )
+   {
+      //String enc = URI::URLEncode( *i_uri->asString() );
+      AutoCString curi( *i_uri->asString() );
+
+      retval = curl_easy_setopt( curl, CURLOPT_URL, curi.c_str() );
+   }
+   else if( i_uri->isOfClass( "URI" ) )
+   {
+      URI* uri = (URI*) i_uri->asObjectSafe()->getUserData();
+      AutoCString curi( uri->get(true) );
+
+      retval = curl_easy_setopt( curl, CURLOPT_URL, curi.c_str() );
+   }
+   else
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__)
+            .extra( "[S|URI]" ) );
+   }
+
+   if( retval != CURLE_OK )
+   {
+      throw_error( FALCON_ERROR_CURL_INIT, __LINE__, FAL_STR( curl_err_init ), retval );
+   }
+}
+
 /*#
    @function curl_version
    @brief Returns the version of libcurl
@@ -104,54 +155,9 @@ FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm )
 {
    // setup our options
    Mod::CurlHandle* h = dyncast< Mod::CurlHandle* >( vm->self().asObject() );
-   CURL* curl = h->handle();
-
-   // we had a general init error from curl
-   if ( curl == 0 )
-   {
-      throw new Mod::CurlError( ErrorParam( FALCON_ERROR_CURL_INIT, __LINE__ )
-                  .desc( FAL_STR( curl_err_init ) )
-                  .extra( FAL_STR( curl_err_resources ) ));
-   }
-
-   curl_easy_setopt( curl, CURLOPT_NOPROGRESS, 1 );
-   curl_easy_setopt( curl, CURLOPT_NOSIGNAL, 1 );
-
-   // we need ourselves inside the object, so we can handle us back in multiple.
-   curl_easy_setopt( curl, CURLOPT_PRIVATE, h );
-
    Item* i_uri = vm->param(0);
 
-   // no parameter? -- nothing to do
-   if( i_uri == 0 )
-      return;
-
-   CURLcode retval;
-
-   if( i_uri->isString() )
-   {
-      //String enc = URI::URLEncode( *i_uri->asString() );
-      AutoCString curi( *i_uri->asString() );
-
-      retval = curl_easy_setopt( curl, CURLOPT_URL, curi.c_str() );
-   }
-   else if( i_uri->isOfClass( "URI" ) )
-   {
-      URI* uri = (URI*) i_uri->asObjectSafe()->getUserData();
-      AutoCString curi( uri->get(true) );
-
-      retval = curl_easy_setopt( curl, CURLOPT_URL, curi.c_str() );
-   }
-   else
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__)
-            .extra( "[S|URI]" ) );
-   }
-
-   if( retval != CURLE_OK )
-   {
-      throw_error( FALCON_ERROR_CURL_INIT, __LINE__, FAL_STR( curl_err_init ), retval );
-   }
+   internal_curl_init( vm, h, i_uri );
 }
 
 /*#
@@ -1026,6 +1032,61 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    {
       throw_error( FALCON_ERROR_CURL_GETINFO, __LINE__, FAL_STR( curl_err_getinfo ), cerr );
    }
+}
+
+/*#
+   @function dlaod
+   @brief Downloads file.
+   @param uri The uri to be downloaded.
+   @optparam stream a Stream where to download the data.
+
+   Downloads a file from a remote source and stores it on a string,
+   or on a @b stream, as in the following sequence:
+   @code
+      import from curl
+
+      data = curl.Handle( "http://www.falconpl.org" ).setOutString().exec().getData()
+      // equivalent:
+      data = curl.dload( "http://www.falconpl.org" )
+   @endcode
+*/
+
+FALCON_FUNC  curl_dload( ::Falcon::VMachine *vm )
+{
+   Item* i_uri = vm->param(0);
+   Item* i_stream = vm->param(1);
+
+   if ( i_uri == 0 || ! (i_uri->isString() || i_uri->isOfClass( "URI" ))
+         || (i_stream != 0 && ! (i_stream->isNil() || i_stream->isOfClass("Stream")) ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+          .extra( "S|URI,[Stream]" ) );
+   }
+
+   Mod::CurlHandle* ca = new Mod::CurlHandle( vm->findWKI("Handle")->asClass() );
+
+   internal_curl_init( vm, ca, i_uri );
+
+   if( i_stream == 0 || i_stream->isNil() )
+      ca->setOnDataGetString();
+   else
+      ca->setOnDataStream(
+            dyncast<Stream*>(i_stream->asObject()->getFalconData()) );
+
+  CURLcode retval = curl_easy_perform(ca->handle());
+  if( retval != CURLE_OK )
+  {
+     ca->cleanup();
+     ca->gcMark(1); // let the gc kill it
+     throw_error( FALCON_ERROR_CURL_EXEC, __LINE__, FAL_STR( curl_err_exec ), retval );
+  }
+
+  ca->cleanup();
+
+  if( i_stream == 0 || i_stream->isNil() )
+     vm->retval( ca->getData() );
+
+  ca->gcMark(1); // let the gc kill it
 }
 
 

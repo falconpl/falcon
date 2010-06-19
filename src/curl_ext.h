@@ -53,6 +53,7 @@
 namespace Falcon {
 namespace Ext {
 
+FALCON_FUNC  curl_dload( ::Falcon::VMachine *vm );
 FALCON_FUNC  curl_version( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm );
