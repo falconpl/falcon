@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 150b
+* Category: Encoding
+* Subcategory: Base64
+* Short: Check binary data in Base64
+* Description:
+*     Checks that base64 is working -- with binary data.
+* [/Description]
+*
+****************************************************************************/
+
+mb1 = Base64.decmb( "SGVsbG8=" )
+mb2 = Base64.decmb( "SGVsbG9k" )
+mb3 = Base64.decmb( "SGVsbG9keA==" )
+
+if Base64.encode( mb1 ) != "SGVsbG8=": failure("Basic encode 1")
+if Base64.encode( mb2 ) != "SGVsbG9k": failure("Basic encode 2")
+if Base64.encode( mb3 ) != "SGVsbG9keA==": failure("Basic encode 3")
+
+success()
+
+/* End of file */

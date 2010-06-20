@@ -1991,6 +1991,19 @@ Module* core_module_init()
    self->addClassMethod( tok_class, "hasCurrent", &Falcon::core::Tokenizer_hasCurrent );
 
    //=======================================================================
+   // Web coders - Base64
+   //=======================================================================
+   Falcon::Symbol *base64_class = self->addClass( "Base64",  Falcon::core::Tokenizer_init );
+
+   // properties
+   self->addClassMethod( base64_class, "encode", &Falcon::core::Base64_encode ).asSymbol()->
+      addParam("data");
+   self->addClassMethod( base64_class, "decode", &Falcon::core::Base64_decode ).asSymbol()->
+      addParam("data");
+   self->addClassMethod( base64_class, "decmb", &Falcon::core::Base64_decmb ).asSymbol()->
+      addParam("data");
+
+   //=======================================================================
    // Table class - tabular programming
    //=======================================================================
    Falcon::Symbol *table_class = self->addClass( "Table", &Falcon::core::Table_init );

@@ -14,6 +14,7 @@ set(falcon_files
   falcon/attribmap.h
   falcon/autocstring.h
   falcon/autowstring.h
+  falcon/base64.h
   falcon/basealloc.h
   falcon/baton.h
   falcon/cacheobject.h

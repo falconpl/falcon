@@ -605,6 +605,10 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Base64_encode ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Base64_decode ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Base64_decmb ( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Tokenizer_parse ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Tokenizer_rewind ( ::Falcon::VMachine *vm );

@@ -29,6 +29,7 @@ Falcon (0.9.6.5)
   * fixed: passvp() was failing if calling function had local vars (!)
   * fixed: First trace step of errors didn't report the target file name.
   * fixed: import <module> in <namespace> used the "as" instead of "in" keyword.
+  * added: Base64 class.
             
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

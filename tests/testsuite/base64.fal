@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 150a
+* Category: Encoding
+* Subcategory: Base64
+* Short: Test for base64 encoding
+* Description:
+*     Checks that base64 is working.
+* [/Description]
+*
+****************************************************************************/
+
+if Base64.encode( "Hello" ) != "SGVsbG8=": failure("Basic encode 1")
+if Base64.encode( "Hellod" ) != "SGVsbG9k": failure("Basic encode 2")
+if Base64.encode( "Hellodx" ) != "SGVsbG9keA==": failure("Basic encode 3")
+if Base64.encode("" ) != "" : failure("Basic encode empty")
+
+if Base64.decode( Base64.encode( "Hello" ) )!= "Hello": failure("Basic decode 1")
+if Base64.decode( Base64.encode( "Hellod" ) )!= "Hellod": failure("Basic decode 2")
+if Base64.decode( Base64.encode( "Hellodx" ) )!= "Hellodx": failure("Basic decode 3")
+if Base64.decode( Base64.encode( "" ) )!= "": failure("Basic decode empty")
+
+if Base64.decode( Base64.encode( "私生エンコードする" ) )!= "私生エンコードする": failure("Intl. encode 1")
+if Base64.decode( Base64.encode( "私生エンコードしてる" ) )!= "私生エンコードしてる": failure("Intl. encode 2")
+if Base64.decode( Base64.encode( "私生エンコードしている" ) )!= "私生エンコードしている": failure("Intl. encode 3")
+
+success()
+
+/* End of file */

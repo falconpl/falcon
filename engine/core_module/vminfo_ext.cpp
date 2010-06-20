@@ -1,8 +1,7 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vminfo_ext.h
+   FILE: vminfo_ext.cpp
 
-   Header for Falcon Realtime Library - C modules
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 14 Aug 2008 00:31:21 +0200
