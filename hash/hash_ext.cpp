@@ -117,9 +117,12 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
         which = vm->regA();
     }
 
+    bool ownCarrier = false;
+
     if(which.isString())
     {
         carrier = (Mod::HashCarrier<Mod::HashBase>*)(Mod::GetHashByName(which.asString()));
+        ownCarrier = true;
     }
     else if(which.isObject())
     {
@@ -173,7 +176,8 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
         vm->retval(str);
     }
 
-    delete carrier;
+    if(ownCarrier)
+        delete carrier;
 }
 
 /*#

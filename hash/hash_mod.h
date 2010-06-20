@@ -87,7 +87,7 @@ namespace Mod {
         virtual uint64 AsInt(void);
 
         // this is internally used and must be overloaded too, and return the class name exactly as used by Falcon
-        virtual char *GetName(void) { return "HashBase"; }
+        virtual const char *GetName(void) { return "HashBase"; }
 
     protected:
         bool _finalized;
@@ -126,7 +126,7 @@ namespace Mod {
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         uint64 AsInt(void) { return _finalized ? _crc : 0; } // special for CRC32
         static void GenTab(void);
-        char *GetName(void) { return "CRC32"; }
+        const char *GetName(void) { return "CRC32"; }
 
     private:
         uint32 _crc;
@@ -143,7 +143,7 @@ namespace Mod {
         uint32 DigestSize(void) { return ADLER32_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         uint64 AsInt(void) { return _finalized ? _adler : 0; } // special for Adler32
-        char *GetName(void) { return "Adler32"; }
+        const char *GetName(void) { return "Adler32"; }
 
     private:
         uint32 _adler;
@@ -158,7 +158,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return SHA1_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "SHA1Hash"; }
+        const char *GetName(void) { return "SHA1Hash"; }
 
     private:
         SHA1_CTX _ctx;
@@ -173,7 +173,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return SHA224_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "SHA224Hash"; }
+        const char *GetName(void) { return "SHA224Hash"; }
 
     private:
         sha256_sha224_ctx _ctx;
@@ -188,7 +188,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return SHA256_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "SHA256Hash"; }
+        const char *GetName(void) { return "SHA256Hash"; }
 
     private:
         sha256_sha224_ctx _ctx;
@@ -203,7 +203,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return SHA384_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "SHA384Hash"; }
+        const char *GetName(void) { return "SHA384Hash"; }
 
     private:
         sha512_sha384_ctx _ctx;
@@ -218,7 +218,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return SHA512_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "SHA512Hash"; }
+        const char *GetName(void) { return "SHA512Hash"; }
 
     private:
         sha512_sha384_ctx _ctx;
@@ -233,7 +233,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return MD2_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "MD2Hash"; }
+        const char *GetName(void) { return "MD2Hash"; }
 
     private:
         md2_ctx _ctx;
@@ -248,7 +248,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return MD4_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "MD4Hash"; }
+        const char *GetName(void) { return "MD4Hash"; }
 
     private:
         MD4_CTX _ctx;
@@ -263,7 +263,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return MD5_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "MD5Hash"; }
+        const char *GetName(void) { return "MD5Hash"; }
 
     private:
         md5_state_t _ctx;
@@ -278,7 +278,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return WHIRLPOOL_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "WhirlpoolHash"; }
+        const char *GetName(void) { return "WhirlpoolHash"; }
 
     private:
         whirlpool_ctx _ctx;
@@ -293,7 +293,7 @@ namespace Mod {
         void Finalize(void);
         uint32 DigestSize(void) { return TIGER_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        char *GetName(void) { return "TigerHash"; }
+        const char *GetName(void) { return "TigerHash"; }
 
     private:
         tiger_ctx _ctx;
@@ -317,7 +317,7 @@ namespace Mod {
     public:
         RIPEMD128Hash();
         uint32 DigestSize(void) { return RIPEMD128_DIGEST_LENGTH; }
-        char *GetName(void) { return "RIPEMD128Hash"; }
+        const char *GetName(void) { return "RIPEMD128Hash"; }
     };
 
     class RIPEMD160Hash : public RIPEMDHashBase
@@ -325,7 +325,7 @@ namespace Mod {
     public:
         RIPEMD160Hash();
         uint32 DigestSize(void) { return RIPEMD160_DIGEST_LENGTH; }
-        char *GetName(void) { return "RIPEMD160Hash"; }
+        const char *GetName(void) { return "RIPEMD160Hash"; }
     };
 
     class RIPEMD256Hash : public RIPEMDHashBase
@@ -333,7 +333,7 @@ namespace Mod {
     public:
         RIPEMD256Hash();
         uint32 DigestSize(void) { return RIPEMD256_DIGEST_LENGTH; }
-        char *GetName(void) { return "RIPEMD256Hash"; }
+        const char *GetName(void) { return "RIPEMD256Hash"; }
     };
 
     class RIPEMD320Hash : public RIPEMDHashBase
@@ -341,7 +341,7 @@ namespace Mod {
     public:
         RIPEMD320Hash();
         uint32 DigestSize(void) { return RIPEMD320_DIGEST_LENGTH; }
-        char *GetName(void) { return "RIPEMD320Hash"; }
+        const char *GetName(void) { return "RIPEMD320Hash"; }
     };
 
 
