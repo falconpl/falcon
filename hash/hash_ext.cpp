@@ -640,6 +640,7 @@ The semantics are equal to:
 @function ripemd256
 @ingroup strong_hashes
 @brief Convenience function that calculates a 256 bits long RIPEMD256 hash.
+@return A lowercase hexadecimal string with the RIPEMD256 hash.
 
 This function takes an arbitrary amount of parameters. See HashBase.update() for details.
 

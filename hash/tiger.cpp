@@ -211,7 +211,7 @@ void tiger_update(tiger_ctx *ctx, byte *buffer, word32 len)
 void tiger_finalize(tiger_ctx *ctx)
 {
     register word64 i, j;
-    unsigned char temp[64];
+    byte temp[64];
     i = ctx->index;
 #ifdef BIG_ENDIAN
     for(j=0; j<i; j++)

@@ -60,8 +60,11 @@ Purschke <purschke@bnl.gov>.
  * efficiently on either one than if ARCH_IS_BIG_ENDIAN is defined.
  */
 
-typedef unsigned char md5_byte_t;                           /* 8-bit byte */
-typedef unsigned int md5_word_t;                            /* 32-bit word */
+/* use falcon types and definitions */
+#include "hash_defs.h"
+
+typedef byte md5_byte_t;                           /* 8-bit byte */
+typedef word32 md5_word_t;                            /* 32-bit word */
 
 /* Define the state of the MD5 Algorithm. */
 typedef struct md5_state_s

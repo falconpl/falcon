@@ -122,7 +122,7 @@ static word64 K[80] = {
 /* Helper macros derived from those in mhash_sha1.h */
 
 #ifndef EXTRACT_UCHAR
-#define EXTRACT_UCHAR(p)  (*(unsigned char *)(p))
+#define EXTRACT_UCHAR(p)  (*(byte *)(p))
 #endif
 
 #define STRING2INT64(s) ((((((((((((((word64)(EXTRACT_UCHAR(s) << 8)    \

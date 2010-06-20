@@ -39,6 +39,8 @@ Comments) 1950 to 1952 in the files http://www.ietf.org/rfc/rfc1950.txt
 (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
+#include "adler32.h"
+
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define NMAX 5552
 /* NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
@@ -52,10 +54,10 @@ Comments) 1950 to 1952 in the files http://www.ietf.org/rfc/rfc1950.txt
 #define MOD(a) a %= BASE
 #define MOD4(a) a %= BASE
 
-unsigned int adler32(unsigned int adler, char *buf, unsigned int len)
+word32 adler32(word32 adler, char *buf, word32 len)
 {
-    unsigned long sum2;
-    unsigned n;
+    word32 sum2;
+    word32 n;
 
     /* split Adler-32 into component sums */
     sum2 = (adler >> 16) & 0xffff;

@@ -49,16 +49,16 @@ A million repetitions of "a"
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(unsigned long *state, unsigned char *buffer)
+void SHA1Transform(word32 *state, byte *buffer)
 {
-unsigned long a, b, c, d, e;
+word32 a, b, c, d, e;
 typedef union {
-    unsigned char c[64];
-    unsigned long l[16];
+    byte c[64];
+    word32 l[16];
 } CHAR64LONG16;
 CHAR64LONG16* block;
 #ifdef SHA1HANDSOFF
-static unsigned char workspace[64];
+static byte workspace[64];
     block = (CHAR64LONG16*)workspace;
     memcpy(block, buffer, 64);
 #else
@@ -118,9 +118,9 @@ void SHA1Init(SHA1_CTX* context)
 
 /* Run your data through this. */
 
-void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len)
+void SHA1Update(SHA1_CTX* context, byte* data, word32 len)
 {
-unsigned int i, j;
+    word32 i, j;
 
     j = (context->count[0] >> 3) & 63;
     if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
@@ -140,22 +140,22 @@ unsigned int i, j;
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char *digest, SHA1_CTX* context)
+void SHA1Final(byte *digest, SHA1_CTX* context)
 {
-unsigned long i, j;
-unsigned char finalcount[8];
+    word32 i, j;
+    byte finalcount[8];
 
     for (i = 0; i < 8; i++) {
-        finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
+        finalcount[i] = (byte)((context->count[(i >= 4 ? 0 : 1)]
          >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
     }
-    SHA1Update(context, (unsigned char *)"\200", 1);
+    SHA1Update(context, (byte *)"\200", 1);
     while ((context->count[0] & 504) != 448) {
-        SHA1Update(context, (unsigned char *)"\0", 1);
+        SHA1Update(context, (byte *)"\0", 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
     for (i = 0; i < 20; i++) {
-        digest[i] = (unsigned char)
+        digest[i] = (byte)
          ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
     /* Wipe variables */

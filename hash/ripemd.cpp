@@ -932,7 +932,7 @@ static void ripemd_block(struct ripemd_ctx *ctx, byte *block)
 void ripemd_update(struct ripemd_ctx *ctx, byte *buffer, word32 len)
 {
 	if (ctx->index) {	/* Try to fill partial block */
-		unsigned left = RIPEMD_DATASIZE - ctx->index;
+		word32 left = RIPEMD_DATASIZE - ctx->index;
 		if (len < left) {
 			memcpy(ctx->block + ctx->index, buffer, len);
 			ctx->index += len;
