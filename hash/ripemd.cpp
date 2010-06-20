@@ -914,7 +914,7 @@ static void ripemd_transform(struct ripemd_ctx *ctx, word32 * data)
 			 | EXTRACT_UCHAR(s+1)) << 8)  \
 			 | EXTRACT_UCHAR(s))
 
-static void ripemd_block(struct ripemd_ctx *ctx, byte *block)
+static void ripemd_block(struct ripemd_ctx *ctx, const byte *block)
 {
 	word32 data[RIPEMD_DATALEN];
 	word32 i;
@@ -929,7 +929,7 @@ static void ripemd_block(struct ripemd_ctx *ctx, byte *block)
 	ripemd_transform(ctx, data);
 }
 
-void ripemd_update(struct ripemd_ctx *ctx, byte *buffer, word32 len)
+void ripemd_update(struct ripemd_ctx *ctx, const byte *buffer, word32 len)
 {
 	if (ctx->index) {	/* Try to fill partial block */
 		word32 left = RIPEMD_DATASIZE - ctx->index;

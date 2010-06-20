@@ -14,7 +14,7 @@ struct tiger_ctx
 
 void tiger_init(tiger_ctx *ctx);
 void tiger_compress(word64 *str, word64 *state);
-void tiger_update(tiger_ctx *ctx, byte *buffer, word32 len);
+void tiger_update(tiger_ctx *ctx, const byte *buffer, word32 len);
 void tiger_finalize(tiger_ctx *ctx);
 void tiger_digest(struct tiger_ctx *ctx, byte *s);
 void tiger_digest_little_endian_like(struct tiger_ctx *ctx, byte *s);

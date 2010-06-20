@@ -19,7 +19,7 @@
  */
 
 /* This code heavily borrows from the sha256/sha1 code written by 
- * Niels Möller and Peter Gutmann (see sha256_sha224.c of the mhash library)
+ * Niels Mï¿½ller and Peter Gutmann (see sha256_sha224.c of the mhash library)
  */ 
 
 #include <string.h>
@@ -241,7 +241,7 @@ static void sha512_sha384_transform(word64 * state, word64 * data)
 }
 
 static void 
-sha512_sha384_block(struct sha512_sha384_ctx *ctx, byte * block)
+sha512_sha384_block(struct sha512_sha384_ctx *ctx, const byte * block)
 {
 	word64 data[SHA512_SHA384_DATA_LENGTH];
 	word32 i;
@@ -262,7 +262,7 @@ sha512_sha384_block(struct sha512_sha384_ctx *ctx, byte * block)
 }
 
 void
-sha512_sha384_update(struct sha512_sha384_ctx *ctx, byte * buffer, 
+sha512_sha384_update(struct sha512_sha384_ctx *ctx, const byte * buffer,
 		     word32 length)
 {
 	word32 left;

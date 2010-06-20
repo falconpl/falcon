@@ -54,7 +54,7 @@ void ripemd128_init(struct ripemd_ctx *ctx);
 void ripemd160_init(struct ripemd_ctx *ctx);
 void ripemd256_init(struct ripemd_ctx *ctx);
 void ripemd320_init(struct ripemd_ctx *ctx);
-void ripemd_update(struct ripemd_ctx *ctx, byte *buffer, word32 len);
+void ripemd_update(struct ripemd_ctx *ctx, const byte *buffer, word32 len);
 void ripemd_final(struct ripemd_ctx *ctx);
 void ripemd_digest(struct ripemd_ctx *ctx, byte *s);
 

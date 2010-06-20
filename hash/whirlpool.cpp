@@ -954,7 +954,7 @@ void whirlpool_init(whirlpool_ctx *ctx) {
 *
 * This method maintains the invariant: bufferBits < DIGESTBITS
 */
-void whirlpool_update(uint8 *source, uint32 sourceBits, whirlpool_ctx *ctx) {
+void whirlpool_update(const uint8 *source, uint32 sourceBits, whirlpool_ctx *ctx) {
     /*
     sourcePos
     |

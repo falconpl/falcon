@@ -49,7 +49,7 @@ void
 sha384_init(struct sha512_sha384_ctx *ctx);
 
 void
-sha512_sha384_update(struct sha512_sha384_ctx *ctx, byte *data, word32 length);
+sha512_sha384_update(struct sha512_sha384_ctx *ctx, const byte *data, word32 length);
 
 void
 sha512_sha384_final(struct sha512_sha384_ctx *ctx);

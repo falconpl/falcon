@@ -30,7 +30,7 @@ struct whirlpool_ctx {
 };
 
 void whirlpool_finalize(whirlpool_ctx *ctx, uint8 *result);
-void whirlpool_update(uint8 *source, uint32 sourceBits, whirlpool_ctx *ctx);
+void whirlpool_update(const uint8 *source, uint32 sourceBits, whirlpool_ctx *ctx);
 void whirlpool_init(whirlpool_ctx *ctx);
 
 #endif

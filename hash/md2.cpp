@@ -2,14 +2,14 @@
  *
  * The MD2 hash function, described in RFC 1319.
  *
- * This code was originally written by Möller/Sigfridsson for
+ * This code was originally written by Mï¿½ller/Sigfridsson for
  * libnettle. It was altered by B. Poettering to fit the mhash
  * interface. The original copyright notice follows.
  */
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2003 Niels Möller, Andreas Sigfridsson
+ * Copyright (C) 2003 Niels Mï¿½ller, Andreas Sigfridsson
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -28,7 +28,7 @@
  */
 
 /* This code originates from the Python Cryptography Toolkit, version 1.0.1.
-   Further hacked by Andreas Sigfridsson and Niels Möller. Original license:
+   Further hacked by Andreas Sigfridsson and Niels Mï¿½ller. Original license:
 
    ===================================================================
    Distribute and use freely; there are no restrictions on further
@@ -70,7 +70,7 @@ S[256] = {
   31, 26, 219, 153, 141, 51, 159, 17, 131, 20
 };
 
-void md2_transform(md2_ctx *ctx, byte *data)
+static void md2_transform(md2_ctx *ctx, const byte *data)
 {
 	byte i, j, t;
 	memcpy(ctx->X + 16, data, MD2_DATA_SIZE);
@@ -92,7 +92,7 @@ void md2_init(md2_ctx *ctx)
 	memset(ctx, 0, sizeof(md2_ctx));
 }
 
-void md2_update(md2_ctx *ctx, byte *data, word32 length)
+void md2_update(md2_ctx *ctx, const byte *data, word32 length)
 {
 	if (ctx->index != 0)
 	{

@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Niels Möller
+ * Copyright (C) 2001 Niels Mï¿½ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -55,7 +55,7 @@ void
 sha224_init(struct sha256_sha224_ctx *ctx);
 
 void
-sha256_sha224_update(struct sha256_sha224_ctx *ctx, byte *data, word32 length);
+sha256_sha224_update(struct sha256_sha224_ctx *ctx, const byte *data, word32 length);
 
 void
 sha256_sha224_final(struct sha256_sha224_ctx *ctx);

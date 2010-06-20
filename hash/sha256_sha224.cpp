@@ -5,7 +5,7 @@
 
 /* nettle, low-level cryptographics library
  *
- * Copyright (C) 2001 Niels Möller
+ * Copyright (C) 2001 Niels Mï¿½ller
  *  
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -229,7 +229,7 @@ static void sha256_sha224_transform(word32 *state, word32 *data)
 	state[7] += H;
 }
 
-static void sha256_sha224_block(struct sha256_sha224_ctx *ctx, byte *block)
+static void sha256_sha224_block(struct sha256_sha224_ctx *ctx,  const byte *block)
 {
 	word32 data[SHA256_SHA224_DATA_LENGTH];
 	word32 i;
@@ -245,7 +245,7 @@ static void sha256_sha224_block(struct sha256_sha224_ctx *ctx, byte *block)
 }
 
 void
-sha256_sha224_update(struct sha256_sha224_ctx *ctx, byte *buffer, word32 length)
+sha256_sha224_update(struct sha256_sha224_ctx *ctx, const byte *buffer, word32 length)
 {
 	word32 left;
 

@@ -14,7 +14,7 @@ struct SHA1_CTX
 
 void SHA1Transform(word32 *state, byte *buffer);
 void SHA1Init(SHA1_CTX *context);
-void SHA1Update(SHA1_CTX *context, byte *data, word32 len);
+void SHA1Update(SHA1_CTX *context, const byte *data, word32 len);
 void SHA1Final(byte *digest, SHA1_CTX *context);
 
 #endif

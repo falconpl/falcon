@@ -273,7 +273,6 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
     if(byte *digest = hash->GetDigest())
     {
         Falcon::String *str = new Falcon::CoreString; // each byte will be encoded to 2 chars
-        char tmp[3];
         str->reserve( size*2 );
 
         for(uint32 i = 0; i < size; i++)

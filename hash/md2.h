@@ -2,12 +2,12 @@
  *
  * The MD2 hash function, described in RFC 1319.
  * 
- * This code was originally written by Niels Möller for libnettle. It
+ * This code was originally written by Niels Mï¿½ller for libnettle. It
  * was altered by B. Poettering to fit the mhash interface. The original
  * copyright notice follows.
  */
 
-/* Copyright (C) 2003 Niels Möller
+/* Copyright (C) 2003 Niels Mï¿½ller
  *  
  * The nettle library is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -44,7 +44,7 @@ struct md2_ctx
 
 void md2_init(md2_ctx *ctx);
 
-void md2_update(md2_ctx *ctx, byte *data, word32 length);
+void md2_update(md2_ctx *ctx, const byte *data, word32 length);
 
 void md2_digest(md2_ctx *ctx, byte *digest);
 

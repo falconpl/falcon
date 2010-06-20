@@ -11,7 +11,7 @@ struct MD4_CTX {
 };
 
 void MD4Init(struct MD4_CTX *context);
-void MD4Update(struct MD4_CTX *context, byte *buf, word32 len);
+void MD4Update(struct MD4_CTX *context, const byte *buf, word32 len);
 void MD4Final( struct MD4_CTX *context, byte *digest);
 void MD4Transform(word32 *buf, word32 *in);
 

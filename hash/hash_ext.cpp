@@ -235,7 +235,7 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
     }
     else if(what->isString())
     {
-        hash->UpdateData(what->asString());
+        hash->UpdateData(*what->asString());
     }
     else if(what->isArray())
     {
@@ -322,7 +322,7 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
     {
         String str;
         what->toString( str );
-        hash->UpdateData( &str );
+        hash->UpdateData( str );
     }
 }
 

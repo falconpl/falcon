@@ -112,34 +112,13 @@ void HashBase::UpdateData(MemBuf *buf)
     }
 }
 
-void HashBase::UpdateData(String *str)
+void HashBase::UpdateData(const String &str)
 {
-    uint32 len = str->length();
-    if(!len)
-        return;
-    uint32 charSize = str->manipulator()->charSize();
-    switch(charSize)
-    {
-    case 1:
-        UpdateData(str->getRawStorage(), len);
-        break;
+   uint32 size = str.size();
+   if( size == 0 )
+     return;
 
-    case 2:
-        for(uint32 i = 0; i < len; i++)
-        {
-            int16 c = endianInt16(str->getCharAt(i)); // TODO: this has to be tested on big-endian!
-            UpdateData((byte*)&c, 2);
-        }
-        break;
-
-    case 4:
-        for(uint32 i = 0; i < len; i++)
-        {
-            int32 c = endianInt32(str->getCharAt(i)); // TODO: this has to be tested on big-endian!
-            UpdateData((byte*)&c, 4);
-        }
-        break;
-    }
+   UpdateData( str.getRawStorage(), size );
 }
 
 uint64 HashBase::AsInt(void)
@@ -249,13 +228,13 @@ byte *HashBaseFalcon::GetDigest(void)
     return _digest;
 }
 
-void HashBaseFalcon::UpdateData(byte *ptr, uint32 size)
+void HashBaseFalcon::UpdateData( const byte *ptr, uint32 size)
 {
     if(!size)
         return;
     Falcon::Item m;
     _GetCallableMethod(m, "process");
-    Falcon::MemBuf_1 *mb = new Falcon::MemBuf_1(ptr, size); // adopt pointers (no copy!)
+    Falcon::MemBuf_1 *mb = new Falcon::MemBuf_1( (byte*)ptr, size, 0);
     _vm->pushParam(mb);
     _vm->callItemAtomic(m, 1);
 }
@@ -320,7 +299,7 @@ void CRC32::Finalize(void)
         _digest[i] = ((byte*)&_crc)[(CRC32_DIGEST_LENGTH-1) - i]; // copy bytes in reverse // TODO: little-endian only?
 }
 
-void CRC32::UpdateData(byte *ptr, uint32 size)
+void CRC32::UpdateData( const byte *ptr, uint32 size)
 {
     for (uint32 i = 0; i < size; i++)
     {
@@ -345,7 +324,7 @@ void Adler32::Finalize(void)
         _digest[i] = ((byte*)&adlerEndian)[(ADLER32_DIGEST_LENGTH-1) - i]; // copy bytes in reverse // TODO: little-endian only?
 }
 
-void Adler32::UpdateData(byte *ptr, uint32 size)
+void Adler32::UpdateData( const byte *ptr, uint32 size)
 {
     _adler = adler32(_adler, (char*)ptr, size);
 }
@@ -356,7 +335,7 @@ SHA1Hash::SHA1Hash()
     SHA1Init(&_ctx);
 }
 
-void SHA1Hash::UpdateData(byte *ptr, uint32 size)
+void SHA1Hash::UpdateData(const byte *ptr, uint32 size)
 {
     SHA1Update(&_ctx, ptr, size);
 }
@@ -376,7 +355,7 @@ SHA224Hash::SHA224Hash()
     sha224_init(&_ctx);
 }
 
-void SHA224Hash::UpdateData(byte *ptr, uint32 size)
+void SHA224Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha256_sha224_update(&_ctx, ptr, size);
 }
@@ -397,7 +376,7 @@ SHA256Hash::SHA256Hash()
     sha256_init(&_ctx);
 }
 
-void SHA256Hash::UpdateData(byte *ptr, uint32 size)
+void SHA256Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha256_sha224_update(&_ctx, ptr, size);
 }
@@ -418,7 +397,7 @@ SHA384Hash::SHA384Hash()
     sha384_init(&_ctx);
 }
 
-void SHA384Hash::UpdateData(byte *ptr, uint32 size)
+void SHA384Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha512_sha384_update(&_ctx, ptr, size);
 }
@@ -439,7 +418,7 @@ SHA512Hash::SHA512Hash()
     sha512_init(&_ctx);
 }
 
-void SHA512Hash::UpdateData(byte *ptr, uint32 size)
+void SHA512Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha512_sha384_update(&_ctx, ptr, size);
 }
@@ -460,7 +439,7 @@ MD2Hash::MD2Hash()
     md2_init(&_ctx);
 }
 
-void MD2Hash::UpdateData(byte *ptr, uint32 size)
+void MD2Hash::UpdateData(const byte *ptr, uint32 size)
 {
     md2_update(&_ctx, ptr, size);
 }
@@ -480,7 +459,7 @@ MD4Hash::MD4Hash()
     MD4Init(&_ctx);
 }
 
-void MD4Hash::UpdateData(byte *ptr, uint32 size)
+void MD4Hash::UpdateData(const byte *ptr, uint32 size)
 {
     MD4Update(&_ctx, ptr, size);
 }
@@ -500,7 +479,7 @@ MD5Hash::MD5Hash()
     md5_init(&_ctx);
 }
 
-void MD5Hash::UpdateData(byte *ptr, uint32 size)
+void MD5Hash::UpdateData(const byte *ptr, uint32 size)
 {
     md5_append(&_ctx, ptr, size);
 }
@@ -520,7 +499,7 @@ WhirlpoolHash::WhirlpoolHash()
     whirlpool_init(&_ctx);
 }
 
-void WhirlpoolHash::UpdateData(byte *ptr, uint32 size)
+void WhirlpoolHash::UpdateData(const byte *ptr, uint32 size)
 {
     whirlpool_update(ptr, size * 8, &_ctx); // whirlpool expects size in bits
 }
@@ -540,7 +519,7 @@ TigerHash::TigerHash()
     tiger_init(&_ctx);
 }
 
-void TigerHash::UpdateData(byte *ptr, uint32 size)
+void TigerHash::UpdateData(const byte *ptr, uint32 size)
 {
     tiger_update(&_ctx, ptr, size);
 }
@@ -555,7 +534,7 @@ void TigerHash::Finalize(void)
     tiger_digest(&_ctx, _digest);
 }
 
-void RIPEMDHashBase::UpdateData(byte *ptr, uint32 size)
+void RIPEMDHashBase::UpdateData(const byte *ptr, uint32 size)
 {
     ripemd_update(&_ctx, ptr, size);
 }
