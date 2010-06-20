@@ -322,10 +322,9 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
     }
     else // fallback - convert to string if nothing else works
     {
-        String *str = new String();
-        what->toString(*str);
-        hash->UpdateData(str);
-        delete str;
+        String str;
+        what->toString( str );
+        hash->UpdateData( &str );
     }
 }
 
