@@ -272,7 +272,7 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
     uint32 size = hash->DigestSize();
     if(byte *digest = hash->GetDigest())
     {
-        Falcon::String *str = new Falcon::String(size * 2); // each byte will be encoded to 2 chars
+        Falcon::String *str = new Falcon::CoreString(size * 2); // each byte will be encoded to 2 chars
         char tmp[3];
 
         for(uint32 i = 0; i < size; i++)
@@ -355,7 +355,7 @@ template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMachine *vm )
 
     uint32 size = hash.DigestSize();
     byte *digest = hash.GetDigest();
-    Falcon::String *str = new Falcon::String(size * 2); // each byte will be encoded to 2 chars
+    Falcon::String *str = new Falcon::CoreString(size * 2); // each byte will be encoded to 2 chars
     char tmp[3];
 
     for(uint32 i = 0; i < size; i++)
