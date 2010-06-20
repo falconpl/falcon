@@ -43,6 +43,48 @@ namespace Falcon {
 namespace Mod {
 
 
+// this is a helper function used by makeHash() and the hash() convenience function
+FalconData *GetHashByName(String *whichStr)
+{
+    if(!whichStr->compareIgnoreCase("crc32"))
+        return new Mod::HashCarrier<Mod::CRC32>();
+    else if(!whichStr->compareIgnoreCase("adler32"))
+        return new Mod::HashCarrier<Mod::Adler32>();
+    else if(!whichStr->compareIgnoreCase("md2"))
+        return new Mod::HashCarrier<Mod::MD2Hash>();
+    else if(!whichStr->compareIgnoreCase("md4"))
+        return new Mod::HashCarrier<Mod::MD4Hash>();
+    else if(!whichStr->compareIgnoreCase("md5"))
+        return new Mod::HashCarrier<Mod::MD5Hash>();
+    else if(!whichStr->compareIgnoreCase("sha1"))
+        return new Mod::HashCarrier<Mod::SHA1Hash>();
+    else if(!whichStr->compareIgnoreCase("sha224"))
+        return new Mod::HashCarrier<Mod::SHA224Hash>();
+    else if(!whichStr->compareIgnoreCase("sha256"))
+        return new Mod::HashCarrier<Mod::SHA256Hash>();
+    else if(!whichStr->compareIgnoreCase("sha384"))
+        return new Mod::HashCarrier<Mod::SHA384Hash>();
+    else if(!whichStr->compareIgnoreCase("sha512"))
+        return new Mod::HashCarrier<Mod::SHA512Hash>();
+    else if(!whichStr->compareIgnoreCase("tiger"))
+        return new Mod::HashCarrier<Mod::TigerHash>();
+    else if(!whichStr->compareIgnoreCase("whirlpool"))
+        return new Mod::HashCarrier<Mod::WhirlpoolHash>();
+    else if(!whichStr->compareIgnoreCase("ripemd128"))
+        return new Mod::HashCarrier<Mod::RIPEMD128Hash>();
+    else if(!whichStr->compareIgnoreCase("ripemd160"))
+        return new Mod::HashCarrier<Mod::RIPEMD160Hash>();
+    else if(!whichStr->compareIgnoreCase("ripemd256"))
+        return new Mod::HashCarrier<Mod::RIPEMD256Hash>();
+    else if(!whichStr->compareIgnoreCase("ripemd320"))
+        return new Mod::HashCarrier<Mod::RIPEMD320Hash>();
+
+    // note: when adding entries here, be sure to overload the hash's GetName() method accordingly!
+
+    return NULL;
+}
+
+
 void HashBase::UpdateData(MemBuf *buf)
 {
     uint32 ws = buf->wordSize();
@@ -125,7 +167,7 @@ HashBaseFalcon::~HashBaseFalcon()
 
 void HashBaseFalcon::_GetCallableMethod(Falcon::Item& item, const Falcon::String& name)
 {
-    if(!_vm->self().asObject()->getMethod(name, item))
+    if(!_self->getMethod(name, item))
     {
         throw new Falcon::AccessError(
             Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )

@@ -42,6 +42,8 @@
 
 #include "../include/version.h"
 
+#include "hash_ext.inl"
+
 /*#
     @module feather_hash hash
     @brief Various hash and checksum functions
@@ -126,7 +128,7 @@
     Advantages of doing it this way:
     - It is not necessary to implement update() in native falcon code.
     - All value endian conversions, type mangling, and error checking is done by the module, so focus can be set on the algorithm itself.
-    - The values returned by bytes(), toMemBuf() and toInt() are cached, means less calls, less time.
+    - The values returned by bytes(), toMemBuf() and toInt() are cached by the module, means less calls, less time.
     - The module ensures that internal_finalize() is called only once, no explicit checking required.
 
 */
@@ -243,7 +245,8 @@
     @brief Calculates a 320 bits long RIPEMD-320 hash (RIPEMD family)
 */
 
-template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, const char *name)
+template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, const char *name,
+                                                         Falcon::InheritDef *parent)
 {
     Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Hash_init<HASH>);
     self->addClassMethod(cls, "update", Falcon::Ext::Hash_update<HASH>);
@@ -258,53 +261,80 @@ template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, c
     self->addClassMethod(cls, "toInt", Falcon::Ext::Hash_toInt<HASH>);
     cls->setWKS(true);
 
+    if(parent)
+        cls->getClassDef()->addInheritance(parent);
+
     return cls;
 }
 
 Falcon::Module *hash_module_init(void)
 {
-   #define FALCON_DECLARE_MODULE self
+    #define FALCON_DECLARE_MODULE self
 
-   // initialize the module
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "hash" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+    // initialize the module
+    Falcon::Module *self = new Falcon::Module();
+    self->name( "hash" );
+    self->language( "en_US" );
+    self->engineVersion( FALCON_VERSION_NUM );
+    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
-   //============================================================
-   // Here declare the international string table implementation
-   //
-   #include "hash_st.h"
+    //============================================================
+    // Here declare the international string table implementation
+    //
+    #include "hash_st.h"
 
-   //============================================================
-   // API declarations
-   //
-   SimpleRegisterHash<Falcon::Mod::CRC32>         (self, "CRC32"        );
-   SimpleRegisterHash<Falcon::Mod::Adler32>       (self, "Adler32"      );
-   SimpleRegisterHash<Falcon::Mod::HashBaseFalcon>(self, "HashBase"     );
-   SimpleRegisterHash<Falcon::Mod::SHA1Hash>      (self, "SHA1Hash"     );
-   SimpleRegisterHash<Falcon::Mod::SHA224Hash>    (self, "SHA224Hash"   );
-   SimpleRegisterHash<Falcon::Mod::SHA256Hash>    (self, "SHA256Hash"   );
-   SimpleRegisterHash<Falcon::Mod::SHA384Hash>    (self, "SHA384Hash"   );
-   SimpleRegisterHash<Falcon::Mod::SHA512Hash>    (self, "SHA512Hash"   );
-   SimpleRegisterHash<Falcon::Mod::MD2Hash>       (self, "MD2Hash"      );
-   SimpleRegisterHash<Falcon::Mod::MD4Hash>       (self, "MD4Hash"      );
-   SimpleRegisterHash<Falcon::Mod::MD5Hash>       (self, "MD5Hash"      );
-   SimpleRegisterHash<Falcon::Mod::WhirlpoolHash> (self, "WhirlpoolHash");
-   SimpleRegisterHash<Falcon::Mod::TigerHash>     (self, "TigerHash"    );
-   SimpleRegisterHash<Falcon::Mod::RIPEMD128Hash> (self, "RIPEMD128Hash");
-   SimpleRegisterHash<Falcon::Mod::RIPEMD160Hash> (self, "RIPEMD160Hash");
-   SimpleRegisterHash<Falcon::Mod::RIPEMD256Hash> (self, "RIPEMD256Hash");
-   SimpleRegisterHash<Falcon::Mod::RIPEMD320Hash> (self, "RIPEMD320Hash");
+    //============================================================
+    // API declarations
+    //
+    Falcon::Symbol *baseSym = SimpleRegisterHash<Falcon::Mod::HashBaseFalcon>(self, "HashBase", NULL);
+    Falcon::InheritDef *base = new Falcon::InheritDef(baseSym);
 
+    SimpleRegisterHash<Falcon::Mod::CRC32>         (self, "CRC32"        , base);
+    SimpleRegisterHash<Falcon::Mod::Adler32>       (self, "Adler32"      , base);
+    SimpleRegisterHash<Falcon::Mod::SHA1Hash>      (self, "SHA1Hash"     , base);
+    SimpleRegisterHash<Falcon::Mod::SHA224Hash>    (self, "SHA224Hash"   , base);
+    SimpleRegisterHash<Falcon::Mod::SHA256Hash>    (self, "SHA256Hash"   , base);
+    SimpleRegisterHash<Falcon::Mod::SHA384Hash>    (self, "SHA384Hash"   , base);
+    SimpleRegisterHash<Falcon::Mod::SHA512Hash>    (self, "SHA512Hash"   , base);
+    SimpleRegisterHash<Falcon::Mod::MD2Hash>       (self, "MD2Hash"      , base);
+    SimpleRegisterHash<Falcon::Mod::MD4Hash>       (self, "MD4Hash"      , base);
+    SimpleRegisterHash<Falcon::Mod::MD5Hash>       (self, "MD5Hash"      , base);
+    SimpleRegisterHash<Falcon::Mod::WhirlpoolHash> (self, "WhirlpoolHash", base);
+    SimpleRegisterHash<Falcon::Mod::TigerHash>     (self, "TigerHash"    , base);
+    SimpleRegisterHash<Falcon::Mod::RIPEMD128Hash> (self, "RIPEMD128Hash", base);
+    SimpleRegisterHash<Falcon::Mod::RIPEMD160Hash> (self, "RIPEMD160Hash", base);
+    SimpleRegisterHash<Falcon::Mod::RIPEMD256Hash> (self, "RIPEMD256Hash", base);
+    SimpleRegisterHash<Falcon::Mod::RIPEMD320Hash> (self, "RIPEMD320Hash", base);
 
-   self->addExtFunc("getSupportedHashes", Falcon::Ext::Func_GetSupportedHashes);
+    self->addExtFunc("crc32",      Falcon::Ext::Func_hashSimple<Falcon::Mod::CRC32>);
+    self->addExtFunc("adler32",    Falcon::Ext::Func_hashSimple<Falcon::Mod::Adler32>);
+    self->addExtFunc("md2",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD2Hash>);
+    self->addExtFunc("md4",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD4Hash>);
+    self->addExtFunc("md5",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD5Hash>);
+    self->addExtFunc("sha1",       Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA1Hash>);
+    self->addExtFunc("sha224",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA224Hash>);
+    self->addExtFunc("sha256",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA256Hash>);
+    self->addExtFunc("sha384",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA384Hash>);
+    self->addExtFunc("sha512",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA512Hash>);
+    self->addExtFunc("tiger",      Falcon::Ext::Func_hashSimple<Falcon::Mod::TigerHash>);
+    self->addExtFunc("whirlpool",  Falcon::Ext::Func_hashSimple<Falcon::Mod::WhirlpoolHash>);
+    self->addExtFunc("ripemd128",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD128Hash>);
+    self->addExtFunc("ripemd160",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD160Hash>);
+    self->addExtFunc("ripemd256",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD256Hash>);
+    self->addExtFunc("ripemd320",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD320Hash>);
 
-   // generate CRC32 table
-   Falcon::Mod::CRC32::GenTab();
+    self->addExtFunc("hash", Falcon::Ext::Func_hash)
+        ->addParam("raw")->addParam("which");
 
-   return self;
+    self->addExtFunc("makeHash", Falcon::Ext::Func_makeHash)
+        ->addParam("name");
+
+    self->addExtFunc("getSupportedHashes", Falcon::Ext::Func_GetSupportedHashes);
+
+    // generate CRC32 table
+    Falcon::Mod::CRC32::GenTab();
+
+    return self;
 }
 
 FALCON_MODULE_DECL

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: hash_ext.cpp
+   FILE: hash_ext.h
 
    Provides multiple hashing algorithms
    Interface extension functions
@@ -37,7 +37,17 @@
 
 #include <falcon/module.h>
 
-#include "hash_ext.inl"
+namespace Falcon {
+namespace Ext {
+
+FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm );
+FALCON_FUNC Func_hash( ::Falcon::VMachine *vm );
+FALCON_FUNC Func_makeHash( ::Falcon::VMachine *vm );
+
+void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachine *vm, uint32 stackDepth);
+
+}
+}
 
 
 #endif

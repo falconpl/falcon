@@ -52,5 +52,7 @@ FAL_MODSTR( hash_err_not_membuf_1, "Returned type is not MemBuf with word size 1
 FAL_MODSTR( hash_err_membuf_length_differs, "Returned MemBuf length is not what bytes() returns, fix this" );
 FAL_MODSTR( hash_err_size, "Hash can't have length 0" );
 FAL_MODSTR( hash_err_no_overload, "Method not overloaded" );
+FAL_MODSTR( hash_not_found, "Unable to find out which hash to use, or not supported hash" );
+FAL_MODSTR( hash_internal_error, "Hash module internal error, whoops" );
 
 /* end of hash_st.h */

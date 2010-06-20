@@ -48,7 +48,7 @@ function expect(what, expected, desc)
 end
 
 // alg: hash class constructor, items: list or array of items to be hashed (preferrably strings or membufs)
-function hash(alg, items)
+function myhash(alg, items)
     h = alg()
     for i in items: h.update(i)
     h.finalize()
@@ -149,9 +149,9 @@ function test_hashes()
         > "--- Test for: '", idx, "' ---"
         for e in reslist
             alg, desc, result = e
-            a = hash(alg, [idx]) // test with only 1 arg (1x UpdateData() call)
-            b = hash(alg, chsplit(idx)) // hash each char seperately (many UpdateData() calls)
-            c = hash(alg, [idx.toMemBuf()]) // convert to MemBuf
+            a = myhash(alg, [idx]) // test with only 1 arg (1x UpdateData() call)
+            b = myhash(alg, chsplit(idx)) // hash each char seperately (many UpdateData() calls)
+            c = myhash(alg, [idx.toMemBuf()]) // convert to MemBuf
             if not expect([a,b,c], result, desc): good = false
         end
     end
@@ -178,26 +178,26 @@ function test_hashes()
     > "--- Checking membuf input ---"
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
     // the memory layout below is in little endian
-    mb1 = hash(SHA1Hash, [li2buf(1, .[0x61 0x62 0x63 0x64 0x41 0x42 0x43 0x44])])
-    mb2 = hash(SHA1Hash, [li2buf(2, .[0x6261 0x6463 0x4241 0x4443])])
-    mb3 = hash(SHA1Hash, [li2buf(3, .[0x636261 0x424164]), li2buf(2, .[0x4443])])
-    mb4 = hash(SHA1Hash, [li2buf(4, .[0x64636261 0x44434241])])
-    if not expect([hash(SHA1Hash, ["abcdABCD"])], expected, "SHA1 string"): good = false
+    mb1 = myhash(SHA1Hash, [li2buf(1, .[0x61 0x62 0x63 0x64 0x41 0x42 0x43 0x44])])
+    mb2 = myhash(SHA1Hash, [li2buf(2, .[0x6261 0x6463 0x4241 0x4443])])
+    mb3 = myhash(SHA1Hash, [li2buf(3, .[0x636261 0x424164]), li2buf(2, .[0x4443])])
+    mb4 = myhash(SHA1Hash, [li2buf(4, .[0x64636261 0x44434241])])
+    if not expect([myhash(SHA1Hash, ["abcdABCD"])], expected, "SHA1 string"): good = false
     if not expect([mb1,mb2,mb3,mb4], expected, "SHA1 MemBuf"): good = false
     
     > "--- Checking multi-byte string input ---"
     expected = "f930a2079c45dd97608325d73a24335cefa1846e"
     str = "abc"
     str.charSize(4)
-    if not expect([hash(SHA1Hash, [str])], expected, "SHA1 multibyte string"): good = false
-    if not expect([hash(SHA1Hash, [str.toMemBuf()])], expected, "SHA1 multibyte string (as MemBuf)"): good = false
+    if not expect([myhash(SHA1Hash, [str])], expected, "SHA1 multibyte string"): good = false
+    if not expect([myhash(SHA1Hash, [str.toMemBuf()])], expected, "SHA1 multibyte string (as MemBuf)"): good = false
     
     > "--- Checking direct hash hashing ---"
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
     sha = SHA1Hash()
     sha.update("abcdABCD")
     sha.finalize()
-    if not expect([hash(SHA1Hash, [sha])], hash(SHA1Hash, [sha.toMemBuf()]), "SHA1 hash"): good = false
+    if not expect([myhash(SHA1Hash, [sha])], myhash(SHA1Hash, [sha.toMemBuf()]), "SHA1 hash"): good = false
     
     > "--- Checking sequence hashing ---"
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
@@ -206,19 +206,19 @@ function test_hashes()
     dict = [ 1 => "ab", 2 => "cd", 3 => [ 1 => "AB", 2 => "CD"] ] // ordered dictionary
     dictu = [ 2 => "cd", 1 => "ab", 3 => [ 2 => "CD", 1 => "AB"] ] // rely on correct ordering by dict
     mixed = [ 1 => "a", 2 => List("b", ["c", "d", li2buf(1, .[0x41 0x42 0x43 0x44])])]
-    if not expect([hash(SHA1Hash, [arr])], expected, "SHA1 array"): good = false
-    if not expect([hash(SHA1Hash, [li])], expected, "SHA1 list"): good = false
-    if not expect([hash(SHA1Hash, [dict])], expected, "SHA1 dict"): good = false
-    if not expect([hash(SHA1Hash, [dictu])], expected, "SHA1 dict2"): good = false
-    if not expect([hash(SHA1Hash, [mixed])], expected, "SHA1 mixed"): good = false
+    if not expect([myhash(SHA1Hash, [arr])], expected, "SHA1 array"): good = false
+    if not expect([myhash(SHA1Hash, [li])], expected, "SHA1 list"): good = false
+    if not expect([myhash(SHA1Hash, [dict])], expected, "SHA1 dict"): good = false
+    if not expect([myhash(SHA1Hash, [dictu])], expected, "SHA1 dict2"): good = false
+    if not expect([myhash(SHA1Hash, [mixed])], expected, "SHA1 mixed"): good = false
     
     > "--- Checking references as input ---"
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
     val = "abcdABCD"
     ref1 = $val
     ref2 = $ref1
-    if not expect([hash(SHA1Hash, [ref1])], expected, "SHA1 ref"): good = false
-    if not expect([hash(SHA1Hash, [ref2])], expected, "SHA1 double-ref"): good = false
+    if not expect([myhash(SHA1Hash, [ref1])], expected, "SHA1 ref"): good = false
+    if not expect([myhash(SHA1Hash, [ref2])], expected, "SHA1 double-ref"): good = false
     
     > "--- Checking updateInt() ---"
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
@@ -235,8 +235,8 @@ function test_hashes()
     
     > "--- Checking for Nil ---"
     expected = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-    if not expect([hash(SHA1Hash, [nil])], expected, "SHA1 nil"): good = false
-    if not expect([hash(SHA1Hash, [nil, [1 => nil], [[nil]], List(nil,[nil, nil])])], expected, "SHA1 nil seq"): good = false
+    if not expect([myhash(SHA1Hash, [nil])], expected, "SHA1 nil"): good = false
+    if not expect([myhash(SHA1Hash, [nil, [1 => nil], [[nil]], List(nil,[nil, nil])])], expected, "SHA1 nil seq"): good = false
     
     > "--- Checking overloadable base for misbehavior ---"
     hb = HashBase()
@@ -289,21 +289,21 @@ function test_hashes()
     
     > "--- Checking for wrong return types in overloaded classes ---"
     try
-        hash(Checksum16Wrong1, "abc") // must throw
+        myhash(Checksum16Wrong1, "abc") // must throw
         good = false
         > "FAIL! wrong toMemBuf() return type accepted"
     catch
         > "Wrong toMemBuf() return type did throw, good."
     end
     try
-        hash(Checksum16Wrong2, "abc") // must throw
+        myhash(Checksum16Wrong2, "abc") // must throw
         good = false
         > "FAIL! wrong toMemBuf() word size accepted"
     catch
         > "Wrong toMemBuf() word size did throw, good."
     end
     try
-        hash(Checksum16Wrong3, "abc") // must throw
+        myhash(Checksum16Wrong3, "abc") // must throw
         good = false
         > "FAIL! wrong toMemBuf() byte length accepted"
     catch
@@ -335,6 +335,50 @@ function test_hashes()
         > "FAIL! undetected stack overflow?!" // not sure if we can even reach this point, rather the VM would blow up in smoke at update()
     catch
         > "update() stack overflow detected, good."
+    end
+    
+    > "--- Checking convenience functions & makeHash() ---"
+    v1 = sha1("abc") // have to check only one, as the others work the same internally
+    if(v1 != "a9993e364706816aba3e25717850c26c9cd0d89d")
+        > "FAIL! sha1('abc') returned '", v1, "', shoudld be 'a9993e364706816aba3e25717850c26c9cd0d89d'"
+        good = false
+    end
+    for e in getSupportedHashes()
+        v1 = makeHash(e).update("abc").finalize().toString()
+        v2 = hash(false, e, "a", ["b", "c"])
+        tmph = makeHash(e);
+        tmph.update("a");
+        f = { ha => ha.update("b") }
+        v3 = hash(false, f(tmph) , "c")
+        if(v1 != v2 or v1 != v3)
+            > "FAIL! one of [", e, "] convenience function returned wrong output!"
+            good = false
+        else
+            > e, " good."
+        end
+    end
+    
+    > "--- Checking hash(true, ...) - raw MemBuf output ---"
+    sha1buf_expected = li2buf(1, .[0xA9 0x99 0x3E 0x36 0x47 0x06 0x81 0x6A 0xBA 0x3E 0x25 0x71 0x78 0x50 0xC2 0x6C 0x9C 0xD0 0xD8 0x9D])
+    sha1buf = hash(true, SHA1Hash, "abc")
+    if not bufcmp(sha1buf, sha1buf_expected)
+        > "[SHA1] FAIL!"
+        >> "Expected: "; inspect(sha1buf_expected)
+        >> "Got:      "; inspect(sha1buf)
+        good = false
+    else
+        > "hash(true, ...) raw MemBuf output success."
+    end
+    
+    > "--- Checking hash() with custom overloaded class ---"
+    ch16 = Checksum16()
+    v1 = ch16.update("abc").finalize().toString()
+    v2 = hash(false, Checksum16, "abc")
+    if(v1 != v2)
+        > "FAIL! hash() returned wrong results! Should be: ", v1, ", was ", v2
+        good = false
+    else
+        > "result: ", v1, ", seems good"
     end
     
     > "--- Test complete ---"
