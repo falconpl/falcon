@@ -172,6 +172,8 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
         }
         vm->retval(str);
     }
+
+    delete carrier;
 }
 
 /*#
