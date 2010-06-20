@@ -162,7 +162,7 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
     else
     {
         
-        Falcon::String *str = new Falcon::String(size * 2); // each byte will be encoded to 2 chars
+        Falcon::String *str = new Falcon::CoreString(size * 2); // each byte will be encoded to 2 chars
         char tmp[3];
 
         for(uint32 i = 0; i < size; i++)
