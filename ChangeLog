@@ -1,2 +1,5 @@
+Falcon-curl (1.1) 
+  ! Handle.setOptions was not in the list of the exported functions.
+
 Falcon-curl (1.0) 
   * first official release.
