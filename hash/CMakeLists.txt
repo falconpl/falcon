@@ -21,6 +21,7 @@ set(SRC_FILES
   hash_mod.cpp
   hash_srv.cpp
   hash_st.cpp
+  hash_ext.cpp
   # add more source files starting here:
   adler32.cpp
   md2.cpp
