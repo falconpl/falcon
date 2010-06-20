@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_CELLRENDERER( pItem ) \
+        ((GtkCellRenderer*) Falcon::dyncast<Gtk::CellRenderer*>( pItem->asObjectSafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gtk {
