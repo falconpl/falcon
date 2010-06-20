@@ -146,7 +146,7 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
         {
             throw new Falcon::ParamError( 
                 Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ )
-                .extra( "MemBuf or S or Array" ) );
+                .extra( "A|S|M" ) );
         }
         Hash_updateItem_internal(what, hash, vm, 0);
     }
@@ -279,14 +279,14 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
     }
     else if(what->isOfClass("MPZ")) // direct conversion from MPZ to hash -- as soon as MPZ provide toMemBuf, this can be dropped
     {
-        Item *mpz = new Item;
+        Item mpz;
         // involve the VM to convert an MPZ to string in base 16
         // and then convert that into the individual bytes beeing hashed (backwards, to represent the original number)
         // i have checked it and the way this is done here is *correct*!
-        if(what->asObject()->getMethod("toString", *mpz))
+        if(what->asObject()->getMethod("toString", mpz))
         {
             vm->pushParameter(16);
-            vm->callItemAtomic(*mpz, 1);
+            vm->callItemAtomic(mpz, 1);
             String *hexstr = vm->regA().asString();
             if(uint32 len = hexstr->length())
             {
@@ -313,12 +313,10 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
         }
         else
         {
-            delete mpz;
             throw new Falcon::AccessError(
                 Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
                 .extra( "MPZ does not provide toString, blame OmniMancer" ) );
         }
-        delete mpz;
     }
     else // fallback - convert to string if nothing else works
     {
