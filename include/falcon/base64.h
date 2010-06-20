@@ -23,7 +23,7 @@
 
 namespace Falcon {
 
-class Base64
+class FALCON_DYN_CLASS Base64
 {
 public:
    /** Basic implementation */
