@@ -49,7 +49,7 @@ A million repetitions of "a"
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-static void SHA1Transform(word32 *state, const byte *buffer)
+void SHA1Transform(word32 *state, const byte *buffer)
 {
 word32 a, b, c, d, e;
 typedef union {

@@ -75,7 +75,7 @@ void MD4Init(struct MD4_CTX *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD4Update(struct MD4_CTX *ctx, byte *buf, word32 len)
+void MD4Update(struct MD4_CTX *ctx, const byte *buf, word32 len)
 {
 	register word32 t;
 

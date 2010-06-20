@@ -140,7 +140,7 @@ void tiger_init(tiger_ctx *ctx)
     | EXTRACT_UCHAR(s+1)) << 8)  \
     | EXTRACT_UCHAR(s))
 
-void tiger_block(struct tiger_ctx *ctx, byte *str)
+static void tiger_block(struct tiger_ctx *ctx, const byte *str)
 {
     word64 temp[8];
 #ifdef BIG_ENDIAN
@@ -178,7 +178,7 @@ void tiger_compress(word64 *str, word64 *state)
     state[2] = c;
 }
 
-void tiger_update(tiger_ctx *ctx, byte *buffer, word32 len)
+void tiger_update(tiger_ctx *ctx, const byte *buffer, word32 len)
 {
     word32 left;
 
