@@ -118,7 +118,7 @@ FALCON_FUNC TreeRowReference::init( VMARG )
         || !i_path || !i_path->isObject() || !IS_DERIVED( i_path, GtkTreePath ) )
         throw_inv_params( "GtkTreeModel,GtkTreePath" );
 #endif
-    GtkTreeModel* mdl = GET_TREEMODEL( i_mdl );
+    GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     GtkTreePath* path = GET_TREEPATH( i_path );
     GtkTreeRowReference* ref = gtk_tree_row_reference_new( mdl, path );
     if ( ref )
@@ -160,7 +160,7 @@ FALCON_FUNC TreeRowReference::new_proxy( VMARG )
         throw_inv_params( "GtkTreeModel,GtkTreePath" );
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
-    GtkTreeModel* mdl = GET_TREEMODEL( i_mdl );
+    GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     GtkTreePath* path = GET_TREEPATH( i_path );
     GtkTreeRowReference* ref = gtk_tree_row_reference_new_proxy( proxy, mdl, path );
     if ( ref )
@@ -312,7 +312,7 @@ FALCON_FUNC TreeRowReference::reordered( VMARG )
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
     GtkTreePath* path = GET_TREEPATH( i_path );
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     CoreArray* order = i_order->asArray();
     const int cnt = order->length();
     gint* norder = (gint*) memAlloc( sizeof( gint ) * cnt );

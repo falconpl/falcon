@@ -83,7 +83,7 @@ FALCON_FUNC TreeModelSort::init( VMARG )
     if ( !i_mdl || !i_mdl->isObject() || !Gtk::TreeModel::implementedBy( i_mdl ) )
         throw_inv_params( "GtkTreeModel" );
 #endif
-    GtkTreeModel* mdl = GET_TREEMODEL( i_mdl );
+    GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     MYSELF;
     self->setGObject( (GObject*) gtk_tree_model_sort_new_with_model( mdl ) );
 }
@@ -151,7 +151,7 @@ FALCON_FUNC TreeModelSort::convert_child_iter_to_iter( VMARG )
     if ( !i_child || !i_child->isObject() || !IS_DERIVED( i_child, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* child = GET_TREEITER( i_child );
+    GtkTreeIter* child = GET_TREEITER( *i_child );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;
@@ -215,7 +215,7 @@ FALCON_FUNC TreeModelSort::convert_iter_to_child_iter( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter res;
@@ -281,7 +281,7 @@ FALCON_FUNC TreeModelSort::iter_is_valid( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tree_model_sort_iter_is_valid( (GtkTreeModelSort*)_obj, iter ) );

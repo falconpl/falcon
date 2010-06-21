@@ -539,7 +539,7 @@ FALCON_FUNC TreeModel::get_path( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     GtkTreePath* path = gtk_tree_model_get_path( (GtkTreeModel*)_obj, iter );
@@ -564,7 +564,7 @@ FALCON_FUNC TreeModel::get_value( VMARG )
         || !i_col || !i_col->isInteger() )
         throw_inv_params( "GtkTreeIter,I" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     GValue val;
@@ -633,7 +633,7 @@ FALCON_FUNC TreeModel::iter_next( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter iter = *(GET_TREEITER( i_iter ));
+    GtkTreeIter iter = *(GET_TREEITER( *i_iter ));
     MYSELF;
     GET_OBJ( self );
     gboolean ret = gtk_tree_model_iter_next( (GtkTreeModel*)_obj, &iter );
@@ -661,7 +661,7 @@ FALCON_FUNC TreeModel::iter_children( VMARG )
         && IS_DERIVED( i_iter, GtkTreeIter ) ) ) )
         throw_inv_params( "[GtkTreeIter]" );
 #endif
-    GtkTreeIter* parent = i_iter->isNil() ? NULL : GET_TREEITER( i_iter );
+    GtkTreeIter* parent = i_iter->isNil() ? NULL : GET_TREEITER( *i_iter );
     GtkTreeIter iter;
     MYSELF;
     GET_OBJ( self );
@@ -686,7 +686,7 @@ FALCON_FUNC TreeModel::iter_has_child( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tree_model_iter_has_child( (GtkTreeModel*)_obj, iter ) );
@@ -709,7 +709,7 @@ FALCON_FUNC TreeModel::iter_n_children( VMARG )
         && IS_DERIVED( i_iter, GtkTreeIter ) ) ) )
         throw_inv_params( "[GtkTreeIter]" );
 #endif
-    GtkTreeIter* iter = i_iter->isNil() ? NULL : GET_TREEITER( i_iter );
+    GtkTreeIter* iter = i_iter->isNil() ? NULL : GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tree_model_iter_n_children( (GtkTreeModel*)_obj, iter ) );
@@ -736,7 +736,7 @@ FALCON_FUNC TreeModel::iter_nth_child( VMARG )
         || !i_n || !i_n->isInteger() )
         throw_inv_params( "[GtkTreeIter],I" );
 #endif
-    GtkTreeIter* parent = i_par->isNil() ? NULL : GET_TREEITER( i_par );
+    GtkTreeIter* parent = i_par->isNil() ? NULL : GET_TREEITER( *i_par );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;
@@ -767,7 +767,7 @@ FALCON_FUNC TreeModel::iter_parent( VMARG )
     if ( !i_child || !i_child->isObject() || !IS_DERIVED( i_child, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* child = GET_TREEITER( i_child );
+    GtkTreeIter* child = GET_TREEITER( *i_child );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;
@@ -795,7 +795,7 @@ FALCON_FUNC TreeModel::get_string_from_iter( VMARG )
     if ( !i_iter || !i_iter->isObject() || !IS_DERIVED( i_iter, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     gchar* s = gtk_tree_model_get_string_from_iter( (GtkTreeModel*)_obj, iter );
@@ -829,7 +829,7 @@ FALCON_FUNC TreeModel::row_changed( VMARG )
         throw_inv_params( "GtkTreePath,GtkTreeIter" );
 #endif
     GtkTreePath* path = GET_TREEPATH( i_path );
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_row_changed( (GtkTreeModel*)_obj, path, iter );
@@ -852,7 +852,7 @@ FALCON_FUNC TreeModel::row_inserted( VMARG )
         throw_inv_params( "GtkTreePath,GtkTreeIter" );
 #endif
     GtkTreePath* path = GET_TREEPATH( i_path );
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_row_inserted( (GtkTreeModel*)_obj, path, iter );
@@ -877,7 +877,7 @@ FALCON_FUNC TreeModel::row_has_child_toggled( VMARG )
         throw_inv_params( "GtkTreePath,GtkTreeIter" );
 #endif
     GtkTreePath* path = GET_TREEPATH( i_path );
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_row_has_child_toggled( (GtkTreeModel*)_obj, path, iter );
@@ -928,7 +928,7 @@ FALCON_FUNC TreeModel::rows_reordered( VMARG )
         throw_inv_params( "GtkTreePath,GtkTreeIter,A" );
 #endif
     GtkTreePath* path = GET_TREEPATH( i_path );
-    GtkTreeIter* iter = GET_TREEITER( i_iter );
+    GtkTreeIter* iter = GET_TREEITER( *i_iter );
     CoreArray* order = i_order->asArray();
     const int cnt = order->length();
     MYSELF;

@@ -96,7 +96,7 @@ FALCON_FUNC TreeModelFilter::init( VMARG )
         && IS_DERIVED( i_root, GtkTreePath ) ) ) )
         throw_inv_params( "GtkTreeModel,[GtkTreePath]" );
 #endif
-    GtkTreeModel* mdl = GET_TREEMODEL( i_mdl );
+    GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     GtkTreePath* root = i_root->isNil() ? NULL : GET_TREEPATH( i_root );
     MYSELF;
     self->setGObject( (GObject*) gtk_tree_model_filter_new( mdl, root ) );
@@ -233,7 +233,7 @@ FALCON_FUNC TreeModelFilter::convert_child_iter_to_iter( VMARG )
     if ( !i_child || !i_child->isObject() || !IS_DERIVED( i_child, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* child = GET_TREEITER( i_child );
+    GtkTreeIter* child = GET_TREEITER( *i_child );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;
@@ -260,7 +260,7 @@ FALCON_FUNC TreeModelFilter::convert_iter_to_child_iter( VMARG )
     if ( !i_filt || !i_filt->isObject() || !IS_DERIVED( i_filt, GtkTreeIter ) )
         throw_inv_params( "GtkTreeIter" );
 #endif
-    GtkTreeIter* filt = GET_TREEITER( i_filt );
+    GtkTreeIter* filt = GET_TREEITER( *i_filt );
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;

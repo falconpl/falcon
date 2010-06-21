@@ -3,8 +3,8 @@
 
 #include "modgtk.hpp"
 
-#define GET_TREEITER( pItem ) \
-        Falcon::dyncast<Gtk::TreeIter*>( pItem->asObjectSafe() )->getTreeIter()
+#define GET_TREEITER( item ) \
+        (Falcon::dyncast<Gtk::TreeIter*>( (item).asObjectSafe() )->getTreeIter())
 
 
 namespace Falcon {
