@@ -85,10 +85,7 @@ FALCON_FUNC TextTag::init( VMARG )
  */
 FALCON_FUNC TextTag::get_priority( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_tag_get_priority( (GtkTextTag*)_obj ) );

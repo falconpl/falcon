@@ -643,10 +643,7 @@ FALCON_FUNC ListStore::append( VMARG )
  */
 FALCON_FUNC ListStore::clear( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_list_store_clear( (GtkListStore*)_obj );

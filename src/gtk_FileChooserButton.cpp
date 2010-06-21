@@ -90,10 +90,7 @@ FALCON_FUNC FileChooserButton::init( VMARG )
  */
 FALCON_FUNC FileChooserButton::signal_file_set( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "file_set", (void*) &FileChooserButton::on_file_set, vm );
 }
 
@@ -143,10 +140,7 @@ FALCON_FUNC FileChooserButton::new_with_dialog( VMARG )
  */
 FALCON_FUNC FileChooserButton::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( new String(
@@ -176,10 +170,7 @@ FALCON_FUNC FileChooserButton::set_title( VMARG )
  */
 FALCON_FUNC FileChooserButton::get_width_chars( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_file_chooser_button_get_width_chars( (GtkFileChooserButton*)_obj ) );
@@ -211,10 +202,7 @@ FALCON_FUNC FileChooserButton::set_width_chars( VMARG )
  */
 FALCON_FUNC FileChooserButton::get_focus_on_click( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_button_get_focus_on_click(

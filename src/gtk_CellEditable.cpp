@@ -78,10 +78,7 @@ Falcon::CoreObject* CellEditable::factory( const Falcon::CoreClass* gen, void* e
  */
 FALCON_FUNC CellEditable::signal_editing_done( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "editing_done", (void*) &CellEditable::on_editing_done, vm );
 }
 
@@ -106,10 +103,7 @@ void CellEditable::on_editing_done( GtkCellEditable* obj, gpointer _vm )
  */
 FALCON_FUNC CellEditable::signal_remove_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "remove_widget", (void*) &CellEditable::on_remove_widget, vm );
 }
 
@@ -150,10 +144,7 @@ FALCON_FUNC CellEditable::start_editing( VMARG )
  */
 FALCON_FUNC CellEditable::editing_done( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_cell_editable_editing_done( (GtkCellEditable*)_obj );
@@ -166,10 +157,7 @@ FALCON_FUNC CellEditable::editing_done( VMARG )
  */
 FALCON_FUNC CellEditable::remove_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_cell_editable_remove_widget( (GtkCellEditable*)_obj );

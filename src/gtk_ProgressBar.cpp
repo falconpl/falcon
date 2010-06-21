@@ -73,10 +73,7 @@ Falcon::CoreObject* ProgressBar::factory( const Falcon::CoreClass* gen, void* pb
  */
 FALCON_FUNC ProgressBar::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_progress_bar_new();
     self->setGObject( (GObject*) wdt );
@@ -89,10 +86,7 @@ FALCON_FUNC ProgressBar::init( VMARG )
  */
 FALCON_FUNC ProgressBar::pulse( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_progress_bar_pulse( (GtkProgressBar*)_obj );
@@ -196,10 +190,7 @@ FALCON_FUNC ProgressBar::set_ellipsize( VMARG )
  */
 FALCON_FUNC ProgressBar::get_text( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* txt = gtk_progress_bar_get_text( (GtkProgressBar*)_obj );
@@ -217,10 +208,7 @@ FALCON_FUNC ProgressBar::get_text( VMARG )
  */
 FALCON_FUNC ProgressBar::get_fraction( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gdouble frac = gtk_progress_bar_get_fraction( (GtkProgressBar*)_obj );
@@ -235,10 +223,7 @@ FALCON_FUNC ProgressBar::get_fraction( VMARG )
  */
 FALCON_FUNC ProgressBar::get_pulse_step( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gdouble frac = gtk_progress_bar_get_pulse_step( (GtkProgressBar*)_obj );
@@ -253,10 +238,7 @@ FALCON_FUNC ProgressBar::get_pulse_step( VMARG )
  */
 FALCON_FUNC ProgressBar::get_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkProgressBarOrientation ori = gtk_progress_bar_get_orientation( (GtkProgressBar*)_obj );
@@ -271,10 +253,7 @@ FALCON_FUNC ProgressBar::get_orientation( VMARG )
  */
 FALCON_FUNC ProgressBar::get_ellipsize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     PangoEllipsizeMode mode = gtk_progress_bar_get_ellipsize( (GtkProgressBar*)_obj );

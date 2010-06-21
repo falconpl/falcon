@@ -235,10 +235,7 @@ Falcon::CoreObject* Visual::factory( const Falcon::CoreClass* gen, void* vis, bo
  */
 FALCON_FUNC Visual::query_depths( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gint* depths;
     gint cnt;
     gdk_query_depths( &depths, &cnt );
@@ -259,10 +256,7 @@ FALCON_FUNC Visual::query_depths( VMARG )
  */
 FALCON_FUNC Visual::query_visual_types( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkVisualType* types;
     gint cnt;
     gdk_query_visual_types( &types, &cnt );
@@ -284,10 +278,7 @@ FALCON_FUNC Visual::query_visual_types( VMARG )
  */
 FALCON_FUNC Visual::list_visuals( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GList* lst = gdk_list_visuals();
     GList* el;
     int cnt = 0;
@@ -310,10 +301,7 @@ FALCON_FUNC Visual::list_visuals( VMARG )
  */
 FALCON_FUNC Visual::get_best_depth( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gdk_visual_get_best_depth() );
 }
 
@@ -325,10 +313,7 @@ FALCON_FUNC Visual::get_best_depth( VMARG )
  */
 FALCON_FUNC Visual::get_best_type( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (int64) gdk_visual_get_best_type() );
 }
 
@@ -342,10 +327,7 @@ FALCON_FUNC Visual::get_best_type( VMARG )
  */
 FALCON_FUNC Visual::get_system( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkVisual* vis = gdk_visual_get_system();
     vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(), vis ) );
 }
@@ -358,10 +340,7 @@ FALCON_FUNC Visual::get_system( VMARG )
  */
 FALCON_FUNC Visual::get_best( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkVisual* vis = gdk_visual_get_best();
     vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(), vis ) );
 }
@@ -453,10 +432,7 @@ FALCON_FUNC Visual::unref( VMARG );
  */
 FALCON_FUNC Visual::get_screen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkScreen* scrn = gdk_visual_get_screen( self->m_visual );
     vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), scrn ) );

@@ -103,10 +103,7 @@ FALCON_FUNC ToolButton::init( VMARG )
  */
 FALCON_FUNC ToolButton::signal_clicked( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "clicked", (void*) &ToolButton::on_clicked, vm );
 }
 
@@ -161,10 +158,7 @@ FALCON_FUNC ToolButton::set_label( VMARG )
  */
 FALCON_FUNC ToolButton::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_tool_button_get_label( (GtkToolButton*)_obj );
@@ -208,10 +202,7 @@ FALCON_FUNC ToolButton::set_use_underline( VMARG )
  */
 FALCON_FUNC ToolButton::get_use_underline( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_button_get_use_underline( (GtkToolButton*)_obj ) );
@@ -243,10 +234,7 @@ FALCON_FUNC ToolButton::set_stock_id( VMARG )
  */
 FALCON_FUNC ToolButton::get_stock_id( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* stock = gtk_tool_button_get_stock_id( (GtkToolButton*)_obj );
@@ -279,10 +267,7 @@ FALCON_FUNC ToolButton::set_icon_name( VMARG )
  */
 FALCON_FUNC ToolButton::get_icon_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* ico = gtk_tool_button_get_icon_name( (GtkToolButton*)_obj );
@@ -324,10 +309,7 @@ FALCON_FUNC ToolButton::set_icon_widget( VMARG )
  */
 FALCON_FUNC ToolButton::get_icon_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_tool_button_get_icon_widget( (GtkToolButton*)_obj );
@@ -370,10 +352,7 @@ FALCON_FUNC ToolButton::set_label_widget( VMARG )
  */
 FALCON_FUNC ToolButton::get_label_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_tool_button_get_label_widget( (GtkToolButton*)_obj );

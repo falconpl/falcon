@@ -151,10 +151,7 @@ FALCON_FUNC Colormap::unref( VMARG );
  */
 FALCON_FUNC Colormap::get_system( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkColormap* cmap = gdk_colormap_get_system();
     vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(), cmap ) );
 }
@@ -167,10 +164,7 @@ FALCON_FUNC Colormap::get_system( VMARG )
  */
 FALCON_FUNC Colormap::get_system_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gdk_colormap_get_system_size() );
 }
 
@@ -212,10 +206,7 @@ FALCON_FUNC Colormap::query_color( VMARG );
  */
 FALCON_FUNC Colormap::get_visual( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkVisual* vis = gdk_colormap_get_visual( self->m_colormap );
     vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(), vis ) );
@@ -229,10 +220,7 @@ FALCON_FUNC Colormap::get_visual( VMARG )
  */
 FALCON_FUNC Colormap::get_screen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkScreen* scrn = gdk_colormap_get_screen( self->m_colormap );
     vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), scrn ) );

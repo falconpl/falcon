@@ -170,10 +170,7 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
  */
 FALCON_FUNC Widget::signal_accel_closures_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "accel_closures_changed",
         (void*) &Widget::on_accel_closures_changed, vm );
 }
@@ -204,10 +201,7 @@ void Widget::on_accel_closures_changed( GtkWidget* wdt, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_button_press_event( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "button_press_event",
         (void*) &Widget::on_button_press_event, vm );
 }
@@ -278,10 +272,7 @@ gboolean Widget::on_button_press_event( GtkWidget* obj, GdkEventButton* ev, gpoi
  */
 FALCON_FUNC Widget::signal_button_release_event( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "button_release_event",
         (void*) &Widget::on_button_release_event, vm );
 }
@@ -353,10 +344,7 @@ gboolean Widget::on_button_release_event( GtkWidget* obj, GdkEventButton* ev, gp
  */
 FALCON_FUNC Widget::signal_can_activate_accel( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "can_activate_accel",
         (void*) &Widget::on_can_activate_accel, vm );
 }
@@ -421,10 +409,7 @@ gboolean Widget::on_can_activate_accel( GtkWidget* obj, guint signal_id, gpointe
  */
 FALCON_FUNC Widget::signal_child_notify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "child_notify",
         (void*) &Widget::on_child_notify, vm );
 }
@@ -478,10 +463,7 @@ void Widget::on_child_notify( GtkWidget* obj, GParamSpec* spec, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_composited_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "composited_changed",
         (void*) &Widget::on_composited_changed, vm );
 }
@@ -516,12 +498,7 @@ void Widget::on_composited_changed( GtkWidget* obj, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_delete_event( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "delete_event", (void*) &Widget::on_delete_event, vm );
 }
 
@@ -592,10 +569,7 @@ gboolean Widget::on_delete_event( GtkWidget* obj, GdkEvent* ev, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_destroy_event( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "destroy_event", (void*) &Widget::on_destroy_event, vm );
 }
 
@@ -738,12 +712,7 @@ gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_hide( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "hide", (void*) &Widget::on_hide, vm );
 }
 
@@ -863,12 +832,7 @@ void Widget::on_hide( GtkWidget* obj, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_show( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "show", (void*) &Widget::on_show, vm );
 }
 
@@ -894,10 +858,7 @@ void Widget::on_show( GtkWidget* obj, gpointer _vm )
  */
 FALCON_FUNC Widget::signal_size_request( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "size_request", (void*) &Widget::on_size_request, vm );
 }
 
@@ -979,10 +940,7 @@ void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm 
  */
 FALCON_FUNC Widget::destroy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_destroy( (GtkWidget*)_obj );
@@ -998,10 +956,7 @@ FALCON_FUNC Widget::destroy( VMARG )
  */
 FALCON_FUNC Widget::unparent( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_unparent( (GtkWidget*)_obj );
@@ -1014,12 +969,7 @@ FALCON_FUNC Widget::unparent( VMARG )
  */
 FALCON_FUNC Widget::show( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show( ((GtkWidget*)_obj) );
@@ -1032,12 +982,7 @@ FALCON_FUNC Widget::show( VMARG )
  */
 FALCON_FUNC Widget::show_now( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_now( ((GtkWidget*)_obj) );
@@ -1050,12 +995,7 @@ FALCON_FUNC Widget::show_now( VMARG )
  */
 FALCON_FUNC Widget::hide( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide( ((GtkWidget*)_obj) );
@@ -1068,12 +1008,7 @@ FALCON_FUNC Widget::hide( VMARG )
  */
 FALCON_FUNC Widget::show_all( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_show_all( ((GtkWidget*)_obj) );
@@ -1086,12 +1021,7 @@ FALCON_FUNC Widget::show_all( VMARG )
  */
 FALCON_FUNC Widget::hide_all( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_hide_all( ((GtkWidget*)_obj) );
@@ -1106,10 +1036,7 @@ FALCON_FUNC Widget::hide_all( VMARG )
  */
 FALCON_FUNC Widget::map( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_map( (GtkWidget*)_obj );
@@ -1124,10 +1051,7 @@ FALCON_FUNC Widget::map( VMARG )
  */
 FALCON_FUNC Widget::unmap( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_unmap( (GtkWidget*)_obj );
@@ -1155,10 +1079,7 @@ FALCON_FUNC Widget::unmap( VMARG )
  */
 FALCON_FUNC Widget::realize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_realize( (GtkWidget*)_obj );
@@ -1174,10 +1095,7 @@ FALCON_FUNC Widget::realize( VMARG )
  */
 FALCON_FUNC Widget::unrealize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_unrealize( (GtkWidget*)_obj );
@@ -1190,10 +1108,7 @@ FALCON_FUNC Widget::unrealize( VMARG )
  */
 FALCON_FUNC Widget::queue_draw( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_queue_draw( (GtkWidget*)_obj );
@@ -1211,10 +1126,7 @@ FALCON_FUNC Widget::queue_draw( VMARG )
  */
 FALCON_FUNC Widget::queue_resize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_queue_resize( (GtkWidget*)_obj );
@@ -1227,10 +1139,7 @@ FALCON_FUNC Widget::queue_resize( VMARG )
 */
 FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_queue_resize_no_redraw( (GtkWidget*)_obj );
@@ -1260,10 +1169,7 @@ FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
  */
 FALCON_FUNC Widget::size_request( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkRequisition req;
@@ -1283,10 +1189,7 @@ FALCON_FUNC Widget::size_request( VMARG )
  */
 FALCON_FUNC Widget::get_child_requisition( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkRequisition req;
@@ -1319,12 +1222,7 @@ FALCON_FUNC Widget::get_child_requisition( VMARG )
  */
 FALCON_FUNC Widget::activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_activate( ((GtkWidget*)_obj) ) );
@@ -1366,12 +1264,7 @@ FALCON_FUNC Widget::reparent( VMARG )
  */
 FALCON_FUNC Widget::is_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_widget_is_focus( (GtkWidget*)_obj ) );
@@ -1387,12 +1280,7 @@ FALCON_FUNC Widget::is_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_grab_focus( (GtkWidget*)_obj );
@@ -1409,12 +1297,7 @@ FALCON_FUNC Widget::grab_focus( VMARG )
  */
 FALCON_FUNC Widget::grab_default( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_widget_grab_default( (GtkWidget*)_obj );
@@ -1455,12 +1338,7 @@ FALCON_FUNC Widget::set_name( VMARG )
  */
 FALCON_FUNC Widget::get_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* s = gtk_widget_get_name( (GtkWidget*)_obj );
@@ -1563,12 +1441,7 @@ FALCON_FUNC Widget::add_events( VMARG )
  */
 FALCON_FUNC Widget::get_toplevel( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* gwdt = gtk_widget_get_toplevel( (GtkWidget*)_obj );
@@ -1595,12 +1468,7 @@ FALCON_FUNC Widget::get_toplevel( VMARG )
  */
 FALCON_FUNC Widget::get_events( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_widget_get_events( (GtkWidget*)_obj ) );
@@ -1649,12 +1517,7 @@ FALCON_FUNC Widget::is_ancestor( VMARG )
  */
 FALCON_FUNC Widget::hide_on_delete( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-    {
-        throw_require_no_args();
-    }
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gboolean b = gtk_widget_hide_on_delete( (GtkWidget*)_obj );
@@ -1812,10 +1675,7 @@ FALCON_FUNC Widget::hide_on_delete( VMARG )
  */
 FALCON_FUNC Widget::get_size_request( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint w, h;

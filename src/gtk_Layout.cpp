@@ -175,10 +175,7 @@ FALCON_FUNC Layout::set_size( VMARG )
  */
 FALCON_FUNC Layout::get_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     guint width, height;
     MYSELF;
     GET_OBJ( self );
@@ -203,10 +200,7 @@ FALCON_FUNC Layout::get_size( VMARG )
  */
 FALCON_FUNC Layout::get_hadjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_layout_get_hadjustment( (GtkLayout*)_obj );
@@ -227,10 +221,7 @@ FALCON_FUNC Layout::get_hadjustment( VMARG )
  */
 FALCON_FUNC Layout::get_vadjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_layout_get_vadjustment( (GtkLayout*)_obj );

@@ -91,10 +91,7 @@ FALCON_FUNC Activatable::do_set_related_action( VMARG )
  */
 FALCON_FUNC Activatable::get_related_action( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAction* act = gtk_activatable_get_related_action( (GtkActivatable*)_obj );
@@ -112,10 +109,7 @@ FALCON_FUNC Activatable::get_related_action( VMARG )
  */
 FALCON_FUNC Activatable::get_use_action_appearance( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_activatable_get_use_action_appearance( (GtkActivatable*)_obj ) );

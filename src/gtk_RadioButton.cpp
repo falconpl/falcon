@@ -95,10 +95,7 @@ FALCON_FUNC RadioButton::init( VMARG )
  */
 FALCON_FUNC RadioButton::signal_group_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "group_changed", (void*) &RadioButton::on_group_changed, vm );
 }
 
@@ -172,10 +169,7 @@ FALCON_FUNC RadioButton::new_with_mnemonic( VMARG )
  */
 FALCON_FUNC RadioButton::get_group( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GSList* grp = gtk_radio_button_get_group( (GtkRadioButton*)_obj );

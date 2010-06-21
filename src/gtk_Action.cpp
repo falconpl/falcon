@@ -168,10 +168,7 @@ FALCON_FUNC Action::init( VMARG )
  */
 FALCON_FUNC Action::signal_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate", (void*) &Action::on_activate, vm );
 }
 
@@ -189,10 +186,7 @@ void Action::on_activate( GtkAction* act, gpointer _vm )
  */
 FALCON_FUNC Action::get_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nam = gtk_action_get_name( (GtkAction*)_obj );
@@ -210,10 +204,7 @@ FALCON_FUNC Action::get_name( VMARG )
  */
 FALCON_FUNC Action::is_sensitive( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_is_sensitive( (GtkAction*)_obj ) );
@@ -230,10 +221,7 @@ FALCON_FUNC Action::is_sensitive( VMARG )
  */
 FALCON_FUNC Action::get_sensitive( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_sensitive( (GtkAction*)_obj ) );
@@ -268,10 +256,7 @@ FALCON_FUNC Action::set_sensitive( VMARG )
  */
 FALCON_FUNC Action::is_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_is_visible( (GtkAction*)_obj ) );
@@ -288,10 +273,7 @@ FALCON_FUNC Action::is_visible( VMARG )
  */
 FALCON_FUNC Action::get_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_visible( (GtkAction*)_obj ) );
@@ -329,10 +311,7 @@ FALCON_FUNC Action::set_visible( VMARG )
  */
 FALCON_FUNC Action::activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_action_activate( (GtkAction*)_obj );
@@ -367,10 +346,7 @@ FALCON_FUNC Action::create_icon( VMARG )
  */
 FALCON_FUNC Action::create_menu_item( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* itm = gtk_action_create_menu_item( (GtkAction*)_obj );
@@ -386,10 +362,7 @@ FALCON_FUNC Action::create_menu_item( VMARG )
  */
 FALCON_FUNC Action::create_tool_item( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* itm = gtk_action_create_tool_item( (GtkAction*)_obj );
@@ -405,10 +378,7 @@ FALCON_FUNC Action::create_tool_item( VMARG )
  */
 FALCON_FUNC Action::create_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* menu = gtk_action_create_menu( (GtkAction*)_obj );
@@ -434,10 +404,7 @@ FALCON_FUNC Action::disconnect_proxy( VMARG );
  */
 FALCON_FUNC Action::get_proxies( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GSList* lst = gtk_action_get_proxies( (GtkAction*)_obj );
@@ -467,10 +434,7 @@ FALCON_FUNC Action::get_proxies( VMARG )
  */
 FALCON_FUNC Action::connect_accelerator( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_action_connect_accelerator( (GtkAction*)_obj );
@@ -483,10 +447,7 @@ FALCON_FUNC Action::connect_accelerator( VMARG )
  */
 FALCON_FUNC Action::disconnect_accelerator( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_action_disconnect_accelerator( (GtkAction*)_obj );
@@ -504,10 +465,7 @@ FALCON_FUNC Action::disconnect_accelerator( VMARG )
  */
 FALCON_FUNC Action::block_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_action_block_activate( (GtkAction*)_obj );
@@ -520,10 +478,7 @@ FALCON_FUNC Action::block_activate( VMARG )
  */
 FALCON_FUNC Action::unblock_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_action_unblock_activate( (GtkAction*)_obj );
@@ -545,10 +500,7 @@ FALCON_FUNC Action::unblock_activate_from( VMARG );
  */
 FALCON_FUNC Action::get_always_show_image( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_always_show_image( (GtkAction*)_obj ) );
@@ -582,10 +534,7 @@ FALCON_FUNC Action::set_always_show_image( VMARG )
  */
 FALCON_FUNC Action::get_accel_path( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* path = gtk_action_get_accel_path( (GtkAction*)_obj );
@@ -649,10 +598,7 @@ FALCON_FUNC Action::set_label( VMARG )
  */
 FALCON_FUNC Action::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_action_get_label( (GtkAction*)_obj );
@@ -689,10 +635,7 @@ FALCON_FUNC Action::set_short_label( VMARG )
  */
 FALCON_FUNC Action::get_short_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_action_get_short_label( (GtkAction*)_obj );
@@ -729,10 +672,7 @@ FALCON_FUNC Action::set_tooltip( VMARG )
  */
 FALCON_FUNC Action::get_tooltip( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* tip = gtk_action_get_tooltip( (GtkAction*)_obj );
@@ -769,10 +709,7 @@ FALCON_FUNC Action::set_stock_id( VMARG )
  */
 FALCON_FUNC Action::get_stock_id( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* id = gtk_action_get_stock_id( (GtkAction*)_obj );
@@ -809,10 +746,7 @@ FALCON_FUNC Action::set_icon_name( VMARG )
  */
 FALCON_FUNC Action::get_icon_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_action_get_icon_name( (GtkAction*)_obj );
@@ -848,10 +782,7 @@ FALCON_FUNC Action::set_visible_horizontal( VMARG )
  */
 FALCON_FUNC Action::get_visible_horizontal( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_visible_horizontal( (GtkAction*)_obj ) );
@@ -883,10 +814,7 @@ FALCON_FUNC Action::set_visible_vertical( VMARG )
  */
 FALCON_FUNC Action::get_visible_vertical( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_visible_vertical( (GtkAction*)_obj ) );
@@ -921,10 +849,7 @@ FALCON_FUNC Action::set_is_important( VMARG )
  */
 FALCON_FUNC Action::get_is_important( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_is_important( (GtkAction*)_obj ) );

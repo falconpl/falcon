@@ -115,10 +115,7 @@ Falcon::CoreObject* CellRenderer::factory( const Falcon::CoreClass* gen, void* e
  */
 FALCON_FUNC CellRenderer::signal_editing_canceled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "editing_canceled", (void*) &CellRenderer::on_editing_canceled, vm );
 }
 
@@ -141,10 +138,7 @@ void CellRenderer::on_editing_canceled( GtkCellRenderer* obj, gpointer _vm )
  */
 FALCON_FUNC CellRenderer::signal_editing_started( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "editing_started", (void*) &CellRenderer::on_editing_started, vm );
 }
 
@@ -415,10 +409,7 @@ FALCON_FUNC CellRenderer::stop_editing( VMARG )
  */
 FALCON_FUNC CellRenderer::get_fixed_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint w, h;
@@ -461,10 +452,7 @@ FALCON_FUNC CellRenderer::set_fixed_size( VMARG )
  */
 FALCON_FUNC CellRenderer::get_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_cell_renderer_get_visible( (GtkCellRenderer*)_obj ) );
@@ -497,10 +485,7 @@ FALCON_FUNC CellRenderer::set_visible( VMARG )
  */
 FALCON_FUNC CellRenderer::get_sensitive( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_cell_renderer_get_sensitive( (GtkCellRenderer*)_obj ) );
@@ -533,10 +518,7 @@ FALCON_FUNC CellRenderer::set_sensitive( VMARG )
  */
 FALCON_FUNC CellRenderer::get_alignment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gfloat x, y;
@@ -578,10 +560,7 @@ FALCON_FUNC CellRenderer::set_alignment( VMARG )
  */
 FALCON_FUNC CellRenderer::get_padding( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint x, y;

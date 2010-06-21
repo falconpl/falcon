@@ -103,10 +103,7 @@ FALCON_FUNC EntryBuffer::init( VMARG )
  */
 FALCON_FUNC EntryBuffer::get_text( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* txt = gtk_entry_buffer_get_text( (GtkEntryBuffer*)_obj );
@@ -144,10 +141,7 @@ FALCON_FUNC EntryBuffer::set_text( VMARG )
  */
 FALCON_FUNC EntryBuffer::get_bytes( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_entry_buffer_get_bytes( (GtkEntryBuffer*)_obj ) );
@@ -161,10 +155,7 @@ FALCON_FUNC EntryBuffer::get_bytes( VMARG )
  */
 FALCON_FUNC EntryBuffer::get_length( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_entry_buffer_get_length( (GtkEntryBuffer*)_obj ) );
@@ -180,10 +171,7 @@ FALCON_FUNC EntryBuffer::get_length( VMARG )
  */
 FALCON_FUNC EntryBuffer::get_max_length( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_entry_buffer_get_max_length( (GtkEntryBuffer*)_obj ) );

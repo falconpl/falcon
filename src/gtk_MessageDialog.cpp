@@ -177,10 +177,7 @@ FALCON_FUNC MessageDialog::set_image( VMARG )
  */
 FALCON_FUNC MessageDialog::get_image( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* img = gtk_message_dialog_get_image( (GtkMessageDialog*)_obj );

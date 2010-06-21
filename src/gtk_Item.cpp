@@ -66,10 +66,7 @@ Falcon::CoreObject* Item::factory( const Falcon::CoreClass* gen, void* itm, bool
  */
 FALCON_FUNC Item::signal_deselect( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "deselect", (void*) &Item::on_deselect, vm );
 }
 
@@ -86,10 +83,7 @@ void Item::on_deselect( GtkItem* obj, gpointer _vm )
  */
 FALCON_FUNC Item::signal_select( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "select", (void*) &Item::on_select, vm );
 }
 
@@ -106,10 +100,7 @@ void Item::on_select( GtkItem* obj, gpointer _vm )
  */
 FALCON_FUNC Item::signal_toggle( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "toggle", (void*) &Item::on_toggle, vm );
 }
 
@@ -126,10 +117,7 @@ void Item::on_toggle( GtkItem* obj, gpointer _vm )
  */
 FALCON_FUNC Item::select( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_item_select( (GtkItem*)_obj );
@@ -142,10 +130,7 @@ FALCON_FUNC Item::select( VMARG )
  */
 FALCON_FUNC Item::deselect( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_item_deselect( (GtkItem*)_obj );
@@ -158,10 +143,7 @@ FALCON_FUNC Item::deselect( VMARG )
  */
 FALCON_FUNC Item::toggle( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_item_toggle( (GtkItem*)_obj );

@@ -90,10 +90,7 @@ FALCON_FUNC MenuToolButton::init( VMARG )
  */
 FALCON_FUNC MenuToolButton::signal_show_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "show_menu", (void*) &MenuToolButton::on_show_menu, vm );
 }
 
@@ -152,10 +149,7 @@ FALCON_FUNC MenuToolButton::set_menu( VMARG )
  */
 FALCON_FUNC MenuToolButton::get_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* menu = gtk_menu_tool_button_get_menu( (GtkMenuToolButton*)_obj );

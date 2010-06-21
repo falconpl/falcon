@@ -86,10 +86,7 @@ Falcon::CoreObject* InfoBar::factory( const Falcon::CoreClass* gen, void* bar, b
  */
 FALCON_FUNC InfoBar::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_info_bar_new() );
 }
@@ -237,10 +234,7 @@ FALCON_FUNC InfoBar::set_message_type( VMARG )
  */
 FALCON_FUNC InfoBar::get_message_type( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_info_bar_get_message_type( (GtkInfoBar*)_obj ) );
@@ -254,10 +248,7 @@ FALCON_FUNC InfoBar::get_message_type( VMARG )
  */
 FALCON_FUNC InfoBar::get_action_area( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_info_bar_get_action_area( (GtkInfoBar*)_obj );
@@ -272,10 +263,7 @@ FALCON_FUNC InfoBar::get_action_area( VMARG )
  */
 FALCON_FUNC InfoBar::get_content_area( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_info_bar_get_content_area( (GtkInfoBar*)_obj );

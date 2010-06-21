@@ -207,10 +207,7 @@ FALCON_FUNC TreeModelFilter::set_visible_column( VMARG )
  */
 FALCON_FUNC TreeModelFilter::get_model( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTreeModel* mdl = gtk_tree_model_filter_get_model( (GtkTreeModelFilter*)_obj );
@@ -337,10 +334,7 @@ FALCON_FUNC TreeModelFilter::convert_path_to_child_path( VMARG )
  */
 FALCON_FUNC TreeModelFilter::refilter( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_filter_refilter( (GtkTreeModelFilter*)_obj );
@@ -359,10 +353,7 @@ FALCON_FUNC TreeModelFilter::refilter( VMARG )
  */
 FALCON_FUNC TreeModelFilter::clear_cache( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_filter_clear_cache( (GtkTreeModelFilter*)_obj );

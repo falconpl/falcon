@@ -47,10 +47,7 @@ Falcon::CoreObject* VolumeButton::factory( const Falcon::CoreClass* gen, void* b
  */
 FALCON_FUNC VolumeButton::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_volume_button_new() );
 }

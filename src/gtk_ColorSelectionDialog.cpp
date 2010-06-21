@@ -76,10 +76,7 @@ FALCON_FUNC ColorSelectionDialog::init( VMARG )
  */
 FALCON_FUNC ColorSelectionDialog::get_color_selection( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_color_selection_dialog_get_color_selection(

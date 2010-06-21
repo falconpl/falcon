@@ -97,10 +97,7 @@ FALCON_FUNC Button::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_button_new() );
 }
 
@@ -113,10 +110,7 @@ FALCON_FUNC Button::init( VMARG )
  */
 FALCON_FUNC Button::signal_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate", (void*) &Button::on_activate, vm );
 }
 
@@ -133,10 +127,7 @@ void Button::on_activate( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_clicked( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "clicked", (void*) &Button::on_clicked, vm );
 }
 
@@ -156,10 +147,7 @@ void Button::on_clicked( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_enter( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "enter", (void*) &Button::on_enter, vm );
 }
 
@@ -179,10 +167,7 @@ void Button::on_enter( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_leave( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "leave", (void*) &Button::on_leave, vm );
 }
 
@@ -202,10 +187,7 @@ void Button::on_leave( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_pressed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "pressed", (void*) &Button::on_pressed, vm );
 }
 
@@ -225,10 +207,7 @@ void Button::on_pressed( GtkButton* btn, gpointer _vm )
  */
 FALCON_FUNC Button::signal_released( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "released", (void*) &Button::on_released, vm );
 }
 

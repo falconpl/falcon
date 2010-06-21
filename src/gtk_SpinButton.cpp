@@ -122,10 +122,7 @@ FALCON_FUNC SpinButton::init( VMARG )
  */
 FALCON_FUNC SpinButton::signal_change_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "change_value", (void*) &SpinButton::on_change_value, vm );
 }
 
@@ -148,10 +145,7 @@ gint SpinButton::on_input( GtkSpinButton* obj, gpointer arg1, gpointer _vm );
  */
 FALCON_FUNC SpinButton::signal_output( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "output", (void*) &SpinButton::on_output, vm );
 }
 
@@ -211,10 +205,7 @@ gboolean SpinButton::on_output( GtkSpinButton* obj, gpointer _vm )
  */
 FALCON_FUNC SpinButton::signal_value_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "value_changed", (void*) &SpinButton::on_value_changed, vm );
 }
 
@@ -231,10 +222,7 @@ void SpinButton::on_value_changed( GtkSpinButton* btn, gpointer _vm )
  */
 FALCON_FUNC SpinButton::signal_wrapped( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "wrapped", (void*) &SpinButton::on_wrapped, vm );
 }
 
@@ -336,10 +324,7 @@ FALCON_FUNC SpinButton::set_adjustment( VMARG )
  */
 FALCON_FUNC SpinButton::get_adjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_spin_button_get_adjustment( (GtkSpinButton*)_obj );
@@ -418,10 +403,7 @@ FALCON_FUNC SpinButton::set_range( VMARG )
 */
 FALCON_FUNC SpinButton::get_value_as_int( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_spin_button_get_value_as_int( (GtkSpinButton*)_obj ) );
@@ -553,10 +535,7 @@ FALCON_FUNC SpinButton::set_snap_to_ticks( VMARG )
 */
 FALCON_FUNC SpinButton::update( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_spin_button_update( (GtkSpinButton*)_obj );
@@ -572,10 +551,7 @@ FALCON_FUNC SpinButton::update( VMARG )
 */
 FALCON_FUNC SpinButton::get_digits( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (Falcon::int64) gtk_spin_button_get_digits( (GtkSpinButton*)_obj ) );
@@ -591,10 +567,7 @@ FALCON_FUNC SpinButton::get_digits( VMARG )
 */
 FALCON_FUNC SpinButton::get_increments( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gdouble step, page;
@@ -615,10 +588,7 @@ FALCON_FUNC SpinButton::get_increments( VMARG )
 */
 FALCON_FUNC SpinButton::get_numeric( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_spin_button_get_numeric( (GtkSpinButton*)_obj ) );
@@ -634,10 +604,7 @@ FALCON_FUNC SpinButton::get_numeric( VMARG )
 */
 FALCON_FUNC SpinButton::get_range( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gdouble min, max;
@@ -658,10 +625,7 @@ FALCON_FUNC SpinButton::get_range( VMARG )
 */
 FALCON_FUNC SpinButton::get_snap_to_ticks( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_spin_button_get_snap_to_ticks( (GtkSpinButton*)_obj ) );
@@ -675,10 +639,7 @@ FALCON_FUNC SpinButton::get_snap_to_ticks( VMARG )
 */
 FALCON_FUNC SpinButton::get_update_policy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (Falcon::int64) gtk_spin_button_get_update_policy( (GtkSpinButton*)_obj ) );
@@ -692,10 +653,7 @@ FALCON_FUNC SpinButton::get_update_policy( VMARG )
 */
 FALCON_FUNC SpinButton::get_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (Falcon::numeric) gtk_spin_button_get_value( (GtkSpinButton*)_obj ) );
@@ -709,10 +667,7 @@ FALCON_FUNC SpinButton::get_value( VMARG )
 */
 FALCON_FUNC SpinButton::get_wrap( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_spin_button_get_wrap( (GtkSpinButton*)_obj ) );

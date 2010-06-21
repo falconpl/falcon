@@ -89,10 +89,7 @@ Falcon::CoreObject* Statusbar::factory( const Falcon::CoreClass* gen, void* sbar
  */
 FALCON_FUNC Statusbar::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_statusbar_new();
     self->setGObject( (GObject*) wdt );
@@ -105,10 +102,7 @@ FALCON_FUNC Statusbar::init( VMARG )
  */
 FALCON_FUNC Statusbar::signal_text_popped( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "text_popped", (void*) &Statusbar::on_text_popped, vm );
 }
 
@@ -154,10 +148,7 @@ void Statusbar::on_text_popped( GtkStatusbar* obj, guint ctxt_id, gchar* text, g
  */
 FALCON_FUNC Statusbar::signal_text_pushed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "text_pushed", (void*) &Statusbar::on_text_pushed, vm );
 }
 
@@ -302,10 +293,7 @@ FALCON_FUNC Statusbar::set_has_resize_grip( VMARG )
  */
 FALCON_FUNC Statusbar::get_has_resize_grip( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_statusbar_get_has_resize_grip( (GtkStatusbar*)_obj ) );
@@ -320,10 +308,7 @@ FALCON_FUNC Statusbar::get_has_resize_grip( VMARG )
  */
 FALCON_FUNC Statusbar::get_message_area( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* box = gtk_statusbar_get_message_area( (GtkStatusbar*)_obj );

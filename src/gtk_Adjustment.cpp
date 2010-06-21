@@ -115,10 +115,7 @@ FALCON_FUNC Adjustment::init( VMARG )
  */
 FALCON_FUNC Adjustment::signal_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "changed", (void*) &Adjustment::on_changed, vm );
 }
 
@@ -137,10 +134,7 @@ void Adjustment::on_changed( GtkAdjustment* obj, gpointer _vm )
  */
 FALCON_FUNC Adjustment::signal_value_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "value_changed", (void*) &Adjustment::on_value_changed, vm );
 }
 
@@ -158,10 +152,7 @@ void Adjustment::on_value_changed( GtkAdjustment* obj, gpointer _vm )
  */
 FALCON_FUNC Adjustment::get_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_value( (GtkAdjustment*)_obj ) );
@@ -223,10 +214,7 @@ FALCON_FUNC Adjustment::clamp_page( VMARG )
  */
 FALCON_FUNC Adjustment::changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_adjustment_changed( (GtkAdjustment*)_obj );
@@ -242,10 +230,7 @@ FALCON_FUNC Adjustment::changed( VMARG )
  */
 FALCON_FUNC Adjustment::value_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_adjustment_value_changed( (GtkAdjustment*)_obj );
@@ -292,10 +277,7 @@ FALCON_FUNC Adjustment::configure( VMARG )
  */
 FALCON_FUNC Adjustment::get_lower( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_lower( (GtkAdjustment*)_obj ) );
@@ -309,10 +291,7 @@ FALCON_FUNC Adjustment::get_lower( VMARG )
  */
 FALCON_FUNC Adjustment::get_page_increment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_page_increment( (GtkAdjustment*)_obj ) );
@@ -326,10 +305,7 @@ FALCON_FUNC Adjustment::get_page_increment( VMARG )
  */
 FALCON_FUNC Adjustment::get_page_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_page_size( (GtkAdjustment*)_obj ) );
@@ -343,10 +319,7 @@ FALCON_FUNC Adjustment::get_page_size( VMARG )
  */
 FALCON_FUNC Adjustment::get_step_increment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_step_increment( (GtkAdjustment*)_obj ) );
@@ -360,10 +333,7 @@ FALCON_FUNC Adjustment::get_step_increment( VMARG )
  */
 FALCON_FUNC Adjustment::get_upper( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_adjustment_get_upper( (GtkAdjustment*)_obj ) );

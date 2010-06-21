@@ -53,10 +53,7 @@ Falcon::CoreObject* TearoffMenuItem::factory( const Falcon::CoreClass* gen, void
  */
 FALCON_FUNC TearoffMenuItem::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_tearoff_menu_item_new() );
 }

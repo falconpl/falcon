@@ -110,11 +110,7 @@ FALCON_FUNC ToolItem::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_tool_item_new() );
 }
 
@@ -153,10 +149,7 @@ FALCON_FUNC ToolItem::set_homogeneous( VMARG )
  */
 FALCON_FUNC ToolItem::get_homogeneous( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_homogeneous( (GtkToolItem*)_obj ) );
@@ -192,10 +185,7 @@ FALCON_FUNC ToolItem::set_expand( VMARG )
  */
 FALCON_FUNC ToolItem::get_expand( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_expand( (GtkToolItem*)_obj ) );
@@ -265,10 +255,7 @@ FALCON_FUNC ToolItem::set_use_drag_window( VMARG )
  */
 FALCON_FUNC ToolItem::get_use_drag_window( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_use_drag_window( (GtkToolItem*)_obj ) );
@@ -301,10 +288,7 @@ FALCON_FUNC ToolItem::set_visible_horizontal( VMARG )
  */
 FALCON_FUNC ToolItem::get_visible_horizontal( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_visible_horizontal( (GtkToolItem*)_obj ) );
@@ -341,10 +325,7 @@ FALCON_FUNC ToolItem::set_visible_vertical( VMARG )
  */
 FALCON_FUNC ToolItem::get_visible_vertical( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_visible_vertical( (GtkToolItem*)_obj ) );
@@ -382,10 +363,7 @@ FALCON_FUNC ToolItem::set_is_important( VMARG )
  */
 FALCON_FUNC ToolItem::get_is_important( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_get_is_important( (GtkToolItem*)_obj ) );
@@ -403,10 +381,7 @@ FALCON_FUNC ToolItem::get_is_important( VMARG )
  */
 FALCON_FUNC ToolItem::get_ellipsize_mode( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_ellipsize_mode( (GtkToolItem*)_obj ) );
@@ -424,10 +399,7 @@ FALCON_FUNC ToolItem::get_ellipsize_mode( VMARG )
  */
 FALCON_FUNC ToolItem::get_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_icon_size( (GtkToolItem*)_obj ) );
@@ -444,10 +416,7 @@ FALCON_FUNC ToolItem::get_icon_size( VMARG )
  */
 FALCON_FUNC ToolItem::get_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_orientation( (GtkToolItem*)_obj ) );
@@ -474,10 +443,7 @@ FALCON_FUNC ToolItem::get_orientation( VMARG )
  */
 FALCON_FUNC ToolItem::get_toolbar_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_toolbar_style( (GtkToolItem*)_obj ) );
@@ -494,10 +460,7 @@ FALCON_FUNC ToolItem::get_toolbar_style( VMARG )
  */
 FALCON_FUNC ToolItem::get_relief_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_relief_style( (GtkToolItem*)_obj ) );
@@ -515,10 +478,7 @@ FALCON_FUNC ToolItem::get_relief_style( VMARG )
  */
 FALCON_FUNC ToolItem::get_text_alignment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tool_item_get_text_alignment( (GtkToolItem*)_obj ) );
@@ -535,10 +495,7 @@ FALCON_FUNC ToolItem::get_text_alignment( VMARG )
  */
 FALCON_FUNC ToolItem::get_text_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_get_text_orientation( (GtkToolItem*)_obj ) );
@@ -596,10 +553,7 @@ FALCON_FUNC ToolItem::set_proxy_menu_item( VMARG )
  */
 FALCON_FUNC ToolItem::rebuild_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_rebuild_menu( (GtkToolItem*)_obj );
@@ -616,10 +570,7 @@ FALCON_FUNC ToolItem::rebuild_menu( VMARG )
  */
 FALCON_FUNC ToolItem::toolbar_reconfigured( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_toolbar_reconfigured( (GtkToolItem*)_obj );

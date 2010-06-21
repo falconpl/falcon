@@ -119,10 +119,7 @@ Falcon::CoreObject* TreeViewColumn::factory( const Falcon::CoreClass* gen, void*
  */
 FALCON_FUNC TreeViewColumn::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_tree_view_column_new() );
 }
@@ -134,10 +131,7 @@ FALCON_FUNC TreeViewColumn::init( VMARG )
  */
 FALCON_FUNC TreeViewColumn::signal_clicked( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "clicked", (void*) &TreeViewColumn::on_clicked, vm );
 }
 
@@ -265,10 +259,7 @@ FALCON_FUNC TreeViewColumn::pack_end( VMARG )
  */
 FALCON_FUNC TreeViewColumn::clear( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gtk_tree_view_column_clear( GET_TREEVIEWCOLUMN( vm->self() ) );
 }
 
@@ -474,10 +465,7 @@ FALCON_FUNC TreeViewColumn::set_spacing( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_spacing( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_spacing( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -506,10 +494,7 @@ FALCON_FUNC TreeViewColumn::set_visible( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_visible( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -541,10 +526,7 @@ FALCON_FUNC TreeViewColumn::set_resizable( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_resizable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_resizable( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -573,10 +555,7 @@ FALCON_FUNC TreeViewColumn::set_sizing( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_sizing( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (int64) gtk_tree_view_column_get_sizing( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -588,10 +567,7 @@ FALCON_FUNC TreeViewColumn::get_sizing( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_width( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_width( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -605,10 +581,7 @@ FALCON_FUNC TreeViewColumn::get_width( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_fixed_width( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_fixed_width( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -661,10 +634,7 @@ FALCON_FUNC TreeViewColumn::set_min_width( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_min_width( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_min_width( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -697,10 +667,7 @@ FALCON_FUNC TreeViewColumn::set_max_width( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_max_width( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_max_width( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -713,10 +680,7 @@ FALCON_FUNC TreeViewColumn::get_max_width( VMARG )
  */
 FALCON_FUNC TreeViewColumn::clicked( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gtk_tree_view_column_clicked( GET_TREEVIEWCOLUMN( vm->self() ) );
 }
 
@@ -748,10 +712,7 @@ FALCON_FUNC TreeViewColumn::set_title( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     const gchar* title = gtk_tree_view_column_get_title( GET_TREEVIEWCOLUMN( vm->self() ) );
     if ( title )
         vm->retval( UTF8String( title ) );
@@ -788,10 +749,7 @@ FALCON_FUNC TreeViewColumn::set_expand( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_expand( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_expand( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -822,10 +780,7 @@ FALCON_FUNC TreeViewColumn::set_clickable( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_clickable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_clickable( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -860,10 +815,7 @@ FALCON_FUNC TreeViewColumn::set_widget( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkWidget* wdt = gtk_tree_view_column_get_widget( GET_TREEVIEWCOLUMN( vm->self() ) );
     if ( wdt )
         vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
@@ -900,10 +852,7 @@ FALCON_FUNC TreeViewColumn::set_alignment( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_alignment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (numeric) gtk_tree_view_column_get_alignment( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -932,10 +881,7 @@ FALCON_FUNC TreeViewColumn::set_reorderable( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_reorderable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_reorderable( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -968,10 +914,7 @@ FALCON_FUNC TreeViewColumn::set_sort_column_id( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_sort_column_id( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( gtk_tree_view_column_get_sort_column_id( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -1002,10 +945,7 @@ FALCON_FUNC TreeViewColumn::set_sort_indicator( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_sort_indicator( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gtk_tree_view_column_get_sort_indicator( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 
@@ -1044,10 +984,7 @@ FALCON_FUNC TreeViewColumn::set_sort_order( VMARG )
  */
 FALCON_FUNC TreeViewColumn::get_sort_order( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (int64) gtk_tree_view_column_get_sort_order( GET_TREEVIEWCOLUMN( vm->self() ) ) );
 }
 

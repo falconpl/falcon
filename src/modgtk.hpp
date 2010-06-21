@@ -56,6 +56,12 @@
         throw new ::Falcon::Gtk::GtkError( \
         ::Falcon::ErrorParam( ::Falcon::Gtk::n, __LINE__ ).desc( x ) )
 
+#ifdef STRICT_PARAMETER_CHECK
+#define NO_ARGS     if ( vm->paramCount() ) throw_require_no_args();
+#else
+#define NO_ARGS
+#endif
+
 
 namespace Falcon {
 

@@ -79,10 +79,7 @@ Falcon::CoreObject* TreeIter::factory( const Falcon::CoreClass* gen, void* iter,
  */
 FALCON_FUNC TreeIter::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( new Gtk::TreeIter( vm->findWKI( "GtkTreeIter" )->asClass(),
                                    self->getTreeIter() ) );

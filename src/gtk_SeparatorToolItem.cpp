@@ -52,10 +52,7 @@ Falcon::CoreObject* SeparatorToolItem::factory( const Falcon::CoreClass* gen, vo
  */
 FALCON_FUNC SeparatorToolItem::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_separator_tool_item_new() );
 }
@@ -90,10 +87,7 @@ FALCON_FUNC SeparatorToolItem::set_draw( VMARG )
  */
 FALCON_FUNC SeparatorToolItem::get_draw( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_separator_tool_item_get_draw( (GtkSeparatorToolItem*)_obj ) );

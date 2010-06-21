@@ -202,10 +202,7 @@ FALCON_FUNC Window::init( VMARG )
  */
 FALCON_FUNC Window::signal_activate_default( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate_default", (void*) &Window::on_activate_default, vm );
 }
 
@@ -223,10 +220,7 @@ void Window::on_activate_default( GtkWindow* obj, gpointer _vm )
  */
 FALCON_FUNC Window::signal_activate_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate_focus", (void*) &Window::on_activate_focus, vm );
 }
 
@@ -249,10 +243,7 @@ void Window::on_activate_focus( GtkWindow* obj, gpointer _vm )
  */
 FALCON_FUNC Window::signal_keys_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "keys_changed", (void*) &Window::on_keys_changed, vm );
 }
 
@@ -270,10 +261,7 @@ void Window::on_keys_changed( GtkWindow* obj, gpointer _vm )
  */
 FALCON_FUNC Window::signal_set_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "set_focus", (void*) &Window::on_set_focus, vm );
 }
 
@@ -401,10 +389,7 @@ FALCON_FUNC Window::set_resizable( VMARG )
  */
 FALCON_FUNC Window::get_resizable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_resizable( (GtkWindow*)_obj ) );
@@ -428,10 +413,7 @@ FALCON_FUNC Window::position( VMARG );
  */
 FALCON_FUNC Window::activate_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_activate_focus( (GtkWindow*)_obj ) );
@@ -449,10 +431,7 @@ FALCON_FUNC Window::activate_focus( VMARG )
  */
 FALCON_FUNC Window::activate_default( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_activate_default( (GtkWindow*)_obj ) );
@@ -567,10 +546,7 @@ FALCON_FUNC Window::set_gravity( VMARG )
  */
 FALCON_FUNC Window::get_gravity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_window_get_gravity( (GtkWindow*)_obj ) );
@@ -675,10 +651,7 @@ FALCON_FUNC Window::set_destroy_with_parent( VMARG )
  */
 FALCON_FUNC Window::is_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_is_active( (GtkWindow*)_obj ) );
@@ -695,10 +668,7 @@ FALCON_FUNC Window::is_active( VMARG )
  */
 FALCON_FUNC Window::has_toplevel_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_has_toplevel_focus( (GtkWindow*)_obj ) );
@@ -797,10 +767,7 @@ FALCON_FUNC Window::mnemonic_activate( VMARG )
  */
 FALCON_FUNC Window::get_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_window_get_focus( (GtkWindow*)_obj );
@@ -845,10 +812,7 @@ FALCON_FUNC Window::set_focus( VMARG )
  */
 FALCON_FUNC Window::get_default_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_window_get_default_widget( (GtkWindow*)_obj );
@@ -908,10 +872,7 @@ FALCON_FUNC Window::set_default( VMARG )
  */
 FALCON_FUNC Window::present( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_present( (GtkWindow*)_obj );
@@ -955,10 +916,7 @@ FALCON_FUNC Window::present_with_time( VMARG )
  */
 FALCON_FUNC Window::iconify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_iconify( (GtkWindow*)_obj );
@@ -977,10 +935,7 @@ FALCON_FUNC Window::iconify( VMARG )
  */
 FALCON_FUNC Window::deiconify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_deiconify( (GtkWindow*)_obj );
@@ -1002,10 +957,7 @@ FALCON_FUNC Window::deiconify( VMARG )
  */
 FALCON_FUNC Window::stick( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_stick( (GtkWindow*)_obj );
@@ -1024,10 +976,7 @@ FALCON_FUNC Window::stick( VMARG )
  */
 FALCON_FUNC Window::unstick( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_unstick( (GtkWindow*)_obj );
@@ -1050,10 +999,7 @@ FALCON_FUNC Window::unstick( VMARG )
  */
 FALCON_FUNC Window::maximize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_maximize( (GtkWindow*)_obj );
@@ -1073,10 +1019,7 @@ FALCON_FUNC Window::maximize( VMARG )
  */
 FALCON_FUNC Window::unmaximize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_unmaximize( (GtkWindow*)_obj );
@@ -1097,10 +1040,7 @@ FALCON_FUNC Window::unmaximize( VMARG )
  */
 FALCON_FUNC Window::fullscreen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_fullscreen( (GtkWindow*)_obj );
@@ -1121,10 +1061,7 @@ FALCON_FUNC Window::fullscreen( VMARG )
  */
 FALCON_FUNC Window::unfullscreen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_unfullscreen( (GtkWindow*)_obj );
@@ -1608,10 +1545,7 @@ FALCON_FUNC Window::set_role( VMARG )
  */
 FALCON_FUNC Window::get_decorated( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_decorated( (GtkWindow*)_obj ) );
@@ -1625,10 +1559,7 @@ FALCON_FUNC Window::get_decorated( VMARG )
  */
 FALCON_FUNC Window::get_deletable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_deletable( (GtkWindow*)_obj ) );
@@ -1650,10 +1581,7 @@ FALCON_FUNC Window::get_deletable( VMARG )
  */
 FALCON_FUNC Window::get_default_icon_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     const gchar* nam = gtk_window_get_default_icon_name();
     vm->retval( nam ? UTF8String( nam ) : UTF8String( "" ) );
 }
@@ -1671,10 +1599,7 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
  */
 FALCON_FUNC Window::get_default_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint w, h;
@@ -1693,10 +1618,7 @@ FALCON_FUNC Window::get_default_size( VMARG )
  */
 FALCON_FUNC Window::get_destroy_with_parent( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_destroy_with_parent( (GtkWindow*)_obj ) );
@@ -1717,10 +1639,7 @@ FALCON_FUNC Window::get_destroy_with_parent( VMARG )
  */
 FALCON_FUNC Window::get_frame_dimensions( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint l, t, r, b;
@@ -1743,10 +1662,7 @@ FALCON_FUNC Window::get_frame_dimensions( VMARG )
  */
 FALCON_FUNC Window::get_has_frame( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_has_frame( (GtkWindow*)_obj ) );
@@ -1765,10 +1681,7 @@ FALCON_FUNC Window::get_has_frame( VMARG )
  */
 FALCON_FUNC Window::get_icon_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nam = gtk_window_get_icon_name( (GtkWindow*)_obj );
@@ -1788,10 +1701,7 @@ FALCON_FUNC Window::get_icon_name( VMARG )
  */
 FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_window_get_mnemonic_modifier( (GtkWindow*)_obj ) );
@@ -1807,10 +1717,7 @@ FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
  */
 FALCON_FUNC Window::get_modal( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_modal( (GtkWindow*)_obj ) );
@@ -1855,10 +1762,7 @@ FALCON_FUNC Window::get_modal( VMARG )
  */
 FALCON_FUNC Window::get_position( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint x, y;
@@ -1879,10 +1783,7 @@ FALCON_FUNC Window::get_position( VMARG )
  */
 FALCON_FUNC Window::get_role( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* role = gtk_window_get_role( (GtkWindow*)_obj );
@@ -1934,10 +1835,7 @@ FALCON_FUNC Window::get_role( VMARG )
  */
 FALCON_FUNC Window::get_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint w, h;
@@ -1956,10 +1854,7 @@ FALCON_FUNC Window::get_size( VMARG )
  */
 FALCON_FUNC Window::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* t = gtk_window_get_title( (GtkWindow*)_obj );
@@ -1977,10 +1872,7 @@ FALCON_FUNC Window::get_title( VMARG )
  */
 FALCON_FUNC Window::get_transient_for( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWindow* win = gtk_window_get_transient_for( (GtkWindow*)_obj );
@@ -1998,10 +1890,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
  */
 FALCON_FUNC Window::get_type_hint( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_window_get_type_hint( (GtkWindow*)_obj ) );
@@ -2015,10 +1904,7 @@ FALCON_FUNC Window::get_type_hint( VMARG )
  */
 FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_skip_taskbar_hint( (GtkWindow*)_obj ) );
@@ -2032,10 +1918,7 @@ FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
  */
 FALCON_FUNC Window::get_skip_pager_hint( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_skip_pager_hint( (GtkWindow*)_obj ) );
@@ -2049,10 +1932,7 @@ FALCON_FUNC Window::get_skip_pager_hint( VMARG )
  */
 FALCON_FUNC Window::get_urgency_hint( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_urgency_hint( (GtkWindow*)_obj ) );
@@ -2066,10 +1946,7 @@ FALCON_FUNC Window::get_urgency_hint( VMARG )
  */
 FALCON_FUNC Window::get_accept_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_accept_focus( (GtkWindow*)_obj ) );
@@ -2083,10 +1960,7 @@ FALCON_FUNC Window::get_accept_focus( VMARG )
  */
 FALCON_FUNC Window::get_focus_on_map( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_window_get_focus_on_map( (GtkWindow*)_obj ) );
@@ -2104,10 +1978,7 @@ FALCON_FUNC Window::get_focus_on_map( VMARG )
  */
 FALCON_FUNC Window::get_window_type( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_window_get_window_type( (GtkWindow*)_obj ) );
@@ -2210,10 +2081,7 @@ FALCON_FUNC Window::parse_geometry( VMARG )
  */
 FALCON_FUNC Window::reshow_with_initial_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_window_reshow_with_initial_size( (GtkWindow*)_obj );
@@ -2347,10 +2215,7 @@ FALCON_FUNC Window::set_auto_startup_notification( VMARG )
  */
 FALCON_FUNC Window::get_opacity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_window_get_opacity( (GtkWindow*)_obj ) );

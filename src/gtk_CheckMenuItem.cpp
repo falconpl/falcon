@@ -70,10 +70,7 @@ FALCON_FUNC CheckMenuItem::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_check_menu_item_new() );
 }
 
@@ -84,10 +81,7 @@ FALCON_FUNC CheckMenuItem::init( VMARG )
  */
 FALCON_FUNC CheckMenuItem::signal_toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "toggled", (void*) &CheckMenuItem::on_toggled, vm );
 }
 
@@ -143,10 +137,7 @@ FALCON_FUNC CheckMenuItem::new_with_mnemonic( VMARG )
  */
 FALCON_FUNC CheckMenuItem::get_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_check_menu_item_get_active( (GtkCheckMenuItem*)_obj ) );
@@ -181,10 +172,7 @@ FALCON_FUNC CheckMenuItem::set_active( VMARG )
  */
 FALCON_FUNC CheckMenuItem::toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_check_menu_item_toggled( (GtkCheckMenuItem*)_obj );
@@ -198,10 +186,7 @@ FALCON_FUNC CheckMenuItem::toggled( VMARG )
  */
 FALCON_FUNC CheckMenuItem::get_inconsistent( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_check_menu_item_get_inconsistent( (GtkCheckMenuItem*)_obj ) );
@@ -261,10 +246,7 @@ FALCON_FUNC CheckMenuItem::set_draw_as_radio( VMARG )
  */
 FALCON_FUNC CheckMenuItem::get_draw_as_radio( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_check_menu_item_get_draw_as_radio( (GtkCheckMenuItem*)_obj ) );

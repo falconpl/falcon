@@ -105,10 +105,7 @@ FALCON_FUNC Alignment::set( VMARG )
  */
 FALCON_FUNC Alignment::get_padding( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     guint top, bottom, left, right;

@@ -337,10 +337,7 @@ FALCON_FUNC Table::set_homogeneous( VMARG )
  */
 FALCON_FUNC Table::get_default_row_spacing( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_table_get_default_row_spacing( (GtkTable*)_obj ) );
@@ -354,10 +351,7 @@ FALCON_FUNC Table::get_default_row_spacing( VMARG )
  */
 FALCON_FUNC Table::get_homogeneous( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_table_get_homogeneous( (GtkTable*)_obj ) );
@@ -411,10 +405,7 @@ FALCON_FUNC Table::get_col_spacing( VMARG )
  */
 FALCON_FUNC Table::get_default_col_spacing( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_table_get_default_col_spacing( (GtkTable*)_obj ) );

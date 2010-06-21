@@ -185,10 +185,7 @@ Falcon::CoreObject* TextIter::factory( const Falcon::CoreClass* gen, void* iter,
  */
 FALCON_FUNC TextIter::get_buffer( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextBuffer* buf = gtk_text_iter_get_buffer( (GtkTextIter*)_obj );
@@ -203,10 +200,7 @@ FALCON_FUNC TextIter::get_buffer( VMARG )
  */
 FALCON_FUNC TextIter::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextIter* iter = gtk_text_iter_copy( (GtkTextIter*)_obj );
@@ -228,10 +222,7 @@ FALCON_FUNC TextIter::copy( VMARG )
  */
 FALCON_FUNC TextIter::get_offset( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_offset( (GtkTextIter*)_obj ) );
@@ -248,10 +239,7 @@ FALCON_FUNC TextIter::get_offset( VMARG )
  */
 FALCON_FUNC TextIter::get_line( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_line( (GtkTextIter*)_obj ) );
@@ -267,10 +255,7 @@ FALCON_FUNC TextIter::get_line( VMARG )
  */
 FALCON_FUNC TextIter::get_line_offset( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_line_offset( (GtkTextIter*)_obj ) );
@@ -287,10 +272,7 @@ FALCON_FUNC TextIter::get_line_offset( VMARG )
  */
 FALCON_FUNC TextIter::get_line_index( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_line_index( (GtkTextIter*)_obj ) );
@@ -304,10 +286,7 @@ FALCON_FUNC TextIter::get_line_index( VMARG )
  */
 FALCON_FUNC TextIter::get_visible_line_index( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_visible_line_index( (GtkTextIter*)_obj ) );
@@ -321,10 +300,7 @@ FALCON_FUNC TextIter::get_visible_line_index( VMARG )
  */
 FALCON_FUNC TextIter::get_visible_line_offset( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_iter_get_visible_line_offset( (GtkTextIter*)_obj ) );
@@ -343,10 +319,7 @@ FALCON_FUNC TextIter::get_visible_line_offset( VMARG )
  */
 FALCON_FUNC TextIter::get_char( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gunichar c = gtk_text_iter_get_char( (GtkTextIter*)_obj );
@@ -480,10 +453,7 @@ FALCON_FUNC TextIter::get_visible_text( VMARG )
  */
 FALCON_FUNC TextIter::get_pixbuf( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkPixbuf* buf = gtk_text_iter_get_pixbuf( (GtkTextIter*)_obj );

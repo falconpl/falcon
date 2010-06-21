@@ -108,10 +108,7 @@ FALCON_FUNC LinkButton::new_with_label( VMARG )
  */
 FALCON_FUNC LinkButton::get_uri( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* uri = gtk_link_button_get_uri( (GtkLinkButton*)_obj );
@@ -209,10 +206,7 @@ void link_button_uri_hook_func( GtkLinkButton* btn, const gchar* link, gpointer 
  */
 FALCON_FUNC LinkButton::get_visited( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_link_button_get_visited( (GtkLinkButton*)_obj ) );

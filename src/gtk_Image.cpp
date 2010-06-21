@@ -254,10 +254,7 @@ FALCON_FUNC Image::set_from_stock( VMARG )
  */
 FALCON_FUNC Image::clear( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_image_clear( (GtkImage*)_obj );

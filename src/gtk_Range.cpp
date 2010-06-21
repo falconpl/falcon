@@ -107,10 +107,7 @@ Falcon::CoreObject* Range::factory( const Falcon::CoreClass* gen, void* range, b
  */
 FALCON_FUNC Range::signal_adjust_bounds( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "adjust_bounds", (void*) &Range::on_adjust_bounds, vm );
 }
 
@@ -138,10 +135,7 @@ void Range::on_adjust_bounds( GtkRange* obj, gdouble arg1, gpointer _vm )
  */
 FALCON_FUNC Range::signal_change_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "change_value", (void*) &Range::on_change_value, vm );
 }
 
@@ -203,10 +197,7 @@ gboolean Range::on_change_value( GtkRange* obj, GtkScrollType scroll, gdouble va
  */
 FALCON_FUNC Range::signal_move_slider( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_slider", (void*) &Range::on_move_slider, vm );
 }
 
@@ -250,10 +241,7 @@ void Range::on_move_slider( GtkRange* obj, GtkScrollType step, gpointer _vm )
  */
 FALCON_FUNC Range::signal_value_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "value_changed", (void*) &Range::on_value_changed, vm );
 }
 
@@ -271,10 +259,7 @@ void Range::on_value_changed( GtkRange* obj, gpointer _vm )
  */
 FALCON_FUNC Range::get_fill_level( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_range_get_fill_level( (GtkRange*)_obj ) );
@@ -288,10 +273,7 @@ FALCON_FUNC Range::get_fill_level( VMARG )
  */
 FALCON_FUNC Range::get_restrict_to_fill_level( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_range_get_restrict_to_fill_level( (GtkRange*)_obj ) );
@@ -305,10 +287,7 @@ FALCON_FUNC Range::get_restrict_to_fill_level( VMARG )
  */
 FALCON_FUNC Range::get_show_fill_level( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_range_get_show_fill_level( (GtkRange*)_obj ) );
@@ -392,10 +371,7 @@ FALCON_FUNC Range::set_show_fill_level( VMARG )
  */
 FALCON_FUNC Range::get_adjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_range_get_adjustment( (GtkRange*)_obj );
@@ -461,10 +437,7 @@ FALCON_FUNC Range::set_adjustment( VMARG )
  */
 FALCON_FUNC Range::get_inverted( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_range_get_inverted( (GtkRange*)_obj ) );
@@ -499,10 +472,7 @@ FALCON_FUNC Range::set_inverted( VMARG )
  */
 FALCON_FUNC Range::get_update_policy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_range_get_update_policy( (GtkRange*)_obj ) );
@@ -516,10 +486,7 @@ FALCON_FUNC Range::get_update_policy( VMARG )
  */
 FALCON_FUNC Range::get_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_range_get_value( (GtkRange*)_obj ) );
@@ -622,10 +589,7 @@ FALCON_FUNC Range::set_lower_stepper_sensitivity( VMARG )
  */
 FALCON_FUNC Range::get_lower_stepper_sensitivity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_range_get_lower_stepper_sensitivity( (GtkRange*)_obj ) );
@@ -658,10 +622,7 @@ FALCON_FUNC Range::set_upper_stepper_sensitivity( VMARG )
  */
 FALCON_FUNC Range::get_upper_stepper_sensitivity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_range_get_lower_stepper_sensitivity( (GtkRange*)_obj ) );
@@ -676,10 +637,7 @@ FALCON_FUNC Range::get_upper_stepper_sensitivity( VMARG )
  */
 FALCON_FUNC Range::get_flippable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_range_get_flippable( (GtkRange*)_obj ) );
@@ -713,10 +671,7 @@ FALCON_FUNC Range::set_flippable( VMARG )
  */
 FALCON_FUNC Range::get_min_slider_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_range_get_min_slider_size( (GtkRange*)_obj ) );
@@ -735,10 +690,7 @@ FALCON_FUNC Range::get_min_slider_size( VMARG )
  */
 FALCON_FUNC Range::get_slider_range( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint st, nd;
@@ -757,10 +709,7 @@ FALCON_FUNC Range::get_slider_range( VMARG )
  */
 FALCON_FUNC Range::get_slider_size_fixed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_range_get_slider_size_fixed( (GtkRange*)_obj ) );

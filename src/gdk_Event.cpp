@@ -156,10 +156,7 @@ FALCON_FUNC Event::init( VMARG )
  */
 FALCON_FUNC Event::get_real_event( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     switch ( self->getEvent()->type )
     {
@@ -228,10 +225,7 @@ FALCON_FUNC Event::get_real_event( VMARG )
  */
 FALCON_FUNC Event::events_pending( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gdk_events_pending() );
 }
 
@@ -245,10 +239,7 @@ FALCON_FUNC Event::events_pending( VMARG )
  */
 FALCON_FUNC Event::peek( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkEvent* ev = gdk_event_peek();
     if ( ev )
         vm->retval( new Gdk::Event( vm->findWKI( "GdkEvent" )->asClass(), ev, true ) );
@@ -266,10 +257,7 @@ FALCON_FUNC Event::peek( VMARG )
  */
 FALCON_FUNC Event::get( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkEvent* ev = gdk_event_get();
     if ( ev )
         vm->retval( new Gdk::Event( vm->findWKI( "GdkEvent" )->asClass(), ev, true ) );
@@ -291,10 +279,7 @@ FALCON_FUNC Event::get_graphics_expose( VMARG );
  */
 FALCON_FUNC Event::put( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gdk_event_put( self->getEvent() );
 }
@@ -307,10 +292,7 @@ FALCON_FUNC Event::put( VMARG )
  */
 FALCON_FUNC Event::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( new Gdk::Event( vm->findWKI( "GdkEvent" )->asClass(),
                                 self->getEvent() ) );
@@ -324,10 +306,7 @@ FALCON_FUNC Event::copy( VMARG )
  */
 FALCON_FUNC Event::get_time( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( (int64) gdk_event_get_time( self->getEvent() ) );
 }
@@ -340,10 +319,7 @@ FALCON_FUNC Event::get_time( VMARG )
  */
 FALCON_FUNC Event::get_state( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkModifierType state;
     gdk_event_get_state( self->getEvent(), &state );
@@ -382,10 +358,7 @@ FALCON_FUNC Event::get_axis( VMARG )
  */
 FALCON_FUNC Event::get_coords( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gdouble x, y;
     gboolean ret = gdk_event_get_coords( self->getEvent(), &x, &y );
@@ -408,10 +381,7 @@ FALCON_FUNC Event::get_coords( VMARG )
  */
 FALCON_FUNC Event::get_root_coords( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gdouble x, y;
     gboolean ret = gdk_event_get_root_coords( self->getEvent(), &x, &y );
@@ -434,10 +404,7 @@ FALCON_FUNC Event::get_root_coords( VMARG )
  */
 FALCON_FUNC Event::get_show_events( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( (bool) gdk_get_show_events() );
 }
 

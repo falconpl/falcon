@@ -67,10 +67,7 @@ Falcon::CoreObject* HRuler::factory( const Falcon::CoreClass* gen, void* ruler, 
  */
 FALCON_FUNC HRuler::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkWidget* ruler = gtk_hruler_new();
     self->setGObject( (GObject*) ruler );

@@ -83,10 +83,7 @@ FALCON_FUNC RadioMenuItem::init( VMARG )
  */
 FALCON_FUNC RadioMenuItem::signal_group_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "group_changed", (void*) &RadioMenuItem::on_group_changed, vm );
 }
 

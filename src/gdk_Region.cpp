@@ -104,10 +104,7 @@ Falcon::CoreObject* Region::factory( const Falcon::CoreClass* gen, void* region,
  */
 FALCON_FUNC Region::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     // does nothing
 }
 
@@ -169,10 +166,7 @@ FALCON_FUNC Region::polygon( VMARG )
  */
 FALCON_FUNC Region::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkRegion* ret = gdk_region_copy( self->getRegion() );
     vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), ret,
@@ -212,10 +206,7 @@ FALCON_FUNC Region::destroy( VMARG );
  */
 FALCON_FUNC Region::get_clipbox( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkRectangle rec;
     gdk_region_get_clipbox( self->getRegion(), &rec );
@@ -230,10 +221,7 @@ FALCON_FUNC Region::get_clipbox( VMARG )
  */
 FALCON_FUNC Region::get_rectangles( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GdkRectangle* rects = NULL;
     gint cnt;
@@ -258,10 +246,7 @@ FALCON_FUNC Region::get_rectangles( VMARG )
  */
 FALCON_FUNC Region::empty( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( (bool) gdk_region_empty( self->getRegion() ) );
 }

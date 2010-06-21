@@ -53,10 +53,7 @@ FALCON_FUNC CheckButton::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_check_button_new() );
 }
 

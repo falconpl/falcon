@@ -73,10 +73,7 @@ Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* obj, bo
  */
 FALCON_FUNC Object::signal_notify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "notify", (void*) &Object::on_notify, vm );
 }
 
@@ -257,10 +254,7 @@ FALCON_FUNC Object::notify( VMARG )
  */
 FALCON_FUNC Object::freeze_notify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     g_object_freeze_notify( _obj );
@@ -278,10 +272,7 @@ FALCON_FUNC Object::freeze_notify( VMARG )
  */
 FALCON_FUNC Object::thaw_notify( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     g_object_thaw_notify( _obj );
@@ -295,10 +286,7 @@ FALCON_FUNC Object::thaw_notify( VMARG )
  */
 FALCON_FUNC Object::ref( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     g_object_ref( _obj );
@@ -314,10 +302,7 @@ FALCON_FUNC Object::ref( VMARG )
  */
 FALCON_FUNC Object::unref( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     g_object_unref( _obj );
@@ -336,10 +321,7 @@ FALCON_FUNC Object::unref( VMARG )
  */
 FALCON_FUNC Object::ref_sink( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     g_object_ref_sink( _obj );

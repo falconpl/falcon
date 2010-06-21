@@ -91,10 +91,7 @@ FALCON_FUNC ToolItemGroup::init( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_collapsed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_group_get_collapsed( (GtkToolItemGroup*)_obj ) );
@@ -132,10 +129,7 @@ FALCON_FUNC ToolItemGroup::get_drop_item( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_ellipsize( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_item_group_get_ellipsize( (GtkToolItemGroup*)_obj ) );
@@ -169,10 +163,7 @@ FALCON_FUNC ToolItemGroup::get_item_position( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_n_items( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_group_get_n_items( (GtkToolItemGroup*)_obj ) );
@@ -190,10 +181,7 @@ FALCON_FUNC ToolItemGroup::get_n_items( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_tool_item_group_get_label( (GtkToolItemGroup*)_obj );
@@ -211,10 +199,7 @@ FALCON_FUNC ToolItemGroup::get_label( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_label_widget( VMARG )
 { // return GtkLabel instead?
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* lbl = gtk_tool_item_group_get_label_widget( (GtkToolItemGroup*)_obj );
@@ -249,10 +234,7 @@ FALCON_FUNC ToolItemGroup::get_nth_item( VMARG )
  */
 FALCON_FUNC ToolItemGroup::get_header_relief( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_item_group_get_header_relief( (GtkToolItemGroup*)_obj ) );

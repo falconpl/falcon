@@ -49,10 +49,7 @@ void Orientable::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
  */
 FALCON_FUNC Orientable::get_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_orientable_get_orientation( (GtkOrientable*)_obj ) );

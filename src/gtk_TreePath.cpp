@@ -112,10 +112,7 @@ void TreePath::setTreePath( const GtkTreePath* path, const bool transfer )
  */
 FALCON_FUNC TreePath::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setTreePath( gtk_tree_path_new(), true );
 }
@@ -165,10 +162,7 @@ FALCON_FUNC TreePath::new_from_indices( VMARG )
  */
 FALCON_FUNC TreePath::to_string( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gchar* s = gtk_tree_path_to_string( self->getTreePath() );
     vm->retval( UTF8String( s ) );
@@ -183,10 +177,7 @@ FALCON_FUNC TreePath::to_string( VMARG )
  */
 FALCON_FUNC TreePath::new_first( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( new Gtk::TreePath( vm->findWKI( "GtkTreePath" )->asClass(),
                                    gtk_tree_path_new_first(),
                                    true ) );
@@ -238,10 +229,7 @@ FALCON_FUNC TreePath::prepend_index( VMARG )
  */
 FALCON_FUNC TreePath::get_depth( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( gtk_tree_path_get_depth( self->getTreePath() ) );
 }
@@ -256,10 +244,7 @@ FALCON_FUNC TreePath::get_depth( VMARG )
  */
 FALCON_FUNC TreePath::get_indices( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gint* indexes = gtk_tree_path_get_indices( self->getTreePath() );
     if ( indexes )
@@ -297,10 +282,7 @@ FALCON_FUNC TreePath::free( VMARG );
  */
 FALCON_FUNC TreePath::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( new Gtk::TreePath( vm->findWKI( "GtkTreePath" )->asClass(),
                                    gtk_tree_path_copy( self->getTreePath() ),
@@ -337,10 +319,7 @@ FALCON_FUNC TreePath::compare( VMARG )
  */
 FALCON_FUNC TreePath::next( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gtk_tree_path_next( self->getTreePath() );
 }
@@ -352,10 +331,7 @@ FALCON_FUNC TreePath::next( VMARG )
  */
 FALCON_FUNC TreePath::prev( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gtk_tree_path_prev( self->getTreePath() );
 }
@@ -368,10 +344,7 @@ FALCON_FUNC TreePath::prev( VMARG )
  */
 FALCON_FUNC TreePath::up( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( (bool) gtk_tree_path_up( self->getTreePath() ) );
 }
@@ -382,10 +355,7 @@ FALCON_FUNC TreePath::up( VMARG )
  */
 FALCON_FUNC TreePath::down( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     gtk_tree_path_down( self->getTreePath() );
 }

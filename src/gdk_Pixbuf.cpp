@@ -55,10 +55,7 @@ Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bo
  */
 FALCON_FUNC Pixbuf::version( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     vm->retval( new String( GDK_PIXBUF_VERSION ) );
 }
 

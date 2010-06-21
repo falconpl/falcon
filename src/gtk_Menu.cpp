@@ -104,10 +104,7 @@ Falcon::CoreObject* Menu::factory( const Falcon::CoreClass* gen, void* menu, boo
  */
 FALCON_FUNC Menu::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_menu_new() );
 }
@@ -119,10 +116,7 @@ FALCON_FUNC Menu::init( VMARG )
  */
 FALCON_FUNC Menu::signal_move_scroll( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_scroll", (void*) &Menu::on_move_scroll, vm );
 }
 
@@ -334,10 +328,7 @@ FALCON_FUNC Menu::set_accel_path( VMARG )
  */
 FALCON_FUNC Menu::get_accel_path( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* s = gtk_menu_get_accel_path( (GtkMenu*)_obj );
@@ -375,10 +366,7 @@ FALCON_FUNC Menu::set_title( VMARG )
  */
 FALCON_FUNC Menu::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* title = gtk_menu_get_title( (GtkMenu*)_obj );
@@ -417,10 +405,7 @@ FALCON_FUNC Menu::set_monitor( VMARG )
  */
 FALCON_FUNC Menu::get_monitor( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_menu_get_monitor( (GtkMenu*)_obj ) );
@@ -435,10 +420,7 @@ FALCON_FUNC Menu::get_monitor( VMARG )
  */
 FALCON_FUNC Menu::get_tearoff_state( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_menu_get_tearoff_state( (GtkMenu*)_obj ) );
@@ -472,10 +454,7 @@ FALCON_FUNC Menu::set_reserve_toggle_size( VMARG )
  */
 FALCON_FUNC Menu::get_reserve_toggle_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_menu_get_reserve_toggle_size( (GtkMenu*)_obj ) );
@@ -489,10 +468,7 @@ FALCON_FUNC Menu::get_reserve_toggle_size( VMARG )
  */
 FALCON_FUNC Menu::popdown( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_popdown( (GtkMenu*)_obj );
@@ -505,10 +481,7 @@ FALCON_FUNC Menu::popdown( VMARG )
  */
 FALCON_FUNC Menu::reposition( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_reposition( (GtkMenu*)_obj );
@@ -522,10 +495,7 @@ FALCON_FUNC Menu::reposition( VMARG )
  */
 FALCON_FUNC Menu::get_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_menu_get_active( (GtkMenu*)_obj );
@@ -604,10 +574,7 @@ FALCON_FUNC Menu::attach_to_widget( VMARG )
  */
 FALCON_FUNC Menu::detach( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_detach( (GtkMenu*)_obj );
@@ -621,10 +588,7 @@ FALCON_FUNC Menu::detach( VMARG )
  */
 FALCON_FUNC Menu::get_attach_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_menu_get_attach_widget( (GtkMenu*)_obj );

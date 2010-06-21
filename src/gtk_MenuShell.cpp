@@ -76,10 +76,7 @@ Falcon::CoreObject* MenuShell::factory( const Falcon::CoreClass* gen, void* shel
  */
 FALCON_FUNC MenuShell::signal_activate_current( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate_current", (void*) &MenuShell::on_activate_current, vm );
 }
 
@@ -125,10 +122,7 @@ void MenuShell::on_activate_current( GtkMenuShell* obj, gboolean force_hide, gpo
  */
 FALCON_FUNC MenuShell::signal_cancel( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "cancel", (void*) &MenuShell::on_cancel, vm );
 }
 
@@ -145,10 +139,7 @@ void MenuShell::on_cancel( GtkMenuShell* obj, gpointer _vm )
  */
 FALCON_FUNC MenuShell::signal_cycle_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "cycle_focus", (void*) &MenuShell::on_cycle_focus, vm );
 }
 
@@ -192,10 +183,7 @@ void MenuShell::on_cycle_focus( GtkMenuShell* obj, GtkDirectionType dir, gpointe
  */
 FALCON_FUNC MenuShell::signal_deactivate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "deactivate", (void*) &MenuShell::on_deactivate, vm );
 }
 
@@ -212,10 +200,7 @@ void MenuShell::on_deactivate( GtkMenuShell* obj, gpointer _vm )
  */
 FALCON_FUNC MenuShell::signal_move_current( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_current", (void*) &MenuShell::on_move_current, vm );
 }
 
@@ -261,10 +246,7 @@ void MenuShell::on_move_current( GtkMenuShell* obj, GtkMenuDirectionType dir, gp
  */
 FALCON_FUNC MenuShell::signal_move_selected( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_selected", (void*) &MenuShell::on_move_selected, vm );
 }
 
@@ -325,10 +307,7 @@ gboolean MenuShell::on_move_selected( GtkMenuShell* obj, gint dist, gpointer _vm
  */
 FALCON_FUNC MenuShell::signal_selection_done( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "selection_done", (void*) &MenuShell::on_selection_done, vm );
 }
 
@@ -408,10 +387,7 @@ FALCON_FUNC MenuShell::insert( VMARG )
  */
 FALCON_FUNC MenuShell::deactivate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_deactivate( (GtkMenuShell*)_obj );
@@ -462,10 +438,7 @@ FALCON_FUNC MenuShell::select_first( VMARG )
  */
 FALCON_FUNC MenuShell::deselect( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_deselect( (GtkMenuShell*)_obj );
@@ -502,10 +475,7 @@ FALCON_FUNC MenuShell::activate_item( VMARG )
  */
 FALCON_FUNC MenuShell::cancel( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_cancel( (GtkMenuShell*)_obj );
@@ -554,10 +524,7 @@ FALCON_FUNC MenuShell::set_take_focus( VMARG )
  */
 FALCON_FUNC MenuShell::get_take_focus( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_menu_shell_get_take_focus( (GtkMenuShell*)_obj ) );

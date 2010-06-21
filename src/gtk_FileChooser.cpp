@@ -132,10 +132,7 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
  */
 FALCON_FUNC FileChooser::signal_confirm_overwrite( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "confirm_overwrite",
         (void*) &FileChooser::on_confirm_overwrite, vm );
 }
@@ -208,10 +205,7 @@ FileChooser::on_confirm_overwrite( GtkFileChooser* obj, gpointer _vm )
  */
 FALCON_FUNC FileChooser::signal_current_folder_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "current_folder_changed",
         (void*) &FileChooser::on_current_folder_changed, vm );
 }
@@ -235,10 +229,7 @@ void FileChooser::on_current_folder_changed( GtkFileChooser* obj, gpointer _vm )
  */
 FALCON_FUNC FileChooser::signal_file_activated( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "file_activated",
         (void*) &FileChooser::on_file_activated, vm );
 }
@@ -262,10 +253,7 @@ void FileChooser::on_file_activated( GtkFileChooser* obj, gpointer _vm )
  */
 FALCON_FUNC FileChooser::signal_selection_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "selection_changed",
         (void*) &FileChooser::on_selection_changed, vm );
 }
@@ -294,10 +282,7 @@ void FileChooser::on_selection_changed( GtkFileChooser* obj, gpointer _vm )
  */
 FALCON_FUNC FileChooser::signal_update_preview( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "update_preview",
         (void*) &FileChooser::on_update_preview, vm );
 }
@@ -339,10 +324,7 @@ FALCON_FUNC FileChooser::set_action( VMARG )
  */
 FALCON_FUNC FileChooser::get_action( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_file_chooser_get_action( (GtkFileChooser*)_obj ) );
@@ -381,10 +363,7 @@ FALCON_FUNC FileChooser::set_local_only( VMARG )
  */
 FALCON_FUNC FileChooser::get_local_only( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_local_only( (GtkFileChooser*)_obj ) );
@@ -420,10 +399,7 @@ FALCON_FUNC FileChooser::set_select_multiple( VMARG )
  */
 FALCON_FUNC FileChooser::get_select_multiple( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_select_multiple( (GtkFileChooser*)_obj ) );
@@ -456,10 +432,7 @@ FALCON_FUNC FileChooser::set_show_hidden( VMARG )
  */
 FALCON_FUNC FileChooser::get_show_hidden( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_show_hidden( (GtkFileChooser*)_obj ) );
@@ -501,10 +474,7 @@ FALCON_FUNC FileChooser::set_do_overwrite_confirmation( VMARG )
  */
 FALCON_FUNC FileChooser::get_do_overwrite_confirmation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_do_overwrite_confirmation( (GtkFileChooser*)_obj ) );
@@ -540,10 +510,7 @@ FALCON_FUNC FileChooser::set_create_folders( VMARG )
  */
 FALCON_FUNC FileChooser::get_create_folders( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_create_folders( (GtkFileChooser*)_obj ) );
@@ -585,10 +552,7 @@ FALCON_FUNC FileChooser::set_current_name( VMARG )
  */
 FALCON_FUNC FileChooser::get_filename( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* nm = gtk_file_chooser_get_filename( (GtkFileChooser*)_obj );
@@ -671,10 +635,7 @@ FALCON_FUNC FileChooser::unselect_filename( VMARG )
  */
 FALCON_FUNC FileChooser::select_all( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_file_chooser_select_all( (GtkFileChooser*)_obj );
@@ -687,10 +648,7 @@ FALCON_FUNC FileChooser::select_all( VMARG )
  */
 FALCON_FUNC FileChooser::unselect_all( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_file_chooser_unselect_all( (GtkFileChooser*)_obj );
@@ -707,10 +665,7 @@ FALCON_FUNC FileChooser::unselect_all( VMARG )
  */
 FALCON_FUNC FileChooser::get_filenames( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GSList* sl = gtk_file_chooser_get_filenames( (GtkFileChooser*)_obj );
@@ -754,10 +709,7 @@ FALCON_FUNC FileChooser::set_current_folder( VMARG )
  */
 FALCON_FUNC FileChooser::get_current_folder( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* folder = gtk_file_chooser_get_current_folder( (GtkFileChooser*)_obj );
@@ -782,10 +734,7 @@ FALCON_FUNC FileChooser::get_current_folder( VMARG )
  */
 FALCON_FUNC FileChooser::get_uri( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* uri = gtk_file_chooser_get_uri( (GtkFileChooser*)_obj );
@@ -868,10 +817,7 @@ FALCON_FUNC FileChooser::unselect_uri( VMARG )
  */
 FALCON_FUNC FileChooser::get_uris( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GSList* sl = gtk_file_chooser_get_uris( (GtkFileChooser*)_obj );
@@ -916,10 +862,7 @@ FALCON_FUNC FileChooser::set_current_folder_uri( VMARG )
  */
 FALCON_FUNC FileChooser::get_current_folder_uri( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* uri = gtk_file_chooser_get_current_folder_uri( (GtkFileChooser*)_obj );
@@ -970,10 +913,7 @@ FALCON_FUNC FileChooser::set_preview_widget( VMARG )
  */
 FALCON_FUNC FileChooser::get_preview_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_file_chooser_get_preview_widget( (GtkFileChooser*)_obj );
@@ -1014,10 +954,7 @@ FALCON_FUNC FileChooser::set_preview_widget_active( VMARG )
  */
 FALCON_FUNC FileChooser::get_preview_widget_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_preview_widget_active( (GtkFileChooser*)_obj ) );
@@ -1053,10 +990,7 @@ FALCON_FUNC FileChooser::set_use_preview_label( VMARG )
  */
 FALCON_FUNC FileChooser::get_use_preview_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_file_chooser_get_use_preview_label( (GtkFileChooser*)_obj ) );
@@ -1070,10 +1004,7 @@ FALCON_FUNC FileChooser::get_use_preview_label( VMARG )
  */
 FALCON_FUNC FileChooser::get_preview_filename( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* nm = gtk_file_chooser_get_preview_filename( (GtkFileChooser*)_obj );
@@ -1094,10 +1025,7 @@ FALCON_FUNC FileChooser::get_preview_filename( VMARG )
  */
 FALCON_FUNC FileChooser::get_preview_uri( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     char* uri = gtk_file_chooser_get_preview_uri( (GtkFileChooser*)_obj );
@@ -1138,10 +1066,7 @@ FALCON_FUNC FileChooser::set_extra_widget( VMARG )
  */
 FALCON_FUNC FileChooser::get_extra_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_file_chooser_get_extra_widget( (GtkFileChooser*)_obj );

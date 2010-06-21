@@ -95,10 +95,7 @@ FALCON_FUNC RadioAction::init( VMARG )
  */
 FALCON_FUNC RadioAction::signal_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "changed", (void*) &RadioAction::on_changed, vm );
 }
 
@@ -149,10 +146,7 @@ void RadioAction::on_changed( GtkRadioAction* obj, GtkRadioAction* current, gpoi
  */
 FALCON_FUNC RadioAction::get_current_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_radio_action_get_current_value( (GtkRadioAction*)_obj ) );

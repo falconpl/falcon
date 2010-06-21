@@ -179,10 +179,7 @@ FALCON_FUNC TreeRowReference::new_proxy( VMARG )
  */
 FALCON_FUNC TreeRowReference::get_model( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkTreeModel* mdl = gtk_tree_row_reference_get_model( self->getTreeRowReference() );
     vm->retval( new Gtk::TreeModel( vm->findWKI( "GtkTreeModel" )->asClass(), mdl ) );
@@ -196,10 +193,7 @@ FALCON_FUNC TreeRowReference::get_model( VMARG )
  */
 FALCON_FUNC TreeRowReference::get_path( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkTreePath* pth = gtk_tree_row_reference_get_path( self->getTreeRowReference() );
     if ( pth )
@@ -216,10 +210,7 @@ FALCON_FUNC TreeRowReference::get_path( VMARG )
  */
 FALCON_FUNC TreeRowReference::valid( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( (bool) gtk_tree_row_reference_valid( self->getTreeRowReference() ) );
 }
@@ -237,10 +228,7 @@ FALCON_FUNC TreeRowReference::free( VMARG );
  */
 FALCON_FUNC TreeRowReference::copy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     vm->retval( new Gtk::TreeRowReference( vm->findWKI( "GtkTreeRowreference" )->asClass(),
                 gtk_tree_row_reference_copy( self->getTreeRowReference() ) ) );

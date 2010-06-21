@@ -121,10 +121,7 @@ FALCON_FUNC ScaleButton::init( VMARG )
  */
 FALCON_FUNC ScaleButton::signal_popdown( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "popdown", (void*) &ScaleButton::on_popdown, vm );
 }
 
@@ -143,10 +140,7 @@ void ScaleButton::on_popdown( GtkScaleButton* obj, gpointer _vm )
  */
 FALCON_FUNC ScaleButton::signal_popup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "popup", (void*) &ScaleButton::on_popup, vm );
 }
 
@@ -163,10 +157,7 @@ void ScaleButton::on_popup( GtkScaleButton* obj, gpointer _vm )
  */
 FALCON_FUNC ScaleButton::signal_value_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "value_changed", (void*) &ScaleButton::on_value_changed, vm );
 }
 
@@ -282,10 +273,7 @@ FALCON_FUNC ScaleButton::set_value( VMARG )
  */
 FALCON_FUNC ScaleButton::get_adjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_scale_button_get_adjustment( (GtkScaleButton*)_obj );
@@ -300,10 +288,7 @@ FALCON_FUNC ScaleButton::get_adjustment( VMARG )
  */
 FALCON_FUNC ScaleButton::get_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_scale_button_get_value( (GtkScaleButton*)_obj ) );
@@ -318,10 +303,7 @@ FALCON_FUNC ScaleButton::get_value( VMARG )
  */
 FALCON_FUNC ScaleButton::get_popup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_scale_button_get_popup( (GtkScaleButton*)_obj );
@@ -336,10 +318,7 @@ FALCON_FUNC ScaleButton::get_popup( VMARG )
  */
 FALCON_FUNC ScaleButton::get_plus_button( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_scale_button_get_plus_button( (GtkScaleButton*)_obj );
@@ -354,10 +333,7 @@ FALCON_FUNC ScaleButton::get_plus_button( VMARG )
  */
 FALCON_FUNC ScaleButton::get_minus_button( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_scale_button_get_minus_button( (GtkScaleButton*)_obj );

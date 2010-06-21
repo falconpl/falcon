@@ -186,10 +186,7 @@ FALCON_FUNC Paned::pack2( VMARG )
  */
 FALCON_FUNC Paned::get_child1( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_paned_get_child1( (GtkPaned*)_obj );
@@ -210,10 +207,7 @@ FALCON_FUNC Paned::get_child1( VMARG )
  */
 FALCON_FUNC Paned::get_child2( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_paned_get_child2( (GtkPaned*)_obj );
@@ -252,10 +246,7 @@ FALCON_FUNC Paned::set_position( VMARG )
  */
 FALCON_FUNC Paned::get_position( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_paned_get_position( (GtkPaned*)_obj ) );
@@ -273,10 +264,7 @@ FALCON_FUNC Paned::get_position( VMARG )
  */
 FALCON_FUNC Paned::get_handle_window( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkWindow* wdt = gtk_paned_get_handle_window( (GtkPaned*)_obj );

@@ -142,10 +142,7 @@ FALCON_FUNC GC::new_with_values( VMARG )
  */
 FALCON_FUNC GC::get_screen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkScreen* screen = gdk_gc_get_screen( (GdkGC*)_obj );
@@ -197,10 +194,7 @@ FALCON_FUNC GC::set_values( VMARG )
  */
 FALCON_FUNC GC::get_values( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkGCValues val;

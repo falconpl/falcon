@@ -134,10 +134,7 @@ FALCON_FUNC TextMark::set_visible( VMARG )
  */
 FALCON_FUNC TextMark::get_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_mark_get_visible( (GtkTextMark*)_obj ) );
@@ -153,10 +150,7 @@ FALCON_FUNC TextMark::get_visible( VMARG )
  */
 FALCON_FUNC TextMark::get_deleted( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_mark_get_deleted( (GtkTextMark*)_obj ) );
@@ -170,10 +164,7 @@ FALCON_FUNC TextMark::get_deleted( VMARG )
  */
 FALCON_FUNC TextMark::get_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const char* name = gtk_text_mark_get_name( (GtkTextMark*)_obj );
@@ -195,10 +186,7 @@ FALCON_FUNC TextMark::get_name( VMARG )
  */
 FALCON_FUNC TextMark::get_buffer( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextBuffer* buf = gtk_text_mark_get_buffer( (GtkTextMark*)_obj );
@@ -216,10 +204,7 @@ FALCON_FUNC TextMark::get_buffer( VMARG )
  */
 FALCON_FUNC TextMark::get_left_gravity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_mark_get_left_gravity( (GtkTextMark*)_obj ) );

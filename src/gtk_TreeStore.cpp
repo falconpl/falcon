@@ -727,10 +727,7 @@ FALCON_FUNC TreeStore::iter_depth( VMARG )
  */
 FALCON_FUNC TreeStore::clear( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_store_clear( (GtkTreeStore*)_obj );

@@ -71,10 +71,7 @@ Falcon::CoreObject* OptionMenu::factory( const Falcon::CoreClass* gen, void* men
  */
 FALCON_FUNC OptionMenu::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_option_menu_new() );
 }
@@ -86,10 +83,7 @@ FALCON_FUNC OptionMenu::init( VMARG )
  */
 FALCON_FUNC OptionMenu::signal_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "changed", (void*) &OptionMenu::on_changed, vm );
 }
 
@@ -107,10 +101,7 @@ void OptionMenu::on_changed( GtkOptionMenu* obj, gpointer _vm )
  */
 FALCON_FUNC OptionMenu::get_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* menu = gtk_option_menu_get_menu( (GtkOptionMenu*)_obj );
@@ -146,10 +137,7 @@ FALCON_FUNC OptionMenu::set_menu( VMARG )
  */
 FALCON_FUNC OptionMenu::remove_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_option_menu_remove_menu( (GtkOptionMenu*)_obj );
@@ -183,10 +171,7 @@ FALCON_FUNC OptionMenu::set_history( VMARG )
  */
 FALCON_FUNC OptionMenu::get_history( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_option_menu_get_history( (GtkOptionMenu*)_obj ) );

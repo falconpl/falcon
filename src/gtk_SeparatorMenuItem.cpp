@@ -45,10 +45,7 @@ Falcon::CoreObject* SeparatorMenuItem::factory( const Falcon::CoreClass* gen, vo
  */
 FALCON_FUNC SeparatorMenuItem::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_separator_menu_item_new() );
 }

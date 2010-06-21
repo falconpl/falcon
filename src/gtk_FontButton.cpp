@@ -67,10 +67,7 @@ Falcon::CoreObject* FontButton::factory( const Falcon::CoreClass* gen, void* btn
  */
 FALCON_FUNC FontButton::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_font_button_new() );
 }
@@ -89,10 +86,7 @@ FALCON_FUNC FontButton::init( VMARG )
  */
 FALCON_FUNC FontButton::signal_font_set( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "font_set", (void*) &FontButton::on_font_set, vm );
 }
 
@@ -156,10 +150,7 @@ FALCON_FUNC FontButton::set_font_name( VMARG )
  */
 FALCON_FUNC FontButton::get_font_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_font_button_get_font_name( (GtkFontButton*)_obj );
@@ -192,10 +183,7 @@ FALCON_FUNC FontButton::set_show_style( VMARG )
  */
 FALCON_FUNC FontButton::get_show_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_font_button_get_show_style( (GtkFontButton*)_obj ) );
@@ -227,10 +215,7 @@ FALCON_FUNC FontButton::set_show_size( VMARG )
  */
 FALCON_FUNC FontButton::get_show_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_font_button_get_show_size( (GtkFontButton*)_obj ) );
@@ -262,10 +247,7 @@ FALCON_FUNC FontButton::set_use_font( VMARG )
  */
 FALCON_FUNC FontButton::get_use_font( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_font_button_get_use_font( (GtkFontButton*)_obj ) );
@@ -297,10 +279,7 @@ FALCON_FUNC FontButton::set_use_size( VMARG )
  */
 FALCON_FUNC FontButton::get_use_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_font_button_get_use_size( (GtkFontButton*)_obj ) );
@@ -333,10 +312,7 @@ FALCON_FUNC FontButton::set_title( VMARG )
  */
 FALCON_FUNC FontButton::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* title = gtk_font_button_get_title( (GtkFontButton*)_obj );

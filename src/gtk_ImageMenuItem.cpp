@@ -68,10 +68,7 @@ Falcon::CoreObject* ImageMenuItem::factory( const Falcon::CoreClass* gen, void* 
  */
 FALCON_FUNC ImageMenuItem::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_image_menu_item_new() );
 }
@@ -108,10 +105,7 @@ FALCON_FUNC ImageMenuItem::set_image( VMARG )
  */
 FALCON_FUNC ImageMenuItem::get_image( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_image_menu_item_get_image( (GtkImageMenuItem*)_obj );
@@ -187,10 +181,7 @@ FALCON_FUNC ImageMenuItem::new_with_mnemonic( VMARG )
  */
 FALCON_FUNC ImageMenuItem::get_use_stock( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_image_menu_item_get_use_stock( (GtkImageMenuItem*)_obj ) );
@@ -223,10 +214,7 @@ FALCON_FUNC ImageMenuItem::set_use_stock( VMARG )
  */
 FALCON_FUNC ImageMenuItem::get_always_show_image( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_image_menu_item_get_always_show_image( (GtkImageMenuItem*)_obj ) );

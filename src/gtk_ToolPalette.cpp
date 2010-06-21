@@ -89,10 +89,7 @@ Falcon::CoreObject* ToolPalette::factory( const Falcon::CoreClass* gen, void* it
  */
 FALCON_FUNC ToolPalette::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_tool_palette_new() );
 }
@@ -107,10 +104,7 @@ FALCON_FUNC ToolPalette::init( VMARG )
  */
 FALCON_FUNC ToolPalette::signal_set_scroll_adjustments( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "set_scroll_adjustments",
                              (void*) &ToolPalette::on_set_scroll_adjustments, vm );
 }
@@ -290,10 +284,7 @@ FALCON_FUNC ToolPalette::set_group_position( VMARG )
  */
 FALCON_FUNC ToolPalette::get_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_palette_get_icon_size( (GtkToolPalette*)_obj ) );
@@ -324,10 +315,7 @@ FALCON_FUNC ToolPalette::set_icon_size( VMARG )
  */
 FALCON_FUNC ToolPalette::unset_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tool_palette_unset_icon_size( (GtkToolPalette*)_obj );
@@ -341,10 +329,7 @@ FALCON_FUNC ToolPalette::unset_icon_size( VMARG )
  */
 FALCON_FUNC ToolPalette::get_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_palette_get_style( (GtkToolPalette*)_obj ) );
@@ -375,10 +360,7 @@ FALCON_FUNC ToolPalette::set_style( VMARG )
  */
 FALCON_FUNC ToolPalette::unset_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tool_palette_unset_style( (GtkToolPalette*)_obj );
@@ -478,10 +460,7 @@ FALCON_FUNC ToolPalette::set_drag_source( VMARG )
  */
 FALCON_FUNC ToolPalette::get_hadjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_tool_palette_get_hadjustment( (GtkToolPalette*)_obj );
@@ -496,10 +475,7 @@ FALCON_FUNC ToolPalette::get_hadjustment( VMARG )
  */
 FALCON_FUNC ToolPalette::get_vadjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_tool_palette_get_vadjustment( (GtkToolPalette*)_obj );

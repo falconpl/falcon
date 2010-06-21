@@ -110,10 +110,7 @@ bool TreeModel::implementedBy( const Falcon::Item* it )
  */
 FALCON_FUNC TreeModel::signal_row_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "row_changed", (void*) &TreeModel::on_row_changed, vm );
 }
 
@@ -172,10 +169,7 @@ void TreeModel::on_row_changed( GtkTreeModel* obj, GtkTreePath* path,
  */
 FALCON_FUNC TreeModel::signal_row_deleted( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "row_deleted", (void*) &TreeModel::on_row_deleted, vm );
 }
 
@@ -222,10 +216,7 @@ void TreeModel::on_row_deleted( GtkTreeModel* obj, GtkTreePath* path, gpointer _
  */
 FALCON_FUNC TreeModel::signal_row_has_child_toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "row_has_child_toggled",
                              (void*) &TreeModel::on_row_has_child_toggled, vm );
 }
@@ -280,10 +271,7 @@ void TreeModel::on_row_has_child_toggled( GtkTreeModel* obj, GtkTreePath* path,
  */
 FALCON_FUNC TreeModel::signal_row_inserted( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "row_inserted", (void*) &TreeModel::on_row_inserted, vm );
 }
 
@@ -337,10 +325,7 @@ void TreeModel::on_row_inserted( GtkTreeModel* obj, GtkTreePath* path,
  */
 FALCON_FUNC TreeModel::signal_rows_reordered( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "rows_reordered", (void*) &TreeModel::on_rows_reordered, vm );
 }
 
@@ -403,10 +388,7 @@ void TreeModel::on_rows_reordered( GtkTreeModel* obj, GtkTreePath* path,
  */
 FALCON_FUNC TreeModel::get_flags( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tree_model_get_flags( (GtkTreeModel*)_obj ) );
@@ -420,10 +402,7 @@ FALCON_FUNC TreeModel::get_flags( VMARG )
  */
 FALCON_FUNC TreeModel::get_n_columns( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tree_model_get_n_columns( (GtkTreeModel*)_obj ) );
@@ -511,10 +490,7 @@ FALCON_FUNC TreeModel::get_iter_from_string( VMARG )
  */
 FALCON_FUNC TreeModel::get_iter_first( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;

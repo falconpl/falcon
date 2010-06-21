@@ -112,10 +112,7 @@ FALCON_FUNC Ruler::set_range( VMARG )
  */
 FALCON_FUNC Ruler::get_metric( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_ruler_get_metric( (GtkRuler*)_obj ) );
@@ -129,10 +126,7 @@ FALCON_FUNC Ruler::get_metric( VMARG )
  */
 FALCON_FUNC Ruler::get_range( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gdouble lower, upper, pos, max;
     MYSELF;
     GET_OBJ( self );

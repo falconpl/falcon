@@ -138,10 +138,7 @@ FALCON_FUNC ComboBoxEntry::set_text_column( VMARG )
  */
 FALCON_FUNC ComboBoxEntry::get_text_column( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_entry_get_text_column( (GtkComboBoxEntry*)_obj ) );

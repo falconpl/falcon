@@ -93,10 +93,7 @@ FALCON_FUNC Editable::select_region( VMARG )
  */
 FALCON_FUNC Editable::get_selection_bounds( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint start, end;
@@ -197,10 +194,7 @@ FALCON_FUNC Editable::get_chars( VMARG )
  */
 FALCON_FUNC Editable::cut_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_editable_cut_clipboard( (GtkEditable*)_obj );
@@ -213,10 +207,7 @@ FALCON_FUNC Editable::cut_clipboard( VMARG )
  */
 FALCON_FUNC Editable::copy_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_editable_copy_clipboard( (GtkEditable*)_obj );
@@ -229,10 +220,7 @@ FALCON_FUNC Editable::copy_clipboard( VMARG )
  */
 FALCON_FUNC Editable::paste_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_editable_paste_clipboard( (GtkEditable*)_obj );
@@ -245,10 +233,7 @@ FALCON_FUNC Editable::paste_clipboard( VMARG )
  */
 FALCON_FUNC Editable::delete_selection( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_editable_delete_selection( (GtkEditable*)_obj );
@@ -288,10 +273,7 @@ FALCON_FUNC Editable::set_position( VMARG )
  */
 FALCON_FUNC Editable::get_position( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_editable_get_position( (GtkEditable*)_obj ) );
@@ -323,10 +305,7 @@ FALCON_FUNC Editable::set_editable( VMARG )
  */
 FALCON_FUNC Editable::get_editable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_editable_get_editable( (GtkEditable*)_obj ) );

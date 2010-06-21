@@ -61,10 +61,7 @@ void ToolShell::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
  */
 FALCON_FUNC ToolShell::get_ellipsize_mode( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_ellipsize_mode( (GtkToolShell*)_obj ) );
@@ -82,10 +79,7 @@ FALCON_FUNC ToolShell::get_ellipsize_mode( VMARG )
  */
 FALCON_FUNC ToolShell::get_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_icon_size( (GtkToolShell*)_obj ) );
@@ -102,10 +96,7 @@ FALCON_FUNC ToolShell::get_icon_size( VMARG )
  */
 FALCON_FUNC ToolShell::get_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_orientation( (GtkToolShell*)_obj ) );
@@ -122,10 +113,7 @@ FALCON_FUNC ToolShell::get_orientation( VMARG )
  */
 FALCON_FUNC ToolShell::get_relief_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_relief_style( (GtkToolShell*)_obj ) );
@@ -142,10 +130,7 @@ FALCON_FUNC ToolShell::get_relief_style( VMARG )
  */
 FALCON_FUNC ToolShell::get_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_style( (GtkToolShell*)_obj ) );
@@ -163,10 +148,7 @@ FALCON_FUNC ToolShell::get_style( VMARG )
  */
 FALCON_FUNC ToolShell::get_text_alignment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tool_shell_get_text_alignment( (GtkToolShell*)_obj ) );
@@ -183,10 +165,7 @@ FALCON_FUNC ToolShell::get_text_alignment( VMARG )
  */
 FALCON_FUNC ToolShell::get_text_orientation( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_text_orientation( (GtkToolShell*)_obj ) );
@@ -206,10 +185,7 @@ FALCON_FUNC ToolShell::get_text_orientation( VMARG )
  */
 FALCON_FUNC ToolShell::rebuild_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tool_shell_rebuild_menu( (GtkToolShell*)_obj );

@@ -70,10 +70,7 @@ Falcon::CoreObject* ColorButton::factory( const Falcon::CoreClass* gen, void* bt
  */
 FALCON_FUNC ColorButton::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkWidget* wdt = gtk_color_button_new();
     MYSELF;
     self->setGObject( (GObject*) wdt );
@@ -92,10 +89,7 @@ FALCON_FUNC ColorButton::init( VMARG )
  */
 FALCON_FUNC ColorButton::signal_color_set( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "color_set", (void*) &ColorButton::on_color_set, vm );
 }
 
@@ -154,10 +148,7 @@ FALCON_FUNC ColorButton::set_color( VMARG )
  */
 FALCON_FUNC ColorButton::get_color( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkColor tmp;
@@ -191,10 +182,7 @@ FALCON_FUNC ColorButton::set_alpha( VMARG )
  */
 FALCON_FUNC ColorButton::get_alpha( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_color_button_get_alpha( (GtkColorButton*)_obj ) );
@@ -226,10 +214,7 @@ FALCON_FUNC ColorButton::set_use_alpha( VMARG )
  */
 FALCON_FUNC ColorButton::get_use_alpha( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_color_button_get_use_alpha( (GtkColorButton*)_obj ) );
@@ -262,10 +247,7 @@ FALCON_FUNC ColorButton::set_title( VMARG )
  */
 FALCON_FUNC ColorButton::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const char* title = gtk_color_button_get_title( (GtkColorButton*)_obj );

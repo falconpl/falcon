@@ -136,10 +136,7 @@ FALCON_FUNC ComboBox::init( VMARG )
  */
 FALCON_FUNC ComboBox::signal_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "changed", (void*) &ComboBox::on_changed, vm );
 }
 
@@ -162,10 +159,7 @@ void ComboBox::on_changed( GtkComboBox* wdt, gpointer _vm )
  */
 FALCON_FUNC ComboBox::signal_move_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_active", (void*) &ComboBox::on_move_active, vm );
 }
 
@@ -214,10 +208,7 @@ void ComboBox::on_move_active( GtkComboBox* obj, GtkScrollType scrolltype, gpoin
  */
 FALCON_FUNC ComboBox::signal_popdown( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "popdown", (void*) &ComboBox::on_popdown, vm );
 }
 
@@ -240,10 +231,7 @@ void ComboBox::on_popdown( GtkComboBox* wdt, gpointer _vm )
  */
 FALCON_FUNC ComboBox::signal_popup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "popup", (void*) &ComboBox::on_popup, vm );
 }
 
@@ -267,10 +255,7 @@ void ComboBox::on_popup( GtkComboBox* wdt, gpointer _vm )
  */
 FALCON_FUNC ComboBox::get_wrap_width( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_wrap_width( (GtkComboBox*)_obj ) );
@@ -304,10 +289,7 @@ FALCON_FUNC ComboBox::set_wrap_width( VMARG )
  */
 FALCON_FUNC ComboBox::get_row_span_column( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_row_span_column( (GtkComboBox*)_obj ) );
@@ -341,10 +323,7 @@ FALCON_FUNC ComboBox::set_row_span_column( VMARG )
  */
 FALCON_FUNC ComboBox::get_column_span_column( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_column_span_column( (GtkComboBox*)_obj ) );
@@ -382,10 +361,7 @@ FALCON_FUNC ComboBox::set_column_span_column( VMARG )
  */
 FALCON_FUNC ComboBox::get_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_active( (GtkComboBox*)_obj ) );
@@ -430,10 +406,7 @@ FALCON_FUNC ComboBox::set_active( VMARG )
  */
 FALCON_FUNC ComboBox::new_text( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkWidget* wdt = gtk_combo_box_new_text();
     vm->retval( new Gtk::ComboBox(
         vm->findWKI( "GtkComboBox" )->asClass(), (GtkComboBox*) wdt ) );
@@ -533,10 +506,7 @@ FALCON_FUNC ComboBox::remove_text( VMARG )
  */
 FALCON_FUNC ComboBox::get_active_text( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gchar* txt = gtk_combo_box_get_active_text( (GtkComboBox*)_obj );
@@ -561,10 +531,7 @@ FALCON_FUNC ComboBox::get_active_text( VMARG )
  */
 FALCON_FUNC ComboBox::popup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_combo_box_popup( (GtkComboBox*)_obj );
@@ -580,10 +547,7 @@ FALCON_FUNC ComboBox::popup( VMARG )
  */
 FALCON_FUNC ComboBox::popdown( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_combo_box_popdown( (GtkComboBox*)_obj );
@@ -622,10 +586,7 @@ FALCON_FUNC ComboBox::set_add_tearoffs( VMARG )
  */
 FALCON_FUNC ComboBox::get_add_tearoffs( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_combo_box_get_add_tearoffs( (GtkComboBox*)_obj ) );
@@ -656,10 +617,7 @@ FALCON_FUNC ComboBox::set_title( VMARG )
  */
 FALCON_FUNC ComboBox::get_title( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* title = gtk_combo_box_get_title( (GtkComboBox*)_obj );
@@ -698,10 +656,7 @@ FALCON_FUNC ComboBox::set_focus_on_click( VMARG )
  */
 FALCON_FUNC ComboBox::get_focus_on_click( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_combo_box_get_focus_on_click( (GtkComboBox*)_obj ) );
@@ -735,10 +690,7 @@ FALCON_FUNC ComboBox::set_button_sensitivity( VMARG )
  */
 FALCON_FUNC ComboBox::get_button_sensitivity( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_button_sensitivity( (GtkComboBox*)_obj ) );

@@ -113,10 +113,7 @@ Falcon::CoreObject* Toolbar::factory( const Falcon::CoreClass* gen, void* tbar, 
  */
 FALCON_FUNC Toolbar::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_toolbar_new() );
 }
@@ -131,10 +128,7 @@ FALCON_FUNC Toolbar::init( VMARG )
  */
 FALCON_FUNC Toolbar::signal_orientation_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "orientation_changed",
                              (void*) &Toolbar::on_orientation_changed, vm );
 }
@@ -185,10 +179,7 @@ void Toolbar::on_orientation_changed( GtkToolbar* obj, GtkOrientation orient, gp
  */
 FALCON_FUNC Toolbar::signal_popup_context_menu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "popup_context_menu",
                              (void*) &Toolbar::on_popup_context_menu, vm );
 }
@@ -237,10 +228,7 @@ void Toolbar::on_popup_context_menu( GtkToolbar* obj, gint x, gint y,
  */
 FALCON_FUNC Toolbar::signal_style_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "style_changed",
                              (void*) &Toolbar::on_style_changed, vm );
 }
@@ -336,10 +324,7 @@ FALCON_FUNC Toolbar::get_item_index( VMARG )
  */
 FALCON_FUNC Toolbar::get_n_items( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_toolbar_get_n_items( (GtkToolbar*)_obj ) );
@@ -443,10 +428,7 @@ FALCON_FUNC Toolbar::set_tooltips( VMARG );
  */
 FALCON_FUNC Toolbar::unset_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_toolbar_unset_icon_size( (GtkToolbar*)_obj );
@@ -460,10 +442,7 @@ FALCON_FUNC Toolbar::unset_icon_size( VMARG )
  */
 FALCON_FUNC Toolbar::get_show_arrow( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_toolbar_get_show_arrow( (GtkToolbar*)_obj ) );
@@ -480,10 +459,7 @@ FALCON_FUNC Toolbar::get_show_arrow( VMARG )
  */
 FALCON_FUNC Toolbar::get_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_toolbar_get_style( (GtkToolbar*)_obj ) );
@@ -497,10 +473,7 @@ FALCON_FUNC Toolbar::get_style( VMARG )
  */
 FALCON_FUNC Toolbar::get_icon_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_toolbar_get_icon_size( (GtkToolbar*)_obj ) );
@@ -517,10 +490,7 @@ FALCON_FUNC Toolbar::get_icon_size( VMARG )
  */
 FALCON_FUNC Toolbar::get_relief_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_toolbar_get_icon_size( (GtkToolbar*)_obj ) );
@@ -597,10 +567,7 @@ FALCON_FUNC Toolbar::set_icon_size( VMARG )
  */
 FALCON_FUNC Toolbar::unset_style( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_toolbar_unset_style( (GtkToolbar*)_obj );

@@ -98,10 +98,7 @@ FALCON_FUNC MenuItem::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_menu_item_new() );
 }
 
@@ -112,10 +109,7 @@ FALCON_FUNC MenuItem::init( VMARG )
  */
 FALCON_FUNC MenuItem::signal_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate", (void*) &MenuItem::on_activate, vm );
 }
 
@@ -134,10 +128,7 @@ void MenuItem::on_activate( GtkMenuItem* obj, gpointer _vm )
  */
 FALCON_FUNC MenuItem::signal_activate_item( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate_item", (void*) &MenuItem::on_activate_item, vm );
 }
 
@@ -219,10 +210,7 @@ FALCON_FUNC MenuItem::set_right_justified( VMARG )
  */
 FALCON_FUNC MenuItem::get_right_justified( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_menu_item_get_right_justified( (GtkMenuItem*)_obj ) );
@@ -237,10 +225,7 @@ FALCON_FUNC MenuItem::get_right_justified( VMARG )
  */
 FALCON_FUNC MenuItem::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( UTF8String( gtk_menu_item_get_label( (GtkMenuItem*)_obj ) ) );
@@ -269,10 +254,7 @@ FALCON_FUNC MenuItem::set_label( VMARG )
  */
 FALCON_FUNC MenuItem::get_use_underline( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_menu_item_get_use_underline( (GtkMenuItem*)_obj ) );
@@ -327,10 +309,7 @@ FALCON_FUNC MenuItem::set_submenu( VMARG )
  */
 FALCON_FUNC MenuItem::get_submenu( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* menu = gtk_menu_item_get_submenu( (GtkMenuItem*)_obj );
@@ -378,10 +357,7 @@ FALCON_FUNC MenuItem::set_accel_path( VMARG )
  */
 FALCON_FUNC MenuItem::get_accel_path( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* path = gtk_menu_item_get_accel_path( (GtkMenuItem*)_obj );
@@ -401,10 +377,7 @@ FALCON_FUNC MenuItem::get_accel_path( VMARG )
  */
 FALCON_FUNC MenuItem::select( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_item_select( (GtkMenuItem*)_obj );
@@ -419,10 +392,7 @@ FALCON_FUNC MenuItem::select( VMARG )
  */
 FALCON_FUNC MenuItem::deselect( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_item_deselect( (GtkMenuItem*)_obj );
@@ -435,10 +405,7 @@ FALCON_FUNC MenuItem::deselect( VMARG )
  */
 FALCON_FUNC MenuItem::activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_menu_item_activate( (GtkMenuItem*)_obj );

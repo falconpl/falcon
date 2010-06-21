@@ -234,10 +234,7 @@ FALCON_FUNC TreeModelSort::convert_iter_to_child_iter( VMARG )
  */
 FALCON_FUNC TreeModelSort::reset_default_sort_func( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_sort_reset_default_sort_func( (GtkTreeModelSort*)_obj );
@@ -256,10 +253,7 @@ FALCON_FUNC TreeModelSort::reset_default_sort_func( VMARG )
  */
 FALCON_FUNC TreeModelSort::clear_cache( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_model_sort_clear_cache( (GtkTreeModelSort*)_obj );

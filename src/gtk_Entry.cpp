@@ -202,10 +202,7 @@ FALCON_FUNC Entry::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_entry_new() );
 }
 
@@ -221,10 +218,7 @@ FALCON_FUNC Entry::init( VMARG )
  */
 FALCON_FUNC Entry::signal_activate( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "activate", (void*) &Entry::on_activate, vm );
 }
 
@@ -243,10 +237,7 @@ void Entry::on_activate( GtkEntry* obj, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_backspace( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "backspace", (void*) &Entry::on_backspace, vm );
 }
 
@@ -265,10 +256,7 @@ void Entry::on_backspace( GtkEntry* obj, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_copy_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "copy_clipboard", (void*) &Entry::on_copy_clipboard, vm );
 }
 
@@ -287,10 +275,7 @@ void Entry::on_copy_clipboard( GtkEntry* obj, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_cut_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "cut_clipboard", (void*) &Entry::on_cut_clipboard, vm );
 }
 
@@ -313,10 +298,7 @@ void Entry::on_cut_clipboard( GtkEntry* obj, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_delete_from_cursor( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "delete_from_cursor", (void*) &Entry::on_delete_from_cursor, vm );
 }
 
@@ -362,10 +344,7 @@ void Entry::on_delete_from_cursor( GtkEntry* obj, GtkDeleteType type, gint count
  */
 FALCON_FUNC Entry::signal_icon_press( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "icon_press", (void*) &Entry::on_icon_press, vm );
 }
 
@@ -411,10 +390,7 @@ void Entry::on_icon_press( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* ev
  */
 FALCON_FUNC Entry::signal_icon_release( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "icon_release", (void*) &Entry::on_icon_release, vm );
 }
 
@@ -463,10 +439,7 @@ void Entry::on_icon_release( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* 
  */
 FALCON_FUNC Entry::signal_insert_at_cursor( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "insert_at_cursor", (void*) &Entry::on_insert_at_cursor, vm );
 }
 
@@ -525,10 +498,7 @@ void Entry::on_insert_at_cursor( GtkEntry* obj, gchar* string, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_move_cursor( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "move_cursor", (void*) &Entry::on_move_cursor, vm );
 }
 
@@ -576,10 +546,7 @@ void Entry::on_move_cursor( GtkEntry* obj, GtkMovementStep step, gint cnt, gbool
  */
 FALCON_FUNC Entry::signal_paste_clipboard( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "paste_clipboard", (void*) &Entry::on_paste_clipboard, vm );
 }
 
@@ -599,10 +566,7 @@ void Entry::on_paste_clipboard( GtkEntry* obj, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_populate_popup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "populate_popup", (void*) &Entry::on_populate_popup, vm );
 }
 
@@ -648,10 +612,7 @@ void Entry::on_populate_popup( GtkEntry* obj, GtkMenu* menu, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_preedit_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "preedit_changed", (void*) &Entry::on_preedit_changed, vm );
 }
 
@@ -698,10 +659,7 @@ void Entry::on_preedit_changed( GtkEntry* obj, gchar* preedit, gpointer _vm )
  */
 FALCON_FUNC Entry::signal_toggle_overwrite( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "toggle_overwrite", (void*) &Entry::on_toggle_overwrite, vm );
 }
 
@@ -762,10 +720,7 @@ FALCON_FUNC Entry::new_with_max_length( VMARG )
  */
 FALCON_FUNC Entry::get_buffer( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkEntryBuffer* buf = gtk_entry_get_buffer( (GtkEntry*)_obj );
@@ -828,10 +783,7 @@ FALCON_FUNC Entry::set_text( VMARG )
  */
 FALCON_FUNC Entry::get_text( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* txt = gtk_entry_get_text( (GtkEntry*)_obj );
@@ -850,10 +802,7 @@ FALCON_FUNC Entry::get_text( VMARG )
  */
 FALCON_FUNC Entry::get_text_length( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_entry_get_text_length( (GtkEntry*)_obj ) );
@@ -926,10 +875,7 @@ FALCON_FUNC Entry::set_invisible_char( VMARG )
  */
 FALCON_FUNC Entry::unset_invisible_char( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_entry_unset_invisible_char( (GtkEntry*)_obj );
@@ -972,10 +918,7 @@ FALCON_FUNC Entry::set_max_length( VMARG )
  */
 FALCON_FUNC Entry::get_activates_default( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_entry_get_activates_default( (GtkEntry*)_obj ) );
@@ -989,10 +932,7 @@ FALCON_FUNC Entry::get_activates_default( VMARG )
  */
 FALCON_FUNC Entry::get_has_frame( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_entry_get_has_frame( (GtkEntry*)_obj ) );
@@ -1009,10 +949,7 @@ FALCON_FUNC Entry::get_has_frame( VMARG )
  */
 FALCON_FUNC Entry::get_width_chars( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_entry_get_width_chars( (GtkEntry*)_obj ) );
@@ -1092,10 +1029,7 @@ FALCON_FUNC Entry::set_width_chars( VMARG )
  */
 FALCON_FUNC Entry::get_invisible_char( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gunichar uni = gtk_entry_get_invisible_char( (GtkEntry*)_obj );
@@ -1138,10 +1072,7 @@ FALCON_FUNC Entry::set_alignment( VMARG )
  */
 FALCON_FUNC Entry::get_alignment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (numeric) gtk_entry_get_alignment( (GtkEntry*)_obj ) );
@@ -1174,10 +1105,7 @@ FALCON_FUNC Entry::set_overwrite_mode( VMARG )
  */
 FALCON_FUNC Entry::get_overwrite_mode( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_entry_get_overwrite_mode( (GtkEntry*)_obj ) );
@@ -1211,10 +1139,7 @@ FALCON_FUNC Entry::get_overwrite_mode( VMARG )
  */
 FALCON_FUNC Entry::get_layout_offsets( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint x, y;
@@ -1273,10 +1198,7 @@ FALCON_FUNC Entry::text_index_to_layout_index( VMARG )
  */
 FALCON_FUNC Entry::get_max_length( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_entry_get_max_length( (GtkEntry*)_obj ) );
@@ -1290,10 +1212,7 @@ FALCON_FUNC Entry::get_max_length( VMARG )
  */
 FALCON_FUNC Entry::get_visibility( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_entry_get_visibility( (GtkEntry*)_obj ) );
@@ -1339,10 +1258,7 @@ FALCON_FUNC Entry::set_cursor_hadjustment( VMARG )
  */
 FALCON_FUNC Entry::get_cursor_hadjustment( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkAdjustment* adj = gtk_entry_get_cursor_hadjustment( (GtkEntry*)_obj );
@@ -1378,10 +1294,7 @@ FALCON_FUNC Entry::set_progress_fraction( VMARG )
  */
 FALCON_FUNC Entry::get_progress_fraction( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (numeric) gtk_entry_get_progress_fraction( (GtkEntry*)_obj ) );
@@ -1413,10 +1326,7 @@ FALCON_FUNC Entry::set_progress_pulse_step( VMARG )
  */
 FALCON_FUNC Entry::get_progress_pulse_step( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (numeric) gtk_entry_get_progress_pulse_step( (GtkEntry*)_obj ) );
@@ -1434,10 +1344,7 @@ FALCON_FUNC Entry::get_progress_pulse_step( VMARG )
  */
 FALCON_FUNC Entry::progress_pulse( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_entry_progress_pulse( (GtkEntry*)_obj );

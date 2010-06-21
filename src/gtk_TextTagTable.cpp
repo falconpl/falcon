@@ -65,10 +65,7 @@ Falcon::CoreObject* TextTagTable::factory( const Falcon::CoreClass* gen, void* t
  */
 FALCON_FUNC TextTagTable::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkTextTagTable* tab = gtk_text_tag_table_new();
     self->setGObject( (GObject*) tab );
@@ -81,10 +78,7 @@ FALCON_FUNC TextTagTable::init( VMARG )
  */
 FALCON_FUNC TextTagTable::signal_tag_added( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "tag_added", (void*) &TextTagTable::on_tag_added, vm );
 }
 
@@ -129,10 +123,7 @@ void TextTagTable::on_tag_added( GtkTextTagTable* obj, GtkTextTag* tag, gpointer
  */
 FALCON_FUNC TextTagTable::signal_tag_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "tag_changed", (void*) &TextTagTable::on_tag_changed, vm );
 }
 
@@ -176,10 +167,7 @@ void TextTagTable::on_tag_changed( GtkTextTagTable* obj, GtkTextTag* tag, gboole
  */
 FALCON_FUNC TextTagTable::signal_tag_removed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "tag_removed", (void*) &TextTagTable::on_tag_removed, vm );
 }
 
@@ -292,10 +280,7 @@ FALCON_FUNC TextTagTable::lookup( VMARG )
  */
 FALCON_FUNC TextTagTable::get_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_tag_table_get_size( (GtkTextTagTable*)_obj ) );

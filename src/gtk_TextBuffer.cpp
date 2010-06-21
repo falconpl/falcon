@@ -165,10 +165,7 @@ FALCON_FUNC TextBuffer::init( VMARG )
  */
 FALCON_FUNC TextBuffer::get_line_count( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_buffer_get_line_count( (GtkTextBuffer*)_obj ) );
@@ -185,10 +182,7 @@ FALCON_FUNC TextBuffer::get_line_count( VMARG )
  */
 FALCON_FUNC TextBuffer::get_char_count( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_buffer_get_char_count( (GtkTextBuffer*)_obj ) );
@@ -202,10 +196,7 @@ FALCON_FUNC TextBuffer::get_char_count( VMARG )
  */
 FALCON_FUNC TextBuffer::get_tag_table( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextTagTable* tab = gtk_text_buffer_get_tag_table( (GtkTextBuffer*)_obj );
@@ -860,10 +851,7 @@ FALCON_FUNC TextBuffer::get_mark( VMARG )
  */
 FALCON_FUNC TextBuffer::get_insert( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextMark* mk = gtk_text_buffer_get_insert( (GtkTextBuffer*)_obj );
@@ -887,10 +875,7 @@ FALCON_FUNC TextBuffer::get_insert( VMARG )
  */
 FALCON_FUNC TextBuffer::get_selection_bound( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextMark* mk = gtk_text_buffer_get_selection_bound( (GtkTextBuffer*)_obj );
@@ -905,10 +890,7 @@ FALCON_FUNC TextBuffer::get_selection_bound( VMARG )
  */
 FALCON_FUNC TextBuffer::get_has_selection( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_buffer_get_has_selection( (GtkTextBuffer*)_obj ) );
@@ -1247,10 +1229,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_index( VMARG )
  */
 FALCON_FUNC TextBuffer::get_start_iter( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
@@ -1271,10 +1250,7 @@ FALCON_FUNC TextBuffer::get_start_iter( VMARG )
  */
 FALCON_FUNC TextBuffer::get_end_iter( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
@@ -1290,10 +1266,7 @@ FALCON_FUNC TextBuffer::get_end_iter( VMARG )
  */
 FALCON_FUNC TextBuffer::get_bounds( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkTextIter* start = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     GtkTextIter* end = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     MYSELF;
@@ -1316,10 +1289,7 @@ FALCON_FUNC TextBuffer::get_bounds( VMARG )
  */
 FALCON_FUNC TextBuffer::get_modified( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_buffer_get_modified( (GtkTextBuffer*)_obj ) );
@@ -1391,10 +1361,7 @@ FALCON_FUNC TextBuffer::delete_selection( VMARG )
  */
 FALCON_FUNC TextBuffer::get_selection_bounds( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GtkTextIter* start = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     GtkTextIter* end = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
     MYSELF;
@@ -1437,10 +1404,7 @@ FALCON_FUNC TextBuffer::get_selection_bounds( VMARG )
  */
 FALCON_FUNC TextBuffer::begin_user_action( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_begin_user_action( (GtkTextBuffer*)_obj );
@@ -1453,10 +1417,7 @@ FALCON_FUNC TextBuffer::begin_user_action( VMARG )
  */
 FALCON_FUNC TextBuffer::end_user_action( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_end_user_action( (GtkTextBuffer*)_obj );

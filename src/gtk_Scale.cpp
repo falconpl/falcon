@@ -80,10 +80,7 @@ Falcon::CoreObject* Scale::factory( const Falcon::CoreClass* gen, void* range, b
  */
 FALCON_FUNC Scale::signal_format_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "format_value", (void*) &Scale::on_format_value, vm );
 }
 
@@ -197,10 +194,7 @@ FALCON_FUNC Scale::set_value_pos( VMARG )
  */
 FALCON_FUNC Scale::get_digits( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_scale_get_digits( (GtkScale*)_obj ) );
@@ -214,10 +208,7 @@ FALCON_FUNC Scale::get_digits( VMARG )
  */
 FALCON_FUNC Scale::get_draw_value( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_scale_get_draw_value( (GtkScale*)_obj ) );
@@ -231,10 +222,7 @@ FALCON_FUNC Scale::get_draw_value( VMARG )
  */
 FALCON_FUNC Scale::get_value_pos( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_scale_get_value_pos( (GtkScale*)_obj ) );

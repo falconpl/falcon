@@ -89,10 +89,7 @@ FALCON_FUNC ToggleAction::init( VMARG )
  */
 FALCON_FUNC ToggleAction::signal_toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "toggled", (void*) &ToggleAction::on_toggled, vm );
 }
 
@@ -109,10 +106,7 @@ void ToggleAction::on_toggled( GtkToggleAction* act, gpointer _vm )
  */
 FALCON_FUNC ToggleAction::toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_toggle_action_toggled( (GtkToggleAction*)_obj );
@@ -144,10 +138,7 @@ FALCON_FUNC ToggleAction::set_active( VMARG )
  */
 FALCON_FUNC ToggleAction::get_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_toggle_action_get_active( (GtkToggleAction*)_obj ) );
@@ -179,10 +170,7 @@ FALCON_FUNC ToggleAction::set_draw_as_radio( VMARG )
  */
 FALCON_FUNC ToggleAction::get_draw_as_radio( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_toggle_action_get_draw_as_radio( (GtkToggleAction*)_obj ) );

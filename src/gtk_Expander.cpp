@@ -139,10 +139,7 @@ FALCON_FUNC Expander::set_expanded( VMARG )
  */
 FALCON_FUNC Expander::get_expanded( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_expander_get_expanded( (GtkExpander*)_obj ) );
@@ -174,10 +171,7 @@ FALCON_FUNC Expander::set_spacing( VMARG )
  */
 FALCON_FUNC Expander::get_spacing( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_expander_get_spacing( (GtkExpander*)_obj ) );
@@ -219,10 +213,7 @@ FALCON_FUNC Expander::set_label( VMARG )
  */
 FALCON_FUNC Expander::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const char* lbl = gtk_expander_get_label( (GtkExpander*)_obj );
@@ -262,10 +253,7 @@ FALCON_FUNC Expander::set_use_underline( VMARG )
  */
 FALCON_FUNC Expander::get_use_underline( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_expander_get_use_underline( (GtkExpander*)_obj ) );
@@ -297,10 +285,7 @@ FALCON_FUNC Expander::set_use_markup( VMARG )
  */
 FALCON_FUNC Expander::get_use_markup( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_expander_get_use_markup( (GtkExpander*)_obj ) );
@@ -339,10 +324,7 @@ FALCON_FUNC Expander::set_label_widget( VMARG )
  */
 FALCON_FUNC Expander::get_label_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_expander_get_label_widget( (GtkExpander*)_obj );

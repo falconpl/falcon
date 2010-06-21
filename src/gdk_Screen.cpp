@@ -109,10 +109,7 @@ FALCON_FUNC Screen::signal_size_changed( VMARG );
  */
 FALCON_FUNC Screen::get_default( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     GdkScreen* scrn = gdk_screen_get_default();
     if ( scrn )
         vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), scrn ) );

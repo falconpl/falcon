@@ -58,10 +58,7 @@ Falcon::CoreObject* WindowGroup::factory( const Falcon::CoreClass* gen, void* wi
  */
 FALCON_FUNC WindowGroup::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_window_group_new() );
 }
@@ -115,10 +112,7 @@ FALCON_FUNC WindowGroup::remove_window( VMARG )
  */
 FALCON_FUNC WindowGroup::list_windows( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GList* lst = gtk_window_group_list_windows( (GtkWindowGroup*)_obj );

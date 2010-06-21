@@ -143,10 +143,7 @@ FALCON_FUNC Fixed::move( VMARG )
  */
 FALCON_FUNC Fixed::get_has_window( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_fixed_get_has_window( (GtkFixed*)_obj ) );

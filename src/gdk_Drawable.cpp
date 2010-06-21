@@ -129,10 +129,7 @@ FALCON_FUNC Drawable::get_data( VMARG );
  */
 FALCON_FUNC Drawable::get_screen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkScreen* screen = gdk_drawable_get_screen( (GdkDrawable*)_obj );
@@ -147,10 +144,7 @@ FALCON_FUNC Drawable::get_screen( VMARG )
  */
 FALCON_FUNC Drawable::get_visual( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkVisual* vis = gdk_drawable_get_visual( (GdkDrawable*)_obj );
@@ -189,10 +183,7 @@ FALCON_FUNC Drawable::set_colormap( VMARG )
  */
 FALCON_FUNC Drawable::get_colormap( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkColormap* map = gdk_drawable_get_colormap( (GdkDrawable*)_obj );
@@ -212,10 +203,7 @@ FALCON_FUNC Drawable::get_colormap( VMARG )
  */
 FALCON_FUNC Drawable::get_depth( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gdk_drawable_get_depth( (GdkDrawable*)_obj ) );
@@ -233,10 +221,7 @@ FALCON_FUNC Drawable::get_depth( VMARG )
  */
 FALCON_FUNC Drawable::get_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint w, h;
@@ -260,10 +245,7 @@ FALCON_FUNC Drawable::get_size( VMARG )
  */
 FALCON_FUNC Drawable::get_clip_region( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkRegion* reg = gdk_drawable_get_clip_region( (GdkDrawable*)_obj );
@@ -282,10 +264,7 @@ FALCON_FUNC Drawable::get_clip_region( VMARG )
  */
 FALCON_FUNC Drawable::get_visible_region( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkRegion* reg = gdk_drawable_get_visible_region( (GdkDrawable*)_obj );

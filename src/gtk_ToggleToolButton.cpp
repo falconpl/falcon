@@ -58,11 +58,7 @@ FALCON_FUNC ToggleToolButton::init( VMARG )
     MYSELF;
     if ( self->getGObject() )
         return;
-
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     self->setGObject( (GObject*) gtk_toggle_tool_button_new() );
 }
 
@@ -73,10 +69,7 @@ FALCON_FUNC ToggleToolButton::init( VMARG )
  */
 FALCON_FUNC ToggleToolButton::signal_toggled( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "toggled", (void*) &ToggleToolButton::on_toggled, vm );
 }
 
@@ -137,10 +130,7 @@ FALCON_FUNC ToggleToolButton::set_active( VMARG )
  */
 FALCON_FUNC ToggleToolButton::get_active( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_toggle_tool_button_get_active( (GtkToggleToolButton*)_obj ) );

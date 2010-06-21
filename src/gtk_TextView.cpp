@@ -185,10 +185,7 @@ FALCON_FUNC TextView::set_buffer( VMARG )
  */
 FALCON_FUNC TextView::get_buffer( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkTextBuffer* buf = gtk_text_view_get_buffer( (GtkTextView*)_obj );
@@ -321,10 +318,7 @@ FALCON_FUNC TextView::move_mark_onscreen( VMARG )
  */
 FALCON_FUNC TextView::place_cursor_onscreen( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_place_cursor_onscreen( (GtkTextView*)_obj ) );
@@ -844,10 +838,7 @@ FALCON_FUNC TextView::set_wrap_mode( VMARG )
  */
 FALCON_FUNC TextView::get_wrap_mode( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_wrap_mode( (GtkTextView*)_obj ) );
@@ -883,10 +874,7 @@ FALCON_FUNC TextView::set_editable( VMARG )
  */
 FALCON_FUNC TextView::get_editable( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_get_editable( (GtkTextView*)_obj ) );
@@ -921,10 +909,7 @@ FALCON_FUNC TextView::set_cursor_visible( VMARG )
  */
 FALCON_FUNC TextView::get_cursor_visible( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_get_cursor_visible( (GtkTextView*)_obj ) );
@@ -956,10 +941,7 @@ FALCON_FUNC TextView::set_overwrite( VMARG )
  */
 FALCON_FUNC TextView::get_overwrite( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_get_overwrite( (GtkTextView*)_obj ) );
@@ -993,10 +975,7 @@ FALCON_FUNC TextView::set_pixels_above_lines( VMARG )
  */
 FALCON_FUNC TextView::get_pixels_above_lines( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_pixels_above_lines( (GtkTextView*)_obj ) );
@@ -1030,10 +1009,7 @@ FALCON_FUNC TextView::set_pixels_below_lines( VMARG )
  */
 FALCON_FUNC TextView::get_pixels_below_lines( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_pixels_below_lines( (GtkTextView*)_obj ) );
@@ -1067,10 +1043,7 @@ FALCON_FUNC TextView::set_pixels_inside_wrap( VMARG )
  */
 FALCON_FUNC TextView::get_pixels_inside_wrap( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_pixels_inside_wrap( (GtkTextView*)_obj ) );
@@ -1106,10 +1079,7 @@ FALCON_FUNC TextView::set_justification( VMARG )
  */
 FALCON_FUNC TextView::get_justification( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_text_view_get_justification( (GtkTextView*)_obj ) );
@@ -1144,10 +1114,7 @@ FALCON_FUNC TextView::set_left_margin( VMARG )
  */
 FALCON_FUNC TextView::get_left_margin( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_left_margin( (GtkTextView*)_obj ) );
@@ -1182,10 +1149,7 @@ FALCON_FUNC TextView::set_right_margin( VMARG )
  */
 FALCON_FUNC TextView::get_right_margin( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_right_margin( (GtkTextView*)_obj ) );
@@ -1220,10 +1184,7 @@ FALCON_FUNC TextView::set_indent( VMARG )
  */
 FALCON_FUNC TextView::get_indent( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_text_view_get_indent( (GtkTextView*)_obj ) );
@@ -1262,10 +1223,7 @@ FALCON_FUNC TextView::set_accepts_tab( VMARG )
  */
 FALCON_FUNC TextView::get_accepts_tab( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_get_accepts_tab( (GtkTextView*)_obj ) );

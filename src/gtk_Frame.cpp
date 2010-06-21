@@ -184,10 +184,7 @@ FALCON_FUNC Frame::set_shadow_type( VMARG )
  */
 FALCON_FUNC Frame::get_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_frame_get_label( (GtkFrame*)_obj );
@@ -209,10 +206,7 @@ FALCON_FUNC Frame::get_label( VMARG )
  */
 FALCON_FUNC Frame::get_label_align( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gfloat xalign, yalign;
@@ -231,10 +225,7 @@ FALCON_FUNC Frame::get_label_align( VMARG )
  */
 FALCON_FUNC Frame::get_label_widget( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_frame_get_label_widget( (GtkFrame*)_obj );
@@ -252,10 +243,7 @@ FALCON_FUNC Frame::get_label_widget( VMARG )
  */
 FALCON_FUNC Frame::get_shadow_type( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_frame_get_shadow_type( (GtkFrame*)_obj ) );

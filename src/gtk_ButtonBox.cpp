@@ -91,10 +91,7 @@ Falcon::CoreObject* ButtonBox::factory( const Falcon::CoreClass* gen, void* box,
  */
 FALCON_FUNC ButtonBox::get_layout( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_button_box_get_layout( (GtkButtonBox*)_obj ) );
@@ -108,10 +105,7 @@ FALCON_FUNC ButtonBox::get_layout( VMARG )
  */
 FALCON_FUNC ButtonBox::get_child_size( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gint minw, minh;
     MYSELF;
     GET_OBJ( self );
@@ -133,10 +127,7 @@ FALCON_FUNC ButtonBox::get_child_size( VMARG )
  */
 FALCON_FUNC ButtonBox::get_child_ipadding( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     gint w, h;
     MYSELF;
     GET_OBJ( self );

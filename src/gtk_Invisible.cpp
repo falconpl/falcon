@@ -59,10 +59,7 @@ Falcon::CoreObject* Invisible::factory( const Falcon::CoreClass* gen, void* arro
  */
 FALCON_FUNC Invisible::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_invisible_new();
     self->setGObject( (GObject*) wdt );

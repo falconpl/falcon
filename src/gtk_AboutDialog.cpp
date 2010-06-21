@@ -107,10 +107,7 @@ Falcon::CoreObject* AboutDialog::factory( const Falcon::CoreClass* gen, void* dl
  */
 FALCON_FUNC AboutDialog::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_about_dialog_new() );
 }
@@ -126,10 +123,7 @@ FALCON_FUNC AboutDialog::init( VMARG )
  */
 FALCON_FUNC AboutDialog::get_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_name( (GtkAboutDialog*)_obj );
@@ -165,10 +159,7 @@ FALCON_FUNC AboutDialog::set_name( VMARG )
  */
 FALCON_FUNC AboutDialog::get_program_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_program_name( (GtkAboutDialog*)_obj );
@@ -205,10 +196,7 @@ FALCON_FUNC AboutDialog::set_program_name( VMARG )
  */
 FALCON_FUNC AboutDialog::get_version( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* ver = gtk_about_dialog_get_version( (GtkAboutDialog*)_obj );
@@ -238,10 +226,7 @@ FALCON_FUNC AboutDialog::set_version( VMARG )
  */
 FALCON_FUNC AboutDialog::get_copyright( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* cr = gtk_about_dialog_get_copyright( (GtkAboutDialog*)_obj );
@@ -273,10 +258,7 @@ FALCON_FUNC AboutDialog::set_copyright( VMARG )
  */
 FALCON_FUNC AboutDialog::get_comments( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* com = gtk_about_dialog_get_comments( (GtkAboutDialog*)_obj );
@@ -308,10 +290,7 @@ FALCON_FUNC AboutDialog::set_comments( VMARG )
  */
 FALCON_FUNC AboutDialog::get_license( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lic = gtk_about_dialog_get_license( (GtkAboutDialog*)_obj );
@@ -344,10 +323,7 @@ FALCON_FUNC AboutDialog::set_license( VMARG )
  */
 FALCON_FUNC AboutDialog::get_wrap_license( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_about_dialog_get_wrap_license( (GtkAboutDialog*)_obj ) );
@@ -381,10 +357,7 @@ FALCON_FUNC AboutDialog::set_wrap_license( VMARG )
  */
 FALCON_FUNC AboutDialog::get_website( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* web = gtk_about_dialog_get_website( (GtkAboutDialog*)_obj );
@@ -416,10 +389,7 @@ FALCON_FUNC AboutDialog::set_website( VMARG )
  */
 FALCON_FUNC AboutDialog::get_website_label( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* lbl = gtk_about_dialog_get_website_label( (GtkAboutDialog*)_obj );
@@ -449,10 +419,7 @@ FALCON_FUNC AboutDialog::set_website_label( VMARG )
  */
 FALCON_FUNC AboutDialog::get_authors( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* const *authors = gtk_about_dialog_get_authors( (GtkAboutDialog*)_obj );
@@ -501,10 +468,7 @@ FALCON_FUNC AboutDialog::set_authors( VMARG )
  */
 FALCON_FUNC AboutDialog::get_artists( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* const *artists = gtk_about_dialog_get_artists( (GtkAboutDialog*)_obj );
@@ -553,10 +517,7 @@ FALCON_FUNC AboutDialog::set_artists( VMARG )
  */
 FALCON_FUNC AboutDialog::get_documenters( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* const *documenters = gtk_about_dialog_get_documenters( (GtkAboutDialog*)_obj );
@@ -605,10 +566,7 @@ FALCON_FUNC AboutDialog::set_documenters( VMARG )
  */
 FALCON_FUNC AboutDialog::get_translator_credits( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* cred = gtk_about_dialog_get_translator_credits( (GtkAboutDialog*)_obj );
@@ -638,10 +596,7 @@ FALCON_FUNC AboutDialog::set_translator_credits( VMARG )
  */
 FALCON_FUNC AboutDialog::get_logo( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     GdkPixbuf* buf = gtk_about_dialog_get_logo( (GtkAboutDialog*)_obj );
@@ -681,10 +636,7 @@ FALCON_FUNC AboutDialog::set_logo( VMARG )
  */
 FALCON_FUNC AboutDialog::get_logo_icon_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_about_dialog_get_logo_icon_name( (GtkAboutDialog*)_obj );

@@ -101,10 +101,7 @@ FALCON_FUNC EventBox::set_above_child( VMARG )
  */
 FALCON_FUNC EventBox::get_above_child( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_event_box_get_above_child( (GtkEventBox*)_obj ) );
@@ -166,10 +163,7 @@ FALCON_FUNC EventBox::set_visible_window( VMARG )
  */
 FALCON_FUNC EventBox::get_visible_window( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_event_box_get_visible_window( (GtkEventBox*)_obj ) );

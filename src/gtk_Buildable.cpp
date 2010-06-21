@@ -79,10 +79,7 @@ FALCON_FUNC Buildable::set_name( VMARG )
  */
 FALCON_FUNC Buildable::get_name( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     const gchar* nm = gtk_buildable_get_name( (GtkBuildable*)_obj );

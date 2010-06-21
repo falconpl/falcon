@@ -93,10 +93,7 @@ void Object::on_destroy( GObject* obj, gpointer _vm )
  */
 FALCON_FUNC Object::destroy( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_object_destroy( (GtkObject*)_obj );

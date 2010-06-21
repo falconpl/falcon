@@ -76,10 +76,7 @@ Falcon::CoreObject* TreeSortable::factory( const Falcon::CoreClass* gen, void* m
  */
 FALCON_FUNC TreeSortable::signal_sort_column_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     CoreGObject::get_signal( "sort_column_changed",
                              (void*) &TreeSortable::on_sort_column_changed, vm );
 }
@@ -98,10 +95,7 @@ void TreeSortable::on_sort_column_changed( GtkTreeSortable* obj, gpointer _vm )
  */
 FALCON_FUNC TreeSortable::sort_column_changed( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gtk_tree_sortable_sort_column_changed( (GtkTreeSortable*)_obj );
@@ -119,10 +113,7 @@ FALCON_FUNC TreeSortable::sort_column_changed( VMARG )
  */
 FALCON_FUNC TreeSortable::get_sort_column_id( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     gint id;
@@ -203,10 +194,7 @@ FALCON_FUNC TreeSortable::set_default_sort_func( VMARG );
  */
 FALCON_FUNC TreeSortable::has_default_sort_func( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tree_sortable_has_default_sort_func( (GtkTreeSortable*)_obj ) );

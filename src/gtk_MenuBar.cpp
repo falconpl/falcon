@@ -62,10 +62,7 @@ Falcon::CoreObject* MenuBar::factory( const Falcon::CoreClass* gen, void* bar, b
  */
 FALCON_FUNC MenuBar::init( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     self->setGObject( (GObject*) gtk_menu_bar_new() );
 }
@@ -104,10 +101,7 @@ FALCON_FUNC MenuBar::set_pack_direction( VMARG )
  */
 FALCON_FUNC MenuBar::get_pack_direction( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_menu_bar_get_pack_direction( (GtkMenuBar*)_obj ) );
@@ -140,10 +134,7 @@ FALCON_FUNC MenuBar::set_child_pack_direction( VMARG )
  */
 FALCON_FUNC MenuBar::get_child_pack_direction( VMARG )
 {
-#ifdef STRICT_PARAMETER_CHECK
-    if ( vm->paramCount() )
-        throw_require_no_args();
-#endif
+    NO_ARGS
     MYSELF;
     GET_OBJ( self );
     vm->retval( (int64) gtk_menu_bar_get_child_pack_direction( (GtkMenuBar*)_obj ) );
