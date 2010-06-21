@@ -130,9 +130,9 @@ uint32 _milliseconds()
    return (uint32) GetTickCount();
 }
 
-uint32 _epoch()
+int64 _epoch()
 {
-   return _time64(0)
+   return (int64) _time64(0);
 }
 
 void _tempName( String &res )
