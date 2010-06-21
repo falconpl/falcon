@@ -1222,6 +1222,7 @@ Module* core_module_init()
    self->addExtFunc( "input", &Falcon::core::input );
    self->addExtFunc( "printl", &Falcon::core::printl );
    self->addExtFunc( "seconds", &Falcon::core::seconds );
+   self->addExtFunc( "epoch", &Falcon::core::epoch );
 
    //=======================================================================
    // RTL random api

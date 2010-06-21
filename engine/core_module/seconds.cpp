@@ -24,7 +24,7 @@ namespace core {
 /*#
    @function seconds
    @ingroup general_purpose
-   @brief Returns the number of seconds since the "epoch" as reported by the system.
+   @brief Returns the number of seconds and milliseconds from day, activity or program start.
    @return The number of seconds and fractions of seconds in a floating point value.
 
    Actually, this function returns a floating point number which represents seconds
@@ -38,6 +38,20 @@ FALCON_FUNC  seconds ( ::Falcon::VMachine *vm )
 {
    vm->retval( Sys::_seconds() );
 }
+
+/*#
+   @function epoch
+   @ingroup general_purpose
+   @brief Returns the number of seconds since the "epoch" (1 Jan 1970).
+   @return An integer number of seconds.
+*/
+
+
+FALCON_FUNC  epoch ( ::Falcon::VMachine *vm )
+{
+   vm->retval( Sys::_epoch() );
+}
+
 
 }}
 

@@ -73,6 +73,12 @@ FALCON_DYN_SYM bool _getEnv( const String &var, String &result );
 FALCON_DYN_SYM bool _setEnv( const String &var, const String &value );
 FALCON_DYN_SYM bool _unsetEnv( const String &var );
 
+/** Returns seconds since epoch.
+   Used in many systems.
+*/
+
+FALCON_DYN_SYM int64 _epoch();
+
 /** Callback for environment variable enumeration.
  \see _enumerateEnvironment
 */

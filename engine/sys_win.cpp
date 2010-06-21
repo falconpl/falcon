@@ -27,6 +27,8 @@
 #include <falcon/string.h>
 #include <falcon/memory.h>
 #include <errno.h>
+#include <time.h>
+
 
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
@@ -126,6 +128,11 @@ numeric _localSeconds()
 uint32 _milliseconds()
 {
    return (uint32) GetTickCount();
+}
+
+uint32 _epoch()
+{
+   return _time64(0)
 }
 
 void _tempName( String &res )
