@@ -1017,7 +1017,6 @@ static bool Dictionary_do_next( VMachine* vm )
 FALCON_FUNC  Dictionary_do ( ::Falcon::VMachine *vm )
 {
 	Item* i_func = vm->param(0);
-	Item* i_target = vm->param(1);
 
    if ( i_func == 0 || ! i_func->isCallable() )
    {
