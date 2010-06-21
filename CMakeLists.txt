@@ -9,6 +9,14 @@ cmake_minimum_required( VERSION 2.8 )
 #   Options
 #
 option( ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
+option( NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
+option( STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
+
+if ( STRICT_PARAMETER_CHECK )
+    add_definitions( -DSTRICT_PARAMETER_CHECK )
+elseif ( NO_PARAMETER_CHECK )
+    add_definitions( -DNO_PARAMETER_CHECK )
+endif()
 
 ##
 #   Find Falcon
