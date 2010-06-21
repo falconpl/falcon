@@ -97,7 +97,7 @@ FALCON_FUNC TreeModelFilter::init( VMARG )
         throw_inv_params( "GtkTreeModel,[GtkTreePath]" );
 #endif
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
-    GtkTreePath* root = i_root->isNil() ? NULL : GET_TREEPATH( i_root );
+    GtkTreePath* root = i_root->isNil() ? NULL : GET_TREEPATH( *i_root );
     MYSELF;
     self->setGObject( (GObject*) gtk_tree_model_filter_new( mdl, root ) );
 }
@@ -288,7 +288,7 @@ FALCON_FUNC TreeModelFilter::convert_child_path_to_path( VMARG )
     if ( !i_pth || !i_pth->isObject() || !IS_DERIVED( i_pth, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* path = GET_TREEPATH( i_pth );
+    GtkTreePath* path = GET_TREEPATH( *i_pth );
     MYSELF;
     GET_OBJ( self );
     GtkTreePath* res =
@@ -317,7 +317,7 @@ FALCON_FUNC TreeModelFilter::convert_path_to_child_path( VMARG )
     if ( !i_pth || !i_pth->isObject() || !IS_DERIVED( i_pth, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* path = GET_TREEPATH( i_pth );
+    GtkTreePath* path = GET_TREEPATH( *i_pth );
     MYSELF;
     GET_OBJ( self );
     GtkTreePath* res =

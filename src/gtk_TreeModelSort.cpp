@@ -124,7 +124,7 @@ FALCON_FUNC TreeModelSort::convert_child_path_to_path( VMARG )
     if ( !i_pth || !i_pth->isObject() || !IS_DERIVED( i_pth, GtkTreepath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* pth = GET_TREEPATH( i_pth );
+    GtkTreePath* pth = GET_TREEPATH( *i_pth );
     MYSELF;
     GET_OBJ( self );
     GtkTreePath* res = gtk_tree_model_sort_convert_child_path_to_path(
@@ -188,7 +188,7 @@ FALCON_FUNC TreeModelSort::convert_path_to_child_path( VMARG )
     if ( !i_pth || !i_pth->isObject() || !IS_DERIVED( i_pth, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* pth = GET_TREEPATH( i_pth );
+    GtkTreePath* pth = GET_TREEPATH( *i_pth );
     MYSELF;
     GET_OBJ( self );
     GtkTreePath* res = gtk_tree_model_sort_convert_path_to_child_path(

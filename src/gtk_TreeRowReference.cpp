@@ -119,7 +119,7 @@ FALCON_FUNC TreeRowReference::init( VMARG )
         throw_inv_params( "GtkTreeModel,GtkTreePath" );
 #endif
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
-    GtkTreePath* path = GET_TREEPATH( i_path );
+    GtkTreePath* path = GET_TREEPATH( *i_path );
     GtkTreeRowReference* ref = gtk_tree_row_reference_new( mdl, path );
     if ( ref )
     {
@@ -161,7 +161,7 @@ FALCON_FUNC TreeRowReference::new_proxy( VMARG )
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
-    GtkTreePath* path = GET_TREEPATH( i_path );
+    GtkTreePath* path = GET_TREEPATH( *i_path );
     GtkTreeRowReference* ref = gtk_tree_row_reference_new_proxy( proxy, mdl, path );
     if ( ref )
         vm->retval( new Gtk::TreeRowReference( vm->findWKI( "GtkTreeRowReference" )->asClass(),
@@ -263,7 +263,7 @@ FALCON_FUNC TreeRowReference::inserted( VMARG )
         throw_inv_params( "GObject,GtkTreePath" );
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
-    GtkTreePath* path = GET_TREEPATH( i_path );
+    GtkTreePath* path = GET_TREEPATH( *i_path );
     gtk_tree_row_reference_inserted( proxy, path );
 }
 
@@ -284,7 +284,7 @@ FALCON_FUNC TreeRowReference::deleted( VMARG )
         throw_inv_params( "GObject,GtkTreePath" );
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
-    GtkTreePath* path = GET_TREEPATH( i_path );
+    GtkTreePath* path = GET_TREEPATH( *i_path );
     gtk_tree_row_reference_deleted( proxy, path );
 }
 
@@ -311,7 +311,7 @@ FALCON_FUNC TreeRowReference::reordered( VMARG )
         throw_inv_params( "GObject,GtkTreePath,GtkTreeIter,A" );
 #endif
     GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
-    GtkTreePath* path = GET_TREEPATH( i_path );
+    GtkTreePath* path = GET_TREEPATH( *i_path );
     GtkTreeIter* iter = GET_TREEITER( *i_iter );
     CoreArray* order = i_order->asArray();
     const int cnt = order->length();

@@ -325,7 +325,7 @@ FALCON_FUNC TreePath::compare( VMARG )
     if ( !i_b || !i_b->isObject() || !IS_DERIVED( i_b, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* b = GET_TREEPATH( i_b );
+    GtkTreePath* b = GET_TREEPATH( *i_b );
     MYSELF;
     vm->retval( gtk_tree_path_compare( self->getTreePath(), b ) );
 }
@@ -404,7 +404,7 @@ FALCON_FUNC TreePath::is_ancestor( VMARG )
     if ( !i_desc || !i_desc->isObject() || !IS_DERIVED( i_desc, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* desc = GET_TREEPATH( i_desc );
+    GtkTreePath* desc = GET_TREEPATH( *i_desc );
     MYSELF;
     vm->retval( (bool) gtk_tree_path_is_ancestor( self->getTreePath(), desc ) );
 }
@@ -423,7 +423,7 @@ FALCON_FUNC TreePath::is_descendant( VMARG )
     if ( !i_anc || !i_anc->isObject() || !IS_DERIVED( i_anc, GtkTreePath ) )
         throw_inv_params( "GtkTreePath" );
 #endif
-    GtkTreePath* anc = GET_TREEPATH( i_anc );
+    GtkTreePath* anc = GET_TREEPATH( *i_anc );
     MYSELF;
     vm->retval( (bool) gtk_tree_path_is_descendant( self->getTreePath(), anc ) );
 }

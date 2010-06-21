@@ -3,8 +3,8 @@
 
 #include "modgtk.hpp"
 
-#define GET_TREEPATH( pItem ) \
-        Falcon::dyncast<Gtk::TreePath*>( pItem->asObjectSafe() )->getTreePath()
+#define GET_TREEPATH( item ) \
+        (Falcon::dyncast<Gtk::TreePath*>( (item).asObjectSafe() )->getTreePath())
 
 
 namespace Falcon {
