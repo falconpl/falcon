@@ -82,6 +82,11 @@ uint32 _milliseconds()
 #endif
 }
 
+int64 _epoch()
+{
+   return (int64) time(0);
+}
+
 void _tempName( String &res )
 {
    static bool first = true;
