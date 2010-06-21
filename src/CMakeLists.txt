@@ -130,6 +130,7 @@ set( SRC_FILES
     gtk_TreeRowReference.cpp
     gtk_TreeSortable.cpp
     gtk_TreeStore.cpp
+    gtk_TreeViewColumn.cpp
     gtk_VBox.cpp
     gtk_VButtonBox.cpp
     gtk_VolumeButton.cpp
@@ -271,6 +272,7 @@ set( HDR_FILES
     gtk_TreeRowReference.hpp
     gtk_TreeSortable.hpp
     gtk_TreeStore.hpp
+    gtk_TreeViewColumn.hpp
     gtk_VBox.hpp
     gtk_VButtonBox.hpp
     gtk_VolumeButton.hpp
