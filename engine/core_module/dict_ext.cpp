@@ -8,7 +8,7 @@
    Begin: gio mar 16 2006
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2006: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -894,7 +894,9 @@ FALCON_FUNC  Dictionary_mcomp ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Dictionary_mfcomp ( ::Falcon::VMachine *vm )
 {
-   if ( vm->param(0) == 0 )
+	Item* i_func = vm->param(0);
+
+   if ( i_func == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "C, ..." ) );
@@ -904,7 +906,7 @@ FALCON_FUNC  Dictionary_mfcomp ( ::Falcon::VMachine *vm )
    CoreDict* dict = vm->self().asDict();
    StackFrame* current = vm->currentFrame();
 
-   Item i_check = vm->param(0) == 0 ? Item(): *vm->param(10);
+   Item i_check = *i_func;
 
    // if this is a blessed dictionary, we must use the append method.
    if ( dict->isBlessed() )
@@ -924,6 +926,124 @@ FALCON_FUNC  Dictionary_mfcomp ( ::Falcon::VMachine *vm )
    }
 }
 
+static bool Dictionary_do_next( VMachine* vm )
+{
+	Iterator* iter = dyncast<Iterator *>(vm->local(0)->asGCPointer());
+
+	bool advance = true;
+	if( vm->regA().isOob() && vm->regA().isInteger() )
+	{
+		int64 value = vm->regA().asInteger();
+		if ( value == 0 )
+		{
+			// we're done
+			Item* ip = vm->param(1);
+			if ( ip )
+				vm->retval( *ip );
+			return false;
+		}
+
+		if( value == 1 )
+		{
+			iter->erase();
+			advance = false;
+		}
+	}
+	else
+	{
+		Item* ip = vm->param(1);
+		if ( ip != 0 && ! ip->isNil() )
+		{
+			ip->add( vm->regA(), *ip );
+		}
+	}
+
+
+	if( advance )
+	{
+		iter->next();
+	}
+
+	if( ! iter->hasCurrent() )
+	{
+		// get the last return value and exit
+		Item* ip = vm->param(1);
+		if ( ip )
+			vm->retval( *ip );
+		return false;
+	}
+
+	vm->pushParam( iter->getCurrentKey() );
+	vm->pushParam( iter->getCurrent() );
+
+	vm->callFrame( *vm->param(0), 2 );
+	return true;
+}
+
+/*#
+   @method do Dictionary
+   @brief Repeats a function for each key/value pair in the dictionary.
+   @param func The function to be repeated.
+   @optparam acc Accumulator item.
+   @return The accumulator item, if provided, or nil.
+
+	The function is called repeatedly for each key/value pair in the dictionary,
+		with the key passed as the first parameter and the  value in the second.
+
+	If an accumulator item is given in the @b acc parameter, each returned element is plainly added to the
+	accumulator item with the standard add semantic (equivalent to "+" operator).
+	Objects overriding the __add operator will receive the required callback.
+
+	If the function returns an oob(0), the loop is broken, while if
+	it returns an oob(1), the current item is dropped. Any other out of band parameter
+	is ignored.
+
+	For example:
+
+	@code
+		dict = [ "first" => "v1",
+				"second" => "v2",
+				"third" => "v3" ]
+
+		dsum = dict.do( { k, v  =>
+				if k == "second": return oob(1)
+				return k + "=" + v
+				}, [] )
+
+		> dsum.describe()
+	@endcode
+*/
+
+FALCON_FUNC  Dictionary_do ( ::Falcon::VMachine *vm )
+{
+	Item* i_func = vm->param(0);
+	Item* i_target = vm->param(1);
+
+   if ( i_func == 0 || ! i_func->isCallable() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "C, ..." ) );
+   }
+
+   // Save the parameters as the stack may change greatly.
+   CoreDict* dict = vm->self().asDict();
+   if ( dict->empty() )
+   {
+   	vm->retnil();
+   	return;
+   }
+
+
+   Iterator* iter = new Iterator(&dict->items());
+   vm->addLocals(1);
+   *vm->local(0) = new GarbagePointer(iter);
+   vm->returnHandler( Dictionary_do_next );
+
+   // do the first call.
+   vm->pushParam( iter->getCurrentKey() );
+	vm->pushParam( iter->getCurrent() );
+	vm->callFrame( *vm->param(0), 2 );
+}
 
 
 }

@@ -55,7 +55,6 @@ FALCON_FUNC  mth_metaclass ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm );
-FALCON_FUNC  Dictionary_dop( ::Falcon::VMachine *vm );
 
 //FALCON_FUNC  mth_hasProperty( ::Falcon::VMachine *vm );
 
@@ -370,6 +369,7 @@ FALCON_FUNC  Array_tabField ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_tabRow ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_last ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_concat ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  bless( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictMerge( ::Falcon::VMachine *vm );
@@ -389,6 +389,8 @@ FALCON_FUNC  Dictionary_last( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_mcomp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_mfcomp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_dop( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_do( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm );

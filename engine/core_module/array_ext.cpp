@@ -114,6 +114,48 @@ FALCON_FUNC  Array_mfcomp ( ::Falcon::VMachine *vm )
 
 
 /*#
+   @method concat Array
+   @brief Concatenate all the elements of an array in a string.
+   @optparam sep Separator to be put between the elements.
+   @return A single string.
+*/
+FALCON_FUNC  Array_concat ( ::Falcon::VMachine *vm )
+{
+	Item* i_sep = vm->param(0);
+
+   if ( i_sep != 0 && ! i_sep->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "[S]" ) );
+   }
+
+   CoreArray* arr = vm->self().asArray();
+   CoreString *str = new CoreString;
+   uint32 len = arr->length();
+
+   for( uint32 i = 0; i < len ; ++i )
+   {
+   	const Item& item = arr->at(i);
+
+   	if ( item.isString() )
+   	{
+   		str->append( *item.asString() );
+   	}
+   	else
+   	{
+   	  	String temp;
+   	  	vm->itemToString( temp, &item );
+   	  	str->append( temp );
+   	}
+
+   	if( (i + 1)< len && i_sep )
+   		str->append( *i_sep->asString() );
+   }
+
+   vm->retval( str );
+}
+
+/*#
    @method front Array
    @brief Returns and eventually extracts the first element in the array.
    @optparam remove true to remove the front item.

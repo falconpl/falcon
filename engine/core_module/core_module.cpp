@@ -656,6 +656,9 @@ Module* core_module_init()
    
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
    self->addClassMethod( array_meta, "NM", &Falcon::core::mth_arrayNM );
+   self->addClassMethod( array_meta, "concat", &Falcon::core::Array_concat ).asSymbol()->
+   		addParam( "sep" );
+
 
    //==================================================================
    // Dict class
@@ -689,6 +692,8 @@ Module* core_module_init()
    self->addClassMethod( dict_meta, "mcomp", &Falcon::core::Dictionary_mcomp );
    self->addClassMethod( dict_meta, "mfcomp", &Falcon::core::Dictionary_mfcomp ).asSymbol()->
       addParam( "filter" );
+   self->addClassMethod( dict_meta, "do", &Falcon::core::Dictionary_do ).asSymbol()->
+      addParam( "func" );
 
 
    self->addClassMethod( dict_meta, "merge", &Falcon::core::mth_dictMerge ).asSymbol()->
