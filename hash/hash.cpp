@@ -328,6 +328,9 @@ Falcon::Module *hash_module_init(void)
     self->addExtFunc("makeHash", Falcon::Ext::Func_makeHash)
         ->addParam("name");
 
+    self->addExtFunc("hmac", Falcon::Ext::Func_hmac)
+        ->addParam("raw")->addParam("which")->addParam("key")->addParam("data");
+
     self->addExtFunc("getSupportedHashes", Falcon::Ext::Func_GetSupportedHashes);
 
     // generate CRC32 table

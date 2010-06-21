@@ -84,6 +84,21 @@ FalconData *GetHashByName(String *whichStr)
     return NULL;
 }
 
+CoreString *ByteArrayToHex(byte *arr, uint32 size)
+{
+    CoreString *str = new CoreString; // each byte will be encoded to 2 chars
+    str->reserve(size * 2);
+
+    for(uint32 i = 0; i < size; i++)
+    {
+        int hexlet = (arr[i] >> 4) & 0xf ;
+        str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
+        hexlet = arr[i] & 0xf ;
+        str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
+    }
+    return str;
+}
+
 
 void HashBase::UpdateData(MemBuf *buf)
 {
@@ -332,12 +347,12 @@ void Adler32::UpdateData( const byte *ptr, uint32 size)
 SHA1Hash::SHA1Hash()
 {
     _finalized = false;
-    SHA1Init(&_ctx);
+    sha_init(&_ctx);
 }
 
 void SHA1Hash::UpdateData(const byte *ptr, uint32 size)
 {
-    SHA1Update(&_ctx, ptr, size);
+    sha_update(&_ctx, ptr, size);
 }
 
 void SHA1Hash::Finalize(void)
@@ -345,7 +360,8 @@ void SHA1Hash::Finalize(void)
     if(_finalized)
         return;
 
-    SHA1Final(&_digest[0], &_ctx);
+    sha_final(&_ctx);
+    sha_digest(&_ctx, &_digest[0]);
     _finalized = true;
 }
 

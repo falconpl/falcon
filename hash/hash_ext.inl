@@ -36,7 +36,6 @@
 @beginmodule feather_hash
 */
 
-#include <stdio.h>
 #include <string.h>
 #include <falcon/engine.h>
 #include "hash_mod.h"
@@ -272,19 +271,7 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
     uint32 size = hash->DigestSize();
     if(byte *digest = hash->GetDigest())
     {
-        Falcon::String *str = new Falcon::CoreString; // each byte will be encoded to 2 chars
-        str->reserve( size*2 );
-
-        for(uint32 i = 0; i < size; i++)
-        {
-            int hexlet = (digest[i] >> 4) & 0xf ;
-            str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
-            hexlet = digest[i] & 0xf ;
-            str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
-        }
-
-        vm->retval(str);
-        return;
+        vm->retval(Mod::ByteArrayToHex(digest, size));
     }
     else
     {
@@ -292,7 +279,6 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
             Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
             .extra(FAL_STR(hash_err_not_finalized)));
     }
-
 }
 
 /*#
@@ -355,18 +341,7 @@ template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMachine *vm )
 
     hash.Finalize();
 
-    uint32 size = hash.DigestSize();
-    byte *digest = hash.GetDigest();
-    Falcon::String *str = new Falcon::CoreString(size * 2); // each byte will be encoded to 2 chars
-    char tmp[3];
-
-    for(uint32 i = 0; i < size; i++)
-    {
-        sprintf(tmp, "%02x", digest[i]); // convert byte to hex
-        str->A(tmp[0]).A(tmp[1]); // and add it to output string
-    }
-
-    vm->retval(str);
+    vm->retval(Mod::ByteArrayToHex(hash.GetDigest(), hash.DigestSize()));
 }
 
 

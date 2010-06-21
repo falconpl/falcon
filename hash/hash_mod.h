@@ -66,6 +66,9 @@
 #define RIPEMD256_DIGEST_LENGTH  32  // 256 bits
 #define RIPEMD320_DIGEST_LENGTH  40  // 320 bits
 
+// should there be any hash that has a greater block size don't forget to change this!!
+#define MAX_USED_BLOCKSIZE 128
+
 namespace Falcon {
 namespace Mod {
 
@@ -81,7 +84,11 @@ namespace Mod {
         virtual void UpdateData(const byte *ptr, uint32 size) {}
         virtual void Finalize(void) {}
         virtual uint32 DigestSize(void) { return 0; }
+
         virtual byte *GetDigest(void) { return NULL; }
+
+        // required for HMAC, since 64 is the block size for most hashes we take that as default and override only where necessary
+        virtual uint32 GetBlockSize(void) { return 64; }
 
         // can be overloaded optionally (but MUST be overloaded if DigestSize < 8)
         virtual uint64 AsInt(void);
@@ -161,7 +168,7 @@ namespace Mod {
         const char *GetName(void) { return "SHA1Hash"; }
 
     private:
-        SHA1_CTX _ctx;
+        sha_ctx _ctx;
         byte _digest[SHA1_DIGEST_LENGTH];
     };
 
@@ -204,6 +211,7 @@ namespace Mod {
         uint32 DigestSize(void) { return SHA384_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         const char *GetName(void) { return "SHA384Hash"; }
+        uint32 GetBlockSize(void) { return 128; }
 
     private:
         sha512_sha384_ctx _ctx;
@@ -219,6 +227,7 @@ namespace Mod {
         uint32 DigestSize(void) { return SHA512_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         const char *GetName(void) { return "SHA512Hash"; }
+        uint32 GetBlockSize(void) { return 128; }
 
     private:
         sha512_sha384_ctx _ctx;
@@ -365,6 +374,7 @@ namespace Mod {
 
 
     FalconData *GetHashByName(String *whichStr);
+    CoreString *ByteArrayToHex(byte *arr, uint32 size);
 
 
 }

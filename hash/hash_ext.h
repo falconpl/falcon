@@ -43,6 +43,7 @@ namespace Ext {
 FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm );
 FALCON_FUNC Func_hash( ::Falcon::VMachine *vm );
 FALCON_FUNC Func_makeHash( ::Falcon::VMachine *vm );
+FALCON_FUNC Func_hmac( ::Falcon::VMachine *vm );
 
 void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachine *vm, uint32 stackDepth);
 

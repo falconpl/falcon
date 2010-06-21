@@ -103,7 +103,7 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
     if(vm->paramCount() < 2)
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( "X, B [, X...]" ) );
+            .origin( e_orig_mod ).extra( "B, X, [, X...]" ) );
     }
     
     bool raw = vm->param(0)->asBoolean();
@@ -164,16 +164,7 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
     }
     else
     {
-        
-        Falcon::String *str = new Falcon::CoreString(size * 2); // each byte will be encoded to 2 chars
-        char tmp[3];
-
-        for(uint32 i = 0; i < size; i++)
-        {
-            sprintf(tmp, "%02x", digest[i]); // convert byte to hex
-            str->A(tmp[0]).A(tmp[1]); // and add it to output string
-        }
-        vm->retval(str);
+        vm->retval(Mod::ByteArrayToHex(digest, size));
     }
 
     if(ownCarrier)
@@ -184,6 +175,7 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
 @function makeHash
 @brief Creates a hash object based on the algorithm name
 @param name The name of the algorithm (case insensitive)
+@optparam silent Return @b nil instead of throwing an exception, if the hash was not found
 @return A new instance of a hash object of the the given algorithm name 
 @raise ParamError in case a hash with that name was not found
 @note Use getSupportedHashes() to check which hash names are supported.
@@ -195,11 +187,18 @@ FALCON_FUNC Func_makeHash( ::Falcon::VMachine *vm )
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin( e_orig_mod ).extra( "S" ) );
     }
+    
     String *name = vm->param(0)->asString();
+    bool silent =  vm->paramCount() > 1 && vm->param(1)->asBoolean();
     FalconData *fdata = Mod::GetHashByName(name);
     Mod::HashCarrier<Mod::HashBase> *carrier = (Mod::HashCarrier<Mod::HashBase>*)(fdata);
     if(!carrier)
     {
+        if(silent)
+        {
+            vm->retnil();
+            return;
+        }
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin( e_orig_mod ).desc( FAL_STR(hash_not_found) ).extra(*name) );
     }
@@ -216,6 +215,177 @@ FALCON_FUNC Func_makeHash( ::Falcon::VMachine *vm )
     obj->setUserData(carrier);
     vm->retval(obj);
 }
+
+/*#
+@function hmac
+@brief Provides HMAC authentication for a block of data
+@param raw If set to true, return a raw MemBuf instead of a string.
+@param which Hash that should be used
+@param key Secret authentication key
+@param data The data to be authenticated
+@return A lowercase hexadecimal string with the HMAC-result of the chosen hash if @i raw is false, or a 1-byte wide MemBuf if true.
+@raise ParamError in case @i which is a string and a hash with that name was not found; or if @i which does not evaluate to a hash object.
+@raise AccessError if @i which evaluates to a hash object that was already finalized.
+
+Param @i key can be a String or a MemBuf.
+
+Param @i which can contain a String with the name of the hash, a hash class constructor, or a function that returns a useable hash object.
+Unlike the hash() function, it is not possible to pass a hash object directly, because it would have to be used 3 times, which is not possible
+because of finalization.
+
+In total, this function evaluates @i which 3 times, creating 3 hash objects internally.
+
+@note Use getSupportedHashes() to check which hash names are supported.
+*/
+FALCON_FUNC Func_hmac( ::Falcon::VMachine *vm )
+{
+    Item *i_raw = vm->param(0);
+    Item *i_which = vm->param(1);
+    Item *i_key = vm->param(2);
+    Item *i_data = vm->param(3);
+    if( !(i_raw && i_which && i_key)
+     || !(i_which->isCallable() || i_which->isString())
+     || !(i_key->isMemBuf() || i_key->isString())
+     || !(i_data->isMemBuf() || i_data->isString()) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_mod ).extra( "B, X, X, [, X...]" ) );
+    }
+
+    bool raw = i_raw->asBoolean();
+
+    // first, get the 3 hash items to use
+    Item hashItem[3];
+    bool ownCarrier[3] = { false, false, false };
+    Mod::HashCarrier<Mod::HashBase> *carrier[3] = { NULL, NULL, NULL };
+    Mod::HashBase *hash[3] = { NULL, NULL, NULL };
+    bool success = true;
+    for(uint32 i = 0; i < 3; ++i)
+    {
+        Item& itemRef = hashItem[i];
+        itemRef = *i_which;
+        while(itemRef.isCallable())
+        {
+            vm->callItemAtomic(itemRef, 0);
+            itemRef = vm->regA();
+        }
+        if(itemRef.isString())
+        {
+            carrier[i] = (Mod::HashCarrier<Mod::HashBase>*)(Mod::GetHashByName(itemRef.asString()));
+            ownCarrier[i] = true;
+        }
+        else if(itemRef.isObject())
+        {
+            CoreObject *co = itemRef.asObject();
+            if(co->derivedFrom("HashBase"))
+                carrier[i] = (Mod::HashCarrier<Mod::HashBase>*)(co->getUserData());
+        }
+        if(carrier[i])
+            hash[i] = carrier[i]->GetHash();
+        else
+            success = false;
+    }
+
+    if(success)
+    {
+        uint32 blocksize = hash[0]->GetBlockSize();
+        uint32 byteCount;
+
+        byte i_key_pad[MAX_USED_BLOCKSIZE];
+        byte o_key_pad[MAX_USED_BLOCKSIZE];
+
+        if(i_key->isMemBuf())
+        {
+            MemBuf *buf = i_key->asMemBuf();
+            byteCount = buf->size();
+        }
+        else
+        {
+            String *str = i_key->asString();
+            byteCount = str->size();
+        }
+        
+        if(byteCount > blocksize) // key too large? hash it, so the resulting size will be equal to blocksize
+        {
+            if(i_key->isString())
+                hash[0]->UpdateData(*i_key->asString());
+            else
+                hash[0]->UpdateData(i_key->asMemBuf());
+            hash[0]->Finalize();
+            byte *digest = hash[0]->GetDigest();
+            memcpy(i_key_pad, digest, blocksize);
+            memcpy(o_key_pad, digest, blocksize);
+        }
+        else if(byteCount <= blocksize) // key too small? if the key has exactly blocksize bytes we can go this way too
+        {
+            // TODO: is the way the memory is accessed here ok? works on big endian? different char sizes in strings?
+            uint32 remain = blocksize - byteCount;
+            byte *memptr;
+            if(i_key->isMemBuf()) // it's a MemBuf, copy into output buffers and pad with zeros
+            {
+                MemBuf *buf = i_key->asMemBuf();
+                memptr = buf->data();
+            }
+            else // it's a string, append zeros
+            {
+                String *str = i_key->asString();
+                memptr = str->getRawStorage();
+            }
+            memcpy(i_key_pad, memptr, blocksize);
+            memcpy(o_key_pad, memptr, blocksize);
+            if(remain)
+            {
+                memset(i_key_pad + byteCount, 0, remain);
+                memset(o_key_pad + byteCount, 0, remain);
+            }
+        }
+
+        for(uint32 i = 0; i < blocksize; ++i)
+        {
+            o_key_pad[i] ^= 0x5C;
+            i_key_pad[i] ^= 0x36;
+        }
+
+        // inner hash
+        hash[1]->UpdateData(i_key_pad, blocksize);
+        if(i_data->isString())
+            hash[1]->UpdateData(*i_data->asString());
+        else
+            hash[1]->UpdateData(i_data->asMemBuf());
+        hash[1]->Finalize();
+
+        // outer hash
+        hash[2]->UpdateData(o_key_pad, blocksize);
+        hash[2]->UpdateData(hash[1]->GetDigest(), hash[1]->DigestSize());
+        hash[2]->Finalize();
+
+        uint32 size = hash[2]->DigestSize();
+        byte *digest = hash[2]->GetDigest();
+
+        if(raw)
+        {
+            Falcon::MemBuf_1 *buf = new Falcon::MemBuf_1(size);
+            memcpy(buf->data(), digest, size);
+            vm->retval(buf);
+        }
+        else
+        {
+            vm->retval(Mod::ByteArrayToHex(digest, size));
+        }
+    }
+
+    // cleanup
+    for(uint32 i = 0; i < 3; ++i)
+        if(ownCarrier[i])
+            delete carrier[i];
+
+    if(!success)
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_mod ).extra( FAL_STR(hash_not_found) ) );
+    }
+}
+
 
 
 // updateItem is a helper function to process the individual items passed to update()
@@ -277,7 +447,7 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
         // whatever we got as result, hash it. it does not necessarily have to be a MemBuf for this to work.
         Hash_updateItem_internal(&mb, hash, vm, stackDepth + 1);
     }
-    else if(what->isOfClass("MPZ")) // direct conversion from MPZ to hash -- as soon as MPZ provide toMemBuf, this can be dropped
+    /*else if(what->isOfClass("MPZ")) // direct conversion from MPZ to hash -- as soon as MPZ provide toMemBuf, this can be dropped
     {
         Item mpz;
         // involve the VM to convert an MPZ to string in base 16
@@ -317,7 +487,7 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
                 Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
                 .extra( "MPZ does not provide toString, blame OmniMancer" ) );
         }
-    }
+    }*/
     else // fallback - convert to string if nothing else works
     {
         String str;
