@@ -583,6 +583,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TREE_MODEL_LIST_ONLY",       GTK_TREE_MODEL_LIST_ONLY },
 
     /*
+     *  GtkTreeViewColumnSizing
+     */
+    { "GTK_TREE_VIEW_COLUMN_GROW_ONLY", GTK_TREE_VIEW_COLUMN_GROW_ONLY },
+    { "GTK_TREE_VIEW_COLUMN_AUTOSIZE",  GTK_TREE_VIEW_COLUMN_AUTOSIZE },
+    { "GTK_TREE_VIEW_COLUMN_FIXED",     GTK_TREE_VIEW_COLUMN_FIXED },
+
+    /*
      *  GtkUpdateType
      */
     { "GTK_UPDATE_CONTINUOUS",      GTK_UPDATE_CONTINUOUS },
