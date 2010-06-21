@@ -1413,7 +1413,7 @@ void String::internal_escape( String &strout, bool full ) const
          case '\b': strout += "\\b"; break;
          case '\\': strout += "\\\\"; break;
          default:
-            if ( chat < 8 || (chat >= 128 && full) ) {
+            if ( chat < 32 || (chat >= 128 && full) ) {
                char bufarea[14];
                bufarea[0] = '\\';
                bufarea[1] = 'x';
