@@ -193,6 +193,16 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_DIR_LEFT",               GTK_DIR_LEFT },
     { "GTK_DIR_RIGHT",              GTK_DIR_RIGHT },
 
+    /*
+     *  GtkDragResult
+     */
+    { "GTK_DRAG_RESULT_SUCCESS",        GTK_DRAG_RESULT_SUCCESS },
+    { "GTK_DRAG_RESULT_NO_TARGET",      GTK_DRAG_RESULT_NO_TARGET },
+    { "GTK_DRAG_RESULT_USER_CANCELLED", GTK_DRAG_RESULT_USER_CANCELLED },
+    { "GTK_DRAG_RESULT_TIMEOUT_EXPIRED",GTK_DRAG_RESULT_TIMEOUT_EXPIRED },
+    { "GTK_DRAG_RESULT_GRAB_BROKEN",    GTK_DRAG_RESULT_GRAB_BROKEN },
+    { "GTK_DRAG_RESULT_ERROR",          GTK_DRAG_RESULT_ERROR },
+
 #if GTK_MINOR_VERSION >= 16
     /*
      *  GtkEntryIconPosition
@@ -490,6 +500,12 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_SIDE_RIGHT",     GTK_SIDE_RIGHT },
 
     /*
+     *  GtkSortType
+     */
+    { "GTK_SORT_ASCENDING",     GTK_SORT_ASCENDING },
+    { "GTK_SORT_DESCENDING",    GTK_SORT_DESCENDING },
+
+    /*
      *  GtkSpinButtonUpdatePolicy
      */
     { "GTK_UPDATE_ALWAYS",              GTK_UPDATE_ALWAYS },
@@ -533,6 +549,13 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS",GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS },
     { "GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT",  GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT },
     { "GTK_TEXT_BUFFER_TARGET_INFO_TEXT",       GTK_TEXT_BUFFER_TARGET_INFO_TEXT },
+
+    /*
+     *  GtkTextDirection
+     */
+    { "GTK_TEXT_DIR_NONE",      GTK_TEXT_DIR_NONE },
+    { "GTK_TEXT_DIR_LTR",       GTK_TEXT_DIR_LTR },
+    { "GTK_TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
 
     /*
      *  GtkTextWindowType
@@ -604,45 +627,6 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_VISIBILITY_FULL",    GTK_VISIBILITY_FULL },
 
     /*
-     *  GtkWindowPosition
-     */
-    { "GTK_WIN_POS_NONE",       GTK_WIN_POS_NONE },
-    { "GTK_WIN_POS_CENTER",     GTK_WIN_POS_CENTER },
-    { "GTK_WIN_POS_MOUSE",      GTK_WIN_POS_MOUSE },
-    { "GTK_WIN_POS_CENTER_ALWAYS",  GTK_WIN_POS_CENTER_ALWAYS },
-    { "GTK_WIN_POS_CENTER_ON_PARENT",   GTK_WIN_POS_CENTER_ON_PARENT },
-
-    /*
-     *  GtkWindowType
-     */
-    { "GTK_WINDOW_TOPLEVEL",    GTK_WINDOW_TOPLEVEL },
-    { "GTK_WINDOW_POPUP",       GTK_WINDOW_POPUP },
-
-    /*
-     *  GtkWrapMode
-     */
-    { "GTK_WRAP_NONE",      GTK_WRAP_NONE },
-    { "GTK_WRAP_CHAR",      GTK_WRAP_CHAR },
-    { "GTK_WRAP_WORD",      GTK_WRAP_WORD },
-    { "GTK_WRAP_WORD_CHAR", GTK_WRAP_WORD_CHAR },
-
-    /*
-     *  GtkSortType
-     */
-    { "GTK_SORT_ASCENDING",     GTK_SORT_ASCENDING },
-    { "GTK_SORT_DESCENDING",    GTK_SORT_DESCENDING },
-
-    /*
-     *  GtkDragResult
-     */
-    { "GTK_DRAG_RESULT_SUCCESS",        GTK_DRAG_RESULT_SUCCESS },
-    { "GTK_DRAG_RESULT_NO_TARGET",      GTK_DRAG_RESULT_NO_TARGET },
-    { "GTK_DRAG_RESULT_USER_CANCELLED", GTK_DRAG_RESULT_USER_CANCELLED },
-    { "GTK_DRAG_RESULT_TIMEOUT_EXPIRED",GTK_DRAG_RESULT_TIMEOUT_EXPIRED },
-    { "GTK_DRAG_RESULT_GRAB_BROKEN",    GTK_DRAG_RESULT_GRAB_BROKEN },
-    { "GTK_DRAG_RESULT_ERROR",          GTK_DRAG_RESULT_ERROR },
-
-    /*
      *  GtkWidgetFlags
      */
     { "GTK_TOPLEVEL",           GTK_TOPLEVEL },
@@ -666,11 +650,27 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_NO_SHOW_ALL",        GTK_NO_SHOW_ALL },
 
     /*
-     *  GtkTextDirection
+     *  GtkWindowPosition
      */
-    { "GTK_TEXT_DIR_NONE",      GTK_TEXT_DIR_NONE },
-    { "GTK_TEXT_DIR_LTR",       GTK_TEXT_DIR_LTR },
-    { "GTK_TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
+    { "GTK_WIN_POS_NONE",       GTK_WIN_POS_NONE },
+    { "GTK_WIN_POS_CENTER",     GTK_WIN_POS_CENTER },
+    { "GTK_WIN_POS_MOUSE",      GTK_WIN_POS_MOUSE },
+    { "GTK_WIN_POS_CENTER_ALWAYS",  GTK_WIN_POS_CENTER_ALWAYS },
+    { "GTK_WIN_POS_CENTER_ON_PARENT",   GTK_WIN_POS_CENTER_ON_PARENT },
+
+    /*
+     *  GtkWindowType
+     */
+    { "GTK_WINDOW_TOPLEVEL",    GTK_WINDOW_TOPLEVEL },
+    { "GTK_WINDOW_POPUP",       GTK_WINDOW_POPUP },
+
+    /*
+     *  GtkWrapMode
+     */
+    { "GTK_WRAP_NONE",      GTK_WRAP_NONE },
+    { "GTK_WRAP_CHAR",      GTK_WRAP_CHAR },
+    { "GTK_WRAP_WORD",      GTK_WRAP_WORD },
+    { "GTK_WRAP_WORD_CHAR", GTK_WRAP_WORD_CHAR },
 
     // BEGIN GDK CONSTANTS //
 
