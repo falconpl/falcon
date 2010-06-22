@@ -311,6 +311,7 @@ bool JSON::decode( Item& target, Stream* src ) const
                      return false;
 
                   target.setNil();
+                  src->unget( chr );
                   return true;
 
                case 't':
@@ -323,6 +324,7 @@ bool JSON::decode( Item& target, Stream* src ) const
                      return false;
 
                   target.setBoolean( true );
+                  src->unget( chr );
                   return true;
 
                case 'f':
@@ -336,6 +338,7 @@ bool JSON::decode( Item& target, Stream* src ) const
                      return false;
 
                   target.setBoolean( false );
+                  src->unget( chr );
                   return true;
 
                case '{':

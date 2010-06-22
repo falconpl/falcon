@@ -5,6 +5,7 @@ Feathers (0.9.6.5)
            in compiler.
   * added: hash module.
   * fixed: In logging module, some "%" patterns may lead to endless loops.
+  * fixed: Json decode was broken with separators after literals
 
 Feathers (0.9.6.4)
   * fixed: Added SO_REUSEADDR to default slocket initialization.
