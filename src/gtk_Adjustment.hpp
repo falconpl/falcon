@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_ADJUSTMENT( item ) \
+        ((GtkAdjustment*) Falcon::dyncast<Gtk::Adjustment*>( (item).asObjectSafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gtk {
