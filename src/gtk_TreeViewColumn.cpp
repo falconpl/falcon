@@ -166,7 +166,7 @@ FALCON_FUNC TreeViewColumn::new_with_attributes( VMARG )
         throw_inv_params( "S,GtkCellRenderer,A" );
 #endif
     AutoCString title( i_title->asString() );
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     CoreArray* attr = i_attr->asArray();
     const int len = attr->length();
 #ifndef NO_PARAMETER_CHECK
@@ -223,7 +223,7 @@ FALCON_FUNC TreeViewColumn::pack_start( VMARG )
         || !i_exp || !i_exp->isBoolean() )
         throw_inv_params( "GtkCellRenderer,B" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     gtk_tree_view_column_pack_start( GET_TREEVIEWCOLUMN( vm->self() ),
                                      cell, (gboolean) i_exp->asBoolean() );
 }
@@ -247,7 +247,7 @@ FALCON_FUNC TreeViewColumn::pack_end( VMARG )
         || !i_exp || !i_exp->isBoolean() )
         throw_inv_params( "GtkCellRenderer,B" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     gtk_tree_view_column_pack_end( GET_TREEVIEWCOLUMN( vm->self() ),
                                    cell, (gboolean) i_exp->asBoolean() );
 }
@@ -287,7 +287,7 @@ FALCON_FUNC TreeViewColumn::add_attribute( VMARG )
         || !i_col || !i_col->isInteger() )
         throw_inv_params( "GtkCellRenderer,S,I" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     AutoCString attr( i_attr->asString() );
     gtk_tree_view_column_add_attribute( GET_TREEVIEWCOLUMN( vm->self() ),
                                         cell, attr.c_str(), i_col->asInteger() );
@@ -313,7 +313,7 @@ FALCON_FUNC TreeViewColumn::set_attributes( VMARG )
         || !i_attr || !i_attr->isArray() )
         throw_inv_params( "GtkCellRenderer,A" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     CoreArray* attr = i_attr->asArray();
     const int len = attr->length();
 #ifndef NO_PARAMETER_CHECK
@@ -368,7 +368,7 @@ FALCON_FUNC TreeViewColumn::set_cell_data_func( VMARG )
         || !i_data )
         throw_inv_params( "GtkCellRenderer,[C],[X]" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     MYSELF;
     GET_OBJ( self );
     if ( i_func->isNil() )
@@ -437,7 +437,7 @@ FALCON_FUNC TreeViewColumn::clear_attributes( VMARG )
     if ( !i_cell || !i_cell->isObject() || !IS_DERIVED( i_cell, GtkCellRenderer ) )
         throw_inv_params( "GtkCellRenderer" );
 #endif
-    GtkCellRenderer* cell = GET_CELLRENDERER( i_cell );
+    GtkCellRenderer* cell = GET_CELLRENDERER( *i_cell );
     gtk_tree_view_column_clear_attributes( GET_TREEVIEWCOLUMN( vm->self() ), cell );
 }
 
