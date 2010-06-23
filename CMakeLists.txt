@@ -12,6 +12,8 @@ cmake_minimum_required(VERSION 2.6)
 
 INCLUDE( "falmod.cmake" )
 
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+
 #process source directory
 ADD_SUBDIRECTORY(src)
 

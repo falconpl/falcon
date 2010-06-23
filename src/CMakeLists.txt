@@ -18,6 +18,9 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES("${FALCON_LIB_PATH}")
 
+FIND_PACKAGE(GD REQUIRED)
+INCLUDE_DIRECTORIES(GD_INCLUDE_DIR)
+
 #sources
 FILE( GLOB SRC_FILES "*.cpp" )
 
@@ -31,6 +34,6 @@ ADD_LIBRARY( ${CURRENT_MODULE} MODULE
 
 #If your module needs some lib more, use the followings:
 #
-TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} falcon_engine libgd.a fontconfig png z jpeg freetype m)
+TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} falcon_engine ${GD_LIBRARIES} fontconfig freetype m)
 FALCON_INSTALL_MODULE( ${CURRENT_MODULE} )
 #
