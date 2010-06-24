@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_GDKWINDOW( item ) \
+        ((GdkWindow*) Falcon::dyncast<Gdk::Window*>( (item).asObjectSafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gdk {
