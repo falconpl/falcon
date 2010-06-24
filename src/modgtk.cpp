@@ -127,6 +127,7 @@
 #include "gtk_TreePath.hpp"
 #include "gtk_TreeRowReference.hpp"
 #include "gtk_TreeStore.hpp"
+#include "gtk_TreeView.hpp"
 #include "gtk_TreeViewColumn.hpp"
 #include "gtk_VBox.hpp"
 #include "gtk_VButtonBox.hpp"
@@ -283,6 +284,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::ToolItemGroup::modInit( self );
                 Falcon::Gtk::ToolPalette::modInit( self );
 #endif
+                Falcon::Gtk::TreeView::modInit( self );
             Falcon::Gtk::CellRenderer::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
