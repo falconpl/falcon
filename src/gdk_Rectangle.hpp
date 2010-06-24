@@ -3,7 +3,8 @@
 
 #include "modgtk.hpp"
 
-#include <gdk/gdk.h>
+#define GET_RECTANGLE( item ) \
+        (Falcon::dyncast<Gdk::Rectangle*>( (item).asObjectSafe() )->getRectangle())
 
 
 namespace Falcon {
