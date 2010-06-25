@@ -29,7 +29,7 @@ class MyHash from HashBase
     state = nil // internal state
     pos = 0 // internal state position
     shift = 0 // internal shift counter
-    outp = nil // the result from internal_finalize() will be put here
+    outp = nil // the result from finalize() will be put here
     halfsize = 0 // always bytes() / 2
     
     // ** the init block sets up the internal state and fills the buffer with its initial data, if required
@@ -39,7 +39,7 @@ class MyHash from HashBase
         self.state.fill(0xdeadc0de) // prevent memory from beeing un-initialized
         for i = 1 to self.halfsize - 1
             x = self.state[i - 1]
-            self.state[i] = x ^^ crc32(x)
+            self.state[i] = x ^^ crc32int(x)
         end
     end
     
@@ -75,13 +75,14 @@ class MyHash from HashBase
         end
     end
     
-    // ** calls to finalize() are checked internally, and, if required,
-    // ** forwarded to internal_finalize(). There is no special checking needed
-    // ** to prevent internal_finalize() getting called multiple times,
+    // ** finalize() is called by the module directly before toString(), toInt(), or toMemBuf().
+    // ** This method is intended to finish up unprocessed data, or apply last transformations to the internal state,
+    // ** and to make the actual hash digest available to the module.
+    // ** There is no special checking needed to prevent finalize() getting called multiple times,
     // ** because this is checked by the module, which will allow it
     // ** to be called only ONCE, and also take care that the update() methods
     // ** can't be called anymore.
-    function internal_finalize()      // must be declared, as it is invoked by the module on finalize()
+    function finalize()      // must be declared, as it is invoked by the module when the hash digest is requested
         b = self.bytes()
         self.outp = MemBuf(b, 1)
         self.outp.fill(0) // prevent memory from beeing un-initialized
@@ -103,10 +104,9 @@ class MyHash from HashBase
 end
 
 // helper function for int->int crc32 calculation
-function crc32(i)
+function crc32int(i)
     c = CRC32()
     c.updateInt(i, 4)
-    c.finalize()
     return c.toInt()
 end
 
@@ -136,6 +136,5 @@ else
         hash.update(buf) // hash the block
         buf.rewind() // reset position for next read
     end
-    hash.finalize()
     > hash // output as hex string
 end

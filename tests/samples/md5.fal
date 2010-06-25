@@ -39,6 +39,5 @@ else
         hash.update(buf) // hash the block
         buf.rewind() // reset position for next read
     end
-    hash.finalize()
     > hash // output as hex string
 end
