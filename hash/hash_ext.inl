@@ -81,7 +81,6 @@ This method accepts an @i arbitrary amount of parameters, each treated different
 - All parameters are hashed in the order they are passed.
 - Sequences can be nested.
 
-@note @b update() can be called arbitrarily often, until @b finalize() has been called.
 @note Multiple calls can be chained, e.g. hash.update(x).update(y).update(z)
 */
 template <class HASH> FALCON_FUNC Hash_update( ::Falcon::VMachine *vm )
@@ -123,7 +122,6 @@ It supports 1 up to 8 bytes (uint64).
 
 All integers are internally converted to little-endian. Floating-point numbers are automatically converted to Integers, all other types raise an error.
 
-@note @b updateInt() can be called arbitrarily often, until @b finalize() has been called.
 @note Multiple calls can be chained, e.g. hash.updateInt(x).updateInt(y).updateInt(z)
 */
 template <class HASH> FALCON_FUNC Hash_updateInt( ::Falcon::VMachine *vm )
@@ -157,31 +155,12 @@ template <class HASH> FALCON_FUNC Hash_updateInt( ::Falcon::VMachine *vm )
 }
 
 /*#
-@method finalize HashBase
-@brief Finalizes a hash and produces the actual result.
-@return The object itself.
-
-A hash object instance must be finalized before the result can be obtained.
-After finalizing, no more data can be added.
-
-@note Does nothing if the hash is already finalized.
-@note It is possible to add another call after @b finalize(), e.g. hash.finalize().toString()
-*/
-template <class HASH> FALCON_FUNC Hash_finalize( ::Falcon::VMachine *vm )
-{
-    Mod::HashCarrier<HASH> *carrier = (Mod::HashCarrier<HASH>*)(vm->self().asObject()->getUserData());
-    Mod::HashBase *hash = carrier->GetHash();
-    if(hash->IsFinalized())
-        return;
-
-    hash->Finalize();
-    vm->retval(vm->self());
-}
-
-/*#
 @method isFinalized HashBase
 @brief Checks if a hash is finalized.
 @return true if the hash is finalized, false if not.
+
+When a result from a hash is obtained, the hash will be finalized, making it impossible to add additional data.
+This method can be used if the finalization state of a hash is unknown.
 */
 template <class HASH> FALCON_FUNC Hash_isFinalized( ::Falcon::VMachine *vm )
 {
@@ -194,7 +173,6 @@ template <class HASH> FALCON_FUNC Hash_isFinalized( ::Falcon::VMachine *vm )
 @return The amount of @b bytes of the hash result.
 
 The amount of returned bytes is specific for each hash algorithm.
-Does not require finalize() called previously.
 */
 template <class HASH> FALCON_FUNC Hash_bytes( ::Falcon::VMachine *vm )
 {
@@ -228,13 +206,14 @@ template <class HASH> FALCON_FUNC Hash_bits( ::Falcon::VMachine *vm )
 @method toMemBuf HashBase
 @brief Returns the hash result in a MemBuf.
 @return The hash result, in a 1-byte wide MemBuf.
-@raise AccessError if the hash is not finalized.
 
-Before calling this, the hash must be finalized.
+@note After calling this, the hash will be finalized.
 */
 template <class HASH> FALCON_FUNC Hash_toMemBuf( ::Falcon::VMachine *vm )
 {
     Mod::HashBase *hash = ((Mod::HashCarrier<HASH>*)vm->self().asObject()->getUserData())->GetHash();
+    if(!hash->IsFinalized())
+        hash->Finalize();
     uint32 size = hash->DigestSize();
     Falcon::MemBuf_1 *buf = new Falcon::MemBuf_1(size);
     if(byte *digest = hash->GetDigest())
@@ -246,7 +225,7 @@ template <class HASH> FALCON_FUNC Hash_toMemBuf( ::Falcon::VMachine *vm )
     {
         throw new Falcon::AccessError( 
             Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
-            .extra(FAL_STR(hash_err_not_finalized)));
+            .extra(FAL_STR(hash_err_no_digest)));
     }
 }
 
@@ -261,13 +240,14 @@ template <> FALCON_FUNC Hash_toMemBuf<Mod::HashBaseFalcon>( ::Falcon::VMachine *
 @method toString HashBase
 @brief Returns the hash result as a hexadecimal string.
 @return The hash result, as a lowercased hexadecimal string.
-@raise AccessError if the hash was not finalized.
 
-Before calling this, the hash must be finalized. 
+@note After calling this, the hash will be finalized.
 */
 template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
 {
     Mod::HashBase *hash = ((Mod::HashCarrier<HASH>*)vm->self().asObject()->getUserData())->GetHash();
+    if(!hash->IsFinalized())
+        hash->Finalize();
     uint32 size = hash->DigestSize();
     if(byte *digest = hash->GetDigest())
     {
@@ -277,7 +257,7 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
     {
         throw new Falcon::AccessError( 
             Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
-            .extra(FAL_STR(hash_err_not_finalized)));
+            .extra(FAL_STR(hash_err_no_digest)));
     }
 }
 
@@ -285,17 +265,19 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
 @method toInt HashBase
 @brief Returns the result as an Integer value.
 @return The checksum result, as an Integer.
-@raise AccessError if the hash was not finalized.
 
 Converts up to 8 bytes from the actual hash result to an integer value and returns it, depending on its length.
 If the hash is longer, the 8 lowest bytes are taken. (MemBuf[0] to MemBuf[7])
 
-Before calling this, the hash must be finalized. 
+@note After calling this, the hash will be finalized. 
 @note The returned int is in native endianness.
 */
 template <class HASH> FALCON_FUNC Hash_toInt( ::Falcon::VMachine *vm )
 {
-    vm->retval((Falcon::int64)((Mod::HashCarrier<HASH>*)vm->self().asObject()->getUserData())->GetHash()->AsInt());
+    Mod::HashBase *hash = ((Mod::HashCarrier<HASH>*)vm->self().asObject()->getUserData())->GetHash();
+    if(!hash->IsFinalized())
+        hash->Finalize();
+    vm->retval((Falcon::int64)hash->AsInt());
 }
 
 /*#
@@ -342,6 +324,17 @@ template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMachine *vm )
     hash.Finalize();
 
     vm->retval(Mod::ByteArrayToHex(hash.GetDigest(), hash.DigestSize()));
+}
+
+/*#
+@method reset HashBase
+@brief Clears the hash state
+
+Clears a hash and sets it back to the state when it was created.
+*/
+template <class HASH> FALCON_FUNC Hash_reset( ::Falcon::VMachine *vm )
+{
+    ((Mod::HashCarrier<HASH>*)vm->self().asObject()->getUserData())->Reset();
 }
 
 

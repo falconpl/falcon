@@ -106,7 +106,7 @@ namespace Mod {
         HashBaseFalcon();
         ~HashBaseFalcon();
         virtual void UpdateData( const byte *ptr, uint32 size); // VM call to process() in overloaded falcon class
-        virtual void Finalize(void); // VM call to internal_finalize() in overloaded falcon class
+        virtual void Finalize(void); // VM call to finalize() in overloaded falcon class
         virtual uint32 DigestSize(void); // VM call to bytes() in overloaded falcon class
         virtual byte *GetDigest(void); // VM call to toMemBuf() in overloaded falcon class
         virtual uint64 AsInt(void);
@@ -117,7 +117,7 @@ namespace Mod {
     protected:
         void _GetCallableMethod(Falcon::Item& item, const Falcon::String& name);
         VMachine *_vm;
-        CoreObject *_self;
+        CoreObject *_self; // will be GC'd
         uint32 _bytes; // caches bytes() value
         byte *_digest; // stores a copy of toMemBuf() value once called
         uint64 _intval; // caches toInt() value
@@ -361,6 +361,7 @@ namespace Mod {
         HashCarrier() { hash = new HASH(); }
         ~HashCarrier() { delete hash; }
         inline HASH *GetHash(void) { return hash; }
+        inline void Reset(void) { delete hash; hash = new HASH(); }
 
         virtual HashCarrier<HASH> *clone() const { return NULL; } // not cloneable
 

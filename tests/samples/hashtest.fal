@@ -51,7 +51,6 @@ end
 function myhash(alg, items)
     h = alg()
     for i in items: h.update(i)
-    h.finalize()
     return h.toString()
 end
 
@@ -59,14 +58,12 @@ end
 function hashInt(alg, items)
     h = alg()
     for i in items: h.update(i)
-    h.finalize()
     return h.toInt()
 end
 
 function hashBuf(alg, items)
     h = alg()
     for i in items: h.update(i)
-    h.finalize()
     return h.toMemBuf()
 end
 
@@ -196,7 +193,6 @@ function test_hashes()
     expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
     sha = SHA1Hash()
     sha.update("abcdABCD")
-    sha.finalize()
     if not expect([myhash(SHA1Hash, [sha])], myhash(SHA1Hash, [sha.toMemBuf()]), "SHA1 hash"): good = false
     
     > "--- Checking sequence hashing ---"
@@ -225,12 +221,10 @@ function test_hashes()
     sha = SHA1Hash()
     sha.update().update().update() // this should not throw
     sha.updateInt(0x61, 1).updateInt(0x62, 1).updateInt(0x6463, 2).updateInt(0x44434241, 4) // little endian
-    sha.finalize()
     if not expect([sha.toString()], expected, "SHA1 int8/int16/int32"): good = false
     
     sha = SHA1Hash()
     sha.updateInt(0x4443424164636261, 8) // little endian
-    sha.finalize()
     if not expect([sha.toString()], expected, "SHA1 int64"): good = false
     
     > "--- Checking for Nil ---"
@@ -255,13 +249,6 @@ function test_hashes()
         > "Not overloaded update() did throw, good."
     end
     try
-        hb.finalize() // throws missing interface: internal_finalize() not found
-        good = false
-        > "FAIL! HashBase.finalize() didn't raise an error"
-     catch
-        > "Not overloaded finalize() did throw, good."
-    end
-    try
         t = hb.toMemBuf() // not overloaded, must throw
         good = false
         > "FAIL! HashBase.toMemBuf() didn't raise an error"
@@ -272,20 +259,11 @@ function test_hashes()
     > "--- Checking custom overloaded function"
     cx = Checksum16() // class defined below
     if not expect([cx.bits()], 16, "Checksum16 bits"): good = false
-    try
-        oops = cx.toString() // must throw, not finalized
-        good = false;
-        > "FAIL! Checksum16.toString() before finalize() didn't raise an error"
-    catch
-        > "Checksum16.toString() before finalize() did throw, good."
-    end
     cx.update("abcd", "ABCD")
-    cx.finalize()
     out1 = cx.toString()
-    cx.finalize()
     out2 = cx.toString()
     // out1 and out2 must be equal, otherwise there are internal problems
-    if not expect([out1, out2], "cb2d", "Checksum16 double finalize()"): good = false
+    if not expect([out1, out2], "cb2d", "Checksum16 double toString()"): good = false
     
     > "--- Checking for wrong return types in overloaded classes ---"
     try
@@ -329,7 +307,6 @@ function test_hashes()
     try
         cx = Checksum16()
         cy = Checksum16Wrong6()
-        cy.finalize()
         cx.update(cy)
         good = false
         > "FAIL! undetected stack overflow?!" // not sure if we can even reach this point, rather the VM would blow up in smoke at update()
@@ -344,7 +321,7 @@ function test_hashes()
         good = false
     end
     for e in getSupportedHashes()
-        v1 = makeHash(e).update("abc").finalize().toString()
+        v1 = makeHash(e).update("abc").toString()
         v2 = hash(false, e, "a", ["b", "c"])
         tmph = makeHash(e);
         tmph.update("a");
@@ -372,7 +349,7 @@ function test_hashes()
     
     > "--- Checking hash() with custom overloaded class ---"
     ch16 = Checksum16()
-    v1 = ch16.update("abc").finalize().toString()
+    v1 = ch16.update("abc").toString()
     v2 = hash(false, Checksum16, "abc")
     if(v1 != v2)
         > "FAIL! hash() returned wrong results! Should be: ", v1, ", was ", v2
@@ -386,7 +363,7 @@ function test_hashes()
 end
 
 // own class for a simple checksum, to test HashBase class overloading
-// ** process(buf), internal_finalize() -- have to be defined
+// ** process(buf), finalize() -- have to be defined
 // ** toMemBuf(), bytes() -- have to be overloaded
 class Checksum16 from HashBase
     val = 0xa374cf9e // state variable, for this checksum an int is sufficient, for hashes a membuf would be a better choice
@@ -403,7 +380,7 @@ class Checksum16 from HashBase
         end
     end
     
-    function internal_finalize()
+    function finalize()
         a = (self.val >> 24) && 0xFF
         b = (self.val >> 16) && 0xFF
         c = (self.val >> 8) && 0xFF
@@ -451,7 +428,7 @@ class NopHash2Bytes from HashBase
     function toMemBuf(): return self.retbuf
     function process(buf)
     end
-    function internal_finalize()
+    function finalize()
         self.retbuf = MemBuf(2,1)
         self.retbuf.fill(0)
         self.retbuf[0] = 1
@@ -464,7 +441,7 @@ class NopHash16Bytes from HashBase
     function toMemBuf(): return self.retbuf
     function process(buf)
     end
-    function internal_finalize()
+    function finalize()
         self.retbuf = MemBuf(16,1)
         self.retbuf.fill(0)
         self.retbuf[0] = 1
@@ -490,7 +467,6 @@ if test_hashes()
                     for i = 0 to 100
                         h = a()
                         h.update(s)
-                        h.finalize()
                         s = f(h) // use output as new input
                     end
                 end

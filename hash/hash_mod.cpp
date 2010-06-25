@@ -181,7 +181,7 @@ void HashBaseFalcon::Finalize(void)
         return;
 
     Falcon::Item m;
-    _GetCallableMethod(m, "internal_finalize");
+    _GetCallableMethod(m, "finalize");
     _vm->callItemAtomic(m, 0);
     _finalized = true; // assume success only if it didn't throw
 }
@@ -212,11 +212,8 @@ byte *HashBaseFalcon::GetDigest(void)
 
     // otherwise, calculate it
     if(!IsFinalized())
-    {
-        throw new Falcon::AccessError(
-            Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
-            .extra(_vm->moduleString(hash_err_not_finalized)));
-    }
+        Finalize();
+
     Falcon::Item m;
     _GetCallableMethod(m, "toMemBuf"); // this is safe since toMemBuf() is overloaded
     _vm->callItemAtomic(m, 0);

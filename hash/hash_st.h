@@ -47,7 +47,7 @@
 // functions as a shortcut.
 
 FAL_MODSTR( hash_err_finalized, "Hash already finalized" );
-FAL_MODSTR( hash_err_not_finalized, "Hash not finalized" );
+FAL_MODSTR( hash_err_no_digest, "Internal error: Hash digest is NULL" );
 FAL_MODSTR( hash_err_not_membuf_1, "Returned type is not MemBuf with word size 1" );
 FAL_MODSTR( hash_err_membuf_length_differs, "Returned MemBuf length is not what bytes() returns, fix this" );
 FAL_MODSTR( hash_err_size, "Hash can't have length 0" );
