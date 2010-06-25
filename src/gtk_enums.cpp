@@ -908,6 +908,13 @@ void Enums::modInit( Falcon::Module* mod )
 #endif
 
     /*
+     *  GdkExtensionMode
+     */
+    { "GDK_EXTENSION_EVENTS_NONE",      GDK_EXTENSION_EVENTS_NONE },
+    { "GDK_EXTENSION_EVENTS_ALL",       GDK_EXTENSION_EVENTS_ALL },
+    { "GDK_EXTENSION_EVENTS_CURSOR",    GDK_EXTENSION_EVENTS_CURSOR },
+
+    /*
      *  GdkFillRule
      */
     { "GDK_EVEN_ODD_RULE",  GDK_EVEN_ODD_RULE },
