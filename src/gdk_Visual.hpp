@@ -3,7 +3,8 @@
 
 #include "modgtk.hpp"
 
-#include <gdk/gdk.h>
+#define GET_VISUAL( item ) \
+        (Falcon::dyncast<Gdk::Visual*>( (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
