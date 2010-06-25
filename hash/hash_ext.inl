@@ -70,7 +70,6 @@ template <> FALCON_FUNC Hash_init<Mod::HashBaseFalcon>( ::Falcon::VMachine *vm )
 
 This method accepts an @i arbitrary amount of parameters, each treated differently:
 - Strings and MemBufs are hashed with respect to their byte count (1, 2, or 4 byte strings) and endianness.
-- MPZ (Big Numbers) are converted to a hex string internally, which is then converted to a byte array and hashed (this operation is endian-neutral).
 - Lists and Arrays are traversed, each item beeing hashed.
 - Dictionaries: only the values are hashed (the keys not). Note that the order in which the values are processed depends on the keys!
 - Nil as parameter is always skipped, even if contained in a Sequence.
@@ -207,7 +206,7 @@ template <class HASH> FALCON_FUNC Hash_bits( ::Falcon::VMachine *vm )
 @brief Returns the hash result in a MemBuf.
 @return The hash result, in a 1-byte wide MemBuf.
 
-@note After calling this, the hash will be finalized.
+@note Calling this method will finalize the hash.
 */
 template <class HASH> FALCON_FUNC Hash_toMemBuf( ::Falcon::VMachine *vm )
 {
@@ -241,7 +240,7 @@ template <> FALCON_FUNC Hash_toMemBuf<Mod::HashBaseFalcon>( ::Falcon::VMachine *
 @brief Returns the hash result as a hexadecimal string.
 @return The hash result, as a lowercased hexadecimal string.
 
-@note After calling this, the hash will be finalized.
+@note Calling this method will finalize the hash.
 */
 template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
 {
@@ -269,7 +268,7 @@ template <class HASH> FALCON_FUNC Hash_toString( ::Falcon::VMachine *vm )
 Converts up to 8 bytes from the actual hash result to an integer value and returns it, depending on its length.
 If the hash is longer, the 8 lowest bytes are taken. (MemBuf[0] to MemBuf[7])
 
-@note After calling this, the hash will be finalized. 
+@note Calling this method will finalize the hash. 
 @note The returned int is in native endianness.
 */
 template <class HASH> FALCON_FUNC Hash_toInt( ::Falcon::VMachine *vm )
