@@ -173,13 +173,13 @@ FALCON_MODULE_DECL
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::Drawable::modInit( self );
         Falcon::Gdk::Bitmap::modInit( self );
+        Falcon::Gdk::Pixmap::modInit( self );
         Falcon::Gdk::Window::modInit( self );
     Falcon::Gdk::Event::modInit( self );
         Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::GC::modInit( self );
     Falcon::Gdk::GCValues::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
-    Falcon::Gdk::Pixmap::modInit( self );
     Falcon::Gdk::Point::modInit( self );
     Falcon::Gdk::Rectangle::modInit( self );
     Falcon::Gdk::Region::modInit( self );
