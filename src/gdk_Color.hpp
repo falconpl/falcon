@@ -3,7 +3,8 @@
 
 #include "modgtk.hpp"
 
-#include <gdk/gdk.h>
+#define GET_COLOR( item ) \
+        (Falcon::dyncast<Gdk::Color*>( (item).asObjectSafe() )->getColor())
 
 
 namespace Falcon {
