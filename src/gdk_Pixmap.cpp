@@ -5,6 +5,7 @@
 #include "gdk_Pixmap.hpp"
 
 #include "gdk_Color.hpp"
+#include "gdk_Drawable.hpp"
 
 
 namespace Falcon {
@@ -76,15 +77,14 @@ FALCON_FUNC Pixmap::init( VMARG )
         || !i_height || !i_height->isInteger()
         || !i_depth || !i_depth->isInteger() )
         throw_inv_params( "[Gdkdrawable],I,I,I" );
+    if ( i_depth->asInteger() == -1 && i_draw->isNil() )
+        throw_inv_params( "Gdkdrawable == nil and depth == -1" );
 #endif
-    GdkDrawable* draw = i_draw->isNil() ? NULL
-                        : (GdkDrawable*) COREGOBJECT( i_draw )->getGObject();
-    GdkPixmap* pix = gdk_pixmap_new( draw,
-                                     i_width->asInteger(),
-                                     i_height->asInteger(),
-                                     i_depth->asInteger() );
     MYSELF;
-    self->setGObject( (GObject*) pix );
+    self->setGObject( (GObject*) gdk_pixmap_new( i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
+                                                 i_width->asInteger(),
+                                                 i_height->asInteger(),
+                                                 i_depth->asInteger() ) );
 }
 
 
@@ -120,19 +120,15 @@ FALCON_FUNC Pixmap::create_from_data( VMARG )
         || !i_bg || !i_bg->isObject() || !IS_DERIVED( i_bg, GdkColor ) )
         throw_inv_params( "[GdkDrawable],S,I,I,GdkColor,GdkColor" );
 #endif
-    GdkDrawable* draw = i_draw->isNil() ? NULL
-                        : (GdkDrawable*) COREGOBJECT( i_draw )->getGObject();
     AutoCString data( i_data->asString() );
-    GdkColor* fg = dyncast<Gdk::Color*>( i_fg->asObjectSafe() )->getColor();
-    GdkColor* bg = dyncast<Gdk::Color*>( i_bg->asObjectSafe() )->getColor();
-    GdkPixmap* pix = gdk_pixmap_create_from_data( draw,
-                                                  data.c_str(),
-                                                  i_width->asInteger(),
-                                                  i_height->asInteger(),
-                                                  i_depth->asInteger(),
-                                                  fg,
-                                                  bg );
-    vm->retval( new Gdk::Pixmap( vm->findWKI( "GdkPixmap" )->asClass(), pix ) );
+    vm->retval( new Gdk::Pixmap( vm->findWKI( "GdkPixmap" )->asClass(),
+                gdk_pixmap_create_from_data( i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
+                                             data.c_str(),
+                                             i_width->asInteger(),
+                                             i_height->asInteger(),
+                                             i_depth->asInteger(),
+                                             GET_COLOR( *i_fg ),
+                                             GET_COLOR( *i_bg ) ) ) );
 }
 
 

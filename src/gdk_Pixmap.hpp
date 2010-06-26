@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_PIXMAP( item ) \
+        ((GdkPixmap*) Falcon::dyncast<Gdk::Pixmap*>( (item).asObjectsafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gdk {
