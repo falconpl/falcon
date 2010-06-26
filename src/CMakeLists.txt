@@ -10,6 +10,7 @@ falcon_define_module( CURRENT_MODULE gtk )
 set( SRC_FILES
     g_Object.cpp
     g_ParamSpec.cpp
+    gdk_Bitmap.cpp
     gdk_Color.cpp
     gdk_Colormap.cpp
     gdk_Cursor.cpp
@@ -153,6 +154,7 @@ set( SRC_FILES
 set( HDR_FILES
     g_Object.hpp
     g_ParamSpec.hpp
+    gdk_Bitmap.hpp
     gdk_Color.hpp
     gdk_Colormap.hpp
     gdk_Cursor.hpp

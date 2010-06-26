@@ -7,6 +7,7 @@
 #include "g_Object.hpp"
 #include "g_ParamSpec.hpp"
 
+#include "gdk_Bitmap.hpp"
 #include "gdk_Color.hpp"
 #include "gdk_Colormap.hpp"
 #include "gdk_Cursor.hpp"
@@ -171,6 +172,7 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Cursor::modInit( self );
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::Drawable::modInit( self );
+        Falcon::Gdk::Bitmap::modInit( self );
         Falcon::Gdk::Window::modInit( self );
     Falcon::Gdk::Event::modInit( self );
         Falcon::Gdk::EventButton::modInit( self );
