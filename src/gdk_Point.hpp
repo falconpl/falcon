@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_POINT( item ) \
+        (Falcon::dyncast<Gdk::Point*>( (item).asObjectSafe() )->getPoint())
+
 
 namespace Falcon {
 namespace Gdk {
