@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_DRAWABLE( item ) \
+        ((GdkDrawable*) Falcon::dyncast<Gdk::Drawable*>( (item).asObjectSafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gdk {
@@ -46,13 +49,13 @@ public:
     static FALCON_FUNC get_clip_region( VMARG );
 
     static FALCON_FUNC get_visible_region( VMARG );
-#if 0
+
     static FALCON_FUNC draw_point( VMARG );
 
     static FALCON_FUNC draw_points( VMARG );
 
     static FALCON_FUNC draw_line( VMARG );
-
+#if 0
     static FALCON_FUNC draw_lines( VMARG );
 
     static FALCON_FUNC draw_pixbuf( VMARG );

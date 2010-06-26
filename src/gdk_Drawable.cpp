@@ -6,6 +6,8 @@
 
 #include "gdk_Colormap.hpp"
 //#include "gdk_Display.hpp"
+#include "gdk_GC.hpp"
+#include "gdk_Point.hpp"
 #include "gdk_Region.hpp"
 #include "gdk_Screen.hpp"
 #include "gdk_Visual.hpp"
@@ -44,10 +46,10 @@ void Drawable::modInit( Falcon::Module* mod )
     { "get_size",           &Drawable::get_size },
     { "get_clip_region",    &Drawable::get_clip_region },
     { "get_visible_region", &Drawable::get_visible_region },
+    { "draw_point",         &Drawable::draw_point },
+    { "draw_points",        &Drawable::draw_points },
+    { "draw_line",          &Drawable::draw_line },
 #if 0
-    { "draw_point",    &Drawable:: },
-    { "draw_points",    &Drawable:: },
-    { "draw_line",    &Drawable:: },
     { "draw_lines",    &Drawable:: },
     { "draw_pixbuf",    &Drawable:: },
     { "draw_segments",    &Drawable:: },
@@ -130,10 +132,8 @@ FALCON_FUNC Drawable::get_data( VMARG );
 FALCON_FUNC Drawable::get_screen( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GdkScreen* screen = gdk_drawable_get_screen( (GdkDrawable*)_obj );
-    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), screen ) );
+    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(),
+                    gdk_drawable_get_screen( GET_DRAWABLE( vm->self() ) ) ) );
 }
 
 
@@ -145,10 +145,8 @@ FALCON_FUNC Drawable::get_screen( VMARG )
 FALCON_FUNC Drawable::get_visual( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GdkVisual* vis = gdk_drawable_get_visual( (GdkDrawable*)_obj );
-    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(), vis ) );
+    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(),
+                    gdk_drawable_get_visual( GET_DRAWABLE( vm->self() ) ) ) );
 }
 
 
@@ -169,10 +167,8 @@ FALCON_FUNC Drawable::set_colormap( VMARG )
     if ( !i_map || !i_map->isObject() || !IS_DERIVED( i_map, GdkColormap ) )
         throw_inv_params( "GdkColormap" );
 #endif
-    GdkColormap* map = (GdkColormap*) COREGOBJECT( i_map )->getGObject();
-    MYSELF;
-    GET_OBJ( self );
-    gdk_drawable_set_colormap( (GdkDrawable*)_obj, map );
+    gdk_drawable_set_colormap( GET_DRAWABLE( vm->self() ),
+                               GET_COLORMAP( *i_map ) );
 }
 
 
@@ -184,9 +180,7 @@ FALCON_FUNC Drawable::set_colormap( VMARG )
 FALCON_FUNC Drawable::get_colormap( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GdkColormap* map = gdk_drawable_get_colormap( (GdkDrawable*)_obj );
+    GdkColormap* map = gdk_drawable_get_colormap( GET_DRAWABLE( vm->self() ) );
     if ( map )
         vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(), map ) );
     else
@@ -204,16 +198,14 @@ FALCON_FUNC Drawable::get_colormap( VMARG )
 FALCON_FUNC Drawable::get_depth( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gdk_drawable_get_depth( (GdkDrawable*)_obj ) );
+    vm->retval( gdk_drawable_get_depth( GET_DRAWABLE( vm->self() ) ) );
 }
 
 
 /*#
     @method get_size
     @brief Returns the size of drawable.
-    @return an array ( drawable's width, drawable's height )
+    @return an array [ drawable's width, drawable's height ]
 
     On the X11 platform, if drawable is a GdkWindow, the returned size is the
     size reported in the most-recently-processed configure event, rather than
@@ -222,10 +214,8 @@ FALCON_FUNC Drawable::get_depth( VMARG )
 FALCON_FUNC Drawable::get_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint w, h;
-    gdk_drawable_get_size( (GdkDrawable*)_obj, &w, &h );
+    gdk_drawable_get_size( GET_DRAWABLE( vm->self() ), &w, &h );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
@@ -246,10 +236,8 @@ FALCON_FUNC Drawable::get_size( VMARG )
 FALCON_FUNC Drawable::get_clip_region( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GdkRegion* reg = gdk_drawable_get_clip_region( (GdkDrawable*)_obj );
-    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), reg,
+    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(),
+                                 gdk_drawable_get_clip_region( GET_DRAWABLE( vm->self() ) ),
                                  true ) );
 }
 
@@ -265,18 +253,112 @@ FALCON_FUNC Drawable::get_clip_region( VMARG )
 FALCON_FUNC Drawable::get_visible_region( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GdkRegion* reg = gdk_drawable_get_visible_region( (GdkDrawable*)_obj );
-    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), reg,
+    vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(),
+                                 gdk_drawable_get_visible_region( GET_DRAWABLE( vm->self() ) ),
                                  true ) );
 }
 
 
+/*#
+    @method draw_point
+    @brief Draws a point, using the foreground color and other attributes of the GdkGC.
+    @param gc a GdkGC.
+    @param x the x coordinate of the point.
+    @param y the y coordinate of the point.
+ */
+FALCON_FUNC Drawable::draw_point( VMARG )
+{
+    Item* i_gc = vm->param( 0 );
+    Item* i_x = vm->param( 1 );
+    Item* i_y = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_gc || !i_gc->isObject() || !IS_DERIVED( i_gc, GdkGC )
+        || !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "GdkGC,I,I" );
+#endif
+    gdk_draw_point( GET_DRAWABLE( vm->self() ),
+                    GET_GC( *i_gc ),
+                    i_x->asInteger(),
+                    i_y->asInteger() );
+}
+
+
+/*#
+    @method draw_points
+    @brief Draws a number of points, using the foreground color and other attributes of the GdkGC.
+    @param gc a GdkGC.
+    @param points an array of GdkPoint structures.
+ */
+FALCON_FUNC Drawable::draw_points( VMARG )
+{
+    Item* i_gc = vm->param( 0 );
+    Item* i_arr = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_gc || !i_gc->isObject() || !IS_DERIVED( i_gc, GdkGC )
+        || !i_arr || !i_arr->isArray() )
+        throw_inv_params( "GdkGC,A" );
+#endif
+    CoreArray* arr = i_arr->asArray();
+    const int len = arr->length();
+    if ( len == 0 )
+    {
+        g_print( "Drawable::draw_points: Warning: empty array, bypassing.\n" );
+        return;
+    }
+    GdkPoint* pts = (GdkPoint*) memAlloc( sizeof( GdkPoint ) * len );
+    Item it;
+    for ( int i = 0; i < len; ++i )
+    {
+        it = arr->at( i );
+#ifndef NO_PARAMETER_CHECK
+        if ( !it.isObject() || !IS_DERIVED( &it, GdkPoint ) )
+        {
+            memFree( pts );
+            throw_inv_params( "GdkPoint" );
+        }
+#endif
+        memcpy( &pts[i], GET_POINT( it ), sizeof( GdkPoint ) );
+    }
+    gdk_draw_points( GET_DRAWABLE( vm->self() ), GET_GC( *i_gc ), pts, len );
+    memFree( pts );
+}
+
+
+/*#
+    @method draw_line
+    @brief Draws a line, using the foreground color and other attributes of the GdkGC.
+    @param gc a GdkGC.
+    @param x1 the x coordinate of the start point.
+    @param y1 the y coordinate of the start point.
+    @param x2 the x coordinate of the end point.
+    @param y2 the y coordinate of the end point.
+ */
+FALCON_FUNC Drawable::draw_line( VMARG )
+{
+    Item* i_gc = vm->param( 0 );
+    Item* i_x1 = vm->param( 1 );
+    Item* i_y1 = vm->param( 2 );
+    Item* i_x2 = vm->param( 3 );
+    Item* i_y2 = vm->param( 4 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_gc || !i_gc->isObject() || !IS_DERIVED( i_gc, GdkGC )
+        || !i_x1 || !i_x1->isInteger()
+        || !i_y1 || !i_y1->isInteger()
+        || !i_x2 || !i_x2->isInteger()
+        || !i_y2 || !i_y2->isInteger() )
+        throw_inv_params( "GdkGC,I,I,I,I" );
+#endif
+    gdk_draw_line( GET_DRAWABLE( vm->self() ),
+                   GET_GC( *i_gc ),
+                   i_x1->asInteger(),
+                   i_y1->asInteger(),
+                   i_x2->asInteger(),
+                   i_y2->asInteger() );
+}
+
+
 #if 0
-FALCON_FUNC Drawable::draw_point( VMARG );
-FALCON_FUNC Drawable::draw_points( VMARG );
-FALCON_FUNC Drawable::draw_line( VMARG );
 FALCON_FUNC Drawable::draw_lines( VMARG );
 FALCON_FUNC Drawable::draw_pixbuf( VMARG );
 FALCON_FUNC Drawable::draw_segments( VMARG );
