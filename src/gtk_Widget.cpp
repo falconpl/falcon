@@ -6,11 +6,20 @@
 
 #include "g_ParamSpec.hpp"
 
+#include "gdk_Bitmap.hpp"
+#include "gdk_Color.hpp"
+#include "gdk_Colormap.hpp"
+#include "gdk_Event.hpp"
 #include "gdk_EventButton.hpp"
+#include "gdk_Rectangle.hpp"
+#include "gdk_Visual.hpp"
+#include "gdk_Window.hpp"
 
+#include "gtk_CellEditable.hpp"
+//#include "gtk_ExtendedLayout.hpp"
+#include "gtk_FileChooser.hpp"
 #include "gtk_Requisition.hpp"
-
-#include <gtk/gtk.h>
+#include "gtk_ToolShell.hpp"
 
 
 namespace Falcon {
@@ -98,6 +107,9 @@ void Widget::modInit( Falcon::Module* mod )
     //{ "signal_visibility_notify_event", &Widget::signal_visibility_notify_event },
     //{ "signal_window_state_event",      &Widget::signal_window_state_event },
     { "destroy",                &Widget::destroy },
+#if 0 // unused
+    { "destroyed",              &Widget::destroyed },
+#endif
     { "unparent",               &Widget::unparent },
     { "show",                   &Widget::show },
     { "show_now",               &Widget::show_now },
@@ -111,24 +123,125 @@ void Widget::modInit( Falcon::Module* mod )
     { "queue_draw",             &Widget::queue_draw },
     { "queue_resize",           &Widget::queue_resize },
     { "queue_resize_no_redraw", &Widget::queue_resize_no_redraw },
-    //{ "draw",                   &Widget::draw },
     { "size_request",           &Widget::size_request },
     { "get_child_requisition",  &Widget::get_child_requisition },
-
-
+#if 0 // todo
+    { "size_allocate",          &Widget::size_allocate },
+    { "add_accelerator",        &Widget::add_accelerator },
+    { "remove_accelerator",     &Widget::remove_accelerator },
+    { "set_accel_path",         &Widget::set_accel_path },
+    { "list_accel_closures",    &Widget::list_accel_closures },
+#endif
+    { "can_activate_accel",     &Widget::can_activate_accel },
+    { "event",                  &Widget::event },
+    { "activate",               &Widget::activate },
     { "reparent",               &Widget::reparent },
+    { "intersect",              &Widget::intersect },
     { "is_focus",               &Widget::is_focus },
     { "grab_focus",             &Widget::grab_focus },
     { "grab_default",           &Widget::grab_default },
     { "set_name",               &Widget::set_name },
     { "get_name",               &Widget::get_name },
+    { "set_state",              &Widget::set_state },
     { "set_sensitive",          &Widget::set_sensitive },
+    { "set_parent",             &Widget::set_parent },
+    { "set_parent_window",      &Widget::set_parent_window },
+    { "get_parent_window",      &Widget::get_parent_window },
     { "set_events",             &Widget::set_events },
-    { "add_events",             &Widget::add_events },
-    { "get_toplevel",           &Widget::set_sensitive },
     { "get_events",             &Widget::get_events },
+    { "add_events",             &Widget::add_events },
+    { "set_extension_events",   &Widget::set_extension_events },
+    { "get_extension_events",   &Widget::get_extension_events },
+#if GTK_CHECK_VERSION( 3, 0, 0 )
+    { "set_device_events",      &Widget::set_device_events },
+    { "get_device_events",      &Widget::get_device_events },
+    { "add_device_events",      &Widget::add_device_events },
+#endif
+    { "get_toplevel",           &Widget::get_toplevel },
+    { "get_ancestor",           &Widget::get_ancestor },
+    { "get_colormap",           &Widget::get_colormap },
+    { "set_colormap",           &Widget::set_colormap },
+    { "get_visual",             &Widget::get_visual },
+    { "get_pointer",            &Widget::get_pointer },
     { "is_ancestor",            &Widget::is_ancestor },
+    { "translate_coordinates",  &Widget::translate_coordinates },
     { "hide_on_delete",         &Widget::hide_on_delete },
+#if 0 // todo
+    { "set_style",              &Widget::set_style },
+#endif
+    { "ensure_style",           &Widget::ensure_style },
+#if 0 // todo
+    { "get_style",              &Widget::get_style },
+#endif
+    { "reset_rc_styles",        &Widget::reset_rc_styles },
+    { "push_colormap",          &Widget::push_colormap },
+    { "pop_colormap",           &Widget::pop_colormap },
+    { "set_default_colormap",   &Widget::set_default_colormap },
+#if 0 // todo
+    { "get_default_style",      &Widget::get_default_style },
+#endif
+    { "get_default_colormap",   &Widget::get_default_colormap },
+    { "get_default_visual",     &Widget::get_default_visual },
+    { "set_direction",          &Widget::set_direction },
+    { "get_direction",          &Widget::get_direction },
+    { "set_default_direction",  &Widget::set_default_direction },
+    { "get_default_direction",  &Widget::get_default_direction },
+    { "shape_combine_mask",     &Widget::shape_combine_mask },
+    { "input_shape_combine_mask",&Widget::input_shape_combine_mask },
+    { "path",                   &Widget::path },
+    { "class_path",             &Widget::class_path },
+    { "get_composite_name",     &Widget::get_composite_name },
+#if 0 // todo
+    { "modify_style",    &Widget:: },
+    { "get_modifier_style",    &Widget:: },
+#endif
+    { "modify_fg",              &Widget::modify_fg },
+    { "modify_bg",              &Widget::modify_bg },
+    { "modify_text",            &Widget::modify_text },
+    { "modify_base",            &Widget::modify_base },
+#if 0
+    { "modify_font",    &Widget:: },
+    { "modify_cursor",    &Widget:: },
+    { "create_pango_context",    &Widget:: },
+    { "get_pango_context",    &Widget:: },
+    { "create_pango_layout",    &Widget:: },
+    { "widget_render_icon",    &Widget:: },
+    { "pop_composite_child",    &Widget:: },
+    { "push_composite_child",    &Widget:: },
+    { "queue_clear",    &Widget:: },
+    { "queue_clear_area",    &Widget:: },
+    { "queue_draw_area",    &Widget:: },
+    { "reset_shapes",    &Widget:: },
+    { "set_app_paintable",    &Widget:: },
+    { "set_double_buffered",    &Widget:: },
+    { "set_redraw_on_allocate",    &Widget:: },
+    { "set_composite_name",    &Widget:: },
+    { "set_scroll_adjustments",    &Widget:: },
+    { "mnemonic_activate",    &Widget:: },
+    { "class_install_style_property",    &Widget:: },
+    { "class_install_style_property_parser",    &Widget:: },
+    { "class_find_style_property",    &Widget:: },
+    { "class_list_style_properties",    &Widget:: },
+    { "region_intersect",    &Widget:: },
+    { "send_expose",    &Widget:: },
+    { "style_get",    &Widget:: },
+    { "style_get_property",    &Widget:: },
+    { "style_get_valist",    &Widget:: },
+    { "style_attach",    &Widget:: },
+    { "get_accessible",    &Widget:: },
+    { "child_focus",    &Widget:: },
+    { "child_notify",    &Widget:: },
+    { "freeze_child_notify",    &Widget:: },
+    { "get_child_visible",    &Widget:: },
+    { "get_parent",    &Widget:: },
+    { "get_settings",    &Widget:: },
+    { "get_clipboard",    &Widget:: },
+    { "get_display",    &Widget:: },
+    { "get_root_window",    &Widget:: },
+    { "get_screen",    &Widget:: },
+    { "has_screen",    &Widget:: },
+#endif
+
 
     { "get_size_request",       &Widget::get_size_request },
     //{ "set_child_visible",      &Widget::set_child_visible },
@@ -140,6 +253,11 @@ void Widget::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Widget, meth->name, meth->cb );
+
+    Gtk::CellEditable::clsInit( mod, c_Widget );
+    //Gtk::ExtendedLayout::clsInit( mod, c_Widget );
+    Gtk::FileChooser::clsInit( mod, c_Widget );
+    Gtk::ToolShell::clsInit( mod, c_Widget );
 }
 
 
@@ -161,6 +279,8 @@ Falcon::CoreObject* Widget::factory( const Falcon::CoreClass* gen, void* wdt, bo
 
     GtkWidget is the base class all widgets in GTK+ derive from.
     It manages the widget lifecycle, states and style.
+
+    [...]
  */
 
 
@@ -931,20 +1051,28 @@ void Widget::on_size_request( GtkWidget* obj, GtkRequisition* req, gpointer _vm 
     @method destroy GtkWidget
     @brief Destroys a widget.
 
-    Equivalent to gtk_object_destroy().
+    Equivalent to gtk_object_destroy(), except that you don't have to cast the
+    widget to GtkObject. When a widget is destroyed, it will break any references
+    it holds to other objects. If the widget is inside a container, the widget
+    will be removed from the container. If the widget is a toplevel (derived from
+    GtkWindow), it will be removed from the list of toplevels, and the reference
+    GTK+ holds to it will be removed. Removing a widget from its container or the
+    list of toplevels results in the widget being finalized, unless you've added
+    additional references to the widget with g_object_ref().
 
     In most cases, only toplevel widgets (windows) require explicit destruction,
     because when you destroy a toplevel its children will be destroyed as well.
-
-    In Falcon, you should not need to use that method.
  */
 FALCON_FUNC Widget::destroy( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_destroy( (GtkWidget*)_obj );
+    gtk_widget_destroy( GET_WIDGET( vm->self() ) );
 }
+
+
+#if 0 // unused
+FALCON_FUNC Widget::destroyed( VMARG );
+#endif
 
 
 /*#
@@ -957,35 +1085,45 @@ FALCON_FUNC Widget::destroy( VMARG )
 FALCON_FUNC Widget::unparent( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_unparent( (GtkWidget*)_obj );
+    gtk_widget_unparent( GET_WIDGET( vm->self() ) );
 }
 
 
 /*#
     @method show GtkWidget
     @brief Flags a widget to be displayed.
+
+    Any widget that isn't shown will not appear on the screen. If you want to show
+    all the widgets in a container, it's easier to call gtk_widget_show_all() on
+    the container, instead of individually showing the widgets.
+
+    Remember that you have to show the containers containing a widget, in addition
+    to the widget itself, before it will appear onscreen.
+
+    When a toplevel container is shown, it is immediately realized and mapped;
+    other shown widgets are realized and mapped when their toplevel container is
+    realized and mapped.
  */
 FALCON_FUNC Widget::show( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_show( ((GtkWidget*)_obj) );
+    gtk_widget_show( GET_WIDGET( vm->self() ) );
 }
 
 
 /*#
     @method show_now GtkWidget
     @brief Shows a widget.
+
+    If the widget is an unmapped toplevel widget (i.e. a GtkWindow that has not
+    yet been shown), enter the main loop and wait for the window to actually be
+    mapped. Be careful; because the main loop is running, anything can happen
+    during this function.
  */
 FALCON_FUNC Widget::show_now( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_show_now( ((GtkWidget*)_obj) );
+    gtk_widget_show_now( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -996,9 +1134,7 @@ FALCON_FUNC Widget::show_now( VMARG )
 FALCON_FUNC Widget::hide( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_hide( ((GtkWidget*)_obj) );
+    gtk_widget_hide( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1009,9 +1145,7 @@ FALCON_FUNC Widget::hide( VMARG )
 FALCON_FUNC Widget::show_all( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_show_all( ((GtkWidget*)_obj) );
+    gtk_widget_show_all( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1022,9 +1156,7 @@ FALCON_FUNC Widget::show_all( VMARG )
 FALCON_FUNC Widget::hide_all( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_hide_all( ((GtkWidget*)_obj) );
+    gtk_widget_hide_all( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1037,9 +1169,7 @@ FALCON_FUNC Widget::hide_all( VMARG )
 FALCON_FUNC Widget::map( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_map( (GtkWidget*)_obj );
+    gtk_widget_map( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1052,9 +1182,7 @@ FALCON_FUNC Widget::map( VMARG )
 FALCON_FUNC Widget::unmap( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_unmap( (GtkWidget*)_obj );
+    gtk_widget_unmap( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1080,9 +1208,7 @@ FALCON_FUNC Widget::unmap( VMARG )
 FALCON_FUNC Widget::realize( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_realize( (GtkWidget*)_obj );
+    gtk_widget_realize( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1096,9 +1222,7 @@ FALCON_FUNC Widget::realize( VMARG )
 FALCON_FUNC Widget::unrealize( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_unrealize( (GtkWidget*)_obj );
+    gtk_widget_unrealize( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1109,9 +1233,7 @@ FALCON_FUNC Widget::unrealize( VMARG )
 FALCON_FUNC Widget::queue_draw( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_queue_draw( (GtkWidget*)_obj );
+    gtk_widget_queue_draw( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1127,9 +1249,7 @@ FALCON_FUNC Widget::queue_draw( VMARG )
 FALCON_FUNC Widget::queue_resize( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_queue_resize( (GtkWidget*)_obj );
+    gtk_widget_queue_resize( GET_WIDGET( vm->self() ) );
 }
 
 
@@ -1140,19 +1260,18 @@ FALCON_FUNC Widget::queue_resize( VMARG )
 FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_queue_resize_no_redraw( (GtkWidget*)_obj );
+    gtk_widget_queue_resize_no_redraw( GET_WIDGET( vm->self() ) );
 }
-
-
-//FALCON_FUNC Widget::draw( VMARG );
 
 
 /*#
     @method size_request GtkWidget
-    @brief Get the size "requisition" of the widget.
+    @brief Get the size requisition of the widget.
     @return GtkRequisition object
+
+    Warning: gtk_widget_size_request has been deprecated since version 3.0 and
+    should not be used in newly-written code.
+    Use gtk_extended_layout_get_desired_size() instead.
 
     This function is typically used when implementing a GtkContainer subclass.
     Obtains the preferred size of a widget. The container uses this information
@@ -1170,12 +1289,9 @@ FALCON_FUNC Widget::queue_resize_no_redraw( VMARG )
 FALCON_FUNC Widget::size_request( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     GtkRequisition req;
-    gtk_widget_size_request( (GtkWidget*)_obj, &req );
-    Item* wki = vm->findWKI( "GtkRequisition" );
-    vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
+    gtk_widget_size_request( GET_WIDGET( vm->self() ), &req );
+    vm->retval( new Gtk::Requisition( vm->findWKI( "GtkRequisition" )->asClass(), &req ) );
 }
 
 
@@ -1183,114 +1299,229 @@ FALCON_FUNC Widget::size_request( VMARG )
     @method get_child_requisition GtkWidget
     @brief This function is only for use in widget implementations.
 
+    Warning: gtk_widget_get_child_requisition has been deprecated since version
+    3.0 and should not be used in newly-written code.
+    Use gtk_extended_layout_get_desired_size() instead.
+
     Obtains widget->requisition, unless someone has forced a particular geometry
     on the widget (e.g. with gtk_widget_set_size_request()), in which case it
     returns that geometry instead of the widget's requisition.
+
+    This function differs from gtk_widget_size_request() in that it retrieves
+    the last size request value from widget->requisition, while
+    gtk_widget_size_request() actually calls the "size_request" method on widget
+    to compute the size request and fill in widget->requisition, and only then
+    returns widget->requisition.
+
+    Because this function does not call the "size_request" method, it can only
+    be used when you know that widget->requisition is up-to-date, that is,
+    gtk_widget_size_request() has been called since the last time a resize was
+    queued. In general, only container implementations have this information;
+    applications should use gtk_widget_size_request().
  */
 FALCON_FUNC Widget::get_child_requisition( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     GtkRequisition req;
-    gtk_widget_get_child_requisition( (GtkWidget*)_obj, &req );
-    Item* wki = vm->findWKI( "GtkRequisition" );
-    vm->retval( new Gtk::Requisition( wki->asClass(), &req ) );
+    gtk_widget_get_child_requisition( GET_WIDGET( vm->self() ), &req );
+    vm->retval( new Gtk::Requisition( vm->findWKI( "GtkRequisition" )->asClass(), &req ) );
+}
+
+#if 0 // todo
+FALCON_FUNC Widget::size_allocate( VMARG );
+
+
+/*#
+    @method add_accelerator GtkWidget
+    @brief Installs an accelerator for this widget in accel_group that causes accel_signal to be emitted if the accelerator is activated.
+    @param accel_signal widget signal to emit on accelerator activation
+    @param accel_group accel group for this widget, added to its toplevel (GtkAccelGroup).
+    @param accel_key GDK keyval of the accelerator.
+    @param accel_mods modifier key combination of the accelerator (GdkModifierType).
+    @param accel_flags flag accelerators, e.g. GTK_ACCEL_VISIBLE (GtkAccelFlags).
+
+    The accel_group needs to be added to the widget's toplevel via
+    gtk_window_add_accel_group(), and the signal must be of type G_RUN_ACTION.
+    Accelerators added through this function are not user changeable during runtime.
+    If you want to support accelerators that can be changed by the user, use
+    gtk_accel_map_add_entry() and gtk_widget_set_accel_path() or
+    gtk_menu_item_set_accel_path() instead.
+ */
+FALCON_FUNC Widget::add_accelerator( VMARG )
+{
+    Item* i_sig = vm->param( 0 );
+    Item* i_grp = vm->param( 1 );
+    Item* i_key = vm->param( 2 );
+    Item* i_mod = vm->param( 3 );
+    Item* i_flg = vm->param( 4 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_sig || !i_sig->isString()
+        || !i_grp || !i_grp->isObject() || !IS_DERIVED( i_grp, GtkAccelGroup )
+        || !i_key || !i_key->isInteger()
+        || !i_mod || !i_mod->isInteger()
+        || !i_flg || !i_flg->isInteger() )
+        throw_inv_params( "S,GtkAccelGroup,I,GdkModifierType,GtkAccelFlags" );
+#endif
+    AutoCString sig( i_sig->asString() );
+    GtkAccelGroup* grp = GET_ACCELGROUP( *i_grp );
+    gtk_widget_add_accelerator( GET_WIDGET( vm->self() ),
+                                sig.c_str(),
+                                grp,
+                                i_key->asInteger(),
+                                (GdkModifierType) i_mod->asInteger(),
+                                (GtkAccelFlags) i_flg->asInteger() );
 }
 
 
-//FALCON_FUNC Widget::size_allocate( VMARG );
+FALCON_FUNC Widget::remove_accelerator( VMARG );
 
-//FALCON_FUNC Widget::add_accelerator( VMARG );
+FALCON_FUNC Widget::set_accel_path( VMARG );
 
-//FALCON_FUNC Widget::remomve_accelerator( VMARG );
+FALCON_FUNC Widget::list_accel_closures( VMARG );
+#endif
 
-//FALCON_FUNC Widget::set_accel_path( VMARG );
 
-//FALCON_FUNC Widget::list_accel_closures( VMARG );
+/*#
+    @method can_activate_accel GtkWidget
+    @brief Determines whether an accelerator that activates the signal identified by signal_id can currently be activated.
+    @param signal_id the ID of a signal installed on widget
+    @return TRUE if the accelerator can be activated.
 
-//FALCON_FUNC Widget::can_activate_accel( VMARG );
+    This is done by emitting the "can-activate-accel" signal on widget; if the
+    signal isn't overridden by a handler or in a derived widget, then the default
+    check is that the widget must be sensitive, and the widget and all its
+    ancestors mapped.
+ */
+FALCON_FUNC Widget::can_activate_accel( VMARG )
+{
+    Item* i_id = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_id || !i_id->isInteger() )
+        throw_inv_params( "I" );
+#endif
+    vm->retval( (bool) gtk_widget_can_activate_accel( GET_WIDGET( vm->self() ),
+                                                      i_id->asInteger() ) );
+}
 
-//FALCON_FUNC Widget::event( VMARG );
 
+/*#
+    @method event GtkWidget
+    @brief This function is used to emit the event signals on a widget (those signals should never be emitted without using this function to do so).
+    @param event a GdkEvent
+    @return return from the event signal emission (TRUE if the event was handled)
+
+    Rarely-used function.
+
+    If you want to synthesize an event though, don't use this function; instead,
+    use gtk_main_do_event() so the event will behave as if it were in the event
+    queue. Don't synthesize expose events; instead, use
+    gdk_window_invalidate_rect() to invalidate a region of the window.
+ */
+FALCON_FUNC Widget::event( VMARG )
+{
+    Item* i_ev = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_ev || !i_ev->isObject() || !IS_DERIVED( i_ev, GdkEvent ) )
+        throw_inv_params( "GdkEvent" );
+#endif
+    vm->retval( (bool) gtk_widget_event( GET_WIDGET( vm->self() ),
+                                         GET_EVENT( *i_ev ) ) );
+}
 
 
 /*#
     @method activate GtkWidget
-    @brief For widgets that can be "activated" (buttons, menu items, etc).
-    @return boolean
+    @brief For widgets that can be "activated" (buttons, menu items, etc.) this function activates them.
+    @return TRUE if the widget was activatable
+
+    Activation is what happens when you press Enter on a widget during key
+    navigation. If widget isn't activatable, the function returns FALSE.
  */
 FALCON_FUNC Widget::activate( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_widget_activate( ((GtkWidget*)_obj) ) );
+    vm->retval( (bool) gtk_widget_activate( GET_WIDGET( vm->self() ) ) );
 }
 
 
 /*#
     @method reparent GtkWidget
     @brief Moves a widget from one container to another.
-    @param new_parent The new parent
+    @param new_parent a GtkContainer to move the widget into
  */
 FALCON_FUNC Widget::reparent( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
-    {
+    if ( !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
-    }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
-    gtk_widget_reparent( (GtkWidget*)_obj, (GtkWidget*) wdt );
+    gtk_widget_reparent( GET_WIDGET( vm->self() ),
+                         GET_WIDGET( *i_wdt ) );
 }
 
 
-//FALCON_FUNC Widget::intersect( VMARG );
-
+/*#
+    @method intersect GtkWidget
+    @brief Computes the intersection of a widget's area and area given as parameter.
+    @param area a GdkRectangle
+    @return a GdkRectangle intersection of the widget and area, or nil if there was no intersection
+ */
+FALCON_FUNC Widget::intersect( VMARG )
+{
+    Item* i_area = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_area || !i_area->isObject() || !IS_DERIVED( i_area, GdkRectangle ) )
+        throw_inv_params( "GdkRectangle" );
+#endif
+    GdkRectangle res;
+    if ( gtk_widget_intersect( GET_WIDGET( vm->self() ),
+                               GET_RECTANGLE( *i_area ),
+                               &res ) )
+        vm->retval( new Gdk::Rectangle( vm->findWKI( "GdkRectangle" )->asClass(), &res ) );
+    else
+        vm->retnil();
+}
 
 
 /*#
     @method is_focus GtkWidget
     @brief Determines if the widget is the focus widget within its toplevel.
+    @return TRUE if the widget is the focus widget.
+
     This does not mean that the HAS_FOCUS flag is necessarily set;
     HAS_FOCUS will only be set if the toplevel widget additionally has the
     global input focus.
-    @return (boolean)
  */
 FALCON_FUNC Widget::is_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_widget_is_focus( (GtkWidget*)_obj ) );
+    vm->retval( (bool) gtk_widget_is_focus( GET_WIDGET( vm->self() ) ) );
 }
 
 
 /*#
     @method grab_focus GtkWidget
     @brief Causes widget to have the keyboard focus for the GtkWindow it's inside.
-    widget must be a focusable widget, such as a GtkEntry; something like GtkFrame won't work.
+
+    The widget must be a focusable widget, such as a GtkEntry; something like
+    GtkFrame won't work.
+
     More precisely, it must have the GTK_CAN_FOCUS flag set.
     Use gtk_widget_set_can_focus() to modify that flag.
  */
 FALCON_FUNC Widget::grab_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_grab_focus( (GtkWidget*)_obj );
+    gtk_widget_grab_focus( GET_WIDGET( vm->self() ) );
 }
 
 
 /*#
     @method grab_default GtkWidget
     @brief Causes widget to become the default widget.
-    widget must have the GTK_CAN_DEFAULT flag set; typically you have to set this flag
+
+    The widget must have the GTK_CAN_DEFAULT flag set; typically you have to set this flag
     yourself by calling gtk_widget_set_can_default (widget, TRUE). The default widget
     is activated when the user presses Enter in a window. Default widgets must be
     activatable, that is, gtk_widget_activate() should affect them.
@@ -1298,19 +1529,19 @@ FALCON_FUNC Widget::grab_focus( VMARG )
 FALCON_FUNC Widget::grab_default( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_grab_default( (GtkWidget*)_obj );
+    gtk_widget_grab_default( GET_WIDGET( vm->self() ) );
 }
 
 
 /*#
     @method set_name GtkWidget
     @brief Attribute a name to the widget.
-    @param name (string)
+    @param name name for the widget
+
     Widgets can be named, which allows you to refer to them from a gtkrc file.
     You can apply a style to widgets with a particular name in the gtkrc file.
     See the documentation for gtkrc files (on the same page as the docs for GtkRcStyle).
+
     Note that widget names are separated by periods in paths (see gtk_widget_path()),
     so names with embedded periods may cause confusion.
  */
@@ -1318,69 +1549,115 @@ FALCON_FUNC Widget::set_name( VMARG )
 {
     Item* i_name = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_name || i_name->isNil() || !i_name->isString() )
-    {
+    if ( !i_name || !i_name->isString() )
         throw_inv_params( "S" );
-    }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    AutoCString s( i_name->asString() );
-    gtk_widget_set_name( (GtkWidget*)_obj, s.c_str() );
+    AutoCString name( i_name->asString() );
+    gtk_widget_set_name( GET_WIDGET( vm->self() ), name.c_str() );
 }
 
 
 /*#
     @method get_name GtkWidget
     @brief Get the name of the widget.
-    @return (string)
+    @return name of the widget.
+
     See GtkWidget.set_name() for the significance of widget names.
  */
 FALCON_FUNC Widget::get_name( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    const gchar* s = gtk_widget_get_name( (GtkWidget*)_obj );
-    vm->retval( String( s ) );
+    vm->retval( UTF8String( gtk_widget_get_name( GET_WIDGET( vm->self() ) ) ) );
 }
 
 
-//FALCON_FUNC Widget::set_state( VMARG );
+/*#
+    @method set_state GtkWidget
+    @brief This function is for use in widget implementations.
+    @param state new state for widget (GtkStateType)
 
+    Sets the state of a widget (insensitive, prelighted, etc.) Usually you should
+    set the state using wrapper functions such as gtk_widget_set_sensitive().
+ */
+FALCON_FUNC Widget::set_state( VMARG )
+{
+    Item* i_st = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_st || !i_st->isInteger() )
+        throw_inv_params( "GtkStateType" );
+#endif
+    gtk_widget_set_state( GET_WIDGET( vm->self() ), (GtkStateType) i_st->asInteger() );
+}
 
 
 /*#
     @method set_sensitive GtkWidget
     @brief Sets the sensitivity of a widget.
+    @param sensitive TRUE to make the widget sensitive
+
     A widget is sensitive if the user can interact with it.
     Insensitive widgets are "grayed out" and the user can't interact with them.
-    Insensitive widgets are known as "inactive", "disabled", or "ghosted" in some other toolkits.
+    Insensitive widgets are known as "inactive", "disabled", or "ghosted" in
+    some other toolkits.
  */
 FALCON_FUNC Widget::set_sensitive( VMARG )
 {
     Item* i_sens = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_sens || i_sens->isNil() || !i_sens->isBoolean() )
-    {
+    if ( !i_sens || !i_sens->isBoolean() )
         throw_inv_params( "B" );
-    }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_set_sensitive( (GtkWidget*)_obj, i_sens->asBoolean() ? TRUE : FALSE );
+    gtk_widget_set_sensitive( GET_WIDGET( vm->self() ), (gboolean) i_sens->asBoolean() );
 }
 
 
-//FALCON_FUNC Widget::set_parent( VMARG );
+/*#
+    @method set_parent GtkWidget
+    @brief This function is useful only when implementing subclasses of GtkContainer.
+    @param parent parent container
 
-//FALCON_FUNC Widget::set_parent_window( VMARG );
+    Sets the container as the parent of widget, and takes care of some deta
+    ils such as updating the state and style of the child to reflect its new
+    location. The opposite function is gtk_widget_unparent().
+ */
+FALCON_FUNC Widget::set_parent( VMARG )
+{
+    Item* i_par = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_par || !i_par->isObject() || !IS_DERIVED( i_par, GtkWidget ) )
+        throw_inv_params( "GtkWidget" );
+#endif
+    gtk_widget_set_parent( GET_WIDGET( vm->self() ), GET_WIDGET( *i_par ) );
+}
 
-//FALCON_FUNC Widget::get_parent_window( VMARG );
 
-//FALCON_FUNC Widget::set_uposition( VMARG );
+/*#
+    @method set_parent_window GtkWidget
+    @brief Sets a non default parent window for widget.
+    @param parent_window the new parent window (GdkWindow).
+ */
+FALCON_FUNC Widget::set_parent_window( VMARG )
+{
+    Item* i_par = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_par || !i_par->isObject() || !IS_DERIVED( i_par, GdkWindow ) )
+        throw_inv_params( "GdkWindow" );
+#endif
+    gtk_widget_set_parent_window( GET_WIDGET( vm->self() ), GET_GDKWINDOW( *i_par ) );
+}
 
-//FALCON_FUNC Widget::set_usize( VMARG );
+
+/*#
+    @method get_parent_window GtkWidget
+    @brief Gets widget's parent window.
+    @return the parent window of widget (GdkWindow).
+ */
+FALCON_FUNC Widget::get_parent_window( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Window( vm->findWKI( "GdkWindow" )->asClass(),
+                    gtk_widget_get_parent_window( GET_WIDGET( vm->self() ) ) ) );
+}
 
 
 /*#
@@ -1400,12 +1677,25 @@ FALCON_FUNC Widget::set_events( VMARG )
 {
     Item* i_ev = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_ev || i_ev->isNil() || !i_ev->isInteger() )
-        throw_inv_params( "I" );
+    if ( !i_ev || !i_ev->isInteger() )
+        throw_inv_params( "GdkEventMask" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_set_events( (GtkWidget*)_obj, i_ev->asInteger() );
+    gtk_widget_set_events( GET_WIDGET( vm->self() ), i_ev->asInteger() );
+}
+
+
+/*#
+    @method get_events GtkWidget
+    @brief Returns the event mask for the widget.
+    @return event mask for widget (GdkEventMask)
+
+    (A bitfield containing flags from the GdkEventMask enumeration.)
+    These are the events that the widget will receive.
+ */
+FALCON_FUNC Widget::get_events( VMARG )
+{
+    NO_ARGS
+    vm->retval( gtk_widget_get_events( GET_WIDGET( vm->self() ) ) );
 }
 
 
@@ -1418,166 +1708,692 @@ FALCON_FUNC Widget::add_events( VMARG )
 {
     Item* i_ev = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_ev || i_ev->isNil() || !i_ev->isInteger() )
-        throw_inv_params( "I" );
+    if ( !i_ev || !i_ev->isInteger() )
+        throw_inv_params( "GdkEventMask" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_widget_add_events( (GtkWidget*)_obj, i_ev->asInteger() );
+    gtk_widget_add_events( GET_WIDGET( vm->self() ), i_ev->asInteger() );
 }
 
 
-//FALCON_FUNC Widget::set_extension_events( VMARG );
+/*#
+    @method set_extension_events GtkWidget
+    @brief Sets the extension events mask to mode.
+    @param mode bitfield of extension events to receive (GdkExtensionMode).
 
-//FALCON_FUNC Widget::get_extension_events( VMARG );
+    See GdkExtensionMode and gdk_input_set_extension_events().
+ */
+FALCON_FUNC Widget::set_extension_events( VMARG )
+{
+    Item* i_mode = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_mode || !i_mode->isInteger() )
+        throw_inv_params( "GdkExtensionMode" );
+#endif
+    gtk_widget_set_extension_events( GET_WIDGET( vm->self() ),
+                                     (GdkExtensionMode) i_mode->asInteger() );
+}
+
+
+/*#
+    @method get_extension_events GtkWidget
+    @brief Retrieves the extension events the widget will receive.
+    @return extension events for widget (GdkExtensionMode).
+
+    See gdk_input_set_extension_events().
+ */
+FALCON_FUNC Widget::get_extension_events( VMARG )
+{
+    NO_ARGS
+    vm->retval( (int64) gtk_widget_get_extension_events( GET_WIDGET( vm->self() ) ) );
+}
+
+
+#if GTK_CHECK_VERSION( 3, 0, 0 )
+FALCON_FUNC Widget::set_device_events( VMARG );
+FALCON_FUNC Widget::get_device_events( VMARG );
+FALCON_FUNC Widget::add_device_events( VMARG );
+#endif
 
 
 /*#
     @method get_toplevel GtkWidget
     @brief This function returns the topmost widget in the container hierarchy widget is a part of.
-    @return (widget)
+    @return the topmost ancestor of widget, or widget itself if there's no ancestor.
+
     If widget has no parent widgets, it will be returned as the topmost widget.
-    No reference will be added to the returned widget; it should not be unreferenced.
+
+    Note the difference in behavior vs. gtk_widget_get_ancestor();
+    gtk_widget_get_ancestor (widget, GTK_TYPE_WINDOW) would return NULL if widget
+    wasn't inside a toplevel window, and if the window was inside a GtkWindow-derived
+    widget which was in turn inside the toplevel GtkWindow. While the second case
+    may seem unlikely, it actually happens when a GtkPlug is embedded inside a
+    GtkSocket within the same application.
+
+    To reliably find the toplevel GtkWindow, use gtk_widget_get_toplevel() and
+    check if the TOPLEVEL flags is set on the result.
  */
 FALCON_FUNC Widget::get_toplevel( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GtkWidget* gwdt = gtk_widget_get_toplevel( (GtkWidget*)_obj );
-    Item* wki = vm->findWKI( "GtkWidget" );
-    vm->retval( new Widget( wki->asClass(), gwdt ) );
+    vm->retval( new Widget( vm->findWKI( "GtkWidget" )->asClass(),
+                            gtk_widget_get_toplevel( GET_WIDGET( vm->self() ) ) ) );
 }
-
-
-//FALCON_FUNC Widget::get_ancestor( VMARG );
-
-//FALCON_FUNC Widget::get_colormap( VMARG );
-
-//FALCON_FUNC Widget::set_colormap( VMARG );
-
-//FALCON_FUNC Widget::get_visual( VMARG );
 
 
 /*#
-    @method get_events GtkWidget
-    @brief Returns the event mask for the widget.
-    @return (integer)
-    (A bitfield containing flags from the GdkEventMask enumeration.)
-    These are the events that the widget will receive.
+    @method get_ancestor GtkWidget
+    @brief Gets the first ancestor of widget with type widget_type.
+    @param widget_type ancestor type (GType)
+    @return the ancestor widget, or NULL if not found.
+
+    For example, gtk_widget_get_ancestor (widget, GTK_TYPE_BOX) gets the first
+    GtkBox that's an ancestor of widget. See note about checking for a toplevel
+    GtkWindow in the docs for gtk_widget_get_toplevel().
+
+    Note that unlike gtk_widget_is_ancestor(), gtk_widget_get_ancestor() considers
+    widget to be an ancestor of itself.
  */
-FALCON_FUNC Widget::get_events( VMARG )
+FALCON_FUNC Widget::get_ancestor( VMARG )
 {
-    NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_widget_get_events( (GtkWidget*)_obj ) );
+    Item* i_tp = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_tp || !i_tp->isInteger() )
+        throw_inv_params( "GType" );
+#endif
+    GtkWidget* wdt = gtk_widget_get_ancestor( GET_WIDGET( vm->self() ),
+                                              (GType) i_tp->asInteger() );
+    if ( wdt )
+        vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
+    else
+        vm->retnil();
 }
 
 
-//FALCON_FUNC Widget::get_pointer( VMARG );
+/*#
+    @method get_colormap GtkWidget
+    @brief Gets the colormap that will be used to render widget.
+    @return the colormap used by widget (GdkColormap).
+ */
+FALCON_FUNC Widget::get_colormap( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(),
+                        gtk_widget_get_colormap( GET_WIDGET( vm->self() ) ) ) );
+}
 
+
+/*#
+    @method set_colormap GtkWidget
+    @brief Sets the colormap for the widget to the given value.
+    @param colormap a GdkColormap
+
+    Widget must not have been previously realized. This probably should only be
+    used from an init() function (i.e. from the constructor for the widget).
+ */
+FALCON_FUNC Widget::set_colormap( VMARG )
+{
+    Item* i_map = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_map || !i_map->isObject() || !IS_DERIVED( i_map, GdkColormap ) )
+        throw_inv_params( "GdkColormap" );
+#endif
+    gtk_widget_set_colormap( GET_WIDGET( vm->self() ),
+                             GET_COLORMAP( *i_map ) );
+}
+
+
+/*#
+    @method get_visual GtkWidget
+    @brief Gets the visual that will be used to render widget.
+    @return the GdkVisual for widget.
+ */
+FALCON_FUNC Widget::get_visual( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(),
+                        gtk_widget_get_visual( GET_WIDGET( vm->self() ) ) ) );
+}
+
+
+/*#
+    @method get_pointer GtkWidget
+    @brief Obtains the location of the mouse pointer in widget coordinates.
+    @return An array [ x coordinate, y coordinate ]
+
+    Widget coordinates are a bit odd; for historical reasons, they are defined as
+    widget->window coordinates for widgets that are not GTK_NO_WINDOW widgets,
+    and are relative to widget->allocation.x, widget->allocation.y for widgets
+    that are GTK_NO_WINDOW widgets.
+
+ */
+FALCON_FUNC Widget::get_pointer( VMARG )
+{
+    NO_ARGS
+    gint x, y;
+    gtk_widget_get_pointer( GET_WIDGET( vm->self() ), &x, &y );
+    CoreArray* arr = new CoreArray( 2 );
+    arr->append( x );
+    arr->append( y );
+    vm->retval( arr );
+}
 
 
 /*#
     @method is_ancestor GtkWidget
     @brief Determines whether widget is somewhere inside ancestor, possibly with intermediate containers.
-    @return (boolean)
+    @param ancestor another GtkWidget
+    @return TRUE if ancestor contains widget as a child, grandchild, great grandchild, etc.
  */
 FALCON_FUNC Widget::is_ancestor( VMARG )
 {
     Item* i_wdt = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_wdt || i_wdt->isNil() || !IS_DERIVED( i_wdt, GtkWidget ) )
-    {
+    if ( !i_wdt || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
-    }
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
-    vm->retval( (bool) gtk_widget_is_ancestor( (GtkWidget*)_obj, wdt ) );
+    vm->retval( (bool) gtk_widget_is_ancestor( GET_WIDGET( vm->self() ),
+                                               GET_WIDGET( *i_wdt ) ) );
 }
 
 
-//FALCON_FUNC Widget::translate_coordinates( VMARG );
+/*#
+    @method translate_coordinates GtkWidget
+    @brief Translate coordinates relative to src_widget's allocation to coordinates relative to dest_widget's allocations.
+    @param dest_widget a GtkWidget
+    @param src_x X position relative to src_widget
+    @param src_y Y position relative to src_widget
+    @return An array [ X position, Y position ] relative to dest_widget, or nil if either widget was not realized, or there was no common ancestor.
+
+    In order to perform this operation, both widgets must be realized, and must
+    share a common toplevel.
+ */
+FALCON_FUNC Widget::translate_coordinates( VMARG )
+{
+    Item* i_wdt = vm->param( 0 );
+    Item* i_x = vm->param( 1 );
+    Item* i_y = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, gtkWidget )
+        || !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "GtkWidget,I,I" );
+#endif
+    gint x, y;
+    if ( gtk_widget_translate_coordinates( GET_WIDGET( vm->self() ),
+                                           GET_WIDGET( *i_wdt ),
+                                           i_x->asInteger(),
+                                           i_y->asInteger(),
+                                           &x, &y ) )
+    {
+        CoreArray* arr = new CoreArray( 2 );
+        arr->append( x );
+        arr->append( y );
+        vm->retval( arr );
+    }
+    else
+        vm->retnil();
+}
 
 
 
 /*#
     @method hide_on_delete GtkWidget
     @brief Utility function.
-    @return (boolean) always true
+    @return always true
+
     Intended to be connected to the "delete-event" signal on a GtkWindow.
     The function calls gtk_widget_hide() on its argument, then returns TRUE.
     If connected to ::delete-event, the result is that clicking the close button
     for a window (on the window frame, top right corner usually) will hide but
     not destroy the window.
+
     By default, GTK+ destroys windows when ::delete-event is received.
  */
 FALCON_FUNC Widget::hide_on_delete( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gboolean b = gtk_widget_hide_on_delete( (GtkWidget*)_obj );
-    vm->retval( (bool) b );
+    vm->retval( (bool) gtk_widget_hide_on_delete( GET_WIDGET( vm->self() ) ) );
 }
 
 
-//FALCON_FUNC Widget::set_style( VMARG );
+#if 0 // todo
+FALCON_FUNC Widget::set_style( VMARG );
+#endif
 
-//FALCON_FUNC Widget::set_rc_style( VMARG );
 
-//FALCON_FUNC Widget::ensure_style( VMARG );
+/*#
+    @method ensure_style GtkWidget
+    @brief Ensures that widget has a style (widget->style).
 
-//FALCON_FUNC Widget::get_style( VMARG );
+    Not a very useful function; most of the time, if you want the style, the
+    widget is realized, and realized widgets are guaranteed to have a style already.
+ */
+FALCON_FUNC Widget::ensure_style( VMARG )
+{
+    NO_ARGS
+    gtk_widget_ensure_style( GET_WIDGET( vm->self() ) );
+}
 
-//FALCON_FUNC Widget::restore_default_style( VMARG );
 
-//FALCON_FUNC Widget::reset_rc_styles( VMARG );
+#if 0 // todo
+FALCON_FUNC Widget::get_style( VMARG );
+#endif
 
-//FALCON_FUNC Widget::push_colormap( VMARG );
 
-//FALCON_FUNC Widget::pop_colormap( VMARG );
+/*#
+    @method reset_rc_styles GtkWidget
+    @brief Reset the styles of widget and all descendents, so when they are looked up again, they get the correct values for the currently loaded RC file settings.
 
-//FALCON_FUNC Widget::set_default_colormap( VMARG );
+    This function is not useful for applications.
+ */
+FALCON_FUNC Widget::reset_rc_styles( VMARG )
+{
+    NO_ARGS
+    gtk_widget_reset_rc_styles( GET_WIDGET( vm->self() ) );
+}
 
-//FALCON_FUNC Widget::get_default_style( VMARG );
 
-//FALCON_FUNC Widget::get_default_colormap( VMARG );
+/*#
+    @method push_colormap GtkWidget
+    @brief Pushes cmap onto a global stack of colormaps; the topmost colormap on the stack will be used to create all widgets.
+    @param cmap a GdkColormap
 
-//FALCON_FUNC Widget::get_default_visual( VMARG );
+    Remove cmap with gtk_widget_pop_colormap(). There's little reason to use this function.
+ */
+FALCON_FUNC Widget::push_colormap( VMARG )
+{
+    Item* i_map = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_map || !i_map->isObject() || !IS_DERIVED( i_map, GdkColormap ) )
+        throw_inv_params( "GdkColormap" );
+#endif
+    gtk_widget_push_colormap( GET_COLORMAP( *i_map ) );
+}
 
-//FALCON_FUNC Widget::set_direction( VMARG );
 
-//FALCON_FUNC Widget::get_direction( VMARG );
+/*#
+    @method pop_colormap GtkWidget
+    @brief Removes a colormap pushed with gtk_widget_push_colormap().
+ */
+FALCON_FUNC Widget::pop_colormap( VMARG )
+{
+    NO_ARGS
+    gtk_widget_pop_colormap();
+}
 
-//FALCON_FUNC Widget::set_default_direction( VMARG );
 
-//FALCON_FUNC Widget::get_default_direction( VMARG );
+/*#
+    @method set_default_colormap GtkWidget
+    @brief Sets the default colormap to use when creating widgets.
+    @param colormap a GdkColormap
 
-//FALCON_FUNC Widget::shape_combine_mask( VMARG );
+    gtk_widget_push_colormap() is a better function to use if you only want to
+    affect a few widgets, rather than all widgets.
+ */
+FALCON_FUNC Widget::set_default_colormap( VMARG )
+{
+    Item* i_map = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_map || !i_map->isObject() || !IS_DERIVED( i_map, GdkColormap ) )
+        throw_inv_params( "GdkColormap" );
+#endif
+    gtk_widget_set_default_colormap( GET_COLORMAP( *i_map ) );
+}
 
-//FALCON_FUNC Widget::input_shape_combine_mask( VMARG );
 
-//FALCON_FUNC Widget::path( VMARG );
+#if 0 // todo
+FALCON_FUNC Widget::get_default_style( VMARG );
+#endif
 
-//FALCON_FUNC Widget::class_path( VMARG );
 
-//FALCON_FUNC Widget::get_composite_name( VMARG );
+/*#
+    @method get_default_colormap GtkWidget
+    @brief Obtains the default colormap used to create widgets.
+    @return default widget colormap.
+ */
+FALCON_FUNC Widget::get_default_colormap( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(),
+                                   gtk_widget_get_default_colormap() ) );
+}
 
+
+/*#
+    @method get_default_visual GtkWidget
+    @brief Obtains the visual of the default colormap.
+    @return visual of the default colormap.
+
+    Not really useful; used to be useful before gdk_colormap_get_visual() existed.
+ */
+FALCON_FUNC Widget::get_default_visual( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(),
+                                 gtk_widget_get_default_visual() ) );
+}
+
+
+/*#
+    @method set_direction GtkWidget
+    @brief Sets the reading direction on a particular widget.
+    @param dir the new direction (GtkTextDirection).
+
+    This direction controls the primary direction for widgets containing text,
+    and also the direction in which the children of a container are packed. The
+    ability to set the direction is present in order so that correct localization
+    into languages with right-to-left reading directions can be done. Generally,
+    applications will let the default reading direction present, except for
+    containers where the containers are arranged in an order that is explicitely
+    visual rather than logical (such as buttons for text justification).
+
+    If the direction is set to GTK_TEXT_DIR_NONE, then the value set by
+    gtk_widget_set_default_direction() will be used.
+ */
+FALCON_FUNC Widget::set_direction( VMARG )
+{
+    Item* i_dir = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_dir || !i_dir->isInteger() )
+        throw_inv_params( "GtkTextDirection" );
+#endif
+    gtk_widget_set_direction( GET_WIDGET( vm->self() ),
+                              (GtkTextDirection) i_dir->asInteger() );
+}
+
+
+/*#
+    @method get_direction GtkWidget
+    @brief Gets the reading direction for a particular widget.
+    @return the reading direction for the widget (GtkTextDirection).
+ */
+FALCON_FUNC Widget::get_direction( VMARG )
+{
+    NO_ARGS
+    vm->retval( (int64) gtk_widget_get_direction( GET_WIDGET( vm->self() ) ) );
+}
+
+
+/*#
+    @method set_default_direction GtkWidget
+    @brief Sets the default reading direction for widgets where the direction has not been explicitly set by gtk_widget_set_direction().
+    @param dir the new default direction (GtkTextDirection). This cannot be GTK_TEXT_DIR_NONE.
+ */
+FALCON_FUNC Widget::set_default_direction( VMARG )
+{
+    Item* i_dir = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_dir || !i_dir->isInteger() )
+        throw_inv_params( "GtkTextDirection" );
+#endif
+    gtk_widget_set_default_direction( (GtkTextDirection) i_dir->asInteger() );
+}
+
+
+/*#
+    @method get_default_direction GtkWidget
+    @brief Obtains the current default reading direction.
+    @return the current default direction (GtkTextDirection).
+ */
+FALCON_FUNC Widget::get_default_direction( VMARG )
+{
+    NO_ARGS
+    vm->retval( (int64) gtk_widget_get_default_direction() );
+}
+
+
+/*#
+    @method shape_combine_mask GtkWidget
+    @brief Sets a shape for this widget's GDK window.
+    @param shape_mask shape to be added, or NULL to remove an existing shape (GdkBitmap).
+    @param offset_x X position of shape mask with respect to window
+    @param offset_y Y position of shape mask with respect to window
+
+    This allows for transparent windows etc., see gdk_window_shape_combine_mask()
+    for more information.
+ */
+FALCON_FUNC Widget::shape_combine_mask( VMARG )
+{
+    Item* i_msk = vm->param( 0 );
+    Item* i_x = vm->param( 1 );
+    Item* i_y = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_msk || !i_msk->isObject() || !IS_DERIVED( i_msk, GdkBitmap )
+        || !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "GdkBitmap,I,I" );
+#endif
+    gtk_widget_shape_combine_mask( GET_WIDGET( vm->self() ),
+                                   GET_BITMAP( *i_msk ),
+                                   i_x->asInteger(),
+                                   i_y->asInteger() );
+}
+
+
+/*#
+    @method input_shape_combine_mask GtkWidget
+    @brief Sets an input shape for this widget's GDK window.
+    @param shape_mask shape to be added, or NULL to remove an existing shape (GdkBitmap).
+    @param offset_x X position of shape mask with respect to window
+    @param offset_y Y position of shape mask with respect to window
+
+    This allows for windows which react to mouse click in a nonrectangular
+    region, see gdk_window_input_shape_combine_mask() for more information.
+ */
+FALCON_FUNC Widget::input_shape_combine_mask( VMARG )
+{
+    Item* i_msk = vm->param( 0 );
+    Item* i_x = vm->param( 1 );
+    Item* i_y = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_msk || !i_msk->isObject() || !IS_DERIVED( i_msk, GdkBitmap )
+        || !i_x || !i_x->isInteger()
+        || !i_y || !i_y->isInteger() )
+        throw_inv_params( "GdkBitmap,I,I" );
+#endif
+    gtk_widget_input_shape_combine_mask( GET_WIDGET( vm->self() ),
+                                         GET_BITMAP( *i_msk ),
+                                         i_x->asInteger(),
+                                         i_y->asInteger() );
+}
+
+
+/*#
+    @method path GtkWidget
+    @brief Obtains the full path to widget.
+    @param reverse TRUE to get the path in reverse order
+    @return the path
+
+    The path is simply the name of a widget and all its parents in the container
+    hierarchy, separated by periods. The name of a widget comes from
+    gtk_widget_get_name(). Paths are used to apply styles to a widget in gtkrc
+    configuration files. Widget names are the type of the widget by default
+    (e.g. "GtkButton") or can be set to an application-specific value with
+    gtk_widget_set_name(). By setting the name of a widget, you allow users or
+    theme authors to apply styles to that specific widget in their gtkrc file.
+
+    Setting reverse to TRUE returns the path in reverse order, i.e. starting with
+    widget's name instead of starting with the name of widget's outermost ancestor.
+ */
+FALCON_FUNC Widget::path( VMARG )
+{
+    Item* i_rev = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_rev || !i_rev->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    gchar* path;
+    if ( i_rev->asBoolean() )
+        gtk_widget_path( GET_WIDGET( vm->self() ), NULL, NULL, &path );
+    else
+        gtk_widget_path( GET_WIDGET( vm->self() ), NULL, &path, NULL );
+    vm->retval( UTF8String( path ) );
+    g_free( path );
+}
+
+
+/*#
+    @method class_path GtkWidget
+    @brief Same as gtk_widget_path(), but always uses the name of a widget's type, never uses a custom name set with gtk_widget_set_name().
+    @param reverse TRUE to get the path in reverse order
+    @return the class path
+ */
+FALCON_FUNC Widget::class_path( VMARG )
+{
+    Item* i_rev = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_rev || !i_rev->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    gchar* path;
+    if ( i_rev->asBoolean() )
+        gtk_widget_class_path( GET_WIDGET( vm->self() ), NULL, NULL, &path );
+    else
+        gtk_widget_class_path( GET_WIDGET( vm->self() ), NULL, &path, NULL );
+    vm->retval( UTF8String( path ) );
+    g_free( path );
+}
+
+
+/*#
+    @method get_composite_name GtkWidget
+    @brief Obtains the composite name of a widget.
+    @return the composite name of widget, or NULL if widget is not a composite child.
+ */
+FALCON_FUNC Widget::get_composite_name( VMARG )
+{
+    NO_ARGS
+    gchar* name = gtk_widget_get_composite_name( GET_WIDGET( vm->self() ) );
+    if ( name )
+    {
+        vm->retval( UTF8String( name ) );
+        g_free( name );
+    }
+    else
+        vm->retnil();
+}
+
+
+#if 0 // todo
 //FALCON_FUNC Widget::modify_style( VMARG );
-
 //FALCON_FUNC Widget::get_modifier_style( VMARG );
+#endif
 
-//FALCON_FUNC Widget::modify_fg( VMARG );
 
-//FALCON_FUNC Widget::modify_bg( VMARG );
+/*#
+    @method modify_fg GtkWidget
+    @brief Sets the foreground color for a widget in a particular state.
+    @param state the state for which to set the foreground color (GtkStateType).
+    @param color the color to assign, or NULL to undo the effect of previous calls to of gtk_widget_modify_fg()
 
-//FALCON_FUNC Widget::modify_text( VMARG );
+    All other style values are left untouched. See also gtk_widget_modify_style().
+ */
+FALCON_FUNC Widget::modify_fg( VMARG )
+{
+    Item* i_st = vm->param( 0 );
+    Item* i_clr = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_st || !i_st->isInteger()
+        || !i_clr || !( i_clr->isNil() || ( i_clr->isObject()
+        && IS_DERIVED( i_clr, GdkColor ) ) ) )
+        throw_inv_params( "GtkStateType,[GdkColor]" );
+#endif
+    gtk_widget_modify_fg( GET_WIDGET( vm->self() ),
+                          (GtkStateType) i_st->asInteger(),
+                          i_clr->isNil() ? NULL : GET_COLOR( *i_clr ) );
+}
 
-//FALCON_FUNC Widget::modify_base( VMARG );
+
+/*#
+    @method modify_bg GtkWidget
+    @brief Sets the background color for a widget in a particular state.
+    @param state the state for which to set the background color (GtkStateType).
+    @param color the color to assign, or NULL to undo the effect of previous calls to of gtk_widget_modify_bg().
+
+    All other style values are left untouched. See also gtk_widget_modify_style().
+
+    Note that "no window" widgets (which have the GTK_NO_WINDOW flag set) draw on
+    their parent container's window and thus may not draw any background themselves.
+    This is the case for e.g. GtkLabel. To modify the background of such widgets,
+    you have to set the background color on their parent; if you want to set the
+    background of a rectangular area around a label, try placing the label in a
+    GtkEventBox widget and setting the background color on that.
+ */
+FALCON_FUNC Widget::modify_bg( VMARG )
+{
+    Item* i_st = vm->param( 0 );
+    Item* i_clr = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_st || !i_st->isInteger()
+        || !i_clr || !( i_clr->isNil() || ( i_clr->isObject()
+        && IS_DERIVED( i_clr, GdkColor ) ) ) )
+        throw_inv_params( "GtkStateType,[GdkColor]" );
+#endif
+    gtk_widget_modify_bg( GET_WIDGET( vm->self() ),
+                          (GtkStateType) i_st->asInteger(),
+                          i_clr->isNil() ? NULL : GET_COLOR( *i_clr ) );
+}
+
+
+/*#
+    @method modify_text GtkWidget
+    @brief Sets the text color for a widget in a particular state.
+    @param state the state for which to set the text color (GtkStateType).
+    @param color the color to assign, or NULL to undo the effect of previous calls to of gtk_widget_modify_text().
+
+    All other style values are left untouched. The text color is the foreground
+    color used along with the base color (see gtk_widget_modify_base()) for
+    widgets such as GtkEntry and GtkTextView. See also gtk_widget_modify_style().
+ */
+FALCON_FUNC Widget::modify_text( VMARG )
+{
+    Item* i_st = vm->param( 0 );
+    Item* i_clr = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_st || !i_st->isInteger()
+        || !i_clr || !( i_clr->isNil() || ( i_clr->isObject()
+        && IS_DERIVED( i_clr, GdkColor ) ) ) )
+        throw_inv_params( "GtkStateType,[GdkColor]" );
+#endif
+    gtk_widget_modify_text( GET_WIDGET( vm->self() ),
+                            (GtkStateType) i_st->asInteger(),
+                            i_clr->isNil() ? NULL : GET_COLOR( *i_clr ) );
+}
+
+
+/*#
+    @method modify_base GtkWidget
+    @brief Sets the base color for a widget in a particular state.
+    @param state the state for which to set the base color (GtkStateType).
+    @param the color to assign, or NULL to undo the effect of previous calls to of gtk_widget_modify_base().
+
+    All other style values are left untouched. The base color is the background
+    color used along with the text color (see gtk_widget_modify_text()) for
+    widgets such as GtkEntry and GtkTextView. See also gtk_widget_modify_style().
+
+    Note that "no window" widgets (which have the GTK_NO_WINDOW flag set) draw
+    on their parent container's window and thus may not draw any background
+    themselves. This is the case for e.g. GtkLabel. To modify the background of
+    such widgets, you have to set the base color on their parent; if you want to
+    set the background of a rectangular area around a label, try placing the
+    label in a GtkEventBox widget and setting the base color on that.
+ */
+FALCON_FUNC Widget::modify_base( VMARG )
+{
+    Item* i_st = vm->param( 0 );
+    Item* i_clr = vm->param( 1 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_st || !i_st->isInteger()
+        || !i_clr || !( i_clr->isNil() || ( i_clr->isObject()
+        && IS_DERIVED( i_clr, GdkColor ) ) ) )
+        throw_inv_params( "GtkStateType,[GdkColor]" );
+#endif
+    gtk_widget_modify_base( GET_WIDGET( vm->self() ),
+                            (GtkStateType) i_st->asInteger(),
+                            i_clr->isNil() ? NULL : GET_COLOR( *i_clr ) );
+}
+
+
 
 //FALCON_FUNC Widget::modify_font( VMARG );
 

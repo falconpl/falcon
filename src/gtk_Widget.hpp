@@ -313,6 +313,10 @@ public:
 
     static FALCON_FUNC destroy( VMARG );
 
+#if 0 // unused
+    static FALCON_FUNC destroyed( VMARG );
+#endif
+
     static FALCON_FUNC unparent( VMARG );
 
     static FALCON_FUNC show( VMARG );
@@ -339,31 +343,29 @@ public:
 
     static FALCON_FUNC queue_resize_no_redraw( VMARG );
 
-    //static FALCON_FUNC draw( VMARG );
-
     static FALCON_FUNC size_request( VMARG );
 
     static FALCON_FUNC get_child_requisition( VMARG );
+#if 0 // todo
+    static FALCON_FUNC size_allocate( VMARG );
 
-    //static FALCON_FUNC size_allocate( VMARG );
+    static FALCON_FUNC add_accelerator( VMARG );
 
-    //static FALCON_FUNC add_accelerator( VMARG );
+    static FALCON_FUNC remove_accelerator( VMARG );
 
-    //static FALCON_FUNC remomve_accelerator( VMARG );
+    static FALCON_FUNC set_accel_path( VMARG );
 
-    //static FALCON_FUNC set_accel_path( VMARG );
+    static FALCON_FUNC list_accel_closures( VMARG );
+#endif
+    static FALCON_FUNC can_activate_accel( VMARG );
 
-    //static FALCON_FUNC list_accel_closures( VMARG );
-
-    //static FALCON_FUNC can_activate_accel( VMARG );
-
-    //static FALCON_FUNC event( VMARG );
+    static FALCON_FUNC event( VMARG );
 
     static FALCON_FUNC activate( VMARG );
 
     static FALCON_FUNC reparent( VMARG );
 
-    //static FALCON_FUNC intersect( VMARG );
+    static FALCON_FUNC intersect( VMARG );
 
     static FALCON_FUNC is_focus( VMARG );
 
@@ -375,101 +377,99 @@ public:
 
     static FALCON_FUNC get_name( VMARG );
 
-    //static FALCON_FUNC set_state( VMARG );
+    static FALCON_FUNC set_state( VMARG );
 
     static FALCON_FUNC set_sensitive( VMARG );
 
-    //static FALCON_FUNC set_parent( VMARG );
+    static FALCON_FUNC set_parent( VMARG );
 
-    //static FALCON_FUNC set_parent_window( VMARG );
+    static FALCON_FUNC set_parent_window( VMARG );
 
-    //static FALCON_FUNC get_parent_window( VMARG );
-
-    //static FALCON_FUNC set_uposition( VMARG );
-
-    //static FALCON_FUNC set_usize( VMARG );
+    static FALCON_FUNC get_parent_window( VMARG );
 
     static FALCON_FUNC set_events( VMARG );
 
+    static FALCON_FUNC get_events( VMARG );
+
     static FALCON_FUNC add_events( VMARG );
 
-    //static FALCON_FUNC set_extension_events( VMARG );
+    static FALCON_FUNC set_extension_events( VMARG );
 
-    //static FALCON_FUNC get_extension_events( VMARG );
+    static FALCON_FUNC get_extension_events( VMARG );
+
+#if GTK_CHECK_VERSION( 3, 0, 0 )
+    static FALCON_FUNC set_device_events( VMARG );
+    static FALCON_FUNC get_device_events( VMARG );
+    static FALCON_FUNC add_device_events( VMARG );
+#endif
 
     static FALCON_FUNC get_toplevel( VMARG );
 
-    //static FALCON_FUNC get_ancestor( VMARG );
+    static FALCON_FUNC get_ancestor( VMARG );
 
-    //static FALCON_FUNC get_colormap( VMARG );
+    static FALCON_FUNC get_colormap( VMARG );
 
-    //static FALCON_FUNC set_colormap( VMARG );
+    static FALCON_FUNC set_colormap( VMARG );
 
-    //static FALCON_FUNC get_visual( VMARG );
+    static FALCON_FUNC get_visual( VMARG );
 
-    static FALCON_FUNC get_events( VMARG );
-
-    //static FALCON_FUNC get_pointer( VMARG );
+    static FALCON_FUNC get_pointer( VMARG );
 
     static FALCON_FUNC is_ancestor( VMARG );
 
-    //static FALCON_FUNC translate_coordinates( VMARG );
+    static FALCON_FUNC translate_coordinates( VMARG );
 
     static FALCON_FUNC hide_on_delete( VMARG );
+#if 0 // todo
+    static FALCON_FUNC set_style( VMARG );
+#endif
+    static FALCON_FUNC ensure_style( VMARG );
+#if 0 // todo
+    static FALCON_FUNC get_style( VMARG );
+#endif
+    static FALCON_FUNC reset_rc_styles( VMARG );
 
-    //static FALCON_FUNC set_style( VMARG );
+    static FALCON_FUNC push_colormap( VMARG );
 
-    //static FALCON_FUNC set_rc_style( VMARG );
+    static FALCON_FUNC pop_colormap( VMARG );
 
-    //static FALCON_FUNC ensure_style( VMARG );
+    static FALCON_FUNC set_default_colormap( VMARG );
+#if 0 // todo
+    static FALCON_FUNC get_default_style( VMARG );
+#endif
+    static FALCON_FUNC get_default_colormap( VMARG );
 
-    //static FALCON_FUNC get_style( VMARG );
+    static FALCON_FUNC get_default_visual( VMARG );
 
-    //static FALCON_FUNC restore_default_style( VMARG );
+    static FALCON_FUNC set_direction( VMARG );
 
-    //static FALCON_FUNC reset_rc_styles( VMARG );
+    static FALCON_FUNC get_direction( VMARG );
 
-    //static FALCON_FUNC push_colormap( VMARG );
+    static FALCON_FUNC set_default_direction( VMARG );
 
-    //static FALCON_FUNC pop_colormap( VMARG );
+    static FALCON_FUNC get_default_direction( VMARG );
 
-    //static FALCON_FUNC set_default_colormap( VMARG );
+    static FALCON_FUNC shape_combine_mask( VMARG );
 
-    //static FALCON_FUNC get_default_style( VMARG );
+    static FALCON_FUNC input_shape_combine_mask( VMARG );
 
-    //static FALCON_FUNC get_default_colormap( VMARG );
+    static FALCON_FUNC path( VMARG );
 
-    //static FALCON_FUNC get_default_visual( VMARG );
+    static FALCON_FUNC class_path( VMARG );
 
-    //static FALCON_FUNC set_direction( VMARG );
-
-    //static FALCON_FUNC get_direction( VMARG );
-
-    //static FALCON_FUNC set_default_direction( VMARG );
-
-    //static FALCON_FUNC get_default_direction( VMARG );
-
-    //static FALCON_FUNC shape_combine_mask( VMARG );
-
-    //static FALCON_FUNC input_shape_combine_mask( VMARG );
-
-    //static FALCON_FUNC path( VMARG );
-
-    //static FALCON_FUNC class_path( VMARG );
-
-    //static FALCON_FUNC get_composite_name( VMARG );
-
+    static FALCON_FUNC get_composite_name( VMARG );
+#if 0 // todo
     //static FALCON_FUNC modify_style( VMARG );
 
     //static FALCON_FUNC get_modifier_style( VMARG );
+#endif
+    static FALCON_FUNC modify_fg( VMARG );
 
-    //static FALCON_FUNC modify_fg( VMARG );
+    static FALCON_FUNC modify_bg( VMARG );
 
-    //static FALCON_FUNC modify_bg( VMARG );
+    static FALCON_FUNC modify_text( VMARG );
 
-    //static FALCON_FUNC modify_text( VMARG );
-
-    //static FALCON_FUNC modify_base( VMARG );
+    static FALCON_FUNC modify_base( VMARG );
 
     //static FALCON_FUNC modify_font( VMARG );
 
