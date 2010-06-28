@@ -66,7 +66,8 @@ Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* object,
  */
 FALCON_FUNC Object::signal_destroy( VMARG )
 {
-    CoreGObject::get_signal( "destroy", (void*) &Object::on_destroy, vm );
+    NO_ARGS
+    CoreGObject::get_signal( "destroy", (void*) &Gtk::Object::on_destroy, vm );
 }
 
 
@@ -94,9 +95,7 @@ void Object::on_destroy( GObject* obj, gpointer _vm )
 FALCON_FUNC Object::destroy( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_object_destroy( (GtkObject*)_obj );
+    gtk_object_destroy( GET_GTKOBJECT( vm->self() ) );
 }
 
 

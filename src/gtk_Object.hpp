@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_GTKOBJECT( item ) \
+        ((GtkObject*) Falcon::dyncast<Gtk::Object*>( (item).asObjectSafe() )->getGObject())
+
 
 namespace Falcon {
 namespace Gtk {
