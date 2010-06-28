@@ -6,7 +6,10 @@
 
 #include "gdk_Event.hpp"
 #include "gdk_Rectangle.hpp"
+#include "gdk_Window.hpp"
+
 #include "gtk_CellEditable.hpp"
+#include "gtk_Widget.hpp"
 
 
 namespace Falcon {
@@ -28,9 +31,7 @@ void CellRenderer::modInit( Falcon::Module* mod )
     Gtk::MethodTab methods[] =
     {
     { "signal_editing_canceled",    &CellRenderer::signal_editing_canceled },
-#if 0 // todo
     { "signal_editing_started",     &CellRenderer::signal_editing_started },
-#endif
     { "get_size",                   &CellRenderer::get_size },
     { "render",                     &CellRenderer::render },
     { "activate",                   &CellRenderer::activate },
@@ -202,13 +203,11 @@ FALCON_FUNC CellRenderer::get_size( VMARG )
         && IS_DERIVED( i_area, GtkWidget ) ) ) )
         throw_inv_params( "GtkWidget,[GdkRectangle]" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
-    GdkRectangle* area = i_area->isNil() ? NULL
-            : dyncast<Gdk::Rectangle*>( i_area->asObjectSafe() )->getRectangle();
-    MYSELF;
-    GET_OBJ( self );
     gint x, y, w, h;
-    gtk_cell_renderer_get_size( (GtkCellRenderer*)_obj, wdt, area, &x, &y, &w, &h );
+    gtk_cell_renderer_get_size( GET_CELLRENDERER( vm->self() ),
+                                GET_WIDGET( *i_wdt ),
+                                i_area->isNil() ? NULL : GET_RECTANGLE( *i_area ),
+                                &x, &y, &w, &h );
     CoreArray* arr = new CoreArray( 4 );
     arr->append( x );
     arr->append( y );
@@ -253,19 +252,12 @@ FALCON_FUNC CellRenderer::render( VMARG )
         throw_inv_params( "GdkWindow,GtkWidget,GdkRectangle,"
                           "GdkRectangle,GdkRectangle,GtkCellRendererState" );
 #endif
-    GdkWindow* win = (GdkWindow*) COREGOBJECT( i_win )->getGObject();
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
-    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
-    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
-    GdkRectangle* expo_area = dyncast<Gdk::Rectangle*>( i_expo_area->asObjectSafe() )->getRectangle();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_render( (GtkCellRenderer*)_obj,
-                              win,
-                              wdt,
-                              back_area,
-                              cell_area,
-                              expo_area,
+    gtk_cell_renderer_render( GET_CELLRENDERER( vm->self() ),
+                              GET_GDKWINDOW( *i_win ),
+                              GET_WIDGET( *i_wdt ),
+                              GET_RECTANGLE( *i_back_area ),
+                              GET_RECTANGLE( *i_cell_area ),
+                              GET_RECTANGLE( *i_expo_area ),
                               (GtkCellRendererState) i_flags->asInteger() );
 }
 
@@ -302,20 +294,14 @@ FALCON_FUNC CellRenderer::activate( VMARG )
         throw_inv_params( "GdkEvent,GtkWidget,S,GdkRectangle,"
                           "GdkRectangle,GtkCellRendererState" );
 #endif
-    GdkEvent* ev = dyncast<Gdk::Event*>( i_ev->asObjectSafe() )->getEvent();
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     AutoCString path( i_path->asString() );
-    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
-    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
-    MYSELF;
-    GET_OBJ( self );
     vm->retval( (bool)
-    gtk_cell_renderer_activate( (GtkCellRenderer*)_obj,
-                                ev,
-                                wdt,
+    gtk_cell_renderer_activate( GET_CELLRENDERER( vm->self() ),
+                                GET_EVENT( *i_ev ),
+                                GET_WIDGET( *i_wdt ),
                                 path.c_str(),
-                                back_area,
-                                cell_area,
+                                GET_RECTANGLE( *i_back_area ),
+                                GET_RECTANGLE( *i_cell_area ),
                                 (GtkCellRendererState) i_flags->asInteger() ) );
 }
 
@@ -350,20 +336,14 @@ FALCON_FUNC CellRenderer::start_editing( VMARG )
         throw_inv_params( "GdkEvent,GtkWidget,S,GdkRectangle,"
                           "GdkRectangle,GtkCellRendererState" );
 #endif
-    GdkEvent* ev = dyncast<Gdk::Event*>( i_ev->asObjectSafe() )->getEvent();
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
     AutoCString path( i_path->asString() );
-    GdkRectangle* back_area = dyncast<Gdk::Rectangle*>( i_back_area->asObjectSafe() )->getRectangle();
-    GdkRectangle* cell_area = dyncast<Gdk::Rectangle*>( i_cell_area->asObjectSafe() )->getRectangle();
-    MYSELF;
-    GET_OBJ( self );
     GtkCellEditable* editable =
-    gtk_cell_renderer_start_editing( (GtkCellRenderer*)_obj,
-                                     ev,
-                                     wdt,
+    gtk_cell_renderer_start_editing( GET_CELLRENDERER( vm->self() ),
+                                     GET_EVENT( *i_ev ),
+                                     GET_WIDGET( *i_wdt ),
                                      path.c_str(),
-                                     back_area,
-                                     cell_area,
+                                     GET_RECTANGLE( *i_back_area ),
+                                     GET_RECTANGLE( *i_cell_area ),
                                      (GtkCellRendererState) i_flags->asInteger() );
     if ( editable )
         vm->retval( new Gtk::CellEditable( vm->findWKI( "GtkCellEditable" )->asClass(),
@@ -395,9 +375,7 @@ FALCON_FUNC CellRenderer::stop_editing( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_stop_editing( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_stop_editing( GET_CELLRENDERER( vm->self() ),
                                     (gboolean) i_bool->asBoolean() );
 }
 
@@ -405,15 +383,13 @@ FALCON_FUNC CellRenderer::stop_editing( VMARG )
 /*#
     @method get_fixed_size GtkCellRenderer
     @brief Fills in width and height with the appropriate size of cell.
-    @return an array ( fixed width of the cell, fixed height of the cell ).
+    @return an array [ fixed width of the cell, fixed height of the cell ].
  */
 FALCON_FUNC CellRenderer::get_fixed_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint w, h;
-    gtk_cell_renderer_get_fixed_size( (GtkCellRenderer*)_obj, &w, &h );
+    gtk_cell_renderer_get_fixed_size( GET_CELLRENDERER( vm->self() ), &w, &h );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
@@ -436,9 +412,7 @@ FALCON_FUNC CellRenderer::set_fixed_size( VMARG )
         || !i_h || !i_h->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_set_fixed_size( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_set_fixed_size( GET_CELLRENDERER( vm->self() ),
                                       i_w->asInteger(),
                                       i_h->asInteger() );
 }
@@ -453,9 +427,7 @@ FALCON_FUNC CellRenderer::set_fixed_size( VMARG )
 FALCON_FUNC CellRenderer::get_visible( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_cell_renderer_get_visible( (GtkCellRenderer*)_obj ) );
+    vm->retval( (bool) gtk_cell_renderer_get_visible( GET_CELLRENDERER( vm->self() ) ) );
 }
 
 
@@ -471,9 +443,7 @@ FALCON_FUNC CellRenderer::set_visible( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_set_visible( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_set_visible( GET_CELLRENDERER( vm->self() ),
                                    (gboolean) i_bool->asBoolean() );
 }
 
@@ -486,9 +456,7 @@ FALCON_FUNC CellRenderer::set_visible( VMARG )
 FALCON_FUNC CellRenderer::get_sensitive( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_cell_renderer_get_sensitive( (GtkCellRenderer*)_obj ) );
+    vm->retval( (bool) gtk_cell_renderer_get_sensitive( GET_CELLRENDERER( vm->self() ) ) );
 }
 
 
@@ -504,9 +472,7 @@ FALCON_FUNC CellRenderer::set_sensitive( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_set_sensitive( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_set_sensitive( GET_CELLRENDERER( vm->self() ),
                                      (gboolean) i_bool->asBoolean() );
 }
 
@@ -514,15 +480,13 @@ FALCON_FUNC CellRenderer::set_sensitive( VMARG )
 /*#
     @method get_alignment GtkCellRenderer
     @brief Returns xalign and yalign of the cell.
-    @return an array ( x alignment, y alignment )
+    @return an array [ x alignment, y alignment ]
  */
 FALCON_FUNC CellRenderer::get_alignment( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gfloat x, y;
-    gtk_cell_renderer_get_alignment( (GtkCellRenderer*)_obj, &x, &y );
+    gtk_cell_renderer_get_alignment( GET_CELLRENDERER( vm->self() ), &x, &y );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( (numeric) x );
     arr->append( (numeric) y );
@@ -545,9 +509,7 @@ FALCON_FUNC CellRenderer::set_alignment( VMARG )
         || !i_y || !i_y->isOrdinal() )
         throw_inv_params( "N,N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_set_alignment( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_set_alignment( GET_CELLRENDERER( vm->self() ),
                                      i_x->forceNumeric(),
                                      i_y->forceNumeric() );
 }
@@ -561,10 +523,8 @@ FALCON_FUNC CellRenderer::set_alignment( VMARG )
 FALCON_FUNC CellRenderer::get_padding( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint x, y;
-    gtk_cell_renderer_get_padding( (GtkCellRenderer*)_obj, &x, &y );
+    gtk_cell_renderer_get_padding( GET_CELLRENDERER( vm->self() ), &x, &y );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( x );
     arr->append( y );
@@ -587,9 +547,7 @@ FALCON_FUNC CellRenderer::set_padding( VMARG )
         || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_cell_renderer_set_padding( (GtkCellRenderer*)_obj,
+    gtk_cell_renderer_set_padding( GET_CELLRENDERER( vm->self() ),
                                    i_x->asInteger(),
                                    i_y->asInteger() );
 }
