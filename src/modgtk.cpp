@@ -96,6 +96,8 @@
 #include "gtk_RadioMenuItem.hpp"
 #include "gtk_RadioToolButton.hpp"
 #include "gtk_Range.hpp"
+#include "gtk_RecentFilter.hpp"
+#include "gtk_RecentFilterInfo.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_Ruler.hpp"
 #include "gtk_Scale.hpp"
@@ -202,6 +204,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::CellEditable::modInit( self );
     Falcon::Gtk::FileFilterInfo::modInit( self );
     Falcon::Gtk::Main::modInit( self );
+    Falcon::Gtk::RecentFilterInfo::modInit( self );
     Falcon::Gtk::Requisition::modInit( self );
     Falcon::Gtk::Signal::modInit( self );
     Falcon::Gtk::Stock::modInit( self );
@@ -222,6 +225,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Adjustment::modInit( self );
         Falcon::Gtk::FileFilter::modInit( self );
+        Falcon::Gtk::RecentFilter::modInit( self );
         Falcon::Gtk::TreeViewColumn::modInit( self );
         Falcon::Gtk::Widget::modInit( self );
             Falcon::Gtk::Container::modInit( self );

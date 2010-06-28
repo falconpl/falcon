@@ -98,6 +98,8 @@ set( SRC_FILES
     gtk_RadioMenuItem.cpp
     gtk_RadioToolButton.cpp
     gtk_Range.cpp
+    gtk_RecentFilter.cpp
+    gtk_RecentFilterInfo.cpp
     gtk_Requisition.cpp
     gtk_Ruler.cpp
     gtk_Scale.cpp
@@ -244,6 +246,8 @@ set( HDR_FILES
     gtk_RadioMenuItem.hpp
     gtk_RadioToolButton.hpp
     gtk_Range.hpp
+    gtk_RecentFilter.hpp
+    gtk_RecentFilterInfo.hpp
     gtk_Requisition.hpp
     gtk_Ruler.hpp
     gtk_Scale.hpp

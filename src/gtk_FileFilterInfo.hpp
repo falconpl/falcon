@@ -33,15 +33,11 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GtkFileFilterInfo* getInfo() const { return (GtkFileFilterInfo*) &m_info; }
+    GtkFileFilterInfo* getInfo() const { return (GtkFileFilterInfo*) m_info; }
 
 private:
 
-    void setInfo( const GtkFileFilterInfo* );
-
-    void disposeInfo();
-
-    GtkFileFilterInfo   m_info;
+    GtkFileFilterInfo*  m_info;
 
 };
 
