@@ -44,8 +44,7 @@ FileFilterInfo::~FileFilterInfo()
 
 void FileFilterInfo::setInfo( const GtkFileFilterInfo* info )
 {
-    if ( info->contains )
-        m_info.contains = info->contains;
+    m_info.contains = info->contains;
     if ( info->filename )
         m_info.filename = g_strdup( info->filename );
     if ( info->uri )
