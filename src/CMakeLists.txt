@@ -59,6 +59,8 @@ set( SRC_FILES
     gtk_FileChooser.cpp
     gtk_FileChooserButton.cpp
     gtk_FileChooserDialog.cpp
+    gtk_FileFilter.cpp
+    gtk_FileFilterInfo.cpp
     gtk_Fixed.cpp
     gtk_FontButton.cpp
     gtk_Frame.cpp
@@ -203,6 +205,8 @@ set( HDR_FILES
     gtk_FileChooser.hpp
     gtk_FileChooserButton.hpp
     gtk_FileChooserDialog.hpp
+    gtk_FileFilter.hpp
+    gtk_FileFilterInfo.hpp
     gtk_Fixed.hpp
     gtk_FontButton.hpp
     gtk_Frame.hpp

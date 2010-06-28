@@ -56,6 +56,8 @@
 #include "gtk_Expander.hpp"
 #include "gtk_FileChooserButton.hpp"
 #include "gtk_FileChooserDialog.hpp"
+#include "gtk_FileFilter.hpp"
+#include "gtk_FileFilterInfo.hpp"
 #include "gtk_Fixed.hpp"
 #include "gtk_FontButton.hpp"
 #include "gtk_Frame.hpp"
@@ -198,6 +200,7 @@ FALCON_MODULE_DECL
     // not GObject based //
 
     Falcon::Gtk::CellEditable::modInit( self );
+    Falcon::Gtk::FileFilterInfo::modInit( self );
     Falcon::Gtk::Main::modInit( self );
     Falcon::Gtk::Requisition::modInit( self );
     Falcon::Gtk::Signal::modInit( self );
@@ -218,6 +221,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::ListStore::modInit( self );
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Adjustment::modInit( self );
+        Falcon::Gtk::FileFilter::modInit( self );
         Falcon::Gtk::TreeViewColumn::modInit( self );
         Falcon::Gtk::Widget::modInit( self );
             Falcon::Gtk::Container::modInit( self );

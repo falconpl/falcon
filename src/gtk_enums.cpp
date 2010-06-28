@@ -915,6 +915,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_EXTENSION_EVENTS_CURSOR",    GDK_EXTENSION_EVENTS_CURSOR },
 
     /*
+     *  GtkFileFilterFlags
+     */
+    { "GTK_FILE_FILTER_FILENAME",       GTK_FILE_FILTER_FILENAME },
+    { "GTK_FILE_FILTER_URI",            GTK_FILE_FILTER_URI },
+    { "GTK_FILE_FILTER_DISPLAY_NAME",   GTK_FILE_FILTER_DISPLAY_NAME },
+    { "GTK_FILE_FILTER_MIME_TYPE",      GTK_FILE_FILTER_MIME_TYPE },
+
+    /*
      *  GdkFillRule
      */
     { "GDK_EVEN_ODD_RULE",  GDK_EVEN_ODD_RULE },
