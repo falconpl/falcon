@@ -30,10 +30,9 @@ FileFilterInfo::FileFilterInfo( const Falcon::CoreClass* gen, const GtkFileFilte
     :
     Falcon::CoreObject( gen )
 {
+    memset( &m_info, 0, sizeof( GtkFileFilterInfo ) );
     if ( info )
         setInfo( info );
-    else
-        memset( &m_info, 0, sizeof( GtkFileFilterInfo ) );
 }
 
 
@@ -45,7 +44,6 @@ FileFilterInfo::~FileFilterInfo()
 
 void FileFilterInfo::setInfo( const GtkFileFilterInfo* info )
 {
-    disposeInfo();
     if ( info->contains )
         m_info.contains = info->contains;
     if ( info->filename )
@@ -62,13 +60,13 @@ void FileFilterInfo::setInfo( const GtkFileFilterInfo* info )
 void FileFilterInfo::disposeInfo()
 {
     if ( m_info.filename )
-        g_free( &m_info.filename );
+        g_free( (gpointer) m_info.filename );
     if ( m_info.uri )
-        g_free( &m_info.uri );
+        g_free( (gpointer) m_info.uri );
     if ( m_info.display_name )
-        g_free( &m_info.display_name );
+        g_free( (gpointer) m_info.display_name );
     if ( m_info.mime_type )
-        g_free( &m_info.mime_type );
+        g_free( (gpointer) m_info.mime_type );
     memset( &m_info, 0, sizeof( GtkFileFilterInfo ) );
 }
 
@@ -113,7 +111,7 @@ bool FileFilterInfo::setProperty( const Falcon::String& s, const Falcon::Item& i
             throw_inv_params( "S" );
 #endif
         if ( m_info.filename )
-            g_free( &m_info.filename );
+            g_free( (gpointer) m_info.filename );
         AutoCString s( it.asString() );
         m_info.filename = g_strdup( s.c_str() );
     }
@@ -125,7 +123,7 @@ bool FileFilterInfo::setProperty( const Falcon::String& s, const Falcon::Item& i
             throw_inv_params( "S" );
 #endif
         if ( m_info.uri )
-            g_free( &m_info.uri );
+            g_free( (gpointer) m_info.uri );
         AutoCString s( it.asString() );
         m_info.uri = g_strdup( s.c_str() );
     }
@@ -137,7 +135,7 @@ bool FileFilterInfo::setProperty( const Falcon::String& s, const Falcon::Item& i
             throw_inv_params( "S" );
 #endif
         if ( m_info.display_name )
-            g_free( &m_info.display_name );
+            g_free( (gpointer) m_info.display_name );
         AutoCString s( it.asString() );
         m_info.display_name = g_strdup( s.c_str() );
     }
@@ -149,7 +147,7 @@ bool FileFilterInfo::setProperty( const Falcon::String& s, const Falcon::Item& i
             throw_inv_params( "S" );
 #endif
         if ( m_info.mime_type )
-            g_free( &m_info.mime_type );
+            g_free( (gpointer) m_info.mime_type );
         AutoCString s( it.asString() );
         m_info.mime_type = g_strdup( s.c_str() );
     }
@@ -175,6 +173,7 @@ Falcon::CoreObject* FileFilterInfo::factory( const Falcon::CoreClass* gen, void*
     @prop display_name the string that will be used to display the file in the file chooser
     @prop mime_type the mime type of the file
  */
+
 
 } // Gtk
 } // Falcon

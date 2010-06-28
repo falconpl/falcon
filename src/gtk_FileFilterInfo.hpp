@@ -49,4 +49,4 @@ private:
 } // Gtk
 } // Falcon
 
-#endif // !GTK_FILEFILTERINFO_HPP_HPP
+#endif // !GTK_FILEFILTERINFO_HPP
