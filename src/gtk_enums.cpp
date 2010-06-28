@@ -245,6 +245,14 @@ void Enums::modInit( Falcon::Module* mod )
 #endif
 
     /*
+     *  GtkFileFilterFlags
+     */
+    { "GTK_FILE_FILTER_FILENAME",       GTK_FILE_FILTER_FILENAME },
+    { "GTK_FILE_FILTER_URI",            GTK_FILE_FILTER_URI },
+    { "GTK_FILE_FILTER_DISPLAY_NAME",   GTK_FILE_FILTER_DISPLAY_NAME },
+    { "GTK_FILE_FILTER_MIME_TYPE",      GTK_FILE_FILTER_MIME_TYPE },
+
+    /*
      *  GtkIconSize
      */
     { "GTK_ICON_SIZE_INVALID",      GTK_ICON_SIZE_INVALID },
@@ -913,14 +921,6 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_EXTENSION_EVENTS_NONE",      GDK_EXTENSION_EVENTS_NONE },
     { "GDK_EXTENSION_EVENTS_ALL",       GDK_EXTENSION_EVENTS_ALL },
     { "GDK_EXTENSION_EVENTS_CURSOR",    GDK_EXTENSION_EVENTS_CURSOR },
-
-    /*
-     *  GtkFileFilterFlags
-     */
-    { "GTK_FILE_FILTER_FILENAME",       GTK_FILE_FILTER_FILENAME },
-    { "GTK_FILE_FILTER_URI",            GTK_FILE_FILTER_URI },
-    { "GTK_FILE_FILTER_DISPLAY_NAME",   GTK_FILE_FILTER_DISPLAY_NAME },
-    { "GTK_FILE_FILTER_MIME_TYPE",      GTK_FILE_FILTER_MIME_TYPE },
 
     /*
      *  GdkFillRule
