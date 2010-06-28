@@ -31,6 +31,10 @@ void Object::modInit( Falcon::Module* mod )
     { "ref",                &Object::ref },
     { "unref",              &Object::unref },
     { "ref_sink",           &Object::ref_sink },
+#if 0 // todo?
+    { "connect",            &Object::connect },
+    { "disconnect",         &Object::disconnect },
+#endif
     { NULL, NULL }
     };
 
@@ -100,43 +104,45 @@ FALCON_FUNC Object::set_property( VMARG )
     Item* i_nam = vm->param( 0 );
     Item* i_val = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_nam || i_nam->isNil() || !i_nam->isString()
+    if ( !i_nam || !i_nam->isString()
         || !i_val )
         throw_inv_params( "S,X" );
 #endif
     AutoCString name( i_nam->asString() );
-    MYSELF;
-    GET_OBJ( self );
+    GObject* gobj = GET_OBJECT( vm->self() );
 
-    if ( i_val->isNil() )
-        g_object_set( _obj, name.c_str(), NULL, NULL );
-    else
-    if ( i_val->isInteger() )
-        g_object_set( _obj, name.c_str(), i_val->asInteger(), NULL );
-    else
-    if ( i_val->isBoolean() )
-        g_object_set( _obj, name.c_str(), i_val->asBoolean(), NULL );
-    else
-    if ( i_val->isNumeric() )
-        g_object_set( _obj, name.c_str(), i_val->asNumeric(), NULL );
-    else
-    if ( i_val->isString() )
+    switch ( i_val->type() )
+    {
+    case FLC_ITEM_NIL:
+        g_object_set( gobj, name.c_str(), NULL, NULL );
+        break;
+    case FLC_ITEM_INT:
+        g_object_set( gobj, name.c_str(), i_val->asInteger(), NULL );
+        break;
+    case FLC_ITEM_BOOL:
+        g_object_set( gobj, name.c_str(), i_val->asBoolean(), NULL );
+        break;
+    case FLC_ITEM_NUM:
+        g_object_set( gobj, name.c_str(), i_val->asNumeric(), NULL );
+        break;
+    case FLC_ITEM_STRING:
     {
         AutoCString val( i_val->asString() );
-        g_object_set( _obj, name.c_str(), val.c_str(), NULL );
+        g_object_set( gobj, name.c_str(), val.c_str(), NULL );
+        break;
     }
-    else
-    if ( i_val->isObject() )
+    case FLC_ITEM_OBJECT:
     {
 #ifndef NO_PARAMETER_CHECK
         if ( !IS_DERIVED( i_val, GObject ) )
             throw_inv_params( "GObject" );
 #endif
-        GObject* obj = COREGOBJECT( i_val )->getGObject();
-        g_object_set( _obj, name.c_str(), obj, NULL );
+        g_object_set( gobj, name.c_str(), GET_OBJECT( *i_val ), NULL );
+        break;
     }
-    else
+    default:
         throw_inv_params( "S,X" );
+    }
 }
 
 
@@ -153,12 +159,11 @@ FALCON_FUNC Object::get_property( VMARG )
     if ( !i_nam || !i_nam->isString() )
         throw_inv_params( "S" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
+    GObject* gobj = GET_OBJECT( vm->self() );
     AutoCString nam( i_nam->asString() );
 
     GParamSpec* spec = g_object_class_find_property(
-        G_OBJECT_GET_CLASS( _obj ), nam.c_str() );
+        G_OBJECT_GET_CLASS( gobj ), nam.c_str() );
 
     if ( !spec )
         throw_gtk_error( e_inv_property, FAL_STR( gtk_e_inv_property_ ) );
@@ -166,7 +171,7 @@ FALCON_FUNC Object::get_property( VMARG )
     if ( spec->value_type == G_TYPE_BOOLEAN )
     {
         gboolean b;
-        g_object_get( _obj, nam.c_str(), &b, NULL );
+        g_object_get( gobj, nam.c_str(), &b, NULL );
         vm->retval( (bool) b );
     }
     else
@@ -178,7 +183,7 @@ FALCON_FUNC Object::get_property( VMARG )
         || spec->value_type == G_TYPE_UINT64 )
     {
         Falcon::int64 val;
-        g_object_get( _obj, nam.c_str(), &val, NULL );
+        g_object_get( gobj, nam.c_str(), &val, NULL );
         vm->retval( val );
     }
     else
@@ -186,33 +191,30 @@ FALCON_FUNC Object::get_property( VMARG )
         || spec->value_type == G_TYPE_DOUBLE )
     {
         double d;
-        g_object_get( _obj, nam.c_str(), &d, NULL );
+        g_object_get( gobj, nam.c_str(), &d, NULL );
         vm->retval( d );
     }
     else
     if ( spec->value_type == G_TYPE_STRING )
     {
-        gchar* txt;
-        g_object_get( _obj, nam.c_str(), &txt, NULL );
-        String* s;
+        gchar* txt = NULL;
+        g_object_get( gobj, nam.c_str(), &txt, NULL );
         if ( txt )
         {
-            s = new String( txt );
-            s->bufferize();
+            vm->retval( UTF8String( txt ) );
             g_free( txt );
         }
         else
-            s = new String;
-        vm->retval( s );
+            vm->retval( UTF8String( "" ) );
     }
     else
     if ( g_type_is_a( spec->value_type, G_TYPE_OBJECT ) )
     {
         GObject* o;
-        g_object_get( _obj, nam.c_str(), &o, NULL );
+        g_object_get( gobj, nam.c_str(), &o, NULL );
         if ( o )
         {
-            vm->retval( new Object( vm->self().asClass(), o ) );
+            vm->retval( new Glib::Object( vm->self().asClass(), o ) );
             g_object_unref( o );
         }
         else
@@ -232,13 +234,11 @@ FALCON_FUNC Object::notify( VMARG )
 {
     Item* i_nam = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_nam || i_nam->isNil() || !i_nam->isString() )
+    if ( !i_nam || !i_nam->isString() )
         throw_inv_params( "S" );
 #endif
     AutoCString name( i_nam->asString() );
-    MYSELF;
-    GET_OBJ( self );
-    g_object_notify( _obj, name.c_str() );
+    g_object_notify( GET_OBJECT( vm->self() ), name.c_str() );
 }
 
 
@@ -255,9 +255,7 @@ FALCON_FUNC Object::notify( VMARG )
 FALCON_FUNC Object::freeze_notify( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    g_object_freeze_notify( _obj );
+    g_object_freeze_notify( GET_OBJECT( vm->self() ) );
 }
 
 
@@ -273,9 +271,7 @@ FALCON_FUNC Object::freeze_notify( VMARG )
 FALCON_FUNC Object::thaw_notify( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    g_object_thaw_notify( _obj );
+    g_object_thaw_notify( GET_OBJECT( vm->self() ) );
 }
 
 
@@ -287,9 +283,7 @@ FALCON_FUNC Object::thaw_notify( VMARG )
 FALCON_FUNC Object::ref( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    g_object_ref( _obj );
+    g_object_ref( GET_OBJECT( vm->self() ) );
 }
 
 
@@ -303,9 +297,7 @@ FALCON_FUNC Object::ref( VMARG )
 FALCON_FUNC Object::unref( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    g_object_unref( _obj );
+    g_object_unref( GET_OBJECT( vm->self() ) );
 }
 
 
@@ -322,9 +314,7 @@ FALCON_FUNC Object::unref( VMARG )
 FALCON_FUNC Object::ref_sink( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    g_object_ref_sink( _obj );
+    g_object_ref_sink( GET_OBJECT( vm->self() ) );
 }
 
 

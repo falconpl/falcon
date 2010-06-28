@@ -1,7 +1,14 @@
+/**
+ *  \file g_Object.hpp
+ */
+
 #ifndef G_OBJECT_HPP
 #define G_OBJECT_HPP
 
 #include "modgtk.hpp"
+
+#define GET_OBJECT( item ) \
+        (Falcon::dyncast<Glib::Object*>( (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {
@@ -41,6 +48,11 @@ public:
     static FALCON_FUNC unref( VMARG );
 
     static FALCON_FUNC ref_sink( VMARG );
+
+#if 0 // todo?
+    static FALCON_FUNC connect( VMARG );
+    static FALCON_FUNC disconnect( VMARG );
+#endif
 
 };
 
