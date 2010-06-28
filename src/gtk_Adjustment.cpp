@@ -4,8 +4,6 @@
 
 #include "gtk_Adjustment.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gtk {
@@ -90,7 +88,7 @@ Falcon::CoreObject* Adjustment::factory( const Falcon::CoreClass* gen, void* adj
  */
 FALCON_FUNC Adjustment::init( VMARG )
 {
-    Gtk::ArgCheck0 args( vm, "[N,N,N,N,N,N]" );
+    Gtk::ArgCheck0 args( vm, "[N],[N],[N],[N],[N],[N]" );
 
     gdouble value = args.getNumeric( 0, false );
     gdouble lower = args.getNumeric( 1, false );
@@ -100,18 +98,14 @@ FALCON_FUNC Adjustment::init( VMARG )
     gdouble page_sz = args.getNumeric( 5, false );
 
     MYSELF;
-    GtkObject* obj = gtk_adjustment_new( value, lower, upper, step_incr,
-            page_incr, page_sz );
-    self->setGObject( (GObject*) obj );
+    self->setGObject( (GObject*) gtk_adjustment_new(
+            value, lower, upper, step_incr, page_incr, page_sz ) );
 }
 
 
 /*#
     @method signal_changed GtkAdjustment
-    @brief Connect a VMSlot to the adjustment changed signal and return it
-
-    Emitted when one or more of the GtkAdjustment fields have been changed, other
-    than the value field.
+    @brief Emitted when one or more of the GtkAdjustment fields have been changed, other than the value field.
  */
 FALCON_FUNC Adjustment::signal_changed( VMARG )
 {
@@ -128,9 +122,7 @@ void Adjustment::on_changed( GtkAdjustment* obj, gpointer _vm )
 
 /*#
     @method signal_value_changed GtkAdjustment
-    @brief Connect a VMSlot to the adjustment changed signal and return it
-
-    Emitted when the GtkAdjustment value field has been changed.
+    @brief Emitted when the GtkAdjustment value field has been changed.
  */
 FALCON_FUNC Adjustment::signal_value_changed( VMARG )
 {
@@ -153,9 +145,7 @@ void Adjustment::on_value_changed( GtkAdjustment* obj, gpointer _vm )
 FALCON_FUNC Adjustment::get_value( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_value( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_value( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -172,12 +162,11 @@ FALCON_FUNC Adjustment::set_value( VMARG )
 {
     Item* i_val = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_val || i_val->isNil() || !i_val->isOrdinal() )
+    if ( !i_val || !i_val->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_value( (GtkAdjustment*)_obj, i_val->asNumeric() );
+    gtk_adjustment_set_value( GET_ADJUSTMENT( vm->self() ),
+                              i_val->forceNumeric() );
 }
 
 
@@ -195,13 +184,12 @@ FALCON_FUNC Adjustment::clamp_page( VMARG )
     Item* i_low = vm->param( 0 );
     Item* i_upp = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_low || i_low->isNil() || !i_low->isOrdinal()
-        || !i_upp || i_upp->isNil() || !i_upp->isOrdinal() )
+    if ( !i_low || !i_low->isOrdinal()
+        || !i_upp || !i_upp->isOrdinal() )
         throw_inv_params( "N,N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_clamp_page( (GtkAdjustment*)_obj, i_low->asNumeric(), i_upp->asNumeric() );
+    gtk_adjustment_clamp_page( GET_ADJUSTMENT( vm->self() ),
+                               i_low->forceNumeric(), i_upp->forceNumeric() );
 }
 
 
@@ -215,9 +203,7 @@ FALCON_FUNC Adjustment::clamp_page( VMARG )
 FALCON_FUNC Adjustment::changed( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_changed( (GtkAdjustment*)_obj );
+    gtk_adjustment_changed( GET_ADJUSTMENT( vm->self() ) );
 }
 
 
@@ -231,9 +217,7 @@ FALCON_FUNC Adjustment::changed( VMARG )
 FALCON_FUNC Adjustment::value_changed( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_value_changed( (GtkAdjustment*)_obj );
+    gtk_adjustment_value_changed( GET_ADJUSTMENT( vm->self() ) );
 }
 
 
@@ -263,9 +247,7 @@ FALCON_FUNC Adjustment::configure( VMARG )
     gdouble page_incr = args.getNumeric( 4 );
     gdouble page_sz = args.getNumeric( 5 );
 
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_configure( (GtkAdjustment*)_obj,
+    gtk_adjustment_configure( GET_ADJUSTMENT( vm->self() ),
             value, lower, upper, step_incr, page_incr, page_sz );
 }
 
@@ -278,9 +260,7 @@ FALCON_FUNC Adjustment::configure( VMARG )
 FALCON_FUNC Adjustment::get_lower( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_lower( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_lower( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -292,9 +272,7 @@ FALCON_FUNC Adjustment::get_lower( VMARG )
 FALCON_FUNC Adjustment::get_page_increment( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_page_increment( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_page_increment( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -306,9 +284,7 @@ FALCON_FUNC Adjustment::get_page_increment( VMARG )
 FALCON_FUNC Adjustment::get_page_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_page_size( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_page_size( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -320,9 +296,7 @@ FALCON_FUNC Adjustment::get_page_size( VMARG )
 FALCON_FUNC Adjustment::get_step_increment( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_step_increment( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_step_increment( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -334,9 +308,7 @@ FALCON_FUNC Adjustment::get_step_increment( VMARG )
 FALCON_FUNC Adjustment::get_upper( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_adjustment_get_upper( (GtkAdjustment*)_obj ) );
+    vm->retval( gtk_adjustment_get_upper( GET_ADJUSTMENT( vm->self() ) ) );
 }
 
 
@@ -360,12 +332,11 @@ FALCON_FUNC Adjustment::set_lower( VMARG )
 {
     Item* i_low = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_low || i_low->isNil() || !i_low->isOrdinal() )
+    if ( !i_low || !i_low->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_lower( (GtkAdjustment*)_obj, i_low->asNumeric() );
+    gtk_adjustment_set_lower( GET_ADJUSTMENT( vm->self() ),
+                              i_low->forceNumeric() );
 }
 
 
@@ -381,12 +352,11 @@ FALCON_FUNC Adjustment::set_page_increment( VMARG )
 {
     Item* i_incr = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_incr || i_incr->isNil() || !i_incr->isOrdinal() )
+    if ( !i_incr || !i_incr->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_page_increment( (GtkAdjustment*)_obj, i_incr->asNumeric() );
+    gtk_adjustment_set_page_increment( GET_ADJUSTMENT( vm->self() ),
+                                       i_incr->forceNumeric() );
 }
 
 
@@ -402,12 +372,11 @@ FALCON_FUNC Adjustment::set_page_size( VMARG )
 {
     Item* i_sz = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_sz || i_sz->isNil() || !i_sz->isOrdinal() )
+    if ( !i_sz || !i_sz->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_page_size( (GtkAdjustment*)_obj, i_sz->asNumeric() );
+    gtk_adjustment_set_page_size( GET_ADJUSTMENT( vm->self() ),
+                                  i_sz->forceNumeric() );
 }
 
 
@@ -423,12 +392,11 @@ FALCON_FUNC Adjustment::set_step_increment( VMARG )
 {
     Item* i_step = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_step || i_step->isNil() || !i_step->isOrdinal() )
+    if ( !i_step || !i_step->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_step_increment( (GtkAdjustment*)_obj, i_step->asNumeric() );
+    gtk_adjustment_set_step_increment( GET_ADJUSTMENT( vm->self() ),
+                                       i_step->forceNumeric() );
 }
 
 
@@ -446,12 +414,11 @@ FALCON_FUNC Adjustment::set_upper( VMARG )
 {
     Item* i_upp = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_upp || i_upp->isNil() || !i_upp->isOrdinal() )
+    if ( !i_upp || !i_upp->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_adjustment_set_upper( (GtkAdjustment*)_obj, i_upp->asNumeric() );
+    gtk_adjustment_set_upper( GET_ADJUSTMENT( vm->self() ),
+                              i_upp->forceNumeric() );
 }
 #endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
