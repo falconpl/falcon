@@ -26,7 +26,7 @@ void WindowGroup::modInit( Falcon::Module* mod )
     {
     { "add_window",     &WindowGroup::add_window },
     { "remove_window",  &WindowGroup::remove_window },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "list_windows",   &WindowGroup::list_windows },
 #endif
     { NULL, NULL }
@@ -104,7 +104,7 @@ FALCON_FUNC WindowGroup::remove_window( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method list_windows GtkWindowGroup
     @brief Returns a list of the GtkWindows that belong to window_group.

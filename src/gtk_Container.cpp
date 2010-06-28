@@ -34,7 +34,7 @@ void Container::modInit( Falcon::Module* mod )
     //{ "foreach_full",         &Container::foreach_full },
     //{ "get_children",         &Container::get_children },
     { "set_reallocate_redraws", &Container::set_reallocate_redraws },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_focus_child",        &Container::get_focus_child },
 #endif
     { "set_focus_child",        &Container::set_focus_child },
@@ -221,7 +221,7 @@ FALCON_FUNC Container::set_reallocate_redraws( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_focus_child GtkContainer
     @brief Returns the current focus child widget inside container.

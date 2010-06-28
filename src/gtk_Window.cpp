@@ -66,7 +66,7 @@ void Window::modInit( Falcon::Module* mod )
     //{ "propagate_key_event",        &Window::set_gravity },
     { "get_focus",          &Window::get_focus },
     { "set_focus",          &Window::set_focus },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_default_widget", &Window::get_default_widget },
 #endif
     { "set_default",        &Window::set_default },
@@ -100,7 +100,7 @@ void Window::modInit( Falcon::Module* mod )
     { "get_decorated",      &Window::get_decorated },
     { "get_deletable",      &Window::get_deletable },
     //{ "get_default_icon_list",        &Window::set_gravity },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "get_default_icon_name",&Window::get_default_icon_name },
 #endif
     { "get_default_size",   &Window::get_default_size },
@@ -124,7 +124,7 @@ void Window::modInit( Falcon::Module* mod )
     { "get_accept_focus",   &Window::get_accept_focus },
     { "get_focus_on_map",   &Window::get_focus_on_map },
     //{ "get_group",        &Window::set_gravity },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_window_type",    &Window::get_window_type },
 #endif
     { "move",               &Window::move },
@@ -804,7 +804,7 @@ FALCON_FUNC Window::set_focus( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_default_widget GtkWindow
     @brief Returns the default widget for window.
@@ -1569,7 +1569,7 @@ FALCON_FUNC Window::get_deletable( VMARG )
 //FALCON_FUNC Window::get_default_icon_list( VMARG );
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method get_default_icon_name GtkWindow
     @brief Gets the window default icon name.
@@ -1970,7 +1970,7 @@ FALCON_FUNC Window::get_focus_on_map( VMARG )
 //FALCON_FUNC Window::get_group( VMARG );
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_window_type GtkWindow
     @brief Gets the type of the window.

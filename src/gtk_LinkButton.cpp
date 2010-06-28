@@ -27,7 +27,7 @@ void LinkButton::modInit( Falcon::Module* mod )
     { "get_uri",        &LinkButton::get_uri },
     { "set_uri",        &LinkButton::set_uri },
     { "set_uri_hook",   &LinkButton::set_uri_hook },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_visited",    &LinkButton::get_visited },
     { "set_visited",    &LinkButton::set_visited },
 #endif
@@ -193,7 +193,7 @@ void link_button_uri_hook_func( GtkLinkButton* btn, const gchar* link, gpointer 
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_visited GtkLinkButton
     @brief Retrieves the 'visited' state of the URI where the GtkLinkButton points.
@@ -230,7 +230,7 @@ FALCON_FUNC LinkButton::set_visited( VMARG )
     gtk_link_button_set_visited( (GtkLinkButton*)_obj,
                                  (gboolean) i_bool->asBoolean() );
 }
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 
 } // Gtk

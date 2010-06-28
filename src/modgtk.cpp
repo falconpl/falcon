@@ -28,7 +28,7 @@
 
 #include "gtk_enums.hpp"
 
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
 #include "gtk_AboutDialog.hpp"
 #endif
 #include "gtk_Action.hpp"
@@ -67,7 +67,7 @@
 #include "gtk_HScrollbar.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_ImageMenuItem.hpp"
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 #include "gtk_InfoBar.hpp"
 #endif
 #include "gtk_Invisible.hpp"
@@ -119,7 +119,7 @@
 #include "gtk_ToolButton.hpp"
 #include "gtk_ToolItem.hpp"
 #include "gtk_ToolItemGroup.hpp"
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 #include "gtk_ToolPalette.hpp"
 #endif
 #include "gtk_TreeIter.hpp"
@@ -254,7 +254,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::SeparatorToolItem::modInit( self );
                     Falcon::Gtk::Window::modInit( self );
                         Falcon::Gtk::Dialog::modInit( self );
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
                             Falcon::Gtk::AboutDialog::modInit( self );
 #endif
                             Falcon::Gtk::ColorSelectionDialog::modInit( self );
@@ -266,7 +266,7 @@ FALCON_MODULE_DECL
                         Falcon::Gtk::VButtonBox::modInit( self );
                     Falcon::Gtk::HBox::modInit( self );
                         Falcon::Gtk::FileChooserButton::modInit( self );
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
                         Falcon::Gtk::InfoBar::modInit( self );
 #endif
                         Falcon::Gtk::Statusbar::modInit( self );
@@ -282,7 +282,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::Table::modInit( self );
                 Falcon::Gtk::TextView::modInit( self );
                 Falcon::Gtk::Toolbar::modInit( self );
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
                 Falcon::Gtk::ToolItemGroup::modInit( self );
                 Falcon::Gtk::ToolPalette::modInit( self );
 #endif

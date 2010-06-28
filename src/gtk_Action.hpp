@@ -63,7 +63,7 @@ public:
 
     static FALCON_FUNC disconnect_accelerator( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC block_activate( VMARG );
 
     static FALCON_FUNC unblock_activate( VMARG );
@@ -74,7 +74,7 @@ public:
     static FALCON_FUNC unblock_activate_from( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_always_show_image( VMARG );
 
     static FALCON_FUNC set_always_show_image( VMARG );
@@ -88,7 +88,7 @@ public:
 
     //static FALCON_FUNC set_accel_group( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 
     static FALCON_FUNC set_label( VMARG );
 
@@ -126,7 +126,7 @@ public:
 
     static FALCON_FUNC get_is_important( VMARG );
 
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 };
 

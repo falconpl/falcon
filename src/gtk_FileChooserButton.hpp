@@ -24,7 +24,7 @@ public:
 
     static FALCON_FUNC init( VMARG );
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
     static FALCON_FUNC signal_file_set( VMARG );
 
     static void on_file_set( GtkFileChooserButton*, gpointer );

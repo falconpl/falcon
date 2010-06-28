@@ -88,7 +88,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_ANCHOR_W",           GTK_ANCHOR_W },
     { "GTK_ANCHOR_E",           GTK_ANCHOR_E },
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     /*
      *  GtkArrowPlacement
      */
@@ -203,7 +203,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_DRAG_RESULT_GRAB_BROKEN",    GTK_DRAG_RESULT_GRAB_BROKEN },
     { "GTK_DRAG_RESULT_ERROR",          GTK_DRAG_RESULT_ERROR },
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     /*
      *  GtkEntryIconPosition
      */
@@ -240,7 +240,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_FILE_CHOOSER_ERROR_NONEXISTENT",GTK_FILE_CHOOSER_ERROR_NONEXISTENT },
     { "GTK_FILE_CHOOSER_ERROR_BAD_FILENAME",GTK_FILE_CHOOSER_ERROR_BAD_FILENAME },
     { "GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS",GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME",GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME },
 #endif
 
@@ -266,7 +266,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_IMAGE_ICON_SET",     GTK_IMAGE_ICON_SET },
     { "GTK_IMAGE_ANIMATION",    GTK_IMAGE_ANIMATION },
     { "GTK_IMAGE_ICON_NAME",    GTK_IMAGE_ICON_NAME },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "GTK_IMAGE_GICON",        GTK_IMAGE_GICON },
 #endif
 
@@ -591,7 +591,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_TOOLBAR_BOTH",       GTK_TOOLBAR_BOTH },
     { "GTK_TOOLBAR_BOTH_HORIZ", GTK_TOOLBAR_BOTH_HORIZ },
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     /*
      *  GtkToolPaletteDragTargets
      */
@@ -803,7 +803,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_WATCH",              GDK_WATCH },
     { "GDK_XTERM",              GDK_XTERM },
     { "GDK_LAST_CURSOR",        GDK_LAST_CURSOR },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "GDK_BLANK_CURSOR",       GDK_BLANK_CURSOR },
 #endif
     { "GDK_CURSOR_IS_PIXMAP",   GDK_CURSOR_IS_PIXMAP },
@@ -894,16 +894,16 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_SCROLL",         GDK_SCROLL },
     { "GDK_WINDOW_STATE",   GDK_WINDOW_STATE },
     { "GDK_SETTING",        GDK_SETTING },
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
     { "GDK_OWNER_CHANGE",   GDK_OWNER_CHANGE },
 #endif
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
     { "GDK_GRAB_BROKEN",    GDK_GRAB_BROKEN },
 #endif
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "GDK_DAMAGE",         GDK_DAMAGE },
 #endif
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "GDK_EVENT_LAST",     GDK_EVENT_LAST },
 #endif
 
@@ -1106,7 +1106,7 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_WINDOW_DIALOG",      GDK_WINDOW_DIALOG },
     { "GDK_WINDOW_TEMP",        GDK_WINDOW_TEMP },
     { "GDK_WINDOW_FOREIGN",     GDK_WINDOW_FOREIGN },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "GDK_WINDOW_OFFSCREEN",   GDK_WINDOW_OFFSCREEN },
 #endif
 

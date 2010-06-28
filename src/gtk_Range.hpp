@@ -78,13 +78,13 @@ public:
 
     static FALCON_FUNC get_upper_stepper_sensitivity( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC get_flippable( VMARG );
 
     static FALCON_FUNC set_flippable( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_min_slider_size( VMARG );
 
     //static FALCON_FUNC get_range_rect( VMARG );

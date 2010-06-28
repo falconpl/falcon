@@ -34,7 +34,7 @@ public:
 
     static FALCON_FUNC new_with_mnemonic( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC get_use_stock( VMARG );
 
     static FALCON_FUNC set_use_stock( VMARG );

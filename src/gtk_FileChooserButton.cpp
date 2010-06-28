@@ -24,7 +24,7 @@ void FileChooserButton::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
     { "signal_file_set",    &FileChooserButton::signal_file_set },
 #endif
     //{ "new_with_backend",   &FileChooserButton::new_with_backend },
@@ -81,7 +81,7 @@ FALCON_FUNC FileChooserButton::init( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
 /*#
     @method signal_file_set GtkFileChooserButton
     @brief The file-set signal is emitted when the user selects a file.
@@ -99,7 +99,7 @@ void FileChooserButton::on_file_set( GtkFileChooserButton* obj, gpointer _vm )
 {
     CoreGObject::trigger_slot( (GObject*) obj, "file_set", "on_file_set", (VMachine*)_vm );
 }
-#endif // GTK_MINOR_VERSION >= 12
+#endif // GTK_CHECK_VERSION( 2, 12, 0 )
 
 
 //FALCON_FUNC FileChooserButton::new_with_backend( VMARG );

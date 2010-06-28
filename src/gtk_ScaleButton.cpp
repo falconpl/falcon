@@ -35,7 +35,7 @@ void ScaleButton::modInit( Falcon::Module* mod )
     { "set_value",          &ScaleButton::set_value },
     { "get_adjustment",     &ScaleButton::get_adjustment },
     { "get_value",          &ScaleButton::get_value },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_popup",          &ScaleButton::get_popup },
     { "get_plus_button",    &ScaleButton::get_plus_button },
     { "get_minus_button",   &ScaleButton::get_minus_button },
@@ -50,7 +50,7 @@ void ScaleButton::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_ScaleButton, meth->name, meth->cb );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     Gtk::Orientable::clsInit( mod, c_ScaleButton );
 #endif
 }
@@ -295,7 +295,7 @@ FALCON_FUNC ScaleButton::get_value( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_popup GtkScaleButton
     @brief Retrieves the popup of the GtkScaleButton.
@@ -346,7 +346,7 @@ FALCON_FUNC ScaleButton::set_orientation( VMARG );
 FALCON_FUNC ScaleButton::get_orientation( VMARG );
 #endif
 
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 
 } // Gtk

@@ -4,7 +4,7 @@
 
 #include "gtk_InfoBar.hpp"
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 
 #include "gtk_Buildable.hpp"
 #include "gtk_Orientable.hpp"
@@ -274,4 +274,4 @@ FALCON_FUNC InfoBar::get_content_area( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )

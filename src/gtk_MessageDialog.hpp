@@ -29,7 +29,7 @@ public:
     static FALCON_FUNC set_markup( VMARG );
 
     static FALCON_FUNC set_image( VMARG );
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_image( VMARG );
 #endif
     static FALCON_FUNC set_secondary_text( VMARG );

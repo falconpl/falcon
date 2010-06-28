@@ -4,7 +4,7 @@
 
 #include "gtk_AboutDialog.hpp"
 
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
 
 #include "gdk_Pixbuf.hpp"
 
@@ -30,7 +30,7 @@ void AboutDialog::modInit( Falcon::Module* mod )
     {
     { "get_name",           &AboutDialog::get_name },
     { "set_name",           &AboutDialog::set_name },
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
     { "get_program_name",   &AboutDialog::get_program_name },
     { "set_program_name",   &AboutDialog::set_program_name },
 #endif
@@ -42,7 +42,7 @@ void AboutDialog::modInit( Falcon::Module* mod )
     { "set_comments",       &AboutDialog::set_comments },
     { "get_license",        &AboutDialog::get_license },
     { "set_license",        &AboutDialog::set_license },
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
     { "get_wrap_license",   &AboutDialog::get_wrap_license },
     { "set_wrap_license",   &AboutDialog::set_wrap_license },
 #endif
@@ -151,7 +151,7 @@ FALCON_FUNC AboutDialog::set_name( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
 /*#
     @method get_program_name GtkAboutDialog
     @brief Returns the program name displayed in the about dialog.
@@ -186,7 +186,7 @@ FALCON_FUNC AboutDialog::set_program_name( VMARG )
     GET_OBJ( self );
     gtk_about_dialog_set_program_name( (GtkAboutDialog*)_obj, nm.c_str() );
 }
-#endif // GTK_MINOR_VERSION >= 12
+#endif // GTK_CHECK_VERSION( 2, 12, 0 )
 
 
 /*#
@@ -315,7 +315,7 @@ FALCON_FUNC AboutDialog::set_license( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
 /*#
     @method get_wrap_license GtkAboutDialog
     @brief Returns whether the license text in about is automatically wrapped.
@@ -347,7 +347,7 @@ FALCON_FUNC AboutDialog::set_wrap_license( VMARG )
     gtk_about_dialog_set_wrap_license( (GtkAboutDialog*)_obj,
                                        (gboolean) i_bool->asBoolean() );
 }
-#endif // GTK_MINOR_VERSION >= 8
+#endif // GTK_CHECK_VERSION( 2, 8, 0 )
 
 
 /*#
@@ -780,4 +780,4 @@ void about_dialog_url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointe
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 6
+#endif // GTK_CHECK_VERSION( 2, 6, 0 )

@@ -24,7 +24,7 @@ void ColorSelectionDialog::modInit( Falcon::Module* mod )
     //c_ColorSelectionDialog->setWKS( true );
     //c_ColorSelectionDialog->getClassDef()->factory( &ColorSelectionDialog::factory );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     mod->addClassMethod( c_ColorSelectionDialog, "get_color_selection",
                 &ColorSelectionDialog::get_color_selection );
 #endif
@@ -68,7 +68,7 @@ FALCON_FUNC ColorSelectionDialog::init( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_color_selection GtkColorSelectionDialog
     @brief Retrieves the GtkColorSelection widget embedded in the dialog.

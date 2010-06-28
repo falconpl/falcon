@@ -28,7 +28,7 @@ void MessageDialog::modInit( Falcon::Module* mod )
     { "new_with_markup",        &MessageDialog::new_with_markup },
     { "set_markup",             &MessageDialog::set_markup },
     { "set_image",              &MessageDialog::set_image },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_image",              &MessageDialog::get_image },
 #endif
     { "set_secondary_text",     &MessageDialog::set_secondary_text },
@@ -169,7 +169,7 @@ FALCON_FUNC MessageDialog::set_image( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_image GtkMessageDialog
     @brief Gets the dialog's image.

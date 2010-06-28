@@ -205,7 +205,7 @@ FALCON_FUNC Event::get_real_event( VMARG )
     case GDK_SETTING:
     case GDK_OWNER_CHANGE:
     case GDK_GRAB_BROKEN:
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     case GDK_DAMAGE:
 #endif
 #if 0 // not reached

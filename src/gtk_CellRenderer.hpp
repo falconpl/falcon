@@ -51,7 +51,7 @@ public:
 
     static FALCON_FUNC set_fixed_size( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC get_visible( VMARG );
 
     static FALCON_FUNC set_visible( VMARG );
@@ -67,7 +67,7 @@ public:
     static FALCON_FUNC get_padding( VMARG );
 
     static FALCON_FUNC set_padding( VMARG );
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )
 
 };
 

@@ -5,7 +5,7 @@
 #include "gtk_ToolShell.hpp"
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -18,19 +18,19 @@ void ToolShell::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
 {
     Gtk::MethodTab methods[] =
     {
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_ellipsize_mode",     &ToolShell::get_ellipsize_mode },
 #endif
     { "get_icon_size",          &ToolShell::get_icon_size },
     { "get_orientation",        &ToolShell::get_orientation },
     { "get_relief_style",       &ToolShell::get_relief_style },
     { "get_style",              &ToolShell::get_style },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_text_alignment",     &ToolShell::get_text_alignment },
     { "get_text_orientation",   &ToolShell::get_text_orientation },
 #endif
     { "rebuild_menu",           &ToolShell::rebuild_menu },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     //{ "get_text_size_group",    &ToolShell::get_text_size_group },
 #endif
     { NULL, NULL }
@@ -50,7 +50,7 @@ void ToolShell::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
  */
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_ellipsize_mode GtkToolShell
     @brief Retrieves the current ellipsize mode for the tool shell.
@@ -137,7 +137,7 @@ FALCON_FUNC ToolShell::get_style( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_text_alignment GtkToolShell
     @brief Retrieves the current text alignment for the tool shell.
@@ -170,7 +170,7 @@ FALCON_FUNC ToolShell::get_text_orientation( VMARG )
     GET_OBJ( self );
     vm->retval( (int64) gtk_tool_shell_get_text_orientation( (GtkToolShell*)_obj ) );
 }
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 
 /*#
@@ -192,7 +192,7 @@ FALCON_FUNC ToolShell::rebuild_menu( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 //FALCON_FUNC ToolShell::get_text_size_group( VMARG );
 #endif
 
@@ -200,4 +200,4 @@ FALCON_FUNC ToolShell::rebuild_menu( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )

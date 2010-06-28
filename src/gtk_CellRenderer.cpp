@@ -41,7 +41,7 @@ void CellRenderer::modInit( Falcon::Module* mod )
     { "stop_editing",               &CellRenderer::stop_editing },
     { "get_fixed_size",             &CellRenderer::get_fixed_size },
     { "set_fixed_size",             &CellRenderer::set_fixed_size },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "get_visible",                &CellRenderer::get_visible },
     { "set_visible",                &CellRenderer::set_visible },
     { "get_sensitive",              &CellRenderer::get_sensitive },
@@ -50,7 +50,7 @@ void CellRenderer::modInit( Falcon::Module* mod )
     { "set_alignment",              &CellRenderer::set_alignment },
     { "get_padding",                &CellRenderer::get_padding },
     { "set_padding",                &CellRenderer::set_padding },
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )
     { NULL, NULL }
     };
 
@@ -444,7 +444,7 @@ FALCON_FUNC CellRenderer::set_fixed_size( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method get_visible GtkCellRenderer
     @brief Returns the cell renderer's visibility.
@@ -593,7 +593,7 @@ FALCON_FUNC CellRenderer::set_padding( VMARG )
                                    i_x->asInteger(),
                                    i_y->asInteger() );
 }
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )
 
 
 } // Gtk

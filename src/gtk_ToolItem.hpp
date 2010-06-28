@@ -64,7 +64,7 @@ public:
 
     static FALCON_FUNC get_is_important( VMARG );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_ellipsize_mode( VMARG );
 #endif
 
@@ -76,7 +76,7 @@ public:
 
     static FALCON_FUNC get_relief_style( VMARG );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_text_alignment( VMARG );
 
     static FALCON_FUNC get_text_orientation( VMARG );
@@ -90,7 +90,7 @@ public:
 
     static FALCON_FUNC rebuild_menu( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC toolbar_reconfigured( VMARG );
 #endif
 

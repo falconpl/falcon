@@ -36,7 +36,7 @@ void Region::modInit( Falcon::Module* mod )
     { "get_rectangles", &Region::get_rectangles },
     { "empty",          &Region::empty },
     { "equal",          &Region::equal },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "rect_equal",     &Region::rect_equal },
 #endif
     { "point_in",       &Region::point_in },
@@ -271,7 +271,7 @@ FALCON_FUNC Region::equal( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method rect_equal GdkRegion
     @brief Finds out if a regions is the same as a rectangle.

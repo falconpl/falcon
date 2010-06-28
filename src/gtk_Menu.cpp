@@ -39,17 +39,17 @@ void Menu::modInit( Falcon::Module* mod )
     { "get_accel_group",    &Menu::get_accel_group },
 #endif
     { "set_accel_path",     &Menu::set_accel_path },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_accel_path",     &Menu::get_accel_path },
 #endif
     { "set_title",          &Menu::set_title },
     { "get_title",          &Menu::get_title },
     { "set_monitor",        &Menu::set_monitor },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_monitor",        &Menu::get_monitor },
 #endif
     { "get_tearoff_state",  &Menu::get_tearoff_state },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "set_reserve_toggle_size",&Menu::set_reserve_toggle_size },
     { "get_reserve_toggle_size",&Menu::get_reserve_toggle_size },
 #endif
@@ -320,7 +320,7 @@ FALCON_FUNC Menu::set_accel_path( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_accel_path GtkMenu
     @brief Retrieves the accelerator path set on the menu.
@@ -397,7 +397,7 @@ FALCON_FUNC Menu::set_monitor( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_monitor GtkMenu
     @brief Retrieves the number of the monitor on which to show the menu.
@@ -427,7 +427,7 @@ FALCON_FUNC Menu::get_tearoff_state( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method set_reserve_toggle_size GtkMenu
     @brief Sets whether the menu should reserve space for drawing toggles or icons, regardless of their actual presence.

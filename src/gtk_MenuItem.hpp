@@ -44,7 +44,7 @@ public:
 
     static FALCON_FUNC get_right_justified( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC get_label( VMARG );
 
     static FALCON_FUNC set_label( VMARG );
@@ -62,7 +62,7 @@ public:
 
     static FALCON_FUNC set_accel_path( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_accel_path( VMARG );
 #endif
 

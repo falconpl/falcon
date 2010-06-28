@@ -46,14 +46,14 @@ void ToolItem::modInit( Falcon::Module* mod )
     { "get_visible_vertical",       &ToolItem::get_visible_vertical },
     { "set_is_important",           &ToolItem::set_is_important },
     { "get_is_important",           &ToolItem::get_is_important },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_ellipsize_mode",         &ToolItem::get_ellipsize_mode },
 #endif
     { "get_icon_size",              &ToolItem::get_icon_size },
     { "get_orientation",            &ToolItem::get_orientation },
     { "get_toolbar_style",          &ToolItem::get_toolbar_style },
     { "get_relief_style",           &ToolItem::get_relief_style },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_text_alignment",         &ToolItem::get_text_alignment },
     { "get_text_orientation",       &ToolItem::get_text_orientation },
 #endif
@@ -61,7 +61,7 @@ void ToolItem::modInit( Falcon::Module* mod )
     //{ "get_proxy_menu_item",      &ToolItem::get_proxy_menu_item },
     { "set_proxy_menu_item",        &ToolItem::set_proxy_menu_item },
     { "rebuild_menu",               &ToolItem::rebuild_menu },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "toolbar_reconfigured",       &ToolItem::toolbar_reconfigured },
 #endif
     //{ "get_text_size_group",      &ToolItem::get_text_size_group },
@@ -72,7 +72,7 @@ void ToolItem::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_ToolItem, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_ToolItem );
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     Gtk::Activatable::clsInit( mod, c_ToolItem );
 #endif
 
@@ -370,7 +370,7 @@ FALCON_FUNC ToolItem::get_is_important( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_ellipsize_mode GtkToolItem
     @brief Returns the ellipsize mode used for tool_item.
@@ -467,7 +467,7 @@ FALCON_FUNC ToolItem::get_relief_style( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_text_alignment GtkToolItem
     @brief Returns the text alignment used for tool_item.
@@ -560,7 +560,7 @@ FALCON_FUNC ToolItem::rebuild_menu( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method toolbar_reconfigured GtkToolItem
     @brief Emits the signal "toolbar_reconfigured" on tool_item.

@@ -155,12 +155,12 @@ FALCON_FUNC TreeModelSort::convert_child_iter_to_iter( VMARG )
     MYSELF;
     GET_OBJ( self );
     GtkTreeIter iter;
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     gboolean ret =
 #endif
     gtk_tree_model_sort_convert_child_iter_to_iter( (GtkTreeModelSort*)_obj,
                                                     &iter, child );
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     if ( ret )
 #else
     if ( gtk_tree_model_sort_iter_is_valid( (GtkTreeModelSort*)_obj, &iter ) )

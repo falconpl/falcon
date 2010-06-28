@@ -54,7 +54,7 @@ FALCON_FUNC set_do_overwrite_confirmation( VMARG );
 
 FALCON_FUNC get_do_overwrite_confirmation( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 FALCON_FUNC set_create_folders( VMARG );
 
 FALCON_FUNC get_create_folders( VMARG );
@@ -136,7 +136,7 @@ FALCON_FUNC remove_shortcut_folder_uri( VMARG );
 
 FALCON_FUNC list_shortcut_folder_uris( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 FALCON_FUNC get_current_folder_file( VMARG );
 
 FALCON_FUNC get_file( VMARG );
@@ -152,7 +152,7 @@ FALCON_FUNC set_current_folder_file( VMARG );
 FALCON_FUNC set_file( VMARG );
 
 FALCON_FUNC unselect_file( VMARG );
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 #endif
 
 } // FileChooser

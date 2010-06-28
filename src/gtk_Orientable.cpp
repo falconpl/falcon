@@ -5,7 +5,7 @@
 #include "gtk_Orientable.hpp"
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -78,4 +78,4 @@ FALCON_FUNC Orientable::set_orientation( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )

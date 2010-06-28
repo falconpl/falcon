@@ -4,7 +4,7 @@
 
 #include "gtk_ToolItemGroup.hpp"
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 
 #include "gtk_ToolItem.hpp"
 #include "gtk_ToolShell.hpp"
@@ -383,4 +383,4 @@ FALCON_FUNC ToolItemGroup::set_header_relief( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )

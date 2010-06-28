@@ -53,7 +53,7 @@ public:
 
     static FALCON_FUNC equal( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC rect_equal( VMARG );
 #endif
 

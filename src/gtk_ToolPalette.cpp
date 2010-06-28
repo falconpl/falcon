@@ -4,7 +4,7 @@
 
 #include "gtk_ToolPalette.hpp"
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 
 #include "gtk_Adjustment.hpp"
 #include "gtk_Buildable.hpp"
@@ -486,4 +486,4 @@ FALCON_FUNC ToolPalette::get_vadjustment( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )

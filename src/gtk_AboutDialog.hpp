@@ -3,7 +3,7 @@
 
 #include "modgtk.hpp"
 
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -29,7 +29,7 @@ public:
 
     static FALCON_FUNC set_name( VMARG );
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
     static FALCON_FUNC get_program_name( VMARG );
 
     static FALCON_FUNC set_program_name( VMARG );
@@ -51,7 +51,7 @@ public:
 
     static FALCON_FUNC set_license( VMARG );
 
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
     static FALCON_FUNC get_wrap_license( VMARG );
 
     static FALCON_FUNC set_wrap_license( VMARG );
@@ -117,6 +117,6 @@ void about_dialog_url_hook_func( GtkAboutDialog*, const gchar*, gpointer );
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 6
+#endif // GTK_CHECK_VERSION( 2, 6, 0 )
 
 #endif // !GTK_ABOUTDIALOG_HPP

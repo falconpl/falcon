@@ -59,7 +59,7 @@ void ComboBox::modInit( Falcon::Module* mod )
     { "get_title",              &ComboBox::get_title },
     { "set_focus_on_click",     &ComboBox::set_focus_on_click },
     { "get_focus_on_click",     &ComboBox::get_focus_on_click },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "set_button_sensitivity", &ComboBox::set_button_sensitivity },
     { "get_button_sensitivity", &ComboBox::get_button_sensitivity },
 #endif
@@ -663,7 +663,7 @@ FALCON_FUNC ComboBox::get_focus_on_click( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method set_button_sensitivity GtkComboBox
     @brief Sets whether the dropdown button of the combo box should be always sensitive (GTK_SENSITIVITY_ON), never sensitive (GTK_SENSITIVITY_OFF) or only if there is at least one item to display (GTK_SENSITIVITY_AUTO).
@@ -695,7 +695,7 @@ FALCON_FUNC ComboBox::get_button_sensitivity( VMARG )
     GET_OBJ( self );
     vm->retval( gtk_combo_box_get_button_sensitivity( (GtkComboBox*)_obj ) );
 }
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 
 } // Gtk

@@ -45,7 +45,7 @@ public:
     static void on_delete_from_cursor( GtkEntry*, GtkDeleteType, gint, gpointer );
 
 #if 0 // todo: missing GdkEvent
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC signal_icon_press( VMARG );
 
     static void on_icon_press( GtkEntry*, GtkEntryIconPosition, GdkEvent*, gpointer );
@@ -72,7 +72,7 @@ public:
 
     static void on_populate_popup( GtkEntry*, GtkMenu*, gpointer );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC signal_preedit_changed( VMARG );
 
     static void on_preedit_changed( GtkEntry*, gchar*, gpointer );
@@ -82,13 +82,13 @@ public:
 
     static void on_toggle_overwrite( GtkEntry*, gpointer );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC new_with_buffer( VMARG );
 #endif
 
     static FALCON_FUNC new_with_max_length( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC get_buffer( VMARG );
 
     static FALCON_FUNC set_buffer( VMARG );
@@ -104,7 +104,7 @@ public:
 
     static FALCON_FUNC get_text( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_text_length( VMARG );
 #endif
 
@@ -116,7 +116,7 @@ public:
 
     static FALCON_FUNC set_invisible_char( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC unset_invisible_char( VMARG );
 #endif
 
@@ -148,7 +148,7 @@ public:
 
     static FALCON_FUNC get_alignment( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC set_overwrite_mode( VMARG );
 
     static FALCON_FUNC get_overwrite_mode( VMARG );
@@ -174,7 +174,7 @@ public:
 
     static FALCON_FUNC get_cursor_hadjustment( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC set_progress_fraction( VMARG );
 
     static FALCON_FUNC get_progress_fraction( VMARG );
@@ -186,12 +186,12 @@ public:
     static FALCON_FUNC progress_pulse( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 22
+#if GTK_CHECK_VERSION( 2, 22, 0 )
     //static FALCON_FUNC im_context_filter_keypress( VMARG );
     //static FALCON_FUNC reset_im_context( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC set_icon_from_pixbuf( VMARG );
 
     static FALCON_FUNC set_icon_from_stock( VMARG );
@@ -231,9 +231,9 @@ public:
     //static FALCON_FUNC set_icon_drag_source( VMARG );
 
     //static FALCON_FUNC get_current_icon_drag_source( VMARG );
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     //static FALCON_FUNC get_icon_window( VMARG );
 
     //static FALCON_FUNC get_text_window( VMARG );

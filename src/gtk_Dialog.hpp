@@ -44,21 +44,21 @@ public:
 
     static FALCON_FUNC set_response_sensitive( VMARG );
 
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
     static FALCON_FUNC get_response_for_widget( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_widget_for_response( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_action_area( VMARG );
 
     static FALCON_FUNC get_content_area( VMARG );
 #endif
 
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
     //static FALCON_FUNC alternative_dialog_button_order( VMARG );
 
     //static FALCON_FUNC set_alternative_button_order( VMARG );

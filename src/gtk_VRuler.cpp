@@ -21,14 +21,14 @@ void VRuler::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkRuler" ) );
     c_VRuler->getClassDef()->addInheritance( in );
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
     /*
      *  implements GtkBuilable
      */
     Gtk::Buildable::clsInit( mod, c_VRuler );
 #endif
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     /*
      *  implements GtkOrientable
      */

@@ -46,7 +46,7 @@ public:
 
     static FALCON_FUNC get_value( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_popup( VMARG );
 
     static FALCON_FUNC get_plus_button( VMARG );

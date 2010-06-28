@@ -44,7 +44,7 @@ public:
 
     static FALCON_FUNC get_has_resize_grip( VMARG );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_message_area( VMARG );
 #endif
 

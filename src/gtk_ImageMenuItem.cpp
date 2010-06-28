@@ -30,7 +30,7 @@ void ImageMenuItem::modInit( Falcon::Module* mod )
     { "new_from_stock",     &ImageMenuItem::new_from_stock },
     { "new_with_label",     &ImageMenuItem::new_with_label },
     { "new_with_mnemonic",  &ImageMenuItem::new_with_mnemonic },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "get_use_stock",      &ImageMenuItem::get_use_stock },
     { "set_use_stock",      &ImageMenuItem::set_use_stock },
     { "get_always_show_image",&ImageMenuItem::get_always_show_image },
@@ -173,7 +173,7 @@ FALCON_FUNC ImageMenuItem::new_with_mnemonic( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method get_use_stock GtkImageMenuItem
     @brief Checks whether the label set in the menuitem is used as a stock id to select the stock item for the item.
@@ -244,7 +244,7 @@ FALCON_FUNC ImageMenuItem::set_always_show_image( VMARG )
 
 //FALCON_FUNC ImageMenuItem::set_accel_group( VMARG );
 
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 
 } // Gtk

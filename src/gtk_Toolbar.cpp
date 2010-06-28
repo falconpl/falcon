@@ -72,10 +72,10 @@ void Toolbar::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Toolbar, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_Toolbar );
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     Gtk::Orientable::clsInit( mod, c_Toolbar );
 #endif
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     Gtk::ToolShell::clsInit( mod, c_Toolbar );
 #endif
 }

@@ -27,7 +27,7 @@ public:
     static FALCON_FUNC add_window( VMARG );
 
     static FALCON_FUNC remove_window( VMARG );
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC list_windows( VMARG );
 #endif
 

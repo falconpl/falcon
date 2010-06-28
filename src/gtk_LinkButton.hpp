@@ -32,7 +32,7 @@ public:
 
     static FALCON_FUNC set_uri_hook( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_visited( VMARG );
 
     static FALCON_FUNC set_visited( VMARG );

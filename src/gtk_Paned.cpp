@@ -33,7 +33,7 @@ void Paned::modInit( Falcon::Module* mod )
     mod->addClassMethod( c_Paned, "get_child2", &Paned::get_child2 );
     mod->addClassMethod( c_Paned, "set_position",&Paned::set_position );
     mod->addClassMethod( c_Paned, "get_position",&Paned::get_position );
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     mod->addClassMethod( c_Paned, "get_handle_window",&Paned::get_handle_window );
 #endif
 
@@ -253,7 +253,7 @@ FALCON_FUNC Paned::get_position( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_handle_window GtkPaned
     @brief Returns the GdkWindow of the handle.

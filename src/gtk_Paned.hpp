@@ -38,7 +38,7 @@ public:
 
     static FALCON_FUNC get_position( VMARG );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_handle_window( VMARG );
 #endif
 

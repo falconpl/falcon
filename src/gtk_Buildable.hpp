@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 
-#if GTK_MINOR_VERSION >= 12
+#if GTK_CHECK_VERSION( 2, 12, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -41,6 +41,6 @@ FALCON_FUNC get_internal_child( VMARG );
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 12
+#endif // GTK_CHECK_VERSION( 2, 12, 0 )
 
 #endif // !GTK_BUILDABLE_HPP

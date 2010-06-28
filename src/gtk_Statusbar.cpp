@@ -30,7 +30,7 @@ void Statusbar::modInit( Falcon::Module* mod )
     { "remove",             &Statusbar::remove },
     { "set_has_resize_grip",&Statusbar::set_has_resize_grip },
     { "get_has_resize_grip",&Statusbar::get_has_resize_grip },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_message_area",   &Statusbar::get_message_area },
 #endif
     { NULL, NULL }
@@ -300,7 +300,7 @@ FALCON_FUNC Statusbar::get_has_resize_grip( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_message_area GtkStatusbar
     @brief Retrieves the box containing the label widget.

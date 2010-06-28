@@ -3,7 +3,7 @@
 
 #include "modgtk.hpp"
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -77,6 +77,6 @@ public:
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 #endif // !GTK_TOOLPALETTE_HPP

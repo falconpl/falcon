@@ -50,11 +50,11 @@ void Range::modInit( Falcon::Module* mod )
     { "get_lower_stepper_sensitivity",&Range::get_lower_stepper_sensitivity },
     { "set_upper_stepper_sensitivity",&Range::set_upper_stepper_sensitivity },
     { "get_upper_stepper_sensitivity",&Range::get_upper_stepper_sensitivity },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "get_flippable",              &Range::get_flippable },
     { "set_flippable",              &Range::set_flippable },
 #endif
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_min_slider_size",        &Range::get_min_slider_size },
     //{ "get_range_rect",             &Range::get_range_rect },
     { "get_slider_range",           &Range::get_slider_range },
@@ -69,7 +69,7 @@ void Range::modInit( Falcon::Module* mod )
         mod->addClassMethod( c_Range, meth->name, meth->cb );
 
     Gtk::Buildable::clsInit( mod, c_Range );
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     Gtk::Orientable::clsInit( mod, c_Range );
 #endif
 }
@@ -629,7 +629,7 @@ FALCON_FUNC Range::get_upper_stepper_sensitivity( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method get_flippable GtkRange
     @brief Gets the value set by gtk_range_set_flippable().
@@ -660,10 +660,10 @@ FALCON_FUNC Range::set_flippable( VMARG )
     GET_OBJ( self );
     gtk_range_set_flippable( (GtkRange*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
 }
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_min_slider_size GtkRange
     @brief This function is useful mainly for GtkRange subclasses.
@@ -737,7 +737,7 @@ FALCON_FUNC Range::set_slider_size_fixed( VMARG )
     GET_OBJ( self );
     gtk_range_set_slider_size_fixed( (GtkRange*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
 }
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 
 } // Gtk

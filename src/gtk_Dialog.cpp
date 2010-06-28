@@ -35,17 +35,17 @@ void Dialog::modInit( Falcon::Module* mod )
     { "set_default_response",   &Dialog::set_default_response },
     { "set_has_separator",      &Dialog::set_has_separator },
     { "set_response_sensitive", &Dialog::set_response_sensitive },
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
     { "get_response_for_widget",&Dialog::get_response_for_widget },
 #endif
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_widget_for_response",&Dialog::get_widget_for_response },
 #endif
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_action_area",        &Dialog::get_action_area },
     { "get_content_area",       &Dialog::get_content_area },
 #endif
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
     //{ "alternative_dialog_button_order",&Dialog::alternative_dialog_button_order },
     //{ "set_alternative_button_order",&Dialog::set_alternative_button_order },
     //{ "set_alternative_button_order_from_array",&Dialog::set_alternative_button_order_from_array },
@@ -305,7 +305,7 @@ FALCON_FUNC Dialog::set_response_sensitive( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 8
+#if GTK_CHECK_VERSION( 2, 8, 0 )
 /*#
     @method get_response_for_widget
     @brief Gets the response id of a widget in the action area of a dialog.
@@ -328,7 +328,7 @@ FALCON_FUNC Dialog::get_response_for_widget( VMARG )
 #endif
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_widget_for_response
     @brief Gets the widget button that uses the given response ID in the action area of a dialog.
@@ -354,7 +354,7 @@ FALCON_FUNC Dialog::get_widget_for_response( VMARG )
 #endif
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_action_area
     @brief Returns the action area of dialog.
@@ -383,16 +383,16 @@ FALCON_FUNC Dialog::get_content_area( VMARG )
     GtkWidget* wdt = gtk_dialog_get_action_area( (GtkDialog*)_obj );
     vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
 }
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 
-#if GTK_MINOR_VERSION >= 6
+#if GTK_CHECK_VERSION( 2, 6, 0 )
 //FALCON_FUNC Dialog::alternative_dialog_button_order( VMARG );
 
 //FALCON_FUNC Dialog::set_alternative_button_order( VMARG );
 
 //FALCON_FUNC Dialog::set_alternative_button_order_from_array( VMARG );
-#endif // GTK_MINOR_VERSION >= 6
+#endif // GTK_CHECK_VERSION( 2, 6, 0 )
 
 
 } // Gtk

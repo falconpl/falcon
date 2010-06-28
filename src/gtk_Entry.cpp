@@ -37,7 +37,7 @@ void Entry::modInit( Falcon::Module* mod )
     { "signal_cut_clipboard",   &Entry::signal_cut_clipboard },
     { "signal_delete_from_cursor",&Entry::signal_delete_from_cursor },
 #if 0
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "signal_icon_press",      &Entry::signal_icon_press },
     { "signal_icon_release",    &Entry::signal_icon_release },
 #endif
@@ -46,15 +46,15 @@ void Entry::modInit( Falcon::Module* mod )
     { "signal_move_cursor",     &Entry::signal_move_cursor },
     { "signal_paste_clipboard", &Entry::signal_paste_clipboard },
     { "signal_populate_popup",  &Entry::signal_populate_popup },
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "signal_preedit_changed", &Entry::signal_preedit_changed },
 #endif
     { "signal_toggle_overwrite",&Entry::signal_toggle_overwrite },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "new_with_buffer",        &Entry::new_with_buffer },
 #endif
     { "new_with_max_length",    &Entry::new_with_max_length },
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     { "get_buffer",             &Entry::get_buffer },
     { "set_buffer",             &Entry::set_buffer },
 #endif
@@ -63,7 +63,7 @@ void Entry::modInit( Falcon::Module* mod )
     //{ "prepend_text",           &Entry::foo },
     //{ "set_position",           &Entry::foo },
     { "get_text",               &Entry::get_text },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_text_length",        &Entry::get_text_length },
 #endif
 #if 0
@@ -71,7 +71,7 @@ void Entry::modInit( Falcon::Module* mod )
 #endif
     { "set_visibility",         &Entry::set_visibility },
     { "set_invisible_char",     &Entry::set_invisible_char },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "unset_invisible_char",   &Entry::unset_invisible_char },
 #endif
 #if 0 // deprecated
@@ -89,7 +89,7 @@ void Entry::modInit( Falcon::Module* mod )
     { "get_invisible_char",     &Entry::get_invisible_char },
     { "set_alignment",          &Entry::set_alignment },
     { "get_alignment",          &Entry::get_alignment },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "set_overwrite_mode",     &Entry::set_overwrite_mode },
     { "get_overwrite_mode",     &Entry::get_overwrite_mode },
 #endif
@@ -103,18 +103,18 @@ void Entry::modInit( Falcon::Module* mod )
     //{ "get_completion",        &Entry::foo },
     { "set_cursor_hadjustment", &Entry::set_cursor_hadjustment },
     { "get_cursor_hadjustment", &Entry::get_cursor_hadjustment },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "set_progress_fraction",  &Entry::set_progress_fraction },
     { "get_progress_fraction",  &Entry::get_progress_fraction },
     { "set_progress_pulse_step",&Entry::set_progress_pulse_step },
     { "get_progress_pulse_step",&Entry::get_progress_pulse_step },
     { "progress_pulse",         &Entry::progress_pulse },
 #endif
-#if GTK_MINOR_VERSION >= 22
+#if GTK_CHECK_VERSION( 2, 22, 0 )
     //{ "im_context_filter_keypress",     &Entry::im_context_filter_keypress },
     //{ "reset_im_context",     &Entry::foo },
 #endif
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "set_icon_from_pixbuf",   &Entry::set_icon_from_pixbuf },
     { "set_icon_from_stock",    &Entry::set_icon_from_stock },
     { "set_icon_from_icon_name",&Entry::set_icon_from_icon_name },
@@ -136,7 +136,7 @@ void Entry::modInit( Falcon::Module* mod )
     //{ "set_icon_drag_source",        &Entry::foo },
     //{ "get_current_icon_drag_source",        &Entry::foo },
 #endif
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     //{ "get_icon_window",        &Entry::foo },
     //{ "get_text_window",        &Entry::foo },
 #endif
@@ -337,7 +337,7 @@ void Entry::on_delete_from_cursor( GtkEntry* obj, GtkDeleteType type, gint count
 }
 
 #if 0 // todo: missing GdkEvent
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method signal_icon_press
     @brief The ::icon-press signal is emitted when an activatable icon is clicked.
@@ -428,7 +428,7 @@ void Entry::on_icon_release( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* 
     }
     while ( iter.hasCurrent() );
 }
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 #endif
 
 /*#
@@ -605,7 +605,7 @@ void Entry::on_populate_popup( GtkEntry* obj, GtkMenu* menu, gpointer _vm )
 }
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method signal_preedit_changed
     @brief If an input method is used, the typed text will not immediately be committed to the buffer. So if you are interested in the text, connect to this signal.
@@ -648,7 +648,7 @@ void Entry::on_preedit_changed( GtkEntry* obj, gchar* preedit, gpointer _vm )
     }
     while ( iter.hasCurrent() );
 }
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 
 /*#
@@ -670,7 +670,7 @@ void Entry::on_toggle_overwrite( GtkEntry* obj, gpointer _vm )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method new_with_buffer
     @brief Creates a new entry with the specified text buffer.
@@ -712,7 +712,7 @@ FALCON_FUNC Entry::new_with_max_length( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method get_buffer GtkEntry
     @brief Get the GtkEntryBuffer object which holds the text for this widget.
@@ -729,7 +729,7 @@ FALCON_FUNC Entry::get_buffer( VMARG )
 #endif
 
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
     @method set_buffer GtkEntry
     @brief Set the GtkEntryBuffer object which holds the text for this widget.
@@ -794,7 +794,7 @@ FALCON_FUNC Entry::get_text( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_text_length GtkEntry
     @brief Retrieves the current length of the text in entry.
@@ -866,7 +866,7 @@ FALCON_FUNC Entry::set_invisible_char( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method unset_invisible_char GtkEntry
     @brief Unsets the invisible char previously set with set_invisible_char().
@@ -1079,7 +1079,7 @@ FALCON_FUNC Entry::get_alignment( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method set_overwrite_mode
     @brief Sets whether the text is overwritten when typing in the GtkEntry.
@@ -1110,7 +1110,7 @@ FALCON_FUNC Entry::get_overwrite_mode( VMARG )
     GET_OBJ( self );
     vm->retval( (bool) gtk_entry_get_overwrite_mode( (GtkEntry*)_obj ) );
 }
-#endif // GTK_MINOR_VERSION >= 14
+#endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 
 //FALCON_FUNC Entry::get_layout( VMARG );
@@ -1266,7 +1266,7 @@ FALCON_FUNC Entry::get_cursor_hadjustment( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method set_progress_fraction
     @brief Causes the entry's progress indicator to "fill in" the given fraction of the bar.
@@ -1349,16 +1349,16 @@ FALCON_FUNC Entry::progress_pulse( VMARG )
     GET_OBJ( self );
     gtk_entry_progress_pulse( (GtkEntry*)_obj );
 }
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 
-#if GTK_MINOR_VERSION >= 22
+#if GTK_CHECK_VERSION( 2, 22, 0 )
 //FALCON_FUNC Entry::im_context_filter_keypress( VMARG )
 //FALCON_FUNC Entry::reset_im_context
 #endif
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method set_icon_from_pixbuf
     @brief Sets the icon shown in the specified position using a pixbuf.
@@ -1796,9 +1796,9 @@ FALCON_FUNC Entry::get_icon_tooltip_markup( VMARG )
 //FALCON_FUNC Entry::set_icon_drag_source( VMARG );
 
 //FALCON_FUNC Entry::get_current_icon_drag_source( VMARG );
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 //FALCON_FUNC Entry::get_icon_window( VMARG );
 
 //FALCON_FUNC Entry::get_text_window( VMARG );

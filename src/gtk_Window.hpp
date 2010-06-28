@@ -108,7 +108,7 @@ public:
 
     static FALCON_FUNC set_focus( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_default_widget( VMARG );
 #endif
 
@@ -174,7 +174,7 @@ public:
 
     //static FALCON_FUNC get_default_icon_list( VMARG );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     static FALCON_FUNC get_default_icon_name( VMARG );
 #endif
 
@@ -220,7 +220,7 @@ public:
 
     //static FALCON_FUNC get_group( VMARG );
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_window_type( VMARG );
 #endif
 

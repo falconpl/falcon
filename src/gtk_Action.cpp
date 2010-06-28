@@ -50,7 +50,7 @@ void Action::modInit( Falcon::Module* mod )
     { "get_proxies",            &Action::get_proxies },
     { "connect_accelerator",    &Action::connect_accelerator },
     { "disconnect_accelerator", &Action::disconnect_accelerator },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "block_activate",         &Action::block_activate },
     { "unblock_activate",       &Action::unblock_activate },
 #endif
@@ -58,7 +58,7 @@ void Action::modInit( Falcon::Module* mod )
     { "block_activate_from",    &Action::block_activate_from },
     { "unblock_activate_from",  &Action::unblock_activate_from },
 #endif
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
     { "get_always_show_image",  &Action::get_always_show_image },
     { "set_always_show_image",  &Action::set_always_show_image },
 #endif
@@ -66,7 +66,7 @@ void Action::modInit( Falcon::Module* mod )
     { "set_accel_path",         &Action::set_accel_path },
     //{ "get_accel_closure",     &Action::get_accel_closure },
     //{ "set_accel_group",       &Action::set_accel_group },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "set_label",              &Action::set_label },
     { "get_label",              &Action::get_label },
     { "set_short_label",        &Action::set_short_label },
@@ -454,7 +454,7 @@ FALCON_FUNC Action::disconnect_accelerator( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method block_activate GtkAction
     @brief Disable activation signals from the action
@@ -483,7 +483,7 @@ FALCON_FUNC Action::unblock_activate( VMARG )
     GET_OBJ( self );
     gtk_action_unblock_activate( (GtkAction*)_obj );
 }
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 
 #if 0 // deprecated
@@ -492,7 +492,7 @@ FALCON_FUNC Action::unblock_activate_from( VMARG );
 #endif
 
 
-#if GTK_MINOR_VERSION >= 20
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
     @method get_always_show_image GtkAction
     @brief Returns whether action's menu item proxies will ignore the "gtk-menu-images" setting and always show their image, if available.
@@ -524,7 +524,7 @@ FALCON_FUNC Action::set_always_show_image( VMARG )
     GET_OBJ( self );
     gtk_action_set_always_show_image( (GtkAction*)_obj, i_bool->asBoolean() ? TRUE : FALSE );
 }
-#endif // GTK_MINOR_VERSION >= 20
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 
 /*#
@@ -571,7 +571,7 @@ FALCON_FUNC Action::set_accel_path( VMARG )
 //FALCON_FUNC Action::set_accel_group( VMARG );
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method set_label GtkAction
     @brief Sets the label of action.
@@ -855,7 +855,7 @@ FALCON_FUNC Action::get_is_important( VMARG )
     vm->retval( (bool) gtk_action_get_is_important( (GtkAction*)_obj ) );
 }
 
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 } // Gtk
 } // Falcon

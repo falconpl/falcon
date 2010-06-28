@@ -34,7 +34,7 @@ void MenuItem::modInit( Falcon::Module* mod )
     { "new_with_mnemonic",      &MenuItem::new_with_mnemonic },
     { "set_right_justified",    &MenuItem::set_right_justified },
     { "get_right_justified",    &MenuItem::get_right_justified },
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     { "get_label",              &MenuItem::get_label },
     { "set_label",              &MenuItem::set_label },
     { "get_use_underline",      &MenuItem::get_use_underline },
@@ -44,7 +44,7 @@ void MenuItem::modInit( Falcon::Module* mod )
     { "get_submenu",            &MenuItem::get_submenu },
     //{ "remove_submenu",       &MenuItem::remove_submenu },
     { "set_accel_path",         &MenuItem::set_accel_path },
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     { "get_accel_path",         &MenuItem::get_accel_path },
 #endif
     { "select",                 &MenuItem::select },
@@ -61,7 +61,7 @@ void MenuItem::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_MenuItem, meth->name, meth->cb );
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
     Gtk::Activatable::clsInit( mod, c_MenuItem );
 #endif
 
@@ -217,7 +217,7 @@ FALCON_FUNC MenuItem::get_right_justified( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 16
+#if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method get_label GtkMenuItem
     @brief Gets the text on the menu_item label
@@ -278,7 +278,7 @@ FALCON_FUNC MenuItem::set_use_underline( VMARG )
     gtk_menu_item_set_use_underline( (GtkMenuItem*)_obj,
                                      i_bool->asBoolean() ? TRUE : FALSE );
 }
-#endif // GTK_MINOR_VERSION >= 16
+#endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 
 /*#
@@ -349,7 +349,7 @@ FALCON_FUNC MenuItem::set_accel_path( VMARG )
 }
 
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
     @method get_accel_path GtkMenuItem
     @brief Retrieve the accelerator path that was previously set on menu_item.

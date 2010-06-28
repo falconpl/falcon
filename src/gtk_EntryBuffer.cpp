@@ -6,7 +6,7 @@
 
 #include <gtk/gtk.h>
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -211,4 +211,4 @@ FALCON_FUNC EntryBuffer::set_max_length( VMARG )
 } // Gtk
 } // Falcon
 
-#endif // GTK_MINOR_VERSION >= 18
+#endif // GTK_CHECK_VERSION( 2, 18, 0 )

@@ -50,7 +50,7 @@ public:
 #endif
     static FALCON_FUNC set_accel_path( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_accel_path( VMARG );
 #endif
 
@@ -60,13 +60,13 @@ public:
 
     static FALCON_FUNC set_monitor( VMARG );
 
-#if GTK_MINOR_VERSION >= 14
+#if GTK_CHECK_VERSION( 2, 14, 0 )
     static FALCON_FUNC get_monitor( VMARG );
 #endif
 
     static FALCON_FUNC get_tearoff_state( VMARG );
 
-#if GTK_MINOR_VERSION >= 18
+#if GTK_CHECK_VERSION( 2, 18, 0 )
     static FALCON_FUNC set_reserve_toggle_size( VMARG );
 
     static FALCON_FUNC get_reserve_toggle_size( VMARG );
