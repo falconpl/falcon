@@ -119,14 +119,19 @@ public:
     static FALCON_FUNC get_sort_order( VMARG );
 
     static FALCON_FUNC cell_set_cell_data( VMARG );
-#if 0 // todo
+
     static FALCON_FUNC cell_get_size( VMARG );
+
     static FALCON_FUNC cell_get_position( VMARG );
+
     static FALCON_FUNC cell_is_visible( VMARG );
+
     static FALCON_FUNC focus_cell( VMARG );
+
     static FALCON_FUNC queue_resize( VMARG );
+
     static FALCON_FUNC get_tree_view( VMARG );
-#endif
+
 };
 
 

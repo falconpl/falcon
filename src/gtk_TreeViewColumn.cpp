@@ -4,11 +4,14 @@
 
 #include "gtk_TreeViewColumn.hpp"
 
+#include "gdk_Rectangle.hpp"
+
 #include "gtk_Buildable.hpp"
 //#include "gtk_CellLayout.hpp"
 #include "gtk_CellRenderer.hpp"
 #include "gtk_TreeIter.hpp"
 #include "gtk_TreeModel.hpp"
+#include "gtk_TreeView.hpp"
 #include "gtk_Widget.hpp"
 
 
@@ -74,14 +77,12 @@ void TreeViewColumn::modInit( Falcon::Module* mod )
     { "set_sort_order",         &TreeViewColumn::set_sort_order },
     { "get_sort_order",         &TreeViewColumn::get_sort_order },
     { "cell_set_cell_data",     &TreeViewColumn::cell_set_cell_data },
-#if 0
-    { "cell_get_size",    &TreeViewColumn:: },
-    { "cell_get_position",    &TreeViewColumn:: },
-    { "cell_is_visible",    &TreeViewColumn:: },
-    { "focus_cell",    &TreeViewColumn:: },
-    { "queue_resize",    &TreeViewColumn:: },
-    { "get_tree_view",    &TreeViewColumn:: },
-#endif
+    { "cell_get_size",          &TreeViewColumn::cell_get_size },
+    { "cell_get_position",      &TreeViewColumn::cell_get_position },
+    { "cell_is_visible",        &TreeViewColumn::cell_is_visible },
+    { "focus_cell",             &TreeViewColumn::focus_cell },
+    { "queue_resize",           &TreeViewColumn::queue_resize },
+    { "get_tree_view",          &TreeViewColumn::get_tree_view },
     { NULL, NULL }
     };
 
@@ -126,7 +127,7 @@ FALCON_FUNC TreeViewColumn::init( VMARG )
 
 
 /*#
-    @method signal_clicked
+    @method signal_clicked GtkTreeViewColumn
     @brief ?
  */
 FALCON_FUNC TreeViewColumn::signal_clicked( VMARG )
@@ -143,7 +144,7 @@ void TreeViewColumn::on_clicked( GtkTreeViewColumn* obj, gpointer _vm )
 
 
 /*#
-    @method new_with_attributes
+    @method new_with_attributes GtkTreeViewColumn
     @brief Creates a new GtkTreeViewColumn with a number of default values.
     @param title The title to set the header to.
     @param cell The GtkCellRenderer.
@@ -206,7 +207,7 @@ FALCON_FUNC TreeViewColumn::new_with_attributes( VMARG )
 
 
 /*#
-    @method pack_start
+    @method pack_start GtkTreeViewColumn
     @brief Packs the cell into the beginning of the column.
     @param cell The GtkCellRenderer.
     @param expand TRUE if cell is to be given extra space allocated to tree_column.
@@ -230,7 +231,7 @@ FALCON_FUNC TreeViewColumn::pack_start( VMARG )
 
 
 /*#
-    @method pack_end
+    @method pack_end GtkTreeViewColumn
     @brief Adds the cell to end of the column.
     @param cell The GtkCellRenderer.
     @param expand TRUE if cell is to be given extra space allocated to tree_column.
@@ -254,7 +255,7 @@ FALCON_FUNC TreeViewColumn::pack_end( VMARG )
 
 
 /*#
-    @method clear
+    @method clear GtkTreeViewColumn
     @brief Unsets all the mappings on all renderers on the tree_column.
  */
 FALCON_FUNC TreeViewColumn::clear( VMARG )
@@ -265,7 +266,7 @@ FALCON_FUNC TreeViewColumn::clear( VMARG )
 
 
 /*#
-    @method add_attribute
+    @method add_attribute GtkTreeViewColumn
     @brief Adds an attribute mapping to the list in tree_column.
     @param cell_renderer the GtkCellRenderer to set attributes on
     @param attribute An attribute on the renderer
@@ -295,7 +296,7 @@ FALCON_FUNC TreeViewColumn::add_attribute( VMARG )
 
 
 /*#
-    @method set_attributes
+    @method set_attributes GtkTreeViewColumn
     @brief Sets the attributes in the list as the attributes of tree_column.
     @param cell_renderer the GtkCellRenderer we're setting the attributes of
     @param attributes An array of pairs [ attribute, column, ... ]
@@ -347,7 +348,7 @@ FALCON_FUNC TreeViewColumn::set_attributes( VMARG )
 
 
 /*#
-    @method set_cell_data_func
+    @method set_cell_data_func GtkTreeViewColumn
     @brief Sets the GtkTreeViewColumnFunc to use for the column.
     @param cell_renderer A GtkCellRenderer
     @param func The GtkTreeViewColumnFunc to use, or nil.
@@ -426,7 +427,7 @@ void TreeViewColumn::exec_cell_data_func( GtkTreeViewColumn* tree_column,
 
 
 /*#
-    @method clear_attributes
+    @method clear_attributes GtkTreeViewColumn
     @brief Clears all existing attributes previously set with gtk_tree_view_column_set_attributes().
     @param cell_renderer a GtkCellRenderer to clear the attribute mapping on.
  */
@@ -443,7 +444,7 @@ FALCON_FUNC TreeViewColumn::clear_attributes( VMARG )
 
 
 /*#
-    @method set_spacing
+    @method set_spacing GtkTreeViewColumn
     @brief Sets the spacing field of tree_column, which is the number of pixels to place between cell renderers packed into it.
     @param distance between cell renderers in pixels.
  */
@@ -459,7 +460,7 @@ FALCON_FUNC TreeViewColumn::set_spacing( VMARG )
 
 
 /*#
-    @method get_spacing
+    @method get_spacing GtkTreeViewColumn
     @brief Returns the spacing of tree_column.
     @return the spacing of tree_column.
  */
@@ -471,7 +472,7 @@ FALCON_FUNC TreeViewColumn::get_spacing( VMARG )
 
 
 /*#
-    @method set_visible
+    @method set_visible GtkTreeViewColumn
     @brief Sets the visibility of tree_column.
     @param visible TRUE if the tree_column is visible.
  */
@@ -488,7 +489,7 @@ FALCON_FUNC TreeViewColumn::set_visible( VMARG )
 
 
 /*#
-    @method get_visible
+    @method get_visible GtkTreeViewColumn
     @brief Returns TRUE if tree_column is visible.
     @return whether the column is visible or not. If it is visible, then the tree will show the column.
  */
@@ -500,7 +501,7 @@ FALCON_FUNC TreeViewColumn::get_visible( VMARG )
 
 
 /*#
-    @method set_resizable
+    @method set_resizable GtkTreeViewColumn
     @brief If resizable is TRUE, then the user can explicitly resize the column by grabbing the outer edge of the column button.
     @param resizeable TRUE, if the column can be resized
 
@@ -520,7 +521,7 @@ FALCON_FUNC TreeViewColumn::set_resizable( VMARG )
 
 
 /*#
-    @method get_resizable
+    @method get_resizable GtkTreeViewColumn
     @brief Returns TRUE if the tree_column can be resized by the end user.
     @return TRUE, if the tree_column can be resized.
  */
@@ -532,7 +533,7 @@ FALCON_FUNC TreeViewColumn::get_resizable( VMARG )
 
 
 /*#
-    @method set_sizing
+    @method set_sizing GtkTreeViewColumn
     @brief Sets the growth behavior of tree_column to type.
     @param type The GtkTreeViewColumnSizing.
  */
@@ -549,7 +550,7 @@ FALCON_FUNC TreeViewColumn::set_sizing( VMARG )
 
 
 /*#
-    @method get_sizing
+    @method get_sizing GtkTreeViewColumn
     @brief Returns the current type of tree_column.
     @return The type of tree_column (GtkTreeViewColumnSizing).
  */
@@ -561,7 +562,7 @@ FALCON_FUNC TreeViewColumn::get_sizing( VMARG )
 
 
 /*#
-    @method get_width
+    @method get_width GtkTreeViewColumn
     @brief Returns the current size of tree_column in pixels.
     @return The current width of tree_column.
  */
@@ -573,7 +574,7 @@ FALCON_FUNC TreeViewColumn::get_width( VMARG )
 
 
 /*#
-    @method get_fixed_width
+    @method get_fixed_width GtkTreeViewColumn
     @brief Gets the fixed width of the column.
 
     This value is only meaning may not be the actual width of the column on
@@ -587,7 +588,7 @@ FALCON_FUNC TreeViewColumn::get_fixed_width( VMARG )
 
 
 /*#
-    @method set_fixed_width
+    @method set_fixed_width GtkTreeViewColumn
     @brief Sets the size of the column in pixels.
     @param fixed_width The size to set tree_column to. Must be greater than 0.
 
@@ -609,7 +610,7 @@ FALCON_FUNC TreeViewColumn::set_fixed_width( VMARG )
 
 
 /*#
-    @method set_min_width
+    @method set_min_width GtkTreeViewColumn
     @brief Sets the minimum width of the tree_column.
     @param min_width The minimum width of the column in pixels, or -1.
 
@@ -628,7 +629,7 @@ FALCON_FUNC TreeViewColumn::set_min_width( VMARG )
 
 
 /*#
-    @method get_min_width
+    @method get_min_width GtkTreeViewColumn
     @brief Returns the minimum width in pixels of the tree_column, or -1 if no minimum width is set.
     @return The minimum width of the tree_column.
  */
@@ -640,7 +641,7 @@ FALCON_FUNC TreeViewColumn::get_min_width( VMARG )
 
 
 /*#
-    @method set_max_width
+    @method set_max_width GtkTreeViewColumn
     @brief Sets the maximum width of the tree_column.
     @param max_width The maximum width of the column in pixels, or -1.
 
@@ -661,7 +662,7 @@ FALCON_FUNC TreeViewColumn::set_max_width( VMARG )
 
 
 /*#
-    @method get_max_width
+    @method get_max_width GtkTreeViewColumn
     @brief Returns the maximum width in pixels of the tree_column, or -1 if no maximum width is set.
     @return The maximum width of the tree_column.
  */
@@ -673,7 +674,7 @@ FALCON_FUNC TreeViewColumn::get_max_width( VMARG )
 
 
 /*#
-    @method clicked
+    @method clicked GtkTreeViewColumn
     @brief Emits the "clicked" signal on the column.
 
     This function will only work if tree_column is clickable.
@@ -686,7 +687,7 @@ FALCON_FUNC TreeViewColumn::clicked( VMARG )
 
 
 /*#
-    @method set_title
+    @method set_title GtkTreeViewColumn
     @brief Sets the title of the tree_column.
     @param title The title of the tree_column.
 
@@ -706,7 +707,7 @@ FALCON_FUNC TreeViewColumn::set_title( VMARG )
 
 
 /*#
-    @method get_title
+    @method get_title GtkTreeViewColumn
     @brief Returns the title of the widget.
     @return the title of the column.
  */
@@ -722,7 +723,7 @@ FALCON_FUNC TreeViewColumn::get_title( VMARG )
 
 
 /*#
-    @method set_expand
+    @method set_expand GtkTreeViewColumn
     @brief Sets the column to take available extra space.
     @param expand TRUE if the column should take available extra space, FALSE if not
 
@@ -743,7 +744,7 @@ FALCON_FUNC TreeViewColumn::set_expand( VMARG )
 
 
 /*#
-    @method get_expand
+    @method get_expand GtkTreeViewColumn
     @brief Return TRUE if the column expands to take any available space.
     @return TRUE, if the column expands
  */
@@ -755,7 +756,7 @@ FALCON_FUNC TreeViewColumn::get_expand( VMARG )
 
 
 /*#
-    @method set_clickable
+    @method set_clickable GtkTreeViewColumn
     @brief Sets the header to be active if active is TRUE.
     @param clickable TRUE if the header is active.
 
@@ -774,7 +775,7 @@ FALCON_FUNC TreeViewColumn::set_clickable( VMARG )
 
 
 /*#
-    @method get_clickable
+    @method get_clickable GtkTreeViewColumn
     @brief Returns TRUE if the user can click on the header for the column.
     @return TRUE if user can click the column header.
  */
@@ -786,7 +787,7 @@ FALCON_FUNC TreeViewColumn::get_clickable( VMARG )
 
 
 /*#
-    @method set_widget
+    @method set_widget GtkTreeViewColumn
     @brief Sets the widget in the header to be widget.
     @param widget A child GtkWidget, or NULL.
 
@@ -807,7 +808,7 @@ FALCON_FUNC TreeViewColumn::set_widget( VMARG )
 
 
 /*#
-    @method get_widget
+    @method get_widget GtkTreeViewColumn
     @brief Returns the GtkWidget in the button on the column header.
     @return The GtkWidget in the column header, or NULL
 
@@ -825,7 +826,7 @@ FALCON_FUNC TreeViewColumn::get_widget( VMARG )
 
 
 /*#
-    @method set_alignment
+    @method set_alignment GtkTreeViewColumn
     @brief Sets the alignment of the title or custom widget inside the column header.
     @param xalign The alignment, which is between [0.0 and 1.0] inclusive.
 
@@ -845,7 +846,7 @@ FALCON_FUNC TreeViewColumn::set_alignment( VMARG )
 
 
 /*#
-    @method get_alignment
+    @method get_alignment GtkTreeViewColumn
     @brief Returns the current x alignment of tree_column.
 
     This value can range between 0.0 and 1.0.
@@ -858,7 +859,7 @@ FALCON_FUNC TreeViewColumn::get_alignment( VMARG )
 
 
 /*#
-    @method set_reorderable
+    @method set_reorderable GtkTreeViewColumn
     @brief If reorderable is TRUE, then the column can be reordered by the end user dragging the header.
     @param reorderable TRUE, if the column can be reordered.
  */
@@ -875,7 +876,7 @@ FALCON_FUNC TreeViewColumn::set_reorderable( VMARG )
 
 
 /*#
-    @method get_reorderable
+    @method get_reorderable GtkTreeViewColumn
     @brief Returns TRUE if the tree_column can be reordered by the user.
     @return TRUE if the tree_column can be reordered by the user.
  */
@@ -887,7 +888,7 @@ FALCON_FUNC TreeViewColumn::get_reorderable( VMARG )
 
 
 /*#
-    @method set_sort_column_id
+    @method set_sort_column_id GtkTreeViewColumn
     @brief Sets the logical sort_column_id that this column sorts on when this column is selected for sorting.
     @param sort_column_id The sort_column_id of the model to sort on.
 
@@ -906,7 +907,7 @@ FALCON_FUNC TreeViewColumn::set_sort_column_id( VMARG )
 
 
 /*#
-    @method get_sort_column_id
+    @method get_sort_column_id GtkTreeViewColumn
     @brief Gets the logical sort_column_id that the model sorts on when this column is selected for sorting.
     @return the current sort_column_id for this column, or -1 if this column can't be used for sorting.
 
@@ -920,7 +921,7 @@ FALCON_FUNC TreeViewColumn::get_sort_column_id( VMARG )
 
 
 /*#
-    @method set_sort_indicator
+    @method set_sort_indicator GtkTreeViewColumn
     @brief Call this function with a setting of TRUE to display an arrow in the header button indicating the column is sorted.
     @param setting TRUE to display an indicator that the column is sorted
 
@@ -939,7 +940,7 @@ FALCON_FUNC TreeViewColumn::set_sort_indicator( VMARG )
 
 
 /*#
-    @method get_sort_indicator
+    @method get_sort_indicator GtkTreeViewColumn
     @brief Gets the value set by gtk_tree_view_column_set_sort_indicator().
     @return whether the sort indicator arrow is displayed
  */
@@ -951,7 +952,7 @@ FALCON_FUNC TreeViewColumn::get_sort_indicator( VMARG )
 
 
 /*#
-    @method set_sort_order
+    @method set_sort_order GtkTreeViewColumn
     @brief Changes the appearance of the sort indicator.
     @param order sort order that the sort indicator should indicate (GtkSortType)
 
@@ -978,7 +979,7 @@ FALCON_FUNC TreeViewColumn::set_sort_order( VMARG )
 
 
 /*#
-    @method get_sort_order
+    @method get_sort_order GtkTreeViewColumn
     @brief Gets the value set by gtk_tree_view_column_set_sort_order().
     @return the sort order the sort indicator is indicating (GtkSortType)
  */
@@ -990,7 +991,7 @@ FALCON_FUNC TreeViewColumn::get_sort_order( VMARG )
 
 
 /*#
-    @method cell_set_cell_data
+    @method cell_set_cell_data GtkTreeViewColumn
     @brief Sets the cell renderer based on the tree_model and iter.
     @param tree_model The GtkTreeModel to to get the cell renderers attributes from.
     @param iter The GtkTreeIter to to get the cell renderer's attributes from.
@@ -1024,14 +1025,127 @@ FALCON_FUNC TreeViewColumn::cell_set_cell_data( VMARG )
 }
 
 
-#if 0
-FALCON_FUNC TreeViewColumn::cell_get_size( VMARG );
-FALCON_FUNC TreeViewColumn::cell_get_position( VMARG );
-FALCON_FUNC TreeViewColumn::cell_is_visible( VMARG );
-FALCON_FUNC TreeViewColumn::focus_cell( VMARG );
-FALCON_FUNC TreeViewColumn::queue_resize( VMARG );
-FALCON_FUNC TreeViewColumn::get_tree_view( VMARG );
+/*#
+    @method cell_get_size GtkTreeViewColumn
+    @brief Obtains the width and height needed to render the column.
+    @param cell_area The area (GdkRectangle) a cell in the column will be allocated, or NULL.
+    @return an array [ x offset, y offset of a cell relative to cell_area, width, height needed to render a cell ]
+
+    This is used primarily by the GtkTreeView.
+ */
+FALCON_FUNC TreeViewColumn::cell_get_size( VMARG )
+{
+    Item* i_cell = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_cell || !( i_cell->isNil() || ( i_cell->isObject()
+        && IS_DERIVED( i_cell, GdkRectangle ) ) ) )
+        throw_inv_params( "[GdkRectangle]" );
 #endif
+    gint x, y, w, h;
+    gtk_tree_view_column_cell_get_size( GET_TREEVIEWCOLUMN( vm->self() ),
+                                        i_cell->isNil() ? NULL : GET_RECTANGLE( *i_cell ),
+                                        &x, &y, &w, &h );
+    CoreArray* arr = new CoreArray( 4 );
+    arr->append( x );
+    arr->append( y );
+    arr->append( w );
+    arr->append( h );
+    vm->retval( arr );
+}
+
+
+/*#
+    @method cell_get_position GtkTreeViewColumn
+    @brief Obtains the horizontal position and size of a cell in a column.
+    @param cell a GtkCellRenderer
+    @return an array [ horizontal position of cell within tree_column, width of cell ], or nil
+
+    If the cell is not found in the column, nil is returned.
+ */
+FALCON_FUNC TreeViewColumn::cell_get_position( VMARG )
+{
+    Item* i_cell = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_cell || !i_cell->isObject() || !IS_DERIVED( i_cell, GtkCellRenderer ) )
+        throw_inv_params( "GtkCellRenderer" );
+#endif
+    gint start_pos, width;
+    if ( gtk_tree_view_column_cell_get_position( GET_TREEVIEWCOLUMN( vm->self() ),
+                                                 GET_CELLRENDERER( *i_cell ),
+                                                 &start_pos,
+                                                 &width ) )
+    {
+        CoreArray* arr = new CoreArray( 2 );
+        arr->append( start_pos );
+        arr->append( width );
+        vm->retval( arr );
+    }
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method cell_is_visible GtkTreeViewColumn
+    @brief Returns TRUE if any of the cells packed into the tree_column are visible.
+    @return TRUE, if any of the cells packed into the tree_column are currently visible
+
+    For this to be meaningful, you must first initialize the cells with
+    gtk_tree_view_column_cell_set_cell_data()
+ */
+FALCON_FUNC TreeViewColumn::cell_is_visible( VMARG )
+{
+    NO_ARGS
+    vm->retval( (bool) gtk_tree_view_column_cell_is_visible( GET_TREEVIEWCOLUMN( vm->self() ) ) );
+}
+
+
+/*#
+    @method focus_cell GtkTreeViewColumn
+    @brief Sets the current keyboard focus to be at cell, if the column contains 2 or more editable and activatable cells.
+    @param cell A GtkCellRenderer
+ */
+FALCON_FUNC TreeViewColumn::focus_cell( VMARG )
+{
+    Item* i_cell = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_cell || !i_cell->isObject() || !IS_DERIVED( i_cell, GtkCellRenderer ) )
+        throw_inv_params( "GtkCellRenderer" );
+#endif
+    gtk_tree_view_column_focus_cell( GET_TREEVIEWCOLUMN( vm->self() ),
+                                     GET_CELLRENDERER( *i_cell ) );
+}
+
+
+/*#
+    @method queue_resize GtkTreeViewColumn
+    @brief Flags the column, and the cell renderers added to this column, to have their sizes renegotiated.
+ */
+FALCON_FUNC TreeViewColumn::queue_resize( VMARG )
+{
+    NO_ARGS
+    gtk_tree_view_column_queue_resize( GET_TREEVIEWCOLUMN( vm->self() ) );
+}
+
+
+/*#
+    @method get_tree_view GtkTreeViewColumn
+    @brief Returns the GtkTreeView wherein tree_column has been inserted.
+    @return The tree view wherein column has been inserted if any, NULL otherwise.
+
+    If column is currently not inserted in any tree view, NULL is returned.
+ */
+FALCON_FUNC TreeViewColumn::get_tree_view( VMARG )
+{
+    NO_ARGS
+    GtkWidget* view = gtk_tree_view_column_get_tree_view( GET_TREEVIEWCOLUMN( vm->self() ) );
+    if ( view )
+        vm->retval( new Gtk::TreeView( vm->findWKI( "GtkTreeView" )->asClass(),
+                                       (GtkTreeView*) view ) );
+    else
+        vm->retnil();
+}
+
 
 } // Gtk
 } // Falcon
