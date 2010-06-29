@@ -71,6 +71,7 @@ FALCON_MODULE_DECL
    //
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *jerr_cls = self->addClass( "JSONError", &Falcon::Ext::JSONError_init );
+   jerr_cls->setWKS( true );
    jerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    //======================================

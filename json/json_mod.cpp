@@ -220,6 +220,17 @@ bool JSON::encode( const Item& source, Stream* tgt  )
    return true;
 }
 
+inline bool isterminal( char chr )
+{
+	return
+		chr == ','
+		|| chr == '}'
+		|| chr == ']'
+		|| chr == ' '
+		|| chr == '\t'
+		|| chr == '\r'
+		|| chr == '\n';
+}
 
 void JSON::encode_string( const String &str, Stream* tgt ) const
 {
@@ -305,9 +316,7 @@ bool JSON::decode( Item& target, Stream* src ) const
                   if ( ! src->get( chr ) || chr != 'u' ) return false;
                   if ( ! src->get( chr ) || chr != 'l' ) return false;
                   if ( ! src->get( chr ) || chr != 'l' ) return false;
-                  if ( src->get( chr ) &&
-                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
-                       )
+                  if ( ! src->get( chr ) || ! isterminal( chr ) )
                      return false;
 
                   target.setNil();
@@ -318,10 +327,8 @@ bool JSON::decode( Item& target, Stream* src ) const
                   if ( ! src->get( chr ) || chr != 'r' ) return false;
                   if ( ! src->get( chr ) || chr != 'u' ) return false;
                   if ( ! src->get( chr ) || chr != 'e' ) return false;
-                  if ( src->get( chr ) &&
-                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
-                       )
-                     return false;
+                  if ( ! src->get( chr ) || ! isterminal( chr ) )
+                        return false;
 
                   target.setBoolean( true );
                   src->unget( chr );
@@ -332,10 +339,8 @@ bool JSON::decode( Item& target, Stream* src ) const
                   if ( ! src->get( chr ) || chr != 'l' ) return false;
                   if ( ! src->get( chr ) || chr != 's' ) return false;
                   if ( ! src->get( chr ) || chr != 'e' ) return false;
-                  if ( src->get( chr ) &&
-                       chr != ',' && chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n'
-                       )
-                     return false;
+                  if ( ! src->get( chr ) || ! isterminal( chr ) )
+                        return false;
 
                   target.setBoolean( false );
                   src->unget( chr );
