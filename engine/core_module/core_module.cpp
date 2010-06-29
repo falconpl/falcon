@@ -1428,7 +1428,7 @@ Module* core_module_init()
       addParam("dict")->addParam("item");
 
    self->addExtFunc( "fileType", &Falcon::core::fileType )->
-      addParam("filename");
+      addParam("filename")->addParam("df");
    self->addExtFunc( "fileNameMerge", &Falcon::core::fileNameMerge )->
       addParam("spec")->addParam("path")->addParam("filename")->addParam("ext");
    self->addExtFunc( "fileNameSplit", &Falcon::core::fileNameSplit )->

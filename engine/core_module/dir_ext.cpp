@@ -287,19 +287,22 @@ FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
 
 /*#
    @function fileType
-   @brief Deterimnes the type of a file.
+   @brief Determines the type of a file.
    @param filename Relative or absolute path to a file.
+   @optparam nf Don't follow symlinks
+
    @return A valid file type or FileStat.NOTFOUND if not found.
 
    This function is useful to know what of what kind of system entry
    is a certain file, or if it exists at all, without paying the overhead
    for a full FileStat object being instantiated.
 
+
    Returned values may be:
       - FileStat.NORMAL
       - FileStat.DIR
       - FileStat.PIPE
-      - FileStat.LINK
+      - FileStat.LINK - Only if @b nf parameter is true.
       - FileStat.DEVICE
       - FileStat.SOCKET
       - FileStat.UNKNOWN
@@ -309,7 +312,7 @@ FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
-
+   Item *i_df = vm->param(1);
    if ( name == 0 || ! name->isString() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -320,7 +323,30 @@ FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 
    FileStat::e_fileType type = FileStat::t_notFound;
 
-   Sys::fal_fileType( *name->asString(), type );
+   bool follow = !( i_df != 0 && i_df->isTrue() );
+	int count = 99;
+
+	String sName = *name->asString();
+   while( true )
+   {
+   	Sys::fal_fileType( sName, type );
+
+   	if ( follow && type == FileStat::t_link )
+		{
+		   String temp;
+		   if ( ! Sys::fal_readlink( sName, temp ) || --count == 0 )
+		   {
+				type = FileStat::t_notFound;
+				break;
+			}
+		   sName = temp;
+		}
+   	else
+   	{
+   		break;
+   	}
+   }
+
    // will already be -1 if not found
    vm->retval( type );
 }

@@ -33,6 +33,7 @@ Falcon (0.9.6.5)
   * added: Base64 class.
   * fixed: String.escape() enscaped only below chr(8) and not below chr(32).
   * added: epoch() function returning exactly the seconds since UNIX epoch.
+  * minor: fileType now follows links, unless an extra parameter is set to true. 
 
             
 Falcon (0.9.6.4)
