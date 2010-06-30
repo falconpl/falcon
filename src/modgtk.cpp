@@ -49,6 +49,7 @@
 #include "gtk_CellRendererSpin.hpp"
 #include "gtk_CellRendererSpinner.hpp"
 #include "gtk_CellRendererText.hpp"
+#include "gtk_CellRendererToggle.hpp"
 #include "gtk_CheckButton.hpp"
 #include "gtk_CheckMenuItem.hpp"
 #include "gtk_ColorButton.hpp"
@@ -310,6 +311,7 @@ FALCON_MODULE_DECL
                     Falcon::Gtk::CellRendererAccel::modInit( self );
                     Falcon::Gtk::CellRendererCombo::modInit( self );
                     Falcon::Gtk::CellRendererSpin::modInit( self );
+                Falcon::Gtk::CellRendererToggle::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Invisible::modInit( self );

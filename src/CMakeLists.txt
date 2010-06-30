@@ -49,6 +49,7 @@ set( SRC_FILES
     gtk_CellRendererSpin.cpp
     gtk_CellRendererSpinner.cpp
     gtk_CellRendererText.cpp
+    gtk_CellRendererToggle.cpp
     gtk_CheckButton.cpp
     gtk_CheckMenuItem.cpp
     gtk_ColorButton.cpp
@@ -204,6 +205,7 @@ set( HDR_FILES
     gtk_CellRendererSpin.hpp
     gtk_CellRendererSpinner.hpp
     gtk_CellRendererText.hpp
+    gtk_CellRendererToggle.hpp
     gtk_CheckButton.hpp
     gtk_CheckMenuItem.hpp
     gtk_ColorButton.hpp
