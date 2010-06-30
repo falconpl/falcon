@@ -134,6 +134,12 @@ void Enums::modInit( Falcon::Module* mod )
     { "GTK_BUTTONS_OK_CANCEL",  GTK_BUTTONS_OK_CANCEL },
 
     /*
+     *  GtkCellRendererAccelMode
+     */
+    { "GTK_CELL_RENDERER_ACCEL_MODE_GTK",   GTK_CELL_RENDERER_ACCEL_MODE_GTK },
+    { "GTK_CELL_RENDERER_ACCEL_MODE_OTHER", GTK_CELL_RENDERER_ACCEL_MODE_OTHER },
+
+    /*
      *  GtkCellRendererMode
      */
     { "GTK_CELL_RENDERER_MODE_INERT",       GTK_CELL_RENDERER_MODE_INERT },

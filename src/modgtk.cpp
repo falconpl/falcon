@@ -42,6 +42,7 @@
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CellEditable.hpp"
 #include "gtk_CellRenderer.hpp"
+#include "gtk_CellRendererAccel.hpp"
 #include "gtk_CellRendererText.hpp"
 #include "gtk_CheckButton.hpp"
 #include "gtk_CheckMenuItem.hpp"
@@ -298,6 +299,7 @@ FALCON_MODULE_DECL
                 Falcon::Gtk::TreeView::modInit( self );
             Falcon::Gtk::CellRenderer::modInit( self );
                 Falcon::Gtk::CellRendererText::modInit( self );
+                    Falcon::Gtk::CellRendererAccel::modInit( self );
             Falcon::Gtk::Entry::modInit( self );
                 Falcon::Gtk::SpinButton::modInit( self );
             Falcon::Gtk::Invisible::modInit( self );
