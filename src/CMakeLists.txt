@@ -43,6 +43,7 @@ set( SRC_FILES
     gtk_CellEditable.cpp
     gtk_CellRenderer.cpp
     gtk_CellRendererAccel.cpp
+    gtk_CellRendererCombo.cpp
     gtk_CellRendererText.cpp
     gtk_CheckButton.cpp
     gtk_CheckMenuItem.cpp
@@ -193,6 +194,7 @@ set( HDR_FILES
     gtk_CellEditable.hpp
     gtk_CellRenderer.hpp
     gtk_CellRendererAccel.hpp
+    gtk_CellRendererCombo.hpp
     gtk_CellRendererText.hpp
     gtk_CheckButton.hpp
     gtk_CheckMenuItem.hpp
