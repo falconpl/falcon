@@ -47,6 +47,7 @@ set( SRC_FILES
     gtk_CellRendererPixbuf.cpp
     gtk_CellRendererProgress.cpp
     gtk_CellRendererSpin.cpp
+    gtk_CellRendererSpinner.cpp
     gtk_CellRendererText.cpp
     gtk_CheckButton.cpp
     gtk_CheckMenuItem.cpp
@@ -201,6 +202,7 @@ set( HDR_FILES
     gtk_CellRendererPixbuf.hpp
     gtk_CellRendererProgress.hpp
     gtk_CellRendererSpin.hpp
+    gtk_CellRendererSpinner.hpp
     gtk_CellRendererText.hpp
     gtk_CheckButton.hpp
     gtk_CheckMenuItem.hpp
