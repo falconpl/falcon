@@ -44,6 +44,7 @@
 #include "gtk_CellRenderer.hpp"
 #include "gtk_CellRendererAccel.hpp"
 #include "gtk_CellRendererCombo.hpp"
+#include "gtk_CellRendererPixbuf.hpp"
 #include "gtk_CellRendererSpin.hpp"
 #include "gtk_CellRendererText.hpp"
 #include "gtk_CheckButton.hpp"
@@ -300,6 +301,7 @@ FALCON_MODULE_DECL
 #endif
                 Falcon::Gtk::TreeView::modInit( self );
             Falcon::Gtk::CellRenderer::modInit( self );
+                Falcon::Gtk::CellRendererPixbuf::modInit( self );
                 Falcon::Gtk::CellRendererText::modInit( self );
                     Falcon::Gtk::CellRendererAccel::modInit( self );
                     Falcon::Gtk::CellRendererCombo::modInit( self );
