@@ -3,8 +3,8 @@
 
 #include "modgtk.hpp"
 
-#define GET_TREEROWREFERENCE( pItem ) \
-        Falcon::dyncast<Gtk::TreeRowReference*>( pItem->asObjectSafe() )->getTreeRowReference()
+#define GET_TREEROWREFERENCE( item ) \
+        (((Gtk::TreeRowReference*) (item).asObjectSafe() )->getTreeRowReference())
 
 
 namespace Falcon {

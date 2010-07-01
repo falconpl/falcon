@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_TREEVIEWCOLUMN( item ) \
-        ((GtkTreeViewColumn*) Falcon::dyncast<Gtk::TreeViewColumn*>( (item).asObjectSafe() )->getGObject())
+        ((GtkTreeViewColumn*)((Gtk::TreeViewColumn*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

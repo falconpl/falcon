@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_RECENTFILTER( item ) \
-        ((GtkRecentFilter*) Falcon::dyncast<Gtk::RecentFilter*>( (item).asObjectSafe() )->getGObject())
+        ((GtkRecentFilter*)((Gtk::RecentFilter*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

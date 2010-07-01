@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_TREEMODEL( item ) \
-        ((GtkTreeModel*) Falcon::dyncast<Gtk::TreeModel*>( (item).asObjectSafe() )->getGObject())
+        ((GtkTreeModel*)((Gtk::TreeModel*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

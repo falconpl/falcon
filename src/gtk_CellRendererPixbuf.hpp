@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_CELLRENDERERPIXBUF( item ) \
-        ((GtkCellRendererPixbuf*) Falcon::dyncast<Gtk::CellRendererPixbuf*>( (item).asObjectSafe() )->getGObject())
+        ((GtkCellRendererPixbuf*)((Gtk::CellRendererPixbuf*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

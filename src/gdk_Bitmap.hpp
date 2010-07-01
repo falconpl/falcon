@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_BITMAP( item ) \
-        ((GdkBitmap*) Falcon::dyncast<Gdk::Bitmap*>( (item).asObjectSafe() )->getGObject())
+        ((GdkBitmap*)((Gdk::Bitmap*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

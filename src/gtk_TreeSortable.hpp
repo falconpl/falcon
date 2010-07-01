@@ -3,8 +3,8 @@
 
 #include "modgtk.hpp"
 
-#define GET_TREESORTABLE( pItem ) \
-        ((GtkTreeSortable*) COREGOBJECT( pItem )->getGObject())
+#define GET_TREESORTABLE( item ) \
+        ((GtkTreeSortable*)((Gtk::TreeSortable*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

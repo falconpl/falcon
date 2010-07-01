@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_CELLRENDERERTOGGLE( item ) \
-        ((GtkCellRendererToggle*) Falcon::dyncast<Gtk::CellRendererToggle*>( (item).asObjectSafe() )->getGObject())
+        ((GtkCellRendererToggle*)((Gtk::CellRendererToggle*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

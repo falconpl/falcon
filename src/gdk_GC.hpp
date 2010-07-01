@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_GC( item ) \
-        ((GdkGC*) Falcon::dyncast<Gdk::GC*>( (item).asObjectSafe() )->getGObject())
+        ((GdkGC*)((Gdk::GC*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

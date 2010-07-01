@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_TREEITER( item ) \
-        (Falcon::dyncast<Gtk::TreeIter*>( (item).asObjectSafe() )->getTreeIter())
+        (((Gtk::TreeIter*) (item).asObjectSafe() )->getTreeIter())
 
 
 namespace Falcon {

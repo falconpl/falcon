@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_FILEFILTER( item ) \
-        ((GtkFileFilter*) Falcon::dyncast<Gtk::FileFilter*>( (item).asObjectSafe() )->getGObject())
+        ((GtkFileFilter*)((Gtk::FileFilter*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_DRAWABLE( item ) \
-        ((GdkDrawable*) Falcon::dyncast<Gdk::Drawable*>( (item).asObjectSafe() )->getGObject())
+        ((GdkDrawable*)((Gdk::Drawable*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {

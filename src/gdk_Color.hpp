@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_COLOR( item ) \
-        (Falcon::dyncast<Gdk::Color*>( (item).asObjectSafe() )->getColor())
+        (((Gdk::Color*) (item).asObjectSafe() )->getColor())
 
 
 namespace Falcon {

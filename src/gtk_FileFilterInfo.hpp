@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_FILEFILTERINFO( item ) \
-        (Falcon::dyncast<Gtk::FileFilterInfo*>( (item).asObjectSafe() )->getInfo())
+        (((Gtk::FileFilterInfo*) (item).asObjectSafe() )->getInfo())
 
 
 namespace Falcon {

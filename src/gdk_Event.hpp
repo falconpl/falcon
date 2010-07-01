@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_EVENT( item ) \
-        (Falcon::dyncast<Gdk::Event*>( (item).asObjectSafe() )->getEvent())
+        (((Gdk::Event*) (item).asObjectSafe() )->getEvent())
 
 
 namespace Falcon {

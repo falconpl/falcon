@@ -8,7 +8,7 @@
 #include "modgtk.hpp"
 
 #define GET_OBJECT( item ) \
-        (Falcon::dyncast<Glib::Object*>( (item).asObjectSafe() )->getGObject())
+        (((Glib::Object*) (item).asObjectSafe() )->getGObject())
 
 
 namespace Falcon {
