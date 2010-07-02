@@ -499,7 +499,10 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
    }
    else
    {
-      raiseError( e_nofile, URI::URLDecode(uri.get()) );
+   	String expl = URI::URLDecode(uri.get());
+   	if( scan )
+   		expl += String(" in path ") + getSearchPath();
+      raiseError( e_nofile, expl );
    }
 
    // in case of errors, we already raised
