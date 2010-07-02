@@ -92,7 +92,7 @@ FALCON_FUNC Statusbar::init( VMARG )
     NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_statusbar_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

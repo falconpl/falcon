@@ -83,7 +83,7 @@ FALCON_FUNC Table::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Item* i_rows = vm->param( 0 );
@@ -116,7 +116,7 @@ FALCON_FUNC Table::init( VMARG )
     else
         wdt = gtk_table_new( rows, cols, FALSE );
 
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -186,7 +186,7 @@ FALCON_FUNC Table::attach( VMARG )
         || !i_ypad || i_ypad->isNil() || !i_ypad->isInteger() )
         throw_inv_params( "GtkWidget,I,I,I,I,I,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_table_attach( (GtkTable*)_obj, wdt, i_left->asInteger(), i_right->asInteger(),
@@ -226,7 +226,7 @@ FALCON_FUNC Table::attach_defaults( VMARG )
         || !i_bottom || i_bottom->isNil() || !i_bottom->isInteger() )
         throw_inv_params( "GtkWidget,I,I,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_table_attach_defaults( (GtkTable*)_obj, wdt, i_left->asInteger(), i_right->asInteger(),

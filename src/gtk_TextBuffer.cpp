@@ -146,13 +146,13 @@ FALCON_FUNC TextBuffer::init( VMARG )
             if ( !i_tab->isObject() || !IS_DERIVED( i_tab, GtkTextTagTable ) )
                 throw_inv_params( "[GtkTextTagTable]" );
 #endif
-            tab = (GtkTextTagTable*) COREGOBJECT( i_tab )->getGObject();
+            tab = (GtkTextTagTable*) COREGOBJECT( i_tab )->getObject();
         }
     }
 
     MYSELF;
     GtkTextBuffer* buf = gtk_text_buffer_new( tab );
-    self->setGObject( (GObject*) buf );
+    self->setObject( (GObject*) buf );
 }
 
 
@@ -227,7 +227,7 @@ FALCON_FUNC TextBuffer::insert( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,S,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
     char* txt = args.getCString( 1 );
     int len = args.getInteger( 2 );
 
@@ -281,7 +281,7 @@ FALCON_FUNC TextBuffer::insert_interactive( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,S,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
     char* txt = args.getCString( 1 );
     int len = args.getInteger( 2 );
     bool dft_edit = args.getBoolean( 3 );
@@ -346,9 +346,9 @@ FALCON_FUNC TextBuffer::insert_range( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -385,9 +385,9 @@ FALCON_FUNC TextBuffer::insert_range_interactive( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter,GtkTextIter,B" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
     bool dft_edit = args.getBoolean( 3 );
 
     MYSELF;
@@ -425,8 +425,8 @@ FALCON_FUNC TextBuffer::delete_( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -457,8 +457,8 @@ FALCON_FUNC TextBuffer::delete_interactive( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter,B" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
     gboolean dft_edit = args.getBoolean( 2 );
 
     MYSELF;
@@ -493,7 +493,7 @@ FALCON_FUNC TextBuffer::backspace( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,B,B" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
     gboolean inter = args.getBoolean( 1 );
     gboolean dft_edit = args.getBoolean( 2 );
 
@@ -550,8 +550,8 @@ FALCON_FUNC TextBuffer::get_text( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter,B" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
     gboolean hide = args.getBoolean( 2 );
 
     MYSELF;
@@ -595,8 +595,8 @@ FALCON_FUNC TextBuffer::get_slice( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter,B" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
     gboolean hide = args.getBoolean( 2 );
 
     MYSELF;
@@ -637,8 +637,8 @@ FALCON_FUNC TextBuffer::insert_pixbuf( VMARG )
         || !CoreObject_IS_DERIVED( o_pix, GdkPixbuf ) )
         throw_inv_params( "GtkTextIter,GdkPixbuf" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
-    GdkPixbuf* pix = (GdkPixbuf*) o_pix->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
+    GdkPixbuf* pix = (GdkPixbuf*) o_pix->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -683,7 +683,7 @@ FALCON_FUNC TextBuffer::create_mark( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "S,GtkTextIter,B" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -712,8 +712,8 @@ FALCON_FUNC TextBuffer::move_mark( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextMark,GtkTextIter" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getGObject();
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_move_mark ( (GtkTextBuffer*)_obj, mk, iter );
@@ -738,7 +738,7 @@ FALCON_FUNC TextBuffer::move_mark_by_name( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "S,GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -767,8 +767,8 @@ FALCON_FUNC TextBuffer::add_mark( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextMark,GtkTextIter" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getGObject();
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_add_mark( (GtkTextBuffer*)_obj, mk, iter );
@@ -793,7 +793,7 @@ FALCON_FUNC TextBuffer::delete_mark( VMARG )
         || !IS_DERIVED( i_mk, GtkTextMark ) )
         throw_inv_params( "GtkTextMark" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_delete_mark( (GtkTextBuffer*)_obj, mk );
@@ -915,7 +915,7 @@ FALCON_FUNC TextBuffer::place_cursor( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -945,8 +945,8 @@ FALCON_FUNC TextBuffer::select_range( VMARG )
         || !IS_DERIVED( i_bnd, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* ins = (GtkTextIter*) COREGOBJECT( i_ins )->getGObject();
-    GtkTextIter* bnd = (GtkTextIter*) COREGOBJECT( i_bnd )->getGObject();
+    GtkTextIter* ins = (GtkTextIter*) COREGOBJECT( i_ins )->getObject();
+    GtkTextIter* bnd = (GtkTextIter*) COREGOBJECT( i_bnd )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -978,9 +978,9 @@ FALCON_FUNC TextBuffer::apply_tag( VMARG )
         || !IS_DERIVED( i_end, GtkTextIter ) )
         throw_inv_params( "GtkTextTag,GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getGObject();
-    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getGObject();
-    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getGObject();
+    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getObject();
+    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getObject();
+    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -1012,9 +1012,9 @@ FALCON_FUNC TextBuffer::remove_tag( VMARG )
         || !IS_DERIVED( i_end, GtkTextIter ) )
         throw_inv_params( "GtkTextTag,GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getGObject();
-    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getGObject();
-    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getGObject();
+    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getObject();
+    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getObject();
+    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -1041,8 +1041,8 @@ FALCON_FUNC TextBuffer::apply_tag_by_name( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "S,GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -1069,8 +1069,8 @@ FALCON_FUNC TextBuffer::remove_tag_by_name( VMARG )
         || !CoreObject_IS_DERIVED( o_end, GtkTextIter ) )
         throw_inv_params( "S,GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) o_start->getGObject();
-    GtkTextIter* end = (GtkTextIter*) o_end->getGObject();
+    GtkTextIter* start = (GtkTextIter*) o_start->getObject();
+    GtkTextIter* end = (GtkTextIter*) o_end->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -1099,8 +1099,8 @@ FALCON_FUNC TextBuffer::remove_all_tags( VMARG )
         || !IS_DERIVED( i_end, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,GtkTextIter" );
 #endif
-    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getGObject();
-    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getGObject();
+    GtkTextIter* start = (GtkTextIter*) COREGOBJECT( i_start )->getObject();
+    GtkTextIter* end = (GtkTextIter*) COREGOBJECT( i_end )->getObject();
 
     MYSELF;
     GET_OBJ( self );

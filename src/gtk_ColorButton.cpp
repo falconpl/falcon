@@ -73,7 +73,7 @@ FALCON_FUNC ColorButton::init( VMARG )
     NO_ARGS
     GtkWidget* wdt = gtk_color_button_new();
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -114,7 +114,7 @@ FALCON_FUNC ColorButton::new_with_color( VMARG )
         || !IS_DERIVED( i_clr, GdkColor ) )
         throw_inv_params( "GdkColor" );
 #endif
-    const GdkColor* clr = Falcon::dyncast<Gdk::Color*>( i_clr->asObjectSafe() )->getColor();
+    const GdkColor* clr = GET_COLOR( *i_clr );
     GtkWidget* wdt = gtk_color_button_new_with_color( clr );
     vm->retval( new Gtk::ColorButton( vm->findWKI( "GtkColorButton" )->asClass(),
                                       (GtkColorButton*) wdt ) );
@@ -134,7 +134,7 @@ FALCON_FUNC ColorButton::set_color( VMARG )
         || !IS_DERIVED( i_clr, GdkColor ) )
         throw_inv_params( "GdkColor" );
 #endif
-    const GdkColor* clr = Falcon::dyncast<Gdk::Color*>( i_clr->asObjectSafe() )->getColor();
+    const GdkColor* clr = GET_COLOR( *i_clr );
     MYSELF;
     GET_OBJ( self );
     gtk_color_button_set_color( (GtkColorButton*)_obj, clr );

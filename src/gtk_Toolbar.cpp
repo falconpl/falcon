@@ -115,7 +115,7 @@ FALCON_FUNC Toolbar::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_toolbar_new() );
+    self->setObject( (GObject*) gtk_toolbar_new() );
 }
 
 
@@ -287,7 +287,7 @@ FALCON_FUNC Toolbar::insert( VMARG )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkToolItem,I" );
 #endif
-    GtkToolItem* titem = (GtkToolItem*) COREGOBJECT( i_titem )->getGObject();
+    GtkToolItem* titem = (GtkToolItem*) COREGOBJECT( i_titem )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_toolbar_insert( (GtkToolbar*)_obj, titem, i_pos->asInteger() );
@@ -310,7 +310,7 @@ FALCON_FUNC Toolbar::get_item_index( VMARG )
         || !IS_DERIVED( i_titem, GtkToolItem ) )
         throw_inv_params( "GtkToolItem" );
 #endif
-    GtkToolItem* titem = (GtkToolItem*) COREGOBJECT( i_titem )->getGObject();
+    GtkToolItem* titem = (GtkToolItem*) COREGOBJECT( i_titem )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_toolbar_get_item_index( (GtkToolbar*)_obj, titem ) );
@@ -389,7 +389,7 @@ FALCON_FUNC Toolbar::set_drop_highlight_item( VMARG )
         throw_inv_params( "GtkToolItem,I" );
 #endif
     GtkToolItem* titem = i_titem->isNil() ? NULL :
-                            (GtkToolItem*) COREGOBJECT( i_titem )->getGObject();
+                            (GtkToolItem*) COREGOBJECT( i_titem )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_toolbar_set_drop_highlight_item( (GtkToolbar*)_obj, titem, i_idx->asInteger() );

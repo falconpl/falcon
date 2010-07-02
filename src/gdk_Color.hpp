@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_COLOR( item ) \
-        (((Gdk::Color*) (item).asObjectSafe() )->getColor())
+        (((Gdk::Color*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -15,15 +15,17 @@ namespace Gdk {
  */
 class Color
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Color( const Falcon::CoreClass*, const GdkColor* = 0 );
 
+    Color( const Color& );
+
     ~Color();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Color* clone() const { return new Color( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -33,11 +35,9 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkColor* getColor() const { return m_color; }
+    GdkColor* getObject() const { return (GdkColor*) m_obj; }
 
-private:
-
-    GdkColor*   m_color;
+    void setObject( const void* );
 
 };
 

@@ -48,7 +48,7 @@ FALCON_FUNC HBox::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Item* i_homog = vm->param( 0 );
@@ -75,7 +75,7 @@ FALCON_FUNC HBox::init( VMARG )
     }
     GtkWidget* gwdt = gtk_hbox_new( homog, spacing );
 
-    self->setGObject( (GObject*) gwdt );
+    self->setObject( (GObject*) gwdt );
 }
 
 

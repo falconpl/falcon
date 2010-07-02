@@ -148,7 +148,7 @@ FALCON_FUNC Action::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
@@ -158,7 +158,7 @@ FALCON_FUNC Action::init( VMARG )
     const char* stock_id = args.getCString( 3, false );
 
     GtkAction* act = gtk_action_new( nam, lbl, tooltip, stock_id );
-    self->setGObject( (GObject*) act );
+    self->setObject( (GObject*) act );
 }
 
 

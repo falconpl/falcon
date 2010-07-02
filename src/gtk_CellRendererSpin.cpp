@@ -55,7 +55,7 @@ FALCON_FUNC CellRendererSpin::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_cell_renderer_spin_new() );
+    self->setObject( (GObject*) gtk_cell_renderer_spin_new() );
 }
 
 

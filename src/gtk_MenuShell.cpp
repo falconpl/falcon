@@ -331,7 +331,7 @@ FALCON_FUNC MenuShell::append( VMARG )
         || !IS_DERIVED( i_chld, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_append( (GtkMenuShell*)_obj, chld );
@@ -351,7 +351,7 @@ FALCON_FUNC MenuShell::prepend( VMARG )
         || !IS_DERIVED( i_chld, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_prepend( (GtkMenuShell*)_obj, chld );
@@ -374,7 +374,7 @@ FALCON_FUNC MenuShell::insert( VMARG )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkWidget,I" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_insert( (GtkMenuShell*)_obj, chld, i_pos->asInteger() );
@@ -407,7 +407,7 @@ FALCON_FUNC MenuShell::select_item( VMARG )
         || !IS_DERIVED( i_chld, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_select_item( (GtkMenuShell*)_obj, chld );
@@ -462,7 +462,7 @@ FALCON_FUNC MenuShell::activate_item( VMARG )
         || !i_bool || i_bool->isNil() || !i_bool->isBoolean() )
         throw_inv_params( "GtkWidget,B" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_shell_activate_item( (GtkMenuShell*)_obj, chld, i_bool->asBoolean() ? TRUE : FALSE );

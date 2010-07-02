@@ -80,7 +80,7 @@ FALCON_FUNC RecentFilter::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_recent_filter_new() );
+    self->setObject( (GObject*) gtk_recent_filter_new() );
 }
 
 

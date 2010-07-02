@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_RECTANGLE( item ) \
-        (((Gdk::Rectangle*) (item).asObjectSafe() )->getRectangle())
+        (((Gdk::Rectangle*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -15,15 +15,17 @@ namespace Gdk {
  */
 class Rectangle
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Rectangle( const Falcon::CoreClass*, const GdkRectangle* = 0 );
 
+    Rectangle( const Rectangle& );
+
     ~Rectangle();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Rectangle* clone() const { return new Rectangle( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -33,7 +35,9 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkRectangle* getRectangle() const { return (GdkRectangle*) &m_rectangle; }
+    GdkRectangle* getObject() const { return (GdkRectangle*) m_obj; }
+
+    void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
 
@@ -43,7 +47,7 @@ public:
 
 private:
 
-    GdkRectangle    m_rectangle;
+    void alloc();
 
 };
 

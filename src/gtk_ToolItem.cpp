@@ -108,10 +108,10 @@ Falcon::CoreObject* ToolItem::factory( const Falcon::CoreClass* gen, void* itm, 
 FALCON_FUNC ToolItem::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_tool_item_new() );
+    self->setObject( (GObject*) gtk_tool_item_new() );
 }
 
 
@@ -534,7 +534,7 @@ FALCON_FUNC ToolItem::set_proxy_menu_item( VMARG )
     if ( !CoreObject_IS_DERIVED( o_menu_item, GtkMenuItem ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* menu_item = (GtkWidget*) o_menu_item->getGObject();
+    GtkWidget* menu_item = (GtkWidget*) o_menu_item->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_set_proxy_menu_item( (GtkToolItem*)_obj, menu_item_id, menu_item );

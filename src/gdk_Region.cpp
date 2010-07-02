@@ -62,20 +62,26 @@ void Region::modInit( Falcon::Module* mod )
 Region::Region( const Falcon::CoreClass* gen,
                 const GdkRegion* region, const bool transfer )
     :
-    Falcon::CoreObject( gen ),
-    m_region( NULL )
+    Gtk::VoidObject( gen )
 {
     if ( region )
-        m_region = transfer ? (GdkRegion*) region : gdk_region_copy( (GdkRegion*) region );
-    else
-        m_region = gdk_region_new();
+        m_obj = transfer ? (void*) region : gdk_region_copy( (GdkRegion*) region );
+}
+
+
+Region::Region( const Region& other )
+    :
+    Gtk::VoidObject( other )
+{
+    if ( other.m_obj )
+        m_obj = gdk_region_copy( (GdkRegion*) other.m_obj );
 }
 
 
 Region::~Region()
 {
-    if ( m_region )
-        gdk_region_destroy( m_region );
+    if ( m_obj )
+        gdk_region_destroy( (GdkRegion*) m_obj );
 }
 
 
@@ -147,7 +153,7 @@ FALCON_FUNC Region::polygon( VMARG )
                 throw_inv_params( spec );
             }
 #endif
-            tmp = dyncast<Gdk::Point*>( pt.asObjectSafe() )->getPoint();
+            tmp = GET_POINT( pt );
             memcpy( &points[i], tmp, sizeof( GdkPoint ) );
         }
         ret = gdk_region_polygon( points, cnt, (GdkFillRule) i_rule->asInteger() );
@@ -167,8 +173,7 @@ FALCON_FUNC Region::polygon( VMARG )
 FALCON_FUNC Region::copy( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GdkRegion* ret = gdk_region_copy( self->getRegion() );
+    GdkRegion* ret = gdk_region_copy( GET_REGION( vm->self() ) );
     vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), ret,
                                  true ) );
 }
@@ -187,7 +192,7 @@ FALCON_FUNC Region::rectangle( VMARG )
     if ( !i_rec || !i_rec->isObject() || !IS_DERIVED( i_rec, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    GdkRectangle* rec = dyncast<Gdk::Rectangle*>( i_rec->asObjectSafe() )->getRectangle();
+    GdkRectangle* rec = GET_RECTANGLE( *i_rec );
     GdkRegion* ret = gdk_region_rectangle( rec );
     vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), ret,
                                  true ) );
@@ -207,9 +212,8 @@ FALCON_FUNC Region::destroy( VMARG );
 FALCON_FUNC Region::get_clipbox( VMARG )
 {
     NO_ARGS
-    MYSELF;
     GdkRectangle rec;
-    gdk_region_get_clipbox( self->getRegion(), &rec );
+    gdk_region_get_clipbox( GET_REGION( vm->self() ), &rec );
     vm->retval( new Gdk::Rectangle( vm->findWKI( "GdkRectangle" )->asClass(), &rec ) );
 }
 
@@ -222,10 +226,9 @@ FALCON_FUNC Region::get_clipbox( VMARG )
 FALCON_FUNC Region::get_rectangles( VMARG )
 {
     NO_ARGS
-    MYSELF;
     GdkRectangle* rects = NULL;
     gint cnt;
-    gdk_region_get_rectangles( self->getRegion(), &rects, &cnt );
+    gdk_region_get_rectangles( GET_REGION( vm->self() ), &rects, &cnt );
     CoreArray* arr = new CoreArray( cnt );
     for ( int i = 0; i < cnt; ++i )
     {
@@ -247,8 +250,7 @@ FALCON_FUNC Region::get_rectangles( VMARG )
 FALCON_FUNC Region::empty( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    vm->retval( (bool) gdk_region_empty( self->getRegion() ) );
+    vm->retval( (bool) gdk_region_empty( GET_REGION( vm->self() ) ) );
 }
 
 
@@ -265,9 +267,8 @@ FALCON_FUNC Region::equal( VMARG )
     if ( !i_reg || !i_reg->isObject() || !IS_DERIVED( i_reg, GdkRegion ) )
         throw_inv_params( "GdkRegion" );
 #endif
-    GdkRegion* reg = dyncast<Gdk::Region*>( i_reg->asObjectSafe() )->getRegion();
-    MYSELF;
-    vm->retval( (bool) gdk_region_equal( self->getRegion(), reg ) );
+    GdkRegion* reg = GET_REGION( *i_reg );
+    vm->retval( (bool) gdk_region_equal( GET_REGION( vm->self() ), reg ) );
 }
 
 
@@ -285,9 +286,8 @@ FALCON_FUNC Region::rect_equal( VMARG )
     if ( !i_rec || !i_rec->isObject() || !IS_DERIVED( i_rec, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    GdkRectangle* rec = dyncast<Gdk::Rectangle*>( i_rec->asObjectSafe() )->getRectangle();
-    MYSELF;
-    vm->retval( (bool) gdk_region_rect_equal( self->getRegion(), rec ) );
+    GdkRectangle* rec = GET_RECTANGLE( *i_rec );
+    vm->retval( (bool) gdk_region_rect_equal( GET_REGION( vm->self() ), rec ) );
 }
 #endif
 
@@ -308,8 +308,7 @@ FALCON_FUNC Region::point_in( VMARG )
         || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    vm->retval( (bool) gdk_region_point_in( self->getRegion(),
+    vm->retval( (bool) gdk_region_point_in( GET_REGION( vm->self() ),
                                             i_x->asInteger(), i_y->asInteger() ) );
 }
 
@@ -327,9 +326,8 @@ FALCON_FUNC Region::rect_in( VMARG )
     if ( !i_rec || !i_rec->isObject() || !IS_DERIVED( i_rec, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    GdkRectangle* rec = dyncast<Gdk::Rectangle*>( i_rec->asObjectSafe() )->getRectangle();
-    MYSELF;
-    vm->retval( (int64) gdk_region_rect_in( self->getRegion(), rec ) );
+    GdkRectangle* rec = GET_RECTANGLE( *i_rec );
+    vm->retval( (int64) gdk_region_rect_in( GET_REGION( vm->self() ), rec ) );
 }
 
 
@@ -348,8 +346,7 @@ FALCON_FUNC Region::offset( VMARG )
         || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    gdk_region_offset( self->getRegion(), i_x->asInteger(), i_y->asInteger() );
+    gdk_region_offset( GET_REGION( vm->self() ), i_x->asInteger(), i_y->asInteger() );
 }
 
 
@@ -368,8 +365,7 @@ FALCON_FUNC Region::shrink( VMARG )
         || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    gdk_region_shrink( self->getRegion(), i_x->asInteger(), i_y->asInteger() );
+    gdk_region_shrink( GET_REGION( vm->self() ), i_x->asInteger(), i_y->asInteger() );
 }
 
 
@@ -387,9 +383,8 @@ FALCON_FUNC Region::union_with_rect( VMARG )
     if ( !i_rec || !i_rec->isObject() || !IS_DERIVED( i_rec, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    GdkRectangle* rec = dyncast<Gdk::Rectangle*>( i_rec->asObjectSafe() )->getRectangle();
-    MYSELF;
-    gdk_region_union_with_rect( self->getRegion(), rec );
+    GdkRectangle* rec = GET_RECTANGLE( *i_rec );
+    gdk_region_union_with_rect( GET_REGION( vm->self() ), rec );
 }
 
 
@@ -407,9 +402,8 @@ FALCON_FUNC Region::intersect( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
         throw_inv_params( "GdkRegion" );
 #endif
-    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
-    MYSELF;
-    gdk_region_intersect( self->getRegion(), src );
+    GdkRegion* src = GET_REGION( *i_src );
+    gdk_region_intersect( GET_REGION( vm->self() ), src );
 }
 
 
@@ -427,9 +421,8 @@ FALCON_FUNC Region::union_( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
         throw_inv_params( "GdkRegion" );
 #endif
-    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
-    MYSELF;
-    gdk_region_union( self->getRegion(), src );
+    GdkRegion* src = GET_REGION( *i_src );
+    gdk_region_union( GET_REGION( vm->self() ), src );
 }
 
 
@@ -447,9 +440,8 @@ FALCON_FUNC Region::subtract( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
         throw_inv_params( "GdkRegion" );
 #endif
-    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
-    MYSELF;
-    gdk_region_subtract( self->getRegion(), src );
+    GdkRegion* src = GET_REGION( *i_src );
+    gdk_region_subtract( GET_REGION( vm->self() ), src );
 }
 
 
@@ -468,9 +460,8 @@ FALCON_FUNC Region::xor_( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRegion ) )
         throw_inv_params( "GdkRegion" );
 #endif
-    GdkRegion* src = dyncast<Gdk::Region*>( i_src->asObjectSafe() )->getRegion();
-    MYSELF;
-    gdk_region_xor( self->getRegion(), src );
+    GdkRegion* src = GET_REGION( *i_src );
+    gdk_region_xor( GET_REGION( vm->self() ), src );
 }
 
 

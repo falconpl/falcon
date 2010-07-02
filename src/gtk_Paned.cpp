@@ -98,7 +98,7 @@ FALCON_FUNC Paned::add1( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     gtk_paned_add1( (GtkPaned*)_obj, wdt );
 }
 
@@ -120,7 +120,7 @@ FALCON_FUNC Paned::add2( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     gtk_paned_add2( (GtkPaned*)_obj, wdt );
 }
 
@@ -141,7 +141,7 @@ FALCON_FUNC Paned::pack1( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,B,B" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gboolean resize = args.getBoolean( 1 );
     gboolean shrink = args.getBoolean( 2 );
@@ -168,7 +168,7 @@ FALCON_FUNC Paned::pack2( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,B,B" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gboolean resize = args.getBoolean( 1 );
     gboolean shrink = args.getBoolean( 2 );

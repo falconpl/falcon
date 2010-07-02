@@ -56,10 +56,10 @@ Falcon::CoreObject* ToggleToolButton::factory( const Falcon::CoreClass* gen, voi
 FALCON_FUNC ToggleToolButton::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_toggle_tool_button_new() );
+    self->setObject( (GObject*) gtk_toggle_tool_button_new() );
 }
 
 

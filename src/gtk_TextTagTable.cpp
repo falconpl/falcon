@@ -68,7 +68,7 @@ FALCON_FUNC TextTagTable::init( VMARG )
     NO_ARGS
     MYSELF;
     GtkTextTagTable* tab = gtk_text_tag_table_new();
-    self->setGObject( (GObject*) tab );
+    self->setObject( (GObject*) tab );
 }
 
 
@@ -222,7 +222,7 @@ FALCON_FUNC TextTagTable::add( VMARG )
         || !IS_DERIVED( i_tag, GtkTextTag ) )
         throw_inv_params( "GtkTextTag" );
 #endif
-    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getGObject();
+    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_tag_table_add( (GtkTextTagTable*)_obj, tag );
@@ -242,7 +242,7 @@ FALCON_FUNC TextTagTable::remove( VMARG )
         || !IS_DERIVED( i_tag, GtkTextTag ) )
         throw_inv_params( "GtkTextTag" );
 #endif
-    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getGObject();
+    GtkTextTag* tag = (GtkTextTag*) COREGOBJECT( i_tag )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_tag_table_remove( (GtkTextTagTable*)_obj, tag );

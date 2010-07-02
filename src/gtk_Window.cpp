@@ -182,7 +182,7 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
 FALCON_FUNC Window::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Item* i_wtype = vm->param( 0 );
@@ -192,7 +192,7 @@ FALCON_FUNC Window::init( VMARG )
 #endif
     GtkWindowType gwt = i_wtype ? (GtkWindowType) i_wtype->asInteger()
                         : GTK_WINDOW_TOPLEVEL;
-    self->setGObject( (GObject*) gtk_window_new( gwt ) );
+    self->setObject( (GObject*) gtk_window_new( gwt ) );
 }
 
 
@@ -604,7 +604,7 @@ FALCON_FUNC Window::set_transient_for( VMARG )
         throw_inv_params( "[GtkWindow]" );
 #endif
     GtkWindow* win = i_win->isNil() ? NULL
-                    : (GtkWindow*) COREGOBJECT( i_win )->getGObject();
+                    : (GtkWindow*) COREGOBJECT( i_win )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_set_transient_for( (GtkWindow*)_obj, win );
@@ -695,7 +695,7 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 #endif
     String* chr = i_keyval->asString();
     guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_add_mnemonic( (GtkWindow*)_obj, keyval, target );
@@ -719,7 +719,7 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 #endif
     String* chr = i_keyval->asString();
     guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getGObject();
+    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_remove_mnemonic( (GtkWindow*)_obj, keyval, target );
@@ -797,7 +797,7 @@ FALCON_FUNC Window::set_focus( VMARG )
         throw_inv_params( "[GtkWidget]" );
 #endif
     GtkWidget* wdt = i_wdt->isNil() ? NULL
-                    : (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+                    : (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_set_focus( (GtkWindow*)_obj, wdt );
@@ -845,7 +845,7 @@ FALCON_FUNC Window::set_default( VMARG )
         throw_inv_params( "[GtkWidget]" );
 #endif
     GtkWidget* wdt = i_wdt->isNil() ? NULL
-                    : (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+                    : (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_set_default( (GtkWindow*)_obj, wdt );

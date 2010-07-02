@@ -15,15 +15,17 @@ namespace Gdk {
  */
 class Visual
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Visual( const Falcon::CoreClass*, const GdkVisual* = 0 );
 
+    Visual( const Visual& );
+
     ~Visual();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Visual* clone() const { return new Visual( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -32,6 +34,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkVisual* getObject() const { return (GdkVisual*) m_obj; }
 
     static FALCON_FUNC query_depths( VMARG );
 
@@ -59,12 +63,11 @@ public:
 #endif
     static FALCON_FUNC get_screen( VMARG );
 
-
-    GdkVisual* getObject() const { return m_visual; }
-
 private:
 
-    GdkVisual*   m_visual;
+    void incref() const;
+
+    void decref() const;
 
 };
 

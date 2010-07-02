@@ -55,9 +55,9 @@ FALCON_FUNC VScale::init( VMARG )
     if ( !i_adj || !i_adj->isObject() || !IS_DERIVED( i_adj, GtkAdjustment ) )
         throw_inv_params( "GtkAdjustment" );
 #endif
-    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
-    self->setGObject( (GObject*) gtk_vscale_new( adj ) );
+    self->setObject( (GObject*) gtk_vscale_new( adj ) );
 }
 
 

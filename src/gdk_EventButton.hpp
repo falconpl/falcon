@@ -21,9 +21,11 @@ public:
     EventButton( const Falcon::CoreClass*,
                  const GdkEventButton* = 0, const bool transfer = false );
 
+    EventButton( const EventButton& );
+
     ~EventButton();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    EventButton* clone() const { return new EventButton( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -33,9 +35,9 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkEventButton* getEvent() const { return (GdkEventButton*) m_event; }
+    GdkEventButton* getObject() const { return (GdkEventButton*) m_obj; }
 
-    void setEvent( const GdkEventButton*, const bool transfer = false );
+    void setObject( const void*, const bool transfer = false );
 
     static FALCON_FUNC init( VMARG );
 

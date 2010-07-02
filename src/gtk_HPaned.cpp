@@ -51,7 +51,7 @@ FALCON_FUNC HPaned::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* wdt = gtk_hpaned_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

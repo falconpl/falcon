@@ -13,7 +13,7 @@ namespace Glib {
  */
 void ParamSpec::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_ParamSpec = mod->addClass( "GParamSpec", &Gtk::abstract_init );
+    Falcon::Symbol* c_ParamSpec = mod->addClass( "%GParamSpec" );
 
     c_ParamSpec->setWKS( true );
     c_ParamSpec->getClassDef()->factory( &ParamSpec::factory );
@@ -27,27 +27,51 @@ void ParamSpec::modInit( Falcon::Module* mod )
 
 ParamSpec::ParamSpec( const Falcon::CoreClass* gen, const GParamSpec* spec )
     :
-    Falcon::CoreObject( gen ),
-    m_spec( NULL )
+    Gtk::VoidObject( gen, spec )
 {
-    if ( spec )
-    {
-        m_spec = (GParamSpec*) spec;
-        g_param_spec_ref_sink( m_spec );
-    }
+    incref();
+}
+
+
+ParamSpec::ParamSpec( const ParamSpec& other )
+    :
+    Gtk::VoidObject( other )
+{
+    incref();
 }
 
 
 ParamSpec::~ParamSpec()
 {
-    if ( m_spec )
-        g_param_spec_unref( m_spec );
+    decref();
+}
+
+
+void ParamSpec::incref() const
+{
+    if ( m_obj )
+        g_param_spec_ref_sink( (GParamSpec*) m_obj );
+}
+
+
+void ParamSpec::decref() const
+{
+    if ( m_obj )
+        g_param_spec_unref( (GParamSpec*) m_obj );
+}
+
+
+void ParamSpec::setObject( const void* spec )
+{
+    VoidObject::setObject( spec );
+    incref();
 }
 
 
 bool ParamSpec::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
-    assert( m_spec );
+    assert( m_obj );
+    GParamSpec* m_spec = (GParamSpec*) m_obj;
 
     if ( s == "name" )
         it = UTF8String( m_spec->name );

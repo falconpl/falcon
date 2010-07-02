@@ -107,7 +107,7 @@ FALCON_FUNC Container::add( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     gtk_container_add( (GtkContainer*)_obj, wdt );
 }
 
@@ -125,7 +125,7 @@ FALCON_FUNC Container::remove( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_container_remove( (GtkContainer*)_obj, wdt );
@@ -259,7 +259,7 @@ FALCON_FUNC Container::set_focus_child( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_container_set_focus_child( (GtkContainer*)_obj, wdt );

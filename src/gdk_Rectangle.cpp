@@ -34,33 +34,61 @@ void Rectangle::modInit( Falcon::Module* mod )
 
 Rectangle::Rectangle( const Falcon::CoreClass* gen, const GdkRectangle* rect )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen )
 {
     if ( rect )
-        memcpy( &m_rectangle, rect, sizeof( GdkRectangle ) );
-    else
-        memset( &m_rectangle, 0, sizeof( GdkRectangle ) );
+        setObject( rect );
+}
+
+
+Rectangle::Rectangle( const Rectangle& other )
+    :
+    Gtk::VoidObject( other )
+{
+    m_obj = 0;
+    if ( other.m_obj )
+        setObject( other.m_obj );
 }
 
 
 Rectangle::~Rectangle()
 {
+    if ( m_obj )
+        memFree( m_obj );
+}
+
+
+void Rectangle::alloc()
+{
+    assert( m_obj == 0 );
+    m_obj = memAlloc( sizeof( GdkRectangle ) );
+}
+
+
+void Rectangle::setObject( const void* rect )
+{
+    assert( m_obj == 0 );
+    alloc();
+    memcpy( m_obj, rect, sizeof( GdkRectangle ) );
 }
 
 
 bool Rectangle::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkRectangle* m_rectangle = (GdkRectangle*) m_obj;
+
     if ( s == "x" )
-        it = m_rectangle.x;
+        it = m_rectangle->x;
     else
     if ( s == "y" )
-        it = m_rectangle.y;
+        it = m_rectangle->y;
     else
     if ( s == "width" )
-        it = m_rectangle.width;
+        it = m_rectangle->width;
     else
     if ( s == "height" )
-        it = m_rectangle.height;
+        it = m_rectangle->height;
     else
         return defaultProperty( s, it );
     return true;
@@ -69,17 +97,20 @@ bool Rectangle::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 
 bool Rectangle::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
+    assert( m_obj );
+    GdkRectangle* m_rectangle = (GdkRectangle*) m_obj;
+
     if ( s == "x" )
-        m_rectangle.x = it.forceInteger();
+        m_rectangle->x = it.forceInteger();
     else
     if ( s == "y" )
-        m_rectangle.y = it.forceInteger();
+        m_rectangle->y = it.forceInteger();
     else
     if ( s == "width" )
-        m_rectangle.width = it.forceInteger();
+        m_rectangle->width = it.forceInteger();
     else
     if ( s == "height" )
-        m_rectangle.height = it.forceInteger();
+        m_rectangle->height = it.forceInteger();
     else
         return false;
     return true;
@@ -113,10 +144,11 @@ FALCON_FUNC Rectangle::init( VMARG )
 {
     Gtk::ArgCheck0 args( vm, "[I,I,I,I]" );
     MYSELF;
-    self->m_rectangle.x = args.getInteger( 0, false );
-    self->m_rectangle.y = args.getInteger( 1, false );
-    self->m_rectangle.width = args.getInteger( 2, false );
-    self->m_rectangle.height = args.getInteger( 3, false );
+    self->alloc();
+    ((GdkRectangle*)self->m_obj)->x = args.getInteger( 0, false );
+    ((GdkRectangle*)self->m_obj)->y = args.getInteger( 1, false );
+    ((GdkRectangle*)self->m_obj)->width = args.getInteger( 2, false );
+    ((GdkRectangle*)self->m_obj)->height = args.getInteger( 3, false );
 }
 
 
@@ -136,9 +168,8 @@ FALCON_FUNC Rectangle::intersect( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    MYSELF;
-    GdkRectangle* src1 = self->getRectangle();
-    GdkRectangle* src2 = dyncast<Gdk::Rectangle*>( i_src->asObjectSafe() )->getRectangle();
+    GdkRectangle* src1 = GET_RECTANGLE( vm->self() );
+    GdkRectangle* src2 = GET_RECTANGLE( *i_src );
     GdkRectangle dest;
     gboolean ret = gdk_rectangle_intersect( src1, src2, &dest );
     if ( !ret )
@@ -160,9 +191,8 @@ FALCON_FUNC Rectangle::union_( VMARG )
     if ( !i_src || !i_src->isObject() || !IS_DERIVED( i_src, GdkRectangle ) )
         throw_inv_params( "GdkRectangle" );
 #endif
-    MYSELF;
-    GdkRectangle* src1 = self->getRectangle();
-    GdkRectangle* src2 = dyncast<Gdk::Rectangle*>( i_src->asObjectSafe() )->getRectangle();
+    GdkRectangle* src1 = GET_RECTANGLE( vm->self() );
+    GdkRectangle* src2 = GET_RECTANGLE( *i_src );
     GdkRectangle dest;
     gdk_rectangle_union( src1, src2, &dest );
     vm->retval( new Gdk::Rectangle( vm->findWKI( "GdkRectangle" )->asClass(), &dest ) );

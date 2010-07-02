@@ -44,73 +44,87 @@ void GCValues::modInit( Falcon::Module* mod )
 
 GCValues::GCValues( const Falcon::CoreClass* gen, const GdkGCValues* gcvalues )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen )
 {
     if ( gcvalues )
-    {
-        memcpy( &m_gcvalues, gcvalues, sizeof( GdkGCValues ) );
-        GCValues::incref();
-    }
-    else
-        memset( &m_gcvalues, 0, sizeof( GdkGCValues ) );
+        setObject( gcvalues );
+}
+
+
+GCValues::GCValues( const GCValues& other )
+    :
+    Gtk::VoidObject( other )
+{
+    m_obj = 0;
+    if ( other.m_obj )
+        setObject( other.m_obj );
 }
 
 
 GCValues::~GCValues()
 {
-    GCValues::decref();
+    if ( m_obj )
+    {
+        decref();
+        memFree( m_obj );
+    }
 }
 
 
 void GCValues::incref()
 {
-    if ( m_gcvalues.font )
-        gdk_font_ref( m_gcvalues.font );
-    if ( m_gcvalues.tile )
-        g_object_ref_sink( (GObject*) m_gcvalues.tile );
-    if ( m_gcvalues.stipple )
-        g_object_ref_sink( (GObject*) m_gcvalues.stipple );
-    if ( m_gcvalues.clip_mask )
-        g_object_ref_sink( (GObject*) m_gcvalues.clip_mask );
+    assert( m_obj );
+    GdkGCValues* m_gcvalues = (GdkGCValues*) m_obj;
+
+    if ( m_gcvalues->font )
+        gdk_font_ref( m_gcvalues->font );
+    if ( m_gcvalues->tile )
+        g_object_ref_sink( (GObject*) m_gcvalues->tile );
+    if ( m_gcvalues->stipple )
+        g_object_ref_sink( (GObject*) m_gcvalues->stipple );
+    if ( m_gcvalues->clip_mask )
+        g_object_ref_sink( (GObject*) m_gcvalues->clip_mask );
 }
 
 
 void GCValues::decref()
 {
-    if ( m_gcvalues.font )
-        gdk_font_unref( m_gcvalues.font );
-    if ( m_gcvalues.tile )
-        g_object_unref( (GObject*) m_gcvalues.tile );
-    if ( m_gcvalues.stipple )
-        g_object_unref( (GObject*) m_gcvalues.stipple );
-    if ( m_gcvalues.clip_mask )
-        g_object_unref( (GObject*) m_gcvalues.clip_mask );
+    assert( m_obj );
+    GdkGCValues* m_gcvalues = (GdkGCValues*) m_obj;
+
+    if ( m_gcvalues->font )
+        gdk_font_unref( m_gcvalues->font );
+    if ( m_gcvalues->tile )
+        g_object_unref( (GObject*) m_gcvalues->tile );
+    if ( m_gcvalues->stipple )
+        g_object_unref( (GObject*) m_gcvalues->stipple );
+    if ( m_gcvalues->clip_mask )
+        g_object_unref( (GObject*) m_gcvalues->clip_mask );
 }
 
 
-void GCValues::setGCValues( const GdkGCValues* gcvalues )
+void GCValues::setObject( const void* gcvalues )
 {
-    GCValues::decref();
-    memcpy( &m_gcvalues, gcvalues, sizeof( GdkGCValues ) );
-    GCValues::incref();
+    assert( m_obj == 0 );
+    m_obj = memAlloc( sizeof( GdkGCValues ) );
+    memcpy( m_obj, gcvalues, sizeof( GdkGCValues ) );
+    incref();
 }
 
 
 bool GCValues::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkGCValues* m_gcvalues = (GdkGCValues*) m_obj;
+    VMachine* vm = VMachine::getCurrent();
+
     if ( s == "foreground" )
-    {
-        VMachine* vm = VMachine::getCurrent();
         it = new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
-                             &m_gcvalues.foreground );
-    }
+                             &m_gcvalues->foreground );
     else
     if ( s == "background" )
-    {
-        VMachine* vm = VMachine::getCurrent();
         it = new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
-                             &m_gcvalues.background );
-    }
+                             &m_gcvalues->background );
 #if 0 // todo
     else
     if ( s == "font" )
@@ -118,61 +132,52 @@ bool GCValues::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 #endif
     else
     if ( s == "function" )
-        it = (int64) m_gcvalues.function;
+        it = (int64) m_gcvalues->function;
     else
     if ( s == "fill" )
-        it = (int64) m_gcvalues.fill;
+        it = (int64) m_gcvalues->fill;
     else
     if ( s == "tile" )
-    {
-        VMachine* vm = VMachine::getCurrent();
         it = new Gdk::Pixmap( vm->findWKI( "GdkPixmap" )->asClass(),
-                              m_gcvalues.tile );
-    }
+                              m_gcvalues->tile );
     else
     if ( s == "stipple" )
-    {
-        VMachine* vm = VMachine::getCurrent();
         it = new Gdk::Pixmap( vm->findWKI( "GdkPixmap" )->asClass(),
-                              m_gcvalues.stipple );
-    }
+                              m_gcvalues->stipple );
     else
     if ( s == "clip_mask" )
-    {
-        VMachine* vm = VMachine::getCurrent();
         it = new Gdk::Pixmap( vm->findWKI( "GdkPixmap" )->asClass(),
-                              m_gcvalues.clip_mask );
-    }
+                              m_gcvalues->clip_mask );
     else
     if ( s == "subwindow_mode" )
-        it = (int64) m_gcvalues.subwindow_mode;
+        it = (int64) m_gcvalues->subwindow_mode;
     else
     if ( s == "ts_x_origin" )
-        it = m_gcvalues.ts_y_origin;
+        it = m_gcvalues->ts_y_origin;
     else
     if ( s == "ts_y_origin" )
-        it = m_gcvalues.ts_y_origin;
+        it = m_gcvalues->ts_y_origin;
     else
     if ( s == "clip_x_origin" )
-        it = m_gcvalues.clip_x_origin;
+        it = m_gcvalues->clip_x_origin;
     else
     if ( s == "clip_y_origin" )
-        it = m_gcvalues.clip_y_origin;
+        it = m_gcvalues->clip_y_origin;
     else
     if ( s == "graphics_exposures" )
-        it = m_gcvalues.graphics_exposures;
+        it = m_gcvalues->graphics_exposures;
     else
     if ( s == "line_width" )
-        it = m_gcvalues.line_width;
+        it = m_gcvalues->line_width;
     else
     if ( s == "line_style" )
-        it = (int64) m_gcvalues.line_style;
+        it = (int64) m_gcvalues->line_style;
     else
     if ( s == "cap_style" )
-        it = (int64) m_gcvalues.cap_style;
+        it = (int64) m_gcvalues->cap_style;
     else
     if ( s == "join_style" )
-        it = (int64) m_gcvalues.join_style;
+        it = (int64) m_gcvalues->join_style;
     else
         return false;
     return true;
@@ -181,14 +186,17 @@ bool GCValues::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 
 bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
+    assert( m_obj );
+    GdkGCValues* m_gcvalues = (GdkGCValues*) m_obj;
+
     if ( s == "foreground" )
     {
 #ifndef NO_PARAMETER_CHECK
         if ( !it.isObject() || !IS_DERIVED( &it, GdkColor ) )
             throw_inv_params( "GdkColor" );
 #endif
-        GdkColor* clr = dyncast<Gdk::Color*>( it.asObjectSafe() )->getColor();
-        memcpy( &m_gcvalues.foreground, clr, sizeof( GdkColor ) );
+        GdkColor* clr = GET_COLOR( it );
+        memcpy( &m_gcvalues->foreground, clr, sizeof( GdkColor ) );
     }
     else
     if ( s == "background" )
@@ -197,8 +205,8 @@ bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
         if ( !it.isObject() || !IS_DERIVED( &it, GdkColor ) )
             throw_inv_params( "GdkColor" );
 #endif
-        GdkColor* clr = dyncast<Gdk::Color*>( it.asObjectSafe() )->getColor();
-        memcpy( &m_gcvalues.background, clr, sizeof( GdkColor ) );
+        GdkColor* clr = GET_COLOR( it );
+        memcpy( &m_gcvalues->background, clr, sizeof( GdkColor ) );
     }
 #if 0 // todo
     else
@@ -207,10 +215,10 @@ bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
 #endif
     else
     if ( s == "function" )
-        m_gcvalues.function = (GdkFunction) it.forceInteger();
+        m_gcvalues->function = (GdkFunction) it.forceInteger();
     else
     if ( s == "fill" )
-        m_gcvalues.fill = (GdkFill) it.forceInteger();
+        m_gcvalues->fill = (GdkFill) it.forceInteger();
     else
     if ( s == "tile" )
     {
@@ -218,11 +226,11 @@ bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
         if ( !it.isObject() || !IS_DERIVED( &it, GdkPixmap ) )
             throw_inv_params( "GdkPixmap" );
 #endif
-        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getGObject();
-        if ( m_gcvalues.tile )
-            g_object_unref( (GObject*) m_gcvalues.tile );
-        m_gcvalues.tile = pix;
-        g_object_ref( (GObject*) m_gcvalues.tile );
+        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getObject();
+        if ( m_gcvalues->tile )
+            g_object_unref( (GObject*) m_gcvalues->tile );
+        m_gcvalues->tile = pix;
+        g_object_ref( (GObject*) m_gcvalues->tile );
     }
     else
     if ( s == "stipple" )
@@ -231,11 +239,11 @@ bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
         if ( !it.isObject() || !IS_DERIVED( &it, GdkPixmap ) )
             throw_inv_params( "GdkPixmap" );
 #endif
-        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getGObject();
-        if ( m_gcvalues.stipple )
-            g_object_unref( (GObject*) m_gcvalues.stipple );
-        m_gcvalues.stipple = pix;
-        g_object_ref( (GObject*) m_gcvalues.stipple );
+        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getObject();
+        if ( m_gcvalues->stipple )
+            g_object_unref( (GObject*) m_gcvalues->stipple );
+        m_gcvalues->stipple = pix;
+        g_object_ref( (GObject*) m_gcvalues->stipple );
     }
     else
     if ( s == "clip_mask" )
@@ -244,42 +252,42 @@ bool GCValues::setProperty( const Falcon::String& s, const Falcon::Item& it )
         if ( !it.isObject() || !IS_DERIVED( &it, GdkPixmap ) )
             throw_inv_params( "GdkPixmap" );
 #endif
-        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getGObject();
-        if ( m_gcvalues.clip_mask )
-            g_object_unref( (GObject*) m_gcvalues.clip_mask );
-        m_gcvalues.clip_mask = pix;
-        g_object_ref( (GObject*) m_gcvalues.clip_mask );
+        GdkPixmap* pix = (GdkPixmap*) COREGOBJECT( &it )->getObject();
+        if ( m_gcvalues->clip_mask )
+            g_object_unref( (GObject*) m_gcvalues->clip_mask );
+        m_gcvalues->clip_mask = pix;
+        g_object_ref( (GObject*) m_gcvalues->clip_mask );
     }
     else
     if ( s == "subwindow_mode" )
-        m_gcvalues.subwindow_mode = (GdkSubwindowMode) it.forceInteger();
+        m_gcvalues->subwindow_mode = (GdkSubwindowMode) it.forceInteger();
     else
     if ( s == "ts_x_origin" )
-        m_gcvalues.ts_y_origin = it.forceInteger();
+        m_gcvalues->ts_y_origin = it.forceInteger();
     else
     if ( s == "ts_y_origin" )
-        m_gcvalues.ts_y_origin = it.forceInteger();
+        m_gcvalues->ts_y_origin = it.forceInteger();
     else
     if ( s == "clip_x_origin" )
-        m_gcvalues.clip_x_origin = it.forceInteger();
+        m_gcvalues->clip_x_origin = it.forceInteger();
     else
     if ( s == "clip_y_origin" )
-        m_gcvalues.clip_y_origin = it.forceInteger();
+        m_gcvalues->clip_y_origin = it.forceInteger();
     else
     if ( s == "graphics_exposures" )
-        m_gcvalues.graphics_exposures = it.forceInteger();
+        m_gcvalues->graphics_exposures = it.forceInteger();
     else
     if ( s == "line_width" )
-        m_gcvalues.line_width = it.forceInteger();
+        m_gcvalues->line_width = it.forceInteger();
     else
     if ( s == "line_style" )
-        m_gcvalues.line_style = (GdkLineStyle) it.forceInteger();
+        m_gcvalues->line_style = (GdkLineStyle) it.forceInteger();
     else
     if ( s == "cap_style" )
-        m_gcvalues.cap_style = (GdkCapStyle) it.forceInteger();
+        m_gcvalues->cap_style = (GdkCapStyle) it.forceInteger();
     else
     if ( s == "join_style" )
-        m_gcvalues.join_style = (GdkJoinStyle) it.forceInteger();
+        m_gcvalues->join_style = (GdkJoinStyle) it.forceInteger();
     else
         return false;
     return true;

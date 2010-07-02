@@ -84,7 +84,7 @@ FALCON_FUNC ComboBoxEntry::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* wdt = gtk_combo_box_entry_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

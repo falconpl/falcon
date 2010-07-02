@@ -6,6 +6,7 @@
 
 #include <glib-object.h>
 
+#include "gdk_Color.hpp"
 
 namespace Falcon {
 namespace Glib {
@@ -68,10 +69,9 @@ Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* obj, bo
 
 /*#
     @method signal_notify GObject
-    @brief Connect a VMSlot to the object notify signal and return it
+    @brief The notify signal is emitted on an object when one of its properties has been changed.
 
-    The notify signal is emitted on an object when one of its properties has been
-    changed. Note that getting this signal doesn't guarantee that the value of the
+    Note that getting this signal doesn't guarantee that the value of the
     property has actually changed, it may also be emitted when the setter for the
     property is called to reinstate the previous value.
  */
@@ -92,7 +92,7 @@ void Object::on_notify( GObject* obj, GParamSpec* pspec, gpointer _vm )
     @method set_property GObject
     @brief Sets a property on an object.
     @param property_name name of the property to set
-    @param value value for the property (nil, integer, boolean, numeric, or string)
+    @param value value for the property
 
     @code
     w = GtkWindow()
@@ -101,14 +101,14 @@ void Object::on_notify( GObject* obj, GParamSpec* pspec, gpointer _vm )
  */
 FALCON_FUNC Object::set_property( VMARG )
 {
-    Item* i_nam = vm->param( 0 );
+    Item* i_name = vm->param( 0 );
     Item* i_val = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_nam || !i_nam->isString()
+    if ( !i_name || !i_name->isString()
         || !i_val )
         throw_inv_params( "S,X" );
 #endif
-    AutoCString name( i_nam->asString() );
+    AutoCString name( i_name->asString() );
     GObject* gobj = GET_OBJECT( vm->self() );
 
     switch ( i_val->type() )
@@ -133,11 +133,10 @@ FALCON_FUNC Object::set_property( VMARG )
     }
     case FLC_ITEM_OBJECT:
     {
-#ifndef NO_PARAMETER_CHECK
-        if ( !IS_DERIVED( i_val, GObject ) )
-            throw_inv_params( "GObject" );
-#endif
-        g_object_set( gobj, name.c_str(), GET_OBJECT( *i_val ), NULL );
+        if ( IS_DERIVED( i_val, GObject ) )
+            g_object_set( gobj, name.c_str(), GET_OBJECT( *i_val ), NULL );
+        else
+            g_object_set( gobj, name.c_str(), ((Gtk::VoidObject*) i_val->asObjectSafe())->getObject(), NULL );
         break;
     }
     default:
@@ -207,6 +206,7 @@ FALCON_FUNC Object::get_property( VMARG )
         else
             vm->retval( UTF8String( "" ) );
     }
+#if 0
     else
     if ( g_type_is_a( spec->value_type, G_TYPE_OBJECT ) )
     {
@@ -220,8 +220,25 @@ FALCON_FUNC Object::get_property( VMARG )
         else
             vm->retnil();
     }
+#endif
     else
-        throw_inv_params( "not implemented" );
+    {
+        const gchar* tpname = g_type_name( G_PARAM_SPEC_VALUE_TYPE( spec ) );
+        void* o;
+        g_object_get( gobj, nam.c_str(), &o, NULL );
+
+        if ( !strcmp( tpname, "GdkColor" ) )
+        {
+            vm->retval( new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
+                                        (GdkColor*) o ) );
+            gdk_color_free( (GdkColor*) o );
+        }
+        else
+        {
+            g_print( "type name %s\n", tpname );
+            throw_inv_params( "not implemented" );
+        }
+    }
 }
 
 

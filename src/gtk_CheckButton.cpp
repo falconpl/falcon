@@ -51,10 +51,10 @@ Falcon::CoreObject* CheckButton::factory( const Falcon::CoreClass* gen, void* bt
 FALCON_FUNC CheckButton::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_check_button_new() );
+    self->setObject( (GObject*) gtk_check_button_new() );
 }
 
 

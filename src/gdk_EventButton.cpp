@@ -40,17 +40,30 @@ EventButton::EventButton( const Falcon::CoreClass* gen,
                           const GdkEventButton* ev, const bool transfer )
     :
     Gdk::Event( gen, (GdkEvent*) ev, transfer )
-{
-}
+{}
+
+
+EventButton::EventButton( const EventButton& other )
+    :
+    Gdk::Event( other )
+{}
 
 
 EventButton::~EventButton()
+{}
+
+
+void EventButton::setObject( const void* ev, const bool transfer )
 {
+    Gdk::Event::setObject( ev, transfer );
 }
 
 
 bool EventButton::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkEventButton* m_event = (GdkEventButton*) m_obj;
+
     if ( s == "time" )
         it = ((GdkEventButton*)m_event)->time;
     else
@@ -91,12 +104,6 @@ bool EventButton::setProperty( const Falcon::String& s, const Falcon::Item& it )
 Falcon::CoreObject* EventButton::factory( const Falcon::CoreClass* gen, void* ev, bool )
 {
     return new EventButton( gen, (GdkEventButton*) ev );
-}
-
-
-void EventButton::setEvent( const GdkEventButton* ev, const bool transfer )
-{
-    Gdk::Event::setEvent( (GdkEvent*) ev, transfer );
 }
 
 
@@ -161,7 +168,7 @@ FALCON_FUNC EventButton::init( VMARG )
 #endif
     // todo: check for correct event type
     MYSELF;
-    self->setEvent( (GdkEventButton*) gdk_event_new( (GdkEventType) i_tp->asInteger() ),
+    self->setObject( (GdkEventButton*) gdk_event_new( (GdkEventType) i_tp->asInteger() ),
                     true );
 }
 

@@ -69,11 +69,11 @@ FALCON_FUNC RadioMenuItem::init( VMARG )
         throw_inv_params( "[GtkRadioMenuItem]" );
 #endif
     GtkRadioMenuItem* grp = i_grp->isNil() ? NULL
-                        : (GtkRadioMenuItem*) COREGOBJECT( i_grp )->getGObject();
+                        : (GtkRadioMenuItem*) COREGOBJECT( i_grp )->getObject();
     GtkWidget* itm = grp ? gtk_radio_menu_item_new_from_widget( grp )
                         : gtk_radio_menu_item_new( NULL );
     MYSELF;
-    self->setGObject( (GObject*) itm );
+    self->setObject( (GObject*) itm );
 }
 
 
@@ -114,7 +114,7 @@ FALCON_FUNC RadioMenuItem::new_with_label( VMARG )
     if ( o_grp && !CoreObject_IS_DERIVED( o_grp, GtkRadioMenuItem ) )
         throw_inv_params( spec );
 #endif
-    GtkRadioMenuItem* grp = o_grp ? (GtkRadioMenuItem*) o_grp->getGObject() : NULL;
+    GtkRadioMenuItem* grp = o_grp ? (GtkRadioMenuItem*) o_grp->getObject() : NULL;
     GtkWidget* itm = grp ?
         gtk_radio_menu_item_new_with_label_from_widget( grp, lbl )
         : gtk_radio_menu_item_new_with_label( NULL, lbl );
@@ -145,7 +145,7 @@ FALCON_FUNC RadioMenuItem::new_with_mnemonic( VMARG )
     if ( o_grp && !CoreObject_IS_DERIVED( o_grp, GtkRadioMenuItem ) )
         throw_inv_params( spec );
 #endif
-    GtkRadioMenuItem* grp = o_grp ? (GtkRadioMenuItem*) o_grp->getGObject() : NULL;
+    GtkRadioMenuItem* grp = o_grp ? (GtkRadioMenuItem*) o_grp->getObject() : NULL;
     GtkWidget* itm = grp ?
         gtk_radio_menu_item_new_with_mnemonic_from_widget( grp, lbl )
         : gtk_radio_menu_item_new_with_mnemonic( NULL, lbl );

@@ -68,10 +68,10 @@ Falcon::CoreObject* CheckMenuItem::factory( const Falcon::CoreClass* gen, void* 
 FALCON_FUNC CheckMenuItem::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_check_menu_item_new() );
+    self->setObject( (GObject*) gtk_check_menu_item_new() );
 }
 
 

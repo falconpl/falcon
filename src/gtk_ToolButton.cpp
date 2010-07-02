@@ -81,7 +81,7 @@ Falcon::CoreObject* ToolButton::factory( const Falcon::CoreClass* gen, void* btn
 FALCON_FUNC ToolButton::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     const char* spec = "[GtkWidget,S]";
@@ -92,8 +92,8 @@ FALCON_FUNC ToolButton::init( VMARG )
     if ( o_ico && !CoreObject_IS_DERIVED( o_ico, GtkWidget ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* ico = o_ico ? (GtkWidget*) o_ico->getGObject() : NULL;
-    self->setGObject( (GObject*) gtk_tool_button_new( ico, lbl ) );
+    GtkWidget* ico = o_ico ? (GtkWidget*) o_ico->getObject() : NULL;
+    self->setObject( (GObject*) gtk_tool_button_new( ico, lbl ) );
 }
 
 
@@ -295,7 +295,7 @@ FALCON_FUNC ToolButton::set_icon_widget( VMARG )
         throw_inv_params( "[GtkWidget]" );
 #endif
     GtkWidget* wdt = i_wdt->isNil() ? NULL :
-                        (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+                        (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_button_set_icon_widget( (GtkToolButton*)_obj, wdt );
@@ -338,7 +338,7 @@ FALCON_FUNC ToolButton::set_label_widget( VMARG )
         throw_inv_params( "[GtkWidget]" );
 #endif
     GtkWidget* wdt = i_wdt->isNil() ? NULL :
-                        (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+                        (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_button_set_label_widget( (GtkToolButton*)_obj, wdt );

@@ -47,7 +47,7 @@ FALCON_FUNC SeparatorMenuItem::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_separator_menu_item_new() );
+    self->setObject( (GObject*) gtk_separator_menu_item_new() );
 }
 
 

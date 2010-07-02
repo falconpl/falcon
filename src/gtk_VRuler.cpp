@@ -70,7 +70,7 @@ FALCON_FUNC VRuler::init( VMARG )
     NO_ARGS
     MYSELF;
     GtkWidget* ruler = gtk_vruler_new();
-    self->setGObject( (GObject*) ruler );
+    self->setObject( (GObject*) ruler );
 }
 
 

@@ -60,7 +60,7 @@ FALCON_FUNC WindowGroup::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_window_group_new() );
+    self->setObject( (GObject*) gtk_window_group_new() );
 }
 
 
@@ -77,7 +77,7 @@ FALCON_FUNC WindowGroup::add_window( VMARG )
         || !IS_DERIVED( i_win, GtkWindow ) )
         throw_inv_params( "GtkWindow" );
 #endif
-    GtkWindow* win = (GtkWindow*) COREGOBJECT( i_win )->getGObject();
+    GtkWindow* win = (GtkWindow*) COREGOBJECT( i_win )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_group_add_window( (GtkWindowGroup*)_obj, win );
@@ -97,7 +97,7 @@ FALCON_FUNC WindowGroup::remove_window( VMARG )
         || !IS_DERIVED( i_win, GtkWindow ) )
         throw_inv_params( "GtkWindow" );
 #endif
-    GtkWindow* win = (GtkWindow*) COREGOBJECT( i_win )->getGObject();
+    GtkWindow* win = (GtkWindow*) COREGOBJECT( i_win )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_window_group_remove_window( (GtkWindowGroup*)_obj, win );

@@ -107,7 +107,7 @@ FALCON_FUNC Label::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     GtkWidget* gwdt;
@@ -138,7 +138,7 @@ FALCON_FUNC Label::init( VMARG )
     else
         gwdt = gtk_label_new( NULL );
 
-    self->setGObject( (GObject*) gwdt );
+    self->setObject( (GObject*) gwdt );
 }
 
 
@@ -322,7 +322,7 @@ FALCON_FUNC Label::set_mnemonic_widget( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     gtk_label_set_mnemonic_widget( (GtkLabel*)_obj, wdt );
 }
 

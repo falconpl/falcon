@@ -114,7 +114,7 @@ FALCON_FUNC Image::init( VMARG )
         img = gtk_image_new();
 
     MYSELF;
-    self->setGObject( (GObject*) img );
+    self->setObject( (GObject*) img );
 }
 
 

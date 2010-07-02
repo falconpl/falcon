@@ -66,7 +66,7 @@ FALCON_FUNC HButtonBox::init( VMARG )
 #endif
     GtkWidget* wdt = gtk_hbutton_box_new();
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

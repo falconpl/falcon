@@ -152,7 +152,7 @@ FALCON_FUNC ButtonBox::get_child_secondary( VMARG )
     if ( !i_child || !i_child->isObject() || !IS_DERIVED( i_child, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_button_box_get_child_secondary( (GtkButtonBox*)_obj, child ) );
@@ -214,7 +214,7 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
         || !i_sec || !i_sec->isBoolean() )
         throw_inv_params( "GtkWidget,B" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_button_box_set_child_secondary( (GtkButtonBox*)_obj, child,

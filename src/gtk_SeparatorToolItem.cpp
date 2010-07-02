@@ -54,7 +54,7 @@ FALCON_FUNC SeparatorToolItem::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_separator_tool_item_new() );
+    self->setObject( (GObject*) gtk_separator_tool_item_new() );
 }
 
 

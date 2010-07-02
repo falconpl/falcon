@@ -68,7 +68,7 @@ FALCON_FUNC ToggleAction::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Gtk::ArgCheck4 args( vm, "S[,S,S,S]" );
@@ -79,7 +79,7 @@ FALCON_FUNC ToggleAction::init( VMARG )
     const gchar* stock = args.getCString( 3, false );
 
     GtkToggleAction* act = gtk_toggle_action_new( name, label, tooltip, stock );
-    self->setGObject( (GObject*) act );
+    self->setObject( (GObject*) act );
 }
 
 

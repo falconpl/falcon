@@ -79,7 +79,7 @@ FALCON_FUNC LinkButton::init( VMARG )
 #endif
     AutoCString uri( i_uri->asString() );
     MYSELF;
-    self->setGObject( (GObject*) gtk_link_button_new( uri.c_str() ) );
+    self->setObject( (GObject*) gtk_link_button_new( uri.c_str() ) );
 }
 
 

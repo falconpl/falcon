@@ -76,11 +76,11 @@ FALCON_FUNC RadioButton::init( VMARG )
         throw_inv_params( "[GtkRadioButton]" );
 #endif
     GtkRadioButton* grp = i_grp->isNil() ? NULL
-                        : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+                        : (GtkRadioButton*) COREGOBJECT( i_grp )->getObject();
     GtkWidget* btn = grp ? gtk_radio_button_new_from_widget( grp )
                     : gtk_radio_button_new( NULL );
     MYSELF;
-    self->setGObject( (GObject*) btn );
+    self->setObject( (GObject*) btn );
 }
 
 
@@ -124,7 +124,7 @@ FALCON_FUNC RadioButton::new_with_label( VMARG )
         throw_inv_params( "[GtkRadioButton],S" );
 #endif
     GtkRadioButton* grp = i_grp->isNil() ? NULL
-                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getObject();
     AutoCString lbl( i_lbl->asString() );
     GtkWidget* btn = grp ? gtk_radio_button_new_with_label_from_widget( grp, lbl.c_str() )
                     : gtk_radio_button_new_with_label( NULL, lbl.c_str() );
@@ -153,7 +153,7 @@ FALCON_FUNC RadioButton::new_with_mnemonic( VMARG )
         throw_inv_params( "[GtkRadioButton],S" );
 #endif
     GtkRadioButton* grp = i_grp->isNil() ? NULL
-                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getGObject();
+                    : (GtkRadioButton*) COREGOBJECT( i_grp )->getObject();
     AutoCString lbl( i_lbl->asString() );
     GtkWidget* btn = grp ? gtk_radio_button_new_with_mnemonic_from_widget( grp, lbl.c_str() )
                     : gtk_radio_button_new_with_mnemonic( NULL, lbl.c_str() );
@@ -203,7 +203,7 @@ FALCON_FUNC RadioButton::set_group( VMARG )
     if ( !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkRadioButton ) )
         throw_inv_params( "GtkRadioButton" );
 #endif
-    GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getGObject();
+    GtkRadioButton* wdt = (GtkRadioButton*) COREGOBJECT( i_wdt )->getObject();
     GSList* grp = gtk_radio_button_get_group( wdt );
     assert( grp && grp->data );
     MYSELF;

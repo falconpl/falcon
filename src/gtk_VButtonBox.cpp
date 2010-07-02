@@ -66,7 +66,7 @@ FALCON_FUNC VButtonBox::init( VMARG )
 #endif
     GtkWidget* wdt = gtk_vbutton_box_new();
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

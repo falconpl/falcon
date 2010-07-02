@@ -122,7 +122,7 @@ FALCON_FUNC Dialog::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
 #ifndef NO_PARAMETER_CHECK
@@ -130,7 +130,7 @@ FALCON_FUNC Dialog::init( VMARG )
         throw_require_no_args();
 #endif
     GtkWidget* wdt = gtk_dialog_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -225,7 +225,7 @@ FALCON_FUNC Dialog::add_action_widget( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     gtk_dialog_add_action_widget( (GtkDialog*)_obj, child, i_id->asInteger() );
 }
 
@@ -322,7 +322,7 @@ FALCON_FUNC Dialog::get_response_for_widget( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     vm->retval( gtk_dialog_get_response_for_widget( (GtkDialog*)_obj, wdt ) );
 }
 #endif

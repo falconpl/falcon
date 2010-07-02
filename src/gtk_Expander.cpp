@@ -83,7 +83,7 @@ FALCON_FUNC Expander::init( VMARG )
 
     MYSELF;
     GtkWidget* wdt = gtk_expander_new( lbl );
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -309,7 +309,7 @@ FALCON_FUNC Expander::set_label_widget( VMARG )
     else
 #endif
     if ( o_wdt )
-        wdt = (GtkWidget*) o_wdt->getGObject();
+        wdt = (GtkWidget*) o_wdt->getObject();
 
     MYSELF;
     GET_OBJ( self );

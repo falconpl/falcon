@@ -124,7 +124,7 @@ FALCON_FUNC TreeStore::init( VMARG )
         memFree( types );
     }
     MYSELF;
-    self->setGObject( (GObject*) tree );
+    self->setObject( (GObject*) tree );
 }
 
 
@@ -226,7 +226,7 @@ FALCON_FUNC TreeStore::set_value( VMARG )
         if ( !IS_DERIVED( i_val, GObject ) )
             throw_inv_params( "GObject" );
 #endif
-        GObject* obj = dyncast<Gtk::CoreGObject*>( i_val->asObjectSafe() )->getGObject();
+        GObject* obj = dyncast<Gtk::CoreGObject*>( i_val->asObjectSafe() )->getObject();
         g_value_init( &val, G_TYPE_OBJECT );
         g_value_set_object( &val, obj );
         break;
@@ -327,7 +327,7 @@ FALCON_FUNC TreeStore::set( VMARG )
                     throw_inv_params( "GObject" );
                 }
 #endif
-                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getGObject();
+                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getObject();
                 g_value_init( &values[i], G_TYPE_OBJECT );
                 g_value_set_object( &values[i], obj );
                 break;
@@ -587,7 +587,7 @@ FALCON_FUNC TreeStore::insert_with_values( VMARG )
                     throw_inv_params( "GObject" );
                 }
 #endif
-                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getGObject();
+                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getObject();
                 g_value_init( &values[i], G_TYPE_OBJECT );
                 g_value_set_object( &values[i], obj );
                 break;

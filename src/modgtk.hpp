@@ -30,7 +30,7 @@
         Gtk::CoreGObject* self = Falcon::dyncast<Gtk::CoreGObject*>( vm->self().asObjectSafe() )
 
 #define GET_OBJ( self ) \
-        GObject* _obj = self->getGObject()
+        GObject* _obj = self->getObject()
 
 #define COREGOBJECT( pItem ) \
         (Falcon::dyncast<Gtk::CoreGObject*>( (pItem)->asObjectSafe() ))
@@ -71,6 +71,7 @@ namespace Falcon {
 namespace Gtk {
 
 
+class VoidObject;
 class CoreGObject;
 class Signal;
 
@@ -82,45 +83,95 @@ FALCON_FUNC abstract_init( VMARG );
 
 
 /**
+ *  \class Falcon::Gtk::VoidObject
+ *  \brief Embeds a void pointer.
+ */
+class VoidObject
+    :
+    public Falcon::CoreObject
+{
+public:
+
+    virtual ~VoidObject() {}
+
+    virtual VoidObject* clone() const { return new VoidObject( *this ); }
+
+    void gcMark( Falcon::uint32 ) {}
+
+    virtual bool getProperty( const Falcon::String& s, Falcon::Item& it ) const
+    {
+        return defaultProperty( s, it );
+    }
+
+    virtual bool setProperty( const Falcon::String&, const Falcon::Item& )
+    {
+        return false;
+    }
+
+    void* getObject() const { return (void*) m_obj; }
+
+    virtual void setObject( const void* obj )
+    {
+        assert( m_obj == 0 );
+        assert( obj != 0 );
+        m_obj = (void*) obj;
+    }
+
+protected:
+
+    VoidObject( const Falcon::CoreClass* cls, const void* obj = 0 )
+        :
+        CoreObject( cls ),
+        m_obj( (void*) obj )
+    {}
+
+    VoidObject( const VoidObject& other )
+        :
+        CoreObject( other ),
+        m_obj( other.m_obj )
+    {}
+
+    void*   m_obj;
+
+};
+
+
+/**
  *  \class Falcon::Gtk::CoreGObject
  *  \brief The base class exposing a GObject.
  */
 class CoreGObject
     :
-    public Falcon::FalconObject
+    public Gtk::VoidObject
 {
-    friend class Gtk::Signal;
-
 public:
 
-    ~CoreGObject() { decref(); }
+    ~CoreGObject();
 
-    CoreGObject* clone() const;
-
-    void gcMark( Falcon::uint32 ) {}
+    virtual CoreGObject* clone() const { return new CoreGObject( *this ); }
 
     /**
      *  \brief Get a property.
      *  Properties are stored in the table of associations of the GObject,
      *  as garbage-locked items.
      */
-    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
+    virtual bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
     /**
      *  \brief Set a property.
      *  Stores a garbage-lock in the table of associations of the GObject.
      */
-    bool setProperty( const Falcon::String&, const Falcon::Item& );
+    virtual bool setProperty( const Falcon::String&, const Falcon::Item& );
 
     /**
      *  \brief Get the GObject.
      */
-    GObject* getGObject() const { return m_obj; }
+    GObject* getObject() const { return (GObject*) m_obj; }
 
     /**
      *  \brief Set the GObject.
      */
-    void setGObject( const GObject* obj );
+    virtual void setObject( const void* );
 
     /**
      *  \brief Add an anonymous VMSlot in the GObject.
@@ -189,11 +240,9 @@ private:
      */
     static void release_locks( gpointer );
 
-    void incref() { if ( m_obj ) g_object_ref_sink( m_obj ); }
+    void incref() const;
 
-    void decref() { if ( m_obj ) g_object_unref( m_obj ); }
-
-    GObject*    m_obj;
+    void decref() const;
 
 };
 
@@ -203,17 +252,15 @@ private:
  */
 class Signal
     :
-    public Falcon::FalconObject
+    public Gtk::CoreGObject
 {
     friend class Gtk::CoreGObject;
 
 public:
 
-    ~Signal() { decref(); }
+    ~Signal() {}
 
-    Signal* clone() const { return 0; }
-
-    void gcMark( Falcon::uint32 ) {}
+    Signal* clone() const { return new Signal( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -222,11 +269,6 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
-
-    /**
-     *  \brief Get the GObject.
-     */
-    GObject* getGObject() const { return m_obj; }
 
     /**
      *  \brief Connect a signal to a callback.
@@ -244,11 +286,7 @@ private:
     Signal( const Falcon::CoreClass* cls,
             const GObject* gobj, const char* name, const void* cb );
 
-    void incref() { if ( m_obj ) g_object_ref_sink( m_obj ); }
-
-    void decref() { if ( m_obj ) g_object_unref( m_obj ); }
-
-    GObject*    m_obj;
+    Signal( const Signal& );
 
     char*     m_name;
 

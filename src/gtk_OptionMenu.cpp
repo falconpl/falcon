@@ -73,7 +73,7 @@ FALCON_FUNC OptionMenu::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_option_menu_new() );
+    self->setObject( (GObject*) gtk_option_menu_new() );
 }
 
 
@@ -124,7 +124,7 @@ FALCON_FUNC OptionMenu::set_menu( VMARG )
     if ( !i_menu || !i_menu->isObject() || !IS_DERIVED( i_menu, GtkMenu ) )
         throw_inv_params( "GtkMenu" );
 #endif
-    GtkWidget* menu = (GtkWidget*) COREGOBJECT( i_menu )->getGObject();
+    GtkWidget* menu = (GtkWidget*) COREGOBJECT( i_menu )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_option_menu_set_menu( (GtkOptionMenu*)_obj, menu );

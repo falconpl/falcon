@@ -4,8 +4,6 @@
 
 #include "gdk_DragContext.hpp"
 
-#include <gtk/gtk.h>
-
 
 namespace Falcon {
 namespace Gdk {
@@ -15,7 +13,7 @@ namespace Gdk {
  */
 void DragContext::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_DragContext = mod->addClass( "GdkDragContext", &Gtk::abstract_init );
+    Falcon::Symbol* c_DragContext = mod->addClass( "%GdkDragContext" );
 
     c_DragContext->setWKS( true );
     c_DragContext->getClassDef()->factory( &DragContext::factory );
@@ -35,26 +33,52 @@ void DragContext::modInit( Falcon::Module* mod )
 
 DragContext::DragContext( const Falcon::CoreClass* gen, const GdkDragContext* ctxt )
     :
-    Falcon::CoreObject( gen ),
-    m_ctxt( NULL )
+    Gtk::VoidObject( gen, ctxt )
 {
-    if ( ctxt )
-    {
-        m_ctxt = (GdkDragContext*) ctxt;
-        gdk_drag_context_ref( m_ctxt );
-    }
+    incref();
+}
+
+
+DragContext::DragContext( const DragContext& other )
+    :
+    Gtk::VoidObject( other )
+{
+    incref();
 }
 
 
 DragContext::~DragContext()
 {
-    if ( m_ctxt )
-        gdk_drag_context_unref( m_ctxt );
+    decref();
+}
+
+
+void DragContext::incref() const
+{
+    if ( m_obj )
+        gdk_drag_context_ref( (GdkDragContext*) m_obj );
+}
+
+
+void DragContext::decref() const
+{
+    if ( m_obj )
+        gdk_drag_context_unref( (GdkDragContext*) m_obj );
+}
+
+
+void DragContext::setObject( const void* ctxt )
+{
+    VoidObject::setObject( ctxt );
+    incref();
 }
 
 
 bool DragContext::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkDragContext* m_ctxt = (GdkDragContext*) m_obj;
+
     if ( s == "protocol" )
         it = m_ctxt->protocol;
     else

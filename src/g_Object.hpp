@@ -8,7 +8,7 @@
 #include "modgtk.hpp"
 
 #define GET_OBJECT( item ) \
-        (((Glib::Object*) (item).asObjectSafe() )->getGObject())
+        (((Glib::Object*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

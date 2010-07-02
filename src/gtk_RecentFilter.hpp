@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_RECENTFILTER( item ) \
-        ((GtkRecentFilter*)((Gtk::RecentFilter*) (item).asObjectSafe() )->getGObject())
+        ((GtkRecentFilter*)((Gtk::RecentFilter*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

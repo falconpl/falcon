@@ -91,7 +91,7 @@ FALCON_FUNC ToolPalette::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_tool_palette_new() );
+    self->setObject( (GObject*) gtk_tool_palette_new() );
 }
 
 
@@ -159,7 +159,7 @@ FALCON_FUNC ToolPalette::get_exclusive( VMARG )
     if ( !i_grp || !( i_grp->isObject() && IS_DERIVED( i_grp, GtkToolItemGroup ) ) )
         throw_inv_params( "GtkToolItemGroup" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_palette_get_exclusive( (GtkToolPalette*)_obj, grp ) );
@@ -183,7 +183,7 @@ FALCON_FUNC ToolPalette::set_exclusive( VMARG )
         || !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "GtkToolItemGroup,B" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_palette_set_exclusive( (GtkToolPalette*)_obj, grp, i_bool->asBoolean() ? TRUE : FALSE );
@@ -203,7 +203,7 @@ FALCON_FUNC ToolPalette::get_expand( VMARG )
     if ( !i_grp || !( i_grp->isObject() && IS_DERIVED( i_grp, GtkToolItemGroup ) ) )
         throw_inv_params( "GtkToolItemGroup" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_tool_palette_get_expand( (GtkToolPalette*)_obj, grp ) );
@@ -225,7 +225,7 @@ FALCON_FUNC ToolPalette::set_expand( VMARG )
         || !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "GtkToolItemGroup,B" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_palette_set_expand( (GtkToolPalette*)_obj, grp, i_bool->asBoolean() ? TRUE : FALSE );
@@ -245,7 +245,7 @@ FALCON_FUNC ToolPalette::get_group_position( VMARG )
     if ( !i_grp || !( i_grp->isObject() && IS_DERIVED( i_grp, GtkToolItemGroup ) ) )
         throw_inv_params( "GtkToolItemGroup" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tool_palette_get_group_position( (GtkToolPalette*)_obj, grp ) );
@@ -270,7 +270,7 @@ FALCON_FUNC ToolPalette::set_group_position( VMARG )
         || !i_pos || !i_pos->isInteger() )
         throw_inv_params( "GtkToolItemGroup,I" );
 #endif
-    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getGObject();
+    GtkToolItemGroup* grp = (GtkToolItemGroup*) COREGOBJECT( i_grp )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_palette_set_group_position( (GtkToolPalette*)_obj, grp, i_pos->asInteger() );

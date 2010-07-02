@@ -42,7 +42,7 @@ Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bo
 
 
 /*#
-    @class gtk.GdkPixbuf
+    @class GdkPixbuf
     @brief Information that describes an image.
  */
 
@@ -56,7 +56,7 @@ Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bo
 FALCON_FUNC Pixbuf::version( VMARG )
 {
     NO_ARGS
-    vm->retval( new String( GDK_PIXBUF_VERSION ) );
+    vm->retval( UTF8String( GDK_PIXBUF_VERSION ) );
 }
 
 

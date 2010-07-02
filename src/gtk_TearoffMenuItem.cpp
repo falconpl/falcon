@@ -55,7 +55,7 @@ FALCON_FUNC TearoffMenuItem::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_tearoff_menu_item_new() );
+    self->setObject( (GObject*) gtk_tearoff_menu_item_new() );
 }
 
 

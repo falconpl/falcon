@@ -55,27 +55,52 @@ void Colormap::modInit( Falcon::Module* mod )
 
 Colormap::Colormap( const Falcon::CoreClass* gen, const GdkColormap* clr )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen, clr )
 {
-    m_colormap = NULL;
+    incref();
+}
 
-    if ( clr )
-    {
-        m_colormap = (GdkColormap*) clr;
-        gdk_colormap_ref( m_colormap );
-    }
+
+Colormap::Colormap( const Colormap& other )
+    :
+    Gtk::VoidObject( other )
+{
+    incref();
 }
 
 
 Colormap::~Colormap()
 {
-    if ( m_colormap )
-        gdk_colormap_unref( m_colormap );
+    decref();
+}
+
+
+void Colormap::incref() const
+{
+    if ( m_obj )
+        gdk_colormap_ref( (GdkColormap*) m_obj );
+}
+
+
+void Colormap::decref() const
+{
+    if ( m_obj )
+        gdk_colormap_unref( (GdkColormap*) m_obj );
+}
+
+
+void Colormap::setObject( const void* map )
+{
+    VoidObject::setObject( map );
+    incref();
 }
 
 
 bool Colormap::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkColormap* m_colormap = (GdkColormap*) m_obj;
+
     if ( s == "size" )
         it = m_colormap->size;
     else
@@ -131,9 +156,7 @@ FALCON_FUNC Colormap::init( VMARG )
 #endif
     GdkVisual* vis = Falcon::dyncast<Gdk::Visual*>( o_vis )->getObject();
     MYSELF;
-    GdkColormap* cmap = gdk_colormap_new( vis, b );
-    self->m_colormap = cmap;
-    gdk_colormap_ref( self->m_colormap );
+    self->setObject( gdk_colormap_new( vis, b ) );
 }
 
 
@@ -152,8 +175,8 @@ FALCON_FUNC Colormap::unref( VMARG );
 FALCON_FUNC Colormap::get_system( VMARG )
 {
     NO_ARGS
-    GdkColormap* cmap = gdk_colormap_get_system();
-    vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(), cmap ) );
+    vm->retval( new Gdk::Colormap( vm->findWKI( "GdkColormap" )->asClass(),
+                                   gdk_colormap_get_system() ) );
 }
 
 
@@ -183,8 +206,7 @@ FALCON_FUNC Colormap::change( VMARG )
     if ( !i_ncol || i_ncol->isNil() || !i_ncol->isInteger() )
         throw_inv_params( "I" );
 #endif
-    MYSELF;
-    gdk_colormap_change( self->m_colormap, i_ncol->asInteger() );
+    gdk_colormap_change( GET_COLORMAP( vm->self() ), i_ncol->asInteger() );
 }
 
 
@@ -207,9 +229,8 @@ FALCON_FUNC Colormap::query_color( VMARG );
 FALCON_FUNC Colormap::get_visual( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GdkVisual* vis = gdk_colormap_get_visual( self->m_colormap );
-    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(), vis ) );
+    vm->retval( new Gdk::Visual( vm->findWKI( "GdkVisual" )->asClass(),
+                        gdk_colormap_get_visual( GET_COLORMAP( vm->self() ) ) ) );
 }
 
 
@@ -221,9 +242,8 @@ FALCON_FUNC Colormap::get_visual( VMARG )
 FALCON_FUNC Colormap::get_screen( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GdkScreen* scrn = gdk_colormap_get_screen( self->m_colormap );
-    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), scrn ) );
+    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(),
+                        gdk_colormap_get_screen( GET_COLORMAP( vm->self() ) ) ) );
 }
 
 

@@ -159,7 +159,7 @@ FALCON_FUNC TreeRowReference::new_proxy( VMARG )
         || !i_path || !i_path->isObject() || !IS_DERIVED( i_path, GtkTreePath ) )
         throw_inv_params( "GtkTreeModel,GtkTreePath" );
 #endif
-    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
+    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getObject();
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     GtkTreePath* path = GET_TREEPATH( *i_path );
     GtkTreeRowReference* ref = gtk_tree_row_reference_new_proxy( proxy, mdl, path );
@@ -250,7 +250,7 @@ FALCON_FUNC TreeRowReference::inserted( VMARG )
         || !i_path || !i_path->isObject() || !IS_DERIVED( i_path, GtkTreePath ) )
         throw_inv_params( "GObject,GtkTreePath" );
 #endif
-    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
+    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getObject();
     GtkTreePath* path = GET_TREEPATH( *i_path );
     gtk_tree_row_reference_inserted( proxy, path );
 }
@@ -271,7 +271,7 @@ FALCON_FUNC TreeRowReference::deleted( VMARG )
         || !i_path || !i_path->isObject() || !IS_DERIVED( i_path, GtkTreePath ) )
         throw_inv_params( "GObject,GtkTreePath" );
 #endif
-    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
+    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getObject();
     GtkTreePath* path = GET_TREEPATH( *i_path );
     gtk_tree_row_reference_deleted( proxy, path );
 }
@@ -298,7 +298,7 @@ FALCON_FUNC TreeRowReference::reordered( VMARG )
         || !i_order || !i_order->isArray() )
         throw_inv_params( "GObject,GtkTreePath,GtkTreeIter,A" );
 #endif
-    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getGObject();
+    GObject* proxy = dyncast<Gtk::CoreGObject*>( i_prox->asObjectSafe() )->getObject();
     GtkTreePath* path = GET_TREEPATH( *i_path );
     GtkTreeIter* iter = GET_TREEITER( *i_iter );
     CoreArray* order = i_order->asArray();

@@ -54,7 +54,7 @@ FALCON_FUNC CellRendererPixbuf::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_cell_renderer_pixbuf_new() );
+    self->setObject( (GObject*) gtk_cell_renderer_pixbuf_new() );
 }
 
 

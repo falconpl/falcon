@@ -130,8 +130,7 @@ FALCON_FUNC CellEditable::start_editing( VMARG )
         && IS_DERIVED( i_ev, GdkEvent ) ) ) )
         throw_inv_params( "[GdkEvent]" );
 #endif
-    GdkEvent* ev = i_ev->isNil() ? NULL
-                    : dyncast<Gdk::Event*>( i_ev->asObjectSafe() )->getEvent();
+    GdkEvent* ev = i_ev->isNil() ? NULL : GET_EVENT( *i_ev );
     MYSELF;
     GET_OBJ( self );
     gtk_cell_editable_start_editing( (GtkCellEditable*)_obj, ev );

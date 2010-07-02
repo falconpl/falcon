@@ -76,7 +76,7 @@ FALCON_FUNC ProgressBar::init( VMARG )
     NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_progress_bar_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

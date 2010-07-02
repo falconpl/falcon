@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_CELLRENDERERACCEL( item ) \
-        ((GtkCellRendererAccel*)((Gtk::CellRendererAccel*) (item).asObjectSafe() )->getGObject())
+        ((GtkCellRendererAccel*)((Gtk::CellRendererAccel*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

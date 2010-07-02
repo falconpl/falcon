@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_ADJUSTMENT( item ) \
-        ((GtkAdjustment*)((Gtk::Adjustment*) (item).asObjectSafe() )->getGObject())
+        (((Gtk::Adjustment*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -24,6 +24,8 @@ public:
     Adjustment( const Falcon::CoreClass*, const GtkAdjustment* = 0 );
 
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    GtkAdjustment* getObject() const { return (GtkAdjustment*) m_obj; }
 
     static FALCON_FUNC init( VMARG );
 

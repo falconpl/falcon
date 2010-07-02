@@ -423,7 +423,7 @@ FALCON_FUNC Range::set_adjustment( VMARG )
     if ( !i_adj || !i_adj->isObject() || !IS_DERIVED( i_adj, GtkAdjustment ) )
         throw_inv_params( "GtkAdjustment" );
 #endif
-    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_range_set_adjustment( (GtkRange*)_obj, adj );

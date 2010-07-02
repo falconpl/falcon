@@ -65,7 +65,7 @@ FALCON_FUNC AspectFrame::init( VMARG )
     MYSELF;
     GtkWidget* wdt = gtk_aspect_frame_new(
         lbl ? lbl : "", xalign, yalign, ratio, obey );
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

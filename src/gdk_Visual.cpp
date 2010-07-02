@@ -66,27 +66,48 @@ void Visual::modInit( Falcon::Module* mod )
 
 Visual::Visual( const Falcon::CoreClass* gen, const GdkVisual* vis )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen, vis )
 {
-    m_visual = NULL;
-
     if ( vis )
-    {
-        m_visual = (GdkVisual*) vis;
-        gdk_visual_ref( m_visual );
-    }
+        incref();
+}
+
+
+Visual::Visual( const Visual& vis )
+    :
+    Gtk::VoidObject( vis )
+{
+    if ( vis.m_obj )
+        incref();
 }
 
 
 Visual::~Visual()
 {
-    if ( m_visual )
-        gdk_visual_unref( m_visual );
+    if ( m_obj )
+        decref();
+}
+
+
+void Visual::incref() const
+{
+    assert( m_obj );
+    gdk_visual_ref( (GdkVisual*) m_obj );
+}
+
+
+void Visual::decref() const
+{
+    assert( m_obj );
+    gdk_visual_unref( (GdkVisual*) m_obj );
 }
 
 
 bool Visual::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkVisual* m_visual = (GdkVisual*) m_obj;
+
     if ( s == "type" )
         it = (int64) m_visual->type;
     else
@@ -136,6 +157,9 @@ bool Visual::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 
 bool Visual::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
+    assert( m_obj );
+    GdkVisual* m_visual = (GdkVisual*) m_obj;
+
     if ( s == "type" )
         m_visual->type = (GdkVisualType) it.forceInteger();
     else
@@ -433,8 +457,7 @@ FALCON_FUNC Visual::unref( VMARG );
 FALCON_FUNC Visual::get_screen( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GdkScreen* scrn = gdk_visual_get_screen( self->m_visual );
+    GdkScreen* scrn = gdk_visual_get_screen( GET_VISUAL( vm->self() ) );
     vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(), scrn ) );
 }
 

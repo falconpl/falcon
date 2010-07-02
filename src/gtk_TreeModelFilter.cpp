@@ -99,7 +99,7 @@ FALCON_FUNC TreeModelFilter::init( VMARG )
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     GtkTreePath* root = i_root->isNil() ? NULL : GET_TREEPATH( *i_root );
     MYSELF;
-    self->setGObject( (GObject*) gtk_tree_model_filter_new( mdl, root ) );
+    self->setObject( (GObject*) gtk_tree_model_filter_new( mdl, root ) );
 }
 
 

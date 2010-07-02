@@ -109,7 +109,7 @@ FALCON_FUNC AboutDialog::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_about_dialog_new() );
+    self->setObject( (GObject*) gtk_about_dialog_new() );
 }
 
 
@@ -622,7 +622,7 @@ FALCON_FUNC AboutDialog::set_logo( VMARG )
         ( i_logo->isObject() && IS_DERIVED( i_logo, GdkPixbuf ) ) ) )
         throw_inv_params( "[GdkPixbuf]" );
 #endif
-    GdkPixbuf* buf = i_logo->isObject() ? (GdkPixbuf*) COREGOBJECT( i_logo )->getGObject() : NULL;
+    GdkPixbuf* buf = i_logo->isObject() ? (GdkPixbuf*) COREGOBJECT( i_logo )->getObject() : NULL;
     MYSELF;
     GET_OBJ( self );
     gtk_about_dialog_set_logo( (GtkAboutDialog*)_obj, buf );

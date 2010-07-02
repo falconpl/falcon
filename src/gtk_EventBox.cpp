@@ -64,7 +64,7 @@ FALCON_FUNC EventBox::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* box = gtk_event_box_new();
-    self->setGObject( (GObject*) box );
+    self->setObject( (GObject*) box );
 }
 
 

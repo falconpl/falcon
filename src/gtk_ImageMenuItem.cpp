@@ -70,7 +70,7 @@ FALCON_FUNC ImageMenuItem::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_image_menu_item_new() );
+    self->setObject( (GObject*) gtk_image_menu_item_new() );
 }
 
 
@@ -91,7 +91,7 @@ FALCON_FUNC ImageMenuItem::set_image( VMARG )
         throw_inv_params( "GtkWidget" );
 #endif
     GtkWidget* img = i_img->isNil() ? NULL
-                        : (GtkWidget*) COREGOBJECT( i_img )->getGObject();
+                        : (GtkWidget*) COREGOBJECT( i_img )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_image_menu_item_set_image( (GtkImageMenuItem*)_obj, img );

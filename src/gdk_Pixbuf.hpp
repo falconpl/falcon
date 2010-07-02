@@ -24,6 +24,8 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GdkPixbuf* getObject() const { return (GdkPixbuf*) m_obj; }
+
     static FALCON_FUNC version( VMARG );
 
     //static FALCON_FUNC init( VMARG );

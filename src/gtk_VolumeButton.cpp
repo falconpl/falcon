@@ -49,7 +49,7 @@ FALCON_FUNC VolumeButton::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_volume_button_new() );
+    self->setObject( (GObject*) gtk_volume_button_new() );
 }
 
 

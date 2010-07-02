@@ -135,7 +135,7 @@ FALCON_FUNC ListStore::init( VMARG )
         memFree( types );
     }
     MYSELF;
-    self->setGObject( (GObject*) lst );
+    self->setObject( (GObject*) lst );
 }
 
 
@@ -271,7 +271,7 @@ FALCON_FUNC ListStore::set( VMARG )
                     throw_inv_params( "GObject" );
                 }
 #endif
-                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getGObject();
+                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getObject();
                 g_value_init( &values[i], G_TYPE_OBJECT );
                 g_value_set_object( &values[i], obj );
                 break;
@@ -347,7 +347,7 @@ FALCON_FUNC ListStore::set_value( VMARG )
         if ( !IS_DERIVED( i_val, GObject ) )
             throw_inv_params( "GObject" );
 #endif
-        GObject* obj = dyncast<Gtk::CoreGObject*>( i_val->asObjectSafe() )->getGObject();
+        GObject* obj = dyncast<Gtk::CoreGObject*>( i_val->asObjectSafe() )->getObject();
         g_value_init( &val, G_TYPE_OBJECT );
         g_value_set_object( &val, obj );
         break;
@@ -568,7 +568,7 @@ FALCON_FUNC ListStore::insert_with_values( VMARG )
                     throw_inv_params( "GObject" );
                 }
 #endif
-                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getGObject();
+                GObject* obj = dyncast<Gtk::CoreGObject*>( it.asObjectSafe() )->getObject();
                 g_value_init( &values[i], G_TYPE_OBJECT );
                 g_value_set_object( &values[i], obj );
                 break;

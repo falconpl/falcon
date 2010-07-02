@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_REGION( item ) \
+        (((Gdk::Region*) (item).asObjectSafe())->getObject())
+
 
 namespace Falcon {
 namespace Gdk {
@@ -12,16 +15,18 @@ namespace Gdk {
  */
 class Region
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Region( const Falcon::CoreClass*,
             const GdkRegion* = 0, const bool transfer = false );
 
+    Region( const Region& );
+
     ~Region();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Region* clone() const { return new Region( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -31,7 +36,9 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkRegion* getRegion() const { return (GdkRegion*) m_region; }
+    GdkRegion* getObject() const { return (GdkRegion*) m_obj; }
+
+    //void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
 
@@ -77,10 +84,6 @@ public:
 #if 0 // todo
     static FALCON_FUNC spans_intersect_foreach( VMARG );
 #endif
-
-private:
-
-    GdkRegion*  m_region;
 
 };
 

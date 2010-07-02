@@ -106,7 +106,7 @@ FALCON_FUNC Menu::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_menu_new() );
+    self->setObject( (GObject*) gtk_menu_new() );
 }
 
 
@@ -168,7 +168,7 @@ FALCON_FUNC Menu::set_screen( VMARG )
         throw_inv_params( "[GdkScreen]" );
 #endif
     GdkScreen* screen = i_screen && i_screen->isNil() ? NULL
-            : (GdkScreen*) COREGOBJECT( i_screen )->getGObject();
+            : (GdkScreen*) COREGOBJECT( i_screen )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_set_screen( (GtkMenu*)_obj, screen );
@@ -198,7 +198,7 @@ FALCON_FUNC Menu::reorder_child( VMARG )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkMenuItem,I" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_reorder_child( (GtkMenu*)_obj, child, i_pos->asInteger() );
@@ -234,7 +234,7 @@ FALCON_FUNC Menu::attach( VMARG )
     if ( !CoreObject_IS_DERIVED( o_child, GtkMenuItem ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* child = (GtkWidget*) o_child->getGObject();
+    GtkWidget* child = (GtkWidget*) o_child->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_attach( (GtkMenu*)_obj, child, left_a, right_a, top_a, bottom_a );
@@ -269,8 +269,8 @@ FALCON_FUNC Menu::popup( VMARG )
         || ( o_mitem && !CoreObject_IS_DERIVED( o_mitem, GtkWidget ) ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* mshell = o_mshell ? (GtkWidget*) o_mshell->getGObject() : NULL;
-    GtkWidget* mitem = o_mitem ? (GtkWidget*) o_mitem->getGObject() : NULL;
+    GtkWidget* mshell = o_mshell ? (GtkWidget*) o_mshell->getObject() : NULL;
+    GtkWidget* mitem = o_mitem ? (GtkWidget*) o_mitem->getObject() : NULL;
     MYSELF;
     GET_OBJ( self );
     gtk_menu_popup( (GtkMenu*)_obj, mshell, mitem, NULL, NULL, btn, time );
@@ -297,7 +297,7 @@ FALCON_FUNC Menu::set_accel_group( VMARG )
     MYSELF;
     GET_OBJ( self );
     gtk_menu_set_accel_group( (GtkMenu*)_obj,
-            i_grp ? (GtkAccelGroup*) COREGOBJECT( i_grp )->getGObject() : NULL );
+            i_grp ? (GtkAccelGroup*) COREGOBJECT( i_grp )->getObject() : NULL );
 }
 
 
@@ -558,7 +558,7 @@ FALCON_FUNC Menu::attach_to_widget( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_attach_to_widget( (GtkMenu*)_obj, wdt, NULL );
@@ -613,7 +613,7 @@ FALCON_FUNC Menu::get_for_attach_widget( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     GList* lst = gtk_menu_get_for_attach_widget( (GtkWidget*) wdt );
     GList* el;
     int num = 0;

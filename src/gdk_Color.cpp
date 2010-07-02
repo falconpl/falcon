@@ -27,24 +27,40 @@ void Color::modInit( Falcon::Module* mod )
 
 Color::Color( const Falcon::CoreClass* gen, const GdkColor* clr )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen )
 {
-    m_color = NULL;
-
     if ( clr )
-        m_color = gdk_color_copy( clr );
+        m_obj = gdk_color_copy( clr );
+}
+
+
+Color::Color( const Color& other )
+    :
+    Gtk::VoidObject( other )
+{
+    m_obj = gdk_color_copy( (GdkColor*) other.m_obj );
 }
 
 
 Color::~Color()
 {
-    if ( m_color )
-        gdk_color_free( m_color );
+    if ( m_obj )
+        gdk_color_free( (GdkColor*) m_obj );
+}
+
+
+void Color::setObject( const void* clr )
+{
+    VoidObject::setObject( clr );
+    m_obj = gdk_color_copy( (GdkColor*) clr );
 }
 
 
 bool Color::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkColor* m_color = (GdkColor*) m_obj;
+
     if ( s == "pixel" )
         it = m_color->pixel;
     else
@@ -64,6 +80,9 @@ bool Color::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 
 bool Color::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
+    assert( m_obj );
+    GdkColor* m_color = (GdkColor*) m_obj;
+
     if ( s == "pixel" )
         m_color->pixel = it.forceInteger();
     else

@@ -108,11 +108,11 @@ FALCON_FUNC SpinButton::init( VMARG )
         throw_inv_params( "[GtkAdjustment],N,I" );
 #endif
     GtkAdjustment* adj = i_adj->isNil() ? NULL
-                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     GtkWidget* btn = gtk_spin_button_new(
                     adj, i_rate->forceNumeric(), i_digits->forceInteger() );
     MYSELF;
-    self->setGObject( (GObject*) btn );
+    self->setObject( (GObject*) btn );
 }
 
 
@@ -256,7 +256,7 @@ FALCON_FUNC SpinButton::configure( VMARG )
         throw_inv_params( "[GtkAdjustment],N,I" );
 #endif
     GtkAdjustment* adj = i_adj->isNil() ? NULL
-                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_spin_button_configure( (GtkSpinButton*)_obj,
@@ -310,7 +310,7 @@ FALCON_FUNC SpinButton::set_adjustment( VMARG )
     if ( !i_adj || !( i_adj->isObject() && IS_DERIVED( i_adj, GtkAdjustment ) ) )
         throw_inv_params( "GtkAdjustment" );
 #endif
-    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_spin_button_set_adjustment( (GtkSpinButton*)_obj, adj );

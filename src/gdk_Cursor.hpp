@@ -12,15 +12,17 @@ namespace Gdk {
  */
 class Cursor
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Cursor( const Falcon::CoreClass*, const GdkCursor* = 0 );
 
+    Cursor( const Cursor& );
+
     ~Cursor();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Cursor* clone() const { return new Cursor( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -30,9 +32,9 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkCursor* getCursor() const { return (GdkCursor*) m_cursor; }
+    GdkCursor* getObject() const { return (GdkCursor*) m_obj; }
 
-    void setCursor( const GdkCursor* );
+    void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
 #if 0
@@ -48,7 +50,9 @@ public:
 #endif
 private:
 
-    GdkCursor*  m_cursor;
+    void incref() const;
+
+    void decref() const;
 
 };
 

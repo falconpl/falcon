@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_BITMAP( item ) \
-        ((GdkBitmap*)((Gdk::Bitmap*) (item).asObjectSafe() )->getGObject())
+        (((Gdk::Bitmap*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -24,6 +24,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkBitmap* getObject() const { return (GdkBitmap*) m_obj; }
 
     static FALCON_FUNC create_from_data( VMARG );
 

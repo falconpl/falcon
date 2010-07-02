@@ -113,7 +113,7 @@ FALCON_FUNC ComboBox::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
 #ifndef NO_PARAMETER_CHECK
@@ -121,7 +121,7 @@ FALCON_FUNC ComboBox::init( VMARG )
         throw_require_no_args();
 #endif
     GtkWidget* wdt = gtk_combo_box_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

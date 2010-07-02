@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_GC( item ) \
-        ((GdkGC*)((Gdk::GC*) (item).asObjectSafe() )->getGObject())
+        (((Gdk::GC*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -24,6 +24,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkGC* getObject() const { return (GdkGC*) m_obj; }
 
     static FALCON_FUNC init( VMARG );
 

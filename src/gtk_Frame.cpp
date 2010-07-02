@@ -67,7 +67,7 @@ FALCON_FUNC Frame::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Item* i_lbl = vm->param( 0 );
@@ -84,7 +84,7 @@ FALCON_FUNC Frame::init( VMARG )
     else
         wdt = gtk_frame_new( NULL );
 
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -127,7 +127,7 @@ FALCON_FUNC Frame::set_label_widget( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_frame_set_label_widget( (GtkFrame*)_obj, wdt );

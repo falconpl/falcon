@@ -29,27 +29,54 @@ void Point::modInit( Falcon::Module* mod )
 
 Point::Point( const Falcon::CoreClass* gen, const GdkPoint* point )
     :
-    Falcon::CoreObject( gen )
+    Gtk::VoidObject( gen )
 {
     if ( point )
-        memcpy( &m_point, point, sizeof( GdkPoint ) );
-    else
-        memset( &m_point, 0, sizeof( GdkPoint ) );
+        setObject( point );
+}
+
+
+Point::Point( const Point& other )
+    :
+    Gtk::VoidObject( other )
+{
+    m_obj = 0;
+    if ( other.m_obj )
+        setObject( other.m_obj );
 }
 
 
 Point::~Point()
 {
+    if ( m_obj )
+        memFree( m_obj );
+}
+
+
+void Point::alloc()
+{
+    assert( m_obj == 0 );
+    m_obj = memAlloc( sizeof( GdkPoint ) );
+}
+
+void Point::setObject( const void* pt )
+{
+    assert( m_obj == 0 );
+    alloc();
+    memcpy( m_obj, pt, sizeof( GdkPoint ) );
 }
 
 
 bool Point::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkPoint* m_point = (GdkPoint*) m_obj;
+
     if ( s == "x" )
-        it = m_point.x;
+        it = m_point->x;
     else
     if ( s == "y" )
-        it = m_point.y;
+        it = m_point->y;
     else
         return defaultProperty( s, it );
     return true;
@@ -58,11 +85,14 @@ bool Point::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 
 bool Point::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
+    assert( m_obj );
+    GdkPoint* m_point = (GdkPoint*) m_obj;
+
     if ( s == "x" )
-        m_point.x = it.forceInteger();
+        m_point->x = it.forceInteger();
     else
     if ( s == "y" )
-        m_point.y = it.forceInteger();
+        m_point->y = it.forceInteger();
     else
         return false;
     return true;
@@ -95,8 +125,9 @@ FALCON_FUNC Point::init( VMARG )
         throw_inv_params( "[I,I]" );
 #endif
     MYSELF;
-    self->m_point.x = i_x ? i_x->asInteger() : 0;
-    self->m_point.y = i_y ? i_y->asInteger() : 0;
+    self->alloc();
+    ((GdkPoint*)self->m_obj)->x = i_x ? i_x->asInteger() : 0;
+    ((GdkPoint*)self->m_obj)->y = i_y ? i_y->asInteger() : 0;
 }
 
 

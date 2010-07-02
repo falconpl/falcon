@@ -12,15 +12,17 @@ namespace Gdk {
  */
 class DragContext
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     DragContext( const Falcon::CoreClass*, const GdkDragContext* = 0 );
 
+    DragContext( const DragContext& );
+
     ~DragContext();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    DragContext* clone() const { return new DragContext( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -30,11 +32,15 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkDragContext* getObject() const { return m_ctxt; }
+    GdkDragContext* getObject() const { return (GdkDragContext*) m_obj; }
+
+    void setObject( const void* );
 
 private:
 
-    GdkDragContext* m_ctxt;
+    void incref() const;
+
+    void decref() const;
 
 };
 

@@ -72,9 +72,9 @@ FALCON_FUNC MenuToolButton::init( VMARG )
     if ( o_ico && !CoreObject_IS_DERIVED( o_ico, GtkWidget ) )
         throw_inv_params( spec );
 #endif
-    GtkWidget* ico = o_ico ? (GtkWidget*) o_ico->getGObject() : NULL;
+    GtkWidget* ico = o_ico ? (GtkWidget*) o_ico->getObject() : NULL;
     MYSELF;
-    self->setGObject( (GObject*) gtk_menu_tool_button_new( ico, lbl ) );
+    self->setObject( (GObject*) gtk_menu_tool_button_new( ico, lbl ) );
 }
 
 
@@ -135,7 +135,7 @@ FALCON_FUNC MenuToolButton::set_menu( VMARG )
         throw_inv_params( "[GtkMenu]" );
 #endif
     GtkWidget* menu = i_menu->isNil() ? NULL
-                    : (GtkWidget*) COREGOBJECT( i_menu )->getGObject();
+                    : (GtkWidget*) COREGOBJECT( i_menu )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_tool_button_set_menu( (GtkMenuToolButton*)_obj, menu );

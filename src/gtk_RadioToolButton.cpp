@@ -64,11 +64,11 @@ FALCON_FUNC RadioToolButton::init( VMARG )
         throw_inv_params( "[GtkRadioToolButton]" );
 #endif
     GtkRadioToolButton* grp = i_grp->isNil() ? NULL
-                        : (GtkRadioToolButton*) COREGOBJECT( i_grp )->getGObject();
+                        : (GtkRadioToolButton*) COREGOBJECT( i_grp )->getObject();
     GtkToolItem* btn = grp ? gtk_radio_tool_button_new_from_widget( grp )
                     : gtk_radio_tool_button_new( NULL );
     MYSELF;
-    self->setGObject( (GObject*) btn );
+    self->setObject( (GObject*) btn );
 }
 
 
@@ -92,7 +92,7 @@ FALCON_FUNC RadioToolButton::new_from_stock( VMARG )
     if ( o_grp && !CoreObject_IS_DERIVED( o_grp, GtkRadioToolButton ) )
         throw_inv_params( spec );
 #endif
-    GtkRadioToolButton* grp = o_grp ? (GtkRadioToolButton*) o_grp->getGObject() : NULL;
+    GtkRadioToolButton* grp = o_grp ? (GtkRadioToolButton*) o_grp->getObject() : NULL;
     GtkToolItem* btn = grp ? gtk_radio_tool_button_new_with_stock_from_widget( grp, stock )
                     : gtk_radio_tool_button_new_from_stock( NULL, stock );
     vm->retval( new Gtk::RadioToolButton(

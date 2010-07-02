@@ -84,7 +84,7 @@ FALCON_FUNC FileFilter::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_file_filter_new() );
+    self->setObject( (GObject*) gtk_file_filter_new() );
 }
 
 

@@ -352,7 +352,7 @@ FALCON_FUNC abstract_init( VMARG )
 {
     MYSELF;
     // check that a derived class has stuffed an object here
-    if ( !self->getGObject() )
+    if ( self->getObject() == 0 )
     {
         throw_gtk_error( e_abstract_class, FAL_STR( gtk_e_abstract_class_ ) );
     }
@@ -361,8 +361,7 @@ FALCON_FUNC abstract_init( VMARG )
 
 CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
     :
-    Falcon::FalconObject( cls ),
-    m_obj( (GObject*) gobj )
+    VoidObject( cls, (void*) gobj )
 {
     incref();
 }
@@ -370,35 +369,47 @@ CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
 
 CoreGObject::CoreGObject( const CoreGObject& other )
     :
-    Falcon::FalconObject( other ),
-    m_obj( other.m_obj )
+    VoidObject( other )
 {
     incref();
 }
 
 
-CoreGObject* CoreGObject::clone() const
+CoreGObject::~CoreGObject()
 {
-    return new CoreGObject( *this );
+    decref();
 }
 
 
-void CoreGObject::setGObject( const GObject* obj )
+void CoreGObject::setObject( const void* obj )
 {
-    assert( !m_obj && obj );
-    m_obj = (GObject*) obj;
+    VoidObject::setObject( obj );
     incref();
+}
+
+
+void CoreGObject::incref() const
+{
+    if ( m_obj )
+        g_object_ref_sink( m_obj );
+}
+
+
+void CoreGObject::decref() const
+{
+    if ( m_obj )
+        g_object_unref( m_obj );
 }
 
 
 bool CoreGObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
     AutoCString cstr( s );
-    GarbageLock* lock = (GarbageLock*) g_object_get_data( m_obj, cstr.c_str() );
+    GarbageLock* lock = (GarbageLock*) g_object_get_data( (GObject*) m_obj, cstr.c_str() );
     if ( lock )
         it = lock->item();
     else
-        return defaultProperty( s, it );
+        return VoidObject::getProperty( s, it );
     return true;
 }
 
@@ -406,7 +417,7 @@ bool CoreGObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 bool CoreGObject::setProperty( const Falcon::String& s, const Falcon::Item& it )
 {
     AutoCString cstr( s );
-    g_object_set_data_full( m_obj, cstr.c_str(),
+    g_object_set_data_full( (GObject*) m_obj, cstr.c_str(),
             new GarbageLock( it ), &CoreGObject::release_lock );
     return true;
 }
@@ -435,7 +446,7 @@ void CoreGObject::get_signal( const char* signame, const void* cb, Falcon::VMach
     CoreGObject* self = Falcon::dyncast<CoreGObject*>( vm->self().asObjectSafe() );
 
     vm->retval( new Gtk::Signal( vm->findWKI( "GtkSignal" )->asClass(),
-            self->m_obj, signame, cb ) );
+            (GObject*) self->m_obj, signame, cb ) );
 }
 
 
@@ -513,13 +524,18 @@ GarbageLock* CoreGObject::lockItem( GObject* obj, const Falcon::Item& it )
 Signal::Signal( const Falcon::CoreClass* cls,
                 const GObject* gobj, const char* name, const void* cb )
     :
-    Falcon::FalconObject( cls ),
-    m_obj( (GObject*) gobj ),
+    Gtk::CoreGObject( cls, gobj ),
     m_name( (char*) name ),
     m_cb( (void*) cb )
-{
-    incref();
-}
+{}
+
+
+Signal::Signal( const Signal& other )
+    :
+    Gtk::CoreGObject( other ),
+    m_name( other.m_name ),
+    m_cb( other.m_cb )
+{}
 
 
 bool Signal::getProperty( const Falcon::String& s, Falcon::Item& it ) const
@@ -546,7 +562,8 @@ Falcon::CoreObject* Signal::factory( const Falcon::CoreClass* cls, void* gobj, b
 
 void Signal::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Signal = mod->addClass( "GtkSignal" );
+    Falcon::Symbol* c_Signal = mod->addClass( "GtkSignal", &Gtk::abstract_init );
+    // NB: must not be private otherwise can't get WKI!..
 
     c_Signal->setWKS( true );
     //c_Signal->getClassDef()->factory( &Signal::factory );
@@ -559,7 +576,7 @@ FALCON_FUNC Signal::connect( VMARG )
 {
     Falcon::Item* cb = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !cb || cb->isNil() || !( cb->isCallable() || cb->isComposed() ) )
+    if ( !cb || !( cb->isCallable() || cb->isComposed() ) )
         throw_inv_params( "C" );
 #endif
     Signal* self = Falcon::dyncast<Signal*>( vm->self().asObjectSafe() );

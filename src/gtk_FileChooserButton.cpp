@@ -77,7 +77,7 @@ FALCON_FUNC FileChooserButton::init( VMARG )
     int action = args.getInteger( 1 );
     GtkWidget* wdt = gtk_file_chooser_button_new( title, (GtkFileChooserAction) action );
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -126,7 +126,7 @@ FALCON_FUNC FileChooserButton::new_with_dialog( VMARG )
         || !IS_DERIVED( i_dlg, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* dlg = (GtkWidget*) COREGOBJECT( i_dlg )->getGObject();
+    GtkWidget* dlg = (GtkWidget*) COREGOBJECT( i_dlg )->getObject();
     GtkWidget* wdt = gtk_file_chooser_button_new_with_dialog( dlg );
     vm->retval( new Gtk::FileChooserButton(
             vm->findWKI( "GtkFileChooserButton" )->asClass(), (GtkFileChooserButton*) wdt ) );

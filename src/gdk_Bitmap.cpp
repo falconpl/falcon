@@ -63,11 +63,11 @@ FALCON_FUNC Bitmap::create_from_data( VMARG )
 #endif
     AutoCString data( i_data->asString() );
     MYSELF;
-    self->setGObject( (GObject*) gdk_bitmap_create_from_data(
-                                i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
-                                data.c_str(),
-                                i_width->asInteger(),
-                                i_height->asInteger() ) );
+    self->setObject( gdk_bitmap_create_from_data(
+                        i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
+                        data.c_str(),
+                        i_width->asInteger(),
+                        i_height->asInteger() ) );
 }
 
 

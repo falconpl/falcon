@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_TREEVIEW( item ) \
-        ((GtkTreeView*)((Gtk::TreeView*) (item).asObjectSafe() )->getGObject())
+        ((GtkTreeView*)((Gtk::TreeView*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

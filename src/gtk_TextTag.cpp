@@ -71,7 +71,7 @@ FALCON_FUNC TextTag::init( VMARG )
 
     MYSELF;
     GtkTextTag* tag = gtk_text_tag_new( name );
-    self->setGObject( (GObject*) tag );
+    self->setObject( (GObject*) tag );
 }
 
 

@@ -15,15 +15,17 @@ namespace Gdk {
  */
 class Colormap
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Colormap( const Falcon::CoreClass*, const GdkColormap* = 0 );
 
+    Colormap( const Colormap& other );
+
     ~Colormap();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Colormap* clone() const { return new Colormap( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -32,6 +34,10 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkColormap* getObject() const { return (GdkColormap*) m_obj; }
+
+    void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
 #if 0
@@ -57,12 +63,11 @@ public:
 
     static FALCON_FUNC get_screen( VMARG );
 
-
-    GdkColormap* getObject() const { return m_colormap; }
-
 private:
 
-    GdkColormap*   m_colormap;
+    void incref() const;
+
+    void decref() const;
 
 };
 

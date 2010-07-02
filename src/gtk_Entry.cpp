@@ -200,10 +200,10 @@ Falcon::CoreObject* Entry::factory( const Falcon::CoreClass* gen, void* entry, b
 FALCON_FUNC Entry::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_entry_new() );
+    self->setObject( (GObject*) gtk_entry_new() );
 }
 
 
@@ -683,7 +683,7 @@ FALCON_FUNC Entry::new_with_buffer( VMARG )
     if ( !i_buf || !i_buf->isObject() || !IS_DERIVED( i_buf, GtkEntryBuffer ) )
         throw_inv_params( "GtkEntryBuffer" );
 #endif
-    GtkEntryBuffer* buf = (GtkEntryBuffer*) COREGOBJECT( i_buf )->getGObject();
+    GtkEntryBuffer* buf = (GtkEntryBuffer*) COREGOBJECT( i_buf )->getObject();
     GtkWidget* entry = gtk_entry_new_with_buffer( buf );
     vm->retval( new Gtk::Entry( vm->findWKI( "GtkEntry" )->asClass(),
                                 (GtkEntry*) entry ) );
@@ -744,7 +744,7 @@ FALCON_FUNC Entry::set_buffer( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkEntryBuffer* buf = (GtkEntryBuffer*) COREGOBJECT( i_buf )->getGObject();
+    GtkEntryBuffer* buf = (GtkEntryBuffer*) COREGOBJECT( i_buf )->getObject();
     gtk_entry_set_buffer( (GtkEntry*)_obj, buf );
 }
 #endif
@@ -1244,7 +1244,7 @@ FALCON_FUNC Entry::set_cursor_hadjustment( VMARG )
         throw_inv_params( "[GtkAdjustment]" );
 #endif
     GtkAdjustment* adj = i_adj->isNil() ? NULL
-                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_entry_set_cursor_hadjustment( (GtkEntry*)_obj, adj );
@@ -1378,7 +1378,7 @@ FALCON_FUNC Entry::set_icon_from_pixbuf( VMARG )
         throw_inv_params( "GtkEntryIconPosition,[GdkPixbuf]" );
 #endif
     GdkPixbuf* pix = i_pix->isNil() ? NULL
-                    : (GdkPixbuf*) COREGOBJECT( i_pix )->getGObject();
+                    : (GdkPixbuf*) COREGOBJECT( i_pix )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_entry_set_icon_from_pixbuf( (GtkEntry*)_obj,

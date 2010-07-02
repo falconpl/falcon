@@ -84,7 +84,7 @@ Falcon::CoreObject* ScaleButton::factory( const Falcon::CoreClass* gen, void* bt
 FALCON_FUNC ScaleButton::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Gtk::ArgCheck0 args( vm, "GtkIconSize,N,N,N,[A]" );
@@ -109,7 +109,7 @@ FALCON_FUNC ScaleButton::init( VMARG )
     else
         wdt = gtk_scale_button_new( (GtkIconSize) size, min, max, step, NULL );
 
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -208,7 +208,7 @@ FALCON_FUNC ScaleButton::set_adjustment( VMARG )
         || !IS_DERIVED( i_adj, GtkAdjustment ) )
         throw_inv_params( "GtkAdjustment" );
 #endif
-    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+    GtkAdjustment* adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_scale_button_set_adjustment( (GtkScaleButton*)_obj, adj );

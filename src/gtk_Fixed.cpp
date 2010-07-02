@@ -80,7 +80,7 @@ FALCON_FUNC Fixed::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* fixed = gtk_fixed_new();
-    self->setGObject( (GObject*) fixed );
+    self->setObject( (GObject*) fixed );
 }
 
 
@@ -99,7 +99,7 @@ FALCON_FUNC Fixed::put( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -125,7 +125,7 @@ FALCON_FUNC Fixed::move( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );

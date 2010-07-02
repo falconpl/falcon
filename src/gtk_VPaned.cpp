@@ -52,7 +52,7 @@ FALCON_FUNC VPaned::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* wdt = gtk_vpaned_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

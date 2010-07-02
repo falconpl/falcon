@@ -3,8 +3,6 @@
 
 #include "modgtk.hpp"
 
-#include <gdk/gdk.h>
-
 
 namespace Falcon {
 namespace Gdk {

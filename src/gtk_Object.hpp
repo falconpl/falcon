@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_GTKOBJECT( item ) \
-        ((GtkObject*)((Gtk::Object*) (item).asObjectSafe() )->getGObject())
+        ((GtkObject*)((Gtk::Object*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

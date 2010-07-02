@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_TREESORTABLE( item ) \
-        ((GtkTreeSortable*)((Gtk::TreeSortable*) (item).asObjectSafe() )->getGObject())
+        ((GtkTreeSortable*)((Gtk::TreeSortable*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

@@ -48,23 +48,52 @@ void Cursor::modInit( Falcon::Module* mod )
 
 Cursor::Cursor( const Falcon::CoreClass* gen, const GdkCursor* cursor )
     :
-    Falcon::CoreObject( gen ),
-    m_cursor( NULL )
+    Gtk::VoidObject( gen, cursor )
 {
-    if ( cursor )
-        m_cursor = gdk_cursor_ref( (GdkCursor*) cursor );
+    incref();
+}
+
+
+Cursor::Cursor( const Cursor& other )
+    :
+    Gtk::VoidObject( other )
+{
+    incref();
 }
 
 
 Cursor::~Cursor()
 {
-    if ( m_cursor )
-        gdk_cursor_unref( m_cursor );
+    decref();
+}
+
+
+void Cursor::incref() const
+{
+    if ( m_obj )
+        gdk_cursor_ref( (GdkCursor*) m_obj );
+}
+
+
+void Cursor::decref() const
+{
+    if ( m_obj )
+        gdk_cursor_unref( (GdkCursor*) m_obj );
+}
+
+
+void Cursor::setObject( const void* cur )
+{
+    VoidObject::setObject( cur );
+    incref();
 }
 
 
 bool Cursor::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkCursor* m_cursor = (GdkCursor*) m_obj;
+
     if ( s == "type" )
         it = (int64) m_cursor->type;
     else
@@ -85,13 +114,6 @@ Falcon::CoreObject* Cursor::factory( const Falcon::CoreClass* gen, void* cursor,
 }
 
 
-void Cursor::setCursor( const GdkCursor* cursor )
-{
-    assert( !m_cursor );
-    m_cursor = gdk_cursor_ref( (GdkCursor*) cursor );
-}
-
-
 /*#
     @class GdkCursor
     @brief Standard and pixmap cursors
@@ -106,7 +128,7 @@ FALCON_FUNC Cursor::init( VMARG )
         throw_inv_params( "GdkCursorType" );
 #endif
     MYSELF;
-    self->setCursor( gdk_cursor_new( (GdkCursorType) i_tp->asInteger() ) );
+    self->setObject( gdk_cursor_new( (GdkCursorType) i_tp->asInteger() ) );
 }
 
 #if 0 // todo (GdkPixmap,GdkDisplay,..)

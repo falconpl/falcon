@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_EVENT( item ) \
-        (((Gdk::Event*) (item).asObjectSafe() )->getEvent())
+        (((Gdk::Event*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -15,27 +15,29 @@ namespace Gdk {
  */
 class Event
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Event( const Falcon::CoreClass*, const GdkEvent* = 0, const bool transfer = false );
 
-    ~Event();
+    Event( const Event& );
 
-    Falcon::CoreObject* clone() const { return 0; }
+    virtual ~Event();
 
-    bool getProperty( const Falcon::String&, Falcon::Item& ) const;
+    virtual Event* clone() const { return new Event( *this ); }
 
-    bool setProperty( const Falcon::String&, const Falcon::Item& );
+    virtual bool getProperty( const Falcon::String&, Falcon::Item& ) const;
+
+    virtual bool setProperty( const Falcon::String&, const Falcon::Item& );
 
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
 
-    GdkEvent* getEvent() const { return (GdkEvent*) m_event; }
+    GdkEvent* getObject() const { return (GdkEvent*) m_obj; }
 
-    void setEvent( const GdkEvent*, const bool transfer = false );
+    virtual void setObject( const void*, const bool transfer = false );
 
     static FALCON_FUNC get_real_event( VMARG );
 
@@ -74,10 +76,6 @@ public:
 
     static FALCON_FUNC get_screen( VMARG );
 #endif
-
-protected:
-
-    GdkEvent*   m_event;
 
 };
 

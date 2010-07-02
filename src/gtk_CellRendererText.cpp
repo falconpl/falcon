@@ -63,7 +63,7 @@ FALCON_FUNC CellRendererText::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_cell_renderer_text_new() );
+    self->setObject( (GObject*) gtk_cell_renderer_text_new() );
 }
 
 

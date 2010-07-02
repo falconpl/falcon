@@ -85,7 +85,7 @@ FALCON_FUNC TreeModelSort::init( VMARG )
 #endif
     GtkTreeModel* mdl = GET_TREEMODEL( *i_mdl );
     MYSELF;
-    self->setGObject( (GObject*) gtk_tree_model_sort_new_with_model( mdl ) );
+    self->setObject( (GObject*) gtk_tree_model_sort_new_with_model( mdl ) );
 }
 
 

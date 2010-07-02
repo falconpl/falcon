@@ -81,7 +81,7 @@ FALCON_FUNC Arrow::init( VMARG )
     else
         wdt = gtk_arrow_new( GTK_ARROW_NONE, GTK_SHADOW_NONE );
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

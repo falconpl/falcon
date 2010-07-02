@@ -48,7 +48,7 @@ FALCON_FUNC VBox::init( VMARG )
 {
     MYSELF;
 
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
 
     Item* i_homog = vm->param( 0 );
@@ -74,7 +74,7 @@ FALCON_FUNC VBox::init( VMARG )
         spacing = i_spacing->asInteger();
     }
     GtkWidget* gwdt = gtk_vbox_new( homog, spacing );
-    self->setGObject( (GObject*) gwdt );
+    self->setObject( (GObject*) gwdt );
 }
 
 

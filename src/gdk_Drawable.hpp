@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_DRAWABLE( item ) \
-        ((GdkDrawable*)((Gdk::Drawable*) (item).asObjectSafe() )->getGObject())
+        (((Gdk::Drawable*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -24,6 +24,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkDrawable* getObject() const { return (GdkDrawable*) m_obj; }
 
 #if 0 // deprecated
     static FALCON_FUNC ref( VMARG );

@@ -86,12 +86,12 @@ FALCON_FUNC MessageDialog::init( VMARG )
     if ( o_parent && !CoreObject_IS_DERIVED( o_parent, GtkWindow ) )
         throw_inv_params( spec );
 #endif
-    GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getGObject() : NULL;
+    GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new( parent,
         (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
         msg ); // can emit a warning, safely ignore.
     MYSELF;
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -125,7 +125,7 @@ FALCON_FUNC MessageDialog::new_with_markup( VMARG )
     if ( o_parent && !CoreObject_IS_DERIVED( o_parent, GtkWindow ) )
         throw_inv_params( spec );
 #endif
-    GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getGObject() : NULL;
+    GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new_with_markup( parent,
         (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
         msg ); // can emit a warning, safely ignore.
@@ -162,7 +162,7 @@ FALCON_FUNC MessageDialog::set_image( VMARG )
         || !IS_DERIVED( i_img, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* img = (GtkWidget*) COREGOBJECT( i_img )->getGObject();
+    GtkWidget* img = (GtkWidget*) COREGOBJECT( i_img )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_message_dialog_set_image( (GtkMessageDialog*)_obj, img );

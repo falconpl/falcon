@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_POINT( item ) \
-        (((Gdk::Point*) (item).asObjectSafe() )->getPoint())
+        (((Gdk::Point*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -15,15 +15,17 @@ namespace Gdk {
  */
 class Point
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     Point( const Falcon::CoreClass*, const GdkPoint* = 0 );
 
+    Point( const Point& );
+
     ~Point();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    Point* clone() const { return new Point( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -33,13 +35,15 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkPoint* getPoint() const { return (GdkPoint*) &m_point; }
+    GdkPoint* getObject() const { return (GdkPoint*) m_obj; }
+
+    void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
 
 private:
 
-    GdkPoint    m_point;
+    void alloc();
 
 };
 

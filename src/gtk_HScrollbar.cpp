@@ -57,9 +57,9 @@ FALCON_FUNC HScrollbar::init( VMARG )
         throw_inv_params( "[GtkAdjustment]" );
 #endif
     GtkAdjustment* adj = i_adj->isNil() ? NULL
-                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
-    self->setGObject( (GObject*) gtk_hscrollbar_new( adj ) );
+    self->setObject( (GObject*) gtk_hscrollbar_new( adj ) );
 }
 
 

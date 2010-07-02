@@ -899,7 +899,7 @@ FALCON_FUNC FileChooser::set_preview_widget( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_file_chooser_set_preview_widget( (GtkFileChooser*)_obj, wdt );
@@ -1052,7 +1052,7 @@ FALCON_FUNC FileChooser::set_extra_widget( VMARG )
     if ( !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_file_chooser_set_extra_widget( (GtkFileChooser*)_obj, wdt );

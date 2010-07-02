@@ -80,18 +80,18 @@ FALCON_FUNC Layout::init( VMARG )
     if ( o_hadj && !CoreObject_IS_DERIVED( o_hadj, GtkAdjustment ) )
             throw_inv_params( "[GtkAdjustment,GtkAdjustment]" );
 #endif
-    GtkAdjustment* hadj = (GtkAdjustment*) o_hadj->getGObject();
+    GtkAdjustment* hadj = (GtkAdjustment*) o_hadj->getObject();
 
     CoreGObject* o_vadj = args.getCoreGObject( 1, false );
 #ifndef NO_PARAMETER_CHECK
     if ( o_vadj && !CoreObject_IS_DERIVED( o_vadj, GtkAdjustment ) )
             throw_inv_params( "[GtkAdjustment,GtkAdjustment]" );
 #endif
-    GtkAdjustment* vadj = (GtkAdjustment*) o_vadj->getGObject();
+    GtkAdjustment* vadj = (GtkAdjustment*) o_vadj->getObject();
 
     MYSELF;
     GtkWidget* wdt = gtk_layout_new( hadj, vadj );
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 
@@ -111,7 +111,7 @@ FALCON_FUNC Layout::put( VMARG )
     if ( o_wdt && !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -138,7 +138,7 @@ FALCON_FUNC Layout::move( VMARG )
     if ( o_wdt && !CoreObject_IS_DERIVED( o_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) o_wdt->getGObject();
+    GtkWidget* wdt = (GtkWidget*) o_wdt->getObject();
 
     gint x = args.getInteger( 1 );
     gint y = args.getInteger( 2 );
@@ -247,7 +247,7 @@ FALCON_FUNC Layout::set_hadjustment( VMARG )
 #endif
     GtkAdjustment* adj = NULL;
     if ( i_adj )
-        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_layout_set_hadjustment( (GtkLayout*)_obj, adj );
@@ -271,7 +271,7 @@ FALCON_FUNC Layout::set_vadjustment( VMARG )
 #endif
     GtkAdjustment* adj = NULL;
     if ( i_adj )
-        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getGObject();
+        adj = (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_layout_set_vadjustment( (GtkLayout*)_obj, adj );

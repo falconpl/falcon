@@ -62,7 +62,7 @@ FALCON_FUNC Invisible::init( VMARG )
     NO_ARGS
     MYSELF;
     GtkWidget* wdt = gtk_invisible_new();
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 #if 0

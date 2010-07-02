@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_GDKWINDOW( item ) \
-        ((GdkWindow*)((Gdk::Window*) (item).asObjectSafe() )->getGObject())
+        (((Gdk::Window*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
@@ -24,6 +24,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkWindow* getObject() const { return (GdkWindow*) m_obj; }
 
     //static FALCON_FUNC init( VMARG );
 

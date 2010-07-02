@@ -81,7 +81,7 @@ FALCON_FUNC Pixmap::init( VMARG )
         throw_inv_params( "Gdkdrawable == nil and depth == -1" );
 #endif
     MYSELF;
-    self->setGObject( (GObject*) gdk_pixmap_new( i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
+    self->setObject( (GObject*) gdk_pixmap_new( i_draw->isNil() ? NULL : GET_DRAWABLE( *i_draw ),
                                                  i_width->asInteger(),
                                                  i_height->asInteger(),
                                                  i_depth->asInteger() ) );

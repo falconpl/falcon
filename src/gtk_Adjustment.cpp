@@ -98,7 +98,7 @@ FALCON_FUNC Adjustment::init( VMARG )
     gdouble page_sz = args.getNumeric( 5, false );
 
     MYSELF;
-    self->setGObject( (GObject*) gtk_adjustment_new(
+    self->setObject( (GObject*) gtk_adjustment_new(
             value, lower, upper, step_incr, page_incr, page_sz ) );
 }
 

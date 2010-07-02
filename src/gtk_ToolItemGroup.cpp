@@ -80,7 +80,7 @@ FALCON_FUNC ToolItemGroup::init( VMARG )
     Gtk::ArgCheck1 args( vm, "S" );
     const gchar* lbl = args.getCString( 0 );
     MYSELF;
-    self->setGObject( (GObject*) gtk_tool_item_group_new( lbl ) );
+    self->setObject( (GObject*) gtk_tool_item_group_new( lbl ) );
 }
 
 
@@ -149,7 +149,7 @@ FALCON_FUNC ToolItemGroup::get_item_position( VMARG )
     if ( !i_itm || !i_itm->isObject() || !IS_DERIVED( i_itm, GtkToolItem ) )
         throw_inv_params( "GtkToolItem" );
 #endif
-    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getGObject();
+    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( gtk_tool_item_group_get_item_position( (GtkToolItemGroup*)_obj, itm ) );
@@ -256,7 +256,7 @@ FALCON_FUNC ToolItemGroup::insert( VMARG )
         || !i_pos || !i_pos->isInteger() )
         throw_inv_params( "GtkToolItem,I" );
 #endif
-    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getGObject();
+    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_group_insert( (GtkToolItemGroup*)_obj, itm, i_pos->asInteger() );
@@ -316,7 +316,7 @@ FALCON_FUNC ToolItemGroup::set_item_position( VMARG )
         || !i_pos || !i_pos->isInteger() )
         throw_inv_params( "GtkToolItem,I" );
 #endif
-    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getGObject();
+    GtkToolItem* itm = (GtkToolItem*) COREGOBJECT( i_itm )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_group_set_item_position( (GtkToolItemGroup*)_obj, itm, i_pos->asInteger() );
@@ -354,7 +354,7 @@ FALCON_FUNC ToolItemGroup::set_label_widget( VMARG )
     if ( !i_wdt || !i_wdt->isObject() || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_tool_item_group_set_label_widget( (GtkToolItemGroup*)_obj, wdt );

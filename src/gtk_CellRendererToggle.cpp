@@ -70,7 +70,7 @@ FALCON_FUNC CellRendererToggle::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_cell_renderer_accel_new() );
+    self->setObject( (GObject*) gtk_cell_renderer_accel_new() );
 }
 
 

@@ -12,15 +12,17 @@ namespace Glib {
  */
 class ParamSpec
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     ParamSpec( const Falcon::CoreClass*, const GParamSpec* = 0 );
 
+    ParamSpec( const ParamSpec& );
+
     ~ParamSpec();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    ParamSpec* clone() const { return new ParamSpec( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -30,11 +32,15 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GParamSpec* getSpec() const { return (GParamSpec*) m_spec; }
+    GParamSpec* getObject() const { return (GParamSpec*) m_obj; }
+
+    void setObject( const void* );
 
 private:
 
-    GParamSpec* m_spec;
+    void incref() const;
+
+    void decref() const;
 
 };
 

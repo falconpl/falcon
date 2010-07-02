@@ -89,7 +89,7 @@ FALCON_FUNC EntryBuffer::init( VMARG )
         buf = gtk_entry_buffer_new( NULL, -1 );
 
     MYSELF;
-    self->setGObject( (GObject*) buf );
+    self->setObject( (GObject*) buf );
 }
 
 

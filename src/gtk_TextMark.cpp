@@ -101,7 +101,7 @@ FALCON_FUNC TextMark::init( VMARG )
 
     MYSELF;
     GtkTextMark* mk = gtk_text_mark_new( name, gravity );
-    self->setGObject( (GObject*) mk );
+    self->setObject( (GObject*) mk );
 }
 
 

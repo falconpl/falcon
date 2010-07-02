@@ -71,7 +71,7 @@ FALCON_FUNC Alignment::init( VMARG )
 
     MYSELF;
     GtkWidget* wdt = gtk_alignment_new( xalign, yalign, xscale, yscale );
-    self->setGObject( (GObject*) wdt );
+    self->setObject( (GObject*) wdt );
 }
 
 

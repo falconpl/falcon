@@ -103,9 +103,9 @@ FALCON_FUNC GC::init( VMARG )
     if ( !i_draw || !i_draw->isObject() || !IS_DERIVED( i_draw, GdkDrawable ) )
         throw_inv_params( "GdkDrawable" );
 #endif
-    GdkDrawable* draw = (GdkDrawable*) COREGOBJECT( i_draw )->getGObject();
+    GdkDrawable* draw = (GdkDrawable*) COREGOBJECT( i_draw )->getObject();
     MYSELF;
-    self->setGObject( (GObject*) gdk_gc_new( draw ) );
+    self->setObject( (GObject*) gdk_gc_new( draw ) );
 }
 
 
@@ -128,8 +128,8 @@ FALCON_FUNC GC::new_with_values( VMARG )
         || !i_mask || !i_mask->isInteger() )
         throw_inv_params( "GdkGCValues,GdkGCValuesMask" );
 #endif
-    GdkDrawable* draw = (GdkDrawable*) COREGOBJECT( i_draw )->getGObject();
-    GdkGCValues* val = dyncast<Gdk::GCValues*>( i_val->asObjectSafe() )->getGCValues();
+    GdkDrawable* draw = (GdkDrawable*) COREGOBJECT( i_draw )->getObject();
+    GdkGCValues* val = GET_GCVALUES( *i_val );
     GdkGC* gc = gdk_gc_new_with_values( draw, val, (GdkGCValuesMask) i_mask->asInteger() );
     vm->retval( new Gdk::GC( vm->findWKI( "GdkGC" )->asClass(), gc ) );
 }
@@ -176,7 +176,7 @@ FALCON_FUNC GC::set_values( VMARG )
         || !i_mask || !i_mask->isInteger() )
         throw_inv_params( "GdkGCValues,GdkGCValuesMask" );
 #endif
-    GdkGCValues* val = dyncast<Gdk::GCValues*>( i_val->asObjectSafe() )->getGCValues();
+    GdkGCValues* val = GET_GCVALUES( *i_val );
     MYSELF;
     GET_OBJ( self );
     gdk_gc_set_values( (GdkGC*)_obj, val, (GdkGCValuesMask) i_mask->asInteger() );

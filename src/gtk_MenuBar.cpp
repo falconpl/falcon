@@ -64,7 +64,7 @@ FALCON_FUNC MenuBar::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_menu_bar_new() );
+    self->setObject( (GObject*) gtk_menu_bar_new() );
 }
 
 

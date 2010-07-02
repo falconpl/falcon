@@ -58,28 +58,42 @@ void Event::modInit( Falcon::Module* mod )
 
 Event::Event( const Falcon::CoreClass* gen, const GdkEvent* ev, const bool transfer )
     :
-    Falcon::CoreObject( gen ),
-    m_event( NULL )
+    Gtk::VoidObject( gen, ev )
 {
-    if ( ev )
-    {
-        if ( !transfer )
-            m_event = gdk_event_copy( (GdkEvent*) ev );
-        else
-            m_event = (GdkEvent*) ev;
-    }
+    if ( m_obj && !transfer )
+        m_obj = gdk_event_copy( (GdkEvent*) m_obj );
+}
+
+
+Event::Event( const Event& other )
+    :
+    Gtk::VoidObject( other )
+{
+    if ( m_obj )
+        m_obj = gdk_event_copy( (GdkEvent*) m_obj );
 }
 
 
 Event::~Event()
 {
-    if ( m_event )
-        gdk_event_free( m_event );
+    if ( m_obj )
+        gdk_event_free( (GdkEvent*) m_obj );
+}
+
+
+void Event::setObject( const void* ev, const bool transfer )
+{
+    VoidObject::setObject( ev );
+    if ( !transfer )
+        m_obj = gdk_event_copy( (GdkEvent*) ev );
 }
 
 
 bool Event::getProperty( const Falcon::String& s, Falcon::Item& it ) const
 {
+    assert( m_obj );
+    GdkEvent* m_event = (GdkEvent*) m_obj;
+
     if ( s == "type" )
         it = (int64) m_event->type;
 #if 0 // todo
@@ -108,17 +122,6 @@ Falcon::CoreObject* Event::factory( const Falcon::CoreClass* gen, void* ev, bool
 }
 
 
-void Event::setEvent( const GdkEvent* ev, const bool transfer )
-{
-    assert( !m_event );
-
-    if ( !transfer )
-        m_event = gdk_event_copy( (GdkEvent*) ev );
-    else
-        m_event = (GdkEvent*) ev;
-}
-
-
 /*#
     @class GdkEvent
     @brief Functions for handling events from the window system
@@ -133,7 +136,7 @@ void Event::setEvent( const GdkEvent* ev, const bool transfer )
 FALCON_FUNC Event::init( VMARG )
 {
     MYSELF;
-    if ( self->getEvent() )
+    if ( self->getObject() )
         return;
 
     Item* i_type = vm->param( 0 );
@@ -141,7 +144,7 @@ FALCON_FUNC Event::init( VMARG )
     if ( !i_type || !i_type->isInteger() )
         throw_inv_params( "GdkEventType" );
 #endif
-    self->setEvent( (GdkEvent*) gdk_event_new( (GdkEventType) i_type->asInteger() ),
+    self->setObject( (GdkEvent*) gdk_event_new( (GdkEventType) i_type->asInteger() ),
                     true );
 }
 
@@ -158,7 +161,7 @@ FALCON_FUNC Event::get_real_event( VMARG )
 {
     NO_ARGS
     MYSELF;
-    switch ( self->getEvent()->type )
+    switch ( self->getObject()->type )
     {
 #if 0
     case GDK_NOTHING:
@@ -173,7 +176,7 @@ FALCON_FUNC Event::get_real_event( VMARG )
     case GDK_BUTTON_RELEASE:
     {
         vm->retval( new Gdk::EventButton( vm->findWKI( "GdkEventButton" )->asClass(),
-                                          (GdkEventButton*) self->getEvent() ) );
+                                          (GdkEventButton*) self->getObject() ) );
         return;
     }
 #if 0
@@ -280,8 +283,7 @@ FALCON_FUNC Event::get_graphics_expose( VMARG );
 FALCON_FUNC Event::put( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    gdk_event_put( self->getEvent() );
+    gdk_event_put( GET_EVENT( vm->self() ) );
 }
 
 
@@ -293,9 +295,8 @@ FALCON_FUNC Event::put( VMARG )
 FALCON_FUNC Event::copy( VMARG )
 {
     NO_ARGS
-    MYSELF;
     vm->retval( new Gdk::Event( vm->findWKI( "GdkEvent" )->asClass(),
-                                self->getEvent() ) );
+                                GET_EVENT( vm->self() ) ) );
 }
 
 
@@ -307,8 +308,7 @@ FALCON_FUNC Event::copy( VMARG )
 FALCON_FUNC Event::get_time( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    vm->retval( (int64) gdk_event_get_time( self->getEvent() ) );
+    vm->retval( (int64) gdk_event_get_time( GET_EVENT( vm->self() ) ) );
 }
 
 
@@ -320,9 +320,8 @@ FALCON_FUNC Event::get_time( VMARG )
 FALCON_FUNC Event::get_state( VMARG )
 {
     NO_ARGS
-    MYSELF;
     GdkModifierType state;
-    gdk_event_get_state( self->getEvent(), &state );
+    gdk_event_get_state( GET_EVENT( vm->self() ), &state );
     vm->retval( (int64) state );
 }
 
@@ -340,9 +339,8 @@ FALCON_FUNC Event::get_axis( VMARG )
     if ( !i_ax || !i_ax->isInteger() )
         throw_inv_params( "GdkAxisUse" );
 #endif
-    MYSELF;
     gdouble value;
-    gboolean ret = gdk_event_get_axis( self->getEvent(),
+    gboolean ret = gdk_event_get_axis( GET_EVENT( vm->self() ),
                                        (GdkAxisUse) i_ax->asInteger(), &value );
     if ( ret )
         vm->retval( (numeric) value );
@@ -359,9 +357,8 @@ FALCON_FUNC Event::get_axis( VMARG )
 FALCON_FUNC Event::get_coords( VMARG )
 {
     NO_ARGS
-    MYSELF;
     gdouble x, y;
-    gboolean ret = gdk_event_get_coords( self->getEvent(), &x, &y );
+    gboolean ret = gdk_event_get_coords( GET_EVENT( vm->self() ), &x, &y );
     if ( ret )
     {
         CoreArray* arr = new CoreArray( 2 );
@@ -382,9 +379,8 @@ FALCON_FUNC Event::get_coords( VMARG )
 FALCON_FUNC Event::get_root_coords( VMARG )
 {
     NO_ARGS
-    MYSELF;
     gdouble x, y;
-    gboolean ret = gdk_event_get_root_coords( self->getEvent(), &x, &y );
+    gboolean ret = gdk_event_get_root_coords( GET_EVENT( vm->self() ), &x, &y );
     if ( ret )
     {
         CoreArray* arr = new CoreArray( 2 );

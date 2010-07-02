@@ -78,7 +78,7 @@ FALCON_FUNC RadioAction::init( VMARG )
     gint value = args.getInteger( 4 );
 
     GtkRadioAction* act = gtk_radio_action_new( name, label, tooltip, stock, value );
-    self->setGObject( (GObject*) act );
+    self->setObject( (GObject*) act );
 }
 
 

@@ -3,6 +3,8 @@
 
 #include "modgtk.hpp"
 
+#define GET_GCVALUES( item ) \
+        (((Gdk::GCValues*) (item).asObjectSafe())->getObject())
 
 namespace Falcon {
 namespace Gdk {
@@ -12,15 +14,17 @@ namespace Gdk {
  */
 class GCValues
     :
-    public Falcon::CoreObject
+    public Gtk::VoidObject
 {
 public:
 
     GCValues( const Falcon::CoreClass*, const GdkGCValues* = 0 );
 
+    GCValues( const GCValues& );
+
     ~GCValues();
 
-    Falcon::CoreObject* clone() const { return 0; }
+    GCValues* clone() const { return new GCValues( *this ); }
 
     bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
@@ -30,23 +34,15 @@ public:
 
     static void modInit( Falcon::Module* );
 
-    GdkGCValues* getGCValues() const { return (GdkGCValues*) &m_gcvalues; }
+    GdkGCValues* getObject() const { return (GdkGCValues*) m_obj; }
 
-    void setGCValues( const GdkGCValues* );
+    void setObject( const void* );
 
 private:
 
-    /*
-     *  Increment ref count of internal objects.
-     */
     void incref();
 
-    /*
-     *  Decrement ref count of internal objects.
-     */
     void decref();
-
-    GdkGCValues     m_gcvalues;
 
 };
 

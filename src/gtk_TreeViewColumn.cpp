@@ -122,7 +122,7 @@ FALCON_FUNC TreeViewColumn::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_tree_view_column_new() );
+    self->setObject( (GObject*) gtk_tree_view_column_new() );
 }
 
 

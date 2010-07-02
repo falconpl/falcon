@@ -186,7 +186,7 @@ FALCON_FUNC TreeView::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_tree_view_new() );
+    self->setObject( (GObject*) gtk_tree_view_new() );
 }
 
 

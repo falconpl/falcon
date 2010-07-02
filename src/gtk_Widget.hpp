@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_WIDGET( item ) \
-        ((GtkWidget*)((Gtk::Widget*) (item).asObjectSafe() )->getGObject())
+        ((GtkWidget*)((Gtk::Widget*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {

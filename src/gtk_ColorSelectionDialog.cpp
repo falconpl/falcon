@@ -64,7 +64,7 @@ FALCON_FUNC ColorSelectionDialog::init( VMARG )
         title = (char*) "";
     MYSELF;
     GtkWidget* dlg = gtk_color_selection_dialog_new( title );
-    self->setGObject( (GObject*) dlg );
+    self->setObject( (GObject*) dlg );
 }
 
 

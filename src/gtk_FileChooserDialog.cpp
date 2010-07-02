@@ -76,11 +76,11 @@ FALCON_FUNC FileChooserDialog::init( VMARG )
     if ( o_parent && !CoreObject_IS_DERIVED( o_parent, GtkWindow ) )
         throw_inv_params( spec );
 #endif
-    GtkWindow* win = o_parent ? (GtkWindow*) o_parent->getGObject() : NULL;
+    GtkWindow* win = o_parent ? (GtkWindow*) o_parent->getObject() : NULL;
     GtkWidget* dlg = gtk_file_chooser_dialog_new(
             title, win, (GtkFileChooserAction) action, NULL, NULL );
     MYSELF;
-    self->setGObject( (GObject*) dlg );
+    self->setObject( (GObject*) dlg );
 }
 
 

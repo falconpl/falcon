@@ -131,7 +131,7 @@ FALCON_FUNC Box::pack_start( VMARG )
     if ( padding < 0 )
         throw_inv_params( "GtkWidget,B,B,I" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -171,7 +171,7 @@ FALCON_FUNC Box::pack_end( VMARG )
     if ( padding < 0 )
         throw_inv_params( "GtkWidget,B,B,I" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
 
     MYSELF;
     GET_OBJ( self );
@@ -198,7 +198,7 @@ FALCON_FUNC Box::pack_start_defaults( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_pack_start_defaults( (GtkBox*)_obj, wdt );
@@ -223,7 +223,7 @@ FALCON_FUNC Box::pack_end_defaults( VMARG )
         || !IS_DERIVED( i_wdt, GtkWidget ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_pack_end_defaults( (GtkBox*)_obj, wdt );
@@ -307,7 +307,7 @@ FALCON_FUNC Box::reorder_child( VMARG )
         || !i_pos || i_pos->isNil() || !i_pos->isInteger() )
         throw_inv_params( "GtkWidget,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_reorder_child( (GtkBox*)_obj, wdt, i_pos->asInteger() );
@@ -327,7 +327,7 @@ FALCON_FUNC Box::query_child_packing( VMARG )
     if ( !i_child || !( i_child->isObject() && IS_DERIVED( i_child, GtkWidget ) ) )
         throw_inv_params( "GtkWidget" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gboolean expand, fill;
@@ -368,7 +368,7 @@ FALCON_FUNC Box::set_child_packing( VMARG )
         || !i_ptype || !i_ptype->isInteger() )
         throw_inv_params( "GtkWidget,B,B,I,GtkPackType" );
 #endif
-    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* child = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_box_set_child_packing( (GtkBox*)_obj, child, (gboolean) i_expand->asBoolean(),

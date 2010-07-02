@@ -69,7 +69,7 @@ FALCON_FUNC FontButton::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_font_button_new() );
+    self->setObject( (GObject*) gtk_font_button_new() );
 }
 
 

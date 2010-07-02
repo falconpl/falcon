@@ -96,10 +96,10 @@ Falcon::CoreObject* MenuItem::factory( const Falcon::CoreClass* gen, void* menu,
 FALCON_FUNC MenuItem::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_menu_item_new() );
+    self->setObject( (GObject*) gtk_menu_item_new() );
 }
 
 
@@ -295,7 +295,7 @@ FALCON_FUNC MenuItem::set_submenu( VMARG )
         throw_inv_params( "[GtkWidget]" );
 #endif
     GtkWidget* menu = i_menu->isNil() ? NULL :
-                            (GtkWidget*) COREGOBJECT( i_menu )->getGObject();
+                            (GtkWidget*) COREGOBJECT( i_menu )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_menu_item_set_submenu( (GtkMenuItem*)_obj, menu );

@@ -95,10 +95,10 @@ Falcon::CoreObject* Button::factory( const Falcon::CoreClass* gen, void* btn, bo
 FALCON_FUNC Button::init( VMARG )
 {
     MYSELF;
-    if ( self->getGObject() )
+    if ( self->getObject() )
         return;
     NO_ARGS
-    self->setGObject( (GObject*) gtk_button_new() );
+    self->setObject( (GObject*) gtk_button_new() );
 }
 
 
@@ -629,7 +629,7 @@ FALCON_FUNC Button::set_image( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkWidget* img = (GtkWidget*) COREGOBJECT( i_img )->getGObject();
+    GtkWidget* img = (GtkWidget*) COREGOBJECT( i_img )->getObject();
     gtk_button_set_image( (GtkButton*)_obj, img );
 }
 

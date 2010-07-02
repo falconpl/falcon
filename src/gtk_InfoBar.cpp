@@ -88,7 +88,7 @@ FALCON_FUNC InfoBar::init( VMARG )
 {
     NO_ARGS
     MYSELF;
-    self->setGObject( (GObject*) gtk_info_bar_new() );
+    self->setObject( (GObject*) gtk_info_bar_new() );
 }
 
 
@@ -113,7 +113,7 @@ FALCON_FUNC InfoBar::add_action_widget( VMARG )
         || !i_id || i_id->isNil() || !i_id->isInteger() )
         throw_inv_params( "GtkWidget,I" );
 #endif
-    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getGObject();
+    GtkWidget* chld = (GtkWidget*) COREGOBJECT( i_chld )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_info_bar_add_action_widget( (GtkInfoBar*)_obj, chld, i_id->asInteger() );

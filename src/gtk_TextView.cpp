@@ -120,7 +120,7 @@ FALCON_FUNC TextView::init( VMARG )
 #endif
     MYSELF;
     GtkWidget* view = gtk_text_view_new();
-    self->setGObject( (GObject*) view );
+    self->setObject( (GObject*) view );
 }
 
 
@@ -145,7 +145,7 @@ FALCON_FUNC TextView::new_with_buffer( VMARG )
         if ( !CoreObject_IS_DERIVED( o_buf, GtkTextBuffer ) )
             throw_inv_params( "[GtkTextBuffer]" );
 #endif
-        buf = (GtkTextBuffer*) o_buf->getGObject();
+        buf = (GtkTextBuffer*) o_buf->getObject();
     }
     GtkWidget* view = gtk_text_view_new_with_buffer( buf );
     vm->retval( new Gtk::TextView( vm->findWKI( "GtkTextView" )->asClass(),
@@ -170,7 +170,7 @@ FALCON_FUNC TextView::set_buffer( VMARG )
         if ( !CoreObject_IS_DERIVED( o_buf, GtkTextBuffer ) )
             throw_inv_params( "[GtkTextBuffer]" );
 #endif
-        buf = (GtkTextBuffer*) o_buf->getGObject();
+        buf = (GtkTextBuffer*) o_buf->getObject();
     }
     MYSELF;
     GET_OBJ( self );
@@ -220,7 +220,7 @@ FALCON_FUNC TextView::scroll_to_mark( VMARG )
     if ( !CoreObject_IS_DERIVED( o_mk, GtkTextMark ) )
         throw_inv_params( "GtkTextMark,N,B,N,N" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) o_mk->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) o_mk->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_view_scroll_to_mark( (GtkTextView*)_obj, mk, within_margin,
@@ -262,7 +262,7 @@ FALCON_FUNC TextView::scroll_to_iter( VMARG )
     if ( !CoreObject_IS_DERIVED( o_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter,N,B,N,N" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) o_iter->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) o_iter->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_scroll_to_iter( (GtkTextView*)_obj,
@@ -283,7 +283,7 @@ FALCON_FUNC TextView::scroll_mark_onscreen( VMARG )
         || !IS_DERIVED( i_mk, GtkTextMark ) )
         throw_inv_params( "GtkTextMark" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_view_scroll_mark_onscreen( (GtkTextView*)_obj, mk );
@@ -304,7 +304,7 @@ FALCON_FUNC TextView::move_mark_onscreen( VMARG )
         || !IS_DERIVED( i_mk, GtkTextMark ) )
         throw_inv_params( "GtkTextMark" );
 #endif
-    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getGObject();
+    GtkTextMark* mk = (GtkTextMark*) COREGOBJECT( i_mk )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_move_mark_onscreen( (GtkTextView*)_obj, mk ) );
@@ -351,7 +351,7 @@ FALCON_FUNC TextView::get_line_at_y( VMARG )
         || !i_y || i_y->isNil() || !i_y->isInteger() )
         throw_inv_params( "GtkTextIter,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     gint line_top;
     MYSELF;
     GET_OBJ( self );
@@ -377,7 +377,7 @@ FALCON_FUNC TextView::get_line_yrange( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     gint y, height;
     MYSELF;
     GET_OBJ( self );
@@ -593,7 +593,7 @@ FALCON_FUNC TextView::forward_display_line( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_forward_display_line( (GtkTextView*)_obj, iter ) );
@@ -621,7 +621,7 @@ FALCON_FUNC TextView::backward_display_line( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_backward_display_line( (GtkTextView*)_obj, iter ) );
@@ -649,7 +649,7 @@ FALCON_FUNC TextView::forward_display_line_end( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_forward_display_line_end( (GtkTextView*)_obj, iter ) );
@@ -677,7 +677,7 @@ FALCON_FUNC TextView::backward_display_line_start( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_backward_display_line_start( (GtkTextView*)_obj, iter ) );
@@ -700,7 +700,7 @@ FALCON_FUNC TextView::starts_display_line( VMARG )
         || !IS_DERIVED( i_iter, GtkTextIter ) )
         throw_inv_params( "GtkTextIter" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_starts_display_line( (GtkTextView*)_obj, iter ) );
@@ -732,7 +732,7 @@ FALCON_FUNC TextView::move_visually( VMARG )
         || !i_cnt || i_cnt->isNil() || !i_cnt->isInteger() )
         throw_inv_params( "GtkTextIter,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getGObject();
+    GtkTextIter* iter = (GtkTextIter*) COREGOBJECT( i_iter )->getObject();
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_text_view_move_visually( (GtkTextView*)_obj,
@@ -778,7 +778,7 @@ FALCON_FUNC TextView::add_child_in_window( VMARG )
         || !i_ypos || i_ypos->isNil() || !i_ypos->isInteger() )
         throw_inv_params( "GtkWidget,GtkTextWindowType,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_view_add_child_in_window( (GtkTextView*)_obj, wdt,
@@ -805,7 +805,7 @@ FALCON_FUNC TextView::move_child( VMARG )
         || !i_ypos || i_ypos->isNil() || !i_ypos->isInteger() )
         throw_inv_params( "GtkWidget,I,I" );
 #endif
-    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_child )->getGObject();
+    GtkWidget* wdt = (GtkWidget*) COREGOBJECT( i_child )->getObject();
     MYSELF;
     GET_OBJ( self );
     gtk_text_view_move_child( (GtkTextView*)_obj, wdt,
