@@ -39,6 +39,12 @@ public:
 
     void setObject( const void* );
 
+    static FALCON_FUNC init( VMARG );
+
+private:
+
+    void alloc();
+
 };
 
 
