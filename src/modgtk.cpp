@@ -17,6 +17,7 @@
 #include "gdk_EventButton.hpp"
 #include "gdk_GC.hpp"
 #include "gdk_GCValues.hpp"
+#include "gdk_Geometry.hpp"
 #include "gdk_Pixbuf.hpp"
 #include "gdk_Pixmap.hpp"
 #include "gdk_Point.hpp"
@@ -191,6 +192,7 @@ FALCON_MODULE_DECL
         Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::GC::modInit( self );
     Falcon::Gdk::GCValues::modInit( self );
+    Falcon::Gdk::Geometry::modInit( self );
     Falcon::Gdk::Pixbuf::modInit( self );
     Falcon::Gdk::Point::modInit( self );
     Falcon::Gdk::Rectangle::modInit( self );
