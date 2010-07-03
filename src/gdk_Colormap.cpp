@@ -105,17 +105,12 @@ bool Colormap::getProperty( const Falcon::String& s, Falcon::Item& it ) const
         it = m_colormap->size;
     else
     if ( s == "colors" )
-    { // todo
-        if ( m_colormap )
-        {
-            CoreArray* arr = new CoreArray( m_colormap->size );
-            Item* wki = VMachine::getCurrent()->findWKI( "GdkColor" );
-            for ( int i = 0; i < m_colormap->size; ++i )
-                arr->append( new Gdk::Color( wki->asClass(), &m_colormap->colors[i] ) );
-            it = arr;
-        }
-        else
-            return false;
+    {
+        CoreArray* arr = new CoreArray( m_colormap->size );
+        Item* wki = VMachine::getCurrent()->findWKI( "GdkColor" );
+        for ( int i = 0; i < m_colormap->size; ++i )
+            arr->append( new Gdk::Color( wki->asClass(), &m_colormap->colors[i] ) );
+        it = arr;
     }
     else
         return defaultProperty( s, it );
@@ -140,23 +135,22 @@ Falcon::CoreObject* Colormap::factory( const Falcon::CoreClass* gen, void* clr, 
     @brief The GdkColormap structure is used to describe an allocated or unallocated color.
     @param visual a GdkVisual.
     @param allocate if true, the newly created colormap will be a private colormap, and all colors in it will be allocated for the applications use.
-    @return the new GdkColormap.
 
     @prop size For pseudo-color colormaps, the number of colors in the colormap.
     @prop colors An array containing the current values in the colormap. This can be used to map from pixel values back to RGB values. This is only meaningful for pseudo-color colormaps.
  */
 FALCON_FUNC Colormap::init( VMARG )
 {
-    Gtk::ArgCheck0 args( vm, "GdkVisual,B" );
-    CoreObject* o_vis = args.getObject( 0 );
-    gboolean b = args.getBoolean( 1 );
+    Item* i_vis = vm->param( 0 );
+    Item* i_allocate = vm->param( 1 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !CoreObject_IS_DERIVED( o_vis, GdkVisual ) )
+    if ( !i_vis || !i_vis->isObject() || !IS_DERIVED( i_vis, GdkVisual )
+        || !i_allocate || !i_allocate->isBoolean() )
         throw_inv_params( "GdkVisual,B" );
 #endif
-    GdkVisual* vis = Falcon::dyncast<Gdk::Visual*>( o_vis )->getObject();
     MYSELF;
-    self->setObject( gdk_colormap_new( vis, b ) );
+    self->setObject( gdk_colormap_new( GET_VISUAL( *i_vis ),
+                                       (gboolean) i_allocate->asBoolean() ) );
 }
 
 
