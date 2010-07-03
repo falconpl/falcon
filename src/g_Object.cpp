@@ -6,7 +6,6 @@
 
 #include <glib-object.h>
 
-#include "gdk_Color.hpp"
 
 namespace Falcon {
 namespace Glib {
@@ -133,14 +132,15 @@ FALCON_FUNC Object::set_property( VMARG )
     }
     case FLC_ITEM_OBJECT:
     {
-        if ( IS_DERIVED( i_val, GObject ) )
-            g_object_set( gobj, name.c_str(), GET_OBJECT( *i_val ), NULL );
+        VoidObject* vobj = dynamic_cast<Gtk::VoidObject*>( i_val->asObjectSafe() );
+        if ( vobj != 0 )
+            g_object_set( gobj, name.c_str(), vobj->getObject(), NULL );
         else
-            g_object_set( gobj, name.c_str(), ((Gtk::VoidObject*) i_val->asObjectSafe())->getObject(), NULL );
+            throw_inv_params( "S,GTK" );
         break;
     }
     default:
-        throw_inv_params( "S,X" );
+        throw_inv_params( "not implemented" );
     }
 }
 
@@ -153,51 +153,56 @@ FALCON_FUNC Object::set_property( VMARG )
  */
 FALCON_FUNC Object::get_property( VMARG )
 {
-    Item* i_nam = vm->param( 0 );
+    Item* i_name = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_nam || !i_nam->isString() )
+    if ( !i_name || !i_name->isString() )
         throw_inv_params( "S" );
 #endif
     GObject* gobj = GET_OBJECT( vm->self() );
-    AutoCString nam( i_nam->asString() );
+    AutoCString name( i_name->asString() );
 
     GParamSpec* spec = g_object_class_find_property(
-        G_OBJECT_GET_CLASS( gobj ), nam.c_str() );
+        G_OBJECT_GET_CLASS( gobj ), name.c_str() );
 
     if ( !spec )
         throw_gtk_error( e_inv_property, FAL_STR( gtk_e_inv_property_ ) );
 
-    if ( spec->value_type == G_TYPE_BOOLEAN )
+    switch ( spec->value_type )
+    {
+    case G_TYPE_NONE:
+        vm->retnil();
+        return;
+    case G_TYPE_BOOLEAN:
     {
         gboolean b;
-        g_object_get( gobj, nam.c_str(), &b, NULL );
+        g_object_get( gobj, name.c_str(), &b, NULL );
         vm->retval( (bool) b );
+        return;
     }
-    else
-    if (   spec->value_type == G_TYPE_INT
-        || spec->value_type == G_TYPE_UINT
-        || spec->value_type == G_TYPE_LONG
-        || spec->value_type == G_TYPE_ULONG
-        || spec->value_type == G_TYPE_INT64
-        || spec->value_type == G_TYPE_UINT64 )
+    case G_TYPE_INT:
+    case G_TYPE_UINT:
+    case G_TYPE_LONG:
+    case G_TYPE_ULONG:
+    case G_TYPE_INT64:
+    case G_TYPE_UINT64:
     {
-        Falcon::int64 val;
-        g_object_get( gobj, nam.c_str(), &val, NULL );
-        vm->retval( val );
+        Falcon::int64 i = 0;
+        g_object_get( gobj, name.c_str(), &i, NULL );
+        vm->retval( i );
+        return;
     }
-    else
-    if (   spec->value_type == G_TYPE_FLOAT
-        || spec->value_type == G_TYPE_DOUBLE )
+    case G_TYPE_FLOAT:
+    case G_TYPE_DOUBLE:
     {
-        double d;
-        g_object_get( gobj, nam.c_str(), &d, NULL );
+        double d = 0;
+        g_object_get( gobj, name.c_str(), &d, NULL );
         vm->retval( d );
+        return;
     }
-    else
-    if ( spec->value_type == G_TYPE_STRING )
+    case G_TYPE_STRING:
     {
         gchar* txt = NULL;
-        g_object_get( gobj, nam.c_str(), &txt, NULL );
+        g_object_get( gobj, name.c_str(), &txt, NULL );
         if ( txt )
         {
             vm->retval( UTF8String( txt ) );
@@ -205,39 +210,44 @@ FALCON_FUNC Object::get_property( VMARG )
         }
         else
             vm->retval( UTF8String( "" ) );
+        return;
     }
-#if 0
-    else
-    if ( g_type_is_a( spec->value_type, G_TYPE_OBJECT ) )
+    default:
     {
-        GObject* o;
-        g_object_get( gobj, nam.c_str(), &o, NULL );
-        if ( o )
+        switch ( G_TYPE_FUNDAMENTAL( spec->value_type ) )
         {
-            vm->retval( new Glib::Object( vm->self().asClass(), o ) );
-            g_object_unref( o );
+        case G_TYPE_ENUM:
+        {
+            Falcon::int64 val = 0;
+            g_object_get( gobj, name.c_str(), &val, NULL );
+            vm->retval( val );
+            return;
         }
-        else
-            vm->retnil();
-    }
-#endif
-    else
-    {
-        const gchar* tpname = g_type_name( G_PARAM_SPEC_VALUE_TYPE( spec ) );
-        void* o;
-        g_object_get( gobj, nam.c_str(), &o, NULL );
+        case G_TYPE_OBJECT:
+        {
+            void* o;
+            g_object_get( gobj, name.c_str(), &o, NULL );
+            Gtk::CoreGObject::retval( vm, spec->value_type, o );
+            return;
+        }
+        case G_TYPE_BOXED:
+        {
+            void* o;
+            g_object_get( gobj, name.c_str(), &o, NULL );
+            Gtk::VoidObject::retval( vm, spec->value_type, o );
+            return;
+        }
+        default:
+            g_print( "type name %s\n"
+                     "GType %ld\n"
+                     "Fundamental %s\n",
+                g_type_name( G_PARAM_SPEC_VALUE_TYPE( spec ) ),
+                spec->value_type,
+                g_type_name( G_TYPE_FUNDAMENTAL( spec->value_type ) ) );
 
-        if ( !strcmp( tpname, "GdkColor" ) )
-        {
-            vm->retval( new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
-                                        (GdkColor*) o ) );
-            gdk_color_free( (GdkColor*) o );
+            throw_inv_params( "not yet implemented..." );
         }
-        else
-        {
-            g_print( "type name %s\n", tpname );
-            throw_inv_params( "not implemented" );
-        }
+    }
     }
 }
 

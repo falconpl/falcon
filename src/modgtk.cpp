@@ -359,6 +359,41 @@ FALCON_FUNC abstract_init( VMARG )
 }
 
 
+bool VoidObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    return defaultProperty( s, it );
+}
+
+
+bool VoidObject::setProperty( const Falcon::String&, const Falcon::Item& )
+{
+    return false;
+}
+
+
+void VoidObject::retval( VMachine* vm,
+                         const GType type,
+                         void*& obj,
+                         const bool doFree )
+{
+    const gchar* tpname = g_type_name( type );
+
+    if ( !strcmp( tpname, "GdkColor" ) )
+    {
+        vm->retval( new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
+                                    (GdkColor*) obj ) );
+        if ( doFree )
+        {
+            gdk_color_free( (GdkColor*) obj );
+            obj = NULL;
+        }
+    }
+
+    else
+        return CoreGObject::retval( vm, type, obj, doFree );
+}
+
+
 CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
     :
     VoidObject( cls, (void*) gobj )
@@ -420,6 +455,35 @@ bool CoreGObject::setProperty( const Falcon::String& s, const Falcon::Item& it )
     g_object_set_data_full( (GObject*) m_obj, cstr.c_str(),
             new GarbageLock( it ), &CoreGObject::release_lock );
     return true;
+}
+
+
+void CoreGObject::retval( VMachine* vm,
+                          const GType type,
+                          void*& obj,
+                          const bool doFree )
+{
+    assert( G_TYPE_FUNDAMENTAL( type ) == G_TYPE_OBJECT );
+
+    const gchar* tpname = g_type_name( type );
+
+    if ( !strcmp( tpname, "foo" ) )
+    {
+    }
+    else
+    {
+        if ( doFree )
+            g_object_unref( obj );
+
+        g_print( "type name %s\n"
+                 "GType %ld\n",
+            tpname, type );
+
+        throw_inv_params( "not yet implemented..." );
+    }
+
+    if ( doFree )
+        g_object_unref( obj );
 }
 
 

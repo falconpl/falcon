@@ -98,15 +98,9 @@ public:
 
     void gcMark( Falcon::uint32 ) {}
 
-    virtual bool getProperty( const Falcon::String& s, Falcon::Item& it ) const
-    {
-        return defaultProperty( s, it );
-    }
+    virtual bool getProperty( const Falcon::String&, Falcon::Item& ) const;
 
-    virtual bool setProperty( const Falcon::String&, const Falcon::Item& )
-    {
-        return false;
-    }
+    virtual bool setProperty( const Falcon::String&, const Falcon::Item& );
 
     void* getObject() const { return (void*) m_obj; }
 
@@ -116,6 +110,19 @@ public:
         assert( obj != 0 );
         m_obj = (void*) obj;
     }
+
+    /**
+     *  \brief Create a valid object of given type and throw it in the machine.
+     *  \param vm a virtual machine
+     *  \param type the GType of obj
+     *  \param obj a pointer to an instance of type
+     *  \param doFree wether to free the object when it is possible
+     *  \note if the object gets freed it will be set to NULL
+     */
+    static void retval( VMachine* vm,
+                        const GType type,
+                        void*& obj,
+                        const bool doFree = true );
 
 protected:
 
@@ -172,6 +179,18 @@ public:
      *  \brief Set the GObject.
      */
     virtual void setObject( const void* );
+
+    /**
+     *  \brief Create a valid object of given type and throw it in the machine.
+     *  \param vm a virtual machine
+     *  \param type the GType of obj, derived from G_TYPE_OBJECT
+     *  \param obj a pointer to an instance of that type
+     *  \param doFree wether to unref the object
+     */
+    static void retval( VMachine* vm,
+                        const GType type,
+                        void*& obj,
+                        const bool doFree = true );
 
     /**
      *  \brief Add an anonymous VMSlot in the GObject.
