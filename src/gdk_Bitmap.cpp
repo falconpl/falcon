@@ -20,6 +20,8 @@ void Bitmap::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GdkDrawable" ) );
     c_Bitmap->getClassDef()->addInheritance( in );
 
+    //c_Bitmap->setWKS( true );
+    c_Bitmap->getClassDef()->factory( &Bitmap::factory );
 }
 
 
