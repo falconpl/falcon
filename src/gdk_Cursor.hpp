@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_CURSOR( item ) \
+        (((Gdk::Cursor*) (item).asObjectSafe())->getObject())
+
 
 namespace Falcon {
 namespace Gdk {
@@ -37,17 +40,25 @@ public:
     void setObject( const void* );
 
     static FALCON_FUNC init( VMARG );
-#if 0
+
     static FALCON_FUNC new_from_pixmap( VMARG );
+
     static FALCON_FUNC new_from_pixbuf( VMARG );
+
     static FALCON_FUNC new_from_name( VMARG );
+
     static FALCON_FUNC new_for_display( VMARG );
+
     static FALCON_FUNC get_display( VMARG );
+
     static FALCON_FUNC get_image( VMARG );
+
+#if 0 // not used
     static FALCON_FUNC ref( VMARG );
     static FALCON_FUNC unref( VMARG );
     static FALCON_FUNC destroy( VMARG );
 #endif
+
 private:
 
     void incref() const;
