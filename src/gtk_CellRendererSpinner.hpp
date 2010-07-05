@@ -3,6 +3,8 @@
 
 #include "modgtk.hpp"
 
+#if GTK_CHECK_VERSION( 2, 20, 0 )
+
 #define GET_CELLRENDERERSPINNER( item ) \
         ((GtkCellRendererSpinner*)((Gtk::CellRendererSpinner*) (item).asObjectSafe() )->getObject())
 
@@ -32,5 +34,7 @@ public:
 
 } // Gtk
 } // Falcon
+
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 #endif // !GTK_CELLRENDERERSPINNER_HPP

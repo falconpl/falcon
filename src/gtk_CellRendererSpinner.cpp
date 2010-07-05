@@ -4,6 +4,7 @@
 
 #include "gtk_CellRendererSpinner.hpp"
 
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 
 namespace Falcon {
 namespace Gtk {
@@ -59,3 +60,5 @@ FALCON_FUNC CellRendererSpinner::init( VMARG )
 
 } // Gtk
 } // Falcon
+
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )

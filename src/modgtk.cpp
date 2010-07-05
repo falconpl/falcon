@@ -49,7 +49,9 @@
 #include "gtk_CellRendererPixbuf.hpp"
 #include "gtk_CellRendererProgress.hpp"
 #include "gtk_CellRendererSpin.hpp"
+#if GTK_CHECK_VERSION( 2, 20, 0 )
 #include "gtk_CellRendererSpinner.hpp"
+#endif
 #include "gtk_CellRendererText.hpp"
 #include "gtk_CellRendererToggle.hpp"
 #include "gtk_CheckButton.hpp"
@@ -310,7 +312,9 @@ FALCON_MODULE_DECL
             Falcon::Gtk::CellRenderer::modInit( self );
                 Falcon::Gtk::CellRendererPixbuf::modInit( self );
                 Falcon::Gtk::CellRendererProgress::modInit( self );
+#if GTK_CHECK_VERSION( 2, 20, 0 )
                 Falcon::Gtk::CellRendererSpinner::modInit( self );
+#endif
                 Falcon::Gtk::CellRendererText::modInit( self );
                     Falcon::Gtk::CellRendererAccel::modInit( self );
                     Falcon::Gtk::CellRendererCombo::modInit( self );
