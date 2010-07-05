@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_SCREEN( item ) \
+        (((Gdk::Screen*) (item).asObjectSafe() )->getObject())
+
 
 namespace Falcon {
 namespace Gdk {
@@ -21,6 +24,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GdkScreen* getObject() const { return (GdkScreen*) m_obj; }
 
 #if 0
     static FALCON_FUNC signal_composited_changed( VMARG );
