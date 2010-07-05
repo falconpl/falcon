@@ -4,7 +4,10 @@
 
 #include "gtk_Window.hpp"
 
-//#include "gdk_Event.hpp"
+#include "gdk_Event.hpp"
+#include "gdk_Geometry.hpp"
+#include "gdk_Screen.hpp"
+
 #include "gtk_Widget.hpp"
 
 
@@ -27,124 +30,125 @@ void Window::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    { "signal_activate_default",&Window::signal_activate_default },
-    { "signal_activate_focus",&Window::signal_activate_focus },
-    //{ "signal_frame_event",&Window::signal_frame_event },
-    { "signal_keys_changed",&Window::signal_keys_changed },
-    { "signal_set_focus",   &Window::signal_set_focus },
-    { "set_title",          &Window::set_title },
-    { "set_wmclass",        &Window::set_wmclass },
+    { "signal_activate_default",    &Window::signal_activate_default },
+    { "signal_activate_focus",      &Window::signal_activate_focus },
+    { "signal_frame_event",         &Window::signal_frame_event },
+    { "signal_keys_changed",        &Window::signal_keys_changed },
+    { "signal_set_focus",           &Window::signal_set_focus },
+    { "set_title",                  &Window::set_title },
+    { "set_wmclass",                &Window::set_wmclass },
 #if 0 // deprecated
-    { "set_policy",         &Window::set_policy },
+    { "set_policy",                 &Window::set_policy },
 #endif
-    { "set_resizable",      &Window::set_resizable },
-    { "get_resizable",      &Window::get_resizable },
-    //{ "add_accel_group",    &Window::add_accel_group },
-    //{ "remove_accel_group", &Window::remove_accel_group },
+    { "set_resizable",              &Window::set_resizable },
+    { "get_resizable",              &Window::get_resizable },
+    //{ "add_accel_group",          &Window::add_accel_group },
+    //{ "remove_accel_group",       &Window::remove_accel_group },
 #if 0 // deprecated
-    { "position",           &Window::position },
+    { "position",                   &Window::position },
 #endif
-    { "activate_focus",     &Window::activate_focus },
-    { "activate_default",   &Window::activate_default },
-    { "set_modal",          &Window::set_modal },
-    { "set_default_size",   &Window::set_default_size },
-    //{ "set_geomerty_hints", &Window::set_geometry_hints },
-    { "set_gravity",        &Window::set_gravity },
-    { "get_gravity",        &Window::get_gravity },
-    { "set_position",       &Window::set_position },
-    { "set_transient_for",  &Window::set_transient_for },
-    { "set_destroy_with_parent",&Window::set_destroy_with_parent },
-    //{ "set_screen",        &Window::set_gravity },
-    //{ "get_screen",        &Window::set_gravity },
-    { "is_active",          &Window::is_active },
-    { "has_toplevel_focus", &Window::has_toplevel_focus },
-    //{ "list_toplevels",        &Window::set_gravity },
-    { "add_mnemonic",       &Window::add_mnemonic },
-    { "remove_mnemonic",    &Window::remove_mnemonic },
-    { "mnemonic_activate",        &Window::set_gravity },
-    //{ "activate_key",        &Window::set_gravity },
-    //{ "propagate_key_event",        &Window::set_gravity },
-    { "get_focus",          &Window::get_focus },
-    { "set_focus",          &Window::set_focus },
+    { "activate_focus",             &Window::activate_focus },
+    { "activate_default",           &Window::activate_default },
+    { "set_modal",                  &Window::set_modal },
+    { "set_default_size",           &Window::set_default_size },
+    { "set_geomerty_hints",         &Window::set_geometry_hints },
+    { "set_gravity",                &Window::set_gravity },
+    { "get_gravity",                &Window::get_gravity },
+    { "set_position",               &Window::set_position },
+    { "set_transient_for",          &Window::set_transient_for },
+    { "set_destroy_with_parent",    &Window::set_destroy_with_parent },
+    { "set_screen",                 &Window::set_screen },
+    { "get_screen",                 &Window::get_screen },
+    { "is_active",                  &Window::is_active },
+    { "has_toplevel_focus",         &Window::has_toplevel_focus },
+    { "list_toplevels",             &Window::list_toplevels },
+    { "add_mnemonic",               &Window::add_mnemonic },
+    { "remove_mnemonic",            &Window::remove_mnemonic },
+    { "mnemonic_activate",          &Window::set_gravity },
+    //{ "activate_key",             &Window::set_gravity },
+    //{ "propagate_key_event",      &Window::set_gravity },
+    { "get_focus",                  &Window::get_focus },
+    { "set_focus",                  &Window::set_focus },
 #if GTK_CHECK_VERSION( 2, 14, 0 )
-    { "get_default_widget", &Window::get_default_widget },
+    { "get_default_widget",         &Window::get_default_widget },
 #endif
-    { "set_default",        &Window::set_default },
-    { "present",            &Window::present },
-    { "present_with_time",  &Window::present_with_time },
-    { "iconify",            &Window::iconify },
-    { "deiconify",          &Window::deiconify },
-    { "stick",              &Window::stick },
-    { "unstick",            &Window::unstick },
-    { "maximize",           &Window::maximize },
-    { "unmaximize",         &Window::unmaximize },
-    { "fullscreen",         &Window::fullscreen },
-    { "unfullscreen",       &Window::unfullscreen },
-    { "set_keep_above",     &Window::set_keep_above },
-    { "set_keep_below",     &Window::set_keep_below },
-    { "begin_resize_drag",  &Window::begin_resize_drag },
-    { "begin_move_drag",    &Window::begin_move_drag },
-    { "set_decorated",      &Window::set_decorated },
-    { "set_deletable",      &Window::set_deletable },
-    { "set_frame_dimensions",&Window::set_frame_dimensions },
-    { "set_has_frame",      &Window::set_has_frame },
-    { "set_mnemonic_modifier",&Window::set_mnemonic_modifier },
-    { "set_type_hint",      &Window::set_type_hint },
-    { "set_skip_taskbar_hint",&Window::set_skip_taskbar_hint },
-    { "set_skip_pager_hint",&Window::set_skip_pager_hint },
-    { "set_urgency_hint",   &Window::set_urgency_hint },
-    { "set_accept_focus",   &Window::set_accept_focus },
-    { "set_focus_on_map",   &Window::set_focus_on_map },
-    { "set_startup_id",     &Window::set_startup_id },
-    { "set_role",           &Window::set_role },
-    { "get_decorated",      &Window::get_decorated },
-    { "get_deletable",      &Window::get_deletable },
-    //{ "get_default_icon_list",        &Window::set_gravity },
+    { "set_default",                &Window::set_default },
+    { "present",                    &Window::present },
+    { "present_with_time",          &Window::present_with_time },
+    { "iconify",                    &Window::iconify },
+    { "deiconify",                  &Window::deiconify },
+    { "stick",                      &Window::stick },
+    { "unstick",                    &Window::unstick },
+    { "maximize",                   &Window::maximize },
+    { "unmaximize",                 &Window::unmaximize },
+    { "fullscreen",                 &Window::fullscreen },
+    { "unfullscreen",               &Window::unfullscreen },
+    { "set_keep_above",             &Window::set_keep_above },
+    { "set_keep_below",             &Window::set_keep_below },
+    { "begin_resize_drag",          &Window::begin_resize_drag },
+    { "begin_move_drag",            &Window::begin_move_drag },
+    { "set_decorated",              &Window::set_decorated },
+    { "set_deletable",              &Window::set_deletable },
+    { "set_frame_dimensions",       &Window::set_frame_dimensions },
+    { "set_has_frame",              &Window::set_has_frame },
+    { "set_mnemonic_modifier",      &Window::set_mnemonic_modifier },
+    { "set_type_hint",              &Window::set_type_hint },
+    { "set_skip_taskbar_hint",      &Window::set_skip_taskbar_hint },
+    { "set_skip_pager_hint",        &Window::set_skip_pager_hint },
+    { "set_urgency_hint",           &Window::set_urgency_hint },
+    { "set_accept_focus",           &Window::set_accept_focus },
+    { "set_focus_on_map",           &Window::set_focus_on_map },
+    { "set_startup_id",             &Window::set_startup_id },
+    { "set_role",                   &Window::set_role },
+    { "get_decorated",              &Window::get_decorated },
+    { "get_deletable",              &Window::get_deletable },
+    //{ "get_default_icon_list",    &Window::set_gravity },
 #if GTK_CHECK_VERSION( 2, 16, 0 )
-    { "get_default_icon_name",&Window::get_default_icon_name },
+    { "get_default_icon_name",      &Window::get_default_icon_name },
 #endif
-    { "get_default_size",   &Window::get_default_size },
-    { "get_destroy_with_parent",&Window::get_destroy_with_parent },
-    { "get_frame_dimensions",&Window::get_frame_dimensions },
-    { "get_has_frame",      &Window::get_has_frame },
-    //{ "get_icon",        &Window::set_gravity },
-    //{ "get_icon_list",        &Window::set_gravity },
-    { "get_icon_name",      &Window::get_icon_name },
-    { "get_mnemonic_modifier",&Window::get_mnemonic_modifier },
-    { "get_modal",          &Window::get_modal },
-    { "get_position",       &Window::get_position },
-    { "get_role",           &Window::get_role },
-    { "get_size",           &Window::get_size },
-    { "get_title",          &Window::get_title },
-    { "get_transient_for",  &Window::get_transient_for },
-    { "get_type_hint",      &Window::get_type_hint },
-    { "get_skip_taskbar_hint",&Window::get_skip_taskbar_hint },
-    { "get_skip_pager_hint",&Window::get_skip_pager_hint },
-    { "get_urgency_hint",   &Window::get_urgency_hint },
-    { "get_accept_focus",   &Window::get_accept_focus },
-    { "get_focus_on_map",   &Window::get_focus_on_map },
-    //{ "get_group",        &Window::set_gravity },
+    { "get_default_size",           &Window::get_default_size },
+    { "get_destroy_with_parent",    &Window::get_destroy_with_parent },
+    { "get_frame_dimensions",       &Window::get_frame_dimensions },
+    { "get_has_frame",              &Window::get_has_frame },
+    //{ "get_icon",                 &Window::set_gravity },
+    //{ "get_icon_list",            &Window::set_gravity },
+    { "get_icon_name",              &Window::get_icon_name },
+    { "get_mnemonic_modifier",      &Window::get_mnemonic_modifier },
+    { "get_modal",                  &Window::get_modal },
+    { "get_position",               &Window::get_position },
+    { "get_role",                   &Window::get_role },
+    { "get_size",                   &Window::get_size },
+    { "get_title",                  &Window::get_title },
+    { "get_transient_for",          &Window::get_transient_for },
+    { "get_type_hint",              &Window::get_type_hint },
+    { "get_skip_taskbar_hint",      &Window::get_skip_taskbar_hint },
+    { "get_skip_pager_hint",        &Window::get_skip_pager_hint },
+    { "get_urgency_hint",           &Window::get_urgency_hint },
+    { "get_accept_focus",           &Window::get_accept_focus },
+    { "get_focus_on_map",           &Window::get_focus_on_map },
+    //{ "get_group",                &Window::set_gravity },
 #if GTK_CHECK_VERSION( 2, 20, 0 )
-    { "get_window_type",    &Window::get_window_type },
+    { "get_window_type",            &Window::get_window_type },
 #endif
-    { "move",               &Window::move },
-    { "parse_geometry",     &Window::parse_geometry },
-    { "reshow_with_initial_size",&Window::reshow_with_initial_size },
-    { "resize",             &Window::resize },
-    //{ "set_default_icon_list",        &Window::set_gravity },
-    //{ "set_default_icon",        &Window::set_gravity },
-    //{ "set_default_icon_from_file",        &Window::set_gravity },
-    { "set_default_icon_name",&Window::set_default_icon_name },
-    //{ "set_icon",        &Window::set_gravity },
-    //{ "set_icon_list",        &Window::set_gravity },
-    //{ "set_icon_from_file",        &Window::set_gravity },
-    { "set_icon_name",        &Window::set_icon_name },
+    { "move",                       &Window::move },
+    { "parse_geometry",             &Window::parse_geometry },
+    { "reshow_with_initial_size",   &Window::reshow_with_initial_size },
+    { "resize",                     &Window::resize },
+    //{ "set_default_icon_list",    &Window::set_gravity },
+    //{ "set_default_icon",         &Window::set_gravity },
+    //{ "set_default_icon_from_file",&Window::set_gravity },
+    { "set_default_icon_name",      &Window::set_default_icon_name },
+    //{ "set_icon",                 &Window::set_gravity },
+    //{ "set_icon_list",            &Window::set_gravity },
+    //{ "set_icon_from_file",       &Window::set_gravity },
+    { "set_icon_name",              &Window::set_icon_name },
     { "set_auto_startup_notification",&Window::set_auto_startup_notification },
-    { "get_opacity",        &Window::get_opacity },
-    { "set_opacity",        &Window::set_opacity },
-    //{ "get_mnemonics_visible",        &Window::set_gravity },
-    //{ "set_mnemonics_visible",        &Window::set_gravity },
-
+    { "get_opacity",                &Window::get_opacity },
+    { "set_opacity",                &Window::set_opacity },
+#if GTK_CHECK_VERSION( 2, 20, 0 )
+    { "get_mnemonics_visible",      &Window::get_mnemonics_visible },
+    { "set_mnemonics_visible",      &Window::set_mnemonics_visible },
+#endif
     { NULL, NULL }
     };
 
@@ -178,6 +182,9 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
     GTK_WINDOW_POPUP is not for dialogs, though in some other toolkits dialogs
     are called "popups". In GTK+, GTK_WINDOW_POPUP means a pop-up menu or pop-up
     tooltip. On X11, popup windows are not controlled by the window manager.
+
+    If you simply want an undecorated window (no window borders), use
+    gtk_window_set_decorated(), don't use GTK_WINDOW_POPUP.
  */
 FALCON_FUNC Window::init( VMARG )
 {
@@ -232,9 +239,49 @@ void Window::on_activate_focus( GtkWindow* obj, gpointer _vm )
 }
 
 
-//FALCON_FUNC Window::signal_frame_event( VMARG );
+/*#
+    @method signal_frame_event
+    @brief .
+ */
+FALCON_FUNC Window::signal_frame_event( VMARG )
+{
+    NO_ARGS
+    CoreGObject::get_signal( "frame_event", (void*) &Window::on_frame_event, vm );
+}
 
-//void Window::on_frame_event( GtkWindow* obj, GdkEvent* ev, gpointer _vm );
+
+void Window::on_frame_event( GtkWindow* obj, GdkEvent* ev, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "frame_event", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkEvent" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_frame_event", it ) )
+            {
+                printf(
+                "[GtkWindow::on_frame_event] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gdk::Event( wki->asClass(), ev ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
 
 
 /*#
@@ -319,10 +366,8 @@ FALCON_FUNC Window::set_title( VMARG )
     if ( !i_title || !i_title->isString() )
         throw_inv_params( "S" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
     AutoCString title( i_title->asString() );
-    gtk_window_set_title( (GtkWindow*)_obj, title.c_str() );
+    gtk_window_set_title( GET_WINDOW( vm->self() ), title.c_str() );
 }
 
 
@@ -351,9 +396,7 @@ FALCON_FUNC Window::set_wmclass( VMARG )
 #endif
     AutoCString nm( i_nm->asString() );
     AutoCString cl( i_cl->asString() );
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_wmclass( (GtkWindow*)_obj, nm.c_str(), cl.c_str() );
+    gtk_window_set_wmclass( GET_WINDOW( vm->self() ), nm.c_str(), cl.c_str() );
 }
 
 
@@ -376,9 +419,7 @@ FALCON_FUNC Window::set_resizable( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_resizable( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_resizable( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -390,9 +431,7 @@ FALCON_FUNC Window::set_resizable( VMARG )
 FALCON_FUNC Window::get_resizable( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_resizable( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_resizable( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -414,9 +453,7 @@ FALCON_FUNC Window::position( VMARG );
 FALCON_FUNC Window::activate_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_activate_focus( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_activate_focus( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -432,9 +469,7 @@ FALCON_FUNC Window::activate_focus( VMARG )
 FALCON_FUNC Window::activate_default( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_activate_default( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_activate_default( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -454,9 +489,7 @@ FALCON_FUNC Window::set_modal( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_modal( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_modal( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -501,13 +534,39 @@ FALCON_FUNC Window::set_default_size( VMARG )
         || !i_h || !i_h->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_default_size( (GtkWindow*)_obj, i_w->asInteger(), i_h->asInteger() );
+    gtk_window_set_default_size( GET_WINDOW( vm->self() ), i_w->asInteger(), i_h->asInteger() );
 }
 
 
-//FALCON_FUNC set_geometry_hints( VMARG );
+/*#
+    @method set_geometry_hints GtkWindow
+    @brief This function sets up hints about how a window can be resized by the user.
+    @param geometry_widget widget the geometry hints will be applied to or NULL.
+    @param geometry GdkGeometry containing geometry information or NULL.
+    @param geom_mask mask (GdkWindowHints) indicating which struct fields should be paid attention to
+
+    You can set a minimum and maximum size; allowed resize increments (e.g. for
+    xterm, you can only resize by the size of a character); aspect ratios; and
+    more. See the GdkGeometry struct.
+ */
+FALCON_FUNC Window::set_geometry_hints( VMARG )
+{
+    Item* i_wdt = vm->param( 0 );
+    Item* i_geom = vm->param( 1 );
+    Item* i_mask = vm->param( 2 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_wdt || !( i_wdt->isNil() || ( i_wdt->isObject()
+        && IS_DERIVED( i_wdt, GtkWidget ) ) )
+        || !i_geom || !( i_geom->isNil() || ( i_geom->isObject()
+        && IS_DERIVED( i_geom, GdkGeometry ) ) )
+        || !i_mask || !i_mask->isInteger() )
+        throw_inv_params( "[GtkWidget],[GdkGeometry],GdkWindowHints" );
+#endif
+    gtk_window_set_geometry_hints( GET_WINDOW( vm->self() ),
+                                   i_wdt->isNil() ? NULL : GET_WIDGET( *i_wdt ),
+                                   i_geom->isNil() ? NULL : GET_GEOMETRY( *i_geom ),
+                                   (GdkWindowHints) i_mask->asInteger() );
+}
 
 
 /*#
@@ -528,14 +587,7 @@ FALCON_FUNC Window::set_gravity( VMARG )
     if ( !i_grav || !i_grav->isInteger() )
         throw_inv_params( "GdkGravity" );
 #endif
-    int grav = i_grav->asInteger();
-#ifndef NO_PARAMETER_CHECK
-    if ( grav < 1 || grav > 10 )
-        throw_inv_params( "GdkGravity" );
-#endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_gravity( (GtkWindow*)_obj, (GdkGravity) grav );
+    gtk_window_set_gravity( GET_WINDOW( vm->self() ), (GdkGravity) i_grav->asInteger() );
 }
 
 
@@ -547,9 +599,7 @@ FALCON_FUNC Window::set_gravity( VMARG )
 FALCON_FUNC Window::get_gravity( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (int64) gtk_window_get_gravity( (GtkWindow*)_obj ) );
+    vm->retval( (int64) gtk_window_get_gravity( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -568,14 +618,7 @@ FALCON_FUNC Window::set_position( VMARG )
     if ( !i_pos || !i_pos->isInteger() )
         throw_inv_params( "GtkWindowPosition" );
 #endif
-    int pos = i_pos->asInteger();
-#ifndef NO_PARAMETER_CHECK
-    if ( pos < 0 || pos > 4 )
-        throw_inv_params( "GtkWindowPosition" );
-#endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_position( (GtkWindow*)_obj, (GtkWindowPosition) pos );
+    gtk_window_set_position( GET_WINDOW( vm->self() ), (GtkWindowPosition) i_pos->asInteger() );
 }
 
 
@@ -603,11 +646,8 @@ FALCON_FUNC Window::set_transient_for( VMARG )
         && IS_DERIVED( i_win, GtkWindow ) ) ) )
         throw_inv_params( "[GtkWindow]" );
 #endif
-    GtkWindow* win = i_win->isNil() ? NULL
-                    : (GtkWindow*) COREGOBJECT( i_win )->getObject();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_transient_for( (GtkWindow*)_obj, win );
+    gtk_window_set_transient_for( GET_WINDOW( vm->self() ),
+                                  i_win->isNil() ? NULL : GET_WINDOW( *i_win ) );
 }
 
 
@@ -627,15 +667,40 @@ FALCON_FUNC Window::set_destroy_with_parent( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_destroy_with_parent( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_destroy_with_parent( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
-//FALCON_FUNC Window::set_screen( VMARG );
+/*#
+    @method set_screen GtkWindow
+    @brief Sets the GdkScreen where the window is displayed.
+    @param screen a GdkScreen.
 
-//FALCON_FUNC Window::get_screen( VMARG );
+    If the window is already mapped, it will be unmapped, and then remapped on
+    the new screen.
+ */
+FALCON_FUNC Window::set_screen( VMARG )
+{
+    Item* i_screen = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_screen || !i_screen->isObject() || !IS_DERIVED( i_screen, GdkScreen ) )
+        throw_inv_params( "GdkScreen" );
+#endif
+    gtk_window_set_screen( GET_WINDOW( vm->self() ), GET_SCREEN( *i_screen ) );
+}
+
+
+/*#
+    @method get_screen GtkWindow
+    @brief Returns the GdkScreen associated with window.
+    @return a GdkScreen.
+ */
+FALCON_FUNC Window::get_screen( VMARG )
+{
+    NO_ARGS
+    vm->retval( new Gdk::Screen( vm->findWKI( "GdkScreen" )->asClass(),
+                                 gtk_window_get_screen( GET_WINDOW( vm->self() ) ) ) );
+}
 
 
 /*#
@@ -652,9 +717,7 @@ FALCON_FUNC Window::set_destroy_with_parent( VMARG )
 FALCON_FUNC Window::is_active( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_is_active( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_is_active( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -669,13 +732,31 @@ FALCON_FUNC Window::is_active( VMARG )
 FALCON_FUNC Window::has_toplevel_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_has_toplevel_focus( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_has_toplevel_focus( GET_WINDOW( vm->self() ) ) );
 }
 
 
-//FALCON_FUNC Window::list_toplevels( VMARG );
+/*#
+    @method list_toplevels GtkWindow
+    @param Returns a list of all existing toplevel windows.
+    @return An array of GtkWindow
+ */
+FALCON_FUNC Window::list_toplevels( VMARG )
+{
+    NO_ARGS
+    GList* lst = gtk_window_list_toplevels();
+    GList* el;
+    int cnt = 0;
+    for ( el = lst; el; el = el->next) ++cnt;
+    CoreArray* arr = new CoreArray( cnt );
+    if ( cnt )
+    {
+        Item* wki = vm->findWKI( "GtkWindow" );
+        for ( el = lst; el; el = el->next )
+            arr->append( new Gtk::Window( wki->asClass(), (GtkWindow*) el->data ) );
+    }
+    vm->retval( arr );
+}
 
 
 /*#
@@ -695,10 +776,7 @@ FALCON_FUNC Window::add_mnemonic( VMARG )
 #endif
     String* chr = i_keyval->asString();
     guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getObject();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_add_mnemonic( (GtkWindow*)_obj, keyval, target );
+    gtk_window_add_mnemonic( GET_WINDOW( vm->self() ), keyval, GET_WIDGET( *i_target ) );
 }
 
 
@@ -719,10 +797,7 @@ FALCON_FUNC Window::remove_mnemonic( VMARG )
 #endif
     String* chr = i_keyval->asString();
     guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
-    GtkWidget* target = (GtkWidget*) COREGOBJECT( i_target )->getObject();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_remove_mnemonic( (GtkWindow*)_obj, keyval, target );
+    gtk_window_remove_mnemonic( GET_WINDOW( vm->self() ), keyval, GET_WIDGET( *i_target ) );
 }
 
 
@@ -744,9 +819,7 @@ FALCON_FUNC Window::mnemonic_activate( VMARG )
 #endif
     String* chr = i_keyval->asString();
     guint keyval = chr->length() ? chr->getCharAt( 0 ) : 0;
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_mnemonic_activate( (GtkWindow*)_obj,
+    gtk_window_mnemonic_activate( GET_WINDOW( vm->self() ),
                                   keyval, (GdkModifierType) i_modif->asInteger() );
 }
 
@@ -768,9 +841,7 @@ FALCON_FUNC Window::mnemonic_activate( VMARG )
 FALCON_FUNC Window::get_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GtkWidget* wdt = gtk_window_get_focus( (GtkWindow*)_obj );
+    GtkWidget* wdt = gtk_window_get_focus( GET_WINDOW( vm->self() ) );
     if ( wdt )
         vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
     else
@@ -796,11 +867,8 @@ FALCON_FUNC Window::set_focus( VMARG )
         && IS_DERIVED( i_wdt, GtkWidget ) ) ) )
         throw_inv_params( "[GtkWidget]" );
 #endif
-    GtkWidget* wdt = i_wdt->isNil() ? NULL
-                    : (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_focus( (GtkWindow*)_obj, wdt );
+    gtk_window_set_focus( GET_WINDOW( vm->self() ),
+                          i_wdt->isNil() ? NULL : GET_WIDGET( *i_wdt ) );
 }
 
 
@@ -813,9 +881,7 @@ FALCON_FUNC Window::set_focus( VMARG )
 FALCON_FUNC Window::get_default_widget( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GtkWidget* wdt = gtk_window_get_default_widget( (GtkWindow*)_obj );
+    GtkWidget* wdt = gtk_window_get_default_widget( GET_WINDOW( vm->self() ) );
     if ( wdt )
         vm->retval( new Gtk::Widget( vm->findWKI( "GtkWidget" )->asClass(), wdt ) );
     else
@@ -844,11 +910,8 @@ FALCON_FUNC Window::set_default( VMARG )
         && IS_DERIVED( i_wdt, GtkWidget ) ) ) )
         throw_inv_params( "[GtkWidget]" );
 #endif
-    GtkWidget* wdt = i_wdt->isNil() ? NULL
-                    : (GtkWidget*) COREGOBJECT( i_wdt )->getObject();
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_default( (GtkWindow*)_obj, wdt );
+    gtk_window_set_default( GET_WINDOW( vm->self() ),
+                            i_wdt->isNil() ? NULL : GET_WIDGET( *i_wdt ) );
 }
 
 
@@ -873,9 +936,7 @@ FALCON_FUNC Window::set_default( VMARG )
 FALCON_FUNC Window::present( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_present( (GtkWindow*)_obj );
+    gtk_window_present( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -893,9 +954,7 @@ FALCON_FUNC Window::present_with_time( VMARG )
     if ( !i_time || !i_time->isInteger() )
         throw_inv_params( "I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_present_with_time( (GtkWindow*)_obj, i_time->asInteger() );
+    gtk_window_present_with_time( GET_WINDOW( vm->self() ), i_time->asInteger() );
 }
 
 
@@ -917,9 +976,7 @@ FALCON_FUNC Window::present_with_time( VMARG )
 FALCON_FUNC Window::iconify( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_iconify( (GtkWindow*)_obj );
+    gtk_window_iconify( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -936,9 +993,7 @@ FALCON_FUNC Window::iconify( VMARG )
 FALCON_FUNC Window::deiconify( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_deiconify( (GtkWindow*)_obj );
+    gtk_window_deiconify( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -958,9 +1013,7 @@ FALCON_FUNC Window::deiconify( VMARG )
 FALCON_FUNC Window::stick( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_stick( (GtkWindow*)_obj );
+    gtk_window_stick( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -977,9 +1030,7 @@ FALCON_FUNC Window::stick( VMARG )
 FALCON_FUNC Window::unstick( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_unstick( (GtkWindow*)_obj );
+    gtk_window_unstick( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -1000,9 +1051,7 @@ FALCON_FUNC Window::unstick( VMARG )
 FALCON_FUNC Window::maximize( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_maximize( (GtkWindow*)_obj );
+    gtk_window_maximize( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -1020,9 +1069,7 @@ FALCON_FUNC Window::maximize( VMARG )
 FALCON_FUNC Window::unmaximize( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_unmaximize( (GtkWindow*)_obj );
+    gtk_window_unmaximize( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -1041,9 +1088,7 @@ FALCON_FUNC Window::unmaximize( VMARG )
 FALCON_FUNC Window::fullscreen( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_fullscreen( (GtkWindow*)_obj );
+    gtk_window_fullscreen( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -1062,9 +1107,7 @@ FALCON_FUNC Window::fullscreen( VMARG )
 FALCON_FUNC Window::unfullscreen( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_unfullscreen( (GtkWindow*)_obj );
+    gtk_window_unfullscreen( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -1094,9 +1137,7 @@ FALCON_FUNC Window::set_keep_above( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_keep_above( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_keep_above( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1126,9 +1167,7 @@ FALCON_FUNC Window::set_keep_below( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_keep_below( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_keep_below( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1159,9 +1198,7 @@ FALCON_FUNC Window::begin_resize_drag( VMARG )
         || !i_root_x->isInteger() || !i_root_y->isInteger() || !i_tstamp->isInteger() )
         throw_inv_params( "I,I,I,I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_begin_resize_drag( (GtkWindow*)_obj,
+    gtk_window_begin_resize_drag( GET_WINDOW( vm->self() ),
                                   (GdkWindowEdge) i_edge->asInteger(),
                                   i_button->asInteger(),
                                   i_root_x->asInteger(),
@@ -1195,9 +1232,7 @@ FALCON_FUNC Window::begin_move_drag( VMARG )
         || !i_root_y->isInteger() || !i_tstamp->isInteger() )
         throw_inv_params( "I,I,I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_begin_move_drag( (GtkWindow*)_obj,
+    gtk_window_begin_move_drag( GET_WINDOW( vm->self() ),
                                 i_button->asInteger(),
                                 i_root_x->asInteger(),
                                 i_root_y->asInteger(),
@@ -1228,9 +1263,7 @@ FALCON_FUNC Window::set_decorated( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_decorated( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_decorated( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1255,9 +1288,7 @@ FALCON_FUNC Window::set_deletable( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_deletable( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_deletable( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1288,9 +1319,7 @@ FALCON_FUNC Window::set_frame_dimensions( VMARG )
         || !i_right->isInteger() || !i_bottom->isInteger() )
         throw_inv_params( "I,I,I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_frame_dimensions( (GtkWindow*)_obj,
+    gtk_window_set_frame_dimensions( GET_WINDOW( vm->self() ),
                                      i_left->asInteger(),
                                      i_top->asInteger(),
                                      i_right->asInteger(),
@@ -1322,9 +1351,7 @@ FALCON_FUNC Window::set_has_frame( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_has_frame( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_has_frame( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1340,9 +1367,7 @@ FALCON_FUNC Window::set_mnemonic_modifier( VMARG )
     if ( !i_modif || !i_modif->isInteger() )
         throw_inv_params( "I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_mnemonic_modifier( (GtkWindow*)_obj,
+    gtk_window_set_mnemonic_modifier( GET_WINDOW( vm->self() ),
                                       (GdkModifierType) i_modif->asInteger() );
 }
 
@@ -1365,9 +1390,7 @@ FALCON_FUNC Window::set_type_hint( VMARG )
     if ( !i_hint || !i_hint->isInteger() )
         throw_inv_params( "I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_type_hint( (GtkWindow*)_obj,
+    gtk_window_set_type_hint( GET_WINDOW( vm->self() ),
                               (GdkWindowTypeHint) i_hint->asInteger() );
 }
 
@@ -1387,9 +1410,7 @@ FALCON_FUNC Window::set_skip_taskbar_hint( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_skip_taskbar_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_skip_taskbar_hint( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1410,9 +1431,7 @@ FALCON_FUNC Window::set_skip_pager_hint( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_skip_pager_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_skip_pager_hint( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1431,9 +1450,7 @@ FALCON_FUNC Window::set_urgency_hint( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_urgency_hint( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_urgency_hint( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1452,9 +1469,7 @@ FALCON_FUNC Window::set_accept_focus( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_accept_focus( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_accept_focus( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1473,9 +1488,7 @@ FALCON_FUNC Window::set_focus_on_map( VMARG )
     if ( !i_bool || !i_bool->isBoolean() )
         throw_inv_params( "B" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_focus_on_map( (GtkWindow*)_obj, (gboolean) i_bool->asBoolean() );
+    gtk_window_set_focus_on_map( GET_WINDOW( vm->self() ), (gboolean) i_bool->asBoolean() );
 }
 
 
@@ -1502,9 +1515,7 @@ FALCON_FUNC Window::set_startup_id( VMARG )
         throw_inv_params( "S" );
 #endif
     AutoCString id( i_id->asString() );
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_startup_id( (GtkWindow*)_obj, id.c_str() );
+    gtk_window_set_startup_id( GET_WINDOW( vm->self() ), id.c_str() );
 }
 
 
@@ -1532,9 +1543,7 @@ FALCON_FUNC Window::set_role( VMARG )
         throw_inv_params( "S" );
 #endif
     AutoCString role( i_role->asString() );
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_role( (GtkWindow*)_obj, role.c_str() );
+    gtk_window_set_role( GET_WINDOW( vm->self() ), role.c_str() );
 }
 
 
@@ -1546,9 +1555,7 @@ FALCON_FUNC Window::set_role( VMARG )
 FALCON_FUNC Window::get_decorated( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_decorated( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_decorated( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1560,9 +1567,7 @@ FALCON_FUNC Window::get_decorated( VMARG )
 FALCON_FUNC Window::get_deletable( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_deletable( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_deletable( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1573,17 +1578,19 @@ FALCON_FUNC Window::get_deletable( VMARG )
 /*#
     @method get_default_icon_name GtkWindow
     @brief Gets the window default icon name.
-    @return (string) the fallback icon name for windows
+    @return the fallback icon name for windows, or nil
 
     Returns the fallback icon name for windows that has been set with set_default_icon_name().
-    The returned string is owned by GTK+ and should not be modified. It is only valid
-    until the next call to set_default_icon_name().
+    It is only valid until the next call to set_default_icon_name().
  */
 FALCON_FUNC Window::get_default_icon_name( VMARG )
 {
     NO_ARGS
     const gchar* nam = gtk_window_get_default_icon_name();
-    vm->retval( nam ? UTF8String( nam ) : UTF8String( "" ) );
+    if ( nam )
+        vm->retval( UTF8String( nam ) );
+    else
+        vm->retnil();
 }
 #endif
 
@@ -1600,10 +1607,8 @@ FALCON_FUNC Window::get_default_icon_name( VMARG )
 FALCON_FUNC Window::get_default_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint w, h;
-    gtk_window_get_default_size( (GtkWindow*)_obj, &w, &h );
+    gtk_window_get_default_size( GET_WINDOW( vm->self() ), &w, &h );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
@@ -1619,9 +1624,7 @@ FALCON_FUNC Window::get_default_size( VMARG )
 FALCON_FUNC Window::get_destroy_with_parent( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_destroy_with_parent( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_destroy_with_parent( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1640,10 +1643,8 @@ FALCON_FUNC Window::get_destroy_with_parent( VMARG )
 FALCON_FUNC Window::get_frame_dimensions( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint l, t, r, b;
-    gtk_window_get_frame_dimensions( (GtkWindow*)_obj, &l, &t, &r, &b );
+    gtk_window_get_frame_dimensions( GET_WINDOW( vm->self() ), &l, &t, &r, &b );
     CoreArray* arr = new CoreArray( 4 );
     arr->append( l );
     arr->append( t );
@@ -1663,9 +1664,7 @@ FALCON_FUNC Window::get_frame_dimensions( VMARG )
 FALCON_FUNC Window::get_has_frame( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_has_frame( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_has_frame( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1682,9 +1681,7 @@ FALCON_FUNC Window::get_has_frame( VMARG )
 FALCON_FUNC Window::get_icon_name( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    const gchar* nam = gtk_window_get_icon_name( (GtkWindow*)_obj );
+    const gchar* nam = gtk_window_get_icon_name( GET_WINDOW( vm->self() ) );
     if ( nam )
         vm->retval( UTF8String( nam ) );
     else
@@ -1701,10 +1698,8 @@ FALCON_FUNC Window::get_icon_name( VMARG )
  */
 FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
 {
-    NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (int64) gtk_window_get_mnemonic_modifier( (GtkWindow*)_obj ) );
+    NO_ARGS // TODO return a string?
+    vm->retval( (int64) gtk_window_get_mnemonic_modifier( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1718,9 +1713,7 @@ FALCON_FUNC Window::get_mnemonic_modifier( VMARG )
 FALCON_FUNC Window::get_modal( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_modal( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_modal( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1763,10 +1756,8 @@ FALCON_FUNC Window::get_modal( VMARG )
 FALCON_FUNC Window::get_position( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint x, y;
-    gtk_window_get_position( (GtkWindow*)_obj, &x, &y );
+    gtk_window_get_position( GET_WINDOW( vm->self() ), &x, &y );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( x );
     arr->append( y );
@@ -1784,9 +1775,7 @@ FALCON_FUNC Window::get_position( VMARG )
 FALCON_FUNC Window::get_role( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    const gchar* role = gtk_window_get_role( (GtkWindow*)_obj );
+    const gchar* role = gtk_window_get_role( GET_WINDOW( vm->self() ) );
     if ( role )
         vm->retval( UTF8String( role ) );
     else
@@ -1836,10 +1825,8 @@ FALCON_FUNC Window::get_role( VMARG )
 FALCON_FUNC Window::get_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
     gint w, h;
-    gtk_window_get_size( (GtkWindow*)_obj, &w, &h );
+    gtk_window_get_size( GET_WINDOW( vm->self() ), &w, &h );
     CoreArray* arr = new CoreArray( 2 );
     arr->append( w );
     arr->append( h );
@@ -1855,9 +1842,7 @@ FALCON_FUNC Window::get_size( VMARG )
 FALCON_FUNC Window::get_title( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    const gchar* t = gtk_window_get_title( (GtkWindow*)_obj );
+    const gchar* t = gtk_window_get_title( GET_WINDOW( vm->self() ) );
     if ( t )
         vm->retval( UTF8String( t ) );
     else
@@ -1873,9 +1858,7 @@ FALCON_FUNC Window::get_title( VMARG )
 FALCON_FUNC Window::get_transient_for( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    GtkWindow* win = gtk_window_get_transient_for( (GtkWindow*)_obj );
+    GtkWindow* win = gtk_window_get_transient_for( GET_WINDOW( vm->self() ) );
     if ( win )
         vm->retval( new Gtk::Window( vm->findWKI( "GtkWindow" )->asClass(), win ) );
     else
@@ -1891,9 +1874,7 @@ FALCON_FUNC Window::get_transient_for( VMARG )
 FALCON_FUNC Window::get_type_hint( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (int64) gtk_window_get_type_hint( (GtkWindow*)_obj ) );
+    vm->retval( (int64) gtk_window_get_type_hint( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1905,9 +1886,7 @@ FALCON_FUNC Window::get_type_hint( VMARG )
 FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_skip_taskbar_hint( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_skip_taskbar_hint( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1919,9 +1898,7 @@ FALCON_FUNC Window::get_skip_taskbar_hint( VMARG )
 FALCON_FUNC Window::get_skip_pager_hint( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_skip_pager_hint( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_skip_pager_hint( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1933,9 +1910,7 @@ FALCON_FUNC Window::get_skip_pager_hint( VMARG )
 FALCON_FUNC Window::get_urgency_hint( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_urgency_hint( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_urgency_hint( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1947,9 +1922,7 @@ FALCON_FUNC Window::get_urgency_hint( VMARG )
 FALCON_FUNC Window::get_accept_focus( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_accept_focus( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_accept_focus( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1961,9 +1934,7 @@ FALCON_FUNC Window::get_accept_focus( VMARG )
 FALCON_FUNC Window::get_focus_on_map( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_get_focus_on_map( (GtkWindow*)_obj ) );
+    vm->retval( (bool) gtk_window_get_focus_on_map( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -1979,9 +1950,7 @@ FALCON_FUNC Window::get_focus_on_map( VMARG )
 FALCON_FUNC Window::get_window_type( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (int64) gtk_window_get_window_type( (GtkWindow*)_obj ) );
+    vm->retval( (int64) gtk_window_get_window_type( GET_WINDOW( vm->self() ) ) );
 }
 #endif
 
@@ -2031,9 +2000,7 @@ FALCON_FUNC Window::move( VMARG )
         || !i_y || !i_y->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_move( (GtkWindow*)_obj, i_x->asInteger(), i_y->asInteger() );
+    gtk_window_move( GET_WINDOW( vm->self() ), i_x->asInteger(), i_y->asInteger() );
 }
 
 
@@ -2067,9 +2034,7 @@ FALCON_FUNC Window::parse_geometry( VMARG )
         throw_inv_params( "S" );
 #endif
     AutoCString geom( i_geom->asString() );
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( (bool) gtk_window_parse_geometry( (GtkWindow*)_obj, geom.c_str() ) );
+    vm->retval( (bool) gtk_window_parse_geometry( GET_WINDOW( vm->self() ), geom.c_str() ) );
 }
 
 
@@ -2082,9 +2047,7 @@ FALCON_FUNC Window::parse_geometry( VMARG )
 FALCON_FUNC Window::reshow_with_initial_size( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_reshow_with_initial_size( (GtkWindow*)_obj );
+    gtk_window_reshow_with_initial_size( GET_WINDOW( vm->self() ) );
 }
 
 
@@ -2112,9 +2075,7 @@ FALCON_FUNC Window::resize( VMARG )
         || !i_h || !i_h->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_resize( (GtkWindow*)_obj, i_w->asInteger(), i_h->asInteger() );
+    gtk_window_resize( GET_WINDOW( vm->self() ), i_w->asInteger(), i_h->asInteger() );
 }
 
 
@@ -2169,15 +2130,13 @@ FALCON_FUNC Window::set_icon_name( VMARG )
     if ( !i_name || !( i_name->isNil() || i_name->isString() ) )
         throw_inv_params( "[S]" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
     if ( i_name->isString() )
     {
         AutoCString name( i_name->asString() );
-        gtk_window_set_icon_name( (GtkWindow*)_obj, name.c_str() );
+        gtk_window_set_icon_name( GET_WINDOW( vm->self() ), name.c_str() );
     }
     else
-        gtk_window_set_icon_name( (GtkWindow*)_obj, NULL );
+        gtk_window_set_icon_name( GET_WINDOW( vm->self() ), NULL );
 }
 
 
@@ -2216,9 +2175,7 @@ FALCON_FUNC Window::set_auto_startup_notification( VMARG )
 FALCON_FUNC Window::get_opacity( VMARG )
 {
     NO_ARGS
-    MYSELF;
-    GET_OBJ( self );
-    vm->retval( gtk_window_get_opacity( (GtkWindow*)_obj ) );
+    vm->retval( gtk_window_get_opacity( GET_WINDOW( vm->self() ) ) );
 }
 
 
@@ -2243,15 +2200,39 @@ FALCON_FUNC Window::set_opacity( VMARG )
     if ( !i_opac || !i_opac->isOrdinal() )
         throw_inv_params( "N" );
 #endif
-    MYSELF;
-    GET_OBJ( self );
-    gtk_window_set_opacity( (GtkWindow*)_obj, i_opac->forceNumeric() );
+    gtk_window_set_opacity( GET_WINDOW( vm->self() ), i_opac->forceNumeric() );
 }
 
 
-//FALCON_FUNC Window::get_mnemonics_visible( VMARG );
+#if GTK_CHECK_VERSION( 2, 20, 0 )
+/*#
+    @method get_mnemonics_visible GtkWindow
+    @brief Gets the value of the "mnemonics-visible" property.
+    @return TRUE if mnemonics are supposed to be visible in this window.
+ */
+FALCON_FUNC Window::get_mnemonics_visible( VMARG )
+{
+    NO_ARGS
+    vm->retval( (bool) gtk_window_get_mnemonics_visible( GET_WINDOW( vm->self() ) ) );
+}
 
-//FALCON_FUNC Window::set_mnemonics_visible( VMARG );
+
+/*#
+    @method set_mnemonics_visible GtkWindow
+    @brief Sets the "mnemonics-visible" property.
+    @param visible TRUE to set mnemonics visible
+ */
+FALCON_FUNC Window::set_mnemonics_visible( VMARG )
+{
+    Item* i_bool = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_bool || !i_bool->isBoolean() )
+        throw_inv_params( "B" );
+#endif
+    gtk_window_set_mnemonics_visible( GET_WINDOW( vm->self() ),
+                                      (gboolean) i_bool->asBoolean() );
+}
+#endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 
 } // Gtk

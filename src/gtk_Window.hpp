@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_WINDOW( item ) \
+        (((Gtk::Window*) (item).asObjectSafe() )->getObject())
+
 
 namespace Falcon {
 namespace Gtk {
@@ -22,6 +25,8 @@ public:
 
     static void modInit( Falcon::Module* );
 
+    GtkWindow* getObject() const { return (GtkWindow*) m_obj; }
+
     static FALCON_FUNC init( VMARG );
 
     static FALCON_FUNC signal_activate_default( VMARG );
@@ -32,9 +37,9 @@ public:
 
     static void on_activate_focus( GtkWindow*, gpointer );
 
-    //static FALCON_FUNC signal_frame_event( VMARG );
+    static FALCON_FUNC signal_frame_event( VMARG );
 
-    //static void on_frame_event( GtkWindow*, GdkEvent*, gpointer );
+    static void on_frame_event( GtkWindow*, GdkEvent*, gpointer );
 
     static FALCON_FUNC signal_keys_changed( VMARG );
 
@@ -72,7 +77,7 @@ public:
 
     static FALCON_FUNC set_default_size( VMARG );
 
-    //static FALCON_FUNC set_geometry_hints( VMARG );
+    static FALCON_FUNC set_geometry_hints( VMARG );
 
     static FALCON_FUNC set_gravity( VMARG );
 
@@ -84,15 +89,15 @@ public:
 
     static FALCON_FUNC set_destroy_with_parent( VMARG );
 
-    //static FALCON_FUNC set_screen( VMARG );
+    static FALCON_FUNC set_screen( VMARG );
 
-    //static FALCON_FUNC get_screen( VMARG );
+    static FALCON_FUNC get_screen( VMARG );
 
     static FALCON_FUNC is_active( VMARG );
 
     static FALCON_FUNC has_toplevel_focus( VMARG );
 
-    //static FALCON_FUNC list_toplevels( VMARG );
+    static FALCON_FUNC list_toplevels( VMARG );
 
     static FALCON_FUNC add_mnemonic( VMARG );
 
@@ -254,10 +259,11 @@ public:
 
     static FALCON_FUNC set_opacity( VMARG );
 
-    //static FALCON_FUNC get_mnemonics_visible( VMARG );
+#if GTK_CHECK_VERSION( 2, 20, 0 )
+    static FALCON_FUNC get_mnemonics_visible( VMARG );
 
-    //static FALCON_FUNC set_mnemonics_visible( VMARG );
-
+    static FALCON_FUNC set_mnemonics_visible( VMARG );
+#endif
 
 };
 
