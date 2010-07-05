@@ -4,7 +4,7 @@
 #include "modgtk.hpp"
 
 #define GET_PIXMAP( item ) \
-        (((Gdk::Pixmap*) (item).asObjectsafe() )->getObject())
+        (((Gdk::Pixmap*) (item).asObjectSafe() )->getObject())
 
 
 namespace Falcon {
