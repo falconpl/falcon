@@ -5,6 +5,9 @@
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#define GET_PIXBUF( item ) \
+        (((Gdk::Pixbuf*) (item).asObjectSafe())->getObject())
+
 
 namespace Falcon {
 namespace Gdk {
