@@ -14,6 +14,7 @@ set( SRC_FILES
     gdk_Color.cpp
     gdk_Colormap.cpp
     gdk_Cursor.cpp
+    gdk_Display.cpp
     gdk_DragContext.cpp
     gdk_Drawable.cpp
     gdk_Event.cpp
@@ -171,6 +172,7 @@ set( HDR_FILES
     gdk_Color.hpp
     gdk_Colormap.hpp
     gdk_Cursor.hpp
+    gdk_Display.hpp
     gdk_DragContext.hpp
     gdk_Drawable.hpp
     gdk_Event.hpp
