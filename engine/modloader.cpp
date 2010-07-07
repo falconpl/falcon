@@ -296,11 +296,11 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
    Module *mod = loadFile( expName, t_none, true );
    if( m_bUseUniqueNames )
    {
-   	nmodName += "-";
+   	nmodName += ";";
    	nmodName.N( rand() );
    	nmodName.N( rand() );
-
    }
+
    mod->name( nmodName );
 
    return mod;

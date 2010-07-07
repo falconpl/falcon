@@ -574,8 +574,17 @@ bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
 }
 
 
-String Module::absoluteName( const String &module_name, const String &parent_name )
+String Module::absoluteName( const String &orig_name, const String &parent_name )
 {
+	String module_name = orig_name;
+
+	// first, remove separator for unique names
+	uint32 pos_sep = module_name.find( ";" );
+	if( pos_sep != String::npos )
+	{
+		module_name = module_name.subString(0, pos_sep );
+	}
+
    if ( module_name.getCharAt(0) == '.' )
    {
       // notation .name
