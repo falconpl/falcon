@@ -100,10 +100,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
 
    // load and link
    try {
-      rt.loadFile( fileName, false );
-      Module* mod = rt.findModuleByID(0);
-      String sName(mod->name());
-      mod->name( sName.A("-").N(vm->liveModules().size()) );
+      rt.loadFile( fileName, true );
       vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
       LiveModule *lmod = vm->link( &rt );
 

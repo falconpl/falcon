@@ -198,6 +198,13 @@ void Runtime::loadFile( const String &file, bool bIsPrivate )
 
    try
    {
+   	if( bIsPrivate )
+   	{
+   		// mangle the file name...
+   		String name = l->name();
+   		l->name( name.A("-").N(rand()).N(rand()));
+   	}
+
       addModule( l, bIsPrivate );
       l->decref();
    }
