@@ -574,12 +574,8 @@ bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
 }
 
 
-String Module::absoluteName( const String &orig_name, const String &parent_name )
+String Module::absoluteName( const String &module_name, const String &parent_name )
 {
-	// first, remove separator for unique names
-	uint32 pos_sep = orig_name.find( ";" );
-	String module_name = orig_name.subString(0, pos_sep ); // ok also if npos
-
    if ( module_name.getCharAt(0) == '.' )
    {
       // notation .name
@@ -600,11 +596,7 @@ String Module::absoluteName( const String &orig_name, const String &parent_name 
       if ( parent_name.size() == 0 )
          return module_name.subString( 5 );
       else
-      {
-      	uint32 pos_sep = parent_name.find( ";" );
-      	// ok also if npos
-         return parent_name.subString(0, pos_sep ) + "." + module_name.subString( 5 );
-      }
+         return parent_name + "." + module_name.subString( 5 );
    }
    else
       return module_name;

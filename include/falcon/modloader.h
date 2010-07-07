@@ -75,7 +75,6 @@ protected:
    bool m_delayRaise;
    bool m_ignoreSources;
    bool m_saveRemote;
-   bool m_bUseUniqueNames;
    uint32 m_compileErrors;
 
    Compiler m_compiler;
@@ -568,12 +567,6 @@ public:
 
    /** return last compile errors. */
    uint32 compileErrors() const { return m_compileErrors; }
-
-   /** Force the name of the loaded module to be unique. */
-   void useUniqueNames( bool m ) { m_bUseUniqueNames = m; }
-
-   /** Return current status of unique name loading. */
-   bool useUniqueNames() const { return m_bUseUniqueNames; }
 
    /** Return the compiler used by this module loader.
       This object can be inspected, or compiler options can be set by the caller.

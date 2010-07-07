@@ -76,7 +76,6 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
 
    // create the loader/runtime pair.
    ModuleLoader cpl( i_path == 0 || i_path->isNil() ? vm->appSearchPath() : String(*i_path->asString()) );
-   cpl.useUniqueNames( true );
    cpl.delayRaise(true);
    Runtime rt( &cpl, vm );
    rt.hasMainModule( false );
@@ -102,6 +101,9 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    // load and link
    try {
       rt.loadFile( fileName, false );
+      Module* mod = rt.findModuleByID(0);
+      String sName(mod->name());
+      mod->name( sName.A("-").N(vm->liveModules().size()) );
       vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
       LiveModule *lmod = vm->link( &rt );
 
