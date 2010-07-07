@@ -34,7 +34,7 @@ Falcon (0.9.6.5)
   * fixed: String.escape() enscaped only below chr(8) and not below chr(32).
   * added: epoch() function returning exactly the seconds since UNIX epoch.
   * minor: fileType now follows links, unless an extra parameter is set to true. 
-
+  * fixed: include() would mess up different modules having the same name.
             
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

@@ -53,6 +53,7 @@ ModuleLoader::ModuleLoader():
    m_delayRaise( false ),
    m_ignoreSources( false ),
    m_saveRemote( false ),
+   m_bUseUniqueNames( false ),
    m_compileErrors(0)
 {
    m_path.deletor( string_deletor );
@@ -70,6 +71,7 @@ ModuleLoader::ModuleLoader( const String &path ):
    m_delayRaise( false ),
    m_ignoreSources( false ),
    m_saveRemote( false ),
+   m_bUseUniqueNames( false ),
    m_compileErrors(0)
 {
    m_path.deletor( string_deletor );
@@ -292,6 +294,13 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
 
 
    Module *mod = loadFile( expName, t_none, true );
+   if( m_bUseUniqueNames )
+   {
+   	nmodName += "-";
+   	nmodName.N( rand() );
+   	nmodName.N( rand() );
+
+   }
    mod->name( nmodName );
 
    return mod;
