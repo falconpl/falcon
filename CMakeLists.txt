@@ -32,23 +32,65 @@ link_directories( ${FALCON_LIB_PATH} )
 ##
 #   Find gtk
 #
-if ( WIN32 ) # Windoze, using env var GTK_ROOT
+if ( WIN32 )
 
-    set( GTK2_GTK_LIBRARY "$ENV{GTK_ROOT}/lib/gtk-win32-2.0.lib" )
-    set( GTK2_GTK_INCLUDE_DIR "$ENV{GTK_ROOT}/include/gtk-2.0" )
-    set( GTK2_GLIB_INCLUDE_DIR "$ENV{GTK_ROOT}/include/glib-2.0" )
-    set( GTK2_GLIBCONFIG_INCLUDE_DIR "$ENV{GTK_ROOT}/lib/glib-2.0/include" )
-    set( GTK2_GLIB_LIBRARY "$ENV{GTK_ROOT}/lib/glib-2.0.lib" )
-    set( GTK2_GDK_INCLUDE_DIR  "$ENV{GTK_ROOT}/include/gtk-2.0" )
-    set( GTK2_GDKCONFIG_INCLUDE_DIR "$ENV{GTK_ROOT}/lib/gtk-2.0/include" )
-    set( GTK2_GDK_LIBRARY "$ENV{GTK_ROOT}/lib/gdk-win32-2.0.lib" )
-    set( GTK2_ATK_LIBRARY "$ENV{GTK_ROOT}/lib/atk-1.0.lib" )
-    set( GTK2_CAIRO_LIBRARY "$ENV{GTK_ROOT}/lib/cairo.lib" )
-    set( GTK2_PANGO_LIBRARY "$ENV{GTK_ROOT}/lib/pango-1.0.lib" )
+    set( GTK_DIR c:/gtk ) ## dir of the Gtk bundled stuff
+
+    set( GTK2_ATK_INCLUDE_DIR "${GTK_DIR}/include/atk-1.0" )
+    set( GTK2_ATK_LIBRARY "${GTK_DIR}/lib/atk-1.0.lib" )
+
+    set( GTK2_CAIRO_INCLUDE_DIR "${GTK_DIR}/include/cairo" )
+    set( GTK2_CAIRO_LIBRARY "${GTK_DIR}/lib/cairo.lib" )
+
+    set( GTK2_GDKCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/gtk-2.0/include" )
+    set( GTK2_GDK_INCLUDE_DIR  "${GTK_DIR}/include/gtk-2.0" )
+    set( GTK2_GDK_LIBRARY "${GTK_DIR}/lib/gdk-win32-2.0.lib" )
+
+    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
+    set( GTK2_GDKPIXBUF_LIBRARY "${GTK_DIR}/lib/gdk_pixbuf-2.0.lib" )
+
+    set( GTK2_GLIBCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/glib-2.0/include" )
+    set( GTK2_GLIB_INCLUDE_DIR "${GTK_DIR}/include/glib-2.0" )
+    set( GTK2_GLIB_LIBRARY "${GTK_DIR}/lib/glib-2.0.lib" )
+
+    set( GTK2_GOBJECT_INCLUDE_DIR "${GTK_DIR}/include/glib-2.0/gobject" )
+    set( GTK2_GOBJECT_LIBRARY "${GTK_DIR}/lib/gobject-2.0.lib" )
+
+    set( GTK2_GTHREAD_INCLUDE_DIR "${GTK_DIR}/include/glib-2.0" )
+    set( GTK2_GTHREAD_LIBRARY "${GTK_DIR}/lib/gthread-2.0.lib" )
+
+    set( GTK2_GTK_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0" )
+    set( GTK2_GTK_LIBRARY "${GTK_DIR}/lib/gtk-win32-2.0.lib" )
+
+    set( GTK2_PANGO_INCLUDE_DIR "${GTK_DIR}/include/pango-1.0" )
+    set( GTK2_PANGO_LIBRARY "${GTK_DIR}/lib/pango-1.0.lib" )
 
     find_package( GTK2 2.12 REQUIRED )
 
-    set( GTK2_LIBRARIES "${GTK2_LIBRARIES};$ENV{GTK_ROOT}/lib/gobject-2.0.lib" )
+    include_directories(
+        ${GTK2_ATK_INCLUDE_DIR}
+        ${GTK2_CAIRO_INCLUDE_DIR}
+        ${GTK2_GDKCONFIG_INCLUDE_DIR}
+        ${GTK2_GDK_INCLUDE_DIR}
+        ${GTK2_GDKPIXBUF_INCLUDE_DIR}
+        ${GTK2_GLIBCONFIG_INCLUDE_DIR}
+        ${GTK2_GLIB_INCLUDE_DIR}
+        ${GTK2_GOBJECT_INCLUDE_DIR}
+        ${GTK2_GTK_INCLUDE_DIR}
+        ${GTK2_PANGO_INCLUDE_DIR}
+        )
+
+    set( GTK2_LIBRARIES
+        ${GTK2_ATK_LIBRARY}
+        ${GTK2_CAIRO_LIBRARY}
+        ${GTK2_GDK_LIBRARY}
+        ${GTK2_GDKPIXBUF_LIBRARY}
+        ${GTK2_GLIB_LIBRARY}
+        ${GTK2_GOBJECT_LIBRARY}
+        ${GTK2_GTHREAD_LIBRARY}
+        ${GTK2_GTK_LIBRARY}
+        ${GTK2_PANGO_LIBRARY}
+        )
 
 else() # Linux
 

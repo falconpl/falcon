@@ -334,7 +334,6 @@ add_library( ${CURRENT_MODULE} MODULE
 target_link_libraries( ${CURRENT_MODULE}
     ${Falcon_LIBRARIES}
     ${GTK2_LIBRARIES}
-    gobject-2.0
     )
 
 ##
