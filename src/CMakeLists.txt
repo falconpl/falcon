@@ -331,10 +331,22 @@ add_library( ${CURRENT_MODULE} MODULE
 ##
 #   Linking
 #
-target_link_libraries( ${CURRENT_MODULE}
-    ${Falcon_LIBRARIES}
-    ${GTK2_LIBRARIES}
-    )
+if ( WIN32 )
+
+	target_link_libraries( ${CURRENT_MODULE}
+        ${Falcon_LIBRARIES}
+        ${GTK2_LIBRARIES}
+        )
+
+else()
+
+	target_link_libraries( ${CURRENT_MODULE}
+        ${Falcon_LIBRARIES}
+        ${GTK2_LIBRARIES}
+        gobject-2.0
+        )
+
+#endif
 
 ##
 #   Install
