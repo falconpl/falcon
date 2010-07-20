@@ -346,7 +346,7 @@ else()
         gobject-2.0
         )
 
-#endif
+endif()
 
 ##
 #   Install
