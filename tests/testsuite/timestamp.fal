@@ -191,6 +191,11 @@ if aday.month != 0 or \
       failure( "Date distance 3" )
 end
 
+
+// test VM comparation
+if aday == nil: failure( "Timestamp considered == nil" )
+if aday != aday: failure( "Timestamp considered != to itself" )
+
 success()
 
 /* End of file */

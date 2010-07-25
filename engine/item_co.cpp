@@ -1542,6 +1542,10 @@ int co_object_compare( const Item& first, const Item& second )
    {
       CoreObject *self = first.asObjectSafe();
 
+      // we're possibly calling a deep method,
+      // and second may come from the stack.
+      Item temp = second;
+
       // do we have an active VM?
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -1550,7 +1554,7 @@ int co_object_compare( const Item& first, const Item& second )
          Item mth;
          if ( self->getMethod( "compare", mth ) )
          {
-            vm->pushParam( second );
+            vm->pushParam( temp );
             vm->callItemAtomic( mth, 1 );
             if ( vm->regA().isInteger() )
             {
@@ -1560,8 +1564,8 @@ int co_object_compare( const Item& first, const Item& second )
       }
 
       // by fallback -- use normal ordering.
-      if( second.isObject() )
-         return (int)(self - second.asObjectSafe());
+      if( temp.isObject() )
+         return (int)(self - temp.asObjectSafe());
    }
 
    return first.type() - second.type();

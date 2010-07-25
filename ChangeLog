@@ -17,7 +17,7 @@ Falcon (0.9.6.5)
   * fixed: include() didn't take the engine encodings as the default.
   * fixed: language level second() was not using the new system independent api 
            Falcon::Sys::_seconds(). As a result, some embeddings using _second()
-		   may have provided mismatched timings on windows.
+           may have provided mismatched timings on windows.
   * minor: When used with invalid parameters, falpack points out that -h will 
            print help text.
   * fixed: Sys::fal_mkdir (unix) didn't handle absolute paths proper. 
@@ -33,8 +33,8 @@ Falcon (0.9.6.5)
   * added: Base64 class.
   * fixed: String.escape() enscaped only below chr(8) and not below chr(32).
   * added: epoch() function returning exactly the seconds since UNIX epoch.
-  * minor: fileType now follows links, unless an extra parameter is set to true. 
-  * fixed: include() would mess up different modules having the same name.
+  * fixed: Comparation with timestamps and other kind of items caused an
+           endless recursion.
             
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp

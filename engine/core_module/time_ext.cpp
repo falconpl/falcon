@@ -359,11 +359,13 @@ FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm )
          vm->retval( ts1->compare( *ts2 ) );
       }
       else {
-         vm->retval( vm->self().compare( *date ) );
+    	  // let the VM use the default algo.
+          vm->retnil();
       }
    }
    else {
-      vm->retval( vm->self().compare( *date ) );
+	   // let the VM use the default algo.
+	   vm->retnil();
    }
 }
 
