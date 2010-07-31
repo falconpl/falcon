@@ -68,6 +68,7 @@ FALCON_FUNC  Handle_setInStream( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Handle_postData( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm );
+FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm );
 //FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm );
 FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm );

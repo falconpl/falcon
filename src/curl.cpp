@@ -155,41 +155,43 @@ FALCON_MODULE_DECL
    easy_class->getClassDef()->factory( &Falcon::Mod::CurlHandle::Factory );
    self->addClassMethod( easy_class, "exec", Falcon::Ext::Handle_exec );
 
-   self->addClassMethod( easy_class, "setOutConsole", Falcon::Ext::Handle_setOutConsole );
-   self->addClassMethod( easy_class, "setOutString", Falcon::Ext::Handle_setOutString );
-   self->addClassMethod( easy_class, "setOutStream", Falcon::Ext::Handle_setOutStream ).asSymbol()
+   self->addClassMethod( easy_class, "setOutConsole", &Falcon::Ext::Handle_setOutConsole );
+   self->addClassMethod( easy_class, "setOutString", &Falcon::Ext::Handle_setOutString );
+   self->addClassMethod( easy_class, "setOutStream", &Falcon::Ext::Handle_setOutStream ).asSymbol()
       ->addParam( "stream" );
-   self->addClassMethod( easy_class, "setOutCallback", Falcon::Ext::Handle_setOutCallback ).asSymbol()
+   self->addClassMethod( easy_class, "setOutCallback", &Falcon::Ext::Handle_setOutCallback ).asSymbol()
       ->addParam( "cb" );
-   self->addClassMethod( easy_class, "setInStream", Falcon::Ext::Handle_setInStream ).asSymbol()
+   self->addClassMethod( easy_class, "setInStream", &Falcon::Ext::Handle_setInStream ).asSymbol()
       ->addParam( "stream" );
-   self->addClassMethod( easy_class, "setInCallback", Falcon::Ext::Handle_setInCallback ).asSymbol()
+   self->addClassMethod( easy_class, "setInCallback", &Falcon::Ext::Handle_setInCallback ).asSymbol()
       ->addParam( "cb" );
 
    //self->addClassMethod( easy_class, "setOutMessage", Falcon::Ext::Handle_setOutMessage ).asSymbol()
    //   ->addParam( "slot" );
-   self->addClassMethod( easy_class, "getData", Falcon::Ext::Handle_getData );
-   self->addClassMethod( easy_class, "setOption", Falcon::Ext::Handle_setOption ).asSymbol()
+   self->addClassMethod( easy_class, "getData", &Falcon::Ext::Handle_getData );
+   self->addClassMethod( easy_class, "setOption", &Falcon::Ext::Handle_setOption ).asSymbol()
       ->addParam( "option" )->addParam( "data" );
-   self->addClassMethod( easy_class, "postData", Falcon::Ext::Handle_postData ).asSymbol()
+   self->addClassMethod( easy_class, "setOptions", &Falcon::Ext::Handle_setOptions ).asSymbol()
+      ->addParam( "options" );
+   self->addClassMethod( easy_class, "postData", &Falcon::Ext::Handle_postData ).asSymbol()
       ->addParam( "data" );
-   self->addClassMethod( easy_class, "getInfo", Falcon::Ext::Handle_getInfo ).asSymbol()
+   self->addClassMethod( easy_class, "getInfo", &Falcon::Ext::Handle_getInfo ).asSymbol()
       ->addParam( "option" );
 
-   self->addClassMethod( easy_class, "cleanup", Falcon::Ext::Handle_cleanup );
+   self->addClassMethod( easy_class, "cleanup", &Falcon::Ext::Handle_cleanup );
    self->addClassProperty( easy_class, "data" );
 
    //============================================================
    // Here declare CURL - multi api
    //
 
-   Falcon::Symbol *multy_class = self->addClass( "Multi", Falcon::Ext::Multi_init );
+   Falcon::Symbol *multy_class = self->addClass( "Multi", &Falcon::Ext::Multi_init );
    multy_class->getClassDef()->factory( &Falcon::Mod::CurlMultiHandle::Factory );
-   self->addClassMethod( multy_class, "add", Falcon::Ext::Multi_add ).asSymbol()
+   self->addClassMethod( multy_class, "add", &Falcon::Ext::Multi_add ).asSymbol()
       ->addParam( "h" );
-   self->addClassMethod( multy_class, "remove", Falcon::Ext::Multi_remove ).asSymbol()
+   self->addClassMethod( multy_class, "remove", &Falcon::Ext::Multi_remove ).asSymbol()
       ->addParam( "h" );
-   self->addClassMethod( multy_class, "perform", Falcon::Ext::Multi_perform );
+   self->addClassMethod( multy_class, "perform", &Falcon::Ext::Multi_perform );
 
 
    //============================================================
