@@ -1,0 +1,174 @@
+             Falcon disclaimer for Mersenne Twister algorithm.
+
+
+INDRODUCTION
+============
+
+   The Falcon Programming Language uses The Mersenne Twister algorithm to
+generate pseudo random numbers. The algorithm can be used under a BSD-LIKE
+license, requiring to reprint the disclaimer.
+
+  Users of the Falcon Programming Language don't need to comply to this
+license even if embedding the Falcon Programming Language in their application,
+as explicitly indicated by its Author(s).
+
+LICENSE
+=======
+
+Mersenne Twister random number generator -- a C++ class MTRand
+Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
+Richard J. Wagner  v1.0  15 May 2003  rjwagner@writeme.com
+
+The Mersenne Twister is an algorithm for generating random numbers.  It
+was designed with consideration of the flaws in various other generators.
+The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
+are far greater.  The generator is also fast; it avoids multiplication and
+division, and it benefits from caches and pipelines.  For more information
+see the inventors' web page at http://www.math.keio.ac.jp/~matumoto/emt.html
+
+Reference
+M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
+Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
+Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
+
+Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+Copyright (C) 2000 - 2003, Richard J. Wagner
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+
+  3. The names of its contributors may not be used to endorse or promote
+     products derived from this software without specific prior written
+     permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The original code included the following notice:
+
+    When you use this, send an email to: matumoto@math.keio.ac.jp
+    with an appropriate reference to your work.
+
+It would be nice to CC: rjwagner@writeme.com and Cokus@math.washington.edu
+when you write.
+
+
+END OF LICENSE
+
+
+Exception
+=========
+
+<Mail to Mr. Nishimura, Mr. Matsumoto and Mr. Wagner>
+
+  My name is Giancarlo Niccolai and I lead the development of the Falcon
+Programming Language:
+
+  http://www.falconpl.org
+
+We have found the M.T. algorithm by Mr. Matsumoto and Mr. Nishimura, as
+modified by Mr. Wagner, to be very effective and useful for the purpose of
+the basic random number generator to be used in our language and provided to
+our users through the random() function family.
+
+However, as the code would then be part of the Falcon Scripting Engine,
+the BSD license may be intended as to require applications using Falcon as a
+scripting engine, or application written in Falcon, to add the bolireplate
+into their distribution. For how small this requirement may be, we cannot
+insert in our language code asking our users to comply particular formalities
+except those indicated in our license.
+
+OTOH, it's totally OK for us to comply with the BSD license; we can (and will,
+in case you agree) add the BSD license boilerplate with your copyright notice
+to our copyright statements and documentation.
+
+What I am asking you is a special exception to the BSD license to be applied
+to users of the Falcon programming language so that they can comply just to
+our license.
+
+Please, notice that Falcon is currently distributed under GPL or "The Falcon
+Programming Language License" (dual licensing); both those license require
+the final users to know what they're using and where is it coming from,
+and so, to have access to the original copyright statement (which will include
+your boilerplate) and documentation (which will indicate the source of the
+random number generator algorithm in the relevant sections).
+
+FYI, FPLL is meant to be an open source license, far less restrictive than
+GPL, aiming to resolve specific licensing issues of programming languages;
+we're dual licensing because of the drop in the competence of OSI and the
+slowness of legal offices of institutional GNU/Linux distributors in analyzing
+the license (yet Blastwave, AuroraUX and Slackware have adopted FPLL).
+
+TIA for your kind attention
+Giancarlo Niccolai
+
+===========================================================================
+Reply from Mr. Wagner:
+
+
+Return-path: <wagnerr@xxxxx> [hidden for privacy]
+Envelope-to: gc@falconpl.org
+Delivery-date: Fri, 09 Apr 2010 10:25:50 -0700
+Received: from webrelay-macc.mr.itd.umich.edu ([141.211.12.74]:48408)
+   by vps779.inmotionhosting.com with esmtp (Exim 4.68)
+   (envelope-from <wagnerr@xxxxxx>) [hidden for privacy]
+   id 1O0Hxc-0006Kc-Ih
+   for gc@xxxxxx; Fri, 09 Apr 2010 10:25:50 -0700 [hidden for privacy]
+Received: FROM jackiebrown-repl.mail.umich.edu (jackiebrown-repl.mail.umich.edu [141.211.125.75])
+   By webrelay-macc.mr.itd.umich.edu ID 4BBF6390.E23B8.5407 ;
+    9 Apr 2010 13:27:44 EDT
+Received: (from www@localhost)
+   by jackiebrown-repl.mail.umich.edu () id o39HRigv029981
+   for gc@xxxxxxx; Fri, 9 Apr 2010 13:27:44 -0400 [hidden for privacy]
+Received: from hobson.nist.gov (hobson.nist.gov [129.6.153.49]) by
+ web.mail.umich.edu (Horde Framework) with HTTP; Fri, 09 Apr 2010 13:27:44
+ -0400
+Message-ID: <20100409132744.13544mn7qgj175a8@web.mail.umich.edu>
+Date: Fri, 09 Apr 2010 13:27:44 -0400
+From: wagnerr <wagnerr@umich.edu>
+To: Giancarlo Niccolai <gc@falconpl.org>
+Subject: Re: Redistribution of Mersenne Twister algorithm.
+References: <4B4AECDF.8030107@falconpl.org>
+In-Reply-To: <4B4AECDF.8030107@falconpl.org>
+MIME-Version: 1.0
+Content-Type: text/plain;
+ charset=ISO-8859-1;
+ DelSp="Yes";
+ format="flowed"
+Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
+User-Agent: Internet Messaging Program (IMP) H3 (4.3.5)
+X-Remote-Browser: Mozilla/5.0 (compatible; Konqueror/3.5; Linux)
+ KHTML/3.5.10 (like Gecko) (Debian)
+X-IMP-Server: 192.168.225.75 (jackiebrown-repl)
+X-Originating-IP: 129.6.153.49
+X-Originating-User: wagnerr
+X-Spam-Status: No, score=-2.6
+X-Spam-Score: -25
+X-Spam-Bar: --
+X-Spam-Flag: NO
+
+Giancarlo,
+
+I'm glad to hear you found my Mersenne Twister code useful. You have
+my permission to redistribute it under the GPL and FPLL.
+
+Rick Wagner

@@ -3,41 +3,43 @@
 
                               Chimera Release
 
-                                  0.9.6.4
+                                  0.9.6.6
   
   "Chimera" version is an intermediate version that bridges Eagle series
 with the next series, in which we should put in the final compiler/module
 assets.
 
-  This is mainly a critical bugfix release over 0.9.6.2. Backward compatibility
-with previous versions is granted, as well as binary comptatibility of the
-public interface. A minor change has been delivered to the internal API of
-Falcon::CoreSlot class, which is usually not exposed to external modules.
+  This is the last bugfix release in the Chimera version, and closes the
+series of 0.9.6.6 releases.
 
-  The most notable addition to this release is an "event oriented" interface
-to the VMSlot class, which allows finer control of scoped broadcasts.
+  IMPORANT DISCLAIMER: starting from this version, we're introducing the
+mersenne twister algorithm for random number generation. The permission
+to use it has been granted by one of the authors, as described in the
+README.mersenne file.
 
 
 New Features
 ============
 
-  - Function.trace() to get the traceback steps.
-  - Methodic functions strEsq, strUnesq, strEscape, strUnescape (and
-    similarly named methods in String) helping string transformation in
-    web modules.
-  - Event model to VMSlot (children named slots).
-  - Now unknown messages are optionally marshalled to "__on_event" in objects.
-
+  - The hash module has been added to feathers; it provides a set of popular
+    hashing facilities as MD5, SHA256, HMAC and many more.
+  - Message oriented programming has now an "event model" message generation,
+    which is added to VMSlot class.
+  - Added method Dictionary.dop (default operation) -- a facility that makes
+    easier to create maps of complex items (i.e. maps of lists) with a one-liner.
+  - Added methods Dictionary.do and Array.concat
+  - Added Base64 class.
+  - New epoch() function returning exactly the seconds since UNIX epoch.
 
 Critical bug fixes
 ==================
 
-  - *comp() methods didn't skip the item when oob(1) was returned
+  - toString() crashed when called without a parameter.
   - Failing to init the frame in new VMContexts would have caused random
     crashes depending on linkage or memory conditions.
-  - Error reporting in include() may crash.
-  - Invalid loop condition caused fself.caller() to segfault.
-
+  - Immediate array unpack was causing an assert in case of wrong sizes.
+  - passvp() was failing if calling function had local vars
+  
 Usage tips
 ==========
 

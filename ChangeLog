@@ -1,4 +1,4 @@
-Falcon (0.9.6.5)
+Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even
            if it was possible to do that.
   * fixed: When importing from namespaces, inheritance (derivedFrom) from 
