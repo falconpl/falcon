@@ -1,4 +1,4 @@
-Feathers (0.9.6.5)
+Feathers (0.9.6.6)
   * fixed: Sockets wasn't cloneable (so they couldn't be sent to
            other threads).
   * fixed: Random crash due to early and wrong marking of imported modules

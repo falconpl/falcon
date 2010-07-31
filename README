@@ -21,6 +21,7 @@ Modules admitted in the Feathers are currently:
    * funcext
    * json
    * logging
+   * hash
    * mxml
    * process
    * regex
@@ -29,6 +30,8 @@ Modules admitted in the Feathers are currently:
 
 In version 0.9.4.2 we added "logging" and in 0.9.4.4 "json".
 
+The "hash" module was added in version 0.9.6.6.
+
 
 BUILDING
 ========
@@ -36,7 +39,7 @@ BUILDING
 To build the Falcon Feathers, you'll need a well setup Falcon Development
 Environment, as specified in the relative document at
 
-   http://old.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+   http://falconpl.org/?s=bf
 
 The core must be built and installed in the active tree before starting
 feathers configuration.
@@ -48,4 +51,18 @@ Then,
    make install
 
 should do.
+
+
+LICENSE and DISCLAIMERS
+=======================
+
+The following modules include external software licensed under OpenSource
+compliant licenses:
+
+  * hash
+  * regex
+  * zlib
+
+Please, be sure to read the README and other disclaimer files present in
+the relative subdirectories.
 
