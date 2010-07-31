@@ -2,64 +2,73 @@
 # Configurator for development tools
 #
 
+# CMake will find it via find_package(falcon [REQUIRED])
+# It supplies include paths, libraries (via falcon-core-targets.cmake)
+# and convenience MACROS.
+#
+
+set( cmake_mod_files
+   FalconConfig.cmake
+   FalconConfigVersion.cmake )
+   
+foreach(item ${cmake_mod_files} )
+  message( "Configuring ${item}" )
+  configure_file(
+    ${item}.in  "${CMAKE_CURRENT_BINARY_DIR}/${item}"
+    ESCAPE_QUOTES @ONLY)
+
+    #Create installation files from in files
+    list( APPEND cmake_mod_files_inst "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
+endforeach()
+
+
+message( "Configuring ${item}" )
+  configure_file(
+    FindFalcon.cmake.in  ${CMAKE_CURRENT_BINARY_DIR}/
+    ESCAPE_QUOTES @ONLY)
+
+#
+# Configure other binary/executable files
+#
+
 IF(UNIX)
    SET(sys_in_spec falcon-conf )
    SET(sys_inst_spec ${CMAKE_CURRENT_BINARY_DIR}/falcon-conf)
 ENDIF(UNIX)
 
-SET(in_files
+SET(in_bin_files
   falconeer.fal
   ${sys_in_spec}
 )
 
-
-foreach(item ${in_files} )
+foreach(item ${in_bin_files} )
   message( "Configuring ${item}" )
   configure_file(
-    ${item}.in  ${CMAKE_CURRENT_BINARY_DIR}/${item}
+    ${item}.in  "${CMAKE_CURRENT_BINARY_DIR}/${item}"
     ESCAPE_QUOTES @ONLY)
-endforeach(item)
+    
+    #Create installation files from in files
+    list( APPEND inst_bin_files "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
+endforeach()
 
-# CMake will find it via find_package(falcon [REQUIRED])
-# It supplies include paths, libraries (via falcon-core-targets.cmake)
-# and convenience MACROS.
 #
-message( "Configuring FalconConfig.cmake" )
-configure_file(
-  FalconConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
-  @ONLY
-)
-configure_file(
-  FalconConfigVersion.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/FalconConfigVersion.cmake
-  @ONLY
-)
+# Add non-configured files to be installed
+#
 
+list(APPEND inst_bin_files "fallc.fal")
 
 ########################################################################
 # Install
 
-SET(inst_files
-  "${CMAKE_CURRENT_BINARY_DIR}/falconeer.fal"
-  "fallc.fal"
-  ${sys_inst_spec}
-)
-
-
-INSTALL(
-  FILES ${inst_files}
+install(
+  FILES ${inst_bin_files}
   DESTINATION ${FALCON_BIN_DIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE 
-              OWNER_EXECUTE
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
               GROUP_READ GROUP_EXECUTE
               WORLD_READ WORLD_EXECUTE
 )
 
-install(FILES
-   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfig.cmake
-   ${CMAKE_CURRENT_BINARY_DIR}/FalconConfigVersion.cmake
-   ${CMAKE_CURRENT_BINARY_DIR}/modfunctions.cmake
+install(
+   FILES ${cmake_mod_files_inst}
    DESTINATION ${FALCON_CMAKE_DIR}
 )
-configure_file(modfunctions.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/modfunctions.cmake @ONLY)

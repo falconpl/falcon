@@ -20,7 +20,7 @@
 #                  (should then use command line CMAKE_RPATH* variables)
 #
 
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.8)
 project(Falcon_Core)
 
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
@@ -85,6 +85,7 @@ endif(NOT FALCON_SONAME_AGE)
 #CMAKE is good at this, let's use this feature
 set(FALCON_VERSION_RC   "${FALCON_VERSION_MAJOR}, ${FALCON_VERSION_MINOR}, ${FALCON_VERSION_REVISION}, ${FALCON_VERSION_PATCH}")
 set(FALCON_VERSION_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}.${FALCON_VERSION_PATCH}")
+set(FALCON_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}")
 
 message(STATUS "Compiling Falcon ${FALCON_VERSION_ID} on ${CMAKE_SYSTEM}" )
 
@@ -131,7 +132,7 @@ if (NOT FALCON_INC_DIR)
    if(WIN32)
       set(FALCON_INC_DIR "include")
    else()
-      set(FALCON_INC_DIR "include/falcon-${FALCON_VERSION_ID}")
+      set(FALCON_INC_DIR "include/falcon${FALCON_ID}")
    endif()
 endif()
 
@@ -146,7 +147,7 @@ endif()
 if(WIN32)
   set(FALCON_CMAKE_DIR cmake)
 else()
-  set(FALCON_CMAKE_DIR share/falcon-${FALCON_VERSION_ID}/cmake)
+  set(FALCON_CMAKE_DIR share/falcon-${FALCON_ID}/cmake)
 endif()
 
 set(FALCON_APP_DIR ${FALCON_MOD_DIR}/apps)
@@ -160,25 +161,16 @@ set(FALCON_INSTALL_DESTINATIONS
 
 message( STATUS "Binary prefix: ${FALCON_BIN_DIR}" )
 message( STATUS "Library prefix: ${FALCON_LIB_DIR}" )
+message( STATUS "Include prefix: ${FALCON_INC_DIR}" )
 message( STATUS "Module prefix: ${FALCON_MOD_DIR}" )
+message( STATUS "Application directory: ${FALCON_APP_DIR}" )
+message( STATUS "CMAKE config prefix: ${FALCON_CMAKE_DIR}" )
 
 if ( NOT WIN32 )
    if (NOT FALCON_MAN_DIR)
       set(FALCON_MAN_DIR "share/man/man1")
    endif()
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
-endif()
-
-option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" off)
-if(NOT DISABLE_RPATH)
-  # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
-  set(CMAKE_SKIP_BUILD_RPATH  false)
-  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false) 
-  
-  # Apple equivalent to RPATH is called `install_name'
-  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
 endif()
 
 #########################################################à

@@ -4,7 +4,7 @@
 #
 # Useful tool to compile falcon modules and embedding applications.
 #
-# (C) Giancarlo Niccolai 2003
+# (C) Giancarlo Niccolai 2010
 
 SYSTEM=""
 
@@ -22,10 +22,11 @@ usage()
    echo "   -L, --embed-libs     library flags and libraries for embedding apps"
    echo "   --libs-only-l        write the libraries that must be linked"
    echo "   --libs-only-L        write the directory where library is installed"
-   echo "   --moddir             write the module installation directory"
    echo "   -p, --ldpath         Path for LD_LIBRARY_PATH"
    echo "   -h, --help           this help"
-   echo "   --cmake              Position of the CMAKE module file"
+   echo "   --moddir             write the module installation directory"
+   echo "   --appdir             write falcon applications installation directory"
+   echo "   --cmake              Position of the CMAKE module for auto-build configurations"
    echo ""
    echo "Include this script in your makefiles with \$( $0 <params> )"
 }
@@ -40,10 +41,9 @@ if [ -z "$*" ]; then
    exit
 fi
 
-FALCONLIB="-lfalcon_engine"
-
 detectSystem
 
+FALCONLIB="-lfalcon_engine"
 if [ "$SYSTEM" = "mac" ]; then
   CFLAGS="-fPIC -dynamiclib -fno-common"
   LDFLAGS="-module -dload -dynamiclib"
@@ -59,6 +59,8 @@ LIB_LD_PATH="@CMAKE_INSTALL_PREFIX@/@FALCON_LIB_DIR@"
 INC_FLAGS="-I$INC_PATH"
 LIB_FLAGS="-L$LIB_PATH"
 MODDIR="@CMAKE_INSTALL_PREFIX@/@FALCON_MOD_DIR@"
+APPDIR="@CMAKE_INSTALL_PREFIX@/@FALCON_APP_DIR@"
+CMAKEMOD="@CMAKE_INSTALL_PREFIX@/@FALCON_CMAKE_DIR@/FalconConfig.cmake"
 
 while [ -n "$*" ]; do
    case "$1" in
@@ -73,7 +75,8 @@ while [ -n "$*" ]; do
       "-p" | "--ldpath") echo "$LIB_LD_PATH" ;;
       "--libs-only-l") echo "$FALCONLIB" ;;
       "--moddir") echo "$MODDIR";;
-      "--cmake") echo "@CMAKE_INSTALL_PREFIX@/@FALCON_MOD_DIR@/cmake/FalconConfig.cmake";;
+      "--appdir") echo "$APPDIR";;
+      "--cmake") echo "$CMAKEMOD";;
       "-h" | "--help" | *)
          usage
          exit;;

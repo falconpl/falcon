@@ -9,174 +9,18 @@ configure_file(
   @ONLY 
 )
 
-set(falcon_files 
-  falcon/allocator.h
-  falcon/attribmap.h
-  falcon/autocstring.h
-  falcon/autowstring.h
-  falcon/base64.h
-  falcon/basealloc.h
-  falcon/baton.h
-  falcon/cacheobject.h
-  falcon/callpoint.h
-  falcon/carray.h
-  falcon/cclass.h
-  falcon/citerator.h
-  falcon/common.h
-  falcon/compiler.h
-  falcon/complex.h
-  falcon/continuation.h
-  falcon/corecarrier.h
-  falcon/coredict.h
-  falcon/core_ext.h
-  falcon/corefunc.h
-  falcon/coreobject.h
-  falcon/corerange.h
-  falcon/coreslot.h
-  falcon/coretable.h
-  falcon/crobject.h
-  falcon/debug.h
-  falcon/deepitem.h
-  falcon/deptab.h
-  falcon/destroyable.h
-  falcon/detmempool.h
-  falcon/dir_sys.h
-  falcon/dir_sys_unix.h
-  falcon/dir_sys_win.h
-  falcon/dll_base.h
-  falcon/dll_dl.h
-  falcon/dll.h
-  falcon/dll_mac.h
-  falcon/dll_win.h
-  falcon/engine.h
-  falcon/eng_messages.h
-  falcon/engstrings.h
-  falcon/error_base.h
-  falcon/error.h
-  falcon/falcondata.h
-  falcon/falconobject.h
-  falcon/fassert.h
-  falcon/filestat.h
-  falcon/flexymodule.h
-  falcon/format.h
-  falcon/fstream.h
-  falcon/fstream_sys_unix.h
-  falcon/fstream_sys_win.h
-  falcon/garbageable.h
-  falcon/garbagelock.h
-  falcon/garbagepointer.h
-  falcon/gcalloc.h
-  falcon/gencode.h
-  falcon/generator.h
-  falcon/generatorseq.h
-  falcon/genericlist.h
-  falcon/genericmap.h
-  falcon/genericvector.h
-  falcon/genhasm.h
-  falcon/gentree.h
-  falcon/globals.h
-  falcon/gpage.h
-  falcon/heap.h
-  falcon/heap_linux.h
-  falcon/heap_win.h
-  falcon/intcomp.h
-  falcon/itemarray.h
-  falcon/itemdict.h
-  falcon/item.h
-  falcon/itemid.h
-  falcon/itemlist.h
-  falcon/itempage.h
-  falcon/itemset.h
-  falcon/itemtraits.h
-  falcon/iterator.h
-  falcon/itm_deref.h
-  falcon/lineardict.h
-  falcon/linemap.h
-  falcon/livemodule.h
-  falcon/llist.h
-  falcon/ltree.h
-  falcon/memblock.h
-  falcon/membuf.h
-  falcon/memory.h
-  falcon/mempool.h
-  falcon/mersennetwister.h
-  falcon/message_defs.h
-  falcon/modloader.h
-  falcon/module.h
-  falcon/modulecache.h
-  falcon/mt.h
-  falcon/mt_posix.h
-  falcon/mt_win.h
-  falcon/objectfactory.h
-  falcon/pagedict.h
-  falcon/path.h
-  falcon/pcode.h
-  falcon/pcodes.h
-  falcon/pointerpage.h
-  falcon/poopseq.h
-  falcon/proptable.h
-  falcon/rampmode.h
-  falcon/rangeseq.h
-  falcon/rc_version.h
-  falcon/refcount.h
-  falcon/reflectfunc.h
-  falcon/reflectobject.h
-  falcon/refstring.h
-  falcon/rosstream.h
-  falcon/runtime.h
-  falcon/sequence.h
-  falcon/service.h
-  falcon/setup.h
-  falcon/signals.h
-  falcon/signals_posix.h
-  falcon/smba.h
-  falcon/spage.h
-  falcon/src_lexer.h
-  falcon/stackframe.h
-  falcon/stdstreams.h
-  falcon/streambuffer.h
-  falcon/stream.h
-  falcon/string.h
-  falcon/stringstream.h
-  falcon/stringstream_srv.h
-  falcon/stringwithid.h
-  falcon/strtable.h
-  falcon/symbol.h
-  falcon/symlist.h
-  falcon/symtab.h
-  falcon/syntree.h
-  falcon/sys.h
-  falcon/testsuite.h
-  falcon/timestamp.h
-  falcon/time_sys.h
-  falcon/time_sys_unix.h
-  falcon/time_sys_win.h
-  falcon/tokenizer.h
-  falcon/trace.h
-  falcon/traits.h
-  falcon/transcoding.h
-  falcon/types.h
-  falcon/uintpair.h
-  falcon/uri.h
-  falcon/vardef.h
-  falcon/vfs_file.h
-  falcon/vfsprovider.h
-  falcon/vmcontext.h
-  falcon/vmevent.h
-  falcon/vm.h
-  falcon/vmmaps.h
-  falcon/vmmsg.h
-  falcon/vm_sys.h
-  falcon/vm_sys_posix.h
-  falcon/vm_sys_win.h
-  falcon/xtree_fix.h
-)
-unset(FALCON_HEADERS)
-foreach(item ${falcon_files})
-  list(APPEND FALCON_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/${item})
-endforeach(item ${falcon_files})
-list(APPEND FALCON_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/falcon/config.h)
+file( GLOB falcon_files falcon/*.h)
+file( GLOB falcon_srv falcon/srv/*.h)
+
+set(FALCON_HEADERS
+   ${falcon_files}
+   ${CMAKE_CURRENT_BINARY_DIR}/falcon/config.h)
+
+set(FALCON_SRV_HEADERS
+   ${falcon_srv} )
 
 install(FILES ${FALCON_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon)
+install(FILES ${FALCON_SRV_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon/srv)
 
 set(FALCON_HEADERS ${FALCON_HEADERS} PARENT_SCOPE)
+set(FALCON_SRV_HEADERS ${FALCON_SRV_HEADERS} PARENT_SCOPE)
