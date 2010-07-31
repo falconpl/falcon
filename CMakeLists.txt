@@ -8,7 +8,6 @@
 #
 # FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
 # FALCON_INC_DIR - Prefix for installation of include files.
-# FALCON_MAN_DIR - Prefix for installation of man files.
 # FALCON_LIB_DIR - Prefix for installation of archives and dynamic libraries
 #                  on UNIXes. Defaults to "lib".
 # FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
@@ -16,8 +15,7 @@
 # FALCON_SKIP_BISON - ON to avoid using bison.
 # FALCON_WITH_MANPAGES - ON to build and install man pages.
 # FALCON_MAN_DIR - Where manual pages are stored (below prefix)
-# DISABLE_RPATH  - Disable our detected settings for RPATH?
-#                  (should then use command line CMAKE_RPATH* variables)
+# FALCON_CMAKE_DIR - Where to install FalconConfig.cmake & c
 #
 
 cmake_minimum_required(VERSION 2.8)

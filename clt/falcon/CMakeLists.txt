@@ -3,14 +3,14 @@
 #
 # Falcon command line
 ##################################################
-option(FALCON_WITH_READLINE "Switch to ON for readline support." OFF)
-option(FALCON_WITH_INTERNAL_EDITLINE "" OFF)
+option(FALCON_WITH_EDITLINE "Switch to ON for editline support." OFF)
+option(FALCON_WITH_INTERNAL_EDITLINE "Switch to ON to use EDITLINE provided by falcon" ON)
 
 if(WIN32)
    set(readline_SRC readline_simple.cpp)
    set( SYSTEM_RC falcon.rc)
 else()  
-   if(NOT FALCON_WITH_READLINE)
+   if(NOT FALCON_WITH_EDITLINE)
      set(readline_SRC readline_simple.cpp)
    else()
      set(readline_SRC readline_editline.cpp)
@@ -21,8 +21,8 @@ else()
      else()
        find_package(Editline REQUIRED)
      endif()
-  endif(NOT FALCON_WITH_READLINE)
-endif(WIN32)
+  endif()
+endif()
 
 include_directories(
   ${PROJECT_BINARY_DIR}/include

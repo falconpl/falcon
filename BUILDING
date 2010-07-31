@@ -2,8 +2,8 @@
 
                      The Falcon Programming Language
 
-                                0.9 series
-
+                                0.9.6.6
+                                
                           BUILDING INSTRUCTION
 
 
@@ -11,12 +11,14 @@ INTRODUCTION
 ============
 
   This document refers to building Falcon source package as it distributed
-in bleeding edge and official releases on POSIX and comparable platforms
-(e.g. MSys). To build the live repository from the current development
-branch, please refer to the following document:
+in bleeding edge and official releases.
 
-  http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+  To configure a more complete development enviroment, where it is possible
+to have different versions of Falcon compiled with different settings and
+having a different set of modules compiled and installed for each setting,
+please refer to the following on-line document:
 
+   http://falconpl.org/?s=bf
 
 PRE-REQUISITE
 =============
@@ -27,7 +29,7 @@ c/c++ compiler supporting your platform and cmake, available at
    http://www.cmake.org
 
   Other than that, it is optionally required to provide development files
-correcty installed and configured for the following well known libraries:
+correctly installed and configured for the following well known libraries:
 
   - ZLIB
   - PCRE
@@ -36,134 +38,101 @@ correcty installed and configured for the following well known libraries:
 THE BUILD PROCESS
 =================
 
-  The source package is configured both to be installed directly on the target
-system and to prepare a delayed installation through a packaging system.
+  The build process happens under a standard CMAKE build session. Most of the
+times,
 
-  The process is divided in two steps: the package building happens inside the
-devel/ path under this directory, which must be located (or linked entierely)
-on a filesystem that can be written. All the configuration and build happens
-inside the devel/ path; the original content of the package is not altered,
-and deleting the devel/ path allows a fresh re-build process in case something
-goes wrong.
+  mkdir build
+  cd build
+  cmake ..       (*)
+  make
+  make install
 
-  Once the package is built, the installation step moves the package where
-required through the "prefix" option of the build.sh script and creates
-the needed symlink. The installation step will create this directories,
-filling them with the needed files:
+  is enough to create the core Falcon installation. A complete build requires
+also the feathers to be specified in the CMAKE main command line (the line
+indicated by *).
 
-  $p/bin               --> falcon, falrun, faltest etc.
-  $p/include/falcon    --> .h files needed to extend Falcon
-  $p/lib               --> libfalcon_engine.so & needed links
-  $p/lib/falcon        --> *_fm.so "feather" (useful) modules
+   cmake .. -DFALCON_WITH_FEATHERS=<location to feathers>
 
-where "$p" is the "prefix" set with the -p option of the build.sh script
-(defaulting to /usr/local).
+  The standard feathers location in the source package is under /feathers.
 
-  In case the installation needs to strip some of the installed files or to
-move it in different places, (in example, if the installed stuff must be
-packaged for secondary installation on different machines), the location where
-this tree can be reached must be specified via the "final destination" option
-of the build.sh script: "-f".
+  Relevant variables affecting the outcome of the build and installation processes
+are:
 
-In example, suppose we want to build a Falcon that must be installed on
-/opt/falcon, but that has to be stored on /tmp/falcon, where a packaging
-software reads it and prepares a package as an RPM, DEB or PKG. The command
-required will be:
+  - CMAKE_INSTALL_PREFIX: where Falcon will be placed on target systems. It is
+      very relevant in POSIX systems. Defaults to "/usr/local".
+  - FALCON_BIN_DIR: Directory under prefix for binary installation. Defaults
+      to "bin".
+  - FALCON_INC_DIR: Where to store include files. Defaults to
+      "include/falcon<ver>"
+  - FALCON_LIB_DIR: Where to store library files. Defaults to "lib".
+  - FALCON_MOD_DIR: Default location for installation modules. Defaults to
+      "$FALCON_LIB_DIR/falcon" on POSIX system, and "bin" on others.
+  - FALCON_WITH_MANPAGES: Creates and install also manual pages for POSIX
+      man command. It's "ON" by default on POSIX systems, "OFF" on others.
+  - FALCON_MAN_DIR: Where to install man pages. Defaults to "share/man/man1".
+  - FALCON_CMAKE_DIR: Where to install cmake configuration settings that can
+      be used to create third party Falcon modules or application embedding
+      falcon.
 
-   $ ./build.sh -p /tmp/falcon  -f /opt/falcon
+  The "make install" step can be directed to place Falcon in a temporary
+empty location where it will be picked for separate packaging via the default
+"DESTDIR=" setting:
 
-and after the build process is complete:
-
-   $ ./build.sh -i
+   cmake -DCMAKE_INSTALL_PREFIX="/opt/falcon"
+   make insatll DESTDIR="/tmp/falcon"
 
   This will move the needed files in /tmp/falcon, but will internally configure
 falcon to run from /opt/falcon/bin
-
-  *NOTICE: it is possible to specify the "-i" option directly on the first
-invocation of build.sh; this will install the created binaries and developement
-files immediately after having created them. This is useful for packaging
-systems that support a single build command, or on some platforms where CMAKE
-seems not to properly identify the completion of the first step, trying to
-rebuild all when ./build.sh is invoked.
 
 
 Changing library directory name
 ===============================
 
   In some systems, common system libraries for different architectures are
-stored on different directories. In example, one may want to store the 64 bit
-version of Falcon engine in lib64. It is possible to specify the -l option
-during the build step to change the "lib" default.
+stored on different directories. For example, one may want to store the 64 bit
+version of Falcon engine in lib64.
 
 
 Internal libraries
 ==================
 
-  By default, Falcon builds an internally shipped version of the following
-well known libraries:
+  By default, Falcon feathers build process tries to find in the system a
+build support for PCRE and ZLIB, falling back to build internally shipped
+versions if they are not found:
 
   - PCRE 7.2
   - ZLIB 1.1
 
-  If you prefer to use a version available on the system (i.e. a shared
-version of libpcre.so available for dynlink), you can remove the compilation
-and linking of the internal libraries specifying the "-inc" option on
-the build step.
-
-  To specify to use selectively one or more internal versions, disable
-the automation wit "-inc" and export the variable EXTRA_CMAKE with
-the following values (space spearated):
+  To change this behavior, use the following options
 
   -DFALCON_WITH_INTERNAL_PCRE=ON    (to build internal PCRE)
+  -DFALCON_WITH_INTERNAL_PCRE=OFF   (to force external PCRE)
   -DFALCON_WITH_INTERNAL_ZLIB=ON    (to build internal ZLIB)
+  -DFALCON_WITH_INTERNAL_ZLIB=OFF   (to force external ZLIB)
 
 
+Support for EDITLINE in interactive mode (POSIX)
+================================================
 
-Extra flags
-===========
-
-Build flags can be passed through the environment variables:
-
-  - CFLAGS: for the building of C files (some internal library, as PCRE)
-  - CXXFLAGS: for the building of the main engine.
-  - LDFLAGS: flags passed to the linker.
-  - EXTRA_CMAKE: extra parameters to be passed to CMAKE.
-
-
-Build processors
-================
-
-  The option "-j" can set the number of processors employed to build the
-process. When using CMAKE 2.4, and sporadically on some systems, it has
-been obserbed that setting a value > 2 causes the CMAKE build sequence
-to be confused, and causes the build process to fail once. When building
-manually, you can just ignore and repeat the build, while if you're building
-through an automated process, it is better to test if this problem is
-present on your combination of CMAKE/platform.
-
-
-Support for EDITLINE or READLINE in interactive mode
-====================================================
-
-The falcon command line tool can take benefit of an installed readline
-library, or use the internally distributed editline in case readline
+  The falcon command line tool can take benefit of an installed editline
+library, or use the internally distributed editline in case editline
 is not available.
 
-Currently, both those library cannot interpret international
+  Currently, both those library cannot interpret international
 characters correctly, so they are turned off by default.
 
-To compile falcon with readline support use:
+  To compile falcon with Editline support use:
 
-   -DFALCON_WITH_READLINE=ON
+   -DFALCON_WITH_EDITLINE=ON
+   
+  If you want to use a system-wide installation of editline, instead of
+the one that is shipped with Falcon, use the following option:
 
-You will need to have readline installed with development support.
+   -DFALCON_WITH_INTERNAL_EDITLINE=OFF
 
-Otherwise, you can use the small editline library, which is shipped
-with falcon using
-
-   -DFALCON_WITH_INTERNAL_EDITLINE=ON
-
-Notice that, in this case, Falcon build system will detect if you
+  Notice that, in this case, Falcon build system will detect if you
 have a system-wide installation of the edit-line library, and
 use that instead.
 
+  Notice that WIN32 console has a built-in interface that allows to
+edit the commands inputed in the interactive mode.
