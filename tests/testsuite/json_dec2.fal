@@ -10,13 +10,13 @@
 * [/Description]
 *
 ****************************************************************************/
-import from json
+load json
 
 mytest = '{"test_obj":{test_v1:"zero",test_v2:null},test_val:true,test_arr:[0,1,false],"ta2":["a","b"],"c":"d"}'
 
 try
-   v = json.JSONdecode( mytest )
-catch
+   v = JSONdecode( mytest )
+catch JSONError
    failure( "Can't decode the string" )
 end
 
