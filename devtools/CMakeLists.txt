@@ -21,12 +21,6 @@ foreach(item ${cmake_mod_files} )
     list( APPEND cmake_mod_files_inst "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
 endforeach()
 
-
-message( "Configuring ${item}" )
-  configure_file(
-    FindFalcon.cmake.in  ${CMAKE_CURRENT_BINARY_DIR}/
-    ESCAPE_QUOTES @ONLY)
-
 #
 # Configure other binary/executable files
 #

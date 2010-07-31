@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# To be copied in a directory like build/ and run there
+
+cmake .. \
+   -DCMAKE_BUILD_TYPE=Release \
+   -DCMAKE_INSTALL_PREFIX="/usr/local" \
+   -DFALCON_BIN_DIR="bin" \
+   -DFALCON_LIB_DIR="lib" \
+   -DFALCON_WITH_MANPAGES="ON" \
+   -DFALCON_MAN_DIR="share/man/man1" \
+   -DFALCON_WITH_FEASTHERS="feathers" \
+   -DFALCON_WITH_INTERNAL_PCRE="OFF" \
+   -DFALCON_WITH_INTERNAL_ZLIB="OFF" \
+   -DFALCON_WITH_EDITLINE="ON" \
+   -DFALCON_WITH_INTERNAL="OFF"
+
+# other useful settings
+# -DFALCON_INC_DIR="include/falcon<ver>"
+# -DFALCON_MOD_DIR="lib/falcon"
+# -DFALCON_CMAKE_DIR="share/falcon<ver>/cmake"
+# -DFALCON_SHARE_DIR="share/falcon<ver>"
+   

@@ -73,6 +73,8 @@ are:
   - FALCON_CMAKE_DIR: Where to install cmake configuration settings that can
       be used to create third party Falcon modules or application embedding
       falcon.
+  - FALCON_SHARE_DIR: Where README and other distribution related
+      documentation files are to be placed.
 
   The "make install" step can be directed to place Falcon in a temporary
 empty location where it will be picked for separate packaging via the default
@@ -83,6 +85,14 @@ empty location where it will be picked for separate packaging via the default
 
   This will move the needed files in /tmp/falcon, but will internally configure
 falcon to run from /opt/falcon/bin
+
+
+*NOTE: You'll usually want to ship your Falcon version built with
+
+        -DCMAKE_BUILD_TYPE=Release
+
+*NOTE: For your comfort, the source distro comes with a cmake_build.sample
+containing all the options set to their default values.
 
 
 Changing library directory name

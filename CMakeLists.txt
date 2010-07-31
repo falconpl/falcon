@@ -15,6 +15,7 @@
 # FALCON_SKIP_BISON - ON to avoid using bison.
 # FALCON_WITH_MANPAGES - ON to build and install man pages.
 # FALCON_MAN_DIR - Where manual pages are stored (below prefix)
+# FALCON_SHARE_DIR - Where to install falco share files
 # FALCON_CMAKE_DIR - Where to install FalconConfig.cmake & c
 #
 
@@ -83,7 +84,7 @@ endif(NOT FALCON_SONAME_AGE)
 #CMAKE is good at this, let's use this feature
 set(FALCON_VERSION_RC   "${FALCON_VERSION_MAJOR}, ${FALCON_VERSION_MINOR}, ${FALCON_VERSION_REVISION}, ${FALCON_VERSION_PATCH}")
 set(FALCON_VERSION_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}.${FALCON_VERSION_PATCH}")
-set(FALCON_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}")
+set(FALCON_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}")
 
 message(STATUS "Compiling Falcon ${FALCON_VERSION_ID} on ${CMAKE_SYSTEM}" )
 
@@ -121,6 +122,13 @@ if (NOT FALCON_LIB_DIR)
    set(FALCON_LIB_DIR lib)
 endif()
 
+if( NOT FALCON_SHARE_DIR)
+   if(WIN32)
+      set(FALCON_SHARE_DIR "share")
+   else()
+      set(FALCON_SHARE_DIR "share/falcon${FALCON_ID}")
+   endif()
+endif()
 
 if (NOT FALCON_BIN_DIR)
    set(FALCON_BIN_DIR bin)
@@ -145,7 +153,7 @@ endif()
 if(WIN32)
   set(FALCON_CMAKE_DIR cmake)
 else()
-  set(FALCON_CMAKE_DIR share/falcon-${FALCON_ID}/cmake)
+  set(FALCON_CMAKE_DIR ${FALCON_SHARE_DIR}/cmake)
 endif()
 
 set(FALCON_APP_DIR ${FALCON_MOD_DIR}/apps)
@@ -170,6 +178,29 @@ if ( NOT WIN32 )
    endif()
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
+
+
+#########################################################à
+# List of files to be installed as docs
+#
+
+set( doc_files
+      AUTHORS
+      BUILDING
+      ChangeLog
+      copyright
+      LICENSE
+      README
+      README.editline
+      README.mersenne
+      TODO
+      LICENSE_GPLv2
+      RELNOTES
+   )
+
+install(
+   FILES ${doc_files}
+   DESTINATION ${FALCON_SHARE_DIR} )
 
 #########################################################à
 # Subdirectories

@@ -31,16 +31,10 @@ set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
 set(Falcon_INC_DIR "@FALCON_INC_DIR@")
 set(Falcon_CMAKE_DIR "@FALCON_CMAKE_DIR@")
 
-if(WIN32)
-   # On windows, the target installation directory is decided during package install.
-   # OTOH, cmake directory is fixed under $PREFIX/cmake, or around that location
-   # so we can rebuild the target location easily.
-   string(REGEX REPLACE "[^/]+" ".." _ups "${Falcon_CMAKE_DIR}")
-   get_filename_component(Falcon_PREFIX ${SELF_DIR}/${_ups} ABSOLUTE)
-else()
-   # Under Unices (all flavors), the prefix is decided at install time.
-   set(Falcon_PREFIX "@CMAKE_INSTALL_PREFIX@" )
-endif()
+# Allow flexible installation location to perform out-of-install module builds
+# Also, on WIN32, the target installation directory is decided during package install.
+string(REGEX REPLACE "[^/]+" ".." _ups "${Falcon_CMAKE_DIR}")
+get_filename_component(Falcon_PREFIX ${SELF_DIR}/${_ups} ABSOLUTE)
 
 set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
 set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
@@ -126,6 +120,8 @@ function(FALCON_INSTALL_MODULE tgt )
       set_target_properties(${tgt} PROPERTIES
          PREFIX "" )
    endif()
+
+   set( CMAKE_INSTALL_PREFIX, "@CMAKE_INSTALL_PREFIX@" ) 
 
    if( DEFINED MOD_INSTALL )
       set( dest "${MOD_INSTALL}" )
