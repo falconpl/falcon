@@ -369,7 +369,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    uint32 limit;
 
    if ( target == 0 || ! target->isString()
-        || splitstr == 0 || ! splitstr->isString()
+        || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
         || ( count != 0 && ! count->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -383,20 +383,44 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    String *tg_str = target->asString();
    uint32 tg_len = target->asString()->length();
 
-   String *sp_str = splitstr->asString();
-   uint32 sp_len = splitstr->asString()->length();
+   // split in chars?
+   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0)
+   {
+      // split the string in an array.
+      if( limit > tg_len )
+         limit = tg_len;
 
-   // Is the split string empty
-   if ( sp_len == 0 ) {
-      vm->retnil();
+      CoreArray* ca = new CoreArray( limit );
+      for( uint32 i = 0; i < limit - 1; ++i )
+      {
+         CoreString* elem = new CoreString(1);
+         elem->append( tg_str->getCharAt(i) );
+         ca->append( elem );
+      }
+      // add remains if there are any
+      if(limit <= tg_len)
+         ca->append(tg_str->subString(limit - 1));
+
+      vm->retval( ca );
       return;
    }
+
+   String *sp_str = splitstr->asString();
+   uint32 sp_len = splitstr->asString()->length();
 
    // return item.
    CoreArray *retarr = new CoreArray;
 
+   // if the split string is empty, return empty string
+   if ( sp_len == 0 )
+   {
+      retarr->append( new CoreString() );
+      vm->retval( retarr );
+      return;
+   }
+
    // if the token is wider than the string, just return the string
-   if ( tg_len <= sp_len )
+   if ( tg_len < sp_len )
    {
       retarr->append( new CoreString(  *tg_str ) );
       vm->retval( retarr );
@@ -423,7 +447,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
          uint32 splitend = pos - sp_len;
          retarr->append( new CoreString( String( *tg_str, last_pos, splitend ) ) );
 
-         lastIsEmpty = (last_pos + 1 >= splitend);
+         lastIsEmpty = (last_pos >= splitend);
 
          last_pos = pos;
          limit--;
@@ -526,7 +550,7 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
    }
 
    if ( (target == 0 || ! target->isString())
-        || (splitstr != 0 && ! (splitstr->isString()||splitstr->isNil()))
+        || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
         || ( count != 0 && ! count->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -534,44 +558,50 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
          .extra( vm->self().isMethodic() ? "S, [N]" : "S, S, [N]" ) );
    }
 
-   // Parameter estraction.
+   // Parameter extraction.
    String *tg_str = target->asString();
    uint32 tg_len = target->asString()->length();
    uint32 limit = count == 0 ? 0xffffffff: (int32) count->forceInteger();
 
    // split in chars?
-   if( splitstr == 0 || splitstr->isNil() )
+   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0)
    {
       // split the string in an array.
       if( limit > tg_len )
          limit = tg_len;
 
       CoreArray* ca = new CoreArray( limit );
-      for( uint32 i = 0; i < limit; ++i )
+      for( uint32 i = 0; i < limit - 1; ++i )
       {
          CoreString* elem = new CoreString(1);
          elem->append( tg_str->getCharAt(i) );
          ca->append( elem );
       }
+      // add remains if there are any
+      if(limit <= tg_len)
+         ca->append(tg_str->subString(limit - 1));
 
       vm->retval( ca );
       return;
    }
 
    String *sp_str = splitstr->asString();
-   uint32 sp_len = splitstr->asString()->length();
+   uint32 sp_len = sp_str->length();
 
-   // Is the split string empty
-   if ( sp_len == 0 ) {
-      vm->retnil();
-      return;
-   }
 
    // return item.
    CoreArray *retarr = new CoreArray;
 
+   // if the split string is empty, return empty string
+   if ( sp_len == 0 )
+   {
+      retarr->append( new CoreString() );
+      vm->retval( retarr );
+      return;
+   }
+
    // if the token is wider than the string, just return the string
-   if ( tg_len <= sp_len )
+   if ( tg_len < sp_len )
    {
       retarr->append( new CoreString( *tg_str ) );
       vm->retval( retarr );

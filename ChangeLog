@@ -8,7 +8,7 @@ Falcon (0.9.6.6)
            even if stored in their own namespace.
   * fixed: CoreSlot wasn't exported so it couldn't be used in modules.
   * fixed: "a" * 10000 taking ages because of parser error in first allocation.
-           Thanks fgenesis for this.
+           Thanks maxm for this.
   * minor: Added option "-s" in CLT to send error output on stdout, and --cgi
            option to load "cgi" module and add -s option in one step.
   * minor: strSplit() returns an array containing all the elements if the token
@@ -35,7 +35,9 @@ Falcon (0.9.6.6)
   * added: epoch() function returning exactly the seconds since UNIX epoch.
   * fixed: Comparation with timestamps and other kind of items caused an
            endless recursion.
-            
+  * fixed: strSplit(":",":") should logically return an array of two empty items,
+           but returned ":" instead.
+
 Falcon (0.9.6.4)
   * fixed: returning oob(1) from a filter in comp() & single sequence mfcomp
            didn't discard the value.

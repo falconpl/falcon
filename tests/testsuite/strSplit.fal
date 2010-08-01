@@ -41,6 +41,11 @@ if strarr5[0] != "fields": failure( "Adjacent fields considered - first" )
 if strarr5[1] != "": failure( "Adjacent fields considered - second" )
 if strarr5[2] != "here": failure( "Adjacent fields considered - third" )
 
+
+strarr6 = strSplit( ":", ":" )
+if len( strarr6 ) != 2: failure( "Positive empty split" )
+if strarr6[0] != "" or strarr6[1] != "": failure( "Positive empty split - content" )
+
 strarr6 = strSplitTrimmed( "fields     here", " " )
 if len( strarr6 ) != 2: failure( "Adjacent fields ignored - lenght" )
 if strarr6[0] != "fields": failure( "Adjacent fields ignored - first" )
