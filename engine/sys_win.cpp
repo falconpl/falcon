@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+#ifdef __MINGW32__
+#define _time64 time
+#endif
+
 /** \file
    System level support for basic and common operatios.
 */
