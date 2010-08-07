@@ -1,0 +1,93 @@
+import SDL from sdl
+import from sdlgl as OGL
+import GL from sdlgl as GL
+import from sdlglu as OGLU
+import GLU from sdlglu as GLU
+import from sdlglext as OGLExt
+import GLExt from sdlglext as GLExt
+width = 640
+height = 480
+screen = nil
+rotation = 0
+
+function InitGraphics()
+   global screen
+   SDL.Init(SDL.INIT_VIDEO)
+   screen = SDL.SetVideoMode(width,height,32,SDL.OPENGL)
+   OGL.Viewport(0,0,width,height)
+   OGL.MatrixMode(GL.PROJECTION)
+   OGL.LoadIdentity()
+   OGLU.Perspective(45.0, width / height, 1.0, 100.0)
+   OGL.MatrixMode(GL.MODELVIEW)
+   
+   OGL.SetAttribute(GL.RED_SIZE, 5)
+   OGL.SetAttribute(GL.GREEN_SIZE, 5)
+   OGL.SetAttribute(GL.BLUE_SIZE, 5)
+   OGL.SetAttribute(GL.DEPTH_SIZE, 16)
+   OGL.SetAttribute(GL.DOUBLEBUFFER, 1)
+   
+   OGL.ClearColor(0, 0, 0, 1)
+   OGL.ClearDepth(1)
+   OGL.Enable(GL.DEPTH_TEST)
+end
+
+function DrawGraphics()
+   OGL.Clear(GL.COLOR_BUFFER_BIT || GL.DEPTH_BUFFER_BIT);
+   
+   // Set location in front of camera
+   OGL.LoadIdentity()
+   OGL.Translate(0, 0, -10)
+   rotation += 0.2
+   OGL.Rotate(rotation, 1,1,1)
+   // Draw a square
+   OGL.Begin(GL.QUADS)
+   OGL.Color3d(1, 0, 0)
+   OGL.Vertex3d(-2, 2, 0)
+   OGL.Color3d(1, 1, 0)
+   OGL.Vertex3d(2, 2, 0)
+   OGL.Color3d(0, 1, 0)
+   OGL.Vertex3d(2, -2, 0)
+   OGL.Color3d(0, 1, 1)
+   OGL.Vertex3d(-2, -2, 0)
+   OGL.End()
+
+   // Show the frame
+   OGL.SwapBuffers()
+end
+
+object events
+   events = ["sdl_Quit",
+             "sdl_Expose",
+             "sdl_KeyDown"]
+   init
+      for event in self.events: subscribe( event, self )
+   end
+   
+   function on_sdl_Quit( state, x, y, xrel, yrel )
+      > "== Quit! =="
+      exit(0)
+   end
+   
+   function on_sdl_Expose()
+      OGL.SwapBuffers();
+   end
+   
+   function on_sdl_KeyDown(state, scancode, sym, mod, unicode)
+      if sym == SDLK.ESCAPE
+         > "== Quit! =="
+         exit(0)
+      end
+   end
+end
+
+try
+   InitGraphics()
+   SDL.StartEvents()
+   while true
+      DrawGraphics()
+      sleep(0.001)
+   end
+   SDL.StopEvents()
+catch in e
+   > e
+end

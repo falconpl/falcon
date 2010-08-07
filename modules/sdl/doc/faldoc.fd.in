@@ -1,0 +1,45 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for SDL module.
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon - SDL Module.
+Author = The Falcon Committee
+Version = 0.9.12
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.basedir=@PROJECT_SOURCE_DIR@/doc
+Input.directory=../src
+Input.directory=../ttf
+Input.directory=../mixer
+Input.directory=../image
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+Input.extra=main.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=@CMAKE_CURRENT_BINARY_DIR@/html
+Output.html.url=.
+Output.html.doctitle=Falcon SDL Module reference.

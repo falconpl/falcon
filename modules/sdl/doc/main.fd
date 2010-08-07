@@ -1,0 +1,35 @@
+/*#
+   @main Falcon SDL module suite.
+
+   This is the Falcon SDL module (and related modules) reference.
+
+   SDL (Simple DirectMedia Layer) is one of the most known and used libraries
+   for graphic application development. Falcon wraps and extends SDL and many
+   of it many well known extension in an organinc subsystem, which allow
+   Falcon based applications to interact with graphics, sound, input device and
+   in general all that is needed to build a modern graphic application.
+
+   SDL and its extensions are mainly focused on 2D graphics and sound management
+   and they provide a simple but powerful application framework.
+
+   @section sdl_main_setup Setup
+
+   A minimal setup for this module may be something like the
+   following:
+   @code
+   load sdl
+
+   try
+      a = SDL.InitAuto( SDL.INIT_VIDEO )
+      SDL.WM_SetCaption( "Falcon SDL window", "Falcon and SDL" );
+      screen = SDL.SetVideoMode( 640, 480 )
+
+      > "Success! - press enter"
+      input()
+   catch SDLError in e
+      > "Test failed: "
+      > e
+   end
+   @endcode
+
+*/

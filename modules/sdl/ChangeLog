@@ -1,0 +1,38 @@
+SDL (0.9.13)
+   * fixed: Resize event didn't correctly pass its parameters.
+   * fixed: Deserialization protocol was not respected by SDL_surface 
+            carrier.
+
+SDL (0.9.12)
+   * fixed: Ported to falcon Eagle.
+
+SDL (0.9.10)
+   * added: SDLSurface.DisplayFormatAlpha
+   * major: Removed SDLEventManager; now using falcon broadcasts to 
+            dispatch SDL events.
+   
+SDL (0.9.8)
+   * added: Updated to Falcon 0.9
+   * major: Module name is now "sdl".
+   * fixed: UpdateRects wasn't working.
+
+SDL (0.9.6)
+   * added: Method SDLSurface.SetAlpha
+
+SDL (0.9.4)
+   * fxied: TTF Function wasn't getting colors with b == 0.
+   * fixed: Memleak (debug code in destructor...)
+   * fixed: UpdateRect wasn't working when the parameter was an SDLRect
+   * fixed: SDLRect was crashing if not receiving 4 parameters.
+   * fixed: SDL.PushUserEvent didn't zero optional data if it wasn't passed.
+
+SDL (0.9.2)
+   * fxied: WaitEvent() caused a too tight loop in the VM, wasting
+            100% cpu.
+   * fixed: WaitEvent() always returned to itself, even in case of quit,
+            instead returning to the caller after a single message was
+            processed.
+   * Fixed: SDLColor (full class reflection was drawn but left incomplete).
+
+SDL (0.9)
+   * Added support for SDL_image and SDL_mixer

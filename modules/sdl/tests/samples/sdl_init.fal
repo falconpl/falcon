@@ -1,0 +1,37 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_init.fal
+
+   Minimal initialization and quit test.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 16 Mar 2008 21:15:18 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdl
+
+try
+   a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.WM_SetCaption( "Falcon SDL window", "Falcon and SDL" );
+   screen = SDL.SetVideoMode( 640, 480 )
+
+   > "Success! - press enter"
+   input()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

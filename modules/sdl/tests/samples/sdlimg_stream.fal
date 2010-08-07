@@ -1,0 +1,62 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_testimages.fal
+
+   Tests the various functions related to SDL image module
+   -------------------------------------------------------------------
+   Author: Federico Baroni
+   Begin: Wed, 1 Oct 2008 21:58:47 +0100
+
+   Last modified because:
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdlimage
+
+> "\nStarting SDL_image module testing procedure:\n"
+> "Testing SDL_Image Load on Falcon Streams"
+
+try
+
+   a = SDL.InitAuto( SDL.INIT_VIDEO )
+
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.WM_SetCaption( "Falcon logo!" )
+
+   screen = SDL.SetVideoMode( 640, 480 )
+   img_stream = InputStream( "FalconLogo1.bmp" )
+
+   > "Checking if the image is a bmp: ", IMAGE.isBMP( img_stream )
+   > "Checking if the image is a jpg: ", IMAGE.isJPG( img_stream )
+
+   > "Trying to load a BMP image:\n"
+   img = IMAGE.Load( img_stream )
+   img.BlitSurface( nil, screen, nil )
+   screen.UpdateRect()
+
+   img_stream.seek(0)
+   > "Trying to load a BMP image with the hint:\n"
+   img = IMAGE.Load( img_stream, "BMP" )
+   img.BlitSurface( nil, screen, SDLRect(0,200,640,300) )
+   screen.UpdateRect()
+
+   > "Success! - press enter"
+
+catch in e
+   > "Test failed: "
+   > e
+   > "Press enter"
+end
+   input()
+   > "End of test 03.\n\n"
+
+/* end of file */

@@ -1,0 +1,111 @@
+
+                     The Falcon Programming Language
+
+                               SDL binding
+
+                                  0.9.12
+
+  This is the SDL binding module for The Falcon Programming language.
+Binary downloads, documentation, support and so on is available through
+the following link:
+
+  http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=sdl&sect_id=main
+  
+
+BUILDING
+========
+
+  FSDL can be built direclty against installed Falcon Programming Language
+development files (they come with the installers for the various platfomrs, 
+or are available as separate packages of various GNU/Linux based 
+distributions). Alternatively, they can be built or through the 
+Falcon Development Environment:
+
+   http://www.falconpl.org/devenv
+   
+  Once the Core is in place, you should be sure you have installed and 
+configured all the SDL libraries needed for this module:
+
+   - SDL base
+   - SDL_ttf
+   - SDL_mixer
+   - SDL_image
+
+  If you're on linux, chances are that you will have all them pre-installed.
+However you will very probably have to install the relative development 
+packages.
+
+  You may obtain the libraries in binary (with headers) and source format from
+
+      http://www.libsdl.com
+      
+  The FSDL project at falconpl.org site ships a set of pre-configured 
+
+
+FOR PACKAGERS
+=============
+
+  This module respects Falcon Module Standards and can be automatically
+built and installed when Falcon Development files are available.
+
+  To override the default installation directories (which are located where
+Falcon modules are currently installed) use the CMAKE option 
+    
+     -DINSTDIR=...
+     
+  This allows installation of modules on temporary paths where they can
+be picked by the packaging system.
+
+
+On MS-WINDOWS
+=============
+
+  On the Falcon site, the SDL project area stores a pre-configured set of
+the official SDL libraries and development support files that you can copy
+and install on the SDL_DEV directory under this one.
+
+  The file contains an sdl_falpb.bat configurator that can be used in place
+of falpb to find all the SDL dependency and create the development tree.
+
+  The sdl_falpb.bat script can be used also as a reference on how to direct
+the cmake build system to find SDL libraries you may have compiled and
+installed elsewhere.
+
+  For an out-of-source build not using the Falcon Build environment, or if
+you just prefer to build this module against an installed version of Falcon,
+just create a build dir, enter it and run a script setting the needed 
+variables, accordingly with the SDL_* variables found in the SDL_DEV package.
+
+  In example:
+  
+      SET SDL_DEV_ROOT=<mypath>\SDL_DEV
+      SET SDLDIR=%SDL_DEV_ROOT%\SDL-1.2.13
+      SET SDLMIXERDIR=%SDL_DEV_ROOT%\SDL_mixer-1.2.8
+      SET SDLIMAGEDIR=%SDL_DEV_ROOT%\SDL_image-1.2.7
+      SET SDLTTFDIR=%SDL_DEV_ROOT%\SDL_ttf-2.0.9
+
+changing <mypath> into the pat to your SDL_DEV expanded directory. After 
+this, cmake will be able to find the SDL needed sdl modules.
+ 
+  Don't forget to copy also del SDL dlls you find in the varous bin/ 
+directories into the Falcon binary directory, or install them system-wide in 
+C:\windows\system32
+     
+On MacOSX
+=========
+
+  SDL On MacOSX uses the Cocoa framework. This requires the SDL-using
+applications to be specially built and configured.
+
+  First, you should install the SDL frameworks provided by SDL at the
+home site we indicated above. 
+
+  Falcon applications using the SDL Module and initializing the video
+output should be run with sdl_falcon rather than with falcon.
+
+  sdl_falcon is a MacOSX application which sends COCOA messages to SDL.
+Otherwise, it is a completely normal falcon interpreter (it is always
+kept in sync with the official Falcon command line tool).
+
+  This application is built and installed exclusively on MacOSX.
+
