@@ -1,0 +1,14 @@
+
+                        Falcon DBus Module 
+                             
+                           Version 0.1
+
+
+  This is a preliminary release for the DBUS module. It exposes
+client DBus functions to Falcon scripts.
+
+  More functions (to create DBus aware servers) are on their way
+and will be released soon.
+
+  The contents of this module are subject to sudden change.
+

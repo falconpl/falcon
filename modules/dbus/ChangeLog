@@ -1,0 +1,8 @@
+Falcon-dbus (0.2)
+    * fixed: s_extract_return function returned more arrays instead of a single one
+    * fixed: DBus.dispatch( a control missed )
+    * added: support for DBusMessage, DBus.popMessage, DBus.requestName and DBus.addFilter
+    * added: parallel methods DBus.startDispatch() and DBus.stopDispatch()
+Falcon-dbus (0.1) 
+  * first official release.
+
