@@ -1,0 +1,73 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 0c
+* Category: smoke
+* Subcategory:
+* Short: String conversion
+* Description:
+*   Verifies if the parameter parsing and reverse conversion of the function
+*   description are working.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "void call_p0_ri()" )
+   
+   // Basic check 
+   if f.toString() != "void call_p0_ri()": failure( "void call_p0_ri()" )
+
+   // mean check
+   f = l.get( "int call_p0_ri()" )
+   if f.toString() != "int call_p0_ri()": failure( "int call_p0_ri()" )
+   f = l.get( "int call_p0_ri(...)" )
+   if f.toString() != "int call_p0_ri(...)": failure( "int call_p0_ri(...)" )
+
+   // a bit more complex
+   f = l.get( "int call_p0_ri(void* data)" )
+   if f.toString() != "int call_p0_ri(void* data)": failure( "int call_p0_ri(void* data)" )
+   f = l.get( "long call_p0_ri(unsigned long p)" )
+   if f.toString() != "long call_p0_ri(unsigned long p)": failure( "long call_p0_ri(unsigned long p)" )
+   f = l.get( "short call_p0_ri(unsigned short p)" )
+   if f.toString() != "short call_p0_ri(unsigned short p)": failure( "short call_p0_ri(unsigned short p)" )
+   f = l.get( "short call_p0_ri(unsigned short p)" )
+   if f.toString() != "short call_p0_ri(unsigned short p)": failure( "short call_p0_ri(unsigned short p)" )
+   f = l.get( "void* call_p0_ri(char p)" )
+   if f.toString() != "void* call_p0_ri(char p)": failure( "void* call_p0_ri(char p)" )
+   f = l.get( "void** call_p0_ri(unsigned char p)" )
+   if f.toString() != "void** call_p0_ri(unsigned char p)": failure( "void** call_p0_ri(unsigned char p)" )
+   f = l.get( "void** call_p0_ri(const char* p)" )
+   if f.toString() != "void** call_p0_ri(const char* p)": failure( "void** call_p0_ri(const char* p)" )
+
+   // with structures
+   f = l.get( "struct test* call_p0_ri(int* p)" )
+   if f.toString() != "struct test* call_p0_ri(int* p)": failure( "struct test* call_p0_ri(int* p)" )
+   f = l.get( "union test* call_p0_ri(int* p)" )
+   if f.toString() != "union test* call_p0_ri(int* p)": failure( "union test* call_p0_ri(int* p)" )
+   f = l.get( "enum test call_p0_ri(int* p)" )
+   if f.toString() != "enum test call_p0_ri(int* p)": failure( "enum test call_p0_ri(int* p)" )
+   f = l.get( "void call_p0_ri(struct test* the_struct)" )
+   if f.toString() != "void call_p0_ri(struct test* the_struct)": failure( "void call_p0_ri(struct test* the_struct)" )
+   f = l.get( "void call_p0_ri(union test* the_struct)" )
+   if f.toString() != "void call_p0_ri(union test* the_struct)": failure( "void call_p0_ri(union test* the_struct)" )
+   f = l.get( "void call_p0_ri(enum test the_struct)" )
+   if f.toString() != "void call_p0_ri(enum test the_struct)": failure( "void call_p0_ri(enum test the_struct)" )
+
+   // multiple parameters
+   f = l.get( "void call_p0_ri(void* data, const char* string, int size)" )
+   // we have to see this normalized
+   if f.toString() != "void call_p0_ri(void* data, const char* string, int size)": failure( "void call_p0_ri(void* data, const char* string, int size)" )
+
+   // multiple params with ...
+   f = l.get( "void call_p0_ri(int size, ...)" )
+   if f.toString() != "void call_p0_ri(int size, ...)": failure( "void call_p0_ri(int size, ...)" )
+
+   success()
+catch DynLibError in e
+   failure( e )
+end

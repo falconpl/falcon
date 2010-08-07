@@ -1,0 +1,38 @@
+/*
+   FALCON - Samples for the DynLib dynamic library
+
+   FILE: testgtk.fal
+
+   Test a message box under UNIX with GTK libraries.
+   Also tests protected items.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 2006-05-11 12:35
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load dynlib
+
+l = DynLib( "/usr/lib/libgtk-x11-2.0.so" )
+gtkInit = l.get( "void gtk_init(int argc, char* argv[] )" )
+gtkDialogWithButtons = l.get(
+         "struct GTKWidget* gtk_dialog_new_with_buttons( const char* str, int x, int y, ... )",
+         "void gtk_widget_destroy( struct GTKWidget* w )" )
+         
+gtkDialogRun = l.get( "int gtk_dialog_run ( struct GTKWidget* w )" )
+
+
+gtkInit( 0, 0 )
+w = gtkDialogWithButtons( "Hello world", 0, 1,
+   "Ok", 1,
+   "Cancel", 2,
+   "何か言った？", 3,
+   0 )
+
+n = gtkDialogRun( w )
+> "Dialog result: ", n
+

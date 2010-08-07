@@ -1,0 +1,31 @@
+Dynlib (0.9.99)
+   - Major: Changed the DynLib class get() method so that it uses C
+            headers instead of arbitrary parameter/return types.
+   - Major: Removed call() from DynFunction; using the call__ BOM
+            override.
+   - Major: Completely redesigned the parameter type/value system;
+            now it can be used easily by call code under any
+            architecture/asm.
+
+
+Dynlib (0.9.5)
+   - Major: Added function set to manipulate C structures:
+            stringToPtr, memBufToPtr, memBufFromPtr, setStruct, getStruct
+            and memSet.
+   - Bugfix: limitBuffer without size was doing endless loop.
+   
+Dynlib (0.9.4)
+   - Minor: Linked against 0.8.14
+
+Dynlib (0.9.2)
+   - Fixed: toString to display safe parameters formats.
+   - Fixed: double floating point parameter and return values.
+   - Added: function derefPtr() for double dereference.
+   - Added: function dynExt function returning system specific
+     dynlib extension.
+   - Fixed: Empty parameter specificators may not block non-empty
+            calls.
+
+Dynlib (0.9)
+   - This is 1.0 release candidate.
+

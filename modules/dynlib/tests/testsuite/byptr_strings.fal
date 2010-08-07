@@ -1,0 +1,34 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 3b
+* Category: byptr
+* Subcategory:
+* Short: Byptr strings
+* Description:
+*   Checks correct return via pointer of string types.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // Integer pointer
+   f = l.get( "void call_pRsz( const char** v )" )
+   s = ""
+   f( $s )
+   if s != "Hello world": failure( "$S" )
+
+   f = l.get( "void call_pRwz( const wchar_t** v )" )
+   s = ""
+   f( $s )
+   if s != "Hello world": failure( "$W" )
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

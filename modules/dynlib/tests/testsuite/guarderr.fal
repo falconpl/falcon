@@ -1,0 +1,88 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 2d
+* Category: guarded
+* Subcategory:
+* Short: Error check on guarded params
+* Description:
+*   Checks if the correct errors are raised when the guarded parameters do not
+*   match with the actual ones.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+load cksum
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // use a parameterless call to avoid problems in case of messups
+
+   // No parameters
+   f = l.get( "int call_p0_ri()" )
+   try
+      f( "p" )
+      failure( "Empty params" )
+   catch ParamError in e
+   end
+
+   // a parameter with no call
+   f = l.get( "int call_p0_ri( int p1 )" )
+   try
+      f()
+      failure( "Single param not given" )
+   catch ParamError in e
+   end
+
+   try
+      f( 10, 20 )
+      failure( "Too many params" )
+   catch ParamError in e
+   end
+
+   // type checks
+   try
+      f( "s" )
+      failure( "Int type not filtering (1)" )
+   catch ParamError in e
+   end
+
+   // type checks
+   try
+      f( [10:20] )
+      failure( "Int type not filtering (2)" )
+   catch ParamError in e
+   end
+
+   f = l.get( "int call_p0_ri(const char* p)" )
+   try
+      f( false )
+      failure( "String type not filtering (1)" )
+   catch ParamError in e
+   end
+
+   try
+      f( 10 )
+      failure( "String type not filtering (2)" )
+   catch ParamError in e
+   end
+   
+   try
+      f( 10.5 )
+      failure( "String type not filtering (3)" )
+   catch ParamError in e
+   end
+
+   try
+      f( nil )
+      failure( "String type not filtering (4)" )
+   catch ParamError in e
+   end
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

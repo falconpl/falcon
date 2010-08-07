@@ -1,0 +1,43 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for dynlib
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = DynLib
+Author = Giancarlo Niccolai
+Version = 0.9.99
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=../src
+#you may place other input directory here
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+#Input.extra=main.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=DynLib-docs-0.9.99
+Output.html.url=.
+Output.html.doctitle=DynLib module Function Reference
+

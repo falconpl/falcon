@@ -1,0 +1,32 @@
+/*
+   FALCON - Samples for the DynLib dynamic library
+
+   FILE: testmsgbox.fal
+
+   Test a message box under MS-Windows.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 2006-05-11 12:35
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load dynlib
+
+l = DynLib( "user32.dll" )
+k = DynLib( "kernel32.dll" )
+MessageBox = l.get( "int MessageBoxA( void* wnd, char* text, char* caption, unsigned int type )" )
+GetLastError = k.get( "int GetLastError()" )
+
+v = MessageBox(  
+    0,
+    "Hello world!",
+    "Hello",
+    4 || 32
+)
+
+> "Ops: ", v, " le: ", GetLastError()
+
