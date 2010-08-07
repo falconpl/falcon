@@ -1,0 +1,117 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   send.fal - Shows how to send a file to a remote server
+
+   USAGE: send.fal [-u <usernam>] [-p <password>] [-r <newname>] [-?] <URL> <file>
+*/
+
+import from curl
+
+try
+   Options.parse()
+   if Options.url == nil or Options.file == nil
+      Options.usage()
+      exit(0)
+   end
+   
+catch StringType
+   exit(1)
+end
+
+try
+   
+   is = InputStream( Options.file )
+   h = curl.Handle( URI.encode(Options.url) )
+   // we want to receive the data as a stream.
+   h.setInStream( is )
+   h.setOption( curl.CURLOPT.UPLOAD, true )
+
+   if Options.user: h.setOption( curl.CURLOPT.USERNAME, Options.user )
+   if Options.password: h.setOption( curl.CURLOPT.PASSWORD, Options.password )
+
+   // if we want to rename the file after it is copied, use FTP quote
+   if Options.newname
+      uri = URI( Options.url )
+      quoted = [
+         "RNFR " + uri.path,
+         "RNTO " + Options.newname ]
+      h.setOption( curl.CURLOPT.POSTQUOTE, quoted )
+   end
+         
+
+   > "Starting transfer; reading file ", args[1]
+   h.exec()
+   > "Transfer complete."
+
+   is.close()
+   h.cleanup()
+
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+catch IoError in e
+   > "Error in creating the output file: "
+   > e
+   return 1
+end
+
+
+ object Options from CmdlineParser
+
+   url = nil
+   file = nil
+   
+   newname = nil
+   user = nil
+   password = nil
+   
+   function onOption( option )
+      switch option
+         case "?", "help"
+            self.usage()
+         case "u", "p", "r"
+            self.expectValue()
+         default
+            self.unrecognized( option )
+      end
+   end
+
+   function onValue( option, value )
+      switch option
+         case "p"
+            self.password = value
+         case "u"
+            self.user = value
+         case "r"
+            self.newname = value
+      end
+   end
+
+   function onFree( param )
+      if self.url == nil
+         self.url = param
+      elif self.file == nil
+         self.file = param
+      else
+         self.usage()
+         raise "broken"
+      end
+   end
+
+   function unrecognized( option )
+      > "Unrecognized option: ", option
+      self.usage()
+      raise "broken"
+   end
+
+   function usage()
+      > "USAGE: send.fal  [-u <usernam>] [-p <password>] [-?] <URL> <file>"
+      >
+   end
+end

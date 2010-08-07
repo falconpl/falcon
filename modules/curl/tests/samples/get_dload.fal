@@ -1,0 +1,46 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_dload.fal - Uses the dload function to get a
+                  remote address on a stream.
+
+   USAGE: get_stream.fal  <URL> <file>
+*/
+
+import from curl
+
+if args.len() != 2 and args.len() != 1
+   > "USAGE: get_dload.fal  <URL> [<file>]"
+   >
+   return 1
+end
+
+try
+   if args.len() == 2
+      os = OutputStream( args[1] )
+      > "Starting transfer; writing on file ", args[1]
+   end
+   
+   data = curl.dload( args[0], os )
+   > "Transfer complete."
+
+   if os
+      os.close()
+   else
+      > data
+   end
+   
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+catch IoError in e
+   > "Error in creating the output file: "
+   > e
+   return 1
+end
+

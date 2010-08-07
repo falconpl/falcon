@@ -1,0 +1,296 @@
+                     Falcon Programming Language License
+
+                        Version 1.1, March 2008
+
+                  http://www.falconpl.org/?page_id=license_1_1
+
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+    1. Definitions.
+          * "License" shall mean the terms and conditions for use,
+            reproduction, and distribution as defined by Sections 1 through
+            10 of this document.
+          * "Licensor" shall mean the copyright owner or entity authorized
+            by the copyright owner that is granting the License.
+          * "Legal Entity" shall mean the union of the acting entity and all
+            other entities that control, are controlled by, or are under
+            common control with that entity. For the purposes of this
+            definition, "control" means (i) the power, direct or indirect,
+            to cause the direction or management of such entity, whether by
+            contract or otherwise, or (ii) ownership of fifty percent (50%)
+            or more of the outstanding shares, or (iii) beneficial ownership
+            of such entity.
+          * "You" (or "Your") shall mean an individual or Legal Entity
+            exercising permissions granted by this License.
+          * "Source" form shall mean the preferred form for making
+            modifications, including but not limited to software source code
+            and example code.
+          * "Object" form shall mean any form resulting from mechanical
+            transformation or translation of a Source form, including but
+            not limited to compiled object code, generated documentation,
+            and conversions to other media types.
+          * "Work" shall mean the work of authorship, whether in Source or
+            Object form, made available under the License, as indicated by a
+            copyright notice that is included in or attached to the work (an
+            example is provided in the Appendix below).
+          * "Derivative Works" shall mean any work, whether in Source or
+            Object form, that is based on (or derived from) the Work and for
+            which the editorial revisions, annotations, elaborations, or
+            other modifications represent, as a whole, an original work of
+            authorship. For the purposes of this License, Derivative Works
+            shall not include works that remain separable from, or merely
+            link (or bind by name) to the interfaces of, the Work and
+            Derivative Works thereof.
+          * "Embedding Works" shall mean any work, whether in Source or
+            Object form, that links (or binds by name) to the interface of
+            the Work and Derivative Works.
+          * "Applications of the Work" shall mean any work, whether in
+            Source or Object form, that is expressed through the grammar
+            rules which are known by the Work and that require the Work to
+            perform its execution.
+          * "Contribution" shall mean any work of authorship, including the
+            original version of the Work and any modifications or additions
+            to that Work or Derivative Works thereof, that is intentionally
+            submitted to Licensor for inclusion in the Work by the copyright
+            owner or by an individual or Legal Entity authorized to submit
+            on behalf of the copyright owner. For the purposes of this
+            definition, "submitted" means any form of electronic, verbal, or
+            written communication sent to the Licensor or its
+            representatives, including but not limited to communication on
+            electronic mailing lists, source code control systems, and issue
+            tracking systems that are managed by, or on behalf of, the
+            Licensor for the purpose of discussing and improving the Work,
+            but excluding communication that is conspicuously marked or
+            otherwise designated in writing by the copyright owner as "Not a
+            Contribution."
+          * "Contributor" shall mean Licensor and any individual or Legal
+            Entity on behalf of whom a Contribution has been received by
+            Licensor and subsequently incorporated within the Work.
+    2. Grant of Copyright License. Subject to the terms and conditions of
+       this License, each Contributor hereby grants to You a perpetual,
+       worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+       copyright license to reproduce, prepare Derivative Works of, prepare
+       Embedding Works, prepare Applications of the Work, publicly display,
+       publicly perform, sublicense, and distribute the Work and such
+       Derivative Works in Source or Object form.
+    3. Grant of Patent License. Subject to the terms and conditions of this
+       License, each Contributor hereby grants to You a perpetual,
+       worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+       (except as stated in this section) patent license to make, have made,
+       use, offer to sell, sell, import, and otherwise transfer the Work,
+       where such license applies only to those patent claims licensable by
+       such Contributor that are necessarily infringed by their
+       Contribution(s) alone or by combination of their Contribution(s) with
+       the Work to which such Contribution(s) was submitted. If You
+       institute patent litigation against any entity (including a
+       cross-claim or counterclaim in a lawsuit) alleging that the Work or a
+       Contribution incorporated within the Work constitutes direct or
+       contributory patent infringement, then any patent licenses granted to
+       You under this License for that Work shall terminate as of the date
+       such litigation is filed.
+    4. Redistribution of Work and Derivative Works. You may reproduce and
+       distribute copies of the Work or Derivative Works thereof in any
+       medium, with or without modifications, and in Source or Object form,
+       provided that You meet the following conditions:
+         1. You must give any other recipients of the Work or Derivative
+            Works a copy of this License; and
+         2. You must cause any modified files to carry prominent notices
+            stating that You changed the files; and
+         3. You must retain, in the Source form of any Derivative Works that
+            You distribute, all copyright, patent, trademark, and
+            attribution notices from the Source form of the Work, excluding
+            those notices that do not pertain to any part of the Derivative
+            Works; and
+         4. You must state in the Source Form and in the documentation of
+            any Derivative Work the fact that such work is a derivation of
+            the Work, and include a copy of the Work in its Source form or
+            provide directions on how to obtain a copy of the Work in its
+            Source form; and
+         5. The Derivative Works are distributed under the terms of this
+            License, or under terms that do not cause infringement of this
+            License.
+    5. Distribution of Embedding Works and Applications of the Work. You may
+       produce and distribute any Embedding Work or Applications of the Work
+       thereof in any medium, in Source or Object form, provided You meet
+       the following conditions:
+         1. The Embedding Works and Applications of the Work are distributed
+            under the term of this License, or the application of another
+            License is explicitly stated in the documentation of the
+            Embedding Works and Applications of the Work or included in the
+            Source form of the Embedding Works and Applications of the Work;
+            and
+         2. If the Source form of Embedding Works is not distributed nor
+            made available to the Users in any form, the Embedding Works
+            carry a prominent notice in their documentation, or when not
+            applicable, in any place that the Users are exposed to, about
+            the fact that the Work is embedded, along with a general
+            statement about the task that the Work is performing in the
+            Embedding Works; and
+         3. If the Source form of Applications of the Work is not
+            distributed nor made available to the Users in any form, the
+            Applications of the Work carry a prominent notice in their
+            documentation, or when not applicable, in any place that the
+            Users are exposed to, about the fact that the Work is used by
+            the Application of the Work.
+    6. Submission of Contributions. Unless You explicitly state otherwise,
+       any Contribution intentionally submitted for inclusion in the Work by
+       You to the Licensor shall be under the terms and conditions of this
+       License, without any additional terms or conditions. Notwithstanding
+       the above, nothing herein shall supersede or modify the terms of any
+       separate license agreement You may have executed with Licensor
+       regarding such Contributions.
+    7. Trademarks. This License does not grant permission to use the trade
+       names, trademarks, service marks, or product names of the Licensor,
+       except as required for reasonable and customary use in describing the
+       origin of the Work and reproducing the content of the NOTICE file.
+    8. Disclaimer of Warranty. Unless required by applicable law or agreed
+       to in writing, Licensor provides the Work (and each Contributor
+       provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES
+       OR CONDITIONS OF ANY KIND, either express or implied, including,
+       without limitation, any warranties or conditions of TITLE,
+       NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR
+       PURPOSE. You are solely responsible for determining the
+       appropriateness of using or redistributing the Work and assume any
+       risks associated with Your exercise of permissions under this
+       License.
+    9. Limitation of Liability. In no event and under no legal theory,
+       whether in tort (including negligence), contract, or otherwise,
+       unless required by applicable law (such as deliberate and grossly
+       negligent acts) or agreed to in writing, shall any Contributor be
+       liable to You for damages, including any direct, indirect, special,
+       incidental, or consequential damages of any character arising as a
+       result of this License or out of the use or inability to use the Work
+       (including but not limited to damages for loss of goodwill, work
+       stoppage, computer failure or malfunction, or any and all other
+       commercial damages or losses), even if such Contributor has been
+       advised of the possibility of such damages.
+   10. Accepting Warranty or Additional Liability. While redistributing the
+       Work or Derivative Works thereof, You may choose to offer, and charge
+       a fee for, acceptance of support, warranty, indemnity, or other
+       liability obligations and/or rights consistent with this License.
+       However, in accepting such obligations, You may act only on Your own
+       behalf and on Your sole responsibility, not on behalf of any other
+       Contributor, and only if You agree to indemnify, defend, and hold
+       each Contributor harmless for any liability incurred by, or claims
+       asserted against, such Contributor by reason of Your accepting any
+       such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+
+==============================================================================
+
+APPENDIX: How to apply the Falcon Programming Language License to your work
+
+To apply the Falcon Programming Language License to your work, attach the
+following boilerplate notice, with the fields enclosed by brackets "[]" replaced
+with your own identifying information. (Don't include the brackets!) The text
+should be enclosed in the appropriate comment syntax for the file format. We
+also recommend that a file or class name and description of purpose be included
+on the same "printed page" as the copyright notice for easier identification
+within third-party archives.
+
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Falcon Programming Language License,
+   Version 1.1 (the "License"); you may not use this file
+   except in compliance with the License. You may obtain
+   a copy of the License at
+
+      http://www.falconpl.org/?page_id=license_1_1
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on
+   an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+
+==============================================================================
+
+APPENDIX: License commentary
+
+Dear reader,
+
+   First of all, thanks for considering using The Falcon Language for Your job, or
+to embed it into Your application, or to use it for any other reason. The Falcon
+Programming Language License explains what You are allowed to do with Falcon and
+what You are supposed (and allowed) not to do. Since the legal jargon may be
+cryptic, You are provided here with a little resume of the License. It is
+important that You read and accept the License, as this resume hasn't any legal
+valence, and is provided only for the reason to express clarifications and
+examples that cannot find their place in the formal document.
+
+   The License grants You the rights to use the Source code of Falcon and its
+various components in any way; You can study it, You can copy it, You can modify
+it, and You can even sell it, but You can't change the license under which it is
+distributed: even if You sell it, You have to provide the customers with the
+source code of Falcon and to grant them the same rights You have on it.
+
+   The License also grants Your copyrights and intellectual rights for any
+modification or addition You may want to apply to Falcon. In case or addition
+and modifications, the License binds You to provide the user with the
+information that the original program, that is Falcon, was modified by You and
+what are the changes or the additions that You applied.
+
+   Also, even if You can freely distribute, or even charge a fee, for Your derived
+work, You MUST apply the Falcon Programming Language License to Your
+modifications, and distribute them under the same terms. In other words, Your
+modifications, if made public, must be provided or available in source code.
+
+   The license also grants You the right to embed Falcon in any application. Here
+You are granted the right to pick the terms and licenses You prefer, and to
+distribute Your embedding application without providing its source code. Even if
+significant portions of Falcon are in line functions, and even if You decide to
+statically link Falcon in Your application, this doesn't make it a "Derivative
+Work" of it: Your Embedding application is free to embed Falcon "as is" as it
+wish, without any requirements in terms of source distribution. You can also
+modify Falcon for Your specific needs and THEN embed Your modified version; the
+modified version of Falcon is under Falcon License, and must be made available
+in source code (or be proposed as a Contribution to the Falcon Committee), but
+Your Embedding application can still be distributed under Your preferred terms.
+The License has only a requirement that is demanded on Your Embedding
+application: in case you don't distribute your embedding application isn't made
+available in source code, You HAVE to state somewhere (in a place that CAN
+possibly be seen by the average user) that You are embedding Falcon and the
+reason for that. In example, You may state "ProgramX uses the Falcon Programming
+Language to automatize the Gamma procedure".
+
+   About the scripts, which are more or less what a scripting language is for, You
+are granted the right to apply the license You prefer. As Falcon is also a
+script "compiler", You may even retain from distributing the script sources, and
+apply closed-source license to Your script-based application or to the scripts
+that are embedded in Your embedding application. However, if You don't
+distribute the script sources, and you use Falcon or another application covered
+by the same license to run them, You are again required to state somewhere in
+Your documentation or where the user can read it that You are using "Falcon" (or
+the derivative work you used), and more or less why You are doing it. For a pure
+Falcon application, You can just state "This application is written in Falcon".
+In example, if You use Falcon to drive a web site, and You don't want Your site
+visitors to ever see Your scripts, You have to put somewhere a reading like
+"Powered with Falcon".
+
+   What You cannot do is to claim that any thing You learnt from Falcon is Yours:
+especially, You are forbidden to patent any element that is found in Falcon.
+Another thing that You can't do is to sell a Falcon based product as if it were
+"completely" Yours, forgetting to cite, even in a very small reading, the fact
+that Falcon is in. Finally, a thing that the License prevents You from doing is
+to put the blame for failures on Falcon: the product is provided as-is, without
+any warranty. It's up to You to test if it is suitable to solve Your problems,
+and if a Falcon based application can be sold and granted as "working" to Your
+customers. If that application breaks, whether there's a problem with Falcon or
+not, You can't issue any claim on the Falcon contributors.
+
+   Finally, notice that this version of falcon is released under dual license.
+You may chose either to use this FPLLv1.1 license or the standard GNU GPLv2.
+GNU GPLv2 is usually shipped with Your distribution and commentaries are widely
+available on the Net, so we won't discuss it here.
+
+   Be kind on the Open Source Community: they have already made a lot for You even
+if You don't know them (and even if they don't know You).
+
+
+                                                         Best regards,
+                                                         Giancarlo Niccolai

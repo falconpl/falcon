@@ -1,0 +1,61 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_cb.fal - Shows how to send incoming data to a callback
+
+   USAGE: get_cb.fal  <URL>
+*/
+
+import from curl
+
+if args.len() != 1
+   > "USAGE: get_cb.fal  <URL>"
+   >
+   return 1
+end
+
+try
+   h = curl.Handle( args[0] )
+   // we want to receive the data as a stream.
+   h.setOutCallback( receiver.callback )
+
+   > "Starting transfer..."
+   h.exec()
+   > "Transfer complete."
+
+   h.cleanup()
+
+   > "Received content (just some parts...)"
+   receiver.describe()
+
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+
+end
+
+
+object receiver
+   str = ""
+
+   function callback( data )
+      > "Receiving data in ", data.len(), " bytes..."
+      self.str += data
+   end
+
+   function describe()
+      if self.str.len() > 80
+         > self.str[0:40], " ..."
+         > "..."
+         > "... ", self.str[-40:]
+      else
+         > self.str
+      end
+   end
+   
+end

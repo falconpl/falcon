@@ -1,0 +1,54 @@
+
+                   Falcon libcurl binding Module 
+                             
+                           Version 1.0
+
+
+  This module provides binding of the famous libCURL http/ftp interface
+for the Falcon programming language.
+
+  LibCURL is available at
+     
+     http://curl.haxx.se/libcurl/
+
+  Falcon can be downloaded at
+    
+     http://www.falconpl.org
+
+  The homesite for the development of this module is at
+
+     http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=curl
+
+
+BUILD INSTRUCTIONS
+==================
+
+To build falcon-curl you need:
+
+   - The CMake buid system (http://www.cmake.org/)
+   - Development files of the Falcon programming language.
+   - Development fiels of the libCURL project.
+   - A compiler/IDE compatible with CMake.
+
+  Once unpacked the files, create a "build" directory where you prefer.
+We'll suppose you create it below the topmost path of the source package.
+
+  Then, enter the build directory and launch
+
+  $ cmake <source dir> -DCMAKE_BUILD_TYPE=Release
+
+  Where <source dir> is the relative or absolute path to the directory
+where this file you're reading resides.
+
+  On POSIX systems, you may find useful to add the option -DCMAKE_BUILD_PREFIX
+to specify where the module should be finally installed.
+
+  Please, refer to Falcon module generic build instructions for more 
+sophisticated options. 
+
+  Refer to CMake online guide to specify the directories where libcurl
+may be installed.
+
+
+
+

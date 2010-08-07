@@ -1,0 +1,33 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_stdout.fal - Shows how to dump a remote source to stdout.
+
+   USAGE: get_stdout.fal  <URL>
+*/
+
+import from curl
+
+if args.len() != 1
+   > "USAGE: get_stdout.fal  <URL>"
+   >
+   return 1
+end
+
+try
+   h = curl.Handle( args[0] )
+
+   // by default, it's so -- but we repeat for clearness
+   h.setOutConsole()
+
+   h.exec()
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+end
+

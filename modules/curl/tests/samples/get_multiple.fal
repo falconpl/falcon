@@ -1,0 +1,71 @@
+/*
+   FALCON PROGRAMMING LANGUAGE
+
+   CURL library binding - Samples
+
+   get_multiple.fal - Captures multiple files.
+
+   Uses a loop to determine end of multiple transfers.
+
+   USAGE: get_multiple.fal  <URL1> <URL2> ... <URLN>
+*/
+
+import from curl
+
+if args.len() < 1
+   > "USAGE: get_multiple.fal  <URL1> <URL2> ... <URLN>"
+   >
+   return 1
+end
+
+// A place where to store the handles
+class Storer( uri, id )
+   file = nil
+   uri = uri
+   handle = nil
+   id = id
+   
+   init
+      self.handle = curl.Handle( uri )
+      self.handle.setOutCallback( self.onData )
+      self.file = OutputStream( @"get_multiple_dump_$(id:r2p0)" )
+   end
+   
+   function onData( data )
+      self.file.write( data )
+   end
+end
+
+handles = []
+multi = curl.Multi()
+
+try
+   for i in [0:args.len()]
+      st = Storer( args[i], i )
+      handles += st
+      multi.add( st.handle )
+   end
+   
+   > "Starting transfer..."
+   loop
+      v = multi.perform()
+      >> v, ": "
+      for h in handles
+         >> h.id, "(", h.handle.getInfo(curl.INFO.SIZE_DOWNLOAD)
+         >> ")"
+         formiddle: >>", "
+      end
+      >> "\r"
+      sleep(0.1)
+   end v == 0
+   >
+   > "Transfer complete."
+
+   return 0
+catch curl.CurlError in e
+   > "ERROR!"
+   > "Received the follwing error:"
+   > e
+   return 1
+end
+
