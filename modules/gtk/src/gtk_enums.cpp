@@ -1,0 +1,1176 @@
+/**
+ *  \file gtk_enums.cpp
+ */
+
+#include "gtk_enums.hpp"
+
+#include <gtk/gtk.h>
+
+namespace Falcon {
+namespace Gtk {
+
+void Enums::modInit( Falcon::Module* mod )
+{
+
+    Gtk::ConstIntTab intConstants[] =
+    {
+
+    // BEGIN GLIB CONSTANTS //
+
+    /*
+     *  GParamFlags
+     */
+    { "G_PARAM_READABLE",       G_PARAM_READABLE },
+    { "G_PARAM_WRITABLE",       G_PARAM_WRITABLE },
+    { "G_PARAM_CONSTRUCT",      G_PARAM_CONSTRUCT },
+    { "G_PARAM_CONSTRUCT_ONLY", G_PARAM_CONSTRUCT_ONLY },
+    { "G_PARAM_LAX_VALIDATION", G_PARAM_LAX_VALIDATION },
+    { "G_PARAM_STATIC_NAME",    G_PARAM_STATIC_NAME },
+#ifndef G_DISABLE_DEPRECATED
+    { "G_PARAM_PRIVATE",        G_PARAM_PRIVATE },
+#endif
+    { "G_PARAM_STATIC_NICK",    G_PARAM_STATIC_NICK },
+    { "G_PARAM_STATIC_BLURB",   G_PARAM_STATIC_BLURB },
+
+    /*
+     *  GType (here for now)
+     */
+    { "G_TYPE_INVALID",     G_TYPE_INVALID },
+    { "G_TYPE_NONE",        G_TYPE_NONE },
+    { "G_TYPE_INTERFACE",   G_TYPE_INTERFACE },
+    { "G_TYPE_CHAR",        G_TYPE_CHAR },
+    { "G_TYPE_UCHAR",       G_TYPE_UCHAR },
+    { "G_TYPE_BOOLEAN",     G_TYPE_BOOLEAN },
+    { "G_TYPE_INT",         G_TYPE_INT },
+    { "G_TYPE_UINT",        G_TYPE_UINT },
+    { "G_TYPE_LONG",        G_TYPE_LONG },
+    { "G_TYPE_ULONG",       G_TYPE_ULONG },
+    { "G_TYPE_INT64",       G_TYPE_INT64 },
+    { "G_TYPE_UINT64",      G_TYPE_UINT64 },
+    { "G_TYPE_ENUM",        G_TYPE_ENUM },
+    { "G_TYPE_FLAGS",       G_TYPE_FLAGS },
+    { "G_TYPE_FLOAT",       G_TYPE_FLOAT },
+    { "G_TYPE_DOUBLE",      G_TYPE_DOUBLE },
+    { "G_TYPE_STRING",      G_TYPE_STRING },
+    { "G_TYPE_POINTER",     G_TYPE_POINTER },
+    { "G_TYPE_BOXED",       G_TYPE_BOXED },
+    { "G_TYPE_PARAM",       G_TYPE_PARAM },
+    { "G_TYPE_OBJECT",      G_TYPE_OBJECT },
+    { "G_TYPE_GTYPE",       G_TYPE_GTYPE },
+
+    // BEGIN GTK CONSTANTS //
+
+    /*
+     *  GtkAccelFlags
+     */
+    { "GTK_ACCEL_VISIBLE",      GTK_ACCEL_VISIBLE },
+    { "GTK_ACCEL_LOCKED",       GTK_ACCEL_LOCKED },
+    { "GTK_ACCEL_MASK",         GTK_ACCEL_MASK },
+
+    /*
+     *  GtkAnchorType
+     */
+    { "GTK_ANCHOR_CENTER",      GTK_ANCHOR_CENTER },
+    { "GTK_ANCHOR_NORTH",       GTK_ANCHOR_NORTH },
+    { "GTK_ANCHOR_NORTH_WEST",  GTK_ANCHOR_NORTH_WEST },
+    { "GTK_ANCHOR_NORTH_EAST",  GTK_ANCHOR_NORTH_EAST },
+    { "GTK_ANCHOR_SOUTH",       GTK_ANCHOR_SOUTH },
+    { "GTK_ANCHOR_SOUTH_WEST",  GTK_ANCHOR_SOUTH_WEST },
+    { "GTK_ANCHOR_SOUTH_EAST",  GTK_ANCHOR_SOUTH_EAST },
+    { "GTK_ANCHOR_WEST",        GTK_ANCHOR_WEST },
+    { "GTK_ANCHOR_EAST",        GTK_ANCHOR_EAST },
+    { "GTK_ANCHOR_N",           GTK_ANCHOR_N },
+    { "GTK_ANCHOR_NW",          GTK_ANCHOR_NW },
+    { "GTK_ANCHOR_NE",          GTK_ANCHOR_NE },
+    { "GTK_ANCHOR_S",           GTK_ANCHOR_S },
+    { "GTK_ANCHOR_SW",          GTK_ANCHOR_SW },
+    { "GTK_ANCHOR_SE",          GTK_ANCHOR_SE },
+    { "GTK_ANCHOR_W",           GTK_ANCHOR_W },
+    { "GTK_ANCHOR_E",           GTK_ANCHOR_E },
+
+#if GTK_CHECK_VERSION( 2, 16, 0 )
+    /*
+     *  GtkArrowPlacement
+     */
+    { "GTK_ARROWS_BOTH",        GTK_ARROWS_BOTH },
+    { "GTK_ARROWS_START",       GTK_ARROWS_START },
+    { "GTK_ARROWS_END",         GTK_ARROWS_END },
+#endif
+
+    /*
+     *  GtkArrowType
+     */
+    { "GTK_ARROW_UP",           GTK_ARROW_UP },
+    { "GTK_ARROW_DOWN",         GTK_ARROW_DOWN },
+    { "GTK_ARROW_LEFT",         GTK_ARROW_LEFT },
+    { "GTK_ARROW_RIGHT",        GTK_ARROW_RIGHT },
+    { "GTK_ARROW_NONE",         GTK_ARROW_NONE },
+
+    /*
+     *  GtkAttachOptions
+     */
+    { "GTK_EXPAND",             GTK_EXPAND },
+    { "GTK_SHRINK",             GTK_SHRINK },
+    { "GTK_FILL",               GTK_FILL },
+
+    /*
+     *  GtkButtonBoxStyle
+     */
+    { "GTK_BUTTONBOX_DEFAULT_STYLE",    GTK_BUTTONBOX_DEFAULT_STYLE },
+    { "GTK_BUTTONBOX_SPREAD",           GTK_BUTTONBOX_SPREAD },
+    { "GTK_BUTTONBOX_EDGE",             GTK_BUTTONBOX_EDGE },
+    { "GTK_BUTTONBOX_START",            GTK_BUTTONBOX_START },
+    { "GTK_BUTTONBOX_END",              GTK_BUTTONBOX_END },
+    { "GTK_BUTTONBOX_CENTER",           GTK_BUTTONBOX_CENTER },
+
+    /*
+     *  GtkButtonsType
+     */
+    { "GTK_BUTTONS_NONE",       GTK_BUTTONS_NONE },
+    { "GTK_BUTTONS_OK",         GTK_BUTTONS_OK },
+    { "GTK_BUTTONS_CLOSE",      GTK_BUTTONS_CLOSE },
+    { "GTK_BUTTONS_CANCEL",     GTK_BUTTONS_CANCEL },
+    { "GTK_BUTTONS_YES_NO",     GTK_BUTTONS_YES_NO },
+    { "GTK_BUTTONS_OK_CANCEL",  GTK_BUTTONS_OK_CANCEL },
+
+    /*
+     *  GtkCellRendererAccelMode
+     */
+    { "GTK_CELL_RENDERER_ACCEL_MODE_GTK",   GTK_CELL_RENDERER_ACCEL_MODE_GTK },
+    { "GTK_CELL_RENDERER_ACCEL_MODE_OTHER", GTK_CELL_RENDERER_ACCEL_MODE_OTHER },
+
+    /*
+     *  GtkCellRendererMode
+     */
+    { "GTK_CELL_RENDERER_MODE_INERT",       GTK_CELL_RENDERER_MODE_INERT },
+    { "GTK_CELL_RENDERER_MODE_ACTIVATABLE", GTK_CELL_RENDERER_MODE_ACTIVATABLE },
+    { "GTK_CELL_RENDERER_MODE_EDITABLE",    GTK_CELL_RENDERER_MODE_EDITABLE },
+
+    /*
+     *  GtkCellRendererState
+     */
+    { "GTK_CELL_RENDERER_SELECTED",     GTK_CELL_RENDERER_SELECTED },
+    { "GTK_CELL_RENDERER_PRELIT",       GTK_CELL_RENDERER_PRELIT },
+    { "GTK_CELL_RENDERER_INSENSITIVE",  GTK_CELL_RENDERER_INSENSITIVE },
+    { "GTK_CELL_RENDERER_SORTED",       GTK_CELL_RENDERER_SORTED },
+    { "GTK_CELL_RENDERER_FOCUSED",      GTK_CELL_RENDERER_FOCUSED },
+
+    /*
+     *  GtkCornerType
+     */
+    { "GTK_CORNER_TOP_LEFT",        GTK_CORNER_TOP_LEFT },
+    { "GTK_CORNER_BOTTOM_LEFT",     GTK_CORNER_BOTTOM_LEFT },
+    { "GTK_CORNER_TOP_RIGHT",       GTK_CORNER_TOP_RIGHT },
+    { "GTK_CORNER_BOTTOM_RIGHT",    GTK_CORNER_BOTTOM_RIGHT },
+
+    /*
+     *  GtkCurveType
+     */
+    { "GTK_CURVE_TYPE_LINEAR",      GTK_CURVE_TYPE_LINEAR },
+    { "GTK_CURVE_TYPE_SPLINE",      GTK_CURVE_TYPE_SPLINE },
+    { "GTK_CURVE_TYPE_FREE",        GTK_CURVE_TYPE_FREE },
+
+    /*
+     *  GtkDeleteType
+     */
+    { "GTK_DELETE_CHARS",           GTK_DELETE_CHARS },
+    { "GTK_DELETE_WORD_ENDS",       GTK_DELETE_WORD_ENDS },
+    { "GTK_DELETE_WORDS",           GTK_DELETE_WORDS },
+    { "GTK_DELETE_DISPLAY_LINES",   GTK_DELETE_DISPLAY_LINES },
+    { "GTK_DELETE_DISPLAY_LINE_ENDS",GTK_DELETE_DISPLAY_LINE_ENDS },
+    { "GTK_DELETE_PARAGRAPH_ENDS",  GTK_DELETE_PARAGRAPH_ENDS },
+    { "GTK_DELETE_PARAGRAPHS",      GTK_DELETE_PARAGRAPHS },
+    { "GTK_DELETE_WHITESPACE",      GTK_DELETE_WHITESPACE },
+
+    /*
+     *  GtkDialogFlags
+     */
+    { "GTK_DIALOG_MODAL",               GTK_DIALOG_MODAL },
+    { "GTK_DIALOG_DESTROY_WITH_PARENT", GTK_DIALOG_DESTROY_WITH_PARENT },
+    { "GTK_DIALOG_NO_SEPARATOR",        GTK_DIALOG_NO_SEPARATOR },
+
+    /*
+     *  GtkDirectionType
+     */
+    { "GTK_DIR_TAB_FORWARD",        GTK_DIR_TAB_FORWARD },
+    { "GTK_DIR_TAB_BACKWARD",       GTK_DIR_TAB_BACKWARD },
+    { "GTK_DIR_UP",                 GTK_DIR_UP },
+    { "GTK_DIR_DOWN",               GTK_DIR_DOWN },
+    { "GTK_DIR_LEFT",               GTK_DIR_LEFT },
+    { "GTK_DIR_RIGHT",              GTK_DIR_RIGHT },
+
+    /*
+     *  GtkDragResult
+     */
+    { "GTK_DRAG_RESULT_SUCCESS",        GTK_DRAG_RESULT_SUCCESS },
+    { "GTK_DRAG_RESULT_NO_TARGET",      GTK_DRAG_RESULT_NO_TARGET },
+    { "GTK_DRAG_RESULT_USER_CANCELLED", GTK_DRAG_RESULT_USER_CANCELLED },
+    { "GTK_DRAG_RESULT_TIMEOUT_EXPIRED",GTK_DRAG_RESULT_TIMEOUT_EXPIRED },
+    { "GTK_DRAG_RESULT_GRAB_BROKEN",    GTK_DRAG_RESULT_GRAB_BROKEN },
+    { "GTK_DRAG_RESULT_ERROR",          GTK_DRAG_RESULT_ERROR },
+
+#if GTK_CHECK_VERSION( 2, 16, 0 )
+    /*
+     *  GtkEntryIconPosition
+     */
+    { "GTK_ENTRY_ICON_PRIMARY",     GTK_ENTRY_ICON_PRIMARY },
+    { "GTK_ENTRY_ICON_SECONDARY",   GTK_ENTRY_ICON_SECONDARY },
+#endif
+
+    /*
+     *  GtkExpanderStyle
+     */
+    { "GTK_EXPANDER_COLLAPSED",     GTK_EXPANDER_COLLAPSED },
+    { "GTK_EXPANDER_SEMI_COLLAPSED",GTK_EXPANDER_SEMI_COLLAPSED },
+    { "GTK_EXPANDER_SEMI_EXPANDED", GTK_EXPANDER_SEMI_EXPANDED },
+    { "GTK_EXPANDER_EXPANDED",      GTK_EXPANDER_EXPANDED },
+
+    /*
+     *  GtkFileChooserAction
+     */
+    { "GTK_FILE_CHOOSER_ACTION_OPEN",   GTK_FILE_CHOOSER_ACTION_OPEN },
+    { "GTK_FILE_CHOOSER_ACTION_SAVE",   GTK_FILE_CHOOSER_ACTION_SAVE },
+    { "GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER",GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER },
+    { "GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER",GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER },
+
+    /*
+     *  GtkFileChooserConfirmation
+     */
+    { "GTK_FILE_CHOOSER_CONFIRMATION_CONFIRM",GTK_FILE_CHOOSER_CONFIRMATION_CONFIRM },
+    { "GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME",GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME },
+    { "GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN",GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN },
+
+    /*
+     *  GtkFileChooserError
+     */
+    { "GTK_FILE_CHOOSER_ERROR_NONEXISTENT",GTK_FILE_CHOOSER_ERROR_NONEXISTENT },
+    { "GTK_FILE_CHOOSER_ERROR_BAD_FILENAME",GTK_FILE_CHOOSER_ERROR_BAD_FILENAME },
+    { "GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS",GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS },
+#if GTK_CHECK_VERSION( 2, 16, 0 )
+    { "GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME",GTK_FILE_CHOOSER_ERROR_INCOMPLETE_HOSTNAME },
+#endif
+
+    /*
+     *  GtkFileFilterFlags
+     */
+    { "GTK_FILE_FILTER_FILENAME",       GTK_FILE_FILTER_FILENAME },
+    { "GTK_FILE_FILTER_URI",            GTK_FILE_FILTER_URI },
+    { "GTK_FILE_FILTER_DISPLAY_NAME",   GTK_FILE_FILTER_DISPLAY_NAME },
+    { "GTK_FILE_FILTER_MIME_TYPE",      GTK_FILE_FILTER_MIME_TYPE },
+
+    /*
+     *  GtkIconSize
+     */
+    { "GTK_ICON_SIZE_INVALID",      GTK_ICON_SIZE_INVALID },
+    { "GTK_ICON_SIZE_MENU",         GTK_ICON_SIZE_MENU },
+    { "GTK_ICON_SIZE_SMALL_TOOLBAR",GTK_ICON_SIZE_SMALL_TOOLBAR },
+    { "GTK_ICON_SIZE_LARGE_TOOLBAR",GTK_ICON_SIZE_LARGE_TOOLBAR },
+    { "GTK_ICON_SIZE_BUTTON",       GTK_ICON_SIZE_BUTTON },
+    { "GTK_ICON_SIZE_DND",          GTK_ICON_SIZE_DND },
+    { "GTK_ICON_SIZE_DIALOG",       GTK_ICON_SIZE_DIALOG },
+
+    /*
+     *  GtkImageType
+     */
+    { "GTK_IMAGE_EMPTY",        GTK_IMAGE_EMPTY },
+    { "GTK_IMAGE_PIXMAP",       GTK_IMAGE_PIXMAP },
+    { "GTK_IMAGE_IMAGE",        GTK_IMAGE_IMAGE },
+    { "GTK_IMAGE_PIXBUF",       GTK_IMAGE_PIXBUF },
+    { "GTK_IMAGE_STOCK",        GTK_IMAGE_STOCK },
+    { "GTK_IMAGE_ICON_SET",     GTK_IMAGE_ICON_SET },
+    { "GTK_IMAGE_ANIMATION",    GTK_IMAGE_ANIMATION },
+    { "GTK_IMAGE_ICON_NAME",    GTK_IMAGE_ICON_NAME },
+#if GTK_CHECK_VERSION( 2, 14, 0 )
+    { "GTK_IMAGE_GICON",        GTK_IMAGE_GICON },
+#endif
+
+    /*
+     *  GtkIMPreeditStyle
+     */
+    { "GTK_IM_PREEDIT_NOTHING",     GTK_IM_PREEDIT_NOTHING },
+    { "GTK_IM_PREEDIT_CALLBACK",    GTK_IM_PREEDIT_CALLBACK },
+    { "GTK_IM_PREEDIT_NONE",        GTK_IM_PREEDIT_NONE },
+
+    /*
+     *  GtkIMStatusStyle
+     */
+    { "GTK_IM_STATUS_NOTHING",      GTK_IM_STATUS_NOTHING },
+    { "GTK_IM_STATUS_CALLBACK",     GTK_IM_STATUS_CALLBACK },
+    { "GTK_IM_STATUS_NONE",         GTK_IM_STATUS_NONE },
+
+    /*
+     *  GtkJustification
+     */
+    { "GTK_JUSTIFY_LEFT",       GTK_JUSTIFY_LEFT },
+    { "GTK_JUSTIFY_RIGHT",      GTK_JUSTIFY_RIGHT },
+    { "GTK_JUSTIFY_CENTER",     GTK_JUSTIFY_CENTER },
+    { "GTK_JUSTIFY_FILL",       GTK_JUSTIFY_FILL },
+
+    /*
+     *  GtkMatchType
+     */
+    { "GTK_MATCH_ALL",          GTK_MATCH_ALL },
+    { "GTK_MATCH_ALL_TAIL",     GTK_MATCH_ALL_TAIL },
+    { "GTK_MATCH_HEAD",         GTK_MATCH_HEAD },
+    { "GTK_MATCH_TAIL",         GTK_MATCH_TAIL },
+    { "GTK_MATCH_EXACT",        GTK_MATCH_EXACT },
+    { "GTK_MATCH_LAST",         GTK_MATCH_LAST },
+
+    /*
+     *  GtkMenuDirectionType
+     */
+
+    { "GTK_MENU_DIR_PARENT",    GTK_MENU_DIR_PARENT },
+    { "GTK_MENU_DIR_CHILD",     GTK_MENU_DIR_CHILD },
+    { "GTK_MENU_DIR_NEXT",      GTK_MENU_DIR_NEXT },
+    { "GTK_MENU_DIR_PREV",      GTK_MENU_DIR_PREV },
+
+    /*
+     *  GtkMessageType
+     */
+    { "GTK_MESSAGE_INFO",       GTK_MESSAGE_INFO },
+    { "GTK_MESSAGE_WARNING",    GTK_MESSAGE_WARNING },
+    { "GTK_MESSAGE_QUESTION",   GTK_MESSAGE_QUESTION },
+    { "GTK_MESSAGE_ERROR",      GTK_MESSAGE_ERROR },
+    { "GTK_MESSAGE_OTHER",      GTK_MESSAGE_OTHER },
+
+    /*
+     *  GtkMetricType
+     */
+    { "GTK_PIXELS",     GTK_PIXELS },
+    { "GTK_INCHES",     GTK_INCHES },
+    { "GTK_CENTIMETERS",GTK_CENTIMETERS },
+
+    /*
+     *  GtkMovementStep
+     */
+    { "GTK_MOVEMENT_LOGICAL_POSITIONS",     GTK_MOVEMENT_LOGICAL_POSITIONS },
+    { "GTK_MOVEMENT_VISUAL_POSITIONS",      GTK_MOVEMENT_VISUAL_POSITIONS },
+    { "GTK_MOVEMENT_WORDS",                 GTK_MOVEMENT_WORDS },
+    { "GTK_MOVEMENT_DISPLAY_LINES",         GTK_MOVEMENT_DISPLAY_LINES },
+    { "GTK_MOVEMENT_DISPLAY_LINE_ENDS",     GTK_MOVEMENT_DISPLAY_LINE_ENDS },
+    { "GTK_MOVEMENT_PARAGRAPHS",            GTK_MOVEMENT_PARAGRAPHS },
+    { "GTK_MOVEMENT_PARAGRAPH_ENDS",        GTK_MOVEMENT_PARAGRAPH_ENDS },
+    { "GTK_MOVEMENT_PAGES",                 GTK_MOVEMENT_PAGES },
+    { "GTK_MOVEMENT_BUFFER_ENDS",           GTK_MOVEMENT_BUFFER_ENDS },
+    { "GTK_MOVEMENT_HORIZONTAL_PAGES",      GTK_MOVEMENT_HORIZONTAL_PAGES },
+
+    /*
+     *  GtkOrientation
+     */
+    { "GTK_ORIENTATION_HORIZONTAL", GTK_ORIENTATION_HORIZONTAL },
+    { "GTK_ORIENTATION_VERTICAL",   GTK_ORIENTATION_VERTICAL },
+
+    /*
+     *  GtkPackDirection
+     */
+    { "GTK_PACK_DIRECTION_LTR",     GTK_PACK_DIRECTION_LTR },
+    { "GTK_PACK_DIRECTION_RTL",     GTK_PACK_DIRECTION_RTL },
+    { "GTK_PACK_DIRECTION_TTB",     GTK_PACK_DIRECTION_TTB },
+    { "GTK_PACK_DIRECTION_BTT",     GTK_PACK_DIRECTION_BTT },
+
+    /*
+     *  GtkPackType
+     */
+    { "GTK_PACK_START",     GTK_PACK_START },
+    { "GTK_PACK_END",       GTK_PACK_END },
+
+    /*
+     *  GtkPathPriorityType
+     */
+    { "GTK_PATH_PRIO_LOWEST",       GTK_PATH_PRIO_LOWEST },
+    { "GTK_PATH_PRIO_GTK",          GTK_PATH_PRIO_GTK },
+    { "GTK_PATH_PRIO_APPLICATION",  GTK_PATH_PRIO_APPLICATION },
+    { "GTK_PATH_PRIO_THEME",        GTK_PATH_PRIO_THEME },
+    { "GTK_PATH_PRIO_RC",           GTK_PATH_PRIO_RC },
+    { "GTK_PATH_PRIO_HIGHEST",      GTK_PATH_PRIO_HIGHEST },
+
+    /*
+     *  GtkPathType
+     */
+    { "GTK_PATH_WIDGET",        GTK_PATH_WIDGET },
+    { "GTK_PATH_WIDGET_CLASS",  GTK_PATH_WIDGET_CLASS },
+    { "GTK_PATH_CLASS",         GTK_PATH_CLASS },
+
+    /*
+     *  GtkPolicyType
+     */
+    { "GTK_POLICY_ALWAYS",      GTK_POLICY_ALWAYS },
+    { "GTK_POLICY_AUTOMATIC",   GTK_POLICY_AUTOMATIC },
+    { "GTK_POLICY_NEVER",       GTK_POLICY_NEVER },
+
+    /*
+     *  GtkPositionType
+     */
+    { "GTK_POS_LEFT",       GTK_POS_LEFT },
+    { "GTK_POS_RIGHT",      GTK_POS_RIGHT },
+    { "GTK_POS_TOP",        GTK_POS_TOP },
+    { "GTK_POS_BOTTOM",     GTK_POS_BOTTOM },
+
+    /*
+     *  GtkPreviewType
+     */
+    { "GTK_PREVIEW_COLOR",      GTK_PREVIEW_COLOR },
+    { "GTK_PREVIEW_GRAYSCALE",  GTK_PREVIEW_GRAYSCALE },
+
+    /*
+     *  GtkProgressBarOrientation
+     */
+    { "GTK_PROGRESS_LEFT_TO_RIGHT", GTK_PROGRESS_LEFT_TO_RIGHT },
+    { "GTK_PROGRESS_RIGHT_TO_LEFT", GTK_PROGRESS_RIGHT_TO_LEFT },
+    { "GTK_PROGRESS_BOTTOM_TO_TOP", GTK_PROGRESS_BOTTOM_TO_TOP },
+    { "GTK_PROGRESS_TOP_TO_BOTTOM", GTK_PROGRESS_TOP_TO_BOTTOM },
+
+    /*
+     *  GtkRecentFilterFlags
+     */
+    { "GTK_RECENT_FILTER_URI",          GTK_RECENT_FILTER_URI },
+    { "GTK_RECENT_FILTER_DISPLAY_NAME", GTK_RECENT_FILTER_DISPLAY_NAME },
+    { "GTK_RECENT_FILTER_MIME_TYPE",    GTK_RECENT_FILTER_MIME_TYPE },
+    { "GTK_RECENT_FILTER_APPLICATION",  GTK_RECENT_FILTER_APPLICATION },
+    { "GTK_RECENT_FILTER_GROUP",        GTK_RECENT_FILTER_GROUP },
+    { "GTK_RECENT_FILTER_AGE",          GTK_RECENT_FILTER_AGE },
+
+    /*
+     *  GtkReliefStyle
+     */
+    { "GTK_RELIEF_NORMAL",      GTK_RELIEF_NORMAL },
+    { "GTK_RELIEF_HALF",        GTK_RELIEF_HALF },
+    { "GTK_RELIEF_NONE",        GTK_RELIEF_NONE },
+
+    /*
+     *  GtkResizeMode
+     */
+    { "GTK_RESIZE_PARENT",      GTK_RESIZE_PARENT },
+    { "GTK_RESIZE_QUEUE",       GTK_RESIZE_QUEUE },
+    { "GTK_RESIZE_IMMEDIATE",   GTK_RESIZE_IMMEDIATE },
+
+    /*
+     *  GtkResponseType
+     */
+    { "GTK_RESPONSE_NONE",      GTK_RESPONSE_NONE },
+    { "GTK_RESPONSE_REJECT",    GTK_RESPONSE_REJECT },
+    { "GTK_RESPONSE_ACCEPT",    GTK_RESPONSE_ACCEPT },
+    { "GTK_RESPONSE_DELETE_EVENT",GTK_RESPONSE_DELETE_EVENT },
+    { "GTK_RESPONSE_OK",        GTK_RESPONSE_OK },
+    { "GTK_RESPONSE_CANCEL",    GTK_RESPONSE_CANCEL },
+    { "GTK_RESPONSE_CLOSE",     GTK_RESPONSE_CLOSE },
+    { "GTK_RESPONSE_YES",       GTK_RESPONSE_YES },
+    { "GTK_RESPONSE_NO",        GTK_RESPONSE_NO },
+    { "GTK_RESPONSE_APPLY",     GTK_RESPONSE_APPLY },
+    { "GTK_RESPONSE_HELP",      GTK_RESPONSE_HELP },
+
+    /*
+     *  GtkScrollStep
+     */
+    { "GTK_SCROLL_STEPS",       GTK_SCROLL_STEPS },
+    { "GTK_SCROLL_PAGES",       GTK_SCROLL_PAGES },
+    { "GTK_SCROLL_ENDS",        GTK_SCROLL_ENDS },
+    { "GTK_SCROLL_HORIZONTAL_STEPS",    GTK_SCROLL_HORIZONTAL_STEPS },
+    { "GTK_SCROLL_HORIZONTAL_PAGES",    GTK_SCROLL_HORIZONTAL_PAGES },
+    { "GTK_SCROLL_HORIZONTAL_ENDS",     GTK_SCROLL_HORIZONTAL_ENDS },
+
+    /*
+     *  GtkScrollType
+     */
+    { "GTK_SCROLL_NONE",            GTK_SCROLL_NONE },
+    { "GTK_SCROLL_JUMP",            GTK_SCROLL_JUMP },
+    { "GTK_SCROLL_STEP_BACKWARD",   GTK_SCROLL_STEP_BACKWARD },
+    { "GTK_SCROLL_STEP_FORWARD",    GTK_SCROLL_STEP_FORWARD },
+    { "GTK_SCROLL_PAGE_BACKWARD",   GTK_SCROLL_PAGE_BACKWARD },
+    { "GTK_SCROLL_PAGE_FORWARD",    GTK_SCROLL_PAGE_FORWARD },
+    { "GTK_SCROLL_STEP_UP",         GTK_SCROLL_STEP_UP },
+    { "GTK_SCROLL_STEP_DOWN",       GTK_SCROLL_STEP_DOWN },
+    { "GTK_SCROLL_PAGE_UP",         GTK_SCROLL_PAGE_UP },
+    { "GTK_SCROLL_PAGE_DOWN",       GTK_SCROLL_PAGE_DOWN },
+    { "GTK_SCROLL_STEP_LEFT",       GTK_SCROLL_STEP_LEFT },
+    { "GTK_SCROLL_STEP_RIGHT",      GTK_SCROLL_STEP_RIGHT },
+    { "GTK_SCROLL_PAGE_LEFT",       GTK_SCROLL_PAGE_LEFT },
+    { "GTK_SCROLL_PAGE_RIGHT",      GTK_SCROLL_PAGE_RIGHT },
+    { "GTK_SCROLL_START",           GTK_SCROLL_START },
+    { "GTK_SCROLL_END",             GTK_SCROLL_END },
+
+    /*
+     *  GtkSelectionMode
+     */
+    { "GTK_SELECTION_NONE",         GTK_SELECTION_NONE },
+    { "GTK_SELECTION_SINGLE",       GTK_SELECTION_SINGLE },
+    { "GTK_SELECTION_BROWSE",       GTK_SELECTION_BROWSE },
+    { "GTK_SELECTION_MULTIPLE",     GTK_SELECTION_MULTIPLE },
+    { "GTK_SELECTION_EXTENDED",     GTK_SELECTION_EXTENDED },
+
+    /*
+     *  GtkSensitivityType
+     */
+    { "GTK_SENSITIVITY_AUTO",   GTK_SENSITIVITY_AUTO },
+    { "GTK_SENSITIVITY_ON",     GTK_SENSITIVITY_ON },
+    { "GTK_SENSITIVITY_OFF",    GTK_SENSITIVITY_OFF },
+
+    /*
+     *  GtkShadowType
+     */
+    { "GTK_SHADOW_NONE",        GTK_SHADOW_NONE },
+    { "GTK_SHADOW_IN",          GTK_SHADOW_IN },
+    { "GTK_SHADOW_OUT",         GTK_SHADOW_OUT },
+    { "GTK_SHADOW_ETCHED_IN",   GTK_SHADOW_ETCHED_IN },
+    { "GTK_SHADOW_ETCHED_OUT",  GTK_SHADOW_ETCHED_OUT },
+
+    /*
+     *  GtkSideType
+     */
+    { "GTK_SIDE_TOP",       GTK_SIDE_TOP },
+    { "GTK_SIDE_BOTTOM",    GTK_SIDE_BOTTOM },
+    { "GTK_SIDE_LEFT",      GTK_SIDE_LEFT },
+    { "GTK_SIDE_RIGHT",     GTK_SIDE_RIGHT },
+
+    /*
+     *  GtkSortType
+     */
+    { "GTK_SORT_ASCENDING",     GTK_SORT_ASCENDING },
+    { "GTK_SORT_DESCENDING",    GTK_SORT_DESCENDING },
+
+    /*
+     *  GtkSpinButtonUpdatePolicy
+     */
+    { "GTK_UPDATE_ALWAYS",              GTK_UPDATE_ALWAYS },
+    { "GTK_UPDATE_IF_VALID",            GTK_UPDATE_IF_VALID },
+
+    /*
+     *  GtkSpinType
+     */
+    { "GTK_SPIN_STEP_FORWARD",          GTK_SPIN_STEP_FORWARD },
+    { "GTK_SPIN_STEP_FORWARD",          GTK_SPIN_STEP_BACKWARD },
+    { "GTK_SPIN_PAGE_FORWARD",          GTK_SPIN_PAGE_FORWARD },
+    { "GTK_SPIN_PAGE_BACKWARD",         GTK_SPIN_PAGE_BACKWARD },
+    { "GTK_SPIN_HOME",                  GTK_SPIN_HOME },
+    { "GTK_SPIN_END",                   GTK_SPIN_END },
+    { "GTK_SPIN_USER_DEFINED",          GTK_SPIN_USER_DEFINED },
+
+    /*
+     *  GtkStateType
+     */
+    { "GTK_STATE_NORMAL",       GTK_STATE_NORMAL },
+    { "GTK_STATE_ACTIVE",       GTK_STATE_ACTIVE },
+    { "GTK_STATE_PRELIGHT",     GTK_STATE_PRELIGHT },
+    { "GTK_STATE_SELECTED",     GTK_STATE_SELECTED },
+    { "GTK_STATE_INSENSITIVE",  GTK_STATE_INSENSITIVE },
+
+    /*
+     *  GtkSubmenuDirection
+     */
+    { "GTK_DIRECTION_LEFT",     GTK_DIRECTION_LEFT },
+    { "GTK_DIRECTION_RIGHT",    GTK_DIRECTION_RIGHT },
+
+    /*
+     *  GtkSubmenuPlacement
+     */
+    { "GTK_TOP_BOTTOM",     GTK_TOP_BOTTOM },
+    { "GTK_LEFT_RIGHT",     GTK_LEFT_RIGHT },
+
+    /*
+     *  GtkTextBufferTargetInfo
+     */
+    { "GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS",GTK_TEXT_BUFFER_TARGET_INFO_BUFFER_CONTENTS },
+    { "GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT",  GTK_TEXT_BUFFER_TARGET_INFO_RICH_TEXT },
+    { "GTK_TEXT_BUFFER_TARGET_INFO_TEXT",       GTK_TEXT_BUFFER_TARGET_INFO_TEXT },
+
+    /*
+     *  GtkTextDirection
+     */
+    { "GTK_TEXT_DIR_NONE",      GTK_TEXT_DIR_NONE },
+    { "GTK_TEXT_DIR_LTR",       GTK_TEXT_DIR_LTR },
+    { "GTK_TEXT_DIR_RTL",       GTK_TEXT_DIR_RTL },
+
+    /*
+     *  GtkTextWindowType
+     */
+    { "GTK_TEXT_WINDOW_PRIVATE",    GTK_TEXT_WINDOW_PRIVATE },
+    { "GTK_TEXT_WINDOW_WIDGET",     GTK_TEXT_WINDOW_WIDGET },
+    { "GTK_TEXT_WINDOW_TEXT",       GTK_TEXT_WINDOW_TEXT },
+    { "GTK_TEXT_WINDOW_LEFT",       GTK_TEXT_WINDOW_LEFT },
+    { "GTK_TEXT_WINDOW_RIGHT",      GTK_TEXT_WINDOW_RIGHT },
+    { "GTK_TEXT_WINDOW_TOP",        GTK_TEXT_WINDOW_TOP },
+    { "GTK_TEXT_WINDOW_BOTTOM",     GTK_TEXT_WINDOW_BOTTOM },
+
+    /*
+     *  GtkToolbarChildType
+     */
+    { "GTK_TOOLBAR_CHILD_SPACE",        GTK_TOOLBAR_CHILD_SPACE },
+    { "GTK_TOOLBAR_CHILD_BUTTON",       GTK_TOOLBAR_CHILD_BUTTON },
+    { "GTK_TOOLBAR_CHILD_TOGGLEBUTTON", GTK_TOOLBAR_CHILD_TOGGLEBUTTON },
+    { "GTK_TOOLBAR_CHILD_TOGGLEBUTTON", GTK_TOOLBAR_CHILD_TOGGLEBUTTON },
+    { "GTK_TOOLBAR_CHILD_WIDGET",       GTK_TOOLBAR_CHILD_WIDGET },
+
+    /*
+     *  GtkToolbarSpaceStyle
+     */
+    { "GTK_TOOLBAR_SPACE_EMPTY",    GTK_TOOLBAR_SPACE_EMPTY },
+    { "GTK_TOOLBAR_SPACE_LINE",     GTK_TOOLBAR_SPACE_LINE },
+
+    /*
+     *  GtkToolbarStyle
+     */
+    { "GTK_TOOLBAR_ICONS",      GTK_TOOLBAR_ICONS },
+    { "GTK_TOOLBAR_TEXT",       GTK_TOOLBAR_TEXT },
+    { "GTK_TOOLBAR_BOTH",       GTK_TOOLBAR_BOTH },
+    { "GTK_TOOLBAR_BOTH_HORIZ", GTK_TOOLBAR_BOTH_HORIZ },
+
+#if GTK_CHECK_VERSION( 2, 20, 0 )
+    /*
+     *  GtkToolPaletteDragTargets
+     */
+    { "GTK_TOOL_PALETTE_DRAG_ITEMS",    GTK_TOOL_PALETTE_DRAG_ITEMS },
+    { "GTK_TOOL_PALETTE_DRAG_GROUPS",   GTK_TOOL_PALETTE_DRAG_GROUPS },
+#endif
+
+    /*
+     *  GtkTreeModelFlags
+     */
+    { "GTK_TREE_MODEL_ITERS_PERSIST",   GTK_TREE_MODEL_ITERS_PERSIST },
+    { "GTK_TREE_MODEL_LIST_ONLY",       GTK_TREE_MODEL_LIST_ONLY },
+
+    /*
+     *  GtkTreeViewColumnSizing
+     */
+    { "GTK_TREE_VIEW_COLUMN_GROW_ONLY", GTK_TREE_VIEW_COLUMN_GROW_ONLY },
+    { "GTK_TREE_VIEW_COLUMN_AUTOSIZE",  GTK_TREE_VIEW_COLUMN_AUTOSIZE },
+    { "GTK_TREE_VIEW_COLUMN_FIXED",     GTK_TREE_VIEW_COLUMN_FIXED },
+
+    /*
+     *  GtkTreeViewDropPosition
+     */
+    { "GTK_TREE_VIEW_DROP_BEFORE",          GTK_TREE_VIEW_DROP_BEFORE },
+    { "GTK_TREE_VIEW_DROP_AFTER",           GTK_TREE_VIEW_DROP_AFTER },
+    { "GTK_TREE_VIEW_DROP_INTO_OR_BEFORE",  GTK_TREE_VIEW_DROP_INTO_OR_BEFORE },
+    { "GTK_TREE_VIEW_DROP_INTO_OR_AFTER",   GTK_TREE_VIEW_DROP_INTO_OR_AFTER },
+
+    /*
+     *  GtkTreeViewGridLines
+     */
+    { "GTK_TREE_VIEW_GRID_LINES_NONE",      GTK_TREE_VIEW_GRID_LINES_NONE },
+    { "GTK_TREE_VIEW_GRID_LINES_HORIZONTAL",GTK_TREE_VIEW_GRID_LINES_HORIZONTAL },
+    { "GTK_TREE_VIEW_GRID_LINES_VERTICAL",  GTK_TREE_VIEW_GRID_LINES_VERTICAL },
+    { "GTK_TREE_VIEW_GRID_LINES_BOTH",      GTK_TREE_VIEW_GRID_LINES_BOTH },
+
+    /*
+     *  GtkUpdateType
+     */
+    { "GTK_UPDATE_CONTINUOUS",      GTK_UPDATE_CONTINUOUS },
+    { "GTK_UPDATE_DISCONTINUOUS",   GTK_UPDATE_DISCONTINUOUS },
+    { "GTK_UPDATE_DELAYED",         GTK_UPDATE_DELAYED },
+
+    /*
+     *  GtkVisibility
+     */
+    { "GTK_VISIBILITY_NONE",    GTK_VISIBILITY_NONE },
+    { "GTK_VISIBILITY_PARTIAL", GTK_VISIBILITY_PARTIAL },
+    { "GTK_VISIBILITY_FULL",    GTK_VISIBILITY_FULL },
+
+    /*
+     *  GtkWidgetFlags
+     */
+    { "GTK_TOPLEVEL",           GTK_TOPLEVEL },
+    { "GTK_NO_WINDOW",          GTK_NO_WINDOW },
+    { "GTK_REALIZED",           GTK_REALIZED },
+    { "GTK_MAPPED",             GTK_MAPPED },
+    { "GTK_VISIBLE",            GTK_VISIBLE },
+    { "GTK_SENSITIVE",          GTK_SENSITIVE },
+    { "GTK_PARENT_SENSITIVE",   GTK_PARENT_SENSITIVE },
+    { "GTK_CAN_FOCUS",          GTK_CAN_FOCUS },
+    { "GTK_HAS_FOCUS",          GTK_HAS_FOCUS },
+    { "GTK_CAN_DEFAULT",        GTK_CAN_DEFAULT },
+    { "GTK_HAS_DEFAULT",        GTK_HAS_DEFAULT },
+    { "GTK_HAS_GRAB",           GTK_HAS_GRAB },
+    { "GTK_RC_STYLE",           GTK_RC_STYLE },
+    { "GTK_COMPOSITE_CHILD",    GTK_COMPOSITE_CHILD },
+    { "GTK_NO_REPARENT",        GTK_NO_REPARENT },
+    { "GTK_APP_PAINTABLE",      GTK_APP_PAINTABLE },
+    { "GTK_RECEIVES_DEFAULT",   GTK_RECEIVES_DEFAULT },
+    { "GTK_DOUBLE_BUFFERED",    GTK_DOUBLE_BUFFERED },
+    { "GTK_NO_SHOW_ALL",        GTK_NO_SHOW_ALL },
+
+    /*
+     *  GtkWindowPosition
+     */
+    { "GTK_WIN_POS_NONE",       GTK_WIN_POS_NONE },
+    { "GTK_WIN_POS_CENTER",     GTK_WIN_POS_CENTER },
+    { "GTK_WIN_POS_MOUSE",      GTK_WIN_POS_MOUSE },
+    { "GTK_WIN_POS_CENTER_ALWAYS",  GTK_WIN_POS_CENTER_ALWAYS },
+    { "GTK_WIN_POS_CENTER_ON_PARENT",   GTK_WIN_POS_CENTER_ON_PARENT },
+
+    /*
+     *  GtkWindowType
+     */
+    { "GTK_WINDOW_TOPLEVEL",    GTK_WINDOW_TOPLEVEL },
+    { "GTK_WINDOW_POPUP",       GTK_WINDOW_POPUP },
+
+    /*
+     *  GtkWrapMode
+     */
+    { "GTK_WRAP_NONE",      GTK_WRAP_NONE },
+    { "GTK_WRAP_CHAR",      GTK_WRAP_CHAR },
+    { "GTK_WRAP_WORD",      GTK_WRAP_WORD },
+    { "GTK_WRAP_WORD_CHAR", GTK_WRAP_WORD_CHAR },
+
+    // BEGIN GDK CONSTANTS //
+
+    /*
+     *  GdkAxisUse
+     */
+    { "GDK_AXIS_IGNORE",    GDK_AXIS_IGNORE },
+    { "GDK_AXIS_X",         GDK_AXIS_X },
+    { "GDK_AXIS_Y",         GDK_AXIS_Y },
+    { "GDK_AXIS_PRESSURE",  GDK_AXIS_PRESSURE },
+    { "GDK_AXIS_XTILT",     GDK_AXIS_XTILT },
+    { "GDK_AXIS_YTILT",     GDK_AXIS_YTILT },
+    { "GDK_AXIS_WHEEL",     GDK_AXIS_WHEEL },
+    { "GDK_AXIS_LAST",      GDK_AXIS_LAST },
+
+
+    /*
+     *  GdkByteOrder
+     */
+    { "GDK_LSB_FIRST",  GDK_LSB_FIRST },
+    { "GDK_MSB_FIRST",  GDK_MSB_FIRST },
+
+    /*
+     *  GdkCapStyle
+     */
+    { "GDK_CAP_NOT_LAST",       GDK_CAP_NOT_LAST },
+    { "GDK_CAP_BUTT",           GDK_CAP_BUTT },
+    { "GDK_CAP_ROUND",          GDK_CAP_ROUND },
+    { "GDK_CAP_PROJECTING",     GDK_CAP_PROJECTING },
+
+    /*
+     *  GdkColorSpace
+     */
+    { "GDK_COLORSPACE_RGB", GDK_COLORSPACE_RGB },
+
+    /*
+     *  GdkCursorType
+     */
+    { "GDK_X_CURSOR",           GDK_X_CURSOR },
+    { "GDK_ARROW",              GDK_ARROW },
+    { "GDK_BASED_ARROW_DOWN",   GDK_BASED_ARROW_DOWN },
+    { "GDK_BASED_ARROW_UP",     GDK_BASED_ARROW_UP },
+    { "GDK_BOAT",               GDK_BOAT },
+    { "GDK_BOGOSITY",           GDK_BOGOSITY },
+    { "GDK_BOTTOM_LEFT_CORNER", GDK_BOTTOM_LEFT_CORNER },
+    { "GDK_BOTTOM_RIGHT_CORNER",GDK_BOTTOM_RIGHT_CORNER },
+    { "GDK_BOTTOM_SIDE",        GDK_BOTTOM_SIDE },
+    { "GDK_BOTTOM_TEE",         GDK_BOTTOM_TEE },
+    { "GDK_BOX_SPIRAL",         GDK_BOX_SPIRAL },
+    { "GDK_CENTER_PTR",         GDK_CENTER_PTR },
+    { "GDK_CIRCLE",             GDK_CIRCLE },
+    { "GDK_CLOCK",              GDK_CLOCK },
+    { "GDK_COFFEE_MUG",         GDK_COFFEE_MUG },
+    { "GDK_CROSS",              GDK_CROSS },
+    { "GDK_CROSS_REVERSE",      GDK_CROSS_REVERSE },
+    { "GDK_CROSSHAIR",          GDK_CROSSHAIR },
+    { "GDK_DIAMOND_CROSS",      GDK_DIAMOND_CROSS },
+    { "GDK_DOT",                GDK_DOT },
+    { "GDK_DOTBOX",             GDK_DOTBOX },
+    { "GDK_DOUBLE_ARROW",       GDK_DOUBLE_ARROW },
+    { "GDK_DRAFT_LARGE",        GDK_DRAFT_LARGE },
+    { "GDK_DRAFT_SMALL",        GDK_DRAFT_SMALL },
+    { "GDK_DRAPED_BOX",         GDK_DRAPED_BOX },
+    { "GDK_EXCHANGE",           GDK_EXCHANGE },
+    { "GDK_FLEUR",              GDK_FLEUR },
+    { "GDK_GOBBLER",            GDK_GOBBLER },
+    { "GDK_GUMBY",              GDK_GUMBY },
+    { "GDK_HAND1",              GDK_HAND1 },
+    { "GDK_HAND2",              GDK_HAND2 },
+    { "GDK_HEART",              GDK_HEART },
+    { "GDK_ICON",               GDK_ICON },
+    { "GDK_IRON_CROSS",         GDK_IRON_CROSS },
+    { "GDK_LEFT_PTR",           GDK_LEFT_PTR },
+    { "GDK_LEFT_SIDE",          GDK_LEFT_SIDE },
+    { "GDK_LEFT_TEE",           GDK_LEFT_TEE },
+    { "GDK_LEFTBUTTON",         GDK_LEFTBUTTON },
+    { "GDK_LL_ANGLE",           GDK_LL_ANGLE },
+    { "GDK_LR_ANGLE",           GDK_LR_ANGLE },
+    { "GDK_MAN",                GDK_MAN },
+    { "GDK_MIDDLEBUTTON",       GDK_MIDDLEBUTTON },
+    { "GDK_MOUSE",              GDK_MOUSE },
+    { "GDK_PENCIL",             GDK_PENCIL },
+    { "GDK_PIRATE",             GDK_PIRATE },
+    { "GDK_PLUS",               GDK_PLUS },
+    { "GDK_QUESTION_ARROW",     GDK_QUESTION_ARROW },
+    { "GDK_RIGHT_PTR",          GDK_RIGHT_PTR },
+    { "GDK_RIGHT_SIDE",         GDK_RIGHT_SIDE },
+    { "GDK_RIGHT_TEE",          GDK_RIGHT_TEE },
+    { "GDK_RIGHTBUTTON",        GDK_RIGHTBUTTON },
+    { "GDK_RTL_LOGO",           GDK_RTL_LOGO },
+    { "GDK_SAILBOAT",           GDK_SAILBOAT },
+    { "GDK_SB_DOWN_ARROW",      GDK_SB_DOWN_ARROW },
+    { "GDK_SB_H_DOUBLE_ARROW",  GDK_SB_H_DOUBLE_ARROW },
+    { "GDK_SB_LEFT_ARROW",      GDK_SB_LEFT_ARROW },
+    { "GDK_SB_RIGHT_ARROW",     GDK_SB_RIGHT_ARROW },
+    { "GDK_SB_UP_ARROW",        GDK_SB_UP_ARROW },
+    { "GDK_SB_V_DOUBLE_ARROW",  GDK_SB_V_DOUBLE_ARROW },
+    { "GDK_SHUTTLE",            GDK_SHUTTLE },
+    { "GDK_SIZING",             GDK_SIZING },
+    { "GDK_SPIDER",             GDK_SPIDER },
+    { "GDK_SPRAYCAN",           GDK_SPRAYCAN },
+    { "GDK_STAR",               GDK_STAR },
+    { "GDK_TARGET",             GDK_TARGET },
+    { "GDK_TCROSS",             GDK_TCROSS },
+    { "GDK_TOP_LEFT_ARROW",     GDK_TOP_LEFT_ARROW },
+    { "GDK_TOP_LEFT_CORNER",    GDK_TOP_LEFT_CORNER },
+    { "GDK_TOP_RIGHT_CORNER",   GDK_TOP_RIGHT_CORNER },
+    { "GDK_TOP_SIDE",           GDK_TOP_SIDE },
+    { "GDK_TOP_TEE",            GDK_TOP_TEE },
+    { "GDK_TREK",               GDK_TREK },
+    { "GDK_UL_ANGLE",           GDK_UL_ANGLE },
+    { "GDK_UMBRELLA",           GDK_UMBRELLA },
+    { "GDK_UR_ANGLE",           GDK_UR_ANGLE },
+    { "GDK_WATCH",              GDK_WATCH },
+    { "GDK_XTERM",              GDK_XTERM },
+    { "GDK_LAST_CURSOR",        GDK_LAST_CURSOR },
+#if GTK_CHECK_VERSION( 2, 16, 0 )
+    { "GDK_BLANK_CURSOR",       GDK_BLANK_CURSOR },
+#endif
+    { "GDK_CURSOR_IS_PIXMAP",   GDK_CURSOR_IS_PIXMAP },
+
+    /*
+     *  GdkDragAction
+     */
+    { "GDK_ACTION_DEFAULT", GDK_ACTION_DEFAULT },
+    { "GDK_ACTION_COPY",    GDK_ACTION_COPY },
+    { "GDK_ACTION_MOVE",    GDK_ACTION_MOVE },
+    { "GDK_ACTION_LINK",    GDK_ACTION_LINK },
+    { "GDK_ACTION_PRIVATE", GDK_ACTION_PRIVATE },
+    { "GDK_ACTION_ASK",     GDK_ACTION_ASK },
+
+
+    /*
+     *  GdkDragProtocol
+     */
+    { "GDK_DRAG_PROTO_MOTIF",       GDK_DRAG_PROTO_MOTIF },
+    { "GDK_DRAG_PROTO_XDND",        GDK_DRAG_PROTO_XDND },
+    { "GDK_DRAG_PROTO_ROOTWIN",     GDK_DRAG_PROTO_ROOTWIN },
+    { "GDK_DRAG_PROTO_NONE",        GDK_DRAG_PROTO_NONE },
+    { "GDK_DRAG_PROTO_WIN32_DROPFILES",GDK_DRAG_PROTO_WIN32_DROPFILES },
+    { "GDK_DRAG_PROTO_OLE2",        GDK_DRAG_PROTO_OLE2 },
+    { "GDK_DRAG_PROTO_LOCAL",       GDK_DRAG_PROTO_LOCAL },
+
+    /*
+     *  GdkEventMask
+     */
+    { "GDK_EXPOSURE_MASK",              GDK_EXPOSURE_MASK },
+    { "GDK_POINTER_MOTION_MASK",        GDK_POINTER_MOTION_MASK },
+    { "GDK_POINTER_MOTION_HINT_MASK",   GDK_POINTER_MOTION_HINT_MASK },
+    { "GDK_BUTTON_MOTION_MASK",         GDK_BUTTON_MOTION_MASK },
+    { "GDK_BUTTON1_MOTION_MASK",        GDK_BUTTON1_MOTION_MASK },
+    { "GDK_BUTTON2_MOTION_MASK",        GDK_BUTTON2_MOTION_MASK },
+    { "GDK_BUTTON3_MOTION_MASK",        GDK_BUTTON3_MOTION_MASK },
+    { "GDK_BUTTON_PRESS_MASK",          GDK_BUTTON_PRESS_MASK },
+    { "GDK_BUTTON_RELEASE_MASK",        GDK_BUTTON_RELEASE_MASK },
+    { "GDK_KEY_PRESS_MASK",             GDK_KEY_PRESS_MASK },
+    { "GDK_KEY_RELEASE_MASK",           GDK_KEY_RELEASE_MASK },
+    { "GDK_ENTER_NOTIFY_MASK",          GDK_ENTER_NOTIFY_MASK },
+    { "GDK_LEAVE_NOTIFY_MASK",          GDK_LEAVE_NOTIFY_MASK },
+    { "GDK_FOCUS_CHANGE_MASK",          GDK_FOCUS_CHANGE_MASK },
+    { "GDK_STRUCTURE_MASK",             GDK_STRUCTURE_MASK },
+    { "GDK_PROPERTY_CHANGE_MASK",       GDK_PROPERTY_CHANGE_MASK },
+    { "GDK_VISIBILITY_NOTIFY_MASK",     GDK_VISIBILITY_NOTIFY_MASK },
+    { "GDK_PROXIMITY_IN_MASK",          GDK_PROXIMITY_IN_MASK },
+    { "GDK_PROXIMITY_OUT_MASK",         GDK_PROXIMITY_OUT_MASK },
+    { "GDK_SUBSTRUCTURE_MASK",          GDK_SUBSTRUCTURE_MASK },
+    { "GDK_SCROLL_MASK",                GDK_SCROLL_MASK },
+    { "GDK_ALL_EVENTS_MASK",            GDK_ALL_EVENTS_MASK },
+
+    /*
+     *  GdkEventType
+     */
+    { "GDK_NOTHING",        GDK_NOTHING },
+    { "GDK_DELETE",         GDK_DELETE },
+    { "GDK_DESTROY",        GDK_DESTROY },
+    { "GDK_EXPOSE",         GDK_EXPOSE },
+    { "GDK_MOTION_NOTIFY",  GDK_MOTION_NOTIFY },
+    { "GDK_BUTTON_PRESS",   GDK_BUTTON_PRESS },
+    { "GDK_2BUTTON_PRESS",  GDK_2BUTTON_PRESS },
+    { "GDK_3BUTTON_PRESS",  GDK_3BUTTON_PRESS },
+    { "GDK_BUTTON_RELEASE", GDK_BUTTON_RELEASE },
+    { "GDK_KEY_PRESS",      GDK_KEY_PRESS },
+    { "GDK_KEY_RELEASE",    GDK_KEY_RELEASE },
+    { "GDK_ENTER_NOTIFY",   GDK_ENTER_NOTIFY },
+    { "GDK_LEAVE_NOTIFY",   GDK_LEAVE_NOTIFY },
+    { "GDK_FOCUS_CHANGE",   GDK_FOCUS_CHANGE },
+    { "GDK_CONFIGURE",      GDK_CONFIGURE },
+    { "GDK_MAP",            GDK_MAP },
+    { "GDK_UNMAP",          GDK_UNMAP },
+    { "GDK_PROPERTY_NOTIFY",GDK_PROPERTY_NOTIFY },
+    { "GDK_SELECTION_CLEAR",GDK_SELECTION_CLEAR },
+    { "GDK_SELECTION_REQUEST",GDK_SELECTION_REQUEST },
+    { "GDK_SELECTION_NOTIFY",GDK_SELECTION_NOTIFY },
+    { "GDK_PROXIMITY_IN",   GDK_PROXIMITY_IN },
+    { "GDK_PROXIMITY_OUT",  GDK_PROXIMITY_OUT },
+    { "GDK_DRAG_ENTER",     GDK_DRAG_ENTER },
+    { "GDK_DRAG_LEAVE",     GDK_DRAG_LEAVE },
+    { "GDK_DRAG_MOTION",    GDK_DRAG_MOTION },
+    { "GDK_DRAG_STATUS",    GDK_DRAG_STATUS },
+    { "GDK_DROP_START",     GDK_DROP_START },
+    { "GDK_DROP_FINISHED",  GDK_DROP_FINISHED },
+    { "GDK_CLIENT_EVENT",   GDK_CLIENT_EVENT },
+    { "GDK_VISIBILITY_NOTIFY",GDK_VISIBILITY_NOTIFY },
+    { "GDK_NO_EXPOSE",      GDK_NO_EXPOSE },
+    { "GDK_SCROLL",         GDK_SCROLL },
+    { "GDK_WINDOW_STATE",   GDK_WINDOW_STATE },
+    { "GDK_SETTING",        GDK_SETTING },
+#if GTK_CHECK_VERSION( 2, 6, 0 )
+    { "GDK_OWNER_CHANGE",   GDK_OWNER_CHANGE },
+#endif
+#if GTK_CHECK_VERSION( 2, 8, 0 )
+    { "GDK_GRAB_BROKEN",    GDK_GRAB_BROKEN },
+#endif
+#if GTK_CHECK_VERSION( 2, 14, 0 )
+    { "GDK_DAMAGE",         GDK_DAMAGE },
+#endif
+#if GTK_CHECK_VERSION( 2, 18, 0 )
+    { "GDK_EVENT_LAST",     GDK_EVENT_LAST },
+#endif
+
+    /*
+     *  GdkExtensionMode
+     */
+    { "GDK_EXTENSION_EVENTS_NONE",      GDK_EXTENSION_EVENTS_NONE },
+    { "GDK_EXTENSION_EVENTS_ALL",       GDK_EXTENSION_EVENTS_ALL },
+    { "GDK_EXTENSION_EVENTS_CURSOR",    GDK_EXTENSION_EVENTS_CURSOR },
+
+    /*
+     *  GdkFillRule
+     */
+    { "GDK_EVEN_ODD_RULE",  GDK_EVEN_ODD_RULE },
+    { "GDK_WINDING_RULE",   GDK_WINDING_RULE },
+
+    /*
+     *  GdkFunction
+     */
+    { "GDK_COPY",           GDK_COPY },
+    { "GDK_INVERT",         GDK_INVERT },
+    { "GDK_XOR",            GDK_XOR },
+    { "GDK_CLEAR",          GDK_CLEAR },
+    { "GDK_AND",            GDK_AND },
+    { "GDK_AND_REVERSE",    GDK_AND_REVERSE },
+    { "GDK_AND_INVERT",     GDK_AND_INVERT },
+    { "GDK_NOOP",           GDK_NOOP },
+    { "GDK_OR",             GDK_OR },
+    { "GDK_EQUIV",          GDK_EQUIV },
+    { "GDK_OR_REVERSE",     GDK_OR_REVERSE },
+    { "GDK_COPY_INVERT",    GDK_COPY_INVERT },
+    { "GDK_OR_INVERT",      GDK_OR_INVERT },
+    { "GDK_NAND",           GDK_NAND },
+    { "GDK_NOR",            GDK_NOR },
+    { "GDK_SET",            GDK_SET },
+
+    /*
+     *  GdkGCValuesMask
+     */
+    { "GDK_GC_FOREGROUND",      GDK_GC_FOREGROUND },
+    { "GDK_GC_BACKGROUND",      GDK_GC_BACKGROUND },
+    { "GDK_GC_FONT",            GDK_GC_FONT },
+    { "GDK_GC_FUNCTION",        GDK_GC_FUNCTION },
+    { "GDK_GC_FILL",            GDK_GC_FILL },
+    { "GDK_GC_TILE",            GDK_GC_TILE },
+    { "GDK_GC_STIPPLE",         GDK_GC_STIPPLE },
+    { "GDK_GC_CLIP_MASK",       GDK_GC_CLIP_MASK },
+    { "GDK_GC_SUBWINDOW",       GDK_GC_SUBWINDOW },
+    { "GDK_GC_TS_X_ORIGIN",     GDK_GC_TS_X_ORIGIN },
+    { "GDK_GC_TS_Y_ORIGIN",     GDK_GC_TS_Y_ORIGIN },
+    { "GDK_GC_CLIP_X_ORIGIN",   GDK_GC_CLIP_X_ORIGIN },
+    { "GDK_GC_CLIP_Y_ORIGIN",   GDK_GC_CLIP_Y_ORIGIN },
+    { "GDK_GC_EXPOSURES",       GDK_GC_EXPOSURES },
+    { "GDK_GC_LINE_WIDTH",      GDK_GC_LINE_WIDTH },
+    { "GDK_GC_LINE_STYLE",      GDK_GC_LINE_STYLE },
+    { "GDK_GC_CAP_STYLE",       GDK_GC_CAP_STYLE },
+    { "GDK_GC_JOIN_STYLE",      GDK_GC_JOIN_STYLE },
+
+    /*
+     *  GdkGravity
+     */
+    { "GDK_GRAVITY_NORTH_WEST", GDK_GRAVITY_NORTH_WEST },
+    { "GDK_GRAVITY_NORTH",      GDK_GRAVITY_NORTH },
+    { "GDK_GRAVITY_NORTH_EAST", GDK_GRAVITY_NORTH_EAST },
+    { "GDK_GRAVITY_WEST",       GDK_GRAVITY_WEST },
+    { "GDK_GRAVITY_CENTER",     GDK_GRAVITY_CENTER },
+    { "GDK_GRAVITY_EAST",       GDK_GRAVITY_EAST },
+    { "GDK_GRAVITY_SOUTH_WEST", GDK_GRAVITY_SOUTH_WEST },
+    { "GDK_GRAVITY_SOUTH",      GDK_GRAVITY_SOUTH },
+    { "GDK_GRAVITY_SOUTH_EAST", GDK_GRAVITY_SOUTH_EAST },
+    { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
+
+    /*
+     *  GdkJoinStyle
+     */
+    { "GDK_JOIN_MITER",     GDK_JOIN_MITER },
+    { "GDK_JOIN_ROUND",     GDK_JOIN_ROUND },
+    { "GDK_JOIN_BEVEL",     GDK_JOIN_BEVEL },
+
+    /*
+     *  GdkLineStyle
+     */
+    { "GDK_LINE_SOLID",         GDK_LINE_SOLID },
+    { "GDK_LINE_ON_OFF_DASH",   GDK_LINE_ON_OFF_DASH },
+    { "GDK_LINE_DOUBLE_DASH",   GDK_LINE_DOUBLE_DASH },
+
+    /*
+     *  GdkModifierType
+     */
+    { "GDK_SHIFT_MASK",         GDK_SHIFT_MASK },
+    { "GDK_LOCK_MASK",          GDK_LOCK_MASK },
+    { "GDK_CONTROL_MASK",       GDK_CONTROL_MASK },
+    { "GDK_MOD1_MASK",          GDK_MOD1_MASK },
+    { "GDK_MOD2_MASK",          GDK_MOD2_MASK },
+    { "GDK_MOD3_MASK",          GDK_MOD3_MASK },
+    { "GDK_MOD4_MASK",          GDK_MOD4_MASK },
+    { "GDK_MOD5_MASK",          GDK_MOD5_MASK },
+    { "GDK_BUTTON1_MASK",       GDK_BUTTON1_MASK },
+    { "GDK_BUTTON2_MASK",       GDK_BUTTON2_MASK },
+    { "GDK_BUTTON3_MASK",       GDK_BUTTON3_MASK },
+    { "GDK_BUTTON4_MASK",       GDK_BUTTON4_MASK },
+    { "GDK_BUTTON5_MASK",       GDK_BUTTON5_MASK },
+    { "GDK_SUPER_MASK",         GDK_SUPER_MASK },
+    { "GDK_HYPER_MASK",         GDK_HYPER_MASK },
+    { "GDK_META_MASK",          GDK_META_MASK },
+    { "GDK_RELEASE_MASK",       GDK_RELEASE_MASK },
+    { "GDK_MODIFIER_MASK",      GDK_MODIFIER_MASK },
+
+    /*
+     *  GdkOverlapType
+     */
+    { "GDK_OVERLAP_RECTANGLE_IN",   GDK_OVERLAP_RECTANGLE_IN },
+    { "GDK_OVERLAP_RECTANGLE_OUT",  GDK_OVERLAP_RECTANGLE_OUT },
+    { "GDK_OVERLAP_RECTANGLE_PART", GDK_OVERLAP_RECTANGLE_PART },
+
+    /*
+     *  GdkPixbuf version
+     */
+    { "GDK_PIXBUF_MAJOR", GDK_PIXBUF_MAJOR },
+    { "GDK_PIXBUF_MINOR", GDK_PIXBUF_MINOR },
+    { "GDK_PIXBUF_MICRO", GDK_PIXBUF_MICRO },
+
+    /*
+     *  GdkPixbufAlphaMode
+     */
+    { "GDK_PIXBUF_ALPHA_BILEVEL",   GDK_PIXBUF_ALPHA_BILEVEL },
+    { "GDK_PIXBUF_ALPHA_FULL",      GDK_PIXBUF_ALPHA_FULL },
+
+
+    /*
+     *  GdkPixbufError
+     */
+    { "GDK_PIXBUF_ERROR_CORRUPT_IMAGE",         GDK_PIXBUF_ERROR_CORRUPT_IMAGE },
+    { "GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY",   GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY },
+    { "GDK_PIXBUF_ERROR_BAD_OPTION",            GDK_PIXBUF_ERROR_BAD_OPTION },
+    { "GDK_PIXBUF_ERROR_UNKNOWN_TYPE",          GDK_PIXBUF_ERROR_UNKNOWN_TYPE },
+    { "GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION", GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION },
+    { "GDK_PIXBUF_ERROR_FAILED",                GDK_PIXBUF_ERROR_FAILED },
+
+    /*
+     *  GdkVisualType
+     */
+    { "GDK_VISUAL_STATIC_GRAY",     GDK_VISUAL_STATIC_GRAY },
+    { "GDK_VISUAL_GRAYSCALE",       GDK_VISUAL_GRAYSCALE },
+    { "GDK_VISUAL_STATIC_COLOR",    GDK_VISUAL_STATIC_COLOR },
+    { "GDK_VISUAL_PSEUDO_COLOR",    GDK_VISUAL_PSEUDO_COLOR },
+    { "GDK_VISUAL_TRUE_COLOR",      GDK_VISUAL_TRUE_COLOR },
+    { "GDK_VISUAL_DIRECT_COLOR",    GDK_VISUAL_DIRECT_COLOR },
+
+    /*
+     *  GdkWindowAttributesType
+     */
+    { "GDK_WA_TITLE",       GDK_WA_TITLE },
+    { "GDK_WA_X",           GDK_WA_X },
+    { "GDK_WA_Y",           GDK_WA_Y },
+    { "GDK_WA_CURSOR",      GDK_WA_CURSOR },
+    { "GDK_WA_COLORMAP",    GDK_WA_COLORMAP },
+    { "GDK_WA_VISUAL",      GDK_WA_VISUAL },
+    { "GDK_WA_WMCLASS",     GDK_WA_WMCLASS },
+    { "GDK_WA_NOREDIR",     GDK_WA_NOREDIR },
+    { "GDK_WA_TYPE_HINT",   GDK_WA_TYPE_HINT },
+
+    /*
+     *  GdkWindowClass
+     */
+    { "GDK_INPUT_OUTPUT",   GDK_INPUT_OUTPUT },
+    { "GDK_INPUT_ONLY",     GDK_INPUT_ONLY },
+
+    /*
+     *  GdkWindowEdge
+     */
+    { "GDK_WINDOW_EDGE_NORTH_WEST", GDK_WINDOW_EDGE_NORTH_WEST },
+    { "GDK_WINDOW_EDGE_NORTH",      GDK_WINDOW_EDGE_NORTH },
+    { "GDK_WINDOW_EDGE_NORTH_EAST", GDK_WINDOW_EDGE_NORTH_EAST },
+    { "GDK_WINDOW_EDGE_WEST",       GDK_WINDOW_EDGE_WEST },
+    { "GDK_WINDOW_EDGE_EAST",       GDK_WINDOW_EDGE_EAST },
+    { "GDK_WINDOW_EDGE_SOUTH_WEST", GDK_WINDOW_EDGE_SOUTH_WEST },
+    { "GDK_WINDOW_EDGE_SOUTH",      GDK_WINDOW_EDGE_SOUTH },
+    { "GDK_WINDOW_EDGE_SOUTH_EAST", GDK_WINDOW_EDGE_SOUTH_EAST },
+
+    /*
+     *  GdkWindowHints
+     */
+    { "GDK_HINT_POS",           GDK_HINT_POS },
+    { "GDK_HINT_MIN_SIZE",      GDK_HINT_MIN_SIZE },
+    { "GDK_HINT_MAX_SIZE",      GDK_HINT_MAX_SIZE },
+    { "GDK_HINT_BASE_SIZE",     GDK_HINT_BASE_SIZE },
+    { "GDK_HINT_ASPECT",        GDK_HINT_ASPECT },
+    { "GDK_HINT_RESIZE_INC",    GDK_HINT_RESIZE_INC },
+    { "GDK_HINT_WIN_GRAVITY",   GDK_HINT_WIN_GRAVITY },
+    { "GDK_HINT_USER_POS",      GDK_HINT_USER_POS },
+    { "GDK_HINT_USER_SIZE",     GDK_HINT_USER_SIZE },
+
+    /*
+     *  GdkWindowType
+     */
+    { "GDK_WINDOW_ROOT",        GDK_WINDOW_ROOT },
+    { "GDK_WINDOW_TOPLEVEL",    GDK_WINDOW_TOPLEVEL },
+    { "GDK_WINDOW_CHILD",       GDK_WINDOW_CHILD },
+    { "GDK_WINDOW_DIALOG",      GDK_WINDOW_DIALOG },
+    { "GDK_WINDOW_TEMP",        GDK_WINDOW_TEMP },
+    { "GDK_WINDOW_FOREIGN",     GDK_WINDOW_FOREIGN },
+#if GTK_CHECK_VERSION( 2, 18, 0 )
+    { "GDK_WINDOW_OFFSCREEN",   GDK_WINDOW_OFFSCREEN },
+#endif
+
+    /*
+     *  GdkWindowTypeHint
+     */
+    { "GDK_WINDOW_TYPE_HINT_NORMAL",    GDK_WINDOW_TYPE_HINT_NORMAL },
+    { "GDK_WINDOW_TYPE_HINT_DIALOG",    GDK_WINDOW_TYPE_HINT_DIALOG },
+    { "GDK_WINDOW_TYPE_HINT_MENU",      GDK_WINDOW_TYPE_HINT_MENU },
+    { "GDK_WINDOW_TYPE_HINT_TOOLBAR",   GDK_WINDOW_TYPE_HINT_TOOLBAR },
+    { "GDK_WINDOW_TYPE_HINT_SPLASHSCREEN",GDK_WINDOW_TYPE_HINT_SPLASHSCREEN },
+    { "GDK_WINDOW_TYPE_HINT_UTILITY",   GDK_WINDOW_TYPE_HINT_UTILITY },
+    { "GDK_WINDOW_TYPE_HINT_DOCK",      GDK_WINDOW_TYPE_HINT_DOCK },
+    { "GDK_WINDOW_TYPE_HINT_DESKTOP",   GDK_WINDOW_TYPE_HINT_DESKTOP },
+    { "GDK_WINDOW_TYPE_HINT_DROPDOWN_MENU",GDK_WINDOW_TYPE_HINT_DROPDOWN_MENU },
+    { "GDK_WINDOW_TYPE_HINT_POPUP_MENU",GDK_WINDOW_TYPE_HINT_POPUP_MENU },
+    { "GDK_WINDOW_TYPE_HINT_TOOLTIP",   GDK_WINDOW_TYPE_HINT_TOOLTIP },
+    { "GDK_WINDOW_TYPE_HINT_NOTIFICATION",GDK_WINDOW_TYPE_HINT_NOTIFICATION },
+    { "GDK_WINDOW_TYPE_HINT_COMBO",     GDK_WINDOW_TYPE_HINT_COMBO },
+    { "GDK_WINDOW_TYPE_HINT_DND",       GDK_WINDOW_TYPE_HINT_DND },
+
+
+    // BEGIN PANGO ENUMS //
+
+    /*
+     *  PangoEllipsizeMode
+     */
+    { "PANGO_ELLIPSIZE_NONE",   PANGO_ELLIPSIZE_NONE },
+    { "PANGO_ELLIPSIZE_START",  PANGO_ELLIPSIZE_START },
+    { "PANGO_ELLIPSIZE_MIDDLE", PANGO_ELLIPSIZE_MIDDLE },
+    { "PANGO_ELLIPSIZE_END",    PANGO_ELLIPSIZE_END },
+
+
+    { NULL, 0 }
+    };
+
+    for ( Gtk::ConstIntTab* tab = intConstants; tab->name; ++tab )
+        mod->addConstant( tab->name, tab->value );
+}
+
+
+} // Gtk
+} // Falcon

@@ -1,0 +1,50 @@
+load gtk
+
+m = GtkMain()
+w = GtkWindow()
+
+function _quit()
+    m.quit()
+    return false
+end
+
+w.signal_delete_event().connect( _quit )
+
+class MyButton( row, col ) from GtkButton
+    _row = 0
+    _col = 0
+    init
+        self._row = row
+        self._col = col
+        self.set_label( @ "$row-$col" )
+        self.signal_clicked().connect( self )
+    end
+    function on_clicked()
+        > "Clicked ", self._row, " ", self._col
+    end
+end
+
+class MyTable( numrows, numcols ) from GtkTable
+    init
+        self.resize( numrows, numcols )
+        i = 0
+        while i < numrows
+            y = 0
+            while y < numcols
+                b = MyButton( i, y )
+                self.attach_defaults( b, y, y+1, i, i+1 )
+                y += 1
+            end
+            i += 1
+        end
+    end
+    function on_clicked()
+        m.quit()
+    end
+end
+
+tab = MyTable( 5, 5 )
+
+w.add( tab )
+m.run( w )
+

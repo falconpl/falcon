@@ -1,0 +1,19 @@
+load gtk
+
+_main = GtkMain()
+
+class MyWindow from GtkWindow
+    init
+        self.signal_delete_event().subscribe( self )
+        buf = GtkTextBuffer()
+        buf.set_text( "Falcon", -1 )
+        view = GtkTextView.new_with_buffer( buf )
+        self.add( view )
+    end
+    function on_delete_event()
+        _main.quit()
+        return false
+    end
+end
+
+_main.run( MyWindow() )
