@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 10d
+* Category: sqlite
+* Subcategory:
+* Short: SQLite prepared statement
+* Description:
+*  Inserts multiple records using a prepared statement.
+*  -- USES the table created by the first test
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+data = []
+for i in [0:10]
+   mb = MemBuf(10)
+   for j = 0 to 9: mb[j] = (j+i+65)
+   data += [[ i+10, "Text blob " + i, mb, 24589.21345/(i+1)]]
+end
+
+try
+   conn = dbi.connect( "sqlite3:db=testsuite.db" )
+
+   stmt = conn.prepare("
+      insert into TestTable( key, tblob, bblob, number )
+      values( ?, ?, ?, ? )")
+
+   for elem in data
+      (.[ stmt.execute ] + elem)()
+   end
+
+   stmt.close()
+   conn.commit()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

@@ -1,0 +1,59 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 21d
+* Category: mysql
+* Subcategory:
+* Short: MySQL query table
+* Description:
+* Checks fetching all the data on a table.
+*  -- USES the table created by the first test and the data from test 20d
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+data = []
+for i in [0:10]
+   mb = MemBuf(10)
+   for j = 0 to 9: mb[j] = (j+i+65)
+   t = CurrentTime()
+   t.second = i
+   data += [[ 0, i+10, "fix char " + i, "varchar " + i,
+         "Text blob " + i, mb,
+         24589.21345/(i+1), t ]]
+end
+
+try
+   conn = dbi.connect( config.mysql_conn_str )
+   rs = conn.query( "
+      select kv, vint, fixchar, vchar, tblob, bblob, number, ts
+      from TestTable where vint >= ? and vint < ?",
+      10, 20 )
+
+   // fetch array
+   table = rs.fetch( Table() )
+   count = 0
+   for arr in table
+      if arr[1] != data[count][1] or arr[2] != data[count][2] or \
+            arr[3] != data[count][3] or arr[6] != data[count][6] or \
+            arr[7].year != data[count][7].year
+         failure( "Consistency check at step " + count )
+      end
+      ++count
+   end
+
+   if count != 10
+      failure( "Fetched records " + count )
+   end
+
+   rs.close()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 21b
+* Category: mysql
+* Subcategory:
+* Short: MySQL query simple
+* Description:
+* Performs a simple query that should return exactly one record
+*  -- USES the table created by the first test and the data from test 20b
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str )
+
+   rs = conn.query("
+      select kv, vint, fixchar, vchar, tblob, bblob, number, ts
+      from TestTable where kv = 1")
+
+   if rs.getColumnCount() != 8
+      failure( "Can't get columns: " + rs.getColumnCount() )
+   end
+
+   if rs.getRowCount() != 1
+      failure( "Can't get row count: " + rs.getRowCount() )
+   end
+
+   // fetch array
+   arr = rs.fetch( [] )
+
+   if arr.len() != 8: failure( "Fetched columns number" )
+   if arr[0] != 1: failure( "Value of field 1" )
+   if arr[1] != 1: failure( "Value of field 2" )
+   if arr[2] != 'Fixed char': failure( "Value of field 3" )
+   if arr[3] != 'var char': failure( "Value of field 4" )
+   if arr[4] != 'A textual blob': failure( "Value of field 5" )
+   if arr[5].typeId() != MemBufType: failure( "Value of field 6" )
+   if arr[6] != 101.243: failure( "Value of field 7" )
+   if not arr[7].derivedFrom("TimeStamp"): failure( "Value of field 8" )
+
+   // same thing with a dictionary
+   rs = conn.query("select * from TestTable where kv = 1")
+   dict = rs.fetch( [=>] )
+   if dict.len() != 8: failure( "Fetched columns number - dict" )
+   if dict['kv'] != 1: failure( "Dict - Value of field 1" )
+   if dict['tblob'] != 'A textual blob': failure( "Dict - Value of field 2" )
+   if dict['bblob'].typeId() != MemBufType: failure( "Dict - Value of field 3" )
+   if dict['number'] != 101.243: failure( "Dict - Value of field 4" )
+
+   rs.close()
+   conn.close()
+   success()
+   GC.perform(true)
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

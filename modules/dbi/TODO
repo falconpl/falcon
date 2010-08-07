@@ -1,0 +1,20 @@
+MISCELLANEOUS:
+   * Unit tests including "dbi standard" test that will test
+     required functionality from all drivers
+   * Organize the dbi_status listings so that they are in
+     some type of logical order. Right now I just keep
+     appending to the end as I see the need for a new one
+     thus they are in a very erratic order.
+
+OBJECT PERSISTENCE:
+   * Object persistence needs to be rethought. Many potential problems
+     have appeared along the way. I am going to leave it as is but
+     perform a study on how this should actually look/function.
+   * Could not determine how to store a static class variable, so I made
+     a dangerous global DBIHandle variable in C++ that needs to be
+     changed right away.
+   
+DRIVERS:
+   * firebird/interbase driver
+   * mssql driver
+   * Oracle driver

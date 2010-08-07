@@ -1,0 +1,8 @@
+
+
+mysql_conn_str = "
+   mysql:
+      host=localhost;
+      uid=faltest;
+      pwd=faltest;
+      db=testsuite"

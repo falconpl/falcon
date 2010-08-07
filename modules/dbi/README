@@ -1,0 +1,38 @@
+
+                     The Falcon Programming Language
+
+                              Falcon DBI
+
+                                 0.9.10
+
+
+Falcon DBI is the database abstraction layer that is part of the official
+Falcon distributions. They are granted to be present in a correct falcon
+installation.
+
+Yet, they are handled as a separate project, both for administrative reasons
+and to isolate them from the development of the core system, which may be
+erratic and cause sudden changes in the interfaces.
+
+Modules admitted in the DBI are currently:
+
+   * mysql
+   * pgsql
+   * sqlite3
+   * ODBC
+
+BUILDING
+========
+
+To build the Falcon DBI module, you just need to have Falcon
+development files (or a complete Falcon development environment)
+setup on your machine.
+
+Then,
+
+   cmake .
+   make
+   make install
+
+should do.
+

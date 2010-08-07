@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 11d
+* Category: sqlite
+* Subcategory:
+* Short: SQLite query multiple
+* Description:
+* Creates a table with a signle fetch
+*  -- USES the table created by the first test and the data from test 10d
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+data = []
+for i in [0:10]
+   mb = MemBuf(10)
+   for j = 0 to 9: mb[j] = (j+i+65)
+   data += [[ i+10, "Text blob " + i, mb, 24589.21345/(i+1)]]
+end
+
+
+try
+   conn = dbi.connect( "sqlite3:db=testsuite.db" )
+   rs = conn.query("select key, tblob, bblob, number from TestTable where key >= 10 and key < 20")
+
+   // fetch table
+   table = rs.fetch( Table() )
+   count = 0
+   for arr in table
+      // Sqlite will return binary blobs as strings
+      if arr[0] != data[count][0] or arr[1] != data[count][1] or \
+            arr[3] != data[count][3]
+         failure( "Consistency check at step " + count )
+      end
+      ++count
+   end
+
+   if count != 10
+      failure( "Fetched records " + count )
+   end
+
+   rs.close()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

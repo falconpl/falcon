@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 23a
+* Category: mysql
+* Subcategory:
+* Short: Checks connection rollback
+* Description:
+* Verifies that an insert is correctly rolled back.
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str,
+      "autocommit=off" )
+
+   conn.begin()
+   conn.perform( "
+      insert into TestTable( kv, tblob, number)
+      values( 100, 'A rolled back value', 10.3 )" )
+   conn.rollback()
+
+   rs = conn.query( "select * from TestTable where kv = 100" )
+   if rs.fetch([]) != nil
+      failure( "Some data was returned" )
+   end
+
+   rs.close()
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

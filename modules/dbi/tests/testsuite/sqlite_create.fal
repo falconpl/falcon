@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 10a
+* Category: sqlite
+* Subcategory: 
+* Short: SQLite table creation
+* Description:
+*  Tests table creation in SQLite. The table is then used in all the sqlite
+*  category to perform further tests, so this script should be called before
+*  the other tests are performed
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+
+try
+   conn = dbi.connect( "sqlite3:db=testsuite.db" )
+
+   // Creating a table with ALL the basic datatypes known by the engine.
+   // Interpolated datatypes are not necessary in our tests.
+   conn.perform("
+      create table TestTable(
+         key      INTEGER PRIMARY KEY,
+         tblob        TEXT,
+         bblob        BLOB,
+         number       REAL)
+      ")
+         
+   conn.commit()
+   conn.close()
+   success()
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end
+
