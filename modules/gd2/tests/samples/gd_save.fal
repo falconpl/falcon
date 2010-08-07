@@ -1,0 +1,34 @@
+load gd2
+
+if args.len() == 0
+   imgname = "logo.png"
+else
+   imgname = args[0]
+end
+
+> "Loading PNG image ", imgname
+try
+   fin = InputStream( imgname )
+   img = GdImage.CreateFromPng( fin )
+   fin.close()
+
+   > "Loaded PNG image"
+   > "Image size: ", img.SX(), "x", img.SY()
+
+   > "Saving jpeg image"
+   uri = URI( imgname )
+   p = Path(uri.path)
+   p.extension = "jpg"
+   uri.path = p.path
+
+   out = OutputStream( uri.uri )
+   img.Jpeg( out, 85 )
+   out.close()
+
+catch IoError in e
+   > "Can't load image ", imgname
+   > e
+catch GdError in e
+   > "Error in decoding file ", imgname, " as a PNG."
+   > e
+end

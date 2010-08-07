@@ -1,0 +1,179 @@
+
+                      The Falcon Programming Language
+
+                             LibGD binding "GD2"
+
+                                Version 1.0
+
+
+  This module is an automatically generated module wrapping LibGD graphic
+image manipulation library. The gd2 module for Falcon is created through
+static linkage with libGD fully configured with Jpeg, TrueType, FontConfig
+and every other optional package support.
+
+  Project Development is ongoing at:
+     http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=gd2
+
+  LibGD can be found at: 
+      http://www.libgd.org/
+
+
+BUILDING
+========
+
+  This module builds as a standard Falcon Module. You need a complete
+installation of the LibGD version 2.1.x or following and of Falcon version
+0.9.2 and following, other than CMAKE which is used as a build tool.
+
+  You can get CMAKE at:
+
+   http://www.cmake.org
+
+  If your LibGD installation is not in a standard location (/usr/include,
+/usr/lib, etc.), you will need to tweak by hand src/CMakeList.txt
+adding proper entries as:
+
+   INCLUDE_DIRECTORIES( "<path>" )
+   LINK_DIRECTORIES( "<lib path>" )
+
+  Once you are sure you have CMAKE and falcon-conf in the system PATH, and
+that you have LibGD development libraries in standard location or after
+adding their position in src/CMakeList.txt, you can build the module by
+simply creating a directory "build" under or besides the root path
+of this module, entering it and calling:
+
+  $ cmake <path_to_source>
+  $ make
+  $ make install
+
+where <path_to_source> is the relative path to the topmost directory of
+the source of this module.
+
+  On some systems, you may be required to install the module as a super
+user or administrator.
+
+
+OVERALL DESCRIPTION
+===================
+
+  The "gd2" module is mainly generated through an automatic process binding
+the contents of the LibGD version 2 as a set of Falcon classes.
+
+   All the functions named gdImage* are available under the GdImage class,
+with their name stripped of the gdImage prefix and the case left unchanged.
+
+   So, for example, the gdImageFillRectangle function is exposed in gd2 module
+as GdImage.FillRectangle.
+
+  When LibGD the LibGD function accept a first parameter consisting of a
+gdImage pointer, that becomes a non-static method of the GdImage class in
+the module. When the function doesn't accept a gdImage parameter, it's
+found as a static method of the GdImage class. For example:
+
+   // gdImageCreateTrueColor doesn't need a gdImage*
+   img = GdImage.CreateTrueColor(100, 100)
+
+   // gdImageFillRectangle( gdImage* im, ... ) -> img.FillRectangle
+   img.FillRectangle( 10, 10, 50, 50 , 4 )
+
+  The the GdImage() Falcon class constructor maps to the gdImageCreate()
+function, while the GdImage.CreateTrueColor() static method returns an
+instance of GdImage class (exactly as a factory function). The class
+instance is accounted by the garbage collector, so gdImageDestroy function
+is not available (it's called directly by the garbage collector when needed).
+
+  Load and save from and to different file formats is managed exclusively
+through Falcon streams; loading and saving functions named gdImage*Ctx and
+gdImage*Ptr are not available, but their functionality is replicated by passing
+a memory based Stream or overloading the Stream class.
+
+  Standard LibGD font functions as gdFontGetLarge() and gdFontGetSmall() return
+an "opaque entity" of type GdFont, which can be passed to the GdImage.String()
+methods.
+
+  Informative macros operating on images and named after the gdImage* scheme
+are available as GdImage class methods, while numeric macros are available
+in the global namespace named exactly as reported in the LibGD documentation.
+
+
+ERROR REPORTING
+===============
+
+  Errors in creating images, converting them, storing them and so on are
+reported through the raising of a GdError instance. The GdError class is
+directly derived from Error.
+
+
+MISSING FUNCTIONS
+=================
+
+  - gdImageDestroy is not available (gdImage* are managed by the garbage
+    collector).
+
+  - gdImageString16 and gdImageString16Up are unavailable as they are
+    superseded by GdImage.String() method, accepting any Falcon string.
+
+  - GdFont type is opaque and it's not possible to access to its fields.
+
+  - Functions marked as "deprecated" in LibGD documentation are not
+    supported.
+
+  - Currently, gdImageEllipse() is not available in the LibGD version
+    shipped with some relevant GNU/Linux distributions. We're working
+    at a way to circumvent this, but at the moment GdImage.Ellipse() is
+    not available.
+
+   - gdFontCacheSetup() and gdFontCacheShutdown() are declared to be
+     internally managed by other GD functions, and are not exposed
+     to the "gd2" module yet.
+
+
+SPECIAL BINDINGS
+================
+
+  The two functions gdImageStringFT() and gdImageStringFTEx() are merged into
+one unique GdImage.StringFT method. They Are declared in the LibGD
+documentation as:
+
+ char *gdImageStringFT(gdImagePtr im, int *brect,
+         int fg, char *fontname, double ptsize, double angle, int x, int y,
+         char *string)
+
+and
+
+  char *gdImageStringFTEx(gdImagePtr im, int *brect,
+         int fg, char *fontname, double ptsize, double angle, int x, int y,
+         char *string, gdFTStringExtraPtr strex)
+
+are both exposed as
+
+  GdImage.StringFT( fg, fontname, ptsize, angle, x, y, string, [extra] )
+
+Where "extra" is an optional parameter which can be:
+
+  - a boolean true: in this case StringFT returns the brect array containing
+    4 pairs of x,y coordinates (8 integer numbers).
+
+  - A dictionary, where the keys correspond to the name of the fields in the
+    gdFTStringExtra structure. In this case the 8-integer array indicating
+    the rendering coordinates will be returned if the dictionary contains
+    also a "brect" string key associated with a "true" boolean value.
+
+  In the C version of LibGD, both functions allow to pre-calculate the size of
+a text rendering by passing NULL in place of the gdImagePtr parameter. The
+GdImage.StringFT() method in "gd2" module can be called statically (on the
+class GdImage) to achieve the same result. In that case, the method will
+always return the brect 8-integer vector, ignoring the value set in
+the "extra" parameter.
+
+  If an error condition is detected, a GdError instance is raised.
+
+
+COPYRIGHT
+=========
+
+  LibGD is copyright (C) of its owners Thomas Boutell, Pierre A. Joye
+and others.
+
+  The "gd2" Falcon module is copyright (C) of Giancarlo Niccolai, 2009
+

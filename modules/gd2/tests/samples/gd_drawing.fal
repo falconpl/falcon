@@ -1,0 +1,31 @@
+load gd2
+
+try
+   img = GdImage( 200, 200 )
+
+   white = img.ColorAllocate( 0xff, 0xff, 0xff )
+   red = img.ColorAllocate( 240, 10, 20 )
+   blue = img.ColorAllocate( 10, 10, 90 )
+
+   img.Line( 0, 0, 200, 200, red )
+   img.Line( 200, 0, 0, 200, blue )
+   img.FilledArc( 100, 100, 10, 8, 0, 360, red, gdArc )
+   img.FilledRectangle( 95, 46, 105, 54, red )
+   img.FilledRectangle( 95, 146, 105, 154, blue )
+
+   img.FilledRectangle( 45, 96, 55, 104, red )
+   img.FilledRectangle( 145, 96, 155, 104, blue )
+
+   > "Writing image gdTest_paint.png"
+   out = OutputStream( "gdTest_paint.png" )
+   img.Png( out )
+   out.close()
+   > "Write complete"
+
+catch IoError in e
+   > "Can't create image gdTest_paint.png"
+   > e
+catch GdError in e
+   > "Error in creating the image."
+   > e
+end
