@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 50b
+* Category: threading
+* Subcategory:
+* Short: Basic threading (detach).
+* Description:
+*        Checks that a single thread runs and is then detached.
+* [/Description]
+*
+**************************************************************************/
+
+load threading
+
+class Test from Thread
+        function run()
+                self.detach()
+                sleep(0.001)
+        end
+end
+
+Test().start()
+// ten times the detached thread
+sleep(0.01)
+success()
+

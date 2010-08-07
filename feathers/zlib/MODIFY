@@ -1,0 +1,16 @@
+THE FALCON PROGRAMMING LANGUAGE - ZLIB Module.
+==============================================
+
+This is ZLIB binding for the Falcon Programming Language. The original
+zlib source code, by Jean-loup Gailly and Mark Adler, can be optionally
+compiled and linked in the falcon zlib module. In that case, the poprtion
+of the code not exposing the Falcon copyright notice is released under
+the ZLIB license, which is inclduded below.
+
+The original code of the ZLIB can be found at http://www.zlib.net
+
+AUTHORS of ZLIB Falcon Module
+=============================
+
+Jeremy Cowgar - initial porting and conversion.
+Giancarlo Niccolai - supervision and supplementary coding.

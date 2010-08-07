@@ -1,0 +1,23 @@
+load zlib
+
+> "Using zlib version: ", ZLib.getVersion()
+
+original = "Mary had a little lamb, it's fleece was white as snow."
+
+
+> "Uncompressed: "
+> "   ", original
+
+// creating a compressed memory buffer
+comped = ZLib.compress( original )
+
+// Retreiving the string in the uncompressed membuf
+> "Compressed then uncompressed:"
+> "   ", strFromMemBuf( ZLib.uncompress( comped ) )
+
+// Use string specific functions.
+
+comped = ZLib.compressText( original )
+> "Compressed then uncompressed (text oriented):"
+> "   ", ZLib.uncompressText( comped )
+

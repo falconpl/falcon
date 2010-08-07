@@ -1,0 +1,140 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: custom_hash.fal
+
+   Calculate Custom hash of a file
+   This file provides an example for a rather simple hash algoritm,
+   and how to implement a custom hash by overloding the HashBase class.
+   (Take special note on comments marked with ** )
+   It is not supposed to be strong or collision resistant,
+   just serve as an example.
+   Do not try to hash large files with this, as it is very slow!
+   (30 seconds for a 500kB file on a Core2 with 2.26 GHz)
+   -------------------------------------------------------------------
+   Author: Maximilian Malek
+   Begin: 16 Apr 2010
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load hash
+
+
+class MyHash from HashBase
+    state = nil // internal state
+    pos = 0 // internal state position
+    shift = 0 // internal shift counter
+    outp = nil // the result from finalize() will be put here
+    halfsize = 0 // always bytes() / 2
+    
+    // ** the init block sets up the internal state and fills the buffer with its initial data, if required
+    init
+        self.halfsize = self.bytes() / 2
+        self.state = MemBuf(self.halfsize, 4)
+        self.state.fill(0xdeadc0de) // prevent memory from beeing un-initialized
+        for i = 1 to self.halfsize - 1
+            x = self.state[i - 1]
+            self.state[i] = x ^^ crc32int(x)
+        end
+    end
+    
+    // ** bytes() -- tells the module how long the result MemBuf will be.
+    // ** must be overloaded and return a constant integer.
+    // Note: for this algorithm, the byte length can be chosen freely, as long as it is >= 4 and an even number.
+    function bytes(): return 24
+    
+    // ** must be overloaded and return a MemBuf with wordSize 1 and length equal to bytes()
+    // ** this method is also internally used to retrieve the data for toInt() and toString()
+    function toMemBuf(): return self.outp
+    
+    // ** data that are put into to update() are internally converted to one or more MemBufs,
+    // ** which will be passed to process() by the module.
+    // ** most of the hash function logic takes place here.
+    function process(buf)
+        lim = len(buf) - 1
+        while buf.remaining()
+            c = buf.get()
+            m = c % 32
+            for round = 0 to 5
+                A = self.state[self.pos]
+                newpos = (self.pos + 1) % self.halfsize
+                B = self.state[newpos]
+                C = self.rotr32(B, m) ^^ A
+                B = self.rotl32(A, 1)
+                A = C ^^ ((c ^^ round) << self.shift++);
+                self.state[self.pos] = A
+                self.state[newpos] = B
+                self.shift %= 24 // byte can be max 0xFF, can shift max. 24 bits without losing data
+                self.pos = newpos
+            end
+        end
+    end
+    
+    // ** finalize() is called by the module directly before toString(), toInt(), or toMemBuf().
+    // ** This method is intended to finish up unprocessed data, or apply last transformations to the internal state,
+    // ** and to make the actual hash digest available to the module.
+    // ** There is no special checking needed to prevent finalize() getting called multiple times,
+    // ** because this is checked by the module, which will allow it
+    // ** to be called only ONCE, and also take care that the update() methods
+    // ** can't be called anymore.
+    function finalize()      // must be declared, as it is invoked by the module when the hash digest is requested
+        b = self.bytes()
+        self.outp = MemBuf(b, 1)
+        self.outp.fill(0) // prevent memory from beeing un-initialized
+        k = 0
+        for round = 0 to 4
+            for i = 0 to self.halfsize - 1
+                x = self.state[i]
+                for j = 0 to 8
+                    self.outp[k++] ^= (x >> (j * 4)) && 0xFF
+                    k %= b
+                end
+            end
+        end
+    end
+    
+    // helpers: bit rotate left and right
+    function rotl32(v, i): return ((v << i) || (v >> (31 - i))) && 0xFFFFFFFF
+    function rotr32(v, i): return ((v >> i) || (v << (31 - i))) && 0xFFFFFFFF
+end
+
+// helper function for int->int crc32 calculation
+function crc32int(i)
+    c = CRC32()
+    c.updateInt(i, 4)
+    return c.toInt()
+end
+
+
+
+//  the code below is copied from md5.fal,
+// except that MD5Hash has been replaced with MyHash
+
+if args.len() == 0
+    > "Usage: Pass a filename as parameter to calculate a hash value (example algorithm)"
+else
+    filename = args[0]
+    bufsize = 65536 // 64 kB block size
+    try
+        file = InputStream(filename)
+    catch
+        > "Error opening file: ", filename
+        return
+    end
+    buf = MemBuf(bufsize, 1)
+    hash = MyHash()
+    while not file.eof()
+        bytes = file.read(buf, bufsize) // read the file in blocks
+         // prepare buffer for hashing:
+        buf.position(0) // from the start...
+        buf.limit(bytes) // .. up to the amount of bytes read (if the block was < bufsize)
+        hash.update(buf) // hash the block
+        buf.rewind() // reset position for next read
+    end
+    > hash // output as hex string
+end

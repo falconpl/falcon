@@ -1,0 +1,9 @@
+function func( a )
+   > 'Hello from compiled source: ', a
+end
+
+function retString()
+   return "A string from the remote module"
+end
+
+> 'The main part of the loaded module'

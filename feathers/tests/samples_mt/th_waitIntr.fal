@@ -1,0 +1,58 @@
+/*
+   FALCON - Samples
+
+   FILE: th_errors.fal
+
+   Managing errors in threads.
+
+   This program lances some threads. One will always complete with success,
+   returning an object. The others will destroy themselves.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 2
+
+class MyThread(quit) from Thread
+   quit = quit
+
+   function run()
+      str = ""
+
+      loop
+         try
+            self.wait( self.quit, 5 )  // wait for self.quit in 5 seconds.
+            > "This time, I go for good."
+            break
+         catch InterruptedError in e
+            > "Interrupted!; but I will live on!"
+         end
+      end
+   end
+
+end
+
+
+quit = Barrier()
+thread = MyThread( quit )
+> "Starting interruptable thread"
+thread.start()
+
+for i in [0:5]
+   sleep( 0.5 )
+   > "...Stopping..."
+   thread.stop()
+end
+
+// now clear it really
+quit.open()
+Threading.wait( thread )
+
+> "Main thread complete."

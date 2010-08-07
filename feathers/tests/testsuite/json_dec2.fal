@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 40b
+* Category: json
+* Subcategory:
+* Short: Json decode
+* Description:
+*        Try to decode a pretty twisty
+* [/Description]
+*
+****************************************************************************/
+load json
+
+mytest = '{"test_obj":{test_v1:"zero",test_v2:null},test_val:true,test_arr:[0,1,false],"ta2":["a","b"],"c":"d"}'
+
+try
+   v = JSONdecode( mytest )
+catch JSONError
+   failure( "Can't decode the string" )
+end
+
+if "test_obj" notin v: failure( "toplevel" )
+
+test_obj = v["test_obj"]
+
+if test_obj["test_v2"] != nil: failure( "Null value" )
+if v["test_val"] != true: failure( "flat value" )
+if v["test_arr"][2] != false: failure( "final false" )
+
+success()
+/* End of file */

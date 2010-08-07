@@ -1,0 +1,58 @@
+/*
+   FALCON - Samples
+
+   FILE: reflex_comp_load.fal
+
+   Simple reflexive compiler test; loading an external resource.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 2006-05-11 12:35
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load compiler
+
+// create the compiler
+c = Compiler()
+c.sourceEncoding = "utf-8"
+c.launchAtLink = true
+
+// try to compile a source string
+
+try
+   // First param is the module logical name.
+   > "Loading AND LANUCHING reflex_comp_external"
+   sourceMod = c.loadFile( "reflex_comp_external.fal" )
+   > "Loaded with name \"", sourceMod.name, "\""
+   >
+   
+   // in case of compilation error, we had an error and we bailed out
+
+   // load the symbol func from our module...
+   func = sourceMod.get( "func" )
+   // and execute it...
+   func( "test param" )
+
+   > "... hello BACK from loader..."
+   > "... reloading ..."
+   >
+   
+   // reload it, but under another name
+   sourceMod2 = c.loadFile( "reflex_comp_external.fal", "self.aliased" )
+   > "Loaded with name \"", sourceMod2.name, "\""
+   >
+    // load the symbol func from our module...
+   func = sourceMod2.get( "func" )
+   // and execute it...
+   func( "test param" )
+
+   >
+   > "... goodbye from loader..."
+
+catch CodeError in e
+   > "Had an error: ", e
+end

@@ -1,0 +1,59 @@
+/*
+   Falcon Samples.
+
+   Regular expression test
+
+   This script accepts a pattern and a string to match,
+   and it prints the matches it is able to perform.
+
+*/
+
+load regex
+
+//==================================================
+// Main program
+
+if len( args ) < 2
+	printl( "Usage: ", scriptName, " <pattern> <string> [replacer]" )
+	return 1
+end
+
+// let's try to compile the pattern
+try
+	re = Regex( args[0] )
+   > "--------------------------------------"
+   > "Using PCRE version ", re.version()
+   > "--------------------------------------"
+catch in error
+   > error
+   return 1
+end
+
+try
+	// let's try the match
+	if re.match( args[1] )
+		printl( "Pattern matches!" )
+		printl( "Matched substring: ",
+				args[1][ re.captured(0) ] )
+		for i in [ 1 : re.capturedCount() ]
+			printl( "Captured ", i,": ",
+				args[1][ re.captured(i) ]
+         )
+      end
+
+      // should we substitute the found string?
+      if len( args ) >= 3
+         replaced = re.replaceAll( args[1], args[2] )
+         printl( "Replaced string: ", replaced )
+      end
+   else
+   	printl( "Sorry, match failed!" )
+   end
+   return 0
+catch in error
+	> "Error during matches: "
+   >  error.message
+   return 1
+end
+
+/* end of regexTest.fal */

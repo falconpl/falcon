@@ -1,0 +1,83 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 20d
+* Category: reflexive
+* Subcategory:
+* Short: Basic reflexive compiler
+* Description:
+* Loads the functions and data in reflexcomp_2.fal, accessing them
+* through VM export facility. Several tests are perfomed to ensure
+* that the module is correctly cleaned after unload. In case of
+* errors, it is easy that this test may crash falcon.
+* [/Description]
+*
+****************************************************************************/
+
+load compiler
+
+comp = Compiler()
+disk, modPath, fname, ext = fileNameSplit( scriptPath )
+comp.path = modPath
+comp.saveModules = false
+
+// record the garbage status.
+GC.perform( true )
+mem = GC.usedMem
+items = GC.items
+
+// try once
+mod = comp.loadByName( "reflexcomp_2" )
+
+// get the function symbol
+te = mod.get( "testExport" )
+if te( 1, 2, 3 ) != 6: failure( "Exported function" )
+
+// save the string in the module.
+str = mod.get( "returnString" )()
+if str != "A string from the module"
+   failure( "Can't get string from the module" )
+end
+
+// and create an instance.
+instance = mod.get("TestCls")()
+if instance.mth() != "a string"
+   failure( "Can't get the method from the module" )
+end
+
+// check if we have a correct report of updated memory.
+if GC.usedMem == mem or items == GC.items
+   failure( "Memory increase after load not reported" )
+end
+
+other_string = instance.mth()
+return
+// unload
+mod.unload()
+
+// We still hold the method, and the string must still exist.
+GC.perform(true)
+if str != "A string from the module"
+   failure( "Remote string killed after unload" )
+end
+ 
+if other_string != "a string"
+   failure( "Returned string killed after unload" )
+end
+
+// discharge the module
+mod = te = str = instance = nil
+GC.perform(true)
+
+// have we some leak?
+/*
+if GC.usedMem != mem or items != GC.items
+   > "Mem: ", GC.usedMem - mem
+   > "Items: ", GC.items - items
+   
+   failure( "Leaks after clean unload" )
+end
+*/
+success()
+
+/* end of modunload.fal */

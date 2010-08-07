@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 30c
+* Category: regex
+* Subcategory:
+* Short: Regex grab
+* Description:
+*   Checks grab method in regular expressions.
+*   We also take the occasion to check for capturedCount()
+* [/Description]
+*
+****************************************************************************/
+
+load regex
+
+r = Regex( "a.b" )
+if r.capturedCount() != 0: failure("Captured count - 0.")
+if r.grab( "akb" )[0] != "akb": failure( "Grab all" )
+if r.grab( "akbn" )[0] != "akb": failure( "Grab begin" )
+if r.grab( "nakb" )[0] != "akb": failure( "Grab emd" )
+if r.grab( "ancazbcanb" )[0] != "azb": failure( "Grab inside" )
+if r.grab( "zzz" ): failure( "False positive" )
+
+// now try with some captured expression
+r = Regex( "(..)/(..)/(....)" )
+g = r.grab( "ab12/02/2001cd" )
+if r.capturedCount() != 4: failure("Captured count - 1.")
+if g.len() != 4: failure( "multigrab - size" )
+if g[0] != "12/02/2001": failure( "multigrab - all" )
+if g[1] != "12": failure( "multigrab - 1" )
+if g[2] != "02": failure( "multigrab - 2" )
+if g[3] != "2001": failure( "multigrab - 3" )
+
+success()

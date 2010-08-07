@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 30b
+* Category: regex
+* Subcategory:
+* Short: Comprare override
+* Description:
+*   Checks for == operator to work through compare() method.
+* [/Description]
+*
+****************************************************************************/
+
+load regex
+
+r = Regex( "a.b" )
+if r.compare( "abb" ) != 0: failure( "Method, false negative" )
+if r.match( "zzz" ) == 0: failure( "Method, false positive" )
+if r != "abb": failure( "operator, false negative" )
+if r == "zzz": failure( "operator, false positive" )
+
+switch "abb"
+   case r
+      c = "ok"
+   default
+      c = "fail"
+end
+
+if c != "ok": failure( "switch comparison" )
+
+success()

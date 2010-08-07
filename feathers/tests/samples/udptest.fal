@@ -1,0 +1,85 @@
+/*
+   Falcon Samples.
+
+   UDP transmission.
+
+   This script broadcast a request for the "udpserver.fal", and once found
+   it sends the messages you type to the server.
+
+*/
+
+load socket
+
+// send a discovery packet here.
+if len( args ) != 2
+   printl( "Usage: udptest <server> <target port>" )
+   printl( "<server> may be a broadcast address" )
+   exit( 0 )
+end
+server = args[0]
+port = args[1]
+
+// -------------------------------------------
+// Discovering service
+//
+print( "Discovering service" )
+socket = UDPSocket( "0.0.0.0" )
+socket.broadcast()
+
+socket.sendTo( server, port, "WAY" )
+socket.setTimeout( 100 )
+data = ""
+count = 0
+
+while count < 50 and data == ""
+   socket.recv( data, 1600 )
+   print( "." )
+   ++count
+end
+
+printl()
+
+if not data
+   printl( "Server reply wait timed out." )
+   exit( 0 )
+end
+
+//----------------------------------------------
+// Message parsing.
+//
+
+if strFind( data, "IAM:" ) != 0
+   printl( "Server did not send a valid reply" )
+   exit( 0 )
+end
+
+target = data[4:]
+
+//----------------------------------------------
+// Main loop
+//
+
+printl( "Write \"quit\" to terminate" )
+istream = stdIn()
+print( "> " )
+
+while true
+   if socket.readAvailable(10)
+      data = socket.recv( 1600 )
+      printl()
+      printl( "Server said: ", data )
+      print( "> " )
+   end
+
+   if istream.readAvailable(0)
+      msg = istream.read( 1024 )
+      if msg[0:4] == "quit"
+         break
+      end
+      socket.sendTo( target, port, msg )
+      print( "> " )
+   end
+end
+
+
+/* end of udptest.fal */

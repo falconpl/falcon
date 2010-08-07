@@ -1,0 +1,56 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 20c
+* Category: reflexive
+* Subcategory:
+* Short: Reflexive compiler errors
+* Description:
+* Checks that errors in reflexive compilations are correctly reported.
+* [/Description]
+*
+****************************************************************************/
+
+load compiler
+
+comp = Compiler()
+
+// test 1 - syntax error in compilation
+str = '
+	array = [1,2,3 4]
+	val = 0
+	for e in array
+		val += e
+   end
+
+   return e'
+
+try
+	mod = comp.compile( "myPersonalModule", str )
+	failure( "Compilation error not raised" )
+end
+
+// Test 2 - trying to load unexisting modules
+try
+	mod = comp.loadByName( "an impossible module" )
+	failure( "Load (by name) error not raised" )
+end
+
+try
+	mod = comp.loadFile( "an impossible module" )
+	failure( "Load module error not raised" )
+end
+
+// Test 3 -- unlink order
+disk, modPath, fname, ext = fileNameSplit( scriptPath )
+comp.path = modPath
+
+// try to unload a module loaded after another
+mod = comp.compile( "testmod", "test = 0" )
+mod1 = comp.loadByName( "reflexcomp_1" )
+test_func = mod1.get( "func" )
+
+if not mod.unload(): failure( "free unload not respected" )
+mod1.unload()
+
+success()

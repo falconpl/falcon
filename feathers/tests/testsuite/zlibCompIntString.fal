@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 10c
+* Category: zlib
+* Subcategory:
+* Short: Compress and Uncompress string data containing internationalized strings.
+* Description:
+*
+* [/Description]
+*
+****************************************************************************/
+
+load zlib
+
+original = "これは国際のストリングですよ.どうぞ、大切にして、コムプレッソをしてくれ下さい。"
+
+z = ZLib()
+compressed = z.compressText( original )
+uncompressed = z.uncompressText( compressed )
+if original != uncompressed: failure( "original != uncompressed" )
+
+success()

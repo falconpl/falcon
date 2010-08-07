@@ -1,0 +1,115 @@
+/*
+   FALCON - Samples
+
+   FILE: th_join.fal
+
+   This test shows how to automatize checks on thread termination with
+   join. Join works as waiting for a thread, but it returns the return
+   value of the joined thread, or it throws a ThreadError if the
+   joinied thread terminated with an error.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+load threading
+const threadCount = 2
+
+class MyThreadOk(id) from Thread
+   id = id
+
+   function run()
+      str = ""
+      sleep( random() * 2 )
+      for i in [ord('A'): ord( 'A' ) + 26]
+         str *= i
+      end
+
+      return str
+   end
+end
+
+class MyThreadFail(id) from Thread
+   id = id
+
+   function run()
+      sleep( random() * 3 )
+      raise "Ops, raised an error!"
+   end
+end
+
+class MyThreadBadFail(id) from Thread
+   id = id
+
+   function run()
+      sleep( random() * 3 )
+      self.id[400] = 10  // will surely generate an array access error.
+   end
+end
+
+class MyDetacher(id) from Thread
+   id = id
+
+   function run()
+      sleep( random() * 3 )
+      self.detach()
+   end
+end
+
+//===========================================
+// Main function
+//
+
+threads = []
+for i in [0:threadCount]
+   threads += MyThreadOk( "ID" + i.toString() )
+end
+
+for i in [threadCount:threadCount*2]
+   threads += MyThreadFail( "ID" + i.toString() )
+end
+
+for i in [threadCount*2:threadCount*3]
+   threads += MyThreadBadFail( "ID" + i.toString() )
+end
+
+for i in [threadCount*3:threadCount*4]
+   threads += MyDetacher( "ID" + i.toString() )
+end
+
+// start all the threads
+for t in threads
+   t.start()
+end
+
+// wait for all them.
+for t in threads
+   try
+      output = t.join()
+      > "Thread ", t.id, " terminated: ", output
+
+   catch ThreadError in error
+      se = error.subErrors[0]
+      > "Thread ", t.id, " had an error: ", se.heading()
+
+   catch JoinError in error
+      > "Thread ", t.id, " has been detached."
+
+   catch InterruptedError in error
+      > "Interrupted while waiting for the threads... quitting"
+      break
+
+   catch in error
+      > "Error for the threads: ", error
+      > "...quitting."
+      break
+   end
+end
+
+> "Main thread complete."

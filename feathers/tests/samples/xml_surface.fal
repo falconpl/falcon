@@ -1,0 +1,64 @@
+/*
+   Falcon Samples.
+
+   XML loader and surface scraper.
+
+   This script loads an XML file and shows its "surface".
+
+*/
+
+load mxml
+
+if len(args) != 1
+   > "Please, specify an XML file name."
+   exit(1)
+end
+
+// let's cache the standard output to provide it as a serialization device
+stdout = stdOut()
+
+try
+   // read the XML document
+   doc = MXMLDocument()
+   doc.read( args[0] )
+   
+   // Get the topmost node - it must exist, so we get it's child
+   top = doc.top().firstChild()
+   while top != nil
+      // skip if this is a tag node; topmost tag node is the root
+      if top.nodeType() == MXMLType.tag
+         continue
+      end
+      
+      > strReplicate( "-", 60 )
+      >> "Topmost node: "
+      top.write( stdout, MXMLStyle.INDENT || MXMLStyle.TAB )
+      >
+      top = top.nextSibling()
+   end
+   
+   // now get the root's node child, if any
+   root = doc.root()
+   if root != nil
+      dispNode( root, "Root node" )
+      
+      child = root.firstChild()
+      while child != nil
+         dispNode( child, "Child node" )
+         child = child.nextSibling()
+      end
+   end
+catch MXMLError in error
+   > "Couldn't read or parse the XML document: "
+   > error
+   exit( 1 )
+end
+
+function dispNode( node, prefix )
+   > strReplicate( "-", 60 )
+   > prefix, ": ", node.name()
+   attribs = node.getAttribs()
+   for k,v in attribs
+      > "   \"", k, "\" = \"", v, "\""
+   end
+end

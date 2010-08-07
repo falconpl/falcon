@@ -1,0 +1,18 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: --
+* Category: threading
+* Subcategory:
+* Short: Runtime re-creation 
+* Description:
+*    See tests 51a and 51b
+* [/Description]
+*
+**************************************************************************/
+
+function ab()
+   return 0
+end
+
+export 

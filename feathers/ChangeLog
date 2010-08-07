@@ -1,0 +1,131 @@
+Feathers (0.9.6.6)
+  * fixed: Sockets wasn't cloneable (so they couldn't be sent to
+           other threads).
+  * fixed: Random crash due to early and wrong marking of imported modules
+           in compiler.
+  * added: hash module.
+  * fixed: In logging module, some "%" patterns may lead to endless loops.
+  * fixed: Json decode was broken with separators after literals
+
+Feathers (0.9.6.4)
+  * fixed: Added SO_REUSEADDR to default slocket initialization.
+  * fixed: As dependency from core module is implicit, the Thread_start
+           routine may have pushed some modules BEFORE it during
+           Runtime duplication before thread start, causing weird
+           errors during the link step.
+  * added: Confparser service is now published as "CONFIGFILE"
+  * fixed: LogChannelFiles init was missing parameter declarations.
+  * fixed: Confparser wasn't correctly reading/managing keys under sections.
+
+Feathers (0.9.6)
+  * fixed: Regex.compare never matched (return 0) when using capture 
+           expressions.
+  * fixed: JSONdecode now allows also unquoted keys in dictionaries
+           and accepts '...' as quoting strings.
+  * fixed: JSONEncode was printing an extra "," in object in plavce
+           of not encoded functions.
+  * major: Changed name of the 'eq' function (now an operator) in the
+           functional module.
+  * fixed: In Socket, getHost, getService and getHostName caused
+           GC segfault in case of error (they destroyed directly the
+           target string).
+           
+Feathers (0.9.4.4)
+  * added: JSON module (encoding/decoding JSON).
+  * fixed: In logging module, area, module and function names starting with 
+           % caused mess during format.
+  * fixed: In Socket module, not setting to false m_connected in one 
+           constructor.
+
+Feathers (0.9.4.2)
+  * fixed: Crash in Thread.toString() when the thread isn't started.
+  * added: logging module
+  * minor: Removed buffer creation semantic in .recv() calls in Socket.
+           Also, now MemBuf variables can be correctly used.           
+ 
+Feathers (0.9.4)
+  * major: Added support for interactive compiler in Compiler module.
+  * fixed: In threading throwing some errors before releasing the
+           resources.
+  * fixed: In socket throwing errors before cleaning up and unidling the
+           VM.
+  * added: attributes() method to Module class.
+  * fixed: Regex - not nulling initial match count (may crash)
+  * minor: Harmonized all the DLL versions with main Falcon release.
+
+Feathers (0.9.2)
+  * major: Added property launchAtLink and optional parameter "alias" to
+           compiler module.
+  * fixed: The RunTime used by the reflex compiler thought it had the
+           main module.
+  * added: globals() and exported() methods to Module.
+
+Feathers (0.9.1.6)
+  * minor: Added getName(), setName(), getSystemID() and toString()
+           methods to thread.
+
+Feathers (0.9.1.2)
+  * fixed: In MXML, removed promotion of data nodes when there are
+           other sibling nodes.
+
+Feathers (0.9.1)
+  * major: Ported to Falcon 0.9
+  * minor: Added split() method to Regex.
+  * minor: Added subst() method to Regex (to be thougly tested).
+
+Feathers (0.8.14.2)
+  * minor: Added pread function to process module.
+
+Feathers (0.8.12)
+  * bugfix: Double inheritance in MXML::Document may have caused some compilers
+            to mess up the virtual table. Fixed (using a carrier).
+  * major: The compiler link mode is now "private".
+  * minor: Returning true or false from Regex.match() instead of 0/1.
+  * major: Added funcext (Functional extension functions) module
+	   containing comparation functional operators and "at" accessor
+	   function.
+  * bugfix: ZLib wasn't raising a correct error (ZLibError was declared
+            as ZlibError); this caused a dynlink error in the VM on
+            zlib errors.
+  * bugfix: Zlib was not correctly extending the decompression buffer if
+            the initial extimate wasn't correct.
+
+Feathers (0.8.10)
+  * minor: Added load directive support for loadXXX on reflexive compiler.
+  * bugfix: Confparser didn't read 1 character long values.
+  * Major: Added MXML module
+  * bugfix: REGEX module was taking locally stored PCRE headers even when
+            compilation was required against system PCRE.
+  * bugfix: Pattern was not compiled with  UTF8 support when the string
+            hadn't high UNICODE characters; I.e. matching "." against a
+            Japanese character didn't work unless the pattern had some
+            Japanese characters too.
+  * minor: REGEX using now PCRE 7.6
+  * minor: Sockets and partially process compliant with interruption protocol
+  * bugfix: Compiler class wasn't correctly reflecting user-data.
+  * major: Renamed Process.close into Process.terminate, and changed its semantics;
+           Now it doesn't wait anymore for the process to be complete, it is
+           necessary to wait through Process.Value().
+  * minor: Added method addFalconPath() to the compiler.
+  * minor: Added support for language files with property Compiler.language
+  * bugfix: Regex module was not correctly checking 8bit only utf-8 sequences.
+  * minor: Added compressText and uncompressText to ZLib; compress/uncompress now
+           work with membufs and are more adequate to handle binary data.
+
+Feathers (0.8.8)
+  * Major: It is now possible to unload arbitrary modules.
+  * Major: Added zlib module.
+  * Minor: Using WKS/WKI.
+  * Minor: Added method "getMultuple()" to configParser to always get a vector
+  * Minor: ConfigParser now raises an IoError when having I/O problems.
+  * Minor: Now ConfigParser.getCategory() strip names of the category part if the
+           category key ends with "*".
+
+Feathers (0.8.6)
+  * Bugfix: Process crashed if initialized with a single string.
+  * Minor: Added setDirective() to compiler module.
+
+Feathers (0.8.4)
+  * Fixed compilation and build settings with MINGW
+  * Added compileTemplate and detectTemplate properties to the compiler
+    class (reflecting FlcLoader updates)

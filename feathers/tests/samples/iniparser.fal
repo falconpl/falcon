@@ -1,0 +1,281 @@
+#!/usr/bin/env falcon
+/*
+   FALCON - Samples
+
+   FILE: iniparser.fal
+
+
+   Provide a file .ini as argument.
+   Whithout other arguments, this program will dump the contents of
+   the file.
+   With an argument, it will search the key in the main section and
+   display its value
+   If the argument is in format "+key=value" it will be ADDED.
+   If the argument is in format "o=value" it will be SET.
+   With "-key" the given key will be removed.
+   Providing also an argument in square brackets, as "[section]" the
+   argument will be applied to the given section. "-[section]" will
+   delete the given section.
+   Provide "encoding=..." to change default encoding
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load confparser
+
+printl( "The Falcon Programming Language - samples." )
+if len(args) == 0
+   printl( '
+   Usage:
+   
+   Provide a file .ini as argument.
+   Whithout other arguments, this program will dump the contents of the file.
+   With a second argument, it will search the key in the main section and
+   display its value.
+   If the argument is in format ".key" the category will be shown.
+   If the argument is in format "key=value" it will be SET.
+   If the argument is in format "+key=value" it will be ADDED.
+   With "-key" the given key will be removed.
+   With "-.key" the given category will be removed.
+   Providing also an argument in square brackets, as "[section]" the
+   argument will be applied to the given section. "-[section]" will
+   delete the given section.
+   Provide "encoding=..." to change default encoding.' )
+   return 0
+end
+
+// search for an encoding
+encoding = getSystemEncoding()
+section = nil
+for elem in args
+   if "encoding=" in elem
+      encoding = elem[9:]
+      printl( "Setting encoding to ", encoding )
+   end
+
+   if elem[0] == "[" and elem[-1] == "]"
+      section = elem[1:-1]
+      printl( @"Operating on section \"$section\"" )
+   end
+end
+
+parser = ConfParser( args[0], encoding )
+printl( "Loading ini file..." )
+parser.read()
+
+if len( args ) == 1 or len( args ) == 2 and section
+   func = section ? dumpSection : dumpIni
+   func( parser, section )
+   return 0
+end
+
+
+// we have something more specific to do...
+for elem in args
+   forfirst 		// do nothing - discard the first
+      print()
+      continue
+   end
+
+   if "encoding=" in elem
+      continue
+   end
+
+   if elem[0] == "[" and elem[-1] == "]"
+      continue
+   end
+
+   if "=" in elem
+      //an assignment?
+      assignIni( parser, elem, section )
+      modified = 1
+      continue
+   end
+
+   if elem[0] == "-"
+      //try // to catch string index outbounds.
+         // removal
+         switch elem[1]
+            case "["
+               if not parser.removeSection( elem[2:-1] )
+               printl ("Section ", elem[1:], " not found." )
+               else
+                  printl ("Section ", elem[1:], " deleted." )
+                  modified = 1
+               end
+
+            case "."
+               deleteIniCat( parser, elem[2:], section )
+               modified = 1
+
+            default
+               deleteIni( parser, elem[1:], section )
+               modified = 1
+         end
+      //end
+      continue
+   end
+
+   if elem[0] == "."
+      elem = elem[1:]
+      values = parser.getCategory( elem, section )
+
+      if values
+         printl(";----------------------------")
+         printl( "Dumping category ", elem, ":\n" )
+         if section: print( " in section [", section, "]" );
+         dumpCategory( values )
+      else
+         print( "Category ", elem, " not found" );
+         if section: print( " in section [", section, "]" );
+         printl()
+      end
+
+      continue
+   end
+
+   // print the required element
+   if section
+      value = parser.get( elem, section )
+      print( "In section ", section, ":" )
+   else
+      value = parser.get( elem )
+   end
+
+   if not value
+      printl( "Key ", elem, " not found." )
+   else
+      print( elem, "=" )
+      dumpValue( value )
+   end
+end
+
+if modified
+   printl( "Saving the modified file" )
+   parser.write()
+end
+
+//================================================
+// Function dumping the file
+//================================================
+
+function dumpIni( parser )
+
+   sect_list = parser.getSections()
+
+   // first the main section
+   printl( "; Dumping the main section: " )
+   sect_dict = parser.getDictionary()
+   for key, value in sect_dict
+      print( key, "=" )
+      dumpValue( value )
+   end
+   printl( ";-----------------------\n" )
+
+   // then the other sections
+   for sect in sect_list
+      dumpSection( parser, sect )
+   end
+end
+
+function dumpSection( parser, sect )
+   printl( "; Dumping section [", sect, "]:" )
+   sect_dict = parser.getDictionary( sect )
+   for key, value in sect_dict
+      print( key, "=" )
+      dumpValue( value )
+   end
+   printl( ";-----------------------\n" )
+end
+
+function dumpCategory( values )
+   for key, value in values
+      print( key, "=" )
+      dumpValue( value )
+   end
+   printl( ";-----------------------\n" )
+end
+
+function dumpValue( value )
+   if typeOf( value ) = ArrayType
+      dumpArray( value )
+   else
+      printl( value )
+   end
+end
+
+function dumpArray( array )
+   print( "[" )
+   for elem in array
+      print( elem )
+
+      formiddle: print( "," )
+      forlast
+      end
+   end
+
+   printl( "]" )
+end
+
+//================================================
+// Managing ini assignment (add/set)
+//================================================
+
+function assignIni( parser, elem, section )
+   if elem[0] == "+"
+      elem = elem[1:]
+      funcName = "add"
+      func = parser.add
+   else
+      funcName = "add"
+      func = parser.set
+   end
+
+   key, value = strSplit( elem, "=", 2 )
+   print( "Applying ", funcName, " to ", key, "=", value )
+   if section
+      print( " in section [", section , "]" )
+      func( key, value, section )
+   else
+      func( key, value )
+   end
+   printl()
+end
+
+//================================================
+// Managing ini deletion
+//================================================
+
+function deleteIni( parser, key, section )
+   if section
+      print( "Removing key ", key, " in section [", section , "]" )
+      parser.remove( key, section )
+   else
+      print( "Removing key ", key, " from main section." )
+      parser.remove( key )
+   end
+   printl()
+end
+
+//================================================
+// Managing ini deletion of categories
+//================================================
+
+function deleteIniCat( parser, key, section )
+   if section
+      print( "Removing category ", key, " in section [", section , "]" )
+   else
+      print( "Removing key ", key, " from main section." )
+   end
+
+   parser.removeCategory( key, section )
+   printl()
+end
+
+/* end */

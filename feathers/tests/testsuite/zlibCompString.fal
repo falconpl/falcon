@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 10b
+* Category: zlib
+* Subcategory:
+* Short: Compress and Uncompress string data
+* Description:
+*
+* [/Description]
+*
+****************************************************************************/
+
+load zlib
+
+original = "Mary had a little lamb, it's fleece was white as snow."
+
+z = ZLib()
+compressed = z.compressText( original )
+uncompressed = z.uncompressText( compressed )
+if original != uncompressed: failure( "original != uncompressed" )
+
+success()

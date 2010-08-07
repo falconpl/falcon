@@ -1,0 +1,114 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: jsoinze.fal
+
+   Read a Falcon module and output one object as json format.
+   Usage: jsonize.fal <module> <object/class> [<init>]
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load compiler
+load json
+
+if args.len() != 2 and args.len() != 3
+> '
+  JSONize -- render as json data an arbitrary falcon object.
+
+    USAGE:
+       jsonize.fal <module> <obj/cls> [init]
+
+    PARAMETERS:
+       <module>: module (source, fam or binary) where to find the object
+                 to be turned into a json representation
+       <obj/cls>: Object or class to be jsonized.
+       [init]: Optionally, provide an expression to be passed as class
+               init. The jsonized object will be an instance created
+               through the expression @ "$cls($init)", where cls is
+               the name of the class and init is the expression you
+               provide here.
+'
+return 1
+end
+
+cls_init = args.len() == 3 ? args[2] : ""
+c = Compiler()
+c.addFalconPath()
+
+try
+   m = c.loadFile( args[0] )
+   obj = m.get( args[1] )
+
+   select obj
+      case ObjectType
+         jsonize( obj )
+
+      case ClassType
+         try
+            maker = c.compile( "tempmod", @ '
+               load compiler
+               c = Compiler(); c.addFalconPath()
+               m = c.loadFile( "$args[0]" )
+               cls = m.get( "$args[1]" )
+               try
+                  obj = cls($cls_init)
+               catch in err
+                  error = err
+               end
+               ' )
+         catch SyntaxError in e
+            // the only sintax error we have here can be in $cls_init
+            // we can't have other errors as we have tried the same ops before
+            > @"Syntax error in provided init expression <<$cls_init>>"
+            return 1            
+         end
+                  
+         maker.get( "__main__" )()
+         // any error caused by instantation is in "error"
+         
+         if (error = maker.get( "error" ))
+            > "Instantation of required class caused the following error: "
+            > error
+            return 1
+         end
+         
+         // ready to go
+         jsonize( maker.get( "obj" ) )
+
+      default
+         > @"The symbol \"$args[1]\" is not an object nor a class in module $args[0]"
+         return 1
+   end   
+catch IoError in e
+   > @"Can't find module $args[0]: ", e.toString()
+   return 1
+catch SyntaxError in e
+   > @"Module $args[0] can't be loaded: ", e.toString()
+   return 1
+catch CodeError in e
+   > @"Module $args[0] can't be loaded: ", e.toString()
+   return 1
+end
+
+// done and fine
+return 0
+
+
+
+function jsonize( obj )
+   > "JSON Output: "
+   s = StringStream()
+   JSONencode( obj, s, pretty|true, readable|true )
+   > s.closeToString()
+   >
+   
+end
+

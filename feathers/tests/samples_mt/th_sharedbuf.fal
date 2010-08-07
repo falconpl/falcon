@@ -1,0 +1,50 @@
+/*
+   FALCON - Samples
+
+   FILE: th_sharedbuf.fal
+
+   Uses a shared memory buffer to send back and forth data.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Apr 2008 17:33:55 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+load threading
+
+class MyThread( buffer ) from Thread
+   buffer = buffer
+
+   function run()
+      for i in [1:1000000]
+         for n in [0:self.buffer.len()]
+            self.buffer[n] = i
+         end
+      end
+   end
+
+end
+
+
+buffer = MemBuf( 5, 4 )
+th = MyThread( buffer )
+for n in [0:buffer.len()]
+   buffer[n] = 0
+end
+
+th.start()
+
+while not th.terminated()
+   for n in [0:buffer.len()]
+      >> buffer[n]
+      formiddle: >> ", "
+      forlast: >> ".\r"
+   end
+end
+>
+> "Main thread complete."

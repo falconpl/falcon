@@ -1,0 +1,47 @@
+/*
+   FALCON - Samples
+
+   FILE: th_basic.fal
+
+   Minimal threading sample.
+
+   This test just launches 4 threads, that will run and mess a bit
+   your output, and joins to them to wait for their end.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 4
+
+class MyThread(id) from Thread
+   id = id
+
+   function run()
+      for i in [1:10000]
+         > "Thread ", self.id, ": ", i
+      end
+   end
+end
+
+t = arrayBuffer(threadCount)
+for i in [0:t.len()]
+   t[i] = MyThread( "ID" + i.toString() )
+   t[i].start()
+end
+
+// now that we started the threads, join them.
+while t.len()
+   terminated = Threading.vwait( t )
+   > "Terminated thread ", t[terminated].id
+   t[terminated:terminated+1] = []
+end
+
+
+> "Main thread complete."

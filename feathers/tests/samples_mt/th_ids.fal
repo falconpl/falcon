@@ -1,0 +1,71 @@
+/*
+   FALCON - Samples
+
+   FILE: th_ids.fal
+
+   Tests for threads being launched through the threading interaface,
+   and verifies their ID.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 8
+
+function thMain( barrier, queue )
+   queue.push( Threading.getCurrentID() )
+   Threading.wait( barrier )
+   queue.push( Threading.getCurrentID() )
+end
+
+//===========================================
+//
+threads = [=>]
+mbar = Barrier()
+mq = SyncQueue()
+
+for i in [0:threadCount]
+   th = Threading.start( .[ thMain mbar mq ] )
+   threads[ th.getThreadID() ] = th
+end
+
+// fait for all the threds to be started
+started = 0
+while started < threadCount
+   Threading.wait( mq )
+   id = mq.popFront()
+   mq.release()
+
+   threads[id] = started
+   started++
+end
+
+> Threading.getCurrentID(), " -> Launched threads: "
+for id, th in threads
+   > id, ": ", th.toString()
+end
+
+> "Waiting for thread termination"
+mbar.open()
+terminated = 0
+while terminated < threadCount
+   Threading.wait( mq )
+   id = mq.popFront()
+   mq.release()
+
+   threads[id] = terminated
+   terminated++
+end
+
+> "Termination order:"
+for id, terminated in threads
+   > id, ": ", terminated
+end
+
+> "Main thread complete."

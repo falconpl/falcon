@@ -1,0 +1,482 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: hashtest.fal
+
+   Hash module tests
+   Every hash should produce the same results for the same input data,
+   on all platforms. This script tests the correctness of the hashes output,
+   and checks for errors that may occur because of weird input or misuse.
+   A benchmark function is included.
+   -------------------------------------------------------------------
+   Author: Maximilian Malek
+   Begin: Thu, 25 Mar 2010 02:46:10 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+BENCHMARK = false // set this to true to run a benchmark if the tests finish successfully
+
+
+load hash
+
+function chsplit(str)
+    s = len(str)
+    if not s: return nil
+    arr = arrayBuffer(s)
+    for i = 0 to s - 1: arr[i] = str[i]
+    return arr
+end
+
+function expect(what, expected, desc)
+    ok = true
+    counter = 0
+    for it in what
+        counter++
+        if(it == expected)
+            > "[", desc, ": ", counter, "] success."
+        else
+            > "[", desc, ": ", counter, "] FAIL! Expected: ", expected, ", got: ", it
+            ok = false
+        end
+    end
+    return ok
+end
+
+// alg: hash class constructor, items: list or array of items to be hashed (preferrably strings or membufs)
+function myhash(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    return h.toString()
+end
+
+// only hashes with an output size <= 8 bytes support toInt()
+function hashInt(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    return h.toInt()
+end
+
+function hashBuf(alg, items)
+    h = alg()
+    for i in items: h.update(i)
+    return h.toMemBuf()
+end
+
+function li2buf(s, li)
+    pos = 0
+    mb = MemBuf(len(li), s)
+    for e in li: mb[pos++] = e
+    return mb
+end
+
+function bufcmp(a,b)
+    la = len(a)
+    if (la != len(b)) or (a.wordSize() != b.wordSize()): return false
+    for i = 0 to la - 1: if a[i] != b[i]: return false
+    return true
+end
+    
+        
+
+function test_hashes()
+    // verification table
+    table = [ 
+      "" => [
+            [CRC32,         "CRC32",     "00000000"],
+            [Adler32,       "Adler32",   "00000001"],
+            [SHA1Hash,      "SHA1",      "da39a3ee5e6b4b0d3255bfef95601890afd80709"],
+            [SHA224Hash,    "SHA224",    "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f"],
+            [SHA256Hash,    "SHA256",    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
+            [SHA384Hash,    "SHA384",    "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"],
+            [SHA512Hash,    "SHA512",    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"],
+            [MD2Hash,       "MD2",       "8350e5a3e24c153df2275c9f80692773"],
+            [MD4Hash,       "MD4",       "31d6cfe0d16ae931b73c59d7e0c089c0"],
+            [MD5Hash,       "MD5",       "d41d8cd98f00b204e9800998ecf8427e"],
+            [WhirlpoolHash, "Whirlpool", "19fa61d75522a4669b44e39c1d2e1726c530232130d407f89afee0964997f7a73e83be698b288febcf88e3e03c4f0757ea8964e59b63d93708b138cc42a66eb3"],
+            [TigerHash,     "Tiger",     "3293ac630c13f0245f92bbb1766e16167a4e58492dde73f3"],
+            [RIPEMD160Hash, "RIPEMD160", "9c1185a5c5e9fc54612808977ee8f548b2258d31"]
+            ],
+
+      "abc" => [
+            [CRC32,         "CRC32",     "352441c2"],
+            [Adler32,       "Adler32",   "024d0127"],
+            [SHA1Hash,      "SHA1",      "a9993e364706816aba3e25717850c26c9cd0d89d"],
+            [SHA224Hash,    "SHA224",    "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7"],
+            [SHA256Hash,    "SHA256",    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"],
+            [SHA384Hash,    "SHA384",    "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7"],
+            [SHA512Hash,    "SHA512",    "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"],
+            [MD2Hash,       "MD2",       "da853b0d3f88d99b30283a69e6ded6bb"],
+            [MD4Hash,       "MD4",       "a448017aaf21d8525fc10ae87aa6729d"],
+            [MD5Hash,       "MD5",       "900150983cd24fb0d6963f7d28e17f72"],
+            [WhirlpoolHash, "Whirlpool", "4e2448a4c6f486bb16b6562c73b4020bf3043e3a731bce721ae1b303d97e6d4c7181eebdb6c57e277d0e34957114cbd6c797fc9d95d8b582d225292076d4eef5"],
+            [TigerHash,     "Tiger",     "2aab1484e8c158f2bfb8c5ff41b57a525129131c957b5f93"],
+            [RIPEMD160Hash, "RIPEMD160", "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"]
+            ],
+            
+      "The quick brown fox jumps over the lazy dog" => [
+            [CRC32,         "CRC32",     "414fa339"],
+            [Adler32,       "Adler32",   "5bdc0fda"],
+            [SHA1Hash,      "SHA1",      "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"],
+            [SHA224Hash,    "SHA224",    "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525"],
+            [SHA256Hash,    "SHA256",    "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"],
+            [SHA384Hash,    "SHA384",    "ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1"],
+            [SHA512Hash,    "SHA512",    "07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6"],
+            [MD2Hash,       "MD2",       "03d85a0d629d2c442e987525319fc471"],
+            [MD4Hash,       "MD4",       "1bee69a46ba811185c194762abaeae90"],
+            [MD5Hash,       "MD5",       "9e107d9d372bb6826bd81d3542a419d6"],
+            [WhirlpoolHash, "Whirlpool", "b97de512e91e3828b40d2b0fdce9ceb3c4a71f9bea8d88e75c4fa854df36725fd2b52eb6544edcacd6f8beddfea403cb55ae31f03ad62a5ef54e42ee82c3fb35"],
+            [TigerHash,     "Tiger",     "6d12a41e72e644f017b6f0e2f7b44c6285f06dd5d2c5b075"],
+            [RIPEMD160Hash, "RIPEMD160", "37f332f68db77bd9d7edd4969571ad671cf9dd3b"]
+            ]
+    ]
+    
+    supp = getSupportedHashes()
+    > "Supported hashes:"
+    for s in supp: > " * ", s
+    
+    good = true
+    
+    // check against table values
+    for idx, reslist in table
+        > "--- Test for: '", idx, "' ---"
+        for e in reslist
+            alg, desc, result = e
+            a = myhash(alg, [idx]) // test with only 1 arg (1x UpdateData() call)
+            b = myhash(alg, chsplit(idx)) // hash each char seperately (many UpdateData() calls)
+            c = myhash(alg, [idx.toMemBuf()]) // convert to MemBuf
+            if not expect([a,b,c], result, desc): good = false
+        end
+    end
+    
+    > "--- Checking toInt() methods ---"
+    txt = "The quick brown fox jumps over the lazy dog"
+    if not expect([hashInt(CRC32,   [txt])], 1095738169, "CRC32"): good = false
+    if not expect([hashInt(Adler32, [txt])], 1541148634, "Adler32"): good = false
+    if not expect([hashInt(NopHash2Bytes, [nil])], 1, "NopHash (2 bytes endian test)"): good = false
+    if not expect([hashInt(NopHash16Bytes, [nil])], 1, "NopHash (16 bytes endian test)"): good = false
+    
+    > "--- Checking for correct MemBuf output ---"
+    sha1buf_expected = li2buf(1, .[0xA9 0x99 0x3E 0x36 0x47 0x06 0x81 0x6A 0xBA 0x3E 0x25 0x71 0x78 0x50 0xC2 0x6C 0x9C 0xD0 0xD8 0x9D])
+    sha1buf = hashBuf(SHA1Hash, ["abc"])
+    if not bufcmp(sha1buf, sha1buf_expected)
+        > "[SHA1] FAIL!"
+        >> "Expected: "; inspect(sha1buf_expected)
+        >> "Got:      "; inspect(sha1buf)
+        good = false
+    else
+        > "MemBuf output success."
+    end
+    
+    > "--- Checking membuf input ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    // the memory layout below is in little endian
+    mb1 = myhash(SHA1Hash, [li2buf(1, .[0x61 0x62 0x63 0x64 0x41 0x42 0x43 0x44])])
+    mb2 = myhash(SHA1Hash, [li2buf(2, .[0x6261 0x6463 0x4241 0x4443])])
+    mb3 = myhash(SHA1Hash, [li2buf(3, .[0x636261 0x424164]), li2buf(2, .[0x4443])])
+    mb4 = myhash(SHA1Hash, [li2buf(4, .[0x64636261 0x44434241])])
+    if not expect([myhash(SHA1Hash, ["abcdABCD"])], expected, "SHA1 string"): good = false
+    if not expect([mb1,mb2,mb3,mb4], expected, "SHA1 MemBuf"): good = false
+    
+    > "--- Checking multi-byte string input ---"
+    expected = "f930a2079c45dd97608325d73a24335cefa1846e"
+    str = "abc"
+    str.charSize(4)
+    if not expect([myhash(SHA1Hash, [str])], expected, "SHA1 multibyte string"): good = false
+    if not expect([myhash(SHA1Hash, [str.toMemBuf()])], expected, "SHA1 multibyte string (as MemBuf)"): good = false
+    
+    > "--- Checking direct hash hashing ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    sha = SHA1Hash()
+    sha.update("abcdABCD")
+    if not expect([myhash(SHA1Hash, [sha])], myhash(SHA1Hash, [sha.toMemBuf()]), "SHA1 hash"): good = false
+    
+    > "--- Checking sequence hashing ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    arr = [[[["ab"], ["c", "d"], [ ["AB", ["C", "D"] ] ] ]]]
+    li = List("ab", "cd", "A", List("B", "CD"))
+    dict = [ 1 => "ab", 2 => "cd", 3 => [ 1 => "AB", 2 => "CD"] ] // ordered dictionary
+    dictu = [ 2 => "cd", 1 => "ab", 3 => [ 2 => "CD", 1 => "AB"] ] // rely on correct ordering by dict
+    mixed = [ 1 => "a", 2 => List("b", ["c", "d", li2buf(1, .[0x41 0x42 0x43 0x44])])]
+    if not expect([myhash(SHA1Hash, [arr])], expected, "SHA1 array"): good = false
+    if not expect([myhash(SHA1Hash, [li])], expected, "SHA1 list"): good = false
+    if not expect([myhash(SHA1Hash, [dict])], expected, "SHA1 dict"): good = false
+    if not expect([myhash(SHA1Hash, [dictu])], expected, "SHA1 dict2"): good = false
+    if not expect([myhash(SHA1Hash, [mixed])], expected, "SHA1 mixed"): good = false
+    
+    > "--- Checking references as input ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    val = "abcdABCD"
+    ref1 = $val
+    ref2 = $ref1
+    if not expect([myhash(SHA1Hash, [ref1])], expected, "SHA1 ref"): good = false
+    if not expect([myhash(SHA1Hash, [ref2])], expected, "SHA1 double-ref"): good = false
+    
+    > "--- Checking updateInt() ---"
+    expected = "d702662cf2d55246776f96c51917ea27d60ec93b"
+    sha = SHA1Hash()
+    sha.update().update().update() // this should not throw
+    sha.updateInt(0x61, 1).updateInt(0x62, 1).updateInt(0x6463, 2).updateInt(0x44434241, 4) // little endian
+    if not expect([sha.toString()], expected, "SHA1 int8/int16/int32"): good = false
+    
+    sha = SHA1Hash()
+    sha.updateInt(0x4443424164636261, 8) // little endian
+    if not expect([sha.toString()], expected, "SHA1 int64"): good = false
+    
+    > "--- Checking for Nil ---"
+    expected = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    if not expect([myhash(SHA1Hash, [nil])], expected, "SHA1 nil"): good = false
+    if not expect([myhash(SHA1Hash, [nil, [1 => nil], [[nil]], List(nil,[nil, nil])])], expected, "SHA1 nil seq"): good = false
+    
+    > "--- Checking overloadable base for misbehavior ---"
+    hb = HashBase()
+    try
+        t = hb.bits() // bytes() not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.bits() didn't raise an error"
+    catch
+        > "Not overloaded bytes() did throw, good."
+    end
+    try
+        t = hb.update("abc") // not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.update() didn't raise an error"
+    catch
+        > "Not overloaded update() did throw, good."
+    end
+    try
+        t = hb.toMemBuf() // not overloaded, must throw
+        good = false
+        > "FAIL! HashBase.toMemBuf() didn't raise an error"
+    catch
+        > "Not overloaded toMemBuf() did throw, good."
+    end
+        
+    > "--- Checking custom overloaded function"
+    cx = Checksum16() // class defined below
+    if not expect([cx.bits()], 16, "Checksum16 bits"): good = false
+    cx.update("abcd", "ABCD")
+    out1 = cx.toString()
+    out2 = cx.toString()
+    // out1 and out2 must be equal, otherwise there are internal problems
+    if not expect([out1, out2], "cb2d", "Checksum16 double toString()"): good = false
+    
+    > "--- Checking for wrong return types in overloaded classes ---"
+    try
+        myhash(Checksum16Wrong1, "abc") // must throw
+        good = false
+        > "FAIL! wrong toMemBuf() return type accepted"
+    catch
+        > "Wrong toMemBuf() return type did throw, good."
+    end
+    try
+        myhash(Checksum16Wrong2, "abc") // must throw
+        good = false
+        > "FAIL! wrong toMemBuf() word size accepted"
+    catch
+        > "Wrong toMemBuf() word size did throw, good."
+    end
+    try
+        myhash(Checksum16Wrong3, "abc") // must throw
+        good = false
+        > "FAIL! wrong toMemBuf() byte length accepted"
+    catch
+        > "Wrong toMemBuf() byte length did throw, good."
+    end
+    try
+        cx = Checksum16Wrong4()
+        > cx.bits() // must throw
+        good = false
+        > "FAIL! wrong bytes() return type accepted"
+    catch
+        > "Wrong bytes() return type did throw, good."
+    end
+    try
+        cx = Checksum16Wrong5()
+        > cx.bits() // must throw
+        good = false
+        > "FAIL! bytes() returning 0 accepted"
+    catch
+        > "bytes() returning 0 did throw, good."
+    end
+    > "--- Checking for stack overflow detection ---"
+    try
+        cx = Checksum16()
+        cy = Checksum16Wrong6()
+        cx.update(cy)
+        good = false
+        > "FAIL! undetected stack overflow?!" // not sure if we can even reach this point, rather the VM would blow up in smoke at update()
+    catch
+        > "update() stack overflow detected, good."
+    end
+    
+    > "--- Checking convenience functions & makeHash() ---"
+    v1 = sha1("abc") // have to check only one, as the others work the same internally
+    if(v1 != "a9993e364706816aba3e25717850c26c9cd0d89d")
+        > "FAIL! sha1('abc') returned '", v1, "', shoudld be 'a9993e364706816aba3e25717850c26c9cd0d89d'"
+        good = false
+    end
+    for e in getSupportedHashes()
+        v1 = makeHash(e).update("abc").toString()
+        v2 = hash(false, e, "a", ["b", "c"])
+        tmph = makeHash(e);
+        tmph.update("a");
+        f = { ha => ha.update("b") }
+        v3 = hash(false, f(tmph) , "c")
+        if(v1 != v2 or v1 != v3)
+            > "FAIL! one of [", e, "] convenience function returned wrong output!"
+            good = false
+        else
+            > e, " good."
+        end
+    end
+    
+    > "--- Checking hash(true, ...) - raw MemBuf output ---"
+    sha1buf_expected = li2buf(1, .[0xA9 0x99 0x3E 0x36 0x47 0x06 0x81 0x6A 0xBA 0x3E 0x25 0x71 0x78 0x50 0xC2 0x6C 0x9C 0xD0 0xD8 0x9D])
+    sha1buf = hash(true, SHA1Hash, "abc")
+    if not bufcmp(sha1buf, sha1buf_expected)
+        > "[SHA1] FAIL!"
+        >> "Expected: "; inspect(sha1buf_expected)
+        >> "Got:      "; inspect(sha1buf)
+        good = false
+    else
+        > "hash(true, ...) raw MemBuf output success."
+    end
+    
+    > "--- Checking hash() with custom overloaded class ---"
+    ch16 = Checksum16()
+    v1 = ch16.update("abc").toString()
+    v2 = hash(false, Checksum16, "abc")
+    if(v1 != v2)
+        > "FAIL! hash() returned wrong results! Should be: ", v1, ", was ", v2
+        good = false
+    else
+        > "result: ", v1, ", seems good"
+    end
+    
+    > "--- Test complete ---"
+    return good
+end
+
+// own class for a simple checksum, to test HashBase class overloading
+// ** process(buf), finalize() -- have to be defined
+// ** toMemBuf(), bytes() -- have to be overloaded
+class Checksum16 from HashBase
+    val = 0xa374cf9e // state variable, for this checksum an int is sufficient, for hashes a membuf would be a better choice
+    retbuf = nil // our result after finalize()
+    
+    function bytes(): return 2
+    function toMemBuf(): return self.retbuf
+    
+    function process(buf)
+        lim = len(buf) - 1
+        for i = 0 to lim
+            self.val <<= 1
+            self.val ^= buf.get()
+        end
+    end
+    
+    function finalize()
+        a = (self.val >> 24) && 0xFF
+        b = (self.val >> 16) && 0xFF
+        c = (self.val >> 8) && 0xFF
+        d = self.val && 0xFF
+        self.val = 0
+        self.retbuf = li2buf(1, [a^^c, b^^d])
+    end
+end
+
+// wrong return type
+class Checksum16Wrong1 from Checksum16
+    function toMemBuf(): return [1,2,3]
+end
+
+// wrong MemBuf size
+class Checksum16Wrong2 from Checksum16
+    function toMemBuf(): return MemBuf(2,2)
+end
+
+// wrong byte count
+class Checksum16Wrong3 from Checksum16
+    function toMemBuf(): return MemBuf(8,1)
+end
+
+// bytes() not a number
+class Checksum16Wrong4 from Checksum16
+    function bytes(): return [1,2,3]
+end
+
+// bytes() == 0
+class Checksum16Wrong5 from Checksum16
+    function bytes(): return 0
+end
+
+// toMemBuf() returning self will cause infinite recursion/stack overflow
+// this is because everything returned by toMemBuf() will be put into update() again,
+// and this goes on and on for this class, because toMemBuf() is always provided...
+class Checksum16Wrong6 from Checksum16
+    function toMemBuf(): return self
+end
+
+class NopHash2Bytes from HashBase
+    retbuf = nil
+    function bytes(): return 2
+    function toMemBuf(): return self.retbuf
+    function process(buf)
+    end
+    function finalize()
+        self.retbuf = MemBuf(2,1)
+        self.retbuf.fill(0)
+        self.retbuf[0] = 1
+    end
+end
+
+class NopHash16Bytes from HashBase
+    retbuf = nil
+    function bytes(): return 16
+    function toMemBuf(): return self.retbuf
+    function process(buf)
+    end
+    function finalize()
+        self.retbuf = MemBuf(16,1)
+        self.retbuf.fill(0)
+        self.retbuf[0] = 1
+    end
+end
+
+if test_hashes()
+    > "Hash test completed successfully"
+    
+    if BENCHMARK
+        > "\nBenchmarking...100000 runs for each algorithm and string length"
+        alg = .[Checksum16 CRC32 Adler32 SHA1Hash MD2Hash MD5Hash RIPEMD160Hash TigerHash SHA512Hash WhirlpoolHash]
+        func = [ .[{ x => x.toMemBuf() } "Short MemBuf"],
+                 .[{ x => x.toString() } "Short strings"],
+                 .[{ x => x.toString() * 100 } "Long strings"] ]
+        for f,desc in func
+            > "\n* ", desc
+            for a in alg
+                astr = toString(a)
+                s = nil
+                for j = 0 to 100
+                    >> astr, ": ", j, "%\r"   
+                    for i = 0 to 100
+                        h = a()
+                        h.update(s)
+                        s = f(h) // use output as new input
+                    end
+                end
+                > ""
+            end
+        end
+        > "Benchmark complete."
+    end
+else
+    > "Hash test FAILED!"
+end
+
+
