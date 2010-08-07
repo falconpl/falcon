@@ -1,0 +1,111 @@
+const int PAGE_HEIGHT = 210;
+samp_text = "ƒAƒƒ“ƒ{Ô‚¢‚È‚ ‚¢‚¤‚¦‚¨B•‚‚«‘”‚É¬ƒGƒr‚à‚¨‚æ‚¢‚Å‚éB";
+detail_font = arrayBuffer(16)
+
+pdf = hpdf.Doc()
+
+/*declaration for using Japanese font, encoding. */
+pdf.useJPEncodings()
+pdf.useJPFonts()
+
+detail_font[0] = pdf.getFont("MS-Mincyo", "90ms-RKSJ-H")
+detail_font[1] = pdf.getFont("MS-Mincyo,Bold", "90ms-RKSJ-H")
+detail_font[2] = pdf.getFont("MS-Mincyo,Italic", "90ms-RKSJ-H")
+detail_font[3] = pdf.getFont("MS-Mincyo,BoldItalic", "90ms-RKSJ-H")
+detail_font[4] = pdf.getFont("MS-PMincyo", "90msp-RKSJ-H")
+detail_font[5] = pdf.getFont("MS-PMincyo,Bold", "90msp-RKSJ-H")
+detail_font[6] = pdf.getFont("MS-PMincyo,Italic", "90msp-RKSJ-H")
+detail_font[7] = pdf.getFont("MS-PMincyo,BoldItalic", "90msp-RKSJ-H")
+detail_font[8] = pdf.getFont("MS-Gothic", "90ms-RKSJ-H")
+detail_font[9] = pdf.getFont("MS-Gothic,Bold", "90ms-RKSJ-H")
+detail_font[10] = pdf.getFont("MS-Gothic,Italic", "90ms-RKSJ-H")
+detail_font[11] = pdf.getFont("MS-Gothic,BoldItalic", "90ms-RKSJ-H")
+detail_font[12] = pdf.getFont("MS-PGothic", "90msp-RKSJ-H")
+detail_font[13] = pdf.getFont("MS-PGothic,Bold", "90msp-RKSJ-H")
+detail_font[14] = pdf.getFont("MS-PGothic,Italic", "90msp-RKSJ-H")
+detail_font[15] = pdf.getFont("MS-PGothic,BoldItalic","90msp-RKSJ-H")
+
+/*configure pdf-document to be compressed. */
+pdf.setCompressionMode(hpdf.COMP_ALL);
+
+/*Set page mode to use outlines. */
+pdf.setPageMode(hpdf.PageMode.USE_OUTLINE)
+
+/*create outline root. */
+root = pdf.createOutline(nil, "JP font demo")
+root.setOpened(true)
+
+for i = 0 to 15
+    /*add a new page object. */
+    page = pdf.addPage()
+
+    /*create outline entry */
+    outline = pdf.createOutline(root, detail_font[i].getFontName(), null);
+    dst = page.createDestination()
+    outline.setDestination(dst)
+
+    title_font = pdf.getFont("Helvetica")
+    page.setFontAndSize(title_font, 10)
+
+    page.BeginText();
+
+    /*move the position of the text to top of the page. */
+    page.moveTextPos(10, 190)
+    page.showText(detail_font[i].getFontName())
+
+    page.setFontAndSize(detail_font[i], 15)
+    page.moveTextPos(10, -20)
+    page.showText("abcdefghijklmnopqrstuvwxyz")
+    page.moveTextPos(0, -20)
+    page.showText("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    page.moveTextPos(0, -20)
+    page.showText("1234567890")
+    page.moveTextPos(0, -20)
+
+    page.setFontAndSize(detail_font[i], 10)
+    page.showText(samp_text)
+    page.moveTextPos(0, -18)
+
+    page.setFontAndSize(detail_font[i], 16)
+    page.showText(samp_text)
+    page.moveTextPos(0, -27)
+
+    page.setFontAndSize(detail_font[i], 23)
+    page.showText(samp_text)
+    page.moveTextPos(0, -36)
+
+    page.setFontAndSize(detail_font[i], 30)
+    page.showText(samp_text)
+
+    p = page.getCurrentTextPos()
+
+    /*finish to print text. */
+    page.endText()
+
+    page.setLineWidth(0.5);
+
+    x_pos = 20;
+    for j = 0 to int(len(samp_text)/2)
+      page.moveTo(x_pos, p.y - 10)
+      page.lineTo(x_pos, p.y - 12)
+      page.stroke()
+      x_pos = x_pos + 30
+    end
+
+    page.setWidth(p.x + 20)
+    page.setHeight(PAGE_HEIGHT)
+
+    page.moveTo(10, PAGE_HEIGHT - 25)
+    page.lineTo(p.x + 10, PAGE_HEIGHT - 25)
+    page.stroke()
+
+    page.moveTo(10, PAGE_HEIGHT - 85)
+    page.lineTo(p.x + 10, PAGE_HEIGHT - 85)
+    page.stroke()
+
+    page.moveTo(10, p.y - 12)
+    page.lineTo(p.x + 10, p.y - 12)
+    page.stroke()
+end
+
+pdf.saveToFile(scriptName + ".pdf")

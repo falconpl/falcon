@@ -1,0 +1,95 @@
+import from hpdf
+
+rect1 = [50, 350, 150, 400]
+rect2 = [210, 350, 350, 400]
+rect3 = [50, 250, 150, 300]
+rect4 = [210, 250, 350, 300]
+rect5 = [50, 150, 150, 200]
+rect6 = [210, 150, 350, 200]
+rect7 = [50, 50, 150, 100]
+rect8 = [210, 50, 350, 100]
+
+pdf = hpdf.Doc()
+
+font = pdf.getFont("Times-Roman", "WinAnsiEncoding")
+page = pdf.addPage()
+page.setWidth(400)
+page.setHeight(500)
+
+page.beginText()
+page.setFontAndSize(font, 16)
+page.moveTextPos(130, 450)
+page.showText("Annotation Demo")
+page.endText()
+
+annot = page.createTextAnnot(rect1, 
+  "Annotation with Comment Icon. \n This annotation set to be opened initially.")
+
+annot.setIcon(hpdf.AnnotIcon.COMMENT);
+annot.setOpened(true)
+
+annot = page.createTextAnnot(rect2, "Annotation with Key Icon")
+annot.setIcon(hpdf.AnnotIcon.PARAGRAPH);
+
+annot = page.createTextAnnot(rect3, "Annotation with Note Icon")
+annot.setIcon(hpdf.AnnotIcon.NOTE)
+
+annot = page.createTextAnnot(rect4, "Annotation with Help Icon")
+annot.setIcon(hpdf.AnnotIcon.HELP);
+
+annot = page.createTextAnnot(rect5, "Annotation with NewParagraph Icon")
+annot.setIcon(hpdf.AnnotIcon.NEW_PARAGRAPH)
+
+annot = page.createTextAnnot(rect6, "Annotation with Paragraph Icon")
+annot.setIcon(hpdf.AnnotIcon.PARAGRAPH)
+
+annot = page.createTextAnnot(rect7, "Annotation with Insert Icon")
+annot.setIcon(hpdf.AnnotIcon.INSERT)
+
+encoding = pdf.getEncoder("ISO8859-2")
+page.createTextAnnot(rect8, "Annotation with ISO8859 text ÓÔÕÖ×ØÙ", encoding);
+
+page.setFontAndSize(font, 11)
+
+page.beginText()
+page.moveTextPos(rect1[0] + 35, rect1[3] - 20)
+page.showText("Comment Icon.")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect2[0] + 35, rect2[3] - 20)
+page.showText("Key Icon")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect3[0] + 35, rect3[3] - 20)
+page.showText("Note Icon.")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect4[0] + 35, rect4[3] - 20)
+page.showText("Help Icon")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect5[0] + 35, rect5[3] - 20)
+page.showText("NewParagraph Icon")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect6[0] + 35, rect6[3] - 20)
+page.showText("Paragraph Icon")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect7[0] + 35, rect7[3] - 20)
+page.showText("Insert Icon")
+page.endText()
+
+page.beginText()
+page.moveTextPos(rect8[0] + 35, rect8[3] - 20)
+page.showText("Text Icon(ISO8859-2 text)")
+page.endText()
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")

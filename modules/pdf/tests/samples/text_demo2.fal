@@ -1,0 +1,171 @@
+import from hpdf
+import printGrid from .grid_sheet as printGrid
+samp_text = "The quick brown fox jumps over the lazy dog. "
+
+pdf = hpdf.Doc()
+
+page = pdf.addPage()
+page.setSize(hpdf.PageSize.A5, hpdf.PageDirection.PORTRAIT)
+printGrid(pdf, page)
+height = page.getHeight()
+
+font = pdf.getFont("Helvetica")
+page.setTextLeading(20)
+
+// HPDF_TALIGN_LEFT
+left = 25
+top = 545
+right = 200
+bottom = top - 40
+
+page.rectangle(left, bottom, right - left, top - bottom)
+page.stroke()
+
+page.beginText()
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "HPDF_TALIGN_LEFT")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.LEFT)
+page.endText()
+
+// HPDF_TALIGN_RIGHT
+left = 220
+right = 395
+
+page.rectangle(left, bottom, right - left, top - bottom)
+page.stroke()
+
+page.beginText()
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "HPDF_TALIGN_RIGHT")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.RIGHT)
+page.endText()
+
+// HPDF_TALIGN_CENTER
+left = 25
+top = 475
+right = 200
+bottom = top - 40
+
+page.rectangle(left, bottom, right - left, top - bottom)
+page.stroke()
+
+page.beginText()
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "HPDF_TALIGN_CENTER")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.CENTER)
+page.endText()
+
+// HPDF_TALIGN_JUSTIFY
+left = 220
+right = 395
+
+page.rectangle(left, bottom, right - left, top - bottom)
+page.stroke()
+
+page.beginText()
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "HPDF_TALIGN_JUSTIFY")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.JUSTIFY)
+page.endText()
+
+
+// Skewed coordinate system
+
+angle1 = 5.0
+angle2 = 10.0
+rad1 = angle1 / 180 * PI
+rad2 = angle2 / 180 * PI
+
+page.gSave()
+
+page.concat(1, tan(rad1), tan(rad2), 1, 25, 350)
+
+left = 0
+top = 40
+right = 175
+bottom = 0
+page.rectangle(left, bottom, right - left,
+                top - bottom)
+page.stroke()
+
+page.beginText()
+
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "Skewed coordinate system")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.LEFT)
+
+page.endText()
+
+page.gRestore()
+
+
+// Rotated coordinate system
+page.gSave()
+
+angle1 = 5.0
+rad1 = angle1 / 180 * PI
+
+page.concat(cos(rad1), sin(rad1), -sin(rad1), cos(rad1), 220, 350)
+
+left = 0
+top = 40
+right = 175
+bottom = 0
+page.rectangle(left, bottom, right - left,
+               top - bottom)
+page.stroke()
+
+page.beginText()
+
+page.setFontAndSize(font, 10)
+page.textOut(left, top + 3, "Rotated coordinate system")
+
+page.setFontAndSize(font, 13)
+page.textRect(left, top, right, bottom, samp_text, hpdf.TextAlignment.LEFT)
+
+page.endText()
+
+page.gRestore()
+
+
+// text along a circle
+page.setGrayStroke(0)
+page.circle(210, 190, 145)
+page.circle(210, 190, 113)
+page.stroke()
+
+angle1 = 360.0 / samp_text.len()
+angle2 = 180.0
+
+page.beginText()
+font = pdf.getFont("Courier-Bold")
+page.setFontAndSize(font, 30)
+
+i = 0
+while i < samp_text.len()
+  rad1 = (angle2 - 90) / 180 * PI
+  rad2 = angle2 / 180 * PI
+
+  x = 210.0 + cos(rad2) * 122
+  y = 190.0 + sin(rad2) * 122
+
+  page.setTextMatrix(cos(rad1), sin(rad1), -sin(rad1), cos(rad1), x, y)
+
+  page.showText(samp_text[i:i+1])
+  angle2 -= angle1
+  i += 1
+end
+
+page.endText()
+
+pdf.saveToFile(scriptName + ".pdf")

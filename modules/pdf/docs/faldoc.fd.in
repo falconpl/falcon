@@ -1,0 +1,43 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for hpdf
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = hpdf
+Author = Maik Beckmann
+Version = <version>
+
+################################################
+# Faldoc Input settings
+################################################
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=src/scriptExtensions
+#you may place other input directory here
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+Input.extra=docs/main.fd
+Input.extra=docs/tutorial.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=@CMAKE_CURRENT_BINARY_DIR@/html
+Output.html.url=.
+Output.html.doctitle=curl module Function Reference

@@ -1,0 +1,43 @@
+/*
+* ID: 20a
+* Category: page
+* Subcategory:
+* Short: Test the HPDFPage wrapper
+*/
+
+directive strict=on
+
+import from hpdf
+
+function test_create(doc)
+
+  def exceptionThrown = false
+  try 
+    def standalonePage = hpdf.Page()
+  catch 
+    exceptionThrown = true
+  end
+  if not exceptionThrown: failure("hpdf.Page() didn't throw")
+  
+  def page = doc.addPage()
+
+  return page
+end
+
+function test_setFontAndSize(doc, page)
+  def font = doc.getFont("Helvetica")
+  page.setFontAndSize(font, 10)
+end
+
+def doc = hpdf.Doc()
+def page = test_create(doc)
+test_setFontAndSize(doc, page)
+
+def height = page.getHeight()
+page.setHeight(height)
+def width = page.getWidth()
+page.setWidth(width)
+def lineWidth = page.getLineWidth()
+page.setLineWidth(lineWidth)
+
+success()

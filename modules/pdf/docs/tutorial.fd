@@ -1,0 +1,223 @@
+
+
+/*#
+  @page hpdf_tutorial Tutorial
+  
+  @section hpdf_blank_pdf Creating a blank pdf
+  
+  First of all, we have to tell falcon that we like to use hpdf.  This is
+  done by
+    @code
+    import from hpdf
+    @endcode
+  Then we create an pdf document
+    @code
+    pdfDoc = hpdf.Doc()
+    @endcode
+  What is returned by <code> hpdf.Doc() </code> is a handle which represents the
+  just created pdf document.
+    
+  If we would stop here we would have actually created an invalid pdf,
+  since it must contain at least one page. Thus by blank we actually
+  mean the pdf contains a single empty page. We do so by 
+    @code
+    page = pdfDoc.addPage()
+    @endcode
+  As you can see we used the document handle that has been returned by
+  <code> hpdf.Doc() </code> . <code> pdfDoc.addPage() </code> returns an handle as well, but
+  this one prepresent the page we just added. We won't do anything
+  with it right now, since we want to keep the page empty.
+  
+  The last step is to write the pdf, which we just created in memory,
+  to the disk
+    @code
+    pdfDoc.saveToFile("blank.pdf")
+    @endcode
+
+  This is the complete code
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()    
+    pdfDoc.saveToFile("blank.pdf")
+    @endcode
+  you can put into a file, i.e. called @b blank.fal and run it via
+    @code
+    $ falcon blank.fal
+    @endcode
+  Open the just created @b blank.pdf to test if it is actually a pdf
+  with a single empty page.
+
+  @section hpdf_text Putting text onto a page
+
+  @subsection hpdf_text_helloWorld Hello World!
+
+  There are three methods to to put text to a page
+  <ul>
+    <li> @a Page.showText </li>
+    <li> @a Page.textOut </li>
+    <li> @a Page.textRect </li>
+  </ul>
+
+  The one with the simplest signature is @a Page.showText, which we'll
+  use to create the simplest possible code snippet to put
+  "Hello World!" at a page.
+    @code
+    import from hpdf
+    pdfDoc = hpdfDoc()
+    page = pdfDoc.addPage()
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), 10)
+    page.beginText() // a text object begins
+    page.showText("Hello World!")
+    page.endText() // finalizes the text object
+    pageDoc.saveToFile("helloWorld.pdf")
+    @endcode
+  Run the code and open the pdf.  It will show
+    @code
+    ...            ...
+    .                .
+    .                .
+
+    .                .
+    .Hello World!  ...
+    @endcode
+  "Hello World!" was put at the default position/coordinates which is
+  (0,0). As you can see the origin of a page coordinate system is the
+  bottom-left corner.
+
+  You will have noticed the use of the additional functions
+  <ul>
+    <li> @a Doc.getFont </li>
+    <li> @a Page.setFontAndSize </li>  
+    <li> @a Page.beginText </li>
+    <li> @a Page.endText </li>
+  </ul>
+
+  Setting a font and a font size via Doc.setFontAndSize is mandatory
+  before using one of the three text functions.  As is puttig them
+  between Page.beginText and Page.endText calls, since in a pdf a
+  piece of text is enclosed by an entity called "text object".  These
+  two state functions are used to create such an anonymous text
+  object.
+
+  @subsection hpdf_text_positionAbsolute Positioning text absolute
+  
+  Lets put the text to the top left
+    @code
+    ...            ...
+    .Hello World!    .
+    .                .
+
+    .                .
+    ...            ...
+    @endcode
+  Which can be done by using @a Page.textOut
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()
+    fontSize = 10
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
+    page.beginText()
+    page.textOut(0, page.getHeight() - fontSize, "Hello World!")
+    page.endText()
+    pdfDoc.saveToFile("helloWorld.pdf")
+    @endcode
+
+  @subsection hpdf_text_positionRelative Positioning text relative
+
+  We aim to get
+    @code
+    ...            ...
+    .Hello           .
+    .World           .
+    .!               
+    .                .
+    .                .
+    ...            ...  
+    @endcode    
+  which can be done by using the absolute positioning Page.textOut
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()
+    fontSize = 10
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
+    page.beginText()
+    page.textOut(0, page.getHeight() - fontSize, "Hello")
+    page.textOut(0, page.getHeight() - 2*fontSize, "World")
+    page.textOut(0, page.getHeight() - 3*fontSize, "!")
+    page.endText()
+    pdfDoc.saveToFile("helloWorld.pdf")
+    @endcode
+  which can be done more nicely with a falcon feature called
+  @link "http://falconpl.org/index.ftd?page_id=sitewiki&prj_id=_falcon_site&sid=wiki&pwid=Survival%20Guide&wid=Survival%3AFunctions#Callable-arrays" "callabe arrays"
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()
+    fontSize = 10
+    textOutAt = [page.textOut, 0, page.getHeight() - fontSize]
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
+    page.beginText()
+    textOutAt("Hello")
+    textOutAt[2] -= fontSize
+    textOutAt("World")
+    textOutAt[2] -= fontSize
+    textOutAt("!")
+    page.endText()
+    pdfDoc.saveToFile("helloWorld.pdf")
+    @endcode
+  Since libharu's native language C doesn't got the ability to create
+  functions on the fly by wrapping an exisiting one and even store
+  arguments, there is an alternative called @a Page.moveTextPos
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()
+    fontSize = 10
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
+    page.beginText()
+    page.moveTextPos(0, page.getHeight() - fontSize)
+    page.showText("Hello")
+    page.moveTextPos(0, -fontSize)
+    page.showText("World")
+    page.moveTextPos(0, -fontSize)
+    page.showText("!")
+    page.endText()
+    pdfDoc.saveToFile("helloWorld.pdf")
+    @endcode
+
+  @subsection hpdf_text_paragraphs Paragraphs, or putting text in a box
+
+    @code
+    import from hpdf
+    pdfDoc = hpdf.Doc()
+    page = pdfDoc.addPage()
+    fontSize = 10
+    page.setFontAndSize(pdfDoc.getFont("Helvetica"), fontSize)
+    page.beginText()
+    page.textRect(0,               page.getHeight(), 
+                  page.getWidth(), page.getHeight() - 3*fontSize, 
+        'Paragraphos (from Gr.  παράγραφος, paragraphos  from para "beside" and ' +
+        'graphein "to write") literally meant in ancient Greek papyri anything  ' +
+        'that was written beside the main text, e.g. marginal note or sign to ' +
+        'mark the close or beginning of a sentence.',
+      hpdf.TextAlignment.LEFT)
+    page.endText()
+    pdfDoc.saveToFile("helloWorld.pdf")
+    @endcode
+  @note libharu cannot handle utf8, so the greek letters will be messed
+    up :(
+    
+  
+    
+  foo
+*/
+  
+
+/*
+;;; Local Variables:
+;;; mode: c++
+;;; End:
+*/

@@ -1,0 +1,14 @@
+/*
+* ID: 0a
+* Category: smoke
+* Subcategory:
+* Short: smoke test
+* Description: 
+*   Test whether the module can be imported.
+* [/Description]
+*/
+
+
+import from hpdf
+
+success()

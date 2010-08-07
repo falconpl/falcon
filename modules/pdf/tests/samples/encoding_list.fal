@@ -1,0 +1,147 @@
+import from hpdf
+
+PAGE_WIDTH = 420
+PAGE_HEIGHT = 400
+CELL_WIDTH = 20
+CELL_HEIGHT = 20
+CELL_HEADER = 10
+
+> "WARNING: This example doesn't work correctly yet!" 
+> "The falcon string encoding seems to interfere, "
+> "so MemBuf support has to be added to hpdf text output functions."
+
+function drawGraph(page)
+  // Draw 16 X 15 cells
+
+  // Draw vertical line 
+  page.setLineWidth(0.5)
+
+  for i = 0 to 17
+    x = i * CELL_WIDTH + 40;
+    page.moveTo(x, PAGE_HEIGHT - 60)
+    page.lineTo(x, 40)
+    page.stroke()
+    if i > 0 and i <= 16 
+      page.beginText()
+      page.moveTextPos(x + 5, PAGE_HEIGHT - 75);
+      num = i - 1
+      buf = @"$(num:X)"
+      page.showText(buf);
+      page.endText()
+    end
+  end
+
+  // Draw horizontal lines
+  for i = 0 to 15
+    y = i * CELL_HEIGHT + 40
+    page.moveTo(40, y)
+    page.lineTo(PAGE_WIDTH - 40, y)
+    page.stroke()
+    if i < 14
+      page.beginText()
+      page.moveTextPos(45, y + 5)
+      num = 15 - i
+      buf = @"$(num:X)"
+      page.showText(buf)
+      page.endText()
+    end
+  end
+end
+
+
+function drawFonts(page)
+  page.beginText()
+   // Draw all character from 0x20 to 0xFF to the canvas
+  for i in [1:17]
+    for j in [1:17]
+      y = PAGE_HEIGHT - 55 - ((i - 1) * CELL_HEIGHT);
+      x = j * CELL_WIDTH + 50;
+      shift = (i - 1) * 16 + (j - 1)
+      buf = chr(0)/shift
+      if ord(buf) >= 32
+        d  = x - page.textWidth(buf) / 2
+       page.textOut(d, y, buf)
+        > shift
+        > buf
+      end
+    end
+  end
+  page.endText()
+end
+
+encodings = [
+  "StandardEncoding"
+  // "MacRomanEncoding",
+  // "WinAnsiEncoding",
+  // "ISO8859-2",
+  // "ISO8859-3",
+  // "ISO8859-4",
+  // "ISO8859-5",
+  // "ISO8859-9",
+  // "ISO8859-10",
+  // "ISO8859-13",
+  // "ISO8859-14",
+  // "ISO8859-15",
+  // "ISO8859-16",
+  // "CP1250",
+  // "CP1251",
+  // "CP1252",
+  // "CP1254",
+  // "CP1257",
+  // "KOI8-R",
+  // "Symbol-Set",
+  // "ZapfDingbats-Set"
+]
+
+pdf = hpdf.Doc()
+
+// set compression mode
+pdf.setCompressionMode(hpdf.COMP_ALL)
+
+// Set page mode to use outlines
+pdf.setPageMode( hpdf.PageMode.USE_OUTLINE)
+
+// get default font
+font = pdf.getFont("Helvetica")
+
+// load font object
+font_name = pdf.loadType1FontFromFile("type1/a010013l.afm",
+                                      "type1/a010013l.pfb")
+// create outline root
+root = pdf.createOutline( nil, "Encoding list", nil)
+root.setOpened(true)
+
+for encoding in encodings
+  page = pdf.addPage()
+  page.setWidth(PAGE_WIDTH)
+  page.setHeight(PAGE_HEIGHT)
+
+  outline = pdf.createOutline(root, encoding)
+  dst = page.createDestination()
+  dst.setXYZ(0, page.getHeight(), 1)
+  outline.setDestination(dst)
+
+  page.setFontAndSize(font, 15)
+  drawGraph(page)
+
+  page.beginText()
+  page.setFontAndSize(font, 20)
+  page.moveTextPos(40, PAGE_HEIGHT - 50)
+  page.showText(encoding)
+  page.showText(" Encoding");
+  page.endText()
+
+  if encoding=="Symbol-Set"
+    font2 = pdf.getFont("Symbol")
+  elif encoding == "ZapfDingbats-Set"
+    font2 = pdf.getFont("ZapfDingbats");
+  else
+    font2 = pdf.getFont(font_name, encoding)
+  end
+
+  page.setFontAndSize(font2, 14)
+  drawFonts(page)
+end
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")

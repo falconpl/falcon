@@ -1,0 +1,181 @@
+import from hpdf
+
+function drawPage(pdf, page, title_font, font, h_byte, l_byte)
+  PAGE_WIDTH = 420
+  CELL_HEIGHT = 20
+  CELL_WIDTH = 20
+  
+  l_byte = int(l_byte / 16) * 16
+  h_count = 16 - (l_byte / 16)
+  page_height = 40 + 40 + (h_count + 1) * CELL_HEIGHT
+  
+  page.setHeight(page_height)
+  page.setWidth(PAGE_WIDTH)
+  
+  page.setFontAndSize(title_font, 10)
+  
+  ypos = h_count + 1
+  loop
+    y = (ypos) * CELL_HEIGHT + 40;
+    
+    page.moveTo(40, y)
+    page.lineTo(380, y)
+    page.stroke()
+    if ypos < h_count
+      buf = chr(16 - ypos - 1)
+      if ord(buf) < 10
+        buf = buf/ord('0')
+      else
+        buf = buf/(ord('A') - 10)
+      end
+      
+      w = page.textWidth(buf)
+      page.beginText()
+      page.moveTextPos(40 + (20 - w) / 2, y + 5)
+      page.showText(buf)
+      page.endText()
+    end
+    
+    if ypos == 0: break
+    ypos--
+  end
+  
+  for xpos = 0 to 17
+    y = (h_count + 1) * CELL_HEIGHT + 40
+    x = xpos * CELL_WIDTH + 40
+    
+    page.moveTo(x, 40)
+    page.lineTo(x, y)
+    page.stroke()
+    
+    if xpos > 0 and xpos <= 16
+      buf = chr(xpos - 1)
+      
+      if ord(buf) < 10
+        buf = buf/ord('0')
+      else
+        buf = buf/(ord('A') - 10)
+      end
+      
+      w = page.textWidth(buf)
+      page.beginText()
+      page.moveTextPos(x + (20 - w) / 2, h_count * CELL_HEIGHT + 45)
+      page.showText(buf)
+      page.endText()
+    end
+  end
+  
+
+  page.setFontAndSize(font, 15)
+
+  ypos = h_count
+  loop
+    y = (ypos - 1) * CELL_HEIGHT + 45
+
+    for xpos in [0:16]
+      x = xpos * CELL_WIDTH + 40 + CELL_WIDTH
+      buf = "  "
+      buf[0] = h_byte
+      buf[1] = (16 - ypos) * 16 + xpos
+
+      w = page.textWidth(buf)
+      if w > 0
+        page.beginText()
+        page.moveTextPos(x + (20 - w) / 2, y)
+        page.showText(buf)
+        page.endText()
+      end
+    end
+
+    if ypos == 0: break
+    ypos--
+  end
+end
+
+
+if args.len() < 2
+  > "usage: character_map <encoding-name> <font-name>"
+  exit(1)
+end
+
+pdf = hpdf.Doc()
+
+/* configure pdf-document (showing outline, compression enabled) */
+pdf.setPageMode(hpdf.PageMode.USE_OUTLINE)
+pdf.setCompressionMode(hpdf.COMP_ALL)
+pdf.setPagesConfiguration(10)
+
+pdf.useJPEncodings()
+pdf.useJPFonts()
+pdf.useKREncodings()
+pdf.useKRFonts()
+pdf.useCNSEncodings()
+pdf.useCNSFonts()
+pdf.useCNTEncodings()
+pdf.useCNTFonts()
+
+encoder = pdf.getEncoder(args[0])
+if encoder.getType() != hpdf.EncoderType.DOUBLE_BYTE
+  >"error: ", args[0], " is not cmap-encoder"
+end
+
+font = pdf.getFont(args[1], args[0])
+
+min_l = 255
+min_h = 256
+max_l = 0
+max_h = 0
+
+flg = arrayBuffer(256)
+flg.fill(0)
+
+for i in [0:256]
+  for j in [20:256]
+    buf = "  "
+    code = i * 256 + j
+    buf[0] = i
+    buf[1] = j
+
+    btype = encoder.getByteType(buf, 0)
+    unicode = encoder.getUnicode(code)
+
+    if btype == hpdf.ByteType.LEAD and  unicode != 0x25A1
+      if min_l > j: min_l = j
+      if max_l < j: max_l = j
+      if min_h > i: min_h = i
+      if max_h < i: max_h = i
+      flg[i] = 1
+    end
+  end
+end
+
+> @ "min_h=$(min_h:04X) max_h=$(max_h:04X) min_l=$(min_l:04X) max_l=$(max_l:04X)"
+
+/* create outline root. */
+root = pdf.createOutline(nil, args[0])
+root.setOpened(true)
+
+for i in [0:256]
+  if flg[i]
+    page =  pdf.addPage()
+    title_font = pdf.getFont("Helvetica")
+    rstart = i * 256 + min_l
+    rend = i * 256 + max_l
+    buf = @ "0x$(rstart:04X)-0x$(rend:04X)"
+    outline = pdf.createOutline(root, buf)
+    dst = page.createDestination()
+    outline.setDestination(dst)
+
+    drawPage(pdf, page, title_font, font, i, min_l)
+
+    buf = @ "$(args[0]) ($(args[1])) 0x$(rstart:04X)-0x$(rend:04X)"
+
+    page.setFontAndSize(title_font, 10)
+    page.beginText()
+    page.moveTextPos(40, page.getHeight() - 35)
+    page.showText(buf)
+    page.endText()
+  end
+end
+
+pdf.saveToFile(scriptName + ".pdf")

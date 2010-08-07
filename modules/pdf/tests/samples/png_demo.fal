@@ -1,0 +1,82 @@
+import from hpdf
+
+function drawImage(pdf, filename, x, y, text)
+  page = pdf.getCurrentPage()
+
+  pngFilename = "pngsuite" + "/" + filename
+  image = pdf.loadPngImageFromFile(pngFilename)
+
+  // Draw image to the canvas.
+  page.drawImage(image, x, y,
+                 image.getWidth(), image.getHeight())
+
+  // Print the text
+  page.beginText()
+  page.setTextLeading(16)
+  page.moveTextPos(x, y)
+  page.showTextNextLine(filename)
+  page.showTextNextLine(text)
+  page.endText()
+end
+
+
+pdf = hpdf.Doc()
+
+pdf.setCompressionMode(hpdf.COMP_ALL)
+
+// create default-font
+font = pdf.getFont("Helvetica")
+
+// add a new page object
+page = pdf.addPage()
+
+page.setWidth(550)
+page.setHeight(650)
+
+dst = page.createDestination()
+dst.setXYZ(0, page.getHeight(), 1)
+pdf.setOpenAction(dst)
+
+page.beginText()
+page.setFontAndSize(font, 20)
+page.moveTextPos(220, page.getHeight() - 70)
+page.showText("PngDemo")
+page.endText()
+
+page.setFontAndSize(font, 12)
+
+drawImage(pdf, "basn0g01.png", 100, page.getHeight() - 150,
+          "1bit grayscale.")
+drawImage(pdf, "basn0g02.png", 200, page.getHeight() - 150,
+          "2bit grayscale.")
+drawImage(pdf, "basn0g04.png", 300, page.getHeight() - 150,
+          "4bit grayscale.")
+drawImage(pdf, "basn0g08.png", 400, page.getHeight() - 150,
+          "8bit grayscale.")
+
+drawImage(pdf, "basn2c08.png", 100, page.getHeight() - 250,
+          "8bit color.")
+drawImage(pdf, "basn2c16.png", 200, page.getHeight() - 250,
+          "16bit color.")
+
+drawImage(pdf, "basn3p01.png", 100, page.getHeight() - 350,
+          "1bit pallet.")
+drawImage(pdf, "basn3p02.png", 200, page.getHeight() - 350,
+          "2bit pallet.")
+drawImage(pdf, "basn3p04.png", 300, page.getHeight() - 350,
+          "4bit pallet.")
+drawImage(pdf, "basn3p08.png", 400, page.getHeight() - 350,
+          "8bit pallet.")
+
+drawImage(pdf, "basn4a08.png", 100, page.getHeight() - 450,
+          "8bit alpha.")
+drawImage(pdf, "basn4a16.png", 200, page.getHeight() - 450,
+          "16bit alpha.")
+  
+drawImage(pdf, "basn6a08.png", 100, page.getHeight() - 550,
+          "8bit alpha.")
+drawImage(pdf, "basn6a16.png", 200, page.getHeight() - 550,
+          "16bit alpha.")
+
+// save the document to a file
+pdf.saveToFile(scriptName + ".pdf")

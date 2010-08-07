@@ -1,0 +1,43 @@
+/*
+* ID: 10a
+* Category: doc
+* Subcategory:
+* Short: smoke test
+* Description: 
+*   Test the HPDFDoc wrapper
+* [/Description]
+*/
+
+directive strict=on
+
+import from hpdf
+
+function test_create()
+  def doc = hpdf.Doc()
+  return doc
+end
+
+function test_addPage(doc)
+  def page = doc.addPage()
+  return page
+end
+
+function test_getFont(doc)
+  // valid font
+  def font = doc.getFont("Helvetica")
+
+  def exceptionThrown = false
+  try 
+    def font = doc.getFont("ThisIsAnInvalidFontName")
+  catch 
+    exceptionThrown = true
+  end
+  if not exceptionThrown: failure("doc.getFont(\"Helvetic\") didn't throw")
+end
+
+
+
+def doc = test_create()
+test_getFont(doc)
+
+success()
