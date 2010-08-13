@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include <falcon/engine.h>
+#include <falcon/sys.h>
 #include "sqlite3_mod.h"
 #include "sqlite3.h"
 
@@ -47,11 +48,48 @@ DBIHandle *DBIServiceSQLite3::connect( const String &parameters )
       );
    }
 
+   int flags = SQLITE_OPEN_READWRITE;
+   if( connParams.m_sCreate == "always" )
+   {
+      flags |= SQLITE_OPEN_CREATE;
+
+      // sqlite3 doesn't drop databases: delete files.
+      int32 fsStatus;
+      FileStat::e_fileType st;
+      if ( Sys::fal_fileType( connParams.m_szDb, st ) &&
+           ! Sys::fal_unlink( connParams.m_szDb, fsStatus ) )
+      {
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__)
+                      .extra( parameters )
+                   );
+      }
+   }
+   else if ( connParams.m_sCreate == "cond" )
+   {
+      flags |= SQLITE_OPEN_CREATE;
+   }
+   else if( connParams.m_sCreate != "" )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+              .extra( parameters )
+           );
+   }
+
    sqlite3 *conn;
-   int result = sqlite3_open( connParams.m_szDb, &conn );
+   int result = sqlite3_open_v2( connParams.m_szDb, &conn, flags, NULL );
+
    if ( conn == NULL )
    {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+   }
+   else if ( result == SQLITE_CANTOPEN )
+   {
+      int er = connParams.m_sCreate == "cond" ?
+               FALCON_DBI_ERROR_CONNECT_CREATE : FALCON_DBI_ERROR_DB_NOTFOUND;
+
+      throw new DBIError( ErrorParam( er, __LINE__)
+                    .extra( sqlite3_errmsg( conn ) )
+                 );
    }
    else if ( result != SQLITE_OK )
    {

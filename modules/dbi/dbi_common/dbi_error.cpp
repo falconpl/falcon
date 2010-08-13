@@ -115,6 +115,15 @@ void DBIError::describeError()
       this->errorDescription( "DB already closed" );
       break;
 
+   case FALCON_DBI_ERROR_DB_NOTFOUND:
+      this->errorDescription( "Requested database not found" );
+      break;
+
+   case FALCON_DBI_ERROR_CONNECT_CREATE:
+      this->errorDescription( "Unable to create the database as required" );
+      break;
+
+
       // by default, do nothing -- let the base system to put an appropriate description
    }
 }

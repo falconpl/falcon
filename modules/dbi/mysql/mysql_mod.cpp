@@ -20,6 +20,8 @@
 #include <falcon/engine.h>
 #include <falcon/dbi_error.h>
 #include "mysql_mod.h"
+#include <mysqld_error.h>
+
 
 namespace Falcon
 {
@@ -1270,12 +1272,47 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters )
          szSocket, szFlags ) == NULL
       )
    {
+      int en = mysql_errno( conn ) == ER_BAD_DB_ERROR ?
+               FALCON_DBI_ERROR_DB_NOTFOUND : FALCON_DBI_ERROR_CONNECT;
+
       String errorMessage = mysql_error( conn );
       errorMessage.bufferize();
       mysql_close( conn );
 
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
-              .extra( errorMessage )
+      throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
+   }
+
+   if( connParams.m_sCreate == "always" )
+   {
+      String sDrop = "drop database IF EXIST " + connParams.m_sDb ;
+
+      AutoCString asQuery( sDrop );
+      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+
+      String sCreate = "create database " + connParams.m_sDb ;
+      AutoCString asQuery2( sCreate );
+      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+
+   }
+   else if ( connParams.m_sCreate == "cond" )
+   {
+      String sCreate = "create database if not exist " + connParams.m_sDb;
+      AutoCString asQuery2( sCreate );
+      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+   }
+   else if( connParams.m_sCreate != "" )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+              .extra( parameters )
            );
    }
 

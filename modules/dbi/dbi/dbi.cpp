@@ -17,6 +17,7 @@
 #include "version.h"
 #include "dbi_ext.h"
 #include "dbi_st.h"
+#include <falcon/dbi_error.h>
 
 /*#
    @module dbi Falcon Database Interface.
@@ -410,6 +411,32 @@ FALCON_MODULE_DECL
    Falcon::Symbol *dbierr_cls = self->addClass( "DBIError", &Falcon::Ext::DBIError_init );
    dbierr_cls->setWKS( true );
    dbierr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
+   // exporting error codes
+   self->addClassProperty( dbierr_cls, "COLUMN_RANGE").setInteger( FALCON_DBI_ERROR_COLUMN_RANGE);
+   self->addClassProperty( dbierr_cls, "INVALID_DRIVER" ).setInteger(FALCON_DBI_ERROR_INVALID_DRIVER);
+   self->addClassProperty( dbierr_cls, "NOMEM" ).setInteger(FALCON_DBI_ERROR_NOMEM);
+   self->addClassProperty( dbierr_cls, "CONNPARAMS" ).setInteger(FALCON_DBI_ERROR_CONNPARAMS);
+   self->addClassProperty( dbierr_cls, "CONNECT" ).setInteger(FALCON_DBI_ERROR_CONNECT);
+   self->addClassProperty( dbierr_cls, "QUERY" ).setInteger(FALCON_DBI_ERROR_QUERY);
+   self->addClassProperty( dbierr_cls, "QUERY_EMPTY" ).setInteger(FALCON_DBI_ERROR_QUERY_EMPTY);
+   self->addClassProperty( dbierr_cls, "OPTPARAMS" ).setInteger(FALCON_DBI_ERROR_OPTPARAMS);
+   self->addClassProperty( dbierr_cls, "NO_SUBTRANS" ).setInteger(FALCON_DBI_ERROR_NO_SUBTRANS);
+   self->addClassProperty( dbierr_cls, "NO_MULTITRANS" ).setInteger(FALCON_DBI_ERROR_NO_MULTITRANS);
+   self->addClassProperty( dbierr_cls, "UNPREP_EXEC" ).setInteger(FALCON_DBI_ERROR_UNPREP_EXEC );
+   self->addClassProperty( dbierr_cls, "BIND_SIZE" ).setInteger(FALCON_DBI_ERROR_BIND_SIZE );
+   self->addClassProperty( dbierr_cls, "BIND_MIX" ).setInteger(FALCON_DBI_ERROR_BIND_MIX );
+   self->addClassProperty( dbierr_cls, "EXEC" ).setInteger(FALCON_DBI_ERROR_EXEC );
+   self->addClassProperty( dbierr_cls, "FETCH" ).setInteger(FALCON_DBI_ERROR_FETCH );
+   self->addClassProperty( dbierr_cls, "UNHANDLED_TYPE" ).setInteger(FALCON_DBI_ERROR_UNHANDLED_TYPE );
+   self->addClassProperty( dbierr_cls, "RESET" ).setInteger(FALCON_DBI_ERROR_RESET);
+   self->addClassProperty( dbierr_cls, "BIND_INTERNAL" ).setInteger(FALCON_DBI_ERROR_BIND_INTERNAL );
+   self->addClassProperty( dbierr_cls, "TRANSACTION" ).setInteger(FALCON_DBI_ERROR_TRANSACTION );
+   self->addClassProperty( dbierr_cls, "CLOSED_STMT" ).setInteger(FALCON_DBI_ERROR_CLOSED_STMT );
+   self->addClassProperty( dbierr_cls, "CLOSED_RSET" ).setInteger(FALCON_DBI_ERROR_CLOSED_RSET );
+   self->addClassProperty( dbierr_cls, "CLOSED_DB" ).setInteger(FALCON_DBI_ERROR_CLOSED_DB );
+   self->addClassProperty( dbierr_cls, "DB_NOTFOUND" ).setInteger(FALCON_DBI_ERROR_DB_NOTFOUND );
+   self->addClassProperty( dbierr_cls, "CONNECT_CREATE").setInteger(FALCON_DBI_ERROR_CONNECT_CREATE );
 
    // service publication
    self->publishService( &theDBIService );

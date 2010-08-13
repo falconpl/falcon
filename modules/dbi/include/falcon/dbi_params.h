@@ -211,6 +211,7 @@ public:
    - db= Name of the DB to open (values in m_sDb and m_szDb).
    - host= Host where to perform the connection (values placed in m_sHost and m_szHost).
    - port= TCP Port where the server is listening (values in m_sPort and m_szPort).
+   - create= set to "always" or "cond" to create the database or try to create it in case it doesn't exist.
 */
 class DBIConnParams: public DBIParams
 {
@@ -224,12 +225,14 @@ public:
    String m_sHost;
    String m_sPort;
    String m_sDb;
+   String m_sCreate;
 
    const char* m_szUser;
    const char* m_szPassword;
    const char* m_szHost;
    const char* m_szPort;
    const char* m_szDb;
+   const char* m_szCreate;
 };
 
 }

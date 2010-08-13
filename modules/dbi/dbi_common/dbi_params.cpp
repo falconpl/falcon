@@ -240,6 +240,7 @@ DBIConnParams::DBIConnParams( bool bNoDef ):
       addParameter( "db", m_sDb, &m_szDb );
       addParameter( "port", m_sPort, &m_szPort );
       addParameter( "host", m_sHost, &m_szHost );
+      addParameter( "create", m_sCreate, &m_szCreate );
    }
 }
 
