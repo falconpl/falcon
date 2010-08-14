@@ -432,7 +432,6 @@ static void internal_query_call( VMachine* vm, int mode )
 
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
-   int64 ar;
 
    ItemArray params( vm->paramCount() - 1 );
    for( int32 i = 1; i < vm->paramCount(); i++)
@@ -442,6 +441,7 @@ static void internal_query_call( VMachine* vm, int mode )
 
    DBIRecordset* res = 0;
 
+   int64 ar = -1;
    switch (mode)
    {
    case 0:  // query
@@ -450,12 +450,15 @@ static void internal_query_call( VMachine* vm, int mode )
 
    case 1: // perform
       dbt->perform( *i_sql->asString(), ar, params );
+      vm->retval( ar );
       break;
 
    case 2:  // call;
       res = dbt->call( *i_sql->asString(), ar, params );
       break;
    }
+
+   self->setProperty("affected", ar );
 
    if( res !=0 )
    {
@@ -467,10 +470,6 @@ static void internal_query_call( VMachine* vm, int mode )
       rset->setUserData( res );
 
       vm->retval( rset );
-   }
-   else
-   {
-      vm->retnil();
    }
 }
 
@@ -494,6 +493,7 @@ void Handle_query( VMachine *vm )
    @brief Execute a SQL statement ignoring eventual recordsets.
    @param sql The SQL query
    @optparam ... Parameters for the query
+   @return Number of affected rows, or -1 if the data is not available.
    @raise DBIError if the database engine reports an error.
 
    Call this instead of query() when willing to perform SQL statements

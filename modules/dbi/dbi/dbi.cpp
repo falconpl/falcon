@@ -329,6 +329,7 @@ FALCON_MODULE_DECL
     which allows to issue SQL statements and inspect
     the result of SQL queries.
     
+    @prop affected Count of affected rows in last query, call or perform operation.
    */
 
    // create the base class DBIHandler for falcon
@@ -354,6 +355,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "lselect", &Falcon::Ext::Handle_lselect ).asSymbol()
          ->addParam("sql")->addParam("begin")->addParam("count");
 
+   self->addClassProperty( handler_class, "affected" );
    /*#
       @class Recordset
       @brief Data retuned by SQL queries.
