@@ -10,7 +10,8 @@ cmake_minimum_required(VERSION 2.6)
 # Set here project-wide options
 # OPTION( WITH_OPT  "An poption" OFF)
 
-INCLUDE( "falmod.cmake" )
+#INCLUDE( "falmod.cmake" )
+find_package( Falcon REQUIRED )
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 

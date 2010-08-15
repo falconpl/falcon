@@ -12,7 +12,7 @@ INCLUDE( ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake)
 # Set here project-wide options
 # OPTION( WITH_OPT  "An poption" OFF)
 
-INCLUDE( "falmod.cmake" )
+#INCLUDE( "falmod.cmake" )
 
 # Search for dbus
 pkg_check_modules(DBUS REQUIRED dbus-1 )

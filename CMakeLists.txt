@@ -4,31 +4,43 @@
 # CMake configuration file for Core falcon
 ##############################################################################
 #
-# CONTROL VARIABLES:
+##  Control Variables
 #
-# FALCON_BIN_DIR - Prefix for binary installation. Defaults to "bin"
-# FALCON_INC_DIR - Prefix for installation of include files.
-# FALCON_LIB_DIR - Prefix for installation of archives and dynamic libraries
-#                  on UNIXes. Defaults to "lib".
-# FALCON_MOD_DIR - Prefix for installation of modules. Defaults to
-#                  $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
-# FALCON_SKIP_BISON - ON to avoid using bison.
-# FALCON_WITH_MANPAGES - ON to build and install man pages.
-# FALCON_MAN_DIR - Where manual pages are stored (below prefix)
-# FALCON_SHARE_DIR - Where to install falco share files
-# FALCON_CMAKE_DIR - Where to install FalconConfig.cmake & c
+# FALCON_BIN_DIR    - Prefix for binary installation. Defaults to "bin"
+# FALCON_INC_DIR    - Prefix for installation of include files.
+# FALCON_LIB_DIR    - Prefix for installation of archives and dynamic libraries
+#                     on UNIXes. Defaults to "lib".
+# FALCON_MOD_DIR    - Prefix for installation of modules. Defaults to
+#                     $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
+# FALCON_MAN_DIR    - Where manual pages are stored (below prefix)
+# FALCON_SHARE_DIR  - Where to install falco share files
+# FALCON_CMAKE_DIR  - Where to install FalconConfig.cmake & c
+#
+##  Options
+#
+# FALCON_SKIP_BISON         - ON to avoid using bison.
+# FALCON_WITH_MANPAGES      - ON to build and install man pages.
+# FALCON_WITHOUT_FEATHERS   - ON to not build feathers.
+# FALCON_WITHOUT_MODULES    - ON to not build other modules.
+#
+##  Modules
+#
+# FALCON_WANT_*MODULE_NAME* - ON to build a given module
+#
+# List of available modules: CURL DBI DBUS DYNLIB GD2 GTK PDF SDL
 #
 
 cmake_minimum_required(VERSION 2.8)
 project(Falcon_Core)
 
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
+option( FALCON_WITHOUT_FEATHERS "Do not build feathers" OFF )
 
 if(WIN32)
-	option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
+    option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
 else()
-	# Manpages are mandatory on unix
-	option( FALCON_WITH_MANPAGES "Build and install also manpages" ON )
+    # Manpages are mandatory on unix
+    option( FALCON_WITH_MANPAGES "Build and install also manpages" ON )
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
@@ -216,22 +228,54 @@ add_subdirectory(devtools)
 
 # and man pages
 if (FALCON_WITH_MANPAGES)
-   add_subdirectory(manpages)   
+   add_subdirectory(manpages)
 endif()
 
 #########################################################################
 # Feathers?
 #
-if( FALCON_WITH_FEATHERS )
-   Message( STATUS "Adding FEATHERS to this build -- from ${FALCON_WITH_FEATHERS}" )
-   
+if( NOT FALCON_WITHOUT_FEATHERS )
+   message( STATUS "Adding FEATHERS to this build" )
+
    #override settings for the include dirs
    set( Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include" )
    list( APPEND Falcon_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include" )
-   
-   add_subdirectory( ${FALCON_WITH_FEATHERS} feathers_dir )
+
+   add_subdirectory( feathers )
+
+else()
+    message( STATUS "We are not compiling feathers" )
 endif()
 
+#########################################################################
+# Modules?
+#
+if( NOT FALCON_WITHOUT_MODULES )
+    message( STATUS "Adding all modules to this build" )
+
+    option( FALCON_WANT_CURL "Compile curl module" ON )
+    option( FALCON_WANT_DBI "Compile DBI module" ON )
+    option( FALCON_WANT_DBUS "Compile DBUS module" ON )
+    option( FALCON_WANT_DYNLIB "Compile DynLib module" ON )
+    option( FALCON_WANT_GD2 "Compile GD2 module" ON )
+    option( FALCON_WANT_GTK "Compile Gtk+ module" ON )
+    option( FALCON_WANT_PDF "Compile PDF module" ON )
+    option( FALCON_WANT_SDL "Compile SDL module" ON )
+
+else()
+    message( STATUS "We are not compiling any modules" )
+
+    option( FALCON_WANT_CURL "Compile curl module" OFF )
+    option( FALCON_WANT_DBI "Compile DBI module" OFF )
+    option( FALCON_WANT_DBUS "Compile DBUS module" OFF )
+    option( FALCON_WANT_DYNLIB "Compile DynLib module" OFF )
+    option( FALCON_WANT_GD2 "Compile GD2 module" OFF )
+    option( FALCON_WANT_GTK "Compile Gtk+ module" OFF )
+    option( FALCON_WANT_PDF "Compile PDF module" OFF )
+    option( FALCON_WANT_SDL "Compile SDL module" OFF )
+
+endif()
+add_subdirectory( modules )
 
 #########################################################################
 # Tests?

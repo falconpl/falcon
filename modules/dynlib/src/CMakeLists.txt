@@ -7,7 +7,7 @@
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${falcon_INCLUDE_DIRS}
+  ${Falcon_INCLUDE_DIRS}
 )
 
 if(WIN32)
@@ -17,12 +17,12 @@ if(WIN32)
     #Mingw -- gcc
     set(COMP_FILES dynlib_sys_gcc.cpp )
   endif()
-  
+
   set(SYS_FILES
     ${COMP_FILES}
-    dynlib_sys_win.cpp 
+    dynlib_sys_win.cpp
   )
-  
+
   unset(SYS_LIBS) # No other library needed on windows
 else()
   if(CMAKE_SYSTEM_NAME STREQUAL "SunOS" )
@@ -56,7 +56,7 @@ set(SRC_FILES
   dynlib_mod.cpp
   dynlib_st.cpp
   dynlib_parser.cpp
-  
+
   ${SYS_FILES}
 )
 
