@@ -14,4 +14,5 @@ TODO for 0.9.8
    - Type contracts.
    - New, more flexible compiler/module pair, and revision of the link
      process.
+   - Better Parallel constructs.
    
