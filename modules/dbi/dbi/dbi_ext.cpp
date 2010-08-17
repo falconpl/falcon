@@ -597,6 +597,7 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
       }
       vm->retval( dret );
    }
+   /*
    else
    {
       CoreTable* tbl = dyncast<CoreTable*>(target.asObject()->getFalconData());
@@ -644,6 +645,7 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
 
       vm->retval( target );
    }
+   */
 }
 
 /*#
@@ -662,8 +664,6 @@ static void internal_record_fetch( VMachine* vm, DBIRecordset* dbr, Item& target
    The @b item may be:
    - An Array.
    - A Dictionary.
-   - A Table.
-
 */
 
 void Recordset_fetch( VMachine *vm )
@@ -680,13 +680,22 @@ void Recordset_fetch( VMachine *vm )
       // if i_data is zero, then i_count is also zero, so we don't have to worry
       // about the VM stack being moved.
    }
-
+/*
    if ( ! ( i_data->isArray() || i_data->isDict() || i_data->isOfClass("Table") )
          || (i_count != 0 && ! i_count->isOrdinal())
          )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
            .extra( "[A|D|Table],[N]" ) );
+   }
+*/
+
+   if ( ! ( i_data->isArray() || i_data->isDict() )
+         || (i_count != 0 && ! i_count->isOrdinal())
+         )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+           .extra( "[A|D],[N]" ) );
    }
 
    CoreObject *self = vm->self().asObject();
