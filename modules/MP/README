@@ -1,0 +1,71 @@
+
+                        The Falcon Programming Language
+
+                              Skeleton Module
+
+
+This directory contains a skeleton Falcon Module. The module defines a minimal
+module meant as a minimal development base to help speed up module writing
+startup phase.
+
+The skeleton module is divided into several files to provide better
+customizability:
+
+fmodskel.cpp - The main module file; here exported the module object is
+	created and exported functions are defined.
+
+fmodskel_ext.cpp/.h - this files declare and define the extension (script
+   interface) functions. Add new functions here.
+
+fmodskel_mod.cpp/.h - this files declare and define the module internal
+   logic. If the module is extremely symple, or if it has not an internal
+   logic that may be exported or treated separately with resepect to the
+   extension functions, you may remove this files.
+
+fmodskel_srv.cpp/.h - this files declares the service exported by the module.
+   A service is a re-publishing of the internal logic (mod) towards C++
+   application via a fully virtual class. The service is published to the
+   module and to all the VM where the module is linked. Applications may
+   then load the module and access the service by knowing only its name
+   and including the header file. In this way it is possible to reuse the
+   internal logic that scripts may access also through C++ code.
+
+fmodskel_st.cpp/.h - this files are the string table for module
+   internationalization. See the directions in the files to get more
+   details on how to use this table to provide translations for
+   binary falcon modules.
+
+Other than these, there are project files/make files working on the supported
+platform, and a set of "template" files to be used when creating new sources.
+
+To configure this files and start a new project, copy the directory, enter
+it and use the falcon script "falconeer.fal".
+
+Falconeer is a Falcon utility that is shipped with development packages in of
+every supported platform. On systems where scripts can be given execution
+rights (i.e. Linux, Bsd, Macosx ecc. ) you may call directly
+
+   $ falconeer.fal
+
+from the command prompt. Systems as MS-Windows will require the interpreter
+to load the script from the right path. A "configure.bat" script is provided
+as a sample; it can be changed so to call falconeer with the proper parametrs.
+
+On systems provided with "man" utility a falconeer.fal man page is shipped
+with every Falcon installation; in other systems, you may load the script
+without arguments to have a short inline help.
+
+The script changes the names of the modules, and the supported development
+platforms project settings so to match the project name that you have set.
+
+Once configured with Falconeer, the module in this directory may be
+immediately compiled and tested. The module provides a single RTL function
+called "skeleton()" that returns 0, and publish that function through a
+Service interface which just calls it and rerturns its value.
+
+Once configured the skeleton module, you may remove unneded files and add
+new ones.
+
+To install a module, just copy it in one of the directories listed in the
+FALCON_LOAD_PATH environment variables.
+
