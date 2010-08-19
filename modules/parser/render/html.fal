@@ -1,0 +1,214 @@
+/*
+   FALCON - Generic Parser
+   FILE: html.fal
+
+   Generates an html file out of an input genparser.Context tree
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Base site helper */
+class BaseSiteHelper
+   function code(v, lang)
+      return @"<pre class=\"brush:$lang\">\n"+v+"</pre>"
+   end
+
+   function pageLink( v )
+      return "?pid="+URI.encode(v)
+   end
+
+   function iLink( wiki, v )
+      return @"http://www.$(wiki).com/?" + URI.encode(v)
+   end
+
+   function img( v )
+      return v
+   end
+
+   function file( v )
+      return v
+   end
+
+   function plugin( v, params )
+      return @"<p>Placeholder for plugin \"$v\"($params)</p>"
+   end
+end
+
+
+/*# Html Renderer */
+class Renderer( siteHelper, cls )
+   cls = cls ? cls : ""
+   site = siteHelper ? siteHelper : BaseSiteHelper()
+
+   _btype = nil
+   _blevel = 0
+
+   renderers = [
+      "text" => {node => node.content},
+      "b" => self._render_markup,
+      "i" => self._render_markup,
+      "u" => self._render_markup,
+      "sup" => self._render_markup,
+      "sub" => self._render_markup,
+      "pre" => self._render_markup,
+      "tt" => self._render_markup,
+      "ol" => self._render_markup,
+      "ul" => self._render_markup,
+      "li" => self._render_markup,
+
+      "hr" => self._render_break,
+      "br" => self._render_break,
+
+      "para" => self._render_para,
+      "header" => self._render_header,
+
+      "table" => self._render_table,
+      "tr" => self._render_tr,
+      "th" => self._render_cell,
+      "td" => self._render_cell,
+      "indent" => self._render_indent,
+
+      "link" => self._render_link,
+      "file" => self._render_file,
+
+      "img" => self._render_img,
+      "code" => self._render_code,
+      "plugin" => self._render_plugin
+   ]
+
+
+   function render( context )
+      return self._rcont( context.topNode.content )
+   end
+
+
+   function renderNode( node )
+      if node.type in self.renderers
+         return self.renderers[ node.type ]( node )
+      else
+         return self._renderUNKNOWN( node )
+      end
+   end
+
+
+   function _rcont( content )
+      if not content: return ""
+      if content.typeId() == StringType
+         return content
+      else
+         text = ""
+         for node in content
+            text += self.renderNode( node )
+         end
+         return text
+      end
+   end
+
+   //==========================================================
+   // rendering functions
+   //
+
+   function _renderUNKNOWN( node )
+      return self._render_markup(node)
+   end
+
+   function _ct( tag )
+      if self.cls
+         return "<" + tag + " class=\""+self.cls+"\">"
+      else
+         return "<" + tag + ">"
+      end
+   end
+
+   function _render_para( node )
+      return self._ct("p") + self._rcont(node.content)+"</p>\n"
+   end
+
+   function _render_markup( node )
+      return "<" + node.type + ">" + self._rcont(node.content) + "</" + node.type + ">"
+   end
+
+   function _render_break( node )
+      return "<" + node.type + "/>\n"
+   end
+
+
+   function _render_header( node )
+       return  self._ct("h" + node.level) +
+               self._rcont(node.content) +
+               "</h" + node.level + ">\n\n"
+   end
+
+
+   function _render_table( node )
+      return self._ct("table") + "\n<tbody>\n" +
+              self._rcont(node.content) +
+              "</tbody></table>\n"
+   end
+
+   function _render_tr( node )
+      return "<tr>"+ self._rcont(node.content) + "</tr>\n"
+   end
+
+
+   function _render_cell( node )
+      return self._render_markup( node )
+   end
+
+   function _render_indent( node )
+      return self._ct("div style=\"margin-left:" + 2 * node.level + "em\"") + self._ct("p") +
+         self._rcont(node.content) +
+         "</p></div>\n"
+   end
+
+   function _render_link( node )
+      i = bless(node.infos)
+      link = "<a href=\""
+      if i.ext
+         if "ilink" in i
+            link +=  self.site.iLink( i.iLink, i.name ) + " target=\"_blank\""
+         else
+            link += strEscape(i.name) + " target=\"_blank\""
+         end
+      else
+         link += self.site.pageLink( i.name )
+      end
+
+      link += "\""
+
+      link += ">" + (i.text ? i.text : i.name) + "</a>"
+      return link
+   end
+
+
+    function _render_file( node )
+      i = bless(node.infos)
+      link = "<a href=\"" + self.site.file( i.name ) + "\" target=\"_blank\">" +
+         (i.text ? i.text : i.name) + "</a>"
+      return link
+   end
+
+
+   function _render_img( node )
+      i = bless(node.infos)
+      link = "<img src=\"" + self.site.img( i.name ) + "\""
+      if i.alt: link += " alt=\"" + i.alt + "\""
+      link += "/>"
+      return link
+   end
+
+   function _render_code( node )
+      return self.site.code( self._rcont(node.content), node.infos["lang"] )
+   end
+
+   function _render_plugin( node )
+      return self.site.plugin( node.infos["name"], node.infos["params"] )
+   end
+end
+

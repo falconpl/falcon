@@ -1,0 +1,40 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: creole_to_html.fal
+
+   Read and parses creole WIKI data and outputs an html generated out
+   of it.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from parser.creole
+import from parser.render.html in html
+
+if args.len() == 0
+   > "Please, indicate a file in creole wiki text format on the command line"
+   return 1
+end
+
+is = InputStream(args[0])
+// let's say it's utf-8...
+is.setEncoding("utf-8")
+
+ctx = parser.creole.Context()
+p = parser.creole.Parser()
+
+p.initParser( "start" )
+line = ""
+while is.readLine( line, 120000 )
+   p.parseLine( line, ctx )
+end
+is.close()
+
+> html.Renderer().render( ctx )

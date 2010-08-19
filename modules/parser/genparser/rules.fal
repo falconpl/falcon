@@ -1,0 +1,206 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: Rules.fal
+
+   Generic customizable grammar parser.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 17 Aug 2010 15:49:48 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Regex from regex 
+
+/*# Base rule */
+class Rule( nextState, action )
+   nextState = nextState
+   action = action
+   matchLen = 0
+   
+   function match( text, pos )
+      return -1
+   end
+
+   function apply( context )
+      if self.action: self.action(context)
+      return self.matchLen
+   end
+end
+
+/*#
+   @brief Class representing a token rule.
+
+   Token rules are simply fixed length rules
+   matching the input text.
+
+   @param token the string matching a fixed token
+   @param action the action (function) that should be done when
+          hitting the token. The function will be called with
+          the token as last parameter.
+*/
+class TokenRule( token, nextState, action ) from Rule( nextState, action )
+   token = token
+   separators = " \r\n\t,.!?;:*+-/|^'\"\\#<>"
+   
+   function match( text, pos )
+      t = self.token
+      if (pfind = text.find( t, pos ) ) >= 0
+         if (pfind == 0 or self.isSep( text[(pfind-1)] )) and \
+                  (pfind + t.len() == text.len() or self.isSep( text[(pfind + t.len())] ))
+            return pfind
+         end
+      end
+      
+      return -1
+   end
+
+   function apply( ctx )
+      if self.action: self.action( ctx, self.token )
+      return self.token.len()
+   end
+
+   function isSep( item )
+      return item in self.separators
+   end
+
+end
+
+/*#
+   @brief Class representing a tag rule.
+
+   Token rules are simply fixed length rules
+   matching the input text.
+
+   @param token the string matching a fixed token
+   @param action the action (function) that should be done when
+          hitting the token. The function will be called with
+          the token as last parameter.
+*/
+class TagRule( tag, nextState, action ) from Rule( nextState, action )
+   token = tag
+
+   function match( text, pos )
+      t = self.token
+      if (pfind = text.find( t, pos ) ) >= 0
+         return pfind
+      end
+
+      return -1
+   end
+
+   function apply( ctx )
+      if self.action: self.action( ctx, self.token )
+      return self.token.len()
+   end
+
+end
+
+
+/*#
+   @brief Eats blanks
+*/
+class BlanksRule() from Rule( "#stay" )
+   matchLen = 0
+
+   function match( text, pos )
+      ipos = pos
+      l = text.len()
+      while pos < l
+         c = text[*pos]
+         if (c != 0x20 and c != 0x8 and c != 0x0D and c != 0x0A)
+            self.matchLen = pos - ipos
+            if self.matchLen > 0: return ipos
+         end
+         ++pos
+      end
+      
+      return -1
+   end
+
+end
+
+/*#
+   @brief Regular expression enabled ruler matcher.
+
+
+   @param token the string matching a fixed token
+   @param action the action (function) that should be done when
+          hitting the token. The function will be called with
+          the token as last parameter.
+*/
+class ReRule( re, nextState, action ) from Rule( nextState, action )
+   anchored = re.startsWith("^")
+   re = regex.Regex(re)
+   grabs = nil
+   
+   function match( text, pos )
+      // can't match "^" past the begin of the line
+      if self.anchored and pos > 0: return -1
+      re = self.re
+      // We need our grabs
+      if (rng = re.find( text, pos ))
+         g = []
+         for n in [0:re.capturedCount()]
+            g += text[re.captured(n)]
+         end
+         self.grabs = g
+         return rng[0]
+      end
+
+      return -1
+   end
+
+   function apply( context )
+      g = self.grabs
+      if self.action: (.[ self.action context ] + g)()
+      return g[0].len()
+   end
+end
+
+/*#
+   @brief Empty line rule matcher.
+
+*/
+class EmptyLineRule( nextState, action ) from Rule( nextState, action )
+   matchLen = 1
+   
+   function match( text, pos )
+      if text.len() == 0: return 0
+      return -1
+   end
+end
+
+/*#
+   @brief Matches a single character.
+
+*/
+class CharRule( nextState, action ) from Rule( nextState, action )
+   grabbedChar = " "
+
+   function match( text, pos )
+      if text.len() > pos
+         self.grabbedChar = text[pos]
+         return pos
+      end
+      return -1
+   end
+
+   function apply( ctx )
+      if self.action: self.action( ctx, self.grabbedChar )
+      return 1
+   end
+end
+
+/*# Empty rule meant to immediately do an action and change state without consuming input. */
+class DummyRule( nextState, action ) from Rule( nextState, action )
+   function match()
+      return 0
+   end
+end
+
+

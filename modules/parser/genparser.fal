@@ -1,0 +1,315 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: parser.fal
+
+   Generic customizable grammar parser.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+directive version = 0x010001
+
+import Context from self.context as Context
+import Node from self.node as Node
+import DummyRule from self.rules
+
+
+/*#
+   @brief Parser states (behaviors)
+*/
+class PState( rules, onUnmatched, eolRule )
+   rules = rules
+   onUnmatched = onUnmatched
+   eolRule = eolRule
+end
+
+/*#
+   @brief Main parsing class.
+
+   A generic parser is a parsing system based on token recognition
+   and callback invocation. This class provides general token
+   recognition and calls adequate callbacks.
+
+   In strick terms, this class acts more like a @b lexer which drives
+   a callback-driven parser provided by the user.
+
+   The @b Parser class works by using a set of named states (in the
+   class @a PState), which corespond to different ruleset which are
+   used in different parsing steps.
+
+   Rules, that is, user-provided callbacks, can return a string
+   representing a state name; the coresponding satate is then pushed
+   on a stack, and can be popped later by returning the special
+   state "#pop".
+
+   Each @a PState provides a set of four elements:
+      - separators: a string containing characters considered "blanks"
+         which hasn't any grammar meaning except that of separating
+         tokens and keywords. In example, " \t" would recognize spaces
+         and tab characters as separators.
+      - tokens: A list of @a Rule instances which match recognized tokens.
+         Tokens are recognized when it can be demonstrated that no other
+         token can be matched. In example, if the parser has "+" and "+="
+         tokens, the proper action (either the one associated with + or +=)
+         will be called when the ambiguity can be resolved.
+      - keywords: A list of @a Rule instances which are recognized only if
+         surrounded by separators or tokens. In example, a keyword "fun"
+         would be recognized only if preceded and followed by any of the
+         characters in the @a seperators string, or by any recognized token.
+      - onElement: it's a callback which gets called when identifying a sequence
+        between separators and/or tokens which is not listed in the keywords.
+
+   In example, the following parser regognizes and saves strings by pushing a different
+   state when they are found:
+
+   @code
+   load parser
+
+   // base state
+   base = PState(
+      separators|" \t\n\r",
+      tokens| [ Rule( '"', onQuote ) ],
+      onElement|ignoring )
+
+   // state when parsing a string
+   pstring = PState(
+      separators|"", // spaces are relevant
+      tokens|[
+         Rule( "\\\"", onEscapeQuote ),
+         Rule( "\"", onStringClosed ) ],
+      onElement| addToString )
+
+   content = ""
+   function onQuote( qt )
+      global content
+      // starting string mode
+      content = ""
+      return "string"
+   end
+
+   function ignoring( item )
+      > "Ignoring ", item
+   end
+
+   function addToString( data )
+      global content
+      content += data
+   end
+
+   function onEscapeQuote( qt )
+      global content
+      content += "\""
+   end
+
+   function onStringClosed( qt )
+      global content
+      > "Found string: >>", content, "<<"
+      return "#pop"
+   end
+
+   parser = Parser()
+   parser.addState( "base", base )
+   parser.addState( "string", pstring )
+
+   stream = StringStream( 'unrecognized text, "an \"interesting\" string", other text')
+   parser.parse( stream, "base" )
+   @endcode
+
+   The parser ensures that all the tokens, keywords and unrecognized elements
+   are notified via callbacks in the same order in which they are found in the
+   parsed file.
+
+   Other than returning a state name, the rule callbacks may also return a new
+   instance of @a PState; this would push the state on the stack and make it
+   the currently active state. This makes possible to create new parser states
+   on the fly, in case some of the parsing conditions are not known in advance.
+
+   It is also possible to modify existing states by i.e. adding new keywords or
+   tokens as they become defined while parsing the source code.
+*/
+
+class Parser()
+   // known states by name
+   states = nil
+   
+   // stack of ParserStates
+   _stack = []
+
+   // false when asked to quit
+   _proceed = false
+
+   // current parsing row
+   row = 1
+
+   /*#
+      @brief Pushes a given state making it the active state.
+      @param name The name of the state that should be pushed.
+      @raise ParseError if the state name is not known.
+   */
+   function pushState( name )
+      if not name in self.states
+         raise ParseError( 10000, i"Setting invalid state", name )
+      end
+
+      self._stack += self.states[name]
+   end
+
+   /*#
+      @brief Pops current state.
+      @raise ParseError if the state backlist is empty.
+   */
+   function popState()
+      len = self._stack.len()
+      if len <= 1
+         raise ParseError( 10001, i"Cannot pop topmost state" )
+      end
+
+      arrayResize( self._stack, len - 1 )
+   end
+
+   /*#
+      @brief Performs complete parsing.
+      @param stream An input stream where the input data is read.
+      @param initState The name of the initial state.
+      @raise ParseError if the parser has not been correctly initialized.
+   */
+   function parse( string, initState )
+      self.initParser(initState)
+      ctx = Context()
+      pos = 0
+      
+      loop
+         // find the next line
+         poseol = string.find( "\n", pos )
+         line = string[pos: (poseol >= 0 ? poseol + 1:-1)]
+
+         self.parseLine( line, ctx )
+         
+         pos = poseol + 1
+      end pos == 0
+
+      return ctx
+   end
+
+   function initParser(initState)
+      if initState
+         self._stack = []
+         self.pushState( initState )
+      elif self._stack.len() != 1
+         raise ParseError( 10002, i"Parser not initialized before parsing" )
+      end
+
+      self._proceed = true
+      self.row = 1
+   end
+
+   function parseLine( line, ctx )
+      linelen = line.len()
+      col = 0
+      loop
+         hadWinner = false
+         
+         loop
+            matchAt = line.len()
+            winner = nil
+
+            state = self._stack[-1]
+            for r in state.rules
+               if ( rulePos = r.match( line, col ) ) == 0
+                  // we found the rule
+                  winner = r
+                  hadWinner = true
+                  matchAt = 0
+                  break
+               elif rulePos > 0
+                  if rulePos < matchAt
+                     winner = r
+                     matchAt = rulePos
+                  end
+               end
+            end
+
+            //we found it -- do we have a prefix?
+            if col < matchAt
+               // else, the rule doesn't match
+               prefix = line[col:matchAt]
+
+               if (not state.onUnmatched)
+                  raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)] $prefix" )
+               end
+               state.onUnmatched( ctx, prefix )
+            end
+
+            if winner
+               count = winner.apply( ctx )
+               self._fulfil( winner.nextState )
+            else
+               // empty line and no matching rule, so it seems.
+               break
+            end
+
+            col = matchAt + count
+         end col >= linelen
+
+         if state.eolRule
+            // is this a conditional rule?
+            if state.eolRule[0] == "*"
+               if not hadWinner
+                  self._fulfil( state.eolRule[1:] )
+               end
+            else
+               self._fulfil( state.eolRule )
+            end
+         end
+
+      // Repeat if it was a dummy
+      end not winner.derivedFrom( rules.DummyRule )
+      ++self.row
+   end
+
+
+   function _fulfil( slist )
+      states = slist.split( ";")
+
+      for what in states
+         if what == "#pop"
+            self.popState()
+         elif what == "#stay"
+            return
+         elif what == "#quit"
+            self.terminate()
+         elif what.typeId() == StringType
+            self.pushState( what )
+         elif what.derivedFrom( PState )
+            self._stack += what
+         else
+            // otherwise we have something wrong
+            raise ParseError( 10004, i"Invalid state change", what )
+         end
+      end
+   end
+
+   /*#
+      @brief Request parsing termination.
+
+      A rule callback may call this method via @b sender.terminate()
+      to request immediate exit from the parser sequence.
+
+      A rule may also quit the parser by returning the special
+      "#quit" state.
+   */
+
+   function terminate()
+      self._proceed = false
+   end
+
+end
+
+export

@@ -1,0 +1,72 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: context.fal
+
+   Generic parser, Syntactic Tree context.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 19 Aug 2010 01:34:20 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from .node
+
+/*# Syntree context.
+
+   Has support to create the syntree as the parsing proceeds.
+*/
+
+class Context
+   topNode = node.Node( node.node_top_type )
+   nodeStack = List( self.topNode )
+   currentNode = self.topNode
+
+   listDepth = 0
+
+   function pushNode( node )
+      self.currentNode.add( node )
+      self.nodeStack.push( node )
+      self.currentNode = node
+   end
+
+   function popNode()
+      node = self.nodeStack.pop()
+      if self.nodeStack.empty()
+         raise ParseError( 10010, "Context empty in pop" )
+      end
+      self.currentNode = self.nodeStack.back()
+      return node
+   end
+
+   function add( data )
+      self.currentNode.add( data )
+   end
+
+   function setListDepth( lvl, ltype )
+      if lvl == self.listDepth
+         self.popNode()
+         self.pushNode( node.Node("li") )
+      elif lvl < self.listDepth
+         // we must go back of 2 elements per level
+         for i in [lvl:self.listDepth]
+            self.popNode()
+            self.popNode()
+         end
+         self.listDepth = lvl
+      else
+         // we must go forward of 2 elements per level
+         for i in [self.listDepth:lvl]
+            self.pushNode(node.Node(ltype))
+            self.pushNode(node.Node("li"))
+         end
+      end
+
+      self.listDepth = lvl
+
+   end
+end
