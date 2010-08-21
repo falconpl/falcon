@@ -18,6 +18,15 @@ a = 5 ** 2
 if a != 25.0: failure( "Simple power" )
 a = a ** ( 1 / 2 )
 if a != 5.0: failure( "Simple radix" )
+try
+  0**-1 // crash
+catch MathError
+end
+try
+  5**2 // it should work now
+catch
+   failure( "Power error recovering" )
+end
 
 success()
 

@@ -830,6 +830,7 @@ void co_int_pow( const Item& first, const Item& second, Item& third )
 
    if ( errno != 0 )
    {
+      errno = 0;
       throw new MathError( ErrorParam( e_domain ).extra( "POW" ) );
    }
 
@@ -870,6 +871,7 @@ void co_num_pow( const Item& first, const Item& second, Item& third )
 
    if ( errno != 0 )
    {
+      errno = 0;
       throw new MathError( ErrorParam( e_domain ).extra( "POW" ) );
    }
 
