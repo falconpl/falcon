@@ -90,22 +90,30 @@ LinkElements = .[
                               InfoNode("file", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
                            )
                         })
-                        
-    ReRule( '\[\[((.+?):)?(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
-                        {ctx, ma, d0, ilink, pg, d1, txt, d2, mx =>
-                           ctx.add(
-                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt, "ilink"=>ilink]))
-                           )
-                        })
 
-   ReRule( '\[\[(https?:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+   ReRule( '\[\[(https?:.*?|ftp:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
                         {ctx, ma, pg, d1, txt, d2, mx =>
                            ctx.add(
                               InfoNode("link", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
                            )
                         })
 
-   ReRule( 'https?://[^ ]*',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+   
+    ReRule( '\[\[([^:|\]]+):(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, ilink, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt, "ilink"=>ilink]))
+                           )
+                        })
+   
+   ReRule( '\[\[(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt]))
+                           )
+                        })
+   ReRule( 'https?://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+   ReRule( 'ftp://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
 
    ReRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
                                                  ctx.add( InfoNode("img", _options(mx, ["name"=>pg, "alt"=> (txt? txt:pg)])))} )
@@ -149,7 +157,8 @@ function _inlineState( limit )
             TagRule( limit,  "#pop", {ctx => ctx.popNode()} )
          ]
          + InlineElements,
-         {ctx, data=>ctx.add( data )}  // unparsed data goes directly in the paragraph.
+         {ctx, data=>ctx.add( data )},
+         "para_continue"   // the paragraph can contiune at the end of an inline
       )
 end
    
@@ -174,8 +183,14 @@ class Parser from parser.genparser.Parser
          + TableStart
          + Indents
          + Headers2,
-         {ctx, data=>ctx.add( data )}
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
       ),
+
+      "para_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add(" ")} ) ]
+      ),
+      
       
       "eolverbatim" =>PState(.[
          DummyRule( "#pop", { ctx => ctx.add( "\n") } )
@@ -231,12 +246,17 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*', "#stay" )
          ]
          + InlineElements,
-         {ctx, data=>ctx.add( data )}
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
       ),
       
 
       "escape" =>PState(.[
-            CharRule( "#pop", {ctx, c => if not c: raise ParseError(1,"NOT C!"); ctx.add(c) } )
+            TagRule( "https://", "#pop", {ctx => ctx.add( "https://" )} ) // escaped links
+            TagRule( "http://", "#pop", {ctx => ctx.add( "http://" )} ) // escaped links
+            TagRule( "ftp://", "#pop", {ctx => ctx.add( "ftp://" )} ) // escaped links
+            
+            CharRule( "#pop", {ctx, c => if c: ctx.add(c) } )
             // force to go away if can't grab even a char
          ],
          nil,  // No unrecognised possibile
@@ -269,7 +289,10 @@ class Parser from parser.genparser.Parser
       // Just to be able to add always "," at the end
       "*dummy" => nil
    ]
-         
+
+   function reset()
+      self.initParser( "start" )
+   end
 end
 
 

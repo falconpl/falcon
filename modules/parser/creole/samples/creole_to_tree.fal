@@ -51,7 +51,7 @@ p = parser.creole.Parser()
 p.initParser( "start" )
 line = ""
 while is.readLine( line, 120000 )
-   parser.parseLine( line, ctx )
+   p.parseLine( line, ctx )
 end
 is.close()
 

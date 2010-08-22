@@ -53,9 +53,6 @@ class Node( type, initContent )
    function _stringAdder( data )
       select data
          case StringType
-            if self.content.len() > 0 and not _isBlank(self.content[*-1])
-               self.content += " "
-            end
             self.content += data
 
          case Node
@@ -73,9 +70,6 @@ class Node( type, initContent )
          case StringType
             back = self.content.back()
             if back.type == node_text_type
-               if back.content.len() > 0 and not _isBlank(back.content[*-1])
-                  back.content += " "
-               end
                back.content += data
             else
                self.content.push( Node( node_text_type, data) )

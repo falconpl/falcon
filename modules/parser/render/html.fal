@@ -13,18 +13,21 @@
    See LICENSE file for licensing details.
 */
 
-/*# Base site helper */
-class BaseSiteHelper
+import SiteHelper from .sitehelper as SiteHelper
+
+/*# Default renderer with basic functionalities.
+*/
+class BaseSiteHelper from SiteHelper
    function code(v, lang)
-      return @"<pre class=\"brush:$lang\">\n"+v+"</pre>"
+      return @"<pre>\n"+v+"</pre>"
    end
 
    function pageLink( v )
-      return "?pid="+URI.encode(v)
+      return "/"+URI.encode(v)
    end
 
    function iLink( wiki, v )
-      return @"http://www.$(wiki).com/?" + URI.encode(v)
+      return @"http://www.$(wiki).com/wiki/" + URI.encode(v)
    end
 
    function img( v )
@@ -35,13 +38,18 @@ class BaseSiteHelper
       return v
    end
 
-   function plugin( v, params )
+   function plugin( v, params, node )
       return @"<p>Placeholder for plugin \"$v\"($params)</p>"
    end
 end
 
 
-/*# Html Renderer */
+/*# Html Renderer.
+   @param siteHelper A site helper in the class of 
+   @param cls Class used to render block elements (for easier CSS application).
+
+   
+*/
 class Renderer( siteHelper, cls )
    cls = cls ? cls : ""
    site = siteHelper ? siteHelper : BaseSiteHelper()
@@ -83,7 +91,10 @@ class Renderer( siteHelper, cls )
    ]
 
 
-   function render( context )
+   function render( context, page_name )
+      self.site.page_name = page_name
+      self.site.topnode = context.topNode
+
       return self._rcont( context.topNode.content )
    end
 
@@ -140,9 +151,10 @@ class Renderer( siteHelper, cls )
 
 
    function _render_header( node )
-       return  self._ct("h" + node.level) +
+       return  "<a name=\"" + URI.encode(node.content)+"\">"+
+               self._ct("h" + node.level) +
                self._rcont(node.content) +
-               "</h" + node.level + ">\n\n"
+               "</h" + node.level + "></a>\n\n"
    end
 
 
@@ -171,16 +183,14 @@ class Renderer( siteHelper, cls )
       i = bless(node.infos)
       link = "<a href=\""
       if i.ext
-         if "ilink" in i
-            link +=  self.site.iLink( i.iLink, i.name ) + " target=\"_blank\""
-         else
-            link += strEscape(i.name) + " target=\"_blank\""
-         end
+         link += strEscape(i.name) + "\" target=\"_blank\""
       else
-         link += self.site.pageLink( i.name )
+         if "ilink" in i
+            link +=  self.site.iLink( i.ilink, i.name ) + "\" target=\"_blank\""
+         else
+            link += self.site.pageLink( i.name ) +"\""
+         end
       end
-
-      link += "\""
 
       link += ">" + (i.text ? i.text : i.name) + "</a>"
       return link

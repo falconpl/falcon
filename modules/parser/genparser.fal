@@ -184,17 +184,30 @@ class Parser()
       self.initParser(initState)
       ctx = Context()
       pos = 0
-      
+      strlen = string.len()
+
       loop
          // find the next line
          poseol = string.find( "\n", pos )
-         line = string[pos: (poseol >= 0 ? poseol + 1:-1)]
+         eolsize = 1
 
-         self.parseLine( line, ctx )
+         // consider \r\n or \n\r
+         if pos > 0
+            if string[* (pos-1)] == 0xA
+               --poseol
+               ++eolsize
+            elif pos+1 < strlen and string[* (pos-1)] == 0xA
+               ++eolsize
+            end
+         end
          
-         pos = poseol + 1
-      end pos == 0
+         line = string[pos: (poseol >= 0 ? poseol: strlen)]
+         self.parseLine( line, ctx )
 
+         if poseol < 0: break
+         pos = poseol + eolsize
+      end 
+      
       return ctx
    end
 
@@ -213,6 +226,7 @@ class Parser()
    function parseLine( line, ctx )
       linelen = line.len()
       col = 0
+      
       loop
          hadWinner = false
          
@@ -221,16 +235,17 @@ class Parser()
             winner = nil
 
             state = self._stack[-1]
-            for r in state.rules
-               if ( rulePos = r.match( line, col ) ) == 0
+            for rule in state.rules
+               rulePos = rule.match( line, col )
+               if rulePos == 0
                   // we found the rule
-                  winner = r
+                  winner = rule
                   hadWinner = true
                   matchAt = 0
                   break
                elif rulePos > 0
                   if rulePos < matchAt
-                     winner = r
+                     winner = rule
                      matchAt = rulePos
                   end
                end
