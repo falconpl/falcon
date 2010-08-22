@@ -14,8 +14,10 @@
 
 class Stateful
    [one]
+   end
 
    [two]
+   end
 end
 
 class Stateless

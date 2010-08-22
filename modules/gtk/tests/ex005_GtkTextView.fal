@@ -1,10 +1,17 @@
+/*
+    Falcon-GTK Example 005
+    ======================
+
+    Quickly demonstrating GtkTextView...
+ */
+
 load gtk
 
 _main = GtkMain()
 
 class MyWindow from GtkWindow
     init
-        self.signal_delete_event().subscribe( self )
+        self.signal_delete_event().connect( self )
         buf = GtkTextBuffer()
         buf.set_text( "Falcon", -1 )
         view = GtkTextView.new_with_buffer( buf )

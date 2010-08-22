@@ -1,3 +1,10 @@
+/*
+    Falcon-GTK Example 004
+    ======================
+
+    An application showing all the Gtk stock items.
+ */
+
 load gtk
 
 _main = GtkMain()

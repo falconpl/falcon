@@ -18,6 +18,15 @@ a = 5 ** 2
 if a != 25.0: failure( "Simple power" )
 a = a ** ( 1 / 2 )
 if a != 5.0: failure( "Simple radix" )
+try
+   a = 0**-1 // just to dirty math errno and see if we reset it.
+catch MathError
+end
+try
+   a = 5**2 // see if errno is clear
+catch
+   failure( "Power error recovering" )
+end
 
 success()
 

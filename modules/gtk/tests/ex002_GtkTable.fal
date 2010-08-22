@@ -1,15 +1,25 @@
+/*
+    Falcon-GTK Example 002
+    ======================
+
+    Demonstrating use of GtkTable.
+
+ */
+
 load gtk
 
 m = GtkMain()
 w = GtkWindow()
-
+// a callback for the window to quit the main loop
 function _quit()
     m.quit()
     return false
 end
-
 w.signal_delete_event().connect( _quit )
 
+/*
+    Sublcass GtkButton.
+ */
 class MyButton( row, col ) from GtkButton
     _row = 0
     _col = 0
@@ -24,6 +34,9 @@ class MyButton( row, col ) from GtkButton
     end
 end
 
+/*
+    Subclass GtkTable (and create a table of MyButton).
+ */
 class MyTable( numrows, numcols ) from GtkTable
     init
         self.resize( numrows, numcols )
@@ -38,11 +51,9 @@ class MyTable( numrows, numcols ) from GtkTable
             i += 1
         end
     end
-    function on_clicked()
-        m.quit()
-    end
 end
 
+// Create a table of 25 buttons.
 tab = MyTable( 5, 5 )
 
 w.add( tab )

@@ -1,3 +1,13 @@
+/*
+    Falcon-GTK Example 003
+    ======================
+
+    Little application to 'ping' some IP address (unfinished!),
+    demonstrating the use of a GtkSpinButton.
+
+    (Credits to billykater.)
+ */
+
 load gtk
 
 m = GtkMain( args )
