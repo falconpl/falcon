@@ -1,0 +1,59 @@
+/*
+   FALCON - Samples
+
+   FILE: dbus_receive_signal.fal
+
+   A minimal example that catch the signals sent from dbus_signal.fal
+
+   -------------------------------------------------------------------
+   Author: Enrico Lumetti
+   Begin: Sun, 22 Aug 2010 14:52 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/ 
+
+load dbus
+
+// the two functions are called when the dispatcher catch the respective signal
+function Test()
+   > "Test signal received!"
+end
+
+function Testp( params )
+   > "Testp signal received with args:"
+   inspect( params )
+end
+
+try
+   // Get the connection
+   conn = DBus()
+   
+   // Add a match for signals from opt.Falcon.tests.dbus_signal
+   conn.addMatch( "type='signal',interface='opt.Falcon.tests.dbus_signal'" )
+
+   // We add a filter on signals Test and Testp  and set an handler to each of them.
+   // During the dispatching, the function will check the interface and the name
+   // of the signal and will call the respective handler. 
+   conn.addFilter( "opt.Falcon.tests.dbus_signal", "Test", Test, true );
+   conn.addFilter( "opt.Falcon.tests.dbus_signal", "Testp", Testp, true )
+
+   > "Test started."
+   // start the parallel dispatching
+   conn.startDispatch()
+   stdin = stdIn() 
+
+   loop
+   end stdin.readAvailable( 0.5 ) // if the user press a key, stop the loop
+
+   stdin.grabLine() // just flush the input
+   conn.stopDispatch() 
+
+   > "Test complete"
+catch DBusError in e
+   > "Test failed. DBus subsystem reported the following error: "
+   >
+   > e
+end 
