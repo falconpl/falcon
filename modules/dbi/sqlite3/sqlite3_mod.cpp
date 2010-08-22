@@ -414,13 +414,13 @@ void DBIHandleSQLite3::int_execute( sqlite3_stmt* pStmt, const ItemArray& params
       Sqlite3InBind binds( pStmt );
       binds.bind(params);
       res = sqlite3_step( pStmt );
+      sqlite3_finalize( pStmt );
    }
    else
    {
       res = sqlite3_step( pStmt );
+      sqlite3_finalize( pStmt );
    }
-
-   sqlite3_finalize( pStmt );
 
    if( res != SQLITE_OK
          && res != SQLITE_DONE

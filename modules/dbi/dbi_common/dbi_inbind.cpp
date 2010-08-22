@@ -63,7 +63,14 @@ char* DBIStringConverter_UTF8::convertString( const String& str, char* target, i
       ret = (char *) memAlloc( maxlen );
    }
 
-   bufsize = str.toCString( (char*) ret, bufsize );
+   while( (bufsize = str.toCString( ret, maxlen )) < 0 )
+   {
+      maxlen *= 2;
+      if ( ret != target )
+         memFree(ret);
+      ret = (char *) memAlloc( maxlen );
+   }
+
    return ret;
 }
 
@@ -196,7 +203,7 @@ void DBIInBind::bind( const ItemArray& arr,
    // as a marker of having completed the first loop, we'll change m_size only at the end
    int nSize;
 
-   // firs time around?
+   // first time around?
    if ( m_ibind == 0 )
    {
       bFirst = true;
@@ -232,7 +239,7 @@ void DBIInBind::bind( const ItemArray& arr,
       // first time around, or changed buffer?
       if( m_bAlwaysChange || bi.type() != type || bFirst || bi.databuffer() != buffer || bi.length() != len )
       {
-         // let the engine determine if the type is compatible with the type of colunn
+         // let the engine determine if the type is compatible with the type of column
          onItemChanged( i );
       }
    }
