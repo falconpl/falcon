@@ -28,7 +28,7 @@ if ( FALCON_WANT_PDF )
     add_subdirectory( pdf )
 endif()
 
-if ( FALCON_WANT_SQL )
+if ( FALCON_WANT_SDL )
     add_subdirectory( sdl )
 endif()
 
