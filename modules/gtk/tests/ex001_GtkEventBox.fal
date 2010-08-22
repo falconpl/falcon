@@ -1,3 +1,10 @@
+/*
+    Falcon-GTK Example 001
+    ======================
+
+    Demonstrating GtkEventBox, providing GtkImage a button-press-event.
+ */
+
 load gtk
 
 m = GtkMain()
@@ -13,9 +20,9 @@ class MyWindow from GtkWindow
         self.add( box )
     end
     function on_button_press_event( event )
-        // prints the coordinates
+        // prints the coordinates of the mouse pointer
         > event.x, " ", event.y
-        // return true to block event
+        // (return true to block the event)
         return false
     end
     function on_delete_event()
