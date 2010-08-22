@@ -207,9 +207,25 @@ class Renderer( siteHelper, cls )
 
    function _render_img( node )
       i = bless(node.infos)
-      link = "<img src=\"" + self.site.img( i.name ) + "\""
+      link = ""
+      style = ""
+      
+      if "thumb" in i
+         link +="<a href=\"" + self.site.img( i.name ) +"\" target=\"_blank\">"
+      end
+
+      link += "<img src=\"" + self.site.img( i.name ) + "\""
       if i.alt: link += " alt=\"" + i.alt + "\""
+      if "w" in i: link+=" width=\""+i.w+"\""
+      if "h" in i: link+=" height=\""+i.h+"\""
+      if "valign" in i: style +="vertical-align:"+i.valign+";"
+      if "pad" in i: style +="margin:"+i.pad+"px;"
+      if "center" in i: style +="display: block; margin-left: auto; margin-right: auto;"
+      if style: link +=" style=\""+style+"\""
+      
       link += "/>"
+      
+      if "thumb" in i: link +="</a>"
       return link
    end
 
