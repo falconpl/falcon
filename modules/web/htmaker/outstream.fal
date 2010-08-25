@@ -1,0 +1,35 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: outstream.fal
+
+   Stream wrapper
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:44:23 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+/*# Object used as output stream in renderings.
+
+   To capture the output on a different stream,
+   configure the stream property of this object.
+*/
+object OutStream
+   stream = stdOut()
+
+   function write()
+      passvp( self.stream.writeText )
+   end
+   
+   function writeEscape( text )
+      self.stream.writeText(
+         text.replace( "&", "&amp;" ).replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace( "\"", "&quot;" ) )
+   end
+end

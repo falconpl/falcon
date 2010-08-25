@@ -1,0 +1,44 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+   
+   FILE: minimal.fal
+
+   Mimimal XHTML generator
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from htmaker
+
+doc = htmaker.XHTMLFrame()
+
+doc.html.add(
+
+   htmaker.Head().add( 
+      htmaker.Title( "HTMaker minimal test" ),
+      htmaker.Meta( "desription", "A sample test for Falcon module htmaker" )
+   ),
+   
+   htmaker.Body().set( ["onload" => "launchme()"]).add(
+      htmaker.P( ).add(
+         "some text.",
+         "some other text.",
+         "And still some text."
+         ).set ( { a =>
+            a.style = "my_style"
+            a.onmouseover = "dothis"
+            a.id = "thispara" }
+         ),
+
+         htmaker.ValidHtmlMark()
+      )
+   )
+   
+doc.render()

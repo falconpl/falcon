@@ -1,0 +1,36 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: inclusor.fal
+
+   Mimimal XHTML Generator using an included file.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from htmaker
+
+Reply.ctype( "text","xhtml" )
+
+doc = htmaker.XHTMLFrame()
+
+doc.html.add(
+
+   htmaker.Head().add( htmaker.Title( "Here is the title" ) ),
+
+   htmaker.Body().set( ["onload" => "launchme()"]).add(
+      htmaker.P("Trying to include some text here:"),
+      htmaker.Include( "included.xhtml" ),
+      htmaker.P("Inclusion complete"),
+      htmaker.ValidHtmlMark()
+   )
+)
+
+doc.render()

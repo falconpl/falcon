@@ -1,0 +1,49 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: htmerror.fal
+
+   Error class with specific descriptions
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:44:23 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Class raised in case of logic errors in composing XHTML documents. */
+
+class HTMError(code, extra) from Error(code, "HTML generic error", extra)
+   parentship = 10001
+   nochildren = 10002
+   noattrib = 10003
+   headdef = 10004
+   bodydef = 10005
+   nottoplevel = 10006
+   noid = 10007
+   noclass = 10008
+   nostyle = 10008
+
+   _codes = [
+      10001 => i"Parentship restraint wasn't respected",
+      10002 => i"Adding an item to a flat item",
+      10003 => i"Invalid attribute name",      
+      10004 => i"Head part already defined",
+      10005 => i"Body already defined",
+      10006 => i"Addign a non-toplevel item to <html>",
+      10007 => i"The XHTML element doesn't expose an 'id' property",
+      10008 => i"The XHTML element doesn't expose a 'style' property"
+      ]
+   
+   init
+      if code in self._codes
+         self.description = self._codes[code]
+      end
+   end
+end
+
+/* end of htmerror.fal */

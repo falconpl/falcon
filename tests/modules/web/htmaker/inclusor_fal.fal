@@ -1,0 +1,35 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: inclusor_fal.fal
+
+   Show how to include the result of a falcon script in an xhtml
+   document.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from htmaker
+
+doc = htmaker.XHTMLFrame()
+
+doc.html.add(
+
+   htmaker.Head().add( htmaker.Title( "Here is the title" ) ),
+
+   htmaker.Body().set( ["onload" => "launchme()"]).add(
+      htmaker.P("Trying to include some text here:"),
+      htmaker.IncludeFalcon( "included_fal.fal" ),
+      htmaker.P("Inclusion complete"),
+      htmaker.ValidHtmlMark()
+   )
+)
+
+doc.render()

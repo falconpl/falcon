@@ -1,0 +1,2225 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: htmaker.fal
+
+   Main module file
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:44:23 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import HTMError from self.htmerror as HTMError
+import OutStream from self.outstream as OutStream
+
+/******************************************************************
+Options
+******************************************************************/
+
+/*# General module options. */
+object HTMaker
+   /*# Determine if tree inseretions must be checked for DOM consistency.
+   
+      If this switch is active, every inserted node must respect HTML 4.01
+      hierarcy constraints.
+
+      The check is relatively heavy, and once moving in a production phase,
+      it's hardly likely that generated trees will change. For those
+      application that are known to create well-formed XHTML trees, this
+      option can be turned to false to improve performance.
+   */
+   checkTree = true
+end
+
+
+/******************************************************************
+Base common stuff
+******************************************************************/
+
+class AttribsBase
+
+   /*# render the attributes */
+   function render()
+      
+      string = ""
+      for key, value in self.retrieve()
+         key = key.replace("_", "-" ).replace("__", ":" ).lower()
+         // boolean true values are rendered via attrib-name="attrib-name"
+         // false values are stripped out by removing the key too
+         if value == true
+            string += " " + key + "=\""+key+"\""
+         else
+            if value.typeId() != StringType: continue
+            string += " " + key +
+                  "=\"" + value.replace( '"', '&quot;' ).replace( '&', '&amp;' ) +"\""
+         end
+      end
+      
+      if string: OutStream.write( string )
+   end
+end
+
+/*# Class managing event related attributes */
+class EventAttribs from AttribsBase
+   /*# Script to be run on a mouse click  */
+   onclick = nil
+   /*# Script to be run on a mouse double-click */
+   ondblclick = nil
+   /*#  Script to be run when a document load */
+   onload = nil
+   /*# Script to be run when mouse button is pressed */
+   onmousedown = nil
+   /*# Script to be run when mouse pointer moves */
+   onmousemove = nil
+   /*# Script to be run when mouse pointer moves out of an element */
+   onmouseout = nil
+   /*# Script to be run when mouse pointer moves over an element */
+   onmouseover = nil
+   /*# Script to be run when mouse button is released */
+   onmouseup = nil
+   /*# Script to be run when a key is pressed  */
+   onkeydown = nil
+   /*# Script to be run when a key is pressed and released  */
+   onkeypress = nil
+   /*# Script to be run when a key is released */
+   onkeyup = nil
+   /*# Script to be run when a document unload */
+   onunload = nil
+end
+
+
+class I18nAttribs from AttribsBase
+   /*# Specifies a language code for the content in an element */
+   lang = nil
+
+   /*# Specifies a language code for the content in an element, in XHTML documents */
+   xml__lang = nil
+end
+
+/*# Attributes for all the DomElements */
+class CoreAttribs from AttribsBase
+   /*#  Specifies a classname for an element.
+      Will be rendered as "class"
+   */
+   CLASS = nil
+
+   /*# Specifies the text direction for the content in an element */
+   dir = nil
+
+   /*# Specifies a unique id for an element */
+   id = nil 
+
+   /*# Specifies a language code for the content in an element */
+   style = nil
+
+   /*# Specifies extra information about an element */
+   title = nil
+
+end
+
+/*# Utility class exposing all the attributes */
+class AllAttribs from CoreAttribs, I18nAttribs, EventAttribs
+end
+
+class DomList( parent )
+   parent = parent
+   items = []
+
+   function empty(): return self.children.len() == 0
+   
+   function add( item )
+      if HTMaker.checkTree and item.hname
+         if self.parent.childTypeList and item.hname notin self.parent.childTypeList
+            pcls = self.parent.hname
+            cls = item.hname
+            raise HTMError( HTMError.parentship,
+               @i"Parenting element of class \"$(cls)\" in a parent of class \"$(pcls)\"" )
+         end
+      end
+      
+      self.items += item
+   end   
+end
+
+
+object ContentModel
+   fontstyle = .[ 'tt' 'i' 'b' 'big' 'small' ]
+   phrase = .[ 'em' 'strong' 'dfn' 'code' 'samp' 'kbd' 'var' 'cite' 'abbr' 'acronym' ]
+   special = .[ 'a' 'img' 'object' 'br' 'script' 'map' 'q' 'sub' 'sup' 'span' 'bdo' ]
+   formctrl = .[ 'input' 'select' 'textarea' 'label' 'button' ]
+   inline = .['text']
+   inline_pre = nil
+   inline_a = nil
+   inline_label = nil
+
+   heading = .[ 'h1' 'h2' 'h3' 'h4' 'h5' 'h6' ]
+   list = .[ 'ol' 'ul' ]
+   preformatted = .[ 'pre' ]
+   block = .['p' 'dl' 'div' 'noscript' 'blockquote' 'form' 'hr' 'table' 'fieldset' 'address' ]
+   block_form = nil
+   flow = nil
+   flow_body = nil
+   flow_object = nil
+   flow_fieldset = nil
+   flow_button = nil
+   listitem = .[ 'li' ]
+   defitems = .[ 'dd' 'dt' ]
+
+   tableitems = .[ 'caption' 'col' 'colgroup' 'thead' 'tfoot' 'tbody' ]
+   tablerow = .[ 'tr' ]
+   tablecol = .[ 'col' ]
+   tablecells = .[ 'th' 'td' ]
+   head_misc = .[ 'script' 'style' 'meta' 'link' 'object' 'base' ]
+   options = .[ 'option' 'optgroup' ]
+   
+   init
+      self.inline = self.inline +  self.fontstyle + self.phrase + self.special + self.formctrl
+      self.inline_pre = self.inline - .[ 'img' 'object' 'big' 'small' 'sub' 'sup' ]
+      self.inline_a = self.inline - .[ 'a' ]
+      self.inline_label = self.inline - .[ 'label' ]
+
+      self.block = self.block + self.heading + self.list + self.preformatted
+      self.block_form = (self.block + .[ 'script' ]) - .[ 'form' ]
+
+      self.flow = self.inline + self.block
+      self.flow_body = self.flow + .['ins' 'del']
+      self.flow_object = self.flow + .['param']
+      self.flow_fieldset = self.flow +.[ 'legend' ]
+      self.flow_button = self.flow - ( .['a' 'form' 'fieldset'] ) - self.formctrl
+   end
+end
+
+/*# Topmost node for XHTML documents.
+
+   In rendering, it creates an XHTML compilant document. 
+*/
+class XHTMLFrame( encoding, version )
+   encoding = encoding ? encoding : "utf-8" 
+   version = version ? version: "1.0"
+   html = HTML(self)
+
+   function render()
+      OutStream.write( @'
+<?xml version="$(self.version)" encoding="$(self.encoding)"?>
+<!DOCTYPE html
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+')
+      self.html.render()
+   end
+end
+
+/*# Topmost node for Transitional  documents.
+
+   In rendering, it creates an HTML 4.01 (Transitional) compilant document.
+*/
+class TransitionalFrame( sayDocType )
+   html = HTML(self)
+   sayDocType = sayDocType == nil ? true : sayDocType
+
+   function render()
+      if self.sayDocType
+         OutStream.write( @'
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+            "http://www.w3.org/TR/html4/loose.dtd">
+   ')
+      end
+      
+      self.html.render()
+   end
+end
+
+/*# Topmost node for HTML Strict documents.
+
+   In rendering, it creates an HTML 4.01 (Strict) compilant document.
+*/
+class StrictFrame
+   html = HTML(self)
+
+   function render()
+      OutStream.write( @'
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+      "http://www.w3.org/TR/html4/strict.dtd">
+')
+      self.html.render()
+   end
+end
+
+/*# Topmost node for HTML Frameset documents.
+
+   In rendering, it creates an HTML 4.01 (Frameset) compilant document.
+*/
+class FramesetFrame
+   html = HTML(self)
+
+   function render()
+      OutStream.write( @'
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
+      "http://www.w3.org/TR/html4/frameset.dtd">
+')
+      self.html.render()
+   end
+end
+
+
+/******************************************************************
+* Dom Entities
+******************************************************************/
+
+/** Base dom elements.
+
+   The basic dom element has a real parent and 0 or more
+   restrictions on the parents it could have.
+*/
+class BaseDom( hname, childTypeList, attribClass )
+   childTypeList = childTypeList
+   parent = nil
+   children = childTypeList ? DomList( self ) : nil
+   eattr = attribClass != nil ? attribClass() : nil
+   text = nil
+   hname = hname
+   _rtsep = "\n"
+   _rsep = "\n"
+
+   function st_makesep( level )
+      return " " * (level * 3)
+   end
+   
+   function render( level )
+      if not level: level = 1
+      
+      sep = self.st_makesep( level )
+      OutStream.write( sep + "<" + self.hname )
+
+      if self.eattr
+         self.eattr.render()
+      end
+
+      // ending ?
+      if not self.text and not self.children
+         OutStream.write( "/>" + self._rsep )
+         return
+      end
+
+      OutStream.write( ">" + self._rtsep )
+
+      if self.text
+         // normally does not escapes, but oob text can be passed to escape automatically
+         ((^? self.text) ? OutStream.write : OutStream.writeEscape)( self.text )
+      end
+      
+      if self.children
+         for item in self.children.items
+            forfirst: OutStream.write( self._rsep )
+            item.render( level + 1 )
+            forlast: last = item
+         end
+
+         if last and last.getProperty("_rsep")
+            OutStream.write( sep )
+         end
+      end
+
+      OutStream.write( "</" + self.hname + ">" + self._rsep )      
+   end
+   
+   function add()
+      if self.children
+         for i in [0:paramCount()]
+            item = parameter(i)
+            if item.typeId() == StringType
+               item = ^? item ? Verbatim(item) : Text( item )
+            end
+            self.children.add( item )
+            item.parent = self
+         end
+      else
+         raise HTMError( HTMError.nochildren, self.hname )
+      end
+
+      return self
+   end
+
+   /*# Method to set arbitrary attributes.
+      @param v Either a dictionary used to set the properties or a callable item.
+      @raise HTMError if the properties in @b v are not found.
+      @return self
+      
+      If @b v is a dictioanry, then properties in this item matching the dictionary
+      kyes are searched and the corresponding values are set.
+
+      If @b v is a callable, then it is called with the properties instance as the
+      first parameter, and self as the second.
+
+      Returns the self item so it can be used in chains with other methods.
+   */
+   function set( v )
+      if v.isCallable()
+         v( self.eattr, self )
+      elif v.typeId() == DictionaryType
+         for key, val in v
+            if key notin self.eattr
+               raise HTMError( HTMError.noattrib, key )
+            end
+            self.eattr.setProperty( key, val )
+         end
+      end
+
+      return self
+   end
+
+    /*# Method to set the item ID.
+      @param value The value of the ID.
+      @raise HTMError if this entity doesn't expose an ID property.
+      @return self
+
+      Even if not all the XHTML entities expose an ID, most do. This
+      method is a simple way to set it.
+
+      Returns the self item so it can be used in chains with other methods.
+   */
+
+   function id( value )
+      if not self.eattr or not self.eattr provides id
+         raise HTMError( HTMError.noid, self.hname )
+      end
+      self.eattr.id = value
+      return self
+   end
+
+   /*# Method to set the entity class.
+      @param value The value of the class.
+      @raise HTMError if this entity doesn't expose a class property.
+      @return self
+
+      Even if not all the XHTML entities expose an class, most do. This
+      method is a simple way to set it.
+
+      Returns the self item so it can be used in chains with other methods.
+   */
+
+   function CLASS( value )
+      if not self.eattr or not self.eattr provides CLASS
+         raise HTMError( HTMError.noclass, self.hname )
+      end
+      self.eattr.CLASS = value
+      return self
+   end
+   
+   /*# Method to set the entity style.
+      @param value The value of the style.
+      @raise HTMError if this entity doesn't expose a style property.
+      @return self
+
+      Even if not all the XHTML entities expose a style, most do. This
+      method is a simple way to set it.
+
+      Returns the self item so it can be used in chains with other methods.
+   */
+
+   function style( value )
+      if not self.eattr or not self.eattr provides style
+         raise HTMError( HTMError.nostyle, self.hname )
+      end
+      self.eattr.style = value
+      return self
+   end
+end
+
+
+class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
+   /*# Language of this document */
+   lang = "en"
+   parent = parent
+
+   head = nil
+   body = nil
+
+   function render()
+      if not self.head
+         self.head = Head().add( Title("") )
+      end
+      
+      if not self.body
+         self.body = Body()
+      end
+      
+      if self.parent and self.parent.derivedFrom( XHTMLFrame )
+         OutStream.write(
+            @"
+               <html xmlns=\"http://www.w3.org/1999/xhtml\"
+               xml:lang=\"$(self.lang)\" lang=\"$(self.lang)\" >\n" )
+      else
+         OutStream.write( "<html>\n" )
+      end
+                  
+      self.head.render(1)
+      self.body.render(1)
+      
+      OutStream.write( "</html>\n" )
+   end
+
+   function add()
+      for i in [0:paramCount()]
+         item = parameter(i)
+         select item
+            case Head
+               if self.head != nil
+                  raise HTMError( HTMError.headdef )
+               end
+               self.head = item
+
+            case Body, Frameset
+               if self.body != nil
+                  raise HTMError( HTMError.bodydef )
+               end
+               self.body = item
+
+            default
+               raise HTMError( HTMError.nottoplevel )
+         end
+         item.parent = self
+      end
+   end
+            
+end
+
+
+/******************************************************************
+* Head entities
+******************************************************************/
+
+/*# Attributes used for the @a Head class */
+class HeadAttribs from I18nAttribs
+   /*#
+   This attribute specifies the location of one or more meta data profiles, separated by
+   white space. For future extensions, user agents should consider the value to be a list
+   even though this specification only considers the first URI to be significant.
+   */
+   profile = nil
+end
+
+/*# Class encapsulating the xhtml header.
+   If the title text (a string) is given, a Title node is automatically created.
+*/
+class Head( title ) from BaseDom( "head", ContentModel.head_misc + .['title'], HeadAttribs )
+   init
+      if title
+         self.add( Title( title ) )
+      end
+   end
+end
+
+/*# Class encapsulating the xhtml header.
+   If the title text (a string) is given, a Title node is automatically created.
+*/
+class Title( text ) from BaseDom( "title", nil, I18nAttribs )
+   hname = "title"
+   _rtsep = ""
+   text = text
+end
+
+  
+/*# Attributes used for the @a Meta class */
+class MetaAttribs from I18nAttribs
+   /*# HTTP response header name */
+   http_equiv = nil
+   
+   /*#  Metainformation name */
+   name = nil
+  
+   /*#  associated information */
+   content = nil
+   
+   /*#  select form of content */
+   scheme = nil
+end
+
+
+class Meta( name, content, http_equiv, scheme ) \
+      from BaseDom( "meta", nil , MetaAttribs )
+   
+   init
+      self.eattr.name = name
+      self.eattr.content = content
+      self.eattr.http_equiv = http_equiv
+      self.eattr.scheme = scheme
+   end
+end
+
+
+/******************************************************************
+* Body entities
+******************************************************************/
+
+
+/*# Attributes used for the @a Body class */
+class BodyAttribs from AllAttribs
+
+   /*# The onload event occurs when the user agent finishes loading a window or
+      all frames within a FRAMESET. This attribute
+      may be used with BODY and FRAMESET elements.
+   */   
+   onload = nil
+
+   /*# The onunload event occurs when the user agent removes a document from a window or frame.
+      This attribute may be used with BODY and FRAMESET elements.
+   */
+   onunload = nil
+end
+
+/*# Body class */
+class Body from BaseDom( "body", ContentModel.flow_body , BodyAttribs )
+end
+
+
+class FramesetAttribs from BodyAttribs
+   rows = nil
+   cols = nil
+end
+
+
+/*# Frameset class */
+class Frameset from BaseDom( "frameset", .['frameset' 'frame' 'noframes'], FramesetAttribs )
+end
+
+
+
+/******************************************************************
+* Boxing tags
+******************************************************************/
+
+class FrameAttribs from CoreAttribs
+   /*# Link to long description  (complements title) */
+   longdesc = nil
+
+   /*# name of frame for targetting -- deprecated in XHTML*/
+   name = nil
+   
+   /*# source of frame content */
+   src = nil
+
+   /*# request frame borders? Can be 0 or 1 */
+   frameborder = nil
+   
+   /*# margin widths in pixels */
+   marginwidth = nil
+
+   /*# margin heights in pixels */
+   marginheight = nil
+   
+   /*# allow users to resize frames? -- boolean value */
+   noresize = false
+   
+   /*# Should we have the scrollbar? -- "yes", "no" or "auto" */
+   scrolling = nil 
+end
+
+class Frame from \
+      BaseDom( 'frame', ContentModel.flow, FrameAttribs ) // also div and frameset
+end
+
+class Noframes from \
+      BaseDom( "noframes", ContentModel.flow, AllAttribs ) // also div and frameset
+end
+
+/******************************************************************
+* Text data
+******************************************************************/
+
+/*# Class representing a DIV html element.
+
+   As "div" blocks are often used to express styles, classes or ids, they are
+   directly exposed as parameters for user convenience.
+*/
+class Div( id, CLASS, style ) from  BaseDom( "div", ContentModel.flow, AllAttribs ) // also div and frameset
+   init
+      self.eattr.id = id
+      self.eattr.CLASS = CLASS
+      self.eattr.style = style
+   end
+end
+
+
+class IFrameAttribs from FrameAttribs
+   /*# (top|middle|bottom|left|right)" -- center?  */
+   align = nil
+end
+
+class IFrame from \
+      BaseDom( "iframe", ContentModel.flow, IFrameAttribs ) // also div and frameset 
+end
+
+class ObjectAttribs from AllAttribs
+  /*# declare but don't instantiate flag. Set to "declare" to enable */
+  declare  = nil
+  /*# identifies an implementation */
+  classid  = nil
+  /*#  base URI for classid, data, archive */
+  codebase = nil
+  /*# reference to object's data */  
+  data  = nil
+  /*# content type for data */ 
+  type = nil
+  /*# content type for code */
+  codetype = nil
+  /*# space-separated list of URIs */
+  archive = nil
+  /*# message to show while loading */
+  standby = nil
+  /*# override height */
+  height = nil
+  /*# override width */
+  width = nil
+  /*# use client-side image map */
+  usemap = nil
+  /*# submit as part of form */
+  name = nil
+  /*# position in tabbing order */
+  tabindex = nil
+end
+
+/*# HTML embedding object class. */
+class Object from \
+      BaseDom( "object", ContentModel.flow_object, ObjectAttribs )
+end
+
+class ParamAttribs from AttribsBase
+   /*# document-wide unique id */
+   id = nil
+   /*# property name */
+   name = nil
+   /*# property value */
+   value = nil
+   /*# How to interpret value (can be "data", "ref" or "object")*/
+   valuetype = nil
+   /*# content type for value */
+   type = nil
+end
+
+
+/*# Class representing a single parameter to be sent to an object.
+   @param name The name of the parameter.
+   @param value The value of the parameter.
+   @optparam vtype Valye type (data, ref or object).
+   @optparam ctype Content-type of the parameter value.
+   @optparam id The unique entity ID in the document.
+*/
+class Param( name, value, vtype, ctype, id ) from \
+      BaseDom( "param", nil, ParamAttribs )
+
+   init
+      self.eattr.name = name
+      self.eattr.value = value
+      self.eattr.valuetype = vtype
+      self.eattr.type = ctype
+      self.eattr.id = id
+   end
+end
+
+class ImgAttribs from AllAttribs
+   /*# URI of image to embed */
+   src = nil
+   /*# short description */
+   alt = nil
+   /*# link to long description */
+   longdesc = nil
+   /*# override height */
+   height = nil
+   /*# override width */
+   width = nil
+   /*# use client-side image map */
+   usemap = nil
+   /*# use server-side image map */
+   ismap = nil
+end
+
+/*# Hypertext embedded image. */
+class Img( src, width, height, alt, usemap, ismap ) from \
+      BaseDom( "img", nil, ImgAttribs )
+
+   init
+      self.eattr.src = src ? src : ""  // mandatory
+      self.eattr.width = width
+      self.eattr.heigth = height
+      self.eattr.alt = alt ? alt : ""  // mandatory
+      self.eattr.usemap = usemap
+      self.eattr.ismap = ismap
+   end
+end
+
+class MapAttribs from AllAttribs
+  /*# for reference by usemap */
+  name = nil
+end
+
+/*# Image active link map. */
+class Map(name) from \
+      BaseDom( "map", ContentModel.block + .['area'], MapAttribs )
+   init
+      self.eattr.name = name
+   end
+end
+
+class AreaAttribs from AllAttribs
+   /*# controls interpretation of coords */
+   shape = nil
+   /*# comma-separated list of lengths */
+   coords = nil
+   /*# URI for linked resource */
+   href = nil
+   /*# this region has no action */
+   nohref = nil
+   /*# short description */
+   alt = nil
+   /*# position in tabbing order */
+   tabindex = nil
+   /*#  accessibility key character */
+   accesskey = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+end
+
+class Area( href, shape, coords,nohref, alt ) from \
+      BaseDom( "area", nil, AreaAttribs )
+
+   init
+      self.eattr.href = href
+      self.eattr.shape = shape
+      self.eattr.coords = coords
+      self.eattr.nohref = nohref
+      self.eattr.alt = alt
+   end
+end
+
+/******************************************************************
+* Stylesheets and scripts
+******************************************************************/
+
+class EscapingData( name, attr ) from \
+         BaseDom( name, nil, attr )
+
+   function render( level )
+      sep = self.st_makesep( level )
+      OutStream.write( sep + "<" + self.hname )
+      self.eattr.render()
+      if not self.text
+         // empty element -- closing mark is required by many browsers
+         OutStream.write( "></"+ self.hname + ">\n" )
+         return
+      end
+
+      item = self
+      while item and item provides parent
+         if item.parent.derivedFrom( XHTMLFrame )
+            use_cdata = true
+            break
+         end
+         item = item.parent
+      end
+
+      // we have a content
+      // CDATA markers must be at line begin.
+      if( use_cdata )
+         OutStream.write( ">\n<![CDATA[\n" + self.text + "\n" +
+            "]]>\n" + sep +
+            "</" + self.hname + ">\n")
+      else
+         OutStream.write( ">\n" + self.text + sep +
+            "</" + self.hname + ">\n")
+      end
+   end
+end
+
+class StyleAttribs from I18nAttribs
+   /*# content type of style language */
+   type = nil
+   /*# designed for use with these media.
+      (single or comma-separated list of media descriptors)
+   */
+   media = nil
+   /*# advisory title */
+   title  = nil
+end
+
+/*# Creates an embedded style sheet.
+
+   The style will be rendered wrapped in an XML CDATA element.
+
+   However, XHTML standard suggest not to use this tag and load
+   the stylesheet via link to other documents, to avoid compatibility
+   problems with not totally compliant browsers.
+
+   If @b type is not given, it will be defaulted to "text/css"
+*/
+
+class Style( data, type ) from \
+         EscapingData( "style", StyleAttribs )
+
+   text = data
+   init
+      self.eattr.type = type? type : "text/css"
+   end
+end
+
+
+class ScriptAttribs from AttribsBase
+   /*# char encoding of linked resource */
+   charset = nil
+   /*# content type of script language */
+   type  = nil
+   /*# URI for an external script */
+   src  = nil
+   /*# URI for an external script */
+   defer  = nil
+end
+
+
+/*# Creates an embedded script.
+
+   The script will be rendered wrapped in an XML CDATA element.
+   The user should escape any "]]>" on its own before setting the
+   data.
+
+   However, XHTML standard suggest not to use this tag and load
+   the stylesheet via link to other documents, to avoid compatibility
+   problems with not totally compliant browsers.
+
+   If @b type is not given, it will be defaulted to "text/javascript"
+*/
+
+class Script( src, type, data ) from \
+         EscapingData( "script", ScriptAttribs )
+
+   text = data
+   init
+      self.eattr.src = src
+      self.eattr.type = type? type : "text/javascript"
+   end
+end
+
+/*# Node representing the things to do if the browser doesn't support scripts. */
+class NoScript from \
+         BaseDom( "noscript", ContentModel.block, AllAttribs )
+end
+
+/******************************************************************
+* Text data
+******************************************************************/
+
+/*# Class bounding the standard paragraph.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class P(text) from \
+      BaseDom( "p", ContentModel.inline, AllAttribs )
+   _rtsep = ""
+   text = text
+end
+
+/*# Class bounding pre-formatted text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Pre(text) from \
+   BaseDom( "q", ContentModel.inline_pre, CoreAttribs )
+   text = text
+end
+
+
+/*# Terminal text node.
+
+   This class is meant to store a terminal text (a pure string)
+   which is directly rendered on the output.
+
+   The string is escaped so that html special characters are
+   correctly rendered.
+*/
+
+class Text(text) from \
+      BaseDom( "text", nil, nil )
+   text = text
+
+   function render( level )
+      OutStream.writeEscape( self.text )
+   end
+end
+
+/*# Terminal unparsed node.
+
+   This class is meant to store a terminal text (a pure string)
+   which is directly rendered on the output.
+
+   The parsed string is included verbatim at required position
+   and never escaped.
+*/
+
+class Verbatim(text) from \
+      BaseDom( "text", nil, nil )
+   text = text
+
+   function render( level )
+      OutStream.write( self.text )
+   end
+end
+
+class BDOAttribs from CoreAttribs
+   /*# Language code */
+   lang = nil
+   
+   /*# directionality -- can be "ltr" or "rtl" */
+   dir = nil      
+end
+
+/*# Class overriding directionality in documents
+
+    If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class BDO(text) from \
+      BaseDom( "bdo", ContentModel.inline, BDOAttribs )
+   text = text
+end
+
+/******************************************************************
+* Lists
+******************************************************************/
+
+/*# Unordered list. */
+class UL from \
+      BaseDom( "ul", ContentModel.listitem, AllAttribs )
+end
+
+/*# Ordered list. */
+class OL from \
+      BaseDom( "ol", ContentModel.listitem, AllAttribs )
+end
+
+/*# List item
+
+    If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class LI(text) from \
+      BaseDom( "li", ContentModel.flow, AllAttribs )
+   text = text
+end
+
+
+/*# Definition list. */
+class DL from \
+      BaseDom( "dl", ContentModel.defitems, AllAttribs )
+end
+
+/*# Definition term.
+
+    If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class DT(text) from \
+      BaseDom( "dt", ContentModel.inline, AllAttribs )
+   text = text
+end
+
+/*# Definition data.
+
+    If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class DD(text) from \
+      BaseDom( "dd", ContentModel.flow, AllAttribs )
+   text = text
+end
+
+/******************************************************************
+* Tables
+******************************************************************/
+
+/*# Definition data.
+
+    If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class TableAttribs from AllAttribs
+   /*# purpose/structure for speech output */
+  summary = nil
+  /*# table width */
+  width = nil
+  /*# controls frame width around table */
+  border = nil
+  /*# which parts of frame to render */
+  frame = nil
+  /*# rulings between rows and cols */
+  rules = nil
+  /*# spacing between cells */
+  cellspacing = nil
+  /*# spacing within cells */
+  cellpadding = nil
+
+end
+
+/*# Hyper text Table class.
+
+   (As opposed to the Falcon language Table class).
+*/
+class TABLE from \
+         BaseDom( "table", ContentModel.tableitems, TableAttribs )
+end
+
+/*# Caption for the table.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Caption(text) from \
+         BaseDom( "caption", ContentModel.inline, AllAttribs )
+   text = text
+end
+
+
+class TElemAttribs from AllAttribs
+   /*# Cell horizontal aligment   (left|center|right|justify|char) */
+   align = nil
+   /*# alignment char, e.g. char=':' */
+   char = nil
+   /*# offset for alignment char */
+   charoff = nil
+
+   /*# Vertical cell alignment (top|middle|bottom|baseline) */
+   valign = nil
+end
+
+/*# Table heading.
+*/
+class THead from \
+         BaseDom( "thead", ContentModel.tablerow, TElemAttribs )
+end
+
+/*# Table footer.
+*/
+class TFoot from \
+         BaseDom( "tfoot", ContentModel.tablerow, TElemAttribs )
+end
+
+/*# Table body.
+*/
+class TBody from \
+   BaseDom( "tbody", ContentModel.tablerow, TElemAttribs )
+end
+
+
+class ColAttribs from TElemAttribs
+   /*# default number of columns in group or size of a column */
+   span = nil
+   /*# default width for enclosed COLs or size of the column */
+   width = nil
+end
+
+/*# Group of columns.
+   Can contain only a list of Col items.
+*/
+class ColGroup from \
+         BaseDom( "colgroup", ContentModel.tablecol, ColAttribs )
+end
+
+/*# Defines attributes for a single column
+   Can contain only a list of Col items.
+*/
+class Col from \
+         BaseDom( "col", nil, ColAttribs )
+end
+
+/*# Group of columns.
+   Can contain only a list of Col items.
+*/
+class TR from \
+         BaseDom( "tr", ContentModel.tablecells, TElemAttribs )
+end
+
+class TCellAttribs from TElemAttribs
+   /*# abbreviation for header cell */
+   abbr = nil
+   /*# comma-separated list of related headers */
+   axis = nil
+   /*# list of id's for header cells */
+   headers = nil
+   /*# scope covered by header cells */
+   scope = nil
+   /*# number of rows spanned by cell */
+   rowspan = nil
+   /*# number of cols spanned by cell */
+   colspan = nil
+end
+
+/*# Table cell at header position.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class TH( text ) from \
+         BaseDom( "th", ContentModel.flow, TCellAttribs )
+   _rtsep = ""
+   text = text
+end
+
+/*# Normal table cell.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class TD( text ) from \
+         BaseDom( "td", ContentModel.flow, TCellAttribs )
+   _rtsep = ""
+   text = text
+end
+
+/******************************************************************
+* Anchor
+******************************************************************/
+
+
+class CommonLinkAttribs from AllAttribs
+   /*# char encoding of linked resource */
+   charset = nil
+   /*# advisory content type */
+   type = nil
+   /*# named link end */
+   name = nil
+   /*# URI for linked resource */
+   href = nil
+   /*# language code */
+   hreflang = nil
+   /*# forward link types */
+   rel = nil
+   /*# reverse link types */
+   rev = nil
+end
+
+class AnchorAttribs from CommonLinkAttribs
+   /*#  accessibility key character */
+   accesskey = nil
+   /*# for use with client-side image maps */
+   shape = nil
+   /*# for use with client-side image maps */
+   coords = nil
+   /*# position in tabbing order */
+   tabindex = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+end
+
+class LinkAttribs from CommonLinkAttribs
+   /*# for rendering on these media */
+   media = nil
+end
+
+/*# Anchor.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class A( href, text ) from \
+         BaseDom( "a", ContentModel.inline_a, AnchorAttribs )
+   text = text
+   init
+      self.eattr.href = href
+   end
+end
+
+
+/*# Document relationship (link).
+*/
+class Link( href, rel, type ) from \
+         BaseDom( "link", nil, LinkAttribs )
+   init
+      self.eattr.href = href
+      self.eattr.rel = rel
+      self.eattr.type = type
+   end
+end
+
+
+/******************************************************************
+* Font/prhase control
+******************************************************************/
+
+/*# Base class for all the font and phrase control tags.
+*/
+
+class FontControl( type, text ) from \
+         BaseDom( type, ContentModel.inline, AllAttribs )
+   _rtsep = ""
+   _rsep = ""
+   text = text
+end
+
+/*# Class generating Typewriter/Tele Type text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class TT(text) from \
+      FontControl( "tt", text )
+end
+
+/*# Class generating italic text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class I(text) from \
+      FontControl( "i", text )
+end
+
+/*# Class generating bold text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class B(text) from \
+      FontControl( "b", text )
+end
+
+/*# Class generating big (uppercase/caps) text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Big(text) from \
+      FontControl( "big", text )
+end
+
+/*# Class generating small text.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Small(text) from \
+      FontControl( "small", text )
+end
+
+/*# Class generating emphathised phrases.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Em(text) from \
+      FontControl( "em", text )
+end
+
+/*# Class generating stronger phrases.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Strong(text) from \
+      FontControl( "strong", text )
+end
+
+/*# Class generating definition phrases.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Dfn(text) from \
+      FontControl( "dfn", text )
+end
+
+/*# Class generating a 'code' section.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Code(text) from \
+      FontControl( "code", text )
+end
+
+/*# Class generating a 'sample' section.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Samp(text) from \
+      FontControl( "samp", text )
+end
+
+/*# Class generating a 'text digited on keyboard' section.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Kbd(text) from \
+      FontControl( "kbd", text )
+end
+
+/*# Class generating a 'variable' phrase.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Var(text) from \
+      FontControl( "var", text )
+end
+
+/*# Class generating a citation phrase.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Cite(text) from \
+      FontControl( "cite", text )
+end
+
+/*# Class generating an abbreviation phrase.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Abbr(text) from \
+      FontControl( "abbr", text )
+end
+
+/*# Class indicating an acronym phrase.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Acronym(text) from \
+      FontControl( "acronym", text )
+end
+
+/*# Subscript phrase generator
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Sub(text) from \
+      FontControl( "sub", text )
+end
+
+/*# Superscript phrase generator
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Sup(text) from \
+      FontControl( "sup", text )
+end
+
+/******************************************************************
+* Quotations
+******************************************************************/
+
+class QuotAttribs from AllAttribs
+   /*# URI for source document or msg */
+   cite = nil
+end
+
+/*# Class used to specify a block quotation. */
+
+class Blockquote from \
+      BaseDom( "blockquote", ContentModel.block + .['script'], QuotAttribs )
+end
+
+/*# Class used to specify a quotation.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Q(text) from \
+      BaseDom( "q", ContentModel.inline, QuotAttribs )
+   _rtsep = ""
+   _rsep = ""
+   text = text
+end
+
+class InsDelAttribs from AllAttribs
+   /*# info on reason for change */
+   cite = nil
+   
+   /*#  date and time of change */
+   datetime = nil
+end
+
+/*# Node for text inserted in a document.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Ins(text) from \
+      BaseDom( "ins", ContentModel.inline, InsDelAttribs )
+   _rtsep = ""
+   _rsep = ""
+   text = text
+end
+
+/*# Node for text removed from a document.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Del(text) from \
+      BaseDom( "del", ContentModel.inline, InsDelAttribs )
+   _rtsep = ""
+   _rsep = ""
+   text = text
+end
+
+
+/******************************************************************
+* Headings
+******************************************************************/
+
+class Heading( type, text ) from \
+         BaseDom( type, ContentModel.inline, AllAttribs )
+   _rtsep = ""
+   text = text
+end
+
+/*# Heading level 1 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class H1(text) from \
+      Heading( "h1", text )
+end
+
+/*# Heading level 2 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class H2(text) from \
+      Heading( "h2", text )
+end
+
+/*# Heading level 3 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class H3(text) from \
+      Heading( "h3", text )
+end
+
+/*# Heading level 4 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class H4(text) from \
+      Heading( "h4", text )
+end
+
+/*# Heading level 5 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class H5(text) from \
+      Heading( "h5", text )
+end
+
+/*# Heading level 6 node.
+
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+
+class H6(text) from \
+      Heading( "h6", text )
+end
+
+/******************************************************************
+* Forms
+******************************************************************/
+
+class FormAttribs from AllAttribs
+   /*# server-side form handler */
+   action = nil
+   /*# HTTP method used to submit the form ("get" or "post") */
+   method = nil
+   /*# Content type of the document */
+   enctype = nil
+   /*# list of MIME types for file upload */
+   accept = nil
+   /*# name of form for scripting -- deprecated in xhtml */
+   name = nil
+   /*# the form was submitted */
+   onsubmit = nil
+   /*# the form was reset */
+   onreset = nil
+   /*# list of supported charsets */
+   accept_charset = nil
+end
+
+/*# Creates a form node for data submission and file uploads.
+   @param action the action where to send the form.
+   @param method How to send the form ("get" or "post").
+*/
+class Form( action, method ) from \
+         BaseDom( "form", ContentModel.block_form, FormAttribs )
+
+   method_get = "get"
+   method_post = "post"
+   
+   init
+      self.eattr.action = action
+      self.eattr.method = method
+   end
+   
+   /*# Helper method configuring this object for upload.
+      @param href The URI that has to be set in the action
+      
+      This method sets the following attributes of the form tag
+      so that the form can send files to Falcon remote server-side
+      scripts receiving the data.
+
+      - method = "post"
+      - enctype = "multipart/form-data"
+      - accept-charset="utf-8"
+
+      This settings are sensible also for generic file uploads.
+   */
+   function forUpload( href )
+      self.eattr.action = href
+      self.eattr.method = "post"
+      self.eattr.enctype = "multipart/form-data"
+      self.eattr.accept_charset="utf-8"
+      return self
+   end
+end
+
+class InputAttribs from AllAttribs
+   /*# what kind of widget is needed.
+      Can be one of
+      - text
+      - password
+      - checkbox
+      - radio
+      - submit
+      - reset
+      - file
+      - hidden
+      - image
+      - button
+
+      types are declared as properties in the InputType enumeration
+   */
+   type = nil
+   /*# submit as part of form */
+   name = nil
+   /*# Specify for radio buttons and checkboxes */
+   value = nil
+   /*# for radio buttons and check boxes (boolean)*/
+   checked = false
+   /*# unavailable in this context (boolean) */
+   disabled = false
+   /*# for text and passwd (boolean) */
+   readonly = false
+   /*# specific to each type of field */
+   size = nil
+   /*# max chars for text fields */
+   maxlength = nil
+   /*# for fields with images */
+   src = nil
+   /*# short description */
+   alt = nil
+   /*# use client-side image map */
+   usemap = nil
+   /*# use server-side image map */
+   ismap = nil
+   /*#  position in tabbing order */
+   tabindex = nil
+   /*# accessibility key character */
+   accesskey = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+   /*# some text was selected */
+   onselect = nil
+   /*# the element value was changed */
+   onchange = nil
+   /*#  list of MIME types for file upload */
+   accept = nil
+end
+
+enum InputType
+   text = "text"
+   password = "password"
+   checkbox = "checkbox"
+   radio = "radio"
+   submit = "submit"
+   reset = "reset"
+   file = "file"
+   hidden = "hidden"
+   image = "image"
+   button = "button"
+end
+
+
+/*# Base class for Input items with some common helpers. */
+class BaseInput( type, at ) from \
+         BaseDom( type, nil, at )
+
+   /*# Helper method to disable this input.
+      Return the self object so it's possible to do
+      @code
+      s = Form("manage.ftd").add(
+            Input( "text", "the_field" ).disabled()
+         )
+      @endcode
+   */
+   function disabled()
+      self.eattr.disabled = true
+      return self
+   end
+
+   /*# Helper method to set this field read-only.
+      Return the self object so it's possible to do
+      @code
+      s = Form("manage.ftd").add(
+            Input( "text", "the_field" ).readonly()
+         )
+      @endcode
+   */
+   function readonly()
+      self.eattr.readonly = true
+      return self
+   end
+   
+end
+
+/*# Creates an input, with an optional type.
+   @param type The type of the input.
+   @param name The name of the input (mandatory).
+   @param value The value of the item.
+   
+   Input @b type should be in the @a InputType enumeration.
+   If not specified, the type will be set to 'hidden'.
+*/
+class Input( type, name, value ) from \
+         BaseInput( "input", InputAttribs )
+
+   init
+      if not type: type = InputType.hidden
+      self.eattr.name = name
+      self.eattr.type = type
+      self.eattr.value = value
+   end
+
+
+end
+
+/*# Creates a text input.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @param size Width in characters on the screen.
+    @param maxlength Maximum allowed caracters that can be posted in this field.
+*/
+
+class TextInput( name, value, size, maxlength ) from Input( InputType.text, name, value )
+   init
+      // force to be a boolean
+      self.eattr.size = size
+      self.eattr.maxlength = maxlength
+   end
+end
+
+/*# Creates a masked text input.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @param size Width in characters on the screen.
+    @param maxlength Maximum allowed caracters that can be posted in this field.
+*/
+
+class PasswordInput( name, value, size, maxlength ) from Input( InputType.password, name, value )
+   init
+      // force to be a boolean
+      self.eattr.size = size
+      self.eattr.maxsize = maxlength
+   end
+end
+
+/*# Creates a checkbox input.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @param checked True to make this checkbox checked.
+*/
+class CheckboxInput( name, value, checked ) from Input( InputType.checkbox, name, value )
+   init
+      // force to be a boolean
+      self.eattr.checked = checked ? true : false
+   end
+end
+
+/*# Creates a radio input.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @param checked True to make this radio button selected.
+
+    All the radio buttons having the same name will be selected
+    mutually exclusively.
+*/
+
+class RadioInput( name, value, checked ) from Input( InputType.radio, name, value )
+   init
+      // force to be a boolean
+      self.eattr.checked = checked ? true : false
+   end
+end
+
+/*# Creates a submit button.
+   @param name The name that will be sent back in the form post.
+   @param value Initial value for the item.
+   @optparam onclick The action to perform on click.
+*/
+class SubmitInput( name, value, onclick ) from Input( InputType.submit, name, value )
+   init
+      self.eattr.onclick = onclick
+   end
+end
+
+/*# Creates a reset button.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @optparam onclick The action to perform on click.
+*/
+class ResetInput( name, value, onclick ) from Input( InputType.reset, name, value )
+   init
+      self.eattr.onclick = onclick
+   end
+end
+
+/*# Creates a file input for file upload.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+*/
+class FileInput( name, value ) from Input( InputType.file, name, value )
+end
+
+/*# Creates a graphic button.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @optparam onclick The action to perform on click.
+*/
+class ImageInput( name, value, onclick ) from Input( InputType.image, name, value )
+   init
+      self.eattr.onclick = onclick
+   end
+end
+
+/*# Creates an hidden input field (for parameter propagation in forms).
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+*/
+class HiddenInput( name, value ) from Input( InputType.hidden, name, value )
+end
+
+/*# Creates a generic button.
+    @param name The name that will be sent back in the form post.
+    @param value Initial value for the item.
+    @optparam onclick The action to perform on click.
+*/
+class ButtonInput( name, value, onclick ) from Input( InputType.button, name, value )
+   init
+      self.eattr.onclick = onclick
+   end
+end
+
+
+class SelectAttribs from AllAttribs
+   /*# field name */
+   name = nil
+   /*# rows visible */
+   size = nil
+   /*# default is single selection */
+   multiple = false
+   /*# unavailable in this context */
+   disabled = false
+   /*# position in tabbing order */
+   tabindex = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+   /*# the element value was changed */
+   onchange  = nil
+end
+
+class Select( name, size, multiple ) from \
+         BaseDom( "select", ContentModel.options, SelectAttribs )
+   init
+      self.eattr.name = name
+      self.eattr.size = size
+      self.eattr.multiple = multiple ? true : false
+   end
+end
+
+
+class OptGroupAttribs from AllAttribs
+   /*# unavailable in this context */
+   disabled = false
+   /*# for use in hierarchical menus */
+   label = nil
+end
+
+/*# Group of otpions represented separated in the @a Select menu.
+   @param label The text to be displayed at the beginning of the group.
+   @optparam disabled Set to true to shade the group.
+*/
+
+class OptGroup( label, disabled ) from \
+         BaseDom( "optgroup", ContentModel.options, OptGroupAttribs )
+   init
+      self.eattr.label = label
+      self.eattr.disabled = disabled ? true : false
+   end
+end
+
+class OptionAttribs from AllAttribs
+   /*# Set to true to pre-select this option */
+   selected = false
+   /*# unavailable in this context */
+   disabled = false
+   /*# for use in hierarchical menus */
+   label = nil
+   /*# Value that will be returned in the form if selected.
+      If nil, it defaults to element content.
+   */
+   value = nil
+end
+
+/*# Single choice of a @a Select menu.
+   @param text Text of the component.
+   @optparam value The value to be sent in the form if selected -- defaults to @b text
+   @optparam label The text to be displayed in the menu -- defaults to @b text
+   @optparam selected true to mark this option as selected.
+   @optparam disabled Set to true to shade the option.
+
+   Even if both @b value and @b label are defined, the text element can still be used,
+   for example to display hints by browsers.
+*/
+
+class Option( text, value, label, selected, disabled ) from \
+         BaseDom( "option", nil, OptionAttribs )
+
+   text = text
+   _rtsep = ""
+   
+   init
+      self.eattr.label = label
+      self.eattr.value = value
+      if selected: self.eattr.selected = true
+      if disabled: self.eattr.disabled = true
+   end
+
+   /*# Helper method to set this option on.
+      Return the self object so it's possible to do
+      @code
+      s = Select("the select").add(
+            Option( "the option" ).selected()
+         )
+      @endcode
+   */
+   function selected()
+      self.eattr.selected = true
+      return self
+   end
+
+   /*# Helper method to disable this option.
+      Return the self object so it's possible to do
+      @code
+      s = Select("the select").add(
+            Option( "the option" ).disabled()
+         )
+      @endcode
+   */
+   function disabled()
+      self.eattr.disabled = true
+      return self
+   end
+end
+
+class TextAreaAttribs from AllAttribs
+   /*# Name of the field in the form. */
+   name = nil
+   /*# Displayed text rows */
+   rows = nil
+   /*# Displayed column umbers */
+   cols = nil
+   /*# navailable in this context */
+   disabled = false
+   /*# Set true to prevent changes */
+   readonly = false
+   /*# position in tabbing order */
+   tabindex = nil
+   /*# accessibility key character */
+   accesskey = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# he element lost the focus */
+   onblur = nil
+   /*# some text was selected */
+   onselect = nil
+   /*# the element value was changed */
+   onchange = nil
+end
+
+
+/*# Class representing a Text area in a form.
+   @param name The name of the field to be sent in the form.
+   @optparam text The text to be displayed in the area.
+   @optparam rows The number of rows for the visualization.
+   @optparam cols The number of columns for the visualization.
+   @optparam readonly set to true to make this text area read-only.
+   @optparam disabled set to true to make this text area grayed out.
+*/
+class TextArea( name, text, rows, cols, readonly, disabled ) from \
+         BaseInput( "textarea", TextAreaAttribs )
+   text = text ? text : ""
+
+   init
+      self.eattr.name = name
+      self.eattr.rows = rows
+      self.eattr.cols = cols
+      if readonly: self.eattr.readonly = true
+      if disabled: self.eattr.disabled = true
+   end
+end
+
+class LabelAttribs from AllAttribs
+   /*# matches field ID value (not NAME. It matches ID) */
+   FOR = nil
+   /*# the element lost the focus */
+   accesskey = nil
+   /*# the element lost the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+end
+
+/*# Class representing a Text label in input forms.
+   @optparam Text some text to be used as the label.
+   @optparam forid The ID of the target input element.
+
+   If @b forid is not given, the label should contain
+   the target input element.
+
+   The Label item can contain any other text 
+*/
+
+class Label( text, forid ) from  \
+         BaseDom( "label", ContentModel.inline_label, LabelAttribs )
+
+   _rtsep = ""
+   text = text
+   
+   init
+      self.eattr.FOR = forid
+   end
+      
+end
+
+
+/*# Class used to group fields in forms */
+class FieldSet from \
+         BaseDom( "fieldset", ContentModel.flow_fieldset, AllAttribs )
+end   
+
+class LegendAttribs from AllAttribs
+   /*# accessibility key character */
+   accesskey = nil
+end
+
+/*# Used to specify a legend for a set of fields.
+
+*/
+class Legend(text) from \
+         BaseDom( "legend", ContentModel.inline, LegendAttribs )
+   text = text
+end
+
+
+class ButtonAttribs from AllAttribs
+   /*# Field name for submission. */
+   name = nil
+   /*# sent to server when submitted */
+   value = nil
+   /*# for use as form button  (button|submit|reset) */
+   type = nil
+   /*# unavailable in this context */
+   disabled = nil
+   /*# position in tabbing order */
+   tabindex = nil
+   /*# accessibility key character */
+   accesskey = nil
+   /*# the element got the focus */
+   onfocus = nil
+   /*# the element lost the focus */
+   onblur = nil
+end
+
+/*# Used to create a button type container in a form. */
+class Button( name, value, onclick, type, disabled ) from \
+         BaseDom( "button", ContentModel.flow_button, ButtonAttribs )
+
+   _rtsep = ""
+   type_button = "button"
+   type_submit = "submit"
+   type_reset = "reset"
+   
+   init
+      self.eattr.name = name
+      self.eattr.value = value
+      self.eattr.type = type ? type : self.type_button
+      self.eattr.onclick = onclick
+      if disabled: self.eattr.disabled = true
+   end
+end
+
+
+/******************************************************************
+* Breaks
+******************************************************************/
+
+/*# Line Break
+*/
+class BR from \
+      BaseDom( "br", nil, CoreAttribs )
+end
+
+/*# Horizontal ruler
+*/
+class HR from \
+      BaseDom( "hr", nil, AllAttribs )
+end
+
+/******************************************************************
+* Special elements
+******************************************************************/
+
+/*# Element rendering as the "Valid XHTML 1.0" official mark. */
+class ValidXhtmlMark from BaseDom( "p" )  // fake to be a p
+
+   function render()
+      OutStream.write( '
+      <p>
+      <a href="http://validator.w3.org/check?uri=referer"><img
+         src="http://www.w3.org/Icons/valid-xhtml10"
+         alt="Valid XHTML 1.0 Strict" height="31" width="88" /></a>
+      </p>
+' )
+   end
+end
+
+/*# Element rendering as the "Valid HTML 4.01" official mark. */
+class ValidHtmlMark from BaseDom( "p" )  // fake to be a p
+   function render()
+      OutStream.write('
+   <p>
+      <a href="http://validator.w3.org/check?uri=referer"><img
+        src="http://www.w3.org/Icons/valid-html401"
+        alt="Valid HTML 4.01 Transitional" height="31" width="88"></a>
+   </p>
+' )
+   end
+end
+
+/*# Creates a Falcon script node.
+
+   This can be used to create XHTML compliant FTD documents that need
+   a second-pass parsing server-side.
+
+   The data is wrapped in a '<?fal .... ?>' set of tags.
+*/
+class Falcon( data ) from BaseDom( "" )  // fake to be a i
+   text = data
+   function render()
+      OutStream.write( "<?fal\n" + self.text + "\n?>" )
+   end
+end
+
+/*# Creates a Falcon "print variable" node.
+
+   This can be used to create XHTML compliant FTD documents that need
+   a second-pass parsing server-side.
+
+   The data is wrapped in a '<?fal >>.... ?>' set of tags.
+*/
+class FalconVar( variable ) from BaseDom( "" )  // fake to be a i
+   text = variable
+   function render()
+      OutStream.write( "<?fal >> (" + self.text + ") ?>" )
+   end
+end
+
+/*# Includes a document verbatim.
+   @param fname an URI that can be read by InputStream.
+   @optparam encoding The text-encoding for the included file. Defaults to C (none -- read/write verbatim).
+*/
+class Include( fname, encoding ) from BaseDom( "" )  
+   init 
+      file = InputStream( fname )
+      if encoding: file.setEncoding( encoding )
+      data = ""
+      self.text = ""
+      while not file.eof()
+         file.readText( data, 4096 )
+         self.text += data
+      end
+      file.close()
+   end
+
+   function render()
+      OutStream.write( self.text )
+   end
+end
+
+/*# Includes a falcon document.
+   @param fname an URI that can be passed in Falcon.
+   @optparam encoding The text-encoding for the included file. Defaults to C (none -- read/write verbatim).
+*/
+class IncludeFalcon( fname, encoding ) from BaseDom( "" ) 
+   init
+      ss = StringStream()
+      out = stdOut( ss )
+      try
+         include( fname, encoding )
+         self.text = ss.closeToString()
+      catch in error
+      end
+
+      stdOut(out)
+      if error: raise error
+   end
+
+   function render()
+      OutStream.write( self.text )
+   end
+
+end
+
+/* end of htmaker.fal */

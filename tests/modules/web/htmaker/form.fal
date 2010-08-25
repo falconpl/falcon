@@ -1,0 +1,51 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: form.fal
+
+   XHTML generator -- form test
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from htmaker
+
+doc = htmaker.XHTMLFrame()
+
+doc.html.add(
+
+   htmaker.Head().add( htmaker.Title( "Here is the title" ) ),
+
+   htmaker.Body().set( ["onload" => "launchme()"]).add(
+      htmaker.H1( "Form test" ),      
+      htmaker.P( "We're making some form test here." ),
+      htmaker.Form( "receiver.fal", "post" ).add(
+         htmaker.P().add(
+            htmaker.HiddenInput( "hidden_field", "hidden value" ),
+            htmaker.Label( "User name" ).add( htmaker.TextInput( "UserName" ).id( "uname_id" ) ),
+            htmaker.Select( "optval" ).add(
+               htmaker.OptGroup( "First group" ).add(
+                  htmaker.Option("First option", "op1" ),
+                  htmaker.Option("Second Option", "op2" ).selected() ),
+               htmaker.OptGroup( "Second group" ).add(
+                  htmaker.Option("First option", "op3" ),
+                  htmaker.Option("Second Option", "op4" ).selected() )
+            ),
+            htmaker.SubmitInput( "Send", "Send the data" )
+         )
+      ),
+      
+      htmaker.HR(),
+      htmaker.P( "Here, we're done!" ),
+      htmaker.ValidHtmlMark()
+      )
+   )
+
+doc.render()

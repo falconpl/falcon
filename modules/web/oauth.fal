@@ -1,0 +1,392 @@
+/*
+   FALCON - The Falcon Programming Language.
+   OAuth authentication scheme support - main file
+
+   FILE: oauth.fal
+
+   Main module file
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 21 Jun 2010 13:38:47 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from hash
+import from curl
+
+const OAUTH_REQ_PREFIX = "OAUTH-REQ-"
+
+enum Via
+   POST = "POST"
+   GET = "GET"
+   HEADER = "HEADER"
+end
+
+class OAuth( mode, key, secret )
+   key = key
+   secret = secret
+   mode = mode
+
+   callback = nil
+   realm = nil
+   nonce = nil
+   http_method = nil
+   signature_method = "HMAC-SHA1"
+   version = "1.0"
+   token = nil
+
+   verifier = nil
+
+   /*# Callback performed after a succesful request token operation is completed.
+
+      If it returns false, the token is not saved.
+   */
+   onRequestToken = nil
+
+   // modes
+   init
+      // sets the method as appropriate.
+      self.http_method = self.mode == Via.HEADER ? Via.GET : self.mode
+   end
+
+   /*# Tries to perform the autorization step.
+
+      Asks for a request token, and on success, performs immediately
+      an authorization token request.
+
+      If the @b onRequestToken property is a callable routine, it is
+      called with the parsed request dictionary.
+
+      On failure may raise a string (the error description that has been
+      remotely sent) or a CURLError on connection problems.
+   */
+   function request( reqAddr, authAddr, redirFunc )
+      // Create an unique token if needed
+      if not self.nonce: self.nonce = self._randomString( 20 )
+
+      if not self.requestToken( reqAddr )
+         return false
+      end
+
+      token = self.token.oauth_token
+      // save this as request token
+      try
+         s = Request.getSession( )
+      catch
+         Request.closeSession()
+         s = Request.getSession( )
+      end
+
+      s["test"] = "s"
+      self._saveSession( s )
+
+      // other thigns we have to remember
+
+      // should we call the authorization address
+      if authAddr
+         authAddr += "?oauth_token=" + token
+         if redirFunc
+            redirFunc( authAddr )
+         else
+            Reply.redirect( authAddr, 0 )
+         end
+      end
+
+      return true
+   end
+
+   function embedPage( address )
+      h = curl.Handle( address )
+      h.setOutStream(stdOut())
+      h.exec()
+   end
+
+   /*# Perform a token request.
+
+      This is the first step of the OAuth dance.
+      All the class parameters must be set before calling this function.
+      This blocks until the token is available, or the query fails.
+   */
+   function requestToken( address )
+      params = self._makeBaseParams()
+
+      // make the base fields that are used in the base string
+      fields = self._makeGet( params )
+
+      // Create the base string.
+      bstr = self._makeBaseString( self.http_method, address, fields )
+
+      // TODO: use self.signature_method
+      secret = self.secret + "&"
+      if self.token: secret += self.token.oauth_token_secret
+      // oauth_signature = Base64.encode(
+      //   self._hmac( hash.SHA1Hash, secret, bstr, true ) )
+
+      oauth_signature = Base64.encode(
+         hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
+
+      // Add the signature to the fields.
+      params["oauth_signature"] = oauth_signature
+      query_string = self._makeGet( params )
+
+      if self.mode == Via.POST
+         cr = curl.Handle( address )
+         cr.postData( query_string )
+      elif self.mode == Via.GET
+         cr = curl.Handle( address + "?" + query_string )
+      elif self.mode == Via.HEADER
+         cr = curl.Handle( address )
+         oe = self._makeAuthHeader( params )
+         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
+      end
+
+      //cr.setOption( curl.OPT.HEADER, true )
+      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
+      cr.setOutString()
+      cr.exec()
+      data = cr.getData()
+
+      try
+         dt = self.parseQS( data )
+      catch AccessError
+         raise data
+      end
+
+      if not "oauth_token" in dt
+         raise i"Response didn't contain an oauth_token"
+      end
+
+      if not "oauth_token_secret" in dt
+         raise i"Response didn't contain an oauth_token_secret"
+      end
+
+      if self.onRequestToken.isCallable()
+         if not self.onRequestToken( dt )
+            return false
+         end
+      end
+
+      self.token = bless(dt)
+      return true
+   end
+
+
+   function access( uri )
+      // restore the session
+      s = Request.getSession()
+      self._restoreSession( s )
+
+      // we don't need the callback in access
+      self.callback = nil
+
+      // and save the verifier (both here and in the session)
+      self.verifier = Request.getField( "oauth_verifier" )
+      s["verifier"] = self.verifier
+
+      // now we can send the authorization token request
+      if self.requestToken( uri )
+         self._saveSession(s)
+         return self.getNonOAuth( self.token )
+      end
+   end
+
+//==========================================================
+// API utilities
+//==========================================================
+   function callAPI( uri, params, method )
+      if not self.token
+         s = Request.getSession()
+         self._restoreSession( s )
+      end
+
+      if method == nil: method = Via.HEADER
+
+      params = self._makeApiCallParams() + params
+
+      // Create the base string.
+      bstr = self._makeBaseString( method, uri, self._makeGet( params ) )
+
+      // TODO: use self.signature_method
+      secret = self.secret + "&" + self.token.oauth_token_secret
+      //oauth_signature = Base64.encode(
+      //   self._hmac( hash.SHA1Hash, secret, bstr, true ) )
+
+      oauth_signature = Base64.encode(
+         hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
+
+      // Add the signature to the fields.
+      params["oauth_signature"] = oauth_signature
+      query_string = self._makeGet( params )
+
+      inspect( params )
+
+      if method == Via.POST
+         cr = curl.Handle( uri )
+         cr.postData( query_string )
+      elif self.mode == Via.GET
+         cr = curl.Handle( uri + "?" + query_string )
+      elif self.mode == Via.HEADER
+         cr = curl.Handle( uri + "?" + query_string )
+         oe = self._makeAuthHeader( params )
+         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
+      end
+
+      //cr.setOption( curl.OPT.HEADER, true )
+      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
+      cr.setOutString()
+      cr.exec()
+      return cr.getData()
+   end
+
+
+//==========================================================
+// Generic utilities
+//==========================================================
+
+
+   function parseQS( data )
+      return [=>].comp(
+            map( {e=> map( URI.decode, e.split("="))},
+               data.split("&") ) )
+   end
+
+   function getNonOAuth( params )
+      ret = [=>]
+      for k,v in params
+         if not k.startsWith( "oauth_" )
+            ret[k] = v
+         end
+      end
+      return ret
+   end
+
+   function _makeBaseParams()
+      params = [
+         "oauth_consumer_key" => self.key,
+         "oauth_signature_method" => self.signature_method,
+         "oauth_timestamp" => toString(epoch()),
+         "oauth_version" => self.version
+      ]
+
+      if self.nonce: params["oauth_nonce"] = self.nonce
+      if self.token: params["oauth_token"] = self.token.oauth_token
+      if self.callback: params[ "oauth_callback" ] = self.callback
+      if self.verifier: params[ "oauth_verifier" ] = self.verifier
+      return params
+   end
+
+   function _makeApiCallParams()
+      if not self.token or "oauth_token" notin self.token
+         raise "Api call called but authorization not ready"
+      end
+
+      params = [
+         "oauth_consumer_key" => self.key,
+         "oauth_signature_method" => self.signature_method,
+         "oauth_timestamp" => toString(epoch()),
+         //"oauth_verifier" => self.verifier,
+         "oauth_version" => self.version,
+         "oauth_nonce" =>  self._randomString(25),
+         "oauth_token" => self.token.oauth_token
+      ]
+
+      return params
+   end
+
+   function _makeBaseString( method, base_uri, fields )
+      return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields )
+   end
+
+   function _makeAuthHeader( params )
+      str = "OAuth "
+      for key, val in params
+         str += URI.encode( key ) + "=\"" + URI.encode( val ) + "\""
+         formiddle: str += ", "
+      end
+
+      return str
+   end
+
+   function _makeGet( params )
+      str = ""
+      for key, val in params
+         str += URI.encode( key ) + "=" + URI.encode(val) + ""
+         formiddle: str += "&"
+      end
+
+      return str
+   end
+
+
+   function _hmac( algo, key, message, raw )
+      message = message.clone()
+
+      algo_size = algo().bytes()
+      size = algo_size <= 64 ? 64 : 128
+
+      if key.len() > size
+         key = strFromMemBuf(algo().update(key).toMemBuf())
+      end
+
+      i_key_pad = "\x36" * size
+      o_key_pad = "\x5C" * size
+      for i in [0:key.len()]
+         n =  key[*i]
+         i_key_pad[i] = n ^^ 0x36
+         o_key_pad[i] = n ^^ 0x5C
+      end
+
+      b = algo().update( o_key_pad, algo().update( i_key_pad, message ).toMemBuf() )
+
+      return raw ? b.toMemBuf() : b.toString()
+   end
+
+   function _randomString( size )
+      s = " " * size
+      for i in [0:size]
+         r = random(0,51)
+         if r >= 26
+            s[i] = "a"/ (r-26)
+         else
+            s[i] = "A"/ r
+         end
+      end
+
+      return s
+   end
+
+
+   function _saveSession( s )
+      s["key"]= self.key
+      s["secret"] = self.secret
+      s["mode"] = self.mode
+
+      s["callback"] = self.callback
+      s["realm"] = self.realm
+      s["nonce"] = self.nonce
+      s["http_method"] = self.http_method
+      s["signature_method"] = self.signature_method
+      s["version"] = self.version
+      s["token"] = self.token
+      s["verifier"] = self.verifier
+   end
+
+   function _restoreSession( s )
+      self.key = s["key"]
+      self.secret = s["secret"]
+      self.mode = s["mode"]
+
+      self.callback = s["callback"]
+      self.realm = s["realm"]
+      self.nonce = s["nonce"]
+      self.http_method = s["http_method"]
+      self.signature_method = s["signature_method"]
+      self.version = s["version"]
+      self.token = s["token"]
+      self.verifier = s["verifier"]
+   end
+end

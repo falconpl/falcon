@@ -1,0 +1,54 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: script.fal
+
+   XHTML generator -- script test
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from htmaker
+
+> "="*78
+> "XHTML"
+> "="*78
+doc = htmaker.XHTMLFrame()
+// Testing an XHTML script
+doc.html.add(
+
+   htmaker.Head().add( htmaker.Title( "Here is the title" ) ),
+
+   htmaker.Body().set( ["onload" => "test()"]).add(
+         htmaker.Script(data|"function test() { alert('ok'); }" )
+      )
+   )
+
+doc.render()
+htmaker.OutStream.stream.flush()
+
+> "="*78
+> "HTML Transitional"
+> "="*78
+
+doc = htmaker.TransitionalFrame()
+// Testing an XHTML script
+doc.html.add(
+
+   htmaker.Head().add( htmaker.Title( "Here is the title" ) ),
+
+   htmaker.Body().set( ["onload" => "test()"]).add(
+         htmaker.Script(data|"function test() { alert('ok'); }" )
+      )
+   )
+
+doc.render()
+htmaker.OutStream.stream.flush()
+

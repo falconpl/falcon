@@ -1,0 +1,27 @@
+/*
+   FALCON - The Falcon Programming Language.
+   Hyper Text Maker - XHTML generator
+
+   FILE: included_fal.fal
+
+   Show how to include the result of a falcon script in an xhtml
+   document.
+
+   This is the included script generating stuff to be included
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 11 Jun 2010 21:42:11 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+printl( '
+   <div style="bgcolor:gray;">
+      <p>An included fragment -- from a Falcon script.</p>
+      <p>It''s not hard to create included fragment, just use the Include class.</p>
+   </div>
+')
