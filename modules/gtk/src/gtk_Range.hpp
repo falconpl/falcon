@@ -3,6 +3,9 @@
 
 #include "modgtk.hpp"
 
+#define GET_RANGE( item ) \
+        ((GtkRange*) ((Gtk::Range*) (item).asObjectSafe())->getObject())
+
 
 namespace Falcon {
 namespace Gtk {
@@ -87,13 +90,13 @@ public:
 #if GTK_CHECK_VERSION( 2, 20, 0 )
     static FALCON_FUNC get_min_slider_size( VMARG );
 
-    //static FALCON_FUNC get_range_rect( VMARG );
+    static FALCON_FUNC get_range_rect( VMARG );
 
     static FALCON_FUNC get_slider_range( VMARG );
 
     static FALCON_FUNC get_slider_size_fixed( VMARG );
 
-    //static FALCON_FUNC set_min_slider_size( VMARG );
+    static FALCON_FUNC set_min_slider_size( VMARG );
 
     static FALCON_FUNC set_slider_size_fixed( VMARG );
 #endif

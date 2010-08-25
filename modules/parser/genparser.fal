@@ -273,7 +273,7 @@ class Parser()
             col = matchAt + count
          end col >= linelen
 
-         if state.eolRule
+         if state.eolRule and (not winner or winner.nextState == "#stay")
             // is this a conditional rule?
             if state.eolRule[0] == "*"
                if not hadWinner

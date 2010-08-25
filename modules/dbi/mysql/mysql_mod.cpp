@@ -370,9 +370,12 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
       }
       else
       {
-         ((char*) outbind.memory())[ dlen ] = 0;
          CoreString* res = new CoreString;
-         res->fromUTF8( (char*) outbind.memory() );
+         if( dlen > 0 )
+         {
+            //((char*) outbind.memory())[ dlen -1] = 0;
+            res->fromUTF8( (char*) outbind.memory() );
+         }
          value = res;
       }
    break;
@@ -384,8 +387,8 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
       // read the missing memory -- and be sure to alloc
       if( dlen != 0 )
       {
-         outbind.alloc( dlen );
-         m_pMyBind[nCol].buffer_length = dlen;
+         outbind.alloc( dlen + 1 );
+         m_pMyBind[nCol].buffer_length = dlen+1;
          m_pMyBind[nCol].buffer = outbind.memory();
          if(  mysql_stmt_fetch_column( m_stmt, m_pMyBind + nCol, nCol, 0 ) != 0 )
          {
@@ -418,9 +421,9 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
          }
          else
          {
-            ((char*) outbind.memory() )[ dlen ] = 0;
+            ((char*) outbind.memory())[ dlen ] = 0;
             CoreString* res = new CoreString;
-            res->fromUTF8( (char*) m_pMyBind[nCol].buffer );
+            res->fromUTF8( (char*) outbind.memory() );
             value = res;
          }
       }

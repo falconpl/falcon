@@ -18,6 +18,10 @@ public:
 
     static void modInit( Falcon::Module* );
 
+#if GTK_CHECK_VERSION( 3, 0, 0 )
+    static FALCON_FUNC init( VMARG );
+#endif
+
 };
 
 
