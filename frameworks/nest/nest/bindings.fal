@@ -1,0 +1,99 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: bindings.fal
+
+   Default built-in bindings for Nest.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 04 Aug 2010 09:57:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Built-in configuration binder.
+
+   This binder is used to bind service configuration values to Nest variables.
+
+   The reason to do this convolute thing is that listeners can set themselves
+   into ServiceVar instances, and in this way they can be notified of even
+   configuration variables set in the service.
+
+   Of course, a service is not REQUIRED to offer all its configuration variables
+   publically in this way. It can just receive the configuration data and use
+   it turing the startup or run phase.
+
+   However, if some relevant automated variable has any utility in being published
+   and universally know, this is a useful way to automatically store its value from
+   the configuration of the service into it, and eventually notify listeners.
+*/
+object ConfigBinder
+   function bind( varname, srv, var )
+      if varname in srv.configuration
+         var.value = srv.configuration[varname]
+      end
+   end
+end
+
+
+object GetBinder
+   function bind( varname, srv, var )
+      if varname in Request.gets
+         var.value = Request.gets[varname]
+      end
+   end
+end
+
+object PostBinder
+   function bind( varname, srv, var )
+      if varname in Request.posts
+         var.value = Request.posts[varname]
+      end
+   end
+end
+
+object CookieBinder
+   function bind( varname, srv, var )
+      if varname in Request.cookies
+         var.value = Request.cookies[varname]
+      end
+   end
+end
+
+
+object WebVarBinder
+   function bind( varname, srv, var )
+      if (value = Request.getField( varname, nil ) )
+         var.value = value
+      end
+   end
+end
+
+
+object InputVarBinder
+   function bind( varname, srv, var )
+      if varname in Nest.inputVars
+         var.value = Nest.inputVars[varname]
+      end
+   end
+end
+
+object SessionBinder
+   function initVar( var )
+      var.isSession = true
+   end
+   
+   function bind( varname, srv, var )
+      vn = srv.varName( varname )
+      if vn in Nest.sessionData
+         var.value = Nest.sessionData[vn]
+      end
+   end
+end
+
+export 

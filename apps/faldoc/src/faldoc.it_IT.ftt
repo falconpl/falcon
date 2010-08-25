@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<translation from="C" into="it_IT" module="faldoc">
+ <string id="17">
+  <original>faldoc: Invalid input file</original>
+  <translated>faldoc: Documento in ingresso non valido: </translated>
+ </string>
+ <string id="19">
+  <original>Error in reading the configuration file:</original>
+  <translated>Errore nel leggere il file di configurazione:</translated>
+ </string>
+ <string id="40">
+  <original>faldoc: FATAL ERROR -</original>
+  <translated>faldoc: Error fatale - </translated>
+ </string>
+ <string id="42">
+  <original>faldoc: FATAL ERROR - Rised an exception:</original>
+  <translated>faldoc: Errore fatale - eccezione sollevata:</translated>
+ </string>
+ <string id="44">
+  <original>faldoc - Falcon documentation tool.</original>
+  <translated>faldoc - Strumento di documentazione per falcon.</translated>
+ </string>
+ <string id="45">
+  <original>Part of the Falcon Programming language.</original>
+  <translated>Parte del Linguaggio di Programmazione Falcon.</translated>
+ </string>
+ <string id="46">
+  <original>Version</original>
+  <translated>Versione </translated>
+ </string>
+ <string id="54">
+  <original>Title key missing from configuration</original>
+  <translated>Chiave &apos;title&apos; mancante dalla configurazione</translated>
+ </string>
+ <string id="57">
+  <original>Author key missing from configuration</original>
+  <translated>Chiave &apos;author&apos; mancante dalla configurazione</translated>
+ </string>
+ <string id="59">
+  <original>Version key missing from configuration</original>
+  <translated>Chiave &apos;versione&apos; mancante dalla configurazione</translated>
+ </string>
+ <string id="62">
+  <original>At least one &apos;Output.module&apos; key is necessary.</original>
+  <translated>E&apos; necessario specificare almeno una chiave &apos;Output.module&apos;.</translated>
+ </string>
+</translation>
+

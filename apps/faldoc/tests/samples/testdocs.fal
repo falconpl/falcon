@@ -1,0 +1,39 @@
+/*#
+* @Main This is the main page.
+*
+* Some text that goes in the main page.
+
+You may write either with
+@code
+  \/*#
+   \* This stile
+   \*\/
+@endcode
+Or
+   * @code
+   *    \/*#
+   *    *
+   *    * This style
+   *    *\/
+     @endcode
+   */
+
+/*#
+   @Page secondary_page A Secondary page.
+
+   You may enter
+   several paragraphs
+   by putting some blanks line.
+
+   In example, this would be another paragraph.
+*/
+
+/*#***************************************
+* @function test test of a function.
+* @param t1 the first parameter
+* @optparam t2 an optional parameter
+*
+* This is the desciption of function test.
+*
+* @return The resutlt of the operartion.
+******************************************/

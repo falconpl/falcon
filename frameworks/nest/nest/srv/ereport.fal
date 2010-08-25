@@ -1,0 +1,27 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ereport/main.fal
+
+   Error report service.
+
+   This service is always loaded and rendered as-is in case of errors.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 05 Jul 2010 11:17:02 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+
+class ereport( instance ) from Service( instance )
+   error = ServiceVar( "The Falcon error that happened" )
+   context = ServiceVar( "Text of the page up to the moment where the error was raised" )
+end

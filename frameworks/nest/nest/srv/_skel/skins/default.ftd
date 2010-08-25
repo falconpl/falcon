@@ -1,0 +1,3 @@
+<? function skin( data ) ?>
+   ... put here the code to be displayed ...
+<? end ?>

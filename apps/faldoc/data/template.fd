@@ -1,0 +1,53 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Template fd (faldoc) file
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Template documentation
+Author = Name of the author
+Version = 0.0.1
+
+################################################
+# Arbitrary properties
+################################################
+Property.coauthors = Someone Else
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=/to/be/parsed
+Input.directory=/other/to/be/parsed...
+
+Input.wildcard=*.fdd
+Input.wildcard=*.fal
+Input.wildcard=*.ftd
+Input.wildcard=*.cpp
+
+Input.recursive=true
+
+# Other files may be specified here
+#Input.extra=/path/to/mainmain.fal
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+#You may provide other dynamic output modules here.
+#Output.module=my_module
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=html
+Output.html.url=.

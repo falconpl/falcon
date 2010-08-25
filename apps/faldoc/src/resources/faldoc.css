@@ -1,0 +1,307 @@
+
+
+p {
+   padding: 1pt;
+   margin: 2pt;
+   margin-left: 15pt;
+   margin-bottom: 6pt;
+}
+
+body.faldoc_body {
+   font-family: arial, sans;
+   font-size: medium;
+   background: white;
+   color: #000020;
+   margin: 16pt;
+}
+
+h2.faldoc_section {
+   padding: 5pt;
+   margin-top: 20pt;
+   background: #D5D0ff;
+   font-size: xx-large;
+   font-weight: bold;
+   width: 96%;
+}
+
+h3.faldoc_subsection {
+   padding: 5pt;
+   margin-top: 20pt;
+   background: #D5D0ff;
+   font-size: x-large;
+   font-style: italic;
+   width: 96%;
+}
+
+h3.faldoc_funcname {
+   padding: 5pt;
+   margin-top: 20pt;
+   background: #D5D0ff;
+   width: 96%;
+}
+
+p.faldoc_author {
+   font-style: italic;
+   font-weight: bold;
+}
+
+table.faldoc_list {
+   border: none;
+}
+
+td.faldoc_list {
+   margin: 0;
+   padding: 0;
+}
+
+p.faldoc_brief {
+   font-style: italic;
+}
+
+li {
+   padding: 2pt;
+   margin-bottom: 2pt;
+}
+
+ul.faldoc_bullet {
+   margin-left: 30pt;
+}
+
+p.faldoc_classdef {
+   color: #000040;
+}
+
+table.faldoc_classprops {
+}
+
+td.faldoc_classsep {
+   text-align: center;
+   font-size: large;
+   font-weight: bold;
+   color: # 300000;
+}
+
+pre.faldoc_code {
+   font-family: courier, monospace;
+   font-size: small;
+   margin-left: 20pt;
+}
+
+td.faldoc_funcbrief {
+   font-style: italic;
+   padding: 1pt;
+   padding-left:5pt;
+}
+
+p.faldoc_funcbrief {
+   font-style: italic;
+   margin-bottom: 15pt;
+}
+
+p.faldoc_funcdecl {
+   font-family: courier, monospace;
+   padding-bottom: 2pt;
+   margin-bottom: 5pt;
+   border-color: red;
+   border-bottom: thin;
+   white-space:pre;
+}
+
+td.faldoc_funcname {
+   font-size:medium;
+}
+
+table.faldoc_function {
+   margin-left:35pt;
+}
+
+table.faldoc_header {
+   border-bottom: solid 1pt;
+}
+
+td.faldoc_header {
+   font-size: x-small;
+}
+
+td.faldoc_header_sep {
+   font-weight: bold;
+}
+
+table.faldoc_list {
+   margin-left: 20pt;
+}
+
+table.faldoc_memberlist {
+    margin-left: 20pt;
+}
+
+p.faldoc_note {
+   margin-left: 20pt;
+   margin-right: 20pt;
+   margin-top: 12pt;
+   margin-bottom: 12pt;
+   padding: 3pt;
+   background: #D0D0D0;
+}
+
+span.faldoc_notetype {
+   font-weight: bold;
+}
+
+ol.faldoc_number {
+   margin-left: 20pt;
+}
+
+td.faldoc_optparam {
+   text-align: top;
+   background: #E0E0E0;
+   font-family: courier, monospace;
+   padding-top: 0pt;
+   padding-bottom: 0pt;
+
+   padding-left: 3pt;
+   padding-right: 3pt;
+   margin-right:20pt;
+}
+
+td.faldoc_optparamdesc {
+}
+
+td.faldoc_param {
+   text-align: top;
+   background: #E0E0E0;
+   font-family: courier, monospace;
+   padding-left: 3pt;
+   padding-right: 3pt;
+   margin-right:20pt;
+}
+
+td.faldoc_paramdesc {
+}
+
+td.faldoc_propdef {
+   text-align: top;
+   background: #D5D0ff;
+   font-family: courier, monospace;
+   font-weight: bold;
+   padding: 2pt;
+}
+
+td.faldoc_propdesc {
+   padding: 5pt;
+}
+
+td.faldoc_funcreturn {
+   text-align: top;
+   font-style: italic;
+   background: #E0E0F0;
+   padding-left: 3pt;
+   padding-right: 3pt;
+   margin-right:20pt;
+
+}
+
+td.faldoc_funcreturndesc {
+}
+
+
+td.faldoc_raise {
+   text-align: top;
+   font-style: italic;
+   background: #E0E0FF;
+   padding-left: 3pt;
+   padding-right: 3pt;
+   margin-right:20pt;
+}
+
+
+table.faldoc_raisedesc {
+}
+
+td.faldoc_raiseitem {
+   text-align: top;
+   font-style: bold;
+   padding-left: 3;
+   padding-right: 3;
+   font-family: courier, monospace;
+}
+
+td.faldoc_raisedesc {
+}
+
+td.faldoc_seealso {
+   padding: 3pt;
+   border-color: #E0E0FF;
+   background: #E0E0F0;
+   margin: 10pt;
+   margin-left: 25pt;
+   margin-right: 25pt;
+}
+
+div.faldoc_signature {
+   color: blue;
+   font-style: italic;
+   margin-top: 35px;
+   font-size: small;
+   text-align: right;
+}
+
+p.faldoc_text {
+}
+
+div.faldoc_text {
+}
+
+span.faldoc_belong {
+   margin-left:50px;
+   font-size: small;
+   font-weight:bold;
+   color:#0030F0;
+   padding:2pt;
+   font-family: courier new, courier, monospace;
+}
+
+h1.faldoc_title {
+   font-size: 20pt;
+   font-weight: bold;
+   width: 100%;
+   border-color: red;
+   border-bottom: thin;
+   padding: 3pt;
+   background: #E0E0F0;
+}
+
+h2.faldoc_title {
+   font-size: xx-large;
+   width: 100%;
+   border-color: red;
+   border-bottom: thin;
+   padding: 3pt;
+   background: #E0E0F0;
+}
+
+p.faldoc_unknown {
+   border: thin;
+   padding: 3pt;
+}
+
+div#faldoc_version {
+   color: blue;
+   font-style: italic;
+   font-weight: bold;
+   text-align: center;
+   margin-top: 25px;
+   margin-bottom: 25px;
+   font-size: large;
+}
+
+div#faldoc_author {
+   color: blue;
+   font-style: italic;
+   text-align: center;
+   margin-top: 15px;
+   margin-bottom: 15px;
+   font-size: medium;
+}
+
+

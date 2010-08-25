@@ -1,0 +1,29 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: faldoc_version.fal
+
+   Autodocumentation tool - version file
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 10 Jan 2008 08:12:57 -0800
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+object version
+   major = 2
+   minor = 2
+   revision = 1
+
+   function name()
+      return self.major.toString() + "." +\
+            self.minor.toString() + "." +\
+            self.revision.toString()
+   end
+end
+
+export version

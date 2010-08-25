@@ -1,0 +1,20 @@
+<? function skin( data, srv ) ?>
+   <form action="<?= data.handler ?>" method="POST">
+   <input type="hidden" name="eid" value="<?=data.eid ?>"/>
+   <p>Inserted on: <?= data.record.data["inserted"] ?></p>
+   <p>Title: <input type="text" size="60" maxsize="60" name="title" value="<?= strEscape(data.record.data["title"]) ?>"/></p>
+   <p>Note content:<br/>
+   <textarea rows="10" cols="70" name="content"><?= htmlEscape( data.record.data["content"] )?></textarea>
+   </p>
+   <? if srv.actions ?>
+      <p>
+      <? for action in data.actions ?>
+         <? if action.allowed() ?><?= action.render() ?>&nbsp;&nbsp;<? end ?>
+      <? end ?>
+      </p>
+   <? end ?>
+   </form>
+   <br/>
+   <p>Or just <a href="<?= Nest.pageLink('home') ?>">return to the main page</a>
+   without modifying this record.</p>
+<? end ?>

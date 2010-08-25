@@ -1,0 +1,61 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: utils.fal
+
+   File with general utils
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 29 Jun 2010 16:52:46 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+
+
+function findFile( dir, rname, exts )
+   // search under dir for the file or the file + some of the exts.
+   fname = dir + "/" + rname
+   fpath = Path(fname)
+
+   for ext in exts 
+      fpath.extension = ext
+      if fileType( fpath.path ) == FileStat.NORMAL
+         return fpath.path
+      end
+   end
+   
+   // no luck with the extension. Have we the file as-is?
+   if fileType( fname ) == FileStat.NORMAL
+      return fname
+   end
+   
+   // no luck at all
+   return nil
+end
+
+
+function findFileInDirs( locations, name, exts )
+   for loc in locations
+      if ( f = findFile( loc, name, exts ) )
+         return f
+      end
+   end
+end
+
+
+function reldir( parent, child )
+   if child.startsWith( "/" )
+      return child
+   end
+   
+   if not parent.endsWith("/"): parent += "/"
+   return parent + child
+end
+

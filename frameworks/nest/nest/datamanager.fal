@@ -1,0 +1,77 @@
+/*
+   FALCON - Base Data Manager
+
+   Nest - Falcon web applcation engine
+
+   FILE: datamanager.fal
+
+   Base class for data managers.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 15:33:56 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import NestModule from .nestmodule as NestModule
+
+/*# Base data manager.
+*/
+
+class DataManager( instance ) from NestModule( instance )
+
+   /*# Query an entity.
+   
+      @param entity The entity to be queried.
+      @param fields Array of fields or dictionary of conditions to be retreived.
+      @param start Start after N fetched records (nil for all).
+      @param count Move N records in the returned data.
+
+      @return A Table containing the query results.
+   */
+   function query( entity, fields, start, count )
+   end
+
+   /*# Query an entity -- for a single item.
+      @param entity The entity to be queried.
+      @param eid The ID of the entity to retreive.
+      @param fields The fields to be retreived (nil for all).
+
+      @return A dictionary containing the required fields (or all).
+   */
+   function queryItem( entity, eid, fields )
+   end
+
+   /*# Inserts a new item in the data pool.
+      @param entity The entity to be added.
+      @param data A dictionary of data to be stored.
+      @return The new entity ID.
+   */
+   function add( entity, data )
+   end
+
+   /*# Modifies the values of an entity in the database.
+      @param entity The entity to be added.
+      @param data A dictionary of data to be stored.
+      @return The new entity ID.
+   */
+   function update( entity, eid, data )
+   end
+
+   /*# Modifies the values of an entity in the database.
+      @param entity The entity to be added.
+      @param data A dictionary of data to be stored.
+      @return The new entity ID.
+   */
+   function delete( entity, eid )
+   end
+
+
+   function configure( data )
+      self.configuration = data
+   end
+   
+end

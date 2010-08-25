@@ -1,0 +1,110 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: tabledefs.fal
+
+   Autodocumentation tool - characteristics definitions
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 May 2009 12:19:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .docentity
+load .handlers
+
+/*#
+   Table of entity properties.
+   
+   This table express the characteristics of the source-level (classes, functions, etc) documentation 
+   entities. If an entity has not a characteristic, the value is 0, if it has at most one characteristic,
+   the value is 1, and if it has many the value is 2.
+   
+*/
+
+prototypes = Table( 
+  .[ "type"          "param" "optparam" "return" "raise" "prop" "inset" "ingroup" "from" "inmodule" "brief" ],
+
+  .[ "class"          2      2          0        2       2      0       2         1      1          1       ],
+  .[ "object"         0      0          0        0       2      0       2         1      1          1       ],
+  .[ "function"       2      2          1        2       0      1       2         0      1          1       ],
+  .[ "message"        2      2          0        0       0      0       2         0      1          1       ],
+  .[ "method"         2      2          1        2       0      0       2         0      0          1       ],
+  .[ "property"       0      0          0        2       0      0       0         0      0          1       ],
+  .[ "enum"           0      0          0        0       2      0       2         0      1          1       ],
+  .[ "global"         0      0          0        0       0      0       2         0      1          1       ],
+  .[ "funset"         0      0          0        0       0      0       0         0      1          1       ],
+  .[ "group"          0      0          0        0       0      0       0         0      1          1       ],
+  .[ "module"         0      0          0        0       0      0       0         0      0          1       ],
+  .[ "page"           0      0          0        0       0      0       0         0      0          0       ],
+  .[ "main"           0      0          0        0       0      0       0         0      0          0       ]
+)
+export prototypes
+
+
+/*# 
+   Commands.
+*/
+commands = Table( 
+  .[ "command"        "pc" "isEntity" "isMkup" "isPage" "handler"   "term"            "lexctx"],
+
+  .[ "a"              1    false      true     false    h_a         nil                nil  ],
+  .[ "b"              1    false      true     false    h_mkup      nil                nil  ],
+  .[ "i"              1    false      true     false    h_mkup      nil                nil  ],
+  .[ "bb"             0    false      true     false    h_mkup     .[matching "@ebb"]  nil  ],
+  .[ "em"             0    false      true     false    h_mkup     .[matching "@eem"]  nil  ],
+  .[ "pre"            0    false      true     false    h_pre      .[mtrim "@epre"]    {l=>l.litContext()}   ],
+  .[ "link"           2    false      true     false    h_link     nil                 nil ],
+
+  .[ "beginset"       1    false      false    false    h_begin    nil                 nil ],
+  .[ "begingroup"     1    false      false    false    h_begin    nil                 nil ],
+  .[ "beginmodule"    1    false      false    false    h_begin    nil                 nil ],
+  .[ "endset"         0    false      false    false    h_end      nil                 nil ],
+  .[ "endgroup"       0    false      false    false    h_end      nil                 nil ],
+  .[ "endmodule"      0    false      false    false    h_end      nil                 nil ],
+  
+  .[ "code"           0    false      false    false    h_code     .[mtrim "@endcode"] {l=>l.litContext()} ],
+  .[ "source"         1    false      false    false    h_code     .[mtrim "@endcode"] {l=>l.litContext()} ],
+  .[ "prop"           1    false      false    false    h_prop     end_block           nil ],
+  .[ "note"           0    false      false    false    h_para     end_block           nil ],
+
+  .[ "main"           0    false      false    true     h_main     end_block           nil ],
+  .[ "page"           1    false      false    true     h_page     end_block           nil ],
+  .[ "section"        1    false      false    false    h_sec      end_block           nil ],
+  .[ "subsection"     1    false      false    false    h_sec      end_block           nil ],
+
+  .[ "funset"         1    false      false    true     h_set      end_block           nil ],
+  .[ "group"          1    false      false    true     h_set      end_block           nil ],
+  .[ "module"         1    false      false    true     h_set      end_block           nil ],
+  .[ "see"            1    false      false    false    h_see      nil                 nil ],
+
+  .[ "class"          1    true       false    true     h_type     nil                 nil ],
+  .[ "enum"           1    true       false    true     h_type     nil                 nil ],
+  .[ "function"       1    true       false    false    h_type     nil                 nil ],
+  .[ "message"        1    true       false    false    h_type     nil                 nil ],
+  .[ "global"         1    true       false    false    h_type     nil                 nil ],
+  .[ "method"         2    true       false    false    h_member   nil                 nil ],
+  .[ "object"         1    true       false    true     h_type     nil                 nil ],
+  .[ "property"       2    true       false    false    h_member   nil                 nil ],
+
+  .[ "bullet"         0    false      false    false    h_list     end_block           nil ],
+  .[ "number"         0    false      false    false    h_list     end_block           nil ],
+  .[ "param"          1    false      false    false    h_ptype    end_block           nil ],
+  .[ "optparam"       1    false      false    false    h_ptype    end_block           nil ],
+  .[ "return"         0    false      false    false    h_genprop  end_block           nil ],
+  .[ "brief"          0    false      false    false    h_genprop  end_block           nil ],
+  .[ "from"           1    false      false    false    h_from     end_block           nil ],
+  .[ "raise"          1    false      false    false    h_raise    end_block           nil ],
+
+  .[ "inset"          1    false      false    false    h_grouping nil                 nil ],
+  .[ "ingroup"        1    false      false    false    h_ingroup  nil                 nil ],
+  .[ "inmodule"       1    false      false    false    h_grouping nil                 nil ]
+
+)
+
+export commands
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    

@@ -1,0 +1,243 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: nest.fal
+
+   Main file driving the engine.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import NestError from .error as NestError
+import from .utils
+import ConfigBinder from .bindings as ConfigBinder
+import NestModule from .nestmodule as NestModule
+
+/*#
+   Service variable.
+
+   To be used in services like
+   class X from Service
+      ...
+      varname = ServiceVar( "A nice variable" )
+   end
+   
+*/
+class ServiceVar( descr, binding )
+   description = descr
+   isSession = false
+   _binding = binding
+   
+   _value = nil
+   _valueSet = false
+   _listeners = nil
+
+   init
+      if binding provides initVar
+         binding.initVar( self )
+      end
+   end
+
+   function reinit( descr, binding )
+      self.description = descr
+      self._binding = binding
+      
+      if binding provides initVar
+         binding.initVar( self )
+      end
+   end
+
+   function __set_value( value )
+      self._value = value
+      self._valueSet = true
+      for item in self._listeners
+         item( value )
+      end
+   end
+
+   function __get_value(): return self._value
+
+   function __get_isSet(): return self._valueSet
+   
+   /*# Listen point for subscribers */
+   function listen( lr )
+      if not self._listeners: self._listeners = [].NM()
+      self._listeners.add( lr )
+   end
+
+   /***************************************** Private part */
+   function bind( name, service )
+      if self._binding
+         self._binding.bind( name, service, self )
+      end
+   end
+   
+end
+
+
+class Service( instance ) from NestModule( instance )
+   extscripts = []
+   stylesheets = []
+
+   scripts = []
+   styles = []
+   
+   /*# Skin name. 
+      Set to a logical skin name.
+   */ 
+   skin = ServiceVar( "Logical name of the skin of this service", ConfigBinder )
+   level = ServiceVar( "Minimum user level needed to use this service at all.", ConfigBinder )
+
+   // Real file as detected by Nest.
+   _skin_file = nil
+
+   //=========================================
+   // Public interface
+   //=========================================
+
+   /*# Configures the service.
+      @param config A dictionary containing configuration key/value pairs.
+      
+      In this phase, the service structure is still incomplete, and data providers may be missing.
+
+      This means that variables meant to be broadcast shouldn't be set here. Use the bind
+      process, that happens later on.
+
+      The default implementation just stores the @b config parameter in the @a Service.configuration
+      property. This is where configuration binders will check for this value.
+   */
+   function configure( config )
+      self.configuration = config
+      if "skin" in config
+         self.skin.value = config["skin"]
+      end
+   end
+   
+   /*# Hook called at page load */
+   function startup()
+   end
+
+   /*# Hook called before first rendering */
+   function run()
+   end
+
+   /*# Hook called at render */
+   function render()
+      Nest.run()
+      
+      if self._skin_file
+         return self.renderSkin( self._skin_file )
+      end
+   end
+
+   /*# Called at termination */
+   function finalize()
+   end
+
+   /*# Check if the current user is allowed to access this service.
+   
+       Skins and other variable element should check for this value before performing
+       any operation or displaying any data.
+   */
+   function allowed()
+      return self.level.value == nil or Nest.auth_level <= self.level.value
+   end
+
+    /*# Check if the current user is allowed to access this service.
+
+      Differently from allowed(), it also logs an error message if the service is not
+      allowed.
+   */
+   function checkAllowed()
+      name = self.fullName()
+      Nest.logd( "Checking authorization level for " + name)
+      if not self.allowed()
+         Nest.logw( @ "Running $(name) with level $(Nest.auth_level) when required $(self.level.value)" )
+         return false
+      end
+      Nest.logd( "Authorization level for " + name + " granted")
+      return true
+   end
+   
+//=========================================
+// Utilities
+//=========================================
+
+   /*# Return the name full of a variable contained in this class. */
+   function varName( var )
+      if self.instance: return self.className() + "." + self.instance + ":" + var
+      return self.className() + ":" + var
+   end
+   
+   /*# Bind the variables through the variable binders.
+      @param listener a function to call back if the variables are session variables and change.
+   */
+   function bind( listener )
+      for key, prop in self.retrieve()
+         if prop.derivedFrom( ServiceVar )
+         
+            if prop.isSession and listener
+               prop.listen( .[ listener self.varName(key) ] )
+            end
+
+            prop.bind( key, self )
+         end
+      end
+   end // function configure
+
+
+   /*# Check variables */
+   function getVariables()
+      x = self.retrieve()
+      for k, v in x
+         if not v.derivedFrom( ServiceVar )
+            continue dropping
+         end
+      end
+      
+      return x
+   end
+
+   function getVariableData()
+      x = self.retrieve()
+      r = [=>]
+      for k, v in x
+         if v.derivedFrom( ServiceVar )
+            r[k] = v.value 
+         end
+      end
+      
+      return r
+   end
+
+   /*# Used by nest to communicate the final skin to be used. */
+   function setSkinFile( fname )
+      self._skin_file = fname
+   end
+   
+
+   /*# Loads a required skin file, sending it configuration data. */
+   function renderSkin( file )
+      s = StringStream()
+      old = stdOut( s )
+      try
+         include( file, symDict | (sd=["skin"=>nil] ) )
+         sd["skin"]( bless(self.getVariableData()), self )
+         stdOut( old )
+      catch in e
+         stdOut( old )
+         raise e
+      end
+
+      return s.closeToString()
+   end
+
+end

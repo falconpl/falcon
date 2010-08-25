@@ -1,0 +1,49 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: index.fal
+
+   Test - Notes site.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 26 Jun 2010 14:21:48 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load nest
+import from hash
+   
+Nest.debug = true
+Nest.log_level = 3
+Nest.stylesheets += "notes.css"
+
+Nest.onStartup = function()
+   dm = Nest.dm( "DBIDataManager", "notes_db" )
+
+   if dm.dbc == nil and Nest.pid != "create"
+      Reply.redirect( Nest.pageLink("create") )
+      return
+   end
+
+   login = Nest.service("Login")
+   login.checker = function( uid, pwd )
+      record = dm.queryItem( "users", uid )
+      if record.data and record.data["pwd_md5"] == hash.md5(pwd)
+         switch record.data["auth_type"]
+            case "admin": level = Nest.AL.ADMIN
+            case "staff": level = Nest.AL.STAFF
+            case "user": level = Nest.AL.USER
+            default: level = Nest.AL.VISITOR
+         end
+         return [level, nil]
+      end
+   end
+end
+
+Nest.route()

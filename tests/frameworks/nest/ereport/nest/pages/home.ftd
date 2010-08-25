@@ -1,0 +1,7 @@
+<h1>Willfully Raising an error</h1>
+
+<p>Hello; we're going to raise an error right here:</p>
+<? raise Error( 10001, "A willful error", "don't worry, I wanted to raise it" ) ?>
+
+And you'll never see this text...
+

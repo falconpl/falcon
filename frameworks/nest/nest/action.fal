@@ -1,0 +1,186 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: action.fal
+
+   Abstraciton of target actions.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 14 Aug 2010 19:41:05 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Abstraciton of target actions.
+
+   @param al The authorization level needed to see this action.
+   @param mask The mask for the rendering, or a function used during rendering.
+   @optparam pid A target page ID.
+   @optparam cmd A command to be passed to the target page.
+   @optparam cmdField The field where the command is passed (defaults to "cmd").
+
+   The @b Mask parameter can be either a string that will be rendered verbatim
+   by "render", or a function that is called back during the render phase.
+
+   String masks can be configured using the @b $eid marker
+   in case the action is applied to single entities.
+   
+   If the action is called back on a entity, then the mask function will receive an @b eid
+   parameter.
+   
+   Rendering actions when the Nest authorization level is less privileged than then
+   required @b al will result in an empty string.
+*/
+
+class Action( al, mask )
+   level = al
+   mask = mask
+   auth_level = Nest.ambient( "auth_level" )
+
+   function allowed()
+      return Nest.auth_level <= self.level
+   end
+
+   function render( eid )
+      // Filter the action autorization level.
+      if Nest.auth_level > self.level: return ""
+      
+      if self.mask.typeId() == StringType
+         if eid
+            eid = URI.encode( eid.toString() )
+         end
+         
+         return @ self.mask
+      else
+         return self.mask( eid )
+      end
+   end
+end
+
+/*# Separator action.
+   Always displayed, it's used as a separator between other actions.
+*/
+class SepAction( mask ) from Action( 10000, mask )
+end
+
+
+/*# Generates a button action.
+   @param authLevel minimal authorization level required to see this action
+   @param content The text to be displayed in the button element.
+   @optparam onClick
+   @optparam extra
+
+   The @b content parameter can be any valid HTML text (it won't be escaped).
+*/
+
+class ButtonAction( authLevel, content, onClick, extra ) from Action( authLevel )
+   init
+      if onClick == nil: onClick = ""
+      if extra == nil: extra = ""
+      self.mask = (@'<button type="button" onclick="$(onClick)" $extra>') + content + '</button>'
+   end
+end
+
+
+/*# Generates a submit action.
+
+   @param authLevel minimal authorization level required to see this action
+   @param content
+   @param name
+   @param value
+   @optparam onClick A command to be passed to the page
+   @optparam extra The name of the command field (defaults to "cmd")
+
+   The @b content parameter can be any valid HTML text (it won't be escaped).
+*/
+
+class SubmitAction( authLevel, content, name, value, onClick, extra ) from Action( authLevel )
+   init
+      if onClick == nil: onClick = ""
+      if extra == nil: extra = ""
+      self.mask = (@ '<button type="submit" name="$name" value="$value" onclick="$(onClick)" $extra>') + content + '</button>'
+   end
+end
+
+
+/*# CheckboxAction
+
+   @param authLevel minimal authorization level required to see this action
+   @param name Defaults to eid
+   @param value Defaults to $eid
+   @optparam extra The name of the command field (defaults to "cmd")
+
+   The @b content parameter can be any valid HTML text (it won't be escaped).
+*/
+
+class CheckboxAction( authLevel, name, value, extra ) from Action( authLevel )
+   init
+      if not name: name = "eid"
+      if not value: value = "$(eid)"
+      self.mask = '<input type="checkbox" name="'+name+'[]" value="'+value+'" ' + extra + '/>'
+   end
+end
+
+/*# Creates an action as an html anchor element.
+
+   @param authLevel minimal authorization level required to see this action
+   @param text The text to be displayed in the @b a element
+   @param link Complete link to a target page/entity created via Nest.eidLink()
+   @optparam extra HTML attributes for the anchor element
+   @optparam cmdField The name of the command field (defaults to "cmd")
+*/
+
+class LinkAction( authLevel, text, link, extra ) from Action( authLevel )
+   init
+      if extra == nil: extra = ""
+      self.mask = '<a href="' + link + '" ' + extra +'>' + htmlEscape(text) +'</a>'
+   end
+end
+
+/*# Creates a multichoice action.
+   @param al
+   @param name
+   @param values List/array of Choice items
+   @param extra Extra style, class, ID and similar.
+*/
+class ChoiceAction( al, name, values, extra ) from Action( al )
+   init
+      if extra == nil: extra = ""
+      mask = "<select name=\"" + name + "\" " + extra + ">\n"
+      for v in values
+         extra = v.extra ? v.extra : ""
+         mask += "<option value=\"" + v.value + "\""+extra + ">" + v.description + "</option>\n"
+      end
+      mask += "</select>\n"
+      self.mask = mask
+   end
+end
+
+/*# Choice for ChoiceAction.
+   @param value The value of the choice
+   @param desc The textural description of the choice (unescaped)
+   @optparam extra Extra style for the choice.
+*/
+class Choice( value, desc, extra )
+   value = value
+   description = desc
+   extra = extra
+end
+
+/*# Renders the action surrounding it with HTML code respecting the same rules of the action. */
+class ActionBox( action, prefix, postfix ) from Action( action.level )
+   prefix = prefix ? prefix : ""
+   postfix = postfix ? postfix : ""
+   action  = action
+   
+   function render( eid )
+      if not self.allowed(): return ""
+      return self.prefix + self.action.render( eid ) + self.postfix
+   end
+end
+

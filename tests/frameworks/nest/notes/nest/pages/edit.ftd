@@ -1,0 +1,36 @@
+<?
+   import from nest.action in na
+   dm = Nest.dm( "DBIDataManager", "notes_db" )
+
+   de = Nest.service( "DataEntry", "",
+      [
+         "actions" => .[
+            na.SubmitAction( Nest.AL.STAFF, "Update", "cmd", "upd" )
+            na.SubmitAction( Nest.AL.STAFF, "Delete!", "cmd", "del" )
+         ],
+         "skin" => "note_upd",
+         "handler" => Nest.pageLink("home"),
+         "level" => Nest.AL.USER
+      ]
+   )
+   de.dm = dm
+   de.entity = "notes"
+   de.view = "detail"
+   
+?><html>
+<head>
+   <title>Your notes</title>
+   <?= Nest.headings() ?>
+</head>
+<body>
+   <h1>Modify your note</h1>
+   <? if de.allowed() ?>
+      <?= de.render() ?>
+   <? else ?>
+      <p>Sorry, you're not allowed tobe here</p>
+   <? end ?>
+   <br/>
+   <p>Click here to <a href="<?= Nest.pageLink('home') ?>">return to home</a> and abandon edit.</p>
+   <br/>
+</body>
+</html>

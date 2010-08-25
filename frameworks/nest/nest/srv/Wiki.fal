@@ -1,0 +1,263 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Wiki.fal
+
+   Service managing wiki-like pages.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 20 Aug 2010 21:38:16 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import from nest.bindings in b
+import NestError from nest as NestError
+import from nest.dbentity in dbe
+import from parser.render.html in html
+
+const entity_name = "wiki_pages"
+const default_page = "main"
+
+/*# Service Managing WIKI based contents.
+*/
+class Wiki( instance ) from Service( instance )
+   wid = ServiceVar("Wiki page to be loaded or managed", b.InputVarBinder )
+   wka = ServiceVar("Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)", b.InputVarBinder )
+   wkd = ServiceVar("Wiki data; original data", b.InputVarBinder )
+   wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null.", b.InputVarBinder )
+   
+   parser = ServiceVar( "Instance of a Wiki parser, implementing the Falcon wiki parser interface", b.ConfigBinder )
+   helper = ServiceVar( "Generic parser renderer helper", b.ConfigBinder )
+   main_wid = ServiceVar( "Wid of the main page (which is also the default wid)", b.ConfigBinder )
+   actions = ServiceVar( "Actions that can be done other than \"commit\" on a page", b.ConfigBinder )
+   modyPage = ServiceVar( "Page used when invoking the wiki page modification", b.ConfigBinder )
+
+   preview = ServiceVar( "Compiled content of the page" )
+   page = ServiceVar( "Complete page -- if found" )
+
+   // Gets the authenticated user.
+   auth_user = Nest.ambient( "auth_user", "Authenticated user", b.SessionBinder )
+
+   // data manager
+   dm = nil
+
+   // Wiki Page entities
+   entity = nil
+   
+   function run()
+      Nest.logi( "Running service Wiki" )
+      // Setup
+      if not self.allowed(): return false
+      if not self.dm: raise NestError( NestError.no_dm )
+      if not self.parser.value: raise NestError( NestError.other, "Must configure a parser in configuration" )
+      self.setEntities( self.dm )
+
+      // sanitize the WID settings
+      if not self.main_wid.value: self.main_wid.value = default_page
+      if not self.wid.value
+         wid = self.wid.value = self.main_wid.value
+      else
+         wid = self.wid.value
+      end
+
+      todo = self.wka.value
+      Nest.logi( @"Executing $(todo) on \"$(wid)\"" )
+      // see what we can do
+      switch todo
+         case 'del'
+            if self.wkc.value
+               self.removePage( wid )
+            end
+
+         case 'mody'
+            page = self.dm.queryItem( entity_name, wid, "edit" )
+            if page
+               self.wkd.value = page.data.content_wiki
+            else
+               self.wkd.value = ""
+            end
+            
+         case 'upd'
+            data = self.getBlank()
+            data.page_name = wid
+            data.content_wiki = self.wkd.value 
+            data.content_html = self.renderWiki( data.content_wiki, wid )
+            data.creator = self.auth_user.value
+
+            self.updatePage( data )
+            self.page.value = data
+
+         case 'prw'
+            self.preview.value = self.renderWiki( self.wkd.value, wid )
+
+         default
+            self.page.value = self.getPage( wid )
+      end
+   end
+
+   //============================================================================
+   // Utilities
+   //
+
+   function initialize()
+      if not self.allowed(): return false
+      if not self.dm: raise NestError( NestError.no_dm )
+      self.setEntities( self.dm )
+      Nest.logi( "Initializing WIKI DB entities" )
+      self.dm.createEntity( self.entity, true )
+   end
+
+   function setEntities( dm )
+      // set our entities in the database
+      wp = dbe.DBEntity( entity_name,
+         "sqlite" in dm.cs ?
+         .[
+            "page_name varchar(60) PRIMARY KEY"
+            "content_wiki TEXT"
+            "content_html TEXT"
+            "creator varchar(30)"
+            "editor varchar(15)"
+            "created datetime"
+            "last_edited datetime"
+         ]
+         :
+         .[
+            "page_name varchar(60) PRIMARY KEY"
+            "content_wiki TEXT character set utf8"
+            "content_html TEXT character set utf8"
+            "creator varchar(30) charset utf8"
+            "editor varchar(15) charset utf8"
+            "created datetime"
+            "last_edited datetime"
+         ]
+         )
+
+      // standard view for basic operations
+      wp.views["read"] = .[
+            dbe.DBColumn( "page_name", i"Page name" )
+            dbe.DBColumn( "content_html", i"Html text" )
+            dbe.DBColumn( "creator", i"Page creator" )
+            dbe.DBColumn( "editor", i"Page editor" )
+            dbe.DBColumn( "created", i"Created on" )
+            dbe.DBColumn( "last_edited", i"Last edited on" )
+      ]
+
+      // view for edits
+      wp.views["edit"] = .[
+            dbe.DBColumn( "page_name", i"Page name" )
+            dbe.DBColumn( "content_wiki", i"Wiki text" )
+      ]
+
+       // view for edits
+      wp.views["exists"] = .[
+            dbe.DBColumn( "page_name", i"Page name" )
+            dbe.DBColumn( "creator", i"The creator of the page" )
+            dbe.DBColumn( "created", i"When the page was created" )
+            dbe.DBColumn( "last_edited", i"Last edited on" )
+      ]
+
+      self.entity = wp
+      dm.entities[entity_name] = wp
+   end
+
+   function linkToPage( page, handler )
+      return Nest.pageLink( handler, ["wid"=>page])
+   end
+
+   function linkEditPage( page, handler )
+      return Nest.pageLink( handler, ["wid"=>page, "wka"=>"mody"])
+   end
+   
+   //============================================================================
+   // Core
+   //
+
+   /*#
+      @brief Returns the full record of the given page.
+      @param page_name The id of the page to be retreived.
+      @return The page data on success, nil on failure.
+   */
+   function getPage( page_name )
+      page = self.dm.queryItem( entity_name, page_name, "read" )
+      if page: return page.data
+      return nil
+   end
+
+   /*#
+      @brief Returns a blank page that can be used to fill the update parameters.
+      @return A blank page record.
+   */
+   function getBlank()
+      return self.entity.makeBlank()
+   end
+
+
+   /*#
+      @brief Updates (or creates) a page with new contents.
+      @param pageEntry The page entry to be sent to the db.
+      @return true on success, false if the page cannot be created.
+      @raise NestError in case of wiki generation or database error.
+      
+      if the pageEntry.comp_cnt value is not valorized, compiles automatically
+      the wiki content.
+
+      On success sends an "fmwiki_pupd" message.
+   */
+   function updatePage( pageEntry )
+      Nest.logi( "Update request for " + pageEntry.page_name )
+      
+      // see if the page exists.
+      page = self.dm.queryItem( "wiki_pages", pageEntry.page_name, "exists" )
+      if page
+         // it existed!
+         Nest.logi( "Update existing page: " + pageEntry.page_name )
+
+         if pageEntry.creator and not pageEntry.editor 
+            pageEntry["editor"] = pageEntry["creator"]
+         end
+
+         // the the page was already created
+         pageEntry["last_edited"] = CurrentTime()
+         pageEntry["creator"] = page.data.creator
+         pageEntry["created"] = page.data.created
+         self.dm.update( entity_name, pageEntry.page_name, pageEntry )
+      else
+         Nest.logi( "Create new page: " + pageEntry.page_name )
+         pageEntry["created"] = CurrentTime()
+         self.dm.add( entity_name, pageEntry )
+      end
+   end
+
+
+   function renderWiki( wikitext, pageName )
+      try
+         p = self.parser.value
+         p.reset()
+         ctx = p.parse( wikitext )
+         hr = html.Renderer( self.helper.value, "nest_wiki" )
+         
+         return hr.render( ctx, pageName )
+      catch ParseError in e
+         raise NestError( NestError.other, i"Can't compile the wiki page", e.heading() )
+      end
+   end
+
+   /*#
+      @brief Removes a page.
+      @param page_name The page to be removed.
+      @return true on success, false if the page cannot be created.
+   */
+   function removePage( page_name )
+      return self.dm.delete( entity_name, page_name )
+   end
+   
+end
+

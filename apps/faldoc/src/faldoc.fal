@@ -1,0 +1,195 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Documentation tool
+
+   FILE: faldoc.fal
+
+   Autodocumentation tool - main file
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 10 Jan 2008 08:12:57 -0800
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+load confparser
+load compiler
+//load sdl
+
+load self.parser
+load self.version
+load self.docdata
+
+resources: "resources/*"
+
+banner()
+//GC.adjust( GC.ADJ_LOOSE )
+
+// get minimal parameters
+fdfile = args.len() == 0 ? "faldoc.fd" : args[0]
+
+// get config
+try
+   conf = ConfParser( fdfile )
+   conf.read()
+catch IoError in error
+   > i"faldoc: Invalid input file ", fdfile
+   return 1
+catch in error
+   > i"Error in reading the configuration file: "
+   > error
+   return 1
+end
+
+// Fine, we can create a basic doctree
+docdata = DocData()
+path = Path( fdfile )
+basedir = conf.get( "Input.basedir" ) 
+if not basedir: basedir = path.fulloc
+if basedir == nil or basedir == "": basedir ="."
+
+docdata.basedir = basedir
+assert( "resdir", filePath(scriptPath) + "/resources" )
+
+// Functions raise strings to cause fatal errors.
+try
+   // process configuration for basic parameters
+   processConf( docdata, conf )
+   // process the input files
+   processInput( docdata, conf, basedir )
+   docdata.entities = EntityDB
+   // process the output files
+   processOutput( docdata, conf )
+catch StringType in error
+   > i"faldoc: FATAL ERROR - ", error
+   exit(1)
+catch in error
+   > i"faldoc: FATAL ERROR - Rised an exception:"
+   > error
+   exit(1)
+end
+
+> "faldoc: done."
+return 0
+
+
+//================================================
+// Main utilities
+//================================================
+function banner()
+   > i"faldoc - Falcon documentation tool."
+   > i"Part of the Falcon Programming language."
+   > i"Version ", version.name()
+   > "----------------------------------------"
+end
+
+
+//================================================
+// Process generic settings
+//================================================
+function processConf( doctree, conf )
+   // get the essentials
+   if not (doctree.title = conf.getOne( "Title" ))
+      raise i"Title key missing from configuration"
+   end
+
+   if not (doctree.author = conf.getOne( "Author" ))
+      raise i"Author key missing from configuration"
+   end
+
+   if not (doctree.version = conf.getOne( "Version" ))
+      raise i"Version key missing from configuration"
+   end
+
+   // then, we need at least one output
+   if not conf.get("Output.module" ): raise i"At least one 'Output.module' key is necessary."
+
+   // get the properties.
+   doctree.properties = conf.getCategory( "Property.*" )
+end
+
+//================================================
+// Process Input
+//================================================
+
+function processInput( doctree, conf, basedir )
+   // Input directory -- defaults to "."
+   inputDirs = firstOf(conf.getMultiple( "Input.directory" ), ["."])
+   // Input file wildcard; defaults to "*.fal"
+   inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
+   // input recursive -- defaults to true
+   rec = conf.getOne( "Input.recursive" )
+   inputRec = rec ? strLower( rec ) != "false" : true
+   
+   for dir in inputDirs
+      // open the directory
+      try
+         hdir = Directory( basedir + "/" + dir ).descend( {=>}, {fname =>
+            for wildcard in inputWild
+               if strWildcardMatch( fname, wildcard )
+                  fileParse( fname )
+               end
+            end
+            })
+      catch IoError in err
+         raise "can't read directory \""+basedir + "/"+dir+"\" in input dirs."
+      end
+   end
+
+   // parse extra files
+   extraFiles = conf.getMultiple( "Input.extra" )
+   for extra in extraFiles
+      fileParse( basedir + "/" + extra )
+   end
+
+   // Time to resolve links
+   LinkDB.resolve()
+   // and order data
+   EntityDB.complete()
+
+   // we're done.
+   //for name, val in EntityDB.data: > name
+   
+end
+
+//================================================
+// Process Output
+//================================================
+function processOutput( doctree, conf )
+
+   // get the modules -- we know it's here, processConf checks it
+   outMods = conf.getMultiple("Output.module")
+
+   // determine the path of our modules
+   path = Path( scriptPath ).fulloc
+   if not path: path = "."
+
+   // create the compiler
+   compiler = Compiler( path )
+
+   for mod in outMods
+      try
+         modData = compiler.loadByName( "self.output." + mod )
+         faldoc_output = modData.get( "faldoc_output" )
+         if not isCallable( faldoc_output )
+            raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
+         end
+
+         // perform call
+
+         faldoc_output( doctree, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
+
+         // unload the module
+         modData.unload()
+
+      catch IoError in error
+         // signal an abnormal exit
+         raise "Cannot find or load module (faldoc_output_)"+mod
+      end
+      // let any other error through to be catched by the main try.
+   end
+end
+
+/* end of faldoc */

@@ -1,0 +1,24 @@
+/*
+<source name="index.fal" language="falcon" begin="23-Aug-2010">
+    <description>
+        Web SDK root.
+    </description>
+    <authors>
+        <author>
+            <name>Giuseppe</name>
+            <surname>Greco</surname>
+            <email>giuseppe.greco@agamura.com</email>
+        </author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*/
+
+load nest
+
+// Nest.debug = true
+// Nest.log_level = 3
+Nest.stylesheets += "websdk.css"
+Nest.route()

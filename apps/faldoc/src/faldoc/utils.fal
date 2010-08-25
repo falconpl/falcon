@@ -1,0 +1,78 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: faldoc_utils.fal
+
+   Autodocumentation tool - general utilities
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 10 Jan 2008 08:12:57 -0800
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+currentLine = 0
+currentFile = "<nofile>"
+currentEntity = nil
+
+// Warnings accounter
+object warner
+   outStream = stdErr()
+
+   init
+      subscribe( "warn", self )
+      subscribe( "message", self )
+      subscribe( "error", self )
+   end
+
+   function on_warn( message )
+      message = currentFile +
+         " (" + currentLine + "): " +
+         message
+      self.outStream.writeText( "faldoc WARNING at "+ message +"\n" )
+      self.outStream.flush()
+   end
+
+   function on_message( msg )
+      > "faldoc: ", msg
+   end
+
+   function on_error( file, line, msg )
+      self.outStream.writeText( @"faldoc ERROR at $(file)($(line)): $msg\n" )
+      self.outStream.flush()
+   end
+end
+
+
+function trace_func( x )
+   f = .[printl x ": " ]
+   for i in [1 : paramCount():1 ]
+      f += " "
+      f += paramNumber(i)
+   end
+   f()
+end
+
+// trace( "funcname", msg )
+// to enable trace, set trace = trace_func
+function trace()
+end
+
+// cute function; we should add it in core
+function extendList( dict, id, element )
+   if id notin dict
+      dict[id] = [element]
+   else
+      dict[id].add( element )
+   end
+end
+
+function flatten( te )
+   return te.renderThrough( { te => te.content ? te.content.trim() : ""} )
+end
+
+
+export

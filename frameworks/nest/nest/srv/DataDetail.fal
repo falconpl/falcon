@@ -1,0 +1,42 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DataDetail.fal
+
+   View a single item in a dabase entity
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 15 Aug 2010 12:36:16 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+//WARNING: This is to circumvent a loader's bug. Should be .DBService
+import DBService from .srv.DBService as DBService
+import ServiceVar from nest as ServiceVar
+import from nest.bindings in b
+
+// This is your service
+class DataDetail( instance ) from DBService( instance )
+   /*# Single extracted record */
+   record = ServiceVar( "Extracted data as a DBRecord" )
+
+   /*# Action to be rendered below */
+   actions = ServiceVar( "Actions if configured to view", b.ConfigBinder  )
+
+   /*# Entity to be read. */
+   eid = ServiceVar( "Entity ID on which to operate", b.InputVarBinder  )
+
+   /*# Command. By default it's view. */
+   cmd = ServiceVar( "Command (must be \"edit\" to perform an edit)", b.InputVarBinder  )
+   
+   /*# Reimplementation to perform the required query */
+   function do_query()
+      self.record.value = self.dm.queryItem( self.entity, self.eid.value, self.view )
+   end
+end

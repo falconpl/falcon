@@ -1,0 +1,27 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docentry.fal
+
+   Autodocumentation tool - basic entry item.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 May 2009 12:19:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class DocData
+   title = nil
+   author = nil
+   version = nil
+   properties = nil
+   basedir = nil
+   
+   entities = nil
+end
+
+export

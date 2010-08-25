@@ -1,0 +1,57 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DataQuery/main.fal
+
+   Query an entity and its fields.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 14:45:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+
+// This is your service
+class DBService( instance ) from Service( instance )
+
+   /*# Vector of columns in the DB record */
+   columns = ServiceVar( "Vector of column titles for the last query" )
+
+   /*# Manager of the table actions (submits and other table-level actions). */
+   handler = ServiceVar( "Manager of the table actions", b.ConfigBinder  )
+
+   /*# Data manager of this service */
+   dm = nil
+
+   /*# Querable entity - not in configuration. */
+   entity = nil
+
+   /*# View for the entity - not in configuration. */
+   view = nil
+
+   function run()
+      if not self.checkAllowed(): return
+
+      dm = self.dm
+      if not dm: raise NestError( NestError.other, i"Data manager not set" )
+      if not self.entity: raise NestError( NestError.other, i"Entity not set" )
+
+      self.do_query()
+      self.columns.value = dm.columns
+   end
+
+   function do_query()
+      raise "Please implement this method"
+   end
+
+end

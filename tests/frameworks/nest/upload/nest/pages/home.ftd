@@ -1,0 +1,58 @@
+<html>
+<head>
+   <title>Nest uploader service test</title>
+</head>
+<body>
+<h1>Upload service test</h1>
+<p>The Nest Upload service allows to upload and manage files for insertion in blogs, wikis and so on.</p>
+<p>It is meant to be used in popup windows or CSS/javascript windows and works as a minimalistic remote
+file manager.</p>
+<p>As one of its main, but not exclusive functions is that of selecting a file from the list for
+insertion in a text area, we show here this feature.</p>
+Open the uploader service <a href="javascript:utest()">clicking here</a>.
+</p>
+<p>
+<textarea id="ta_content" cols="80" rows="10">
+   Enter some text here.
+   Files selected in the uploader will be referenced here.   
+</textarea>
+</p>
+
+<h2>Problems with javascript?</h2>
+<p>Then you can use <a href="<?= Nest.pageLink("upage") ?>">this link</a> for a simple test.</p>
+
+<script type="text/javascript">
+   function utest() {
+      window.open('<?= Nest.pageLink("upage", ["wnd" => "yes" ])?>',
+         'Upload test','width=800,height=600,location=no,menubar=no,toolbar=no,scrollbars=yes');
+   }
+
+   function insertText( text )
+   {
+      obj = document.getElementById( "ta_content" );
+
+      /* IE */
+      if (document.all) {
+         obj.focus();
+         var sel=document.selection;
+         var rng=sel.createRange();
+         rng.colapse;
+         rng.text= text;
+      }
+      /* Mozilla/geko */
+      else if(obj.selectionEnd)
+      {
+         var lng=obj.textLength;
+         var from=obj.selectionStart;
+         var to=obj.selectionEnd;
+         obj.value=obj.value.substring(0,from)+ text +obj.value.substring(to,lng);
+      }
+      /* No idea */
+      else
+         obj.value+=text;
+
+   obj.focus();
+   }
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: sess_serv/main.fal
+
+   Service showing the basics of a session management
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 05 Jul 2010 11:17:02 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import from nest.bindings in b
+
+// This is your service
+class SessionTest(owner,instance) from Service( owner, instance )
+   remip = ServiceVar( "Remote IP", b.SessionBinder )
+   taround = ServiceVar( "Times around", b.SessionBinder )
+   tcreate = ServiceVar( "When the session has been intiated", b.SessionBinder )
+   
+   status = "OK"
+   
+   function startup()
+      // do post-configuration step
+   end
+
+   function run()
+      if self.remip.value == nil         
+         self.status = Nest.sessionExpired ? "EXPIRED" : "New"
+         self.remip.value = Request.remote_ip
+         self.taround.value = 1
+         self.tcreate.value = CurrentTime().toString()
+      else
+         self.taround.value = self.taround.value + 1
+      end
+   end
+
+   function render()
+      self.Service.render()
+
+      return @'
+         <h2>Session Service</h2>
+         <pre>
+         Session status: $(self.status)
+         Remote IP: $(self.remip.value)
+         Times around: $(self.taround.value)
+         Session created on: $(self.tcreate.value)
+         </pre>
+         '
+   end
+
+   function finalize()
+      // do post-render finalization
+   end
+end

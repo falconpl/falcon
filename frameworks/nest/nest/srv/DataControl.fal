@@ -1,0 +1,114 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: _skel/main.fal
+
+   Skeleton carbon-copy service
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 05 Jul 2010 11:17:02 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import from nest.bindings in b
+
+import DBIError from dbi
+
+import NestError from nest as NestError
+
+/*# Service used to modify database records. */
+class DataControl( instance ) from Service( instance )
+
+   // Create here the service variables, like
+   cmd = ServiceVar( "The action that must be performed on the data", b.InputVarBinder )
+   eid = ServiceVar( "Entity ID being modified", b.InputVarBinder )
+   result = ServiceVar( "Count of affected rows, used for action effect rendering" )
+   dberror = ServiceVar( "Error returned by the DB when trying to perform the operation" )
+
+   /*# The entity must be specified directly. */
+   entity = nil
+
+   /*# The data manager must be specified directly */
+   dm = nil
+
+   function run()
+      if not self.checkAllowed(): return
+      
+      if not self.dm or not self.entity
+         raise NestError( NestError.other, i"Data manager or entity not set" )
+      end
+
+      if not self.cmd.isSet
+         Nest.logd( "Data Action: no action" )
+         return
+      end
+      
+      action = self.cmd.value
+      dm = self.dm
+      entity = self.entity
+      eid = self.eid.value
+      Nest.logi( @"DataAction: $action $entity:$eid" )
+      
+      try
+         switch action
+            case "del"
+               if eid.typeId() == StringType
+                  self.result.value = dm.delete( entity, eid )
+               else
+                  for key in eid: dm.delete( entity, key )
+               end
+               self.result.value = true
+
+            case "add"
+               d = self.makeData()
+
+               if d
+                  if Nest.log_level >= 3: Nest.logd( @"Adding data:" + d.describe() )
+                  self.result.value = dm.add( entity, d )  // on failure, add rasies
+               else
+                  self.dberror.value = i"No field to be added"
+               end
+               
+            case "upd"
+               d = self.makeData()
+               if d
+                  if Nest.log_level >= 3: Nest.logd( @"Modifying data:" + d.describe() )
+                  dm.update( entity, eid, d )
+                  self.result.value = true
+               else
+                  self.dberror.value = i"No field to be modified"
+               end
+         end
+      catch dbi.DBIError in dbierr
+         // let the renderer take care of this
+         self.dberror.value = dbierr.heading()
+      end
+
+   end
+
+   function makeData()
+      dbe = self.dm.getEntity( self.entity )
+      if not dbe
+         self.dberror.value = @i"Undefined database entity $(self.entity)"
+         return nil
+      end
+
+      d = [=>]
+      for field in dbe.fields
+         fname = self.instance ? self.instance + "." + field : field
+         value = Request.getField( fname, nil )
+         if Nest.log_level >=3: Nest.logd( "Composing field: " + fname + "=" + value )
+         if value: d[field] = value
+      end
+
+      return d
+   end
+end

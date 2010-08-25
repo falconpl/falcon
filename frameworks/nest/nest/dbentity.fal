@@ -1,0 +1,180 @@
+/*
+   FALCON - DBI Database entity
+
+   Nest - Falcon web applcation engine
+
+   FILE: dbentity.fal
+
+   Class abstracting an entity coming from the db.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 13 Aug 2010 12:34:08 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import NestError from .error as NestError
+
+
+class DBColumn( field, title, rnd )
+   field = field
+   title = title
+   rnd = rnd
+
+   function render( value )
+      
+      if self.rnd.typeId() == StringType
+         return @ self.rnd
+      end
+      return self.rnd( value )
+   end
+
+   function renderData( data )
+      return self.render( data[self.field] )
+   end
+end
+
+/*# Simple basic database entity */
+class DBEntity( table_name, fdefs, extra )
+   table_name = table_name
+   fdefs = [=>]
+   fields = []
+   fdef_orig = fdefs
+   extra = extra
+   views = [=>]
+   key_fields = []
+
+   /*# Function returning startup data.
+   
+      Set this property to a function returning startup data, if any.
+
+      We use a function because this prevents instantiation of useless data
+      when creation data is not required (quite often).
+   */
+   startup = nil
+   
+   init
+      if not fdefs: raise NestError( NestError.no_fields )
+      for row in fdefs
+         try
+            fname, fd = row.split(" ", 2)
+            self.fdefs[ fname ] = fd
+            self.fields += fname
+         catch AccessError
+            raise NestError( NestError.mf_fdef, "", row )
+         end
+      end
+      
+      // is "self.fields" still empty?
+      if not self.fields: raise NestError( NestError.no_fields )
+      
+      // TODO: Autodetect primary key field or expression
+      self.key_fields += self.fields[0]
+   end
+
+   /*# Returns the expression needed to create this table.
+   
+      @param if_not_exists adds the clause "IF NOT EXISTS" to the returned SQL create table command.
+      @return a SQL create table command that can generate this entity on a standard DB.
+   */
+   function getCreate( if_not_exists )
+      str = "create table "
+      if if_not_exists: str += " IF NOT EXISTS "
+      str += self.table_name + "(\n"
+      for row in self.fdef_orig
+         formiddle: str += row + ",\n"
+         forlast: str += row
+      end
+
+      if self.extra: str += ",\n" + self.extra
+      str += "\n);"
+
+      return str
+   end
+
+   function getDrop()
+      return "drop table " + self.table_name
+   end
+
+   /*# Returns the key expression.
+
+      This function is called to create a key expression uniquely identifying
+      a single element of this entity.
+
+      The function should return the complete SQL needed to pinpoint a single
+      entity, excluding the where clause.
+
+      The default implementation returns self.key_field = escape(eid)
+   */
+   function keyExpr( eid )
+      
+      key_field = self.key_fields[0]  // first field is the primary key by default
+      if eid.typeId() == StringType
+         return key_field + "=\'" + strEscape( eid ) + "\'"
+      else
+         return key_field + "=" + toString( eid )
+      end
+   end
+   
+   /*# Creates an empty structure that can be used to update database data.
+      @return a blessed dictionary containing an empty record.
+   */
+   function makeBlank()
+      st = [=>]
+      for field in self.fields
+         st[field] = nil
+      end
+      return bless( st )
+   end
+
+
+   /*# Returns a "dressed" record given a record and its view.
+      @return a blessed dictionary containing the record and some methods.
+
+      The returned data has this structure
+      - data: The database record contents
+      - view: The required view.
+      - key(): A method returning a key value to be used with EID
+      - render(): A function applying the view to the data.
+   */
+   function makeRecord( data, view )
+      rval = [ "data" => bless(data) ]
+      kf = self.key_fields
+
+      // use a simpler key() function when having 1 key field
+      if kf.len() == 1
+         kfield = kf[0]
+         rval["key"] = {=> data[kfield]}
+      else
+         rval["key"] = {sep =>
+            if sep == nil: sep = ":"
+            return sep.merge(map( {field=> data[field]}, kf ))
+            }
+      end
+
+      if view
+         rval["render"] = {=>
+            r = ""
+            for col in view
+               r += col.render( data[col.field] )
+            end
+            return r
+         }
+      else
+         rval["render"] = {=>
+            r = ""
+            for field, value in data
+               r += value
+            end
+            return r
+         }
+      end
+
+      rval["view"] = view
+      
+      return bless(rval)
+   end
+end

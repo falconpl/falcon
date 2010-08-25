@@ -1,0 +1,290 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: blexer.fal
+
+   Autodocumentation tool - Text block lexer
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 May 2009 12:19:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .tabledefs
+
+function isWhiteSpace( char )
+   return char == ' ' or char == "\t" or char == "\r"
+end
+
+function isWhiteSpaceOrAsterisk( char, nline )
+   return char == ' ' or char == "\t" or char == "\r" or char == "*"
+end
+
+
+/*# Better to pass the block by ref */
+class Blexer( entity )
+   entity = entity
+   nline = entity.firstline
+   pos = 0
+   indent = 0
+   lbegin = true
+
+   contexts = [self._normal]
+
+   /*# Pops the current context. */
+   function paramContext()
+      self.contexts += self._lex_param
+   end
+
+   function litContext()
+      self.contexts += self._lex_lit
+   end
+   
+   function endContext()
+      self.contexts.base().resize( self.contexts.base().len()-1 )
+   end
+
+   /*# Returns the next token.
+      Might return:
+      - "" on paragraph end
+      - oob( [...] ) The command definition on command
+      - A string (usually a single word)
+      - A whole text slice when entering special lexer contexts.
+      - A puntaction sign (usually a single char)
+      - nil on end.      
+   */
+   function nextToken()
+      if self.pos >= self.entity.cblock.len()
+         if self.lbegin
+            self.lbegin = false
+            return ""
+         else
+            return nil
+         end
+      end
+      
+      // execute the current parsing code
+      return self.contexts[-1]()
+   end
+
+   //============================================
+   // Parse in normal contexts
+   //
+   function _normal()
+      pos = self.pos
+      block = self.entity.cblock
+      length = block.len()
+      paster = 0
+      
+      // ignore leading "*" and spaces
+      loop
+         if self.lbegin
+            while pos < length and isWhiteSpaceOrAsterisk( block[pos] ): ++pos
+            paster = pos
+         else
+            paster = self.pos
+         end
+         
+         while pos < length and isWhiteSpace( block[pos] ): ++pos
+
+         // are we done?
+         if pos >= length
+            self.pos = pos
+            return "" // mark pend; next call will return nil.
+         end
+         
+         if block[pos] == "\n"
+            ++self.nline
+            self.pos = ++pos
+
+            self.lbegin = true
+            return ""
+            /*
+            self.lbegin = true
+            continue
+            */
+         end
+      end true
+
+      if pos >= length
+         return ""  // end of para; next time will be end of block
+      end
+
+      // mark indentation if we was at line begin
+      if self.lbegin
+         lbegin = true
+         self.lbegin = false
+         self.indent = pos - self.pos
+      end
+
+      // get up to the end of the line
+      pnline = block.find( "\n", pos )
+      if pnline == -1: pnline = length
+      // find commands in the line.
+      pat = pos-1
+      loop
+         pat = block.find( "@", pat+1, pnline )
+      end pat == -1 or pat == 0 or block[pat-1] != "\\"
+
+      if pat == -1
+         // we're lucky, no commands
+         ret = block[pos:pnline] + " "
+         if lbegin
+            self.pos = pos+1
+            if ret[0] == "-"
+               return "@bullet"
+            elif ret[0] == "#"
+               return "@number"
+            end
+         end
+
+         self.pos = pnline+1
+         self.lbegin = true
+         self.nline++
+         return ret
+      end 
+
+      // we have a command. teat it.
+      if pat != pos
+         // first, parse the preceding part
+         ret = block[pos:pat]
+
+         if lbegin
+            self.pos = pos+1
+            if ret[0] == "-"
+               return "@bullet"
+            elif ret[0] == "#"
+               return "@number"
+            end
+         end
+
+         self.pos = pat
+         return ret
+      end
+
+      // then, return exactly the command
+      pcmd = block.find( " ", pat, pnline )
+      if pcmd == -1
+         self.pos = pnline+1
+         self.lbegin = true
+         self.nline++
+         return block[pos:pnline]
+      end
+
+      self.pos = pcmd+1
+      return block[pat:pcmd]
+   end
+
+   
+   //============================================
+   // lex tokens in parameter parsing context.
+   //
+   function _lex_param()
+      pos = self.pos
+      length = self.entity.cblock.len()
+
+      loop
+         while pos < length and isWhiteSpace( self.entity.cblock[pos] ): ++pos
+         if pos == length
+            self.pos = pos
+            return nil
+         end
+
+         // in case of return, interrupt as parameters can't span across lines.
+         if self.entity.cblock[pos] == "\n"
+            self.pos = pos+1
+            return ""
+         end
+      end not isWhiteSpace( self.entity.cblock[pos] )
+
+      // did we hid the end?
+      self.pos = pos
+      
+      // are we parsing a "..." param?
+      if self.entity.cblock[pos] == "\""
+         return self._lex_param_quote()
+      end
+      
+      pos1 = pos+1
+      while pos1 < length
+         char = self.entity.cblock[pos1]
+         if char notin .[" " "." "\t" "\r" "\n" "," ":" "?" "!" "#" "(" "[" ")" "]" ]
+            ++pos1
+         elif char == "."
+            if pos1 == length - 1: break
+            next = self.entity.cblock[pos1+1]
+            if next == " " and pos1 > 0 and self.entity.cblock[pos1-1] != ".": break
+            if next in .[":" "\t" "\r" "\n" "," "?" "!" "#" "(" "[" ")" "]" ]: break
+            ++pos1
+         elif char == "\n"
+            ++pos1
+            break
+         else
+            break
+         end
+      end
+
+      self.pos = pos1
+      return self.entity.cblock[pos:pos1].trim()
+   end
+
+   //============================================
+   // lex up to the next quote.
+   //   
+   function _lex_param_quote()
+      pquote = self.pos+1
+
+      pn = self.entity.cblock.find( "\n", pquote )
+      if pn == -1: pn = self.entity.cblock.length()
+
+      loop
+         pquote = self.entity.cblock.find( "\"", pquote )
+         if pquote == -1
+            pquote = self.entity.cblock.len()
+         elif pquote > 0 
+            if self.entity.cblock[pquote-1] != "\\": break
+            pquote++
+         else
+            break
+         end
+         
+      end pquote >= pn
+
+      if pquote >= pn
+         broadcast( "error", currentFile, self.nline, "Unclosed parameter quote." )
+         ++self.nline
+      end
+
+      pos = self.pos+1
+      self.pos = pquote+1
+
+      return self.entity.cblock[pos:pquote]
+   end
+   
+   //=========================================================
+   // read the whole line, from indent point to the end of the line
+   //
+   function _lex_lit()
+      pos = self.pos
+      pos1 = self.entity.cblock.find( "\n", pos )
+      if pos1 < 0: pos1 = self.entity.cblock.len()
+      line = self.entity.cblock[ pos: pos1 ]
+      self.pos = pos1+1
+
+      if ( tline = line.trim() ) and tline[0] == "@"
+         return tline
+      end
+      
+      // escape "\"
+      pos = 0
+      while line and (pos = line.find( "\\@", pos ) )>=0: line[pos:pos+2]= "@"
+      return line[self.indent:] + "\n"
+   end
+   
+end
+
+export Blexer

@@ -1,0 +1,658 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: faldoc_output_html.fal
+
+   Autodocumentation tool - HTML output module - page handlers
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 14 Jun 2009 12:28:04 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+resources: "./*.html"
+
+//===========================================================
+// Create the main page
+//
+function makeMain( r )
+   // select the main page, if any
+   if "main" in r.doctree.entities.grouping
+      mainpage = r.doctree.entities.grouping["main"][0]  // there can be only one main.
+      mtitle = mainpage.props["title"].renderThrough( htmlTextRender )
+   else
+      mainpage = nil
+      mtitle = r.doctree.title
+   end
+
+   if mainpage
+      content = mainpage.content.renderThrough( htmlTextRender )
+   end
+
+   r.setCurrent( "main" )
+   
+   data = make_default_data(r) + [
+         "heading" => mtitle,
+         "page_title" => mtitle,
+         "page_content" => content
+      ]
+
+   main = r.tgdir + "/index.html"
+   out = OutputStream( main )
+   r.tplHeader.render( data, out )
+   r.tplPage.render( data, out )
+   r.tplFooter.render( data, out )
+   out.close()
+end
+
+//===========================================================
+// Create listing pages (pages with link to other pages)
+// (table member)
+
+function make_listingPage( renderer, row )
+   renderer.setCurrent( row.type )
+   list = renderer.doctree.entities.grouping[row.type]
+   url = renderer.config["url"] + "/"
+   
+   items = []
+   
+   for elem in list
+      id = elem.name
+      name = "title" in elem.props ? elem.props["title"].renderThrough( htmlTextRender ) : elem.name
+      brief = "brief" in elem.props ? elem.props["brief"].renderThrough( htmlTextRender ) : ""
+      
+      item = [
+         "item_link" => url + (@row.detail) + ".html",
+         "item_name" => name,
+         "item_brief" => brief ]
+      items += item
+   end
+
+   items.sort( {a,b => a["item_name"].compare( b["item_name"] ) } )
+   data = make_default_data( renderer ) + [
+      "heading" => row.ititle,
+      "entity_name" => row.ititle,
+      "items" => items
+      ]
+
+   file = renderer.tgdir + "/" + row.index + ".html"
+   out = OutputStream( file )
+   renderer.tplHeader.render( data, out )
+   renderer.tplListing.render( data, out )
+   renderer.tplFooter.render( data, out )
+   out.close()
+end
+
+
+//===========================================================
+// Create listing pages (pages with link to other pages)
+// (table member)
+
+function make_page( renderer )
+   make_listingPage( renderer, self )
+   list = renderer.doctree.entities.grouping[self.type]
+
+   renderer.setCurrent( "" )
+   data = make_default_data( renderer )
+      
+   for page in list
+      id = page.name
+      file = renderer.tgdir + "/" + (@self.detail) + ".html"
+      title = page.props["title"].renderThrough( htmlTextRender )
+
+      content = page.content.renderThrough( htmlTextRender )
+      data["heading"] = data["page_title"] = title
+      data["page_content"] = content
+
+      out = OutputStream( file )
+      renderer.tplHeader.render( data, out )
+      renderer.tplPage.render( data, out )
+      renderer.tplFooter.render( data, out )
+      out.close()
+   end
+end
+
+
+//===========================================================
+// Create group pages (Main group index and all groups)
+// (table member)
+
+function make_group( renderer )
+   make_listingPage( renderer, self )
+   
+   renderer.setCurrent( "" )
+   list = renderer.doctree.entities.grouping[self.type]
+   url = renderer.config["url"] + "/"
+   
+   global_data = make_default_data( renderer )
+         
+   for elem in list
+      id = name = elem.name
+      title = "title" in elem.props ? elem.props["title"].renderThrough( htmlTextRender ) : elem.name
+      file = renderer.tgdir + "/" + (@ self.detail) + ".html"
+
+      title = title.trim()
+      data = [ 
+            "heading" => @ self.dtitle,
+            "entity_name" => @ self.dtitle ]
+
+      if "brief" in elem.props 
+         data["brief"] = elem.props["brief"].renderThrough( htmlTextRender )
+      end
+
+      if elem.content
+         data["description"] = elem.content.renderThrough( htmlTextRender )
+      end
+      
+      if "members" in elem.props
+         items = []
+         for name, entity in elem.props["members"]
+            brief = "brief" in entity.props ? entity.props["brief"].renderThrough( htmlTextRender ) : ""
+            
+            item = [
+               "item_link" => make_link_to( entity ),
+               "item_name" => name,
+               "item_brief" => brief ]
+            items += item
+         end
+         
+         data["items"] = items
+      end
+      
+      out = OutputStream( file )
+      tdata = global_data + data
+      renderer.tplHeader.render( tdata, out )
+      renderer.tplListing.render( tdata, out )
+      renderer.tplFooter.render( tdata, out )
+      out.close()
+
+   end
+end
+
+//===========================================================
+// Create Listing/details pages (classes, objects etc.)
+// (table member)
+
+function make_ld( renderer )
+   // first, the list
+   make_listingPage( renderer, self )
+
+   // then the detail
+   renderer.setCurrent( "" )
+   list = renderer.doctree.entities.grouping[self.type]
+   url = renderer.config["url"] + "/"
+   
+   global_data = make_default_data( renderer )
+
+   for elem in list
+      id = name = elem.name
+      file = renderer.tgdir + "/" + (@ self.detail) + ".html"
+      title = "title" in elem.props ? \
+         '"' + elem.props["title"].renderThrough( htmlTextRender ).trim() + '"' : \
+         elem.name
+
+      data = [=>]
+      data["heading"] = @ self.dtitle
+      data["title"] = @ self.dtitle
+      data["brief"] = "brief" in elem.props ? elem.props["brief"].renderThrough( htmlTextRender ) : ""
+
+      if "inmodule" in elem.props
+         l = elem.props["inmodule"]
+         name = l.target and "title" in l.target.props ? \
+               l.target.props["title"].renderThrough( htmlTextRender ) : l.destination
+         data["module_name"] = "[in " + name.trim() + "]"
+         data["module_link"] = l.target ? make_link_to(l.target) : "#"
+      end
+
+      cpt = _makeCallPrototype( elem )
+      from_cpt = _makeFrom( elem )
+      if cpt
+         data["grammar"] = "<b>" + elem.type + "</b> " + cpt + from_cpt
+      end
+
+      idata = _prepareItemEntity( elem );
+      if "item_params" in idata: data["item_params"] = idata["item_params"]
+      if "item_optparams" in idata: data["item_optparams"] = idata["item_optparams"]
+      
+      if elem.content
+         data["description"] = elem.content.renderThrough( htmlTextRender )
+      end
+
+      // determine also inherited properties
+      if "from" in elem.props
+         inherit_props = []
+         inherit_methods = []
+         for link, callproto in elem.props["from"]
+            dest = link.target
+            // add the properties of this class
+            if dest provides props
+               // but only if dest is a real class that has been actually found
+               props, methods = _makeInherited( dest )
+               inherit_props += props
+               inherit_methods += methods
+            end
+         end
+
+         if inherit_props: data["inherit_props"] = inherit_props
+         if inherit_methods: data["inherit_methods"] = inherit_methods
+      end
+
+      sections = []
+      
+      if "members" in elem.props
+         methods = []
+         props = []
+         members = []
+         for name, prop in elem.props["members"]
+            p = _prepareItemEntity( prop, elem.name )
+            switch prop.type
+               case "method"
+                  methods += p
+               case "property"
+                  props += p
+               default
+                  // we'll manage init later.
+                  members += p
+            end
+         end
+         if props: sections += [ "section_title" => "Properties", "items" => props ]
+         if methods: sections += [ "section_title" => "Methods", "items" => methods ]
+         if members: sections += [ "section_title" => "Members", "items" => members ]
+      end
+
+      if sections: data["sections"] = sections
+      
+      out = OutputStream( file )
+      tdata = global_data + data
+      renderer.tplHeader.render( tdata, out )
+      renderer.tplDetails.render( tdata, out )
+      renderer.tplFooter.render( tdata, out )
+      out.close()
+
+   end
+end
+
+
+
+function _makeInherited( elem )
+   brief = "brief" in elem.props ? elem.props["brief"] : ""
+   if "members" in elem.props
+      methods = []
+      props = []
+      for name, prop in elem.props["members"]
+         switch prop.type
+            case "method"
+               p = _prepareItemEntity( prop, elem.name, "method" )
+               p["method_origin"] = elem.name
+               p["method_link"] = make_link_to( prop )
+               methods += p
+            case "property"
+               p = _prepareItemEntity( prop, elem.name, "prop" )
+               p["prop_origin"] = elem.name
+               p["prop_link"] = make_link_to( prop )
+               props += p
+         end
+      end
+      return [props, methods]
+   end
+
+   return [nil, nil]
+end
+
+//===========================================================
+// Create "all" for this type of entity (i.e. all functions).
+// (table member)
+
+function make_all( renderer )
+   list = renderer.doctree.entities.grouping[self.type]
+
+   renderer.setCurrent( "" )
+   data = [
+      "charset" => "utf-8",
+      "title" => renderer.doctree.title,
+      "version" => version.name(),
+      "doclinks" => renderer.doclinks
+      ]
+
+   file = renderer.tgdir + "/" + self.index + ".html"
+
+   data["heading"] = data["page_title"] = self.ititle
+
+   items = []
+   for elem in list
+      items += _prepareItemEntity( elem )
+   end
+
+   data["items"] = items
+
+   out = OutputStream( file )
+   renderer.tplHeader.render( data, out )
+   renderer.tplFullList.render( data, out )
+   renderer.tplFooter.render( data, out )
+   out.close()
+end
+
+//===========================================================
+// Create a modules.
+// (table member)
+
+function make_module( renderer )
+   make_listingPage( renderer, self )
+
+   renderer.setCurrent( "" )
+   
+   global_data = make_default_data( renderer )
+   
+   // module entries doesn't strore  items. We must build the listing here.
+   for module in renderer.doctree.entities.grouping["module"]
+      // are there items subscribed to this module?
+      if module.name in renderer.doctree.entities.modules
+         members = renderer.doctree.entities.modules[module.name]
+         
+         mod_types = [=>]
+         for entity in members: extendList( mod_types, entity.type, entity )
+
+         // now we can create the proper sections
+         sections = []
+         for type, entity_list in mod_types
+            items = []
+            for entity in entity_list
+               brief = "brief" in entity.props ? entity.props["brief"].renderThrough( htmlTextRender ) : ""
+
+               items += [
+                  "item_link" => make_link_to( entity ),
+                  "item_name" => entity.name,
+                  "item_brief" => brief ]
+            end
+
+            sections += [
+               "section_title" => pagetable.find( "type", type, "ititle" ),
+               "items" => items
+            ]
+         end
+      end
+
+      name = "title" in module.props ? module.props["title"].renderThrough( htmlTextRender ) : module.name
+      description = module.content ? module.content.renderThrough( htmlTextRender ): ""
+      brief = "brief" in module.props ? module.props["brief"].renderThrough( htmlTextRender ) : ""
+      
+      data = global_data + [
+         "entity_type" => "Module",
+         "entity_name" => name,
+         "sections" => sections,
+         "brief" => brief,
+         "description" => description
+         ]
+
+      id = module.name
+      file = renderer.tgdir + "/" + (@self.detail) + ".html"
+      out = OutputStream( file )
+      renderer.tplHeader.render( data, out )
+      renderer.tplListing.render( data, out )
+      renderer.tplFooter.render( data, out )
+      out.close()
+   end
+end
+
+
+
+
+//======================================================================================================
+// Generic utilities.
+// 
+
+function _prepareItemEntity( elem, parentName, prefix )
+   if not prefix: prefix = "item"
+   
+   name = parentName and elem.name.find( parentName ) == 0 ? \
+              elem.name[parentName.len()+1:] : elem.name
+
+   item_data = [ prefix + "_name" => name ]
+   
+   if elem.type == "method" or elem.type == "function"
+      item_data[prefix + "_title"] = name + "()"
+      item_data[prefix + "_grammar"] = _makeCallPrototype( elem )
+   else
+      item_data[prefix + "_title"] = name
+      if elem.type == "message"
+         item_data[prefix + "_grammar"] = _makeCallPrototype( elem )
+      end
+   end
+   
+   if "brief" in elem.props
+      item_data[ prefix + "_brief" ] = elem.props["brief"].renderThrough( htmlTextRender )
+   else
+      item_data[ prefix + "_brief" ] = ""
+   end
+
+   if "param" in elem.props
+      // confirm we want a descriptior table
+      item_data[prefix + "_descriptor_table"] = true
+      params = []
+      for param in elem.props["param"]
+         params += ["param_name" => param.name, "param_desc" => param.desc.renderThrough( htmlTextRender ) ]
+      end
+      item_data[ prefix + "_params"] = params
+   end
+
+   if "optparam" in elem.props
+      item_data[prefix + "_descriptor_table"] = true
+      params = []
+      for param in elem.props["optparam"]
+         params += ["param_name" => param.name, "param_desc" => param.desc.renderThrough( htmlTextRender ) ]
+      end
+      item_data[ prefix + "_optparams"] = params
+   end
+
+   if "raise" in elem.props
+      item_data[prefix + "_descriptor_table"] = true
+      raises = []
+      for rname, rdesc in elem.props["raise"]
+         raises += [ "raise_name" => rname.renderThrough( htmlTextRender ),
+                        "raise_desc" => rdesc.renderThrough( htmlTextRender ) ]
+      end
+      
+      item_data[ prefix + "_raises" ] = raises
+   end
+
+   if "return" in elem.props
+      item_data[prefix + "_descriptor_table"] = true
+      item_data[prefix + "_return"] = elem.props["return"].renderThrough( htmlTextRender )
+   end
+
+   if elem.content
+      descr = elem.content.renderThrough( htmlTextRender )
+      item_data[prefix + "_description"] = descr
+   end
+
+   // last but not least, the module
+   if "inmodule" in elem.props
+      l = elem.props["inmodule"]
+      name = l.target and "title" in l.target.props ? \
+             l.target.props["title"].renderThrough( htmlTextRender ) : l.destination
+      item_data["module_name"] = "[in " + name.trim() + "]"
+      item_data["module_link"] = l.target ? make_link_to(l.target) : "#"
+   end
+   
+   return item_data
+end
+
+
+function  _makeCallPrototype( elem )
+   // no prototypes for enum
+   if elem.type == "enum": return elem.name 
+   if elem.type == "funset": return nil
+   
+   grammar = elem.type == "message" ? "...handler... " : elem.name
+   
+   plist = ""
+   if "param" in elem.props
+      for param in elem.props["param"]
+         forfirst: plist += " "
+         plist += param.name
+         formiddle: plist += ", "
+      end
+   end
+
+   if "optparam" in elem.props
+      if "param" in elem.props: plist += ","
+      for param in elem.props["optparam"]
+         forfirst: plist += " "
+         plist += "[" + param.name + "]"
+         formiddle: plist += ", "
+      end
+   end
+   
+   if plist or elem.type == "funtion" or elem.type == "method"
+      plist = "(" + plist + " )"
+      grammar += plist
+   end
+
+   return grammar
+end
+
+
+function _makeFrom( elem )// have we got some from clause?
+   grammar = ""
+   if "from" in elem.props
+      grammar += " \\\n"
+      for link, callproto in elem.props["from"]
+          grammar += "      <b>from</b> " + link.renderThrough( htmlTextRender )
+          if callproto: callproto = callproto.renderThrough( htmlTextRender )
+          if callproto: grammar += "( " + callproto + " )"
+          formiddle: grammar += " \\\n"
+      end
+   end
+
+   return grammar
+end
+
+
+function htmlTextRender( elem )
+   switch elem.type
+      case "text", "entity"
+         return elem.content
+
+      case "note"
+         return '<p class="faldoc_note"><span class="faldoc_notetype">Note:</span> ' + elem.content +"</p>\n"
+
+      case "b"
+         return '<b>' + elem.content + "</b>"
+
+      case "i"
+         return '<i>' + elem.content + "</i>"
+
+      case "section"
+         ret = "<a name=\"" + elem.id + "\">"
+         if elem.level == 1
+            ret+= '<h2 class="faldoc_section">' + elem.content + "</h2>"
+         else
+            ret+= '<h3 class="faldoc_subsection">' + elem.content + "</h3>"
+         end
+         return ret + "</a>\n"
+
+      case "p"
+         return '<p class="faldoc_text">' + elem.content + "</p>\n"
+
+      case "code"
+         fcontent = elem.content.replace( "<", "&lt;" ).replace( ">","&gt;" )
+         return "<pre class=\"faldoc_code\">\n" + fcontent + "</pre>\n"
+
+      case "link"
+         if elem.target
+            if "title" in elem.target.props
+               title = elem.target.props["title"].renderThrough( htmlTextRender ).trim()
+            else
+               title = elem.destination
+            end
+            
+            return "<a href=\""+ make_link_to( elem.target ) + "\">"+ title + "</a>"
+         else
+            return "<b><i>" + elem.destination + "</i></b>"
+         end
+
+      case "href"
+         return "<a href=\""+ elem.href + "\">"+ elem.content.trim() + "</a>"
+
+      case "list_bullet"
+         return "<ul>\n"+ elem.content + "\n</ul>\n"
+
+      case "list_number"
+         return "<ol>\n"+ elem.content + "\n</ol>\n"
+
+      case "number", "bullet"
+         return "<li>"+ elem.content + "</li>"
+
+      default
+         return '<div class="faldoc_unknown"> UNKNOWN PARAGRAPH TYPE: ' + elem.type + "</div>\n"
+   end
+end
+
+function make_link_to( element )
+   try
+      dfname = oob(pagetable.find( "type", element.type, "detail" ))
+   end
+   
+   url = getAssert( "html_url" )
+   if dfname
+      // it's a link to a whole page.
+      id = element.name
+      return url + (@dfname) + ".html"
+   elif ^? dfname
+      // the detail name is unexisting, but we have a master file.
+      return url + pagetable.find( "type", element.type, "index" ) + 
+             ".html#" + element.name
+   end
+   
+   // it should have a membership
+   if "class" in element.props
+      // or is it an object?
+      target = element.props["class"].target
+      // is it an unresolved link?
+      if target
+         // use the target type (it may be an object)
+         dfname = pagetable.find( "type", target.type, "detail" )
+         id = target.name
+         return url + (@ dfname) + ".html#" + element.name[id.len()+1:]
+      end
+   end
+   
+   // fallback to a undefined link
+   return "#"
+end
+
+
+function make_default_data( renderer )
+   return [
+      "charset" => "utf-8",
+      "title" => renderer.doctree.title,
+      "version" => version.name(),
+      "doclinks" => renderer.doclinks ]
+end
+
+//==============================================================================
+// Definition table for pages.
+//==============================================================================
+
+object pagetable from Table(
+   .[ "type"      "index"     "detail"      "handler"     "ititle"        "dtitle" ],
+
+    // The order given in this list is the order of the tabs in the link area.
+   .[ "module"    "modules"   "module_$id"   make_module  "Modules"       "Module $title" ],
+   .[ "page"      "pages"     "page_$id"     make_page    "Related pages" "$title" ],
+   .[ "group"     "groups"    "group_$id"    make_group   "Groups"        "Group \"$title\"" ],
+   .[ "funset"    "funset"    "funset_$id"   make_ld   "Function sets" "Function set $title" ],
+   .[ "class"     "classes"   "class_$id"    make_ld      "Classes"       "Class $name" ],
+   .[ "object"    "objects"   "object_$id"   make_ld      "Objects"       "Object $name" ],
+   .[ "function"  "functions" nil            make_all     "All functions" nil ],
+   .[ "message"   "messagess" nil            make_all     "Messages"      nil ],
+   .[ "enum"      "enum"      "enum_$id"     make_ld      "Enumerations"  "Enum $name" ],
+   .[ "global"    "globals"   nil            make_all     "Globals"       nil ]
+)
+end
+
+export pagetable, makeMain

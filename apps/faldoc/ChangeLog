@@ -1,0 +1,17 @@
+faldoc(CURRENT)
+  ! Fixed load path on windows.
+
+faldoc(2.2)
+  ! Init block removed; Parameters are explained in the class
+    description.
+  ! @from command (and commands with parameters AND end-block variable
+    data) didn't work correctly if the variable part wasn't given.
+  ! Added Input.basdir; The directory every path in the input file refers 
+    to will be set by this variable.  If not set, it defaults to the
+    directory where the input file is located. 
+
+faldoc(2.1)
+  ! Init block is getting grammar parameters, so it's more readable.
+  + Added a short description of inherited properties and functions
+    in class summary.
+

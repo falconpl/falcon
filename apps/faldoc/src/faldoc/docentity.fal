@@ -1,0 +1,382 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docentry.fal
+
+   Autodocumentation tool - basic entry item.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 May 2009 12:19:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .utils
+
+/*# Text entry type def*/
+class TextEntry( type, content )
+   type = type
+   /*# The content may be a string or another TextEntry, depending on type.
+      - type = "text": it's a text block.
+      - type = "p": it's a paragraph composed of many text entries (array of entities).
+      - any other type - it's a markup, and can contain more "text" entries
+   */
+   content = nil
+   lelem = nil
+
+   init
+      select content
+         case TextEntry
+            self.content = List( content )
+
+         case List
+            self.content = content
+
+         case StringType
+            self.content = content
+
+         case NilType
+            return self
+
+         default
+            raise "Invalid content type in TextEntry: " + content.baseClass() + " from " + fself.caller()
+      end
+   end
+
+   /*#
+      Appends a text entry.
+      @param data A string to be appended or a TextEntry.
+   */
+   function append( data )
+      select data
+         case TextEntry
+            select self.content
+               case StringType, NilType
+                  self.content = List( TextEntry( "text", self.content ) )
+            end
+
+            self.content.push( data )
+            self.lelem = nil
+
+         case NilType
+            return
+
+         case StringType
+            if self.lelem == nil
+               select self.content
+                  case StringType
+                     self.content += data
+
+                  case NilType
+                     self.lelem = TextEntry( "text", data )
+                     self.content = List( self.lelem )
+                     
+                  case List
+                     self.lelem = TextEntry( "text", data )
+                     self.content.push( self.lelem )
+
+                  default
+                     raise "self.content of wrong type: " + self.content
+               end
+               return
+            end
+            
+            self.lelem.append( data )
+
+         default
+            raise "Invalid content type in TextEntry.append: " + data.baseClass() + " from " + fself.caller()
+      end
+   end
+
+   /*# Render this entry descending into the sub entries andca
+       passing each one to the renderer.
+
+       The renderer is a function returning a string.
+   */
+   function renderThrough( renderer )
+      select self.content
+         case List
+            val = ""
+            iter = self.content.first()
+            loop
+               elem = iter.value()
+               rnd = elem.renderThrough( renderer )
+               if rnd
+                  chr = rnd[0]
+                  val += (chr >= "0" and chr <="9" or chr >="A" and chr <="Z" or chr >= "a" and chr <="z") ?\
+                         " " +rnd : rnd
+               end
+               if not iter.next(): break
+               
+            end
+
+            return renderer( TextEntry( self.type, val ) )
+
+         default
+            return renderer( self )
+      end
+   end
+end
+
+/*# Special entry type def */
+class CodeEntry( language, content ) from TextEntry( "code", content )
+   language = language
+end
+
+/*# Special entry type def */
+class ChildEntry( parentType, type, content ) from TextEntry( type, content )
+   parentType = parentType
+end
+
+/*# Special entry type def */
+class ParentEntry( childType, type, content ) from TextEntry( type, content )
+   childType = childType
+end
+
+/*# Special entry type def */
+class ExtLinkEntry( href, text ) from TextEntry( "href", text )
+   href = href
+end
+
+class SectionEntry( id, level, title ) from TextEntry( "section", title )
+   id = id
+   level = level
+end
+
+/*# Unresolved link database. */
+object LinkDB
+   /*# Data to be resolved. */
+   data = List()
+
+   /*# Add an entry. */
+   function add( link )
+      if not link.derivedFrom( Link )
+         broadcast( "message", "Trying to add non-link entity to LinkDB \"" +
+                    link + "\" from: " + fself.caller() )
+         return
+      end
+
+      self.data.push( link )
+   end
+
+   /*# Try to resolve all the links, issuing a proper warning if impossible. */
+   function resolve()
+      for link in self.data
+         
+         if link.destination in EntityDB.data
+            link.target = EntityDB.data[link.destination]
+            // is the link correct?
+            if link.membership
+               // only different membership allowed is class -> object
+               if link.target.type != link.membership
+                  if link.membership != "class" or link.target.type != "object"
+                     broadcast( "error", link.source.file, link.line, "Link " +
+                              link.destination + " was considered a " + link.membership )
+                  end
+               end         
+               
+               // the system needs to know that the target class of the member
+               // is actually an object
+               if link.target.type == "object": link.source.props["object"] = true
+
+               if "members" notin link.target.props
+                  link.target.props["members"] = [ link.source.name => link.source ]
+               else
+                  link.target.props["members"][ link.source.name ] = link.source
+               end
+            end
+         else
+            broadcast( "error", link.source.file, link.line, "Can't resolve link to \"" + link.destination + "\"" )
+         end
+      end
+   end
+end
+
+/*#
+   A link between an entity and another one.
+   @param source The entity that is searching for the link.
+   @param line The line in file where the link is found.
+   @param destination The target item of the link.
+
+   If @b destination is a string, the link gets added to the
+   unresolved link database for later resolution.
+
+   Notice that the link is defined as a special (markup) text entry.
+   This allows to put the link inline to other paragraph-wide text
+   composition. The @b content property inherited from TextEntry
+   will be used as text for the final link if given; if not,
+   the string representation of this object will be the name
+   of the linked destination, if available. If not available,
+   this link will be represented as an undefined link and the source
+   data + line will be used to indicate where it is defined.
+*/
+class Link( source, line, destination ) from TextEntry( "link" )
+   source = source
+   line = line
+   destination = destination.typeId() == StringType ? destination: destination.name
+   target = destination.typeId() == StringType ? nil: destination
+   membership = nil
+
+   init
+      LinkDB.add( self )
+   end
+
+   function toString()
+      if self.target
+         return self.content ? self.content : self.target.toString()
+      end
+
+      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
+   end
+
+   function describe()
+      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
+   end
+end
+
+
+/*#
+   Document generic entity.
+
+   The exact entity is defined by the type, which matches a prototype
+   in the @a prototypes table, and a the characteristics, which are
+   filled throught the prototype table.
+*/
+
+class DocEntity( parent )
+   /*# Filename where the entity is coming from. */
+   file = nil
+   /*# First line of comment declaration of the entity. */
+   firstline = nil
+   /*# Line at which the entity is defined at language level (if any). */
+   dline = nil
+   /*# Content block; temporarily stored here for second-level parsing. */
+   cblock = nil
+   /*# Type of the entity. */
+   type = nil
+   /*# Local name of the entity. */
+   name = nil
+
+   /*# Is this entity created out of a real language construct?. */
+   hard = false
+
+   /*# Entity-type specific properties.
+      Each entry is generally composed of a content list (a sequence of TextEntry items). Some
+      entries, as "module", can contain a direct reference to another item via a single
+      Link entry (which, anyhow, is derived from TextEntry).
+   */
+   props = [=>]
+
+   /*# TextEntry of type "entity" containing a set of paragraphs.. */
+   content = nil
+
+   /*# Next entitiy.
+
+      Some entities can be chained. Mainly page-level entities can contain
+      sections and subsections. Those exist as entities, but they are not
+      independent; they are add as children entities.
+   */
+   next = nil
+
+   /** Parent entity.
+      This get a value only in sub-entities (i.e. page sections).
+   */
+   parent = nil
+
+   init
+      if parent
+         parent.addChild( self )
+      end
+   end
+
+   function addChild( entity )
+      if self.next == nil
+         self.next = []
+      end
+      self.next += entity
+      entity.parent = self
+   end
+
+end
+
+/*# Database of all the defined entities. */
+object EntityDB
+   /*# All the data, organized by unique ID */
+   data = [=>]
+
+   /*# All the data, organized by type -> list of entities. */
+   grouping = [=>]
+
+   /*# Data in function sets. */
+   sets = [=>]
+
+   /*# Data in groups. */
+   groups = [=>]
+
+   /*# Data in modules. */
+   modules = [=>]
+
+   function add( entry )
+      if not entry.derivedFrom( DocEntity )
+         broadcast( "error", "Trying to add non-entity to EntityDB \"" +
+               entry + "\" from: " + fself.caller() )
+         return
+      end
+
+      if not entry.name
+         broadcast( "error", entry.file, entry.firstline, "Entry declared at this line has no ID." )
+         return
+      end
+
+      if not entry.type
+         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name + " has no type." )
+         return
+      end
+
+      if "brief" notin entry.props
+         try
+            if prototypes.find( "type", entry.type, "brief")
+               broadcast( "error", entry.file, entry.firstline, "Entry has no 'brief' description." )
+            end
+         end
+         // but let it through
+      end
+
+      if entry.name in self.data
+         other = self.data[entry.name]
+         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name +
+                     @" already existing at $(other.file):$(other.firstline)" )
+         return
+      end
+
+      self.data[ entry.name ] = entry
+      extendList( self.grouping, entry.type, entry )
+
+      // resolve grouping links
+      if "ingroup" in entry.props
+         for link in entry.props["ingroup"]
+            extendList( self.groups, link.destination, entry )
+         end
+      end
+
+      if "inset" in entry.props
+         extendList( self.sets, entry.props["inset"].destination, entry )
+      end
+
+      if "inmodule" in entry.props
+         extendList( self.modules, entry.props["inmodule"].destination, entry )
+      end
+   end
+
+   function complete()
+      for k,row in self.grouping: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.sets: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.groups: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.modules: arraySort( row, { a,b => a.name.compare( b.name ) } )
+   end
+end
+
+export

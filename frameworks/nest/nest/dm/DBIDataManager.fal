@@ -1,0 +1,20 @@
+/*
+   FALCON - DBI Data Manager
+
+   Nest - Falcon web applcation engine
+
+   FILE: main.fal
+
+   General (and simple) DBI based data manager -- ready to be exported
+   as a Nest module.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 15:33:56 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import SQLDM from nest.sqldm as DBIDataManager

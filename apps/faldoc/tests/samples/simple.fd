@@ -1,0 +1,35 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Minimal sample
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Documentation minimal sample
+Author = Giancarlo Niccolai
+Version = 1.0.0
+
+################################################
+# Arbitrary properties
+################################################
+Property.coauthors = Jeremy Cowgar
+Property.comment = A cute extra property
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=simple
+Input.wildcard=*.fal
+Input.recursive=false
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+Output.html.directory=sample_html
+Output.html.url=.

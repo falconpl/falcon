@@ -1,0 +1,54 @@
+<?
+   import from nest.action in na
+
+   // As this is a test, we need to create and check our working environment.
+   targetDir = "uploads"
+   if fileType( targetDir ) != FileStat.DIR
+      try
+         dirMake( targetDir )
+         fileChmod( targetDir, 0755 )
+      catch IoError
+         > "Cannot create test directory "+ targetDir + "<br/>"
+         > "Please, select another directory or make the directory where index.fal resides writable."
+      end
+   end
+
+   config = [
+      "upload_dir" => targetDir,
+      "actions" => .[
+         na.LinkAction( Nest.AL.NONE, i"View", "javascript:viewFile('$$file','$$path');" )
+         na.LinkAction( Nest.AL.NONE, i"Select", "javascript:choseFile('$$file','$$path');" )
+      ]
+   ]
+
+   s = Nest.service( "Uploader", "", config )
+   // We run nest here, so that the configuration is reaed before we start the page
+   Nest.run()
+?>
+<html>
+<head>
+   <title>Wiki attachments control</title>
+   <?= Nest.headings() ?>
+
+<script type="text/javascript">
+   function viewFile( name, path )
+   {
+      window.open( "<?=targetDir ?>/" + path + "/" + name, "View file " + name);
+   }
+
+   function choseFile( name, path )
+   {
+      window.opener.focus();
+      window.opener.insertText( path+"/"+name );
+      window.close();
+   }
+</script>
+</head>
+<body>
+<h1>Wiki attachments control</h1>
+<p>Select or manage uploaded files.</p>
+<div>
+   <?= s.render() ?>
+</div>
+</body>
+</html>

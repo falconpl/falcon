@@ -1,0 +1,67 @@
+/*
+   FALCON - The Falcon Programming Language
+   
+   Nest - Falcon web applcation engine
+   
+   FILE: page.fal
+
+   Definition of the page class.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 25 Jun 2010 10:52:46 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class NestError( code, desc, extra ) from Error( code, desc, extra )
+
+   inv_ttype = 10001
+   page_notfound = 10002
+   undef_var = 10003
+   invalid_var = 10004
+   mod_notfound = 10005
+   no_mod_class = 10006
+   novar = 10007
+   econfig = 10008
+   emisconfig = 10009
+   eparam = 10010
+   misres = 10011
+   unknown_vars = 10012
+   no_route = 10013
+   no_fields = 10014
+   noskin = 10015
+   mf_fdef = 10016
+   no_dm = 10017
+   db_create = 10018
+   other = 10100
+   
+   _desc = [ 
+      10001 => i"Invalid content generator descriptor",
+      10002 => i"Required page not found",
+      10003 => i"Accessing undeclared service variable",
+      10004 => i"Given value has failed validation test",
+      10005 => i"Required module not found",
+      10006 => i"The module must expose a class with its name",
+      10007 => i"Missing required variable for service",
+      10008 => i"Error while reading configuration",
+      10009 => i"Missing or incorrect parameter in service",
+      10010 => i"Wrong parameters for this call",
+      10011 => i"Missing web resources declared by the service",
+      10012 => i"Unknown configuration variables for this service",
+      10013 => i"The system couldn't detect a route for a page",
+      10014 => i"Data entity declared without fields",
+      10015 => i"Skin declared but not found",
+      10016 => i"Malformed field definition in DBEntity",
+      10017 => i"This service requires a data manager to be set",
+      10018 => i"Caught DBI error while creating entity"
+      ]
+
+   init
+      if code in self._desc
+         self.description = self._desc[ code ]
+      end
+   end
+end

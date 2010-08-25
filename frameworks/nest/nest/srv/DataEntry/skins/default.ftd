@@ -1,0 +1,3 @@
+<? function skin( data, srv ) ?>
+   <p><b>Warning:</b> DataEntry service requires specific skinning. At least for now.</b></p>
+<? end ?>

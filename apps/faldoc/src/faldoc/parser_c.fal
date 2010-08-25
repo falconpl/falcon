@@ -1,0 +1,85 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: parser_c.fal
+
+   Autodocumentation tool - Pre-Parses C files.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 May 2009 12:19:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .docentity
+
+/*# Parsers a C file.
+   Returns a list of entries actually coresponding to all the docblocks in the file.
+*/
+
+function preparser_c( file )
+   ins = InputStream( file )
+   nline = 0
+   elems = List()
+   
+   line = ""
+   grabbing = false
+   while ins.readLine(line, 4096)
+      ++nline
+      if not grabbing
+         // find
+         if (pos = strFind( line, "/*#" ) ) != -1
+            grabbing = true
+            line = line[pos+3:].trim()
+            data = ""
+            beginLine = nline
+         end
+      end
+
+      if grabbing
+         // is this the last line?
+         if (pos = strFind( line, "*/" ) ) != -1
+            // check "\"
+            while pos > 0 and line[pos-1] == "\\"
+               pos = strFind( line, "*/", pos )
+            end
+
+            // ok, we have the last line
+            if pos != -1
+               data += line[0:pos]
+               grabbing = false
+               elem = DocEntity()
+               elem.firstline = beginLine
+               elem.file = file
+               elem.cblock = data
+               elems.push( elem )
+            end
+            
+         else
+            data += line + "\n"
+         end
+      end
+   end
+
+   ins.close()
+
+   // last element?
+   if grabbing
+      broadcast( "error", file, beginLine, "Unclosed block." )
+   end
+
+   return elems
+end
+
+export preparser_c
+
+if vmIsMain()
+   elems = preparser_c( args[0] )
+   for e in elems
+      > e.cblock
+      > strReplicate( "=", 60 )
+   end
+end

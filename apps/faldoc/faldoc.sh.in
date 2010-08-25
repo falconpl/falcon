@@ -1,0 +1,7 @@
+#!/bin/sh
+  
+FALCON_EXE=@Falcon_EXECUTABLE@
+FALDOC_FAL=@CMAKE_INSTALL_PREFIX@/@Falcon_APP_DIR@/faldoc/faldoc.fal
+
+$FALCON_EXE $FALDOC_FAL $*
+

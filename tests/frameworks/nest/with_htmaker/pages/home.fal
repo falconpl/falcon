@@ -1,0 +1,37 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: home.fal
+
+   Main page of the hello world site.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 26 Jun 2010 14:21:48 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest
+import from htmaker in ht
+
+doc = ht.TransitionalFrame()
+.[ doc.html.head.add
+   ht.Title( "Hello world!" )
+   ht.Meta( "description", "The hello world site" )
+   ht.Meta( "keywords", "test, hello world" )
+   ht.Link( "nest_test.css", "stylesheet" )
+]()
+
+.[ doc.html.body.add
+   ht.H1( "Hello world!" )
+   ht.P("Welcome in a very simple typical Nest web application." )
+]()
+
+> "home"
+> doc.render()
+

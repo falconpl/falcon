@@ -1,0 +1,74 @@
+/*#
+* @Main This is the main page.
+* Some text that goes in the main page.
+You may write either with
+@code
+   \/*#
+      This stile
+    \*\/
+@endcode
+Or
+   * @code
+   *    /*#
+   *    *
+   *    * This style
+   *    \*\/
+     @endcode
+
+   A nice backslash '\\' will cause things to be escaped.
+   In example you may enter a \@ in the thescription of an
+   entry by writing "\\\@".
+
+   @note Please, notice that this is only a sample. You
+   may wish to see more of this.
+
+   Back to a non-note paragraph.
+
+*/
+
+/*#
+   @Page secondary_page A Secondary page.
+
+   You may enter
+   several paragraphs
+   by putting some blanks line.
+
+   In example, this would be another paragraph.
+*/
+
+/*#
+   @File The testdocs.fal description
+   This entry is meant to generally describe the content
+   of this file.
+*/
+
+/*#***************************************
+* @function test
+* @brief test of a function documentation.
+* @param t1 the first parameter.
+* @optparam t2 an optional parameter.
+*
+* This is the desciption of function test.
+*
+* This would be another paragraph.
+* @note This may be a note...
+*       continued on more paragrahs
+*
+* And this is just the last paragraph.
+*
+* @raise FunError an error in case of xyzzing the frobozz.
+* @return The resutlt of the operartion.
+******************************************/
+
+/*#***************************************
+   @function frobniz
+   @brief frobnizzes the xizzy
+   @param t1 the first parameter.
+   @optparam t2 an optional parameter.
+
+   This is the desciption of function frobniz.
+
+   This would be another paragraph.
+   Note that this function has no return nor raise.
+
+******************************************/

@@ -1,0 +1,187 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: list.fal
+
+   Autodocumentation tool - list
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 12 Jan 2008 12:21:30 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+// The faldoc_output function must be provided by all output modules
+function faldoc_output( doctree, conf )
+
+   > "------------------------------------------------------"
+   > "  List module started"
+   > "------------------------------------------------------"
+
+   > "Module configuration:"
+   > "====================="
+   for k,v in conf: > k," = ",v
+   > "====================="
+
+   if "file" notin conf
+      broadcast( "message", "list.fal: ERROR: Missing mandatory \"file\" key in configuration" )
+      return
+   end
+
+   try
+      filename = conf["file"][0] == "/" ? conf["file"] : doctree.basedir + "/" + conf["file"]
+      > "Writing to " + filename
+      file = OutputStream( filename )
+      build_list( file, doctree, conf )
+      file.close()
+   catch IoError in err
+      file.close()
+      broadcast( "message", "list.fal: ERROR while writing to " + conf["file"] + ": " + err )
+      return
+   end
+
+   > "------------------------------------------------------"
+   > "  List Module complete"
+   > "------------------------------------------------------"
+end
+
+
+function build_list( file, doctree, conf )
+   // intestation
+   file.setEncoding( "utf-8", SYSTEM_DETECT )
+   if "doctitle" in conf
+      file.writeText( conf["doctitle"] +"\n" )
+   else
+      file.writeText( doctree.title +"\n" )
+   end
+   
+   if doctree.version: file.writeText( "Version: " + doctree.version +"\n" )
+   if doctree.author: file.writeText( "Author: " + doctree.author +"\n" )
+
+   file.writeText( "\n" )
+
+   if "module" in doctree.entities.grouping
+      for mod in doctree.entities.grouping["module"]
+         build_mod_list( file, mod.name, doctree, conf )
+         formiddle: file.writeText( "\n\n\n" )
+      end
+   else
+      build_mod_list( file, nil, doctree, conf )
+   end
+   
+   file.writeText( "\n" )
+end
+
+
+function build_mod_list( file, module, doctree, conf )
+   if module
+      strModName = "Module \"" + flatten(doctree.entities.data[module].props["title"])+"\""
+      file.writeText( strReplicate( "#", strModName.len() + 4 ) + "\n" )
+      file.writeText( "# "+ strModName+ " #\n" )
+      file.writeText( strReplicate( "#", strModName.len() + 4 ) + "\n\n" )
+   end
+
+   if "bytype" in conf and conf["bytype"]
+      for type, title in [
+            ["enum", "Enums"],
+            ["global", "Globals"],
+            ["function", "Functions"],
+            ["class", "Classes"],
+            ["object", "Objects"] ]
+
+         formiddle
+            if writeByType( file, conf, module, doctree.entities, type, title )
+               file.writeText( "\n\n" )
+            end
+         end
+
+         forlast: writeByType( file, conf, module, doctree.entities, type, title )
+      end
+      
+   else
+      writeAll( file, conf, module, doctree.entities )
+   end
+
+end
+
+
+function writeByType( file, conf, module, db, type, heading )
+   done = false
+
+   if type in db.grouping
+      brief = "brief" in conf and conf["brief"]
+      members = "members" in conf and conf["members"]
+      check = module ? {entry => "inmodule" in entry.props and entry.props["inmodule"].destination == module } : \
+              {=>true}
+
+      for entry in db.grouping[type]
+
+         if check( entry )
+            if not done
+               file.writeText( heading + "\n" + strReplicate( "=", heading.len() ) + "\n\n" )
+               done = true
+            end
+
+            file.writeText( entry.name )
+            if brief and "brief" in entry.props
+               file.writeText( " - " )
+               file.writeText( flatten( entry.props["brief"] ) )
+            end
+            file.writeText( "\n" )
+
+            if members and entry.type == "class"
+               writeMembers( file, entry, brief )
+            end
+         end
+      end
+   end
+   return done
+end
+
+
+function writeAll( file, conf, module, db )
+   check = module ? {entry => "module" in entry.props and entry.props["module"].destination == module } : \
+              {=>true}
+
+   brief = "brief" in conf and conf["brief"]
+   members = "members" in conf and conf["members"]
+              
+   for entry in db.data
+      if check( entry )
+         if entry.type in ["class", "enum", "global", "object", "function" ]
+            file.writeText( entry.name )
+            if brief and "brief" in entry.props
+               file.writeText( " - " )
+               file.writeText( flatten( entry.props["brief"] ) )
+            end
+            file.writeText( "\n" )
+
+            if members and entry.type == "class"
+               writeMembers( file, entry, brief )
+            end
+         end
+      end
+   end
+end
+
+
+function writeMembers( file, entry, brief )
+   if "members" notin entry.props: return
+   
+   for mname, mdata in entry.props["members"]
+      file.writeText( mname )
+      if mdata.type == "method"
+         file.writeText( "()" )
+      end
+      if brief and "brief" in mdata.props
+         file.writeText( " - " )
+         file.writeText( flatten( mdata.props["brief"] ) )
+      end
+      file.writeText( "\n" )
+   end
+end
+
+

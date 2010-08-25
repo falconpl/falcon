@@ -1,0 +1,32 @@
+<?
+/*
+<source name="home.ftd" language="falcon" begin="23-Aug-2010">
+    <description>
+        Web SDK main page.
+    </description>
+    <authors>
+        <author>
+            <name>Giuseppe</name>
+            <surname>Greco</surname>
+            <email>giuseppe.greco@agamura.com</email>
+        </author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*/
+
+websdk = Nest.service("WebSDK")
+?>
+
+<html>
+<head>
+    <title>Web SDK</title>
+    <?=Nest.headings()?>
+</head>
+<body>
+    <h1>API Summary</h1>
+    <div><?=websdk.render()?></div>
+</body>
+</html>

@@ -1,0 +1,404 @@
+/*
+   FALCON - Web application framework
+
+   FILE: tpl.fal
+
+   Simple Template Document Expander
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 11 Jun 2009 05:34:28 -0700
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class TplError( el, code, desc, extra ) from Error( code, desc, extra )
+   errlist = el
+end
+
+/*#
+   Main template expander class.
+   
+   This class controls the expansion of a single template.
+   
+   It is possible to iteratively expand a template with
+   different data once it has been parsed.
+   
+   The process is two-step. First, a template is parsed
+   with the TplExpander.parse() method, then it's rendered
+   an arbitrary number of times through the render() method.
+*/
+class TplExpander()
+   input = nil
+   output = nil
+   nline = 0
+   contexts = nil
+   errors = nil
+   blocks = nil
+   
+   commands = [
+      "if" => _cmd_if,
+      "for" => _cmd_for,
+      "else" => _cmd_else,
+      "end" => _cmd_end,
+      "forsep" => _cmd_forsep,
+      "=" => _cmd_print ]
+   
+   function reset()
+      self.nline = 0
+      self.contexts = List()
+      self.contexts.push( _blk() )
+      self.errors = List()
+      self.blocks = nil
+   end
+   
+   function countLines( block )
+      pos = 0
+      while (pos = strFind( block, "\n", pos )) >= 0
+         ++self.nline
+         ++pos
+      end
+   end
+   
+   function parse( input )
+      self.reset()
+
+      tpl = self._readAll( input )
+      
+      blocks = List()
+      pos = 0
+
+      while (pos1 = tpl.find( "%", pos )) >= 0
+         // determine if this is a %var% or a <%cmd ...%>
+         if pos1 > 0 and tpl[pos1-1] == "<"
+            // a command.
+            --pos1
+            blk = tpl[pos:pos1]
+            self.countLines( blk )
+            self.contexts.back().push( blk )
+
+            pos2 = tpl.find( "%>", pos1 )
+            if pos2 == -1
+               self.errors.push( @i"Unclosed command at line $self.nline" )
+               raise TplError( self.errors, 10001, "Template error" )
+            end
+            cmd = tpl[pos1+2:pos2]
+            if "%" in cmd or ">" in cmd
+               self.errors.push( @i"Malfored command at line $self.nline" )
+            end
+
+            self.parseCmd( cmd )
+            self.countLines( cmd )
+            pos = pos2 + 2
+            
+         else
+            // a variable name
+            blk = tpl[pos:pos1]
+            self.countLines( blk )
+            self.contexts.back().push( blk )
+            
+            pos2 = tpl.find("%",pos1+1)
+            if pos2 < 0
+               // single %
+               self.errors.push( @i"Unclosed template variable at line $self.nline" )
+               break
+            end
+            
+            if pos2 == pos1+1  // %%
+               self.contexts.back().push( "%" )
+            else
+               var = tpl[pos1+1:pos2]
+               if not self._isWord( var )
+                  self.errors.push( @i"Invalid template variable name at line $self.nline" )
+               else
+                  // add a print command here
+                  self.contexts.back().push( _printblk_empty( var ) )
+               end
+            end
+
+            // advance
+            pos = pos2+1
+         end
+            
+      end  // end while
+      
+      if self.contexts.len() != 1
+         self.errors.push( i"Unclosed context" )
+      end
+
+      if self.errors.len() > 0: raise TplError( self.errors, 10001, i"Template error" )
+
+      // add the last block
+      if pos < tpl.len()
+         blk = tpl[pos:]
+         self.countLines( blk )
+         self.contexts.back().push( blk )
+      end
+      
+      self.blocks = self.contexts.front()
+      self.contexts = nil
+   end
+
+
+   function _isWord( str )
+      return len(str) <= 64 and " " notin str and "\n" notin str
+   end
+
+   function _readAll( input )
+      if input.derivedFrom( Stream )
+         inp = input
+      else
+         inp = InputStream( input )
+      end
+
+      // read all
+      tpl = ""
+      loop
+         tpl += inp.grab( 100000 )
+      end inp.eof()
+
+      if inp != input: inp.close()
+
+      return tpl
+   end
+
+   function parseCmd( cmd )
+      words = cmd.trim().split(" ")
+      if not words
+         self.errors.push( @i"Empty command at $self.nline" )
+      elif words[0] notin self.commands
+         self.errors.push( @i"Unrecognized command \"$words[0]\" at line $self.line" )
+      else
+         
+         if ^? (blk = self.commands[words[0]](self, words))
+            self.errors.push( blk )
+         elif blk
+            self.contexts.back().push( blk )
+         end
+      end
+   end
+   
+   function render( data, output )
+      if self.blocks != nil
+         out = output provides writeText ? output : _fakeStream()
+         self.blocks.render( data, output )
+         if out != output: return out.content
+      end
+   end
+end
+
+export TplExpander, TplError
+
+//===================================================
+// Private part
+//===================================================
+
+// This class emulates a writable stream in a simple string.
+class _fakeStream()
+   content = ""
+   function writeText( text )
+      self.content += text
+   end
+end
+
+// Block class - used to abstract elements of the template.
+class _blk
+   content = List()
+   
+   function push( data )
+      self.content.push(data)
+   end
+   
+   function render( data, output )
+      for item in self.content
+         if item provides render
+            item.render( data, output )
+         else
+            output.writeText( item )
+         end
+      end
+   end
+end
+
+class _hidden_blk from _blk
+   hidden = true
+end
+
+// Block used to abstract <%if ... %> commands
+class _ifblk( var ) from _blk
+   var = var
+   elseblk = List()
+   inelse = false
+   
+   function push( data )
+      if self.inelse
+         self.elseblk.push(data)
+      else
+         self.content.push(data)
+      end
+   end
+   
+   function render( data, output )
+      if self.var in data and data[self.var] != false
+         dt = self.content
+      else
+         dt = self.elseblk
+      end
+      
+      for item in dt
+         if item provides render
+            item.render( data, output )
+         else
+            output.writeText( item )
+         end
+      end
+   end
+end
+
+// Block used to abstract <%for ... %> commands
+class _forblk( var ) from _blk
+   var = var
+   forsep = nil
+   
+   function render( data, output )
+      if self.var in data
+         for element in data[self.var]
+            if element.typeId() == DictionaryType
+               for item in self.content
+                  if item provides render
+                     item.render( element, output )
+                  else
+                     output.writeText( item )
+                  end
+               end
+            else
+               output.writeText( element.toString() )
+            end
+            
+            formiddle
+               if self.forsep
+                  self.forsep.render(data, output)
+               end
+            end
+         end
+      end
+   end
+end
+
+// Block used to abstract <%= ... %> commands
+class _printblk( var ) 
+   content = var
+   
+   function render( data, output )
+      if self.content in data 
+         output.writeText( data[self.content].toString() )
+      else
+         output.writeText( self.content + "?????" )
+      end
+   end
+end
+
+class _printblk_empty( var )
+   content = var
+
+   function render( data, output )
+      if self.content in data
+         output.writeText( data[self.content].toString() )
+      end
+   end
+end
+
+// Handler to parse an <%if ... %> command
+function _cmd_if( te, words )
+   if words.len() != 2
+      return ^+ i"Incorrect parameters for command \"if\""
+   end
+   
+   te.contexts.push( _ifblk( words[1] ) )
+   // ret nil
+end
+
+// Handler to parse a <%for ... %> command
+function _cmd_for( te, words )
+   if words.len() != 2
+      return ^+ i"Incorrect parameters for command \"for\""
+   end
+   
+   te.contexts.push( _forblk( words[1] ) )
+end
+
+// Handler to parse a <%else%> command
+function _cmd_else( te, words )
+   if words.len() != 1
+      return ^+ i"Incorrect parameters for command \"else\""
+   end
+   
+   last = te.contexts.back()
+   if not (last provides inelse) or last.inelse
+      return ^+ "Misplaced \"else\""
+   end
+   
+   last.inelse = true
+end
+
+// Handler to parse a <%forsep%> command
+function _cmd_forsep( te, words )
+   if words.len() != 1
+      return ^+ i"Incorrect parameters for command \"forsep\""
+   end
+
+   last = te.contexts.back()
+   if not (last provides forsep) or last.forsep
+      return ^+ i"Misplaced \"forsep\""
+   end
+
+   last.forsep = _hidden_blk()
+   te.contexts.push( last.forsep )
+end
+
+// Handler to parse a <%end%> command
+function _cmd_end( te, words )
+   if words.len() != 1
+      return ^+ i"Incorrect parameters for command \"end\""
+   end
+   
+   if te.contexts.len() <= 1
+      return ^+ i"Misplaced \"end\""
+   end
+   
+   last = te.contexts.pop()
+   if not last provides hidden: return last
+end
+
+// Handler to parse a <%= ... %> command
+function _cmd_print( te, words )
+   if words.len() != 2
+      return ^+ "Incorrect parameters for command \"=\""
+   end
+   
+   return _printblk(words[1])
+end
+   
+
+//===================================================
+// Main (test)
+//
+if vmIsMain()
+   tlx = TplExpander()
+   if not tlx.parse(args[0])
+      for error in tlx.errors: > error
+      return 1
+   end
+      
+   data = [=>]
+   for val in args[1:]
+      k,v = val.split("=",2)
+      data[k] = v
+   end
+   
+   tlx.render( data, stdOut() )
+   return 0
+end
+

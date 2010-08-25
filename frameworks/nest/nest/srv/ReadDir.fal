@@ -1,0 +1,50 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: readdir/main.fal
+
+   Service used to show directory entries.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest
+import from nest.bindings in b
+
+class DirEntry( name, size, date )
+   name = name
+   size = size
+   date = date
+end
+
+class ReadDir( instance ) from nest.Service( instance )
+   dircont = nest.ServiceVar( "Content of the directory" )
+   dir = nest.ServiceVar( "Optional directory where to look in", b.ConfigBinder )
+
+   function run()
+      if self.dir.value
+         d = Directory( self.dir.value )
+      else
+         d = Directory( "." )
+      end
+      
+      stats = FileStat()
+      content = []
+      while ( f = d.read() )
+         stats.read( f )
+         content += DirEntry( f, stats.size, stats.mtime.toString() )
+      end
+
+      self.dircont.value = content
+      d.close()
+   end
+
+end

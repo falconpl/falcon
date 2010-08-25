@@ -1,0 +1,46 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: home.fal
+
+   Main page of the session test site.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 26 Jun 2010 14:21:48 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+ss = Nest.service( "SessionTest" )
+
+> '
+<html>
+<head>
+   <title>Session variables test site</title>'
+
+> Nest.headings()
+
+> '
+</head>
+<body>
+   <h1>Session variables test site</h1>
+
+<p>This site is used to test session variables. It has a user-defined service
+which just defines a couple of session variables and checks the session status.
+On reload, the session counter is updated.</p>
+<p>Note: on WOPI 1.1, falhttpd doesn''t fill the Remote IP field</p>
+<p><b>Test begin</b></p>
+'
+
+> ss.render()
+
+> '
+<p><b>Test end</b></p>
+</body>
+</html>'
+

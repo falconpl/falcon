@@ -1,0 +1,26 @@
+<?
+   dm = Nest.dm( "DBIDataManager", "notes_db" )
+   if Request.getField("create", "" ) == "yes"
+      dm.create()
+      Reply.redirect( Nest.pageLink("home") )
+   end
+?><html>
+<head>
+<title>Create the notes database</title>
+</head>
+<body>
+<h1>Notes database setup</h1>
+<p>Hello. We have detected that the notes database is currently unavailable.
+You may wish to use this facility to create it.</p>
+<p>The actual configuration will create it through the following settings:</p>
+<pre>
+<?= dm.cs ?>
+</pre>
+<p>If this is not ok, please change the configuration in nest/dm/config/notes_db.fal</p>
+<form action="<?= Nest.pageLink() ?>" method="POST">
+<input type="hidden" name="create" value="yes"/>
+<input type="submit" value="CREATE!"/>
+</form>
+</body>
+</html>
+   

@@ -1,0 +1,246 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: handlers.fal
+
+   Autodocumentation tool - set of command handlers
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 10 Jan 2008 08:12:57 -0800
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load regex
+
+plugins: "output/*"
+
+function end_block( curtoken )
+   return curtoken == nil or \
+          ( curtoken == "" ) or \
+          ( curtoken[0] == "@" and not _isMarkupCommand( curtoken[1:] ) )
+end
+
+function _isMarkupCommand( token )
+   try
+      return commands.find( "command", token ).isMkup
+   catch
+      return true
+   end
+end
+
+function matching( blk_term, curtoken )
+   return ^+ (curtoken == blk_term)
+end
+
+function mtrim( blk_term, curtoken )
+   return ^+ (curtoken != nil and curtoken.trim() == blk_term)
+end
+
+//====================================================================
+// The handlers
+//
+// Each handler receives:
+//   - the lexer
+//   - the command name
+//   - the declared parameters
+//   - if the command has an end-context handler, the TextEntry coresponding to the whole context.
+//
+//   
+//
+
+function h_a( lexer, cmd, entry )
+   return Link( lexer.entity, lexer.nline, entry )
+end
+
+function h_mkup( lexer, cmd, data )
+   return TextEntry( cmd, data )
+end
+
+function h_para( lexer, cmd, data )
+   data.type = cmd
+   return data
+end
+
+function h_pre( lexer, cmd, data )
+   lexer.endContext()
+   return CodeEntry( nil, data )
+end
+
+
+function h_link( lexer, cmd, href, text )
+   return ExtLinkEntry( href, text )
+end
+
+function h_see( lexer, cmd, target )
+   // every item can have "see"
+   extendList( lexer.entity.props, "see", Link( lexer.entity, lexer.nline, target ) )
+end
+
+function h_code( lexer, cmd, language, data )
+   lexer.endContext()
+   // the parser must have closed the previous paragraph
+   // and code makes a pargraph on its own
+   return CodeEntry( data == nil ? "falcon" : language, data == nil ? language: data )
+end
+
+function h_prop( lexer, cmd, pname, data )
+    static
+        // Search for the last word in the sentence
+        re = Regex( "\\b\\(?((\\w+),?\s?)+[\.!?]\\)?" )
+    end
+
+   // the prototype table ensures we're called properly.
+   extendList( lexer.entity.props, "property", data )
+
+   // synthetize a brief.
+   bdata = flatten( data )
+   // find up to the first period (may also be everything)
+
+    if re.match( bdata )
+        // We have a match, now get the last word in the sentence
+        last_word = bdata[ re.captured(1) ]
+        
+        bdata = bdata[ 0:bdata.find( last_word ) ] +  last_word + "."
+    end
+
+   
+   // but we must also create a proper property entry
+   pent = DocEntity( )
+   pent.type = "property"
+   pent.name = lexer.entity.name + "." + pname
+   pent.file = lexer.entity.file
+   pent.firstline = pent.dline = lexer.nline
+   l = Link( pent, lexer.nline, lexer.entity.name )
+   pent.props["class"] = l
+   if bdata: pent.props["brief"] = TextEntry( "text", bdata )
+   l.membership = "class"
+   EntityDB.add( pent )
+end
+
+function h_main( lexer, cmd, title )
+   lexer.entity.type = "main"
+   lexer.entity.name = "main"
+   lexer.entity.props["title"] = title
+   title.type = "text"
+end
+
+function h_page( lexer, cmd, id, title )
+   lexer.entity.type = "page"
+   lexer.entity.name = id
+   lexer.entity.props["title"] = title
+   title.type = "text"
+end
+
+function h_sec( lexer, cmd, id, title )
+   sec = SectionEntry( id, (cmd == "section" ?  1:2), title.content )
+   // we also must create an entity that will be the placeholder for this section
+   // in this way, we'll be able to link this section with @a
+   secent = DocEntity( lexer.entity )
+   secent.type = "section"
+   secent.name = id
+   secent.file = lexer.entity.file
+   secent.firstline = secent.dline = lexer.nline
+   secent.props["point"] = sec 
+   EntityDB.add( secent )
+   return sec
+end
+
+function h_set( lexer, cmd, id, title )
+   lexer.entity.type = cmd
+   lexer.entity.name = id
+   lexer.entity.props["title"] = title
+   title.type = "text"
+end
+
+function h_type(lexer, cmd, name )
+   lexer.entity.type = cmd
+   lexer.entity.name = name
+end
+
+
+function h_member( lexer, cmd, name, owner )
+   lexer.entity.type = cmd
+   lexer.entity.name = owner + "." + name
+   l =  Link( lexer.entity, lexer.nline, owner )
+   lexer.entity.props["class"] = l
+   l.membership = "class"
+end
+
+
+function h_ptype( lexer, cmd, name, descr )
+   // the prototype table ensures we're called properly.
+   if cmd notin lexer.entity.props
+      lexer.entity.props[cmd] = [ bless([ "name"=>name, "desc" => descr ]) ]
+   else
+      if _declared( lexer.entity.props, name )
+         broadcast( "error", currentFile, lexer.nline, "Parameter \"" + name + "\" already declared" )
+      else
+         lexer.entity.props[cmd].add( bless([ "name"=>name, "desc" => descr ]) )
+      end
+   end
+   descr.type = "text"
+end
+
+function _declared( props, name )
+   if "param" in props
+      for dict in props["param"]
+         if dict.name == name and dict.desc: return true
+      end
+   end
+
+   if "optparam" in props
+      for dict in props["optparam"]
+         if dict.name == name and dict.desc: return true
+      end
+   end
+
+   return false
+end
+
+
+function h_genprop( lexer, cmd, descr )
+   lexer.entity.props[cmd] = descr
+   descr.type = "text"
+end
+
+function h_from( lexer, cmd, where, descr )
+   extendList( lexer.entity.props, "from",
+      [ Link( lexer.entity, lexer.nline, where ), descr ] )
+end
+
+
+function h_list( lexer, cmd, para )
+   return ^+ ChildEntry( "list_"+cmd, cmd, para.content )
+end
+
+
+function h_raise( lexer, cmd, exct, descr )
+   extendList( lexer.entity.props, "raise",
+      [ Link( lexer.entity, lexer.nline, exct ), descr ] )
+end
+
+function h_begin( lexer, cmd, set )
+   assert( "current_" + cmd[5:], set )
+end
+
+function h_end( lexer, cmd )
+   retract( "current_" + cmd[3:] )
+end
+
+function h_ingroup( lexer, cmd, id )
+   l = Link( lexer.entity, lexer.nline, id )
+   l.membership = cmd[2:]
+   extendList( lexer.entity.props, cmd, l )
+end
+
+function h_grouping( lexer, cmd, id )
+   l = Link( lexer.entity, lexer.nline, id )
+   l.membership = cmd == "inset" ? "funset" : cmd[2:]
+   lexer.entity.props[cmd] = l
+end
+
+export
