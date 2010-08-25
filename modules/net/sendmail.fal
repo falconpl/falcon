@@ -1,0 +1,88 @@
+/***************************************
+   Mail post function.
+***************************************/
+
+import from socket
+
+const pServer = "localhost"
+const pHelo = "siteclient"
+
+function postMail( pFrom, pAddress, pSubject, pBody )
+   // disabling debug
+   print = function(); end
+   printl = function(); end
+
+   printl( "Posting mail to ", pAddress )
+
+   //connect with server
+   smtp = TCPSocket()
+   smtp.setTimeout(5000)
+   if not smtp.connect( pServer, "smtp" )
+      raise "Failed to connect."
+   end
+
+   // get the hello message
+   reply = ""
+   smtp.recv(reply, 256)
+   printl( "Connected with: ", reply )
+   if reply[0:3] != "220"
+      raise "Server not on line"
+   end
+
+   smtp.send( "HELO " + pHelo +"\r\n" )
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0] != "2"
+      raise "Server not ready after HELO: "+reply
+   end
+
+   smtp.send( "MAIL FROM:"+ pFrom + "\r\n" )
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0:3] != "250"
+      raise "Server not ready after FROM: "+reply
+   end
+
+   smtp.send( "RCPT TO:"+ pAddress + "\r\n" )
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0:3] != "250"
+      raise "Server not ready after rcpt: "+reply
+   end
+
+   smtp.send( "DATA\r\n" )
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0:2] != "35"
+      raise "Server not ready after DATA: "+reply
+   end
+
+   time = CurrentTime()
+   smtp.send( "Date: "+ time.toRFC2822() +"\r\n" )
+   smtp.send( "To: "+ pAddress +"\r\n" )
+   smtp.send( "Content-type: text/plain; charset=utf-8\r\n" )
+   smtp.send( "From: "+ pFrom +"\r\n" )
+   smtp.send( "Subject: "+ pSubject +"\r\n\r\n" )
+
+   sent = 0
+   blen = pBody.len()
+   while sent < blen
+      sent += smtp.send( pBody, blen - sent, sent )
+   end
+   smtp.send( "\r\n.\r\n" )
+
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0:2] != "25"
+      raise "Server not ready after \".\": " + reply
+   end
+
+   smtp.send( "QUIT\r\n" )
+   smtp.recv(reply,256)
+   print( "--> ", reply )
+   if reply[0:2] != "22"
+      raise "Server not ready after quit: "+reply
+   end
+
+   return 1
+end
