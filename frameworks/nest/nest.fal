@@ -112,7 +112,7 @@ end
    Nest structure:
    
    offline:
-      Nest/
+      nest/
          srv/
             ServiceName/
                ServiceName.fal
@@ -908,7 +908,7 @@ object Nest
 
    function _defaultDirs()
       c = self.config
-      if c.nestdir == nil: c.nestdir = Path(vmModulePath()).fulloc
+      if c.nestdir == nil: c.nestdir = Path(vmModulePath()).fulloc + "/nest"
    end
 
    function _manageError( e, ctx )      

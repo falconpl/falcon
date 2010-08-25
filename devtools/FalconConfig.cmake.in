@@ -42,13 +42,6 @@ set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
 set(Falcon_MODULES_DIR  "${Falcon_PREFIX}/@FALCON_MOD_DIR@")
 
 # If defined, prefer the source directory include files over the installed ones
-if(DEFINED ENV{FALCON_SRC_TREE})
-  list(APPEND Falcon_INCLUDE_DIRS "$ENV{FALCON_SRC_TREE}/core/include")
-  message( STATUS "Falcon build configured for DEVELOPMENT BUILD under \"$ENV{FALCON_SRC_TREE}\"" )
-else()
-  message( STATUS "Falcon build configured for SYSTEM WIDE BUILD" )
-endif()
-
 list(APPEND Falcon_INCLUDE_DIRS "${Falcon_INCLUDE_DIR}")
 
 #Versioning
@@ -92,26 +85,11 @@ if(WIN32)
 endif(WIN32)
 
 
-########################################################àà
-# Falcon CMAKE suite
-# Useful functions to finalize modules
-#
-
 macro( falcon_define_module varname modname )
       set( ${varname} "${modname}_fm" )
-endmacro( falcon_define_module )
+endmacro()
 
-function(FALCON_FINALIZE_MODULE tgt )
-      target_link_libraries(${tgt} ${Falcon_LIBRARIES} )
-      falcon_install_module( ${tgt} )
-endfunction(FALCON_FINALIZE_MODULE)
-
-function(FALCON_FINALIZE_MODULE2 tgt libs)
-      target_link_libraries(${tgt} ${Falcon_LIBRARIES} ${libs} )
-      falcon_install_module( ${tgt} )
-endfunction(FALCON_FINALIZE_MODULE2)
-
-function(FALCON_INSTALL_MODULE tgt )
+function(falcon_install_module2 tgt dir )
    if(APPLE)
       set_target_properties(${tgt} PROPERTIES
          PREFIX ""
@@ -121,14 +99,29 @@ function(FALCON_INSTALL_MODULE tgt )
          PREFIX "" )
    endif()
 
-   set( CMAKE_INSTALL_PREFIX, "@CMAKE_INSTALL_PREFIX@" ) 
+   set( CMAKE_INSTALL_PREFIX, "@CMAKE_INSTALL_PREFIX@" )
 
    if( DEFINED MOD_INSTALL )
-      set( dest "${MOD_INSTALL}" )
+      set( dest "${MOD_INSTALL}/${dir}" )
    else()
-      set( dest "${Falcon_MOD_DIR}" )
+      set( dest "${Falcon_MOD_DIR}/${dir}" )
    endif()
-   
+
    install( TARGETS ${tgt}
             DESTINATION ${dest} )
-endfunction(FALCON_INSTALL_MODULE)
+endfunction()
+
+function(falcon_install_module tgt )
+   falcon_install_module2( "${tgt}" .)
+endfunction()
+
+function(falcon_finalize_module2 tgt libs)
+      target_link_libraries(${tgt} ${Falcon_LIBRARIES} ${libs} )
+      falcon_install_module( ${tgt} )
+endfunction()
+
+function(falcon_finalize_module tgt )
+      target_link_libraries(${tgt} ${Falcon_LIBRARIES} )
+      falcon_install_module( ${tgt} )
+endfunction()
+

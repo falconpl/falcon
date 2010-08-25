@@ -18,6 +18,7 @@
 
 #include <falcon/srv/dbi_service.h>
 #include <falcon/dbi_error.h>
+#include <falcon/globals.h>
 
 namespace Falcon
 {
@@ -41,7 +42,7 @@ DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName 
    {
       // ok, let's try to load the service
       try {
-         mod = loader->loadName( provName );
+         mod = loader->loadName( "dbi."+ provName );
          vm->link( mod );
       }
       catch( Error * )

@@ -1,1 +1,1 @@
-add_subdirectory(testsuite)
+add_subdirectory(core/testsuite)

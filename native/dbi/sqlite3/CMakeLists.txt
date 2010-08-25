@@ -53,4 +53,4 @@ else()
    target_link_libraries(${FALCON_MODULE} falcon_engine pthread)
 endif()
 
-falcon_install_module( ${FALCON_MODULE} )
+falcon_install_module2( ${FALCON_MODULE} dbi )

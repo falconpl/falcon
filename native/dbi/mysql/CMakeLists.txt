@@ -50,7 +50,7 @@ INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(../dbi)
 
 # Target
-ADD_LIBRARY( ${FALCON_MODULE} MODULE
+ADD_LIBRARY( ${FALCON_MODULE}/dbi MODULE
 
    ${dbi_common_files}
 
@@ -66,4 +66,10 @@ IF(MSVC)
 ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
-falcon_install_module( ${FALCON_MODULE}  )
+
+if(NOT CMAKE_INSTALL_RPATH)
+   get_filename_component(rpath "${MYSQL_LIBRARY}" PATH )
+   set(CMAKE_INSTALL_RPATH $(rpath) )
+endif()
+
+falcon_install_module2( ${FALCON_MODULE} dbi )
