@@ -4,6 +4,8 @@
 
 #include "gtk_VScrollbar.hpp"
 
+#include "gtk_Adjustment.hpp"
+
 
 namespace Falcon {
 namespace Gtk {
@@ -55,8 +57,7 @@ FALCON_FUNC VScrollbar::init( VMARG )
         && IS_DERIVED( i_adj, GtkAdjustment ) ) ) )
         throw_inv_params( "[GtkAdjustment]" );
 #endif
-    GtkAdjustment* adj = i_adj->isNil() ? NULL
-                    : (GtkAdjustment*) COREGOBJECT( i_adj )->getObject();
+    GtkAdjustment* adj = i_adj->isNil() ? NULL : GET_ADJUSTMENT( *i_adj );
     MYSELF;
     self->setObject( (GObject*) gtk_vscrollbar_new( adj ) );
 }
