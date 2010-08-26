@@ -52,7 +52,7 @@ void Widget::modInit( Falcon::Module* mod )
     { "signal_destroy_event",           &Widget::signal_destroy_event },
     { "signal_direction_changed",       &Widget::signal_direction_changed },
     { "signal_drag_begin",              &Widget::signal_drag_begin },
-    //{ "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
+    { "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
     //{ "signal_drag_data_get",           &Widget::signal_drag_data_get },
     //{ "signal_drag_data_received",      &Widget::signal_drag_data_received },
     //{ "signal_drag_drop",               &Widget::signal_drag_drop },
@@ -840,9 +840,53 @@ void Widget::on_drag_begin( GtkWidget* obj, GdkDragContext* ctxt, gpointer _vm )
 }
 
 
-//FALCON_FUNC Widget::signal_drag_data_delete( VMARG );
+/*#
+    @method signal_drag_data_delete GtkWidget
+    @brief The ::drag-data-delete signal is emitted on the drag source when a drag with the action GDK_ACTION_MOVE is successfully completed.
 
-//void Widget::on_drag_data_delete( GtkWidget*, GdkDragContext*, gpointer );
+    The signal handler is responsible for deleting the data that has been dropped.
+    What "delete" means depends on the context of the drag operation.
+ */
+FALCON_FUNC Widget::signal_drag_data_delete( VMARG )
+{
+    NO_ARGS
+    CoreGObject::get_signal( "drag_data_delete", (void*) &Widget::on_drag_data_delete, vm );
+}
+
+
+void Widget::on_drag_data_delete( GtkWidget* obj, GdkDragContext* ctxt, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "drag_data_delete", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkDragContext" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_drag_data_delete", it ) )
+            {
+                printf(
+                "[GtkWidget::on_drag_data_delete] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gdk::DragContext( wki->asClass(), ctxt ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 //FALCON_FUNC Widget::signal_drag_data_get( VMARG );
 
