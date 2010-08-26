@@ -9,6 +9,7 @@
 #include "gdk_Bitmap.hpp"
 #include "gdk_Color.hpp"
 #include "gdk_Colormap.hpp"
+#include "gdk_DragContext.hpp"
 #include "gdk_Event.hpp"
 #include "gdk_EventButton.hpp"
 #include "gdk_Rectangle.hpp"
@@ -50,7 +51,7 @@ void Widget::modInit( Falcon::Module* mod )
     { "signal_delete_event",            &Widget::signal_delete_event },
     { "signal_destroy_event",           &Widget::signal_destroy_event },
     { "signal_direction_changed",       &Widget::signal_direction_changed },
-    //{ "signal_drag_begin",              &Widget::signal_drag_begin },
+    { "signal_drag_begin",              &Widget::signal_drag_begin },
     //{ "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
     //{ "signal_drag_data_get",           &Widget::signal_drag_data_get },
     //{ "signal_drag_data_received",      &Widget::signal_drag_data_received },
@@ -788,9 +789,56 @@ void Widget::on_direction_changed( GtkWidget* obj, GtkTextDirection dir, gpointe
 }
 
 
-//FALCON_FUNC Widget::signal_drag_begin( VMARG );
+/*#
+    @method signal_drag_begin GtkWidget
+    @brief The ::drag-begin signal is emitted on the drag source when a drag is started.
 
-//void Widget::on_drag_begin( GtkWidget*, GdkDragContext*, gpointer );
+    A typical reason to connect to this signal is to set up a custom drag icon
+    with gtk_drag_source_set_icon().
+
+    Note that some widgets set up a drag icon in the default handler of this signal,
+    so you may have to use g_signal_connect_after() to override what the default handler did.
+ */
+FALCON_FUNC Widget::signal_drag_begin( VMARG )
+{
+    NO_ARGS
+    CoreGObject::get_signal( "drag_begin", (void*) &Widget::on_drag_begin, vm );
+}
+
+
+void Widget::on_drag_begin( GtkWidget* obj, GdkDragContext* ctxt, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "drag_begin", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkDragContext" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_drag_begin", it ) )
+            {
+                printf(
+                "[GtkWidget::on_drag_begin] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( new Gdk::DragContext( wki->asClass(), ctxt ) );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 //FALCON_FUNC Widget::signal_drag_data_delete( VMARG );
 

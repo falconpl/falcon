@@ -77,9 +77,9 @@ public:
 
     static void on_direction_changed( GtkWidget*, GtkTextDirection, gpointer );
 
-    //static FALCON_FUNC signal_drag_begin( VMARG );
+    static FALCON_FUNC signal_drag_begin( VMARG );
 
-    //static void on_drag_begin( GtkWidget*, GdkDragContext*, gpointer );
+    static void on_drag_begin( GtkWidget*, GdkDragContext*, gpointer );
 
     //static FALCON_FUNC signal_drag_data_delete( VMARG );
 
