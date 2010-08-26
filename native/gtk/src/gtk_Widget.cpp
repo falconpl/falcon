@@ -49,7 +49,7 @@ void Widget::modInit( Falcon::Module* mod )
     //{ "signal_damage_event",            &Widget::signal_damage_event },
     { "signal_delete_event",            &Widget::signal_delete_event },
     { "signal_destroy_event",           &Widget::signal_destroy_event },
-    //{ "signal_direction_changed",       &Widget::signal_direction_changed },
+    { "signal_direction_changed",       &Widget::signal_direction_changed },
     //{ "signal_drag_begin",              &Widget::signal_drag_begin },
     //{ "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
     //{ "signal_drag_data_get",           &Widget::signal_drag_data_get },
@@ -744,9 +744,49 @@ gboolean Widget::on_destroy_event( GtkWidget* obj, GdkEvent*, gpointer _vm )
 }
 
 
-//FALCON_FUNC Widget::signal_direction_changed( VMARG );
+/*#
+    @method signal_direction_changed GtkWidget
+    @brief The ::direction-changed signal is emitted when the text direction of a widget changes.
+ */
+FALCON_FUNC Widget::signal_direction_changed( VMARG )
+{
+    NO_ARGS
+    CoreGObject::get_signal( "direction_changed", (void*) &Widget::on_direction_changed, vm );
+}
 
-//void Widget::on_direction_changed( GtkWidget*, GtkTextDirection, gpointer );
+
+void Widget::on_direction_changed( GtkWidget* obj, GtkTextDirection dir, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "direction_changed", false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_direction_changed", it ) )
+            {
+                printf(
+                "[GtkWidget::on_direction_changed] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( (int64) dir );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
+}
+
 
 //FALCON_FUNC Widget::signal_drag_begin( VMARG );
 

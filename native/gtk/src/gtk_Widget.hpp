@@ -73,9 +73,9 @@ public:
 
     static gboolean on_destroy_event( GtkWidget*, GdkEvent*, gpointer );
 
-    //static FALCON_FUNC signal_direction_changed( VMARG );
+    static FALCON_FUNC signal_direction_changed( VMARG );
 
-    //static void on_direction_changed( GtkWidget*, GtkTextDirection, gpointer );
+    static void on_direction_changed( GtkWidget*, GtkTextDirection, gpointer );
 
     //static FALCON_FUNC signal_drag_begin( VMARG );
 
