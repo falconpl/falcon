@@ -18,17 +18,17 @@
 #
 ##  Options
 #
-# FALCON_SKIP_BISON         - ON to avoid using bison.
-# FALCON_WITH_MANPAGES      - ON to build and install man pages.
+# FALCON_SKIP_BISON         - Turn ON to avoid using bison.
+# FALCON_WITH_MANPAGES      - Turn ON to build and install man pages.
 # FALCON_BUILD_FEATHERS     - Turn OFF to skip building Feathers.
 # FALCON_BUILD_MODULES      - Turn OFF to skip building Falcon modules.
-# FALCON_BUILD_NATMODS      - Turn OFF to skip building other binary native modules. 
-# FALCON_BUILD_APPS         - Turn OFF to skip installing falcon applications.
-# FALCON_BUILD_FWKS         - Turn OFF to skip installing falcon frameworks.
+# FALCON_BUILD_NATMODS      - Turn OFF to skip building other binary native modules.
+# FALCON_BUILD_APPS         - Turn OFF to skip installing Falcon applications.
+# FALCON_BUILD_FWKS         - Turn OFF to skip installing Falcon frameworks.
 #
-##  Modules
+##  Options For Native Modules
 #
-# FALCON_WANT_*MODULE_NAME* - ON to build a given module
+# FALCON_BUILD_*MODULE_NAME*    - ON to build a given module
 #
 # List of available modules: CURL DBI DBUS DYNLIB GD2 GTK PDF SDL
 #
@@ -88,11 +88,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 ##################################################################
 # Base options
 option( FALCON_SKIP_BISON "Skip BISON to avoid recompiling grammar" ON )
-option( FALCON_BUILD_FEATHERS "Do not build feathers" ON )
-option( FALCON_BUILD_MODULES "Add Falcon modules" ON )
-option( FALCON_BUILD_FWKS "Add Falcon frameworks" ON )
-option( FALCON_BUILD_APPS "Add Falcon applications" ON )
-option( FALCON_BUILD_NATMODS "Add native (binary) non-feather modules" ON )
+option( FALCON_BUILD_FEATHERS "Build Falcon feathers" ON )
+option( FALCON_BUILD_MODULES "Build Falcon modules" ON )
+option( FALCON_BUILD_FWKS "Build Falcon frameworks" ON )
+option( FALCON_BUILD_APPS "Build Falcon applications" ON )
+option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
 option( FALCON_COMPILE_FAMS "Compile falcon modules when installing them" ON )
 option( FALCON_STRIP_FALS "Remove source modules when installing" OFF )
 
@@ -136,7 +136,7 @@ else()
    endif()
 endif()
 
-#SONAME and soversion (unix so library informations for engine)
+## SONAME and soversion (unix so library informations for engine)
 # Remember that SONAME never follows project versioning, but
 # uses a VERSION, REVISION, AGE format, where
 # VERSION: generational version of the project
@@ -177,12 +177,12 @@ endif(falcon_big_endian)
 if(NOT CMAKE_INSTALL_PREFIX)
   #In windows, we normally install in c:\falcon
   if(WIN32)
-    if($ENV{PRGORAMS})
+    if($ENV{PROGRAMS})
       SET(CMAKE_INSTALL_PREFIX  "C:\\\\$ENV{PROGRAMS}\\\\falcon" )
     else()
       SET(CMAKE_INSTALL_PREFIX  "C:\\\\Program Files\\\\falcon" )
     endif()
-  else()
+  else() # unixes
     set(CMAKE_INSTALL_PREFIX  "/usr/local" )
   endif()
 endif()
