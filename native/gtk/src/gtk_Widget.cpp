@@ -55,7 +55,7 @@ void Widget::modInit( Falcon::Module* mod )
     { "signal_drag_data_delete",        &Widget::signal_drag_data_delete },
     //{ "signal_drag_data_get",           &Widget::signal_drag_data_get },
     //{ "signal_drag_data_received",      &Widget::signal_drag_data_received },
-    //{ "signal_drag_drop",               &Widget::signal_drag_drop },
+    { "signal_drag_drop",               &Widget::signal_drag_drop },
     //{ "signal_drag_end",                &Widget::signal_drag_end },
     //{ "signal_drag_failed",             &Widget::signal_drag_failed },
     //{ "signal_drag_leave",              &Widget::signal_drag_leave },
@@ -897,9 +897,81 @@ void Widget::on_drag_data_delete( GtkWidget* obj, GdkDragContext* ctxt, gpointer
 //void Widget::on_drag_data_received( GtkWidget*, GdkDragContext*, gint, gint,
         //GtkSelectionData*, guint, guint, gpointer );
 
-//FALCON_FUNC Widget::signal_drag_drop( VMARG );
 
-//gboolean Widget::on_drag_drop( GtkWidget*, GdkDragContext*, gint, gint, guint, gpointer );
+/*#
+    @method signal_drag_drop GtkWidget
+    @brief The ::drag-drop signal is emitted on the drop site when the user drops the data onto the widget.
+
+    The signal handler must determine whether the cursor position is in a drop
+    zone or not. If it is not in a drop zone, it returns FALSE and no further
+    processing is necessary. Otherwise, the handler returns TRUE. In this case,
+    the handler must ensure that gtk_drag_finish() is called to let the source
+    know that the drop is done. The call to gtk_drag_finish() can be done either
+    directly or in a "drag-data-received" handler which gets triggered by
+    calling gtk_drag_get_data() to receive the data for one or more of the
+    supported targets.
+ */
+FALCON_FUNC Widget::signal_drag_drop( VMARG )
+{
+    NO_ARGS
+    CoreGObject::get_signal( "drag_drop", (void*) &Widget::on_drag_drop, vm );
+}
+
+
+gboolean Widget::on_drag_drop( GtkWidget* obj, GdkDragContext* ctxt,
+                               gint x, gint y, guint time, gpointer _vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "drag_drop", false );
+
+    if ( !cs || cs->empty() )
+        return FALSE;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+    Item* wki = vm->findWKI( "GdkDragContext" );
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_drag_drop", it ) )
+            {
+                printf(
+                "[GtkWidget::on_drag_drop] invalid callback (expected callable)\n" );
+                return FALSE;
+            }
+        }
+        vm->pushParam( new Gdk::DragContext( wki->asClass(), ctxt ) );
+        vm->pushParam( x );
+        vm->pushParam( y );
+        vm->pushParam( (int64) time );
+        vm->callItem( it, 4 );
+        it = vm->regA();
+
+        if ( !it.isNil() && it.isBoolean() )
+        {
+            if ( it.asBoolean() )
+                return TRUE;
+            else
+                iter.next();
+        }
+        else
+        {
+            printf(
+            "[GtkWidget::on_drag_drop] invalid callback (expected boolean)\n" );
+            return FALSE;
+        }
+    }
+    while ( iter.hasCurrent() );
+
+    return FALSE;
+}
+
 
 //FALCON_FUNC Widget::signal_drag_end( VMARG );
 

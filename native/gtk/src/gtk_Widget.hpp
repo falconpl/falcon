@@ -95,9 +95,9 @@ public:
     //static void on_drag_data_received( GtkWidget*, GdkDragContext*, gint, gint,
             //GtkSelectionData*, guint, guint, gpointer );
 
-    //static FALCON_FUNC signal_drag_drop( VMARG );
+    static FALCON_FUNC signal_drag_drop( VMARG );
 
-    //static gboolean on_drag_drop( GtkWidget*, GdkDragContext*, gint, gint, guint, gpointer );
+    static gboolean on_drag_drop( GtkWidget*, GdkDragContext*, gint, gint, guint, gpointer );
 
     //static FALCON_FUNC signal_drag_end( VMARG );
 
