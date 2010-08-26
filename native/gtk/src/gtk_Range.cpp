@@ -105,7 +105,9 @@ Falcon::CoreObject* Range::factory( const Falcon::CoreClass* gen, void* range, b
 
 /*#
     @method signal_adjust_bounds GtkRange
-    @brief .
+    @brief The "adjust-bounds" signal is emitted when the range is adjusted by user action.
+
+    Note the value can be more or less than the range since it depends on the mouse position.
  */
 FALCON_FUNC Range::signal_adjust_bounds( VMARG )
 {
@@ -116,7 +118,34 @@ FALCON_FUNC Range::signal_adjust_bounds( VMARG )
 
 void Range::on_adjust_bounds( GtkRange* obj, gdouble arg1, gpointer _vm )
 {
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( "adjust_bounds", false );
 
+    if ( !cs || cs->empty() )
+        return;
+
+    VMachine* vm = (VMachine*) _vm;
+    Iterator iter( cs );
+    Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( "on_adjust_bounds", it ) )
+            {
+                printf(
+                "[GtkRange::on_adjust_bounds] invalid callback (expected callable)\n" );
+                return;
+            }
+        }
+        vm->pushParam( arg1 );
+        vm->callItem( it, 1 );
+    }
+    while ( iter.hasCurrent() );
 }
 
 
