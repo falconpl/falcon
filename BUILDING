@@ -13,12 +13,11 @@ INTRODUCTION
   This document refers to building Falcon source package as it distributed
 in bleeding edge and official releases.
 
-  To configure a more complete development enviroment, where it is possible
-to have different versions of Falcon compiled with different settings and
-having a different set of modules compiled and installed for each setting,
-please refer to the following on-line document:
-
-   http://falconpl.org/?s=bf
+  Starting from 9.6.6.7, the package can be configured, built and tested 
+directly from an "unguarded prompt". It's not necessary to use script or 
+special configuration settings to develop Falcon, even in case that there
+is a different developmnet-enabled version of Falcon on the target system.
+ 
 
 PRE-REQUISITE
 =============
@@ -94,6 +93,15 @@ falcon to run from /opt/falcon/bin
 *NOTE: For your comfort, the source distro comes with a cmake_build.sample
 containing all the options set to their default values.
 
+*NOTE: If using an IDE to create Falcon, like Xcode or Visual Studio, you may
+want to use cmake install script "cmake_install.cmake" which is located in the
+root of the build directory. The script usually installs the "Release" target
+but you can tweak it by setting the script like the following:
+
+   $ echo 'set(CMAKE_INSTALL_CONFIG_NAME "Debug" )' >> debug_install.cmake
+   $ cat cmake_install.cmake >> debug_install.cmake
+   $ DESTDIR=/tmp/falcon cmake -P debug_install.cmake
+
 
 Changing library directory name
 ===============================
@@ -146,3 +154,35 @@ use that instead.
 
   Notice that WIN32 console has a built-in interface that allows to
 edit the commands inputed in the interactive mode.
+
+
+
+RUNNING TEST BUILDS
+===================
+
+  The script devtools/falconenv.sh (for POSIX systems) to configure the 
+enviroment so that Falcon is found on a certain location rather than from the 
+standard system installation location.
+
+  For example, after having installed a Falcon build configured to be installed
+on /usr/local and placed in /tmp/falcon, with the following commands:
+
+   $ cmake <path to source> -DCMAKE_INSTALL_PREFIX=/usr/local
+   $ DESTDIR=/tmp/falcon make install
+
+it is possible to launch the following command to run that version of Falcon
+and have it accessing (exclusively) the modules installed with it:
+
+   $ source falconenv.sh /tmp/falcon/usr/local
+
+  The script actually sets the following variables:
+
+    - PATH where to find the falcon executables.
+    - LD_LIBRARY_PATH (or equivalent) on POSIX to find the engine library.
+    - FALCON_LOAD_PATH to the place where falcon modules are installed.
+
+  On MSWindows it's enough to run the following commands:
+  
+    C:\> set FALCON_LOAD_PATH="<path to your falcon.exe>;."
+    C:\> set PATH="%FALCON_LOAD_PATH%;%PATH%"
+
