@@ -75,6 +75,7 @@ namespace Mod {
     class HashBase
     {
     public:
+        virtual ~HashBase();
         // these are the same for every hash function and should not be overloaded
         void UpdateData(MemBuf *buf);
         void UpdateData(const String& str);
@@ -104,7 +105,7 @@ namespace Mod {
     {
     public:
         HashBaseFalcon();
-        ~HashBaseFalcon();
+        virtual ~HashBaseFalcon();
         virtual void UpdateData( const byte *ptr, uint32 size); // VM call to process() in overloaded falcon class
         virtual void Finalize(void); // VM call to finalize() in overloaded falcon class
         virtual uint32 DigestSize(void); // VM call to bytes() in overloaded falcon class
@@ -127,6 +128,7 @@ namespace Mod {
     {
     public:
         CRC32();
+        virtual ~CRC32();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return CRC32_DIGEST_LENGTH; }
@@ -145,6 +147,7 @@ namespace Mod {
     {
     public:
         Adler32();
+        virtual ~Adler32();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return ADLER32_DIGEST_LENGTH; }
@@ -161,6 +164,7 @@ namespace Mod {
     {
     public:
         SHA1Hash();
+        virtual ~SHA1Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA1_DIGEST_LENGTH; }
@@ -176,6 +180,7 @@ namespace Mod {
     {
     public:
         SHA224Hash();
+        virtual ~SHA224Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA224_DIGEST_LENGTH; }
@@ -191,6 +196,7 @@ namespace Mod {
     {
     public:
         SHA256Hash();
+        virtual ~SHA256Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA256_DIGEST_LENGTH; }
@@ -206,6 +212,7 @@ namespace Mod {
     {
     public:
         SHA384Hash();
+        virtual ~SHA384Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA384_DIGEST_LENGTH; }
@@ -222,6 +229,7 @@ namespace Mod {
     {
     public:
         SHA512Hash();
+        virtual ~SHA512Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA512_DIGEST_LENGTH; }
@@ -238,6 +246,7 @@ namespace Mod {
     {
     public:
         MD2Hash();
+        virtual ~MD2Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD2_DIGEST_LENGTH; }
@@ -253,6 +262,7 @@ namespace Mod {
     {
     public:
         MD4Hash();
+        virtual ~MD4Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD4_DIGEST_LENGTH; }
@@ -268,6 +278,7 @@ namespace Mod {
     {
     public:
         MD5Hash();
+        virtual ~MD5Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD5_DIGEST_LENGTH; }
@@ -283,6 +294,7 @@ namespace Mod {
     {
     public:
         WhirlpoolHash();
+        virtual ~WhirlpoolHash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return WHIRLPOOL_DIGEST_LENGTH; }
@@ -298,6 +310,7 @@ namespace Mod {
     {
     public:
         TigerHash();
+        virtual ~TigerHash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return TIGER_DIGEST_LENGTH; }
@@ -312,6 +325,7 @@ namespace Mod {
     class RIPEMDHashBase : public HashBase
     {
     public:
+        virtual ~RIPEMDHashBase();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
@@ -325,6 +339,7 @@ namespace Mod {
     {
     public:
         RIPEMD128Hash();
+        virtual ~RIPEMD128Hash();
         uint32 DigestSize(void) { return RIPEMD128_DIGEST_LENGTH; }
         const char *GetName(void) { return "RIPEMD128Hash"; }
     };
@@ -333,6 +348,7 @@ namespace Mod {
     {
     public:
         RIPEMD160Hash();
+        virtual ~RIPEMD160Hash();
         uint32 DigestSize(void) { return RIPEMD160_DIGEST_LENGTH; }
         const char *GetName(void) { return "RIPEMD160Hash"; }
     };
@@ -341,6 +357,7 @@ namespace Mod {
     {
     public:
         RIPEMD256Hash();
+        virtual ~RIPEMD256Hash();
         uint32 DigestSize(void) { return RIPEMD256_DIGEST_LENGTH; }
         const char *GetName(void) { return "RIPEMD256Hash"; }
     };
@@ -349,6 +366,7 @@ namespace Mod {
     {
     public:
         RIPEMD320Hash();
+        virtual ~RIPEMD320Hash();
         uint32 DigestSize(void) { return RIPEMD320_DIGEST_LENGTH; }
         const char *GetName(void) { return "RIPEMD320Hash"; }
     };
@@ -359,7 +377,7 @@ namespace Mod {
     {
     public:
         HashCarrier() { hash = new HASH(); }
-        ~HashCarrier() { delete hash; }
+        virtual ~HashCarrier() { delete hash; }
         inline HASH *GetHash(void) { return hash; }
         inline void Reset(void) { delete hash; hash = new HASH(); }
 
@@ -376,8 +394,6 @@ namespace Mod {
 
     FalconData *GetHashByName(String *whichStr);
     CoreString *ByteArrayToHex(byte *arr, uint32 size);
-
-
 }
 }
 

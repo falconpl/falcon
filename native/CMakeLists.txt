@@ -41,7 +41,7 @@ option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" OFF )
 if( FALCON_NATMODS_AUTO )
 
    #### Check DBUS
-   pkg_check_modules( DBUS dbus-1 )
+   find_path( DBUS_INCLUDE_DIR dbus.h )
    if (DBUS_INCLUDE_DIRS)
       set( FALCON_BUILD_DBUS ON )
    endif()

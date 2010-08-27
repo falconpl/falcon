@@ -14,5 +14,6 @@ else
    export LD_LIBRARY_PATH="$1/$LIBDIR:$LD_LIBRARY_PATH"
    export FALCON_LOAD_PATH=".;$1/$LIBDIR/falcon"
    export PATH="$1/$BINDIR:$PATH"
+   export DYLD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 
 fi

@@ -42,6 +42,8 @@
 namespace Falcon {
 namespace Mod {
 
+HashBase::~HashBase()
+{}
 
 // this is a helper function used by makeHash() and the hash() convenience function
 FalconData *GetHashByName(String *whichStr)
@@ -283,6 +285,9 @@ CRC32::CRC32()
     _finalized = false;
 }
 
+CRC32::~CRC32()
+{}
+
 void CRC32::GenTab(void)
 {
     uint32 crc;
@@ -325,6 +330,9 @@ Adler32::Adler32()
     _finalized = false;
 }
 
+Adler32::~Adler32()
+{}
+
 void Adler32::Finalize(void)
 {
     if(_finalized)
@@ -347,6 +355,10 @@ SHA1Hash::SHA1Hash()
     sha_init(&_ctx);
 }
 
+SHA1Hash::~SHA1Hash()
+{}
+
+
 void SHA1Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha_update(&_ctx, ptr, size);
@@ -367,6 +379,10 @@ SHA224Hash::SHA224Hash()
     _finalized = false;
     sha224_init(&_ctx);
 }
+
+
+SHA224Hash::~SHA224Hash()
+{}
 
 void SHA224Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -389,6 +405,10 @@ SHA256Hash::SHA256Hash()
     sha256_init(&_ctx);
 }
 
+SHA256Hash::~SHA256Hash()
+{}
+
+
 void SHA256Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha256_sha224_update(&_ctx, ptr, size);
@@ -409,6 +429,9 @@ SHA384Hash::SHA384Hash()
     _finalized = false;
     sha384_init(&_ctx);
 }
+
+SHA384Hash::~SHA384Hash()
+{}
 
 void SHA384Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -431,6 +454,9 @@ SHA512Hash::SHA512Hash()
     sha512_init(&_ctx);
 }
 
+SHA512Hash::~SHA512Hash()
+{}
+
 void SHA512Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha512_sha384_update(&_ctx, ptr, size);
@@ -452,6 +478,10 @@ MD2Hash::MD2Hash()
     md2_init(&_ctx);
 }
 
+MD2Hash::~MD2Hash()
+{}
+
+
 void MD2Hash::UpdateData(const byte *ptr, uint32 size)
 {
     md2_update(&_ctx, ptr, size);
@@ -471,6 +501,9 @@ MD4Hash::MD4Hash()
     _finalized = false;
     MD4Init(&_ctx);
 }
+
+MD4Hash::~MD4Hash()
+{}
 
 void MD4Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -492,6 +525,9 @@ MD5Hash::MD5Hash()
     md5_init(&_ctx);
 }
 
+MD5Hash::~MD5Hash()
+{}
+
 void MD5Hash::UpdateData(const byte *ptr, uint32 size)
 {
     md5_append(&_ctx, ptr, size);
@@ -511,6 +547,11 @@ WhirlpoolHash::WhirlpoolHash()
     _finalized = false;
     whirlpool_init(&_ctx);
 }
+
+
+WhirlpoolHash::~WhirlpoolHash()
+{}
+
 
 void WhirlpoolHash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -532,6 +573,9 @@ TigerHash::TigerHash()
     tiger_init(&_ctx);
 }
 
+TigerHash::~TigerHash()
+{}
+
 void TigerHash::UpdateData(const byte *ptr, uint32 size)
 {
     tiger_update(&_ctx, ptr, size);
@@ -546,6 +590,11 @@ void TigerHash::Finalize(void)
     tiger_finalize(&_ctx);
     tiger_digest(&_ctx, _digest);
 }
+
+
+RIPEMDHashBase::~RIPEMDHashBase()
+{}
+
 
 void RIPEMDHashBase::UpdateData(const byte *ptr, uint32 size)
 {
@@ -568,11 +617,17 @@ RIPEMD128Hash::RIPEMD128Hash()
     ripemd128_init(&_ctx);
 }
 
+RIPEMD128Hash::~RIPEMD128Hash()
+{}
+
 RIPEMD160Hash::RIPEMD160Hash()
 {
     _finalized = false;
     ripemd160_init(&_ctx);
 }
+
+RIPEMD160Hash::~RIPEMD160Hash()
+{}
 
 RIPEMD256Hash::RIPEMD256Hash()
 {
@@ -580,13 +635,17 @@ RIPEMD256Hash::RIPEMD256Hash()
     ripemd256_init(&_ctx);
 }
 
+RIPEMD256Hash::~RIPEMD256Hash()
+{}
+
 RIPEMD320Hash::RIPEMD320Hash()
 {
     _finalized = false;
     ripemd320_init(&_ctx);
 }
 
-
+RIPEMD320Hash::~RIPEMD320Hash()
+{}
 
 
 }
