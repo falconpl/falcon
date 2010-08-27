@@ -1,3 +1,7 @@
+Falcon (0.9.6.7)
+  * fixed: pow() din't reset the numeric error on startup.
+  * fixed: FTD not correctly escaping if using CRLF as EOL.
+  
 Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even
            if it was possible to do that.

@@ -136,6 +136,12 @@ private:
    int checkLimitedTokens();
    void checkContexts();
 
+   bool isWhiteOrEOL( uint32 chr ) {
+         return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' || chr == '\b'
+            || chr == 0x12
+            || chr == 0x3000 || chr == 0x00A0;  // unicode ideographic & nbs
+      }
+
    bool isWhiteSpace( uint32 chr ) {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\b' || chr == 0x12
          || chr == 0x3000 || chr == 0x00A0;  // unicode ideographic & nbs

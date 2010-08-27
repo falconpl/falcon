@@ -167,7 +167,9 @@ int SrcLexer::lex_outscape()
 
          case e_normal:
             if ( chr == '<' )
+            {
                state = e_esc1;
+            }
             else {
                if ( m_whiteLead.size() > 0 )
                {
@@ -208,8 +210,9 @@ int SrcLexer::lex_outscape()
                // and break from the loop so to return the string to print.
                break;
             }
-            else if ( chr == ' ' || chr == '\t' || chr == '\n' )
+            else if ( isWhiteOrEOL(chr) )
             {
+
                // reset lead chars and eventually remove last \n
                m_whiteLead.size(0);
                m_bWasntEmpty = m_string.size() > 0;
@@ -282,7 +285,7 @@ int SrcLexer::lex_outscape()
          break;
 
          case e_escL:
-            if ( chr == ' ' || chr == '\t' || chr == '\n')
+            if ( isWhiteOrEOL(chr) )
             {
                // reset lead chars and eventually remove last \n
                m_whiteLead.size(0);

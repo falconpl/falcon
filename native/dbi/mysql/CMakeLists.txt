@@ -50,7 +50,7 @@ INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(../dbi)
 
 # Target
-ADD_LIBRARY( ${FALCON_MODULE}/dbi MODULE
+ADD_LIBRARY( ${FALCON_MODULE} MODULE
 
    ${dbi_common_files}
 
