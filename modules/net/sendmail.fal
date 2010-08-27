@@ -15,7 +15,7 @@ function postMail( pFrom, pAddress, pSubject, pBody )
    printl( "Posting mail to ", pAddress )
 
    //connect with server
-   smtp = TCPSocket()
+   smtp = socket.TCPSocket()
    smtp.setTimeout(5000)
    if not smtp.connect( pServer, "smtp" )
       raise "Failed to connect."
