@@ -1,0 +1,131 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: api.fal
+
+   Extension for API wrappers.
+   
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 14 Jul 2010 14:26:45 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+import JSONencode from json as JSONencode
+
+class Param( name, desc, dflt, mand )
+   name = name
+   mand = mand
+   value = dflt
+   desc = desc
+
+   function fill()
+      if self.mand
+         try
+            self.value = Request.getField( self.name )
+         catch
+            return false
+         end
+      else
+         self.value = Request.getField( self.name, self.value )
+      end
+      return true
+   end
+      
+end
+
+class Wrapper( name, desc, emap )
+   name = name
+   desc = desc   
+   
+   // List of parameters
+   params = []
+
+   errorMap = [
+      -1 => i"Uncaught exception",
+      -2 => i"Missing mandatory parameters"
+   ]
+
+   init
+      if emap
+         self.errorMap += emap
+      end
+   end
+
+   function execute()
+      self.run( self.go )
+   end
+
+   function run( func )
+      
+      missing = []
+      call = .[ func ]
+      for p in self.params
+         if not p.fill() and p.mand
+            missing += p.name
+         else
+            call.add( p.value )  // don't use +, because value may be []
+         end
+      end
+
+      if missing
+         > JSONencode( self.error( -2, missing.describe() ) )
+         return
+      end
+
+      try
+         result = call()
+         > JSONencode( result )
+      catch DictionaryType in errorDesc
+         > JSONencode( errorDesc )
+      catch in error
+         > JSONencode( self.error( -1, error.toString() ) )
+      end
+
+   end
+
+   function docData()
+      d = [
+         "name" => self.name,
+         "description" => self.desc ]
+
+      if self.params
+         plist = []
+         for p in self.params
+            plist += [
+               "name" => p.name,
+               "description" => p.desc,
+               "mandatory" => p.mand ? true : false ]
+         end
+         d += ["parameters" => plist ]
+      end
+
+      return d
+   end
+
+   function jsonDocData()
+      > JSONencode( self.docData() )
+   end
+
+   function error( id, content )
+      edict = ["error" => id]
+      if content
+         edict += ["detail" => content ]
+      end
+      if id in self.errorMap
+         edict += ["edesc" => self.errorMap[id] ]
+      end
+      
+      return edict
+   end
+   
+end
+
+   
