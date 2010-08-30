@@ -1,0 +1,55 @@
+/*#
+   @page front_end_cgi CGI stand-alone front-end
+
+   The WOPI CGI front-end, called @b falcgi
+   is a stand-alone program (a binary executable for the target platform)
+   which loads a Falcon script corresponding to its name.
+
+   The program is loaded by the web server, and data is passed to it through the common CGI application
+   interface. As soon as the CGI program is ready, it searches for a falcon script bearing its same
+   name (but having extension .fal, .ftd or .fam), loading and then executing it.
+
+   To write an application running under this front-end, it's necessary to configure your web server
+   to run the CGI executable in response to the given request, renaming (or symbolic linking) the
+   CGI program matching the name of the application.
+
+   Suppose there are two CGI applications that can be invoked under the /cgi-bin/ virtual location
+   (it's content being found in the cgi/ directory), one to count the accesses performed on your site,
+   and the other to perform some database query.
+
+   Then, you should copy the CGI WOPI application twice in your cgi/ directory, renaming it according
+   to the task, or creating a symbolic link to perform a new task (and running a new script).
+
+   The directory structure of the above server may be:
+
+   @code
+   cgi/
+      counter
+      counter.fal
+      query
+      query.ftd
+      query_element.fal
+      utility/
+         ...
+   @endcode
+
+   Where @b counter and @b query are copies or symbolic link to falcgi executable, while counter.fal and query.ftd
+   are the real CGI programs written in Falcon.
+
+   In considering what script to load, the @b falcgi program will discard its own extension,
+   so that it can be used similarly also on systems requiring a certain file extension for execution. For example,
+   the @b counter binary file in our example may be called also @b counter.exe, and it would still load and execute
+   counter.fal.
+
+   @note Be sure to read the @a falcgi_iso documentation about specificities of the CGI model.
+
+   @section falcgi_conf Configuration
+
+   The CGI front-end reads the following attributes from the main module:
+   - @b wopi_tempDir: Location where to store the temporary files. Defaults to /tmp on POSIX systems, and to C:\TEMP on MS Windows systems.
+   - @b wopi_maxMemUpload: Maximum size for upload to be retained on memory instead being stored on disk.
+   - @b wopi_sessionTO: Session timeout (maximum live time for session cookies and data, in seconds).
+
+   Other than that, you have to activate the ability to execute CGI programs from within the web server
+   you're currently using. Check the documentation of the web server for further information.
+*/

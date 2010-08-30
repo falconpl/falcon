@@ -1,0 +1,101 @@
+/*#
+   @page front_end_mod_apache2 Apache 2 web server module.
+
+   The @b mod_falcon module for @link "http://www.apache.org" Apache2 web server allows to serve
+   falcon scripts with WOPI directly through a first-class, complete and solid web server.
+
+   The integration is similar to what is achieved through famous @link http://www.php.net Apache-PHP module,
+   providing a virtual machine which is directly controlled by the web server process.
+
+   To activate the mod_falcon module, it is necessary to store it along with the other Apache modules
+   hosted on the target system and provide the following configuration slices in the Apache configuration system
+   at global level:
+
+   @code
+   LoadModule falcon_module /usr/lib/apache2/modules/mod_falcon.so
+   @endcode
+
+   At global or virtual server level, the following mime type handlers should be added as well:
+
+   @code
+   AddType application/x-falcon-module .fam
+   AddType application/x-falcon-source .fal
+   AddType application/x-falcon-ftd .ftd
+   @endcode
+
+   The falcon module needs an initialization file which contains some vital configuration options.
+   Some of them can be overridden also from the apache configuration system. Overridable options can be
+   specified on a per-location or per-directory basis.
+
+   The default location for the configuration file is "/etc/falcon.ini", but it can be changed at the virtual
+   server level through the following directive:
+
+   @code
+   FalconConfig "/etc/falcon.ini"
+   @endcode
+
+   Overridable options are:
+
+   - @b FalconLoadPath: Load path for the scripts starting from this virtual server, location or directory.
+   - @b FalconPDataDir: Persistent data directory.
+   - @b FalconHandler: serve all the URI in this directory or location through the given falcon script.
+
+   @section mod_falcon_config Configuration options
+
+   The options are set in the falcon.ini file through pairs of "Key = value" entries, with "#" marking comments.
+
+   - @b LogErrors: Type of error logging. It can be set to:
+   -- @b Silent - Nothing signaled.
+   -- @b Log  - Nothing signaled on remote end, but the error is logged on the Apache error log.
+   -- @b Kind - Log and minimal informations on remote end, while the complete back trace is logged on the Apache error log.
+   -- @b Report - Send error back trace to log and remote.
+   - @b MaxUpload: Maximum upload allowed in kilobytes. If receiving more data, the upload will be interrupted and the
+     script will be invoked, with the upload field reporting an error.
+   - @b MaxMemUpload - Maximum upload stored in memory (in KB), Uploaded files being smaller than this limit won't be
+      stored in the temporary directory, so that they can be accesses directly from memory by the scripts. The upload
+      control structures make accessing files stored in the temporary directory or in memory totally transparent for
+      the final script. Setting this limit to 0 all the uploaded files will be stored in as temporary files in the
+      temporary directory.
+   - @b UploadDir: location where to place the uploaded files. This place is also the location where temporary files
+     created on explicit script requests are stored.
+   - @b LoadPath: Global Falcon load path for the scripts served.
+   - @b SessionMode: Indicates how session data is stored. It can be "File", or "Memory". In case of "File" session data
+     the serialized session data is stored on a temporary file; deserialization of the session data is slower, but the data can
+     be used by different processes, and stays available also if the server is restarted. Using "Memory", the data stays
+     stored in memory and doesn't require disk serialization. This mode can be used only if the Apache server is dedicating
+     exactly one process to parse all the requests from the clients associated with a session (this means: use it if you
+     know what you're doing).
+   - SessionTimeout: Number of seconds causing sessions to expire. If a session is not accessed after this limit, it is
+      deleted. Set to 0 to enable the scripts to create non-expiring sessions.
+   - @b FalconHandler: Passes ALL the URI requests to the named script (relative to the site home path).
+      See the next section.
+   - @b PersistentDataDir: directory where to place persistent application level data. The user owning the server
+   process should have write rights on this directory.
+
+   @section mod_falcon_vpath Virtual path support
+
+   The mod_falcon Apache2 module supports virtual paths, that is, handling specific URIs through a common script.
+   This can be achieved globally using the FalconHandler key in the Falcon module configuration scripts, or the
+   Apache system can be used to activate this support for certain locations or directories.
+
+   The Apache2 configuration directive @b SetHandler can be used to pass location requests to a @b falcon-program
+   or @b falcon-ftd, specified in the same section through a @b FalconHandler directive.
+
+   The @b falcon-program handler forces the engine to load the handler as a falcon script, while the @b falcon-ftd loads
+   it a Falcon template document source. This is relevant if the script file extension is not a registered one (fal, fam or ftd),
+   so that it is possible for the parse to perform the correct transformations.
+
+   The following example sends all the requests for the Managed directory to the managed-handler.fal script:
+
+   @code
+   #example of a managed location
+
+   <Location "/managed">
+      SetHandler falcon-program
+      # or use
+      # SetHandler falcon-ftd
+      FalconHandler managed-handler.fal
+      FalconLoadPath /somelocation/managed
+   </Location>
+   @endcode
+*/

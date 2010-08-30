@@ -1,0 +1,67 @@
+                     The Falcon Programming Language
+
+                    Web Oriented Programming Interface
+
+                                  1.3
+
+
+
+Falcon Web Oriented Programming Interface is a suite of modules providing
+a coherent programming interface for web development across different means
+to publish web applications, for example web server modules, CGI, FastCGI
+and so on.
+
+
+Contents
+========
+
+   WOPI is currently providing the following front ends:
+
+   - CGI standalone embedding application: a binary application meant to
+      load falcon scripts and serve them through a CGI interface.
+   - Fast-CGI standalone embedding application: a binary application interfacing
+      Fast-CGI libraries.
+   - CGI Falcon module: A module that can be loaded (or pushed) into executable
+      scripts that delivers the WOPI interface to them.
+   - Apache2 web server module: A loadable module for Apache2 that allows to serve
+      dynamic web pages from Falcon scripts directly.
+   - Standalone web server: A minimal web server that can be used to distribute
+      static content or execute Falcon scripts. 
+
+Build instructions
+==================
+
+To build this module, you'll need
+
+   - Falcon development files, version >= 0.9.6
+   - CMAKE
+
+To build the Apache2 WOPI module, you'll need also:
+   - APR-1 with pkg-config installed.
+   - Apache2 development files.
+
+For FastCGI module, you'll need also:
+   - FastCGI development files
+
+To build the various modules, you need to instruct CMAKE with the proper
+configuration switch, -D<switch>=ON. The switches are namely:
+
+   - BUILD_FALCGI 
+   - BUILD_CGI_FM 
+   - BUILD_FFALCGI
+   - BUILD_FALHTTPD
+   - BUILD_MOD_FALCON
+
+NOTE: Apache include files are often installed in uncommon places. If they
+are not under a standard include directory (/usr/local/include or /usr/include),
+you may need to add the CMAKE option
+
+   -DAPACHE_REAL_INCLUDE_DIR=<path to apache includes>
+
+If you have faldoc documentation tool installed on your system, you may
+also consider to create the documentation as an HTML site enabling the
+following:
+
+   - CREATE_DOCS
+
+

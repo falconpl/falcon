@@ -1,0 +1,12 @@
+<html>
+<body>
+Ok!
+<pre>
+<?
+inspect( "Ok" )
+p = []
+p[2] = "error"
+?>
+</pre>
+</body>
+</html>

@@ -1,0 +1,26 @@
+
+                          Falcon WOPI - Test site
+
+
+   This test site contains a small web-based application that can run
+through the various WOPI front-ends.
+
+   Although WOPI is largely seamless, you'll need to configure the various
+WOPI modules to point to this area, or to configure you web server to read
+this directory as a CGI or FastCGI directory.
+
+   Also, you may be required to configure the web application essential
+data, as the sessions timeout or the location where to place temporary
+files, either changing the configuration parameters in the WOPI specific
+front-end configuration files or setting them as "wopi_" attributes in
+the index.fal file.
+
+   Also, in case of using CGI or FastCGI front ends, remember to copy the
+binary CGI front end in the directory, and name it "index", "index.exe"
+or "index.cgi" depending on the operating system you're on. Also, the file
+copied file should be directly executable.
+
+   In case you use the cgi_fm frontend, remember to make index.fal
+executable, if your system allows to, and to correctly configure the sh-bang
+directive at top of the file to point to the falcon command line interpreter.
+

@@ -1,0 +1,24 @@
+<?
+   if "reset" in Request.gets or "called" notin Request.cookies
+      // expire in 10 mins...
+      now = CurrentTime()
+      added = TimeStamp()
+      added.minute = 10
+      now.add( added )
+
+      Reply.setCookie( "called", 0, now )
+      Reply.setCookie( "secondary", "Hello", now )
+      called = 0
+   else
+      called = int( Request.cookies["called"] ) + 1
+      Reply.setCookie( "called", called )
+   end
+?>
+<html>
+</body>
+<H1>Cookie test</h1>
+You have called this script <?=called?> times.
+Click <a href="<?=Request.uri?>?reset">here</a> to reset the count.
+</pre>
+</body>
+</html>

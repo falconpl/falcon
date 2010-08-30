@@ -1,0 +1,5 @@
+- Memory control.
+- Execution time control.
+- Stack depth control.
+- More configuration.
+- FalconInfo() function.

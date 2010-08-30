@@ -1,0 +1,1 @@
+LoadModule falcon_module /usr/lib/apache2/modules/mod_falcon.so

@@ -1,0 +1,50 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for Web Server module.
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon - Web Oriented Programming Interface
+Author = Giancarlo Niccolai
+Version = 1.1
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.basedir=/home/gian/Progetti/falcon/projects/wopi/docs
+Input.directory=../src
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+Input.extra=main.fd
+Input.extra=cgi_fe.fd
+Input.extra=fcgi_fe.fd
+Input.extra=cgi_fm_fe.fd
+Input.extra=httpd_fe.fd
+Input.extra=apache_fe.fd
+Input.extra=wopi_model.fd
+Input.extra=wopi_modules.fd
+
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=/home/gian/Progetti/falcon/projects/wopi/docs/wopi-docs-1.1
+Output.html.url=.
+Output.html.doctitle=Falcon Web Oriented Programming Interface (WOPI)

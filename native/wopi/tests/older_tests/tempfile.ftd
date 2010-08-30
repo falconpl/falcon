@@ -1,0 +1,16 @@
+<h2>Temp file test</h2>
+<P>writing:
+<?
+   name = nil
+   file = tempFile( $name )
+   file.writeText( "Hello world!" )
+   file.close()
+?>
+
+<P>reading file <?=name?>
+<?
+   f = InputStream( name )
+   str = f.readText( 1000 )
+?>
+<P>Readed: <?=str?>
+<p>Note: we're willfully leaving it open for the VM to dispose it.

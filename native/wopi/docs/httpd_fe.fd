@@ -1,0 +1,99 @@
+/*#
+   @page front_end_falhttpd Micro Falcon-based web server
+
+   The stand-alone web server is a simple daemon-type application listening on a TCP-IP connection
+   and serving a single site with very basic configuration.
+
+   It is meant to serve static files and Falcon scripts. Prospectively, it is thought to become
+   a primary mean for falcon-based web sites to distribute content on the net, but in this first
+   release of WOPI it should be considered experimental and suitable for local testing of WOPI
+   sites.
+
+   @section falhttpd_command_line Command line
+
+   The micro web server is started from a program called @b falhttpd (or falhttpd.exe). Some minimal
+   configuration options can be specified on the command line, while more in depth options
+   and MIME type mappings can be specified in a configuration file.
+
+   When two options are specified both on the command line and on the configuration file, the command
+   line setting is prioritized (overrides the configuration file setting).
+
+   - -?: Prints a short in-line help of configuration options.
+   - -A <dir>: Store persistent application data files in this directory. Files are named along
+         the "application" declared in @a Wopi.getData and @a Wopi.setData.
+   - -C <file>: Load this configuration file. By default, falhttpd doesn't load any configuration file.
+   - -D <file>: Log debug information to the given file or path. By default, Log info are sent on
+     the console.
+   - -h <dir>: Sets this directory as site HTDOCS root. By default, falhttpd uses its own start directory
+     as the document root.
+   - -i <addr>: Bind on the named interface (defaults to 0.0.0.0 - all).
+   - -l <n>: Log level (0 min, 5 max). The default level is 3 (all the informative messages).
+   - -L <path>: Set this as the falcon load path. Relative paths are calculated starting from the
+      home document directory. The default is "." (that is, includes the startup directory).
+   - -p <port>: Listen on required port (defaults to 80).
+   - -q: Be quiet (don't log on console).
+   - -S: Do not log on syslog.
+   - -T: Set the temporary directory (the default depends on the target system). This is used
+     to provide the scripts with the ability to create temporary files, and also used to support
+     file upload control.
+
+   @section falhttpd_config Configuration file
+
+   The configuration file allows a better control of some options.
+
+   It's structured as a pair of "key = value" entries; "#" marks a comment line.
+
+   Recognized keys are:
+
+   - @b HomeDir: Home directory of the served site.
+   - @b LoadPath: Falcon load path that is applied to this site.
+   - @b TempDir: Sets the temporary directory.
+   - @b Interface: Address of the local interface(s) on which the application should be listening.
+   - @b Port: TCP Port number on which the application will wait for connections.
+   - @b AllowDir: Set this key to "ON" to allow connections to get the list of files in a directory
+      (if there isn't an active index file).
+   - @b IndexFile: one or more file names that are known to hold the "index" of a directory. If the
+     remote client requests an URI corresponding to a directory on the site, and a file corresponding
+     to one of the files listed in this key is present, that file gets served in place of the directory.
+     More filenames can be separated with ";". The default for this key is
+     "index.htm;index.html;index.fal;index.ftd". Remember to put double quotes (") around this entry.
+    - @b PersistentDataDir: Store persistent application data files in this directory. Files are named along
+     the "application" declared in @a Wopi.getData and @a Wopi.setData.
+
+   @subsection falhttpd_mime_types Mime types configuration
+
+   The falhttpd server determines the mime type of the files it serves via a configuration "category" called "mime".
+   The mime type served to the client is the part of the key past the first dot, and each dot is then transformed
+   into a "/" separator. The Value associated with each key is a single wildcard or multiple wildcards separated
+   by ";", matching the files that should be served with the specified mime type.
+
+   For example, to have documents with an .htm or .html extension served as "text/html", you should use the following
+   entry:
+
+   @code
+   mime.text.html = "*.htm;*.html"
+   @endcode
+
+   Scripts (fal, fam and ftd) can control their own mime type, so they can't be addressed by this mapping.
+
+   As set of minimal entries (for html, images, css and javascript) is built-in on the falhttpd, and will be disabled
+   if mime entries are specified in the configuration file.
+
+   @subsection falhttpd_virtual_paths Virtual paths
+
+   Falhttpd supports virtual paths, or in other words, the ability to redirect all the requests for URI below a certain
+   directory to a single script which has then the role of interpreting that URI as a request.
+
+   To establish a virtual path, the @b vpath configuration category must be used. The rest of the key represents the
+   topmost entry in the virtual path, while the value is the script to be launched (relative to the start directory).
+
+   For example, the following entry:
+   @code
+   vpath.myroot.* = welcome.fal
+   @endcode
+
+   will redirect every request below the URI "/myroot/" to the script "welcome.fal". Script path is relative to the directory
+   where falhttpd is started, and can be anywhere in the system (they're not confined to the site area).
+
+   The script can determine the original URI stored in the request through the appropriate field in the Request object.
+*/

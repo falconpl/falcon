@@ -1,0 +1,173 @@
+/*#
+   @main Web Oriented Programming Interface
+   
+   Falcon Web Oriented Programming Interface (WOPI) is composed
+   of a set of modules and stand-alone applications delivering
+   a coherent interface to web-oriented applications working
+   under different Web server integration models.
+   
+   In other words, WOPI consists of a set of objects, classes
+   and functions that are exposed to all the Falcon scripts working
+   in a web-based environment, regardless the fact that they are
+   run as CGI, as dynamic server-side scripts or through other
+   web publishing models.
+   
+   @section what_to_read What you should read
+   
+   Or, "the crash course to WOPI".
+   
+   First, you should take a look to the rest of this document, just to know what
+   WOPI is about and what are the pieces you can get into doing the job.
+      
+   At this point, you will want to setup a minimal WOPI environment, with a
+   server, a front-end (or a front-end acting as a server) and a browser. Pick the
+   front-end that you think is best suited for you (depending on what you know and
+   what system and web server you can easily setup), or go for the falhttpd server,
+   which is a minimal web server useful for testing WOPI applications locally on your 
+   machine.
+   
+   Second, read about @a wopi_model. It's a simple manual of how to get the raw
+   features you need to start writing web application.
+
+   Then, read about the @a wopi_modules, which explains how to create web-oriented
+   applications assembling different pieces.
+   
+   Finally, take a look at the @a Request and @a Reply WOPI object references, so to
+   have an idea of what are the functionalities they provide in a greater detail. Also,
+   be sure to access the function list section (directly from the top menu of this guide),
+   for additional functions that WOPI provides.
+   
+   Anyhow, keep in mind that this is not a complete manual on how to write web-based applications.
+   This is just a synthetic guide to the features exposed by WOPI to Falcon programmers.
+   Conquering the web is up to you.
+   
+   @section front_ends Front ends
+   
+   WOPI @i front @i ends are the @i means through which scripts
+   are served on the net. Currently, the WOPI project includes
+   the following front ends: 
+   
+   - CGI standalone embedding application: a binary application meant to
+      load falcon scripts and serve them through a CGI interface (see @a front_end_cgi).
+   - Fast-CGI standalone embedding application: a binary application interfacing
+      Fast-CGI libraries (see @a front_end_fcgi and @link "http://www.fastcgi.com" "FastCGI home site").
+   - CGI Falcon module: A module that can be loaded (or pushed) into executable
+      scripts that delivers the WOPI interface to them (see @a front_end_cgi_fm).
+   - Apache2 web server module: A loadable module for Apache2 that allows to serve
+      dynamic web pages from Falcon scripts directly (see @a front_end_mod_apache2).
+   - Standalone web server: A minimal web server that can be used to distribute
+      static content or execute Falcon scripts (see @a front_end_falhttpd). 
+   
+   More front-ends, covering more Web-based service providers, will be delivered
+   in future releases of the Falcon WOPI system. Also, notice that not all the
+   front-ends are readily available in the binary releases of this project
+   on all the supported platforms.
+   
+   This documentation doesn't include building instructions, that are available
+   at project @link "http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=wopi" "home site".
+   
+   Each front-end has an entry in this documentation under the "Related pages" tab. Notice
+   that WOPI interface is meant not to change across different front-ends; front-end entries
+   are meant to help setting up and configuring the various WOPI providers.
+
+	@section wopi_features Features
+	
+	- HTTP GET & POST Field parsing
+	- Cookie control
+	- Upload control
+	- Simplified output encoding control
+	- Template management
+   - Session management
+   - Application-wide data support
+   
+   @section basic_concepts Basic concepts
+   
+   WOPI interface consists of two globally visible objects through which the web-based Falcon
+   application can control the interaction with the remote client. They are namely
+   
+   - Request: an object storing all the available information on the incoming request and, and
+     carrying the main interface to the WOPI front-end functionalities.
+   - Reply: an object that can be used to control the meta-contents of the reply (as i.e. reply codes,
+     HTTP headers, cookies and so on).
+     
+   Other than that, a few functions and classes are exposed by the WOPI module to the scripts.
+   
+   WOPI injects its functions, objects and global items in the global namespace of the target Falcon
+   application. In other words, WOPI-based applications must consider WOPI elements as an integral part
+   of the Falcon language standard libraries. 
+   
+   Output on the Falcon virtual machine standard output and standard error streams are redirected as-is
+   to the final web client. As the first explicit output is performed, the data in the Reply object is
+   processed and conveyed to the client. In other words, it is possible to specify the reply status and
+   headers only up to the moment where the first output is performed.
+
+   For more details, see the @a wopi_model section, containing an overview of the web oriented interface.
+   
+   @section Falcon scripts and FTDs
+   
+   WOPI applications can be composed of any combination of standard falcon scripts and FTD documents.
+   For example, the following script is a standard Falcon script sending an "hello world" to the client:
+   
+   @code
+   // Saying hello world
+   > "<html><body>"
+   > "<h1>Hello world</h1>"
+   > "</body></html>"
+   @endcode
+   
+   Rewriting the same code on an FTD document:
+   
+   @code
+   <? 
+       // inside this escape, we're writing Falcon code;
+       // In this case, we're writing a couple of comments.
+   ?>
+   <html>
+   <body>
+   <h1>Hello world</h1>
+   </body>
+   </head>
+   @endcode
+   
+   Loading a .ftd script from a standard .fal script will cause the unescaped text in the ftd document to be
+   immediately delivered to the output. 
+   
+   @note Loading an .ftd file trough the @b load directive should be avoided, unless You-Know-What-You're-Doing. Output
+   from FTDs can be better controlled through the dynamic load function @b include().
+   
+   A well-designed web-based Falcon application may use FTD documents for data presentation and templating,
+   while the application logic may be stored in standard .fal scripts.
+   
+   @section output_encoding Output Encoding
+    
+   A relatively delicate matter that is worth a space in the main page concerns the encoding of the
+   text data which is delivered to the final client.
+   
+   As web-based applications are usually meant to generate some sort of text,  a default "utf-8" encoding is provided
+   and made known to the remote client via the Reply object. @a Reply.ctype can change this default in case
+   the script is in need to send text in some other encoding, or if it is going to write binary data (i.e. in case it
+   wants to create a dynamic image). In this latter case, the encoding should be set to "C" (no transformation).
+   
+   The vast majority of front-ends has means to change the default encodings via configuration options.
+   
+   As for source files, WOPI scripts should be saved as utf-8 files, but the @b include() language 
+   function and some configuration directives in some front-ends can override this default.
+   
+   @section configuration_in_mod Inline configuration
+   
+   Another common aspect of WOPI is the ability to override some relevant configuration option by the main
+   module of the application serving a page (or, in other words, the script being invoked).
+   
+   A special set of attributes starting with "wopi_" prefix is interpreted by many front-ends as a request
+   to change the configuration. This comes particularly useful to configure site-specific parameters, as the
+   location of the temporary directory. More detail is given in the description of each back-end.
+   
+   @section precompiled_modules Precompiled modules
+   
+   Falcon modules may be stored as pre-compiled @b fam modules on the final production system; as the scripts 
+   rarely have write access to the directory where they are stored, this saves compilation time. If the links
+   to the various pages (and applications) in a site points to the @b fam scripts instead of their relative
+   sources, it is also possible to strip the sources and deliver a pre-compiled only application to the final
+   site.
+*/
+

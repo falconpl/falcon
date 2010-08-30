@@ -1,0 +1,19 @@
+<html>
+<body>
+<h1>Inclusion test</h1>
+<?
+// exporting some variable
+
+parent = "inclusion test"
+export parent
+?>
+<p>Here we include an FTD:</p>
+<hr/>
+<? include( "inc_ftd.ftd" ) ?>
+<hr/>
+<p>And here, a standard falcon module: </p>
+<hr/>
+<? include( "inc_fal.fal" ) ?>
+<hr/>
+</body>
+</html>

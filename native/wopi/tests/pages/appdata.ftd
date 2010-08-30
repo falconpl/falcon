@@ -1,0 +1,30 @@
+<?
+   const appname = "Wopi_TS"
+?>
+<h1>Application data test</h1>
+<p>This test checks for some application data to be correctly passed
+   across different instances.</p>
+<p>The application data here will contain the total number of times that
+the page has been loaded and the last time, prior to this time, when
+it was loaded.</p>
+
+<? data = Wopi.getAppData( appname ) ?>
+<? if data == nil ?>
+   <p>This is the first time that this page is invoked (or very nearly the first time,
+   if you're trying concurrent access).</p>
+   <p>Try to reload the page, and you will see the data we talked about.</p>
+   <? data = ["counter"=>0] ?>
+<? else ?>
+   <p>This page has been visited <?= data["counter"] ?> times.</p>
+   <p>The last visit was on <?= data["time"] ?></P>
+<? end ?>
+
+<?
+   now = CurrentTime()
+
+   loop
+      data["counter"]++
+      data["time"] = now.toRFC2822()
+   end Wopi.setAppData( $data, appname )
+?>
+

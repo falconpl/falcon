@@ -1,0 +1,83 @@
+<?
+/*****************************************************************************
+   WOPI testsuite.
+
+   Multiple POST tets
+*****************************************************************************/
+
+posts = Request.posts
+
+exp = [
+   "Name"
+      => [ "John Doe", "Name" in posts ? posts["Name"] : nil],
+   "Likes"
+      => [ ["Reading", "Music"], "Likes" in posts ? posts["Likes"] : nil],
+   "Occupation"
+      => ["Student", "Occupation" in posts ? posts["Occupation"] : nil],
+   "Gender"
+      => ["M", "Gender" in posts ? posts["Gender"] : nil],
+   "入空"
+      => ["国際値", "入空" in posts ? posts["入空"] : nil],
+   "btn"
+      => ["send", "btn" in posts ? posts["btn"] : nil]
+]
+
+for k, v in posts
+   if k notin exp
+      exp[k] = [nil, v]
+   end
+end
+?>
+
+<h1>Standard form fields test</h1>
+
+<p>For this test, you're required to enter some values in the fields.
+   If the values matches those we suggest, then the test is considered
+   "passed". You may try with different values and check them manually
+   to try wider test ranges.</p>
+   
+
+<? if not posts ?>
+   <h2>Blank form:</h2>
+   <?
+      // fill with default values -- yes, posts are not read only
+      posts["Name"] = ""
+      posts["Occupation"] = ""
+      posts["Gender"] = "M"
+      posts["Likes"] = []
+      posts["入空"] = "国際値"
+   ?>
+<? else ?>
+   <h2>Test results</h2>
+   <? testCheck(exp) ?>
+   <h2>Already filled form:</h2>
+<? end ?>
+
+<form method="POST" action="<?= Request.uri ?>">
+<table>
+<tr><td>Name (Exp. "John Doe"):</td><td><input type="text" value="<?= htmlEscape(posts["Name"])?>" name="Name"/></td></tr>
+<tr><td>Occupation (Exp. Student):</td><td>
+   <select name="Occupation">
+   <option value="" <? if posts["Occupation"] =="": >>'selected="yes"'?>> -- Please select -- </option>
+   <option value="Student" <? if posts["Occupation"] =="Student": >>'selected="yes"'?>>I am a student</option>
+   <option value="Teacher" <? if posts["Occupation"] =="Teacher": >>'selected="yes"'?>>I am a teacher</option>
+   <option value="Employee" <? if posts["Occupation"] =="Employee": >>'selected="yes"'?>>I am an employee</option>
+   <option value="Other" <? if posts["Occupation"] =="Other": >>'selected="yes"'?>>Other</option>
+   </select>
+</td></tr>
+<tr><td>Gender (Exp. "M"):</td><td>
+      <input type="radio" name="Gender" value="M" <? if posts["Gender"] =="M": >>'checked="yes"'?>/>&nbsp;Male
+      &nbsp;&nbsp&nbsp;
+      <input type="radio" name="Gender" value="F" <? if posts["Gender"] =="F": >>'checked="yes"'?>/>&nbsp;Female
+      </td></tr>
+<tr><td>Likes (Exp. Reading + Music):</td><td>
+      <input type="checkbox" name="Likes[]" value="Sport" <? if "Likes" in posts and "Sport" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Sport
+      &nbsp;&nbsp&nbsp;
+      <input type="checkbox" name="Likes[]" value="Reading" <? if "Likes" in posts and "Reading" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Reading
+      &nbsp;&nbsp&nbsp;
+      <input type="checkbox" name="Likes[]" value="Music" <? if "Likes" in posts and "Music" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Music
+      </td></tr>
+<tr><td>International (Exp. "国際値"):</td><td><input type="text" value="<?= htmlEscape(posts['入空'])?>" name="入空"/></td></tr>
+<tr><td colspan="2"><input type="submit" name="btn" value="send"/></td></tr>
+</table>
+</form>

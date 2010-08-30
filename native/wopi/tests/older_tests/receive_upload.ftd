@@ -1,0 +1,59 @@
+<H2>Request:</H2>
+<pre>
+<?
+   inspect( Request )
+?>
+</pre>
+<?
+   upld = Request.posts['TheFile']
+   
+   switch Request.posts['req_type']
+   case "req_open"
+      > "<h2>Open test:</h2>"
+      stream = upld.open()
+      data = stream.read( 1024 )
+      read_in = 0
+      for i in [0:data.len()]
+         read_in += data[*i]
+      end
+      stream.close()
+      > "<p> Test complete; sum of first ", data.len(), " bytes was ", read_in
+      
+   case "req_read"
+      > "<h2>Read test:</h2>"
+      upld.read()
+      data = upld.data
+      read_in = 0
+      for i in [0: data.len() > 1024 ? 1024 : 0 ]
+         read_in += data[i] // here data is a membuf
+      end
+      > "<p> Test complete; sum of first ", data.len(), " bytes was ", read_in
+      
+   case "req_store"
+      > "<h2>Store test -- using a temporary file to complete it</h2>"
+      name = nil
+      tempFile( $name ).close()
+      upld.store( $name )
+
+      > "<p>Stored to temporary file ", name
+      // now try to read it.
+      stream = InputStream( name )
+      data = stream.read( 1024 )
+      read_in = 0
+      for i in [0: data.len() ]
+         read_in += data[*i]
+      end
+      stream.close()
+      > "<p> Test complete; sum of first ", data.len(), " bytes was ", read_in
+      
+   default
+      if upld.data
+         > "<p>Data content:<br>"
+         > "<pre>"
+         > strFromMemBuf( upld.data )
+         > "</pre>"
+      end
+      > "<P> Test complete"
+   end
+?>
+

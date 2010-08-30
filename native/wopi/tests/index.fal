@@ -1,0 +1,132 @@
+#!/usr/bin/falcon -pcgi
+/*****************************************************************************
+   WOPI testsuite.
+
+   This script is configured and prepared so that it can be used under any
+   WOPI front-end.
+
+   It simulates a small web-based application loading applications.
+
+   Read the README file for more informations on setup.
+*****************************************************************************/
+
+// The defaults and the configuration are usually ok
+// but you may want to set your own:
+// wopi_tempDir: "/tmp"
+
+
+// shows the real page
+if "p" notin Request.gets
+   page = "main"
+else
+   page = Request.gets["p"]
+end
+
+// load pre-pages
+if fileType( "pages/pre-" + page + ".fal" ) == FileStat.NORMAL
+   try
+      pre_data = include( "pages/pre-" + page + ".fal" )
+   catch in error
+      header("Error!")
+      errorDocument( @"Sorry, required pre-requisite for required page \"$page\" cannot be loaded.", error )
+      footer()
+      return
+   end
+end
+
+header(page)
+
+// try to load it at this point.
+try
+   include( "pages/" + page + ".ftd" )
+catch in error
+   errorDocument( @"Sorry, cannot load required page \"$page\"", error )
+end
+
+footer(page)
+
+// End of main program.
+//----------------------------------------------------------------------------
+// Internal utilities
+//
+function header( page )
+   >'
+<html>
+   <head>
+   <title>Test page "' + page + '
+   "</title>
+   <link rel="stylesheet" type="text/css" href="/tests.css"/>
+   </head>
+   <body>
+   <div class="header">
+      <div class="img"><img src="imgs/falcon-logo.png"/></div>
+      <div class="headtext">Falcon Web Oriented Programming Interface</div>
+   </div>
+'
+> '<div class="middle">'
+end
+
+function footer( page )
+   > '</div>'
+   >'<div class="footer">'
+   if page != "main"
+      > '<p>Return <a href="' + makeLink( "main" ) + '">to the main page</a></p>'
+   end
+
+   > '<p class="footer"><i>Falcon WOPI test suite</i> -- systime: ' + Format( ".3" ).format( seconds() - Request.startedAt ) + ' </p>'
+   > '</div></body></html>'
+end
+
+
+//----------------------------------------------------------------------------
+// expose an utility function to help creating links to ourself:
+function makeLink( page )
+   return Request.location + "?p=" + page
+end
+
+// A simple utility
+function errorDocument( text, error )
+   > '
+   <h1>Error!</h1>
+   <p>'
+   > text, '</p>'
+
+   if error
+      > "<p><b>Error:</b><pre>", error.toString(), "</pre></p>"
+   end
+end
+
+// An utility used for simple checks on tests
+function testCheck( exp )
+   count = 0
+   
+   > '
+   <table border="1">
+   <tr><th>Field</th><th>Value</th><th>Expected</th><th>Result</th></tr>'
+   
+   for k, v in exp
+      v0 = v[0].describe()
+      v1 = v[1].describe()
+      
+      >@'
+      <tr><td>$k</td><td>$v1</td><td>$v0</td>'
+      if v[0] == v[1]
+         count++
+         >> "<td><b>OK</b></td>"
+      else
+         >> "<td>fail</td>"
+      end
+      > '</td></tr>'
+      
+   end
+   >'</table>'
+   
+   if count == exp.len()
+      > '<p>Test <b>SUCCESS</b>.</p>'
+   else
+      > '<p>Test <b>failed</b>.</p>'
+   end
+end
+
+// export the utility functions so pages can use them
+export makeLink, errorDocument, testCheck, pre_data

@@ -1,0 +1,39 @@
+// This test transmits an image as a jpg.
+// to make things simpler, we'll load the jpg from disk.
+
+// use the query field 'imgname' to retreive the desired image.
+imgname = Request.getField( "imgname", "testimg.jpg" )
+
+// cache de default content type
+def_content_type = Reply.headers["Content-type"]
+
+try
+   infile = InputStream( imgname )
+
+   // to output on the web server, use the stdOut
+   outfile = stdOut()
+   buffer = MemBuf( 1024 )
+
+   Reply.headers["Content-type"] = "image/jpg"
+
+   // ok, transmit the file
+   while not infile.eof()
+      readin = infile.read( buffer )
+      outfile.write( buffer, readin )
+   end
+
+   outfile.close()
+   infile.close()
+catch IoError in error
+   // we couldn't send the image... let's send an error.
+   > dirCurrent()
+   if not Reply.sent
+      Reply.headers["Content-type"] = def_content_type
+
+      > "<H1>Problem while loading the image</H1>"
+      > @"<p>Sorry, couldn't load the desired image in <b>$imgname</b>.\n"
+      > "<p>The system reported the following error:<br/>\n"
+      > "<pre>", error, "</pre></p>\n"
+   end
+   // otherwise there is nothin we can do.
+end

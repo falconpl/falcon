@@ -1,0 +1,41 @@
+<h1>Simple upload test</h1>
+<? if "TheFile" notin Request.posts ?>
+
+   <p>In this test, you're require to send a single file through the form.
+   You should send this script (pages/upload.ftd) or the falcon-logo.png file stored in the
+   imgs/ subdirectory. In this case, the result will be throughly checked to verify
+   that everything went fine.</p>
+
+   <p>You may send an arbitrary file as well; there won't be any formal check, but you
+   may see if something went wrong through the summary that is drawn below.</p>
+   <? if ":error" in Request.posts ?>
+      <p><b>Error</b> in upload: <?= Request.posts[":error"] ?></p>
+   <? end ?>
+<? else ?>
+   <h2>Received data:</h2>
+   <? r = Request.posts["TheFile"] ?>
+   <table>
+   <tr><td>Filename:</td><td><?= r.filename ?></td></tr>
+   <tr><td>Mime type:</td><td><?= r.mimeType ?></td></tr>
+   <tr><td>Size:</td><td><?= r.size ?></td></tr>
+   <tr><td>Interally stored:</td><td><?= r.data != nil ? "Yes" : "No" ?></td></tr>
+   <? if r.filename == "falcon-logo.png" or r.filename == "upload.ftd" ?>
+      <tr><td>Validity check:</td>
+      <? if r.filename == "falcon-logo.png" ?>
+         <td><b><?= r.size == 24556 ? "OK" : "fail" ?></b></td>
+      <? else ?>
+         <td><b><?= r.size == 1636 ? "OK" : "fail" ?></b></td>
+      <? end ?>
+      </tr>
+   <? end ?>
+   </table>
+<? end ?>
+
+<h2>Input form</h2>
+
+<form action="<?= Request.uri ?>" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+<table>
+<tr><td>File: </td><td><input type="file" name="TheFile"/></td></tr>
+<tr><td colspan="2"><input type="submit" name="sub_btn" value="Send"/></td></tr>
+</table>
+</form>

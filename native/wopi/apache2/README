@@ -1,0 +1,107 @@
+                     The Falcon Programming Language
+
+                    Web Oriented Programming Interface
+
+                                  1.0
+
+
+APACHE WOPI FRONT-END MODULE
+============================
+
+  This module allows a smooth integration of the Falcon Programming Language
+with the Apache web server. The integration consists of a simple embedding
+which owns a virtual machine for each script being run by the server, and
+a module which add some functionalities and allows the scripts to interact
+with the surrounding environment (aka the web server).
+
+  The internal module is directly injected into every script executed by this
+module, so it appears to be a part of a language (we may say, an Apache-server
+specific extension).
+
+
+Installation instructions
+=========================
+
+  Once the mod_falcon.so is placed in the Apache2 modules directory, it is
+necessary to set its configuration. The directory conf/ contains a some files
+meant to serve as a template to configure Apache 2:
+
+   * falcon.conf can be copied and included directly as-is. It is quite a
+     standard configuration of an "if mod_falcon.c" section. It contains an
+     entry that allows the falcon.ini file to be in a non-standard location.
+
+     Consider this example :
+
+     +-------------------------------------------------------------------+
+     |                                                                   |
+     |   LoadModule falcon_module /opt/csw/apache2/libexec/mod_falcon.so |
+     |   <IfModule mod_falcon.c>                                         |
+     |       AddType application/x-falcon-module .fam                    |
+     |       AddType application/x-falcon-source .fal                    |
+     |       AddType application/x-falcon-ftd .ftd                       |
+     |       FalconConfig "/etc/opt/csw/mod_falcon/falcon.ini"           |
+     |   </IfModule>                                                     |
+     |                                                                   |
+     +-------------------------------------------------------------------+
+
+   * falcon.load is just a reminder to create a proper LoadModule entry
+     in httpd.conf/apache.conf and get in mod_falcon.
+
+  Other than that, it is necessary to copy falcon.ini as specified in
+falcon.conf ( possibly into /etc ), and configure it to make it fit to your
+needs.  The above example is perfectly valid and consistent with the SVR4
+software package spec on UNIX(tm) systems such as Solaris. In the above
+example you see that the configuration file has been correctly placed within
+the /etc/opt/%vendorname%/%software_name%/ directory.
+
+
+Contents of the falcon.ini file
+===============================
+
+  Here is a typical configuration file that allows for basic functionality.
+This may not fit your needs but it is a simple starting point.
+
+ +-----------------------------------------------------------------------+
+ |                                                                       |
+ | ########################################                              |
+ | #   The Falcon Programming Language.   #                              |
+ | #    mod_faldoc configuration file     #                              |
+ | ########################################                              |
+ |                                                                       |
+ | # Type of error signaling                                             |
+ | # Can be:                                                             |
+ | #  "Silent" - Nothing signaled.                                       |
+ | #  "Log" - Nothing signaled on remote end, error logged.              |
+ | #  "Kind" - Log and minimal informations on remote end.               |
+ | #  "Report" - Send error backtrace to log and remote.                 |
+ |                                                                       |
+ | #LogErrors = Kind     ; Kind signaling.                               |
+ | LogErrors = Report                                                    |
+ |                                                                       |
+ | #################################################################     |
+ | # UPLOAD CONTROL                                                      |
+ | #################################################################     |
+ |                                                                       |
+ | # Maximum upload size (in KB)                                         |
+ | #MaxUpload = 1000                                                     |
+ | MaxUpload = 1024                                                      |
+ |                                                                       |
+ | # MaxMemUpload.                                                       |
+ | #                                                                     |
+ | # Maximum size of uploads to be stored in memory buffers (in KB)      |
+ | #                                                                     |
+ | # Set the maximum size allowed for storage of uploaded files          |
+ | # in memory. Set to 0 to always store files on disk.                  |
+ | #                                                                     |
+ | MaxMemUpload = 10                                                     |
+ |                                                                       |
+ | # Upload temporary directory.                                         |
+ | # Used also for other temporary files.                                |
+ |                                                                       |
+ | #UploadDir = /tmp                                                     |
+ | UploadDir = /var/tmp/csw/mod_falcon                                   |
+ |                                                                       |
+ +-----------------------------------------------------------------------+
+
+
+

@@ -1,0 +1,109 @@
+<html>
+<? val = "Hello world!"?>
+<?
+   maketitle( val )
+   makemeta( [ "test", "ftd", "falcon"], \
+             "This is a test page" )
+   makeencoding( "utf-8" )
+?>
+</head>
+</body>
+<? makeheading( val ) ?>
+<p>This is a dinamic page created with Falcon!</p>
+<p>This post sends also array values; the TestField key is sent as an array.</p>
+<?
+  if Request.gets.len() == 0
+      > "Query is empty (no fields in GET)<br/>"
+   else
+      > "Get fields: </br><ul>"
+      dispDict( Request.gets, "<li>" )
+      > "</ul>"
+   end
+
+   if Request.posts.len() == 0
+      > "Post is empty (no fields in POST)<br/>"
+   else
+      > "Post fields: </br><ul>"
+      dispDict( Request.posts, "<li>" )
+      > "</ul>"
+   end
+?>
+
+<form name="f1" action="hello2.ftd?form=sent" method="POST">
+<br/>Test field 1: <input type="text" name="TestField[]"/>
+<br/>Test field 2: <input type="text" name="TestField[]"/>
+<br/>Test field 3: <input type="text" name="TestField[]"/>
+<br/><input type="submit" name="submitter_button" value="Send!">
+<input type="submit" name="submitter_button" value="Other send!">
+</form>
+
+</body>
+</html>
+<?
+   function maketitle( param )
+      > "<title>", param, "</title>"
+   end
+
+   function makemeta( keywords, descr )
+      // this demonstrates escape nesting.
+      // closing here falcon escaping
+      ?>
+
+      <!-- Unescaped. We're in standard HTML now -->
+      <meta name="keywords" value=<?
+         // again falcon
+         for val in keywords
+            forfirst: >> '"'
+            >> val
+            formiddle: >> ', '
+            forlast: > '"'
+         end
+         ?>/>
+      <meta name="description" value="<?=descr?>"/>
+      <?
+         // back in falcon to close the function
+   end
+
+   function makeencoding( charset )
+      > @"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=$(charset)\"/>"
+   end
+
+   function makeheading( title )
+      printl( "<H1>", title, "</H1>" )
+   end
+
+   function dispDict( dict, itemPrefix )
+      for key, val in dict
+         if itemPrefix: > itemPrefix
+         > key, " = "
+         localInspect( val )
+         > "<br/>\n"
+      end
+   end
+
+   function localInspect( val )
+      select val
+         case ArrayType
+            for elem in val
+               localInspect( elem )
+               forfirst: >> "[ "
+               formiddle: >> ", "
+               forlast: >> "]"
+            end
+
+         case DictionaryType
+            for k,v in val
+               localInspect( k )
+               >> "=>"
+               localInspect( v )
+               forfirst: >> "[ "
+               formiddle: >> ", "
+               forlast: >> "]"
+            end
+
+         default
+            >> val
+      end
+   end
+
+?>

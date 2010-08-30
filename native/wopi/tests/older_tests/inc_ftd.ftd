@@ -1,0 +1,2 @@
+<!-- This is inc_ftd.ftd -->
+<p>Hello.<br/> My duty is that of showing you the <b>parent</b> variable: <?= parent ?></p>

@@ -1,0 +1,57 @@
+<?
+/*****************************************************************************
+   WOPI testsuite.
+
+   Multiple gets tets
+*****************************************************************************/
+
+// Remove the page id from gets (we won't need it).
+
+gets = Request.gets
+gets -= "p"
+
+exp = [
+   "alpha"
+      => [ ["one", "two", "three"], "alpha" in gets ? gets["alpha"] : nil],
+   "beta"
+      => ["xyz", "beta" in gets ? gets["beta"] : nil],
+   "数"
+      => ["百万円", "数" in gets ? gets["数"] : nil],
+   "delta"
+      => ["", "delta" in gets ? gets["delta"] : nil],
+   "gamma"
+      => ["30%", "gamma" in gets ? gets["gamma"] : nil]
+]
+
+for k, v in gets
+   if k notin exp
+      exp[k] = [nil, v]
+   end
+end
+
+count = 0
+?>
+
+<h1>GETS fields test</h1>
+
+<? if gets ?>
+   <p>Performing GETS test:</p>
+   <? testCheck( exp ) ?>
+<? else ?>
+<p>To start the GET field test <a href="<?
+      uri = URI( Request.location )
+      uri.setFields(
+         [ "p" => "gets",
+           "delta" => "",
+           "beta" => "xyz",
+           "gamma" => "30%",
+            "数" => "百万円"
+            ] )
+
+      >> uri.uri + "&alpha[]=one&alpha[]=two&alpha[]=three"
+      
+      /*>> Request.uri +  "?p=gets&delta=&beta=xyz&gamma=" + URI.encode("30%") + "&alpha[]=one&alpha[]=two&alpha[]=three&" +
+      URI.encode( "数") + "=" + URI.encode("百万円")*/
+   ?>">click on this link</a></p>
+
+<? end ?>

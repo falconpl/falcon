@@ -1,0 +1,9 @@
+<html>
+<body>
+<?
+   sendTemplate(InputStream( "test.tpl" ),
+      [ "template" => "world",
+        "verb" => "happens" ] )
+?>
+</body>
+</html>

@@ -1,0 +1,4 @@
+<h1>Redirection test</h1>
+
+<p>Hello. You should be redirected <a href="<?= makeLink( "redir_2" ) ?>">here</a>
+in 5 seconds from now.</p>

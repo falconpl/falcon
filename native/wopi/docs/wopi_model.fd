@@ -1,0 +1,842 @@
+/*#
+   @page wopi_model Web Oriented Programming Interface model
+
+   The Falcon Web Oriented Programming Interface is a framework abstracting the activity
+   of web-based scripts.
+
+   The model can be abstracted as in the following scheme:
+
+   <img src="wopi.png"/>
+
+   A client issues a request to a web server, which is configured to route the request
+   to a WOPI adapter. The adapter fills a set of informations and parses the HTTP
+   request, feeding it to the "main script", which is the head script of the WOPI
+   based Falcon application that is meant to serve the requests.
+
+   The script based Falcon application can send data or HTML based pages back to the client
+   by simply printing it on the standard output (or using the binary data oriented write()
+   method on the stdOut stream), and it can control other aspects of the communication, as setting
+   cookies or changing the content-type header field, manipulating the Reply object.
+
+   @note Keep in mind that a script can serve only one request. When the request is served,
+   the script is terminated and it's state destroyed, unless you take particular actions to
+   make some of its element persistent through @b cookies or @b sessions (see below).
+
+
+   WOPI provides the scripts with a session manager, that allows for persistent data to be
+   stored across sessions.
+
+   @section wopi_model_setup A minimal setup
+
+   Configuration and setup required for each wopi front end is described in its own section.
+   We'll setup here a minimal testing environment that can be used to verify and locally debug
+   applications before delivering them to the final production site.
+
+   For this test, we'll use falhttpd, which is readily available on all the supported platforms
+   and requires a very simple and consistent setup.
+
+   After having installed Falcon and falhttpd, let's just write a couple of simple script to
+   perform a basic test. Save this as index.ftd:
+
+   @code
+   <html>
+   <head>
+   <title>A test with a Falcon Template Script</title>
+   </head>
+   <body>
+   <h1>Hello world!</h1>
+   <p>Some informations about this script:</p>
+   <p>Script name: <?= scriptName ?></p>
+   <p>Script path: <?= scriptPath ?></p>
+   <p>Falcon engine version: <?= vmVersionName() ?></p>
+   <p>WOPI Provider: <?= Request.provider ?></p>
+   </body>
+   </html>
+   @endcode
+
+   In the same directory, start falhttpd with the following command:
+   
+   @code
+   <path to falhttpd> -h . -p 8080
+   @endcode
+
+   Now, launching a browser and querying the address "http://127.0.0.1:8080/" the script will be launched.
+
+   Similarly, instead of an FTD page it is possible to use a standard falcon script. Write now the following
+   code and save it in test.fal
+
+   @code
+   // A standard falcon script: test.fal
+
+   > "<html><head><title>A generated script</title></head>"
+
+   vmid = vmVersionName()
+   > @"
+      <body>
+      <h1>Hello world!</h1>
+      <p>We're now inside a standard falcon script,
+      brought to you via the $vmid Falcon engine.</p>"
+
+   > "</body></html>"
+   @endcode
+
+   Whether you should use ftd files or falcon script to generate the web pages that the remote client will see
+   depends on your choice. It is advisable to use FTDs for mostly static pages in which only part of the
+   content is variable, or when the variable content is easily repeatable (i.e. to generate rows of data tables); when
+   the content of the page is hairy and complex, it is probably better to use falcon script and write the
+   static parts in string blocks.
+
+   Whichever way you prefer to go, non-presentation code (back-end library, utility functions and so on) should be
+   moved into Falcon script modules that would not be meant to perform output (at least, not massively). This helps
+   keeping separate the presentation logic from the business logic.
+
+   @section wopi_model_fields Handling query fields
+
+   Client web applications can send pairs of strings (field-name/value) to configure the behavior of server-side applications.
+   WOPI handles separately 3 kinds of input data that may be sent buy client web applications to the sever side
+   scripts:
+
+   - GET fields: data fields sent directly in the requested URI as a @b query parts.
+   - POST fields: data fields sent through web-browser processed HTML forms or equivalent client applications.
+   - COOKIE fields: fields autonomously sent by the remote web-browser application (usually on a previous server
+     side request to echo those fields in further connections).
+
+   This three kind of query fields are stored in the @a Request.gets, @a Request.posts and @a Request.cookies dictionary respectively,
+   so that each field-name is a key of one of those dictionaries, and the value is (normally) a string corresponding to that dictionary
+   key.
+
+   Falcon WOPI translates special names in the input fields creating arrays or dictionaries corresponding to certain keys.
+
+   @subsection wopi_model_gets Processing GET fields
+
+   The following example shows how to deal with fields directly stored in the @b query element of the incoming URI.
+
+   @code
+   <html>
+   <body>
+   <!-- This is an FTD file -->
+   <h1>GET Processor</h1>
+
+   <? if not Request.gets ?>
+      <!-- Part generated if there aren't get fields -->
+      <p>Your request doesn't contain any get field. Please, try again
+      <a href="<?= Request.uri ?>?one=value1&two=value2&three=value3">clicking here</a>.
+      </p>
+   <? else ?>
+      <!-- Part generated if we have some get field -->
+      <p>Content of the get fields:</p>
+      <table border="1">
+      <tr><th>Field name</th><th>Field content</th></tr>
+      <? for key, value in Request.gets ?>
+         <tr><td><?= htmlEscape(key) ?></td><td><?= htmlEscape(value.describe()) ?></td></tr>
+      <? end ?>
+      </table>
+   <? end ?>
+   
+   </body>
+   <html>
+   @endcode
+
+   While keys are always stings, special formats in the field names can be rendered as arrays or dictionaries of values.
+   For this reason, it is necessary to check for the type of the value associated with each key (unless there are
+   guarantees about the source generating the field), or use functions and methods like @b describe that will work
+   on any type.
+   
+   @note Notice the @a htmlEscape function that has been employed to be sure to render correctly keys and values
+   to the final html document. Values and keys can theoretically contain any character, including special HTML code.
+   Echoing an input variable directly to the final document may expose the remote clients to the risk of malicious
+   code being arbitrarily executed (for example, a value may contain a <javascript> tag and a whole script).
+
+   @subsection wopi_model_posts Processing POST fields
+
+   Processing POST fields coming from a form is analogous to processing query fields received in the @a Request.gets fields.
+   The only difference is in the fact that those fields are stored in the @a Request.posts dictionary.
+
+   See the following example:
+
+   @code
+      <html>
+      <body>
+      <!-- This is an FTD file -->
+      <h1>POST Processor</h1>
+
+      <? if not Request.posts ?>
+         <p><b>Blank form:</b></p>
+         <?
+            // fill with default values -- yes, posts are not read only
+            Request.posts["Name"] = ""
+            Request.posts["Occupation"] = ""
+            Request.posts["Gender"] = "M"
+            Request.posts["Likes"] = []
+         ?>
+      <? else ?>
+         <p><b>Already filled form:</b></p>
+      <? end ?>
+
+      <form method="POST" action="<?= Request.uri ?>">
+      <table>
+      <tr><td>Name:</td><td><input type="text" value="<?= htmlEscape(Request.posts["Name"])?>" name="Name"/></td></tr>
+      <tr><td>Occupation:</td><td>
+         <select name="Occupation">
+         <option value="" <? if Request.posts["Occupation"] =="": >>'selected="yes"'?>> -- Please select -- </option>
+         <option value="Student" <? if Request.posts["Occupation"] =="Student": >>'selected="yes"'?>>I am a student</option>
+         <option value="Teacher" <? if Request.posts["Occupation"] =="Teacher": >>'selected="yes"'?>>I am a teacher</option>
+         <option value="Employee" <? if Request.posts["Occupation"] =="Employee": >>'selected="yes"'?>>I am an employee</option>
+         <option value="Other" <? if Request.posts["Occupation"] =="Other": >>'selected="yes"'?>>Other</option>
+         </select>
+      </td></tr>
+      <tr><td>Gender:</td><td>
+            <input type="radio" name="Gender" value="M" <? if Request.posts["Gender"] =="M": >>'checked="yes"'?>/>&nbsp;Male
+            &nbsp;&nbsp&nbsp;
+            <input type="radio" name="Gender" value="F" <? if Request.posts["Gender"] =="F": >>'checked="yes"'?>/>&nbsp;Female
+            </td></tr>
+      <tr><td>Likes:</td><td>
+            <input type="checkbox" name="Likes[]" value="Sport" <? if "Sport" in Request.posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Sport
+            &nbsp;&nbsp&nbsp;
+            <input type="checkbox" name="Likes[]" value="Reading" <? if "Reading" in Request.posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Reading
+            &nbsp;&nbsp&nbsp;
+            <input type="checkbox" name="Likes[]" value="Music" <? if "Music" in Request.posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Music
+            </td></tr>
+      <tr><td col span="2"><input type="submit" value="send"/></td></tr>
+      </form>
+      </table>
+      </body>
+      <html>
+   @endcode
+
+   Of course, a so verbose and "handmade" HTML form management and crafting is not what usually done in well planned
+   server side applications (that use specific libraries to render the HTML forms and fill them with incoming data),
+   but this is meant to be a sample of what's should be done "behind the scenes".
+
+   The form action uses the "Request.uri" field to send the fields in the form to the same script initially loaded. To simplify
+   the code, a set of default values are stored in the @b posts fields to be used in the code in the form rendering part
+   in case they're not there.
+
+   The @b name attribute of the @b input field is turned into a key in the @b posts dictionary of the @b Request object. Values
+   are directly decoded and transformed into strings before they reach the script.
+
+   Adding a "[]" (square brackets) pair to a field name, all the values associated with that field are stored in an array. In the
+   above example, we have the "Likes" field created with a set of interrelated checkboxes, which value is filled with 0 or more
+   strings, each being an option in the checkbox list.
+
+   @note It is possible to create arrays of values also in GET fields, appending the "[]" to the variable names in the URI query part.
+   
+   Consider using the @a Request.getField method to access a field that may come from GET or POST fields. This method
+   can also provide a simple default in case the field is not given. For example, a variable that is vital for your script
+   may be read like this:
+   
+   @code
+   // Read a "work_mode" variable, and if not sent default it to "normal"
+   work_mode = Request.getField( "work_mode", "normal" )
+   @endcode 
+
+   @section upload_control Upload control
+
+   The WOPI system allows to retrieve and manage uploaded
+   files through a class called @a Uploaded. Each field of a file
+   upload enable form is turned into an @a Uploaded instance in the
+   corresponding post entry of the @a Request entity.
+
+   In example, this form:
+   @code
+      <form action="receiver.ftd" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+         <p>Form field: <input type="text" name="Afield" value="aaaa"/>
+         <p>Input file: <input type="file" name="TheFile"/>
+         <p><input type="submit" name="sub_btn" value="Send"/>
+      </form>
+   @endcode
+
+   will cause the Request.posts dictionary to contain a string entry for the "Afield" key, and an
+   @a Uploaded instance for TheFile. A typical inspect() result on the Request.posts dictionary
+   may be like the following:
+
+   @code
+   Dict[2]{
+      "Afield" => "aaaa"
+      "TheFile" => Object of class Uploaded {
+         data => Nil
+         error => Nil
+         filename => "kusamakura.pdf"
+         mimeType => "application/x-filler"
+         open => Ext. Function Uploaded.open
+         read => Ext. Function Uploaded.read
+         size => int(472396)
+         storage => "/tmp/8sO5pvU6ZoxEY1Qn"
+         store => Ext. Function Uploaded.store
+      }
+      "sub_btn" => "Send"
+   }
+   @endcode
+
+   @note Notice the @b accept-charset parameter of the @b form tag. As MIME type doesn't specify an
+   encoding standard for multipart data, the falcon-apache2 module assumes that all the fields
+   in multipart posted forms (except the file entries) are encoded in utf-8. Please, use the
+   accept-charset="utf-8" in every multipart form when sending data to Falcon modules.
+
+   @subsection upload_control_config Configuration options
+   
+   The upload control is sensible to three parameters that can be configured by the front-ends.
+   Different front-ends have different defaults, and different means to set this parameters; however, 
+   the meaning of the parameters stays unchanged across all the frontends:
+
+   - Maximum size for uploads: it's the maximum upload size allowed, in kilobytes (1024 bytes).
+         The upload size is applied globally to the incoming form data; it's the total
+         size of the uploaded files plus the overhead for headers and multipart boundaries.
+         If the size of the incoming data is above this limit, the script receive a notify
+         in the ":error" @a Request.posts dictionary, explaining the problem. The script
+         can then notify the problem to the user.
+   - Maximum size for uploads stored in memory: Limit for direct-to-memory upload; see below.
+   - @b UploadDir: Where to place temporary files for uploads. This must be a directory
+        present on the system and writable by the web server process. This directory
+        is used also by @a Request.tempFile to create temporary files. If the server cannot
+        write on the target directory when needed, an ":error" entry is returned in
+        the @a Request.posts fields, describing the problem.
+
+   @subsection upload_recv Upload receiving mode
+
+   WOPI front-ends serve the uploaded files in two ways:
+   - Reading them in memory and serving them as a MemBuf.
+   - Saving them in a temporary file and allowing the scripts to access it at a later time.
+
+   If a file is smaller than what set in the maximum size for memory-stored uploads, as set in the
+	specific front-end configuration, it is
+   directed to the @b Uploaded.data field and its whole contents are stored in a MemBuf.
+
+   If it's larger, it is stored in a temporary file whose complete path is written as a string
+   in the @b Uploaded.storage property of the incoming data. To have every upload saved in a
+   temporary file, set the maximum memory-upload size to zero, to have everything in memory without disk storage
+   set it to the same value as the maximum allowed upload size.
+
+   The @a Uploaded class has a set of methods that are useful to treat both upload modes
+   the same way at script level; in other words, it is possible to use this methods to write scripts
+   working just the same if the uploaded data is stored in memory or in a temporary file.
+   
+   They are namely:
+   - @a Uploaded.store - saves the uploaded data to a specified file or directory. In case the
+        uploaded file was stored in a temporary file, a file rename is tried first, and a full
+        copy is performed if not possible (i.e. if source and destination are on different
+        devices).
+   - @a Uploaded.open - opens a stream (file or memory-based) towards the uploaded data; the stream
+        can be used to seek, read or modify the uploaded data.
+   - @a Uploaded.read - reads the temporary file into a memory buffer (placing it in the Uploaded.data
+        property), doing nothing if Uploaded.data is already in place.
+
+   Temporary files are destroyed when the script terminates, so they don't waste system resources
+   and the script doesn't need to take care of their deletion.
+
+   @section wopi_model_cookies Cookie control
+   
+   Cookies are variables that can be stored on the remote browser, and that it will be sent back by the
+   browser when contacting the site.
+   
+   Cookies are read and decoded in the @a Request.cookies dictionary, similarly to what happens with @a Request.gets and
+   @a Request.posts. Also, the @a Request.getField method can be used to access cookie fields as well. 
+   
+   Cookies are set via the @a Reply.setCookie method. They can be bound with a specific sub-part of the site, or deemed
+   to be "forgotten" by the remote client after a given time, or at a specific point in future. The complete
+   list of parameters is described in the @a Reply.setCookie method documentation; what we want to show here is how to
+   use cookies in the flow of your web-based application.
+   
+   Suppose that you want to use cookies to identify the remote user and remember how many times your page has been visited.
+   The following script shows how to properly set cookies, verify their value and eventually remove them.
+   
+   @code
+	<?
+	   // It is essential to set cookies BEFORE any output is sent
+	   // So, in FTD scripts, it is necessary to check if cookies should be set
+	   // before any element of the page is exposed.
+	   
+	   // determine what we want to do.
+	   mode = Request.getField( "mode", "" )
+	   
+	   // read the user and password.
+	   user = Request.getField( "user", "" )
+	   pwd = Request.getField( "pwd", "" )
+	   
+	   switch mode
+	   	case "login"
+	   		// a very simple auth scheme:
+	   		if user == "master" and pwd == "1234"
+	   			// notice: cookie names == to form field names
+	   			Reply.setCookie( "user", "master" )
+	   			Reply.setCookie( "pwd", "1234" )
+	   			Reply.setCookie( "times", 0 )
+	   			times = 0
+	   		else
+	   			// clear the user variable so we know the user is invalid
+	   			user = oob(nil)  // oob to mark the failed login
+	   		end
+	  
+	  		case "logout" 		
+	 			// clear our cookies
+	 			// it's not very important to know if we're really logged in
+	  			Reply.clearCookie( "user" )
+	  			Reply.clearCookie( "pwd" )
+	  			Reply.clearCookie( "times" )
+	  			
+	  			// also, clear the variable so the script knows we're not a user
+	  			user = nil
+	  		
+	  		default
+			   // no mode? -- if we're logged in we must update the times counter.
+			   if user == "master" and pwd == "1234"
+			   	// will throw if something goes wrong; and it's ok with us
+			   	times = int(Request.cookies["times"])
+			   	Reply.setCookie( "times", ++times )
+			   elif user != ""
+			   	// AAARGH, a failed breackage attempt!
+			   	user = oob("")  // mark this situation
+			   end
+	   end 
+	   
+	?><html>
+	
+	<head><title>Cookie test</title></head>
+	<body>
+	<h1>Cookie test</h1>
+	
+	<? if user ?>
+		<!-- We're really logged in! -->
+		<p>Welcome, my master!</p>
+		<p>You have been around <?= times ?> times.</p>
+		<p>Do you want to <a href="<?= Request.uri ?>?mode=logout">logout</a>
+		or to <a href="<?= Request.uri ?>">reload this page</a>?</p>?</p>
+	
+	<? else ?>
+		<? if mode == "logout" ?>
+			<p><b>Logout performed</b>. Goodbye my master!</p>
+		<? elif isoob(user) ?>
+			<!-- Something was wrong. Login failure has user == nil, while breackages have user == "" -->
+			<? if user == nil ?>
+				<p><b>Wrong use rid/password</b>. Please try again.</p>
+			<? else ?>
+				<p><b>Bad move.</b>You're trying to force the system with unauthorized cookies.</p>
+			<? end ?>
+		<? end ?>
+		<!-- in any case, present the login form -->
+		<form action="<?= Request.uri ?>" method="POST">
+		<input type="hidden" name="mode" value="login"/>
+		User: <input type="text" name="user"/><br/>
+		Password: <input type="password" name="pwd"/><br>
+		<input type="submit" value="Login"/>
+		</form>
+	<? end ?>
+	</body>
+	</html>
+   @endcode
+   
+   Notice the first part: in case you're using an FTD script, it's necessary to open immediately a processor
+   block (major/question-mark) to prevent any output to be generated prior we get an occasion to set
+   cookies.
+   
+   Then, cookies are read through @a Request.getField. Later on we see that we have set the same names for
+   get fields ("mode=logout"), post fields (user/pwd) and cookies. This is totally arbitrary, and you may
+   prefer to keep those separated so that you can determine if a field has been previously set as a cookie
+   or is coming from a login form. However, at times is useful to abstract the source of a field, and just
+   consider its value, no matter how the remote client sent it to us. In this way, we can have scripts sending
+   logout requests via standard http links, and sending us login requests via forms, as it happens here.
+   
+   Be careful about checking authorization cookies: as you can see, the script here repeats the check 
+   on the login cookies at each step
+   
+   @section wopi_model_session Sessions
+   
+   Sessions are conceptually similar to cookies with one mayor difference. They are stored server-side.
+   
+   A variable in the Request scoping (cookie, post or get) contains an unique session ID that refers
+   to a dictionary of key-value pairs stored server side. As the "session data" is just a standard
+   Falcon dictionary, every kind of data can be used both for keys and values. When the script terminates,
+   the data is stored in a safe place (depending on the configuration options and on the front-end mechanism,
+   it is usually serialized to a temporary file). 
+   
+   The default behavior consists in storing the session id in a cookie named "SID", but it is possible to change
+   the name of the variable storing the session ID changing the value of the @a Request.sidField property, and
+   prevent the system to automatically generate the cookie changing the value of the @a Request.autoSession field
+   to false. In this case, the scripts are required to keep track of the SID variable by hand, and to pass it
+   around (for example, storing it in the @a Request.gets field and using @a Request.fwdGet method to create
+   a query element to be attached to intra-site links).
+   
+  	As the @a Request.getSession method will try to create a new session if a valid SID is not provided anywhere as
+  	an input variable, the @a Request.hasSession method can be used to check if we can suppose that a session was
+  	already open (or if consistent, the script may just check for the presence of previously stored data in the
+  	dictionary returned by @a Request.getSession).
+  	
+  	Many sites prefer to create a session for any incoming visitor, adding valid user data to the session when the
+  	remote client is validated; in this case, just using @a Request.getSession settles the problem, as you can count
+  	on the data to be empty for new visitors, filled with generic data for visitors still not authenticated and having
+  	a valid user authentication field when the user has logged in.
+  	
+  	Other sites prefer to associate session data only to authenticated users; in this second, more complex case, it is
+  	advisable to use the @a Request.hasSession method to determine if the remote user has tried to open a session in its
+  	previous contacts. Also, in this cases, the site will want to close the session (removing the remote cookie and freeing
+  	locally allocated resources) when the remote user explicitly logs out.
+  	
+  	This second, more complete and complex approach is shown in the following example, in which we substitute the cookie
+  	concepts seen in the previous section with session-based processing:
+   
+   @code
+   <?
+   // It is essential to set cookies BEFORE any output is sent
+   // So, in FTD scripts, it is necessary to check if cookies should be set
+   // before any element of the page is exposed.
+      
+   // determine what we want to do.
+   mode = Request.getField( "mode", "" )
+
+   switch mode
+   	case "login"
+   		// a very simple auth scheme:
+   		if Request.getField( "user", "" ) == "master" and Request.getField( "pwd", "" ) == "1234"
+   			// notice: cookie names == to form field names
+   			session = Request.getSession()
+   			session["user"] = "master"
+   			session["times"] = 0
+   			
+   			// All right.
+   			status = nil
+   		else
+   			status = "Login error"
+   		end
+  
+  		case "logout"
+  			Request.closeSession()
+  		
+  		default
+		   // no mode? -- if we're logged in we must update the times counter.
+		   if Request.hasSession()
+		   	try
+		   		session = Request.getSession()
+		   	catch WopiError 
+		   		// an error in reading the session means we're trying to cheat
+		   		status = "Invalid or expired session ID"
+		   	end
+		   end
+   end 
+
+	// here, "status" is nil if all is ok, and "session" is a dictionary if we have an open session
+	?><html>
+	<head><title>Cookie test</title></head>
+	<body>
+	<h1>Session test</h1>
+	<? if session ?>
+		<!-- We're really logged in! -->
+		<p>Welcome, my master!</p>
+		<p>You have been around <?= session["times"] ?> times.</p>
+		<p>Do you want to <a href="<?= Request.uri ?>?mode=logout">logout</a> 
+			or to <a href="<?= Request.uri ?>">reload this page</a>?</p>
+		
+		<?
+			// the fun with sessions is that we can change data past output
+			session["times"] ++
+		?>
+		
+	<? else ?>
+		<? if mode == "logout" ?>
+			<p><b>Logout performed</b>. Goodbye my master!</p>
+		<? elif status ?>
+			<!-- Something was wrong. Error is specified in status -->
+			<p><b><?= status ?></b>. Please try again.</p>
+		<? end ?>
+		
+		<!-- in any case, present the login form -->
+		<form action="<?= Request.uri ?>" method="POST">
+		<input type="hidden" name="mode" value="login"/>
+		User: <input type="text" name="user"/><br/>
+		Password: <input type="password" name="pd"/><br>
+		<input type="submit" value="Login"/>
+		</form>
+	
+	<? end ?>
+	</body>
+	</html>
+	@endcode
+	
+	See how the session approach does not require the password to be stored anywhere, nor the authentication
+	process to be repeated. 
+	
+	@note To prevent man-in-the-middle attacks that may be possible if the attacker sniffs the SID cookie or
+	variable passing by, or if he guess by brute force a SID being still active, it is advisable to record
+	the @a Request.remote_ip field that was detected at session creation in the session dictionary, and check
+	if it's consistent with following requests.
+	
+	Sessions will be automatically closed, and their data destroyed, after a certain timeout has expired. Each call
+	to @a Request.getSession will reset the timeout; same happens each time a script having called @a Request.getSession
+	terminates. So, as long as the remote user keeps visiting the site, its session stays open. The site may provide
+	some automatic refresh strategy (even AJAX based) that may "ping" the session as long as the browser has an open
+	page on the side, if they wish to.
+	
+	@note The timeout can be set through the target front-end configuration.
+
+   @subsection wopi_model_named_session Named sessions
+
+   The anonymous session support is meant to create a single set of data which is associated with a visitor of
+   a site. However, it is also possible to specify sessions having a specific name; this is useful when receiving
+   an ID from a remote site, or a central service which distributes the data to the users associating them with
+   an unique key.
+
+   The function @a Request.startSession accepts a string parameter that can be used to get the same session at
+   a later time. The same parameter can then be passed to @a Request.getSession and @a Request.closeSession to
+   retreive the same data during another step of the process and to get rid of that data.
+
+   @section wopi_pdata Persistent local data.
+   
+   Some web applications run directly through persistent processes, as 
+   as those served through the FastCGI, the apache module or the falhttpd front-ends,
+   may find useful to initialize some data just once, as they are called the first time
+   under their execution context (be it a system process or a separate thread), and then
+   reused indefinitely until the execution context stays valid.
+   
+   This is the case of database connections: opening and closing a database connection
+   each time a web application is invoked may be an overkill. The same connection object may
+   be shared by all the web application invoked by the same web server execution space
+   (process or thread).
+   
+   As the data needs not to be serialized to other processes or applications, and
+   stays local and private for the currently running process or thread, any falcon
+   item can be sored in this way, even if it doesn't support sharing or serialization.
+   
+   Persistent data can be created through the @a Wopi.setPData method, and then
+   accessed through and @a Wopi.getPData.
+   
+   @code
+      class MyClass
+         file = nil
+         
+         init
+            file = IOStream( "some file" )
+         end
+      end
+      
+      Wopi.setPData( "The common MyClass", MyClass() )
+      
+      // later on ...
+      inst = Wopi.getPData( "The common MyClass" )
+      inst.file.writeString( "Hello world!" )
+   @endcode
+   
+   The @a Wopi.getPData method has an extra parameter that can be used to create the
+   object on the fly if it has still not been initialized for this process:
+   
+   @code
+      // open the file or reuse it...
+      inst = Wopi.getPData( "The common MyClass", {=> return MyClass()} )
+      
+      // continue to use the already open file...
+      inst.file.writeString( "Hello world!" )
+   @endcode
+
+   Persistent data methods can be used also from single-process web applications,
+   (CGI based front-ends), with the effect that the web application will see them
+   not initialized at every invocation.
+   
+   @section wopi_appdata Application-wide data.
+
+   Application-wide data is to be considered an asset that must stay valid for a whole application without any
+   time limit. More applications can produce private (but application-widely visible) data on the same
+   site, and it's even possible to exchange data across different applications.
+
+   Application data is not meant for configuration; it is possible to store relatively static configuration
+   data into configuration files or separate variable-declaring scripts. Web application-wide data is meant
+   for  data that may change across rapidly, or on a per-user basis,which is meaningless to store on more-secure and organize
+   persistent storages, as databases.
+
+   Typical usages for application-wide data are:
+   - Stats on currently logged in users.
+   - Page counters.
+   - Sudden warnings (messages to be displayed to any visitor).
+
+   Falcon WOPI provides a default (unnamed) application data
+   store, and the ability to create application specific stores,
+   each named under the desired application.
+
+   The data is stored as a dictionary (which may be empty if
+   the data was never modified since its creation), and can be accessed
+   via the  @a Wopi.getAppData method. The method can be fed with an optional
+   string, which represent the name of the application willing to access
+   its data. For example:
+
+   @code
+   const appname = "My_Web_Application"
+   data = Wopi.getAppData( appname )
+   // ... use data
+   @endcode
+   
+   @note The application name shouldn't contain spaces nor slashes: on some system,
+   it would cause an error when trying to store the data on semi-persistent or
+   persistent resources.
+   
+   The querying script owns a personal copy of the data that can be changed at will.
+   Concurrent changes of the same application data won't be visible in different scripts
+   until one of the data holder decides to write its copy to the application space
+   via the @a Wopi.setData. This method accepts an optional application name,
+   that @i should match the application name used on the @a Wopi.getData call (this is
+   not a requirement).
+
+   @code
+   const appname = "My Web Application"
+
+   // ...  using data
+
+   Wopi.setAppData( data, appname )
+   @endcode
+
+   @note The item fed into Wopi.setAppData doesn't need to be created by
+   @a Wopi.getAppData method.
+
+   To propagate the new status of the application wide data, the
+   script must call @a Wopi.setAppData. If the data can be safely
+   written on the system and propagated to other scripts,
+   the function returns true; otherwise, it returns false and the
+   contents in the given item are atomically refreshed with the
+   new contents. To have this atomically modified data back in the calling
+   program, the parameter must have been passed as a reference, so that
+   the old data can be discarded and the new data can be used instead.
+
+   In short, the usage pattern for the application wide that is the following:
+
+   @code
+   const appname = "MyApp"
+   
+   data = Wopi.getAppData( appname )
+
+   // operate on data
+
+   while not Wopi.setAppData( $data, appname )
+      // reapply changes to the modified data, if necessary
+   end
+   @endcode
+
+   For example, suppose that you need to increment a counter indicating the visited
+   pages:
+
+   @code
+   data = Wopi.getData()
+
+   loop
+      if data == nil
+         data = [ "counter" => 1 ]
+      else
+         data["counter"] ++
+      end
+   end counter.setData( $data )
+   @endcode
+      
+   In the above example, there is always the possibility that some other script
+   increments the count while we're trying to store its new value. This method
+   ensures that the data is still valid and we're the only having changed it
+   between the moment in which they are first queried and when they are finally
+   stored back to the common repository.
+
+   @note The stored data can be any arbitrary Falcon data, provided that
+   it supports serialization.
+
+   In case of error (I/O on the external persistent storage or serialization/deserialization
+   errors) an exception is raised. Errors that are considered temporary or transient
+   won't generate exception raising; the scripts can consider the raised exception as a
+   definitive failure that will prevent to operate correctly with the designed application-wide data.
+*/
+
+/*#
+   @page falcgi_iso Isomorphism of CGI based sites.
+
+   WOPI provides a coherent interface across different data providers, including CGI and CGI-based front ends (as, for example,
+   FastCGI and the CGI module). However, what WOPI can do is to expose the same interface to access web information and functionalities
+   to communicate with the remote client. It cannot change the model through which the dynamic page is served by the web server.
+
+   The CGI model has been designed to provide single entry point, relatively complex applications generating dynamically the whole
+   content of the replied page. They are meant to be monolithic web applications taking care of a whole aspect of the dynamic site
+   by themselves. Opposely, active server-side pages model has been designed with the idea of providing multiple
+   simple entry points in the web-based applications, each being mainly a "view" entity being backed up, at best, by a central
+   engine made of "common functions".
+
+   WOPI cannot completely overcome the differences between this two philosophical approaches to web based application programming;
+   it limits to offer a consistent interface no matter what model you prefer to chose.
+
+   However, shaping down the web-based application so that it ignores this differences, it is possible to ensure that it runs
+   seamlessly under both CGI oriented front-ends and server-side active pages oriented front-ends. And the result is also relatively
+   elegant, so it's worth having a look.
+
+   @section falcgi_iso_entry One entry point
+
+   The secret of this is offering a single entry point to the application, where all the decision about what elements to be loaded will be
+   taken.
+
+   The structure of a site thought with this idea may be the following:
+
+   @code
+   html_docs/
+      ...
+      cgi-bin/
+         index.exe
+         index.fal
+         pages/
+            default.ftd
+            first.ftd
+            second.ftd
+            third.ftd
+            ,...
+   @endcode
+
+   The @b index.exe program would be the CGI front-end (it may be omitted in case we're using the cgi_fm module from within the
+   index.fal script). 
+
+   Our index.fal may look like this:
+
+   @code
+   #!/usr/bin/falcon -pcgi
+   //^^ this is optional, and if available, it allows to work without the binary front-end.
+
+   // shows the real page
+   if "p" notin Requests.gets
+      errorDocument( "Sorry, page ID not provided" )
+   end
+
+   // try to load it at this point.
+   p = Requests.gets["p"]
+   try
+      include( "pages/" + p + ".ftd" )
+   catch in error
+      errorDocument( @"Sorry, cannot load required page \"$p\"", error )
+   end
+   
+   // End of main program.
+
+   // expose an utility function to help creating links to ourself:
+   function makeLink( page )
+      return Request.uri + "?p=" + page 
+   end
+
+   // A simple utility
+   function errorDocument( text, error )
+      >'
+      <html><head><title>Error!</title></head>
+         <body>
+         <h1>Error!</h1>
+         <p>'
+      > text, '</p>'
+      if error
+         > "<p><b>Error:</b><pre>", error,toString(), "</pre></p>"
+      end
+
+      > "</body><html>"
+   end
+
+   // export the utility functions so pages can use them
+   export makeLink, errorDocument
+   @endcode
+
+   In this way, it doesn't matter if the application is served through a CGI interface or through a web-based interface.
+   As long as every part of the web application respects the directive of indicating other pages to be loaded by adding
+   a @b p field to the query of the link, instead of trying to link it directly, the page will be served through the
+   main script, which will be loaded just the same under a CGI front-end or under an active server page based front-end.
+
+   Actually, many well-designed active server page based web applications adopt this approach just to simplify the organization
+   of their site and to centralize all the setup operations, performing them before the element that takes care of a certain
+   step (that is, a specific "page") is even loaded. It's a "configuration push" model, rather a configuration "pull", where
+   each page must take care of loading the configuration and setting up the environment (for example, checking for a valid user
+   to have logged in and filling the variables accordingly). This "push" design has been found superior by many web designer,
+   so the need to use it to make CGI based and server-active-page based WOPI application seamlessly isomorphic should not be
+   considered a limitation; rather, the ability to pick a simpler, direct model to treat the two kind of web applications
+   differently is to be considered an extended feature of WOPI, which may be useful or not.
+   
+*/

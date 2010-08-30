@@ -26,7 +26,7 @@ OPTION( FALCON_NATMODS_AUTO "Select automatically all the modules that have supp
 
 # Native modules, usually compiled
 OPTION( FALCON_BUILD_DBI "Install DBI module" ON )
-OPTION( FALCON_BUILD_DYNLIB "Install DYNLIB module" ON )
+OPTION( FALCON_BUILD_DYNLIB "Install DYNLIB module" OFF)
 
 # Bindings -- native modules requiring external libraries.
 FalconMakeBinding( CURL CURL "Install CURL binding" )
@@ -37,6 +37,9 @@ FalconMakeBinding( SDL SDL "Install SDL  binding" )
 option( FALCON_BUILD_DBUS "Install DBUS binding" OFF )
 option( FALCON_BUILD_GD2 "Install GD library binding" OFF )
 option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" OFF )
+
+# Other modules
+option( FALCON_BUILD_WOPI "Install Web Oriented Programming Interface" OFF  )
 
 if( FALCON_NATMODS_AUTO )
 
@@ -94,6 +97,10 @@ endif()
 
 if ( FALCON_BUILD_SDL )
     add_subdirectory( sdl )
+endif()
+
+if ( FALCON_BUILD_WOPI )
+    add_subdirectory( wopi )
 endif()
 
 

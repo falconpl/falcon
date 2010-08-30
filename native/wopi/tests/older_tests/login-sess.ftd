@@ -1,0 +1,74 @@
+<?
+   // It is essential to set cookies BEFORE any output is sent
+   // So, in FTD scripts, it is necessary to check if cookies should be set
+   // before any element of the page is exposed.
+      
+   // determine what we want to do.
+   mode = Request.getField( "mode", "" )
+
+   switch mode
+   	case "login"
+   		// a very simple auth scheme:
+   		if Request.getField( "user", "" ) == "master" and Request.getField( "pwd", "" ) == "1234"
+   			// notice: cookie names == to form field names
+   			session = Request.getSession()
+   			session["user"] = "master"
+   			session["times"] = 0
+   			
+   			// All right.
+   			status = nil
+   		else
+   			status = "Login error"
+   		end
+  
+  		case "logout"
+  			Request.closeSession()
+  		
+  		default
+		   // no mode? -- if we're logged in we must update the times counter.
+		   if Request.hasSession()
+		   	try
+		   		session = Request.getSession()
+		   	catch WopiError 
+		   		// an error in reading the session means we're trying to cheat
+		   		status = "Invalid or expired session ID"
+		   	end
+		   end
+   end 
+
+	// here, "status" is nil if all is ok, and "session" is a dictionary if we have an open session
+?><html>
+<head><title>Cookie test</title></head>
+<body>
+<h1>Session test</h1>
+<? if session ?>
+	<!-- We're really logged in! -->
+	<p>Welcome, my master!</p>
+	<p>You have been around <?= session["times"] ?> times.</p>
+	<p>Do you want to <a href="<?= Request.uri ?>?mode=logout">logout</a> 
+		or to <a href="<?= Request.uri ?>">reload this page</a>?</p>
+	
+	<?
+		// the fun with sessions is that we can change data past output
+		session["times"] ++
+	?>
+	
+<? else ?>
+	<? if mode == "logout" ?>
+		<p><b>Logout performed</b>. Goodbye my master!</p>
+	<? elif status ?>
+		<!-- Something was wrong. Error is specified in status -->
+		<p><b><?= status ?></b>. Please try again.</p>
+	<? end ?>
+	
+	<!-- in any case, present the login form -->
+	<form action="<?= Request.uri ?>" method="POST">
+	<input type="hidden" name="mode" value="login"/>
+	User: <input type="text" name="user"/><br/>
+	Password: <input type="password" name="pwd"/><br>
+	<input type="submit" value="Login"/>
+	</form>
+
+<? end ?>
+</body>
+</html>

@@ -1,0 +1,47 @@
+// get the mode
+mode = Request.getField( "mode", "" )
+
+// read the user and password.
+user = Request.getField( "user", "" )
+pwd = Request.getField( "pwd", "" )
+
+switch mode
+   case "login"
+      // a very simple auth scheme:
+      if user == "master" and pwd == "1234"
+         // notice: cookie names == to form field names
+         Reply.setCookie( "user", "master" )
+         Reply.setCookie( "pwd", "1234" )
+         Reply.setCookie( "times", 0 )
+         Reply.setCookie( "international", "国際クッキー" )
+         
+         times_around = 0
+      else
+         // clear the user variable so we know the user is invalid
+         user = oob(nil)  // oob to mark the failed login
+      end
+
+   case "logout"
+      // clear our cookies
+      // it's not very important to know if we're really logged in
+      Reply.clearCookie( "user" )
+      Reply.clearCookie( "pwd" )
+      Reply.clearCookie( "times" )
+      Reply.clearCookie( "international" )
+
+      // also, clear the variable so the script knows we're not a user
+      user = nil
+
+   default
+      // no mode? -- if we're logged in we must update the times counter.
+      if user == "master" and pwd == "1234"
+         // will throw if something goes wrong; and it's ok with us
+         times_around = int(Request.cookies["times"])
+         Reply.setCookie( "times", ++times_around )
+      elif user != ""
+         // AAARGH, a failed breackage attempt!
+         user = oob("")  // mark this situation
+      end
+end
+
+return [user, times_around, mode]

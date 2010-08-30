@@ -1,0 +1,15 @@
+<form action="receive_upload.ftd" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+<p>A: <input type="text" name="A" value="aaaa"/>
+<p><input type="file" name="TheFile"/>
+<p>B: <input type="text" name="B" value="bbbb"/>
+<p>C: <textarea name="C"/>
+   cccc
+   cccc
+</textarea>
+<p>Just upload: <input type="radio" name="req_type" value="req_upld"/>
+<br/>Open Test: <input type="radio" name="req_type" value="req_open"/>
+<br/>Read Test: <input type="radio" name="req_type" value="req_read"/>
+<br/>Store Test: <input type="radio" name="req_type" value="req_store"/>
+
+<p><input type="submit" name="sub_btn" value="Send"/>
+</form>

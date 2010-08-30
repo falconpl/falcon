@@ -1,0 +1,31 @@
+/*#
+   @page front_end_fcgi FastCGI stand-alone front-end
+
+   The WOPI FastCGI front-end, called @b ffalcgi
+   is a stand-alone program (a binary executable for the target platform)
+   which loads a Falcon script corresponding to its name.
+
+   The program is loaded by the web server (that must support the FastCGI library interface), and
+   data is passed to it through the FastCGI library.
+   As soon as the CGI program is ready, it searches for a falcon script bearing its same
+   name (but having extension .fal, .ftd or .fam), loading and then executing it.
+
+   Except for the usage of the @link http://www.fastcgi.com FastCGI library, this front end works as the @a front_end_cgi interface.
+   Using FastCGI, the program is loaded once and stays resident in the web server application process hierarchy;
+   this reduces script load time and allows this front-end to use advanced performance optimization
+   techniques, as module caching.
+
+   @note Be sure to read the @a falcgi_iso documentation about specificities of the CGI model.
+
+   @section ffalcgi_conf Configuration
+
+   The CGI front-end reads the following attributes from the main module:
+   - @b wopi_tempDir: Location where to store the temporary files. Defaults to /tmp on POSIX systems, and to C:\TEMP on MS Windows systems.
+   - @b wopi_maxMemUpload: Maximum size for upload to be retained on memory instead being stored on disk.
+   - @b wopi_sessionTO: Session timeout (maximum live time for session cookies and data, in seconds).
+   - @b wopi_pdataDir: Location where persistent data files are stored (the process should have write access rights here).
+
+   Other than that, you have to activate the ability to execute CGI programs from within the web server
+   you're currently using. Check the documentation of the web server for further information.
+
+*/

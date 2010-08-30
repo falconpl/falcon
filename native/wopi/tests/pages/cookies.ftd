@@ -1,0 +1,39 @@
+<? user, times_around, mode = pre_data ?>
+<h1>Cookies test</h1>
+<p>This test checks for cookie usage allwoing to perform an emulated login/logout sequence.
+   Also, a cookie with a counter value is stored on the client to count for how many
+   times this page has been loaded.
+   Other than that, a cookie with arbitrary data is created (by default, using wide-string
+   characters).</p>
+<p>The user is "master" and the password is "1234". You will need to click on the "reload" link below
+to see the international cookie.</p>
+   
+<? if user ?>
+   <!-- We're really logged in! -->
+   <p>Welcome, <?= user ?></p>
+   <p>You have been around <?= times_around ?> times.</p>
+   <? if "international" in Request.cookies and Request.cookies["international"] ?>
+      <p>You have the international cookie: <?= Request.cookies["international"] ?></p>
+   <? end ?>
+   <p>Do you want to <a href="<?= Request.uri ?>&mode=logout">logout</a>
+   or to <a href="<?= Request.uri ?>">reload this page</a>?</p>
+<? else ?>
+   <? if mode == "logout" ?>
+      <p><b>Logout performed</b>. Goodbye!</p>
+   <? elif isoob(user) ?>
+      <!-- Something was wrong. Login failure has user == nil, while breackages have user == "" -->
+      <? if user == nil ?>
+         <p><b>Wrong userid/password</b>. Please try again.</p>
+      <? else ?>
+         <p><b>Bad move.</b>You're trying to force the system with unauthorized cookies.</p>
+      <? end ?>
+   <? end ?>
+   <!-- in any case, present the login form -->
+   <form action="<?= makeLink(Request.gets["p"]) ?>" method="POST">
+   <input type="hidden" name="mode" value="login"/>
+   User: <input type="text" name="user"/><br/>
+   Password: <input type="password" name="pwd"/><br>
+   <input type="submit" value="Login"/>
+   </form>
+<? end ?>
+

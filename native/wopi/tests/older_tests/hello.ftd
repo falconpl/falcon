@@ -1,0 +1,10 @@
+<html>
+</body>
+<H1><? printl("Hello world!" )?></h1>
+<pre>
+<?
+   inspect( Request )
+?>
+</pre>
+</body>
+</html>

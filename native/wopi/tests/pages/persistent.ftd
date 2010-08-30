@@ -1,0 +1,39 @@
+<h1>Persistent data test</h1>
+<p>Persistent data is data kept valid in the same process or thread where the same application
+is executed different times. This helps to minimize per-process initialization in those
+context where this makes sense (for example, connections towards databases that can be
+assigned to the calling process, instead of reopened each time a page is loaded).</p>
+<p>This test creates a counter that is updated when the same thread or process is re-eneterd
+from a new page. Reload the page to see it in action.<p>
+<p>Please, notice that the counter will be always re-initialized in CGI-based frameworks.</p>
+<?
+import from process
+import from threading
+
+class MyData
+   counter = 0
+   
+   function update()
+      if self.counter == 0
+         self.counter ++
+         return "Counter just initialized!"
+      else
+         return "Counter is now " + (self.counter++)
+      end
+   end
+end
+
+if Request.getField( "reset", nil )
+   Wopi.setPData( "counter", nil )
+end
+
+inst = Wopi.getPData( "counter", .[ MyData ] )
+?>
+<table border="0" cellspacing="2" cellpadding="4">
+<tr><td>Current process:</td><td><b><?= process.processId() ?></b></td></tr>
+<tr><td>Current thread:</td><td><b><?= threading.Threading.getCurrentID() ?></b></td></tr>
+<tr><td>Stauts:</td><td><b><?= inst.update() ?></b></td></tr>
+</table>
+<br/>
+<p>To reset this process, <a href="<?= makeLink(Request.gets["p"]) +"&reset=yes" ?>">click here</a>.</p>
+<p>To reload this page, <a href="<?= makeLink(Request.gets["p"]) ?>">click here</a>.</p>

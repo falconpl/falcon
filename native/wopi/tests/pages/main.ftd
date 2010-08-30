@@ -1,0 +1,19 @@
+<!-- Main.ftd -->
+<h1>Available tests</h1>
+<ul>
+<li>Redirect test: <?= makeTestLink( "redir_1" ) ?></li>
+<li>Get fields test: <?= makeTestLink( "gets" ) ?></li>
+<li>Standard form processing test: <?= makeTestLink( "stdform" ) ?></li>
+<li>Simple upload processing test: <?= makeTestLink( "upload" ) ?></li>
+<li>Complex upload processing test: <?= makeTestLink( "xupload" ) ?></li>
+<li>Cookies control test: <?= makeTestLink( "cookies" ) ?></li>
+<li>Session control test: <?= makeTestLink( "sessions" ) ?></li>
+<li>Session with explicit ID test: <?= makeTestLink( "sessions_expl" ) ?></li>
+<li>Persistent data test: <?= makeTestLink( "persistent" ) ?></li>
+<li>Application wide data control: <?= makeTestLink( "appdata" ) ?></li>
+</ul>
+<?
+   function makeTestLink( id )
+      return '<a href="' + makeLink( id ) + '">[Click here]</a>'
+   end
+?>

@@ -1,0 +1,66 @@
+<h1>Complex upload test</h1>
+
+<? if "Check" notin Request.posts ?>
+
+   <p>In this test, you're require to send multiple fields file through the form.</p>
+
+   <p>The default values ensure an automated check on the validity of the data.
+      You may disable it using the given field.
+      In case you want to use automated file upload check, the files to be sent
+      are falcon-logo.png from the imgs/ subdir, and upload.ftd from the pages/
+      subdir.</p>
+<? else ?>
+   <h2>Received data:</h2>
+   <? if Request.posts["Check"] == "yes"
+         exp = [
+            "Check"
+               => [ "yes", "yes" ],
+            "Text"
+               => ["Default text", "Text" in Request.posts ? Request.posts["Text"] : nil],
+            "IText"
+               => ["平準国際値", "IText" in Request.posts ? Request.posts["IText"] : nil],
+            "FileA"
+               => [ "falcon-logo.png",  Request.posts["FileA"].filename ],
+            "FileA size"
+               => [ 24556,  Request.posts["FileA"].size ],
+            "FileB"
+               => ["upload.ftd",  Request.posts["FileB"].filename],
+            "FileB size"
+               => [ 1636,  Request.posts["FileB"].size ]
+         ]
+         testCheck( exp )         
+   else ?>
+
+      <table>
+      <? r1 =  Request.posts["FileA"]; r2 =  Request.posts["FileB"] ?>
+      <tr><td>Text:</td><td><?= Request.posts["Text"].describe() ?></td></tr>
+      <tr><td>International Text:</td><td><?= Request.posts["IText"].describe() ?></td></tr>
+      <? if r1 ?>
+      <tr><td>Filename A:</td><td><?= r1.filename ?></td></tr>
+      <tr><td>Mime type A:</td><td><?= r1.mimeType ?></td></tr>
+      <tr><td>Size A:</td><td><?= r1.size ?></td></tr>
+      <tr><td>Interally stored A:</td><td><?= r1.data != nil ? "Yes" : "No" ?></td></tr>
+      <? end ?>
+      <? if r2 ?>
+      <tr><td>Filename B:</td><td><?= r2.filename ?></td></tr>
+      <tr><td>Mime type B:</td><td><?= r2.mimeType ?></td></tr>
+      <tr><td>Size B:</td><td><?= r2.size ?></td></tr>
+      <tr><td>Interally stored B:</td><td><?= r2.data != nil ? "Yes" : "No" ?></td></tr>
+      <? end ?>
+      </table>
+   <? end ?>
+<? end ?>
+
+<h2>Input form</h2>
+
+<form action="<?= Request.uri ?>" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+<table>
+<tr><td>File A: </td><td><input type="file" name="FileA"/></td></tr>
+<tr><td>File B: </td><td><input type="file" name="FileB"/></td></tr>
+<tr><td>Text field: </td><td><input type="text" name="Text" value="Default text"/></td></tr>
+<tr><td>Int. text field: </td><td><input type="text" name="IText" value="平準国際値"/></td></tr>
+<tr><td>Check validity: </td><td><input type="radio" name="Check" value="yes"/>Yes
+                        &nbsp;&nbsp;&nbsp;<input type="radio" name="Check" value="no" checked="yes"/>No</td></tr>
+<tr><td colspan="2"><input type="submit" name="sub_btn" value="Send"/></td></tr>
+</table>
+</form>

@@ -1,0 +1,65 @@
+wopi(1.2)
+  - fixed: Falhttpd din't report remote IP in requests.
+  - fixed: Incorrect grabbing of headers in "headers" field.
+           Actually, affected only falhttpd.
+  - fixed: Session expired after required timeout even if refreshed.
+  - Added: In Falhttpd, cmd line option -t and config file Timeout
+           to control the default session timeout.
+  
+wopi(1.1)
+  - added: Wopi.setPData and Wopi.getPData for persistent process data
+  - major: Wopi.setData and Wopi.getData are now Wopi.getAppData and
+           Wopi.getAppData to avoid confusion with PData
+  - added: Support for engine-side module caching.
+  - fixed: Reply.redirect wasn't correctly working if second parameter
+           wasn't given.
+  - fixed: In falhttpd, scriptHandler crashed if script didn't generate
+           any output.   
+  - added: startSession() to start explicitly a named session; also,
+           getSession now accepts an extra ID as a parameter.
+  - fixed: LoadPath setting was ignored (no matter what source it was
+           coming from).       
+
+wopi(1.0)
+  - new: WOPI first version
+
+falcon-apache2 (1.7)
+  - added: Support for directory & location handlers
+  - added: Directory/location level load path directive (FalconLoadPath)
+  - fixed: htmlEscape() broke international chars if directed to strings.
+  - fixed: Non-standard expiration date used in cookies.
+  - fixed: Cookie values was not quoted.
+  - major: Reply headers are not anymore directly accessible. They must be
+           accessed through setHeader and getHeader methods.
+  - added: Session support with Request.getSession()
+  - major: Removed functions uriEscape and uriUnescape (they are provided
+           by the engine static methods URI.encode and URI.decode).
+  - major: Removed function startedAt(), now it's a method of Request.
+  - added: Function getEnviron() that returns the whole process environment.
+
+falcon-apache2 (1.6)
+  - fixed: NOT flushing at each VM request (i.e. at each WRT opcode).
+  - fixed: Crash in Uploaded.store
+  - fixed: Crash in Uploaded.open
+  - fixed: Crash in tempFile
+  - added: Methods Request.fwdGet()/Post() to forward request fields.
+
+falcon-apache2(1.4)
+  - fixed: Updated to Falcon Eagle (0.9.4)
+
+falcon-apache2(1.2)
+  - fixed: error termination may have caused crash due to the
+           output stream referring the VM after its destruction.
+  - fixed: Setting 200 as default ... headers!
+  - fixed: Removed confusing Makefiles.
+  - fixed: Exported symbol is now "falcon_module" (more standard).
+  - fixed: ';' is used for paths in .ini, can't be a comment.
+  - fixed: Added supports for application-wide paths in vm.
+
+falcon-apache2(1.0.0)
+  - fixed: support for Falcon Albatross
+
+falcon-apache2(0.9.2)
+  - Added: upload support.
+  - Added: temporary file support.
+

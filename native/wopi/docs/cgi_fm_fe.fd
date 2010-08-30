@@ -1,0 +1,45 @@
+/*#
+   @page front_end_cgi_fm CGI falcon module
+
+   The WOPI CGI falcon module front-end, called @b cgi_fm
+   is a module that can be injected in a script executed through the @b falcon command line interpreter,
+   causing the WOPI interface to be made available in the calling script.
+
+   The script must be made executable and the web server must be configured so that it can
+   ask the system to execute a standard falcon interpreter to run the script.
+
+   On POSIX systems, this usually means adding a @b sh-bang directive on the very first line of the
+   main script (the one that is directly loaded by the server), like the following:
+
+   @code
+   #!/usr/bin/falcon -pcgi
+   @endcode
+
+   Usually, web servers running on MS-Windows operating systems can be configured so that target scripts
+   can be passed to a certain executable interpreter, together with other parameters on the command line
+   through which the program is invoked.
+
+   The main CGI script may also use the @b load falcon directive to activate the CGI module, but this
+   would make it impossible to be used as-is under other WOPI front-ends.
+
+   @note The Falcon command line interpreter sends error reports on the process error stream. This makes
+   errors invisible on the remote browser side, but web servers are usually copying the text sent on the
+   standard error of CGI programs to a log facility. Fatal errors caused by scripts using this front-end
+   shall be logged directly by the web server. Future versions of Falcon command line program may include
+   options to control this behavior.
+
+   @note Be sure to read the @a falcgi_iso documentation about specificities of the CGI model.
+
+   @section cgi_fm_conf Configuration
+
+   The CGI front-end reads the following attributes from the main module:
+   - @b wopi_tempDir: Location where to store the temporary files. Defaults to /tmp on POSIX systems, and to C:\TEMP on MS Windows systems.
+   - @b wopi_maxMemUpload: Maximum size for upload to be retained on memory instead being stored on disk.
+   - @b wopi_sessionTO: Session timeout (maximum live time for session cookies and data, in seconds).
+   - @b wopi_pdataDir: Location where persistent data files are stored (the process should have write access rights here).
+
+   Other than that, you have to activate the ability to execute CGI programs from within the web server
+   you're currently using. Check the documentation of the web server for further information.
+
+
+*/

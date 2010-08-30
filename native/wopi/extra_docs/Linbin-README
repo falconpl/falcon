@@ -1,0 +1,14 @@
+			
+                           Falcon  - WOPI 1.0
+			
+                         GNU/Linux binary package
+
+This binary package contains the WOPI front-ends compiled for LINUX.
+They are placed in the following locations:
+
+   sbin/falhttpd - Stand Alone web server.
+   lib/apache2/modules/mod_apache - WOPI module for Apache2.
+   lib/falcon/wopi/cgi-bin/falcgi - WOPI CGI module front-end.
+   lib/falcon/wopi/cgi-bin/ffalcgi - WOPI FastCGI front-end.
+   lib/falcon/cgi_fm.so - WOPI CGI module for scripts.
+
