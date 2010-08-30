@@ -159,7 +159,7 @@ public:
 
    inline bool operator <=( const Complex &other )
    {
-      return m_real < other.m_real || (m_real == other.m_real && m_imag < other.m_imag);
+      return m_real <= other.m_real || (m_real == other.m_real && m_imag <= other.m_imag);
    }
 
 };

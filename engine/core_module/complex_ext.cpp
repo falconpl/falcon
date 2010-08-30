@@ -178,11 +178,13 @@ FALCON_FUNC Complex_compare( ::Falcon::VMachine *vm )
    Complex *one, two;
    const CoreClass* gen;
    s_operands( vm, one, two, gen );
+
    if ( (*one) < two )
       vm->retval( -1 );
-   if ( (*one) > two )
+   else if ( (*one) > two )
       vm->retval( 1 );
-   vm->retval( 0 );
+   else
+      vm->retval( 0 );
 }
 
 FALCON_FUNC Complex_conj( ::Falcon::VMachine *vm )
