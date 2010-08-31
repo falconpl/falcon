@@ -32,19 +32,21 @@ class Wiki( instance ) from Service( instance )
    wid = ServiceVar("Wiki page to be loaded or managed", b.InputVarBinder )
    wka = ServiceVar("Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)", b.InputVarBinder )
    wkd = ServiceVar("Wiki data; original data", b.InputVarBinder )
-   wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null.", b.InputVarBinder )
+   wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.", b.InputVarBinder )
    
    parser = ServiceVar( "Instance of a Wiki parser, implementing the Falcon wiki parser interface", b.ConfigBinder )
    helper = ServiceVar( "Generic parser renderer helper", b.ConfigBinder )
    main_wid = ServiceVar( "Wid of the main page (which is also the default wid)", b.ConfigBinder )
    actions = ServiceVar( "Actions that can be done other than \"commit\" on a page", b.ConfigBinder )
    modyPage = ServiceVar( "Page used when invoking the wiki page modification", b.ConfigBinder )
+   history_depth = ServiceVar("Max depth of the wiki history", b.ConfigBinder )
 
    preview = ServiceVar( "Compiled content of the page" )
    page = ServiceVar( "Complete page -- if found" )
 
    // Gets the authenticated user.
    auth_user = Nest.ambient( "auth_user", "Authenticated user", b.SessionBinder )
+   history = ServiceVar("Wiki history; where are we?", b.SessionBinder )
 
    // data manager
    dm = nil
@@ -70,6 +72,28 @@ class Wiki( instance ) from Service( instance )
 
       todo = self.wka.value
       Nest.logi( @"Executing $(todo) on \"$(wid)\"" )
+      
+      // save the history -- if required and if browsing the pages.
+      depth = self.history_depth.value
+      if depth and not todo
+         h = self.history.value
+
+         // force to clear when going to top
+         if wid == self.main_wid.value or self.wkc.value == "h": h = nil
+            
+         if h
+            pos = h.find( wid )
+            if pos >= 0
+               h.resize( pos+1 )
+            elif depth > h.len()
+               h += wid
+            end
+         else
+            self.history.value = [wid]
+         end
+      end
+
+
       // see what we can do
       switch todo
          case 'del'

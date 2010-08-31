@@ -30,7 +30,6 @@
    <? end ?>
 
    <? if vars.wka == 'prw' or vars.wka == 'mody' ?>
-   <div id="nest_wiki_content">
       <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
          <h2>Editing "<?= strEscape(vars.wid)?>"</h2>
          <input type="hidden" name="wid" value="<?= strEscape(vars.wid) ?>" />
@@ -44,15 +43,33 @@
          </tr></table></p>
       </form>
    <? else ?>
+   <div id="nest_wiki_location">
+      <p> Location:
+      <? for loc in vars.history
+            page = Nest.pageLink(nil, ["wid"=>loc] )
+            
+            formiddle
+               print( @"<a href=\"$page\">$loc</a>" )
+               print("&nbsp;>>&nbsp;")
+            end
+
+            forlast
+               printl( @"<b>$loc</b>" )
+            end
+         end
+      ?>
+      </p>
+   </div>
    <div id="nest_wiki_content">
       <? if vars.page ?>
          <?= vars.page.content_html ?>
-         <hr/>
-         <p><i><?=  htmlEscape(vars.page.page_name) ?>, created by
-            <?= vars.page.creator ? vars.page.creator : i"Anonymous" ?> on <?= vars.page.created ?></i></p>
-         <? if vars.page.last_edited ?>
-            <p><i>Last edited by <?= vars.page.editor ? vars.page.editor : i"Anonymous" ?> on <?= vars.page.last_edited ?></i></p>
-         <? end ?>
+         <div id="nest_wiki_page_info">
+            <p><i><?=  htmlEscape(vars.page.page_name) ?>, created by
+               <?= vars.page.creator ? vars.page.creator : i"Anonymous" ?> on <?= vars.page.created ?></i></p>
+            <? if vars.page.last_edited ?>
+               <p><i>Last edited by <?= vars.page.editor ? vars.page.editor : i"Anonymous" ?> on <?= vars.page.last_edited ?></i></p>
+            <? end ?>
+         </div>
       <? else ?>
          <p>The page <b>"<?= htmlEscape(vars.wid) ?>"</b> doesn't exist. You can
             <a href="<?= Nest.pageLink( vars.modyPage, ["wid"=> vars.wid, "wka"=>"mody"])?>">create it clicking on this link</a>.

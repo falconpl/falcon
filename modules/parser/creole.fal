@@ -177,7 +177,8 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
             ReRule( '^\s*\*\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
             ReRule( '^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
-            ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )
+            ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
+            ReRule( '^||((.*?)|)',  "#stay", {ctx, d0, link => ctx.popNode(); ctx.pushNode( InfoNode("cite", ["link"=>link]))} )
          ]
          + InlineElements
          + TableStart

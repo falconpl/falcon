@@ -50,13 +50,16 @@ class Login( instance ) from Service( instance )
       // ensure that nothing can go before we're bound
       // remember that binding (data from session) comes after startup()
       // so here we can set defaults
-      self.auth_level.value = nil
-
-      // And the default for the handler is this same page.
-      self.handler.value = Nest.pageLink()  // self link
+      self.auth_level.value = nil      
    end
    
    function run()
+      if not self.handler.value
+         // And the default for the handler is this same page.
+         self.handler.value = Nest.pageLink(nil, Request.gets)  // self link -- with vars
+         defaultHandler = true
+      end
+      
       // Are we bound from session?
       if self.auth_user.value != nil
          Nest.logd( "User authenticated from session as " + self.auth_user.value + "(" + self.auth_level.value + ")" )
@@ -69,10 +72,16 @@ class Login( instance ) from Service( instance )
             self.auth_level.value = Nest.AL.NONE
             self.auth_data.value = nil
             self.logmode.value = "out"
+            if defaultHandler
+               // And the default for the handler is this same page.
+               self.handler.value = Nest.pageLink()  // self link -- without vars
+            end
          end
 
          self.logmode.value = "ok"
          return
+      elif Nest.sessionExpired
+         self.logmode.value = "expired"
       end
 
       if not self.checker.isCallable()
@@ -84,6 +93,9 @@ class Login( instance ) from Service( instance )
       if self.uid.isSet
          self.checkLogin( self.uid.value, self.pwd.value )
       end
+
+
+
    end
 
    function checkLogin( uid, pwd )
