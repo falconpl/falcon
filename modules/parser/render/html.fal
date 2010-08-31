@@ -81,6 +81,7 @@ class Renderer( siteHelper, cls )
       "th" => self._render_cell,
       "td" => self._render_cell,
       "indent" => self._render_indent,
+      "quote" => self._render_quote,
 
       "link" => self._render_link,
       "file" => self._render_file,
@@ -204,6 +205,16 @@ class Renderer( siteHelper, cls )
       return link
    end
 
+   function _render_quote( node )
+      i = bless(node.infos)
+      if i.link
+         str = self._ct("blockquote cite=\"" + strEscape(i.link) + "\" ")
+      else
+         str = self._ct("blockquote")
+      end
+      str += self._rcont(node.content) +"</blockquote>\n"
+      return str
+   end
 
    function _render_img( node )
       i = bless(node.infos)

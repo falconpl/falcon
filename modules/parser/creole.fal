@@ -22,6 +22,7 @@ import PState from parser.genparser as PState
 import Context from parser.genparser as Context
 
 import ReRule from parser.genparser.rules as ReRule
+import ReRuleLA from parser.genparser.rules as ReRuleLA
 import TagRule from parser.genparser.rules as TagRule
 import EmptyLineRule from parser.genparser.rules as EmptyLineRule
 import DummyRule from parser.genparser.rules as DummyRule
@@ -68,6 +69,12 @@ SpecialEntities = .[
       TagRule( '>', "#stay", {ctx => ctx.add("&gt;")} )
       TagRule( '&', "#stay", {ctx => ctx.add("&amp;")} )
       TagRule( '"', "#stay", {ctx => ctx.add("&quot;")} )
+]
+
+
+ListStart =  .[
+      ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
+      ReRule( '^\s*\*\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
 ]
 
 
@@ -174,16 +181,33 @@ class Parser from parser.genparser.Parser
 
       "para" =>PState(.[
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
-            ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
-            ReRule( '^\s*\*\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
+            
             ReRule( '^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
             ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
-            ReRule( '^||((.*?)|)',  "#stay", {ctx, d0, link => ctx.popNode(); ctx.pushNode( InfoNode("cite", ["link"=>link]))} )
+            ReRule( '^\+\+\+*\s*(.*)?$',  "quote_base", {ctx, ma, link => ctx.popNode();
+                                                            ctx.pushNode( InfoNode("quote", ["link"=>link]))} )
          ]
-         + InlineElements
          + TableStart
+         + ListStart
+         + InlineElements
          + Indents
          + Headers2,
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
+      ),
+
+      "quote_base" =>PState(.[
+            ReRule( '^\+\+\+*$',  "#pop;#pop", {ctx => ctx.popNode();} )
+            DummyRule( "quote", { ctx => ctx.pushNode( Node("para") )} )
+         ]
+      ),
+
+      "quote" =>PState(.[
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
+            ReRuleLA( '^\+\+\+*$',  "#pop", {ctx => ctx.popNode()} )
+         ]
+         + ListStart
+         + InlineElements,
          {ctx, data=>ctx.add( data )},
          "para_continue"
       ),
@@ -242,9 +266,6 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(3, "ul" ) })
             ReRule( '^\s*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
             ReRule( '^\s*\*\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
-
-            // remove leading spaces that are often found in list arrangements
-            ReRule( '^\s*', "#stay" )
          ]
          + InlineElements,
          {ctx, data=>ctx.add( data )},

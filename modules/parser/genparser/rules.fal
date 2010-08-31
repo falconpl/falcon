@@ -126,12 +126,11 @@ end
 
 /*#
    @brief Regular expression enabled ruler matcher.
-
-
    @param token the string matching a fixed token
    @param action the action (function) that should be done when
-          hitting the token. The function will be called with
-          the token as last parameter.
+          hitting the token.
+
+   The function will be called with the token as last parameter.
 */
 class ReRule( re, nextState, action ) from Rule( nextState, action )
    anchored = re.startsWith("^")
@@ -161,6 +160,28 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
       return g[0].len()
    end
 end
+
+/*#
+   @brief Regular expression matcher with look ahead
+   @param token the string matching a fixed token
+   @param action the action (function) that should be done when
+          hitting the token.
+
+   The function will be called with the token as last parameter.
+
+   This rule won't indicate how many characters have been matched,
+   causing an application of the rule and a state change but not
+   discarding the matched characters.
+*/
+class ReRuleLA( re, nextState, action ) from ReRule( re, nextState, action )
+
+   function apply( context )
+      g = self.grabs
+      if self.action: (.[ self.action context ] + g)()
+      return 0
+   end
+end
+
 
 /*#
    @brief Empty line rule matcher.

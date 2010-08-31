@@ -58,6 +58,12 @@ class Context
             self.popNode()
          end
          self.listDepth = lvl
+         
+         // but also, change the item that was li-ing if the list continues
+         if lvl > 0
+            self.popNode()
+            self.pushNode( node.Node("li") )
+         end
       else
          // we must go forward of 2 elements per level
          for i in [self.listDepth:lvl]
