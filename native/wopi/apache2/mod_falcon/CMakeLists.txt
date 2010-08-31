@@ -4,6 +4,9 @@
 
 MESSAGE( "Creating the Falcon module for Apache 2 (mod_apache)" )
 
+set( APACHE2_LIBEXECDIR "${Falcon_LIB_DIR}" 
+   CACHE STRING "Place where mod_falcon will be installed")
+
 ######################################################################
 # Find APACHE and APR libraries
 #
@@ -40,6 +43,7 @@ INCLUDE_DIRECTORIES(
   ${PROJECT_SOURCE_DIR}/include
   ${APACHE_REAL_INCLUDE_DIR}
 )
+
 
 ######################################################################
 # Add libcrun on solaris
@@ -89,7 +93,7 @@ ADD_LIBRARY( mod_falcon MODULE
 )
 
 
-TARGET_LINK_LIBRARIES( mod_falcon
+tARGET_LINK_LIBRARIES( mod_falcon
    falcon_engine
    ${SYSLIBS}
 )

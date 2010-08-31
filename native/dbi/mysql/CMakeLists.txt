@@ -7,6 +7,7 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+option( FALCON_DBI_MYSQL_MY_RPATH "Append mysqlclient library location to install RPATH" ON)
 
 falcon_define_module( FALCON_MODULE mysql )
 
@@ -67,9 +68,13 @@ ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
 
-if(NOT CMAKE_INSTALL_RPATH)
+if(FALCON_DBI_MYSQL_MY_RPATH)
    get_filename_component(rpath "${MYSQL_LIBRARY}" PATH )
-   set(CMAKE_INSTALL_RPATH $(rpath) )
+   set_target_properties( 
+	${FALCON_MODULE} 
+        PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${rpath}" )
+   message( "DBI.Mysql Setting install rpath to ${CMAKE_INSTALL_RPATH}:${rpath}" )
 endif()
 
 falcon_install_module2( ${FALCON_MODULE} dbi )
