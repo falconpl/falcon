@@ -88,7 +88,8 @@ class Renderer( siteHelper, cls )
 
       "img" => self._render_img,
       "code" => self._render_code,
-      "plugin" => self._render_plugin
+      "plugin" => self._render_plugin,
+      "tag" => self._render_tag
    ]
 
 
@@ -96,7 +97,22 @@ class Renderer( siteHelper, cls )
       self.site.page_name = page_name
       self.site.topnode = context.topNode
 
+      //preprocess standouts
+      self.preprocess( context.standouts )
+
+      // and return the content
       return self._rcont( context.topNode.content )
+   end
+
+   function preprocess( sout )
+      i = 0
+      soutlen = sout.len()
+      while i < soutlen
+         node_sout = sout[i++]
+         if node_sout.type == "plugin"
+            self.site.plugin( node_sout.infos["name"], node_sout.infos["params"], node_sout, true )
+         end
+      end
    end
 
 
@@ -115,8 +131,10 @@ class Renderer( siteHelper, cls )
          return content
       else
          text = ""
-         for node in content
+         node = content
+         while node
             text += self.renderNode( node )
+            node = node.next
          end
          return text
       end
@@ -186,10 +204,14 @@ class Renderer( siteHelper, cls )
       if i.ext
          link += strEscape(i.name) + "\" target=\"_blank\""
       else
-         if "ilink" in i
+         if "ilink" in i and i.ilink
             link +=  self.site.iLink( i.ilink, i.name ) + "\" target=\"_blank\""
          else
-            link += self.site.pageLink( i.name ) +"\""
+            if "internal" in i and i.internal
+               link +=  "#" + URI.encode( i.name ) +"\""
+            else
+               link += self.site.pageLink( i.name ) +"\""
+            end
          end
       end
 
@@ -245,7 +267,18 @@ class Renderer( siteHelper, cls )
    end
 
    function _render_plugin( node )
-      return self.site.plugin( node.infos["name"], node.infos["params"] )
+      return self.site.plugin( node.infos["name"], node.infos["params"], node )
    end
+
+   function _render_tag( node )
+      text = ""
+      for k,v in node.infos
+         forfirst: text += " "
+         text += k +"=\"" + strEscape(v) + "\""
+         formiddle: text += " "
+      end
+      return "<" + node.tag + text + ">" + self._rcont( node.content ) + "</" + node.tag +">\n"
+   end
+   
 end
 

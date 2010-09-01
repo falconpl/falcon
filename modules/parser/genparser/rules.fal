@@ -144,8 +144,11 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
       // We need our grabs
       if (rng = re.find( text, pos ))
          g = []
-         for n in [0:re.capturedCount()]
+         n = 0
+         recapcount = re.capturedCount()
+         while n < recapcount
             g += text[re.captured(n)]
+            ++n
          end
          self.grabs = g
          return rng[0]

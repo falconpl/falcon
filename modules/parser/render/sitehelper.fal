@@ -60,7 +60,7 @@ class SiteHelper( page_name, topnode )
       raise "SiteHelper.file To be implemented"
    end
 
-   function plugin( plugin_name, params, node )
+   function plugin( plugin_name, params, node, isDuringStandout )
       return "SiteHelper.plugin To be implemented"
    end
 end

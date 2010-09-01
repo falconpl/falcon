@@ -17,34 +17,16 @@
 */
 
 import from parser.creole
-import from parser.render.html in sh
 import from nest.action in na
 
 
 parser = parser.creole.Parser()
-helper = MyHelper()
 upload_dir = "/uploads"
+upload_linker = { v => upload_dir+"/" + URI.encode(v) }
+
 actions = .[
    na.ButtonAction( Nest.AL.NONE, i"Insert image", "javascript:insertImage()" )
    na.ButtonAction( Nest.AL.NONE, i"Insert file", "javascript:insertFile()" )
 ]   
-
-class MyHelper from sh.BaseSiteHelper
-   function pageLink( v )
-      return Nest.pageLink(nil,["wid"=>v])
-   end
-
-   function img( v )
-      return upload_dir+"/" + URI.encode(v)
-   end
-
-   function file( v )
-      return upload_dir+"/" + URI.encode(v)
-   end
-
-   /*function plugin( plugin_name, params, node )
-      end
-   */
-end
 
 //return @"<pre class=\"brush:$lang\">\n"+v+"</pre>"

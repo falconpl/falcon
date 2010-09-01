@@ -22,6 +22,7 @@ import from nest.bindings in b
 import NestError from nest as NestError
 import from nest.dbentity in dbe
 import from parser.render.html in html
+import plugins from nest.srv.Wiki.plugins as Plugins
 
 const entity_name = "wiki_pages"
 const default_page = "main"
@@ -35,12 +36,13 @@ class Wiki( instance ) from Service( instance )
    wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.", b.InputVarBinder )
    
    parser = ServiceVar( "Instance of a Wiki parser, implementing the Falcon wiki parser interface", b.ConfigBinder )
-   helper = ServiceVar( "Generic parser renderer helper", b.ConfigBinder )
+   upload_linker = ServiceVar( "Function retunring a link to uploaded files.", b.ConfigBinder )
    main_wid = ServiceVar( "Wid of the main page (which is also the default wid)", b.ConfigBinder )
    actions = ServiceVar( "Actions that can be done other than \"commit\" on a page", b.ConfigBinder )
    modyPage = ServiceVar( "Page used when invoking the wiki page modification", b.ConfigBinder )
    history_depth = ServiceVar("Max depth of the wiki history", b.ConfigBinder )
-
+   plugins = ServiceVar("User provided page plugins", b.ConfigBinder )
+   
    preview = ServiceVar( "Compiled content of the page" )
    page = ServiceVar( "Complete page -- if found" )
 
@@ -48,6 +50,7 @@ class Wiki( instance ) from Service( instance )
    auth_user = Nest.ambient( "auth_user", "Authenticated user", b.SessionBinder )
    history = ServiceVar("Wiki history; where are we?", b.SessionBinder )
 
+   helper = _WikiHelper(self)
    // data manager
    dm = nil
 
@@ -266,7 +269,7 @@ class Wiki( instance ) from Service( instance )
          p = self.parser.value
          p.reset()
          ctx = p.parse( wikitext )
-         hr = html.Renderer( self.helper.value, "nest_wiki" )
+         hr = html.Renderer( self.helper, "nest_wiki" )
          
          return hr.render( ctx, pageName )
       catch ParseError in e
@@ -282,6 +285,56 @@ class Wiki( instance ) from Service( instance )
    function removePage( page_name )
       return self.dm.delete( entity_name, page_name )
    end
+
+
+   /*#
+      @brief Loads a plugin and returns its result.
+      @param page_name The page to be removed.
+      @return true on success, false if the page cannot be created.
+   */
+   function plugin( pname, params, node, sout )
+      // do we have some user-provided plugins?
+      upl=self.plugins.value
+      if upl and upl.typeId == DictionaryType and pname in upl
+        pin = upl[pname]
+      end
+
+      // not found a valid user plugin ---  try ours
+      if pin == nil
+         pin = pname in Plugins ? Plugins[pname] : nil
+      end
+
+      // still nothing?
+      if pin == nil 
+         return @i"Plugin $pname not found"
+      else
+         return pin( params, node, sout, self.wid.value )
+      end
+   end
    
+end
+
+
+class _WikiHelper(srv) from html.BaseSiteHelper
+   // the service
+   srv = srv
+   handler = nil
+
+   function pageLink( v )
+      return self.srv.linkToPage( v, self.handler )
+   end
+
+   function img( v )
+      return self.srv.upload_linker.value(v)
+   end
+
+   function file( v )
+      return self.srv.upload_linker.value(v)
+   end
+
+
+   function plugin( plugin_name, params, node, standout )
+      return self.srv.plugin( plugin_name, params, node, standout )
+   end
 end
 

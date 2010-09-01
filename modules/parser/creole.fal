@@ -124,8 +124,8 @@ LinkElements = .[
 
    ReRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
                                                  ctx.add( InfoNode("img", _options(mx, ["name"=>pg, "alt"=> (txt? txt:pg)])))} )
-   ReRule( '<<(.*?)\s+(.*?)>>', "#stay", {ctx, ma, pname, popts =>
-                        ctx.add( InfoNode("plugin", ["name"=>pname, "params"=>_params(popts)]) ) } )
+   ReRule( '<<(.*?)(\s+(.*?))?>>', "#stay", {ctx, ma, pname, d0, popts =>
+                        ctx.add( InfoNode("plugin", ["name"=>pname, "params"=>_params(popts)], true) ) } )
 ]
 
 InlineElements = FormatElements + LinkElements + SpecialEntities
@@ -137,7 +137,12 @@ function _options( mx, res )
    if not mx: return res
    
    elems = mx.split("|")
-   for elem in elems
+   
+   ielem = 0
+   le =  elems.len()
+   while ielem < le
+      elem = elems[ielem++]
+      
       if "=" in elem
          k,v = elem.split("=",2)
          res[k] = v

@@ -23,28 +23,38 @@ import from .node
 
 class Context
    topNode = node.Node( node.node_top_type )
-   nodeStack = List( self.topNode )
+   nodeStack = [ self.topNode ]
+   standouts = []
    currentNode = self.topNode
 
    listDepth = 0
 
-   function pushNode( node )
-      self.currentNode.add( node )
-      self.nodeStack.push( node )
-      self.currentNode = node
+   function pushNode( lnode )
+      self.currentNode.add( lnode )
+      self.nodeStack.add( lnode )
+      self.currentNode = lnode
+
+      if lnode provides standout and lnode.standout
+         self.standouts.add( lnode )
+      end
    end
 
    function popNode()
-      node = self.nodeStack.pop()
-      if self.nodeStack.empty()
+      ns = self.nodeStack
+      lnode = ns[-1]
+      if ns.len() == 1
          raise ParseError( 10010, "Context empty in pop" )
       end
-      self.currentNode = self.nodeStack.back()
-      return node
+      ns.resize(ns.len()-1)
+      self.currentNode = ns[-1]
+      return lnode
    end
 
    function add( data )
       self.currentNode.add( data )
+      if data provides standout and data.standout
+         self.standouts.add( data )
+      end
    end
 
    function setListDepth( lvl, ltype )
@@ -53,7 +63,8 @@ class Context
          self.pushNode( node.Node("li") )
       elif lvl < self.listDepth
          // we must go back of 2 elements per level
-         for i in [lvl:self.listDepth]
+         i = lvl
+         while i++ < self.listDepth
             self.popNode()
             self.popNode()
          end
@@ -66,13 +77,14 @@ class Context
          end
       else
          // we must go forward of 2 elements per level
-         for i in [self.listDepth:lvl]
+         i = self.listDepth
+         while i++ < lvl
             self.pushNode(node.Node(ltype))
             self.pushNode(node.Node("li"))
          end
       end
 
       self.listDepth = lvl
-
    end
+   
 end

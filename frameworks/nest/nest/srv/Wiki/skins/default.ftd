@@ -43,23 +43,25 @@
          </tr></table></p>
       </form>
    <? else ?>
-   <div id="nest_wiki_location">
-      <p> Location:
-      <? for loc in vars.history
-            page = Nest.pageLink(nil, ["wid"=>loc] )
-            
-            formiddle
-               print( @"<a href=\"$page\">$loc</a>" )
-               print("&nbsp;>>&nbsp;")
-            end
+   <? if vars.history ?>
+      <div id="nest_wiki_location">
+         <p> Location:
+         <? for loc in vars.history
+               page = Nest.pageLink(nil, ["wid"=>loc] )
 
-            forlast
-               printl( @"<b>$loc</b>" )
+               formiddle
+                  print( @"<a href=\"$page\">$loc</a>" )
+                  print("&nbsp;>>&nbsp;")
+               end
+
+               forlast
+                  printl( @"<b>$loc</b>" )
+               end
             end
-         end
-      ?>
-      </p>
-   </div>
+         ?>
+         </p>
+      </div>
+   <? end ?>
    <div id="nest_wiki_content">
       <? if vars.page ?>
          <?= vars.page.content_html ?>

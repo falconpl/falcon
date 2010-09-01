@@ -943,7 +943,7 @@ void Sequence::getIterator( Iterator& tgt, bool tail ) const
 {
    tgt.sequence( const_cast<Sequence*>(this) );
    tgt.nextIter( m_iterList );
-   m_iterList = &tgt;   
+   m_iterList = &tgt;
 }
 
 

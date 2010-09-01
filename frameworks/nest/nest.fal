@@ -341,6 +341,7 @@ object Nest
       auth_level.listen( { v => me.auth_level = v == nil ? me.AL.NONE : v } )
       self._ambient["auth_level"] = auth_level
       self._defaultDirs()
+      self._comp.launchAtLink = true
    end
    
    /*# Nest entry point.

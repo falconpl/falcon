@@ -235,7 +235,12 @@ class Parser()
             winner = nil
 
             state = self._stack[-1]
-            for rule in state.rules
+            sr = state.rules
+            
+            ruleId = 0
+            srlen = sr.len()
+            while ruleId < srlen
+               rule =  sr[ruleId++]
                rulePos = rule.match( line, col )
                if rulePos == 0
                   // we found the rule
@@ -293,7 +298,10 @@ class Parser()
    function _fulfil( slist )
       states = slist.split( ";")
 
-      for what in states
+      si = 0
+      l = states.len()
+      while si < l
+         what = states[si++]
          if what == "#pop"
             self.popState()
          elif what == "#stay"
