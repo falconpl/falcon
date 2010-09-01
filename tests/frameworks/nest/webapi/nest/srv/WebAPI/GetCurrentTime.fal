@@ -1,0 +1,42 @@
+/*******************************************************************************
+<source name="GetCurrentTime.fal" language="falcon" begin="23-Aug-2010">
+    <description>
+        Self-describing API object.
+    </description>
+    <authors>
+        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*******************************************************************************/
+
+import from api
+
+/*******************************************************************************
+<object name="GetCurrentTime">
+    <description>
+        Implements the API object functionality.
+    </description>
+</object>
+*******************************************************************************/
+object GetCurrentTime from api.Wrapper(
+    "GetCurrentTime",
+    i"Gets the current time.")
+
+    /***************************************************************************
+    <function name="go">
+        <description see="self">
+        <return>
+            The current time.
+        </return>
+    </function>
+    ***************************************************************************/
+    function go()
+        timeStamp = TimeStamp()
+        return timeStamp.currentTime().toString("%X %x")
+    end
+end
+
+GetCurrentTime.execute()

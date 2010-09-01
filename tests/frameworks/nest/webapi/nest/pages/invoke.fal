@@ -1,0 +1,15 @@
+/*******************************************************************************
+<source name="invoke.fal" language="falcon" begin="24-Aug-2010">
+    <description>
+        Web API frontend.
+    </description>
+    <authors>
+        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*******************************************************************************/
+
+Nest.service("WebAPI").render()
