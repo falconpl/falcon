@@ -1,0 +1,98 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: readdir/main.fal
+
+   Service used to show directory entries.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest
+import from nest.bindings in b
+
+/*# Service receiving the variables in a form.
+
+   This service is a useful shortcut and organizer for form checking code.
+
+   It must be instantiated with a non-null intance. When instantiated, it moves
+   all the variables named "<instance>.xxx" in self.formVars. Then, it launches
+   the relative filters, which may alter them by returning a non-nil value
+   (will be transformed to a string).
+   
+   For meta-information about the form processing, the filters may use the "formResult"
+   hook.
+*/
+class Form( instance, options ) from nest.Service( instance, options )
+   formFilters = nest.ServiceVar( "Functions accepting and checking the variables in the form.", b.ConfigBinder )
+   check = nest.ServiceVar(
+         "Global check on the form; a function called as check( self, vars). Return goes in formResult.",
+         b.ConfigBinder )
+
+   formData = nest.ServiceVar( "Data to be displayed in the form.", b.ConfigBinder )
+   formAction = nest.ServiceVar( "Things to do below the form. For now, verbatim", b.ConfigBinder )
+   
+   formVars = nest.ServiceVar( "Variables in the form as posted by the users" )
+   formResults = nest.ServiceVar( "Results that the final user may be interested in.")
+
+   function startUp()
+      if not self.instance
+         raise nest.NestError( nest.NestError.other, "Service \"FormChecker\" must be given an instance name" )
+      end
+   end
+
+   function run()
+      Nest.logi( "Entering the " + self.fullName() + " service" )
+      
+      // extract the variables
+      formVars = [=>]
+      for k, v in Nest.inputVars
+         if k.startsWith( self.instance + "." )
+            if Nest.log_level >= 3: Nest.logd( @"Adding form variable \"$k\"=\"$v\"" )
+            formVars[ k[self.instance.len()+1:] ] = v
+         end
+      end
+
+      // something to do?
+      if formVars
+         self.formVars.value = formVars
+         for funcName, func in self.formFilters.value
+            if funcName in formVars
+               if Nest.log_level >= 3: Nest.logd( @"Calling form filter for \"$funcName\"" )
+               res = func( self, funcName, formVars[funcName] )
+               if Nest.log_level >= 3: Nest.logd( @"Result for filter \"$funcName\": $res" )
+               if res: formVars[funcName] = res
+            end
+         end
+
+         check = self.check.value
+         if check.isCallable()
+            check = check.base()
+            Nest.logi( "Calling overall form check function" )
+            res = check( self, bless(formVars) )
+            if Nest.log_level >= 3: Nest.logd( @"Overall check function result: $res" )
+            self.formResults.value = res
+         end
+      end
+         
+   end
+
+   function __get_results()
+      if self.formVars.isSet
+         return self.formResults.value
+      end
+   end
+
+    function __get_vars()
+      return self.formVars.value
+   end
+
+end

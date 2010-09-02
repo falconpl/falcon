@@ -25,7 +25,7 @@ class DirEntry( name, size, date )
    date = date
 end
 
-class ReadDir( instance ) from nest.Service( instance )
+class ReadDir( instance, options ) from nest.Service( instance, options )
    dircont = nest.ServiceVar( "Content of the directory" )
    dir = nest.ServiceVar( "Optional directory where to look in", b.ConfigBinder )
 

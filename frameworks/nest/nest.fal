@@ -803,9 +803,7 @@ object Nest
       confFile = utils.findFileInDirs( dirs, fname + ".fal" )
 
       if confFile
-         if self.log_level >= 3
-            self.logd( "Compiling config from " + confFile )
-         end
+         if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
          
          try
             cmp = compiler.Compiler()
@@ -814,7 +812,7 @@ object Nest
             vars = [=>]
             for var in confMod.globals()
                value = confMod.get( var )
-               if value.isCallable() 
+               if var.startsWith("_")
                   continue
                end
                vars[var] = value
@@ -824,6 +822,8 @@ object Nest
             raise NestError( NestError.econfig, "", e.toString() )
          end
       end
+
+      if self.log_level >= 3: self.logd( @"In $(fname), found variables "+ vars.describe() )
       
       return vars // will be nil if not loaded
    end
