@@ -252,7 +252,7 @@ FALCON_MODULE_DECL
    //
    Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::Dyn_dummy_init ); // actually, raises
    dynfunc_cls->setWKS( true );
-   self->addClassMethod( dynfunc_cls, "call__", Falcon::Ext::DynFunction_call );
+   self->addClassMethod( dynfunc_cls, "__call", Falcon::Ext::DynFunction_call );
    self->addClassMethod( dynfunc_cls, "toString", Falcon::Ext::DynFunction_toString );
 
    //============================================================

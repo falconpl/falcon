@@ -1,0 +1,272 @@
+/*******************************************************************************
+<source name="WebAPI.fal" language="falcon" begin="23-Aug-2010">
+    <description>
+        Web API service.
+    </description>
+    <authors>
+        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*******************************************************************************/
+
+import Compiler from compiler as Compiler
+import Config from nest as Config
+import Service from nest as Service
+import NestError from nest as NestError
+import findFile from nest.utils as findFile
+import reldir from nest.utils as reldir
+
+/*******************************************************************************
+<class name="WebAPI">
+    <description>
+        Provides functionality for accessing the Web API.
+    </description>
+    <params see="nest.Service"/>
+</class>
+*******************************************************************************/
+class WebAPI(owner, instance) from Service(owner, instance)
+
+    /***************************************************************************
+    <property name="apidir">
+        <description>
+            The directory where API objects are stored.
+        </description>
+    </function>
+    ***************************************************************************/
+    apidir = nil
+
+    /***************************************************************************
+    <property name="_compiler">
+        <description>
+            Compiler services.
+        </description>
+    </property>
+    ***************************************************************************/
+    _compiler = Compiler()
+
+    /***************************************************************************
+    <property name="_render">
+        <description>
+            Rendering map.
+        </description>
+    </property>
+    ***************************************************************************/
+    _render = [
+        "home" => self._renderHome,
+        "detail" => self._renderDetail,
+        "invoke" => self._renderInvoke
+    ]
+
+    /***************************************************************************
+    <function name="startup">
+        <description see="nest.Service.startup"/>
+    </function>
+    ***************************************************************************/
+    function startup()
+        self.apidir = reldir(Config.site_srv_dir, self.className())
+    end
+
+    /***************************************************************************
+    <function name="run">
+        <description see="nest.Service.run"/>
+    </function>
+    ***************************************************************************/
+    function run()
+    end
+
+    /***************************************************************************
+    <function name="render">
+        <description see="nest.Service.render"/>
+        <return see="nest.Service.render"/>
+    </function>
+    ***************************************************************************/
+    function render()
+        self.Service.render()
+        return self._render[Request.getField("pid", "home")]()
+    end
+
+    /***************************************************************************
+    <function name="finalize">
+        <description see="nest.Service.finalize"/>
+    </function>
+    ***************************************************************************/
+    function finalize()
+    end
+
+    /***************************************************************************
+    <function name="getApiObjects">
+        <description>
+            Gets the specified API objects. If no API object is specified,
+            <this/> gets all the API objects available on the system. API
+            objects represent functionality made available thru an URL.
+        </description>
+        <params>The API objects to retrieve.</params>
+        <return>
+            The API objects.
+        </return>
+    </function>
+    ***************************************************************************/
+    function getApiObjects()
+        exts = ["fam", "fal"]
+        apiObjects = [ => ]
+
+        if paramCount() > 0
+            for i = 0 to paramCount() - 1
+                if not (file = findFile(self.apidir, paramNumber(i), exts))
+                    raise NestError(NestError.mod_notfound, "", paramNumber(i))
+                end
+                apiObjects[paramNumber(i)] = self._loadApiObject(file, paramNumber(i))
+            end
+        else
+            direnum = Directory(self.apidir)
+            while (file = direnum.read())
+                name = Path(file).file
+                if file = findFile(self.apidir, name, exts)
+                    apiObjects[name] = self._loadApiObject(file, name)
+                end
+            end
+        end
+
+        return apiObjects.values()
+    end
+
+    /***************************************************************************
+    <function name="_loadApiObject">
+        <description>
+            Loads the specified API object.
+        </description>
+        <params>
+            <param name="file">The file containing the API object to load.</param>
+            <param name="name">The name of the API object to load.</param>
+        </params>
+        <return>
+            The API object.
+        </return>
+    </function>
+    ***************************************************************************/
+    function _loadApiObject(file, name)
+        try
+            module = self._compiler.loadFile(file, name)
+            moduleClass = module.get(name)
+        catch AccessError
+            raise NestError(NestError.no_mod_class, "", name)
+        end
+
+        return moduleClass
+    end
+
+    /***************************************************************************
+    <function name="_renderHome">
+        <description>
+            Renders the API summary.
+        </description>
+        <return>
+            The API summary.
+        </return>
+    </function>
+    ***************************************************************************/
+    function _renderHome()
+        for apiObject in self.getApiObjects()
+            docData = apiObject.docData()
+            detail = Nest.pageLink("detail", ["function" => docData["name"]])
+            forfirst; out = @'
+                <table>
+                <tr>
+                <th>Name</th>
+                <th>Description</th>
+                </tr>
+                '
+            end; out += @'
+                <tr>
+                <td><a href="$(detail)">$(docData["name"])</a></td>
+                <td>$(docData["description"])</td>
+                </tr>
+                '
+           forlast; out += @'</table>'; end
+        end
+
+        return out ? out : ""
+    end
+
+    /***************************************************************************
+    <function name="_renderDetail">
+        <description>
+            Renders the API object detail.
+        </description>
+        <return>
+            The API object detail.
+        </return>
+    </function>
+    ***************************************************************************/
+    function _renderDetail()
+        docData = self.getApiObjects(Request.getField("function"))[0].docData()
+
+        out = @'
+            <table>
+            <tr>
+            <th>Name</th>
+            <td>$(docData["name"])</td>
+            </tr>
+            <tr>
+            <th>Description</th>
+            <td>$(docData["description"])</td>
+            </tr>
+            <tr>
+            <th>Parameters</th>
+            '
+
+        invokeParams = ["function" => docData["name"]]
+
+        try
+            for param in docData["parameters"]
+                invokeParams[param["name"]] = param["name"]
+                forfirst; out += @'<td><table>'; end
+                out += @'
+                    <tr>
+                    <td class="subtitle">Name</td>
+                    <td class="subtitle">Description</td>
+                    <td class="subtitle">Mandatory</td>
+                    </tr>
+                    <tr>
+                    <td>$(param["name"])</td>
+                    <td>$(param["description"])</td>
+                    <td>$(param["mandatory"])</td>
+                    </tr>
+                    '
+                forlast; out += @'</table></td>'; end
+            end
+        catch in error
+            out += @'<td>N/A</td>'
+        end
+
+        invoke = Nest.pageLink("invoke", invokeParams)
+
+        out += @'
+            </tr>
+            <tr>
+            <th>URL</th>
+            <td><a href="$(invoke)">$(invoke)</a></td>
+            </tr>
+            </table>
+            ' 
+
+        return out
+    end
+
+    /***************************************************************************
+    <function name="_renderInvoke">
+        <description>
+            Renders the result of the API object execution.
+        </description>
+        <return>
+            The result of the API object execution.
+        </return>
+    </function>
+    ***************************************************************************/
+    function _renderInvoke()
+        return self.getApiObjects(Request.getField("function"))[0].execute()
+    end
+end

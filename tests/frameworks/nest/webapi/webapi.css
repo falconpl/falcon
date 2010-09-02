@@ -1,0 +1,35 @@
+/*******************************************************************************
+<source name="webapi.css" language="css" begin="25-Aug-2010">
+    <description>
+        Web API cascading stylesheet.
+    </description>
+    <authors>
+        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*******************************************************************************/
+
+body {
+    font: 100% Verdana, Helvetica, Arial, sans-serif;
+    background: #FFFFFF;
+    margin: 0;
+    padding: 0;
+    text-align: center
+    color: #000000
+}
+
+table {
+    border-spacing: 10px 0px;
+}
+
+td, th {
+    text-align: left;
+    vertical-align: middle;
+}
+
+td.subtitle {
+    font-style: italic;
+}

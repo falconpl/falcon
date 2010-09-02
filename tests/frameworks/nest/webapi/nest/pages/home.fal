@@ -1,0 +1,38 @@
+/*******************************************************************************
+<source name="home.fal" language="falcon" begin="23-Aug-2010">
+    <description>
+        Web API main page.
+    </description>
+    <authors>
+        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
+    </authors>
+    <copyright year="2010" holder="CKD, Inc.">
+        All rights reserved.
+    </copyright>
+</source>
+*******************************************************************************/
+
+import from htmaker
+
+stringStream = StringStream()
+htmaker.OutStream.stream = stdOut(stringStream)
+
+doc = htmaker.TransitionalFrame()
+
+.[doc.html.add
+    htmaker.Head()
+    htmaker.Body()
+]()
+
+.[doc.html.head.add
+    htmaker.Title(i"Web API")
+    htmaker.Link("webapi.css", "stylesheet")
+]()
+
+.[doc.html.body.add
+    htmaker.H1(i"API Summary")
+    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
+]()
+
+stringStream.close()
+printl(doc.render())
