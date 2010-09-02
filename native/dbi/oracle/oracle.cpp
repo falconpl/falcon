@@ -42,7 +42,7 @@ FALCON_MODULE_DECL
    // also, we declare an Oralce class, which derives from DBIHandler which
    // is in the DBI module.
    Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandle" ); // it's external
-   Falcon::Symbol *mysql_class = self->addClass( "Oralce", Falcon::Ext::Oracle_init );
+   Falcon::Symbol *mysql_class = self->addClass( "Oracle", Falcon::Ext::Oracle_init );
    mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    mysql_class->setWKS( true );
 
