@@ -853,7 +853,8 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
       Item &obj = aRect->at( i );
       if ( ! obj.isObject() || ! obj.asObject()->derivedFrom( "SDLRect" ) )
       {
-         memFree( rects );
+         if ( len > 16 ) // free only if we used memAlloc
+            memFree( rects );
          throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
             extra( "A->SDLRect" ) ) ;
          return;
