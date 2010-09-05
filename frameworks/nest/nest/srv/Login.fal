@@ -93,10 +93,8 @@ class Login( instance ) from Service( instance )
       if self.uid.isSet
          self.checkLogin( self.uid.value, self.pwd.value )
       end
-
-
-
    end
+
 
    function checkLogin( uid, pwd )
       Nest.logd( "Checking login for " + uid + ":" + pwd )
@@ -112,7 +110,7 @@ class Login( instance ) from Service( instance )
          Nest.logi( "User \"" + uid + "\" performed login(" + al + ") with data " + ad.describe() )
          self.auth_user.value = uid
          self.auth_level.value = al
-         self.auth_data.value = al
+         self.auth_data.value = ad
          self.logmode.value = "in"
       else
          Nest.logd( "User \"" + uid + "\" failed login." )
