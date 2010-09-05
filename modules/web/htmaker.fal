@@ -16,7 +16,6 @@
 */
 
 import HTMError from self.htmerror as HTMError
-import OutStream from self.outstream as OutStream
 
 /******************************************************************
 Options
@@ -37,15 +36,18 @@ object HTMaker
    checkTree = true
 end
 
+function _htmlEscape( text )
+   return text.replace( "&", "&amp;" ).replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace( "\"", "&quot;" )
+end
 
 /******************************************************************
 Base common stuff
 ******************************************************************/
 
-class AttribsBase
+class AttribsBase()
 
    /*# render the attributes */
-   function render()
+   function toString()
       
       string = ""
       for key, value in self.retrieve()
@@ -61,7 +63,7 @@ class AttribsBase
          end
       end
       
-      if string: OutStream.write( string )
+      return string
    end
 end
 
@@ -134,7 +136,7 @@ class DomList( parent )
    function empty(): return self.children.len() == 0
    
    function add( item )
-      if HTMaker.checkTree and item.hname
+      if HTMaker.checkTree and item.hname and item.hname != "verbatim"
          if self.parent.childTypeList and item.hname notin self.parent.childTypeList
             pcls = self.parent.hname
             cls = item.hname
@@ -200,18 +202,19 @@ end
    In rendering, it creates an XHTML compilant document. 
 */
 class XHTMLFrame( encoding, version )
-   encoding = encoding ? encoding : "utf-8" 
+   encoding = encoding ? encoding : "utf-8"
    version = version ? version: "1.0"
    html = HTML(self)
 
-   function render()
-      OutStream.write( @'
+   function render(stream)
+      if stream == nil: stream = stdOut()
+      stream.writeText( @'
 <?xml version="$(self.version)" encoding="$(self.encoding)"?>
 <!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 ')
-      self.html.render()
+      self.html.render( stream )
    end
 end
 
@@ -219,19 +222,17 @@ end
 
    In rendering, it creates an HTML 4.01 (Transitional) compilant document.
 */
-class TransitionalFrame( sayDocType )
+class TransitionalFrame
    html = HTML(self)
-   sayDocType = sayDocType == nil ? true : sayDocType
-
-   function render()
-      if self.sayDocType
-         OutStream.write( @'
+   
+   function render(stream)
+      if stream == nil: stream = stdOut()
+      stream.writeText( '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
             "http://www.w3.org/TR/html4/loose.dtd">
    ')
-      end
       
-      self.html.render()
+      self.html.render(stream)
    end
 end
 
@@ -242,12 +243,13 @@ end
 class StrictFrame
    html = HTML(self)
 
-   function render()
-      OutStream.write( @'
+   function render(stream)
+      if stream == nil: stream = stdOut()
+      stream.writeText( @'
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
       "http://www.w3.org/TR/html4/strict.dtd">
 ')
-      self.html.render()
+      self.html.render(stream)
    end
 end
 
@@ -258,12 +260,13 @@ end
 class FramesetFrame
    html = HTML(self)
 
-   function render()
-      OutStream.write( @'
+   function render(stream)
+      if stream == nil: stream = stdOut()
+      stream.writeText( @'
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
 ')
-      self.html.render()
+      self.html.render(stream)
    end
 end
 
@@ -291,42 +294,48 @@ class BaseDom( hname, childTypeList, attribClass )
       return " " * (level * 3)
    end
    
-   function render( level )
+   function render( level, stream )
       if not level: level = 1
+      if not stream: stream = stdOut()
       
       sep = self.st_makesep( level )
-      OutStream.write( sep + "<" + self.hname )
+      stream.writeText( sep + "<" + self.hname )
 
       if self.eattr
-         self.eattr.render()
+         sattr = self.eattr.toString()
+         if sattr: stream.writeText( sattr )
       end
 
       // ending ?
       if not self.text and not self.children
-         OutStream.write( "/>" + self._rsep )
+         stream.writeText( "/>" + self._rsep )
          return
       end
 
-      OutStream.write( ">" + self._rtsep )
+      stream.writeText( ">" + self._rtsep )
 
       if self.text
          // normally does not escapes, but oob text can be passed to escape automatically
-         ((^? self.text) ? OutStream.write : OutStream.writeEscape)( self.text )
+         if ^? self.text
+            stream.writeText( _htmlEscape( self.text ) )
+         else
+            stream.writeText( self.text )
+         end
       end
       
       if self.children
          for item in self.children.items
-            forfirst: OutStream.write( self._rsep )
-            item.render( level + 1 )
+            forfirst: stream.writeText( self._rsep )
+            item.render( level + 1, stream )
             forlast: last = item
          end
 
          if last and last.getProperty("_rsep")
-            OutStream.write( sep )
+            stream.writeText( sep )
          end
       end
 
-      OutStream.write( "</" + self.hname + ">" + self._rsep )      
+      stream.writeText( "</" + self.hname + ">" + self._rsep )
    end
    
    function add()
@@ -430,6 +439,16 @@ class BaseDom( hname, childTypeList, attribClass )
       self.eattr.style = value
       return self
    end
+
+   /*# Return the stream associated with the frame. */
+   function getFrame()
+      p = self.parent
+      while p provides parent
+         p = p.parent
+      end
+      
+      return p
+   end
 end
 
 
@@ -441,7 +460,8 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
    head = nil
    body = nil
 
-   function render()
+   function render( stream )
+      if not stream: stream = stdOut()
       if not self.head
          self.head = Head().add( Title("") )
       end
@@ -451,18 +471,18 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
       end
       
       if self.parent and self.parent.derivedFrom( XHTMLFrame )
-         OutStream.write(
+         stream.writeText(
             @"
                <html xmlns=\"http://www.w3.org/1999/xhtml\"
                xml:lang=\"$(self.lang)\" lang=\"$(self.lang)\" >\n" )
       else
-         OutStream.write( "<html>\n" )
+         stream.writeText( "<html>\n" )
       end
                   
-      self.head.render(1)
-      self.body.render(1)
+      self.head.render(1, stream)
+      self.body.render(1, stream)
       
-      OutStream.write( "</html>\n" )
+      stream.writeText( "</html>\n" )
    end
 
    function add()
@@ -807,13 +827,14 @@ end
 class EscapingData( name, attr ) from \
          BaseDom( name, nil, attr )
 
-   function render( level )
+   function render( level, stream )
       sep = self.st_makesep( level )
-      OutStream.write( sep + "<" + self.hname )
-      self.eattr.render()
+      stream.writeText( sep + "<" + self.hname )
+      sattr = self.eattr.toString()
+      if sattr: stream.writeText( sattr )
       if not self.text
          // empty element -- closing mark is required by many browsers
-         OutStream.write( "></"+ self.hname + ">\n" )
+         stream.writeText( "></"+ self.hname + ">\n" )
          return
       end
 
@@ -829,11 +850,11 @@ class EscapingData( name, attr ) from \
       // we have a content
       // CDATA markers must be at line begin.
       if( use_cdata )
-         OutStream.write( ">\n<![CDATA[\n" + self.text + "\n" +
+         stream.writeText( ">\n<![CDATA[\n" + self.text + "\n" +
             "]]>\n" + sep +
             "</" + self.hname + ">\n")
       else
-         OutStream.write( ">\n" + self.text + sep +
+         stream.writeText( ">\n" + self.text + sep +
             "</" + self.hname + ">\n")
       end
    end
@@ -950,8 +971,10 @@ class Text(text) from \
       BaseDom( "text", nil, nil )
    text = text
 
-   function render( level )
-      OutStream.writeEscape( self.text )
+   function render( level, stream )
+      if self.text
+         stream.writeText( _htmlEscape(self.text) )
+      end
    end
 end
 
@@ -965,11 +988,11 @@ end
 */
 
 class Verbatim(text) from \
-      BaseDom( "text", nil, nil )
+      BaseDom( "verbatim", nil, nil )
    text = text
 
-   function render( level )
-      OutStream.write( self.text )
+   function render( level, stream )
+      if self.text: stream.writeText( self.text )
    end
 end
 
@@ -2124,8 +2147,8 @@ end
 /*# Element rendering as the "Valid XHTML 1.0" official mark. */
 class ValidXhtmlMark from BaseDom( "p" )  // fake to be a p
 
-   function render()
-      OutStream.write( '
+   function render(level, stream)
+      stream.writeText( '
       <p>
       <a href="http://validator.w3.org/check?uri=referer"><img
          src="http://www.w3.org/Icons/valid-xhtml10"
@@ -2137,8 +2160,8 @@ end
 
 /*# Element rendering as the "Valid HTML 4.01" official mark. */
 class ValidHtmlMark from BaseDom( "p" )  // fake to be a p
-   function render()
-      OutStream.write('
+   function render(level, stream)
+      stream.writeText('
    <p>
       <a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-html401"
@@ -2157,8 +2180,8 @@ end
 */
 class Falcon( data ) from BaseDom( "" )  // fake to be a i
    text = data
-   function render()
-      OutStream.write( "<?fal\n" + self.text + "\n?>" )
+   function render( level, stream )
+      stream.write( "<?fal\n" + self.text + "\n?>" )
    end
 end
 
@@ -2171,8 +2194,8 @@ end
 */
 class FalconVar( variable ) from BaseDom( "" )  // fake to be a i
    text = variable
-   function render()
-      OutStream.write( "<?fal >> (" + self.text + ") ?>" )
+   function render( level, stream )
+      stream.writeText( "<?fal >> (" + self.text + ") ?>" )
    end
 end
 
@@ -2193,8 +2216,8 @@ class Include( fname, encoding ) from BaseDom( "" )
       file.close()
    end
 
-   function render()
-      OutStream.write( self.text )
+   function render(level, stream)
+      stream.writeText( self.text )
    end
 end
 
@@ -2216,8 +2239,8 @@ class IncludeFalcon( fname, encoding ) from BaseDom( "" )
       if error: raise error
    end
 
-   function render()
-      OutStream.write( self.text )
+   function render(level, stream)
+      stream.writeText( self.text )
    end
 
 end

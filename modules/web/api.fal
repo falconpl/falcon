@@ -98,7 +98,7 @@ class Wrapper( name, desc, emap )
 
       if self.params
          plist = []
-         for p in self.param
+         for p in self.params
             plist += [
                "name" => p.name,
                "description" => p.desc,
