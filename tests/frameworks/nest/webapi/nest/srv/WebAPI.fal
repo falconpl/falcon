@@ -191,7 +191,7 @@ class WebAPI(owner, instance) from Service(owner, instance)
             forlast; table = htmaker.TABLE().add(tbody); end
         end
 
-        if not table; table = htmaker.P(i"No function available"); end
+        if not table; table = htmaker.P(i"No function available."); end
 
         stringStream = StringStream()
         table.render(4, stringStream)
