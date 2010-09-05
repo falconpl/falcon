@@ -63,6 +63,9 @@ class Wiki( instance ) from Service( instance )
       if not self.allowed(): return false
       if not self.dm: raise NestError( NestError.no_dm )
       if not self.parser.value: raise NestError( NestError.other, "Must configure a parser in configuration" )
+      // adding default upload linker
+      if not self.upload_linker.value: self.upload_linker.value = {v => v}
+      
       self.setEntities( self.dm )
 
       // sanitize the WID settings

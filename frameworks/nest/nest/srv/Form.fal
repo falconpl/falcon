@@ -19,6 +19,8 @@
 import from nest
 import from nest.bindings in b
 
+
+
 /*# Service receiving the variables in a form.
 
    This service is a useful shortcut and organizer for form checking code.
@@ -37,8 +39,11 @@ class Form( instance, options ) from nest.Service( instance, options )
          "Global check on the form; a function called as check( self, vars). Return goes in formResult.",
          b.ConfigBinder )
 
+   action = nest.ServiceVar( "Action for the form submit", b.ConfigBinder )
    formData = nest.ServiceVar( "Data to be displayed in the form.", b.ConfigBinder )
-   formAction = nest.ServiceVar( "Things to do below the form. For now, verbatim", b.ConfigBinder )
+   formActions = nest.ServiceVar( "Things to do below the form. For now, verbatim", b.ConfigBinder )
+   formId = nest.ServiceVar( "DOM ID of the form", b.ConfigBinder )
+   formClass = nest.ServiceVar( "CSS Class of the form", b.ConfigBinder )
    
    formVars = nest.ServiceVar( "Variables in the form as posted by the users" )
    formResults = nest.ServiceVar( "Results that the final user may be interested in.")
@@ -51,6 +56,11 @@ class Form( instance, options ) from nest.Service( instance, options )
 
    function run()
       Nest.logi( "Entering the " + self.fullName() + " service" )
+
+      // check actions
+      if self.action.value == nil
+         self.action.value = Nest.pageLink()
+      end
       
       // extract the variables
       formVars = [=>]
@@ -95,4 +105,96 @@ class Form( instance, options ) from nest.Service( instance, options )
       return self.formVars.value
    end
 
+   /*# Creates a field given a definition */
+   function makeField( field )
+      fvals = self.formVars.value
+      value = field.name in fvals ? fvals[field.name] : ""
+      
+      return field.render( self.instance, value )
+   end
+end
+
+
+class Field( name, desc, type, extra, opts )
+   name = name
+   desc = desc
+   type = type
+   extra = extra ? extra : ""
+   opts = opts
+
+   function render( instance, value )
+      fname = instance + "." + self.name
+      res = ""
+      
+      if self.desc
+         desc = htmlEscape(self.desc)
+         res += @'
+            <label id="label_$(self.name)" for="$(self.name)">$(desc)</label>
+            '
+      end
+      
+      // select is treated specially.
+      if self.type == "select"
+         res += @'<select name="$(fname)" id="$(self.name)" $(self.extra)>'
+         
+         for opt in self.opts
+            res += "\n" + opt.render( value )
+         end
+
+         res += "\n</select>\n"
+      else
+         // otherwise, things are simpler.
+         if self.type == "password"
+            value = ""
+         else
+            value = strEscape( value )
+         end
+         
+         res += @'
+            <input type="$(self.type)" name="$(fname)" id="$(self.name)" value="$(value)" $(self.extra)/>
+         '
+      end
+      
+      return res
+   end
+   
+end
+
+
+class MultiField( name, desc, fields )
+   name = name
+   desc = desc
+   fields = fields
+
+   function render( instance, value )
+      res = ""
+      
+      if self.desc
+         desc = htmlEscape(self.desc)
+         res += @'
+            <label id="label_$(self.name)" for="$(self.name)">$(desc)</label>
+            '
+      end
+
+      for field in self.fields
+         res += field.render( instance, value )
+      end
+
+      return res
+   end
+end
+
+
+class Option( value, desc )
+   value = value
+   desc = desc
+
+   function render( val )
+      esc_val = self.value.escape()
+      desc = htmlEscape( self.desc )
+      sel = val == self.value ? ' selected="yes"' : ""
+      
+      return @ "<option value=\"$(esc_val)\"$(sel)>$(desc)</option>\n"
+   end
+   
 end

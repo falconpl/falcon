@@ -7,7 +7,7 @@
          <? if data.logmode == "fail" ?><tr><td colspan="2" class="nest_login_failed">Login failed</td></tr><? end ?>
          <? if data.logmode == "expired" ?><tr><td colspan="2" class="nest_login_failed">Session expired</td></tr><? end ?>
          <tr><td>Username:</td><td><input name="uid" type="text" size="15" maxlength="64"></td></tr>
-         <tr><td>Password:</td><td><input name="pwd" type="text" size="15" maxlength="64"></td></tr>
+         <tr><td>Password:</td><td><input name="pwd" type="password" size="15" maxlength="64"></td></tr>
          <tr><td colspan="2"><input name="submit" type="submit" value="Login"></td></tr>
       </table>
       </form>

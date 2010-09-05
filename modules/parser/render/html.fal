@@ -254,10 +254,9 @@ class Renderer( siteHelper, cls )
       if "valign" in i: style +="vertical-align:"+i.valign+";"
       if "pad" in i: style +="margin:"+i.pad+"px;"
       if "center" in i: style +="display: block; margin-left: auto; margin-right: auto;"
-      if style: link +=" style=\""+style+"\""
-      
+      if style: link +=" style=\""+style+"\""      
       link += "/>"
-      
+
       if "thumb" in i: link +="</a>"
       return link
    end

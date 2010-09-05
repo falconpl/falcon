@@ -1,3 +1,28 @@
 <? function skin( vars, srv ) ?>
-   <div> Here goes the form </div>
+   <div>
+      <?
+      if "RESULT" in vars.formResults
+         if vars.formResults["RESULT"] == "OK"
+            > i"Thanks, you are now registered. You can go back to the main page and log in."
+         else
+            > i"Error in posting the request.<br/>"
+            > "<pre>", vars.formResults["ERROR"], "</pre>"
+         end
+      else
+      ?>
+      <form  method="POST" action="<?= vars.action ?>" class="<?= vars.formClass ?>" id="<?= vars.formId ?>">
+         <fieldset>
+            <? for field in vars.formData ?>
+               <div>
+               <?= srv.makeField( field ) ?>
+               <? if field.name in vars.formResults ?>
+                  <span><?= vars.formResults[ field.name ] ?></span>
+               <? end ?>
+               </div>
+            <? end ?>
+         </fieldset>
+         <?= vars.formActions ?>
+      </form>
+      <? end ?>
+   </div>
 <? end ?>
