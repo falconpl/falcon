@@ -12,10 +12,7 @@
 </source>
 *******************************************************************************/
 
-import from htmaker
-
-stringStream = StringStream()
-htmaker.OutStream.stream = stdOut(stringStream)
+import from web.htmaker in htmaker
 
 doc = htmaker.TransitionalFrame()
 
@@ -26,13 +23,12 @@ doc = htmaker.TransitionalFrame()
 
 .[doc.html.head.add
     htmaker.Title(i"Web API")
-    htmaker.Link("webapi.css", "stylesheet")
+    htmaker.Verbatim(Nest.headings())
 ]()
 
 .[doc.html.body.add
     htmaker.H1(i"API Summary")
-    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
+    htmaker.Div().add(Nest.service("WebAPI").render())
 ]()
 
-stringStream.close()
-printl(doc.render())
+doc.render()

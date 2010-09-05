@@ -18,6 +18,7 @@ import Service from nest as Service
 import NestError from nest as NestError
 import findFile from nest.utils as findFile
 import reldir from nest.utils as reldir
+import from web.htmaker in htmaker
 
 /*******************************************************************************
 <class name="WebAPI">
@@ -172,23 +173,25 @@ class WebAPI(owner, instance) from Service(owner, instance)
         for apiObject in self.getApiObjects()
             docData = apiObject.docData()
             detail = Nest.pageLink("detail", ["function" => docData["name"]])
-            forfirst; out = @'
-                <table>
-                <tr>
-                <th>Name</th>
-                <th>Description</th>
-                </tr>
-                '
-            end; out += @'
-                <tr>
-                <td><a href="$(detail)">$(docData["name"])</a></td>
-                <td>$(docData["description"])</td>
-                </tr>
-                '
-           forlast; out += @'</table>'; end
+            forfirst
+                tbody = htmaker.TBody()
+                .[tbody.add
+                    .[htmaker.TR().add
+                        htmaker.TH(i"Name")
+                        htmaker.TH(i"Description")
+                    ]()
+                ]()
+            end
+            .[tbody.add
+                .[htmaker.TR().add
+                    htmaker.TD().add(htmaker.A(detail, docData["name"]))
+                    htmaker.TD(docData["description"])
+                ]()
+            ]()
+            forlast; table = htmaker.TABLE().add(tbody); end
         end
 
-        return out ? out : ""
+        return table ? table : htmaker.P(i"No function available.")
     end
 
     /***************************************************************************
@@ -203,57 +206,47 @@ class WebAPI(owner, instance) from Service(owner, instance)
     ***************************************************************************/
     function _renderDetail()
         docData = self.getApiObjects(Request.getField("function"))[0].docData()
-
-        out = @'
-            <table>
-            <tr>
-            <th>Name</th>
-            <td>$(docData["name"])</td>
-            </tr>
-            <tr>
-            <th>Description</th>
-            <td>$(docData["description"])</td>
-            </tr>
-            <tr>
-            <th>Parameters</th>
-            '
-
         invokeParams = ["function" => docData["name"]]
 
-        try
-            for param in docData["parameters"]
-                invokeParams[param["name"]] = param["name"]
-                forfirst; out += @'<td><table>'; end
-                out += @'
-                    <tr>
-                    <td class="subtitle">Name</td>
-                    <td class="subtitle">Description</td>
-                    <td class="subtitle">Mandatory</td>
-                    </tr>
-                    <tr>
-                    <td>$(param["name"])</td>
-                    <td>$(param["description"])</td>
-                    <td>$(param["mandatory"])</td>
-                    </tr>
-                    '
-                forlast; out += @'</table></td>'; end
-            end
-        catch in error
-            out += @'<td>N/A</td>'
-        end
+        try; for param in docData["parameters"]
+            invokeParams[param["name"]] = param["name"]
+            forfirst; ntbody = htmaker.TBody(); end
+            .[ntbody.add
+                .[htmaker.TR().add
+                    htmaker.TD(i"name")
+                    htmaker.TD(i"description")
+                    htmaker.TD(i"Mandatory")
+                ]()
+                .[htmaker.TR().add
+                    htmaker.TD(param["name"])
+                    htmaker.TD(param["description"])
+                    htmaker.TD(param["mandatory"] ? i"Yes" : i"No")
+                ]()
+            ]()
+        end; catch AccessError; end
 
         invoke = Nest.pageLink("invoke", invokeParams)
-
-        out += @'
-            </tr>
-            <tr>
-            <th>URL</th>
-            <td><a href="$(invoke)">$(invoke)</a></td>
-            </tr>
-            </table>
-            ' 
-
-        return out
+        tbody = htmaker.TBody()
+        .[tbody.add
+            .[htmaker.TR().add
+                htmaker.TH(i"Name")
+                htmaker.TD(docData["name"])
+            ]()
+            .[htmaker.TR().add
+                htmaker.TH(i"Description")
+                htmaker.TD(docData["description"])
+            ]()
+            .[htmaker.TR().add
+                htmaker.TH(i"Parameters")
+                htmaker.TD().add(ntbody ? htmaker.TABLE().add(ntbody) : htmaker.Text(i"N/A"))
+            ]()
+            .[htmaker.TR().add
+                htmaker.TH(i"URL")
+                htmaker.TD().add(htmaker.A(invoke, invoke))
+            ]()
+        ]()
+        
+        return htmaker.TABLE().add(tbody)
     end
 
     /***************************************************************************
