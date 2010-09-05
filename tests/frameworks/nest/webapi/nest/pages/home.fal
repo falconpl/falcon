@@ -26,12 +26,13 @@ doc = htmaker.TransitionalFrame()
 
 .[doc.html.head.add
     htmaker.Title(i"Web API")
-    htmaker.Link("webapi.css", "stylesheet")
+//  htmaker.Verbatim(Nest.headings())
+    htmaker.Link("webapi.css", "stylesheet", "text/css")
 ]()
 
 .[doc.html.body.add
     htmaker.H1(i"API Summary")
-    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
+    htmaker.Div().add(Nest.service("WebAPI").render())
 ]()
 
 stringStream.close()
