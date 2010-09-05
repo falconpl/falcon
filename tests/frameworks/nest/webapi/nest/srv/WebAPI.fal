@@ -18,7 +18,6 @@ import Service from nest as Service
 import NestError from nest as NestError
 import findFile from nest.utils as findFile
 import reldir from nest.utils as reldir
-
 import from web.htmaker in htmaker
 
 /*******************************************************************************
@@ -224,9 +223,9 @@ class WebAPI(owner, instance) from Service(owner, instance)
                     htmaker.TD(param["mandatory"] ? i"Yes" : i"No")
                 ]()
             ]()
-            forlast; invoke = Nest.pageLink("invoke", invokeParams); end
-        end; catch; end
+        end; catch AccessError; end
 
+        invoke = Nest.pageLink("invoke", invokeParams)
         tbody = htmaker.TBody()
         .[tbody.add
             .[htmaker.TR().add

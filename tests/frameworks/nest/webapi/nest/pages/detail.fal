@@ -26,7 +26,6 @@ doc = htmaker.TransitionalFrame()
 .[doc.html.head.add
     htmaker.Title(functionName)
     htmaker.Verbatim(Nest.headings())
-    //htmaker.Link("webapi.css", "stylesheet", "text/css")
 ]()
 
 .[doc.html.body.add
@@ -35,6 +34,4 @@ doc = htmaker.TransitionalFrame()
     htmaker.Div().add(htmaker.A(Nest.pageLink('home'), i"Back to Summary"))
 ]()
 
-ss = StringStream()
-doc.render(ss)
-print(ss.closeToString())
+doc.render()
