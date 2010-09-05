@@ -191,7 +191,12 @@ class WebAPI(owner, instance) from Service(owner, instance)
             forlast; table = htmaker.TABLE().add(tbody); end
         end
 
-        return table ? table : htmaker.P(i"No function available.")
+        if not table; table = htmaker.P(i"No function available"); end
+
+        stringStream = StringStream()
+        table.render(4, stringStream)
+
+        return stringStream.closeToString()
     end
 
     /***************************************************************************
@@ -213,9 +218,9 @@ class WebAPI(owner, instance) from Service(owner, instance)
             forfirst; ntbody = htmaker.TBody(); end
             .[ntbody.add
                 .[htmaker.TR().add
-                    htmaker.TD(i"name")
-                    htmaker.TD(i"description")
-                    htmaker.TD(i"Mandatory")
+                    htmaker.TD(i"name").CLASS("subheader")
+                    htmaker.TD(i"description").CLASS("subheader")
+                    htmaker.TD(i"Mandatory").CLASS("subheader")
                 ]()
                 .[htmaker.TR().add
                     htmaker.TD(param["name"])
@@ -226,6 +231,7 @@ class WebAPI(owner, instance) from Service(owner, instance)
         end; catch AccessError; end
 
         invoke = Nest.pageLink("invoke", invokeParams)
+
         tbody = htmaker.TBody()
         .[tbody.add
             .[htmaker.TR().add
@@ -246,7 +252,10 @@ class WebAPI(owner, instance) from Service(owner, instance)
             ]()
         ]()
         
-        return htmaker.TABLE().add(tbody)
+        stringStream = StringStream()
+        (htmaker.TABLE().add(tbody)).render(4, stringStream)
+
+        return stringStream.closeToString()
     end
 
     /***************************************************************************

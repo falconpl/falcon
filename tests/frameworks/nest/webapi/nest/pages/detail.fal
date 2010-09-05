@@ -30,7 +30,7 @@ doc = htmaker.TransitionalFrame()
 
 .[doc.html.body.add
     htmaker.H1(functionName)
-    htmaker.Div().add(Nest.service("WebAPI").render())
+    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
     htmaker.Div().add(htmaker.A(Nest.pageLink('home'), i"Back to Summary"))
 ]()
 
