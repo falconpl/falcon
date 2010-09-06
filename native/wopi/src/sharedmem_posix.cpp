@@ -84,7 +84,8 @@ SharedMem::SharedMem( const String &name, const String &filename ):
 
 void SharedMem::internal_build( const String &name, const String &filename )
 {
-   String sSemName =  "WOPI_SEM_"+name;
+   String sSemName = SEM_PREFIX;
+   sSemName += name;
 
    try
    {

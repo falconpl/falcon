@@ -44,11 +44,12 @@ function _toc( param, node, sout, page )
    // headers are always toplevel
    n1 = node
    while n1
-   
+      
       if n1.type == "header"
          // first time around?
          if not resNode
             topNode = gp.Node( "ol" )
+            stack.push( topNode )
             resNode = gp.TagNode( "div", [ "class"=>"nest_wiki_toc" ] )
             resNode.add( topNode )
          end
@@ -63,10 +64,12 @@ function _toc( param, node, sout, page )
             end
 
             while curlev > n1.level
-               topNode = stack.pop()
+               stack.pop()
                --curlev
             end
 
+            // replace the current li
+            topNode = stack.back()
             nli = gp.Node( "li" )
             nli.add( gp.InfoNode("link", ["name"=>n1.content, "ext"=>false, "internal"=>true, "text"=>n1.content]))
             topNode.add( nli )
