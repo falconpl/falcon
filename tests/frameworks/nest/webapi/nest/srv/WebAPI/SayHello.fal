@@ -6,8 +6,8 @@
     <authors>
         <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
     </authors>
-    <copyright year="2010" holder="CKD, Inc.">
-        All rights reserved.
+    <copyright year="2010" holder="The Falcon Programming Language">
+        Released under FPLL 1.1 or GPL 2.0 at your choice.
     </copyright>
 </source>
 *******************************************************************************/
@@ -44,7 +44,7 @@ object SayHello from api.Wrapper(
             self.error(1, i"Provide the name of a friend of yours.")
         end
 
-        return i"hello " + toWhom + "!"
+        return @i'hello $(toWhom)!'
     end
 end
 
