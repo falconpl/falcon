@@ -44,7 +44,7 @@ object SayHello from api.Wrapper(
             self.error(1, i"Provide the name of a friend of yours.")
         end
 
-        return i"hello " + toWhom + "!"
+        return @i'hello $(toWhom)!'
     end
 end
 
