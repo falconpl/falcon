@@ -1,16 +1,12 @@
-/*******************************************************************************
-<source name="WebAPI.fal" language="falcon" begin="23-Aug-2010">
-    <description>
-        Web API service.
-    </description>
-    <authors>
-        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
-    </authors>
-    <copyright year="2010" holder="The Falcon Programming Language">
-        Released under FPLL 1.1 or GPL 2.0 at your choice.
-    </copyright>
-</source>
-*******************************************************************************/
+/*#
+ * @file        WebAPI.fal
+ * @brief       Web API service.
+ * @begin       23-Aug-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
 
 import Compiler from compiler as Compiler
 import Config from nest as Config
@@ -20,96 +16,73 @@ import findFile from nest.utils as findFile
 import reldir from nest.utils as reldir
 import from web.htmaker in htmaker
 
-/*******************************************************************************
-<class name="WebAPI">
-    <description>
-        Provides functionality for accessing the Web API.
-    </description>
-    <params see="nest.Service"/>
-</class>
-*******************************************************************************/
+/*#
+ * Web API service.
+ *
+ * Provides functionality for accessing available API objects.
+ *
+ * @param owner Service owner.
+ * @param instance Service instance.
+ *
+ * @sa nest.Service
+ */
 class WebAPI(owner, instance) from Service(owner, instance)
 
-    /***************************************************************************
-    <property name="apidir">
-        <description>
-            The directory where API objects are stored.
-        </description>
-    </function>
-    ***************************************************************************/
+    /*#
+     * The directory where API objects are stored.
+     */
     apidir = nil
 
-    /***************************************************************************
-    <property name="_compiler">
-        <description>
-            Compiler services.
-        </description>
-    </property>
-    ***************************************************************************/
+    /*#
+     * Compiler services.
+     */
     _compiler = Compiler()
 
-    /***************************************************************************
-    <property name="_render">
-        <description>
-            Rendering map.
-        </description>
-    </property>
-    ***************************************************************************/
+    /*#
+     * Rendering map.
+     */
     _render = [
         "home" => self._renderHome,
         "detail" => self._renderDetail,
         "invoke" => self._renderInvoke
     ]
 
-    /***************************************************************************
-    <function name="startup">
-        <description see="nest.Service.startup"/>
-    </function>
-    ***************************************************************************/
+    /*#
+     * @see nest.Service.startup
+     */
     function startup()
         self.apidir = reldir(Config.site_srv_dir, self.className())
     end
 
-    /***************************************************************************
-    <function name="run">
-        <description see="nest.Service.run"/>
-    </function>
-    ***************************************************************************/
+    /*#
+     * @see nest.Service.run
+     */
     function run()
     end
 
-    /***************************************************************************
-    <function name="render">
-        <description see="nest.Service.render"/>
-        <return see="nest.Service.render"/>
-    </function>
-    ***************************************************************************/
+    /*#
+     * @see nest.Service.render
+     */
     function render()
         self.Service.render()
         return self._render[Request.getField("pid", "home")]()
     end
 
-    /***************************************************************************
-    <function name="finalize">
-        <description see="nest.Service.finalize"/>
-    </function>
-    ***************************************************************************/
+    /*#
+     * @see nest.Service.finalize
+     */
     function finalize()
     end
 
-    /***************************************************************************
-    <function name="getApiObjects">
-        <description>
-            Gets the specified API objects. If no API object is specified,
-            <this/> gets all the API objects available on the system. API
-            objects represent functionality made available thru an URL.
-        </description>
-        <params>The API objects to retrieve.</params>
-        <return>
-            The API objects.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Gets the specified API objects.
+     *
+     * If no API object is specified, this function gets all the API objects
+     * available on the system. API objects represent functionality made
+     * available thru an URL.
+     *
+     * @return The API object.
+     */
     function getApiObjects()
         exts = ["fam", "fal"]
         apiObjects = [ => ]
@@ -134,20 +107,14 @@ class WebAPI(owner, instance) from Service(owner, instance)
         return apiObjects.values()
     end
 
-    /***************************************************************************
-    <function name="_loadApiObject">
-        <description>
-            Loads the specified API object.
-        </description>
-        <params>
-            <param name="file">The file containing the API object to load.</param>
-            <param name="name">The name of the API object to load.</param>
-        </params>
-        <return>
-            The API object.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Loads the specified API object.
+     *
+     * @param file The file containing the API object to load.
+     * @param name The name of the API object to load.
+     *
+     * @return The API object.
+     */
     function _loadApiObject(file, name)
         try
             module = self._compiler.loadFile(file, name)
@@ -159,16 +126,11 @@ class WebAPI(owner, instance) from Service(owner, instance)
         return moduleClass
     end
 
-    /***************************************************************************
-    <function name="_renderHome">
-        <description>
-            Renders the API summary.
-        </description>
-        <return>
-            The API summary.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Renders the API summary.
+     *
+     * @return The API summary.
+     */
     function _renderHome()
         for apiObject in self.getApiObjects()
             docData = apiObject.docData()
@@ -199,16 +161,11 @@ class WebAPI(owner, instance) from Service(owner, instance)
         return stringStream.closeToString()
     end
 
-    /***************************************************************************
-    <function name="_renderDetail">
-        <description>
-            Renders the API object detail.
-        </description>
-        <return>
-            The API object detail.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Renders the API object detail.
+     *
+     * @return The API object detail.
+     */
     function _renderDetail()
         docData = self.getApiObjects(Request.getField("function"))[0].docData()
         invokeParams = ["function" => docData["name"]]
@@ -258,16 +215,11 @@ class WebAPI(owner, instance) from Service(owner, instance)
         return stringStream.closeToString()
     end
 
-    /***************************************************************************
-    <function name="_renderInvoke">
-        <description>
-            Renders the result of the API object execution.
-        </description>
-        <return>
-            The result of the API object execution.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Renders the result of the API object execution.
+     *
+     * @return The result of the API object execution.
+     */
     function _renderInvoke()
         return self.getApiObjects(Request.getField("function"))[0].execute()
     end

@@ -1,16 +1,12 @@
-/*******************************************************************************
-<source name="detail.fal" language="falcon" begin="23-Aug-2010">
-    <description>
-        Web API detail page.
-    </description>
-    <authors>
-        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
-    </authors>
-    <copyright year="2010" holder="The Falcon Programming Language">
-        Released under FPLL 1.1 or GPL 2.0 at your choice.
-    </copyright>
-</source>
-*******************************************************************************/
+/*#
+ * @file        detail.fal
+ * @brief       Web API detail page.
+ * @begin       23-Aug-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
 
 import from web.htmaker in htmaker
 

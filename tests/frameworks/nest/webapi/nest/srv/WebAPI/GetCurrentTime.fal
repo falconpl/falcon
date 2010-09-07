@@ -1,38 +1,29 @@
-/*******************************************************************************
-<source name="GetCurrentTime.fal" language="falcon" begin="23-Aug-2010">
-    <description>
-        Self-describing API object.
-    </description>
-    <authors>
-        <author href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</author>
-    </authors>
-    <copyright year="2010" holder="The Falcon Programming Language">
-        Released under FPLL 1.1 or GPL 2.0 at your choice.
-    </copyright>
-</source>
-*******************************************************************************/
+/*#
+ * @file        GetCurrentTime.fal
+ * @brief       Self-describing API object.
+ * @begin       23-Aug-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
 
 import from api
 
-/*******************************************************************************
-<object name="GetCurrentTime">
-    <description>
-        Implements the API object functionality.
-    </description>
-</object>
-*******************************************************************************/
+/*#
+ * Self-describing API object.
+ *
+ * @sa api.Wrapper, WebAPI
+ */
 object GetCurrentTime from api.Wrapper(
     "GetCurrentTime",
     i"Gets the current time.")
 
-    /***************************************************************************
-    <function name="go">
-        <description see="self">
-        <return>
-            The current time.
-        </return>
-    </function>
-    ***************************************************************************/
+    /*#
+     * Implements the API object functionality.
+     *
+     * @return The current time.
+     */
     function go()
         timeStamp = TimeStamp()
         return timeStamp.currentTime().toString("%X %x")
