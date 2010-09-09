@@ -77,7 +77,7 @@ FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
    The function may raise an error if the value cannot be
    computed because of domain or overflow errors.
 */
-FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
+FALCON_FUNC flc_math_log10( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
 
@@ -138,7 +138,7 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
    The function may raise an error if the value cannot be
    computed because of domain or overflow errors.
 */
-FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
+FALCON_FUNC flc_math_sqrt( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
 
@@ -170,12 +170,12 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
    The function may raise an error if the value cannot be
    computed because of domain or overflow errors.
 */
-FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
+FALCON_FUNC flc_math_mod( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
    Item *num2 = vm->param( 1 );
 
-   if ( num2 == 0 )
+   if ( num2 == 0 || ! num1.isOrdinal() || ! num2.isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
       return;
