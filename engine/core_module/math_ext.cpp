@@ -99,6 +99,38 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function sqrt
+   @brief Returns the square root of the argument.
+   @param x Argument.
+   @return The square root of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
+FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+      return;
+   }
+
+   errno = 0;
+   numeric res = sqrt( num1->forceNumeric() );
+   if ( errno != 0 )
+   {
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
+
+/*#
    @function pow
    @brief Returns the first argument elevated to the second one (x^y)
    @param x Base.
