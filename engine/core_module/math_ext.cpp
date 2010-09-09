@@ -129,6 +129,38 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function mod
+   @brief Returns the modulo of two arguments.
+   @param x Argument.
+   @param y Argument.
+   @return The modulo of the two argument; x mod y.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
+FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+   Item *num2 = vm->param( 1 );
+
+   if ( num2 == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
+      return;
+   }
+
+   errno = 0;
+   numeric res = fmod( num1->forceNumeric(), num2->forceNumeric() );
+   if ( errno != 0 )
+   {
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
 
 /*#
    @function pow
