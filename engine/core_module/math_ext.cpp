@@ -467,6 +467,7 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
 }
 
 #define PI 3.1415926535897932384626433832795
+#define E  2.7182818284590452353602874713527
 /*#
    @function rad2deg
    @brief Converts an angle expressed in radians into degrees.
