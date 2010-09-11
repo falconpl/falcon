@@ -766,7 +766,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
 {
-   // Parameter estraction.
+   // Parameter extraction.
    CoreString *ts = new CoreString;
    String *self = vm->self().asString();
    uint32 pc = vm->paramCount();
@@ -900,7 +900,7 @@ FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm )
 
 /*#
    @function strBackFind
-   @brief Finds a substring bakwards.
+   @brief Finds a substring backwards.
    @param string String where the search will take place.
    @param needle Substring to search for.
    @optparam start Optional position from which to start the search in string.
@@ -913,7 +913,7 @@ FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm )
 
 /*#
    @method rfind String
-   @brief Finds a substring bakwards.
+   @brief Finds a substring backwards.
    @param needle Substring to search for.
    @optparam start Optional position from which to start the search in string.
    @optparam end Optional position at which to end the search in string.
