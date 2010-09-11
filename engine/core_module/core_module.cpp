@@ -1253,7 +1253,7 @@ Module* core_module_init()
    self->addConstant("E", 2.7182818284590452353602874713527);
    self->addExtFunc( "log", &Falcon::core::flc_math_log )->
       addParam("x");
-   self->addExtFunc( "log10", &Falcon::core:flc_math_log )->
+   self->addExtFunc( "log10", &Falcon::core::flc_math_log )->
       addParam("x");
    self->addExtFunc( "exp", &Falcon::core::flc_math_exp )->
       addParam("x");

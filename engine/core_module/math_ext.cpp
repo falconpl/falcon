@@ -175,7 +175,7 @@ FALCON_FUNC flc_math_mod( ::Falcon::VMachine *vm )
    Item *num1 = vm->param( 0 );
    Item *num2 = vm->param( 1 );
 
-   if ( num2 == 0 || ! num1.isOrdinal() || ! num2.isOrdinal() )
+   if ( num2 == 0 || ! num1->isOrdinal() || ! num2->isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
       return;
