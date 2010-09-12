@@ -249,7 +249,11 @@ public:
    void position( int64 pos ) { m_idata.pos = pos; }
    
    Iterator* nextIter() const { return m_next; }
-   void nextIter( Iterator* n ) { m_next = n; }
+   void nextIter( Iterator* n )
+   {
+      fassert( n != this );
+      m_next = n;
+   }
 
    inline void goTop() {
       m_owner->getIterator( *this );
