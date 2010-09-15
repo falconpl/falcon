@@ -1,0 +1,66 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Menu.fal
+
+   Service for managing menus
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 15 Sep 2010 18:56:26 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+
+/*# Entity representing a menu item. */
+class MenuItem( text, target, al )
+   text = text
+   target = target
+   auth_level = al
+end
+
+
+/*# Menu service. */
+class Menu( instance ) from Service( instance )
+   auth_level = Nest.ambient( "auth_level", "Authenticated user level -- as a Nest.AL level", b.SessionBinder )
+   mi_skin = ServiceVar( "Skin for a single menu item", b.SkinBinder )
+   items = ServiceVar( "Items in the menu -- list or dictionary of MenuItems", b.ConfigBinder )
+
+   current_item = ServiceVar( "The current item, detected by the active pid by run" )
+   active_items = ServiceVar( "The items that are supposed to be visible in this page" )
+
+   function run()
+      Nest.logi( "Menu service run()" )
+      al = self.auth_level.isSet ? self.auth_level.value : Nest.AL.None
+      ci = []
+      for item in self.items.value
+         if Nest.auth_level <= item.auth_level
+            ci += item
+            if Nest.pid == item.target
+               self.current_item.value = item
+            end
+         end
+      end
+
+      self.active_items.value = ci
+      
+      // sanitize the item skin
+      if not self.mi_skin.isSet
+         // a default sub-skin
+         self.mi_skin.value = function( item )
+            tg = "://" in item.target ? tg : Nest.pageLink(item.target)
+            >@'<a href="$(tg)">$(item.text)</a>'
+         end
+      end
+   end
+   
+end

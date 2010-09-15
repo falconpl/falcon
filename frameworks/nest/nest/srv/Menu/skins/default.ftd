@@ -1,0 +1,7 @@
+<? function skin( vars, srv ) ?>
+<ul>
+<? for item in vars.active_items ?>
+   <li><? vars.mi_skin( item ) ?></li>
+<? end ?>
+</ul>
+<? end ?>

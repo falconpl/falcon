@@ -32,6 +32,9 @@
    and universally know, this is a useful way to automatically store its value from
    the configuration of the service into it, and eventually notify listeners.
 */
+
+import from nest.utils in utils
+
 object ConfigBinder
    function bind( varname, srv, var )
       if varname in srv.configuration
@@ -92,6 +95,52 @@ object SessionBinder
       vn = srv.varName( varname )
       if vn in Nest.sessionData
          var.value = Nest.sessionData[vn]
+      end
+   end
+end
+
+
+object SkinBinder
+   function bind( varname, srv, var )
+      if varname in srv.configuration
+         skinFile = srv.configuration[varname]
+         if skinFile.isCallable()
+            Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " to a callable in configuration." )
+            var.value = srv.configuration[varname]
+         else
+            skin = self.getSubSkin(skinFile, srv, var)
+            if skin
+               Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " from file." )
+               var.value = skin
+            end
+         end
+      end
+   end
+
+
+   function getSubSkin( skinFile, srv, var )
+      srvName = srv.className()
+      srvInst = srv.instance
+
+      // sub-skins are named after the model
+      // [instance]_varname.fal/fam/ftd
+      if srvInst: skinFile = srvInst + "_" + skinFile
+      
+      skinPaths = [
+         utils.reldir( Nest.cnf.homedir, Nest.cnf.site_srv_dir + "/" + srvName +  "/skins" ),
+         Nest.cnf.nestdir +"/srv/" + srvName  + "/skins" ]
+
+         
+      if self.log_level >= 3
+         self.logd( "Service " + self.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
+      end
+
+
+      skinFile = utils.findFileInDirs( skinPaths, skinFile, ['fal','ftd','fam'] )
+      if skinFile
+         self.logi( "Service " + self.fullName() + " using sub-skin " + skinFile )
+         include( skinFile, symDict | (sd=["skin"=>nil] ) )
+         return sd["skin"]
       end
    end
 end
