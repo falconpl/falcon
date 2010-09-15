@@ -118,7 +118,7 @@ FALCON_FUNC String_charSize( VMachine *vm )
    This method returns a string containing one character from the beginning of the string,
    or eventually more characters in case a number > 1 is specified in @b count.
 
-   If @b remove is true, then the character is removed and the string is shrinked.
+   If @b remove is true, then the character is removed and the string is shrunk.
    @see strFront
 
    If @b numeric is true,
@@ -139,7 +139,7 @@ FALCON_FUNC String_charSize( VMachine *vm )
    This function returns a string containing one character from the beginning of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
 
-   If @b remove is true, then the character is removed and the string is shrinked.
+   If @b remove is true, then the character is removed and the string is shrunk.
    @see String.front
 
    If @b numeric is true,
@@ -199,7 +199,7 @@ FALCON_FUNC mth_strFront( VMachine *vm )
    This function returns a string containing one character from the end of this string,
    or eventually more characters in case a number > 1 is specified in @b count.
 
-   If @b remove is true, then the character is removed and the string is shrinked.
+   If @b remove is true, then the character is removed and the string is shrunk.
    @see strFront
 
    If @b numeric is true,
@@ -220,7 +220,7 @@ FALCON_FUNC mth_strFront( VMachine *vm )
    This function returns a string containing one character from the end of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
 
-   If @b remove is true, then the characters are removed and the string is shrinked.
+   If @b remove is true, then the characters are removed and the string is shrunk.
    @see String.front
 
    If @b numeric is true,
@@ -766,7 +766,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
 {
-   // Parameter estraction.
+   // Parameter extraction.
    CoreString *ts = new CoreString;
    String *self = vm->self().asString();
    uint32 pc = vm->paramCount();
@@ -900,7 +900,7 @@ FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm )
 
 /*#
    @function strBackFind
-   @brief Finds a substring bakwards.
+   @brief Finds a substring backwards.
    @param string String where the search will take place.
    @param needle Substring to search for.
    @optparam start Optional position from which to start the search in string.
@@ -913,7 +913,7 @@ FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm )
 
 /*#
    @method rfind String
-   @brief Finds a substring bakwards.
+   @brief Finds a substring backwards.
    @param needle Substring to search for.
    @optparam start Optional position from which to start the search in string.
    @optparam end Optional position at which to end the search in string.

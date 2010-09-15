@@ -15,7 +15,7 @@
 
 /** \file
    Implementation of Core Strings.
-   \todo Add support for intenrational strings.
+   \todo Add support for international strings.
 */
 
 #include <falcon/memory.h>
@@ -1784,7 +1784,7 @@ bool String::parseBin( uint64 &target, uint32 pos ) const
    target = 0;
    uint32 endSub = pos;
 
-   // max lenght of binary = 64 chars, + 2 for stubs
+   // max length of binary = 64 chars, + 2 for stubs
    while( endSub < len && (endSub - pos < 64) )
    {
       uint32 chnext = getCharAt( endSub );
@@ -1810,7 +1810,7 @@ bool String::parseOctal( uint64 &target, uint32 pos ) const
    target = 0;
    uint32 endSub = pos;
 
-   // max lenght of octals = 11 chars, + 2 for stubs
+   // max length of octals = 11 chars, + 2 for stubs
    while( endSub < len && (endSub - pos < 26) )
    {
       uint32 chnext = getCharAt( endSub );

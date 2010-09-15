@@ -767,7 +767,7 @@ class Img( src, width, height, alt, usemap, ismap ) from \
    init
       self.eattr.src = src ? src : ""  // mandatory
       self.eattr.width = width
-      self.eattr.heigth = height
+      self.eattr.height = height
       self.eattr.alt = alt ? alt : ""  // mandatory
       self.eattr.usemap = usemap
       self.eattr.ismap = ismap

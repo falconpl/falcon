@@ -68,6 +68,36 @@ FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function log10
+   @brief Returns the common (base 10) logarithm of the argument.
+   @param x Argument.
+   @return The common logarithm of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
+FALCON_FUNC flc_math_log10( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+   }
+
+   errno = 0;
+   numeric res = log10( num1->forceNumeric() );
+   if ( errno != 0 )
+   {
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
+/*#
    @function exp
    @brief Returns exponential (e^x) of the argument.
    @param x Argument.
@@ -89,6 +119,70 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
 
    errno = 0;
    numeric res = exp( num1->forceNumeric() );
+   if ( errno != 0 )
+   {
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
+/*#
+   @function sqrt
+   @brief Returns the square root of the argument.
+   @param x Argument.
+   @return The square root of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
+FALCON_FUNC flc_math_sqrt( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+      return;
+   }
+
+   errno = 0;
+   numeric res = sqrt( num1->forceNumeric() );
+   if ( errno != 0 )
+   {
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
+/*#
+   @function mod
+   @brief Returns the modulo of two arguments.
+   @param x Argument.
+   @param y Argument.
+   @return The modulo of the two argument; x mod y.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
+FALCON_FUNC flc_math_mod( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+   Item *num2 = vm->param( 1 );
+
+   if ( num2 == 0 || ! num1->isOrdinal() || ! num2->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
+      return;
+   }
+
+   errno = 0;
+   numeric res = fmod( num1->forceNumeric(), num2->forceNumeric() );
    if ( errno != 0 )
    {
       throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
@@ -373,6 +467,7 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
 }
 
 #define PI 3.1415926535897932384626433832795
+#define E  2.7182818284590452353602874713527
 /*#
    @function rad2deg
    @brief Converts an angle expressed in radians into degrees.

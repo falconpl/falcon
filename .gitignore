@@ -4,3 +4,5 @@ build
 build_*
 bld
 
+# OS X
+.DS_Store
