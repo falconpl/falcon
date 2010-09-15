@@ -254,6 +254,17 @@ if ( NOT WIN32 )
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
 
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" on)
+if(NOT DISABLE_RPATH)
+  # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
+  set(CMAKE_SKIP_BUILD_RPATH  false)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH false)
+
+  # Apple equivalent to RPATH is called `install_name'
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FALCON_LIB_DIR}")
+endif()
 
 #########################################################à
 # List of files to be installed as docs
