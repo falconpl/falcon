@@ -33,7 +33,7 @@ import NestModule from .nestmodule as NestModule
 */
 class ServiceVar( descr, binding )
    description = descr
-   isSession = false
+   isSession = false   
    _binding = binding
    
    _value = nil

@@ -31,7 +31,6 @@ end
 
 /*# Menu service. */
 class Menu( instance ) from Service( instance )
-   auth_level = Nest.ambient( "auth_level", "Authenticated user level -- as a Nest.AL level", b.SessionBinder )
    mi_skin = ServiceVar( "Skin for a single menu item", b.SkinBinder )
    items = ServiceVar( "Items in the menu -- list or dictionary of MenuItems", b.ConfigBinder )
 
@@ -40,7 +39,8 @@ class Menu( instance ) from Service( instance )
 
    function run()
       Nest.logi( "Menu service run()" )
-      al = self.auth_level.isSet ? self.auth_level.value : Nest.AL.None
+      auth_level = Nest.ambient( "auth_level", "Authenticated user level -- as a Nest.AL level" )
+      al = auth_level.isSet ? auth_level.value : Nest.AL.None
       ci = []
       for item in self.items.value
          if Nest.auth_level <= item.auth_level
