@@ -23,6 +23,7 @@ add_library(hpdf_fm MODULE
    moduleImpl/st.cpp
    moduleImpl/doc.cpp
    moduleImpl/encoder.cpp
+   moduleImpl/encoder_unicode.cpp
    moduleImpl/error.cpp
    moduleImpl/array.cpp
    moduleImpl/dict.cpp
