@@ -100,14 +100,6 @@ option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
 option( FALCON_COMPILE_FAMS "Compile falcon modules when installing them" ON )
 option( FALCON_STRIP_FALS "Remove source modules when installing" OFF )
 
-if(WIN32)
-    option( FALCON_BUILD_MANPAGES "Build and install also manpages" OFF )
-else()
-    # Manpages are mandatory on unix
-    option( FALCON_BUILD_MANPAGES "Build and install also manpages" ON )
-endif()
-
-
 # NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
 # since they are neither RUNTIME, LIBRARY nor ARCHIVE.
@@ -298,11 +290,6 @@ add_subdirectory(include)
 add_subdirectory(engine)
 add_subdirectory(clt)
 add_subdirectory(devtools)
-
-## Docs
-if (FALCON_WITH_MANPAGES)
-   add_subdirectory(manpages)
-endif()
 #
 add_subdirectory(docs)
 

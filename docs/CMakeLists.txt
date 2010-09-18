@@ -27,3 +27,13 @@ generate_documentation(
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 )
 
+if(WIN32)
+    option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
+else()
+    # Manpages are mandatory on unix
+    option( FALCON_WITH_MANPAGES "Build and install also manpages" ON )
+endif()
+#
+if (FALCON_WITH_MANPAGES)
+   add_subdirectory(manpages)
+endif()
