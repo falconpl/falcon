@@ -299,11 +299,12 @@ add_subdirectory(engine)
 add_subdirectory(clt)
 add_subdirectory(devtools)
 
-
-# and man pages
+## Docs
 if (FALCON_WITH_MANPAGES)
    add_subdirectory(manpages)
 endif()
+#
+add_subdirectory(docs)
 
 #########################################################################
 # Feathers?
