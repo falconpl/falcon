@@ -10,8 +10,10 @@
 
 #include <hpdf.h>
 #include <falcon/cacheobject.h>
+#include "encoder_unicode.h"
 
 namespace Falcon { namespace Mod { namespace hpdf {
+
 
 
 class FALCON_DYN_CLASS Doc : public CacheObject

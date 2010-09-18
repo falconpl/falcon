@@ -14,6 +14,8 @@ Doc::Doc(CoreClass const* cls) :
   Falcon::CacheObject(cls)
 {
   m_doc = HPDF_New( &Mod::hpdf::error_handler, this );
+  HPDF_UseUnicodeEncodings(m_doc);
+  HPDF_SetCurrentEncoder( m_doc, "UTF-8" );
 }
 
 Doc::~Doc()

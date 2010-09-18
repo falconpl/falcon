@@ -152,6 +152,7 @@ set(CORE_MODULE_SOURCES
 add_library(falcon_engine SHARED
   attribmap.cpp
   autocstring.cpp
+  autoucsstring.cpp
   autowstring.cpp
   base64.cpp
   basealloc.cpp
