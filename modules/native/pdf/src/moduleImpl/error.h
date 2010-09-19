@@ -24,14 +24,15 @@ void error_handler( HPDF_STATUS errorNo, HPDF_STATUS detailNo, void* user_data )
 /** Class to indentify HPDF low level errors.
  * HPDF C library errors are represented to the falcon engine by instances of
  * this class */
-struct FALCON_DYN_CLASS Error : Falcon::Error
+class FALCON_DYN_CLASS Error : public Falcon::Error
 {
+public:
   Error():
-    Falcon::Error( "Error" )
+    Falcon::Error( "HPDFError" )
   { }
 
   Error( ErrorParam const& params  ):
-    Falcon::Error( "Error", params )
+    Falcon::Error( "HPDFError", params )
   { }
 };
 

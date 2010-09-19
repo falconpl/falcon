@@ -54,6 +54,7 @@
 
 // Falcon String helpers
 #include <falcon/autocstring.h>
+#include <falcon/autoucsstring.h>
 #include <falcon/autowstring.h>
 
 // Falcon stream helpers

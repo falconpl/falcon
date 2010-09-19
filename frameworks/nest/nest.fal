@@ -112,6 +112,19 @@ enum AuthLevel
    NONE = 100
 end
 
+
+/*# Standard authorization levels.
+
+   A lower authorization code means more priviledges.
+*/
+enum Priority
+   STARTUP = 0
+   HIGH = 10
+   NORMAL = 20
+   LOW = 30
+   LOWEST = 40
+end
+
 /*#
    Just a reminder
    
@@ -188,6 +201,9 @@ object Nest
 
    /*# Repeat the AuthLevel enumeration */
    AL = AuthLevel
+
+   /*# Repeat the Priority enumeration */
+   PRIO = Priority
 
    /*# For now, use the max authlevel by default. */
    auth_level = AuthLevel.ADMIN
@@ -293,11 +309,54 @@ object Nest
    /*# Inline scripts to be put before body. */
    styles = []
 
+   /*# Title for the page.
+      This will be renedered as \<title>\<?=Nest.title?>\</title> when
+      Nest.headings are called.
+   */
+   title = nil
+
    /*# Basic logger */
    logger = nil
 
    /*# Debug mode? */
    debug = false
+
+   /*# Framing.
+      If having a value, the framing system will be active.
+
+      Framing will cause the frame part to be always loaded, and
+      determined page (pid) to be loaded and stored in a @a Nest.content
+      variable.
+
+      The frame should be a function that will be called after
+      loading the page and render it, as the page must be rendered in
+      the Nest.content variable.
+
+      Interesting functions can be:
+      @code
+      Nest.frame = .[ include "some_file" ]
+      Nest.frame = .[ include Nest.pageLink("pid-of-frame") ]
+      @endcode
+
+      The function should produce an output that will be captured by Nest
+      and then rendered.
+
+      @note A page can change its own frame (or drop it altogether) by
+            setting Nest.frame to something else, as the page is evaluated
+            before determining if it needs to be framed or not.
+   */
+   frame = nil
+
+   /*# Content for the frame.
+   
+      This is automatically filled by nest before calling a Nest.frame
+      function.
+
+      The frame should just display this content through \<?= Nest.content ?>
+      or equivalent.
+   */
+   content = nil
+      
 
    /*# Log level.
 
@@ -473,8 +532,21 @@ object Nest
                [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
                   cfg.nestdir + "/srv/" + name ])
 
-         // 2-N. Register the service, that is, configre its resources and prepare Nest to run it
+         // 2. Register the service, that is, configre its resources and prepare Nest to run it
          self._registerService( srv, vars )
+
+         // 3. Binding the service
+         self.logi( "Binding service " + srv.fullName() )
+         srv.bind( self._onSessionVarChanged )
+
+         self.logi( "calling startup on service " + srv.fullName() )
+         srv.startup()
+      end
+
+      // 3 should we run it?
+      if self._phase == _phase_exec
+         self.logi("Running late service ", srv.fullName() )
+         srv.run()
       end
          
       return ^- srv
@@ -534,14 +606,9 @@ object Nest
    function run()
       if self._phase > _phase_config: return
       self.logi( "Entering run phase" )
-      
-      for srv in self._srvlist
-         self.logi( "Binding service " + srv.fullName() )
-         srv.bind( self._onSessionVarChanged )
-      end
 
       self._phase = _phase_exec
-      
+
       for srv in self._srvlist
          self.logi( "Running service " + srv.fullName() )
          srv.run()
@@ -552,6 +619,11 @@ object Nest
    /*# Produces nest automatic headings. */
    function headings()
       str = ""
+
+      if self.title
+         str += @"<title>$(self.title)</title>\n"
+      end
+      
       for item in self.extscripts
          str += @"<script type=\"text/javascript\" src=\"$item\"></script>\n"
       end
@@ -706,7 +778,6 @@ object Nest
       // 4 - Register the service
       self._srvlist += srv
       self.services[ srv.fullName() ] = srv
-      srv.startup()
    end
 
       
@@ -863,6 +934,15 @@ object Nest
       old = stdOut( s )
       try
          include( file )
+
+         // should the page be framed?
+         if self.frame.isCallable()
+            self.content = s.closeToString()
+            s = StringStream()
+            stdOut(s)
+            self.frame()
+         end
+
          for name, service in self.services
             service.finalize()
          end
@@ -888,9 +968,37 @@ object Nest
       if self.debug
          self._displayDebug()
       end
-
    end
 
+   function _load_page( file )
+      s = StringStream()
+      old = stdOut( s )
+      try
+         include( file )
+         for name, service in self.services
+            service.finalize()
+         end
+
+         // save session data
+         self._saveSession()
+
+         // save an eventual error for later
+      catch in e
+      end
+
+      // ... finally
+      stdOut( old )
+      ctx = s.closeToString()
+
+      // do we have an error to manage?
+      if e
+         self._manageError( e, ctx )
+         return nil
+      end
+      
+      return ctx
+   end
+   
 
    function _selector_html( file )
       f = InputStream( file )

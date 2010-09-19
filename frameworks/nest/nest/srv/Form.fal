@@ -20,7 +20,6 @@ import from nest
 import from nest.bindings in b
 
 
-
 /*# Service receiving the variables in a form.
 
    This service is a useful shortcut and organizer for form checking code.
@@ -115,12 +114,13 @@ class Form( instance, options ) from nest.Service( instance, options )
 end
 
 
-class Field( name, desc, type, extra, opts )
+class Field( name, desc, type, extra, opts, defValue )
    name = name
    desc = desc
    type = type
    extra = extra ? extra : ""
    opts = opts
+   dvalue = defValue
 
    function render( instance, value )
       fname = instance + "." + self.name
@@ -132,6 +132,8 @@ class Field( name, desc, type, extra, opts )
             <label id="label_$(self.name)" for="$(self.name)">$(desc)</label>
             '
       end
+
+      if not value and self.dvalue: value = strEscape( self.dvalue.toString() )
       
       // select is treated specially.
       if self.type == "select"

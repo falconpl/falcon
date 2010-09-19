@@ -21,8 +21,7 @@ import ServiceVar from nest as ServiceVar
 import NestError from nest as NestError
 import from nest.bindings in b
 
-class Login( instance ) from Service( instance )
-
+class Login( instance ) from Service( instance )   
    handler = ServiceVar( "Page where the login service checks for authentication", b.ConfigBinder )
 
    uid = ServiceVar( "The user-id as inputed by the remote user", b.InputVarBinder )
@@ -45,15 +44,17 @@ class Login( instance ) from Service( instance )
       The auth_user will be set after the input uid.
    */
    checker = nil
-   
-   function startup()
-      // ensure that nothing can go before we're bound
-      // remember that binding (data from session) comes after startup()
-      // so here we can set defaults
-      self.auth_level.value = nil      
-   end
+
+   _checked = false
    
    function run()
+      self.check()
+   end
+   
+   function check()
+      if self._checked: return
+      
+      self._checked = true
       if not self.handler.value
          // And the default for the handler is this same page.
          self.handler.value = Nest.pageLink(nil, Request.gets)  // self link -- with vars
@@ -82,6 +83,7 @@ class Login( instance ) from Service( instance )
          return
       elif Nest.sessionExpired
          self.logmode.value = "expired"
+         self.auth_level.value = Nest.AL.NONE
       end
 
       if not self.checker.isCallable()
@@ -92,6 +94,8 @@ class Login( instance ) from Service( instance )
       // asking for a login?
       if self.uid.isSet
          self.checkLogin( self.uid.value, self.pwd.value )
+      else
+         self.auth_level.value = Nest.AL.NONE
       end
    end
 
@@ -115,6 +119,7 @@ class Login( instance ) from Service( instance )
       else
          Nest.logd( "User \"" + uid + "\" failed login." )
          self.logmode.value = "fail"
+         self.auth_level.value = Nest.AL.NONE
       end
    end
 end
