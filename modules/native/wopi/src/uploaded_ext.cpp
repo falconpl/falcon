@@ -414,6 +414,7 @@ void InitUploadedClass( Module* self )
    self->addClassProperty( c_upfile, "data" );
    self->addClassProperty( c_upfile, "error" );
    self->addClassMethod( c_upfile, "read", &Uploaded_read );
+   self->addClassMethod( c_upfile, "open", &Uploaded_open );
    self->addClassMethod( c_upfile, "store", &Uploaded_store ).asSymbol()
       ->addParam( "path" );
 }
