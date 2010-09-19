@@ -83,6 +83,7 @@ class Login( instance ) from Service( instance )
          return
       elif Nest.sessionExpired
          self.logmode.value = "expired"
+         self.auth_level.value = Nest.AL.NONE
       end
 
       if not self.checker.isCallable()
@@ -93,6 +94,8 @@ class Login( instance ) from Service( instance )
       // asking for a login?
       if self.uid.isSet
          self.checkLogin( self.uid.value, self.pwd.value )
+      else
+         self.auth_level.value = Nest.AL.NONE
       end
    end
 
@@ -116,6 +119,7 @@ class Login( instance ) from Service( instance )
       else
          Nest.logd( "User \"" + uid + "\" failed login." )
          self.logmode.value = "fail"
+         self.auth_level.value = Nest.AL.NONE
       end
    end
 end
