@@ -1,3 +1,4 @@
+
 wopi(1.2)
   - fixed: Falhttpd din't report remote IP in requests.
   - fixed: Incorrect grabbing of headers in "headers" field.

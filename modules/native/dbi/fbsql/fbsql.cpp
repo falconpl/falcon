@@ -16,9 +16,9 @@
  * See LICENSE file for licensing details.
  */
 
-#include "mysql_mod.h"
+#include "fbsql_mod.h"
+#include "fbsql_ext.h"
 #include "version.h"
-#include "mysql_ext.h"
 
 // Instantiate the driver service
 Falcon::DBIServiceFirebird theFirebirdService;
@@ -42,9 +42,9 @@ FALCON_MODULE_DECL
 
    Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
    dbh_class->imported( true );
-   Falcon::Symbol *fjrebird_class = self->addClass( "FirebirdSQL", Falcon::Ext::Firebird_init );
-   mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
-   mysql_class->setWKS( true );
+   Falcon::Symbol *firebird_class = self->addClass( "FirebirdSQL", Falcon::Ext::Firebird_init );
+   firebird_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
+   firebird_class->setWKS( true );
 
    // service publication
    self->publishService( &theFirebirdService );
