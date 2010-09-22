@@ -839,11 +839,7 @@ DBIHandleFirebird::~DBIHandleFirebird()
 
 void DBIHandleFirebird::options( const String& params )
 {
-   if( m_settings.parse( params ) )
-   {
-      mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0);
-   }
-   else
+   if( ! m_settings.parse( params ) )
    {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
             .extra( params ) );
@@ -859,15 +855,12 @@ const DBISettingParams* DBIHandleFirebird::options() const
 DBIHandleFirebird::DBIHandleFirebird()
 {
    m_conn = 0L;
+   m_tr = 0L;
 }
 
 DBIHandleFirebird::DBIHandleFirebird( const isc_db_handle &conn )
 {
    m_conn = conn;
-
-   // we'll be using UTF-8 charset
-   mysql_set_character_set( m_conn, "utf8" );
-   mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
 
 DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, const ItemArray& params )
@@ -875,69 +868,19 @@ DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, 
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
+   if( m_tr == 0L )
+      begin();
+
    // do we want to fetch strings?
-   if( options()->m_bFetchStrings )
-   {
-      MYSQL *conn = getConn();
-      String temp;
-      sqlExpand( sql, temp, params );
-
-      AutoCString asQuery( temp );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      MYSQL_RES* rec =  options()->m_nPrefetch < 0 ?
-         mysql_store_result( conn ) :
-         mysql_use_result( conn );
-
-      affectedRows = mysql_affected_rows( conn );
-      return new DBIRecordsetFirebird_RES_STR( this, rec );
-   }
+   // if( options()->m_bFetchStrings )
 
    // prepare and execute -- will create a new m_statement
-   MYSQL_STMT* stmt = my_prepare( sql );
-   MYSQL_RES* meta = 0;
+   isc_stmt_handle stmt = 0L;
 
-   try
+   if ( options()->m_bAutocommit )
    {
-      FirebirdDBIInBind bindings(stmt);
-      affectedRows = my_execute( stmt, bindings, params );
-
-      // We want a result recordset
-      meta = mysql_stmt_result_metadata( stmt );
-      if( meta == 0 )
-      {
-         // the query didn't return a recorset
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
-      }
-      else
-      {
-         // ok. Do the user wanted all the result back?
-         if( m_settings.m_nPrefetch < 0 )
-         {
-            if( mysql_stmt_store_result( stmt ) != 0 )
-            {
-               throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
-            }
-         }
-
-         // -- may throw
-         DBIRecordsetFirebird* recset = new DBIRecordsetFirebird_STMT( this, meta, stmt );
-         return recset;
-      }
-
+      commit();
    }
-   catch( ... )
-   {
-      if( meta != 0 )
-         mysql_free_result( meta );
-
-      mysql_stmt_close( stmt );
-      throw;
-   }
-
 
    return 0; // to make the compiler happy
 }
@@ -946,7 +889,10 @@ DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, 
 void DBIHandleFirebird::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   if( m_tr == 0L )
+      begin();
 
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
@@ -999,6 +945,11 @@ void DBIHandleFirebird::perform( const String &sql, int64 &affectedRows, const I
         throw;
      }
    }
+
+   if ( options()->m_bAutocommit )
+   {
+      commit();
+   }
 }
 
 
@@ -1007,6 +958,9 @@ DBIRecordset* DBIHandleFirebird::call( const String &sql, int64 &affectedRows, c
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   if( m_tr == 0L )
+      begin();
 
    MYSQL *conn = getConn();
    String temp;
@@ -1041,6 +995,11 @@ DBIRecordset* DBIHandleFirebird::call( const String &sql, int64 &affectedRows, c
       {
          mysql_free_result(rec1);
       }
+   }
+
+   if ( options()->m_bAutocommit )
+   {
+      commit();
    }
 
    return options()->m_bFetchStrings ?
@@ -1134,8 +1093,21 @@ int64 DBIHandleFirebird::getLastInsertedId( const String& sequenceName )
 
 void DBIHandleFirebird::begin()
 {
-   if( m_conn == 0 )
+   if( m_conn == 0L )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   ISC_STATUS status[20];
+
+   if ( m_tr != 0L )
+   {
+      if( ! isc_rollback_transaction(status, &m_tr) )
+      {
+         // TODO Throw the error
+      }
+      m_tr = 0L;
+   }
+
+   isc_start_transaction( status, &m_tr, 1, NULL );
 
    if( mysql_query( m_conn, "BEGIN" ) != 0 )
    {
@@ -1146,25 +1118,31 @@ void DBIHandleFirebird::begin()
 
 void DBIHandleFirebird::commit()
 {
-   if( m_conn == 0 )
+   if( m_conn == 0L )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   if( mysql_query( m_conn, "COMMIT" ) != 0 )
+   ISC_STATUS status[20];
+   if( ! isc_commit_transaction(status, &m_tr) )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+      // TODO Throw the error
    }
+
+   m_tr = 0L;
 }
 
 
 void DBIHandleFirebird::rollback()
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   if( m_conn == 0L )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   if( mysql_query( m_conn, "ROLLBACK" ) != 0 )
+   ISC_STATUS status[20];
+   if( ! isc_rollback_transaction(status, &m_tr) )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+      // TODO Throw the error
    }
+
+   m_tr = 0L;
 }
 
 
@@ -1195,6 +1173,10 @@ void DBIHandleFirebird::selectLimited( const String& query,
 
 void DBIHandleFirebird::close()
 {
+   if( m_tr != 0 )
+   {
+      m_tr
+   }
    if ( m_conn != NULL )
    {
       mysql_query( m_conn, "ROLLBACK" );
@@ -1403,7 +1385,11 @@ DBIHandle *DBIServiceFirebird::connect( const String &parameters )
    dpb = dpb_buffer;
    checkParamString( dpb, dpb_length, sLcMsg, szLcMsg, isc_dpb_lc_messages );
    dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, szLcType, szLcType, isc_dpb_lc_ctype );
+
+   // We'll ALWAYS use AutoCString to talk with Firebird, as such we'll ALWAYS use UTF8
+   isc_expand_dpb( &dpb, &dpb_length,
+         isc_dpb_lc_messages, "UTF8",
+               NULL );
 
    /* Attach to the database. */
    ISC_STATUS status_vector[20];
