@@ -59,8 +59,7 @@ FALCON_MODULE_DECL
    #include "json_st.h"
 
    self->addExtFunc( "JSONencode", &Falcon::Ext::JSONencode )->
-      addParam("item")->addParam("stream")
-      ->addParam( "uenc" )->addParam( "pretty" )->addParam( "readable" );
+      addParam("item")->addParam("stream")->addParam( "pretty" )->addParam( "readable" );
 
 
    self->addExtFunc( "JSONdecode", &Falcon::Ext::JSONdecode )->
