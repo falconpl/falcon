@@ -67,7 +67,7 @@ Continuation::~Continuation()
 }
 
 
-bool Continuation::jump()
+bool Continuation::jump( const Item &jump_param )
 {
    if ( m_vm->currentContext()->atomicMode() )
    {
@@ -76,6 +76,7 @@ bool Continuation::jump()
    }
 
    m_callingFrame = m_vm->currentFrame();
+   m_context = m_vm->currentContext();
 
    if ( m_tgtSymbol != 0 )
    {
@@ -91,16 +92,19 @@ bool Continuation::jump()
       m_bottom->prev( m_callingFrame );
       for ( uint32 i = 0; i < m_params.length(); ++i )
          m_callingFrame->stack().append( m_params[i] );
-      m_bottom->prepareParams( m_callingFrame, m_bottom->m_param_count );
+      m_bottom->prepareParams( m_callingFrame, m_params.length() );
 
       // Set the new frame
       m_context->setFrames( m_top );
-      m_bottom = m_top = 0;
 
-      // jump
-      m_vm->currentContext()->symbol( m_tgtSymbol );
-      m_vm->currentContext()->lmodule( m_tgtLModule );
-      m_vm->currentContext()->pc_next() = m_tgtPC;
+      // jump -- by modifying the current FRAME stack, as it will be popped as we return
+      m_top->m_symbol = m_tgtSymbol;
+      m_top->m_module = m_tgtLModule;
+      m_top->m_ret_pc = m_tgtPC;
+
+      m_bottom = m_top = 0;
+      // and set the return value that must be seen there.
+      m_context->regA() = jump_param;
       return true;
    }
 
@@ -140,14 +144,16 @@ void Continuation::suspend( const Item& retval )
    m_callingFrame->pop( frame->m_param_count );
    m_context->setFrames( m_callingFrame );
 
-   // the PC will be in our return frame.
-   m_tgtSymbol = m_callingFrame->m_symbol;
-   m_tgtLModule = m_callingFrame->m_module;
-   m_tgtPC = m_callingFrame->m_ret_pc;
+   // prepare the resume values
+   m_tgtSymbol = m_top->m_symbol;
+   m_tgtLModule = m_top->m_module;
+   m_tgtPC = m_top->m_ret_pc;
    m_vm->regA() = retval;
 
    // for sure, we need more call
    m_bComplete = false;
+
+   // PC, module and symbol are in our return frame, which is invoked as we return.
 }
 
 
