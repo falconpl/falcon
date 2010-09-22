@@ -103,5 +103,9 @@ if ( FALCON_BUILD_WOPI )
     add_subdirectory( wopi )
 endif()
 
+if ( FALCON_BUILD_CONIO )
+    add_subdirectory( conio )
+endif()
+
 
 
