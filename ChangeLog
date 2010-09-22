@@ -7,7 +7,8 @@ Falcon (0.9.6.7)
            continuations.
   * minor: Reversed startup continuation parameter list (now the 
            call-with-continuation parameter is the first one).
-  
+  * fixed: Json escaping (\uNNNN) wasn't correctly generated.
+   
 Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even
            if it was possible to do that.
