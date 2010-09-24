@@ -10,7 +10,7 @@
 
 load nest
 
-// Nest.debug = true
-// Nest.log_level = 3
+Nest.debug = true
+Nest.log_level = 3
 Nest.stylesheets += "webapi.css"
 Nest.route()

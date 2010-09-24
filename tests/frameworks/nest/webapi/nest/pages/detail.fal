@@ -10,9 +10,11 @@
 
 import from web.htmaker in htmaker
 
-functionName = Request.getField("function")
-
 doc = htmaker.TransitionalFrame()
+fd = Nest.service("WebAPIDetail", "", ["apidir" => "."])
+Nest.run()
+
+functionName = fd.funcname.value
 
 .[doc.html.add
     htmaker.Head()
@@ -20,13 +22,13 @@ doc = htmaker.TransitionalFrame()
 ]()
 
 .[doc.html.head.add
-    htmaker.Title(functionName)
+    htmaker.Title("Details - "  + functionName)
     htmaker.Verbatim(Nest.headings())
 ]()
 
 .[doc.html.body.add
     htmaker.H1(functionName)
-    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
+    htmaker.Div().add(htmaker.Verbatim(fd.render()))
     htmaker.Div().add(htmaker.A(Nest.pageLink('home'), i"Back to Summary"))
 ]()
 

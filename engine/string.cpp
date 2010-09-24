@@ -1365,22 +1365,6 @@ void String::prepend( uint32 chr )
    setCharAt( 0, chr );
 }
 
-void String::uint32ToHex( uint32 number, char *buffer )
-{
-   uint32 divisor = 0x10000000;
-   int pos = 0;
-
-   while( divisor > 0 ) {
-      uint32 rest = number / divisor;
-      if( rest > 0 || pos > 0 ) {
-         buffer[pos] = rest >= 10 ? 'A' + (rest - 10):'0'+rest;
-         pos++;
-         number -= rest * divisor;
-      }
-      divisor = divisor >> 4; // divide by 16
-   }
-   buffer[pos] = 0;
-}
 
 void String::escape( String &strout ) const
 {
@@ -1414,11 +1398,8 @@ void String::internal_escape( String &strout, bool full ) const
          case '\\': strout += "\\\\"; break;
          default:
             if ( chat < 32 || (chat >= 128 && full) ) {
-               char bufarea[14];
-               bufarea[0] = '\\';
-               bufarea[1] = 'x';
-               uint32ToHex( chat, bufarea+2 );
-               strout += bufarea;
+               strout += 'x';
+               strout.writeNumberHex(chat, true );
             }
             else{
                strout += chat;
@@ -1904,7 +1885,7 @@ void String::writeNumber( int64 number )
    append( buffer + pos );
 }
 
-void String::writeNumberHex( uint64 number, bool uppercase )
+void String::writeNumberHex( uint64 number, bool uppercase, int ciphers  )
 {
    // prepare the buffer
    char buffer[18];
@@ -1912,6 +1893,10 @@ void String::writeNumberHex( uint64 number, bool uppercase )
    buffer[17] = '\0';
 
    byte base = uppercase ? 0x41 : 0x61;
+   if( ciphers > 16 )
+   {
+      ciphers = 16;
+   }
 
    if ( number == 0 )
    {
@@ -1928,11 +1913,17 @@ void String::writeNumberHex( uint64 number, bool uppercase )
          }
 
          number >>= 4;
+         ciphers--;
       }
-      pos++;
    }
 
-   append( buffer + pos );
+   while( ciphers > 0 )
+   {
+      buffer[pos--] = '0';
+      ciphers --;
+   }
+
+   append( buffer + pos + 1 );
 }
 
 void String::writeNumberOctal( uint64 number )

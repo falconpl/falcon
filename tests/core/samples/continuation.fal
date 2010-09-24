@@ -1,0 +1,58 @@
+/*
+   Falcon Samples.
+
+   Control process streams from script.
+
+   Shows working principles of continuations.
+
+   Call passing a first item that is iteratively searched througout
+   the other items passed on the command line.
+
+   Communication goes back and forth on both sides of the
+   continuation: The slave function communicates the position where
+   the item is found, and the master caller communicates how many
+   items have been found up to date.
+   
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 22 Sep 2010 16:04:48 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+if args.len() < 2
+   > "Usage: continuation.fal item_to_find item1 item2 ... itemN"
+   return 1
+end
+
+iterFind = Continuation( { c, elem, array =>
+      for n in [0: array.len()]
+         if array[n] == elem
+            found(c,n)
+         end
+      end })
+
+pos = iterFind(args[0], args[1:] )
+count = 0
+while pos >= 0
+   > "Found a '", args[0], "' at pos ", pos
+   pos = iterFind(++count)
+end
+
+> "Complete"
+return 0
+
+//=======================================
+
+function found( c, value )
+   foundUpToDate = c(value)
+   >> "Found ", foundUpToDate, " element"
+   if foundUpToDate > 1
+      >> "s"
+   end
+   > "."
+end

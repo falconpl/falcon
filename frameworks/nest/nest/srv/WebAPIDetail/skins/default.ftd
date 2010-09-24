@@ -1,0 +1,23 @@
+<? function skin( vars, srv )
+   fdata = vars.fdata
+?>
+<table>
+<tbody>
+   <tr><td>Name</td><td><?= fdata.name ?></td></tr>
+   <? if "parameters" in fdata ?>
+   <tr><td>Parameters</td><td><table>
+      <thead>
+      <tr><th>Name</th><th>description</th><th>Mandatory</th></tr>
+      </thead>
+      <tbody>
+      <? for param in fdata.parameters; param = bless(param) ?>
+         <tr><td><?= param.name ?></td><td><?= htmlEscape(param.description) ?></td>
+             <td><?= param.mandatory ? "yes" : "no" ?></td></tr>
+      <? end ?>
+      </tbody>
+   </table></td></tr>
+   <? end ?>
+   <tr><td>Description</td><td><?= fdata.description ?></td></tr>
+</tbody>
+</table>
+<? end ?>
