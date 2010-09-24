@@ -43,7 +43,6 @@ namespace Ext {
    @brief Encode an item in JSON format.
    @param item the item to be encoded in JSON format.
    @optparam stream A stream on which to send the encoded result.
-   @optparam uenc Encode every character outside the ASCII printable range as \\uXXXX.
    @optparam pretty Add spacing around separators and puntaction.
    @optparam readable Put each item in lists on a separate line.
    @return a string containing the JSON string, if @b stream is nil
@@ -56,9 +55,8 @@ FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
 {
    Item *i_item = vm->param(0);
    Item *i_stream = vm->param(1);
-   Item *i_uenc = vm->param(2);
-   Item *i_pretty = vm->param(3);
-   Item *i_readable = vm->param(4);
+   Item *i_pretty = vm->param(2);
+   Item *i_readable = vm->param(3);
 
    Stream* target = 0;
    bool bDel;
@@ -82,11 +80,10 @@ FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
       target = dyncast<Stream*>( i_stream->asObject()->getFalconData() );
    }
 
-   bool bUenc = i_uenc != 0 && i_uenc->isTrue();
    bool bPretty = i_pretty != 0 && i_pretty->isTrue();
    bool bReadable = i_readable != 0 && i_readable->isTrue();
 
-   JSON encoder( bUenc, bPretty, bReadable );
+   JSON encoder( bPretty, bReadable );
    bool result =  encoder.encode( *i_item, target );
 
    if( bDel )

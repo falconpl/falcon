@@ -31,7 +31,7 @@ namespace Falcon {
 class JSON: public BaseAlloc
 {
 public:
-   JSON( bool bEncUni = false, bool bPretty=false, bool bReadale = false );
+   JSON( bool bPretty=false, bool bReadale = false );
    ~JSON();
 
    bool encode( const Item& source, Stream* tgt );
@@ -43,7 +43,6 @@ private:
    CoreDict* decodeDict( Stream* src ) const;
    bool decodeKey( String& tgt, Stream* src ) const;
 
-   bool m_bEncUnicode;
    bool m_bPretty;
    bool m_bReadable;
    int m_level;

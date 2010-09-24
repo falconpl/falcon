@@ -57,7 +57,7 @@ namespace core {
    if the random number matches a dividend of a "secret" number.
 
    @code
-      c = Continuation( { secret, c =>
+      c = Continuation( { c, secret =>
             while true
                r = random( 2, secret )
                if secret % r == 0
@@ -70,18 +70,38 @@ namespace core {
 
    Other than returning immediately to the first caller of the continuation,
    the current state of the called sequence is recorded and restored when
-   subsequent calls are performed. In those calls, parameters are ignored
-   (they stay the same as the first call). The following code returns the
+   subsequent calls are performed. The following code returns the
    position where a given element is found in an array:
 
    @code
-      c = Continuation( { elem, array, c =>
+      finder = Continuation( { c, elem, array =>
             for n in [0: array.len()]
                if array[n] == elem: c(n)
             end })
 
-      while (pos = c(10, [1,"a",10,5,10] ))
+      pos = finder(10, [1,"a",10,5,10] )
+      while pos >= 0
          > "Found a '10' at pos ", pos
+         pos = finder()
+      end
+   @endcode
+
+   Parameters passed in subsequent calls are returned inside the continuation function. For example,
+   the following code adds a parameter that is passed from the caller to the callee and then displayed:
+
+   @code
+      finder = Continuation( { c, elem, array =>
+            for n in [0: array.len()]
+               if array[n] == elem
+                  > "Found ", c(n), " elements."
+               end
+            end })
+
+      pos = finder(10, [1,"a",10,5,10] )
+      count = 0
+      while pos >= 0
+         > "Found a '10' at pos ", pos
+         pos = finder(++count)
       end
    @endcode
 
@@ -123,16 +143,26 @@ FALCON_FUNC Continuation_init ( ::Falcon::VMachine *vm )
 FALCON_FUNC Continuation_call ( ::Falcon::VMachine *vm )
 {
    ContinuationCarrier* cc = dyncast<ContinuationCarrier*>( vm->self().asObject() );
-   // call in passive phase calls the desired item.
-   if( cc->cont()->jump() )
-      return;
 
+   // eventually, prepare the parameter to be returned in case of jump
+   Item iContPass;
+   if ( vm->paramCount() > 0 )
+       iContPass = *vm->param(0);
+
+   // call in passive phase calls the desired item.
+   if( cc->cont()->jump(iContPass) )
+   {
+      // the jump happened, we just must return.
+      return;
+   }
+
+   vm->pushParam( cc->suspendItem() );
    for( int32 i = 0; i < vm->paramCount(); i++)
    {
       vm->pushParam( *vm->param(i) );
    }
+
    // otherwise, we have to call the item from here.
-   vm->pushParam( cc->suspendItem() );
    vm->callFrame( cc->ccItem(), 1 + vm->paramCount() );
 }
 

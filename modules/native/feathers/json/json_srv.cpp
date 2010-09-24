@@ -29,9 +29,9 @@ JSONService::JSONService():
    Service( JSONSERVICE_NAME )
 {}
 
-bool JSONService::encode( const Item& itm, String& tgt, bool bEncUni, bool bPretty, bool bReadale )
+bool JSONService::encode( const Item& itm, String& tgt, bool bPretty, bool bReadale )
 {
-   JSON js( bEncUni, bPretty, bReadale );
+   JSON js( bPretty, bReadale );
    StringStream ss;
 
    if( ! js.encode( itm, &ss ) )
@@ -42,9 +42,9 @@ bool JSONService::encode( const Item& itm, String& tgt, bool bEncUni, bool bPret
 
 }
 
-bool JSONService::encode( const Item& itm, Stream* tgt, bool bEncUni, bool bPretty, bool bReadale )
+bool JSONService::encode( const Item& itm, Stream* tgt, bool bPretty, bool bReadale )
 {
-   JSON js( bEncUni, bPretty, bReadale );
+   JSON js( bPretty, bReadale );
    return js.encode( itm, tgt );
 }
 

@@ -24,7 +24,7 @@ doc = htmaker.TransitionalFrame()
 
 .[doc.html.body.add
     htmaker.H1(i"API Summary")
-    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPI").render()))
+    htmaker.Div().add(htmaker.Verbatim(Nest.service("WebAPIList").render()))
 ]()
 
 doc.render()

@@ -1,0 +1,88 @@
+/*#
+ * @file        WebAPI.fal
+ * @brief       Web API service.
+ * @begin       23-Aug-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+import Compiler from compiler as Compiler
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+
+/*#
+ * Web API service.
+ *
+ * Provides functionality for accessing available API objects.
+ *
+ * @param owner Service owner.
+ * @param instance Service instance.
+ *
+ * @see nest.Service
+ */
+class WebAPIDetail(instance) from Service(instance)
+
+   /*#
+   * The directory where API objects are stored.
+   */
+   apidir = ServiceVar( "The directory where API objects are stored", b.ConfigBinder )
+   funcname = ServiceVar( "Function pseudo object list (name, link, description)", b.InputVarBinder )
+
+   fdata = ServiceVar( "The function data that will be passed to the skin" )
+   /*#
+   * Compiler services.
+   */
+   _compiler = Compiler()
+
+   /*#
+   * @see nest.Service.run
+   */
+   function run()
+      Nest.logi("Service WebAPIDetail run")
+
+      // apidir MUST be configured.
+      if not self.apidir.isSet
+         raise NestError( 10100, "apidir not configured" )
+      end
+
+      fname = self.funcname.value
+      
+      // and now, load file
+      func = self._loadApiObject( self.apidir.value + "/" + fname + ".fam", fname )
+      if func == nil
+         // no fam? -- try fal
+         func = self._loadApiObject( self.apidir.value + "/" + fname + ".fal", fname )
+      end
+
+      if func == nil
+         raise NestError( NestError.other, "Can't find required function", fname )
+      end
+      
+      self.fdata.value = bless( func.docData() )
+   end
+
+
+   /*#
+     * Loads the specified API object.
+     *
+     * @param file The file containing the API object to load.
+     * @param name The name of the API object to load.
+     *
+     * @return The API object.
+     */
+    function _loadApiObject(file, name)
+        try
+            module = self._compiler.loadFile(file, name)
+            moduleClass = module.get(name)
+            return moduleClass
+        catch AccessError
+            Nest.logi("File " + file + " is not a valid Nest API entity." )
+            //raise NestError(NestError.no_mod_class, "", name)
+            // ignore the invalid module
+        end
+    end
+end
