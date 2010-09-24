@@ -19,7 +19,9 @@
 #include <falcon/dbi_common.h>
 #include <falcon/srv/dbi_service.h>
 
-#include <ibsql.h>
+#include <ibase.h>
+#include <ib_util.h>
+#include <iberror.h>
 
 namespace Falcon
 {
@@ -28,18 +30,17 @@ class FirebirdDBIInBind: public DBIInBind
 {
 
 public:
-   FirebirdDBIInBind( MYSQL_STMT* stmt );
-
+   FirebirdDBIInBind( isc_stmt_handle* stmt );
    virtual ~FirebirdDBIInBind();
 
    virtual void onFirstBinding( int size );
    virtual void onItemChanged( int num );
 
-   MYSQL_BIND* mybindings() const { return m_mybind; }
+   XSQLDA* fb_bindings() const { return m_fbbind; }
 
 private:
-   MYSQL_BIND* m_mybind;
-   MYSQL_STMT* m_stmt;
+   XSQLDA* m_fbbind;
+   isc_stmt_handle* m_stmt;
 };
 
 
@@ -133,15 +134,17 @@ public:
 class DBIHandleFirebird : public DBIHandle
 {
 protected:
-   MYSQL *m_conn;
+   isc_db_handle m_conn;
+   isc_tr_handle m_tr;
+
    DBISettingParams m_settings;
 
-   MYSQL_STMT* my_prepare( const String &query );
-   int64 my_execute( MYSQL_STMT* stmt, FirebirdDBIInBind& bindings, const ItemArray& params );
+   isc_stmt_handle* fb_prepare( const String &query );
+   int64 fb_execute( isc_stmt_handle* stmt, FirebirdDBIInBind& bindings, const ItemArray& params );
 
 public:
    DBIHandleFirebird();
-   DBIHandleFirebird( MYSQL *conn );
+   DBIHandleFirebird( const isc_db_handle &conn );
    virtual ~DBIHandleFirebird();
 
    virtual void options( const String& params );
@@ -161,7 +164,11 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   MYSQL *getConn() { return m_conn; }
+   isc_db_handle& getConn() { return m_conn; }
+   const isc_db_handle& getConn() const { return m_conn; }
+
+   isc_tr_handle& getTr() { return m_tr; }
+   const isc_tr_handle& getTr() const { return m_tr; }
 
    // Throws a DBI error, using the last error code and description.
    void throwError( const char* file, int line, int code );
@@ -171,11 +178,11 @@ public:
 class DBIStatementFirebird : public DBIStatement
 {
 protected:
-   MYSQL_STMT* m_statement;
+   isc_stmt_handle m_statement;
    FirebirdDBIInBind* m_inBind;
 
 public:
-   DBIStatementFirebird( DBIHandle *dbh, MYSQL_STMT* stmt );
+   DBIStatementFirebird( DBIHandle *dbh, const isc_stmt_handle& stmt );
    virtual ~DBIStatementFirebird();
 
    virtual int64 execute( const ItemArray& params );
@@ -183,7 +190,8 @@ public:
    virtual void close();
 
    DBIHandleFirebird* getMySql() const { return static_cast<DBIHandleFirebird*>( m_dbh ); }
-   MYSQL_STMT* my_statement() const { return m_statement; }
+   const isc_stmt_handle& my_statement() const { return m_statement; }
+   isc_stmt_handle& my_statement() { return m_statement; }
 };
 
 

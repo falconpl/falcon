@@ -17,9 +17,11 @@
 #include <stdio.h>
 #include <errmsg.h>
 
+#include <time.h>
+
 #include <falcon/engine.h>
 #include <falcon/dbi_error.h>
-#include "mysql_mod.h"
+#include "fbsql_mod.h"
 
 namespace Falcon
 {
@@ -28,27 +30,28 @@ namespace Falcon
  * Private class used to convert timestamp to Firebird format.
  *****************************************************************************/
 
-class DBITimeConverter_MYSQL_TIME: public DBITimeConverter
+class DBITimeConverter_Firebird_TIME: public DBITimeConverter
 {
 public:
    virtual void convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const;
-} DBITimeConverter_MYSQL_TIME_impl;
+} DBITimeConverter_Firebird_TIME_impl;
 
-void DBITimeConverter_MYSQL_TIME::convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const
+void DBITimeConverter_Firebird_TIME::convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const
 {
-   fassert( ((unsigned)bufsize) >= sizeof( MYSQL_TIME ) );
+   fassert( ((unsigned)bufsize) >= sizeof( ISC_TIMESTAMP ) );
 
-   MYSQL_TIME* mtime = (MYSQL_TIME*) buffer;
-   mtime->year = (unsigned) ts->m_year;
-   mtime->month = (unsigned) ts->m_month;
-   mtime->day = (unsigned) ts->m_day;
-   mtime->hour = (unsigned) ts->m_hour;
-   mtime->minute = (unsigned) ts->m_minute;
-   mtime->second = (unsigned) ts->m_second;
-   mtime->second_part = (unsigned) ts->m_msec;
-   mtime->neg = 0;
+   ISC_TIMESTAMP* mtime = (ISC_TIMESTAMP*) buffer;
+   struct tm entry_time;
 
-   bufsize = sizeof( MYSQL_TIME );
+   entry_time.tm_year = ts->m_year < 1900 ? 0 : ts->m_year - 1900;
+   entry_time.tm_mon = ts->m_month-1;
+   entry_time.tm_mday = (unsigned) ts->m_day;
+   entry_time.tm_hour = (unsigned) ts->m_hour;
+   entry_time.tm_min = (unsigned) ts->m_minute;
+   entry_time.tm_sec = (unsigned) ts->m_second;
+
+   isc_encode_timestamp( &entry_time, mtime );
+   bufsize = sizeof( ISC_TIMESTAMP );
 }
 
 
@@ -778,7 +781,7 @@ int64 DBIStatementFirebird::execute( const ItemArray& params )
          // Inserts or other repetitive statements will have at least 1, so
          // this branch won't be repeatedly checked in the fast path.
          m_inBind = new FirebirdDBIInBind( m_statement );
-         m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
+         m_inBind->bind( params, DBITimeConverter_Firebird_TIME_impl );
 
          if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
          {
@@ -788,7 +791,7 @@ int64 DBIStatementFirebird::execute( const ItemArray& params )
    }
    else
    {
-      m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
+      m_inBind->bind( params, DBITimeConverter_Firebird_TIME_impl );
    }
 
    if( mysql_stmt_execute( m_statement ) != 0 )
@@ -836,11 +839,7 @@ DBIHandleFirebird::~DBIHandleFirebird()
 
 void DBIHandleFirebird::options( const String& params )
 {
-   if( m_settings.parse( params ) )
-   {
-      mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0);
-   }
-   else
+   if( ! m_settings.parse( params ) )
    {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
             .extra( params ) );
@@ -855,17 +854,13 @@ const DBISettingParams* DBIHandleFirebird::options() const
 
 DBIHandleFirebird::DBIHandleFirebird()
 {
-   m_conn = NULL;
+   m_conn = 0L;
+   m_tr = 0L;
 }
 
-DBIHandleFirebird::DBIHandleFirebird( MYSQL *conn )
+DBIHandleFirebird::DBIHandleFirebird( const isc_db_handle &conn )
 {
    m_conn = conn;
-
-   // we'll be using UTF-8 charset
-   mysql_set_character_set( m_conn, "utf8" );
-
-   mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
 
 DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, const ItemArray& params )
@@ -873,69 +868,19 @@ DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, 
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
+   if( m_tr == 0L )
+      begin();
+
    // do we want to fetch strings?
-   if( options()->m_bFetchStrings )
-   {
-      MYSQL *conn = getConn();
-      String temp;
-      sqlExpand( sql, temp, params );
-
-      AutoCString asQuery( temp );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      MYSQL_RES* rec =  options()->m_nPrefetch < 0 ?
-         mysql_store_result( conn ) :
-         mysql_use_result( conn );
-
-      affectedRows = mysql_affected_rows( conn );
-      return new DBIRecordsetFirebird_RES_STR( this, rec );
-   }
+   // if( options()->m_bFetchStrings )
 
    // prepare and execute -- will create a new m_statement
-   MYSQL_STMT* stmt = my_prepare( sql );
-   MYSQL_RES* meta = 0;
+   isc_stmt_handle stmt = 0L;
 
-   try
+   if ( options()->m_bAutocommit )
    {
-      FirebirdDBIInBind bindings(stmt);
-      affectedRows = my_execute( stmt, bindings, params );
-
-      // We want a result recordset
-      meta = mysql_stmt_result_metadata( stmt );
-      if( meta == 0 )
-      {
-         // the query didn't return a recorset
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
-      }
-      else
-      {
-         // ok. Do the user wanted all the result back?
-         if( m_settings.m_nPrefetch < 0 )
-         {
-            if( mysql_stmt_store_result( stmt ) != 0 )
-            {
-               throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
-            }
-         }
-
-         // -- may throw
-         DBIRecordsetFirebird* recset = new DBIRecordsetFirebird_STMT( this, meta, stmt );
-         return recset;
-      }
-
+      commit();
    }
-   catch( ... )
-   {
-      if( meta != 0 )
-         mysql_free_result( meta );
-
-      mysql_stmt_close( stmt );
-      throw;
-   }
-
 
    return 0; // to make the compiler happy
 }
@@ -944,7 +889,10 @@ DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, 
 void DBIHandleFirebird::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   if( m_tr == 0L )
+      begin();
 
    // if we don't have var params, we can use the standard query, after proper escape.
    if ( params.length() == 0 )
@@ -997,6 +945,11 @@ void DBIHandleFirebird::perform( const String &sql, int64 &affectedRows, const I
         throw;
      }
    }
+
+   if ( options()->m_bAutocommit )
+   {
+      commit();
+   }
 }
 
 
@@ -1005,6 +958,9 @@ DBIRecordset* DBIHandleFirebird::call( const String &sql, int64 &affectedRows, c
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   if( m_tr == 0L )
+      begin();
 
    MYSQL *conn = getConn();
    String temp;
@@ -1039,6 +995,11 @@ DBIRecordset* DBIHandleFirebird::call( const String &sql, int64 &affectedRows, c
       {
          mysql_free_result(rec1);
       }
+   }
+
+   if ( options()->m_bAutocommit )
+   {
+      commit();
    }
 
    return options()->m_bFetchStrings ?
@@ -1096,7 +1057,7 @@ int64 DBIHandleFirebird::my_execute( MYSQL_STMT* stmt, FirebirdDBIInBind& bindin
    // Do we have some parameter to bind?
    if( params.length() > 0 )
    {
-      bindings.bind( params, DBITimeConverter_MYSQL_TIME_impl );
+      bindings.bind( params, DBITimeConverter_Firebird_TIME_impl );
 
       if( mysql_stmt_bind_param( stmt, bindings.mybindings() ) != 0 )
       {
@@ -1132,8 +1093,21 @@ int64 DBIHandleFirebird::getLastInsertedId( const String& sequenceName )
 
 void DBIHandleFirebird::begin()
 {
-   if( m_conn == 0 )
+   if( m_conn == 0L )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+   ISC_STATUS status[20];
+
+   if ( m_tr != 0L )
+   {
+      if( ! isc_rollback_transaction(status, &m_tr) )
+      {
+         // TODO Throw the error
+      }
+      m_tr = 0L;
+   }
+
+   isc_start_transaction( status, &m_tr, 1, NULL );
 
    if( mysql_query( m_conn, "BEGIN" ) != 0 )
    {
@@ -1144,25 +1118,31 @@ void DBIHandleFirebird::begin()
 
 void DBIHandleFirebird::commit()
 {
-   if( m_conn == 0 )
+   if( m_conn == 0L )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   if( mysql_query( m_conn, "COMMIT" ) != 0 )
+   ISC_STATUS status[20];
+   if( ! isc_commit_transaction(status, &m_tr) )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+      // TODO Throw the error
    }
+
+   m_tr = 0L;
 }
 
 
 void DBIHandleFirebird::rollback()
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   if( m_conn == 0L )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   if( mysql_query( m_conn, "ROLLBACK" ) != 0 )
+   ISC_STATUS status[20];
+   if( ! isc_rollback_transaction(status, &m_tr) )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+      // TODO Throw the error
    }
+
+   m_tr = 0L;
 }
 
 
@@ -1193,6 +1173,10 @@ void DBIHandleFirebird::selectLimited( const String& query,
 
 void DBIHandleFirebird::close()
 {
+   if( m_tr != 0 )
+   {
+      m_tr
+   }
    if ( m_conn != NULL )
    {
       mysql_query( m_conn, "ROLLBACK" );
@@ -1232,59 +1216,201 @@ void DBIServiceFirebird::init()
 {
 }
 
+static void checkParamNumber(char *&dpb, const String& value, byte dpb_type, const String &option )
+{
+   if ( value.length() )
+   {
+      int64 res;
+      if( ! value.parseInt(res) )
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+                  .extra( option + "=" + value )
+               );
+
+      *dpb++ = dpb_type;
+      *dpb++ = 1;
+      *dpb++ = (byte) res;
+   }
+}
+
+static void checkParamYesOrNo(char *&dpb, const String& value, byte dpb_type, const String &option )
+{
+   if ( value.size() )
+   {
+      *dpb++ = dpb_type;
+      *dpb++ = 1;
+
+     if( value.compareIgnoreCase( "yes" ) == 0 )
+        *dpb++ = (byte) 1;
+     else if( value.compareIgnoreCase( "no" ) == 0 )
+        *dpb++ = (byte) 0;
+     else
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+                 .extra( option + "=" + sNoRserve )
+              );
+   }
+}
+
+static void checkParamString(char *&dpb, int& len, const String& value, char* szValue, byte dpb_type )
+{
+   if ( value.size() )
+   {
+      isc_expand_dpb( &dpb, &len,
+            dpb_type, szValue,
+            NULL
+      );
+   }
+}
+
+
 DBIHandle *DBIServiceFirebird::connect( const String &parameters )
 {
-   MYSQL *conn = mysql_init( NULL );
+   isc_db_handle handle = 0L;
 
-   if ( conn == NULL )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
-   }
+   char dpb_buffer[256*10], *dpb, *p;
+   // User name (uid)
+   // Password (pwd)
+
+   dpb = dpb_buffer;
+   int dpb_length;
 
    // Parse the connection string.
    DBIConnParams connParams;
 
    // add Firebird specific parameters
-   String sSocket, sFlags;
-   const char *szSocket = 0;
-   connParams.addParameter( "socket", sSocket, &szSocket );
-   connParams.addParameter( "flags", sFlags );
+   // Encrypted password (epwd)
+   String sPwdEnc; char* szPwdEncode;
+   connParams.addParameter( "epwd", sPwdEnc, &szPwdEncode );
+
+   // Role name (role)
+   String sRole; char* szRole;
+   connParams.addParameter( "role", sRole, &szRole );
+
+   // System database administrator’s user name (sa)
+   String sSAName; char* szSAName;
+   connParams.addParameter( "sa", sSAName, &szSAName );
+
+   // Authorization key for a software license (license)
+   String sLicense; char* szLicense;
+   connParams.addParameter( "license", sLicense, &szLicense );
+
+   // Database encryption key (ekey)
+   String sKey; char* szKey;
+   connParams.addParameter( "ekey", sKey, &szKey );
+
+   // Number of cache buffers (nbuf)
+   String sNBuf;
+   connParams.addParameter( "nbuf", sNBuf );
+
+   // dbkey context scope (kscope)
+   String sDBKeyScope;
+   connParams.addParameter( "kscope", sDBKeyScope );
+
+   // Specify whether or not to reserve a small amount of space on each database
+   // --- page for holding backup versions of records when modifications are made (noreserve)
+   String sNoRserve;
+   connParams.addParameter( "reserve", sNoRserve );
+
+   // Specify whether or not the database should be marked as damaged (dmg)
+   String sDmg;
+   connParams.addParameter( "dmg", sDmg );
+
+   // Perform consistency checking of internal structures (verify)
+   String sVerify;
+   connParams.addParameter( "verify", sVerify );
+
+   // Activate the database shadow, an optional, duplicate, in-sync copy of the database (shadow)
+   String sShadow;
+   connParams.addParameter( "shadow", sShadow );
+
+   // Delete the database shadow (delshadow)
+   String sDelShadow;
+   connParams.addParameter( "delshadow", sDelShadow );
+
+   // Activate a replay logging system to keep track of all database calls (beginlog)
+   String sBeginLog;
+   connParams.addParameter( "beginlog", sBeginLog );
+
+   // Deactivate the replay logging system (quitlog)
+   String sQuitLog;
+   connParams.addParameter( "quitlog", sQuitLog );
+
+   // Language-specific message file  (lcmsg)
+   String sLcMsg; char* szLcMsg;
+   connParams.addParameter( "lcmsg", sLcMsg, &szLcMsg );
+
+   // Character set to be utilized (lctype)
+   String sLcType; char* szLcType;
+   connParams.addParameter( "lctype", sLcType, &szLcType );
+
+   // Connection timeout (tout)
+   String sTimeout;
+   connParams.addParameter( "tout", sTimeout );
 
    if( ! connParams.parse( parameters ) )
    {
-      mysql_close( conn );
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
          .extra( parameters )
       );
    }
 
-   long szFlags = CLIENT_MULTI_STATEMENTS;
-   // TODO parse flags
+   // create the dpb; first the numerical values.
+   *dpb++ = isc_dpb_version1;
 
-   if ( mysql_real_connect( conn,
-         connParams.m_szHost,
-         connParams.m_szUser,
-         connParams.m_szPassword,
-         connParams.m_szDb,
-         connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
-         szSocket, szFlags ) == NULL
-      )
+   checkParamNumber( dpb, sNBuf, isc_dpb_num_buffers, "nbuf" );
+   checkParamNumber( dpb, sTimeOut, isc_dpb_connect_timeout, "tout" );
+
+   checkParamYesOrNo( dpb, sDBKeyScope, isc_dpb_no_reserve, "kscope" );
+   checkParamYesOrNo( dpb, sNoRserve, isc_dpb_no_reserve, "reserve" );
+   checkParamYesOrNo( dpb, sDmg, isc_dpb_damaged, "dmg" );
+   checkParamYesOrNo( dpb, sVerify, isc_dpb_verify, "verify" );
+   checkParamYesOrNo( dpb, sShadow, isc_dpb_activate_shadow, "shadow" );
+   checkParamYesOrNo( dpb, sDelShadow, isc_dpb_delete_shadow, "delshadow" );
+   checkParamYesOrNo( dpb, sBeginLog, isc_dpb_begin_log, "beginlog" );
+   checkParamYesOrNo( dpb, sQuitLog, isc_dpb_quit_log, "sQuitLog" );
+
+   dpb_length = dpb - dpb_buffer;
+
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, connParams.m_sUser, connParams.m_szUser, isc_dpb_user_name );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, connParams.m_sPassword, connParams.m_szPassword, isc_dpb_password );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, sPwdEnc, szPwdEncode, isc_dpb_password_enc );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, sRole, szRole, isc_dpb_sql_role_name );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, sLicense, szLicense, isc_dpb_license );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, sKey, szKey, isc_dpb_encrypt_key );
+   dpb = dpb_buffer;
+   checkParamString( dpb, dpb_length, sLcMsg, szLcMsg, isc_dpb_lc_messages );
+   dpb = dpb_buffer;
+
+   // We'll ALWAYS use AutoCString to talk with Firebird, as such we'll ALWAYS use UTF8
+   isc_expand_dpb( &dpb, &dpb_length,
+         isc_dpb_lc_messages, "UTF8",
+               NULL );
+
+   /* Attach to the database. */
+   ISC_STATUS status_vector[20];
+
+   isc_attach_database(status_vector, strlen(connParams.m_szDb), connParams.m_szDb, &handle,
+         dpb_length,
+         dbp_buffer);
+
+   if ( status_vector[0] == 1 && status_vector[1] )
    {
-      String errorMessage = mysql_error( conn );
-      errorMessage.bufferize();
-      mysql_close( conn );
-
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
-              .extra( errorMessage )
-           );
+                   .extra( "Some error" )
+                );
    }
 
-   return new DBIHandleFirebird( conn );
+   return new DBIHandleFirebird( handle );
 }
 
 CoreObject *DBIServiceFirebird::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
-   Item *cl = vm->findWKI( "Firebird" );
+   Item *cl = vm->findWKI( "FirebirdSQL" );
    if ( cl == 0 || ! cl->isClass() )
    {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );

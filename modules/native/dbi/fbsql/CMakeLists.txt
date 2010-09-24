@@ -8,62 +8,62 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-falcon_define_module( FALCON_MODULE mysql )
+falcon_define_module( FALCON_MODULE fbsql )
 
-# Find MYSQL
-SET(MYSQL_INCLUDE_SEARCH_PATH
-  ${MYSQL_INCLUDE_DIR}
-  /usr/include/mysql
-  /usr/local/include/mysql
-)
-FIND_PATH(MYSQL_REAL_INCLUDE_DIR mysql.h ${MYSQL_INCLUDE_SEARCH_PATH})
+set( firebird_include_search_path
+      ${FIREBIRD_INCLUDE_DIR}
+      /usr/local/include
+      /usr/include )
+      
+# Find FB includes
+FIND_PATH(
+   FIREBIRD_INC_DIR ibase.h
+      ${firebird_include_search_path}
+  )
+
+  
+if (NOT FIREBIRD_INC_DIR)
+   MESSAGE(FATAL_ERROR "Can't find ibase.h header file in ${firebird_include_search_path}" )
+endif()
 
 # Find MySQL Client Library
-SET(MYSQL_LIB_SEARCH_PATH ${MYSQL_LIB_DIR} /usr/lib /usr/local/lib)
-SET(MYSQL_LIB_NAMES mysqlclient mysqlclient_r)
-FIND_LIBRARY(MYSQL_LIBRARY
-  NAMES ${MYSQL_LIB_NAMES}
-  PATHS ${MYSQL_LIB_SEARCH_PATH}
+SET( firebird_lib_search_path  "${FIREBIRD_LIB_DIR}" /usr/local/lib /usr/lib  )
+
+FIND_LIBRARY( FIREBIRD_LIBRARY
+  NAMES libfbclient.so
+  PATHS ${firebird_lib_search_path}
 )
 
-IF (MYSQL_REAL_INCLUDE_DIR AND MYSQL_LIBRARY)
-  INCLUDE_DIRECTORIES(BEFORE ${MYSQL_REAL_INCLUDE_DIR})
-ELSE (MYSQL_REAL_INCLUDE_DIR AND MYSQL_LIBRARY)
-  IF(NOT MYSQL_REAL_INCLUDE_DIR)
-    MESSAGE(SEND_ERROR "MySQL include path was not found")
-    MESSAGE(SEND_ERROR "Looked in: ${MYSQL_INCLUDE_SEARCH_PATH}")
-  ENDIF (NOT MYSQL_REAL_INCLUDE_DIR)
-  IF (NOT MYSQL_LIBRARY)
-    MESSAGE(SEND_ERROR "MySQL client library was not found")
-    MESSAGE(SEND_ERROR "Looked for: ${MYSQL_LIB_NAMES}")
-    MESSAGE(SEND_ERROR "Looked in: ${MYSQL_LIB_SEARCH_PATH}")
-  ENDIF (NOT MYSQL_LIBRARY)
-  MESSAGE(FATAL_ERROR "Cannot build MySQL DBI module")
-ENDIF (MYSQL_REAL_INCLUDE_DIR AND MYSQL_LIBRARY)
+if (NOT FIREBIRD_LIBRARY)
+   MESSAGE(FATAL_ERROR "Can't find library libfbclient.so in ${firebird_lib_search_path}" )
+endif()
 
-MESSAGE(STATUS "Found mysql.h in ${MYSQL_REAL_INCLUDE_DIR}")
-MESSAGE(STATUS "Found mysql client library, ${MYSQL_LIBRARY}")
+
+MESSAGE(STATUS "Found ibase.h in ${FIREBIRD_INC_DIR}")
+MESSAGE(STATUS "Found firebird client library ${FIREBIRD_LIBRARY}")
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(../dbi)
+INCLUDE_DIRECTORIES(${FIREBIRD_INC_DIR})
+
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
 
    ${dbi_common_files}
 
-   mysql.cpp
-   mysql_ext.cpp
-   mysql_mod.cpp
+   fbsql.cpp
+   fbsql_ext.cpp
+   fbsql_mod.cpp
 )
 
 # Link
 IF(MSVC)
-  SET(MYSQL_OPT_LIBS wsock32)
-  SET_TARGET_PROPERTIES(${FALCON_MODULE}  PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
+  SET(FIREBIRD_OPT_LIBS wsock32)
 ENDIF(MSVC)
 
-TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
-falcon_install_module( ${FALCON_MODULE}  )
+TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${FIREBIRD_OPT_LIBS} ${FIREBIRD_LIBRARY})
+falcon_install_module2( ${FALCON_MODULE} dbi )
+
