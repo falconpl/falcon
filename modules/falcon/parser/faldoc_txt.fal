@@ -1,0 +1,301 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: faldoc_txt.fal
+
+   Read faldoc documentation text files.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Node from parser.genparser.node as Node
+import LevelNode from parser.genparser.node as LevelNode
+import InfoNode from parser.genparser.node as InfoNode
+
+import PState from parser.genparser as PState
+import Context from parser.genparser as Context
+
+import ReRule from parser.genparser.rules as ReRule
+import ReRuleLA from parser.genparser.rules as ReRuleLA
+import TagRule from parser.genparser.rules as TagRule
+import EmptyLineRule from parser.genparser.rules as EmptyLineRule
+import DummyRule from parser.genparser.rules as DummyRule
+import CharRule from parser.genparser.rules as CharRule
+
+import Parser from parser.genparser
+
+
+TableStart = .[
+   ReRule( '^\s*\|=\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("th"))} )
+   ReRule( '^\s*\|\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("td"))} )
+]
+
+ListStart =  .[
+   ReRule( '^[\s\*]*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
+   ReRule( '^[\s*\*]*-\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
+]
+
+TopCommands =  .[
+   ReRule( '^[\s*\*]*@section (\w) +(.*)$', "#stay", 
+           {ctx, d0, p0, p0b => ctx.add(InfoNode("command", ['cmd'=>'b', 'p0'=> p0 ? p0:p0b] )) })  
+]
+
+InlineCommands = .[
+   ReRule( '@a +(\w)', "#stay", {ctx, d0, p0 => ctx.add(InfoNode("command", ['cmd'=>'a', 'p0'=>p0] )) })
+   ReRule( '@b +"([^"]*)"|(\w)', "#stay", {ctx, d0, p0, p0b => ctx.add(InfoNode("command", ['cmd'=>'b', 'p0'=> p0 ? p0:p0b] )) })  
+   ReRule( '@l +"([^"]*)"|(\w) +"([^"]*)"|(\w)', "#stay", 
+                              {ctx, d0, p0, p0b, p1, p1b => ctx.add(InfoNode("command", 
+                              ['cmd'=>'l', 'p0'=> p0 ? p0:p0b, 'p1' => p1?p1:p1b ] )) })
+]
+
+FormatElements = .[
+   TagRule( "**",  "bold", {ctx => ctx.pushNode( Node("b"))} )
+   TagRule( "//",  "italic", {ctx => ctx.pushNode( Node("i"))} )
+   TagRule( "__",  "underline", {ctx => ctx.pushNode( Node("u"))} )
+   TagRule( "^^",  "superscript", {ctx => ctx.pushNode( Node("sup"))} )
+   TagRule( ",,",  "subscript", {ctx => ctx.pushNode( Node("sub"))} )
+   TagRule( "~~", "#stay", {ctx => ctx.add( "~" )} ) // escape escaped
+   TagRule( "\\\\", "#stay", {ctx => ctx.add( "\\" )} ) // escape escaped
+   TagRule( "~", "escape" ) // escape char
+   TagRule( "\\", "escape" ) // escape char
+]
+
+LinkElements = .[
+    ReRule( '\[\[:(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("file", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
+                           )
+                        })
+
+   ReRule( '\[\[(https?:.*?|ftp:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("link", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
+                           )
+                        })
+
+   
+    ReRule( '\[\[([^:|\]]+):(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, ilink, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt, "ilink"=>ilink]))
+                           )
+                        })
+   
+   ReRule( '\[\[(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+                        {ctx, ma, pg, d1, txt, d2, mx =>
+                           ctx.add(
+                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt]))
+                           )
+                        })
+   ReRule( 'https?://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+   ReRule( 'ftp://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+
+   ReRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
+                                                 ctx.add( InfoNode("img", _options(mx, ["name"=>pg, "alt"=> (txt? txt:pg)])))} )
+   ReRule( '<<(.*?)(\s+(.*?))?>>', "#stay", {ctx, ma, pname, d0, popts =>
+                        ctx.add( InfoNode("plugin", ["name"=>pname, "params"=>_params(popts)], true) ) } )
+]
+
+InlineElements = FormatElements + LinkElements + SpecialEntities
+
+/*
+   Determine the options of a optioned link
+*/
+function _options( mx, res )
+   if not mx: return res
+   
+   elems = mx.split("|")
+   
+   ielem = 0
+   le =  elems.len()
+   while ielem < le
+      elem = elems[ielem++]
+      
+      if "=" in elem
+         k,v = elem.split("=",2)
+         res[k] = v
+      else
+         res[elem] = true
+      end
+   end
+   return res
+end
+   
+
+/*
+   Determine options of plugins
+*/
+function _params( opts )
+   return opts
+end
+
+
+function _inlineState( limit )
+   return PState(.[
+            EmptyLineRule( "#pop;#pop", {ctx => ctx.popNode(); ctx.popNode()} )  // return to base
+            // Putting it before allows to override
+            TagRule( limit,  "#pop", {ctx => ctx.popNode()} )
+         ]
+         + InlineElements,
+         {ctx, data=>ctx.add( data )},
+         "para_continue"   // the paragraph can contiune at the end of an inline
+      )
+end
+   
+
+class Parser from parser.genparser.Parser
+   states = [
+      "start"=> PState(.[
+            EmptyLineRule( "#stay" )  // at start, empty lines are ignored
+         ] 
+         + Headers 
+         + .[ DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} ) ]
+      ),
+
+      "para" =>PState(.[
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
+            
+            ReRule( '^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
+            ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
+            ReRule( '^\+\+\+*\s*(.*)?$',  "quote_base", {ctx, ma, link => ctx.popNode();
+                                                            ctx.pushNode( InfoNode("quote", ["link"=>link]))} )
+         ]
+         + TableStart
+         + ListStart
+         + InlineElements
+         + Indents
+         + Headers2,
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
+      ),
+
+      "quote_base" =>PState(.[
+            ReRule( '^\+\+\+*$',  "#pop;#pop", {ctx => ctx.popNode();} )
+            DummyRule( "quote", { ctx => ctx.pushNode( Node("para") )} )
+         ]
+      ),
+
+      "quote" =>PState(.[
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
+            ReRuleLA( '^\+\+\+*$',  "#pop", {ctx => ctx.popNode()} )
+         ]
+         + ListStart
+         + InlineElements,
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
+      ),
+
+      "para_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add(" ")} ) ]
+      ),
+      
+      
+      "eolverbatim" =>PState(.[
+         DummyRule( "#pop", { ctx => ctx.add( "\n") } )
+         ]
+      ),
+
+      "table" => PState(.[
+            // at the end of the line we close TD and TR
+            EmptyLineRule( "#pop")
+         ]
+         + InlineElements
+         +.[
+            ReRule( '\s*\|$',  "tableBeginLine", {ctx=>  ctx.popNode(); ctx.popNode()} )
+            ReRule( '\s*\|=\s*',  "#stay", {ctx=> ctx.popNode(); ctx.pushNode(Node("th"))} )
+            ReRule( '\s*\|\s*',  "#stay", {ctx=> ctx.popNode(); ctx.pushNode(Node("td"))} )
+            ReRule( '\s*$',  "#pop", {ctx=> ctx.popNode(); ctx.popNode(); ctx.popNode()} )
+         ],
+         {ctx, data=>ctx.add( data )}
+      ),
+
+      "tableBeginLine" => PState(.[
+            ReRule( '^\s*\|=\s*',  "#pop", {ctx=> ctx.pushNode(Node("tr")); ctx.pushNode(Node("th"))} )
+            ReRule( '^\s*\|\s*',  "#pop", {ctx=> ctx.pushNode(Node("tr")); ctx.pushNode(Node("td"))} )
+            DummyRule( "#pop", {ctx=> ctx.popNode(); } )
+         ]
+      ),
+
+      // Some inline states
+      "bold" => _inlineState( "**" ),
+      "italic" => _inlineState( "//" ),
+      "superscript" => _inlineState( "^^" ),
+      "subscript" => _inlineState( ",," ),
+      "underline" => _inlineState( "__" ),
+
+      "list" => PState(.[
+            EmptyLineRule( "#pop;#pop", { ctx=> ctx.setListDepth( 0 ); ctx.popNode(); })
+                  
+            ReRule( '^\s*######\s*', "#stay", {ctx=> ctx.setListDepth(6, "ol" ) })
+            ReRule( '^\s*#####\s*', "#stay", {ctx=> ctx.setListDepth(5, "ol" ) })
+            ReRule( '^\s*####\s*', "#stay", {ctx=> ctx.setListDepth(4, "ol" ) })
+            ReRule( '^\s*###\s*', "#stay", {ctx=> ctx.setListDepth(3, "ol" ) })
+            ReRule( '^\s*##\s*', "#stay", {ctx=> ctx.setListDepth(2, "ol" )})
+            ReRule( '^\s*#\s*', "#stay", {ctx=> ctx.setListDepth(1, "ol" )})
+
+            ReRule( '^\s*\*\*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(6, "ul" ) })
+            ReRule( '^\s*\*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(5, "ul" ) })
+            ReRule( '^\s*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(4, "ul" ) })
+            ReRule( '^\s*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(3, "ul" ) })
+            ReRule( '^\s*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
+            ReRule( '^\s*\*\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
+         ]
+         + InlineElements,
+         {ctx, data=>ctx.add( data )},
+         "para_continue"
+      ),
+      
+
+      "escape" =>PState(.[
+            TagRule( "https://", "#pop", {ctx => ctx.add( "https://" )} ) // escaped links
+            TagRule( "http://", "#pop", {ctx => ctx.add( "http://" )} ) // escaped links
+            TagRule( "ftp://", "#pop", {ctx => ctx.add( "ftp://" )} ) // escaped links
+            
+            CharRule( "#pop", {ctx, c => if c: ctx.add(c) } )
+            // force to go away if can't grab even a char
+         ],
+         nil,  // No unrecognised possibile
+         "*#pop"  // pop if not matched at the end of the line, like ~\n
+      ),
+
+      "verbatim_line" =>PState(.[
+            ReRule( '^}}}$',  "#pop", {ctx => ctx.popNode()} )
+         ]
+         + SpecialEntities,
+         {ctx, data=>ctx.add( data )},
+         "eolverbatim"
+      ),
+
+      "verbatim_code" =>PState(.[
+            ReRule( '^}}}$',  "#pop", {ctx => ctx.popNode()} )
+         ],
+         {ctx, data=>ctx.add( data )},
+         "eolverbatim"
+      ),
+
+      "verbatim" =>PState(.[
+            EmptyLineRule( "#pop;#pop", {ctx => ctx.popNode(); ctx.popNode()} )  // pop if newpara
+            TagRule( '}}}',  "#pop", {ctx => ctx.popNode()} )
+         ]
+         + SpecialEntities,
+         {ctx, data=>ctx.add( data )}
+      ),
+
+      // Just to be able to add always "," at the end
+      "*dummy" => nil
+   ]
+
+   function reset()
+      self.initParser( "start" )
+   end
+end
+
+

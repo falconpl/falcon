@@ -1,0 +1,319 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docentity.fal
+
+   Autodocumentation tool - basic entry item.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 24 Sep 2010 19:24:04 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Entity class.
+
+   A document entity is a single entry in the documentation
+   file. It can be a page, a section, a class, an object,
+   a function, a method, or in general any entity that can be
+   indexed and cross-linked.
+   
+   An entity is made of multiple paragraph and has multiple
+   properties. It's type and name cannot always be determied
+   at creation (actually, that is rare), and is usually
+   assigned after the whole entity documentation text have
+   been parsed.
+   
+   Entities can be hierarchically organized into different
+   relationship groups:
+   - parent - children; ownership relationship, like properties and methods for classes.
+   - group - members: Multiple grouping where each group can have a list of members, but
+     a member can be present in multiple groups.s
+
+   Parent-children relationships are described through a pair of property 
+   (parent and children), while grouping is expressed through entries in 
+   the @a self.props property (with the property "in<entity type>" => "<entity id>". 
+
+   The @a self.props property contains many important elements, as the parameters.
+   Parameters entry (under props
+*/
+
+class DocEntity()
+   type = nil
+   name = nil
+   
+   props = bless([=>])
+   
+   parent = nil
+   children = nil
+   
+   /*# Textual content of the entity. 
+      This is the document tree that should be rendered for the 
+      description of the node.
+   */ 
+   content = nil
+   
+   function define( type, name )
+      self.type = type
+      self.name = name
+      
+      broadcast( "DocEntry.define", self ) 
+   end
+   
+   function addChild( child )
+      if self.children == nil
+         self.children = [child]
+      else
+         self.children += child
+      end
+      child.parent = self
+   end
+   
+   function addMember( member )
+      if self.children == nil
+         self.children = [child]
+      else
+         self.children += child
+      end
+      child.props["in" + self.type] = self
+   end
+   
+end
+
+/*# Unresolved link database. */
+object LinkDB
+   /*# Data to be resolved. */
+   data = List()
+
+   /*# Add an entry. */
+   function add( link )
+      if not link.derivedFrom( Link )
+         broadcast( "message", "Trying to add non-link entity to LinkDB \"" +
+                    link + "\" from: " + fself.caller() )
+         return
+      end
+
+      self.data.push( link )
+   end
+
+   /*# Try to resolve all the links, issuing a proper warning if impossible. */
+   function resolve()
+      for link in self.data
+         
+         if link.destination in EntityDB.data
+            link.target = EntityDB.data[link.destination]
+            // is the link correct?
+            if link.membership
+               // only different membership allowed is class -> object
+               if link.target.type != link.membership
+                  if link.membership != "class" or link.target.type != "object"
+                     broadcast( "error", link.source.file, link.line, "Link " +
+                              link.destination + " was considered a " + link.membership )
+                  end
+               end         
+               
+               // the system needs to know that the target class of the member
+               // is actually an object
+               if link.target.type == "object": link.source.props["object"] = true
+
+               if "members" notin link.target.props
+                  link.target.props["members"] = [ link.source.name => link.source ]
+               else
+                  link.target.props["members"][ link.source.name ] = link.source
+               end
+            end
+         else
+            broadcast( "error", link.source.file, link.line, "Can't resolve link to \"" + link.destination + "\"" )
+         end
+      end
+   end
+end
+
+/*#
+   A link between an entity and another one.
+   @param source The entity that is searching for the link.
+   @param line The line in file where the link is found.
+   @param destination The target item of the link.
+
+   If @b destination is a string, the link gets added to the
+   unresolved link database for later resolution.
+
+   Notice that the link is defined as a special (markup) text entry.
+   This allows to put the link inline to other paragraph-wide text
+   composition. The @b content property inherited from TextEntry
+   will be used as text for the final link if given; if not,
+   the string representation of this object will be the name
+   of the linked destination, if available. If not available,
+   this link will be represented as an undefined link and the source
+   data + line will be used to indicate where it is defined.
+*/
+class Link( source, line, destination ) from TextEntry( "link" )
+   source = source
+   line = line
+   destination = destination.typeId() == StringType ? destination: destination.name
+   target = destination.typeId() == StringType ? nil: destination
+   membership = nil
+
+   init
+      LinkDB.add( self )
+   end
+
+   function toString()
+      if self.target
+         return self.content ? self.content : self.target.toString()
+      end
+
+      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
+   end
+
+   function describe()
+      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
+   end
+end
+
+
+/*#
+   Document generic entity.
+
+   The exact entity is defined by the type, which matches a prototype
+   in the @a prototypes table, and a the characteristics, which are
+   filled throught the prototype table.
+*/
+
+class DocEntity( parent )
+   /*# Filename where the entity is coming from. */
+   file = nil
+   /*# First line of comment declaration of the entity. */
+   firstline = nil
+   /*# Line at which the entity is defined at language level (if any). */
+   dline = nil
+   /*# Content block; temporarily stored here for second-level parsing. */
+   cblock = nil
+   /*# Type of the entity. */
+   type = nil
+   /*# Local name of the entity. */
+   name = nil
+
+   /*# Is this entity created out of a real language construct?. */
+   hard = false
+
+   /*# Entity-type specific properties.
+      Each entry is generally composed of a content list (a sequence of TextEntry items). Some
+      entries, as "module", can contain a direct reference to another item via a single
+      Link entry (which, anyhow, is derived from TextEntry).
+   */
+   props = [=>]
+
+   /*# TextEntry of type "entity" containing a set of paragraphs.. */
+   content = nil
+
+   /*# Next entitiy.
+
+      Some entities can be chained. Mainly page-level entities can contain
+      sections and subsections. Those exist as entities, but they are not
+      independent; they are add as children entities.
+   */
+   next = nil
+
+   /** Parent entity.
+      This get a value only in sub-entities (i.e. page sections).
+   */
+   parent = nil
+
+   init
+      if parent
+         parent.addChild( self )
+      end
+   end
+
+   function addChild( entity )
+      if self.next == nil
+         self.next = []
+      end
+      self.next += entity
+      entity.parent = self
+   end
+
+end
+
+/*# Database of all the defined entities. */
+object EntityDB
+   /*# All the data, organized by unique ID */
+   data = [=>]
+
+   /*# All the data, organized by type -> list of entities. */
+   grouping = [=>]
+
+   /*# Data in function sets. */
+   sets = [=>]
+
+   /*# Data in groups. */
+   groups = [=>]
+
+   /*# Data in modules. */
+   modules = [=>]
+
+   function add( entry )
+      if not entry.derivedFrom( DocEntity )
+         broadcast( "error", "Trying to add non-entity to EntityDB \"" +
+               entry + "\" from: " + fself.caller() )
+         return
+      end
+
+      if not entry.name
+         broadcast( "error", entry.file, entry.firstline, "Entry declared at this line has no ID." )
+         return
+      end
+
+      if not entry.type
+         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name + " has no type." )
+         return
+      end
+
+      if "brief" notin entry.props
+         try
+            if prototypes.find( "type", entry.type, "brief")
+               broadcast( "error", entry.file, entry.firstline, "Entry has no 'brief' description." )
+            end
+         end
+         // but let it through
+      end
+
+      if entry.name in self.data
+         other = self.data[entry.name]
+         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name +
+                     @" already existing at $(other.file):$(other.firstline)" )
+         return
+      end
+
+      self.data[ entry.name ] = entry
+      extendList( self.grouping, entry.type, entry )
+
+      // resolve grouping links
+      if "ingroup" in entry.props
+         for link in entry.props["ingroup"]
+            extendList( self.groups, link.destination, entry )
+         end
+      end
+
+      if "inset" in entry.props
+         extendList( self.sets, entry.props["inset"].destination, entry )
+      end
+
+      if "inmodule" in entry.props
+         extendList( self.modules, entry.props["inmodule"].destination, entry )
+      end
+   end
+
+   function complete()
+      for k,row in self.grouping: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.sets: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.groups: arraySort( row, { a,b => a.name.compare( b.name ) } )
+      for k,row in self.modules: arraySort( row, { a,b => a.name.compare( b.name ) } )
+   end
+end
+
+export
