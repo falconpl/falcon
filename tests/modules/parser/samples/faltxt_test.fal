@@ -49,7 +49,7 @@ is.setEncoding("utf-8")
 ctx = parser.genparser.Context()
 p = parser.faldoc.txt.Parser()
 
-p.trace = false
+p.trace = true
 
 p.initParser( "start" )
 line = ""

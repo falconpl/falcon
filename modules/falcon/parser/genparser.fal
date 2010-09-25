@@ -6,10 +6,10 @@
    Generic customizable grammar parser.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+   Begin: Sat, 30 Aug 2010 09:42:22 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -21,9 +21,8 @@ import Node from self.node as Node
 import DummyRule from self.rules
 
 
-/*#
-   @brief Parser states (behaviors)
-*/
+//# Parser states (behaviors)
+
 class PState( rules, onUnmatched, eolRule )
    rules = rules
    onUnmatched = onUnmatched
@@ -136,22 +135,27 @@ end
 */
 
 class Parser()
-   // known states by name
+   //# known states by name
    states = nil
    
-   // stack of ParserStates
+   //# stack of ParserStates
    _stack = []
 
-   // false when asked to quit
+   //# Used for tracing
+   _stateNames = []
+
+   //# false when asked to quit
    _proceed = false
 
-   // current parsing row
+   //# current parsing row
    row = 1
 
-   /*#
-      @brief Pushes a given state making it the active state.
-      @param name The name of the state that should be pushed.
-      @raise ParseError if the state name is not known.
+   //# true to activate rule tracing
+   trace = false
+
+   /*# Pushes a given state making it the active state.
+   *  @param name The name of the state that should be pushed.
+   *  @raise ParseError if the state name is not known.
    */
    function pushState( name )
       if not name in self.states
@@ -159,6 +163,10 @@ class Parser()
       end
 
       self._stack += self.states[name]
+      if self.trace
+         self._stateNames += name
+         self.traceStates()
+      end
    end
 
    /*#
@@ -172,6 +180,10 @@ class Parser()
       end
 
       arrayResize( self._stack, len - 1 )
+      if self.trace
+         arrayResize( self._stateNames, len - 1 )
+         self.traceStates()
+      end
    end
 
    /*#
@@ -182,7 +194,7 @@ class Parser()
    */
    function parse( string, initState )
       self.initParser(initState)
-      ctx = Context()
+      ctx = Context
       pos = 0
       strlen = string.len()
 
@@ -229,6 +241,7 @@ class Parser()
       
       loop
          hadWinner = false
+         if self.trace: self.traceText( line )
          
          loop
             matchAt = line.len()
@@ -269,6 +282,7 @@ class Parser()
 
             if winner
                count = winner.apply( ctx )
+               if self.trace: self.traceRule( winner )
                self._fulfil( winner.nextState )
             else
                // empty line and no matching rule, so it seems.
@@ -282,9 +296,11 @@ class Parser()
             // is this a conditional rule?
             if state.eolRule[0] == "*"
                if not hadWinner
+                  if self.trace: self.traceMsg("Following optional eolRule")
                   self._fulfil( state.eolRule[1:] )
                end
             else
+               if self.trace: self.traceMsg("Following mandatory eolRule")
                self._fulfil( state.eolRule )
             end
          end
@@ -292,6 +308,7 @@ class Parser()
       // Repeat if it was a dummy
       end not winner.derivedFrom( rules.DummyRule )
       ++self.row
+      ctx.row = self.row
    end
 
 
@@ -305,6 +322,7 @@ class Parser()
          if what == "#pop"
             self.popState()
          elif what == "#stay"
+            if self.trace: self.traceMsg( "Staying in current state" )
             return
          elif what == "#quit"
             self.terminate()
@@ -312,6 +330,10 @@ class Parser()
             self.pushState( what )
          elif what.derivedFrom( PState )
             self._stack += what
+            if self.trace
+               self._stateNames += "anon(" + what.toString()+ ")"
+               self.traceStates()
+            end
          else
             // otherwise we have something wrong
             raise ParseError( 10004, i"Invalid state change", what )
@@ -333,6 +355,25 @@ class Parser()
       self._proceed = false
    end
 
+   function traceText( line )
+      > "[PTRC:text] <<", line, ">>"
+   end
+
+   function traceStates()
+      > "[PTRC:stat] ", ", ".merge(self._stateNames)
+   end
+
+   function traceMsg( msg )
+      > "[PTRC:msg ] ", msg
+   end
+
+   function traceRule( r, count )
+      >> "[PTRC:rule] Applying ", r.className(), "("
+      if r provides token: >> '"', r.token.escape(), "\", "
+      >> '"', r.nextState, '")'
+      > " matcing ", r.matchLen, " chars."
+   end
+   
 end
 
 export

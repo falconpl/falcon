@@ -70,7 +70,7 @@ class Parser from parser.genparser.Parser
             TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
             // Consumes useless * at begin of comment
             ReRule( '^\s*\*+(?!/)', "#stay" )
-            ReRule( '\**+/', "#pop", {ctx=> ctx.popNode()})
+            ReRule( '\+*+/', "#pop", {ctx=> ctx.popNode()})
          ],
          {ctx, data=>ctx.add( data )},
          "grab_continue"

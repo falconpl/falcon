@@ -1,7 +1,7 @@
 /*
    FALCON - Generic Parser
 
-   FILE: faldoc_txt.fal
+   FILE: txt.fal
 
    Read faldoc documentation text files.
    -------------------------------------------------------------------
@@ -27,9 +27,131 @@ import TagRule from parser.genparser.rules as TagRule
 import EmptyLineRule from parser.genparser.rules as EmptyLineRule
 import DummyRule from parser.genparser.rules as DummyRule
 import CharRule from parser.genparser.rules as CharRule
+import ProxyRule from parser.genparser.rules as ProxyRule
 
 import Parser from parser.genparser
 
+ParaCommands =  .[
+   ReRule( '^\s*@brief\s+', "para",
+           {ctx => ctx.pushNode(InfoNode("@brief", ['line' => ctx.row ] )) })
+
+   ReRule( '^\s*@note\s+', "para",
+           {ctx => ctx.pushNode(InfoNode("@note", ['line' => ctx.row ] )) })
+
+   ReRule( '^\s*@return\s+', "para",
+           {ctx => ctx.pushNode(InfoNode("@note", ['line' => ctx.row ] )) })
+
+   ReRule( '^\s*@main\s+', "para",
+           {ctx => ctx.pushNode(InfoNode("@main", ['line' => ctx.row ] )) })
+           
+   ReRule( '^\s*@raise\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'name'=> p0 ] )) })
+           
+   ReRule( '^\s*@param\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@param", ['line' => ctx.row, 'name'=> p0 ] )) })
+
+   ReRule( '^\s*@optparam\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@optparam", ['line' => ctx.row, 'name'=> p0 ] )) })
+
+   ReRule( '^\s*@from\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@from", ['line' => ctx.row, 'name'=> p0 ] )) })
+
+   ReRule( '^\s*@group\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@group", ['line' => ctx.row, 'name'=> p0 ] )) })
+           
+   ReRule( '^\s*@funset\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@funcset", ['line' => ctx.row, 'name'=> p0 ] )) })
+           
+   ReRule( '^\s*@page\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@prop\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@module\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@section\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@subsection\s+(\w+)', "para",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0] )) })
+
+]
+
+
+NamingCommands = .[
+   ReRule( '^\s*@see\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.addNode(InfoNode("@see", ['line' => ctx.row, 'name'=> p0 ] )) })
+           
+   ReRule( '^\s*@class\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@class", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@object\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@object", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@function\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@function", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@message\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@message", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@enum\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@enum", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@global\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@global", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@method\s+(\w+)\s+(\w).*$', "#stay",
+           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@method", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
+
+   ReRule( '^\s*@property\s+(\w+)\s+(\w).*$', "#stay",
+           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@property", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
+]
+
+ScopeCommands = .[
+   ReRule( '^\s*@beginmodule\s+(\w+).*$', "#stay",
+         {ctx, d0, p0 => ctx.addNode(InfoNode("@beginmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@beginset\s+(\w+).*$', "#stay",
+         {ctx, d0, p0 => ctx.addNode(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@begingroup\s+(\w+).*$', "#stay",
+         {ctx, d0, p0 => ctx.addNode(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+
+   ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.addNode(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@inset\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.addNode(InfoNode("@inset", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@ingroup\s+(\w+).*$', "#stay",
+           {ctx, d0, p0 => ctx.addNode(InfoNode("@ingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+
+   ReRule( '^\s*@endmodule(\s+.*$|$)', "#stay",
+         {ctx => ctx.addNode(InfoNode("@endmodule", ['line' => ctx.row] )) })
+   ReRule( '^\s*@endset(\s+.*$|$)', "#stay",
+         {ctx => ctx.addNode(InfoNode("@endset", ['line' => ctx.row] )) })
+   ReRule( '^\s*@endgroup(\s+.*$|$)', "#stay",
+         {ctx => ctx.addNode(InfoNode("@endset", ['line' => ctx.row] )) })
+]
+
+InlineCommands = .[
+   ReRule( '(^|\s)@a\s+("([^"]*)"|(\w+))', "#stay",
+         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'p0'=> p0 ? p0:p0b] )) })
+   ReRule( '(^|\s)@b\s+("([^"]*)"|(\w+))', "#stay",
+         {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
+   ReRule( '(^|\s)@i\s+("([^"]*)"|(\w+))', "#stay",
+         {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
+   ReRule( '(^|\s)@l\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
+                              {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("@l",
+                              ['line' => ctx.row, 'p0'=> p0 ? p0:p0b, 'p1' => p1?p1:p1b ] )) })
+]
+
+BlockCommands =  .[
+   ReRule( '^\s*@pre(\s.*$|$)', "pre_text",
+           {ctx => ctx.pushNode(InfoNode("@pre", ['line' => ctx.row ] )) })
+   ReRule( '^\s*@source\s+(\w+).*$', "code_text",
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@code", ['line' => ctx.row, "lang"=>p0 ] )) })
+   ReRule( '^\s*@code(\s.*$|$)', "code_text",
+           {ctx => ctx.pushNode(InfoNode("@code", ['line' => ctx.row, "lang"=>"" ] )) })
+]
 
 TableStart = .[
    ReRule( '^\s*\|=\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("th"))} )
@@ -37,21 +159,8 @@ TableStart = .[
 ]
 
 ListStart =  .[
-   ReRule( '^[\s\*]*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
-   ReRule( '^[\s*\*]*-\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
-]
-
-TopCommands =  .[
-   ReRule( '^[\s*\*]*@section (\w) +(.*)$', "#stay", 
-           {ctx, d0, p0, p0b => ctx.add(InfoNode("command", ['cmd'=>'b', 'p0'=> p0 ? p0:p0b] )) })  
-]
-
-InlineCommands = .[
-   ReRule( '@a +(\w)', "#stay", {ctx, d0, p0 => ctx.add(InfoNode("command", ['cmd'=>'a', 'p0'=>p0] )) })
-   ReRule( '@b +"([^"]*)"|(\w)', "#stay", {ctx, d0, p0, p0b => ctx.add(InfoNode("command", ['cmd'=>'b', 'p0'=> p0 ? p0:p0b] )) })  
-   ReRule( '@l +"([^"]*)"|(\w) +"([^"]*)"|(\w)', "#stay", 
-                              {ctx, d0, p0, p0b, p1, p1b => ctx.add(InfoNode("command", 
-                              ['cmd'=>'l', 'p0'=> p0 ? p0:p0b, 'p1' => p1?p1:p1b ] )) })
+   ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
+   ReRule( '^\s*-\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
 ]
 
 FormatElements = .[
@@ -66,77 +175,6 @@ FormatElements = .[
    TagRule( "\\", "escape" ) // escape char
 ]
 
-LinkElements = .[
-    ReRule( '\[\[:(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
-                        {ctx, ma, pg, d1, txt, d2, mx =>
-                           ctx.add(
-                              InfoNode("file", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
-                           )
-                        })
-
-   ReRule( '\[\[(https?:.*?|ftp:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
-                        {ctx, ma, pg, d1, txt, d2, mx =>
-                           ctx.add(
-                              InfoNode("link", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
-                           )
-                        })
-
-   
-    ReRule( '\[\[([^:|\]]+):(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
-                        {ctx, ma, ilink, pg, d1, txt, d2, mx =>
-                           ctx.add(
-                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt, "ilink"=>ilink]))
-                           )
-                        })
-   
-   ReRule( '\[\[(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
-                        {ctx, ma, pg, d1, txt, d2, mx =>
-                           ctx.add(
-                              InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt]))
-                           )
-                        })
-   ReRule( 'https?://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
-   ReRule( 'ftp://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
-
-   ReRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
-                                                 ctx.add( InfoNode("img", _options(mx, ["name"=>pg, "alt"=> (txt? txt:pg)])))} )
-   ReRule( '<<(.*?)(\s+(.*?))?>>', "#stay", {ctx, ma, pname, d0, popts =>
-                        ctx.add( InfoNode("plugin", ["name"=>pname, "params"=>_params(popts)], true) ) } )
-]
-
-InlineElements = FormatElements + LinkElements + SpecialEntities
-
-/*
-   Determine the options of a optioned link
-*/
-function _options( mx, res )
-   if not mx: return res
-   
-   elems = mx.split("|")
-   
-   ielem = 0
-   le =  elems.len()
-   while ielem < le
-      elem = elems[ielem++]
-      
-      if "=" in elem
-         k,v = elem.split("=",2)
-         res[k] = v
-      else
-         res[elem] = true
-      end
-   end
-   return res
-end
-   
-
-/*
-   Determine options of plugins
-*/
-function _params( opts )
-   return opts
-end
-
 
 function _inlineState( limit )
    return PState(.[
@@ -144,51 +182,46 @@ function _inlineState( limit )
             // Putting it before allows to override
             TagRule( limit,  "#pop", {ctx => ctx.popNode()} )
          ]
-         + InlineElements,
+         + InlineCommands
+         + FormatElements,
          {ctx, data=>ctx.add( data )},
          "para_continue"   // the paragraph can contiune at the end of an inline
       )
 end
-   
 
 class Parser from parser.genparser.Parser
    states = [
       "start"=> PState(.[
             EmptyLineRule( "#stay" )  // at start, empty lines are ignored
-         ] 
-         + Headers 
-         + .[ DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} ) ]
+         ]
+         + ParaCommands
+         + NamingCommands
+         + ScopeCommands
+         + .[
+            // serve also inline commands, but generate a para node for them.
+            ProxyRule( InlineCommands + BlockCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
+
+            // if a @ is not recognized here, we have a problem.
+            ReRule('@(\w+)?', "#stay", {ctx, d0, p0=>ctx.addNode( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
+
+            // Otherwise, enter the para mode
+            DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
+         ]
       ),
 
       "para" =>PState(.[
-            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
-            
-            ReRule( '^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
-            ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
-            ReRule( '^\+\+\+*\s*(.*)?$',  "quote_base", {ctx, ma, link => ctx.popNode();
-                                                            ctx.pushNode( InfoNode("quote", ["link"=>link]))} )
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})            
          ]
+         + BlockCommands
+         + InlineCommands
+         
          + TableStart
          + ListStart
-         + InlineElements
-         + Indents
-         + Headers2,
-         {ctx, data=>ctx.add( data )},
-         "para_continue"
-      ),
-
-      "quote_base" =>PState(.[
-            ReRule( '^\+\+\+*$',  "#pop;#pop", {ctx => ctx.popNode();} )
-            DummyRule( "quote", { ctx => ctx.pushNode( Node("para") )} )
-         ]
-      ),
-
-      "quote" =>PState(.[
-            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
-            ReRuleLA( '^\+\+\+*$',  "#pop", {ctx => ctx.popNode()} )
-         ]
-         + ListStart
-         + InlineElements,
+         + FormatElements
+         + .[
+            // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
+            ReRuleLA( '^\s*@', "#pop", {ctx=>ctx.popNode()} )
+         ],
          {ctx, data=>ctx.add( data )},
          "para_continue"
       ),
@@ -196,18 +229,13 @@ class Parser from parser.genparser.Parser
       "para_continue"=> PState(
          .[ DummyRule( "#pop", { ctx => ctx.add(" ")} ) ]
       ),
-      
-      
-      "eolverbatim" =>PState(.[
-         DummyRule( "#pop", { ctx => ctx.add( "\n") } )
-         ]
-      ),
 
       "table" => PState(.[
             // at the end of the line we close TD and TR
             EmptyLineRule( "#pop")
          ]
-         + InlineElements
+         + InlineCommands
+         + FormatElements
          +.[
             ReRule( '\s*\|$',  "tableBeginLine", {ctx=>  ctx.popNode(); ctx.popNode()} )
             ReRule( '\s*\|=\s*',  "#stay", {ctx=> ctx.popNode(); ctx.pushNode(Node("th"))} )
@@ -248,17 +276,14 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
             ReRule( '^\s*\*\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
          ]
-         + InlineElements,
+         + InlineCommands
+         + FormatElements,
          {ctx, data=>ctx.add( data )},
          "para_continue"
       ),
       
 
       "escape" =>PState(.[
-            TagRule( "https://", "#pop", {ctx => ctx.add( "https://" )} ) // escaped links
-            TagRule( "http://", "#pop", {ctx => ctx.add( "http://" )} ) // escaped links
-            TagRule( "ftp://", "#pop", {ctx => ctx.add( "ftp://" )} ) // escaped links
-            
             CharRule( "#pop", {ctx, c => if c: ctx.add(c) } )
             // force to go away if can't grab even a char
          ],
@@ -266,27 +291,24 @@ class Parser from parser.genparser.Parser
          "*#pop"  // pop if not matched at the end of the line, like ~\n
       ),
 
-      "verbatim_line" =>PState(.[
-            ReRule( '^}}}$',  "#pop", {ctx => ctx.popNode()} )
-         ]
-         + SpecialEntities,
-         {ctx, data=>ctx.add( data )},
-         "eolverbatim"
-      ),
-
-      "verbatim_code" =>PState(.[
-            ReRule( '^}}}$',  "#pop", {ctx => ctx.popNode()} )
+      "pre_text" =>PState(.[
+            ReRule( '^\s*@endpre\s*$',  "#pop", {ctx => ctx.popNode()} )
          ],
          {ctx, data=>ctx.add( data )},
          "eolverbatim"
       ),
 
-      "verbatim" =>PState(.[
-            EmptyLineRule( "#pop;#pop", {ctx => ctx.popNode(); ctx.popNode()} )  // pop if newpara
-            TagRule( '}}}',  "#pop", {ctx => ctx.popNode()} )
+      "code_text" =>PState(.[
+            ReRule( '^\s*@endcode\s*$',  "#pop", {ctx => ctx.popNode()} )
+         ],
+         {ctx, data=>ctx.add( data )},
+         "eolverbatim"
+      ),
+
+
+      "eolverbatim" =>PState(.[
+         DummyRule( "#pop", { ctx => ctx.add( "\n") } )
          ]
-         + SpecialEntities,
-         {ctx, data=>ctx.add( data )}
       ),
 
       // Just to be able to add always "," at the end

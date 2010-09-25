@@ -7,7 +7,19 @@ import from socket
 const pServer = "localhost"
 const pHelo = "siteclient"
 
-function postMail( pFrom, pAddress, pSubject, pBody )
+//# @module Single Line comment test
+//# This shall go on the same single comment line.
+//# and this too.
+
+/*#############################
+ *  Function to send a mail text.
+ *  
+ *  @param pFrom Sender of the mail
+ *  @param pAddress Where to send the mail
+ *  @param pBody Body of the mail
+ ******************************************/
+
+function postMail  ( pFrom, pAddress, pSubject, pBody )
    // disabling debug
    print = function(); end
    printl = function(); end

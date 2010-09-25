@@ -134,6 +134,7 @@ end
 */
 class ReRule( re, nextState, action ) from Rule( nextState, action )
    anchored = re.startsWith("^")
+   token = re
    re = regex.Regex(re)
    grabs = nil
    
@@ -227,4 +228,55 @@ class DummyRule( nextState, action ) from Rule( nextState, action )
    end
 end
 
+/*#
+   Rule combining one or more sub-rules.
+   @param rules An array of rules that may be matched.
+   @param nextState The state where to go if a sub-rule is matched.
+   @param actionPre An action to run as action(context, winningRule) @b before winning rule action is performed.
+   @param actionPost An action to run as action(context, winningRule) @b after winning rule action is performed.
+
+   If @b nextState is nil, then the winning rule state transition is applied, otherwise
+   @b nextstate overrides winning rule state setting.
+*/
+class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, actionPre )
+   rules = rules
+   actionPost = actionPost
+   winningRule = nil
+   hasState = nextState ? true : false
+
+   
+   function match( text, pos )
+      self.winningRule = nil
+      n = 0
+      l = self.rules.len()
+      res = -1
+      while n < l
+         res = self.rules[n].match( text, pos )
+         if res >= 0
+            self.winningRule = self.rules[n]
+            return res
+         end
+         ++n
+      end
+
+      return -1
+   end
+
+
+   function apply( ctx )
+      if self.winningRule
+         if self.action: self.action( ctx, self.winningRule )
+         retval = self.winningRule.apply(ctx)
+         if self.actionPost: self.actionPost( ctx, self.winningRule )
+
+         if not self.hasState
+            self.nextState = self.winningRule.nextState
+         end
+         
+         return retval
+      end
+      
+      return 0
+   end
+end
 

@@ -26,13 +26,15 @@ import PState from parser.genparser as PState
 class Parser from parser.genparser.Parser
    states = [
       "start" => PState( .[
-            // ignore fake grabs
-            ReRule( '/\*#[\*|#]*/', "#stay" )
+            ReRule( '/\*#[\*|#]*?\*/', "#stay" )
             ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
             TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
 
+            TagRule( "/*", "comment" )
+            ReRule( "//.*$", "#stay" )
+
             // ignore everything else
-            ReRule(".*", "#stay")
+            ReRule(".*$", "#stay")
          ]
       ),
 
@@ -40,20 +42,35 @@ class Parser from parser.genparser.Parser
             TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
             // Consumes useless * at begin of comment
             ReRule( '^\s*\*+(?!/)', "#stay" )
-            ReRule( '\**+/', "#pop", {ctx=> ctx.popNode()})
+            ReRule( '\*++/', "#pop", {ctx=> ctx.popNode()})
          ],
          {ctx, data=>ctx.add( data )},
          "grab_continue"
       ),
 
+      "grab_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add("\n")} ) ]
+      ),
+
       "grab_eol" =>PState(
          .[],
          {ctx, data=>ctx.add( data )},
-         "#pop"
+         "grab_eol_checker"
       ),
-      
-      "grab_continue"=> PState(
-         .[ DummyRule( "#pop", { ctx => ctx.add("\n")} ) ]
+
+      "grab_eol_checker" =>PState(
+         .[
+            // if there is a //# on the next line, go on returning on the prev state
+            TagRule( "//#", "#pop", {ctx=>ctx.add("\n")} )
+            // Else, pop the node and return to top
+            DummyRule( "#pop;#pop", {ctx=>ctx.popNode()} )
+         ]
+      ),
+
+      "comment" =>PState(.[
+            ReRule( '.*?\*/', "#pop" )
+            ReRule( '.*', "#stay" )
+         ]
       ),
 
       // Just to be able to add always "," at the end
