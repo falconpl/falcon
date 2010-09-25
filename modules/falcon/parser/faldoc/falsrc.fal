@@ -1,0 +1,225 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: falsrc.fal
+
+   Read faldoc blocks inside source files.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Sep 2010 14:53:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Node from parser.genparser.node as Node
+import InfoNode from parser.genparser.node as InfoNode
+
+import TagRule from parser.genparser.rules as TagRule
+import TokenRule from parser.genparser.rules as TokenRule
+import ReRule from parser.genparser.rules as ReRule
+import ReRuleLA from parser.genparser.rules as ReRuleLA
+import EmptyLineRule from parser.genparser.rules as EmptyLineRule
+import DummyRule from parser.genparser.rules as DummyRule
+import CharRule from parser.genparser.rules as CharRule
+
+import PState from parser.genparser as PState
+import Parser from parser.genparser
+
+
+CommentsAndGrabs = .[
+   ReRule( '/\*#[\*|#]*?\*/', "#stay" )
+   ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+
+   TagRule( "/*", "comment" )
+   ReRule( "//.*$", "#stay" )
+]
+
+FuncAndVars = .[
+   ReRule( '\s*function\s+(\w+)', "funcdecl",
+      {ctx, d0, cname=> ctx.pushNode( InfoNode( "function", ["line"=>ctx.row,"name"=> cname] )) })
+   ReRule( '\s*(\w+)\s*=', "#stay",
+      {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+]
+
+class Parser from parser.genparser.Parser
+   states = [
+      "start" => PState(
+         CommentsAndGrabs
+         + FuncAndVars
+         + .[
+            ReRule( 'class\s+(\w+)', "classdecl",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "class", ["line"=>ctx.row, "name"=> cname] )) })
+            ReRule( 'object\s+(\w+)', "classdecl",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "objct", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( 'enum\s+(\w+)', "enum",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "enum", ["line"=>ctx.row,"name"=> cname] )) })
+            // ignore everything else.
+            ReRule( '.*', "#stay" )
+         ]
+      ),
+
+      //===========================================================
+      // Generic part
+      //===========================================================
+
+      "grab" =>PState(.[
+            TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
+            // Consumes useless * at begin of comment
+            ReRule( '^\s*\*+(?!/)', "#stay" )
+            ReRule( '\**+/', "#pop", {ctx=> ctx.popNode()})
+         ],
+         {ctx, data=>ctx.add( data )},
+         "grab_continue"
+      ),
+
+      "grab_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add("\n")} ) ]
+      ),
+
+      "grab_eol" =>PState(
+         .[],
+         {ctx, data=>ctx.add( data )},
+         "grab_eol_checker"
+      ),
+
+      "grab_eol_checker" =>PState(
+         .[
+            // if there is a //# on the next line, go on returning on the prev state
+            TagRule( "//#", "#pop", {ctx=>ctx.add("\n")} )
+            // Else, pop the node and return to top
+            DummyRule( "#pop;#pop", {ctx=>ctx.popNode()} )
+         ]
+      ),
+
+      "comment" =>PState(.[
+            ReRule( '.*?\*/', "#pop" )
+            ReRule( '.*', "#stay" )
+         ]
+      ),
+      
+      //===========================================================
+      // class and object
+      //===========================================================
+      
+      "classdecl" => PState( .[
+            ReRule( '\s*\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
+            ReRule( '\s+from(\s|\\$)', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
+
+            // auto return from class
+            TagRule( "end", "#pop",  {ctx => ctx.popNode()} )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // and return immmediately without waiting an end
+            ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
+            // enter the function state at eol (and dump errors )
+            ReRuleLA( '.*$', "class" )
+         ]
+      ),
+
+      "inherit" => PState(.[
+            ReRule( '\s*(\w+)\s*', "inherit_cls",
+                  {ctx, d0, cls =>ctx.pushNode( InfoNode("from", ["line"=>ctx.row, "class"=>cls ]))} )
+
+            ReRuleLA( '^\s*end\s*;|^\s*end\s*$', "#pop" )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // Consume errors and go to the class state
+            ReRule( '.*$', "class" )
+         ]
+      ),
+
+      "inherit_cls" => PState(.[
+            ReRule( '\s*\(', "inherit_expr", {ctx=>ctx.add("(")} )
+            ReRule( '\s*,', "#pop", {ctx=>ctx.popNode()} )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // Consume errors and go to the class state -- removing the inherit node.
+            ReRuleLA( '.*$', "#pop", {ctx=>ctx.popNode()})
+         ]
+      ),
+
+      "inherit_expr" => PState(.[
+            ReRule( '\(', "inherit_expr", {ctx => ctx.add("(") } )
+            ReRule( '\)', "#pop",  {ctx => ctx.add(")")} )
+         ],
+         {ctx, data=>ctx.add( data ) },
+         "inerhit_expr_eol"
+      ),
+
+      "inerhit_expr_eol" => PState(.[
+            DummyRule( "#pop", {ctx=>ctx.add(" ") } )
+         ]
+      ),
+
+      "class" => PState(
+         CommentsAndGrabs
+         + FuncAndVars
+         +.[
+            ReRuleLA( '^\s*end\s*;|^\s*end\s*$', "#pop" )
+         ],
+         {=>}
+      ),
+      
+      //===========================================================
+      // Function
+      //===========================================================
+      
+      "funcdecl" => PState(.[
+            ReRule( '\s*\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // and return immmediately without waiting an end
+            ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
+            // dump errors
+            ReRule( '.*$', "function" )
+         ]
+      ),
+
+      "function" => PState(.[
+            TokenRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
+         ],
+         {=>}
+      ),
+
+      "params" => PState(.[
+            ReRule( '\s*(\w+)\s*,', "#stay",
+                  {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param]))} )
+            ReRule( '\s*(\w+)\s*\)', "#pop",
+                  {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param])); ctx.popNode()} )
+            TagRule( ")", "#pop" )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+         ]
+      ),
+
+      //===========================================================
+      // Enums
+      //===========================================================
+
+      "enum" => PState(.[
+            ReRule( '(w+)\s+=(.*)$', "#stay",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+            TagRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
+
+            // eat errors
+            ReRule( '.*', "#stay" )
+         ]
+      ),
+
+      // Just to be able to add always "," at the end
+      "*dummy" => nil
+   ]
+
+   function reset()
+      self.initParser( "start" )
+   end
+end
+

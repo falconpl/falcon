@@ -1,0 +1,68 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: generic.fal
+
+   Read faldoc blocks inside generic files.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Sep 2010 14:53:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import InfoNode from parser.genparser.node as InfoNode
+
+import TagRule from parser.genparser.rules as TagRule
+import ReRule from parser.genparser.rules as ReRule
+import DummyRule from parser.genparser.rules as DummyRule
+
+import Parser from parser.genparser
+import PState from parser.genparser as PState
+
+class Parser from parser.genparser.Parser
+   states = [
+      "start" => PState( .[
+            // ignore fake grabs
+            ReRule( '/\*#[\*|#]*/', "#stay" )
+            ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+            TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+
+            // ignore everything else
+            ReRule(".*", "#stay")
+         ]
+      ),
+
+      "grab" =>PState(.[
+            TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
+            // Consumes useless * at begin of comment
+            ReRule( '^\s*\*+(?!/)', "#stay" )
+            ReRule( '\**+/', "#pop", {ctx=> ctx.popNode()})
+         ],
+         {ctx, data=>ctx.add( data )},
+         "grab_continue"
+      ),
+
+      "grab_eol" =>PState(
+         .[],
+         {ctx, data=>ctx.add( data )},
+         "#pop"
+      ),
+      
+      "grab_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add("\n")} ) ]
+      ),
+
+      // Just to be able to add always "," at the end
+      "*dummy" => nil
+   ]
+
+   function reset()
+      self.initParser( "start" )
+   end
+end
+
+
