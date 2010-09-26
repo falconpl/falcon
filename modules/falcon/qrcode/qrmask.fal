@@ -94,7 +94,7 @@ class QrMask
         codeArray = []
 
         for line in bitFrame
-        arrayAdd(codeArray, strMerge(line, ""))
+            arrayAdd(codeArray, strMerge(line, ""))
         end
 
         return ZLib().compressText(strMerge(codeArray, "\n"))
