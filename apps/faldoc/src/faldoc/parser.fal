@@ -16,6 +16,11 @@
 
 load .parser_c
 load .blexer
+import Parser from parser.faldoc.falsrc as FalParser
+import Parser from parser.faldoc.generic as GenericParser
+import Parser from parser.faldoc.txt as TxtParser
+
+
 //load regex
 
 import currentFile, currentLine
@@ -32,274 +37,127 @@ function fileParse( filename )
    retract( "current_module" )
    retract( "current_set" )
    retract( "current_group" )
+
+   if currentFile.endsWith( ".fal" )
+      parser = FalParser()
+   else
+      parser = GenericParser()
+   end
    
    try
-      data = preparser_c( filename )
-   catch IoError in err
+      stream = InputStream( filename )
+      ctx = parser.parseStream( stream )
+   catch IoError in err      
       broadcast ( "warn", err.toString() )
    end
+   
+   if stream: stream.close()
 
-   //trace = trace_func
-
-   for elem in data
-      p = BlockParser( elem )
-      p.parse()
-      elem.cblock = nil
-      //trace( strReplicate( "=", 70 ) )
-      if not elem.type
-         if elem.props or elem.parent or elem.content
-            broadcast( "error", currentFile, elem.firstline, "Entity has no type" )
+   node = ctx.topNode.content
+   txtparser = TxtParser()
+   cur_entity = nil
+   
+   while node
+      // faldoc TXT always creates an entity, which may be then re-configured afterwards
+      if node.type == "faldoc_txt"
+         try
+            ctxNode = txtparser.parse( node.content, "start", node.infos["line"] )
+            // if the context is made exclusively of global commands, they are not generating a node.
+            if not processGlobalCommands( ctxNode )
+               de = DocEntity( filename, node.infos[line] )
+               de.content = node.content
+               de.pcontent = ctxNode
+               de.processContent()
+               // the current entity on which declarations are applied is this one.
+               cur_entity = de
+            end
+         catch ParseError in e
+            broadcast("warn", "Can't properly parse entity at line " + node.infos["line"] )
          end
-      else
-         p.addAutoProps()
-         // save the node as valid.
-
-         EntityDB.add( elem )
       end
+      
+      node = node.next
    end
-   return data
+end 
+
+function processGlobalCommands( ctx )
+   node = ctx.topNode.content
+
+   while node
+      switch node.type
+      
+         case "@begingroup"
+            node = beginCmd( "group", node )
+
+         case "@beginset"
+            node = beginCmd( "set", node )
+
+         case "@beginmodule"
+            node = beginCmd( "module", node )
+
+         case "@endgroup"
+            node = endCmd( "group", node )
+
+         case "@endset"
+            node = endCmd( "set", node )
+
+         case "@endmodule"
+            node = endCmd( "module", node )
+
+         default
+            node = node.next
+   end
+
+   // was this block just a global command?
+   return ctx.topNode.content == nil
 end
 
-class PCtx( cmd, line, endHandler, current )
-   cmd = cmd
-   line = line
-   eh = endHandler
-   // this must be directly configured by the context closer.
-   current = current
+function beginCmd( what, node )
+   an = "current_" + what
+   
+   if (grp = getAssert( an, nil ))
+      broadcast( "warn", @"Already in $what \"$grp\" when declaring @begin$what at line " + node.infos["line"] )
+   end
+   assert( an, node.infos["name"] )
+   n1 = node.next
+   node.remove()
+   return n1
 end
 
-/*# parses a text block into its entities */
-class BlockParser( elem )
-   elem = elem
-   lexer = Blexer( elem )
-   ctx = nil
-   entityList = nil
-   current = nil
-   
-   function parse()
-      elem = self.elem
-      lexer = self.lexer
+function endCmd( what, node )
+   an = "current_" + what
 
-      self.entityList = [ TextEntry( "entity" ) ]
-      self.current = TextEntry( "p", "" )
-      self.ctx = []
-      
-      while (nt = lexer.nextToken()) != nil
-         
-         // parse end-blocks
-         if self.ctx
-            // is the terminator matched?
-            pctx = self.ctx[-1]
-            if (res = pctx.eh( nt ))
-               // parsed the context
-               data = pctx.cmd( self.current )
-               // pop the terminator
-               self.current = self.ctx[-1].current
-               self.ctx.resize( self.ctx.len()-1 )
-               self.append( data )
-               if ^? res: continue
-            end
-            // should the token be discarded?
-         end
-         
-         if nt == ""
-            // an empty token means end of paragraph
-            self.closePara()
-         // a command?
-         elif nt[0] == "@"
-            // a command!
-            cmd = nt[1:]
-            self.processCommand( cmd )
-         else
-            // a normal token
-            self.current.append( nt )
-         end
-      end
-      
-      // close the last context, if possible
-      self.closePara()
-
-      // close the entity
-      for c in [self.entityList.len()-1:1:-1]
-         self.entityList[c-1].append( self.entityList[c] )
-      end
-
-      if self.entityList[0].content
-         self.elem.content = self.entityList[0]
-      end
-   end
-
-   
-   function closePara()
-      // raise error for unclosed contexts
-      for c in [0:self.ctx.len():1]
-         broadcast( "error", currentFile, self.lexer.nline,
-            "Unclosed context: " + self.ctx[c].cmd[2] + " from line " + self.ctx[c].line )
-      end
-
-      self.ctx.resize(0)
-      if self.current.content
-         self.append( self.current )
-         self.current = TextEntry( "p", "" )
-      end
-   end
-
-
-   function append( data )
-      // is data a child?
-      parent = self.entityList[-1]
-      if data provides parentType
-         // maching parent?
-         if parent provides childType
-            if parent.childType == data.type
-               parent.append( data )
-            else
-               self.entityList.resize( self.entityList.len() -1 )
-               self.entityList[-1].append( parent )
-               self.entityList += ParentEntry( data.type, data.parentType )
-               self.entityList[-1].append( data )
-            end
-         else
-            self.entityList += ParentEntry( data.type, data.parentType )
-            self.entityList[-1].append( data )
-         end
-      else
-         if parent provides childType
-            self.entityList.resize( self.entityList.len() -1 )
-            self.entityList[-1].append( parent )
-         end
-
-         if data: self.entityList[-1].append( data )
-      end
-   end
-
-   
-   function processCommand( cmd )
-      lexer = self.lexer
-
-      // find the command in the cmd list for parameter lexer
-      try
-         cmdp = commands.find( "command", cmd )
-      catch TableError
-         broadcast( "error", currentFile, lexer.nline, "Unrecognized command " + cmd )
-         return
-      end
-      
-      // block command? -- we must also close the paragraph
-      if not cmdp.isMkup: self.closePara()
-
-      // context controls;
-      // If it's an entity type command, we must ensure that the entity has not a type
-      if cmdp.isEntity
-         if self.elem.type
-            broadcast( "error", currentFile, lexer.nline,
-               "Assigning new type " + cmdp.command + " to this entity of type "+ self.elem.type )
-         end
-      else
-         // Otherwise we must check if the command is a property command
-         self.checkProperty( cmd, true ) // raise on error
-      end
-
-      // parse parameters
-      cmd = .[cmdp.handler   self.lexer    cmdp.command ]   // fixed params.
-      trace( "Cmd", cmdp.command )
-
-      // var params
-      if cmdp.pc
-         lexer.paramContext()
-         for parid in [ 0 : cmdp.pc ]
-            param = lexer.nextToken()
-            if param == nil or param == ""
-               // parameters must be on the same line.
-               broadcast( "error", currentFile, lexer.nline, "Not enough parameters for command "+ cmdp.command )
-               break
-            end
-            trace( "   Param", param )
-            cmd += param
-         end
-         lexer.endContext()
-      end
-
-      // is a context-sensible command? --
-      if cmdp.term
-         // eventually alter the lexer
-         if cmdp.lexctx: cmdp.lexctx( lexer )
-            
-         // don't execute it now; rather, context it.
-         self.ctx += PCtx( cmd, lexer.nline, cmdp.term, self.current )
-         self.current = TextEntry( "text", "" )
-      else
-         // markup commands return their markup...
-         if ( data = cmd() ) != nil: self.current.append( data )
-         //... while block command operate directly modifying the entity via the lexer ownership
-      end
+   if not (grp = getAssert( an, nil ))
+      broadcast( "error", @"No active $what when declaring @end$what at line " + node.infos["line"] )
+   else
+      retract( an, node.infos["name"] )
    end
    
+   n1 = node.next
+   node.remove()
+   return n1
+end
 
-   function checkProperty( cmd, rs )
-      lexer = self.lexer
-      
-      if prototypes.columnPos( cmd ) >= 0
-         if self.elem.type
-            try
-               num = prototypes.find( "type", self.elem.type, cmd )
-            catch AccessError
-               > "Can't find prototype ",  self.elem.type
-               exit(0)
-            end
 
-            if num == 1
-               if cmd in self.elem.props
-                  if rs
-                     broadcast( "error", currentFile, lexer.nline,
-                           "Already defined \"" + cmd + "\" for this entity." )
-                  end
-                  return false
-               end
-            elif num != 2
-               if rs
-                  broadcast( "error", currentFile, lexer.nline,
-                     "Invalid property \"" + cmd + "\" for this entity." )
-               end
-               
-               return false
-            else
-               return true
-            end
-         else
-            if rs
-               broadcast( "error", currentFile, lexer.nline,
-                     "Cannot assign property \"" + cmd + "\" to undefined entity." )
-            end
-            
-            return false
-         end
-      end
-      
-      return true
+function addAutoProps()
+   // add automatic property
+   if (set = getAssert( "current_set", nil )) and self.checkProperty( "inset", false )
+      l =  Link( self.elem, self.lexer.nline, set )
+      l.membership = "funset"
+      self.elem.props["inset"] = l
    end
 
-   function addAutoProps()
-      // add automatic property
-      if (set = getAssert( "current_set", nil )) and self.checkProperty( "inset", false )
-         l =  Link( self.elem, self.lexer.nline, set )
-         l.membership = "funset"
-         self.elem.props["inset"] = l
-      end
-      
-      if (grp = getAssert( "current_group", nil )) and self.checkProperty( "ingroup", false )
-         l = Link( self.elem, self.lexer.nline, grp )
-         l.membership = "group"
-         extendList( self.elem.props, "ingroup", l )
-      end
-
-      if (module = getAssert( "current_module", nil )) and self.checkProperty( "inmodule", false )
-         l = Link( self.elem, self.lexer.nline, module )
-         l.membership = "module"
-         self.elem.props["inmodule"] = l
-      end
+   if (grp = getAssert( "current_group", nil )) and self.checkProperty( "ingroup", false )
+      l = Link( self.elem, self.lexer.nline, grp )
+      l.membership = "group"
+      extendList( self.elem.props, "ingroup", l )
    end
-   
+
+   if (module = getAssert( "current_module", nil )) and self.checkProperty( "inmodule", false )
+      l = Link( self.elem, self.lexer.nline, module )
+      l.membership = "module"
+      self.elem.props["inmodule"] = l
+   end
 end
 
 

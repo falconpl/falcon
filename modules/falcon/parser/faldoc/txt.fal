@@ -72,10 +72,12 @@ ParaCommands =  .[
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@section\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0] )) })
+            // add with standout, so that we can handle them without scanning the whole tree.
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0], true )) })
 
    ReRule( '^\s*@subsection\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0] )) })
+            // add with standout, so that we can handle them without scanning the whole tree.
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0], true )) })
 
 ]
 
@@ -134,23 +136,24 @@ ScopeCommands = .[
 
 InlineCommands = .[
    ReRule( '(^|\s)@a\s+("([^"]*)"|(\w+))', "#stay",
-         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'p0'=> p0 ? p0:p0b] )) })
+         // add with standout, so that we can transform it without parsing the whole tree
+         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'p0'=> p0 ? p0:p0b], true )) })
    ReRule( '(^|\s)@b\s+("([^"]*)"|(\w+))', "#stay",
          {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
    ReRule( '(^|\s)@i\s+("([^"]*)"|(\w+))', "#stay",
          {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
-   ReRule( '(^|\s)@l\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
-                              {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("@l",
-                              ['line' => ctx.row, 'p0'=> p0 ? p0:p0b, 'p1' => p1?p1:p1b ] )) })
+   ReRule( '(^|\s)@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
+                              {ctx, d0, d1, d2, d2b, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",
+                              ['line' => ctx.row, 'name'=> p0 ? p0:p0b, 'text' => p1?p1:p1b, "ext"=>true ] )) })
 ]
 
 BlockCommands =  .[
    ReRule( '^\s*@pre(\s.*$|$)', "pre_text",
-           {ctx => ctx.pushNode(InfoNode("@pre", ['line' => ctx.row ] )) })
+           {ctx => ctx.pushNode(InfoNode("pre", ['line' => ctx.row ] )) })
    ReRule( '^\s*@source\s+(\w+).*$', "code_text",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@code", ['line' => ctx.row, "lang"=>p0 ] )) })
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("code", ['line' => ctx.row, "lang"=>p0 ] )) })
    ReRule( '^\s*@code(\s.*$|$)', "code_text",
-           {ctx => ctx.pushNode(InfoNode("@code", ['line' => ctx.row, "lang"=>"" ] )) })
+           {ctx => ctx.pushNode(InfoNode("code", ['line' => ctx.row, "lang"=>"" ] )) })
 ]
 
 TableStart = .[

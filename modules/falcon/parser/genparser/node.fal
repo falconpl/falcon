@@ -74,6 +74,8 @@ class Node( type, text, parent, prev, next )
          self.next.prev = self.prev
          if self.prev != nil: self.prev.next = self.next
       end
+
+      return self.next
    end
 
    /*# Remove the contents of this node */

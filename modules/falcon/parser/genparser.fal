@@ -190,11 +190,15 @@ class Parser()
       @brief Performs complete parsing.
       @param stream An input stream where the input data is read.
       @param initState The name of the initial state.
+      @optparam initRow If given, set the initial row to this number
       @raise ParseError if the parser has not been correctly initialized.
    */
-   function parse( string, initState )
+   function parse( string, initState, initRow )
+      if not initState: initState = "start"
       self.initParser(initState)
-      ctx = Context
+      if initRow: self.row = initRow
+      
+      ctx = Context()
       pos = 0
       strlen = string.len()
 
@@ -223,6 +227,18 @@ class Parser()
       return ctx
    end
 
+   //# Parses a file
+   function parseStream( stream, initState )
+      self.initParser( initState )
+      ctx = Context()
+      line = ""
+      while stream.readLine( line, 4096 )
+         self.parseLine( line, ctx )
+      end
+
+      return ctx
+   end
+   
    function initParser(initState)
       if initState
          self._stack = []

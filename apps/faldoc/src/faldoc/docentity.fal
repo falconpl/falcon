@@ -14,219 +14,271 @@
    See LICENSE file for licensing details.
 */
 
-load .utils
+/*# Entity class.
 
-/*# Text entry type def*/
-class TextEntry( type, content )
-   type = type
-   /*# The content may be a string or another TextEntry, depending on type.
-      - type = "text": it's a text block.
-      - type = "p": it's a paragraph composed of many text entries (array of entities).
-      - any other type - it's a markup, and can contain more "text" entries
+   A document entity is a single entry in the documentation
+   file. It can be a page, a section, a class, an object,
+   a function, a method, or in general any entity that can be
+   indexed and cross-linked.
+
+   An entity is made of multiple paragraph and has multiple
+   properties. It's type and name cannot always be determied
+   at creation (actually, that is rare), and is usually
+   assigned after the whole entity documentation text have
+   been parsed.
+
+   Entities can be hierarchically organized into different
+   relationship groups:
+   - parent - children; ownership relationship, like properties and methods for classes.
+   - group - members: Multiple grouping where each group can have a list of members, but
+     a member can be present in multiple groups.s
+
+   Parent-children relationships are described through a pair of property
+   (parent and children), while grouping is expressed through entries in
+   the @a self.props property (with the property "in<entity type>" => "<entity id>".
+
+   The @a self.props property contains many important elements, as the parameters.
+   Parameters entry (under props
+*/
+
+class DocEntity( file, line, parent )
+
+   //# Type of the entity
+   type = nil
+   /*# Local name of the entity. */
+   name = nil
+   /*# Filename where the entity is coming from. */
+   file = file
+   
+   /*# First line of comment declaration of the entity. */
+   firstline = line
+   /*# Line at which the entity is defined at language level (if any). */
+   dline = nil
+
+   /*# Is this entity created out of a real language construct?. */
+   hard = false
+
+   props = bless([=>])
+   parent = nil
+   children = nil
+
+   //# Module of this entity, if any
+   module = nil
+
+   //# function set of this entity, if any
+   funset = nil
+   
+   //# Groups of this entity (an array), if any
+   groups = nil
+   
+   /*# Textual content of the entity.
+      This is the document tree that should be rendered for the
+      description of the node.
    */
    content = nil
-   lelem = nil
+
+   /*# Parsed content.
+      Documentation of the entity parsed as an infonode.
+   */
+   pcontent = nil
 
    init
-      select content
-         case TextEntry
-            self.content = List( content )
-
-         case List
-            self.content = content
-
-         case StringType
-            self.content = content
-
-         case NilType
-            return self
-
-         default
-            raise "Invalid content type in TextEntry: " + content.baseClass() + " from " + fself.caller()
+      if parent
+         parent.addChild( self )
       end
    end
 
-   /*#
-      Appends a text entry.
-      @param data A string to be appended or a TextEntry.
-   */
-   function append( data )
-      select data
-         case TextEntry
-            select self.content
-               case StringType, NilType
-                  self.content = List( TextEntry( "text", self.content ) )
-            end
-
-            self.content.push( data )
-            self.lelem = nil
-
-         case NilType
-            return
-
-         case StringType
-            if self.lelem == nil
-               select self.content
-                  case StringType
-                     self.content += data
-
-                  case NilType
-                     self.lelem = TextEntry( "text", data )
-                     self.content = List( self.lelem )
-                     
-                  case List
-                     self.lelem = TextEntry( "text", data )
-                     self.content.push( self.lelem )
-
-                  default
-                     raise "self.content of wrong type: " + self.content
-               end
-               return
-            end
-            
-            self.lelem.append( data )
-
-         default
-            raise "Invalid content type in TextEntry.append: " + data.baseClass() + " from " + fself.caller()
-      end
-   end
-
-   /*# Render this entry descending into the sub entries andca
-       passing each one to the renderer.
-
-       The renderer is a function returning a string.
-   */
-   function renderThrough( renderer )
-      select self.content
-         case List
-            val = ""
-            iter = self.content.first()
-            loop
-               elem = iter.value()
-               rnd = elem.renderThrough( renderer )
-               if rnd
-                  chr = rnd[0]
-                  val += (chr >= "0" and chr <="9" or chr >="A" and chr <="Z" or chr >= "a" and chr <="z") ?\
-                         " " +rnd : rnd
-               end
-               if not iter.next(): break
-               
-            end
-
-            return renderer( TextEntry( self.type, val ) )
-
-         default
-            return renderer( self )
-      end
-   end
-end
-
-/*# Special entry type def */
-class CodeEntry( language, content ) from TextEntry( "code", content )
-   language = language
-end
-
-/*# Special entry type def */
-class ChildEntry( parentType, type, content ) from TextEntry( type, content )
-   parentType = parentType
-end
-
-/*# Special entry type def */
-class ParentEntry( childType, type, content ) from TextEntry( type, content )
-   childType = childType
-end
-
-/*# Special entry type def */
-class ExtLinkEntry( href, text ) from TextEntry( "href", text )
-   href = href
-end
-
-class SectionEntry( id, level, title ) from TextEntry( "section", title )
-   id = id
-   level = level
-end
-
-/*# Unresolved link database. */
-object LinkDB
-   /*# Data to be resolved. */
-   data = List()
-
-   /*# Add an entry. */
-   function add( link )
-      if not link.derivedFrom( Link )
-         broadcast( "message", "Trying to add non-link entity to LinkDB \"" +
-                    link + "\" from: " + fself.caller() )
+   //# Defines the entity and stores it in the database.
+   function define( type, name, line )
+      if (self.type != nil or self.name != nil)
+         // we don't care about re-definitions
+         if self.type != type or self.name != name
+            broadcast( "error", @i"Entity \"$name\"/$type doesn't match previous definition at line $line"
+         end
          return
       end
+            
+      self.type = type
+      self.name = name
+      self.dline = line
 
-      self.data.push( link )
+      EntityDB.add( self )
    end
 
-   /*# Try to resolve all the links, issuing a proper warning if impossible. */
-   function resolve()
-      for link in self.data
-         
-         if link.destination in EntityDB.data
-            link.target = EntityDB.data[link.destination]
-            // is the link correct?
-            if link.membership
-               // only different membership allowed is class -> object
-               if link.target.type != link.membership
-                  if link.membership != "class" or link.target.type != "object"
-                     broadcast( "error", link.source.file, link.line, "Link " +
-                              link.destination + " was considered a " + link.membership )
-                  end
-               end         
-               
-               // the system needs to know that the target class of the member
-               // is actually an object
-               if link.target.type == "object": link.source.props["object"] = true
+   //# Calculates the unique ID of this node.
+   function getID()
+      if self.parent
+         return self.parent.getName() + "." + self.name
+      end
 
-               if "members" notin link.target.props
-                  link.target.props["members"] = [ link.source.name => link.source ]
+      return self.name
+   end
+   
+   function addChild( child )
+      if self.children == nil
+         self.children = [child]
+      else
+         self.children += child
+      end
+      child.parent = self
+   end
+
+   function addMember( member )
+      if self.children == nil
+         self.children = [child]
+      else
+         self.children += child
+      end
+   end
+
+   /*# Processess the commands in the parsed content block.
+
+      @note Interesting commands are at top level. Everything else (inline commands)
+      is expanded by the generic parser into DOM entities or is made to "stand out".
+   */
+   function parseContent()
+      node = self.pcontent.topNode.content
+      while node != nil
+         switch node.type
+            case "@brief", "@return"
+               self.props[ node.type[1:] ] = node.content
+               node = node.remove()
+
+            case "@param", "@optparam", "@raise"
+               self.addParam( node.type[1:], node.infos["name"], node.content, node.infos["line"] )
+               node = node.remove()
+
+            case "@see"
+               link = EntryDB.link( self, node.infos["line"], node.infos["name"], true )
+               self.addParam( "see", node.infos["name"], link )
+               node = node.remove()
+
+            case "@inset"
+               if self.funset
+                  broadcast( "error", "Function set already declared for entity \"$name\" at line $node.infos['line']")
                else
-                  link.target.props["members"][ link.source.name ] = link.source
+                  self.funset = self.groupIn( node.infos["name"], node.infos["line"] )
                end
-            end
-         else
-            broadcast( "error", link.source.file, link.line, "Can't resolve link to \"" + link.destination + "\"" )
+               node = node.remove()
+            
+            case "@inmodule"
+               if self.module
+                  broadcast( "error", "Function set already declared for entity \"$name\" at line $node.infos['line']")
+               else
+                  self.module = self.groupIn( node.infos["name"], node.infos["line"] )
+               end
+               node = node.remove()
+
+            case "@ingroup"
+               if self.groups
+                  self.groups.add( self.groupIn( node.infos["name"], node.infos["line"] ) )
+               else
+                  self.groups = [add( self.groupIn( node.infos["name"], node.infos["line"] ) )]
+               end
+               node = node.remove()
+            
+            default
+               node = node.next
          end
       end
    end
+
+   //# Put this object in a group
+   function groupIn( name, line )
+      link = EntryDB.link( self, line, name, true )
+      // already resolved?
+      if link.target: link.target.addMember( self )
+      return link
+   end
+
+   //# Adds a parameter or similar multiple entry in properties.
+   function addParam( type, name, content, line )
+
+      // First, a special control for parameters and optional parameters which relate to each other
+      if type == "param" and "optparam" in self.props and arrayScan( self.props["optparam"], {elem => elem[0] == name} ) >= 0
+         broadcast( "error", @i"Parameter \"$name\" of type already declared as optparam at line $line" )
+         return
+      elif type == "optparam" and "param" in self.props and arrayScan( self.props["param"], {elem => elem[0] == name} ) >= 0
+         broadcast( "error", @i"Optional parameter \"$name\" of type already declared as parameter at line $line" )
+         return
+      end
+
+      // the add the property
+      if type in self.props
+         vt = self.props[type]
+
+         if arrayScan( vt, {elem => elem[0] == name} )
+            broadcast( "error", @i"Property \"$name\" of type \"$type\" already declared at line $line" )
+         else
+            vt.add( [name, content] )
+         end
+      else
+         self.props[type] = [[name, content]]
+      end
+      
+   end
+
+   //# Adds a parameter declared in the function prototype
+   function addFoundParam( name, content, line )
+      vtp = "param" in self.props ? self.props["param"] : nil
+      vto = "optparam" in self.props ? self.props["optparam"] : nil
+
+      foundParam = vtp and arrayScan( vtp, {elem => elem[0] == name} ) == -1
+      foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) == -1
+
+      if not foundParam and not foundOpt
+         broadcast( "warn", @i"Formal parameter $name not referenced in text block" )
+         addParam( "param", name, nil, line )
+      end
+   end
+      
 end
+
+
 
 /*#
    A link between an entity and another one.
    @param source The entity that is searching for the link.
    @param line The line in file where the link is found.
    @param destination The target item of the link.
+   @optparam automatic When false, the system will complain if not resolved.
 
-   If @b destination is a string, the link gets added to the
-   unresolved link database for later resolution.
+   The link is created when a Generic Parser InfoNode of the proper type
+   ("a") is found, or automatically when some other entities
+   are parsed (i.e. "from" inheritance InfoNodes, "see" InfoNodes, "raise" and so on).
 
-   Notice that the link is defined as a special (markup) text entry.
-   This allows to put the link inline to other paragraph-wide text
-   composition. The @b content property inherited from TextEntry
-   will be used as text for the final link if given; if not,
-   the string representation of this object will be the name
-   of the linked destination, if available. If not available,
-   this link will be represented as an undefined link and the source
-   data + line will be used to indicate where it is defined.
+   The link is then added to the infonode as a "link" property, with one end
+   referencing the entity where the infonode is located (source), and the other
+   referencing a destination.
+
+   If the destination exists when the link is created, it is immediately
+   referenced.
+
+   If it doesn't exist, an entry in the @a EntityDB.missing property is created,
+   and the link is stored as the value of the missing dictionary, while the
+   expected unique ID is set both as the destination of the link and as the
+   key of the missing dictionary.
+
+   When a new entity arrives, it is checked against the missing dictionary, and
+   if a link is found there, the @a Link.target field gets referenced.
+
+   
 */
-class Link( source, line, destination ) from TextEntry( "link" )
+class Link( source, line, destination, automatic )
    source = source
    line = line
-   destination = destination.typeId() == StringType ? destination: destination.name
-   target = destination.typeId() == StringType ? nil: destination
-   membership = nil
+   destination = destination
+   automatic = automatic
+   
+   target = nil
 
    init
-      LinkDB.add( self )
+      EntityDB.addLink( self )
    end
 
    function toString()
       if self.target
-         return self.content ? self.content : self.target.toString()
+         return self.target.toString()
       end
 
       return @"(undef at $(self.source.file):$(self.line)) " + self.destination
@@ -238,75 +290,15 @@ class Link( source, line, destination ) from TextEntry( "link" )
 end
 
 
-/*#
-   Document generic entity.
-
-   The exact entity is defined by the type, which matches a prototype
-   in the @a prototypes table, and a the characteristics, which are
-   filled throught the prototype table.
-*/
-
-class DocEntity( parent )
-   /*# Filename where the entity is coming from. */
-   file = nil
-   /*# First line of comment declaration of the entity. */
-   firstline = nil
-   /*# Line at which the entity is defined at language level (if any). */
-   dline = nil
-   /*# Content block; temporarily stored here for second-level parsing. */
-   cblock = nil
-   /*# Type of the entity. */
-   type = nil
-   /*# Local name of the entity. */
-   name = nil
-
-   /*# Is this entity created out of a real language construct?. */
-   hard = false
-
-   /*# Entity-type specific properties.
-      Each entry is generally composed of a content list (a sequence of TextEntry items). Some
-      entries, as "module", can contain a direct reference to another item via a single
-      Link entry (which, anyhow, is derived from TextEntry).
-   */
-   props = [=>]
-
-   /*# TextEntry of type "entity" containing a set of paragraphs.. */
-   content = nil
-
-   /*# Next entitiy.
-
-      Some entities can be chained. Mainly page-level entities can contain
-      sections and subsections. Those exist as entities, but they are not
-      independent; they are add as children entities.
-   */
-   next = nil
-
-   /** Parent entity.
-      This get a value only in sub-entities (i.e. page sections).
-   */
-   parent = nil
-
-   init
-      if parent
-         parent.addChild( self )
-      end
-   end
-
-   function addChild( entity )
-      if self.next == nil
-         self.next = []
-      end
-      self.next += entity
-      entity.parent = self
-   end
-
-end
 
 /*# Database of all the defined entities. */
 object EntityDB
    /*# All the data, organized by unique ID */
    data = [=>]
 
+   //# Missing entities as unique ID -> link
+   missing = [=>]
+   
    /*# All the data, organized by type -> list of entities. */
    grouping = [=>]
 
@@ -355,20 +347,28 @@ object EntityDB
       self.data[ entry.name ] = entry
       extendList( self.grouping, entry.type, entry )
 
-      // resolve grouping links
-      if "ingroup" in entry.props
-         for link in entry.props["ingroup"]
-            extendList( self.groups, link.destination, entry )
-         end
+      // resolve links
+      if entry.name in self.missing
+         self.missing[entry.name].target = entry
+         self.missing -= entry.name
+         // is this entity 
       end
+   end
 
-      if "inset" in entry.props
-         extendList( self.sets, entry.props["inset"].destination, entry )
+   
+   //# Adds a single link
+   function addLink( link )
+      if link.destination in self.data
+         link.target = self.data[link.destination]
+      else
+         self.missing.dop(link.destination, [], {v => v+= link})
       end
+   end
 
-      if "inmodule" in entry.props
-         extendList( self.modules, entry.props["inmodule"].destination, entry )
-      end
+   function link( sourceEntity, line, destination, automatic )
+      l = Link( sourceEntity, line, destination, automatic )
+      self.addLink( l )
+      return l
    end
 
    function complete()
