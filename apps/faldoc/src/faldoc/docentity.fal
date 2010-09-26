@@ -349,9 +349,23 @@ object EntityDB
 
       // resolve links
       if entry.name in self.missing
-         self.missing[entry.name].target = entry
+         links = self.missing[entry.name]
          self.missing -= entry.name
-         // is this entity 
+         // is this entity a grouping entry? -- then, this link sources are our children.
+         if (entry.type == "group" or entry.type == "funcset" or entry.type == "module")
+            children = []
+            for l in links
+               l.target = entry
+               children += l.source
+            end
+            entry.children = children
+         else
+            // else, we must just fill the link target
+            for l in links
+               l.target = entry
+            end
+         end
+
       end
    end
 
