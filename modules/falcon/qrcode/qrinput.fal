@@ -275,7 +275,7 @@ class QrInput(version, errorCorrectionLevel)
 
         $buffer = array($size, $index, $parity);
         entry = QrInputItem(QrModes.structure, 3, buffer)
-        array_unshift($this->items, $entry);
+        arrayIns(self.items, 0, entry)
     end
 
     function calcParity()

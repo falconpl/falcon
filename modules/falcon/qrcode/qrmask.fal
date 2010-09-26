@@ -112,21 +112,21 @@ class QrMask
     end
 
     function makeMaskNo(maskNo, width, s, d /* ref */, maskGenOnly)
-        if maskGenOnly = nil; maskGenOnly = false; end
+        if maskGenOnly == nil; maskGenOnly = false; end
 
         b = 0
         bitMask = []
         fileName = QrConfig.cache_dir + "mask_" + maskNo + "/" +  "mask_" + width + "_" + maskNo + ".dat"
 
         if QrConfig.cacheable
-            if not fileType(fileName) = FileStat.NOTFOUND
+            if not fileType(fileName) == FileStat.NOTFOUND
                 buffer = strBuffer(FileStat(fileName).size)
                 inputStream = InputStream(fileName)
                 bitMask = self.unserialize(inputStream.read(buffer))
                 inputStream.close()
             else
                 bitMask = self.generateMaskNo(maskNo, width, s, d)
-                if fileType(QrConfig.cache_dir + "mask_" + maskNo) = FileStat.NOTFOUND
+                if fileType(QrConfig.cache_dir + "mask_" + maskNo) == FileStat.NOTFOUND
                     dirMake(QrConfig.cache_dir + "mask_" + maskNo)
                 end
                 
@@ -144,7 +144,7 @@ class QrMask
 
         for y in [0:wisth]
             for x in [0:width]
-                if bitMask[y][x] = 1
+                if bitMask[y][x] == 1
                     d[y][x] = chr(s[y][x][*0] ^ bitMask[y][x]
                 end
                 b += (d[y][x][*0] && 1)
@@ -172,10 +172,10 @@ class QrMask
             if i && 1
                 if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
                     fact = (self.runLength[i] / 3)
-                    if (self.runLength[i - 2] = fact) and
-                        (self.runLength[i - 1] = fact) and
-                        (self.runLength[i + 1] = fact) and
-                        (self.runLength[i + 2] = fact)
+                    if (self.runLength[i - 2] == fact) and
+                        (self.runLength[i - 1] == fact) and
+                        (self.runLength[i + 1] == fact) and
+                        (self.runLength[i + 2] == fact)
                         if (self.runLength[i - 3] < 0) or (self.runLength[i - 3] >= (4 * fact))
                             demerit += N3
                         elif ((i + 3) >= length) or (self.runLength[i + 3] >= (4 * fact))

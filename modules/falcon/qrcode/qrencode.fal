@@ -42,7 +42,7 @@ class QrRawCode(input)
         spec = [0, 0, 0, 0, 0]
 
         self._data = input.getByteStream()
-        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, spec)
+        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, $spec)
         self._version = input.version
         self._blockNum1 = QrSpec.rsBlockNum1(spec)
         self._dataLen = QrSpec.rsDataLen(spec)
