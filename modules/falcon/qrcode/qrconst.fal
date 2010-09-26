@@ -1,0 +1,53 @@
+/*#
+ * @file        qrconst.fal
+ * @brief       Constants.
+ * @begin       08-Sep-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+enum QrModes
+    null = -1
+    num = 0
+    an = 1
+    eight_bit = 2
+    kanji = 3
+    structure = 4
+end
+
+enum QrErrorCorrectionLevels
+    L = 0
+    M = 1
+    Q = 2
+    H = 3
+end
+
+enum QrFormats
+    text = 0
+    png = 1
+end
+
+object QrStr
+    function set(srctab /* ref */, x, y, repl, replen)
+        substr = strFront(srctab[y], x)
+        srclen = len(srctab[y])
+        parlen = len(substr)
+
+        if replen == nil
+            parlen += len(repl)
+            substr += repl
+        elif replen > 0
+            parlen += replen
+            substr += strFront(repl, replen)
+        end
+
+        delta = srclen - parlen
+        if delta > 0; substr += strBack(srctab[y], delta); end
+
+        return (srctab[y] = substr)
+    end
+end
+
+export

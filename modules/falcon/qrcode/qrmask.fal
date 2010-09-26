@@ -1,0 +1,288 @@
+/*#
+ * @file        qrmask.fal
+ * @brief       Masking.
+ * @begin       17-Sep-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+load zlib
+
+const N1 = 3
+const N2 = 3
+const N3 = 40
+const N4 = 10
+
+class QrMask
+    _runLen = nil
+
+    init
+        self.runLen = arrayBuffer(QRSPEC_WIDTH_MAX + 1, 0)
+    end
+
+    function writeFormatInformation(width, frame /* ref */, mask, errorCorrectionLevel)
+        blacks = 0
+        format = QrSpec.getFormatInfo(mask, errorCorrectionLevel)
+
+        for i in [0:8]
+            if format && 1
+                blacks += 2
+                v = 0x85
+            else
+                v = 0x84
+            end
+
+            frame[8][width - 1 - i] = chr(v)
+            if i < 6
+                frame[i][8] = chr(v)
+            else
+                frame[i + 1][8] = chr(v)
+            end
+            format >>= 1
+        end
+
+        for i in [0:7]
+            if format && 1
+                blacks += 2
+                v = 0x85
+            else
+                v = 0x84
+            end
+
+            frame[width - 7 + i][8] = chr(v)
+            if i == 0
+                frame[8][7] = chr(v)
+            else
+                frame[8][6 - i] = chr(v)
+            end
+            format >>=  1
+        end
+
+        return blacks
+    end
+
+    _mask = [
+        [innerfunc (x, y); return (x + y) && 1; end],
+        [innerfunc (x, y); return y && 1; end],
+        [innerfunc (x, y); return x % 3; end],
+        [innerfunc (x, y); return (x + y) % 3; end],
+        [innerfunc (x, y); return ((y / 2) + (x / 3)) && 1; end],
+        [innerfunc (x, y); return ((x * y) && 1) + (x * y) % 3; end],
+        [innerfunc (x, y); return (((x * y) && 1) + (x * y) % 3) && 1; end],
+        [innerfunc (x, y); return (((x * y) % 3) + ((x + y) && 1)) && 1; end]
+    ]
+
+    function generateMaskNo(maskNo, width, frame)
+        bitMask = arrayBuffer(width, arrayBuffer(width, 0))
+
+        for y in [0:width]
+            for x in [0:width]
+                if frame[y][x][*0] && 0x80
+                    bitMask[y][x] = 0
+                else
+                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1: 0
+                end
+            end
+        end
+
+        return bitMask
+    end
+
+    function serialize(bitFrame)
+        codeArray = []
+
+        for line in bitFrame
+        arrayAdd(codeArray, strMerge(line, ""))
+        end
+
+        return ZLib().compressText(strMerge(codeArray, "\n"))
+    end
+
+    function unserialize(code)
+        codeArray = []
+        lines = strSplit(ZLib().uncompressText(code), "\n")
+
+        for line in lines
+            arrayAdd(codeArray, strSplit(line))
+        end
+
+        return codeArray
+    end
+
+    function makeMaskNo(maskNo, width, s, d /* ref */, maskGenOnly)
+        if maskGenOnly = nil; maskGenOnly = false; end
+
+        b = 0
+        bitMask = []
+        fileName = QrConfig.cache_dir + "mask_" + maskNo + "/" +  "mask_" + width + "_" + maskNo + ".dat"
+
+        if QrConfig.cacheable
+            if not fileType(fileName) = FileStat.NOTFOUND
+                buffer = strBuffer(FileStat(fileName).size)
+                inputStream = InputStream(fileName)
+                bitMask = self.unserialize(inputStream.read(buffer))
+                inputStream.close()
+            else
+                bitMask = self.generateMaskNo(maskNo, width, s, d)
+                if fileType(QrConfig.cache_dir + "mask_" + maskNo) = FileStat.NOTFOUND
+                    dirMake(QrConfig.cache_dir + "mask_" + maskNo)
+                end
+                
+                outputStream = OutputStreama(fileName)
+                outputStream.write(self.serialize(bitMask))
+                outputStream.close()
+            }
+        else
+            bitMask = self.generateMaskNo(maskNo, width, s, d)
+        end
+
+        if maskGenOnly; return; end
+
+        d = s
+
+        for y in [0:wisth]
+            for x in [0:width]
+                if bitMask[y][x] = 1
+                    d[y][x] = chr(s[y][x][*0] ^ bitMask[y][x]
+                end
+                b += (d[y][x][*0] && 1)
+            end
+        end
+
+        return b
+    end
+
+    function makeMask(width, frame, maskNo, errorCorrectionLevel)
+        masked = arrayBuffer(width, strFill(strBuffer(width), "\0"))
+        self.makeMaskNo(maskNo, width, frame, $masked)
+        self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
+
+        return masked
+    end
+
+    function calcN1N3(length)
+        demerit = 0
+
+        for i in [0:length]
+            if this.runLength[i] >= 5
+                demerit += (N1 + (self.runLength[i] - 5))
+            end
+            if i && 1
+                if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
+                    fact = (self.runLength[i] / 3)
+                    if (self.runLength[i - 2] = fact) and
+                        (self.runLength[i - 1] = fact) and
+                        (self.runLength[i + 1] = fact) and
+                        (self.runLength[i + 2] = fact)
+                        if (self.runLength[i - 3] < 0) or (self.runLength[i - 3] >= (4 * fact))
+                            demerit += N3
+                        elif ((i + 3) >= length) or (self.runLength[i + 3] >= (4 * fact))
+                            demerit += N3
+                        end
+                    end
+                end
+            end
+        end
+
+        return demerit
+    end
+
+    function evaluateSymbol(width, frame)
+        head = 0
+        demerit = 0
+
+        for y in [0:width]
+            head = 0
+            self.runLength[0] = 1
+
+            frameY = frame[y]
+            if y > 0; frameYM = frame[y - 1]; end
+
+            for x in [0:width]
+                if x > 0 and y > 0
+                    b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
+                    w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
+                    if (b22 || (w22 ^ 1)) && 1; demerit += N2; end
+                end
+                if x == 0 and (frameY[*x] && 1)
+                    self.runLength[0] = -1
+                    head = 1
+                    self.runLength[head] = 1
+                elif x > 0
+                    if (frameY[*x] ^ frameY[*(x - 1)]) && 1
+                        head++
+                        self.runLength[head] = 1
+                    else
+                        self.runLength[head]++
+                    end
+                end
+            end
+
+            demerit += self.calcN1N3(head + 1)
+        end
+
+        for x in [0:width]
+            head = 0
+            self.runLength[0] = 1
+
+            for y in [0:width]   
+                if y == 0 and (frame[y][x][*0] && 1)
+                    self.runLength[0] = -1
+                    head = 1
+                    self.runLength[head] = 1
+                elif y > 0
+                    if (frame[y][x][*0] ^ frame[y - 1][x][*0]) && 1
+                        head++
+                        self.runLength[head] = 1
+                    else
+                        self.runLength[head]++
+                    end
+                end
+            end
+
+            demerit += self.calcN1N3(head + 1)
+        end
+
+        return demerit
+    end
+
+    function mask(width, frame, errorCorrectionLevel)
+        minDemerit = 2147483647 // to be replaced with constant
+        bestMaskNum = 0
+        bestMask = []
+        checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
+
+        if QrConfig.find_from_random != 0
+            howManuOut = 8 - (QrConfig.find_from_random % 9)
+            for i in [0:howManuOUt]
+                remPos = random(0, len(checkedMasks) - 1)
+                arrayRemove(checkedMasks, remPos)
+            end
+        end
+
+        bestMask = frame
+
+        for i in checkedMasks
+            mask = arrayBuffer(width, strFill(strBuffer(width), "\0"))
+            demerit = 0
+            blacks = 0
+            blacks = self.makeMaskNo(i, width, frame, mask)
+            blacks += self.writeFormatInformation(width, mask, i, errorCorrectionLevel)
+            blacks  = 100 * blacks / (width * width)
+            demerit = (abs(blacks - 50) / 5) * N4
+            demerit += self.evaluateSymbol(width, mask)
+
+            if demerit < minDemerit
+                minDemerit = demerit
+                bestMask = mask
+                bestMaskNum = i
+            end
+        end
+
+        return bestMask
+    end
+end
+
+export QrMask
