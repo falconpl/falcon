@@ -137,8 +137,8 @@ class QrRsItem
     end
 end
 
-object QrRs
-    items = []
+class QrRs
+    static items = []
 
     function init_rs(symsize, gfpoly, fcr, prim, nroots, pad)
         for rs in items

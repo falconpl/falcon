@@ -209,7 +209,7 @@ class QrInput(version, errorCorrectionLevel)
     _version = 0
     _items = []
     _errorCorrectionLevel = QrErrorCorrectionLevels.L
-    _anTable = [
+    static _anTable = [
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,
