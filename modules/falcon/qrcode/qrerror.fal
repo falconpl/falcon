@@ -1,0 +1,33 @@
+/*#
+ * @file        qrerror.fal
+ * @brief       Error handling.
+ * @begin       13-Sep-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+class QrError(code, desc, extra) from Error(code, desc, extra)
+    invalid_param = 10001
+    invalid_version = 10002
+    version_not_found = 10003
+    invalid_error_correction_level = 10004
+    invalid_mode = 10005
+    encoding = 10006
+
+    _desc = [ 
+        10001 => i"Invalid parameter",
+        10002 => i"Invalid version",
+        10003 => i"Version not found",
+        10004 => i"Invalid error correction level"
+        10005 => i"Invalid mode"
+        10006 => i"Encoding error"
+    ]
+
+    init
+        if code in self._desc
+            self.description = self._desc[code]
+        end
+    end
+end
