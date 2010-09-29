@@ -1,0 +1,164 @@
+/*
+   FALCON - Generic modules
+
+   FILE: tree.fal
+
+   Generic structures: tree
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 28 Sep 2010 15:30:16 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+/*# Generic Node of a tree structure.
+   @optparam content Some generic payload for the tree structure.
+*/
+class Node( content )
+   content = content
+   parent = nil
+   next = nil
+   prev = nil
+
+   //# first child of the children of this node
+   firstChild = nil
+   //# last child of the children of this node
+   lastChild = nil
+
+   //# Exchange this node with another one.
+   function change( node )
+      node.parent = self.parent
+      node.next = self.next
+      node.prev = self.prev
+      if self.next
+         self.next.prev = node
+      else
+         if self.parent: self.parent.setTail( node )
+      end
+
+      if self.prev
+         self.prev.next = node
+      else
+         if self.parent: self.parent.content = node
+      end
+   end
+
+   //# Inserts the parameter before this node
+   function insertBefore( node )
+      if self.prev
+         self.prev.next = node
+      else
+         // we're the last node of our parent.
+         if self.parent
+            self.parent.firstChild = node
+         end
+      end
+
+      node.prev = self.prev
+      node.next = self
+      node.parent = self.parent
+
+      self.prev = node
+   end
+
+   //# Inserts the parameter after this node
+   function insertAfter( node )
+      if self.next
+         self.next.prev = node
+      else
+         // we're the first node of our parent.
+         if self.parent
+            self.parent.lastChild = node
+         end
+      end
+
+      node.next = self.next
+      node.prev = self
+      node.parent = self.parent
+
+      self.next = node
+   end
+
+   /*# Detach this node from the tree
+      @return The next node, if it exists.
+   */
+   function remove()
+      if self.next == nil
+         if self.prev == nil
+            // we are the only child of our parent?
+            if self.parent != nil
+               self.parent.firstChild = nil
+               self.parent.lastChild = nil
+            else
+               // however, without next we're the last child
+               self.parent.lastChild = self.prev
+            end
+         else
+            self.prev.next = nil
+         end
+      else
+         self.next.prev = self.prev
+         if self.prev != nil
+            self.prev.next = self.next
+         else
+            // we are the FIRST child of our parent
+            if self.parent != nil
+               self.parent.firstChild = self.next
+            end
+         end
+      end
+
+      return self.next
+   end
+
+   //# Adds a child after the already present children.
+   function appendChild( child )
+      child.prev = self.lastChild
+
+      if self.lastChild
+         self.lastChild.next = child
+      else
+         self.firstChild = child
+      end
+      
+      self.lastChild = child
+      child.parent = self
+   end
+
+   //# Adds a child in front of the children
+   function prependChild( child )
+      child.next = self.firstChild
+      if self.firstChild
+         self.firstChild.prev = child
+      else
+         // this is the first child
+         self.lastChild = child
+      end
+
+      self.firstChild = child
+      child.parent = self
+   end
+
+
+   /*# Recursively traverse the node tree
+      @param f A callable that will be called with each node.
+
+      The @f function is called frist on this node, and then
+      the traverse method of each children is called. This makes
+      the structure descend-first-then-call structure.
+   */
+   function traverse( f )
+      f( self )
+      node = self.firstChild
+      while node != nil
+         node.traverse( f )
+         node = node.next
+      end
+   end
+         
+end
+
