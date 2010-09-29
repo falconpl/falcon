@@ -33,7 +33,7 @@
 # List of available modules: CURL DBI DBUS DYNLIB GD2 GTK PDF SDL
 #
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6.2)
 project(Falcon)
 
 #########################################################################
@@ -246,8 +246,8 @@ if ( NOT WIN32 )
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
 
-option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" on)
-if(NOT DISABLE_RPATH)
+option(FALCON_DEFAULT_RPATH "http://wiki.debian.org/RpathIssue" off)
+if(FALCON_DEFAULT_RPATH)
   # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
   set(CMAKE_SKIP_BUILD_RPATH  false)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH false)

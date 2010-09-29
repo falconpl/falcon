@@ -592,6 +592,7 @@ bool JSON::decodeKey( String& tgt, Stream* src ) const
             switch( chr )
             {
                case '\\': tgt.append( '\\' ); break;
+               case '"': tgt.append( '"' ); break;
                case 'b': tgt.append( '\b' ); break;
                case 't': tgt.append( '\t' ); break;
                case 'n': tgt.append( '\n' ); break;
