@@ -208,11 +208,11 @@ class Parser()
          eolsize = 1
 
          // consider \r\n or \n\r
-         if pos > 0
-            if string[* (pos-1)] == 0xA
+         if poseol > 0
+            if string[* (poseol-1)] == 0xA
                --poseol
                ++eolsize
-            elif pos+1 < strlen and string[* (pos-1)] == 0xA
+            elif poseol+1 < strlen and string[* (poseol+1)] == 0xA
                ++eolsize
             end
          end
@@ -298,7 +298,7 @@ class Parser()
 
             if winner
                count = winner.apply( ctx )
-               if self.trace: self.traceRule( winner )
+               if self.trace: self.traceRule( winner, ctx )
                self._fulfil( winner.nextState )
             else
                // empty line and no matching rule, so it seems.
@@ -383,8 +383,8 @@ class Parser()
       > "[PTRC:msg ] ", msg
    end
 
-   function traceRule( r, count )
-      >> "[PTRC:rule] Applying ", r.className(), "("
+   function traceRule( r, context )
+      >> "[PTRC:rule] (ctx depth:", context.nodeStack.len(),  ") Applying ", r.className(), "("
       if r provides token: >> '"', r.token.escape(), "\", "
       >> '"', r.nextState, '")'
       > " matcing ", r.matchLen, " chars."

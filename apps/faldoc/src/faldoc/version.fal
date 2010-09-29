@@ -15,9 +15,9 @@
 */
 
 object version
-   major = 2
-   minor = 2
-   revision = 1
+   major = 3
+   minor = 0
+   revision = 0
 
    function name()
       return self.major.toString() + "." +\

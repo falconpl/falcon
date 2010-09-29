@@ -16,6 +16,8 @@
    See LICENSE file for licensing details.
 */
 
+import from struct.tree
+
 node_text_type = "text"
 node_top_type = "top"
 
@@ -23,68 +25,13 @@ function _isBlank( c )
    return c == 0x20 or c == 0xD or c == 0xA or c == 0x8
 end
 
-class Node( type, text, parent, prev, next )
+class Node( type, text ) from struct.tree.Node( text )
    type = type
-
-   /* Can be a string or a node list. */
-   content = text
 
    /*# If true, will be moved notified to the renderer while processing. */
    standout = false
    
    add = self._nilAdder
-
-   parent = parent
-   next = next
-   prev = prev
-
-   _tail = nil
-
-   /*# Exchange this node with another one. */
-   function change( node )
-      node.parent = self.parent
-      node.next = self.next
-      node.prev = self.prev
-      if self.next
-         self.next.prev = node
-      else
-         if self.parent: self.parent.setTail( node )
-      end
-      
-      if self.prev
-         self.prev.next = node
-      else
-         if self.parent: self.parent.content = node
-      end
-   end
-
-   function setTail( node ): self._tail = node
-
-   /*# Detach this node from the tree */
-   function remove()
-      if self.next == nil
-         if self.prev == nil
-            if self.parent != nil
-               self.parent.clearContent()
-            end
-         else
-            self.prev.next = nil
-         end
-      else
-         self.next.prev = self.prev
-         if self.prev != nil: self.prev.next = self.next
-      end
-
-      return self.next
-   end
-
-   /*# Remove the contents of this node */
-   function clearContent()
-      self.content = nil
-      self._tail = nil
-      self.add = self._nilAdder
-   end
-   
 
    function _nilAdder( data )
       select data
@@ -93,9 +40,7 @@ class Node( type, text, parent, prev, next )
             self.add = self._stringAdder
             
          case Node
-            self.content = data
-            data.parent = self
-            self._tail = data
+            self.appendChild( data )
             self.add = self._listAdder
             
          default
@@ -109,12 +54,11 @@ class Node( type, text, parent, prev, next )
          case StringType
             self.content += data
 
-         case Node
-            n = Node( node_text_type, self.content, self, nil, data )
-            data.prev = n
-            data.parent = self
-            self.content = n
-            self._tail = data
+         case Node            
+            n = Node( node_text_type, self.content )
+            self.appendChild( n )
+            self.appendChild( data )
+            self.content = nil
             self.add = self._listAdder
 
          default
@@ -125,22 +69,15 @@ class Node( type, text, parent, prev, next )
 
    function _listAdder( data )
       select data
-         case StringType
-            
-            if self._tail.type == node_text_type
-               self._tail.content += data
+         case StringType            
+            if self.lastChild.type == node_text_type
+               self.lastChild.content += data
             else
-               n = Node( node_text_type, data, self, self._tail )
-               self._tail.next = n
-               self._tail = n
+               self.appendChild( Node( node_text_type, data ) )
             end
             
          case Node
-            data.parent = self
-            data.prev = self._tail
-            self._tail.next = data
-            self._tail = data
-
+            self.appendChild( data )
          default
             raise ParseError( 10001, "Invalid data added to a node: " + data.describe() )
       end

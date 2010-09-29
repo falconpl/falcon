@@ -84,54 +84,54 @@ ParaCommands =  .[
 
 NamingCommands = .[
    ReRule( '^\s*@see\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.addNode(InfoNode("@see", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@see", ['line' => ctx.row, 'name'=> p0 ] )) })
            
    ReRule( '^\s*@class\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@class", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@class", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@object\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@object", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@object", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@function\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@function", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@function", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@message\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@message", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@message", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@enum\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@enum", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@enum", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@global\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@global", ['line' => ctx.row, 'name'=> p0] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@global", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@method\s+(\w+)\s+(\w).*$', "#stay",
-           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@method", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
+           {ctx, d0, p0, p1 => ctx.add(InfoNode("@method", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
 
    ReRule( '^\s*@property\s+(\w+)\s+(\w).*$', "#stay",
-           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@property", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
+           {ctx, d0, p0, p1 => ctx.add(InfoNode("@property", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
 ]
 
 ScopeCommands = .[
    ReRule( '^\s*@beginmodule\s+(\w+).*$', "#stay",
-         {ctx, d0, p0 => ctx.addNode(InfoNode("@beginmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
+         {ctx, d0, p0 => ctx.add(InfoNode("@beginmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@beginset\s+(\w+).*$', "#stay",
-         {ctx, d0, p0 => ctx.addNode(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
+         {ctx, d0, p0 => ctx.add(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@begingroup\s+(\w+).*$', "#stay",
-         {ctx, d0, p0 => ctx.addNode(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+         {ctx, d0, p0 => ctx.add(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
 
    ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.addNode(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@inset\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.addNode(InfoNode("@inset", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@inset", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@ingroup\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.addNode(InfoNode("@ingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@ingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
 
    ReRule( '^\s*@endmodule(\s+.*$|$)', "#stay",
-         {ctx => ctx.addNode(InfoNode("@endmodule", ['line' => ctx.row] )) })
+         {ctx => ctx.add(InfoNode("@endmodule", ['line' => ctx.row] )) })
    ReRule( '^\s*@endset(\s+.*$|$)', "#stay",
-         {ctx => ctx.addNode(InfoNode("@endset", ['line' => ctx.row] )) })
+         {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
    ReRule( '^\s*@endgroup(\s+.*$|$)', "#stay",
-         {ctx => ctx.addNode(InfoNode("@endset", ['line' => ctx.row] )) })
+         {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
 ]
 
 InlineCommands = .[
@@ -152,7 +152,7 @@ BlockCommands =  .[
            {ctx => ctx.pushNode(InfoNode("pre", ['line' => ctx.row ] )) })
    ReRule( '^\s*@source\s+(\w+).*$', "code_text",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("code", ['line' => ctx.row, "lang"=>p0 ] )) })
-   ReRule( '^\s*@code(\s.*$|$)', "code_text",
+   ReRule( '^\s*@code\s*$', "code_text",
            {ctx => ctx.pushNode(InfoNode("code", ['line' => ctx.row, "lang"=>"" ] )) })
 ]
 
@@ -200,12 +200,13 @@ class Parser from parser.genparser.Parser
          + ParaCommands
          + NamingCommands
          + ScopeCommands
+         + BlockCommands
          + .[
             // serve also inline commands, but generate a para node for them.
-            ProxyRule( InlineCommands + BlockCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
+            ProxyRule( InlineCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
 
             // if a @ is not recognized here, we have a problem.
-            ReRule('@(\w+)?', "#stay", {ctx, d0, p0=>ctx.addNode( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
+            ReRule('^\s*@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
 
             // Otherwise, enter the para mode
             DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
@@ -215,15 +216,16 @@ class Parser from parser.genparser.Parser
       "para" =>PState(.[
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})            
          ]
-         + BlockCommands
          + InlineCommands
-         
          + TableStart
          + ListStart
          + FormatElements
          + .[
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
             ReRuleLA( '^\s*@', "#pop", {ctx=>ctx.popNode()} )
+            
+            // while a @ in the middle of the para means an unrecognized command for sure.
+            ReRule( '@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
          ],
          {ctx, data=>ctx.add( data )},
          "para_continue"

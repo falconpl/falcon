@@ -61,7 +61,8 @@ class TokenRule( token, nextState, action ) from Rule( nextState, action )
 
    function apply( ctx )
       if self.action: self.action( ctx, self.token )
-      return self.token.len()
+      self.matchLen = self.token.len()
+      return self.matchLen
    end
 
    function isSep( item )
@@ -95,7 +96,8 @@ class TagRule( tag, nextState, action ) from Rule( nextState, action )
 
    function apply( ctx )
       if self.action: self.action( ctx, self.token )
-      return self.token.len()
+      self.matchLen = self.token.len()
+      return self.matchLen
    end
 
 end
@@ -161,7 +163,8 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
    function apply( context )
       g = self.grabs
       if self.action: (.[ self.action context ] + g)()
-      return g[0].len()
+      self.matchLen = g[0].len()
+      return self.matchLen
    end
 end
 
@@ -206,6 +209,7 @@ end
 */
 class CharRule( nextState, action ) from Rule( nextState, action )
    grabbedChar = " "
+   matchLen = 1
 
    function match( text, pos )
       if text.len() > pos
@@ -223,8 +227,8 @@ end
 
 /*# Empty rule meant to immediately do an action and change state without consuming input. */
 class DummyRule( nextState, action ) from Rule( nextState, action )
-   function match()
-      return 0
+   function match( text, pos )
+      return pos
    end
 end
 
@@ -272,10 +276,11 @@ class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, 
          if not self.hasState
             self.nextState = self.winningRule.nextState
          end
-         
+         self.matchLen = retval
          return retval
       end
-      
+
+      self.matchLen = 0
       return 0
    end
 end

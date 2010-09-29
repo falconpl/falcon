@@ -108,14 +108,15 @@ class Parser from parser.genparser.Parser
       "classdecl" => PState( .[
             ReRule( '\s*\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
             ReRule( '\s+from(\s|\\$)', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
-
-            // auto return from class
-            TagRule( "end", "#pop",  {ctx => ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRule( '\\$', "#stay" )
             // and return immmediately without waiting an end
             ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
+
+            // consume "end" after returning from the class.
+            ReRule( '^\s*end\s*;|^\s*end\s*$', "#pop", {ctx=> ctx.popNode()} )
+            
             // enter the function state at eol (and dump errors )
             ReRuleLA( '.*$', "class" )
          ]
@@ -125,7 +126,7 @@ class Parser from parser.genparser.Parser
             ReRule( '\s*(\w+)\s*', "inherit_cls",
                   {ctx, d0, cls =>ctx.pushNode( InfoNode("from", ["line"=>ctx.row, "class"=>cls ]))} )
 
-            ReRuleLA( '^\s*end\s*;|^\s*end\s*$', "#pop" )
+            ReRuleLA( '^\s*end\s*;|^\s*end\s*$', "#pop", {ctx=> ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRule( '\\$', "#stay" )
@@ -193,7 +194,7 @@ class Parser from parser.genparser.Parser
                   {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param]))} )
             ReRule( '\s*(\w+)\s*\)', "#pop",
                   {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param])); ctx.popNode()} )
-            TagRule( ")", "#pop" )
+            TagRule( ")", "#pop", {ctx=> ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRule( '\\$', "#stay" )

@@ -16,9 +16,11 @@ Version = 0.9.6.6
 # Faldoc Input settings
 ################################################
 
-Input.directory=../engine/core_module
+#Input.directory=../engine/core_module
+Input.directory=../modules/falcon
 
 Input.wildcard=*.cpp     #we use only...
+Input.wildcard=*.fal
 Input.recursive=true
 
 # Other files may be specified here

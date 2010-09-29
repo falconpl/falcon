@@ -14,6 +14,8 @@
    See LICENSE file for licensing details.
 */
 
+import from struct.tree
+
 /*# Entity class.
 
    A document entity is a single entry in the documentation
@@ -41,7 +43,7 @@
    Parameters entry (under props
 */
 
-class DocEntity( file, line, parent )
+class Entity( content, file, line ) from struct.tree.Node( content )
 
    //# Type of the entity
    type = nil
@@ -59,8 +61,6 @@ class DocEntity( file, line, parent )
    hard = false
 
    props = bless([=>])
-   parent = nil
-   children = nil
 
    //# Module of this entity, if any
    module = nil
@@ -70,30 +70,21 @@ class DocEntity( file, line, parent )
    
    //# Groups of this entity (an array), if any
    groups = nil
-   
-   /*# Textual content of the entity.
-      This is the document tree that should be rendered for the
-      description of the node.
-   */
-   content = nil
 
    /*# Parsed content.
       Documentation of the entity parsed as an infonode.
    */
    pcontent = nil
 
-   init
-      if parent
-         parent.addChild( self )
-      end
-   end
+   //# Non-child members (for entities with grouping abilities)
+   members = nil
 
    //# Defines the entity and stores it in the database.
    function define( type, name, line )
       if (self.type != nil or self.name != nil)
          // we don't care about re-definitions
          if self.type != type or self.name != name
-            broadcast( "error", @i"Entity \"$name\"/$type doesn't match previous definition at line $line"
+            broadcast( "error", @i"Entity \"$name\"/$type doesn't match previous definition at line $line" )
          end
          return
       end
@@ -114,20 +105,12 @@ class DocEntity( file, line, parent )
       return self.name
    end
    
-   function addChild( child )
-      if self.children == nil
-         self.children = [child]
-      else
-         self.children += child
-      end
-      child.parent = self
-   end
 
    function addMember( member )
-      if self.children == nil
-         self.children = [child]
+      if self.members == nil
+         self.members = [member]
       else
-         self.children += child
+         self.members += member
       end
    end
 
@@ -149,13 +132,13 @@ class DocEntity( file, line, parent )
                node = node.remove()
 
             case "@see"
-               link = EntryDB.link( self, node.infos["line"], node.infos["name"], true )
+               link = EntityDB.link( self, node.infos["line"], node.infos["name"], true )
                self.addParam( "see", node.infos["name"], link )
                node = node.remove()
 
             case "@inset"
                if self.funset
-                  broadcast( "error", "Function set already declared for entity \"$name\" at line $node.infos['line']")
+                  faldoc.error( "Function set already declared for entity \"$name\" at line $node.infos['line']")
                else
                   self.funset = self.groupIn( node.infos["name"], node.infos["line"] )
                end
@@ -163,7 +146,7 @@ class DocEntity( file, line, parent )
             
             case "@inmodule"
                if self.module
-                  broadcast( "error", "Function set already declared for entity \"$name\" at line $node.infos['line']")
+                  faldoc.error( "Function set already declared for entity \"$name\" at line $node.infos['line']")
                else
                   self.module = self.groupIn( node.infos["name"], node.infos["line"] )
                end
@@ -173,7 +156,7 @@ class DocEntity( file, line, parent )
                if self.groups
                   self.groups.add( self.groupIn( node.infos["name"], node.infos["line"] ) )
                else
-                  self.groups = [add( self.groupIn( node.infos["name"], node.infos["line"] ) )]
+                  self.groups = [self.groupIn( node.infos["name"], node.infos["line"] )]
                end
                node = node.remove()
             
@@ -185,7 +168,7 @@ class DocEntity( file, line, parent )
 
    //# Put this object in a group
    function groupIn( name, line )
-      link = EntryDB.link( self, line, name, true )
+      link = EntityDB.link( self, line, name, true )
       // already resolved?
       if link.target: link.target.addMember( self )
       return link
@@ -196,10 +179,10 @@ class DocEntity( file, line, parent )
 
       // First, a special control for parameters and optional parameters which relate to each other
       if type == "param" and "optparam" in self.props and arrayScan( self.props["optparam"], {elem => elem[0] == name} ) >= 0
-         broadcast( "error", @i"Parameter \"$name\" of type already declared as optparam at line $line" )
+         faldoc.error( @i"Parameter \"$name\" of type already declared as optparam at line $line" )
          return
       elif type == "optparam" and "param" in self.props and arrayScan( self.props["param"], {elem => elem[0] == name} ) >= 0
-         broadcast( "error", @i"Optional parameter \"$name\" of type already declared as parameter at line $line" )
+         faldoc.error( @i"Optional parameter \"$name\" of type already declared as parameter at line $line" )
          return
       end
 
@@ -208,7 +191,7 @@ class DocEntity( file, line, parent )
          vt = self.props[type]
 
          if arrayScan( vt, {elem => elem[0] == name} )
-            broadcast( "error", @i"Property \"$name\" of type \"$type\" already declared at line $line" )
+            faldoc.error( @i"Property \"$name\" of type \"$type\" already declared at line $line" )
          else
             vt.add( [name, content] )
          end
@@ -227,8 +210,8 @@ class DocEntity( file, line, parent )
       foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) == -1
 
       if not foundParam and not foundOpt
-         broadcast( "warn", @i"Formal parameter $name not referenced in text block" )
-         addParam( "param", name, nil, line )
+         faldoc.warn( @i"Formal parameter $name not referenced in text block" )
+         self.addParam( "param", name, nil, line )
       end
    end
       
@@ -290,6 +273,19 @@ class Link( source, line, destination, automatic )
 end
 
 
+/*# Entry in the missing database
+   @param name the name of the object.
+   @optparam type Expected type of the missing object, if any
+   @optparam path Path (as partial dotted parentship) of the expected item, if known.
+*/
+class Missing( name, type, path )
+   name = name
+   type = type
+   path = path
+
+   //# list of items waiting for this item to arrive.
+   waiting = []  
+end
 
 /*# Database of all the defined entities. */
 object EntityDB
@@ -312,7 +308,7 @@ object EntityDB
    modules = [=>]
 
    function add( entry )
-      if not entry.derivedFrom( DocEntity )
+      if not entry.derivedFrom( Entity )
          broadcast( "error", "Trying to add non-entity to EntityDB \"" +
                entry + "\" from: " + fself.caller() )
          return
@@ -323,11 +319,12 @@ object EntityDB
          return
       end
 
-      if not entry.type
+      if not entry.type                                                                                                                
          broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name + " has no type." )
          return
       end
 
+      /*
       if "brief" notin entry.props
          try
             if prototypes.find( "type", entry.type, "brief")
@@ -336,6 +333,7 @@ object EntityDB
          end
          // but let it through
       end
+      */
 
       if entry.name in self.data
          other = self.data[entry.name]
@@ -345,7 +343,11 @@ object EntityDB
       end
 
       self.data[ entry.name ] = entry
-      extendList( self.grouping, entry.type, entry )
+      if entry.type in self.grouping
+         self.grouping[entry.type].add(entry)
+      else
+         self.grouping[entry.type] = [entry]
+      end
 
       // resolve links
       if entry.name in self.missing
@@ -375,7 +377,7 @@ object EntityDB
       if link.destination in self.data
          link.target = self.data[link.destination]
       else
-         self.missing.dop(link.destination, [], {v => v+= link})
+         
       end
    end
 

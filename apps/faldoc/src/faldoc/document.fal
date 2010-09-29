@@ -1,0 +1,72 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: document.fal
+
+   Autodocumentation tool - Output document representation.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 28 Sep 2010 15:30:16 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .filecontext
+
+import from .docentity
+import from struct.tree
+
+import from parser.faldoc.generic
+import from parser.faldoc.falsrc
+
+class Document
+   title = nil
+   author = nil
+   version = nil
+
+   //# Tree of nodes (with a first topnode -- called main)
+   content = nil
+   
+   //# The global database of entities.
+   entityDB = docentity.EntityDB
+
+   _fdParser = parser.faldoc.falsrc.Parser()
+   _gParser = parser.faldoc.generic.Parser()
+   
+   init
+      main = docentity.Entity( "main" )
+      self.content = main
+      self.entityDB.add( main )
+   end
+
+   function addFile( file )
+      p = Path( file )
+      faldoc.info( "Processing " + p.filename + " in " + p.fulloc )
+      try
+         istream = InputStream( file )
+         // for now, suppose utf-8 encoding
+         istream.setEncoding( "utf-8" )
+         
+         if file.endsWith( ".ftd" ) or file.endsWith( ".fal" )
+             self._fdParser.trace = true
+            ctx = self._fdParser.parseStream( istream, "start" )
+         else
+            ctx = self._gParser.parseStream( istream, "start" )
+         end
+         
+         fc = FileContext( file )
+         fc.parse( ctx )
+
+      catch in e
+         faldoc.error( "While parsing " + file + ": " + e )
+      end
+
+      if istream: istream.close()
+   end
+   
+end
+
+export Document
