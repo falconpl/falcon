@@ -51,7 +51,6 @@ class Document
          istream.setEncoding( "utf-8" )
          
          if file.endsWith( ".ftd" ) or file.endsWith( ".fal" )
-             self._fdParser.trace = true
             ctx = self._fdParser.parseStream( istream, "start" )
          else
             ctx = self._gParser.parseStream( istream, "start" )

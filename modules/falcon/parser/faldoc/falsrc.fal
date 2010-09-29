@@ -208,7 +208,7 @@ class Parser from parser.genparser.Parser
       "enum" => PState(.[
             ReRule( '(w+)\s+=(.*)$', "#stay",
                {ctx, d0, cname=> ctx.pushNode( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
-            TagRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
+            TagRule( "end", "#pop", {ctx => ctx.popNode()} )
 
             // eat errors
             ReRule( '.*', "#stay" )
