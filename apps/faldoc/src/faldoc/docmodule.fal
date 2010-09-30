@@ -1,0 +1,147 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docmodule.fal
+
+   Autodocumentation tool - Module representation in a document.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 30 Sep 2010 19:07:41 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .docentity
+load .link
+
+/*# Database of all the defined entities. */
+class DocModule( name, mainmodule )
+   //# The main mocule of the document, used to cascade link requests.
+   main = mainmodule
+   
+   //# Title of the module
+   brief = nil
+
+   //# name of the module
+   name = name
+
+   //# True when this has been explicitly defined
+   defined = false
+
+   //# Content of the module introduction
+   content = nil
+
+   //# Pages in this modules
+   pages = [=>]
+
+   //# All the entities of this module
+   entities = [=>]
+
+   //# Missing entities as local ID -> link
+   missing = [=>]
+
+   //# adds an entity to the module
+   function add( entity )
+      if not entity.name or not entity.type
+         faldoc.fatal( i"Adding an unknown entity in module $self.name", entity.firstline )
+      end
+      
+      // Manage groups and sets
+      // For groups; only first-level items can be grouped
+      if "ingroup" in entity.props
+         for groupname in entity.props["ingroup"]
+            group = self.getEntity( groupname, "group", true )
+            group.addMember( entity )
+         end
+      end
+
+      if "inset" in entity.props
+         self.getEntity( entity.props["inset"], "funset", true ).addMember( entity )
+      end
+      
+      if entity.name in self.entities
+         faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
+         return
+      end      
+
+      // resolve links
+      self.onEntityAdded( entity.name, entity )
+      
+   end
+
+   //# Gets an entity from this module (possibly undefined)
+   function getEntity( name, type, create )
+      if name notin self.entities
+         if not create: return nil
+         e = Entity( nil, "<nowhere>", 0 )
+         e.type = type
+         self.add( e )
+      else
+         e = self.entities[name]
+      end
+
+      return e
+   end
+
+   //# Callback used to resolve a link.
+   function onEntityAdded( name, entity )
+      self.entities[name] = entity
+      
+      if name in self.missing
+         faldoc.verbose( @i"Resolving entity $name in module $self.name" )
+         links = self.missing[entity.name]
+         self.missing -= entity.name
+
+         for l in links
+            l.target = entity
+         end
+      end
+      
+      if self.main: self.main.onEntityAdded( self.name + "." + entity.name, entity )
+   end
+
+
+   //# Adds a single link
+   function addLink( link )
+      // Already resolved?
+      if link.destination in self.entities
+         link.target = self.data[link.destination]
+         return true
+      else
+         // -- No? is this name in the global module?
+         if self.main
+            if self.main.addLink( link )
+               // it was resolved by main
+               return true
+            end
+            // no; we added the link to the main links, but we must add it also locally
+            self.missing[ link.destination ] = link
+         end
+      end
+   end
+
+   //# Shortcut to create a link between an entity and one other entity that may still not be available
+   function link( sourceEntity, line, destination, automatic )
+      l = Link( sourceEntity, line, destination, automatic )
+      self.addLink( l )
+      return l
+   end
+
+   //# Groups the entities by type
+   function groupEntities()
+      data = [=>]
+      for e, entity in self.entities
+         if entity.type in self.grouping
+            data[entity.type].add(entity)
+         else
+            data[entity.type] = [entity]
+         end
+      end
+      return data
+   end
+end
+
+export
