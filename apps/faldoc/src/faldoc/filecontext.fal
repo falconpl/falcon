@@ -182,15 +182,6 @@ class FileContext( file, defmod )
          if entity.name
             self.addEntity( entity )
          end
-
-         // once added, the textual entity has its full context needed to resolve links.
-         // all the links
-         if "links" in entity.props
-            mod = entity.module
-            for link in entity.props["links"]
-               mod.addLink( link )
-            end
-         end
          
          return entity
       catch ParseError in e
@@ -246,10 +237,10 @@ class FileContext( file, defmod )
    //# Stores a new entity in the entity database.
    function addEntity( entity )
       // store in the corrent module
-      if entity.module == nil: entity.module = self.current_module
+      if not entity.module: entity.module = self.current_module
 
       // Still nothing?
-      if entity.module == nil: entity.module = self.defmod
+      if not entity.module: entity.module = self.defmod
       
       if self.current_group != nil and entity.parent == nil
          if "ingroup" in entity.props
@@ -269,6 +260,14 @@ class FileContext( file, defmod )
 
       // Finally, add the entity
       entity.module.add( entity )
+
+      // once added, the textual entity has its full context needed to resolve links.
+      if "links" in entity.props
+         mod = entity.module
+         for link in entity.props["links"]
+            mod.addLink( link )
+         end
+      end
    end
 
    //# Configures an entity with non-textual data.

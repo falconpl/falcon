@@ -222,8 +222,7 @@ class Parser from parser.genparser.Parser
             ReRule( '\\$', "#stay" )
             // and return immmediately without waiting an end
             ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
-            // dump errors
-            ReRule( '.*$', "function" )
+            EOLRule( "function" )
          ]
       ),
 
@@ -245,7 +244,7 @@ class Parser from parser.genparser.Parser
             TagRule( ")", "#pop", {ctx=> ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRule( '\s*\\$', "#stay" )
          ]
       ),
 

@@ -185,7 +185,8 @@ function _inlineState( limit )
 end
 
 StartRules = \
-   ParaCommands \
+   .[ EmptyLineRule( "#stay" )  ] \
+   + ParaCommands \
    + NamingCommands \
    + ScopeCommands \
    + BlockCommands \
@@ -196,8 +197,6 @@ StartRules = \
       // if a @ is not recognized here, we have a problem.
       ReRule('^\s*@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
 
-      EmptyLineRule( "#stay" )  // at start, empty lines are ignored
-      
       // Otherwise, enter the para mode
       DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
    ]

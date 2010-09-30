@@ -52,7 +52,7 @@ class Document
             ctx = self._gParser.parseStream( istream, "start" )
             module = self.mainModule
          end
-         
+
          fc = FileContext( file, module )
          faldoc.currentFile = file
          fc.parse( ctx )

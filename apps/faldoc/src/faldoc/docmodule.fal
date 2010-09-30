@@ -108,7 +108,7 @@ class DocModule( name, mainmodule )
    function addLink( link )
       // Already resolved?
       if link.destination in self.entities
-         link.target = self.data[link.destination]
+         link.target = self.entities[link.destination]
          return true
       else
          // -- No? is this name in the global module?
@@ -118,7 +118,11 @@ class DocModule( name, mainmodule )
                return true
             end
             // no; we added the link to the main links, but we must add it also locally
-            self.missing[ link.destination ] = link
+            if link.destination in self.missing
+               self.missing[ link.destination ] += link
+            else
+               self.missing[ link.destination ] = [link]
+            end
          end
       end
    end
