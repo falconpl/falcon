@@ -24,6 +24,7 @@ import Context from parser.genparser as Context
 import ReRule from parser.genparser.rules as ReRule
 import ReRuleLA from parser.genparser.rules as ReRuleLA
 import TagRule from parser.genparser.rules as TagRule
+import TokenRuleLA from parser.genparser.rules as TokenRuleLA
 import EmptyLineRule from parser.genparser.rules as EmptyLineRule
 import DummyRule from parser.genparser.rules as DummyRule
 import CharRule from parser.genparser.rules as CharRule
@@ -45,7 +46,7 @@ ParaCommands =  .[
            {ctx => ctx.pushNode(InfoNode("@main", ['line' => ctx.row ] )) })
            
    ReRule( '^\s*@raise\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'what'=> p0 ] )) })
            
    ReRule( '^\s*@param\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@param", ['line' => ctx.row, 'name'=> p0 ] )) })
@@ -54,7 +55,7 @@ ParaCommands =  .[
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@optparam", ['line' => ctx.row, 'name'=> p0 ] )) })
 
    ReRule( '^\s*@from\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@from", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@from", ['line' => ctx.row, 'what'=> p0 ] )) })
 
    ReRule( '^\s*@group\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@group", ['line' => ctx.row, 'name'=> p0 ] )) })
@@ -62,29 +63,20 @@ ParaCommands =  .[
    ReRule( '^\s*@funset\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@funcset", ['line' => ctx.row, 'name'=> p0 ] )) })
            
-   ReRule( '^\s*@page\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0] )) })
+   ReRule( '^\s*@page\s+(\w+)\s+(.*)$', "para",
+           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] )) })
 
    ReRule( '^\s*@prop\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })
 
    ReRule( '^\s*@module\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0] )) })
-
-   ReRule( '^\s*@section\s+(\w+)', "para",
-            // add with standout, so that we can handle them without scanning the whole tree.
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0], true )) })
-
-   ReRule( '^\s*@subsection\s+(\w+)', "para",
-            // add with standout, so that we can handle them without scanning the whole tree.
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0], true )) })
-
+           {ctx, d0, p0 => ctx.pushNode(InfoNode("@module", ['line' => ctx.row, 'name'=> p0] )) })
 ]
 
 
 NamingCommands = .[
    ReRule( '^\s*@see\s+(\w+).*$', "#stay",
-           {ctx, d0, p0 => ctx.add(InfoNode("@see", ['line' => ctx.row, 'name'=> p0 ] )) })
+           {ctx, d0, p0 => ctx.add(InfoNode("@see", ['line' => ctx.row, 'what'=> p0 ] )) })
            
    ReRule( '^\s*@class\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@class", ['line' => ctx.row, 'name'=> p0] )) })
@@ -137,7 +129,7 @@ ScopeCommands = .[
 InlineCommands = .[
    ReRule( '(^|\s)@a\s+("([^"]*)"|(\w+))', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
-         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'p0'=> p0 ? p0:p0b], true )) })
+         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
    ReRule( '(^|\s)@b\s+("([^"]*)"|(\w+))', "#stay",
          {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
    ReRule( '(^|\s)@i\s+("([^"]*)"|(\w+))', "#stay",
@@ -192,29 +184,53 @@ function _inlineState( limit )
       )
 end
 
+StartRules = \
+   ParaCommands \
+   + NamingCommands \
+   + ScopeCommands \
+   + BlockCommands \
+   + .[
+      // serve also inline commands, but generate a para node for them.
+      ProxyRule( InlineCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
+
+      // if a @ is not recognized here, we have a problem.
+      ReRule('^\s*@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
+
+      EmptyLineRule( "#stay" )  // at start, empty lines are ignored
+      
+      // Otherwise, enter the para mode
+      DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
+   ]
+         
 class Parser from parser.genparser.Parser
    states = [
       "start"=> PState(.[
-            EmptyLineRule( "#stay" )  // at start, empty lines are ignored
+            ReRule( '^\s*@section\s+(\w+)\s+(.*)$', "section",
+               {ctx, d0, p0, p1 =>
+                  ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0, 'title'=>p1] )) })
+            // ignore subsection here, making it an error
          ]
-         + ParaCommands
-         + NamingCommands
-         + ScopeCommands
-         + BlockCommands
-         + .[
-            // serve also inline commands, but generate a para node for them.
-            ProxyRule( InlineCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
+         + StartRules
+      ),
 
-            // if a @ is not recognized here, we have a problem.
-            ReRule('^\s*@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
-
-            // Otherwise, enter the para mode
-            DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
+      "section" =>PState(.[           
+            TokenRuleLA( "@section", "#pop", {ctx => ctx.popNode() } )
+            ReRule( '^\s*@subsection\s+(\w+)\s+(.*)$', "section",
+               {ctx, d0, p0, p1 =>
+                  ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0, 'title'=>p1] )) })
          ]
+         + StartRules
+      ),
+
+      "subsection" =>PState(.[
+            TokenRuleLA( "@section", "#pop", {ctx => ctx.popNode() } )
+            TokenRuleLA( "@subsection", "#pop", {ctx => ctx.popNode() } )
+         ]
+         + StartRules
       ),
 
       "para" =>PState(.[
-            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})            
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})         
          ]
          + InlineCommands
          + TableStart

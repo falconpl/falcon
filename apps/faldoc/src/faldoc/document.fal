@@ -15,9 +15,8 @@
 */
 
 load .filecontext
-
-import from .docentity
-import from struct.tree
+load .docmodule
+load .link
 
 import from parser.faldoc.generic
 import from parser.faldoc.falsrc
@@ -27,20 +26,14 @@ class Document
    author = nil
    version = nil
 
-   //# Tree of nodes (with a first topnode -- called main)
-   content = nil
+   //# main module -- main is a reserved name, can't possibly used by modules.
+   mainModule = DocModule("main")
    
-   //# The global database of entities.
-   entityDB = docentity.EntityDB
+   // other modules in this document.
+   modules = [=>]
 
    _fdParser = parser.faldoc.falsrc.Parser()
    _gParser = parser.faldoc.generic.Parser()
-   
-   init
-      main = docentity.Entity( "main" )
-      self.content = main
-      self.entityDB.add( main )
-   end
 
    function addFile( file )
       p = Path( file )
@@ -52,11 +45,16 @@ class Document
          
          if file.endsWith( ".ftd" ) or file.endsWith( ".fal" )
             ctx = self._fdParser.parseStream( istream, "start" )
+            modname = faldoc.calcModName( file )
+            module = self.getModule( modname )
+            faldoc.verbose( @i"File $file has module name $modname" )
          else
             ctx = self._gParser.parseStream( istream, "start" )
+            module = self.mainModule
          end
          
-         fc = FileContext( file )
+         fc = FileContext( file, module )
+         faldoc.currentFile = file
          fc.parse( ctx )
 
       catch in e
@@ -64,6 +62,17 @@ class Document
       end
 
       if istream: istream.close()
+   end
+
+
+   function getModule( name )
+      if name in self.modules
+         return self.modules[name]
+      else
+         mod = DocModule( name, self.mainModule )
+         self.modules[name] = mod
+         return mod
+      end
    end
    
 end

@@ -255,74 +255,85 @@ class Parser()
       linelen = line.len()
       col = 0
       
+      hadWinner = false
+      if self.trace: self.traceText( line )
+      atEnd = false
+
       loop
-         hadWinner = false
-         if self.trace: self.traceText( line )
-         
-         loop
-            matchAt = line.len()
-            winner = nil
+         matchAt = line.len()
+         winner = nil
 
-            state = self._stack[-1]
-            sr = state.rules
-            
-            ruleId = 0
-            srlen = sr.len()
-            while ruleId < srlen
-               rule =  sr[ruleId++]
-               rulePos = rule.match( line, col )
-               if rulePos == 0
-                  // we found the rule
-                  winner = rule
-                  hadWinner = true
-                  matchAt = 0
-                  break
-               elif rulePos > 0
-                  if rulePos < matchAt
-                     winner = rule
-                     matchAt = rulePos
-                  end
-               end
-            end
+         state = self._stack[-1]
+         sr = state.rules
 
-            //we found it -- do we have a prefix?
-            if col < matchAt
-               // else, the rule doesn't match
-               prefix = line[col:matchAt]
-
-               if (not state.onUnmatched)
-                  raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)] $prefix" )
-               end
-               state.onUnmatched( ctx, prefix )
-            end
-
-            if winner
-               count = winner.apply( ctx )
-               if self.trace: self.traceRule( winner, ctx )
-               self._fulfil( winner.nextState )
-            else
-               // empty line and no matching rule, so it seems.
+         ruleId = 0
+         srlen = sr.len()
+         while ruleId < srlen
+            rule =  sr[ruleId++]
+            rulePos = rule.match( line, col )
+            if rulePos == 0
+               // we found the rule
+               winner = rule
+               hadWinner = true
+               matchAt = 0
                break
-            end
-
-            col = matchAt + count
-         end col >= linelen
-
-         if state.eolRule and (not winner or winner.nextState == "#stay")
-            // is this a conditional rule?
-            if state.eolRule[0] == "*"
-               if not hadWinner
-                  if self.trace: self.traceMsg("Following optional eolRule")
-                  self._fulfil( state.eolRule[1:] )
+            elif rulePos > 0
+               if rulePos < matchAt
+                  winner = rule
+                  matchAt = rulePos
+               elif rulePos == matchAt and not winner
+                  // match at end
+                  winner = rule
+                  break
                end
-            else
-               if self.trace: self.traceMsg("Following mandatory eolRule")
-               self._fulfil( state.eolRule )
             end
          end
 
-      // Repeat if it was a dummy
-      end not winner.derivedFrom( rules.DummyRule )
+         //we found it -- do we have a prefix?
+         if col < matchAt
+            // else, the rule doesn't match
+            prefix = line[col:matchAt]
+
+            if (not state.onUnmatched)
+               raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)] $prefix" )
+            end
+            state.onUnmatched( ctx, prefix )
+         end
+
+         if winner
+            count = winner.apply( ctx )
+            if self.trace: self.traceRule( winner, ctx )
+            self._fulfil( winner.nextState )
+            // ensure that end of lines with look-ahead are respected
+            if winner.lookAhead: atEnd = false
+         else
+            // empty line and no matching rule, so it seems.
+            break
+         end
+
+         col = matchAt + count
+
+         // are we done?
+         if col >= linelen
+            // offer an extra loop for rules matching at end of line
+            if atEnd: break
+            atEnd = true
+         end
+      end
+
+      if state.eolRule and (not winner or winner.nextState == "#stay")
+         // is this a conditional rule?
+         if state.eolRule[0] == "*"
+            if not hadWinner
+               if self.trace: self.traceMsg("Following optional eolRule")
+               self._fulfil( state.eolRule[1:] )
+            end
+         else
+            if self.trace: self.traceMsg("Following mandatory eolRule")
+            self._fulfil( state.eolRule )
+         end
+      end
+
       ++self.row
       ctx.row = self.row
    end

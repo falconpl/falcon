@@ -15,61 +15,152 @@
    See LICENSE file for licensing details.
 */
 
-import from parser.faldoc.txt
 import from .docentity
 
 /*#
    Documentation data relative to a single input file.
-
-*/
-class FileContext( file )
+   @param File the file to be parsed
+   @param defmod The default module where entities should go if not specified.
+*/ 
+class FileContext( file, defmod )
    file = file
    ctx = nil
 
-   //# Identifier of the current file -- used to prefix entities in this file.
-   fileID = ""
-
-   //# Entities of this file.
-   entities = [=>]
+   defmod = defmod
 
    //# Parser used by this file
-   parser = parser.faldoc.txt.Parser()
+   parser = faldoc.txtParser
 
    //# Parent entity, used when parsing sub-contexts
    parent = nil
 
+   //# Active begin/end blocks
+   current_set = nil
+
+   current_group = nil
+
+   current_module = nil
+   
    //# Parsing a context into entities.
    function parse( ctx )
       self.ctx = ctx
-      node = ctx.topNode.firstChild
-      entity = nil
-      
-      while node != nil
-         > "Node at line ", node.infos["line"]
-         if node.type == "faldoc_txt"
-            // parse the content of this text entity
-            cnt = node.content
-            line = node.infos["line"]
-            entity = self.parseText( cnt, line )
-         else
-            // have we a textual entity we want to post-process?
-            if entity
-               self.apply( node, entity )
-               // the text entity is discharged
-               entity = nil
-            else
-               // create a new entity of the specified type.
-               self.createEntity( node )
-            end
-         end
-         
-         node = node.next
-      end
+      self.parseNode( ctx.topNode )
 
       // finally, when we know who we are, store our entities in the global db.
       self.storeEntities()
    end
 
+
+   function parseNode( parent, parentEntity )
+      node = parent.firstChild
+      entity = nil
+      
+      while node != nil
+         // normally, don't destroy currently examined entity
+         clear = false
+         
+         switch node.type
+         
+            case "faldoc_txt"
+               // see if we have a previous pending entity
+               self.checkEntity( entity )
+
+               cnt = node.content
+               line = node.infos["line"]
+               // parse the content of this text entity
+               // -- may be nil if the entity is just containing document commands.
+               entity = self.parseText( cnt, line )
+
+            case "inherit"
+               self.parseInherit( parentEntity, node.firstChild )
+               return
+               
+            case "params"
+               self.parseParams( parentEntity, node.firstChild )
+               return
+         
+            default
+               // have we a textual entity we want to post-process?
+               if entity
+                  self.apply( node, entity, parentEntity )
+                  // the text entity is discharged -- after checking for children
+                  clear = true
+               else
+                  // create a new entity of the specified type.
+                  entity = self.createEntity( node, parentEntity )
+                  // the entity created automatically from falcon source is discharged
+                  // -- after checking for children
+                  clear = true
+               end
+         end
+
+         // see if we have children, and pass our entity to it.
+         if node.firstChild: self.parseNode( node, entity )
+         // fullfil the promise to clear the entity.
+         if clear: entity = nil
+         
+         node = node.next
+      end
+
+      // check if we have a last entity pending
+      self.checkEntity( entity )
+   end
+
+
+   function parseInherit( entity, node )
+      // only class and objects can have inheritance
+      if entity.type != "class" and entity.type != "object"
+         faldoc.error( @i"Inconsistent inheritance found for entity $entity.name($entity.firstline) at line " + node.infos["line"] )
+         return
+      end
+
+      inherit = []
+      while node != nil
+         if node.type != "from"
+            faldoc.error( @i"Invalid inheritance element in $entity.name($entity.firstline) at line " + node.infos["line"] )
+            return
+         end
+         
+         //TODO: Use a link here.
+         // the called class is in infos/class, while the call prototype is in the content.
+         inherit.add( [ node.infos["class"], node.content ] )
+         node = node.next
+      end 
+
+      entity.props["from"] = inherit
+   end
+
+   
+
+   function parseParams( entity, node )
+      // only functions, methods and classes and objects can have parameters
+      if entity.type != "class" and entity.type != "function" and entity.type != "method"
+         faldoc.error( @i"Inconsistent inheritance found for entity $entity.name($entity.firstline) at line " + node.infos["line"] )
+         return
+      end
+
+      while node != nil
+         if node.type != "param" and node.type
+            faldoc.error( @i"Invalid parameter element in $entity.name($entity.firstline) at line " + node.infos["line"] )
+            return
+         end
+
+         line = node.infos["line"]
+         name = node.infos["name"]
+         entity.addFoundParam( name, node.content, line )
+         node = node.next
+      end
+   end
+
+   function checkEntity( entity )
+      if entity
+         if entity.name
+            self.addEntity( entity )
+         else
+            faldoc.error( @ i"Undefined entity in $self.file at " + entity.firstline )
+         end
+      end
+   end
 
    /*# Parse a textual entity.
       @param cnt The text of the entry
@@ -81,44 +172,147 @@ class FileContext( file )
          ectx = p.parse( cnt )
          entity = docentity.Entity( cnt, self.file, line)
          entity.pcontent = ectx
-         entity.parseContent()
-
+         if not entity.parseContent( self.onGroupingChange )
+            // if the entity is just a set of document-wide commands, return.
+            return nil
+         end
+            
          // is the entity complete enough?
          // a textual entity can declare its name only if it already has a type.
          if entity.name
             self.addEntity( entity )
          end
 
+         // once added, the textual entity has its full context needed to resolve links.
+         // all the links
+         if "links" in entity.props
+            mod = entity.module
+            for link in entity.props["links"]
+               mod.addLink( link )
+            end
+         end
+         
          return entity
       catch ParseError in e
-         faldoc.error( @i"while parsing entity at line $(line) in $(file):\n$e" )
+         faldoc.error( @i"While parsing entity at line $(line) in $(file):\n$e" )
          return nil
       end
    end
 
+
+   function onGroupingChange( line, cmd, name )
+      switch cmd
+         case "@begingroup"
+            if self.current_group != nil
+               faldoc.warn( @i"Beginning new group $name while group $self.current_group is not closed", line)
+            end
+            self.current_group = name
+
+         case "@beginset"
+            if self.current_set != nil
+               faldoc.warn( @i"Beginning new set $name while group $self.current_set is not closed", line)
+            end
+            self.current_set = name
+
+         case "@beginmodule"
+            if self.current_module != nil
+               faldoc.warn( i"Beginning new module $name while group $self.current_set is not closed", line)
+            end
+            self.current_module = faldoc.document.getModule( name )
+
+         case "@endgroup"
+            if self.current_group == nil
+               faldoc.warn( i"Parsing @endgroup, but no group open", line)
+            end
+            self.current_group = nil
+
+         case "@endset"
+            if self.current_set == nil
+               faldoc.warn( i"Parsing @endset at but no set open", line)
+            end
+            self.current_group = nil
+
+         case "@endmodule"
+            if self.modName != nil
+               faldoc.error( i"@endmodule command invalid in source modules", line)
+            elif self.current_module == nil
+               faldoc.warn( i"Parsing @endmodule at, but no group open", line)
+            end
+            self.current_group = nil
+      end
+
+   end
+   
    //# Stores a new entity in the entity database.
    function addEntity( entity )
-      > "Adding entity ", entity.type
+      // store in the corrent module
+      if entity.module == nil: entity.module = self.current_module
+
+      // Still nothing?
+      if entity.module == nil: entity.module = self.defmod
+      
+      if self.current_group != nil and entity.parent == nil
+         if "ingroup" in entity.props
+            groups = entity.props["ingroup"]
+            if self.current_group notin groups
+               groups.add( self.current_group )
+            end
+         else
+            entity.props["ingroup"] = [self.current_group]
+         end
+      end
+
+      // about sets, only functions can be infunction sets
+      if self.current_set != nil and entity.type == "function" and "inset" notin entity.props
+         entity.props["inset"] = self.current_set
+      end
+
+      // Finally, add the entity
+      entity.module.add( entity )
    end
 
    //# Configures an entity with non-textual data.
-   function apply( node, entity )
+   function apply( node, entity, parentEntity )
+      l1 = node.infos["line"]
+   
+      if entity.name
+         l2 = entity.firstline
+         faldoc.warn( @i"Entity defined at $l2 redefined here", l1 )
+         self.entities -= entity.name
+      end
+
+      // if we have a parent, variables and functions must be added below them.
+      if parentEntity and (node.type == "function" or node.type == "variable" )
+         // this is valid also for enums
+         entity.type = node.type == "function" ? "method" : "property"
+         entity.name = parentEntity.name + "." + node.infos["name"]
+      else
+         entity.type = node.type
+         entity.name = node.infos["name"]
+      end
+
+      entity.dline = l1
+      
+      self.addEntity( entity )
    end
 
    //# Creates an entity out of a non-text definition
-   function createEntity( node )
-      switch node.type
-         case "class"
-            > "Found a class"
-         case "function"
-            > "Found a function"
-         case "object"
-            > "Found an object"
-         case "variable"
-            > "Found a variable"
-         case "enum"
-            > "found an enum"
+   function createEntity( node, parentEntity )
+      entity = docentity.Entity( nil, self.file, node.infos["line"] )
+      
+      // if we have a parent, variables and functions must be added below them.
+      if parentEntity and (node.type == "function" or node.type == "variable" )
+         // this is valid also for enums
+         entity.type = node.type == "function" ? "method" : "property"
+         entity.name = parentEntity.name + "." + node.infos["name"]
+      else
+         entity.type = node.type
+         entity.name = node.infos["name"]
       end
+
+      entity.dline = entity.firstline
+      self.addEntity( entity )
+      return entity
    end
    
 
@@ -126,5 +320,6 @@ class FileContext( file )
    function storeEntities()
    end
 end
+
 
 export FileContext

@@ -832,6 +832,7 @@ class EscapingData( name, attr ) from \
       stream.writeText( sep + "<" + self.hname )
       sattr = self.eattr.toString()
       if sattr: stream.writeText( sattr )
+      
       if not self.text
          // empty element -- closing mark is required by many browsers
          stream.writeText( "></"+ self.hname + ">\n" )

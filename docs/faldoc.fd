@@ -4,6 +4,8 @@
 # Faldoc file for core module.
 #
 
+loglevel = 4
+
 ################################################
 # Documentation generic data
 ################################################
@@ -18,6 +20,10 @@ Version = 0.9.6.6
 
 #Input.directory=../engine/core_module
 Input.directory=../modules/falcon
+
+#By default, input directories are also roots for module names, but...
+# Input.moduleRoot = ../modules/falcon
+# Input.moduleRoot = ../... ....
 
 Input.wildcard=*.cpp     #we use only...
 Input.wildcard=*.fal

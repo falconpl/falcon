@@ -7,7 +7,7 @@ import from socket
 const pServer = "localhost"
 const pHelo = "siteclient"
 
-//# @module Single Line comment test
+//# @module modname Single Line comment test
 //# This shall go on the same single comment line.
 //# and this too.
 
@@ -16,6 +16,7 @@ const pHelo = "siteclient"
  *  
  *  @param pFrom Sender of the mail
  *  @param pAddress Where to send the mail
+ *  @param pSubject the subject of the mail to be sent
  *  @param pBody Body of the mail
  ******************************************/
 

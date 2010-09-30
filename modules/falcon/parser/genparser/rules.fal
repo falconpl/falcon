@@ -21,6 +21,7 @@ class Rule( nextState, action )
    nextState = nextState
    action = action
    matchLen = 0
+   lookAhead = false
    
    function match( text, pos )
       return -1
@@ -45,7 +46,7 @@ end
 */
 class TokenRule( token, nextState, action ) from Rule( nextState, action )
    token = token
-   separators = " \r\n\t,.!?;:*+-/|^'\"\\#<>"
+   separators = " \r\n\t,.!?;:*+-/|^'\"\\#<>()[]"
    
    function match( text, pos )
       t = self.token
@@ -61,7 +62,7 @@ class TokenRule( token, nextState, action ) from Rule( nextState, action )
 
    function apply( ctx )
       if self.action: self.action( ctx, self.token )
-      self.matchLen = self.token.len()
+      self.matchLen = self.lookAhead ? 0 : self.token.len()
       return self.matchLen
    end
 
@@ -69,6 +70,14 @@ class TokenRule( token, nextState, action ) from Rule( nextState, action )
       return item in self.separators
    end
 
+end
+
+
+/*#
+   Class representing a language token, with look ahead.
+*/
+class TokenRuleLA( token, nextState, action ) from TokenRule( token, nextState, action )
+   lookAhead = true   
 end
 
 /*#
@@ -181,7 +190,8 @@ end
    discarding the matched characters.
 */
 class ReRuleLA( re, nextState, action ) from ReRule( re, nextState, action )
-
+   lookAhead = true
+   
    function apply( context )
       g = self.grabs
       if self.action: (.[ self.action context ] + g)()
@@ -230,6 +240,20 @@ class DummyRule( nextState, action ) from Rule( nextState, action )
    function match( text, pos )
       return pos
    end
+end
+
+/*# Rule matching the end of line */
+class EOLRule( nextState, action ) from Rule( nextState, action )
+   function match( text, pos )
+      return text.len()
+   end
+end
+
+/*# Rule matching the end of line, with look ahead.
+   This prevents exiting from the loop checking this line when EOLRuleLA is matched
+*/
+class EOLRuleLA( nextState, action ) from EOLRule( nextState, action )
+   lookAhead = true
 end
 
 /*#

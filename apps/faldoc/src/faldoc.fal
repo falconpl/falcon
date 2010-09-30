@@ -20,6 +20,8 @@ load self.version
 load self.config
 load self.document
 
+import from parser.faldoc.txt
+
 resources: "resources/*"
 
 
@@ -33,11 +35,17 @@ class Application
    fdfile = nil
    errorCount = 0
    warnCount = 0
-   
-   quietLevel = 100
+
    config = nil
 
    document = nil
+
+   //# file currently parsed
+   currentFile = ""
+
+   //# Txt parser used by many users.
+   txtParser = parser.faldoc.txt.Parser()
+
 
    //# Application process
    function go()
@@ -84,8 +92,9 @@ class Application
       
       for dir in cfg.inputDirs
          // open the directory
+         drel = self.relativize( basedir, dir )
          try
-            hdir = Directory( basedir + "/" + dir ).descend( {=>}, {fname =>
+            hdir = Directory( drel ).descend( {=>}, {fname =>
                for wildcard in cfg.inputWild
                   if strWildcardMatch( fname, wildcard )
                      doc.addFile( fname )
@@ -119,32 +128,39 @@ class Application
    //=================================================================
 
    //# function to generate a fatal error
-   function fatal( error )
-      self.display( 0, "faldoc: FATAL - " + error )
+   function fatal( error, line )      
+      self.display( 0, "FATAL - " + error, line )
       exit(0)
    end
 
    //# function to generate an error
-   function error( e )
-      self.display( 1, "faldoc: ERROR - " + e )
+   function error( e, line )
+      self.display( 1, "ERROR - " + e, line )
       self.errorCount++
    end
 
    //# function to generate a warning
-   function warn( e )
-      self.display( 2, "faldoc: WARN - " + e )
+   function warn( e, line )
+      self.display( 2, "WARN - " + e, line )
       self.warnCount++
    end
 
    //# function to send an info
-   function info( i )
-      self.display( 3, "faldoc: " + i )
+   function info( i, line )
+      self.display( 3, i, line )
+   end
+
+   //# function to send an info
+   function verbose( i, line )
+      self.display( 4, i, line )
    end
 
    //# funciton to display an information message
-   function display( level, msg )
-      if level < self.quietLevel
-         > msg
+   function display( level, msg, line )
+      fmarker = line ? self.currentFile + ":" + line : self.currentFile
+
+      if level <= self.config.loglevel
+         > "faldoc: ", fmarker, " ", msg
       end
    end
 
@@ -152,19 +168,58 @@ class Application
       if self.warnCount or self.errorCount
          self.info( "="*60 )
 
-         self.info( "Detected " + self.errorCount + "warnings." )
+         self.info( i"Detected " + self.warnCount + " warnings." )
          
          if self.errorCount
-            self.info( "Terminating with " + self.errorCount + "errors." )
+            self.info( i"Terminating with " + self.errorCount + " errors." )
             return 1
          else
-            self.info( "Done." )
+            self.info( i"== Done ==" )
          end
       else
-         self.info( "\nDone." )
+         self.info( i"== Done ==" )
          return 0
       end
    end
+
+   //# Eventually relativize a filename or directory name to basedir
+   function relativize( basedir, dir )
+      dpath = Path( dir )
+      if dpath.fulloc.startsWith("/")
+         return dir
+      else
+         return basedir + "/" + dir
+      end
+   end
+
+   /*# Determine module name based on base directory and root module directories.
+      @param file A full filename of a module, already relativized to basedir.
+   */
+   function calcModName( file )
+      cfg = self.config
+      basedir = cfg.basedir
+
+      // find a base directory that may be the root of our module
+      rootDir = self.findRootDir( basedir, cfg.moduleRoots, file ) 
+      // no luck? try with input dirs
+      if not rootDir: rootDir = self.findRootDir( basedir, cfg.inputDirs, file )
+
+      if rootDir: file = file[rootDir.len()+1:]
+      if file.endsWith( ".fal" ) or file.endsWith( ".ftd" )
+         file = file[0:-4]
+      end
+      return file.replace("/",".")
+   end
+
+   function findRootDir( basedir, roots, file )
+      for dir in roots
+         dr = self.relativize( basedir, dir )
+         if file.startsWith( dr )
+            return dr
+         end
+      end
+   end
+   
 end
 
 
@@ -176,64 +231,6 @@ faldoc = Application()
 faldoc.go()
 return faldoc.result()
 
-/*
-// Fine, we can create a basic doctree
-docdata = DocData()
-// Functions raise strings to cause fatal errors.
-try
-   // process configuration for basic parameters
-   processConf( docdata, conf )
-   // process the input files
-   processInput( docdata, conf, basedir )
-   docdata.entities = EntityDB
-   // process the output files
-   processOutput( docdata, conf )
-catch StringType in error
-   > i"faldoc: FATAL ERROR - ", error
-   exit(1)
-catch in error
-   > i"faldoc: FATAL ERROR - Rised an exception:"
-   > error
-   exit(1)
-end
-
-> "faldoc: done."
-return 0
-*/
-
-
-//================================================
-// Process Input
-//================================================
-/*
-function processInput( doctree, conf, basedir )
-   
-   for dir in inputDirs
-      // open the directory
-      try
-         hdir = Directory( basedir + "/" + dir ).descend( {=>}, {fname =>
-            for wildcard in inputWild
-               if strWildcardMatch( fname, wildcard )
-                  
-                  fileParse( fname )
-               end
-            end
-            })
-      catch IoError in err
-         raise "can't read directory \""+basedir + "/"+dir+"\" in input dirs."
-      end
-   end
-
-   // parse extra files
-   extraFiles = conf.getMultiple( "Input.extra" )
-   for extra in extraFiles
-      fileParse( basedir + "/" + extra )
-   end
-
-   // and order data
-   // EntityDB.complete()
-end
-*/
 
 //================================================
 // Process Output

@@ -28,6 +28,9 @@ class Config
    //# Input directory -- defaults to "."
    inputDirs = nil
 
+   //# Module topmost directories
+   moduleRoots = nil
+
    // Input file wildcard; defaults to "*.fal"
    inputWild = nil
 
@@ -39,6 +42,9 @@ class Config
 
    //# List of output modules to be used to generate output
    outMods = nil
+
+   //# Log level
+   loglevel = nil
 
 
    //# Reads the configuration file.
@@ -106,11 +112,19 @@ class Config
 
       // get the properties.
       self.properties = conf.getCategory( "Property.*" )
+
+      try
+         self.loglevel = int(firstOf( conf.getOne( "loglevel" ), 3 ))  // default info
+      catch
+         faldoc.fatal( i"Loglevel key must be an integer" )
+      end
    end
 
    function getInputSettings( conf )
       // Input directory -- defaults to "."
       self.inputDirs = firstOf(conf.getMultiple( "Input.directory" ), ["."])
+      self.moduleRoots = firstOf(conf.getMultiple( "Input.moduleRoot" ), [])
+      
       // Input file wildcard; defaults to "*.fal"
       self.inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
       // input recursive -- defaults to true

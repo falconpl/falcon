@@ -25,14 +25,14 @@ function traverse( node, level )
       > node.infos.describe()
    end
 
-   if node.content == nil or node.content.typeId() == StringType
+   if node.content
       > node.content
-   else
-      n = node.content
-      while n
-         traverse( n, level + 1 )
-         n = n.next
-      end
+   end
+   
+   n = node.firstChild
+   while n
+      traverse( n, level + 1 )
+      n = n.next
    end
 end
 

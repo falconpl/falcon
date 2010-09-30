@@ -43,7 +43,7 @@ import from struct.tree
    Parameters entry (under props
 */
 
-class Entity( content, file, line ) from struct.tree.Node( content )
+class Entity( content, file, line )
 
    //# Type of the entity
    type = nil
@@ -57,44 +57,21 @@ class Entity( content, file, line ) from struct.tree.Node( content )
    /*# Line at which the entity is defined at language level (if any). */
    dline = nil
 
-   /*# Is this entity created out of a real language construct?. */
-   hard = false
-
    props = bless([=>])
 
    //# Module of this entity, if any
    module = nil
-
-   //# function set of this entity, if any
-   funset = nil
-   
-   //# Groups of this entity (an array), if any
-   groups = nil
 
    /*# Parsed content.
       Documentation of the entity parsed as an infonode.
    */
    pcontent = nil
 
+   //# Textual (unparsed) content. For debugging and reference
+   content = content
+
    //# Non-child members (for entities with grouping abilities)
    members = nil
-
-   //# Defines the entity and stores it in the database.
-   function define( type, name, line )
-      if (self.type != nil or self.name != nil)
-         // we don't care about re-definitions
-         if self.type != type or self.name != name
-            broadcast( "error", @i"Entity \"$name\"/$type doesn't match previous definition at line $line" )
-         end
-         return
-      end
-            
-      self.type = type
-      self.name = name
-      self.dline = line
-
-      EntityDB.add( self )
-   end
 
    //# Calculates the unique ID of this node.
    function getID()
@@ -104,85 +81,143 @@ class Entity( content, file, line ) from struct.tree.Node( content )
 
       return self.name
    end
-   
-
-   function addMember( member )
-      if self.members == nil
-         self.members = [member]
-      else
-         self.members += member
-      end
-   end
 
    /*# Processess the commands in the parsed content block.
-
+      @param onGroupingChange callback receiving line, command and name in case of grouping commands.
+      @return false if this entity is actually a set of document-wide command and should not be considered
+              a real document entity.
+              
       @note Interesting commands are at top level. Everything else (inline commands)
       is expanded by the generic parser into DOM entities or is made to "stand out".
    */
-   function parseContent()
-      node = self.pcontent.topNode.content
+   function parseContent( onGroupingChange )
+      return self.parseNodeContent( self.pcontent.topNode.firstChild, onGroupingChange )
+   end
+
+   function parseNodeContent( node, onGroupingChange )
+
+      // go deep before proceeding
+      if node.firstChild
+         // ignore the result of the analisys of the first-level children.
+         self.parseNodeContent( node.firstChild, onGroupingChange )
+      end
+      
       while node != nil
+         isASimpleCommand = false
+         line = node provides infos ? node.infos["line"] + self.firstline - 1 : self.firstline
+   
          switch node.type
+            case "@a"
+               node.infos["link"] = self.addLink( node.infos["dest"], line, true )
+               node = node.next
+               
+            case "@raise", "@from", "@see"
+               l = self.addLink( node.infos["what"], line, node.type == "@see" )
+               // we trick the system a bit and send a link instead of a name here.
+               // however, it's ok and wors as expected
+               self.addParam( node.type[1:], l, node.content, line )
+               node = node.remove()
+               
             case "@brief", "@return"
                self.props[ node.type[1:] ] = node.content
                node = node.remove()
 
-            case "@param", "@optparam", "@raise"
-               self.addParam( node.type[1:], node.infos["name"], node.content, node.infos["line"] )
-               node = node.remove()
-
-            case "@see"
-               link = EntityDB.link( self, node.infos["line"], node.infos["name"], true )
-               self.addParam( "see", node.infos["name"], link )
+            case "@param", "@optparam"
+               self.addParam( node.type[1:], node.infos["name"], node.content, line )
                node = node.remove()
 
             case "@inset"
-               if self.funset
-                  faldoc.error( "Function set already declared for entity \"$name\" at line $node.infos['line']")
+               if "inset" in self.props
+                  faldoc.error( "Function set already declared for entity \"$name\"", line )
                else
-                  self.funset = self.groupIn( node.infos["name"], node.infos["line"] )
+                  self.props["inset"] = node.infos["name"] 
                end
                node = node.remove()
             
             case "@inmodule"
                if self.module
-                  faldoc.error( "Function set already declared for entity \"$name\" at line $node.infos['line']")
+                  faldoc.error( "Module already declared for entity \"$name\"", line)
                else
-                  self.module = self.groupIn( node.infos["name"], node.infos["line"] )
+                  self.module = faldoc.document.getModule( node.infos["name"] )
                end
                node = node.remove()
 
             case "@ingroup"
-               if self.groups
-                  self.groups.add( self.groupIn( node.infos["name"], node.infos["line"] ) )
+               gname = node.infos["group"]
+               if "ingroup" in self.props
+                  groups = self.props["ingroup"]
+                  if gname in groups
+                     faldoc.error( "Group \$gname already declared for entity \"$name\"", line)
+                  else
+                     groups.add( gname )
+                  end
                else
-                  self.groups = [self.groupIn( node.infos["name"], node.infos["line"] )]
+                  self.groups = [gname]
                end
                node = node.remove()
-            
+
+            case "@begingroup", "@beginset", "@beginmodule"
+               onGroupingChange( line, node.type, node.infos["name"] )
+               isASimpleCommand = true
+               node = node.remove()
+
+            case "@endgroup", "@endnset", "@endmodule"
+               onGroupingChange( line, node.type, nil )
+               isASimpleCommand = true
+               node = node.remove()
+               
+            // we have the type defined!
+            case "@class", "@function", "@object", "@enum", "@global"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               node = node.remove()
+
+            case "@method", "@property"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               self.cls = node.infos["class"]
+               node = node.remove()
+
+            case "@page"
+               self.name = node.infos["name"]
+               self.type = "page"
+               self.props[ "title" ] = node.infos["title"]
+               node = node.remove()
+               
+            case "@main"
+               self.name = "main"
+               self.type = "main"
+               node = node.remove()
+
             default
                node = node.next
          end
       end
+      
+      return not isASimpleCommand
    end
 
-   //# Put this object in a group
-   function groupIn( name, line )
-      link = EntityDB.link( self, line, name, true )
-      // already resolved?
-      if link.target: link.target.addMember( self )
-      return link
+
+   function addLink( dest, line, explicit )
+      l = Link( self, line, dest, explicit )
+      if "links" in self.props
+         self.props["links"].add( l )
+      else
+         self.props["links"] = [l]
+      end
+      return l
    end
+      
 
    //# Adds a parameter or similar multiple entry in properties.
    function addParam( type, name, content, line )
 
       // First, a special control for parameters and optional parameters which relate to each other
       if type == "param" and "optparam" in self.props and arrayScan( self.props["optparam"], {elem => elem[0] == name} ) >= 0
-         faldoc.error( @i"Parameter \"$name\" of type already declared as optparam at line $line" )
+         faldoc.error( @i"Parameter \"$name\" of type already declared as optparam", line )
          return
       elif type == "optparam" and "param" in self.props and arrayScan( self.props["param"], {elem => elem[0] == name} ) >= 0
-         faldoc.error( @i"Optional parameter \"$name\" of type already declared as parameter at line $line" )
+         faldoc.error( @i"Optional parameter \"$name\" of type already declared as parameter", line )
          return
       end
 
@@ -190,8 +225,8 @@ class Entity( content, file, line ) from struct.tree.Node( content )
       if type in self.props
          vt = self.props[type]
 
-         if arrayScan( vt, {elem => elem[0] == name} )
-            faldoc.error( @i"Property \"$name\" of type \"$type\" already declared at line $line" )
+         if arrayScan( vt, {elem => elem[0] == name} ) >= 0
+            faldoc.error( @i"Property \"$name\" of type \"$type\" already declared", line )
          else
             vt.add( [name, content] )
          end
@@ -206,193 +241,33 @@ class Entity( content, file, line ) from struct.tree.Node( content )
       vtp = "param" in self.props ? self.props["param"] : nil
       vto = "optparam" in self.props ? self.props["optparam"] : nil
 
-      foundParam = vtp and arrayScan( vtp, {elem => elem[0] == name} ) == -1
-      foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) == -1
+      foundParam = vtp and arrayScan( vtp, {elem => elem[0] == name} ) != -1
+      foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) != -1
 
       if not foundParam and not foundOpt
-         faldoc.warn( @i"Formal parameter $name not referenced in text block" )
+         faldoc.warn( @i"Formal parameter \"$name\" not referenced in text block", line )
          self.addParam( "param", name, nil, line )
+      end
+   end
+
+   //# adds a member
+   function addMember( entity, ownership )
+      if ownership
+         entity.parent = entity
+      end
+      
+      if not self.members
+         self.members = [entity.name=> entity]
+      else
+         if entity.name in self.members
+            faldoc.error( @i"Re-Adding member $entity.name to $self.name", entity.dline )
+         else
+            self.members[entity.name] = entity
+         end
       end
    end
       
 end
 
-
-
-/*#
-   A link between an entity and another one.
-   @param source The entity that is searching for the link.
-   @param line The line in file where the link is found.
-   @param destination The target item of the link.
-   @optparam automatic When false, the system will complain if not resolved.
-
-   The link is created when a Generic Parser InfoNode of the proper type
-   ("a") is found, or automatically when some other entities
-   are parsed (i.e. "from" inheritance InfoNodes, "see" InfoNodes, "raise" and so on).
-
-   The link is then added to the infonode as a "link" property, with one end
-   referencing the entity where the infonode is located (source), and the other
-   referencing a destination.
-
-   If the destination exists when the link is created, it is immediately
-   referenced.
-
-   If it doesn't exist, an entry in the @a EntityDB.missing property is created,
-   and the link is stored as the value of the missing dictionary, while the
-   expected unique ID is set both as the destination of the link and as the
-   key of the missing dictionary.
-
-   When a new entity arrives, it is checked against the missing dictionary, and
-   if a link is found there, the @a Link.target field gets referenced.
-
-   
-*/
-class Link( source, line, destination, automatic )
-   source = source
-   line = line
-   destination = destination
-   automatic = automatic
-   
-   target = nil
-
-   init
-      EntityDB.addLink( self )
-   end
-
-   function toString()
-      if self.target
-         return self.target.toString()
-      end
-
-      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
-   end
-
-   function describe()
-      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
-   end
-end
-
-
-/*# Entry in the missing database
-   @param name the name of the object.
-   @optparam type Expected type of the missing object, if any
-   @optparam path Path (as partial dotted parentship) of the expected item, if known.
-*/
-class Missing( name, type, path )
-   name = name
-   type = type
-   path = path
-
-   //# list of items waiting for this item to arrive.
-   waiting = []  
-end
-
-/*# Database of all the defined entities. */
-object EntityDB
-   /*# All the data, organized by unique ID */
-   data = [=>]
-
-   //# Missing entities as unique ID -> link
-   missing = [=>]
-   
-   /*# All the data, organized by type -> list of entities. */
-   grouping = [=>]
-
-   /*# Data in function sets. */
-   sets = [=>]
-
-   /*# Data in groups. */
-   groups = [=>]
-
-   /*# Data in modules. */
-   modules = [=>]
-
-   function add( entry )
-      if not entry.derivedFrom( Entity )
-         broadcast( "error", "Trying to add non-entity to EntityDB \"" +
-               entry + "\" from: " + fself.caller() )
-         return
-      end
-
-      if not entry.name
-         broadcast( "error", entry.file, entry.firstline, "Entry declared at this line has no ID." )
-         return
-      end
-
-      if not entry.type                                                                                                                
-         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name + " has no type." )
-         return
-      end
-
-      /*
-      if "brief" notin entry.props
-         try
-            if prototypes.find( "type", entry.type, "brief")
-               broadcast( "error", entry.file, entry.firstline, "Entry has no 'brief' description." )
-            end
-         end
-         // but let it through
-      end
-      */
-
-      if entry.name in self.data
-         other = self.data[entry.name]
-         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name +
-                     @" already existing at $(other.file):$(other.firstline)" )
-         return
-      end
-
-      self.data[ entry.name ] = entry
-      if entry.type in self.grouping
-         self.grouping[entry.type].add(entry)
-      else
-         self.grouping[entry.type] = [entry]
-      end
-
-      // resolve links
-      if entry.name in self.missing
-         links = self.missing[entry.name]
-         self.missing -= entry.name
-         // is this entity a grouping entry? -- then, this link sources are our children.
-         if (entry.type == "group" or entry.type == "funcset" or entry.type == "module")
-            children = []
-            for l in links
-               l.target = entry
-               children += l.source
-            end
-            entry.children = children
-         else
-            // else, we must just fill the link target
-            for l in links
-               l.target = entry
-            end
-         end
-
-      end
-   end
-
-   
-   //# Adds a single link
-   function addLink( link )
-      if link.destination in self.data
-         link.target = self.data[link.destination]
-      else
-         
-      end
-   end
-
-   function link( sourceEntity, line, destination, automatic )
-      l = Link( sourceEntity, line, destination, automatic )
-      self.addLink( l )
-      return l
-   end
-
-   function complete()
-      for k,row in self.grouping: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.sets: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.groups: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.modules: arraySort( row, { a,b => a.name.compare( b.name ) } )
-   end
-end
 
 export
