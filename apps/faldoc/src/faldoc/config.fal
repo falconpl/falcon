@@ -135,7 +135,7 @@ class Config
 
    function getOutputSettings( conf )
       // get the modules -- we know it's here, processConf checks it
-      outMods = conf.getMultiple("Output.module")
+      self.outMods = conf.getMultiple("Output.module")
    end
 
    //=========================================================

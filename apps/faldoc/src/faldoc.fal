@@ -54,6 +54,7 @@ class Application
          self.banner()
          self.readConfig()
          self.processInput()
+         self.processOutput()
          
       catch in e
          self.fatal( e.toString() )
@@ -111,6 +112,43 @@ class Application
          doc.addFile( basedir + "/" + extra )
       end
    end
+
+   
+   function processOutput()
+      self.info( "=" * 60 )
+      
+      // determine the path of our modules      
+      path = Path( scriptPath ).fulloc
+      if not path: path = "."
+
+      // create the compiler
+      compiler = Compiler( path )
+
+      conf = self.config
+      self.info( "Start processing output" )
+
+      for mod in conf.outMods
+         try
+            modData = compiler.loadByName( "self.output." + mod )
+            faldoc_output = modData.get( "faldoc_output" )
+            if not isCallable( faldoc_output )
+               raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
+            end
+
+            // perform call
+            faldoc_output( self.document, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
+
+            // unload the module
+            modData.unload()
+
+         catch IoError in error
+            // signal an abnormal exit
+            raise "Cannot find or load module (faldoc_output_)"+mod
+         end
+         // let any other error through to be catched by the main try.
+      end
+   end
+   
 
    function initDocument()
       cfg = self.config
@@ -232,42 +270,6 @@ faldoc.go()
 return faldoc.result()
 
 
-//================================================
-// Process Output
-//================================================
-/*
-function processOutput( doctree, conf )
-
-   // determine the path of our modules
-   path = Path( scriptPath ).fulloc
-   if not path: path = "."
-
-   // create the compiler
-   compiler = Compiler( path )
-
-   for mod in outMods
-      try
-         modData = compiler.loadByName( "self.output." + mod )
-         faldoc_output = modData.get( "faldoc_output" )
-         if not isCallable( faldoc_output )
-            raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
-         end
-
-         // perform call
-
-         faldoc_output( doctree, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
-
-         // unload the module
-         modData.unload()
-
-      catch IoError in error
-         // signal an abnormal exit
-         raise "Cannot find or load module (faldoc_output_)"+mod
-      end
-      // let any other error through to be catched by the main try.
-   end
-end
-*/
 // Export the global faldoc entity
 export faldoc
 
