@@ -36,8 +36,8 @@
 #include <typeinfo>
 
 #define GC_IDLE_TIME 250
-// default 128k
-#define GC_THREAD_STACK_SIZE  0x10000
+// default 1M
+#define GC_THREAD_STACK_SIZE  1024*1024
 
 
 // By default, 1MB

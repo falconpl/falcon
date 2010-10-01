@@ -177,8 +177,9 @@ FALCON_MODULE_DECL
    // Error class
 
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *neterr_cls = self->addClass( "RegexError", &Falcon::Ext::RegexError_init );
-   neterr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   Falcon::Symbol *reerr_cls = self->addClass( "RegexError", &Falcon::Ext::RegexError_init );
+   reerr_cls->setWKS(true);
+   reerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
 
    return self;
