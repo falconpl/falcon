@@ -25,3 +25,4 @@ add_library(logging_fm MODULE
 
 falcon_finalize_module( logging_fm )
  
+set(_project_targets ${_project_targets} logging_fm PARENT_SCOPE)

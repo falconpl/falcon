@@ -19,3 +19,4 @@ add_library(confparser_fm MODULE
 
 falcon_finalize_module( confparser_fm )
  
+set(project_targets ${project_targets} confparser_fm PARENT_SCOPE) 

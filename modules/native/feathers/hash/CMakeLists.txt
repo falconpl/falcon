@@ -72,3 +72,5 @@ target_link_libraries( ${CURRENT_MODULE} falcon_engine)
 
 
 falcon_install_module( ${CURRENT_MODULE} )
+
+set(_project_targets ${_project_targets} ${CURRENT_MODULE} PARENT_SCOPE)

@@ -19,4 +19,5 @@ add_library(process_fm MODULE
 )
 
 falcon_finalize_module( process_fm )
- 
+
+set(_project_targets ${_project_targets} process_fm PARENT_SCOPE) 
