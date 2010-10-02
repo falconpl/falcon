@@ -19,7 +19,7 @@
 get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 # OPTIONAL for the case this project is built as a subproject.
-if(NOT TARGET falcon_engine)
+if(NOT Falcon_IN_CORE_SOURCETREE)
   include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
 endif()
 
@@ -53,11 +53,13 @@ set( Falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
 set( Falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
 set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 
-#Check if everything is in place.
-find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
-find_program(Falcon_falpack_EXECUTABLE falpack "${Falcon_BINARY_DIR}")
-find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
-find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
+if(NOT Falcon_IN_CORE_SOURCETREE)
+  #Check if everything is in place.
+  find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
+  find_program(Falcon_falpack_EXECUTABLE falpack "${Falcon_BINARY_DIR}")
+  find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
+  find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
+endif()
 
 # Prepare Falcon in development environment.
 list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
@@ -90,6 +92,12 @@ macro( falcon_define_module varname modname )
 endmacro()
 
 function(falcon_install_module2 tgt dir )
+
+   if(NOT CMAKE_INSTALL_PREFIX STREQUAL "@CMAKE_INSTALL_PREFIX@")
+     message("WARNING: falcon was built with the with CMAKE_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@."
+             "The current prefix is ${CMAKE_INSTALL_PREFIX}.")
+   endif()
+
    if(APPLE)
       set_target_properties(${tgt} PROPERTIES
          PREFIX ""
@@ -99,13 +107,15 @@ function(falcon_install_module2 tgt dir )
          PREFIX "" )
    endif()
 
-   set( CMAKE_INSTALL_PREFIX, "@CMAKE_INSTALL_PREFIX@" )
-
    if( DEFINED MOD_INSTALL )
       set( dest "${MOD_INSTALL}/${dir}" )
    else()
       set( dest "${Falcon_MOD_DIR}/${dir}" )
    endif()
+
+  set_target_properties(${tgt} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}
+  )
 
    install( TARGETS ${tgt}
             DESTINATION ${dest} )
@@ -124,4 +134,3 @@ function(falcon_finalize_module tgt )
       target_link_libraries(${tgt} ${Falcon_LIBRARIES} )
       falcon_install_module( ${tgt} )
 endfunction()
-

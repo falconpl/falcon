@@ -1,28 +1,42 @@
 #
 # FALDOC - Falcon Documentation system
 #
-# Faldoc file for core module.
+# Faldoc file for Feathers modules.
 #
 
 ################################################
 # Documentation generic data
 ################################################
 
-Title = Falcon Core Module
+Title = Falcon Feathers - The Standard Modules Reference.
 Author = The Falcon Committee
-Version = 0.9.6.6
+Version = @PROJECT_SOURCE_DIR@
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-Input.directory=../engine/core_module
+Input.basedir=@Falcon_Feathers_SOURCE_DIR@
+
+Input.directory=compiler
+Input.directory=confparser
+Input.directory=funcext
+Input.directory=logging
+Input.directory=hash
+Input.directory=json
+Input.directory=process
+Input.directory=mxml
+Input.directory=regex
+Input.directory=socket
+Input.directory=threading
+Input.directory=zlib
 
 Input.wildcard=*.cpp     #we use only...
-Input.recursive=true
+Input.wildcard=*.inl     #we use only...
+Input.recursive=false
 
 # Other files may be specified here
-Input.extra=main.fd
+Input.extra=docs/main.fd
 
 ################################################
 # Faldoc Output settings
@@ -37,17 +51,16 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.6.6
+Output.html.directory=@output_dir@
 Output.html.url=.
-Output.html.doctitle=Falcon Function Reference
+Output.html.doctitle=Falcon Feathers Function Reference
 
 ################################################
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=coreModule-0.9.6.6.lst
-Output.list.doctitle=Falcon Core Module - Function List
+Output.list.file=@output_dir@/Falcon-feathers-@FALCON_VERSION_ID@.lst
+Output.list.doctitle=Falcon Feather Modules - Function List
 Output.list.bytype=true
 Output.list.members=true
 Output.list.brief=true
-
