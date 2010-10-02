@@ -146,10 +146,10 @@ install(EXPORT falcon-core-targets
   DESTINATION ${FALCON_CMAKE_DIR}
 )
 
-# #docs
-# if(TARGET Falcon_Feathers)
-#   set( faldoc_DIR "${CMAKE_CURRENT_BINARY_DIR}/apps/faldoc")
-#   add_subdirectory(docs)
-#   add_subdirectory(modules/native/feathers/docs)
-# endif()
+#docs
+if(TARGET Falcon_Feathers)
+  set( faldoc_DIR "${CMAKE_CURRENT_BINARY_DIR}/apps/faldoc")
+  add_subdirectory(docs)
+  #add_subdirectory(modules/native/feathers/docs)
+endif()
 

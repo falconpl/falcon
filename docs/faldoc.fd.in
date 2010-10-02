@@ -10,13 +10,14 @@
 
 Title = Falcon Core Module
 Author = The Falcon Committee
-Version = 0.9.6.6
+Version = @FALCON_VERSION_ID@
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-Input.directory=../engine/core_module
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=engine/core_module
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=true
@@ -37,7 +38,7 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.6.6
+Output.html.directory=@output_dir@
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
 
@@ -45,7 +46,7 @@ Output.html.doctitle=Falcon Function Reference
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=coreModule-0.9.6.6.lst
+Output.list.file=@output_dir@/../coreModule-@FALCON_VERSION_ID@.lst
 Output.list.doctitle=Falcon Core Module - Function List
 Output.list.bytype=true
 Output.list.members=true
