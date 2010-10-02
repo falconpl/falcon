@@ -10,13 +10,17 @@ project(falcon-app-faldoc)
 find_package(Falcon REQUIRED)
 
 if(Falcon_IN_CORE_SOURCETREE)
-  set(_cmd
-    ${CMAKE_COMMAND}
-        -Dexecutable=falpack
-        -Dworkdir=${CMAKE_CURRENT_BINARY_DIR}
-        -Darguments="-S -P faldoc ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal"
-      -P ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
-  )
+  if(WIN32)
+    set(${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/falcon  -S -P faldoc ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal)
+  else()
+    set(_cmd
+      ${CMAKE_COMMAND}
+          -Dexecutable=falpack
+          -Dworkdir=${CMAKE_CURRENT_BINARY_DIR}
+          -Darguments="-S -P faldoc ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal"
+        -P ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
+    )
+  endif()
 else()
   set(_cmd ${Falcon_falpack_EXECUTABLE} -S -P faldoc ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal)
 endif()
@@ -24,7 +28,7 @@ endif()
 add_custom_command(
   OUTPUT faldoc.sh
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal
-  COMMAND echo ${_cmd}
+  COMMAND ${CMAKE_COMMAND} -E echo  ${_cmd}
 )
 
 add_custom_target(faldoc ALL DEPENDS faldoc.sh)

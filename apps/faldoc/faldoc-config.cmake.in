@@ -4,18 +4,26 @@ get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 find_program(Falcon_faldoc_EXECUTABLE faldoc.sh ${Falcon_BINARY_DIR})
 
 function(faldoc_module_docs modulename input_file output_dir)
-  if(Falcon_IN_CORE_SOURCETREE)
-    set(_cmd
-      ${CMAKE_COMMAND}
-        -Dexecutable=falcon
-        -Dworkdir=${CMAKE_CURRENT_BINARY_DIR}
-        -Darguments="${Falcon_SOURCE_DIR}/apps/faldoc/src/faldoc.fal ${input_file}"
-      -P ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
-      )
-    set(_dependencies falpack compiler_fm)
 
+  if(Falcon_IN_CORE_SOURCETREE)
+    if(WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio.*")
+	  set(_cmd
+	    ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/falcon 
+		  -L ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}/${CMAKE_CFG_INTDIR}
+		  ${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal 
+		  ${input_file}
+		)
+    else()
+	  set(_cmd
+          ${CMAKE_COMMAND}
+            -Dexecutable=falcon
+            -Dworkdir=${CMAKE_CURRENT_BINARY_DIR}
+            -Darguments="${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal ${input_file}"
+         -P ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
+        )
+    endif()
   else()
-    set(_cmd ${Falcon_faldoc_EXECUTABLE} -S -P faldoc ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc.fal)
+    set(_cmd ${Falcon_faldoc_EXECUTABLE} -S -P faldoc ${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal)
   endif()
 
   add_custom_command(
