@@ -32,7 +32,7 @@ function(faldoc_module_docs modulename input_file output_dir)
     DEPENDS ${input_file} ${ARGN}
   )
 
-  add_custom_target(${modulename}_module_docs ALL DEPENDS ${output_dir}/index.html)
+  add_custom_target(${modulename}_module_docs DEPENDS ${output_dir}/index.html)
   #
   if(Falcon_IN_CORE_SOURCETREE)
     add_dependencies(${modulename}_module_docs faldoc)
