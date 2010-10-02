@@ -36,9 +36,11 @@ configure_file(
   @ONLY
 )
 
+file(GLOB scriptExtensions_SRCS "../engine/core_module/*.cpp")
 faldoc_module_docs(core
   ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
   ${output_dir}
+  ${scriptExtensions_SRCS}
 )
 
 if(WIN32)
