@@ -14,6 +14,7 @@
    See LICENSE file for licensing details.
 */
 
+import from web.htmaker in ht
 
 // The faldoc_output function must be provided by all output modules
 function faldoc_output( doctree, conf )
@@ -22,13 +23,61 @@ end
 
 class HTMLGenerator( doctree, conf )
    doc = doctree
-   conf = conf
+   conf = bless(conf)
+   basedir = faldoc.config.basedir
+   directory = "directory" in conf ? conf["directory"] : nil
+   htmltitle = "title" in conf ? conf["title"] : doctree.title
+   baseurl = "url" in conf ? conf["url"] : nil
+   
 
    function go()
-      falcon.info( "HTML Generator module started." )
+      faldoc.info( "=" * 60 )
+      faldoc.info( "HTML Generator module started." )
       
-      falcon.info( "HTML Generator module ended." )
+      if not self.directory
+         faldoc.error( i"html output - Missing mandatory parameter \"directory\"" )
+         return false
+      end
+      
+      fpath = Path()
+      fpath.fulloc = self.directory
+      if not fpath.fulloc.startsWith("/")
+         self.directory = self.basedir + "/" + self.directory
+      end
+
+      faldoc.info( "html output - Writing to " + self.directory )
+
+      try
+         dirMake( self.directory, true )
+         self.makeIndex()
+
+         self.makeModule( self.doc.mainModule )
+         for modname, module in self.doc.modules
+            self.makeModule( module )
+         end
+
+      catch IoError in err
+         faldoc.error( "html.fal: " + err )
+         return
+      end
+      
+      faldoc.info( "HTML Generator module ended." )
+      faldoc.info( "=" * 60 )
    end
+
+   function makeIndex()
+      file = OutputStream( self.directory + "/index.html" )
+      doc = ht.TransitionalFrame()
+
+      doc.html.head = ht.Head().add(ht.Title( self.doc.title ))
+      doc.html.body = ht.Body().add( ht.H1( self.doc.title ) )
+      doc.render( file )
+      file.close()
+   end
+
+   function makeModule( module )
+   end
+   
 end
 
 

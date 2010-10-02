@@ -121,12 +121,8 @@ class Application
    function processOutput()
       self.info( "=" * 60 )
       
-      // determine the path of our modules      
-      path = Path( scriptPath ).fulloc
-      if not path: path = "."
-
       // create the compiler
-      compiler = Compiler( path )
+      compiler = Compiler()
 
       conf = self.config.cfile
       self.info( "Start processing output" )
@@ -199,9 +195,15 @@ class Application
 
    //# funciton to display an information message
    function display( level, msg, line )
-      fmarker = line ? self.currentFile + ":" + line : self.currentFile
-
       if level <= self.config.loglevel
+         fmarker = ""
+         if self.currentFile
+            fmarker = self.currentFile
+         end
+
+         if line
+            fmarker += ":" + line
+         end
          > "faldoc: ", fmarker, " ", msg
       end
    end

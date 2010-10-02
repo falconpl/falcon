@@ -22,7 +22,7 @@ Version = 0.9.6.6
 ################################################
 
 #Input.directory=../engine/core_module
-Input.directory=../modules/falcon
+#Input.directory=../modules/falcon
 
 #By default, input directories are also roots for module names, but...
 # Input.moduleRoot = ../modules/falcon
@@ -39,7 +39,7 @@ Input.extra=main.fd
 # Faldoc Output settings
 ################################################
 
-#Output.module=html
+Output.module=html
 Output.module=list
 
 ################################################

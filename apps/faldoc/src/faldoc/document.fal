@@ -62,6 +62,7 @@ class Document
          faldoc.error( "While parsing " + file + ": " + e )
       end
 
+      faldoc.currentFile = nil
       if istream: istream.close()
    end
 

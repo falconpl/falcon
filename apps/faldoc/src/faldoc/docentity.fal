@@ -106,7 +106,7 @@ class Entity( content, file, line )
          
          isASimpleCommand = false
          line = node provides infos ? node.infos["line"] + self.firstline - 1 : self.firstline
-   
+         
          switch node.type
             case "@a"
                node.infos["link"] = self.addLink( node.infos["dest"], line, true )
@@ -184,10 +184,22 @@ class Entity( content, file, line )
                self.type = "page"
                self.props[ "title" ] = node.infos["title"]
                node = node.remove()
-               
+
+            case "@group", "@funset"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               self.props[ "title" ] = node.infos["title"]
+               isASimpleCommand = true
+               node = node.remove()
+
             case "@main"
-               self.name = "main"
+               self.name = "#main"
                self.type = "main"
+               node = node.remove()
+
+            case "cmd_unrecognized"
+               command = node.infos["cmd"]
+               faldoc.error( @i"Unrecognized command \"$command\"", node.infos["line"] )
                node = node.remove()
 
             default

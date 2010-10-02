@@ -45,6 +45,8 @@ class DocModule( name, mainmodule )
 
    //# adds an entity to the module
    function add( entity )
+      > "Adding entity ", entity.name, " from ", fself.caller()
+      
       if not entity.name or not entity.type
          faldoc.fatal( i"Adding an unknown entity in module $self.name", entity.firstline )
       end

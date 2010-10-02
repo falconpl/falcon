@@ -26,8 +26,8 @@ function faldoc_output( doctree, conf )
 
    basedir = faldoc.config.basedir
    
-   if "file" notin conf
-      broadcast( "message", "list.fal: ERROR: Missing mandatory \"file\" key in configuration" )
+   if "file" notin conf 
+      faldoc.error( "ERROR: Missing mandatory \"list.file\" key in configuration" )
       return
    end
 
@@ -73,7 +73,7 @@ function build_list( file, doctree, conf )
    build_mod_list( file, doctree.mainModule, doctree, conf )
 
    for modname, module in doctree.modules
-      forfirst:  file.writeText( "\n\n\n" )
+      forfirst:  file.writeText( "\n\n" )
       
       // prefix the module name to the list
       strModName = i"Module" + " \"" + module.name +"\""
@@ -82,7 +82,7 @@ function build_list( file, doctree, conf )
       file.writeText( strReplicate( "#", strModName.len() + 4 ) + "\n\n" )
    
       build_mod_list( file, module, doctree, conf )
-      formiddle: file.writeText( "\n\n\n" )
+      formiddle: file.writeText( "\n\n" )
    end
    
    file.writeText( "\n" )

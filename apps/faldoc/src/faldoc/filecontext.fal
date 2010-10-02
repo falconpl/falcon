@@ -207,14 +207,6 @@ class FileContext( file, defmod )
                faldoc.error( @ i"Entity not declaring a @brief paragraph", entity.firstline )
             end
          end
-
-         
-            
-         // is the entity complete enough?
-         // a textual entity can declare its name only if it already has a type.
-         if entity.name
-            self.addEntity( entity )
-         end
          
          return entity
       catch ParseError in e
