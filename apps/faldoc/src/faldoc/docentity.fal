@@ -95,14 +95,15 @@ class Entity( content, file, line )
    end
 
    function parseNodeContent( node, onGroupingChange )
-
-      // go deep before proceeding
-      if node.firstChild
-         // ignore the result of the analisys of the first-level children.
-         self.parseNodeContent( node.firstChild, onGroupingChange )
-      end
       
       while node != nil
+
+         // go deep before proceeding
+         if node.firstChild
+            // ignore the result of the analisys of the first-level children.
+            self.parseNodeContent( node.firstChild, onGroupingChange )
+         end
+         
          isASimpleCommand = false
          line = node provides infos ? node.infos["line"] + self.firstline - 1 : self.firstline
    
@@ -115,15 +116,15 @@ class Entity( content, file, line )
                l = self.addLink( node.infos["what"], line, node.type == "@see" )
                // we trick the system a bit and send a link instead of a name here.
                // however, it's ok and wors as expected
-               self.addParam( node.type[1:], l, node.content, line )
+               self.addParam( node.type[1:], l, node, line )
                node = node.remove()
                
             case "@brief", "@return"
-               self.props[ node.type[1:] ] = node.content
+               self.props[ node.type[1:] ] = node
                node = node.remove()
 
             case "@param", "@optparam"
-               self.addParam( node.type[1:], node.infos["name"], node.content, line )
+               self.addParam( node.type[1:], node.infos["name"], node, line )
                node = node.remove()
 
             case "@inset"
@@ -266,7 +267,39 @@ class Entity( content, file, line )
          end
       end
    end
-      
+
+   function membersByType()
+      data = [=>]
+      for member in self.members
+         if member.type in data
+            data[member.type].add( member )
+         else
+            data[member.type] = [member]
+         end
+      end
+   end
+
+   function prototype()
+      pars = ""
+      if "param" in self.props
+         pars = ", ".merge(map( {x=> x[0]}, self.props["param"]))
+      end
+      if "optparam" in self.props
+         if pars: pars += ", "
+         pars += ",".merge( map( {x=> "[" + x[0] + "]"}, self.props["optparam"]) )
+      end
+
+      if pars
+         return self.name + "( " + pars + " )"
+      else
+         if self.type == "function" or self.type == "method"
+            return self.name + "()"
+         else
+            return self.name
+         end
+      end
+   end
+   
 end
 
 

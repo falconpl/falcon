@@ -205,7 +205,7 @@ end
 
 */
 class EmptyLineRule( nextState, action ) from Rule( nextState, action )
-   matchLen = 1
+   matchLen = 0
    
    function match( text, pos )
       if text.len() == 0: return 0

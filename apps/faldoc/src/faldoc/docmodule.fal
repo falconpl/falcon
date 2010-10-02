@@ -138,7 +138,7 @@ class DocModule( name, mainmodule )
    function groupEntities()
       data = [=>]
       for e, entity in self.entities
-         if entity.type in self.grouping
+         if entity.type in data
             data[entity.type].add(entity)
          else
             data[entity.type] = [entity]

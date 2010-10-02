@@ -38,6 +38,7 @@ class Document
    function addFile( file )
       p = Path( file )
       faldoc.info( "Processing " + p.filename + " in " + p.fulloc )
+
       try
          istream = InputStream( file )
          // for now, suppose utf-8 encoding

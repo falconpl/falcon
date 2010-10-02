@@ -82,6 +82,10 @@ class Application
       if not self.config.read( self.fdfile )
          self.fatal( i"Errors in configuration" )
       end
+
+      if not self.config.inputDirs
+         self.fatal( i"Sorry, no input dirs" )
+      end
    end
 
    function processInput()
@@ -124,10 +128,10 @@ class Application
       // create the compiler
       compiler = Compiler( path )
 
-      conf = self.config
+      conf = self.config.cfile
       self.info( "Start processing output" )
 
-      for mod in conf.outMods
+      for mod in self.config.outMods
          try
             modData = compiler.loadByName( "self.output." + mod )
             faldoc_output = modData.get( "faldoc_output" )

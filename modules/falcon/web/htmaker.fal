@@ -275,7 +275,7 @@ end
 * Dom Entities
 ******************************************************************/
 
-/** Base dom elements.
+/*# Base dom elements.
 
    The basic dom element has a real parent and 0 or more
    restrictions on the parents it could have.

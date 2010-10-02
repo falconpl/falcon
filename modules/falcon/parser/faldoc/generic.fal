@@ -40,9 +40,10 @@ class Parser from parser.genparser.Parser
 
       "grab" =>PState(.[
             TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
+            ReRule( '\s*\*+/', "#pop", {ctx=> ctx.popNode()})
+
             // Consumes useless * at begin of comment
-            ReRule( '^\s*\*+(?!/)', "#stay" )
-            ReRule( '\*++/', "#pop", {ctx=> ctx.popNode()})
+            ReRule( '^\s*\*+', "#stay" )
          ],
          {ctx, data=>ctx.add( data )},
          "grab_continue"

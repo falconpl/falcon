@@ -238,6 +238,9 @@ class Parser from parser.genparser.Parser
          + .[
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
             ReRuleLA( '^\s*@', "#pop", {ctx=>ctx.popNode()} )
+
+            // eat useless spaces at line start.
+            ReRule( '^\s+', "#stay" )
             
             // while a @ in the middle of the para means an unrecognized command for sure.
             ReRule( '@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})

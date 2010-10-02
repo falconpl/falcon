@@ -4,7 +4,10 @@
 # Faldoc file for core module.
 #
 
-loglevel = 4
+LogLevel = 4
+AutoBrief = true
+GetUndoc = true
+GetPrivate = false
 
 ################################################
 # Documentation generic data
@@ -36,7 +39,7 @@ Input.extra=main.fd
 # Faldoc Output settings
 ################################################
 
-Output.module=html
+#Output.module=html
 Output.module=list
 
 ################################################

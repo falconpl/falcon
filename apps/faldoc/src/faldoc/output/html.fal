@@ -14,197 +14,22 @@
    See LICENSE file for licensing details.
 */
 
-load .tpl
-load .html_handlers
 
 // The faldoc_output function must be provided by all output modules
 function faldoc_output( doctree, conf )
-   global html_config
-   global html_tree
-   global html_current_module
-
-   > "------------------------------------------------------"
-   > "  HTML Module started"
-   > "------------------------------------------------------"
-
-   html_tree = doctree
-   html_config = conf
-
-   for k,v in conf: > k,"=",v
-   > "Title: ", doctree.title
-   > "Author: ", doctree.author
-   > "Version: ", doctree.version
-   
-
-   // Arbitrary properties
-   for prop, value in doctree.properties: > "Prop ", prop, ": ", value
-
-   // set some config default
-   resdir = getAssert( "resdir" )
-   if resdir and resdir[-1] != "/": resdir += "/"
-   
-   if "directory" notin html_config: html_config["directory"] = "html"
-   if "url" notin html_config: html_config["url"] = "."
-   if "doctitle" notin html_config: html_config["doctitle"] = doctree.title
-   if "style" notin html_config: html_config["style"] = resdir + "faldoc.css"
-   if "header" notin html_config: html_config["header"] = resdir + "header.tpl"
-   if "footer" notin html_config: html_config["footer"] = resdir + "footer.tpl"
-   if "listing" notin html_config: html_config["listing"] = resdir + "entity_listing.tpl"
-   if "fulllist" notin html_config: html_config["fulllist"] = resdir + "entity_fulllist.tpl"
-   if "detail" notin html_config: html_config["detail"] = resdir + "entity_detail.tpl"
-   if "pagetpl" notin html_config: html_config["pagetpl"] = resdir + "entity_page.tpl"
-   
-   // we'll need this around
-   assert( "html_url", html_config["url"] + "/" )
-
-   // start creating the file tree
-   tgdir = html_config["directory"]
-   if not tgdir or tgdir[0] != "/"
-      tgdir = doctree.basedir + "/" + tgdir
-   end
-
-   > "Target: ", tgdir
-   > "--------------------------"
-   >
-
-   // style can be empty if the user doesn't want it.
-   if not prepareDir( tgdir, [
-            html_config["style"],
-            resdir + "tabs.css",
-            resdir + "tab_l.gif",
-            resdir + "tab_b.gif",
-            resdir + "tab_r.gif" ]
-            )
-      return
-   end
-
-   // prepare the template data
-   try
-      > "Reading templates..."
-      rnd = Renderer( html_config, doctree, tgdir )
-      > "Template parsing succesful"
-   catch TplError in e
-      msg = ""
-      for error in e.errlist: msg += error + "\n"
-      broadcast( "message", "FATAL: Pasrsing error while parsing templates: \n" + msg )
-      return
-   catch in e
-      broadcast( "message", "FATAL: while parsing templates: \n" + e )
-      return
-   end
-
-   try
-      rnd.makePages()
-   catch IoError in err
-      broadcast( "message", "FATAL: \n" + e )
-   end
-   
-   > "------------------------------------------------------"
-   > "  HTML Module complete"
-   > "------------------------------------------------------"
+   HTMLGenerator( doctree, conf ).go()
 end
 
-function prepareDir( tgdir, resources )
-   global html_config
+class HTMLGenerator( doctree, conf )
+   doc = doctree
+   conf = conf
 
-   try
-      dirMake( tgdir, true )
-   catch IoError
-      broadcast( "message", "Cannot create output directory " + tgdir )
-      return false
-   end
-
-   // the style can be empty if the user doesn't want it
-   for file in resources
-      tgFile = tgdir + "/" + fileName(file)
-      try
-         fileCopy( file, tgFile )
-      catch IoError
-         broadcast( "message",  "Cannot copy stilesheet document: " + file + " to " + tgFile )
-         return false
-      end
-   end
-   
-   return true
-end
-
-
-class Renderer( config, doctree, tgdir )
-   tplHeader = TplExpander()
-   tplFooter = TplExpander()
-   tplListing = TplExpander()
-   tplDetails = TplExpander()
-   tplPage = TplExpander()
-   tplFullList = TplExpander()
-   
-   tgdir = tgdir
-   doctree = doctree
-   config = config
-   doclinks = nil
-
-   init
-      try
-         file = config["header"]
-         self.tplHeader.parse( file )
-         file = config["footer"]
-         self.tplFooter.parse( file )
-         file = config["listing"]
-         self.tplListing.parse( file )
-         file = config["detail"]
-         self.tplDetails.parse( file )
-         file = config["pagetpl"]
-         self.tplPage.parse( file )
-         file = config["fulllist"]
-         self.tplFullList.parse( file )
-
-         self.makeDocLinks()
-      catch TplError in e
-         e.errlist.pushFront( "In file " + file )
-         raise e
-      end
-   end
-
-   function makeDocLinks()
-      // select the data for the main page.
-      url = self.config["url"] + "/"
-
-      // main is a special page, always present.
-      self.doclinks = [
-         [ "l_ref"=> url+"index.html", "l_desc"=> "Main", "l_type"=>"main"] ]
-
-      // create links for all the items in the page having an index entry.
-      types = self.doctree.entities.grouping
-
-      for row in pagetable
-         if row.type notin types: continue
-         
-         if row.index
-            self.doclinks.add(
-               ["l_ref" => url + row.index + ".html", "l_desc" => row.ititle, "l_type" => row.type ] )
-         end
-      end
-   end
-
-   function setCurrent( pageId )
-      for rrow in self.doclinks
-         if rrow["l_type"] == pageId
-            rrow["current"] = true
-         else
-            rrow -= "current"
-         end
-      end
-   end
-
-   function makePages()
-      makeMain( self )
-      // create the listing pages.
-      types = self.doctree.entities.grouping
-      > "Making HTML pages"
-      for row in pagetable
-         if row.type notin types: continue
-         row.handler( self )
-      end
+   function go()
+      falcon.info( "HTML Generator module started." )
+      
+      falcon.info( "HTML Generator module ended." )
    end
 end
+
 
 

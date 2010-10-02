@@ -209,10 +209,10 @@ class Parser()
 
          // consider \r\n or \n\r
          if poseol > 0
-            if string[* (poseol-1)] == 0xA
+            if string[* (poseol-1)] == 0xD
                --poseol
                ++eolsize
-            elif poseol+1 < strlen and string[* (poseol+1)] == 0xA
+            elif poseol+1 < strlen and string[* (poseol+1)] == 0xD
                ++eolsize
             end
          end
@@ -242,6 +242,7 @@ class Parser()
    function initParser(initState)
       if initState
          self._stack = []
+         if self.trace: self._stateNames = []
          self.pushState( initState )
       elif self._stack.len() != 1
          raise ParseError( 10002, i"Parser not initialized before parsing" )
@@ -260,7 +261,7 @@ class Parser()
       atEnd = false
 
       loop
-         matchAt = line.len()
+         matchAt = linelen
          winner = nil
 
          state = self._stack[-1]

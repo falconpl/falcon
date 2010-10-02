@@ -44,8 +44,16 @@ CommentsAndGrabs = .[
 FuncAndVars = .[
    ReRule( '\s*function\s+(\w+)', "funcdecl",
       {ctx, d0, cname=> ctx.pushNode( InfoNode( "function", ["line"=>ctx.row,"name"=> cname] )) })
-   ReRule( '\s*(\w+)\s*=', "#stay",
+   ReRule( '^\s*(\w+)\s*=', "#stay",
       {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+]
+
+escaping = .[
+   TagRule( '"', "string1" )
+   TagRule( '''', "string2" )
+   TagRule( '(', "par_round" )
+   TagRule( '[', "par_square" )
+   TagRule( '{', "par_graph" )
 ]
 
 // We don't care about contents, but we need to properly count "end"
@@ -58,13 +66,17 @@ BlockStatements = .[
    TokenRule( "if", "block_begin" )
    TokenRule( "switch", "block_begin" )
    TokenRule( "select", "block_begin" )
+   TokenRule( "forfirst", "block_begin" )
+   TokenRule( "formiddle", "block_begin" )
+   TokenRule( "forlast", "block_begin" )
 ]
 
    
 class Parser from parser.genparser.Parser
    states = [
       "start" => PState(
-         CommentsAndGrabs
+         escaping
+         + CommentsAndGrabs
          + FuncAndVars
          + .[
             ReRule( 'class\s+(\w+)', "classdecl",
@@ -84,9 +96,10 @@ class Parser from parser.genparser.Parser
 
       "grab" =>PState(.[
             TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
+            ReRule( '\s*\*+/', "#pop", {ctx=> ctx.popNode()})
+            
             // Consumes useless * at begin of comment
-            ReRule( '^\s*\*+(?!/)', "#stay" )
-            ReRule( '\+*+/', "#pop", {ctx=> ctx.popNode()})
+            ReRule( '^\s*\*+', "#stay" )
          ],
          {ctx, data=>ctx.add( data )},
          "grab_continue"
@@ -192,7 +205,8 @@ class Parser from parser.genparser.Parser
       ),
 
       "class" => PState(
-         CommentsAndGrabs
+         escaping
+         + CommentsAndGrabs
          + FuncAndVars
          +.[
             // eat init, or the parser will think that everything in init is a property
@@ -203,7 +217,8 @@ class Parser from parser.genparser.Parser
       ),
 
       "init" => PState(
-         BlockStatements
+         escaping
+         + BlockStatements
          + .[
             TokenRule( 'end', "#pop" )
          ],
@@ -227,7 +242,8 @@ class Parser from parser.genparser.Parser
       ),
 
       "function" => PState(
-         BlockStatements
+         escaping
+         + BlockStatements
          + .[
             TokenRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
          ],
@@ -265,7 +281,47 @@ class Parser from parser.genparser.Parser
       //===========================================================
       // Normal code
       //===========================================================
-      "block_begin" => PState(.[
+      "string1" => PState(.[
+            TagRule( '\"', "#stay" )
+            TagRule( '"', "#pop" )
+         ],
+         {=>}
+      ),
+
+      "string2" => PState(.[
+            TagRule( '''''', "#stay" )
+            TagRule( '''', "#pop" )
+         ],
+         {=>}
+      ),
+
+      "par_round" => PState(
+         escaping
+         +.[
+            TagRule( ')', "#pop" )
+         ],
+         {=>}
+      ),
+
+      "par_square" => PState(
+         escaping
+         +.[
+            TagRule( ']', "#pop" )
+         ],
+         {=>}
+      ),
+
+      "par_graph" => PState(
+         escaping
+         +.[
+            TagRule( '}', "#pop" )
+         ],
+         {=>}
+      ),
+   
+      "block_begin" => PState(
+         escaping
+         +.[
             // if we find a \\$, the definition continues...
             ReRule( '\\$', "#stay" )
             // Avoid confusing ?: with ":"
@@ -281,7 +337,8 @@ class Parser from parser.genparser.Parser
 
       "block_continue" => PState(
          // we can have nested blocks
-         BlockStatements
+         escaping
+         +BlockStatements
          + .[
             // if we find a \\$, the definition continues...
             TokenRule( 'end', "#pop;#pop" )
@@ -290,7 +347,8 @@ class Parser from parser.genparser.Parser
       ),
 
       "question_mark" => PState(
-         .[
+         escaping
+         + .[
             // Return to block declaration when we find ':'
             TagRule( ':', "#pop" )
          ],

@@ -40,11 +40,23 @@ class Config
    //# input recursive -- defaults to true
    recursive = nil
 
+   //#using autobrief ?
+   autobrief = nil
+   
    //# List of output modules to be used to generate output
    outMods = nil
 
    //# Log level
    loglevel = nil
+
+   //#configuration file
+   cfile = nil
+
+   //# get undocumented
+   getundoc = nil
+
+   //# get private members
+   getprivate = nil
 
 
    //# Reads the configuration file.
@@ -53,6 +65,7 @@ class Config
       try
          conf = confparser.ConfParser( fdfile )
          conf.read()
+         self.cfile = conf
          
       catch IoError in error
          faldoc.fatal( i"Invalid input file $(fdfile)" )
@@ -113,8 +126,17 @@ class Config
       // get the properties.
       self.properties = conf.getCategory( "Property.*" )
 
+      // autobrief
+      self.autobrief = self.checkBool( "AutoBrief", false )
+
+      // get undocumented
+      self.getundoc = self.checkBool( "GetUndoc", false )
+
+      // get private members
+      self.getprivate = self.checkBool( "GetPrivate", false )
+
       try
-         self.loglevel = int(firstOf( conf.getOne( "loglevel" ), 3 ))  // default info
+         self.loglevel = int(firstOf( conf.getOne( "LogLevel" ), 3 ))  // default info
       catch
          faldoc.fatal( i"Loglevel key must be an integer" )
       end
@@ -128,7 +150,7 @@ class Config
       // Input file wildcard; defaults to "*.fal"
       self.inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
       // input recursive -- defaults to true
-      self.recursive = self.checkBool( conf.getOne( "Input.recursive" ), true )
+      self.recursive = self.checkBool( "Input.recursive", true )
       // input extra files
       self.inputExtra = conf.getMultiple( "Input.extra" )
    end
@@ -141,8 +163,14 @@ class Config
    //=========================================================
    // More utilities
    //=========================================================
-   function checkBool( value, dflt )
-      return value ? strLower( value ) != "false" : dflt
+   function checkBool( key, dflt )
+      value = self.cfile.getOne( key )
+      if not value: return dflt
+      
+      v = strLower( value )
+      if v == "on" or v == "true": return true
+      if v == "off" or v == "false": return false
+      faldoc.fatal( i"Invalid value for configuration key " + key )
    end
    
 end

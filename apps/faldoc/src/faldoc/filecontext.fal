@@ -54,7 +54,10 @@ class FileContext( file, defmod )
    function parseNode( parent, parentEntity )
       node = parent.firstChild
       entity = nil
-      
+
+      getundoc = faldoc.config.getundoc
+      getprivate = faldoc.config.getprivate
+
       while node != nil
          // normally, don't destroy currently examined entity
          clear = false
@@ -73,11 +76,13 @@ class FileContext( file, defmod )
 
             case "inherit"
                self.parseInherit( parentEntity, node.firstChild )
-               return
+               node = node.next
+               continue
                
             case "params"
                self.parseParams( parentEntity, node.firstChild )
-               return
+               node = node.next
+               continue
          
             default
                // have we a textual entity we want to post-process?
@@ -86,6 +91,15 @@ class FileContext( file, defmod )
                   // the text entity is discharged -- after checking for children
                   clear = true
                else
+                  // skip undocumented entities if not required to take them,
+                  nodeName = node.infos["name"]
+                  if not getundoc or \
+                     ( (nodeName.startsWith("_") or "._" in nodeName) and not getprivate)
+                     
+                     // prevent scanning for sub-nodes
+                     node = node.next
+                     continue
+                  end
                   // create a new entity of the specified type.
                   entity = self.createEntity( node, parentEntity )
                   // the entity created automatically from falcon source is discharged
@@ -157,7 +171,7 @@ class FileContext( file, defmod )
          if entity.name
             self.addEntity( entity )
          else
-            faldoc.error( @ i"Undefined entity in $self.file at " + entity.firstline )
+            faldoc.error( @ i"Undefined entity",entity.firstline )
          end
       end
    end
@@ -176,6 +190,25 @@ class FileContext( file, defmod )
             // if the entity is just a set of document-wide commands, return.
             return nil
          end
+
+         // do we have a brief?
+         if "brief" notin entity.props
+            // autobrief on?
+            if faldoc.config.autobrief
+               // have we it some text?
+               first_node = entity.pcontent.topNode.firstChild
+               if first_node and first_node.type == "para"
+                  entity.props["brief"] = first_node
+                  first_node.remove()
+               else
+                  faldoc.error( @ i"Entity not declaring a @brief paragraph", entity.firstline )
+               end
+            else
+               faldoc.error( @ i"Entity not declaring a @brief paragraph", entity.firstline )
+            end
+         end
+
+         
             
          // is the entity complete enough?
          // a textual entity can declare its name only if it already has a type.
@@ -285,6 +318,7 @@ class FileContext( file, defmod )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
          entity.name = parentEntity.name + "." + node.infos["name"]
+         parentEntity.addMember( entity )
       else
          entity.type = node.type
          entity.name = node.infos["name"]
@@ -304,6 +338,7 @@ class FileContext( file, defmod )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
          entity.name = parentEntity.name + "." + node.infos["name"]
+         parentEntity.addMember( entity )
       else
          entity.type = node.type
          entity.name = node.infos["name"]
