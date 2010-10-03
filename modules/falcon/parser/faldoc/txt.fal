@@ -42,8 +42,8 @@ ParaCommands =  .[
    ReRule( '^\s*@return\s+', "para",
            {ctx => ctx.pushNode(InfoNode("@note", ['line' => ctx.row ] )) })
 
-   ReRule( '^\s*@main\s+', "para",
-           {ctx => ctx.pushNode(InfoNode("@main", ['line' => ctx.row ] )) })
+   ReRule( '^\s*@main\s+(.*)$', "#stay",
+           {ctx, d0, p0 => ctx.add(InfoNode("@main", ['line' => ctx.row, 'title' => p0 ] )) })
            
    ReRule( '^\s*@raise\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'what'=> p0 ] )) })
@@ -127,15 +127,15 @@ ScopeCommands = .[
 ]
 
 InlineCommands = .[
-   ReRule( '(^|\s)@a\s+("([^"]*)"|(\w+))', "#stay",
+   ReRule( '@a\s+("([^"]*)"|(\w|\.)+)', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
-         {ctx, d0, d1, d2, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
-   ReRule( '(^|\s)@b\s+("([^"]*)"|(\w+))', "#stay",
-         {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
-   ReRule( '(^|\s)@i\s+("([^"]*)"|(\w+))', "#stay",
-         {ctx, d0, d1, d2, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
-   ReRule( '(^|\s)@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
-                              {ctx, d0, d1, d2, d2b, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",
+         {ctx, d0, d1, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
+   ReRule( '@b\s+("([^"]*)"|(\w+))', "#stay",
+         {ctx, d0, d1, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
+   ReRule( '@i\s+("([^"]*)"|(\w+))', "#stay",
+         {ctx, d0, d1, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
+   ReRule( '@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
+                              {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",
                               ['line' => ctx.row, 'name'=> p0 ? p0:p0b, 'text' => p1?p1:p1b, "ext"=>true ] )) })
 ]
 
@@ -216,7 +216,7 @@ class Parser from parser.genparser.Parser
             TokenRuleLA( "@section", "#pop", {ctx => ctx.popNode() } )
             ReRule( '^\s*@subsection\s+(\w+)\s+(.*)$', "section",
                {ctx, d0, p0, p1 =>
-                  ctx.pushNode(InfoNode("@subsection", ['line' => ctx.row, 'name'=> p0, 'title'=>p1] )) })
+                  ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0, 'title'=>p1] )) })
          ]
          + StartRules
       ),
@@ -292,12 +292,12 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*##\s*', "#stay", {ctx=> ctx.setListDepth(2, "ol" )})
             ReRule( '^\s*#\s*', "#stay", {ctx=> ctx.setListDepth(1, "ol" )})
 
-            ReRule( '^\s*\*\*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(6, "ul" ) })
-            ReRule( '^\s*\*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(5, "ul" ) })
-            ReRule( '^\s*\*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(4, "ul" ) })
-            ReRule( '^\s*\*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(3, "ul" ) })
-            ReRule( '^\s*\*\*\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
-            ReRule( '^\s*\*\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
+            ReRule( '^\s*------\s*', "#stay", {ctx=> ctx.setListDepth(6, "ul" ) })
+            ReRule( '^\s*-----\s*', "#stay", {ctx=> ctx.setListDepth(5, "ul" ) })
+            ReRule( '^\s*----\s*', "#stay", {ctx=> ctx.setListDepth(4, "ul" ) })
+            ReRule( '^\s*---\s*', "#stay", {ctx=> ctx.setListDepth(3, "ul" ) })
+            ReRule( '^\s*--\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
+            ReRule( '^\s*-\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
          ]
          + InlineCommands
          + FormatElements,

@@ -93,22 +93,23 @@ class Node( content )
             if self.parent != nil
                self.parent.firstChild = nil
                self.parent.lastChild = nil
-            else
-               // however, without next we're the last child
-               self.parent.lastChild = self.prev
             end
          else
             self.prev.next = nil
+            if self.parent != nil
+               // however, without next we're the last child
+               self.parent.lastChild = self.prev
+            end
          end
       else
          self.next.prev = self.prev
-         if self.prev != nil
-            self.prev.next = self.next
-         else
+         if self.prev == nil
             // we are the FIRST child of our parent
             if self.parent != nil
                self.parent.firstChild = self.next
             end
+         else
+            self.prev.next = self.next
          end
       end
 

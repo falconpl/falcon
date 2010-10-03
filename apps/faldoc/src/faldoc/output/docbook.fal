@@ -1,0 +1,214 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docbook.fal
+
+   Autodocumentation tool - DOCBOOK output module
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 12 Jan 2008 12:21:30 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from parser.render.docbook in docbook
+
+// The faldoc_output function must be provided by all output modules
+function faldoc_output( doctree, conf )
+   DOCBOOKGenerator( doctree, conf ).go()
+end
+
+class FaldocBookRenderer from docbook.Renderer
+
+   init
+      self.renderers += [
+         "@section" => self.renderSection,
+         "@a" => self.render_a
+      ]
+   end
+
+   function renderSection( node )
+      return "<section id=\"" + URI.encode( node.infos["name"] ) + "\">\n" +
+         "<title>" + _htmlEscape( node.infos["title"]) + "</title>\n" +
+         self.rcont(node) +
+         "</section>\n"
+   end
+   
+   function render_a( node )
+      return "[@a node, todo]"
+   end
+         
+end
+
+class DOCBOOKGenerator( doctree, conf )
+   doc = doctree
+   conf = bless(conf)
+   basedir = faldoc.config.basedir
+   file = "file" in conf ? conf["file"] : nil
+   encoding = "encoding" in conf? conf["encoding"] : "utf-8"
+   copyyear = "copyright.year" in conf? conf["copyright.year"] : nil
+   copyholder = "copyright.holder" in conf? conf["copyright.holder"] : nil
+
+   _outfile = nil
+
+   _rndr = FaldocBookRenderer()
+
+   function go()
+      faldoc.info( "=" * 60 )
+      faldoc.info( "DOCBOOK Generator module started." )
+
+      if not self.file
+         faldoc.error( i"docbook output - Missing mandatory parameter \"file\"" )
+         return false
+      end
+
+      fpath = Path(self.file)
+      if not fpath.fulloc.startsWith("/")
+         self.file = self.basedir + "/" + self.file
+      end
+
+      faldoc.info( "docbook output - Writing to " + self.file )
+
+      try
+         self._outfile = OutputStream( self.file )
+         self._outfile.setEncoding( self.encoding )
+         self.start()
+         
+         self.makeModule( self.doc.mainModule )
+         for modname, module in self.doc.modules
+            self.makeModule( module )
+         end
+
+         self._outfile.writeText( "</book>\n" )
+      catch IoError in err
+         faldoc.error( "docbook.fal: " + err )
+         return
+      end
+
+      if self._outfile: self._outfile.close()
+      faldoc.info( "HTML Generator module ended." )
+      faldoc.info( "=" * 60 )
+   end
+
+   function start()
+      fpath = Path(self.file)
+      of = self._outfile
+      of.writeText( "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n" )
+      of.writeText( "<book xml:id=\""+fpath.file+"\" xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\">\n" )
+      self.bookInfo()
+   end
+
+   function bookInfo()
+      
+      self.opentag( "bookinfo" )
+
+      self.writeTag( "title", self.doc.title )
+      if self.doc.author: self.writeTag(  "author", self.doc.author )
+      if self.copyyear and self.copyholder
+         self.write( Tag( "copyright",
+            .[Tag( "year", self.copyear )
+              Tag( "holder", self.copyholder ) ] )
+            )
+      end
+
+      self.closetag( "bookinfo" )
+   end
+
+
+   function makeModule( module )
+
+      self.opentag( "chapter" )
+
+      if "#main" in module.entities
+         main = module.entities["#main"]
+         self.writeTag( "title", main.props["title"] )
+         self.opentag( "section" )
+         self._outfile.write(
+            self._rndr.render( main.pcontent )
+         )
+         self.closetag( "section" )
+      end
+
+      entities = module.groupEntities()
+      if "page" in entities
+         for page in entities["page"]
+            self.opentag( "section" )
+            self._outfile.write(
+               self._rndr.render( page.pcontent )
+            )
+            self.closetag( "section" )
+         end
+      end
+      
+      self.closetag( "chapter" )
+   end
+
+
+   function opentag( tag )
+      self._outfile.writeText( @"<$tag>\n" )
+   end
+   
+   function closetag( tag )
+      self._outfile.writeText( @"</$tag>\n" )
+   end
+
+   function write( xtag )
+      self._outfile.writeText( xtag.render() )
+   end
+   
+   function writeTag( tag, content, attribs )
+      content = _htmlEscape(content)
+      att = ""
+      for k,v in attribs
+         forfirst: att = " "
+         att += k + '="' + v.replace('"', '\"') + '"'
+         formiddle: att += " "
+      end
+
+      if not content
+         self._outfile.writeText( "<"+ tag + att +"/>\n" )
+      else
+         self._outfile.writeText( "<"+ tag + att +">" + content + "</"+tag+">\n" )
+      end
+   end
+   
+end
+
+function _htmlEscape( content )
+   return content.replace( "&", "&amper").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
+end
+
+
+class Tag( tag, content, attribs )
+   attribs = attribs
+   tag = tag
+   content = content
+
+   function render()
+      if self.content.typeId() == StringType
+         content = _htmlEscape(self.content)
+      else
+         content = ""
+         for tag in self.content
+            content += tag.render()
+         end
+      end
+      
+      att = ""
+      for k,v in self.attribs
+         forfirst: att = " "
+         att += k + '="' + v.replace('"', '\"') + '"'
+         formiddle: att += " "
+      end
+
+      if not content
+         self._outfile.writeText( "<"+ tag + att +"/>\n" )
+      else
+         self._outfile.writeText( "<"+ tag + att +">" + content + "</"+tag+">\n" )
+      end
+   end
+end
+

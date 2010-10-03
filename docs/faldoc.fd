@@ -41,6 +41,7 @@ Input.extra=main.fd
 
 Output.module=html
 Output.module=list
+Output.module=docbook
 
 ################################################
 # Faldoc HTML Output settings
@@ -61,4 +62,15 @@ Output.list.doctitle=Falcon Core Module - Function List
 Output.list.bytype=true
 Output.list.members=true
 Output.list.brief=true
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.docbook.file = falcon-db0967.xml
+Output.docbook.encoding = utf-8
+Output.docbook.copyright.year = 2010
+Output.docbook.copyright.Holder = The Falcon Committee
+
+
 

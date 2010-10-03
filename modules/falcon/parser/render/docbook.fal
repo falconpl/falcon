@@ -1,0 +1,220 @@
+/*
+   FALCON - Generic Parser
+   FILE: doocbook.fal
+
+   Generates a doocbook output of an input genparser.Context tree
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+
+/*# Doocbook Renderer.
+
+   The docbook renderer transforms the input text in a valid docbook output,
+   which may be inserted under a <section> entry of a DocBook 5.1 document.
+
+   Heading elements are treated as sections.
+*/
+class Renderer()
+
+   blevel = 0
+
+   renderers = [
+      "text" => {node => _sgmlEscape(node.content) },
+      "b" => .[ self._render_markup "emphasis" "role=\"bold\""],
+      "i" => .[ self._render_markup "emphasis" nil],
+      "u" => .[ self._render_markup "emphasis" nil],
+      "sup" => .[self._render_markup "superscript" nil],
+      "sub" => .[self._render_markup "subscript" nil],
+      "pre" => .[self._render_markup "literal" nil],
+      "tt" => .[self._render_markup "literal" nil],
+      "ol" => .[self._render_markup "orderedlist" nil ],
+      "ul" => .[self._render_markup "itemizedlist" nil ],
+      "li" => .[self._render_li],
+
+      "hr" => self._render_hr,
+      "br" => self._renderUNKNOWN,
+
+      "para" => self._render_para,
+      "header" => self._render_header,
+
+      "table" => self._render_table,
+      "tr" => self._render_tr,
+      "th" => self._render_header_cell,
+      "td" => self._render_cell,
+      "indent" => self._render_indent,
+      "quote" => self._render_quote,
+
+      "link" => self._render_link,
+      "file" => self._render_file,
+
+      "img" => self._render_img,
+      "code" => self._render_code,
+      "plugin" => self._render_plugin,
+      "tag" => self._renderUNKNOWN
+   ]
+
+
+   function render( context )
+
+      //preprocess standouts
+      //self.preprocess( context.standouts )
+
+      // and return the content
+      content = self.rcont( context.topNode )
+
+      // close opened sections
+      while self.blevel > 0
+         content += "</section>\n"
+         self.blevel--
+      end
+
+      return content
+   end
+
+   /*
+   function preprocess( sout )
+   end
+   */
+
+
+   function renderNode( node )
+      if node.type in self.renderers
+         return self.renderers[ node.type ]( node )
+      else
+         return self._renderUNKNOWN( node )
+      end
+   end
+
+
+   function rcont( node )
+      content = node.content
+      if content: return _sgmlEscape( content )
+
+      text = ""
+      node = node.firstChild
+      while node
+         > "Rendering node ", node.type
+         text += self.renderNode( node )
+         node = node.next
+      end
+      return text
+   end
+
+   //==========================================================
+   // rendering functions
+   //
+
+   function _renderUNKNOWN( node )
+      return self.rcont( node )
+   end
+
+
+   function _render_para( node )
+      return "<para>" + self.rcont(node)+"</para>\n"
+   end
+
+   function _render_markup( tag, attribs, node )
+      return "<" + tag + (attribs ? " " +attribs : "") +">" + self.rcont(node) + "</" + tag + ">"
+   end
+
+   function _render_li( node )
+      return "<listitem><para>" + self.rcont(node) + "</para></listitem>\n"
+   end
+
+   function _render_hr( node )
+      return "<para><literal>-----------------------------------------------</literal></para>\n"
+   end
+
+
+   function _render_header( node )
+      content =  self.rcont( node )
+      return self.render_header_level( node.level, content, content )
+   end
+   
+   function render_header_level( l, content, id )
+      prefix = ""
+      while self.blevel+1 < l
+         prefix += "<section>\n"
+         self.blevel++
+      end
+
+      while self.blevel +1 > l
+         prefix += "</section>\n"
+         self.blevel--
+      end
+
+      self.blevel++
+      
+      content = "<section id=\"" + URI.encode(id) +"\">\n"+
+                "<title>" + content + "</title>\n"
+      return prefix + content
+   end
+
+
+   function _render_table( node )
+      return "<table>\n<tgroup>\n" +
+              self.rcont(node) +
+              "</tgroup></table>\n"
+   end
+
+   function _render_tr( node )
+      return "<row>"+ self.rcont(node) + "</row>\n"
+   end
+
+   function _render_header_cell( node )
+      return "<entry><emphasis>"+ self.rcont(node) + "</emphasis></entry>\n"
+   end
+
+   function _render_cell( node )
+       return "<entry>"+ self.rcont(node) + "</entry>\n"
+   end
+
+   function _render_indent( node )
+      return "<litral>" + (" " * node.level ) +  "</literal><para>" +
+         self.rcont(node) +
+         "</para>\n"
+   end
+
+   function _render_link( node )
+      i = bless(node.infos)
+      
+      link = "<ulink url=\"" + strEscape(i.name) + "\">" +
+             _sgmlEscape(i.text ? i.text : i.name) + "</ulink>"
+      return link
+   end
+
+
+   function _render_file( node )
+      //todo
+   end
+
+   function _render_quote( node )
+      return "<blockquote><para>" + self.rcont(node) +"</para></blockquote>\n"
+   end
+
+   function _render_img( node )
+      // todo
+   end
+
+   function _render_code( node )
+      return "<programlisting>\n"+ self.rcont(node) + "</programlisting>\n"
+   end
+
+   function _render_plugin( node )
+      // not supported
+   end
+
+end
+
+
+function _sgmlEscape( content )
+   return content.replace( "&", "&amper").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
+end

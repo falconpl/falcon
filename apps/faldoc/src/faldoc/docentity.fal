@@ -95,9 +95,9 @@ class Entity( content, file, line )
    end
 
    function parseNodeContent( node, onGroupingChange )
-      
-      while node != nil
 
+      while node != nil
+      
          // go deep before proceeding
          if node.firstChild
             // ignore the result of the analisys of the first-level children.
@@ -159,12 +159,10 @@ class Entity( content, file, line )
 
             case "@begingroup", "@beginset", "@beginmodule"
                onGroupingChange( line, node.type, node.infos["name"] )
-               isASimpleCommand = true
                node = node.remove()
 
             case "@endgroup", "@endnset", "@endmodule"
                onGroupingChange( line, node.type, nil )
-               isASimpleCommand = true
                node = node.remove()
                
             // we have the type defined!
@@ -189,12 +187,12 @@ class Entity( content, file, line )
                self.name = node.infos["name"]
                self.type = node.type[1:]
                self.props[ "title" ] = node.infos["title"]
-               isASimpleCommand = true
                node = node.remove()
 
             case "@main"
                self.name = "#main"
                self.type = "main"
+               self.props["title"] = node.infos["title"]
                node = node.remove()
 
             case "cmd_unrecognized"
@@ -206,8 +204,6 @@ class Entity( content, file, line )
                node = node.next
          end
       end
-      
-      return not isASimpleCommand
    end
 
 

@@ -186,8 +186,10 @@ class FileContext( file, defmod )
          ectx = p.parse( cnt )
          entity = docentity.Entity( cnt, self.file, line)
          entity.pcontent = ectx
-         if not entity.parseContent( self.onGroupingChange )
-            // if the entity is just a set of document-wide commands, return.
+         entity.parseContent( self.onGroupingChange )
+         
+         // if the entity is just a set of document-wide commands, return.
+         if ectx.topNode.firstChild == nil
             return nil
          end
 
