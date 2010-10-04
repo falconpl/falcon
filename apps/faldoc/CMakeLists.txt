@@ -31,9 +31,9 @@ add_custom_command(
   COMMAND ${_cmd}
 )
 
-add_custom_target(faldoc-package ALL DEPENDS faldoc/faldoc.fal)
+add_custom_target(faldoc ALL DEPENDS faldoc/faldoc.fal)
 if(Falcon_IN_CORE_SOURCETREE)
-  add_dependencies(faldoc-package falcon Falcon_Feathers)
+  add_dependencies(faldoc falcon Falcon_Feathers)
 endif()
 
 #workaround for falpack shortcoming
