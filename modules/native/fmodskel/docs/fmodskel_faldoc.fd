@@ -21,7 +21,6 @@ Version = <version>
 # Faldoc Input settings
 ################################################
 
-<<<<<<< HEAD:docs/faldoc.fd
 #Input.directory=../engine/core_module
 #Input.directory=../modules/falcon
 
@@ -32,13 +31,6 @@ Version = <version>
 Input.wildcard=*.cpp     #we use only...
 Input.wildcard=*.fal
 Input.recursive=true
-=======
-Input.directory=../src
-#you may place other input directory here
-
-Input.wildcard=*.cpp     #we use only...
-Input.recursive=false
->>>>>>> 07f750e40ec589c74f290296c9e9169088a6cbf1:modules/native/fmodskel/docs/fmodskel_faldoc.fd
 
 # Other files may be specified here
 #Input.extra=main.fd
@@ -48,11 +40,8 @@ Input.recursive=false
 ################################################
 
 Output.module=html
-<<<<<<< HEAD:docs/faldoc.fd
 Output.module=list
 Output.module=docbook
-=======
->>>>>>> 07f750e40ec589c74f290296c9e9169088a6cbf1:modules/native/fmodskel/docs/fmodskel_faldoc.fd
 
 ################################################
 # Faldoc HTML Output settings
@@ -62,8 +51,7 @@ Output.module=docbook
 
 Output.html.directory=html
 Output.html.url=.
-<<<<<<< HEAD:docs/faldoc.fd
-Output.html.doctitle=Falcon Function Reference
+Output.html.doctitle=@PROJECT_NAME@ module Function Reference
 
 ################################################
 # Faldoc listing Output settings
@@ -85,8 +73,3 @@ Output.docbook.copyright.year = 2010
 Output.docbook.copyright.Holder = The Falcon Committee
 Output.docbook.frame = book
 
-
-
-=======
-Output.html.doctitle=@PROJECT_NAME@ module Function Reference
->>>>>>> 07f750e40ec589c74f290296c9e9169088a6cbf1:modules/native/fmodskel/docs/fmodskel_faldoc.fd
