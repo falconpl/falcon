@@ -123,7 +123,7 @@ bool fal_mkdir( const String &f, int32 &fsStatus )
 {
    AutoCString filename( f );
 
-   if ( ::mkdir( filename.c_str(), 0777 ) == 0 ) {
+   if ( ::mkdir( filename.c_str(), 0744 ) == 0 ) {
       fsStatus = 0;
       return true;
    }
