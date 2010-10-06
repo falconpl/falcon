@@ -17,4 +17,5 @@ add_library(compiler_fm MODULE
 )
 
 falcon_finalize_module( compiler_fm )
- 
+
+set(_project_targets ${_project_targets} compiler_fm PARENT_SCOPE)

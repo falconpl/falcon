@@ -27,3 +27,4 @@ add_library(mxml_fm MODULE
 
 falcon_finalize_module( mxml_fm )
  
+set(_project_targets ${_project_targets} mxml_fm PARENT_SCOPE)

@@ -4,32 +4,22 @@
 # Faldoc file for core module.
 #
 
-LogLevel = 4
-AutoBrief = true
-GetUndoc = true
-GetPrivate = false
-
 ################################################
 # Documentation generic data
 ################################################
 
 Title = Falcon Core Module
 Author = The Falcon Committee
-Version = 0.9.6.6
+Version = @FALCON_VERSION_ID@
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-#Input.directory=../engine/core_module
-#Input.directory=../modules/falcon
-
-#By default, input directories are also roots for module names, but...
-# Input.moduleRoot = ../modules/falcon
-# Input.moduleRoot = ../... ....
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=engine/core_module
 
 Input.wildcard=*.cpp     #we use only...
-Input.wildcard=*.fal
 Input.recursive=true
 
 # Other files may be specified here
@@ -41,7 +31,6 @@ Input.extra=main.fd
 
 Output.module=html
 Output.module=list
-Output.module=docbook
 
 ################################################
 # Faldoc HTML Output settings
@@ -49,7 +38,7 @@ Output.module=docbook
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.6.6
+Output.html.directory=@output_dir@
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
 
@@ -57,21 +46,9 @@ Output.html.doctitle=Falcon Function Reference
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=coreModule-0.9.6.6.lst
+Output.list.file=@output_dir@/../coreModule-@FALCON_VERSION_ID@.lst
 Output.list.doctitle=Falcon Core Module - Function List
 Output.list.bytype=true
 Output.list.members=true
 Output.list.brief=true
-
-################################################
-# Faldoc listing Output settings
-################################################
-
-Output.docbook.file = falcon-db0967.xml
-Output.docbook.encoding = utf-8
-Output.docbook.copyright.year = 2010
-Output.docbook.copyright.Holder = The Falcon Committee
-Output.docbook.frame = book
-
-
 

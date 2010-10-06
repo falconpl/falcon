@@ -1,0 +1,42 @@
+if(NOT executable)
+  message(FATAL_ERROR "missing -Dexecutable=..")
+endif()
+#
+if(NOT arguments)
+  message(FATAL_ERROR "missing -Darguments=\"..\"")
+endif()
+#
+if(NOT workdir)
+  message(FATAL_ERROR "missing -Dworkdir=..")
+endif()
+
+find_program(EXECUTABLE
+  NAMES ${executable}
+  HINTS "@CMAKE_BINARY_DIR@/bin"
+  NO_DEFAULT_PATH
+)
+#
+if(NOT EXECUTABLE)
+  message(FATAL_ERROR "${executable} executable not found")
+endif()
+
+if(NOT WIN32)
+  set(ENV{LD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{LD_LIBRARY_PATH}")
+endif()
+
+separate_arguments(arguments)
+set(cmd ${EXECUTABLE} -L "@CMAKE_BINARY_DIR@/@FALCON_MOD_DIR@" ${arguments})
+separate_arguments(cmd)
+execute_process(
+  COMMAND ${cmd}
+  WORKING_DIRECTORY ${workdir}
+  RESULT_VARIABLE res
+  ERROR_VARIABLE err
+)
+
+if(res)
+  if(NOT err STREQUAL "")
+    message("error:${err}")
+  endif()
+  message(SEND_ERROR "${res}")
+endif()

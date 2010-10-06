@@ -9,7 +9,8 @@
 
 set( cmake_mod_files
    FalconConfig.cmake
-   FalconConfigVersion.cmake )
+   falcon-core-config.cmake
+   falcon-core-config-version.cmake )
    
 foreach(item ${cmake_mod_files} )
   message( "Configuring ${item}" )
@@ -18,7 +19,7 @@ foreach(item ${cmake_mod_files} )
     ESCAPE_QUOTES @ONLY)
 
     #Create installation files from in files
-    list( APPEND cmake_mod_files_inst "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
+    list( APPEND cmake_mod_files_inst ${CMAKE_CURRENT_BINARY_DIR}/${item} )
 endforeach()
 
 #
@@ -63,6 +64,6 @@ install(
 )
 
 install(
-   FILES ${cmake_mod_files_inst}
+   FILES ${cmake_mod_files_inst} 
    DESTINATION ${FALCON_CMAKE_DIR}
 )

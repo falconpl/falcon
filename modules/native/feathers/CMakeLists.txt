@@ -22,6 +22,8 @@ include_directories(
   ${Falcon_INCLUDE_DIRS}
 )
 
+unset(_project_targets)
+#
 add_subdirectory(compiler)
 add_subdirectory(confparser)
 add_subdirectory(funcext)
@@ -34,15 +36,14 @@ add_subdirectory(regex)
 add_subdirectory(socket)
 add_subdirectory(threading)
 add_subdirectory(zlib)
+#
+add_custom_target(Falcon_Feathers)
+add_dependencies(Falcon_Feathers ${_project_targets})
+unset(_project_targets)
 
 # install headers
 add_subdirectory(include)
 
-option(FALCON_WITH_CTEST_TESTS "" off)
-if(FALCON_WITH_CTEST_TESTS)
-  enable_testing()
-  include(CTest)
-  add_subdirectory(tests)
+if(NOT Falcon_IN_CORE_SOURCETREE)
+  add_subdirectory(docs)
 endif()
-
- 

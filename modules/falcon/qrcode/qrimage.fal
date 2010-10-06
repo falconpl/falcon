@@ -1,0 +1,84 @@
+/*#
+ * @file        qrimage.fal
+ * @brief       Image manipulation.
+ * @begin       11-Sep-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+load gd2
+ 
+object QrImage
+    function png(frame, outFile, pixelPerPoint, outerFrame, saveAndPrint)
+        if saveAndPrint == nil; saveAndPrint = false; end
+        img = self._image(frame, pixelPerPoint, outerFrame)
+
+        if outFile != nil
+            outputStream = OutputStream(outFile)
+            img.Png(outputStream)
+            outputStream.close()
+        end
+
+        if outFile == nil or saveAndPrint
+            img.Png(stdOut())
+        end
+    end
+
+    function jpg(frame, outFile, pixelPerPoint, outerFrame, q, saveAndPrint)
+        if pixelPerPoint == nil; pixelPerPoint = 8; end
+        if q == nil; q = 85; end
+        if saveAndPrint == nil; saveAndPrint = false; end
+
+        img = self._image(frame, pixelPerPoint, outerFrame)
+
+        if outFile != nil
+            outputStream = OutputStream(outFile)
+            img.Jpeg(outputStream, q)
+            outputStream.close()
+        end
+
+        if outFile == nil or saveAndPrint
+            img.Jpeg(stdOut(), q)
+        end
+    end
+
+    function _image(frame, pixelPerPoint, outerFrame)
+        if frame == nil
+            raise QrError(QrError.invalid_param, "frame is null")
+        end
+
+        if pixelPerPoint == nil; pixelPerPoint = 4; end
+        if outerFrame == nil; outerFrame = 4; end
+
+        h = len(frame)
+        w = len(frame[0])
+
+        imgH = h + 2 * outerFrame
+        imgW = w + 2 * outerFrame
+
+        baseImg = GdImage(imgW, imgH)
+        col = .[
+            baseImg.ColorAllocate(255, 255, 255)
+            baseImg.ColorAllocate(0, 0, 0)
+        ]
+
+        baseImg.Fill(0, 0, col[0])
+
+        for y in [0:h]
+            for x in [0:w]
+                if frame[y][x] == '1'
+                    baseImg.SetPixel(x + outerFrame, y + outerFrame, col[1])
+                end
+            end
+        end
+
+        targetImg = GdImage(imgW * pixelPerPoint, imgH * pixelPerPoint)
+        targetImg.CopyResized(baseImg, 0, 0, 0, 0, imgW * pixelPerPoint, imgH * pixelPerPoint, imgW, imgH)
+
+        return targetImg
+    end
+end
+
+export QrImage

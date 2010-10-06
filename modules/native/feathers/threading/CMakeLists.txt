@@ -30,3 +30,4 @@ add_library(threading_fm MODULE
 
 falcon_finalize_module( threading_fm )
  
+set(_project_targets ${_project_targets} threading_fm PARENT_SCOPE)
