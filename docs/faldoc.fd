@@ -71,6 +71,7 @@ Output.docbook.file = falcon-db0967.xml
 Output.docbook.encoding = utf-8
 Output.docbook.copyright.year = 2010
 Output.docbook.copyright.Holder = The Falcon Committee
+Output.docbook.frame = book
 
 
 

@@ -14,17 +14,29 @@
 */
 
 
-
 /*# Doocbook Renderer.
+   @optparam frame An object used to surround produced data with proper docbook framing.
 
    The docbook renderer transforms the input text in a valid docbook output,
    which may be inserted under a <section> entry of a DocBook 5.1 document.
 
-   Heading elements are treated as sections.
+   Heading elements are treated as sections, and properly nested based on their level.
+
+   If given, the @b frame object will be used to complete the document by appending
+   and prepending proper XML and docbook starters.
+
+   The @b frame object will provide an open() method that shall return the docbook
+   code to declare the document (including the xml document declaration) and a close()
+   method so that the whole document can be built through
+
+   @code
+      frame.open() + rendered_content + frame.close()
+   @endcode
 */
-class Renderer()
+class Renderer( frame )
 
    blevel = 0
+   frame = frame
 
    renderers = [
       "text" => {node => _sgmlEscape(node.content) },
@@ -61,22 +73,38 @@ class Renderer()
       "tag" => self._renderUNKNOWN
    ]
 
+   init
+      if frame
+         if not frame provides open or not frame provides close
+            raise GenericError( 10000, i"The 'frame' parameter must provide a callable open/close method pairs" )
+         end
+      end
+   end
 
    function render( context )
 
       //preprocess standouts
       //self.preprocess( context.standouts )
-
+      
       // and return the content
       content = self.rcont( context.topNode )
 
       // close opened sections
       while self.blevel > 0
-         content += "</section>\n"
+         if self.frame
+            content += self.frame.closeSection( self.blevel )
+         else
+            content += "</section>\n"
+         end
          self.blevel--
       end
 
-      return content
+      f = self.frame
+      if f
+         return f.open() + content + f.close()
+      else
+         return content
+      end
    end
 
    /*
@@ -118,7 +146,8 @@ class Renderer()
 
 
    function _render_para( node )
-      return "<para>" + self.rcont(node)+"</para>\n"
+      content = self.rcont(node)
+      return content ? "<para>" + content +"</para>\n" : ""
    end
 
    function _render_markup( tag, attribs, node )
@@ -142,20 +171,24 @@ class Renderer()
    function render_header_level( l, content, id )
       prefix = ""
       while self.blevel+1 < l
-         prefix += "<section>\n"
          self.blevel++
+         prefix += self.frame ? self.frame.openSection( self.blevel, id ) :  "<section>\n"
       end
 
       while self.blevel +1 > l
-         prefix += "</section>\n"
+         prefix += self.frame ? self.frame.closeSection( self.blevel ) :  "<section>\n"
          self.blevel--
       end
 
       self.blevel++
-      
-      content = "<section id=\"" + URI.encode(id) +"\">\n"+
-                "<title>" + content + "</title>\n"
-      return prefix + content
+
+      if self.frame
+         header = self.frame.openSection( self.blevel, id )
+      else
+         header = "<section id=\"" + URI.encode(id) +"\">\n"
+      end
+
+      return prefix + header + "<title>" + content + "</title>\n"
    end
 
 
@@ -217,4 +250,190 @@ end
 
 function _sgmlEscape( content )
    return content.replace( "&", "&amper").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
+end
+
+
+/*# Frame creating a book frame
+   @param encoding The target encoding that will be placed in the xml declaration
+   @param name The name of the book
+   @param title Title of the book as a whole
+   @optparam author The author
+   @optparam copyyear Year of copyright
+   @optparam copyholder Holder of copyright
+*/
+
+class BookFrame( encoding, name, title, author, copyyear, copyholder )
+   encoding = encoding
+   name = name
+   title = title
+   author = author
+   copyyear = copyyear
+   copyholder = copyholder
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "
+         <!DOCTYPE article
+         PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
+         \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
+      str += "<book>\n"
+      str += "<bookinfo>\n"
+      str += "<title>" + _sgmlEscape( self.title ) + "</title>\n"
+      if self.author
+         str += "<author>" + _sgmlEscape( self.title ) + "</author>\n"
+      end
+      if self.copyyear and self.copyholder
+         str+= "<copyright>\n"
+         str += "<year>" + self.copyear + "</year>\n"
+         str += "<holder>" + _sgmlEscape( self.copyholder ) + "</holder>\n"
+         str+= "</copyright>\n"
+      end
+      str += "</bookinfo>\n"
+
+      return str
+   end
+
+   function close()
+      return  "</book>\n"
+   end
+
+   function openSection( level, id )
+      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      if level == 0 
+         return @"<chapter$(ids)>\n"
+      else
+         return @"<sect$(level)$(ids)>\n"
+      end
+   end
+
+   function closeSection( level )
+      if level == 0
+         return "</chapter>\n"
+      else
+         return @"</sect$(level)>\n"
+      end
+   end
+end
+
+
+/*# Frame creating a book frame -- in docbook 5
+   @param encoding The target encoding that will be placed in the xml declaration
+   @param name The name of the book
+   @param title Title of the book as a whole
+   @optparam author The author
+   @optparam copyyear Year of copyright
+   @optparam copyholder Holder of copyright
+*/
+
+class Book5Frame( encoding, name, title, author, copyyear, copyholder )
+   encoding = encoding
+   name = name
+   title = title
+   author = author
+   copyyear = copyyear
+   copyholder = copyholder
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "<book xml:id=\""+self.name+"\" xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\">\n"
+      str += "<bookinfo>\n"
+      str += "<title>" + _sgmlEscape( self.title ) + "</title>\n"
+      if self.author
+         str += "<author>" + _sgmlEscape( self.title ) + "</author>\n"
+      end
+      if self.copyyear and self.copyholder
+         str+= "<copyright>\n"
+         str += "<year>" + self.copyear + "</year>\n"
+         str += "<holder>" + _sgmlEscape( self.copyholder ) + "</holder>\n"
+         str+= "</copyright>\n"
+      end
+      str += "</bookinfo>\n"
+
+      return str
+   end
+
+   function close()
+      return  "</book>\n"
+   end
+
+   function openSection( level, id )
+      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      if level == 0
+         return @"<chapter$(ids)>\n"
+      else
+         return @"<section$(ids)>\n"
+      end
+   end
+
+   function closeSection( level )
+      if level == 0
+         return "</chapter>\n"
+      else
+         return "</section>\n"
+      end
+   end
+end
+
+
+
+/*# Frame creating an article frame
+   @param encoding The target encoding that will be placed in the xml declaration
+   @optparam optparam lang The language of the article.
+*/
+
+class ArticleFrame( encoding, lang )
+   encoding = encoding
+   lang = lang ? lang : ""
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "
+         <!DOCTYPE article
+         PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
+         \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
+      str += "<article lang=\"" + self.lang + "\">\n"
+      return str
+   end
+
+   function close()
+      return "</article>\n"
+   end
+
+   function openSection( level, id )
+      return "<sect" + (level + 1) + (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+   end
+
+   function closeSection( level )
+      return "</sect" + (level+1) + ">\n"
+   end
+
+end
+
+/*# Frame creating an article frame in DocBook 5
+   @param encoding The target encoding that will be placed in the xml declaration
+   @optparam optparam lang The language of the article.
+*/
+
+class Article5Frame( encoding, lang )
+   encoding = encoding
+   lang = lang ? lang : ""
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "<article xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\" lang=\"" + self.lang + "\">\n"
+      return str
+   end
+
+   function close()
+      return "</article>\n"
+   end
+
+   function openSection( level, id )
+      return "<section"+ (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+   end
+
+   function closeSection( level )
+      return "</section>\n"
+   end
+
 end
