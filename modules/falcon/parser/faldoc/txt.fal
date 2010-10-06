@@ -40,7 +40,7 @@ ParaCommands =  .[
            {ctx => ctx.pushNode(InfoNode("@note", ['line' => ctx.row ] )) })
 
    ReRule( '^\s*@return\s+', "para",
-           {ctx => ctx.pushNode(InfoNode("@note", ['line' => ctx.row ] )) })
+           {ctx => ctx.pushNode(InfoNode("@return", ['line' => ctx.row ] )) })
 
    ReRule( '^\s*@main\s+(.*)$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@main", ['line' => ctx.row, 'title' => p0 ] )) })
@@ -64,7 +64,9 @@ ParaCommands =  .[
            {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@funset", ['line' => ctx.row, 'name'=> p0, 'title' => p1 ] )) })
            
    ReRule( '^\s*@page\s+(\w+)\s+(.*)$', "para",
-           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] )) })
+           {ctx, d0, p0, p1 =>
+               ctx.add(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] ))
+               ctx.pushNode(Node("para")) })
 
    ReRule( '^\s*@prop\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })

@@ -141,7 +141,7 @@ class Renderer( frame )
    //
 
    function _renderUNKNOWN( node )
-      return self.rcont( node )
+      return "<comment>UNKNOWN NODE TYPE: " + node.type() + " - " +self.rcont( node ) + "</comment>"
    end
 
 
@@ -164,31 +164,34 @@ class Renderer( frame )
 
 
    function _render_header( node )
-      content =  self.rcont( node )
-      return self.render_header_level( node.level, content, content )
+      content = self.rcont( node )
+      return self.make_section( node.level, content, URI.encode(content) )
+   end
+
+   function make_section( level, id, title )
+      prefix = self.go_to_level( level-1 )
+      self.blevel = level
+      if self.frame
+         header = self.frame.openSection( level, id )
+      else
+         header = "<section id=\"" + id +"\">\n"
+      end
+      return prefix + header + "<title>" + title + "</title>\n"
    end
    
-   function render_header_level( l, content, id )
+   function go_to_level( l )
       prefix = ""
-      while self.blevel+1 < l
+      while self.blevel < l
          self.blevel++
-         prefix += self.frame ? self.frame.openSection( self.blevel, id ) :  "<section>\n"
+         prefix += self.frame ? self.frame.openSection( self.blevel ) :  "<section>\n"
       end
 
-      while self.blevel +1 > l
-         prefix += self.frame ? self.frame.closeSection( self.blevel ) :  "<section>\n"
+      while self.blevel > l
+         prefix += self.frame ? self.frame.closeSection( self.blevel ) :  "</section>\n"
          self.blevel--
       end
 
-      self.blevel++
-
-      if self.frame
-         header = self.frame.openSection( self.blevel, id )
-      else
-         header = "<section id=\"" + URI.encode(id) +"\">\n"
-      end
-
-      return prefix + header + "<title>" + content + "</title>\n"
+      return prefix
    end
 
 
@@ -230,7 +233,13 @@ class Renderer( frame )
    end
 
    function _render_quote( node )
-      return "<blockquote><para>" + self.rcont(node) +"</para></blockquote>\n"
+      attrib = node.infos["link"]
+      if attrib
+         return "<blockquote><attribution>" + _sgmlEscape(attrib) +
+                "</attribution>\n<para>" + self.rcont(node) +"</para></blockquote>\n"
+      else
+         return "<blockquote><para>" + self.rcont(node) +"</para></blockquote>\n"
+      end
    end
 
    function _render_img( node )
@@ -260,6 +269,8 @@ end
    @optparam author The author
    @optparam copyyear Year of copyright
    @optparam copyholder Holder of copyright
+
+   @todo Author fields broken up
 */
 
 class BookFrame( encoding, name, title, author, copyyear, copyholder )
@@ -273,18 +284,18 @@ class BookFrame( encoding, name, title, author, copyyear, copyholder )
    function open()
       str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
       str += "
-         <!DOCTYPE article
+         <!DOCTYPE book
          PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
          \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
       str += "<book>\n"
       str += "<bookinfo>\n"
       str += "<title>" + _sgmlEscape( self.title ) + "</title>\n"
       if self.author
-         str += "<author>" + _sgmlEscape( self.title ) + "</author>\n"
+         str += "<author><firstname>" + _sgmlEscape( self.author ) + "</firstname></author>\n"
       end
       if self.copyyear and self.copyholder
          str+= "<copyright>\n"
-         str += "<year>" + self.copyear + "</year>\n"
+         str += "<year>" + self.copyyear + "</year>\n"
          str += "<holder>" + _sgmlEscape( self.copyholder ) + "</holder>\n"
          str+= "</copyright>\n"
       end
@@ -323,6 +334,8 @@ end
    @optparam author The author
    @optparam copyyear Year of copyright
    @optparam copyholder Holder of copyright
+
+   @todo Author fields broken up
 */
 
 class Book5Frame( encoding, name, title, author, copyyear, copyholder )
@@ -339,11 +352,11 @@ class Book5Frame( encoding, name, title, author, copyyear, copyholder )
       str += "<bookinfo>\n"
       str += "<title>" + _sgmlEscape( self.title ) + "</title>\n"
       if self.author
-         str += "<author>" + _sgmlEscape( self.title ) + "</author>\n"
+         str += "<author><firstname>" + _sgmlEscape( self.author ) + "</firstname></author>\n"
       end
       if self.copyyear and self.copyholder
          str+= "<copyright>\n"
-         str += "<year>" + self.copyear + "</year>\n"
+         str += "<year>" + self.copyyear + "</year>\n"
          str += "<holder>" + _sgmlEscape( self.copyholder ) + "</holder>\n"
          str+= "</copyright>\n"
       end
@@ -391,7 +404,9 @@ class ArticleFrame( encoding, lang )
          <!DOCTYPE article
          PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
          \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
-      str += "<article lang=\"" + self.lang + "\">\n"
+      str += "<article"
+      if self.lang: str += " lang=\"" + self.lang + "\""
+      str+=">\n"
       return str
    end
 
@@ -420,7 +435,9 @@ class Article5Frame( encoding, lang )
 
    function open()
       str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
-      str += "<article xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\" lang=\"" + self.lang + "\">\n"
+      str += "<article xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\""
+      if self.lang: str += " lang=\"" + self.lang + "\""
+      str+=">\n"
       return str
    end
 

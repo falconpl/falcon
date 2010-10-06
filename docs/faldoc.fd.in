@@ -18,8 +18,10 @@ Version = @FALCON_VERSION_ID@
 
 Input.basedir=@PROJECT_SOURCE_DIR@
 Input.directory=engine/core_module
+Input.directory=modules/falcon
 
-Input.wildcard=*.cpp     #we use only...
+Input.wildcard=*.cpp    
+Input.wildcard=*.fal
 Input.recursive=true
 
 # Other files may be specified here
@@ -31,6 +33,7 @@ Input.extra=main.fd
 
 Output.module=html
 Output.module=list
+Output.module=docbook
 
 ################################################
 # Faldoc HTML Output settings
@@ -38,7 +41,7 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=@output_dir@
+Output.html.directory=@output_dir@/html
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
 
@@ -46,9 +49,20 @@ Output.html.doctitle=Falcon Function Reference
 # Faldoc listing Output settings
 ################################################
 
-Output.list.file=@output_dir@/../coreModule-@FALCON_VERSION_ID@.lst
+Output.list.file=@output_dir@/@FALCON_VERSION_ID@.lst
 Output.list.doctitle=Falcon Core Module - Function List
 Output.list.bytype=true
 Output.list.members=true
 Output.list.brief=true
 
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.docbook.file = @output_dir@/@FALCON_VERSION_ID@-docbook.xml
+Output.docbook.encoding = utf-8
+Output.docbook.copyright.year = 2010
+Output.docbook.copyright.holder = The Falcon Committee
+
+#Can be "book", "article", "book5", "article5"
+Output.docbook.frame = book

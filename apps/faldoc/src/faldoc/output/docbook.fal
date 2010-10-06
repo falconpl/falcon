@@ -21,42 +21,33 @@ function faldoc_output( doctree, conf )
    DOCBOOKGenerator( doctree, conf ).go()
 end
 
-class FaldocBookRenderer( frame ) from docbook.Renderer
-
-   myframe = frame
-   
+class FaldocBookRenderer( frame ) from docbook.Renderer( frame )
    init
       self.renderers += [
          "@section" => self.renderSection,
+         "@note" => self.renderNote,
          "@a" => self.render_a
       ]
-
-      self.blevel = 1
    end
 
    function render( context )
-
       content = self.rcont( context.topNode )
-
-      // close opened sections
-      while self.blevel > 1
-         content += self.myframe.closeSection( self.blevel )
-         self.blevel--
-      end
-      
       return content
    end
 
    function renderSection( node )
-      
-      front = self.myframe.openSection( self.blevel, node.infos["name"]  ) +
-         "<title>" + _htmlEscape( node.infos["title"]) + "</title>\n"
-      self.blevel ++ 
+      level = self.blevel
+      front = self.make_section( level+1, node.infos["name"], node.infos["title"] )
       content = self.rcont(node)
-      self.blevel --
-      back = self.myframe.closeSection( self.blevel )
-
+      back = self.go_to_level( level )
+      
+      // the level will be closed when necessary
       return front + content + back
+   end
+
+   function renderNote( node )
+      content = self.rcont( node )
+      return "<note><para>" + content + "</para></note>\n"
    end
    
    function render_a( node )
@@ -80,6 +71,7 @@ class DOCBOOKGenerator( doctree, conf )
    _rndr = nil
 
    init
+      inspect (conf )
       if "frame" in conf
          switch conf["frame"]
             case "article"
@@ -89,7 +81,7 @@ class DOCBOOKGenerator( doctree, conf )
                self.frame = docbook.BookFrame( self.encoding, fname, self.doc.title, self.doc.author, self.copyyear, self.copyholder )
             case "article5"
                if self.file: fname = fileName( self.file )
-               self.frame = docbook.Article5Frame( self.encoding, fname, self.doc.title, self.doc.author, self.copyyear, self.copyholder )
+               self.frame = docbook.Article5Frame( self.encoding )
             case "book5"
                if self.file: fname = fileName( self.file )
                self.frame = docbook.Book5Frame( self.encoding, fname, self.doc.title, self.doc.author, self.copyyear, self.copyholder )
@@ -154,13 +146,13 @@ class DOCBOOKGenerator( doctree, conf )
       entities = module.groupEntities()
       if "page" in entities
          for page in entities["page"]
-            self._outfile.write(
-               self._rndr.render( page.pcontent )
-            )
+            self._outfile.writeText( self._rndr.make_section(1, page.name, page.props["title"] ) )
+            self._outfile.writeText( self._rndr.render( page.pcontent ) )
          end
       end
       
-      self._outfile.writeText( self.frame.closeSection(0) )
+      self._outfile.writeText( self._rndr.go_to_level(0) )
+      self._outfile.writeText(self.frame.closeSection(0))
    end
 
 
