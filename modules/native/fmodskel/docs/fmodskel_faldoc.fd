@@ -1,35 +1,35 @@
 #
 # FALDOC - Falcon Documentation system
 #
-# Faldoc file for core module.
+# Faldoc file for @PROJECT_NAME@
 #
 
 ################################################
 # Documentation generic data
 ################################################
 
-Title = Falcon Core Module
-Author = The Falcon Committee
-Version = 0.9.6.6
+Title = @PROJECT_NAME@
+Author = @AUTHOR@
+Version = <version>
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-Input.directory=../engine/core_module
+Input.directory=../src
+#you may place other input directory here
 
 Input.wildcard=*.cpp     #we use only...
-Input.recursive=true
+Input.recursive=false
 
 # Other files may be specified here
-Input.extra=main.fd
+#Input.extra=main.fd
 
 ################################################
 # Faldoc Output settings
 ################################################
 
 Output.module=html
-Output.module=list
 
 ################################################
 # Faldoc HTML Output settings
@@ -37,17 +37,6 @@ Output.module=list
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.6.6
+Output.html.directory=html
 Output.html.url=.
-Output.html.doctitle=Falcon Function Reference
-
-################################################
-# Faldoc listing Output settings
-################################################
-
-Output.list.file=coreModule-0.9.6.6.lst
-Output.list.doctitle=Falcon Core Module - Function List
-Output.list.bytype=true
-Output.list.members=true
-Output.list.brief=true
-
+Output.html.doctitle=@PROJECT_NAME@ module Function Reference

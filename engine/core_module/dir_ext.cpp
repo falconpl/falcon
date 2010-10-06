@@ -767,25 +767,43 @@ FALCON_FUNC  Directory_init ( ::Falcon::VMachine *vm )
 /*#
    @method read Directory
    @brief Returns the next entry in the directory.
-   @return A string representing the next entry, or nil when no new entries are left.
+   @return A string representing the next entry, or oob(0) when no new entries are left.
+
+   The usage is
+   @code
+   dir =  Directory( "." )
+   while entry = dir.read(): > entry
+   dir.close()
+   @endcode
+   or
+   @code
+   dir = Directory( "." )
+   for entry in dir.read: > entry
+   dir.close()
+   @endcode
+
 */
 FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm )
 {
    DirEntry *dir = dyncast<DirEntry *>(vm->self().asObject()->getFalconData());
 
    String reply;
-   if ( dir->read( reply ) ) {
+   if ( dir->read( reply ) )
+   {
       CoreString *ret = new CoreString;
       ret->bufferize( reply );
       vm->retval( ret );
    }
-   else {
-      if ( dir->lastError() != 0 ) {
+   else
+   {
+      if ( dir->lastError() != 0 )
+      {
          throw new IoError( ErrorParam( e_io_error, __LINE__ )
             .origin( e_orig_runtime )
             .sysError( (uint32) Sys::_lastError() ) );
       }
-      vm->retnil();
+      vm->retval( (int64)0 );
+      vm->regA().setOob( true );
    }
 }
 

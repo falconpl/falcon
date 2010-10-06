@@ -1,0 +1,136 @@
+######################################################################
+# The Falcon Programming Language.
+# CMake module for find_package( falcon )
+######################################################################
+#
+# Generates the following variables.
+# - Falcon_INCLUDE_DIRS: List of directories for inclusion
+# - Falcon_LIBRARY_DIRS: List of directories for library search
+# - Falcon_BINARY_DIR: Where the falcon binary resides
+# - Falcon_MODULES_DIR: Default installation directory for modules
+#
+# - Falcon_LIBRARIES: Libraries needed for link.
+#
+######################################################################
+# Notes: set -DMOD_INSTALL=<target> to have modules installed in a
+#        non-default directory.
+######################################################################
+
+get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+
+# OPTIONAL for the case this project is built as a subproject.
+if(NOT Falcon_IN_CORE_SOURCETREE)
+  include(${SELF_DIR}/falcon-core-targets.cmake OPTIONAL)
+endif()
+
+set(Falcon_APP_DIR "@FALCON_APP_DIR@")
+set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
+set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
+set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
+set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
+set(Falcon_INC_DIR "@FALCON_INC_DIR@")
+set(Falcon_CMAKE_DIR "@FALCON_CMAKE_DIR@")
+
+# Allow flexible installation location to perform out-of-install module builds
+# Also, on WIN32, the target installation directory is decided during package install.
+string(REGEX REPLACE "[^/]+" ".." _ups "${Falcon_CMAKE_DIR}")
+get_filename_component(Falcon_PREFIX ${SELF_DIR}/${_ups} ABSOLUTE)
+
+set(Falcon_INCLUDE_DIR "${Falcon_PREFIX}/@FALCON_INC_DIR@")
+set(Falcon_BINARY_DIR "${Falcon_PREFIX}/@FALCON_BIN_DIR@")
+set(Falcon_LIBRARY_DIR "${Falcon_PREFIX}/@FALCON_LIB_DIR@")
+set(Falcon_MODULES_DIR  "${Falcon_PREFIX}/@FALCON_MOD_DIR@")
+
+# If defined, prefer the source directory include files over the installed ones
+list(APPEND Falcon_INCLUDE_DIRS "${Falcon_INCLUDE_DIR}")
+
+#Versioning
+set( Falcon_VERSION "@FALCON_VERSION_ID@" )
+set( Falcon_VERSION_NAME "@FALCON_VERSION_NAME@" )
+#
+set( Falcon_MAJOR_VERSION @FALCON_VERSION_MAJOR@ )
+set( Falcon_MINOR_VERSION @FALCON_VERSION_MINOR@ )
+set( Falcon_SUBMINOR_VERSION @FALCON_VERSION_REVISION@ )
+set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
+
+if(NOT Falcon_IN_CORE_SOURCETREE)
+  #Check if everything is in place.
+  find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
+  find_program(Falcon_falpack_EXECUTABLE falpack "${Falcon_BINARY_DIR}")
+  find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
+  find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
+endif()
+
+# Prepare Falcon in development environment.
+list(APPEND Falcon_INCLUDE_DIRS  ${Falcon_INCLUDE_DIR})
+list(APPEND Falcon_LIBRARY_DIRS  ${Falcon_LIBRARY_DIR})
+
+set(Falcon_LIBRARIES falcon_engine)
+
+# for install(TARGETS .. ${FALCON_INSTALL_DESTINATIONS})
+set(FALCON_INSTALL_DESTINATIONS
+  RUNTIME DESTINATION ${Falcon_BIN_DIR}
+  LIBRARY DESTINATION ${Falcon_LIB_DIR}
+  ARCHIVE DESTINATION ${Falcon_ARCH_DIR}
+)
+# NOTE modules are installed via
+#   install(FILES .. DESTINATION ${FALCON_MOD_DIR})
+# since they are neither RUNTIME, LIBRARY nor ARCHIVE.
+
+if(WIN32)
+   #mingw requires -mthreads global option
+   if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+      list(APPEND CMAKE_EXE_LINKER_FLAGS -mthreads )
+      list(APPEND CMAKE_SHARED_LINKER_FLAGS -mthreads )
+      list(APPEND CMAKE_MODULE_LINKER_FLAGS -mthreads )
+   endif()
+endif(WIN32)
+
+
+macro( falcon_define_module varname modname )
+      set( ${varname} "${modname}_fm" )
+endmacro()
+
+function(falcon_install_module2 tgt dir )
+
+   if(NOT CMAKE_INSTALL_PREFIX STREQUAL "@CMAKE_INSTALL_PREFIX@")
+     message("WARNING: falcon was built with the with CMAKE_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@."
+             "The current prefix is ${CMAKE_INSTALL_PREFIX}.")
+   endif()
+
+   if(APPLE)
+      set_target_properties(${tgt} PROPERTIES
+         PREFIX ""
+         SUFFIX ".dylib" )
+   else()
+      set_target_properties(${tgt} PROPERTIES
+         PREFIX "" )
+   endif()
+
+   if( DEFINED MOD_INSTALL )
+      set( dest "${MOD_INSTALL}/${dir}" )
+   else()
+      set( dest "${Falcon_MOD_DIR}/${dir}" )
+   endif()
+
+  set_target_properties(${tgt} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}
+  )
+
+   install( TARGETS ${tgt}
+            DESTINATION ${dest} )
+endfunction()
+
+function(falcon_install_module tgt )
+   falcon_install_module2( "${tgt}" .)
+endfunction()
+
+function(falcon_finalize_module2 tgt libs)
+      target_link_libraries(${tgt} ${Falcon_LIBRARIES} ${libs} )
+      falcon_install_module( ${tgt} )
+endfunction()
+
+function(falcon_finalize_module tgt )
+      target_link_libraries(${tgt} ${Falcon_LIBRARIES} )
+      falcon_install_module( ${tgt} )
+endfunction()

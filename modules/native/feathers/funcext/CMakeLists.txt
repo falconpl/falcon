@@ -16,3 +16,4 @@ add_library(funcext_fm MODULE
 
 falcon_finalize_module( funcext_fm )
  
+set(_project_targets ${_project_targets} funcext_fm PARENT_SCOPE)

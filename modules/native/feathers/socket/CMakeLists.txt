@@ -47,3 +47,5 @@ if(WIN32)
 endif(WIN32)
 
 falcon_install_module( socket_fm ) 
+
+set(_project_targets ${_project_targets} socket_fm PARENT_SCOPE)
