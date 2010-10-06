@@ -81,7 +81,6 @@ class DOCBOOKGenerator( doctree, conf )
 
    init
       if "frame" in conf
-         fn = 
          switch conf["frame"]
             case "article"
                self.frame = docbook.ArticleFrame( self.encoding )
