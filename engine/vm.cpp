@@ -457,7 +457,7 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    if ( ! success )
    {
       // LiveModule is garbageable, cannot be destroyed.
-      return false;
+      return 0;
    }
 
    // We can now add the module to our list of available modules.
