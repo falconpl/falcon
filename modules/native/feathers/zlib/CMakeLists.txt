@@ -55,3 +55,4 @@ target_link_libraries(zlib_fm falcon_engine ${ZLIB_LIBRARIES})
 
 falcon_install_module( zlib_fm )
  
+set(_project_targets ${_project_targets} zlib_fm PARENT_SCOPE)

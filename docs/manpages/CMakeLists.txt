@@ -24,10 +24,14 @@ file(GLOB SRC "*.1" )
 foreach(man ${SRC})
    get_filename_component( mantarget ${man} NAME )
 
-   add_custom_target( ${mantarget} ALL
-     ${GZIP_TOOL} --best -c ${man} > ${mantarget}.gz
+   add_custom_command(
+     OUTPUT ${mantarget}.gz
+     COMMAND ${GZIP_TOOL} --best -c ${man} > ${mantarget}.gz
      DEPENDS ${man}
      COMMENT "Building ${mantarget}.gz"
+   )
+   add_custom_target( ${mantarget} ALL
+     DEPENDS ${mantarget}.gz
    )
 
    install(
