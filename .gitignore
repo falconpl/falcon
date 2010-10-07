@@ -1,5 +1,10 @@
 .directory
 *.fam
+
+# emacs
+.#*
+
+# Build directories
 build
 build_*
 bld
