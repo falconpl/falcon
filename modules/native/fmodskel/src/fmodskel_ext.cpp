@@ -1,28 +1,28 @@
 /*
-   @MAIN_PRJ@
-   FILE: @PROJECT_NAME@_ext.cpp
+   @{fmodskel_MAIN_PRJ}@
+   FILE: @{fmodskel_PROJECT_NAME}@_ext.cpp
 
-   @DESCRIPTION@
+   @{fmodskel_DESCRIPTION}@
    Interface extension functions
    -------------------------------------------------------------------
-   Author: @AUTHOR@
-   Begin: @DATE@
+   Author: @{fmodskel_AUTHOR}@
+   Begin: @{fmodskel_DATE}@
 
    -------------------------------------------------------------------
-   (C) Copyright @YEAR@: @COPYRIGHT@
+   (C) Copyright @{fmodskel_YEAR}@: @{fmodskel_COPYRIGHT}@
 
-   @LICENSE@
+   @{fmodskel_LICENSE}@
 */
 
 /** \file
-   @DESCRIPTION@
+   @{fmodskel_DESCRIPTION}@
    Interface extension functions
 */
 
 #include <falcon/engine.h>
-#include "@PROJECT_NAME@_mod.h"
-#include "@PROJECT_NAME@_ext.h"
-#include "@PROJECT_NAME@_st.h"
+#include "@{fmodskel_PROJECT_NAME}@_mod.h"
+#include "@{fmodskel_PROJECT_NAME}@_ext.h"
+#include "@{fmodskel_PROJECT_NAME}@_st.h"
 
 namespace Falcon { namespace Ext {
 
@@ -50,7 +50,7 @@ FALCON_FUNC  skeleton( ::Falcon::VMachine *vm )
    @return A message that can be internationalized.
 
    This function returns a string from the string table
-   (see @PROJECT_NAME@_st.h).
+   (see @{fmodskel_PROJECT_NAME}@_st.h).
 
    The returned string may be internationalized through
    the standard falcon internationalization system (the
@@ -62,9 +62,9 @@ FALCON_FUNC  skeleton( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  skeletonString( ::Falcon::VMachine *vm )
 {
-   vm->retval( FAL_STR( @PROJECT_NAME@_msg_1 ) );
+   vm->retval( FAL_STR( @{fmodskel_PROJECT_NAME}@_msg_1 ) );
 }
 
 }} // namespace Falcon::Ext
 
-/* end of @PROJECT_NAME@_mod.cpp */
+/* end of @{fmodskel_PROJECT_NAME}@_mod.cpp */

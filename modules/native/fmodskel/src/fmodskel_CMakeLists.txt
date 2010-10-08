@@ -1,11 +1,11 @@
 ####################################################################
-# @MAIN_PRJ@
+# @{fmodskel_MAIN_PRJ}@
 #
-# CMake configuration file for @PROJECT_NAME@
+# CMake configuration file for @{fmodskel_PROJECT_NAME}@
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE @PROJECT_NAME@ )
+falcon_define_module( CURRENT_MODULE @{fmodskel_PROJECT_NAME}@ )
 
 # Inclusion settings
 include_directories(
@@ -18,21 +18,21 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  @PROJECT_NAME@.cpp
-  @PROJECT_NAME@_ext.cpp
-  @PROJECT_NAME@_mod.cpp
-  @PROJECT_NAME@_srv.cpp
-  @PROJECT_NAME@_st.cpp
+  @{fmodskel_PROJECT_NAME}@.cpp
+  @{fmodskel_PROJECT_NAME}@_ext.cpp
+  @{fmodskel_PROJECT_NAME}@_mod.cpp
+  @{fmodskel_PROJECT_NAME}@_srv.cpp
+  @{fmodskel_PROJECT_NAME}@_st.cpp
   # add more source files starting here:
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  @PROJECT_NAME@_ext.h
-  @PROJECT_NAME@_mod.h
-  @PROJECT_NAME@_srv.h
-  @PROJECT_NAME@_st.h
+  @{fmodskel_PROJECT_NAME}@_ext.h
+  @{fmodskel_PROJECT_NAME}@_mod.h
+  @{fmodskel_PROJECT_NAME}@_srv.h
+  @{fmodskel_PROJECT_NAME}@_st.h
   version.h
   # add more header files starting here:
 )

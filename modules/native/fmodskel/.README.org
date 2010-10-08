@@ -78,13 +78,13 @@ to your command line window on either
 *** Generate your module from the skeleton
 
 **** Unix
-If you haven already, export fkmodskel via
+If you haven't already, get the falcon sources
 
-  $ svn export svn://falconpl.org/falcon/modules/fmodskel/trunk fmodskel
+  $ git clone http://git.falconpl.org/falcon.git
 
 Copy this directory and name it i.e. mymodule
 
-  $ cp -r fmodskel mymodule
+  $ cp -r falcon/modules/native/fmodskel mymodule
 
 Enter it and create your new module from the skeleton
 
@@ -92,16 +92,17 @@ Enter it and create your new module from the skeleton
   $ falconeer.fal -n MyModule -d "My brand new falcon module" -a "Mr. My Name"
 
 **** Windows
-If you haven't already, export fkmodskel from
+If you haven't already, get the falcon sources
 
-  svn://falconpl.org/falcon/modules/fmodskel/trunk
+   http://git.falconpl.org/falcon.git
 
-with an svn client such as http://tortoisesvn.tigris.org.  Copy this
-directory and name it i.e. =mymodule=. Enter it and create your new
-module from the skeleton with the falconeer utility. Other than unix,
-systems as MS-Windows will require the interpreter to load the script
-rather than having the script be executable itself. The "config.bat"
-script is provided as a sample you may modify this line
+with a git client such as http://code.google.com/p/tortoisegit/.  Copy
+the directory =falcon/modules/native/fmodskel= name it
+i.e. =mymodule=. Enter it and create your new module from the skeleton
+with the falconeer utility. Other than unix, systems as MS-Windows
+will require the interpreter to load the script rather than having the
+script be executable itself. The "config.bat" script is provided as a
+sample you may modify this line
 
   falcon -w %FALCON_BIN_PATH%/falconeer.fal -n MyModule -d "My brand new falcon module" -a "Mr. my name"
 

@@ -23,7 +23,7 @@ function(faldoc_module_docs modulename input_file output_dir)
         )
     endif()
   else()
-    set(_cmd ${Falcon_faldoc_EXECUTABLE} -S -P faldoc ${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal)
+    set(_cmd ${Falcon_faldoc_EXECUTABLE} "${input_file}")
   endif()
 
   add_custom_command(

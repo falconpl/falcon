@@ -1,17 +1,17 @@
 /*
-   @MAIN_PRJ@
-   FILE: @PROJECT_NAME@_st.cpp
+   @{fmodskel_MAIN_PRJ}@
+   FILE: @{fmodskel_PROJECT_NAME}@_st.cpp
 
-   @DESCRIPTION@
+   @{fmodskel_DESCRIPTION}@
    Interface extension functions
    -------------------------------------------------------------------
-   Author: @AUTHOR@
-   Begin: @DATE@
+   Author: @{fmodskel_AUTHOR}@
+   Begin: @{fmodskel_DATE}@
 
    -------------------------------------------------------------------
-   (C) Copyright @YEAR@: @COPYRIGHT@
+   (C) Copyright @{fmodskel_YEAR}@: @{fmodskel_COPYRIGHT}@
 
-   @LICENSE@
+   @{fmodskel_LICENSE}@
 */
 
 /** \file
@@ -20,6 +20,6 @@
 */
 
 #define FALCON_REALIZE_STRTAB
-#include "@PROJECT_NAME@_st.h"
+#include "@{fmodskel_PROJECT_NAME}@_st.h"
 
-/* end of @PROJECT_NAME@_st.cpp */
+/* end of @{fmodskel_PROJECT_NAME}@_st.cpp */

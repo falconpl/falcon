@@ -1,17 +1,17 @@
 /*
-   @MAIN_PRJ@
+   @{fmodskel_MAIN_PRJ}@
    FILE: version.h
 
-   @DESCRIPTION@
+   @{fmodskel_DESCRIPTION}@
    Interface extension functions
    -------------------------------------------------------------------
-   Author: @AUTHOR@
-   Begin: @DATE@
+   Author: @{fmodskel_AUTHOR}@
+   Begin: @{fmodskel_DATE}@
 
    -------------------------------------------------------------------
-   (C) Copyright @YEAR@: @COPYRIGHT@
+   (C) Copyright @{fmodskel_YEAR}@: @{fmodskel_COPYRIGHT}@
 
-   @LICENSE@
+   @{fmodskel_LICENSE}@
 */
 
 #ifndef VERSION_H
