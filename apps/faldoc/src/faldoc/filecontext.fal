@@ -186,13 +186,8 @@ class FileContext( file, defmod )
          ectx = p.parse( cnt )
          entity = docentity.Entity( cnt, self.file, line)
          entity.pcontent = ectx
-         entity.parseContent( self.onGroupingChange )
+         entity.parseContent( self.onGroupingChange, self.addEntity )
          
-         // if the entity is just a set of document-wide commands, return.
-         if ectx.topNode.firstChild == nil
-            return nil
-         end
-
          // do we have a brief?
          if "brief" notin entity.props
             // autobrief on?
@@ -203,16 +198,21 @@ class FileContext( file, defmod )
                   entity.props["brief"] = first_node
                   first_node.remove()
                else
+                  // Discard the entity if it was a simple command
+                  if entity.wasASimpleCommand(): return nil
                   faldoc.error( @ i"Entity not declaring a @brief paragraph", entity.firstline )
                end
             else
+               // Discard the entity if it was a simple command
+               if entity.wasASimpleCommand(): return nil
                faldoc.error( @ i"Entity not declaring a @brief paragraph", entity.firstline )
             end
          end
-         
+
+         // can't be "a simple command" if it had @brief
          return entity
-      catch ParseError in e
-         faldoc.error( @i"While parsing entity at line $(line) in $(file):\n$e" )
+      catch ParseError in error
+         faldoc.error( @i"While parsing entity\n$error", line )
          return nil
       end
    end
@@ -270,7 +270,8 @@ class FileContext( file, defmod )
       if not entity.module: entity.module = self.defmod
       
       if self.current_group != nil
-         if "ingroup" in entity.props
+         // group is active only to first-level entities.
+         if "ingroup" in entity.props and "owner" notin entity.props
             groups = entity.props["ingroup"]
             if self.current_group notin groups
                groups.add( self.current_group )
@@ -286,6 +287,7 @@ class FileContext( file, defmod )
       end
 
       // Finally, add the entity
+      // This will also apply membership to groups and set.
       entity.module.add( entity )
 
       // once added, the textual entity has its full context needed to resolve links.

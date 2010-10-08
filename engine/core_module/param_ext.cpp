@@ -150,7 +150,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
    @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
-   @raise AccessError if @number is out of range.
+   @raise AccessError if @b number is out of range.
 
    The function is equivalent to assigning the value directly to the required
    parameter; of course, in this way also optional parameter may be accessed.

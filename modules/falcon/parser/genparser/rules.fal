@@ -265,12 +265,17 @@ end
 
    If @b nextState is nil, then the winning rule state transition is applied, otherwise
    @b nextstate overrides winning rule state setting.
+
+   If @b nextState contains a "*" character, it is replaced with the state from the rule. So, you can have
+   "#pop;*" to first pop the current state and then apply the state transition from the winner rule.
 */
 class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, actionPre )
    rules = rules
    actionPost = actionPost
    winningRule = nil
    hasState = nextState ? true : false
+   incState = "*" in nextState
+   origState = nextState
 
    
    function match( text, pos )
@@ -278,16 +283,21 @@ class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, 
       n = 0
       l = self.rules.len()
       res = -1
+      matchPos = text.len()
       while n < l
          res = self.rules[n].match( text, pos )
-         if res >= 0
+         if res == 0
+            // we have the winner
             self.winningRule = self.rules[n]
             return res
+         elif res > -1 and res < matchPos
+            matchPos = res
+            self.winningRule = self.rules
          end
          ++n
       end
 
-      return -1
+      return res
    end
 
 
@@ -297,9 +307,15 @@ class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, 
          retval = self.winningRule.apply(ctx)
          if self.actionPost: self.actionPost( ctx, self.winningRule )
 
-         if not self.hasState
+         if self.hasState
+            if self.incState
+               self.nextState = self.origState.replace( "*", self.winningRule.nextState )
+            end
+            // else, let the state it has.
+         else
             self.nextState = self.winningRule.nextState
          end
+         
          self.matchLen = retval
          return retval
       end

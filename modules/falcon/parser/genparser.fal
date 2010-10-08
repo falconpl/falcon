@@ -282,10 +282,11 @@ class Parser()
                if rulePos < matchAt
                   winner = rule
                   matchAt = rulePos
+                  hadWinner = true
                elif rulePos == matchAt and not winner
                   // match at end
                   winner = rule
-                  break
+                  hadWinner = true
                end
             end
          end

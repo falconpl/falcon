@@ -45,7 +45,7 @@ class DocModule( name, mainmodule )
 
    //# adds an entity to the module
    function add( entity )
-      if not entity.name or not entity.type
+      if not entity.name
          faldoc.fatal( @i"Adding an unknown entity in module $self.name", entity.firstline )
       end
       
@@ -61,6 +61,13 @@ class DocModule( name, mainmodule )
       if "inset" in entity.props
          self.getEntity( entity.props["inset"], "funset", true ).addMember( entity )
       end
+
+      // do we have an owner?
+      if "owner" in entity.props
+         // We don't know what is the type of the ownership here.
+         // May be a class, an object or an enum, for example.
+         self.getEntity( entity.props["owner"], nil, true ).addMember( entity )
+      end
       
       if entity.name in self.entities
          // entity already declared; but -- is this an automatic definition?
@@ -72,7 +79,7 @@ class DocModule( name, mainmodule )
             preve = self.entities[ entity.name ]
             if preve.automatic
                // warn if found with different type
-               if preve.type != entity.type
+               if preve.type != nil and preve.type != entity.type
                   faldoc.warn( @i"Entity \"$entity.name\" was referenced in \"$self.name\" with different type: ($preve.type)", entity.firstline )
                end
                // but go on the same.

@@ -76,6 +76,11 @@ class Entity( content, file, line )
    //# True when this entity was created because of a supposed reference
    automatic = false
 
+   //# used to determine if an empty entity should be marked as an error
+   hadSimple = false
+   //# used to determine if an empty entity should be marked as an error
+   hadComplex = false
+
    //# Copy an existing entity
    function copy( other )
       self.type = other.type
@@ -101,17 +106,19 @@ class Entity( content, file, line )
 
    /*# Processess the commands in the parsed content block.
       @param onGroupingChange callback receiving line, command and name in case of grouping commands.
+      @param entityAdder A callable that will be called back if the parser finds something to be added.
       @return false if this entity is actually a set of document-wide command and should not be considered
               a real document entity.
+              
               
       @note Interesting commands are at top level. Everything else (inline commands)
       is expanded by the generic parser into DOM entities or is made to "stand out".
    */
-   function parseContent( onGroupingChange )
-      return self.parseNodeContent( self.pcontent.topNode.firstChild, onGroupingChange )
+   function parseContent( onGroupingChange, entityAdder )
+      self.parseNodeContent( self.pcontent.topNode.firstChild, onGroupingChange, entityAdder )
    end
 
-   function parseNodeContent( node, onGroupingChange )
+   function parseNodeContent( node, onGroupingChange, entityAdder )
 
       while node != nil
       
@@ -120,10 +127,11 @@ class Entity( content, file, line )
             // ignore the result of the analisys of the first-level children.
             self.parseNodeContent( node.firstChild, onGroupingChange )
          end
-         
-         isASimpleCommand = false
-         line = node provides infos ? node.infos["line"] + self.firstline - 1 : self.firstline
-         
+
+         line = (node provides infos) ? (node.infos["line"] + self.firstline - 1) : self.firstline
+
+         hadSimple = false
+         hadComplex = false
          switch node.type
             case "@a"
                node.infos["link"] = self.addLink( node.infos["dest"], line, true )
@@ -135,14 +143,40 @@ class Entity( content, file, line )
                // however, it's ok and wors as expected
                self.addParam( node.type[1:], l, node, line )
                node = node.remove()
+               hadComplex = true
                
             case "@brief", "@return"
-               self.props[ node.type[1:] ] = node
+               type = node.type[1:]
+               if type in self.props
+                  faldoc.error( @i"Command @$type already declared for entity", line )
+               else
+                  self.props[ type ] = node
+               end
                node = node.remove()
+               hadComplex = true
 
             case "@param", "@optparam"
                self.addParam( node.type[1:], node.infos["name"], node, line )
                node = node.remove()
+               hadComplex = true
+
+            case "@prop"
+               // simple declaration of class properties
+               prop = Entity( "", self.file, line )
+               prop.type = "property"
+               prop.name = self.name + "." + node.infos["name"]
+               prop.pcontent = self.pcontent.baseClass()()
+               prop.props["owner"] = self.name
+
+               n1 = node.remove()
+               node.prev = node.next = node.parent = nil
+               node.type = "para"
+               prop.pcontent.add( node )
+               
+               prop.parseContent( onGroupingChange, entityAdder )
+               entityAdder( prop )
+               node = n1
+               hadComplex = true
 
             case "@inset"
                if "inset" in self.props
@@ -151,6 +185,7 @@ class Entity( content, file, line )
                   self.props["inset"] = node.infos["name"] 
                end
                node = node.remove()
+               hadComplex = true
             
             case "@inmodule"
                if self.module
@@ -159,6 +194,7 @@ class Entity( content, file, line )
                   self.module = faldoc.document.getModule( node.infos["name"] )
                end
                node = node.remove()
+               hadComplex = true
 
             case "@ingroup"
                gname = node.infos["name"]
@@ -173,54 +209,77 @@ class Entity( content, file, line )
                   self.props["ingroup"] = [gname]
                end
                node = node.remove()
+               hadComplex = true
 
             case "@begingroup", "@beginset", "@beginmodule"
                onGroupingChange( line, node.type, node.infos["name"] )
                node = node.remove()
-
-            case "@endgroup", "@endnset", "@endmodule"
+               hadSimple = true
+               
+            case "@endgroup", "@endset", "@endmodule"
                onGroupingChange( line, node.type, nil )
                node = node.remove()
+               hadSimple = true
                
             // we have the type defined!
             case "@class", "@function", "@object", "@enum", "@global"
                self.name = node.infos["name"]
                self.type = node.type[1:]
                node = node.remove()
+               hadComplex = true
 
             case "@method", "@property"
-               self.name = node.infos["name"]
+               self.name = node.infos["class"] + "." + node.infos["name"]
                self.type = node.type[1:]
-               //self.cls = node.infos["class"]
+               self.props["owner"] = node.infos["class"]
                node = node.remove()
+               hadComplex = true
 
             case "@page"
                self.name = node.infos["name"]
                self.type = "page"
                self.props[ "title" ] = node.infos["title"]
                node = node.remove()
+               hadComplex = true
 
             case "@group", "@funset"
                self.name = node.infos["name"]
                self.type = node.type[1:]
                self.props[ "title" ] = node.infos["title"]
                node = node.remove()
+               hadComplex = true
 
             case "@main"
                self.name = "#main"
                self.type = "main"
                self.props["title"] = node.infos["title"]
                node = node.remove()
+               hadComplex = true
 
             case "cmd_unrecognized"
                command = node.infos["cmd"]
-               faldoc.error( @i"Unrecognized command \"$command\"", node.infos["line"] )
+               faldoc.error( @i"Unrecognized command \"$command\"", line )
                node = node.remove()
 
             default
                node = node.next
          end
       end
+
+      if hadComplex: self.hadComplex = true
+      if hadSimple: self.hadSimple = true
+   end
+
+
+   /*# Indicates if this entity just contained file-level commands.
+
+      If true, then it is not an error if this entity results empty after parsing.
+
+      It means that it was there just as a place where to call this commands, and was
+      not intended to create an entity that was left undefined.
+   */
+   function wasASimpleCommand()
+      return self.hadSimple and not self.hadComplex
    end
 
 
@@ -279,7 +338,7 @@ class Entity( content, file, line )
    //# adds a member
    function addMember( entity, ownership )
       if ownership
-         entity.parent = entity
+         entity.parent = self
       end
       
       if not self.members
@@ -303,6 +362,20 @@ class Entity( content, file, line )
          end
       end
    end
+
+   function getPropsAndMethods()
+      props = []
+      methods = []
+      for m,v in self.members
+         if v.type == "property"
+            props += v
+         else
+            methods += v
+         end
+      end
+      return [props, methods]
+   end
+
 
    function prototype()
       pars = ""

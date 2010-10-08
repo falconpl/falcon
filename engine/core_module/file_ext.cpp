@@ -35,9 +35,6 @@
 
 #include "core_module.h"
 
-/*#
-
-*/
 
 namespace Falcon {
 namespace core {

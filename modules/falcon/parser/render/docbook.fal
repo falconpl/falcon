@@ -195,9 +195,9 @@ class Renderer( frame )
 
 
    function _render_table( node )
-      return "<table>\n<tgroup>\n" +
+      return "<informaltable>\n<tgroup cols=\"0\">\n" +
               self.rcont(node) +
-              "</tgroup></table>\n"
+              "</tgroup></informaltable>\n"
    end
 
    function _render_tr( node )
@@ -246,7 +246,7 @@ class Renderer( frame )
    end
 
    function _render_code( node )
-      return "<programlisting>\n"+ self.rcont(node) + "</programlisting>\n"
+      return "<programlisting>"+ self.rcont(node) + "</programlisting>\n"
    end
 
    function _render_plugin( node )

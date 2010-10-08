@@ -883,7 +883,6 @@ FALCON_FUNC  Dictionary_mcomp ( ::Falcon::VMachine *vm )
    @brief Appends elements to this dictionary through a filter.
    @param filter A filter function receiving each element before its insertion, or nil.
    @param ... One or more sequences, ranges or callables generating items.
-   @optparam filter A filtering function receiving one item at a time.
    @return This dictionary.
 
    Please, see the description of @a Sequence.comp, and the general @a Dictionary.comp

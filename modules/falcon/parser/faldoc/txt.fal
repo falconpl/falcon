@@ -98,10 +98,10 @@ NamingCommands = .[
    ReRule( '^\s*@global\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@global", ['line' => ctx.row, 'name'=> p0] )) })
 
-   ReRule( '^\s*@method\s+(\w+)\s+(\w).*$', "#stay",
+   ReRule( '^\s*@method\s+(\w+)\s+(\w+)$', "#stay",
            {ctx, d0, p0, p1 => ctx.add(InfoNode("@method", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
 
-   ReRule( '^\s*@property\s+(\w+)\s+(\w).*$', "#stay",
+   ReRule( '^\s*@property\s+(\w+)\s+(\w+)$', "#stay",
            {ctx, d0, p0, p1 => ctx.add(InfoNode("@property", ['line' => ctx.row, 'name'=> p0, 'class'=>p1 ] )) })
 ]
 
@@ -125,16 +125,16 @@ ScopeCommands = .[
    ReRule( '^\s*@endset(\s+.*$|$)', "#stay",
          {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
    ReRule( '^\s*@endgroup(\s+.*$|$)', "#stay",
-         {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
+         {ctx => ctx.add(InfoNode("@endgroup", ['line' => ctx.row] )) })
 ]
 
 InlineCommands = .[
-   ReRule( '@a\s+("([^"]*)"|(\w|\.)+)', "#stay",
+   ReRule( '@a\s+("([^"]*)"|((\w|\.|_|-|:)+))', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
          {ctx, d0, d1, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
-   ReRule( '@b\s+("([^"]*)"|(\w|\.)+)', "#stay",
+   ReRule( '@b\s+("([^"]*)"|([^\s:;]+))', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
-   ReRule( '@i\s+("([^"]*)"|(\w|\.)+)', "#stay",
+   ReRule( '@i\s+("([^"]*)"|([^\s:;]+))', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
    ReRule( '@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
                               {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",
@@ -186,21 +186,24 @@ function _inlineState( limit )
       )
 end
 
-StartRules = \
-   .[ EmptyLineRule( "#stay" )  ] \
-   + ParaCommands \
+ParaStartCommands = \
+   ParaCommands \
    + NamingCommands \
    + ScopeCommands \
-   + BlockCommands \
+   + BlockCommands
+
+StartRules = \
+   .[ EmptyLineRule( "#stay" )  ] \
+   + ParaStartCommands \
    + .[
       // serve also inline commands, but generate a para node for them.
-      ProxyRule( InlineCommands, "para", {ctx=> ctx.pushNode( Node("para") )} )
-
-      // if a @ is not recognized here, we have a problem.
-      ReRule('^\s*@.*$', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
+      ProxyRule( InlineCommands, "para;*", {ctx=> ctx.pushNode( Node("para") )} )
 
       // Otherwise, enter the para mode
-      DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} )
+      ReRuleLA( '[^\s]', "para", { ctx => ctx.pushNode( Node("para") )} )
+
+      // consuming everything else
+      ReRule( '\s*', "#stay" )
    ]
          
 class Parser from parser.genparser.Parser
@@ -215,7 +218,7 @@ class Parser from parser.genparser.Parser
       ),
 
       "section" =>PState(.[           
-            TokenRuleLA( "@section", "#pop", {ctx => ctx.popNode() } )
+            ReRuleLA( '^\s*@section', "#pop", {ctx => ctx.popNode() } )
             ReRule( '^\s*@subsection\s+(\w+)\s+(.*)$', "section",
                {ctx, d0, p0, p1 =>
                   ctx.pushNode(InfoNode("@section", ['line' => ctx.row, 'name'=> p0, 'title'=>p1] )) })
@@ -224,26 +227,26 @@ class Parser from parser.genparser.Parser
       ),
 
       "subsection" =>PState(.[
-            TokenRuleLA( "@section", "#pop", {ctx => ctx.popNode() } )
-            TokenRuleLA( "@subsection", "#pop", {ctx => ctx.popNode() } )
+            ReRuleLA( '^\s*@section', "#pop", {ctx => ctx.popNode() } )
+            ReRuleLA( '^\s*@subsection', "#pop", {ctx => ctx.popNode() } )
          ]
          + StartRules
       ),
 
       "para" =>PState(.[
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})         
+            // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
+            ProxyRule( ParaStartCommands, "#pop;*", {ctx=>ctx.popNode()} )
          ]
-         + InlineCommands
          + TableStart
          + ListStart
          + FormatElements
          + .[
-            // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
-            ReRuleLA( '^\s*@', "#pop", {ctx=>ctx.popNode()} )
-
             // eat useless spaces at line start.
             ReRule( '^\s+', "#stay" )
-            
+         ]
+         + InlineCommands
+         + .[
             // while a @ in the middle of the para means an unrecognized command for sure.
             ReRule( '@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
          ],
