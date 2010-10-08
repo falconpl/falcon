@@ -4,7 +4,9 @@
 # CMake configuration file for DBI
 ####################################################################
 cmake_minimum_required(VERSION 2.6.2)
-PROJECT(Falcon_DBI)
+project(Falcon_DBI)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # The required package
 find_package(Falcon REQUIRED)
