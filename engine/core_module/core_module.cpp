@@ -1113,6 +1113,7 @@ Module* core_module_init()
    self->addExtFunc( "vmFalconPath", &Falcon::core::vmFalconPath );
    self->addExtFunc( "vmSearchPath", &Falcon::core::vmSearchPath );
    self->addExtFunc( "vmModuleName", &Falcon::core::vmModuleName );
+   self->addExtFunc( "vmModuleLine", &Falcon::core::vmModuleLine );
    self->addExtFunc( "vmModulePath", &Falcon::core::vmModulePath );
    self->addExtFunc( "vmRelativePath", &Falcon::core::vmRelativePath );
 

@@ -205,6 +205,22 @@ FALCON_FUNC vmModuleName( ::Falcon::VMachine *vm )
 }
 
 /*
+   @function vmModuleLine
+   @inset vminfo
+   @brief Returns the number of the line it has been called at.
+   @return An integer that represents a line number.
+*/
+FALCON_FUNC vmModuleLine( ::Falcon::VMachine *vm )
+{
+   const Symbol* sym;
+   uint32 line;
+   uint32 pc;
+
+   vm->getTraceStep( 0, sym, line, pc );
+   vm->retval( (int64)line );
+}
+
+/*
    @function vmModulePath
    @inset vminfo
    @brief Returns the phisical path (complete URI) from which this module was loaded.
