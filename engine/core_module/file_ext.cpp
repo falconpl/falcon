@@ -1999,7 +1999,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
    - "iso8859-1" to "iso8859-15"
    - "gbk" (Chinese simplified)
    - "cp1252"
-   - "C" (byte oriented – writes byte per byte)
+   - "C" (byte oriented -- writes byte per byte)
 
    As EOL manipulation is also part of the text operations, this function allows to
    chose how to deal with EOL characters stored in Falcon strings when writing data
@@ -2089,7 +2089,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    - "iso8859-1" to "iso8859-15"
    - "gbk" (Chinese simplified)
    - "cp1252"
-   - "C" (byte oriented – writes byte per byte)
+   - "C" (byte oriented -- writes byte per byte)
 
    @note The maximum size of the data that can be read is
    limited to 2 Gigabytes.
@@ -2253,7 +2253,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    - "iso8859-1" to "iso8859-15"
    - "gbk" (Chinese simplified)
    - "cp1252"
-   - "C" (byte oriented – writes byte per byte)
+   - "C" (byte oriented -- writes byte per byte)
 
 */
 

@@ -269,7 +269,7 @@ class FileContext( file, defmod )
       // Still nothing?
       if not entity.module: entity.module = self.defmod
       
-      if self.current_group != nil and entity.parent == nil
+      if self.current_group != nil
          if "ingroup" in entity.props
             groups = entity.props["ingroup"]
             if self.current_group notin groups

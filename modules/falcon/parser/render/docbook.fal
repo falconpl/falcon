@@ -129,7 +129,6 @@ class Renderer( frame )
       text = ""
       node = node.firstChild
       while node
-         > "Rendering node ", node.type
          text += self.renderNode( node )
          node = node.next
       end
@@ -141,7 +140,7 @@ class Renderer( frame )
    //
 
    function _renderUNKNOWN( node )
-      return "<comment>UNKNOWN NODE TYPE: " + node.type() + " - " +self.rcont( node ) + "</comment>"
+      return "<para>UNKNOWN NODE TYPE: " + node.type + " - " +self.rcont( node ) + "</para>\n"
    end
 
 
@@ -258,7 +257,7 @@ end
 
 
 function _sgmlEscape( content )
-   return content.replace( "&", "&amper").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
+   return content.replace( "&", "&amp;").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
 end
 
 

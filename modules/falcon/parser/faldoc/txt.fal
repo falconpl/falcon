@@ -48,10 +48,10 @@ ParaCommands =  .[
    ReRule( '^\s*@raise\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'what'=> p0 ] )) })
            
-   ReRule( '^\s*@param\s+(\w+)', "para",
+   ReRule( '^\s*@param\s+(\w+|...)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@param", ['line' => ctx.row, 'name'=> p0 ] )) })
 
-   ReRule( '^\s*@optparam\s+(\w+)', "para",
+   ReRule( '^\s*@optparam\s+(\w+|...)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@optparam", ['line' => ctx.row, 'name'=> p0 ] )) })
 
    ReRule( '^\s*@from\s+(\w+)', "para",
@@ -132,9 +132,9 @@ InlineCommands = .[
    ReRule( '@a\s+("([^"]*)"|(\w|\.)+)', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
          {ctx, d0, d1, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
-   ReRule( '@b\s+("([^"]*)"|(\w+))', "#stay",
+   ReRule( '@b\s+("([^"]*)"|(\w|\.)+)', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
-   ReRule( '@i\s+("([^"]*)"|(\w+))', "#stay",
+   ReRule( '@i\s+("([^"]*)"|(\w|\.)+)', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
    ReRule( '@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
                               {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",

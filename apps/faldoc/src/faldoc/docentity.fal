@@ -73,6 +73,23 @@ class Entity( content, file, line )
    //# Non-child members (for entities with grouping abilities)
    members = nil
 
+   //# True when this entity was created because of a supposed reference
+   automatic = false
+
+   //# Copy an existing entity
+   function copy( other )
+      self.type = other.type
+      self.name = other.name
+      self.file = other.file
+      self.firstline =  other.firstline
+      self.dline =  other.dline
+      self.props =  other.props
+      self.module =  other.module
+      self.pcontent = other.pcontent
+      self.content = other.content
+      self.members = other.members
+   end
+
    //# Calculates the unique ID of this node.
    function getID()
       if self.parent
@@ -144,7 +161,7 @@ class Entity( content, file, line )
                node = node.remove()
 
             case "@ingroup"
-               gname = node.infos["group"]
+               gname = node.infos["name"]
                if "ingroup" in self.props
                   groups = self.props["ingroup"]
                   if gname in groups
@@ -153,7 +170,7 @@ class Entity( content, file, line )
                      groups.add( gname )
                   end
                else
-                  self.groups = [gname]
+                  self.props["ingroup"] = [gname]
                end
                node = node.remove()
 
@@ -174,7 +191,7 @@ class Entity( content, file, line )
             case "@method", "@property"
                self.name = node.infos["name"]
                self.type = node.type[1:]
-               self.cls = node.infos["class"]
+               //self.cls = node.infos["class"]
                node = node.remove()
 
             case "@page"

@@ -66,10 +66,36 @@ class DOCBOOKGenerator( doctree, conf )
    copyyear = "copyright.year" in conf? conf["copyright.year"] : nil
    copyholder = "copyright.holder" in conf? conf["copyright.holder"] : nil
 
+   //# Level of the document.
+   docLevel = 0
+   
    _outfile = nil
 
    _rndr = nil
 
+   _entityHandler = [
+      "page" => self.makePage,
+      "variable" => self.makeGlobal,
+      "object" => self.makeObject,
+      "class" => self.makeClass,
+      "function" => self.makeFunction,
+      "group" => self.makeGroup,
+      "funset" => self.makeFunset,
+      "enum" => self.makeEnum,
+      "message" => self.makeMessage
+   ]
+
+   //# represents the section order
+   _moduleOrder =  .[
+      "page" "group" "funset"
+      .["object" i"Objects"]
+      .["class" i"Classes"]
+      .["function" i"Functions"]
+      .["variable" i"Variables"]
+      .["enum" i"Enumerations"]
+      .["message" i"Messages" ]
+   ]
+   
    init
       inspect (conf )
       if "frame" in conf
@@ -114,7 +140,12 @@ class DOCBOOKGenerator( doctree, conf )
          self._outfile.setEncoding( self.encoding )
          self._outfile.writeText( self.frame.open() )
 
+         // each element of the main module is a chapter
+         self.docLevel = 0
          self.makeModule( self.doc.mainModule )
+
+         // other modules must be in their own chapter.
+         self.docLevel = 1
          for modname, module in self.doc.modules
             self.makeModule( module )
          end
@@ -138,24 +169,97 @@ class DOCBOOKGenerator( doctree, conf )
       if "#main" in module.entities
          main = module.entities["#main"]
          self.writeTag( "title", main.props["title"] )
-         self._outfile.writeText(
-            self._rndr.render( main.pcontent )
-         )
+         self._outfile.writeText( self._rndr.render( main.pcontent ) )
       end
 
       entities = module.groupEntities()
-      if "page" in entities
-         for page in entities["page"]
-            self._outfile.writeText( self._rndr.make_section(1, page.name, page.props["title"] ) )
-            self._outfile.writeText( self._rndr.render( page.pcontent ) )
+      for etype in self._moduleOrder
+         if etype.typeId() == StringType
+            self.makeEntityList( etype, entities ) 
+         else
+            self.makeEntityPage( etype[0], etype[1], entities )
          end
       end
-      
+
+
       self._outfile.writeText( self._rndr.go_to_level(0) )
       self._outfile.writeText(self.frame.closeSection(0))
    end
+      
+   //===============================================================
+   // Handlers
+   //===============================================================
+   function makeEntityList( etype, entities )
+      if etype in entities
+         maker = self._entityHandler[ etype ]
+         for entity in entities[ etype ]
+            maker( entity )
+            //# todo - remove grouped entities.
+         end
+      end
+   end
+   
+   function makeEntityPage( etype, chapName, entities )
+      if etype in entities
+         dl = self.docLevel
+         self.docLevel ++
+         // section heading -- no need for xref here.
+         self._outfile.writeText( self._rndr.make_section( self.docLevel, "", chapName ) )
 
-
+         maker = self._entityHandler[ etype ]
+         for entity in entities[ etype ]
+            maker( entity )
+         end
+         
+         self.docLevel = dl
+      end
+   end
+   
+   function makePage( entity )
+      self._outfile.writeText( self._rndr.make_section( self.docLevel + 1, entity.name, entity.props["title"] ) )
+      self._outfile.writeText( self._rndr.render( entity.pcontent ) )
+   end
+   
+   function makeGlobal( entity )
+   end
+   
+   function makeObject( entity )
+      self._outfile.writeText( self._rndr.make_section( self.docLevel + 1, entity.name, entity.name ) )
+      data = self._rndr.render( entity.pcontent )
+      // at least one para is mandatory in every section
+      self._outfile.writeText( data = "" ? "<para/>\n" : data )
+   end
+   
+   function makeClass( entity )
+      self._outfile.writeText( self._rndr.make_section( self.docLevel + 1, entity.name, entity.name ) )
+      data = self._rndr.render( entity.pcontent )
+      // at least one para is mandatory in every section
+      self._outfile.writeText( data == "" ? "<para/>\n" : data )
+   end
+   
+   function makeFunction( entity )
+      self._outfile.writeText( self._rndr.make_section( self.docLevel + 1, entity.name, entity.name ) )
+      data = self._rndr.render( entity.pcontent )
+      // at least one para is mandatory in every section
+      self._outfile.writeText( data == "" ? "<para/>\n" : data )
+   end
+   
+   function makeGroup( entity )
+   end
+   
+   function makeFunset( entity )
+   end
+   
+   function makeEnum( entity )
+   end
+   
+   function makeMessage( entity )
+   end
+   
+   //===============================================================
+   // Utilities
+   //===============================================================
+   
    function opentag( tag )
       self._outfile.writeText( @"<$tag>\n" )
    end
