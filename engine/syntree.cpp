@@ -865,8 +865,7 @@ bool StmtSwitch::addRangeCase( Value *itm )
       else {
          if ( isOpen )
          {
-            if  ( other_end >= other_end )
-               return false;
+            return false;
          }
          else
          {

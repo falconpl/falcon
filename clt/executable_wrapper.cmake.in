@@ -10,6 +10,7 @@ if(NOT workdir)
   message(FATAL_ERROR "missing -Dworkdir=..")
 endif()
 
+
 find_program(EXECUTABLE
   NAMES ${executable}
   HINTS "@CMAKE_BINARY_DIR@/bin"
@@ -20,9 +21,16 @@ if(NOT EXECUTABLE)
   message(FATAL_ERROR "${executable} executable not found")
 endif()
 
-if(NOT WIN32)
+
+if(WIN32)
+  # falcon_engine.dll and the executables reside in the same directory.
+elseif(APPLE)
+  set(ENV{DYLD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{DYLD_LIBRARY_PATH}")
+else()
+  # Linux, Solaris, BSD, ...
   set(ENV{LD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{LD_LIBRARY_PATH}")
 endif()
+
 
 separate_arguments(arguments)
 set(cmd ${EXECUTABLE} -L "@CMAKE_BINARY_DIR@/@FALCON_MOD_DIR@" ${arguments})
@@ -33,6 +41,7 @@ execute_process(
   RESULT_VARIABLE res
   ERROR_VARIABLE err
 )
+
 
 if(res)
   if(NOT err STREQUAL "")

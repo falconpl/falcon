@@ -317,7 +317,7 @@ class QrInput(version, errorCorrectionLevel)
         return bits;
     end
 
-    function _lookAnTable(c)
+    function lookAnTable(c)
         return c > 127 ? -1 : self._anTable[c]
     end
 
