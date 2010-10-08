@@ -204,7 +204,7 @@ FALCON_FUNC vmModuleName( ::Falcon::VMachine *vm )
    vm->retval( new CoreString( mod->name() ));
 }
 
-/*
+/*#
    @function vmModuleLine
    @inset vminfo
    @brief Returns the number of the line it has been called at.
