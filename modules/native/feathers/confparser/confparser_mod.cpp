@@ -624,7 +624,7 @@ bool ConfigFile::getValue( const String &key, String &value )
    // file lines list.
    ListElement *le = (ListElement *) ce->m_values.begin()->data();
    ConfigFileLine *line = (ConfigFileLine *) le->data();
-   value = *line->m_value;
+   value = (line->m_value) ? *(line->m_value) : "" ;
    m_currentValue = ce->m_values.begin()->next();
 
    return true;
