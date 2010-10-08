@@ -114,7 +114,7 @@ function(falcon_install_module2 tgt dir )
    endif()
 
   set_target_properties(${tgt} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}
   )
 
    install( TARGETS ${tgt}
