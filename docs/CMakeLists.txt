@@ -18,16 +18,23 @@ function(generate_doxygen_documentation _target_name _doxygen_config_file)
   )
 endfunction(generate_doxygen_documentation)
 
+set(output_dir "Falcon-docs-engine.@FALCON_VERSION_ID@")
 configure_file(
   Doxyfile.in
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
   @ONLY
 )
-
+#
 generate_doxygen_documentation(
-  core_doxygen_docs # make target
+  core_engine_docs # make target
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 )
+#
+install(
+   DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
+   OPTIONAL # if docs haven't been generated
+)
+
 
 set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/Falcon-docs-core.${FALCON_VERSION_ID})
 configure_file(
