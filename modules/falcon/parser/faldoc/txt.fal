@@ -129,7 +129,7 @@ ScopeCommands = .[
 ]
 
 InlineCommands = .[
-   ReRule( '@a\s+("([^"]*)"|((\w|\.|_|-|:)+))', "#stay",
+   ReRule( '@a\s+("([^"]*)"|((\w|\.|_)+))\.?', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
          {ctx, d0, d1, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
    ReRule( '@b\s+("([^"]*)"|([^\s:;]+))', "#stay",

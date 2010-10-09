@@ -54,13 +54,14 @@ class Entity( content, file, line )
    
    /*# First line of comment declaration of the entity. */
    firstline = line
+
    /*# Line at which the entity is defined at language level (if any). */
    dline = nil
 
    props = bless([=>])
 
-   //# Module of this entity, if any
-   module = nil
+   //# Parent of this entity
+   parent = nil
 
    /*# Parsed content.
       Documentation of the entity parsed as an infonode.
@@ -78,30 +79,56 @@ class Entity( content, file, line )
 
    //# used to determine if an empty entity should be marked as an error
    hadSimple = false
+
    //# used to determine if an empty entity should be marked as an error
    hadComplex = false
 
+   //# after -- an ID (local to the owner module) for a page-entity to be placed after.
+   after = nil
+
+   id = 0
+   static lid = 0
+   
+   init
+      self.id = self.lid++
+   end
+   
    //# Copy an existing entity
-   function copy( other )
+   function declareAs( other )
       self.type = other.type
-      self.name = other.name
       self.file = other.file
       self.firstline =  other.firstline
-      self.dline =  other.dline
-      self.props =  other.props
-      self.module =  other.module
+      self.dline = other.dline
+      self.props = other.props
       self.pcontent = other.pcontent
       self.content = other.content
-      self.members = other.members
+      self.after = other.after
+      if other.members
+         if self.members
+            self.members += other.members
+         else
+            self.members = other.members
+         end
+      end
+      self.automatic = false
    end
 
    //# Calculates the unique ID of this node.
    function getID()
       if self.parent
-         return self.parent.getName() + "." + self.name
+         id = self.parent.getID()
+         if id: return id + "." + self.name
       end
 
       return self.name
+   end
+
+   function getName()
+      if "owner" in self.props
+         return self.parent.name + "." + self.name
+      else
+         return self.name
+      end
    end
 
    /*# Processess the commands in the parsed content block.
@@ -134,11 +161,12 @@ class Entity( content, file, line )
          hadComplex = false
          switch node.type
             case "@a"
-               node.infos["link"] = self.addLink( node.infos["dest"], line, true )
+               l = faldoc.document.addLink( self, line, node.infos["dest"], true )
+               node.infos["link"] = l
                node = node.next
                
             case "@raise", "@from", "@see"
-               l = self.addLink( node.infos["what"], line, node.type == "@see" )
+               l = faldoc.document.addLink( self, line, node.infos["what"], node.type == "@see" )
                // we trick the system a bit and send a link instead of a name here.
                // however, it's ok and wors as expected
                self.addParam( node.type[1:], l, node, line )
@@ -164,7 +192,7 @@ class Entity( content, file, line )
                // simple declaration of class properties
                prop = Entity( "", self.file, line )
                prop.type = "property"
-               prop.name = self.name + "." + node.infos["name"]
+               prop.name = node.infos["name"]
                prop.pcontent = self.pcontent.baseClass()()
                prop.props["owner"] = self.name
 
@@ -178,35 +206,20 @@ class Entity( content, file, line )
                node = n1
                hadComplex = true
 
-            case "@inset"
-               if "inset" in self.props
-                  faldoc.error( "Function set already declared for entity \"$name\"", line )
+            case "@inset", "@ingroup"
+               if "inset" in self.props or "ingroup" in self.props
+                  faldoc.error( "Grouping option already declared for this entity", line )
                else
-                  self.props["inset"] = node.infos["name"] 
+                  self.props[node.type[1:]] = node.infos["name"]
                end
                node = node.remove()
                hadComplex = true
             
             case "@inmodule"
-               if self.module
-                  faldoc.error( "Module already declared for entity \"$name\"", line)
+               if self.parent
+                  faldoc.error( "Parent already declared for entity \"$name\"", line)
                else
-                  self.module = faldoc.document.getModule( node.infos["name"] )
-               end
-               node = node.remove()
-               hadComplex = true
-
-            case "@ingroup"
-               gname = node.infos["name"]
-               if "ingroup" in self.props
-                  groups = self.props["ingroup"]
-                  if gname in groups
-                     faldoc.error( "Group \$gname already declared for entity \"$name\"", line)
-                  else
-                     groups.add( gname )
-                  end
-               else
-                  self.props["ingroup"] = [gname]
+                  self.parent = faldoc.document.getModule( node.infos["name"] )
                end
                node = node.remove()
                hadComplex = true
@@ -229,7 +242,7 @@ class Entity( content, file, line )
                hadComplex = true
 
             case "@method", "@property"
-               self.name = node.infos["class"] + "." + node.infos["name"]
+               self.name = node.infos["name"]
                self.type = node.type[1:]
                self.props["owner"] = node.infos["class"]
                node = node.remove()
@@ -252,6 +265,27 @@ class Entity( content, file, line )
             case "@main"
                self.name = "#main"
                self.type = "main"
+               self.props["title"] = node.infos["title"]
+               node = node.remove()
+               hadComplex = true
+
+            case "@module"
+               // ok, create the module
+               name = node.info["name"]
+               module = faldoc.document.getModule( name )
+               if not module.automatic
+                  // someone already created it.
+                  faldoc.error( @i"Module $(name) already created", line )
+               else
+                  module.automatic = false
+                  // if it's automatic, it can't have a main page.
+                  self.name = "#main"
+                  self.type = "main"
+                  self.props["title"] = node.infos["title"]
+                  self.parent = module
+                  // this will turn us in the main for the given module at return.
+               end
+
                self.props["title"] = node.infos["title"]
                node = node.remove()
                hadComplex = true
@@ -280,17 +314,6 @@ class Entity( content, file, line )
    */
    function wasASimpleCommand()
       return self.hadSimple and not self.hadComplex
-   end
-
-
-   function addLink( dest, line, explicit )
-      l = Link( self, line, dest, explicit )
-      if "links" in self.props
-         self.props["links"].add( l )
-      else
-         self.props["links"] = [l]
-      end
-      return l
    end
       
 
@@ -335,21 +358,40 @@ class Entity( content, file, line )
       end
    end
 
-   //# adds a member
-   function addMember( entity, ownership )
-      if ownership
-         entity.parent = self
+   //# adds an entity to this entity
+   function addMember( entity )
+      if not entity.name
+         faldoc.fatal( @i"Adding an unknown entity to its parent $self.name", entity.firstline )
       end
-      
-      if not self.members
-         self.members = [entity.name=> entity]
-      else
-         if entity.name in self.members
-            faldoc.error( @i"Re-Adding member $entity.name to $self.name", entity.dline )
+
+      if entity.name in self.members
+         // entity already declared; but -- is this an automatic definition?
+         if entity.automatic
+            // strange; we should have taken the real entity
+            faldoc.error( @i"Entity \"$entity.name\" referenced as automatic but was already declared in \"$self.name\"", entity.firstline )
          else
-            self.members[entity.name] = entity
+            // Was the previously declared entity automatic?
+            preve = self.members[ entity.name ]
+            if preve.automatic
+               // warn if found with different type
+               if preve.type != nil and preve.type != entity.type
+                  faldoc.warn( @i"Entity \"$entity.name\" was referenced in \"$self.name\" with different type: ($preve.type)", entity.firstline )
+               end
+               // but go on the same.
+               preve.declareAs( entity )
+            else
+               // a real error -- two entities explictly declared with the same name.
+               faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
+            end
          end
+
+         // in either case
+         return
       end
+
+      // add the entity
+      if not self.members: self.members = [=>]
+      self.members[entity.name] = entity
    end
 
    function membersByType()
@@ -387,14 +429,47 @@ class Entity( content, file, line )
          pars += ",".merge( map( {x=> "[" + x[0] + "]"}, self.props["optparam"]) )
       end
 
+      name = self.getName()
       if pars
-         return self.name + "( " + pars + " )"
+         return name + "( " + pars + " )"
       else
          if self.type == "function" or self.type == "method"
-            return self.name + "()"
+            return name + "()"
          else
-            return self.name
+            return name
          end
+      end
+   end
+
+   
+   function getDescendant( tgtname )
+      pt = tgtname.find( "." )
+      if pt > 0
+         name = tgtname[0:pt]
+         rest = tgtname[pt+1:]
+      else
+         name = tgtname
+         rest = nil
+      end
+
+      if name in self.members
+         child = self.members[name]
+         if rest
+            return child.getDescendant( rest )
+         else
+            return child
+         end
+      end
+
+      // no luck
+      return nil
+   end
+
+   function dump( level )
+      if not level: level = 0
+      > " " * level, self.id, " ", self.type, " ", self.name, " - ", self.file, ":", self.firstline
+      for n, v in self.members
+         v.dump( level + 1 )
       end
    end
    

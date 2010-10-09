@@ -115,6 +115,12 @@ class Application
       for extra in cfg.inputExtra
          doc.addFile( basedir + "/" + extra )
       end
+
+      // ok, time to cleanup: resolve links
+      doc.resolveLinks()
+
+      // and check for undefined entities
+      doc.checkUndefined()
    end
 
    
@@ -166,39 +172,42 @@ class Application
    //=================================================================
 
    //# function to generate a fatal error
-   function fatal( error, line )      
-      self.display( 0, "FATAL - " + error, line )
+   function fatal( error, line, file )      
+      self.display( 0, "FATAL - " + error, line, file )
       exit(0)
    end
 
    //# function to generate an error
-   function error( e, line )
-      self.display( 1, "ERROR - " + e, line )
+   function error( e, line, file )
+      self.display( 1, "ERROR - " + e, line, file )
       self.errorCount++
    end
 
    //# function to generate a warning
-   function warn( e, line )
-      self.display( 2, "WARN - " + e, line )
+   function warn( e, line, file )
+      self.display( 2, "WARN - " + e, line, file )
       self.warnCount++
    end
 
    //# function to send an info
-   function info( i, line )
-      self.display( 3, i, line )
+   function info( i, line, file )
+      self.display( 3, i, line, file )
    end
 
    //# function to send an info
-   function verbose( i, line )
-      self.display( 4, i, line )
+   function verbose( i, line, file )
+      self.display( 4, i, line, file )
    end
 
    //# funciton to display an information message
-   function display( level, msg, line )
+   function display( level, msg, line, file )
       if level <= self.config.loglevel
-         fmarker = ""
-         if self.currentFile
+         if file
+            fmarker = file
+         elif self.currentFile
             fmarker = self.currentFile
+         else
+            fmarker = ""
          end
 
          if line

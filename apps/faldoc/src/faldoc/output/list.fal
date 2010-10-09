@@ -70,10 +70,11 @@ function build_list( file, doctree, conf )
 
    // all the valid documents have a main module
    // -- which needs not to be introduced.
-   build_mod_list( file, doctree.mainModule, doctree, conf )
+   build_mod_list( file, doctree, doctree, conf )
 
-   for modname, module in doctree.modules
+   for modname, module in doctree.members
       forfirst:  file.writeText( "\n\n" )
+      if module.type != "module": continue
       
       // prefix the module name to the list
       strModName = i"Module" + " \"" + module.name +"\""
@@ -125,7 +126,7 @@ function writeData( file, conf, type, title, data, module )
    for entry in data
 
       // skip if foreign
-      if entry.module != module
+      if entry.parent != module
          continue
       end
 

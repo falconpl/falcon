@@ -51,7 +51,8 @@ class FaldocBookRenderer( frame ) from docbook.Renderer( frame )
    end
    
    function render_a( node )
-      return "[@a node, todo]"
+      l = node.infos["link"]
+      return DOCBOOKGenerator.makeLink( l )
    end
          
 end
@@ -68,9 +69,6 @@ class DOCBOOKGenerator( doctree, conf )
 
    //# Level of the document.
    docLevel = 0
-
-   //# Prefix for ids (i.e. grouped entries)
-   id_prefix = nil
    
    _outfile = nil
 
@@ -79,30 +77,27 @@ class DOCBOOKGenerator( doctree, conf )
    _entityHandler = [
       "page" => self.makePage,
       "variable" => self.makeVariable,
+      "global" => self.makeVariable,
       "object" => self.makeObject,
       "class" => self.makeClass,
       "function" => self.makeFunction,
-      "group" => self.makeGroup,
-      "funset" => self.makeFunset,
+      "group" => self.makePage,
+      "funset" => self.makePage,
       "enum" => self.makeEnum,
       "message" => self.makeMessage
    ]
 
    //# represents the section order
    _moduleOrder =  .[
-      "page"
-      "group"
-      "funset"
       .["object" i"Objects"]
       .["class" i"Classes"]
       .["function" i"Functions"]
-      .["variable" i"Variables"]
+      .["global" i"Variables"]
       .["enum" i"Enumerations"]
       .["message" i"Messages" ]
    ]
    
    init
-      inspect (conf )
       if "frame" in conf
          switch conf["frame"]
             case "article"
@@ -147,11 +142,12 @@ class DOCBOOKGenerator( doctree, conf )
 
          // each element of the main module is a chapter
          self.docLevel = 0
-         self.makeModule( self.doc.mainModule )
+         self.makeModule( self.doc )
 
          // other modules must be in their own chapter.
          self.docLevel = 1
-         for modname, module in self.doc.modules
+         for modname, module in self.doc.members
+            if module.type != "module": continue
             self.makeModule( module )
          end
 
@@ -168,13 +164,17 @@ class DOCBOOKGenerator( doctree, conf )
 
 
    function makeModule( module )
-
       self._outfile.writeText(self.frame.openSection(0))
 
-      if "#main" in module.entities
-         main = module.entities["#main"]
-         self.writeTag( "title", main.props["title"] )
-         self._outfile.writeText( self._rndr.render( main.pcontent ) )
+      // then do the pages
+      for page in  module.orderPages()
+         // the main page is always the first
+         if page.type == "main"
+            self.writeTag( "title", page.props["title"] )
+            self.makeContent( page.pcontent )
+         else
+            self.makePage( page )
+         end
       end
 
       entities = module.groupEntities()
@@ -221,22 +221,26 @@ class DOCBOOKGenerator( doctree, conf )
          self.docLevel = dl
       end
    end
-   
-   function makePage( entity )
-      self._outfile.writeText( self._rndr.make_section( self.docLevel, entity.name, entity.props["title"] ) )
-      data = self._rndr.render( entity.pcontent )
-      self._outfile.writeText( data == "" ? "<para/>\n" : data )
-   end
+
    
    function makeVariable( entity, prefixName )
       if not prefixName: prefixName = i"Global"
-      name = prefixName + " " + self.relativize( entity.name )
-      id = self.id_prefix ? self.id_prefix + ":" + entity.name : entity.name
+      name = prefixName + " " + entity.name
+      id = entity.getID()
       self._outfile.writeText( self._rndr.make_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
-      data = self._rndr.render( entity.pcontent )
-      self._outfile.writeText( data == "" ? "<para/>\n" : data )
+      self.makeContent( entity.pcontent )
    end
+
+
+   function makeContent( ctx )
+      if ctx
+         data = self._rndr.render( ctx )
+      end
+      
+      self._outfile.writeText( data ?  data : "<para/>\n" )
+   end
+   
    
    function makeObject( entity )
       self.makeObjectoid( entity, i"Object", true )
@@ -252,15 +256,15 @@ class DOCBOOKGenerator( doctree, conf )
 
 
    function makeObjectoid( entity, typeName, proto )
-      id = self.id_prefix ? self.id_prefix + ":" + entity.name : entity.name
+      id = entity.getID()
       self._outfile.writeText( self._rndr.make_section( self.docLevel, id, typeName + " " + entity.name ) )
 
       self.makeBrief( entity )
       if proto: self.makePrototype( entity, true )
 
-      data = self._rndr.render( entity.pcontent )
-      // at least one para is mandatory in every section
-      self._outfile.writeText( data == "" ? "<para/>\n" : data )
+      // write the content
+      self.makeContent( entity.pcontent )
+
       if entity.members
          dl = self.docLevel
 
@@ -287,37 +291,22 @@ class DOCBOOKGenerator( doctree, conf )
    
    function makeFunction( entity, prefixName )
       if not prefixName: prefixName = i"Function"
-      name = prefixName + " " + self.relativize( entity.name )
-      id = self.id_prefix ? self.id_prefix + ":" + entity.name : entity.name
+      name = prefixName + " " + entity.name
+      id = entity.getID()
       self._outfile.writeText( self._rndr.make_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
-      data = self._rndr.render( entity.pcontent )
-      // at least one para is mandatory in every section
       self.makePrototype( entity )
-      self._outfile.writeText( data == "" ? "<para/>\n" : data )
-   end
-   
-   function makeGroup( entity )
-      self.makeGroupoid( entity, i"Group" )
+      self.makeContent( entity.pcontent )
    end
 
-   function makeFunset( entity )
-      self.makeGroupoid( entity, i"Function set" )
-   end
    
-   function makeGroupoid( entity, pageName )
-      //> "Entity: ", entity.describe(1)
+   function makePage( entity )
       // If the group is undefined, it will have no title.
-      self.id_prefix = entity.name
-      
-      name = pageName+ " " + (("title" in entity.props) ? entity.props["title"] : entity.name)
-
+      name = ("title" in entity.props) ? entity.props["title"] : entity.name
       // define a chapter for xref -- can't ave prefix.
       self._outfile.writeText( self._rndr.make_section( self.docLevel, entity.name, name  ) )
-      if entity.pcontent
-         data = self._rndr.render( entity.pcontent )
-      end
-      self._outfile.writeText( data ? data: "<para/>\n" )
+      self.makeBrief( entity )
+      self.makeContent( entity.pcontent )
       
       if entity.members
          dl = self.docLevel
@@ -327,8 +316,6 @@ class DOCBOOKGenerator( doctree, conf )
          end
          self.docLevel = dl
       end
-
-      self.id_prefix = nil
    end
 
    function makeMessage( entity )
@@ -364,8 +351,9 @@ class DOCBOOKGenerator( doctree, conf )
          fr = entity.props["from"]
          proto = "<simpara><literal>" + proto + " from "
          for link, callexp in fr
-            cexp = self._rndr.rcont( callexp )
-            proto += "\\</literal></simpara><simpara><literal>           " + link.destination +"( " + cexp + " )"
+            linkcal = self.makeLink( link )
+            cexp = callexp? "(" + self._rndr.rcont( callexp ) + ")" : ""
+            proto += "\\</literal></simpara><simpara><literal>           " +linkcal+ cexp
          end
          self._outfile.writeText( proto + "</literal></simpara>" )
       else
@@ -385,7 +373,9 @@ class DOCBOOKGenerator( doctree, conf )
             self.opentag( "entry" )
             self.writeTag( "emphasis", i"Returns" )
             self.closetag( "entry" )
-            self.writeTag( "entry", content )
+            self.opentag( "entry" )
+            self._outfile.writeText( content )
+            self.closetag( "entry" )
             self.closetag( "row" )
          end
       end
@@ -401,15 +391,22 @@ class DOCBOOKGenerator( doctree, conf )
       self.closetag( "para" )
    end
 
-   function makeParams( plist, style )
+   
+
+   function makeParams( plist )
       
       for name, content in plist
-         self.opentag( "row" )
-         self.writeTag( "entry", "" ) // make an empty col for indent
-         self.writeTag( "entry", name, style )
-         vcont = self._rndr.rcont( content )
-         self.writeTag( "entry", vcont.trim(), style )
-         self.closetag( "row" )
+         // ignore the parameter if not documented
+         if content
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", name )
+            vcont = self._rndr.rcont( content )
+            self.opentag( "entry" )
+            self._outfile.writeText( vcont.trim() )
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
       end
    end
 
@@ -442,7 +439,10 @@ class DOCBOOKGenerator( doctree, conf )
       self.opentag( "entry" )
       for link, content in rlist
          self.opentag( "simpara" )
-         self.writeTag( "emphasis", link.destination, ["role"=>"bold"] ) // make an empty col for indent
+         self.opentag( "emphasis", ["role"=>"bold"] )
+         vcont = self.makeLink( link )
+         self._outfile.writeText( vcont.trim() )
+         self.closetag( "emphasis" )
          ctx = self._rndr.rcont( content ).trim()
          self._outfile.writeText( " - " + ctx )
          self.closetag( "simpara" )
@@ -451,16 +451,26 @@ class DOCBOOKGenerator( doctree, conf )
       
       self.closetag( "row" )
    end
+
+
+   function makeLink( l )
+      if l.target
+         if "title" in l.target.props
+            text = l.target.props["title"]
+         else
+            text = l.destination
+         end
+         return "<link linkend=\""+l.target.getID() + "\">"+text+"</link>"
+      else
+         return l.destination
+      end
+   end
+
    
    //===============================================================
    // Utilities
    //===============================================================
 
-   function relativize( name )
-      if "." in name: return name[name.rfind( "." ) + 1:]
-      return name
-   end
-   
    function opentag( tag, attribs )
       att = ""
       for k,v in attribs

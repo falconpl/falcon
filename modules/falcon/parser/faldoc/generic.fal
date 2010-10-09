@@ -26,16 +26,13 @@ import PState from parser.genparser as PState
 class Parser from parser.genparser.Parser
    states = [
       "start" => PState( .[
-            ReRule( '/\*#[\*|#]*?\*/', "#stay" )
             ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
             TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
 
             TagRule( "/*", "comment" )
             ReRule( "//.*$", "#stay" )
-
-            // ignore everything else
-            ReRule(".*$", "#stay")
-         ]
+         ],
+         {=>}
       ),
 
       "grab" =>PState(.[

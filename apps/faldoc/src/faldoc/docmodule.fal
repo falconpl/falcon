@@ -18,154 +18,34 @@ load .docentity
 load .link
 
 /*# Database of all the defined entities. */
-class DocModule( name, mainmodule )
-   //# The main mocule of the document, used to cascade link requests.
-   main = mainmodule
-   
+class DocModule( name ) from Entity
    //# Title of the module
-   brief = nil
-
-   //# name of the module
-   name = name
-
-   //# True when this has been explicitly defined
-   defined = false
-
-   //# Content of the module introduction
-   content = nil
-
-   //# Pages in this modules
-   pages = [=>]
-
-   //# All the entities of this module
-   entities = [=>]
+   title = nil
 
    //# Missing entities as local ID -> link
    missing = [=>]
 
-   //# adds an entity to the module
-   function add( entity )
-      if not entity.name
-         faldoc.fatal( @i"Adding an unknown entity in module $self.name", entity.firstline )
-      end
-      
-      // Manage groups and sets
-      // For groups; only first-level items can be grouped
-      if "ingroup" in entity.props
-         for groupname in entity.props["ingroup"]
-            group = self.getEntity( groupname, "group", true )
-            group.addMember( entity )
-         end
-      end
-
-      if "inset" in entity.props
-         self.getEntity( entity.props["inset"], "funset", true ).addMember( entity )
-      end
-
-      // do we have an owner?
-      if "owner" in entity.props
-         // We don't know what is the type of the ownership here.
-         // May be a class, an object or an enum, for example.
-         self.getEntity( entity.props["owner"], nil, true ).addMember( entity )
-      end
-      
-      if entity.name in self.entities
-         // entity already declared; but -- is this an automatic definition?
-         if entity.automatic
-            // strange; we should have taken the real entity
-            faldoc.error( @i"Entity \"$entity.name\" referenced as automatic but was already declared in \"$self.name\"", entity.firstline )
-         else
-            // Was the previously declared entity automatic?
-            preve = self.entities[ entity.name ]
-            if preve.automatic
-               // warn if found with different type
-               if preve.type != nil and preve.type != entity.type
-                  faldoc.warn( @i"Entity \"$entity.name\" was referenced in \"$self.name\" with different type: ($preve.type)", entity.firstline )
-               end
-               // but go on the same.
-               preve.copy( entity )
-            else
-               // a real error -- two entities explictly declared with the same name.
-               faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
-            end
-         end
-         
-         // in either case
-         return
-      end      
-
-      // resolve links
-      self.onEntityAdded( entity.name, entity )
-   end
-
    //# Gets an entity from this module (possibly undefined)
-   function getEntity( name, type, create )
-      if name notin self.entities
-         if not create: return nil
-         e = Entity( "", "<nowhere>", 0 )
+   function getEntity( name, type )
+      if name notin self.members
+         e = Entity( "", self.file, 0 )
          e.name = name
          e.type = type
          e.automatic = true
-         self.add( e )
+         if not self.members: self.members = [=>]
+         self.members[name] = e
+         e.parent = self
       else
-         e = self.entities[name]
+         e = self.members[name]
       end
 
       return e
    end
 
-   //# Callback used to resolve a link.
-   function onEntityAdded( name, entity )
-      self.entities[name] = entity
-      
-      if name in self.missing
-         faldoc.verbose( @i"Resolving entity $name in module $self.name" )
-         links = self.missing[entity.name]
-         self.missing -= entity.name
-
-         for l in links
-            l.target = entity
-         end
-      end
-      
-      if self.main: self.main.onEntityAdded( self.name + "." + entity.name, entity )
-   end
-
-
-   //# Adds a single link
-   function addLink( link )
-      // Already resolved?
-      if link.destination in self.entities
-         link.target = self.entities[link.destination]
-         return true
-      else
-         // -- No? is this name in the global module?
-         if self.main
-            if self.main.addLink( link )
-               // it was resolved by main
-               return true
-            end
-            // no; we added the link to the main links, but we must add it also locally
-            if link.destination in self.missing
-               self.missing[ link.destination ] += link
-            else
-               self.missing[ link.destination ] = [link]
-            end
-         end
-      end
-   end
-
-   //# Shortcut to create a link between an entity and one other entity that may still not be available
-   function link( sourceEntity, line, destination, automatic )
-      l = Link( sourceEntity, line, destination, automatic )
-      self.addLink( l )
-      return l
-   end
-
    //# Groups the entities by type
    function groupEntities()
       data = [=>]
-      for e, entity in self.entities
+      for e, entity in self.members
          if entity.type in data
             data[entity.type].add(entity)
          else
@@ -174,6 +54,94 @@ class DocModule( name, mainmodule )
       end
       return data
    end
+
+   //# Returns the meta-pages respecting their required order.
+   function orderPages()
+      pages = []
+      groups = []
+      funsets = []
+      for name, entity in self.members
+         switch entity.type
+            case "main"
+               pages[0:0] = entity
+            case "page"
+               pages += entity
+            case "group"
+               groups += entity
+            case "funset"
+               funsets += entity
+         end
+      end
+
+      // ok, now see if we must reorder something
+      allpages = pages + groups + funsets
+      ppage = 1
+      l = allpages.len()
+      while ppage < l
+         entity = allpages[ppage]
+
+         // should we reorder it?
+         if entity.after and allpages[ppage-1].name != entity.after
+            // get the entity
+            if entity.after notin self.members
+               faldoc.error( @i"Entity should be after $(entity.after), but \"$(entity.after)\" is not in module $(self.name)",
+                  entity.firstline )
+               ppage ++
+               continue
+            end
+
+            // adjust @after main
+            after = entity.after
+            if after == "main": after = "#main"
+
+            etgt = self.members[ after ]
+            // but where is this entity?
+            ptgt = allpages.find( etgt )
+            if ptgt < 0
+               faldoc.error( @i"Entity should be after $(entity.after), but that is not a meta-page", entity.firstline )
+               ppage++
+               continue
+            end
+
+            // and now reorder!
+            allpages.remove( ppage )
+            // We must insert after the found element, which may be shifted 1 back if it's after our point
+            allpages.insert( (ptgt > ppage ? ptgt : ptgt+1), entity )
+            // -- for the same reason, we may need not to increment if we have removed an element.
+            if ptgt < ppage: ppage ++
+            continue
+         end
+
+         ppage ++
+      end
+
+      // ok, pages are re-ordered
+      return allpages
+   end
+
+
+   function checkUndefined()
+      // No entites should have automatic setting turned on at end, except for modules.
+      for name, entity in self.members
+         if entity.type == "module"
+            entity.checkUndefined()
+         else
+            if entity.automatic
+               if entity.members
+                  mbfirst = entity.members.first().value()
+                  line = mbfirst.firstline
+                  file = mbfirst.file
+               else
+                  line = 0
+                  file = self.file
+               end
+               
+               faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined", line, file )
+            end
+         end
+      end
+   end
+   
 end
 
 export

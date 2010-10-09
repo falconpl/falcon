@@ -45,9 +45,6 @@ class FileContext( file, defmod )
    function parse( ctx )
       self.ctx = ctx
       self.parseNode( ctx.topNode )
-
-      // finally, when we know who we are, store our entities in the global db.
-      self.storeEntities()
    end
 
 
@@ -61,7 +58,7 @@ class FileContext( file, defmod )
       while node != nil
          // normally, don't destroy currently examined entity
          clear = false
-         
+
          switch node.type
          
             case "faldoc_txt"
@@ -124,24 +121,24 @@ class FileContext( file, defmod )
    function parseInherit( entity, node )
       // only class and objects can have inheritance
       if entity.type != "class" and entity.type != "object"
-         faldoc.error( @i"Inconsistent inheritance found for entity $entity.name($entity.firstline) at line " + node.infos["line"] )
+         faldoc.error( @i"Inconsistent inheritance found for entity $entity.name", entity.firstline )
          return
       end
-
-      inherit = []
+      
       while node != nil
+         line = node.infos["line"] + entity.firstline
          if node.type != "from"
-            faldoc.error( @i"Invalid inheritance element in $entity.name($entity.firstline) at line " + node.infos["line"] )
+            faldoc.error( @i"Invalid inheritance element in $entity.name", line )
             return
          end
+
+         l = entity.addLink( node.infos["class"], line, false )
+         faldoc.document.addLink( l )
          
-         //TODO: Use a link here.
-         // the called class is in infos/class, while the call prototype is in the content.
-         inherit.add( [ node.infos["class"], node.content ] )
+         entity.addParam( "from", l, node, line )
+
          node = node.next
       end 
-
-      entity.props["from"] = inherit
    end
 
    
@@ -233,7 +230,9 @@ class FileContext( file, defmod )
             self.current_set = name
 
          case "@beginmodule"
-            if self.current_module != nil
+            if self.modName != nil
+               faldoc.error( i"@beginmodule command invalid in source modules", line)
+            elif self.current_module != nil
                faldoc.warn( i"Beginning new module $name while group $self.current_set is not closed", line)
             end
             self.current_module = faldoc.document.getModule( name )
@@ -254,47 +253,60 @@ class FileContext( file, defmod )
             if self.modName != nil
                faldoc.error( i"@endmodule command invalid in source modules", line)
             elif self.current_module == nil
-               faldoc.warn( i"Parsing @endmodule at, but no group open", line)
+               faldoc.warn( i"Parsing @endmodule at, but no module open", line)
             end
-            self.current_group = nil
+            self.current_module = nil
       end
 
    end
    
    //# Stores a new entity in the entity database.
-   function addEntity( entity )
-      // store in the corrent module
-      if not entity.module: entity.module = self.current_module
-
-      // Still nothing?
-      if not entity.module: entity.module = self.defmod
+   function addEntity( entity )      
+      // determine the module of the entity.
+      if "inmodule" in entity.props
+         module = faldoc.document.getModule(entity.props["inmodule"])
+      elif self.current_module
+         module = self.current_module
+      else
+         module = self.defmod
+      end
       
-      if self.current_group != nil
-         // group is active only to first-level entities.
-         if "ingroup" in entity.props and "owner" notin entity.props
-            groups = entity.props["ingroup"]
-            if self.current_group notin groups
-               groups.add( self.current_group )
+      // store in the current module
+      if "owner" in entity.props
+         // do we have an owner? -- then, it's also a parent.
+         entity.parent = module.getEntity( entity.props["owner"] )
+      else
+         // otherwise, we belong to the module
+         entity.parent = module
+      end
+
+      // Finally, add the entity to its rightful parent
+      entity.parent.addMember( entity )
+      
+      // Ok, should we handle grouiping?
+      if entity.type != "funset" and entity.type != "page" and entity.type != "group" and entity.type != "main"
+         if self.current_group != nil or self.current_set!= nil
+            if "ingroup" notin entity.props and "inset" notin entity.props and "owner" notin entity.props
+               if self.current_group != nil
+                  entity.props["ingroup"] = self.current_group
+               elif self.current_set!= nil
+                  entity.props["inset"] = self.current_set
+               end
             end
-         else
-            entity.props["ingroup"] = [self.current_group]
          end
-      end
+         
+         // manage group ownership
+         if "ingroup" in entity.props
+            group = module.getEntity( entity.props["ingroup"] )
+         elif "inset" in entity.props
+            group = module.getEntity( entity.props["inset"] )
+         end
 
-      // about sets, only functions can be infunction sets
-      if self.current_set != nil and entity.type == "function" and "inset" notin entity.props
-         entity.props["inset"] = self.current_set
-      end
-
-      // Finally, add the entity
-      // This will also apply membership to groups and set.
-      entity.module.add( entity )
-
-      // once added, the textual entity has its full context needed to resolve links.
-      if "links" in entity.props
-         mod = entity.module
-         for link in entity.props["links"]
-            mod.addLink( link )
+         if group
+            // this entity may have been neutralized if already existing
+            // in that case, we want the already stored one to be grouped
+            rentity = entity.parent.getEntity( entity.name )
+            group.addMember( rentity )
          end
       end
    end
@@ -313,13 +325,12 @@ class FileContext( file, defmod )
       if parentEntity and (node.type == "function" or node.type == "variable" )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
-         entity.name = parentEntity.name + "." + node.infos["name"]
          parentEntity.addMember( entity )
       else
          entity.type = node.type
-         entity.name = node.infos["name"]
       end
 
+      entity.name = node.infos["name"]
       entity.dline = l1
       
       self.addEntity( entity )
@@ -328,27 +339,22 @@ class FileContext( file, defmod )
    //# Creates an entity out of a non-text definition
    function createEntity( node, parentEntity )
       entity = docentity.Entity( nil, self.file, node.infos["line"] )
+      entity.name = node.infos["name"]
+      entity.dline = entity.firstline
       
       // if we have a parent, variables and functions must be added below them.
       if parentEntity and (node.type == "function" or node.type == "variable" )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
-         entity.name = parentEntity.name + "." + node.infos["name"]
          parentEntity.addMember( entity )
       else
          entity.type = node.type
-         entity.name = node.infos["name"]
+         self.addEntity( entity )
       end
 
-      entity.dline = entity.firstline
-      self.addEntity( entity )
       return entity
    end
-   
 
-   //# Store entities in the global database
-   function storeEntities()
-   end
 end
 
 

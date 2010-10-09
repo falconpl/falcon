@@ -51,8 +51,8 @@ class HTMLGenerator( doctree, conf )
          dirMake( self.directory, true )
          self.makeIndex()
 
-         self.makeModule( self.doc.mainModule )
-         for modname, module in self.doc.modules
+         self.makeModule( self.doc )
+         for modname, module in self.doc.members
             self.makeModule( module )
          end
 

@@ -21,20 +21,17 @@ load .link
 import from parser.faldoc.generic
 import from parser.faldoc.falsrc
 
-class Document
+class Document from DocModule
    title = nil
    author = nil
    version = nil
 
-   //# main module -- main is a reserved name, can't possibly used by modules.
-   mainModule = DocModule("main")
-   
-   // other modules in this document.
-   modules = [=>]
-
    _fdParser = parser.faldoc.falsrc.Parser()
    _gParser = parser.faldoc.generic.Parser()
 
+   // links to be resolved
+   links = []
+   
    function addFile( file )
       p = Path( file )
       faldoc.info( "Processing " + p.filename + " in " + p.fulloc )
@@ -51,7 +48,7 @@ class Document
             faldoc.verbose( @i"File $file has module name $modname" )
          else
             ctx = self._gParser.parseStream( istream, "start" )
-            module = self.mainModule
+            module = self
          end
 
          fc = FileContext( file, module )
@@ -68,15 +65,56 @@ class Document
 
 
    function getModule( name )
-      if name in self.modules
-         return self.modules[name]
+      if name in self.members
+         return self.members[name]
       else
-         mod = DocModule( name, self.mainModule )
-         self.modules[name] = mod
-         return mod
+         // create one module at each step of the hierarcy
+         modNames = name.split(".")
+         mn = ""
+         topModule = self
+         for name in modNames
+            mn += name
+            module = DocModule( name, topModule )
+            module.automatic = true
+            self.modules[mn] = module
+            topModule = module
+            mn += "."
+         end
+         return module
       end
    end
-   
+
+   function addLink( entity, line, dest, explicit )
+      l = Link( entity, line, dest, explicit )
+      self.links.add(l)
+      return l
+   end
+
+   function resolveLinks()
+      for l in self.links
+         self.resolveLink( l )         
+      end
+   end
+
+   function resolveLink( l )
+      src = l.source
+      // we must find the required entity through the parent.
+      parent = src.parent
+      
+      // try to reverse-find starting from the parent.
+      while parent
+         if (tgt = parent.getDescendant( l.destination ))
+            // found!
+            l.target = tgt
+            return
+         end
+         parent = parent.parent
+      end
+
+      // not found? -- too bad
+      (l.explicit ? faldoc.error : faldoc.warn)( @i"Unresolved link to \"$(l.destination)\"", l.line, l.source.file )
+   end
+      
 end
 
 export Document
