@@ -106,6 +106,14 @@ if( NOT FALCON_SHARE_DIR)
    endif()
 endif()
 
+if( NOT FALCON_DOC_DIR)
+   if(WIN32)
+      set(FALCON_DOC_DIR "share")
+   else()
+      set(FALCON_DOC_DIR "share/doc/falcon${FALCON_ID}")
+   endif()
+endif()
+
 if (NOT FALCON_BIN_DIR)
    set(FALCON_BIN_DIR bin)
 endif()
@@ -175,6 +183,7 @@ set(Falcon_LIB_DIR "${FALCON_LIB_DIR}")
 set(Falcon_MAN_DIR "${FALCON_MAN_DIR}")
 set(Falcon_INC_DIR "${FALCON_INC_DIR}")
 set(Falcon_SHARE_DIR "${FALCON_SHARE_DIR}")
+set(Falcon_DOC_DIR "${FALCON_DOC_DIR}")
 set(Falcon_CMAKE_DIR "${FALCON_CMAKE_DIR}")
 
 
