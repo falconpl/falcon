@@ -15,18 +15,19 @@ Version = 0.9.10
 ################################################
 # Faldoc Input settings
 ################################################
+Input.basedir=@PROJECT_SOURCE_DIR@
 
-Input.directory=../dbi
-Input.directory=../mysql
-Input.directory=../pgsql
-Input.directory=../sqlite3
-Input.directory=../odbc
+Input.directory=dbi
+Input.directory=mysql
+Input.directory=pgsql
+Input.directory=sqlite3
+Input.directory=odbc
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=false
 
 # Other files may be specified here
-Input.extra=main.fd
+Input.extra=docs/main.fd
 
 ################################################
 # Faldoc Output settings
@@ -40,6 +41,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-dbi.0.9.10-docs
+Output.html.directory=@output_dir@
 Output.html.url=.
 Output.html.doctitle=Falcon DBI Module reference.

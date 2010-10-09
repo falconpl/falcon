@@ -26,6 +26,7 @@ ELSE(MSVC)
    OPTION(FALCON_DBI_BUILD_ODBC "Include ODBC DBI Module" OFF)
 ENDIF(MSVC)
 
+option( FALCON_DBI_BUILD_DOCS "Create documentation" OFF )
 
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
@@ -80,3 +81,6 @@ IF(FALCON_DBI_BUILD_FIREBIRD)
   ADD_SUBDIRECTORY(fbsql)
 ENDIF()
 
+if( FALCON_DBI_BUILD_DOCS )
+   add_subdirectory( docs )
+endif()
