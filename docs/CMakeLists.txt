@@ -26,7 +26,7 @@ configure_file(
 )
 #
 generate_doxygen_documentation(
-  core_engine_docs # make target
+  engine_docs # make target
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 )
 #
