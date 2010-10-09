@@ -166,6 +166,21 @@ if ( NOT WIN32 )
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
 
+# Variable Forwarding, interally we use the conventions
+# introduced by find_package(Falcon). TODO: That's not elegant
+set(Falcon_APP_DIR "${FALCON_APP_DIR}")
+set(Falcon_MOD_DIR "${FALCON_MOD_DIR}")
+set(Falcon_BIN_DIR "${FALCON_BIN_DIR}")
+set(Falcon_LIB_DIR "${FALCON_LIB_DIR}")
+set(Falcon_MAN_DIR "${FALCON_MAN_DIR}")
+set(Falcon_INC_DIR "${FALCON_INC_DIR}")
+set(Falcon_SHARE_DIR "${FALCON_SHARE_DIR}")
+set(Falcon_CMAKE_DIR "${FALCON_CMAKE_DIR}")
+
+
+#########################################################################
+# RPATH(Linux) and install_name(OSX)
+#
 option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" on)
 if(NOT DISABLE_RPATH)
   # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
