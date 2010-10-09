@@ -3,7 +3,7 @@ get_filename_component(SELF_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 find_program(Falcon_faldoc_EXECUTABLE faldoc.sh ${Falcon_BINARY_DIR})
 
-function(faldoc_module_docs modulename input_file output_dir)
+function(faldoc_target modulename input_file output_dir)
 
   if(Falcon_IN_CORE_SOURCETREE)
     if(WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio.*")
@@ -30,6 +30,7 @@ function(faldoc_module_docs modulename input_file output_dir)
     OUTPUT ${output_dir}/index.html
     COMMAND ${_cmd}
     DEPENDS ${input_file} ${ARGN}
+    COMMENT ${output_dir}/index.html
   )
 
   add_custom_target(${modulename}_module_docs DEPENDS ${output_dir}/index.html)
@@ -37,4 +38,32 @@ function(faldoc_module_docs modulename input_file output_dir)
   if(Falcon_IN_CORE_SOURCETREE)
     add_dependencies(${modulename}_module_docs faldoc)
   endif()
+endfunction(faldoc_target)
+
+function(faldoc_module_docs modulename input_file_in)
+  
+  get_filename_component(_in_ext ${input_file_in} EXT)
+  get_filename_component(input_file ${input_file_in} NAME_WE)
+  if(NOT _in_ext STREQUAL ".fd.in")
+    message(FATAL_ERROR "the input_file_in file name has to match *.fd.in, it's ${input_file_in} instead.")
+  endif()
+
+  set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/Falcon-docs-${modulename})
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}.fd.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${input_file}.fd
+    @ONLY
+  )
+  
+  faldoc_target(${modulename}
+    ${CMAKE_CURRENT_BINARY_DIR}/${input_file}.fd
+    ${output_dir}
+    ${ARGN} # additional dependencies
+  )
+  
+  install(
+    DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
+    OPTIONAL # if docs haven't been generated
+  )
+
 endfunction(faldoc_module_docs)

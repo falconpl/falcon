@@ -44,7 +44,7 @@ configure_file(
 )
 
 file(GLOB scriptExtensions_SRCS "../engine/core_module/*.cpp")
-faldoc_module_docs(core
+faldoc_target(core
   ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
   ${output_dir}
   ${scriptExtensions_SRCS}
