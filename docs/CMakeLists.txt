@@ -43,6 +43,11 @@ faldoc_module_docs(core
   ${scriptExtensions_SRCS}
 )
 
+install(
+   DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
+   OPTIONAL # if docs haven't been generated
+)
+
 if(WIN32)
     option( FALCON_WITH_MANPAGES "Build and install also manpages" OFF )
 else()
