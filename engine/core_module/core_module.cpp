@@ -1260,7 +1260,7 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "sqrt", &Falcon::core::flc_math_sqrt )->
       addParam("x");  
-   self->addExtFunc( "mod", &Falcon::core::flc_math_exp )->
+   self->addExtFunc( "mod", &Falcon::core::flc_math_mod )->
       addParam("x")->addParam("y");
    self->addExtFunc( "pow", &Falcon::core::flc_math_pow )->
       addParam("x")->addParam("y");
