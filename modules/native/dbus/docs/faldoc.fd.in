@@ -16,7 +16,8 @@ Version = 0.1
 # Faldoc Input settings
 ################################################
 
-Input.directory=../src
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=src
 #you may place other input directory here
 
 Input.wildcard=*.cpp     #we use only...
@@ -37,6 +38,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=falcon-dbus-0.1-docs
+Output.html.directory=@output_dir@
 Output.html.url=.
 Output.html.doctitle=Falcon-dbus module Function Reference
