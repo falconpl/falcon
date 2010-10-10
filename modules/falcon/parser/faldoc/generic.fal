@@ -32,7 +32,7 @@ class Parser from parser.genparser.Parser
             TagRule( "/*", "comment" )
             ReRule( "//.*$", "#stay" )
          ],
-         {=>}
+         "*" // get all
       ),
 
       "grab" =>PState(.[

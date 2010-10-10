@@ -163,8 +163,8 @@ class Parser()
       end
 
       self._stack += self.states[name]
+      self._stateNames += name
       if self.trace
-         self._stateNames += name
          self.traceStates()
       end
    end
@@ -180,8 +180,8 @@ class Parser()
       end
 
       arrayResize( self._stack, len - 1 )
+      arrayResize( self._stateNames, len - 1 )
       if self.trace
-         arrayResize( self._stateNames, len - 1 )
          self.traceStates()
       end
    end
@@ -297,9 +297,10 @@ class Parser()
             prefix = line[col:matchAt]
 
             if (not state.onUnmatched)
-               raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)] $prefix" )
+               statedesc = ", ".merge(self._stateNames)
+               raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)]{$(statedesc)} \"$prefix\"" )
             end
-            state.onUnmatched( ctx, prefix )
+            if state.onUnmatched != "*": state.onUnmatched( ctx, prefix )
          end
 
          if winner
@@ -359,8 +360,8 @@ class Parser()
             self.pushState( what )
          elif what.derivedFrom( PState )
             self._stack += what
+            self._stateNames += "anon(" + what.toString()+ ")"
             if self.trace
-               self._stateNames += "anon(" + what.toString()+ ")"
                self.traceStates()
             end
          else

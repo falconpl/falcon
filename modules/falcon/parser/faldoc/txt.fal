@@ -33,6 +33,9 @@ import ProxyRule from parser.genparser.rules as ProxyRule
 import Parser from parser.genparser
 
 ParaCommands =  .[
+   ReRule( '^\s*@after\s+(.*)$', "#stay",
+           {ctx,p0,p1 => ctx.add(InfoNode("@after", ['line' => ctx.row, "dest"=>p1 ] )) })
+           
    ReRule( '^\s*@brief\s+', "para",
            {ctx => ctx.pushNode(InfoNode("@brief", ['line' => ctx.row ] )) })
 
@@ -68,11 +71,11 @@ ParaCommands =  .[
                ctx.add(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] ))
                ctx.pushNode(Node("para")) })
 
+   ReRule( '^\s*@module\s+(\w+)\s+(.*)', "para",
+           {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@module", ['line' => ctx.row, 'name'=> p0,'title'=> p1 ] )) })
+
    ReRule( '^\s*@prop\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })
-
-   ReRule( '^\s*@module\s+(\w+)', "para",
-           {ctx, d0, p0 => ctx.pushNode(InfoNode("@module", ['line' => ctx.row, 'name'=> p0] )) })
 ]
 
 
@@ -199,11 +202,11 @@ StartRules = \
       // serve also inline commands, but generate a para node for them.
       ProxyRule( InlineCommands, "para;*", {ctx=> ctx.pushNode( Node("para") )} )
 
-      // Otherwise, enter the para mode
-      ReRuleLA( '[^\s]', "para", { ctx => ctx.pushNode( Node("para") )} )
-
       // consuming everything else
       ReRule( '\s*', "#stay" )
+
+      // Otherwise, enter the para mode
+      ReRuleLA( '[^\s]', "para", { ctx => ctx.pushNode( Node("para") )} )
    ]
          
 class Parser from parser.genparser.Parser
@@ -236,7 +239,7 @@ class Parser from parser.genparser.Parser
       "para" =>PState(.[
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})         
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
-            ProxyRule( ParaStartCommands, "#pop;*", {ctx=>ctx.popNode()} )
+            ProxyRule( ParaStartCommands, "#pop;*", {ctx, rule=>ctx.popNode(); } )
          ]
          + TableStart
          + ListStart
@@ -304,8 +307,13 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*--\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
             ReRule( '^\s*-\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
          ]
+         + ProxyRule( ParaStartCommands, "#pop;#pop;*", {ctx, rule=>ctx.setListDepth( 0 );ctx.popNode(); } )
          + InlineCommands
-         + FormatElements,
+         + FormatElements
+         + .[
+            // while a @ in the middle of the para means an unrecognized command for sure.
+            ReRule( '@(\w+)', "#stay", {ctx, d0, p0=>ctx.add( InfoNode( "cmd_unrecognized", ['line' => ctx.row, "cmd"=>d0] ) )})
+         ],
          {ctx, data=>ctx.add( data )},
          "para_continue"
       ),

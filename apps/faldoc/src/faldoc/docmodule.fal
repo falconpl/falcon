@@ -25,6 +25,11 @@ class DocModule( name ) from Entity
    //# Missing entities as local ID -> link
    missing = [=>]
 
+   init
+      self.name = name ? name : "Main module"
+      self.type = "module"
+   end
+   
    //# Gets an entity from this module (possibly undefined)
    function getEntity( name, type )
       if name notin self.members
@@ -79,9 +84,12 @@ class DocModule( name ) from Entity
       l = allpages.len()
       while ppage < l
          entity = allpages[ppage]
+         // adjust @after main
+         after = entity.after
+         if after == "main": after = "#main"
 
          // should we reorder it?
-         if entity.after and allpages[ppage-1].name != entity.after
+         if entity.after and allpages[ppage-1].name != after
             // get the entity
             if entity.after notin self.members
                faldoc.error( @i"Entity should be after $(entity.after), but \"$(entity.after)\" is not in module $(self.name)",
@@ -89,10 +97,6 @@ class DocModule( name ) from Entity
                ppage ++
                continue
             end
-
-            // adjust @after main
-            after = entity.after
-            if after == "main": after = "#main"
 
             etgt = self.members[ after ]
             // but where is this entity?
@@ -106,7 +110,8 @@ class DocModule( name ) from Entity
             // and now reorder!
             allpages.remove( ppage )
             // We must insert after the found element, which may be shifted 1 back if it's after our point
-            allpages.insert( (ptgt > ppage ? ptgt : ptgt+1), entity )
+            ptgt_pos = (ptgt > ppage ? ptgt : ptgt+1)
+            allpages[ptgt_pos:ptgt_pos] = entity
             // -- for the same reason, we may need not to increment if we have removed an element.
             if ptgt < ppage: ppage ++
             continue
@@ -136,7 +141,7 @@ class DocModule( name ) from Entity
                   file = self.file
                end
                
-               faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined", line, file )
+               faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined in $(self.name)", line, file )
             end
          end
       end

@@ -36,10 +36,10 @@ class FaldocBookRenderer( frame ) from docbook.Renderer( frame )
    end
 
    function renderSection( node )
-      level = self.blevel
-      front = self.make_section( level+1, node.infos["name"], node.infos["title"] )
+      docLevel = self.blevel
+      front = self.open_section( docLevel, node.infos["name"], node.infos["title"] )
       content = self.rcont(node)
-      back = self.go_to_level( level )
+      back = self.close_section( docLevel )
       
       // the level will be closed when necessary
       return front + content + back
@@ -145,10 +145,9 @@ class DOCBOOKGenerator( doctree, conf )
          self.makeModule( self.doc )
 
          // other modules must be in their own chapter.
-         self.docLevel = 1
          for modname, module in self.doc.members
             if module.type != "module": continue
-            self.makeModule( module )
+            self.makeModule( module, true )
          end
 
          self._outfile.writeText( self.frame.close() )
@@ -163,34 +162,69 @@ class DOCBOOKGenerator( doctree, conf )
    end
 
 
-   function makeModule( module )
-      self._outfile.writeText(self.frame.openSection(0))
+   function makeModule( module, isChildModule, isSubChild )
 
-      // then do the pages
-      for page in  module.orderPages()
-         // the main page is always the first
-         if page.type == "main"
-            self.writeTag( "title", page.props["title"] )
-            self.makeContent( page.pcontent )
+      pages = module.orderPages()
+      if not pages and not module.members 
+         // an empty module
+         return
+      end
+
+      // create the module
+      docLevel = self.docLevel
+
+      // create the main page
+      if pages and pages[0].type == "main"
+         moduleId = module.getID()
+         self._outfile.writeText(self._rndr.open_section(docLevel, moduleId,
+                                  pages[0].props["title"] + (moduleId ? " (" + moduleId + ")":"") ))
+         self.makeContent( pages[0].pcontent )
+         pages.remove(0)
+         if isChildModule
+            self.docLevel ++
          else
-            self.makePage( page )
+            self._outfile.writeText(self._rndr.close_section(docLevel))
+         end
+      else
+         // dummy titlel if we don't have a main page
+         if isChildModule
+            self._outfile.writeText(self._rndr.open_section(docLevel, module.getID(), i"Module " + module.getID()))
+            self._outfile.writeText("<para/>\n")
+            self.docLevel ++
          end
       end
 
+      // do all the other pages
+      for page in pages
+         // the main page is always the first
+         self.makePage( page )
+      end
+   
+      // do ungrouped entities
       entities = module.groupEntities()
       for etype in self._moduleOrder
          if etype.typeId() == StringType
-            self.makeEntityList( etype, entities ) 
+            self.makeEntityList( etype, entities )
          else
             self.makeEntityPage( etype[0], etype[1], entities )
          end
       end
 
-
-      self._outfile.writeText( self._rndr.go_to_level(0) )
-      self._outfile.writeText(self.frame.closeSection(0))
-   end
+      if isChildModule
+         if not isSubChild
+            // do all the children
+            childmods = self.getAllModules( module )
+            for modname, submod in childmods
+               self.makeModule( submod, true, true )
+            end
+         end
+         
+         self._outfile.writeText( self._rndr.close_section(docLevel) )
+      end
       
+      self.docLevel = docLevel
+   end
+   
    //===============================================================
    // Handlers
    //===============================================================
@@ -214,9 +248,12 @@ class DOCBOOKGenerator( doctree, conf )
             if "ingroup" in entity.props or "inset" in entity.props: continue
             if not done
                done = true
-               self._outfile.writeText( self._rndr.make_section( dl, "", chapName ) )
+               self._outfile.writeText( self._rndr.open_section( dl, "", chapName ) )
             end
             maker( entity )
+         end
+         if done
+            self._outfile.writeText( self._rndr.close_section( dl ) )
          end
          self.docLevel = dl
       end
@@ -227,9 +264,10 @@ class DOCBOOKGenerator( doctree, conf )
       if not prefixName: prefixName = i"Global"
       name = prefixName + " " + entity.name
       id = entity.getID()
-      self._outfile.writeText( self._rndr.make_section( self.docLevel, id, name ) )
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
       self.makeContent( entity.pcontent )
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
    end
 
 
@@ -257,35 +295,36 @@ class DOCBOOKGenerator( doctree, conf )
 
    function makeObjectoid( entity, typeName, proto )
       id = entity.getID()
-      self._outfile.writeText( self._rndr.make_section( self.docLevel, id, typeName + " " + entity.name ) )
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, typeName + " " + entity.name ) )
 
       self.makeBrief( entity )
       if proto: self.makePrototype( entity, true )
 
+      props, methods = entity.getPropsAndMethods()
+      // todo - inherit list
+      self.makePropsTable( props, methods )
+
       // write the content
       self.makeContent( entity.pcontent )
-
+      
       if entity.members
          dl = self.docLevel
-
-         props, methods = entity.getPropsAndMethods()
-         // todo - inherit list
-         
          self.docLevel ++
-         if props
-            for property in props
+         for property in props
+            if property.pcontent
                self.makeVariable( property, i"Property" )
             end
          end
 
-         if methods
-            for met in methods
+         for met in methods
+            if met.pcontent or "param" in met.props or "optparam" in met.props
                self.makeFunction( met, i"Method" )
             end
          end
 
          self.docLevel = dl
       end
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
    end
 
    
@@ -293,10 +332,11 @@ class DOCBOOKGenerator( doctree, conf )
       if not prefixName: prefixName = i"Function"
       name = prefixName + " " + entity.name
       id = entity.getID()
-      self._outfile.writeText( self._rndr.make_section( self.docLevel, id, name ) )
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
       self.makePrototype( entity )
       self.makeContent( entity.pcontent )
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
    end
 
    
@@ -304,7 +344,7 @@ class DOCBOOKGenerator( doctree, conf )
       // If the group is undefined, it will have no title.
       name = ("title" in entity.props) ? entity.props["title"] : entity.name
       // define a chapter for xref -- can't ave prefix.
-      self._outfile.writeText( self._rndr.make_section( self.docLevel, entity.name, name  ) )
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, entity.getID(), name  ) )
       self.makeBrief( entity )
       self.makeContent( entity.pcontent )
       
@@ -316,6 +356,7 @@ class DOCBOOKGenerator( doctree, conf )
          end
          self.docLevel = dl
       end
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
    end
 
    function makeMessage( entity )
@@ -411,6 +452,54 @@ class DOCBOOKGenerator( doctree, conf )
    end
 
 
+   function makePropsTable( props, methods )
+      if not props and not methods: return
+      
+      self.opentag( "para" )
+      self.opentag( "informaltable", ["frame"=>"none"] )
+      self.opentag( "tgroup" , ["cols"=>"3"] )  // 3 cols;
+      self.writeTag( "colspec", "", ["colname"=>"c1", "colwidth"=>"10pt"] )
+      self.writeTag( "colspec", "", ["colname"=>"c2", "colwidth"=>"2*"] )
+      self.writeTag( "colspec", "", ["colname"=>"c3", "colwidth"=>"3*"] )
+      self.opentag( "tbody" )
+
+      if props
+         self.opentag( "row", ["rowsep"=>"1"] )
+         self.writeTag( "entry", i"Properties", ["namest"=>"c1", "nameend"=>"c3"] )
+         self.closetag( "row" )
+         for prop in props
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", prop.name )
+            self.opentag( "entry" )
+            if "brief" in prop.props: self._outfile.writeText( self._rndr.rcont( prop.props["brief"] ) )
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+
+      if methods
+         self.opentag( "row", ["rowsep"=>"1"] )
+         self.writeTag( "entry", i"Methods", ["namest"=>"c1", "nameend"=>"c3"] )
+         self.closetag( "row" )
+         for method in methods
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", method.prototype() )
+            self.opentag( "entry" )
+            if "brief" in method.props: self._outfile.writeText( self._rndr.rcont( method.props["brief"] ))
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+
+      self.closetag( "tbody" )
+      self.closetag( "tgroup" )
+      self.closetag( "informaltable" )
+      self.closetag( "para" )
+   end
+
+
    function makeRaise( rlist )
       self.opentag( "row" )
       self.writeTag( "entry", "" ) // make an empty col for indent
@@ -454,7 +543,8 @@ class DOCBOOKGenerator( doctree, conf )
 
 
    function makeLink( l )
-      if l.target
+      // ingore links to empty elements.
+      if l.target and (l.target.pcontent or "title" in l.target.props)
          if "title" in l.target.props
             text = l.target.props["title"]
          else
@@ -471,6 +561,17 @@ class DOCBOOKGenerator( doctree, conf )
    // Utilities
    //===============================================================
 
+   function getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self.getAllModules( m )
+         end
+      end
+      return mods
+   end
+   
    function opentag( tag, attribs )
       att = ""
       for k,v in attribs
@@ -491,7 +592,7 @@ class DOCBOOKGenerator( doctree, conf )
    end
    
    function writeTag( tag, content, attribs )
-      content = _htmlEscape(content)
+      content = docbook.Renderer.sgmlEscape(content)
       att = ""
       for k,v in attribs
          forfirst: att = " "
@@ -508,9 +609,6 @@ class DOCBOOKGenerator( doctree, conf )
    
 end
 
-function _htmlEscape( content )
-   return content.replace( "&", "&amp;").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
-end
 
 
 class Tag( tag, content, attribs )
@@ -520,7 +618,7 @@ class Tag( tag, content, attribs )
 
    function render()
       if self.content.typeId() == StringType
-         content = _htmlEscape(self.content)
+         content = docbook.Renderer.sgmlEscape(self.content)
       else
          content = ""
          for tag in self.content

@@ -21,12 +21,15 @@ import from .docentity
    Documentation data relative to a single input file.
    @param File the file to be parsed
    @param defmod The default module where entities should go if not specified.
+   @optparam modName The logical modue name, if any, for this file.
 */ 
-class FileContext( file, defmod )
+class FileContext( file, defmod, modName )
    file = file
    ctx = nil
 
    defmod = defmod
+
+   modName = modName
 
    //# Parser used by this file
    parser = faldoc.txtParser
@@ -70,6 +73,7 @@ class FileContext( file, defmod )
                // parse the content of this text entity
                // -- may be nil if the entity is just containing document commands.
                entity = self.parseText( cnt, line )
+               
 
             case "inherit"
                self.parseInherit( parentEntity, node.firstChild )
@@ -132,9 +136,7 @@ class FileContext( file, defmod )
             return
          end
 
-         l = entity.addLink( node.infos["class"], line, false )
-         faldoc.document.addLink( l )
-         
+         l = faldoc.document.addLink( entity, line, node.infos["class"], false )         
          entity.addParam( "from", l, node, line )
 
          node = node.next
@@ -186,7 +188,7 @@ class FileContext( file, defmod )
          entity.parseContent( self.onGroupingChange, self.addEntity )
          
          // do we have a brief?
-         if "brief" notin entity.props
+         if "title" notin entity.props and "brief" notin entity.props
             // autobrief on?
             if faldoc.config.autobrief
                // have we it some text?
@@ -233,8 +235,9 @@ class FileContext( file, defmod )
             if self.modName != nil
                faldoc.error( i"@beginmodule command invalid in source modules", line)
             elif self.current_module != nil
-               faldoc.warn( i"Beginning new module $name while group $self.current_set is not closed", line)
+               faldoc.warn( @i"Beginning new module $name while group $self.current_set is not closed", line)
             end
+            faldoc.verbose( @i"Changing @beginmodule to $(name)" ) 
             self.current_module = faldoc.document.getModule( name )
 
          case "@endgroup"
@@ -255,16 +258,23 @@ class FileContext( file, defmod )
             elif self.current_module == nil
                faldoc.warn( i"Parsing @endmodule at, but no module open", line)
             end
+            faldoc.verbose( i"Changing @endmodule" )
             self.current_module = nil
       end
 
    end
    
    //# Stores a new entity in the entity database.
-   function addEntity( entity )      
+   function addEntity( entity )
+      if entity.parent
+         // nothing else needed
+         return
+      end
+      
       // determine the module of the entity.
       if "inmodule" in entity.props
          module = faldoc.document.getModule(entity.props["inmodule"])
+         if not module: return // error already signaled
       elif self.current_module
          module = self.current_module
       else
@@ -305,7 +315,7 @@ class FileContext( file, defmod )
          if group
             // this entity may have been neutralized if already existing
             // in that case, we want the already stored one to be grouped
-            rentity = entity.parent.getEntity( entity.name )
+            rentity = module.getEntity( entity.name )
             group.addMember( rentity )
          end
       end
@@ -321,19 +331,19 @@ class FileContext( file, defmod )
          self.entities -= entity.name
       end
 
+      entity.name = node.infos["name"]
+      entity.dline = l1
+
       // if we have a parent, variables and functions must be added below them.
       if parentEntity and (node.type == "function" or node.type == "variable" )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
          parentEntity.addMember( entity )
+         entity.parent = parentEntity
       else
          entity.type = node.type
+         self.addEntity( entity )
       end
-
-      entity.name = node.infos["name"]
-      entity.dline = l1
-      
-      self.addEntity( entity )
    end
 
    //# Creates an entity out of a non-text definition
@@ -347,6 +357,7 @@ class FileContext( file, defmod )
          // this is valid also for enums
          entity.type = node.type == "function" ? "method" : "property"
          parentEntity.addMember( entity )
+         entity.parent = parentEntity
       else
          entity.type = node.type
          self.addEntity( entity )

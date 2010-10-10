@@ -120,7 +120,7 @@ class Entity( content, file, line )
          if id: return id + "." + self.name
       end
 
-      return self.name
+      return self.name == "Main module" ? "" : self.name
    end
 
    function getName()
@@ -146,24 +146,28 @@ class Entity( content, file, line )
    end
 
    function parseNodeContent( node, onGroupingChange, entityAdder )
-
+   
       while node != nil
-      
+         
          // go deep before proceeding
          if node.firstChild
-            // ignore the result of the analisys of the first-level children.
-            self.parseNodeContent( node.firstChild, onGroupingChange )
+            self.parseNodeContent( node.firstChild, onGroupingChange, entityAdder )
          end
 
          line = (node provides infos) ? (node.infos["line"] + self.firstline - 1) : self.firstline
 
          hadSimple = false
          hadComplex = false
+         //> "Node ", node.parent.type + "." + node.type + (node provides infos and "name" in node.infos ? ": " + node.infos["name"] : "")
          switch node.type
             case "@a"
                l = faldoc.document.addLink( self, line, node.infos["dest"], true )
                node.infos["link"] = l
                node = node.next
+
+            case "@after"
+               self.after = node.infos["dest"]
+               node = node.remove()
                
             case "@raise", "@from", "@see"
                l = faldoc.document.addLink( self, line, node.infos["what"], node.type == "@see" )
@@ -270,9 +274,9 @@ class Entity( content, file, line )
                hadComplex = true
 
             case "@module"
-               // ok, create the module
-               name = node.info["name"]
+               name = node.infos["name"]
                module = faldoc.document.getModule( name )
+               if not module: return
                if not module.automatic
                   // someone already created it.
                   faldoc.error( @i"Module $(name) already created", line )
@@ -283,6 +287,7 @@ class Entity( content, file, line )
                   self.type = "main"
                   self.props["title"] = node.infos["title"]
                   self.parent = module
+                  module.addMember( self )
                   // this will turn us in the main for the given module at return.
                end
 
@@ -364,11 +369,14 @@ class Entity( content, file, line )
          faldoc.fatal( @i"Adding an unknown entity to its parent $self.name", entity.firstline )
       end
 
+      faldoc.verbose( @i"Adding entity $entity.name to $self.name", entity.firstline )
+      
       if entity.name in self.members
          // entity already declared; but -- is this an automatic definition?
          if entity.automatic
             // strange; we should have taken the real entity
             faldoc.error( @i"Entity \"$entity.name\" referenced as automatic but was already declared in \"$self.name\"", entity.firstline )
+            > fself.stack()
          else
             // Was the previously declared entity automatic?
             preve = self.members[ entity.name ]

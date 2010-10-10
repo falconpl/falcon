@@ -45,13 +45,15 @@ class Document from DocModule
             ctx = self._fdParser.parseStream( istream, "start" )
             modname = faldoc.calcModName( file )
             module = self.getModule( modname )
+            if not module: return
             faldoc.verbose( @i"File $file has module name $modname" )
          else
             ctx = self._gParser.parseStream( istream, "start" )
             module = self
          end
 
-         fc = FileContext( file, module )
+         // modname can be nil.
+         fc = FileContext( file, module, modname )
          faldoc.currentFile = file
          fc.parse( ctx )
 
@@ -66,20 +68,34 @@ class Document from DocModule
 
    function getModule( name )
       if name in self.members
-         return self.members[name]
+         module = self.members[name]
+         if module.type != "module"
+            faldoc.error( @i"Asking for module $(name), but that's already a $(module.type)")
+            return nil
+         end
+
+         return module
       else
          // create one module at each step of the hierarcy
          modNames = name.split(".")
-         mn = ""
          topModule = self
          for name in modNames
-            mn += name
-            module = DocModule( name, topModule )
-            module.automatic = true
-            self.modules[mn] = module
+            if name in topModule.members
+               module = topModule.members[name]
+               if module.type != "module"
+                  faldoc.error( @i"Asking for module $(name), but that's already a $(module.type)")
+                  return nil
+               end
+            else
+               module = DocModule( name, topModule )
+               module.automatic = true
+               topModule.addMember( module )
+               module.parent = topModule
+            end
+            
             topModule = module
-            mn += "."
          end
+         
          return module
       end
    end

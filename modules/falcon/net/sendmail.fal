@@ -11,6 +11,10 @@ const pHelo = "siteclient"
 //# This shall go on the same single comment line.
 //# and this too.
 
+/*# @main The sendmail module
+   This cute module has all you need to send a mail.
+*/
+
 /*#############################
  *  Function to send a mail text.
  *  
