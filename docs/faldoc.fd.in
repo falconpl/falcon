@@ -70,3 +70,4 @@ Output.docbook.copyright.holder = The Falcon Committee
 
 #Can be "book", "article", "book5", "article5"
 Output.docbook.frame = book
+Output.docbook.detailed = false
