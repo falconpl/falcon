@@ -4,6 +4,10 @@
 # Faldoc file for core module.
 #
 
+AutoBrief = true
+GetUndoc = true
+GetPrivate = false
+
 ################################################
 # Documentation generic data
 ################################################

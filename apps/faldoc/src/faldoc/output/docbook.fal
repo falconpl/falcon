@@ -66,6 +66,7 @@ class DOCBOOKGenerator( doctree, conf )
    encoding = "encoding" in conf? conf["encoding"] : "utf-8"
    copyyear = "copyright.year" in conf? conf["copyright.year"] : nil
    copyholder = "copyright.holder" in conf? conf["copyright.holder"] : nil
+   detailed = "detailed" in conf? conf["detailed"].lower().compare("true") == 0 : true
 
    //# Level of the document.
    docLevel = 0
@@ -263,7 +264,7 @@ class DOCBOOKGenerator( doctree, conf )
    function makeVariable( entity, prefixName )
       if not prefixName: prefixName = i"Global"
       name = prefixName + " " + entity.name
-      id = entity.getID()
+      id = entity.type != "property" or self.detailed ? entity.getID() : nil
       self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
       self.makeContent( entity.pcontent )
@@ -331,7 +332,7 @@ class DOCBOOKGenerator( doctree, conf )
    function makeFunction( entity, prefixName )
       if not prefixName: prefixName = i"Function"
       name = prefixName + " " + entity.name
-      id = entity.getID()
+      id = entity.type != "method" or self.detailed ? entity.getID() : nil
       self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
       self.makeBrief( entity )
       self.makePrototype( entity )
@@ -352,7 +353,11 @@ class DOCBOOKGenerator( doctree, conf )
          dl = self.docLevel
          self.docLevel ++
          for name, child in entity.members
-            self._entityHandler[ child.type ]( child )
+            if child.type in self._entityHandler
+               self._entityHandler[ child.type ]( child )
+            else
+               faldoc.warn( @i"Page type $(child.type) not handled by docbook" )
+            end
          end
          self.docLevel = dl
       end
@@ -545,12 +550,17 @@ class DOCBOOKGenerator( doctree, conf )
    function makeLink( l )
       // ingore links to empty elements.
       if l.target and (l.target.pcontent or "title" in l.target.props)
+         target = l.target
+         if (not self.detailed) and ( target.type == "property" or target.type == "method" )
+            target = target.parent
+         end
+         
          if "title" in l.target.props
-            text = l.target.props["title"]
+            text = target.props["title"]
          else
             text = l.destination
          end
-         return "<link linkend=\""+l.target.getID() + "\">"+text+"</link>"
+         return "<link linkend=\""+ target.getID() + "\">"+text+"</link>"
       else
          return l.destination
       end
