@@ -308,13 +308,14 @@ class BaseDom( hname, childTypeList, attribClass )
 
       // ending ?
       if not self.text and not self.children
-         stream.writeText( "/>" + self._rsep )
+         stream.writeText( "/>" )
+         if self._rsep: stream.writeText(self._rsep + sep)
          return
       end
 
       stream.writeText( ">" + self._rtsep )
 
-      if self.text
+      if self.text.typeId() == StringType
          // normally does not escapes, but oob text can be passed to escape automatically
          if ^? self.text
             stream.writeText( _htmlEscape( self.text ) )
@@ -327,11 +328,6 @@ class BaseDom( hname, childTypeList, attribClass )
          for item in self.children.items
             forfirst: stream.writeText( self._rsep )
             item.render( level + 1, stream )
-            forlast: last = item
-         end
-
-         if last and last.getProperty("_rsep")
-            stream.writeText( sep )
          end
       end
 
@@ -344,6 +340,8 @@ class BaseDom( hname, childTypeList, attribClass )
             item = parameter(i)
             if item.typeId() == StringType
                item = ^? item ? Verbatim(item) : Text( item )
+            elif not item.derivedFrom( BaseDom )
+               raise HTMError( HTMError.addnodom, self.hname, item.describe(1) )
             end
             self.children.add( item )
             item.parent = self
@@ -1037,6 +1035,8 @@ end
 
 class LI(text) from \
       BaseDom( "li", ContentModel.flow, AllAttribs )
+   _rtsep = ""
+   
    text = text
 end
 
@@ -1054,6 +1054,8 @@ end
 
 class DT(text) from \
       BaseDom( "dt", ContentModel.inline, AllAttribs )
+   _rtsep = ""
+
    text = text
 end
 
@@ -1260,6 +1262,9 @@ end
 */
 class A( href, text ) from \
          BaseDom( "a", ContentModel.inline_a, AnchorAttribs )
+   _rtsep = ""
+   _rsep = ""
+   
    text = text
    init
       self.eattr.href = href

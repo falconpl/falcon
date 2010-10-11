@@ -15,11 +15,61 @@
 */
 
 import from web.htmaker in ht
+import from parser.render.html in render
 
 // The faldoc_output function must be provided by all output modules
 function faldoc_output( doctree, conf )
    HTMLGenerator( doctree, conf ).go()
 end
+
+function _htmlEscape( string )
+   return string.replace( "&", "&amp;" ).replace( "<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+end
+
+class FaldocHtmlRenderer() from render.Renderer()
+   level = 0
+   
+   init
+      self.renderers += [
+         "@section" => self.renderSection,
+         "@note" => self.renderNote,
+         "@a" => self.render_a
+      ]
+   end
+
+/*
+   function render( context )
+      content = self.rcont( context.topNode )
+      return content
+   end
+*/
+
+   function renderSection( node )
+      hl = self.level + 2
+      title = _htmlEscape(node.infos["title"])
+      link = strEscape(node.infos["name"])
+      
+      prefix = @"<h$(hl)><a name=\"$(link)\">$(title)</a></h$(hl)>\n"
+      ++self.level
+      content = self.rcont(node)
+      --self.level
+
+      // the level will be closed when necessary
+      return prefix + content
+   end
+
+   function renderNote( node )
+      content = self.rcont( node )
+      return i"<b>Note:</b> "+ content + "\n"
+   end
+
+   function render_a( node )
+      l = node.infos["link"]
+      return HTMLGenerator.makeLink( l )
+   end
+
+end
+
 
 class HTMLGenerator( doctree, conf )
    doc = doctree
@@ -28,8 +78,32 @@ class HTMLGenerator( doctree, conf )
    directory = "directory" in conf ? conf["directory"] : nil
    htmltitle = "title" in conf ? conf["title"] : doctree.title
    baseurl = "url" in conf ? conf["url"] : nil
+   encoding = "encoding" in conf? conf["encoding"] : "utf-8"
+
+   _rndr = FaldocHtmlRenderer()
    
 
+   _entityHandler = [
+      "variable" => self.makeVariable,
+      "global" => self.makeVariable,
+      "object" => self.makeObject,
+      "class" => self.makeClass,
+      "function" => self.makeFunction,
+      "enum" => self.makeEnum,
+      "message" => self.makeMessage
+   ]
+
+   //# represents the section order
+   _moduleOrder =  .[
+      .["object" i"Objects" i"Object"]
+      .["class" i"Classes" i"Class"]
+      .["function" i"Functions" ""]
+      .["global" i"Variables" "" ]
+      .["enum" i"Enumerations" i"Enum"]
+      .["message" i"Messages" i"Message"]
+   ]
+   
+   
    function go()
       faldoc.info( "=" * 60 )
       faldoc.info( "HTML Generator module started." )
@@ -50,12 +124,12 @@ class HTMLGenerator( doctree, conf )
       try
          dirMake( self.directory, true )
          self.makeIndex()
-
+/*
          self.makeModule( self.doc )
          for modname, module in self.doc.members
             self.makeModule( module )
          end
-
+*/
       catch IoError in err
          faldoc.error( "html.fal: " + err )
          return
@@ -64,21 +138,282 @@ class HTMLGenerator( doctree, conf )
       faldoc.info( "HTML Generator module ended." )
       faldoc.info( "=" * 60 )
    end
+   
 
    function makeIndex()
       file = OutputStream( self.directory + "/index.html" )
       doc = ht.TransitionalFrame()
 
-      doc.html.head = ht.Head().add(ht.Title( self.doc.title ))
-      doc.html.body = ht.Body().add( ht.H1( self.doc.title ) )
+      doc.html.head = self.makeHead( self.doc.title, i"Index" )
+
+      struct = ht.OL()
+      self.makeStruct( struct, self.doc )
+      for modname, module in self.doc.getAllModules()
+         substruct = ht.OL()
+         title = self.makeStruct( substruct, module )
+         listruct = ht.LI()
+         listruct.add(title)
+         listruct.add(substruct)
+         struct.add( listruct  )
+      end
+
+      faldoc.verbose( i"Document generation complete." )
+      
+      doc.html.body = ht.Body().CLASS("faldoc").add(
+         ht.H1( self.doc.title ),
+         struct )
       doc.render( file )
       file.close()
    end
 
-   function makeModule( module )
+
+   //===============================================================
+   // Handlers
+   //===============================================================
+
+   function makeVariable( entity )
+      if entity.type == "property"
+         name = i"Property" + " " + entity.name
+      else
+         name = i"Global" + " " + entity.name
+      end
+   
+      /*
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
+      self.makeBrief( entity )
+      self.makeContent( entity.pcontent )
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
+      */
+   end
+
+
+   function makeEntity( entity )
+      faldoc.verbose( @i"Making entity $(entity.type) $(entity.name)" )
+
+      if entity.type in self._entityHandler
+         self._entityHandler[ entity.type ]( entity )
+      end
+   end
+
+
+   function makeObject( entity )
+      self.makeObjectoid( entity, i"Object", true )
+   end
+
+   function makeClass( entity )
+      self.makeObjectoid( entity, i"Class", true )
+   end
+
+   function makeEnum( entity )
+      self.makeObjectoid( entity, i"Enumeration" )
+   end
+
+
+   function makeObjectoid( entity, typeName, proto )
+   end
+
+
+   function makeFunction( entity, prefixName )
+   end
+
+
+   function makePage( entity )
+      faldoc.verbose( @i"Making page $(entity.type) $(entity.name)" )
+
+      file = OutputStream( self.directory +"/"+ self.getFileName( entity ) )
+      doc = ht.TransitionalFrame()
+
+      // pretty sure we have a title
+      doc.html.head = self.makeHead( self.doc.title, entity.props["title"] )
+      
+      faldoc.verbose( i"Document generation complete." )
+      doc.html.body = ht.Body().CLASS("faldoc").add(
+         ht.H1( entity.props["title"] ),
+         self.makeBrief( entity ),
+         self.makeContent( entity )
+         )
+
+      if entity.members
+         ulmembers = ht.UL().CLASS("memberlist")
+         doc.html.body.add( ht.H2( i"Members" ) )
+         
+         for mname, member in entity.members
+            node = ht.LI().add( ht.A( self.getFileName(member, true ), mname ) )
+            if "brief" in member.props
+               brief = self._rndr.rcont(member.props["brief"])
+               if brief: node.add( " - " + brief )
+            end
+            
+            ulmembers.add( node )
+         end
+         
+         doc.html.body.add( ulmembers )
+      end
+
+      
+      doc.render( file )
+      file.close()
+      
+   end
+
+   function makeMessage( entity )
+   end
+
+
+   function makeBrief( entity )
+      if "brief" in entity.props
+         content = self._rndr.rcont( entity.props["brief"] )
+         if content: return ht.P().CLASS("brief").add( ht.Verbatim( content ) )
+      end
+      return ^+ ""
+   end
+
+   function makePrototype( entity, addType )
+   end
+
+
+
+   function makeParams( plist )
+   end
+
+
+   function makePropsTable( props, methods )
+   end
+
+
+   function makeRaise( rlist )
+   end
+
+
+   function makeLink( l )
+      // ingore links to empty elements.
+      if l.target
+         target = l.target
+         
+         if "title" in l.target.props
+            text = target.props["title"]
+         else
+            text = l.destination
+         end
+         return ht.A( self.getLinkName( target ), text )
+      else
+         return ht.B( l.destination )
+      end
+   end
+
+
+   function makeContent( entity )
+      if entity.pcontent
+         content = self._rndr.rcont( entity.pcontent.topNode )
+         if content: return ht.Verbatim( content )
+      end
+      return ^+ ""
    end
    
+   //===============================================================
+   // Utilities
+   //===============================================================
+
+   function makeStruct( struct, module )
+      pages = module.orderPages()
+
+      faldoc.verbose( @i"Making pages for $module.name" )
+      title = ""
+      for page in pages
+         if page.type == "main"
+            title = page.props["title"]
+         end
+         struct.add( self.makeStructNode( page ) )
+         self.makePage( page )
+      end
+      
+      entities = module.groupEntities()
+      faldoc.verbose( @i"Making entities for $module.name" )
+      for type, type_title, type_name in self._moduleOrder
+         if type in entities
+            faldoc.verbose( @i"Making entities of type $type for $module.name" )
+            litype = ht.LI().add( type_title )
+            oltype = ht.OL()
+            litype.add( oltype )
+            struct.add( litype )
+            for entity in entities[type]
+               faldoc.verbose( @i"Making entity " + entity.getID() )
+               oltype.add( self.makeStructNode( entity, type_name ) )
+               self.makeEntity( entity )
+            end
+         end
+      end
+
+      modid = module.getID()
+      if title
+         title += " " + @i"(module $modid)"
+      else
+         title = @i"Module $modid"
+      end
+
+      if "brief" in module.props
+         title += " - " + module.props["brief"]
+      end
+      
+      return title
+   end
+
+
+   function makeStructNode( entity, prefix )
+      if "title" in entity.props
+         text = entity.props["title"]
+      else
+         text = prefix ? prefix + " " + entity.name : entity.name
+      end
+
+      li = ht.LI()
+      li.add( ht.A( self.getFileName(entity, true), text.trim() ) )
+      if "brief" in entity.props
+         li.add( " - " + self._rndr.rcont(entity.props["brief"]) )
+      end
+
+      return li
+   end
+
+   
+   function getFileName( entity, forlink )
+      if entity.type == "property" or entity.type == "method"
+         if entity.parent
+            return entity.parent.getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+         end
+      elif "ingroup" in entity.props
+         return entity.parent.members[entity.props["ingroup"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+      elif "inset" in entity.props
+         return entity.parent.members[entity.props["inset"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+      elif entity.type == "function" or entity.type == "global"
+         // Unbound functions and globals have their own file.
+         if entity.parent
+            filename = entity.parent.getID().replace(".","_")
+         else
+            filename = "__"
+         end
+         filename += "_" + entity.type + ".html"  + (forlink ? "#" + entity.name : "")
+         return filename
+      elif entity.type == "main" 
+         return entity.getID().replace(".","_").replace("#", "") + ".html"
+      else
+         return entity.getID().replace( ".", "_" ) + ".html"
+      end
+   end
+
+
+   function getLinkName( entity )
+      return self.getFileName( entity, true )
+   end
+
+
+   function makeHead( category, itemName )
+      title = category + itemName ? " - " + itemName : ""
+      
+      return ht.Head().add(
+         ht.Meta( nil, "text/html;charset=\"$(self.charset)\"", "Content-type" ),
+         ht.Link( "faldoc.css", "stylesheet", "text/css"),
+         ht.Title( title ))
+   end
+
 end
-
-
-

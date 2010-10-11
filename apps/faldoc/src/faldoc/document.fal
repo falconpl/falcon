@@ -130,7 +130,23 @@ class Document from DocModule
       // not found? -- too bad
       (l.explicit ? faldoc.error : faldoc.warn)( @i"Unresolved link to \"$(l.destination)\"", l.line, l.source.file )
    end
-      
+
+
+   //# Recursively gets all the modules stored in the document.
+   function getAllModules()
+      return self._getAllModules( self )
+   end
+   
+   function _getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self._getAllModules( m )
+         end
+      end
+      return mods
+   end
 end
 
 export Document
