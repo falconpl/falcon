@@ -1,18 +1,18 @@
 /*
-   @MAIN_PRJ@
-   FILE: @PROJECT_NAME@_ext.cpp
+   @{fmodskel_MAIN_PRJ}@
+   FILE: @{fmodskel_PROJECT_NAME}@_ext.cpp
 
-   @DESCRIPTION@
+   @{fmodskel_DESCRIPTION}@
    Main module file, providing the module object to
    the Falcon engine.
    -------------------------------------------------------------------
-   Author: @AUTHOR@
-   Begin: @DATE@
+   Author: @{fmodskel_AUTHOR}@
+   Begin: @{fmodskel_DATE}@
 
    -------------------------------------------------------------------
-   (C) Copyright @YEAR@: @COPYRIGHT@
+   (C) Copyright @{fmodskel_YEAR}@: @{fmodskel_COPYRIGHT}@
 
-   @LICENSE@
+   @{fmodskel_LICENSE}@
 */
 
 /** \file
@@ -21,14 +21,14 @@
 */
 
 #include <falcon/module.h>
-#include "@PROJECT_NAME@_ext.h"
-#include "@PROJECT_NAME@_srv.h"
-#include "@PROJECT_NAME@_st.h"
+#include "@{fmodskel_PROJECT_NAME}@_ext.h"
+#include "@{fmodskel_PROJECT_NAME}@_srv.h"
+#include "@{fmodskel_PROJECT_NAME}@_st.h"
 
 #include "version.h"
 
 /*#
-   @main @PROJECT_NAME@
+   @main @{fmodskel_PROJECT_NAME}@
 
    This entry creates the main page of your module documentation.
 
@@ -56,7 +56,7 @@ FALCON_MODULE_DECL
 
    // initialize the module
    Falcon::Module *self = new Falcon::Module();
-   self->name( "@PROJECT_NAME@" );
+   self->name( "@{fmodskel_PROJECT_NAME}@" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
@@ -64,7 +64,7 @@ FALCON_MODULE_DECL
    //============================================================
    // Here declare the international string table implementation
    //
-   #include "@PROJECT_NAME@_st.h"
+   #include "@{fmodskel_PROJECT_NAME}@_st.h"
 
    //============================================================
    // Here declare skeleton api
@@ -80,4 +80,4 @@ FALCON_MODULE_DECL
    return self;
 }
 
-/* end of @PROJECT_NAME@.cpp */
+/* end of @{fmodskel_PROJECT_NAME}@.cpp */

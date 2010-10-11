@@ -1,22 +1,23 @@
 #
 # FALDOC - Falcon Documentation system
 #
-# Faldoc file for @PROJECT_NAME@
+# Faldoc file for curl
 #
 
 ################################################
 # Documentation generic data
 ################################################
 
-Title = @PROJECT_NAME@
-Author = @AUTHOR@
-Version = <version>
+Title = curl
+Author = Giancarlo Niccolai
+Version = 1.0
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-Input.directory=../src
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=src
 #you may place other input directory here
 
 Input.wildcard=*.cpp     #we use only...
@@ -37,6 +38,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=html
+Output.html.directory=@output_dir@
 Output.html.url=.
-Output.html.doctitle=@PROJECT_NAME@ module Function Reference
+Output.html.doctitle=curl module Function Reference

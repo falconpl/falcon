@@ -8,6 +8,8 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
+import from .qrconst
+
 const STRUCTURE_HEADER_BITS = 20
 const MAX_STRUCTURED_SYMBOLS = 16
 
@@ -143,19 +145,18 @@ class QrInputItem(mode, size, data)
 
         if version == 0; version = 1; end
 
-        switch self._mode
-            case QrModes.num
-                bits = QrInput.estimateBitsModeNum(self._size)
-            case QrModes.an
-                bits = QrInput.estimateBitsModeAn(self._size)
-            case QrModes.eight
-                bits = QrInput.estimateBitsMode8(self._size)
-            case QrModes.kanji
-                bits = QrInput.estimateBitsModeKanji(self._size)
-            case QrModes.structure
-                return STRUCTURE_HEADER_BITS;            
-            default
-                return 0
+        if self._mode == QrModes.num
+            bits = QrInput.estimateBitsModeNum(self._size)
+        elif self._mode == QrModes.an
+            bits = QrInput.estimateBitsModeAn(self._size)
+        elif self._mode == QrModes.eight_bit
+            bits = QrInput.estimateBitsMode8(self._size)
+        elif self._mode == QrModes.kanji
+            bits = QrInput.estimateBitsModeKanji(self._size)
+        elif self._mode == QrModes.structure
+            return STRUCTURE_HEADER_BITS
+        else
+            return 0
         end
 
         l = QrSpec.lengthIndicator(self._mode, version)
@@ -185,19 +186,18 @@ class QrInputItem(mode, size, data)
             inputItem1 = nil
             inputItem2 = nil
         else     
-            switch self._mode
-                case QrModes.num
-                    self.encodeModeNum(version)
-                case QrModes.an
-                    self.encodeModeAn(version)
-                case QrModes.eight
-                    self.encodeMode8(version)
-                case QrModes.kanji
-                    self.encodeModeKanji(version)
-                case QrModes.structure
-                    self.encodeModeStructure()
-                default
-                    raise QrError(QrError.invalid_mode, @i'$(self.mode) is not supported')
+            if self._mode ==  QrModes.num
+                self.encodeModeNum(version)
+            elif self._mode == QrModes.an
+                self.encodeModeAn(version)
+            elif self._mode == QrModes.eight_bit
+                self.encodeMode8(version)
+            elif self._mode == QrModes.kanji
+                self.encodeModeKanji(version)
+            elif self._mode == QrModes.structure
+                self.encodeModeStructure()
+            else
+                raise QrError(QrError.invalid_mode, @i'$(self.mode) is not supported')
             end
         end
 
@@ -208,8 +208,8 @@ end
 class QrInput(version, errorCorrectionLevel)
     _version = 0
     _items = []
-    _errorCorrectionLevel = QrErrorCorrectionLevels.L
-    static _anTable = [
+    _errorCorrectionLevel = 0
+    _anTable = [
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,
@@ -222,13 +222,10 @@ class QrInput(version, errorCorrectionLevel)
 
     init
         if version == nil; version = 0; end
-        if errorCorrectionLevel == nil: errorCorrectionLevel = ErrorCorrectionLevels.L; end
+        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevels.L; end
 
-        self.version = version
-
-        if errorCorrectionLevel != nil
-            self.errorCorrectionLevel = errorCorrectionLevel
-        end
+        self._version = version
+        self.errorCorrectionLevel = errorCorrectionLevel
     end
 
     function __get_version()
@@ -236,7 +233,7 @@ class QrInput(version, errorCorrectionLevel)
     end
 
     function __set_version(version)
-        if version < 0 or version > QrSpec.MaxVersion)
+        if version < 0 or version > QrSpec.MaxVersion
             raise QrError(QrError.invalid_version, @i'$(version) is not supported')
         end
 
@@ -294,9 +291,8 @@ class QrInput(version, errorCorrectionLevel)
 
     function _checkModeNum(size, data)
         for i in [0:size]
-            if (data[*i] < "0"[*0]) or
-                (data[*i] > "9"[*0])
-                return false;
+            if (data[*i] < "0"[*0]) or (data[*i] > "9"[*0])
+                return false
             end
         end
 
@@ -365,19 +361,18 @@ class QrInput(version, errorCorrectionLevel)
             raise QrError(QrError.invalid_param, i"size is less than 1")
         end
 
-        switch mode
-            case QrModes.num
-                return self.checkModeNum(size, data)
-            case QrModes.an
-                return self.checkModeAn(size, data)
-            case QrModes.kanji
-                return self.checkModeKanji(szie, data)
-            case QrModes.eight_bit
-                return true
-            case QrModes.structure
-                return true
-            default
-                raise QrError(QrError.invalid_mode, @i'$(mode) is not supported')
+        if mode == QrModes.num
+            return self.checkModeNum(size, data)
+        elif mode == QrModes.an
+            return self.checkModeAn(size, data)
+        elif mode == QrModes.kanji
+            return self.checkModeKanji(szie, data)
+        elif mode == QrModes.eight_bit
+            return true
+        elif mode == QrModes.structure
+            return true
+        else
+            raise QrError(QrError.invalid_mode, @i'$(mode) is not supported')
         end
     end
 
@@ -398,7 +393,7 @@ class QrInput(version, errorCorrectionLevel)
         loop
             previous = version
             bits = self.estimateBitStreamSize(previous)
-            version = QrSpec.getMinVersion((bits + 7) / 8), self.errorCorrectionLevel)
+            version = QrSpec.getMinVersion((bits + 7) / 8, self.errorCorrectionLevel)
         end not version > previous
 
         return version
@@ -407,29 +402,24 @@ class QrInput(version, errorCorrectionLevel)
     function lengthOfCode(mode, version, bits)
         payload = bits - 4 - QrSpec.lengthIndicator(mdoe, version)
 
-        switch mode
-            case QrModes.num
-                chunks = payload / 10
-                remain = payload - chunks * 10
-                size = chunks * 3
-                if remain >= 7
-                    size += 2
-                elif remain >= 4
-                    size++
-                end
-            case QrModes.an
-                chunks = payload / 11
-                remain = payload - chunks * 11
-                size = chunks * 2
-                if remain >= 6; size++; end
-            case QrModes.eight_bit
-                size = $payload / 8
-            case QrModes.kanji
-                size = (payload / 13) * 2
-            case QrModes.structure
-                size = payload / 8
-            default
-                size = 0
+        if mode == QrModes.num
+            chunks = payload / 10
+            remain = payload - chunks * 10
+            size = chunks * 3
+            if remain >= 7; size += 2; elif remain >= 4; size++; end
+        elif mode == QrModes.an
+            chunks = payload / 11
+            remain = payload - chunks * 11
+            size = chunks * 2
+            if remain >= 6; size++; end
+        elif mode == QrModes.eight_bit
+            size = $payload / 8
+        elif mode == QrModes.kanji
+            size = (payload / 13) * 2
+        elif mode == QrModes.structure
+            size = payload / 8
+        else
+            size = 0
         end
 
         maxsize = QrSpec.maxWords(mode, version)

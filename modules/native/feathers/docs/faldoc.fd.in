@@ -10,7 +10,7 @@
 
 Title = Falcon Feathers - The Standard Modules Reference.
 Author = The Falcon Committee
-Version = @PROJECT_SOURCE_DIR@
+Version = @Falcon_VERSION@
 
 ################################################
 # Faldoc Input settings

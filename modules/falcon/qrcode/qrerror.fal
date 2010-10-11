@@ -20,8 +20,8 @@ class QrError(code, desc, extra) from Error(code, desc, extra)
         10001 => i"Invalid parameter",
         10002 => i"Invalid version",
         10003 => i"Version not found",
-        10004 => i"Invalid error correction level"
-        10005 => i"Invalid mode"
+        10004 => i"Invalid error correction level",
+        10005 => i"Invalid mode",
         10006 => i"Encoding error"
     ]
 

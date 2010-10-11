@@ -1,32 +1,33 @@
 #
 # FALDOC - Falcon Documentation system
 #
-# Faldoc file for DBI module.
+# Faldoc file for @{fmodskel_PROJECT_NAME}@
 #
 
 ################################################
 # Documentation generic data
 ################################################
 
-Title = Falcon - DBI Module.
-Author = The Falcon Committee
-Version = 0.9.10
+Title = @{fmodskel_PROJECT_NAME}@
+Author = @{fmodskel_AUTHOR}@
+Version = <version>
+#Version = @@{fmodskel_PROJECT_NAME}@_VERSION_ID@
+
 
 ################################################
 # Faldoc Input settings
 ################################################
 
-Input.directory=../dbi
-Input.directory=../mysql
-Input.directory=../pgsql
-Input.directory=../sqlite3
-Input.directory=../odbc
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=src
+#you may place other input directory here
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=false
 
 # Other files may be specified here
-Input.extra=main.fd
+#Input.extra=main.fd
+
 
 ################################################
 # Faldoc Output settings
@@ -34,12 +35,14 @@ Input.extra=main.fd
 
 Output.module=html
 
+
 ################################################
 # Faldoc HTML Output settings
 # Each module can be self-configured through
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-dbi.0.9.10-docs
+Output.html.directory=@output_dir@
 Output.html.url=.
-Output.html.doctitle=Falcon DBI Module reference.
+Output.html.doctitle=@{fmodskel_PROJECT_NAME}@ module Function Reference
+

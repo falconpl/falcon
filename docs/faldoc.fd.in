@@ -23,7 +23,7 @@ Input.wildcard=*.cpp     #we use only...
 Input.recursive=true
 
 # Other files may be specified here
-Input.extra=main.fd
+Input.extra=docs/main.fd
 
 ################################################
 # Faldoc Output settings

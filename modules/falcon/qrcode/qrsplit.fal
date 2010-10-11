@@ -30,7 +30,7 @@ class QrSplit(dataStr, input, modeHint)
     end
 
     function identifyMode(pos)
-        if (pos >= len(self.dataStr); return QrModes.null; end
+        if pos >= len(self.dataStr); return QrModes.null; end
 
         c = self.dataStr[pos]
 
@@ -61,15 +61,15 @@ class QrSplit(dataStr, input, modeHint)
         mode = self.identifyMode(p)
 
         if mode == QrModes.eigth_bit
-            dif = QrInput.estimateBitsModeNum(run) + 4 + ln
-                + QrInput.estimateBitsMode8(1)
+            dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
+                + QrInput.estimateBitsMode8(1) \
                 - QrInput.estimateBitsMode8(run + 1)
             if dif > 0; return self.eat8(); end
         end
 
         if mode == QrModes.an
-            dif = QrInput.estimateBitsModeNum(run) + 4 + ln
-                + QrInput.estimateBitsModeAn(1)
+            dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
+                + QrInput.estimateBitsModeAn(1) \
                 - QrInput.estimateBitsModeAn(run + 1)
             if dif > 0; return self.eatAn(); end
         end
@@ -89,8 +89,8 @@ class QrSplit(dataStr, input, modeHint)
                 q = p
                 while self.isDigitAt(self.dataStr, q); q++; end
 
-                dif = QrInput.estimateBitsModeAn(p)
-                    + QrInput.estimateBitsModeNum(q - p) + 4 + ln
+                dif = QrInput.estimateBitsModeAn(p) \
+                    + QrInput.estimateBitsModeNum(q - p) + 4 + ln \
                     - QrInput.estimateBitsModeAn(q)
 
                 if dif < 0
@@ -106,8 +106,8 @@ class QrSplit(dataStr, input, modeHint)
         run = p
 
         if not self.isAlNumAt(self.dataStr, p)
-            dif = QrInput.estimateBitsModeAn(run) + 4 + la
-                + QrInput.estimateBitsMode8(1)
+            dif = QrInput.estimateBitsModeAn(run) + 4 + la \
+                + QrInput.estimateBitsMode8(1) \
                 - QrInput.estimateBitsMode8(run + 1)
             if dif > 0; return self.eat8(); end
         end
@@ -136,8 +136,8 @@ class QrSplit(dataStr, input, modeHint)
             if mode == QrModes.num
                 q = p
                 while self.isDigitAt(self.dataStr, q); q++; end
-                dif = QrInput.estimateBitsMode8(p)
-                    + QrInput.estimateBitsModeNum(q - p) + 4 + ln
+                dif = QrInput.estimateBitsMode8(p) \
+                    + QrInput.estimateBitsModeNum(q - p) + 4 + ln \
                     - QrInput.estimateBitsMode8(q)
                 if dif < 0
                     break
@@ -147,8 +147,8 @@ class QrSplit(dataStr, input, modeHint)
             elif mode == QrModes.an
                 q = p
                 while self.isAlNumAt(self.dataStr, q); q++; end
-                dif = QrInput.estimateBitsMode8(p)
-                    + QrInput.estimateBitsModeAn(q - p) + 4 + la
+                dif = QrInput.estimateBitsMode8(p) \
+                    + QrInput.estimateBitsModeAn(q - p) + 4 + la \
                     - QrInput.estimateBitsMode8(q)
                 if dif < 0
                     break
@@ -171,16 +171,18 @@ class QrSplit(dataStr, input, modeHint)
 
             mode = self.identifyMode(0)
 
-            switch mode
-                case QrModes.num; length = self.eatNum()
-                case QrModes.an; length = self.eatAn()
-                case QrModes.kanji
-                    if hint == QrModes.kanji
-                        length = self.eatKanji()
-                    else
-                        length = self.eat8()
-                    end
-                default; length = self.eat8()
+            if mode == QrModes.num
+                length = self.eatNum()
+            elif mode == QrModes.an
+                length = self.eatAn()
+            elif mode == QrModes.kanji
+                if hint == QrModes.kanji
+                    length = self.eatKanji()
+                else
+                    length = self.eat8()
+                end
+            else
+                length = self.eat8()
             end
 
             if length > 0; self.dataStr = strBack(self.dataStr, len(self.dataStr) - length); end
@@ -215,7 +217,6 @@ class QrSplit(dataStr, input, modeHint)
 
         if not caseSensitive; split.toUpper(); end
         return split.splitString()
-    and
+    end
 end
-
 export QrSplit

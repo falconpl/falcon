@@ -29,6 +29,8 @@ set(Falcon_BIN_DIR "@FALCON_BIN_DIR@")
 set(Falcon_LIB_DIR "@FALCON_LIB_DIR@")
 set(Falcon_MAN_DIR "@FALCON_MAN_DIR@")
 set(Falcon_INC_DIR "@FALCON_INC_DIR@")
+set(Falcon_SHARE_DIR "@FALCON_SHARE_DIR@")
+set(Falcon_DOC_DIR "@FALCON_DOC_DIR@")
 set(Falcon_CMAKE_DIR "@FALCON_CMAKE_DIR@")
 
 # Allow flexible installation location to perform out-of-install module builds
@@ -114,7 +116,7 @@ function(falcon_install_module2 tgt dir )
    endif()
 
   set_target_properties(${tgt} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}
   )
 
    install( TARGETS ${tgt}

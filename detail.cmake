@@ -61,8 +61,9 @@ endif(NOT FALCON_SONAME_AGE)
 set(FALCON_VERSION_RC   "${FALCON_VERSION_MAJOR}, ${FALCON_VERSION_MINOR}, ${FALCON_VERSION_REVISION}, ${FALCON_VERSION_PATCH}")
 set(FALCON_VERSION_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}.${FALCON_VERSION_PATCH}")
 set(FALCON_ID   "${FALCON_VERSION_MAJOR}.${FALCON_VERSION_MINOR}.${FALCON_VERSION_REVISION}")
-
 message(STATUS "Compiling Falcon ${FALCON_VERSION_ID} on ${CMAKE_SYSTEM}" )
+#
+set( Falcon_VERSION "${FALCON_VERSION_ID}" )
 
 ##############################################################################
 #  Other defaults
@@ -103,6 +104,14 @@ if( NOT FALCON_SHARE_DIR)
       set(FALCON_SHARE_DIR "share")
    else()
       set(FALCON_SHARE_DIR "share/falcon${FALCON_ID}")
+   endif()
+endif()
+
+if( NOT FALCON_DOC_DIR)
+   if(WIN32)
+      set(FALCON_DOC_DIR "share")
+   else()
+      set(FALCON_DOC_DIR "share/doc/falcon${FALCON_ID}")
    endif()
 endif()
 
@@ -166,6 +175,22 @@ if ( NOT WIN32 )
    message( STATUS "Manual pages: ${FALCON_MAN_DIR}" )
 endif()
 
+# Variable Forwarding, interally we use the conventions
+# introduced by find_package(Falcon). TODO: That's not elegant
+set(Falcon_APP_DIR "${FALCON_APP_DIR}")
+set(Falcon_MOD_DIR "${FALCON_MOD_DIR}")
+set(Falcon_BIN_DIR "${FALCON_BIN_DIR}")
+set(Falcon_LIB_DIR "${FALCON_LIB_DIR}")
+set(Falcon_MAN_DIR "${FALCON_MAN_DIR}")
+set(Falcon_INC_DIR "${FALCON_INC_DIR}")
+set(Falcon_SHARE_DIR "${FALCON_SHARE_DIR}")
+set(Falcon_DOC_DIR "${FALCON_DOC_DIR}")
+set(Falcon_CMAKE_DIR "${FALCON_CMAKE_DIR}")
+
+
+#########################################################################
+# RPATH(Linux) and install_name(OSX)
+#
 option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" on)
 if(NOT DISABLE_RPATH)
   # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.

@@ -22,3 +22,5 @@ MESSAGE( "Found DBUS: ${DBUS_INCLUDE_DIRS}" )
 ADD_SUBDIRECTORY(src)
 
 #add other subdirectories here.
+
+add_subdirectory(docs)

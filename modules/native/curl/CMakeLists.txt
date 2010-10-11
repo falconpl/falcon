@@ -5,7 +5,7 @@
 ####################################################################
 
 cmake_minimum_required(VERSION 2.6)
-project(curl)
+project(Falcon_curl)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(Falcon REQUIRED)
@@ -16,3 +16,6 @@ find_package(CURL 7.18.2 REQUIRED)
 #add_subdirectory(awesome_library)
 # ..before the module's source dir:
 add_subdirectory(src)
+
+# docs
+add_subdirectory(docs)

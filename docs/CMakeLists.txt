@@ -18,29 +18,27 @@ function(generate_doxygen_documentation _target_name _doxygen_config_file)
   )
 endfunction(generate_doxygen_documentation)
 
+set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/Falcon-docs-engine)
 configure_file(
   Doxyfile.in
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
   @ONLY
 )
-
+#
 generate_doxygen_documentation(
-  core_doxygen_docs # make target
+  engine_docs # make target
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 )
-
-set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/Falcon-docs-core.${FALCON_VERSION_ID})
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/faldoc.fd.in
-  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
-  @ONLY
+#
+install(
+   DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
+   OPTIONAL # if docs haven't been generated
 )
 
 file(GLOB scriptExtensions_SRCS "../engine/core_module/*.cpp")
 faldoc_module_docs(core
-  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
-  ${output_dir}
-  ${scriptExtensions_SRCS}
+  faldoc.fd.in # input
+  ${scriptExtensions_SRCS} # additional depenencies
 )
 
 if(WIN32)

@@ -1113,6 +1113,7 @@ Module* core_module_init()
    self->addExtFunc( "vmFalconPath", &Falcon::core::vmFalconPath );
    self->addExtFunc( "vmSearchPath", &Falcon::core::vmSearchPath );
    self->addExtFunc( "vmModuleName", &Falcon::core::vmModuleName );
+   self->addExtFunc( "vmModuleLine", &Falcon::core::vmModuleLine );
    self->addExtFunc( "vmModulePath", &Falcon::core::vmModulePath );
    self->addExtFunc( "vmRelativePath", &Falcon::core::vmRelativePath );
 
@@ -1259,7 +1260,7 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "sqrt", &Falcon::core::flc_math_sqrt )->
       addParam("x");  
-   self->addExtFunc( "mod", &Falcon::core::flc_math_exp )->
+   self->addExtFunc( "mod", &Falcon::core::flc_math_mod )->
       addParam("x")->addParam("y");
    self->addExtFunc( "pow", &Falcon::core::flc_math_pow )->
       addParam("x")->addParam("y");

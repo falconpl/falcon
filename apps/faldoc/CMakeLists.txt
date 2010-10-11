@@ -33,7 +33,7 @@ add_custom_command(
 
 add_custom_target(faldoc ALL DEPENDS faldoc/faldoc.fal)
 if(Falcon_IN_CORE_SOURCETREE)
-  add_dependencies(faldoc falcon Falcon_Feathers)
+  add_dependencies(faldoc falcon falpack Falcon_Feathers)
 endif()
 
 #workaround for falpack shortcoming

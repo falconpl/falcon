@@ -1,17 +1,8 @@
 find_package(faldoc REQUIRED)
 
-set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/html)
-#
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/faldoc.fd.in
-  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
-  @ONLY
-)
-#
+file(GLOB_RECURSE scriptExtensions_SRCS "../src/scriptExtensions/*.cpp")
 faldoc_module_docs(hpdf
-  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd 
-  ${output_dir}
+  faldoc.fd.in # input
+  ${scriptExtensions_SRCS} # additional depenencies
 )
-
-#install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ DESTINATION share/doc/falcon/modules/hpdf/html)
 

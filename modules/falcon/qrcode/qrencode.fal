@@ -50,7 +50,7 @@ class QrRawCode(input)
         self._ecc = arrayBuffer(self._eccLen, 0)
         self._blockNum = QrSpec.rsBlockNum(spec)
 
-        self._init(spec)
+        self._initialize(spec)
     end
 
     function __get_version()
@@ -87,7 +87,7 @@ class QrRawCode(input)
         return code;
     end
 
-    function _init(spec)
+    function _initialize(spec)
         dataLen = QrSpec.rsDataCodes1(spec)
         eccLen = QrSpec.rsEccCodes1(spec)
         rs = QrRs.init_rs(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
@@ -138,7 +138,7 @@ class QrCode
     end
 
     function __get_width()
-        retusn self._width
+        return self._width
     end
 
     function __get_data()
@@ -412,7 +412,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
         end
 
         maxSize = (int) (QrConfig.png_max_size / (len(frame) + 2 * self.margin))
-        QrImage::png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
+        QrImage.png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
     end
 end
 

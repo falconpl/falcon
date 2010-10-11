@@ -1,11 +1,11 @@
 ####################################################################
-# @MAIN_PRJ@
+# @{fmodskel_MAIN_PRJ}@
 #
-# CMake configuration file for @PROJECT_NAME@
+# CMake configuration file for @{fmodskel_PROJECT_NAME}@
 ####################################################################
 
 cmake_minimum_required(VERSION 2.6)
-project(@PROJECT_NAME@)
+project(@{fmodskel_PROJECT_NAME}@)
 
 # find the falcon installation.  Set CMAKE_INSTALL_PREFIX to the falcon root 
 # directory to make it work.
@@ -16,3 +16,6 @@ find_package(Falcon REQUIRED)
 #add_subdirectory(awesome_library)
 # ..before the module's source dir:
 add_subdirectory(src)
+
+# Documentation
+add_subdirectory(docs)

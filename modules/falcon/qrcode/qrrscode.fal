@@ -9,21 +9,21 @@
  */
 
 class QrRsItem
-    mm = 0                 // Bits per symbol 
-    nn = 0                 // Symbols per block (= (1<<mm)-1) 
-    alpha_to = nil  // log lookup table 
-    index_of = nil   // Antilog lookup table 
-    genpoly = nil   // Generator polynomial 
-    nroots = 0              // Number of generator roots = number of parity symbols 
-    fcr = 0           // First consecutive root, index form 
-    prim = 0              // Primitive element, index form 
-    iprim = 0              // prim-th root of 1, index form 
-    pad = 0            // Padding bytes in shortened block 
+    mm = 0
+    nn = 0
+    alpha_to = nil
+    index_of = nil
+    genpoly = nil
+    nroots = 0
+    fcr = 0
+    prim = 0
+    iprim = 0
+    pad = 0
     gfpoly = 0
 
     function modnn(x)
         while x >= self.nn
-            x -= self.>nn
+            x -= self.nn
             x = (x >> self.mm) + (x && self.nn)
         end
 
@@ -40,7 +40,7 @@ class QrRsItem
         if symsize < 0 or symsize > 8; return rs; end
         if fcr < 0 or fcr >= (1 << symsize); return rs; end
         if prim <= 0 or prim >= (1 << symsize); return rs; end
-        if nroots < 0 or nroots >= (1 << symsize) return rs; end
+        if nroots < 0 or nroots >= (1 << symsize); return rs; end
         if pad < 0 or pad >= ((1 << symsize) -1 - nroots); return rs; end
 
         rs = QrRsItem()
@@ -87,7 +87,7 @@ class QrRsItem
 
             for j in [i:0:-1]
                 if rs.genpoly[j] != 0
-                    rs.genpoly[j] = rs.genpoly[j - 1] ^ rs.alpha_to[rs.modnn(rs.index_of[rs.genpoly[j]] + root)]
+                    rs.genpoly[j] = rs.genpoly[j - 1] ^^ rs.alpha_to[rs.modnn(rs.index_of[rs.genpoly[j]] + root)]
                 else
                     rs.genpoly[j] = rs.genpoly[j - 1]
                 end
@@ -104,32 +104,20 @@ class QrRsItem
     end
 
     function encode_rs_char(data, parity /* ref */)
-        MM = $self.>mm
-        NN = $self.nn
-        ALPHA_TO = $self.lpha_to
-        INDEX_OF = $self.index_of
-        GENPOLY = $self.genpoly
-        NROOTS = $self.nroots
-        FCR = $self.fcr
-        PRIM = $self.prim
-        IPRIM = $self.iprim
-        PAD = $self.pad
-        A0 = $NN
+        parity = arrayBuffer(self.nroots, 0)
 
-        parity = arrayBuffer(NROOTS, 0)
-
-        for i in [0:NN - NROOTS - PAD]
-            feedback = INDEX_OF[data[i] ^ parity[0]]
-            if feedback != A0     
-                feedback = self.modnn(NN - GENPOLY[NROOTS] + feedback)
-                for j in [1:NROOTS]
-                    parity[j] ^= ALPHA_TO[self.modnn(feedback + GENPOLY[NROOTS - j])]
+        for i in [0:self.nn - self.nroots - self.pad]
+            feedback = self.index_of[data[i] ^^ parity[0]]
+            if feedback != self.nn     
+                feedback = self.modnn(self.nn - self.genpoly[self.nroots] + feedback)
+                for j in [1:self.nroots]
+                    parity[j] ^= self.alpha_to[self.modnn(feedback + self.genpoly[self.nroots - j])]
                 end
             end
 
             if len(parity) > 0; arrayRemove(parity, 0); end
-            if feedback != A0
-                arrayAdd(parity, ALPHA_TO[self.modnn(feedback + GENPOLY[0])])
+            if feedback != self.nn
+                arrayAdd(parity, self.alpha_to[self.modnn(feedback + self.genpoly[0])])
             else
                 arrayAdd(parity, 0)
             end
@@ -138,7 +126,7 @@ class QrRsItem
 end
 
 class QrRs
-    static items = []
+    items = []
 
     function init_rs(symsize, gfpoly, fcr, prim, nroots, pad)
         for rs in items

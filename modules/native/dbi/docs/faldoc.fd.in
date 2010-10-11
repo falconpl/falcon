@@ -1,29 +1,33 @@
 #
 # FALDOC - Falcon Documentation system
 #
-# Faldoc file for curl
+# Faldoc file for DBI module.
 #
 
 ################################################
 # Documentation generic data
 ################################################
 
-Title = curl
-Author = Giancarlo Niccolai
-Version = 1.0
+Title = Falcon - DBI Module.
+Author = The Falcon Committee
+Version = 0.9.10
 
 ################################################
 # Faldoc Input settings
 ################################################
+Input.basedir=@PROJECT_SOURCE_DIR@
 
-Input.directory=../src
-#you may place other input directory here
+Input.directory=dbi
+Input.directory=mysql
+Input.directory=pgsql
+Input.directory=sqlite3
+Input.directory=odbc
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=false
 
 # Other files may be specified here
-#Input.extra=main.fd
+Input.extra=docs/main.fd
 
 ################################################
 # Faldoc Output settings
@@ -37,6 +41,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=falcon-curl-1.0
+Output.html.directory=@output_dir@
 Output.html.url=.
-Output.html.doctitle=curl module Function Reference
+Output.html.doctitle=Falcon DBI Module reference.

@@ -1,0 +1,18 @@
+find_package(faldoc REQUIRED)
+
+set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/html)
+#
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/faldoc.fd.in
+  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
+  @ONLY
+)
+#
+faldoc_module_docs(@{fmodskel_PROJECT_NAME}@
+  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd 
+  ${output_dir}
+)
+
+# To generate the documentation
+#  When using Makefiles: make @{fmodskel_PROJECT_NAME}@_module_docs
+#  Visual Studio: Build the @{fmodskel_PROJECT_NAME}@_module_docs subproject
