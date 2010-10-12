@@ -420,4 +420,25 @@ class QrSpec
     function rsEccLength(spec); return (spec[0] + spec[3]) * spec[2]; end
 end
 
+object QrStr
+    function set(srctab, x, y, repl, replen)
+        substr = strFront(srctab[y], x)
+        srclen = len(srctab[y])
+        parlen = len(substr)
+
+        if replen == nil
+            parlen += len(repl)
+            substr += repl
+        elif replen > 0
+            parlen += replen
+            substr += strFront(repl, replen)
+        end
+
+        delta = srclen - parlen
+        if delta > 0; substr += strBack(srctab[y], delta); end
+
+        return (srctab[y] = substr)
+    end
+end
+
 export QrSpec
