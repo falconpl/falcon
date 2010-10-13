@@ -227,8 +227,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING ) )
    {
-      new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -251,7 +250,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    else 
    {
       vm->unidle();
-      new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
+      throw new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
          .desc( FAL_STR(proc_msg_errlist3) )
          .sysError( retval ) );
    }
@@ -292,7 +291,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    vm->idle();
