@@ -30,9 +30,21 @@
 #include "process_ext.h"
 #include "process_st.h"
 
+
+
 /*#
     @beginmodule feather_process
 */
+
+// TODO: put this somewhere more suitable
+namespace {
+  template <typename T>
+  struct auto_array {
+    T* p;
+    auto_array(T* p) : p(p) { }
+    ~auto_array() { if (p) delete [] p ; }
+  };
+} // anonymous namespace
 
 namespace Falcon {
 namespace Ext {
@@ -363,24 +375,45 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    Item *sys_req = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
+   if( sys_req == 0 || ( !sys_req->isString() &&  !sys_req->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
-   String *argv[4];
-
+                       
    String shellName( ::Falcon::Sys::shellName() );
    String shellParam( ::Falcon::Sys::shellParam() );
-   argv[0] = &shellName;
-   argv[1] = &shellParam;
-   argv[2] = sys_req->asString();
-   argv[3] = 0;
+   
+   auto_array<String*> argv(0);
 
-   int retval=0;
+   if( sys_req->isString() )
+   {
+      argv.p = new String*[4];
+      argv.p[0] = &shellName;
+      argv.p[1] = &shellParam;
+      argv.p[2] = sys_req->asString();
+      argv.p[3] = 0;
+   }
+   else
+   {
+      CoreArray *array = sys_req->asArray();
+      for( size_t i = 0; i < array->length(); i++ )
+         if ( !array->at( i ).isString() )
+         {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( FAL_STR( proc_msg_allstr ) ) );
+         }
+
+      argv.p = new String*[array->length() + 1];
+      for( size_t i = 0; i < array->length(); i++ )
+         argv.p[i] = (*array)[i].asString();
+      argv.p[array->length()] = 0;
+   }
+ 
+   int retval = 0;
    CoreString* gs = new CoreString;
-   if( ::Falcon::Sys::spawn_read( argv, false, background, &retval, gs ) )
+   if( ::Falcon::Sys::spawn_read( argv.p, false, background, &retval, gs ) )
    {
       if ( retval == 0x7F00 )
       {
@@ -388,14 +421,16 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
             .desc( FAL_STR( proc_msg_prccreate ) )
             .sysError( 0 ) );
       }
-      else
-         vm->retval( gs );
+
+      vm->retval( gs );
    }
-   else {
+   else
+   {
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR( proc_msg_prccreate ) )
          .sysError( retval ) );
    }
+
 }
 
 /*#
@@ -544,7 +579,7 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                .extra( FAL_STR( proc_msg_allstr ) ) );
          }
-      argv = (String **) memAlloc( (array->length()+1) * sizeof( String * ) );
+      argv = new String*[array->length() + 1];
       for( count = 0; count < array->length(); count ++ )
       {
          argv[count] = (*array)[count].asString();
