@@ -30,11 +30,13 @@ else()
   # Linux, Solaris, BSD, ...
   set(ENV{LD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{LD_LIBRARY_PATH}")
 endif()
-
+#
+set(ENV{FALCON_LOAD_PATH} "@CMAKE_BINARY_DIR@/@FALCON_MOD_DIR@\;@Falcon_SOURCE_DIR@/modules/falcon")
 
 separate_arguments(arguments)
-set(cmd ${EXECUTABLE} -L "@CMAKE_BINARY_DIR@/@FALCON_MOD_DIR@" ${arguments})
+set(cmd ${EXECUTABLE} ${arguments})
 separate_arguments(cmd)
+#
 execute_process(
   COMMAND ${cmd}
   WORKING_DIRECTORY ${workdir}
