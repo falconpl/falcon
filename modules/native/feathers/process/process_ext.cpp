@@ -36,16 +36,6 @@
     @beginmodule feather_process
 */
 
-// TODO: put this somewhere more suitable
-namespace {
-  template <typename T>
-  struct auto_array {
-    T* p;
-    auto_array(T* p) : p(p) { }
-    ~auto_array() { if (p) delete [] p ; }
-  };
-} // anonymous namespace
-
 namespace Falcon {
 namespace Ext {
 
@@ -379,20 +369,17 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
-   bool background = mode == 0 ? false : mode->isTrue();
-                       
+   bool background = mode == 0 ? false : mode->isTrue();                    
    String shellName( ::Falcon::Sys::shellName() );
    String shellParam( ::Falcon::Sys::shellParam() );
+   GenericVector argv(&traits::t_stringptr());
    
-   auto_array<String*> argv(0);
-
    if( sys_req->isString() )
    {
-      argv.p = new String*[4];
-      argv.p[0] = &shellName;
-      argv.p[1] = &shellParam;
-      argv.p[2] = sys_req->asString();
-      argv.p[3] = 0;
+      argv.push( &shellName );
+      argv.push( &shellParam );
+      argv.push( sys_req->asString() );
+      argv.push( 0 );
    }
    else
    {
@@ -404,15 +391,15 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
                .extra( FAL_STR( proc_msg_allstr ) ) );
          }
 
-      argv.p = new String*[array->length() + 1];
       for( size_t i = 0; i < array->length(); i++ )
-         argv.p[i] = (*array)[i].asString();
-      argv.p[array->length()] = 0;
+         argv.push( (*array)[i].asString() );
+       argv.push( 0 );
    }
  
    int retval = 0;
    CoreString* gs = new CoreString;
-   if( ::Falcon::Sys::spawn_read( argv.p, false, background, &retval, gs ) )
+   if( ::Falcon::Sys::spawn_read( static_cast<String**>( argv.at(0) ),
+                                  false, background, &retval, gs ) )
    {
       if ( retval == 0x7F00 )
       {
