@@ -13,10 +13,12 @@ import QrConfig from .qrconfig as QrConfig
 import QrSpec from .qrspec as QrSpec
 import QrSpecConsts from .qrspec as QrSpecConsts
 
-const N1 = 3
-const N2 = 3
-const N3 = 40
-const N4 = 10
+enum QrMaskConsts
+    n1 = 3
+    n2 = 3
+    n3 = 40
+    n4 = 10
+end
 
 class QrMask
     _runLen = nil
@@ -165,12 +167,12 @@ class QrMask
         return masked
     end
 
-    function calcN1N3(length)
+    function calcQrMaskConsts.n1QrMaskConsts.n3(length)
         demerit = 0
 
         for i in [0:length]
             if self.runLength[i] >= 5
-                demerit += (N1 + (self.runLength[i] - 5))
+                demerit += (QrMaskConsts.n1 + (self.runLength[i] - 5))
             end
             if i && 1
                 if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
@@ -180,9 +182,9 @@ class QrMask
                         (self.runLength[i + 1] == fact) and \
                         (self.runLength[i + 2] == fact)
                         if (self.runLength[i - 3] < 0) or (self.runLength[i - 3] >= (4 * fact))
-                            demerit += N3
+                            demerit += QrMaskConsts.n3
                         elif ((i + 3) >= length) or (self.runLength[i + 3] >= (4 * fact))
-                            demerit += N3
+                            demerit += QrMaskConsts.n3
                         end
                     end
                 end
@@ -207,7 +209,7 @@ class QrMask
                 if x > 0 and y > 0
                     b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
                     w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
-                    if (b22 || (w22 ^^ 1)) && 1; demerit += N2; end
+                    if (b22 || (w22 ^^ 1)) && 1; demerit += QrMaskConsts.n2; end
                 end
                 if x == 0 and (frameY[*x] && 1)
                     self.runLength[0] = -1
@@ -223,7 +225,7 @@ class QrMask
                 end
             end
 
-            demerit += self.calcN1N3(head + 1)
+            demerit += self.calcQrMaskConsts.n1QrMaskConsts.n3(head + 1)
         end
 
         for x in [0:width]
@@ -245,7 +247,7 @@ class QrMask
                 end
             end
 
-            demerit += self.calcN1N3(head + 1)
+            demerit += self.calcQrMaskConsts.n1QrMaskConsts.n3(head + 1)
         end
 
         return demerit
@@ -274,7 +276,7 @@ class QrMask
             blacks = self.makeMaskNo(i, width, frame, mask)
             blacks += self.writeFormatInformation(width, mask, i, errorCorrectionLevel)
             blacks  = 100 * blacks / (width * width)
-            demerit = (abs(blacks - 50) / 5) * N4
+            demerit = (abs(blacks - 50) / 5) * QrMaskConsts.n4
             demerit += self.evaluateSymbol(width, mask)
 
             if demerit < minDemerit

@@ -14,8 +14,10 @@ import QrModes from .qrconst as QrModes
 import QrErrorCorrectionLevels from .qrconst as QrErrorCorrectionLevels
 import QrSpec from .qrspec as QrSpec
 
-const STRUCTURE_HEADER_BITS = 20
-const MAX_STRUCTURED_SYMBOLS = 16
+enum QrInputConsts
+    structure_header_bits = 20
+    max_structured_symbols = 16
+end
 
 class QrInputItem(mode, size, data)
     _mode = QrModes.null
@@ -158,7 +160,7 @@ class QrInputItem(mode, size, data)
         elif self._mode == QrModes.kanji
             bits = QrInput.estimateBitsModeKanji(self._size)
         elif self._mode == QrModes.structure
-            return STRUCTURE_HEADER_BITS
+            return QrInputConsts.structure_header_bits
         else
             return 0
         end
@@ -266,12 +268,12 @@ class QrInput(version, errorCorrectionLevel)
     end
 
     function insertStructuredAppendHeader(size, index, parity)
-        if size > MAX_STRUCTURED_SYMBOLS
-            raise QrError(QrError.invalid_param, @i'size exceeds $(MAX_STRUCTURED_SYMBOLS)')
+        if size > QrInputConsts.max_structured_symbols
+            raise QrError(QrError.invalid_param, @i'size exceeds $(QrInputConsts.max_structured_symbols)')
         end
 
-        if index <= 0 or index > MAX_STRUCTURED_SYMBOLS
-            raise QrError(QrError.invalid_param, @i'index is not between 0 and $(MAX_STRUCTURED_SYMBOLS)')
+        if index <= 0 or index > QrInputConsts.max_structured_symbols
+            raise QrError(QrError.invalid_param, @i'index is not between 0 and $(QrInputConsts.max_structured_symbols)')
         end
 
         // $buffer = array($size, $index, $parity);
