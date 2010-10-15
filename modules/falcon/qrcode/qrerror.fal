@@ -31,3 +31,5 @@ class QrError(code, desc, extra) from Error(code, desc, extra)
         end
     end
 end
+
+export

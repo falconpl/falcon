@@ -9,6 +9,7 @@
  */
 
 import from .qrconst
+import from .qrspec
 
 const STRUCTURE_HEADER_BITS = 20
 const MAX_STRUCTURED_SYMBOLS = 16

@@ -8,6 +8,12 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
+import from .qrconfig
+import from .qrerror
+import from .qrconst
+import from .qrimage
+import from .qrinput
+
 class QrRsBlock(dataLen, data, eccLen, ecc /* ref */, rsItem)
     dataLen = 0
     data = nil
@@ -215,7 +221,6 @@ class QrCode
         end
 
         input = QrInput(version, errorCorrectionLevel)
-        // j3d check for null string
         QrSplit.splitStringToQrInput(string, input, mode, caseSensitive)
 
         return self.encodeInput(input)
@@ -416,4 +421,4 @@ class QrEncode(errorCorrectionLevel, size, margin)
     end
 end
 
-export QrEncode
+export QrCode

@@ -207,7 +207,7 @@ class QrSplit(dataStr, input, modeHint)
         return self.dataStr
     end
 
-    function splitStringToQRinput(string, input, modeHint, caseSensitive)
+    function splitStringToQrInput(string, input, modeHint, caseSensitive)
         if caseSensitive == nil; caseSensitive = true; end
         if string == nil or string == '\0' or string == ''
             raise QrError(QrError.invalid_param, i'string is empty')
