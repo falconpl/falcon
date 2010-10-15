@@ -8,12 +8,22 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
  
-const QRSPEC_VERSION_MAX = 40
-const QRSPEC_WIDTH_MAX = 177
-const QRCAP_WIDTH = 0
-const QRCAP_WORDS = 1
-const QRCAP_REMINDER = 2
-const QRCAP_EC = 3
+import QrConfig from .qrconfig as QrConfig
+import QrError from .qrerror as QrError
+import QrModes from .qrconst as QrModes
+import QrErrorCorrectionLevels from .qrconst as QrErrorCorrectionLevels
+
+enum QrSpecConsts
+    max_version = 40
+    max_width = 177
+end
+
+enum QrCapConsts
+    width = 0
+    words = 1
+    reminder = 2
+    ec = 3
+end
 
 class QrSpec
     frames = nil
@@ -127,10 +137,10 @@ class QrSpec
     ]
 
     formatInfo = [
-        array(0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976),
-        array(0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0),
-        array(0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed),
-        array(0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b)
+        [0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976],
+        [0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0],
+        [0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed],
+        [0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b]
     ]
 
     lengthTableBits = [
@@ -141,24 +151,24 @@ class QrSpec
     ]
 
     function getDataLength(version, errorCorrectionLevel)
-        return self.capacity[version][QRCAP_WORDS] - self.capacity[version][QRCAP_EC][errorCorrectionLevel]
+        return self.capacity[version][QrCapConsts.words] - self.capacity[version][QrCapConsts.ec][errorCorrectionLevel]
     end
 
     function getEccLength(version, errorCorrectionLevel)
-        return self.capacity[version][QRCAP_EC][errorCorrectionLevel]
+        return self.capacity[version][QrCapConsts.ec][errorCorrectionLevel]
     end
 
     function getWidth(version)
-        return self.capacity[version][QRCAP_WIDTH]
+        return self.capacity[version][QrCapConsts.width]
     end
 
     function getRemainder(version)
-        return self.capacity[version][QRCAP_REMINDER]
+        return self.capacity[version][QrCapConsts.reminder]
     end
 
     function getMinVersion(size, errorCorrectionLevel)
-        for i in [1:QRSPEC_VERSION_MAX + 1]
-            words = self.capacity[i][QRCAP_WORDS] - self.capacity[i][QRCAP_EC][errorCorrectionLevel]
+        for i in [1:QrSpecConsts.max_version + 1]
+            words = self.capacity[i][QrCapConsts.words] - self.capacity[i][QrCapConsts.ec][errorCorrectionLevel]
             if words >= size; return i; end
         end
 
@@ -273,7 +283,7 @@ class QrSpec
     end
 
     function getVersionPattern(version)
-        if version < 7 or version > QRSPEC_VERSION_MAX
+        if version < 7 or version > QrSpecConsts.max_version
             return 0
         end
 
@@ -281,8 +291,11 @@ class QrSpec
     end
 
     function getFormatInfo(mask, errorCorrectionLevel)
-        if mask < 0 or $mask > 7; return 0; end
-        if errorCorrectionLlevel < 0 or errorCorrectionLevel > 3; return 0; end
+        if mask < 0 or mask > 7; return 0; end
+        if errorCorrectionLevel < QrErrorCorrectionLevels.L \
+            or errorCorrectionLevel > QrErrorCorrectionLevels.H
+            return 0
+        end
         return self.formatInfo[errorCorrectionLevel][mask]
     end
 
@@ -303,7 +316,7 @@ class QrSpec
     end
 
     function createFrame(version)
-        width = self.capacity[version][QRCAP_WIDTH]
+        width = self.capacity[version][QrCapConsts.width]
         frameLine = strFill(strBuffer(width), '\0')
         frame = arrayBuffer(width, frameLine)
 
@@ -377,7 +390,7 @@ class QrSpec
     end
 
     function newFrame(version)
-        if version < 1 or version > QRSPEC_VERSION_MAX; return nil; end
+        if version < 1 or version > QrSpecConsts.max_version; return nil; end
 
         if self.frames == nil
             self.frames = arrayBuffer(version, nil)
@@ -441,4 +454,4 @@ object QrStr
     end
 end
 
-export QrSpec
+export QrSpec, QrSpecConsts

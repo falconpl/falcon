@@ -8,6 +8,11 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
+import QrError from .qrerror as QrError
+import QrInput from .qrinput as QrInput
+import QrModes from .qrconst as QrModes
+import QrSpec from .qrspec as QrSpec
+
 class QrSplit(dataStr, input, modeHint)
     dataStr = nil
     input = nil
@@ -57,25 +62,24 @@ class QrSplit(dataStr, input, modeHint)
         p = 0
         while self.isDigitAt(self.dataStr, p); p++; end
 
-        run = p
         mode = self.identifyMode(p)
 
         if mode == QrModes.eigth_bit
-            dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
+            dif = QrInput.estimateBitsModeNum(p) + 4 + ln \
                 + QrInput.estimateBitsMode8(1) \
-                - QrInput.estimateBitsMode8(run + 1)
+                - QrInput.estimateBitsMode8(p + 1)
             if dif > 0; return self.eat8(); end
         end
 
         if mode == QrModes.an
-            dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
+            dif = QrInput.estimateBitsModeNum(p) + 4 + ln \
                 + QrInput.estimateBitsModeAn(1) \
-                - QrInput.estimateBitsModeAn(run + 1)
+                - QrInput.estimateBitsModeAn(p + 1)
             if dif > 0; return self.eatAn(); end
         end
 
-        self.input.append(QrModes.num, run, strSplit(self.dataStr))
-        return run;
+        self.input.append(QrModes.num, p, strSplit(self.dataStr))
+        return p;
     end
 
     function eanAn()
@@ -103,17 +107,15 @@ class QrSplit(dataStr, input, modeHint)
             end
         end
 
-        run = p
-
         if not self.isAlNumAt(self.dataStr, p)
-            dif = QrInput.estimateBitsModeAn(run) + 4 + la \
+            dif = QrInput.estimateBitsModeAn(p) + 4 + la \
                 + QrInput.estimateBitsMode8(1) \
-                - QrInput.estimateBitsMode8(run + 1)
+                - QrInput.estimateBitsMode8(p + 1)
             if dif > 0; return self.eat8(); end
         end
 
-        self.input.append(QrModes.an, run, strSplit(self.dataStr))
-        return run
+        self.input.append(QrModes.an, p, strSplit(self.dataStr))
+        return p
     end
 
     function eatKanji()
@@ -121,7 +123,7 @@ class QrSplit(dataStr, input, modeHint)
         while self.identifyMode(p) == QrModes.kanji; p += 2; end
         
         self.input.append(QrModes.kanji, p, strSplit(self.dataStr))
-        return run
+        return p
     end
 
     function eat8()
@@ -160,9 +162,8 @@ class QrSplit(dataStr, input, modeHint)
             end
         end
 
-        run = p
-        self.input.append(QrModes.eight_bit, run, strSplit(self.dataStr))
-        return run
+        self.input.append(QrModes.eight_bit, p, strSplit(self.dataStr))
+        return p
     end
 
     function splitString()
@@ -176,7 +177,7 @@ class QrSplit(dataStr, input, modeHint)
             elif mode == QrModes.an
                 length = self.eatAn()
             elif mode == QrModes.kanji
-                if hint == QrModes.kanji
+                if self.modeHint == QrModes.kanji
                     length = self.eatKanji()
                 else
                     length = self.eat8()

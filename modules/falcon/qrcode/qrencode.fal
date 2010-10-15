@@ -8,14 +8,17 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
-import from .qrconfig
-import from .qrerror
-import from .qrconst
-import from .qrrscode
-import from .qrimage
-import from .qrinput
-import from .qrsplit
-import from .qrspec
+import QrConfig from .qrconfig as QrConfig
+import QrError from .qrerror as QrError
+import QrModes from .qrconst as QrModes
+import QrErrorCorrectionLevels from .qrconst as QrErrorCorrectionLevels
+import QrMask from .qrmask as QrMask
+import QrImage from .qrimage as QrImage
+import QrInput from .qrinput as QrInput
+import QrRs from .qrrscode as QrRs
+import QrSplit from .qrsplit as QrSplit
+import QrSpec from .qrspec as QrSpec
+import QrTools from .qrtools as QrTools
 
 class QrRsBlock(dataLen, data, eccLen, ecc /* ref */, rsItem)
     dataLen = 0
@@ -207,7 +210,7 @@ class QrCode
         return self.encodeMask(input, -1)
     end
 
-    function encodeString8Bit(string, version, errorCorrectinoLevel)
+    function encodeString8Bit(string, version, errorCorrectionLevel)
         if string == nil
             raise QrError(QrError.invalid_param, "string is null")
         end
@@ -387,7 +390,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
         return code.data
     end
 
-    function encode(text, outfile) 
+    function encode(text, outFile) 
         code = QrCode()
 
         if self.eightBit
@@ -398,7 +401,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
 
         binarized = QrTools.binarize(code.data)
 
-        if outfile != nil
+        if outFile != nil
             outputStream = OutputStream(outFile, 666, FILE_SHARE)
             for line in binarized; outputStream.printl(line); end
             outputStream.close()

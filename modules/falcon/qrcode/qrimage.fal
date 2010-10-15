@@ -9,7 +9,7 @@
  */
 
 load gd2
-import from .qrerror 
+import QrError from .qrerror as QrError
  
 object QrImage
     function png(frame, outFile, pixelPerPoint, outerFrame, saveAndPrint)
@@ -47,7 +47,7 @@ object QrImage
 
     function _image(frame, pixelPerPoint, outerFrame)
         if frame == nil
-            raise qrerror.QrError(qrerror.QrError.invalid_param, "frame is null")
+            raise QrError(QrError.invalid_param, "frame is null")
         end
 
         if pixelPerPoint == nil; pixelPerPoint = 4; end

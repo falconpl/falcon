@@ -9,6 +9,9 @@
  */
 
 load zlib
+import QrConfig from .qrconfig as QrConfig
+import QrSpec from .qrspec as QrSpec
+import QrSpecConsts from .qrspec as QrSpecConsts
 
 const N1 = 3
 const N2 = 3
@@ -30,7 +33,7 @@ class QrMask
     ]
 
     init
-        self.runLen = arrayBuffer(QRSPEC_WIDTH_MAX + 1, 0)
+        self.runLen = arrayBuffer(QrSpecConsts.max_width + 1, 0)
     end
 
     function writeFormatInformation(width, frame /* ref */, mask, errorCorrectionLevel)
@@ -130,7 +133,7 @@ class QrMask
                     dirMake(QrConfig.cache_dir + "mask_" + maskNo)
                 end
                 
-                outputStream = OutputStreama(fileName)
+                outputStream = OutputStream(fileName)
                 outputStream.write(self.serialize(bitMask))
                 outputStream.close()
             end
@@ -142,7 +145,7 @@ class QrMask
 
         d = s
 
-        for y in [0:wisth]
+        for y in [0:width]
             for x in [0:width]
                 if bitMask[y][x] == 1
                     d[y][x] = chr(s[y][x][*0]) ^^ bitMask[y][x]
@@ -166,7 +169,7 @@ class QrMask
         demerit = 0
 
         for i in [0:length]
-            if this.runLength[i] >= 5
+            if self.runLength[i] >= 5
                 demerit += (N1 + (self.runLength[i] - 5))
             end
             if i && 1
@@ -256,7 +259,7 @@ class QrMask
 
         if QrConfig.find_from_random != 0
             howManuOut = 8 - (QrConfig.find_from_random % 9)
-            for i in [0:howManuOUt]
+            for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
                 arrayRemove(checkedMasks, remPos)
             end

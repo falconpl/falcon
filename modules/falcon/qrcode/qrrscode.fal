@@ -129,7 +129,7 @@ class QrRs
     items = []
 
     function init_rs(symsize, gfpoly, fcr, prim, nroots, pad)
-        for rs in items
+        for rs in self.items
             if rs.pad != pad; continue; end
             if rs.nroots != nroots; continue; end
             if rs.mm != symsize; continue; end
