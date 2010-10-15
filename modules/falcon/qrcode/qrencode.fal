@@ -11,8 +11,11 @@
 import from .qrconfig
 import from .qrerror
 import from .qrconst
+import from .qrrscode
 import from .qrimage
 import from .qrinput
+import from .qrsplit
+import from .qrspec
 
 class QrRsBlock(dataLen, data, eccLen, ecc /* ref */, rsItem)
     dataLen = 0

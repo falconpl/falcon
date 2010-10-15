@@ -166,7 +166,7 @@ class QrSpec
     end
 
     function lengthIndicator(mode, version)
-        if mode == QR_MODE_STRUCTURE; return 0; end
+        if mode == QrModes.structure; return 0; end
 
         if version <= 9
             l = 0
@@ -180,7 +180,7 @@ class QrSpec
     end
 
     function maxWords(mode, version)
-        if mode == QR_MODE_STRUCTURE; return 3; end
+        if mode == QrModes.structure; return 3; end
 
         if version <= 9
             l = 0
@@ -192,7 +192,7 @@ class QrSpec
 
         bits = self.lengthTableBits[mode][l]
         words = (1 << bits) - 1
-        if mode == QR_MODE_KANJI; words *= 2; end
+        if mode == QrModes.kanji; words *= 2; end
 
         return words
     end
