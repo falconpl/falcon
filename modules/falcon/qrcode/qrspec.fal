@@ -396,7 +396,7 @@ class QrSpec
                     inputStream.close()
                 else
                     self.frames[version - 1] = self.createFrame(version)
-                    outputStream = OutputStreama(fileName)
+                    outputStream = OutputStream(fileName)
                     outputStream.write(self.serialilze(self.frames[version - 1]))
                     outputStream.close()
                 end
