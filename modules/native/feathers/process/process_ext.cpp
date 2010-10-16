@@ -41,24 +41,50 @@ namespace Falcon { namespace Ext {
 
 namespace {
 
-void s_appendCommands(VMachine* vm, GenericVector& argv, Item* command)
+bool s_checkArray(Item* item)
 {
-   fassert( command->isArray() );
+   fassert( item->isArray() );
+
+   bool doThrow = false;
+   CoreArray *array = item->asArray();
+   if ( ! array->length() > 1 )
+      return false;
    
-   CoreArray *commands = command->asArray();
-   for( size_t i = 0; i < commands->length(); i++ )
-      if ( !commands->at( i ).isString() )
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                               .extra( FAL_STR( proc_msg_allstr ) ) );
-      }
+   for( size_t i = 0; i < array->length(); i++ )
+      if ( !array->at( i ).isString() )
+         return false;
    
+   return true;  
+}
+
+void s_appendCommands(GenericVector& argv, Item* command)
+{
+   fassert( s_checkArray(command) );
+
+   CoreArray* commands = command->asArray();
    for( size_t i = 0; i < commands->length(); i++ )
    {
-     String* str =  (*commands)[i].asString();
-     argv.push( new String( *str ) );
+      String* str =  (*commands)[i].asString();
+      argv.push( new String( *str ) );
+   }  
+}
+
+String s_mergeCommandArray(Item* command)
+{
+   fassert( s_checkArray(command) );
+
+   String ret;
+   
+   CoreArray* commands = command->asArray();
+   ret.append( *(*commands)[0].asString() );
+   for( size_t i = 1; i < commands->length(); i++ )
+   {
+      String* str =  (*commands)[i].asString();
+      ret.append( " "  );
+      ret.append( *str  );
    }
    
+   return ret;
 }
 
 } // anonymous namespace
@@ -241,10 +267,10 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || !command->isString() )
+   if( command == 0 || (!command->isString() && !command->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                            .extra("S, [B]") );
+                            .extra("S|A{S}, [B]") );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -252,7 +278,15 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    
    argv.push( new String( Falcon::Sys::shellName()) );
    argv.push( new String( Falcon::Sys::shellParam()) );
-   argv.push( new String( *command->asString() ) );
+   if( command->isString() )
+      argv.push( new String( *command->asString() ) );
+   else
+   {
+      if ( !s_checkArray(command) )
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                               .extra( FAL_STR( proc_msg_allstr ) ) );
+      argv.push( new String( s_mergeCommandArray(command) ) );
+   }   
    argv.push( 0 );
    
    int retval;
@@ -319,7 +353,12 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
   if( command->isString() )
     Falcon::Mod::argvize(argv, *command->asString());
   else
-     s_appendCommands(vm, argv, command);
+  {
+     if ( !s_checkArray(command) )
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                              .extra( FAL_STR( proc_msg_allstr ) ) );     
+     s_appendCommands(argv, command);
+  }
   argv.push( 0 );
 
    int retval;
@@ -371,10 +410,10 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || !command->isString() )
+   if( command == 0 || (!command->isString() && !command->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                             .extra( "S, B" ) );
+                             .extra( "S|A{S}, B" ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -382,7 +421,15 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
 
    argv.push( new String( Falcon::Sys::shellName()) );
    argv.push( new String( Falcon::Sys::shellParam()) );
-   argv.push( new String( *command->asString() ) );
+   if( command->isString() )
+      argv.push( new String( *command->asString() ) );
+   else
+   {
+      if ( !s_checkArray(command) )
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                               .extra( FAL_STR( proc_msg_allstr ) ) );
+      argv.push( new String( s_mergeCommandArray(command) ) );
+   }
    argv.push( 0 );
 
    int retval = 0;
@@ -446,7 +493,12 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
    if( command->isString() )
      Falcon::Mod::argvize(argv, *command->asString());
    else
-     s_appendCommands(vm, argv, command);
+   {
+      if ( !s_checkArray(command) )
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                               .extra( FAL_STR( proc_msg_allstr ) ) );
+      s_appendCommands(argv, command);
+   }
   argv.push( 0 );
 
 
@@ -526,7 +578,12 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
      if( command->isString() )
        Falcon::Mod::argvize(argv, *command->asString());
      else
-       s_appendCommands(vm, argv, command);
+     {
+        if ( !s_checkArray(command) )
+           throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                 .extra( FAL_STR( proc_msg_allstr ) ) );
+        s_appendCommands(argv, command);
+     }
    }
    argv.push( 0 );
 

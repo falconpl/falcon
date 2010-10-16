@@ -34,9 +34,11 @@ catch in e
 end
 //
 try
+  > "system(command_str)"
   system(command_array)
-  failure( "system accepted an array" )
-catch
+catch in e
+  > e
+  failure( "system failed on command array" )
 end
 
 
@@ -72,9 +74,12 @@ catch in e
 end
 //
 try
+  > "pread(command_array)"
   output = pread(command_array)
-  failure( "pread accepted command array" )
-catch
+  > output
+catch in e
+  > e
+  failure( "pread failed on command array" )
 end
 
 /*
