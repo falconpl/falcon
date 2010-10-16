@@ -53,7 +53,7 @@ class QrSplit(dataStr, input, modeHint)
             end
         end
 
-        return QrMode.eigth_bit
+        return QrMode.eight_bit
     end
 
     function eatNum()
@@ -64,7 +64,7 @@ class QrSplit(dataStr, input, modeHint)
 
         mode = self.identifyMode(p)
 
-        if mode == QrMode.eigth_bit
+        if mode == QrMode.eight_bit
             dif = QrInput.estimateBitsModeNum(p) + 4 + ln \
                 + QrInput.estimateBitsMode8(1) \
                 - QrInput.estimateBitsMode8(p + 1)
