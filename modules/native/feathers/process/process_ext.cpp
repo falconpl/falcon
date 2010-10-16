@@ -241,10 +241,10 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || ( !command->isString() ) )
+   if( command == 0 || !command->isString() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                            .extra("S|A{S}, [B]") );
+                            .extra("S, [B]") );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -252,10 +252,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    
    argv.push( new String( Falcon::Sys::shellName()) );
    argv.push( new String( Falcon::Sys::shellParam()) );
-   if( command->isString() )
-     argv.push( new String( *command->asString() ) );
-   else
-     s_appendCommands(vm, argv, command);
+   argv.push( new String( *command->asString() ) );
    argv.push( 0 );
    
    int retval;
@@ -374,10 +371,10 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || ( !command->isString() &&  !command->isArray() ) )
+   if( command == 0 || !command->isString() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                             .extra( "S|A{S}, B" ) );
+                             .extra( "S, B" ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -385,10 +382,7 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
 
    argv.push( new String( Falcon::Sys::shellName()) );
    argv.push( new String( Falcon::Sys::shellParam()) );
-   if( command->isString() )
-     argv.push( new String( *command->asString() ) );
-   else
-     s_appendCommands(vm, argv, command);
+   argv.push( new String( *command->asString() ) );
    argv.push( 0 );
 
    int retval = 0;
@@ -521,10 +515,11 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
      argv.push( new String( Falcon::Sys::shellName()) );
      argv.push( new String( Falcon::Sys::shellParam()) );
      
-     if( command->isString() )
-       argv.push( new String( *command->asString() ) );
-     else
-       s_appendCommands(vm, argv, command);
+     if( ! command->isString()  )
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                             .extra( "S, [I]" ) );
+     
+     argv.push( new String( *command->asString() ) );
    }
    else
    {
