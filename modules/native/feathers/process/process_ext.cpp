@@ -241,7 +241,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || ( command->type() != FLC_ITEM_STRING ) )
+   if( command == 0 || ( !command->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                             .extra("S|A{S}, [B]") );
@@ -308,10 +308,10 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( command == 0 || ( command->type() != FLC_ITEM_STRING &&  command->type() != FLC_ITEM_ARRAY ) )
+   if( command == 0 || ( !command->isString() &&  !command->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                             .extra("S, [B]") );
+                             .extra("S|A{S}, [B]") );
    }
 
    vm->idle();
@@ -442,7 +442,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 {
    Item *command = vm->param(0);
 
-   if( command == 0 || ( command->type() != FLC_ITEM_STRING &&  command->type() != FLC_ITEM_ARRAY ) )
+   if( command == 0 || ( !command->isString() &&  !command->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                             .extra("S|A{S}") );
