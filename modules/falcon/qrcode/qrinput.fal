@@ -10,17 +10,17 @@
 
 import QrBitStream from .qrbitstream as QrBitStream
 import QrError from .qrerror as QrError
-import QrModes from .qrconst as QrModes
-import QrErrorCorrectionLevels from .qrconst as QrErrorCorrectionLevels
+import QrMode from .qrconst as QrMode
+import QrErrorCorrectionLevel from .qrconst as QrErrorCorrectionLevel
 import QrSpec from .qrspec as QrSpec
 
-enum QrInputConsts
+enum QrInputConst
     structure_header_bits = 20
     max_structured_symbols = 16
 end
 
 class QrInputItem(mode, size, data)
-    _mode = QrModes.null
+    _mode = QrMode.null
     _size = 0
     _data = nil
     _bitStream = nil
@@ -59,7 +59,7 @@ class QrInputItem(mode, size, data)
 
         bitStream = QrBitStream()
         bitStream.appendNum(4, val)
-        bitStream.appendNum(QrSpec.lengthIndicator(QrModes.num, version), self._size)
+        bitStream.appendNum(QrSpec.lengthIndicator(QrMode.num, version), self._size)
 
         for i in [0:words]
             val  = (self._data[*(i * 3)] - "0"[*0]) * 100
@@ -85,7 +85,7 @@ class QrInputItem(mode, size, data)
 
         bitStream = QrBitStream()
         bitStream.appendNum(4, 0x02)
-        bitStream.appendNum(QrSpec.lengthIndicator(QrModes.an, version), self._size)
+        bitStream.appendNum(QrSpec.lengthIndicator(QrMode.an, version), self._size)
 
         for i in [0:words]
             val  = QrInput.lookAnTable(self._data[*(i * 2)]) * 45
@@ -104,7 +104,7 @@ class QrInputItem(mode, size, data)
     function encodeMode8Bit(version)
         bitStream = QrBitStream()
         bitStream.appendNum(4, 0x4)
-        bitStream.appendNum(QrSpec.lengthIndicator(QrModes.eight, version), self._size)
+        bitStream.appendNum(QrSpec.lengthIndicator(QrMode.eight, version), self._size)
 
         for i in [0:self._size]
             bitStream.appendNum(8, self._data[*i])
@@ -116,7 +116,7 @@ class QrInputItem(mode, size, data)
     function encodeModeKanji(version)
         bitStream = QrBitStream()
         bitStream.appendNum(4, 0x8)
-        bitStream.appendNum(QrSpec.lengthIndicator(QrModes.kanji, version), self._size / 2);
+        bitStream.appendNum(QrSpec.lengthIndicator(QrMode.kanji, version), self._size / 2);
 
         for i in [0:self._size:2]
             val = (self._data[*i] << 8) || self._data[(i + 1)]
@@ -151,16 +151,16 @@ class QrInputItem(mode, size, data)
 
         if version == 0; version = 1; end
 
-        if self._mode == QrModes.num
+        if self._mode == QrMode.num
             bits = QrInput.estimateBitsModeNum(self._size)
-        elif self._mode == QrModes.an
+        elif self._mode == QrMode.an
             bits = QrInput.estimateBitsModeAn(self._size)
-        elif self._mode == QrModes.eight_bit
+        elif self._mode == QrMode.eight_bit
             bits = QrInput.estimateBitsMode8(self._size)
-        elif self._mode == QrModes.kanji
+        elif self._mode == QrMode.kanji
             bits = QrInput.estimateBitsModeKanji(self._size)
-        elif self._mode == QrModes.structure
-            return QrInputConsts.structure_header_bits
+        elif self._mode == QrMode.structure
+            return QrInputConst.structure_header_bits
         else
             return 0
         end
@@ -192,15 +192,15 @@ class QrInputItem(mode, size, data)
             inputItem1 = nil
             inputItem2 = nil
         else     
-            if self._mode ==  QrModes.num
+            if self._mode ==  QrMode.num
                 self.encodeModeNum(version)
-            elif self._mode == QrModes.an
+            elif self._mode == QrMode.an
                 self.encodeModeAn(version)
-            elif self._mode == QrModes.eight_bit
+            elif self._mode == QrMode.eight_bit
                 self.encodeMode8(version)
-            elif self._mode == QrModes.kanji
+            elif self._mode == QrMode.kanji
                 self.encodeModeKanji(version)
-            elif self._mode == QrModes.structure
+            elif self._mode == QrMode.structure
                 self.encodeModeStructure()
             else
                 raise QrError(QrError.invalid_mode, @i'$(self.mode) is not supported')
@@ -228,7 +228,7 @@ class QrInput(version, errorCorrectionLevel)
 
     init
         if version == nil; version = 0; end
-        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevels.L; end
+        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevel.L; end
 
         self._version = version
         self.errorCorrectionLevel = errorCorrectionLevel
@@ -251,7 +251,7 @@ class QrInput(version, errorCorrectionLevel)
     end
 
     function __set_errorCorrectionLevel(errorCorrectionLevel)
-        if errorCorrectionLevel > QrErrorCorrectionLevels.H
+        if errorCorrectionLevel > QrErrorCorrectionLevel.H
             raise QrError(QrError.invalid_correction_error_level, @i'$(errorCorrectionLevel) not supported')
         end
 
@@ -268,17 +268,16 @@ class QrInput(version, errorCorrectionLevel)
     end
 
     function insertStructuredAppendHeader(size, index, parity)
-        if size > QrInputConsts.max_structured_symbols
-            raise QrError(QrError.invalid_param, @i'size exceeds $(QrInputConsts.max_structured_symbols)')
+        if size > QrInputConst.max_structured_symbols
+            raise QrError(QrError.invalid_param, @i'size exceeds $(QrInputConst.max_structured_symbols)')
         end
 
-        if index <= 0 or index > QrInputConsts.max_structured_symbols
-            raise QrError(QrError.invalid_param, @i'index is not between 0 and $(QrInputConsts.max_structured_symbols)')
+        if index <= 0 or index > QrInputConst.max_structured_symbols
+            raise QrError(QrError.invalid_param, @i'index is not between 0 and $(QrInputConst.max_structured_symbols)')
         end
 
-        // $buffer = array($size, $index, $parity);
         buffer = [size, index, parity]
-        entry = QrInputItem(QrModes.structure, 3, buffer)
+        entry = QrInputItem(QrMode.structure, 3, buffer)
         arrayIns(self.items, 0, entry)
     end
 
@@ -286,7 +285,7 @@ class QrInput(version, errorCorrectionLevel)
         parity = 0
 
         for item in self._items
-            if item.mode != QrModes.structure
+            if item.mode != QrMode.structure
                 for i in [item.size - 1:0:-1]
                     parity ^= item.data[i]
                 end
@@ -368,15 +367,15 @@ class QrInput(version, errorCorrectionLevel)
             raise QrError(QrError.invalid_param, i"size is less than 1")
         end
 
-        if mode == QrModes.num
+        if mode == QrMode.num
             return self.checkModeNum(size, data)
-        elif mode == QrModes.an
+        elif mode == QrMode.an
             return self.checkModeAn(size, data)
-        elif mode == QrModes.kanji
+        elif mode == QrMode.kanji
             return self.checkModeKanji(size, data)
-        elif mode == QrModes.eight_bit
+        elif mode == QrMode.eight_bit
             return true
-        elif mode == QrModes.structure
+        elif mode == QrMode.structure
             return true
         else
             raise QrError(QrError.invalid_mode, @i'$(mode) is not supported')
@@ -409,21 +408,21 @@ class QrInput(version, errorCorrectionLevel)
     function lengthOfCode(mode, version, bits)
         payload = bits - 4 - QrSpec.lengthIndicator(mode, version)
 
-        if mode == QrModes.num
+        if mode == QrMode.num
             chunks = payload / 10
             remain = payload - chunks * 10
             size = chunks * 3
             if remain >= 7; size += 2; elif remain >= 4; size++; end
-        elif mode == QrModes.an
+        elif mode == QrMode.an
             chunks = payload / 11
             remain = payload - chunks * 11
             size = chunks * 2
             if remain >= 6; size++; end
-        elif mode == QrModes.eight_bit
+        elif mode == QrMode.eight_bit
             size = $payload / 8
-        elif mode == QrModes.kanji
+        elif mode == QrMode.kanji
             size = (payload / 13) * 2
-        elif mode == QrModes.structure
+        elif mode == QrMode.structure
             size = payload / 8
         else
             size = 0

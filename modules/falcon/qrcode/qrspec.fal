@@ -10,15 +10,15 @@
  
 import QrConfig from .qrconfig as QrConfig
 import QrError from .qrerror as QrError
-import QrModes from .qrconst as QrModes
-import QrErrorCorrectionLevels from .qrconst as QrErrorCorrectionLevels
+import QrMode from .qrconst as QrMode
+import QrErrorCorrectionLevel from .qrconst as QrErrorCorrectionLevel
 
-enum QrSpecConsts
+enum QrSpecConst
     max_version = 40
     max_width = 177
 end
 
-enum QrCapConsts
+enum QrCapConst
     width = 0
     words = 1
     reminder = 2
@@ -151,24 +151,24 @@ class QrSpec
     ]
 
     function getDataLength(version, errorCorrectionLevel)
-        return self.capacity[version][QrCapConsts.words] - self.capacity[version][QrCapConsts.ec][errorCorrectionLevel]
+        return self.capacity[version][QrCapConst.words] - self.capacity[version][QrCapConst.ec][errorCorrectionLevel]
     end
 
     function getEccLength(version, errorCorrectionLevel)
-        return self.capacity[version][QrCapConsts.ec][errorCorrectionLevel]
+        return self.capacity[version][QrCapConst.ec][errorCorrectionLevel]
     end
 
     function getWidth(version)
-        return self.capacity[version][QrCapConsts.width]
+        return self.capacity[version][QrCapConst.width]
     end
 
     function getRemainder(version)
-        return self.capacity[version][QrCapConsts.reminder]
+        return self.capacity[version][QrCapConst.reminder]
     end
 
     function getMinVersion(size, errorCorrectionLevel)
-        for i in [1:QrSpecConsts.max_version + 1]
-            words = self.capacity[i][QrCapConsts.words] - self.capacity[i][QrCapConsts.ec][errorCorrectionLevel]
+        for i in [1:QrSpecConst.max_version + 1]
+            words = self.capacity[i][QrCapConst.words] - self.capacity[i][QrCapConst.ec][errorCorrectionLevel]
             if words >= size; return i; end
         end
 
@@ -176,7 +176,7 @@ class QrSpec
     end
 
     function lengthIndicator(mode, version)
-        if mode == QrModes.structure; return 0; end
+        if mode == QrMode.structure; return 0; end
 
         if version <= 9
             l = 0
@@ -190,7 +190,7 @@ class QrSpec
     end
 
     function maxWords(mode, version)
-        if mode == QrModes.structure; return 3; end
+        if mode == QrMode.structure; return 3; end
 
         if version <= 9
             l = 0
@@ -202,7 +202,7 @@ class QrSpec
 
         bits = self.lengthTableBits[mode][l]
         words = (1 << bits) - 1
-        if mode == QrModes.kanji; words *= 2; end
+        if mode == QrMode.kanji; words *= 2; end
 
         return words
     end
@@ -283,7 +283,7 @@ class QrSpec
     end
 
     function getVersionPattern(version)
-        if version < 7 or version > QrSpecConsts.max_version
+        if version < 7 or version > QrSpecConst.max_version
             return 0
         end
 
@@ -292,8 +292,8 @@ class QrSpec
 
     function getFormatInfo(mask, errorCorrectionLevel)
         if mask < 0 or mask > 7; return 0; end
-        if errorCorrectionLevel < QrErrorCorrectionLevels.L \
-            or errorCorrectionLevel > QrErrorCorrectionLevels.H
+        if errorCorrectionLevel < QrErrorCorrectionLevel.L \
+            or errorCorrectionLevel > QrErrorCorrectionLevel.H
             return 0
         end
         return self.formatInfo[errorCorrectionLevel][mask]
@@ -316,7 +316,7 @@ class QrSpec
     end
 
     function createFrame(version)
-        width = self.capacity[version][QrCapConsts.width]
+        width = self.capacity[version][QrCapConst.width]
         frameLine = strFill(strBuffer(width), '\0')
         frame = arrayBuffer(width, frameLine)
 
@@ -390,7 +390,7 @@ class QrSpec
     end
 
     function newFrame(version)
-        if version < 1 or version > QrSpecConsts.max_version; return nil; end
+        if version < 1 or version > QrSpecConst.max_version; return nil; end
 
         if self.frames == nil
             self.frames = arrayBuffer(version, nil)
@@ -454,4 +454,4 @@ object QrStr
     end
 end
 
-export QrSpec, QrSpecConsts
+export QrSpec, QrSpecConst

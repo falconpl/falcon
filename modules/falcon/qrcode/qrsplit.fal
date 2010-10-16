@@ -10,7 +10,7 @@
 
 import QrError from .qrerror as QrError
 import QrInput from .qrinput as QrInput
-import QrModes from .qrconst as QrModes
+import QrMode from .qrconst as QrMode
 import QrSpec from .qrspec as QrSpec
 
 class QrSplit(dataStr, input, modeHint)
@@ -35,56 +35,56 @@ class QrSplit(dataStr, input, modeHint)
     end
 
     function identifyMode(pos)
-        if pos >= len(self.dataStr); return QrModes.null; end
+        if pos >= len(self.dataStr); return QrMode.null; end
 
         c = self.dataStr[pos]
 
         if self.isDigitAt(self.dataStr, pos)
-            return QrModes.num;
+            return QrMode.num;
         elif self.isAlNumAt(self.dataStr, pos)
-            return QrModes.an;
-        elif self.modeHint == QrModes.kanji
+            return QrMode.an;
+        elif self.modeHint == QrMode.kanji
             if pos + 1 < len(self.dataStr)
                 d = self.dataStr[pos + 1]
                 word = (c[*0] << 8) || d[*0]
                 if (word >= 0x8140 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
-                    return QrModes.kanji
+                    return QrMode.kanji
                 end
             end
         end
 
-        return QrModes.eigth_bit
+        return QrMode.eigth_bit
     end
 
     function eatNum()
-        ln = QrSpec.lengthIndicator(QrModes.num, self.input.version)
+        ln = QrSpec.lengthIndicator(QrMode.num, self.input.version)
 
         p = 0
         while self.isDigitAt(self.dataStr, p); p++; end
 
         mode = self.identifyMode(p)
 
-        if mode == QrModes.eigth_bit
+        if mode == QrMode.eigth_bit
             dif = QrInput.estimateBitsModeNum(p) + 4 + ln \
                 + QrInput.estimateBitsMode8(1) \
                 - QrInput.estimateBitsMode8(p + 1)
             if dif > 0; return self.eat8(); end
         end
 
-        if mode == QrModes.an
+        if mode == QrMode.an
             dif = QrInput.estimateBitsModeNum(p) + 4 + ln \
                 + QrInput.estimateBitsModeAn(1) \
                 - QrInput.estimateBitsModeAn(p + 1)
             if dif > 0; return self.eatAn(); end
         end
 
-        self.input.append(QrModes.num, p, strSplit(self.dataStr))
+        self.input.append(QrMode.num, p, strSplit(self.dataStr))
         return p;
     end
 
     function eanAn()
-        la = QrSpec.lengthIndicator(QrModes.an, self.input.version)
-        ln = QrSpec.lengthIndicator(QrModes.num, self.input.version)
+        la = QrSpec.lengthIndicator(QrMode.an, self.input.version)
+        ln = QrSpec.lengthIndicator(QrMode.num, self.input.version)
 
         p = 0
 
@@ -114,28 +114,28 @@ class QrSplit(dataStr, input, modeHint)
             if dif > 0; return self.eat8(); end
         end
 
-        self.input.append(QrModes.an, p, strSplit(self.dataStr))
+        self.input.append(QrMode.an, p, strSplit(self.dataStr))
         return p
     end
 
     function eatKanji()
         p = 0
-        while self.identifyMode(p) == QrModes.kanji; p += 2; end
+        while self.identifyMode(p) == QrMode.kanji; p += 2; end
         
-        self.input.append(QrModes.kanji, p, strSplit(self.dataStr))
+        self.input.append(QrMode.kanji, p, strSplit(self.dataStr))
         return p
     end
 
     function eat8()
-        la = QrSpec.lengthIndicator(QrModes.an, self.input.version)
-        ln = QrSpec.lengthIndicator(QrModes.num, self.input.version)
+        la = QrSpec.lengthIndicator(QrMode.an, self.input.version)
+        ln = QrSpec.lengthIndicator(QrMode.num, self.input.version)
 
         p = 1
         dataStrLen = len(self.dataStr)
         while p < dataStrLen
             mode = self.identifyMode(p)
-            if mode == QrModes.kanji; break; end
-            if mode == QrModes.num
+            if mode == QrMode.kanji; break; end
+            if mode == QrMode.num
                 q = p
                 while self.isDigitAt(self.dataStr, q); q++; end
                 dif = QrInput.estimateBitsMode8(p) \
@@ -146,7 +146,7 @@ class QrSplit(dataStr, input, modeHint)
                 else
                     p = q
                 end
-            elif mode == QrModes.an
+            elif mode == QrMode.an
                 q = p
                 while self.isAlNumAt(self.dataStr, q); q++; end
                 dif = QrInput.estimateBitsMode8(p) \
@@ -162,7 +162,7 @@ class QrSplit(dataStr, input, modeHint)
             end
         end
 
-        self.input.append(QrModes.eight_bit, p, strSplit(self.dataStr))
+        self.input.append(QrMode.eight_bit, p, strSplit(self.dataStr))
         return p
     end
 
@@ -172,12 +172,12 @@ class QrSplit(dataStr, input, modeHint)
 
             mode = self.identifyMode(0)
 
-            if mode == QrModes.num
+            if mode == QrMode.num
                 length = self.eatNum()
-            elif mode == QrModes.an
+            elif mode == QrMode.an
                 length = self.eatAn()
-            elif mode == QrModes.kanji
-                if self.modeHint == QrModes.kanji
+            elif mode == QrMode.kanji
+                if self.modeHint == QrMode.kanji
                     length = self.eatKanji()
                 else
                     length = self.eat8()
@@ -195,7 +195,7 @@ class QrSplit(dataStr, input, modeHint)
         p = 0
         while p < stringLen
             mode = self.identifyMode(strBack(self.dataStr, stringLen - p), self.modeHint)
-            if mode == QrModes.kanji
+            if mode == QrMode.kanji
                 p += 2
             else
                 if self.dataStr[*p] >= 'a'[*0] and self.dataStr[*p] <= 'z'[*0]

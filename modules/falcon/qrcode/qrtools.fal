@@ -12,7 +12,7 @@ import QrConfig from .qrconfig as QrConfig
 import QrImage from .qrimage as QrImage
 import QrMask from .qrmask as QrMask
 import QrSpec from .qrspec as QrSpec
-import QrSpecConsts from .qrspec as QrSpecConsts
+import QrSpecConst from .qrspec as QrSpecConst
 
 class QrTools
     function binarize(frame)
@@ -29,7 +29,7 @@ class QrTools
     function buildCache()
         mask = QrMask()
 
-        for a in [1:QrSpecConsts.max_version + 1]
+        for a in [1:QrSpecConst.max_version + 1]
             frame = QrSpec.newFrame(a)
             fileName = QrConfig.cache_dir + 'frame_' + a + '.png'
             QrImage.png(self.binarize(frame), fileName, 1, 0)
