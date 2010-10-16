@@ -82,6 +82,7 @@ end
     TODO: all combinations of FLAGS
  */
 try
+  > "Process(command_str)"
   process = Process(command_str)
   pout = process.getOutput()
 
@@ -96,6 +97,7 @@ catch in e
 end
 //
 try
+  > "Process(command_array)"
   process = Process(command_array)
   pout = process.getOutput()
 
