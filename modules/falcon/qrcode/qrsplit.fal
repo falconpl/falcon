@@ -29,7 +29,7 @@ class QrSplit(dataStr, input, modeHint)
         return (str[*pos]) >= '0'[*0] and str[*pos] <= '9'[*0]
     end
 
-    function isAlnumAt(str, pos)
+    function isAlNumAt(str, pos)
         if pos >= len(str); return false; end
         return QrInput.lookAnTable(str[*pos]) >= 0
     end
