@@ -84,13 +84,9 @@ class HTMLGenerator( doctree, conf )
    
 
    _entityHandler = [
-      "variable" => self.makeVariable,
-      "global" => self.makeVariable,
       "object" => self.makeObject,
       "class" => self.makeClass,
-      "function" => self.makeFunction,
-      "enum" => self.makeEnum,
-      "message" => self.makeMessage
+      "enum" => self.makeEnum
    ]
 
    //# represents the section order
@@ -100,7 +96,7 @@ class HTMLGenerator( doctree, conf )
       .["function" i"Functions" ""]
       .["global" i"Variables" "" ]
       .["enum" i"Enumerations" i"Enum"]
-      .["message" i"Messages" i"Message"]
+      .["message" i"Messages" ""]
    ]
    
    
@@ -122,14 +118,12 @@ class HTMLGenerator( doctree, conf )
       faldoc.info( "html output - Writing to " + self.directory )
 
       try
+         // prepare the directory
          dirMake( self.directory, true )
+         
+         // the index page is generated together with all the entity pages it points to.
          self.makeIndex()
-/*
-         self.makeModule( self.doc )
-         for modname, module in self.doc.members
-            self.makeModule( module )
-         end
-*/
+
       catch IoError in err
          faldoc.error( "html.fal: " + err )
          return
@@ -139,29 +133,40 @@ class HTMLGenerator( doctree, conf )
       faldoc.info( "=" * 60 )
    end
    
-
+   //# Generates the index pages and all the entities reachable from there.
    function makeIndex()
+   
+      // Creating the index.
       file = OutputStream( self.directory + "/index.html" )
       doc = ht.TransitionalFrame()
 
       doc.html.head = self.makeHead( self.doc.title, i"Index" )
 
+      // Each entity in the main module is inserted as a LI.
       struct = ht.OL()
+      // Creates the structure listing of the main module
       self.makeStruct( struct, self.doc )
       for modname, module in self.doc.getAllModules()
          substruct = ht.OL()
+         // Create the structure listing of the submodules
          title = self.makeStruct( substruct, module )
+         //... each of which is a sub-element of the main structure.
          listruct = ht.LI()
          listruct.add(title)
          listruct.add(substruct)
-         struct.add( listruct  )
+         struct.add( listruct )
       end
 
-      faldoc.verbose( i"Document generation complete." )
-      
+      faldoc.info( i"Index document generation complete." )
+
+      // Put the index at the top 
       doc.html.body = ht.Body().CLASS("faldoc").add(
          ht.H1( self.doc.title ),
          struct )
+
+      // Then add the main page.
+
+      // finally, render the index
       doc.render( file )
       file.close()
    end
@@ -210,10 +215,65 @@ class HTMLGenerator( doctree, conf )
 
 
    function makeObjectoid( entity, typeName, proto )
+      faldoc.verbose( @i"Making objectoid $(entity.type) $(entity.name)" )
+
+      file = OutputStream( self.directory +"/"+ self.getFileName( entity ) )
+      doc = ht.TransitionalFrame()
+
+      // pretty sure we have a title
+      title = typeName + " " + entity.name
+      doc.html.head = self.makeHead( self.doc.title, title )
+      doc.html.body = ht.Body().CLASS("faldoc").add(
+            ht.H1( title ),
+            self.makeBrief( entity ) )
+
+      if proto
+         self.makePrototype( doc.html.body, entity, true )
+      end
+
+      doc.html.body.add( self.makeContent( entity ) )
+         
+      if entity.members
+         members = entity.membersByType()
+         doc.html.body.add( self.makePropsTable( members ) )
+         // then print the properties and the methods.
+         // make the property list
+         if "property" in members
+            faldoc.verbose( @i"Making properties of objectoid $(entity.type) $(entity.name)" )
+            doc.html.body.add( ht.H2( i"Properties" ) )
+            for prop in members["property"]
+               self.makeIntraPageMember( doc.html.body,  prop )
+            end
+         end
+
+         // then print the properties and the methods.
+         // make the property list
+         if "method" in members
+            faldoc.verbose( @i"Making methods of objectoid $(entity.type) $(entity.name)" )
+            doc.html.body.add( ht.H2( i"Methods" ) )
+            for prop in members["method"]
+               self.makeIntraPageMember( doc.html.body,  prop )
+            end
+         end
+      end
+
+      doc.render( file )
+      file.close()
    end
 
 
-   function makeFunction( entity, prefixName )
+   function makeIntraPageMember( struct, entity )
+      // add the title
+      struct.add( ht.H3().add( ht.A().set( ["name"=>entity.name] ).add(entity.name ) ) )
+      // add the brief
+      struct.add( self.makeBrief( entity ) )
+      // add the prototype
+      if entity.type == "function" or entity.type == "method"
+         self.makePrototype( struct, entity )
+      end
+
+      // finally, add the body
+      struct.add( self.makeContent( entity ) )
    end
 
 
@@ -224,39 +284,44 @@ class HTMLGenerator( doctree, conf )
       doc = ht.TransitionalFrame()
 
       // pretty sure we have a title
-      doc.html.head = self.makeHead( self.doc.title, entity.props["title"] )
+      title = entity.props["title"]
+      doc.html.head = self.makeHead( self.doc.title, title )
       
-      faldoc.verbose( i"Document generation complete." )
-      doc.html.body = ht.Body().CLASS("faldoc").add(
-         ht.H1( entity.props["title"] ),
+      body = ht.Body().CLASS("faldoc").add(
+         ht.H1( title ),
          self.makeBrief( entity ),
          self.makeContent( entity )
          )
 
       if entity.members
-         ulmembers = ht.UL().CLASS("memberlist")
-         doc.html.body.add( ht.H2( i"Members" ) )
-         
-         for mname, member in entity.members
-            node = ht.LI().add( ht.A( self.getFileName(member, true ), mname ) )
-            if "brief" in member.props
-               brief = self._rndr.rcont(member.props["brief"])
-               if brief: node.add( " - " + brief )
+         members = entity.membersByType()
+
+         // Create the entities using a consistent order.
+         for type, listName, ename in self. _moduleOrder
+            if type in members
+               mlist = members[type]
+               body.add( ht.H2( listName ) )
+
+               // if the entity is heavy, just place a link
+               if ename
+                  elemList = ht.UL().CLASS("memberlist")
+                  for entity in mlist
+                     elemList.add( self.makeMemberLink( entity ) )
+                  end
+                  body.add( elemList )
+               else
+                  // it's light. Add the entities.
+                  for entity in mlist
+                     self.makeIntraPageMember( body, entity )
+                  end
+               end
             end
-            
-            ulmembers.add( node )
          end
-         
-         doc.html.body.add( ulmembers )
       end
 
-      
+      doc.html.body = body
       doc.render( file )
       file.close()
-      
-   end
-
-   function makeMessage( entity )
    end
 
 
@@ -268,7 +333,8 @@ class HTMLGenerator( doctree, conf )
       return ^+ ""
    end
 
-   function makePrototype( entity, addType )
+   function makePrototype( struct, entity, addType )
+      struct.add( ht.P( "TODO: prototype of " + entity.name ) )
    end
 
 
@@ -277,8 +343,33 @@ class HTMLGenerator( doctree, conf )
    end
 
 
-   function makePropsTable( props, methods )
+   function makePropsTable( members )
+      table = ht.TABLE().CLASS( "members" )
+      if "property" in members
+         self.makePropsTablePart( table, i"Properties", members["property"] )
+      end
+      if "method" in members
+         self.makePropsTablePart( table, i"Methods", members["method"] )
+      end
+      return table
    end
+
+   function makePropsTablePart( table, title, members )
+      tbody = ht.TBody()
+      tbody.add( ht.TR().add( ht.TD( title ).set( ["colspan" => 2, "CLASS"=>"member_type"] ) ) )
+      for prop in members
+         tdName = ht.TD().add( ht.A( "#" + prop.name, prop.name ) )
+         row = ht.TR().add( tdName )
+         if "brief" in prop.props
+            row.add( ht.TD().add( ht.Verbatim( self._rndr.rcont( prop.props["brief"] ) ) ) )
+         else
+            tdName.set(["colspan"=>2])
+         end
+         tbody.add(row)
+      end
+      table.add( tbody )
+   end
+
 
 
    function makeRaise( rlist )
@@ -314,6 +405,9 @@ class HTMLGenerator( doctree, conf )
    // Utilities
    //===============================================================
 
+   /*# Creates the structured listing of a module.
+      @return The title of the module, formatted for output.
+   */
    function makeStruct( struct, module )
       pages = module.orderPages()
 
@@ -330,16 +424,25 @@ class HTMLGenerator( doctree, conf )
       entities = module.groupEntities()
       faldoc.verbose( @i"Making entities for $module.name" )
       for type, type_title, type_name in self._moduleOrder
-         if type in entities
-            faldoc.verbose( @i"Making entities of type $type for $module.name" )
-            litype = ht.LI().add( type_title )
-            oltype = ht.OL()
-            litype.add( oltype )
-            struct.add( litype )
-            for entity in entities[type]
-               faldoc.verbose( @i"Making entity " + entity.getID() )
-               oltype.add( self.makeStructNode( entity, type_name ) )
-               self.makeEntity( entity )
+         faldoc.verbose( @i"Making entities of type $type for $module.name" )
+         
+         if type_name
+            // it's an heavy object.
+            if type in entities
+               faldoc.verbose( @i"Found heavy entities of type $type" )
+               for entity in entities[type]
+                  faldoc.verbose( @i"Making entity " + entity.getID() )
+                  struct.add( self.makeStructNode( entity, type_name ) )
+                  self.makeEntity( entity )
+               end
+            end
+         else
+            // they are light objects
+            if self.makeLightTypes( module, type, type_title, entities )
+               // Yes, we did that page.
+               // (we may not do that if all the entities are grouped).
+               faldoc.verbose( @i"Found some light entity of type $type" )
+               struct.add( ht.LI().add( ht.A(self.getFilenameForType( type, module ), type_title ) ))
             end
          end
       end
@@ -358,7 +461,37 @@ class HTMLGenerator( doctree, conf )
       return title
    end
 
+   function makeLightTypes( module, type, type_title, entities )
+      if not type in entities: return false
+      done = false
+      entlist = entities[type]
+      
+      for ent in entlist
+         if ent.parent != module or "inset" in ent.props or "ingroup" in ent.props
+            continue
+         end
 
+         // we have found an ungrouped entity!
+         if not done
+            done = true
+            file = OutputStream( self.directory +"/"+ self.getFilenameForType( type, module ) )
+            doc = ht.TransitionalFrame()
+            doc.html.head = self.makeHead( self.doc.title, type_title )
+            doc.html.body = ht.Body().CLASS("faldoc").add( ht.H1( type_title ) )
+         end
+
+         self.makeIntraPageMember( doc.html.body, ent )
+      end
+
+      if done
+         // finally, render the index
+         doc.render( file )
+         file.close()
+      end
+      
+      return done
+   end
+   
    function makeStructNode( entity, prefix )
       if "title" in entity.props
          text = entity.props["title"]
@@ -375,37 +508,64 @@ class HTMLGenerator( doctree, conf )
       return li
    end
 
-   
+   // Gets the filename, and eventually the link position, where an entity should be placed.
    function getFileName( entity, forlink )
       if entity.type == "property" or entity.type == "method"
          if entity.parent
             return entity.parent.getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
          end
-      elif "ingroup" in entity.props
+      // only functions and variables, when in groups, are hosted in the parent item.
+      elif "ingroup" in entity.props and not self.isFat(entity)
          return entity.parent.members[entity.props["ingroup"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+      // function sets own their items.
       elif "inset" in entity.props
          return entity.parent.members[entity.props["inset"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
-      elif entity.type == "function" or entity.type == "global"
-         // Unbound functions and globals have their own file.
-         if entity.parent
-            filename = entity.parent.getID().replace(".","_")
-         else
-            filename = "__"
-         end
-         filename += "_" + entity.type + ".html"  + (forlink ? "#" + entity.name : "")
-         return filename
-      elif entity.type == "main" 
-         return entity.getID().replace(".","_").replace("#", "") + ".html"
+
+      // Unbound functions and globals have their own file.
+      elif not self.isFat( entity )
+         filename = self.getFilenameForType( entity.type, entity.parent )
+         if forlink: filename += "#" + entity.name
+         return filename         
+
+      // otherwise, the entity has its own name (but "#main" should be "main").
       else
-         return entity.getID().replace( ".", "_" ) + ".html"
+         return entity.getID().replace( ".", "_" ).replace("#", "") + ".html"
       end
    end
 
+   //# Return the filename of pages holding types (functions, messages, variables...)
+   function getFilenameForType( type, parent )
+      if parent
+         filename = parent.getID().replace(".","_")
+      else
+         filename = "__"
+      end
+      filename += "_" + type + ".html"
+
+      return filename
+   end
+         
 
    function getLinkName( entity )
       return self.getFileName( entity, true )
    end
 
+   //# Returns true if the entity is "massive", and should have its own page.
+   function isFat( entity )
+      static
+         fatness = [
+            "object" => true,
+            "class" => true,
+            "enum" => true,
+            "group" => true,
+            "page" => true,
+            "funset" => true,
+            "main" => true,
+            "module" => true ]
+      end
+
+      return entity.type in fatness
+   end
 
    function makeHead( category, itemName )
       title = category + itemName ? " - " + itemName : ""
@@ -416,4 +576,13 @@ class HTMLGenerator( doctree, conf )
          ht.Title( title ))
    end
 
+   //# Creates a node to be directly added in a member list (OL of class "memberlist")
+   function makeMemberLink( member )
+      node = ht.LI().add( ht.A( self.getFileName(member, true ), member.name ) )
+      if "brief" in member.props
+         brief = self._rndr.rcont(member.props["brief"])
+         if brief: node.add( " - " ).add( ht.Verbatim( brief ) )
+      end
+      return node
+   end
 end

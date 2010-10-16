@@ -402,15 +402,17 @@ class Entity( content, file, line )
       self.members[entity.name] = entity
    end
 
+   //# Returns all the members of this entity grouped by their type.
    function membersByType()
       data = [=>]
-      for member in self.members
+      for name, member in self.members
          if member.type in data
             data[member.type].add( member )
          else
             data[member.type] = [member]
          end
       end
+      return data
    end
 
    function getPropsAndMethods()
