@@ -124,8 +124,10 @@ class QrMask
         fileName = QrConfig.cache_dir + "mask_" + maskNo + "/" +  "mask_" + width + "_" + maskNo + ".dat"
 
         if QrConfig.cacheable
-            if not fileType(fileName) == FileStat.NOTFOUND
-                buffer = strBuffer(FileStat(fileName).size)
+            if fileType(fileName) != FileStat.NOTFOUND
+                stat = FileStat()
+                stat.read(fileName)
+                buffer = strBuffer(stat.size)
                 inputStream = InputStream(fileName)
                 bitMask = self.unserialize(inputStream.read(buffer))
                 inputStream.close()
