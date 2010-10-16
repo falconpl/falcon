@@ -28,7 +28,7 @@ class QrMask
         [innerfunc (x, y); return y && 1; end],
         [innerfunc (x, y); return x % 3; end],
         [innerfunc (x, y); return (x + y) % 3; end],
-        [innerfunc (x, y); return ((y / 2) + (x / 3)) && 1; end],
+        [innerfunc (x, y); return (int(y / 2) + int(x / 3)) && 1; end],
         [innerfunc (x, y); return ((x * y) && 1) + (x * y) % 3; end],
         [innerfunc (x, y); return (((x * y) && 1) + (x * y) % 3) && 1; end],
         [innerfunc (x, y); return (((x * y) % 3) + ((x + y) && 1)) && 1; end]
@@ -152,7 +152,7 @@ class QrMask
                 if bitMask[y][x] == 1
                     d[y][x] = chr(s[y][x][*0]) ^^ bitMask[y][x]
                 end
-                b += (d[y][x][*0] && 1)
+                b += d[y][x][*0] && 1
             end
         end
 
@@ -160,7 +160,7 @@ class QrMask
     end
 
     function makeMask(width, frame, maskNo, errorCorrectionLevel)
-        masked = arrayBuffer(width, strFill(strBuffer(width), '\0'))
+        masked = arrayBuffer(width, "\x0" * width)
         self.makeMaskNo(maskNo, width, frame, $masked)
         self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
 
@@ -176,7 +176,7 @@ class QrMask
             end
             if i && 1
                 if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
-                    fact = (self.runLength[i] / 3)
+                    fact = int(self.runLength[i] / 3)
                     if (self.runLength[i - 2] == fact) and \
                         (self.runLength[i - 1] == fact) and \
                         (self.runLength[i + 1] == fact) and \
@@ -207,16 +207,16 @@ class QrMask
 
             for x in [0:width]
                 if x > 0 and y > 0
-                    b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
-                    w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
+                    b22 = frameY[x][*0] && frameY[x - 1][*0] && frameYM[x][*0] && frameYM[x - 1][*0]
+                    w22 = frameY[x][*0] || frameY[x - 1][*0] || frameYM[x][*0] || frameYM[x - 1][*0]
                     if (b22 || (w22 ^^ 1)) && 1; demerit += QrMaskConst.n2; end
                 end
-                if x == 0 and (frameY[*x] && 1)
+                if x == 0 and (frameY[x][*0] && 1)
                     self.runLength[0] = -1
                     head = 1
                     self.runLength[head] = 1
                 elif x > 0
-                    if (frameY[*x] ^^ frameY[*(x - 1)]) && 1
+                    if (frameY[x][*0] ^^ frameY[x - 1][*0]) && 1
                         head++
                         self.runLength[head] = 1
                     else
@@ -270,13 +270,13 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-            mask = arrayBuffer(width, strFill(strBuffer(width), '\0'))
+        mask = arrayBuffer(width, "\x0" * width)
             demerit = 0
             blacks = 0
             blacks = self.makeMaskNo(i, width, frame, mask)
             blacks += self.writeFormatInformation(width, mask, i, errorCorrectionLevel)
-            blacks  = 100 * blacks / (width * width)
-            demerit = (abs(blacks - 50) / 5) * QrMaskConst.n4
+            blacks  = int(100 * blacks / (width * width))
+            demerit = int(int(abs(blacks - 50) / 5) * QrMaskConst.n4)
             demerit += self.evaluateSymbol(width, mask)
 
             if demerit < minDemerit

@@ -28,9 +28,10 @@ class QrTools
 
     function buildCache()
         mask = QrMask()
+        spec = QrSpec()
 
         for a in [1:QrSpecConst.max_version + 1]
-            frame = QrSpec.newFrame(a)
+            frame = spec.newFrame(a)
             fileName = QrConfig.cache_dir + 'frame_' + a + '.png'
             QrImage.png(self.binarize(frame), fileName, 1, 0)
             

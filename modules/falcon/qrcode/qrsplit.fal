@@ -82,7 +82,7 @@ class QrSplit(dataStr, input, modeHint)
         return p;
     end
 
-    function eanAn()
+    function eatAn()
         la = QrSpec.lengthIndicator(QrMode.an, self.input.version)
         ln = QrSpec.lengthIndicator(QrMode.num, self.input.version)
 
@@ -210,7 +210,7 @@ class QrSplit(dataStr, input, modeHint)
 
     function splitStringToQrInput(string, input, modeHint, caseSensitive)
         if caseSensitive == nil; caseSensitive = true; end
-        if string == nil or string == '\0' or string == ''
+        if string == nil or string == "\x0" or string == ""
             raise QrError(QrError.invalid_param, i'string is empty')
         end
 
