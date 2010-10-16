@@ -287,8 +287,8 @@ class BaseDom( hname, childTypeList, attribClass )
    eattr = attribClass != nil ? attribClass() : nil
    text = nil
    hname = hname
-   _rtsep = "\n"
-   _rsep = "\n"
+   _sepAfter = ""
+   _sepDecl = ""
 
    function st_makesep( level )
       return " " * (level * 3)
@@ -299,7 +299,7 @@ class BaseDom( hname, childTypeList, attribClass )
       if not stream: stream = stdOut()
       
       sep = self.st_makesep( level )
-      stream.writeText( sep + "<" + self.hname )
+      stream.writeText( "<" + self.hname )
 
       if self.eattr
          sattr = self.eattr.toString()
@@ -309,11 +309,12 @@ class BaseDom( hname, childTypeList, attribClass )
       // ending ?
       if not self.text and not self.children
          stream.writeText( "/>" )
-         if self._rsep: stream.writeText(self._rsep + sep)
+         if self._sepAfter: stream.writeText(self._sepAfter + sep)
          return
       end
 
-      stream.writeText( ">" + self._rtsep )
+      stream.writeText( ">" )
+      if self._sepDecl: stream.writeText(self._sepDecl + sep)
 
       if self.text.typeId() == StringType
          // normally does not escapes, but oob text can be passed to escape automatically
@@ -326,12 +327,12 @@ class BaseDom( hname, childTypeList, attribClass )
       
       if self.children
          for item in self.children.items
-            forfirst: stream.writeText( self._rsep )
             item.render( level + 1, stream )
          end
       end
 
-      stream.writeText( "</" + self.hname + ">" + self._rsep )
+      stream.writeText( "</" + self.hname + ">" )
+      if self._sepAfter: stream.writeText( self._sepAfter + sep )
    end
    
    function add()
@@ -539,7 +540,6 @@ end
 */
 class Title( text ) from BaseDom( "title", nil, I18nAttribs )
    hname = "title"
-   _rtsep = ""
    text = text
 end
 
@@ -942,7 +942,7 @@ end
 */
 class P(text) from \
       BaseDom( "p", ContentModel.inline, AllAttribs )
-   _rtsep = ""
+   _sepAfter = "\n"
    text = text
 end
 
@@ -952,7 +952,9 @@ end
    added below the item.
 */
 class Pre(text) from \
-   BaseDom( "q", ContentModel.inline_pre, CoreAttribs )
+   BaseDom( "pre", ContentModel.inline_pre, CoreAttribs )
+
+   _sepAfter = "\n"
    text = text
 end
 
@@ -1035,8 +1037,8 @@ end
 
 class LI(text) from \
       BaseDom( "li", ContentModel.flow, AllAttribs )
-   _rtsep = ""
-   
+
+   _sepAfter = "\n"
    text = text
 end
 
@@ -1044,6 +1046,9 @@ end
 /*# Definition list. */
 class DL from \
       BaseDom( "dl", ContentModel.defitems, AllAttribs )
+
+   _sepAfter = "\n"
+   _sepDecl = "\n"
 end
 
 /*# Definition term.
@@ -1054,8 +1059,8 @@ end
 
 class DT(text) from \
       BaseDom( "dt", ContentModel.inline, AllAttribs )
-   _rtsep = ""
 
+   _sepAfter = "\n"
    text = text
 end
 
@@ -1067,6 +1072,8 @@ end
 
 class DD(text) from \
       BaseDom( "dd", ContentModel.flow, AllAttribs )
+
+   _sepAfter = "\n"
    text = text
 end
 
@@ -1104,6 +1111,9 @@ end
 */
 class TABLE from \
          BaseDom( "table", ContentModel.tableitems, TableAttribs )
+
+   _sepAfter = "\n"
+   _sepDecl = "\n"
 end
 
 /*# Caption for the table.
@@ -1133,18 +1143,21 @@ end
 */
 class THead from \
          BaseDom( "thead", ContentModel.tablerow, TElemAttribs )
+   _sepAfter = "\n"
 end
 
 /*# Table footer.
 */
 class TFoot from \
          BaseDom( "tfoot", ContentModel.tablerow, TElemAttribs )
+   _sepAfter = "\n"
 end
 
 /*# Table body.
 */
 class TBody from \
    BaseDom( "tbody", ContentModel.tablerow, TElemAttribs )
+   _sepAfter = "\n"
 end
 
 
@@ -1174,6 +1187,7 @@ end
 */
 class TR from \
          BaseDom( "tr", ContentModel.tablecells, TElemAttribs )
+   _sepAfter = "\n"
 end
 
 class TCellAttribs from TElemAttribs
@@ -1198,7 +1212,6 @@ end
 */
 class TH( text ) from \
          BaseDom( "th", ContentModel.flow, TCellAttribs )
-   _rtsep = ""
    text = text
 end
 
@@ -1209,7 +1222,6 @@ end
 */
 class TD( text ) from \
          BaseDom( "td", ContentModel.flow, TCellAttribs )
-   _rtsep = ""
    text = text
 end
 
@@ -1261,10 +1273,7 @@ end
    added below the item.
 */
 class A( href, text ) from \
-         BaseDom( "a", ContentModel.inline_a, AnchorAttribs )
-   _rtsep = ""
-   _rsep = ""
-   
+         BaseDom( "a", ContentModel.inline_a, AnchorAttribs )   
    text = text
    init
       self.eattr.href = href
@@ -1293,8 +1302,6 @@ end
 
 class FontControl( type, text ) from \
          BaseDom( type, ContentModel.inline, AllAttribs )
-   _rtsep = ""
-   _rsep = ""
    text = text
 end
 
@@ -1474,8 +1481,8 @@ end
 */
 class Q(text) from \
       BaseDom( "q", ContentModel.inline, QuotAttribs )
-   _rtsep = ""
-   _rsep = ""
+
+   _sepAfter = "\n"
    text = text
 end
 
@@ -1494,8 +1501,6 @@ end
 */
 class Ins(text) from \
       BaseDom( "ins", ContentModel.inline, InsDelAttribs )
-   _rtsep = ""
-   _rsep = ""
    text = text
 end
 
@@ -1506,8 +1511,6 @@ end
 */
 class Del(text) from \
       BaseDom( "del", ContentModel.inline, InsDelAttribs )
-   _rtsep = ""
-   _rsep = ""
    text = text
 end
 
@@ -1518,7 +1521,6 @@ end
 
 class Heading( type, text ) from \
          BaseDom( type, ContentModel.inline, AllAttribs )
-   _rtsep = ""
    text = text
 end
 
@@ -1956,7 +1958,7 @@ class Option( text, value, label, selected, disabled ) from \
          BaseDom( "option", nil, OptionAttribs )
 
    text = text
-   _rtsep = ""
+   _sepAfter = "\n"
    
    init
       self.eattr.label = label
@@ -2063,7 +2065,7 @@ end
 class Label( text, forid ) from  \
          BaseDom( "label", ContentModel.inline_label, LabelAttribs )
 
-   _rtsep = ""
+   _sepAfter = "\n"
    text = text
    
    init
@@ -2115,7 +2117,7 @@ end
 class Button( name, value, onclick, type, disabled ) from \
          BaseDom( "button", ContentModel.flow_button, ButtonAttribs )
 
-   _rtsep = ""
+   _sepAfter = "\n"
    type_button = "button"
    type_submit = "submit"
    type_reset = "reset"
@@ -2138,12 +2140,14 @@ end
 */
 class BR from \
       BaseDom( "br", nil, CoreAttribs )
+      _sepAfter = "\n"
 end
 
 /*# Horizontal ruler
 */
 class HR from \
       BaseDom( "hr", nil, AllAttribs )
+      _sepAfter = "\n"
 end
 
 /******************************************************************

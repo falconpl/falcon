@@ -81,6 +81,8 @@ class HTMLGenerator( doctree, conf )
    encoding = "encoding" in conf? conf["encoding"] : "utf-8"
 
    _rndr = FaldocHtmlRenderer()
+   //_htframe = ht.TransitionalFrame
+   _htframe = ht.XHTMLFrame
    
 
    _entityHandler = [
@@ -138,7 +140,7 @@ class HTMLGenerator( doctree, conf )
    
       // Creating the index.
       file = OutputStream( self.directory + "/index.html" )
-      doc = ht.TransitionalFrame()
+      doc = self._htframe()
 
       doc.html.head = self.makeHead( self.doc.title, i"Index" )
 
@@ -176,21 +178,6 @@ class HTMLGenerator( doctree, conf )
    // Handlers
    //===============================================================
 
-   function makeVariable( entity )
-      if entity.type == "property"
-         name = i"Property" + " " + entity.name
-      else
-         name = i"Global" + " " + entity.name
-      end
-   
-      /*
-      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
-      self.makeBrief( entity )
-      self.makeContent( entity.pcontent )
-      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
-      */
-   end
-
 
    function makeEntity( entity )
       faldoc.verbose( @i"Making entity $(entity.type) $(entity.name)" )
@@ -218,7 +205,7 @@ class HTMLGenerator( doctree, conf )
       faldoc.verbose( @i"Making objectoid $(entity.type) $(entity.name)" )
 
       file = OutputStream( self.directory +"/"+ self.getFileName( entity ) )
-      doc = ht.TransitionalFrame()
+      doc = self._htframe()
 
       // pretty sure we have a title
       title = typeName + " " + entity.name
@@ -228,13 +215,14 @@ class HTMLGenerator( doctree, conf )
             self.makeBrief( entity ) )
 
       if proto
-         self.makePrototype( doc.html.body, entity, true )
+         self.makePrototype( doc.html.body, entity, typeName )
       end
 
       doc.html.body.add( self.makeContent( entity ) )
          
       if entity.members
          members = entity.membersByType()
+         // we know we have at least a member, so we have a table.
          doc.html.body.add( self.makePropsTable( members ) )
          // then print the properties and the methods.
          // make the property list
@@ -257,6 +245,11 @@ class HTMLGenerator( doctree, conf )
          end
       end
 
+      // see also...
+      if "see" in entity.props
+          doc.html.body.add( self.makeSeeAlso( entity.props["see"] ) )
+      end
+
       doc.render( file )
       file.close()
    end
@@ -274,6 +267,11 @@ class HTMLGenerator( doctree, conf )
 
       // finally, add the body
       struct.add( self.makeContent( entity ) )
+      
+      // see also...
+      if "see" in entity.props
+         struct.add( self.makeSeeAlso( entity.props["see"] ) )
+      end
    end
 
 
@@ -281,7 +279,7 @@ class HTMLGenerator( doctree, conf )
       faldoc.verbose( @i"Making page $(entity.type) $(entity.name)" )
 
       file = OutputStream( self.directory +"/"+ self.getFileName( entity ) )
-      doc = ht.TransitionalFrame()
+      doc = self._htframe()
 
       // pretty sure we have a title
       title = entity.props["title"]
@@ -319,6 +317,11 @@ class HTMLGenerator( doctree, conf )
          end
       end
 
+      // see also...
+      if "see" in entity.props
+         body.add( self.makeSeeAlso( entity.props["see"] ) )
+      end
+
       doc.html.body = body
       doc.render( file )
       file.close()
@@ -333,22 +336,94 @@ class HTMLGenerator( doctree, conf )
       return ^+ ""
    end
 
-   function makePrototype( struct, entity, addType )
-      struct.add( ht.P( "TODO: prototype of " + entity.name ) )
+
+   function makePrototype( struct, entity, typeName )
+
+      proto = entity.prototype()
+      if typeName: proto = typeName + " " + proto
+      protoEntry = ht.Pre().CLASS("prototype").add( proto )
+      
+      if "from" in entity.props
+         fr = entity.props["from"]
+         protoEntry.add( " from " )
+         for link, callexp in fr
+            linkcal = self.makeLink( link )
+            cexp = callexp? "(" + self._rndr.rcont( callexp ) + ")" : ""
+            protoEntry.add( "\\\n                 " )
+            protoEntry.add(linkcal)
+            protoEntry.add(cexp)
+         end
+      end
+
+      struct.add( protoEntry )
+      table = self.makePrototable( entity )
+      if table
+         struct.add(table)
+      end
    end
 
 
 
-   function makeParams( plist )
+   function makePrototable( entity )
+      tbody = nil
+      if "param" in entity.props
+         tbody = ht.TBody()
+         for paraName, paraContent in entity.props["param"]
+            tbody.add( ht.TR().CLASS("param").add(
+               ht.TD().CLASS("name").add( paraName ),
+               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
+               ))
+         end
+      end
+      
+      if "optparam" in entity.props
+         if not tbody: tbody = ht.TBody()
+         for paraName, paraContent in entity.props["optparam"]
+            tbody.add( ht.TR().CLASS("optparam").add(
+               ht.TD().CLASS("name").add( paraName ),
+               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
+               ))
+         end
+      end
+
+      
+      if "return" in entity.props
+         if not tbody: tbody = ht.TBody()
+         tbody.add( ht.TR().CLASS("return").add(
+            ht.TD().CLASS("name").add( i"Return" ),
+            ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( entity.props["return"] )) )
+            ))
+      end
+
+      if "raise" in entity.props
+         if not tbody: tbody = ht.TBody()
+         tb2 = ht.TBody()
+         for link, content in entity.props["raise"]
+            tb2.add( ht.TR().add(
+               ht.TD().CLASS("name").add( self.makeLink( link ) ),
+               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( content )) )
+               ))
+         end
+         tbody.add( ht.TR().CLASS("raise").add(
+               ht.TD().add( i"Raise" ),
+               ht.TD().CLASS("content").add( ht.TABLE().add(tb2) )
+            ))
+      end
+
+      if tbody
+         return ht.TABLE().CLASS( "prototype" ).add( tbody )
+      end
    end
 
 
    function makePropsTable( members )
-      table = ht.TABLE().CLASS( "members" )
+      table = nil
       if "property" in members
+         table = ht.TABLE().CLASS( "members" )
          self.makePropsTablePart( table, i"Properties", members["property"] )
       end
       if "method" in members
+         if not table: table = ht.TABLE().CLASS( "members" )
          self.makePropsTablePart( table, i"Methods", members["method"] )
       end
       return table
@@ -371,10 +446,15 @@ class HTMLGenerator( doctree, conf )
    end
 
 
-
-   function makeRaise( rlist )
+   function makeSeeAlso( seeList )
+      para = ht.P(i"See also" + ": ").CLASS("see_also")
+      for link, content in seeList
+         para.add( self.makeLink(link) )
+         formiddle: para.add( ", " )
+         forlast: para.add( "." )
+      end
+      return para
    end
-
 
    function makeLink( l )
       // ingore links to empty elements.
@@ -475,7 +555,7 @@ class HTMLGenerator( doctree, conf )
          if not done
             done = true
             file = OutputStream( self.directory +"/"+ self.getFilenameForType( type, module ) )
-            doc = ht.TransitionalFrame()
+            doc = self._htframe()
             doc.html.head = self.makeHead( self.doc.title, type_title )
             doc.html.body = ht.Body().CLASS("faldoc").add( ht.H1( type_title ) )
          end
