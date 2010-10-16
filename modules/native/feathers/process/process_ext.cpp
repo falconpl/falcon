@@ -73,7 +73,8 @@ FALCON_FUNC  falcon_processKill( ::Falcon::VMachine *vm )
 
    if ( id == 0 || ! id->isOrdinal() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                            .extra("I, [B]"));
    }
 
    if ( mode == 0 || ! mode->isTrue() )
@@ -217,7 +218,8 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                            .extra("S, [B]") );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -281,7 +283,8 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                             .extra("S, [B]") );
    }
 
    vm->idle();
@@ -369,7 +372,7 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    if( sys_req == 0 || ( !sys_req->isString() &&  !sys_req->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                             .extra( "( S|A, B)" ) );
+                             .extra( "S|A{S}, B" ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();                    
@@ -453,7 +456,8 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                            .extra("S|A{S}") );
    }
 
    String **argv;
@@ -533,7 +537,7 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
       (mode_itm != 0 && ! mode_itm->isOrdinal())  )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "( S|A, [I] )" ) );
+         .extra( "S|A{S}, [I]" ) );
    }
 
    String **argv;
