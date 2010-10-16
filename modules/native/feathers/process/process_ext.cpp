@@ -36,8 +36,33 @@
     @beginmodule feather_process
 */
 
-namespace Falcon {
-namespace Ext {
+namespace Falcon { namespace Ext {
+
+
+namespace {
+
+void s_appendCommands(VMachine* vm, GenericVector& argv, Item* command)
+{
+   fassert( command->isArray() );
+   
+   CoreArray *commands = command->asArray();
+   for( size_t i = 0; i < commands->length(); i++ )
+      if ( !commands->at( i ).isString() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                               .extra( FAL_STR( proc_msg_allstr ) ) );
+      }
+   
+   for( size_t i = 0; i < commands->length(); i++ )
+   {
+     String* str =  (*commands)[i].asString();
+     argv.push( new String( *str ) );
+   }
+   
+}
+
+} // anonymous namespace
+
 
 /*#
    @function processId
@@ -213,28 +238,30 @@ FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 {
-   Item *sys_req = vm->param(0);
+   Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING ) )
+   if( command == 0 || ( command->type() != FLC_ITEM_STRING ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                            .extra("S, [B]") );
+                            .extra("S|A{S}, [B]") );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
-   String *argv[4];
-
-   String shellName( ::Falcon::Sys::shellName() );
-   String shellParam( ::Falcon::Sys::shellParam() );
-   argv[0] = &shellName;
-   argv[1] = &shellParam;
-   argv[2] = sys_req->asString();
-   argv[3] = 0;
-
+   GenericVector argv( &traits::t_stringptr_own() );
+   
+   argv.push( new String( Falcon::Sys::shellName()) );
+   argv.push( new String( Falcon::Sys::shellParam()) );
+   if( command->isString() )
+     argv.push( new String( *command->asString() ) );
+   else
+     s_appendCommands(vm, argv, command);
+   argv.push( 0 );
+   
    int retval;
    vm->idle();
-   if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
+   if( ::Falcon::Sys::spawn( static_cast<String**>( argv.at(0) ),
+                             false, background, &retval ) )
    {
       vm->unidle();
       vm->retval( retval );
@@ -278,10 +305,10 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 {
-   Item *sys_req = vm->param(0);
+   Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
+   if( command == 0 || ( command->type() != FLC_ITEM_STRING &&  command->type() != FLC_ITEM_ARRAY ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                              .extra("S, [B]") );
@@ -290,46 +317,24 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    vm->idle();
    
    bool background = mode == 0 ? false : mode->isTrue();
-   String **argv;
-
-   if( sys_req->isString() ) {
-      argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );
-   }
-   else {
-      uint32 count;
-      CoreArray *array = sys_req->asArray();
-      for( count = 0; count < array->length(); count ++ )
-         if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( FAL_STR( proc_msg_allstr ) ) );
-         }
-
-      argv = (String **) memAlloc( (array->length()+1) * sizeof( String * ) );
-      for( count = 0; count < array->length(); count ++ )
-      {
-         argv[count] = (*array)[count].asString();
-      }
-      argv[array->length()] = 0;
-   }
+   GenericVector argv( &traits::t_stringptr_own() );
+   
+  if( command->isString() )
+    Falcon::Mod::argvize(argv, *command->asString());
+  else
+     s_appendCommands(vm, argv, command);
+  argv.push( 0 );
 
    int retval;
-   if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
+   if( ::Falcon::Sys::spawn( static_cast<String**>( argv.at(0) ),
+                             false, background, &retval ) )
    {
       vm->unidle();
       vm->retval( retval );
-      
-      if( sys_req->type() == FLC_ITEM_STRING )
-         ::Falcon::Mod::freeArgv( argv );
-      else
-         memFree( argv );
    }
    else {
       vm->unidle();
-       if( sys_req->type() == FLC_ITEM_STRING )
-         ::Falcon::Mod::freeArgv( argv );
-      else
-         memFree( argv );
-         
+
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR( proc_msg_prccreate ) )
          .sysError( retval ) );
@@ -366,43 +371,26 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
 {
-   Item *sys_req = vm->param(0);
+   Item *command = vm->param(0);
    Item *mode = vm->param(1);
 
-   if( sys_req == 0 || ( !sys_req->isString() &&  !sys_req->isArray() ) )
+   if( command == 0 || ( !command->isString() &&  !command->isArray() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                              .extra( "S|A{S}, B" ) );
    }
 
-   bool background = mode == 0 ? false : mode->isTrue();                    
-   String shellName( ::Falcon::Sys::shellName() );
-   String shellParam( ::Falcon::Sys::shellParam() );
-   GenericVector argv( &traits::t_stringptr() );
+   bool background = mode == 0 ? false : mode->isTrue();
+   GenericVector argv( &traits::t_stringptr_own() );
 
-   argv.push( &shellName );
-   argv.push( &shellParam );
-   
-   if( sys_req->isString() )
-   {
-      argv.push( sys_req->asString() );
-      argv.push( 0 );
-   }
+   argv.push( new String( Falcon::Sys::shellName()) );
+   argv.push( new String( Falcon::Sys::shellParam()) );
+   if( command->isString() )
+     argv.push( new String( *command->asString() ) );
    else
-   {
-      CoreArray *array = sys_req->asArray();
-      for( size_t i = 0; i < array->length(); i++ )
-         if ( !array->at( i ).isString() )
-         {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR( proc_msg_allstr ) ) );
-         }
+     s_appendCommands(vm, argv, command);
+   argv.push( 0 );
 
-      for( size_t i = 0; i < array->length(); i++ )
-         argv.push( (*array)[i].asString() );
-       argv.push( 0 );
-   }
- 
    int retval = 0;
    CoreString* gs = new CoreString;
    if( ::Falcon::Sys::spawn_read( static_cast<String**>( argv.at(0) ),
@@ -452,51 +440,34 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 {
-   Item *sys_req = vm->param(0);
+   Item *command = vm->param(0);
 
-   if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
+   if( command == 0 || ( command->type() != FLC_ITEM_STRING &&  command->type() != FLC_ITEM_ARRAY ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                             .extra("S|A{S}") );
    }
 
-   String **argv;
+   GenericVector argv( &traits::t_stringptr_own() );
+   if( command->isString() )
+     Falcon::Mod::argvize(argv, *command->asString());
+   else
+     s_appendCommands(vm, argv, command);
+  argv.push( 0 );
 
-   if( sys_req->type() == FLC_ITEM_STRING ) {
-      argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );
-   }
-   else {
-      uint32 count;
-      CoreArray *array = sys_req->asArray();
-      for( count = 0; count < array->length(); count ++ )
-         if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( FAL_STR( proc_msg_allstr ) ) );
-         }
-
-      argv = (String **) memAlloc( (array->length()+1) * sizeof( char * ) );
-
-      for( count = 0; count < array->length(); count ++ )
-      {
-         argv[count] = array->at( count ).asString();
-      }
-      argv[array->length()] = 0;
-   }
 
    int retval;
-   if( ::Falcon::Sys::spawn( argv, true, false, &retval ) )
+   if( ::Falcon::Sys::spawn( static_cast<String**>( argv.at(0) ),
+                             true, false, &retval ) )
+   {
       vm->retval( retval );
-   else {
+   }
+   else
+   {
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ ).
          desc( FAL_STR( proc_msg_prccreate ) ).sysError( retval ) );
    }
-
-   if( sys_req->type() == FLC_ITEM_STRING )
-      ::Falcon::Mod::freeArgv( argv );
-   else
-      memFree( argv );
 }
-
 
 /*#
    @class Process
@@ -530,56 +501,40 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
 {
-   Item *sys_req = vm->param(0);
+   Item *command = vm->param(0);
    Item *mode_itm = vm->param(1);
 
-   if( sys_req == 0 || ( ! sys_req->isString() && ! sys_req->isArray() ) ||
+   if( command == 0 || ( ! command->isString() && ! command->isArray() ) ||
       (mode_itm != 0 && ! mode_itm->isOrdinal())  )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "S|A{S}, [I]" ) );
    }
 
-   String **argv;
-   String *args[4];
-   bool delArgs = false;
-   bool deepDel = false;
    // this will also work as flag, as it is valorized only when using the static args[] vector.
    uint32 mode = mode_itm == 0 ? 0 : (uint32) mode_itm->forceInteger();
 
    //pa_viaShell
-   String shellName( ::Falcon::Sys::shellName() );
-   String shellParam( ::Falcon::Sys::shellParam() );
-   if ( (mode & 0x20) == 0x20 && sys_req->isString() ) {
-      delArgs = false;
-      argv = args;
-      argv[0] = &shellName;
-      argv[1] = &shellParam;
-      argv[2] = sys_req->asString();
-      argv[3] = 0;
+   GenericVector argv( &traits::t_stringptr_own() );
+   if ( (mode & 0x20) == 0x20 )
+   {
+     argv.push( new String( Falcon::Sys::shellName()) );
+     argv.push( new String( Falcon::Sys::shellParam()) );
+     
+     if( command->isString() )
+       argv.push( new String( *command->asString() ) );
+     else
+       s_appendCommands(vm, argv, command);
    }
-   else if( sys_req->isString() ) {
-      delArgs = true;
-      deepDel = true;
-      argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );
+   else
+   {
+     if( command->isString() )
+       Falcon::Mod::argvize(argv, *command->asString());
+     else
+       s_appendCommands(vm, argv, command);
    }
-   else {
-      delArgs = true;
-      deepDel = false;
-      uint32 count;
-      CoreArray *array = sys_req->asArray();
-      for( count = 0; count < array->length(); count ++ )
-         if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR( proc_msg_allstr ) ) );
-         }
-      argv = new String*[array->length() + 1];
-      for( count = 0; count < array->length(); count ++ )
-      {
-         argv[count] = (*array)[count].asString();
-      }
-      argv[array->length()] = 0;
-   }
+   argv.push( 0 );
+
 
    bool sinkin = ((mode & 0x1) == 0x1);
    bool sinkout = ((mode & 0x2) == 0x2);
@@ -587,7 +542,9 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    bool mergeerr = ((mode & 0x8) == 0x8);
    bool background = ((mode & 0x10) == 0x10);
 
-   ::Falcon::Sys::ProcessHandle *handle = ::Falcon::Sys::openProcess( argv, sinkin, sinkout, sinkerr, mergeerr, background );
+   ::Falcon::Sys::ProcessHandle *handle =
+       ::Falcon::Sys::openProcess( static_cast<String**>( argv.at(0) ),
+                                   sinkin, sinkout, sinkerr, mergeerr, background );
    if ( handle->lastError() == 0 )
       vm->self().asObject()->setUserData( handle );
    else {
@@ -595,14 +552,6 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR(proc_msg_prccreate) )
          .sysError( handle->lastError() ) );
-   }
-
-   if ( delArgs )
-   {
-      if( deepDel )
-         ::Falcon::Mod::freeArgv( argv );
-      else
-         memFree( argv );
    }
 }
 
