@@ -20,11 +20,6 @@ object QrConfig
     cache_dir = dirCurrent() + '/cache/'
 
     /*#
-     * Error logs directory.
-     */
-    log_dir = dirCurrent() + '/'
-        
-    /*#
      * Specifies whether or not to estimate best mask.
      * 
      * Set this attribute to false if performance is an issue.
