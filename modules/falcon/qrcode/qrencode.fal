@@ -340,7 +340,7 @@ class QrFrameFiller(width, frame /* ref */)
             end
 
             if x < 0 or y < 0
-                raise QrError(QrError.encoding, "error creating frame")
+                raise QrError(QrError.encoding, "error masking frame")
             end
 
             self._x = x

@@ -292,10 +292,12 @@ class QrSpec
 
     function getFormatInfo(mask, errorCorrectionLevel)
         if mask < 0 or mask > 7; return 0; end
+
         if errorCorrectionLevel < QrErrorCorrectionLevel.L \
             or errorCorrectionLevel > QrErrorCorrectionLevel.H
-            return 0
+            raise QrError(QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) not supported')
         end
+
         return QrFormatInfo[errorCorrectionLevel][mask]
     end
 
@@ -389,7 +391,9 @@ class QrSpec
     end
 
     function newFrame(version)
-        if version < 1 or version > QrSpecConst.max_version; return nil; end
+        if version < 1 or version > QrSpecConst.max_version
+            raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+        end
 
         if self.frames == nil
             self.frames = arrayBuffer(version + 1, nil)
@@ -426,7 +430,10 @@ class QrSpec
             end
         end
 
-        if self.frames[version] == nil; return nil; end
+        if self.frames[version] == nil
+            raise QrError(QrError.encoding, "error creating frame")
+        end
+
         return self.frames[version]
     end
 
