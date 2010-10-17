@@ -126,7 +126,7 @@ class Page(title, file, master_entity ) from tree.Node
 
    function makeNaviItem( div, page, cls )
       desc = page.title
-      if desc.len() > 24: desc = desc[0:24] + "..."
+      if desc.len() > 36: desc = desc[0:34] + "..."
       div.add( ht.Div().CLASS(cls).add(ht.A( page.file, desc ) ) )
    end
    
@@ -483,7 +483,17 @@ class HTMLGenerator( doctree, conf )
          // then prepare the tree for the submodules
          for modname, module in self.doc.getAllModules()
             // skip virtual modules
-            if not module.main and not module.members: continue
+            if not module.main
+               virtual = true
+               for name, elem in module.members
+                  if elem.type != "module"
+                     virtual = false
+                     break
+                  end
+               end
+               faldoc.verbose( "Skipping virtual module " + module.name )
+               if virtual: continue
+            end
 
             // do all the rest
             ip_mod = ModulePage( module )
@@ -633,16 +643,20 @@ class HTMLGenerator( doctree, conf )
       if "param" in entity.props
          tbody = ht.TBody()
          for paraName, paraContent in entity.props["param"]
-            tbody.add( ht.TR().CLASS("param").add(
-               ht.TD().CLASS("name").add( paraName ),
-               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
-               ))
+            // just ignore undocumented parameters
+            if paraContent
+               tbody.add( ht.TR().CLASS("param").add(
+                  ht.TD().CLASS("name").add( paraName ),
+                  ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
+                  ))
+            end
          end
       end
       
       if "optparam" in entity.props
          if not tbody: tbody = ht.TBody()
          for paraName, paraContent in entity.props["optparam"]
+            // as optional parameters must be explicitly declared, they cannot be undoc
             tbody.add( ht.TR().CLASS("optparam").add(
                ht.TD().CLASS("name").add( paraName ),
                ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )

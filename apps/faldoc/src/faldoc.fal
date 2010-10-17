@@ -113,7 +113,12 @@ class Application
 
       // parse extra files
       for extra in cfg.inputExtra
-         doc.addFile( basedir + "/" + extra )
+         p = Path(extra)
+         if not p.fulloc.startsWith("/")
+            doc.addFile( basedir + "/" + extra )
+         else
+            doc.addFile( extra )
+         end
       end
 
       // ok, time to cleanup: resolve links

@@ -59,6 +59,7 @@ escaping = .[
 // We don't care about contents, but we need to properly count "end"
 BlockStatements = .[
    TokenRule( "function", "block_begin" )
+   TokenRule( "try", "block_begin" )
    TokenRule( "while", "block_begin" )
    TokenRule( "if", "block_begin" )
    TokenRule( "loop", "block_begin" )
@@ -222,6 +223,8 @@ class Parser from parser.genparser.Parser
          escaping
          + BlockStatements
          + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
             TokenRule( 'end', "#pop" )
          ],
          "*"
@@ -249,6 +252,8 @@ class Parser from parser.genparser.Parser
          escaping
          + BlockStatements
          + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
             TokenRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
          ],
          "*"
@@ -257,12 +262,14 @@ class Parser from parser.genparser.Parser
       "params" => PState(
          CommentsAndGrabs
          +.[
-            ReRule( '\s*(\w+)', "params_continue",
+            ReRule( '(\w+)', "params_continue",
                   {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param]))} )
             TagRule( ")", "#pop", {ctx=> ctx.popNode()} )
+
+            ReRule( '\s+', "#stay" )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\s*\\$', "#stay" )
+            ReRule( '\\$', "#stay" )
          ]
       ),
 
@@ -272,7 +279,7 @@ class Parser from parser.genparser.Parser
             TagRule( ',', "#pop" )
             ReRuleLA( '\)', "#pop" )
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\s*', "#stay" )
+            ReRule( '\s+', "#stay" )
             ReRule( '\\$', "#stay" )
          ]
       ),
@@ -282,10 +289,17 @@ class Parser from parser.genparser.Parser
       // Enums
       //===========================================================
 
-      "enum" => PState(.[
-            ReRule( '(w+)\s+=(.*)$', "#stay",
-               {ctx, d0, cname=> ctx.pushNode( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+      "enum" => PState(
+         CommentsAndGrabs
+         +.[
             TagRule( "end", "#pop", {ctx => ctx.popNode()} )
+            
+            ReRule( '\s*((\w|_)+)\s*=(.*)$', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( '\s*((\w|_)+)\s*$', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( '\s*((\w|_)+)\s*;', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
          ],
          "*"
       ),
@@ -334,6 +348,8 @@ class Parser from parser.genparser.Parser
       "block_begin" => PState(
          escaping
          +.[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
             // if we find a \\$, the definition continues...
             ReRule( '\\$', "#stay" )
             // Avoid confusing ?: with ":"
@@ -352,6 +368,8 @@ class Parser from parser.genparser.Parser
          escaping
          +BlockStatements
          + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
             // if we find a \\$, the definition continues...
             TokenRule( 'end', "#pop;#pop" )
          ],
