@@ -339,7 +339,7 @@ class QrFrameFiller(width, frame /* ref */)
                 end
             end
 
-            if x < 0 or y < 0; return nil; end
+            if x < 0 or y < 0
                 raise QrError(QrError.encoding, "error creating frame")
             end
 
