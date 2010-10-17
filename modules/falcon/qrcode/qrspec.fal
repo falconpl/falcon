@@ -407,7 +407,8 @@ class QrSpec
                     inputStream = InputStream(fileName)
                     inputStream.seek(0)
                     buffer = inputStream.grab(stat.size)
-                    self.frames[version] = self.unserialize(inputStream.read(buffer))
+                    inputStream.read(buffer)
+                    self.frames[version] = self.unserialize(buffer)
                     inputStream.close()
                 else
                     self.frames[version] = self.createFrame(version)

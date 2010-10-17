@@ -130,7 +130,8 @@ class QrMask
                 inputStream = InputStream(fileName)
                 inputStream.seek(0)
                 buffer = inputStream.grab(stat.size)
-                bitMask = self.unserialize(inputStream.read(buffer))
+                inputStream.read(buffer)
+                bitMask = self.unserialize(buffer)
                 inputStream.close()
             else
                 bitMask = self.generateMaskNo(maskNo, width, s, d)
