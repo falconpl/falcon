@@ -8,6 +8,12 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
+import QrConfig from .qrconfig as QrConfig
+import QrImage from .qrimage as QrImage
+import QrMask from .qrmask as QrMask
+import QrSpec from .qrspec as QrSpec
+import QrSpecConst from .qrspec as QrSpecConst
+
 class QrTools
     function binarize(frame)
         frameLen = len(frame)
@@ -21,10 +27,11 @@ class QrTools
     end
 
     function buildCache()
-        mask = QrMmask()
+        mask = QrMask()
+        spec = QrSpec()
 
-        for a in [1:QRSPEC_VERSION_MAX + 1]
-            frame = QrSpec.newFrame(a)
+        for a in [1:QrSpecConst.max_version + 1]
+            frame = spec.newFrame(a)
             fileName = QrConfig.cache_dir + 'frame_' + a + '.png'
             QrImage.png(self.binarize(frame), fileName, 1, 0)
             

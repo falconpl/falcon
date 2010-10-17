@@ -1381,7 +1381,7 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
    @param array2 Array containing the second half of the merge, read-only
    @optparam insertPos Optional position of array 1 at which to place array2
    @optparam start First element of array2 to merge in array1
-   @optparam end Last element – 1 of array2 to merge in array1
+   @optparam end Last element - 1 of array2 to merge in array1
 
    The items in array2 are appended to the end of array1, or in case an mergePos
    is specified, they are inserted at the given position. If mergePos is 0, they

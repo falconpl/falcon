@@ -105,12 +105,13 @@ if( FALCON_BUILD_FEATHERS )
    list( APPEND Falcon_INCLUDE_DIRS
       "${CMAKE_CURRENT_BINARY_DIR}/include" )
 
-   add_subdirectory( apps/faldoc )
    add_subdirectory( modules/native/feathers )
 
 else()
     message( STATUS "Not building feathers" )
 endif()
+
+
 
 #########################################################################
 # Modules?
@@ -149,8 +150,11 @@ install(EXPORT falcon-core-targets
 )
 
 #docs
-if(TARGET faldoc)
-  add_subdirectory(docs)
-  add_subdirectory(modules/native/feathers/docs)
+if(TARGET Falcon_Feathers)
+  add_subdirectory( apps/faldoc )
+  if(TARGET faldoc)
+    add_subdirectory(docs)
+    add_subdirectory(modules/native/feathers/docs)
+  endif()
 endif()
 

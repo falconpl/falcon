@@ -78,7 +78,7 @@ class QrRsItem
         rs.gfpoly = gfpoly
 
         iprim = 1; while (iprim % prim) != 0; iprim += rs.nn; end
-        rs.iprim = iprim / prim
+        rs.iprim = int(iprim / prim)
         rs.genpoly[0] = 1
 
         root = fcr * prim
@@ -125,11 +125,11 @@ class QrRsItem
     end
 end
 
-class QrRs
+class QrRs(symsize, gfpoly, fcr, prim, nroots, pad)
     items = []
 
-    function init_rs(symsize, gfpoly, fcr, prim, nroots, pad)
-        for rs in items
+    init
+        for rs in self.items
             if rs.pad != pad; continue; end
             if rs.nroots != nroots; continue; end
             if rs.mm != symsize; continue; end
@@ -139,6 +139,7 @@ class QrRs
             return rs;
         end
 
+        rs = QrRsItem()
         rs = QrRsItem.init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad)
         arrayIns(self.items, 0, rs)
 

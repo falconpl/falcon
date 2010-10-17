@@ -101,7 +101,7 @@ class Renderer( siteHelper, cls )
       self.preprocess( context.standouts )
 
       // and return the content
-      return self._rcont( context.topNode.content )
+      return self.rcont( context.topNode )
    end
 
    function preprocess( sout )
@@ -125,19 +125,17 @@ class Renderer( siteHelper, cls )
    end
 
 
-   function _rcont( content )
-      if not content: return ""
-      if content.typeId() == StringType
-         return content
-      else
-         text = ""
-         node = content
-         while node
-            text += self.renderNode( node )
-            node = node.next
-         end
-         return text
+   function rcont( node )
+      content = node.content
+      if content: return content
+      
+      text = ""
+      node = node.firstChild
+      while node
+         text += self.renderNode( node )
+         node = node.next
       end
+      return text
    end
 
    //==========================================================
@@ -157,11 +155,11 @@ class Renderer( siteHelper, cls )
    end
 
    function _render_para( node )
-      return self._ct("p") + self._rcont(node.content)+"</p>\n"
+      return self._ct("p") + self.rcont(node)+"</p>\n"
    end
 
    function _render_markup( node )
-      return "<" + node.type + ">" + self._rcont(node.content) + "</" + node.type + ">"
+      return "<" + node.type + ">" + self.rcont(node) + "</" + node.type + ">"
    end
 
    function _render_break( node )
@@ -170,21 +168,22 @@ class Renderer( siteHelper, cls )
 
 
    function _render_header( node )
-       return  "<a name=\"" + URI.encode(node.content)+"\">"+
+      content = self.rcont( node )
+      return  "<a name=\"" + URI.encode(content)+"\">"+
                self._ct("h" + node.level) +
-               self._rcont(node.content) +
+               content +
                "</h" + node.level + "></a>\n\n"
    end
 
 
    function _render_table( node )
       return self._ct("table") + "\n<tbody>\n" +
-              self._rcont(node.content) +
+              self.rcont(node) +
               "</tbody></table>\n"
    end
 
    function _render_tr( node )
-      return "<tr>"+ self._rcont(node.content) + "</tr>\n"
+      return "<tr>"+ self.rcont(node) + "</tr>\n"
    end
 
 
@@ -194,7 +193,7 @@ class Renderer( siteHelper, cls )
 
    function _render_indent( node )
       return self._ct("div style=\"margin-left:" + 2 * node.level + "em\"") + self._ct("p") +
-         self._rcont(node.content) +
+         self.rcont(node) +
          "</p></div>\n"
    end
 
@@ -234,7 +233,7 @@ class Renderer( siteHelper, cls )
       else
          str = self._ct("blockquote")
       end
-      str += self._rcont(node.content) +"</blockquote>\n"
+      str += self.rcont(node) +"</blockquote>\n"
       return str
    end
 
@@ -262,7 +261,7 @@ class Renderer( siteHelper, cls )
    end
 
    function _render_code( node )
-      return self.site.code( self._rcont(node.content), node.infos["lang"] )
+      return self.site.code( self.rcont(node), node.infos["lang"] )
    end
 
    function _render_plugin( node )
@@ -276,7 +275,7 @@ class Renderer( siteHelper, cls )
          text += k +"=\"" + strEscape(v) + "\""
          formiddle: text += " "
       end
-      return "<" + node.tag + text + ">" + self._rcont( node.content ) + "</" + node.tag +">\n"
+      return "<" + node.tag + text + ">" + self.rcont( node ) + "</" + node.tag +">\n"
    end
    
 end

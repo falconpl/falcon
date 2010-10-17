@@ -9,6 +9,7 @@
  */
 
 load gd2
+import QrError from .qrerror as QrError
  
 object QrImage
     function png(frame, outFile, pixelPerPoint, outerFrame, saveAndPrint)

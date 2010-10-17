@@ -21,6 +21,7 @@ class Rule( nextState, action )
    nextState = nextState
    action = action
    matchLen = 0
+   lookAhead = false
    
    function match( text, pos )
       return -1
@@ -45,7 +46,7 @@ end
 */
 class TokenRule( token, nextState, action ) from Rule( nextState, action )
    token = token
-   separators = " \r\n\t,.!?;:*+-/|^'\"\\#<>"
+   separators = " \r\n\t,.!?;:*+-/|^'\"\\#<>()[]"
    
    function match( text, pos )
       t = self.token
@@ -61,13 +62,22 @@ class TokenRule( token, nextState, action ) from Rule( nextState, action )
 
    function apply( ctx )
       if self.action: self.action( ctx, self.token )
-      return self.token.len()
+      self.matchLen = self.lookAhead ? 0 : self.token.len()
+      return self.matchLen
    end
 
    function isSep( item )
       return item in self.separators
    end
 
+end
+
+
+/*#
+   Class representing a language token, with look ahead.
+*/
+class TokenRuleLA( token, nextState, action ) from TokenRule( token, nextState, action )
+   lookAhead = true   
 end
 
 /*#
@@ -95,7 +105,8 @@ class TagRule( tag, nextState, action ) from Rule( nextState, action )
 
    function apply( ctx )
       if self.action: self.action( ctx, self.token )
-      return self.token.len()
+      self.matchLen = self.token.len()
+      return self.matchLen
    end
 
 end
@@ -134,6 +145,7 @@ end
 */
 class ReRule( re, nextState, action ) from Rule( nextState, action )
    anchored = re.startsWith("^")
+   token = re
    re = regex.Regex(re)
    grabs = nil
    
@@ -160,7 +172,8 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
    function apply( context )
       g = self.grabs
       if self.action: (.[ self.action context ] + g)()
-      return g[0].len()
+      self.matchLen = g[0].len()
+      return self.matchLen
    end
 end
 
@@ -177,7 +190,8 @@ end
    discarding the matched characters.
 */
 class ReRuleLA( re, nextState, action ) from ReRule( re, nextState, action )
-
+   lookAhead = true
+   
    function apply( context )
       g = self.grabs
       if self.action: (.[ self.action context ] + g)()
@@ -191,7 +205,7 @@ end
 
 */
 class EmptyLineRule( nextState, action ) from Rule( nextState, action )
-   matchLen = 1
+   matchLen = 0
    
    function match( text, pos )
       if text.len() == 0: return 0
@@ -205,6 +219,7 @@ end
 */
 class CharRule( nextState, action ) from Rule( nextState, action )
    grabbedChar = " "
+   matchLen = 1
 
    function match( text, pos )
       if text.len() > pos
@@ -222,9 +237,91 @@ end
 
 /*# Empty rule meant to immediately do an action and change state without consuming input. */
 class DummyRule( nextState, action ) from Rule( nextState, action )
-   function match()
-      return 0
+   function match( text, pos )
+      return pos
    end
 end
 
+/*# Rule matching the end of line */
+class EOLRule( nextState, action ) from Rule( nextState, action )
+   function match( text, pos )
+      return text.len()
+   end
+end
+
+/*# Rule matching the end of line, with look ahead.
+   This prevents exiting from the loop checking this line when EOLRuleLA is matched
+*/
+class EOLRuleLA( nextState, action ) from EOLRule( nextState, action )
+   lookAhead = true
+end
+
+/*#
+   Rule combining one or more sub-rules.
+   @param rules An array of rules that may be matched.
+   @param nextState The state where to go if a sub-rule is matched.
+   @param actionPre An action to run as action(context, winningRule) @b before winning rule action is performed.
+   @param actionPost An action to run as action(context, winningRule) @b after winning rule action is performed.
+
+   If @b nextState is nil, then the winning rule state transition is applied, otherwise
+   @b nextstate overrides winning rule state setting.
+
+   If @b nextState contains a "*" character, it is replaced with the state from the rule. So, you can have
+   "#pop;*" to first pop the current state and then apply the state transition from the winner rule.
+*/
+class ProxyRule( rules, nextState, actionPre, actionPost) from Rule( nextState, actionPre )
+   rules = rules
+   actionPost = actionPost
+   winningRule = nil
+   hasState = nextState ? true : false
+   incState = "*" in nextState
+   origState = nextState
+
+   
+   function match( text, pos )
+      self.winningRule = nil
+      n = 0
+      l = self.rules.len()
+      res = -1
+      matchPos = text.len()
+      while n < l
+         res = self.rules[n].match( text, pos )
+         if res == 0
+            // we have the winner
+            self.winningRule = self.rules[n]
+            return res
+         elif res > -1 and res < matchPos
+            matchPos = res
+            self.winningRule = self.rules
+         end
+         ++n
+      end
+
+      return res
+   end
+
+
+   function apply( ctx )
+      if self.winningRule
+         if self.action: self.action( ctx, self.winningRule )
+         retval = self.winningRule.apply(ctx)
+         if self.actionPost: self.actionPost( ctx, self.winningRule )
+
+         if self.hasState
+            if self.incState
+               self.nextState = self.origState.replace( "*", self.winningRule.nextState )
+            end
+            // else, let the state it has.
+         else
+            self.nextState = self.winningRule.nextState
+         end
+         
+         self.matchLen = retval
+         return retval
+      end
+
+      self.matchLen = 0
+      return 0
+   end
+end
 

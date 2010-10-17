@@ -1,0 +1,396 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: falsrc.fal
+
+   Read faldoc blocks inside source files.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Sep 2010 14:53:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Node from parser.genparser.node as Node
+import InfoNode from parser.genparser.node as InfoNode
+
+import TagRule from parser.genparser.rules as TagRule
+import TokenRule from parser.genparser.rules as TokenRule
+import TokenRuleLA from parser.genparser.rules as TokenRuleLA
+import ReRule from parser.genparser.rules as ReRule
+import ReRuleLA from parser.genparser.rules as ReRuleLA
+import EmptyLineRule from parser.genparser.rules as EmptyLineRule
+import DummyRule from parser.genparser.rules as DummyRule
+import CharRule from parser.genparser.rules as CharRule
+import EOLRule from parser.genparser.rules as EOLRule
+import EOLRuleLA from parser.genparser.rules as EOLRuleLA
+
+import PState from parser.genparser as PState
+import Parser from parser.genparser
+
+
+CommentsAndGrabs = .[
+   ReRule( '/\*#[\*|#]*?\*/', "#stay" )
+   ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+
+   TagRule( "/*", "comment" )
+   ReRule( '\s*//.*$', "#stay" )
+]
+
+FuncAndVars = .[
+   ReRule( '\s*function\s+(\w+)', "funcdecl",
+      {ctx, d0, cname=> ctx.pushNode( InfoNode( "function", ["line"=>ctx.row,"name"=> cname] )) })
+   ReRule( '^\s*(\w+)\s*=', "#stay",
+      {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+]
+
+escaping = .[
+   TagRule( '"', "string1" )
+   TagRule( '''', "string2" )
+   TagRule( '(', "par_round" )
+   TagRule( '[', "par_square" )
+   TagRule( '{', "par_graph" )
+]
+
+// We don't care about contents, but we need to properly count "end"
+BlockStatements = .[
+   TokenRule( "function", "block_begin" )
+   TokenRule( "try", "block_begin" )
+   TokenRule( "while", "block_begin" )
+   TokenRule( "if", "block_begin" )
+   TokenRule( "loop", "block_begin" )
+   TokenRule( "for", "block_begin" )
+   TokenRule( "if", "block_begin" )
+   TokenRule( "switch", "block_begin" )
+   TokenRule( "select", "block_begin" )
+   TokenRule( "forfirst", "block_begin" )
+   TokenRule( "formiddle", "block_begin" )
+   TokenRule( "forlast", "block_begin" )
+]
+
+   
+class Parser from parser.genparser.Parser
+   states = [
+      "start" => PState(
+         escaping
+         + CommentsAndGrabs
+         + FuncAndVars
+         + .[
+            ReRule( 'class\s+(\w+)', "classdecl",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "class", ["line"=>ctx.row, "name"=> cname] )) })
+            ReRule( 'object\s+(\w+)', "classdecl",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "object", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( 'enum\s+(\w+)', "enum",
+               {ctx, d0, cname=> ctx.pushNode( InfoNode( "enum", ["line"=>ctx.row,"name"=> cname] )) })
+         ],
+         "*" // ignore everything else
+      ),
+
+      //===========================================================
+      // Generic part
+      //===========================================================
+
+      "grab" =>PState(.[
+            TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
+            ReRule( '\s*\*+/', "#pop", {ctx=> ctx.popNode()})
+            
+            // Consumes useless * at begin of comment
+            ReRule( '^\s*\*+', "#stay" )
+         ],
+         {ctx, data=>ctx.add( data )},
+         "grab_continue"
+      ),
+
+      "grab_continue"=> PState(
+         .[ DummyRule( "#pop", { ctx => ctx.add("\n")} ) ]
+      ),
+
+      "grab_eol" =>PState(
+         .[],
+         {ctx, data=>ctx.add( data )},
+         "grab_eol_checker"
+      ),
+
+      "grab_eol_checker" =>PState(
+         .[
+            // if there is a //# on the next line, go on returning on the prev state
+            TagRule( "//#", "#pop", {ctx=>ctx.add("\n")} )
+            // Else, pop the node and return to top
+            DummyRule( "#pop;#pop", {ctx=>ctx.popNode()} )
+         ]
+      ),
+
+      "comment" =>PState(.[
+            ReRule( '.*?\*/', "#pop" )
+         ],
+         "*"  // get all
+      ),
+      
+      //===========================================================
+      // class and object
+      //===========================================================
+      
+      "classdecl" => PState(
+         CommentsAndGrabs
+         +.[
+            ReRule( '\s*', "#stay" )
+            ReRule( '\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
+            TokenRule( 'from', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // and return immmediately without waiting an end
+            ReRule( ':.*$', "#pop", {ctx=> ctx.popNode()} )
+
+            // consume "end" after returning from the class.
+            TokenRule( 'end', "#pop", {ctx=> ctx.popNode()} )
+            
+            // enter the function state at eol (and dump errors )
+            TagRule( ';', "#class", {ctx=> ctx.popNode()} )
+            EOLRule( "class" )
+         ]
+      ),
+
+      "inherit" => PState(
+         CommentsAndGrabs
+         +.[
+            ReRule( '\s*', "#stay" )
+            ReRule( '((\w|\.)+)', "inherit_cls",
+                  {ctx, d0, cls, d1 =>ctx.pushNode( InfoNode("from", ["line"=>ctx.row, "class"=>cls ]))} )
+
+            TokenRuleLA( 'end', "#pop", {ctx=> ctx.popNode()} )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+
+            // Consume errors and go to the class state
+            EOLRuleLA( "#pop", {ctx=>ctx.popNode()} )
+         ]
+      ),
+
+      "inherit_cls" => PState(
+         CommentsAndGrabs
+         + .[
+            ReRule( '\s*', "#stay" )
+            ReRule( '\(', "inherit_expr", {ctx=>ctx.add("(")} )
+            ReRule( ',', "#pop", {ctx=>ctx.popNode()} )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+
+            // return to previous state where ; is parsed
+            ReRuleLA( ';', "#pop" )
+
+            // Consume errors and go to the class state -- removing the inherit node.
+            EOLRuleLA( "#pop", {ctx=>ctx.popNode()} )
+         ]
+      ),
+
+      "inherit_expr" => PState(
+         CommentsAndGrabs
+         + .[
+            // add a stack layer for expressions with (
+            ReRule( '\(\s*', "inherit_expr", {ctx => ctx.add("(") } )
+            ReRule( '\s*\)', "#pop",  {ctx => ctx.add(")")} )
+         ],
+         {ctx, data=>ctx.add( data ) },
+         "inerhit_expr_eol"
+      ),
+
+      "inerhit_expr_eol" => PState( .[
+            DummyRule( "#pop", {ctx=>ctx.add(" ") } )
+         ]
+      ),
+
+      "class" => PState(
+         escaping
+         + CommentsAndGrabs
+         + FuncAndVars
+         +.[
+            // eat init, or the parser will think that everything in init is a property
+            ReRule('^\s*init\s*:\s*$', "#stay" )
+            ReRule('^\s*init\s*$', "init" )
+            TokenRuleLA( 'end', "#pop" )
+         ],
+         "*"
+      ),
+
+      "init" => PState(
+         escaping
+         + BlockStatements
+         + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
+            TokenRule( 'end', "#pop" )
+         ],
+         "*"
+      ),
+      
+      //===========================================================
+      // Function
+      //===========================================================
+      
+      "funcdecl" => PState(
+         CommentsAndGrabs
+         + .[
+            ReRule( '\s*', "#stay" )
+            ReRule( '\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+            // and return immmediately without waiting an end
+            ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
+            ReRule( ';', "function" )
+            EOLRule( "function" )
+         ]
+      ),
+
+      "function" => PState(
+         escaping
+         + BlockStatements
+         + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
+            TokenRule( "end", "#pop;#pop", {ctx => ctx.popNode()} )
+         ],
+         "*"
+      ),
+
+      "params" => PState(
+         CommentsAndGrabs
+         +.[
+            ReRule( '(\w+)', "params_continue",
+                  {ctx, d0, param=>ctx.add( InfoNode("param", ["line"=>ctx.row, "name"=>param]))} )
+            TagRule( ")", "#pop", {ctx=> ctx.popNode()} )
+
+            ReRule( '\s+', "#stay" )
+            
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\\$', "#stay" )
+         ]
+      ),
+
+      "params_continue" => PState(
+         CommentsAndGrabs
+         +.[
+            TagRule( ',', "#pop" )
+            ReRuleLA( '\)', "#pop" )
+            // consume multiline tokens, so that the eol rule doesn't fire.
+            ReRule( '\s+', "#stay" )
+            ReRule( '\\$', "#stay" )
+         ]
+      ),
+      
+
+      //===========================================================
+      // Enums
+      //===========================================================
+
+      "enum" => PState(
+         CommentsAndGrabs
+         +.[
+            TagRule( "end", "#pop", {ctx => ctx.popNode()} )
+            
+            ReRule( '\s*((\w|_)+)\s*=(.*)$', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( '\s*((\w|_)+)\s*$', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+            ReRule( '\s*((\w|_)+)\s*;', "#stay",
+               {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
+         ],
+         "*"
+      ),
+
+      //===========================================================
+      // Normal code
+      //===========================================================
+      "string1" => PState(.[
+            TagRule( '\"', "#stay" )
+            TagRule( '"', "#pop" )
+         ],
+         "*"
+      ),
+
+      "string2" => PState(.[
+            TagRule( '''''', "#stay" )
+            TagRule( '''', "#pop" )
+         ],
+         "*"
+      ),
+
+      "par_round" => PState(
+         escaping
+         +.[
+            TagRule( ')', "#pop" )
+         ],
+         "*"
+      ),
+
+      "par_square" => PState(
+         escaping
+         +.[
+            TagRule( ']', "#pop" )
+         ],
+         "*"
+      ),
+
+      "par_graph" => PState(
+         escaping
+         +.[
+            TagRule( '}', "#pop" )
+         ],
+         "*"
+      ),
+   
+      "block_begin" => PState(
+         escaping
+         +.[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
+            // if we find a \\$, the definition continues...
+            ReRule( '\\$', "#stay" )
+            // Avoid confusing ?: with ":"
+            TagRule( "?", "question_mark" )
+            ReRule( ':.*$', "#pop" )
+            
+            // Abandon this state either on ";" or on EOL
+            TagRule( ";", "block_continue" )
+            EOLRule( "block_continue" )
+         ],
+         "*"
+      ),
+
+      "block_continue" => PState(
+         // we can have nested blocks
+         escaping
+         +BlockStatements
+         + .[
+            TagRule( "/*", "comment" )
+            ReRule( '\s*//.*$', "#stay" )
+            // if we find a \\$, the definition continues...
+            TokenRule( 'end', "#pop;#pop" )
+         ],
+         "*"
+      ),
+
+      "question_mark" => PState(
+         escaping
+         + .[
+            // Return to block declaration when we find ':'
+            TagRule( ':', "#pop" )
+         ],
+         "*"
+      ),
+
+      // Just to be able to add always "," at the end
+      "*dummy" => nil
+   ]
+
+   function reset()
+      self.initParser( "start" )
+   end
+end
+

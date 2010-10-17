@@ -72,7 +72,7 @@ Falcon::CoreObject* Scale::factory( const Falcon::CoreClass* gen, void* range, b
 
 
 /*#
-    @method signal_format_value
+    @method signal_format_value GtkScale
     @brief Signal which allows you to change how the scale value is displayed.
 
     Connect a signal handler which returns a string representing value.

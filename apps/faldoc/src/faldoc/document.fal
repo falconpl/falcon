@@ -1,0 +1,152 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: document.fal
+
+   Autodocumentation tool - Output document representation.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 28 Sep 2010 15:30:16 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .filecontext
+load .docmodule
+load .link
+
+import from parser.faldoc.generic
+import from parser.faldoc.falsrc
+
+class Document from DocModule
+   title = nil
+   author = nil
+   version = nil
+
+   _fdParser = parser.faldoc.falsrc.Parser()
+   _gParser = parser.faldoc.generic.Parser()
+
+   // links to be resolved
+   links = []
+   
+   function addFile( file )
+      p = Path( file )
+      faldoc.info( "Processing " + p.filename + " in " + p.fulloc )
+
+      try
+         istream = InputStream( file )
+         // for now, suppose utf-8 encoding
+         istream.setEncoding( "utf-8" )
+         
+         if file.endsWith( ".ftd" ) or file.endsWith( ".fal" )
+            ctx = self._fdParser.parseStream( istream, "start" )
+            modname = faldoc.calcModName( file )
+            module = self.getModule( modname )
+            if not module: return
+            faldoc.verbose( @i"File $file has module name $modname" )
+         else
+            ctx = self._gParser.parseStream( istream, "start" )
+            module = self
+         end
+
+         // modname can be nil.
+         fc = FileContext( file, module, modname )
+         faldoc.currentFile = file
+         fc.parse( ctx )
+
+      catch in e
+         faldoc.error( "While parsing " + file + ": " + e )
+      end
+
+      faldoc.currentFile = nil
+      if istream: istream.close()
+   end
+
+
+   function getModule( name )
+      if name in self.members
+         module = self.members[name]
+         if module.type != "module"
+            faldoc.error( @i"Asking for module $(name), but that's already a $(module.type)")
+            return nil
+         end
+
+         return module
+      else
+         // create one module at each step of the hierarcy
+         modNames = name.split(".")
+         topModule = self
+         for name in modNames
+            if name in topModule.members
+               module = topModule.members[name]
+               if module.type != "module"
+                  faldoc.error( @i"Asking for module $(name), but that's already a $(module.type)")
+                  return nil
+               end
+            else
+               module = DocModule( name, topModule )
+               module.automatic = true
+               topModule.addMember( module )
+               module.parent = topModule
+            end
+            
+            topModule = module
+         end
+         
+         return module
+      end
+   end
+
+   function addLink( entity, line, dest, explicit )
+      l = Link( entity, line, dest, explicit )
+      self.links.add(l)
+      return l
+   end
+
+   function resolveLinks()
+      for l in self.links
+         self.resolveLink( l )         
+      end
+   end
+
+   function resolveLink( l )
+      src = l.source
+      // we must find the required entity through the parent.
+      parent = src.parent
+      
+      // try to reverse-find starting from the parent.
+      while parent
+         if (tgt = parent.getDescendant( l.destination ))
+            // found!
+            l.target = tgt
+            return
+         end
+         parent = parent.parent
+      end
+
+      // not found? -- too bad
+      (l.explicit ? faldoc.error : faldoc.warn)( @i"Unresolved link to \"$(l.destination)\"", l.line, l.source.file )
+   end
+
+
+   //# Recursively gets all the modules stored in the document.
+   function getAllModules()
+      return self._getAllModules( self )
+   end
+   
+   function _getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self._getAllModules( m )
+         end
+      end
+      return mods
+   end
+end
+
+export Document

@@ -354,7 +354,14 @@ function make_module( renderer )
          members = renderer.doctree.entities.modules[module.name]
          
          mod_types = [=>]
-         for entity in members: extendList( mod_types, entity.type, entity )
+         for entity in members
+            if entity.type in mod_types
+               mod_types[entity.type] += entity
+            else
+               mod_types[entity.type] = [entity]
+            end
+         end
+            
 
          // now we can create the proper sections
          sections = []

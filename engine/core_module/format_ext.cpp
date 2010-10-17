@@ -41,7 +41,7 @@ namespace core {
    The format specifier is a string that may contain various elements indicating how the target
    variable should be rendered as a string.
 
-   @subsection format_specification Format specification
+   @section format_specification Format specification
 
       @b Size: The minimum field length; it can be just expressed by a number.
       if the formatted output is wide as or wider than the allocated size, the output

@@ -9,11 +9,16 @@
  */
 
 load zlib
+import QrConfig from .qrconfig as QrConfig
+import QrSpec from .qrspec as QrSpec
+import QrSpecConst from .qrspec as QrSpecConst
 
-const N1 = 3
-const N2 = 3
-const N3 = 40
-const N4 = 10
+enum QrMaskConst
+    n1 = 3
+    n2 = 3
+    n3 = 40
+    n4 = 10
+end
 
 class QrMask
     _runLen = nil
@@ -23,14 +28,14 @@ class QrMask
         [innerfunc (x, y); return y && 1; end],
         [innerfunc (x, y); return x % 3; end],
         [innerfunc (x, y); return (x + y) % 3; end],
-        [innerfunc (x, y); return ((y / 2) + (x / 3)) && 1; end],
+        [innerfunc (x, y); return (int(y / 2) + int(x / 3)) && 1; end],
         [innerfunc (x, y); return ((x * y) && 1) + (x * y) % 3; end],
         [innerfunc (x, y); return (((x * y) && 1) + (x * y) % 3) && 1; end],
         [innerfunc (x, y); return (((x * y) % 3) + ((x + y) && 1)) && 1; end]
     ]
 
     init
-        self.runLen = arrayBuffer(QRSPEC_WIDTH_MAX + 1, 0)
+        self._runLen = arrayBuffer(QrSpecConst.max_width + 1, 0)
     end
 
     function writeFormatInformation(width, frame /* ref */, mask, errorCorrectionLevel)
@@ -119,10 +124,14 @@ class QrMask
         fileName = QrConfig.cache_dir + "mask_" + maskNo + "/" +  "mask_" + width + "_" + maskNo + ".dat"
 
         if QrConfig.cacheable
-            if not fileType(fileName) == FileStat.NOTFOUND
-                buffer = strBuffer(FileStat(fileName).size)
+            if fileType(fileName) != FileStat.NOTFOUND
+                stat = FileStat()
+                stat.read(fileName)
                 inputStream = InputStream(fileName)
-                bitMask = self.unserialize(inputStream.read(buffer))
+                inputStream.seek(0)
+                buffer = inputStream.grab(stat.size)
+                inputStream.read(buffer)
+                bitMask = self.unserialize(buffer)
                 inputStream.close()
             else
                 bitMask = self.generateMaskNo(maskNo, width, s, d)
@@ -130,7 +139,7 @@ class QrMask
                     dirMake(QrConfig.cache_dir + "mask_" + maskNo)
                 end
                 
-                outputStream = OutputStreama(fileName)
+                outputStream = OutputStream(fileName)
                 outputStream.write(self.serialize(bitMask))
                 outputStream.close()
             end
@@ -142,12 +151,12 @@ class QrMask
 
         d = s
 
-        for y in [0:wisth]
+        for y in [0:width]
             for x in [0:width]
                 if bitMask[y][x] == 1
                     d[y][x] = chr(s[y][x][*0]) ^^ bitMask[y][x]
                 end
-                b += (d[y][x][*0] && 1)
+                b += d[y][x][*0] && 1
             end
         end
 
@@ -155,7 +164,7 @@ class QrMask
     end
 
     function makeMask(width, frame, maskNo, errorCorrectionLevel)
-        masked = arrayBuffer(width, strFill(strBuffer(width), '\0'))
+        masked = arrayBuffer(width, "\x0" * width)
         self.makeMaskNo(maskNo, width, frame, $masked)
         self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
 
@@ -166,20 +175,20 @@ class QrMask
         demerit = 0
 
         for i in [0:length]
-            if this.runLength[i] >= 5
-                demerit += (N1 + (self.runLength[i] - 5))
+            if self.runLength[i] >= 5
+                demerit += (QrMaskConst.n1 + (self.runLength[i] - 5))
             end
             if i && 1
                 if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
-                    fact = (self.runLength[i] / 3)
+                    fact = int(self.runLength[i] / 3)
                     if (self.runLength[i - 2] == fact) and \
                         (self.runLength[i - 1] == fact) and \
                         (self.runLength[i + 1] == fact) and \
                         (self.runLength[i + 2] == fact)
                         if (self.runLength[i - 3] < 0) or (self.runLength[i - 3] >= (4 * fact))
-                            demerit += N3
+                            demerit += QrMaskConst.n3
                         elif ((i + 3) >= length) or (self.runLength[i + 3] >= (4 * fact))
-                            demerit += N3
+                            demerit += QrMaskConst.n3
                         end
                     end
                 end
@@ -202,16 +211,16 @@ class QrMask
 
             for x in [0:width]
                 if x > 0 and y > 0
-                    b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
-                    w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
-                    if (b22 || (w22 ^^ 1)) && 1; demerit += N2; end
+                    b22 = frameY[x][*0] && frameY[x - 1][*0] && frameYM[x][*0] && frameYM[x - 1][*0]
+                    w22 = frameY[x][*0] || frameY[x - 1][*0] || frameYM[x][*0] || frameYM[x - 1][*0]
+                    if (b22 || (w22 ^^ 1)) && 1; demerit += QrMaskConst.n2; end
                 end
-                if x == 0 and (frameY[*x] && 1)
+                if x == 0 and (frameY[x][*0] && 1)
                     self.runLength[0] = -1
                     head = 1
                     self.runLength[head] = 1
                 elif x > 0
-                    if (frameY[*x] ^^ frameY[*(x - 1)]) && 1
+                    if (frameY[x][*0] ^^ frameY[x - 1][*0]) && 1
                         head++
                         self.runLength[head] = 1
                     else
@@ -256,7 +265,7 @@ class QrMask
 
         if QrConfig.find_from_random != 0
             howManuOut = 8 - (QrConfig.find_from_random % 9)
-            for i in [0:howManuOUt]
+            for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
                 arrayRemove(checkedMasks, remPos)
             end
@@ -265,13 +274,13 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-            mask = arrayBuffer(width, strFill(strBuffer(width), '\0'))
+        mask = arrayBuffer(width, "\x0" * width)
             demerit = 0
             blacks = 0
             blacks = self.makeMaskNo(i, width, frame, mask)
             blacks += self.writeFormatInformation(width, mask, i, errorCorrectionLevel)
-            blacks  = 100 * blacks / (width * width)
-            demerit = (abs(blacks - 50) / 5) * N4
+            blacks  = int(100 * blacks / (width * width))
+            demerit = int(int(abs(blacks - 50) / 5) * QrMaskConst.n4)
             demerit += self.evaluateSymbol(width, mask)
 
             if demerit < minDemerit

@@ -8,6 +8,18 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
+import QrConfig from .qrconfig as QrConfig
+import QrError from .qrerror as QrError
+import QrMode from .qrconst as QrMode
+import QrErrorCorrectionLevel from .qrconst as QrErrorCorrectionLevel
+import QrMask from .qrmask as QrMask
+import QrImage from .qrimage as QrImage
+import QrInput from .qrinput as QrInput
+import QrRs from .qrrscode as QrRs
+import QrSplit from .qrsplit as QrSplit
+import QrSpec from .qrspec as QrSpec
+import QrTools from .qrtools as QrTools
+
 class QrRsBlock(dataLen, data, eccLen, ecc /* ref */, rsItem)
     dataLen = 0
     data = nil
@@ -29,7 +41,7 @@ class QrRawCode(input)
     _dataLen = 0
     _ecc = nil 
     _eccLen = 0
-    _rsBlocks = nil
+    _rsBlocks = []
     _blockNum = 0
     _blockNum1 = 0
     _count = 0
@@ -45,8 +57,8 @@ class QrRawCode(input)
         QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, $spec)
         self._version = input.version
         self._blockNum1 = QrSpec.rsBlockNum1(spec)
-        self._dataLen = QrSpec.rsDataLen(spec)
-        self._eccLen = QrSpec.rsEccLen(spec)
+        self._dataLen = QrSpec.rsDataLength(spec)
+        self._eccLen = QrSpec.rsEccLength(spec)
         self._ecc = arrayBuffer(self._eccLen, 0)
         self._blockNum = QrSpec.rsBlockNum(spec)
 
@@ -69,8 +81,8 @@ class QrRawCode(input)
         code = 0
 
         if self._count < self._dataLen
-            row = self._count % self._blocks
-            col = self._count / self._blocks
+            row = self._count % self._blockNum
+            col = self._count / self._blockNum
             if col >= self._rsBlocks[0].dataLen
                 row += self._blockNum1
             end
@@ -90,22 +102,21 @@ class QrRawCode(input)
     function _initialize(spec)
         dataLen = QrSpec.rsDataCodes1(spec)
         eccLen = QrSpec.rsEccCodes1(spec)
-        rs = QrRs.init_rs(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
+        rs = QrRs(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
 
-        blockNo = 0
         dataPos = 0
         eccPos = 0
+        self._rsBlocks = []
 
         for i in [0:QrSpec.rsBlockNum1(spec)]
             ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
-            self._rsBlocks[blockNo] = QrRsBlock(
+            arrayAdd(self._rsBlocks, QrRsBlock(
                 dataLen, self._data[dataPos:len(self._data) - dataPos],
-                eccLen, $ecc, rs)
+                eccLen, $ecc, rs))
             self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
-                
+
             dataPos += dataLen
             eccPos += $eccLen
-            blockNo++
         end
 
         if QrSpec.rsBlockNum2(spec) != 0
@@ -115,14 +126,13 @@ class QrRawCode(input)
 
             for i in [0:QrSpec.rsBlockNum2(spec)]
                 ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
-                self._rsBlocks[blockNo] = QrRsBlock(
+                arrayAdd(self._rsBlocks, QrRsBlock(
                     dataLen, self._data[dataPos:len(self._data) - dataPos],
-                    eccLen, $ecc, rs)
+                    eccLen, $ecc, rs))
                 self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
 
                 dataPos += dataLen
                 eccPos += eccLen
-                blockNo++
             end
         end
     end
@@ -146,27 +156,30 @@ class QrCode
     end
 
     function encodeMask(input, mask)
+        spec = QrSpec()
         raw = QrRawCode(input)
         version = raw.version
-        width = QrSpec.getWidth(version)
-        frame = QrSpec.newFrame(version)
+        width = spec.getWidth(version)
+        frame = spec.newFrame(version)
 
         filler = QrFrameFiller(width, $frame)
-        if filler == nil; return nil; end
+        if filler == nil
+            raise QrError(QrError.encoding, "error creating frame filler")
+        end
 
         for i in [0:raw.dataLen + raw.eccLen]
             code = raw.getCode()
             bit = 0x80
             for j in [0:8]
                 addr = filler.next()
-                filler.setFrameAt(addr, 0x02 || ((bit && code) != 0))
+                filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
                 bit >>= 1
             end
         end
 
         raw = nil
 
-        for i in [0:QrSpec.getRemainder(version)]
+        for i in [0:spec.getRemainder(version)]
             addr = filler.next()
             filler.setFrameAt(addr, 0x02)
         end
@@ -185,7 +198,9 @@ class QrCode
             masked = maskObj.makeMask(width, frame, mask, input.errorCorrectionLevel)
         end
 
-        if masked == nil; return nil; end
+        if masked == nil
+            raise QrError(QrError.encoding, "error masking frame")
+        end
 
         self._version = version
         self._width = width
@@ -198,54 +213,53 @@ class QrCode
         return self.encodeMask(input, -1)
     end
 
-    function encodeString8Bit(string, version, errorCorrectinoLevel)
+    function encodeString8Bit(string, version, errorCorrectionLevel)
         if string == nil
             raise QrError(QrError.invalid_param, "string is null")
         end
 
         input = QrInput(version, errorCorrectionLevel)
-        input.append(input, QrModes.eight_bit, len(string), strSplit(string))
+        input.append(input, QrMode.eight_bit, len(string), strSplit(string))
 
         return self.encodeInput(input)
     end
 
     function encodeString(string, version, errorCorrectionLevel, mode, caseSensitive)
-        if mode != QrModes.eigth and mode != QrModes.kanji
+        if mode != QrMode.eight_bit and mode != QrMode.kanji
             raise QrError(QrError.invalid_mode, @i'$(mode) not supported')
         end
 
         input = QrInput(version, errorCorrectionLevel)
-        // j3d check for null string
-        QrSplit.splitStringToQrInput(string, input, mode, caseSensitive)
+        QrSplit.splitStringToInput(string, input, mode, caseSensitive)
 
         return self.encodeInput(input)
     end
 
     function png(text, outFile, errorCorrectionLevel, size, margin, saveAndPrint)
-        if errorCorrectionLevel == nil; errorCorrrectionLevel = QrErrorCorrectionLevels.L; end
+        if errorCorrectionLevel == nil; errorCorrrectionLevel = QrErrorCorrectionLevel.L; end
         if size == nil; size = 3; end
         if margin == nil; margin = 4; end
         if saveAndPrint == nil; saveAndPrint = false; end
 
-        enc = QrEncode.factory(errorCorrectionLevel, size, margin)
+        enc = QrEncode(errorCorrectionLevel, size, margin)
         return enc.encodePng(text, outFile, saveAndPrint)
     end
 
     function text(text, outFile, errorCorrectionLevel, size, margin)
-        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevels.L; end
+        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevel.L; end
         if size == nil; size = 3; end
         if margin == nil; margin = 4; end
 
-        enc = QrEncode.factory(errorCorrectionLevel, size, margin)
+        enc = QrEncode(errorCorrectionLevel, size, margin)
         return enc.encode(text, outFile)
     end
 
     function raw(text, outFile, errorCorrectionLevel, size, margin)
-        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevels.L; end
+        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevel.L; end
         if size == nil; size = 3; end
         if margin == nil; margin = 4; end
 
-        enc = QrEncode.factory(errorCorrectionLevel, size, margin)
+        enc = QrEncode(errorCorrectionLevel, size, margin)
         return enc.encodeRaw(text, outFile)
     end
 end
@@ -324,46 +338,62 @@ class QrFrameFiller(width, frame /* ref */)
                     end
                 end
             end
-            if x < 0 or y < 0; return nil; end
+
+            if x < 0 or y < 0
+                raise QrError(QrError.encoding, "error creating frame")
+            end
 
             self._x = x
             self._y = y
-        end not self._frame[y][x][*0] && 0x80
+        end (self._frame[y][x][*0] && 0x80) == 0
 
         return ["x" => x, "y" => y]
     end
 end
 
 class QrEncode(errorCorrectionLevel, size, margin)
-    _errorCorrectionLevel = QrErrorCorrectionLevels.L
+    _mode = QrMode.eight_bit
+    _errorCorrectionLevel = QrErrorCorrectionLevel.L
 
     caseSensitive = true
     eightBit = false
     version = 0
     size = 3
     margin = 4
-    mode = QrModes.eight_bit
+
+    init
+        if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevel.L; end
+        if size == nil; size = 3; end
+        if margin == nil; margin = 4; end
+
+        self.size = size
+        self.margin = margin
+        self.errorCorrectionLevel = errorCorrectionLevel
+    end
 
     function __get_errorCorrrectionLevel()
         return self._errorCorrectionLevel
     end
     
+    function __set_mode(mode)
+        if mode == nil
+            raise QrError(QrError.invalid_param, "mode is null")
+        end
+
+        if mode < QrMode.null \
+            or mode > QrMode.structure
+            raise QrError(QrError.invalid_mode, @i'$(mode) not supported')
+        end
+    end
+
     function __set_errorCorrectionLevel(errorCorrectionLevel)
         if errorCorrectionLevel == nil
             raise QrError(QrError.invalid_param, "errorCorrectionLevel is null")
         end
 
-        switch errorCorrectionLevel
-            case 'l', 'L'
-                self._errorCorrectionLevel = QrErrorCorrectionLevels.L
-            case 'm', 'M'
-                self._errorCorrectionLevel = QrErrorCorrectionLevels.M
-            case 'q', 'Q'
-                self._errorCorrectionLevel = QrErrorCorrectionLevels.Q
-            case 'h', 'H'
-                self._errorCorrectionLevel = QrErrorCorrectionLevels.H
-            default
-                raise QrError(QrError.invalid_error_correction_errorCorrectionLevel, @i'$(errorCorrectionLevel) not supported')
+        if errorCorrectionLevel < QrErrorCorrectionLevel.L \
+            or errorCorrectionLevel > QrErrorCorrectionLevel.H
+            raise QrError(QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) not supported')
         end
     end
 
@@ -379,7 +409,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
         return code.data
     end
 
-    function encode(text, outfile) 
+    function encode(text, outFile) 
         code = QrCode()
 
         if self.eightBit
@@ -390,7 +420,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
 
         binarized = QrTools.binarize(code.data)
 
-        if outfile != nil
+        if outFile != nil
             outputStream = OutputStream(outFile, 666, FILE_SHARE)
             for line in binarized; outputStream.printl(line); end
             outputStream.close()
@@ -411,9 +441,12 @@ class QrEncode(errorCorrectionLevel, size, margin)
             raise QrError(QrError.encoding, errorMessage)
         end
 
-        maxSize = (int) (QrConfig.png_max_size / (len(frame) + 2 * self.margin))
+        maxSize = int(QrConfig.png_max_size / (len(frame) + 2 * self.margin))
         QrImage.png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
+    end
+
+    function factory(errorCorrectionLevel, size, margin)
     end
 end
 
-export QrEncode
+export QrCode

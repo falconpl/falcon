@@ -8,7 +8,7 @@
  * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
  */
 
-enum QrModes
+enum QrMode
     null = -1
     num = 0
     an = 1
@@ -17,14 +17,14 @@ enum QrModes
     structure = 4
 end
 
-enum QrErrorCorrectionLevels
+enum QrErrorCorrectionLevel
     L = 0
     M = 1
     Q = 2
     H = 3
 end
 
-enum QrFormats
+enum QrFormat
     text = 0
     png = 1
 end
