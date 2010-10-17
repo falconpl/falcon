@@ -127,8 +127,9 @@ class QrMask
             if fileType(fileName) != FileStat.NOTFOUND
                 stat = FileStat()
                 stat.read(fileName)
-                buffer = strBuffer(stat.size)
                 inputStream = InputStream(fileName)
+                inputStream.seek(0)
+                buffer = inputStream.grab(stat.size)
                 bitMask = self.unserialize(inputStream.read(buffer))
                 inputStream.close()
             else
