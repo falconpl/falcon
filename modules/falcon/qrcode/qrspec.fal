@@ -398,9 +398,14 @@ class QrSpec
         end
 
         if self.frames[version] == nil
-            fileName = QrConfig.cache_dir + "frame_" + version + ".dat"
-
             if QrConfig.cacheable
+                fileName = QrConfig.cache_dir + "frame_" + version + ".dat"
+
+                if fileType(QrConfig.cache_dir) == FileStat.NOTFOUND
+                    dirMake(QrConfig.cache_dir, true)
+                    fileChmod(QrConfig.cache_dir, 775)
+                end
+
                 if fileType(fileName) != FileStat.NOTFOUND
                     stat = FileStat()
                     stat.read(fileName)
