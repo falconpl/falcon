@@ -20,37 +20,37 @@
 #ifndef flc_process_sys_H
 #define flc_process_sys_H
 
-#include <falcon/falcondata.h>
+#include <falcon/stream.h>
+#include <falcon/string.h>
 
-namespace Falcon {
-
-class Stream;
-class FileService;
-class String;
+namespace Falcon { namespace Sys {
 
 
-namespace Sys {
 
-class ProcessHandle: public FalconData
+class Process
 {
    bool m_done;
    int m_lastError;
    int m_procVal;
 
 public:
-   ProcessHandle():
-      m_done(false),
-      m_lastError( 0 ),
-      m_procVal( 0 )
+   Process():
+       m_done(false),
+       m_lastError( 0 ),
+       m_procVal( 0 )
    {}
 
+   /*
+    * Interface
+    */
    virtual ::Falcon::Stream *getInputStream() =0;
    virtual ::Falcon::Stream *getOutputStream() =0;
    virtual ::Falcon::Stream *getErrorStream() =0;
-
+   //
    virtual bool close() = 0;
    virtual bool wait( bool block ) = 0 ;
    virtual bool terminate( bool severe = false ) = 0;
+
 
    int processValue() const { return m_procVal; }
    void processValue( int val ) { m_procVal = val; }
@@ -59,11 +59,12 @@ public:
    int lastError() const { return m_lastError; }
    void lastError( int val ) { m_lastError = val; }
 
-   virtual void gcMark( uint32 mk ) {};
-   virtual FalconData *clone() const {return 0;}
+   static Process* factory();
 };
 
-class ProcessEnum: public FalconData
+
+
+class ProcessEnum
 {
    void *m_sysdata;
 
@@ -76,9 +77,6 @@ public:
    */
    int next( String &name, uint64 &pid, uint64 &ppid, String &path );
    bool close();
-
-   virtual void gcMark( uint32 mk ) {};
-   virtual FalconData *clone() const {return 0;}
 };
 
 bool spawn( String **args, bool overlay, bool background, int *result );
@@ -86,14 +84,14 @@ bool spawn_read( String **args, bool overlay, bool background, int *result, Stri
 
 const char *shellParam();
 const char *shellName();
-ProcessHandle *openProcess( String **args, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
+bool openProcess(Process* ph, String **args, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
 
 uint64 processId();
 bool processKill( uint64 id );
 bool processTerminate( uint64 id );
 
-}
-}
+
+}} // ns Falcon::Sys
 
 #endif
 

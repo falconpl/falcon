@@ -20,7 +20,7 @@
 #include <falcon/fstream_sys_win.h>
 #include <falcon/memory.h>
 
-#include "process_sys_win.h"
+#include "process_win.h"
 
 namespace Falcon {
 
@@ -329,7 +329,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    secatt.nLength = sizeof( secatt );
    secatt.lpSecurityDescriptor = NULL;
    secatt.bInheritHandle = TRUE;
-   
+
    if ( !CreatePipe( &hRead, &hWrite, &secatt, 0 ) )
    {
       *returnValue = GetLastError();
@@ -396,7 +396,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
 
 		si.dwFlags |= STARTF_USESTDHANDLES;
 		si.hStdOutput = hWrite;
-		
+
       bufSize = finalCmd.length() * 4 + 1;
 		char *charbuf = (char *) memAlloc( bufSize );
 		finalCmd.toCString( charbuf, bufSize );
@@ -431,7 +431,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    do
    {
       signaled = WaitForSingleObject( proc.hProcess, 10 ) == WAIT_OBJECT_0;
- 
+
       // nothing to read?
       peek = PeekNamedPipe( hRead, NULL, 0,  NULL, &readin, NULL );
 
@@ -445,7 +445,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
             sOut->append( temp );
          }
       }
-      
+
    }
    while( readin > 0 || ! signaled );
 
@@ -485,10 +485,8 @@ const char *shellParam()
    return "/C";
 }
 
-ProcessHandle *openProcess( String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
+ProcessHandle *openProcess(ProcessHandle* ph, String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
 {
-   WinProcessHandle *ph = new WinProcessHandle();
-
    STARTUPINFOA si;
 	STARTUPINFOW siw;
    PROCESS_INFORMATION proc;
@@ -795,7 +793,6 @@ bool WinProcessHandle::terminate( bool )
 
 }
 
-}
-}
+}} // ns Falcon::Sys
 
 /* end of process_sys_win.cpp */

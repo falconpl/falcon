@@ -31,15 +31,16 @@
 #include <falcon/memory.h>
 #include <falcon/fstream_sys_unix.h>
 
-#include "process_sys_unix.h"
+#include "process_posix.h"
 
 #include <string.h>
 
-namespace Falcon {
+namespace Falcon { namespace Sys {
 
-namespace Sys {
 
-static char **s_localize( String **args )
+namespace {
+
+char **s_localize( String **args )
 {
    char **argv;
 
@@ -63,7 +64,7 @@ static char **s_localize( String **args )
    return argv;
 }
 
-static void s_freeLocalized( char **args )
+void s_freeLocalized( char **args )
 {
    uint32 count = 0;
    while( args[ count ] != 0 )
@@ -74,6 +75,8 @@ static void s_freeLocalized( char **args )
    memFree( args );
 
 }
+
+} // anonymous namespace
 
 //====================================================================
 // Simple process manipulation functions
@@ -183,7 +186,7 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 {
    // convert to our local format.
    char **argv = s_localize( args );
-   
+
    if ( ! overlay )
    {
       pid_t pid = fork();
@@ -194,12 +197,12 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
             // if child output is not wanted, sink it
             int hNull;
             hNull = open("/dev/null", O_RDWR);
-            
+
             dup2( hNull, STDIN_FILENO );
             dup2( hNull, STDOUT_FILENO );
             dup2( hNull, STDERR_FILENO );
          }
-         
+
          execvp( argv[0], argv ); // never returns.
          exit( -1 ); // or we have an error
       }
@@ -222,14 +225,14 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 bool spawn_read( String **args, bool overlay, bool background, int *returnValue, String *sOutput )
 {
    int pipe_fd[2];
-   
+
    if ( pipe( pipe_fd ) != 0 )
       return false;
 
    // convert to our local format.
    char **argv = s_localize( args );
    const char *cookie = "---ASKasdfyug72348AIOfasdjkfb---";
-   
+
    if ( ! overlay )
    {
       pid_t pid = fork();
@@ -240,20 +243,20 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
             // if child output is not wanted, sink it
             int hNull;
             hNull = open("/dev/null", O_RDWR);
-            
+
             dup2( hNull, STDIN_FILENO );
             dup2( hNull, STDERR_FILENO );
          }
-         
+
          dup2( pipe_fd[1], STDOUT_FILENO );
-               
+
          execvp( argv[0], argv ); // never returns.
          write( pipe_fd[1], cookie, strlen( cookie ) );
          exit( -1 ); // or we have an error
       }
 
       s_freeLocalized( argv );
-      
+
       // read the output
       #define MAX_READ_PER_LOOP  4096
       char buffer[MAX_READ_PER_LOOP];
@@ -264,18 +267,18 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
       /* Wait up to 100msecs */
       tv.tv_sec = 0;
       tv.tv_usec = 100;
-      
-      while( true ) 
+
+      while( true )
       {
          FD_ZERO( &rfds );
          FD_SET( pipe_fd[0], &rfds);
          int retval = select(pipe_fd[0]+1, &rfds, NULL, NULL, &tv );
-        
+
          if( retval )
          {
             readin = read( pipe_fd[0], buffer, MAX_READ_PER_LOOP );
             String s;
-            s.adopt( buffer, readin, 0 ); 
+            s.adopt( buffer, readin, 0 );
             sOutput->append( s );
          }
          else {
@@ -309,9 +312,9 @@ const char *shellParam()
    return "-c";
 }
 
-ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
+bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
 {
-   UnixProcessHandle *ph = new UnixProcessHandle();
+   PosixProcess* ph = static_cast<PosixProcess*>(_ph);
 
    // step 1: prepare the needed pipes
    if ( sinkin )
@@ -320,7 +323,7 @@ ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool s
    {
       if ( pipe( ph->m_file_des_in ) < 0 ) {
          ph->lastError(errno);
-         return ph;
+         return false;
       }
    }
 
@@ -330,7 +333,7 @@ ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool s
    {
       if ( pipe( ph->m_file_des_out ) < 0 ) {
          ph->lastError(errno);
-         return ph;
+         return false;
       }
    }
 
@@ -342,7 +345,7 @@ ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool s
    {
       if ( pipe( ph->m_file_des_err ) < 0 ) {
          ph->lastError(errno);
-         return ph;
+         return false;
       }
    }
 
@@ -380,13 +383,18 @@ ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool s
       _exit( -1 );
    }
    else
-      return ph;
+      return true;
 }
 
 //====================================================================
-// UnixProcessHandle system area.
+// PosixProcess system area.
 
-UnixProcessHandle::~UnixProcessHandle()
+PosixProcess::PosixProcess():
+   Process()
+{}
+
+
+PosixProcess::~PosixProcess()
 {
    if ( ! done() )
    {
@@ -396,7 +404,7 @@ UnixProcessHandle::~UnixProcessHandle()
    }
 }
 
-bool UnixProcessHandle::wait( bool block )
+bool PosixProcess::wait( bool block )
 {
    int pval,res;
    res = waitpid( m_pid, &pval, block ? 0 : WNOHANG );
@@ -416,7 +424,7 @@ bool UnixProcessHandle::wait( bool block )
 }
 
 
-bool UnixProcessHandle::close()
+bool PosixProcess::close()
 {
    if ( m_file_des_err[1] != -1 )
       ::close(m_file_des_err[1]);
@@ -427,7 +435,7 @@ bool UnixProcessHandle::close()
    return true;
 }
 
-bool UnixProcessHandle::terminate( bool severe )
+bool PosixProcess::terminate( bool severe )
 {
    int sig = severe ? SIGKILL : SIGTERM;
    if( kill( m_pid, sig ) == 0) {
@@ -437,7 +445,7 @@ bool UnixProcessHandle::terminate( bool severe )
    return false;
 }
 
-::Falcon::Stream *UnixProcessHandle::getInputStream()
+::Falcon::Stream *PosixProcess::getInputStream()
 {
    if( m_file_des_in[1] == -1 || done() )
       return 0;
@@ -446,7 +454,7 @@ bool UnixProcessHandle::terminate( bool severe )
    return new FileStream( data );
 }
 
-::Falcon::Stream *UnixProcessHandle::getOutputStream()
+::Falcon::Stream *PosixProcess::getOutputStream()
 {
    if( m_file_des_out[0] == -1 || done() )
       return 0;
@@ -455,7 +463,7 @@ bool UnixProcessHandle::terminate( bool severe )
    return new FileStream( data );
 }
 
-::Falcon::Stream *UnixProcessHandle::getErrorStream()
+::Falcon::Stream *PosixProcess::getErrorStream()
 {
    if( m_file_des_err[0] != -1 || done() )
       return 0;
@@ -465,7 +473,11 @@ bool UnixProcessHandle::terminate( bool severe )
 
 }
 
+Process* Process::factory()
+{
+   return new PosixProcess();
 }
-}
+
+}} // ns Falcon::Sys
 
 /* end of process_sys_unix.cpp */

@@ -36,47 +36,56 @@
 #define FALPROC_ERR_WAIT      (FALCON_PROCESS_ERROR_BASE + 4)
 #define FALPROC_ERR_TERM      (FALCON_PROCESS_ERROR_BASE + 5)
 
-namespace Falcon {
-namespace Ext {
+namespace Falcon { namespace Ext {
 
-FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_processId ( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_processKill ( ::Falcon::VMachine *vm );
+FALCON_FUNC  process_system ( VMachine *vm );
+FALCON_FUNC  process_systemCall ( VMachine *vm );
+FALCON_FUNC  process_pread ( VMachine *vm );
+FALCON_FUNC  process_exec ( VMachine *vm );
+FALCON_FUNC  process_processId ( VMachine *vm );
+FALCON_FUNC  process_processKill ( VMachine *vm );
 
 /**
    Process( command, [sinkin, sinkout, sinkerr, mergeerr, background] )
 */
-FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm );
-
-FALCON_FUNC  ProcessEnum_init  ( ::Falcon::VMachine *vm );
-FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm );
-FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm );
-
-class ProcessError: public ::Falcon::Error
+struct Process
 {
-public:
+   static FALCON_FUNC  init ( VMachine *vm );
+   static FALCON_FUNC  wait ( VMachine *vm );
+   static FALCON_FUNC  terminate ( VMachine *vm );
+   static FALCON_FUNC  value ( VMachine *vm );
+   static FALCON_FUNC  getInput ( VMachine *vm );
+   static FALCON_FUNC  getOutput ( VMachine *vm );
+   static FALCON_FUNC  getAux ( VMachine *vm );
+   static void registerExtensions( Module* );
+   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
+};
+
+struct ProcessEnum
+{
+   static FALCON_FUNC  init  ( VMachine *vm );
+   static FALCON_FUNC  next  ( VMachine *vm );
+   static FALCON_FUNC  close  ( VMachine *vm );
+   static void registerExtensions( Module* );
+   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
+};
+
+struct ProcessError : Falcon::Error
+{
    ProcessError():
       Error( "ProcessError" )
-   {}
+   { }
 
    ProcessError( const ErrorParam &params  ):
       Error( "ProcessError", params )
-      {}
+   { }
+
+   static FALCON_FUNC  init ( VMachine *vm );
+   static void registerExtensions( Module* );
 };
 
-FALCON_FUNC  ProcessError_init ( ::Falcon::VMachine *vm );
 
-}
-}
+}} // ns Falcon::Ext
 
 #endif
 

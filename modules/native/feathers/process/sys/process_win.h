@@ -23,7 +23,7 @@
 #include <windows.h>
 #include <tlhelp32.h>
 
-#include "process_sys.h"
+#include "process.h"
 
 namespace Falcon {
 
@@ -33,7 +33,7 @@ namespace Sys {
 
 class WinProcessHandle: public ProcessHandle
 {
-   friend ProcessHandle *openProcess( String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
+   friend ProcessHandle *openProcess(ProcessHandle* ph, String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
 
    HANDLE hPipeInRd;
    HANDLE hPipeInWr;

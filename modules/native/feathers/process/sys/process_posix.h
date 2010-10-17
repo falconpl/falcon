@@ -21,29 +21,15 @@
 #define flc_process_sys_unix_H
 
 #include <sys/types.h>
-#include "process_sys.h"
+#include "process.h"
 
-namespace Falcon {
+namespace Falcon { namespace Sys {
 
-class FileService;
-
-namespace Sys {
-
-class UnixProcessHandle: public ProcessHandle
+class PosixProcess: public Process
 {
-   int m_file_des_in[2];
-   int m_file_des_out[2];
-   int m_file_des_err[2];
-
-   pid_t m_pid;
-
-   friend ProcessHandle *openProcess( String **args, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
 public:
-   UnixProcessHandle():
-      ProcessHandle()
-   {}
-
-   virtual ~UnixProcessHandle();
+   PosixProcess();
+   virtual ~PosixProcess();
 
    pid_t pid() const { return m_pid; }
 
@@ -54,10 +40,19 @@ public:
    virtual bool close();
    virtual bool wait( bool block );
    virtual bool terminate( bool severe = false );
+
+private:
+   friend bool openProcess(Process* ph, String** args,
+                           bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
+
+   int m_file_des_in[2];
+   int m_file_des_out[2];
+   int m_file_des_err[2];
+
+   pid_t m_pid;
 };
 
-}
-}
+}} // ns Falcon::Sys
 
 #endif
 

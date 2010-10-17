@@ -5,19 +5,19 @@
 ####################################################################
 
 if(UNIX)
-   SET(SYS_SPECIFIC process_sys_unix.cpp)
+   SET(SYS_SPECIFIC sys/process_posix.cpp)
 else()
-   SET(SYS_SPECIFIC process_sys_win.cpp process.rc)
+   SET(SYS_SPECIFIC sys/process_win.cpp process.rc)
 endif()
 
 add_library(process_fm MODULE
    process.cpp
-   process_ext.cpp
-   process_mod.cpp
+   ext/process.cpp
+   mod/process.cpp
    process_st.cpp
    ${SYS_SPECIFIC}
 )
 
 falcon_finalize_module( process_fm )
 
-set(_project_targets ${_project_targets} process_fm PARENT_SCOPE) 
+set(_project_targets ${_project_targets} process_fm PARENT_SCOPE)

@@ -21,16 +21,41 @@
 #define flc_process_mod_H
 
 #include <falcon/genericvector.h>
+#include <falcon/cacheobject.h>
+#include "../sys/process.h"
 
-namespace Falcon {
+namespace Falcon { namespace Mod {
 
-class String;
-class VMachine;
+class ProcessEnum : public CacheObject
+{
+public:
+   ProcessEnum(CoreClass const* cls);
+   virtual ~ProcessEnum();
 
-/** Process and child management API */
-namespace Mod {
+   // not cloneable
+   ProcessEnum *clone() const { return 0; }
+   Sys::ProcessEnum* handle();
 
-class Handle;
+private:
+   class Impl;
+   Impl* m_impl;
+};
+
+class Process : public CacheObject
+{
+public:
+   Process(CoreClass const* cls);
+   virtual ~Process();
+
+   // not cloneable
+   Process *clone() const { return 0; }
+   Sys::Process* handle();
+
+
+private:
+   class Impl;
+   Impl* m_impl;
+};
 
 /**  Tokenizes a command string with its paremters and appends it to a vector.
  * \param argv Command tokens will be appended to it.

@@ -23,11 +23,89 @@
 #include <falcon/string.h>
 #include <string.h>
 
-#include "process_sys.h"
-#include "process_mod.h"
+#include "../sys/process.h"
+#include "process.h"
 
 
 namespace Falcon { namespace Mod {
+
+
+namespace {
+
+struct Process::Impl
+{
+   Sys::Process* process;
+
+   Impl() :
+      process ( Sys::Process::factory() )
+   { }
+
+   ~Impl()
+   {
+      if (process)
+         delete process;
+   }
+};
+
+} // anonymous namespace
+
+
+Process::Process(CoreClass const* cls) :
+      CacheObject(cls),
+      m_impl( new Process::Impl )
+{ }
+
+Process::~Process()
+{
+   if ( m_impl )
+      delete m_impl;
+}
+
+Sys::Process* Process::handle()
+{
+   return m_impl->process;
+}
+
+
+
+
+
+namespace {
+
+struct ProcessEnum::Impl
+{
+   Sys::ProcessEnum*  processEnum;
+
+   Impl() :
+      processEnum ( new Sys::ProcessEnum )
+   { }
+
+   ~Impl()
+   {
+      if (processEnum)
+         delete processEnum;
+   }
+};
+
+} // anonymous namespace
+
+
+ProcessEnum::ProcessEnum(CoreClass const* cls) :
+      CacheObject(cls),
+      m_impl( new ProcessEnum::Impl )
+{ }
+
+ProcessEnum::~ProcessEnum()
+{
+   if ( m_impl )
+      delete m_impl;
+}
+
+Sys::ProcessEnum* ProcessEnum::handle()
+{
+   return m_impl->processEnum;
+}
+
 
 
 void argvize(GenericVector& argv, const String &params)
@@ -94,7 +172,7 @@ void argvize(GenericVector& argv, const String &params)
                   break;
 
                   case '\'':
-                     argv.push(new String( params, posInit, pos ));                     
+                     argv.push(new String( params, posInit, pos ));
                      posInit = pos + 1;
                      state = s_quote2;
                   break;

@@ -25,10 +25,10 @@
 #include <falcon/carray.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
-#include "process_sys.h"
-#include "process_mod.h"
-#include "process_ext.h"
-#include "process_st.h"
+#include "../sys/process.h"
+#include "../mod/process.h"
+#include "process.h"
+#include "../process_st.h"
 
 
 
@@ -49,12 +49,12 @@ bool s_checkArray(Item* item)
    CoreArray *array = item->asArray();
    if ( ! array->length() > 1 )
       return false;
-   
+
    for( size_t i = 0; i < array->length(); i++ )
       if ( !array->at( i ).isString() )
          return false;
-   
-   return true;  
+
+   return true;
 }
 
 void s_appendCommands(GenericVector& argv, Item* command)
@@ -66,7 +66,7 @@ void s_appendCommands(GenericVector& argv, Item* command)
    {
       String* str =  (*commands)[i].asString();
       argv.push( new String( *str ) );
-   }  
+   }
 }
 
 String s_mergeCommandArray(Item* command)
@@ -74,7 +74,7 @@ String s_mergeCommandArray(Item* command)
    fassert( s_checkArray(command) );
 
    String ret;
-   
+
    CoreArray* commands = command->asArray();
    ret.append( *(*commands)[0].asString() );
    for( size_t i = 1; i < commands->length(); i++ )
@@ -83,7 +83,7 @@ String s_mergeCommandArray(Item* command)
       ret.append( " "  );
       ret.append( *str  );
    }
-   
+
    return ret;
 }
 
@@ -100,7 +100,7 @@ String s_mergeCommandArray(Item* command)
    function will return the process ID associated with the host application.
 */
 
-FALCON_FUNC  falcon_processId( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_processId( ::Falcon::VMachine *vm )
 {
    vm->retval( (int64) Sys::processId() );
 }
@@ -117,7 +117,7 @@ FALCON_FUNC  falcon_processId( ::Falcon::VMachine *vm )
    is stopped in the most hard way the system provides; i.e. in UNIX, KILL
    signal is sent.
 */
-FALCON_FUNC  falcon_processKill( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_processKill( ::Falcon::VMachine *vm )
 {
    Item *id = vm->param(0);
    Item *mode = vm->param(1);
@@ -168,13 +168,12 @@ FALCON_FUNC  falcon_processKill( ::Falcon::VMachine *vm )
       returned before the parent is listed.
 */
 
-FALCON_FUNC  ProcessEnum_init  ( ::Falcon::VMachine *vm )
-{
-   Sys::ProcessEnum *pe = new Sys::ProcessEnum();
-   CoreObject *self = vm->self().asObject();
-   self->setUserData( pe );
-}
+FALCON_FUNC  ProcessEnum::init  ( ::Falcon::VMachine *vm ) { }
 
+CoreObject* ProcessEnum::factory(const CoreClass* cls, void* user_data, bool )
+{
+   return new Mod::ProcessEnum(cls);
+}
 
 /*#
    @method next ProcessEnum
@@ -189,15 +188,14 @@ FALCON_FUNC  ProcessEnum_init  ( ::Falcon::VMachine *vm )
    properties are changed.
 */
 
-FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
+FALCON_FUNC  ProcessEnum::next  ( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::ProcessEnum *pe = (Sys::ProcessEnum *)self->getUserData();
+   Mod::ProcessEnum* self = Falcon::dyncast<Mod::ProcessEnum*>( vm->self().asObject() );
    CoreString *name = new CoreString;
    CoreString *path = new CoreString;
    uint64 pid, ppid;
 
-   int64 res = (int64) pe->next( *name, pid, ppid, *path );
+   int64 res = (int64) self->handle()->next( *name, pid, ppid, *path );
 
    if ( res != 1 )
    {
@@ -225,17 +223,28 @@ FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
    Disposes the data associated with this item without waiting
    for the garbage collector to reclaim them.
 */
-FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
+FALCON_FUNC  ProcessEnum::close  ( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::ProcessEnum *pe = (Sys::ProcessEnum *)self->getUserData();
-   if ( ! pe->close() ) {
+      Mod::ProcessEnum* self = Falcon::dyncast<Mod::ProcessEnum*>( vm->self().asObject() );
+   if ( ! self->handle()->close() ) {
          throw new ProcessError( ErrorParam( FALPROC_ERR_CLOSELIST, __LINE__ )
             .desc( FAL_STR( proc_msg_errlist2 ) ) );
       return;
    }
 }
 
+void ProcessEnum::registerExtensions( Module* self )
+{
+   Falcon::Symbol *pe_class = self->addClass( "ProcessEnum", Falcon::Ext::ProcessEnum::init );
+   pe_class->getClassDef()->factory(&Falcon::Ext::ProcessEnum::factory);
+   self->addClassProperty( pe_class, "name" );
+   self->addClassProperty( pe_class, "pid" );
+   self->addClassProperty( pe_class, "parentPid" );
+   self->addClassProperty( pe_class, "cmdLine" );
+
+   self->addClassMethod( pe_class, "next", Falcon::Ext::ProcessEnum::next );
+   self->addClassMethod( pe_class, "close", Falcon::Ext::ProcessEnum::close );
+}
 
 /*#
    @function system
@@ -262,7 +271,7 @@ FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
    and graphical systems, icons representing the process are usually not visible when
    this option is set.
 */
-FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_system ( ::Falcon::VMachine *vm )
 {
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
@@ -275,7 +284,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 
    bool background = mode == 0 ? false : mode->isTrue();
    GenericVector argv( &traits::t_stringptr_own() );
-   
+
    argv.push( new String( Falcon::Sys::shellName()) );
    argv.push( new String( Falcon::Sys::shellParam()) );
    if( command->isString() )
@@ -286,9 +295,9 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                .extra( FAL_STR( proc_msg_allstr ) ) );
       argv.push( new String( s_mergeCommandArray(command) ) );
-   }   
+   }
    argv.push( 0 );
-   
+
    int retval;
    vm->idle();
    if( ::Falcon::Sys::spawn( static_cast<String**>( argv.at(0) ),
@@ -297,7 +306,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
       vm->unidle();
       vm->retval( retval );
    }
-   else 
+   else
    {
       vm->unidle();
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
@@ -334,7 +343,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    child is given the parent's console instead. Icons representing the process are
    usually not visible when this option is set.
 */
-FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_systemCall ( ::Falcon::VMachine *vm )
 {
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
@@ -346,17 +355,17 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    }
 
    vm->idle();
-   
+
    bool background = mode == 0 ? false : mode->isTrue();
    GenericVector argv( &traits::t_stringptr_own() );
-   
+
   if( command->isString() )
     Falcon::Mod::argvize(argv, *command->asString());
   else
   {
      if ( !s_checkArray(command) )
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                              .extra( FAL_STR( proc_msg_allstr ) ) );     
+                              .extra( FAL_STR( proc_msg_allstr ) ) );
      s_appendCommands(argv, command);
   }
   argv.push( 0 );
@@ -375,7 +384,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
          .desc( FAL_STR( proc_msg_prccreate ) )
          .sysError( retval ) );
    }
-   
+
 }
 
 
@@ -390,8 +399,8 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    @raise ProcessError if the process couldn't be created.
 
    This function launches an external system command and waits until the command
-   execution is terminated, returning the exit code of the child process. All the 
-   
+   execution is terminated, returning the exit code of the child process. All the
+
    for example:
 
    @code
@@ -400,12 +409,12 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    @endcode
 
    If the process cannot be started if it fails to start, an error is raised.
-   
+
    \note This function uses the standard system shell to execute the passed
    commands, so it is possible to pipe applications and redirect streams
    via the standard "|" and ">" command line characters.
 */
-FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_pread ( ::Falcon::VMachine *vm )
 {
    Item *command = vm->param(0);
    Item *mode = vm->param(1);
@@ -479,7 +488,7 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    program, and the other elements will be passed as parameters. If the program
    name is not an absolute path, it is searched in the system execution search path.
 */
-FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
+FALCON_FUNC  process_exec ( ::Falcon::VMachine *vm )
 {
    Item *command = vm->param(0);
 
@@ -525,7 +534,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
    This class is meant for finer control of child processes and
    inter process comunication.
-   
+
    The process named in the @b command argument is started. It is possible to
    provide either a string containing a complete command line, with the process
    name and its arguments, or an array whose first element is the process name,
@@ -545,8 +554,9 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
 */
 
-FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::init ( ::Falcon::VMachine *vm )
 {
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
    Item *command = vm->param(0);
    Item *mode_itm = vm->param(1);
 
@@ -566,11 +576,11 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    {
      argv.push( new String( Falcon::Sys::shellName()) );
      argv.push( new String( Falcon::Sys::shellParam()) );
-     
+
      if( ! command->isString()  )
        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                              .extra( "S, [I]" ) );
-     
+
      argv.push( new String( *command->asString() ) );
    }
    else
@@ -594,17 +604,20 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    bool mergeerr = ((mode & 0x8) == 0x8);
    bool background = ((mode & 0x10) == 0x10);
 
-   ::Falcon::Sys::ProcessHandle *handle =
-       ::Falcon::Sys::openProcess( static_cast<String**>( argv.at(0) ),
-                                   sinkin, sinkout, sinkerr, mergeerr, background );
-   if ( handle->lastError() == 0 )
-      vm->self().asObject()->setUserData( handle );
-   else {
-      delete handle;
+
+   Sys::openProcess(self->handle(), static_cast<String**>( argv.at(0) ),
+                    sinkin, sinkout, sinkerr, mergeerr, background );
+   if ( self->handle()->lastError() != 0 )
+   {
       throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR(proc_msg_prccreate) )
-         .sysError( handle->lastError() ) );
+         .sysError( self->handle()->lastError() ) );
    }
+}
+
+CoreObject* Process::factory(const CoreClass* cls, void* user_data, bool )
+{
+   return new Mod::Process(cls);
 }
 
 
@@ -628,21 +641,19 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    to check if the child process terminated at time intervals.
 */
 
-FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::wait ( ::Falcon::VMachine *vm )
 {
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-      vm->self().asObject()->getUserData();
-   
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
    vm->idle();
-   if( ! handle->wait( true ) ) 
+   if( ! self->handle()->wait( true ) )
    {
       vm->unidle();
       throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
          .desc( FAL_STR( proc_msg_waitfail ) )
-         .sysError( handle->lastError() ) );
+         .sysError( self->handle()->lastError() ) );
    }
    else {
-      handle->close();
+      self->handle()->close();
       vm->unidle();
    }
 }
@@ -662,19 +673,17 @@ FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm )
    used. On UNIX, a KILL signal is sent to the child process, while a TERM signal
    is sent if severe is not specified or false.
 */
-FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::terminate ( ::Falcon::VMachine *vm )
 {
    Item *severe = vm->param(0);
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-      vm->self().asObject()->getUserData();
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
 
-
-   if ( ! handle->done() )
+   if ( ! self->handle()->done() )
    {
       bool sev = severe == 0 ? false : severe->isTrue();
-      if( ! handle->terminate( sev ) ) {
+      if( ! self->handle()->terminate( sev ) ) {
          throw new ProcessError( ErrorParam( FALPROC_ERR_TERM, __LINE__ ).
-            desc( FAL_STR( proc_msg_termfail ) ).sysError( handle->lastError() ) );
+            desc( FAL_STR( proc_msg_termfail ) ).sysError( self->handle()->lastError() ) );
       }
    }
 }
@@ -696,39 +705,38 @@ FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm )
    After value() returns, there may still be some data to be read from the child
    output and auxiliary streams; they should be read until they return 0.
 */
-FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::value ( ::Falcon::VMachine *vm )
 {
    Item *h_wait = vm->param(0);
 
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-         vm->self().asObject()->getUserData();
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
 
    bool wait = h_wait == 0 ? false : h_wait->isTrue();
-   if ( wait && ! handle->done() ) {
+   if ( wait && ! self->handle()->done() ) {
       vm->idle();
-      if( ! handle->wait( true ) ) {
-         handle->close();
+      if( ! self->handle()->wait( true ) ) {
+         self->handle()->close();
          vm->unidle();
          throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
             .desc( FAL_STR( proc_msg_waitfail ) )
-            .sysError( handle->lastError() ) );
+            .sysError( self->handle()->lastError() ) );
       }
       else
          vm->unidle();
    }
    // give a test to see if the process is terminated in the meanwhile
-   else if ( ! handle->done() ) {
-      if( ! handle->wait( false ) ) {
+   else if ( ! self->handle()->done() ) {
+      if( ! self->handle()->wait( false ) ) {
          throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
             .desc( FAL_STR( proc_msg_waitfail ) )
-            .sysError( handle->lastError() ) );
+            .sysError( self->handle()->lastError() ) );
       }
    }
 
-   if( handle->done() )
+   if( self->handle()->done() )
    {
-      vm->retval( handle->processValue() );
-      handle->close();
+      vm->retval( self->handle()->processValue() );
+      self->handle()->close();
    }
    else
       vm->retval( -1 ); // not yet terminated.
@@ -748,12 +756,11 @@ FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
    @note This function should be called only once per Process class;
       be sure to cache its value.
 */
-FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::getInput ( ::Falcon::VMachine *vm )
 {
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-      vm->self().asObject()->getUserData();
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
 
-   Stream *file = handle->getInputStream();
+   Stream *file = self->handle()->getInputStream();
    if (file == 0 )
       vm->retnil();
    else {
@@ -780,12 +787,11 @@ FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm )
    @note This function should be called only once per Process class;
       be sure to cache its value.
 */
-FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::getOutput ( ::Falcon::VMachine *vm )
 {
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-      vm->self().asObject()->getUserData();
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
 
-   Stream *file = handle->getOutputStream();
+   Stream *file = self->handle()->getOutputStream();
    if (file == 0 )
       vm->retnil();
    else{
@@ -815,12 +821,11 @@ FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm )
    @note This function should be called only once per Process class;
       be sure to cache its value.
 */
-FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Process::getAux ( ::Falcon::VMachine *vm )
 {
-   ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
-      vm->self().asObject()->getUserData();
+   Mod::Process* self = Falcon::dyncast<Mod::Process*>( vm->self().asObject() );
 
-   Stream *file = handle->getErrorStream();
+   Stream *file = self->handle()->getErrorStream();
    if (file == 0 )
       vm->retnil();
    else {
@@ -833,6 +838,19 @@ FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm )
    }
 }
 
+void Process::registerExtensions( Module* self )
+{
+   Falcon::Symbol *proc_class = self->addClass( "Process", Falcon::Ext::Process::init );
+   proc_class->getClassDef()->factory( &Falcon::Ext::Process::factory );
+   self->addClassMethod( proc_class, "wait", Falcon::Ext::Process::wait );
+   self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process::terminate ).asSymbol()->
+      addParam("severe");
+   self->addClassMethod( proc_class, "value", Falcon::Ext::Process::value ).asSymbol()->
+      addParam("wait");
+   self->addClassMethod( proc_class, "getInput", Falcon::Ext::Process::getInput );
+   self->addClassMethod( proc_class, "getOutput", Falcon::Ext::Process::getOutput );
+   self->addClassMethod( proc_class, "getAux", Falcon::Ext::Process::getAux );
+}
 
 /*#
    @class ProcessError
@@ -845,7 +863,7 @@ FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm )
    See the Error class in the core module.
 */
 
-FALCON_FUNC  ProcessError_init ( ::Falcon::VMachine *vm )
+FALCON_FUNC  ProcessError::init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
@@ -854,7 +872,14 @@ FALCON_FUNC  ProcessError_init ( ::Falcon::VMachine *vm )
    ::Falcon::core::Error_init( vm );
 }
 
+void ProcessError::registerExtensions( Module* self )
+{
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *procerr_cls = self->addClass( "ProcessError", Falcon::Ext::ProcessError::init );
+   procerr_cls->setWKS( true );
+   procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 }
-}
+
+}} // ns Falcon::Ext
 
 /* end of process_mod.cpp */
