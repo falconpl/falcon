@@ -26,7 +26,8 @@ class HTMError(code, extra) from Error(code, "HTML generic error", extra)
    nottoplevel = 10006
    noid = 10007
    noclass = 10008
-   nostyle = 10008
+   nostyle = 10009
+   addnodom = 10010
 
    _codes = [
       10001 => i"Parentship restraint wasn't respected",
@@ -36,7 +37,9 @@ class HTMError(code, extra) from Error(code, "HTML generic error", extra)
       10005 => i"Body already defined",
       10006 => i"Addign a non-toplevel item to <html>",
       10007 => i"The XHTML element doesn't expose an 'id' property",
-      10008 => i"The XHTML element doesn't expose a 'style' property"
+      10008 => i"The XHTML element doesn't expose a 'class' property",
+      10009 => i"The XHTML element doesn't expose a 'style' property",
+      10010 => i"Adding a non-DOM element item."
       ]
    
    init

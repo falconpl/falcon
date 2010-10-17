@@ -21,7 +21,9 @@ import from .node
    Has support to create the syntree as the parsing proceeds.
 */
 
-class Context
+class Context()
+   row = 1
+   
    topNode = node.Node( node.node_top_type )
    nodeStack = [ self.topNode ]
    standouts = []

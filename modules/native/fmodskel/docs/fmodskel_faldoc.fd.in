@@ -4,6 +4,11 @@
 # Faldoc file for @{fmodskel_PROJECT_NAME}@
 #
 
+LogLevel = 4
+AutoBrief = true
+GetUndoc = true
+GetPrivate = false
+
 ################################################
 # Documentation generic data
 ################################################
@@ -21,9 +26,16 @@ Version = <version>
 Input.basedir=@PROJECT_SOURCE_DIR@
 Input.directory=src
 #you may place other input directory here
+#Input.directory=../engine/core_module
+#Input.directory=../modules/falcon
+
+#By default, input directories are also roots for module names, but...
+# Input.moduleRoot = ../modules/falcon
+# Input.moduleRoot = ../... ....
 
 Input.wildcard=*.cpp     #we use only...
-Input.recursive=false
+Input.wildcard=*.fal
+Input.recursive=true
 
 # Other files may be specified here
 #Input.extra=main.fd
@@ -34,6 +46,8 @@ Input.recursive=false
 ################################################
 
 Output.module=html
+Output.module=list
+Output.module=docbook
 
 
 ################################################
@@ -45,4 +59,24 @@ Output.module=html
 Output.html.directory=@output_dir@
 Output.html.url=.
 Output.html.doctitle=@{fmodskel_PROJECT_NAME}@ module Function Reference
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.list.file=coreModule-0.9.6.6.lst
+Output.list.doctitle=Falcon Core Module - Function List
+Output.list.bytype=true
+Output.list.members=true
+Output.list.brief=true
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.docbook.file = falcon-db0967.xml
+Output.docbook.encoding = utf-8
+Output.docbook.copyright.year = 2010
+Output.docbook.copyright.Holder = The Falcon Committee
+Output.docbook.frame = book
 

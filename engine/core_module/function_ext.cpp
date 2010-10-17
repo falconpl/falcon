@@ -48,7 +48,7 @@ static void s_caller_internal( VMachine* vm, bool mode )
 
    if( i_level != 0 )
    {
-      if( i_level->isOrdinal() )
+      if( i_level->isOrdinal() || i_level->isNil() )
       {
          int64 i64level =  i_level->forceInteger();
          if( i64level < 0 )
@@ -138,6 +138,60 @@ FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Function_trace ( ::Falcon::VMachine *vm )
 {
    s_caller_internal( vm, false );
+}
+
+/*#
+   @method stack Function
+   @brief Gets a string representation of the call stack.
+   @return A string containing all the stack trace up to this point.
+
+   The returned string looks like the stack trace printed by errors,
+   but is referred to the call stack up to the function from which
+   this method is called.
+
+   @note The method can also be called statically on the Function metaclass.
+*/
+
+FALCON_FUNC  Function_stack ( ::Falcon::VMachine *vm )
+{
+   const Symbol *sym;
+   uint32 line;
+   uint32 pc;
+   int level = 0;
+
+   CoreString& target = *(new CoreString());
+
+   while( vm->getTraceStep( level, sym, line, pc ) )
+   {
+      if ( target.size() )
+         target += "\n";
+
+      const Module* mod = sym->module();
+      if ( mod->path().size() )
+      {
+         target += "\"" + mod->path() + "\" ";
+      }
+
+      target += mod->name() + "." + sym->name() + ":";
+      target.writeNumber( (int64) line );
+      target += "(PC:";
+      switch( pc )
+      {
+         case VMachine::i_pc_call_external: target += "ext"; break;
+         case VMachine::i_pc_call_external_return: target += "ext.r"; break;
+         case VMachine::i_pc_redo_request: target += "redo"; break;
+         case VMachine::i_pc_call_external_ctor: target += "ext.c"; break;
+         case VMachine::i_pc_call_external_ctor_return: target += "ext.cr"; break;
+         default:
+            target.writeNumber( (int64) pc );
+      }
+
+      target += ")";
+
+      ++level;
+   }
+
+   vm->retval( &target );
 }
 
 }

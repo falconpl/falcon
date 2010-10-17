@@ -19,10 +19,6 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 
-/*#
-   
-*/
-
 namespace Falcon {
 namespace core {
 

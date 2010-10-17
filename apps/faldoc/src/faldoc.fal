@@ -14,182 +14,283 @@
 
    See LICENSE file for licensing details.
 */
-load confparser
-load compiler
-//load sdl
 
-load self.parser
+load compiler
 load self.version
-load self.docdata
+load self.config
+load self.document
+
+import from parser.faldoc.txt
 
 resources: "resources/*"
 
-banner()
-//GC.adjust( GC.ADJ_LOOSE )
-
-// get minimal parameters
-fdfile = args.len() == 0 ? "faldoc.fd" : args[0]
-
-// get config
-try
-   conf = ConfParser( fdfile )
-   conf.read()
-catch IoError in error
-   > i"faldoc: Invalid input file ", fdfile
-   return 1
-catch in error
-   > i"Error in reading the configuration file: "
-   > error
-   return 1
-end
-
-// Fine, we can create a basic doctree
-docdata = DocData()
-path = Path( fdfile )
-basedir = conf.get( "Input.basedir" ) 
-if not basedir: basedir = path.fulloc
-if basedir == nil or basedir == "": basedir ="."
-
-docdata.basedir = basedir
-assert( "resdir", filePath(scriptPath) + "/resources" )
-
-// Functions raise strings to cause fatal errors.
-try
-   // process configuration for basic parameters
-   processConf( docdata, conf )
-   // process the input files
-   processInput( docdata, conf, basedir )
-   docdata.entities = EntityDB
-   // process the output files
-   processOutput( docdata, conf )
-catch StringType in error
-   > i"faldoc: FATAL ERROR - ", error
-   exit(1)
-catch in error
-   > i"faldoc: FATAL ERROR - Rised an exception:"
-   > error
-   exit(1)
-end
-
-> "faldoc: done."
-return 0
-
 
 //================================================
-// Main utilities
-//================================================
-function banner()
-   > i"faldoc - Falcon documentation tool."
-   > i"Part of the Falcon Programming language."
-   > i"Version ", version.name()
-   > "----------------------------------------"
-end
-
-
-//================================================
-// Process generic settings
-//================================================
-function processConf( doctree, conf )
-   // get the essentials
-   if not (doctree.title = conf.getOne( "Title" ))
-      raise i"Title key missing from configuration"
-   end
-
-   if not (doctree.author = conf.getOne( "Author" ))
-      raise i"Author key missing from configuration"
-   end
-
-   if not (doctree.version = conf.getOne( "Version" ))
-      raise i"Version key missing from configuration"
-   end
-
-   // then, we need at least one output
-   if not conf.get("Output.module" ): raise i"At least one 'Output.module' key is necessary."
-
-   // get the properties.
-   doctree.properties = conf.getCategory( "Property.*" )
-end
-
-//================================================
-// Process Input
+// Application class
 //================================================
 
-function processInput( doctree, conf, basedir )
-   // Input directory -- defaults to "."
-   inputDirs = firstOf(conf.getMultiple( "Input.directory" ), ["."])
-   // Input file wildcard; defaults to "*.fal"
-   inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
-   // input recursive -- defaults to true
-   rec = conf.getOne( "Input.recursive" )
-   inputRec = rec ? strLower( rec ) != "false" : true
+class Application
+   version = "3.0"
    
-   for dir in inputDirs
-      // open the directory
+   fdfile = nil
+   errorCount = 0
+   warnCount = 0
+
+   config = nil
+
+   document = nil
+
+   //# file currently parsed
+   currentFile = ""
+
+   //# Txt parser used by many users.
+   txtParser = parser.faldoc.txt.Parser()
+
+
+   //# Application process
+   function go()
       try
-         hdir = Directory( basedir + "/" + dir ).descend( {=>}, {fname =>
-            for wildcard in inputWild
-               if strWildcardMatch( fname, wildcard )
-                  fileParse( fname )
-               end
-            end
-            })
-      catch IoError in err
-         raise "can't read directory \""+basedir + "/"+dir+"\" in input dirs."
+         self.processParams()
+         self.banner()
+         self.readConfig()
+         self.processInput()
+         self.processOutput()
+         
+      catch in e
+         self.fatal( e.toString() )
       end
    end
 
-   // parse extra files
-   extraFiles = conf.getMultiple( "Input.extra" )
-   for extra in extraFiles
-      fileParse( basedir + "/" + extra )
+   //=================================================================
+   // Process steps
+   //=================================================================
+   
+   function processParams()
+      // get minimal parameters
+      self.fdfile = args.len() == 0 ? "faldoc.fd" : args[0]
+   end
+   
+   function banner()
+      > i"faldoc - Falcon documentation tool."
+      > i"Part of the Falcon Programming language."
+      > i"Version ", version.name()
+      > "----------------------------------------"
    end
 
-   // Time to resolve links
-   LinkDB.resolve()
-   // and order data
-   EntityDB.complete()
+   function readConfig()
+      self.config = Config()
+      if not self.config.read( self.fdfile )
+         self.fatal( i"Errors in configuration" )
+      end
 
-   // we're done.
-   //for name, val in EntityDB.data: > name
+      if not self.config.inputDirs
+         self.fatal( i"Sorry, no input dirs" )
+      end
+   end
+
+   function processInput()
+      self.initDocument()
+      
+      cfg = self.config
+      doc = self.document
+      basedir = cfg.basedir
+      
+      for dir in cfg.inputDirs
+         // open the directory
+         drel = self.relativize( basedir, dir )
+         try
+            hdir = Directory( drel ).descend( {=>}, {fname =>
+               for wildcard in cfg.inputWild
+                  if strWildcardMatch( fname, wildcard )
+                     doc.addFile( fname )
+                  end
+               end
+               })
+         catch IoError in err       
+            raise "can't read directory \""+basedir + "/"+dir+"\" in input dirs."
+         end
+      end
+
+      // parse extra files
+      for extra in cfg.inputExtra
+         p = Path(extra)
+         if not p.fulloc.startsWith("/")
+            doc.addFile( basedir + "/" + extra )
+         else
+            doc.addFile( extra )
+         end
+      end
+
+      // ok, time to cleanup: resolve links
+      doc.resolveLinks()
+
+      // and check for undefined entities
+      doc.checkUndefined()
+   end
+
    
-end
+   function processOutput()
+      self.info( "=" * 60 )
+      
+      // create the compiler
+      compiler = Compiler()
 
-//================================================
-// Process Output
-//================================================
-function processOutput( doctree, conf )
+      conf = self.config.cfile
+      self.info( "Start processing output" )
 
-   // get the modules -- we know it's here, processConf checks it
-   outMods = conf.getMultiple("Output.module")
+      for mod in self.config.outMods
+         try
+            modData = compiler.loadByName( "self.output." + mod )
+            faldoc_output = modData.get( "faldoc_output" )
+            if not isCallable( faldoc_output )
+               raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
+            end
 
-   // determine the path of our modules
-   path = Path( scriptPath ).fulloc
-   if not path: path = "."
+            // perform call
+            faldoc_output( self.document, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
 
-   // create the compiler
-   compiler = Compiler( path )
+            // unload the module
+            modData.unload()
 
-   for mod in outMods
-      try
-         modData = compiler.loadByName( "self.output." + mod )
-         faldoc_output = modData.get( "faldoc_output" )
-         if not isCallable( faldoc_output )
-            raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
+         catch IoError in error
+            // signal an abnormal exit
+            raise "Cannot find or load module (faldoc_output_)"+mod
+         end
+         // let any other error through to be catched by the main try.
+      end
+   end
+   
+
+   function initDocument()
+      cfg = self.config
+      
+      doc = Document()
+      doc.title = cfg.title
+      doc.author = cfg.author
+      doc.version = cfg.version
+
+      self.document = doc
+   end
+
+   //=================================================================
+   // Utilities
+   //=================================================================
+
+   //# function to generate a fatal error
+   function fatal( error, line, file )      
+      self.display( 0, "FATAL - " + error, line, file )
+      exit(0)
+   end
+
+   //# function to generate an error
+   function error( e, line, file )
+      self.display( 1, "ERROR - " + e, line, file )
+      self.errorCount++
+   end
+
+   //# function to generate a warning
+   function warn( e, line, file )
+      self.display( 2, "WARN - " + e, line, file )
+      self.warnCount++
+   end
+
+   //# function to send an info
+   function info( i, line, file )
+      self.display( 3, i, line, file )
+   end
+
+   //# function to send an info
+   function verbose( i, line, file )
+      self.display( 4, i, line, file )
+   end
+
+   //# funciton to display an information message
+   function display( level, msg, line, file )
+      if level <= self.config.loglevel
+         if file
+            fmarker = file
+         elif self.currentFile
+            fmarker = self.currentFile
+         else
+            fmarker = ""
          end
 
-         // perform call
-
-         faldoc_output( doctree, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
-
-         // unload the module
-         modData.unload()
-
-      catch IoError in error
-         // signal an abnormal exit
-         raise "Cannot find or load module (faldoc_output_)"+mod
+         if line
+            fmarker += ":" + line
+         end
+         > "faldoc: ", fmarker, " ", msg
       end
-      // let any other error through to be catched by the main try.
    end
+
+   function result()
+      if self.warnCount or self.errorCount
+         self.info( "="*60 )
+
+         self.info( i"Detected " + self.warnCount + " warnings." )
+         
+         if self.errorCount
+            self.info( i"Terminating with " + self.errorCount + " errors." )
+            return 1
+         else
+            self.info( i"== Done ==" )
+         end
+      else
+         self.info( i"== Done ==" )
+         return 0
+      end
+   end
+
+   //# Eventually relativize a filename or directory name to basedir
+   function relativize( basedir, dir )
+      dpath = Path( dir )
+      if dpath.fulloc.startsWith("/")
+         return dir
+      else
+         return basedir + "/" + dir
+      end
+   end
+
+   /*# Determine module name based on base directory and root module directories.
+      @param file A full filename of a module, already relativized to basedir.
+   */
+   function calcModName( file )
+      cfg = self.config
+      basedir = cfg.basedir
+
+      // find a base directory that may be the root of our module
+      rootDir = self.findRootDir( basedir, cfg.moduleRoots, file ) 
+      // no luck? try with input dirs
+      if not rootDir: rootDir = self.findRootDir( basedir, cfg.inputDirs, file )
+
+      if rootDir: file = file[rootDir.len()+1:]
+      if file.endsWith( ".fal" ) or file.endsWith( ".ftd" )
+         file = file[0:-4]
+      end
+      return file.replace("/",".")
+   end
+
+   function findRootDir( basedir, roots, file )
+      for dir in roots
+         dr = self.relativize( basedir, dir )
+         if file.startsWith( dr )
+            return dr
+         end
+      end
+   end
+   
 end
+
+
+//================================================
+// Main code
+//================================================
+
+faldoc = Application()
+faldoc.go()
+return faldoc.result()
+
+
+// Export the global faldoc entity
+export faldoc
 
 /* end of faldoc */

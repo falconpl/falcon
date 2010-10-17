@@ -266,7 +266,7 @@
 		 TimeStamp instance are zeroed.
      - @b Object: When presenting any other object as an input field in a SQL statement, the Object.toString
                  method is applied and the result is sent to the database driver instead.
-		 
+
    The "string=on" option can be specified in the connection parameter or database handle option (see @a Handle.options) 
    to have
    all the results of the queries returned as string values, except for NULL and binary blobs, that are still
@@ -274,7 +274,7 @@
    natively and the extracted data should just be represented on output, or if the database engine provides
    some information that cannot be easily determined after the automatic Value-to-Item translation, this
    modality may be extremely useful.
-   
+
    @beginmodule dbi
 */
 

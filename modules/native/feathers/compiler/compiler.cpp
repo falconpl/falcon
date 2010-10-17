@@ -22,8 +22,7 @@
 */
 
 /*#
-   @module feather_compiler Compiler
-   @brief The Reflexive Compiler Module
+   @module compiler The Reflexive Compiler Module
 
    Falcon provides a reflexive compiler and module loader that allows scripts to
    load other falcon sources, pre-compiled modules or binary modules.
