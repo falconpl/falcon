@@ -25,6 +25,9 @@ class DocModule( name ) from Entity
    //# Missing entities as local ID -> link
    missing = [=>]
 
+   //# Main page of the module, if any
+   main = nil
+
    init
       self.name = name ? name : "Main module"
       self.type = "module"
@@ -45,19 +48,6 @@ class DocModule( name ) from Entity
       end
 
       return e
-   end
-
-   //# Groups the entities by type
-   function groupEntities()
-      data = [=>]
-      for e, entity in self.members
-         if entity.type in data
-            data[entity.type].add(entity)
-         else
-            data[entity.type] = [entity]
-         end
-      end
-      return data
    end
 
    //# Returns the meta-pages respecting their required order.
@@ -144,6 +134,15 @@ class DocModule( name ) from Entity
                faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined in $(self.name)", line, file )
             end
          end
+      end
+   end
+
+   function addMember( entity )
+      if entity.type == "main"
+         self.main = entity
+         self.title = entity.props["title"]
+      else
+         self.Entity.addMember( entity )
       end
    end
    

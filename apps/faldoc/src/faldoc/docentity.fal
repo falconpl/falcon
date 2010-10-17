@@ -287,7 +287,8 @@ class Entity( content, file, line )
                   self.type = "main"
                   self.props["title"] = node.infos["title"]
                   self.parent = module
-                  module.addMember( self )
+                  module.main = self
+                  module.title = node.infos["title"]
                   // this will turn us in the main for the given module at return.
                end
 
@@ -482,6 +483,20 @@ class Entity( content, file, line )
          v.dump( level + 1 )
       end
    end
+
+   //# Groups the entities by type
+   function groupEntities()
+      data = [=>]
+      for e, entity in self.members
+         if entity.type in data
+            data[entity.type].add(entity)
+         else
+            data[entity.type] = [entity]
+         end
+      end
+      return data
+   end
+
    
 end
 
