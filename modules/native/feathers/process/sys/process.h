@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: process_sys.h
 
-   System dependant module specifications for process module
+   System dependent module specifications for process module
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab mar 11 2006
@@ -14,7 +14,7 @@
 */
 
 /** \file
-   System dependant module specifications for process module
+   System dependent module specifications for process module
 */
 
 #ifndef flc_process_sys_H

@@ -30,8 +30,6 @@
 namespace Falcon { namespace Mod {
 
 
-namespace {
-
 struct Process::Impl
 {
    Sys::Process* process;
@@ -47,7 +45,6 @@ struct Process::Impl
    }
 };
 
-} // anonymous namespace
 
 
 Process::Process(CoreClass const* cls) :
@@ -69,9 +66,6 @@ Sys::Process* Process::handle()
 
 
 
-
-namespace {
-
 struct ProcessEnum::Impl
 {
    Sys::ProcessEnum*  processEnum;
@@ -87,7 +81,6 @@ struct ProcessEnum::Impl
    }
 };
 
-} // anonymous namespace
 
 
 ProcessEnum::ProcessEnum(CoreClass const* cls) :
