@@ -403,7 +403,7 @@ class QrSpec
 
                 if fileType(QrConfig.cache_dir) == FileStat.NOTFOUND
                     dirMake(QrConfig.cache_dir, true)
-                    fileChmod(QrConfig.cache_dir, 775)
+                    // fileChmod(QrConfig.cache_dir, 775)
                 end
 
                 if fileType(fileName) != FileStat.NOTFOUND
