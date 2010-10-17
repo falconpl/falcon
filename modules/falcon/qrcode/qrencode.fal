@@ -163,7 +163,9 @@ class QrCode
         frame = spec.newFrame(version)
 
         filler = QrFrameFiller(width, $frame)
-        if filler == nil; return nil; end
+        if filler == nil
+            raise QrError(QrError.encoding, "error creating frame filler")
+        end
 
         for i in [0:raw.dataLen + raw.eccLen]
             code = raw.getCode()
@@ -196,7 +198,9 @@ class QrCode
             masked = maskObj.makeMask(width, frame, mask, input.errorCorrectionLevel)
         end
 
-        if masked == nil; return nil; end
+        if masked == nil
+            raise QrError(QrError.encoding, "error masking frame")
+        end
 
         self._version = version
         self._width = width
@@ -334,7 +338,10 @@ class QrFrameFiller(width, frame /* ref */)
                     end
                 end
             end
+
             if x < 0 or y < 0; return nil; end
+                raise QrError(QrError.encoding, "error creating frame")
+            end
 
             self._x = x
             self._y = y
