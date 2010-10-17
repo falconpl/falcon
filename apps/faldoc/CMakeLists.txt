@@ -38,7 +38,7 @@ endif()
 
 #workaround for falpack shortcoming
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/faldoc/output
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/faldoc
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/faldoc/faldoc
 )
 
 configure_file(
