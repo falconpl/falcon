@@ -226,7 +226,7 @@ class QrCode
         end
 
         input = QrInput(version, errorCorrectionLevel)
-        QrSplit.splitStringToQrInput(string, input, mode, caseSensitive)
+        QrSplit.splitStringToInput(string, input, mode, caseSensitive)
 
         return self.encodeInput(input)
     end
