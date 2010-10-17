@@ -14,369 +14,491 @@
    See LICENSE file for licensing details.
 */
 
-load .utils
+import from struct.tree
 
-/*# Text entry type def*/
-class TextEntry( type, content )
-   type = type
-   /*# The content may be a string or another TextEntry, depending on type.
-      - type = "text": it's a text block.
-      - type = "p": it's a paragraph composed of many text entries (array of entities).
-      - any other type - it's a markup, and can contain more "text" entries
-   */
-   content = nil
-   lelem = nil
+/*# Entity class.
 
-   init
-      select content
-         case TextEntry
-            self.content = List( content )
+   A document entity is a single entry in the documentation
+   file. It can be a page, a section, a class, an object,
+   a function, a method, or in general any entity that can be
+   indexed and cross-linked.
 
-         case List
-            self.content = content
+   An entity is made of multiple paragraph and has multiple
+   properties. It's type and name cannot always be determied
+   at creation (actually, that is rare), and is usually
+   assigned after the whole entity documentation text have
+   been parsed.
 
-         case StringType
-            self.content = content
+   Entities can be hierarchically organized into different
+   relationship groups:
+   - parent - children; ownership relationship, like properties and methods for classes.
+   - group - members: Multiple grouping where each group can have a list of members, but
+     a member can be present in multiple groups.s
 
-         case NilType
-            return self
+   Parent-children relationships are described through a pair of property
+   (parent and children), while grouping is expressed through entries in
+   the @a self.props property (with the property "in<entity type>" => "<entity id>".
 
-         default
-            raise "Invalid content type in TextEntry: " + content.baseClass() + " from " + fself.caller()
-      end
-   end
-
-   /*#
-      Appends a text entry.
-      @param data A string to be appended or a TextEntry.
-   */
-   function append( data )
-      select data
-         case TextEntry
-            select self.content
-               case StringType, NilType
-                  self.content = List( TextEntry( "text", self.content ) )
-            end
-
-            self.content.push( data )
-            self.lelem = nil
-
-         case NilType
-            return
-
-         case StringType
-            if self.lelem == nil
-               select self.content
-                  case StringType
-                     self.content += data
-
-                  case NilType
-                     self.lelem = TextEntry( "text", data )
-                     self.content = List( self.lelem )
-                     
-                  case List
-                     self.lelem = TextEntry( "text", data )
-                     self.content.push( self.lelem )
-
-                  default
-                     raise "self.content of wrong type: " + self.content
-               end
-               return
-            end
-            
-            self.lelem.append( data )
-
-         default
-            raise "Invalid content type in TextEntry.append: " + data.baseClass() + " from " + fself.caller()
-      end
-   end
-
-   /*# Render this entry descending into the sub entries andca
-       passing each one to the renderer.
-
-       The renderer is a function returning a string.
-   */
-   function renderThrough( renderer )
-      select self.content
-         case List
-            val = ""
-            iter = self.content.first()
-            loop
-               elem = iter.value()
-               rnd = elem.renderThrough( renderer )
-               if rnd
-                  chr = rnd[0]
-                  val += (chr >= "0" and chr <="9" or chr >="A" and chr <="Z" or chr >= "a" and chr <="z") ?\
-                         " " +rnd : rnd
-               end
-               if not iter.next(): break
-               
-            end
-
-            return renderer( TextEntry( self.type, val ) )
-
-         default
-            return renderer( self )
-      end
-   end
-end
-
-/*# Special entry type def */
-class CodeEntry( language, content ) from TextEntry( "code", content )
-   language = language
-end
-
-/*# Special entry type def */
-class ChildEntry( parentType, type, content ) from TextEntry( type, content )
-   parentType = parentType
-end
-
-/*# Special entry type def */
-class ParentEntry( childType, type, content ) from TextEntry( type, content )
-   childType = childType
-end
-
-/*# Special entry type def */
-class ExtLinkEntry( href, text ) from TextEntry( "href", text )
-   href = href
-end
-
-class SectionEntry( id, level, title ) from TextEntry( "section", title )
-   id = id
-   level = level
-end
-
-/*# Unresolved link database. */
-object LinkDB
-   /*# Data to be resolved. */
-   data = List()
-
-   /*# Add an entry. */
-   function add( link )
-      if not link.derivedFrom( Link )
-         broadcast( "message", "Trying to add non-link entity to LinkDB \"" +
-                    link + "\" from: " + fself.caller() )
-         return
-      end
-
-      self.data.push( link )
-   end
-
-   /*# Try to resolve all the links, issuing a proper warning if impossible. */
-   function resolve()
-      for link in self.data
-         
-         if link.destination in EntityDB.data
-            link.target = EntityDB.data[link.destination]
-            // is the link correct?
-            if link.membership
-               // only different membership allowed is class -> object
-               if link.target.type != link.membership
-                  if link.membership != "class" or link.target.type != "object"
-                     broadcast( "error", link.source.file, link.line, "Link " +
-                              link.destination + " was considered a " + link.membership )
-                  end
-               end         
-               
-               // the system needs to know that the target class of the member
-               // is actually an object
-               if link.target.type == "object": link.source.props["object"] = true
-
-               if "members" notin link.target.props
-                  link.target.props["members"] = [ link.source.name => link.source ]
-               else
-                  link.target.props["members"][ link.source.name ] = link.source
-               end
-            end
-         else
-            broadcast( "error", link.source.file, link.line, "Can't resolve link to \"" + link.destination + "\"" )
-         end
-      end
-   end
-end
-
-/*#
-   A link between an entity and another one.
-   @param source The entity that is searching for the link.
-   @param line The line in file where the link is found.
-   @param destination The target item of the link.
-
-   If @b destination is a string, the link gets added to the
-   unresolved link database for later resolution.
-
-   Notice that the link is defined as a special (markup) text entry.
-   This allows to put the link inline to other paragraph-wide text
-   composition. The @b content property inherited from TextEntry
-   will be used as text for the final link if given; if not,
-   the string representation of this object will be the name
-   of the linked destination, if available. If not available,
-   this link will be represented as an undefined link and the source
-   data + line will be used to indicate where it is defined.
-*/
-class Link( source, line, destination ) from TextEntry( "link" )
-   source = source
-   line = line
-   destination = destination.typeId() == StringType ? destination: destination.name
-   target = destination.typeId() == StringType ? nil: destination
-   membership = nil
-
-   init
-      LinkDB.add( self )
-   end
-
-   function toString()
-      if self.target
-         return self.content ? self.content : self.target.toString()
-      end
-
-      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
-   end
-
-   function describe()
-      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
-   end
-end
-
-
-/*#
-   Document generic entity.
-
-   The exact entity is defined by the type, which matches a prototype
-   in the @a prototypes table, and a the characteristics, which are
-   filled throught the prototype table.
+   The @a self.props property contains many important elements, as the parameters.
+   Parameters entry (under props
 */
 
-class DocEntity( parent )
-   /*# Filename where the entity is coming from. */
-   file = nil
-   /*# First line of comment declaration of the entity. */
-   firstline = nil
-   /*# Line at which the entity is defined at language level (if any). */
-   dline = nil
-   /*# Content block; temporarily stored here for second-level parsing. */
-   cblock = nil
-   /*# Type of the entity. */
+class Entity( content, file, line )
+
+   //# Type of the entity
    type = nil
    /*# Local name of the entity. */
    name = nil
+   /*# Filename where the entity is coming from. */
+   file = file
+   
+   /*# First line of comment declaration of the entity. */
+   firstline = line
 
-   /*# Is this entity created out of a real language construct?. */
-   hard = false
+   /*# Line at which the entity is defined at language level (if any). */
+   dline = nil
 
-   /*# Entity-type specific properties.
-      Each entry is generally composed of a content list (a sequence of TextEntry items). Some
-      entries, as "module", can contain a direct reference to another item via a single
-      Link entry (which, anyhow, is derived from TextEntry).
-   */
-   props = [=>]
+   props = bless([=>])
 
-   /*# TextEntry of type "entity" containing a set of paragraphs.. */
-   content = nil
-
-   /*# Next entitiy.
-
-      Some entities can be chained. Mainly page-level entities can contain
-      sections and subsections. Those exist as entities, but they are not
-      independent; they are add as children entities.
-   */
-   next = nil
-
-   /** Parent entity.
-      This get a value only in sub-entities (i.e. page sections).
-   */
+   //# Parent of this entity
    parent = nil
 
+   /*# Parsed content.
+      Documentation of the entity parsed as an infonode.
+   */
+   pcontent = nil
+
+   //# Textual (unparsed) content. For debugging and reference
+   content = content
+
+   //# Non-child members (for entities with grouping abilities)
+   members = nil
+
+   //# True when this entity was created because of a supposed reference
+   automatic = false
+
+   //# used to determine if an empty entity should be marked as an error
+   hadSimple = false
+
+   //# used to determine if an empty entity should be marked as an error
+   hadComplex = false
+
+   //# after -- an ID (local to the owner module) for a page-entity to be placed after.
+   after = nil
+
+   id = 0
+   static lid = 0
+   
    init
-      if parent
-         parent.addChild( self )
+      self.id = self.lid++
+   end
+   
+   //# Copy an existing entity
+   function declareAs( other )
+      self.type = other.type
+      self.file = other.file
+      self.firstline =  other.firstline
+      self.dline = other.dline
+      self.props = other.props
+      self.pcontent = other.pcontent
+      self.content = other.content
+      self.after = other.after
+      if other.members
+         if self.members
+            self.members += other.members
+         else
+            self.members = other.members
+         end
+      end
+      self.automatic = false
+   end
+
+   //# Calculates the unique ID of this node.
+   function getID()
+      if self.parent
+         id = self.parent.getID()
+         if id: return id + "." + self.name
+      end
+
+      return self.name == "Main module" ? "" : self.name
+   end
+
+   function getName()
+      if "owner" in self.props
+         return self.parent.name + "." + self.name
+      else
+         return self.name
       end
    end
 
-   function addChild( entity )
-      if self.next == nil
-         self.next = []
-      end
-      self.next += entity
-      entity.parent = self
+   /*# Processess the commands in the parsed content block.
+      @param onGroupingChange callback receiving line, command and name in case of grouping commands.
+      @param entityAdder A callable that will be called back if the parser finds something to be added.
+      @return false if this entity is actually a set of document-wide command and should not be considered
+              a real document entity.
+              
+              
+      @note Interesting commands are at top level. Everything else (inline commands)
+      is expanded by the generic parser into DOM entities or is made to "stand out".
+   */
+   function parseContent( onGroupingChange, entityAdder )
+      self.parseNodeContent( self.pcontent.topNode.firstChild, onGroupingChange, entityAdder )
    end
 
-end
+   function parseNodeContent( node, onGroupingChange, entityAdder )
+   
+      while node != nil
+         
+         // go deep before proceeding
+         if node.firstChild
+            self.parseNodeContent( node.firstChild, onGroupingChange, entityAdder )
+         end
 
-/*# Database of all the defined entities. */
-object EntityDB
-   /*# All the data, organized by unique ID */
-   data = [=>]
+         line = (node provides infos) ? (node.infos["line"] + self.firstline - 1) : self.firstline
 
-   /*# All the data, organized by type -> list of entities. */
-   grouping = [=>]
+         hadSimple = false
+         hadComplex = false
+         //> "Node ", node.parent.type + "." + node.type + (node provides infos and "name" in node.infos ? ": " + node.infos["name"] : "")
+         switch node.type
+            case "@a"
+               l = faldoc.document.addLink( self, line, node.infos["dest"], true )
+               node.infos["link"] = l
+               node = node.next
 
-   /*# Data in function sets. */
-   sets = [=>]
+            case "@after"
+               self.after = node.infos["dest"]
+               node = node.remove()
+               
+            case "@raise", "@from", "@see"
+               l = faldoc.document.addLink( self, line, node.infos["what"], node.type == "@see" )
+               // we trick the system a bit and send a link instead of a name here.
+               // however, it's ok and wors as expected
+               self.addParam( node.type[1:], l, node, line )
+               node = node.remove()
+               hadComplex = true
+               
+            case "@brief", "@return"
+               type = node.type[1:]
+               if type in self.props
+                  faldoc.error( @i"Command @$type already declared for entity", line )
+               else
+                  self.props[ type ] = node
+               end
+               node = node.remove()
+               hadComplex = true
 
-   /*# Data in groups. */
-   groups = [=>]
+            case "@param", "@optparam"
+               self.addParam( node.type[1:], node.infos["name"], node, line )
+               node = node.remove()
+               hadComplex = true
 
-   /*# Data in modules. */
-   modules = [=>]
+            case "@prop"
+               // simple declaration of class properties
+               prop = Entity( "", self.file, line )
+               prop.type = "property"
+               prop.name = node.infos["name"]
+               prop.pcontent = self.pcontent.baseClass()()
+               prop.props["owner"] = self.name
 
-   function add( entry )
-      if not entry.derivedFrom( DocEntity )
-         broadcast( "error", "Trying to add non-entity to EntityDB \"" +
-               entry + "\" from: " + fself.caller() )
+               n1 = node.remove()
+               node.prev = node.next = node.parent = nil
+               node.type = "para"
+               prop.pcontent.add( node )
+               
+               prop.parseContent( onGroupingChange, entityAdder )
+               entityAdder( prop )
+               node = n1
+               hadComplex = true
+
+            case "@inset", "@ingroup"
+               if "inset" in self.props or "ingroup" in self.props
+                  faldoc.error( "Grouping option already declared for this entity", line )
+               else
+                  self.props[node.type[1:]] = node.infos["name"]
+               end
+               node = node.remove()
+               hadComplex = true
+            
+            case "@inmodule"
+               if self.parent
+                  faldoc.error( "Parent already declared for entity \"$name\"", line)
+               else
+                  self.parent = faldoc.document.getModule( node.infos["name"] )
+               end
+               node = node.remove()
+               hadComplex = true
+
+            case "@begingroup", "@beginset", "@beginmodule"
+               onGroupingChange( line, node.type, node.infos["name"] )
+               node = node.remove()
+               hadSimple = true
+               
+            case "@endgroup", "@endset", "@endmodule"
+               onGroupingChange( line, node.type, nil )
+               node = node.remove()
+               hadSimple = true
+               
+            // we have the type defined!
+            case "@class", "@function", "@object", "@enum", "@global"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               node = node.remove()
+               hadComplex = true
+
+            case "@method", "@property"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               self.props["owner"] = node.infos["class"]
+               node = node.remove()
+               hadComplex = true
+
+            case "@page"
+               self.name = node.infos["name"]
+               self.type = "page"
+               self.props[ "title" ] = node.infos["title"]
+               node = node.remove()
+               hadComplex = true
+
+            case "@group", "@funset"
+               self.name = node.infos["name"]
+               self.type = node.type[1:]
+               self.props[ "title" ] = node.infos["title"]
+               node = node.remove()
+               hadComplex = true
+
+            case "@main"
+               self.name = "#main"
+               self.type = "main"
+               self.props["title"] = node.infos["title"]
+               node = node.remove()
+               hadComplex = true
+
+            case "@module"
+               name = node.infos["name"]
+               module = faldoc.document.getModule( name )
+               if not module: return
+               if not module.automatic
+                  // someone already created it.
+                  faldoc.error( @i"Module $(name) already created", line )
+               else
+                  module.automatic = false
+                  // if it's automatic, it can't have a main page.
+                  self.name = "#main"
+                  self.type = "main"
+                  self.props["title"] = node.infos["title"]
+                  self.parent = module
+                  module.main = self
+                  module.title = node.infos["title"]
+                  // this will turn us in the main for the given module at return.
+               end
+
+               self.props["title"] = node.infos["title"]
+               node = node.remove()
+               hadComplex = true
+
+            case "cmd_unrecognized"
+               command = node.infos["cmd"]
+               faldoc.error( @i"Unrecognized command \"$command\"", line )
+               node = node.remove()
+
+            default
+               node = node.next
+         end
+      end
+
+      if hadComplex: self.hadComplex = true
+      if hadSimple: self.hadSimple = true
+   end
+
+
+   /*# Indicates if this entity just contained file-level commands.
+
+      If true, then it is not an error if this entity results empty after parsing.
+
+      It means that it was there just as a place where to call this commands, and was
+      not intended to create an entity that was left undefined.
+   */
+   function wasASimpleCommand()
+      return self.hadSimple and not self.hadComplex
+   end
+      
+
+   //# Adds a parameter or similar multiple entry in properties.
+   function addParam( type, name, content, line )
+
+      // First, a special control for parameters and optional parameters which relate to each other
+      if type == "param" and "optparam" in self.props and arrayScan( self.props["optparam"], {elem => elem[0] == name} ) >= 0
+         faldoc.error( @i"Parameter \"$name\" of type already declared as optparam", line )
+         return
+      elif type == "optparam" and "param" in self.props and arrayScan( self.props["param"], {elem => elem[0] == name} ) >= 0
+         faldoc.error( @i"Optional parameter \"$name\" of type already declared as parameter", line )
          return
       end
 
-      if not entry.name
-         broadcast( "error", entry.file, entry.firstline, "Entry declared at this line has no ID." )
-         return
+      // the add the property
+      if type in self.props
+         vt = self.props[type]
+
+         if arrayScan( vt, {elem => elem[0] == name} ) >= 0
+            faldoc.error( @i"Property \"$name\" of type \"$type\" already declared", line )
+         else
+            vt.add( [name, content] )
+         end
+      else
+         self.props[type] = [[name, content]]
+      end
+      
+   end
+
+   //# Adds a parameter declared in the function prototype
+   function addFoundParam( name, content, line )
+      vtp = "param" in self.props ? self.props["param"] : nil
+      vto = "optparam" in self.props ? self.props["optparam"] : nil
+
+      foundParam = vtp and arrayScan( vtp, {elem => elem[0] == name} ) != -1
+      foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) != -1
+
+      if not foundParam and not foundOpt
+         faldoc.warn( @i"Formal parameter \"$name\" not referenced in text block", line )
+         self.addParam( "param", name, nil, line )
+      end
+   end
+
+   //# adds an entity to this entity
+   function addMember( entity )
+      if not entity.name
+         faldoc.fatal( @i"Adding an unknown entity to its parent $self.name", entity.firstline )
       end
 
-      if not entry.type
-         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name + " has no type." )
-         return
-      end
-
-      if "brief" notin entry.props
-         try
-            if prototypes.find( "type", entry.type, "brief")
-               broadcast( "error", entry.file, entry.firstline, "Entry has no 'brief' description." )
+      faldoc.verbose( @i"Adding entity $entity.name to $self.name", entity.firstline )
+      
+      if entity.name in self.members
+         // entity already declared; but -- is this an automatic definition?
+         if entity.automatic
+            // strange; we should have taken the real entity
+            faldoc.error( @i"Entity \"$entity.name\" referenced as automatic but was already declared in \"$self.name\"", entity.firstline )
+            > fself.stack()
+         else
+            // Was the previously declared entity automatic?
+            preve = self.members[ entity.name ]
+            if preve.automatic
+               // warn if found with different type
+               if preve.type != nil and preve.type != entity.type
+                  faldoc.warn( @i"Entity \"$entity.name\" was referenced in \"$self.name\" with different type: ($preve.type)", entity.firstline )
+               end
+               // but go on the same.
+               preve.declareAs( entity )
+            else
+               // a real error -- two entities explictly declared with the same name.
+               faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
             end
          end
-         // but let it through
-      end
 
-      if entry.name in self.data
-         other = self.data[entry.name]
-         broadcast( "error", entry.file, entry.firstline, "Entry with ID " + entry.name +
-                     @" already existing at $(other.file):$(other.firstline)" )
+         // in either case
          return
       end
 
-      self.data[ entry.name ] = entry
-      extendList( self.grouping, entry.type, entry )
+      // add the entity
+      if not self.members: self.members = [=>]
+      self.members[entity.name] = entity
+   end
 
-      // resolve grouping links
-      if "ingroup" in entry.props
-         for link in entry.props["ingroup"]
-            extendList( self.groups, link.destination, entry )
+   //# Returns all the members of this entity grouped by their type.
+   function membersByType()
+      data = [=>]
+      for name, member in self.members
+         if member.type in data
+            data[member.type].add( member )
+         else
+            data[member.type] = [member]
+         end
+      end
+      return data
+   end
+
+   function getPropsAndMethods()
+      props = []
+      methods = []
+      for m,v in self.members
+         if v.type == "property"
+            props += v
+         else
+            methods += v
+         end
+      end
+      return [props, methods]
+   end
+
+
+   function prototype()
+      pars = ""
+      if "param" in self.props
+         pars = ", ".merge(map( {x=> x[0]}, self.props["param"]))
+      end
+      if "optparam" in self.props
+         if pars: pars += ", "
+         pars += ",".merge( map( {x=> "[" + x[0] + "]"}, self.props["optparam"]) )
+      end
+
+      name = self.getName()
+      if pars
+         return name + "( " + pars + " )"
+      else
+         if self.type == "function" or self.type == "method"
+            return name + "()"
+         else
+            return name
+         end
+      end
+   end
+
+   
+   function getDescendant( tgtname )
+      pt = tgtname.find( "." )
+      if pt > 0
+         name = tgtname[0:pt]
+         rest = tgtname[pt+1:]
+      else
+         name = tgtname
+         rest = nil
+      end
+
+      if name in self.members
+         child = self.members[name]
+         if rest
+            return child.getDescendant( rest )
+         else
+            return child
          end
       end
 
-      if "inset" in entry.props
-         extendList( self.sets, entry.props["inset"].destination, entry )
-      end
+      // no luck
+      return nil
+   end
 
-      if "inmodule" in entry.props
-         extendList( self.modules, entry.props["inmodule"].destination, entry )
+   function dump( level )
+      if not level: level = 0
+      > " " * level, self.id, " ", self.type, " ", self.name, " - ", self.file, ":", self.firstline
+      for n, v in self.members
+         v.dump( level + 1 )
       end
    end
 
-   function complete()
-      for k,row in self.grouping: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.sets: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.groups: arraySort( row, { a,b => a.name.compare( b.name ) } )
-      for k,row in self.modules: arraySort( row, { a,b => a.name.compare( b.name ) } )
+   //# Groups the entities by type
+   function groupEntities()
+      data = [=>]
+      for e, entity in self.members
+         if entity.type in data
+            data[entity.type].add(entity)
+         else
+            data[entity.type] = [entity]
+         end
+      end
+      return data
    end
+
+   
 end
+
 
 export

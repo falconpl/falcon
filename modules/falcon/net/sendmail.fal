@@ -7,7 +7,24 @@ import from socket
 const pServer = "localhost"
 const pHelo = "siteclient"
 
-function postMail( pFrom, pAddress, pSubject, pBody )
+//# @module modname Single Line comment test
+//# This shall go on the same single comment line.
+//# and this too.
+
+/*# @main The sendmail module
+   This cute module has all you need to send a mail.
+*/
+
+/*#############################
+ *  Function to send a mail text.
+ *  
+ *  @param pFrom Sender of the mail
+ *  @param pAddress Where to send the mail
+ *  @param pSubject the subject of the mail to be sent
+ *  @param pBody Body of the mail
+ ******************************************/
+
+function postMail  ( pFrom, pAddress, pSubject, pBody )
    // disabling debug
    print = function(); end
    printl = function(); end

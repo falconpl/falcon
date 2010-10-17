@@ -382,7 +382,8 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
                .sysError( error )
                );
          }
-         origUri.path( curdir + "/" + origUri.path() );
+
+         origUri.pathElement().setFullLocation( curdir + "/" + origUri.pathElement().getFullLocation() );
       }
    }
    else

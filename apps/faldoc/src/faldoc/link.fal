@@ -1,0 +1,66 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: link.fal
+
+   Autodocumentation tool - Hypotetical or effective link between
+   document entities.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 30 Sep 2010 19:07:41 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+/*#
+   A link between an entity and another one.
+   @param source The entity that is searching for the link.
+   @param line The line in file where the link is found.
+   @param destination The target item of the link.
+   @optparam explicit When true, the system will complain if not resolved.
+
+   The link is created when a Generic Parser InfoNode of the proper type
+   ("a") is found, or automatically when some other entities
+   are parsed (i.e. "from" inheritance InfoNodes, "see" InfoNodes, "raise" and so on).
+
+   The link is then added to the infonode as a "link" property, with one end
+   referencing the entity where the infonode is located (source), and the other
+   referencing a destination.
+
+   If the destination exists when the link is created, it is immediately
+   referenced.
+
+   If it doesn't exist, an entry in the @a EntityDB.missing property is created,
+   and the link is stored as the value of the missing dictionary, while the
+   expected unique ID is set both as the destination of the link and as the
+   key of the missing dictionary.
+
+   When a new entity arrives, it is checked against the missing dictionary, and
+   if a link is found there, the @a Link.target field gets referenced.
+*/
+class Link( source, line, destination, explicit )
+   source = source
+   line = line
+   destination = destination
+   explicit = explicit
+
+   target = nil
+
+   function toString()
+      if self.target
+         return self.target.toString()
+      end
+
+      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
+   end
+
+   function describe()
+      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
+   end
+end
+
+export

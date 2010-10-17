@@ -14,197 +14,823 @@
    See LICENSE file for licensing details.
 */
 
-load .tpl
-load .html_handlers
+import from web.htmaker in ht
+import from parser.render.html in render
+import from struct.tree in tree
+
+// global location for our generator
+_generator = nil
+
+
+//# A page in our final documentation
+//# The content may be a single entity 
+class Page(title, file, master_entity ) from tree.Node
+   content = master_entity
+   title = title
+   file = file
+
+   doc = nil
+   stream = nil
+
+   //# open this page
+   function openDoc()
+      file = OutputStream( _generator.directory + "/" + self.file )
+      file.setEncoding( _generator.encoding )
+      self.stream = file
+      self.doc = _generator.htframe()
+      self.doc.html.head = self.makeHead( _generator.doc.title, self.title )
+   end
+
+   //#close this page
+   function closeDoc()
+      self.doc.render( self.stream )
+      self.stream.close()
+   end
+   
+   function makeHead( category, itemName )
+      title = category + itemName ? " - " + itemName : ""
+
+      return ht.Head().add(
+         ht.Meta( nil, @"text/html;charset=\"$(_generator.encoding)\"", "Content-type" ),
+         ht.Link( "faldoc.css", "stylesheet", "text/css"),
+         ht.Title( title ))
+   end
+
+   //# To be overridden by subclasses
+   function makeBody( body )
+      body.add( ht.P().add( "Unknown page type. You must override this page." ) )
+   end
+
+   //# To be called to make this page
+   function make()
+      self.openDoc()
+      
+      body = ht.Body().CLASS("faldoc")
+      navi = self.makeNavi()
+      navi.CLASS( "navi_top" )
+      body.add( navi )
+
+      self.makeBody( body )
+
+      navi = navi.clone()
+      navi.CLASS( "navi_bottom" )
+      body.add( navi )
+      
+      self.doc.html.body = body 
+      self.closeDoc()
+   end
+
+   //# Creates the navigation div
+   function makeNavi()
+      div = ht.Div()
+
+      if self.prev
+         self.makeNaviItem( div, self.prev, "prev" )
+      elif self.parent
+         self.makeNaviItem( div, self.parent, "prev" )
+      end
+
+      // top node
+      node = self.parent
+      while node and node.parent
+         node = node.parent
+      end
+
+      if node
+         self.makeNaviItem( div, node , "top" )
+      end
+
+      // up node
+      if self.parent and self.parent != node
+         self.makeNaviItem( div, self.parent, "up" )
+      end
+
+      // next node
+      if self.firstChild
+         self.makeNaviItem( div, self.firstChild, "next" )
+      elif self.next
+         self.makeNaviItem( div, self.next, "next" )
+      else
+         node = self.parent
+         while node and not node.next
+            node = node.parent
+         end
+
+         if node
+            self.makeNaviItem( div, node.next, "next" )
+         end
+      end
+
+      return div
+   end
+
+   function makeNaviItem( div, page, cls )
+      desc = page.title
+      if desc.len() > 36: desc = desc[0:34] + "..."
+      div.add( ht.Div().CLASS(cls).add(ht.A( page.file, desc ) ) )
+   end
+   
+   
+end
+
+
+class IndexPage( mainPage ) from Page( i"Table of contents", "index.html", mainPage )
+
+   function makeBody( body )
+      
+      body.add( ht.H1( _generator.doc.title ) )
+
+      // the main module is not required to have a main description.
+      if self.content
+         body.add( ht.H2( self.content.props["title"] ) )
+         body.add( _generator.makeContent( self.content ) )
+      end
+         
+      body.add( ht.H2( self.title ) )  // table of contents
+         
+      // all the other pages must be our childern.
+      itemList = ht.OL()
+      self.addChildren( self.firstChild, itemList )
+
+      body.add( itemList )
+   end
+
+
+   function addChildren( node, itemList )
+      while node != nil
+         li = ht.LI().add( ht.A( node.file, node.title ) )
+
+         /*member = self.content
+         if member and "brief" in member.props
+            brief = _generator.renderContent(member.props["brief"])
+            if brief: li.add( " - " ).add( ht.Verbatim( brief ) )
+         end
+         */
+         
+         // do we have subitems?
+         if node.firstChild
+            il1 = ht.OL()
+            self.addChildren( node.firstChild, il1 )
+            li.add( il1 )
+         end
+
+         itemList.add( li )
+         node = node.next
+      end
+   end
+
+end
+
+
+class GroupingPage( entity ) from Page( entity.props["title"], _generator.getFileName(entity), entity )
+
+   function makeBody( body )
+      entity = self.content
+      faldoc.verbose( @i"Making page $(entity.type) $(entity.name)" )
+      title = self.title
+
+      body.add(
+         ht.H1( title ),
+         _generator.makeBrief( entity ),
+         _generator.makeContent( entity )
+         )
+
+      if entity.members
+         members = entity.membersByType()
+
+         // Create the entities using a consistent order.
+         for type, listName, ename in _generator.moduleOrder
+            if type in members
+               mlist = members[type]
+               body.add( ht.H2( listName ) )
+
+               // if the entity is heavy, just place a link
+               if ename
+                  elemList = ht.UL().CLASS("memberlist")
+                  for entity in mlist
+                     elemList.add( _generator.makeMemberLink( entity ) )
+                  end
+                  body.add( elemList )
+               else
+                  // it's light. Add the entities.
+                  for entity in mlist
+                     _generator.makeIntraPageMember( body, entity )
+                  end
+               end
+            end
+         end
+      end
+
+      // see also...
+      if "see" in entity.props
+         body.add( _generator.makeSeeAlso( entity.props["see"] ) )
+      end
+   end
+
+end
+
+
+class ObjectoidPage( entity, typeName, proto ) from Page( typeName + " " + entity.name, _generator.getFileName(entity), entity )
+   typeName = typeName
+   proto = proto
+   
+   function makeBody( body )
+      entity = self.content
+      faldoc.verbose( @i"Making objectoid $(entity.type) $(entity.name)" )
+
+      body.add(
+            ht.H1( self.title ),
+            _generator.makeBrief( entity ) )
+
+      if self.proto
+         _generator.makePrototype( body, entity, self.typeName )
+      end
+
+      body.add( _generator.makeContent( entity ) )
+
+      if entity.members
+         members = entity.membersByType()
+         // we know we have at least a member, so we have a table.
+         body.add( _generator.makePropsTable( members ) )
+         // then print the properties and the methods.
+         // make the property list
+         if "property" in members
+            faldoc.verbose( @i"Making properties of objectoid $(entity.type) $(entity.name)" )
+            body.add( ht.H2( i"Properties" ) )
+            for prop in members["property"]
+               _generator.makeIntraPageMember( body,  prop )
+            end
+         end
+
+         // then print the properties and the methods.
+         // make the property list
+         if "method" in members
+            faldoc.verbose( @i"Making methods of objectoid $(entity.type) $(entity.name)" )
+            body.add( ht.H2( i"Methods" ) )
+            for prop in members["method"]
+               _generator.makeIntraPageMember( body,  prop )
+            end
+         end
+      end
+
+      // see also...
+      if "see" in entity.props
+          body.add( _generator.makeSeeAlso( entity.props["see"] ) )
+      end
+   end
+
+end
+
+
+class ModulePage( module ) from IndexPage( module )
+   // override indexpage defaults.
+   title = module.title ? module.title : "Module" + " " + module.getID()
+   file = _generator.getFileName( module )
+
+   function makeBody( body )
+
+      body.add( ht.H1( self.title ) )
+      // add the module definition if we have an explicit module
+      if self.content.title
+         body.add( ht.P().CLASS("moddef").add( i"Module" + " " + self.content.getID() ) )
+      end
+
+      // Submodules may have a description that we shoudl put here.
+      if self.content.main
+         body.add( _generator.makeContent( self.content.main ))
+      end
+
+      body.add( ht.H2( i"Contents of this module" ) )  // table of contents
+
+      // all the other pages must be our childern.
+      itemList = ht.OL()
+      self.addChildren( self.firstChild, itemList )
+
+      body.add( itemList )
+   end
+end
+
+
+class MetaPage( title, file, entity_list ) from Page( title, file, entity_list )
+
+   function makeBody( body )
+      entlist = self.content
+      body.add( ht.H1( self.title ) )
+      
+      for ent in entlist
+         _generator.makeIntraPageMember( body, ent )
+      end
+
+      return body
+   end
+end
+
+
+class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html", doc )
+
+   function makeBody( body )
+      faldoc.info( i"Making alphabetical index page." )
+
+      dict = [=>]
+      self.makeAlpha( self.content, dict )
+      for modname, module in self.content.getAllModules()
+         self.makeAlpha( module, dict )
+      end
+
+      body.add( ht.H1() )
+
+      // ok, for each letter of the alphabeth...
+      for letter, entlist in dict
+         body.add( ht.H3( letter ).CLASS("alpha") )
+         para = ht.P().CLASS("alpha")
+         for name, entity in entlist
+            para.add( ht.A( _generator.getLinkName( entity ), name) )
+            para.add( ", " + @i"$(entity.type)" )
+            if "ingroup" in entity.props
+               group = entity.parent.members[entity.props["ingroup"]]
+               para.add( " " + i"in group" + " ")
+               para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
+            end
+            if "inset" in entity.props
+               group = entity.parent.members[entity.props["inset"]]
+               para.add( " " + i"in set" + " ")
+               para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
+            end
+            para.add(ht.BR())
+         end
+         body.add( para )
+      end
+   end
+
+   function makeAlpha( module, dict )
+      for name, entity in module.members
+         initial = name[0].upper()
+         if initial in dict
+            dict[initial] += [entity.name => entity]
+         else
+            dict[initial] = [entity.name => entity]
+         end
+      end
+   end
+end
+
 
 // The faldoc_output function must be provided by all output modules
 function faldoc_output( doctree, conf )
-   global html_config
-   global html_tree
-   global html_current_module
-
-   > "------------------------------------------------------"
-   > "  HTML Module started"
-   > "------------------------------------------------------"
-
-   html_tree = doctree
-   html_config = conf
-
-   for k,v in conf: > k,"=",v
-   > "Title: ", doctree.title
-   > "Author: ", doctree.author
-   > "Version: ", doctree.version
-   
-
-   // Arbitrary properties
-   for prop, value in doctree.properties: > "Prop ", prop, ": ", value
-
-   // set some config default
-   resdir = getAssert( "resdir" )
-   if resdir and resdir[-1] != "/": resdir += "/"
-   
-   if "directory" notin html_config: html_config["directory"] = "html"
-   if "url" notin html_config: html_config["url"] = "."
-   if "doctitle" notin html_config: html_config["doctitle"] = doctree.title
-   if "style" notin html_config: html_config["style"] = resdir + "faldoc.css"
-   if "header" notin html_config: html_config["header"] = resdir + "header.tpl"
-   if "footer" notin html_config: html_config["footer"] = resdir + "footer.tpl"
-   if "listing" notin html_config: html_config["listing"] = resdir + "entity_listing.tpl"
-   if "fulllist" notin html_config: html_config["fulllist"] = resdir + "entity_fulllist.tpl"
-   if "detail" notin html_config: html_config["detail"] = resdir + "entity_detail.tpl"
-   if "pagetpl" notin html_config: html_config["pagetpl"] = resdir + "entity_page.tpl"
-   
-   // we'll need this around
-   assert( "html_url", html_config["url"] + "/" )
-
-   // start creating the file tree
-   tgdir = html_config["directory"]
-   if not tgdir or tgdir[0] != "/"
-      tgdir = doctree.basedir + "/" + tgdir
-   end
-
-   > "Target: ", tgdir
-   > "--------------------------"
-   >
-
-   // style can be empty if the user doesn't want it.
-   if not prepareDir( tgdir, [
-            html_config["style"],
-            resdir + "tabs.css",
-            resdir + "tab_l.gif",
-            resdir + "tab_b.gif",
-            resdir + "tab_r.gif" ]
-            )
-      return
-   end
-
-   // prepare the template data
-   try
-      > "Reading templates..."
-      rnd = Renderer( html_config, doctree, tgdir )
-      > "Template parsing succesful"
-   catch TplError in e
-      msg = ""
-      for error in e.errlist: msg += error + "\n"
-      broadcast( "message", "FATAL: Pasrsing error while parsing templates: \n" + msg )
-      return
-   catch in e
-      broadcast( "message", "FATAL: while parsing templates: \n" + e )
-      return
-   end
-
-   try
-      rnd.makePages()
-   catch IoError in err
-      broadcast( "message", "FATAL: \n" + e )
-   end
-   
-   > "------------------------------------------------------"
-   > "  HTML Module complete"
-   > "------------------------------------------------------"
+   global _generator
+   (_generator = HTMLGenerator( doctree, conf )).go()
 end
 
-function prepareDir( tgdir, resources )
-   global html_config
+function _htmlEscape( string )
+   return string.replace( "&", "&amp;" ).replace( "<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+end
 
-   try
-      dirMake( tgdir, true )
-   catch IoError
-      broadcast( "message", "Cannot create output directory " + tgdir )
-      return false
+class FaldocHtmlRenderer() from render.Renderer()
+   level = 0
+   
+   init
+      self.renderers += [
+         "@section" => self.renderSection,
+         "@note" => self.renderNote,
+         "@a" => self.render_a
+      ]
    end
 
-   // the style can be empty if the user doesn't want it
-   for file in resources
-      tgFile = tgdir + "/" + fileName(file)
-      try
-         fileCopy( file, tgFile )
-      catch IoError
-         broadcast( "message",  "Cannot copy stilesheet document: " + file + " to " + tgFile )
+/*
+   function render( context )
+      content = self.rcont( context.topNode )
+      return content
+   end
+*/
+
+   function renderSection( node )
+      hl = self.level + 2
+      title = _htmlEscape(node.infos["title"])
+      link = strEscape(node.infos["name"])
+      
+      prefix = @"<h$(hl)><a name=\"$(link)\">$(title)</a></h$(hl)>\n"
+      ++self.level
+      content = self.rcont(node)
+      --self.level
+
+      // the level will be closed when necessary
+      return prefix + content
+   end
+
+   function renderNote( node )
+      content = self.rcont( node )
+      return i"<b>Note:</b> "+ content + "\n"
+   end
+
+   function render_a( node )
+      l = node.infos["link"]
+      return HTMLGenerator.makeLink( l )
+   end
+
+end
+
+
+class HTMLGenerator( doctree, conf )
+   doc = doctree
+   conf = bless(conf)
+   basedir = faldoc.config.basedir
+   directory = "directory" in conf ? conf["directory"] : nil
+   htmltitle = "title" in conf ? conf["title"] : doctree.title
+   baseurl = "url" in conf ? conf["url"] : nil
+   encoding = "encoding" in conf? conf["encoding"] : "utf-8"
+
+   _rndr = FaldocHtmlRenderer()
+   //htframe = ht.TransitionalFrame
+   htframe = ht.XHTMLFrame
+
+   //# represents the section order
+   moduleOrder =  .[
+      .["object" i"Objects" i"Object"]
+      .["class" i"Classes" i"Class"]
+      .["function" i"Functions" ""]
+      .["global" i"Variables" "" ]
+      .["enum" i"Enumerations" i"Enum"]
+      .["message" i"Messages" ""]
+   ]
+   
+   
+   function go()
+      faldoc.info( "=" * 60 )
+      faldoc.info( "HTML Generator module started." )
+      
+      if not self.directory
+         faldoc.error( i"html output - Missing mandatory parameter \"directory\"" )
          return false
       end
-   end
-   
-   return true
-end
+      
+      fpath = Path()
+      fpath.fulloc = self.directory
+      if not fpath.fulloc.startsWith("/")
+         self.directory = self.basedir + "/" + self.directory
+      end
 
+      faldoc.info( "html output - Writing to " + self.directory )
 
-class Renderer( config, doctree, tgdir )
-   tplHeader = TplExpander()
-   tplFooter = TplExpander()
-   tplListing = TplExpander()
-   tplDetails = TplExpander()
-   tplPage = TplExpander()
-   tplFullList = TplExpander()
-   
-   tgdir = tgdir
-   doctree = doctree
-   config = config
-   doclinks = nil
-
-   init
       try
-         file = config["header"]
-         self.tplHeader.parse( file )
-         file = config["footer"]
-         self.tplFooter.parse( file )
-         file = config["listing"]
-         self.tplListing.parse( file )
-         file = config["detail"]
-         self.tplDetails.parse( file )
-         file = config["pagetpl"]
-         self.tplPage.parse( file )
-         file = config["fulllist"]
-         self.tplFullList.parse( file )
+         // prepare the directory
+         dirMake( self.directory, true )
 
-         self.makeDocLinks()
-      catch TplError in e
-         e.errlist.pushFront( "In file " + file )
-         raise e
-      end
-   end
+         // add the index page...
+         ip = IndexPage(self.doc.main)
+         // and prepare the tree for the main module
+         self.makeTree( ip, self.doc )
 
-   function makeDocLinks()
-      // select the data for the main page.
-      url = self.config["url"] + "/"
+         // then prepare the tree for the submodules
+         for modname, module in self.doc.getAllModules()
+            // skip virtual modules
+            if not module.main
+               virtual = true
+               for name, elem in module.members
+                  if elem.type != "module"
+                     virtual = false
+                     break
+                  end
+               end
+               faldoc.verbose( "Skipping virtual module " + module.name )
+               if virtual: continue
+            end
 
-      // main is a special page, always present.
-      self.doclinks = [
-         [ "l_ref"=> url+"index.html", "l_desc"=> "Main", "l_type"=>"main"] ]
-
-      // create links for all the items in the page having an index entry.
-      types = self.doctree.entities.grouping
-
-      for row in pagetable
-         if row.type notin types: continue
+            // do all the rest
+            ip_mod = ModulePage( module )
+            self.makeTree( ip_mod, module )
+            ip.appendChild( ip_mod )
+         end
          
-         if row.index
-            self.doclinks.add(
-               ["l_ref" => url + row.index + ".html", "l_desc" => row.ititle, "l_type" => row.type ] )
-         end
-      end
-   end
+         // finally create the appendix pages.
+         ip.appendChild( AlphaIndexPage( self.doc ) )
 
-   function setCurrent( pageId )
-      for rrow in self.doclinks
-         if rrow["l_type"] == pageId
-            rrow["current"] = true
+         // and make
+         self.makePages( ip )
+
+      catch IoError in err
+         faldoc.error( "html.fal: " + err )
+         return
+      end
+      
+      faldoc.info( "HTML Generator module ended." )
+      faldoc.info( "=" * 60 )
+   end
+   
+   function makeTree( topPage, module )
+      pages = module.orderPages()
+      for page in pages
+         pt = GroupingPage( page )
+         self.makePageTree( pt, page )
+         topPage.appendChild( pt )
+      end
+
+      entities = module.groupEntities()
+      for type, type_title, type_name in self.moduleOrder
+         if type_name
+            if type in entities
+               for entity in entities[type]
+                  // skip entities in groups or sets
+                  if "ingroup" in entity.props or "inset" in entity.props: continue
+                  topPage.appendChild( ObjectoidPage( entity, type_name, type != "enum" ) )
+               end
+            end
          else
-            rrow -= "current"
+            if type in entities
+               glob_entities = []
+               for entity in entities[type]
+                  if "ingroup" in entity.props or "inset" in entity.props: continue
+                  // we found at least one entity that goes in the generic page
+                  glob_entities += entity
+               end
+
+               if glob_entities
+                  topPage.appendChild( MetaPage( type_title, self.getFilenameForType( type ), glob_entities ) )
+               end
+            end
          end
       end
    end
 
-   function makePages()
-      makeMain( self )
-      // create the listing pages.
-      types = self.doctree.entities.grouping
-      > "Making HTML pages"
-      for row in pagetable
-         if row.type notin types: continue
-         row.handler( self )
+
+   function makePageTree( topPage, pentity )
+      entities = pentity.groupEntities()
+      for type, type_title, type_name in self.moduleOrder
+         // only heavy types generate a sub-page
+         if type in entities and type_name
+            for entity in entities[type]
+               topPage.appendChild(  ObjectoidPage( entity, type_name, type != "enum" ) )
+            end
+         end
       end
    end
+
+   function makePages( topPage )
+      topPage.make()
+      node = topPage.firstChild
+      while node
+         self.makePages( node )
+         node = node.next
+      end
+   end
+
+
+   //===============================================================
+   // Handlers
+   //===============================================================
+
+   function renderContent( node )
+      return self._rndr.rcont( node )
+   end
+
+   function makeIntraPageMember( struct, entity )
+      // add the title
+      struct.add( ht.H3().add( ht.A().set( ["name"=>entity.name] ).add(entity.name ) ) )
+      // add the brief
+      struct.add( self.makeBrief( entity ) )
+      // add the prototype
+      if entity.type == "function" or entity.type == "method"
+         self.makePrototype( struct, entity )
+      end
+
+      // finally, add the body
+      struct.add( self.makeContent( entity ) )
+      
+      // see also...
+      if "see" in entity.props
+         struct.add( self.makeSeeAlso( entity.props["see"] ) )
+      end
+   end
+
+
+   function makeBrief( entity )
+      if "brief" in entity.props
+         content = self._rndr.rcont( entity.props["brief"] )
+         if content: return ht.P().CLASS("brief").add( ht.Verbatim( content ) )
+      end
+      return ^+ ""
+   end
+
+
+   function makePrototype( struct, entity, typeName )
+
+      proto = entity.prototype()
+      if typeName: proto = typeName + " " + proto
+      protoEntry = ht.Pre().CLASS("prototype").add( proto )
+      
+      if "from" in entity.props
+         fr = entity.props["from"]
+         protoEntry.add( " from " )
+         for link, callexp in fr
+            linkcal = self.makeLink( link )
+            cexp = callexp? "(" + self._rndr.rcont( callexp ) + ")" : ""
+            protoEntry.add( "\\\n                 " )
+            protoEntry.add(linkcal)
+            protoEntry.add(cexp)
+         end
+      end
+
+      struct.add( protoEntry )
+      table = self.makePrototable( entity )
+      if table
+         struct.add(table)
+      end
+   end
+
+
+
+   function makePrototable( entity )
+      tbody = nil
+      if "param" in entity.props
+         tbody = ht.TBody()
+         for paraName, paraContent in entity.props["param"]
+            // just ignore undocumented parameters
+            if paraContent
+               tbody.add( ht.TR().CLASS("param").add(
+                  ht.TD().CLASS("name").add( paraName ),
+                  ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
+                  ))
+            end
+         end
+      end
+      
+      if "optparam" in entity.props
+         if not tbody: tbody = ht.TBody()
+         for paraName, paraContent in entity.props["optparam"]
+            // as optional parameters must be explicitly declared, they cannot be undoc
+            tbody.add( ht.TR().CLASS("optparam").add(
+               ht.TD().CLASS("name").add( paraName ),
+               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( paraContent )) )
+               ))
+         end
+      end
+
+      
+      if "return" in entity.props
+         if not tbody: tbody = ht.TBody()
+         tbody.add( ht.TR().CLASS("return").add(
+            ht.TD().CLASS("name").add( i"Return" ),
+            ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( entity.props["return"] )) )
+            ))
+      end
+
+      if "raise" in entity.props
+         if not tbody: tbody = ht.TBody()
+         tb2 = ht.TBody()
+         for link, content in entity.props["raise"]
+            tb2.add( ht.TR().add(
+               ht.TD().CLASS("name").add( self.makeLink( link ) ),
+               ht.TD().CLASS("content").add( ht.Verbatim(self._rndr.rcont( content )) )
+               ))
+         end
+         tbody.add( ht.TR().CLASS("raise").add(
+               ht.TD().add( i"Raise" ),
+               ht.TD().CLASS("content").add( ht.TABLE().add(tb2) )
+            ))
+      end
+
+      if tbody
+         return ht.TABLE().CLASS( "prototype" ).add( tbody )
+      end
+   end
+
+
+   function makePropsTable( members )
+      table = nil
+      if "property" in members
+         table = ht.TABLE().CLASS( "members" )
+         self.makePropsTablePart( table, i"Properties", members["property"] )
+      end
+      if "method" in members
+         if not table: table = ht.TABLE().CLASS( "members" )
+         self.makePropsTablePart( table, i"Methods", members["method"] )
+      end
+      return table
+   end
+
+   function makePropsTablePart( table, title, members )
+      tbody = ht.TBody()
+      tbody.add( ht.TR().add( ht.TD( title ).set( ["colspan" => 2, "CLASS"=>"member_type"] ) ) )
+      for prop in members
+         tdName = ht.TD().add( ht.A( "#" + prop.name, prop.name ) )
+         row = ht.TR().add( tdName )
+         if "brief" in prop.props
+            row.add( ht.TD().add( ht.Verbatim( self._rndr.rcont( prop.props["brief"] ) ) ) )
+         else
+            tdName.set(["colspan"=>2])
+         end
+         tbody.add(row)
+      end
+      table.add( tbody )
+   end
+
+
+   function makeSeeAlso( seeList )
+      para = ht.P(i"See also" + ": ").CLASS("see_also")
+      for link, content in seeList
+         para.add( self.makeLink(link) )
+         formiddle: para.add( ", " )
+         forlast: para.add( "." )
+      end
+      return para
+   end
+
+   function makeLink( l )
+      // ingore links to empty elements.
+      if l.target
+         target = l.target
+         
+         if "title" in l.target.props
+            text = target.props["title"]
+         else
+            text = l.destination
+         end
+         return ht.A( self.getLinkName( target ), text )
+      else
+         return ht.B( l.destination )
+      end
+   end
+
+
+   function makeContent( entity )
+      if entity.pcontent
+         content = self._rndr.rcont( entity.pcontent.topNode )
+         if content: return ht.Verbatim( content )
+      end
+      return ^+ ""
+   end
+
+
+   //===============================================================
+   // Utilities
+   //===============================================================
+
+   // Gets the filename, and eventually the link position, where an entity should be placed.
+   function getFileName( entity, forlink )
+      if entity.type == "property" or entity.type == "method"
+         if entity.parent
+            return entity.parent.getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+         end
+      // only functions and variables, when in groups, are hosted in the parent item.
+      elif "ingroup" in entity.props and not self.isFat(entity)
+         return entity.parent.members[entity.props["ingroup"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+      // function sets own their items.
+      elif "inset" in entity.props
+         return entity.parent.members[entity.props["inset"]].getID().replace( ".", "_" ) + ".html" + (forlink ? "#" + entity.name : "")
+
+      // Unbound functions and globals have their own file.
+      elif not self.isFat( entity )
+         filename = self.getFilenameForType( entity.type, entity.parent )
+         if forlink: filename += "#" + entity.name
+         return filename         
+
+      // otherwise, the entity has its own name (but "#main" should be "main").
+      else
+         return entity.getID().replace( ".", "_" ).replace("#", "") + ".html"
+      end
+   end
+
+   //# Return the filename of pages holding types (functions, messages, variables...)
+   function getFilenameForType( type, parent )
+      if parent
+         filename = parent.getID().replace(".","_")
+      else
+         filename = "__"
+      end
+      filename += "_" + type + ".html"
+
+      return filename
+   end
+         
+
+   function getLinkName( entity )
+      return self.getFileName( entity, true )
+   end
+
+   //# Returns true if the entity is "massive", and should have its own page.
+   function isFat( entity )
+      static
+         fatness = [
+            "object" => true,
+            "class" => true,
+            "enum" => true,
+            "group" => true,
+            "page" => true,
+            "funset" => true,
+            "main" => true,
+            "module" => true ]
+      end
+
+      return entity.type in fatness
+   end
+
+    //# Creates a node to be directly added in a member list (OL of class "memberlist")
+   function makeMemberLink( member )
+      node = ht.LI().add( ht.A( self.getFileName(member, true ), member.name ) )
+      if "brief" in member.props
+         brief = self._rndr.rcont(member.props["brief"])
+         if brief: node.add( " - " ).add( ht.Verbatim( brief ) )
+      end
+      return node
+   end
+
 end
-
-

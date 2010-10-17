@@ -31,7 +31,6 @@ namespace core {
    @class Error
    @brief Internal VM and runtime error reflection class.
    @ingroup errors
-   @ingroup general_purpose
 
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
@@ -221,7 +220,6 @@ FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
    @brief Syntax error descriptor.
 
    @ingroup errors
-   @ingroup general_purpose
 
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
@@ -247,7 +245,6 @@ FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
    @class GenericError
    @brief Generic undefined failure.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -272,7 +269,6 @@ FALCON_FUNC  GenericError_init ( ::Falcon::VMachine *vm )
    @class CodeError
    @brief VM and internal coded related error descriptor.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -296,8 +292,8 @@ FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm )
    @class IoError
    @brief Error on I/O operations.
    @ingroup errors
-   @ingroup general_purpose
-   @optparam code A numeric error code.
+
+@optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
    @from Error code, description, extra
@@ -320,7 +316,6 @@ FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm )
    @class TypeError
    @brief Type mismatch in a typed operation.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -343,7 +338,6 @@ FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
    @class AccessError
    @brief Error accessing an indexed item.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -370,7 +364,6 @@ FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm )
    @class MathError
    @brief Mathematical calculation error.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -394,7 +387,6 @@ FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm )
    @class ParamError
    @brief Incongruent paremeter error.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -422,7 +414,6 @@ FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm )
    @class ParseError
    @brief Generic input parsing error.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -452,7 +443,6 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
    @class CloneError
    @brief Item cannot be cloned.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -483,7 +473,6 @@ FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
    @class InterruptedError
    @brief Wait operation interrupted.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -507,7 +496,6 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
    @class MessageError
    @brief Error in the messaging system.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -531,7 +519,6 @@ FALCON_FUNC  MessageError_init ( ::Falcon::VMachine *vm )
    @class TableError
    @brief Error in Table class core operations.
    @ingroup errors
-   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.

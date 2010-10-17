@@ -496,6 +496,7 @@ Module* core_module_init()
       addParam("level");    //static
    self->addClassMethod( func_meta, "trace", &Falcon::core::Function_trace ).asSymbol()->
       addParam("level");    //static
+   self->addClassMethod( func_meta, "stack", &Falcon::core::Function_stack );    //static
 
    /*#
       @class GarbagePointer

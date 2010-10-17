@@ -36,10 +36,6 @@
    #endif
 #endif
 
-/*#
-   
-*/
-
 namespace Falcon {
 namespace core {
 
