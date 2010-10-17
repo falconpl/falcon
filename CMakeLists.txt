@@ -150,9 +150,11 @@ install(EXPORT falcon-core-targets
 )
 
 #docs
-if(TARGET faldoc)
+if(TARGET Falcon_Feathers)
   add_subdirectory( apps/faldoc )
-  add_subdirectory(docs)
-  add_subdirectory(modules/native/feathers/docs)
+  if(TARGET faldoc)
+    add_subdirectory(docs)
+    add_subdirectory(modules/native/feathers/docs)
+  endif()
 endif()
 
