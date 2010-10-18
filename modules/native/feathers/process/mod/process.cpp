@@ -30,73 +30,43 @@
 namespace Falcon { namespace Mod {
 
 
-struct Process::Impl
-{
-   Sys::Process* process;
-
-   Impl() :
-      process ( Sys::Process::factory() )
-   { }
-
-   ~Impl()
-   {
-      if (process)
-         delete process;
-   }
-};
-
-
-
+/*
+  Mod::Process
+*/
 Process::Process(CoreClass const* cls) :
-      CacheObject(cls),
-      m_impl( new Process::Impl )
+   CacheObject(cls),
+   m_process( Sys::Process::factory() )
 { }
 
 Process::~Process()
 {
-   if ( m_impl )
-      delete m_impl;
+   if ( m_process )
+      delete m_process;
 }
 
 Sys::Process* Process::handle()
 {
-   return m_impl->process;
+   return m_process;
 }
 
 
-
-
-struct ProcessEnum::Impl
-{
-   Sys::ProcessEnum*  processEnum;
-
-   Impl() :
-      processEnum ( new Sys::ProcessEnum )
-   { }
-
-   ~Impl()
-   {
-      if (processEnum)
-         delete processEnum;
-   }
-};
-
-
-
+/*
+  Mod::ProcessEnum
+*/
 ProcessEnum::ProcessEnum(CoreClass const* cls) :
-      CacheObject(cls),
-      m_impl( new ProcessEnum::Impl )
+   CacheObject(cls),
+   m_processEnum( new Sys::ProcessEnum )
 { }
 
 ProcessEnum::~ProcessEnum()
 {
-   if ( m_impl )
-      delete m_impl;
+   if ( m_processEnum )
+      delete m_processEnum;
 }
 
 Sys::ProcessEnum* ProcessEnum::handle()
 {
-   return m_impl->processEnum;
+   return m_processEnum;
 }
 
 

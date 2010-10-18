@@ -22,8 +22,13 @@
 
 #include <falcon/genericvector.h>
 #include <falcon/cacheobject.h>
-#include "../sys/process.h"
 
+
+namespace Falcon { namespace Sys {
+   class Process;
+   class ProcessEnum;
+}}
+  
 namespace Falcon { namespace Mod {
 
 class ProcessEnum : public CacheObject
@@ -37,8 +42,7 @@ public:
    Sys::ProcessEnum* handle();
 
 private:
-   class Impl;
-   Impl* m_impl;
+   Sys::ProcessEnum* m_processEnum;
 };
 
 class Process : public CacheObject
@@ -50,11 +54,9 @@ public:
    // not cloneable
    Process *clone() const { return 0; }
    Sys::Process* handle();
-
-
+   
 private:
-   class Impl;
-   Impl* m_impl;
+   Sys::Process* m_process;
 };
 
 /**  Tokenizes a command string with its paremters and appends it to a vector.
