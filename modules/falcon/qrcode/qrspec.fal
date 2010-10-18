@@ -334,12 +334,12 @@ class QrSpec
             yOffset++
         end
 
-        setPattern = strFill(strBuffer(8), "\xc0")
+        setPattern = "\xc0" * 8
         QrStr.set($frame, 0, 7, setPattern)
         QrStr.set($frame, width - 8, 7, setPattern)
         QrStr.set($frame, 0, width - 8, setPattern)
 
-        setPattern = strFill(strBuffer(9), "\x84")
+        setPattern = "\x84" * 9
         QrStr.set($frame, 0, 8, setPattern)
         QrStr.set($frame, width - 8, 8, setPattern, 8)
 
@@ -395,10 +395,12 @@ class QrSpec
             raise QrError(QrError.invalid_version, @i'$(version) is not supported')
         end
 
+        arrayLen = version + 1
+
         if self.frames == nil
-            self.frames = arrayBuffer(version + 1, nil)
-        elif len(self.frames) < version
-            arrayResize(self.frames, version)
+            self.frames = arrayBuffer(arrayLen, nil)
+        elif len(self.frames) < arrayLen
+            arrayResize(self.frames, arrayLen)
         end
 
         if self.frames[version] == nil

@@ -185,14 +185,13 @@ class QrCode
         end
 
         frame = filler.frame
-        filler = nil
         maskObj = QrMask()
 
         if mask < 0
             if QrConfig.find_best_mask
                 masked = maskObj.mask(width, frame, input.errorCorrectionLevel)
             else
-                masked = maskObj.makeMask(width, frame, QrConfig.default_mask % 8, input.errorCorrectionLevel)
+                masked = maskObj.makeMask(width, frame, int(QrConfig.default_mask % 8), input.errorCorrectionLevel)
             end
         else
             masked = maskObj.makeMask(width, frame, mask, input.errorCorrectionLevel)

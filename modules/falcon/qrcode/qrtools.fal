@@ -19,7 +19,7 @@ class QrTools
         frameLen = len(frame)
         for line in frame
             for i in [0:frameLen]
-                line[i] = (line[*i] && 1) ? '1' : '0'
+                line[i] = (line[i][*0] && 1) ? '1' : '0'
             end
         end
 
