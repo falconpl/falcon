@@ -49,7 +49,7 @@ class QrInputItem(mode, size, data)
         end
 
         if not QrInput.checkMode(mode, size, data)
-            raise QrError(QrError.encoding, @i'Mode $(mode) is not suitable for encoding the specified data')
+            raise QrError(QrError.encoding_error, @i'Mode $(mode) is not suitable for encoding the specified data')
         end
 
         self._mode = mode
@@ -180,7 +180,7 @@ class QrInputItem(mode, size, data)
         l = QrSpec.lengthIndicator(self._mode, version)
         m = 1 << l
         num = int((self._size + m - 1) / m)
-        bits += $num * (4 + l)
+        bits += num * (4 + l)
 
         return bits
     end
@@ -370,11 +370,11 @@ class QrInput(version, errorCorrectionLevel)
         end
 
         if mode == QrMode.num
-            return self.checkModeNum(size, data)
+            return self._checkModeNum(size, data)
         elif mode == QrMode.an
-            return self.checkModeAn(size, data)
+            return self._checkModeAn(size, data)
         elif mode == QrMode.kanji
-            return self.checkModeKanji(size, data)
+            return self._checkModeKanji(size, data)
         elif mode == QrMode.eight_bit
             return true
         elif mode == QrMode.structure
@@ -465,7 +465,7 @@ class QrInput(version, errorCorrectionLevel)
         end false
     end
 
-    function appendPaddingBit(bitStream /* ref */)
+    function appendPaddingBit(bitStream)
         bits = bitStream.size
         maxWords = QrSpec.getDataLength(self.version, self.errorCorrectionLevel)
         maxBits = maxWords * 8
@@ -511,7 +511,7 @@ class QrInput(version, errorCorrectionLevel)
 
     function getBitStream()
         bitStream = self.mergeBitStream()
-        self.appendPaddingBit($bitStream)
+        self.appendPaddingBit(bitStream)
         return bitStream
     end
 

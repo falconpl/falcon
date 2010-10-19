@@ -38,7 +38,7 @@ class QrMask
         self._runLen = arrayBuffer(QrSpecConst.max_width + 1, 0)
     end
 
-    function writeFormatInformation(width, frame /* ref */, mask, errorCorrectionLevel)
+    function writeFormatInformation(width, frame, mask, errorCorrectionLevel)
         blacks = 0
         format = QrSpec.getFormatInfo(mask, errorCorrectionLevel)
 
@@ -116,7 +116,7 @@ class QrMask
         return codeArray
     end
 
-    function makeMaskNo(maskNo, width, s, d /* ref */, maskGenOnly)
+    function makeMaskNo(maskNo, width, s, d, maskGenOnly)
         if maskGenOnly == nil; maskGenOnly = false; end
 
         b = 0
@@ -165,8 +165,8 @@ class QrMask
 
     function makeMask(width, frame, maskNo, errorCorrectionLevel)
         masked = arrayBuffer(width, "\x0" * width)
-        self.makeMaskNo(maskNo, width, frame, $masked)
-        self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
+        self.makeMaskNo(maskNo, width, frame, masked)
+        self.writeFormatInformation(width, masked, maskNo, errorCorrectionLevel)
 
         return masked
     end

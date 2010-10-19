@@ -51,11 +51,8 @@ class QrRsItem
         rs.alpha_to = arrayBuffer(rs.nn + 1, 0)
         rs.index_of = arrayBuffer(rs.nn + 1, 0)
 
-        NN = $rs.nn
-        A0 = $NN
-
-        rs.index_of[0] = A0 // log(zero) = -inf
-        rs.alpha_to[A0] = 0 // alpha**-inf = 0
+        rs.index_of[0] = rs.nn
+        rs.alpha_to[rs.nn] = 0
         sr = 1
 
         for i in [0:rs.nn]     
@@ -103,7 +100,7 @@ class QrRsItem
         return rs;
     end
 
-    function encode_rs_char(data, parity /* ref */)
+    function encode_rs_char(data, parity)
         parity = arrayBuffer(self.nroots, 0)
 
         for i in [0:self.nn - self.nroots - self.pad]
