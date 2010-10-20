@@ -27,7 +27,7 @@ class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
     ecc = nil
 
     init
-        rsItem.encode_rs_char(data, ecc)
+        rsItem.encodeChar(data, ecc)
         self.dataLen = dataLen
         self.data = data
         self.eccLen = eccLen
@@ -297,15 +297,15 @@ class QrFrameFiller(width, frame)
     end
 
     function next()
+        w = self.width
+        x = self._x
+        y = self._y
+
         loop
             if self._bit == -1
                 self._bit = 0
                 return ["x" => self._x, "y" => self._y]
             end
-
-            x = self._x
-            y = self._y
-            w = self.width
 
             if self._bit == 0
                 x--
@@ -344,7 +344,7 @@ class QrFrameFiller(width, frame)
 
             self._x = x
             self._y = y
-        end (self._frame[y][x][*0] && 0x80) == 0
+        end (self._frame[y][*x] && 0x80) == 0
 
         return ["x" => x, "y" => y]
     end

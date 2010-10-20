@@ -26,12 +26,12 @@ class QrSplit(dataStr, input, modeHint)
 
     function isDigitAt(str, pos)
         if pos >= len(str); return false; end
-        return (str[pos][*0]) >= '0'[*0] and str[pos][*0] <= '9'[*0]
+        return (str[*pos]) >= '0'[*0] and str[*pos] <= '9'[*0]
     end
 
     function isAlNumAt(str, pos)
         if pos >= len(str); return false; end
-        return QrInput.lookAnTable(str[pos][*0]) >= 0
+        return QrInput.lookAnTable(str[*pos]) >= 0
     end
 
     function identifyMode(pos)
@@ -197,8 +197,8 @@ class QrSplit(dataStr, input, modeHint)
             if mode == QrMode.kanji
                 p += 2
             else
-                if self.dataStr[p][*0] >= 'a'[*0] and self.dataStr[p][*0] <= 'z'[*0]
-                    self.dataStr[p] = chr(self.dataStr[p][*0] - 32)
+                if self.dataStr[*p] >= 'a'[*0] and self.dataStr[*p] <= 'z'[*0]
+                    self.dataStr[p] = chr(self.dataStr[*p] - 32)
                 end
                 p++
             end

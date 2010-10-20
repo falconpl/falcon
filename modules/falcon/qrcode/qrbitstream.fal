@@ -11,20 +11,24 @@
 import QrError from .qrerror as QrError
 
 class QrBitStream(size)
-    data = nil
+    _data = nil
 
     init
-        self.data = size != nil ? arrayBuffer(size, 0) : []
+        self._data = size != nil ? arrayBuffer(size, 0) : []
+    end
+
+    function __get_data()
+        return self._data
     end
 
     function __get_size()
-        return len(self.data)
+        return len(self._data)
     end
 
     function allocate(size)
-        if size != len(self.data)
-            arrayResize(self.data, size)
-            arrayFill(self.data, 0)
+        if size != len(self._data)
+            arrayResize(self._data, size)
+            arrayFill(self._data, 0)
         end
     end
 
@@ -73,9 +77,9 @@ class QrBitStream(size)
 
         if bitStream.size != 0
             if self.size == 0
-                self.data = bitStream.data
+                self._data = bitStream.data
             else
-                arrayMerge(self.data, bitStream.data)
+                arrayMerge(self._data, bitStream.data)
             end
         end
     end
@@ -110,7 +114,7 @@ class QrBitStream(size)
             v = 0
             for j in [0:8]
                 v <<= 1
-                v |= self.data[p]
+                v |= self._data[p]
                 p++
             end
             data[i] = v
@@ -120,7 +124,7 @@ class QrBitStream(size)
             v = 0
             for j in [0:size && 7]
                 v <<= 1
-                v |= self.data[p]
+                v |= self._data[p]
                 p++
             end
             data[bytes] = v

@@ -30,7 +30,7 @@ class QrRsItem
         return x
     end
 
-    function init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad)
+    function initChar(symsize, gfpoly, fcr, prim, nroots, pad)
         // Common code for intializing a Reed-Solomon control block (char or int symbols)
         // Copyright 2004 Phil Karn, KA9Q
         // May be used under the terms of the GNU Lesser General Public License (LGPL)
@@ -100,7 +100,7 @@ class QrRsItem
         return rs;
     end
 
-    function encode_rs_char(data, parity)
+    function encodeChar(data, parity)
         parity = arrayBuffer(self.nroots, 0)
 
         for i in [0:self.nn - self.nroots - self.pad]
@@ -137,7 +137,7 @@ class QrRs(symsize, gfpoly, fcr, prim, nroots, pad)
         end
 
         rs = QrRsItem()
-        rs = QrRsItem.init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad)
+        rs = QrRsItem.initChar(symsize, gfpoly, fcr, prim, nroots, pad)
         arrayIns(self.items, 0, rs)
 
         return rs
