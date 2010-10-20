@@ -43,54 +43,47 @@ namespace {
 struct LocalArgv
 {
    char** p;
-   LocalArgv(String** source) : p(0)
+
+   LocalArgv(String** argList) :
+      p( 0 )
    {
-      this->fill(source);
+      this->fill( argList );
    }
 
     ~LocalArgv()
     {
-       if (p)
-          this->free();
+       this->free();
     }
 
-   void fill( String** args )
+   void fill( String** argList )
    {
-      size_t count = 0;
-      while( args[count] != 0 )
-         ++count;
+      this->free();
 
-      if(p)
-         this->free();
+      size_t size = 0;
+      while( argList[size] != 0 )
+         ++size;
 
-      p = new char*[count+1];
-      p[count] = 0;
+      p = new char*[size + 1];
+      p[size] = 0;
 
-      for(size_t i = 0; args[i] != 0; i++ )
+      for(size_t i = 0; argList[i] != 0; i++ )
       {
-         String *arg = args[i];
-         uint32 allocSize = arg->length() * 4;
-         char *buffer = new char[allocSize];
-         arg->toCString( buffer, allocSize );
-         p[i] = buffer;
+         String* arg = argList[i];
+         size_t nBytes = arg->length() * 4;
+         p[i] = new char[ nBytes ];
+         arg->toCString(p[i], nBytes );
       }
    }
 
    void free()
    {
-      uint32 i = 0;
-      while( p[i] != 0 )
-      {
+      if( !p ) return;
+
+      for(size_t i = 0; p[i] != 0; i++ )
          delete [] p[i];
-         ++i;
-      }
       delete [] p;
    }
 };
-
-
-
-
 
 } // anonymous namespace
 
@@ -121,7 +114,7 @@ ProcessEnum::ProcessEnum()
 
 ProcessEnum::~ProcessEnum()
 {
-   close();
+   this->close();
 }
 
 int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
@@ -129,8 +122,8 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
    if ( m_sysdata == 0 )
       return -1;
 
-   DIR *procdir = (DIR *) m_sysdata;
-   struct dirent *de;
+   DIR* procdir = static_cast<DIR*>(m_sysdata);
+   struct dirent* de;
 
    while ( (de = readdir( procdir ) ) != 0 )
    {
@@ -142,13 +135,13 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
       return 0;
 
    char statent[ 64 ];
-   FILE *fp;
+   FILE* fp;
    char status;
    char szName[1024];
 
    snprintf( statent, 64, "/proc/%s/stat", de->d_name );
    fp = fopen( statent, "r" );
-   if ( fp == NULL ) return -1;
+   if ( !fp ) return -1;
    int32 p_pid, p_ppid;
    if ( fscanf( fp, "%d %s %c %d", &p_pid, szName, &status, &p_ppid ) != 4 )
    {
@@ -164,14 +157,14 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
       szName[ strlen( szName ) -1] = '\0';
       name.bufferize( szName + 1 );
    }
-   else {
+   else
       name.bufferize( szName );
-   }
+
 
    // read also the command line, which may be missing.
    snprintf( statent, sizeof(statent), "/proc/%s/cmdline", de->d_name );
    fp = fopen( statent, "r" );
-   if ( fp == NULL || fscanf( fp, "%s", szName ) != 1 )
+   if ( !fp || fscanf( fp, "%s", szName ) != 1 )
    {
       szName[0] = 0;
       return 1;
@@ -187,7 +180,7 @@ bool ProcessEnum::close()
 {
    if ( m_sysdata != 0 )
    {
-      closedir( (DIR *) m_sysdata );
+      closedir( static_cast<DIR*>(m_sysdata) );
       m_sysdata = 0;
       return true;
    }
@@ -198,7 +191,7 @@ bool ProcessEnum::close()
 //====================================================================
 // Generic system interface.
 
-bool spawn( String **args, bool overlay, bool background, int *returnValue )
+bool spawn( String** argList, bool overlay, bool background, int* returnValue )
 {
    // convert to our local format.
    LocalArgv argv( args );
@@ -207,9 +200,11 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
    {
       pid_t pid = fork();
 
-      if ( pid == 0 ) {
+      if ( !pid )
+      {
          // we are in the child;
-         if ( background ) {
+         if ( background )
+         {
             // if child output is not wanted, sink it
             int hNull;
             hNull = open("/dev/null", O_RDWR);
@@ -237,7 +232,7 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 
 
 
-bool spawn_read( String **args, bool overlay, bool background, int *returnValue, String *sOutput )
+bool spawn_read( String** argList, bool overlay, bool background, int* returnValue, String* sOutput )
 {
    int pipe_fd[2];
 
@@ -246,15 +241,17 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
 
    // convert to our local format.
    LocalArgv argv( args );
-   const char *cookie = "---ASKasdfyug72348AIOfasdjkfb---";
+   const char* cookie = "---ASKasdfyug72348AIOfasdjkfb---";
 
    if ( ! overlay )
    {
       pid_t pid = fork();
 
-      if ( pid == 0 ) {
+      if ( pid == 0 )
+      {
          // we are in the child;
-         if ( background ) {
+         if ( background )
+         {
             // if child output is not wanted, sink it
             int hNull;
             hNull = open("/dev/null", O_RDWR);
@@ -294,7 +291,8 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
             s.adopt( buffer, readin, 0 );
             sOutput->append( s );
          }
-         else {
+         else
+         {
             if ( pid == waitpid( pid, returnValue, WNOHANG ) )
             {
                close( pipe_fd[0] );
@@ -312,20 +310,20 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
 }
 
 
-const char *shellName()
+const char* shellName()
 {
-   const char *shname = getenv("SHELL");
+   const char* shname = getenv("SHELL");
    if ( shname == 0 )
       shname = "/bin/sh";
    return shname;
 }
 
-const char *shellParam()
+const char* shellParam()
 {
    return "-c";
 }
 
-bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
+bool openProcess(Process* _ph, String** arg_list, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
 {
    PosixProcess* ph = static_cast<PosixProcess*>(_ph);
 
@@ -334,7 +332,8 @@ bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, boo
       ph->m_file_des_in[1] = -1;
    else
    {
-      if ( pipe( ph->m_file_des_in ) < 0 ) {
+      if ( pipe( ph->m_file_des_in ) < 0 )
+      {
          ph->lastError(errno);
          return false;
       }
@@ -344,7 +343,8 @@ bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, boo
       ph->m_file_des_out[0] = -1;
    else
    {
-      if ( pipe( ph->m_file_des_out ) < 0 ) {
+      if ( pipe( ph->m_file_des_out ) < 0 )
+      {
          ph->lastError(errno);
          return false;
       }
@@ -356,7 +356,8 @@ bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, boo
       ph->m_file_des_err[0] = ph->m_file_des_out[0];
    else
    {
-      if ( pipe( ph->m_file_des_err ) < 0 ) {
+      if ( pipe( ph->m_file_des_err ) < 0 )
+      {
          ph->lastError(errno);
          return false;
       }
@@ -428,10 +429,12 @@ bool PosixProcess::wait( bool block )
 
       return true;
    }
-   else  if( res == 0 ) {
+   else if( res == 0 )
+   {
       done(false);
       return true;
    }
+
    lastError( errno );
    return false;
 }
@@ -451,14 +454,14 @@ bool PosixProcess::close()
 bool PosixProcess::terminate( bool severe )
 {
    int sig = severe ? SIGKILL : SIGTERM;
-   if( kill( m_pid, sig ) == 0) {
+   if( kill( m_pid, sig ) == 0)
       return true;
-   }
+
    lastError( errno );
    return false;
 }
 
-::Falcon::Stream *PosixProcess::getInputStream()
+::Falcon::Stream *PosixProcess::inputStream()
 {
    if( m_file_des_in[1] == -1 || done() )
       return 0;
@@ -467,7 +470,7 @@ bool PosixProcess::terminate( bool severe )
    return new FileStream( data );
 }
 
-::Falcon::Stream *PosixProcess::getOutputStream()
+::Falcon::Stream *PosixProcess::outputStream()
 {
    if( m_file_des_out[0] == -1 || done() )
       return 0;
@@ -476,7 +479,7 @@ bool PosixProcess::terminate( bool severe )
    return new FileStream( data );
 }
 
-::Falcon::Stream *PosixProcess::getErrorStream()
+::Falcon::Stream *PosixProcess::errorStream()
 {
    if( m_file_des_err[0] != -1 || done() )
       return 0;

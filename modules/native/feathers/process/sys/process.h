@@ -39,13 +39,14 @@ public:
        m_lastError( 0 ),
        m_procVal( 0 )
    {}
+   virtual ~Process() { }
 
    /*
     * Interface
     */
-   virtual ::Falcon::Stream *getInputStream() =0;
-   virtual ::Falcon::Stream *getOutputStream() =0;
-   virtual ::Falcon::Stream *getErrorStream() =0;
+   virtual Falcon::Stream* inputStream() = 0;
+   virtual Falcon::Stream* outputStream() = 0;
+   virtual Falcon::Stream* errorStream() = 0;
    //
    virtual bool close() = 0;
    virtual bool wait( bool block ) = 0 ;

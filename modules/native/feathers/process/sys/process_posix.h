@@ -29,20 +29,23 @@ class PosixProcess: public Process
 {
 public:
    PosixProcess();
-   virtual ~PosixProcess();
+   ~PosixProcess();
+
+
+   /*
+    * Interface Implementation
+    */
+   Falcon::Stream* inputStream();
+   Falcon::Stream* outputStream();
+   Falcon::Stream* errorStream();
+   //
+   bool close();
+   bool wait( bool block );
+   bool terminate( bool severe = false );
 
    pid_t pid() const { return m_pid; }
-
-   virtual ::Falcon::Stream *getInputStream();
-   virtual ::Falcon::Stream *getOutputStream();
-   virtual ::Falcon::Stream *getErrorStream();
-
-   virtual bool close();
-   virtual bool wait( bool block );
-   virtual bool terminate( bool severe = false );
-
 private:
-   friend bool openProcess(Process* ph, String** args,
+   friend bool openProcess(Process* ph, String** argList,
                            bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
 
    int m_file_des_in[2];
