@@ -40,41 +40,57 @@ namespace Falcon { namespace Sys {
 
 namespace {
 
-char **s_localize( String **args )
+struct LocalArgv
 {
-   char **argv;
-
-   uint32 count = 0;
-   while( args[count] != 0 )
-      ++count;
-
-   argv = (char **) memAlloc( (count+1) *sizeof( char * ) );
-   argv[ count ] = 0;
-   count = 0;
-   while( args[count] != 0 )
+   char** p;
+   LocalArgv(String** source) : p(0)
    {
-      String *arg = args[count];
-      uint32 allocSize = arg->length() * 4;
-      char *buffer = (char *) memAlloc( allocSize );
-      arg->toCString( buffer, allocSize );
-      argv[ count ] = buffer;
-      ++count;
+      this->fill(source);
    }
 
-   return argv;
-}
+    ~LocalArgv()
+    {
+       if (p)
+          this->free();
+    }
 
-void s_freeLocalized( char **args )
-{
-   uint32 count = 0;
-   while( args[ count ] != 0 )
+   void fill( String** args )
    {
-      memFree( args[count] );
-      ++count;
-   }
-   memFree( args );
+      size_t count = 0;
+      while( args[count] != 0 )
+         ++count;
 
-}
+      if(p)
+         this->free();
+
+      p = new char*[count+1];
+      p[count] = 0;
+
+      for(size_t i = 0; args[i] != 0; i++ )
+      {
+         String *arg = args[i];
+         uint32 allocSize = arg->length() * 4;
+         char *buffer = new char[allocSize];
+         arg->toCString( buffer, allocSize );
+         p[i] = buffer;
+      }
+   }
+
+   void free()
+   {
+      uint32 i = 0;
+      while( p[i] != 0 )
+      {
+         delete [] p[i];
+         ++i;
+      }
+      delete [] p;
+   }
+};
+
+
+
+
 
 } // anonymous namespace
 
@@ -185,7 +201,7 @@ bool ProcessEnum::close()
 bool spawn( String **args, bool overlay, bool background, int *returnValue )
 {
    // convert to our local format.
-   char **argv = s_localize( args );
+   LocalArgv argv( args );
 
    if ( ! overlay )
    {
@@ -203,11 +219,10 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
             dup2( hNull, STDERR_FILENO );
          }
 
-         execvp( argv[0], argv ); // never returns.
+         execvp( argv.p[0], argv.p ); // never returns.
          exit( -1 ); // or we have an error
       }
 
-      s_freeLocalized( argv );
       if ( pid == waitpid( pid, returnValue, 0 ) )
          return true;
       // else we have an error
@@ -216,7 +231,7 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
    }
 
    // in case of overlay, just run the execvp and eventually return in case of error.
-   execvp( argv[0], argv ); // never returns.
+   execvp( argv.p[0], argv.p ); // never returns.
    exit( -1 );
 }
 
@@ -230,7 +245,7 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
       return false;
 
    // convert to our local format.
-   char **argv = s_localize( args );
+   LocalArgv argv( args );
    const char *cookie = "---ASKasdfyug72348AIOfasdjkfb---";
 
    if ( ! overlay )
@@ -250,12 +265,10 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
 
          dup2( pipe_fd[1], STDOUT_FILENO );
 
-         execvp( argv[0], argv ); // never returns.
+         execvp( argv.p[0], argv.p ); // never returns.
          write( pipe_fd[1], cookie, strlen( cookie ) );
          exit( -1 ); // or we have an error
       }
-
-      s_freeLocalized( argv );
 
       // read the output
       #define MAX_READ_PER_LOOP  4096
@@ -293,7 +306,7 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
    }
 
    // in case of overlay, just run the execvp and eventually return in case of error.
-   execvp( argv[0], argv ); // never returns.
+   execvp( argv.p[0], argv.p ); // never returns.
    exit( -1 );
    return false;
 }
@@ -378,8 +391,8 @@ bool openProcess(Process* _ph, String **arg_list, bool sinkin, bool sinkout, boo
          dup2( ph->m_file_des_err[1], STDERR_FILENO );
 
       // Launch the EXECVP procedure.
-      char **args = s_localize( arg_list );
-      execvp( args[0], args ); // never returns.
+      LocalArgv argv( arg_list );
+      execvp( argv.p[0], argv.p ); // never returns.
       _exit( -1 );
    }
    else
