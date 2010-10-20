@@ -40,17 +40,17 @@ namespace Falcon { namespace Sys {
 
 namespace {
 
-struct LocalArgv
+struct LocalizedArgv
 {
    char** p;
 
-   LocalArgv(String** argList) :
+   LocalizedArgv(String** argList) :
       p( 0 )
    {
       this->fill( argList );
    }
 
-    ~LocalArgv()
+    ~LocalizedArgv()
     {
        this->free();
     }
@@ -193,7 +193,7 @@ bool ProcessEnum::close()
 bool spawn( String** argList, bool overlay, bool background, int* returnValue )
 {
    // convert to our local format.
-   LocalArgv argv( args );
+   LocalizedArgv argv( args );
 
    if ( ! overlay )
    {
@@ -239,7 +239,7 @@ bool spawn_read( String** argList, bool overlay, bool background, int* returnVal
       return false;
 
    // convert to our local format.
-   LocalArgv argv( args );
+   LocalizedArgv argv( args );
    const char* cookie = "---ASKasdfyug72348AIOfasdjkfb---";
 
    if ( ! overlay )
@@ -393,7 +393,7 @@ bool openProcess(Process* _ph, String** arg_list, bool sinkin, bool sinkout, boo
          dup2( ph->m_file_des_err[1], STDERR_FILENO );
 
       // Launch the EXECVP procedure.
-      LocalArgv argv( arg_list );
+      LocalizedArgv argv( arg_list );
       execvp( argv.p[0], argv.p ); // never returns.
       _exit( -1 );
    }
