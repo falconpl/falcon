@@ -740,7 +740,7 @@ void gauge()
       temp += ")";
 
       if ( failedCount > 0 )
-         stdOut->writeString( " fail " + failedCount );
+         stdOut->writeString( String(" fail ").A(failedCount) );
    }
 }
 
