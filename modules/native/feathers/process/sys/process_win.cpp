@@ -182,14 +182,14 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
          if( argv[0]->toCString( charbuf, bufSize ) > 0 )
          {
             if ( ! SearchPathA( NULL, charbuf, NULL, 2048, fullCommand, &filePart ) )
-               finalCmd = charbuf;
+               finalCmd.bufferize(charbuf);
             else
-               finalCmd = fullCommand;
+               finalCmd.bufferize(fullCommand);
          }
       }
       else {
          wideImplemented = true;
-         finalCmd = fileNameBuf;
+         finalCmd.bufferize(fileNameBuf);
       }
    }
    else
