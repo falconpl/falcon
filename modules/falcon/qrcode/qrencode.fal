@@ -20,14 +20,14 @@ import QrSplit from .qrsplit as QrSplit
 import QrSpec from .qrspec as QrSpec
 import QrTools from .qrtools as QrTools
 
-class QrRsBlock(dataLen, data, eccLen, ecc /* ref */, rsItem)
+class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
     dataLen = 0
     data = nil
     eccLen = 0
     ecc = nil
 
     init
-        rsItem.encode_rs_char(data, ecc)
+        rsItem.encodeChar(data, ecc)
         self.dataLen = dataLen
         self.data = data
         self.eccLen = eccLen
@@ -54,7 +54,7 @@ class QrRawCode(input)
         spec = [0, 0, 0, 0, 0]
 
         self._data = input.getByteStream()
-        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, $spec)
+        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, spec)
         self._version = input.version
         self._blockNum1 = QrSpec.rsBlockNum1(spec)
         self._dataLen = QrSpec.rsDataLength(spec)
@@ -88,8 +88,8 @@ class QrRawCode(input)
             end
             code = self._rsBlocks[row].data[col]
         elif self._count < self._dataLen + self._eccLen
-            row = (self._count - self._dataLen) % self._blocks
-            col = (self._count - self._dataLen) / self._blocks
+            row = (self._count - self._dataLen) % self._blockNum
+            col = (self._count - self._dataLen) / self._blockNum
             code = self._rsBlocks[row].ecc[col]
         else
             return code
@@ -112,11 +112,11 @@ class QrRawCode(input)
             ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
             arrayAdd(self._rsBlocks, QrRsBlock(
                 dataLen, self._data[dataPos:len(self._data) - dataPos],
-                eccLen, $ecc, rs))
+                eccLen, ecc, rs))
             self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
 
             dataPos += dataLen
-            eccPos += $eccLen
+            eccPos += eccLen
         end
 
         if QrSpec.rsBlockNum2(spec) != 0
@@ -128,7 +128,7 @@ class QrRawCode(input)
                 ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
                 arrayAdd(self._rsBlocks, QrRsBlock(
                     dataLen, self._data[dataPos:len(self._data) - dataPos],
-                    eccLen, $ecc, rs))
+                    eccLen, ecc, rs))
                 self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
 
                 dataPos += dataLen
@@ -162,9 +162,9 @@ class QrCode
         width = spec.getWidth(version)
         frame = spec.newFrame(version)
 
-        filler = QrFrameFiller(width, $frame)
+        filler = QrFrameFiller(width, frame)
         if filler == nil
-            raise QrError(QrError.encoding, "error creating frame filler")
+            raise QrError(QrError.encoding_error, "error creating frame filler")
         end
 
         for i in [0:raw.dataLen + raw.eccLen]
@@ -185,7 +185,6 @@ class QrCode
         end
 
         frame = filler.frame
-        filler = nil
         maskObj = QrMask()
 
         if mask < 0
@@ -199,7 +198,7 @@ class QrCode
         end
 
         if masked == nil
-            raise QrError(QrError.encoding, "error masking frame")
+            raise QrError(QrError.encoding_error, "error masking frame")
         end
 
         self._version = version
@@ -264,7 +263,7 @@ class QrCode
     end
 end
 
-class QrFrameFiller(width, frame /* ref */)
+class QrFrameFiller(width, frame)
     _width = 0
     _frame = nil
     _x = 0
@@ -290,23 +289,23 @@ class QrFrameFiller(width, frame /* ref */)
     end
 
     function setFrameAt(at, val)
-        self._frame[at['y']][at['x']] = chr(val)
+        self._frame[at["y"]][at["x"]] = chr(val)
     end
 
     function getFrameAt(at)
-        return self._frame[at['y']][at['x']][*0]
+        return self._frame[at["y"]][at["x"]][*0]
     end
 
     function next()
+        w = self.width
+        x = self._x
+        y = self._y
+
         loop
             if self._bit == -1
                 self._bit = 0
                 return ["x" => self._x, "y" => self._y]
             end
-
-            x = self._x
-            y = self._y
-            w = self.width
 
             if self._bit == 0
                 x--
@@ -340,12 +339,12 @@ class QrFrameFiller(width, frame /* ref */)
             end
 
             if x < 0 or y < 0
-                raise QrError(QrError.encoding, "error creating frame")
+                raise QrError(QrError.encoding_error, "error masking frame")
             end
 
             self._x = x
             self._y = y
-        end (self._frame[y][x][*0] && 0x80) == 0
+        end (self._frame[y][*x] && 0x80) == 0
 
         return ["x" => x, "y" => y]
     end
@@ -425,7 +424,8 @@ class QrEncode(errorCorrectionLevel, size, margin)
             for line in binarized; outputStream.printl(line); end
             outputStream.close()
         end
-       return binarized
+
+        return binarized
     end
 
     function encodePng(text, outFile, saveAndPrint)
@@ -438,7 +438,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
         stdOut(oldOut)
 
         if errorMessage != ""
-            raise QrError(QrError.encoding, errorMessage)
+            raise QrError(QrError.encoding_error, errorMessage)
         end
 
         maxSize = int(QrConfig.png_max_size / (len(frame) + 2 * self.margin))

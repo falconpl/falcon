@@ -192,7 +192,7 @@ FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
 /*#
    @method setTimeout Socket
    @brief Sets the default timeout for lengthy operations.
-   @param timeout Timeout in seconds and fractions.
+   @param timeout Timeout in milliseconds.
 
    This function sets a default timeout for the read/write operations, or for other
    lengthy operations as connect. If -1 is set (the default at socket creation),

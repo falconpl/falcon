@@ -207,7 +207,7 @@ class QrSpec
         return words
     end
 
-    function getEccSpec(version, errorCorrectionLevel, spec /* ref */)
+    function getEccSpec(version, errorCorrectionLevel, spec)
         if len(spec) < 5; spec = [0, 0, 0, 0, 0]; end
 
         b1 = QrEccTable[version][errorCorrectionLevel][0]
@@ -230,7 +230,7 @@ class QrSpec
         end
     end
 
-    function putAlignmentMarker(frame /* ref */, ox, oy)
+    function putAlignmentMarker(frame, ox, oy)
         finder = [
             "\xa1\xa1\xa1\xa1\xa1",
             "\xa1\xa0\xa0\xa0\xa1",
@@ -243,11 +243,11 @@ class QrSpec
         xStart = ox - 2
 
         for y in [0:5]     
-            QrStr.set($frame, xStart, yStart + y, finder[y])
+            QrStr.set(frame, xStart, yStart + y, finder[y])
         end
     end
 
-    function putAlignmentPattern(version, frame /* ref */, width)
+    function putAlignmentPattern(version, frame, width)
         if version < 2; return; end
 
         d = QrAlignmentPattern[version][1] - QrAlignmentPattern[version][0]
@@ -260,14 +260,14 @@ class QrSpec
         if w * w - 3 == 1
             x = QrAlignmentPattern[version][0]
             y = QrAlignmentPattern[version][0]
-            self.putAlignmentMarker($frame, x, y)
+            self.putAlignmentMarker(frame, x, y)
             return
         end
 
         cx = QrAlignmentPattern[version][0]
         for x in [1:w - 1]
-            self.putAlignmentMarker($frame, 6, cx)
-            self.putAlignmentMarker($frame, cx, 6)
+            self.putAlignmentMarker(frame, 6, cx)
+            self.putAlignmentMarker(frame, cx, 6)
             cx += d
         end
 
@@ -275,8 +275,8 @@ class QrSpec
         for y in [0:w - 1]
             cx = QrAlignmentPattern[version][0]
             for x in [0:w - 1]
-                self.putAlignmentMarker($frame, cx, cy)
-                cx += $d
+                self.putAlignmentMarker(frame, cx, cy)
+                cx += d
             end
             cy += d
         end
@@ -292,10 +292,12 @@ class QrSpec
 
     function getFormatInfo(mask, errorCorrectionLevel)
         if mask < 0 or mask > 7; return 0; end
+
         if errorCorrectionLevel < QrErrorCorrectionLevel.L \
             or errorCorrectionLevel > QrErrorCorrectionLevel.H
-            return 0
+            raise QrError(QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) not supported')
         end
+
         return QrFormatInfo[errorCorrectionLevel][mask]
     end
 
@@ -311,7 +313,7 @@ class QrSpec
         ]
 
         for y in [0:7]     
-            QrStr.set($frame, ox, oy + y, finder[y])
+            QrStr.set(frame, ox, oy + y, finder[y])
         end
     end
 
@@ -332,14 +334,14 @@ class QrSpec
             yOffset++
         end
 
-        setPattern = strFill(strBuffer(8), "\xc0")
-        QrStr.set($frame, 0, 7, setPattern)
-        QrStr.set($frame, width - 8, 7, setPattern)
-        QrStr.set($frame, 0, width - 8, setPattern)
+        setPattern = "\xc0" * 8
+        QrStr.set(frame, 0, 7, setPattern)
+        QrStr.set(frame, width - 8, 7, setPattern)
+        QrStr.set(frame, 0, width - 8, setPattern)
 
-        setPattern = strFill(strBuffer(9), "\x84")
-        QrStr.set($frame, 0, 8, setPattern)
-        QrStr.set($frame, width - 8, 8, setPattern, 8)
+        setPattern = "\x84" * 9
+        QrStr.set(frame, 0, 8, setPattern)
+        QrStr.set(frame, width - 8, 8, setPattern, 8)
 
         yOffset = width - 8
 
@@ -354,7 +356,7 @@ class QrSpec
             frame[7 + i][6] = chr(0x90 || (i && 1))
         end
 
-        self.putAlignmentPattern(version, $frame, width)
+        self.putAlignmentPattern(version, frame, width)
 
         if version >= 7
             vinf = self.getVersionPattern(version)
@@ -389,12 +391,16 @@ class QrSpec
     end
 
     function newFrame(version)
-        if version < 1 or version > QrSpecConst.max_version; return nil; end
+        if version < 1 or version > QrSpecConst.max_version
+            raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+        end
+
+        arrayLen = version + 1
 
         if self.frames == nil
-            self.frames = arrayBuffer(version + 1, nil)
-        elif len(self.frames) < version
-            arrayResize(self.frames, version)
+            self.frames = arrayBuffer(arrayLen, nil)
+        elif len(self.frames) < arrayLen
+            arrayResize(self.frames, arrayLen)
         end
 
         if self.frames[version] == nil
@@ -426,7 +432,10 @@ class QrSpec
             end
         end
 
-        if self.frames[version] == nil; return nil; end
+        if self.frames[version] == nil
+            raise QrError(QrError.encoding_error, "error creating frame")
+        end
+
         return self.frames[version]
     end
 

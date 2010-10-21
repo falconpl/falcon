@@ -4,6 +4,9 @@
 # emacs
 .#*
 
+# vi
+*.swp
+
 # Build directories
 build
 build_*
