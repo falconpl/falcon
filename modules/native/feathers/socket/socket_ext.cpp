@@ -223,7 +223,7 @@ FALCON_FUNC  Socket_setTimeout( ::Falcon::VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
-   tcps->timeout( (int32) i_to->forceInteger() );
+   tcps->timeout( (int32) (i_to->forceInteger() * 1000.0) );
 }
 
 
