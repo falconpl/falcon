@@ -1,0 +1,115 @@
+/*#
+   @main Nest - The Falcon Web Application Framework.
+   
+Nest is a Web Application Framework standing on top of the 
+web oriented programming interface (WOPI). It's role is that
+of standardizing and simplifying the development and the deployment
+of applications residing on a web server and serving multiple client.
+
+In other words, it's a standardized base platform for the so called S-D-S (server-database-script)
+applications.
+
+/*#
+@page overview Nest Overview
+@after main
+
+Nest is designed after a set of principles that are constants through the several elements
+of the architecture that compose it. 
+
+- @b Extendibility. Nest components can be redesigned, and new components can be hot plugged on
+even live servers.
+- @b Overridability. All the default implementation of various components can be overridden
+by simply defining a local version, which "covers" the same feature.
+- @b Interoperability. A common data sharing protocol traverses all the component, that need 
+not to know each other to access common data.
+- @b Orthogonality. Orthogonal concepts, as data representation and functional code, or page
+templates versus reply document synthesis are not forced into a single design; conversely,
+orthogonal concepts can live together in the same application, or in the same script.
+- @b Optionality. All the elements in Nest are optional. Nothing is forced onto the user,
+to the point that is perfectly possible to compose applications using even non-Nest based
+scripts working together with Nest.
+
+@section arch Overall architecture
+
+Nest is mainly organized into three kind of elements:
+
+- Library
+- Services
+- Data Managers
+
+The library is a set of common functions and objects that are exposed to both Nest components
+(Services and Data Managers) and to third party users, as the final application.
+
+Services are the functional heart of the Nest system. As the name suggests, they provide
+"services" to the final application. They are able to configure themselves through various
+input sources, including input coming from web forms or query URIs, and there are various means
+through which they can be controlled by the host application. 
+
+Data managers provide a mapping between entities stored in external databases and objects
+seen in the Nest application. It is not mandatory to use data managers to handle persistent
+data, but they often provide a more abstract, simpler way to access databases.
+
+@section appenv Nest application anatomy
+
+An application is composed of __pages__, each one presenting exactly one view to the remote
+guest. An entry point (generally index.fal) loads the Nest system and perform what is called
+__routing__. This consists in determining which one page should be delivered to the user depending
+on the input variables.
+
+The routed page is then loaded as a Falcon plugin (via the reflexive compiler interface) and
+executed in the current virtual machine context. This makes all the Nest system available to
+the loaded script. The routed script can then behave as a static page, or invoke Nest modules,
+namey __services__ and/or __data managers__.
+
+Nest modules are themselves plugin which the routed page can load through the faciliteis
+provided by Nest. Services work as abstract processors that can process input from several
+soruces and then can be rendered to the final page through a __skin__. Data managers bind 
+database entities to objects, and they are generally used by services or as a mean to 
+make database-bound data to travel across abstract services and the pages that are hosting them.
+
+@section sitestruct Nest site structure
+
+Before descending in the details of the Nest routing process, it is useful to describe how
+Nest site and modules are structured and layed down.
+
+Nest system has its own installation location and structure, which is not necessarily related
+to the way sites using Nest should be organized; at site developer level, the Nest module and
+utilities are opaque, and all that's required is that Nest and its components are correctly 
+installed as a Falcon module somewhere in the FALCON_LOAD_PATH, or even directly in the default
+Falcon module location (e.g. /usr/lib/falcon).
+
+Also, here we'll describe the default site structure; the vast majority of this settings can
+be changed, even dynamically, through configuration options that are explained later.
+
+Consider the entry point of an application a script in a given location; usually, but not necessarily,
+the script is also the default script for the given directory (e.g. index.fal).
+
+Then, the site will be organized as follows:
+
+@code
+   /homedir
+      index.fal
+      /nest
+         /pages
+         /srv
+         /dm
+@endcode
+
+The **nest/pages** subdirectory contains the pages and all the modules they need, The **nest/srv** directory
+contains site specific services, or site-specific skins or configurations for standard services.
+Similarly, the **nest/dm** directory contains site specific data managers, or configurations indicating data
+structures used for the site.
+
+@note It is advisable to place the **nest** tree outside the scope of the directories served by the web
+server, if possible, to minimize security risks. The default is to search it right under the entry
+point script **just** because some low-cost web hosts doesn't allow to write data outside the scope of the 
+directories served by the provided web servers.
+
+*/
+
+/*# 
+@page config Nest basic configuration
+@after overview
+
+Nest 
+*/
