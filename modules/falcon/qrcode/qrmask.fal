@@ -87,7 +87,7 @@ class QrMask
                 if frame[y][*x] && 0x80
                     bitMask[y][x] = 0
                 else
-                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1: 0
+                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1 : 0
                 end
             end
         end
@@ -263,7 +263,7 @@ class QrMask
         bestMask = []
         checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
 
-        if QrConfig.find_from_random != 0
+        if QrConfig.find_from_random != nil
             howManuOut = 8 - (QrConfig.find_from_random % 9)
             for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
@@ -274,7 +274,7 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-        mask = arrayBuffer(width, "\x0" * width)
+            mask = arrayBuffer(width, "\x0" * width)
             demerit = 0
             blacks = 0
             blacks = self.makeMaskNo(i, width, frame, mask)
