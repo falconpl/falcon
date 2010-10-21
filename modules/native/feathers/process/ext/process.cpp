@@ -355,7 +355,6 @@ FALCON_FUNC  process_systemCall( VMachine* vm )
                              .extra("S|A{S}, [B]") );
    }
 
-   vm->idle();
 
    bool background = mode == 0 ? false : mode->isTrue();
    GenericVector argv( &traits::t_stringptr_own() );
@@ -371,6 +370,7 @@ FALCON_FUNC  process_systemCall( VMachine* vm )
   }
   argv.push( 0 );
 
+   vm->idle();
    int retval;
    if( Sys::spawn( static_cast<String**>( argv.at(0) ),
                              false, background, &retval ) )

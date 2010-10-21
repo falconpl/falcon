@@ -24,6 +24,41 @@
 
 namespace Falcon { namespace Sys {
 
+
+namespace {
+
+struct AutoBuf
+{
+   char* cbuf;
+   wchar_t* wcbuf;
+   AutoBuf(String& source, bool wide) :
+      cbuf(0),
+      wcbuf(0)
+   {
+      size_t bufSize = source.length() * 4 + 1;
+      if(wide)
+      {
+         wcbuf = new wchar_t[ bufSize ];
+         source.toWideString( wcbuf, bufSize );
+      }
+      else
+	  {
+         cbuf = new char[ bufSize ];
+         source.toCString( cbuf, bufSize );
+      }
+      
+   }
+
+   ~AutoBuf()
+   {
+      if(cbuf) delete [] cbuf;
+      if(wcbuf) delete [] wcbuf;
+   }
+};
+
+} // anonymous namespace
+
+
 //====================================================================
 // Simple process manipulation functions
 
@@ -550,6 +585,7 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
    wchar_t* filePart_w;
    char fullCommand[2048];
    wchar_t* fullCommand_w = reinterpret_cast<wchar_t*>( fullCommand );
+   AutoBuf foo(*(argv[0]), true);
    if ( ! SearchPathW( NULL, fileNameBuf, NULL, 1024, fullCommand_w, &filePart_w ) )
    {
       if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
@@ -560,21 +596,23 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          if( argv[0]->toCString( charbuf, bufSize ) > 0 )
          {
             if ( ! SearchPathA( NULL, charbuf, NULL, 2048, fullCommand, &filePart ) )
-               finalCmd = charbuf;
+               finalCmd.bufferize(charbuf);
             else
-               finalCmd = fullCommand;
+               finalCmd.bufferize(fullCommand);
          }
       }
       else
       {
          wideImplemented = true;
-         finalCmd = fileNameBuf;
+         finalCmd.bufferize(fileNameBuf);
       }
    }
    else
-      finalCmd = fullCommand_w;
+      finalCmd.bufferize(fullCommand_w);
 
+   AutoBuf bar(finalCmd, true);
    delete[] fileNameBuf;
+   AutoBuf bar2(finalCmd, true);
    
    // build the complete string
    for(size_t i = 1; argv[ i ] != 0; i++)
@@ -582,6 +620,7 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
       finalCmd.append( ' ' );
       finalCmd.append( *argv[i] );
    }
+   AutoBuf foo2(finalCmd, true);
    
    if( wideImplemented )
    {
@@ -607,11 +646,9 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          iFlags |= DETACHED_PROCESS;
       }
       
-      bufSize = finalCmd.length() * 4 + 1;
-      wchar_t* cmdbuf = new wchar_t[ bufSize ];
-      finalCmd.toWideString( cmdbuf, bufSize );
+      AutoBuf cmdbuf(finalCmd, true);
       if ( ! CreateProcessW( NULL,
-                             cmdbuf,
+                             cmdbuf.wcbuf,
                              NULL,
                              NULL,
                              TRUE, //Inerhit handles!
@@ -634,8 +671,6 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          
          CloseHandle( proc.hThread ); // unused
       }
-      
-      delete [] cmdbuf;
       
    }
    else
@@ -662,11 +697,9 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          iFlags |= DETACHED_PROCESS;
       }
       
-      size_t bufSize = finalCmd.length() * 4 + 1;
-      char* cmdbuf = new char[ bufSize ];
-      finalCmd.toCString( cmdbuf, bufSize );
+      AutoBuf cmdbuf(finalCmd, false);
       if ( ! CreateProcessA( NULL,
-                             cmdbuf,
+                             cmdbuf.cbuf,
                              NULL,
                              NULL,
                              TRUE, //Inerhit handles!
@@ -690,7 +723,6 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          CloseHandle( proc.hThread ); // unused
       }
       
-      delete [] cmdbuf;
    }
    
    return true;
