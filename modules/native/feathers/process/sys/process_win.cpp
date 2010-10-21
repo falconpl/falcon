@@ -56,6 +56,39 @@ struct AutoBuf
    }
 };
 
+
+String s_fullCommand(String& command, bool& wideImplemented)
+{
+   String finalCmd;
+   AutoBuf fileNameBuf_w(command, true);
+   wchar_t* filePart_w;
+   char fullCommand[2048];
+   wchar_t* fullCommand_w = reinterpret_cast<wchar_t*>( fullCommand );
+   if ( ! SearchPathW( NULL, fileNameBuf_w.wcbuf, NULL, 1024, fullCommand_w, &filePart_w ) )
+   {
+     if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+     {
+        wideImplemented = false;
+        char* filePart;
+        AutoBuf fileNameBuf(command, false);
+        if ( ! SearchPathA( NULL, fileNameBuf.cbuf, NULL, 2048, fullCommand, &filePart ) )
+           finalCmd.bufferize(fileNameBuf.cbuf);
+        else
+           finalCmd.bufferize(fullCommand);
+     }
+     else
+     {
+        wideImplemented = true;
+        finalCmd.bufferize(fileNameBuf_w.wcbuf);
+     }
+   }
+   else
+      finalCmd.bufferize(fullCommand_w);
+
+   return finalCmd;
+}
+
+
 } // anonymous namespace
 
 
@@ -158,52 +191,17 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
    STARTUPINFOA si;
    STARTUPINFOW siw;
    PROCESS_INFORMATION proc;
-   int iPos;
    DWORD iRet;
    DWORD iFlags;
-   char fullCommand[2048];
-   wchar_t *fullCommand_w = (wchar_t *)fullCommand;
-   char *filePart;
-   wchar_t *filePart_w;
+   
    bool wideImplemented;
-   String finalCmd;
-   
-   // find the command in the path
-   uint32 bufSize = argv[0]->length() * 4 + 1;
-   wchar_t *fileNameBuf = (wchar_t *) memAlloc( bufSize );
-   argv[0]->toWideString( fileNameBuf, bufSize );
-   
-   if ( ! SearchPathW( NULL, fileNameBuf, NULL, 1024, fullCommand_w, &filePart_w ) )
-   {
-      if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
-      {
-         wideImplemented = false;
-         char *charbuf = (char *) fileNameBuf;
-         if( argv[0]->toCString( charbuf, bufSize ) > 0 )
-         {
-            if ( ! SearchPathA( NULL, charbuf, NULL, 2048, fullCommand, &filePart ) )
-               finalCmd.bufferize(charbuf);
-            else
-               finalCmd.bufferize(fullCommand);
-         }
-      }
-      else {
-         wideImplemented = true;
-         finalCmd.bufferize(fileNameBuf);
-      }
-   }
-   else
-      finalCmd = fullCommand_w;
-   
-   memFree( fileNameBuf );
+   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
    
    // build the complete string
-   iPos = 1;
-   while( argv[ iPos ] != 0 )
+   for(size_t i = 1; argv[ i ] != 0; i++)
    {
       finalCmd.append( ' ' );
-      finalCmd.append( *argv[iPos] );
-      iPos++;
+      finalCmd.append( *argv[i] );
    }
    
    if( wideImplemented )
@@ -225,8 +223,8 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
          siw.dwFlags |= STARTF_USESTDHANDLES;
       }
       
-      bufSize = finalCmd.length() * 4 + 1;
-      fileNameBuf = (wchar_t *) memAlloc( bufSize );
+      size_t bufSize = finalCmd.length() * 4 + 1;
+      wchar_t* fileNameBuf = (wchar_t *) memAlloc( bufSize );
       finalCmd.toWideString( fileNameBuf, bufSize );
       if ( ! CreateProcessW( NULL,
                              fileNameBuf,
@@ -265,7 +263,7 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
          si.dwFlags |= STARTF_USESTDHANDLES;
       }
       
-      bufSize = finalCmd.length() * 4 + 1;
+      size_t bufSize = finalCmd.length() * 4 + 1;
       char *charbuf = (char *) memAlloc( bufSize );
       finalCmd.toCString( charbuf, bufSize );
       
@@ -316,46 +314,16 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    wchar_t *fullCommand_w = (wchar_t *)fullCommand;
    char *filePart;
    wchar_t *filePart_w;
+
    bool wideImplemented;
-   String finalCmd;
-   
-   // find the command in the path
-   uint32 bufSize = argv[0]->length() * 4 + 1;
-   wchar_t *fileNameBuf = (wchar_t *) memAlloc( bufSize );
-   argv[0]->toWideString( fileNameBuf, bufSize );
-   
-   if ( ! SearchPathW( NULL, fileNameBuf, NULL, 1024, fullCommand_w, &filePart_w ) )
-   {
-      if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
-      {
-         wideImplemented = false;
-         char *charbuf = (char *) fileNameBuf;
-         if( argv[0]->toCString( charbuf, bufSize ) > 0 )
-         {
-            if ( ! SearchPathA( NULL, charbuf, NULL, 2048, fullCommand, &filePart ) )
-               finalCmd = charbuf;
-            else
-               finalCmd = fullCommand;
-         }
-      }
-      else {
-         wideImplemented = true;
-         finalCmd = fileNameBuf;
-      }
-   }
-   else
-      finalCmd = fullCommand_w;
-   
-   memFree( fileNameBuf );
+   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
    
    // build the complete string
-   iPos = 1;
-   while( argv[ iPos ] != 0 ) {
+   for(size_t i = 1; argv[ i ] != 0; i++)
+   {
       finalCmd.append( ' ' );
-      finalCmd.append( *argv[iPos] );
-      iPos++;
+      finalCmd.append( *argv[i] );
    }
-   
    HANDLE hRead = INVALID_HANDLE_VALUE;
    HANDLE hWrite = INVALID_HANDLE_VALUE;
    
@@ -390,8 +358,8 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
       }
       
       siw.dwFlags |= STARTF_USESTDHANDLES;
-      bufSize = finalCmd.length() * 4 + 1;
-      fileNameBuf = (wchar_t *) memAlloc( bufSize );
+      size_t bufSize = finalCmd.length() * 4 + 1;
+      wchar_t*  fileNameBuf = (wchar_t *) memAlloc( bufSize );
       finalCmd.toWideString( fileNameBuf, bufSize );
       if ( ! CreateProcessW( NULL,
                              fileNameBuf,
@@ -431,7 +399,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
       si.dwFlags |= STARTF_USESTDHANDLES;
       si.hStdOutput = hWrite;
       
-      bufSize = finalCmd.length() * 4 + 1;
+      size_t bufSize = finalCmd.length() * 4 + 1;
       char *charbuf = (char *) memAlloc( bufSize );
       finalCmd.toCString( charbuf, bufSize );
       
@@ -574,46 +542,8 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
       }
    }
    
-   String finalCmd;
-   
-   // find the command in the path
-   uint32 bufSize = argv[0]->length() * 4 + 1;
-   wchar_t* fileNameBuf = new wchar_t[bufSize];
-   argv[0]->toWideString( fileNameBuf, bufSize );
-   
    bool wideImplemented;
-   wchar_t* filePart_w;
-   char fullCommand[2048];
-   wchar_t* fullCommand_w = reinterpret_cast<wchar_t*>( fullCommand );
-   AutoBuf foo(*(argv[0]), true);
-   if ( ! SearchPathW( NULL, fileNameBuf, NULL, 1024, fullCommand_w, &filePart_w ) )
-   {
-      if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
-      {
-         wideImplemented = false;
-         char* filePart;
-         char* charbuf = reinterpret_cast<char*>( fileNameBuf );
-         if( argv[0]->toCString( charbuf, bufSize ) > 0 )
-         {
-            if ( ! SearchPathA( NULL, charbuf, NULL, 2048, fullCommand, &filePart ) )
-               finalCmd.bufferize(charbuf);
-            else
-               finalCmd.bufferize(fullCommand);
-         }
-      }
-      else
-      {
-         wideImplemented = true;
-         finalCmd.bufferize(fileNameBuf);
-      }
-   }
-   else
-      finalCmd.bufferize(fullCommand_w);
-
-   AutoBuf bar(finalCmd, true);
-   delete[] fileNameBuf;
-   AutoBuf bar2(finalCmd, true);
-   
+   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
    // build the complete string
    for(size_t i = 1; argv[ i ] != 0; i++)
    {
