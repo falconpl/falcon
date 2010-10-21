@@ -14,11 +14,11 @@
 load process
 
 if vmSystemType() == "WIN"
-  command_str = "dir C:/"
-  command_array = ["dir", "C:/"]
+  command_str = "cmd /?"
+  command_array = ["cmd", "/?"]
 else // POSIX
-  command_str = "ls /"
-  command_array = ["ls", "/"]
+  command_str = "sh --version"
+  command_array = ["sh", "--version"]
 end
 
 
