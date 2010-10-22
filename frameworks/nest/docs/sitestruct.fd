@@ -18,6 +18,10 @@ orthogonal concepts can live together in the same application, or in the same sc
 to the point that is perfectly possible to compose applications using even non-Nest based
 scripts working together with Nest.
 
+
+
+
+
 @section arch Overall architecture
 
 Nest is mainly organized into three kind of elements:
@@ -38,6 +42,8 @@ Data managers provide a mapping between entities stored in external databases an
 seen in the Nest application. It is not mandatory to use data managers to handle persistent
 data, but they often provide a more abstract, simpler way to access databases.
 
+
+
 @section appenv Nest application anatomy
 
 An application is composed of __pages__, each one presenting exactly one view to the remote
@@ -55,6 +61,8 @@ provided by Nest. Services work as abstract processors that can process input fr
 soruces and then can be rendered to the final page through a __skin__. Data managers bind 
 database entities to objects, and they are generally used by services or as a mean to 
 make database-bound data to travel across abstract services and the pages that are hosting them.
+
+
 
 @section sitestruct Nest site structure
 

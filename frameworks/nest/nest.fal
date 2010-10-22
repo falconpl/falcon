@@ -322,15 +322,14 @@ object Nest
    debug = false
 
    /*# Framing.
-      If having a value, the framing system will be active.
-
-      Framing will cause the frame part to be always loaded, and
-      determined page (pid) to be loaded and stored in a @a Nest.content
-      variable.
-
-      The frame should be a function that will be called after
-      loading the page and render it, as the page must be rendered in
-      the Nest.content variable.
+   
+      When the @b frame property is set to a function,
+      then Nest will load the page that the routing system
+      required and render it separately. The output of the
+      rendered page will be stored in the @a Nest.content
+      property; then, the function stored in @b frame will be
+      called, and it will just need to print @a Nest.content variable 
+      at the desired position.
 
       Interesting functions can be:
       @code

@@ -70,4 +70,82 @@ version  = ".".merge(vmVersionInfo())
 Or even, you may chose to use a very structured approach through the htmaker
 module.
 
+@code
+// this is head,fal
+
+import from htmaker in ht
+
+doc = ht.TransitionalFrame()
+doc.html.head.add( ht.Title( "My first Nest site" ) )
+
+doc.html.body.add(
+   ht.H1( "Welcome!" ),
+   ht.P(" Welcome to my first Nest Site. I hope you enjoy it" ),
+   ht.P("Running Falcon version " + ".".merge(vmVersionInfo()) ) )
+
+> doc.render()
+@endcode
+
+
+
+@section qs_routing Page routing
+
+Typical applications will want to load more pages from a site, depending
+on the connection status and input parameters. This process of selection of the
+page that is served by Nest to the remote user is called __routing__ and can be
+widely configured. However, the default mechanism is usually enough to serve the
+needs of even complex web application; it consists of serving the page named
+after an input variable called **pid**. For example, an url like
+
+@code
+   http://www.mysite.com/index.fal?pid=user_settings
+@endcode
+
+would search for a falcon module named {{user_settings.fal}} or {{user_setting.ftd}}
+(or its equivalent **fam** module), in the __nest/pages__ directory, and run it as
+a nest page.
+
+If the "pid" variable is not given, the default routing scheme will fallback to the
+page ID **home**. This is configurable as well.
+
+@section qs_framing Framing
+
+Sites, and especially web applications, are usually providing a common code that is
+consistent througout all the areas, which sourrounds the web site. 
+
+This is called __framing__. Nest doesn't force the users to use a particular framing
+scheme. For example, they may use the standard falcon {{include()}} function to include
+dynamically header and footer elements, or they may consistently {{load}} a set of site-specific
+function which include framing facilities. We'll illustrate some of this mechanisms later
+on in this document,
+
+However, Nest provides a ready-to-use framing mechanism that fits most of the common needs
+of web applicaitons, and this is covered by this quickstart.
+
+When the @a Nest.frame property is set to a function,
+then Nest will load the page that the routing system
+required and render it separately. The output of the
+rendered page will be stored in the @a Nest.content
+property; then, the function stored in @a Nest.frame will be
+called, and it will just need to print @a Nest.content variable 
+at the desired position.
+
+For example, the following code can be placed on the entry point script to provide the same
+headers and footers for all the pages of a site:
+
+@code
+// this is index.fal
+
+Nest.frame = function()
+            > '<html><head><title>My site</title></head><body>'
+            > '<p>My site starts here...</p><hr/>'
+            > Nest.content
+            > '<hr/><p>And this was My Site! ... </p></body></html>'
+         end
+         
+Nest.route()
+
+@endcode
+
+
 */
