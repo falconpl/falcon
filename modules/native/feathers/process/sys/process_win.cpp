@@ -223,11 +223,9 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
          siw.dwFlags |= STARTF_USESTDHANDLES;
       }
       
-      size_t bufSize = finalCmd.length() * 4 + 1;
-      wchar_t* fileNameBuf = (wchar_t *) memAlloc( bufSize );
-      finalCmd.toWideString( fileNameBuf, bufSize );
+      AutoBuf fileNameBuf(finalCmd, true);
       if ( ! CreateProcessW( NULL,
-                             fileNameBuf,
+                             fileNameBuf.wcbuf,
                              NULL,
                              NULL,
                              TRUE, //Inerhit handles!
@@ -238,14 +236,12 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
                              &proc
                              ) )
       {
-         memFree( fileNameBuf );
          *returnValue = GetLastError();
          return false;
       }
-      
-      memFree( fileNameBuf );
    }
-   else {
+   else
+   {
       memset( &si, 0, sizeof( si ) );
       si.cb = sizeof( si );
       
@@ -304,17 +300,6 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
 
 bool spawn_read( String **argv, bool overlay, bool background, int *returnValue, String *sOut )
 {
-   STARTUPINFOA si;
-   STARTUPINFOW siw;
-   PROCESS_INFORMATION proc;
-   int iPos;
-   DWORD iRet;
-   DWORD iFlags;
-   char fullCommand[2048];
-   wchar_t *fullCommand_w = (wchar_t *)fullCommand;
-   char *filePart;
-   wchar_t *filePart_w;
-
    bool wideImplemented;
    String finalCmd = s_fullCommand(*argv[0], wideImplemented);
    
@@ -338,17 +323,21 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
       return false;
    }
    
+   PROCESS_INFORMATION proc;
    if( wideImplemented )
    {
+      STARTUPINFOW siw;
       memset( &siw, 0, sizeof( siw ) );
       siw.cb = sizeof( siw );
-      
-      if( background )  {
+
+      DWORD iFlags;
+      iFlags = 0;
+      if( background )
+      {
          iFlags = DETACHED_PROCESS;
          siw.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
          siw.wShowWindow = SW_HIDE;
       }
-      iFlags = 0;
       
       siw.hStdOutput = hWrite ;
       
@@ -358,11 +347,9 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
       }
       
       siw.dwFlags |= STARTF_USESTDHANDLES;
-      size_t bufSize = finalCmd.length() * 4 + 1;
-      wchar_t*  fileNameBuf = (wchar_t *) memAlloc( bufSize );
-      finalCmd.toWideString( fileNameBuf, bufSize );
+      AutoBuf fileNameBuf(finalCmd, true);
       if ( ! CreateProcessW( NULL,
-                             fileNameBuf,
+                             fileNameBuf.wcbuf,
                              NULL,
                              NULL,
                              TRUE, //Inerhit handles!
@@ -373,23 +360,25 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
                              &proc
                              ) )
       {
-         memFree( fileNameBuf );
          *returnValue = GetLastError();
          return false;
       }
       
-      memFree( fileNameBuf );
    }
-   else {
+   else
+   {
+      STARTUPINFOA si;
       memset( &si, 0, sizeof( si ) );
       si.cb = sizeof( si );
       
-      if( background )  {
+      DWORD iFlags;
+      iFlags = 0;
+      if( background )
+      {
          iFlags = DETACHED_PROCESS;
          si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
          si.wShowWindow = SW_HIDE;
       }
-      iFlags = 0;
       
       if( overlay ) {
          si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
@@ -399,12 +388,9 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
       si.dwFlags |= STARTF_USESTDHANDLES;
       si.hStdOutput = hWrite;
       
-      size_t bufSize = finalCmd.length() * 4 + 1;
-      char *charbuf = (char *) memAlloc( bufSize );
-      finalCmd.toCString( charbuf, bufSize );
-      
+      AutoBuf fileNameBuf(finalCmd, false);
       if ( ! CreateProcessA( NULL,
-                             charbuf,
+                             fileNameBuf.cbuf,
                              NULL,
                              NULL,
                              TRUE,  // INHERIT HANDLES!
@@ -412,20 +398,17 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
                              NULL,
                              NULL,
                              &si,
-			&proc
+                             &proc
                              ) )
       {
-         memFree( charbuf );
          *returnValue = GetLastError();
          return false;
       }
       
-      memFree( charbuf );
-	}
+   }
    
    // read from the input handle
-#define read_buffer_size 4096
-   char buffer[read_buffer_size];
+   char buffer[4096];
    DWORD readin;
    BOOL peek;
    bool signaled;
@@ -452,6 +435,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    while( readin > 0 || ! signaled );
    
    CloseHandle( hRead );
+   DWORD iRet;
    // we have to change our streams with the ones of the process.
    GetExitCodeProcess( proc.hProcess, &iRet );
    //memFree( completeCommand );
