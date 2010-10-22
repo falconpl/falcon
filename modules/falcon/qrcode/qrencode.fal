@@ -27,7 +27,7 @@ class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
     ecc = nil
 
     init
-        rsItem.encode_rs_char(data, ecc)
+        rsItem.encodeChar(data, ecc)
         self.dataLen = dataLen
         self.data = data
         self.eccLen = eccLen
@@ -121,8 +121,8 @@ class QrRawCode(input)
 
         if QrSpec.rsBlockNum2(spec) != 0
             dataLen = QrSpec.rsDataCodes2(spec)
-            eccLen = QrSpec.rsEcCodes2(spec)
-            rs = QrRs.init_rs(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
+            eccLen = QrSpec.rsEccCodes2(spec)
+            rs = QrRs(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
 
             for i in [0:QrSpec.rsBlockNum2(spec)]
                 ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
@@ -297,15 +297,15 @@ class QrFrameFiller(width, frame)
     end
 
     function next()
+        w = self.width
+        x = self._x
+        y = self._y
+
         loop
             if self._bit == -1
                 self._bit = 0
                 return ["x" => self._x, "y" => self._y]
             end
-
-            x = self._x
-            y = self._y
-            w = self.width
 
             if self._bit == 0
                 x--
@@ -344,7 +344,7 @@ class QrFrameFiller(width, frame)
 
             self._x = x
             self._y = y
-        end (self._frame[y][x][*0] && 0x80) == 0
+        end (self._frame[y][*x] && 0x80) == 0
 
         return ["x" => x, "y" => y]
     end
@@ -443,9 +443,6 @@ class QrEncode(errorCorrectionLevel, size, margin)
 
         maxSize = int(QrConfig.png_max_size / (len(frame) + 2 * self.margin))
         QrImage.png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
-    end
-
-    function factory(errorCorrectionLevel, size, margin)
     end
 end
 

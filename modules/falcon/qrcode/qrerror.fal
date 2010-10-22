@@ -14,7 +14,8 @@ class QrError(code, desc, extra) from Error(code, desc, extra)
     version_not_found = 10003
     invalid_error_correction_level = 10004
     invalid_mode = 10005
-    encoding_error = 10006
+    invalid_mask = 10006
+    encoding_error = 10007
 
     _desc = [ 
         self.invalid_param => i"Invalid parameter",
@@ -22,6 +23,7 @@ class QrError(code, desc, extra) from Error(code, desc, extra)
         self.version_not_found => i"Version not found",
         self.invalid_error_correction_level => i"Invalid error correction level",
         self.invalid_mode => i"Invalid mode",
+        self.invalid_mask => i"Invalid mask",
         self.encoding_error => i"Encoding error"
     ]
 

@@ -84,10 +84,10 @@ class QrMask
 
         for y in [0:width]
             for x in [0:width]
-                if frame[y][x][*0] && 0x80
+                if frame[y][*x] && 0x80
                     bitMask[y][x] = 0
                 else
-                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1: 0
+                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1 : 0
                 end
             end
         end
@@ -154,9 +154,9 @@ class QrMask
         for y in [0:width]
             for x in [0:width]
                 if bitMask[y][x] == 1
-                    d[y][x] = chr(s[y][x][*0]) ^^ bitMask[y][x]
+                   d[y][x] = chr(s[y][*x] ^^ bitMask[y][x])
                 end
-                b += d[y][x][*0] && 1
+                b += d[y][*x] && 1
             end
         end
 
@@ -175,19 +175,19 @@ class QrMask
         demerit = 0
 
         for i in [0:length]
-            if self.runLength[i] >= 5
-                demerit += (QrMaskConst.n1 + (self.runLength[i] - 5))
+            if self._runLen[i] >= 5
+                demerit += (QrMaskConst.n1 + (self._runLen[i] - 5))
             end
             if i && 1
-                if (i >= 3) and (i < (length - 2)) and (self.runLength[i] % 3 == 0)
-                    fact = int(self.runLength[i] / 3)
-                    if (self.runLength[i - 2] == fact) and \
-                        (self.runLength[i - 1] == fact) and \
-                        (self.runLength[i + 1] == fact) and \
-                        (self.runLength[i + 2] == fact)
-                        if (self.runLength[i - 3] < 0) or (self.runLength[i - 3] >= (4 * fact))
+                if (i >= 3) and (i < (length - 2)) and (self._runLen[i] % 3 == 0)
+                    fact = int(self._runLen[i] / 3)
+                    if (self._runLen[i - 2] == fact) and \
+                        (self._runLen[i - 1] == fact) and \
+                        (self._runLen[i + 1] == fact) and \
+                        (self._runLen[i + 2] == fact)
+                        if (self._runLen[i - 3] < 0) or (self._runLen[i - 3] >= (4 * fact))
                             demerit += QrMaskConst.n3
-                        elif ((i + 3) >= length) or (self.runLength[i + 3] >= (4 * fact))
+                        elif ((i + 3) >= length) or (self._runLen[i + 3] >= (4 * fact))
                             demerit += QrMaskConst.n3
                         end
                     end
@@ -204,27 +204,27 @@ class QrMask
 
         for y in [0:width]
             head = 0
-            self.runLength[0] = 1
+            self._runLen[0] = 1
 
             frameY = frame[y]
             if y > 0; frameYM = frame[y - 1]; end
 
             for x in [0:width]
                 if x > 0 and y > 0
-                    b22 = frameY[x][*0] && frameY[x - 1][*0] && frameYM[x][*0] && frameYM[x - 1][*0]
-                    w22 = frameY[x][*0] || frameY[x - 1][*0] || frameYM[x][*0] || frameYM[x - 1][*0]
+                    b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
+                    w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
                     if (b22 || (w22 ^^ 1)) && 1; demerit += QrMaskConst.n2; end
                 end
-                if x == 0 and (frameY[x][*0] && 1)
-                    self.runLength[0] = -1
+                if x == 0 and (frameY[*x] && 1)
+                    self._runLen[0] = -1
                     head = 1
-                    self.runLength[head] = 1
+                    self._runLen[head] = 1
                 elif x > 0
-                    if (frameY[x][*0] ^^ frameY[x - 1][*0]) && 1
+                    if (frameY[*x] ^^ frameY[*(x - 1)]) && 1
                         head++
-                        self.runLength[head] = 1
+                        self._runLen[head] = 1
                     else
-                        self.runLength[head]++
+                        self._runLen[head]++
                     end
                 end
             end
@@ -234,19 +234,19 @@ class QrMask
 
         for x in [0:width]
             head = 0
-            self.runLength[0] = 1
+            self._runLen[0] = 1
 
             for y in [0:width]   
-                if y == 0 and (frame[y][x][*0] && 1)
-                    self.runLength[0] = -1
+                if y == 0 and (frame[y][*x] && 1)
+                    self._runLen[0] = -1
                     head = 1
-                    self.runLength[head] = 1
+                    self._runLen[head] = 1
                 elif y > 0
-                    if (frame[y][x][*0] ^^ frame[y - 1][x][*0]) && 1
+                    if (frame[y][*x] ^^ frame[y - 1][*x]) && 1
                         head++
-                        self.runLength[head] = 1
+                        self._runLen[head] = 1
                     else
-                        self.runLength[head]++
+                        self._runLen[head]++
                     end
                 end
             end
@@ -263,7 +263,7 @@ class QrMask
         bestMask = []
         checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
 
-        if QrConfig.find_from_random != 0
+        if QrConfig.find_from_random != nil
             howManuOut = 8 - (QrConfig.find_from_random % 9)
             for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
@@ -274,7 +274,7 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-        mask = arrayBuffer(width, "\x0" * width)
+            mask = arrayBuffer(width, "\x0" * width)
             demerit = 0
             blacks = 0
             blacks = self.makeMaskNo(i, width, frame, mask)

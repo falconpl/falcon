@@ -116,3 +116,4 @@ word32 adler32(word32 adler, char *buf, word32 len)
     /* return recombined sums */
     return adler | (sum2 << 16);
 }
+
