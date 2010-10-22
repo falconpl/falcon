@@ -24,9 +24,4 @@ enum QrErrorCorrectionLevel
     H = 3
 end
 
-enum QrFormat
-    text = 0
-    png = 1
-end
-
 export
