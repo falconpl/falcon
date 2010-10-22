@@ -526,12 +526,13 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
       finalCmd.append( *argv[i] );
    }
    AutoBuf foo2(finalCmd, true);
-   
+
+   STARTUPINFOW siw;
+   STARTUPINFOA si;
+   PROCESS_INFORMATION proc;
+   DWORD iFlags = 0;
    if( wideImplemented )
    {
-      PROCESS_INFORMATION proc;
-      STARTUPINFOW siw;
-      DWORD iFlags = 0;
       memset( &siw, 0, sizeof( siw ) );
       siw.cb = sizeof( siw );
       
@@ -550,28 +551,9 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          siw.wShowWindow = SW_HIDE;
          iFlags |= DETACHED_PROCESS;
       }
-      
-      if ( ! s_openProcess(finalCmd, iFlags, proc, 0, &siw) )      
-      {
-         ph->lastError( GetLastError() );
-         CloseHandle( ph->hPipeInWr );
-         CloseHandle( ph->hPipeOutRd );
-         CloseHandle( ph->hPipeErrRd );
-      }
-      else
-      {
-         ph->m_procId = proc.dwProcessId;
-         ph->m_procHandle = proc.hProcess;
-         
-         CloseHandle( proc.hThread ); // unused
-      }
-      
    }
    else
    {
-      PROCESS_INFORMATION proc;      
-      DWORD iFlags = 0;
-      STARTUPINFOA si;
       memset( &si, 0, sizeof( si ) );
       si.cb = sizeof( si );
       
@@ -579,7 +561,7 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
       {
          // using show_hide AND using invalid handlers for unused streams
          si.dwFlags = STARTF_USESTDHANDLES;
-         
+        
          si.hStdInput = ph->hPipeInRd;
          si.hStdOutput = ph->hPipeOutWr;
          si.hStdError = ph->hPipeErrWr;
@@ -590,23 +572,28 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          si.wShowWindow = SW_HIDE;
          iFlags |= DETACHED_PROCESS;
       }
-      
-      if ( ! s_openProcess(finalCmd, iFlags, proc, &si,0 ) )
-      {
-         ph->lastError( GetLastError() );
-         CloseHandle( ph->hPipeInWr );
-         CloseHandle( ph->hPipeOutRd );
-         CloseHandle( ph->hPipeErrRd );
-      }
-      else
-      {
-         ph->m_procId = proc.dwProcessId;
-         ph->m_procHandle = proc.hProcess;
-                   
-         CloseHandle( proc.hThread ); // unused
-      }
-      
    }
+   bool created;
+   if( wideImplemented )
+     created = s_openProcess(finalCmd, iFlags, proc, 0, &siw );
+   else
+     created = s_openProcess(finalCmd, iFlags, proc, &si,0 );
+       
+   if ( ! created )
+   {
+      ph->lastError( GetLastError() );
+      CloseHandle( ph->hPipeInWr );
+      CloseHandle( ph->hPipeOutRd );
+      CloseHandle( ph->hPipeErrRd );
+   }
+   else
+   {
+     ph->m_procId = proc.dwProcessId;
+     ph->m_procHandle = proc.hProcess;
+     
+     CloseHandle( proc.hThread ); // unused
+   }
+   
    
    return true;
 }
