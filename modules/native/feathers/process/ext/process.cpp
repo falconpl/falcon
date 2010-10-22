@@ -47,7 +47,7 @@ bool s_checkArray(Item* item)
 
    bool doThrow = false;
    CoreArray *array = item->asArray();
-   if ( ! array->length() > 1 )
+   if ( !( array->length() > 1) )
       return false;
 
    for( size_t i = 0; i < array->length(); i++ )
