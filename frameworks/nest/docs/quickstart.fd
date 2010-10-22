@@ -1,0 +1,73 @@
+/*#
+@page quickstart Quickstart -- turning the engine on.
+@after overview
+
+Supposing you have WOPI in place, and that you have configured your
+WOPI to find the entry point of your application (or your manually
+access it), we start from the __index.fal__ file in the top directory
+of the configured site.
+
+As a framework, Nest becomes part of your application (or, we may say,
+your application becomes part of Nest); as such, you have to declare
+
+@code
+   load nest
+@endcode
+
+at the very start of your entry point script. A minimal but complete
+entry point may look like:
+
+@code
+// index.fal
+load nest
+
+// Tell nest to start.
+Nest.route()
+@endcode
+
+Route will tell nest to get the page that the overall status of the connection
+requires; by default, a new incoming user is served by the page called __home__.
+
+So we need a {{home.ftd}} or {{home.fal}} script under {{nest/pages}}. For example,
+using a ftd:
+
+@code
+<html>
+<head>
+   <title>My first Nest site</title>
+</head>
+<body>
+   <h1>Welcome!</h1>
+   <p> Welcome to my first Nest Site. I hope you enjoy it,</p>
+   <p>Running with Falcon <?= ".".merge(vmVersionInfo()) ?></p>
+</body>
+</html>
+@endcode
+
+Or if you prefer a more structured approach, we can use a falcon script:
+
+@code
+// this is head,fal
+> '
+<html>
+<head>
+   <title>My first Nest site</title>
+</head>
+<body>
+   <h1>Welcome!</h1>
+   <p> Welcome to my first Nest Site. I hope you enjoy it,</p>
+'
+
+version  = ".".merge(vmVersionInfo())
+> @'<p>Running with Falcon $version</p>'
+
+> "</body>\n</html>\n"
+
+// this was head.fal
+
+@endcode
+
+Or even, you may chose to use a very structured approach through the htmaker
+module.
+
+*/
