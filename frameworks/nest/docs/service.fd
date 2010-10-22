@@ -1,0 +1,91 @@
+/* @page services Anatomy of a service
+
+Services are functional modules of Nest that perform background operations
+on behalf of the calling page, coordinate with each other to achieve a common
+result and then, optionally, are rendered as a part of the final page.
+
+A service can be loaded by a Nest page using the @a Nest.service method;
+invoking the same service more than once causes the already loaded service
+to be accessed from different place.
+
+For example:
+
+@code
+   // Loads the login service
+   x = Nest.service( "Login" )
+
+   ...
+   ...
+
+   y = Nest.service( "Login" )
+
+   > x == y    // true.
+@endcode
+
+A page may also desire more copies of the same service to be ative at once; for
+example, one may desider to see its own calendar and it's organizational
+unit calendar in two separate elements of the same page. The second parameter
+of the @a Nest.service method is called the __instance name__, and can be used
+for that purpose.
+
+@code
+   my_cal = Nest.service( "Calendar", "mine" )
+   office_cal = Nest.service( "Calendar", "office" )
+   > my_cal == office_cal       // false
+@endcode
+
+@section service_cfg Service Configuration
+
+Services can read their own configuration both from falcon files placed in their
+Nest service tree and from a dictionary they receive as a third optional parameter
+in the  @a Nest.service call.
+
+Nest loads any file named {{config.fal}} under {{srv/<ServiceName>}} in the Nest
+active directory, and extracts the variables found at global level  putting them
+at disposal of the services.
+
+For example, the configuration for a "Calendar" service may be placed under
+{{nest/srv/Calendar/config.fal}}, and look like this:
+
+@code
+   // A nice color for the display?
+   color = "#FFEE00"
+
+   // Month or week?
+   display = "month"
+
+   welcome_cb = function( name )
+      return i@"Welcome $name!"
+   end
+@endcode
+
+As in the example, configuration files can declare simple data or include
+even complex logic, to be performed at load time (in the configuration file
+main code) or to be used as callbacks by the service on need.
+
+Services with an instance name can have their own configuration placed under
+the {{config}} subdirectory under the service location, named after their
+instance name. So, a Calendar service being loaded as "mine" instance will
+search for its configuration under {{nest/srv/Calendar/config/mine.fal}}.
+If that file is not found, the file {{config.fal}} will be loaded instead.
+
+@subsection srv_live_cfg Live configurations
+
+Other than load a static configuration from a pre-existing source file,
+services can be given a configuration through a dictionary passed as
+the third parameter of @a Nest.service. The following code snippet achieves
+a result similar to the just seen example.
+
+@code
+   my_cal = Nest.service( "Calendar", "mine", [
+                     "color" => "#FFEE00",
+                     "display" => "month"
+                     "welcome_cb" =>
+                           {name => i@"Welcome $name!" }
+                     ])
+@endcode
+
+The values passed to the service in this way override the ones
+eventually found in the configuration file, and allow for dynamic
+re
+*/
