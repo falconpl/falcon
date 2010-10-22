@@ -5,9 +5,12 @@
 ####################################################################
 
 if(UNIX)
-   SET(SYS_SPECIFIC sys/process_posix.cpp)
+   set(SYS_SPECIFIC sys/process_posix.cpp)
 else()
-   SET(SYS_SPECIFIC sys/process_win.cpp process.rc)
+   set(SYS_SPECIFIC sys/process_win.cpp process.rc)
+   set_source_files_properties(sys/process_win.cpp PROPERTIES
+      COMPILE_DEFINITIONS "UNICODE"
+   )
 endif()
 
 add_library(process_fm MODULE

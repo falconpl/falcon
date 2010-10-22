@@ -29,30 +29,22 @@ namespace {
 
 struct AutoBuf
 {
-   char* cbuf;
-   wchar_t* wcbuf;
-   AutoBuf(String& source, bool wide) :
-      cbuf(0),
-      wcbuf(0)
+   TCHAR* buf;
+   AutoBuf(String& source) :
+      buf(0)
    {
       size_t bufSize = source.length() * 4 + 1;
-      if(wide)
-      {
-         wcbuf = new wchar_t[ bufSize ];
-         source.toWideString( wcbuf, bufSize );
-      }
-      else
-	  {
-         cbuf = new char[ bufSize ];
-         source.toCString( cbuf, bufSize );
-      }
-      
+      buf = new TCHAR[ bufSize ];
+#ifdef UNICODE
+      source.toWideString( buf, bufSize );
+#else
+      source.toCString( buf, bufSize );
+#endif
    }
 
    ~AutoBuf()
    {
-      if(cbuf) delete [] cbuf;
-      if(wcbuf) delete [] wcbuf;
+      if(buf) delete [] buf;
    }
 };
 
@@ -60,76 +52,21 @@ struct AutoBuf
 String s_fullCommand(String& command, bool& wideImplemented)
 {
    String finalCmd;
-   AutoBuf fileNameBuf_w(command, true);
-   wchar_t* filePart_w;
-   char fullCommand[2048];
-   wchar_t* fullCommand_w = reinterpret_cast<wchar_t*>( fullCommand );
-   if ( ! SearchPathW( NULL, fileNameBuf_w.wcbuf, NULL, 1024, fullCommand_w, &filePart_w ) )
+   
+   AutoBuf fileNameBuf(command);
+   TCHAR fullCommand[1024];
+   TCHAR* filePart;
+   if ( ! SearchPath( NULL, fileNameBuf.buf, NULL, 1024, fullCommand, &filePart ) )
    {
-     if ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
-     {
-        wideImplemented = false;
-        char* filePart;
-        AutoBuf fileNameBuf(command, false);
-        if ( ! SearchPathA( NULL, fileNameBuf.cbuf, NULL, 2048, fullCommand, &filePart ) )
-           finalCmd.bufferize(fileNameBuf.cbuf);
-        else
-           finalCmd.bufferize(fullCommand);
-     }
-     else
-     {
-        wideImplemented = true;
-        finalCmd.bufferize(fileNameBuf_w.wcbuf);
-     }
+      wideImplemented = true;
+      finalCmd.bufferize(fileNameBuf.buf);
    }
    else
-      finalCmd.bufferize(fullCommand_w);
+      finalCmd.bufferize(fullCommand);
 
    return finalCmd;
 }
 
-bool s_openProcess(String& command, DWORD& iFlags,  PROCESS_INFORMATION& proc,STARTUPINFOA* si, STARTUPINFOW* siw)
-{
-  if( siw )
-  {
-    AutoBuf cmdbuf(command, true);
-    if ( ! CreateProcessW( NULL,
-                           cmdbuf.wcbuf,
-                           NULL,
-                           NULL,
-                           TRUE, //Inerhit handles!
-                           iFlags,
-                           NULL,
-                           NULL,
-                           siw,
-                           &proc
-                           ) )
-    {
-      return false;
-    }
-  }
-  else if( si )
-  {
-    AutoBuf cmdbuf(command, false);
-    if ( ! CreateProcessA( NULL,
-                           cmdbuf.cbuf,
-                           NULL,
-                           NULL,
-                           TRUE, //Inerhit handles!
-                           iFlags,
-                           NULL,
-                           NULL,
-                           si,
-                           &proc
-                           ) )
-    {
-      return false;
-    }
-  }
-  
-  return true;
-}
-  
 } // anonymous namespace
 
 
@@ -239,72 +176,51 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
       finalCmd.append( *argv[i] );
    }
 
-   PROCESS_INFORMATION proc;   
-   if( wideImplemented )
+   PROCESS_INFORMATION proc;
+   STARTUPINFO si;             
+   memset( &si, 0, sizeof( si ) );
+   si.cb = sizeof( si );
+   
+   DWORD iFlags = 0;      
+   if( background )
    {
-      STARTUPINFOW siw;
-      memset( &siw, 0, sizeof( siw ) );
-      siw.cb = sizeof( siw );
-      
-      DWORD iFlags = 0;
-      if( background )
-      {
-         iFlags = DETACHED_PROCESS;
-         siw.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
-         siw.wShowWindow = SW_HIDE;
-      }
-      
-      if( overlay )
-      {
-         siw.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-         siw.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-         siw.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-         siw.dwFlags |= STARTF_USESTDHANDLES;
-      }
-      
-      if ( ! s_openProcess(finalCmd, iFlags, proc, 0, &siw ) )
-      {
-         *returnValue = GetLastError();
-         return false;
-      }
+      iFlags = DETACHED_PROCESS;
+      si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
+      si.wShowWindow = SW_HIDE;
    }
-   else
+      
+   if( overlay )
    {
-      STARTUPINFOA si;             
-      memset( &si, 0, sizeof( si ) );
-      si.cb = sizeof( si );
-
-      DWORD iFlags = 0;      
-      if( background )
-      {
-         iFlags = DETACHED_PROCESS;
-         si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
-         si.wShowWindow = SW_HIDE;
-      }
-      
-      if( overlay ) {
-         si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-         si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-         si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-         si.dwFlags |= STARTF_USESTDHANDLES;
-      }
-      
-      if ( ! s_openProcess(finalCmd, iFlags, proc, &si, 0 ) )
-      {
-         *returnValue = GetLastError();
-         return false;
-      }
-      
+      si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
+      si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
+      si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
+      si.dwFlags |= STARTF_USESTDHANDLES;
    }
    
+   AutoBuf cmdbuf(finalCmd);
+   if ( ! CreateProcess( NULL,
+                         cmdbuf.buf,
+                         NULL,
+                         NULL,
+                         TRUE, //Inerhit handles!
+                         iFlags,
+                         NULL,
+                         NULL,
+                         &si,
+                         &proc
+                         ) )
+   {
+      *returnValue = GetLastError();
+      return false;
+   }
+      
    // we have to change our streams with the ones of the process.
    WaitForSingleObject( proc.hProcess, INFINITE );
    DWORD iRet;
    GetExitCodeProcess( proc.hProcess, &iRet );
    //memFree( completeCommand );
-   if ( overlay ) {
+   if ( overlay )
       _exit(iRet);
-   }
    
    CloseHandle( proc.hProcess );
    CloseHandle( proc.hThread );
@@ -339,64 +255,43 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    }
    
    PROCESS_INFORMATION proc;
-   if( wideImplemented )
+   STARTUPINFO si;
+   memset( &si, 0, sizeof( si ) );
+   si.cb = sizeof( si );
+   
+   DWORD iFlags = 0;
+   if( background )
    {
-      STARTUPINFOW siw;
-      memset( &siw, 0, sizeof( siw ) );
-      siw.cb = sizeof( siw );
-
-      DWORD iFlags = 0;
-      if( background )
-      {
-         iFlags = DETACHED_PROCESS;
-         siw.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
-         siw.wShowWindow = SW_HIDE;
-      }
-      
-      siw.hStdOutput = hWrite ;
-      
-      if( overlay ) {
-         siw.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-         siw.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-      }
-      
-      siw.dwFlags |= STARTF_USESTDHANDLES;
-      if ( ! s_openProcess(finalCmd, iFlags, proc, 0, &siw) )
-      {
-         *returnValue = GetLastError();
-         return false;
-      }
-      
+      iFlags = DETACHED_PROCESS;
+      si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
+      si.wShowWindow = SW_HIDE;
    }
-   else
+   
+   if( overlay )
    {
-      STARTUPINFOA si;
-      memset( &si, 0, sizeof( si ) );
-      si.cb = sizeof( si );
-      
-      DWORD iFlags = 0;
-      if( background )
-      {
-         iFlags = DETACHED_PROCESS;
-         si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
-         si.wShowWindow = SW_HIDE;
-      }
-      
-      if( overlay ) {
-         si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-         si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-      }
-      
-      si.dwFlags |= STARTF_USESTDHANDLES;
-      si.hStdOutput = hWrite;
-      
-      if ( ! s_openProcess(finalCmd, iFlags, proc, &si, 0) )
-      {
-         *returnValue = GetLastError();
-         return false;
-      }
-      
+      si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
+      si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
    }
+      
+   si.dwFlags |= STARTF_USESTDHANDLES;
+   si.hStdOutput = hWrite;
+   
+   AutoBuf cmdbuf(finalCmd);
+   if ( ! CreateProcess( NULL,
+                         cmdbuf.buf,
+                         NULL,
+                         NULL,
+                         TRUE, //Inerhit handles!
+                         iFlags,
+                         NULL,
+                         NULL,
+                         &si,
+                         &proc
+                         ) )     
+   {
+      *returnValue = GetLastError();
+      return false;
+   }   
    
    // read from the input handle
    char buffer[4096];
@@ -525,61 +420,41 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
       finalCmd.append( ' ' );
       finalCmd.append( *argv[i] );
    }
-   AutoBuf foo2(finalCmd, true);
 
-   STARTUPINFOW siw;
-   STARTUPINFOA si;
+   STARTUPINFO si;
    PROCESS_INFORMATION proc;
    DWORD iFlags = 0;
-   if( wideImplemented )
+   memset( &si, 0, sizeof( si ) );
+   si.cb = sizeof( si );
+   
+   if ( ! bg )
    {
-      memset( &siw, 0, sizeof( siw ) );
-      siw.cb = sizeof( siw );
+      // using show_hide AND using invalid handlers for unused streams
+      si.dwFlags = STARTF_USESTDHANDLES;
       
-      if ( ! bg )
-      {
-         // using show_hide AND using invalid handlers for unused streams
-         siw.dwFlags = STARTF_USESTDHANDLES;
-         
-         siw.hStdInput = ph->hPipeInRd;
-         siw.hStdOutput = ph->hPipeOutWr;
-         siw.hStdError = ph->hPipeErrWr;
-      }
-      else
-      {
-         siw.dwFlags |= STARTF_USESHOWWINDOW;
-         siw.wShowWindow = SW_HIDE;
-         iFlags |= DETACHED_PROCESS;
-      }
+      si.hStdInput = ph->hPipeInRd;
+      si.hStdOutput = ph->hPipeOutWr;
+      si.hStdError = ph->hPipeErrWr;
    }
    else
    {
-      memset( &si, 0, sizeof( si ) );
-      si.cb = sizeof( si );
-      
-      if ( ! bg )
-      {
-         // using show_hide AND using invalid handlers for unused streams
-         si.dwFlags = STARTF_USESTDHANDLES;
-        
-         si.hStdInput = ph->hPipeInRd;
-         si.hStdOutput = ph->hPipeOutWr;
-         si.hStdError = ph->hPipeErrWr;
-      }
-      else
-      {
-         si.dwFlags |= STARTF_USESHOWWINDOW;
-         si.wShowWindow = SW_HIDE;
-         iFlags |= DETACHED_PROCESS;
-      }
+      si.dwFlags |= STARTF_USESHOWWINDOW;
+      si.wShowWindow = SW_HIDE;
+      iFlags |= DETACHED_PROCESS;
    }
-   bool created;
-   if( wideImplemented )
-     created = s_openProcess(finalCmd, iFlags, proc, 0, &siw );
-   else
-     created = s_openProcess(finalCmd, iFlags, proc, &si,0 );
-       
-   if ( ! created )
+
+   AutoBuf cmdbuf(finalCmd);
+   if ( ! CreateProcess( NULL,
+                         cmdbuf.buf,
+                         NULL,
+                         NULL,
+                         TRUE, //Inerhit handles!
+                         iFlags,
+                         NULL,
+                         NULL,
+                         &si,
+                         &proc
+                         ) )
    {
       ph->lastError( GetLastError() );
       CloseHandle( ph->hPipeInWr );
