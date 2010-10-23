@@ -49,7 +49,7 @@ struct AutoBuf
 };
 
 
-String s_fullCommand(String& command, bool& wideImplemented)
+String s_fullCommand(String& command)
 {
    String finalCmd;
    
@@ -57,10 +57,7 @@ String s_fullCommand(String& command, bool& wideImplemented)
    TCHAR fullCommand[1024];
    TCHAR* filePart;
    if ( ! SearchPath( NULL, fileNameBuf.buf, NULL, 1024, fullCommand, &filePart ) )
-   {
-      wideImplemented = true;
       finalCmd.bufferize(fileNameBuf.buf);
-   }
    else
       finalCmd.bufferize(fullCommand);
 
@@ -166,8 +163,7 @@ bool ProcessEnum::close()
 
 bool spawn(String** argv, bool overlay, bool background, int *returnValue )
 {
-   bool wideImplemented;
-   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
+   String finalCmd = s_fullCommand(*argv[0]);
    
    // build the complete string
    for(size_t i = 1; argv[ i ] != 0; i++)
@@ -185,7 +181,7 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
    if( background )
    {
       iFlags = DETACHED_PROCESS;
-      si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
+      si.dwFlags = STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
    }
       
@@ -231,8 +227,7 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
 
 bool spawn_read( String **argv, bool overlay, bool background, int *returnValue, String *sOut )
 {
-   bool wideImplemented;
-   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
+   String finalCmd = s_fullCommand(*argv[0]);
    
    // build the complete string
    for(size_t i = 1; argv[ i ] != 0; i++)
@@ -356,36 +351,33 @@ const char *shellParam()
    return "/C";
 }
 
-bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg )
+bool openProcess(Process* _ph, String **argv, bool sinkIn, bool sinkOut, bool sinkErr, bool mergeErr, bool bg )
 {
    WinProcess* ph = static_cast<WinProcess*>(_ph);
    
-   SECURITY_ATTRIBUTES secatt;
-   
-   ph->hPipeInRd=INVALID_HANDLE_VALUE;
-   ph->hPipeInWr=INVALID_HANDLE_VALUE;
-   ph->hPipeOutRd=INVALID_HANDLE_VALUE;
-   ph->hPipeOutWr=INVALID_HANDLE_VALUE;
-   ph->hPipeErrRd=INVALID_HANDLE_VALUE;
-   ph->hPipeErrWr=INVALID_HANDLE_VALUE;
+   ph->hPipeInRd = INVALID_HANDLE_VALUE;
+   ph->hPipeInWr = INVALID_HANDLE_VALUE;
+   ph->hPipeOutRd = INVALID_HANDLE_VALUE;
+   ph->hPipeOutWr = INVALID_HANDLE_VALUE;
+   ph->hPipeErrRd = INVALID_HANDLE_VALUE;
+   ph->hPipeErrWr = INVALID_HANDLE_VALUE;
    
    // prepare security attributes
-   secatt.nLength = sizeof( secatt );
-   secatt.lpSecurityDescriptor = NULL;
-   secatt.bInheritHandle = TRUE;
+   SECURITY_ATTRIBUTES secAtt;
+   secAtt.nLength = sizeof( secAtt );
+   secAtt.lpSecurityDescriptor = NULL;
+   secAtt.bInheritHandle = TRUE;
    
-   if ( ! sinkin )
-   {
-      if ( !CreatePipe( &ph->hPipeInRd, &ph->hPipeInWr, &secatt, 0 ) )
+   if ( ! sinkIn )
+      if ( !CreatePipe( &ph->hPipeInRd, &ph->hPipeInWr, &secAtt, 0 ) )
       {
          ph->lastError( GetLastError() );
          return false;
       }
-   }
    
-   if ( ! sinkout )
+   if ( ! sinkOut )
    {
-      if ( ! CreatePipe( &ph->hPipeOutRd, &ph->hPipeOutWr, &secatt, 0 ) )
+      if ( ! CreatePipe( &ph->hPipeOutRd, &ph->hPipeOutWr, &secAtt, 0 ) )
       {
          ph->lastError( GetLastError() );
          CloseHandle( ph->hPipeInRd );
@@ -393,15 +385,15 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          return false;
       }
       
-      if ( mergeErr ) {
+      if ( mergeErr )
+      {
          ph->hPipeErrRd = ph->hPipeOutRd;
          ph->hPipeErrWr = ph->hPipeOutWr;
       }
    }
    
-   if ( ! sinkerr && ! mergeErr )
-   {
-      if ( !CreatePipe( &ph->hPipeErrRd, &ph->hPipeErrWr, &secatt, 0 ) )
+   if ( ! sinkErr && ! mergeErr )
+      if ( !CreatePipe( &ph->hPipeErrRd, &ph->hPipeErrWr, &secAtt, 0 ) )
       {
          ph->lastError( GetLastError() );
          CloseHandle( ph->hPipeInRd );
@@ -410,10 +402,8 @@ bool openProcess(Process* _ph, String **argv, bool sinkin, bool sinkout, bool si
          CloseHandle( ph->hPipeOutWr );
          return false;
       }
-   }
    
-   bool wideImplemented;
-   String finalCmd = s_fullCommand(*argv[0], wideImplemented);
+   String finalCmd = s_fullCommand(*argv[0]);
    // build the complete string
    for(size_t i = 1; argv[ i ] != 0; i++)
    {
