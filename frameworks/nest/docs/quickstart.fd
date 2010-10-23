@@ -135,6 +135,7 @@ headers and footers for all the pages of a site:
 
 @code
 // this is index.fal
+load nest
 
 Nest.frame = function()
             > '<html><head><title>My site</title></head><body>'
@@ -144,8 +145,53 @@ Nest.frame = function()
          end
          
 Nest.route()
-
 @endcode
 
+The function set in @a Nest.frame may be also a direct __include__ that loads the
+frame page. The location of those pages is always relative to the entry point.
+
+For example, to externalize the frame in another module, it is possible to write:
+
+@code
+// this is index.fal
+load nest
+
+Nest.frame = .[include "frame.ftd"]
+Nest.route()
+@endcode
+
+Then, {{frame.ftd}} would beside index.fal, and would look like the following:
+@code
+<!-- This is frame.ftd -->
+<html>
+   <head><title>My site</title></head>
+   <body>
+   <p>My site starts here...</p><hr/>
+   <?= Nest.content ?>
+   <hr/>
+   <p>And this was My Site! ... </p>
+   </body>
+</html>
+@endcode
+
+@sction qs_services Services
+
+Nest modular web application composition is based on the concept of __services__, that are
+modules preforming specific tasks and then, optionally, being rendered on the final page.
+
+For the details, please refer to the "@a service" chapter. In this quickstart guide, we see
+how to setup a minimal service in a page, and their basic working principles.
+
+Services are invoked through the @a Nest.service method, which returns a @a Service class
+instance. The instance can be configured on the fly during the @a Nest.service call, or it
+may be configured separately, after the instance is obtained.
+
+After services are loaded and configured, they are executed in their load order when the
+@a Nest.run method is invoked, or automatically when the first @a Service.render method is
+invoked. It is possible to load other services afterwards, and they will be run automatically
+right before they are rendered.
+
+However, it's generally a good idea not to rely on load and run order, as they may be different
+under different contexts. Nest provides mechanisms that allow services to exchange
 
 */

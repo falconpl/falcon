@@ -16,8 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-//WARNING: This is to circumvent a loader's bug. Should be .DBService
-import DBService from .srv.DBService as DBService
+import DBService from nest.srv.DBService as DBService
 import ServiceVar from nest as ServiceVar
 import from nest.bindings in b
 

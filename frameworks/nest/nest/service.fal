@@ -82,7 +82,8 @@ class ServiceVar( descr, binding )
    
 end
 
-
+/*# Nest main page module
+*/
 class Service( instance ) from NestModule( instance )
    extscripts = []
    stylesheets = []
@@ -111,7 +112,7 @@ class Service( instance ) from NestModule( instance )
       This means that variables meant to be broadcast shouldn't be set here. Use the bind
       process, that happens later on.
 
-      The default implementation just stores the @b config parameter in the @a Service.configuration
+      The default implementation just stores the @b config parameter in the @a NestModule.configuration
       property. This is where configuration binders will check for this value.
    */
    function configure( config )
@@ -121,24 +122,55 @@ class Service( instance ) from NestModule( instance )
       end
    end
    
-   /*# Hook called at page load */
+   /*# Hook called when the service is loaded.
+
+      After the service is loaded and configured by Nest, it gets a chance to punch in
+      and perform some essential operations before Nest can proceed with the rest of the page.
+   */
    function startup()
    end
 
-   /*# Hook called before first rendering */
+   /*# Action performed by the service before rendering.
+   
+      This method is always called after the whole of the page has been loaded,
+      and all the services are readied and started up.
+   */
    function run()
    end
 
-   /*# Hook called at render */
+   /*# Ask Nest system to prepare to render ourselves at this point.
+
+      This sends a request to Nest to insert the output of the Service
+      here.
+
+   */
    function render()
-      Nest.run()
-      
+      Nest.renderService( self )
+   end
+
+   /*# Execute rendering.
+
+      This callback is called if the service previously registered through @ Service.render,
+      and is invoked directly by Nest at page output completion.
+
+      The default function loads the skin given in _skin_file, if present.
+
+      Implementors may override this if this simple behavior is not enough, or if the service
+      rendering is simple enough not to require skin files.
+   */
+   function perform_render()
       if self._skin_file
          return self.renderSkin( self._skin_file )
       end
+      return ""
    end
+   
+   /*# Called at termination.
 
-   /*# Called at termination */
+      This method is called after all the rendering are perfomed and the page output is sent
+      to the remote user. Normally, it shouln't generate any output, unless critical errors
+      are detected and cannot be handled locally.
+   */
    function finalize()
    end
 
@@ -153,7 +185,7 @@ class Service( instance ) from NestModule( instance )
 
     /*# Check if the current user is allowed to access this service.
 
-      Differently from allowed(), it also logs an error message if the service is not
+      Differently from @a Service.allowed, it also logs an error message if the service is not
       allowed.
    */
    function checkAllowed()

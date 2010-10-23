@@ -22,7 +22,7 @@
 </head>
 <body>
    <h1>View your note</h1>
-   <?= de.render() ?>
+   <? de.render() ?>
    <br/>
    <p>Click here to <a href="<?= Nest.pageLink('home') ?>">return to home</a>.</p>
    <br/>
