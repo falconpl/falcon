@@ -66,6 +66,17 @@ class QrInputItem(mode, size, data, bitStream)
         return self._bitStream
     end
 
+    // greg
+    function show()
+        for i in [0:len(self._data)]
+            >> self._data[i]
+        end
+        >
+        > "len is " + len(self._data)
+        > "size is " + self._size
+    end
+    // greg
+
     function encodeModeNum(version)
         val = 0x1
         words = int(self._size / 3)
@@ -255,6 +266,14 @@ class QrInput(version, errorCorrectionLevel)
 
         self._errorCorrectionLevel = errorCorrectionLevel
     end
+
+    // greg
+    function show()
+        for item in self._items
+            item.show()
+        end
+    end
+    // greg
 
     function appendEntry(entry)
         arrayAdd(self._items, entry)

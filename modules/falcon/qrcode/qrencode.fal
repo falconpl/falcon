@@ -27,7 +27,7 @@ class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
     ecc = nil
 
     init
-        rsItem.encodeChar(data, ecc)
+        rsItem.encodeChar(data, $ecc)
         self.dataLen = dataLen
         self.data = data
         self.eccLen = eccLen
@@ -112,8 +112,13 @@ class QrRawCode(input)
             ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
             arrayAdd(self._rsBlocks, QrRsBlock(
                 dataLen, self._data[dataPos:len(self._data) - dataPos],
-                eccLen, ecc, rs))
-            self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+                eccLen, $ecc, rs))
+
+            if eccPos > 0
+                self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+            else
+                self._ecc = ecc
+            end
 
             dataPos += dataLen
             eccPos += eccLen
@@ -128,8 +133,13 @@ class QrRawCode(input)
                 ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
                 arrayAdd(self._rsBlocks, QrRsBlock(
                     dataLen, self._data[dataPos:len(self._data) - dataPos],
-                    eccLen, ecc, rs))
-                self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+                    eccLen, $ecc, rs))
+
+                if eccPos > 0
+                    self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+                else
+                    self._ecc = ecc
+                end
 
                 dataPos += dataLen
                 eccPos += eccLen
@@ -175,6 +185,9 @@ class QrCode
                 filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
                 bit >>= 1
             end
+            // greg
+            >
+            // greg
         end
 
         raw = nil
@@ -438,9 +451,22 @@ class QrEncode(errorCorrectionLevel, size, margin)
         stdOut(oldOut)
 
         if errorMessage != ""
-            raise QrError(QrError.encoding_error, errorMessage)
+         //   raise QrError(QrError.encoding_error, errorMessage)
+         //greg
+         > errorMessage
+         //greg
         end
 
+        // greg
+        /*
+        > "frame len = " + len(frame)
+        > "frame = "
+        for i in [0:len(frame)]
+            > frame[i]
+        end
+        >
+        */
+        // greg
         maxSize = int(QrConfig.png_max_size / (len(frame) + 2 * self.margin))
         QrImage.png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
     end
