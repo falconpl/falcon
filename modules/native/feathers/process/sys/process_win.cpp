@@ -146,7 +146,7 @@ bool ProcessEnum::close()
       return true;
 
    WIN_PROC_HANDLE *ph = (WIN_PROC_HANDLE *) m_sysdata;
-   if ( CloseHandle( ph->hSnap ) )
+   if ( ! CloseHandle( ph->hSnap ) )
    {
       delete ph;
       m_sysdata = 0;
