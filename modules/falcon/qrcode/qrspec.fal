@@ -177,6 +177,7 @@ class QrSpec
 
     function lengthIndicator(mode, version)
         if mode == QrMode.structure; return 0; end
+        l = 0
 
         if version <= 9
             l = 0
@@ -191,6 +192,7 @@ class QrSpec
 
     function maxWords(mode, version)
         if mode == QrMode.structure; return 3; end
+        l = 0
 
         if version <= 9
             l = 0
@@ -284,14 +286,16 @@ class QrSpec
 
     function getVersionPattern(version)
         if version < 7 or version > QrSpecConst.max_version
-            return 0
+            raise QrError(QrError.invalid_version, @i'$(version) is not supported')
         end
 
         return QrVersionPattern[version -7]
     end
 
     function getFormatInfo(mask, errorCorrectionLevel)
-        if mask < 0 or mask > 7; return 0; end
+        if mask < 0 or mask > 7;
+            raise QrError(QrError.invalid_mask, @i'$(mask) is not supported')
+        end
 
         if errorCorrectionLevel < QrErrorCorrectionLevel.L \
             or errorCorrectionLevel > QrErrorCorrectionLevel.H
@@ -301,7 +305,7 @@ class QrSpec
         return QrFormatInfo[errorCorrectionLevel][mask]
     end
 
-    function putFinderPattern(frame /* ref */, ox, oy)
+    function putFinderPattern(frame, ox, oy)
         finder = [
             "\xc1\xc1\xc1\xc1\xc1\xc1\xc1",
             "\xc1\xc0\xc0\xc0\xc0\xc0\xc1",
@@ -321,9 +325,9 @@ class QrSpec
         width = QrCapacity[version][QrCapConst.width]
         frame = arrayBuffer(width, "\x0" * width)
 
-        self.putFinderPattern($frame, 0, 0)
-        self.putFinderPattern($frame, width - 7, 0)
-        self.putFinderPattern($frame, 0, width - 7)
+        self.putFinderPattern(frame, 0, 0)
+        self.putFinderPattern(frame, width - 7, 0)
+        self.putFinderPattern(frame, 0, width - 7)
 
         yOffset = width - 7
 
