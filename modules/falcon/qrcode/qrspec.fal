@@ -245,15 +245,12 @@ class QrSpec
         xStart = ox - 2
 
         for y in [0:5]     
-            QrStr.set(frame, xStart, yStart + y, finder[y])
+            QrStr.set($frame, xStart, yStart + y, finder[y])
         end
     end
 
     function putAlignmentPattern(version, frame, width)
-        if version < 2
-            return
-            // raise QrError(QrError.invalid_version, @i'$(version) is not supported')
-        end
+        if version < 2; return; end
 
         d = QrAlignmentPattern[version][1] - QrAlignmentPattern[version][0]
         if d < 0
@@ -265,14 +262,14 @@ class QrSpec
         if w * w - 3 == 1
             x = QrAlignmentPattern[version][0]
             y = QrAlignmentPattern[version][0]
-            self.putAlignmentMarker(frame, x, y)
+            self.putAlignmentMarker($frame, x, y)
             return
         end
 
         cx = QrAlignmentPattern[version][0]
         for x in [1:w - 1]
-            self.putAlignmentMarker(frame, 6, cx)
-            self.putAlignmentMarker(frame, cx, 6)
+            self.putAlignmentMarker($frame, 6, cx)
+            self.putAlignmentMarker($frame, cx, 6)
             cx += d
         end
 
@@ -280,7 +277,7 @@ class QrSpec
         for y in [0:w - 1]
             cx = QrAlignmentPattern[version][0]
             for x in [0:w - 1]
-                self.putAlignmentMarker(frame, cx, cy)
+                self.putAlignmentMarker($frame, cx, cy)
                 cx += d
             end
             cy += d
@@ -308,7 +305,7 @@ class QrSpec
         return QrFormatInfo[errorCorrectionLevel][mask]
     end
 
-    function putFinderPattern(frame /* ref */, ox, oy)
+    function putFinderPattern(frame, ox, oy)
         finder = [
             "\xc1\xc1\xc1\xc1\xc1\xc1\xc1",
             "\xc1\xc0\xc0\xc0\xc0\xc0\xc1",
@@ -320,17 +317,18 @@ class QrSpec
         ]
 
         for y in [0:7]     
-            QrStr.set(frame, ox, oy + y, finder[y])
+            QrStr.set($frame, ox, oy + y, finder[y])
         end
     end
 
     function createFrame(version)
         width = QrCapacity[version][QrCapConst.width]
-        frame = arrayBuffer(width, "\x0" * width)
+        frame = arrayBuffer(width)
+        for y in [0:width]; frame[y] = "\x0" * width; end
 
-        self.putFinderPattern(frame, 0, 0)
-        self.putFinderPattern(frame, width - 7, 0)
-        self.putFinderPattern(frame, 0, width - 7)
+        self.putFinderPattern($frame, 0, 0)
+        self.putFinderPattern($frame, width - 7, 0)
+        self.putFinderPattern($frame, 0, width - 7)
 
         yOffset = width - 7
 
@@ -342,13 +340,13 @@ class QrSpec
         end
 
         setPattern = "\xc0" * 8
-        QrStr.set(frame, 0, 7, setPattern)
-        QrStr.set(frame, width - 8, 7, setPattern)
-        QrStr.set(frame, 0, width - 8, setPattern)
+        QrStr.set($frame, 0, 7, setPattern)
+        QrStr.set($frame, width - 8, 7, setPattern)
+        QrStr.set($frame, 0, width - 8, setPattern)
 
         setPattern = "\x84" * 9
-        QrStr.set(frame, 0, 8, setPattern)
-        QrStr.set(frame, width - 8, 8, setPattern, 8)
+        QrStr.set($frame, 0, 8, setPattern)
+        QrStr.set($frame, width - 8, 8, setPattern, 8)
 
         yOffset = width - 8
 
@@ -363,7 +361,7 @@ class QrSpec
             frame[7 + i][6] = chr(0x90 || (i && 1))
         end
 
-        self.putAlignmentPattern(version, frame, width)
+        self.putAlignmentPattern(version, $frame, width)
 
         if version >= 7
             vinf = self.getVersionPattern(version)
@@ -416,7 +414,7 @@ class QrSpec
 
                 if fileType(QrConfig.cache_dir) == FileStat.NOTFOUND
                     dirMake(QrConfig.cache_dir, true)
-                    // fileChmod(QrConfig.cache_dir, 775)
+                    fileChmod(QrConfig.cache_dir, 0775)
                 end
 
                 if fileType(fileName) != FileStat.NOTFOUND

@@ -33,35 +33,41 @@ FalconMakeBinding( CURL CURL "Install CURL binding" )
 FalconMakeBinding( GTK GTK2 "Install GTK binding" )
 FalconMakeBinding( SDL SDL "Install SDL  binding" )
 
-# Bindings -- Requiring more sophisticated checks
-option( FALCON_BUILD_DBUS "Install DBUS binding" OFF )
-option( FALCON_BUILD_GD2 "Install GD library binding" OFF )
-option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" OFF )
 
 # Other modules
 option( FALCON_BUILD_WOPI "Install Web Oriented Programming Interface" OFF  )
 
+# TODO: foreach ftw
 if( FALCON_NATMODS_AUTO )
 
    #### Check DBUS
    find_path( DBUS_INCLUDE_DIR dbus.h )
    if (DBUS_INCLUDE_DIRS)
-      set( FALCON_BUILD_DBUS ON )
+      set( _dbus ON )
    endif()
 
    #### Check LibHARU
    find_path(LibHaru_INCLUE_DIR hpdf.h)
    if (LibHaru_INCLUE_DIR)
-      set( FALCON_BUILD_PDF ON )
+      set( _pdf ON)
    endif()
 
    #### Check GD2
    find_path(GD_INCLUDE_DIR gd.h)
    if (GD_INCLUDE_DIR)
-      set( FALCON_BUILD_GD2 ON )
+      set( _gd2 ON)
    endif()
-
+else()
+  set( _dbus OFF )
+  set( _pdf OFF )
+  set( _gd2 OFF )
 endif()
+
+# Bindings -- Requiring more sophisticated checks
+option( FALCON_BUILD_DBUS "Install DBUS binding"  ${_dbus})
+option( FALCON_BUILD_GD2 "Install GD library binding" ${_gd2})
+option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" ${_pdf})
+
 
 #########################################################
 # Inclusion statements

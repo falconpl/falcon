@@ -36,9 +36,13 @@ class QrTools
             QrImage.png(self.binarize(frame), fileName, 1, 0)
             
             width = len(frame)
-            bitMask = arrayBuffer(width, arrayBuffer(width, 0))
+            bitMask = arrayBuffer(width)
+            for i in [0:width]
+                bitMask[i] = arrayBuffer(width, 0)
+            end
+
             for maskNo in [0:8]
-                mask.makeMaskNo(maskNo, width, frame, bitMask, true)
+                mask.makeMaskNo(maskNo, width, frame, $bitMask, true)
             end
         end
     end

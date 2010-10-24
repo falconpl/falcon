@@ -80,14 +80,15 @@ class QrMask
     end
 
     function generateMaskNo(maskNo, width, frame)
-        bitMask = arrayBuffer(width, arrayBuffer(width, 0))
+        bitMask = arrayBuffer(width)
 
         for y in [0:width]
+            col = bitMask[y] = arrayBuffer(width, 0)
             for x in [0:width]
                 if frame[y][*x] && 0x80
-                    bitMask[y][x] = 0
+                    col[x] = 0
                 else
-                    bitMask[y][x] = self._mask[maskNo](x, y) == 0 ? 1 : 0
+                    col[x] = self._mask[maskNo](x, y) == 0 ? 1 : 0
                 end
             end
         end
@@ -116,7 +117,7 @@ class QrMask
         return codeArray
     end
 
-    function makeMaskNo(maskNo, width, s, d, maskGenOnly)
+    function makeMaskNo(maskNo, width, frame, mask, maskGenOnly)
         if maskGenOnly == nil; maskGenOnly = false; end
 
         b = 0
@@ -134,7 +135,7 @@ class QrMask
                 bitMask = self.unserialize(buffer)
                 inputStream.close()
             else
-                bitMask = self.generateMaskNo(maskNo, width, s, d)
+                bitMask = self.generateMaskNo(maskNo, width, frame, mask)
                 if fileType(QrConfig.cache_dir + "mask_" + maskNo) == FileStat.NOTFOUND
                     dirMake(QrConfig.cache_dir + "mask_" + maskNo)
                 end
@@ -144,19 +145,19 @@ class QrMask
                 outputStream.close()
             end
         else
-            bitMask = self.generateMaskNo(maskNo, width, s, d)
+            bitMask = self.generateMaskNo(maskNo, width, frame, mask)
         end
 
         if maskGenOnly; return; end
 
-        d = s
+        mask = clone(frame)
 
         for y in [0:width]
             for x in [0:width]
                 if bitMask[y][x] == 1
-                   d[y][x] = chr(s[y][*x] ^^ bitMask[y][x])
+                   mask[y][x] = chr(frame[y][*x] ^^ bitMask[y][x])
                 end
-                b += d[y][*x] && 1
+                b += mask[y][*x] && 1
             end
         end
 
@@ -164,9 +165,11 @@ class QrMask
     end
 
     function makeMask(width, frame, maskNo, errorCorrectionLevel)
-        masked = arrayBuffer(width, "\x0" * width)
-        self.makeMaskNo(maskNo, width, frame, masked)
-        self.writeFormatInformation(width, masked, maskNo, errorCorrectionLevel)
+        masked = arrayBuffer(width)
+        for y in [0:width]; masked[y] = "\x0" * width; end
+
+        self.makeMaskNo(maskNo, width, frame, $masked)
+        self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
 
         return masked
     end
@@ -263,7 +266,7 @@ class QrMask
         bestMask = []
         checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
 
-        if QrConfig.find_from_random != nil
+        if QrConfig.find_from_random != 0
             howManuOut = 8 - (QrConfig.find_from_random % 9)
             for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
@@ -274,11 +277,13 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-            mask = arrayBuffer(width, "\x0" * width)
+            mask = arrayBuffer(width)
+            for y in [0:width]; mask[y] = "\x0" * width; end
+
             demerit = 0
             blacks = 0
-            blacks = self.makeMaskNo(i, width, frame, mask)
-            blacks += self.writeFormatInformation(width, mask, i, errorCorrectionLevel)
+            blacks = self.makeMaskNo(i, width, frame, $mask)
+            blacks += self.writeFormatInformation(width, $mask, i, errorCorrectionLevel)
             blacks  = int(100 * blacks / (width * width))
             demerit = int(int(abs(blacks - 50) / 5) * QrMaskConst.n4)
             demerit += self.evaluateSymbol(width, mask)

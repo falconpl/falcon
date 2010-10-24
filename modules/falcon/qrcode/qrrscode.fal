@@ -10,29 +10,20 @@
 
 import QrError from .qrerror as QrError
 
-class QrRsItem
-    mm = 0
-    nn = 0
-    alphaTo = nil
-    indexOf = nil
-    genpoly = nil
-    nroots = 0
-    fcr = 0
-    prim = 0
-    iprim = 0
-    pad = 0
-    gfpoly = 0
+class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
+    _mm = 0
+    _nn = 0
+    _alphaTo = nil
+    _indexOf = nil
+    _genpoly = nil
+    _nroots = 0
+    _fcr = 0
+    _prim = 0
+    _iprim = 0
+    _pad = 0
+    _gfpoly = 0
 
-    function modnn(x)
-        while x >= self.nn
-            x -= self.nn
-            x = (x >> self.mm) + (x && self.nn)
-        end
-
-        return x
-    end
-
-    function initChar(symsize, gfpoly, fcr, prim, nroots, pad)
+    init
         // Common code for intializing a Reed-Solomon control block (char or int symbols)
         // Copyright 2004 Phil Karn, KA9Q
         // May be used under the terms of the GNU Lesser General Public License (LGPL)
@@ -42,92 +33,98 @@ class QrRsItem
             or (prim <= 0 or prim >= (1 << symsize)) \
             or (nroots < 0 or nroots >= (1 << symsize)) \
             or (pad < 0 or pad >= ((1 << symsize) -1 - nroots))
-            raise QrError(QrError.invalid_param)
+            raise QrError(QrError.encoding_error, i"error initializing Reed-Solomon control block")
         end
 
-        rs = QrRsItem()
-        rs.mm = symsize
-        rs.nn = (1 << symsize) - 1
-        rs.pad = pad
+        self._mm = symsize
+        self._nn = (1 << symsize) - 1
+        self._pad = pad
 
-        rs.alphaTo = arrayBuffer(rs.nn + 1, 0)
-        rs.indexOf = arrayBuffer(rs.nn + 1, 0)
+        self._alphaTo = arrayBuffer(self._nn + 1, 0)
+        self._indexOf = arrayBuffer(self._nn + 1, 0)
 
-        rs.indexOf[0] = rs.nn
-        rs.alphaTo[rs.nn] = 0
+        self._indexOf[0] = self._nn
+        self._alphaTo[self._nn] = 0
         sr = 1
 
-        for i in [0:rs.nn]     
-            rs.indexOf[sr] = i
-            rs.alphaTo[i] = sr
+        for i in [0:self._nn]     
+            self._indexOf[sr] = i
+            self._alphaTo[i] = sr
             sr <<= 1
             if sr && (1 << symsize); sr ^= gfpoly; end
-            sr &= rs.nn
+            sr &= self._nn
         end
 
         if sr != 1
             raise QrError(QrError.encoding_error, i"polynominal is not primitive")
         end
 
-        rs.genpoly = arrayBuffer(nroots + 1, 0)
-        rs.fcr = fcr
-        rs.prim = prim
-        rs.nroots = nroots
-        rs.gfpoly = gfpoly
+        self._genpoly = arrayBuffer(nroots + 1, 0)
+        self._fcr = fcr
+        self._prim = prim
+        self._nroots = nroots
+        self._gfpoly = gfpoly
 
-        iprim = 1; while (iprim % prim) != 0; iprim += rs.nn; end
-        rs.iprim = int(iprim / prim)
-        rs.genpoly[0] = 1
+        iprim = 1; while (iprim % prim) != 0; iprim += self._nn; end
+        self._iprim = int(iprim / prim)
+        self._genpoly[0] = 1
 
         root = fcr * prim
         for i in [0:nroots]
-            rs.genpoly[i + 1] = 1
+            self._genpoly[i + 1] = 1
 
             for j in [i:1:-1]
-                if rs.genpoly[j] != 0
-                    rs.genpoly[j] = rs.genpoly[j - 1] ^^ rs.alphaTo[rs.modnn(rs.indexOf[rs.genpoly[j]] + root)]
+                if self._genpoly[j] != 0
+                    self._genpoly[j] = self._genpoly[j - 1] ^^ self._alphaTo[self._modnn(self._indexOf[self._genpoly[j]] + root)]
                 else
-                    rs.genpoly[j] = rs.genpoly[j - 1]
+                    self._genpoly[j] = self._genpoly[j - 1]
                 end
             end
-            rs.genpoly[0] = rs.alphaTo[rs.modnn(rs.indexOf[rs.genpoly[0]] + root)]
+            self._genpoly[0] = self._alphaTo[self._modnn(self._indexOf[self._genpoly[0]] + root)]
             root += prim
         end
 
         for i in [0:nroots + 1]
-            rs.genpoly[i] = rs.indexOf[rs.genpoly[i]]
+            self._genpoly[i] = self._indexOf[self._genpoly[i]]
         end
-
-        return rs;
     end
 
     function encodeChar(data, parity)
-        parity = arrayBuffer(self.nroots, 0)
+        parity = arrayBuffer(self._nroots, 0)
 
-        for i in [0:self.nn - self.nroots - self.pad]
-            feedback = self.indexOf[data[i] ^^ parity[0]]
-            if feedback != self.nn     
-                feedback = self.modnn(self.nn - self.genpoly[self.nroots] + feedback)
-                for j in [1:self.nroots]
-                    parity[j] ^= self.alphaTo[self.modnn(feedback + self.genpoly[self.nroots - j])]
+        for i in [0:self._nn - self._nroots - self._pad]
+            feedback = self._indexOf[data[i] ^^ parity[0]]
+            if feedback != self._nn     
+                feedback = self._modnn(self._nn - self._genpoly[self._nroots] + feedback)
+                for j in [1:self._nroots]
+                    parity[j] ^= self._alphaTo[self._modnn(feedback + self._genpoly[self._nroots - j])]
                 end
             end
 
             if len(parity) > 0; arrayRemove(parity, 0); end
-            if feedback != self.nn
-                arrayAdd(parity, self.alphaTo[self.modnn(feedback + self.genpoly[0])])
+            if feedback != self._nn
+                arrayAdd(parity, self._alphaTo[self._modnn(feedback + self._genpoly[0])])
             else
                 arrayAdd(parity, 0)
             end
         end
     end
+
+    function _modnn(x)
+        while x >= self._nn
+            x -= self._nn
+            x = (x >> self._mm) + (x && self._nn)
+        end
+
+        return x
+    end
 end
 
-class QrRs(symsize, gfpoly, fcr, prim, nroots, pad)
-    items = []
+object QrRs
+    _items = []
 
-    init
-        for rs in self.items
+    function getItem(symsize, gfpoly, fcr, prim, nroots, pad)
+        for rs in self._items
             if rs.pad != pad; continue; end
             if rs.nroots != nroots; continue; end
             if rs.mm != symsize; continue; end
@@ -137,9 +134,8 @@ class QrRs(symsize, gfpoly, fcr, prim, nroots, pad)
             return rs;
         end
 
-        rs = QrRsItem()
-        rs = QrRsItem.initChar(symsize, gfpoly, fcr, prim, nroots, pad)
-        arrayIns(self.items, 0, rs)
+        rs = QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
+        arrayIns(self._items, 0, rs)
 
         return rs
     end
