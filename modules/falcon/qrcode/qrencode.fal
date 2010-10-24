@@ -176,7 +176,7 @@ class QrCode
                 bit >>= 1
             end
         end
-
+        
         raw = nil
 
         for i in [0:spec.getRemainder(version)]

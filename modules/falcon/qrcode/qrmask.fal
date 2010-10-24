@@ -150,7 +150,7 @@ class QrMask
 
         if maskGenOnly; return; end
 
-        mask = frame
+        mask = clone(frame)
 
         for y in [0:width]
             for x in [0:width]
@@ -165,7 +165,9 @@ class QrMask
     end
 
     function makeMask(width, frame, maskNo, errorCorrectionLevel)
-        masked = arrayBuffer(width, "\x0" * width)
+        masked = arrayBuffer(width)
+        for y in [0:width]; masked[y] = "\x0" * width; end
+
         self.makeMaskNo(maskNo, width, frame, $masked)
         self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
 
@@ -268,7 +270,6 @@ class QrMask
             howManuOut = 8 - (QrConfig.find_from_random % 9)
             for i in [0:howManuOut]
                 remPos = random(0, len(checkedMasks) - 1)
-                > remPos
                 arrayRemove(checkedMasks, remPos)
             end
         end
@@ -276,7 +277,9 @@ class QrMask
         bestMask = frame
 
         for i in checkedMasks
-            mask = arrayBuffer(width, "\x0" * width)
+            mask = arrayBuffer(width)
+            for y in [0:width]; mask[y] = "\x0" * width; end
+
             demerit = 0
             blacks = 0
             blacks = self.makeMaskNo(i, width, frame, $mask)

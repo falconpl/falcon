@@ -323,7 +323,8 @@ class QrSpec
 
     function createFrame(version)
         width = QrCapacity[version][QrCapConst.width]
-        frame = arrayBuffer(width, "\x0" * width)
+        frame = arrayBuffer(width)
+        for y in [0:width]; frame[y] = "\x0" * width; end
 
         self.putFinderPattern($frame, 0, 0)
         self.putFinderPattern($frame, width - 7, 0)
