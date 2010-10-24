@@ -27,7 +27,7 @@ class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
     ecc = nil
 
     init
-        rsItem.encodeChar(data, ecc)
+        rsItem.encodeChar(data, $ecc)
         self.dataLen = dataLen
         self.data = data
         self.eccLen = eccLen
@@ -54,7 +54,7 @@ class QrRawCode(input)
         spec = [0, 0, 0, 0, 0]
 
         self._data = input.getByteStream()
-        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, spec)
+        QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, $spec)
         self._version = input.version
         self._blockNum1 = QrSpec.rsBlockNum1(spec)
         self._dataLen = QrSpec.rsDataLength(spec)
@@ -112,8 +112,8 @@ class QrRawCode(input)
             ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
             arrayAdd(self._rsBlocks, QrRsBlock(
                 dataLen, self._data[dataPos:len(self._data) - dataPos],
-                eccLen, ecc, rs))
-            self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+                eccLen, $ecc, rs))
+            self._ecc = self._ecc[0:eccPos] + ecc
 
             dataPos += dataLen
             eccPos += eccLen
@@ -128,8 +128,8 @@ class QrRawCode(input)
                 ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
                 arrayAdd(self._rsBlocks, QrRsBlock(
                     dataLen, self._data[dataPos:len(self._data) - dataPos],
-                    eccLen, ecc, rs))
-                self._ecc = arrayMerge(self._ecc[0:eccPos], ecc)
+                    eccLen, $ecc, rs))
+                self._ecc = self._ecc[0:eccPos] + ecc
 
                 dataPos += dataLen
                 eccPos += eccLen
@@ -162,7 +162,7 @@ class QrCode
         width = spec.getWidth(version)
         frame = spec.newFrame(version)
 
-        filler = QrFrameFiller(width, frame)
+        filler = QrFrameFiller(width, $frame)
         if filler == nil
             raise QrError(QrError.encoding_error, "error creating frame filler")
         end
