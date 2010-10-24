@@ -192,10 +192,10 @@ FALCON_FUNC  ProcessEnum::next( VMachine* vm )
 {
    Mod::ProcessEnum* self = Falcon::dyncast<Mod::ProcessEnum*>( vm->self().asObject() );
    CoreString *name = new CoreString;
-   CoreString *path = new CoreString;
+   CoreString *commandLine = new CoreString;
    uint64 pid, ppid;
 
-   int64 res = (int64) self->handle()->next( *name, pid, ppid, *path );
+   int64 res = (int64) self->handle()->next( *name, pid, ppid, *commandLine );
 
    if ( res != 1 )
    {
@@ -208,7 +208,7 @@ FALCON_FUNC  ProcessEnum::next( VMachine* vm )
    else
    {
       self->setProperty( "name", name );
-      self->setProperty( "cmdLine", path );
+      self->setProperty( "cmdLine", commandLine );
       self->setProperty( "pid", (int64) pid );
       self->setProperty( "parentPid", (int64) ppid );
    }

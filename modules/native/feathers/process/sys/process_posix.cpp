@@ -117,7 +117,7 @@ ProcessEnum::~ProcessEnum()
    this->close();
 }
 
-int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
+int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandLine )
 {
    if ( m_sysdata == 0 )
       return -1;
@@ -125,29 +125,29 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
    DIR* procdir = static_cast<DIR*>(m_sysdata);
    struct dirent* de;
 
+   // `DIR' implements a stream and readdir moves it forward.
    while ( (de = readdir( procdir ) ) != 0 )
    {
+      // skip non pid entries
       if ( de->d_name[0] >= '0' && de->d_name[0] <= '9' )
          break;
    }
-
-   if ( de == 0 )
-      return 0;
-
+   if ( !de ) return 0; // EOF
+   
    char statent[ 64 ];
-   FILE* fp;
+   snprintf( statent, 64, "/proc/%s/stat", de->d_name );
+   FILE* fp = fopen( statent, "r" );
+   if ( !fp ) return -1;
+   
+   int32 p_pid, p_ppid;
    char status;
    char szName[1024];
-
-   snprintf( statent, 64, "/proc/%s/stat", de->d_name );
-   fp = fopen( statent, "r" );
-   if ( !fp ) return -1;
-   int32 p_pid, p_ppid;
    if ( fscanf( fp, "%d %s %c %d", &p_pid, szName, &status, &p_ppid ) != 4 )
    {
       fclose( fp );
       return -1;
    }
+   
    pid = (int64) p_pid;
    ppid = (int64) p_ppid;
    fclose(fp);
@@ -160,7 +160,6 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
    else
       name.bufferize( szName );
 
-
    // read also the command line, which may be missing.
    snprintf( statent, sizeof(statent), "/proc/%s/cmdline", de->d_name );
    fp = fopen( statent, "r" );
@@ -170,15 +169,15 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
       return 1;
    }
 
-   fclose(fp);
-   path.bufferize( szName );
+   fclose( fp );
+   commandLine.bufferize( szName );
 
    return 1;
 }
 
 bool ProcessEnum::close()
 {
-   if ( m_sysdata != 0 )
+   if ( m_sysdata )
    {
       closedir( static_cast<DIR*>(m_sysdata) );
       m_sysdata = 0;
@@ -268,8 +267,8 @@ bool spawn_read( String** argList, bool overlay, bool background, int* returnVal
       }
 
       // read the output
-      #define MAX_READ_PER_LOOP  4096
-      char buffer[MAX_READ_PER_LOOP];
+      const size_t max_read_per_loop = 4096;
+      char buffer[max_read_per_loop];
       int readin;
       fd_set rfds;
       struct timeval tv;
@@ -286,7 +285,7 @@ bool spawn_read( String** argList, bool overlay, bool background, int* returnVal
 
          if( retval )
          {
-            readin = read( pipe_fd[0], buffer, MAX_READ_PER_LOOP );
+            readin = read( pipe_fd[0], buffer, max_read_per_loop );
             String s;
             s.adopt( buffer, readin, 0 );
             sOutput->append( s );
@@ -304,9 +303,11 @@ bool spawn_read( String** argList, bool overlay, bool background, int* returnVal
    }
 
    // in case of overlay, just run the execvp and eventually return in case of error.
-   execvp( argv.p[0], argv.p ); // never returns.
+   execvp( argv.p[0], argv.p ); // never returns..
+   // .. unless an error occured:
    exit( -1 );
-   return false;
+   // *returnValue = errno;
+   // return false;
 }
 
 
