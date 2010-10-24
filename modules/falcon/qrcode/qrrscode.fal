@@ -11,17 +11,17 @@
 import QrError from .qrerror as QrError
 
 class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
-    _mm = 0
+    mm = 0
     _nn = 0
     _alphaTo = nil
     _indexOf = nil
     _genpoly = nil
-    _nroots = 0
-    _fcr = 0
-    _prim = 0
+    nroots = 0
+    fcr = 0
+    prim = 0
     _iprim = 0
-    _pad = 0
-    _gfpoly = 0
+    pad = 0
+    gfpoly = 0
 
     init
         // Common code for intializing a Reed-Solomon control block (char or int symbols)
@@ -36,9 +36,9 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
             raise QrError(QrError.encoding_error, i"error initializing Reed-Solomon control block")
         end
 
-        self._mm = symsize
+        self.mm = symsize
         self._nn = (1 << symsize) - 1
-        self._pad = pad
+        self.pad = pad
 
         self._alphaTo = arrayBuffer(self._nn + 1, 0)
         self._indexOf = arrayBuffer(self._nn + 1, 0)
@@ -60,10 +60,10 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
         end
 
         self._genpoly = arrayBuffer(nroots + 1, 0)
-        self._fcr = fcr
-        self._prim = prim
-        self._nroots = nroots
-        self._gfpoly = gfpoly
+        self.fcr = fcr
+        self.prim = prim
+        self.nroots = nroots
+        self.gfpoly = gfpoly
 
         iprim = 1; while (iprim % prim) != 0; iprim += self._nn; end
         self._iprim = int(iprim / prim)
@@ -90,14 +90,14 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
     end
 
     function encodeChar(data, parity)
-        parity = arrayBuffer(self._nroots, 0)
+        parity = arrayBuffer(self.nroots, 0)
 
-        for i in [0:self._nn - self._nroots - self._pad]
+        for i in [0:self._nn - self.nroots - self.pad]
             feedback = self._indexOf[data[i] ^^ parity[0]]
             if feedback != self._nn     
-                feedback = self._modnn(self._nn - self._genpoly[self._nroots] + feedback)
-                for j in [1:self._nroots]
-                    parity[j] ^= self._alphaTo[self._modnn(feedback + self._genpoly[self._nroots - j])]
+                feedback = self._modnn(self._nn - self._genpoly[self.nroots] + feedback)
+                for j in [1:self.nroots]
+                    parity[j] ^= self._alphaTo[self._modnn(feedback + self._genpoly[self.nroots - j])]
                 end
             end
 
@@ -113,7 +113,7 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
     function _modnn(x)
         while x >= self._nn
             x -= self._nn
-            x = (x >> self._mm) + (x && self._nn)
+            x = (x >> self.mm) + (x && self._nn)
         end
 
         return x

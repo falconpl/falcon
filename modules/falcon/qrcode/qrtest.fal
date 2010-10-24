@@ -14,4 +14,5 @@ import QrError from .qrerror as QrError
 import QrTools from .qrtools as QrTools
 
 // QrTools.buildCache()
-QrCode.png('Hasta la victoria, siempre!', 'qrtest.png', QrErrorCorrectionLevel.L, 4, 2)
+//QrCode.png('Hasta la victoria, siempre!\x1\x2', 'qrtest.png', QrErrorCorrectionLevel.L, 5, 3)
+QrCode.png('君よ Hasta la victoria, siempre!', 'qrtest.png', QrErrorCorrectionLevel.L, 5, 1)

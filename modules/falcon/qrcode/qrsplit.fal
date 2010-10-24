@@ -37,22 +37,19 @@ class QrSplit(data, input, mode)
     function identifyMode(pos)
         if pos >= len(self._data); return QrMode.null; end
 
-        c = self._data[pos]
-
         if self.isDigitAt(self._data, pos)
             return QrMode.num;
         elif self.isAlNumAt(self._data, pos)
             return QrMode.an;
-        elif self._mode == QrMode.kanji
-            if pos + 1 < len(self._data)
-                d = self._data[pos + 1]
-                word = (c[*0] << 8) || d[*0]
-                if (word >= 0x8140 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
-                    return QrMode.kanji
-                end
+        elif self._mode == QrMode.kanji                     
+            word = self._data[*pos]
+            //if (word >= 0x1000 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
+            // Our kanjis are in the UNICODE range, not in shift-jis
+            if word >= 0x3040 and word <= 0x4db0
+               return QrMode.kanji
             end
         end
-
+        
         return QrMode.eight_bit
     end
 

@@ -109,11 +109,11 @@ class QrRawCode(input)
         self._rsBlocks = []
 
         for i in [0:QrSpec.rsBlockNum1(spec)]
-            ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
+            ecc = self._ecc[eccPos:]
             arrayAdd(self._rsBlocks, QrRsBlock(
-                dataLen, self._data[dataPos:len(self._data) - dataPos],
+                dataLen, self._data[dataPos:],
                 eccLen, $ecc, rs))
-            self._ecc = self._ecc[0:eccPos] + ecc
+            self._ecc = self._ecc[0:eccPos] + ecc[0:]
 
             dataPos += dataLen
             eccPos += eccLen
@@ -125,11 +125,11 @@ class QrRawCode(input)
             rs = QrRs.getItem(8, 0x11D, 0, 1, eccLen, 255 - dataLen - eccLen)
 
             for i in [0:QrSpec.rsBlockNum2(spec)]
-                ecc = self._ecc[eccPos:len(self._ecc) - eccPos]
+                ecc = self._ecc[eccPos:]
                 arrayAdd(self._rsBlocks, QrRsBlock(
-                    dataLen, self._data[dataPos:len(self._data) - dataPos],
+                    dataLen, self._data[dataPos:],
                     eccLen, $ecc, rs))
-                self._ecc = self._ecc[0:eccPos] + ecc
+                self._ecc = self._ecc[0:eccPos] + ecc[0:]
 
                 dataPos += dataLen
                 eccPos += eccLen
@@ -162,7 +162,7 @@ class QrCode
         width = spec.getWidth(version)
         frame = spec.newFrame(version)
 
-        filler = QrFrameFiller(width, $frame)
+        filler = QrFrameFiller(width, frame)
         if filler == nil
             raise QrError(QrError.encoding_error, "error creating frame filler")
         end
@@ -218,7 +218,7 @@ class QrCode
         end
 
         input = QrInput(version, errorCorrectionLevel)
-        input.append(input, QrMode.eight_bit, len(string), strSplit(string))
+        input.append( QrMode.eight_bit, len(string), string )
 
         return self.encodeInput(input)
     end
@@ -383,6 +383,8 @@ class QrEncode(errorCorrectionLevel, size, margin)
             or mode > QrMode.structure
             raise QrError(QrError.invalid_mode, @i'$(mode) not supported')
         end
+        
+        self._mode = mode
     end
 
     function __set_errorCorrectionLevel(errorCorrectionLevel)
@@ -394,12 +396,13 @@ class QrEncode(errorCorrectionLevel, size, margin)
             or errorCorrectionLevel > QrErrorCorrectionLevel.H
             raise QrError(QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) not supported')
         end
+        self._errorCorrectionLevel = errorCorrectionLevel
     end
 
     function encodeRaw(text, outFile)
         code = QrCode()
 
-        if self._eightBit
+        if self.eightBit
             code.encodeString8Bit(text, self.version, self.errorCorrectionLevel)
         else
             code.encodeString(text, self.version, self.errorCorrectionLevel, self.mode, self.caseSensitive)
@@ -420,7 +423,7 @@ class QrEncode(errorCorrectionLevel, size, margin)
         binarized = QrTools.binarize(code.data)
 
         if outFile != nil
-            outputStream = OutputStream(outFile, 666, FILE_SHARE)
+            outputStream = OutputStream(outFile, 0666, FILE_SHARE)
             for line in binarized; outputStream.printl(line); end
             outputStream.close()
         end
@@ -431,16 +434,30 @@ class QrEncode(errorCorrectionLevel, size, margin)
     function encodePng(text, outFile, saveAndPrint)
         if saveAndPrint == nil; saveAndPrint = false; end
 
+        /*
+        if text.charSize() > 1
+            self.mode = QrMode.kanji
+        end
+        */
+        if text.charSize() > 1
+            text = transcodeTo(text,"utf-8")
+        end
+        //self.eightBit = true
+        //self.mode = QrMode.eight_bit
+        frame = self.encode(text)
+
+        /*
         stringStream = StringStream()
         oldOut = stdOut(stringStream)
+        self.eightBit = true
         frame = self.encode(text)
         errorMessage = stringStream.closeToString()
         stdOut(oldOut)
-
+        
         if errorMessage != ""
             raise QrError(QrError.encoding_error, errorMessage)
         end
-
+         */
         maxSize = int(QrConfig.png_max_size / (len(frame) + 2 * self.margin))
         QrImage.png(frame, outFile, min(max(1, self.size), maxSize), self.margin, saveAndPrint)
     end

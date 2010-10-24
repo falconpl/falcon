@@ -96,27 +96,6 @@ class QrMask
         return bitMask
     end
 
-    function serialize(bitFrame)
-        codeArray = []
-
-        for line in bitFrame
-            arrayAdd(codeArray, strMerge(line, ""))
-        end
-
-        return ZLib().compressText(strMerge(codeArray, "\n"))
-    end
-
-    function unserialize(code)
-        codeArray = []
-        lines = strSplit(ZLib().uncompressText(code), "\n")
-
-        for line in lines
-            arrayAdd(codeArray, strSplit(line))
-        end
-
-        return codeArray
-    end
-
     function makeMaskNo(maskNo, width, frame, mask, maskGenOnly)
         if maskGenOnly == nil; maskGenOnly = false; end
 
@@ -126,13 +105,8 @@ class QrMask
 
         if QrConfig.cacheable
             if fileType(fileName) != FileStat.NOTFOUND
-                stat = FileStat()
-                stat.read(fileName)
                 inputStream = InputStream(fileName)
-                inputStream.seek(0)
-                buffer = inputStream.grab(stat.size)
-                inputStream.read(buffer)
-                bitMask = self.unserialize(buffer)
+                bitMask = deserialize(inputStream)
                 inputStream.close()
             else
                 bitMask = self.generateMaskNo(maskNo, width, frame, mask)
@@ -141,7 +115,7 @@ class QrMask
                 end
                 
                 outputStream = OutputStream(fileName)
-                outputStream.write(self.serialize(bitMask))
+                serialize(bitMask, outputStream )
                 outputStream.close()
             end
         else

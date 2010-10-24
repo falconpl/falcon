@@ -22,7 +22,7 @@ class QrTools
                 line[i] = (line[*i] && 1) ? '1' : '0'
             end
         end
-
+         
         return frame
     end
 
@@ -42,7 +42,7 @@ class QrTools
             end
 
             for maskNo in [0:8]
-                mask.makeMaskNo(maskNo, width, frame, $bitMask, true)
+                mask.makeMaskNo(maskNo, width, frame, bitMask, true)
             end
         end
     end

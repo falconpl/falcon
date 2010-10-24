@@ -27,18 +27,18 @@ class QrBitStream(size)
 
     function allocate(size)
         if size != len(self._data)
-            arrayResize(self._data, size)
-            arrayFill(self._data, 0)
+            arrayResize(self._data, size, 0)
         end
     end
 
     function newFromNum(bits, num)
         bitStream = QrBitStream()
         bitStream.allocate(bits)
+        bsData = bitStream.data
 
         mask = 1 << (bits - 1)
         for i in [0:bits]
-            bitStream.data[i] = num && mask ? 1 : 0
+            bsData[i] = num && mask ? 1 : 0
             mask >>= 1
         end
 
@@ -52,15 +52,16 @@ class QrBitStream(size)
 
         bitStream = QrBitStream(size * 8)
         dataLen = len(data)
+        bsData = bitStream.data
         p = 0
-
+         
         for i in [0:size]
             mask = 0x80
             for j in [0:8]
                 if i < dataLen and data[i] && mask 
-                    bitStream.data[p] = 1
+                    bsData[p] = 1
                 else
-                    bitStream.data[p] = 0
+                    bsData[p] = 0
                 end
                 p++
                 mask >>= 1
@@ -79,7 +80,7 @@ class QrBitStream(size)
             if self.size == 0
                 self._data = bitStream.data
             else
-                arrayMerge(self._data, bitStream.data)
+                self._data += bitStream.data
             end
         end
     end

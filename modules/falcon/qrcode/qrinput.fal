@@ -128,11 +128,13 @@ class QrInputItem(mode, size, data, bitStream)
 
     function encodeModeKanji(version)
         bitStream = QrBitStream()
+        /*
         bitStream.appendNum(4, 0x8)
         bitStream.appendNum(QrSpec.lengthIndicator(QrMode.kanji, version), int(self._size / 2));
 
-        for i in [0:self._size:2]
-            val = (self._data[i][*0] << 8) || self._data[(i + 1)]
+        for i in [0:self._size]
+            val = self._data[i][*0]
+            
             if val <= 0x9FFC
                 val -= 0x8140
             else
@@ -142,6 +144,20 @@ class QrInputItem(mode, size, data, bitStream)
             h = (val >> 8) * 0xC0
             val = (val && 0xFF) + h
 
+            bitStream.appendNum(13, val)
+        end
+
+        self._bitStream = bitStream
+        */
+
+        //TODO: Kanji mode requires shift-jis do be used.
+        // ATM we don't have it. Just adding the Unicode.
+        
+        bitStream.appendNum(4, 0x8)
+        bitStream.appendNum(QrSpec.lengthIndicator(QrMode.kanji, version), int(self._size ));
+
+        for i in [0:self._size]
+            val = self._data[i][*0]
             bitStream.appendNum(13, val)
         end
 
@@ -348,11 +364,10 @@ class QrInput(version, errorCorrectionLevel)
     end
 
     function _checkModeKanji(size, data)
-        if size && 1; return false; end
-
-        for i in [0:size:2]
-            val = (data[*i] << 8) || data[*(i + 1)]
-            if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
+        for i in [0:size]
+            val = data[i] 
+            //if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
+            if val < 0x1000
                 return false
             end
         end
