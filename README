@@ -13,7 +13,7 @@ BUILD INSTRUCTIONS
 
   Checkout the latest source code from the Git repository from:
 
-  http://git.falconpl.org/falcon.git
+  http://git.falconpl.org
 
   Instructions on how to build the released source packages are contained
 in the "BUILDING" document.
