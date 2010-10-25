@@ -6,13 +6,14 @@
 
 
 
-SVN BUILD INSTRUCTIONS
-======================
+BUILD INSTRUCTIONS
+==================
 
-  To build the currently working version from the active repository, please
-refer to this document:
+  WARNING: Use of SVN is now OBSOLETE.
 
-   http://falconpl.org/?s=bf
+  Checkout the latest source code from the Git repository from:
+
+  http://git.falconpl.org/falcon.git
 
   Instructions on how to build the released source packages are contained
 in the "BUILDING" document.
