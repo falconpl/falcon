@@ -29,10 +29,10 @@
 
    String masks can be configured using the @b $eid marker
    in case the action is applied to single entities.
-   
+
    If the action is called back on a entity, then the mask function will receive an @b eid
    parameter.
-   
+
    Rendering actions when the Nest authorization level is less privileged than then
    required @b al will result in an empty string.
 */
@@ -49,12 +49,12 @@ class Action( al, mask )
    function render( eid )
       // Filter the action autorization level.
       if Nest.auth_level > self.level: return ""
-      
+
       if self.mask.typeId() == StringType
          if eid
             eid = URI.encode( eid.toString() )
          end
-         
+
          return @ self.mask
       else
          return self.mask( eid )
@@ -122,6 +122,7 @@ class CheckboxAction( authLevel, name, value, extra ) from Action( authLevel )
    init
       if not name: name = "eid"
       if not value: value = "$(eid)"
+      if extra == nil: extra = ""
       self.mask = '<input type="checkbox" name="'+name+'[]" value="'+value+'" ' + extra + '/>'
    end
 end
@@ -177,7 +178,7 @@ class ActionBox( action, prefix, postfix ) from Action( action.level )
    prefix = prefix ? prefix : ""
    postfix = postfix ? postfix : ""
    action  = action
-   
+
    function render( eid )
       if not self.allowed(): return ""
       return self.prefix + self.action.render( eid ) + self.postfix
