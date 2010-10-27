@@ -1,7 +1,52 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: qrcode.fal
 
+   QR Code library front end.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai & Giuseppe Greco
+   Begin:Wed, 27 Oct 2010 21:51:41 +0200
 
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+   
+   See LICENSE file for licensing details.
+*/
 
 import from self.lib in qr
+
+/*# @main QR-Code generator module.
+
+   This module exposes two classes (@a Maker and @a Image) that are meant to
+   create QR-Code images.
+
+   QR-Code is a sort of barcode that can store binary and text information on paper or
+   screen devices, and can be read back with optical devices.
+
+   QR-Code is a patent held by  @link http://www.denso-wave.com/qrcode/index-e.html "Denso wave",
+   but is released free of charge for everyone to use.
+
+   A minimal sample program may be:
+   
+   @code
+   import from img.qrcode in qr
+
+   // Generates a QR Code image with a utf-8 encded text
+   img = qr.Maker().text( "Hello world", qr.ECL.L, "utf-8" )
+
+   // Save it as a PNG with 3 pixels per bit and 2 pixels of white border.
+   img.savePng( "hello.png", 3, 2 )
+   @endcodce
+
+   The library has support for dumping the image directly to an arbitrary stream
+   (and so, for example, generating a live document on a web server).
+
+   The code of this library is heavily based on @link http://fukuchi.org/works/qrencode/index.en.html "Lib QR Encode".
+   
+*/
+
+// workaround to circumvent error in module loader
+QrMask = qr.QrMask
 
 /*# Error correction level enumeration .
    Sets the trade off between generation complexity and scan readability.
@@ -246,7 +291,7 @@ class Image( v, w, data, maker )
    end
 
 
-   function _saveOn( fname, size, margin, func )
+   function _saveOn( func, fname, size, margin )
       stream = OutputStream( fname )
       try
          self._makeImage( func, stream, size, margin )

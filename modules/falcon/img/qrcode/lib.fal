@@ -71,23 +71,15 @@ end
 
 
 class QrBitStream(size)
-   _data = nil
+   data = nil
 
    init
-      self._data = size != nil ? arrayBuffer(size, 0) : []
-   end
-
-   function __get_data()
-      return self._data
-   end
-
-   function __get_size()
-      return len(self._data)
+      self.data = size != nil ? arrayBuffer(size, 0) : []
    end
 
    function allocate(size)
-      if size != len(self._data)
-         arrayResize(self._data, size, 0)
+      if size != len(self.data)
+         arrayResize(self.data, size, 0)
       end
    end
 
@@ -136,13 +128,7 @@ class QrBitStream(size)
          raise QrError(QrError.invalid_param, "bitStream is null")
       end
 
-      if bitStream.size != 0
-         if self.size == 0
-            self._data = bitStream.data
-         else
-            self._data += bitStream.data
-         end
-      end
+      self.data += bitStream.data
    end
 
    function appendNum(bits, num)
@@ -164,7 +150,7 @@ class QrBitStream(size)
    end
 
    function toByte()
-      size = self.size
+      size = self.data.len()
       if size == 0; return []; end
 
       data = arrayBuffer(int((size + 7) / 8), 0)
@@ -175,7 +161,7 @@ class QrBitStream(size)
          v = 0
          for j in [0:8]
             v <<= 1
-            v |= self._data[p]
+            v |= self.data[p]
             p++
          end
          data[i] = v
@@ -185,7 +171,7 @@ class QrBitStream(size)
          v = 0
          for j in [0:size && 7]
             v <<= 1
-            v |= self._data[p]
+            v |= self.data[p]
             p++
          end
          data[bytes] = v
@@ -412,7 +398,7 @@ class QrInputItem(mode, size, data, bitStream)
          end
       end
 
-      return self._bitStream.size
+      return self._bitStream.data.len()
    end
 end
 
@@ -515,7 +501,7 @@ class QrMask( maker )
          if fileType(fileName) != FileStat.NOTFOUND
             inputStream = InputStream(fileName)
             bitMask = deserialize(inputStream)
-            //inputStream.close()
+            inputStream.close()
          else
             bitMask = self.generateMaskNo(maskNo, width, frame, mask)
             if fileType(self._maker.cache_dir + "/mask_" + maskNo) == FileStat.NOTFOUND
@@ -1064,7 +1050,7 @@ class QrInput(version, errorCorrectionLevel)
    end
 
    function appendPaddingBit(bitStream)
-      bits = bitStream.size
+      bits = bitStream.data.len()
       maxWords = QrSpec.getDataLength(self.version, self.errorCorrectionLevel)
       maxBits = maxWords * 8
 
@@ -1333,37 +1319,16 @@ end
 
 
 object QrImage
-   function png(frame, outFile, pixelPerPoint, outerFrame, saveAndPrint)
-      if saveAndPrint == nil; saveAndPrint = false; end
+   function png(frame, outFile, pixelPerPoint, outerFrame)
       img = self._image(frame, pixelPerPoint, outerFrame)
-
-      if outFile != nil
-         outputStream = OutputStream(outFile)
-         img.Png(outputStream)
-         outputStream.close()
-      end
-
-      if outFile == nil or saveAndPrint
-         img.Png(stdOut())
-      end
+      img.Png(outFile)
    end
 
-   function jpg(frame, outFile, pixelPerPoint, outerFrame, q, saveAndPrint)
-      if pixelPerPoint == nil; pixelPerPoint = 8; end
+   function jpg(frame, outFile, pixelPerPoint, outerFrame, q )
       if q == nil; q = 85; end
-      if saveAndPrint == nil; saveAndPrint = false; end
 
       img = self._image(frame, pixelPerPoint, outerFrame)
-
-      if outFile != nil
-         outputStream = OutputStream(outFile)
-         img.Jpeg(outputStream, q)
-         outputStream.close()
-      end
-
-      if outFile == nil or saveAndPrint
-         img.Jpeg(stdOut(), q)
-      end
+      img.Jpeg(outFile, q)
    end
 
    function _image(frame, pixelPerPoint, outerFrame)

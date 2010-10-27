@@ -2,7 +2,7 @@
  * FALCON - The Falcon Programming Language.
  * FILE: mysql.cpp
  *
- * Pgsql driver main module
+ * Mysql driver main module
  *
  * This is BOTH a driver for the DBI interface AND a standalone
  * MySQL module.
