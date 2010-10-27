@@ -605,7 +605,8 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( file->good() )
          {
             val = endianInt32(val);
-            CoreArray *array = new CoreArray( val );
+            CoreArray *array = new CoreArray();
+            array->resize(val);
 
             for( int i = 0; i < val; i ++ )
             {
@@ -613,7 +614,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
                if( retval != sc_ok ) {
                   break;
                }
-               array->length( i + 1 );
+
             }
 
             if ( retval == sc_ok ) {

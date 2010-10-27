@@ -5,7 +5,7 @@
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE @PROJECT_NAME@ )
+falcon_define_module( CURRENT_MODULE curl )
 
 # Inclusion settings
 include_directories(
