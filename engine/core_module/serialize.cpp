@@ -119,7 +119,10 @@ FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
 
 
    Stream *file = (Stream *) fileId->asObject()->getUserData();
+   vm->idle();
    Item::e_sercode sc = source->serialize( file );
+   vm->unidle();
+
    switch( sc )
    {
       case Item::sc_ok: vm->retval( 1 ); break;
