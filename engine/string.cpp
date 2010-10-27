@@ -1537,13 +1537,15 @@ bool String::deserialize( Stream *in, bool bStatic )
    uint32 size;
 
    in->read( (byte *) &size, sizeof( size ) );
-   m_size = endianInt32(size);
-   m_bExported = (m_size & 0x80000000) == 0x80000000;
-   m_size = m_size & 0x7FFFFFFF;
+   size = endianInt32(size);
+   m_bExported = (size & 0x80000000) == 0x80000000;
+   size = size & 0x7FFFFFFF;
 
    // if the size of the deserialized string is 0, we have an empty string.
-   if ( m_size == 0 )
+   if ( size == 0 )
    {
+      m_size = 0;
+
       // if we had something allocated, we got to free it.
       if ( m_allocated > 0 )
       {
@@ -1565,6 +1567,12 @@ bool String::deserialize( Stream *in, bool bStatic )
       // determine the needed manipulator
       if ( bStatic )
       {
+         if( m_size < size )
+         {
+            return false;
+         }
+
+         m_size = size;
          switch( chars )
          {
             case 1: manipulator( &csh::handler_static ); break;
@@ -1581,14 +1589,16 @@ bool String::deserialize( Stream *in, bool bStatic )
             case 4: manipulator( &csh::handler_buffer32 ); break;
             default: return false;
          }
+
+         m_allocated = m_size = size;
+         if ( m_storage != 0 )
+            memFree( m_storage );
+
+         m_storage = (byte *) memAlloc( m_allocated );
+         if( m_storage == 0 )
+            return false;
       }
 
-
-      m_storage = (byte *) memRealloc( m_storage, m_size );
-      if( m_storage == 0 )
-         return false;
-
-      m_allocated = m_size;
 
       #ifdef FALCON_LITTLE_ENDIAN
       in->read( m_storage, m_size );
