@@ -74,6 +74,7 @@ files = [\
    "src/" + skelname + "_srv.cpp",
    "src/" + skelname + "_srv.h",
    "src/" + skelname + "_CMakeLists.txt:src/CMakeLists.txt",
+   "src/" + skelname + "_version.h:src/version.h",
    "templates/"+ skelname + "_cpp_template",
    "templates/" + skelname + "_h_template",
    "docs/" + skelname + "_faldoc.fd.in:docs/faldoc.fd.in",
