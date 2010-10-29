@@ -1,7 +1,7 @@
 /*
    FALCON - Generic Parser
 
-   FILE: giuse.fal
+   FILE: lib.fal
 
    Read and parses creole WIKI data.
    -------------------------------------------------------------------
@@ -209,10 +209,10 @@ class QrInputItem(mode, size, data, bitStream)
          raise QrError(QrError.invalid_param, "data is null")
       end
 
-      data = data[0:min(len(data), size)]
-
-      if len(data) < size
-         arrayMerge(data, arrayBuffer(size - len(data), 0))
+      l = len(data)
+      if size and size < l
+         // zer oextra bytes
+         data[size:] = arrayBuffer(size - len(data), 0)
       end
 
       if not QrInput.checkMode(mode, size, data)
