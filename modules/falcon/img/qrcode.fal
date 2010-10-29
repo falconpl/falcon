@@ -111,7 +111,7 @@ class Maker
    */
       
    function text( text, clevel, encoding, caseSensitive )
-      qrinput = self._getInput( text, clevel )
+      qrinput = self._getInput( clevel )
       if caseSensitive == nil: caseSensitive = true
 
       if encoding
@@ -129,7 +129,7 @@ class Maker
       @see Maker.ECL
    */
    function raw( data, cLevel )
-      qrinput = self._getInput( data, cLevel )
+      qrinput = self._getInput( cLevel )
       qrinput.append( qr.QrMode.eight_bit, len(data), data )
       return self._encodeInput(qrinput)
    end
@@ -140,9 +140,7 @@ class Maker
 
 //===============================================================================
 
-   function _getInput( text, clevel )
-      if text == nil: raise ParamError(qr.QrError.invalid_param, i"Data parameter can't be nil")
-
+   function _getInput( clevel )
       if clevel == nil: clevel = qr.QrErrorCorrectionLevel.L
       if clevel < qr.QrErrorCorrectionLevel.L \
          or clevel > qr.QrErrorCorrectionLevel.H
