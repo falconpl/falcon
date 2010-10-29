@@ -1,5 +1,5 @@
 ####################################################################
-# @MAIN_PRJ@
+# The Falcon Programming Language
 #
 # CMake configuration file for hash
 ####################################################################
@@ -34,7 +34,6 @@ set(SRC_FILES
   tiger.cpp
   tiger_sboxes.cpp
   whirlpool.cpp
-
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
@@ -57,7 +56,6 @@ set(HDR_FILES
   md5.h
   tiger.h
   whirlpool.h
-
 )
 
 
