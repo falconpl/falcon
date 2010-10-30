@@ -1,6 +1,6 @@
 /*
    @{fmodskel_MAIN_PRJ}@
-   FILE: @{fmodskel_PROJECT_NAME}@_ext.cpp
+   FILE: @{fmodskel_PROJECT_NAME}@.cpp
 
    @{fmodskel_DESCRIPTION}@
    Main module file, providing the module object to

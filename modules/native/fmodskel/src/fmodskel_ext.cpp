@@ -67,4 +67,4 @@ FALCON_FUNC  skeletonString( ::Falcon::VMachine *vm )
 
 }} // namespace Falcon::Ext
 
-/* end of @{fmodskel_PROJECT_NAME}@_mod.cpp */
+/* end of @{fmodskel_PROJECT_NAME}@_ext.cpp */
