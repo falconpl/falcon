@@ -252,13 +252,7 @@ bool AppFalcon::setup( int argc, char* argv[] )
       }
 
       Engine::setEncodings( srcEncoding, ioEncoding );
-#ifndef NDEBUG
-      if ( m_options.trace_file != "" )
-      {
-         AutoCString trace_file(m_options.trace_file);
-         TRACE_ON( trace_file.c_str() );
-      }
-#endif
+
    }
 
 

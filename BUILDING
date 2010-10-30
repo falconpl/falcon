@@ -42,17 +42,18 @@ times,
 
   mkdir build
   cd build
-  cmake ..       (*)
-  make
+  cmake ..       
+  ccmake .       (*) 
   make install
+  make 
 
-  is enough to create the core Falcon installation. A complete build requires
-also the feathers to be specified in the CMAKE main command line (the line
-indicated by *).
+  is enough to create the core Falcon installation. The line indicated with a (*) is a 
+manual on-screen configuration of the falcon build elements. The ccmake command will
+open up a menu through which you can cherry-pick the components to be built and installed.
 
-   cmake .. -DFALCON_WITH_FEATHERS=<location to feathers>
-
-  The standard feathers location in the source package is under /feathers.
+  Many complex components, as SDL and DBI require a finetune configuration after their
+switch on. To do that, first perform a configuration (use the 'c' key) and then change the
+new settings that appare.
 
   Relevant variables affecting the outcome of the build and installation processes
 are:
@@ -90,10 +91,10 @@ falcon to run from /opt/falcon/bin
 
         -DCMAKE_BUILD_TYPE=Release
 
-*NOTE: For your comfort, the source distro comes with a cmake_build.sample
-containing all the options set to their default values.
+IDE Hints
+=========
 
-*NOTE: If using an IDE to create Falcon, like Xcode or Visual Studio, you may
+If using an IDE to create Falcon, like Xcode or Visual Studio, you may
 want to use cmake install script "cmake_install.cmake" which is located in the
 root of the build directory. The script usually installs the "Release" target
 but you can tweak it by setting the script like the following:
@@ -102,6 +103,47 @@ but you can tweak it by setting the script like the following:
    $ cat cmake_install.cmake >> debug_install.cmake
    $ DESTDIR=/tmp/falcon cmake -P debug_install.cmake
 
+To be able to run the install target directly from the IDE, you'll need to tweak
+some manual settings in the project files; keep in mind that CMAKE will destroy 
+those project files when a setting is changed, and thus CMAKE is re-run, so you'll
+need to re-enter this setting manually after each re-configuration.
+
+On XCODE, just add a "DESTDIR" User-Defined setting in the "build" tab of the 
+global project settings.
+
+On Eclipse, set the DESTDIR variable as an environment setting under the build/make
+project category.
+
+On Visual Studio, there isn't any specific setting, but you can easily set the
+DESTDIR varible in the environment prior loading the visual studio from the
+command line, like in the following example:
+
+	set DESTDIR=c:\tmp\install\falcon
+	vcexpress (or other command to start the visual studio)
+
+A similar approach can be applied to Eclipse, while it's more problematic with XCode.
+
+
+
+Running from a temporary directory
+==================================
+
+  Falcon just requires its FALCON_LOAD_PATH to be properly set to the location where
+modules are to be found. Also, on POSIX systems, the dynamic library loader path
+should be directed to load the falcon engine library file from the temporary library
+installation path. Finally, it's advisable to add the location where the binary
+falcon interpreter is to be found in front of the system PATH.
+
+  All this operations are performed by a script named "falconenv.sh" or "falconenv.bat"
+found in devtools/ directory; just pass the temporary installation directory name to the
+script as a parameter and it will set the required variables accordingly.
+
+  On POSIX systems remember to include the script instead of just running it, using the
+command:
+	
+		source devtools/falconenv.sh path/to/temp/install/dir
+
+		 
 
 Changing library directory name
 ===============================
