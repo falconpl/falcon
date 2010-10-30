@@ -1,0 +1,31 @@
+import from nest.dbentity in dbe
+
+class notes from dbe.DBEntity
+
+	fields = .[
+		"id INTEGER PRIMARY KEY AUTOINCREMENT" 
+   	"title varchar(60)"
+   	"content blob"
+   	"inserted DATETIME default CURRENT_TIMESTAMP"
+	]
+
+	views = [
+		"table" => .[
+			   dbe.DBColumn( "inserted", i"Inserted on" )
+			   dbe.DBColumn( "title", i"Title", {v=>"<span class='title'>" + htmlEscape(v) + "</span>"} )
+			   dbe.DBColumn( "content", i"Content",
+			      { v=>
+			            "<span class='content'>" +
+			            ( v.len() > 30 ? v[0:27] + " ... " : v) +
+			            "</span>"
+			      })
+			   ],
+
+		"detail" => .[
+	   		dbe.DBColumn( "inserted", i"Inserted on", {v => @"</b>$(v)</b>"} )
+	   		dbe.DBColumn( "title", i"Title",  {v => htmlEscape(v)} )
+		   	dbe.DBColumn( "content", i"Content", {v => htmlEscape(v).replace("\n", "<br/>\n") })
+   			]
+   ]
+             
+end

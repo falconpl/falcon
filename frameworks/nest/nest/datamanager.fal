@@ -16,12 +16,33 @@
    See LICENSE file for licensing details.
 */
 
-import NestModule from .nestmodule as NestModule
+import from utils
 
 /*# Base data manager.
+	This is just an abstract class of definitions to be implemented by the 
+	real data managers.
+	
+	The final application should write a data manager class 
 */
 
-class DataManager( instance ) from NestModule( instance )
+class DataManager( name, location )
+	// name of this data manager.
+	name = name
+	
+	//# Place in where this script is located.
+	location = location
+	
+	//# Entities currently loaded by this dataManager
+	entities = [=>]
+	
+	/*# Configure this data manager.
+      @param vars an array of variables to be configured.
+   	@raise CodeError if the configuration is not coherent with the type of data manager.   
+   */
+   function configure( vars )
+   	raise CodeError( 10000, i"Please override" )
+   end
+
 
    /*# Query an entity.
    
@@ -33,6 +54,7 @@ class DataManager( instance ) from NestModule( instance )
       @return A Table containing the query results.
    */
    function query( entity, fields, start, count )
+   	raise CodeError( 10000, i"Please override" )
    end
 
    /*# Query an entity -- for a single item.
@@ -43,6 +65,7 @@ class DataManager( instance ) from NestModule( instance )
       @return A dictionary containing the required fields (or all).
    */
    function queryItem( entity, eid, fields )
+   	raise CodeError( 10000, i"Please override" )
    end
 
    /*# Inserts a new item in the data pool.
@@ -51,6 +74,7 @@ class DataManager( instance ) from NestModule( instance )
       @return The new entity ID.
    */
    function add( entity, data )
+   	raise CodeError( 10000, i"Please override" )
    end
 
    /*# Modifies the values of an entity in the database.
@@ -59,6 +83,7 @@ class DataManager( instance ) from NestModule( instance )
       @return The new entity ID.
    */
    function update( entity, eid, data )
+   	raise CodeError( 10000, i"Please override" )
    end
 
    /*# Modifies the values of an entity in the database.
@@ -67,11 +92,61 @@ class DataManager( instance ) from NestModule( instance )
       @return The new entity ID.
    */
    function delete( entity, eid )
+   	raise CodeError( 10000, i"Please override" )
    end
-
-
-   function configure( data )
-      self.configuration = data
+   
+   /*# Create the database. 
+   	The base class loads all the entities and sends them to the
+   	createEntity method.
+   */
+   
+   function create()
+   	entloc = self.location + "/" + self.name
+   	ents = [=>]
+   	
+   	// scan the data manager entities in its directory
+   	d = Directory( entloc )
+   	while( name = d.read() )
+   		if name.endsWith( ".fal" ) or name.endsWith( ".fam" )
+   			ents[ name[0:name.rfind( "." ) ] = 0
+   		end
+   	end
+   	d.close()
+   		
+   	// now load all of them
+   	for ename, dummy in ents
+   		entity = self.loadEntity( ename )
+	   	// TODO: Sort them in the correct dependency order
+	   	entity.create()
+	   	entity.initialize()
+   	end
+   end
+   
+   /*# Loads an entity definition.
+   	@param ename The name of the entity to be loaded.
+   */
+   function entity( ename )
+   	if ename in self.entities
+   		return self.entities[ename]
+   	end
+   	
+   	entloc = utils.findFileInDirs(
+            [ self.location + "/" + self.name ],
+            name,
+            ["fal", "fam"]
+         )
+         
+      if not entloc
+      	raise NestError( NestError.entity_not_found, "", ename )
+      end
+   	
+   	cls = Nest.compileClass( entloc, ename )
+   	if cls != nil
+   		ent = cls( self )
+   		self.entities[ename] = cls
+   		return cls
+   	end 
+   	
    end
    
 end

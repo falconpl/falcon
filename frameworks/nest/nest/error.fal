@@ -37,6 +37,9 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    no_dm = 10017
    db_create = 10018
    not_in_frame = 10019
+   no_dm_type = 10020
+   wrong_dm_type = 10021
+   entity_not_found = 10022
    other = 10100
    
    _desc = [ 
@@ -58,7 +61,10 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10016 => i"Malformed field definition in DBEntity",
       10017 => i"This service requires a data manager to be set",
       10018 => i"Caught DBI error while creating entity",
-      10019 => i"This method can be invoked only within a frame, and just once"
+      10019 => i"This method can be invoked only within a frame, and just once",
+      10020 => i"The configuration of this Data Manager must contain a 'type' key",
+      10021 => i"The value of the type key must be a class derived from Nest.DataManager",
+      10022 => i"Entity not found"
       ]
 
    init
