@@ -1,0 +1,297 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: bufext_test.fal
+
+   Bufext module tests
+   This file contains simple and stress-tests for the buffers
+   provided by the bufext module.
+   -------------------------------------------------------------------
+   Author: Maximilian Malek
+   Begin: Thu, 25 Oct 2010
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   
+*/
+
+load bufext
+
+GC.adjust(GC.ADJ_STRICT) // we will produce a lot of garbge
+randomSeed(8736275764) // make results consistent
+
+success = true
+
+function EXPECT(actual, expected, str)
+    global success
+    if(actual != expected)
+        > "FAIL: Expected: '", expected, "', actual: '", actual, "' <-- ", str
+        success = false
+    end
+end
+
+function EXPECTDIFF(actual, expected, diff, str)
+    global success
+    if(abs(actual - expected) > diff)
+        > "FAIL: Expected: '", expected, "', actual: '", actual, "' <-- ", str
+        success = false
+    end
+end
+
+bb = BitBuf(3) // wrong initial size (internal array type is uint32 or uint64)
+EXPECT(bb.capacity() % 4, 0, "BitBuf capacity alignment")
+
+fa = [1,2,3]
+bb.write(fa)
+for i = 0 to len(fa) - 1
+    EXPECT(bb.r64(), fa[i], "Basic BitBuf 64 bit read/write")
+end
+
+EXPECT(BitBuf.bitsForInt(2), 2, "required bit count")
+EXPECT(BitBuf.bitsForInt(7), 3, "required bit count")
+EXPECT(BitBuf.bitsForInt(8), 4, "required bit count")
+EXPECT(BitBuf.bitsForInt(255), 8, "required bit count")
+EXPECT(BitBuf.bitsForInt(1023), 10, "required bit count")
+EXPECT(BitBuf.bitsForInt(1024), 11, "required bit count")
+EXPECT(BitBuf.bitsForInt(0xFFFFFFFFFFFF), 48, "required bit count")
+
+bb = ByteBuf()
+bb.w8(200, -50).w16(40000, -20000).w32(3000000000, -1000000000)
+EXPECT(bb.r8(), 200, "Unsigned 8 bit read")
+EXPECT(bb.r8(true), -50, "Signed 8 bit read")
+EXPECT(bb.r16(), 40000, "Unsigned 16 bit read")
+EXPECT(bb.r16(true), -20000, "Signed 16 bit read")
+EXPECT(bb.r32(), 3000000000, "Unsigned 32 bit read")
+EXPECT(bb.r32(true), -1000000000, "Signed 32 bit read")
+
+// if errors occur here, this is possibly because of wrong compiler optimization
+d1 = ByteBuf().wd(5.55555).toString()
+d2 = ByteBuf().write(5.55555).toString()
+d3 = BitBuf().wd(5.55555).toString()
+d4 = BitBuf().write(5.55555).toString()
+EXPECT(d2, d1, "ByteBuf numeric wd() equal to write()")
+EXPECT(d3, d4, "BitBuf numeric wd() equal to write()")
+EXPECT(d3, d1, "ByteBuf numeric wd() equal to BitBuf wd()")
+EXPECT(d4, d2, "ByteBuf numeric write() equal to BitBuf write()")
+
+bb = BitBuf()
+fa = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+cmp = { a,b => abs(a-b) < 0.0000001 }
+for f in fa: bb.wf(f)
+
+for i = 0 to len(fa) - 1
+    f = bb.rf()
+    ck = ByteBufNativeEndian(8).wf(fa[i])
+    fc = ck.rf()
+    EXPECTDIFF(f, fc, 0.0000001, "BitBuf vs ByteBuf numeric precision")
+end
+
+
+function bitstr(bb)
+    s = ""
+    bb.rposBits(0)
+    i = 0
+    while i < bb.sizeBits()
+        bit = bb.rb()
+        s += (bit ? "1" : "0")
+        i++
+    end
+    return s
+end
+
+bb = ByteBufLittleEndian()
+bb.w8(8).w16(16).w32(32).w64(64)
+EXPECT(bb.toString(), "081000200000004000000000000000", "ByteBufLittleEndian byte order")
+
+bb = ByteBufBigEndian()
+bb.w8(8).w16(16).w32(32).w64(64)
+EXPECT(bb.toString(), "080010000000200000000000000040", "ByteBufBigEndian byte order")
+
+
+EXPECT(bitstr(BitBuf().wb(1,1,1,0,0,0,0,1)), "11100001", "BitBuf bool 1-bit write")
+
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0)), "000", "BitBuf fixed-bit write (1)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1)), "000100", "BitBuf fixed-bit write (2)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2)), "000100010", "BitBuf fixed-bit write (3)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3)), "000100010110", "BitBuf fixed-bit write (4)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4)), "000100010110001", "BitBuf fixed-bit write (5)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5)), "000100010110001101", "BitBuf fixed-bit write (6)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5,6)), "000100010110001101011", "BitBuf fixed-bit write (7)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5,6,7)), "000100010110001101011111", "BitBuf fixed-bit write (8)")
+
+
+bb = ByteBuf().write("abc").writeNoNT("ABC")
+EXPECT(bb.readString(), "abc", "ByteBuf null-terminated string")
+EXPECT(bb.readString(), "ABC", "ByteBuf not null-terminated string at end of buf")
+EXPECT(bb.toString(), "61626300414243", "ByteBuf string, hex")
+
+bb = ByteBuf().writeNoNT("abc", "ABC").write("-")
+EXPECT(bb.readString(), "abcABC-", "ByteBuf not null-terminated string continous read")
+
+bb = ByteBuf(8)
+bb.growable(false)
+bb.w32(1,2)
+try
+    bb.w8(3)
+    EXPECT(false, true, "Not-growwable buffer write exception")
+end
+
+if success
+    > " === BASIC TESTS SUCCESSFUL ==="
+else
+    > " === BASIC TESTS FAILED ==="
+    exit()
+end
+
+// stress test below
+
+function genRString()
+    lim = random(20)
+    s = strBuffer(lim + 1)
+    while lim
+        lim--
+        s %= random(97, 112)
+    end
+    s.charSize(1)
+    return s
+end
+
+typenames = [  "bool"
+              ,"i8  "
+              ,"i16 "
+              ,"i32 "
+              ,"i64 "
+              ,"flt "
+              ,"dbl "
+              ,"str "
+]
+
+writefunc = [ { b,v => b.wb(v) }
+          ,{ b,v => b.w8(v) }
+          ,{ b,v => b.w16(v) }
+          ,{ b,v => b.w32(v) }
+          ,{ b,v => b.w64(v) }
+          ,{ b,v => b.wf(v) }
+          ,{ b,v => b.wd(v) }
+          ,{ b,v => b.write(v) }
+]
+
+readfunc = [ { b => b.rb() }
+          ,{ b => b.r8() }
+          ,{ b => b.r16() }
+          ,{ b => b.r32() }
+          ,{ b => b.r64() }
+          ,{ b => b.rf() }
+          ,{ b => b.rd() }
+          ,{ b => b.readString(1, 50) }
+]
+
+genfunc = [ { => random(1) ? true : false }
+            ,[random, 0, 255]
+            ,[random, 0, 65535]
+            ,[random, 0, 4294967295]
+            ,[random, 0, 1152921504606846976]
+            ,{ => random() * 100}
+            ,{ => random() * 1000}
+            , genRString
+]
+
+cmpfunc = [ { a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => abs(a-b) < 0.00001 } // float precision is never so good
+           ,{ a, b, strict => strict ? (a == b) : (abs(a-b) < 0.000000001) }
+           ,{ a, b => a == b }
+]
+
+function buftest(bb, strict)
+    lim = random(1500) + 1
+    vals = arrayBuffer(lim)
+    ps = arrayBuffer(lim)
+    x = len(writefunc) - 1
+    i = 0
+    while i < lim
+        p = random(x)
+        item = genfunc[p]()
+        vals[i] = item
+        ps[i] = p
+        tn = typenames[p]
+        writefunc[p](bb, item)
+        i++
+    end
+
+    i = 0
+    while i < lim
+        item = vals[i]
+        p = ps[i]
+        r = readfunc[p](bb)
+        tn = typenames[p]
+        if not cmpfunc[p](item,r,strict)
+            > "\n\n", bb.toString()
+            > @ "ERROR! ty: '$tn', i = $i, p = $p, should be: '$item', is: '$r'"
+            return false
+        end
+        i++
+    end
+
+    if bb.readable()
+        > "Readable, should not be: wpos = ", bb.wpos(), ", rpos = ", bb.rpos(), ", capacity = ", bb.capacity(), ", size = ", bb.size(), ", readable = ", bb.readable()
+        if(bb provides sizeBits) // is BitBuf
+            > "Readable, should not be: wposBits = ", bb.wposBits(), ", rpos = ", bb.rposBits(), ", sizeBits = ", bb.sizeBits(), ", readableBits = ", bb.readableBits()
+        end
+        return false
+    end
+
+    return true
+end
+
+> " === GENERIC STRESS TEST ==="
+
+lim = 500
+bufs = [ [BitBuf, false], [ByteBuf, false], [ByteBufNativeEndian, true], [ByteBufLittleEndian, false], [ByteBufBigEndian, false], [ByteBufReverseEndian, false] ]
+for cons, strict in bufs
+    for i = 0 to lim
+        >> "\r[", cons, "] ", round(i / lim * 100), " %   "
+        if not buftest(cons(), strict)
+            > "*TEST ERROR*"
+            success = false
+            break
+        end
+    end
+    > " - OK!"
+end
+
+> " === BITBUF SEQUENCE STRESS TEST ==="
+lim = 200
+for i = 1 to 63 // inclusive - cause all different possibilities for shifted patterns
+
+    // we use the same random seed for each pattern, so the data are always the same, just shifted by different byte amounts
+    randomSeed(873876698769)
+    for j = 0 to lim
+        >> "\r[BitBuf+", i, "] ", round(j / lim * 100), " %   "
+        bb = BitBuf()
+
+        // this will have the whole buf shifted by i bytes
+        bb.bitCount(i)
+        bb.writeBits(0x0123456789abcdef)
+        junk = bb.readBits()
+
+        if not buftest(bb, false)
+            > "*TEST ERROR*"
+            success = false
+            break
+        end
+    end
+    > " - OK!"
+end
+
+if success
+    > "==== TEST GOOD ===="
+else
+    > "==== TEST FAILED ===="
+end
