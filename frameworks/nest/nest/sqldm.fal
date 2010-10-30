@@ -3,7 +3,7 @@
 
    Nest - Falcon web applcation engine
 
-   FILE: dbidm.fal
+   FILE: sqldm.fal
 
    General (and simple) DBI/sql based data manager.
    -------------------------------------------------------------------
@@ -22,8 +22,9 @@ import NestError from .error as NestError
 import DBEntity from .dbentity as DBEntity
 
 /*# Class used to serve dbi connections */
-class DBIDataManager( name, loc ) from DataManager( name, loc )
+class SQLDM( instance ) from DataManager( instance )
    dbc = nil
+   entities = [=>]
    configuration = nil
 
    /*# Connection string */
@@ -33,9 +34,15 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
    columns = nil
 
    function configure( data )
-      Nest.logi( "Configuring DBIDataManager" )
-      if "connect" notin data
-         raise NestError( NestError.other, i"missing 'connect' in configuration" )
+      Nest.logi( "Configuring SQLDM" )
+      if "connectString" notin data
+         raise NestError( NestError.other, i"missing 'connectString' in configuration" )
+      end
+
+      for item, value in data
+         if value.derivedFrom( DBEntity )
+            self.entities[ value.table_name ] = value
+         end
       end
 
       self.configuration = data

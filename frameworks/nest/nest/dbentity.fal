@@ -55,7 +55,7 @@ class DBEntity( table_name, fdefs, extra )
       when creation data is not required (quite often).
    */
    startup = nil
-      
+   
    init
       if not fdefs: raise NestError( NestError.no_fields )
       for row in fdefs
@@ -72,15 +72,8 @@ class DBEntity( table_name, fdefs, extra )
       if not self.fields: raise NestError( NestError.no_fields )
       
       // TODO: Autodetect primary key field or expression
-      self.key_fields += self.fields[0]   
+      self.key_fields += self.fields[0]
    end
-
-   function create()
-   end
-   
-   function initialize()
-   end
-
 
    /*# Returns the expression needed to create this table.
    
