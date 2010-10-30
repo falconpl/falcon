@@ -1,0 +1,101 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: TableCheckUser.fal
+
+   Hook checking users in a table.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Hook from nest.hook as Hook 
+import NestError from nest.error as NestError
+
+/*#
+   @class TableCheckUser.User
+   @param password the password to be checked
+   @param auth_level Nest authorization level (0 highest, 100 lowest)
+   @param auth_data Optional application-specific data associated with this user
+*/
+class User( password, auth_level, auth_data )
+   password = password
+   auth_level = auth_level
+   auth_data = auth_data
+end
+
+/*# Hook that can be used to check for users in a configuration table.
+
+   This hook engages with the "check_user" function, and receives a
+   user/password pair to be authenticated.
+
+   Authentication happens by checking a dictionary set in the configuration
+   under the @b user key. Each user key must be associated with an entity
+   of class @a User.
+
+   Passwords may be hashed through an arbitrary algorithm. In that case,
+   the configuration must include a @b hash key pointing to the function
+   used to obfuscate the passwords. 
+
+   Eventually, a @b dflt configuration key can contain a default user
+   entity that is returned if the password is not matched.
+*/
+class TableCheckUser from Hook( "check_user" )
+   users = nil
+   hash = nil
+   dflt = nil
+
+   func = function( uid, pwd )
+      if uid in self.users
+         data = self.users[uid]
+         if not data.derivedFrom( User )
+            raise NestError( NestError.other, i"All the entities in the user configuration must be of class User" )
+         end
+
+         // eventually hash the incoming password
+         if self.hash: pwd = self.hash(pwd)
+
+         if pwd == data.password
+            consume = true
+            return [ data.auth_level, data.auth_data]
+         end
+      else
+
+         if self.dflt
+            // ok, we have a default, but don't consume
+            return [ self.dflt.auth_level, self.dflt.auth_data]
+         end
+      end
+
+      return nil
+   end
+   
+
+   function configure( config )
+      if "users" notin config
+         raise NestError( NestError.other, i"Requires a 'user' key in configuration" )
+      end
+
+      self.users = config["users"]
+      if "hash" in config
+         self.hash = config["hash"]
+         if not self.hash.isCallable()
+            raise NestError( NestError.other, i"Hash key provided in configuration must be callable" )
+         end
+      end
+
+      if "dflt" in config
+         self.dflt = config["dflt"]
+         if not self.dflt.derivedFrom( User )
+            raise NestError( NestError.other, i"The dflt configuration key must be of class User" )
+         end
+      end
+   end
+end

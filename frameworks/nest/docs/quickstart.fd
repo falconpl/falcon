@@ -1,0 +1,209 @@
+/*#
+@page quickstart Quickstart -- turning the engine on.
+@after overview
+
+Supposing you have WOPI in place, and that you have configured your
+WOPI to find the entry point of your application (or your manually
+access it), we start from the __index.fal__ file in the top directory
+of the configured site.
+
+As a framework, Nest becomes part of your application (or, we may say,
+your application becomes part of Nest); as such, you have to declare
+
+@code
+   load nest
+@endcode
+
+at the very start of your entry point script. A minimal but complete
+entry point may look like:
+
+@code
+// index.fal
+load nest
+
+// Tell nest to start.
+Nest.route()
+@endcode
+
+Route will tell nest to get the page that the overall status of the connection
+requires; by default, a new incoming user is served by the page called __home__.
+
+So we need a {{home.ftd}} or {{home.fal}} script under {{nest/pages}}. For example,
+using a ftd:
+
+@code
+<html>
+<head>
+   <title>My first Nest site</title>
+</head>
+<body>
+   <h1>Welcome!</h1>
+   <p> Welcome to my first Nest Site. I hope you enjoy it,</p>
+   <p>Running with Falcon <?= ".".merge(vmVersionInfo()) ?></p>
+</body>
+</html>
+@endcode
+
+Or if you prefer a more structured approach, we can use a falcon script:
+
+@code
+// this is head,fal
+> '
+<html>
+<head>
+   <title>My first Nest site</title>
+</head>
+<body>
+   <h1>Welcome!</h1>
+   <p> Welcome to my first Nest Site. I hope you enjoy it,</p>
+'
+
+version  = ".".merge(vmVersionInfo())
+> @'<p>Running with Falcon $version</p>'
+
+> "</body>\n</html>\n"
+
+// this was head.fal
+
+@endcode
+
+Or even, you may chose to use a very structured approach through the htmaker
+module.
+
+@code
+// this is head,fal
+
+import from htmaker in ht
+
+doc = ht.TransitionalFrame()
+doc.html.head.add( ht.Title( "My first Nest site" ) )
+
+doc.html.body.add(
+   ht.H1( "Welcome!" ),
+   ht.P(" Welcome to my first Nest Site. I hope you enjoy it" ),
+   ht.P("Running Falcon version " + ".".merge(vmVersionInfo()) ) )
+
+> doc.render()
+@endcode
+
+
+
+@section qs_routing Page routing
+
+Typical applications will want to load more pages from a site, depending
+on the connection status and input parameters. This process of selection of the
+page that is served by Nest to the remote user is called __routing__ and can be
+widely configured. However, the default mechanism is usually enough to serve the
+needs of even complex web application; it consists of serving the page named
+after an input variable called **pid**. For example, an url like
+
+@code
+   http://www.mysite.com/index.fal?pid=user_settings
+@endcode
+
+would search for a falcon module named {{user_settings.fal}} or {{user_setting.ftd}}
+(or its equivalent **fam** module), in the __nest/pages__ directory, and run it as
+a nest page.
+
+If the "pid" variable is not given, the default routing scheme will fallback to the
+page ID **home**. This is configurable as well.
+
+
+
+
+@section qs_framing Framing
+
+Sites, and especially web applications, are usually providing a common code that is
+consistent througout all the areas, which sourrounds the web site. 
+
+This is called __framing__. Nest doesn't force the users to use a particular framing
+scheme. For example, they may use the standard falcon {{include()}} function to include
+dynamically header and footer elements, or they may consistently {{load}} a set of site-specific
+function which include framing facilities. We'll illustrate some of this mechanisms later
+on in this document,
+
+However, Nest provides a ready-to-use framing mechanism that fits most of the common needs
+of web applicaitons, and this is covered by this quickstart.
+
+When the @a Nest.frame property is set to a function,
+then Nest will load the page that the routing system
+required and render it separately. The output of the
+rendered page can be retreived through the @a Nest.content
+method.
+
+A frame function can also be used to load services that are common through all the pages
+sharing that frame.
+
+For example, the following code can be placed on the entry point script to provide the same
+headers and footers for all the pages of a site:
+
+@code
+// this is index.fal
+load nest
+
+Nest.frame = function()
+            > '<html><head><title>My site</title></head><body>'
+            > '<p>My site starts here...</p><hr/>'
+            > Nest.content
+            > '<hr/><p>And this was My Site! ... </p></body></html>'
+         end
+         
+Nest.route()
+@endcode
+
+The function set in @a Nest.frame may be also a direct __include__ that loads the
+frame page. The location of those pages is always relative to the entry point.
+
+For example, to externalize the frame in another module, it is possible to write:
+
+@code
+// this is index.fal
+load nest
+
+Nest.frame = .[include "frame.ftd"]
+Nest.route()
+@endcode
+
+Then, {{frame.ftd}} would beside index.fal, and would look like the following:
+@code
+<!-- This is frame.ftd -->
+<html>
+   <head><title>My site</title></head>
+   <body>
+   <p>My site starts here...</p><hr/>
+   <? Nest.content() ?>
+   <hr/>
+   <p>And this was My Site! ... </p>
+   </body>
+</html>
+@endcode
+
+@sction qs_services Services
+
+Nest modular web application composition is based on the concept of __services__, that are
+modules preforming specific tasks and then, optionally, being rendered on the final page.
+
+For the details, please refer to the "@a service" chapter. In this quickstart guide, we see
+how to setup a minimal service in a page, and their basic working principles.
+
+Services are invoked through the @a Nest.service method, which returns a @a Service class
+instance. The instance can be configured on the fly during the @a Nest.service call, or it
+may be configured separately, after the instance is obtained.
+
+Services are executed in different phases; part of them is run as they are first invoked,
+other parts of them are run after all the page has been composed. They can also register
+themselves to listen for other services activity, so they can effectively be invoked several
+time per page.
+
+If a service is meant to output some data on the final page, the last action it performs
+is the __render__ step. The default is that of passing a set of data to a simple script
+that must organize this data as an HTML output; this specialized script is called __skin__.
+
+Services communicate with the rest of the Nest world through special entities called __service variables__.
+
+Those special variables are declared by the service at startup, and Nest can treat them in very special ways.
+For example, service variables can be automatically filled with input from web forms or queries, or from
+session data, or they can be shared throughout the sytem. Mainly, they are turned into a dictionary
+and automatically fed into the skin, if the service doesn't provide a personalized rendering strategy.
+
+*/

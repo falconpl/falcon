@@ -49,6 +49,8 @@ object Config
    site_srv_dir = "nest/srv"
 
    site_dm_dir = "nest/dm"
+
+   site_hooks_dir = "nest/hooks"
    
    /*# Directory where online service resources are stored on the site.
       
