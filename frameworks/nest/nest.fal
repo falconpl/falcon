@@ -20,6 +20,7 @@ import Config from self.config as Config
 import NestError from self.error as NestError
 import Service from self.service as Service
 import ServiceVar from self.service as ServiceVar
+import DBIDataManager from self.dbidm as DBIDataManager
 import DataManager from self.datamanager as DataManager
 import Hook from self.hook in hook_module 
 import from self.utils
@@ -437,14 +438,14 @@ object Nest
    */
    function dm( name, config )
       if name in self._dms
-      	// Return it oob if already registered.
-      	return ^+ self._dms[ name ]
+         // Return it oob if already registered.
+         return ^+ self._dms[ name ]
       end
       
       cfg = self.config
       // here the trick of the function is useless, as we KNOW we have to configure this stuff
-      vars = self._loadConfig( name,
-            [  utils.reldir( cfg.homedir, cfg.site_dm_dir + "/" + name ) ])
+      vars = self._loadConfig( 
+            [  utils.reldir( cfg.homedir, cfg.site_dm_dir ) ], name)
       
       // Let the config parameter have an higher priority
       if not vars
@@ -465,7 +466,7 @@ object Nest
       
       dm = sClass( name, cfg.site_dm_dir + "/" + name )
       dm.configure( vars )
-      self._dms[ bame ] = dm
+      self._dms[ name ] = dm
       return dm
    end
 
@@ -965,6 +966,8 @@ object Nest
    
    // Service configuration step 3.1 -- load service specific config
    function _loadConfig( dirs, fname )
+      if self.log_level >= 3: self.logd( @"Searching configuration for $(fname) in " + dirs.describe() )
+
       confFile = utils.findFileInDirs( dirs, fname + ".fal" )
 
       if confFile
@@ -989,9 +992,11 @@ object Nest
          catch in e
             raise NestError( NestError.econfig, "", e.toString() )
          end
+         
+         if self.log_level >= 3: self.logd( @"In $(fname), found variables "+ vars.describe() )
+      else
+         self.logi( @"Couldn't find $(fname)" )
       end
-
-      if self.log_level >= 3: self.logd( @"In $(fname), found variables "+ vars.describe() )
       
       return vars // will be nil if not loaded
    end

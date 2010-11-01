@@ -34,6 +34,7 @@
 */
 
 import from nest.utils in utils
+import NestError from nest.error as NestError
 
 object ConfigBinder
    function bind( varname, srv, var )
@@ -112,7 +113,26 @@ object SkinBinder
             if skin
                Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " from file." )
                var.value = skin
+            else
+               raise NestError( NestError.noskin, "", skinFile )
             end
+         end
+      else
+         // get the default-<varname>.fal skin,
+         // but if the service skin file is not set,
+         // don't force it.
+         bset = srv.skin.isSet
+         name = (bset ? srv.skin.value : "default") + "-" + varname
+         Nest.logi( "Service " + srv.fullName() + " searching default sub-skin " + name + " from file." )
+         skin = self.getSubSkin( name , srv, var)
+         if not skin            
+            if bset
+               // The skin was mandatory
+               raise NestError( NestError.noskin, "", skinFile )
+            end
+            Nest.logi( "Service " + srv.fullName() + " ignoring missing sub-skin." )
+         else
+            var.value = skin
          end
       end
    end

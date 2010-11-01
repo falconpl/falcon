@@ -1,0 +1,255 @@
+/*
+   FALCON - DBI Data Manager
+
+   Nest - Falcon web applcation engine
+
+   FILE: dbview.fal
+
+   View specifying how a DBEntity should be seen.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 31 Oct 2010 11:34:45 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# Field of a DBView.
+   @param field The name of a field in the target entity.
+   @optparam title Textual representation of the field name in this view.
+   @optparam rednerer A function accepting the value of the field as input
+             and returning a string representation to be displayed.
+   @optparam order If given, will impose an order on the multiple returned values.
+   
+   This structured is used by the @a DBView class to indicate how an entitity
+   should be represented.
+
+   If the @b title parameter is not given, the field is considered as hidden,
+   and not displayed.
+
+   If the @b renderer is not given, the the field value will be placed untranslated
+   in the final structure, otherwise the return value of the renderer function will
+   be used.
+
+   The @b order parameter must be one of the @a DBOrder enumeration value. To exclude
+   this field from ordering clauses, just leave this parameter nil
+*/
+class DBViewField( field, title, rednerer, order )
+   //# Name of the specified field
+   name = field
+   //# Optional title for visualization (set to nil to hide)
+   title = title
+   //# Function to transform the visualization of the field.
+   rnd = rednerer
+   //# Order in multi-record queries (in @a DBOrder enum)
+   order = order
+end
+
+/*# Enumeration of type of conditions in the @a DBCondFilter class. */
+enum DBCondType
+   //# Less than
+   LT = 0
+   //# Greater than
+   GT = 1
+   //# Equal to
+   EQ = 2
+   //# Not equal to
+   NEQ = 3
+   //# Less or equal
+   LE = 4
+   //# Greater or equal
+   GE = 5
+   //# Similar to
+   LIKE = 6
+   //# Check if the value is null
+   NULL = 7
+   //# Check if the value is not null
+   NOTNULL = 8
+end
+
+/*# Order for views
+   @see DBViewField
+*/
+enum DBOrder
+   //# Order values in ascending orders
+   ASCENDING = 1
+   //# Order values in Descending order
+   DESCENDIG = 2
+   //# No ordering
+   NONE = -1
+end
+
+/*# Structure used to apply filters on fields.
+
+   @param ctype a @a DBCondType enumeration element.
+   @optparam value The value against which to check.
+   @see DBView
+*/
+class DBCond( ctype, value )
+   ctype = ctype
+   value = value
+
+   /*# Returns a string representation of the condition.
+      @return a string suitable for a SQL 'where'.
+      Will create an ANSI SQL compliant 'where' condition.
+   */
+   function toString()
+      ctype = self.ctype
+      if ctype == DBCondType.LT
+         c = "<"
+      elif ctype == DBCondType.GT
+         c = ">"
+      elif ctype == DBCondType.EQ
+         c = "="
+      elif ctype == DBCondType.NEQ
+         c = "<>"
+      elif ctype == DBCondType.LE
+         c = "<="
+      elif ctype == DBCondType.GE
+         c = ">="
+      elif ctype == DBCondType.LIKE
+         c = " like "
+      elif ctype == DBCondType.NULL
+         return  " is null"
+      elif ctype == DBCondType.NOTNULL
+         return " is not null"
+      end
+
+      return c + "'" + strEscape(self.value) + "'"
+   end
+end
+
+
+/*# Creates a DB View.
+   @param entity The entity on which the view acts as a filter.
+   @param check If true (default), will check for correctness of assigned parameters.
+
+   This class represents a filter through which entities can be seen differently.
+
+   It provides some optional checking mechanism to verify that their specific
+   usage is coherent with the entity definition they lay upon. For example, it
+   can check for the required fields to exist.
+
+   @prop fields An array of @a DBViewField class entities specifying which fields
+         should be retreived in this view and how to represent them.         
+
+   @prop cond Filter conditions in a dictionary, where the left part is a field name, and the
+         right part is an instance of @a DBCond class.
+*/
+   
+class DBView( entity, check )
+   entity = entity
+   check = check == nil ? true : check
+
+   _fields = nil
+   _cond = nil
+
+   function __get_fields(): return self.fields
+   function __get_cond(): return self.cond
+
+   function __set_fields( value )
+      if self.check
+         if value.typeId() != ArrayType
+            raise ParamError( 501, nil, "A" ) 
+         end
+         
+         entity = self.entity
+         for field in value
+            if not field.derivedFrom( DBViewField )
+               raise ParamError( 502, nil, "Should be an instance of DBViewField" )
+            end
+
+            if not field.name in entity.fields
+               raise ParamError( 502, nil, "Field " + field.name + " not in entity " + entity.className() )
+            end
+         end
+      end
+      
+      self._fields = value
+   end
+   
+   function __set_cond( value )
+      if self.check
+         if value.typeId() != DictionaryType
+            raise ParamError( 501, nil, "D" )
+         end
+
+         entity = self.entity
+         for name, check in value
+            if not name in entity.fields
+               raise ParamError( 502, nil, "Field " + name + " not in entity " + self.entity.className() )
+            end
+
+            if not check.derivedFrom( DBCond )
+               raise ParamError( 502, nil, "Should be an instance of DBCond" )
+            end
+         end
+      end
+      
+      self._fields = value
+   end
+
+   /*# Called by the DBManager to post-process data after extraction.
+      @param data An entity data (dictionary of field->value).
+      @return The same @b data dictionary received as input.
+   */
+   function postProcess( data )
+      for field in self._fields
+         name = field.name
+         if name in data and field.rnd
+            data[name] = field.rnd( data[name] )
+         end
+      end
+      return data
+   end
+
+   /*# Apply this view to retreived data.
+      @param data A dictionary of key => value pairs.
+      @return An array containing just the fields having a title, possibly rendered via their rndr function
+   */
+   function apply( data )
+      dret = []
+      
+      for field in self._fields
+         if field.title
+            name = field.name
+            rnd = field.rnd
+            if name in data 
+               dret += rnd ? rnd( data[name] ) : data[name]
+            end
+         end
+      end
+      
+      return dret
+   end
+
+   /*# Apply this view to retreived data.
+      @param data A dictionary of key => value pairs.
+      @return A dictionary containing just the fields having a title, possibly rendered via their rndr function
+   */
+   function applyDict( data )
+      dret = [=>]
+
+      for field in self._fields
+         if field.title
+            name = field.name
+            rnd = field.rnd
+            if name in data
+               dret[name] = rnd ? rnd( data[name] ) : data[name]
+            end
+         end
+      end
+
+      return dret
+   end
+
+   /*# Return the titles of the columns that should be seen in this view.
+      @return array of strings representing the titles of the columns filtered by this view.
+   */
+   function titles()
+      return [].comp( { f => f.title ? f.title : ^+1 }, self._fields )
+   end
+   
+end

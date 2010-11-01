@@ -16,12 +16,12 @@
    See LICENSE file for licensing details.
 */
 
-import DBService from nest.srv.DBService as DBService
+import DataService from nest.srv.DataService as DataService
 import ServiceVar from nest as ServiceVar
 import from nest.bindings in b
 
 // This is your service
-class DataDetail( instance ) from DBService( instance )
+class DataDetail( instance ) from DataService( instance )
    /*# Single extracted record */
    record = ServiceVar( "Extracted data as a DBRecord" )
 

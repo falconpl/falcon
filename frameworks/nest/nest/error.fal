@@ -40,6 +40,8 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    no_dm_type = 10020
    wrong_dm_type = 10021
    entity_not_found = 10022
+   no_key_fields = 10023
+   unpack_key = 10024
    other = 10100
    
    _desc = [ 
@@ -64,7 +66,9 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10019 => i"This method can be invoked only within a frame, and just once",
       10020 => i"The configuration of this Data Manager must contain a 'type' key",
       10021 => i"The value of the type key must be a class derived from Nest.DataManager",
-      10022 => i"Entity not found"
+      10022 => i"Entity not found",
+      10023 => i"Data entity declared without any KEY fields",
+      10024 => i"Key expression doesn't match key field specs in this entity"
       ]
 
    init

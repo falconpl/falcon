@@ -1,0 +1,93 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DataTable.fal
+
+   Queries an entity and its fields, organizing the result as a table.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 14:45:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import DataService from nest.srv.DataService as DataService
+import ServiceVar from nest as ServiceVar
+import from nest.bindings in b
+import NestError from nest.error as NestError
+
+/*# Service rendering data from a DataManager as a table.
+
+   This service uses a Data Manager to generate a table
+   of data retreived from a database.
+
+   The 
+*/
+class DataTable( instance ) from DataService( instance )
+   /*# Start at given record number */
+   default_cnt = ServiceVar( "Default record number count", b.ConfigBinder  )
+   
+   /*# Actions to be rendered in front of each item. */
+   front_act = ServiceVar( "Actions in front of each item", b.ConfigBinder  )
+
+   /*# Actions to be rendered after each item. */
+   back_act = ServiceVar( "Actions to be rendered after each item", b.ConfigBinder  )
+
+   /*# Global actions for the table. */
+   table_act = ServiceVar( "Global actions for the table", b.ConfigBinder  )
+
+   /*# Start at given record number */
+   start = ServiceVar( "Start at given record number", b.InputVarBinder  )
+   
+   /*# Get given record count */
+   cnt = ServiceVar( "Get given record count", b.InputVarBinder  )
+
+   //# Skin used to render the title line
+   heading_skin = ServiceVar( "Skin used to render the title line", b.SkinBinder  )
+
+   //# Skin used to render each item
+   row_skin = ServiceVar( "Skin used to render each item", b.SkinBinder  )
+
+   //# Skin used to render the global table actions
+   actions_skin = ServiceVar( "Skin used to render the global table actions", b.SkinBinder  )
+   
+
+   /*# Extracted data as a DBRecord vector */
+   records = ServiceVar( "Extracted data as a DBRecord vector" )
+
+   _start = nil
+   _count = nil
+   
+   function startup()
+      // initialize the base class
+      self.DataService.startup()
+      
+      if not self.default_cnt.isSet
+         raise NestError( NestError.other, "Default count for table not set in configuration" )
+      end
+
+      try
+         self._count = self.cnt.isSet ? int( self.cnt.value ) : self.default_cnt.value
+      catch ParamError
+         self._count = self.default_cnt.value
+      end
+
+      try
+         if self.start.isSet: self._start = int(self.start.value)
+      catch ParamError
+         // else, use the nil default
+      end
+   end
+
+   /*# Reimplementation to perform the required query */
+   function do_query()
+      view = self.view.value
+      entity = view.entity
+      self.records.value = entity.table( view, self._start, self._count )
+   end
+end

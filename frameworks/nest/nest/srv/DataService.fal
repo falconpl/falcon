@@ -21,33 +21,36 @@ import ServiceVar from nest as ServiceVar
 import NestError from nest as NestError
 import from nest.bindings in b
 
-// This is your service
-class DBService( instance ) from Service( instance )
+/*# Base class for services related to data management.
 
-   /*# Vector of columns in the DB record */
-   columns = ServiceVar( "Vector of column titles for the last query" )
+   Services must be configured indicating the name of the data manager they
+   use, and a view.
+*/ 
+class DataService( instance ) from Service( instance )
 
    /*# Manager of the table actions (submits and other table-level actions). */
    handler = ServiceVar( "Manager of the table actions", b.ConfigBinder  )
 
-   /*# Data manager of this service */
-   dm = nil
+   /*# Config: A data manager given in configuration */
+   dm_name = ServiceVar( "The name of a data manager", b.ConfigBinder  )
 
-   /*# Querable entity - not in configuration. */
+   /*# Config: The name of an entity */
+   entity_name = ServiceVar( "The name of an entity manager", b.ConfigBinder  )
+
+   /*# A DBView instance used to access the desired entity */
+   view = ServiceVar( "A DBView instance used to access the desired entity", b.ConfigBinder  )
+
+   //# Entity, autoloaded from configuration.
    entity = nil
-
-   /*# View for the entity - not in configuration. */
-   view = nil
-
+   
+   function startup()
+      self.entity = Nest.dm( self.dm_name.value ).entity( self.entity_name.value )
+   end
+      
    function run()
       if not self.checkAllowed(): return
-
-      dm = self.dm
-      if not dm: raise NestError( NestError.other, i"Data manager not set" )
       if not self.entity: raise NestError( NestError.other, i"Entity not set" )
-
       self.do_query()
-      self.columns.value = dm.columns
    end
 
    function do_query()

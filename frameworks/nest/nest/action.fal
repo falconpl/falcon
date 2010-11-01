@@ -20,9 +20,7 @@
 
    @param al The authorization level needed to see this action.
    @param mask The mask for the rendering, or a function used during rendering.
-   @optparam pid A target page ID.
-   @optparam cmd A command to be passed to the target page.
-   @optparam cmdField The field where the command is passed (defaults to "cmd").
+   @optparam prompt A Textual prompt that should be rendered in skins.
 
    The @b Mask parameter can be either a string that will be rendered verbatim
    by "render", or a function that is called back during the render phase.
@@ -35,11 +33,16 @@
 
    Rendering actions when the Nest authorization level is less privileged than then
    required @b al will result in an empty string.
+
+   The @b prompt parameter is a string that can be used as a title, or as a content
+   for several rendering purposes.
 */
 
-class Action( al, mask )
+class Action( al, mask, prompt )
    level = al
    mask = mask
+   _prompt = prompt
+   
    auth_level = Nest.ambient( "auth_level" )
 
    function allowed()
@@ -60,6 +63,10 @@ class Action( al, mask )
          return self.mask( eid )
       end
    end
+
+   function __get_prompt(): return self._prompt
+   function __set_propmt(p): self._prompt = p ? p: ""
+   
 end
 
 /*# Separator action.
@@ -90,16 +97,16 @@ end
 /*# Generates a submit action.
 
    @param authLevel minimal authorization level required to see this action
-   @param content
-   @param name
-   @param value
+   @param content Content of the submit button
+   @param name HTML form name of this button
+   @param value HTML Value of this button.
    @optparam onClick A command to be passed to the page
    @optparam extra The name of the command field (defaults to "cmd")
 
    The @b content parameter can be any valid HTML text (it won't be escaped).
 */
 
-class SubmitAction( authLevel, content, name, value, onClick, extra ) from Action( authLevel )
+class SubmitAction( authLevel, content, name, value, onClick, extra ) from Action( authLevel, nil, content )
    init
       if onClick == nil: onClick = ""
       if extra == nil: extra = ""
@@ -130,13 +137,12 @@ end
 /*# Creates an action as an html anchor element.
 
    @param authLevel minimal authorization level required to see this action
-   @param text The text to be displayed in the @b a element
+   @param text The text to be displayed in the @b a element (will be used also as prompt)
    @param link Complete link to a target page/entity created via Nest.eidLink()
    @optparam extra HTML attributes for the anchor element
-   @optparam cmdField The name of the command field (defaults to "cmd")
 */
 
-class LinkAction( authLevel, text, link, extra ) from Action( authLevel )
+class LinkAction( authLevel, text, link, extra ) from Action( authLevel, nil, text )
    init
       if extra == nil: extra = ""
       self.mask = '<a href="' + link + '" ' + extra +'>' + htmlEscape(text) +'</a>'
@@ -144,12 +150,13 @@ class LinkAction( authLevel, text, link, extra ) from Action( authLevel )
 end
 
 /*# Creates a multichoice action.
-   @param al
-   @param name
+   @param al Authorization level
+   @param name Name of the action
    @param values List/array of Choice items
-   @param extra Extra style, class, ID and similar.
+   @optparam extra Extra style, class, ID and similar.
+   @optparam prompt Prompt for rendering.
 */
-class ChoiceAction( al, name, values, extra ) from Action( al )
+class ChoiceAction( al, name, values, extra, prompt ) from Action( al, nil, prompt )
    init
       if extra == nil: extra = ""
       mask = "<select name=\"" + name + "\" " + extra + ">\n"
@@ -183,5 +190,7 @@ class ActionBox( action, prefix, postfix ) from Action( action.level )
       if not self.allowed(): return ""
       return self.prefix + self.action.render( eid ) + self.postfix
    end
+
+   function __get_prompt(): return self.action.prompt
 end
 

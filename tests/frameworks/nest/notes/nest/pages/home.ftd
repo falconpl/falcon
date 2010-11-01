@@ -1,18 +1,18 @@
 <?
    import from nest.action in na
    
-   dm = Nest.dm( "DBIDataManager", "notes_db" )
+   dm = Nest.dm( "notes_db" )
 
    login = Nest.service("Login")
    da = Nest.service( "DataControl" )        
-   dq = Nest.service( "DataQuery", "",
+   dq = Nest.service( "DataTable", "",
       [
-         "iactions" => .[
+         "back_act" => .[
             na.ActionBox( na.LinkAction( Nest.AL.USER, "View", Nest.eidLink("view") ), "&nbsp;", "&nbsp;" )
             na.ActionBox( na.LinkAction( Nest.AL.STAFF, "Edit", Nest.eidLink("edit") ), "&nbsp;", "&nbsp;" )
          ],
-         "daction" => na.CheckboxAction( Nest.AL.STAFF ),
-         "tactions" => .[
+         "front_act" => na.CheckboxAction( Nest.AL.STAFF ),
+         "table_act" => .[
             na.SubmitAction( Nest.AL.STAFF, "Delete!", "cmd", "del" )
             na.ButtonAction( Nest.AL.STAFF, "Add new!", "window.location='" + Nest.pageLink("add")+"'" )
          ],
@@ -20,8 +20,8 @@
          "level" => Nest.AL.USER
       ] )
       
-   dq.dm = da.dm = dm
-   dq.entity = da.entity = "notes"
+   da.dm = dm
+   //dq.entity = da.entity = "notes"
    dq.view = "table"
    
 ?><html>

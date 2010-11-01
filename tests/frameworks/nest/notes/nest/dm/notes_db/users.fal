@@ -1,16 +1,17 @@
 import from nest.dbentity in dbe
 import from hash
 
-class users from dbe.DBEntity
-	fields = .[
-		   "user_id char(15) PRIMARY KEY"
-		   "pwd_md5 varchar(30)"
-		   "auth_type char(10)"
-	   ]
+class users( dbm ) from dbe.DBEntity( dbm )
+
+   definition = .[
+      ^+ "user_id char(15) PRIMARY KEY"
+         "pwd_md5 varchar(30)"
+         "auth_type char(10)"
+   ]
    
-	init_data = .[
-      .["user_id" => "admin"   "pwd_md5" => hash.md5("admin")   "auth_type" => "admin"]
-      .["user_id" => "staff"   "pwd_md5" => hash.md5("staff")   "auth_type" => "staff"]
-      .["user_id" => "user"    "pwd_md5" => hash.md5("user")    "auth_type" => "user"]
+   init_data = [
+      ["user_id" => "admin",   "pwd_md5" => hash.md5("admin"),   "auth_type" => "admin"],
+      ["user_id" => "staff",   "pwd_md5" => hash.md5("staff"),   "auth_type" => "staff"],
+      ["user_id" => "user",    "pwd_md5" => hash.md5("user"),    "auth_type" => "user"]
    ]
 end

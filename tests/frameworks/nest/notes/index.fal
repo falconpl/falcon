@@ -24,7 +24,7 @@ Nest.log_level = 3
 Nest.stylesheets += "notes.css"
 
 Nest.onStartup = function()
-   dm = Nest.dm( "DBIDataManager", "notes_db" )
+   dm = Nest.dm( "notes_db" )
 
    if dm.dbc == nil and Nest.pid != "create"
       Reply.redirect( Nest.pageLink("create") )
@@ -34,7 +34,7 @@ Nest.onStartup = function()
    Nest.addHook(
       Nest.Hook( "check_user",
          function( uid, pwd )
-            record = dm.queryItem( "users", uid )
+            record = dm.queryItem( dm.entity("users"), uid )
             if record.data and record.data["pwd_md5"] == hash.md5(pwd)
                switch record.data["auth_type"]
                   case "admin": level = Nest.AL.ADMIN

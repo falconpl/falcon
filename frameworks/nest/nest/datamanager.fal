@@ -16,137 +16,187 @@
    See LICENSE file for licensing details.
 */
 
-import from utils
+import from .utils
+import NestError from .error as NestError
 
 /*# Base data manager.
-	This is just an abstract class of definitions to be implemented by the 
-	real data managers.
-	
-	The final application should write a data manager class 
+   This is just an abstract class of definitions to be implemented by the
+   real data managers.
 */
 
 class DataManager( name, location )
-	// name of this data manager.
-	name = name
-	
-	//# Place in where this script is located.
-	location = location
-	
-	//# Entities currently loaded by this dataManager
-	entities = [=>]
-	
-	/*# Configure this data manager.
+   // name of this data manager.
+   name = name
+
+   //# Place in where this script is located.
+   location = location
+
+   //# Entities currently loaded by this dataManager
+   entities = [=>]
+
+   /*# Configure this data manager.
       @param vars an array of variables to be configured.
-   	@raise CodeError if the configuration is not coherent with the type of data manager.   
+      @raise CodeError if the configuration is not coherent with the type of data manager.
+
+      The subclasses must override this mehtod.
    */
    function configure( vars )
-   	raise CodeError( 10000, i"Please override" )
+      raise CodeError( 10000, i"Please override" )
    end
 
 
-   /*# Query an entity.
-   
-      @param entity The entity to be queried.
-      @param fields Array of fields or dictionary of conditions to be retreived.
-      @param start Start after N fetched records (nil for all).
-      @param count Move N records in the returned data.
+   /*# Query multiple records from an entity.
 
-      @return A Table containing the query results.
+      @param entity The entity to be queried.
+      @param view A field list or @a DBView configuring this query (nil for all).
+      @param start Start after N fetched records (nil for 0).
+      @param count Get N records in the returned data (nil for all).
+      @return An array of DBRecord entity containing the retreived data.
+
+      The @b view parameter can be an array of field names that should be
+          retrieved from this entity, or a View that will select just part of
+          the elements.
+          
+      The subclasses must override this mehtod.
    */
-   function query( entity, fields, start, count )
-   	raise CodeError( 10000, i"Please override" )
+   function query( entity, view, start, count)
+      raise CodeError( 10000, i"Please override" )
    end
 
    /*# Query an entity -- for a single item.
       @param entity The entity to be queried.
-      @param eid The ID of the entity to retreive.
-      @param fields The fields to be retreived (nil for all).
+      @param key_fields The ID of the entity to retreive.
+      @param view A view shaping the fields to be retreived (or nil)
 
-      @return A dictionary containing the required fields (or all).
+      @return A DBRecord entity containing the retreived data.
+
+      The subclasses must override this mehtod.
    */
-   function queryItem( entity, eid, fields )
-   	raise CodeError( 10000, i"Please override" )
+   function queryItem( entity, key_fields, view )
+      raise CodeError( 10000, i"Please override" )
    end
 
    /*# Inserts a new item in the data pool.
       @param entity The entity to be added.
       @param data A dictionary of data to be stored.
       @return The new entity ID.
+
+      The subclasses must override this mehtod.
    */
-   function add( entity, data )
-   	raise CodeError( 10000, i"Please override" )
+   function insert( entity, data )
+      raise CodeError( 10000, i"Please override" )
    end
 
    /*# Modifies the values of an entity in the database.
       @param entity The entity to be added.
       @param data A dictionary of data to be stored.
       @return The new entity ID.
+
+      The subclasses must override this mehtod.
    */
    function update( entity, eid, data )
-   	raise CodeError( 10000, i"Please override" )
+      raise CodeError( 10000, i"Please override" )
    end
 
    /*# Modifies the values of an entity in the database.
       @param entity The entity to be added.
       @param data A dictionary of data to be stored.
       @return The new entity ID.
+
+      The subclasses must override this mehtod.
    */
    function delete( entity, eid )
-   	raise CodeError( 10000, i"Please override" )
+      raise CodeError( 10000, i"Please override" )
    end
-   
-   /*# Create the database. 
-   	The base class loads all the entities and sends them to the
-   	createEntity method.
+
+   /*# Creates the physical underlying DatabaseResource.
+      @param cond if true should create the database only if not alredy existing.
+
+      The subclasses must override this mehtod.
    */
-   
-   function create()
-   	entloc = self.location + "/" + self.name
-   	ents = [=>]
-   	
-   	// scan the data manager entities in its directory
-   	d = Directory( entloc )
-   	while( name = d.read() )
-   		if name.endsWith( ".fal" ) or name.endsWith( ".fam" )
-   			ents[ name[0:name.rfind( "." ) ] = 0
-   		end
-   	end
-   	d.close()
-   		
-   	// now load all of them
-   	for ename, dummy in ents
-   		entity = self.loadEntity( ename )
-	   	// TODO: Sort them in the correct dependency order
-	   	entity.create()
-	   	entity.initialize()
-   	end
+   function createDB( cond )
+      raise CodeError( 10000, i"Please override" )
+   end
+
+   /*# Creates an entity in the database.
+      Called back by @a DataManager.create.
+      @param entity The @a DBEntity to be created in the database.
+      @param cond True to create only if the entity doesn't exist.
+
+   */
+   function createEntity( entity, cond )
+      raise CodeError( 10000, i"Please override" )
    end
    
+   /*# Create the database.
+      @param cond True if the database should be created only if not found (conditional),
+                  false to re-create it.
+                  
+      This performs a self.createDB( cond ) call right after loading all the entities,
+      and then invokes create() onthe entities in the right order.
+
+      So, the upstream DB manager should be re-implementing the createDB method to
+      create a new empty DB.
+   */
+
+   function create( cond )
+      Nest.logi( "Creating database " + self.name )
+      entloc = self.location
+      ents = [=>]
+
+      // scan the data manager entities in its directory
+      try
+         d = Directory( entloc )
+         while (name = d.read())
+            if name.endsWith( ".fal" ) or name.endsWith( ".fam" )
+               ents[ name[0:name.rfind( "." ) ] ] = 0
+            end
+         end
+         d.close()
+      catch IoError in e
+         Nest.logw( "The database has no entity files; skipping creation" )
+         raise e
+      end
+         
+      // Ok, we ask the upstream to create the db
+      self.createDB( cond )
+      
+      // now load all of them
+      for ename, dummy in ents
+         entity = self.entity( ename )
+         // TODO: Sort them in the correct dependency order
+         self.createEntity( entity )
+         for data in entity.init_data
+            self.insert( entity, data )
+         end
+      end
+   end
+
    /*# Loads an entity definition.
-   	@param ename The name of the entity to be loaded.
+      @param ename The name of the entity to be loaded.
    */
    function entity( ename )
-   	if ename in self.entities
-   		return self.entities[ename]
-   	end
-   	
-   	entloc = utils.findFileInDirs(
-            [ self.location + "/" + self.name ],
-            name,
+      if ename in self.entities
+         return self.entities[ename]
+      end
+      
+      entloc = utils.findFileInDirs(
+            [ self.location  ],
+            ename,
             ["fal", "fam"]
          )
-         
+
       if not entloc
-      	raise NestError( NestError.entity_not_found, "", ename )
+         raise NestError( NestError.entity_not_found, "", ename )
       end
-   	
-   	cls = Nest.compileClass( entloc, ename )
-   	if cls != nil
-   		ent = cls( self )
-   		self.entities[ename] = cls
-   		return cls
-   	end 
-   	
+
+      cls = Nest.compileClass( entloc, ename )
+      if cls != nil
+         ent = cls( self )
+         self.entities[ename] = ent
+         return ent
+      end
+
    end
-   
+
 end
