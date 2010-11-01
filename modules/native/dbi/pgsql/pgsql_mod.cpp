@@ -17,8 +17,9 @@
 #include <stdio.h>
 
 #include <falcon/engine.h>
-#include "pgsql.h"
+#include "pgsql_mod.h"
 
+/* Oid - see catalog/pg_type.h */
 #define PG_TYPE_BOOL                    16
 #define PG_TYPE_BYTEA                   17
 #define PG_TYPE_CHAR                    18
@@ -63,6 +64,7 @@
 #define PG_TYPE_TIMESTAMPTZ             1184  /* with timezone */
 #define PG_TYPE_NUMERIC                 1700
 
+
 namespace Falcon
 {
 
@@ -70,15 +72,16 @@ namespace Falcon
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandle *dbh, PGresult *res )
-    : DBIRecordset( dbh )
+DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandlePgSQL *dbh, PGresult *res )
+    :
+    DBIRecordset( dbh ),
+    m_row( -1 ),
+    m_res( res )
 {
-   m_res = res;
-
-   m_row = -1; // BOF
-   m_rowCount = PQntuples( m_res );
-   m_columnCount = PQnfields( m_res );
+    m_rowCount = PQntuples( res );
+    m_columnCount = PQnfields( res );
 }
+
 
 DBIRecordsetPgSQL::~DBIRecordsetPgSQL()
 {
@@ -86,6 +89,110 @@ DBIRecordsetPgSQL::~DBIRecordsetPgSQL()
       close();
 }
 
+
+bool DBIRecordsetPgSQL::fetchRow()
+{
+    return ++m_row < m_rowCount ? true : false;
+}
+
+
+bool DBIRecordsetPgSQL::discard( int64 ncount )
+{
+    for ( int64 i=0; i < ncount; ++i )
+    {
+        if ( !fetchRow() )
+            return false;
+    }
+    return true;
+}
+
+
+int64 DBIRecordsetPgSQL::getRowIndex()
+{
+    return m_row;
+}
+
+
+int64 DBIRecordsetPgSQL::getRowCount()
+{
+    return m_rowCount;
+}
+
+
+int DBIRecordsetPgSQL::getColumnCount()
+{
+   return m_columnCount;
+}
+
+
+bool DBIRecordsetPgSQL::getColumnName( int nCol, String& name )
+{
+    if ( nCol < 0 || nCol >= m_columnCount )
+        return false;
+
+    name.bufferize( PQfname( m_res, nCol ) );
+    return true;
+}
+
+
+bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
+{
+    if ( nCol < 0 || nCol >= m_columnCount )
+        return false;
+
+    const char* v = PQgetvalue( m_res, m_row, nCol );
+    if ( *v == '\0'
+        && PQgetisnull( m_res, m_row, nCol ) )
+    {
+        value.setNil();
+        return true;
+    }
+
+    switch ( PQftype( m_res, nCol ) )
+    {
+    case PG_TYPE_BOOL:
+        value.setBoolean( *v == 't' ? true : false );
+        break;
+
+    case PG_TYPE_INT2:
+    case PG_TYPE_INT4:
+    case PG_TYPE_INT8:
+        value.setInteger( atol( v ) );
+        break;
+
+    case PG_TYPE_FLOAT4:
+    case PG_TYPE_FLOAT8:
+    case PG_TYPE_NUMERIC:
+        value.setNumeric( atof( v ) );
+        break;
+
+    case PG_TYPE_CHAR2:
+    case PG_TYPE_CHAR4:
+    case PG_TYPE_CHAR8:
+    case PG_TYPE_TEXT:
+    case PG_TYPE_VARCHAR:
+    default:
+        {
+            String s( v );
+            s.bufferize();
+            value = s;
+            break;
+        }
+    }
+    return true;
+}
+
+
+void DBIRecordsetPgSQL::close()
+{
+    if ( m_res != NULL )
+    {
+        PQclear( m_res );
+        m_res = NULL;
+    }
+}
+
+#if 0
 dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
 {
    switch ( pgType )
@@ -494,18 +601,239 @@ DBIBlobStream *DBITransactionPgSQL::createBlob( dbi_status &status, const String
    status = dbi_not_implemented;
    return 0;
 }
-
+#endif
 
 /******************************************************************************
  * DB Handler class
  *****************************************************************************/
 
+
+DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
+    :
+    m_conn( conn ),
+    m_bInTrans( false )
+{}
+
+
 DBIHandlePgSQL::~DBIHandlePgSQL()
 {
-   close();
+    close();
 }
 
 
+void DBIHandlePgSQL::close()
+{
+    if ( m_conn != 0 )
+    {
+        if ( m_bInTrans )
+        {
+            // force rollback, skipping errors...
+            PGresult* res = PQexec( m_conn, "ROLLBACK" );
+            PQclear( res );
+        }
+        PQfinish( m_conn );
+        m_conn = 0;
+    }
+    m_bInTrans = false;
+}
+
+
+void DBIHandlePgSQL::options( const String& params )
+{}
+
+
+const DBISettingParams* DBIHandlePgSQL::options() const
+{
+    return 0;
+}
+
+
+void DBIHandlePgSQL::throwError( const char* file, int line, PGresult* res )
+{
+    fassert( res );
+
+    int code = (int) PQresultStatus( res );
+    const char* err = PQresultErrorMessage( res );
+
+    if ( err != NULL && err[0] != '\0' )
+    {
+        String desc = err;
+        desc.remove( desc.length() - 1, 1 ); // Get rid of newline
+        desc.bufferize();
+
+        PQclear( res );
+
+        throw new DBIError( ErrorParam( code, line )
+            .extra( desc )
+            .module( file ) );
+    }
+    else
+    {
+        PQclear( res );
+
+        throw new DBIError( ErrorParam( code, line )
+            .module( file ) );
+    }
+}
+
+
+void DBIHandlePgSQL::begin()
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    if ( m_bInTrans )
+        return;
+
+    PGresult* res = PQexec( m_conn, "BEGIN" );
+    if ( res == 0
+        || PQresultStatus( res ) != PGRES_COMMAND_OK )
+    {
+        throwError( __FILE__, __LINE__, res );
+    }
+
+    m_bInTrans = true;
+    PQclear( res );
+}
+
+
+void DBIHandlePgSQL::commit()
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    if ( !m_bInTrans )
+        return;
+
+    PGresult* res = PQexec( m_conn, "COMMIT" );
+    if ( res == 0
+        || PQresultStatus( res ) != PGRES_COMMAND_OK )
+    {
+        throwError( __FILE__, __LINE__, res );
+    }
+
+    m_bInTrans = false;
+    PQclear( res );
+}
+
+
+void DBIHandlePgSQL::rollback()
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    if ( !m_bInTrans )
+        return;
+
+    PGresult* res = PQexec( m_conn, "ROLLBACK" );
+    if ( res == 0
+        || PQresultStatus( res ) != PGRES_COMMAND_OK )
+    {
+        throwError( __FILE__, __LINE__, res );
+    }
+
+    m_bInTrans = false;
+    PQclear( res );
+}
+
+
+DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    String output;
+    if ( params.length() != 0 )
+    {
+        if ( !dbi_sqlExpand( sql, output, params ) )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+        }
+    }
+    else
+        output = sql;
+
+    AutoCString cStr( output );
+    PGresult* res = PQexec( m_conn, cStr.c_str() );
+
+    if ( res == NULL )
+        throwError( __FILE__, __LINE__, res );
+
+    ExecStatusType st = PQresultStatus( res );
+    if ( st != PGRES_TUPLES_OK
+        && st != PGRES_COMMAND_OK )
+        throwError( __FILE__, __LINE__, res );
+
+    char* num = PQcmdTuples( res );
+    if ( num && num[0] != '\0' )
+        affectedRows = atoi( num );
+    else
+        affectedRows = -1;
+
+    return new DBIRecordsetPgSQL( this, res );
+}
+
+
+void DBIHandlePgSQL::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    String output;
+    if ( params.length() != 0 )
+    {
+        if ( !dbi_sqlExpand( sql, output, params ) )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+        }
+    }
+    else
+        output = sql;
+
+    AutoCString cStr( output );
+    PGresult* res = PQexec( m_conn, cStr.c_str() );
+
+    if ( res == NULL )
+        throwError( __FILE__, __LINE__, res );
+
+    ExecStatusType st = PQresultStatus( res );
+    if ( st != PGRES_TUPLES_OK
+        && st != PGRES_COMMAND_OK )
+        throwError( __FILE__, __LINE__, res );
+
+    char* num = PQcmdTuples( res );
+    if ( num && num[0] != '\0' )
+        affectedRows = atoi( num );
+    else
+        affectedRows = -1;
+}
+
+
+DBIRecordset* DBIHandlePgSQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
+{
+    return 0;
+}
+
+
+DBIStatement* DBIHandlePgSQL::prepare( const String &query )
+{
+    return 0;
+}
+
+
+int64 DBIHandlePgSQL::getLastInsertedId( const String& name )
+{
+    return 0;
+}
+
+
+void DBIHandlePgSQL::selectLimited( const String& query, int64 nBegin, int64 nCount, String& result )
+{
+
+}
+
+
+#if 0
 DBIStatement* DBIHandlePgSQL::getDefaultTransaction()
 {
    return m_connTr == NULL ? (m_connTr = new DBITransactionPgSQL( this )) : m_connTr;
@@ -522,18 +850,6 @@ DBIStatement *DBIHandlePgSQL::startTransaction()
    }
 
    return t;
-}
-
-DBIHandlePgSQL::DBIHandlePgSQL()
-{
-   m_conn = NULL;
-   m_connTr = NULL;
-}
-
-DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
-{
-   m_conn = conn;
-   m_connTr = NULL;
 }
 
 dbi_status DBIHandlePgSQL::closeTransaction( DBIStatement *tr )
@@ -601,59 +917,48 @@ dbi_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
 
    return dbi_ok;
 }
-
-dbi_status DBIHandlePgSQL::close()
-{
-   if ( m_conn != NULL ) {
-      PQfinish( m_conn );
-      m_conn = NULL;
-   }
-
-   return dbi_ok;
-}
+#endif
 
 /******************************************************************************
  * Main service class
  *****************************************************************************/
 
-dbi_status DBIServicePgSQL::init()
+void DBIServicePgSQL::init()
 {
-   return dbi_ok;
 }
 
-DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
-                                     dbi_status &retval, String &errorMessage )
+
+DBIHandle *DBIServicePgSQL::connect( const String &parameters )
 {
    AutoCString connParams( parameters );
    PGconn *conn = PQconnectdb( connParams.c_str () );
-   if ( conn == NULL ) {
-      retval = dbi_memory_allocation_error;
-      return NULL;
+   if ( conn == NULL )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__ ) );
    }
 
-   if ( PQstatus( conn ) != CONNECTION_OK ) {
-      retval = dbi_connect_error;
-      errorMessage = PQerrorMessage( conn );
+   if ( PQstatus( conn ) != CONNECTION_OK )
+   {
+      String errorMessage = PQerrorMessage( conn );
       errorMessage.remove( errorMessage.length() - 1, 1 ); // Get rid of newline
       errorMessage.bufferize();
 
       PQfinish( conn );
 
-      return NULL;
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__ )
+              .extra( errorMessage ) );
    }
-
-   retval = dbi_ok;
 
    return new DBIHandlePgSQL( conn );
 }
 
+
 CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "PgSQL" );
-   if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" ) {
-      throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
-                                      .desc( "PgSQL DBI driver was not found" ) );
-      return 0;
+   if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
    }
 
    CoreObject *obj = cl->asClass()->createInstance();
@@ -664,5 +969,4 @@ CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 } /* namespace Falcon */
 
-/* end of pgsql_srv.cpp */
-
+/* end of pgsql_mod.cpp */
