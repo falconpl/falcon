@@ -837,7 +837,25 @@ DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 
 int64 DBIHandlePgSQL::getLastInsertedId( const String& name )
 {
-    return 0;
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    /* so... PQoidValue does it but takes a PGresult.
+    We can retrieve a PGresult in case of prepared statements only...
+    */
+
+    AutoCString nm( name );
+    PGresult* res = PQdescribePrepared( m_conn, nm.c_str() );
+    int oid = -1;
+
+    if ( PQresultStatus( res ) != PGRES_COMMAND_OK )
+        goto finish;
+    else
+        oid = (int) PQoidValue( res );
+
+  finish:
+    PQclear( res );
+    return oid;
 }
 
 
