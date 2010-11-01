@@ -3626,13 +3626,16 @@ void VMachine::handleRaisedItem( Item& value )
          // in case of an error of class Error, we have already a good error inside of it.
          err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
          err->incref();
+         // Also, provide a traceback
+         if( ! err->hasTraceback() )
+              fillErrorTraceback(*err);
       }
       else {
          // else incapsulate the item in an error.
          err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
          err->raised( value );
       }
-      err->hasTraceback();
+
       throw err;
    }
 
@@ -3648,6 +3651,13 @@ void VMachine::handleRaisedItem( Item& value )
          m_break = false;
          throw value;
       }
+   }
+
+   if ( value.isObject() && value.isOfClass( "Error" ) )
+   {
+      Error* err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
+      if( ! err->hasTraceback() )
+           fillErrorTraceback(*err);
    }
 
    regB() = value;
