@@ -141,24 +141,25 @@ object SkinBinder
    function getSubSkin( skinFile, srv, var )
       srvName = srv.className()
       srvInst = srv.instance
+      cnf = Nest.config
 
       // sub-skins are named after the model
       // [instance]_varname.fal/fam/ftd
       if srvInst: skinFile = srvInst + "_" + skinFile
       
       skinPaths = [
-         utils.reldir( Nest.cnf.homedir, Nest.cnf.site_srv_dir + "/" + srvName +  "/skins" ),
-         Nest.cnf.nestdir +"/srv/" + srvName  + "/skins" ]
+         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + srvName +  "/skins" ),
+         cnf.nestdir +"/srv/" + srvName  + "/skins" ]
 
          
-      if self.log_level >= 3
-         self.logd( "Service " + self.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
+      if Nest.log_level >= 3
+         Nest.logd( "Service " + srv.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
       end
 
 
       skinFile = utils.findFileInDirs( skinPaths, skinFile, ['fal','ftd','fam'] )
       if skinFile
-         self.logi( "Service " + self.fullName() + " using sub-skin " + skinFile )
+         if Nest.log_level >= 2: Nest.logi( "Service " + srv.fullName() + " using sub-skin " + skinFile )
          include( skinFile, symDict | (sd=["skin"=>nil] ) )
          return sd["skin"]
       end

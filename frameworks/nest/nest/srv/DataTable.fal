@@ -87,7 +87,7 @@ class DataTable( instance ) from DataService( instance )
    /*# Reimplementation to perform the required query */
    function do_query()
       view = self.view.value
-      entity = view.entity
+      entity = self.entity
       self.records.value = entity.table( view, self._start, self._count )
    end
 end

@@ -19,10 +19,10 @@
 import Service from nest as Service
 import ServiceVar from nest as ServiceVar
 import from nest.bindings in b
+import NestError from nest as NestError
+import DBEntity from nest.dbentity as DBEntity
 
 import DBIError from dbi
-
-import NestError from nest as NestError
 
 /*# Service used to modify database records. */
 class DataControl( instance ) from Service( instance )
@@ -34,17 +34,32 @@ class DataControl( instance ) from Service( instance )
    dberror = ServiceVar( "Error returned by the DB when trying to perform the operation" )
 
    /*# The entity must be specified directly. */
-   entity = nil
+   entity = ServiceVar( "Entity instance or name in format \"db.entity\"", b.ConfigBinder )
 
-   /*# The data manager must be specified directly */
-   dm = nil
-
-   function run()
+   //# cached entity, used internally
+   centity = nil
+   
+   function startup()
       if not self.checkAllowed(): return
       
-      if not self.dm or not self.entity
-         raise NestError( NestError.other, i"Data manager or entity not set" )
+      entity = self.entity.value
+      if entity.derivedFrom( DBEntity )
+         self.centity = entity
+      elif entity.typeId() == StringType
+         try
+            dm_name, ename = entity.split(".",2)
+         catch
+            raise NestError( NestError.other, i"Entity name not in format \"dm_name.entity\"", entity )
+         end
+
+         self.centity = Nest.dm( dm_name ).entity( ename )
+      else
+         raise NestError( NestError.other, i"Entity not specified in DataControl config" )
       end
+   end
+   
+   function run()
+      if not self.checkAllowed(): return
 
       if not self.cmd.isSet
          Nest.logd( "Data Action: no action" )
@@ -52,8 +67,7 @@ class DataControl( instance ) from Service( instance )
       end
       
       action = self.cmd.value
-      dm = self.dm
-      entity = self.entity
+      entity = self.centity
       eid = self.eid.value
       Nest.logi( @"DataAction: $action $entity:$eid" )
       
@@ -61,9 +75,9 @@ class DataControl( instance ) from Service( instance )
          switch action
             case "del"
                if eid.typeId() == StringType
-                  self.result.value = dm.delete( entity, eid )
+                  self.result.value = entity.delete( eid )
                else
-                  for key in eid: dm.delete( entity, key )
+                  for key in eid: entity.delete( key )
                end
                self.result.value = true
 
@@ -72,7 +86,7 @@ class DataControl( instance ) from Service( instance )
 
                if d
                   if Nest.log_level >= 3: Nest.logd( @"Adding data:" + d.describe() )
-                  self.result.value = dm.add( entity, d )  // on failure, add rasies
+                  self.result.value = entity.insert( d )  // on failure, add rasies
                else
                   self.dberror.value = i"No field to be added"
                end
@@ -81,7 +95,7 @@ class DataControl( instance ) from Service( instance )
                d = self.makeData()
                if d
                   if Nest.log_level >= 3: Nest.logd( @"Modifying data:" + d.describe() )
-                  dm.update( entity, eid, d )
+                  entity.update( eid, d )
                   self.result.value = true
                else
                   self.dberror.value = i"No field to be modified"
@@ -95,11 +109,7 @@ class DataControl( instance ) from Service( instance )
    end
 
    function makeData()
-      dbe = self.dm.getEntity( self.entity )
-      if not dbe
-         self.dberror.value = @i"Undefined database entity $(self.entity)"
-         return nil
-      end
+      dbe = self.centity
 
       d = [=>]
       for field in dbe.fields

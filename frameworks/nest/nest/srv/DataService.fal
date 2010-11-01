@@ -20,36 +20,39 @@ import Service from nest as Service
 import ServiceVar from nest as ServiceVar
 import NestError from nest as NestError
 import from nest.bindings in b
+import DBView from nest.dbview as DBView
 
 /*# Base class for services related to data management.
 
    Services must be configured indicating the name of the data manager they
    use, and a view.
+
+   This class MUST be configured with a **view** configuration variable,
+   that represents the entity on which this service should operate and the
+   view through which the entity must be accessed.
+
+   As views are nameless, they must be created directly in the configuration
+   file (or in the configuration dictionary), and are tighly coupled with
+   the service they refer to.
 */ 
 class DataService( instance ) from Service( instance )
 
    /*# Manager of the table actions (submits and other table-level actions). */
    handler = ServiceVar( "Manager of the table actions", b.ConfigBinder  )
 
-   /*# Config: A data manager given in configuration */
-   dm_name = ServiceVar( "The name of a data manager", b.ConfigBinder  )
-
-   /*# Config: The name of an entity */
-   entity_name = ServiceVar( "The name of an entity manager", b.ConfigBinder  )
-
    /*# A DBView instance used to access the desired entity */
    view = ServiceVar( "A DBView instance used to access the desired entity", b.ConfigBinder  )
 
-   //# Entity, autoloaded from configuration.
-   entity = nil
    
    function startup()
-      self.entity = Nest.dm( self.dm_name.value ).entity( self.entity_name.value )
+      view = self.view.value
+      if not view.derivedFrom( DBView )
+         raise NestError( NestError.other, i"View not specified in configuration." )
+      end
    end
       
    function run()
       if not self.checkAllowed(): return
-      if not self.entity: raise NestError( NestError.other, i"Entity not set" )
       self.do_query()
    end
 

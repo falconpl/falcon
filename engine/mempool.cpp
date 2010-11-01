@@ -498,16 +498,11 @@ void MemPool::markItem( const Item &item )
       case FLC_ITEM_CLSMETHOD:
       {
          CoreObject *co = item.asMethodClassOwner();
-         if( co->mark() != gen ) {
-            co->gcMark( gen );
-         }
+         co->gcMark( gen );
 
          CoreClass *cls = item.asMethodClass();
          // if the class is the generator of the method, we have already marked it.
-         if( cls->mark() != gen )
-         {
-            cls->gcMark( gen );
-         }
+         cls->gcMark( gen );
       }
       break;
 

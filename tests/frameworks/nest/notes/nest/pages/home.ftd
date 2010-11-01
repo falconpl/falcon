@@ -1,10 +1,26 @@
 <?
    import from nest.action in na
+   import from nest.dbview in dw
    
-   dm = Nest.dm( "notes_db" )
+   notes = Nest.dm( "notes_db" ).entity( "notes" )
 
+   tableview = dw.DBView( notes )
+   tableview.fields = .[
+      dw.DBViewField( "inserted", i"Inserted on", nil, dw.DBOrder.DESCENDING )
+      dw.DBViewField( "title", i"Title", {v=>"<span class='title'>" + htmlEscape(v) + "</span>"} )
+      dw.DBViewField( "content", i"Content",
+               { v=>
+                     "<span class='content'>" +
+                     ( v.len() > 30 ? v[0:27] + " ... " : v) +
+                     "</span>"
+               })
+      ]
+   
    login = Nest.service("Login")
-   da = Nest.service( "DataControl" )        
+   da = Nest.service( "DataControl", "",
+         ["entity"=>notes]
+         )
+         
    dq = Nest.service( "DataTable", "",
       [
          "back_act" => .[
@@ -16,13 +32,9 @@
             na.SubmitAction( Nest.AL.STAFF, "Delete!", "cmd", "del" )
             na.ButtonAction( Nest.AL.STAFF, "Add new!", "window.location='" + Nest.pageLink("add")+"'" )
          ],
-         "handler" => Nest.pageLink(),
+         "view" => tableview,
          "level" => Nest.AL.USER
       ] )
-      
-   da.dm = dm
-   //dq.entity = da.entity = "notes"
-   dq.view = "table"
    
 ?><html>
 <head>

@@ -76,7 +76,7 @@ enum DBOrder
    //# Order values in ascending orders
    ASCENDING = 1
    //# Order values in Descending order
-   DESCENDIG = 2
+   DESCENDING = 2
    //# No ordering
    NONE = -1
 end
@@ -124,7 +124,9 @@ end
 
 /*# Creates a DB View.
    @param entity The entity on which the view acts as a filter.
-   @param check If true (default), will check for correctness of assigned parameters.
+   @optparam check If true (default), will check for correctness of assigned parameters.
+   @optparam fields initial value of the view fields.
+   @optparam cond initial value of the table conditions.
 
    This class represents a filter through which entities can be seen differently.
 
@@ -132,6 +134,13 @@ end
    usage is coherent with the entity definition they lay upon. For example, it
    can check for the required fields to exist.
 
+   If not specified in the constructor call, the @a DBView.fields and @a DBView.cond
+   property can be specified at any moment.
+
+   @note It is not necessary to specify the fields composing a primary key of an entity in
+         a view, if they must not be seen; those fields are automatically added to any
+         access query even if not explictly requested.
+   
    @prop fields An array of @a DBViewField class entities specifying which fields
          should be retreived in this view and how to represent them.         
 
@@ -139,16 +148,21 @@ end
          right part is an instance of @a DBCond class.
 */
    
-class DBView( entity, check )
+class DBView( entity, fields, cond, check )
    entity = entity
    check = check == nil ? true : check
 
    _fields = nil
    _cond = nil
 
-   function __get_fields(): return self.fields
-   function __get_cond(): return self.cond
-
+   init
+      if fields: self.fields = fields
+      if cond: self.cond = cond
+   end
+   
+   function __get_fields(): return self._fields
+   function __get_cond(): return self._cond
+   
    function __set_fields( value )
       if self.check
          if value.typeId() != ArrayType
