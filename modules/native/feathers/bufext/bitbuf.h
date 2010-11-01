@@ -126,7 +126,7 @@ public:
 
     }
 
-    // note: be sure that usedbytes <= totalbytes!
+    // note: be sure that usedbytes <= totalbytes! extra is ignored if copy is true
     StackBitBuf(uint8 *buf, NUMTYPE usedbytes, NUMTYPE totalbytes, bool copy = true, NUMTYPE extra = 0)
     {
         if(copy)
@@ -519,7 +519,7 @@ public:
 
     // resize to s bytes
     // will move wpos to the end of the allocated block
-    // for efficiency, do notactually shrink the buffer if it is larger
+    // for efficiency, do not actually shrink the buffer if it is larger
     inline void resize(NUMTYPE s)
     {
         reserve(s);

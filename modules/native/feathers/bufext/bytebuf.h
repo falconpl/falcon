@@ -86,6 +86,7 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
             }
             else
             {
+                _mybuf = false;
                 _buf = buf;
                 _res = totalsize;
             }

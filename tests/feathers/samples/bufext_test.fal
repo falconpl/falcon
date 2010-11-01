@@ -41,6 +41,12 @@ function EXPECTDIFF(actual, expected, diff, str)
     end
 end
 
+EXPECT(BitBuf.derivedFrom(ByteBuf), true, "BitBuf from ByteBuf")
+EXPECT(ByteBufLittleEndian.derivedFrom(ByteBuf), true, "ByteBufLittleEndian from ByteBuf")
+EXPECT(ByteBufNativeEndian.derivedFrom(ByteBuf), true, "ByteBufNativeEndian from ByteBuf")
+EXPECT(ByteBufBigEndian.derivedFrom(ByteBuf), true, "ByteBufBigEndian from ByteBuf")
+EXPECT(ByteBufReverseEndian.derivedFrom(ByteBuf), true, "ByteBufReverseEndian from ByteBuf")
+
 bb = BitBuf(3) // wrong initial size (internal array type is uint32 or uint64)
 EXPECT(bb.capacity() % 4, 0, "BitBuf capacity alignment")
 
@@ -136,8 +142,38 @@ bb.growable(false)
 bb.w32(1,2)
 try
     bb.w8(3)
-    EXPECT(false, true, "Not-growwable buffer write exception")
+    EXPECT(false, true, "Not-growable buffer write error not raised")
 end
+
+mb = MemBuf(16, 1).fill(0xFF)
+bc = ByteBufLittleEndian(mb) // copy
+ba = ByteBufLittleEndian(mb, true) // adapt
+ba[0] = 0x04
+ba[1] = 0x0A
+ba[5] = 0
+EXPECT(mb.get(), 4, "ByteBuf adapt 1")
+EXPECT(bc[0], 0xFF, "ByteBuf copy 1")
+EXPECT(mb.get(), 10, "ByteBuf adapt 2")
+EXPECT(bc[1], 0xFF, "ByteBuf copy 2")
+EXPECT(ba.r16(), 0x0A04, "ByteBuf adapt read 1")
+EXPECT(bc.r16(), 0xFFFF, "ByteBuf copy read 1")
+
+> " === DEPENDENCY TEST vs. GC ==="
+
+// ByteBuf dependency smoke test (stil required bufs may not be garbaged)
+mb = MemBuf(50000, 4).fill(0xFFFFFFFF) // a large object, interesting for the GC
+mb.put(42)
+b = ByteBufNativeEndian(mb, true)
+mb = nil
+for i = 0 to 500
+    EXPECT(b.r32(), 42, "ByteBuf recursive adapt dependency test")
+    b = ByteBufNativeEndian(b, true).growable(false) // adapt
+end
+GC.perform(true) // if dependencies are not set up correctly, this may cause multi-free of the internal memory, and segfault
+x = b.r32() // if mb was garbaged, this will likely segfault
+EXPECT(x, 42, "ByteBuf recursive adapt dependency test, final") 
+b = nil
+
 
 if success
     > " === BASIC TESTS SUCCESSFUL ==="

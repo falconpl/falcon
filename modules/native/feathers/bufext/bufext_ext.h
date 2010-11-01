@@ -49,27 +49,43 @@ namespace Falcon { namespace Ext {
 template <typename BUFTYPE> class BufCarrier : public FalconData
 {
 public:
-    BufCarrier(): m_dependant(NULL) {}
+    BufCarrier(): m_dependant(NULL) {} // default ctor
     ~BufCarrier() {}
-    BufCarrier(uint32 res): buf(res), m_dependant(NULL) {}
-    BufCarrier(BufCarrier *other, uint32 extra = 0): buf(other->buf, extra), m_dependant(NULL) {}
-    BufCarrier(uint8 *ptr, uint32 usedsize, uint32 totalsize, bool copy, uint32 extra)
-        : buf(ptr, usedsize, totalsize, copy, extra), m_dependant(NULL) {}
+
+    BufCarrier(uint32 res): buf(res), m_dependant(NULL) {} // pre-alloc ctor
+
+    BufCarrier(MemBuf *other, uint32 extra = 0)            // MemBuf copy ctor
+        : buf(other->data(), other->limit(), other->size(), true, extra), m_dependant(NULL) {}
+
+    BufCarrier(uint8 *ptr, uint32 usedsize, uint32 totalsize, bool copy, uint32 extra); // direct memory ctor
 
     inline BUFTYPE& GetBuf(void) { return buf; }
 
-    virtual BufCarrier<BUFTYPE> *clone() const { return new BufCarrier<BUFTYPE>(const_cast<BufCarrier<BUFTYPE>*>(this), 0); }
+    virtual BufCarrier<BUFTYPE> *clone() const;
 
     virtual void gcMark( uint32 mark );
 
     virtual bool serialize( Stream *stream, bool bLive ) const;
     virtual bool deserialize( Stream *stream, bool bLive );
-    inline CoreObject *dependant(void) const { return m_dependant; }
-    inline void dependant(CoreObject *obj) { m_dependant = obj; }
+    inline Garbageable *dependant(void) const { return m_dependant; }
+    inline void dependant(Garbageable *obj) { m_dependant = obj; }
+    inline Garbageable *dependantData(void) const { return m_depData; }
+    inline void dependantData(Garbageable *obj) { m_depData = obj; }
 private:
-    CoreObject *m_dependant;
+    Garbageable *m_dependant; // for MemBuf and other objects
     BUFTYPE buf;
 };
+
+template <typename BUFTYPE>
+BufCarrier<BUFTYPE>::BufCarrier(uint8 *ptr, uint32 usedsize, uint32 totalsize, bool copy, uint32 extra)
+: buf(ptr, usedsize, totalsize, copy, extra), m_dependant(NULL)
+{
+}
+
+template <typename BUFTYPE> BufCarrier<BUFTYPE> *BufCarrier<BUFTYPE>::clone() const
+{
+    return new BufCarrier<BUFTYPE>((uint8*)buf.getBuf(), buf.size(), buf.capacity(), true, 0);
+}
 
 template <typename BUFTYPE> void BufCarrier<BUFTYPE>::gcMark(uint32 mark)
 {

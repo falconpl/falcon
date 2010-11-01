@@ -18,6 +18,7 @@ Version = @Falcon_VERSION@
 
 Input.basedir=@Falcon_Feathers_SOURCE_DIR@
 
+Input.directory=bufext
 Input.directory=compiler
 Input.directory=confparser
 Input.directory=funcext
