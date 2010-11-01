@@ -72,7 +72,7 @@ namespace Falcon
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandlePgSQL *dbh, PGresult *res )
+DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandlePgSQL* dbh, PGresult* res )
     :
     DBIRecordset( dbh ),
     m_row( -1 ),
@@ -145,6 +145,14 @@ bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
         && PQgetisnull( m_res, m_row, nCol ) )
     {
         value.setNil();
+        return true;
+    }
+    else
+    if ( ((DBIHandlePgSQL*)m_dbh)->options()->m_bFetchStrings )
+    {
+        String s( v );
+        s.bufferize();
+        value = s;
         return true;
     }
 
