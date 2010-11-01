@@ -121,7 +121,6 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 
    // declare that the script has created it
    err->origin( e_orig_script );
-   vm->fillErrorContext( err );
 
    // filling properties
    Item *param = vm->param( 0 );
