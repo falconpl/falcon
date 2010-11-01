@@ -127,6 +127,62 @@ enum Priority
    LOWEST = 40
 end
 
+/*#
+   Just a reminder
+   
+   Nest structure:
+   
+   offline:
+      nest/
+         srv/
+            ServiceName/
+               ServiceName.fal
+               config.fal 
+               skins/
+                  default.fal
+                  ...
+               res/
+                  css
+               j  s
+         ...
+         srv/
+            ...
+      
+   online:
+   
+      site/
+         nest/
+            pages/
+               ...
+               
+            srv/<name>/
+               config.fal
+               res/
+                  css, js ...
+               skins/
+                  default.fal
+                  ...
+            res/
+               css, js ...
+            
+            skins/
+               askin.fal
+               ...
+
+   =========================================
+
+   Nest phases:
+   ------------
+   1) Load configuration
+   2) Page routing         
+   3) Parameter evaluation/filter       <--> Nest.route()
+   4) Service/provider registration     <--> Nest.service( ... ); Nest.dprovider( ... )
+   5) Service run                       <--> Nest.display( 'service' )
+   6) Session recording                 
+   7) Page rendering                    <--> Nest.commit()
+   
+*/
+
 object Nest
    //===================================================================
    // Public properties
@@ -150,14 +206,6 @@ object Nest
 
    /*# Repeat the Priority enumeration */
    PRIO = Priority
-   
-   /*# Repeat data managers. 
-   	An enumeration with the following values
-   	- DBI = DBIDataManager class
-   */
-   DM = bless( [
-   	"DBI" => DBIDataManager
-   	])
 
    //# Repeat the hook class
    Hook = hook_module.Hook
@@ -216,6 +264,12 @@ object Nest
    */
    services = [=>]
 
+   /*# Dictionary of loaded data managers.
+
+      Usually not at the disposal of the user application.
+   */
+   dms = [=>]
+
    /*# Nest-specific session data.
 
       Contains data which must be retained across sessions.
@@ -271,8 +325,8 @@ object Nest
       When the @b frame property is set to a function,
       then Nest will load the page that the routing system
       required and render it separately. The output of the
-      rendered page will be retrieved through the @a Nest.content
-      method; then, the function stored in @b frame will be
+      rendered page will be stored in the @a Nest.content
+      property; then, the function stored in @b frame will be
       called, and it will just need to print @a Nest.content variable 
       at the desired position.
 
@@ -284,9 +338,13 @@ object Nest
 
       The function should produce an output that will be captured by Nest
       and then rendered.
+
+      @note A page can change its own frame (or drop it altogether) by
+            setting Nest.frame to something else, as the page is evaluated
+            before determining if it needs to be framed or not.
    */
    frame = nil      
-	
+
    /*# Log level.
 
       Can be:
@@ -296,7 +354,6 @@ object Nest
       - 3: debug
    */
    log_level = 0
-   
    
    //===================================================================
    // Private properties
@@ -322,9 +379,6 @@ object Nest
 
    // dictionary of function hooks
    _hooks = [=>]
-   
-   // dictionary of data managers
-   _dms = [=>]
 
    // Rendered content of the page, each being a strtring or a function to be called back.
    _contentSlices = nil
@@ -424,6 +478,7 @@ object Nest
    end
 
 
+<<<<<<< HEAD
    /*# Invoke a Data Manager.
    	@param name The name of the data manager to be invoked.
    	@optparam config Dictionary of variables to be used as configuration.
@@ -468,6 +523,25 @@ object Nest
       dm.configure( vars )
       self._dms[ name ] = dm
       return dm
+=======
+   /*# Invoke a Data Manager. */
+   function dm( name, inst, vars )
+      cfg = self.config
+      dm = self._instanceModule( "DataManager", name, inst, self.dms,
+               // using a function instead of an array prevents array generation if not necessary
+               { => [ cfg.nestdir + "/dm",
+                  utils.reldir( cfg.homedir, cfg.site_dm_dir ) ] })
+
+      if not ^? dm
+         // here the trick of the function is useless, as we KNOW we have to configure this stuff
+         self._configModule( dm, vars,
+               [  utils.reldir( cfg.homedir, cfg.site_dm_dir + "/" + name ),
+                  cfg.nestdir + "/dm/" + name ])
+         self.dms[dm.fullName()] = dm
+      end
+      
+      return ^- dm
+>>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Invoke an ambient variable.
@@ -744,24 +818,6 @@ object Nest
       self._contentFile = nil
    end
    
-   /*# Compile a class having the same name of the host module.
-   	
-   	This method automatically loads a module and returns a class
-   	having the same name of the loaded module.
-   	
-   	This kind of scheme is used in several cases in the Nest
-   	scheme, for example in the DB entities.
-   */
-   function compileClass( location, name )
-   	mod = self._comp.loadFile( location, name )
-      try
-         srvClass = mod.get( name )
-      catch AccessError
-         raise NestError( NestError.no_mod_class, "", name )
-      end
-		return srvClass
-   end
-   
    //=============================================================
    // Logging functions
    //=============================================================
@@ -865,7 +921,13 @@ object Nest
             self.logi( @"Found $type $name in $srvfile" )
          end
 
-         srvClass = self.compileClass( srvfile, name )
+         mod = self._comp.loadFile( srvfile, name )
+         try
+            srvClass = mod.get( name )
+         catch AccessError
+            raise NestError( NestError.no_mod_class, "", name )
+         end
+
          srv = srvClass( inst )
          srv.homedir = Path( srvfile )
 
@@ -974,12 +1036,9 @@ object Nest
          if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
          
          try
-            /*
             cmp = compiler.Compiler()
             cmp.launchAtLink = true
             confMod = cmp.loadFile( confFile )
-            */
-            confMod = self._comp.loadFile( confFile )
             vars = [=>]
             for var in confMod.globals()
                value = confMod.get( var )

@@ -63,8 +63,8 @@ public:
    virtual bool discard( int64 ncount );
    virtual void close();
 };
- 
- 
+
+
 class DBIStatementSQLite3: public DBIStatement
 {
 protected:
@@ -115,7 +115,7 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   static void throwError( int falconError, int sql3Error, const char* edesc=0 );
+   static void throwError( int falconError, int sql3Error, char* edesc=0 );
    static String errorDesc( int error );
    sqlite3 *getConn() { return m_conn; }
 };

@@ -692,7 +692,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
          localSymName = sym->getImportAlias()->name();
    }
 
-   // If we found it it...
+   // If we found it...
    if ( lmod != 0 )
    {
       Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );

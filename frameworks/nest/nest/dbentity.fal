@@ -63,6 +63,7 @@ class DBEntity( dbm )
    key_fields = []
 
 
+<<<<<<< HEAD
    //# Definition of each field in a field => definition part dictionary
    fdefs = [=>]
 
@@ -106,10 +107,27 @@ class DBEntity( dbm )
             value = kval[p1:pos].replace( "\\|", "|").replace( "\\\\", "\\" )
             p1 = pos+1
             kfields[ self.key_fields[kfid++] ] = value
+=======
+      We use a function because this prevents instantiation of useless data
+      when creation data is not required (quite often).
+   */
+   startup = nil
+   
+   init
+      if not fdefs: raise NestError( NestError.no_fields )
+      for row in fdefs
+         try
+            fname, fd = row.split(" ", 2)
+            self.fdefs[ fname ] = fd
+            self.fields += fname
+         catch AccessError
+            raise NestError( NestError.mf_fdef, "", row )
+>>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
          end
 
          pos = kval.find( "|", pos+1 )
       end
+<<<<<<< HEAD
 
       kfields[ self.key_fields[kfid] ] = kval[p1:pos].replace( "\\|", "|").replace( "\\\\", "\\" )
 
@@ -125,6 +143,14 @@ class DBEntity( dbm )
    function find( eid, view )
       keys = self.parseKey( eid )
       return self.manager.queryItem( self, keys, view )
+=======
+      
+      // is "self.fields" still empty?
+      if not self.fields: raise NestError( NestError.no_fields )
+      
+      // TODO: Autodetect primary key field or expression
+      self.key_fields += self.fields[0]
+>>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Queries a specific item in this entity.

@@ -1,10 +1,11 @@
 <?
    import from nest.action in na
    import from nest.dbview in dw
-   
+   import DBView from nest.dbview as DBView
+
    notes = Nest.dm( "notes_db" ).entity( "notes" )
 
-   tableview = dw.DBView( notes )
+   tableview = DBView( notes )
    tableview.fields = .[
       dw.DBViewField( "inserted", i"Inserted on", nil, dw.DBOrder.DESCENDING )
       dw.DBViewField( "title", i"Title", {v=>"<span class='title'>" + htmlEscape(v) + "</span>"} )

@@ -81,7 +81,7 @@ empty location where it will be picked for separate packaging via the default
 "DESTDIR=" setting:
 
    cmake -DCMAKE_INSTALL_PREFIX="/opt/falcon"
-   make insatll DESTDIR="/tmp/falcon"
+   make install DESTDIR="/tmp/falcon"
 
   This will move the needed files in /tmp/falcon, but will internally configure
 falcon to run from /opt/falcon/bin

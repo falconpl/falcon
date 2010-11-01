@@ -507,13 +507,17 @@ void DBIHandleSQLite3::selectLimited( const String& query,
 }
 
 
-void DBIHandleSQLite3::throwError( int falconError, int sql3Error, const char* edesc )
+void DBIHandleSQLite3::throwError( int falconError, int sql3Error, char* edesc )
 {
    String err = String("(").N(sql3Error).A(") ");
    if( edesc == 0 )
       err += errorDesc( sql3Error );
    else
+   {
       err.A(edesc);
+      err.bufferize();
+      sqlite3_free( edesc ); // got from sqlite3_malloc, must be freed
+   }
 
    throw new DBIError( ErrorParam(falconError, __LINE__ )
          .extra(err) );
