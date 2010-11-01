@@ -705,7 +705,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_growable( ::Falcon::VMachine *vm )
 }
 
 /*#
-@method growable ByteBuf
+@method readable ByteBuf
 @brief Returns the remaining bytes that can be read
 @return The remaining readable bytes until the end is reached
 
