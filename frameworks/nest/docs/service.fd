@@ -48,15 +48,15 @@ For example, the configuration for a "Calendar" service may be placed under
 {{nest/srv/Calendar/config.fal}}, and look like this:
 
 @code
-   // A nice color for the display?
-   color = "#FFEE00"
+// A nice color for the display?
+color = "#FFEE00"
 
-   // Month or week?
-   display = "month"
+// Month or week?
+display = "month"
 
-   welcome_cb = function( name )
-      return i@"Welcome $name!"
-   end
+welcome_cb = function( name )
+   return i@"Welcome $name!"
+end
 @endcode
 
 As in the example, configuration files can declare simple data or include

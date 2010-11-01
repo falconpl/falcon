@@ -1,0 +1,6 @@
+/*# 
+@page config Nest basic configuration
+@after quickstart
+
+Nest is configured through direct calls in the entry point. 
+*/

@@ -31,10 +31,10 @@
 </head>
 <body>
    <h1>Your notes</h1>
-   <div id="login"><?= login.render() ?></div>
-   <p><?= da.render() ?></p>
+   <div id="login"><? login.render() ?></div>
+   <p><? da.render() ?></p>
    <p>This is a simple test site showing how you could create an on-line notepad.</p>
    <p><?= na.Action(Nest.AL.STAFF, "Use this link to create a <a href=\"" + Nest.pageLink('add') +"\">new note</a>.").render() ?>
-   <?= dq.render() ?>
+   <? dq.render() ?>
 </body>
 </html>

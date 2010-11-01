@@ -21,6 +21,10 @@ import ServiceVar from nest as ServiceVar
 import NestError from nest as NestError
 import from nest.bindings in b
 
+/*# Service used to authenticate remote users.
+
+   @note uses the check_user( uid, password) hook
+*/
 class Login( instance ) from Service( instance )   
    handler = ServiceVar( "Page where the login service checks for authentication", b.ConfigBinder )
 
@@ -47,7 +51,7 @@ class Login( instance ) from Service( instance )
 
    _checked = false
    
-   function run()
+   function startup()
       self.check()
    end
    
@@ -85,11 +89,12 @@ class Login( instance ) from Service( instance )
          self.logmode.value = "expired"
          self.auth_level.value = Nest.AL.NONE
       end
-
+      /*
       if not self.checker.isCallable()
          Nest.logw( "Login service has no checker configured." )
          return
       end
+      */
 
       // asking for a login?
       if self.uid.isSet
@@ -103,7 +108,8 @@ class Login( instance ) from Service( instance )
    function checkLogin( uid, pwd )
       Nest.logd( "Checking login for " + uid + ":" + pwd )
       
-      res = self.checker( uid, pwd )
+      res = Nest.callHook( "check_user", self.uid.value, self.pwd.value )
+
       if res
          try
             al, ad = res
