@@ -135,6 +135,7 @@ protected:
 
     PGconn* m_conn;
     bool    m_bInTrans;
+    DBISettingParams m_settings;
 
 public:
 
@@ -197,11 +198,16 @@ class DBIServicePgSQL
 {
 public:
 
-    DBIServicePgSQL() : DBIService( "DBI_pgsql" ) {}
+    DBIServicePgSQL()
+        :
+        DBIService( "DBI_pgsql" )
+    {}
 
     virtual void init();
-    virtual DBIHandle *connect( const String &parameters );
-    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
+
+    virtual DBIHandle* connect( const String& parameters );
+
+    virtual CoreObject* makeInstance( VMachine* vm, DBIHandle* dbh );
 
 };
 

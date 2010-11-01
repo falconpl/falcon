@@ -639,12 +639,18 @@ void DBIHandlePgSQL::close()
 
 
 void DBIHandlePgSQL::options( const String& params )
-{}
+{
+    if ( !m_settings.parse( params ) )
+    {
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+            .extra( params ) );
+    }
+}
 
 
 const DBISettingParams* DBIHandlePgSQL::options() const
 {
-    return 0;
+    return &m_settings;
 }
 
 
