@@ -302,12 +302,9 @@ Falcon::Module *bufext_module_init(void)
    return self;
 }
 
-// TODO: remove the debug #ifndef block before pushing !!
-#ifndef _DEBUG
 FALCON_MODULE_DECL
 {
     return bufext_module_init();
 }
-#endif
 
 /* end of bufext.cpp */
