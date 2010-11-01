@@ -85,7 +85,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       
       if view
          sql_fields = ",".merge( entity.key_fields +
-                                 map( {column => column.field}, view.fields ) )
+                                 map( {column => column.name}, view.fields ) )
          cond = view.cond
          if cond
             sql_cond = "\nwhere "
@@ -99,7 +99,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          for field in view.fields
             if field.order and field.order != DBOrder.NONE
                order += field.name + " " +
-                        (field.order == DBOrder.ASCENDING ? "ASCENDING" : "DESCENDING" )
+                        (field.order == DBOrder.ASCENDING ? "" : "DESC" )
             end
          end
 
@@ -112,26 +112,18 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       end
 
       if start and count
-         select_part = self.dbc.lselect( @"select $sql_fields from $entity.table_name", start, count )
+         select_part = self.dbc.lselect( @"select $sql_fields from $entity.name", start, count )
       else
-         select_part = @"select $sql_fields from $entity.table_name"
+         select_part = @"select $sql_fields from $entity.name"
       end
 
       sql_command = select_part + sql_cond + sql_order
       if Nest.log_level >= 3: Nest.logi( "Querying SQL: " + sql_command )
 
       r = self.dbc.query( sql_command )
-      if count
-         result = arrayBuffer( count )
-         pos = 0
-         while (d = r.fetch([=>]))
-            result[pos++]= DBRecord( entity, d, view )
-         end
-      else
-         result = []
-         while (d = r.fetch([=>]))
-            result += DBRecord( entity, d, view )
-         end
+      result = []
+      while (d = r.fetch([=>]))
+         result += DBRecord( entity, d, view )
       end
          
       return result
@@ -139,7 +131,6 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
    
 
    function queryItem( entity, keys, view )
-
       if view
          sql_fields = ",".merge( entity.key_fields +
                               map( {column => column.field}, view.fields ) )
@@ -148,13 +139,13 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          sql_fields = ",".merge( entity.fields )
       end
 
-      sql_command = @"select $sql_fields from $dbe.table_name \nwhere " +
+      sql_command = @"select $sql_fields from $entity.name \nwhere " +
             "=? and ".merge( keys.keys() ) + "=?"
       if Nest.log_level >= 3: Nest.logi( "Querying SQL: " + sql_command )
 
-      recordset = self.dbc.query( sql_command  )
+      recordset = (.[ self.dbc.query sql_command ] + keys.values() )()
       data  = recordset.fetch([=>])
-
+      if not data: return nil
       return DBRecord( entity, data, view )
    end
    

@@ -263,7 +263,7 @@ class DBView( entity, fields, cond, check )
       @return array of strings representing the titles of the columns filtered by this view.
    */
    function titles()
-      return [].comp( { f => f.title ? f.title : ^+1 }, self._fields )
+      return [].comp( self._fields, { f => f.title ? f.title : ^+1 } )
    end
    
 end

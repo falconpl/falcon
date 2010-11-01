@@ -67,8 +67,8 @@ class DataTable( instance ) from DataService( instance )
       // initialize the base class
       self.DataService.startup()
       
-      if not self.default_cnt.isSet
-         raise NestError( NestError.other, "Default count for table not set in configuration" )
+      if not self.default_cnt.value
+         raise NestError( NestError.other, "Default count (default_cnt) for table not set in configuration" )
       end
 
       try
@@ -87,7 +87,8 @@ class DataTable( instance ) from DataService( instance )
    /*# Reimplementation to perform the required query */
    function do_query()
       view = self.view.value
-      entity = self.entity
-      self.records.value = entity.table( view, self._start, self._count )
+      entity = view.entity
+      values = entity.table( view, self._start, self._count )
+      self.records.value = values
    end
 end

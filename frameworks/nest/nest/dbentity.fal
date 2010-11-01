@@ -111,7 +111,7 @@ class DBEntity( dbm )
          pos = kval.find( "|", pos+1 )
       end
 
-      kfields[ self.key_fields[kfid] ] = kval[p1:pos].replace( "\\|", "|").replace( "\\\\", "\\" )
+      kfields[ self.key_fields[kfid] ] = kval[p1:].replace( "\\|", "|").replace( "\\\\", "\\" )
 
       // we must have found at least one expression
       if not kfields: raise NestError( NestError.unpack_key, "", self.name + ": " + kval )
@@ -134,7 +134,7 @@ class DBEntity( dbm )
       @return An array containing at maximum count elements.
    */
    function table( view, start, count )
-      return self.manager.queryItem( self, view, start, count )
+      return self.manager.query( self, view, start, count )
    end
 
    [init]
@@ -155,6 +155,18 @@ class DBEntity( dbm )
          if not self.fields: raise NestError( NestError.no_fields )
          if not self.key_fields: raise NestError( NestError.no_key_fields )
       end
+   end
+
+   /*# Adds a record to the database.
+      @param data A dictionary of pair key=>value to be inserted.
+      @return A @a DBRecord entity created with the added data.
+
+      The returned record can be queried for its ID with
+      @a DBRecord.eid() method.
+   */
+   function insert( data )
+      self.manager.insert( self, data )
+      return DBRecord( self, data )
    end
 
 end
@@ -181,10 +193,10 @@ class DBRecord( dbe, data, view )
       the original key values by splitting the returned value.
    */
    function eid()
-      dbe = self.dbentity
+      dbe = self.entity
       dt = self.data
       return "|".merge(map( { kfield =>
-                  dt[kfield].replace("\\", "\\\\").replace( '|', "\\|") },
+                  dt[kfield].toString().replace("\\", "\\\\").replace( '|', "\\|") },
                   dbe.key_fields ))
    end
 
@@ -203,25 +215,25 @@ class DBRecord( dbe, data, view )
 
    /*# Delete this instance from the database. */
    function delete()
-      dbm = self.dbentity.dbm
-      dbm.delete( self.dbentity.name, self.key_values() )
+      dbm = self.dbentity.manager
+      dbm.delete( self.dbentity, self.key_values() )
    end
 
    /*# Delete this instance from the database. */
    function update()
-      dbm = self.dbentity.dbm
+      dbm = self.dbentity.manager
       // removing the key fields from the data should not be strictly necessary,
       // but some db engines may be stressed by this operation otherwise
       kf = self.key_fields()
       data = self.data - kf
 
-      dbm.update( self.dbentity.name, kf, data )
+      dbm.update( self.dbentity, kf, data )
    end
 
    /*# Adds this entity to the database. */
    function insert()
-      dbm = self.dbentity.dbm
-      dbm.insert( self.dbentity.name, self.data )
+      dbm = self.dbentity.manager
+      dbm.insert( self.dbentity, self.data )
    end
 
    function applyView()

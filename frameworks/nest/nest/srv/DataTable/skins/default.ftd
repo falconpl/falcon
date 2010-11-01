@@ -12,18 +12,18 @@
       
       <!-- Table heading -->
       <thead>
-      <?= s.heading_skin( s, srv ) ?>
+      <? s.heading_skin( s, srv ) ?>
       </thead>
       <!-- Table body -->
       <tbody>
       <? for row in s.records ?>
-         <?= s.row_skin( s, srv, row ) ?>
+         <? s.row_skin( s, srv, row ) ?>
       <? end ?>
 
       <!-- Row of actions to be done at table level -->
-      <? if s.tactions ?>         
+      <? if s.table_act ?>
          <tr>
-            <?= s.actions_skin( s, srv, s.table_act ) ?>
+            <? s.actions_skin( s, srv, s.table_act ) ?>
          </tr>
       <? end ?>
       </tbody>
