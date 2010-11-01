@@ -21,7 +21,7 @@ import NestError from .error as NestError
 
 /*# Database entity.
    @param dbm The database manager to which this enitity is related
-   
+
    This class represents a table, or anyhow an entity type in a persistent storage system.
 
    New site-specific entities must be placed in files under {{nest/dm/dbname}} named after
@@ -30,9 +30,9 @@ import NestError from .error as NestError
 
    The implementations **must** specify a @b definition property and store the entity
    definition into it.
-   
+
    Each element of the @b definition property should be a string where the first word is a
-   field name, and the rest is a field definition that can be applied by the 
+   field name, and the rest is a field definition that can be applied by the
    Nest users should extend this class to describe the actual entities in their
    databases.
 
@@ -43,7 +43,7 @@ import NestError from .error as NestError
    may override the "name" property in their init method, if this is not desired.
 
    @prop definition Original definition of the database
-   
+
 */
 class DBEntity( dbm )
    //# Database manager to which this entity belongs.
@@ -55,15 +55,14 @@ class DBEntity( dbm )
       the subclass.
    */
    name = self.className()
-   
+
    //# List of fields in declaration order
    fields = []
-   
+
    //# List of key fields.
    key_fields = []
 
 
-<<<<<<< HEAD
    //# Definition of each field in a field => definition part dictionary
    fdefs = [=>]
 
@@ -73,7 +72,7 @@ class DBEntity( dbm )
    /*# Initial data for this entity.
 
       Must be a dictionary of "field name" => value.
-      
+
       Used by the data-manager when creating the entity to fill
       the initial values.
 
@@ -101,33 +100,16 @@ class DBEntity( dbm )
          if kfid > kflen
             raise NestError( NestError.unpack_key, "", self.name + ": " + kval )
          end
-            
+
          if kval[pos-1] != "\\"
             // a real bar separating key fields
             value = kval[p1:pos].replace( "\\|", "|").replace( "\\\\", "\\" )
             p1 = pos+1
             kfields[ self.key_fields[kfid++] ] = value
-=======
-      We use a function because this prevents instantiation of useless data
-      when creation data is not required (quite often).
-   */
-   startup = nil
-   
-   init
-      if not fdefs: raise NestError( NestError.no_fields )
-      for row in fdefs
-         try
-            fname, fd = row.split(" ", 2)
-            self.fdefs[ fname ] = fd
-            self.fields += fname
-         catch AccessError
-            raise NestError( NestError.mf_fdef, "", row )
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
          end
 
          pos = kval.find( "|", pos+1 )
       end
-<<<<<<< HEAD
 
       kfields[ self.key_fields[kfid] ] = kval[p1:pos].replace( "\\|", "|").replace( "\\\\", "\\" )
 
@@ -143,14 +125,6 @@ class DBEntity( dbm )
    function find( eid, view )
       keys = self.parseKey( eid )
       return self.manager.queryItem( self, keys, view )
-=======
-      
-      // is "self.fields" still empty?
-      if not self.fields: raise NestError( NestError.no_fields )
-      
-      // TODO: Autodetect primary key field or expression
-      self.key_fields += self.fields[0]
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Queries a specific item in this entity.
@@ -198,7 +172,7 @@ class DBRecord( dbe, data, view )
    entity = dbe
    //# A view to be applied to this data.
    view = view
-   
+
    /*# Returns a key expression identifying this record.
       @returns A string representing a valid key identifying this record.
 
@@ -221,12 +195,12 @@ class DBRecord( dbe, data, view )
       kf = self.dbentity.key_fields
       ret = [=>]
       data = self.data
-      
+
       for kfield in kf
          ret[kfield] = data[kfield]
       end
    end
-   
+
    /*# Delete this instance from the database. */
    function delete()
       dbm = self.dbentity.dbm
@@ -240,7 +214,7 @@ class DBRecord( dbe, data, view )
       // but some db engines may be stressed by this operation otherwise
       kf = self.key_fields()
       data = self.data - kf
-      
+
       dbm.update( self.dbentity.name, kf, data )
    end
 
@@ -257,5 +231,5 @@ class DBRecord( dbe, data, view )
 
       return self.data
    end
-   
-end   
+
+end

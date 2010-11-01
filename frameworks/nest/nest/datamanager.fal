@@ -16,7 +16,6 @@
    See LICENSE file for licensing details.
 */
 
-<<<<<<< HEAD
 import from .utils
 import NestError from .error as NestError
 
@@ -45,14 +44,6 @@ class DataManager( name, location )
       raise CodeError( 10000, i"Please override" )
    end
 
-=======
-import NestModule from .nestmodule as NestModule
-
-/*# Base data manager.
-*/
-
-class DataManager( instance ) from NestModule( instance )
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
 
    /*# Query multiple records from an entity.
 
@@ -68,12 +59,8 @@ class DataManager( instance ) from NestModule( instance )
           
       The subclasses must override this mehtod.
    */
-<<<<<<< HEAD
    function query( entity, view, start, count)
       raise CodeError( 10000, i"Please override" )
-=======
-   function query( entity, fields, start, count )
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Query an entity -- for a single item.
@@ -85,12 +72,8 @@ class DataManager( instance ) from NestModule( instance )
 
       The subclasses must override this mehtod.
    */
-<<<<<<< HEAD
    function queryItem( entity, key_fields, view )
       raise CodeError( 10000, i"Please override" )
-=======
-   function queryItem( entity, eid, fields )
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Inserts a new item in the data pool.
@@ -100,12 +83,8 @@ class DataManager( instance ) from NestModule( instance )
 
       The subclasses must override this mehtod.
    */
-<<<<<<< HEAD
    function insert( entity, data )
       raise CodeError( 10000, i"Please override" )
-=======
-   function add( entity, data )
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Modifies the values of an entity in the database.
@@ -116,10 +95,7 @@ class DataManager( instance ) from NestModule( instance )
       The subclasses must override this mehtod.
    */
    function update( entity, eid, data )
-<<<<<<< HEAD
       raise CodeError( 10000, i"Please override" )
-=======
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
    /*# Modifies the values of an entity in the database.
@@ -130,7 +106,6 @@ class DataManager( instance ) from NestModule( instance )
       The subclasses must override this mehtod.
    */
    function delete( entity, eid )
-<<<<<<< HEAD
       raise CodeError( 10000, i"Please override" )
    end
 
@@ -222,13 +197,6 @@ class DataManager( instance ) from NestModule( instance )
          return ent
       end
 
-=======
-   end
-
-
-   function configure( data )
-      self.configuration = data
->>>>>>> aebbb5f9bdd96e16894fada53424e653bac5bd4d
    end
 
 end
