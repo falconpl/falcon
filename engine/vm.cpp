@@ -3655,7 +3655,7 @@ void VMachine::handleRaisedItem( Item& value )
    {
       Error* err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
       if( ! err->hasTraceback() )
-           fillErrorTraceback(*err);
+           fillErrorContext(err, true);
    }
 
    regB() = value;
