@@ -13,16 +13,92 @@
  * See LICENSE file for licensing details.
  */
 
-#ifndef DBI_PGSQL_H
-#define DBI_PGSQL_H
+#ifndef PGSQL_MOD_H
+#define PGSQL_MOD_H
 
 #include <libpq-fe.h>
 
-#include "../include/dbiservice.h"
+#include <falcon/dbi_common.h>
+#include <falcon/srv/dbi_service.h>
 
 namespace Falcon
 {
 
+#if 0
+class PgSQLInBind
+    :
+    public DBIInBind
+{
+public:
+
+    PgSQLInBind();
+    virtual ~PgSQLInBind();
+
+    virtual void onFirstBinding( int size );
+    virtual void onItemChanged( int num );
+
+};
+#endif
+
+class DBIHandlePgSQL;
+
+
+void dbi_pgsqlQuestionMarksToDollars( const String& input, String& output );
+
+
+class DBIRecordsetPgSQL
+    :
+    public DBIRecordset
+{
+protected:
+
+    int64       m_row;
+    int64       m_rowCount;
+    int         m_columnCount;
+
+    PGresult*   m_res;
+
+public:
+
+    DBIRecordsetPgSQL( DBIHandlePgSQL* dbh, PGresult* res );
+    virtual ~DBIRecordsetPgSQL();
+
+    virtual bool fetchRow();
+    virtual int64 getRowIndex();
+    virtual int64 getRowCount();
+    virtual int getColumnCount();
+    virtual bool getColumnName( int nCol, String& name );
+    virtual bool getColumnValue( int nCol, Item& value );
+    virtual bool discard( int64 ncount );
+    virtual void close();
+
+};
+
+
+class DBIStatementPgSQL
+    :
+    public DBIStatement
+{
+protected:
+
+    int32   m_nParams;
+    String  m_execString;
+    AutoCString m_zExecString;
+
+    void getExecString( int32 nParams );
+
+public:
+
+    DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query );
+    virtual ~DBIStatementPgSQL();
+
+    virtual int64 execute( const ItemArray& params );
+    virtual void reset();
+    virtual void close();
+};
+
+
+#if 0
 class DBIRecordsetPgSQL : public DBIRecordset
 {
 protected:
@@ -75,7 +151,48 @@ public:
    virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
       bool bBinary = false );
 };
+#endif
 
+
+class DBIHandlePgSQL
+    :
+    public DBIHandle
+{
+protected:
+
+    PGconn* m_conn;
+    bool    m_bInTrans;
+    DBISettingParams m_settings;
+
+public:
+
+    DBIHandlePgSQL( PGconn* = 0 );
+    virtual ~DBIHandlePgSQL();
+
+    PGconn* getConn() { return m_conn; }
+
+    virtual void options( const String& params );
+    virtual const DBISettingParams* options() const;
+
+    virtual void begin();
+    virtual void commit();
+    virtual void rollback();
+
+    virtual DBIRecordset* query( const String &sql, int64 &affectedRows, const ItemArray& params );
+    virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
+    virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+    virtual DBIStatement* prepare( const String &query );
+    virtual int64 getLastInsertedId( const String& name = "" );
+
+    virtual void selectLimited( const String& query, int64 nBegin, int64 nCount, String& result );
+
+    virtual void close();
+
+    static void throwError( const char* file, int line, PGresult* res );
+
+};
+
+#if 0
 class DBIHandlePgSQL : public DBIHandle
 {
 protected:
@@ -96,26 +213,33 @@ public:
    virtual int64 getLastInsertedId( const String &value );
    virtual dbi_status getLastError( String &description );
    virtual dbi_status escapeString( const String &value, String &escaped );
-   virtual dbi_status close();
+   virtual void close();
    virtual DBIStatement* getDefaultTransaction();
 };
+#endif
 
-class DBIServicePgSQL : public DBIService
+
+class DBIServicePgSQL
+    :
+    public DBIService
 {
 public:
-   DBIServicePgSQL() : DBIService( "DBI_pgsql" ) {}
 
-   virtual dbi_status init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent,
-                               dbi_status &retval, String &errorMessage );
-   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
+    DBIServicePgSQL()
+        :
+        DBIService( "DBI_pgsql" )
+    {}
+
+    virtual void init();
+
+    virtual DBIHandle* connect( const String& parameters );
+
+    virtual CoreObject* makeInstance( VMachine* vm, DBIHandle* dbh );
+
 };
 
 }
 
 extern Falcon::DBIServicePgSQL thePgSQLService;
 
-#endif /* DBI_PGSQL_H */
-
-/* end of pgsql.h */
-
+#endif /* PGSQL_MOD_H */
