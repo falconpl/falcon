@@ -3614,19 +3614,23 @@ bool VMachine::replaceMe_onIdleTime( numeric seconds )
 
 void VMachine::handleRaisedItem( Item& value )
 {
+   Error* err = 0;
+
+   if ( value.isObject() && value.isOfClass( "Error" ) )
+   {
+      err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
+      if( ! err->hasTraceback() )
+           fillErrorContext(err, true);
+   }
+
    // can someone get it?
    if( currentContext()->tryFrame() == 0 )  // uncaught error raised from scripts...
    {
       // create the error that the external application will see.
-      Error *err;
-      if ( value.isObject() && value.isOfClass( "Error" ) )
+      if ( err != 0 )
       {
          // in case of an error of class Error, we have already a good error inside of it.
-         err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
          err->incref();
-         // Also, provide a traceback
-         if( ! err->hasTraceback() )
-              fillErrorTraceback(*err);
       }
       else {
          // else incapsulate the item in an error.
@@ -3649,13 +3653,6 @@ void VMachine::handleRaisedItem( Item& value )
          m_break = false;
          throw value;
       }
-   }
-
-   if ( value.isObject() && value.isOfClass( "Error" ) )
-   {
-      Error* err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
-      if( ! err->hasTraceback() )
-           fillErrorContext(err, true);
    }
 
    regB() = value;

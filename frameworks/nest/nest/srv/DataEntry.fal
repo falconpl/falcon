@@ -31,13 +31,15 @@ class DataEntry( instance ) from DataService( instance )
    /*# Entity to be read. */
    eid = ServiceVar( "Entity ID on which to operate", b.InputVarBinder  )
 
-   /*# Command. By default it's view. */
-   cmd = ServiceVar( "Command (must be \"edit\" to perform an edit)", b.InputVarBinder  )
    
    /*# Reimplementation to perform the required query */
    function do_query()
-      if self.eid.value != nil
-         self.record.value = self.dm.queryItem( self.entity, self.eid.value, self.view )
+      eid = self.eid.value
+      
+      if eid
+         view = self.view.value
+         entity = view.entity
+         self.record.value = entity.find( eid, view )
       end
    end
 end

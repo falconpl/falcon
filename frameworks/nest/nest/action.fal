@@ -16,14 +16,12 @@
    See LICENSE file for licensing details.
 */
 
+import NestError from .error as NestError
+
 /*# Abstraciton of target actions.
-
-   @param al The authorization level needed to see this action.
-   @param mask The mask for the rendering, or a function used during rendering.
-   @optparam prompt A Textual prompt that should be rendered in skins.
-
-   The @b Mask parameter can be either a string that will be rendered verbatim
-   by "render", or a function that is called back during the render phase.
+   @optparam prompt A Textual prompt that should be rendered in skins. Works also
+          as a logical name for this entity.
+   @optparam al The authorization level needed to see this action. Pass @b nil to allow everyone to see.
 
    String masks can be configured using the @b $eid marker
    in case the action is applied to single entities.
@@ -36,32 +34,35 @@
 
    The @b prompt parameter is a string that can be used as a title, or as a content
    for several rendering purposes.
+
+   @prop prompt The prompt or action name for skin rendering.
 */
 
-class Action( al, mask, prompt )
+class Action( prompt, al )
+   //# Authorization level required for this action to be visible (or nil if none).
    level = al
-   mask = mask
    _prompt = prompt
    
-   auth_level = Nest.ambient( "auth_level" )
 
+   /*# Check if a logged-in user can see this action.
+      @return True if the user or visitor can see this action.
+      
+      Uses @a Nest.auth_level comparing it against the @a Action.level
+      set at creation
+   */
    function allowed()
+      if self.level == nil: return true
       return Nest.auth_level <= self.level
    end
 
+   /*# Renders this action.
+      @optparam eid The Entity ID that refers to this action (if this is a item-action)
+      @return A string that represents the action on the output page.
+
+      This must be re-implemented by subclasses.
+   */
    function render( eid )
-      // Filter the action autorization level.
-      if Nest.auth_level > self.level: return ""
-
-      if self.mask.typeId() == StringType
-         if eid
-            eid = URI.encode( eid.toString() )
-         end
-
-         return @ self.mask
-      else
-         return self.mask( eid )
-      end
+      raise Error( NestError.other, "Please, re-implement this" )
    end
 
    function __get_prompt(): return self._prompt
@@ -69,128 +70,493 @@ class Action( al, mask, prompt )
    
 end
 
-/*# Separator action.
-   Always displayed, it's used as a separator between other actions.
+
+/*# Makes an hidden action.
+   @param al The authorization level under which this action is ignored.
+   @param cmd The command to be added to the form surrounding this action.
+   @param value The value of the command.
+
+   Hidden actions are never rendered, but they generate hidden input fields
+   that can be a part of a global form. 
+
+   If the @b value paramter is a function, the passed function is run before
+   deciding to add this action rendering. If false,
+   this action is ignored. If the function returns a string, the result is set
+   in place of the @b value field.
+
+   @note The @b cond function is called with the "eid" parameter of the @ HiddenAction.render
+   method as first parameter, and with this same entity as second parameter.
+   
 */
-class SepAction( mask ) from Action( 10000, mask )
+
+class HiddenAction( al, cmd, value ) from Action( nil, al )
+   cmd = cmd
+   value = value
+
+   /*# Renders this action.
+      @optparam eid The Entity ID that refers to this action (if this is a item-action)
+      @return A string that represents the action on the output page.
+
+      Will return an xhtml input element of type hidden. If the @b value property
+      of this class is a runnable item, it will be run, and if it returns a string,
+      the value will be escaped and placed in the value field of the input element.
+
+      If it returns false, this method will return an empty string.
+   */
+   function render( eid )
+      if not self.allowed(): return ""
+      
+      if self.value.isCallable()
+         ret = self.value( eid, self )
+         if not ret and ret != ""
+            return ""
+         end
+      else
+         ret = self.value
+      end
+
+      return '<input type="hidden" name="' + htmlEscape(self.cmd) +'" value="' + htmlEscape( ret ) + '"/>'
+   end
 end
 
+/*# Action rendering arbitrary text.
+   @param prompt Name of the action for tables or titles.
+   @param al Authorization level reqired to render this action.
+   @optparam authText Raw XHTML text to be rendered if the action is authorized.
+   @optparam naText Raw XHTML text to be rendered if the action is **not** authorized.
 
-/*# Generates a button action.
-   @param authLevel minimal authorization level required to see this action
-   @param content The text to be displayed in the button element.
-   @optparam onClick
-   @optparam extra
-
-   The @b content parameter can be any valid HTML text (it won't be escaped).
+   
 */
 
-class ButtonAction( authLevel, content, onClick, extra ) from Action( authLevel )
-   init
-      if onClick == nil: onClick = ""
-      if extra == nil: extra = ""
-      self.mask = (@'<button type="button" onclick="$(onClick)" $extra>') + content + '</button>'
+class TextAction( prompt, al, authText, naText ) from Action( prompt, al )
+   authText = authText
+   naText = naText
+   
+   function render()
+      if self.allowed()
+         return self.authText ? self.authText : ""
+      else
+         return self.naText ? self.naText : ""
+      end
+   end
+end
+
+/*# Separator action.
+   @param mask A text to be inserted between other surrounding actions.
+
+   Always displayed, it's used as a separator between other actions.
+
+   It can be just inserted in a list of actions to be rendered to make some more
+   room between them.
+   
+*/
+class SepAction( mask ) from Action
+
+   //# Text to be inserted inbetween other actions.
+   mask = mask
+   
+   //# Just prints the @a SepAction.mask property
+   function render()
+      return self.mask
    end
 end
 
 
-/*# Generates a submit action.
-
+/*# Generates a button action.
+   @param prompt Text for rendering columns headings or titles.
    @param authLevel minimal authorization level required to see this action
-   @param content Content of the submit button
-   @param name HTML form name of this button
+   @param content Content to be displayed in this button.
+   @optparam onClick Javascript or other script action to perform on click.
+   @optparam extra Extra pre-formatted html/xml to add to the definition of the button on the page.
+
+   The @b content parameter can be any valid HTML text (it won't be escaped).
+*/
+
+class ButtonAction( prompt, authLevel, content, onClick, extra ) from Action( prompt, authLevel )
+   onClick = onClick
+   extra = extra
+   content = content
+
+   function render()
+      text = '<button type="button"'
+
+      if self.onClick
+         text += ' onclick="' + htmlEscape( self.onClick ) + '"'
+      end
+
+      if self.extra
+         text += " " + self.extra
+      end
+
+      if self.content
+         text += ">"+ self.content + "</button>"
+      else
+         text += "/>"
+      end
+      
+      return text
+   end
+   
+end
+
+
+/*# Generates a submit action.
+   @param prompt Text for rendering columns headings or titles.
+   @param authLevel minimal authorization level required to see this action
+   @param content Content to be displayed in this button.
    @param value HTML Value of this button.
    @optparam onClick A command to be passed to the page
    @optparam extra The name of the command field (defaults to "cmd")
 
    The @b content parameter can be any valid HTML text (it won't be escaped).
+
+   If the @b name parameter is nil, it will be defaulted to 'eid'.
+
+   If the @b value
+   parameter is nil, the render method will use its parameter as the value of the
+   button; otherwise the provided value will be used.
 */
 
-class SubmitAction( authLevel, content, name, value, onClick, extra ) from Action( authLevel, nil, content )
-   init
-      if onClick == nil: onClick = ""
-      if extra == nil: extra = ""
-      self.mask = (@ '<button type="submit" name="$name" value="$value" onclick="$(onClick)" $extra>') + content + '</button>'
+class SubmitAction( prompt, authLevel, content, name, value, onClick, extra ) from ButtonAction( prompt, authLevel, content, onClick, extra )
+   name = name == nil ? "eid" : name
+   value = value
+
+   function render( eid )
+      text = '<button type="submit"'
+
+      if self.name
+         text += ' name="' + htmlEscape( self.name ) + '"'
+      end
+
+      // value must be rendered also if ""
+      if self.value != nil
+         text += ' value="' + htmlEscape( self.value ) + '"'
+      else
+         text += ' value="' + htmlEscape( eid ) + '"'
+      end
+      
+      if self.onClick
+         text += ' onclick="' + htmlEscape(self.onClick) + '"'
+      end
+
+      if self.extra
+         text += " " + self.extra
+      end
+
+      if self.content
+         text += ">"+ self.content + "</button>"
+      else
+         text += "/>"
+      end
+
+      return text
    end
 end
 
 
 /*# CheckboxAction
-
+   @param prompt Text for rendering columns headings or titles.
    @param authLevel minimal authorization level required to see this action
    @param name Defaults to eid
    @param value Defaults to $eid
+   @optparam onClick A command to be passed to the page
    @optparam extra The name of the command field (defaults to "cmd")
 
    The @b content parameter can be any valid HTML text (it won't be escaped).
+
+   If the @b name parameter is nil, it will be defaulted to 'eid'. Notice that the
+   checbox semantics require the "[]" specifier to be added to the variable name;
+   this is done automatically, you don't have to specify it in the @b name parameter.
+
+   If the @b value
+   parameter is nil, the render method will use its parameter as the value of the
+   button; otherwise the provided value will be used.
 */
 
-class CheckboxAction( authLevel, name, value, extra ) from Action( authLevel )
-   init
-      if not name: name = "eid"
-      if not value: value = "$(eid)"
-      if extra == nil: extra = ""
-      self.mask = '<input type="checkbox" name="'+name+'[]" value="'+value+'" ' + extra + '/>'
+class CheckboxAction( prompt, authLevel, name, value, onClick, extra ) from Action( prompt, authLevel )
+   name = name == nil ? "eid" : name
+   value = value
+   onClick = onClick
+   extra = extra
+
+   function render( eid )
+      text = '<input type="checkbox"'
+
+      if self.name
+         text += ' name="' + htmlEscape( self.name ) + '[]"'
+      end
+
+      // value must be rendered also if ""
+      if self.value != nil
+         text += ' value="' + htmlEscape( self.value ) + '"'
+      else
+         text += ' value="' + htmlEscape( eid ) + '"'
+      end
+
+      if self.onClick
+         text += ' onclick="' + htmlEscape(self.onClick) + '"'
+      end
+
+      if self.extra
+         text += " " + self.extra
+      end
+
+      text += "/>"
+
+      return text
    end
+   
 end
 
 /*# Creates an action as an html anchor element.
-
+   @param prompt Text for rendering columns headings or titles.
    @param authLevel minimal authorization level required to see this action
    @param text The text to be displayed in the @b a element (will be used also as prompt)
    @param link Complete link to a target page/entity created via Nest.eidLink()
+   @optparam onClick A command to be passed to the page
    @optparam extra HTML attributes for the anchor element
+
+   If the @b link parameter contains the text $(eid), that text is substituted
+   with the value of the @b eid parameter of the @a LinkAction.render method.
 */
 
-class LinkAction( authLevel, text, link, extra ) from Action( authLevel, nil, text )
-   init
-      if extra == nil: extra = ""
-      self.mask = '<a href="' + link + '" ' + extra +'>' + htmlEscape(text) +'</a>'
+class LinkAction( prompt, authLevel, link, text, onClick, extra ) from Action( prompt, authLevel )
+   text = text
+   link = link
+   onClick = onClick
+   extra = extra
+
+   function render( eid )
+      text = '<a href="' + self.link + '"'
+      if eid
+         text = text.replace( "$(eid)", eid )
+      end
+
+      if self.onClick
+         text += ' onclick="' + htmlEscape(self.onClick) + '"'
+      end
+
+      if self.extra
+         text += " " + self.extra
+      end
+
+      if self.text
+         text += '>' + htmlEscape(self.text) +'</a>'
+      else
+         text += '/>'
+      end
+         
+      return text
    end
 end
 
 /*# Creates a multichoice action.
+   @param prompt Text for rendering columns headings or titles.
    @param al Authorization level
-   @param name Name of the action
+   @param name Name of the action as it appare in the final form.
    @param values List/array of Choice items
+   @optparam multi If true, arrange for a multiple choice select
    @optparam extra Extra style, class, ID and similar.
-   @optparam prompt Prompt for rendering.
 */
-class ChoiceAction( al, name, values, extra, prompt ) from Action( al, nil, prompt )
+class SelectAction( prompt, al, name, values, multi, extra ) from Action( prompt, al )
+   name = name
+   values = values
+   multi = multi
+   extra = extra
+
    init
-      if extra == nil: extra = ""
-      mask = "<select name=\"" + name + "\" " + extra + ">\n"
-      for v in values
-         extra = v.extra ? v.extra : ""
-         mask += "<option value=\"" + v.value + "\""+extra + ">" + v.description + "</option>\n"
+      if Nest.pcheck
+         if not values.typeId() == ArrayType
+            raise NestError( NestError.pcheck, "", "SelectAction.values must be an array of Option instances" )
+         end
+         for elem in values
+            if not elem.derivedFrom( Option )
+               raise NestError( NestError.pcheck, "", "SelectAction.values must be an array of Option instances" )
+            end
+         end
       end
+   end
+
+   /*# Render the select field.
+      @param value Current value of the form variable to which this action refers.
+
+      If the @b value parameter is nil, then the method will try to find an input
+      variable in the Nest input matching its name.
+
+      The given @b value or the inferred value will be used to mark the active option.
+
+      In case the @b multi option is set for this action, the @b value should be a
+      vector of strings.
+   */
+   function render( value )
+      name = self.name
+      mask = '<select name="' + name
+
+      if value == nil
+         if name in Nest.inputVars
+            value = Nest.inputVars[ name ]
+         end
+      end
+
+      if Nest.pcheck and value and self.multi and value.typeId() != ArrayType
+         raise NestError( NestError.pcheck, "", "Value in render() must be an array of string" )
+      end
+      
+      // in case of multi select, we must add the [] specifier.
+      if self.multi
+         mask += '[]" multiple="multiple"'
+      else
+         mask += '"'
+      end
+
+      if self.extra
+         mask += " " + self.extra
+      end
+
+      mask += ">\n"
+      
+      for v in self.values
+         mask += '   <option value="' + v.value + '"'
+         if self.multi and v.value in value
+            mask += ' selected="selected"'
+         elif v.value == value
+            mask += ' selected="selected"'
+         end
+
+         if v.extra
+            mask += " " + v.extra
+         end
+
+         if v.description
+            mask += ">" + v.description + "</option>\n"
+         else
+            mask += "/>\n"
+         end
+      end
+      
       mask += "</select>\n"
-      self.mask = mask
+
+      return mask
    end
 end
 
-/*# Choice for ChoiceAction.
+/*# Option for SelectAction.
    @param value The value of the choice
    @param desc The textural description of the choice (unescaped)
    @optparam extra Extra style for the choice.
 */
-class Choice( value, desc, extra )
+class Option( value, desc, extra )
    value = value
    description = desc
    extra = extra
+
+   init
+      if Nest.pcheck
+         if value == nil or desc == nil
+            raise NestError( NestError.pcheck, "", "Options must have value and description parameters set" )
+         end
+      end
+   end
 end
 
-/*# Renders the action surrounding it with HTML code respecting the same rules of the action. */
-class ActionBox( action, prefix, postfix ) from Action( action.level )
-   prefix = prefix ? prefix : ""
-   postfix = postfix ? postfix : ""
+/*# Surrounds an action with arbitrary HTML code.
+   @param action The action to be surrounded.
+   @optparam prefix XHTML code to be inserted before the aciton or nil for none.
+   @optparam postfix XHTML code to be inserted after the aciton or nil for none.
+
+   This instance uses the authorization level and prompt of the given @b action.
+
+   @note Being XHTML text, @b prefix and @b postifix are not escaped; be careful.
+*/
+class ActionBox( action, prefix, postfix ) from Action( action.prompt, action.level )
+   prefix = prefix
+   postfix = postfix
    action  = action
+
+   init
+      if Nest.pcheck
+         if not action.derivedFrom( Action )
+            raise NestError( NestError.pcheck, "", "The actions parameter must be an array of actions." )
+         end
+      end
+   end
 
    function render( eid )
       if not self.allowed(): return ""
-      return self.prefix + self.action.render( eid ) + self.postfix
-   end
+      
+      text = ""
+      if self.prefix
+         text += self.prefix
+      end
+      
+      text += self.action.render( eid )
 
-   function __get_prompt(): return self.action.prompt
+      if self.postfix
+         text += self.postfix
+      end
+      
+      return text
+   end
 end
 
+/*# Surrounds many actions with HTML text.
+   @param prompt The name or prompt of this action group.
+   @param actions An array of actions to be rendered.
+   @optparam prefix XHTML code to be inserted before the aciton group or nil for none.
+   @optparam prefix XHTML code to be inserted after the aciton group or nil for none.
+   @optparam infix XHTML code to be inserted in between each action or nil for none.
+
+   This instance assumes the @b lowest authorization level given to all the @b actions
+   it boxes.
+
+   @note Being XHTML text, @b infix, @b prefix and @b postifix are not escaped; be careful.
+*/
+class MutliActionBox( prompt, actions, prefix, postfix, infix ) from Action( prompt )
+   actions  = actions
+   prefix = prefix
+   postfix = postfix
+   infix = infix
+
+   init
+      if Nest.pcheck
+         if actions.typeId() != ArrayType
+            raise NestError( NestError.pcheck, "", "The actions parameter must be an array of actions." )
+         end
+      end
+
+      minlevel = 100000
+      for item in actions
+         if Nest.pcheck and not item.derivedFrom( Action )
+            raise NestError( NestError.pcheck, "", "The actions parameter must be an array of actions." )
+         end
+         
+         if minlevel > item.level
+            minlevel = item.level
+         end
+      end
+
+      self.level = minlevel
+   end
+   
+   function render( eid )
+      if not self.allowed(): return ""
+
+      text = ""
+      if self.prefix
+         text += self.prefix
+      end
+
+      for action in self.actions
+         text += self.action.render( eid )
+         formiddle
+            if self.infix: text += self.infix
+         end
+      end
+      
+      if self.postfix
+         text += self.postfix
+      end
+
+      return text
+   end
+end

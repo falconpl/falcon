@@ -66,11 +66,13 @@ class DataTable( instance ) from DataService( instance )
    function startup()
       // initialize the base class
       self.DataService.startup()
-      
-      if not self.default_cnt.value
-         raise NestError( NestError.other, "Default count (default_cnt) for table not set in configuration" )
-      end
 
+      if Nest.pcheck
+         if not self.default_cnt.value
+            raise NestError( NestError.other, "Default count (default_cnt) for table not set in configuration" )
+         end
+      end
+      
       try
          self._count = self.cnt.isSet ? int( self.cnt.value ) : self.default_cnt.value
       catch ParamError
@@ -80,7 +82,7 @@ class DataTable( instance ) from DataService( instance )
       try
          if self.start.isSet: self._start = int(self.start.value)
       catch ParamError
-         // else, use the nil default
+         self._start = 0
       end
    end
 

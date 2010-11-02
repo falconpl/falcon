@@ -36,6 +36,9 @@ class DataDetail( instance ) from DataService( instance )
    
    /*# Reimplementation to perform the required query */
    function do_query()
-      self.record.value = self.dm.queryItem( self.entity, self.eid.value, self.view )
+      view = self.view.value
+      entity = view.entity
+      eid = self.eid.value
+      self.record.value = entity.find( eid, view )
    end
 end

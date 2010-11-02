@@ -265,6 +265,9 @@ object Nest
 
    /*# Debug mode? */
    debug = false
+   
+   //# Instructs the modules to perform checks on service parameters. False by default.
+   pcheck = false
 
    /*# Framing.
    
@@ -829,8 +832,6 @@ object Nest
          skinNeeded = false
       end
 
-      self._scanForSkin( srv, skinFile, skinNeeded )
-
       // 4 - Register the service
       self._srvlist += srv
       self.services[ srv.fullName() ] = srv
@@ -999,36 +1000,6 @@ object Nest
       end
       
       return vars // will be nil if not loaded
-   end
-
-   // Service configuration step 4 - skin scan
-   function _scanForSkin( srv, skinName, skinNeeded )
-      cnf = self.config
-      s_base_name = srv.className()
-      
-      skinPaths = []
-      if skinNeeded
-         // if needed (esplicit), search the skin in the global skin path
-         skinPaths += utils.reldir( cnf.homedir, cnf.site_skins_dir )
-      end
-
-      skinPaths += [
-            utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + s_base_name +  "/skins" ),
-            cnf.nestdir +"/srv/" + s_base_name  + "/skins" ]
-            
-      if self.log_level >= 3
-         self.logd( "Service " + s_base_name + " scanning for skin \"" + skinName + "\"" +
-         (skinNeeded ? "(needed)" : "") +
-         " in " + skinPaths.describe() )
-      end
-      
-      skinFile = utils.findFileInDirs( skinPaths, skinName, ['fal','ftd','fam'] )
-      if skinFile
-         self.logi( "Service " + srv.fullName() + " using skin " + skinFile )
-         srv.setSkinFile( skinFile )
-      elif skinNeeded
-         raise NestError( NestError.noskin, "", s_base_name + ": "+ skinName )
-      end
    end
       
    function _selector_script( file )

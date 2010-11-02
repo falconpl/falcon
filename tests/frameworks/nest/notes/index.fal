@@ -21,6 +21,7 @@ import from hash
    
 Nest.debug = true
 Nest.log_level = 3
+Nest.pcheck = true
 Nest.stylesheets += "notes.css"
 
 Nest.onStartup = function()

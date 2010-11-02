@@ -16,6 +16,8 @@
    See LICENSE file for licensing details.
 */
 
+import NestError from .error as NestError
+
 /*# Field of a DBView.
    @param field The name of a field in the target entity.
    @optparam title Textual representation of the field name in this view.
@@ -124,16 +126,11 @@ end
 
 /*# Creates a DB View.
    @param entity The entity on which the view acts as a filter.
-   @optparam check If true (default), will check for correctness of assigned parameters.
-   @optparam fields initial value of the view fields.
    @optparam cond initial value of the table conditions.
-
+   @optparam fields initial value of the view fields.
+   
    This class represents a filter through which entities can be seen differently.
-
-   It provides some optional checking mechanism to verify that their specific
-   usage is coherent with the entity definition they lay upon. For example, it
-   can check for the required fields to exist.
-
+   
    If not specified in the constructor call, the @a DBView.fields and @a DBView.cond
    property can be specified at any moment.
 
@@ -148,9 +145,8 @@ end
          right part is an instance of @a DBCond class.
 */
    
-class DBView( entity, fields, cond, check )
+class DBView( entity, fields, cond, spec )
    entity = entity
-   check = check == nil ? true : check
 
    _fields = nil
    _cond = nil
@@ -164,40 +160,27 @@ class DBView( entity, fields, cond, check )
    function __get_cond(): return self._cond
    
    function __set_fields( value )
-      if self.check
-         if value.typeId() != ArrayType
-            raise ParamError( 501, nil, "A" ) 
-         end
-         
-         entity = self.entity
-         for field in value
-            if not field.derivedFrom( DBViewField )
-               raise ParamError( 502, nil, "Should be an instance of DBViewField" )
-            end
-
-            if not field.name in entity.fields
-               raise ParamError( 502, nil, "Field " + field.name + " not in entity " + entity.className() )
-            end
-         end
+      if Nest.pcheck
+         self._checkFields( value )
       end
       
       self._fields = value
    end
    
    function __set_cond( value )
-      if self.check
+      if Nest.pcheck
          if value.typeId() != DictionaryType
-            raise ParamError( 501, nil, "D" )
+            raise NestError( NestError.pcheck, nil, "D" )
          end
 
          entity = self.entity
          for name, check in value
             if not name in entity.fields
-               raise ParamError( 502, nil, "Field " + name + " not in entity " + self.entity.className() )
+               raise NestError( NestError.pcheck, nil, "Field " + name + " not in entity " + self.entity.className() )
             end
 
             if not check.derivedFrom( DBCond )
-               raise ParamError( 502, nil, "Should be an instance of DBCond" )
+               raise NestError( NestError.pcheck, nil, "Should be an instance of DBCond" )
             end
          end
       end
@@ -205,18 +188,22 @@ class DBView( entity, fields, cond, check )
       self._fields = value
    end
 
-   /*# Called by the DBManager to post-process data after extraction.
-      @param data An entity data (dictionary of field->value).
-      @return The same @b data dictionary received as input.
-   */
-   function postProcess( data )
-      for field in self._fields
-         name = field.name
-         if name in data and field.rnd
-            data[name] = field.rnd( data[name] )
+   // Checks if a field array is correct.
+   function _checkFields( value )
+      if value.typeId() != ArrayType
+         raise NestError( Nest.pcheck, nil, "Should be an array of DBViewField instances" )
+      end
+
+      entity = self.entity
+      for field in value
+         if not field.derivedFrom( DBViewField )
+            raise NestError( Nest.pcheck, nil, "Should be an array of DBViewField instances" )
+         end
+
+         if not field.name in entity.fields
+            raise NestError( Nest.pcheck, nil, "Field " + field.name + " not in entity " + entity.className() )
          end
       end
-      return data
    end
 
    /*# Apply this view to retreived data.
@@ -231,7 +218,7 @@ class DBView( entity, fields, cond, check )
             name = field.name
             rnd = field.rnd
             if name in data 
-               dret += rnd ? rnd( data[name] ) : data[name]
+               dret += rnd ? rnd( data[name] ) : htmlEscape(data[name].toString())
             end
          end
       end
@@ -251,7 +238,7 @@ class DBView( entity, fields, cond, check )
             name = field.name
             rnd = field.rnd
             if name in data
-               dret[name] = rnd ? rnd( data[name] ) : data[name]
+               dret[name] = rnd ? rnd( data[name] ) : htmlEscape(data[name].toString())
             end
          end
       end

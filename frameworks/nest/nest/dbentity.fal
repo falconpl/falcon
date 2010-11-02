@@ -169,6 +169,22 @@ class DBEntity( dbm )
       return DBRecord( self, data )
    end
 
+   /*# Delete a determined entity from the database.
+      @param eid The Entity ID to be removed.
+   */
+   function delete( eid )
+      dbm = self.manager
+      dbm.delete( self, self.parseKey( eid ) )
+   end
+
+   /*# Update a determined entity from the database.
+      @param eid The Entity ID to be removed.
+   */
+   function update( eid, data )
+      dbm = self.manager
+      dbm.update( self, self.parseKey( eid ), data )
+   end
+   
 end
 
 
@@ -242,6 +258,49 @@ class DBRecord( dbe, data, view )
       end
 
       return self.data
+   end
+
+   /*# Returns a pre-rendered view of a subset of a record that can be used as a preview.
+
+      The purpose of this method is that to extract minimal informations from a record
+      so that the user can tell what that record is about.
+
+      This method generates a string that can be directly used as an xhtml output
+      to identify a record. For example, it may return the title of an entry,
+      a set of the first characters from a title plus the insertion date.
+
+      The default is that of using the @a DBView.spec_field property, which should be a list
+      of DBViewField.
+      The result of each entry in that process is separated by a character.
+
+      The user may override this method in subclasses where appropriate.
+
+      By default, if there isn't any spec_field, the first field is rendered and returned.
+   */
+   function specify()
+      str = ""
+      data = self.data
+      if self.view
+         for field in self.view.fields
+            name = field.name
+            rnd = field.rnd
+            if name in data
+               str += rnd ? rnd( data[name] ) : htmlEscape(data[name].toString())
+            end
+
+            formiddle: str += " "
+         end
+      else
+         for field in self.entity.fields
+            if field in data
+               str += htmlEscape(data[name].toString())
+            end
+
+            formiddle: str += " "
+         end
+      end
+      
+      return str
    end
 
 end

@@ -104,6 +104,7 @@ end
 object SkinBinder
    function bind( varname, srv, var )
       if varname in srv.configuration
+
          skinFile = srv.configuration[varname]
          if skinFile.isCallable()
             Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " to a callable in configuration." )
@@ -117,12 +118,20 @@ object SkinBinder
                raise NestError( NestError.noskin, "", skinFile )
             end
          end
+         
       else
          // get the default-<varname>.fal skin,
          // but if the service skin file is not set,
          // don't force it.
          bset = srv.skin.isSet
-         name = (bset ? srv.skin.value : "default") + "-" + varname
+         
+         // are we binding the main skin?
+         if varname == "skin"
+            name = "default"
+         else
+            name = (bset ? srv.skin.value : "default") + "-" + varname
+         end
+         
          Nest.logi( "Service " + srv.fullName() + " searching default sub-skin " + name + " from file." )
          skin = self.getSubSkin( name , srv, var)
          if not skin            

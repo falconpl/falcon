@@ -31,24 +31,32 @@ import DBView from nest.dbview as DBView
    that represents the entity on which this service should operate and the
    view through which the entity must be accessed.
 
+   The **handler** configuration variable is mandatory as well. It indicates
+   the target link for actions peformed at table/form level.
+
    As views are nameless, they must be created directly in the configuration
    file (or in the configuration dictionary), and are tighly coupled with
    the service they refer to.
 */ 
 class DataService( instance ) from Service( instance )
 
-   /*# Manager of the table actions (submits and other table-level actions). */
+   /*# Target link managing of the table actions (submits and other table-level actions). */
    handler = ServiceVar( "Manager of the table actions", b.ConfigBinder  )
 
    /*# A DBView instance used to access the desired entity */
    view = ServiceVar( "A DBView instance used to access the desired entity", b.ConfigBinder  )
 
-   
    function startup()
-      view = self.view.value
-      if not view.derivedFrom( DBView )
-         raise NestError( NestError.other, i"View not specified in configuration." )
+      if Nest.pcheck
+         if not self.view.value.derivedFrom( DBView )
+            raise NestError( NestError.pcheck, "", i"View not specified in configuration, or not a DBView." )
+         end
+
+         if self.handler.value.typeId() != StringType
+            raise NestError( NestError.pcheck, "", i"Form action handler" )
+         end
       end
+      
    end
       
    function run()

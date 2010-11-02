@@ -111,13 +111,15 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          sql_fields = ",".merge( entity.fields )
       end
 
-      if start and count
-         select_part = self.dbc.lselect( @"select $sql_fields from $entity.name", start, count )
+      sql_command = @"$sql_fields from $entity.name" + sql_cond + sql_order
+      
+      if count
+         if start == nil: start = 0
+         sql_command = self.dbc.lselect( sql_command, start, count )
       else
-         select_part = @"select $sql_fields from $entity.name"
+         sql_command = "select " + sql_command
       end
-
-      sql_command = select_part + sql_cond + sql_order
+      
       if Nest.log_level >= 3: Nest.logi( "Querying SQL: " + sql_command )
 
       r = self.dbc.query( sql_command )
@@ -133,7 +135,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
    function queryItem( entity, keys, view )
       if view
          sql_fields = ",".merge( entity.key_fields +
-                              map( {column => column.field}, view.fields ) )
+                              map( {column => column.name}, view.fields ) )
       else
          // get all
          sql_fields = ",".merge( entity.fields )
