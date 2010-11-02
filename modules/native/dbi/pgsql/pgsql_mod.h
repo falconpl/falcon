@@ -81,7 +81,11 @@ class DBIStatementPgSQL
 {
 protected:
 
-    void getExecString( uint32 nParams, String& output );
+    int32   m_nParams;
+    String  m_execString;
+    AutoCString m_zExecString;
+
+    void getExecString( int32 nParams );
 
 public:
 

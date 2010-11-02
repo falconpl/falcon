@@ -224,7 +224,8 @@ void DBIRecordsetPgSQL::close()
 
 DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
     :
-    DBIStatement( dbh )
+    DBIStatement( dbh ),
+    m_nParams( -1 )
 {
     String temp;
     dbi_pgsqlQuestionMarksToDollars( query, temp );
@@ -244,36 +245,32 @@ DBIStatementPgSQL::~DBIStatementPgSQL()
 }
 
 
-void DBIStatementPgSQL::getExecString( uint32 nParams, String& output )
+void DBIStatementPgSQL::getExecString( int32 nParams )
 {
-    output.reserve( 16 + ( nParams * 2 ) );
-    output.size( 0 );
-    output = "EXECUTE dummy(";
+    fassert( m_nParams == -1 );
+
+    m_execString.reserve( 16 + ( nParams * 2 ) );
+    m_execString.size( 0 );
+    m_execString = "EXECUTE dummy(";
     if ( nParams > 0 )
     {
-        output.append( "?" );
-        for ( uint32 i=1; i < nParams; ++i )
-            output.append( ",?" );
+        m_execString.append( "?" );
+        for ( int32 i=1; i < nParams; ++i )
+            m_execString.append( ",?" );
     }
-    output.append( ");" );
+    m_execString.append( ");" );
+
+    m_nParams = nParams;
+    m_zExecString.set( m_execString );
 }
 
 
 int64 DBIStatementPgSQL::execute( const ItemArray& params )
 {
-    String query;
+    if ( m_nParams == -1 )
+        getExecString( params.length() );
 
-    if ( params.length() > 0 )
-    {
-        String temp;
-        getExecString( params.length(), temp );
-        dbi_sqlExpand( temp, query, params );
-    }
-    else
-        query = "EXECUTE dummy();";
-
-    AutoCString zQuery( query );
-    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
+    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), m_zExecString.c_str() );
     if ( res == 0
         || PQresultStatus( res ) != PGRES_COMMAND_OK )
     {
