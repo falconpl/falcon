@@ -24,6 +24,8 @@ Nest.log_level = 3
 Nest.pcheck = true
 Nest.stylesheets += "notes.css"
 
+Nest.addHook( "DBCheckUser" )
+
 Nest.onStartup = function()
    dm = Nest.dm( "notes_db" )
 
@@ -31,7 +33,7 @@ Nest.onStartup = function()
       Reply.redirect( Nest.pageLink("create") )
       return
    end
-
+/*
    Nest.addHook(
       Nest.Hook( "check_user",
          function( uid, pwd )
@@ -47,7 +49,7 @@ Nest.onStartup = function()
             end
          end
    ))
-
+*/
    login = Nest.service("Login")
 end
 

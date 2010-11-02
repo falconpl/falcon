@@ -681,7 +681,7 @@ object Nest
 
       Calls a hook.
    */
-   function callHook( name )
+   function emit( name )
       if name in self._hooks
          self.logi( "Calling hook " + name )
          for hook in self._hooks[name]
