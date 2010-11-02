@@ -43,6 +43,9 @@ public:
 class DBIHandlePgSQL;
 
 
+void dbi_pgsqlQuestionMarksToDollars( const String& input, String& output );
+
+
 class DBIRecordsetPgSQL
     :
     public DBIRecordset
@@ -70,6 +73,26 @@ public:
     virtual void close();
 
 };
+
+
+class DBIStatementPgSQL
+    :
+    public DBIStatement
+{
+protected:
+
+    void getExecString( uint32 nParams, String& output );
+
+public:
+
+    DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query );
+    virtual ~DBIStatementPgSQL();
+
+    virtual int64 execute( const ItemArray& params );
+    virtual void reset();
+    virtual void close();
+};
+
 
 #if 0
 class DBIRecordsetPgSQL : public DBIRecordset

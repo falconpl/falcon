@@ -68,6 +68,27 @@
 namespace Falcon
 {
 
+
+void dbi_pgsqlQuestionMarksToDollars( const String& input, String& output )
+{
+    output.reserve( input.size() + 32 );
+    output.size( 0 );
+
+    uint32 pos0 = 0;
+    uint32 pos1 = input.find( "?" );
+
+    for ( int64 i=1; pos1 != String::npos; ++i )
+    {
+        output += input.subString( pos0, pos1 );
+        output.A( "$" ).N( i );
+        pos0 = pos1 + 1;
+        pos1 = input.find( "?", pos0 );
+    }
+
+    output += input.subString( pos0 );
+}
+
+
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
@@ -148,7 +169,7 @@ bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
         return true;
     }
     else
-    if ( ((DBIHandlePgSQL*)m_dbh)->options()->m_bFetchStrings )
+    if ( m_dbh->options()->m_bFetchStrings )
     {
         String s( v );
         s.bufferize();
@@ -199,6 +220,80 @@ void DBIRecordsetPgSQL::close()
         m_res = NULL;
     }
 }
+
+
+DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
+    :
+    DBIStatement( dbh )
+{
+    String temp;
+    dbi_pgsqlQuestionMarksToDollars( query, temp );
+    AutoCString zQuery( temp );
+    PGresult* res = PQprepare( dbh->getConn(), "dummy", zQuery.c_str(), 0, NULL );
+
+    if ( res == NULL
+        || PQresultStatus( res ) != PGRES_COMMAND_OK )
+        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
+
+    PQclear( res );
+}
+
+
+DBIStatementPgSQL::~DBIStatementPgSQL()
+{
+}
+
+
+void DBIStatementPgSQL::getExecString( uint32 nParams, String& output )
+{
+    output.reserve( 16 + ( nParams * 2 ) );
+    output.size( 0 );
+    output = "EXECUTE dummy(";
+    if ( nParams > 0 )
+    {
+        output.append( "?" );
+        for ( uint32 i=1; i < nParams; ++i )
+            output.append( ",?" );
+    }
+    output.append( ");" );
+}
+
+
+int64 DBIStatementPgSQL::execute( const ItemArray& params )
+{
+    String query;
+
+    if ( params.length() > 0 )
+    {
+        String temp;
+        getExecString( params.length(), temp );
+        dbi_sqlExpand( temp, query, params );
+    }
+    else
+        query = "EXECUTE dummy();";
+
+    AutoCString zQuery( query );
+    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
+    if ( res == 0
+        || PQresultStatus( res ) != PGRES_COMMAND_OK )
+    {
+        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
+    }
+
+    PQclear( res );
+    return 0;
+}
+
+
+void DBIStatementPgSQL::reset()
+{
+}
+
+
+void DBIStatementPgSQL::close()
+{
+}
+
 
 #if 0
 dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
@@ -521,6 +616,7 @@ DBIRecordset *DBITransactionPgSQL::query( const String &query, int64 &affected_r
    case PGRES_COPY_IN:
       retval = PGRES_TUPLES_OK == 0 ? dbi_ok : dbi_no_results;
       {
+
          char *sAffectedRows = PQcmdTuples( res );
          if ( sAffectedRows == NULL || strlen( sAffectedRows ) == 0 )
             affected_rows = 0;
