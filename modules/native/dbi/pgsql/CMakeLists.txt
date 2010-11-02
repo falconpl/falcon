@@ -50,6 +50,7 @@ INCLUDE_DIRECTORIES(../include)
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
+   ${dbi_common_files}
    pgsql_fm.cpp
    pgsql_ext.cpp
    pgsql_mod.cpp
