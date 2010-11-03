@@ -184,6 +184,19 @@ class DBEntity( dbm )
       dbm = self.manager
       dbm.update( self, self.parseKey( eid ), data )
    end
+
+   /*# Make a blank data containing all the fields available for this entity.
+      @return A blessed dictionary containing all the fields of this entity as keys, and nil values.
+
+      Useful to make templates for updates or insertions.
+   */
+   function makeBlank()
+      data = [=>]
+      for field in self.fields
+         data[field] = nil
+      end
+      return bless(data)
+   end
    
 end
 
@@ -195,7 +208,7 @@ end
 */
 class DBRecord( dbe, data, view )
    //# the raw data as returned by the query
-   data = data
+   data = bless(data)
    //# The entity where this data was taken from
    entity = dbe
    //# A view to be applied to this data.

@@ -18,6 +18,7 @@
 
 import from .utils
 import NestError from .error as NestError
+import DBEntity from .dbentity as DBEntity
 
 /*# Base data manager.
    This is just an abstract class of definitions to be implemented by the
@@ -197,6 +198,19 @@ class DataManager( name, location )
          return ent
       end
 
+   end
+
+   /*# Puts an entity in the data manager.
+      @param Entity an instance to be added.
+   */
+   function addEntity( entity )
+      if Nest.pcheck
+         if not entity.derivedFrom( DBEntity )
+            raise NestError( NestError.pcheck, "", "'entity' must be of class DBEntity" )
+         end
+      end
+      
+      self.entities[entity.name] = entity
    end
 
 end

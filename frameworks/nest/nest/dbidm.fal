@@ -173,7 +173,10 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       // Did the add generate a unique ID?
       if (id = self.dbc.getLastID( table ))
          // yep -- it's nice to inform our users
-         data[ entity.key_fields[0] ] = id
+         kfield = entity.key_fields[0]
+         if kfield notin data or data[kfield] == nil
+            data[ kfield ] = id
+         end
          return id
       end
 

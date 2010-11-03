@@ -21,8 +21,10 @@ import ServiceVar from nest as ServiceVar
 import from nest.bindings in b
 import NestError from nest as NestError
 import from nest.dbentity in dbe
+import from nest.dbview in dbv
 import from parser.render.html in html
 import plugins from nest.srv.Wiki.plugins as Plugins
+import DataManager from nest.datamanager as DataManager
 
 const entity_name = "wiki_pages"
 const default_page = "main"
@@ -30,20 +32,41 @@ const default_page = "main"
 /*# Service Managing WIKI based contents.
 */
 class Wiki( instance ) from Service( instance )
+   //# Wiki page to be loaded or managed
    wid = ServiceVar("Wiki page to be loaded or managed", b.InputVarBinder )
+   //# Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)
    wka = ServiceVar("Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)", b.InputVarBinder )
+   //# Wiki data; original data
    wkd = ServiceVar("Wiki data; original data", b.InputVarBinder )
+   //# Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.
    wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.", b.InputVarBinder )
+
    
+   //===========================================
+   // Configuration.
+   //# Data manager used by this WIKI instance -- must be a DataManager instance.
+   dm = ServiceVar( "Data manager used by this WIKI instance -- must be a DataManager instance.", b.ConfigBinder )
+   //# Instance of a Wiki parser, implementing the Falcon wiki parser interface
    parser = ServiceVar( "Instance of a Wiki parser, implementing the Falcon wiki parser interface", b.ConfigBinder )
+   //# Function retunring a link to uploaded files.
    upload_linker = ServiceVar( "Function retunring a link to uploaded files.", b.ConfigBinder )
+   //# Wid of the main page (which is also the default wid)
    main_wid = ServiceVar( "Wid of the main page (which is also the default wid)", b.ConfigBinder )
+   //# Actions that can be done other than "commit" on a page
    actions = ServiceVar( "Actions that can be done other than \"commit\" on a page", b.ConfigBinder )
+   //# Page used when invoking the wiki page modification
    modyPage = ServiceVar( "Page used when invoking the wiki page modification", b.ConfigBinder )
+   //# Max depth of the wiki history
    history_depth = ServiceVar("Max depth of the wiki history", b.ConfigBinder )
+   //# User provided page plugins
    plugins = ServiceVar("User provided page plugins", b.ConfigBinder )
+
+   //===================================================================
+   // Internal variables
    
+   //# Compiled content of the page
    preview = ServiceVar( "Compiled content of the page" )
+   //# Complete page -- if found
    page = ServiceVar( "Complete page -- if found" )
 
    // Gets the authenticated user.
@@ -51,22 +74,55 @@ class Wiki( instance ) from Service( instance )
    history = ServiceVar("Wiki history; where are we?", b.SessionBinder )
 
    helper = _WikiHelper(self)
-   // data manager
-   dm = nil
 
-   // Wiki Page entities
+   //# Wiki Page entity @a DBEntity in the Data Manager
    entity = nil
+
+   //# @a DBView used to read a page
+   read_view = nil
+
+   //# @a DBView used to edit a page
+   edit_view = nil
+
+   //# @a DBView used to determine if a certain view exists
+   exists_view = nil
+
+   //# Spacial variable to be set true when the wiki is not required to display pages.
+   mute = false
+
+   //===================================================================
+   // Main part
+   //
+   function startup()
+      if not self.allowed(): return false
+
+      dm = self.dm.value
+      if Nest.pcheck
+         if not dm.derivedFrom( DataManager )
+            raise NestError( NestError.pcheck, "", "Mandatory parameter 'dm' not derived from DataManager" )
+         end
+
+         pv = self.parser.value
+         if not (pv provides parse)
+            raise NestError( NestError.pcheck, "",  "Must configure a parser in configuration" )
+         end
+      end
+
+      self.setEntities( dm )
+   end
    
    function run()
       Nest.logi( "Running service Wiki" )
-      // Setup
+      
       if not self.allowed(): return false
-      if not self.dm: raise NestError( NestError.no_dm )
-      if not self.parser.value: raise NestError( NestError.other, "Must configure a parser in configuration" )
+
+      if self.mute
+         Nest.logi("Service muted")
+         return false
+      end
+
       // adding default upload linker
       if not self.upload_linker.value: self.upload_linker.value = {v => v}
-      
-      self.setEntities( self.dm )
 
       // sanitize the WID settings
       if not self.main_wid.value: self.main_wid.value = default_page
@@ -108,7 +164,7 @@ class Wiki( instance ) from Service( instance )
             end
 
          case 'mody'
-            page = self.dm.queryItem( entity_name, wid, "edit" )
+            page = self.entity.find( wid, self.edit_view )
             if page
                self.wkd.value = page.data.content_wiki
             else
@@ -139,63 +195,45 @@ class Wiki( instance ) from Service( instance )
 
    function initialize()
       if not self.allowed(): return false
-      if not self.dm: raise NestError( NestError.no_dm )
-      self.setEntities( self.dm )
       Nest.logi( "Initializing WIKI DB entities" )
-      self.dm.createEntity( self.entity, true )
+      // parameter check should be already performed
+      dm = self.dm.value
+      self.setEntities( dm )
+      dm.createEntity( self.entity, true )
    end
+
 
    function setEntities( dm )
       // set our entities in the database
-      wp = dbe.DBEntity( entity_name,
-         "sqlite" in dm.cs ?
-         .[
-            "page_name varchar(60) PRIMARY KEY"
-            "content_wiki TEXT"
-            "content_html TEXT"
-            "creator varchar(30)"
-            "editor varchar(15)"
-            "created datetime"
-            "last_edited datetime"
-         ]
-         :
-         .[
-            "page_name varchar(60) PRIMARY KEY"
-            "content_wiki TEXT character set utf8"
-            "content_html TEXT character set utf8"
-            "creator varchar(30) charset utf8"
-            "editor varchar(15) charset utf8"
-            "created datetime"
-            "last_edited datetime"
-         ]
-         )
+      wp = wiki_entity( dm )
+      // add the entity to the datamanager
+      dm.addEntity( wp )
+      self.entity = wp
 
       // standard view for basic operations
-      wp.views["read"] = .[
-            dbe.DBColumn( "page_name", i"Page name" )
-            dbe.DBColumn( "content_html", i"Html text" )
-            dbe.DBColumn( "creator", i"Page creator" )
-            dbe.DBColumn( "editor", i"Page editor" )
-            dbe.DBColumn( "created", i"Created on" )
-            dbe.DBColumn( "last_edited", i"Last edited on" )
-      ]
+      self.read_view = dbv.DBView( wp, .[
+            dbv.DBViewField( "page_name", i"Page name" )
+            dbv.DBViewField( "content_html", i"Html text" )
+            dbv.DBViewField( "creator", i"Page creator" )
+            dbv.DBViewField( "editor", i"Page editor" )
+            dbv.DBViewField( "created", i"Created on" )
+            dbv.DBViewField( "last_edited", i"Last edited on" )
+      ])
 
       // view for edits
-      wp.views["edit"] = .[
-            dbe.DBColumn( "page_name", i"Page name" )
-            dbe.DBColumn( "content_wiki", i"Wiki text" )
-      ]
+      self.edit_view = dbv.DBView( wp, .[
+            dbv.DBViewField( "page_name", i"Page name" )
+            dbv.DBViewField( "content_wiki", i"Wiki text" )
+      ])
 
-       // view for edits
-      wp.views["exists"] = .[
-            dbe.DBColumn( "page_name", i"Page name" )
-            dbe.DBColumn( "creator", i"The creator of the page" )
-            dbe.DBColumn( "created", i"When the page was created" )
-            dbe.DBColumn( "last_edited", i"Last edited on" )
-      ]
+      // view for edits
+      self.exists_view = dbv.DBView( wp, .[
+            dbv.DBViewField( "page_name", i"Page name" )
+            dbv.DBViewField( "creator", i"The creator of the page" )
+            dbv.DBViewField( "created", i"When the page was created" )
+            dbv.DBViewField( "last_edited", i"Last edited on" )
+      ])
 
-      self.entity = wp
-      dm.entities[entity_name] = wp
    end
 
    function linkToPage( page, handler )
@@ -216,7 +254,7 @@ class Wiki( instance ) from Service( instance )
       @return The page data on success, nil on failure.
    */
    function getPage( page_name )
-      page = self.dm.queryItem( entity_name, page_name, "read" )
+      page = self.entity.find( page_name, self.read_view )
       if page: return page.data
       return nil
    end
@@ -245,7 +283,7 @@ class Wiki( instance ) from Service( instance )
       Nest.logi( "Update request for " + pageEntry.page_name )
       
       // see if the page exists.
-      page = self.dm.queryItem( "wiki_pages", pageEntry.page_name, "exists" )
+      page = self.entity.find( pageEntry.page_name, self.exists_view )
       if page
          // it existed!
          Nest.logi( "Update existing page: " + pageEntry.page_name )
@@ -258,11 +296,11 @@ class Wiki( instance ) from Service( instance )
          pageEntry["last_edited"] = CurrentTime()
          pageEntry["creator"] = page.data.creator
          pageEntry["created"] = page.data.created
-         self.dm.update( entity_name, pageEntry.page_name, pageEntry )
+         self.entity.update( pageEntry.page_name, pageEntry )
       else
          Nest.logi( "Create new page: " + pageEntry.page_name )
          pageEntry["created"] = CurrentTime()
-         self.dm.add( entity_name, pageEntry )
+         self.entity.insert( pageEntry )
       end
    end
 
@@ -286,7 +324,7 @@ class Wiki( instance ) from Service( instance )
       @return true on success, false if the page cannot be created.
    */
    function removePage( page_name )
-      return self.dm.delete( entity_name, page_name )
+      return self.entity.delete( page_name )
    end
 
 
@@ -340,4 +378,33 @@ class _WikiHelper(srv) from html.BaseSiteHelper
       return self.srv.plugin( plugin_name, params, node, standout )
    end
 end
+
+class wiki_entity(dm) from dbe.DBEntity(dm)
+
+   name = entity_name
+
+   definition = (
+         "sqlite" in dm.cs ?
+         .[
+            ^+ "page_name varchar(60) PRIMARY KEY"
+            "content_wiki TEXT"
+            "content_html TEXT"
+            "creator varchar(30)"
+            "editor varchar(15)"
+            "created datetime"
+            "last_edited datetime"
+         ]
+         :
+         .[
+            ^+ "page_name varchar(60) PRIMARY KEY"
+            "content_wiki TEXT character set utf8"
+            "content_html TEXT character set utf8"
+            "creator varchar(30) charset utf8"
+            "editor varchar(15) charset utf8"
+            "created datetime"
+            "last_edited datetime"
+         ])
+end
+
+
 

@@ -1,3 +1,6 @@
+// Nest - Notes test site
+// Configuration for the users entity
+
 import from nest.dbentity in dbe
 import from hash
 
