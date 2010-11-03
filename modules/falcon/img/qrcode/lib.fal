@@ -81,44 +81,6 @@ class QrBitStream(size)
       end
    end
 
-   function newFromNum(bits, num)
-      bitStream = QrBitStream()
-      bitStream.allocate(bits)
-
-      mask = 1 << (bits - 1)
-      for i in [0:bits]
-         bitStream.data[i] = num && mask ? 1 : 0
-         mask >>= 1
-      end
-
-      return bitStream
-   end
-
-   function newFromBytes(size, data)
-      if data == nil
-         raise QrError(QrError.invalid_param, i"data is null")
-      end
-
-      dataLength = len(data)
-      bitStream = QrBitStream(size * 8)
-      p = 0
-
-      for i in [0:size]
-         mask = 0x80
-         for j in [0:8]
-            if i < dataLength and data[i] && mask
-               bitStream.data[p] = 1
-            else
-               bitStream.data[p] = 0
-            end
-            p++
-            mask >>= 1
-         end
-      end
-
-      return bitStream
-   end
-
    function append(bitStream)
       if bitStream == nil
          raise QrError(QrError.invalid_param, i"bitStream is null")
@@ -129,7 +91,7 @@ class QrBitStream(size)
 
    function appendNum(bits, num)
       if bits != 0
-         bitStream = QrBitStream.newFromNum(bits, num)
+         bitStream = self._newFromNum(bits, num)
          self.append(bitStream)
       end
    end
@@ -140,13 +102,13 @@ class QrBitStream(size)
       end
 
       if size != 0
-         bitStream = QrBitStream.newFromBytes(size, data)
+         bitStream = self._newFromBytes(size, data)
          self.append(bitStream)
       end
    end
 
    function toByte()
-      size = self.data.len()
+      size = len(self.data)
       if size == 0: return []
 
       data = arrayBuffer(int((size + 7) / 8), 0)
@@ -174,6 +136,44 @@ class QrBitStream(size)
       end
 
       return data
+   end
+
+   function _newFromNum(bits, num)
+      bitStream = QrBitStream()
+      bitStream.allocate(bits)
+
+      mask = 1 << (bits - 1)
+      for i in [0:bits]
+         bitStream.data[i] = num && mask ? 1 : 0
+         mask >>= 1
+      end
+
+      return bitStream
+   end
+
+   function _newFromBytes(size, data)
+      if data == nil
+         raise QrError(QrError.invalid_param, i"data is null")
+      end
+
+      dataLength = len(data)
+      bitStream = QrBitStream(size * 8)
+      p = 0
+
+      for i in [0:size]
+         mask = 0x80
+         for j in [0:8]
+            if i < dataLength and data[i] && mask
+               bitStream.data[p] = 1
+            else
+               bitStream.data[p] = 0
+            end
+            p++
+            mask >>= 1
+         end
+      end
+
+      return bitStream
    end
 end
 
@@ -236,7 +236,7 @@ class QrInputItem(mode, size, data, bitStream)
 
       bitStream = QrBitStream()
       bitStream.appendNum(4, val)
-      bitStream.appendNum(QrSpec.lengthIndicator(QrMode.num, version), self._size)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.num, version), self._size)
 
       for i in [0:words]
          val  = (self._data[i * 3][*0] - "0"[*0]) * 100
@@ -262,7 +262,7 @@ class QrInputItem(mode, size, data, bitStream)
 
       bitStream = QrBitStream()
       bitStream.appendNum(4, 0x02)
-      bitStream.appendNum(QrSpec.lengthIndicator(QrMode.an, version), self._size)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.an, version), self._size)
 
       for i in [0:words]
          val  = int(QrInput.lookAnTable(self._data[i * 2][*0])) * 45
@@ -281,7 +281,7 @@ class QrInputItem(mode, size, data, bitStream)
    function encodeModeEightBit(version)
       bitStream = QrBitStream()
       bitStream.appendNum(4, 0x4)
-      bitStream.appendNum(QrSpec.lengthIndicator(QrMode.eight_bit, version), self._size)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.eight_bit, version), self._size)
 
       for i in [0:self._size]
          bitStream.appendNum(8, self._data[i][*0])
@@ -294,7 +294,7 @@ class QrInputItem(mode, size, data, bitStream)
       bitStream = QrBitStream()
       /*
       bitStream.appendNum(4, 0x8)
-      bitStream.appendNum(QrSpec.lengthIndicator(QrMode.kanji, version), int(self._size / 2));
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.kanji, version), int(self._size / 2));
 
       for i in [0:self._size]
          val = self._data[i][*0]
@@ -318,7 +318,7 @@ class QrInputItem(mode, size, data, bitStream)
       // ATM we don't have it. Just adding the Unicode.
 
       bitStream.appendNum(4, 0x8)
-      bitStream.appendNum(QrSpec.lengthIndicator(QrMode.kanji, version), int(self._size));
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.kanji, version), int(self._size));
 
       for i in [0:self._size]
          val = self._data[i][*0]
@@ -357,7 +357,7 @@ class QrInputItem(mode, size, data, bitStream)
          return 0
       end
 
-      length = QrSpec.lengthIndicator(self._mode, version)
+      length = QrSpec.getLengthIndicator(self._mode, version)
       m = 1 << length
       num = int((self._size + m - 1) / m)
       bits += num * (4 + length)
@@ -394,7 +394,7 @@ class QrInputItem(mode, size, data, bitStream)
          end
       end
 
-      return self._bitStream.data.len()
+      return len(self._bitStream.data)
    end
 end
 
@@ -536,7 +536,7 @@ class QrInput(version, errorCorrectionLevel)
    end
 
    function lengthOfCode(mode, version, bits)
-      payload = bits - 4 - QrSpec.lengthIndicator(mode, version)
+      payload = bits - 4 - QrSpec.getLengthIndicator(mode, version)
 
       if mode == QrMode.num
          chunks = int(payload / 10)
@@ -594,7 +594,7 @@ class QrInput(version, errorCorrectionLevel)
    end
 
    function appendPaddingBit(bitStream)
-      bits = bitStream.data.len()
+      bits = len(bitStream.data)
       maxWords = QrSpec.getDataLength(self.version, self.errorCorrectionLevel)
       maxBits = maxWords * 8
 
@@ -1174,7 +1174,7 @@ class QrSplit(data, input, mode)
    end
 
    function _eatNum()
-      length = QrSpec.lengthIndicator(QrMode.num, self._input.version)
+      length = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
 
       run = 0
       while self.isDigitAt(self._data, run); run++; end
@@ -1200,8 +1200,8 @@ class QrSplit(data, input, mode)
    end
 
    function _eatAn()
-      lengthAn= QrSpec.lengthIndicator(QrMode.an, self._input.version)
-      lengthNum = QrSpec.lengthIndicator(QrMode.num, self._input.version)
+      lengthAn= QrSpec.getLengthIndicator(QrMode.an, self._input.version)
+      lengthNum = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
       run = 0
 
       while self.isAlNumAt(self._data, run)
@@ -1243,8 +1243,8 @@ class QrSplit(data, input, mode)
    end
 
    function _eatEightBit()
-      lengthAn = QrSpec.lengthIndicator(QrMode.an, self._input.version)
-      lengthNum = QrSpec.lengthIndicator(QrMode.num, self._input.version)
+      lengthAn = QrSpec.getLengthIndicator(QrMode.an, self._input.version)
+      lengthNum = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
 
       run = 1
       dataLength = len(self._data)
@@ -1562,7 +1562,7 @@ class QrTools
       spec = QrSpec()
 
       for version in [1:QrSpecConst.max_version + 1]
-         frame = spec.newFrame(version, cache_dir)
+         frame = spec.createFrame(version, cache_dir)
          fileName = cache_dir + '/frame_' + version + '.png'
          QrImage.png(self.binarize(frame), fileName, 1, 0)
 
@@ -1753,7 +1753,7 @@ class QrSpec
       raise QrError(QrError.version_not_found)
    end
 
-   function lengthIndicator(mode, version)
+   function getLengthIndicator(mode, version)
       if mode == QrMode.structure: return 0
       length = 0
 
@@ -1899,7 +1899,63 @@ class QrSpec
       end
    end
 
-   function createFrame(version)
+   function createFrame(version, cacheDir)
+      if version < 1 or version > QrSpecConst.max_version
+         raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+      end
+
+      arrayLength = version + 1
+
+      if self.frames == nil
+         self.frames = arrayBuffer(arrayLength, nil)
+      elif len(self.frames) < arrayLength
+         arrayResize(self.frames, arrayLength)
+      end
+
+      if self.frames[version] == nil
+         if cacheDir
+            fileName = cacheDir + "/frame_" + version + ".dat"
+
+            if fileType(cacheDir) == FileStat.NOTFOUND
+               dirMake(cacheDir, true)
+               fileChmod(cacheDir, 0755)
+            end
+
+            if fileType(fileName) != FileStat.NOTFOUND
+               inputStream = InputStream(fileName)                    
+               deserialized = deserialize(inputStream)
+               self.frames[version] = deserialized
+               // inputStream.close()
+            else
+               ver = self._createFrame(version)
+               outputStream = OutputStream(fileName)
+               serialize(ver, outputStream)
+               outputStream.close()
+               self.frames[version] = ver
+            end
+         else
+            self.frames[version] = self._createFrame(version)
+         end
+      end
+
+      if self.frames[version] == nil
+         raise QrError(QrError.encoding_error, i"error creating frame")
+      end
+
+      return self.frames[version]
+   end
+
+   function rsBlockNum(spec); return spec[0] + spec[3]; end
+   function rsBlockNum1(spec); return spec[0]; end
+   function rsDataCodes1(spec); return spec[1]; end
+   function rsEccCodes1(spec); return spec[2]; end
+   function rsBlockNum2(spec); return spec[3]; end
+   function rsDataCodes2(spec); return spec[4]; end
+   function rsEccCodes2(spec); return spec[2]; end
+   function rsDataLength(spec); return (spec[0] * spec[1]) + (spec[3] * spec[4]); end
+   function rsEccLength(spec); return (spec[0] + spec[3]) * spec[2]; end
+
+   function _createFrame(version)
       width = QrCapacity[version][QrCapConst.width]
       frame = arrayBuffer(width)
       for y in [0:width]; frame[y] = "\x0" * width; end
@@ -1964,62 +2020,6 @@ class QrSpec
       frame[width - 8][8] = "\x81"
       return frame
    end
-
-   function newFrame(version, cacheDir)
-      if version < 1 or version > QrSpecConst.max_version
-         raise QrError(QrError.invalid_version, @i'$(version) is not supported')
-      end
-
-      arrayLength = version + 1
-
-      if self.frames == nil
-         self.frames = arrayBuffer(arrayLength, nil)
-      elif len(self.frames) < arrayLength
-         arrayResize(self.frames, arrayLength)
-      end
-
-      if self.frames[version] == nil
-         if cacheDir
-            fileName = cacheDir + "/frame_" + version + ".dat"
-
-            if fileType(cacheDir) == FileStat.NOTFOUND
-               dirMake(cacheDir, true)
-               fileChmod(cacheDir, 0755)
-            end
-
-            if fileType(fileName) != FileStat.NOTFOUND
-               inputStream = InputStream(fileName)                    
-               deserialized = deserialize(inputStream)
-               self.frames[version] = deserialized
-               // inputStream.close()
-            else
-               ver = self.createFrame(version)
-               outputStream = OutputStream(fileName)
-               serialize(ver, outputStream)
-               outputStream.close()
-               self.frames[version] = ver
-            end
-         else
-            self.frames[version] = self.createFrame(version)
-         end
-      end
-
-      if self.frames[version] == nil
-         raise QrError(QrError.encoding_error, i"error creating frame")
-      end
-
-      return self.frames[version]
-   end
-
-   function rsBlockNum(spec); return spec[0] + spec[3]; end
-   function rsBlockNum1(spec); return spec[0]; end
-   function rsDataCodes1(spec); return spec[1]; end
-   function rsEccCodes1(spec); return spec[2]; end
-   function rsBlockNum2(spec); return spec[3]; end
-   function rsDataCodes2(spec); return spec[4]; end
-   function rsEccCodes2(spec); return spec[2]; end
-   function rsDataLength(spec); return (spec[0] * spec[1]) + (spec[3] * spec[4]); end
-   function rsEccLength(spec); return (spec[0] + spec[3]) * spec[2]; end
 end
 
 //------------------------------------------------------------------------------

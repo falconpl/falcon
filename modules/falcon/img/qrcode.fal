@@ -156,7 +156,7 @@ class Maker
       raw = qr.QrRawCode(qrinput)
       version = raw.version
       width = spec.getWidth(version)
-      frame = spec.newFrame(version, self.cache_dir)
+      frame = spec.createFrame(version, self.cache_dir)
 
       filler = qr.QrFrameFiller(width, frame)
       if filler == nil
