@@ -2,14 +2,14 @@
 
    <form action="<?= data.handler ?>" method="POST"
    id="form_nest_data_query<?= srv.instance ? "_" + srv.instance : "" ?>" >
-   <input type="hidden" name="eid" value="<?= data.record.key() ?>"/>
+   <input type="hidden" name="eid" value="<?= data.eid ?>"/>
    
    <table class="nest_data_detail">
    <tbody>
-      <? for col in data.record.view ?>
+      <? for col in data.view.fields ?>
       <tr>
          <td class="nest_data_detail_title"><?= col.title ?></td>
-         <td class="nest_data_detail_field"><?= col.renderData(data.record.data) ?></td>
+         <td class="nest_data_detail_field"><?= data.record.data[col.name] ?></td>
       </tr>
       <? end ?>
 

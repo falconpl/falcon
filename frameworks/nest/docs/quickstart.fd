@@ -206,4 +206,35 @@ For example, service variables can be automatically filled with input from web f
 session data, or they can be shared throughout the sytem. Mainly, they are turned into a dictionary
 and automatically fed into the skin, if the service doesn't provide a personalized rendering strategy.
 
+@sction qs_hooks Hooks
+
+Hooks are callback functions that can be overridden by the final application. Instead of placing
+those callbacks directly on a callback point, Nests allows for a name-based invocation mechanism
+that allows for multiple services or multiple pages to invoke the same function by name.
+
+Hooks can be declared directly through the @a Nest.addHook method, or they can be loaded from
+specially named plug-ins in the **nest/hooks** directory of the nest tree. Also, they can be
+provided with a {{config.fal}} facility file. In short, they can look like Nest modules, but their
+sole role is that of providing an abstract callback point; the fact that they can be loaded from
+a plug-in file and that they can be provided with a possibly complex configuration file is an
+extra facility offered by Nest that helps to configure and finetune web-oriented applications.
+
+Declaring a hook is a matter of deriving from the @a Hook class, or creating a simple hook entity via
+this facility:
+@code
+h = Nest.Hook( "my_hook",
+         function( params )
+            // do things...
+            return "some_value"
+         end
+      )
+// ....
+Nest.addHook( h )
+@endcode
+
+@section qs_dm Data Managers
+
+Data managers are simple database abstractions that make room for seeing an application database
+as a persistent storage of program entities.
+
 */

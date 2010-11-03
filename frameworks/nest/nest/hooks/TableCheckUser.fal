@@ -79,23 +79,29 @@ class TableCheckUser from Hook( "check_user" )
    
 
    function configure( config )
-      if "users" notin config
-         raise NestError( NestError.other, i"Requires a 'user' key in configuration" )
-      end
-
-      self.users = config["users"]
-      if "hash" in config
-         self.hash = config["hash"]
-         if not self.hash.isCallable()
-            raise NestError( NestError.other, i"Hash key provided in configuration must be callable" )
+      if Nest.pcheck
+         if "users" notin config
+            raise NestError( NestError.other, i"Requires a 'user' key in configuration" )
          end
-      end
 
-      if "dflt" in config
-         self.dflt = config["dflt"]
-         if not self.dflt.derivedFrom( User )
-            raise NestError( NestError.other, i"The dflt configuration key must be of class User" )
+         self.users = config["users"]
+         if "hash" in config
+            self.hash = config["hash"]
+            if not self.hash.isCallable()
+               raise NestError( NestError.other, i"Hash key provided in configuration must be callable" )
+            end
          end
+
+         if "dflt" in config
+            self.dflt = config["dflt"]
+            if not self.dflt.derivedFrom( User )
+               raise NestError( NestError.other, i"The dflt configuration key must be of class User" )
+            end
+         end
+      else
+         self.users = config["users"]
+         if "hash" in config: self.hash = config["hash"]
+         if "dflt" in config: self.dflt = config["dflt"]
       end
    end
 end

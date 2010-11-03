@@ -1,9 +1,4 @@
 <? function skin( vars, srv ) ?>
-<? if not srv.allowed()
-   > i"<p>Sorry, you're not authorized</p>"
-   return
-end ?>
-
    <? if vars.performed ?>
       <!-- performed section -->
       <div id="nest_uploader_perform">
@@ -25,13 +20,14 @@ end ?>
    <? if vars.sel and not vars.cnf ?>
       <!-- confirm section -->
       <div id="nest_uploader_confirm">
-         <form action="<?= Request.uri ?>" method="POST" accept-charset="utf-8">
+         <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
             <p>Do you really want to <?= vars.do == 'mv' ? "move" : "delete" ?> the following files?</p>
             <ul>
             <? for file in vars.sel ?>
                <li><?= file ?></li>
             <? end ?>
             </ul>
+            <input type="hidden" name="loc" value="<?=vars.loc?>"/>
             <? for file in vars.sel ?>
             <input type="hidden" name="sel[]" value="<?= file ?>"/>
             <? end ?>
@@ -79,7 +75,8 @@ end ?>
 
    <!-- Create a section -->
    <div id="nest_uploader_create_section">
-      <form action="<?= Request.uri ?>" method="POST" accept-charset="utf-8">
+      <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+      <input type="hidden" name="loc" value="<?=vars.loc?>"/>
       <p>Create a new section: <input type="text" size="30" maxlength="40" name="tg"/>
       <input type="submit" name="sub_btn" value="Create"/></p>
       <input type="hidden" name="do" value="new"/>
@@ -90,7 +87,8 @@ end ?>
    <hr/>
    <!-- upload section -->
    <div id="nest_uploader_upload">
-      <form action="<?= Request.uri ?>" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+      <form action="<?= Nest.pageLink() ?>" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+      <input type="hidden" name="loc" value="<?=vars.loc?>"/>
       <p>Upload a file: <input type="file" name="upld"/>&nbsp;&nbsp;<input type="submit" name="sub_btn" value="Upload"/></p>
       </form>
    </div>
@@ -100,7 +98,8 @@ end ?>
    <!-- File display section -->
    <div id="nest_uploader_files">
       <? if vars.files ?>
-         <form action="<?= Request.uri ?>" method="POST" accept-charset="utf-8">
+         <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+         <input type="hidden" name="loc" value="<?=vars.loc?>"/>
          <table>
          <? path = vars.loc ?>
          <tr><th>Select</th><th>File</th><? if vars.actions ?><th>Actions</th><? end ?></tr>
@@ -129,8 +128,9 @@ end ?>
       <? else ?>
          <p><b>The section is empty</b></p>
          <? if vars.path and not vars.sections ?>
-            <form action="<?= Request.uri ?>" method="POST" accept-charset="utf-8">
+            <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
             <p>
+            <input type="hidden" name="loc" value="<?=vars.loc?>"/>
             <input type="hidden" name="loc" value="<?= vars.loc ?>"/>
             <input type="hidden" name="do" value="deldir"/>
             <button type="submit">Delete this section!</button>

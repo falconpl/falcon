@@ -15,7 +15,7 @@
 if Complex( ) != Complex( ): failure( "Complex( )" )
 if Complex( 1 ).real != 1: failure( "Complex( 1 )" )
 if Complex( 0, -5 ).imag != -5: failure( "Complex( 0, -5)" )
-if Complex( 0.3, 1.3 ) != 0: failure( "Complex( 0.3 )" )
+if Complex( 0.3, 1.3 ).real != 0.3: failure( "Complex( 0.3 )" )
 if Complex( 1234567891234,0 ).real != 1234567891234: failure( "Complex( 1234567891234, 0 )" )
 if Complex( 0,-1234567891234 ).imag != -1234567891234: failure( "Complex( 0,-1234567891234 )" )
 if Complex( 1, 0 ).abs() != 1.0: failure( "Complex( 1, 0 ) " )

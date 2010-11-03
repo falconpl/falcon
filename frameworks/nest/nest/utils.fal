@@ -17,8 +17,6 @@
 */
 
 
-
-
 function findFile( dir, rname, exts )
    // search under dir for the file or the file + some of the exts.
    fname = dir + "/" + rname

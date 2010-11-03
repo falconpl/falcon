@@ -1,0 +1,253 @@
+/*
+   FALCON - DBI Data Manager
+
+   Nest - Falcon web applcation engine
+
+   FILE: dbidm.fal
+
+   General (and simple) DBI/sql based data manager.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 15:33:56 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from dbi
+import DataManager from .datamanager as DataManager
+import NestError from .error as NestError
+import DBEntity from .dbentity as DBEntity
+import DBRecord from .dbentity as DBRecord
+import DBOrder from .dbview as DBOrder
+
+const connectConfKey = "connect"
+
+/*# Data manager interfacing DBI connections.
+
+   This class is not meant for direct usage. 
+   You should primarily use the entity interfaces,
+   the database related services and ultimately the dabase handler.
+
+   However, the functions provided by this class may be directly
+   used, but this will reduce the data abstraction of your web
+   application.
+   
+   It's safe to use the @a DBIDataManager.dbc handler to perform
+   directly SQL statements, but this will cause an even more tight
+   coupling of the database logic with your web application, and
+   should be avoided when possible.   
+*/
+class DBIDataManager( name, loc ) from DataManager( name, loc )
+   dbc = nil
+   configuration = nil
+
+   /*# Connection string */
+   cs = nil
+
+   /*# Title of the columns of the last query operation */
+   columns = nil
+
+   function configure( data )
+      Nest.logi( "Configuring DBIDataManager" )
+      if connectConfKey notin data
+         raise NestError( NestError.other, i"missing 'connect' in configuration" )
+      end
+
+      self.configuration = data
+      self.cs = data[connectConfKey]
+      try
+         self.dbc = dbi.connect( self.cs )
+      catch dbi.DBIError in dbe
+         if dbe.code != dbi.DBIError.DB_NOTFOUND
+            raise dbe
+         end
+         // allow to proceed with dbc empty.
+         Nest.logw( "Database not found: " + self.cs )
+      end
+
+      if Nest.log_level >= 2: Nest.logi( "Setting entities: " + self.entities.keys().describe() )
+   end
+
+
+   function createDB( cond )
+      self.cs = self.configuration[connectConfKey] + ";create=" +  (cond ? "cond" : "always")
+      Nest.logi( "Creating database through: " + self.cs )
+      self.dbc = dbi.connect( self.cs )
+   end
+
+
+   function query( entity, view, start, count )
+      sql_cond = ""
+      sql_order = ""
+      
+      if view
+         sql_fields = ",".merge( entity.key_fields +
+                                 map( {column => column.name}, view.fields ) )
+         cond = view.cond
+         if cond
+            sql_cond = "\nwhere "
+            for f, c in cond
+               sql_cond += f + c.toString()
+               formiddle: sql_cond += " and "
+            end
+         end
+
+         order = ""
+         for field in view.fields
+            if field.order and field.order != DBOrder.NONE
+               order += field.name + " " +
+                        (field.order == DBOrder.ASCENDING ? "" : "DESC" )
+            end
+         end
+
+         if order
+            sql_order = "\norder by " + order
+         end
+      else
+         // get all
+         sql_fields = ",".merge( entity.fields )
+      end
+
+      sql_command = @"$sql_fields from $entity.name" + sql_cond + sql_order
+      
+      if count
+         if start == nil: start = 0
+         sql_command = self.dbc.lselect( sql_command, start, count )
+      else
+         sql_command = "select " + sql_command
+      end
+      
+      if Nest.log_level >= 3: Nest.logi( "Querying SQL: " + sql_command )
+
+      r = self.dbc.query( sql_command )
+      result = []
+      while (d = r.fetch([=>]))
+         result += DBRecord( entity, d, view )
+      end
+         
+      return result
+   end
+   
+
+   function queryItem( entity, keys, view )
+      if view
+         sql_fields = ",".merge( entity.key_fields +
+                              map( {column => column.name}, view.fields ) )
+      else
+         // get all
+         sql_fields = ",".merge( entity.fields )
+      end
+
+      sql_command = @"select $sql_fields from $entity.name \nwhere " +
+            "=? and ".merge( keys.keys() ) + "=?"
+      if Nest.log_level >= 3: Nest.logi( "Querying SQL: " + sql_command )
+
+      recordset = (.[ self.dbc.query sql_command ] + keys.values() )()
+      data  = recordset.fetch([=>])
+      if not data: return nil
+      return DBRecord( entity, data, view )
+   end
+   
+   /*# Inserts the required data in the given database table.
+      @param entity The table to be accessed in the database.
+      @param data A dictionary of field => value pairs to be added to the database.
+      
+      If the table has an automatic ID generator as the primary key,
+      this will be detected and the coresponding key field will be
+      updated in the input @b data parameter.
+   */
+   function insert( entity, data )
+   
+      Nest.logi( "Adding entity in table " + entity.name )      
+      sql_fields = ",".merge( data.keys() )
+      sql_qm = ("?," * data.len())[0:-1]  // ?,?,?, << kill the last ","
+
+      table = entity.name
+      sql_command = .[ self.dbc.perform @"insert into $(table)( $(sql_fields) )\nvalues($sql_qm)" ]
+      if Nest.log_level >= 3: Nest.logd("Executing sql: " + sql_command[1] )
+      ( sql_command + data.values() )()
+
+      // Did the add generate a unique ID?
+      if (id = self.dbc.getLastID( table ))
+         // yep -- it's nice to inform our users
+         kfield = entity.key_fields[0]
+         if kfield notin data or data[kfield] == nil
+            data[ kfield ] = id
+         end
+         return id
+      end
+
+      return nil
+   end
+
+   /*# Creates an entity in the database.
+      Called back by @a DataManager.create.
+      @param entity The @a DBEntity to be created in the database.
+      @param cond True to create only if the table doesn't exist.
+      
+   */
+   function createEntity( entity, cond )
+      Nest.logi("Creating entity " + entity )
+      str = "create table "
+      if cond: str += " IF NOT EXISTS "
+      str += entity.name + "(\n"
+      for row in entity.definition
+         formiddle: str += row + ",\n"
+         forlast: str += row
+      end
+      
+      if entity.extra: str += ",\n" + self.extra
+      str += "\n);"
+      if Nest.log_level >= 3: Nest.logd( "Creating table: " +str )
+      self.dbc.perform( str )
+   end
+   
+   /*# Updates the required data in the database.
+      @param entity The table to be accessed in the database.
+      @param key_fields A dictionary of field => value to be used as where condition,
+             possibly uniquely identifying a single record.
+      @param data A dictionary of field => value pairs to be updated to the database.
+      @return Number of affected rows.
+   */
+   function update( entity, key_fields, data )
+      Nest.logi( "Updating table " + entity.name )
+
+      sql_fields = "=?,".merge( data.keys() ) + "=?"
+      if key_fields
+         where = "\nwhere " + ("=?,".merge( key_fields.keys() ) + "=?")
+      else
+         where = ""
+      end
+      
+      sql_command = .[ self.dbc.perform
+                       @"update $(entity.name)\nset $sql_fields" + where ] +\
+                     data.values()
+
+      if key_fields
+         sql_command += key_fields.values()
+      end
+
+      if Nest.log_level >= 3: Nest.logd("Executing sql: " + sql_command[1] )
+      // Return the number of affected columns
+      return sql_command()
+   end
+   
+   /*# Updates the required data in the database.
+      @param table The table to be accessed in the database.
+      @param key_fields A dictionary of field => value to be used as where condition,
+             possibly uniquely identifying a single record.
+      @param data A dictionary of field => value pairs to be updated to the database.
+      @return Number of affected rows.
+   */
+   function delete( entity, key_fields )
+      Nest.logi( @"Deleting from $(entity.name)" )
+      command = @"delete from $(entity.name)\nwhere " +
+                  ("=?,".merge( key_fields.keys() ) + "=?")
+      if Nest.log_level >= 3: Nest.logd("Executing sql: " + command )
+      return (.[ self.dbc.perform command] + key_fields.values())()
+   end
+
+end

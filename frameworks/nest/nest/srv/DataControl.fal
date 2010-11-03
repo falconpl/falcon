@@ -19,51 +19,102 @@
 import Service from nest as Service
 import ServiceVar from nest as ServiceVar
 import from nest.bindings in b
+import NestError from nest as NestError
+import DBEntity from nest.dbentity as DBEntity
+import DBView from nest.dbview as DBView
 
 import DBIError from dbi
 
-import NestError from nest as NestError
+/*# Service used to modify database records.
 
-/*# Service used to modify database records. */
+*/
 class DataControl( instance ) from Service( instance )
 
-   // Create here the service variables, like
+   /*# Input: Command to perform.
+      Can be one of:
+      - **del**: Delete the required records (@ DataContro.eid can be a single item or an array of items).
+      - **upd**: Update the specified eid.
+      - **add**: Adds a new record.
+   */
    cmd = ServiceVar( "The action that must be performed on the data", b.InputVarBinder )
+   
+   /*# Input: Confirm command.
+      If this input variable is "1", then a confirmation request is asked.
+      This is just securuity against user unwilling fault.
+   */
+   cnf = ServiceVar( "Set to 1 when need to be confirmed.", b.InputVarBinder )
+   
+   //# Entity (or array of entities) on which to perform the command.
    eid = ServiceVar( "Entity ID being modified", b.InputVarBinder )
+
+   //# Set to true when the operation succeded, false when failed.
    result = ServiceVar( "Count of affected rows, used for action effect rendering" )
+
+   //# Error raised by the DB on failure.
    dberror = ServiceVar( "Error returned by the DB when trying to perform the operation" )
 
-   /*# The entity must be specified directly. */
-   entity = nil
+   /*# DBEntity instance on which to operate.*/
+   entity = ServiceVar( "Entity instance or name in format \"db.entity\"", b.ConfigBinder )
 
-   /*# The data manager must be specified directly */
-   dm = nil
+   //# Handler for confirm requests -- if nil maps to self.
+   handler = ServiceVar( "Handler for confirm requests -- if nil maps to self", b.ConfigBinder )
 
-   function run()
+   //# Skin used for confirmation requests.
+   confirm_skin = ServiceVar( "Skin used for confirmation requests.", b.SkinBinder )
+
+   //# Optional view used during confirm.
+   view = ServiceVar( "Optional view used during confirm", b.ConfigBinder )
+   
+   //# cached entity, used internally
+   centity = nil
+   
+   function startup()
       if not self.checkAllowed(): return
       
-      if not self.dm or not self.entity
-         raise NestError( NestError.other, i"Data manager or entity not set" )
+      entity = self.entity.value
+      if Nest.pcheck
+         if not entity.derivedFrom( DBEntity )
+            raise NestError( NestError.pcheck, "", i"entity must be of DBEntity class" )
+         end
+
+         if self.view.value and not self.view.value.derivedFrom( DBView )
+            raise NestError( NestError.pcheck, "", i"view must be of DBView class" )
+         end
       end
+
+      if self.handler.value == nil
+         self.handler.value = Nest.pageLink()
+      end
+      
+      self.centity = entity
+   end
+   
+   function run()
+      if not self.checkAllowed(): return
 
       if not self.cmd.isSet
          Nest.logd( "Data Action: no action" )
          return
       end
-      
+
       action = self.cmd.value
-      dm = self.dm
-      entity = self.entity
+      entity = self.centity
       eid = self.eid.value
+
       Nest.logi( @"DataAction: $action $entity:$eid" )
-      
+
+      if self.cnf.value == "1"
+         self.askConfirm(action, eid)
+         return
+      end
+
       try
          switch action
             case "del"
                if eid.typeId() == StringType
-                  self.result.value = dm.delete( entity, eid )
+                  self.result.value = entity.delete( eid )
                else
-                  for key in eid: dm.delete( entity, key )
+                  for key in eid: entity.delete( key )
                end
                self.result.value = true
 
@@ -72,7 +123,7 @@ class DataControl( instance ) from Service( instance )
 
                if d
                   if Nest.log_level >= 3: Nest.logd( @"Adding data:" + d.describe() )
-                  self.result.value = dm.add( entity, d )  // on failure, add rasies
+                  self.result.value = entity.insert( d )  // on failure, add rasies
                else
                   self.dberror.value = i"No field to be added"
                end
@@ -81,11 +132,15 @@ class DataControl( instance ) from Service( instance )
                d = self.makeData()
                if d
                   if Nest.log_level >= 3: Nest.logd( @"Modifying data:" + d.describe() )
-                  dm.update( entity, eid, d )
+                  entity.update( eid, d )
                   self.result.value = true
                else
                   self.dberror.value = i"No field to be modified"
                end
+
+            default
+               // blind the skins.
+               self.cmd.value = nil
          end
       catch dbi.DBIError in dbierr
          // let the renderer take care of this
@@ -95,11 +150,7 @@ class DataControl( instance ) from Service( instance )
    end
 
    function makeData()
-      dbe = self.dm.getEntity( self.entity )
-      if not dbe
-         self.dberror.value = @i"Undefined database entity $(self.entity)"
-         return nil
-      end
+      dbe = self.centity
 
       d = [=>]
       for field in dbe.fields
@@ -111,4 +162,55 @@ class DataControl( instance ) from Service( instance )
 
       return d
    end
+
+   function askConfirm( cmd, eid )
+      Nest.logd( "Need confirm, putting data in result and asking for confirm" )
+      
+      if cmd == "del"
+         if eid.typeId() != ArrayType
+            eid = [eid]
+            self.eid.value = eid
+         end
+
+         self.askMultipleConfirm( eid )
+      else
+         self.result.value = self.makeData()
+         // another copy. Maybe clone would be ok, but I prefer to be sure.
+         data = self.makeData()
+
+         // should I render through a view?
+         view = self.view.value
+         if view
+            // can I specify the data?
+            view.apply( data )
+         end
+         self.cnf.value = data
+      end
+
+      self.skin.value = self.confirm_skin.value
+   end
+
+   
+   function askMultipleConfirm( eid )
+      // should I render through a view?
+      view = self.view.value
+      entity = self.centity
+      
+      if view
+         data = []
+         for id in eid
+            record = entity.find( id, view )
+            if record
+               data += record.specify()
+            else
+               Nest.logw( "EID not found: "+ eid )
+               data += eid
+            end
+         end
+         self.cnf.value = data
+      else
+         self.cnf.value = eid
+      end
+   end
+   
 end

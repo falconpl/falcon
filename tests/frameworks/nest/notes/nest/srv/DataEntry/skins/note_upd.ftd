@@ -14,7 +14,4 @@
       </p>
    <? end ?>
    </form>
-   <br/>
-   <p>Or just <a href="<?= Nest.pageLink('home') ?>">return to the main page</a>
-   without modifying this record.</p>
 <? end ?>

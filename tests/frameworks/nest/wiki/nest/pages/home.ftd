@@ -1,7 +1,6 @@
 <?
-   dm = Nest.dm( "DBIDataManager", "wiki_db" )
+   dm = Nest.dm( "wiki_db" )
    wiki = Nest.service("Wiki")
-   wiki.dm = dm
 ?>
 <html>
 <head>
@@ -67,7 +66,7 @@
 <p>This page shows a complete example of a simlple wiki system.</p>
 <table border="1" width="100%">
 <tr>
-   <td width="80%" style="padding:5pt; vertical-align:top"><?= wiki.render() ?></td>
+   <td width="80%" style="padding:5pt; vertical-align:top"><? wiki.render() ?></td>
    <td width="20%" style="padding:5pt; padding-top:10pt; vertical-align:top"><?= showNavi() ?></td>
 </tr>
 </table>

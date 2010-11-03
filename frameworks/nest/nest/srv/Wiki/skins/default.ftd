@@ -67,9 +67,9 @@
          <?= vars.page.content_html ?>
          <div id="nest_wiki_page_info">
             <p><i><?=  htmlEscape(vars.page.page_name) ?>, created by
-               <?= vars.page.creator ? vars.page.creator : i"Anonymous" ?> on <?= vars.page.created ?></i></p>
+               <?= vars.page.creator ? htmlEscape(vars.page.creator) : i"Anonymous" ?> on <?= vars.page.created ?></i></p>
             <? if vars.page.last_edited ?>
-               <p><i>Last edited by <?= vars.page.editor ? vars.page.editor : i"Anonymous" ?> on <?= vars.page.last_edited ?></i></p>
+               <p><i>Last edited by <?= vars.page.editor ? htmlEscape(vars.page.editor) : i"Anonymous" ?> on <?= vars.page.last_edited ?></i></p>
             <? end ?>
          </div>
       <? else ?>

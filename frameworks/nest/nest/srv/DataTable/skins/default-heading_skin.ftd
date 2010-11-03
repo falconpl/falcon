@@ -1,0 +1,15 @@
+<? function skin(s, srv) ?>
+   <!-- TODO: Add sorting control -->
+   <tr><?
+
+      for action in s.front_act
+         if action.allowed()
+            >> '<th class="nest_front_act">', action.prompt, '</th>'
+         end
+      end
+      
+      for col in s.view.titles(): >> '<th>', col, '</th>'
+      if s.back_act: >> '<th>', i"Actions", '</th>'
+
+   ?></tr>
+<? end ?>
