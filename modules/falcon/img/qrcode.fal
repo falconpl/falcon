@@ -160,7 +160,7 @@ class Maker
 
       filler = qr.QrFrameFiller(width, frame)
       if filler == nil
-         raise qr.QrError(qr.QrError.encoding_error, "error creating frame filler")
+         raise qr.QrError(qr.QrError.encoding_error, i"error creating frame filler")
       end
 
       for i in [0:raw.dataLength + raw.eccLength]
@@ -194,7 +194,7 @@ class Maker
       end
 
       if masked == nil
-         raise qr.QrError(qr.QrError.encoding_error, "error masking frame")
+         raise qr.QrError(qr.QrError.encoding_error, i"error masking frame")
       end
 
       return Image(version, width, masked, self)

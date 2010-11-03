@@ -96,7 +96,7 @@ class QrBitStream(size)
 
    function newFromBytes(size, data)
       if data == nil
-         raise QrError(QrError.invalid_param, "data is null")
+         raise QrError(QrError.invalid_param, i"data is null")
       end
 
       dataLength = len(data)
@@ -121,7 +121,7 @@ class QrBitStream(size)
 
    function append(bitStream)
       if bitStream == nil
-         raise QrError(QrError.invalid_param, "bitStream is null")
+         raise QrError(QrError.invalid_param, i"bitStream is null")
       end
 
       self.data += bitStream.data
@@ -136,7 +136,7 @@ class QrBitStream(size)
 
    function appendBytes(size, data)
       if data == nil
-         raise QrError(QrError.invalid_param, "data is null")
+         raise QrError(QrError.invalid_param, i"data is null")
       end
 
       if size != 0
@@ -203,7 +203,7 @@ class QrInputItem(mode, size, data, bitStream)
 
    init
       if data == nil
-         raise QrError(QrError.invalid_param, "data is null")
+         raise QrError(QrError.invalid_param, i"data is null")
       end
 
       dataLength = len(data)
@@ -366,7 +366,7 @@ class QrInputItem(mode, size, data, bitStream)
    end
 
    function encodeBitStream(version)
-      words = QrSpec.maxWords(self._mode, version)
+      words = QrSpec.getMaxWords(self._mode, version)
 
       if self._size > words
          inputItem1 = QrInputItem(self._mode, words, self._data)
@@ -458,30 +458,6 @@ class QrInput(version, errorCorrectionLevel)
       arrayIns(self._items, 0, entry)
    end
 
-   function calcParity()
-      parity = 0
-
-      for item in self._items
-         if item.mode != QrMode.structure
-            for i in [item.size - 1:0:-1]
-               parity ^= item.data[i]
-            end
-         end
-      end
-
-      return parity
-   end
-
-   function _checkModeNum(size, data)
-      for i in [0:size]
-         if (data[i][*0] < "0"[*0]) or (data[i][*0] > "9"[*0])
-            return false
-         end
-      end
-
-      return true
-   end
-
    function estimateBitsModeNum(size)
       w = int(size / 3)
       bits = w * 10
@@ -500,16 +476,6 @@ class QrInput(version, errorCorrectionLevel)
       return c > 127 ? -1 : QrAnTable[c]
    end
 
-   function _checkModeAn(size, data)
-      for i in [0:size]
-         if self.lookAnTable(data[i][*0]) == -1
-            return false
-         end
-      end
-
-      return true
-   end
-
    function estimateBitsModeAn(size)
       w = int(size / 2)
       bits = w * 11
@@ -524,18 +490,6 @@ class QrInput(version, errorCorrectionLevel)
 
    function estimateBitsModeKanji(size)
       return int((size / 2) * 13)
-   end
-
-   function _checkModeKanji(size, data)
-      for i in [0:size]
-         val = data[i][*0]
-         // if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
-         if val < 0x3000
-            return false
-         end
-      end
-
-      return true
    end
 
    function checkMode(mode, size, data)
@@ -604,7 +558,7 @@ class QrInput(version, errorCorrectionLevel)
          size = 0
       end
 
-      maxsize = QrSpec.maxWords(mode, version)
+      maxsize = QrSpec.getMaxWords(mode, version)
       if size < 0: size = 0
       if size > maxsize: size = maxsize
 
@@ -692,6 +646,38 @@ class QrInput(version, errorCorrectionLevel)
    function getByteStream()
       bitStream = self.getBitStream()
       return bitStream.toByte()
+   end
+
+   function _checkModeNum(size, data)
+      for i in [0:size]
+         if (data[i][*0] < "0"[*0]) or (data[i][*0] > "9"[*0])
+            return false
+         end
+      end
+
+      return true
+   end
+
+   function _checkModeAn(size, data)
+      for i in [0:size]
+         if self.lookAnTable(data[i][*0]) == -1
+            return false
+         end
+      end
+
+      return true
+   end
+
+   function _checkModeKanji(size, data)
+      for i in [0:size]
+         val = data[i][*0]
+         // if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
+         if val < 0x3000
+            return false
+         end
+      end
+
+      return true
    end
 end
 
@@ -832,7 +818,7 @@ class QrMask(maker)
       return masked
    end
 
-   function calcN1N3(length)
+   function calculateN1N3(length)
       demerit = 0
 
       for i in [0:length]
@@ -890,7 +876,7 @@ class QrMask(maker)
             end
          end
 
-         demerit += self.calcN1N3(head + 1)
+         demerit += self.calculateN1N3(head + 1)
       end
 
       for x in [0:width]
@@ -912,7 +898,7 @@ class QrMask(maker)
             end
          end
 
-         demerit += self.calcN1N3(head + 1)
+         demerit += self.calculateN1N3(head + 1)
       end
 
       return demerit
@@ -1133,6 +1119,60 @@ class QrSplit(data, input, mode)
       return QrMode.eight_bit
    end
 
+   function splitString()
+      while len(self._data) > 0
+         if self._data == '': break
+
+         mode = self.identifyMode(0)
+
+         if mode == QrMode.num
+            length = self._eatNum()
+         elif mode == QrMode.an
+            length = self._eatAn()
+         elif mode == QrMode.kanji
+            if self._mode == QrMode.kanji
+               length = self._eatKanji()
+            else
+               length = self._eatEightBit()
+            end
+         else
+            length = self._eatEightBit()
+         end
+
+         if length > 0: self._data = strBack(self._data, len(self._data) - length)
+      end
+   end
+
+   function toUpper()
+      stringLength = len(self._data)
+      p = 0
+      while p < stringLength
+         mode = self.identifyMode(strBack(self._data, stringLength - p), self._mode)
+         if mode == QrMode.kanji
+            p += 2
+         else
+            if self._data[*p] >= 'a'[*0] and self._data[*p] <= 'z'[*0]
+               self._data[p] = chr(self._data[*p] - 32)
+            end
+            p++
+         end
+      end
+
+      return self._data
+   end
+
+   function splitStringToInput(string, input, mode, caseSensitive)
+      if caseSensitive == nil: caseSensitive = true
+      if string == nil or string == "\x0" or string == ""
+         raise QrError(QrError.invalid_param, i"string is empty")
+      end
+
+      split = QrSplit(string, input, mode)
+
+      if not caseSensitive: split.toUpper()
+      split.splitString()
+   end
+
    function _eatNum()
       length = QrSpec.lengthIndicator(QrMode.num, self._input.version)
 
@@ -1145,7 +1185,7 @@ class QrSplit(data, input, mode)
          dif = QrInput.estimateBitsModeNum(run) + 4 + length \
             + QrInput.estimateBitsMode8(1) \
             - QrInput.estimateBitsMode8(run + 1)
-         if dif > 0: return self._eat8()
+         if dif > 0: return self._eatEightBit()
       end
 
       if mode == QrMode.an
@@ -1187,7 +1227,7 @@ class QrSplit(data, input, mode)
          dif = QrInput.estimateBitsModeAn(run) + 4 + lengthAn \
             + QrInput.estimateBitsMode8(1) \
             - QrInput.estimateBitsMode8(run + 1)
-         if dif > 0: return self._eat8()
+         if dif > 0: return self._eatEightBit()
       end
 
       self._input.append(QrMode.an, run, strSplit(self._data))
@@ -1202,7 +1242,7 @@ class QrSplit(data, input, mode)
       return run
    end
 
-   function _eat8()
+   function _eatEightBit()
       lengthAn = QrSpec.lengthIndicator(QrMode.an, self._input.version)
       lengthNum = QrSpec.lengthIndicator(QrMode.num, self._input.version)
 
@@ -1241,60 +1281,6 @@ class QrSplit(data, input, mode)
       self._input.append(QrMode.eight_bit, run, strSplit(self._data))
       return run
    end
-
-   function splitString()
-      while len(self._data) > 0
-         if self._data == '': break
-
-         mode = self.identifyMode(0)
-
-         if mode == QrMode.num
-            length = self._eatNum()
-         elif mode == QrMode.an
-            length = self._eatAn()
-         elif mode == QrMode.kanji
-            if self._mode == QrMode.kanji
-               length = self._eatKanji()
-            else
-               length = self._eat8()
-            end
-         else
-            length = self._eat8()
-         end
-
-         if length > 0: self._data = strBack(self._data, len(self._data) - length)
-      end
-   end
-
-   function toUpper()
-      stringLength = len(self._data)
-      p = 0
-      while p < stringLength
-         mode = self.identifyMode(strBack(self._data, stringLength - p), self._mode)
-         if mode == QrMode.kanji
-            p += 2
-         else
-            if self._data[*p] >= 'a'[*0] and self._data[*p] <= 'z'[*0]
-               self._data[p] = chr(self._data[*p] - 32)
-            end
-            p++
-         end
-      end
-
-      return self._data
-   end
-
-   function splitStringToInput(string, input, modeHint, caseSensitive)
-      if caseSensitive == nil: caseSensitive = true
-      if string == nil or string == "\x0" or string == ""
-         raise QrError(QrError.invalid_param, i'string is empty')
-      end
-
-      split = QrSplit(string, input, modeHint)
-
-      if not caseSensitive: split.toUpper()
-      split.splitString()
-   end
 end
 
 //------------------------------------------------------------------------------
@@ -1314,7 +1300,7 @@ object QrImage
 
    function _image(frame, pixelPerPoint, outerFrame)
       if frame == nil
-         raise QrError(QrError.invalid_param, "frame is null")
+         raise QrError(QrError.invalid_param, i"frame is null")
       end
 
       if pixelPerPoint == nil: pixelPerPoint = 4
@@ -1380,7 +1366,7 @@ class QrRawCode(input)
 
    init
       if input == nil
-         raise QrError(QrError.invalid_param, "input is null")
+         raise QrError(QrError.invalid_param, i"input is null")
       end
 
       spec = [0, 0, 0, 0, 0]
@@ -1546,7 +1532,7 @@ class QrFrameFiller(width, frame)
          end
 
          if x < 0 or y < 0
-            raise QrError(QrError.encoding_error, "error masking frame")
+            raise QrError(QrError.encoding_error, i"error masking frame")
          end
 
          self._x = x
@@ -1782,7 +1768,7 @@ class QrSpec
       return QrLengthTableBits[mode][length]
    end
 
-   function maxWords(mode, version)
+   function getMaxWords(mode, version)
       if mode == QrMode.structure: return 3
       length = 0
 
@@ -2019,7 +2005,7 @@ class QrSpec
       end
 
       if self.frames[version] == nil
-         raise QrError(QrError.encoding_error, "error creating frame")
+         raise QrError(QrError.encoding_error, i"error creating frame")
       end
 
       return self.frames[version]
