@@ -4,18 +4,19 @@
    FILE: lib.fal
 
    Read and parses creole WIKI data.
-   -------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    Author: Giuseppe Greco
    Begin: Wed, 27 Oct 2010 13:11:50 +0200
 
-   -------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-
 import from gd2
+
+const MaxInt = 2147483647
 
 enum QrMode
    null = -1
@@ -33,9 +34,7 @@ enum QrErrorCorrectionLevel
    H = 3
 end
 
-//===============================================================================
-
-
+//==============================================================================
 
 class QrError(code, desc, extra) from Error(code, desc, extra)
    invalid_param = 10001
@@ -63,12 +62,7 @@ class QrError(code, desc, extra) from Error(code, desc, extra)
    end
 end
 
-
-//===============================================================================
-
-
-
-
+//==============================================================================
 
 class QrBitStream(size)
    data = nil
@@ -151,7 +145,7 @@ class QrBitStream(size)
 
    function toByte()
       size = self.data.len()
-      if size == 0; return []; end
+      if size == 0: return []
 
       data = arrayBuffer(int((size + 7) / 8), 0)
       bytes = int(size / 8)
@@ -181,6 +175,7 @@ class QrBitStream(size)
    end
 end
 
+//==============================================================================
 
 enum QrInputConst
    structure_header_bits = 20
@@ -209,10 +204,10 @@ class QrInputItem(mode, size, data, bitStream)
          raise QrError(QrError.invalid_param, "data is null")
       end
 
-      l = len(data)
-      if size and size < l
-         // zer oextra bytes
-         data[size:] = arrayBuffer(size - len(data), 0)
+      dataLen = len(data)
+      if size and size < dataLen
+         // zero extra bytes
+         data[size:] = arrayBuffer(size - dataLen, 0)
       end
 
       if not QrInput.checkMode(mode, size, data)
@@ -344,8 +339,7 @@ class QrInputItem(mode, size, data, bitStream)
 
    function estimateBitStreamSizeOfEntry(version)
       bits = 0
-
-      if version == 0; version = 1; end
+      if version == 0: version = 1
 
       if self._mode == QrMode.num
          bits = QrInput.estimateBitsModeNum(self._size)
@@ -402,10 +396,7 @@ class QrInputItem(mode, size, data, bitStream)
    end
 end
 
-
-
 //===============================================================================
-
 
 enum QrMaskConst
    n1 = 3
@@ -414,7 +405,7 @@ enum QrMaskConst
    n4 = 10
 end
 
-class QrMask( maker )
+class QrMask(maker)
    _runLen = nil
    _maker = maker
 
@@ -492,7 +483,7 @@ class QrMask( maker )
    end
 
    function makeMaskNo(maskNo, width, frame, mask, maskGenOnly)
-      if maskGenOnly == nil; maskGenOnly = false; end
+      if maskGenOnly == nil: maskGenOnly = false
 
       b = 0
       bitMask = []
@@ -516,7 +507,7 @@ class QrMask( maker )
          bitMask = self.generateMaskNo(maskNo, width, frame, mask)
       end
 
-      if maskGenOnly; return; end
+      if maskGenOnly: return
 
       mask = clone(frame)
 
@@ -578,13 +569,13 @@ class QrMask( maker )
          self._runLen[0] = 1
 
          frameY = frame[y]
-         if y > 0; frameYM = frame[y - 1]; end
+         if y > 0: frameYM = frame[y - 1]
 
          for x in [0:width]
             if x > 0 and y > 0
                b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
                w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
-               if (b22 || (w22 ^^ 1)) && 1; demerit += QrMaskConst.n2; end
+               if (b22 || (w22 ^^ 1)) && 1: demerit += QrMaskConst.n2
             end
             if x == 0 and (frameY[*x] && 1)
                self._runLen[0] = -1
@@ -629,7 +620,7 @@ class QrMask( maker )
    end
 
    function mask(width, frame, errorCorrectionLevel)
-      minDemerit = 2147483647 // to be replaced with constant
+      minDemerit = MaxInt
       bestMaskNum = 0
       bestMask = []
       checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -667,20 +658,19 @@ class QrMask( maker )
    end
 end
 
-
-//=======================================================================
-
+//==============================================================================
 
 class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
-   mm = 0
    _nn = 0
    _alphaTo = nil
    _indexOf = nil
    _genpoly = nil
+   _iprim = 0
+
+   mm = 0
    nroots = 0
    fcr = 0
    prim = 0
-   _iprim = 0
    pad = 0
    gfpoly = 0
 
@@ -712,7 +702,7 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
          self._indexOf[sr] = i
          self._alphaTo[i] = sr
          sr <<= 1
-         if sr && (1 << symsize); sr ^= gfpoly; end
+         if sr && (1 << symsize): sr ^= gfpoly
          sr &= self._nn
       end
 
@@ -762,7 +752,7 @@ class QrRsItem(symsize, gfpoly, fcr, prim, nroots, pad)
             end
          end
 
-         if len(parity) > 0; arrayRemove(parity, 0); end
+         if len(parity) > 0: arrayRemove(parity, 0)
          if feedback != self._nn
             arrayAdd(parity, self._alphaTo[self._modnn(feedback + self._genpoly[0])])
          else
@@ -786,12 +776,12 @@ class QrRs
 
    function getItem(symsize, gfpoly, fcr, prim, nroots, pad)
       for rs in self._items
-         if rs.pad != pad; continue; end
-         if rs.nroots != nroots; continue; end
-         if rs.mm != symsize; continue; end
-         if rs.gfpoly != gfpoly; continue; end
-         if rs.fcr != fcr; continue; end
-         if rs.prim != prim; continue; end
+         if rs.pad != pad: continue
+         if rs.nroots != nroots: continue
+         if rs.mm != symsize: continue
+         if rs.gfpoly != gfpoly: continue
+         if rs.fcr != fcr: continue
+         if rs.prim != prim: continue
          return rs;
       end
 
@@ -802,11 +792,7 @@ class QrRs
    end
 end
 
-
-
-
-//=================================================================================
-
+//==============================================================================
 
 class QrInput(version, errorCorrectionLevel)
    _version = 0
@@ -814,8 +800,8 @@ class QrInput(version, errorCorrectionLevel)
    _errorCorrectionLevel = 0
 
    init
-      if version == nil; version = 0; end
-      if errorCorrectionLevel == nil; errorCorrectionLevel = QrErrorCorrectionLevel.L; end
+      if version == nil: version = 0
+      if errorCorrectionLevel == nil: errorCorrectionLevel = QrErrorCorrectionLevel.L
 
       self._version = version
       self.errorCorrectionLevel = errorCorrectionLevel
@@ -924,7 +910,7 @@ class QrInput(version, errorCorrectionLevel)
       w = int(size / 2)
       bits = w * 11
 
-      if size && 1; bits += 6; end
+      if size && 1: bits += 6
       return bits
    end
 
@@ -939,7 +925,7 @@ class QrInput(version, errorCorrectionLevel)
    function _checkModeKanji(size, data)
       for i in [0:size]
          val = data[i][*0]
-         //if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
+         // if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
          if val < 0x3000
             return false
          end
@@ -1003,7 +989,7 @@ class QrInput(version, errorCorrectionLevel)
          chunks = int(payload / 11)
          remain = payload - chunks * 11
          size = chunks * 2
-         if remain >= 6; size++; end
+         if remain >= 6: size++
       elif mode == QrMode.eight_bit
          size = int(payload / 8)
       elif mode == QrMode.kanji
@@ -1015,8 +1001,8 @@ class QrInput(version, errorCorrectionLevel)
       end
 
       maxsize = QrSpec.maxWords(mode, version)
-      if size < 0; size = 0; end
-      if size > maxsize; size = maxsize; end
+      if size < 0: size = 0
+      if size > maxsize: size = maxsize
 
       return size;
    end
@@ -1054,7 +1040,7 @@ class QrInput(version, errorCorrectionLevel)
       maxWords = QrSpec.getDataLength(self.version, self.errorCorrectionLevel)
       maxBits = maxWords * 8
 
-      if maxBits == bits; return; end
+      if maxBits == bits: return
 
       if maxBits - bits < 5
          bitStream.appendNum(maxBits - bits, 0)
@@ -1105,9 +1091,7 @@ class QrInput(version, errorCorrectionLevel)
    end
 end
 
-
 //===============================================================================
-
 
 class QrSplit(data, input, mode)
    _data = nil
@@ -1121,17 +1105,17 @@ class QrSplit(data, input, mode)
    end
 
    function isDigitAt(str, pos)
-      if pos >= len(str); return false; end
+      if pos >= len(str): return false
       return str[*pos] >= '0'[*0] and str[*pos] <= '9'[*0]
    end
 
    function isAlNumAt(str, pos)
-      if pos >= len(str); return false; end
+      if pos >= len(str): return false
       return QrInput.lookAnTable(str[*pos]) >= 0
    end
 
    function identifyMode(pos)
-      if pos >= len(self._data); return QrMode.null; end
+      if pos >= len(self._data): return QrMode.null
 
       if self.isDigitAt(self._data, pos)
          return QrMode.num;
@@ -1139,7 +1123,7 @@ class QrSplit(data, input, mode)
          return QrMode.an;
       elif self._mode == QrMode.kanji
          word = self._data[*pos]
-         //if (word >= 0x1000 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
+         // if (word >= 0x1000 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
          // Our kanjis are in the UNICODE range, not in shift-jis
          if word >= 0x3040 and word <= 0x4db0
             return QrMode.kanji
@@ -1161,14 +1145,14 @@ class QrSplit(data, input, mode)
          dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
             + QrInput.estimateBitsMode8(1) \
             - QrInput.estimateBitsMode8(run + 1)
-         if dif > 0; return self._eat8(); end
+         if dif > 0: return self._eat8()
       end
 
       if mode == QrMode.an
          dif = QrInput.estimateBitsModeNum(run) + 4 + ln \
             + QrInput.estimateBitsModeAn(1) \
             - QrInput.estimateBitsModeAn(run + 1)
-         if dif > 0; return self._eatAn(); end
+         if dif > 0: return self._eatAn()
       end
 
       self._input.append(QrMode.num, run, strSplit(self._data))
@@ -1203,7 +1187,7 @@ class QrSplit(data, input, mode)
          dif = QrInput.estimateBitsModeAn(run) + 4 + la \
             + QrInput.estimateBitsMode8(1) \
             - QrInput.estimateBitsMode8(run + 1)
-         if dif > 0; return self._eat8(); end
+         if dif > 0: return self._eat8()
       end
 
       self._input.append(QrMode.an, run, strSplit(self._data))
@@ -1226,7 +1210,7 @@ class QrSplit(data, input, mode)
       dataLen = len(self._data)
       while run < dataLen
          mode = self.identifyMode(run)
-         if mode == QrMode.kanji; break; end
+         if mode == QrMode.kanji: break
          if mode == QrMode.num
             q = run
             while self.isDigitAt(self._data, q); q++; end
@@ -1260,7 +1244,7 @@ class QrSplit(data, input, mode)
 
    function splitString()
       while len(self._data) > 0
-         if self._data == ''; break; end
+         if self._data == '': break
 
          mode = self.identifyMode(0)
 
@@ -1278,7 +1262,7 @@ class QrSplit(data, input, mode)
             length = self._eat8()
          end
 
-         if length > 0; self._data = strBack(self._data, len(self._data) - length); end
+         if length > 0: self._data = strBack(self._data, len(self._data) - length)
       end
    end
 
@@ -1301,22 +1285,19 @@ class QrSplit(data, input, mode)
    end
 
    function splitStringToInput(string, input, modeHint, caseSensitive)
-      if caseSensitive == nil; caseSensitive = true; end
+      if caseSensitive == nil: caseSensitive = true
       if string == nil or string == "\x0" or string == ""
          raise QrError(QrError.invalid_param, i'string is empty')
       end
 
       split = QrSplit(string, input, modeHint)
 
-      if not caseSensitive; split.toUpper(); end
+      if not caseSensitive: split.toUpper()
       split.splitString()
    end
 end
 
-
-//===============================================================================
-
-
+//==============================================================================
 
 object QrImage
    function png(frame, outFile, pixelPerPoint, outerFrame)
@@ -1324,8 +1305,8 @@ object QrImage
       img.Png(outFile)
    end
 
-   function jpg(frame, outFile, pixelPerPoint, outerFrame, q )
-      if q == nil; q = 85; end
+   function jpg(frame, outFile, pixelPerPoint, outerFrame, q)
+      if q == nil: q = 85
 
       img = self._image(frame, pixelPerPoint, outerFrame)
       img.Jpeg(outFile, q)
@@ -1336,8 +1317,8 @@ object QrImage
          raise QrError(QrError.invalid_param, "frame is null")
       end
 
-      if pixelPerPoint == nil; pixelPerPoint = 4; end
-      if outerFrame == nil; outerFrame = 4; end
+      if pixelPerPoint == nil: pixelPerPoint = 4
+      if outerFrame == nil: outerFrame = 4
 
       h = len(frame)
       w = len(frame[0])
@@ -1368,8 +1349,8 @@ object QrImage
    end
 end
 
+//==============================================================================
 
-//=====================================================================
 class QrRsBlock(dataLen, data, eccLen, ecc, rsItem)
    dataLen = 0
    data = nil
@@ -1395,7 +1376,6 @@ class QrRawCode(input)
    _blockNum = 0
    _blockNum1 = 0
    _count = 0
-
    _qrrs = QrRs()
 
    init
@@ -1413,7 +1393,6 @@ class QrRawCode(input)
       self._eccLen = QrSpec.rsEccLength(spec)
       self._ecc = arrayBuffer(self._eccLen, 0)
       self._blockNum = QrSpec.rsBlockNum(spec)
-
       self._initialize(spec)
    end
 
@@ -1578,8 +1557,7 @@ class QrFrameFiller(width, frame)
    end
 end
 
-
-//============================================================================
+//==============================================================================
 
 class QrTools
    function binarize(frame)
@@ -1625,9 +1603,7 @@ class QrTools
    end
 end
 
-
-//============================================================================
-// QRSpec
+//==============================================================================
 
 enum QrSpecConst
     max_version = 40
@@ -1785,14 +1761,14 @@ class QrSpec
     function getMinVersion(size, errorCorrectionLevel)
         for i in [1:QrSpecConst.max_version + 1]
             words = QrCapacity[i][QrCapConst.words] - QrCapacity[i][QrCapConst.ec][errorCorrectionLevel]
-            if words >= size; return i; end
+            if words >= size: return i
         end
 
         raise QrError(QrError.version_not_found)
     end
 
     function lengthIndicator(mode, version)
-        if mode == QrMode.structure; return 0; end
+        if mode == QrMode.structure: return 0
         l = 0
 
         if version <= 9
@@ -1807,7 +1783,7 @@ class QrSpec
     end
 
     function maxWords(mode, version)
-        if mode == QrMode.structure; return 3; end
+        if mode == QrMode.structure: return 3
         l = 0
 
         if version <= 9
@@ -1820,13 +1796,13 @@ class QrSpec
 
         bits = QrLengthTableBits[mode][l]
         words = (1 << bits) - 1
-        if mode == QrMode.kanji; words *= 2; end
+        if mode == QrMode.kanji: words *= 2
 
         return words
     end
 
     function getEccSpec(version, errorCorrectionLevel, spec)
-        if len(spec) < 5; spec = [0, 0, 0, 0, 0]; end
+        if len(spec) < 5: spec = [0, 0, 0, 0, 0]
 
         b1 = QrEccTable[version][errorCorrectionLevel][0]
         b2 = QrEccTable[version][errorCorrectionLevel][1]
@@ -1866,7 +1842,7 @@ class QrSpec
     end
 
     function putAlignmentPattern(version, frame, width)
-        if version < 2; return; end
+        if version < 2: return
 
         d = QrAlignmentPattern[version][1] - QrAlignmentPattern[version][0]
         if d < 0
@@ -2030,7 +2006,7 @@ class QrSpec
                     inputStream = InputStream(fileName)                    
                     ds = deserialize(inputStream)
                     self.frames[version] = ds
-                    //inputStream.close()
+                    // inputStream.close()
                 else
                     ver = self.createFrame(version)
                     outputStream = OutputStream(fileName)
@@ -2075,8 +2051,7 @@ function QrStr_set(srctab, x, y, repl, replen)
    end
 
    delta = srclen - parlen
-   if delta > 0; substr += strBack(srctab[y], delta); end
+   if delta > 0: substr += strBack(srctab[y], delta)
 
    return (srctab[y] = substr)
 end
-
