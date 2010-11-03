@@ -189,7 +189,7 @@ public:
     virtual void close();
 
     static void throwError( const char* file, int line, PGresult* res );
-
+    PGresult* internal_exec( const String& sql, int64& affectedRows );
 };
 
 #if 0

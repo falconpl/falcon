@@ -844,6 +844,37 @@ void DBIHandlePgSQL::rollback()
 }
 
 
+PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows )
+{
+    fassert( m_conn );
+
+    AutoCString cStr( sql );
+    PGresult* res = PQexec( m_conn, cStr.c_str() );
+
+    if ( res == NULL )
+        throwError( __FILE__, __LINE__, res );
+
+    ExecStatusType st = PQresultStatus( res );
+    if ( st != PGRES_TUPLES_OK
+        && st != PGRES_COMMAND_OK )
+        throwError( __FILE__, __LINE__, res );
+
+    const char* num = PQcmdTuples( res );
+    if ( num && num[0] != '\0' )
+        affectedRows = atoi( num );
+    else
+        affectedRows = -1;
+
+    if ( st == PGRES_TUPLES_OK )
+        return res;
+    else
+    {
+        PQclear( res );
+        return NULL;
+    }
+}
+
+
 DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
     if ( m_conn == 0 )
@@ -860,22 +891,9 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, con
     else
         output = sql;
 
-    AutoCString cStr( output );
-    PGresult* res = PQexec( m_conn, cStr.c_str() );
-
-    if ( res == NULL )
-        throwError( __FILE__, __LINE__, res );
-
-    ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_TUPLES_OK
-        && st != PGRES_COMMAND_OK )
-        throwError( __FILE__, __LINE__, res );
-
-    char* num = PQcmdTuples( res );
-    if ( num && num[0] != '\0' )
-        affectedRows = atoi( num );
-    else
-        affectedRows = -1;
+    PGresult* res = internal_exec( output, affectedRows );
+    if ( res == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
 
     return new DBIRecordsetPgSQL( this, res );
 }
@@ -897,28 +915,31 @@ void DBIHandlePgSQL::perform( const String &sql, int64 &affectedRows, const Item
     else
         output = sql;
 
-    AutoCString cStr( output );
-    PGresult* res = PQexec( m_conn, cStr.c_str() );
-
-    if ( res == NULL )
-        throwError( __FILE__, __LINE__, res );
-
-    ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_TUPLES_OK
-        && st != PGRES_COMMAND_OK )
-        throwError( __FILE__, __LINE__, res );
-
-    char* num = PQcmdTuples( res );
-    if ( num && num[0] != '\0' )
-        affectedRows = atoi( num );
-    else
-        affectedRows = -1;
+    PGresult* res = internal_exec( output, affectedRows );
+    if ( res )
+        PQclear( res );
 }
 
 
 DBIRecordset* DBIHandlePgSQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-    return 0;
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    String output;
+    if ( params.length() != 0 )
+    {
+        if ( !dbi_sqlExpand( sql, output, params ) )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+        }
+        output.prepend( "EXECUTE " );
+    }
+    else
+        output = "EXECUTE " + sql;
+
+    PGresult* res = internal_exec( output, affectedRows );
+    return res != 0 ? new DBIRecordsetPgSQL( this, res ) : NULL;
 }
 
 
