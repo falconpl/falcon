@@ -32,10 +32,10 @@ import from self.lib in qr
    import from img.qrcode in qr
 
    // Generates a QR Code image with a utf-8 encded text
-   img = qr.Maker().text( "Hello world", qr.ECL.L, "utf-8" )
+   img = qr.Maker().text("Hello world", qr.ECL.L, "utf-8")
 
    // Save it as a PNG with 3 pixels per bit and 2 pixels of white border.
-   img.savePng( "hello.png", 3, 2 )
+   img.savePng("hello.png", 3, 2)
    @endcodce
 
    The library has support for dumping the image directly to an arbitrary stream
@@ -104,14 +104,14 @@ class Maker
 
    /*# Encode a text oriented string.
       @param text The text to be encoded
-      @optparam clevel The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
       @optparam encoding Optional text encoding for the final output.
       @optparam caseSensitive Set to false to create alphanumeric sequences.
 
       @see Maker.ECL
    */
-   function text(text, clevel, encoding, caseSensitive)
-      qrinput = self._getInput(clevel)
+   function text(text, errorCorrectionLevel, encoding, caseSensitive)
+      qrinput = self._getInput(errorCorrectionLevel)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
@@ -125,30 +125,30 @@ class Maker
 
    /*# Encode raw binary data.
       @param text The text to be encoded
-      @optparam cLevel The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLLevel The error correction level (defaults to ECL.L).
 
       @see Maker.ECL
    */
-   function raw(data, cLevel)
-      qrinput = self._getInput(cLevel)
+   function raw(data, errorCorrectionLevel)
+      qrinput = self._getInput(errorCorrectionLevel)
       qrinput.append(qr.QrMode.eight_bit, len(data), data)
       return self._encodeInput(qrinput)
    end
 
-   function encodeStruct(data, cLevel)
+   function encodeStruct(data, errorCorrectionLevel)
       // TODO
    end
 
    /* Private part */
 
-   function _getInput(clevel)
-      if clevel == nil: clevel = qr.QrErrorCorrectionLevel.L
-      if clevel < qr.QrErrorCorrectionLevel.L \
-         or clevel > qr.QrErrorCorrectionLevel.H
-            raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(clevel) not supported')
+   function _getInput(errorCorrectionLevel)
+      if errorCorrectionLevel == nil: errorCorrectionLevel = qr.QrErrorCorrectionLevel.L
+      if errorCorrectionLevel < qr.QrErrorCorrectionLevel.L \
+         or errorCorrectionLevel > qr.QrErrorCorrectionLevel.H
+            raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) is not supported')
       end
 
-      return qr.QrInput(0, clevel)
+      return qr.QrInput(0, errorCorrectionLevel)
    end
 
    function _encodeMask(qrinput, mask)
@@ -156,14 +156,14 @@ class Maker
       raw = qr.QrRawCode(qrinput)
       version = raw.version
       width = spec.getWidth(version)
-      frame = spec.newFrame(version, self.cache_dir )
+      frame = spec.newFrame(version, self.cache_dir)
 
       filler = qr.QrFrameFiller(width, frame)
       if filler == nil
          raise qr.QrError(qr.QrError.encoding_error, "error creating frame filler")
       end
 
-      for i in [0:raw.dataLen + raw.eccLen]
+      for i in [0:raw.dataLength + raw.eccLength]
          code = raw.getCode()
          bit = 0x80
          for j in [0:8]
