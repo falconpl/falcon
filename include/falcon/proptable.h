@@ -68,7 +68,7 @@ struct PropEntry
    void *reflect_data;
 
    /** Default value of the property */
-   Item m_value;
+   SafeItem m_value;
 
    union {
       uint32 offset;

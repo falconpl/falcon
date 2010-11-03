@@ -138,6 +138,14 @@ void Error::decref()
 
 String &Error::toString( String &target ) const
 {
+   // recursive stringation
+   if ( m_nextError != 0 )
+   {
+      m_nextError->toString( target );
+      target += "\n   =======================================\n";
+      target += "   Previeus error boxed in: \n\n";
+   }
+
    heading( target );
    target += "\n";
 
@@ -155,10 +163,6 @@ String &Error::toString( String &target ) const
           iter = iter->next();
       }
    }
-
-   // recursive stringation
-   if ( m_nextError != 0 )
-      m_nextError->toString( target );
 
    return target;
 }

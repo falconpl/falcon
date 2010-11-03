@@ -176,13 +176,13 @@ bool StringTable::load( Stream *in )
    {
       String *str = new String();
       // deserialize and create self-destroying static strings.
-      if ( ! str->deserialize( in, true ) ) {
+      if ( ! str->deserialize( in, false ) ) {
          delete str;
          return false;
       }
 
-	  // consider the strings in the string table static.
-	  // the destructor will destroy the data anyhow, as we have an allocated data
+      // consider the strings in the string table static.
+      // the destructor will destroy the data anyhow, as we have an allocated data
       add( str );
    }
 

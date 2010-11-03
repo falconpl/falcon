@@ -1,0 +1,4 @@
+type = Nest.DM.DBI
+connect = vmSystemType() == "WIN" ? \
+            "sqlite3:db=C:\\Temp\\notes.db" : \
+            "sqlite3:db=/tmp/notes.db"

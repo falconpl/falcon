@@ -100,7 +100,7 @@ void CoreClass::gcMark( uint32 gen )
       }
 
       // and our module
-      m_lmod->mark( gen );
+      m_lmod->gcMark( gen );
    }
 }
 

@@ -387,8 +387,9 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    LiveModule *livemod = prelink( mod, isMainModule, bPrivate );
 
    if ( livemod && completeModLink( livemod ) )
+   {
       return livemod;
-
+   }
    return 0;
 }
 
@@ -420,9 +421,6 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    // set this as the main module if required.
    if ( isMainModule )
       m_mainModule = livemod;
-
-   // no need to free on failure: livemod are garbaged
-   livemod->mark( generation() );
 
    // then we always need the symbol table.
    const SymbolTable *symtab = &livemod->module()->symbolTable();
@@ -456,6 +454,8 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    // return zero and dispose of the module if not succesful.
    if ( ! success )
    {
+      // no need to free on failure: livemod are garbaged
+      livemod->mark( 0 );
       // LiveModule is garbageable, cannot be destroyed.
       return 0;
    }
@@ -463,7 +463,6 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    // We can now add the module to our list of available modules.
    m_liveModules.insert( &livemod->name(), livemod );
    livemod->initialized( LiveModule::init_complete );
-   livemod->mark( generation() );
 
    return livemod;
 }
@@ -693,7 +692,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
          localSymName = sym->getImportAlias()->name();
    }
 
-   // If we found it it...
+   // If we found it...
    if ( lmod != 0 )
    {
       Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
@@ -718,7 +717,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
             // be sure to allocate enough space in the module global table.
             if ( newsym->itemId() >= lmod->globals().length() )
             {
-               lmod->globals().resize( newsym->itemId() );
+               lmod->globals().resize( newsym->itemId()+1 );
             }
 
             // now we have space to link it.
@@ -870,7 +869,7 @@ bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
             // be sure to allocate enough space in the module global table.
             if ( newsym->itemId() >= lmod->globals().length() )
             {
-               lmod->globals().resize( newsym->itemId() );
+               lmod->globals().resize( newsym->itemId()+1 );
             }
 
             // now we have space to link it.
@@ -922,7 +921,6 @@ bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
    {
       m_metaClasses[ sym->getClassDef()->isMetaclassFor() ] = cc;
    }
-
    return true;
 }
 
@@ -965,7 +963,7 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
    Symbol *cls = obj->getInstance();
    if ( cls->getClassDef()->constructor() != 0 )
    {
-      SafeItem ctor = *globs[cls->getClassDef()->constructor()->itemId() ].dereference();
+      Item ctor = *globs[cls->getClassDef()->constructor()->itemId() ].dereference();
       ctor.methodize( *globs[ obj->itemId() ].dereference() );
 
       // If we can't call, we have a wrong init.
@@ -3616,19 +3614,23 @@ bool VMachine::replaceMe_onIdleTime( numeric seconds )
 
 void VMachine::handleRaisedItem( Item& value )
 {
+   Error* err = 0;
+
+   if ( value.isObject() && value.isOfClass( "Error" ) )
+   {
+      err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
+      if( ! err->hasTraceback() )
+           fillErrorContext(err, true);
+   }
+
    // can someone get it?
    if( currentContext()->tryFrame() == 0 )  // uncaught error raised from scripts...
    {
       // create the error that the external application will see.
-      Error *err;
-      if ( value.isObject() && value.isOfClass( "Error" ) )
+      if ( err != 0 )
       {
          // in case of an error of class Error, we have already a good error inside of it.
-         err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
          err->incref();
-         // Also, provide a traceback
-         if( ! err->hasTraceback() )
-              fillErrorTraceback(*err);
       }
       else {
          // else incapsulate the item in an error.
@@ -3651,13 +3653,6 @@ void VMachine::handleRaisedItem( Item& value )
          m_break = false;
          throw value;
       }
-   }
-
-   if ( value.isObject() && value.isOfClass( "Error" ) )
-   {
-      Error* err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
-      if( ! err->hasTraceback() )
-         fillErrorContext(err, true);
    }
 
    regB() = value;

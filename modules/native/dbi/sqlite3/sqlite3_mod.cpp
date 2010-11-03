@@ -502,7 +502,7 @@ void DBIHandleSQLite3::selectLimited( const String& query,
 
    if( nCount != 0 || nBegin != 0 )
    {
-      result += "LIMIT " + sCount + sBegin;
+      result += " LIMIT " + sCount + sBegin;
    }
 }
 

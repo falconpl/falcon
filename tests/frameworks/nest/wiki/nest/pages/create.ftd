@@ -1,9 +1,11 @@
 <?
-   dm = Nest.dm( "DBIDataManager", "wiki_db" )
+   dm = Nest.dm( "wiki_db" )
 
    // add the wiki service
    wiki = Nest.service("Wiki")
-   wiki.dm = dm
+
+   // in this page, we don't want to see any wiki page.
+   wiki.mute = true
    
    if Request.getField("create", "" ) == "yes"
       dm.create()

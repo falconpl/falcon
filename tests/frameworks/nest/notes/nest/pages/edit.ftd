@@ -1,22 +1,26 @@
 <?
    import from nest.action in na
-   dm = Nest.dm( "DBIDataManager", "notes_db" )
+   import from nest.dbview in dw
+   
+   editView = dw.DBView( Nest.dm( "notes_db" ).entity("notes") )
+   editView.fields = .[
+         dw.DBViewField( "inserted", i"Inserted on", {v=> "<b>" + v + "</b>"} )
+         dw.DBViewField( "title", i"Title", {v=>"<h2>" + htmlEscape(v) + "</h2>"} )
+         dw.DBViewField( "content", i"Content", { v=> htmlEscape(v) } )
+      ]
 
    de = Nest.service( "DataEntry", "",
       [
          "actions" => .[
-            na.SubmitAction( Nest.AL.STAFF, "Update", "cmd", "upd" )
-            na.SubmitAction( Nest.AL.STAFF, "Delete!", "cmd", "del" )
+            na.SubmitAction( "Update", Nest.AL.STAFF, "Update", "cmd", "upd" )
+            //na.SubmitAction( "Delete", Nest.AL.STAFF, "Delete!", "cmd", "del" )
          ],
          "skin" => "note_upd",
          "handler" => Nest.pageLink("home"),
-         "level" => Nest.AL.USER
+         "level" => Nest.AL.USER,
+         "view" => editView
       ]
    )
-   de.dm = dm
-   de.entity = "notes"
-   de.view = "detail"
-   
 ?><html>
 <head>
    <title>Your notes</title>

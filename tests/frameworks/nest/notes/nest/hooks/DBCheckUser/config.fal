@@ -1,0 +1,17 @@
+// Configuration for the DBCheckUser hook
+
+import from hash
+
+entity = Nest.dm("notes_db").entity("users")
+password_field = "pwd_md5"
+hash = hash.md5
+
+level_field = "auth_type"
+
+levels = [
+   "admin" => Nest.AL.ADMIN,
+   "staff" => Nest.AL.STAFF,
+   "user" => Nest.AL.USER
+]
+
+data_maker = { record => return record["user_id"] }
