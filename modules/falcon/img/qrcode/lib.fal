@@ -1904,8 +1904,8 @@ class QrSpec
             if fileType(fileName) != FileStat.NOTFOUND
                inputStream = InputStream(fileName)                    
                deserialized = deserialize(inputStream)
+               inputStream.close()
                self.frames[version] = deserialized
-               // inputStream.close()
             else
                ver = self._createFrame(version)
                outputStream = OutputStream(fileName)
