@@ -1,9 +1,8 @@
 /*
-   FALCON - QR Code library back end.
-
+   FALCON - The Falcon Programming Language.
    FILE: lib.fal
 
-   QR Code generator.
+   QR Code library back end.
    -----------------------------------------------------------------------------
    Author: Giuseppe Greco
    Begin: Wed, 27 Oct 2010 13:11:50 +0200
@@ -138,6 +137,8 @@ class QrBitStream(size)
       return data
    end
 
+   /* Private part */
+
    function _newFromNum(bits, num)
       bitStream = QrBitStream()
       bitStream.allocate(bits)
@@ -212,7 +213,7 @@ class QrInputItem(mode, size, data, bitStream)
          data[size:] = arrayBuffer(size - dataLength, 0)
       end
 
-      if not QrInput.checkMode(mode, size, data)
+      if not QrInput.verifyMode(mode, size, data)
          raise QrError(QrError.encoding_error, @i'Mode $(mode) is not suitable for encoding the specified data')
       end
 
@@ -230,7 +231,7 @@ class QrInputItem(mode, size, data, bitStream)
       return self._bitStream
    end
 
-   function encodeModeNum(version)
+   function encodeNum(version)
       val = 0x1
       words = int(self._size / 3)
 
@@ -257,7 +258,7 @@ class QrInputItem(mode, size, data, bitStream)
       self._bitStream = bitStream
    end
 
-   function encodeModeAn(version)
+   function encodeAn(version)
       words = int(self._size / 2)
 
       bitStream = QrBitStream()
@@ -278,7 +279,7 @@ class QrInputItem(mode, size, data, bitStream)
       self._bitStream = bitStream
    end
 
-   function encodeModeEightBit(version)
+   function encodeEightBit(version)
       bitStream = QrBitStream()
       bitStream.appendNum(4, 0x4)
       bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.eight_bit, version), self._size)
@@ -290,7 +291,7 @@ class QrInputItem(mode, size, data, bitStream)
       self._bitStream = bitStream
    end
 
-   function encodeModeKanji(version)
+   function encodeKanji(version)
       bitStream = QrBitStream()
       /*
       bitStream.appendNum(4, 0x8)
@@ -328,7 +329,7 @@ class QrInputItem(mode, size, data, bitStream)
       self._bitStream = bitStream
    end
 
-   function encodeModeStructure()
+   function encodeStructure()
       bitStream = QrBitStream()
 
       bitStream.appendNum(4, 0x03)
@@ -339,18 +340,18 @@ class QrInputItem(mode, size, data, bitStream)
       self._bitStream = bitStream
    end
 
-   function estimateBitStreamSizeOfEntry(version)
+   function estimateBitStreamSize(version)
       bits = 0
       if version == 0: version = 1
 
       if self._mode == QrMode.num
-         bits = QrInput.estimateBitsModeNum(self._size)
+         bits = QrInput.estimateNumSize(self._size)
       elif self._mode == QrMode.an
-         bits = QrInput.estimateBitsModeAn(self._size)
+         bits = QrInput.estimateAnSize(self._size)
       elif self._mode == QrMode.eight_bit
-         bits = QrInput.estimateBitsMode8(self._size)
+         bits = QrInput.estimateEightBitSize(self._size)
       elif self._mode == QrMode.kanji
-         bits = QrInput.estimateBitsModeKanji(self._size)
+         bits = QrInput.estimateKanjiSize(self._size)
       elif self._mode == QrMode.structure
          return QrInputConst.structure_header_bits
       else
@@ -380,15 +381,15 @@ class QrInputItem(mode, size, data, bitStream)
          self._bitStream.append(inputItem2.bitStream)
       else
          if self._mode ==  QrMode.num
-            self.encodeModeNum(version)
+            self.encodeNum(version)
          elif self._mode == QrMode.an
-            self.encodeModeAn(version)
+            self.encodeAn(version)
          elif self._mode == QrMode.eight_bit
-            self.encodeModeEightBit(version)
+            self.encodeEightBit(version)
          elif self._mode == QrMode.kanji
-            self.encodeModeKanji(version)
+            self.encodeKanji(version)
          elif self._mode == QrMode.structure
-            self.encodeModeStructure()
+            self.encodeStructure()
          else
             raise QrError(QrError.invalid_mode, @i'$(self._mode) is not supported')
          end
@@ -458,7 +459,11 @@ class QrInput(version, errorCorrectionLevel)
       arrayIns(self._items, 0, entry)
    end
 
-   function estimateBitsModeNum(size)
+   function lookAnTable(c)
+      return c > 127 ? -1 : QrAnTable[c]
+   end
+
+   function estimateNumSize(size)
       w = int(size / 3)
       bits = w * 10
 
@@ -472,11 +477,7 @@ class QrInput(version, errorCorrectionLevel)
       return bits;
    end
 
-   function lookAnTable(c)
-      return c > 127 ? -1 : QrAnTable[c]
-   end
-
-   function estimateBitsModeAn(size)
+   function estimateAnSize(size)
       w = int(size / 2)
       bits = w * 11
 
@@ -484,25 +485,25 @@ class QrInput(version, errorCorrectionLevel)
       return bits
    end
 
-   function estimateBitsMode8(size)
+   function estimateEightBitSize(size)
       return size * 8
    end
 
-   function estimateBitsModeKanji(size)
+   function estimateKanjiSize(size)
       return int((size / 2) * 13)
    end
 
-   function checkMode(mode, size, data)
+   function verifyMode(mode, size, data)
       if size <= 0
          raise QrError(QrError.invalid_param, i"size is less than 1")
       end
 
       if mode == QrMode.num
-         return self._checkModeNum(size, data)
+         return self._verifyNum(size, data)
       elif mode == QrMode.an
-         return self._checkModeAn(size, data)
+         return self._verifyAn(size, data)
       elif mode == QrMode.kanji
-         return self._checkModeKanji(size, data)
+         return self._verifyKanji(size, data)
       elif mode == QrMode.eight_bit
          return true
       elif mode == QrMode.structure
@@ -516,7 +517,7 @@ class QrInput(version, errorCorrectionLevel)
       bits = 0
 
       for item in self._items
-         bits += item.estimateBitStreamSizeOfEntry(version)
+         bits += item.estimateBitStreamSize(version)
       end
 
       return bits
@@ -533,36 +534,6 @@ class QrInput(version, errorCorrectionLevel)
       end not version > previous
 
       return version
-   end
-
-   function lengthOfCode(mode, version, bits)
-      payload = bits - 4 - QrSpec.getLengthIndicator(mode, version)
-
-      if mode == QrMode.num
-         chunks = int(payload / 10)
-         remain = payload - chunks * 10
-         size = chunks * 3
-         if remain >= 7; size += 2; elif remain >= 4; size++; end
-      elif mode == QrMode.an
-         chunks = int(payload / 11)
-         remain = payload - chunks * 11
-         size = chunks * 2
-         if remain >= 6: size++
-      elif mode == QrMode.eight_bit
-         size = int(payload / 8)
-      elif mode == QrMode.kanji
-         size = int((payload / 13) * 2)
-      elif mode == QrMode.structure
-         size = int(payload / 8)
-      else
-         size = 0
-      end
-
-      maxsize = QrSpec.getMaxWords(mode, version)
-      if size < 0: size = 0
-      if size > maxsize: size = maxsize
-
-      return size;
    end
 
    function createBitStream()
@@ -648,7 +619,9 @@ class QrInput(version, errorCorrectionLevel)
       return bitStream.toByte()
    end
 
-   function _checkModeNum(size, data)
+   /* Private part */
+
+   function _verifyNum(size, data)
       for i in [0:size]
          if (data[i][*0] < "0"[*0]) or (data[i][*0] > "9"[*0])
             return false
@@ -658,7 +631,7 @@ class QrInput(version, errorCorrectionLevel)
       return true
    end
 
-   function _checkModeAn(size, data)
+   function _verifyAn(size, data)
       for i in [0:size]
          if self.lookAnTable(data[i][*0]) == -1
             return false
@@ -668,7 +641,7 @@ class QrInput(version, errorCorrectionLevel)
       return true
    end
 
-   function _checkModeKanji(size, data)
+   function _verifyKanji(size, data)
       for i in [0:size]
          val = data[i][*0]
          // if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
@@ -1046,6 +1019,8 @@ class QrRsItem(symsize, gfPoly, fcr, prim, nRoots, pad)
       end
    end
 
+   /* Private part */
+
    function _modnn(x)
       while x >= self._nn
          x -= self._nn
@@ -1173,6 +1148,8 @@ class QrSplit(data, input, mode)
       split.splitString()
    end
 
+   /* Private part */
+
    function _eatNum()
       length = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
 
@@ -1182,16 +1159,16 @@ class QrSplit(data, input, mode)
       mode = self.identifyMode(run)
 
       if mode == QrMode.eight_bit
-         dif = QrInput.estimateBitsModeNum(run) + 4 + length \
-            + QrInput.estimateBitsMode8(1) \
-            - QrInput.estimateBitsMode8(run + 1)
+         dif = QrInput.estimateNumSize(run) + 4 + length \
+            + QrInput.estimateEightBitSize(1) \
+            - QrInput.estimateEightBitSize(run + 1)
          if dif > 0: return self._eatEightBit()
       end
 
       if mode == QrMode.an
-         dif = QrInput.estimateBitsModeNum(run) + 4 + length \
-            + QrInput.estimateBitsModeAn(1) \
-            - QrInput.estimateBitsModeAn(run + 1)
+         dif = QrInput.estimateNumSize(run) + 4 + length \
+            + QrInput.estimateAnSize(1) \
+            - QrInput.estimateAnSize(run + 1)
          if dif > 0: return self._eatAn()
       end
 
@@ -1209,9 +1186,9 @@ class QrSplit(data, input, mode)
             q = run
             while self.isDigitAt(self._data, q); q++; end
 
-            dif = QrInput.estimateBitsModeAn(run) \
-               + QrInput.estimateBitsModeNum(q - run) + 4 + lengthNum \
-               - QrInput.estimateBitsModeAn(q)
+            dif = QrInput.estimateAnSize(run) \
+               + QrInput.estimateNumSize(q - run) + 4 + lengthNum \
+               - QrInput.estimateAnSize(q)
 
             if dif < 0
                break
@@ -1224,9 +1201,9 @@ class QrSplit(data, input, mode)
       end
 
       if not self.isAlNumAt(self._data, run)
-         dif = QrInput.estimateBitsModeAn(run) + 4 + lengthAn \
-            + QrInput.estimateBitsMode8(1) \
-            - QrInput.estimateBitsMode8(run + 1)
+         dif = QrInput.estimateAnSize(run) + 4 + lengthAn \
+            + QrInput.estimateEightBitSize(1) \
+            - QrInput.estimateEightBitSize(run + 1)
          if dif > 0: return self._eatEightBit()
       end
 
@@ -1254,9 +1231,9 @@ class QrSplit(data, input, mode)
          if mode == QrMode.num
             q = run
             while self.isDigitAt(self._data, q); q++; end
-            dif = QrInput.estimateBitsMode8(run) \
-               + QrInput.estimateBitsModeNum(q - run) + 4 + lengthNum \
-               - QrInput.estimateBitsMode8(q)
+            dif = QrInput.estimateEightBitSize(run) \
+               + QrInput.estimateNumSize(q - run) + 4 + lengthNum \
+               - QrInput.estimateEightBitSize(q)
             if dif < 0
                break
             else
@@ -1265,9 +1242,9 @@ class QrSplit(data, input, mode)
          elif mode == QrMode.an
             q = run
             while self.isAlNumAt(self._data, q); q++; end
-            dif = QrInput.estimateBitsMode8(run) \
-               + QrInput.estimateBitsModeAn(q - run) + 4 + lengthAn \
-               - QrInput.estimateBitsMode8(q)
+            dif = QrInput.estimateEightBitSize(run) \
+               + QrInput.estimateAnSize(q - run) + 4 + lengthAn \
+               - QrInput.estimateEightBitSize(q)
             if dif < 0
                break
             else
@@ -1298,6 +1275,8 @@ object QrImage
       img.Jpeg(outFile, q)
    end
 
+   /* Private part */
+
    function _image(frame, pixelPerPoint, outerFrame)
       if frame == nil
          raise QrError(QrError.invalid_param, i"frame is null")
@@ -1317,7 +1296,6 @@ object QrImage
          baseImg.ColorAllocate(255, 255, 255)
          baseImg.ColorAllocate(0, 0, 0)
       ]
-
       baseImg.Fill(0, 0, col[0])
 
       for y in [0:height]
@@ -1362,7 +1340,7 @@ class QrRawCode(input)
    _blockNum = 0
    _blockNum1 = 0
    _count = 0
-   _qrrs = QrRs()
+   _rs = QrRs()
 
    init
       if input == nil
@@ -1416,11 +1394,13 @@ class QrRawCode(input)
       return code
    end
 
+   /* Private part */
+
    function _initialize(spec)
       dataLength = QrSpec.rsDataCodes1(spec)
       eccLength = QrSpec.rsEccCodes1(spec)
    
-      rs = self._qrrs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
+      rs = self._rs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
 
       dataPos = 0
       eccPos = 0
@@ -1440,7 +1420,7 @@ class QrRawCode(input)
       if QrSpec.rsBlockNum2(spec) != 0
          dataLength = QrSpec.rsDataCodes2(spec)
          eccLength = QrSpec.rsEccCodes2(spec)
-         rs = self._qrrs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
+         rs = self._rs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
 
          for i in [0:QrSpec.rsBlockNum2(spec)]
             ecc = self._ecc[eccPos:]
@@ -1954,6 +1934,8 @@ class QrSpec
    function rsEccCodes2(spec); return spec[2]; end
    function rsDataLength(spec); return (spec[0] * spec[1]) + (spec[3] * spec[4]); end
    function rsEccLength(spec); return (spec[0] + spec[3]) * spec[2]; end
+
+   /* Private part */
 
    function _createFrame(version)
       width = QrCapacity[version][QrCapConst.width]
