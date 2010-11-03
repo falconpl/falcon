@@ -286,9 +286,9 @@ class Image(version, width, data, maker)
       try
          self._makeImage(func, stream, size, margin)
          stream.close()
-      catch in e
+      catch in error
          stream.close()
-         raise e
+         raise error
       end
    end
 end
