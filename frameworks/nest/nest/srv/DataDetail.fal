@@ -23,16 +23,16 @@ import from nest.bindings in b
 // This is your service
 class DataDetail( instance ) from DataService( instance )
    /*# Single extracted record */
-   record = ServiceVar( "Extracted data as a DBRecord" )
+   record = ServiceVar()
 
    /*# Action to be rendered below */
-   actions = ServiceVar( "Actions if configured to view", b.ConfigBinder  )
+   actions = ServiceVar( b.ConfigBinder  )
 
    /*# Entity to be read. */
-   eid = ServiceVar( "Entity ID on which to operate", b.InputVarBinder  )
+   eid = ServiceVar( b.InputVarBinder  )
 
    /*# Command. By default it's view. */
-   cmd = ServiceVar( "Command (must be \"edit\" to perform an edit)", b.InputVarBinder  )
+   cmd = ServiceVar( b.InputVarBinder  )
    
    /*# Reimplementation to perform the required query */
    function do_query()

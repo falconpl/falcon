@@ -36,34 +36,34 @@ class DataControl( instance ) from Service( instance )
       - **upd**: Update the specified eid.
       - **add**: Adds a new record.
    */
-   cmd = ServiceVar( "The action that must be performed on the data", b.InputVarBinder )
+   cmd = ServiceVar( b.InputVarBinder )
    
    /*# Input: Confirm command.
       If this input variable is "1", then a confirmation request is asked.
       This is just securuity against user unwilling fault.
    */
-   cnf = ServiceVar( "Set to 1 when need to be confirmed.", b.InputVarBinder )
+   cnf = ServiceVar( b.InputVarBinder )
    
    //# Entity (or array of entities) on which to perform the command.
-   eid = ServiceVar( "Entity ID being modified", b.InputVarBinder )
+   eid = ServiceVar( b.InputVarBinder )
 
    //# Set to true when the operation succeded, false when failed.
-   result = ServiceVar( "Count of affected rows, used for action effect rendering" )
+   result = ServiceVar( )
 
    //# Error raised by the DB on failure.
-   dberror = ServiceVar( "Error returned by the DB when trying to perform the operation" )
+   dberror = ServiceVar()
 
    /*# DBEntity instance on which to operate.*/
-   entity = ServiceVar( "Entity instance or name in format \"db.entity\"", b.ConfigBinder )
+   entity = ServiceVar()
 
    //# Handler for confirm requests -- if nil maps to self.
-   handler = ServiceVar( "Handler for confirm requests -- if nil maps to self", b.ConfigBinder )
+   handler = ServiceVar( b.ConfigBinder )
 
    //# Skin used for confirmation requests.
-   confirm_skin = ServiceVar( "Skin used for confirmation requests.", b.SkinBinder )
+   confirm_skin = ServiceVar( b.SkinBinder )
 
    //# Optional view used during confirm.
-   view = ServiceVar( "Optional view used during confirm", b.ConfigBinder )
+   view = ServiceVar( b.ConfigBinder )
    
    //# cached entity, used internally
    centity = nil

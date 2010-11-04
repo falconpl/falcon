@@ -25,23 +25,35 @@ import NestError from nest as NestError
 
 */
 class Uploader( instance ) from Service( instance )
+   //# Uploaded file (or file array).
+   upld = ServiceVar( b.InputVarBinder )
+   //# Current location (category), and upload target
+   loc = ServiceVar( b.InputVarBinder )
+   //# Selected files
+   sel = ServiceVar( b.InputVarBinder )
+   //# If true, files in del will be removed
+   cnf = ServiceVar( b.InputVarBinder )
+   //# What to do with files in sel: 'del' or 'mv' (delete or move)
+   do = ServiceVar( b.InputVarBinder )
+   //# Target location of move commands
+   tg = ServiceVar( b.InputVarBinder )
 
-   upld = ServiceVar( "Uploaded file (or file array).", b.InputVarBinder )
-   loc = ServiceVar( "Current location (category), and upload target", b.InputVarBinder )
-   sel = ServiceVar( "Selected files", b.InputVarBinder )
-   cnf = ServiceVar( "If true, files in del will be removed", b.InputVarBinder )
-   do = ServiceVar( "What to do with files in sel: 'del' or 'mv' (delete or move)", b.InputVarBinder )
-   tg = ServiceVar( "Target location of move commands", b.InputVarBinder )
-   
-   upload_dir = ServiceVar( "Root relative or absolute location of the file", b.ConfigBinder )
-   actions = ServiceVar( "Actions that can be performed on single files", b.ConfigBinder )
-   
-   performed = ServiceVar( "What has been done (an array of strings or a single string)" )
-   files = ServiceVar( "A list of files that are in current location." )
-   tglocs = ServiceVar( "Locations where a file may be moved." )
-   
-   sections = ServiceVar( "Subdirectories in the current location." )
-   path = ServiceVar( "Current path, in paris of position/link to go there." )
+   //# Root relative or absolute location of the file
+   upload_dir = ServiceVar( b.ConfigBinder )
+   //# Actions that can be performed on single files
+   actions = ServiceVar( b.ConfigBinder )
+
+   //# What has been done (an array of strings or a single string)
+   performed = ServiceVar( )
+   //# A list of files that are in current location.
+   files = ServiceVar()
+   //# Locations where a file may be moved.
+   tglocs = ServiceVar()
+
+   //# Subdirectories in the current location.
+   sections = ServiceVar( )
+   //# Current path, in paris of position/link to go there.
+   path = ServiceVar()
 
    
    function run()

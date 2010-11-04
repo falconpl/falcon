@@ -22,6 +22,8 @@ import Service from nest as Service
 import ServiceVar from nest as ServiceVar
 
 class ereport( instance ) from Service( instance )
-   error = ServiceVar( "The Falcon error that happened" )
-   context = ServiceVar( "Text of the page up to the moment where the error was raised" )
+   //# The Falcon error that happened
+   error = ServiceVar()
+   //# Text of the page up to the moment where the error was raised
+   context = ServiceVar()
 end

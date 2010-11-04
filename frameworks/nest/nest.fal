@@ -477,12 +477,12 @@ object Nest
    
       Ambient variables are service variables which are immediately repeated to all the system.
    */
-   function ambient( aname, descr, binding )
+   function ambient( aname, binding )
       if aname in self._ambient
          s = self._ambient[aname]
-         if descr or binding: s.reinit( descr, binding )
+         if binding: s.reinit( binding )
       else
-         s = ServiceVar( descr, binding )
+         s = ServiceVar( binding )
          self._ambient[ aname ] = s
       end
       

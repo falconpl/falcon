@@ -41,10 +41,10 @@ import DBView from nest.dbview as DBView
 class DataService( instance ) from Service( instance )
 
    /*# Target link managing of the table actions (submits and other table-level actions). */
-   handler = ServiceVar( "Manager of the table actions", b.ConfigBinder  )
+   handler = ServiceVar( b.ConfigBinder  )
 
    /*# A DBView instance used to access the desired entity */
-   view = ServiceVar( "A DBView instance used to access the desired entity", b.ConfigBinder  )
+   view = ServiceVar( b.ConfigBinder  )
 
    function startup()
       if Nest.pcheck

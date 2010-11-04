@@ -28,14 +28,14 @@ import findFile from nest.utils as findFile
  */
 class WebAPIList(instance) from Service(instance)
 
-   /*#
-   * The directory where API objects are stored.
-   */
-   apidir = ServiceVar( "The directory where API objects are stored", b.ConfigBinder )
-   detail_pid = ServiceVar( "Page to load when asking for details", b.ConfigBinder )
-   funcvar = ServiceVar( "Name of the GET variable identifying a function", b.ConfigBinder )
-
-   functions = ServiceVar( "Function pseudo object list (name, link, description)" )
+   //# The directory where API objects are stored
+   apidir = ServiceVar( b.ConfigBinder )
+   //# Page to load when asking for details
+   detail_pid = ServiceVar( b.ConfigBinder )
+   //# Name of the GET variable identifying a function
+   funcvar = ServiceVar( b.ConfigBinder )
+   //# Function pseudo object list (name, link, description)
+   functions = ServiceVar()
    /*#
    * Compiler services.
    */

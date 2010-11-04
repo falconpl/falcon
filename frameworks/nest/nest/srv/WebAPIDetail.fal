@@ -26,16 +26,14 @@ import from nest.bindings in b
  */
 class WebAPIDetail(instance) from Service(instance)
 
-   /*#
-   * The directory where API objects are stored.
-   */
-   apidir = ServiceVar( "The directory where API objects are stored", b.ConfigBinder )
-   funcname = ServiceVar( "Function pseudo object list (name, link, description)", b.InputVarBinder )
-
-   fdata = ServiceVar( "The function data that will be passed to the skin" )
-   /*#
-   * Compiler services.
-   */
+   //# The directory where API objects are stored.
+   apidir = ServiceVar( b.ConfigBinder )
+   //# Function pseudo object list (name, link, description)
+   funcname = ServiceVar(b.InputVarBinder )
+   //# The function data that will be passed to the skin
+   fdata = ServiceVar()
+   
+   //# Compiler services.
    _compiler = Compiler()
 
    /*#

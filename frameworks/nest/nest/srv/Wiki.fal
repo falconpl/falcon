@@ -33,45 +33,46 @@ const default_page = "main"
 */
 class Wiki( instance ) from Service( instance )
    //# Wiki page to be loaded or managed
-   wid = ServiceVar("Wiki page to be loaded or managed", b.InputVarBinder )
+   wid = ServiceVar( b.InputVarBinder )
    //# Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)
-   wka = ServiceVar("Wiki action; 'del' 'mody' 'upd' 'prw' (none for view)", b.InputVarBinder )
+   wka = ServiceVar(b.InputVarBinder )
    //# Wiki data; original data
-   wkd = ServiceVar("Wiki data; original data", b.InputVarBinder )
+   wkd = ServiceVar( b.InputVarBinder )
    //# Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.
-   wkc = ServiceVar("Wiki confirm; a page will be actually remove only if it's not null. Set to h to clear history.", b.InputVarBinder )
+   wkc = ServiceVar( b.InputVarBinder )
 
    
    //===========================================
    // Configuration.
    //# Data manager used by this WIKI instance -- must be a DataManager instance.
-   dm = ServiceVar( "Data manager used by this WIKI instance -- must be a DataManager instance.", b.ConfigBinder )
+   dm = ServiceVar( b.ConfigBinder )
    //# Instance of a Wiki parser, implementing the Falcon wiki parser interface
-   parser = ServiceVar( "Instance of a Wiki parser, implementing the Falcon wiki parser interface", b.ConfigBinder )
+   parser = ServiceVar( b.ConfigBinder )
    //# Function retunring a link to uploaded files.
-   upload_linker = ServiceVar( "Function retunring a link to uploaded files.", b.ConfigBinder )
+   upload_linker = ServiceVar( b.ConfigBinder )
    //# Wid of the main page (which is also the default wid)
-   main_wid = ServiceVar( "Wid of the main page (which is also the default wid)", b.ConfigBinder )
+   main_wid = ServiceVar( b.ConfigBinder )
    //# Actions that can be done other than "commit" on a page
-   actions = ServiceVar( "Actions that can be done other than \"commit\" on a page", b.ConfigBinder )
+   actions = ServiceVar( b.ConfigBinder )
    //# Page used when invoking the wiki page modification
-   modyPage = ServiceVar( "Page used when invoking the wiki page modification", b.ConfigBinder )
+   modyPage = ServiceVar( b.ConfigBinder )
    //# Max depth of the wiki history
-   history_depth = ServiceVar("Max depth of the wiki history", b.ConfigBinder )
+   history_depth = ServiceVar( b.ConfigBinder )
    //# User provided page plugins
-   plugins = ServiceVar("User provided page plugins", b.ConfigBinder )
+   plugins = ServiceVar( b.ConfigBinder )
 
    //===================================================================
    // Internal variables
    
    //# Compiled content of the page
-   preview = ServiceVar( "Compiled content of the page" )
+   preview = ServiceVar()
    //# Complete page -- if found
-   page = ServiceVar( "Complete page -- if found" )
+   page = ServiceVar()
 
    // Gets the authenticated user.
-   auth_user = Nest.ambient( "auth_user", "Authenticated user", b.SessionBinder )
-   history = ServiceVar("Wiki history; where are we?", b.SessionBinder )
+   auth_user = Nest.ambient( "auth_user", b.SessionBinder )
+   //# Wiki history; where are we?
+   history = ServiceVar( b.SessionBinder )
 
    helper = _WikiHelper(self)
 

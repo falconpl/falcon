@@ -28,12 +28,11 @@ import NestModule from .nestmodule as NestModule
    To be used in services like
    class X from Service
       ...
-      varname = ServiceVar( "A nice variable" )
+      varname = ServiceVar( )
    end
    
 */
-class ServiceVar( descr, binding )
-   description = descr
+class ServiceVar(  binding )
    isSession = false   
    _binding = binding
    
@@ -47,8 +46,7 @@ class ServiceVar( descr, binding )
       end
    end
 
-   function reinit( descr, binding )
-      self.description = descr
+   function reinit( binding )
       self._binding = binding
       
       if binding provides initVar
@@ -83,7 +81,10 @@ class ServiceVar( descr, binding )
    
 end
 
-/*# Nest main page module
+/*# Main Nest modular component.
+   @optparam instance A string representing a specific name for this service.
+
+   If the @b instance is not specificed the service is "instanceless" (or nameless).
 */
 class Service( instance ) from NestModule( instance )
    extscripts = []
@@ -95,8 +96,14 @@ class Service( instance ) from NestModule( instance )
    /*# Skin name. 
       Set to a logical skin name.
    */ 
-   skin = ServiceVar( "Logical name of the skin of this service", SkinBinder )
-   level = ServiceVar( "Minimum user level needed to use this service at all.", ConfigBinder )
+   skin = ServiceVar( SkinBinder )
+   
+   /*# Minimum user authorization level needed to use this service at all.
+
+      When the Nest.auth_level variable is higher (less privileged) than this
+      value, the service won't be run nor rendered.
+   */
+   level = ServiceVar( ConfigBinder )
 
    //=========================================
    // Public interface

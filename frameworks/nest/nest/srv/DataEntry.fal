@@ -23,13 +23,13 @@ import from nest.bindings in b
 // This is your service
 class DataEntry( instance ) from DataService( instance )
    /*# Single extracted record */
-   record = ServiceVar( "Extracted data as a DBRecord" )
+   record = ServiceVar()
 
    /*# Action to be rendered below */
-   actions = ServiceVar( "Actions", b.ConfigBinder  )
+   actions = ServiceVar( b.ConfigBinder  )
 
    /*# Entity to be read. */
-   eid = ServiceVar( "Entity ID on which to operate", b.InputVarBinder  )
+   eid = ServiceVar( b.InputVarBinder  )
 
    
    /*# Reimplementation to perform the required query */

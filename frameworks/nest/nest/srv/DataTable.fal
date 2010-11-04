@@ -30,35 +30,35 @@ import NestError from nest.error as NestError
 */
 class DataTable( instance ) from DataService( instance )
    /*# Start at given record number */
-   default_cnt = ServiceVar( "Default record number count", b.ConfigBinder  )
+   default_cnt = ServiceVar( b.ConfigBinder  )
    
    /*# Actions to be rendered in front of each item. */
-   front_act = ServiceVar( "Actions in front of each item", b.ConfigBinder  )
+   front_act = ServiceVar( b.ConfigBinder  )
 
    /*# Actions to be rendered after each item. */
-   back_act = ServiceVar( "Actions to be rendered after each item", b.ConfigBinder  )
+   back_act = ServiceVar( b.ConfigBinder  )
 
    /*# Global actions for the table. */
-   table_act = ServiceVar( "Global actions for the table", b.ConfigBinder  )
+   table_act = ServiceVar( b.ConfigBinder  )
 
    /*# Start at given record number */
-   start = ServiceVar( "Start at given record number", b.InputVarBinder  )
+   start = ServiceVar( b.InputVarBinder  )
    
    /*# Get given record count */
-   cnt = ServiceVar( "Get given record count", b.InputVarBinder  )
+   cnt = ServiceVar( b.InputVarBinder  )
 
    //# Skin used to render the title line
-   heading_skin = ServiceVar( "Skin used to render the title line", b.SkinBinder  )
+   heading_skin = ServiceVar( b.SkinBinder  )
 
    //# Skin used to render each item
-   row_skin = ServiceVar( "Skin used to render each item", b.SkinBinder  )
+   row_skin = ServiceVar( b.SkinBinder  )
 
    //# Skin used to render the global table actions
-   actions_skin = ServiceVar( "Skin used to render the global table actions", b.SkinBinder  )
+   actions_skin = ServiceVar( b.SkinBinder  )
    
 
    /*# Extracted data as a DBRecord vector */
-   records = ServiceVar( "Extracted data as a DBRecord vector" )
+   records = ServiceVar()
 
    _start = nil
    _count = nil
