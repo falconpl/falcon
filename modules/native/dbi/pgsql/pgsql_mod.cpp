@@ -223,6 +223,9 @@ void DBIRecordsetPgSQL::close()
     }
 }
 
+/*
+    DBIStatementPgSQL class
+ */
 
 DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
     :
@@ -948,7 +951,10 @@ DBIRecordset* DBIHandlePgSQL::call( const String &sql, int64 &affectedRows, cons
 
 DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 {
-    return 0;
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    return new DBIStatementPgSQL( this, query );
 }
 
 
@@ -1118,4 +1124,3 @@ CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 } /* namespace Falcon */
 
-/* end of pgsql_mod.cpp */
