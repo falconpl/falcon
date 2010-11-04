@@ -43,7 +43,7 @@ public:
 class DBIHandlePgSQL;
 
 
-void dbi_pgsqlQuestionMarksToDollars( const String& input, String& output );
+int32 dbi_pgsqlQuestionMarksToDollars( const String& input, String& output );
 
 
 class DBIRecordsetPgSQL
@@ -81,11 +81,10 @@ class DBIStatementPgSQL
 {
 protected:
 
-    int32   m_nParams;
+    uint32  m_nParams;
     String  m_execString;
-    AutoCString m_zExecString;
 
-    void getExecString( int32 nParams );
+    void getExecString( uint32 nParams );
 
 public:
 
@@ -189,7 +188,7 @@ public:
     virtual void close();
 
     static void throwError( const char* file, int line, PGresult* res );
-
+    PGresult* internal_exec( const String& sql, int64& affectedRows );
 };
 
 #if 0

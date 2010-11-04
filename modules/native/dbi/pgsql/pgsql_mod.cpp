@@ -69,23 +69,25 @@ namespace Falcon
 {
 
 
-void dbi_pgsqlQuestionMarksToDollars( const String& input, String& output )
+int32 dbi_pgsqlQuestionMarksToDollars( const String& input, String& output )
 {
     output.reserve( input.size() + 32 );
     output.size( 0 );
 
     uint32 pos0 = 0;
     uint32 pos1 = input.find( "?" );
+    int32 i = 0;
 
-    for ( int64 i=1; pos1 != String::npos; ++i )
+    while ( pos1 != String::npos )
     {
         output += input.subString( pos0, pos1 );
-        output.A( "$" ).N( i );
+        output.A( "$" ).N( ++i );
         pos0 = pos1 + 1;
         pos1 = input.find( "?", pos0 );
     }
 
     output += input.subString( pos0 );
+    return i;
 }
 
 
@@ -224,11 +226,10 @@ void DBIRecordsetPgSQL::close()
 
 DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
     :
-    DBIStatement( dbh ),
-    m_nParams( -1 )
+    DBIStatement( dbh )
 {
     String temp;
-    dbi_pgsqlQuestionMarksToDollars( query, temp );
+    m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
     AutoCString zQuery( temp );
     PGresult* res = PQprepare( dbh->getConn(), "dummy", zQuery.c_str(), 0, NULL );
 
@@ -237,6 +238,8 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
         DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
 
     PQclear( res );
+
+    getExecString( m_nParams );
 }
 
 
@@ -245,32 +248,31 @@ DBIStatementPgSQL::~DBIStatementPgSQL()
 }
 
 
-void DBIStatementPgSQL::getExecString( int32 nParams )
+void DBIStatementPgSQL::getExecString( uint32 nParams )
 {
-    fassert( m_nParams == -1 );
-
     m_execString.reserve( 16 + ( nParams * 2 ) );
     m_execString.size( 0 );
     m_execString = "EXECUTE dummy(";
     if ( nParams > 0 )
     {
         m_execString.append( "?" );
-        for ( int32 i=1; i < nParams; ++i )
+        for ( uint32 i=1; i < nParams; ++i )
             m_execString.append( ",?" );
     }
     m_execString.append( ");" );
-
-    m_nParams = nParams;
-    m_zExecString.set( m_execString );
 }
 
 
 int64 DBIStatementPgSQL::execute( const ItemArray& params )
 {
-    if ( m_nParams == -1 )
-        getExecString( params.length() );
+    String output;
+    if ( !dbi_sqlExpand( m_execString, output, params ) )
+    {
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ ) );
+    }
+    AutoCString zQuery( output );
 
-    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), m_zExecString.c_str() );
+    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
     if ( res == 0
         || PQresultStatus( res ) != PGRES_COMMAND_OK )
     {
@@ -730,7 +732,8 @@ void DBIHandlePgSQL::close()
         {
             // force rollback, skipping errors...
             PGresult* res = PQexec( m_conn, "ROLLBACK" );
-            PQclear( res );
+            if ( res != 0 )
+                PQclear( res );
         }
         PQfinish( m_conn );
         m_conn = 0;
@@ -844,6 +847,37 @@ void DBIHandlePgSQL::rollback()
 }
 
 
+PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows )
+{
+    fassert( m_conn );
+
+    AutoCString cStr( sql );
+    PGresult* res = PQexec( m_conn, cStr.c_str() );
+
+    if ( res == NULL )
+        throwError( __FILE__, __LINE__, res );
+
+    ExecStatusType st = PQresultStatus( res );
+    if ( st != PGRES_TUPLES_OK
+        && st != PGRES_COMMAND_OK )
+        throwError( __FILE__, __LINE__, res );
+
+    const char* num = PQcmdTuples( res );
+    if ( num && num[0] != '\0' )
+        affectedRows = atoi( num );
+    else
+        affectedRows = -1;
+
+    if ( st == PGRES_TUPLES_OK )
+        return res;
+    else
+    {
+        PQclear( res );
+        return NULL;
+    }
+}
+
+
 DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
     if ( m_conn == 0 )
@@ -860,22 +894,9 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, con
     else
         output = sql;
 
-    AutoCString cStr( output );
-    PGresult* res = PQexec( m_conn, cStr.c_str() );
-
-    if ( res == NULL )
-        throwError( __FILE__, __LINE__, res );
-
-    ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_TUPLES_OK
-        && st != PGRES_COMMAND_OK )
-        throwError( __FILE__, __LINE__, res );
-
-    char* num = PQcmdTuples( res );
-    if ( num && num[0] != '\0' )
-        affectedRows = atoi( num );
-    else
-        affectedRows = -1;
+    PGresult* res = internal_exec( output, affectedRows );
+    if ( res == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
 
     return new DBIRecordsetPgSQL( this, res );
 }
@@ -897,28 +918,31 @@ void DBIHandlePgSQL::perform( const String &sql, int64 &affectedRows, const Item
     else
         output = sql;
 
-    AutoCString cStr( output );
-    PGresult* res = PQexec( m_conn, cStr.c_str() );
-
-    if ( res == NULL )
-        throwError( __FILE__, __LINE__, res );
-
-    ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_TUPLES_OK
-        && st != PGRES_COMMAND_OK )
-        throwError( __FILE__, __LINE__, res );
-
-    char* num = PQcmdTuples( res );
-    if ( num && num[0] != '\0' )
-        affectedRows = atoi( num );
-    else
-        affectedRows = -1;
+    PGresult* res = internal_exec( output, affectedRows );
+    if ( res )
+        PQclear( res );
 }
 
 
 DBIRecordset* DBIHandlePgSQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-    return 0;
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    String output;
+    if ( params.length() != 0 )
+    {
+        if ( !dbi_sqlExpand( sql, output, params ) )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+        }
+        output.prepend( "EXECUTE " );
+    }
+    else
+        output = "EXECUTE " + sql;
+
+    PGresult* res = internal_exec( output, affectedRows );
+    return res != 0 ? new DBIRecordsetPgSQL( this, res ) : NULL;
 }
 
 
