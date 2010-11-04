@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+   <title>Nest test suite - Menu service</title>
+   <?= Nest.headings() ?>
+   <? login = Nest.service( "Login" ) ?>
+   <? menu = Nest.service( "Menu" ) ?>
+</head>
+<body>
+   <table class="header">
+   <tbody>
+   <tr><td><? menu.render() ?></td><td><? login.render() ?></td></tr>
+   </tbody>
+   </table>
+   <hr/>
+   <? Nest.content() ?>
+   <hr/>
+   <? if Nest.auth_level < Nest.AL.USER ?>
+   <p class="gray">To login, use the "user" / "user".</p>
+   <? end ?>
+   <p class="signature">Nest test suite.</p>
+</body>
+</html>

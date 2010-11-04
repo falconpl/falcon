@@ -1,0 +1,16 @@
+/* CSS for Nest test sites */
+body {
+   font-family: arial, verdana, sans;
+   font-size: 12pt;
+}
+
+p.signature {
+      font-style:italic;
+      font-size: 8pt;
+}
+
+p.gray {
+   color: #A0A0A0;
+   font-weight: bold;
+   font-style:italic;
+}
