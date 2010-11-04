@@ -55,5 +55,29 @@ FALCON_FUNC PgSQL_init( VMachine* vm )
     }
 }
 
+
+FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
+{
+    Item* i_name = vm->param( 0 );
+    Item* i_query = vm->param( 1 );
+
+    if ( !i_name || !i_name->isString()
+        || !i_query || !i_query->isString() )
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S" ) );
+
+    DBIHandlePgSQL* dbh = static_cast<DBIHandlePgSQL*>( vm->self().asObjectSafe()->getUserData() );
+    fassert( dbh );
+
+    DBIStatement* trans = dbh->prepareNamed( *i_query->asString(), *i_name->asString() );
+
+    // snippet taken from dbi_ext.h - should be shared?
+    Item *trclass = vm->findWKI( "%Statement" );
+    fassert( trclass != 0 && trclass->isClass() );
+    CoreObject *oth = trclass->asClass()->createInstance();
+    oth->setUserData( trans );
+    vm->retval( oth );
+}
+
+
 } /* namespace Ext */
 } /* namespace Falcon */

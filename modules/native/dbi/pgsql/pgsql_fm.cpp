@@ -33,6 +33,9 @@ FALCON_MODULE_DECL
     // we don't have extra functions for the dbhandler of mysql. If whe had,
     // this would be the right place to store them.
 
+    // named prepared statements
+    self->addClassMethod( pgsql_class, "prepareNamed", Falcon::Ext::PgSQL_prepareNamed );
+
     // service publication
     self->publishService( &thePgSQLService );
 

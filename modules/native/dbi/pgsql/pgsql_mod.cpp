@@ -227,14 +227,15 @@ void DBIRecordsetPgSQL::close()
     DBIStatementPgSQL class
  */
 
-DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
+DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query, const String& name )
     :
     DBIStatement( dbh )
 {
     String temp;
     m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
     AutoCString zQuery( temp );
-    PGresult* res = PQprepare( dbh->getConn(), "dummy", zQuery.c_str(), m_nParams, NULL );
+    AutoCString zName( name );
+    PGresult* res = PQprepare( dbh->getConn(), zName.c_str(), zQuery.c_str(), m_nParams, NULL );
 
     if ( res == NULL
         || PQresultStatus( res ) != PGRES_COMMAND_OK )
@@ -242,7 +243,7 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
 
     PQclear( res );
 
-    getExecString( m_nParams );
+    getExecString( m_nParams, name );
 }
 
 
@@ -251,11 +252,13 @@ DBIStatementPgSQL::~DBIStatementPgSQL()
 }
 
 
-void DBIStatementPgSQL::getExecString( uint32 nParams )
+void DBIStatementPgSQL::getExecString( uint32 nParams, const String& name )
 {
-    m_execString.reserve( 16 + ( nParams * 2 ) );
+    fassert( name.length() );
+
+    m_execString.reserve( 11 + name.length() + ( nParams * 2 ) );
     m_execString.size( 0 );
-    m_execString = "EXECUTE dummy(";
+    m_execString = "EXECUTE " + name + "(";
     if ( nParams > 0 )
     {
         m_execString.append( "?" );
@@ -959,6 +962,15 @@ DBIStatement* DBIHandlePgSQL::prepare( const String &query )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
     return new DBIStatementPgSQL( this, query );
+}
+
+
+DBIStatement* DBIHandlePgSQL::prepareNamed( const String &name, const String& query )
+{
+    if ( m_conn == 0 )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+
+    return new DBIStatementPgSQL( this, query, name );
 }
 
 

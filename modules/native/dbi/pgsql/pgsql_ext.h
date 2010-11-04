@@ -11,6 +11,7 @@ class VMachine;
 namespace Ext {
 
 FALCON_FUNC PgSQL_init( VMachine* vm );
+FALCON_FUNC PgSQL_prepareNamed( VMachine* vm );
 
 } // !Ext
 } // !Falcon

@@ -84,11 +84,12 @@ protected:
     uint32  m_nParams;
     String  m_execString;
 
-    void getExecString( uint32 nParams );
+    void getExecString( uint32 nParams, const String& name );
 
 public:
 
-    DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query );
+    DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query,
+                       const String& name="happy_falcon" );
     virtual ~DBIStatementPgSQL();
 
     virtual int64 execute( const ItemArray& params );
@@ -181,6 +182,7 @@ public:
     virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
     virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
     virtual DBIStatement* prepare( const String &query );
+    virtual DBIStatement* prepareNamed( const String &name, const String& query );
     virtual int64 getLastInsertedId( const String& name = "" );
 
     virtual void selectLimited( const String& query, int64 nBegin, int64 nCount, String& result );
