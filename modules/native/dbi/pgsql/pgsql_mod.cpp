@@ -234,7 +234,7 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query )
     String temp;
     m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
     AutoCString zQuery( temp );
-    PGresult* res = PQprepare( dbh->getConn(), "dummy", zQuery.c_str(), 0, NULL );
+    PGresult* res = PQprepare( dbh->getConn(), "dummy", zQuery.c_str(), m_nParams, NULL );
 
     if ( res == NULL
         || PQresultStatus( res ) != PGRES_COMMAND_OK )
@@ -269,18 +269,22 @@ void DBIStatementPgSQL::getExecString( uint32 nParams )
 int64 DBIStatementPgSQL::execute( const ItemArray& params )
 {
     String output;
-    if ( !dbi_sqlExpand( m_execString, output, params ) )
+    if ( params.length() != m_nParams
+        || !dbi_sqlExpand( m_execString, output, params ) )
     {
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ ) );
     }
     AutoCString zQuery( output );
 
     PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
-    if ( res == 0
-        || PQresultStatus( res ) != PGRES_COMMAND_OK )
-    {
+
+    if ( res == 0 )
         DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
-    }
+
+    ExecStatusType st = PQresultStatus( res );
+    if ( st != PGRES_COMMAND_OK
+        && st != PGRES_TUPLES_OK )
+        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
 
     PQclear( res );
     return 0;
