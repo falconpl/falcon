@@ -123,14 +123,10 @@ object SkinBinder
          // get the default-<varname>.fal skin,
          // but if the service skin file is not set,
          // don't force it.
-         bset = srv.skin.isSet
+         bset = var.isSet
          
-         // are we binding the main skin?
-         if varname == "skin"
-            name = "default"
-         else
-            name = (bset ? srv.skin.value : "default") + "-" + varname
-         end
+         // The nameis always the skin name
+         name = varname
          
          Nest.logi( "Service " + srv.fullName() + " searching default sub-skin " + name + " from file." )
          skin = self.getSubSkin( name , srv, var)
@@ -154,11 +150,15 @@ object SkinBinder
 
       // sub-skins are named after the model
       // [instance]_varname.fal/fam/ftd
-      if srvInst: skinFile = srvInst + "_" + skinFile
+      if srvInst
+         dir = srvName + "/" + srvInst
+      else
+         dir = srvName
+      end
       
       skinPaths = [
-         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + srvName +  "/skins" ),
-         cnf.nestdir +"/srv/" + srvName  + "/skins" ]
+         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + dir ),
+         cnf.nestdir +"/srv/" + dir ]
 
          
       if Nest.log_level >= 3

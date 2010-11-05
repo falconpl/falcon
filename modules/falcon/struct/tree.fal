@@ -37,13 +37,13 @@ class Node( content )
       if self.next
          self.next.prev = node
       else
-         if self.parent: self.parent.setTail( node )
+         if self.parent: self.parent.lastChild = node
       end
 
       if self.prev
          self.prev.next = node
       else
-         if self.parent: self.parent.content = node
+         if self.parent: self.parent.firstChild = node
       end
    end
 

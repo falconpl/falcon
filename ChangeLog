@@ -13,6 +13,8 @@ Falcon (0.9.6.7)
   * fixed: Several problems in module loading and marking caused random
            crashes with complex inter-module linking.
   * fixed: Error traceback doesn't include Error_init anymore.
+  * fixed: Several bugs in class inheritance calculus and class equality
+           check.
 
 Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even

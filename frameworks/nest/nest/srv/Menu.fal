@@ -28,9 +28,9 @@ import from nest.bindings in b
    @optparam submenu A list of MenuItems
 
    The @b target can be a link (possibly, a "javascript:" link) or a
-   nest page PID. In the latter case, the Nest routing generator
-   will create a link for the required site.
-
+   nest page PID. In this case, pass it as oob'd, and the
+   @a Nest.pageLink method will be automatically applied to it.
+   
    If the @b target is nil, then the entry won't be clickable;
    this may be used both for disabled menus or to hold sub-menus.
    
@@ -43,11 +43,14 @@ class MenuItem( text, target, al, submenu )
    //# Authorization level
    auth_level = al
    
-   //# Sub-menu; must be an instance of a Menu service.
+   //# Sub-menu; shall be an array of menus.
    submenu = submenu
 
+   //# Indicates if an item represents the current page.
+   current = false
+
    init
-      if ":" notin target
+      if ^? target
          self.target = Nest.pageLink( target )
       else
          self.target = target
@@ -66,20 +69,32 @@ end
    high enough to grant him with some option.
    
    The base menu can be configured through the @a Menu.items configuration, which
-   must be an array of MenuItem variables. variable.
-
-   Other services can dynamically register new items through the the @b add_menu hook, or
-   in case this service has an @b instance name, on @b add_menu.<instance>.
-
-   Items can reference other Menu services.
+   must be an array of MenuItem variables.
 
    The Skin of this serivce will render the menu as a whole, while a subskin called mi_skin
-   is called to render each single item.
+   is called to render each single item. The default skins will render sub-menus recursively;
+   you may implement a different strategy by reimplementing the default skin or the item_skin
+   subskin, or both.
+
+   Other services can dynamically register new items through the the @b add_menu hook, or
+   in case this service has an @b instance name, on @b add_menu.<instance>. The add_menu
+   signal is emitted (during startup phase) as
+   @code
+      Nest.emit( "add_menu[.<instance>]", MenuItem(...) [, "parent" ] )
+   @endcode
+   where the optional @b parent is a string indicating an @a MenuItem.text property in a
+   toplevel item. Deeper submenu parents may be reached using "level1.level2...." dot separator
+   between items.
+
+   Submenus added this way are pushed at the end of the already registered menus at the same level.
+   If more complex interaction is required, the Menu.items service variable can be subscribed and
+   manipulated directly.
+
 */
 class Menu( instance ) from Service( instance )
 
    //# Skin for a single menu item
-   mi_skin = ServiceVar( b.SkinBinder )
+   skin_item = ServiceVar( b.SkinBinder )
 
    //# Config: Items in the menu -- array of MenuItems
    items = ServiceVar( b.ConfigBinder )
@@ -89,6 +104,8 @@ class Menu( instance ) from Service( instance )
    
    //#  The items that are supposed to be visible in this page
    active_items = ServiceVar()
+   //# Config: CSS class of the top element of the skin (will default to 'nest_menu')
+   cls = ServiceVar( b.ConfigBinder )
 
    init
       // register to the add_menu[.instance] hook
@@ -97,16 +114,21 @@ class Menu( instance ) from Service( instance )
    end
 
    function startup()
-      // sanitize the item skin
-      if not self.mi_skin.isSet
-         // a default sub-skin
-         self.mi_skin.value = function( item )
-            if item.target
-               >@'<a href="$(item.target)">$(item.text)</a>'
-            else
-               >@'$(item.text)'
+      if Nest.pcheck
+         vals = self.items.value
+         if vals and vals.typeId() != ArrayType
+            raise NestError( NestError.pcheck, "", "ServiceVar items is not an array" )
+         end
+         
+         for item in vals
+            if not item.derivedFrom( "MenuItem" )
+               raise NestError( NestError.pcheck, "", "Items in Menu.items are not derived from MenuItem" )
             end
          end
+      end
+
+      if not self.cls.value
+         self.cls.value = "nest_menu"
       end
    end
 
@@ -121,32 +143,64 @@ class Menu( instance ) from Service( instance )
       al = auth_level.isSet ? auth_level.value : Nest.AL.NONE
 
       // filter out available events.
+      menuitems = self.items.value
+      if Nest.log_level >= 3: Nest.logd( "Menu input items: " + menuitems.describe() )
       ci = []
-      for item in self.items.value
-         if Nest.auth_level <= item.auth_level
+      for item in menuitems 
+         if not item.auth_level or Nest.auth_level <= item.auth_level
             ci += item
             if Nest.pid == item.target
-               self.current_item.value = item
+               item.current = true
+               if Nest.log_level >= 3: Nest.logd( "Current item is: " + item.text )
+            else
+               item.current = false
             end
          end
       end
 
       self.active_items.value = ci
+      if Nest.log_level >= 3: Nest.logd( "Activating the following items: " + ci.describe() )
    end
 
 
-   function _add_menu_hook( item )
+   function _add_menu_hook( item, parent )
+      // consistency ceheck
       if Nest.pcheck
          if not item.derivedFrom( MenuItem )
-            raise NestError( NestError.pcheck, "", none )
+            raise NestError( NestError.pcheck, "", "in add_menu hook, item not derived from MenuItem" )
+         end
+
+         if parent and parent.typeId() != StringType
+            raise NestError( NestError.pcheck, "", "in add_menu hook, parent is not a string" )
          end
       end
 
-      if self.items.isSet
-         self.items.value.add( item )
+      // find the correct level in the menu where we need to add it.
+      if parent: plist = parent.split(".")
+      tree = self.items.value  // we're in a hook, but we're a method. Self points to Menu
+      
+      // select the correct item
+      while ( plist and (current_name = plist.head()) )
+         parent_item = tree.filter( { v => v == current_name } )
+         if not parent_item
+            Nest.logw( @"Requested item $(parent) not found, adding to the main tree" )
+            tree = self.items.value
+            break
+         else
+            // filter gets 1 element in an array
+            tree = parent_item[0].submenu
+         end
+      end
+
+      // normally, add the item at the end of the selected tree
+      if tree
+         tree.add( item )
       else
+         // if we have no tree, then it means items are empty
          self.items.value = [item]
       end
+      
+      // allow further propagation
    end
    
 end

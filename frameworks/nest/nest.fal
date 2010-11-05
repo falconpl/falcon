@@ -447,8 +447,9 @@ object Nest
       
       cfg = self.config
       // here the trick of the function is useless, as we KNOW we have to configure this stuff
-      vars = self._loadConfig( 
-            [  utils.reldir( cfg.homedir, cfg.site_dm_dir ) ], name)
+      dirs = [  utils.reldir( cfg.homedir, cfg.site_dm_dir ) ]
+      if self.log_level >= 3: self.logd( @"DM $(name) searching config in " + dirs.describe() )
+      vars = self._loadConfig( dirs, name )
       
       // Let the config parameter have an higher priority
       if not vars
@@ -679,20 +680,22 @@ object Nest
       @param The name of a previously registered hook
       @optparam ...
 
-      Calls a hook.
+      Calls a previously registered @a Hook instance.
+      The hook function should return an oob value to signal that the
+      message has been handled, and stop from further propagation.
    */
    function emit( name )
       if name in self._hooks
          self.logi( "Calling hook " + name )
          for hook in self._hooks[name]
             ret = passvp( hook.func )
-            if hook.consume
-               return ret
+            if ^? ret
+               break
             end
          end
 
          self.logd( "Hook " + name + " reutrned  " + ret.describe() )
-         return ret
+         return ^- ret
       else
          self.logw( "Can't find hook " + name )
       end
@@ -756,7 +759,8 @@ object Nest
    	scheme, for example in the DB entities.
    */
    function compileClass( location, name )
-   	mod = self._comp.loadFile( location, name )
+      alias = name + "-:" + location
+      mod = self._comp.loadFile( location, alias )
       try
          srvClass = mod.get( name )
       catch AccessError
@@ -823,16 +827,7 @@ object Nest
       self.styles += srv.styles
       self.scripts += srv.scripts
 
-      // 3 - Find the skin file
-      if srv.skin.value
-         skinFile = srv.skin.value
-         skinNeeded = true
-      else
-         skinFile = "default.fal"
-         skinNeeded = false
-      end
-
-      // 4 - Register the service
+      // 3 - Register the service
       self._srvlist += srv
       self.services[ srv.fullName() ] = srv
    end
@@ -967,20 +962,14 @@ object Nest
    
    // Service configuration step 3.1 -- load service specific config
    function _loadConfig( dirs, fname )
-      if self.log_level >= 3: self.logd( @"Searching configuration for $(fname) in " + dirs.describe() )
-
       confFile = utils.findFileInDirs( dirs, fname + ".fal" )
 
       if confFile
          if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
          
          try
-            /*
-            cmp = compiler.Compiler()
-            cmp.launchAtLink = true
-            confMod = cmp.loadFile( confFile )
-            */
-            confMod = self._comp.loadFile( confFile )
+            privAlias = fname + "-:" + confFile
+            confMod = self._comp.loadFile( confFile, privAlias )
             vars = [=>]
             for var in confMod.globals()
                value = confMod.get( var )

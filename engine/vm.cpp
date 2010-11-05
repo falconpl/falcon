@@ -1996,7 +1996,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
                if ( obj->derivedFrom( cfr->asClass()->symbol()->name() ) )
                   goto success;
             }
-            else if (itm->isClass() && itm->asClass() == cfr->asClass() )
+            else if (itm->isClass() && itm->asClass()->derivedFrom( cfr->asClass()->symbol() ) )
             {
                goto success;
             }

@@ -48,13 +48,13 @@ class DataTable( instance ) from DataService( instance )
    cnt = ServiceVar( b.InputVarBinder  )
 
    //# Skin used to render the title line
-   heading_skin = ServiceVar( b.SkinBinder  )
+   skin_heading = ServiceVar( b.SkinBinder  )
 
    //# Skin used to render each item
-   row_skin = ServiceVar( b.SkinBinder  )
+   skin_row = ServiceVar( b.SkinBinder  )
 
    //# Skin used to render the global table actions
-   actions_skin = ServiceVar( b.SkinBinder  )
+   skin_actions = ServiceVar( b.SkinBinder  )
    
 
    /*# Extracted data as a DBRecord vector */

@@ -23,13 +23,38 @@ import NestError from nest as NestError
 import from nest.dbentity in dbe
 import from nest.dbview in dbv
 import from parser.render.html in html
-import plugins from nest.srv.Wiki.plugins as Plugins
+
 import DataManager from nest.datamanager as DataManager
 
 const entity_name = "wiki_pages"
 const default_page = "main"
 
 /*# Service Managing WIKI based contents.
+
+@section wiki_plugin Plugin management.
+
+This Wiki service resolves plugin requests in wiki texts by generating a
+@a Nest.emit message named "wiki_plugin_<name>", where __name__ is the name
+of the required plugin.
+
+As plugin defitions are application (wiki) globals, the instance of the wiki
+and its configuration are irrilevant. The wiki plugin handler just need to
+generate a string reply that is inserted in its place in the final rendered page.
+
+The function is invoked as
+@code
+   function wiki_plugin_<name>( parms, node, standout, page )
+@endcode
+
+   where params, node and standout are the Falcon wiki renderer parameters:
+   - params is the complete string of values passed to the plugin.
+   - node is the point in the tree structure where the node is declared.
+   - standout true if this is happening in the standout phase.
+   - The top node of the wiki tree.
+
+The Nest system defines the following plugins, which are registered as the wiki service is loaded:
+   - **toc**: Puts a table of content extracted from the source page in place of its definition.
+   - **timestamp**: Puts the current timestamp at its place. 
 */
 class Wiki( instance ) from Service( instance )
    //# Wiki page to be loaded or managed
@@ -58,8 +83,6 @@ class Wiki( instance ) from Service( instance )
    modyPage = ServiceVar( b.ConfigBinder )
    //# Max depth of the wiki history
    history_depth = ServiceVar( b.ConfigBinder )
-   //# User provided page plugins
-   plugins = ServiceVar( b.ConfigBinder )
 
    //===================================================================
    // Internal variables
@@ -91,6 +114,12 @@ class Wiki( instance ) from Service( instance )
    //# Spacial variable to be set true when the wiki is not required to display pages.
    mute = false
 
+   init
+      //# force nest to load standard plugins
+      Nest.addHook( "WikiPluginToc" )
+      Nest.addHook( "WikiPluginTimestamp" )
+   end
+   
    //===================================================================
    // Main part
    //
@@ -334,26 +363,18 @@ class Wiki( instance ) from Service( instance )
       @param page_name The page to be removed.
       @return true on success, false if the page cannot be created.
    */
-   function plugin( pname, params, node, sout )
+   function plugin( pname, params, node, sout, page )
       // do we have some user-provided plugins?
-      upl=self.plugins.value
-      if upl and upl.typeId == DictionaryType and pname in upl
-        pin = upl[pname]
-      end
-
-      // not found a valid user plugin ---  try ours
-      if pin == nil
-         pin = pname in Plugins ? Plugins[pname] : nil
-      end
+      res = Nest.emit( "wiki_plugin_" + pname, params, node, sout, page )
 
       // still nothing?
-      if pin == nil 
-         return @i"Plugin $pname not found"
+      if res == nil and not sout
+         return @i"<br/><b>WARNING:</b> Plugin \"<b>$pname</b>\" not found.<br/>"
       else
-         return pin( params, node, sout, self.wid.value )
+         return res
       end
    end
-   
+
 end
 
 
@@ -375,8 +396,8 @@ class _WikiHelper(srv) from html.BaseSiteHelper
    end
 
 
-   function plugin( plugin_name, params, node, standout )
-      return self.srv.plugin( plugin_name, params, node, standout )
+   function plugin( plugin_name, params, node, standout, page )
+      return self.srv.plugin( plugin_name, params, node, standout, page )
    end
 end
 

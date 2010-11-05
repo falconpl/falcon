@@ -86,9 +86,9 @@ class DBCheckUser from Hook( "check_user" )
                end
 
                if self.data_maker
-                  return [level, self.data_maker(record.data) ]
+                  return ^+ [level, self.data_maker(record.data) ]
                else
-                  return [level, record.data ]
+                  return ^+ [level, record.data ]
                end
             end
          end

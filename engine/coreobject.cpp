@@ -160,8 +160,7 @@ bool CoreObject::deserialize( Stream *stream, bool bLive )
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
-   const Symbol *clssym = m_generatedBy->symbol();
-   return (clssym->name() == className || m_generatedBy->derivedFrom( className ));
+   return m_generatedBy->derivedFrom( className );
 }
 
 

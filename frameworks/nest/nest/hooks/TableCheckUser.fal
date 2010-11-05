@@ -63,8 +63,7 @@ class TableCheckUser from Hook( "check_user" )
          if self.hash: pwd = self.hash(pwd)
 
          if pwd == data.password
-            consume = true
-            return [ data.auth_level, data.auth_data]
+            return ^+ [ data.auth_level, data.auth_data]
          end
       else
 
