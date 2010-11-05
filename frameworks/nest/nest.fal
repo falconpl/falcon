@@ -759,7 +759,7 @@ object Nest
    	scheme, for example in the DB entities.
    */
    function compileClass( location, name )
-      alias = name + "-:" + location
+      alias = name + "-" + random(1,1000000)
       mod = self._comp.loadFile( location, alias )
       try
          srvClass = mod.get( name )
@@ -968,7 +968,7 @@ object Nest
          if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
          
          try
-            privAlias = fname + "-:" + confFile
+            privAlias = fname + "-" + random(1,1000000)
             confMod = self._comp.loadFile( confFile, privAlias )
             vars = [=>]
             for var in confMod.globals()
@@ -980,7 +980,9 @@ object Nest
             end
 
          catch in e
-            raise NestError( NestError.econfig, "", e.toString() )
+            nerr = NestError( NestError.econfig, "" )
+            nerr.boxed = e
+            raise nerr
          end
          
          if self.log_level >= 3: self.logd( @"In $(fname), found variables "+ vars.describe() )
