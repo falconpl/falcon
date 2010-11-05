@@ -54,13 +54,13 @@ class DataControl( instance ) from Service( instance )
    dberror = ServiceVar()
 
    /*# DBEntity instance on which to operate.*/
-   entity = ServiceVar()
+   entity = ServiceVar( b.ConfigBinder )
 
    //# Handler for confirm requests -- if nil maps to self.
    handler = ServiceVar( b.ConfigBinder )
 
    //# Skin used for confirmation requests.
-   confirm_skin = ServiceVar( b.SkinBinder )
+   skin_confirm = ServiceVar( b.SkinBinder )
 
    //# Optional view used during confirm.
    view = ServiceVar( b.ConfigBinder )
@@ -103,6 +103,14 @@ class DataControl( instance ) from Service( instance )
 
       Nest.logi( @"DataAction: $action $entity:$eid" )
 
+      if action != "add" and eid == nil
+         // can be, if asked a command but forgot to set any value
+         // -- just return, we have marked the event in the previous log
+         // -- of course, add can't have an EID
+         self.cmd.value = nil  // this to prevent the skin to fire.
+         return
+      end
+      
       if self.cnf.value == "1"
          self.askConfirm(action, eid)
          return
@@ -187,7 +195,7 @@ class DataControl( instance ) from Service( instance )
          self.cnf.value = data
       end
 
-      self.skin.value = self.confirm_skin.value
+      self.skin.value = self.skin_confirm.value
    end
 
    
@@ -198,7 +206,7 @@ class DataControl( instance ) from Service( instance )
       
       if view
          data = []
-         for id in eid
+         for id in eid            
             record = entity.find( id, view )
             if record
                data += record.specify()

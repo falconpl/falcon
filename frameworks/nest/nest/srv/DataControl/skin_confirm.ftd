@@ -7,7 +7,6 @@
    end
 ?>
 <form action="<?=data.handler?>" method="POST">
-   <input type="hidden" name="cnf" value="1"/>
    <input type="hidden" name="cmd" value="<?=htmlEscape(data.cmd)?>"/>
    <? if data.eid.typeId() == ArrayType ?>
    <? for id in data.eid ?>
