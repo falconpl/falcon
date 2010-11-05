@@ -1000,7 +1000,15 @@ int64 DBIHandlePgSQL::getLastInsertedId( const String& name )
 
 void DBIHandlePgSQL::selectLimited( const String& query, int64 nBegin, int64 nCount, String& result )
 {
+    String sBegin, sCount;
 
+    if( nCount > 0 )
+        sCount.A( " LIMIT " ).N( nCount );
+
+    if ( nBegin > 0 )
+        sBegin.A( " OFFSET " ).N( nBegin );
+
+    result = "SELECT " + query + sCount + sBegin;
 }
 
 
