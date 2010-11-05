@@ -197,6 +197,68 @@ bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
         value.setNumeric( atof( v ) );
         break;
 
+    case PG_TYPE_DATE:
+        {
+            VMachine* vm = VMachine::getCurrent();
+            if ( vm == 0 )
+                return false;
+
+            String tv( v );
+            int64 year, month, day;
+            tv.subString( 0, 4 ).parseInt( year );
+            tv.subString( 5, 7 ).parseInt( month );
+            tv.subString( 8, 10 ).parseInt( day );
+            TimeStamp* ts = new TimeStamp( year, month, day );
+
+            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
+            ots->setUserData( ts );
+            value = ots;
+            break;
+        }
+
+    case PG_TYPE_TIME:
+    case PG_TYPE_TIMETZ: // todo: handle tz
+        {
+            VMachine* vm = VMachine::getCurrent();
+            if ( vm == 0 )
+                return false;
+
+            String tv( v );
+            int64 hour, minute, second;
+            tv.subString( 0, 2 ).parseInt( hour );
+            tv.subString( 3, 5 ).parseInt( minute );
+            tv.subString( 6, 8 ).parseInt( second );
+            TimeStamp* ts = new TimeStamp( 0, 0, 0, hour, minute, second );
+
+            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
+            ots->setUserData( ts );
+            value = ots;
+            break;
+        }
+
+    case PG_TYPE_TIMESTAMP:
+    case PG_TYPE_TIMESTAMPTZ: // todo: handle tz
+        {
+            VMachine* vm = VMachine::getCurrent();
+            if ( vm == 0 )
+                return false;
+
+            String tv( v );
+            int64 year, month, day, hour, minute, second;
+            tv.subString(  0,  4 ).parseInt( year );
+            tv.subString(  5,  7 ).parseInt( month );
+            tv.subString(  8, 10 ).parseInt( day );
+            tv.subString( 11, 13 ).parseInt( hour );
+            tv.subString( 14, 16 ).parseInt( minute );
+            tv.subString( 17, 19 ).parseInt( second );
+            TimeStamp* ts = new TimeStamp( year, month, day, hour, minute, second );
+
+            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
+            ots->setUserData( ts );
+            value = ots;
+            break;
+        }
+
     case PG_TYPE_CHAR2:
     case PG_TYPE_CHAR4:
     case PG_TYPE_CHAR8:
