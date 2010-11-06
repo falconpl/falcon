@@ -1,3 +1,18 @@
+/*
+ * FALCON - The Falcon Programming Language.
+ * FILE: pgsql_ext.cpp
+ *
+ * PgSQL Falcon service/driver
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar, Stanislas Marquis
+ * Begin: Sun Dec 23 21:54:42 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ */
+
 #include <falcon/engine.h>
 
 #include "pgsql_ext.h"
@@ -56,6 +71,11 @@ FALCON_FUNC PgSQL_init( VMachine* vm )
 }
 
 
+/*#
+    @method prepareNamed PgSQL
+    @param name Name for the prepared statement
+    @param query The query to prepare
+ */
 FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
 {
     Item* i_name = vm->param( 0 );

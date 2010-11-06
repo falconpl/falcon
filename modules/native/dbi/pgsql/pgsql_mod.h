@@ -1,10 +1,10 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: pgsql.h
+ * FILE: pgsql_mod.h
  *
  * Pgsql driver main module interface
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
+ * Author: Jeremy Cowgar, Stanislas Marquis
  * Begin: Sun Dec 23 21:36:20 2007
  *
  * -------------------------------------------------------------------
@@ -23,22 +23,6 @@
 
 namespace Falcon
 {
-
-#if 0
-class PgSQLInBind
-    :
-    public DBIInBind
-{
-public:
-
-    PgSQLInBind();
-    virtual ~PgSQLInBind();
-
-    virtual void onFirstBinding( int size );
-    virtual void onItemChanged( int num );
-
-};
-#endif
 
 class DBIHandlePgSQL;
 
@@ -98,62 +82,6 @@ public:
 };
 
 
-#if 0
-class DBIRecordsetPgSQL : public DBIRecordset
-{
-protected:
-   int m_row;
-   int m_rowCount;
-   int m_columnCount;
-
-   PGresult *m_res;
-
-   static dbi_type getFalconType( Oid pgType );
-
-public:
-   DBIRecordsetPgSQL( DBIHandle *dbh, PGresult *res );
-   ~DBIRecordsetPgSQL();
-
-   virtual dbi_status next();
-   virtual int getRowCount();
-   virtual int getRowIndex();
-   virtual int getColumnCount();
-   virtual dbi_status getColumnNames( char *names[] );
-   virtual dbi_status getColumnTypes( dbi_type *types );
-   virtual dbi_status asString( const int columnIndex, String &value );
-   virtual dbi_status asBoolean( const int columnIndex, bool &value );
-   virtual dbi_status asInteger( const int columnIndex, int32 &value );
-   virtual dbi_status asInteger64( const int columnIndex, int64 &value );
-   virtual dbi_status asNumeric( const int columnIndex, numeric &value );
-   virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
-   virtual dbi_status asBlobID( const int columnIndex, String &value );
-   virtual void close();
-   virtual dbi_status getLastError( String &description );
-};
-
-class DBITransactionPgSQL : public DBIStatement
-{
-protected:
-   bool m_inTransaction;
-
-public:
-   DBITransactionPgSQL( DBIHandle *dbh );
-
-   virtual DBIRecordset *query( const String &query, int64 &affected_rows, dbi_status &retval );
-   virtual dbi_status begin();
-   virtual dbi_status commit();
-   virtual dbi_status rollback();
-   virtual void close();
-   virtual dbi_status getLastError( String &description );
-   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
-   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
-      bool bBinary = false );
-};
-#endif
-
-
 class DBIHandlePgSQL
     :
     public DBIHandle
@@ -193,32 +121,6 @@ public:
     PGresult* internal_exec( const String& sql, int64& affectedRows );
 };
 
-#if 0
-class DBIHandlePgSQL : public DBIHandle
-{
-protected:
-   PGconn *m_conn;
-
-   DBITransactionPgSQL *m_connTr;
-
-public:
-   DBIHandlePgSQL();
-   DBIHandlePgSQL( PGconn *conn );
-   virtual ~DBIHandlePgSQL();
-
-   PGconn *getPGconn() { return m_conn; }
-
-   virtual DBIStatement *startTransaction();
-   virtual dbi_status closeTransaction( DBIStatement *tr );
-   virtual int64 getLastInsertedId();
-   virtual int64 getLastInsertedId( const String &value );
-   virtual dbi_status getLastError( String &description );
-   virtual dbi_status escapeString( const String &value, String &escaped );
-   virtual void close();
-   virtual DBIStatement* getDefaultTransaction();
-};
-#endif
-
 
 class DBIServicePgSQL
     :
@@ -239,7 +141,7 @@ public:
 
 };
 
-}
+} // !namespace Falcon
 
 extern Falcon::DBIServicePgSQL thePgSQLService;
 

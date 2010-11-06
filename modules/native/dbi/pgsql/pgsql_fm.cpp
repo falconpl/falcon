@@ -1,3 +1,18 @@
+/*
+ * FALCON - The Falcon Programming Language.
+ * FILE: pgsql_fm.cpp
+ *
+ * PgSQL Falcon service/driver
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar, Stanislas Marquis
+ * Begin: Sun Dec 23 21:54:42 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ */
+
 #include "pgsql_ext.h"
 #include "pgsql_mod.h"
 #include "version.h"
@@ -34,7 +49,8 @@ FALCON_MODULE_DECL
     // this would be the right place to store them.
 
     // named prepared statements
-    self->addClassMethod( pgsql_class, "prepareNamed", Falcon::Ext::PgSQL_prepareNamed );
+    self->addClassMethod( pgsql_class, "prepareNamed", Falcon::Ext::PgSQL_prepareNamed )
+            .asSymbol()->addParam( "name" )->addParam( "query" );
 
     // service publication
     self->publishService( &thePgSQLService );
