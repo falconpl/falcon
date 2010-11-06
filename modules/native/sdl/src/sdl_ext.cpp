@@ -113,7 +113,7 @@ FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
 /*#
    @method InitAuto SDL
    @brief Initialize SDL system and provide automatic cleanup.
-   @param flags SDL initialziation flags
+   @param flags SDL initialization flags
    @return handle for SDL termination.
    @raise SDLError on initialization failure
 
@@ -470,7 +470,12 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance( screen );
-   SDL_FreeSurface( screen );
+
+   // SDL free must NOT be called on screen surfaces.
+   // For this reason, we leave it +1 referenced, so it will be never deleted
+   //SDL_FreeSurface( screen );
+   screen->refcount++;
+
    vm->retval( obj );
 }
 
@@ -544,7 +549,12 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance( surf );
-   SDL_FreeSurface( surf );
+
+   // SDL free must NOT be called on screen surfaces.
+   // For this reason, we leave it +1 referenced, so it will be never deleted
+   //SDL_FreeSurface( surf );
+   surf->refcount++;
+
    vm->retval( obj );
 }
 

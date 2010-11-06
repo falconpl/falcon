@@ -5,20 +5,21 @@
 <html>
 <head>
    <title>Nest test suite - Menu service</title>
-   <?= Nest.headings() ?>
+   <? Nest.headings() ?>
 </head>
 <body>
    <table class="header">
    <tbody>
-   <tr><td><? menu.render() ?></td><td><? login.render() ?></td></tr>
+   <tr><td class="menu"><? menu.render() ?></td><td id="login"><? login.render() ?></td></tr>
    </tbody>
    </table>
-   <hr/>
+
    <? Nest.content() ?>
    <hr/>
-   <? if Nest.auth_level < Nest.AL.USER ?>
-   <p class="gray">To login, use the "user" / "user".</p>
+   <? if Nest.auth_level > Nest.AL.USER ?>
+   <p class="gray">To login, enter "user" / "user" or "admin" / "admin".</p>
    <? end ?>
+   <? Nest.service( "Menu", "footer", [ "skin" => "skin_footer.fal" ] ).render() ?>
    <p class="signature">Nest test suite.</p>
 </body>
 </html>

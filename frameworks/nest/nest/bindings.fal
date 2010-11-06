@@ -150,21 +150,19 @@ object SkinBinder
 
       // sub-skins are named after the model
       // [instance]_varname.fal/fam/ftd
-      if srvInst
-         dir = srvName + "/" + srvInst
-      else
-         dir = srvName
-      end
-      
       skinPaths = [
-         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + dir ),
-         cnf.nestdir +"/srv/" + dir ]
-
+         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + srvName ),
+         cnf.nestdir +"/srv/" + srvName ]
+         
+      if srvInst
+         skinPaths = [
+            utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + srvName + "/" + srvInst ),
+            cnf.nestdir +"/srv/" + srvName + "/" + srvInst ] + skinPaths
+      end
          
       if Nest.log_level >= 3
          Nest.logd( "Service " + srv.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
       end
-
 
       skinFile = utils.findFileInDirs( skinPaths, skinFile, ['fal','ftd','fam'] )
       if skinFile

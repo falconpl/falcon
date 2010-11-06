@@ -1,0 +1,9 @@
+<h1>Account Setting</h1>
+<p>Here you can see your account settings. Actually, this is only a stub, so there is nothing to do...</p>
+<table>
+<tbody>
+<tr><td>User ID:</td><td><?= Nest.ambient( "auth_user" ).value ?></td></tr>
+<tr><td>Name:</td><td><?= Nest.ambient( "auth_data" ).value ?></td></tr>
+</tbody>
+</table>
+

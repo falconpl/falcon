@@ -28,7 +28,7 @@ import NestModule from .nestmodule as NestModule
    To be used in services like
    class X from Service
       ...
-      varname = ServiceVar( )
+      varname = ServiceVar( [binder] )
    end
    
 */
@@ -93,8 +93,27 @@ class Service( instance ) from NestModule( instance )
    scripts = []
    styles = []
    
-   /*# Skin name. 
-      Set to a logical skin name.
+   /*# Skin name.
+   
+      Set to a logical skin name or to a callable function.
+
+      If left undefined, and the service render step is required,
+      the value will be defaulted to "skin", and the relative skin
+      will be searched in the service path, but no warning will be
+      raised if the default skin file is not found.
+
+      If a skin is explicitly required and the @a SkinBinder can't find it,
+      then an error will be raised.
+
+      The skin function will be typically called with two parameters: the
+      variables bound in the service and the instance of this service. However,
+      this is a general convention that doesn't need to be respected by the
+      service-skin pairs, if some different communication between them is
+      required.
+
+      Bound variables are sent to the skin in a blessed dictionary (pseudo-object)
+      where each key is the name of the Service variable, and the value is the
+      bound variable value.
    */ 
    skin = ServiceVar( SkinBinder )
    
@@ -104,6 +123,25 @@ class Service( instance ) from NestModule( instance )
       value, the service won't be run nor rendered.
    */
    level = ServiceVar( ConfigBinder )
+
+   /*# ID of the (x)html element that the skin should expose when rendering this item.
+
+      Many skins will want to know the ID value to put on the topmost html item they
+      render, so that CSS and javascripts can easily address the element.
+
+      The default is that of making the this value == to the instance name, and where
+      absent, to the service name, but it can be overridden in configuration.
+   */
+
+   css_id = ServiceVar( ConfigBinder )
+
+   /*# Class of the (x)html element that the skin should expose when rendering this item.
+
+      Many skins will want to know the class value to put on the topmost html item they
+      render, so that CSS and javascripts can easily address the element.
+   */
+
+   css_class = ServiceVar( ConfigBinder )
 
    //=========================================
    // Public interface
@@ -154,7 +192,8 @@ class Service( instance ) from NestModule( instance )
    end
 
    /*# Execute rendering.
-
+      @return Pre-formatted XHTML text to output directly on the final page.
+      
       This callback is called if the service previously registered through @ Service.render,
       and is invoked directly by Nest at page output completion.
 
@@ -162,12 +201,25 @@ class Service( instance ) from NestModule( instance )
 
       Implementors may override this if this simple behavior is not enough, or if the service
       rendering is simple enough not to require skin files.
+
+      This method should return "" if nothing is to be rendered.
    */
    function perform_render()
-      if not self.allowed(): return ""
-      if (sf = self.skin.value) and sf.isCallable()
-         return self.renderSkin( sf )
+      if self.allowed()
+
+         if not self.css_id.isSet
+            self.css_id.value = self.instance ? self.instance : self.className()
+         end
+
+         if not self.css_class.isSet
+            self.css_class.value = ""
+         end
+         
+         if (sf = self.skin.value) and sf.isCallable()
+            return self.renderSkin( sf )
+         end
       end
+      
       return ""
    end
    
@@ -184,6 +236,8 @@ class Service( instance ) from NestModule( instance )
    
        Skins and other variable element should check for this value before performing
        any operation or displaying any data.
+
+       @see Service.checkAllowed
    */
    function allowed()
       return self.level.value == nil or Nest.auth_level <= self.level.value
@@ -192,7 +246,7 @@ class Service( instance ) from NestModule( instance )
     /*# Check if the current user is allowed to access this service.
 
       Differently from @a Service.allowed, it also logs an error message if the service is not
-      allowed.
+      allowed. As such, is slower, and should be used sparsely.
    */
    function checkAllowed()
       name = self.fullName()

@@ -507,14 +507,18 @@ object Nest
       // srv is OOB'd if already registered.
       if not ^? srv
          // 1. Load service configuration
-
+         dirs = [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
+                  cfg.nestdir + "/srv/" + name ]
+         if inst
+            dirs = [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name + "/" + inst),
+                  cfg.nestdir + "/srv/" + name + "/" + inst ] + dirs
+         end
+         
          // here the trick of the function is useless, as we KNOW we have to configure this stuff
-         self._configModule( srv, vars,
-               [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
-                  cfg.nestdir + "/srv/" + name ])
+         self._configModule( srv, vars, dirs)
 
          // 2. Register the service, that is, configre its resources and prepare Nest to run it
-         self._registerService( srv, vars )
+         self._registerService( srv )
 
          // 3. Binding the service
          self.logi( "Binding service " + srv.fullName() )
@@ -533,6 +537,17 @@ object Nest
    
    /*# Produces nest automatic headings. */
    function headings()
+      Nest.logi( "Placing render mark for headers" )
+      // save the rendering up to date
+      self._contentSlices += self._pageStream.closeToString()
+      // prepare for later rendering at this point
+      self._contentSlices += self._render_headings
+      // generate a new stream for the rest of the page.
+      self._pageStream = StringStream()
+      stdOut( self._pageStream )
+   end
+   
+   function _render_headings()
       str = ""
 
       if self.title
@@ -817,17 +832,15 @@ object Nest
    end
 
    
-   function _registerService( srv, vars )
-      cnf = self.config
-
-      // 2. determine online resources (and verify they're installed)
+   function _registerService( srv )
+      // 1. determine online resources (and verify they're installed)
       self._checkOnlineRes( srv )
       
       // ... and just add inline styles and scripts
       self.styles += srv.styles
       self.scripts += srv.scripts
 
-      // 3 - Register the service
+      // 2 - Register the service
       self._srvlist += srv
       self.services[ srv.fullName() ] = srv
    end
@@ -920,22 +933,14 @@ object Nest
       lname = srv.className()
       debug = self.log_level >= 3
 
-      if debug: self.logd( "Module \"" + lname + "\" searching config in " + dirs.describe() )
+      if debug: self.logd( @"Module $(lname) searching cfg for \"$(srv.instance)\" in "+ dirs.describe() )
       cf1_data = self._loadConfig( dirs, "config" )
       if debug: self.logd( "Config variablers for " + lname + ": " + vars.describe() )
-
-      // searching config in subdirs
-      if srv.instance
-         // search instance.fal under ./config
-         ddet = map( {d=> d + "/config"}, dirs )
-         if debug: self.logd( @"Module $(lname) searching cfg for \"$(srv.instance)\" in "+ ddet.describe() )
-         cf2_data = self._loadConfig( ddet, srv.instance )
-      end
       
       // Search in the main configuration
       sname = srv.fullName()
       if sname in cnf.mod_config
-         cf3_data = cnf.mod_config[sname]
+         cf2_data = cnf.mod_config[sname]
       end
 
       // Sum it up; priority is:
@@ -944,9 +949,9 @@ object Nest
       // 3. Instance configuration
       // 4. Module configuration
       
-      if cf1_data or cf2_data or cf3_data or vars
+      if cf1_data or cf2_data or vars
          configData = [=>]
-         for d in .[ cf1_data cf2_data cf3_data vars]
+         for d in .[ cf1_data cf2_data vars]
             if d: configData += d
          end
       end
@@ -968,7 +973,7 @@ object Nest
          if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
          
          try
-            privAlias = fname + "-:" + confFile
+            privAlias = fname + "-" + random( 1000000 )
             confMod = self._comp.loadFile( confFile, privAlias )
             vars = [=>]
             for var in confMod.globals()
@@ -1065,8 +1070,10 @@ object Nest
       cs = self._contentSlices
       slen = cs.len()
       while i < slen
-         if cs[i].isCallable()
-            cs[i] = cs[i]()
+         mth = cs[i] 
+         if mth.isCallable()
+            if self.log_level >= 3: self.logd( "Calling slice " + mth )
+            cs[i] = mth()
          end
          ++i
       end

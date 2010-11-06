@@ -18,10 +18,10 @@
 
 load nest
 
-Nest.debug = true
+/*Nest.debug = true
 Nest.log_level = 3
-
 Nest.pcheck = true
+*/
 Nest.stylesheets += "nest.css"
 Nest.frame = .[ include "frame.ftd" ]
 Nest.addHook( "TableCheckUser" )

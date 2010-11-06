@@ -1,0 +1,30 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: WikiPluginToc.fal
+
+   Plugin for the Wiki service responding to "timestamp" plugin nodes.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 31 Aug 2010 23:06:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.hook
+
+function _timestamp( param, node, sout, page )
+   if sout: return ""
+
+   if param: return CurrentTime().toString(param)
+   return CurrentTime().toString()
+end
+
+//# Plugin for the Wiki service responding to "timestamp" plugin nodes.
+class WikiPluginTimestamp from nest.hook.Hook( "wiki_plugin_timestamp", _timestamp )
+end

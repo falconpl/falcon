@@ -23,13 +23,21 @@ import from nest.bindings in b
 
 /*# Entity representing a menu item.
    @param text The text of the menu item.
-   @param target The destination link.
+   @optparam target The destination link.
    @optparam al Authorization level for this item to appare.
    @optparam submenu A list of MenuItems
 
+   The @b text parameter is the text that should be rendered
+   as the menu name. The item may be marked as conditional
+   making it out-of-band; this will make it to appare only
+   if there is a link (target is not nil) or there are sub-menus.
+   Useful for "plugin" menu items.
+
    The @b target can be a link (possibly, a "javascript:" link) or a
-   nest page PID. In this case, pass it as oob'd, and the
-   @a Nest.pageLink method will be automatically applied to it.
+   nest page PID. The special scheme "nest:" marks a nest page ID.
+   All the other values are treated as direct links. You may prefix
+   the @b target entry with a ">" character to ask for this entity
+   to be opeend in a another window.
    
    If the @b target is nil, then the entry won't be clickable;
    this may be used both for disabled menus or to hold sub-menus.
@@ -38,8 +46,13 @@ import from nest.bindings in b
 class MenuItem( text, target, al, submenu )
    //# text of this menu item
    text = text
+
    //# Target link of this menu item
    target = nil
+
+   //# Open in a new window?
+   wnd = ""
+   
    //# Authorization level
    auth_level = al
    
@@ -49,11 +62,24 @@ class MenuItem( text, target, al, submenu )
    //# Indicates if an item represents the current page.
    current = false
 
+   //# is this item referencing a page ID?
+   pid = nil
+   
    init
-      if ^? target
-         self.target = Nest.pageLink( target )
-      else
-         self.target = target
+      // parse the target field
+      if target
+         if target.startsWith(">")
+            target = target[1:]
+            self.wnd = "_blank"
+         end
+
+         if target.startsWith( "nest:" )
+            pid = target[5:]
+            self.pid = pid
+            self.target = Nest.pageLink( pid )
+         else
+            self.target = target
+         end
       end
    end
 end
@@ -104,8 +130,6 @@ class Menu( instance ) from Service( instance )
    
    //#  The items that are supposed to be visible in this page
    active_items = ServiceVar()
-   //# Config: CSS class of the top element of the skin (will default to 'nest_menu')
-   cls = ServiceVar( b.ConfigBinder )
 
    init
       // register to the add_menu[.instance] hook
@@ -126,10 +150,6 @@ class Menu( instance ) from Service( instance )
             end
          end
       end
-
-      if not self.cls.value
-         self.cls.value = "nest_menu"
-      end
    end
 
    function run()
@@ -146,16 +166,14 @@ class Menu( instance ) from Service( instance )
       menuitems = self.items.value
       if Nest.log_level >= 3: Nest.logd( "Menu input items: " + menuitems.describe() )
       ci = []
-      for item in menuitems 
-         if not item.auth_level or Nest.auth_level <= item.auth_level
-            ci += item
-            if Nest.pid == item.target
-               item.current = true
-               if Nest.log_level >= 3: Nest.logd( "Current item is: " + item.text )
-            else
-               item.current = false
-            end
+      for item in menuitems
+         // hidden and empty?
+         if ^? item.text and (item.target == nil and not item.submenu)
+            // ignore it
+            continue
          end
+
+         self._markItems( item, ci )
       end
 
       self.active_items.value = ci
@@ -163,11 +181,12 @@ class Menu( instance ) from Service( instance )
    end
 
 
+   // Adds a menu through the "add_menu.instance" hook
    function _add_menu_hook( item, parent )
       // consistency ceheck
       if Nest.pcheck
-         if not item.derivedFrom( MenuItem )
-            raise NestError( NestError.pcheck, "", "in add_menu hook, item not derived from MenuItem" )
+         if not item.derivedFrom( "MenuItem" )
+            raise NestError( NestError.pcheck, "", "in add_menu hook, item not derived from MenuItem " + item.describe() )
          end
 
          if parent and parent.typeId() != StringType
@@ -180,27 +199,59 @@ class Menu( instance ) from Service( instance )
       tree = self.items.value  // we're in a hook, but we're a method. Self points to Menu
       
       // select the correct item
-      while ( plist and (current_name = plist.head()) )
-         parent_item = tree.filter( { v => v == current_name } )
+      while ( plist and (current_name = plist.head()) and tree )
+         parent_item = filter( { v => v.text == current_name }, tree )
          if not parent_item
-            Nest.logw( @"Requested item $(parent) not found, adding to the main tree" )
+            plist = true // force the following error
             tree = self.items.value
             break
          else
             // filter gets 1 element in an array
-            tree = parent_item[0].submenu
+            parent_item = parent_item[0]
+            tree = parent_item.submenu
          end
+      end
+
+      // if found, then the list of parents must be empty
+      if plist
+         Nest.logw( @"Requested item $(parent) not found, adding to the main tree" )
       end
 
       // normally, add the item at the end of the selected tree
       if tree
          tree.add( item )
       else
-         // if we have no tree, then it means items are empty
-         self.items.value = [item]
+         // the tree may be empty if this the only child of the parent.
+         if parent_item
+            parent_item.submenu = [item]
+         else
+            // if we have no tree, then it means items are empty
+            self.items.value = [item]
+         end
       end
       
       // allow further propagation
+   end
+
+   function _markItems( item, ci )
+      if not item.auth_level or Nest.auth_level <= item.auth_level
+         ci += item
+         if Nest.pid == item.pid
+            item.current = true
+            item.target = nil
+            if Nest.log_level >= 3: Nest.logd( "Current item is: " + item.text )
+         else
+            item.current = false
+            if ^? item.target: item.target = Nest.pageLink( item.target )
+         end
+      end
+
+      // do the same for sub-items
+      sm = []
+      for subitem in item.submenu
+         self._markItems( subitem, sm )
+      end
+      item.submenu = sm
    end
    
 end

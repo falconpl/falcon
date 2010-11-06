@@ -3,13 +3,16 @@
 import MenuItem from nest.srv.Menu as MenuItem
 
 items = .[
-   MenuItem( "Home", ^+"home" )
-   MenuItem( "Plugins", nil, Nest.AL.USER )
-   MenuItem( "Account settings", ^+"account", Nest.AL.USER,
+   MenuItem( "Home", "nest:home" )
+   MenuItem( "Account settings", "nest:account", Nest.AL.USER,
          .[
-            MenuItem( "Address", ^+"acc_addr" )
-            MenuItem( "Preferences", ^+"acc_prefs" )
+            MenuItem( "Change password", "nest:acc_password" )
+            MenuItem( "Preferences", "nest:acc_preferences" )
          ]
       )
-   MenuItem( "Contacts", "contacts" )
+   MenuItem( ^+ "Plugins", nil, Nest.AL.USER )
+   MenuItem( "Contacts",  "nest:contacts" )
+   MenuItem( "Go to falcon",  ">http://www.falconpl.org" )
 ]
+
+css_class = "main_menu"
