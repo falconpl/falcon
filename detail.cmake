@@ -98,6 +98,10 @@ message( STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}" )
 if (NOT FALCON_LIB_DIR)
    set(FALCON_LIB_DIR lib)
 endif()
+#
+if(LIB_SUFFIX)
+  set(FALCON_LIB_DIR "${FALCON_LIB_DIR}${LIB_SUFFIX}")
+endif()
 
 if( NOT FALCON_SHARE_DIR)
    if(WIN32)
