@@ -193,7 +193,7 @@ bool ProcessEnum::close()
 bool spawn( String** argList, bool overlay, bool background, int* returnValue )
 {
    // convert to our local format.
-   LocalizedArgv argv( args );
+   LocalizedArgv argv( argList );
 
    if ( ! overlay )
    {
@@ -239,7 +239,7 @@ bool spawn_read( String** argList, bool overlay, bool background, int* returnVal
       return false;
 
    // convert to our local format.
-   LocalizedArgv argv( args );
+   LocalizedArgv argv( argList );
    const char* cookie = "---ASKasdfyug72348AIOfasdjkfb---";
 
    if ( ! overlay )
