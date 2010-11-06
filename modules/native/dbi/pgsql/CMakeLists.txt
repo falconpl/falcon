@@ -19,7 +19,7 @@ SET(PGSQL_INCLUDE_SEARCH_PATH
 FIND_PATH(PGSQL_REAL_INCLUDE_DIR libpq-fe.h ${PGSQL_INCLUDE_SEARCH_PATH})
 
 # Find PgSQL Client Library
-SET(PGSQL_LIB_SEARCH_PATH ${PGSQL_LIB_DIR} /usr/lib/pgsql /usr/local/lib/pgsql)
+SET(PGSQL_LIB_SEARCH_PATH ${PGSQL_LIB_DIR} /usr/lib /usr/lib/pgsql /usr/local/lib/pgsql)
 SET(PGSQL_LIB_NAMES pq libpq)
 FIND_LIBRARY(PGSQL_LIBRARY
   NAMES ${PGSQL_LIB_NAMES}
@@ -50,9 +50,10 @@ INCLUDE_DIRECTORIES(../include)
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
-   pgsql.cpp
+   ${dbi_common_files}
+   pgsql_fm.cpp
    pgsql_ext.cpp
-   pgsql_srv.cpp
+   pgsql_mod.cpp
 )
 
 # Link

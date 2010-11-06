@@ -2,10 +2,10 @@
  * FALCON - The Falcon Programming Language.
  * FILE: pgsql_ext.h
  *
- * PgSQL Falcon extension interface
+ * PgSQL Falcon service/driver
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar
- * Begin: Sun Dec 23 21:48:48 2007
+ * Author: Jeremy Cowgar, Stanislas Marquis
+ * Begin: Sun Dec 23 21:54:42 2007
  *
  * -------------------------------------------------------------------
  * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
@@ -19,20 +19,16 @@
 #ifndef PGSQL_EXT_H
 #define PGSQL_EXT_H
 
-namespace Falcon
-{
+namespace Falcon {
 
 class VMachine;
 
-namespace Ext
-{
+namespace Ext {
 
-FALCON_FUNC PgSQL_init( VMachine *vm );
+FALCON_FUNC PgSQL_init( VMachine* vm );
+FALCON_FUNC PgSQL_prepareNamed( VMachine* vm );
 
-}
-}
+} // !Ext
+} // !Falcon
 
 #endif /* PGSQL_EXT_H */
-
-/* end of pgsql_ext.h */
-
