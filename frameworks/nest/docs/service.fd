@@ -66,7 +66,7 @@ main code) or to be used as callbacks by the service on need.
 Services with an instance name can have their own configuration placed under
 the {{config}} subdirectory under the service location, named after their
 instance name. So, a Calendar service being loaded as "mine" instance will
-search for its configuration under {{nest/srv/Calendar/config/mine.fal}}.
+search for its configuration under {{nest/srv/Calendar/mine/mine.fal}}.
 If that file is not found, the file {{config.fal}} will be loaded instead.
 
 @subsection srv_live_cfg Live configurations
@@ -87,5 +87,35 @@ a result similar to the just seen example.
 
 The values passed to the service in this way override the ones
 eventually found in the configuration file, and allow for dynamic
-re
+reconfiguration of services at load time.
+
+@subsection service_cfg_prio Configuration priority.
+
+The service will load only the first configuration file it finds. If
+there is an instance-specific configuration file, that one will be loaded;
+if not found, the main service file will be loaded, and if none if found,
+a default file may be loaded from the **nest** main directory.
+
+
+@section srvice_vars Service variables
+
+
+@section serivce_skin Skins
+
+
+@section service_devel Development of service modules
+
+
+@subsection service_devel_life Life cycle of a service
+
+
+@subsection service_devel_bind Bindings and service variables
+
+
+@subsection service_devel_input The input binder
+
+
+@subsection service_devel_skin Skin binder and skinning
+
+
 */

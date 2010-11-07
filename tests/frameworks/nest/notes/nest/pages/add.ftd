@@ -1,7 +1,7 @@
 <html>
 <head>
    <title>Add a new note</title>
-   <?= Nest.headings() ?>
+   <? Nest.headings() ?>
 </head>
 <body>
    <h1>Add a new note</h1>

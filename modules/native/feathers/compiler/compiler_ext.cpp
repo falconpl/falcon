@@ -324,7 +324,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )
@@ -378,7 +378,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )
@@ -451,7 +451,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )

@@ -1,9 +1,4 @@
 <? function skin( vars, srv ) ?>
-   <? if not srv.allowed()
-      > i"<p>Sorry, you're not authorized</p>"
-      return
-   end ?>
-
    <? if vars.wka == 'del' and not vars.wkc ?>
    <!--Check confirmation request-->
    <div id="nest_wiki_confirm">

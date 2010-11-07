@@ -21,7 +21,7 @@
 <head>
    <title>Hello world</title>'
 
-> Nest.headings()
+Nest.headings()
 
 > '
 </head>

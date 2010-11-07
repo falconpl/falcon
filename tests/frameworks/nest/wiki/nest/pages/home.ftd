@@ -5,7 +5,7 @@
 <html>
 <head>
    <title>Nest wiki system test.</title>
-   <?= Nest.headings() ?>
+   <? Nest.headings() ?>
 <script type="text/javascript">
 
    var mode = '';

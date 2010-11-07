@@ -145,6 +145,14 @@ else()
 endif()
 
 # CMake generated information.  Is used by our falcon-config.cmake
+if (NOT FALCON_CMAKE_DIR)
+   if(WIN32)
+      set(FALCON_CMAKE_DIR cmake)
+   else()
+      set(FALCON_CMAKE_DIR ${FALCON_SHARE_DIR}/cmake)
+   endif()
+endif()
+
 install(EXPORT falcon-core-targets
   DESTINATION ${FALCON_CMAKE_DIR}
 )

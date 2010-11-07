@@ -382,6 +382,4 @@ variable in the service invocation call:
 @code
 <? Nest.service( "Menu", "footer", [ "skin" => "skin_footer.fal" ] ).render() ?>
 @endcode
-
-
 */
