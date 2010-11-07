@@ -55,6 +55,21 @@ class Uploader( instance ) from Service( instance )
    //# Current path, in paris of position/link to go there.
    path = ServiceVar()
 
+   function startup()
+      targetDir = self.upload_dir.value
+      
+      if fileType( targetDir ) != FileStat.DIR
+         try
+            dirMake( targetDir )
+            fileChmod( targetDir, 0755 )
+         catch IoError
+            if not Path(targetDir).fulloc.startsWith("/")
+               targetDir = dirCurrent() + targetDir
+            end
+            raise NestError( NestError.other, i"Cannot create or enter target directory", targetDir )
+         end
+      end
+   end
    
    function run()
       if not self.checkAllowed(): return

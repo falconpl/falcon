@@ -507,12 +507,7 @@ object Nest
       // srv is OOB'd if already registered.
       if not ^? srv
          // 1. Load service configuration
-         dirs = [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
-                  cfg.nestdir + "/srv/" + name ]
-         if inst
-            dirs = [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name + "/" + inst),
-                  cfg.nestdir + "/srv/" + name + "/" + inst ] + dirs
-         end
+         dirs = self.getServiceDirs( name, inst )
          
          // here the trick of the function is useless, as we KNOW we have to configure this stuff
          self._configModule( srv, vars, dirs)
@@ -781,7 +776,25 @@ object Nest
       catch AccessError
          raise NestError( NestError.no_mod_class, "", name )
       end
-		return srvClass
+      return srvClass
+   end
+
+   /*# Returns the standard directories to be searched for a service-related file.
+      @param name The service name
+      @optparam inst The service instance
+   */
+
+   function getServiceDirs( name, inst )
+      cfg = self.config
+      
+      dirs = [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
+                  cfg.nestdir + "/srv/" + name ]
+      if inst
+         dirs = [ utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name + "/" + inst)
+               ] + dirs
+      end
+      
+      return dirs
    end
    
    //=============================================================

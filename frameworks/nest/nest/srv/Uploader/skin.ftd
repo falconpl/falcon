@@ -131,7 +131,6 @@
             <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
             <p>
             <input type="hidden" name="loc" value="<?=vars.loc?>"/>
-            <input type="hidden" name="loc" value="<?= vars.loc ?>"/>
             <input type="hidden" name="do" value="deldir"/>
             <button type="submit">Delete this section!</button>
             </p>

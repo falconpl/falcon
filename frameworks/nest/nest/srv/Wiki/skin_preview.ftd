@@ -1,0 +1,10 @@
+<? function skin( vars, srv ) ?>
+   <div id="nest_wiki_preview">
+   <h1><? wid = htmlEscape(vars.wid); > @i"Preview of $(wid) "?></h1>
+   <div id="nest_wiki_preview_frame">
+      <?= vars.preview ?>
+   </div>
+   <p><?= i"Remember that this is just a preview. You haven't still saved the page." ?></p>
+   </div>
+   <? vars.skin_modify( vars, srv ) ?>
+<? end ?>

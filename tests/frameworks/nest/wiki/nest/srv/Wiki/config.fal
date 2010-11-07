@@ -22,11 +22,19 @@ import from nest.action in na
 
 dm = Nest.dm("wiki_db")
 parser = parser.creole.Parser()
-upload_dir = "/uploads"
+upload_dir = "uploads"
 upload_linker = { v => upload_dir+"/" + URI.encode(v) }
+history_depth = 10
 
 actions = .[
-   na.ButtonAction( "Insert image", Nest.AL.NONE, i"Insert image", "javascript:insertImage()" )
-   na.ButtonAction( "Insert file", Nest.AL.NONE, i"Insert file", "javascript:insertFile()" )
+   na.ButtonAction( "Insert image", Nest.AL.NONE, i"Insert image", "javascript:openUploads('image')" )
+   na.ButtonAction( "Insert file", Nest.AL.NONE, i"Insert file", "javascript:openUploads('file')" )
 ]   
 
+pupload = Nest.pageLink("uploads")
+Nest.scripts += @'
+   function openUploads(mode) {
+       window.open("$pupload&mode=" + mode,
+         "Upload test","width=800,height=600,location=no,menubar=no,toolbar=no,scrollbars=yes");
+   }
+'

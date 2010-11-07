@@ -258,6 +258,53 @@ class Service( instance ) from NestModule( instance )
       Nest.logd( "Authorization level for " + name + " granted")
       return true
    end
+
+   /*# Adds a javascript resource for this service directly in the text of the headings.
+      @param res The resource to be called.
+      
+      This will make the text of the given javascript file (in <service>/res directory)
+      to be verbatim copied on the page headers through the @a Nest.headings call.
+   */
+   function addJsRes( res )
+      data = self.loadResource( res )
+      Nest.scripts += data
+   end
+
+   /*# Adds a javascript cascade style sheet directly in the text of the headings.
+      @param res The resource to be called.
+
+      This will make the text of the given CSS file (in <service>/res directory)
+      to be verbatim copied on the page headers through the @a Nest.headings call.
+   */
+   function addCSSRes( res )
+      data = self.loadResource( res )
+      Nest.styles += data
+   end
+
+   /*# Loads a resource file.
+      @param res The resource file to be loaded (complete path as a string).
+      @return The binary data in the file (in a string).
+      @raise IoError on I/O error while getting the data.
+      @raise NestError in case the resource cannot be found
+   */
+   function loadResource( res )
+      dirs = Nest.getServiceDirs( self.className(), self.instance )
+      file = utils.findFileInDirs( map( {fname => fname + "/res"}, dirs), res )   
+      if not file
+         raise NestError( NestError.other, i"Requested resource not found", res )
+      end
+      
+      length = FileStat( file ).size
+      fstream = InputStream( file )
+      try
+         data = fstream.grab( length )
+         fstream.close()
+         return data
+      catch in e
+         fstream.close()
+         raise e
+      end
+   end
    
 //=========================================
 // Utilities

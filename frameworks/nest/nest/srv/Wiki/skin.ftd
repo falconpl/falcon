@@ -1,62 +1,7 @@
 <? function skin( vars, srv ) ?>
-   <? if vars.wka == 'del' and not vars.wkc ?>
-   <!--Check confirmation request-->
-   <div id="nest_wiki_confirm">
-   <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
-      <input type="hidden" name="wka" value="del" />
-      <input type="hidden" name="wkc" value="1" />
-      <input type="hidden" name="wid" value="<?= strEscape(vars.wid) ?>" />
-      <p><?= @ i"Please, confirm the deletion of the page named \"$(vars.wid)\""?></p>
-      <button type="submit"/><?= i"Confirm" ?></button>
-   </form>
-   </div>
-   <!-- skin terminates here -->
-   <? return; end ?>
-
-   <? if vars.wka == 'prw' ?>
-   <!-- preview area -->
-   <div id="nest_wiki_preview">
-   <h1><? wid = htmlEscape(vars.wid); > @i"Preview of $(wid) "?></h1>
-   <div id="nest_wiki_preview_frame">
-      <?= vars.preview ?>
-   </div>
-   <p><?= i"Remember that this is just a preview. You haven't still saved the page." ?></p>
-   </div>
-   <? end ?>
-
-   <? if vars.wka == 'prw' or vars.wka == 'mody' ?>
-      <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
-         <h2>Editing "<?= strEscape(vars.wid)?>"</h2>
-         <input type="hidden" name="wid" value="<?= strEscape(vars.wid) ?>" />
-         <textarea id="nest_wiki_area" name="wkd" rows="15" cols="80"><?= htmlEscape(vars.wkd) ?></textarea>
-         <p><table><tr>
-            <td><button type="submit" name="wka" value="upd"/><?= i"Confirm" ?></button></td>
-            <td><button type="submit" name="wka" value="prw"/><?= i"Preview" ?></button></td>
-            <? for a in vars.actions ?>
-            <td><?= a.render() ?></td>
-            <? end ?>
-         </tr></table></p>
-      </form>
-   <? else ?>
-   <? if vars.history ?>
-      <div id="nest_wiki_location">
-         <p> Location:
-         <? for loc in vars.history
-               page = Nest.pageLink(nil, ["wid"=>loc] )
-
-               formiddle
-                  print( @"<a href=\"$page\">$loc</a>" )
-                  print("&nbsp;>>&nbsp;")
-               end
-
-               forlast
-                  printl( @"<b>$loc</b>" )
-               end
-            end
-         ?>
-         </p>
-      </div>
-   <? end ?>
+   <? if vars.history
+      vars.skin_history( vars, srv )
+   end ?>
    <div id="nest_wiki_content">
       <? if vars.page ?>
          <?= vars.page.content_html ?>
@@ -73,5 +18,4 @@
          </p>
       <? end ?>
    </div>
-   <? end ?>
 <? end ?>
