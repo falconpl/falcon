@@ -35,8 +35,8 @@ class JSONService: public Service
 public:
    JSONService();
 
-   virtual bool encode( const Item& itm, String& tgt, bool bEncUni = false, bool bPretty=false, bool bReadale = false );
-   virtual bool encode( const Item& itm, Stream* tgt, bool bEncUni = false, bool bPretty=false, bool bReadale = false );
+   virtual bool encode( const Item& itm, String& tgt, bool bPretty=false, bool bReadale = false );
+   virtual bool encode( const Item& itm, Stream* tgt, bool bPretty=false, bool bReadale = false );
 
    virtual bool decode( const String& str, Item& tgt );
    virtual bool decode( Stream* source, Item& tgt );

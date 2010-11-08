@@ -1,0 +1,35 @@
+<? function skin( s, srv ) ?>
+   <div id="<?= srv.fullName() ?>">
+   <? if not srv.allowed()
+      > i"<p>Sorry, you're not authorized</p>"
+      return
+   end ?>
+      
+   <? if s.records ?>
+      <form action="<?= s.handler ?>" method="POST"
+            id="form_nest_data_query<?= srv.instance ? "_" + srv.instance : "" ?>" >
+      <table class="nest_data_query">
+      
+      <!-- Table heading -->
+      <thead>
+      <? s.skin_heading( s, srv ) ?>
+      </thead>
+      <!-- Table body -->
+      <tbody>
+      <? for row in s.records ?>
+         <? s.skin_row( s, srv, row ) ?>
+      <? end ?>
+
+      <!-- Row of actions to be done at table level -->
+      <? if s.table_act ?>
+         <tr>
+            <? s.skin_actions( s, srv, s.table_act ) ?>
+         </tr>
+      <? end ?>
+      </tbody>
+      </table>
+   <? else ?>
+      <p><b>Entity view empty</b></p>
+   <? end ?>
+   </div>
+<? end ?>

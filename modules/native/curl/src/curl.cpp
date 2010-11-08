@@ -211,7 +211,9 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "NOPROGRESS" ).setInteger(CURLOPT_NOPROGRESS).setReadOnly(true);
 
    self->addClassProperty( copt_class, "HTTPPROXYTUNNEL" ).setInteger(CURLOPT_HTTPPROXYTUNNEL).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071904
    self->addClassProperty( copt_class, "SOCKS5_GSSAPI_NEC" ).setInteger(CURLOPT_SOCKS5_GSSAPI_NEC).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "TCP_NODELAY" ).setInteger(CURLOPT_TCP_NODELAY).setReadOnly(true);
    self->addClassProperty( copt_class, "AUTOREFERER" ).setInteger(CURLOPT_AUTOREFERER).setReadOnly(true);
    self->addClassProperty( copt_class, "FOLLOWLOCATION" ).setInteger(CURLOPT_FOLLOWLOCATION).setReadOnly(true);
@@ -238,7 +240,9 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "CONNECT_ONLY" ).setInteger(CURLOPT_CONNECT_ONLY).setReadOnly(true);
    self->addClassProperty( copt_class, "SSLENGINE_DEFAULT" ).setInteger(CURLOPT_SSLENGINE_DEFAULT).setReadOnly(true);
    self->addClassProperty( copt_class, "SSL_VERIFYPEER" ).setInteger(CURLOPT_SSL_VERIFYPEER).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071901
    self->addClassProperty( copt_class, "CERTINFO" ).setInteger(CURLOPT_CERTINFO).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "SSL_VERIFYHOST" ).setInteger(CURLOPT_SSL_VERIFYHOST).setReadOnly(true);
    self->addClassProperty( copt_class, "SSL_SESSIONID_CACHE" ).setInteger(CURLOPT_SSL_SESSIONID_CACHE).setReadOnly(true);
 
@@ -250,7 +254,9 @@ FALCON_MODULE_DECL
 
    Falcon::Symbol *cproxy_class = self->addClass( "PROXY" );
    self->addClassProperty( cproxy_class, "HTTP" ).setInteger(CURLPROXY_HTTP).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071904
    self->addClassProperty( cproxy_class, "HTTP_1_0" ).setInteger(CURLPROXY_HTTP_1_0).setReadOnly(true);
+#endif
    self->addClassProperty( cproxy_class, "SOCKS4" ).setInteger(CURLPROXY_SOCKS4).setReadOnly(true);
    self->addClassProperty( cproxy_class, "SOCKS5" ).setInteger(CURLPROXY_SOCKS5).setReadOnly(true);
    self->addClassProperty( cproxy_class, "SOCKS4A" ).setInteger(CURLPROXY_SOCKS4A).setReadOnly(true);
@@ -261,7 +267,9 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "DNS_USE_GLOBAL_CACHE" ).setInteger(CURLOPT_DNS_USE_GLOBAL_CACHE).setReadOnly(true);
    self->addClassProperty( copt_class, "BUFFERSIZE" ).setInteger(CURLOPT_BUFFERSIZE).setReadOnly(true);
    self->addClassProperty( copt_class, "PORT" ).setInteger(CURLOPT_PORT).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071900
    self->addClassProperty( copt_class, "ADDRESS_SCOPE" ).setInteger(CURLOPT_ADDRESS_SCOPE).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "NETRC" ).setInteger(CURLOPT_NETRC).setReadOnly(true);
 
 
@@ -274,7 +282,9 @@ FALCON_MODULE_DECL
    Falcon::Symbol *cauth_class = self->addClass( "AUTH" );
    self->addClassProperty( cauth_class, "BASIC" ).setInteger(CURLAUTH_BASIC).setReadOnly(true);
    self->addClassProperty( cauth_class, "DIGEST" ).setInteger(CURLAUTH_DIGEST).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071903
    self->addClassProperty( cauth_class, "DIGEST_IE" ).setInteger(CURLAUTH_DIGEST_IE).setReadOnly(true);
+#endif
    self->addClassProperty( cauth_class, "GSSNEGOTIATE" ).setInteger(CURLAUTH_GSSNEGOTIATE).setReadOnly(true);
    self->addClassProperty( cauth_class, "NTLM" ).setInteger(CURLAUTH_NTLM).setReadOnly(true);
    self->addClassProperty( cauth_class, "ANY" ).setInteger(CURLAUTH_ANY).setReadOnly(true);
@@ -282,7 +292,9 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "PROXYAUTH" ).setInteger(CURLOPT_PROXYAUTH).setReadOnly(true);
    self->addClassProperty( copt_class, "MAXREDIRS" ).setInteger(CURLOPT_MAXREDIRS).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071901
    self->addClassProperty( copt_class, "POSTREDIR" ).setInteger(CURLOPT_POSTREDIR).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "HTTP_VERSION" ).setInteger(CURLOPT_HTTP_VERSION).setReadOnly(true);
 
    Falcon::Symbol *chttp_class = self->addClass( "HTTP" );
@@ -292,7 +304,9 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "HTTP_CONTENT_DECODING" ).setInteger(CURLOPT_HTTP_CONTENT_DECODING).setReadOnly(true);
    self->addClassProperty( copt_class, "HTTP_TRANSFER_DECODING" ).setInteger(CURLOPT_HTTP_TRANSFER_DECODING).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071904
    self->addClassProperty( copt_class, "TFTP_BLKSIZE" ).setInteger(CURLOPT_TFTP_BLKSIZE).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "FTP_RESPONSE_TIMEOUT" ).setInteger(CURLOPT_FTP_RESPONSE_TIMEOUT).setReadOnly(true);
    self->addClassProperty( copt_class, "USE_SSL" ).setInteger(CURLOPT_USE_SSL).setReadOnly(true);
 
@@ -372,17 +386,20 @@ FALCON_MODULE_DECL
 
    self->addClassProperty( copt_class, "URL" ).setInteger(CURLOPT_URL).setReadOnly(true);
    self->addClassProperty( copt_class, "PROXY" ).setInteger(CURLOPT_PROXY).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071904
    self->addClassProperty( copt_class, "NOPROXY" ).setInteger(CURLOPT_NOPROXY).setReadOnly(true);
    self->addClassProperty( copt_class, "SOCKS5_GSSAPI_SERVICE" ).setInteger(CURLOPT_SOCKS5_GSSAPI_SERVICE).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "INTERFACE" ).setInteger(CURLOPT_INTERFACE).setReadOnly(true);
    self->addClassProperty( copt_class, "NETRC_FILE" ).setInteger(CURLOPT_NETRC_FILE).setReadOnly(true);
    self->addClassProperty( copt_class, "USERPWD" ).setInteger(CURLOPT_USERPWD).setReadOnly(true);
    self->addClassProperty( copt_class, "PROXYUSERPWD" ).setInteger(CURLOPT_PROXYUSERPWD).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071901
    self->addClassProperty( copt_class, "USERNAME" ).setInteger(CURLOPT_USERNAME).setReadOnly(true);
    self->addClassProperty( copt_class, "PASSWORD" ).setInteger(CURLOPT_PASSWORD).setReadOnly(true);
-
    self->addClassProperty( copt_class, "PROXYUSERNAME" ).setInteger(CURLOPT_PROXYUSERNAME).setReadOnly(true);
    self->addClassProperty( copt_class, "PROXYPASSWORD" ).setInteger(CURLOPT_PROXYPASSWORD).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "ENCODING" ).setInteger(CURLOPT_ENCODING).setReadOnly(true);
    self->addClassProperty( copt_class, "REFERER" ).setInteger(CURLOPT_REFERER).setReadOnly(true);
    self->addClassProperty( copt_class, "USERAGENT" ).setInteger(CURLOPT_USERAGENT).setReadOnly(true);
@@ -402,9 +419,11 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "KEYPASSWD" ).setInteger(CURLOPT_KEYPASSWD).setReadOnly(true);
    self->addClassProperty( copt_class, "SSLENGINE" ).setInteger(CURLOPT_SSLENGINE).setReadOnly(true);
    self->addClassProperty( copt_class, "CAINFO" ).setInteger(CURLOPT_CAINFO).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071900
    self->addClassProperty( copt_class, "ISSUERCERT" ).setInteger(CURLOPT_ISSUERCERT).setReadOnly(true);
-   self->addClassProperty( copt_class, "CAPATH" ).setInteger(CURLOPT_CAPATH).setReadOnly(true);
    self->addClassProperty( copt_class, "CRLFILE" ).setInteger(CURLOPT_CRLFILE).setReadOnly(true);
+#endif
+   self->addClassProperty( copt_class, "CAPATH" ).setInteger(CURLOPT_CAPATH).setReadOnly(true);
    self->addClassProperty( copt_class, "RANDOM_FILE" ).setInteger(CURLOPT_RANDOM_FILE).setReadOnly(true);
    self->addClassProperty( copt_class, "EGDSOCKET" ).setInteger(CURLOPT_EGDSOCKET).setReadOnly(true);
    self->addClassProperty( copt_class, "SSL_CIPHER_LIST" ).setInteger(CURLOPT_SSL_CIPHER_LIST).setReadOnly(true);
@@ -448,7 +467,9 @@ FALCON_MODULE_DECL
    self->addClassProperty( curlinfo_class, "TOTAL_TIME" ).setInteger(CURLINFO_TOTAL_TIME).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "NAMELOOKUP_TIME" ).setInteger(CURLINFO_NAMELOOKUP_TIME).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "CONNECT_TIME" ).setInteger(CURLINFO_CONNECT_TIME).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071900
    self->addClassProperty( curlinfo_class, "APPCONNECT_TIME" ).setInteger(CURLINFO_APPCONNECT_TIME).setReadOnly(true);
+#endif
    self->addClassProperty( curlinfo_class, "PRETRANSFER_TIME" ).setInteger(CURLINFO_PRETRANSFER_TIME).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "STARTTRANSFER_TIME" ).setInteger(CURLINFO_STARTTRANSFER_TIME).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "REDIRECT_TIME" ).setInteger(CURLINFO_REDIRECT_TIME).setReadOnly(true);
@@ -468,11 +489,15 @@ FALCON_MODULE_DECL
    self->addClassProperty( curlinfo_class, "HTTPAUTH_AVAIL" ).setInteger(CURLINFO_HTTPAUTH_AVAIL).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "PROXYAUTH_AVAIL" ).setInteger(CURLINFO_PROXYAUTH_AVAIL).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "NUM_CONNECTS" ).setInteger(CURLINFO_NUM_CONNECTS).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071900
    self->addClassProperty( curlinfo_class, "PRIMARY_IP" ).setInteger(CURLINFO_PRIMARY_IP).setReadOnly(true);
+#endif
    self->addClassProperty( curlinfo_class, "COOKIELIST" ).setInteger(CURLINFO_COOKIELIST).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "FTP_ENTRY_PATH" ).setInteger(CURLINFO_FTP_ENTRY_PATH).setReadOnly(true);
    self->addClassProperty( curlinfo_class, "SSL_ENGINES" ).setInteger(CURLINFO_SSL_ENGINES).setReadOnly(true);
+#if LIBCURL_VERSION_NUM >= 0x071904
    self->addClassProperty( curlinfo_class, "CONDITION_UNMET" ).setInteger(CURLINFO_CONDITION_UNMET).setReadOnly(true);
+#endif
 
    /**
     * Separately handled

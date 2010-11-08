@@ -1,0 +1,234 @@
+                        The Falcon Programming Language
+
+                              Skeleton Module
+
+
+Date: 2010-10-08 12:19:05 CEST
+
+Table of Contents
+=================
+1 Abstract 
+2 Comment on the skeleton structure 
+3 Generating your new module from the skeleton 
+    3.1 Quickstart 
+        3.1.1 Generate your module from the skeleton 
+        3.1.2 Configure and build 
+        3.1.3 Test the module 
+
+
+1 Abstract 
+~~~~~~~~~~~
+
+This directory contains a skeleton Falcon Module. The module defines a
+minimal module meant as a minimal development base to help speed up
+module writing startup phase.
+
+2 Comment on the skeleton structure 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The skeleton module is divided into several files to provide better
+customizability:
+
+fmodskel.cpp - The main module file; here exported the module object is
+        created and exported functions are defined.
+
+fmodskel_ext.cpp/.h - this files declare and define the extension (script
+   interface) functions. Add new functions here.
+
+fmodskel_mod.cpp/.h - this files declare and define the module internal
+   logic. If the module is extremely symple, or if it has not an internal
+   logic that may be exported or treated separately with resepect to the
+   extension functions, you may remove this files.
+
+fmodskel_srv.cpp/.h - this files declares the service exported by the module.
+   A service is a re-publishing of the internal logic (mod) towards C++
+   application via a fully virtual class. The service is published to the
+   module and to all the VM where the module is linked. Applications may
+   then load the module and access the service by knowing only its name
+   and including the header file. In this way it is possible to reuse the
+   internal logic that scripts may access also through C++ code.
+
+fmodskel_st.cpp/.h - this files are the string table for module
+   internationalization. See the directions in the files to get more
+   details on how to use this table to provide translations for
+   binary falcon modules.
+
+Other than these, there are project files/make files working on the supported
+platform, and a set of "template" files to be used when creating new sources.
+
+3 Generating your new module from the skeleton 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is done by Falconeer, a Falcon script that is shipped with
+development packages of every supported platform.
+
+On systems provided with "man" utility a falconeer.fal man page is shipped
+with every Falcon installation; in other systems, you may load the script
+without arguments to have a short inline help.
+
+The script changes the names of the modules, and the supported development
+platforms project settings so to match the project name that you have set.
+
+Once configured with Falconeer, the module in this directory may be
+immediately compiled and tested. The module provides a single RTL function
+called "skeleton()" that returns 0, and publish that function through a
+Service interface which just calls it and rerturns its value.
+
+3.1 Quickstart 
+===============
+
+From a highlevel point of view:
+ - Generate your module from the skeleton
+   + Make a copy of the fmodskel dir.
+   + Run falconner.fal in this copy.
+ - Configure, build
+   + Let CMake configure for your development environment
+   + Build it
+ - Test the module 
+   + I.e. by using the interactive falcon -i
+
+Now you can start your code-compile-test cycle.
+  
+
+To get you going real quick, here is a list of commands you can paste
+to your command line window on either
+  - Unix (Linux, BSD, Solaris, MacOSX)
+  - Windows
+
+3.1.1 Generate your module from the skeleton 
+---------------------------------------------
+
+* Unix 
+  If you haven't already, get the falcon sources
+  
+    $ git clone http://git.falconpl.org/falcon.git
+  
+  Copy this directory and name it i.e. mymodule
+  
+    $ cp -r falcon/modules/native/fmodskel mymodule
+  
+  Enter it and create your new module from the skeleton
+  
+    $ cd mymodule
+    $ falconeer.fal -n MyModule -d "My brand new falcon module" -a "Mr. My Name"
+  
+* Windows 
+  If you haven't already, get the falcon sources
+  
+     http://git.falconpl.org/falcon.git
+  
+  with a git client such as http://code.google.com/p/tortoisegit.  Copy
+  the directory `falcon/modules/native/fmodskel' name it
+  i.e. `mymodule'. Enter it and create your new module from the skeleton
+  with the falconeer utility. Other than unix, systems as MS-Windows
+  will require the interpreter to load the script rather than having the
+  script be executable itself. The "config.bat" script is provided as a
+  sample you may modify this line
+  
+    falcon -w %FALCON_BIN_PATH%/falconeer.fal -n MyModule -d "My brand new falcon module" -a "Mr. my name"
+  
+
+3.1.2 Configure and build 
+--------------------------
+
+* Unix 
+  Now create the directory the build takes place and configure it
+  
+    $ mkdir build 
+    $ cd build
+    $ cmake ../
+  
+  Entering 
+  
+    $ make
+  
+  builds your module.
+  
+* Windows 
+  Start cmake-gui from CMake's folder in start->Programs, choose
+  
+    C:\Path\to\mymodule
+  
+  as the source and
+  
+    C:\Path\to\mymodule\VisualStudio
+  
+  as the binary directory. Hit the `Configure' button at the lower left
+  corner, choose the Visual Studio version you got installed and hit
+  `Configure' again.  You will get an error about CMake not finding
+  
+    FalconConfig.cmake
+  
+  and one of the two red highlighted lines in the center view says:
+  
+    Falcon_DIR-NOTFOUND
+  
+  Double clicking this line makes it editiable.  Clicking the three
+  points at the very right opens Window's folder choosing dialog.
+  Navigate to
+  
+    C:\Progam Files\Falcon\lib\falcon\cmake
+  
+  which contains FalconConfig.cmake and press ok.  After hitting
+  `Configure' once CMake will highlight newly found falcon_* properties.
+  After hitting `Configure' again nothing should be highlighted anymore
+  and the `Generate' button, next to the `Configure' Button, is available.
+  
+  Once you've hit `Generate' you can just open the generated
+  
+    MyModule.sln
+  
+  in
+  
+    C:\Path\to\mymodule\VisualStudio
+  
+  and build the solution as usual.
+  
+  + NOTE: Alternative to specifing Falcon_DIR manually 
+    Add
+    
+      C:\Program Files\Falcon
+    
+    to the environment variable
+    
+      CMAKE_PREFIX_PATH
+    
+    or define it if not already there (which is likely). Now CMake will
+    find FalconConfig.cmake automatically.
+    
+     
+
+3.1.3 Test the module 
+----------------------
+
+* Unix 
+  The module has been put into
+  
+    build/src/MyModule_fm.so
+  
+  To test enter build make sure to be at the mymodule rooth path and run
+  
+    $ export FALCON_LOAD_PATH=$FALCON_LOAD_PATH:build/src 
+    $ falcon -i
+  
+* Windows 
+  The module has been put to
+  
+    VisualStudio\Debug\src\MyModule_fm.dll
+  
+  by Visual Studio.  To test it, open a command line (start->execute and
+  enter cmd) and navigate to C:\Path\to\mymodule\VisualStudio
+  
+    $ set FALCON_LOAD_PATH=$FALCON_LOAD_PATH;VisualStudio\Debug\src
+    $ falcon -i
+  
+* Unix and Windows 
+  Enter (without the leading >>> )
+  
+    >>> load MyModule
+    >>> skeleton()
+    0
+    >>> skeletonString()
+    "An internationalizable message"
+    
+  

@@ -1,0 +1,73 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for core module.
+#
+
+AutoBrief = true
+GetUndoc = true
+GetPrivate = false
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon Core Module
+Author = The Falcon Committee
+Version = @FALCON_VERSION_ID@
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.basedir=@PROJECT_SOURCE_DIR@
+Input.directory=engine/core_module
+Input.directory=modules/falcon
+
+Input.wildcard=*.cpp    
+Input.wildcard=*.fal
+Input.recursive=true
+
+# Other files may be specified here
+Input.extra=docs/main.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+Output.module=list
+Output.module=docbook
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=@output_dir@/html
+Output.html.url=.
+Output.html.doctitle=Falcon Function Reference
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.list.file=@output_dir@/@FALCON_VERSION_ID@.lst
+Output.list.doctitle=Falcon Core Module - Function List
+Output.list.bytype=true
+Output.list.members=true
+Output.list.brief=true
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.docbook.file = @output_dir@/@FALCON_VERSION_ID@-docbook.xml
+Output.docbook.encoding = utf-8
+Output.docbook.copyright.year = 2010
+Output.docbook.copyright.holder = The Falcon Committee
+
+#Can be "book", "article", "book5", "article5"
+Output.docbook.frame = book
+Output.docbook.detailed = false

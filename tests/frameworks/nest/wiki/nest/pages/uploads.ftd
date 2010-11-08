@@ -16,14 +16,12 @@
    config = [
       "upload_dir" => targetDir,
       "actions" => .[
-         na.LinkAction( Nest.AL.NONE, i"View", "javascript:viewFile('$$file','$$path');" )
-         na.LinkAction( Nest.AL.NONE, i"Select", "javascript:choseFile('$$file','$$path');" )
+         na.LinkAction( "view", Nest.AL.NONE, "javascript:viewFile('$file','$path');", i"View" )
+         na.LinkAction( "view", Nest.AL.NONE, "javascript:choseFile('$file','$path');", i"Select" )
       ]
    ]
 
    s = Nest.service( "Uploader", "", config )
-   // We run nest here, so that the configuration is reaed before we start the page
-   Nest.run()
 ?>
 <html>
 <head>
@@ -48,7 +46,7 @@
 <h1>Wiki attachments control</h1>
 <p>Select or manage uploaded files.</p>
 <div>
-   <?= s.render() ?>
+   <? s.render() ?>
 </div>
 </body>
 </html>

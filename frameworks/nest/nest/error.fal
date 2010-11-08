@@ -36,6 +36,13 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    mf_fdef = 10016
    no_dm = 10017
    db_create = 10018
+   not_in_frame = 10019
+   no_dm_type = 10020
+   wrong_dm_type = 10021
+   entity_not_found = 10022
+   no_key_fields = 10023
+   unpack_key = 10024
+   pcheck = 10025
    other = 10100
    
    _desc = [ 
@@ -56,7 +63,14 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10015 => i"Skin declared but not found",
       10016 => i"Malformed field definition in DBEntity",
       10017 => i"This service requires a data manager to be set",
-      10018 => i"Caught DBI error while creating entity"
+      10018 => i"Caught DBI error while creating entity",
+      10019 => i"This method can be invoked only within a frame, and just once",
+      10020 => i"The configuration of this Data Manager must contain a 'type' key",
+      10021 => i"The value of the type key must be a class derived from Nest.DataManager",
+      10022 => i"Entity not found",
+      10023 => i"Data entity declared without any KEY fields",
+      10024 => i"Key expression doesn't match key field specs in this entity",
+      10025 => i"Optional parameter consistency check falied"
       ]
 
    init

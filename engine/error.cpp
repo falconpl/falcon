@@ -71,7 +71,8 @@ String &TraceStep::toString( String &target ) const
 
 Error::Error( const Error &e ):
    m_nextError( 0 ),
-   m_LastNextError( 0 )
+   m_LastNextError( 0 ),
+   m_boxed( 0 )
 {
    m_errorCode = e.m_errorCode;
    m_line = e.m_line;
@@ -89,6 +90,10 @@ Error::Error( const Error &e ):
    m_raised = e.m_raised;
    m_className = e.m_className;
 
+   if ( e.m_boxed != 0 )
+   {
+      boxError(m_boxed);
+   }
 
    m_refCount = 1;
 
@@ -121,6 +126,11 @@ Error::~Error()
 
       ptr = ptrnext;
    }
+
+   if ( m_boxed != 0 )
+   {
+      m_boxed->decref();
+   }
 }
 
 void Error::incref()
@@ -138,6 +148,13 @@ void Error::decref()
 
 String &Error::toString( String &target ) const
 {
+   if ( m_boxed != 0 )
+   {
+      target += m_boxed->toString();
+      target += "  =====================================================\n";
+      target += "  Boxed in ";
+   }
+
    heading( target );
    target += "\n";
 
@@ -158,7 +175,9 @@ String &Error::toString( String &target ) const
 
    // recursive stringation
    if ( m_nextError != 0 )
+   {
       m_nextError->toString( target );
+   }
 
    return target;
 }
@@ -284,6 +303,22 @@ void Error::appendSubError( Error *error )
    error->incref();
 }
 
+
+void Error::boxError( Error *error )
+{
+   if ( m_boxed != 0 )
+   {
+      m_boxed->decref();
+   }
+
+   m_boxed = error;
+   if ( error != 0 )
+   {
+      error->incref();
+   }
+}
+
+
 bool Error::nextStep( String &module, String &symbol, uint32 &line, uint32 &pc )
 {
    if ( m_steps.empty() || m_stepIter == 0 )
@@ -405,6 +440,21 @@ void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property, const 
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, pcounter );
+}
+
+void Error_boxed_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
+{
+   Error *error = static_cast<Error *>(userData);
+   if ( error->getBoxedError() != 0 )
+   {
+      VMachine* vm = VMachine::getCurrent();
+      fassert( vm != 0 );
+      property =  error->getBoxedError()->scriptize(vm);
+   }
+   else
+   {
+      property.setNil();
+   }
 }
 
 void Error_subErrors_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
@@ -529,6 +579,14 @@ void Error_pc_rto(CoreObject *instance, void *userData, Item &property, const Pr
    FALCON_REFLECT_INTEGER_TO( error, pcounter );
 }
 
+void Error_boxed_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
+{
+   Error *error = static_cast<Error *>(userData);
+   if ( property.isObject() && property.asObject()->derivedFrom("Error") )
+   {
+      error->boxError( static_cast<Error*>(property.asObject()->getUserData()) );
+   }
+}
 
 //============================================================
 // Reflector

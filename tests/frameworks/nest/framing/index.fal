@@ -1,0 +1,27 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: index.fal
+
+   Test -Frame basic test site
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 23 Oct 2010 22:16:43 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load nest
+
+Nest.debug = true
+Nest.log_level = 3
+
+Nest.frame = .[ include "frame.ftd" ]
+Nest.addHook( "TableCheckUser" )
+
+Nest.route()

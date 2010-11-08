@@ -810,7 +810,7 @@ static bool core_times_next_( ::Falcon::VMachine *vm )
    This function is very similar to a functional for/in loop. It repeats a sequence
    of callable items in the @b sequence parameter a determined number of
    times. If the @b sequence parameter is a sequence, parametric evaluation is
-   performed and the @b &1 late binding is filled with the value of the index; if
+   performed and the **&1** late binding is filled with the value of the index; if
    it's a function, then it is called with the counter value added as the last parameter.
 
    If the evaluated parameter is a sequence, full deep sigma evaluation is performed

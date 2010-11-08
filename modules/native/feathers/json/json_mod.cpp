@@ -19,8 +19,7 @@
 
 namespace Falcon {
 
-JSON::JSON( bool bEncUni, bool bPretty, bool bReadale ):
-   m_bEncUnicode( bEncUni ),
+JSON::JSON( bool bPretty, bool bReadale ):
    m_bPretty( bPretty ),
    m_bReadable( bReadale ),
    m_level(0)
@@ -250,16 +249,10 @@ void JSON::encode_string( const String &str, Stream* tgt ) const
          case '\b': tgt->writeString( "\\b" ); break;
          case '\\': tgt->writeString( "\\\\" ); break;
          default:
-            if ( chat < 8 || ( m_bEncUnicode && chat >127 )) {
-               char bufarea[14];
-               bufarea[0] = '\\';
-               bufarea[1] = 'u';
-
-               if( chat > 0xFFFF )
-                  chat = 0xFFFF;
-
-               String::uint32ToHex( chat, bufarea+2 );
-               tgt->writeString( bufarea );
+            if ( chat < 32 || chat >127 ) {
+               String temp = "\\u";
+               temp.H( chat, true, 4 );
+               tgt->writeString( temp );
             }
             else{
                tgt->put( chat );
@@ -599,6 +592,7 @@ bool JSON::decodeKey( String& tgt, Stream* src ) const
             switch( chr )
             {
                case '\\': tgt.append( '\\' ); break;
+               case '"': tgt.append( '"' ); break;
                case 'b': tgt.append( '\b' ); break;
                case 't': tgt.append( '\t' ); break;
                case 'n': tgt.append( '\n' ); break;

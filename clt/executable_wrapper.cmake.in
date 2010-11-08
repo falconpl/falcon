@@ -1,0 +1,53 @@
+if(NOT executable)
+  message(FATAL_ERROR "missing -Dexecutable=..")
+endif()
+#
+if(NOT arguments)
+  message(FATAL_ERROR "missing -Darguments=\"..\"")
+endif()
+#
+if(NOT workdir)
+  message(FATAL_ERROR "missing -Dworkdir=..")
+endif()
+
+
+find_program(EXECUTABLE
+  NAMES ${executable}
+  HINTS "@CMAKE_BINARY_DIR@/bin"
+  NO_DEFAULT_PATH
+)
+#
+if(NOT EXECUTABLE)
+  message(FATAL_ERROR "${executable} executable not found")
+endif()
+
+
+if(WIN32)
+  # falcon_engine.dll and the executables reside in the same directory.
+elseif(APPLE)
+  set(ENV{DYLD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{DYLD_LIBRARY_PATH}")
+else()
+  # Linux, Solaris, BSD, ...
+  set(ENV{LD_LIBRARY_PATH} "@CMAKE_LIBRARY_OUTPUT_DIRECTORY@:$ENV{LD_LIBRARY_PATH}")
+endif()
+#
+set(ENV{FALCON_LOAD_PATH} "@CMAKE_BINARY_DIR@/@FALCON_MOD_DIR@\;@Falcon_SOURCE_DIR@/modules/falcon")
+
+separate_arguments(arguments)
+set(cmd ${EXECUTABLE} ${arguments})
+separate_arguments(cmd)
+#
+execute_process(
+  COMMAND ${cmd}
+  WORKING_DIRECTORY ${workdir}
+  RESULT_VARIABLE res
+  ERROR_VARIABLE err
+)
+
+
+if(res)
+  if(NOT err STREQUAL "")
+    message("error:${err}")
+  endif()
+  message(SEND_ERROR "${res}")
+endif()

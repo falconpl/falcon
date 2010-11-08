@@ -927,7 +927,7 @@ public:
       \param number the number to be converted.
       \param uppercase true to use ABCDEF letters instead of abdef
     */
-    void writeNumberHex( uint64 number, bool uppercase = true );
+    void writeNumberHex( uint64 number, bool uppercase = true, int count = 0 );
 
     /** Converts a number to a string and appends it to this string.
       This version writes the number in octal format.
@@ -1013,6 +1013,13 @@ public:
     inline String& N( double number, const String& format )
     {
        writeNumber( number, format );
+       return *this;
+    }
+
+    /** Cumulative version of writeHex */
+    inline String& H( uint64 number, bool ucase, int ciphers = 0 )
+    {
+       writeNumberHex( number, ucase, ciphers );
        return *this;
     }
 
@@ -1230,7 +1237,6 @@ public:
 
    bool isCore() const { return m_bCore; }
 
-   static void uint32ToHex( uint32 number, char *buffer );
    static bool isWhiteSpace( uint32 chr )
    {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';

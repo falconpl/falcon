@@ -1,0 +1,653 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docbook.fal
+
+   Autodocumentation tool - DOCBOOK output module
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 12 Jan 2008 12:21:30 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from parser.render.docbook in docbook
+
+// The faldoc_output function must be provided by all output modules
+function faldoc_output( doctree, conf )
+   DOCBOOKGenerator( doctree, conf ).go()
+end
+
+class FaldocBookRenderer( frame ) from docbook.Renderer( frame )
+   init
+      self.renderers += [
+         "@section" => self.renderSection,
+         "@note" => self.renderNote,
+         "@a" => self.render_a
+      ]
+   end
+
+   function render( context )
+      content = self.rcont( context.topNode )
+      return content
+   end
+
+   function renderSection( node )
+      docLevel = self.blevel
+      front = self.open_section( docLevel, node.infos["name"], node.infos["title"] )
+      content = self.rcont(node)
+      back = self.close_section( docLevel )
+      
+      // the level will be closed when necessary
+      return front + content + back
+   end
+
+   function renderNote( node )
+      content = self.rcont( node )
+      return "<note><para>" + content + "</para></note>\n"
+   end
+   
+   function render_a( node )
+      l = node.infos["link"]
+      return DOCBOOKGenerator.makeLink( l )
+   end
+         
+end
+
+class DOCBOOKGenerator( doctree, conf )
+   doc = doctree
+   conf = bless(conf)
+   basedir = faldoc.config.basedir
+   frame = nil
+   file = "file" in conf ? conf["file"] : nil
+   encoding = "encoding" in conf? conf["encoding"] : "utf-8"
+   copyyear = "copyright.year" in conf? conf["copyright.year"] : nil
+   copyholder = "copyright.holder" in conf? conf["copyright.holder"] : nil
+   detailed = "detailed" in conf? conf["detailed"].lower().compare("true") == 0 : true
+
+   //# Level of the document.
+   docLevel = 0
+   
+   _outfile = nil
+
+   _rndr = nil
+
+   _entityHandler = [
+      "page" => self.makePage,
+      "variable" => self.makeVariable,
+      "global" => self.makeVariable,
+      "object" => self.makeObject,
+      "class" => self.makeClass,
+      "function" => self.makeFunction,
+      "group" => self.makePage,
+      "funset" => self.makePage,
+      "enum" => self.makeEnum,
+      "message" => self.makeMessage
+   ]
+
+   //# represents the section order
+   _moduleOrder =  .[
+      .["object" i"Objects"]
+      .["class" i"Classes"]
+      .["function" i"Functions"]
+      .["global" i"Variables"]
+      .["enum" i"Enumerations"]
+      .["message" i"Messages" ]
+   ]
+   
+   init
+      if "frame" in conf
+         switch conf["frame"]
+            case "article"
+               self.frame = docbook.ArticleFrame( self.encoding )
+            case "book"
+               if self.file: fname = fileName( self.file )
+               self.frame = docbook.BookFrame( self.encoding, fname, self.doc.title, self.doc.author, self.copyyear, self.copyholder )
+            case "article5"
+               if self.file: fname = fileName( self.file )
+               self.frame = docbook.Article5Frame( self.encoding )
+            case "book5"
+               if self.file: fname = fileName( self.file )
+               self.frame = docbook.Book5Frame( self.encoding, fname, self.doc.title, self.doc.author, self.copyyear, self.copyholder )
+            default
+               self.frame = docbook.ArticleFrame( self.encoding )
+         end
+      end
+
+      self._rndr = FaldocBookRenderer( self.frame )
+   end
+   
+   function go()
+      faldoc.info( "=" * 60 )
+      faldoc.info( "DOCBOOK Generator module started." )
+
+      if not self.file
+         faldoc.error( i"docbook output - Missing mandatory parameter \"file\"" )
+         return false
+      end
+
+      fpath = Path(self.file)
+      if not fpath.fulloc.startsWith("/")
+         self.file = self.basedir + "/" + self.file
+      end
+
+      faldoc.info( "docbook output - Writing to " + self.file )
+
+      try
+         self._outfile = OutputStream( self.file )
+         self._outfile.setEncoding( self.encoding )
+         self._outfile.writeText( self.frame.open() )
+
+         // each element of the main module is a chapter
+         self.docLevel = 0
+         self.makeModule( self.doc )
+
+         // other modules must be in their own chapter.
+         for modname, module in self.doc.members
+            if module.type != "module": continue
+            self.makeModule( module, true )
+         end
+
+         self._outfile.writeText( self.frame.close() )
+      catch IoError in err
+         faldoc.error( "docbook.fal: " + err )
+         return
+      end
+
+      if self._outfile: self._outfile.close()
+      faldoc.info( "DOCBOOK Generator module ended." )
+      faldoc.info( "=" * 60 )
+   end
+
+
+   function makeModule( module, isChildModule, isSubChild )
+
+      pages = module.orderPages()
+      if not pages and not module.members 
+         // an empty module
+         return
+      end
+
+      // create the module
+      docLevel = self.docLevel
+
+      // create the main page
+      if pages and pages[0].type == "main"
+         moduleId = module.getID()
+         self._outfile.writeText(self._rndr.open_section(docLevel, moduleId,
+                                  pages[0].props["title"] + (moduleId ? " (" + moduleId + ")":"") ))
+         self.makeContent( pages[0].pcontent )
+         pages.remove(0)
+         if isChildModule
+            self.docLevel ++
+         else
+            self._outfile.writeText(self._rndr.close_section(docLevel))
+         end
+      else
+         // dummy titlel if we don't have a main page
+         if isChildModule
+            self._outfile.writeText(self._rndr.open_section(docLevel, module.getID(), i"Module " + module.getID()))
+            self._outfile.writeText("<para/>\n")
+            self.docLevel ++
+         end
+      end
+
+      // do all the other pages
+      for page in pages
+         // the main page is always the first
+         self.makePage( page )
+      end
+   
+      // do ungrouped entities
+      entities = module.groupEntities()
+      for etype in self._moduleOrder
+         if etype.typeId() == StringType
+            self.makeEntityList( etype, entities )
+         else
+            self.makeEntityPage( etype[0], etype[1], entities )
+         end
+      end
+
+      if isChildModule
+         if not isSubChild
+            // do all the children
+            childmods = self.getAllModules( module )
+            for modname, submod in childmods
+               self.makeModule( submod, true, true )
+            end
+         end
+         
+         self._outfile.writeText( self._rndr.close_section(docLevel) )
+      end
+      
+      self.docLevel = docLevel
+   end
+   
+   //===============================================================
+   // Handlers
+   //===============================================================
+   function makeEntityList( etype, entities )
+      if etype in entities
+         maker = self._entityHandler[ etype ]
+         for entity in entities[ etype ]
+            maker( entity )
+            //# todo - remove grouped entities.
+         end
+      end
+   end
+   
+   function makeEntityPage( etype, chapName, entities )
+      done = false
+      if etype in entities
+         // section heading -- no need for xref here.
+         dl = self.docLevel ++
+         maker = self._entityHandler[ etype ]
+         for entity in entities[ etype ]
+            if "ingroup" in entity.props or "inset" in entity.props: continue
+            if not done
+               done = true
+               self._outfile.writeText( self._rndr.open_section( dl, "", chapName ) )
+            end
+            maker( entity )
+         end
+         if done
+            self._outfile.writeText( self._rndr.close_section( dl ) )
+         end
+         self.docLevel = dl
+      end
+   end
+
+   
+   function makeVariable( entity, prefixName )
+      if not prefixName: prefixName = i"Global"
+      name = prefixName + " " + entity.name
+      id = entity.type != "property" or self.detailed ? entity.getID() : nil
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
+      self.makeBrief( entity )
+      self.makeContent( entity.pcontent )
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
+   end
+
+
+   function makeContent( ctx )
+      if ctx
+         data = self._rndr.render( ctx )
+      end
+      
+      self._outfile.writeText( data ?  data : "<para/>\n" )
+   end
+   
+   
+   function makeObject( entity )
+      self.makeObjectoid( entity, i"Object", true )
+   end
+   
+   function makeClass( entity )
+      self.makeObjectoid( entity, i"Class", true )
+   end
+
+   function makeEnum( entity )
+      self.makeObjectoid( entity, i"Enumeration" )
+   end
+
+
+   function makeObjectoid( entity, typeName, proto )
+      id = entity.getID()
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, typeName + " " + entity.name ) )
+
+      self.makeBrief( entity )
+      if proto: self.makePrototype( entity, true )
+
+      props, methods = entity.getPropsAndMethods()
+      // todo - inherit list
+      self.makePropsTable( props, methods )
+
+      // write the content
+      self.makeContent( entity.pcontent )
+      
+      if entity.members
+         dl = self.docLevel
+         self.docLevel ++
+         for property in props
+            if property.pcontent
+               self.makeVariable( property, i"Property" )
+            end
+         end
+
+         for met in methods
+            if met.pcontent or "param" in met.props or "optparam" in met.props
+               self.makeFunction( met, i"Method" )
+            end
+         end
+
+         self.docLevel = dl
+      end
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
+   end
+
+   
+   function makeFunction( entity, prefixName )
+      if not prefixName: prefixName = i"Function"
+      name = prefixName + " " + entity.name
+      id = entity.type != "method" or self.detailed ? entity.getID() : nil
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, id, name ) )
+      self.makeBrief( entity )
+      self.makePrototype( entity )
+      self.makeContent( entity.pcontent )
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
+   end
+
+   
+   function makePage( entity )
+      // If the group is undefined, it will have no title.
+      name = ("title" in entity.props) ? entity.props["title"] : entity.name
+      // define a chapter for xref -- can't ave prefix.
+      self._outfile.writeText( self._rndr.open_section( self.docLevel, entity.getID(), name  ) )
+      self.makeBrief( entity )
+      self.makeContent( entity.pcontent )
+      
+      if entity.members
+         dl = self.docLevel
+         self.docLevel ++
+         for name, child in entity.members
+            if child.type in self._entityHandler
+               self._entityHandler[ child.type ]( child )
+            else
+               faldoc.warn( @i"Page type $(child.type) not handled by docbook" )
+            end
+         end
+         self.docLevel = dl
+      end
+      self._outfile.writeText( self._rndr.close_section( self.docLevel ) )
+   end
+
+   function makeMessage( entity )
+   end
+
+
+   function makeBrief( entity )
+      if "brief" in entity.props
+         node = entity.props["brief"]
+         data = self._rndr.rcont( node )
+         if data
+            self.opentag( "para" )
+            self.writeTag( "emphasis", data )
+            self.closetag( "para" )
+         end
+      end
+   end
+
+   function makePrototype( entity, addType )
+      self.opentag( "para" )
+      self.opentag( "informaltable", ["frame"=>"none"] )
+      self.opentag( "tgroup" , ["cols"=>"3"] )  // 3 cols;
+      self.writeTag( "colspec", "", ["colname"=>"c1", "colwidth"=>"15pt"] )
+      self.writeTag( "colspec", "", ["colname"=>"c2", "colwidth"=>"1*"] )
+      self.writeTag( "colspec", "", ["colname"=>"c3", "colwidth"=>"5*"] )
+      self.opentag( "tbody" )
+
+      self.opentag( "row", ["rowsep"=>"1"] )
+      self.opentag( "entry", ["namest"=>"c1", "nameend"=>"c3"] )
+      proto = entity.prototype()
+      if addType: proto = entity.type + " " + proto
+      if "from" in entity.props
+         fr = entity.props["from"]
+         proto = "<simpara><literal>" + proto + " from "
+         for link, callexp in fr
+            linkcal = self.makeLink( link )
+            cexp = callexp? "(" + self._rndr.rcont( callexp ) + ")" : ""
+            proto += "\\</literal></simpara><simpara><literal>           " +linkcal+ cexp
+         end
+         self._outfile.writeText( proto + "</literal></simpara>" )
+      else
+         self.writeTag( "literal", proto )
+      end
+      
+      self.closetag( "entry" )
+      self.closetag( "row" )
+
+      if "param" in entity.props: self.makeParams( entity.props["param"] )
+      if "optparam" in entity.props: self.makeParams( entity.props["optparam"] )
+      if "return" in entity.props
+         content = self._rndr.rcont( entity.props["return"] )
+         if content      
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.opentag( "entry" )
+            self.writeTag( "emphasis", i"Returns" )
+            self.closetag( "entry" )
+            self.opentag( "entry" )
+            self._outfile.writeText( content )
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+      
+      if "raise" in entity.props
+         rlist = entity.props["raise"]
+         self.makeRaise( rlist )
+      end
+
+      self.closetag( "tbody" )
+      self.closetag( "tgroup" )
+      self.closetag( "informaltable" )
+      self.closetag( "para" )
+   end
+
+   
+
+   function makeParams( plist )
+      
+      for name, content in plist
+         // ignore the parameter if not documented
+         if content
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", name )
+            vcont = self._rndr.rcont( content )
+            self.opentag( "entry" )
+            self._outfile.writeText( vcont.trim() )
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+   end
+
+
+   function makePropsTable( props, methods )
+      if not props and not methods: return
+      
+      self.opentag( "para" )
+      self.opentag( "informaltable", ["frame"=>"none"] )
+      self.opentag( "tgroup" , ["cols"=>"3"] )  // 3 cols;
+      self.writeTag( "colspec", "", ["colname"=>"c1", "colwidth"=>"10pt"] )
+      self.writeTag( "colspec", "", ["colname"=>"c2", "colwidth"=>"2*"] )
+      self.writeTag( "colspec", "", ["colname"=>"c3", "colwidth"=>"3*"] )
+      self.opentag( "tbody" )
+
+      if props
+         self.opentag( "row", ["rowsep"=>"1"] )
+         self.writeTag( "entry", i"Properties", ["namest"=>"c1", "nameend"=>"c3"] )
+         self.closetag( "row" )
+         for prop in props
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", prop.name )
+            self.opentag( "entry" )
+            if "brief" in prop.props: self._outfile.writeText( self._rndr.rcont( prop.props["brief"] ) )
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+
+      if methods
+         self.opentag( "row", ["rowsep"=>"1"] )
+         self.writeTag( "entry", i"Methods", ["namest"=>"c1", "nameend"=>"c3"] )
+         self.closetag( "row" )
+         for method in methods
+            self.opentag( "row" )
+            self.writeTag( "entry", "" ) // make an empty col for indent
+            self.writeTag( "entry", method.prototype() )
+            self.opentag( "entry" )
+            if "brief" in method.props: self._outfile.writeText( self._rndr.rcont( method.props["brief"] ))
+            self.closetag( "entry" )
+            self.closetag( "row" )
+         end
+      end
+
+      self.closetag( "tbody" )
+      self.closetag( "tgroup" )
+      self.closetag( "informaltable" )
+      self.closetag( "para" )
+   end
+
+
+   function makeRaise( rlist )
+      self.opentag( "row" )
+      self.writeTag( "entry", "" ) // make an empty col for indent
+      self.opentag( "entry" )
+      self.writeTag( "emphasis", i"Raises" )
+      self.closetag( "entry" )
+
+      /*
+      self.opentag( "entrytbl", ["cols"=>"2"] )
+      self.writeTag( "colspec", "", ["colname"=>"c1", "colwidth"=>"1*"] )
+      self.writeTag( "colspec", "", ["colname"=>"c2", "colwidth"=>"5*"] )
+      self.opentag( "tbody" )
+
+      for link, content in rlist
+         self.opentag( "row" )
+         self.writeTag( "entry", link.destination ) // make an empty col for indent
+         ctx = self._rndr.rcont( content )
+         self.writeTag( "entry", ctx )
+         self.closetag( "row" )
+      end
+
+      self.closetag( "tbody" )
+      self.closetag( "entrytbl" )
+      */
+
+      self.opentag( "entry" )
+      for link, content in rlist
+         self.opentag( "simpara" )
+         self.opentag( "emphasis", ["role"=>"bold"] )
+         vcont = self.makeLink( link )
+         self._outfile.writeText( vcont.trim() )
+         self.closetag( "emphasis" )
+         ctx = self._rndr.rcont( content ).trim()
+         self._outfile.writeText( " - " + ctx )
+         self.closetag( "simpara" )
+      end
+      self.closetag( "entry" )
+      
+      self.closetag( "row" )
+   end
+
+
+   function makeLink( l )
+      // ingore links to empty elements.
+      if l.target and (l.target.pcontent or "title" in l.target.props)
+         target = l.target
+         if (not self.detailed) and ( target.type == "property" or target.type == "method" )
+            target = target.parent
+         end
+         
+         if "title" in l.target.props
+            text = target.props["title"]
+         else
+            text = l.destination
+         end
+         return "<link linkend=\""+ target.getID() + "\">"+text+"</link>"
+      else
+         return l.destination
+      end
+   end
+
+   
+   //===============================================================
+   // Utilities
+   //===============================================================
+
+   function getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self.getAllModules( m )
+         end
+      end
+      return mods
+   end
+   
+   function opentag( tag, attribs )
+      att = ""
+      for k,v in attribs
+         forfirst: att = " "
+         att += k + '="' + v.replace('"', '\"') + '"'
+         formiddle: att += " "
+      end
+      
+      self._outfile.writeText( @"<$tag$att>\n" )
+   end
+   
+   function closetag( tag )
+      self._outfile.writeText( @"</$tag>\n" )
+   end
+
+   function write( xtag )
+      self._outfile.writeText( xtag.render() )
+   end
+   
+   function writeTag( tag, content, attribs )
+      content = docbook.Renderer.sgmlEscape(content)
+      att = ""
+      for k,v in attribs
+         forfirst: att = " "
+         att += k + '="' + v.replace('"', '\"') + '"'
+         formiddle: att += " "
+      end
+
+      if not content
+         self._outfile.writeText( "<"+ tag + att +"/>\n" )
+      else
+         self._outfile.writeText( "<"+ tag + att +">" + content + "</"+tag+">\n" )
+      end
+   end
+   
+end
+
+
+
+class Tag( tag, content, attribs )
+   attribs = attribs
+   tag = tag
+   content = content
+
+   function render()
+      if self.content.typeId() == StringType
+         content = docbook.Renderer.sgmlEscape(self.content)
+      else
+         content = ""
+         for tag in self.content
+            content += tag.render()
+         end
+      end
+      
+      att = ""
+      for k,v in self.attribs
+         forfirst: att = " "
+         att += k + '="' + v.replace('"', '\"') + '"'
+         formiddle: att += " "
+      end
+
+      if not content
+         self._outfile.writeText( "<"+ tag + att +"/>\n" )
+      else
+         self._outfile.writeText( "<"+ tag + att +">" + content + "</"+tag+">\n" )
+      end
+   end
+end
+

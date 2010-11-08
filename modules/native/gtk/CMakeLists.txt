@@ -3,7 +3,9 @@
 #
 project( gtk )
 
-cmake_minimum_required( VERSION 2.6.2 )
+cmake_minimum_required( VERSION 2.6.3 )
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ##
 #   Options
@@ -27,7 +29,6 @@ find_package( Falcon
           "$ENV{FALCON_BIN_PATH}/cmake"
     REQUIRED )
 include_directories( ${Falcon_INCLUDE_DIRS} )
-link_directories( ${FALCON_LIB_PATH} )
 
 ##
 #   Find gtk

@@ -36,8 +36,8 @@
 #include <typeinfo>
 
 #define GC_IDLE_TIME 250
-// default 128k
-#define GC_THREAD_STACK_SIZE  0x10000
+// default 1M
+#define GC_THREAD_STACK_SIZE  1024*1024
 
 
 // By default, 1MB
@@ -83,6 +83,7 @@ MemPool::MemPool():
    m_thresholdActive = TEMP_MEM_THRESHOLD*3;
 
    // fill the ramp algorithms
+   m_ramp[RAMP_MODE_OFF] = new RampNone;
    m_ramp[RAMP_MODE_STRICT_ID] = new RampStrict;
    m_ramp[RAMP_MODE_LOOSE_ID] = new RampLoose;
    m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 2.6 );
@@ -121,25 +122,17 @@ MemPool::~MemPool()
 
 bool MemPool::rampMode( int mode )
 {
-   if( mode == RAMP_MODE_OFF )
+   if( mode >= 0 && mode < RAMP_MODE_COUNT )
    {
       m_mtx_ramp.lock();
-      m_curRampID = mode;
-      m_curRampMode = 0;
-      m_mtx_ramp.unlock();
-      return true;
-   }
-   else
-   {
-      if( mode >= 0 && mode < RAMP_MODE_COUNT )
+      if ( m_curRampID != mode )
       {
-         m_mtx_ramp.lock();
          m_curRampID = mode;
          m_curRampMode = m_ramp[mode];
          m_curRampMode->reset();
-         m_mtx_ramp.unlock();
-         return true;
       }
+      m_mtx_ramp.unlock();
+      return true;
    }
 
    return false;
@@ -498,16 +491,11 @@ void MemPool::markItem( const Item &item )
       case FLC_ITEM_CLSMETHOD:
       {
          CoreObject *co = item.asMethodClassOwner();
-         if( co->mark() != gen ) {
-            co->gcMark( gen );
-         }
+         co->gcMark( gen );
 
          CoreClass *cls = item.asMethodClass();
          // if the class is the generator of the method, we have already marked it.
-         if( cls->mark() != gen )
-         {
-            cls->gcMark( gen );
-         }
+         cls->gcMark( gen );
       }
       break;
 
@@ -519,21 +507,21 @@ void MemPool::markItem( const Item &item )
 
 void MemPool::gcSweep()
 {
+
    TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
+
    m_mtx_ramp.lock();
-   RampMode *rm = m_curRampMode;
-   if( m_curRampMode != 0 )
-   {
-      rm->onScanInit();
-   }
+   // ramp mode may change while we do the lock...
+   RampMode* rm = m_curRampMode;
+   rm->onScanInit();
    m_mtx_ramp.unlock();
 
    clearRing( m_garbageRoot );
 
    m_mtx_ramp.lock();
    rm->onScanComplete();
-   m_thresholdActive = m_curRampMode->activeLevel();
-   m_thresholdNormal = m_curRampMode->normalLevel();
+   m_thresholdActive = rm->activeLevel();
+   m_thresholdNormal = rm->normalLevel();
    m_mtx_ramp.unlock();
 }
 

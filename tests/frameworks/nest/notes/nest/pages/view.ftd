@@ -1,20 +1,5 @@
 <?
-   import from nest.action in na
-
-   dm = Nest.dm( "DBIDataManager", "notes_db" )
-   de = Nest.service( "DataDetail", "",
-      [
-         "actions" => [
-            na.SubmitAction( Nest.AL.STAFF, "Delete!", "cmd", "del" )
-         ],
-         "handler" => Nest.pageLink("home"),
-         "level" => Nest.AL.USER
-      ]
-   )
-   de.dm = dm
-   de.entity = "notes"
-   de.view = "detail"
-   
+   de = Nest.service( "DataDetail" )
 ?><html>
 <head>
    <title>Your notes</title>
@@ -22,7 +7,7 @@
 </head>
 <body>
    <h1>View your note</h1>
-   <?= de.render() ?>
+   <? de.render() ?>
    <br/>
    <p>Click here to <a href="<?= Nest.pageLink('home') ?>">return to home</a>.</p>
    <br/>

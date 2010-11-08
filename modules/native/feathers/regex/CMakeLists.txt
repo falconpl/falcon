@@ -74,3 +74,4 @@ target_link_libraries(regex_fm
 
 falcon_install_module( regex_fm )
  
+set(_project_targets ${_project_targets} regex_fm PARENT_SCOPE)

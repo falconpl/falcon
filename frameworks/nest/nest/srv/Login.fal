@@ -21,18 +21,29 @@ import ServiceVar from nest as ServiceVar
 import NestError from nest as NestError
 import from nest.bindings in b
 
+/*# Service used to authenticate remote users.
+
+   @note uses the check_user( uid, password) hook
+*/
 class Login( instance ) from Service( instance )   
-   handler = ServiceVar( "Page where the login service checks for authentication", b.ConfigBinder )
+   //# Page where the login service checks for authentication
+   handler = ServiceVar( b.ConfigBinder )
 
-   uid = ServiceVar( "The user-id as inputed by the remote user", b.InputVarBinder )
-   pwd = ServiceVar( "The password as inputed by the remote user", b.InputVarBinder )
-   logout = ServiceVar( "If not nil, this is a logout request.", b.InputVarBinder )
+   //# The user-id as inputed by the remote user
+   uid = ServiceVar( b.InputVarBinder )
+   //# The password as inputed by the remote user
+   pwd = ServiceVar( b.InputVarBinder )
+   //# If not nil, this is a logout request
+   logout = ServiceVar( b.InputVarBinder )
+   //# Used to help skins and listeners to detect what happened (in, out, ok, fail)
+   logmode = ServiceVar()
 
-   logmode = ServiceVar( "Used to help skins and listeners to detect what happened (in, out, ok, fail)" )
-
-   auth_user = Nest.ambient( "auth_user", "Authenticated user", b.SessionBinder )
-   auth_level = Nest.ambient( "auth_level", "Authenticated user level -- as a Nest.AL level", b.SessionBinder )
-   auth_data = Nest.ambient( "auth_data", "Arbitrary free data that can be associated to an authenticated user", b.SessionBinder )
+   //# Authenticated user
+   auth_user = Nest.ambient( "auth_user", b.SessionBinder )
+   //# Authenticated user level -- as a Nest.AL level
+   auth_level = Nest.ambient( "auth_level", b.SessionBinder )
+   //# Arbitrary free data that can be associated to an authenticated user
+   auth_data = Nest.ambient( "auth_data", b.SessionBinder )
 
    /*# Configurable callback to check for login requests.
 
@@ -47,7 +58,7 @@ class Login( instance ) from Service( instance )
 
    _checked = false
    
-   function run()
+   function startup()
       self.check()
    end
    
@@ -85,11 +96,12 @@ class Login( instance ) from Service( instance )
          self.logmode.value = "expired"
          self.auth_level.value = Nest.AL.NONE
       end
-
+      /*
       if not self.checker.isCallable()
          Nest.logw( "Login service has no checker configured." )
          return
       end
+      */
 
       // asking for a login?
       if self.uid.isSet
@@ -103,7 +115,8 @@ class Login( instance ) from Service( instance )
    function checkLogin( uid, pwd )
       Nest.logd( "Checking login for " + uid + ":" + pwd )
       
-      res = self.checker( uid, pwd )
+      res = Nest.emit( "check_user", self.uid.value, self.pwd.value )
+
       if res
          try
             al, ad = res

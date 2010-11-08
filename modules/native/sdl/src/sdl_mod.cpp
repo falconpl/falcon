@@ -76,22 +76,26 @@ SDLSurfaceCarrier_impl::SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surfac
          gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
 
       s->refcount++;
-      setUserData( s );
    }
+
+   setUserData( s );
 }
 
 SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 {
-   while( m_lockCount > 0 )
+   if ( surface() != 0 )
    {
-      m_lockCount--;
-      SDL_UnlockSurface( surface() );
-   }
-   
-   if ( surface()->refcount == 1 )
-      gcMemUnaccount( surface()->h * surface()->w * surface()->format->BytesPerPixel );
+      while( m_lockCount > 0 )
+      {
+         m_lockCount--;
+         SDL_UnlockSurface( surface() );
+      }
 
-   SDL_FreeSurface( surface() );
+      if ( surface()->refcount == 1 )
+         gcMemUnaccount( surface()->h * surface()->w * surface()->format->BytesPerPixel );
+
+      SDL_FreeSurface( surface() );
+   }
 }
 
 

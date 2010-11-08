@@ -210,7 +210,6 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 
 void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
-
    Runtime rt( &iface->loader(), vm );
    rt.hasMainModule(false);
    // let's try to link
@@ -325,7 +324,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )
@@ -379,7 +378,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )
@@ -452,7 +451,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
          extra( *i_name->asString() ) );
 
-      ce->appendSubError(err);
+      ce->boxError(err);
       err->decref();
 
       if ( mod != 0 )

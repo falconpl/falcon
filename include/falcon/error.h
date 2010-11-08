@@ -54,6 +54,7 @@ extern reflectionFuncDecl Error_symbol_rfrom;
 extern reflectionFuncDecl Error_line_rfrom;
 extern reflectionFuncDecl Error_pc_rfrom;
 extern reflectionFuncDecl Error_subErrors_rfrom;
+extern reflectionFuncDecl Error_boxed_rfrom;
 
 extern reflectionFuncDecl Error_code_rto;
 extern reflectionFuncDecl Error_description_rto;
@@ -64,6 +65,7 @@ extern reflectionFuncDecl Error_module_rto;
 extern reflectionFuncDecl Error_symbol_rto;
 extern reflectionFuncDecl Error_line_rto;
 extern reflectionFuncDecl Error_pc_rto;
+extern reflectionFuncDecl Error_boxed_rto;
 
 /** Reflective class for error */
 class ErrorObject: public CRObject
@@ -262,6 +264,9 @@ protected:
    Error *m_nextError;
    Error *m_LastNextError;
 
+   /** Error boxed form other error raising (possibly recursive) */
+   Error* m_boxed;
+
    /** Empty constructor.
       The error must be filled with proper values.
    */
@@ -276,7 +281,8 @@ protected:
       m_origin( e_orig_unknown ),
       m_catchable( true ),
       m_nextError( 0 ),
-      m_LastNextError( 0 )
+      m_LastNextError( 0 ),
+      m_boxed(0)
    {
       m_raised.setNil();
    }
@@ -303,7 +309,8 @@ protected:
       m_origin( params.m_origin ),
       m_catchable( params.m_catchable ),
       m_nextError( 0 ),
-      m_LastNextError( 0 )
+      m_LastNextError( 0 ),
+      m_boxed(0)
    {
       m_raised.setNil();
    }
@@ -325,7 +332,8 @@ public:
       m_origin( e_orig_unknown ),
       m_catchable( true ),
       m_nextError( 0 ),
-      m_LastNextError( 0 )
+      m_LastNextError( 0 ),
+      m_boxed(0)
    {
       m_raised.setNil();
    }
@@ -345,7 +353,8 @@ public:
       m_origin( params.m_origin ),
       m_catchable( params.m_catchable ),
       m_nextError( 0 ),
-      m_LastNextError( 0 )
+      m_LastNextError( 0 ),
+      m_boxed(0)
    {
       m_raised.setNil();
    }
@@ -423,6 +432,9 @@ public:
    Error* subError() const { return m_nextError; }
 
    virtual Error *clone() const;
+
+   void boxError( Error *error );
+   Error* getBoxedError() const { return m_boxed; }
 
    bool hasTraceback() const { return ! m_steps.empty(); }
 };

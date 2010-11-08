@@ -61,6 +61,7 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_trace ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Function_stack ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_attributes( ::Falcon::VMachine *vm );
 
 // Iterator class
@@ -241,6 +242,7 @@ FALCON_FUNC  vmIsMain( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmFalconPath( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmSearchPath( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmModuleName( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmModuleLine( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmModulePath( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmRelativePath( ::Falcon::VMachine *vm );
 

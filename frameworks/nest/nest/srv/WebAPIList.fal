@@ -1,0 +1,141 @@
+/*#
+ * @file        WebAPI.fal
+ * @brief       Web API service.
+ * @begin       23-Aug-2010
+ * @author      <a href="mailto:giuseppe.greco@agamura.com">Giuseppe Greco</a>
+ *
+ * @copyright   (C) 2010 href="http://www.falconpl.org">The Falcon Programming Language</a>
+ * @legalnotice Released under FPLL 1.1 or GPL 2.0 at your choice.
+ */
+
+import from nest.bindings in b
+import Compiler from compiler as Compiler
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+
+import NestError from nest as NestError
+import findFile from nest.utils as findFile
+
+/*#
+ * Web API service.
+ *
+ * Provides functionality for accessing available API objects.
+ *
+ * @param owner Service owner.
+ * @param instance Service instance.
+ *
+ * @see nest.Service
+ */
+class WebAPIList(instance) from Service(instance)
+
+   //# The directory where API objects are stored
+   apidir = ServiceVar( b.ConfigBinder )
+   //# Page to load when asking for details
+   detail_pid = ServiceVar( b.ConfigBinder )
+   //# Name of the GET variable identifying a function
+   funcvar = ServiceVar( b.ConfigBinder )
+   //# Function pseudo object list (name, link, description)
+   functions = ServiceVar()
+   /*#
+   * Compiler services.
+   */
+   _compiler = Compiler()
+
+   /*#
+   * @see nest.Service.run
+   */
+   function run()
+      Nest.logi("Service WebAPI run")
+
+      // Parameter and configuration checking
+      if self.apidir.value == nil
+         raise NestError( 10100, "apidir not configured" )
+      end
+
+      if (detpage = self.detail_pid.value) == nil
+         raise NestError( 10100, "detail_pid not configured" )
+      end
+      
+      varname = self.funcvar.isSet ? self.funcvar.value : "funcname"
+      
+      // and now, load the the directory
+      apiObjects = self.getApiObjects( self.apidir.value )
+
+      // prepare the data to be displayed by the skin
+      data = []
+      
+      for name,ao in apiObjects
+         dd = ao.docData()
+
+         data+= bless([
+               "name" => name,
+               "link" => Nest.pageLink(detpage, [ varname => name ]),
+               "description" => dd["description"]
+               ])      
+      end
+
+      self.functions.value = data
+   end
+
+
+    /*#
+     * Gets the specified API objects.
+     * @param location
+     * @return A dictionary containing the API objects, ordered by their names.
+     *
+     * If no API object is specified, this function gets all the API objects
+     * available on the system. API objects represent functionality made
+     * available through an URL.
+     *
+     *
+     */
+    function getApiObjects( location )
+      apiObjects = [=>]
+
+      direnum = Directory(location)
+      while (file = direnum.read())
+         Nest.logd("Checking: " + file )
+         name = Path(file).file
+         //hidden?
+         if name.startsWith( "." ): continue
+
+         // not a module?
+         if not (file.endsWith("fam") or file.endsWith("fal")): continue
+
+         // already loaded?
+         if name in apiObjects: continue
+
+         // not a file?
+         if fileType( location + "/" + file ) != FileStat.NORMAL: continue
+
+         // ok, load it
+         file = location + "/" + file
+         Nest.logd("Loading API item: " + file ) 
+         mc =  self._loadApiObject(file, name)
+         if mc: apiObjects[name] = mc
+         
+      end
+      
+      return apiObjects
+    end
+
+    /*#
+     * Loads the specified API object.
+     *
+     * @param file The file containing the API object to load.
+     * @param name The name of the API object to load.
+     *
+     * @return The API object.
+     */
+    function _loadApiObject(file, name)
+        try
+            module = self._compiler.loadFile(file, name)
+            moduleClass = module.get(name)
+            return moduleClass
+        catch AccessError
+            Nest.logi("File " + file + " is not a valid Nest API entity." )
+            //raise NestError(NestError.no_mod_class, "", name)
+            // ignore the invalid module
+        end
+    end
+end

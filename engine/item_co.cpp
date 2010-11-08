@@ -1651,7 +1651,7 @@ int co_class_compare( const Item& first, const Item& second )
    }
    else if ( second.isClass() )
    {
-      return (int)(first.asClass()->symbol()->name().compare(first.asClass()->symbol()->name()));
+      return (int)(first.asClass()->symbol()->name().compare(second.asClass()->symbol()->name()));
    }
    else if ( second.isUnbound() )
    {

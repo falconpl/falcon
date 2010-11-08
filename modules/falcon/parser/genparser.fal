@@ -6,10 +6,10 @@
    Generic customizable grammar parser.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+   Begin: Sat, 30 Aug 2010 09:42:22 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -21,9 +21,8 @@ import Node from self.node as Node
 import DummyRule from self.rules
 
 
-/*#
-   @brief Parser states (behaviors)
-*/
+//# Parser states (behaviors)
+
 class PState( rules, onUnmatched, eolRule )
    rules = rules
    onUnmatched = onUnmatched
@@ -136,22 +135,27 @@ end
 */
 
 class Parser()
-   // known states by name
+   //# known states by name
    states = nil
    
-   // stack of ParserStates
+   //# stack of ParserStates
    _stack = []
 
-   // false when asked to quit
+   //# Used for tracing
+   _stateNames = []
+
+   //# false when asked to quit
    _proceed = false
 
-   // current parsing row
+   //# current parsing row
    row = 1
 
-   /*#
-      @brief Pushes a given state making it the active state.
-      @param name The name of the state that should be pushed.
-      @raise ParseError if the state name is not known.
+   //# true to activate rule tracing
+   trace = false
+
+   /*# Pushes a given state making it the active state.
+   *  @param name The name of the state that should be pushed.
+   *  @raise ParseError if the state name is not known.
    */
    function pushState( name )
       if not name in self.states
@@ -159,6 +163,10 @@ class Parser()
       end
 
       self._stack += self.states[name]
+      self._stateNames += name
+      if self.trace
+         self.traceStates()
+      end
    end
 
    /*#
@@ -172,16 +180,24 @@ class Parser()
       end
 
       arrayResize( self._stack, len - 1 )
+      arrayResize( self._stateNames, len - 1 )
+      if self.trace
+         self.traceStates()
+      end
    end
 
    /*#
       @brief Performs complete parsing.
       @param stream An input stream where the input data is read.
       @param initState The name of the initial state.
+      @optparam initRow If given, set the initial row to this number
       @raise ParseError if the parser has not been correctly initialized.
    */
-   function parse( string, initState )
+   function parse( string, initState, initRow )
+      if not initState: initState = "start"
       self.initParser(initState)
+      if initRow: self.row = initRow
+      
       ctx = Context()
       pos = 0
       strlen = string.len()
@@ -192,11 +208,11 @@ class Parser()
          eolsize = 1
 
          // consider \r\n or \n\r
-         if pos > 0
-            if string[* (pos-1)] == 0xA
+         if poseol > 0
+            if string[* (poseol-1)] == 0xD
                --poseol
                ++eolsize
-            elif pos+1 < strlen and string[* (pos-1)] == 0xA
+            elif poseol+1 < strlen and string[* (poseol+1)] == 0xD
                ++eolsize
             end
          end
@@ -211,9 +227,22 @@ class Parser()
       return ctx
    end
 
+   //# Parses a file
+   function parseStream( stream, initState )
+      self.initParser( initState )
+      ctx = Context()
+      line = ""
+      while stream.readLine( line, 4096 )
+         self.parseLine( line, ctx )
+      end
+
+      return ctx
+   end
+   
    function initParser(initState)
       if initState
          self._stack = []
+         if self.trace: self._stateNames = []
          self.pushState( initState )
       elif self._stack.len() != 1
          raise ParseError( 10002, i"Parser not initialized before parsing" )
@@ -227,71 +256,89 @@ class Parser()
       linelen = line.len()
       col = 0
       
-      loop
-         hadWinner = false
-         
-         loop
-            matchAt = line.len()
-            winner = nil
+      hadWinner = false
+      if self.trace: self.traceText( line )
+      atEnd = false
 
-            state = self._stack[-1]
-            sr = state.rules
-            
-            ruleId = 0
-            srlen = sr.len()
-            while ruleId < srlen
-               rule =  sr[ruleId++]
-               rulePos = rule.match( line, col )
-               if rulePos == 0
-                  // we found the rule
+      loop
+         matchAt = linelen
+         winner = nil
+
+         state = self._stack[-1]
+         sr = state.rules
+
+         ruleId = 0
+         srlen = sr.len()
+         while ruleId < srlen
+            rule =  sr[ruleId++]
+            rulePos = rule.match( line, col )
+            if rulePos == 0
+               // we found the rule
+               winner = rule
+               hadWinner = true
+               matchAt = 0
+               break
+            elif rulePos > 0
+               if rulePos < matchAt
+                  winner = rule
+                  matchAt = rulePos
+                  hadWinner = true
+               elif rulePos == matchAt and not winner
+                  // match at end
                   winner = rule
                   hadWinner = true
-                  matchAt = 0
-                  break
-               elif rulePos > 0
-                  if rulePos < matchAt
-                     winner = rule
-                     matchAt = rulePos
-                  end
                end
-            end
-
-            //we found it -- do we have a prefix?
-            if col < matchAt
-               // else, the rule doesn't match
-               prefix = line[col:matchAt]
-
-               if (not state.onUnmatched)
-                  raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)] $prefix" )
-               end
-               state.onUnmatched( ctx, prefix )
-            end
-
-            if winner
-               count = winner.apply( ctx )
-               self._fulfil( winner.nextState )
-            else
-               // empty line and no matching rule, so it seems.
-               break
-            end
-
-            col = matchAt + count
-         end col >= linelen
-
-         if state.eolRule and (not winner or winner.nextState == "#stay")
-            // is this a conditional rule?
-            if state.eolRule[0] == "*"
-               if not hadWinner
-                  self._fulfil( state.eolRule[1:] )
-               end
-            else
-               self._fulfil( state.eolRule )
             end
          end
 
-      // Repeat if it was a dummy
-      end not winner.derivedFrom( rules.DummyRule )
+         //we found it -- do we have a prefix?
+         if col < matchAt
+            // else, the rule doesn't match
+            prefix = line[col:matchAt]
+
+            if (not state.onUnmatched)
+               statedesc = ", ".merge(self._stateNames)
+               raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)]{$(statedesc)} \"$prefix\"" )
+            end
+            if state.onUnmatched != "*": state.onUnmatched( ctx, prefix )
+         end
+
+         if winner
+            count = winner.apply( ctx )
+            if self.trace: self.traceRule( winner, ctx )
+            self._fulfil( winner.nextState )
+            // ensure that end of lines with look-ahead are respected
+            if winner.lookAhead: atEnd = false
+         else
+            // empty line and no matching rule, so it seems.
+            break
+         end
+
+         col = matchAt + count
+
+         // are we done?
+         if col >= linelen
+            // offer an extra loop for rules matching at end of line
+            if atEnd: break
+            atEnd = true
+         end
+      end
+
+      if state.eolRule and (not winner or winner.nextState == "#stay")
+         // is this a conditional rule?
+         if state.eolRule[0] == "*"
+            if not hadWinner
+               if self.trace: self.traceMsg("Following optional eolRule")
+               self._fulfil( state.eolRule[1:] )
+            end
+         else
+            if self.trace: self.traceMsg("Following mandatory eolRule")
+            self._fulfil( state.eolRule )
+         end
+      end
+
       ++self.row
+      ctx.row = self.row
    end
 
 
@@ -305,6 +352,7 @@ class Parser()
          if what == "#pop"
             self.popState()
          elif what == "#stay"
+            if self.trace: self.traceMsg( "Staying in current state" )
             return
          elif what == "#quit"
             self.terminate()
@@ -312,6 +360,10 @@ class Parser()
             self.pushState( what )
          elif what.derivedFrom( PState )
             self._stack += what
+            self._stateNames += "anon(" + what.toString()+ ")"
+            if self.trace
+               self.traceStates()
+            end
          else
             // otherwise we have something wrong
             raise ParseError( 10004, i"Invalid state change", what )
@@ -333,6 +385,25 @@ class Parser()
       self._proceed = false
    end
 
+   function traceText( line )
+      > "[PTRC:text] <<", line, ">>"
+   end
+
+   function traceStates()
+      > "[PTRC:stat] ", ", ".merge(self._stateNames)
+   end
+
+   function traceMsg( msg )
+      > "[PTRC:msg ] ", msg
+   end
+
+   function traceRule( r, context )
+      >> "[PTRC:rule] (ctx depth:", context.nodeStack.len(),  ") Applying ", r.className(), "("
+      if r provides token: >> '"', r.token.escape(), "\", "
+      >> '"', r.nextState, '")'
+      > " matcing ", r.matchLen, " chars."
+   end
+   
 end
 
 export

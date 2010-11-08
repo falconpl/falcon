@@ -1,0 +1,15 @@
+/* Configuration for the Menu service -- Demo NEST site */
+
+import MenuItem from nest.srv.Menu as MenuItem
+
+items = .[
+   MenuItem( "Home", ^+"home" )
+   MenuItem( "Plugins", nil, Nest.AL.USER )
+   MenuItem( "Account settings", ^+"account", Nest.AL.USER,
+         .[
+            MenuItem( "Address", ^+"acc_addr" )
+            MenuItem( "Preferences", ^+"acc_prefs" )
+         ]
+      )
+   MenuItem( "Contacts", "contacts" )
+]

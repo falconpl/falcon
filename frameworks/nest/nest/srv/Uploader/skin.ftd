@@ -1,0 +1,143 @@
+<? function skin( vars, srv ) ?>
+   <? if vars.performed ?>
+      <!-- performed section -->
+      <div id="nest_uploader_perform">
+      <p>Operation result:
+      <? if vars.performed.typeId() == ArrayType ?>
+         </p>
+         <ul>
+            <? for item in vars.performed ?>
+               <li><?= item ?></li>
+            <? end ?>
+         </ul>         
+      <? else ?>
+         <b><?= vars.performed ?></b></p>
+      <? end ?>
+      </div>
+      <hr/>
+   <? end ?>
+   
+   <? if vars.sel and not vars.cnf ?>
+      <!-- confirm section -->
+      <div id="nest_uploader_confirm">
+         <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+            <p>Do you really want to <?= vars.do == 'mv' ? "move" : "delete" ?> the following files?</p>
+            <ul>
+            <? for file in vars.sel ?>
+               <li><?= file ?></li>
+            <? end ?>
+            </ul>
+            <input type="hidden" name="loc" value="<?=vars.loc?>"/>
+            <? for file in vars.sel ?>
+            <input type="hidden" name="sel[]" value="<?= file ?>"/>
+            <? end ?>
+            <input type="hidden" name="do" value="<?= vars.do ?>"/>
+            <input type="hidden" name="tg" value="<?= vars.tg ?>"/>
+            <input type="hidden" name="cnf" value="1"/>
+            <input type="submit" value="Confirm"/>
+         </form>
+      </div>
+      <hr/>
+   <? end ?>
+
+   <!-- location section -->
+   <div id="nest_uploader_location">
+      <? if not vars.path ?>
+         <p>Currently in Root section</p>
+      <? else ?>
+         <p>Location:
+         <? for pos, link in vars.path
+            if link
+               >> "<a href=\"" + link +"\">" + pos + "</a>"
+            else
+               >> pos
+            end
+            formiddle: >> " / "
+         end ?>
+         </p>
+      <? end ?>
+   </div>
+
+   <!-- Enter a subsection -->
+   <div id="nest_uploader_enter_section">
+      <? if vars.sections
+            gets = Request.gets
+         ?>
+         <p>Enter a subsection:</p>
+         <ul>
+            <? for sect in vars.sections ?>
+               <? gets["loc"] = (vars.loc ? (vars.loc + "/"):"") + sect ?>
+               <li><a href="<?= Nest.pageLink(nil, gets )?>"><?= sect ?></a></li>
+            <? end ?>
+         </ul>
+      <? end ?>
+   </div>
+
+   <!-- Create a section -->
+   <div id="nest_uploader_create_section">
+      <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+      <input type="hidden" name="loc" value="<?=vars.loc?>"/>
+      <p>Create a new section: <input type="text" size="30" maxlength="40" name="tg"/>
+      <input type="submit" name="sub_btn" value="Create"/></p>
+      <input type="hidden" name="do" value="new"/>
+      </form>
+   </div>
+   
+   <!-- upload section -->
+   <hr/>
+   <!-- upload section -->
+   <div id="nest_uploader_upload">
+      <form action="<?= Nest.pageLink() ?>" method="POST" enctype="multipart/form-data" accept-charset="utf-8">
+      <input type="hidden" name="loc" value="<?=vars.loc?>"/>
+      <p>Upload a file: <input type="file" name="upld"/>&nbsp;&nbsp;<input type="submit" name="sub_btn" value="Upload"/></p>
+      </form>
+   </div>
+
+
+
+   <!-- File display section -->
+   <div id="nest_uploader_files">
+      <? if vars.files ?>
+         <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+         <input type="hidden" name="loc" value="<?=vars.loc?>"/>
+         <table>
+         <? path = vars.loc ?>
+         <tr><th>Select</th><th>File</th><? if vars.actions ?><th>Actions</th><? end ?></tr>
+         <? for file in vars.files ?>
+            <tr>
+               <td><input type="checkbox" name="sel[]" value="<?= file ?>"/></td>
+               <td><?= file ?></td>
+               <? if vars.actions ?>
+               <td><? for a in vars.actions ?>&nbsp;<?= @a.render() ?>&nbsp;<? end ?></td>
+               <? end ?>
+            </tr>
+         <? end ?>
+         </table>
+         <p>With selected:
+         <button type="submit" name="do" value="del">Delete</button>
+         &nbsp;&nbsp;&nbsp;or
+         <button type="submit" name="do" value="mv">Move in</button>
+         <select name="tg">
+            <option value="">Select target location</option>
+            <? for loc in vars.tglocs ?>
+               <option value="<?= loc ?>"><?= loc ?></option>
+            <? end ?>
+         </select>
+         </p>
+         </form>
+      <? else ?>
+         <p><b>The section is empty</b></p>
+         <? if vars.path and not vars.sections ?>
+            <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+            <p>
+            <input type="hidden" name="loc" value="<?=vars.loc?>"/>
+            <input type="hidden" name="loc" value="<?= vars.loc ?>"/>
+            <input type="hidden" name="do" value="deldir"/>
+            <button type="submit">Delete this section!</button>
+            </p>
+            </form>
+         <? end ?>
+      <? end ?>
+   </div>
+   
+<? end ?>

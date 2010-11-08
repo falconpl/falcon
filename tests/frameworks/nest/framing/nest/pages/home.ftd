@@ -1,0 +1,3 @@
+<h1>Home</h1>
+<p>This is the home in the frame</p>
+<p>You are currently logged in as <?= Nest.ambient( "auth_data" ).value ?>.</p>

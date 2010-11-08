@@ -20,13 +20,13 @@ import from parser.creole
 import from nest.action in na
 
 
+dm = Nest.dm("wiki_db")
 parser = parser.creole.Parser()
 upload_dir = "/uploads"
 upload_linker = { v => upload_dir+"/" + URI.encode(v) }
 
 actions = .[
-   na.ButtonAction( Nest.AL.NONE, i"Insert image", "javascript:insertImage()" )
-   na.ButtonAction( Nest.AL.NONE, i"Insert file", "javascript:insertFile()" )
+   na.ButtonAction( "Insert image", Nest.AL.NONE, i"Insert image", "javascript:insertImage()" )
+   na.ButtonAction( "Insert file", Nest.AL.NONE, i"Insert file", "javascript:insertFile()" )
 ]   
 
-//return @"<pre class=\"brush:$lang\">\n"+v+"</pre>"

@@ -1,0 +1,134 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DBCheckUser.fal
+
+   Hook checking users in a database.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 02 Nov 2010 21:57:08 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Hook from nest.hook as Hook
+import NestError from nest.error as NestError
+import DBEntity from nest.dbentity as DBEntity
+
+/*# Hook that can be used to check for users in a configuration table.
+
+   This hook engages with the "check_user" function, and receives a
+   user/password pair to be authenticated.
+
+   Authentication happens by checking a userid/password pair in a given
+   database entity.
+   
+   Passwords may be hashed through an arbitrary algorithm. In that case,
+   the configuration must include a @b hash key pointing to the function
+   used to obfuscate the passwords.
+
+   Known configuration keys are:
+   
+   - **entity**: DBEntity providing the user table. The table must be searchable
+                 so that the user id is also a valid __eid__ for the table.
+   - **password_field**: Name of the field where the password is stored.
+   - **level_field**: Optional; if given, the logged in users will receive the level specified in this field.
+                     the field should be an integer, with higher levels represented as lower number
+                     (0 = admin); or, it may be a string that is maped through the **levels** configuration
+                     variable.
+   - **levels**: Optional; if given, must be a dictionary of strings => auth_level, where
+                 each string corresponds to a value in the **level_field** column. If a level is not mapped,
+                 the user will receive the lowest authorization level possible.
+   - **data_maker**: Optional; if given, must be a function receiving the whole record and returning the data
+                     that will be stored in "auth_data" nest ambient variable. If not given, the whole record
+                     will be stored in auth_data (this may cause problems with session, so better have it, unless
+                     you know what you're doing).
+   - **hash**: Optional; if given, the incoming password will be processed through this function prior being
+               checked against the password field in the database.
+*/
+
+class DBCheckUser from Hook( "check_user" )
+   entity = nil
+   password_field = nil
+
+   levels = nil
+   level_field = nil
+   data_maker = nil
+   hash = nil
+
+   func = function( uid, pwd )
+         record = self.entity.find( uid )
+
+         if record
+            if self.hash: pwd = self.hash( pwd )
+            if record.data[ self.password_field ] == pwd
+
+               if self.level_field
+                  level = record.data[ self.level_field ]
+                  if self.levels
+                     if level in self.levels
+                        level = self.levels[ level ]
+                     else
+                        level = Nest.AL.NONE
+                     end
+                  else
+                     // cause an error if this is not an int.
+                     level = int( level )
+                  end
+               else
+                  // Otherwise, grant a minimum level
+                  level = Nest.AL.NONE
+               end
+
+               if self.data_maker
+                  return ^+ [level, self.data_maker(record.data) ]
+               else
+                  return ^+ [level, record.data ]
+               end
+            end
+         end
+
+         // record not found or password not valid
+         return nil
+      end
+
+   function configure( config )
+      if Nest.pcheck
+         if "entity" notin config or not ( self.entity = config["entity"] ).derivedFrom( DBEntity )
+            raise NestError( NestError.pcheck, "", i"Need a DBEntity as 'entity' key in configuration" )
+         end
+
+         if "password_field" notin config or ( self.password_field = config["password_field"] ).typeId() != StringType
+            raise NestError( NestError.pcheck, "", i"Need a string in 'password_field' in configuration" )
+         end
+      else
+         self.entity = config["entity"]
+         self.password_field =  config["password_field"]
+      end
+
+      self.levels = "levels" in config ? config["levels"] : nil
+      self.level_field = "level_field" in config ? config["level_field"] : nil
+      self.data_maker = "data_maker" in config ? config["data_maker"] : nil
+      self.hash = "hash" in config ? config["hash"] : nil
+
+      if Nest.pcheck
+         if self.levels and self.levels.typeId() != DictionaryType
+            raise NestError( NestError.other, i"Configuration key 'levels' must be a dictionary" )
+         end
+         if self.level_field and self.level_field.typeId() != StringType
+            raise NestError( NestError.other, i"Configuration key 'level_field' must be a string" )
+         end
+         if self.data_maker and not self.data_maker.isCallable() 
+            raise NestError( NestError.other, i"Configuration key 'data_maker' must callable item" )
+         end
+         if self.hash and not self.hash.isCallable()
+            raise NestError( NestError.other, i"Configuration key 'data_maker' must callable item" )
+         end
+      end
+   end
+end

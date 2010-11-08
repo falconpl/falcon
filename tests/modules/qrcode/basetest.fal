@@ -1,0 +1,12 @@
+import from img.qrcode in qr
+
+if args.len() != 2
+   > "Please, specify output and 'text' on the command line"
+   return -1
+end
+
+img = qr.Maker().text(args[1], qr.ECL.L)
+img.savePng(args[0], 3, 2)
+
+> "Complete"
+return 0

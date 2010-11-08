@@ -1,0 +1,2026 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: lib.fal
+
+   QR Code library back end.
+   -----------------------------------------------------------------------------
+   Author: Giuseppe Greco
+   Begin: Wed, 27 Oct 2010 13:11:50 +0200
+
+   -----------------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from gd2
+
+//------------------------------------------------------------------------------
+
+const MaxInt = 2147483647
+
+//------------------------------------------------------------------------------
+
+enum QrMode
+   null = -1
+   num = 0
+   an = 1
+   eight_bit = 2
+   kanji = 3
+   structure = 4
+end
+
+enum QrErrorCorrectionLevel
+   L = 0
+   M = 1
+   Q = 2
+   H = 3
+end
+
+//------------------------------------------------------------------------------
+
+class QrError(code, desc, extra) from Error(code, desc, extra)
+   invalid_param = 10001
+   invalid_version = 10002
+   version_not_found = 10003
+   invalid_error_correction_level = 10004
+   invalid_mode = 10005
+   invalid_mask = 10006
+   encoding_error = 10007
+
+   _desc = [
+      self.invalid_param => i"Invalid parameter",
+      self.invalid_version => i"Invalid version",
+      self.version_not_found => i"Version not found",
+      self.invalid_error_correction_level => i"Invalid error correction level",
+      self.invalid_mode => i"Invalid mode",
+      self.invalid_mask => i"Invalid mask",
+      self.encoding_error => i"Encoding error"
+   ]
+
+   init
+      if code in self._desc
+         self.description = self._desc[code]
+      end
+   end
+end
+
+//------------------------------------------------------------------------------
+
+class QrBitStream(size)
+   data = nil
+
+   init
+      self.data = size != nil ? arrayBuffer(size, 0) : []
+   end
+
+   function allocate(size)
+      if size != len(self.data)
+         arrayResize(self.data, size, 0)
+      end
+   end
+
+   function append(bitStream)
+      if bitStream == nil
+         raise QrError(QrError.invalid_param, i"bitStream is null")
+      end
+
+      self.data += bitStream.data
+   end
+
+   function appendNum(bits, num)
+      if bits != 0
+         bitStream = self._newFromNum(bits, num)
+         self.append(bitStream)
+      end
+   end
+
+   function appendBytes(size, data)
+      if data == nil
+         raise QrError(QrError.invalid_param, i"data is null")
+      end
+
+      if size != 0
+         bitStream = self._newFromBytes(size, data)
+         self.append(bitStream)
+      end
+   end
+
+   function toByte()
+      size = len(self.data)
+      if size == 0: return []
+
+      data = arrayBuffer(int((size + 7) / 8), 0)
+      bytes = int(size / 8)
+      p = 0
+
+      for i in [0:bytes]
+         v = 0
+         for j in [0:8]
+            v <<= 1
+            v |= self.data[p]
+            p++
+         end
+         data[i] = v
+      end
+
+      if size && 7
+         v = 0
+         for j in [0:size && 7]
+            v <<= 1
+            v |= self.data[p]
+            p++
+         end
+         data[bytes] = v
+      end
+
+      return data
+   end
+
+   /* Private part */
+
+   function _newFromNum(bits, num)
+      bitStream = QrBitStream()
+      bitStream.allocate(bits)
+
+      mask = 1 << (bits - 1)
+      for i in [0:bits]
+         bitStream.data[i] = num && mask ? 1 : 0
+         mask >>= 1
+      end
+
+      return bitStream
+   end
+
+   function _newFromBytes(size, data)
+      if data == nil
+         raise QrError(QrError.invalid_param, i"data is null")
+      end
+
+      dataLength = len(data)
+      bitStream = QrBitStream(size * 8)
+      p = 0
+
+      for i in [0:size]
+         mask = 0x80
+         for j in [0:8]
+            if i < dataLength and data[i] && mask
+               bitStream.data[p] = 1
+            else
+               bitStream.data[p] = 0
+            end
+            p++
+            mask >>= 1
+         end
+      end
+
+      return bitStream
+   end
+end
+
+//------------------------------------------------------------------------------
+
+enum QrInputConst
+   structure_header_bits = 20
+   max_structured_symbols = 16
+end
+
+QrAnTable = [
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1,
+   -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+   25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+]
+
+class QrInputItem(mode, size, data, bitStream)
+   _mode = QrMode.null
+   _size = 0
+   _data = nil
+   _bitStream = nil
+
+   init
+      if data == nil
+         raise QrError(QrError.invalid_param, i"data is null")
+      end
+
+      dataLength = len(data)
+      if size and size < dataLength
+         // zero extra bytes
+         data[size:] = arrayBuffer(size - dataLength, 0)
+      end
+
+      if not QrInput.verifyMode(mode, size, data)
+         raise QrError(QrError.encoding_error, @i'Mode $(mode) is not suitable for encoding the specified data')
+      end
+
+      self._mode = mode
+      self._size = size
+      self._data = data
+      self._bitStream = bitStream
+   end
+
+   function __get_mode()
+      return self._mode
+   end
+
+   function __get_bitStream()
+      return self._bitStream
+   end
+
+   function encodeNum(version)
+      val = 0x1
+      words = int(self._size / 3)
+
+      bitStream = QrBitStream()
+      bitStream.appendNum(4, val)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.num, version), self._size)
+
+      for i in [0:words]
+         val  = (self._data[i * 3][*0] - "0"[*0]) * 100
+         val += (self._data[i * 3 + 1][*0] - "0"[*0]) * 10
+         val += self._data[i * 3 + 2][*0] - "0"[*0]
+         bitStream.appendNum(10, val)
+      end
+
+      if self._size - words * 3 == 1
+         val = self._data[words * 3][*0] - "0"[*0]
+         bitStream.appendNum(4, val)
+      elif self._size - words * 3 == 2
+         val  = (self._data[words * 3][*0] - "0"[*0]) * 10
+         val += self._data[words * 3 + 1][*0] - "0"[*0]
+         bitStream.appendNum(7, val)
+      end
+
+      self._bitStream = bitStream
+   end
+
+   function encodeAn(version)
+      words = int(self._size / 2)
+
+      bitStream = QrBitStream()
+      bitStream.appendNum(4, 0x02)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.an, version), self._size)
+
+      for i in [0:words]
+         val  = int(QrInput.lookAnTable(self._data[i * 2][*0])) * 45
+         val += int(QrInput.lookAnTable(self._data[i * 2 + 1][*0]))
+         bitStream.appendNum(11, val)
+      end
+
+      if self._size && 1
+         val = QrInput.lookAnTable(self._data[words * 2][*0])
+         bitStream.appendNum(6, val)
+      end
+
+      self._bitStream = bitStream
+   end
+
+   function encodeEightBit(version)
+      bitStream = QrBitStream()
+      bitStream.appendNum(4, 0x4)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.eight_bit, version), self._size)
+
+      for i in [0:self._size]
+         bitStream.appendNum(8, self._data[i][*0])
+      end
+
+      self._bitStream = bitStream
+   end
+
+   function encodeKanji(version)
+      bitStream = QrBitStream()
+      /*
+      bitStream.appendNum(4, 0x8)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.kanji, version), int(self._size / 2));
+
+      for i in [0:self._size]
+         val = self._data[i][*0]
+
+         if val <= 0x9FFC
+            val -= 0x8140
+         else
+            val -= 0xC140
+         end
+
+         h = (val >> 8) * 0xC0
+         val = (val && 0xFF) + h
+
+         bitStream.appendNum(13, val)
+      end
+
+      self._bitStream = bitStream
+      */
+
+      //TODO: Kanji mode requires shift-jis do be used.
+      // ATM we don't have it. Just adding the Unicode.
+
+      bitStream.appendNum(4, 0x8)
+      bitStream.appendNum(QrSpec.getLengthIndicator(QrMode.kanji, version), int(self._size));
+
+      for i in [0:self._size]
+         val = self._data[i][*0]
+         bitStream.appendNum(13, val)
+      end
+
+      self._bitStream = bitStream
+   end
+
+   function encodeStructure()
+      bitStream = QrBitStream()
+
+      bitStream.appendNum(4, 0x03)
+      bitStream.appendNum(4, self._data[1][*0] - 1)
+      bitStream.appendNum(4, self._data[0][*0] - 1)
+      bitStream.appendNum(8, self._data[2][*0])
+
+      self._bitStream = bitStream
+   end
+
+   function estimateBitStreamSize(version)
+      bits = 0
+      if version == 0: version = 1
+
+      if self._mode == QrMode.num
+         bits = QrInput.estimateNumSize(self._size)
+      elif self._mode == QrMode.an
+         bits = QrInput.estimateAnSize(self._size)
+      elif self._mode == QrMode.eight_bit
+         bits = QrInput.estimateEightBitSize(self._size)
+      elif self._mode == QrMode.kanji
+         bits = QrInput.estimateKanjiSize(self._size)
+      elif self._mode == QrMode.structure
+         return QrInputConst.structure_header_bits
+      else
+         return 0
+      end
+
+      length = QrSpec.getLengthIndicator(self._mode, version)
+      m = 1 << length
+      num = int((self._size + m - 1) / m)
+      bits += num * (4 + length)
+
+      return bits
+   end
+
+   function encodeBitStream(version)
+      words = QrSpec.getMaxWords(self._mode, version)
+
+      if self._size > words
+         inputItem1 = QrInputItem(self._mode, words, self._data)
+         inputItem2 = QrInputItem(self._mode, self.size - words, self._data[words:len(self._data) - words])
+
+         inputItem1.encodeBitStream(version)
+         inputItem2.encodeBitStream(version)
+
+         self._bitStream = QrBitStream()
+         self._bitStream.append(inputItem1.bitStream)
+         self._bitStream.append(inputItem2.bitStream)
+      else
+         if self._mode ==  QrMode.num
+            self.encodeNum(version)
+         elif self._mode == QrMode.an
+            self.encodeAn(version)
+         elif self._mode == QrMode.eight_bit
+            self.encodeEightBit(version)
+         elif self._mode == QrMode.kanji
+            self.encodeKanji(version)
+         elif self._mode == QrMode.structure
+            self.encodeStructure()
+         else
+            raise QrError(QrError.invalid_mode, @i'$(self._mode) is not supported')
+         end
+      end
+
+      return len(self._bitStream.data)
+   end
+end
+
+class QrInput(version, errorCorrectionLevel)
+   _version = 0
+   _items = []
+   _errorCorrectionLevel = 0
+
+   init
+      if version == nil: version = 0
+      if errorCorrectionLevel == nil: errorCorrectionLevel = QrErrorCorrectionLevel.L
+
+      self._version = version
+      self.errorCorrectionLevel = errorCorrectionLevel
+   end
+
+   function __get_version()
+      return self._version
+   end
+
+   function __set_version(version)
+      if version < 0 or version > QrSpecConst.max_version
+         raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+      end
+
+      self._version = version
+   end
+
+   function __get_errorCorrectionLevel()
+      return self._errorCorrectionLevel
+   end
+
+   function __set_errorCorrectionLevel(errorCorrectionLevel)
+      if errorCorrectionLevel > QrErrorCorrectionLevel.H
+         raise QrError(QrError.invalid_correction_error_level, @i'$(errorCorrectionLevel) is not supported')
+      end
+
+      self._errorCorrectionLevel = errorCorrectionLevel
+   end
+
+   function appendEntry(entry)
+      arrayAdd(self._items, entry)
+   end
+
+   function append(mode, size, data)
+      entry = QrInputItem(mode, size, data)
+      arrayAdd(self._items, entry)
+   end
+
+   function insertStructuredAppendHeader(size, index, parity)
+      if size > QrInputConst.max_structured_symbols
+         raise QrError(QrError.invalid_param, @i'size exceeds $(QrInputConst.max_structured_symbols)')
+      end
+
+      if index <= 0 or index > QrInputConst.max_structured_symbols
+         raise QrError(QrError.invalid_param, @i'index is not between 0 and $(QrInputConst.max_structured_symbols)')
+      end
+
+      buffer = [size, index, parity]
+      entry = QrInputItem(QrMode.structure, 3, buffer)
+      arrayIns(self._items, 0, entry)
+   end
+
+   function lookAnTable(c)
+      return c > 127 ? -1 : QrAnTable[c]
+   end
+
+   function estimateNumSize(size)
+      w = int(size / 3)
+      bits = w * 10
+
+      switch size - w * 3
+         case 1
+            bits += 4
+         case 2
+            bits += 7
+      end
+
+      return bits;
+   end
+
+   function estimateAnSize(size)
+      w = int(size / 2)
+      bits = w * 11
+
+      if size && 1: bits += 6
+      return bits
+   end
+
+   function estimateEightBitSize(size)
+      return size * 8
+   end
+
+   function estimateKanjiSize(size)
+      return int((size / 2) * 13)
+   end
+
+   function verifyMode(mode, size, data)
+      if size <= 0
+         raise QrError(QrError.invalid_param, i"size is less than 1")
+      end
+
+      if mode == QrMode.num
+         return self._verifyNum(size, data)
+      elif mode == QrMode.an
+         return self._verifyAn(size, data)
+      elif mode == QrMode.kanji
+         return self._verifyKanji(size, data)
+      elif mode == QrMode.eight_bit
+         return true
+      elif mode == QrMode.structure
+         return true
+      else
+         raise QrError(QrError.invalid_mode, @i'$(mode) is not supported')
+      end
+   end
+
+   function estimateBitStreamSize(version)
+      bits = 0
+
+      for item in self._items
+         bits += item.estimateBitStreamSize(version)
+      end
+
+      return bits
+   end
+
+   function estimateVersion()
+      version = 0
+      previous = 0
+
+      loop
+         previous = version
+         bits = self.estimateBitStreamSize(previous)
+         version = QrSpec.getMinVersion(int((bits + 7) / 8), self.errorCorrectionLevel)
+      end not version > previous
+
+      return version
+   end
+
+   function createBitStream()
+      total = 0
+
+      for item in self._items
+         bits = item.encodeBitStream(self.version)
+         total += bits
+      end
+
+      return total
+   end
+
+   function convertData()
+      version = self.estimateVersion()
+
+      if version > self.version
+         self.version = version
+      end
+
+      loop
+         bits = self.createBitStream()
+
+         version = QrSpec.getMinVersion(int((bits + 7) / 8), self.errorCorrectionLevel)
+         if version > self.version
+            self.version = version
+         else; break; end
+      end false
+   end
+
+   function appendPaddingBit(bitStream)
+      bits = len(bitStream.data)
+      maxWords = QrSpec.getDataLength(self.version, self.errorCorrectionLevel)
+      maxBits = maxWords * 8
+
+      if maxBits == bits: return
+
+      if maxBits - bits < 5
+         bitStream.appendNum(maxBits - bits, 0)
+         return
+      end
+
+      bits += 4
+      words = int((bits + 7) / 8)
+
+      padding = QrBitStream()
+      padding.appendNum(words * 8 - bits + 4, 0)
+
+      paddingLength = maxWords - words
+
+      if paddingLength > 0
+         paddingBuffer = arrayBuffer(paddingLength)
+         for i in [0:paddingLength]
+            paddingBuffer[i] = (i && 1) ? 0x11 : 0xEC
+         end
+
+         padding.appendBytes(paddingLength, paddingBuffer)
+      end
+
+      bitStream.append(padding)
+   end
+
+   function mergeBitStream()
+      self.convertData()
+
+      bitStream = QrBitStream()
+
+      for item in self._items
+         bitStream.append(item.bitStream)
+      end
+
+      return bitStream
+   end
+
+   function getBitStream()
+      bitStream = self.mergeBitStream()
+      self.appendPaddingBit($bitStream)
+      return bitStream
+   end
+
+   function getByteStream()
+      bitStream = self.getBitStream()
+      return bitStream.toByte()
+   end
+
+   /* Private part */
+
+   function _verifyNum(size, data)
+      for i in [0:size]
+         if (data[i][*0] < "0"[*0]) or (data[i][*0] > "9"[*0])
+            return false
+         end
+      end
+
+      return true
+   end
+
+   function _verifyAn(size, data)
+      for i in [0:size]
+         if self.lookAnTable(data[i][*0]) == -1
+            return false
+         end
+      end
+
+      return true
+   end
+
+   function _verifyKanji(size, data)
+      for i in [0:size]
+         val = data[i][*0]
+         // if val < 0x8140 or (val > 0x9FFC and val < 0xE040) or val > 0xEBBF
+         if val < 0x3000
+            return false
+         end
+      end
+
+      return true
+   end
+end
+
+//------------------------------------------------------------------------------
+
+enum QrMaskConst
+   n1 = 3
+   n2 = 3
+   n3 = 40
+   n4 = 10
+end
+
+class QrMask(maker)
+   _runLength = nil
+   _maker = maker
+
+   _mask = [
+      [innerfunc (x, y); return (x + y) && 1; end],
+      [innerfunc (x, y); return y && 1; end],
+      [innerfunc (x, y); return x % 3; end],
+      [innerfunc (x, y); return (x + y) % 3; end],
+      [innerfunc (x, y); return (int(y / 2) + int(x / 3)) && 1; end],
+      [innerfunc (x, y); return ((x * y) && 1) + (x * y) % 3; end],
+      [innerfunc (x, y); return (((x * y) && 1) + (x * y) % 3) && 1; end],
+      [innerfunc (x, y); return (((x * y) % 3) + ((x + y) && 1)) && 1; end]
+   ]
+
+   init
+      self._runLength = arrayBuffer(QrSpecConst.max_width + 1, 0)
+   end
+
+   function writeFormatInformation(width, frame, mask, errorCorrectionLevel)
+      blacks = 0
+      format = QrSpec.getFormatInfo(mask, errorCorrectionLevel)
+
+      for i in [0:8]
+         if format && 1
+            blacks += 2
+            v = 0x85
+         else
+            v = 0x84
+         end
+
+         frame[8][width - 1 - i] = chr(v)
+         if i < 6
+            frame[i][8] = chr(v)
+         else
+            frame[i + 1][8] = chr(v)
+         end
+         format >>= 1
+      end
+
+      for i in [0:7]
+         if format && 1
+            blacks += 2
+            v = 0x85
+         else
+            v = 0x84
+         end
+
+         frame[width - 7 + i][8] = chr(v)
+         if i == 0
+            frame[8][7] = chr(v)
+         else
+            frame[8][6 - i] = chr(v)
+         end
+         format >>=  1
+      end
+
+      return blacks
+   end
+
+   function generateMaskNo(maskNo, width, frame)
+      bitMask = arrayBuffer(width)
+
+      for y in [0:width]
+         col = bitMask[y] = arrayBuffer(width, 0)
+         for x in [0:width]
+            if frame[y][*x] && 0x80
+               col[x] = 0
+            else
+               col[x] = self._mask[maskNo](x, y) == 0 ? 1 : 0
+            end
+         end
+      end
+
+      return bitMask
+   end
+
+   function makeMaskNo(maskNo, width, frame, mask, maskGenOnly)
+      if maskGenOnly == nil: maskGenOnly = false
+
+      b = 0
+      bitMask = []
+      if self._maker.cache_dir
+         fileName = self._maker.cache_dir + "/mask_" + maskNo + "/" +  "mask_" + width + "_" + maskNo + ".dat"
+         if fileType(fileName) != FileStat.NOTFOUND
+            inputStream = InputStream(fileName)
+            bitMask = deserialize(inputStream)
+            inputStream.close()
+         else
+            bitMask = self.generateMaskNo(maskNo, width, frame, mask)
+            if fileType(self._maker.cache_dir + "/mask_" + maskNo) == FileStat.NOTFOUND
+               dirMake(self._maker.cache_dir + "/mask_" + maskNo)
+            end
+
+            outputStream = OutputStream(fileName)
+            serialize(bitMask, outputStream)
+            outputStream.close()
+         end
+      else
+         bitMask = self.generateMaskNo(maskNo, width, frame, mask)
+      end
+
+      if maskGenOnly: return
+
+      mask = clone(frame)
+
+      for y in [0:width]
+         for x in [0:width]
+            if bitMask[y][x] == 1
+               mask[y][x] = chr(frame[y][*x] ^^ bitMask[y][x])
+            end
+            b += mask[y][*x] && 1
+         end
+      end
+
+      return b
+   end
+
+   function makeMask(width, frame, maskNo, errorCorrectionLevel)
+      masked = arrayBuffer(width)
+      for y in [0:width]; masked[y] = "\x0" * width; end
+
+      self.makeMaskNo(maskNo, width, frame, $masked)
+      self.writeFormatInformation(width, $masked, maskNo, errorCorrectionLevel)
+
+      return masked
+   end
+
+   function calculateN1N3(length)
+      demerit = 0
+
+      for i in [0:length]
+         if self._runLength[i] >= 5
+            demerit += (QrMaskConst.n1 + (self._runLength[i] - 5))
+         end
+         if i && 1
+            if (i >= 3) and (i < (length - 2)) and (self._runLength[i] % 3 == 0)
+               fact = int(self._runLength[i] / 3)
+               if (self._runLength[i - 2] == fact) and \
+                  (self._runLength[i - 1] == fact) and \
+                  (self._runLength[i + 1] == fact) and \
+                  (self._runLength[i + 2] == fact)
+                  if (self._runLength[i - 3] < 0) or (self._runLength[i - 3] >= (4 * fact))
+                     demerit += QrMaskConst.n3
+                  elif ((i + 3) >= length) or (self._runLength[i + 3] >= (4 * fact))
+                     demerit += QrMaskConst.n3
+                  end
+               end
+            end
+         end
+      end
+
+      return demerit
+   end
+
+   function evaluateSymbol(width, frame)
+      head = 0
+      demerit = 0
+
+      for y in [0:width]
+         head = 0
+         self._runLength[0] = 1
+
+         frameY = frame[y]
+         if y > 0: frameYM = frame[y - 1]
+
+         for x in [0:width]
+            if x > 0 and y > 0
+               b22 = frameY[*x] && frameY[*(x - 1)] && frameYM[*x] && frameYM[*(x - 1)]
+               w22 = frameY[*x] || frameY[*(x - 1)] || frameYM[*x] || frameYM[*(x - 1)]
+               if (b22 || (w22 ^^ 1)) && 1: demerit += QrMaskConst.n2
+            end
+            if x == 0 and (frameY[*x] && 1)
+               self._runLength[0] = -1
+               head = 1
+               self._runLength[head] = 1
+            elif x > 0
+               if (frameY[*x] ^^ frameY[*(x - 1)]) && 1
+                  head++
+                  self._runLength[head] = 1
+               else
+                  self._runLength[head]++
+               end
+            end
+         end
+
+         demerit += self.calculateN1N3(head + 1)
+      end
+
+      for x in [0:width]
+         head = 0
+         self._runLength[0] = 1
+
+         for y in [0:width]
+            if y == 0 and (frame[y][*x] && 1)
+               self._runLength[0] = -1
+               head = 1
+               self._runLength[head] = 1
+            elif y > 0
+               if (frame[y][*x] ^^ frame[y - 1][*x]) && 1
+                  head++
+                  self._runLength[head] = 1
+               else
+                  self._runLength[head]++
+               end
+            end
+         end
+
+         demerit += self.calculateN1N3(head + 1)
+      end
+
+      return demerit
+   end
+
+   function mask(width, frame, errorCorrectionLevel)
+      minDemerit = MaxInt
+      bestMaskNum = 0
+      bestMask = []
+      checkedMasks = [0, 1, 2, 3, 4, 5, 6, 7]
+
+      if self._maker.find_from_random != 0
+         howManuOut = 8 - (self._maker.find_from_random % 9)
+         for i in [0:howManuOut]
+            remPos = random(0, len(checkedMasks) - 1)
+            arrayRemove(checkedMasks, remPos)
+         end
+      end
+
+      bestMask = frame
+
+      for i in checkedMasks
+         mask = arrayBuffer(width)
+         for y in [0:width]; mask[y] = "\x0" * width; end
+
+         demerit = 0
+         blacks = 0
+         blacks = self.makeMaskNo(i, width, frame, $mask)
+         blacks += self.writeFormatInformation(width, $mask, i, errorCorrectionLevel)
+         blacks  = int(100 * blacks / (width * width))
+         demerit = int(int(abs(blacks - 50) / 5) * QrMaskConst.n4)
+         demerit += self.evaluateSymbol(width, mask)
+
+         if demerit < minDemerit
+            minDemerit = demerit
+            bestMask = mask
+            bestMaskNum = i
+         end
+      end
+
+      return bestMask
+   end
+end
+
+//------------------------------------------------------------------------------
+
+class QrRsItem(symsize, gfPoly, fcr, prim, nRoots, pad)
+   _nn = 0
+   _alphaTo = nil
+   _indexOf = nil
+   _genPoly = nil
+   _iPrim = 0
+
+   mm = 0
+   nRoots = 0
+   fcr = 0
+   prim = 0
+   pad = 0
+   gfPoly = 0
+
+   init
+      // Common code for intializing a Reed-Solomon control block (char or int symbols)
+      // Copyright 2004 Phil Karn, KA9Q
+      // May be used under the terms of the GNU Lesser General Public License (LGPL)
+
+      if (symsize < 0 or symsize > 8) \
+         or (fcr < 0 or fcr >= (1 << symsize)) \
+         or (prim <= 0 or prim >= (1 << symsize)) \
+         or (nRoots < 0 or nRoots >= (1 << symsize)) \
+         or (pad < 0 or pad >= ((1 << symsize) -1 - nRoots))
+         raise QrError(QrError.encoding_error, i"error initializing Reed-Solomon control block")
+      end
+
+      self.mm = symsize
+      self._nn = (1 << symsize) - 1
+      self.pad = pad
+
+      self._alphaTo = arrayBuffer(self._nn + 1, 0)
+      self._indexOf = arrayBuffer(self._nn + 1, 0)
+
+      self._indexOf[0] = self._nn
+      self._alphaTo[self._nn] = 0
+      sr = 1
+
+      for i in [0:self._nn]
+         self._indexOf[sr] = i
+         self._alphaTo[i] = sr
+         sr <<= 1
+         if sr && (1 << symsize): sr ^= gfPoly
+         sr &= self._nn
+      end
+
+      if sr != 1
+         raise QrError(QrError.encoding_error, i"polynominal is not primitive")
+      end
+
+      self._genPoly = arrayBuffer(nRoots + 1, 0)
+      self.fcr = fcr
+      self.prim = prim
+      self.nRoots = nRoots
+      self.gfPoly = gfPoly
+
+      iprim = 1; while (iprim % prim) != 0; iprim += self._nn; end
+      self._iPrim = int(iprim / prim)
+      self._genPoly[0] = 1
+
+      root = fcr * prim
+      for i in [0:nRoots]
+         self._genPoly[i + 1] = 1
+
+         for j in [i:1:-1]
+            if self._genPoly[j] != 0
+               self._genPoly[j] = self._genPoly[j - 1] ^^ self._alphaTo[self._modnn(self._indexOf[self._genPoly[j]] + root)]
+            else
+               self._genPoly[j] = self._genPoly[j - 1]
+            end
+         end
+         self._genPoly[0] = self._alphaTo[self._modnn(self._indexOf[self._genPoly[0]] + root)]
+         root += prim
+      end
+
+      for i in [0:nRoots + 1]
+         self._genPoly[i] = self._indexOf[self._genPoly[i]]
+      end
+   end
+
+   function encodeChar(data, parity)
+      parity = arrayBuffer(self.nRoots, 0)
+
+      for i in [0:self._nn - self.nRoots - self.pad]
+         feedback = self._indexOf[data[i] ^^ parity[0]]
+         if feedback != self._nn
+            feedback = self._modnn(self._nn - self._genPoly[self.nRoots] + feedback)
+            for j in [1:self.nRoots]
+               parity[j] ^= self._alphaTo[self._modnn(feedback + self._genPoly[self.nRoots - j])]
+            end
+         end
+
+         if len(parity) > 0: arrayRemove(parity, 0)
+         if feedback != self._nn
+            arrayAdd(parity, self._alphaTo[self._modnn(feedback + self._genPoly[0])])
+         else
+            arrayAdd(parity, 0)
+         end
+      end
+   end
+
+   /* Private part */
+
+   function _modnn(x)
+      while x >= self._nn
+         x -= self._nn
+         x = (x >> self.mm) + (x && self._nn)
+      end
+
+      return x
+   end
+end
+
+class QrRs
+   _items = []
+
+   function getItem(symsize, gfPoly, fcr, prim, nRoots, pad)
+      for rs in self._items
+         if rs.pad != pad: continue
+         if rs.nRoots != nRoots: continue
+         if rs.mm != symsize: continue
+         if rs.gfPoly != gfPoly: continue
+         if rs.fcr != fcr: continue
+         if rs.prim != prim: continue
+         return rs;
+      end
+
+      rs = QrRsItem(symsize, gfPoly, fcr, prim, nRoots, pad)
+      arrayIns(self._items, 0, rs)
+
+      return rs
+   end
+end
+
+//------------------------------------------------------------------------------
+
+class QrSplit(data, input, mode)
+   _data = nil
+   _input = nil
+   _mode = nil
+
+   init
+      self._data = data
+      self._input = input
+      self._mode = mode
+   end
+
+   function isDigitAt(str, pos)
+      if pos >= len(str): return false
+      return str[*pos] >= '0'[*0] and str[*pos] <= '9'[*0]
+   end
+
+   function isAlNumAt(str, pos)
+      if pos >= len(str): return false
+      return QrInput.lookAnTable(str[*pos]) >= 0
+   end
+
+   function identifyMode(pos)
+      if pos >= len(self._data): return QrMode.null
+
+      if self.isDigitAt(self._data, pos)
+         return QrMode.num;
+      elif self.isAlNumAt(self._data, pos)
+         return QrMode.an;
+      elif self._mode == QrMode.kanji
+         word = self._data[*pos]
+         // if (word >= 0x1000 and word <= 0x9FFC) or (word >= 0xE040 and word <= 0xEBBF)
+         // Our kanjis are in the UNICODE range, not in shift-jis
+         if word >= 0x3040 and word <= 0x4db0
+            return QrMode.kanji
+         end
+      end
+
+      return QrMode.eight_bit
+   end
+
+   function splitString()
+      while len(self._data) > 0
+         if self._data == '': break
+
+         mode = self.identifyMode(0)
+
+         if mode == QrMode.num
+            length = self._eatNum()
+         elif mode == QrMode.an
+            length = self._eatAn()
+         elif mode == QrMode.kanji
+            if self._mode == QrMode.kanji
+               length = self._eatKanji()
+            else
+               length = self._eatEightBit()
+            end
+         else
+            length = self._eatEightBit()
+         end
+
+         if length > 0: self._data = strBack(self._data, len(self._data) - length)
+      end
+   end
+
+   function toUpper()
+      stringLength = len(self._data)
+      p = 0
+      while p < stringLength
+         mode = self.identifyMode(strBack(self._data, stringLength - p), self._mode)
+         if mode == QrMode.kanji
+            p += 2
+         else
+            if self._data[*p] >= 'a'[*0] and self._data[*p] <= 'z'[*0]
+               self._data[p] = chr(self._data[*p] - 32)
+            end
+            p++
+         end
+      end
+
+      return self._data
+   end
+
+   function splitStringToInput(string, input, mode, caseSensitive)
+      if caseSensitive == nil: caseSensitive = true
+      if string == nil or string == "\x0" or string == ""
+         raise QrError(QrError.invalid_param, i"string is empty")
+      end
+
+      split = QrSplit(string, input, mode)
+
+      if not caseSensitive: split.toUpper()
+      split.splitString()
+   end
+
+   /* Private part */
+
+   function _eatNum()
+      length = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
+
+      run = 0
+      while self.isDigitAt(self._data, run); run++; end
+
+      mode = self.identifyMode(run)
+
+      if mode == QrMode.eight_bit
+         dif = QrInput.estimateNumSize(run) + 4 + length \
+            + QrInput.estimateEightBitSize(1) \
+            - QrInput.estimateEightBitSize(run + 1)
+         if dif > 0: return self._eatEightBit()
+      end
+
+      if mode == QrMode.an
+         dif = QrInput.estimateNumSize(run) + 4 + length \
+            + QrInput.estimateAnSize(1) \
+            - QrInput.estimateAnSize(run + 1)
+         if dif > 0: return self._eatAn()
+      end
+
+      self._input.append(QrMode.num, run, strSplit(self._data))
+      return run;
+   end
+
+   function _eatAn()
+      lengthAn= QrSpec.getLengthIndicator(QrMode.an, self._input.version)
+      lengthNum = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
+      run = 0
+
+      while self.isAlNumAt(self._data, run)
+         if self.isDigitAt(self._data, run)
+            q = run
+            while self.isDigitAt(self._data, q); q++; end
+
+            dif = QrInput.estimateAnSize(run) \
+               + QrInput.estimateNumSize(q - run) + 4 + lengthNum \
+               - QrInput.estimateAnSize(q)
+
+            if dif < 0
+               break
+            else
+               run = q
+            end
+         else
+            run++
+         end
+      end
+
+      if not self.isAlNumAt(self._data, run)
+         dif = QrInput.estimateAnSize(run) + 4 + lengthAn \
+            + QrInput.estimateEightBitSize(1) \
+            - QrInput.estimateEightBitSize(run + 1)
+         if dif > 0: return self._eatEightBit()
+      end
+
+      self._input.append(QrMode.an, run, strSplit(self._data))
+      return run
+   end
+
+   function _eatKanji()
+      run = 0
+      while self.identifyMode(run) == QrMode.kanji; run += 2; end
+
+      self._input.append(QrMode.kanji, run, strSplit(self._data))
+      return run
+   end
+
+   function _eatEightBit()
+      lengthAn = QrSpec.getLengthIndicator(QrMode.an, self._input.version)
+      lengthNum = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
+
+      run = 1
+      dataLength = len(self._data)
+      while run < dataLength
+         mode = self.identifyMode(run)
+         if mode == QrMode.kanji: break
+         if mode == QrMode.num
+            q = run
+            while self.isDigitAt(self._data, q); q++; end
+            dif = QrInput.estimateEightBitSize(run) \
+               + QrInput.estimateNumSize(q - run) + 4 + lengthNum \
+               - QrInput.estimateEightBitSize(q)
+            if dif < 0
+               break
+            else
+               run = q
+            end
+         elif mode == QrMode.an
+            q = run
+            while self.isAlNumAt(self._data, q); q++; end
+            dif = QrInput.estimateEightBitSize(run) \
+               + QrInput.estimateAnSize(q - run) + 4 + lengthAn \
+               - QrInput.estimateEightBitSize(q)
+            if dif < 0
+               break
+            else
+               run = q
+            end
+         else
+            run++
+         end
+      end
+
+      self._input.append(QrMode.eight_bit, run, strSplit(self._data))
+      return run
+   end
+end
+
+//------------------------------------------------------------------------------
+
+object QrImage
+   function png(frame, outFile, pixelPerPoint, outerFrame)
+      img = self._image(frame, pixelPerPoint, outerFrame)
+      img.Png(outFile)
+   end
+
+   function jpg(frame, outFile, pixelPerPoint, outerFrame, q)
+      if q == nil: q = 85
+
+      img = self._image(frame, pixelPerPoint, outerFrame)
+      img.Jpeg(outFile, q)
+   end
+
+   /* Private part */
+
+   function _image(frame, pixelPerPoint, outerFrame)
+      if frame == nil
+         raise QrError(QrError.invalid_param, i"frame is null")
+      end
+
+      if pixelPerPoint == nil: pixelPerPoint = 4
+      if outerFrame == nil: outerFrame = 4
+
+      height = len(frame)
+      width = len(frame[0])
+
+      imgHeight = height + 2 * outerFrame
+      imgWidth = width + 2 * outerFrame
+
+      baseImg = gd2.GdImage(imgWidth, imgHeight)
+      col = .[
+         baseImg.ColorAllocate(255, 255, 255)
+         baseImg.ColorAllocate(0, 0, 0)
+      ]
+      baseImg.Fill(0, 0, col[0])
+
+      for y in [0:height]
+         for x in [0:width]
+            if frame[y][x] == '1'
+               baseImg.SetPixel(x + outerFrame, y + outerFrame, col[1])
+            end
+         end
+      end
+
+      targetImg = gd2.GdImage(imgWidth * pixelPerPoint, imgHeight * pixelPerPoint)
+      targetImg.CopyResized(baseImg, 0, 0, 0, 0, imgWidth * pixelPerPoint, imgHeight * pixelPerPoint, imgWidth, imgHeight)
+
+      return targetImg
+   end
+end
+
+//------------------------------------------------------------------------------
+
+class QrRsBlock(dataLength, data, eccLength, ecc, rsItem)
+   dataLength = 0
+   data = nil
+   eccLength = 0
+   ecc = nil
+
+   init
+      rsItem.encodeChar(data, $ecc)
+      self.dataLength = dataLength
+      self.data = data
+      self.eccLength = eccLength
+      self.ecc = ecc
+   end
+end
+
+class QrRawCode(input)
+   _version = 0
+   _data = nil
+   _dataLength = 0
+   _ecc = nil
+   _eccLength = 0
+   _rsBlocks = []
+   _blockNum = 0
+   _blockNum1 = 0
+   _count = 0
+   _rs = QrRs()
+
+   init
+      if input == nil
+         raise QrError(QrError.invalid_param, i"input is null")
+      end
+
+      spec = [0, 0, 0, 0, 0]
+
+      self._data = input.getByteStream()
+      QrSpec.getEccSpec(input.version, input.errorCorrectionLevel, $spec)
+      self._version = input.version
+      self._blockNum1 = QrSpec.rsBlockNum1(spec)
+      self._dataLength = QrSpec.rsDataLength(spec)
+      self._eccLength = QrSpec.rsEccLength(spec)
+      self._ecc = arrayBuffer(self._eccLength, 0)
+      self._blockNum = QrSpec.rsBlockNum(spec)
+      self._initialize(spec)
+   end
+
+   function __get_version()
+      return self._version
+   end
+
+   function __get_dataLength()
+      return self._dataLength
+   end
+
+   function __get_eccLength()
+      return self._eccLength
+   end
+
+   function getCode()
+      code = 0
+
+      if self._count < self._dataLength
+         row = self._count % self._blockNum
+         col = self._count / self._blockNum
+         if col >= self._rsBlocks[0].dataLength
+            row += self._blockNum1
+         end
+         code = self._rsBlocks[row].data[col]
+      elif self._count < self._dataLength + self._eccLength
+         row = (self._count - self._dataLength) % self._blockNum
+         col = (self._count - self._dataLength) / self._blockNum
+         code = self._rsBlocks[row].ecc[col]
+      else
+         return code
+      end
+
+      self._count++
+      return code
+   end
+
+   /* Private part */
+
+   function _initialize(spec)
+      dataLength = QrSpec.rsDataCodes1(spec)
+      eccLength = QrSpec.rsEccCodes1(spec)
+   
+      rs = self._rs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
+
+      dataPos = 0
+      eccPos = 0
+      self._rsBlocks = []
+
+      for i in [0:QrSpec.rsBlockNum1(spec)]
+         ecc = self._ecc[eccPos:]
+         arrayAdd(self._rsBlocks, QrRsBlock(
+            dataLength, self._data[dataPos:],
+            eccLength, $ecc, rs))
+         self._ecc = self._ecc[0:eccPos] + ecc[0:]
+
+         dataPos += dataLength
+         eccPos += eccLength
+      end
+
+      if QrSpec.rsBlockNum2(spec) != 0
+         dataLength = QrSpec.rsDataCodes2(spec)
+         eccLength = QrSpec.rsEccCodes2(spec)
+         rs = self._rs.getItem(8, 0x11D, 0, 1, eccLength, 255 - dataLength - eccLength)
+
+         for i in [0:QrSpec.rsBlockNum2(spec)]
+            ecc = self._ecc[eccPos:]
+            arrayAdd(self._rsBlocks, QrRsBlock(
+               dataLength, self._data[dataPos:],
+               eccLength, $ecc, rs))
+            self._ecc = self._ecc[0:eccPos] + ecc[0:]
+
+            dataPos += dataLength
+            eccPos += eccLength
+         end
+      end
+   end
+end
+
+class QrFrameFiller(width, frame)
+   _width = 0
+   _frame = nil
+   _x = 0
+   _y = 0
+   _dir = 0
+   _bit = 0
+
+   init
+      self._width = width
+      self._frame = frame
+      self._x = width - 1
+      self._y = width - 1
+      self._dir = -1
+      self._bit = -1
+   end
+
+   function __get_width()
+      return self._width
+   end
+
+   function __get_frame()
+      return self._frame
+   end
+
+   function setFrameAt(at, val)
+      self._frame[at["y"]][at["x"]] = chr(val)
+   end
+
+   function getFrameAt(at)
+      return self._frame[at["y"]][at["x"]][*0]
+   end
+
+   function next()
+      width = self.width
+      x = self._x
+      y = self._y
+
+      loop
+         if self._bit == -1
+            self._bit = 0
+            return ["x" => self._x, "y" => self._y]
+         end
+
+         if self._bit == 0
+            x--
+            self._bit++
+         else
+            x++
+            y += self._dir
+            self._bit--
+         end
+
+         if self._dir < 0
+            if y < 0
+               y = 0
+               x -= 2
+               self._dir = 1
+               if x == 6
+                  x--
+                  y = 9
+               end
+            end
+         else
+            if y == width
+               y = width - 1
+               x -= 2
+               self._dir = -1
+               if x == 6
+                  x--
+                  y -= 8
+               end
+            end
+         end
+
+         if x < 0 or y < 0
+            raise QrError(QrError.encoding_error, i"error masking frame")
+         end
+
+         self._x = x
+         self._y = y
+      end (self._frame[y][*x] && 0x80) == 0
+
+      return ["x" => x, "y" => y]
+   end
+end
+
+//------------------------------------------------------------------------------
+
+class QrTools
+   function binarize(frame)
+      frameLength = len(frame)
+      for line in frame
+         for i in [0:frameLength]
+            line[i] = (line[*i] && 1) ? '1' : '0'
+         end
+      end
+
+      return frame
+   end
+
+   function buildCache(cache_dir)
+      mask = QrMask()
+      spec = QrSpec()
+
+      for version in [1:QrSpecConst.max_version + 1]
+         frame = spec.createFrame(version, cache_dir)
+         fileName = cache_dir + '/frame_' + version + '.png'
+         QrImage.png(self.binarize(frame), fileName, 1, 0)
+
+         width = len(frame)
+         bitMask = arrayBuffer(width)
+         for i in [0:width]
+            bitMask[i] = arrayBuffer(width, 0)
+         end
+
+         for maskNo in [0:8]
+            mask.makeMaskNo(maskNo, width, frame, bitMask, true)
+         end
+      end
+   end
+
+   function dumpMask(frame)
+      width = len(frame)
+
+      for y in [0:width]
+         for x in [0:width]
+            > frame[y][*x] + ','
+         end
+      end
+   end
+end
+
+//------------------------------------------------------------------------------
+
+enum QrSpecConst
+   max_version = 40
+   max_width = 177
+end
+
+enum QrCapConst
+   width = 0
+   words = 1
+   reminder = 2
+   ec = 3
+end
+
+QrLengthTableBits = [
+   [10, 12, 14],
+   [ 9, 11, 13],
+   [ 8, 16, 16],
+   [ 8, 10, 12]
+]
+
+QrCapacity = [
+   [  0,    0, 0, [   0,    0,    0,    0]],
+   [ 21,   26, 0, [   7,   10,   13,   17]], // 1
+   [ 25,   44, 7, [  10,   16,   22,   28]],
+   [ 29,   70, 7, [  15,   26,   36,   44]],
+   [ 33,  100, 7, [  20,   36,   52,   64]],
+   [ 37,  134, 7, [  26,   48,   72,   88]], // 5
+   [ 41,  172, 7, [  36,   64,   96,  112]],
+   [ 45,  196, 0, [  40,   72,  108,  130]],
+   [ 49,  242, 0, [  48,   88,  132,  156]],
+   [ 53,  292, 0, [  60,  110,  160,  192]],
+   [ 57,  346, 0, [  72,  130,  192,  224]], //10
+   [ 61,  404, 0, [  80,  150,  224,  264]],
+   [ 65,  466, 0, [  96,  176,  260,  308]],
+   [ 69,  532, 0, [ 104,  198,  288,  352]],
+   [ 73,  581, 3, [ 120,  216,  320,  384]],
+   [ 77,  655, 3, [ 132,  240,  360,  432]], //15
+   [ 81,  733, 3, [ 144,  280,  408,  480]],
+   [ 85,  815, 3, [ 168,  308,  448,  532]],
+   [ 89,  901, 3, [ 180,  338,  504,  588]],
+   [ 93,  991, 3, [ 196,  364,  546,  650]],
+   [ 97, 1085, 3, [ 224,  416,  600,  700]], //20
+   [101, 1156, 4, [ 224,  442,  644,  750]],
+   [105, 1258, 4, [ 252,  476,  690,  816]],
+   [109, 1364, 4, [ 270,  504,  750,  900]],
+   [113, 1474, 4, [ 300,  560,  810,  960]],
+   [117, 1588, 4, [ 312,  588,  870, 1050]], //25
+   [121, 1706, 4, [ 336,  644,  952, 1110]],
+   [125, 1828, 4, [ 360,  700, 1020, 1200]],
+   [129, 1921, 3, [ 390,  728, 1050, 1260]],
+   [133, 2051, 3, [ 420,  784, 1140, 1350]],
+   [137, 2185, 3, [ 450,  812, 1200, 1440]], //30
+   [141, 2323, 3, [ 480,  868, 1290, 1530]],
+   [145, 2465, 3, [ 510,  924, 1350, 1620]],
+   [149, 2611, 3, [ 540,  980, 1440, 1710]],
+   [153, 2761, 3, [ 570, 1036, 1530, 1800]],
+   [157, 2876, 0, [ 570, 1064, 1590, 1890]], //35
+   [161, 3034, 0, [ 600, 1120, 1680, 1980]],
+   [165, 3196, 0, [ 630, 1204, 1770, 2100]],
+   [169, 3362, 0, [ 660, 1260, 1860, 2220]],
+   [173, 3532, 0, [ 720, 1316, 1950, 2310]],
+   [177, 3706, 0, [ 750, 1372, 2040, 2430]]  //40
+]
+
+QrEccTable = [
+   [[ 0,  0], [ 0,  0], [ 0,  0], [ 0,  0]],
+   [[ 1,  0], [ 1,  0], [ 1,  0], [ 1,  0]], // 1
+   [[ 1,  0], [ 1,  0], [ 1,  0], [ 1,  0]],
+   [[ 1,  0], [ 1,  0], [ 2,  0], [ 2,  0]],
+   [[ 1,  0], [ 2,  0], [ 2,  0], [ 4,  0]],
+   [[ 1,  0], [ 2,  0], [ 2,  2], [ 2,  2]], // 5
+   [[ 2,  0], [ 4,  0], [ 4,  0], [ 4,  0]],
+   [[ 2,  0], [ 4,  0], [ 2,  4], [ 4,  1]],
+   [[ 2,  0], [ 2,  2], [ 4,  2], [ 4,  2]],
+   [[ 2,  0], [ 3,  2], [ 4,  4], [ 4,  4]],
+   [[ 2,  2], [ 4,  1], [ 6,  2], [ 6,  2]], //10
+   [[ 4,  0], [ 1,  4], [ 4,  4], [ 3,  8]],
+   [[ 2,  2], [ 6,  2], [ 4,  6], [ 7,  4]],
+   [[ 4,  0], [ 8,  1], [ 8,  4], [12,  4]],
+   [[ 3,  1], [ 4,  5], [11,  5], [11,  5]],
+   [[ 5,  1], [ 5,  5], [ 5,  7], [11,  7]], //15
+   [[ 5,  1], [ 7,  3], [15,  2], [ 3, 13]],
+   [[ 1,  5], [10,  1], [ 1, 15], [ 2, 17]],
+   [[ 5,  1], [ 9,  4], [17,  1], [ 2, 19]],
+   [[ 3,  4], [ 3, 11], [17,  4], [ 9, 16]],
+   [[ 3,  5], [ 3, 13], [15,  5], [15, 10]], //20
+   [[ 4,  4], [17,  0], [17,  6], [19,  6]],
+   [[ 2,  7], [17,  0], [ 7, 16], [34,  0]],
+   [[ 4,  5], [ 4, 14], [11, 14], [16, 14]],
+   [[ 6,  4], [ 6, 14], [11, 16], [30,  2]],
+   [[ 8,  4], [ 8, 13], [ 7, 22], [22, 13]], //25
+   [[10,  2], [19,  4], [28,  6], [33,  4]],
+   [[ 8,  4], [22,  3], [ 8, 26], [12, 28]],
+   [[ 3, 10], [ 3, 23], [ 4, 31], [11, 31]],
+   [[ 7,  7], [21,  7], [ 1, 37], [19, 26]],
+   [[ 5, 10], [19, 10], [15, 25], [23, 25]], //30
+   [[13,  3], [ 2, 29], [42,  1], [23, 28]],
+   [[17,  0], [10, 23], [10, 35], [19, 35]],
+   [[17,  1], [14, 21], [29, 19], [11, 46]],
+   [[13,  6], [14, 23], [44,  7], [59,  1]],
+   [[12,  7], [12, 26], [39, 14], [22, 41]], //35
+   [[ 6, 14], [ 6, 34], [46, 10], [ 2, 64]],
+   [[17,  4], [29, 14], [49, 10], [24, 46]],
+   [[ 4, 18], [13, 32], [48, 14], [42, 32]],
+   [[20,  4], [40,  7], [43, 22], [10, 67]],
+   [[19,  6], [18, 31], [34, 34], [20, 61]]  //40
+]
+
+QrAlignmentPattern = [
+   [ 0,  0],
+   [ 0,  0], [18,  0], [22,  0], [26,  0], [30,  0], // 1- 5
+   [34,  0], [22, 38], [24, 42], [26, 46], [28, 50], // 6-10
+   [30, 54], [32, 58], [34, 62], [26, 46], [26, 48], //11-15
+   [26, 50], [30, 54], [30, 56], [30, 58], [34, 62], //16-20
+   [28, 50], [26, 50], [30, 54], [28, 54], [32, 58], //21-25
+   [30, 58], [34, 62], [26, 50], [30, 54], [26, 52], //26-30
+   [30, 56], [34, 60], [30, 58], [34, 62], [30, 54], //31-35
+   [24, 50], [28, 54], [32, 58], [26, 54], [30, 58]  //35-40
+]
+
+QrVersionPattern = [
+   0x07c94, 0x085bc, 0x09a99, 0x0a4d3, 0x0bbf6, 0x0c762, 0x0d847, 0x0e60d,
+   0x0f928, 0x10b78, 0x1145d, 0x12a17, 0x13532, 0x149a6, 0x15683, 0x168c9,
+   0x177ec, 0x18ec4, 0x191e1, 0x1afab, 0x1b08e, 0x1cc1a, 0x1d33f, 0x1ed75,
+   0x1f250, 0x209d5, 0x216f0, 0x228ba, 0x2379f, 0x24b0b, 0x2542e, 0x26a64,
+   0x27541, 0x28c69
+]
+
+QrFormatInfo = [
+   [0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976],
+   [0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0],
+   [0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed],
+   [0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b]
+]
+
+class QrSpec
+   frames = nil
+
+   function getDataLength(version, errorCorrectionLevel)
+      return QrCapacity[version][QrCapConst.words] - QrCapacity[version][QrCapConst.ec][errorCorrectionLevel]
+   end
+
+   function getEccLength(version, errorCorrectionLevel)
+      return QrCapacity[version][QrCapConst.ec][errorCorrectionLevel]
+   end
+
+   function getWidth(version)
+      return QrCapacity[version][QrCapConst.width]
+   end
+
+   function getRemainder(version)
+      return QrCapacity[version][QrCapConst.reminder]
+   end
+
+   function getMinVersion(size, errorCorrectionLevel)
+      for i in [1:QrSpecConst.max_version + 1]
+         words = QrCapacity[i][QrCapConst.words] - QrCapacity[i][QrCapConst.ec][errorCorrectionLevel]
+         if words >= size: return i
+      end
+
+      raise QrError(QrError.version_not_found)
+   end
+
+   function getLengthIndicator(mode, version)
+      if mode == QrMode.structure: return 0
+      length = 0
+
+      if version <= 9
+         length = 0
+      elif version <= 26
+         length = 1
+      else
+         length = 2
+      end
+
+      return QrLengthTableBits[mode][length]
+   end
+
+   function getMaxWords(mode, version)
+      if mode == QrMode.structure: return 3
+      length = 0
+
+      if version <= 9
+         length = 0
+      elif version <= 26
+         length = 1
+      else
+         length = 2
+      end
+
+      bits = QrLengthTableBits[mode][length]
+      words = (1 << bits) - 1
+      if mode == QrMode.kanji: words *= 2
+
+      return words
+   end
+
+   function getEccSpec(version, errorCorrectionLevel, spec)
+      if len(spec) < 5: spec = [0, 0, 0, 0, 0]
+
+      b1 = QrEccTable[version][errorCorrectionLevel][0]
+      b2 = QrEccTable[version][errorCorrectionLevel][1]
+      data = self.getDataLength(version, errorCorrectionLevel)
+      ecc  = self.getEccLength(version, errorCorrectionLevel)
+
+      if b2 == 0
+         spec[0] = b1
+         spec[1] = int(data / b1)
+         spec[2] = int(ecc / b1)
+         spec[3] = 0
+         spec[4] = 0
+      else
+         spec[0] = b1
+         spec[1] = int(data / (b1 + b2))
+         spec[2] = int(ecc  / (b1 + b2))
+         spec[3] = b2
+         spec[4] = spec[1] + 1
+      end
+   end
+
+   function putAlignmentMarker(frame, ox, oy)
+      finder = [
+         "\xa1\xa1\xa1\xa1\xa1",
+         "\xa1\xa0\xa0\xa0\xa1",
+         "\xa1\xa0\xa1\xa0\xa1",
+         "\xa1\xa0\xa0\xa0\xa1",
+         "\xa1\xa1\xa1\xa1\xa1"
+      ]
+
+      yStart = oy - 2
+      xStart = ox - 2
+
+      for y in [0:5]
+         QrStr_set(frame, xStart, yStart + y, finder[y])
+      end
+   end
+
+   function putAlignmentPattern(version, frame, width)
+      if version < 2: return
+
+      d = QrAlignmentPattern[version][1] - QrAlignmentPattern[version][0]
+      if d < 0
+         w = 2
+      else
+         w = int((width - QrAlignmentPattern[version][0]) / d + 2)
+      end
+
+      if w * w - 3 == 1
+         x = QrAlignmentPattern[version][0]
+         y = QrAlignmentPattern[version][0]
+         self.putAlignmentMarker(frame, x, y)
+         return
+      end
+
+      cx = QrAlignmentPattern[version][0]
+      for x in [1:w - 1]
+         self.putAlignmentMarker(frame, 6, cx)
+         self.putAlignmentMarker(frame, cx, 6)
+         cx += d
+      end
+
+      cy = QrAlignmentPattern[version][0]
+      for y in [0:w - 1]
+         cx = QrAlignmentPattern[version][0]
+         for x in [0:w - 1]
+            self.putAlignmentMarker(frame, cx, cy)
+            cx += d
+         end
+         cy += d
+      end
+   end
+
+   function getVersionPattern(version)
+      if version < 7 or version > QrSpecConst.max_version
+         raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+      end
+
+      return QrVersionPattern[version -7]
+   end
+
+   function getFormatInfo(mask, errorCorrectionLevel)
+      if mask < 0 or mask > 7;
+         raise QrError(QrError.invalid_mask, @i'$(mask) is not supported')
+      end
+
+      if errorCorrectionLevel < QrErrorCorrectionLevel.L \
+         or errorCorrectionLevel > QrErrorCorrectionLevel.H
+            raise QrError(QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) not supported')
+      end
+
+      return QrFormatInfo[errorCorrectionLevel][mask]
+   end
+
+   function putFinderPattern(frame, ox, oy)
+      finder = [
+         "\xc1\xc1\xc1\xc1\xc1\xc1\xc1",
+         "\xc1\xc0\xc0\xc0\xc0\xc0\xc1",
+         "\xc1\xc0\xc1\xc1\xc1\xc0\xc1",
+         "\xc1\xc0\xc1\xc1\xc1\xc0\xc1",
+         "\xc1\xc0\xc1\xc1\xc1\xc0\xc1",
+         "\xc1\xc0\xc0\xc0\xc0\xc0\xc1",
+         "\xc1\xc1\xc1\xc1\xc1\xc1\xc1"
+      ]
+
+      for y in [0:7]
+         QrStr_set(frame, ox, oy + y, finder[y])
+      end
+   end
+
+   function createFrame(version, cacheDir)
+      if version < 1 or version > QrSpecConst.max_version
+         raise QrError(QrError.invalid_version, @i'$(version) is not supported')
+      end
+
+      arrayLength = version + 1
+
+      if self.frames == nil
+         self.frames = arrayBuffer(arrayLength, nil)
+      elif len(self.frames) < arrayLength
+         arrayResize(self.frames, arrayLength)
+      end
+
+      if self.frames[version] == nil
+         if cacheDir
+            fileName = cacheDir + "/frame_" + version + ".dat"
+
+            if fileType(cacheDir) == FileStat.NOTFOUND
+               dirMake(cacheDir, true)
+               fileChmod(cacheDir, 0755)
+            end
+
+            if fileType(fileName) != FileStat.NOTFOUND
+               inputStream = InputStream(fileName)                    
+               deserialized = deserialize(inputStream)
+               inputStream.close()
+               self.frames[version] = deserialized
+            else
+               ver = self._createFrame(version)
+               outputStream = OutputStream(fileName)
+               serialize(ver, outputStream)
+               outputStream.close()
+               self.frames[version] = ver
+            end
+         else
+            self.frames[version] = self._createFrame(version)
+         end
+      end
+
+      if self.frames[version] == nil
+         raise QrError(QrError.encoding_error, i"error creating frame")
+      end
+
+      return self.frames[version]
+   end
+
+   function rsBlockNum(spec); return spec[0] + spec[3]; end
+   function rsBlockNum1(spec); return spec[0]; end
+   function rsDataCodes1(spec); return spec[1]; end
+   function rsEccCodes1(spec); return spec[2]; end
+   function rsBlockNum2(spec); return spec[3]; end
+   function rsDataCodes2(spec); return spec[4]; end
+   function rsEccCodes2(spec); return spec[2]; end
+   function rsDataLength(spec); return (spec[0] * spec[1]) + (spec[3] * spec[4]); end
+   function rsEccLength(spec); return (spec[0] + spec[3]) * spec[2]; end
+
+   /* Private part */
+
+   function _createFrame(version)
+      width = QrCapacity[version][QrCapConst.width]
+      frame = arrayBuffer(width)
+      for y in [0:width]; frame[y] = "\x0" * width; end
+
+      self.putFinderPattern(frame, 0, 0)
+      self.putFinderPattern(frame, width - 7, 0)
+      self.putFinderPattern(frame, 0, width - 7)
+
+      yOffset = width - 7
+
+      for y in [0:7]
+         frame[y][7] = "\xc0"
+         frame[y][width - 8] = "\xc0"
+         frame[yOffset][7] = "\xc0"
+         yOffset++
+      end
+
+      setPattern = "\xc0" * 8
+      QrStr_set(frame, 0, 7, setPattern)
+      QrStr_set(frame, width - 8, 7, setPattern)
+      QrStr_set(frame, 0, width - 8, setPattern)
+
+      setPattern = "\x84" * 9
+      QrStr_set(frame, 0, 8, setPattern)
+      QrStr_set(frame, width - 8, 8, setPattern, 8)
+
+      yOffset = width - 8
+
+      for y in [0:8]
+         frame[y][8] = "\x84"
+         frame[yOffset][8] = "\x84"
+         yOffset++
+      end
+
+      for i in [1:width - 15]
+         frame[6][7 + i] = chr(0x90 || (i && 1))
+         frame[7 + i][6] = chr(0x90 || (i && 1))
+      end
+
+      self.putAlignmentPattern(version, frame, width)
+
+      if version >= 7
+         vinf = self.getVersionPattern(version)
+
+         v = vinf
+         for x in [0:6]
+            for y in [0:3]
+               frame[(width - 11) + y][x] = chr(0x88 || (v && 1))
+               v >>= 1
+            end
+         end
+
+         v = vinf
+         for y in [0:6]
+            for x in [0:3]
+               frame[y][x + (width - 11)] = chr(0x88 || (v && 1))
+               v >>= 1
+            end
+         end
+      end
+
+      frame[width - 8][8] = "\x81"
+      return frame
+   end
+end
+
+//------------------------------------------------------------------------------
+
+function QrStr_set(srcTable, x, y, rep, repLength)
+   substr = strFront(srcTable[y], x)
+   srcLength = len(srcTable[y])
+   parLength = len(substr)
+
+   if repLength == nil
+      parLength += len(rep)
+      substr += rep
+   elif repLength > 0
+      parLength += repLength
+      substr += strFront(rep, repLength)
+   end
+
+   delta = srcLength - parLength
+   if delta > 0: substr += strBack(srcTable[y], delta)
+
+   return (srcTable[y] = substr)
+end

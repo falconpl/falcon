@@ -1,0 +1,33 @@
+<? function skin( data, srv ) ?>
+
+   <form action="<?= data.handler ?>" method="POST"
+   id="form_nest_data_query<?= srv.instance ? "_" + srv.instance : "" ?>" >
+   <input type="hidden" name="eid" value="<?= data.eid ?>"/>
+   
+   <table class="nest_data_detail">
+   <tbody>
+      <? for col in data.view.fields ?>
+      <tr>
+         <td class="nest_data_detail_title"><?= col.title ?></td>
+         <td class="nest_data_detail_field"><?= data.record.data[col.name] ?></td>
+      </tr>
+      <? end ?>
+
+      <!-- Row of actions to be done at table level -->
+      <? if data.actions ?>
+      <tr>
+         <table border="0">
+         <tr>
+         <? for action in data.actions ?>
+            <? if action.allowed() ?><td><?= action.render() ?></td><? end ?>
+         <? end ?>
+         </tr>
+         </table>
+      </tr>
+      <? end ?>
+      </tbody>
+
+   </tbody>
+   </table>
+   </form>
+<? end ?>

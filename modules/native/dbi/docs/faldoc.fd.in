@@ -1,0 +1,46 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for DBI module.
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon - DBI Module.
+Author = The Falcon Committee
+Version = 0.9.10
+
+################################################
+# Faldoc Input settings
+################################################
+Input.basedir=@PROJECT_SOURCE_DIR@
+
+Input.directory=dbi
+Input.directory=mysql
+Input.directory=pgsql
+Input.directory=sqlite3
+Input.directory=odbc
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+Input.extra=docs/main.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=@output_dir@
+Output.html.url=.
+Output.html.doctitle=Falcon DBI Module reference.

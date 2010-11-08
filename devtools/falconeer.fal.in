@@ -36,14 +36,14 @@ const skelname = "fmodskel"
 
 // using falcon string concatenation to prevent cmake
 // to mangle with this values.
-var_prjname = "@"+"PROJECT_NAME@"
-var_desc    = "@"+"DESCRIPTION@"
-var_author  = "@"+"AUTHOR@"
-var_date    = "@"+"DATE@"
-var_year    = "@"+"YEAR@"
-var_copy    = "@"+"COPYRIGHT@"
-var_license = "@"+"LICENSE@"
-var_mainprj = "@"+"MAIN_PRJ@"
+var_prjname = "@{"+skelname+"_PROJECT_NAME}@"
+var_desc    = "@{"+skelname+"_DESCRIPTION}@"
+var_author  = "@{"+skelname+"_AUTHOR}@"
+var_date    = "@{"+skelname+"_DATE}@"
+var_year    = "@{"+skelname+"_YEAR}@"
+var_copy    = "@{"+skelname+"_COPYRIGHT}@"
+var_license = "@{"+skelname+"_LICENSE}@"
+var_mainprj = "@{"+skelname+"_MAIN_PRJ}@"
 
 const default_license = '
       Licensed under the Falcon Programming Language License,
@@ -74,11 +74,12 @@ files = [\
    "src/" + skelname + "_srv.cpp",
    "src/" + skelname + "_srv.h",
    "src/" + skelname + "_CMakeLists.txt:src/CMakeLists.txt",
+   "src/" + skelname + "_version.h:src/version.h",
    "templates/"+ skelname + "_cpp_template",
    "templates/" + skelname + "_h_template",
-   "docs/" + skelname + "_faldoc.fd:docs/faldoc.fd",
-   skelname + "_CMakeLists.txt:CMakeLists.txt",
-   skelname + "_falmod.cmake:falmod.cmake"
+   "docs/" + skelname + "_faldoc.fd.in:docs/faldoc.fd.in",
+   "docs/" + skelname + "_CMakeLists.txt:docs/CMakeLists.txt",
+   skelname + "_CMakeLists.txt:CMakeLists.txt"
 ]
 
 chgRegex = Regex( skelname )

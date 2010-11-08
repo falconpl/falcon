@@ -68,13 +68,13 @@ CoreObject::~CoreObject()
 
 void CoreObject::gcMark( uint32 gen )
 {
+   // our class
+   const_cast<CoreClass*>(m_generatedBy)->gcMark( gen );
+
    if( gen != mark() )
    {
       // mark ourseleves
       mark( gen );
-
-      // our class
-      const_cast<CoreClass*>(m_generatedBy)->gcMark( gen );
 
       // and possibly our inner falcon data
       if ( m_bIsFalconData )
@@ -160,8 +160,7 @@ bool CoreObject::deserialize( Stream *stream, bool bLive )
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
-   const Symbol *clssym = m_generatedBy->symbol();
-   return (clssym->name() == className || m_generatedBy->derivedFrom( className ));
+   return m_generatedBy->derivedFrom( className );
 }
 
 

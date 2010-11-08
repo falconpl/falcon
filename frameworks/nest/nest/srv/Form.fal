@@ -33,6 +33,7 @@ import from nest.bindings in b
    hook.
 */
 class Form( instance, options ) from nest.Service( instance, options )
+<<<<<<< HEAD:frameworks/nest/nest/srv/Form.fal
    formFilters = nest.ServiceVar( "Functions accepting and checking the variables in the form.", b.ConfigBinder )
    check = nest.ServiceVar(
          "Global check on the form; a function called as check( self, vars). Return goes in formResult.",
@@ -47,6 +48,28 @@ class Form( instance, options ) from nest.Service( instance, options )
    
    formVars = nest.ServiceVar( "Variables in the form as posted by the users" )
    formResults = nest.ServiceVar( "Results that the final user may be interested in.")
+=======
+   //# Functions accepting and checking the variables in the form.
+   formFilters = nest.ServiceVar( b.ConfigBinder )
+   //# Global check on the form; a function called as check( self, vars). Return goes in formResult.
+   check = nest.ServiceVar( b.ConfigBinder )
+   //# Action for the form submit
+   action = nest.ServiceVar( b.ConfigBinder )
+   //# Data to be displayed in the form.
+   formData = nest.ServiceVar( b.ConfigBinder )
+   //# Things to do below the form. For now, verbatim
+   formActions = nest.ServiceVar( b.ConfigBinder )
+   //# DOM ID of the form
+   formId = nest.ServiceVar( b.ConfigBinder )
+   //# CSS Class of the form
+   formClass = nest.ServiceVar( b.ConfigBinder )
+   //# Encoding type; set multipart/form-data for multipart forms
+   enctype = nest.ServiceVar( b.ConfigBinder )
+   //# Variables in the form as posted by the users
+   formVars = nest.ServiceVar()
+   //# Results that the final user may be interested in
+   formResults = nest.ServiceVar()
+>>>>>>> 71af4c7f6077973c2da70735ecdff65e05ffa447:frameworks/nest/nest/srv/Form.fal
 
    function startUp()
       if not self.instance

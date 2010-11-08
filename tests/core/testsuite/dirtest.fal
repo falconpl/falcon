@@ -51,7 +51,7 @@ try
    dir = Directory( "." )
    element = dir.read()
    stats = FileStat()
-   while element != nil
+   while element 
       if stats.read( element )
          filelen2[ element ] = stats.size
       else

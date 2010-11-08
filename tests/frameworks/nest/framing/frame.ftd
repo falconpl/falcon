@@ -1,0 +1,17 @@
+<html>
+<head>
+   <title>This is the frame</title>
+   <?= Nest.headings() ?>
+   <? login = Nest.service( "Login" ) ?>
+</head>
+<body>
+   <p>Here starts the frame...</p>
+   <hr/>
+   <? login.render() ?>
+   <? if Nest.auth_level <= Nest.AL.USER ?>
+   <? Nest.content() ?>
+   <? end ?>
+   <hr/>
+   <p>Here ends the frame...</p>
+</body>
+</html>

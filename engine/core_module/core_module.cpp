@@ -496,6 +496,7 @@ Module* core_module_init()
       addParam("level");    //static
    self->addClassMethod( func_meta, "trace", &Falcon::core::Function_trace ).asSymbol()->
       addParam("level");    //static
+   self->addClassMethod( func_meta, "stack", &Falcon::core::Function_stack );    //static
 
    /*#
       @class GarbagePointer
@@ -999,6 +1000,8 @@ Module* core_module_init()
          setReflectFunc( Falcon::core::Error_pc_rfrom, &Falcon::core::Error_pc_rto );
    self->addClassProperty( error_class, "subErrors" ).
          setReflectFunc( Falcon::core::Error_subErrors_rfrom );
+   self->addClassProperty( error_class, "boxed" ).
+            setReflectFunc( Falcon::core::Error_boxed_rfrom ,&Falcon::core::Error_boxed_rto  );
    self->addClassMethod( error_class, "getSysErrorDesc", &Falcon::core::Error_getSysErrDesc ).setReadOnly( true );
 
    // Other derived error classes.
@@ -1113,6 +1116,7 @@ Module* core_module_init()
    self->addExtFunc( "vmFalconPath", &Falcon::core::vmFalconPath );
    self->addExtFunc( "vmSearchPath", &Falcon::core::vmSearchPath );
    self->addExtFunc( "vmModuleName", &Falcon::core::vmModuleName );
+   self->addExtFunc( "vmModuleLine", &Falcon::core::vmModuleLine );
    self->addExtFunc( "vmModulePath", &Falcon::core::vmModulePath );
    self->addExtFunc( "vmRelativePath", &Falcon::core::vmRelativePath );
 
@@ -1259,7 +1263,7 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "sqrt", &Falcon::core::flc_math_sqrt )->
       addParam("x");  
-   self->addExtFunc( "mod", &Falcon::core::flc_math_exp )->
+   self->addExtFunc( "mod", &Falcon::core::flc_math_mod )->
       addParam("x")->addParam("y");
    self->addExtFunc( "pow", &Falcon::core::flc_math_pow )->
       addParam("x")->addParam("y");

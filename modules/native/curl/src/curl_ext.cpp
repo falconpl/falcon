@@ -479,7 +479,9 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
    case CURLOPT_HEADER:
    case CURLOPT_NOPROGRESS:
    case CURLOPT_HTTPPROXYTUNNEL:
+#if LIBCURL_VERSION_NUM >= 0x071904
    case CURLOPT_SOCKS5_GSSAPI_NEC:
+#endif
    case CURLOPT_TCP_NODELAY:
    case CURLOPT_AUTOREFERER:
    case CURLOPT_FOLLOWLOCATION:
@@ -506,7 +508,9 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
    case CURLOPT_CONNECT_ONLY:
    case CURLOPT_SSLENGINE_DEFAULT:
    case CURLOPT_SSL_VERIFYPEER:
+#if LIBCURL_VERSION_NUM >= 0x071901
    case CURLOPT_CERTINFO:
+#endif
    case CURLOPT_SSL_VERIFYHOST:
    case CURLOPT_SSL_SESSIONID_CACHE:
       {
@@ -526,16 +530,22 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
     case CURLOPT_DNS_USE_GLOBAL_CACHE:
     case CURLOPT_BUFFERSIZE:
     case CURLOPT_PORT:
+#if LIBCURL_VERSION_NUM >= 0x071900
     case CURLOPT_ADDRESS_SCOPE:
+#endif
     case CURLOPT_NETRC:
     case CURLOPT_HTTPAUTH:
     case CURLOPT_PROXYAUTH:
     case CURLOPT_MAXREDIRS:
+#if LIBCURL_VERSION_NUM >= 0x071901
     case CURLOPT_POSTREDIR:
+#endif
     case CURLOPT_HTTP_VERSION:
     case CURLOPT_HTTP_CONTENT_DECODING:
     case CURLOPT_HTTP_TRANSFER_DECODING:
+#if LIBCURL_VERSION_NUM >= 0x071904
     case CURLOPT_TFTP_BLKSIZE:
+#endif
     case CURLOPT_FTP_RESPONSE_TIMEOUT:
     case CURLOPT_USE_SSL:
     case CURLOPT_FTPSSLAUTH:
@@ -585,17 +595,20 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
 
     case CURLOPT_URL:
     case CURLOPT_PROXY:
+#if LIBCURL_VERSION_NUM >= 0x071904
     case CURLOPT_NOPROXY:
     case CURLOPT_SOCKS5_GSSAPI_SERVICE:
+#endif
     case CURLOPT_INTERFACE:
     case CURLOPT_NETRC_FILE:
     case CURLOPT_USERPWD:
     case CURLOPT_PROXYUSERPWD:
+#if LIBCURL_VERSION_NUM >= 0x071901
     case CURLOPT_USERNAME:
     case CURLOPT_PASSWORD:
-
     case CURLOPT_PROXYUSERNAME:
     case CURLOPT_PROXYPASSWORD:
+#endif
     case CURLOPT_ENCODING:
     case CURLOPT_REFERER:
     case CURLOPT_USERAGENT:
@@ -615,9 +628,11 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
     case CURLOPT_KEYPASSWD:
     case CURLOPT_SSLENGINE:
     case CURLOPT_CAINFO:
+#if LIBCURL_VERSION_NUM >= 0x071900
     case CURLOPT_ISSUERCERT:
-    case CURLOPT_CAPATH:
     case CURLOPT_CRLFILE:
+#endif
+    case CURLOPT_CAPATH:
     case CURLOPT_RANDOM_FILE:
     case CURLOPT_EGDSOCKET:
     case CURLOPT_SSL_CIPHER_LIST:
@@ -907,7 +922,9 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    // char*
    case CURLINFO_EFFECTIVE_URL:
    case CURLINFO_CONTENT_TYPE:
+#if LIBCURL_VERSION_NUM >= 0x071900
    case CURLINFO_PRIMARY_IP:
+#endif
    case CURLINFO_FTP_ENTRY_PATH:
    {
       char* rv;
@@ -931,7 +948,9 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    case CURLINFO_PROXYAUTH_AVAIL:
    case CURLINFO_OS_ERRNO:
    case CURLINFO_NUM_CONNECTS:
+#if LIBCURL_VERSION_NUM >= 0x071904
    case CURLINFO_CONDITION_UNMET:
+#endif
       {
          long rv;
          cerr = curl_easy_getinfo( h->handle(), info, &rv );
@@ -980,7 +999,9 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
    case CURLINFO_TOTAL_TIME:
    case CURLINFO_NAMELOOKUP_TIME:
    case CURLINFO_CONNECT_TIME:
+#if LIBCURL_VERSION_NUM >= 0x071900
    case CURLINFO_APPCONNECT_TIME:
+#endif
    case CURLINFO_PRETRANSFER_TIME:
    case CURLINFO_STARTTRANSFER_TIME:
    case CURLINFO_REDIRECT_TIME:

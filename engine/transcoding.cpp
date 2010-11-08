@@ -989,8 +989,8 @@ TranscoderISO_CP::TranscoderISO_CP( const TranscoderISO_CP &other ):
    m_dirTabSize( other.m_dirTabSize ),
    m_reverseTable( other.m_reverseTable ),
    m_revTabSize( other.m_revTabSize ),
-   m_nMinUntl( m_nMinUntl ),
-   m_nMaxUntl( m_nMaxUntl )
+   m_nMinUntl( other.m_nMinUntl ),
+   m_nMaxUntl( other.m_nMaxUntl )
 {}
 
 bool TranscoderISO_CP::get( uint32 &chr )

@@ -1,0 +1,151 @@
+/*
+   FALCON - Documentation tool
+
+   FILE: docmodule.fal
+
+   Autodocumentation tool - Module representation in a document.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 30 Sep 2010 19:07:41 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load .docentity
+load .link
+
+/*# Database of all the defined entities. */
+class DocModule( name ) from Entity
+   //# Title of the module
+   title = nil
+
+   //# Missing entities as local ID -> link
+   missing = [=>]
+
+   //# Main page of the module, if any
+   main = nil
+
+   init
+      self.name = name ? name : "Main module"
+      self.type = "module"
+   end
+   
+   //# Gets an entity from this module (possibly undefined)
+   function getEntity( name, type )
+      if name notin self.members
+         e = Entity( "", self.file, 0 )
+         e.name = name
+         e.type = type
+         e.automatic = true
+         if not self.members: self.members = [=>]
+         self.members[name] = e
+         e.parent = self
+      else
+         e = self.members[name]
+      end
+
+      return e
+   end
+
+   //# Returns the meta-pages respecting their required order.
+   function orderPages()
+      pages = []
+      groups = []
+      funsets = []
+      for name, entity in self.members
+         switch entity.type
+            case "main"
+               pages[0:0] = entity
+            case "page"
+               pages += entity
+            case "group"
+               groups += entity
+            case "funset"
+               funsets += entity
+         end
+      end
+
+      // ok, now see if we must reorder something
+      allpages = pages + groups + funsets
+      ppage = 1
+      l = allpages.len()
+      while ppage < l
+         entity = allpages[ppage]
+         // adjust @after main
+         after = entity.after
+         if after == "main": after = "#main"
+
+         // should we reorder it?
+         if entity.after and allpages[ppage-1].name != after
+            // get the entity
+            if entity.after notin self.members
+               faldoc.error( @i"Entity should be after $(entity.after), but \"$(entity.after)\" is not in module $(self.name)",
+                  entity.firstline )
+               ppage ++
+               continue
+            end
+
+            etgt = self.members[ after ]
+            // but where is this entity?
+            ptgt = allpages.find( etgt )
+            if ptgt < 0
+               faldoc.error( @i"Entity should be after $(entity.after), but that is not a meta-page", entity.firstline )
+               ppage++
+               continue
+            end
+
+            // and now reorder!
+            allpages.remove( ppage )
+            // We must insert after the found element, which may be shifted 1 back if it's after our point
+            ptgt_pos = (ptgt > ppage ? ptgt : ptgt+1)
+            allpages[ptgt_pos:ptgt_pos] = entity
+            // -- for the same reason, we may need not to increment if we have removed an element.
+            if ptgt < ppage: ppage ++
+            continue
+         end
+
+         ppage ++
+      end
+
+      // ok, pages are re-ordered
+      return allpages
+   end
+
+
+   function checkUndefined()
+      // No entites should have automatic setting turned on at end, except for modules.
+      for name, entity in self.members
+         if entity.type == "module"
+            entity.checkUndefined()
+         else
+            if entity.automatic
+               if entity.members
+                  mbfirst = entity.members.first().value()
+                  line = mbfirst.firstline
+                  file = mbfirst.file
+               else
+                  line = 0
+                  file = self.file
+               end
+               
+               faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined in $(self.name)", line, file )
+            end
+         end
+      end
+   end
+
+   function addMember( entity )
+      if entity.type == "main"
+         self.main = entity
+         self.title = entity.props["title"]
+      else
+         self.Entity.addMember( entity )
+      end
+   end
+   
+end
+
+export

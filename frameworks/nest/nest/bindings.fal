@@ -34,6 +34,7 @@
 */
 
 import from nest.utils in utils
+import NestError from nest.error as NestError
 
 object ConfigBinder
    function bind( varname, srv, var )
@@ -103,6 +104,7 @@ end
 object SkinBinder
    function bind( varname, srv, var )
       if varname in srv.configuration
+
          skinFile = srv.configuration[varname]
          if skinFile.isCallable()
             Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " to a callable in configuration." )
@@ -112,7 +114,30 @@ object SkinBinder
             if skin
                Nest.logi( "Service " + srv.fullName() + " is setting sub-skin " + varname + " from file." )
                var.value = skin
+            else
+               raise NestError( NestError.noskin, "", skinFile )
             end
+         end
+         
+      else
+         // get the default-<varname>.fal skin,
+         // but if the service skin file is not set,
+         // don't force it.
+         bset = var.isSet
+         
+         // The nameis always the skin name
+         name = varname
+         
+         Nest.logi( "Service " + srv.fullName() + " searching default sub-skin " + name + " from file." )
+         skin = self.getSubSkin( name , srv, var)
+         if not skin            
+            if bset
+               // The skin was mandatory
+               raise NestError( NestError.noskin, "", skinFile )
+            end
+            Nest.logi( "Service " + srv.fullName() + " ignoring missing sub-skin." )
+         else
+            var.value = skin
          end
       end
    end
@@ -121,24 +146,29 @@ object SkinBinder
    function getSubSkin( skinFile, srv, var )
       srvName = srv.className()
       srvInst = srv.instance
+      cnf = Nest.config
 
       // sub-skins are named after the model
       // [instance]_varname.fal/fam/ftd
-      if srvInst: skinFile = srvInst + "_" + skinFile
+      if srvInst
+         dir = srvName + "/" + srvInst
+      else
+         dir = srvName
+      end
       
       skinPaths = [
-         utils.reldir( Nest.cnf.homedir, Nest.cnf.site_srv_dir + "/" + srvName +  "/skins" ),
-         Nest.cnf.nestdir +"/srv/" + srvName  + "/skins" ]
+         utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + dir ),
+         cnf.nestdir +"/srv/" + dir ]
 
          
-      if self.log_level >= 3
-         self.logd( "Service " + self.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
+      if Nest.log_level >= 3
+         Nest.logd( "Service " + srv.fullName() + " scanning for sub-skin \"" + skinFile + "\" in " + skinPaths.describe() )
       end
 
 
       skinFile = utils.findFileInDirs( skinPaths, skinFile, ['fal','ftd','fam'] )
       if skinFile
-         self.logi( "Service " + self.fullName() + " using sub-skin " + skinFile )
+         if Nest.log_level >= 2: Nest.logi( "Service " + srv.fullName() + " using sub-skin " + skinFile )
          include( skinFile, symDict | (sd=["skin"=>nil] ) )
          return sd["skin"]
       end

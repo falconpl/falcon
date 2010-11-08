@@ -1,0 +1,49 @@
+/*#
+   @main Nest - The Falcon Web Application Framework.
+
+Nest is a Web Application Framework standing on top of the
+web oriented programming interface (WOPI). It's role is that
+of standardizing and simplifying the development and the deployment
+of applications residing on a web server and serving multiple client.
+
+In other words, it's a standardized base platform for the so called S-D-S (server-database-script)
+applications.
+
+@section status Nest development status
+
+The current release of Nest has full support for its application development model.
+Vital elements of web based applications as session handling, login management,
+page routing are all supported and flexible but efficient site-specific expansion
+hooks are provided.
+
+The number of built-in services (web application modules) is still low, but all essential
+services plus a number of complex services (that can be used as a template for user designed
+modules) are provided.
+
+The ORM data model is essential, but effective for simple uses, while it can be diretly
+bypassed (or better, integrated) with direct database interaction via Falcon DBI modules.
+
+There isn't still any native and integrated support for AJAX, but where necessary it is possible
+to use third party Javascript libraries (as MooTools or JQuery) to add AJAX features to a Nest
+based application. Also, a web-server AJAX aware API support is already provided, even if
+essential.
+
+@section phylosophy Philosophy
+
+Nest is conceptually based on the orthogonal concepts of __minimal lines per result__ and
+__minimal override__.
+
+Minimal lines per result means that the target of Nest is that of minimizing the amount of
+live code that must be written to obtain a complete web application. Minimal override means
+that Nest doesn't "cover" the standards of the system hosting it (Falcon and WOPI), but
+instead adds new features to it. This means that, although Nest offers powerful features
+in top of WOPI, all the features of the standard web interface are at disposal of the final
+implementor. Even if offering an ORM (Object Relational Model), it doesn't prevent the implementor
+from using raw SQL commands, and even generating its own tables or databases outside Nest
+support, so to use all the performance-wise features that an abstract model would lose.
+
+Other than the two cardinal concepts, Nest is based on __modular design__. Nest exposes some
+components that can be separately configured, integrated or eventually completely reimplemented
+and overridden at implementor's will, without the need to intervene on the official installation,
+directly on the target site. The strictly modular design allows for easier code sharing and reuse.
+*/

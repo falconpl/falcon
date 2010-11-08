@@ -38,13 +38,18 @@ CoreClass::CoreClass( const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
 
 bool CoreClass::derivedFrom( const String &className ) const
 {
-   // else search the base class name in the inheritance properties.
-   uint32 pos;
-   if ( m_properties->findKey( className, pos ) )
+   // is this class?
+   if ( m_sym->name() == className )
+      return true;
+
+   // else, try with the properties/inheritance
+   for( uint32 i = 0; i < properties().added(); ++i )
    {
-      Item *itm =  m_properties->getValue( pos )->dereference();
-      if ( itm->isClass() )
+      const Item& p = *properties().getValue(i)->dereference();
+      if( p.isClass() && p.asClass()->derivedFrom( className ) )
+      {
          return true;
+      }
    }
 
    return false;
@@ -53,8 +58,12 @@ bool CoreClass::derivedFrom( const String &className ) const
 bool CoreClass::derivedFrom( const Symbol *sym ) const
 {
    // is this class?
-   if ( m_sym == sym )
+   /*if ( m_sym == sym || m_sym->name() == sym->name() )
       return true;
+   */
+
+   if ( m_sym == sym )
+         return true;
 
    // else, try with the properties/inheritance
    for( uint32 i = 0; i < properties().added(); ++i )
@@ -100,7 +109,7 @@ void CoreClass::gcMark( uint32 gen )
       }
 
       // and our module
-      m_lmod->mark( gen );
+      m_lmod->gcMark( gen );
    }
 }
 

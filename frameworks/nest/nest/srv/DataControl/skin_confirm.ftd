@@ -1,0 +1,60 @@
+<? function skin( data, srv )
+   switch data.cmd
+      case "upd": skin_upd( data.eid, data.cnf )
+      case "del": skin_del( data.eid, data.cnf )
+      case "add": skin_add( data.cnf )
+      default: skin_unknown( data.cmd )
+   end
+?>
+<form action="<?=data.handler?>" method="POST">
+   <input type="hidden" name="cmd" value="<?=htmlEscape(data.cmd)?>"/>
+   <? if data.eid.typeId() == ArrayType ?>
+   <? for id in data.eid ?>
+   <input type="hidden" name="eid[]" value="<?=htmlEscape(id)?>"/>
+   <? end ?>
+   <? else ?>
+   <input type="hidden" name="eid" value="<?=htmlEscape(data.eid)?>"/>
+   <? end ?>
+   <? for name, value in data.result ?>
+   <input type="hidden" name="<?=htmlEscape(name)?>" value="<?=htmlEscape(value)?>"/>
+   <? end ?>
+   <button type="submit">Confirm</button>
+</form>
+<? end ?>
+
+<? function skin_upd( eid, content ) ?>
+   <div class="nest_mod_confirm">
+      <p>Please, confirm the modify of record "<?=htmlEscape(eid)?>" as follows:</p>
+      <table>
+      <? for name, value in content ?>
+      <tr><td class="name"><?=htmlEscape(name)?></td><td class="value"><?=htmlEscape(value)?></td></tr>
+      <? end ?>
+      </table>
+   </div>
+<? end ?>
+
+<? function skin_del( eid, data ) ?>
+   <div class="nest_del_confirm">
+      <p>Please, confirm the deletion of the following records:</p>
+      <ul>
+      <? for item in data ?>
+      <li><?=item?></li>
+      <? end ?>
+      </ul>
+   </div>
+<? end ?>
+
+<? function skin_add( content ) ?>
+   <div class="nest_add_confirm">
+      <p>Please, confirm the addition of a record as follows:</p>
+      <table>
+      <? for name, value in content ?>
+      <tr><td class="name"><?=htmlEscape(name)?></td><td class="value"><?=htmlEscape(value)?></td></tr>
+      <? end ?>
+      </table>
+   </div>
+<? end ?>
+
+<? function skin_unknown(cmd) ?>
+<!-- unknown action "<?=htmlEscape(cmd)?>" was requested --> 
+<? end ?>

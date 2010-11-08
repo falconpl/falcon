@@ -1,0 +1,62 @@
+/*
+   FALCON - Generic Parser
+
+   FILE: faltxt_test.fal
+
+   Read and parses a faldoc document, or a falcon file with faldoc
+   comments, and displaes the found entities.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Sep 2010 14:53:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from parser.genparser
+import from parser.faldoc.txt
+
+function traverse( node, level )
+   > "CTX"+level+": " + node.type + (node provides level ? " lvl: "+ node.level : "" )
+
+   if node provides infos
+      > node.infos.describe()
+   end
+
+   if node.content
+      > node.content
+   end
+   
+   n = node.firstChild
+   while n
+      traverse( n, level + 1 )
+      n = n.next
+   end
+end
+
+
+if args.len() == 0
+   > "Please, indicate a Faldoc TEXT source on the command line"
+   return 1
+end
+
+is = InputStream(args[0])
+// let's say it's utf-8...
+is.setEncoding("utf-8")
+
+ctx = parser.genparser.Context()
+p = parser.faldoc.txt.Parser()
+
+p.trace = true
+
+p.initParser( "start" )
+line = ""
+while is.readLine( line, 120000 )
+   p.parseLine( line, ctx )
+end
+is.close()
+
+traverse( ctx.topNode, 0 )
+

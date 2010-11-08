@@ -1,0 +1,13 @@
+<? function skin( data, srv, item ) ?>
+   <? if item.target ?>
+      <a href="<?=item.target?>"><?=item.text?></a>
+   <? else ?>
+      <?=item.text?>
+   <? end ?>
+
+   <? // manage submenus
+   if item.submenu
+      data.skin( data, srv, item.submenu )
+   end
+   ?>
+<? end ?>

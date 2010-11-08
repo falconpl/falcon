@@ -1,0 +1,507 @@
+/*
+   FALCON - Generic Parser
+   FILE: doocbook.fal
+
+   Generates a doocbook output of an input genparser.Context tree
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Aug 2008 09:42:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+/*# Doocbook Renderer.
+   @optparam frame An object used to surround produced data with proper docbook framing.
+
+   The docbook renderer transforms the input text in a valid docbook output,
+   which may be inserted under a <section> entry of a DocBook 5.1 document.
+
+   Heading elements are treated as sections, and properly nested based on their level.
+
+   If given, the @b frame object will be used to complete the document by appending
+   and prepending proper XML and docbook starters.
+
+   The @b frame object will provide an open() method that shall return the docbook
+   code to declare the document (including the xml document declaration) and a close()
+   method so that the whole document can be built through
+
+   @code
+      frame.open() + rendered_content + frame.close()
+   @endcode
+*/
+class Renderer( frame )
+
+   blevel = 0
+   frame = frame
+
+   renderers = [
+      "text" => {node => Renderer.sgmlEscape(node.content) },
+      "b" => .[ self._render_markup "emphasis" "role=\"bold\""],
+      "i" => .[ self._render_markup "emphasis" nil],
+      "u" => .[ self._render_markup "emphasis" nil],
+      "sup" => .[self._render_markup "superscript" nil],
+      "sub" => .[self._render_markup "subscript" nil],
+      "pre" => .[self._render_markup "literal" nil],
+      "tt" => .[self._render_markup "literal" nil],
+      "ol" => .[self._render_markup "orderedlist" nil ],
+      "ul" => .[self._render_markup "itemizedlist" nil ],
+      "li" => .[self._render_li],
+
+      "hr" => self._render_hr,
+      "br" => self._renderUNKNOWN,
+
+      "para" => self._render_para,
+      "header" => self._render_header,
+
+      "table" => self._render_table,
+      "tr" => self._render_tr,
+      "th" => self._render_header_cell,
+      "td" => self._render_cell,
+      "indent" => self._render_indent,
+      "quote" => self._render_quote,
+
+      "link" => self._render_link,
+      "file" => self._render_file,
+
+      "img" => self._render_img,
+      "code" => self._render_code,
+      "plugin" => self._render_plugin,
+      "tag" => self._renderUNKNOWN
+   ]
+
+   init
+      if frame
+         if not frame provides open or not frame provides close
+            raise GenericError( 10000, i"The 'frame' parameter must provide a callable open/close method pairs" )
+         end
+      end
+   end
+
+   function render( context )
+
+      //preprocess standouts
+      //self.preprocess( context.standouts )
+      
+      // and return the content
+      content = self.rcont( context.topNode )
+
+      // close opened sections
+      while self.blevel > 0
+         if self.frame
+            content += self.frame.closeSection( self.blevel )
+         else
+            content += "</section>\n"
+         end
+         self.blevel--
+      end
+
+      f = self.frame
+      if f
+         return f.open() + content + f.close()
+      else
+         return content
+      end
+   end
+
+   /*
+   function preprocess( sout )
+   end
+   */
+
+
+   function renderNode( node )
+      if node.type in self.renderers
+         return self.renderers[ node.type ]( node )
+      else
+         return self._renderUNKNOWN( node )
+      end
+   end
+
+
+   function rcont( node )
+      content = node.content
+      if content: return Renderer.sgmlEscape( content )
+
+      text = ""
+      node = node.firstChild
+      while node
+         text += self.renderNode( node )
+         node = node.next
+      end
+      return text
+   end
+
+   //==========================================================
+   // rendering functions
+   //
+
+   function _renderUNKNOWN( node )
+      return "<para>UNKNOWN NODE TYPE: " + node.type + " - " +self.rcont( node ) + "</para>\n"
+   end
+
+
+   function _render_para( node )
+      content = self.rcont(node)
+      return content ? "<para>" + content +"</para>\n" : ""
+   end
+
+   function _render_markup( tag, attribs, node )
+      return "<" + tag + (attribs ? " " +attribs : "") +">" + self.rcont(node) + "</" + tag + ">"
+   end
+
+   function _render_li( node )
+      return "<listitem><para>" + self.rcont(node) + "</para></listitem>\n"
+   end
+
+   function _render_hr( node )
+      return "<para><literal>-----------------------------------------------</literal></para>\n"
+   end
+
+
+   function _render_header( node )
+      content = self.rcont( node )
+      return self.open_section( node.level, content, URI.encode(content) )
+   end
+
+   function open_section( level, id, title )
+      prefix = self.go_to_level( level )
+      if self.frame
+         header = self.frame.openSection( level, id )
+      else
+         header = "<section id=\"" + id +"\">\n"
+      end
+      self.blevel = level + 1
+      return prefix + header + "<title>" + title + "</title>\n"
+   end
+
+   function close_section( level )
+      prefix = self.go_to_level( level )
+      if self.frame
+         header = self.frame.closeSection( level )
+      else
+         header = "</section>\n"
+      end
+      self.blevel = level
+      return prefix + header
+   end
+   
+   function go_to_level( l )
+      prefix = ""
+      while self.blevel+1 < l
+         self.blevel++
+         prefix += self.frame ? self.frame.openSection( self.blevel ) :  "<section>\n"
+      end
+
+      while self.blevel-1 > l
+         prefix += self.frame ? self.frame.closeSection( self.blevel ) :  "</section>\n"
+         self.blevel--
+      end
+
+      return prefix
+   end
+
+
+   function _render_table( node )
+      return "<informaltable>\n<tgroup cols=\"0\">\n" +
+              self.rcont(node) +
+              "</tgroup></informaltable>\n"
+   end
+
+   function _render_tr( node )
+      return "<row>"+ self.rcont(node) + "</row>\n"
+   end
+
+   function _render_header_cell( node )
+      return "<entry><emphasis>"+ self.rcont(node) + "</emphasis></entry>\n"
+   end
+
+   function _render_cell( node )
+       return "<entry>"+ self.rcont(node) + "</entry>\n"
+   end
+
+   function _render_indent( node )
+      return "<litral>" + (" " * node.level ) +  "</literal><para>" +
+         self.rcont(node) +
+         "</para>\n"
+   end
+
+   function _render_link( node )
+      i = bless(node.infos)
+      
+      link = "<ulink url=\"" + strEscape(i.name) + "\">" +
+             Renderer.sgmlEscape(i.text ? i.text : i.name) + "</ulink>"
+      return link
+   end
+
+
+   function _render_file( node )
+      //todo
+   end
+
+   function _render_quote( node )
+      attrib = node.infos["link"]
+      if attrib
+         return "<blockquote><attribution>" + Renderer.sgmlEscape(attrib) +
+                "</attribution>\n<para>" + self.rcont(node) +"</para></blockquote>\n"
+      else
+         return "<blockquote><para>" + self.rcont(node) +"</para></blockquote>\n"
+      end
+   end
+
+   function _render_img( node )
+      // todo
+   end
+
+   function _render_code( node )
+      return "<programlisting>"+ self.rcont(node) + "</programlisting>\n"
+   end
+
+   function _render_plugin( node )
+      // not supported
+   end
+
+   function sgmlEscape( content )
+      /*
+      static
+         amp = "&"[*0]
+         lt = "<"[*0]
+         gt = ">"[*0]
+         qt = "\""[*0]
+      end
+      
+      i = 0
+      l = content.len()
+      res = strBuffer( l )
+      olds = 0
+      while i < l
+         c = content[*i]
+         if c < 32 or c > 127
+            res += content[olds:i]
+            res += "&#"+c+";"
+            olds = i+1
+         elif c == amp
+            res += content[olds:i]
+            res += "&amp;"
+            olds = i+1
+         elif c == gt
+            res += content[olds:i]
+            res += "&gt;"
+            olds = i+1
+         elif c == lt
+            res += content[olds:i]
+            res += "&lt;"
+            olds = i+1
+         elif c == qt
+            res += content[olds:i]
+            res += "&quot;"
+            olds = i+1
+         end
+         ++i
+      end
+      
+      return res + content[olds:]
+      */
+      return content.replace( "&", "&amp;").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
+   end
+end
+
+
+
+
+
+/*# Frame creating a book frame
+   @param encoding The target encoding that will be placed in the xml declaration
+   @param name The name of the book
+   @param title Title of the book as a whole
+   @optparam author The author
+   @optparam copyyear Year of copyright
+   @optparam copyholder Holder of copyright
+
+   @todo Author fields broken up
+*/
+
+class BookFrame( encoding, name, title, author, copyyear, copyholder )
+   encoding = encoding
+   name = name
+   title = title
+   author = author
+   copyyear = copyyear
+   copyholder = copyholder
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "
+         <!DOCTYPE book
+         PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
+         \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
+      str += "<book>\n"
+      str += "<bookinfo>\n"
+      str += "<title>" + Renderer.sgmlEscape( self.title ) + "</title>\n"
+      if self.author
+         str += "<author><firstname>" + Renderer.sgmlEscape( self.author ) + "</firstname></author>\n"
+      end
+      if self.copyyear and self.copyholder
+         str+= "<copyright>\n"
+         str += "<year>" + self.copyyear + "</year>\n"
+         str += "<holder>" + Renderer.sgmlEscape( self.copyholder ) + "</holder>\n"
+         str+= "</copyright>\n"
+      end
+      str += "</bookinfo>\n"
+
+      return str
+   end
+
+   function close()
+      return  "</book>\n"
+   end
+
+   function openSection( level, id )
+      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      if level == 0 
+         return @"<chapter$(ids)>\n"
+      else
+         return @"<sect$(level)$(ids)>\n"
+      end
+   end
+
+   function closeSection( level )
+      if level == 0
+         return "</chapter>\n"
+      else
+         return @"</sect$(level)>\n"
+      end
+   end
+end
+
+
+/*# Frame creating a book frame -- in docbook 5
+   @param encoding The target encoding that will be placed in the xml declaration
+   @param name The name of the book
+   @param title Title of the book as a whole
+   @optparam author The author
+   @optparam copyyear Year of copyright
+   @optparam copyholder Holder of copyright
+
+   @todo Author fields broken up
+*/
+
+class Book5Frame( encoding, name, title, author, copyyear, copyholder )
+   encoding = encoding
+   name = name
+   title = title
+   author = author
+   copyyear = copyyear
+   copyholder = copyholder
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "<book xml:id=\""+self.name+"\" xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\">\n"
+      str += "<bookinfo>\n"
+      str += "<title>" + Renderer.sgml( self.title ) + "</title>\n"
+      if self.author
+         str += "<author><firstname>" + Renderer.sgmlEscape( self.author ) + "</firstname></author>\n"
+      end
+      if self.copyyear and self.copyholder
+         str+= "<copyright>\n"
+         str += "<year>" + self.copyyear + "</year>\n"
+         str += "<holder>" + Renderer.sgmlEscape( self.copyholder ) + "</holder>\n"
+         str+= "</copyright>\n"
+      end
+      str += "</bookinfo>\n"
+
+      return str
+   end
+
+   function close()
+      return  "</book>\n"
+   end
+
+   function openSection( level, id )
+      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      if level == 0
+         return @"<chapter$(ids)>\n"
+      else
+         return @"<section$(ids)>\n"
+      end
+   end
+
+   function closeSection( level )
+      if level == 0
+         return "</chapter>\n"
+      else
+         return "</section>\n"
+      end
+   end
+end
+
+
+
+/*# Frame creating an article frame
+   @param encoding The target encoding that will be placed in the xml declaration
+   @optparam optparam lang The language of the article.
+*/
+
+class ArticleFrame( encoding, lang )
+   encoding = encoding
+   lang = lang ? lang : ""
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "
+         <!DOCTYPE article
+         PUBLIC \"-//OASIS//DTD DocBook XML V4.1.2//EN\"
+         \"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd\">\n"
+      str += "<article"
+      if self.lang: str += " lang=\"" + self.lang + "\""
+      str+=">\n"
+      return str
+   end
+
+   function close()
+      return "</article>\n"
+   end
+
+   function openSection( level, id )
+      return "<sect" + (level + 1) + (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+   end
+
+   function closeSection( level )
+      return "</sect" + (level+1) + ">\n"
+   end
+
+end
+
+/*# Frame creating an article frame in DocBook 5
+   @param encoding The target encoding that will be placed in the xml declaration
+   @optparam optparam lang The language of the article.
+*/
+
+class Article5Frame( encoding, lang )
+   encoding = encoding
+   lang = lang ? lang : ""
+
+   function open()
+      str = "<?xml version=\"1.0\" encoding=\"" + self.encoding + "\"?>\n"
+      str += "<article xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\""
+      if self.lang: str += " lang=\"" + self.lang + "\""
+      str+=">\n"
+      return str
+   end
+
+   function close()
+      return "</article>\n"
+   end
+
+   function openSection( level, id )
+      return "<section"+ (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+   end
+
+   function closeSection( level )
+      return "</section>\n"
+   end
+
+end

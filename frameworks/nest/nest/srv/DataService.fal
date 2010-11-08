@@ -1,0 +1,71 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DataQuery/main.fal
+
+   Query an entity and its fields.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 14:45:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+import DBView from nest.dbview as DBView
+
+/*# Base class for services related to data management.
+
+   Services must be configured indicating the name of the data manager they
+   use, and a view.
+
+   This class MUST be configured with a **view** configuration variable,
+   that represents the entity on which this service should operate and the
+   view through which the entity must be accessed.
+
+   The **handler** configuration variable is mandatory as well. It indicates
+   the target link for actions peformed at table/form level.
+
+   As views are nameless, they must be created directly in the configuration
+   file (or in the configuration dictionary), and are tighly coupled with
+   the service they refer to.
+*/ 
+class DataService( instance ) from Service( instance )
+
+   /*# Target link managing of the table actions (submits and other table-level actions). */
+   handler = ServiceVar( b.ConfigBinder  )
+
+   /*# A DBView instance used to access the desired entity */
+   view = ServiceVar( b.ConfigBinder  )
+
+   function startup()
+      if Nest.pcheck
+         if not self.view.value.derivedFrom( DBView )
+            raise NestError( NestError.pcheck, "", i"View not specified in configuration, or not a DBView." )
+         end
+
+         if self.handler.value.typeId() != StringType
+            raise NestError( NestError.pcheck, "", i"Form action handler" )
+         end
+      end
+      
+   end
+      
+   function run()
+      if not self.checkAllowed(): return
+      self.do_query()
+   end
+
+   function do_query()
+      raise "Please implement this method"
+   end
+
+end

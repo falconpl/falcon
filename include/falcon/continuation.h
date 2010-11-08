@@ -35,9 +35,15 @@ public:
    virtual ~Continuation();
 
    /** Applies the continuation on the virtual machine.
-       If the continuation is
+
+       If the continuation has already been suspended, then
+       it resumes the continuation and returns true.
+
+       Otherwise, it does nothing and returns false.
+
+       The parameter is set into the return value in case of positive jump.
     */
-   bool jump();
+   bool jump( const Item& jump_param );
 
    /** Invoke the continuation.
     The effect of the invocation is that of:
