@@ -40,9 +40,10 @@ class Form( instance, options ) from nest.Service( instance, options )
 
    action = nest.ServiceVar( "Action for the form submit", b.ConfigBinder )
    formData = nest.ServiceVar( "Data to be displayed in the form.", b.ConfigBinder )
-   formActions = nest.ServiceVar( "Things to do below the form. For now, verbatim", b.ConfigBinder )
+   formActions = nest.ServiceVar( "Things to do below the form. It's a list of input field (buttons/submits)", b.ConfigBinder )
    formId = nest.ServiceVar( "DOM ID of the form", b.ConfigBinder )
    formClass = nest.ServiceVar( "CSS Class of the form", b.ConfigBinder )
+   enctype = nest.ServiceVar( "Encoding type; set multipart/form-data for multipart forms", b.ConfigBinder )
    
    formVars = nest.ServiceVar( "Variables in the form as posted by the users" )
    formResults = nest.ServiceVar( "Results that the final user may be interested in.")
@@ -199,4 +200,22 @@ class Option( value, desc )
       return @ "<option value=\"$(esc_val)\"$(sel)>$(desc)</option>\n"
    end
    
+end
+
+
+class Submit( value, name, cls, extra ) from Button( "submit", value, name, cls, extra )
+end
+
+class Button( type, value, name, cls, extra )
+   type = type
+   name = strEscape( name )
+   value = strEscape( value )
+   cls = strEscape( cls )
+   extra = extra ? extra : ""
+
+   function render( instance )
+      fname = instance ? instance +"." + self.name : self.name
+      return @'
+            <input type="$(self.type)" name="$(fname)" id="$(self.name)" value="$(self.value)" class="$(self.cls)" $(self.extra)/>'
+   end
 end

@@ -10,7 +10,7 @@
          end
       else
       ?>
-      <form  method="POST" action="<?= vars.action ?>" class="<?= vars.formClass ?>" id="<?= vars.formId ?>">
+      <form  method="POST" action="<?= vars.action ?>" class="<?= vars.formClass ?>" id="<?= vars.formId ?>" acceptcharset="utf-8" enctype="<?= vars.enctype ?>" >
          <fieldset>
             <? for field in vars.formData ?>
                <div>
@@ -21,7 +21,9 @@
                </div>
             <? end ?>
          </fieldset>
-         <?= vars.formActions ?>
+         <? for field in vars.formActions ?>
+            <?= field.render() ?>
+         <? end ?>
       </form>
       <? end ?>
    </div>
