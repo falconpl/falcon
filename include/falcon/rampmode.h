@@ -60,6 +60,22 @@ public:
    size_t activeLevel() const { return m_active; }
 };
 
+#define RAMP_MODE_OFF               0
+/** Disables ramping.
+   Never changes the warning levels.
+*/
+class FALCON_DYN_CLASS RampNone: public RampMode
+{
+public:
+   RampNone():
+      RampMode()
+   {}
+
+   virtual ~RampNone();
+   virtual void onScanInit();
+   virtual void onScanComplete();
+};
+
 
 /** Enforces a strict inspection policy.
    The warning active level is set to the quantity of
@@ -77,7 +93,7 @@ public:
    virtual void onScanComplete();
 };
 
-#define RAMP_MODE_STRICT_ID   0
+#define RAMP_MODE_STRICT_ID   1
 
 
 class FALCON_DYN_CLASS RampLoose: public RampMode
@@ -92,7 +108,7 @@ public:
    virtual void onScanComplete();
 };
 
-#define RAMP_MODE_LOOSE_ID   1
+#define RAMP_MODE_LOOSE_ID   2
 
 class FALCON_DYN_CLASS RampSmooth: public RampMode
 {
@@ -109,11 +125,10 @@ public:
    virtual void onScanComplete();
 };
 
-#define RAMP_MODE_SMOOTH_SLOW_ID   2
-#define RAMP_MODE_SMOOTH_FAST_ID   3
+#define RAMP_MODE_SMOOTH_SLOW_ID   3
+#define RAMP_MODE_SMOOTH_FAST_ID   4
 
-#define RAMP_MODE_COUNT              4
-#define RAMP_MODE_OFF               -1
+#define RAMP_MODE_COUNT              5
 #define DEFAULT_RAMP_MODE           RAMP_MODE_SMOOTH_SLOW_ID
 }
 

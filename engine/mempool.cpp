@@ -83,6 +83,7 @@ MemPool::MemPool():
    m_thresholdActive = TEMP_MEM_THRESHOLD*3;
 
    // fill the ramp algorithms
+   m_ramp[RAMP_MODE_OFF] = new RampNone;
    m_ramp[RAMP_MODE_STRICT_ID] = new RampStrict;
    m_ramp[RAMP_MODE_LOOSE_ID] = new RampLoose;
    m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 2.6 );
@@ -121,25 +122,17 @@ MemPool::~MemPool()
 
 bool MemPool::rampMode( int mode )
 {
-   if( mode == RAMP_MODE_OFF )
+   if( mode >= 0 && mode < RAMP_MODE_COUNT )
    {
       m_mtx_ramp.lock();
-      m_curRampID = mode;
-      m_curRampMode = 0;
-      m_mtx_ramp.unlock();
-      return true;
-   }
-   else
-   {
-      if( mode >= 0 && mode < RAMP_MODE_COUNT )
+      if ( m_curRampID != mode )
       {
-         m_mtx_ramp.lock();
          m_curRampID = mode;
          m_curRampMode = m_ramp[mode];
          m_curRampMode->reset();
-         m_mtx_ramp.unlock();
-         return true;
       }
+      m_mtx_ramp.unlock();
+      return true;
    }
 
    return false;
@@ -514,21 +507,21 @@ void MemPool::markItem( const Item &item )
 
 void MemPool::gcSweep()
 {
-   if ( m_curRampMode == 0) // if the ramp mode is NULL, the GC is disabled, nothing to do
-       return;
 
    TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
 
    m_mtx_ramp.lock();
-   m_curRampMode->onScanInit();
+   // ramp mode may change while we do the lock...
+   RampMode* rm = m_curRampMode;
+   rm->onScanInit();
    m_mtx_ramp.unlock();
 
    clearRing( m_garbageRoot );
 
    m_mtx_ramp.lock();
-   m_curRampMode->onScanComplete();
-   m_thresholdActive = m_curRampMode->activeLevel();
-   m_thresholdNormal = m_curRampMode->normalLevel();
+   rm->onScanComplete();
+   m_thresholdActive = rm->activeLevel();
+   m_thresholdNormal = rm->normalLevel();
    m_mtx_ramp.unlock();
 }
 

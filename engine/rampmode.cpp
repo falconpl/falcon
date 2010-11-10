@@ -27,7 +27,23 @@ void RampMode::reset()
 }
 
 //=========================================================
+// A void ramp mode.
+
+RampNone::~RampNone()
+{
+}
+
+void RampNone::onScanInit()
+{
+}
+
+void RampNone::onScanComplete()
+{
+}
+
+//=========================================================
 //
+
 
 
 RampStrict::~RampStrict()
