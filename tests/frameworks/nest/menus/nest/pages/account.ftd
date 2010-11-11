@@ -1,3 +1,4 @@
+<? if not Nest.allowed( Nest.AL.USER, "unauthorized" ): return ?>
 <h1>Account Setting</h1>
 <p>Here you can see your account settings. Actually, this is only a stub, so there is nothing to do...</p>
 <table>

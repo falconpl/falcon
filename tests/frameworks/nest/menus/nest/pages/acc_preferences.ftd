@@ -1,3 +1,4 @@
+<? if not Nest.allowed( Nest.AL.USER, "unauthorized" ): return ?>
 <table cellpadding="5">
 <tbody>
 <tr><td valign="top"><? Nest.service( "Menu", "side" ).render() ?></td>

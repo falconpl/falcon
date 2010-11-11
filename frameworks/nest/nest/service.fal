@@ -160,9 +160,6 @@ class Service( instance ) from NestModule( instance )
    */
    function configure( config )
       self.configuration = config
-      if "skin" in config
-         self.skin.value = config["skin"]
-      end
    end
    
    /*# Hook called when the service is loaded.
