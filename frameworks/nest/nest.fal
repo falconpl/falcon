@@ -16,7 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-directive version = 0x010000
+const _version = "1.0"
 directive lang = "en_US"
 
 import NestError from self.error as NestError
@@ -932,8 +932,7 @@ object Nest
        @return A version string in format major.minor
    */
    function getVersion()
-      ver = vmModuleVersionInfo()
-      return @"$(ver[0]).$(ver[1])"
+      return _version
    end
    //=============================================================
    // Logging functions

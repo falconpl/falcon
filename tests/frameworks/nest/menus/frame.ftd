@@ -20,6 +20,6 @@
    <p class="gray">To login, enter "user" / "user" or "admin" / "admin".</p>
    <? end ?>
    <? Nest.service( "Menu", "footer", [ "skin" => "skin_footer.fal" ] ).render() ?>
-   <p class="signature">Nest test suite.</p>
+   <p class="signature">Nest <?= Nest.getVersion() ?> test suite.</p>
 </body>
 </html>
