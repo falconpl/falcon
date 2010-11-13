@@ -412,11 +412,14 @@ class Select( name, prompt, opts, maker ) from Field( name, maker )
    prompt = prompt
    type = "select"
    options = opts
+   // Select field default is single selection.
+   multiple = false
 
    function toString()
       value = self.value ? self.value : self.dvalue
       name = self.fullName()
       str = @'<select name="$(name)" id="$(name)"'
+      if self.multiple: str += ' multiple="multiple"'
       str += self._makeContent()
       str += ">\n"
       for opt in self.options
