@@ -5,10 +5,10 @@
 
    FILE: index.fal
 
-   Test - Simple session site.
+   Test - Basic menu management
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 26 Jun 2010 14:21:48 +0200
+   Begin: Sat, 23 Oct 2010 22:16:43 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
@@ -18,5 +18,13 @@
 
 load nest
 
-//Nest.stylesheets += "hello.css"
+/*Nest.debug = true
+Nest.log_level = 3
+Nest.pcheck = true
+*/
+Nest.site_nest_dir = "../external_nest"
+Nest.stylesheets += "nest.css"
+Nest.frame = .[ include "../external_nest/frame.ftd" ]
+Nest.addHook( "TableCheckUser" )
+
 Nest.route()

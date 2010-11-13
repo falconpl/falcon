@@ -1,0 +1,20 @@
+<? function skin( vars, srv ) ?>
+<p style="text-align:center">
+   <?
+      entries = []
+      for item in vars.active_items
+         // we're not interested in external links
+         if item.wnd: continue
+
+         if item.current
+            entries += item.text
+         else
+            if not item.target: continue
+            entries += @'<a href="$(item.target)">$(item.text)</a>'
+         end
+      end
+
+      > "&nbsp;&nbsp;-&nbsp;&nbsp;".merge( entries )
+   ?>
+</p>
+<? end ?>

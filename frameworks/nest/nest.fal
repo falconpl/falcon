@@ -932,10 +932,8 @@ object Nest
        @return A version string in format major.minor
    */
    function getVersion()
-      ver = vmGetVersion()
-      n1 = ver / 0x1000
-      n2 = (ver / 0x10) && 0xFF
-      return @"$(n1).$(n2)"
+      ver = vmModuleVersionInfo()
+      return @"$(ver[0]).$(ver[1])"
    end
    //=============================================================
    // Logging functions
