@@ -3,9 +3,9 @@
 
    Nest - Falcon web applcation engine
 
-   FILE: readdir/main.fal
+   FILE: Form.fal
 
-   Service used to show directory entries.
+   Service for simpler handling of web forms.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 27 Jun 2010 14:01:38 +0200
@@ -17,191 +17,562 @@
 */
 
 import from nest
+import NestError from nest as NestError
 import from nest.bindings in b
 
 
 /*# Service receiving the variables in a form.
-
-   This service is a useful shortcut and organizer for form checking code.
-
-   It must be instantiated with a non-null intance. When instantiated, it moves
-   all the variables named "<instance>.xxx" in self.formVars. Then, it launches
-   the relative filters, which may alter them by returning a non-nil value
-   (will be transformed to a string).
+   @optparam instance Instance of the service.
    
-   For meta-information about the form processing, the filters may use the "formResult"
-   hook.
+   This service is a useful generator and manager of web forms.
+
+   Writing a web form is relatively easy, but automation of web forms is a complex matter.
+   Among the things that a modern web site needs to do with form is:
+   - Filling the form with data coming from a data source;
+   - Validating the form data prior remote post;
+   - Validating the form data after it has been received;
+   - Storing the validated data on a data source;
+   - Indicating validation problems to the user, and prompting him with its own previously submitted input.
+
+   The Nest Form service can have also the role to bind with a data entity, completing
+   the data manager services.
 */
-class Form( instance, options ) from nest.Service( instance, options )
-   //# Functions accepting and checking the variables in the form.
-   formFilters = nest.ServiceVar( b.ConfigBinder )
-   //# Global check on the form; a function called as check( self, vars). Return goes in formResult.
+class Form( instance ) from nest.Service( instance )
+   //# Config - DB Entity optionally bound with this form
+   entity = nest.ServiceVar( b.ConfigBinder )
+   
+   //# Config - Global check on the form; a function called as check( self, vars).
    check = nest.ServiceVar( b.ConfigBinder )
-   //# Action for the form submit
-   action = nest.ServiceVar( b.ConfigBinder )
-   //# Data to be displayed in the form.
-   formData = nest.ServiceVar( b.ConfigBinder )
-   //# Things to do below the form. For now, verbatim
-   formActions = nest.ServiceVar( b.ConfigBinder )
-   //# DOM ID of the form
-   formId = nest.ServiceVar( b.ConfigBinder )
-   //# CSS Class of the form
-   formClass = nest.ServiceVar( b.ConfigBinder )
-   //# Variables in the form as posted by the users
-   formVars = nest.ServiceVar()
-   //# Results that the final user may be interested in
-   formResults = nest.ServiceVar()
 
-   function startUp()
-      if not self.instance
-         raise nest.NestError( nest.NestError.other, "Service \"FormChecker\" must be given an instance name" )
-      end
-   end
+   //# Config - Action for the form submit
+   handler = nest.ServiceVar( b.ConfigBinder )
 
-   function run()
-      Nest.logi( "Entering the " + self.fullName() + " service" )
+   //# Config - Actions to be Things to do below the form. 
+   actions = nest.ServiceVar( b.ConfigBinder )
 
+   //# Config - Fields in an array.
+   fields = nest.ServiceVar( b.ConfigBinder )
+
+   //# Skin - Skin used for input fields -- and select fields.
+   skin_input = nest.ServiceVar( b.SkinBinder )
+   
+   //# Skin - Skin used for multiple input fields (horizontal grouping)
+   skin_multiple_h = nest.ServiceVar( b.SkinBinder )
+   
+   //# Skin - Skin used for multiple input fields (vertical grouping)
+   skin_multiple_v = nest.ServiceVar( b.SkinBinder )
+
+   //# Skin - Skin for text areas and wide fields.
+   skin_wide = nest.ServiceVar( b.SkinBinder )
+
+   //# Skin - Skin rendering the result of an operation
+   skin_result = nest.ServiceVar( b.SkinBinder )
+
+   //# Field values, extracted directly for simpler access
+   values = nest.ServiceVar()
+
+   //# Result that the final user may be interested in -- as a pre-formatted HTML text
+   result = nest.ServiceVar()
+
+   //# Automatically set to UUENC when adding an upload field.
+   enctype= nest.ServiceVar()
+   
+   function startup()
       // check actions
-      if self.action.value == nil
-         self.action.value = Nest.pageLink()
+      if self.handler.value == nil
+         self.handler.value = Nest.pageLink()
+      end
+
+      if Nest.pcheck and not self.fields.value.typeId() == ArrayType
+         raise NestError( NestError.pcheck, "", "fields must be array" )
       end
       
-      // extract the variables
-      formVars = [=>]
-      for k, v in Nest.inputVars
-         if k.startsWith( self.instance + "." )
-            if Nest.log_level >= 3: Nest.logd( @"Adding form variable \"$k\"=\"$v\"" )
-            formVars[ k[self.instance.len()+1:] ] = v
+      for f in self.fields.value
+         if Nest.pcheck and not f.derivedFrom( "Field" )
+            raise NestError( NestError.pcheck, "", "fields must be array of Field and is " + f.baseClass() )
+         end
+
+         f.setService( self )
+      end
+
+      // suppose all is ok
+      failure = false
+      // something to do?
+      fields = self.fields.value
+      grabbed = [=>]
+      for f in fields
+         value = f.grabInputValue()
+         if value: grabbed[f.name] = value
+
+         if f.check
+            if ( f.failure = f.check( value, f ) )
+               failure = true
+            end
          end
       end
 
-      // something to do?
-      if formVars
-         self.formVars.value = formVars
-         for funcName, func in self.formFilters.value
-            if funcName in formVars
-               if Nest.log_level >= 3: Nest.logd( @"Calling form filter for \"$funcName\"" )
-               res = func( self, funcName, formVars[funcName] )
-               if Nest.log_level >= 3: Nest.logd( @"Result for filter \"$funcName\": $res" )
-               if res: formVars[funcName] = res
-            end
-         end
-
+      if Nest.log_level >= 3: Nest.logd( @"Form values: " + grabbed.describe() )
+      if grabbed
+         self.values.value = grabbed
+         
          check = self.check.value
          if check.isCallable()
             check = check.base()
-            Nest.logi( "Calling overall form check function" )
-            res = check( self, bless(formVars) )
-            if Nest.log_level >= 3: Nest.logd( @"Overall check function result: $res" )
-            self.formResults.value = res
+            Nest.logi( "Calling overall form check function " )
+            if not check( self, bless(grabbed) )
+               failure = true
+            end
          end
+
+         // should we save the entity?
+         if not failure
+            self._storeEntity()
+         end
+      else
+         // should we load the values from the entity?
+         self._loadEntity()
+      end         
+   end
+
+   function _storeEntity()
+   end
+
+   function _loadEntity()
+   end
+
+   /*# Gets the fields by name.
+      @return A dictionary of field-name => @a Field class instane.
+   */
+   function getFieldsByName()
+      data = self.fields.value
+      fields = [=>]
+      for f in data
+         fields[f.name] = f
       end
-         
-   end
-
-   function __get_results()
-      if self.formVars.isSet
-         return self.formResults.value
-      end
-   end
-
-    function __get_vars()
-      return self.formVars.value
-   end
-
-   /*# Creates a field given a definition */
-   function makeField( field )
-      fvals = self.formVars.value
-      value = field.name in fvals ? fvals[field.name] : ""
-      
-      return field.render( self.instance, value )
+      return bless(fields)
    end
 end
 
 
-class Field( name, desc, type, extra, opts, defValue )
+
+class Field( name, maker )
+   /*# Function used to transform the data source into this value.
+      Prototype:
+      @code
+         functon getter( dbrecord, field )
+      @endcode
+
+      Where @b dbrecord is a @a DBRecord instance, and field is
+      a @b Field instance.
+
+      If given, this has the role to set the value of the field
+      when an entity is peeked.
+
+      Otherwise, if @a Field.field property is set to a string,
+      the required value will just be copied.
+   */
+   getter = nil
+
+   /*# Function used to transform a web value in the data source.
+      Prototype:
+      @code
+         functon setter( field, formingData )
+      @endcode
+
+      Where field is this @b Field instance, and formingData is
+      a dictionary of field-name/value pairs where this field
+      should set its value.
+
+      If not given and if this field has a @a Field.field name,
+      the incoming data will be simply set as the value for the
+      field key.
+   */
+   setter = nil
+
+   //# Underlying data field name.
+   //# May be used by this Field to get or set directly a value from the underlying data.
+   field = nil
+
+   //# Function to be called back to check if this value is valid in this field.
+   check = nil
+   
    name = name
-   desc = desc
-   type = type
-   extra = extra ? extra : ""
-   opts = opts
-   dvalue = defValue
+   srv = nil
+   type = nil
+   dvalue = nil
+   value = nil
+   
+   id = nil
+   cls = nil
+   disabled  = nil
+   readonly  = nil
 
-   function render( instance, value )
-      fname = instance + "." + self.name
-      res = ""
-      
-      if self.desc
-         desc = htmlEscape(self.desc)
-         res += @'
-            <label id="label_$(self.name)" for="$(self.name)">$(desc)</label>
-            '
+   //# Skin used by this field to render itself.
+   skin = {=>}
+   
+   //# Message to be displayed as a "field failure"
+   failure = nil
+
+   //# javascript handler for when the element got the focus
+   onfocus = nil 
+   //# javascript handler for when the element lost the focus
+   onblur = nil
+   //# javascript handler for when some text was selected
+   onselect = nil
+   //# javascript handler for when the element value was changed
+   onchange = nil
+
+   //# javascript handler for when the a pointer button was clicked
+   onclick = nil
+   //# javascript handler for when a pointer button was double clicked
+   ondblclick = nil
+   //# javascript handler for when a pointer button was pressed down
+   onmousedown = nil
+   //# javascript handler for when a pointer button was released
+   onmouseup = nil
+   //# javascript handler for when a pointer was moved onto
+   onmouseover = nil
+   //# javascript handler for when a pointer was moved within
+   onmousemove = nil
+   //# javascript handler for when a pointer was moved away
+   onmouseout = nil
+   //# javascript handler for when a key was pressed and released
+   onkeypress = nil
+   //# javascript handler for when a key was pressed down
+   onkeydown = nil
+   //# javascript handler for when a key was released
+   onkeyup = nil
+   
+   init
+      if maker: self.apply( maker )
+   end
+
+   function fullName()
+      if self.srv: instance = self.srv.instance
+      return instance ? instance +"." + self.name : self.name
+   end
+   
+   function toString()
+      name = self.fullName()
+      str = @'<input type="$(self.type)" name="$(name)" id="$(name)"'
+      str += self._makeValue()
+      str += self._makeContent()
+      str += "/>"
+      return str
+   end
+
+   function _makeValue()
+      value = self.value ? self.value : self.dvalue
+      if value: return " value=\"" + htmlEscape( value.toString() ) + "\""
+      return ""
+   end
+   
+   function _makeContent()
+      str = ""
+      if self.id: str += " id=\"" + htmlEscape( self.id ) + "\""
+      if self.cls: str += " class=\"" + htmlEscape( self.cls ) + "\""
+      if self.onfocus: str += " onfocus=\"" + htmlEscape( self.onfocus ) + "\""
+      if self.onblur: str += " onblur=\"" + htmlEscape( self.onblur ) + "\""
+      if self.onselect: str += " onselect=\"" + htmlEscape( self.onselect ) + "\""
+      if self.onchange: str += " onchange=\"" + htmlEscape( self.onchange ) + "\""
+      if self.onclick: str += " onclick=\"" + htmlEscape( self.onclick ) + "\""
+      if self.onclick: str += " onclick=\"" + htmlEscape( self.onclick ) + "\""
+      if self.onmousedown: str += " onmousedown=\"" + htmlEscape( self.onmousedown ) + "\""
+      if self.onmouseup: str += " onmouseup=\"" + htmlEscape( self.onmouseup ) + "\""
+      if self.onmouseover: str += " onmouseover=\"" + htmlEscape( self.onmouseover ) + "\""
+      if self.onmousemove: str += " onmousemove=\"" + htmlEscape( self.onmousemove ) + "\""
+      if self.onmouseout: str += " onmouseout=\"" + htmlEscape( self.onmouseout ) + "\""
+      if self.onkeypress: str += " onkeypress=\"" + htmlEscape( self.onkeypress ) + "\""
+      if self.onkeydown: str += " onkeydown=\"" + htmlEscape( self.onkeydown ) + "\""
+      if self.onkeyup: str += " onkeyup=\"" + htmlEscape( self.onkeyup ) + "\""
+      str += self._makeExtraContent()
+      return str
+   end
+
+   function _makeExtraContent()
+      return ""
+   end
+
+   /*# Grabs the data incoming from a DB entity
+      @param dbrec a @a DBRecord instance
+   */
+   function grabData( dbrec )
+      data= dbrec.data
+      if self.getter
+         fval = self.getter( data, self )
+         self.value = fval
+      elif self.field in data
+         fval = data[self.field]
+         self.value = fval
       end
+   end
 
-      if not value and self.dvalue: value = strEscape( self.dvalue.toString() )
-      
-      // select is treated specially.
-      if self.type == "select"
-         res += @'<select name="$(fname)" id="$(self.name)" $(self.extra)>'
-         
-         for opt in self.opts
-            res += "\n" + opt.render( value )
-         end
 
-         res += "\n</select>\n"
-      else
-         // otherwise, things are simpler.
-         if self.type == "password"
-            value = ""
-         else
-            value = strEscape( value )
-         end
-         
-         res += @'
-            <input type="$(self.type)" name="$(fname)" id="$(self.name)" value="$(value)" $(self.extra)/>
-         '
+   /*# Readies a data to be stored in a DBEntity
+      @param forming A dictionary of field name => values entries.
+   */
+   function applyData( forming )
+      if self.setter
+         self.setter( self, forming )
+      elif self.field
+         forming[self.field] = self.value
       end
+   end
+
+   //# Grabs the value of this field from nest input values
+   function grabInputValue()
+      instance = self.srv.instance
+      fname = instance ? instance + "." + self.name : self.name
+      if fname in Nest.inputVars
+         value = Nest.inputVars[ fname ]
+         self.value = value
+         return value
+      end
+   end
+
+/*
+   function setValidator( jsfunc )
+      instance = self.srv.instance
+      fname = instance ? instance + "_" + self.name : self.name
       
-      return res
+      self.onkeypress = @"javascript:$(fname)()"
+      self.srv.scripts += @ "function $(fname)(){\n" + jsfunc + "\n}"
+   end
+*/
+   // internal
+   function setSerivce( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
    end
    
 end
 
 
-class MultiField( name, desc, fields )
-   name = name
-   desc = desc
-   fields = fields
+class TextField( name, prompt, maker ) from Field( name, maker )
+   prompt = prompt
+   type = "text"
+   size = nil
+   maxlength = nil
 
-   function render( instance, value )
-      res = ""
-      
-      if self.desc
-         desc = htmlEscape(self.desc)
-         res += @'
-            <label id="label_$(self.name)" for="$(self.name)">$(desc)</label>
-            '
-      end
+   function _makeExtraContent()
+      str = ""
+      if self.size: str += " size=\"" + htmlEscape( self.size.toString() ) + "\""
+      if self.maxlength: str += " maxlength=\"" + htmlEscape( self.maxlength.toString() ) + "\""
+      return str
+   end
 
-      for field in self.fields
-         res += field.render( instance, value )
-      end
 
-      return res
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = srv.skin_input.value
+   end
+   
+end
+
+
+class PasswordField( name, prompt, maker ) from TextField( name, prompt, maker )
+   type = "password"
+end
+
+
+class HiddenField( name, value, maker ) from Field( name, maker )
+   type = "hidden"
+   value = value
+end
+
+class TextArea( name, prompt, maker ) from Field( name, maker )
+   prompt = prompt
+   type = "textarea"
+   rows = nil
+   cols = nil
+
+   function toString()
+      name = self.fullName()
+      str = @'<textarea name="$(name)" id="$(name)"'
+      str += self._makeContent()
+      if self.cols: str += " cols=\"" + htmlEscape( self.cols.toString() ) + "\""
+      if self.rows: str += " rows=\"" + htmlEscape( self.rows.toString() ) + "\""
+      str += ">"
+      value = self.value ? self.value : self.dvalue
+      if value: str += htmlEscape( value.toString() )
+      str += "</textarea>"
+      return str
+   end
+
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = srv.skin_wide.value
    end
 end
+
+
+class Select( name, prompt, opts, maker ) from Field( name, maker )
+   prompt = prompt
+   type = "select"
+   options = opts
+
+   function toString()
+      value = self.value ? self.value : self.dvalue
+      name = self.fullName()
+      str = @'<select name="$(name)" id="$(name)"'
+      str += self._makeContent()
+      str += ">\n"
+      for opt in self.options
+         opt_value = toString(opt.value)
+         str += "<option value=\"" + htmlEscape(opt_value) +"\""
+         if opt_value == value
+            str += ' selected="selected"'
+         end
+         str += ">" + htmlEscape( toString(opt.desc) ) + "</option>\n"
+      end
+      
+      str += "</select>"
+      return str      
+   end
+   
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = srv.skin_input.value
+   end
+   
+end
+
+
+class MultiField( name, prompt, options, maker ) from Field( name, maker )
+   prompt = prompt
+   options = options
+   vertical = false
+   multiple = false
+    
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = self.vertical ? srv.skin_multiple_v.value : srv.skin_multiple_h.value
+   end
+
+   /*# Renders all the options in this multiple field.
+      @return An array of string pairs (description, rendered input field).
+
+      To be used directly by skin_multiple_h or skin_multiple_v
+   */
+   function makeOptions()
+      res = []
+      for opt in self.options
+         res.add( [opt.desc, self.makeSingleOption( opt )] )
+      end
+      return res
+   end
+
+   function makeSingleOption( opt )
+      name = self.srv.instance ? self.srv.instance +"." + self.name : self.name
+      id = name + "_" + htmlEscape( opt.value )
+      if self.multiple: name += "[]"
+      str = @'<input type="$(self.type)" name="$(name)" id="$(id)"'
+      str += self._makeValue( opt )
+      str += self._makeContent()
+      str += "/>"
+      return str
+   end
+
+end
+
+
+class CheckBox( name, prompt, opts, maker ) from MultiField( name, prompt, opts, maker )
+   type = "checkbox"
+   multiple = true
+   
+   function _makeValue( opt )
+      str = " value=\"" +htmlEscape( opt.value ) + "\""
+      if opt.value in self.value
+         str += " checked=\"checked\""
+      end
+      return str
+   end
+   
+end
+
+class Radio( name, prompt, opts, maker ) from MultiField( name, prompt, opts, maker )
+   type = "radio"
+
+   function _makeValue( opt )
+      str = " value=\"" +htmlEscape( opt.value.toString() ) + "\""
+      if opt.value == self.value
+         str += " checked=\"checked\""
+      end
+      return str
+   end
+end
+
+
+class GroupField( name, prompt, fields, maker ) from Field( name, maker )
+   prompt = prompt
+   fields = fields
+   vertical = false
+
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = self.vertical ? srv.skin_multiple_v.value : srv.skin_multiple_h.value
+   end
+
+   function makeOptions()
+      res = []
+      for field in self.fields
+         res.add( [field.prompt, field.toString() ] )
+      end
+      return res
+   end
+
+   function grabInputValue()
+      data = [=>]
+      for field in self.fields
+         field.setSerivce( self.srv )
+         value = field.grabInputValue()
+         data[field.name] = value
+      end
+      return data
+   end
+
+
+   function grabData( dbrec )
+      for field in self.fields
+         field.grabData( dbrec )
+      end
+   end
+
+   function applyData( forming )
+      if self.setter
+         val = [=>]
+         for field in self.fields
+            val[field.name] = field.value
+         end
+         self.value = val
+         self.setter( self, forming )
+      end
+   end
+   
+end
+
+class UploadFile( name, prompt, maker ) from Field( name, maker )
+   prompt = prompt
+   type = "file"
+
+   
+   function setService( srv )
+      if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
+      self.srv = srv
+      self.skin = self.skin_input
+      srv.encoding.value = "enctype=\"application/x-www-form-urlencoded\""
+   end
+end
+
 
 
 class Option( value, desc )
    value = value
-   desc = desc
-
-   function render( val )
-      esc_val = self.value.escape()
-      desc = htmlEscape( self.desc )
-      sel = val == self.value ? ' selected="yes"' : ""
-      
-      return @ "<option value=\"$(esc_val)\"$(sel)>$(desc)</option>\n"
-   end
-   
+   desc = desc   
 end
+

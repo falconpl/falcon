@@ -1,0 +1,7 @@
+<? function skin( vars, srv, field ) ?>
+   <label><?= htmlEscape(field.prompt) ?></label>
+   <? for desc, infield in field.makeOptions() ?>
+      <?=infield?><?= desc ?><br/>
+   <? end ?>
+   <? if field.failure ?><span class="failure"><?=field.failure?></span><? end ?>
+<? end ?>

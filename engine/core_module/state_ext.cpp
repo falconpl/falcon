@@ -66,7 +66,7 @@ FALCON_FUNC  Object_getState( ::Falcon::VMachine *vm )
 /*#
    @method apply Object
    @brief Applies the values in a dictionary to the corresponding properties.
-   @param dict A "stamp" dictionary.
+   @param dict A "stamp" dictionary, or a sequence of named values.
    @raise AccessError if some property listed in the dictionary is not defined.
    @return This same object.
 
@@ -87,16 +87,41 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
 {
    Item* i_dict = vm->param( 0 );
 
-   if ( i_dict == 0 || ! i_dict->isDict() )
+   if ( i_dict == 0 || ! (i_dict->isDict() || i_dict->isArray()) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin(e_orig_runtime)
-            .extra( "D") );
+            .extra( "D|A") );
    }
 
    CoreObject* self = vm->self().asObject();
-   self->apply( i_dict->asDict()->items(), true );
-   vm->retval( self );
+   if ( i_dict->isDict() )
+   {
+      self->apply( i_dict->asDict()->items(), true );
+      vm->retval( self );
+   }
+   else
+   {
+      ItemArray& arr = i_dict->asArray()->items();
+      for( int i = 0; i < arr.length() ; ++i )
+      {
+         const Item& item = arr[i];
+         if ( item.isFutureBind() )
+         {
+            if( ! self->setProperty( *item.asLBind(), item.asFutureBind() ) ) {
+               throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                       .origin(e_orig_runtime)
+                                       .extra( "Missing property: " + *item.asLBind() ) );
+            }
+         }
+         else
+         {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                        .origin(e_orig_runtime)
+                        .extra( "D|A") );
+         }
+      }
+   }
 }
 
 /*#

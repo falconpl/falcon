@@ -1,0 +1,47 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Form/utils.fal
+
+   Utilities for the Form service.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.srv.Form in ff
+import Select from nest.srv.Form as Select
+import GroupField from nest.srv.Form as GroupField
+import GroupField from nest.srv.Form as GroupField
+
+
+_days = map( { n => ff.Option( n, n ) }, [].comp([1:31] ) )
+_months = .[
+   ff.Option( 1, i"January" )
+   ff.Option( 2, i"February" )
+   ff.Option( 3, i"March" )
+   ff.Option( 4, i"April" )
+   ff.Option( 5, i"May" )
+   ff.Option( 6, i"June" )
+   ff.Option( 7, i"July" )
+   ff.Option( 8, i"August" )
+   ff.Option( 9, i"September" )
+   ff.Option( 10, i"October" )
+   ff.Option( 11, i"November" )
+   ff.Option( 12, i"December" )
+]
+
+class DateSelect from ff.GroupField( "birthday", i"Birthday",
+   .[
+      ff.Select( "birthday_day", "", _days )
+      ff.Select( "birthday_month", "", _months )
+      ff.TextField( "birthday_year", "", .[ size|4 maxlength|4 ] )
+   ])
+end

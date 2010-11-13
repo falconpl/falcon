@@ -1,0 +1,5 @@
+<? function skin( vars, srv, field ) ?>
+   <label for="<?=field.fullName()?>" ><?= field.prompt ?></label>
+   <?=field?>
+   <? if field.failure ?><span class="failure"><?=field.failure?></span><? end ?>
+<? end ?>
