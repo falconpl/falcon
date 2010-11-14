@@ -1,4 +1,4 @@
-/* @page services Anatomy of a service
+/* @page services Anatomy of a Service
 
 Services are functional modules of Nest that perform background operations
 on behalf of the calling page, coordinate with each other to achieve a common
@@ -66,7 +66,7 @@ main code) or to be used as callbacks by the service on need.
 Services with an instance name can have their own configuration placed under
 the {{config}} subdirectory under the service location, named after their
 instance name. So, a Calendar service being loaded as "mine" instance will
-search for its configuration under {{nest/srv/Calendar/config/mine.fal}}.
+search for its configuration under {{nest/srv/Calendar/mine/mine.fal}}.
 If that file is not found, the file {{config.fal}} will be loaded instead.
 
 @subsection srv_live_cfg Live configurations
@@ -87,5 +87,358 @@ a result similar to the just seen example.
 
 The values passed to the service in this way override the ones
 eventually found in the configuration file, and allow for dynamic
-re
+reconfiguration of services at load time.
+
+@subsection service_cfg_prio Configuration priority.
+
+The service will load only the first configuration file it finds. If
+there is an instance-specific configuration file, that one will be loaded;
+if not found, the main service file will be loaded, and if none if found,
+a default file may be loaded from the **nest** main directory.
+
+@note In case it is useful for a service configuration module to load a
+master common configuration, it may use import and then republish the
+variables locally, as in the following example:
+
+@code
+import from "../common.fal" in common
+
+// declare (repeat) the used common variables
+var1 = common.var1
+var2 = common.var2
+
+local = "A local variable"
+@endcode
+
+@subsection service_cfg_callback
+
+A simple way for a service to read its configuration is just that of overriding the
+@a Service.configure method.
+
+The method receives the dictionary of configuration key/value pairs as the parameter.
+The default behavior is that of registering the dictionary in the @a Service.configuration
+property, from where configuration settings can be read later on by the @a Service.setup
+or @a Service.run methods. Other than that, the service variables may be automatically
+bound with some configuration keys; for that, see later the paragraph @a binder_config.
+
+@section srvice_vars Service variables
+
+Service variables are special variables declared in the service class body through the
+following statement.
+
+@code
+   ...
+   srv_var = ServiceVar( [binding] )
+   ...
+@endcode
+
+Service variables are actually instances of a class named @a ServiceVar, which has some
+special features.
+- Their value can be automatically injected at startup by Nest through the binding mechanism.
+- They can be "listened" for change "asynchronously".
+- Their value is extracted and provided as a blessed dictionary to skins during the render step.
+
+Bindings are algorithm through which the variables can be initialized or saved. All the bindings
+are found in the @b nest.bindings module, and are usually imported as:
+
+@code
+   import from nest.bindings in b
+   ...
+class MyService( instance ) from Service( instance )
+   ...
+   srv_var = ServiceVar( b.InputBinder )
+   ...
+   
+@endcode
+
+@note Be careful when using short prefix names; when you create a namespace like "b", then
+   "b" becomes invalid as a variable, property or symbol name.
+
+We'll briefly discuss the various bindings algorithms in this section.
+
+Service variables are actually instances of the @a ServiceVar class. As such, their
+value must be accessed throught  the @a ServiceVar.value accessor. The @b ServiceVar.isSet
+accessor will indicate if a value (even nil) has been saved in the the value property, that is
+if the variable has been directly set.
+
+@note Both the @a ServiceVar.value and @a ServiceVar.isSet properties are actually
+accessors, and so, setting and reading them is a relatively heavy operation. Cache those
+properties in a local variable when possible.
+
+Service variables needs not to be bound. It may be useful to create a plain service variable
+without a direct binding so that its value is set during the @a Service.run process, and
+passed as data to be rendered to the service skins.
+
+
+@subsection var_listen Listening to service variables.
+
+Whenever the value of a service variable changes, it is possible to notify automatically
+listeners.
+
+To subscribe to service variable changes, the @a ServiceVar.listen method can be used.
+The registered callback function will be called with the new value as the parameter.
+
+@note If the handler needs to know the name or context of the service variable, use
+      a callable array storing this informations as the callback item, like in the following
+      example:
+
+@code
+function onThingsChanged( srv, varname, value )
+   > @"Variable $(varname) changed into $(value) in service "+ srv.fullName()
+end
+
+service  = Nest.service( "TheService" )
+service.some_var.listen( .[ onThingsChanged service "some_var" ] )
+@endcode
+
+
+
+@subsection binder_config Configuration variable binding
+
+Configuration variables can be bound to servive variables through the @a ConfigBinder object.
+Creating a @a ServiceVar instance with @a ConfigBinder as the parameter will cause the values
+of configuration variables with the same name of the property to be automatically stored
+before the @a Service.startup method is invoked.
+
+@subsection binder_input Input variable bindings
+
+Input variables can be bound to servive variables through the following binders:
+- @a GetBinder: binds fields sent via HTTP queries.
+- @a PostBinder: binds fields sent via HTTP POST requests (usually, HTML form fields).
+- @a CookieBinder: binds fields sent via HTTP Cookie request headers.
+- @a WebVarBinder: binds fields sent via HTTP Cookie request headers, POST fields or GET queries,
+   whichever comes first.
+- @a InputVarBinder: binds the varable with one an input value (generally POST or GET fields) after
+   that it has been processed by the Nest input variable filter (@a Nest.filter).
+
+Creating a @a ServiceVar instance with any of the above classes as the parameter will cause
+the values of some of the input sources in web applications to be set as the variable value
+before the @a Service.startup method is invoked.
+
+If the variable is not present in the input source, the @a ServiceVar.value property will be nil
+and @a ServiceVar.isSet will be false.
+
+Keep in mind that all the input values are strings, or array/dictionaries of strings. If the
+variable should semantically be a nunber, it is necessary to transform it via the @a int
+or @a float functions.
+
+@subsection binder_session Session variable bindings
+
+The session binder (@a SessionBinder object) can be used to make a server variable persistent
+across sessions that is, across calls coming from the same remote user (registered or not). 
+
+The value of service variables may be anything that can be safely serialized and restored
+across a stream through the falcon standard @a serialize function.
+
+To know if the value of session variables has been properly restored, it is enough to
+check the @a ServiceVar.isSet member. It will be true in case of full restore.
+
+In case the variables are not restored, the property @a Nest.sessionExpired can be checked
+to determine if the incoming entity has been assinged a new session (@a Nest.sessionExpired == false),
+or if it was owner of a session that has been destroyed in or closed in the meanwhile.
+
+Error in restoring the session would be traced before the services are possibly loaded.
+
+@subsection ambient_vars Ambient Service variables
+
+Nest provides a simple way to share the exact same service variable across different modules.
+
+The @a Nest.ambient method allows to create a Service Variable, eventually bound, that can be
+then invoked by name by different modules as well as from the calling application.
+
+For example,
+
+@code
+// Srv1.fal
+class Srv1(inst) from Service(inst)
+   my_var = Nest.ambient( "ambient_var" )
+   ...
+end
+
+// Srv2.fal
+class Srv2(inst) from Service(inst)
+   some_var = Nest.ambient( "ambient_var" )
+   ...
+end
+@endcode
+
+In the above example, the "ambient_var" variable is shared across the two services, where it comes
+to be locally known as @b my_var or @b some_var (althought it is reccomendable to use the same
+name for every user).
+
+The service variable created in this way is exactly the same instance for every user referencing it.
+However, the module defining it may decide to use a binder to initialize its value, passing it as a
+second optional paramter of @a Nest.ambient. The variable can be referenced without a binder by
+all the other modules or by the application; it will be properly bound to the owning module during
+the service resolution phase.
+
+
+@section serivce_skin Skins
+
+Skins are functions called to render the results of the work of a service to the final
+web page being formed. They usually (but not necessarily) are built to receive two paramters:
+
+- A dictionary of service variable names and the actual value they possesses.
+- The object instance of the calling service.
+
+Skins are usually stored in separate files that are to be found as fal, ftd or fam modules
+in the directories where service configuration data is found.
+
+They can be automatically loaded through a special binder called @a SkinBinder. Assigning
+a skin-bound service variable to a property marks it as a skin property. Upon resolution,
+the skin property will contain the function to be called to render the service.
+
+The @a Service base class has a property named @a Service.skin which is read by the default
+rendering process. Other skins may be defined by the services to simplify and granularize
+a complex rendering process. For example, a service that is meant to be rendered as a table
+of items may rely on its default @b skin to provide the overall framing and table setup,
+while it may use a new @b skin_row service variable to render each row.
+
+@note it is advisable to name service variable names meant to be skins with the @b skin_ prefix.
+      
+When assigned directly by the service code, the Skin value should be directly the function
+that will perform the rendering. 
+
+If not explicitly assinged in this way, the skin binder will try to find a function or callable
+item named after the service variable in the service configuration. The item in the configuration
+may also be a string representing a module name, in which case a moule with that name will be
+searched.
+
+Finally, the variable may be unreferenced in the configuration; in that case a module having the
+same name of the variable will be searched.
+
+The skin file search order is the following:
+   - <host site>/srv/<service>/<instance>
+   - <host site>/srv/<service>
+   - <Nest installation>/srv/<service>/<instance>
+   - <Nest installation>/srv/<service>
+
+The skin module must expose a function named "skin" at its topmost level.
+
+If a variable named after the skin-bound property is explicitly set in the configuration, then an
+error will be raised if the required skin is not found. Otherwise, the skin is considered optional
+(or to be filled by the service later on), and even if the binder can't find any module corresponding
+to the skin bound property name, it won't raise any error.
+
+Once resolved, skins are just functions. Sub-skins other than the @a Service.skin properties should
+be explicitly invoked by the master skin. For example, the following service is rendered through a table,
+and uses a separate skin to render each row:
+
+@code
+// srv/TheService.fal
+class TheService( inst ) from Service( inst )
+   ...
+   skin_row = ServiceBinder( b.SkinBinder )
+   ...
+   rows = ServiceVar()  // final contents
+   ...
+end
+
+// srv/TheService/skin.ftd
+<? function skin( vars, srv ) ?>
+   <table>
+   <tr><th>...</th></tr>
+   <? for data in vars.rows ?>
+      <? vars.skin_row( data, srv ) ?>
+   <? end ?>
+   </table>
+<? end ?>
+
+// srv/TheService/skin_row.ftd
+<? function skin( data, srv ) ?>
+   <tr>
+   <? for col in data ?>
+      <td><?= col ?></td>
+   <? end ?>
+   </tr>
+<? end ?>
+@endcode
+
+
+@subsection serivce_skin_alt Alternative Skins
+
+It is legal to change the a skin value explicitly during the lifetime of a service. So,
+a service may load different skins to pick the most adequate one to render itself. For
+example, services requiring confirm after a request, may alter their skin with the following
+code:
+
+@code
+class TheService( inst ) from Service( inst )
+   ...
+   skin_confirm = ServiceVar( b.SkinBinder )
+   ...
+   function run()
+      ...
+      if req == "delete"
+         // substitute the normal skin with a confirm request.
+         self.skin.value = self.skin_confirm.value
+      end
+   end
+   ...
+end
+@endcode
+
+@subsection serivce_skin_dyn Dynamic skin loading.
+
+Instead of creating a skin service variable, it is possible to use the dynamic skin loader
+to load an adequate skin at runtime. The @a SkinBinder.getSubSkin method can be directly
+called to search dynamically for a skin module with an arbitrary name.
+
+For exmple, the code in the previous section may be rewritten as:
+
+@code
+class TheService( inst ) from Service( inst )
+   ...
+   function run()
+      ...
+      if req == "delete"
+         // substitute the normal skin with a confirm request.
+         self.skin.value = b.SkinBinder( "skin_confirm", self )
+      end
+   end
+   ...
+end
+@endcode
+
+@section service_devel_life Life cycle of a service
+
+Services are initialized as normal classes. Their @b init method gets called right after filling
+the properties and before service startup, so it may be a good place where prepare the service
+structure variables.
+
+Right after, bindings are resolved and service variables gets bound to their value.
+
+After that, the service gets a chanche to check its status on the @a Service.startup callback.
+If something vital is wrong, the service may raise a @a NestError to stop the genration of the page.
+
+During the page generation, the service may be marked for rendering calling the @a Service.render
+method. This will tell Nest that the service will place some code to be seen by the user at a later
+moment.
+
+After all the page is generated and all the services are read, the @a Service.run() callback of
+every load service is called (in strict load order).
+
+When all the services are run, the @a Service.perform_render method is called. If the service doesn't
+want or need to be rendered, it may just override this method with a method doing nothing, or it may
+have its own rendering routine (directly printing the content that should be placed on the point
+where the @a Service.render() placeholder was left.
+
+The default behavior is that of
+- checking for the service authorization, and returning if @a Service.allowed returns false.
+- checking for the css_id and css_class variables, setting css_id to the name of the service if not previously set.
+- calling the skin if it's set to a callable value.
+
+Finally the finalize callback is called after the page has been generated, but before session variables are
+saved. This gives the service a last chance to save persistent data or clean held resources after the
+rendering step.
+
+Resuming, the service life cycle consists of:
+# initialization
+# variable binding
+# call of @a Service.startup
+# page generation and @a Service.render invocations.
+# call of @a Service.run callback in service load order
+# Rendering process via @a Service.perform_render
+# call of @a Service.finalize callback
+
 */

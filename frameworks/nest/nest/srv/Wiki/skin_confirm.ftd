@@ -1,0 +1,11 @@
+<? function skin( vars, srv ) ?>
+   <div id="nest_wiki_confirm">
+   <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
+      <input type="hidden" name="wka" value="del" />
+      <input type="hidden" name="wkc" value="1" />
+      <input type="hidden" name="wid" value="<?= strEscape(vars.wid) ?>" />
+      <p><?= @ i"Please, confirm the deletion of the page named \"$(vars.wid)\""?></p>
+      <button type="submit"/><?= i"Confirm" ?></button>
+   </form>
+   </div>
+<? end ?>

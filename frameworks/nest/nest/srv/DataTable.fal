@@ -53,15 +53,18 @@ class DataTable( instance ) from DataService( instance )
    //# Skin used to render each item
    skin_row = ServiceVar( b.SkinBinder  )
 
+   //# Skin used to render the various table partition links
+   skin_pages = ServiceVar( b.SkinBinder  )
+
    //# Skin used to render the global table actions
    skin_actions = ServiceVar( b.SkinBinder  )
    
-
    /*# Extracted data as a DBRecord vector */
    records = ServiceVar()
 
    _start = nil
    _count = nil
+   _tableSize = nil
    
    function startup()
       // initialize the base class
@@ -91,6 +94,174 @@ class DataTable( instance ) from DataService( instance )
       view = self.view.value
       entity = view.entity
       values = entity.table( view, self._start, self._count )
+
+      // is the table all seen?
+      self._tableSize = entity.count( view )
+      
       self.records.value = values
    end
+
+   function makeLinkBegin( extraFields )
+      return self.makeLinkTo(0, extraFields )
+   end
+
+   function makeLinkEnd( extraFields )
+      count = self._count
+      loc = self._tableSize 
+      if loc <= count or count == 0: return nil
+      if loc % count != 0
+         loc = (int(loc/count)+1)*count
+      else
+         loc -= count
+      end
+      
+      return self.makeLinkTo(loc, extraFields )
+   end
+
+   /*# Returns a link to the current page adding the field needed to change the start point of this table.
+      @param begin First record to be shown (0 based).
+      @optparam extraFields An optional dictionary of variable->value to be repeated in the link.
+
+      
+   */
+   function makeLinkTo( begin, extraFields )
+      startName = self.instance ? self.instance + ".start" : "start"
+      if extraFields
+         link = Nest.pageLink(nil, extraFields + [startName=>begin])
+      else
+         link = Nest.pageLink( nil, [startName=>begin] )
+      end
+
+      start = self._start
+      if start >= begin and start <= ( begin + self._count )
+         return ^+ link
+      end
+      return link
+   end
+
+   /*# Returns the paramters needed to create links to the section of this page.
+      @return A triplet of values: first record, record per page and record count.
+   */
+   function getTableParams()
+      return [self._start ? self._start : 0, self._count, self._tableSize]
+   end
+
+   /*# Creates an array of links pointing to the partitions of this table.
+      @param topName Text for the "begin" marker.
+      @param bottomName Text for the "bottom" marker.
+      @param preCount Maximum count of direct links to be shown to reach the first @b preCount pages.
+      @param postCount Maximum count of direct links to be shown to reach the last @b posCount pages.
+      @optparam extraFields An optional dictionary of variable->value to be repeated in the link.
+      @return An array of string pairs [description, link] to be shown by the skin.
+
+      If @b preCount is 0, then the link for all the pages will be generated.
+      
+      If @b postCount is 0, then only the last page will be generated.
+      
+      If there are some pages skipped in the middle between pre-count first N pages and postCount last N
+      pages, the place will be marked with an entry [nil, nil].
+
+      The caller may insert the current cursor rendering in this position. If the current position falls
+      within one of the rendered pages, the link (second field) will be oob'd.
+      
+      The method will return Nil if there aren't pages to be shown.
+      @see DataTable.makeCursorLinks
+   */
+   function makePageLinks( topName, bottomName, preCount, postCount, extraFields )
+      count = self._count
+      size = self._tableSize
+      if count == 0 or size <= count: return nil
+
+      links = [ [topName, self.makeLinkTo( 0, extraFields )] ]
+      pos = count
+      done = 1
+
+      // do precount pages
+      while pos + count < size
+         links.add( [pos, self.makeLinkTo( pos, extraFields )] )
+         ++done
+         pos += count
+         if preCount > 0 and preCount <= done
+            break
+         end
+      end
+
+      // do postCount pagest
+      pcpos = (int(size / count) - postCount) * count
+      if size % count != 0: pcpos += count
+
+      if pcpos > pos + count
+         // there's a gap
+         links.add( [nil, nil] )
+      else
+         // serve the post-count
+         pcpos = pos
+      end
+      
+      while pcpos + count < size
+         links.add( [pcpos, self.makeLinkTo( pcpos, extraFields )] )
+         pcpos += count
+      end
+
+      // make the last entry
+      links.add( [bottomName, self.makeLinkTo( pcpos, extraFields )] )
+
+      return links
+   end
+
+   /*# Creates a cursor around the current position.
+      @param name A description for the direction (i.e. "previous" or "more"); must include the variable $(count). 
+      @param direction True for forward (next), false for backward (previous).
+      @optparam multiple Array of other intervals to be returned.
+      @optparam extraFields An optional dictionary of variable->value to be repeated in the link.
+      @optparam force Generate the links even if leading to an impossible location.
+      @return An array of string pairs [description, link] to be shown by the skin, or nil if none can  be
+              generated
+
+      This function  creates one or more page swapper link to go to the next page or to the next N pages.
+      Passing an array of numbers in @b multiple, the corresponding link to the next (or previous) nth.
+      page is created as well. For example, passing [1, 10, 25, 50, 100, 1000] the function will create the
+      links to reach the next 1, 10, 25, 50, 100 and 1000 pages.
+
+      @note The multiple count must be expressed in pages, but the values rendered for display will be in
+            items.
+
+      If @b force is not set to true, the link to the pages will be generated only if the pages would be
+      actually reachable.
+      
+      @note Name must contain a "$(count)" marker that is expanded with the numeric value currently
+            used as step.
+            
+   */
+   function makeCursorLinks( name, direction, multiple, extraFields, force )
+      count = self._count
+      size = self._tableSize
+      pos = self._start
+      if pos == nil: pos = 0
+
+      if not multiple: multiple = [1]
+      links = []
+      for pageSkip in multiple
+         
+         if direction
+            // forward
+            skip = pageSkip*count
+            if pos + skip >= size
+               if not force: break
+            end
+            links.add( [name.replace("$(count)", toString(skip) ), self.makeLinkTo( pos + skip, extraFields )] )
+         else
+            skip = -pageSkip*count
+            if pos + skip < 0
+               if not force: break
+            end
+            links.ins( 0, [name.replace("$(count)", toString(-skip) ), self.makeLinkTo( pos + skip, extraFields )] )
+         end
+
+         
+      end
+
+      return links
+   end
+   
 end

@@ -17,6 +17,7 @@
 #include <falcon/runtime.h>
 #include <falcon/traits.h>
 #include <falcon/vm.h>
+#include <falcon/path.h>
 
 namespace Falcon {
 
@@ -104,9 +105,22 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          Module *l = 0;
          try {
             if( depdata->isFile() )
-               l = m_loader->loadFile( moduleName );
+            {
+               // if the path is relative, then it's relative to the parent module path.
+               Path p(moduleName);
+               if ( !p.isAbsolute() )
+               {
+                 l = m_loader->loadFile(  Path(mod->path()).getFullLocation() + "/" + moduleName );
+               }
+               else
+               {
+                 l = m_loader->loadFile( moduleName );
+               }
+            }
             else
+            {
                l = m_loader->loadName( moduleName, mod->name() );
+            }
          }
          catch( Error* e)
          {

@@ -1,0 +1,85 @@
+
+div.nest_table_pos, div.nest_table_cursor {
+   margin: 4px;
+   line-height: 15pt;
+}
+
+div.nest_table_pos span {
+   border: 1px solid #D0D0FF;
+   background: #E0E0FF;
+   padding: 1px;
+   margin: 1px;
+}
+
+div.nest_table_cursor span {
+   border: 1px solid #D0D0FF;
+   background: #E0E0FF;
+   padding: 1px;
+   margin: 1px;
+}
+
+div.nest_table_cursor span.current {
+   background: #E0E0E0;
+   background: #E0E0E0;
+}
+
+fieldset {
+   border: none;
+   font-family: "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", sans-serif;
+   text-align: left;
+}
+
+fieldset ul {
+   list-style: none;
+}
+
+fieldset fieldset {
+   padding: 0;
+   margin: 0;
+   line-height: 30px;
+}
+
+legend {
+   color: #4d4d4d;
+   clear:both;
+   display: block;
+   float: left;
+   font-size: 1em;
+   font-weight: bold;
+   line-height: 30px;
+   margin-right: 10px;
+   margin-left: 0px;
+   padding: 0;
+   width: 135px;
+}
+
+label {
+   color: #4d4d4d;
+   clear:both;
+   display: block;
+   float: left;
+   font-size: 1em;
+   font-weight: bold;
+   line-height: 30px;
+   margin-right: 10px;
+   width: 135px;
+}
+
+label.block {
+   float: none;
+   padding-bottom: 0px;
+}
+
+fieldset fieldset label {
+   display: inline;
+   float: none;
+}
+
+input, select  {
+   margin: 5px;
+   padding: 5px;
+   font-size: small;
+   background: #fff;
+   border: 1px solid #c1c1c1;
+   color: #464646;
+}

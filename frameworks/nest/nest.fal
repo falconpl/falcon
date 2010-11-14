@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language
-   
+
    Nest - Falcon web applcation engine
-   
+
    FILE: nest.fal
 
    Main file driving the engine.
@@ -16,42 +16,96 @@
    See LICENSE file for licensing details.
 */
 
-import Config from self.config as Config
+const _version = "1.0"
+directive lang = "en_US"
+
 import NestError from self.error as NestError
 import Service from self.service as Service
 import ServiceVar from self.service as ServiceVar
 import DBIDataManager from self.dbidm as DBIDataManager
 import DataManager from self.datamanager as DataManager
-import Hook from self.hook in hook_module 
+import Hook from self.hook in hook_module
 import from self.utils
 
 import from compiler
+
 
 const _phase_startup = 0
 const _phase_config = 1
 const _phase_exec = 2
 const _phase_render = 3
 
+const pages_dir = "pages"
+const srv_dir = "srv"
+const dm_dir = "dm"
+const hooks_dir = "hooks"
+//const res_dir = "res"
+
+/*# Basic Nest router class.
+
+   This class has the role of
+
+   - determining what page ID is implied in the web request currently being served.
+   - building an URI that will include the current page ID.
+*/
 class BasicRouter
-   function route( nestObject )
+   //# Returns the page ID implied in the current web request
+   function route()
       return Request.getField("pid", "home")
    end
 
+   //# Returns a string that may be used to reach the given page
    function routingURI( baseUri, pid )
       return baseUri + "?pid=" + URI.encode( pid )
    end
 end
 
+/*# Basic Nest filter for input variables.
+   This class is meant to provide Nest with input coming from
+   the web requests.
+
+   An instance of this class must be set as the @a Nest.filter
+   property; Nest will call the @b filter method of the instance
+   at proper time, and store its return value into @a Nest.inputVars.
+
+   This base class just provides nest with the sum of Request.gets
+   and Request.post dictionaries, effectively feeding all the standard
+   input fields into @a Nest.inputVars.
+*/
+
 class BasicFilter
+   //# Returns a dictionary of name/value variable pairs.
    function filter()
       return Request.gets + Request.posts
    end
 end
 
+
+/*# Nest basic session manager.
+
+   Session managers have the role of providing Nest with persistent storage for
+   variables related to a specific remote user connection, thus enabling the
+   sateless-http requests to be seen as "sessions".
+
+   The basic session manager uses the WOPI session system as a backend for
+   persistent storage. More sophisticated application-specific session managers
+   may be written to store sessions on serialized files, databases, memory
+   mapped files and so on.
+*/
 class BasicSessionManager
 
    _session = nil
-   
+
+   /*# Restores a previously existing session.
+      @return a pair of session data + session status.
+
+      The function returns an array of two values; the first one is the
+      dictionary of session variables and their own values. The second is
+      true if the session expired.
+
+      A new empty session is represented by the return values [ [=>], false],
+      while an expired session will be returned as [ [=>], true].
+   */
    function restore()
       if Request.hasSession()
          try
@@ -69,14 +123,17 @@ class BasicSessionManager
             sd = [=>]
             se = true
          end
-         
+
          return [sd, se]
       end
-      
+
       // new and not expired
       return [ [=>], false]
    end
-   
+
+   /*# Saves the session data.
+      @param sessionData Dictionary of session variables with their values to be saved.
+   */
    function save( sessionData )
       if not Request.hasSession()
          self._session = Request.getSession()
@@ -87,19 +144,25 @@ class BasicSessionManager
 end
 
 
+/*# Basic Nest Logger.
+   @param channel a Stream where to send the log information.
+   Logger class is used to render nest log information to.
+
+   The basic logger writes its output to a given stream.
+*/
 class BasicLogger( channel )
    channel = channel
    _ts = TimeStamp()
-   
+
    function log( mode, caller, data )
       self._ts.currentTime()
       if caller.startsWith( "Method" )
          caller = caller[caller.find(".")+1:]
       end
-      
+
       self.channel.writeText( self._ts.toString() + " " + mode + " " + caller + "\t" + data +"\n" )
    end
-   
+
 end
 
 /*# Standard authorization levels.
@@ -127,20 +190,39 @@ enum Priority
    LOWEST = 40
 end
 
+/*# Nest application framework.
+
+   This object represents the core of the Nest system.
+   It is mean to be part of the web application loading it,
+   so it should be loaded with the directive
+
+   @code
+   load nest
+   @endcode
+*/
 object Nest
    //===================================================================
    // Public properties
    //===================================================================
 
-   /*# Nest configuration.
-   
-      Manipulate this object (always an object of class @a Config) to change
-      the behavior of nest.
-   */
-   config = Config
+   /*# Nest application directory for current site.
 
-   /*# List of search paths for services */
-   spath = nil
+      It's relative to the entrypoint script, and defaults to "./nest".
+   */
+   site_nest_dir = "./nest"
+
+   /*# Home of the nest installed hierarcy.
+
+      It defaults to vmModulePath(), which is the path from where Falcon loaded this Nest module.
+   */
+   nest_dir = nil
+
+   /*# URI of the entry point script.
+
+      If set to nil, in case of need the URI of the entry point script will be determined
+      through the Request fields.
+   */
+   self_uri = nil
 
    /*# Page ID of the currently served page */
    pid = nil
@@ -150,14 +232,14 @@ object Nest
 
    /*# Repeat the Priority enumeration */
    PRIO = Priority
-   
-   /*# Repeat data managers. 
-   	An enumeration with the following values
-   	- DBI = DBIDataManager class
+
+   /*# Repeat data managers.
+      An enumeration with the following values
+      - DBI = DBIDataManager class
    */
    DM = bless( [
-   	"DBI" => DBIDataManager
-   	])
+      "DBI" => DBIDataManager
+      ])
 
    //# Repeat the hook class
    Hook = hook_module.Hook
@@ -171,7 +253,7 @@ object Nest
 
       Normally, database managers and login services are configured here.
    */
-   
+
    onStartup = nil
    /*# Router.
 
@@ -190,8 +272,8 @@ object Nest
    */
    router = BasicRouter
 
-   /*# Filter.
-   
+   /*# Filter for input variables (POST or GET key/value pairs).
+
       Filters the content of the get and post values and stores them
       in the @a Nest.inputVars field as a dictionary pairs.
 
@@ -203,15 +285,15 @@ object Nest
       The filter object must expose a "filter" function, that returns the
       dictionar function should return a dictionary of variables then saved
       in the inputVars field.
-      
-      The basic filter just stores all the gets and posts variables in the
-      inputVars field.
+
+      The basic (default) filter just stores all the GET and POST variables in the
+      inputVars field (post variables having higer priority).
    */
    filter = BasicFilter
-   
+
 
    /*# List of active services.
-   
+
       Usually not at the disposal of the user application.
    */
    services = [=>]
@@ -236,7 +318,7 @@ object Nest
    sessionManager = BasicSessionManager()
 
    /*# Input variables as parsed and filtered.
-   
+
       At the disposal of services and user applications.
    */
    inputVars = [=>]
@@ -265,18 +347,18 @@ object Nest
 
    /*# Debug mode? */
    debug = false
-   
+
    //# Instructs the modules to perform checks on service parameters. False by default.
    pcheck = false
 
    /*# Framing.
-   
+
       When the @b frame property is set to a function,
       then Nest will load the page that the routing system
       required and render it separately. The output of the
       rendered page will be retrieved through the @a Nest.content
       method; then, the function stored in @b frame will be
-      called, and it will just need to print @a Nest.content variable 
+      called, and it will just need to print @a Nest.content variable
       at the desired position.
 
       Interesting functions can be:
@@ -288,8 +370,8 @@ object Nest
       The function should produce an output that will be captured by Nest
       and then rendered.
    */
-   frame = nil      
-	
+   frame = nil
+
    /*# Log level.
 
       Can be:
@@ -299,8 +381,8 @@ object Nest
       - 3: debug
    */
    log_level = 0
-   
-   
+
+
    //===================================================================
    // Private properties
    //===================================================================
@@ -325,7 +407,7 @@ object Nest
 
    // dictionary of function hooks
    _hooks = [=>]
-   
+
    // dictionary of data managers
    _dms = [=>]
 
@@ -336,22 +418,22 @@ object Nest
    // Current stream where the page is generating its output
    _pageStream = nil
 
-   
+
    //===================================================================
    // Public interface
    //===================================================================
 
    init
+      self.nest_dir = Path(vmModulePath()).fulloc + "/nest"
       auth_level = ServiceVar( "Authorization level" )
       me = self  // use closing methods
       auth_level.listen( { v => me.auth_level = v == nil ? me.AL.NONE : v } )
       self._ambient["auth_level"] = auth_level
-      self._defaultDirs()
       self._comp.launchAtLink = true
    end
-   
+
    /*# Nest entry point.
-   
+
       This method routes a web request down into the nest sytem.
    */
 
@@ -368,7 +450,7 @@ object Nest
          if self.debug: self._displayDebug()
          return
       end
-      
+
       // 2. Load variables
       self._loadSession()
 
@@ -385,7 +467,7 @@ object Nest
          if self.debug: self._displayDebug()
          return
       end
-      
+
       // 4. Read the page -- and load services
       self._phase = _phase_config
       self.selector( pid )
@@ -400,10 +482,10 @@ object Nest
 
    function selector( pid )
       if not pid: pid = "home"
-      
+
       p = Path()
-      p.fulloc = utils.reldir( self.config.homedir, self.config.pagedir )
-      
+      p.fulloc = self.site_nest_dir + "/" + pages_dir
+
       p.file = pid
       extfunc = .[
          .[ 'fal' self._selector_script ]
@@ -422,60 +504,59 @@ object Nest
             return
          end
       end
-      
+
       raise NestError( NestError.page_notfound, "", pid )
    end
 
 
    /*# Invoke a Data Manager.
-   	@param name The name of the data manager to be invoked.
-   	@optparam config Dictionary of variables to be used as configuration.
-   	
-   	The "type" key must be specified either in the @b config
-   	parameter or in the file named after dm/**<name>**.fal, and must
-   	contain a Nest class (i.e. DBIDataManager)
-   	
-   	All the entities relative to this Data Manager name. For example,
-   	they are named like dm/<name>/**<entity_name.fal>**.
-   	
+      @param name The name of the data manager to be invoked.
+      @optparam config Dictionary of variables to be used as configuration.
+
+      The "type" key must be specified either in the @b config
+      parameter or in the file named after dm/**<name>**.fal, and must
+      contain a Nest class (i.e. DBIDataManager)
+
+      All the entities relative to this Data Manager name. For example,
+      they are named like dm/<name>/**<entity_name.fal>**.
+
    */
    function dm( name, config )
       if name in self._dms
          // Return it oob if already registered.
          return ^+ self._dms[ name ]
       end
-      
-      cfg = self.config
+
       // here the trick of the function is useless, as we KNOW we have to configure this stuff
-      dirs = [  utils.reldir( cfg.homedir, cfg.site_dm_dir ) ]
+      dirs = [ self.site_nest_dir + "/" + dm_dir ]
       if self.log_level >= 3: self.logd( @"DM $(name) searching config in " + dirs.describe() )
       vars = self._loadConfig( dirs, name )
-      
+
       // Let the config parameter have an higher priority
       if not vars
-      	vars = config
+         vars = config
       elif config
-      	vars += config
+         vars += config
       end
-      
+
       // Ok, see if we have a type entry
       if "type" notin vars
-      	raise NestError( NestError.no_dm_type, "", name )
+         raise NestError( NestError.no_dm_type, "", name )
       end
-      
+
       sClass = vars["type"]
       if not sClass.derivedFrom( DataManager )
-      	raise NestError( NestError.wrong_dm_type, "", name )
+         raise NestError( NestError.wrong_dm_type, "", name )
       end
-      
-      dm = sClass( name, cfg.site_dm_dir + "/" + name )
+
+      dm = sClass( name, self.site_nest_dir + "/" + dm_dir + "/" + name )
       dm.configure( vars )
       self._dms[ name ] = dm
       return dm
    end
 
    /*# Invoke an ambient variable.
-   
+
       Ambient variables are service variables which are immediately repeated to all the system.
    */
    function ambient( aname, binding )
@@ -486,7 +567,7 @@ object Nest
          s = ServiceVar( binding )
          self._ambient[ aname ] = s
       end
-      
+
       return s
    end
 
@@ -495,26 +576,26 @@ object Nest
       @optparam inst The instance name for the service.
       @optparam vars A dictionary of configuration key/values pairs.
       @return A @a Service instance.
-      
+
    */
    function service( name, inst, vars )
-      cfg = self.config
+      nestDir = self.nest_dir
+      siteNestDir = self.site_nest_dir
       srv = self._instanceModule( "Service", name, inst, self.services,
                // using a function instead of an array prevents array generation if not necessary
-               {=> [cfg.nestdir + "/srv",
-                  utils.reldir( cfg.homedir, cfg.site_srv_dir ) ] })
+               {=> [ nestDir + "/" + srv_dir,
+                  siteNestDir + "/" + srv_dir] })
 
       // srv is OOB'd if already registered.
       if not ^? srv
          // 1. Load service configuration
+         dirs = self.getServiceDirs( name, inst )
 
          // here the trick of the function is useless, as we KNOW we have to configure this stuff
-         self._configModule( srv, vars,
-               [  utils.reldir( cfg.homedir, cfg.site_srv_dir  + "/" + name ),
-                  cfg.nestdir + "/srv/" + name ])
+         self._configModule( srv, vars, dirs)
 
          // 2. Register the service, that is, configre its resources and prepare Nest to run it
-         self._registerService( srv, vars )
+         self._registerService( srv )
 
          // 3. Binding the service
          self.logi( "Binding service " + srv.fullName() )
@@ -530,15 +611,26 @@ object Nest
    end
 
 
-   
+
    /*# Produces nest automatic headings. */
    function headings()
+      Nest.logi( "Placing render mark for headers" )
+      // save the rendering up to date
+      self._contentSlices += self._pageStream.closeToString()
+      // prepare for later rendering at this point
+      self._contentSlices += self._render_headings
+      // generate a new stream for the rest of the page.
+      self._pageStream = StringStream()
+      stdOut( self._pageStream )
+   end
+
+   function _render_headings()
       str = ""
 
       if self.title
          str += @"<title>$(self.title)</title>\n"
       end
-      
+
       for item in self.extscripts
          str += @"<script type=\"text/javascript\" src=\"$item\"></script>\n"
       end
@@ -554,11 +646,15 @@ object Nest
       for item in self.scripts
          str += "<script type=\"text/javascript\">\n" + item + "\n</script>\n"
       end
-      
+
       return str
    end
 
-   /*# Create a link to this page */
+   /*# Create a link to this or another page.
+      @optparam pid The pageID of the desired page; leave nil to use the current pid.
+      @optparam vars A dictionary of variables to be passed to the given page.
+      
+   */
    function pageLink( pid, vars )
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
    end
@@ -574,10 +670,10 @@ object Nest
          else
             if pos + 1 < v.len(): v += "&"
          end
-         
+
          for key, value in vars
             v += URI.encode(key)
-            if value != nil: v += "=" + URI.encode(value.toString())
+            if value != nil: v += "=" + (^? value ? value:URI.encode(value.toString()))
             formiddle: v += "&"
          end
       end
@@ -598,12 +694,21 @@ object Nest
 
    function eidLink( pid, cmd, cmdField )
       v = self.actionLink( pid, cmd, cmdField )
-      if "?" notin v: v += "?"
-      return v + "&eid=$(eid)"
+      if "?" notin v
+         v += "?"
+      else
+         v += "&"
+      end
+      return v + "eid=$(eid)"
    end
 
+   /*# Returns the URI confgiured for this site.
+      If the site has been configured with an explicit callback uri, it is returned,
+      otherwise the URI of the entry point script is determined looking at the Request
+      WOPI fields.
+   */
    function getURI( scheme )
-      if self.config.self_uri: return self.config.self_uri
+      if self.self_uri: return self.self_uri
       if not scheme: scheme = "http"
       try
          return scheme +"://" + Request.headers["Host"] + Request.location
@@ -649,19 +754,22 @@ object Nest
       @param name The logical name of the callback hook.
       @optparam vars Configuration variables to be passed to the hook.
       @optparam before if true, the hook will take priority over existing ones.
-      
+
    */
    function loadHook( name, vars, before )
       Nest.logi( "Loading hook " + name )
-      cfg = self.config
+
+      nestDir = self.nest_dir
+      siteNestDir = self.site_nest_dir
+
       hook = self._instanceModule( "Hook", name, nil, nil,
                // using a function instead of an array prevents array generation if not necessary
-               {=> [cfg.nestdir + "/hooks",
-                  utils.reldir( cfg.homedir, cfg.site_hooks_dir ) ] })
+               {=> [ nestDir + "/" + hooks_dir,
+                      siteNestDir + "/" + hooks_dir ] })
 
-      dirs = [ utils.reldir( cfg.homedir, cfg.site_hooks_dir  + "/" + name ),
-               cfg.nestdir + "/hooks/" + name ]
-               
+      dirs = [ self.site_nest_dir + "/" + hooks_dir  + "/" + name,
+               self.nest_dir + "/" + hooks_dir + "/" + name ]
+
       self.logd( "Hook \"" + name + "\" searching config in " + dirs.describe() )
       cf1_data = self._loadConfig( dirs, "config" )
       self.logd( "Config variablers for " + name + ": " + vars.describe() )
@@ -669,14 +777,14 @@ object Nest
       if vars
          if cf1_data: cf1_data += vars
       end
-      
+
       if cf1_data: hook.configure( cf1_data )
       Nest.logi( "Hook " + name + " of type " + hook.name + " being registered." )
       // as the first parameter is now a hook instance, everything will go fine.
       return self.addHook( hook, before )
    end
 
-    /*# Calls a hook.      
+    /*# Calls a hook.
       @param The name of a previously registered hook
       @optparam ...
 
@@ -733,28 +841,28 @@ object Nest
       if not self._contentFile
          NestError( NestError.not_in_frame, "" )
       end
-      
+
       // save the rendering up to date
       self._contentSlices += self._pageStream.closeToString()
       // generate a new stream for the rest of the page.
       self._pageStream = StringStream()
       stdOut( self._pageStream )
-      
+
       // includes the content page and proceeds with the rest of the framing.
       include( self._contentFile )
       self._contentSlices += self._pageStream.closeToString()
       self._pageStream = StringStream()
       stdOut( self._pageStream )
-      
+
       // also, make sure this can't be done anymore
       self._contentFile = nil
    end
-   
+
    /*# Compile a class having the same name of the host module.
-   	
+
    	This method automatically loads a module and returns a class
    	having the same name of the loaded module.
-   	
+
    	This kind of scheme is used in several cases in the Nest
    	scheme, for example in the DB entities.
    */
@@ -766,9 +874,74 @@ object Nest
       catch AccessError
          raise NestError( NestError.no_mod_class, "", name )
       end
-		return srvClass
+      return srvClass
    end
-   
+
+   /*# Returns the standard directories to be searched for a service-related file.
+      @param name The service name
+      @optparam inst The service instance
+   */
+
+   function getServiceDirs( name, inst )
+
+      dirs = [  self.site_nest_dir + "/" + srv_dir  + "/" + name,
+                  self.nest_dir + "/" + srv_dir  + "/" + name ]
+      if inst
+         dirs = [ self.site_nest_dir + "/" + srv_dir  + "/" + name + "/" + inst
+               ] + dirs
+      end
+
+      return dirs
+   end
+
+   /*# Checks for the current page to be accessible, and eventually loads an alternate page.
+      @param level The authorization level required to access this resource.
+      @param pid_on_failure The Page ID of a resource to be loaded instead of this page.
+      @return True if the current page is authorized, false if it's not allowed.
+
+      This method should be called as the very first method of the routed page (or eventually
+      of the routed frame, if the frame is security-sensible.
+
+      The caller may simply use the returned value to switch into a security-insensible
+      code branch, or it may provide a PID of a resource to be loaded in place of the currently
+      processed page. In this latter case, the caller should return immediately, as nest will have
+      routed the required resource.
+
+      For example, home.ftd may look like
+
+      @code
+      <?
+         import from ...
+
+         if not Nest.allowed( Nest.AL.USER, "unauthorized" ): return
+         ...
+      ?>
+      <h1>Welcome user</h1>
+      <p>sensible things here...</p>
+      ,,,
+      @endcode
+
+      and unauthorized.ftd may simply be a warning message:
+      @code
+      <h1>Unauthorized</h1>
+      <p>Sorry, you shouldn't be here...</p>
+      @endcode
+
+   */
+   function allowed( level, pid_on_failure )
+      if self.auth_level <= level: return true
+      if pid_on_failure
+         self.selector( pid_on_failure )
+      end
+      return false
+   end
+
+   /*# Gets version/subversion of the Nest system.
+       @return A version string in format major.minor
+   */
+   function getVersion()
+      return _version
+   end
    //=============================================================
    // Logging functions
    //=============================================================
@@ -795,7 +968,7 @@ object Nest
          self.logger.log( "DBG ", fself.caller().toString(), data )
       end
    end
-   
+
    //=============================================================
    // private part
    //=============================================================
@@ -806,7 +979,7 @@ object Nest
       end
    end
 
-   
+
    function _initLogger()
       if self.debug
          self._debugStream = StringStream()
@@ -816,18 +989,16 @@ object Nest
       end
    end
 
-   
-   function _registerService( srv, vars )
-      cnf = self.config
 
-      // 2. determine online resources (and verify they're installed)
-      self._checkOnlineRes( srv )
-      
+   function _registerService( srv )
+      // 1. determine online resources (and verify they're installed)
+      //self._checkOnlineRes( srv )
+
       // ... and just add inline styles and scripts
       self.styles += srv.styles
       self.scripts += srv.scripts
 
-      // 3 - Register the service
+      // 2 - Register the service
       self._srvlist += srv
       self.services[ srv.fullName() ] = srv
    end
@@ -874,9 +1045,9 @@ object Nest
 
 
    // Service configuration step 2 -- Check online resources
+   /*
    function _checkOnlineRes( srv )
-      cnf = self.config
-      
+
       if srv.extscripts or srv.stylesheets
          if fileType( utils.reldir( cnf.homedir, cnf.site_res_dir ) ) == FileStat.DIR
             onl_res_dir = cnf.site_res_dir
@@ -886,7 +1057,7 @@ object Nest
             raise NestError( NestError.resloc, "", srv.name )
          end
       end
-      
+
       missing_res = []
       for script in srv.extscripts
          sf = onl_res_dir + "/" + script
@@ -896,7 +1067,7 @@ object Nest
             self.extscripts += sf
          end
       end
-      
+
       for ss in srv.stylesheets
          ssf = onl_res_dir + "/" + ss
          if fileType( ssf ) != FileStat.NORMAL
@@ -907,50 +1078,38 @@ object Nest
       end
 
       if missing_res
-         raise NestError( NestError.misres, "", 
+         raise NestError( NestError.misres, "",
                srv.name + ": " + ", ".merge( missing_res ) )
       end
    end
+   */
 
-   
+
    // Service configuration step 3.1 -- load service specific config
    function _configModule( srv, vars, dirs )
-      cnf = self.config
-
       lname = srv.className()
       debug = self.log_level >= 3
 
-      if debug: self.logd( "Module \"" + lname + "\" searching config in " + dirs.describe() )
+      if debug: self.logd( @"Module $(lname) searching cfg for \"$(srv.instance)\" in "+ dirs.describe() )
       cf1_data = self._loadConfig( dirs, "config" )
       if debug: self.logd( "Config variablers for " + lname + ": " + vars.describe() )
 
-      // searching config in subdirs
-      if srv.instance
-         // search instance.fal under ./config
-         ddet = map( {d=> d + "/config"}, dirs )
-         if debug: self.logd( @"Module $(lname) searching cfg for \"$(srv.instance)\" in "+ ddet.describe() )
-         cf2_data = self._loadConfig( ddet, srv.instance )
-      end
-      
       // Search in the main configuration
       sname = srv.fullName()
-      if sname in cnf.mod_config
-         cf3_data = cnf.mod_config[sname]
-      end
 
       // Sum it up; priority is:
       // 1. Variables given at instantation
       // 2. Global configuration at index
       // 3. Instance configuration
       // 4. Module configuration
-      
-      if cf1_data or cf2_data or cf3_data or vars
+
+      if cf1_data or vars
          configData = [=>]
-         for d in .[ cf1_data cf2_data cf3_data vars]
+         for d in .[ cf1_data vars]
             if d: configData += d
          end
       end
-      
+
       // Actually, the configuration is done in the bind step;
       // The Configuration binder uses the configuration field in the service
       if self.log_level >= 3
@@ -959,14 +1118,14 @@ object Nest
       srv.configure( configData )
    end
 
-   
+
    // Service configuration step 3.1 -- load service specific config
    function _loadConfig( dirs, fname )
       confFile = utils.findFileInDirs( dirs, fname + ".fal" )
 
       if confFile
          if self.log_level >= 3: self.logd( "Compiling config from " + confFile )
-         
+
          try
             privAlias = fname + "-" + random(1,1000000)
             confMod = self._comp.loadFile( confFile, privAlias )
@@ -984,15 +1143,15 @@ object Nest
             nerr.boxed = e
             raise nerr
          end
-         
+
          if self.log_level >= 3: self.logd( @"In $(fname), found variables "+ vars.describe() )
       else
          self.logi( @"Couldn't find $(fname)" )
       end
-      
+
       return vars // will be nil if not loaded
    end
-      
+
    function _selector_script( file )
       // prepare the output stream
       self._pageStream = StringStream()
@@ -1000,7 +1159,7 @@ object Nest
 
       // prepare the content slices
       self._contentSlices = []
-      
+
       try
          // should the page be framed?
          if self.frame.isCallable()
@@ -1009,7 +1168,7 @@ object Nest
          else
             include( file )
          end
-         
+
          // ok, we can run the services
          self._runServices()
 
@@ -1033,7 +1192,7 @@ object Nest
       stdOut( old )
       // Save what we have achieved up to date.
       ctx = self._packSlices()
-         
+
       // do we have an error to manage?
       if e
          self._manageError( e, ctx )
@@ -1059,24 +1218,26 @@ object Nest
       end
    end
 
-   
+
    function _renderSlices()
       self.logi( "Rendering data slices" )
-      
+
       i = 0
       cs = self._contentSlices
       slen = cs.len()
       while i < slen
-         if cs[i].isCallable()
-            cs[i] = cs[i]()
+         mth = cs[i]
+         if mth.isCallable()
+            if self.log_level >= 3: self.logd( "Calling slice " + mth )
+            cs[i] = mth()
          end
          ++i
       end
    end
-      
+
    function _packSlices()
       self.logi( "Packing data slices" )
-      
+
       str = ""
       for s in self._contentSlices
          str += s
@@ -1089,7 +1250,7 @@ object Nest
          service.finalize()
       end
    end
-   
+
 
    function _selector_html( file )
       f = InputStream( file )
@@ -1107,24 +1268,15 @@ object Nest
       self.sessionData[sv] = value
    end
 
-   function _subconfig( varname )
-      var = self.metaconfig.getOne( varname )
-      if var: self.config.setProperty( varname, var )
-   end
 
-   function _defaultDirs()
-      c = self.config
-      if c.nestdir == nil: c.nestdir = Path(vmModulePath()).fulloc + "/nest"
-   end
-
-   function _manageError( e, ctx )      
+   function _manageError( e, ctx )
       try
          // force excluding bindings
          self._phase = _phase_exec
          ereport = self.service( "ereport" )
          ereport.error.value = e
          ereport.context.value = ctx
-         
+
          > ereport.perform_render()
       catch in f
          self._defErrorReport( e, ctx, f )
@@ -1147,7 +1299,7 @@ object Nest
       self.sessionData, self.sessionExpired = self.sessionManager.restore()
       if self.log_level >= 3: self.logd( "Session data: " + self.sessionData.describe() )
    end
-   
+
    // save session data
    function _saveSession()
       if self.sessionData

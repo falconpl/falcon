@@ -24,7 +24,7 @@
 ?><html>
 <head>
    <title>Your notes</title>
-   <?= Nest.headings() ?>
+   <? Nest.headings() ?>
 </head>
 <body>
    <h1>Modify your note</h1>

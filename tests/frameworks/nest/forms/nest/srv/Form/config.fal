@@ -1,0 +1,40 @@
+// config.fal -- Configuration for the test form service.
+
+import from nest.action in act
+import from "./fields.fal" in fields
+
+css_id = "register_form"
+entity = Nest.dm("form_db").entity("users")
+
+fields = .[
+   fields.user_id
+   fields.password
+   fields.rep_password
+   fields.role
+   fields.first_name
+   fields.last_name
+   fields.title
+   fields.birthday
+   fields.sex
+   fields.interests
+   fields.profile
+]
+
+actions = .[
+   act.SubmitAction( "Update", Nest.AL.NONE, "update", "update", "update" )
+]
+
+check = { srv =>
+   fld = srv.fieldsByName.value
+
+   ok = true
+   // check passwords
+   if fld.pwd1.value != fld.pwd2.value
+      fld.pwd2.failure = i"Doesn't match with password 1"
+      ok = false
+   else
+      srv.result.value = "Ok; record saved."
+   end
+
+   return ok
+}

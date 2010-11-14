@@ -2,22 +2,13 @@
    import from nest.action in na
 
    // As this is a test, we need to create and check our working environment.
+   mode = Request.getField("mode","")
    targetDir = "uploads"
-   if fileType( targetDir ) != FileStat.DIR
-      try
-         dirMake( targetDir )
-         fileChmod( targetDir, 0755 )
-      catch IoError
-         > "Cannot create test directory "+ targetDir + "<br/>"
-         > "Please, select another directory or make the directory where index.fal resides writable."
-      end
-   end
-
    config = [
       "upload_dir" => targetDir,
       "actions" => .[
-         na.LinkAction( "view", Nest.AL.NONE, "javascript:viewFile('$file','$path');", i"View" )
-         na.LinkAction( "view", Nest.AL.NONE, "javascript:choseFile('$file','$path');", i"Select" )
+         na.LinkAction( "view", Nest.AL.NONE, "javascript:viewFile('$file','$path', '"+mode+"');", i"View" )
+         na.LinkAction( "view", Nest.AL.NONE, "javascript:choseFile('$file','$path', '"+mode+"');", i"Select" )
       ]
    ]
 
@@ -26,7 +17,7 @@
 <html>
 <head>
    <title>Wiki attachments control</title>
-   <?= Nest.headings() ?>
+   <? Nest.headings() ?>
 
 <script type="text/javascript">
    function viewFile( name, path )
@@ -34,10 +25,10 @@
       window.open( "<?=targetDir ?>/" + path + "/" + name, "View file " + name);
    }
 
-   function choseFile( name, path )
+   function choseFile( name, path, mode )
    {
       window.opener.focus();
-      window.opener.insertText( path+"/"+name );
+      window.opener.nest_wiki_insertText( path+"/"+name, mode );
       window.close();
    }
 </script>

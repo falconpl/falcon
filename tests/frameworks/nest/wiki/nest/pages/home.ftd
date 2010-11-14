@@ -1,56 +1,7 @@
 <?
    dm = Nest.dm( "wiki_db" )
    wiki = Nest.service("Wiki")
-?>
-<html>
-<head>
-   <title>Nest wiki system test.</title>
-   <?= Nest.headings() ?>
-<script type="text/javascript">
 
-   var mode = '';
-   
-   function insertText( text )
-   {
-      if( mode == 'image' )
-         text = '{{'+text+'|An image|w=100|h=100|center|thumb|pad=20}}';
-      else
-         text = '[[:'+text+'|A file]]';
-         
-      obj = document.getElementById( "nest_wiki_area" );
-
-      /* IE */
-      if (document.all) {
-         obj.focus();
-         var sel=document.selection;
-         var rng=sel.createRange();
-         rng.colapse;
-         rng.text= text;
-      }
-      /* Mozilla/geko */
-      else if(obj.selectionEnd)
-      {
-         var lng=obj.textLength;
-         var from=obj.selectionStart;
-         var to=obj.selectionEnd;
-         obj.value=obj.value.substring(0,from)+ text +obj.value.substring(to,lng);
-      }
-      /* No idea */
-      else
-         obj.value+=text;
-
-      obj.focus();
-   }
-
-   function insertImage() { mode='image'; openUploads(); }
-   function insertFile() { mode='file'; openUploads(); }
-
-   function openUploads() {
-       window.open('<?= Nest.pageLink("uploads") ?>',
-         'Upload test','width=800,height=600,location=no,menubar=no,toolbar=no,scrollbars=yes');
-   }
-</script>
-<?
    function showNavi()
       page = wiki.getPage( "special:navi" )
       if page == nil
@@ -60,6 +11,10 @@
       end
    end
 ?>
+<html>
+<head>
+   <title>Nest wiki system test.</title>
+   <? Nest.headings() ?>
 </head>
 <body>
 <h1>Wiki system test</h1>
@@ -74,9 +29,9 @@
 <form action="<?= Nest.pageLink() ?>" method="POST" accept-charset="utf-8">
 <ul>
 <li><a href="/">Return to main</a></li>
-<li><a href="<?= Nest.pageLink( nil, ["wid"=>Request.getField("wid","main"), "wka"=>"del"])?>">Delete this page</a></li>
-<li><a href="<?= Nest.pageLink( nil, ["wid"=>Request.getField("wid","main"), "wka"=>"mody"])?>">Edit this page</a></li>
-<li><a href="<?= Nest.pageLink( nil, ["wid"=>"special:navi", "wka"=>"mody"])?>">Edit the navigation page</a></li>
+<li><a href="<?= wiki.linkDelete() ?>">Delete this page</a></li>
+<li><a href="<?= wiki.linkMody() ?>">Edit this page</a></li>
+<li><a href="<?= wiki.linkMody("special:navi") ?>">Edit the navigation page</a></li>
 <li>Go to this page: <input type="text" name="wid" size="30" maxlength="40"/><button type="submit"/>Go!</button>
 </li>
 </ul>

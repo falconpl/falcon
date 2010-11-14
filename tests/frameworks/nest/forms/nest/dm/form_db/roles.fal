@@ -1,0 +1,18 @@
+// Nest - Notes test site
+// Configuration for the users entity
+
+import from nest.dbentity in dbe
+
+class roles( dbm ) from dbe.DBEntity( dbm )
+
+   definition = .[
+      ^+ "role_id char(15) not null PRIMARY KEY"
+         "role_desc varchar(30) not null"
+   ]
+
+   init_data = [
+      ["role_id" => "admin",  "role_desc" => "Administrator" ],
+      ["role_id" => "staff",  "role_desc" => "Staff person" ],
+      ["role_id" => "user",   "role_desc" => "A normal user" ]
+   ]
+end

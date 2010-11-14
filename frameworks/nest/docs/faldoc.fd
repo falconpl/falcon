@@ -1,0 +1,66 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for core module.
+#
+
+LogLevel = 4
+AutoBrief = true
+GetUndoc = false
+GetPrivate = false
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Nest Web application framework
+Author = The Falcon Committee
+Version = 1.0
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=../
+
+#By default, input directories are also roots for module names, but...
+Input.moduleRoot = ../
+
+Input.wildcard=*.fal
+Input.recursive=true
+
+# Other files may be specified here
+Input.extra=main.fd
+Input.extra=config.fd
+Input.extra=overview.fd 
+Input.extra=quickstart.fd
+Input.extra=service.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+Output.module=docbook
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=Nest_docs-1.0
+Output.html.url=.
+Output.html.doctitle=Nest Web Framework developer manual
+
+################################################
+# Faldoc docbook Output settings
+################################################
+
+Output.docbook.file = Nest_doc.xml
+Output.docbook.encoding = utf-8
+Output.docbook.copyright.year = 2010
+Output.docbook.copyright.holder = The Falcon Committee
+Output.docbook.frame = book
+Output.docbook.detailed = false
+

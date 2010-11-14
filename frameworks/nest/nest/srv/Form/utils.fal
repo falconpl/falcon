@@ -1,0 +1,123 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Form/utils.fal
+
+   Utilities for the Form service.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 27 Jun 2010 14:01:38 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.srv.Form in ff
+import Select from nest.srv.Form as Select
+import GroupField from nest.srv.Form as GroupField
+import GroupField from nest.srv.Form as GroupField
+
+
+_days = map( { n => ff.Option( n, n ) }, [].comp([1:31] ) )
+_months = .[
+   ff.Option( 1, i"January" )
+   ff.Option( 2, i"February" )
+   ff.Option( 3, i"March" )
+   ff.Option( 4, i"April" )
+   ff.Option( 5, i"May" )
+   ff.Option( 6, i"June" )
+   ff.Option( 7, i"July" )
+   ff.Option( 8, i"August" )
+   ff.Option( 9, i"September" )
+   ff.Option( 10, i"October" )
+   ff.Option( 11, i"November" )
+   ff.Option( 12, i"December" )
+]
+
+/*# Date Select.
+   @param name Name of the field in the rendered form.
+   @param prompt Label of the field.
+   @optparam maker Dictionary or array of pairs to configure the data in the class.
+   
+   Simple "form widget" that helps to automatize year/mont/day  input.
+*/
+class DateSelect( name, prompt, maker ) from ff.GroupField( name, prompt,
+   .[
+      ff.Select( name + "_day", "", _days )
+      ff.Select( name + "_month", "", _months )
+      ff.TextField( name + "_year", "", .[ size|4 maxlength|4 ] )
+   ],
+   maker )
+
+   init
+      dayf = self.fields[0]
+      monf = self.fields[1]
+      yearf = self.fields[2]
+      
+      if not self.getter
+         self.getter = { dbr, f =>
+            // can't have a getter if field is not set.
+            date = dbr.data[f.field]
+            if date.typeId() == StringType
+               // comply with sql engines returning a string in dates
+               try
+                  yearf.value = int(date[0:4])
+                  monf.value = int(date[5:7])
+                  dayf.value = int(date[8:10])
+               catch 
+                  // not much to do right now.
+               end
+             elif date provides year
+               yearf.value = date.year
+               monf.value = date.month
+               dayf.value = date.day
+            end
+         }
+      end
+
+      if not self.setter
+         self.setter = { f, forming =>
+            // can't have a getter if field is not set.
+            if yearf.value
+               year = yearf.value
+               month = monf.value
+               day = dayf.value
+               date = @"$(year:rp04)-$(month:rp02)-$(day:rp02)"
+               forming[self.field] = date
+            end
+         }
+      end
+   end
+            
+end
+
+/*# Select Field generted through a database data dictionary.
+   @param entity A DBEntity representing the table to query.
+   @param fieldval The name of the column giving the dictionary values.
+   @param fielddesc The name of the column where the description of the values can be found.
+   @param name Name of the field in the rendered form.
+   @param prompt Label of the field.
+   @optparam maker Dictionary or array of pairs to configure the data in the class.
+   
+   Simple "form widget" that helps to automatize data input coming from DB fields.
+*/
+
+class DataDictionary( entity, fieldval, fielddesc, name, prompt, maker ) from ff.Select( name, prompt, nil, maker )
+   entity = entity
+   fieldval = fieldval
+   fielddesc = fielddesc
+   
+   init
+      opts = []
+      res = entity.manager.dbc.query( @"select $(fieldval),$(fielddesc) from $(entity.name)" )
+      row = []
+      while res.fetch(row)
+         opts += ff.Option( row[0], row[1] )
+      end
+      self.options = opts
+   end
+end

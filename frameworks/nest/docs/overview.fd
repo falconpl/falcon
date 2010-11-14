@@ -97,7 +97,7 @@ The **nest** directory is called __root in the nest tree__ or referred as __nest
 
 @note It is advisable to place the __nest tree__ outside the scope of the directories served by the web
 server, if possible, to minimize security risks. The default is to search it right under the entry
-point script **just** because some low-cost web hosts doesn't allow to write data outside the scope of the
+point script **just** because some low-cost web hostings don't allow to write data outside the scope of the
 directories served by the provided web server.
 
 @section ov_routing Page routing
@@ -244,7 +244,7 @@ h = Nest.Hook( "my_hook",
 Nest.addHook( h )
 @endcode
 
-Hooks can be also referenced by name; in that case, a module named after the hook is searched
+Hooks can be also referenced by name; in that case, a module named after the hook name is searched
 in the **nest/hooks** directory. If found, it must expose a class with the same name of the
 module and derived from @a Hook.
 

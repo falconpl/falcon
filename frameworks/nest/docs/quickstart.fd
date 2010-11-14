@@ -25,6 +25,13 @@ load nest
 Nest.route()
 @endcode
 
+@note A minimal but complete (for our purposes) way to serve the test
+sites in this guide is firing up falhttpd with the following command:
+
+@code
+$ falhttpd -h <path to index.fal> -p 8080 -t 600
+@endcode
+
 Route will tell nest to get the page that the overall status of the connection
 requires; by default, a new incoming user is served by the page called __home__.
 
@@ -47,7 +54,7 @@ using a ftd:
 Or if you prefer a more structured approach, we can use a falcon script:
 
 @code
-// this is head,fal
+// this is head.fal
 > '
 <html>
 <head>
@@ -71,7 +78,7 @@ Or even, you may chose to use a very structured approach through the htmaker
 module.
 
 @code
-// this is head,fal
+// this is head.fal
 
 import from htmaker in ht
 
@@ -91,6 +98,288 @@ doc.html.body.add(
 As a first example of a service, we'll introduce the Menu service, which has the role
 of generating a configurable menu that can be shown on different pages.
 
+First, let's create a site structure for our test; make the following directories:
+@code
+menus/
+  nest/
+    pages/
+    hooks/
+    srv/
+       Menu/
+@endcode
 
+We'll need to place an entry point for our application under **menus**; "index.fal"
+is the standard name. For this sample we'll add some debugging facilities that
+we'll later remove.
 
+@code
+load nest
+
+// debugging directives
+Nest.log_level = 3   // (1)
+Nest.debug = true    // (2)
+Nest.pcheck = true   // (3)
+
+// Nest site configuration
+Nest.stylesheets += "nest.css"
+Nest.frame = .[ include "frame.ftd" ]  // (4)
+Nest.addHook( "TableCheckUser" )
+
+// start the engine
+Nest.route()
+@endcode
+
+The debug directives tell Nest to perform low level logging (1) and also
+send the log output to the user after the page is generated (2)
+
+The directive at (3) instructs Nest modules to perform extra verbose
+checks on their configuration variables to catch for common mistakes
+in early site development stages.
+
+All this directives should be removed from a production server; it may
+be interesting to instruct Nest to log at level 1 (warn) or 2 (info)
+in case the site needs to be monitored for suspect activity. On some
+security sensible site, it is advisable to set the log level to 1, where
+minimal and critical information on Nest activity is sent to the web server
+for recording.
+
+The other instructions are setup directives; the most important one, at the moment,
+is (4), @a Nest.frame. It points to a function that orders to include the frame
+that will be valid for all the pages of the site (or, at least, all the pages
+accessed through this entry point).
+
+The frame is a ftd file as follows.
+
+@code
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<? login = Nest.service( "Login" ) ?>
+<? menu = Nest.service( "Menu" ) ?>
+<html>
+<head>
+   <title>Nest test suite - Menu service</title>
+   <? Nest.headings() ?>
+</head>
+<body>
+   <table class="header">
+   <tbody>
+   <tr><td><? menu.render() ?></td><td><? login.render() ?></td></tr>
+   </tbody>
+   </table>
+   <hr/>
+   <? Nest.content() ?>
+   <hr/>
+   <? if Nest.auth_level < Nest.AL.USER ?>
+   <p class="gray">To login, enter "user" / "user".</p>
+   <? end ?>
+   <p class="signature">Nest test suite.</p>
+</body>
+</html>
+@endcode
+
+Notice the @a Nest.headings call on the headings section. This allows
+Nest to fill the target page with headings suggested in the entry point
+(notice the @a Nest.stylesheets assignment in index.fal) or required by
+modules that may want to publish some meta information, stylesheet,
+css code or client-side script on the target page.
+
+The two @a Nest.service calls load the @a Login and @a Menu service. We'll
+diffusely talk about the Login service throughout the guide; let's concentrate
+on the Menu. Downwards, you can see the @a Menu.render call where the main menu
+should appare.
+
+Then, the frame includes the specific page through the @a Nest.content call.
+Finally, notice the usage of the Nest.auth_level variable do show conditional
+parts of the frame to the visitor. The variable is set through the Login service,
+and is available to the whole application as @a Nest.auth_level. The Login
+service can be configured so that your user storage system doesn't need to understand
+Nest authorization levels, and you can publish some extra authorization
+policies to the application through more sophisticated mechanisms (provided by Nest).
+This variable is a facility that can be used to rapidly prototypes simple
+web sites.
+
+@subsection qs_login_hooks Hook for the Login srvice
+
+To clear the ground from the Login service, and also introduce a concept we'll be
+using later on, we now show how to configure it to serve a simple web site.
+
+The Login service invokes a @a Hook called "check_user", passing the userID and
+the password to it in two parameters, and expects a pair of values in return in
+case of authorization granted: the @a Nest.AL authorization level (a number in 0-100),
+and an optional user-specific data that can be used by the web application
+for different reasons (i.e. displaying its real name, enforcing finer authorization
+policies and so on).
+
+You may write an Hook to serve the Login service matching your need and data
+structures, but Nest provides two ready-made hooks called TableCheckUser and
+DBCheckUser that can do the job with just a little configuration. This time, we
+use the TableCheckUser, writing the following file in the **nest/dm/TableCheckUser/config.fal** file in the site-specific nest directory.
+
+@code
+// Configuration for a TableCheckUser
+
+import from nest.hooks.TableCheckUser in tab
+
+users = [
+   "admin" => tab.User( "admin", Nest.AL.ADMIN, "Administrator" ),
+   "staff" => tab.User( "staff", Nest.AL.STAFF, "Staff member" ),
+   "user" => tab.User( "user", Nest.AL.USER, "Generic user" )
+]
+@endcode
+
+The user-id is the key of the @b users dictionary, while the @a password
+is the first parameter of the @b TableCheckUser.User class instance. There
+are more configuration options, as the ability to use @b hash function
+to check the incoming password against pre-hashed passwords stored in the table,
+but they are beyond the scope of this quikstart.
+
+@subsection qs_menuconf The configuration for the menu service.
+
+The menu is configured through an array of MenuItems, a class found
+in the menu service module. In our case, we'll setup some simple page:
+
+@code
+// Configuration for the Menu service
+
+import MenuItem from nest.srv.Menu as MenuItem
+
+items = .[
+   MenuItem( "Home", "nest:home" )
+   MenuItem( "Account settings", "nest:account", Nest.AL.USER,
+         .[
+            MenuItem( "Change password", "nest:acc_password" )
+            MenuItem( "Preferences", "nest:acc_preferences" )
+         ]
+      )
+   MenuItem( ^+ "Plugins", nil, Nest.AL.USER )
+   MenuItem( "Contacts",  "nest:contacts" )
+   MenuItem( "Go to falcon",  ">http://www.falconpl.org" )
+]
+@endcode
+
+The first parameter is the text that should appare, the second is the page ID or
+link target of the menuy voice, and the third is an optional minimal authorization
+level that must be granted to display the voice.
+
+An optional fourth parameter is a sub-menu. There isn't any built-in nesting limit,
+but web sites rarely use more than 2 levels for readability; in case the need
+arises, other menus (as navigation menu or sidebars) are added, and we'll se an example
+of that later on.
+
+The special "nest:" scheme in the target parameter indicates that the target is a page in the
+site; it's equivalent to using @a Nest.pageLink on the following page ID. The ">" marker
+in the last element indicates that the link generated by this entity should open in a
+new window (or navigation tab), and may be applied also to "nest:" schemes.
+
+Also, notice the "Plugin" menu; we're adding that to show how on-the-fly installed modules
+may add a menu item through a simple procedure. Notice that it's name is marked as __out of band__
+(**^+** falcon operator); this instructs the Nest system not to display that menu unless it has
+some sub-items.
+
+@section qs_pages The pages
+
+It's time to setup the pages. They are included  as samples; we show here the most interesting
+one: this page adds a menu item calling the appropriate service function.
+
+@code
+<?
+   import MenuItem from nest.srv.Menu as MenuItem
+
+   Nest.emit( "add_menu",
+         MenuItem( "Password check",
+             ">https://www.microsoft.com/protect/fraud/passwords/checker.aspx"),
+         "Plugins")
+?>
+<h1>Change password</h1>
+<p>Sorry, this is only a test, and we're not using a database.</p>
+<p>So, in short, this is just a fake page</p>
+@endcode
+
+The @b add_menu emit ask the menu service to add an item that is not in the configuration. An
+extra optional parameter indicates the parent of the new node, and may reference also submenu items
+separating them with dot, as i.e. "Menu 1.Menu 2...."
+
+@section qs_menu_instance Service instances
+
+Another useful feature of Falcon is that of providing the ability to create multiple instances
+of the same service. So, we may have more menus per page. For example, the "preferences" page
+has the following structure:
+
+@code
+
+<table cellpadding="5">
+<tbody>
+<tr><td valign="top"><? Nest.service( "Menu", "side" ).render() ?></td>
+<td>
+<h1>Preferences</h1>
+<p>Sorry, this is only a test, and we're not using a database.</p>
+...
+...
+@endcode
+
+The @b side name for the Menu service instructs Nest to create a separate instance of the
+service; its configuration, skin and resources are to be found in **nest/srv/Menu/side**.
+This is the configuration in config.fal:
+
+@code
+// Configuration for the Menu service -- "side" 
+import MenuItem from nest.srv.Menu as MenuItem
+
+items = .[
+   MenuItem( "First seciton", "#first" )
+   MenuItem( "Second seciton", "#second" )
+   MenuItem( "Third seciton", "#third" )
+]
+@endcode
+
+@section qs_srv_skin Service skins
+
+The service skin can be set changing the @a Service.skin configuration variable, or simply
+writing a skin file (default skin.fal) in the service home directory: the site-specific
+skin will take priority.
+
+We'll use the main service rendered through a non-standard skin to illustrate this feature.
+Adding the following line after towards the end of our frame, we can create the typical
+footer navigation-menu that is commonly see in most modern sites:
+
+@code
+<? Nest.service( "Menu", "footer" ).render() ?>
+@endcode
+
+The service will search for configuration and skin in under **nest/srv/Menu/footer**, but
+when not finding the configuration there, it will fall back to the global Menu configuration
+file; the same for our main menu.
+
+This simplified skin.fal will do the trick:
+
+@code
+<? function skin( vars, srv ) ?>
+<p style="text-align:center">
+   <?
+      entries = []
+      for item in vars.active_items
+         // we're not interested in external links
+         if item.wnd: continue
+
+         if item.current
+            entries += item.text
+         else
+            if not item.target: continue
+            entries += @'<a href="$(item.target)">$(item.text)</a>'
+         end
+      end
+
+      > "&nbsp;&nbsp;-&nbsp;&nbsp;".merge( entries )
+   ?>
+</p>
+<? end ?>
+@end
+
+@note A skin named "skin_footer.fal" is available as a part of the standard
+Menu service. A similar effect can be achieved setting the "skin" configuration
+variable in the service invocation call:
+
+@code
+<? Nest.service( "Menu", "footer", [ "skin" => "skin_footer.fal" ] ).render() ?>
+@endcode
 */

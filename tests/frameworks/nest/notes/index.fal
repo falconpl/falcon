@@ -18,12 +18,14 @@
 
 load nest
 import from hash
-   
+
+/*
 Nest.debug = true
 Nest.log_level = 3
 Nest.pcheck = true
-Nest.stylesheets += "notes.css"
+*/
 
+Nest.stylesheets += "notes.css"
 Nest.addHook( "DBCheckUser" )
 
 Nest.onStartup = function()
@@ -33,23 +35,7 @@ Nest.onStartup = function()
       Reply.redirect( Nest.pageLink("create") )
       return
    end
-/*
-   Nest.addHook(
-      Nest.Hook( "check_user",
-         function( uid, pwd )
-            record = dm.entity("users").find( uid )
-            if record and record.data["pwd_md5"] == hash.md5(pwd)
-               switch record.data["auth_type"]
-                  case "admin": level = Nest.AL.ADMIN
-                  case "staff": level = Nest.AL.STAFF
-                  case "user": level = Nest.AL.USER
-                  default: level = Nest.AL.VISITOR
-               end
-               return [level, nil]
-            end
-         end
-   ))
-*/
+
    login = Nest.service("Login")
 end
 

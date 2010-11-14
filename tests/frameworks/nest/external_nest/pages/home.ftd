@@ -1,0 +1,12 @@
+<h1>Falcon Nest; External site definition test.</h1>
+<p>This site structure is similar to the "menu" test, but here all the nest-related pages,
+configurations and extensions are placed outside the scope of the application entry point.</p>
+<p>When possible, the site structure should be designed so that all the security-sensible
+informations are simply not reachable through the web server.</p>
+
+<? login = Nest.ambient( "auth_data" ).value ?>
+<? if login ?>
+   <p>You are currently logged in as <?= login ?>.</p>
+<? else ?>
+   <p>You are <b>not</b> currently logged in</p>
+<? end ?>

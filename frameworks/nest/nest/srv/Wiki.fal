@@ -54,7 +54,20 @@ The function is invoked as
 
 The Nest system defines the following plugins, which are registered as the wiki service is loaded:
    - **toc**: Puts a table of content extracted from the source page in place of its definition.
-   - **timestamp**: Puts the current timestamp at its place. 
+   - **timestamp**: Puts the current timestamp at its place.
+
+@section wiki_js Javascript management
+
+This service adds a javascript function in the Nest.headings called
+{{function nest_wiki_insertText( text, mode )}}, where text is the text to be inserted, and mode can be
+'image', 'file' or null. Calling this function results in the desired text (possibly a link
+to an internal file or image) to be inserted at the current cursor position in the text area
+having the CSS id {{nest_wiki_area}}.
+
+The function can be called back by the @a Uploader service.
+
+@note @a Nest.headings must be properly called for this to work.
+
 */
 class Wiki( instance ) from Service( instance )
    //# Wiki page to be loaded or managed
@@ -84,6 +97,22 @@ class Wiki( instance ) from Service( instance )
    //# Max depth of the wiki history
    history_depth = ServiceVar( b.ConfigBinder )
 
+
+   //===================================================================
+   // Skins
+
+   //# Skin for action confirm.
+   skin_confirm = ServiceVar( b.SkinBinder )
+
+   //# Skin used for preview pages
+   skin_preview = ServiceVar( b.SkinBinder )
+
+   //# Skin used for modify
+   skin_modify = ServiceVar( b.SkinBinder )
+
+   //# Skin for the history (page sequence)
+   skin_history = ServiceVar( b.SkinBinder )
+   
    //===================================================================
    // Internal variables
    
@@ -139,6 +168,7 @@ class Wiki( instance ) from Service( instance )
       end
 
       self.setEntities( dm )
+      self.addJsRes( 'insertText.js' )
    end
    
    function run()
@@ -191,6 +221,8 @@ class Wiki( instance ) from Service( instance )
          case 'del'
             if self.wkc.value
                self.removePage( wid )
+            else
+               self.skin.value = self.skin_confirm.value
             end
 
          case 'mody'
@@ -200,6 +232,7 @@ class Wiki( instance ) from Service( instance )
             else
                self.wkd.value = ""
             end
+            self.skin.value = self.skin_modify.value
             
          case 'upd'
             data = self.getBlank()
@@ -213,6 +246,7 @@ class Wiki( instance ) from Service( instance )
 
          case 'prw'
             self.preview.value = self.renderWiki( self.wkd.value, wid )
+            self.skin.value = self.skin_preview.value
 
          default
             self.page.value = self.getPage( wid )
@@ -374,6 +408,40 @@ class Wiki( instance ) from Service( instance )
          return res
       end
    end
+
+   //===================================================================
+   // Utilities for the host site
+   //
+   
+   /*# Returns the link that requests to delete the current page.
+      @optparam wid The ID of the wiki page to be handled, or nil for current page.
+      @optparam page If given, ask to handle the request to the given page ID.
+      @return The href to follow to delete the current wiki page.
+   */
+   function linkDelete( wid, page )
+      if not wid: wid = Request.getField("wid","main")
+      return Nest.pageLink( page, ["wid"=>wid, "wka"=>"del"])
+   end
+
+   /*# Returns the link that requests to modify the current page.
+      @optparam wid The ID of the wiki page to be handled, or nil for current page.
+      @optparam page If given, ask to handle the request to the given page ID.
+      @return The href to follow to modify the current wiki page.
+   */
+   function linkMody( wid, page )
+      if not wid: wid = Request.getField("wid","main")
+      return Nest.pageLink( page, ["wid"=>wid, "wka"=>"mody"])
+   end
+
+   /*# Returns the link that needed to follow a page.
+      @optparam page If given, ask to handle the request to the given page ID.
+      @return The href to follow to modify the current wiki page.
+   */
+   function linkGoToPage( wid, page )
+      if not wid: wid = Request.getField("wid","main")
+      return Nest.pageLink( page, ["wid"=>wid])
+   end
+   
 
 end
 
