@@ -137,6 +137,13 @@ class DBEntity( dbm )
       return self.manager.query( self, view, start, count )
    end
 
+   /*# Gets the count of records in this entity.
+      @optparam view a @a DBView instance eventually filtering the query.
+   */
+   function count( view )
+      return self.manager.count( self, view )
+   end
+
    [init]
       function __enter()
          fdefs = self.definition

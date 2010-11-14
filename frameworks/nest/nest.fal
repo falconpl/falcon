@@ -650,7 +650,11 @@ object Nest
       return str
    end
 
-   /*# Create a link to this page */
+   /*# Create a link to this or another page.
+      @optparam pid The pageID of the desired page; leave nil to use the current pid.
+      @optparam vars A dictionary of variables to be passed to the given page.
+      
+   */
    function pageLink( pid, vars )
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
    end

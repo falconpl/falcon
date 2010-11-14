@@ -64,6 +64,17 @@ class DataManager( name, location )
       raise CodeError( 10000, i"Please override" )
    end
 
+   /*# Count records from an entity.
+
+      @param entity The entity to be queried.
+      @param view A field list or @a DBView eventually filtering this count
+
+      The subclasses must override this mehtod.
+   */
+   function count( entity, view )
+      raise CodeError( 10000, i"Please override" )
+   end
+
    /*# Query an entity -- for a single item.
       @param entity The entity to be queried.
       @param key_fields The ID of the entity to retreive.

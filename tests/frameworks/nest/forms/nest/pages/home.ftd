@@ -20,5 +20,7 @@ a page to create or modify users to show the form service in action.</p>
 
 <p><? table.render() ?></p>
 
+<p>Clik here to <a href="<?= Nest.pageLink('add_massive') ?>">Add 1000 users</a>.</p>
+
 </body>
 </html>

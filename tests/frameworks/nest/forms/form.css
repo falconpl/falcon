@@ -1,4 +1,28 @@
 
+div.nest_table_pos, div.nest_table_cursor {
+   margin: 4px;
+   line-height: 15pt;
+}
+
+div.nest_table_pos span {
+   border: 1px solid #D0D0FF;
+   background: #E0E0FF;
+   padding: 1px;
+   margin: 1px;
+}
+
+div.nest_table_cursor span {
+   border: 1px solid #D0D0FF;
+   background: #E0E0FF;
+   padding: 1px;
+   margin: 1px;
+}
+
+div.nest_table_cursor span.current {
+   background: #E0E0E0;
+   background: #E0E0E0;
+}
+
 fieldset {
    border: none;
    font-family: "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", sans-serif;
