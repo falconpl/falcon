@@ -102,7 +102,7 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
         {
             if(_mybuf)
             {
-                delete [] _buf;
+                memFree(_buf);
                 _buf = NULL;
                 _res = 0;
             }
@@ -306,12 +306,12 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
                 throw new BufferError( ErrorParam(e_io_error, __LINE__)
                     .desc(FAL_STR_bufext_buf_full) );
             }
-            uint8 *newbuf = new uint8[s];
+            uint8 *newbuf = (uint8*)memAlloc(s);
             if(_buf)
             {
                 memcpy(newbuf, _buf, _size);
                 if(_mybuf)
-                    delete [] _buf;
+                    memFree(_buf);
             }
             _buf = newbuf;
             _res = s;

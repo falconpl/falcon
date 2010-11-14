@@ -38,7 +38,8 @@ template <typename BUFTYPE, typename SRCTYPE> BufCarrier<BUFTYPE> *BufInitHelper
         if(p1->isBoolean() && p1->isTrue()) // adopt
         {
             newbuf = new BufCarrier<BUFTYPE>((uint8*)srcbuf.getBuf(), srcbuf.size(), srcbuf.capacity(), false, 0);
-            newbuf->dependant(itm->asObject());
+            Garbageable *dep = src->dependant() ? src->dependant() : itm->asObject();
+            newbuf->dependant(dep);
         }
         else // copy with extra bytes
         {
@@ -89,7 +90,8 @@ template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
             uint32 usedsize = mb->limit();
             uint32 totalsize = mb->size();
             carrier = new BufCarrier<BUFTYPE>(ptr, usedsize,totalsize, false, 0); // don't copy
-            carrier->dependant(mb);
+            Garbageable *dep = mb->dependant() ? (Garbageable*)mb->dependant() : (Garbageable*)mb;
+            carrier->dependant(dep); // if mb is already dependant, use that, otherwise, the membuf itself
         }
         else
         {

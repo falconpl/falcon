@@ -172,6 +172,16 @@ end
 GC.perform(true) // if dependencies are not set up correctly, this may cause multi-free of the internal memory, and segfault
 x = b.r32() // if mb was garbaged, this will likely segfault
 EXPECT(x, 42, "ByteBuf recursive adapt dependency test, final") 
+
+> " === STACK OVERFLOW TEST vs. GC ==="
+b = ByteBufNativeEndian(b, true).growable(false) // adapt
+for i = 0 to 100000
+    EXPECT(b.r32(), 42, "ByteBuf recursive adapt GC stack overflow test")
+    b = ByteBufNativeEndian(b, true).growable(false) // adapt
+end
+GC.perform(true)
+x = b.r32() // if mb was garbaged, this will likely segfault
+EXPECT(x, 42, "ByteBuf recursive adapt stack overflow test, final") 
 b = nil
 
 
