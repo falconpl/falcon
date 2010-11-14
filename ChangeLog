@@ -16,6 +16,7 @@ Falcon (0.9.6.7)
   * fixed: Several bugs in class inheritance calculus and class equality
            check.
   * minor: Better error reporting thanks to error boxing.
+  * fixed: load/import with files from relative paths now working.
 
 Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even

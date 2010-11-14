@@ -1,0 +1,28 @@
+// config.fal -- Configuration for the test form service -- EDIT instance.
+
+import from nest.action in act
+import from "../fields.fal" in fields
+
+css_id = "register_form"
+entity = Nest.dm("form_db").entity("users")
+
+// disable the userid
+fields.user_id.disabled = true
+fields.user_id.setter = {=>}
+
+// In this form, we can't change the password
+fields = .[
+   fields.user_id
+   fields.first_name
+   fields.last_name
+   fields.role
+   fields.title
+   fields.birthday
+   fields.sex
+   fields.interests
+   fields.profile
+]
+
+actions = .[
+   act.SubmitAction( "Update", Nest.AL.NONE, "update", "update", "update" )
+]

@@ -669,7 +669,7 @@ object Nest
 
          for key, value in vars
             v += URI.encode(key)
-            if value != nil: v += "=" + URI.encode(value.toString())
+            if value != nil: v += "=" + (^? value ? value:URI.encode(value.toString()))
             formiddle: v += "&"
          end
       end
@@ -690,8 +690,12 @@ object Nest
 
    function eidLink( pid, cmd, cmdField )
       v = self.actionLink( pid, cmd, cmdField )
-      if "?" notin v: v += "?"
-      return v + "&eid=$(eid)"
+      if "?" notin v
+         v += "?"
+      else
+         v += "&"
+      end
+      return v + "eid=$(eid)"
    end
 
    /*# Returns the URI confgiured for this site.

@@ -1,0 +1,24 @@
+<?
+   table = Nest.service( "DataTable" )
+   control = Nest.service( "DataControl" )
+?>
+<html>
+<head>
+   <title>Nest Form service test</title>
+   <? Nest.headings() ?>
+</head>
+<body>
+<h1>Form service test</h1>
+<p>The Nest form service is a service that can be used to create dynamic forms,
+eventually integrated with a database resource.</p>
+<p>This page will use a DataTable to list the users that you created, and then
+a page to create or modify users to show the form service in action.</p>
+
+<p><? control.render() ?></p>
+
+<p>Clik here to <a href="<?= Nest.pageLink('add') ?>">Add a new user</a>.</p>
+
+<p><? table.render() ?></p>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+<?
+   form = Nest.service( "Form" )
+?>
+<html>
+<head>
+   <title>Nest Form service test - form</title>
+   <? Nest.headings() ?>
+</head>
+<body>
+<h1>Create user -- test form</h1>
+<h2>Creating a new profile</h2>
+<? form.render() ?>
+<hr/>
+<a href="/">Return to main page</a>
+</body>
+</html>

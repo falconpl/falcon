@@ -19,6 +19,7 @@
 import from nest
 import NestError from nest as NestError
 import from nest.bindings in b
+import from dbi
 
 
 /*# Service receiving the variables in a form.
@@ -28,11 +29,12 @@ import from nest.bindings in b
 
    Writing a web form is relatively easy, but automation of web forms is a complex matter.
    Among the things that a modern web site needs to do with form is:
-   - Filling the form with data coming from a data source;
+   - Filling the form with data coming from a data source, or with previously loaded defaults;
    - Validating the form data prior remote post;
    - Validating the form data after it has been received;
    - Storing the validated data on a data source;
-   - Indicating validation problems to the user, and prompting him with its own previously submitted input.
+   - Indicating validation problems to the user, and prompting him with its own
+     previously submitted input.
 
    The Nest Form service can have also the role to bind with a data entity, completing
    the data manager services.
@@ -41,7 +43,36 @@ class Form( instance ) from nest.Service( instance )
    //# Config - DB Entity optionally bound with this form
    entity = nest.ServiceVar( b.ConfigBinder )
    
-   //# Config - Global check on the form; a function called as check( self, vars).
+   /*# Config - Global check on the form.
+      It's a function with the following prototype:
+      @code
+         check( form )
+      @endcode
+
+      where @b form is this instance.
+
+      The function has the main role of checking the consistency of the form as a whole,
+      veryfing consistency of multiple fields (i.e. repeated passwords) and deciding
+      if the form as a whole is valid.
+
+      To signal anomalies, the function may use the @a Field.failure entry, or set the
+      service @a Form.result field.
+
+      If the form has a DBEntity set in @a Form.entity, then check() may just return
+      @b true if the form is allowed to proceed, or @b false to stop the form data
+      from being processed. Notice that if a previusly called @a Field.check function
+      was already signaling some problem, the return value of this function will be ignored.
+
+      This function may also store or otherwise process the data on its own; in this case,
+      it should properly set @a Form.result and @a Form.stored (and also @a Service.skin,
+      if consistent), and it should return @b false to prevent further processing.
+
+      @a Returning @b false won't cause any error status to be actually set, it just prevents
+         the form from being automatically stored in a given @a Form.entity.
+
+      In any case, @a Form.stored should be used to tell the application (and the calling page)
+      about the success or failure of form processing result.
+   */
    check = nest.ServiceVar( b.ConfigBinder )
 
    //# Config - Action for the form submit
@@ -65,28 +96,106 @@ class Form( instance ) from nest.Service( instance )
    //# Skin - Skin for text areas and wide fields.
    skin_wide = nest.ServiceVar( b.SkinBinder )
 
-   //# Skin - Skin rendering the result of an operation
+   /*# Skin - Skin used to render the "result" message in the main skin.
+       The default skin shows the result message in a <div> of id result_[css_id],
+      where css_id is the CSS id set in configuration for this service.
+   */
    skin_result = nest.ServiceVar( b.SkinBinder )
 
-   //# Field values, extracted directly for simpler access
-   values = nest.ServiceVar()
+   /*# Skin - Used when the operation is finally performed.
+      This usually closes an update; the caller will want to display
+      "operation complete, please return to main page" or similar messages.
+
+      The default skin just displays the contents of the "result" field.
+      
+      To "disarm" it, the caller should just set it to "skin", so that the
+      main skin gets loaded; this means that the "result" field will be renderd
+      as a part of the form, which will be proposed again with the updated data.
+
+      The default skin shows the result message in a <div> of id performed_[css_id],
+      where css_id is the CSS id set in configuration for this service.
+   */
+   skin_performed = nest.ServiceVar( b.SkinBinder )
+
+   //# Dictionary of Fields ordered by name, for simpler access from other services
+   fieldsByName = nest.ServiceVar()
 
    //# Result that the final user may be interested in -- as a pre-formatted HTML text
    result = nest.ServiceVar()
 
    //# Automatically set to UUENC when adding an upload field.
    enctype= nest.ServiceVar()
+
+   /*# Service -- Last store operation Status.
+
+      Will be true if self.result is an OK message, false if self.result is an error message.
+      It is automatically set by the form when trying to save the form data on a persistent
+      DBEntity; elsewhere it's nil, and isSet will return false.
+
+      The variable could also be used by the form check function (@a Form.check) to declare
+      if a self-managed storage operation was successful or not.
+
+      The status is set during the startup phase, so the host page can configure itself
+      and decide which path to take depending on what happened.
+
+      The variable is not shared with skins.
+   */
+   stored = nest.ServiceVar()
+
+   //# Entity ID that is looked upon -- automatically filled from input fields.
+   eid = nil
+
+   
+   // Will be true if some values has been read
+   _updating = false
    
    function startup()
-      // check actions
+      // preliminary check 
+      self._precheck()
+
+      // let's see if we should update something.
+      // if we're called "blank", then self._updating will stay false 
+      failure = self._checkInputVars()
+
+      // Have we received some update to store?
+      if self._updating
+         check = self.check.value
+         if check.isCallable()
+            check = check.base()
+            Nest.logi( "Calling overall form check function" )
+            if not check( self )
+               failure = true
+            end
+         end
+
+         // should we save the entity?
+         if not failure and self.entity.isSet 
+            self._storeEntity()
+         end
+      else
+         // should we load the values from the entity?
+         if self.eid and self.entity.isSet
+            self._loadEntity()
+         end
+      end         
+   end
+
+   
+   function _precheck()
       if self.handler.value == nil
          self.handler.value = Nest.pageLink()
       end
 
-      if Nest.pcheck and not self.fields.value.typeId() == ArrayType
-         raise NestError( NestError.pcheck, "", "fields must be array" )
+      if Nest.pcheck
+         if not self.fields.value.typeId() == ArrayType
+            raise NestError( NestError.pcheck, "", "fields must be array" )
+         end
+
+         if self.entity.isSet and not self.entity.value.derivedFrom( "DBEntity" )
+            raise NestError( NestError.pcheck, "", "entity must be nil or a DBEntity subclass" )
+         end
       end
-      
+
       for f in self.fields.value
          if Nest.pcheck and not f.derivedFrom( "Field" )
             raise NestError( NestError.pcheck, "", "fields must be array of Field and is " + f.baseClass() )
@@ -95,62 +204,129 @@ class Form( instance ) from nest.Service( instance )
          f.setService( self )
       end
 
-      // suppose all is ok
-      failure = false
-      // something to do?
-      fields = self.fields.value
-      grabbed = [=>]
-      for f in fields
-         value = f.grabInputValue()
-         if value: grabbed[f.name] = value
+      // finally, grab the EID if available
+      vname = self.instance ? self.instance + ".eid" : "eid"
+      self.eid = Request.getField( vname, nil )
+   end
 
-         if f.check
-            if ( f.failure = f.check( value, f ) )
-               failure = true
+   // Check input form data -- returns true if cheks FAILED
+   function _checkInputVars()
+      Nest.logi( "Checking form input variables" )
+      
+      // something to do -- check all the fields?
+      fields = self.fields.value
+      fieldsByName = [=>]
+      failure = false
+      updating = false
+      // prepare also to log
+      if Nest.log_level >= 3: grabbed = [=>]
+      
+      for f in fields
+         // organize the fields
+         fieldsByName[f.name] = f
+
+         // Is the field incoming in input?
+         value = f.grabInputValue()
+         // if it is, it may be "" but not nil
+         if value != nil
+            updating = true
+            if Nest.log_level >= 3: grabbed[ f.name ] = value
+
+            // in this case, we also need to see if the field is consistent.
+            if f.check
+               Nest.logd( "Calling check function for field " + f.name )
+               if ( f.failure = f.check( value, f ) )
+                  failure = true
+               end
             end
          end
       end
-
+      
       if Nest.log_level >= 3: Nest.logd( @"Form values: " + grabbed.describe() )
-      if grabbed
-         self.values.value = grabbed
-         
-         check = self.check.value
-         if check.isCallable()
-            check = check.base()
-            Nest.logi( "Calling overall form check function " )
-            if not check( self, bless(grabbed) )
-               failure = true
+      self.fieldsByName.value = bless(fieldsByName)
+      self._updating = updating
+      return failure
+   end
+   
+   
+   function _storeEntity()
+      Nest.logi( "Storing entity with eid: " + self.eid )
+      
+      // get all the interesting values
+      data = [=>]
+      for f in self.fields.value
+         // a DB entity field?
+         if f.field
+            // If the field has a setter, then call it
+            if f.setter.isCallable()
+               f.setter( f, data )
+            else
+               // else, just store the value
+               data[f.field] = f.value
             end
          end
+      end
+         
+      // If we have an EID it's an existing field update, otherwise it's an insert
+      try
+         if self.eid
+            if Nest.log_level >= 3: Nest.logd( "Updating eid " + self.eid + " with data: " + data.describe() )
+            self.entity.value.update( self.eid, data )
+         else
+            // get the EID -- we'll need it
+            if Nest.log_level >= 3: Nest.logd( "Inserting data: " + data.describe() )
+            dbr = self.entity.value.insert( data )
+            self.eid = dbr.eid()
 
-         // should we save the entity?
-         if not failure
-            self._storeEntity()
+            // then add a field for subseuent posts
+            f = HiddenField( "eid", self.eid )
+            f.srv = self
+            self.fields.value.add( f )
+         end
+
+         // all, ok declare we're clear
+         self.skin.value = self.skin_performed.value
+         self.stored.value = true
+      catch dbi.DBIError in error
+         self.result.value = i"<b>Database error</b>: <br/><pre>" + htmlEscape(error.toString()) + "</pre>"
+         self.stored.value = false
+      end
+   end
+
+   
+   function _loadEntity()
+      Nest.logi( "Loading entity with eid: " + self.eid )
+      // let's get the required EID
+      record = self.entity.value.find( self.eid )
+      // not found? -- that's a problem.
+      if record
+         for name, f in self.fieldsByName.value
+            // a db based field?
+            field = f.field
+            if field
+               if f.getter.isCallable()
+                  f.getter( record, f )
+               elif field in record.data
+                  f.value = record.data[field]
+               end
+               // Else? -- raise an error?
+            end
          end
       else
-         // should we load the values from the entity?
-         self._loadEntity()
-      end         
-   end
-
-   function _storeEntity()
-   end
-
-   function _loadEntity()
-   end
-
-   /*# Gets the fields by name.
-      @return A dictionary of field-name => @a Field class instane.
-   */
-   function getFieldsByName()
-      data = self.fields.value
-      fields = [=>]
-      for f in data
-         fields[f.name] = f
+         entity_name = self.entity.value.name
+         eid = self.eid
+         self.result.value = @i"Record \"$(eid)\" not found in \"$(entity_name)\""
       end
-      return bless(fields)
+
+      // repeat the EID -- if needed
+      if "eid" notin self.fieldsByName.value
+         Nest.logd( "Adding EID to fields: " + self.eid )
+         f = HiddenField( "eid", self.eid )
+         f.srv = self
+         self.fields.value.add( f )
+      end
    end
+
 end
 
 
@@ -271,6 +447,9 @@ class Field( name, maker )
       str = ""
       if self.id: str += " id=\"" + htmlEscape( self.id ) + "\""
       if self.cls: str += " class=\"" + htmlEscape( self.cls ) + "\""
+      if self.readonly: str += " readonly=\"readonly\"" 
+      if self.disabled: str += " disabled=\"disabled\""
+      if self.cls: str += " class=\"" + htmlEscape( self.cls ) + "\""
       if self.onfocus: str += " onfocus=\"" + htmlEscape( self.onfocus ) + "\""
       if self.onblur: str += " onblur=\"" + htmlEscape( self.onblur ) + "\""
       if self.onselect: str += " onselect=\"" + htmlEscape( self.onselect ) + "\""
@@ -328,6 +507,7 @@ class Field( name, maker )
          self.value = value
          return value
       end
+      return nil
    end
 
 /*
@@ -379,6 +559,7 @@ end
 class HiddenField( name, value, maker ) from Field( name, maker )
    type = "hidden"
    value = value
+   skin = {v, s, f => > f.toString()}
 end
 
 class TextArea( name, prompt, maker ) from Field( name, maker )
@@ -425,7 +606,7 @@ class Select( name, prompt, opts, maker ) from Field( name, maker )
       for opt in self.options
          opt_value = toString(opt.value)
          str += "<option value=\"" + htmlEscape(opt_value) +"\""
-         if opt_value == value
+         if opt_value == toString(value)
             str += ' selected="selected"'
          end
          str += ">" + htmlEscape( toString(opt.desc) ) + "</option>\n"
@@ -535,8 +716,10 @@ class GroupField( name, prompt, fields, maker ) from Field( name, maker )
          field.setSerivce( self.srv )
          value = field.grabInputValue()
          data[field.name] = value
+         if value != nil: somedata = true
       end
-      return data
+      if somedata: return data
+      return nil
    end
 
 
