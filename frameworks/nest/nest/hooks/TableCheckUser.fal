@@ -20,7 +20,6 @@ import Hook from nest.hook as Hook
 import NestError from nest.error as NestError
 
 /*#
-   @class TableCheckUser.User
    @param password the password to be checked
    @param auth_level Nest authorization level (0 highest, 100 lowest)
    @param auth_data Optional application-specific data associated with this user
