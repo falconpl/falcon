@@ -39,7 +39,7 @@ import from dbi
    The Nest Form service can have also the role to bind with a data entity, completing
    the data manager services.
 */
-<<<<<<< HEAD
+
 class Form( instance ) from nest.Service( instance )
    //# Config - DB Entity optionally bound with this form
    entity = nest.ServiceVar( b.ConfigBinder )
