@@ -192,7 +192,7 @@ class Generator( baseUri, basePath, functions )
       mod = self._comp.loadFile( path.path )
 
       inst = mod.get( funcName )(true)
-      params = inst.parameters()
+      params = inst.paramNames()
 
       uri = self.baseUri + funcName + ".fal"
       prototype = ",".merge(params)

@@ -7,17 +7,19 @@ class ServerTime(dry) from web.ajax.Function(dry)
       1 => i"Timezone must be an integer"
    ]
 
-   tzdisp = web.ajax.Param( 1, check|{ v, f =>
+   parameters = .[
+      web.ajax.Param( "tzdisp", check|{ v, f =>
          try
             return int(v)
          catch in e
             raise f.error( 1 )
          end
-   })
+      })
+   ]
 
-   function run()
+   function run( tzdisp )
       ts = CurrentTime()
-      tzdisp = self.tzdisp.value
+
       if tzdisp
          tsadd = TimeStamp()
          tsadd.minute = tzdisp
