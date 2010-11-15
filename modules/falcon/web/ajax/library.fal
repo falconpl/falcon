@@ -197,10 +197,9 @@ class Generator( baseUri, basePath, functions )
       uri = self.baseUri + funcName + ".fal"
       prototype = ",".merge(params)
 
-      uriCheck = ""
+      uriCheck = "var uriVars= \"\";\n"
       for varName in params
          uriCheck += @'
-            var uriVars= "";
             if($(varName) != null) {
                if (uriVars == ""){uriVars ="?";}else{uriVars +="&";}
                uriVars += "$(varName)=" + escape($(varName));
