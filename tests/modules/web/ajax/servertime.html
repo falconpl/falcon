@@ -1,0 +1,44 @@
+<html>
+<head>
+<title>ServerTime test</title>
+<script type="text/javascript" src="/library_js.fal"></script>
+<script type="text/javascript">
+
+var result;
+var status;
+
+function go() {
+   result = document.getElementById("result");
+   status = document.getElementById("status");
+   Falcon.ServerTime( onSuccess, onError, onFailure ).call( document.getElementById("hours").value );
+}
+
+function onSuccess( reply ) {
+   result.innerHTML = reply.time;
+   status.innerHTML = "OK!";
+}
+
+function onError( eid, desc, detail ) {
+   result.innerHTML = "Error";
+   status.innerHTML = "<b>Error:</b>" + eid + ":" + desc + " - <i>" + detail +"</i>";
+}
+
+function onFailure( exc ) {
+   result.innerHTML = "Failure";
+   status.innerHTML = "<b>Error:</b>" + exc.toString();
+}
+</script>
+</head>
+
+<body>
+<h1>Falcon - Ajax test</h1>
+<h2>Server time</h2>
+<p>Click on the button to have the request updated via ajax.</p>
+<form>
+Optional displacement: <input type="text" size="4" maxlength="4" name="hours" id="hours"/><br/>
+<input type="button" name="get" value="Get!" onclick="javascript:go();"/>
+</form>
+<div id="result">Here the result will appare here</div>
+<div id="status">Problems may appare here</div>
+</body>
+</html>

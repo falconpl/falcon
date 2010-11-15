@@ -1,0 +1,227 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   FILE: library.fal
+
+   Module supporting AJAX hybrid client-server development.
+   Client-side helpers to talk with Falcon AJAX servers.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 14 Jul 2010 14:26:45 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from compiler
+
+/*# JSon decoder for javascript.
+   Original work in public domain by JSON.org at @a http://www.JSON.org/json2.js.
+   See the original copyleft:
+
+   @code
+    http://www.JSON.org/json2.js
+    2010-08-25
+
+    Public Domain.
+
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+
+    See http://www.JSON.org/js.html
+
+    This code should be minified before deployment.
+    See http://javascript.crockford.com/jsmin.html
+   @endcode
+*/
+
+_json_decode = '
+if (!this.Falcon){this.Falcon={}}
+(function() {
+if (!Falcon.req) { Falcon.req = new XMLHttpRequest(); }
+if (!Falcon.JSON) { Falcon.JSON ={}; }
+var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+gap,indent,meta = {''\b'': ''\\b'',''\t'': ''\\t'',''\n'': ''\\n'',''\f'': ''\\f'',''\r'': ''\\r'',''"'' : ''\\"'',''\\'': ''\\\\''},rep;
+if (typeof Falcon.JSON.parse !== ''function'') {
+Falcon.JSON.parse = function (text, reviver) {
+var j;
+function walk(holder, key) {
+var k, v, value = holder[key];
+if (value && typeof value === ''object'') {
+for (k in value) {
+if (Object.hasOwnProperty.call(value, k)) {
+v = walk(value, k);
+if (v !== undefined) {
+   value[k] = v;
+} else {
+   delete value[k];
+}}}}
+return reviver.call(holder, key, value);
+}
+text = String(text);
+cx.lastIndex = 0;
+if (cx.test(text)) {
+text = text.replace(cx, function (a) {
+return ''\\u'' +
+(''0000'' + a.charCodeAt(0).toString(16)).slice(-4);
+});}
+if (/^[\],:{}\s]*$/
+.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, ''@'')
+.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, '']'')
+.replace(/(?:^|:|,)(?:\s*\[)+/g, ''''))) {
+j = eval(''('' + text + '')'');
+return typeof reviver === ''function'' ?
+walk({'''': j}, '''') : j;}
+throw new SyntaxError(''JSON.parse'');};}
+
+if (typeof Falcon.call !== ''function'') {
+Falcon.call = function (uri, onSuccess, onError, onFailure ) {
+   var http=Falcon.req;
+   http.open("GET", uri, true);
+   http.onreadystatechange = function () {
+      if (http.readyState == 4)
+      {
+         // data complete
+         if ( http.status >= 200 && http.status < 300 )
+         {
+            try{
+               var reply = Falcon.JSON.parse( http.responseText );
+               if( reply.error != null  )
+               {
+                  if(  onError != null )
+                  {
+                     onError( reply.error, reply.edesc, reply.detail );
+                  }
+               }
+               else
+               {
+                  onSuccess( reply );
+               }
+            }
+            catch( e )
+            {
+               if( e.name.toString()=="SyntaxError" ) {
+                  onError( 0, "JSON Decode Error", http.responseText )
+               }
+               else {
+                  alert(e.name + "\n" + e.message)
+               }
+            }
+         }
+         else
+         {
+            onFailure( http.status );
+         }
+      }
+   };
+   http.send(null);
+}}
+'
+_close = '}());'
+
+
+/*# AJAX Library generator.
+   @param baseUri The URI where the AJAX functions can be found.
+   @param basePath Path where the function modules should be searched.
+   @param functions List of function names to be loaded.
+   
+   This class generates a javascript library to be used in pair with ajax functions.
+
+   It is means to be instantiated in a fal script that is then loaded as a javascript source
+   from a remote HTTP client
+
+   It reads the specified functions from their own .fal file and creates prototype calls
+   for javascript.
+
+   An example library script that we may call library_js.fal may look like:
+   @code
+   import Generator from web.ajax.library as Generator
+
+   Generator( "http://api.server.com/path", "./", .[
+         "MakeThis"
+         "MakeThat"
+         "MakeThatToo"]
+   ).generate()
+   @endcode
+
+   The generator will generate javascript functions like:
+   @code
+      Falcon.<FunctionName>( onSuccess, onError, onFailure ).call( param1, param2 ... paramN );
+   @endcode
+
+   where:
+   - @b onSuccess: is a callback that is called with the JSON object returned by the
+        Falcon JSON api if everything was successful.
+   - @b onError: is a callback that is invoked if the API generated an application error;
+        it will receive the error ID, the error description and an optional error detail
+        explaining exactly what happened.
+   - @b onFailure: is a callback generated when the contact with the remote server
+        failed, or the AJAX remote function failed to generate a valid success or error reply.
+
+   The parameters of the call() method of the returned object are in the same order as specified
+   for the API. They will be added as <fieldname>=<value> to the query string if not null.
+*/
+class Generator( baseUri, basePath, functions )
+   baseUri = baseUri
+   basePath = basePath
+   functions = functions
+   _comp = compiler.Compiler()
+
+   init
+      self._comp.launchAtLink = false
+      if not baseUri.endsWith( "/" )
+         self.baseUri += "/"
+      end
+   end
+
+   function generate()
+      Reply.ctype( "application/x-javascript" )
+      stdOut().write( _json_decode )
+      for func in self.functions
+         self.makeFunc( func )
+      end
+      stdOut().write( _close )
+   end
+
+   function makeFunc( funcName )
+      path = Path( self.basePath )
+      path.file = funcName
+      path.extension = "fal"
+      mod = self._comp.loadFile( path.path )
+
+      inst = mod.get( funcName )(true)
+      params = inst.parameters()
+
+      uri = self.baseUri + funcName + ".fal"
+      prototype = ",".merge(params)
+
+      uriCheck = ""
+      for varName in params
+         uriCheck += @'
+            var uriVars= "";
+            if($(varName) != null) {
+               if (uriVars == ""){uriVars ="?";}else{uriVars +="&";}
+               uriVars += "$(varName)=" + escape($(varName));
+            }
+      '
+      end
+
+      func = @'
+      if (typeof Falcon.ServerTime !== ''function'') {
+         Falcon.ServerTime = function ( onSuccess, onError, onFailure ) {
+            return {
+               call: function($(prototype)){
+                  $(uriCheck)
+                  Falcon.call( "$(uri)"+uriVars, onSuccess, onError, onFailure );
+               }
+            }
+         }
+      }
+      '
+      stdOut().write( func )
+   end
+end
+
+

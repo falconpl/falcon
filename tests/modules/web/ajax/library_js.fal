@@ -1,0 +1,5 @@
+import Generator from web.ajax.library as Generator
+
+Generator( "/", "./", .[
+      "ServerTime"]
+).generate()
