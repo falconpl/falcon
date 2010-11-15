@@ -209,8 +209,8 @@ class Generator( baseUri, basePath, functions )
       end
 
       func = @'
-      if (typeof Falcon.ServerTime !== ''function'') {
-         Falcon.ServerTime = function ( onSuccess, onError, onFailure ) {
+      if (typeof Falcon.$(funcName) !== ''function'') {
+         Falcon.$(funcName) = function ( onSuccess, onError, onFailure ) {
             return {
                call: function($(prototype)){
                   $(uriCheck)
