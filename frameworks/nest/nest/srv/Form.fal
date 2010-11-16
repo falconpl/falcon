@@ -206,8 +206,10 @@ class Form( instance ) from nest.Service( instance )
       end
 
       // finally, grab the EID if available
-      vname = self.instance ? self.instance + ".eid" : "eid"
-      self.eid = Request.getField( vname, nil )
+      if not self.eid
+         vname = self.instance ? self.instance + ".eid" : "eid"
+         self.eid = Request.getField( vname, nil )
+      end
    end
 
    // Check input form data -- returns true if cheks FAILED
@@ -521,7 +523,7 @@ class Field( name, maker )
    end
 */
    // internal
-   function setSerivce( srv )
+   function setService( srv )
       if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
       self.srv = srv
    end
@@ -743,19 +745,18 @@ class GroupField( name, prompt, fields, maker ) from Field( name, maker )
    
 end
 
+
 class UploadFile( name, prompt, maker ) from Field( name, maker )
    prompt = prompt
    type = "file"
 
-   
    function setService( srv )
       if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
       self.srv = srv
-      self.skin = self.skin_input
+      self.skin = srv.skin_input
       srv.encoding.value = "enctype=\"application/x-www-form-urlencoded\""
    end
 end
-
 
 
 class Option( value, desc )
