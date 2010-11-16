@@ -716,7 +716,7 @@ class GroupField( name, prompt, fields, maker ) from Field( name, maker )
    function grabInputValue()
       data = [=>]
       for field in self.fields
-         field.setSerivce( self.srv )
+         field.setService( self.srv )
          value = field.grabInputValue()
          data[field.name] = value
          if value != nil: somedata = true
@@ -753,8 +753,8 @@ class UploadFile( name, prompt, maker ) from Field( name, maker )
    function setService( srv )
       if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
       self.srv = srv
-      self.skin = srv.skin_input
-      srv.encoding.value = "enctype=\"application/x-www-form-urlencoded\""
+      self.skin = srv.skin_input.value
+      srv.enctype.value = "enctype=\"application/x-www-form-urlencoded\""
    end
 end
 
