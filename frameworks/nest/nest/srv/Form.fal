@@ -754,7 +754,7 @@ class UploadFile( name, prompt, maker ) from Field( name, maker )
       if Nest.log_level >= 3: Nest.logd( @"Setting servivce for field " + self.fullName() )
       self.srv = srv
       self.skin = srv.skin_input.value
-      srv.enctype.value = "enctype=\"application/x-www-form-urlencoded\""
+      srv.enctype.value = "multipart/form-data"
    end
 end
 

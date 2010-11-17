@@ -2,7 +2,8 @@
    <? if vars.result ?>
       <? vars.skin_result( vars, srv ) ?>
    <? end ?>
-   <form method="POST" action="<?= vars.handler ?>" class="<?= vars.css_class ?>" id="<?= vars.css_id ?>" <?=vars.enctype?>>
+   <form method="POST" action="<?= vars.handler ?>" class="<?= vars.css_class ?>" id="<?= vars.css_id ?>" <? if vars.enctype ?>enc
+type="<?=vars.enctype?>"<? end ?> accept-charset="utf-8">
    <fieldset>
    <ul>
    <? for field in vars.fields ?>
