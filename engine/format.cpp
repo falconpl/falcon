@@ -567,7 +567,7 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
             }
 
             // manual round
-            if( (pow(10,-(m_decimals+1)) *5)+fractPart >=1.0)
+            if( (pow((double)10.0,-(m_decimals+1)) *5)+fractPart >=1.0)
             {
                intPart++;
                bIntIsZero = false;
