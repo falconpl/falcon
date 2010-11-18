@@ -1,9 +1,9 @@
 /*
     FALCON - MIME Parser
 
-    FILE: mime.fal
+    FILE: email.fal
 
-    Multipurpose Internet Mail Extensions parser.
+    Multipurpose Internet Mail Extensions.
     -------------------------------------------------------------------
     Author: Stanislas Marquis
     Begin: Sun, 07 Nov 2010 11:24:04 +0200
@@ -16,115 +16,41 @@
 
 
 /*# @brief Class representing a MIME header field.
-    @param txt String to parse.
+    @optparam n Header name.
+    @optparam v Header body (value).
  */
-class MIMEHeaderField( txt )
+class MIMEHeader( n, v )
 
     //# Header name.
-    name = nil
+    name = n
     //# Header body (value).
-    body = nil
+    body = v
 
-    init
+    /*# @brief Parse a string with one MIME header.
+        @param txt The string to parse.
+        @return Itself.
+     */
+    function parse( txt )
         pos = txt.find( ":" )
         if pos == -1: raise ParseError( 11000, i"Invalid MIME header field", txt )
         self.name = txt[:pos]
-        self.body = txt[pos+1:].trim()
+        body = txt[pos+1:].trim()
         // remove tabs and crlfs
-        self.body = self.body.replace( "\t", "" ).replace( "\r", "" ).replace( "\n", " " )
-    end
-end
-
-
-/*# @brief Class representing a MIME entity.
-    @param stream A stream to parse.
-    @optparam endmark In case of multipart parsing, the boundary where entity ends.
-
-    This class parses a stream positioned at the beginning of a MIME entity.
-    If the entity is nested, the endmark is not nil and parsing must stop there.
-
-    The headers property is a list containing all the entity's headers, as
-    MIMEHeaderField objects.
-
-    The body_start and body_stop properties indicate where the body of the entity
-    starts or ends, respectively, in the given stream.
-
-    In case of a multipart entity, the parts property is a list containing the
-    inner MIMEEntity objects.
- */
-class MIMEEntity( stream, endmark )
-
-    //# A list of MIMEHeaderField instances.
-    headers = []
-    //# The position where the body starts in the stream
-    body_start = -1
-    //# The position where the body ends in the stream
-    body_end = -1
-    //# The list of nested entities, in case of multipart
-    parts = nil
-
-    // private cache
-    _encoding = nil
-    _type = nil
-    _type_params = nil
-
-    init
-        // detect and parse the headers
-        self._parseHeaders( stream )
-
-        if self.mainType() == "multipart"
-
-            boundary = self.getTypeParam( "boundary" )
-            if boundary == nil: raise ParseError( 11001, i"Invalid MIME entity" )
-            separator = "--" + boundary
-            terminator = separator + "--"
-            self.parts = []
-
-            // get the parts recursively
-            while ( line = stream.grabLine() ) != oob( 0 )
-                if line == terminator
-                    self.body_end = self.parts[-1].body_end
-                    return self
-                elif line == separator
-                    if self.body_start == -1: self.body_start = stream.tell()
-                    ent = MIMEEntity( stream, separator )
-                    self.parts += ent
-                    // it may be the last one
-                    stream.seek( ent.body_end )
-                end
-            end
-
-            // we should not get here
-            raise ParseError( 11001, i"Invalid MIME entity" )
-
-        else
-            // not a multipart entity
-            self.body_start = stream.tell()
-
-            if endmark == nil
-                stream.seekEnd( 0 )
-                self.body_end = stream.tell()
-                return self // we're done
-            end
-
-            // nested entity, find the boundary
-            pos = stream.tell()
-            while ( line = stream.grabLine() ) != oob( 0 )
-                if line.startsWith( endmark )
-                    self.body_end = pos
-                    return self // we're done
-                else
-                    pos = stream.tell()
-                end
-            end
-
-            // we should not get here
-            raise ParseError( 11001, i"Invalid MIME entity" )
-        end
+        self.body = body.replace( "\t", " " ).replace( "\r", "" ).replace( "\n", " " )
+        return self
     end
 
-    function _parseHeaders( stream )
-        // find the first blank line and parse headers
+    /*# @brief Return a string representing the header (without CRLF).
+     */
+    function toString()
+        return self.name + ": " + self.body
+    end
+
+    /*# @brief Parse a stream containing MIME headers, until the first blank line.
+        @param stream The stream.
+        @return A list of MIMEHeader objects.
+     */
+    function parseStream( stream )
         // we leave the stream where the body should start
         hdrs = []
         while 1
@@ -133,30 +59,104 @@ class MIMEEntity( stream, endmark )
             if line == "": break
             hdrs += line
         end
+        ret = []
         buf = strBuffer( 4096 )
         for line in hdrs
-            forfirst
-                buf += line
+            buf += line
+            if line[0] in [ "\t", " " ]
                 continue
+            else
+                ret += MIMEHeader().parse( buf )
+                buf = strBuffer( 4096 )
             end
-            formiddle
-                if line[0] in [ "\t", " " ]
-                    buf += line
-                    continue
-                else
-                    self.headers += MIMEHeaderField( buf )
-                    buf = line
+        end
+        return ret
+    end
+end
+
+
+/*# @brief Class representing a MIME entity.
+
+    The headers property is a list containing all the entity's headers, as
+    MIMEHeader objects.
+
+ */
+class MIMEEntity()
+
+    //# A list of MIMEHeaderField instances.
+    headers = []
+    //# The body of the entity, as a string, or a list of MIMEEntity objects in case of multipart.
+    content = nil
+
+    // private cache
+    _encoding = nil
+    _type = nil
+    _type_params = nil
+
+    /*# @brief Parse a stream containing a MIME entity.
+        @param stream A stream to parse.
+        @optparam endmark In case of multipart parsing, the boundary where entity ends.
+        @return Itself.
+
+        This class parses a stream positioned at the beginning of a MIME entity.
+        If the entity is nested, the endmark is not nil and parsing must stop there.
+     */
+    function parseStream( stream, endmark )
+        // detect and parse the headers
+        self.headers += MIMEHeader.parseStream( stream )
+
+        if self.mainType() == "multipart"
+
+            boundary = self.getTypeParam( "boundary" )
+            if boundary == nil: raise ParseError( 11001, i"Invalid MIME entity" )
+            separator = "--" + boundary
+            terminator = separator + "--"
+            self.content = []
+            starts = []
+
+            // get the parts recursively
+            while ( line = stream.grabLine() ) != oob( 0 )
+                if line == terminator
+                    break
+                elif line == separator
+                    starts += stream.tell()
                 end
             end
-            forlast
-                if line[0] in [ "\t", " " ]
-                    buf += line
-                    self.headers += MIMEHeaderField( buf )
-                else
-                    self.headers += MIMEHeaderField( buf )
-                    self.headers += MIMEHeaderField( line )
-                end
+
+            for start in starts
+                stream.seek( start )
+                self.content += MIMEEntity().parseStream( stream, separator )
             end
+
+            return self
+
+        else
+            // not a multipart entity
+            start = stream.tell()
+
+            if endmark == nil
+                stream.seekEnd( 0 )
+                stop = stream.tell()
+            else
+                // nested entity, find the boundary
+                pos = start
+                stop = nil
+                while ( line = stream.grabLine() ) != oob( 0 )
+                    if line.startsWith( endmark )
+                        stop = pos
+                        break
+                    else
+                        pos = stream.tell()
+                    end
+                end
+                if stop == nil: raise ParseError( 11001, i"Invalid MIME entity" )
+            end
+
+            self.content = strBuffer( stop - start )
+            stream.seek( start )
+            stream.read( self.content, stop - start )
+
+            return self
         end
     end
 
@@ -273,7 +273,7 @@ end
 /*# @brief Class representing a whole MIME message.
     @param stream Stream to parse.
  */
-class MIMEMessage( stream ) from MIMEEntity( stream )
+class MIMEMessage() from MIMEEntity()
 end
 
 
