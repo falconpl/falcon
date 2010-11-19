@@ -26,7 +26,11 @@ if(FALCON_WITH_INTERNAL_ZLIB)
     compress.c
     crc32.c
     deflate.c
-    gzio.c
+    gzclose.c
+    gzguts.h
+    gzlib.c
+    gzread.c
+    gzwrite.c
     infback.c
     inffast.c
     inflate.c
