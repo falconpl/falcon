@@ -171,6 +171,22 @@ class MIMEEntity()
         return nil
     end
 
+    /*# @brief Set the value of the first header field whose name is given in parameter.
+        @param name The header name.
+        @param value The header value (body).
+
+        If that header does not exist, it will be created.
+     */
+    function setHeaderValue( name, value )
+        for hf in self.headers
+            if hf.name == name
+                hf.body = value
+                return
+            end
+        end
+        self.headers += MIMEHeader( name, value )
+    end
+
     /*# @brief Return the encoding specified in the Content-Transfer-Encoding message header.
         @return The encoding found. If no such header exists, return '7bit'.
      */
