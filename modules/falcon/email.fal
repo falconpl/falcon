@@ -162,7 +162,7 @@ class MIMEEntity()
 
     /*# @brief Return the value of first header field whose name is given in parameter.
         @param name The header name.
-        @return The value of the first MIMEHeaderField instance found, or nil if not found.
+        @return The value of the first MIMEHeader instance found, or nil if not found.
      */
     function getHeaderValue( name )
         for hf in self.headers
@@ -267,6 +267,11 @@ class MIMEEntity()
         return got == "" ? nil : got
     end
 
+    /*# @brief Return true if the entity is a multipart entity.
+     */
+    function isMultipart()
+        return self.mainType() == "multipart" ? true : false
+    end
 end
 
 
