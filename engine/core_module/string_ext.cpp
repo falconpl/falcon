@@ -1160,7 +1160,7 @@ FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm )
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
 
-      while( pos <= len )
+      while( pos < len )
       {
          uint32 chr = self->getCharAt( pos );
          int found = 0;
