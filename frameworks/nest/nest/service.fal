@@ -286,10 +286,15 @@ class Service( instance ) from NestModule( instance )
    */
    function loadResource( res )
       dirs = Nest.getServiceDirs( self.className(), self.instance )
-      file = utils.findFileInDirs( map( {fname => fname + "/res"}, dirs), res )   
+      dirs = map( {fname => fname + "/res"}, dirs)
+      if Nest.log_level >= 3: Nest.logd( "Searching resource " + res +" in " + dirs.describe() )
+      file = utils.findFileInDirs( dirs , res )
+      
       if not file
          raise NestError( NestError.other, i"Requested resource not found", res )
       end
+
+      if Nest.log_level >= 2: Nest.logi( "Found resource " + res +" in " + file )
       
       length = FileStat( file ).size
       fstream = InputStream( file )

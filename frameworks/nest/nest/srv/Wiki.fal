@@ -96,6 +96,8 @@ class Wiki( instance ) from Service( instance )
    modyPage = ServiceVar( b.ConfigBinder )
    //# Max depth of the wiki history
    history_depth = ServiceVar( b.ConfigBinder )
+   //# Config - Name of the entity used by this wiki service (defaults to "wiki_pages")
+   ename = ServiceVar( b.ConfigBinder )
 
 
    //===================================================================
@@ -167,7 +169,7 @@ class Wiki( instance ) from Service( instance )
          end
       end
 
-      self.setEntities( dm )
+      self.setEntities( dm, self.ename.value )
       self.addJsRes( 'insertText.js' )
    end
    
@@ -257,19 +259,26 @@ class Wiki( instance ) from Service( instance )
    // Utilities
    //
 
-   function initialize()
+   /*# Initializes the wiki system, creating the entity through the data manager.
+      @param ename The name of the entity to be created.
+   */
+   function initialize( ename )
       if not self.allowed(): return false
       Nest.logi( "Initializing WIKI DB entities" )
       // parameter check should be already performed
       dm = self.dm.value
-      self.setEntities( dm )
+      self.setEntities( dm, ename )
       dm.createEntity( self.entity, true )
    end
 
-
-   function setEntities( dm )
+   /*# Creates the entities in a data manager.
+      @param dm The datamanager under which the WIKI entities are to be published.
+      @param ename The name of the entity.
+   */
+   function setEntities( dm, ename )
       // set our entities in the database
       wp = wiki_entity( dm )
+      name = ename ? ename : entity_name
       // add the entity to the datamanager
       dm.addEntity( wp )
       self.entity = wp
