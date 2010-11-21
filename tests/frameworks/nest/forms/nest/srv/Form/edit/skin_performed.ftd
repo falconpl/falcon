@@ -1,0 +1,3 @@
+<? function skin( vars, srv ) ?>
+<p><b>Thanks!</b> -- updates recorded</p>
+<? end ?>

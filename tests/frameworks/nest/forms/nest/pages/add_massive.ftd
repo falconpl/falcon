@@ -1,0 +1,37 @@
+<?
+   ent = Nest.dm( "form_db" ).entity("users")
+   entity = [
+      "pwd_md5" => "inactive",
+      "auth_type" => "user",
+      "first_name" => "User",
+      "last_name" => "Some",
+      "title" => "Dr.",
+      "birthdate" => "2006-05-02",
+      "interests" => "music,sports",
+      "sex" => "M",
+      "profile" => "Some text"
+   ]
+   if Request.getField("create", "" ) == "yes"
+      for i in [0:1000]
+         entity["user_id"] = "user_id_" + i
+         ent.insert( entity )
+      end
+   end
+?><html>
+<head>
+<title>Fill the users database</title>
+</head>
+<body>
+<h1>Fill the User database </h1>
+<? if Request.getField("create", "" ) == "yes" ?>
+<p>Thanks for having created 1000 users!</p>
+<p><a href="/">Return to main</a></p>
+<? else ?>
+<p>We're adding some massinve data to the DB.</p>
+<form action="<?= Nest.pageLink() ?>" method="POST">
+<input type="hidden" name="create" value="yes"/>
+<input type="submit" value="ADD 1000 USERS!"/>
+</form>
+<? end ?>
+</body>
+</html>

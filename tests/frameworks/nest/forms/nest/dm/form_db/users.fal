@@ -1,0 +1,22 @@
+// Nest - Notes test site
+// Configuration for the users entity
+
+import from nest.dbentity in dbe
+import from hash
+
+class users( dbm ) from dbe.DBEntity( dbm )
+
+   definition = .[
+      ^+ "user_id char(15) not null PRIMARY KEY"
+         "pwd_md5 varchar(30)"
+         "auth_type char(10)"
+         "first_name char(25)"
+         "last_name char(25)"
+         "title char(3)"
+         "birthdate date"
+         "interests varchar(256)"
+         "sex char(1)"
+         "profile varchar(2048)"
+   ]
+
+end

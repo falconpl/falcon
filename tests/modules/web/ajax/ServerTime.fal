@@ -1,0 +1,33 @@
+import from web.ajax
+
+class ServerTime(dry) from web.ajax.Function(dry)
+   //zipReply = true
+   
+   errorMap = [
+      1 => i"Timezone must be an integer"
+   ]
+
+   parameters = .[
+      web.ajax.Param( "tzdisp", check|{ v, f =>
+         try
+            return int(v)
+         catch in e
+            raise f.error( 1 )
+         end
+      })
+   ]
+
+   function run( tzdisp )
+      ts = CurrentTime()
+
+      if tzdisp
+         tsadd = TimeStamp()
+         tsadd.minute = tzdisp
+         ts.add( tsadd )
+      end
+
+      return [ "time" => ts.toString() ]
+   end
+end
+
+ServerTime()

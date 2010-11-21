@@ -1,6 +1,57 @@
-/*# 
-@page config Nest basic configuration
+/*#
+@page config Nest basic setup and configuration
 @after quickstart
 
-Nest is configured through direct calls in the entry point. 
+Nest is usually installed as a part of the Falcon distribution, and doesn't
+require any particular setup other than a simple WOPI installation.
+
+Because of its nature of web-oriented application engine, CGI drivers
+are not highly suitable to support its full features. However,
+it is possible to run the application entry point as a CGI under any
+of the WOPI CGI based drivers providing proper CGI environment
+setup. For example, using the falcgi driver it would be necessary
+to add
+
+@code
+load cgi
+@endcode
+
+at top of the entry point script.
+
+Nest is configured through a set of properties to be set directly
+in the application entry point. If this is not desirable, it is
+possible to set some configuration keys in a separate module and
+then load and assign those configuration items in the entry point.
+
+For example, to change the default **nest/** application tree
+top and move it outside the web server host scope, you may:
+
+@code
+load nest
+
+...
+Nest.site_nest_dir = "../this_site_nest"
+...
+
+Nest.route()
+@endcode
+
+@section config_opt Configuration options
+
+@subsection config_loc Install & setup options
+
+- @b site_nest_dir: Path relative to the application entry point where
+   the site-specific Nest services, configurations, data managers, hooks
+   and so on are placed.
+- @b self_uri: URI of the main script. If not set, in case of need the URI of the
+       entry point script will be determined through the Request fields.
+
+@subsection config_loc Debug options
+
+- @b pcheck: if true, do extra checks on parameter consistency, to trap common
+     module configuration errors.
+- @b log_level: 0 for none - 3 for debug
+- @b debug: set to true to send log informatons at the end of the page being
+            generated.
+
 */

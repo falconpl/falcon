@@ -1,28 +1,16 @@
 <? function skin( vars, srv ) ?>
-   <div>
-      <?
-      if "RESULT" in vars.formResults
-         if vars.formResults["RESULT"] == "OK"
-            > i"Thanks, you are now registered. You can go back to the main page and log in."
-         else
-            > i"Error in posting the request.<br/>"
-            > "<pre>", vars.formResults["ERROR"], "</pre>"
-         end
-      else
-      ?>
-      <form  method="POST" action="<?= vars.action ?>" class="<?= vars.formClass ?>" id="<?= vars.formId ?>">
-         <fieldset>
-            <? for field in vars.formData ?>
-               <div>
-               <?= srv.makeField( field ) ?>
-               <? if field.name in vars.formResults ?>
-                  <span><?= vars.formResults[ field.name ] ?></span>
-               <? end ?>
-               </div>
-            <? end ?>
-         </fieldset>
-         <?= vars.formActions ?>
-      </form>
-      <? end ?>
-   </div>
+   <? if vars.result ?>
+      <? vars.skin_result( vars, srv ) ?>
+   <? end ?>
+   <form method="POST" action="<?= vars.handler ?>" class="<?= vars.css_class ?>" id="<?= vars.css_id ?>" <? if vars.enctype ?>enc
+type="<?=vars.enctype?>"<? end ?> accept-charset="utf-8">
+   <fieldset>
+   <ul>
+   <? for field in vars.fields ?>
+      <li><? field.skin( vars, srv, field ) ?></li>
+   <? end ?>
+   </ul>
+   </fieldset>
+   <?= "&nbsp;&nbsp;".merge(map( {a => a.render() }, vars.actions)) ?>
+   </form>
 <? end ?>

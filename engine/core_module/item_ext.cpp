@@ -1524,6 +1524,16 @@ FALCON_FUNC LateBinding_value( VMachine *vm )
 }
 
 /*#
+   @method symbol LateBinding
+   @brief Returns the symbol name associated with a late binding.
+   @return The symbol name
+*/
+FALCON_FUNC LateBinding_symbol( VMachine *vm )
+{
+   vm->retval( vm->self().asLBind() );
+}
+
+/*#
    @method bound LateBinding
    @brief Checks if the late binding is bound.
    @return True if this late binding has a bound value.

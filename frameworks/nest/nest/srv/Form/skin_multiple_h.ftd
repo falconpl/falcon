@@ -1,0 +1,11 @@
+<? function skin( vars, srv, field ) ?>
+   <fieldset id="<?=field.fullName()?>" class="nest_h">
+   <legend><?= htmlEscape(field.prompt) ?></legend>
+   <? for desc, infield in field.makeOptions() ?>
+      <label for="<?=field.fullName()?>" >
+      <?=infield?> <?= desc ?>
+      </label>&nbsp;&nbsp;&nbsp;
+   <? end ?>
+   </fieldset>
+   <? if field.failure ?><span class="failure"><?=field.failure?></span><? end ?>
+<? end ?>

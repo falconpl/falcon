@@ -130,7 +130,29 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          
       return result
    end
-   
+
+
+   function count( entity, view )
+      sql_cond = ""
+
+      if view
+         cond = view.cond
+         if cond
+            sql_cond = "\nwhere "
+            for f, c in cond
+               sql_cond += f + c.toString()
+               formiddle: sql_cond += " and "
+            end
+         end
+      end
+
+      sql_command = @"select count(*) from $entity.name" + sql_cond
+      if Nest.log_level >= 3: Nest.logi( "Counting SQL: " + sql_command )
+
+      r = self.dbc.query( sql_command )
+      if r: return r.fetch([])[0]
+      return 0
+   end
 
    function queryItem( entity, keys, view )
       if view

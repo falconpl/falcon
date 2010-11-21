@@ -81,6 +81,7 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  LateBinding_value( ::Falcon::VMachine *vm );
+FALCON_FUNC  LateBinding_symbol( ::Falcon::VMachine *vm );
 FALCON_FUNC  LateBinding_bound( ::Falcon::VMachine *vm );
 FALCON_FUNC  LateBinding_bind( ::Falcon::VMachine *vm );
 FALCON_FUNC  LateBinding_unbind( ::Falcon::VMachine *vm );

@@ -28,6 +28,7 @@
       <? end ?>
       </tbody>
       </table>
+      <? s.skin_pages( s, srv) ?>
    <? else ?>
       <p><b>Entity view empty</b></p>
    <? end ?>
