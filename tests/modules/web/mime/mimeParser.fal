@@ -1,0 +1,41 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: mimeParser.fal
+
+    Test for Multipurpose Internet Mail Extensions parser.
+    -------------------------------------------------------------------
+    Author: Giancarlo Niccolai
+    Begin: Sun, 21 Nov 2010 15:22:29 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
+
+import from web.mime in mime
+
+mail = mime.parse(stdIn())
+
+showMail( mail, 0 )
+
+function showMail( part, level )
+   
+   > "=" * 70
+   for k,v in part.headers
+      >  " "*(level*3) + "HEADER: " +k,  ": " + v.describe()
+   end
+
+   > "BODY:"
+   > part.body
+   > "=" * 70
+   
+   parts = part.parts
+   if parts
+      > "Parts at level " + level
+      for p in parts
+         showMail( p, level+1 )
+      end
+   end
+end

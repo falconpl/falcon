@@ -1,0 +1,209 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: smtp.fal
+
+    Send a mail!
+    -------------------------------------------------------------------
+    Author: Giancarlo Nicclai
+    Begin: Sun, 21 Nov 2010 19:38:39 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+ */
+
+import from socket
+
+/*# Simple Mail Transfer Protocol interface.
+   @param server A remote server IP or DNS.
+   @param port A port name or number, defaults to 'smtp'.
+*/
+
+class SMTP( server, port )
+   //# Helo string sent at connection
+   heloMsg = "Falcon_SMTP"
+   timeout = 5000
+   server = server
+   port = port ? port : "smtp"
+
+   _smtp = nil
+
+   trace = {=>}
+
+   /*# Send a MIME part.
+      @param part A @a mime.Part instance.
+      @raise CodeError if the contents of From or To fields are invalid
+      
+      Sends a mail to the described recipients.
+      The part must include the From and To headers.
+      
+      If the Date header is not included, it will be added and set
+      to the current date and date.
+
+      @see mime.Part
+   */
+   function send( part )
+      if not part provides headers
+         raise ParamError( 501, nil, "mime.Part")
+      end
+
+      headers = part.headers
+      if not "From" in headers or not "To" in headers
+         raise CodeError( 10000, "Missing 'From' or 'To' fields in mail" )
+      end
+      
+      from_field = headers["From"]
+      to_field = headers["To"]
+
+      from_mail = self.extractMail( from_field )
+      to_list = map( self.extractMail, to_field.split( "," ) )
+      
+      if "Date" notin headers
+         time = CurrentTime()
+         headers[ "Date" ] = time.toRFC2822()
+      end
+
+      self.sendTo( from_mail, to_list, part.toString() )
+   end
+
+
+   /*# Send a mail data to a remote SMTP server.
+      @param sender The sender of the mail.
+      @param rcpt Single or multiple mail target recipients.
+      @param data A string containing the mail content, properly encoded.
+   */
+   function sendTo( sender, rcpt, data )
+      self.connect()
+      self.helo()
+      self.mailFrom( sender )
+      if rcpt.typeId() != StringType
+         for target in rcpt
+            self.rcpt( target )
+         end
+      end
+      self.data( data )
+      self.quit()
+   end
+
+
+   function connect()
+      //connect with server
+      smtp = socket.TCPSocket()
+      smtp.setTimeout(self.timeout)
+      if not smtp.connect( self.server, self.port )
+         raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
+      end
+
+      self.trace( "Connected." )
+      // get the hello message
+      reply = ""
+      smtp.recv(reply, 256)
+      self.trace( reply )
+      if reply[0:3] != "220"
+         raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
+      end
+      
+      self._smtp = smtp
+   end
+
+   
+   function helo()
+      reply = ""
+      smtp = self._smtp
+
+      out = "HELO " + self.heloMsg
+      self.trace( "-->" + out )
+      smtp.send( out +"\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0] != "2"
+         raise socket.NetError( 10003, "HELO refused", reply.trim() )
+      end
+   end
+
+
+   function mailFrom( sender )
+      reply = ""
+      smtp = self._smtp
+
+      out = "MAIL FROM:"+ sender
+      self.trace( "-->" + out )
+      smtp.send( out + "\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0:3] != "250"
+         raise socket.NetError( 10004, "FROM refused", reply.trim() )
+      end
+   end
+   
+
+   function rcpt( target )
+      reply = ""
+      smtp = self._smtp
+
+      out = "RCPT TO:"+ target
+      self.trace( "-->" + out )
+      smtp.send( out + "\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0:3] != "250"
+         raise socket.NetError( 10005, "RCPT refused", reply.trim() )
+      end
+   end
+
+
+   function data( content )
+      reply = ""
+      smtp = self._smtp
+
+      self.trace( "-->DATA" )
+      smtp.send( "DATA\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0:2] != "35"
+         raise socket.NetError( 10006, "DATA refused", reply.trim() )
+      end
+
+      sent = 0
+      blen = content.len()
+      while sent < blen
+         sent += smtp.send( content, blen - sent, sent )
+         self.trace( "--> sent " + sent + " bytes"  )
+      end
+      out = "\r\n.\r\n"
+      self.trace( "-->." )
+      smtp.send( out )      
+
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0:2] != "25"
+         raise socket.NetError( 10007, "DATA not correctly closed", reply )
+      end
+   end
+
+
+   function quit()
+      reply = ""
+      smtp = self._smtp
+      
+      self.trace( "-->QUIT" )
+      smtp.send( "QUIT\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if reply[0:2] != "22"
+         raise socket.NetError( 10008, "QUIT failed", reply )
+      end      
+   end
+
+
+   function extractMail( field )
+      p1 = field.rfind( "<" )
+      p2 = field.rfind( ">" )
+      if p1 < p2
+         return field[p1+1:p2]
+      end
+      return field
+   end
+end
