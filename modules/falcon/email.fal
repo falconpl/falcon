@@ -1,0 +1,302 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: email.fal
+
+    Multipurpose Internet Mail Extensions.
+    -------------------------------------------------------------------
+    Author: Stanislas Marquis
+    Begin: Sun, 07 Nov 2010 11:24:04 +0200
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+ */
+
+
+/*# @brief Class representing a MIME header field.
+    @optparam n Header name.
+    @optparam v Header body (value).
+ */
+class MIMEHeader( n, v )
+
+    //# Header name.
+    name = n
+    //# Header body (value).
+    body = v
+
+    /*# @brief Parse a string with one MIME header.
+        @param txt The string to parse.
+        @return Itself.
+     */
+    function parse( txt )
+        pos = txt.find( ":" )
+        if pos == -1: raise ParseError( 11000, i"Invalid MIME header field", txt )
+        self.name = txt[:pos]
+        body = txt[pos+1:].trim()
+        // remove tabs and crlfs
+        self.body = body.replace( "\t", " " ).replace( "\r", "" ).replace( "\n", " " )
+        return self
+    end
+
+    /*# @brief Return a string representing the header (without CRLF).
+     */
+    function toString()
+        return self.name + ": " + self.body
+    end
+
+    /*# @brief Parse a stream containing MIME headers, until the first blank line.
+        @param stream The stream.
+        @return A list of MIMEHeader objects.
+     */
+    function parseStream( stream )
+        // we leave the stream where the body should start
+        hdrs = []
+        while 1
+            line = stream.grabLine()
+            if line == oob( 0 ): raise ParseError( 11001, i"Invalid MIME entity" )
+            if line == "": break
+            hdrs += line
+        end
+        ret = []
+        buf = strBuffer( 4096 )
+        for line in hdrs
+            buf += line
+            if line[0] in [ "\t", " " ]
+                continue
+            else
+                ret += MIMEHeader().parse( buf )
+                buf = strBuffer( 4096 )
+            end
+        end
+        return ret
+    end
+end
+
+
+/*# @brief Class representing a MIME entity.
+
+    The headers property is a list containing all the entity's headers, as
+    MIMEHeader objects.
+
+ */
+class MIMEEntity()
+
+    //# A list of MIMEHeaderField instances.
+    headers = []
+    //# The body of the entity, as a string, or a list of MIMEEntity objects in case of multipart.
+    content = nil
+
+    // private cache
+    _encoding = nil
+    _type = nil
+    _type_params = nil
+
+    /*# @brief Parse a stream containing a MIME entity.
+        @param stream A stream to parse.
+        @optparam endmark In case of multipart parsing, the boundary where entity ends.
+        @return Itself.
+
+        This class parses a stream positioned at the beginning of a MIME entity.
+        If the entity is nested, the endmark is not nil and parsing must stop there.
+     */
+    function parseStream( stream, endmark )
+        // detect and parse the headers
+        self.headers += MIMEHeader.parseStream( stream )
+
+        if self.mainType() == "multipart"
+
+            boundary = self.getTypeParam( "boundary" )
+            if boundary == nil: raise ParseError( 11001, i"Invalid MIME entity" )
+            separator = "--" + boundary
+            terminator = separator + "--"
+            self.content = []
+            starts = []
+
+            // get the parts recursively
+            while ( line = stream.grabLine() ) != oob( 0 )
+                if line == terminator
+                    break
+                elif line == separator
+                    starts += stream.tell()
+                end
+            end
+
+            for start in starts
+                stream.seek( start )
+                self.content += MIMEEntity().parseStream( stream, separator )
+            end
+
+            return self
+
+        else
+            // not a multipart entity
+            start = stream.tell()
+
+            if endmark == nil
+                stream.seekEnd( 0 )
+                stop = stream.tell()
+            else
+                // nested entity, find the boundary
+                pos = start
+                stop = nil
+                while ( line = stream.grabLine() ) != oob( 0 )
+                    if line.startsWith( endmark )
+                        stop = pos
+                        break
+                    else
+                        pos = stream.tell()
+                    end
+                end
+                if stop == nil: raise ParseError( 11001, i"Invalid MIME entity" )
+            end
+
+            self.content = strBuffer( stop - start )
+            stream.seek( start )
+            stream.read( self.content, stop - start )
+
+            return self
+        end
+    end
+
+    /*# @brief Return the value of first header field whose name is given in parameter.
+        @param name The header name.
+        @return The value of the first MIMEHeader instance found, or nil if not found.
+     */
+    function getHeaderValue( name )
+        for hf in self.headers
+            if hf.name == name: return hf.body
+        end
+        return nil
+    end
+
+    /*# @brief Set the value of the first header field whose name is given in parameter.
+        @param name The header name.
+        @param value The header value (body).
+
+        If that header does not exist, it will be created.
+     */
+    function setHeaderValue( name, value )
+        for hf in self.headers
+            if hf.name == name
+                hf.body = value
+                return
+            end
+        end
+        self.headers += MIMEHeader( name, value )
+    end
+
+    /*# @brief Return the encoding specified in the Content-Transfer-Encoding message header.
+        @return The encoding found. If no such header exists, return '7bit'.
+     */
+    function encoding()
+        if self._encoding == nil
+            v = self.getHeaderValue( "Content-Transfer-Encoding" )
+            self._encoding = v == nil ? "7bit" : v
+        end
+        return self._encoding
+    end
+
+    function _parseContentType( txt )
+        // parse the content-type header value to fill _type and _type_params
+        if txt == nil
+            // default
+            self._type = "text/plain"
+            self._type_params = []
+            return
+        end
+        pos = txt.find( ";" )
+        if pos == -1
+            self._type = txt
+            self._type_params = []
+            return
+        end
+        self._type = txt[:pos].trim()
+        self._type_params = [].comp( txt[pos+1:].split( ";" ), { v => v.trim() } )
+    end
+
+    /*# @brief Return the message type (of the form type/subtype) as specified in the Content-Type header.
+        @return The message type. If no such header exists, return 'text/plain'.
+     */
+    function type()
+        if self._type == nil
+            self._parseContentType( self.getHeaderValue( "Content-Type" ) )
+        end
+        return self._type
+    end
+
+    /*# @brief Return the main type as specified in the Content-Type header.
+        @return The main type. If no such header exists, return 'text'.
+     */
+    function mainType()
+        if self._type == nil
+            self._parseContentType( self.getHeaderValue( "Content-Type" ) )
+        end
+        return self._type.split( "/" )[0]
+    end
+
+    /*# @brief Return the subtype as specified in the Content-Type header.
+        @return The subtype. If no such header exists, return 'plain'.
+     */
+    function subType()
+        if self._type == nil
+            self._parseContentType( self.getHeaderValue( "Content-Type" ) )
+        end
+        return self._type.split( "/" )[1]
+    end
+
+    /*# @brief Return the parameter list of the Content-Type header. This is a list of strings.
+     */
+    function typeParams()
+        if self._type == nil
+            self._parseContentType( self.getHeaderValue( "Content-Type" ) )
+        end
+        return self._type_params
+    end
+
+    /*# @brief Return the value of the first parameter (as returned by typeParams()) of the form name=value for the given name.
+        @param name the type parameter name.
+        @return The value, or nil if nothing found.
+
+        If value is surrounded by quotes of the form ‘<...>‘ or ‘"..."‘, those are removed.
+     */
+    function getTypeParam( name )
+        got = nil
+        for p in self.typeParams()
+            pos = p.find( "=" )
+            if pos != -1
+                if p[:pos].trim().lower() == name
+                   got = p[pos+1:].trim()
+                   break
+                end
+            else
+                if p.lower() == name: return p
+            end
+        end
+        if got in [ nil, "" ]: return nil
+        // value enclosed in "" or <> ?
+        if ( ( got[0] == '"' and got[-1] == '"' )
+            or ( got[0] == '<' and got[-1] == '>' ) )
+            got = got[1:-1]
+        end
+        return got == "" ? nil : got
+    end
+
+    /*# @brief Return true if the entity is a multipart entity.
+     */
+    function isMultipart()
+        return self.mainType() == "multipart" ? true : false
+    end
+end
+
+
+/*# @brief Class representing a whole MIME message.
+    @param stream Stream to parse.
+ */
+class MIMEMessage() from MIMEEntity()
+end
+
+
+export MIMEMessage
+
