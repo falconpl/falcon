@@ -324,6 +324,11 @@ void fal_closeDir( ::Falcon::DirEntry *entry )
 
 bool DirEntry_unix::read( String &res )
 {
+   // Glibc doesn't perform that check
+   if( m_raw_dir == 0)
+   {
+      return false;
+   }
    struct dirent *d;
 
    errno = 0;
