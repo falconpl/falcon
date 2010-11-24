@@ -278,7 +278,7 @@ class Wiki( instance ) from Service( instance )
    function setEntities( dm, ename )
       // set our entities in the database
       wp = wiki_entity( dm )
-      name = ename ? ename : entity_name
+      wp.name = ename ? ename : entity_name
       // add the entity to the datamanager
       dm.addEntity( wp )
       self.entity = wp

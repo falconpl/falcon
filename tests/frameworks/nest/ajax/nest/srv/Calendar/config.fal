@@ -1,5 +1,3 @@
-import from nest.action in act
-
 day_maker = function( year, month, day )
    return @ '<a href="javascript:showDay($(day))">$(day)</a>'
 end
