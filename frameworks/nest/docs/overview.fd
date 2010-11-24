@@ -190,6 +190,22 @@ Then, {{frame.ftd}} would beside index.fal, and would look like the following:
 </html>
 @endcode
 
+Framing can be disabled on specific pages adding the Falcon attibute @b nest_frame as false;
+for example:
+@code
+<?
+nest_frame: false
+?>
+<html>
+<body>
+<h1>Unframed page</h1>
+<p>This page won't be framed, even if nest has a site-wide frame</p>
+</body>
+</html>
+@endcode
+
+@note Unframing .fal and .ftd files is useful to build simple AJAX based sites.
+
 @sction ov_services Services
 
 Nest modular web application composition is based on the concept of __services__, that are

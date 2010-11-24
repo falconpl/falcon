@@ -413,7 +413,7 @@ object Nest
 
    // Rendered content of the page, each being a strtring or a function to be called back.
    _contentSlices = nil
-   _contentFile = nil
+   _contentProvider = nil
 
    // Current stream where the page is generating its output
    _pageStream = nil
@@ -838,7 +838,7 @@ object Nest
       The content page is simply copied verbatim in place of this declaration.
    */
    function content()
-      if not self._contentFile
+      if not self._contentProvider
          NestError( NestError.not_in_frame, "" )
       end
 
@@ -849,13 +849,13 @@ object Nest
       stdOut( self._pageStream )
 
       // includes the content page and proceeds with the rest of the framing.
-      include( self._contentFile )
+      self._contentProvider()
       self._contentSlices += self._pageStream.closeToString()
       self._pageStream = StringStream()
       stdOut( self._pageStream )
 
       // also, make sure this can't be done anymore
-      self._contentFile = nil
+      self._contentProvider = nil
    end
 
    /*# Compile a class having the same name of the host module.
@@ -1161,12 +1161,22 @@ object Nest
       self._contentSlices = []
 
       try
+         self._comp.launchAtLink = false
+         page = self._comp.loadFile( file )
+         self._comp.launchAtLink = true
+         main = page.get("__main__")
+
          // should the page be framed?
          if self.frame.isCallable()
-            self._contentFile = file
-            self.frame()
+            attrs = page.attributes()
+            if "nest_frame" in attrs and not attrs["nest_frame"]
+               main()
+            else
+               self._contentProvider = main
+               self.frame()
+            end
          else
-            include( file )
+            main()
          end
 
          // ok, we can run the services

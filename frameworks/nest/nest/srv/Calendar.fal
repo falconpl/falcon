@@ -1,0 +1,189 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Calendar.fal
+
+   Service for managing calendars
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 15 Sep 2010 18:56:26 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+
+
+/*# Calendar service.
+   @optparam instance An instance name for this service.
+
+   Displays a month/event oriented small calendar.
+
+   The service prepares a matrix of 5 rows x columns
+   so that the skin can easily render it.
+
+   Each element is an entry of .[number, text], where "text" is an html
+   that should be rendered in place of each number.
+
+   If the number is 0, then the day is considered "out of range" and gets
+   shaded.
+   
+*/
+class Calendar( instance ) from Service( instance )
+   //# Config: Days of the week. Defaults to Mon-Sun
+   days = ServiceVar( b.ConfigBinder )
+
+   //# Config: Week start (0=sunday, 1= monday...)
+   week_start = ServiceVar( b.ConfigBinder )
+   
+   //# Config: Function returning an action for each ordinary day
+   day_maker = ServiceVar( b.ConfigBinder )
+
+   /*# Skin: Month render skin.
+      May be used to create custom prev/next months links.
+   */
+   skin_month = ServiceVar( b.SkinBinder )
+
+   /*# Config: Provider generating a list of full days.
+
+      The provider is a hook name, or an array of hook names and the needed
+      parameters, that is invoked to determine which days are full, and
+      what to do when a full day is clicked.
+      
+      The hook will be called with the current year and month as two parameters,
+      and it must return either nil or a list of pairs [day number, action];
+      the action can be @b nil if nothing should be done even if the day is full.
+      
+   */
+   full_day_provider = ServiceVar( b.ConfigBinder )
+
+   //# Input: Year
+   year = ServiceVar( b.InputVarBinder )
+
+   //# Input: Month
+   month = ServiceVar( b.InputVarBinder )
+
+   //# Data to be displayed
+   calendar = ServiceVar()
+
+   //# Rendered variable
+   monthName = ServiceVar()
+
+   monthNames = .[
+      i"January"
+      i"February"
+      i"March"
+      i"April"
+      i"May"
+      i"June"
+      i"July"
+      i"August"
+      i"September"
+      i"October"
+      i"November"
+      i"December"]
+
+
+   _day_maker = nil
+   _year = nil
+   _month = nil
+   
+   function startup()
+      if not self.year.isSet or not self.month.isSet
+         today = CurrentTime()
+         self.year.value = today.year
+         self.month.value = today.month
+      end
+
+      if not self.days.isSet
+         self.days.value = .[ i"M" i"T" i"W" i"T" i"F" i"S" i"S" ]
+         self.week_start.value = 0
+      end
+
+      self._day_maker = self.day_maker.value
+
+      // Sets the default renderer for the month
+      if not self.skin_month.isSet
+         self.skin_month.value = { vars, srv => vars.monthName + " " + vars.year }
+      end
+   end
+
+   function run()
+      // make the first row.
+      date = TimeStamp()
+      self._year = self.year.value
+      self._month = self.month.value
+      date.year = self._year
+      date.month = self._month
+
+      self.monthName.value = self.monthNames[date.month-1]
+      
+      // Month days
+      mdays = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ]
+      // fix leap years
+      if date.isLeapYear(): mdays[1] = 29
+
+      // get the first day of the month
+      date.day = 1
+      wstart = self.week_start.value
+      first_day = date.dayOfWeek()
+      // Calculate the column of the first day of the month, 0 based
+      fday_col = first_day - wstart
+      if fday_col < 0: fday_col = 7 + fday_col
+
+      mapDay = self._mapDay
+
+      // get the count of days before 1
+      if fday_col > 0
+         prevMonth = date.month - 1
+         if prevMonth == 0: prevMonth = 12
+         dcount = mdays[prevMonth-1]
+         day = 7-fday_col+1
+         first_row = [].comp([dcount-fday_col+1:dcount+1],{v=> .[ 0 v ]}) +
+                     [].comp([1:day], mapDay )
+      else
+         day = 8
+         first_row = [].comp([1:day], mapDay )
+      end
+
+      rows = [first_row]
+      dcount = mdays[date.month-1]
+      while day <= dcount
+         lday = day + 7
+         if lday > dcount+1: lday = dcount+1
+         row = [].comp([day:lday], mapDay )
+         rows.add( row )
+         day = lday
+      end
+
+      // is last row incomplete?
+      lday = 1
+      while row.len() < 7
+         row.add( .[ 0 lday ++ ] )
+      end
+
+      // always fill 5 rows.
+      while rows.len() < 5
+         rows.add( [].comp([lday:lday+7], {v=> .[ 0 v]}) )
+         lday += 7  // well, at worst this is done once.
+      end
+
+      self.calendar.value = rows
+   end
+
+   function _mapDay( day )
+      if self._day_maker
+         return .[ day self._day_maker( self._year, self._month, day ) ]
+      end
+
+      return .[ day day ]
+   end
+end

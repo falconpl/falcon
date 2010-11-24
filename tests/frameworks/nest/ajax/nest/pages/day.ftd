@@ -1,0 +1,14 @@
+<?
+// calendar page -- single day selection
+// Generating a pure AJAX content.
+
+// this de-frames the page.
+nest_frame: false
+
+sleep( 0.5 ) // emulating a bit of work.
+
+?><p>
+<b>Operation complete.</b><br/>
+You have selected <?=Nest.inputVars['year']?>-<?=Nest.inputVars['month']?>-<?=Nest.inputVars['day']?>.<br/>
+Today lucky number: <?= random(1,100) ?>
+</p>

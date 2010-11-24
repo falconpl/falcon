@@ -311,7 +311,7 @@ end
 /*# Creates an action as an html anchor element.
    @param prompt Text for rendering columns headings or titles.
    @param authLevel minimal authorization level required to see this action
-   @param text The text to be displayed in the @b a element (will be used also as prompt)
+   @param text The text to be displayed in the @b a element.
    @param link Complete link to a target page/entity created via Nest.eidLink()
    @optparam onClick A command to be passed to the page
    @optparam extra HTML attributes for the anchor element
