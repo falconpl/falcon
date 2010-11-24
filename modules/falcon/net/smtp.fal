@@ -29,8 +29,32 @@ class SMTP( server, port )
    port = port ? port : "smtp"
 
    _smtp = nil
+   _auth = nil
 
    trace = {=>}
+
+   authSchemes = [
+     "PLAIN" => self._plainChech
+   ]
+
+   /*# Set authentication parameters.
+       @param scheme The authentication scheme to be used.
+       @param ... Authentication data (usually, a pair of userid, password parameters).
+       @return self
+
+       Available schemes are:
+       - "PLAIN"
+   */
+
+   function auth( scheme )
+      if not scheme in self.authSchemes
+         raise ParamError(501, nil, "Unknown authorization scheme" )
+      end
+      sfunc = self.authSchemes[scheme]
+      passvp(sfunc)
+      return self
+   end
+
 
    /*# Send a MIME part.
       @param part A @a mime.Part instance.
@@ -77,6 +101,7 @@ class SMTP( server, port )
    function sendTo( sender, rcpt, data )
       self.connect()
       self.helo()
+      if self._auth: self._auth()
       self.mailFrom( sender )
       if rcpt.typeId() != StringType
          for target in rcpt
@@ -206,4 +231,37 @@ class SMTP( server, port )
       end
       return field
    end
+
+
+   // Manages the plain auth scheme
+   function _plainChech(user, password)
+      if user.typeId() != StringType or password.typeId() != StringType
+         raise ParamError( 501, nil, "'PLAIN',S,S")
+      end
+      self._auth = .[self._plainDo user password]
+   end
+
+   function _plainDo( user, password )
+      reply = ""
+      smtp = self._smtp
+
+      self.trace( "-->AUTH PLAIN" )
+      smtp.send( "AUTH PLAIN\r\n" )
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if not reply.startsWith("334")
+         raise socket.NetError( 10009, "AUTH PLAIN failed", reply )
+      end
+      
+      // send the auth data
+      data = Base64.encode( strToMemBuf( @"\x00$(user)\x00$(password)" ) )
+      self.trace( "-->" + data )
+      smtp.send( data + "\r\n")
+      smtp.recv(reply,256)
+      self.trace( "<--" + reply )
+      if not reply.startsWith("2")
+         raise socket.NetError( 10010, "Authorization for AUTH PLAIN failed", reply )
+      end
+   end
 end
+
