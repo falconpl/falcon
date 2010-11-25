@@ -313,8 +313,15 @@ FALCON_FUNC Func_hmac( ::Falcon::VMachine *vm )
                 hash[0]->UpdateData(i_key->asMemBuf());
             hash[0]->Finalize();
             byte *digest = hash[0]->GetDigest();
-            memcpy(i_key_pad, digest, blocksize);
-            memcpy(o_key_pad, digest, blocksize);
+            uint32 digestSize = hash[0]->DigestSize();
+            memcpy(i_key_pad, digest, digestSize);
+            memcpy(o_key_pad, digest, digestSize);
+            if ( digestSize < blocksize )
+            {
+               memset(i_key_pad + digestSize, 0, blocksize - digestSize);
+               memset(o_key_pad + digestSize, 0, blocksize - digestSize);
+            }
+            
         }
         else if(byteCount <= blocksize) // key too small? if the key has exactly blocksize bytes we can go this way too
         {
