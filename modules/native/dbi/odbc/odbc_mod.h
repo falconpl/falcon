@@ -2,9 +2,9 @@
  * FALCON - The Falcon Programming Language.
  * FILE: odbc_mod.h
  *
- * MySQL driver main module interface
+ * ODBC driver main module interface
  * -------------------------------------------------------------------
- * Author: Tiziano De Rubeis
+ * Author: Giancarlo Niccolai
  * Begin: Tue Sep 30 17:00:00 2008
  *
  * -------------------------------------------------------------------
@@ -13,158 +13,181 @@
  * See LICENSE file for licensing details.
  */
 
-#ifndef DBI_ODBC_H
-#define DBI_ODBC_H
+#ifndef FALCON_DBI_ODBC_H
+#define FALCON_DBI_ODBC_H
 
-#include "../include/dbiservice.h"
+#include <falcon/dbi_common.h>
+#include <falcon/srv/dbi_service.h>
 #include <sql.h>
 
 namespace Falcon
 {
-	const unsigned long MAXBUFLEN = 256;
+const unsigned long MAXBUFLEN = 256;
 
-	String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd);
+String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd);
 
-	struct ODBCConn
+struct ODBCConn
+{
+	SQLHENV m_hEnv;
+	SQLHDBC m_hHdbc;
+	SQLHSTMT m_hHstmt;
+	SQLHDESC m_hIpd;
+
+	void Initialize( )
 	{
-		SQLHENV m_hEnv;
-		SQLHDBC m_hHdbc;
-		SQLHSTMT m_hHstmt;
-		SQLHDESC m_hIpd;
+		m_hEnv = SQL_NULL_HENV;
+		m_hHdbc = SQL_NULL_HDBC;
+		m_hHstmt = SQL_NULL_HSTMT;
+		m_hIpd = SQL_NULL_HDESC;
+	}
 
-		void Initialize( )
+	void Initialize( const SQLHENV hEnv, const SQLHDBC hHdbc, const SQLHSTMT hHstmt, const SQLHDESC hIpd )
+	{
+		m_hEnv = hEnv;
+		m_hHdbc = hHdbc;
+		m_hHstmt = hHstmt;
+		m_hIpd = hIpd;
+	}
+
+	void Destroy( )
+	{
+		if( m_hIpd != SQL_NULL_HDESC )
+			SQLFreeHandle(SQL_HANDLE_DESC, m_hIpd );
+
+		if( m_hHstmt != SQL_NULL_HSTMT )
+			SQLFreeHandle( SQL_HANDLE_STMT, m_hHstmt );
+
+		if( m_hHdbc != SQL_NULL_HDBC )
 		{
-			m_hEnv = SQL_NULL_HENV;
-			m_hHdbc = SQL_NULL_HDBC;
-			m_hHstmt = SQL_NULL_HSTMT;
-			m_hIpd = SQL_NULL_HDESC;
+			SQLDisconnect( m_hHdbc );
+			SQLFreeHandle( SQL_HANDLE_DBC, m_hHdbc );
 		}
 
-		void Initialize( const SQLHENV hEnv, const SQLHDBC hHdbc, const SQLHSTMT hHstmt, const SQLHDESC hIpd )
-		{
-			m_hEnv = hEnv;
-			m_hHdbc = hHdbc;
-			m_hHstmt = hHstmt;
-			m_hIpd = hIpd;
-		}
+		if( m_hEnv != SQL_NULL_HENV)
+			SQLFreeHandle(SQL_HANDLE_ENV, m_hEnv );
+	}
+};
 
-		void Destroy( )
-		{
-			if( m_hIpd != SQL_NULL_HDESC )
-				SQLFreeHandle(SQL_HANDLE_DESC, m_hIpd );
 
-			if( m_hHstmt != SQL_NULL_HSTMT )
-				SQLFreeHandle( SQL_HANDLE_STMT, m_hHstmt );
-
-			if( m_hHdbc != SQL_NULL_HDBC )
-			{
-				SQLDisconnect( m_hHdbc );
-				SQLFreeHandle( SQL_HANDLE_DBC, m_hHdbc );
-			}
-
-			if( m_hEnv != SQL_NULL_HENV)
-				SQLFreeHandle(SQL_HANDLE_ENV, m_hEnv );
-		}
-	};
-
-	class DBIRecordsetODBC : public DBIRecordset
+class DBIRecordsetODBC : public DBIRecordset
+{
+public:
+	struct SRowData 
 	{
-	public:
-		struct SRowData 
-		{
-			void* m_pData;
-			int m_nLen;
-		};
-
-		SRowData* m_pDataArr;
-
-	protected:
-	   ODBCConn* m_pConn;
-	   int m_nRow;
-	   int m_nRowCount;
-	   int m_nColumnCount;
-	   String m_sLastError;
-
-	   static dbi_type getFalconType( int typ );
-
-	public:
-	   DBIRecordsetODBC( DBIHandle *dbh, int nRows, int nCols );
-	   ~DBIRecordsetODBC();
-
-	   virtual dbi_status next();
-	   virtual int getRowCount();
-	   virtual int getRowIndex();
-	   virtual int getColumnCount();
-	   virtual dbi_status getColumnNames( char *names[] );
-	   virtual dbi_status getColumnTypes( dbi_type *types );
-	   virtual dbi_status asString( const int columnIndex, String &value );
-	   virtual dbi_status asBoolean( const int columnIndex, bool &value );
-	   virtual dbi_status asInteger( const int columnIndex, int32 &value );
-	   virtual dbi_status asInteger64( const int columnIndex, int64 &value );
-	   virtual dbi_status asNumeric( const int columnIndex, numeric &value );
-	   virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
-	   virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
-	   virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
-	   virtual dbi_status asBlobID( const int columnIndex, String &value );
-	   virtual void close();
-	   virtual dbi_status getLastError( String &description );
-	   virtual dbi_status DBIRecordsetODBC::bind( int ord, int type );
+		void* m_pData;
+		int m_nLen;
 	};
 
+	SRowData* m_pDataArr;
 
-	class DBITransactionODBC : public DBIStatement
-	{
-	protected:
-	   bool m_inTransaction;
-	   String m_sLastError;
+protected:
+   ODBCConn* m_pConn;
+   int m_nRow;
+   int m_nRowCount;
+   int m_nColumnCount;
+   String m_sLastError;
 
-	public:
-	   DBITransactionODBC( DBIHandle *dbh );
+protected:
+   int m_row;
+   int m_columnCount;
+   sqlite3_stmt *m_stmt;
+   Sqlite3InBind m_bind;
+   bool m_bAsString;
 
-	   virtual DBIRecordset *query( const String &query, int64 &affected, dbi_status &retval );
-	   virtual dbi_status begin();
-	   virtual dbi_status commit();
-	   virtual dbi_status rollback();
-	   virtual dbi_status close();
-	   virtual dbi_status getLastError( String &description );
+public:
+   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt, const ItemArray& inBind );
+   virtual ~DBIRecordsetSQLite3();
 
-	   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
-	   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
-		  bool bBinary = false );
-	};
+   virtual int64 getRowIndex();
+   virtual int64 getRowCount();
+   virtual int getColumnCount();
+   virtual bool getColumnName( int nCol, String& name );
+   virtual bool fetchRow();
+   virtual bool getColumnValue( int nCol, Item& value );
+   virtual bool discard( int64 ncount );
+   virtual void close();
+};
 
-	class DBIHandleODBC : public DBIHandle
-	{
-	protected:
-		ODBCConn* m_conn;
-		DBITransactionODBC *m_connTr;
 
-	public:
-		DBIHandleODBC();
-		DBIHandleODBC( ODBCConn *conn );
-		virtual ~DBIHandleODBC();
+class DBIStatementSQLite3: public DBIStatement
+{
+protected:
+   sqlite3_stmt* m_statement;
+   Sqlite3InBind m_inBind;
 
-		ODBCConn *getConn() { return m_conn; }
+public:
+   DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
+   virtual ~DBIStatementSQLite3();
 
-		virtual DBIStatement *startTransaction();
-		virtual DBIStatement *getDefaultTransaction();
-		virtual dbi_status closeTransaction( DBIStatement *tr );
-		virtual int64 getLastInsertedId();
-		virtual int64 getLastInsertedId( const String &value );
-		virtual dbi_status escapeString( const String &value, String &escaped );
-		virtual dbi_status close();
-	};
+   virtual int64 execute( const ItemArray& params );
+   virtual void reset();
+   virtual void close();
 
-	class DBIServiceODBC : public DBIService
-	{
-	public:
-	   DBIServiceODBC() : DBIService( "DBI_odbc" ) {}
+   sqlite3_stmt* sqlite3_statement() const { return m_statement; }
+};
 
-	   virtual dbi_status init();
-	   virtual DBIHandle *connect( const String &parameters, bool persistent,
-								   dbi_status &retval, String &errorMessage );
-	   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
-	};
+
+class DBIStatementODBC: public DBIStatement
+{
+protected:
+   void* m_statement;
+
+public:
+   DBIStatementODBC( DBIHandleODBC *dbh, void* stmt );
+   virtual ~DBIStatementODBC();
+
+   virtual int64 execute( const ItemArray& params );
+   virtual void reset();
+   virtual void close();
+
+   void* odbc_statement() const { return m_statement; }
+};
+
+
+class DBIHandleODBC : public DBIHandle
+{
+protected:
+	ODBCConn* m_conn;
+   DBISettingParams m_settings;
+   bool m_bInTrans;
+
+public:
+   DBIHandleODBC();
+   DBIHandleODBC( ODBCConn *conn );
+   virtual ~DBIHandleODBC();
+
+   virtual void options( const String& params );
+   virtual const DBISettingParams* options() const;
+   virtual void close();
+
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIStatement* prepare( const String &query );
+   virtual int64 getLastInsertedId( const String& name = "" );
+
+   virtual void begin();
+   virtual void commit();
+   virtual void rollback();
+
+   virtual void selectLimited( const String& query,
+         int64 nBegin, int64 nCount, String& result );
+
+   static void throwError( int falconError, int sql3Error, char* edesc=0 );
+   static String errorDesc( int error );
+   sqlite3 *getConn() { return m_conn; }
+};
+
+
+class DBIServiceODBC : public DBIService
+{
+public:
+   DBIServiceODBC() : DBIService( "DBI_odbc" ) {}
+
+   virtual void init();
+   virtual DBIHandle *connect( const String &parameters );
+   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
+};
 
 }
 

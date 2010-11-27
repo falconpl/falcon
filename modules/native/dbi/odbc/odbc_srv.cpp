@@ -2,9 +2,9 @@
  * FALCON - The Falcon Programming Language.
  * FILE: odbc_srv.cpp
  *
- * MySQL Falcon service/driver
+ * ODBC service/driver
  * -------------------------------------------------------------------
- * Author: Tiziano De Rubeis
+ * Author: Giancarlo Niccolai
  * Begin: Wed Oct 13 09:44:00 2008
  *
  * -------------------------------------------------------------------
@@ -27,6 +27,8 @@
 #include <falcon/engine.h>
 #include "odbc_mod.h"
 #include <sqlext.h>
+
+#include <falcon/autocstring.h>
 
 namespace Falcon
 {
@@ -667,17 +669,13 @@ dbi_status DBIHandleODBC::close()
  * Main service class
  *****************************************************************************/
 
-dbi_status DBIServiceODBC::init()
+void DBIServiceODBC::init()
 {
-   return dbi_ok;
 }
 
-DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
-                                     dbi_status &retval, String &errorMessage )
+DBIHandle *DBIServiceODBC::connect( const String &parameters )
 {
    AutoCString asConnParams( parameters );
-   char *connParams = (char *) memAlloc( sizeof(char) * (asConnParams.length() + 1) );
-   strcpy( connParams, asConnParams.c_str() );
 
    SQLHDESC hIpd;
    SQLHENV hEnv;
@@ -688,10 +686,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to allocate the ODBC environment";
-	   memFree( connParams );
-	   return NULL;
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to allocate the ODBC environment" ));
    }
 
    retcode = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER );
@@ -699,11 +695,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to notify ODBC that this is an ODBC 3.0 app.";
-	   memFree( connParams );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   return NULL;
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to notify ODBC that this is an ODBC 3.0 app." ));
    }
 
    // Allocate ODBC connection handle and connect.
@@ -712,14 +705,12 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to allocate ODBC connection handle and connect.";
-	   memFree( connParams );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to allocate ODBC connection handle and connect." ));
 	   return NULL;
    }
 
-   int nSec = 30;
+   int nSec = 15;
    SQLSetConnectAttr( hHdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER)(&nSec), 0 );
 
    SQLCHAR OutConnStr[MAXBUFLEN];
@@ -728,9 +719,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    retcode = SQLDriverConnect(
 	   hHdbc, 
 	   NULL, 
-//	   (SQLCHAR*)sConn.c_str(),
-	   (SQLCHAR*)connParams,
-	   strlen(connParams),
+	   (SQLCHAR*)asConnParams.c_str(),
+      asConnParams.length(),
 	   OutConnStr,
 	   MAXBUFLEN, 
 	   &OutConnStrLen,
@@ -738,26 +728,28 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 
    if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
    {
-	   errorMessage = "SQLDriverConnect failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, FALSE );
-	   memFree( connParams );
+	   String errorMessage = 
+            String("SQLDriverConnect failed. Reason: ") + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, FALSE );
 	   SQLDisconnect( hHdbc );
 	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+	   SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( errorMessage ));
 	   return NULL;
    }
 
-   SQLSetConnectAttr( hHdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF, 0 );
-
+   /*
    retcode = SQLAllocHandle( SQL_HANDLE_STMT, hHdbc, &hHstmt );
 
    if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
    {
-	   errorMessage = "SQLAllocHandle failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, TRUE );
-	   memFree( connParams );
-	   SQLDisconnect( hHdbc );
-	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   return NULL;
+      errorMessage = "SQLAllocHandle failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, TRUE );
+      memFree( connParams );
+      SQLDisconnect( hHdbc );
+      SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
+      SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      return NULL;
    }
 
    retcode = SQLGetStmtAttr( hHstmt, SQL_ATTR_IMP_PARAM_DESC, &hIpd, 0, 0 );
@@ -765,22 +757,20 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( (retcode != SQL_SUCCESS) && (retcode != SQL_SUCCESS_WITH_INFO) )
    {
 	   errorMessage = "SQLGetStmtAttr failed. Reason: " + GetErrorMessage( SQL_HANDLE_STMT, hHstmt, TRUE );
-	   memFree( connParams );
 	   SQLFreeHandle( SQL_HANDLE_STMT, hHstmt );
 	   SQLDisconnect( hHdbc );
 	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
 	   return NULL;
    }
+   */
 
-
-   memFree( connParams );
    ODBCConn* conn = ( ODBCConn* )memAlloc( sizeof( ODBCConn ) );
-   conn->Initialize( hEnv, hHdbc, hHstmt, hIpd );
+   conn->Initialize( hEnv, hHdbc, 0, 0 );
 
-   retval = dbi_ok;
    return new DBIHandleODBC( conn );
 }
+
 
 CoreObject *DBIServiceODBC::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
@@ -799,17 +789,17 @@ CoreObject *DBIServiceODBC::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd)
 {
-	RETCODE      plm_retcode = SQL_SUCCESS;
-	UCHAR      plm_szSqlState[MAXBUFLEN] = "",
-		plm_szErrorMsg[MAXBUFLEN] = "";
+	RETCODE     plm_retcode = SQL_SUCCESS;
+	UCHAR       plm_szSqlState[MAXBUFLEN] = "";
+   UCHAR       plm_szErrorMsg[MAXBUFLEN] = "";
 	SDWORD      plm_pfNativeError = 0L;
-	SWORD      plm_pcbErrorMsg = 0;
-	SQLSMALLINT   plm_cRecNmbr = 1;
+	SWORD       plm_pcbErrorMsg = 0;
+	SQLSMALLINT plm_cRecNmbr = 1;
 	SDWORD      plm_SS_MsgState = 0, plm_SS_Severity = 0;
-	SQLINTEGER   plm_Rownumber = 0;
+	SQLINTEGER  plm_Rownumber = 0;
 	USHORT      plm_SS_Line;
-	SQLSMALLINT   plm_cbSS_Procname, plm_cbSS_Srvname;
-	SQLCHAR      plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
+	SQLSMALLINT plm_cbSS_Procname, plm_cbSS_Srvname;
+	SQLCHAR     plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
 	String sRet = "";
 	char Convert[MAXBUFLEN];
 
