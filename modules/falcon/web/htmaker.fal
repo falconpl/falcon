@@ -514,9 +514,10 @@ end
 * Head entities
 ******************************************************************/
 
-/*# Attributes used for the @a Head class */
+/*# Attributes used for the @a Head class- */
 class HeadAttribs from I18nAttribs
-   /*#
+   /*# Meta-profiles.
+   
    This attribute specifies the location of one or more meta data profiles, separated by
    white space. For future extensions, user agents should consider the value to be a list
    even though this specification only considers the first URI to be significant.
@@ -525,6 +526,7 @@ class HeadAttribs from I18nAttribs
 end
 
 /*# Class encapsulating the xhtml header.
+
    If the title text (a string) is given, a Title node is automatically created.
 */
 class Head( title ) from BaseDom( "head", ContentModel.head_misc + .['title'], HeadAttribs )
@@ -1298,6 +1300,9 @@ end
 ******************************************************************/
 
 /*# Base class for all the font and phrase control tags.
+   @param type The type of node (a valid HTML font/text control inline tag).
+   
+   @optparam text An optional text to add immediately to this node.
 */
 
 class FontControl( type, text ) from \
@@ -1306,7 +1311,8 @@ class FontControl( type, text ) from \
 end
 
 /*# Class generating Typewriter/Tele Type text.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1316,7 +1322,8 @@ class TT(text) from \
 end
 
 /*# Class generating italic text.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1325,7 +1332,8 @@ class I(text) from \
 end
 
 /*# Class generating bold text.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1334,7 +1342,8 @@ class B(text) from \
 end
 
 /*# Class generating big (uppercase/caps) text.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1343,7 +1352,8 @@ class Big(text) from \
 end
 
 /*# Class generating small text.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1352,6 +1362,7 @@ class Small(text) from \
 end
 
 /*# Class generating emphathised phrases.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1361,15 +1372,16 @@ class Em(text) from \
 end
 
 /*# Class generating stronger phrases.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
 */
-class Strong(text) from \
-      FontControl( "strong", text )
+class Strong(text) from FontControl( "strong", text )
 end
 
 /*# Class generating definition phrases.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1379,6 +1391,7 @@ class Dfn(text) from \
 end
 
 /*# Class generating a 'code' section.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1388,6 +1401,7 @@ class Code(text) from \
 end
 
 /*# Class generating a 'sample' section.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1397,6 +1411,7 @@ class Samp(text) from \
 end
 
 /*# Class generating a 'text digited on keyboard' section.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1406,6 +1421,7 @@ class Kbd(text) from \
 end
 
 /*# Class generating a 'variable' phrase.
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1415,7 +1431,8 @@ class Var(text) from \
 end
 
 /*# Class generating a citation phrase.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1424,7 +1441,8 @@ class Cite(text) from \
 end
 
 /*# Class generating an abbreviation phrase.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1433,7 +1451,8 @@ class Abbr(text) from \
 end
 
 /*# Class indicating an acronym phrase.
-
+   @optparam text An optional text to add immediately to this node.
+   
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1441,8 +1460,8 @@ class Acronym(text) from \
       FontControl( "acronym", text )
 end
 
-/*# Subscript phrase generator
-
+/*# Subscript phrase generator.
+   @optparam text An optional text to add immediately to this node.
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1451,6 +1470,7 @@ class Sub(text) from \
 end
 
 /*# Superscript phrase generator
+   @optparam text An optional text to add immediately to this node.
 
    If @b text is specified, an automatic single text node is
    added below the item.
@@ -1458,6 +1478,19 @@ end
 class Sup(text) from \
       FontControl( "sup", text )
 end
+
+/*# Span text.
+   @optparam text An optional text to add immediately to this node.
+   
+   Special flexible flex marker.
+   
+   If @b text is specified, an automatic single text node is
+   added below the item.
+*/
+class Span(text) from \
+      FontControl( "span", text )
+end
+
 
 /******************************************************************
 * Quotations
@@ -1716,6 +1749,7 @@ class BaseInput( type, at ) from \
          BaseDom( type, nil, at )
 
    /*# Helper method to disable this input.
+   
       Return the self object so it's possible to do
       @code
       s = Form("manage.ftd").add(
@@ -1729,6 +1763,7 @@ class BaseInput( type, at ) from \
    end
 
    /*# Helper method to set this field read-only.
+   
       Return the self object so it's possible to do
       @code
       s = Form("manage.ftd").add(
@@ -1882,21 +1917,21 @@ end
 
 
 class SelectAttribs from AllAttribs
-   /*# field name */
+   /*# Field name */
    name = nil
-   /*# rows visible */
+   /*# Rows visible */
    size = nil
-   /*# default is single selection */
+   /*# Default is single selection */
    multiple = false
-   /*# unavailable in this context */
+   /*# Unavailable in this context */
    disabled = false
-   /*# position in tabbing order */
+   /*# Position in tabbing order */
    tabindex = nil
-   /*# the element got the focus */
+   /*# The element got the focus */
    onfocus = nil
-   /*# the element lost the focus */
+   /*# The element lost the focus */
    onblur = nil
-   /*# the element value was changed */
+   /*# The element value was changed */
    onchange  = nil
 end
 
@@ -1911,9 +1946,9 @@ end
 
 
 class OptGroupAttribs from AllAttribs
-   /*# unavailable in this context */
+   /*# Unavailable in this context. */
    disabled = false
-   /*# for use in hierarchical menus */
+   /*# For use in hierarchical menus. */
    label = nil
 end
 
@@ -1933,11 +1968,12 @@ end
 class OptionAttribs from AllAttribs
    /*# Set to true to pre-select this option */
    selected = false
-   /*# unavailable in this context */
+   /*# Unavailable in this context */
    disabled = false
-   /*# for use in hierarchical menus */
+   /*# For use in hierarchical menus */
    label = nil
    /*# Value that will be returned in the form if selected.
+   
       If nil, it defaults to element content.
    */
    value = nil
@@ -1968,6 +2004,7 @@ class Option( text, value, label, selected, disabled ) from \
    end
 
    /*# Helper method to set this option on.
+   
       Return the self object so it's possible to do
       @code
       s = Select("the select").add(
@@ -1981,6 +2018,7 @@ class Option( text, value, label, selected, disabled ) from \
    end
 
    /*# Helper method to disable this option.
+   
       Return the self object so it's possible to do
       @code
       s = Select("the select").add(
@@ -1999,23 +2037,23 @@ class TextAreaAttribs from AllAttribs
    name = nil
    /*# Displayed text rows */
    rows = nil
-   /*# Displayed column umbers */
+   /*# Displayed column numbers */
    cols = nil
-   /*# navailable in this context */
+   /*# Not available in this context */
    disabled = false
    /*# Set true to prevent changes */
    readonly = false
-   /*# position in tabbing order */
+   /*# Position in tabbing order */
    tabindex = nil
-   /*# accessibility key character */
+   /*# Accessibility key character */
    accesskey = nil
-   /*# the element got the focus */
+   /*# The element got the focus */
    onfocus = nil
-   /*# he element lost the focus */
+   /*# The element lost the focus */
    onblur = nil
-   /*# some text was selected */
+   /*# Some text was selected */
    onselect = nil
-   /*# the element value was changed */
+   /*# The element value was changed */
    onchange = nil
 end
 
@@ -2097,19 +2135,19 @@ end
 class ButtonAttribs from AllAttribs
    /*# Field name for submission. */
    name = nil
-   /*# sent to server when submitted */
+   /*# Sent to server when submitted */
    value = nil
-   /*# for use as form button  (button|submit|reset) */
+   /*# For use as form button  (button|submit|reset) */
    type = nil
-   /*# unavailable in this context */
+   /*# Unavailable in this context */
    disabled = nil
-   /*# position in tabbing order */
+   /*# Position in tabbing order */
    tabindex = nil
-   /*# accessibility key character */
+   /*# Accessibility key character */
    accesskey = nil
-   /*# the element got the focus */
+   /*# The element got the focus */
    onfocus = nil
-   /*# the element lost the focus */
+   /*# The element lost the focus */
    onblur = nil
 end
 

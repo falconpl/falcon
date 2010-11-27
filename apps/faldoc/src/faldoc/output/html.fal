@@ -70,25 +70,26 @@ class Page(title, file, master_entity ) from tree.Node
       navi.CLASS( "navi_top" )
       body.add( navi )
 
-      self.makeBody( body )
+      div = ht.Div().id("page_body")
+      self.makeBody( div )
+      body.add( div )
 
-      navi = navi.clone()
+      navi = self.makeNavi()
       navi.CLASS( "navi_bottom" )
       body.add( navi )
+      self.makeSignature( body )
       
       self.doc.html.body = body 
       self.closeDoc()
    end
 
+   function makeSignature( body )
+      body.add( ht.Div().CLASS("signature").add( "Made with " ).add( ht.A( "faldoc 3.0", "http://www.falconpl.org" ) ) )
+   end
+   
    //# Creates the navigation div
    function makeNavi()
-      div = ht.Div()
-
-      if self.prev
-         self.makeNaviItem( div, self.prev, "prev" )
-      elif self.parent
-         self.makeNaviItem( div, self.parent, "prev" )
-      end
+      div = ht.UL()
 
       // top node
       node = self.parent
@@ -97,19 +98,29 @@ class Page(title, file, master_entity ) from tree.Node
       end
 
       if node
-         self.makeNaviItem( div, node , "top" )
+         self.makeNaviItem( div, node , "top", i"Top" )
       end
 
       // up node
       if self.parent and self.parent != node
-         self.makeNaviItem( div, self.parent, "up" )
+         self.makeNaviItem( div, self.parent, "up", i"Up" )
       end
 
-      // next node
+      // prev-next pair
+      
+      if self.prev
+         self.makeNaviItem( div, self.prev, "prev", i"Previous" )
+      elif self.parent
+         self.makeNaviItem( div, self.parent, "prev", i"Previous" )
+      else
+         div.add( ht.LI().CLASS("prev") )
+      end
+      
+
       if self.firstChild
-         self.makeNaviItem( div, self.firstChild, "next" )
+         self.makeNaviItem( div, self.firstChild, "next", i"Next" )
       elif self.next
-         self.makeNaviItem( div, self.next, "next" )
+         self.makeNaviItem( div, self.next, "next", i"Next" )
       else
          node = self.parent
          while node and not node.next
@@ -118,16 +129,21 @@ class Page(title, file, master_entity ) from tree.Node
 
          if node
             self.makeNaviItem( div, node.next, "next" )
+         else
+            div.add( ht.LI().CLASS("next") )
          end
       end
+      
+      div.add( ht.LI().CLASS("clear") )
 
       return div
    end
 
-   function makeNaviItem( div, page, cls )
+   function makeNaviItem( div, page, cls, title )
       desc = page.title
       if desc.len() > 36: desc = desc[0:34] + "..."
-      div.add( ht.Div().CLASS(cls).add(ht.A( page.file, desc ) ) )
+      if title: desc = title + ": " + desc
+      div.add( ht.LI().CLASS(cls).add(ht.A( page.file, desc ) ) )
    end
    
    
@@ -149,33 +165,41 @@ class IndexPage( mainPage ) from Page( i"Table of contents", "index.html", mainP
       body.add( ht.H2( self.title ) )  // table of contents
          
       // all the other pages must be our childern.
-      itemList = ht.OL()
-      self.addChildren( self.firstChild, itemList )
+      itemList = ht.UL().CLASS("TOC")
+      self.addChildren( self.firstChild, itemList, 0 )
 
       body.add( itemList )
    end
 
 
-   function addChildren( node, itemList )
+   function addChildren( node, itemList, level, pid )
+      id = 1
       while node != nil
-         li = ht.LI().add( ht.A( node.file, node.title ) )
+         text_id = pid ? pid + "." + id : toString(id)
+         if node.content provides props
+            node.content.props["html_toc_id"] = text_id
+         end
+         li = _generator.makeNodeLink( node )
+         /*
+         li = ht.LI().add(ht.Span(text_id).CLASS("toc_number")).add( ht.A( node.file, node.title ) )
+         entity = node.content
 
-         /*member = self.content
-         if member and "brief" in member.props
-            brief = _generator.renderContent(member.props["brief"])
+         if entity provides props and "brief" in entity.props
+            brief = _generator.rcont(entity.props["brief"])
             if brief: li.add( " - " ).add( ht.Verbatim( brief ) )
          end
          */
          
          // do we have subitems?
          if node.firstChild
-            il1 = ht.OL()
-            self.addChildren( node.firstChild, il1 )
+            il1 = ht.UL()
+            self.addChildren( node.firstChild, il1, level+1, text_id )
             li.add( il1 )
          end
 
          itemList.add( li )
          node = node.next
+         ++id
       end
    end
 
@@ -190,7 +214,7 @@ class GroupingPage( entity ) from Page( entity.props["title"], _generator.getFil
       title = self.title
 
       body.add(
-         ht.H1( title ),
+         ht.H1().add(ht.Span(entity.props["html_toc_id"]).CLASS("toc_number")).add( title ),
          _generator.makeBrief( entity ),
          _generator.makeContent( entity )
          )
@@ -239,7 +263,9 @@ class ObjectoidPage( entity, typeName, proto ) from Page( typeName + " " + entit
       faldoc.verbose( @i"Making objectoid $(entity.type) $(entity.name)" )
 
       body.add(
-            ht.H1( self.title ),
+            ht.H1().add(
+                  ht.Span(entity.props["html_toc_id"]).CLASS("toc_number")).add(
+                  self.title ),
             _generator.makeBrief( entity ) )
 
       if self.proto
@@ -252,6 +278,13 @@ class ObjectoidPage( entity, typeName, proto ) from Page( typeName + " " + entit
          members = entity.membersByType()
          // we know we have at least a member, so we have a table.
          body.add( _generator.makePropsTable( members ) )
+      end
+
+      // Generate inherited properties
+      inherited = _generator.makeInherited( entity, [] )
+      if inherited: body.add( inherited )
+
+      if entity.members
          // then print the properties and the methods.
          // make the property list
          if "property" in members
@@ -288,22 +321,22 @@ class ModulePage( module ) from IndexPage( module )
    file = _generator.getFileName( module )
 
    function makeBody( body )
-
-      body.add( ht.H1( self.title ) )
+      module = self.content
+      body.add( ht.H1().add(ht.Span(module.props["html_toc_id"]).CLASS("toc_number")).add( self.title ) )
       // add the module definition if we have an explicit module
       if self.content.title
-         body.add( ht.P().CLASS("moddef").add( i"Module" + " " + self.content.getID() ) )
+         body.add( ht.P().CLASS("moddef").add( i"Module" + " " + module.getID() ) )
       end
 
       // Submodules may have a description that we shoudl put here.
-      if self.content.main
-         body.add( _generator.makeContent( self.content.main ))
+      if module.main
+         body.add( _generator.makeContent( module.main ))
       end
 
       body.add( ht.H2( i"Contents of this module" ) )  // table of contents
 
       // all the other pages must be our childern.
-      itemList = ht.OL()
+      itemList = ht.UL().CLASS("TOC")
       self.addChildren( self.firstChild, itemList )
 
       body.add( itemList )
@@ -315,7 +348,7 @@ class MetaPage( title, file, entity_list ) from Page( title, file, entity_list )
 
    function makeBody( body )
       entlist = self.content
-      body.add( ht.H1( self.title ) )
+      body.add( ht.H1().add( self.title ) )
       
       for ent in entlist
          _generator.makeIntraPageMember( body, ent )
@@ -419,12 +452,25 @@ class FaldocHtmlRenderer() from render.Renderer()
 
    function renderNote( node )
       content = self.rcont( node )
-      return i"<b>Note:</b> "+ content + "\n"
+      return "<p class='note'><b>"+i"Note"+":</b> "+ content + "</p>\n"
    end
 
    function render_a( node )
       l = node.infos["link"]
-      return HTMLGenerator.makeLink( l )
+      if l.target
+         target = l.target
+
+         if "title" in l.target.props
+            text = target.props["title"]
+         else
+            text = l.destination
+         end
+         return "<a href=\""+ HTMLGenerator.getLinkName( target ) +"\">"+
+                 text.replace("&","&amp;").replace("<","&lt;").replace(">", "&gt;") +
+                 "</a>"
+      else
+         return "<b>"+ l.destination.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;") +"</b>"
+      end
    end
 
 end
@@ -475,6 +521,9 @@ class HTMLGenerator( doctree, conf )
          // prepare the directory
          dirMake( self.directory, true )
 
+         // copy resource files
+         faldoc.copyResource( "faldoc.css", self.directory )
+         
          // add the index page...
          ip = IndexPage(self.doc.main)
          // and prepare the tree for the main module
@@ -637,6 +686,47 @@ class HTMLGenerator( doctree, conf )
    end
 
 
+   function makeInherited( entity, done, table )
+      if "from" notin entity.props: return
+      
+
+      
+      
+      fr = entity.props["from"]
+      subclasses = []
+      for link, callexp in fr
+         // Gets the members.
+         parent = link.target
+         if parent in done: continue
+         done += parent
+         
+         if parent.members
+            members = parent.membersByType()
+
+            if "property" in members
+               if not table: table = ht.TABLE().CLASS( "members" )
+               self.makePropsTablePart( table, i"Properties", members["property"], parent )
+            end
+            
+            if "method" in members
+               if not table: table = ht.TABLE().CLASS( "members" )
+               self.makePropsTablePart( table, i"Methods", members["method"], parent )
+            end
+
+         end
+         
+         if "from" in parent.props
+            subclasses += parent
+         end
+      end
+
+      for parent in subclasses
+         table = self.makeInherited( parent, done, table )
+      end
+      
+      return table
+   end
+
 
    function makePrototable( entity )
       tbody = nil
@@ -683,7 +773,7 @@ class HTMLGenerator( doctree, conf )
                ))
          end
          tbody.add( ht.TR().CLASS("raise").add(
-               ht.TD().add( i"Raise" ),
+               ht.TD().CLASS("name").add( i"Raise" ),
                ht.TD().CLASS("content").add( ht.TABLE().add(tb2) )
             ))
       end
@@ -707,16 +797,33 @@ class HTMLGenerator( doctree, conf )
       return table
    end
 
-   function makePropsTablePart( table, title, members )
+
+   function makePropsTablePart( table, title, members, parent )
       tbody = ht.TBody()
-      tbody.add( ht.TR().add( ht.TD( title ).set( ["colspan" => 2, "CLASS"=>"member_type"] ) ) )
+
+      if parent
+         plink = ht.A( self.getLinkName( parent ), parent.name )
+         title = @i"$(title) inherited from class"
+      end
+
+      titlecol = ht.TD( title ).set( ["colspan" => "2", "CLASS"=>"member_type"] )
+      if plink
+         titlecol.add(" ").add(plink )
+      end
+      
+      tbody.add( ht.TR().CLASS("member_type").add( titlecol ) )
       for prop in members
-         tdName = ht.TD().add( ht.A( "#" + prop.name, prop.name ) )
+         if parent
+            tdName = ht.TD().add( ht.A( self.getLinkName( prop ), prop.name ) )
+         else
+            tdName = ht.TD().add( ht.A( "#" + prop.name, prop.name ) )
+         end
+         
          row = ht.TR().add( tdName )
          if "brief" in prop.props
-            row.add( ht.TD().add( ht.Verbatim( self._rndr.rcont( prop.props["brief"] ) ) ) )
+            row.add( ht.TD().add( ht.Verbatim( self._rndr.rcont( prop.props["brief"] ) )))
          else
-            tdName.set(["colspan"=>2])
+            tdName.set(["colspan"=>"2"])
          end
          tbody.add(row)
       end
@@ -794,7 +901,7 @@ class HTMLGenerator( doctree, conf )
       if parent
          filename = parent.getID().replace(".","_")
       else
-         filename = "__"
+         filename = ""
       end
       filename += "_" + type + ".html"
 
@@ -823,10 +930,27 @@ class HTMLGenerator( doctree, conf )
       return entity.type in fatness
    end
 
-    //# Creates a node to be directly added in a member list (OL of class "memberlist")
+   //# Creates a node to be directly added in a member list (OL of class "memberlist")
    function makeMemberLink( member )
-      node = ht.LI().add( ht.A( self.getFileName(member, true ), member.name ) )
+      node = ht.LI().add(
+         ht.Span(member.props["html_toc_id"]).CLASS("toc_number")).add(
+         ht.A( self.getFileName(member, true ), member.name ))
+         
       if "brief" in member.props
+         brief = self._rndr.rcont(member.props["brief"])
+         if brief: node.add( " - " ).add( ht.Verbatim( brief ) )
+      end
+      return node
+   end
+
+   //# Creates a node to be directly added in a member list (OL of class "memberlist")
+   function makeNodeLink( node )
+      member = node.content
+      node = ht.LI().add(
+         ht.Span(member.props["html_toc_id"]).CLASS("toc_number")).add(
+         ht.A( node.file, node.title ))
+
+      if member provides props and "brief" in member.props
          brief = self._rndr.rcont(member.props["brief"])
          if brief: node.add( " - " ).add( ht.Verbatim( brief ) )
       end

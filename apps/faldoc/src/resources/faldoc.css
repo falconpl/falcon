@@ -1,307 +1,262 @@
 
-
-p {
-   padding: 1pt;
-   margin: 2pt;
-   margin-left: 15pt;
-   margin-bottom: 6pt;
+body {
+   margin: 25px;
+   font-size: 12pt;
+   font-family: verdana, helvetica, arial, sans serif, sans;
 }
 
-body.faldoc_body {
-   font-family: arial, sans;
-   font-size: medium;
-   background: white;
-   color: #000020;
-   margin: 16pt;
+/*************************************************
+   Navigation
+*************************************************/
+
+ul.navi_top {
+   margin: 30px;
+   padding: 6px  15px 6px 15px;
+   border-top: 1px solid #303060;
+   border-bottom: 1px solid #303060;
+   list-style-type: none;
 }
 
-h2.faldoc_section {
-   padding: 5pt;
-   margin-top: 20pt;
-   background: #D5D0ff;
-   font-size: xx-large;
-   font-weight: bold;
-   width: 96%;
+ul.navi_bottom {
+   margin:30px;
+   padding: 6px  15px 6px 15px;
+   border-top: 1px solid #303060;
+   border-bottom: 1px solid #303060;
+   list-style-type: none;
 }
 
-h3.faldoc_subsection {
-   padding: 5pt;
-   margin-top: 20pt;
-   background: #D5D0ff;
-   font-size: x-large;
-   font-style: italic;
-   width: 96%;
-}
-
-h3.faldoc_funcname {
-   padding: 5pt;
-   margin-top: 20pt;
-   background: #D5D0ff;
-   width: 96%;
-}
-
-p.faldoc_author {
-   font-style: italic;
-   font-weight: bold;
-}
-
-table.faldoc_list {
-   border: none;
-}
-
-td.faldoc_list {
-   margin: 0;
-   padding: 0;
-}
-
-p.faldoc_brief {
-   font-style: italic;
-}
-
-li {
-   padding: 2pt;
-   margin-bottom: 2pt;
-}
-
-ul.faldoc_bullet {
-   margin-left: 30pt;
-}
-
-p.faldoc_classdef {
-   color: #000040;
-}
-
-table.faldoc_classprops {
-}
-
-td.faldoc_classsep {
+ul.navi_bottom li.top, ul.navi_top li.top {
+   width:100%;
+   margin:2px;
    text-align: center;
-   font-size: large;
-   font-weight: bold;
-   color: # 300000;
+   background: #F0F0FF;
 }
 
-pre.faldoc_code {
-   font-family: courier, monospace;
-   font-size: small;
-   margin-left: 20pt;
-}
-
-td.faldoc_funcbrief {
-   font-style: italic;
-   padding: 1pt;
-   padding-left:5pt;
-}
-
-p.faldoc_funcbrief {
-   font-style: italic;
-   margin-bottom: 15pt;
-}
-
-p.faldoc_funcdecl {
-   font-family: courier, monospace;
-   padding-bottom: 2pt;
-   margin-bottom: 5pt;
-   border-color: red;
-   border-bottom: thin;
-   white-space:pre;
-}
-
-td.faldoc_funcname {
-   font-size:medium;
-}
-
-table.faldoc_function {
-   margin-left:35pt;
-}
-
-table.faldoc_header {
-   border-bottom: solid 1pt;
-}
-
-td.faldoc_header {
-   font-size: x-small;
-}
-
-td.faldoc_header_sep {
-   font-weight: bold;
-}
-
-table.faldoc_list {
-   margin-left: 20pt;
-}
-
-table.faldoc_memberlist {
-    margin-left: 20pt;
-}
-
-p.faldoc_note {
-   margin-left: 20pt;
-   margin-right: 20pt;
-   margin-top: 12pt;
-   margin-bottom: 12pt;
-   padding: 3pt;
-   background: #D0D0D0;
-}
-
-span.faldoc_notetype {
-   font-weight: bold;
-}
-
-ol.faldoc_number {
-   margin-left: 20pt;
-}
-
-td.faldoc_optparam {
-   text-align: top;
-   background: #E0E0E0;
-   font-family: courier, monospace;
-   padding-top: 0pt;
-   padding-bottom: 0pt;
-
-   padding-left: 3pt;
-   padding-right: 3pt;
-   margin-right:20pt;
-}
-
-td.faldoc_optparamdesc {
-}
-
-td.faldoc_param {
-   text-align: top;
-   background: #E0E0E0;
-   font-family: courier, monospace;
-   padding-left: 3pt;
-   padding-right: 3pt;
-   margin-right:20pt;
-}
-
-td.faldoc_paramdesc {
-}
-
-td.faldoc_propdef {
-   text-align: top;
-   background: #D5D0ff;
-   font-family: courier, monospace;
-   font-weight: bold;
-   padding: 2pt;
-}
-
-td.faldoc_propdesc {
-   padding: 5pt;
-}
-
-td.faldoc_funcreturn {
-   text-align: top;
-   font-style: italic;
-   background: #E0E0F0;
-   padding-left: 3pt;
-   padding-right: 3pt;
-   margin-right:20pt;
-
-}
-
-td.faldoc_funcreturndesc {
-}
-
-
-td.faldoc_raise {
-   text-align: top;
-   font-style: italic;
+ul.navi_bottom li.up, ul.navi_top li.up {
+   width:100%;
+   margin:2px;
+   text-align: center;
    background: #E0E0FF;
-   padding-left: 3pt;
-   padding-right: 3pt;
-   margin-right:20pt;
 }
 
-
-table.faldoc_raisedesc {
-}
-
-td.faldoc_raiseitem {
-   text-align: top;
-   font-style: bold;
-   padding-left: 3;
-   padding-right: 3;
-   font-family: courier, monospace;
-}
-
-td.faldoc_raisedesc {
-}
-
-td.faldoc_seealso {
-   padding: 3pt;
-   border-color: #E0E0FF;
-   background: #E0E0F0;
-   margin: 10pt;
-   margin-left: 25pt;
-   margin-right: 25pt;
-}
-
-div.faldoc_signature {
-   color: blue;
-   font-style: italic;
-   margin-top: 35px;
-   font-size: small;
-   text-align: right;
-}
-
-p.faldoc_text {
-}
-
-div.faldoc_text {
-}
-
-span.faldoc_belong {
-   margin-left:50px;
-   font-size: small;
-   font-weight:bold;
-   color:#0030F0;
-   padding:2pt;
-   font-family: courier new, courier, monospace;
-}
-
-h1.faldoc_title {
-   font-size: 20pt;
-   font-weight: bold;
-   width: 100%;
-   border-color: red;
-   border-bottom: thin;
-   padding: 3pt;
-   background: #E0E0F0;
-}
-
-h2.faldoc_title {
-   font-size: xx-large;
-   width: 100%;
-   border-color: red;
-   border-bottom: thin;
-   padding: 3pt;
-   background: #E0E0F0;
-}
-
-p.faldoc_unknown {
-   border: thin;
-   padding: 3pt;
-}
-
-div#faldoc_version {
-   color: blue;
-   font-style: italic;
-   font-weight: bold;
+ul.navi_bottom li.prev, ul.navi_top li.prev {
+   width:46%;
+   margin: 2px;
+   float: left;
    text-align: center;
-   margin-top: 25px;
-   margin-bottom: 25px;
-   font-size: large;
+   background: #FFC0C0;
 }
 
-div#faldoc_author {
-   color: blue;
-   font-style: italic;
+
+ul.navi_bottom li.next, ul.navi_top li.next {
+   margin: 2px;
+   margin-right:0;
+   padding:0;
+   width: 46%;
+   float: right;
    text-align: center;
-   margin-top: 15px;
-   margin-bottom: 15px;
-   font-size: medium;
+   background: #C0C0FF;
 }
 
+ul.navi_bottom li.clear, ul.navi_top li.clear {
+   clear:both;
+   width:100%;
+}
+
+/*************************************************
+   TOC
+*************************************************/
+ul.TOC {
+   list-style-type: none;
+   font-size:14pt;
+}
+
+ul.TOC ul {
+   list-style-type: none;
+   font-size:12pt;
+}
+
+ul.TOC ul ul {
+   list-style-type: none;
+   font-size:10pt;
+}
+
+ul.TOC span.toc_number {
+   font-weight: bold;
+   padding-right: 18pt;
+}
+
+ul.TOC ul span.toc_number {
+   padding-right: 14pt;
+}
+
+ul.TOC ul ul span.toc_number {
+   padding-right: 12pt;
+}
+
+H1 span.toc_number {
+   padding-right: 24pt;
+}
+
+/*************************************************
+   Page
+*************************************************/
+
+
+div#page_body {
+   clear:both;
+   margin-left: 20pt;
+}
+
+h1 {
+   background: #F0F0FF;
+   color: #000030;
+   margin-bottom: 40pt;
+   padding-top: 4pt;
+   padding-bottom: 4pt;
+   margin-left: -20pt;
+
+}
+
+h2 {
+   background: #F0F0FF;
+   color: #000030;
+   margin-top: 35pt;
+   margin-bottom: 25pt;
+   padding-top: 2pt;
+   padding-bottom: 2pt;
+   margin-left: -20pt;
+}
+
+h3 {
+   margin-top: 20pt;
+   margin-bottom: 15pt;
+
+   background: #F0F0FF;
+   color: #000030;
+   margin-left: -20pt;
+
+}
+
+p.note {
+   margin:30pt;
+   padding:8pt;
+   background: #E0E0FF;
+   border: 1px solid #7070A0;
+}
+
+
+pre.prototype {
+   color: #000030;
+   padding-top: 12pt;
+   margin-left: 30pt;
+   font-size: 13pt;
+}
+
+table.prototype {
+   margin-left: 30pt;
+   width: 80%;
+
+   border-bottom: 1px solid #7070A0;
+   border-collapse: collapse;
+}
+
+table.prototype td {
+   margin: 0;
+   margin-bottom: 16pt;
+   padding: 0;
+
+   border:0;
+   padding: 1px;
+   padding-left: 3px;
+   padding-right: 3px;
+}
+
+table.prototype tr.param td.name {
+   padding-right: 15pt;
+   font-family: courier, courier new, helvetica, fixed;
+   font-weight: bold;
+}
+
+table.prototype tr.param td.content {
+}
+
+table.prototype tr.optparam td.name {
+   padding-right: 15pt;
+   font-family: courier, courier new, helvetica, fixed;
+   font-weight: bold;
+   background: #F0F0F0;
+}
+
+table.prototype tR.optparam td.content {
+   background: #F0F0F0;
+}
+
+table.prototype tr.return td.name {
+   padding-right: 15pt;
+   font-weight: bold;
+   font-style: italic;
+   background: #F0F0FF;
+}
+
+table.prototype tr.return td.content {
+   background: #F0F0FF;
+}
+
+table.prototype tr.raise td.name {
+   padding-right: 15pt;
+   font-weight: bold;
+   font-style: italic;
+   background: #FFF0F0;
+}
+
+table.prototype tr.raise td.content {
+   background: #FFF0F0;
+}
+
+
+table.members {
+   margin-top: 21pt;
+   margin-bottom: 12pt;
+}
+
+table.members td {
+   padding-right: 30pt;
+   padding-left: 10pt;
+   vertical-align: top;
+}
+
+table.members td.member_type {
+   font-size: 13pt;
+   font-weight: bold;
+   padding: 3pt;
+   padding-top: 18pt;
+   padding-bottom: 8pt;
+   border-bottom: 1px solid #7070A0;
+}
+
+a {
+   text-decoration: none;
+}
+
+a:hover {
+   background: #E0E0FF;
+}
+
+a:visited {
+   color: #A02060;
+}
+
+div.signature {
+   font-family: times new roman, times, serif;
+   font-style: italic;
+   font-size: 10pt;
+   margin-top: 30pt;
+   padding-top: 10pt;
+}
+
+p.brief {
+   font-size: 13pt;
+   font-style: italic;
+}
 

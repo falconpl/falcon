@@ -594,7 +594,7 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_BLOB:
    case MYSQL_TYPE_MEDIUM_BLOB:
    case MYSQL_TYPE_LONG_BLOB:      // text?
-      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
+      if( m_fields[nCol].flags & BINARY_FLAG ) // sic -- from manual
       {
          unsigned long* lengths = mysql_fetch_lengths( m_res );
          byte* mem = (byte*) memAlloc( lengths[nCol] );
