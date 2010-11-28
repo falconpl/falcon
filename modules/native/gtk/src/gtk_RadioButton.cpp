@@ -4,6 +4,9 @@
 
 #include "gtk_RadioButton.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

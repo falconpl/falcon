@@ -12,6 +12,9 @@
 #include "gdk_Screen.hpp"
 #include "gdk_Visual.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {
@@ -125,7 +128,7 @@ FALCON_FUNC Drawable::get_data( VMARG );
 
 
 /*#
-    @method get_screen
+    @method get_screen GdkDrawable
     @brief Gets the GdkScreen associated with a GdkDrawable.
     @return the GdkScreen associated with drawable
  */
@@ -138,7 +141,7 @@ FALCON_FUNC Drawable::get_screen( VMARG )
 
 
 /*#
-    @method get_visual
+    @method get_visual GdkDrawable
     @brief Gets the GdkVisual describing the pixel format of drawable.
     @return a GdkVisual
  */
@@ -151,7 +154,7 @@ FALCON_FUNC Drawable::get_visual( VMARG )
 
 
 /*#
-    @method set_colormap
+    @method set_colormap GdkDrawable
     @brief Sets the colormap associated with drawable.
     @param colormap a GdkColormap
 
@@ -173,7 +176,7 @@ FALCON_FUNC Drawable::set_colormap( VMARG )
 
 
 /*#
-    @method get_colormap
+    @method get_colormap GdkDrawable
     @brief Gets the colormap for drawable, if one is set; returns NULL otherwise.
     @return the colormap, or NULL
  */
@@ -189,7 +192,7 @@ FALCON_FUNC Drawable::get_colormap( VMARG )
 
 
 /*#
-    @method get_depth
+    @method get_depth GdkDrawable
     @brief Obtains the bit depth of the drawable, that is, the number of bits that make up a pixel in the drawable's visual.
     @return number of bits per pixel
 
@@ -203,7 +206,7 @@ FALCON_FUNC Drawable::get_depth( VMARG )
 
 
 /*#
-    @method get_size
+    @method get_size GdkDrawable
     @brief Returns the size of drawable.
     @return an array [ drawable's width, drawable's height ]
 
@@ -224,7 +227,7 @@ FALCON_FUNC Drawable::get_size( VMARG )
 
 
 /*#
-    @method get_clip_region
+    @method get_clip_region GdkDrawable
     @brief Computes the region of a drawable that potentially can be written to by drawing primitives.
     @return a GdkRegion.
 
@@ -243,7 +246,7 @@ FALCON_FUNC Drawable::get_clip_region( VMARG )
 
 
 /*#
-    @method get_visible_region
+    @method get_visible_region GdkDrawable
     @brief Computes the region of a drawable that is potentially visible.
     @return a GdkRegion.
 
@@ -260,7 +263,7 @@ FALCON_FUNC Drawable::get_visible_region( VMARG )
 
 
 /*#
-    @method draw_point
+    @method draw_point GdkDrawable
     @brief Draws a point, using the foreground color and other attributes of the GdkGC.
     @param gc a GdkGC.
     @param x the x coordinate of the point.
@@ -285,7 +288,7 @@ FALCON_FUNC Drawable::draw_point( VMARG )
 
 
 /*#
-    @method draw_points
+    @method draw_points GdkDrawable
     @brief Draws a number of points, using the foreground color and other attributes of the GdkGC.
     @param gc a GdkGC.
     @param points an array of GdkPoint structures.
@@ -326,7 +329,7 @@ FALCON_FUNC Drawable::draw_points( VMARG )
 
 
 /*#
-    @method draw_line
+    @method draw_line GdkDrawable
     @brief Draws a line, using the foreground color and other attributes of the GdkGC.
     @param gc a GdkGC.
     @param x1 the x coordinate of the start point.

@@ -9,6 +9,9 @@
 
 #include <gtk/gtk.h>
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -263,7 +266,7 @@ FALCON_FUNC TextIter::get_line_offset( VMARG )
 
 
 /*#
-    @method get_line_index
+    @method get_line_index GtkTextIter
     @brief Returns the byte index of the iterator, counting from the start of a newline-terminated line.
     @return distance from start of line, in bytes
 
@@ -280,7 +283,7 @@ FALCON_FUNC TextIter::get_line_index( VMARG )
 
 
 /*#
-    @method get_visible_line_index
+    @method get_visible_line_index GtkTextIter
     @brief Returns the number of bytes from the start of the line to the given iter, not counting bytes that are invisible due to tags with the "invisible" flag toggled on.
     @return byte index of iter with respect to the start of the line
  */
@@ -294,7 +297,7 @@ FALCON_FUNC TextIter::get_visible_line_index( VMARG )
 
 
 /*#
-    @method get_visible_line_offset
+    @method get_visible_line_offset GtkTextIter
     @brief Returns the offset in characters from the start of the line to the given iter, not counting characters that are invisible due to tags with the "invisible" flag toggled on.
     @return offset in visible characters from the start of the line
  */
@@ -308,7 +311,7 @@ FALCON_FUNC TextIter::get_visible_line_offset( VMARG )
 
 
 /*#
-    @method get_char
+    @method get_char GtkTextIter
     @brief Returns the Unicode character at this iterator.
     @return a Unicode character, or nil if iter is not dereferenceable
     (Equivalent to operator* on a C++ iterator.) If the element at this iterator is
@@ -335,7 +338,7 @@ FALCON_FUNC TextIter::get_char( VMARG )
 
 
 /*#
-    @method get_slice
+    @method get_slice GtkTextIter
     @brief Returns the text in the given range.
     @param end iterator at end of a range
     @return slice of text from the buffer
@@ -366,7 +369,7 @@ FALCON_FUNC TextIter::get_slice( VMARG )
 
 
 /*#
-    @method get_text
+    @method get_text GtkTextIter
     @brief Returns text in the given range.
     @param end iterator at end of a range
     @return array of characters from the buffer
@@ -394,7 +397,7 @@ FALCON_FUNC TextIter::get_text( VMARG )
 
 
 /*#
-    @method get_visible_slice
+    @method get_visible_slice GtkTextIter
     @brief Like get_slice(), but invisible text is not included.
     @param end iterator at end of a range
     @return slice of text from the buffer
@@ -421,9 +424,12 @@ FALCON_FUNC TextIter::get_visible_slice( VMARG )
 
 
 /*#
-    @method Like gtk_text_iter_get_text(), but invisible text is not included.
+    @method get_visible_text GtkTextIter
+
     @param end iterator at end of a range
     @return string containing visible text in the range
+
+    Like gtk_text_iter_get_text(), but invisible text is not included.
 
     Invisible text is usually invisible because a GtkTextTag with the "invisible"
     attribute turned on has been applied to it.
@@ -447,7 +453,7 @@ FALCON_FUNC TextIter::get_visible_text( VMARG )
 
 
 /*#
-    @method get_pixbuf
+    @method get_pixbuf GtkTextIter
     @brief If the element at iter is a pixbuf, the pixbuf is returned. Otherwise, nil is returned.
     @return the pixbuf
  */

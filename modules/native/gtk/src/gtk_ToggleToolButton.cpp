@@ -4,6 +4,9 @@
 
 #include "gtk_ToggleToolButton.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

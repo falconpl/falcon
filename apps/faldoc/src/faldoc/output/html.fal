@@ -176,7 +176,7 @@ class IndexPage( mainPage ) from Page( i"Table of contents", "index.html", mainP
       id = 1
       while node != nil
          text_id = pid ? pid + "." + id : toString(id)
-         if node.content provides props
+         if node.content provides props and "html_toc_id" notin node.content.props
             node.content.props["html_toc_id"] = text_id
          end
          li = _generator.makeNodeLink( node )
@@ -337,7 +337,7 @@ class ModulePage( module ) from IndexPage( module )
 
       // all the other pages must be our childern.
       itemList = ht.UL().CLASS("TOC")
-      self.addChildren( self.firstChild, itemList )
+      self.addChildren( self.firstChild, itemList, 0 )
 
       body.add( itemList )
    end
@@ -377,6 +377,9 @@ class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html
          body.add( ht.H3( letter ).CLASS("alpha") )
          para = ht.P().CLASS("alpha")
          for name, entity in entlist
+            // skip virtual moduls, already detected.
+            if "html_virtual" in entity.props: continue
+            
             para.add( ht.A( _generator.getLinkName( entity ), name) )
             para.add( ", " + @i"$(entity.type)" )
             if "ingroup" in entity.props
@@ -397,6 +400,9 @@ class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html
 
    function makeAlpha( module, dict )
       for name, entity in module.members
+         // skip virtual moduls, already detected.
+         if "html_virtual" in entity.props: continue
+         if not name: continue
          initial = name[0].upper()
          if initial in dict
             dict[initial] += [entity.name => entity]
@@ -541,6 +547,7 @@ class HTMLGenerator( doctree, conf )
                   end
                end
                faldoc.verbose( "Skipping virtual module " + module.name )
+               module.props["html_virtual"] = true
                if virtual: continue
             end
 
@@ -689,14 +696,13 @@ class HTMLGenerator( doctree, conf )
    function makeInherited( entity, done, table )
       if "from" notin entity.props: return
       
-
-      
-      
       fr = entity.props["from"]
       subclasses = []
       for link, callexp in fr
          // Gets the members.
          parent = link.target
+         // was that an unresolved link?
+         if not parent: continue
          if parent in done: continue
          done += parent
          
@@ -946,15 +952,18 @@ class HTMLGenerator( doctree, conf )
    //# Creates a node to be directly added in a member list (OL of class "memberlist")
    function makeNodeLink( node )
       member = node.content
-      node = ht.LI().add(
-         ht.Span(member.props["html_toc_id"]).CLASS("toc_number")).add(
-         ht.A( node.file, node.title ))
+      li = ht.LI()
+      if member provides props and "html_toc_id" in member.props
+         li.add( ht.Span(member.props["html_toc_id"]).CLASS("toc_number"))
+      end
+
+      li.add(ht.A( node.file, node.title ))
 
       if member provides props and "brief" in member.props
          brief = self._rndr.rcont(member.props["brief"])
-         if brief: node.add( " - " ).add( ht.Verbatim( brief ) )
+         if brief: li.add( " - " ).add( ht.Verbatim( brief ) )
       end
-      return node
+      return li
    end
 
 end

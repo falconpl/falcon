@@ -4,6 +4,9 @@
 
 #include "gtk_Progress.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

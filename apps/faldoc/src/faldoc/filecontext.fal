@@ -328,7 +328,6 @@ class FileContext( file, defmod, modName )
       if entity.name
          l2 = entity.firstline
          faldoc.warn( @i"Entity defined at $l2 redefined here", l1 )
-         self.entities -= entity.name
       end
 
       entity.name = node.infos["name"]

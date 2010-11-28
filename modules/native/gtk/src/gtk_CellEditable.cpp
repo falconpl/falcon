@@ -6,6 +6,9 @@
 
 #include "gdk_Event.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

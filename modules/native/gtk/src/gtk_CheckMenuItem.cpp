@@ -4,6 +4,9 @@
 
 #include "gtk_CheckMenuItem.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

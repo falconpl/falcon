@@ -9,6 +9,9 @@
 #include "gtk_TreeModel.hpp"
 #include "gtk_TreePath.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

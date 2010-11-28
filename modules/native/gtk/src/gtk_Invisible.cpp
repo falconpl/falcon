@@ -4,6 +4,9 @@
 
 #include "gtk_Invisible.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

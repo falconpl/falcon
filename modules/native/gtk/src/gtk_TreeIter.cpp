@@ -7,6 +7,9 @@
 #undef MYSELF
 #define MYSELF Gtk::TreeIter* self = Falcon::dyncast<Gtk::TreeIter*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

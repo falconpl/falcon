@@ -6,6 +6,9 @@
 
 #include "gtk_Adjustment.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

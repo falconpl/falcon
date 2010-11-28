@@ -9,6 +9,10 @@
 #include "gdk_Pixbuf.hpp"
 
 
+/*#
+   @beginmodule gtk
+*/
+
 namespace Falcon {
 namespace Gtk {
 
@@ -366,7 +370,7 @@ FALCON_FUNC AboutDialog::get_website( VMARG )
 
 
 /*#
-    @method set_website
+    @method set_website GtkAboutDialog
     @brief Sets the URL to use for the website link.
     @param a URL string starting with "http://" (or nil).
 

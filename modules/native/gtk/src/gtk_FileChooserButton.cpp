@@ -4,6 +4,9 @@
 
 #include "gtk_FileChooserButton.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

@@ -6,6 +6,10 @@
 
 #if GTK_CHECK_VERSION( 2, 20, 0 )
 
+/*#
+   @beginmodule gtk
+*/
+
 namespace Falcon {
 namespace Gtk {
 

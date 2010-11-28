@@ -41,6 +41,9 @@
 
 #include <sys/time.h>
 
+/*# @beginmodule curl
+*/
+
 namespace Falcon {
 namespace Ext {
 

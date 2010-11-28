@@ -11,6 +11,9 @@
 //#include "gtk_TreeDragSource.hpp"
 #include "gtk_TreeSortable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

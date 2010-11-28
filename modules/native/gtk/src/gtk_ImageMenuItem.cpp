@@ -6,6 +6,9 @@
 
 #include "gtk_Widget.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

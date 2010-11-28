@@ -7,6 +7,9 @@
 #include "gtk_Buildable.hpp"
 #include "gtk_Orientable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

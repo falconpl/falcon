@@ -6,6 +6,9 @@
 
 #include "gtk_Menu.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

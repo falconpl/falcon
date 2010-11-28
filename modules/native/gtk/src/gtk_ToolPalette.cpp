@@ -12,6 +12,9 @@
 #include "gtk_ToolItem.hpp"
 #include "gtk_ToolItemGroup.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

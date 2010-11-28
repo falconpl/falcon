@@ -4,6 +4,9 @@
 
 #include "gtk_ButtonBox.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

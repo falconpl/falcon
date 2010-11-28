@@ -4,6 +4,9 @@
 
 #include "gtk_ProgressBar.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
