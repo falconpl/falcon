@@ -192,7 +192,7 @@ class IndexPage( mainPage ) from Page( i"Table of contents", "index.html", mainP
          
          // do we have subitems?
          if node.firstChild
-            il1 = ht.UL()
+            il1 = ht.UL().CLASS("TOC")
             self.addChildren( node.firstChild, il1, level+1, text_id )
             li.add( il1 )
          end
@@ -344,11 +344,13 @@ class ModulePage( module ) from IndexPage( module )
 end
 
 
-class MetaPage( title, file, entity_list ) from Page( title, file, entity_list )
+class MetaPage( title, file, entity_list ) from Page( title, file, nil )
+   entlist = entity_list
+   content = bless(["props"=>[=>]])
 
    function makeBody( body )
-      entlist = self.content
-      body.add( ht.H1().add( self.title ) )
+      entlist = self.entlist
+      body.add( ht.H1().add(ht.Span(self.content.props["html_toc_id"]).CLASS("toc_number")).add( self.title ) )
       
       for ent in entlist
          _generator.makeIntraPageMember( body, ent )
@@ -600,7 +602,7 @@ class HTMLGenerator( doctree, conf )
                end
 
                if glob_entities
-                  topPage.appendChild( MetaPage( type_title, self.getFilenameForType( type ), glob_entities ) )
+                  topPage.appendChild( MetaPage( type_title, self.getFilenameForType( type, module ), glob_entities ) )
                end
             end
          end

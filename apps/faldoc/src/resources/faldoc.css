@@ -71,6 +71,7 @@ ul.TOC {
    font-size:14pt;
 }
 
+
 ul.TOC ul {
    list-style-type: none;
    font-size:12pt;
@@ -93,6 +94,16 @@ ul.TOC ul span.toc_number {
 ul.TOC ul ul span.toc_number {
    padding-right: 12pt;
 }
+
+ul.memberlist {
+   list-style-type: none;
+   font-size:12pt;
+}
+
+ul.memberlist span.toc_number {
+   padding-right: 12pt;
+}
+
 
 H1 span.toc_number {
    padding-right: 24pt;
