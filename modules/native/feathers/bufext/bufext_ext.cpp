@@ -180,8 +180,7 @@ FALCON_FUNC BitBuf_rposBits( ::Falcon::VMachine *vm )
 
     if(Item *p0 = vm->param(0))
     {
-        if(uint32 bc = (uint32)p0->forceIntegerEx())
-            buf.rpos_bits(bc);
+        buf.rpos_bits((uint32)p0->forceIntegerEx());
         vm->retval(vm->self());
     }
     else
@@ -204,8 +203,7 @@ FALCON_FUNC BitBuf_wposBits( ::Falcon::VMachine *vm )
 
     if(Item *p0 = vm->param(0))
     {
-        if(uint32 bc = (uint32)p0->forceIntegerEx())
-            buf.wpos_bits(bc);
+        buf.wpos_bits((uint32)p0->forceIntegerEx());
         vm->retval(vm->self());
     }
     else

@@ -158,9 +158,108 @@ EXPECT(bc[1], 0xFF, "ByteBuf copy 2")
 EXPECT(ba.r16(), 0x0A04, "ByteBuf adapt read 1")
 EXPECT(bc.r16(), 0xFFFF, "ByteBuf copy read 1")
 
+// pointers + direct memory, reading
+bb = ByteBufLittleEndian()
+bb.resize(50)
+ba = ByteBufLittleEndian()
+ba.w32(0x12345678).write("extra space string------------!").w16(0xFDFE)
+ba.readPtr(bb.ptr(), ba.size())
+EXPECT(bb.r32(), 0x12345678, "ByteBuf readPtr 1")
+bb.readString()
+EXPECT(bb.r16(), 0xFDFE, "ByteBuf readPtr 2")
+
+
+// TODO: writing
+
+// read to membuf
+mb = MemBuf(5, 4) // 5x int32
+mb[0] = 0x01020304
+mb.position(1)
+bb = ByteBufLittleEndian().w32(5,6,7,8,9)
+v = bb.readToBuf(mb, 100)
+EXPECT(v, 16, "readToBuf(LE, WS 4 MB) limit")
+EXPECT(mb[0], 0x01020304, "readToBuf(LE, WS 4 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(LE, WS 4 MB) end")
+
+mb = MemBuf(5, 4) // 5x int32
+mb[0] = 0x01020304
+mb.position(1)
+bb = ByteBufBigEndian().w32(5,6,7,8,9)
+v = bb.readToBuf(mb, 100)
+EXPECT(v, 16, "readToBuf(BE, WS 4 MB) limit")
+EXPECT(mb[0], 0x01020304, "readToBuf(BE, WS 4 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(BE, WS 4 MB) end")
+
+mb = MemBuf(5, 1) // 5x int8
+mb[0] = 0x22
+mb.position(1)
+bb = ByteBufLittleEndian().w8(5,6,7,8,9)
+v = bb.readToBuf(mb) // no 2nd arg here intentionally
+EXPECT(v, 4, "readToBuf(WS 1 MB) limit")
+EXPECT(mb[0], 0x22, "readToBuf(WS 1 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(WS 1 MB) end")
+
+
+bb = ByteBufLittleEndian().w8(2,3,4,5,6).writeNoNT("abcdefghijklmnopqrs")
+ng = ByteBufLittleEndian().growable(false).resize(15)
+ng.w8(0xFD, 0xFE)
+v = bb.readToBuf(ng, 3) // just 3 bytes
+EXPECT(v, 3, "readToBuf 3 bytes")
+EXPECT(ng[0], 0xFD, "readToBuf to ByteBuf read 3, wrongly overwritten")
+EXPECT(ng[4], 4, "readToBuf to ByteBuf read 3, append")
+
+v = bb.readToBuf(ng) // (ng is 5 bytes now) ... append the rest, up to the limit
+EXPECT(v, 10, "readToBuf up to limit")
+EXPECT(ng[4], 4, "readToBuf limit, unchanged prev val")
+EXPECT(ng[14], ord("h"), "readToBuf limit, at limit")
+
+ng.growable(true)
+v = bb.readToBuf(ng) // (ng is 15 bytes now) ... append the rest, all remaining
+EXPECT(v, 11, "readToBuf up to limit")
+EXPECT(ng[14], ord("h"), "readToBuf fully, unchanged prev val")
+EXPECT(ng[14+11], ord("s"), "readToBuf fully, unchanged prev val")
+
+EXPECT(ng.size(), 2+5+19, "readToBuf mb final size")
+EXPECT(bb.readable(), 0, "readToBuf src buf empty")
+
+
+// memory region shifting test (right by 1 bit)
+bb = BitBuf().w8(1,2,4,6,10,0x20,1)
+//> bitstr(bb); bb.rpos(0) // for clarification, uncomment this line
+EXPECT(bb.rb(), true, "BitBuf mem region Rshift init") // this is the 1, and shifts the frame
+t = ByteBufLittleEndian()
+bb.readToBuf(t)
+EXPECT(t.r8(), 0, "BitBuf mem region Rshift 1")
+EXPECT(t.r8(), 1, "BitBuf mem region Rshift 2")
+EXPECT(t.r8(), 2, "BitBuf mem region Rshift 3")
+EXPECT(t.r8(), 3, "BitBuf mem region Rshift 4")
+EXPECT(t.r8(), 5, "BitBuf mem region Rshift 5")
+EXPECT(t.r8(), 0x10 + 0x80, "BitBuf mem region Rshift 6") // (0x20 >> 1) + (1 shifted to right once, into byte beeing read)
+EXPECT(bb.readableBits(), 7, "BitBuf mem region Rshift 1 bit less")
+bb.wb(true) // 1 extra bit, will be highest
+bb.readToBuf(t)
+EXPECT(t.r8(), 0x80, "BitBuf mem region Rshift extra bit")
+
+// memory region shifting test (left by 1 bit)
+bb = BitBuf().wb(false).w8(1,2,4,6,10,0x20)
+//> bitstr(bb); bb.rposBits(0) // for clarification, uncomment this line
+t = ByteBufLittleEndian()
+bb.readToBuf(t)
+EXPECT(t.r8(), 2, "BitBuf mem region Lshift 1")
+EXPECT(t.r8(), 4, "BitBuf mem region Lshift 2")
+EXPECT(t.r8(), 8, "BitBuf mem region Lshift 3")
+EXPECT(t.r8(), 12, "BitBuf mem region Lshift 4")
+EXPECT(t.r8(), 20, "BitBuf mem region Lshift 5")
+EXPECT(t.r8(), 0x40, "BitBuf mem region Lshift 6")
+EXPECT(bb.readableBits(), 1, "BitBuf mem region Lshift last bit")
+bb.bitCount(7).writeBits(0)
+bb.readToBuf(t)
+EXPECT(t.r8(), 0, "BitBuf mem region Lshift extra bits")
+
+
 > " === DEPENDENCY TEST vs. GC ==="
 
-// ByteBuf dependency smoke test (stil required bufs may not be garbaged)
+// ByteBuf dependency smoke test (still required bufs may not be garbaged)
 mb = MemBuf(50000, 4).fill(0xFFFFFFFF) // a large object, interesting for the GC
 mb.put(42)
 b = ByteBufNativeEndian(mb, true)
@@ -179,7 +278,7 @@ for i = 0 to 100000
     EXPECT(b.r32(), 42, "ByteBuf recursive adapt GC stack overflow test")
     b = ByteBufNativeEndian(b, true).growable(false) // adapt
 end
-GC.perform(true)
+GC.perform(true) // if a long dependency chain was built up, this must not cause GC stack overflow
 x = b.r32() // if mb was garbaged, this will likely segfault
 EXPECT(x, 42, "ByteBuf recursive adapt stack overflow test, final") 
 b = nil

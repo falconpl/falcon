@@ -302,6 +302,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_resize( ::Falcon::VMachine *vm )
         uint32 newsize = (uint32)vm->param(0)->forceInteger();
         buf.resize(newsize);
         vm->retval(vm->self());
+        return;
     }
 
     throw new ParamError(ErrorParam(e_inv_params, __LINE__)
@@ -716,7 +717,7 @@ This is a shortcut for size() - rpos().
 template <typename BUFTYPE> FALCON_FUNC Buf_readable( ::Falcon::VMachine *vm )
 {
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(int64(buf.size() - buf.rpos()));
+    vm->retval(int64(buf.readable()));
 }
 
 /*#
@@ -952,8 +953,8 @@ template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMa
 @param bytes Amount of bytes to copy
 @return The buffer itself
 
-Read @i bytes bytes from the buffer and write them to @i ptr. Dangerous function, absolutely no checks are done,
-use only if you know what you are doing.
+Read @i bytes bytes from the buffer and write them to @i ptr, increasing rpos() by the amount of bytes read.
+Dangerous function, absolutely no checks are done, use only if you know what you are doing.
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_readPtr( ::Falcon::VMachine *vm )
 {
@@ -971,21 +972,63 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readPtr( ::Falcon::VMachine *vm )
     vm->retval(vm->self());
 }
 
+
+
+template <typename SRCTYPE, typename DSTTYPE> struct BufReadToBufHelper_X {
+static inline void docopy(SRCTYPE& src, DSTTYPE& dst, uint32 bytes)
+{
+    dst.append((uint8*)src.getBuf() + src.rpos(), bytes);
+    src.rpos(src.rpos() + bytes);
+}
+};
+
+// specialization for BitBuf (1)
+template <typename DSTTYPE> struct BufReadToBufHelper_X<BitBuf, DSTTYPE> {
+static inline void docopy(BitBuf& src, DSTTYPE& dst, uint32 bytes)
+{
+    while(bytes--)
+        dst.template append<uint8>(src.template read<uint8>());
+}
+};
+
+// specialization for BitBuf (2)
+template <typename SRCTYPE> struct BufReadToBufHelper_X<SRCTYPE, BitBuf> {
+static inline void docopy(SRCTYPE& src, BitBuf& dst, uint32 bytes)
+{
+    while(bytes--)
+        dst.template append<uint8>(src.template read<uint8>());
+}
+};
+
+// specialization for BitBuf (3) - to make the compiler happy and avoid ambigous template specialization
+template <> struct BufReadToBufHelper_X<BitBuf, BitBuf> {
+static inline void docopy(BitBuf& src, BitBuf& dst, uint32 bytes)
+{
+    while(bytes--)
+        dst.template append<uint8>(src.template read<uint8>());
+}
+};
+
+template <typename SRCTYPE, typename DSTTYPE>
+inline void BufReadToBufHelper_docopy(SRCTYPE& src, DSTTYPE& dst, uint32 bytes)
+{
+    return BufReadToBufHelper_X<SRCTYPE, DSTTYPE>::docopy(src, dst, bytes);
+}
+
 template <typename SRCTYPE, typename DSTTYPE> uint32 BufReadToBufHelper(SRCTYPE& src, CoreObject *co, uint32 bytes)
 {
     BufCarrier<DSTTYPE> *carrier = (BufCarrier<DSTTYPE>*)(co->getUserData());
     DSTTYPE& dst = carrier->GetBuf();
-    uint32 readable = src.size() - src.rpos();
+    uint32 readable = src.readable();
     if(bytes > readable)
         bytes = readable;
     if(!dst.growable())
     {
-        uint32 writable = dst.size() - dst.wpos();
+        uint32 writable = dst.writable();
         if(bytes > writable)
             bytes = writable;
     }
-    dst.append((uint8*)src.getBuf() + src.rpos(), bytes);
-    src.rpos(src.rpos() + bytes);
+    BufReadToBufHelper_docopy<SRCTYPE, DSTTYPE>(src, dst, bytes); // give template args explicitly to reduce risk of wrong code
 
     return bytes;
 }
@@ -994,25 +1037,30 @@ template <typename SRCTYPE, typename DSTTYPE> uint32 BufReadToBufHelper(SRCTYPE&
 @method readToBuf ByteBuf
 @brief Reads data from the buffer and writes them to another buffer
 @param dest The MemBuf or ByteBuf to write to
-@param bytes Amount of bytes to copy
+@optparam bytes Amount of bytes to copy. Default -1.
 @return The amount of bytes actually copied
 
 Read @i bytes bytes from the buffer and write them to @i dest. If less bytes can be copied,
 because the source buffer has less readable space or the destination buffer is full and not growable,
 it will copy as many bytes as possible.
+If @i bytes is -1 or not given, it will copy as many bytes as possible until the target buffer is full,
+or the source buffer is empty.
 
 @note If @i dest is a 3-byte wide MemBuf, it still reads 4 bytes per integer.
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
 {
-    if(vm->paramCount() < 2)
+    if(!vm->paramCount())
     {
         throw new ParamError(ErrorParam(e_inv_params, __LINE__)
-            .extra("X, I"));
+            .extra("X [, I]"));
     }
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
 
     Item *itm = vm->param(0);
+    Item *i_bytes = vm->param(1);
+
+    uint32 bytes = uint32(i_bytes ? vm->param(1)->forceInteger() : -1);
 
     if(itm->isMemBuf())
     {
@@ -1022,12 +1070,14 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
         uint32 size = mb->size();
         uint32 writeable = size - bytepos;
         uint32 readable = buf.size() - buf.rpos();
-        uint32 bytes = readable > writeable ? writeable : readable; // minimum
+        uint32 maxbytes = readable > writeable ? writeable : readable; // minimum
+        if(bytes > maxbytes)
+            bytes = maxbytes;
         uint32 count = bytes / ws;
         switch(ws)
         {
             case 1:
-                buf.read(mb->data(), bytes);
+                buf.read(mb->data() + bytepos, count);
                 break;
 
             case 2:
@@ -1060,7 +1110,6 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
     }
 
     CoreObject *obj = itm->asObject();
-    uint32 bytes = (uint32)vm->param(1)->forceInteger();
     uint32 read = 0;
 
     if(itm->isOfClass("ByteBuf"))

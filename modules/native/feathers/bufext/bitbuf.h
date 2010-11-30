@@ -185,6 +185,10 @@ public:
 
     inline const uint8 *getBuf(void) const { return (const uint8*)_bufptr; }
 
+    // round down
+    inline uint32 readable(void) const { return (size_bits() - rpos_bits()) / 8; }
+    inline uint32 writable(void) const { return (size_bits() - wpos_bits()) / 8; } // free bytes left before realloc will occur
+
     inline void reset(void)
     {
         _arraypos_r = 0;
@@ -538,7 +542,7 @@ public:
         }
     }
 
-    // bytes required to store a certain number of bits
+    // bytes required to store a certain number of bits (rounds up)
     static inline NUMTYPE roundToBytes(NUMTYPE bits)
     {
         return (bits + 7) / 8;

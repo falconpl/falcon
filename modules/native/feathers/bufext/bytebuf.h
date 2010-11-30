@@ -122,7 +122,7 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
                 _rpos = newsize;
             if(_wpos > newsize)
                 _wpos = newsize;
-            _size = 0;
+            _size = newsize;
         }
         
         void reserve(uint32 newsize)
@@ -237,6 +237,9 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
         inline uint32 bits() const { return bytes() * 8; }
 
         inline uint32 capacity() const { return _res; }
+
+        inline uint32 readable(void) const { return size() - rpos(); }
+        inline uint32 writable(void) const { return size() - wpos(); } // free space left before realloc will occur
         
         template <typename T> void append(T value)
         {
