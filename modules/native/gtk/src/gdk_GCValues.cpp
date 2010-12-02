@@ -7,6 +7,9 @@
 #include "gdk_Color.hpp"
 #include "gdk_Pixmap.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

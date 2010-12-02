@@ -7,6 +7,9 @@
 #include "gtk_Adjustment.hpp"
 #include "gtk_CellEditable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

@@ -1,0 +1,51 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: mimeMaker.fal
+
+    Test for Multipurpose Internet Mail Extensions parser.
+    -------------------------------------------------------------------
+    Author: Giancarlo Niccolai
+    Begin: Sun, 21 Nov 2010 15:22:29 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
+
+import from web.mime in mime
+
+simpleMail = mime.Part(
+   ["Content-Type" => ["" => "text/plain", "charset" => "utf-8"],
+    "Subject" => "Hello world",
+    "From" => "me",
+    "To" => "you" ],
+
+    transcodeTo( "Hello. This is the body of the MIME message.\n", "utf-8" )
+    )
+
+> simpleMail
+
+> "=" * 70
+
+subPart = mime.Part(
+      ["Content-Type" => "text/html"],
+      "<body><h1>While this is html</h1></body>" )
+      
+complexMail = mime.Part(
+   [
+    "Subject" => "More complex",
+    "From" => "me",
+    "To" => "you" ]
+
+
+    ).setMultipart( mime.Multipart.alternative ).addPart( mime.Part(
+      ["Content-type" => "text/plain"],
+      "And this is plain text") ).addPart( subPart )
+stdOut().write(complexMail.toString() )
+
+> "=" * 70
+
+subPart.attachData( "Hello; this will be seen as an attached file", "text/plain", "data.txt", "Your data" )
+> complexMail

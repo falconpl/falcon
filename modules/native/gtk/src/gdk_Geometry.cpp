@@ -7,6 +7,10 @@
 #undef MYSELF
 #define MYSELF Gdk::Geometry* self = Falcon::dyncast<Gdk::Geometry*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
+
 
 namespace Falcon {
 namespace Gdk {

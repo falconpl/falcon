@@ -22,6 +22,7 @@ import TokenRule from parser.genparser.rules as TokenRule
 import TokenRuleLA from parser.genparser.rules as TokenRuleLA
 import ReRule from parser.genparser.rules as ReRule
 import ReRuleLA from parser.genparser.rules as ReRuleLA
+import ReRuleEOL from parser.genparser.rules as ReRuleEOL
 import EmptyLineRule from parser.genparser.rules as EmptyLineRule
 import DummyRule from parser.genparser.rules as DummyRule
 import CharRule from parser.genparser.rules as CharRule
@@ -139,10 +140,10 @@ class Parser from parser.genparser.Parser
          +.[
             ReRule( '\s*', "#stay" )
             ReRule( '\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
-            TokenRule( 'from', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
+            ReRule( 'from', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
             // and return immmediately without waiting an end
             ReRule( ':.*$', "#pop", {ctx=> ctx.popNode()} )
 
@@ -150,7 +151,7 @@ class Parser from parser.genparser.Parser
             TokenRule( 'end', "#pop", {ctx=> ctx.popNode()} )
             
             // enter the function state at eol (and dump errors )
-            TagRule( ';', "#class", {ctx=> ctx.popNode()} )
+            TagRule( ';', "class" )
             EOLRule( "class" )
          ]
       ),
@@ -165,7 +166,7 @@ class Parser from parser.genparser.Parser
             TokenRuleLA( 'end', "#pop", {ctx=> ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
 
             // Consume errors and go to the class state
             EOLRuleLA( "#pop", {ctx=>ctx.popNode()} )
@@ -180,10 +181,10 @@ class Parser from parser.genparser.Parser
             ReRule( ',', "#pop", {ctx=>ctx.popNode()} )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
 
             // return to previous state where ; is parsed
-            ReRuleLA( ';', "#pop" )
+            ReRuleLA( ';', "#pop", {ctx=>ctx.popNode()} )
 
             // Consume errors and go to the class state -- removing the inherit node.
             EOLRuleLA( "#pop", {ctx=>ctx.popNode()} )
@@ -240,7 +241,7 @@ class Parser from parser.genparser.Parser
             ReRule( '\s*', "#stay" )
             ReRule( '\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
             // and return immmediately without waiting an end
             ReRule( '\s*:.*$', "#pop", {ctx=> ctx.popNode()} )
             ReRule( ';', "function" )
@@ -269,7 +270,7 @@ class Parser from parser.genparser.Parser
             ReRule( '\s+', "#stay" )
             
             // consume multiline tokens, so that the eol rule doesn't fire.
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
          ]
       ),
 
@@ -280,7 +281,7 @@ class Parser from parser.genparser.Parser
             ReRuleLA( '\)', "#pop" )
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRule( '\s+', "#stay" )
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
          ]
       ),
       
@@ -351,7 +352,7 @@ class Parser from parser.genparser.Parser
             TagRule( "/*", "comment" )
             ReRule( '\s*//.*$', "#stay" )
             // if we find a \\$, the definition continues...
-            ReRule( '\\$', "#stay" )
+            ReRuleEOL( '\\$', "#stay" )
             // Avoid confusing ?: with ":"
             TagRule( "?", "question_mark" )
             ReRule( ':.*$', "#pop" )

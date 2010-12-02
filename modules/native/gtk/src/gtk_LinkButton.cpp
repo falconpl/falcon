@@ -4,6 +4,9 @@
 
 #include "gtk_LinkButton.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

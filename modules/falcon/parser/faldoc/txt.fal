@@ -237,7 +237,8 @@ class Parser from parser.genparser.Parser
       ),
 
       "para" =>PState(.[
-            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})         
+            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
+            ReRule( '^\s*$', "#pop", {ctx=> ctx.popNode()})
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
             ProxyRule( ParaStartCommands, "#pop;*", {ctx, rule=>ctx.popNode(); } )
          ]

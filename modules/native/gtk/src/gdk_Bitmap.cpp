@@ -6,6 +6,9 @@
 
 #include "gdk_Drawable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

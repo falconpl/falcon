@@ -7,6 +7,10 @@
 #include "gdk_GCValues.hpp"
 #include "gdk_Screen.hpp"
 
+/*#
+   @beginmodule gtk
+*/
+
 
 namespace Falcon {
 namespace Gdk {
@@ -110,7 +114,7 @@ FALCON_FUNC GC::init( VMARG )
 
 
 /*#
-    @method new_with_values
+    @method new_with_values GdkGC
     @brief Create a new GC with the given initial values.
     @param drawable a GdkDrawable. The created GC must always be used with drawables of the same depth as this one.
     @param values a structure containing initial values for the GC (GdkGCValues).
@@ -136,7 +140,7 @@ FALCON_FUNC GC::new_with_values( VMARG )
 
 
 /*#
-    @method get_screen
+    @method get_screen GdkGC
     @brief Gets the GdkScreen for which gc was created
     @return the GdkScreen for gc.
  */
@@ -158,7 +162,7 @@ FALCON_FUNC GC::destroy( VMARG );
 
 
 /*#
-    @method set_values
+    @method set_values GdkGC
     @brief Sets attributes of a graphics context in bulk.
     @param values struct containing the new values (GdkGCValues).
     @param values_mask mask indicating which struct fields are to be used (GdkGCValuesMask).
@@ -184,7 +188,7 @@ FALCON_FUNC GC::set_values( VMARG )
 
 
 /*#
-    @method get_values
+    @method get_values GdkGC
     @brief Retrieves the current values from a graphics context.
     @return the GdkGCValues structure in which to store the results.
 

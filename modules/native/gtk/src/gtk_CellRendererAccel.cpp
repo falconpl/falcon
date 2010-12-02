@@ -4,6 +4,9 @@
 
 #include "gtk_CellRendererAccel.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

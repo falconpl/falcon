@@ -1,0 +1,54 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: send_a_mail.fal
+
+    Test for the SMTP sender.
+    -------------------------------------------------------------------
+    Author: Giancarlo Niccolai
+    Begin: Sun, 21 Nov 2010 15:22:29 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
+
+import from web.mime in mime
+import SMTP from net.smtp as SMTP
+
+if args.len() != 3
+   > "Usage: send_a_mail <server> <port> <e_mail>"
+end
+
+mail = mime.Part()
+mail.setMultipart( mime.Multipart.mixed )
+mail.headers["From"] = "test@falconpl.org"
+mail.headers["To"] = args[2]
+mail.headers["Subject"] = "A test mail"
+
+textPart = mime.Part()
+textPart.setText( '
+Hello,
+
+   this is a test mail sent by the "send_a_mail" program. The text
+is automatically encoded as quoted-printable and the content type
+is automatically set to text/plain. Also, the text is turned into
+utf-8 before sending; we''ll add here some accented characters
+to test this feature.
+
+   "àèìòù"  (a, e, i, o, u)
+
+   The Falcon logo is also attached.
+')
+mail.addPart( textPart )
+mail.attachFile( "./logo.png", "image/png" )
+mail.attachFile( "./send_a_mail.fal", "text/plain" )
+
+> "Starting mail transfer"
+
+server = SMTP( args[0], args[1] )
+server.trace = printl
+server.send( mail )
+
+> "Mail transfer complete"

@@ -1,0 +1,117 @@
+<h1>Home</h1>
+<p>This is the home. As you can see, this page is framed, but the other pages in the site,
+which generates ajax content, are not framed at all.</p>
+
+<div id="calendar">
+</div>
+
+<div id="selection">
+</div>
+
+<style>
+table.nest_calendar {
+   border: solid 1px #000000;
+}
+
+table.nest_calendar tr.month_name td {
+   color: #FFFFFF;
+   background: #282850;
+}
+
+table.nest_calendar tr.month_name a {
+   color: #FFFFFF;
+   text-decoration: none;
+   font-weight: bold;
+}
+
+table.nest_calendar tr.day_names td {
+   background: #A8A8E0;
+}
+
+table.nest_calendar tr.day_names td {
+   font-weight: bold;
+}
+
+table.nest_calendar tr {
+   margin: 0;
+   border: solid 1px #000030;
+}
+
+table.nest_calendar td {
+   text-align: center;
+   background: #F8F8FF;
+   padding: 6px;
+}
+
+table.nest_calendar a {
+   text-decoration: none;
+   font-weight: normal;
+   font-weight: bold;
+   color: #000030;
+}
+
+table.nest_calendar a:hover {
+   text-decoration: none;
+   color: #A03030;
+}
+
+table.nest_calendar td.old {
+   color: #E0E0E0;
+   background: #FFFFFF;
+}
+
+</style>
+<script type="text/javascript">
+   // startup
+   <? today = CurrentTime() ?>
+   var month = <?=today.month?>;
+   var year = <?=today.year?>;
+   loadCalendar();
+
+   //=====================================================
+   // This is an interesting function
+   //
+   function ajax_content(dest, id) {
+      xmlhttp = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+
+      xmlhttp.onreadystatechange = function(){
+         if ((xmlhttp.readyState == 4) && (xmlhttp.status == 200)) {
+            document.getElementById(id).innerHTML = xmlhttp.responseText;
+         }
+      }
+      xmlhttp.open("GET", dest );
+      xmlhttp.send(null);
+   }
+
+
+   function loadCalendar() {
+      document.getElementById("calendar").innerHTML= "<p>Loading the calendar...</p>";
+      
+      ajax_content( "<?=Nest.pageLink( 'calendar' )?>" +
+         "&month=" + month +
+         "&year=" + year,
+         "calendar" );
+   }
+
+   function gotoMonth( skip ) {
+      month = month + skip;
+      if (month > 13) { month = 1; }
+      else if( month < 1 ) { month = 12;}
+      loadCalendar();
+   }
+
+   function gotoYear( skip ) {
+      year = year+skip;
+      loadCalendar();
+   }
+
+   function showDay( day ) {
+      //document.getElementById("selection").innerHTML = "<p>You have selected day <b>" + day + "</b>.</p>";
+      document.getElementById("selection").innerHTML = "<p>Loading settings for day <b>" + day + "</b>.</p>";
+       ajax_content( "<?=Nest.pageLink( 'day' )?>" +
+         "&day=" + day +
+         "&month=" + month +
+         "&year=" + year,
+         "selection" );
+   }
+</script>

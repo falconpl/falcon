@@ -4,6 +4,9 @@
 
 #include "gdk_DragContext.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

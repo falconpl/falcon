@@ -13,6 +13,9 @@
 #include "gtk_TreePath.hpp"
 #include "gtk_TreeViewColumn.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -191,7 +194,7 @@ FALCON_FUNC TreeView::init( VMARG )
 
 
 /*#
-    @method signal_columns_changed
+    @method signal_columns_changed GtkTreeView
     @brief The number of columns of the treeview has changed.
  */
 FALCON_FUNC TreeView::signal_columns_changed( VMARG )
@@ -209,7 +212,7 @@ void TreeView::on_columns_changed( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_cursor_changed
+    @method signal_cursor_changed GtkTreeView
     @brief The position of the cursor (focused cell) has changed.
  */
 FALCON_FUNC TreeView::signal_cursor_changed( VMARG )
@@ -227,7 +230,7 @@ void TreeView::on_cursor_changed( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_expand_collapse_cursor_row
+    @method signal_expand_collapse_cursor_row GtkTreeView
     @brief The "expand-collapse-cursor-row" signal is emitted when the row at the cursor needs to be expanded or collapsed.
  */
 FALCON_FUNC TreeView::signal_expand_collapse_cursor_row( VMARG )
@@ -291,7 +294,7 @@ gboolean TreeView::on_expand_collapse_cursor_row( GtkTreeView* obj, gboolean log
 
 
 /*#
-    @method signal_move_cursor
+    @method signal_move_cursor GtkTreeView
     @brief The "move-cursor" signal is emitted when the user moves the cursor using the Right, Left, Up or Down arrow keys or the Page Up, Page Down, Home and End keys.
  */
 FALCON_FUNC TreeView::signal_move_cursor( VMARG )
@@ -354,7 +357,7 @@ gboolean TreeView::on_move_cursor( GtkTreeView* obj, GtkMovementStep step,
 
 
 /*#
-    @method signal_row_activated
+    @method signal_row_activated GtkTreeView
     @brief The "row-activated" signal is emitted when the method gtk_tree_view_row_activated() is called or the user double clicks a treeview row.
 
     It is also emitted when a non-editable row is selected and one of the keys:
@@ -408,7 +411,7 @@ void TreeView::on_row_activated( GtkTreeView* obj, GtkTreePath* path,
 
 
 /*#
-    @method signal_row_collapsed
+    @method signal_row_collapsed GtkTreeView
     @brief The given row has been collapsed (child nodes are hidden).
  */
 FALCON_FUNC TreeView::signal_row_collapsed( VMARG )
@@ -456,7 +459,7 @@ void TreeView::on_row_collapsed( GtkTreeView* obj, GtkTreeIter* titer,
 
 
 /*#
-    @method signal_row_expanded
+    @method signal_row_expanded GtkTreeView
     @brief The given row has been expanded (child nodes are shown).
  */
 FALCON_FUNC TreeView::signal_row_expanded( VMARG )
@@ -504,7 +507,7 @@ void TreeView::on_row_expanded( GtkTreeView* obj, GtkTreeIter* titer,
 
 
 /*#
-    @method signal_select_all
+    @method signal_select_all GtkTreeView
     @brief The "select-all" signal is emitted when the user presses Control+a or Control+/.
  */
 FALCON_FUNC TreeView::signal_select_all( VMARG )
@@ -564,7 +567,7 @@ gboolean TreeView::on_select_all( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_select_cursor_parent
+    @method signal_select_cursor_parent GtkTreeView
     @brief The "select-cursor-parent" signal is emitted when the user presses Backspace while a row has the cursor.
  */
 FALCON_FUNC TreeView::signal_select_cursor_parent( VMARG )
@@ -625,7 +628,7 @@ gboolean TreeView::on_select_cursor_parent( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_select_cursor_row
+    @method signal_select_cursor_row GtkTreeView
     @brief The "select-cursor-row" signal is emitted when a non-editable row is selected and one of the keys: Space, Shift+Space, Return or Enter is pressed.
  */
 FALCON_FUNC TreeView::signal_select_cursor_row( VMARG )
@@ -687,7 +690,7 @@ gboolean TreeView::on_select_cursor_row( GtkTreeView* obj, gboolean start_editin
 
 
 /*#
-    @method signal_set_scroll_adjustments
+    @method signal_set_scroll_adjustments GtkTreeView
     @brief Set Set the scroll adjustments for the tree view.
 
     Usually scrolled containers like GtkScrolledWindow will emit this signal to
@@ -739,7 +742,7 @@ void TreeView::on_set_scroll_adjustments( GtkTreeView* obj, GtkAdjustment* horiz
 
 
 /*#
-    @method signal_start_interactive_search
+    @method signal_start_interactive_search GtkTreeView
     @brief The "start-interactive-search" signal is emitted when the user presses Control+f.
  */
 FALCON_FUNC TreeView::signal_start_interactive_search( VMARG )
@@ -800,7 +803,7 @@ gboolean TreeView::on_start_interactive_search( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_test_collapse_row
+    @method signal_test_collapse_row GtkTreeView
     @brief The given row is about to be collapsed (hide its children nodes).
 
     Use this signal if you need to control the collapsibility of individual rows.
@@ -868,7 +871,7 @@ gboolean TreeView::on_test_collapse_row( GtkTreeView* obj, GtkTreeIter* titer,
 
 
 /*#
-    @method signal_test_expand_row
+    @method signal_test_expand_row GtkTreeView
     @brief The given row is about to be expanded (show its children nodes).
 
     Use this signal if you need to control the expandability of individual rows.
@@ -936,7 +939,7 @@ gboolean TreeView::on_test_expand_row( GtkTreeView* obj, GtkTreeIter* titer,
 
 
 /*#
-    @method signal_toggle_cursor_row
+    @method signal_toggle_cursor_row GtkTreeView
     @brief The "toggle-cursor-row" signal is emitted when the user presses Control+Space.
  */
 FALCON_FUNC TreeView::signal_toggle_cursor_row( VMARG )
@@ -997,7 +1000,7 @@ gboolean TreeView::on_toggle_cursor_row( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method signal_unselect_all
+    @method signal_unselect_all GtkTreeView
     @brief The "unselect-all" signal is emitted when the user presses Shift+Control+a or Shift+Control+/.
  */
 FALCON_FUNC TreeView::signal_unselect_all( VMARG )
@@ -1058,7 +1061,7 @@ gboolean TreeView::on_unselect_all( GtkTreeView* obj, gpointer _vm )
 
 
 /*#
-    @method get_level_indentation
+    @method get_level_indentation GtkTreeView
     @brief Returns the amount, in pixels, of extra indentation for child levels in tree_view.
     @return the amount of extra indentation for child levels in tree_view. A return value of 0 means that this feature is disabled.
  */
@@ -1070,7 +1073,7 @@ FALCON_FUNC TreeView::get_level_indentation( VMARG )
 
 
 /*#
-    @method get_show_expanders
+    @method get_show_expanders GtkTreeView
     @brief Returns whether or not expanders are drawn in tree_view.
     @return TRUE if expanders are drawn in tree_view, FALSE otherwise.
  */
@@ -1082,7 +1085,7 @@ FALCON_FUNC TreeView::get_show_expanders( VMARG )
 
 
 /*#
-    @method set_level_indentation
+    @method set_level_indentation GtkTreeView
     @brief Sets the amount of extra indentation for child levels to use in tree_view in addition to the default indentation.
     @param indentation the amount, in pixels, of extra indentation in tree_view.
 
@@ -1103,7 +1106,7 @@ FALCON_FUNC TreeView::set_level_indentation( VMARG )
 
 
 /*#
-    @method set_show_expanders
+    @method set_show_expanders GtkTreeView
     @brief Sets whether to draw and enable expanders and indent child rows in tree_view.
     @param enabled TRUE to enable expander drawing, FALSE otherwise.
 
@@ -1126,7 +1129,7 @@ FALCON_FUNC TreeView::set_show_expanders( VMARG )
 
 
 /*#
-    @method new_with_model
+    @method new_with_model GtkTreeView
     @brief Creates a new GtkTreeView widget with the model initialized to model.
     @param model the GtkTreeModel
     @return A newly created GtkTreeView widget.
@@ -1145,7 +1148,7 @@ FALCON_FUNC TreeView::new_with_model( VMARG )
 
 
 /*#
-    @method get_model
+    @method get_model GtkTreeView
     @brief Returns the model the GtkTreeView is based on. Returns NULL if the model is unset.
     @return A GtkTreeModel, or NULL if none is currently being used.
  */
@@ -1161,7 +1164,7 @@ FALCON_FUNC TreeView::get_model( VMARG )
 
 
 /*#
-    @method set_model
+    @method set_model GtkTreeView
     @brief Sets the model for a GtkTreeView.
     @param model The model, or Nil.
 
@@ -1187,7 +1190,7 @@ FALCON_FUNC TreeView::get_selection( VMARG );
 
 
 /*#
-    @method get_hadjustment
+    @method get_hadjustment GtkTreeView
     @brief Gets the GtkAdjustment currently being used for the horizontal aspect.
     @return A GtkAdjustment object, or NULL if none is currently being used.
  */
@@ -1203,7 +1206,7 @@ FALCON_FUNC TreeView::get_hadjustment( VMARG )
 
 
 /*#
-    @method set_hadjustment
+    @method set_hadjustment GtkTreeView
     @brief Sets the GtkAdjustment for the current horizontal aspect.
     @param adjustment The GtkAdjustment to set, or NULL.
  */
@@ -1221,7 +1224,7 @@ FALCON_FUNC TreeView::set_hadjustment( VMARG )
 
 
 /*#
-    @method get_vadjustment
+    @method get_vadjustment GtkTreeView
     @brief Gets the GtkAdjustment currently being used for the vertical aspect.
     @return A GtkAdjustment object, or NULL if none is currently being used.
  */
@@ -1237,7 +1240,7 @@ FALCON_FUNC TreeView::get_vadjustment( VMARG )
 
 
 /*#
-    @method set_vadjustment
+    @method set_vadjustment GtkTreeView
     @brief Sets the GtkAdjustment for the current vertical aspect.
     @param adjustment The GtkAdjustment to set, or NULL.
  */
@@ -1255,7 +1258,7 @@ FALCON_FUNC TreeView::set_vadjustment( VMARG )
 
 
 /*#
-    @method get_headers_visible
+    @method get_headers_visible GtkTreeView
     @brief Returns TRUE if the headers on the tree_view are visible.
     @return Whether the headers are visible or not.
  */
@@ -1267,7 +1270,7 @@ FALCON_FUNC TreeView::get_headers_visible( VMARG )
 
 
 /*#
-    @method set_headers_visible
+    @method set_headers_visible GtkTreeView
     @brief Sets the visibility state of the headers.
     @param headers_visible TRUE if the headers are visible
  */
@@ -1284,7 +1287,7 @@ FALCON_FUNC TreeView::set_headers_visible( VMARG )
 
 
 /*#
-    @method columns_autosize
+    @method columns_autosize GtkTreeView
     @brief Resizes all columns to their optimal width.
 
     Only works after the treeview has been realized.
@@ -1297,7 +1300,7 @@ FALCON_FUNC TreeView::columns_autosize( VMARG )
 
 
 /*#
-    @method get_headers_clickable
+    @method get_headers_clickable GtkTreeView
     @brief Returns whether all header columns are clickable.
     @return TRUE if all header columns are clickable, otherwise FALSE
  */
@@ -1309,7 +1312,7 @@ FALCON_FUNC TreeView::get_headers_clickable( VMARG )
 
 
 /*#
-    @method set_headers_clickable
+    @method set_headers_clickable GtkTreeView
     @brief Allow the column title buttons to be clicked.
     @param setting TRUE if the columns are clickable.
  */
@@ -1326,7 +1329,7 @@ FALCON_FUNC TreeView::set_headers_clickable( VMARG )
 
 
 /*#
-    @method set_rules_hint
+    @method set_rules_hint GtkTreeView
     @brief This function tells GTK+ that the user interface for your application requires users to read across tree rows and associate cells with one another.
     @param setting TRUE if the tree requires reading across rows
 
@@ -1352,7 +1355,7 @@ FALCON_FUNC TreeView::set_rules_hint( VMARG )
 
 
 /*#
-    @method get_rules_hint
+    @method get_rules_hint GtkTreeView
     @brief Gets the setting set by gtk_tree_view_set_rules_hint().
     @return TRUE if rules are useful for the user of this tree
  */
@@ -1364,7 +1367,7 @@ FALCON_FUNC TreeView::get_rules_hint( VMARG )
 
 
 /*#
-    @method append_column
+    @method append_column GtkTreeView
     @brief Appends column to the list of columns.
     @param column The GtkTreeViewColumn to add.
     @return The number of columns in tree_view after appending.
@@ -1385,7 +1388,7 @@ FALCON_FUNC TreeView::append_column( VMARG )
 
 
 /*#
-    @method remove_column
+    @method remove_column GtkTreeView
     @brief Removes column from tree_view.
     @param column The GtkTreeViewColumn to remove.
     @return The number of columns in tree_view after removing.
@@ -1403,7 +1406,7 @@ FALCON_FUNC TreeView::remove_column( VMARG )
 
 
 /*#
-    @method insert_column
+    @method insert_column GtkTreeView
     @brief This inserts the column into the tree_view at position.
     @param column The GtkTreeViewColumn to be inserted.
     @param position The position to insert column in.
@@ -1429,7 +1432,7 @@ FALCON_FUNC TreeView::insert_column( VMARG )
 
 
 /*#
-    @method insert_column_with_attributes
+    @method insert_column_with_attributes GtkTreeView
     @brief Creates a new GtkTreeViewColumn and inserts it into the tree_view at position.
     @param position The position to insert the new column in.
     @param title The title to set the header to.
@@ -1496,7 +1499,7 @@ FALCON_FUNC TreeView::insert_column_with_attributes( VMARG )
 
 
 /*#
-    @method insert_column_with_data_func
+    @method insert_column_with_data_func GtkTreeView
     @brief Convenience function that inserts a new column into the GtkTreeView with the given cell renderer and a GtkCellDataFunc to set cell renderer attributes (normally using data from the model).
     @param position Position to insert, -1 for append
     @param title column title
@@ -1550,7 +1553,7 @@ FALCON_FUNC TreeView::insert_column_with_data_func( VMARG )
 
 
 /*#
-    @method get_column
+    @method get_column GtkTreeView
     @brief Gets the GtkTreeViewColumn at the given position in the tree_view.
     @param n The position of the column, counting from 0.
     @return The GtkTreeViewColumn, or NULL if the position is outside the range of columns.
@@ -1573,7 +1576,7 @@ FALCON_FUNC TreeView::get_column( VMARG )
 
 
 /*#
-    @method get_columns
+    @method get_columns GtkTreeView
     @brief Returns an array of all the GtkTreeViewColumn currently in tree_view.
     @return A list of GtkTreeViewColumn
  */
@@ -1597,7 +1600,7 @@ FALCON_FUNC TreeView::get_columns( VMARG )
 
 
 /*#
-    @method move_column_after
+    @method move_column_after GtkTreeView
     @brief Moves column to be after to base_column.
     @param column The GtkTreeViewColumn to be moved.
     @param base_column The GtkTreeViewColumn to be moved relative to, or NULL.
@@ -1621,7 +1624,7 @@ FALCON_FUNC TreeView::move_column_after( VMARG )
 
 
 /*#
-    @method set_expander_column
+    @method set_expander_column GtkTreeView
     @brief Sets the column to draw the expander arrow at.
     @param column NULL, or the GtkTreeViewColumn to draw the expander arrow at.
 
@@ -1645,7 +1648,7 @@ FALCON_FUNC TreeView::set_expander_column( VMARG )
 
 
 /*#
-    @method get_expander_column
+    @method get_expander_column GtkTreeView
     @brief Returns the column that is the current expander column.
     @return The expander column.
 
@@ -1661,7 +1664,7 @@ FALCON_FUNC TreeView::get_expander_column( VMARG )
 
 
 /*#
-    @method set_column_drag_function
+    @method set_column_drag_function GtkTreeView
     @brief Sets a user function for determining where a column may be dropped when dragged.
     @param func A function to determine which columns are reorderable, or NULL.
     @param user_data User data to be passed to func, or NULL.
@@ -1748,7 +1751,7 @@ gboolean TreeView::exec_column_drag_function( GtkTreeView* obj,
 
 
 /*#
-    @method scroll_to_point
+    @method scroll_to_point GtkTreeView
     @brief Scrolls the tree view such that the top-left corner of the visible area is tree_x, tree_y, where tree_x and tree_y are specified in tree coordinates.
     @param tree_x X coordinate of new top-left pixel of visible area, or -1
     @param tree_y Y coordinate of new top-left pixel of visible area, or -1
@@ -1774,7 +1777,7 @@ FALCON_FUNC TreeView::scroll_to_point( VMARG )
 
 
 /*#
-    @method scroll_to_cell
+    @method scroll_to_cell GtkTreeView
     @brief Moves the alignments of tree_view to the position specified by column and path.
     @param path The GtkTreePath of the row to move to, or NULL.
     @param column The GtkTreeViewColumn to move horizontally to, or NULL.
@@ -1824,7 +1827,7 @@ FALCON_FUNC TreeView::scroll_to_cell( VMARG )
 
 
 /*#
-    @method set_cursor
+    @method set_cursor GtkTreeView
     @brief Sets the current keyboard focus to be at path, and selects it.
     @param path A GtkTreePath
     @param focus_column A GtkTreeViewColumn, or NULL.
@@ -1860,7 +1863,7 @@ FALCON_FUNC TreeView::set_cursor( VMARG )
 
 
 /*#
-    @method set_cursor_on_cell
+    @method set_cursor_on_cell GtkTreeView
     @brief Sets the current keyboard focus to be at path, and selects it.
     @param path A GtkTreePath
     @param focus_column A GtkTreeViewColumn, or NULL.
@@ -1904,7 +1907,7 @@ FALCON_FUNC TreeView::set_cursor_on_cell( VMARG )
 
 
 /*#
-    @method get_cursor
+    @method get_cursor GtkTreeView
     @brief Fills in path and focus_column with the current path and focus column.
     @return An array [ current cursor path, current focus column ]
 
@@ -1927,7 +1930,7 @@ FALCON_FUNC TreeView::get_cursor( VMARG )
 
 
 /*#
-    @method row_activated
+    @method row_activated GtkTreeView
     @brief Activates the cell determined by path and column.
     @param path The GtkTreePath to be activated.
     @param column The GtkTreeViewColumn to be activated.
@@ -1948,7 +1951,7 @@ FALCON_FUNC TreeView::row_activated( VMARG )
 
 
 /*#
-    @method expand_all
+    @method expand_all GtkTreeView
     @brief Recursively expands all nodes in the tree_view.
  */
 FALCON_FUNC TreeView::expand_all( VMARG )
@@ -1959,7 +1962,7 @@ FALCON_FUNC TreeView::expand_all( VMARG )
 
 
 /*#
-    @method collapse_all
+    @method collapse_all GtkTreeView
     @brief Recursively collapses all visible, expanded nodes in tree_view.
  */
 FALCON_FUNC TreeView::collapse_all( VMARG )
@@ -1970,7 +1973,7 @@ FALCON_FUNC TreeView::collapse_all( VMARG )
 
 
 /*#
-    @method expand_to_path
+    @method expand_to_path GtkTreeView
     @brief Expands the row at path.
     @param path GtkTreePath to a row.
 
@@ -1989,7 +1992,7 @@ FALCON_FUNC TreeView::expand_to_path( VMARG )
 
 
 /*#
-    @method expand_row
+    @method expand_row GtkTreeView
     @brief Opens the row so its children are visible.
     @param path GtkTreePath to a row
     @param open_all whether to recursively expand, or just expand immediate children
@@ -2011,7 +2014,7 @@ FALCON_FUNC TreeView::expand_row( VMARG )
 
 
 /*#
-    @method collapse_row
+    @method collapse_row GtkTreeView
     @brief Collapses a row (hides its child rows, if they exist).
     @param path path to a row in the tree_view.
     @return TRUE if the row was collapsed.

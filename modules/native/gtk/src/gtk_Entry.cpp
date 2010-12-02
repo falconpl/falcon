@@ -12,6 +12,9 @@
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_Menu.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -208,7 +211,7 @@ FALCON_FUNC Entry::init( VMARG )
 
 
 /*#
-    @method signal_activate
+    @method signal_activate GtkEntry
     @brief A keybinding signal which gets emitted when the user activates the entry.
 
     Applications should not connect to it, but may emit it with
@@ -230,7 +233,7 @@ void Entry::on_activate( GtkEntry* obj, gpointer _vm )
 
 
 /*#
-    @method signal_backspace
+    @method signal_backspace GtkEntry
     @brief The backspace signal is a keybinding signal which gets emitted when the user asks for it.
 
     The default bindings for this signal are Backspace and Shift-Backspace.
@@ -249,7 +252,7 @@ void Entry::on_backspace( GtkEntry* obj, gpointer _vm )
 
 
 /*#
-    @method signal_copy_clipboard
+    @method signal_copy_clipboard GtkEntry
     @brief The copy-clipboard signal is a keybinding signal which gets emitted to copy the selection to the clipboard.
 
     The default bindings for this signal are Ctrl-c and Ctrl-Insert.
@@ -268,7 +271,7 @@ void Entry::on_copy_clipboard( GtkEntry* obj, gpointer _vm )
 
 
 /*#
-    @method signal_cut_clipboard
+    @method signal_cut_clipboard GtkEntry
     @brief The cut-clipboard signal is a keybinding signal which gets emitted to cut the selection to the clipboard.
 
     The default bindings for this signal are Ctrl-x and Shift-Delete.
@@ -287,7 +290,7 @@ void Entry::on_cut_clipboard( GtkEntry* obj, gpointer _vm )
 
 
 /*#
-    @method signal_delete_from_cursor
+    @method signal_delete_from_cursor GtkEntry
     @brief The delete-from-cursor signal is a keybinding signal which gets emitted when the user initiates a text deletion.
 
     If the type is GTK_DELETE_CHARS, GTK+ deletes the selection if there is one,
@@ -336,11 +339,13 @@ void Entry::on_delete_from_cursor( GtkEntry* obj, GtkDeleteType type, gint count
     while ( iter.hasCurrent() );
 }
 
-#if 0 // todo: missing GdkEvent
+#if 0 // todo: missing GdkEvent 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
-    @method signal_icon_press
+    @method signal_icon_press GtkEntry
     @brief The ::icon-press signal is emitted when an activatable icon is clicked.
+
+    @note Currently **not** implemented.
  */
 FALCON_FUNC Entry::signal_icon_press( VMARG )
 {
@@ -385,8 +390,9 @@ void Entry::on_icon_press( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* ev
 
 
 /*#
-    @method signal_icon_release
+    @method signal_icon_release GtkEntry
     @brief The icon-release signal is emitted on the button release from a mouse click over an activatable icon.
+    @note Currently **not** implemented.
  */
 FALCON_FUNC Entry::signal_icon_release( VMARG )
 {
@@ -432,7 +438,7 @@ void Entry::on_icon_release( GtkEntry* obj, GtkEntryIconPosition pos, GdkEvent* 
 #endif
 
 /*#
-    @method signal_insert_at_cursor
+    @method signal_insert_at_cursor GtkEntry
     @brief The insert-at-cursor signal is a keybinding signal which gets emitted when the user initiates the insertion of a fixed string at the cursor.
 
     This signal has no default bindings.
@@ -478,7 +484,7 @@ void Entry::on_insert_at_cursor( GtkEntry* obj, gchar* string, gpointer _vm )
 
 
 /*#
-    @method signal_move_cursor
+    @method signal_move_cursor GtkEntry
     @brief The move-cursor signal is a keybinding signal which gets emitted when the user initiates a cursor movement.
 
     If the cursor is not visible in entry, this signal causes the viewport to
@@ -539,7 +545,7 @@ void Entry::on_move_cursor( GtkEntry* obj, GtkMovementStep step, gint cnt, gbool
 
 
 /*#
-    @method signal_paste_clipboard
+    @method signal_paste_clipboard GtkEntry
     @brief The paste-clipboard signal is a keybinding signal which gets emitted to paste the contents of the clipboard into the text view.
 
     The default bindings for this signal are Ctrl-v and Shift-Insert.
@@ -558,7 +564,7 @@ void Entry::on_paste_clipboard( GtkEntry* obj, gpointer _vm )
 
 
 /*#
-    @method signal_populate_popup
+    @method signal_populate_popup GtkEntry
     @brief The populate-popup signal gets emitted before showing the context menu of the entry.
 
     If you need to add items to the context menu, connect to this signal and
@@ -607,7 +613,7 @@ void Entry::on_populate_popup( GtkEntry* obj, GtkMenu* menu, gpointer _vm )
 
 #if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
-    @method signal_preedit_changed
+    @method signal_preedit_changed GtkEntry
     @brief If an input method is used, the typed text will not immediately be committed to the buffer. So if you are interested in the text, connect to this signal.
  */
 FALCON_FUNC Entry::signal_preedit_changed( VMARG )
@@ -652,7 +658,7 @@ void Entry::on_preedit_changed( GtkEntry* obj, gchar* preedit, gpointer _vm )
 
 
 /*#
-    @method signal_toggle_overwrite
+    @method signal_toggle_overwrite GtkEntry
     @brief The toggle-overwrite signal is a keybinding signal which gets emitted to toggle the overwrite mode of the entry.
 
     The default bindings for this signal is Insert.
@@ -672,7 +678,7 @@ void Entry::on_toggle_overwrite( GtkEntry* obj, gpointer _vm )
 
 #if GTK_CHECK_VERSION( 2, 18, 0 )
 /*#
-    @method new_with_buffer
+    @method new_with_buffer GtkEntry
     @brief Creates a new entry with the specified text buffer.
     @param buffer The GtkEntryBuffer to use for the new GtkEntry.
  */
@@ -692,7 +698,7 @@ FALCON_FUNC Entry::new_with_buffer( VMARG )
 
 
 /*#
-    @method new_with_max_length
+    @method new_with_max_length GtkEntry
     @brief Creates a new GtkEntry widget with the given maximum length.
     @param max the maximum length of the entry, or 0 for no maximum. (other than the maximum length of entries.) The value passed in will be clamped to the range 0-65536.
 
@@ -1045,7 +1051,7 @@ FALCON_FUNC Entry::get_invisible_char( VMARG )
 
 
 /*#
-    @method set_alignment
+    @method set_alignment GtkEntry
     @brief Sets the alignment for the contents of the entry.
     @param xalign The horizontal alignment, from 0 (left) to 1 (right). Reversed for RTL layouts
 
@@ -1066,7 +1072,7 @@ FALCON_FUNC Entry::set_alignment( VMARG )
 
 
 /*#
-    @method get_alignment
+    @method get_alignment GtkEntry
     @brief Gets the value set by gtk_entry_set_alignment().
     @return the alignment
  */
@@ -1081,7 +1087,7 @@ FALCON_FUNC Entry::get_alignment( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
-    @method set_overwrite_mode
+    @method set_overwrite_mode GtkEntry
     @brief Sets whether the text is overwritten when typing in the GtkEntry.
     @param overwrite new value (boolean).
  */
@@ -1099,7 +1105,7 @@ FALCON_FUNC Entry::set_overwrite_mode( VMARG )
 
 
 /*#
-    @method get_overwrite_mode
+    @method get_overwrite_mode GtkEntry
     @brief Gets the value set by gtk_entry_set_overwrite_mode().
     @return whether the text is overwritten when typing.
  */
@@ -1117,7 +1123,7 @@ FALCON_FUNC Entry::get_overwrite_mode( VMARG )
 
 
 /*#
-    @method get_layout_offsets
+    @method get_layout_offsets GtkEntry
     @brief Obtains the position of the PangoLayout used to render text in the entry, in widget coordinates.
     @return an array ( X offset, Y offset ).
 
@@ -1152,7 +1158,7 @@ FALCON_FUNC Entry::get_layout_offsets( VMARG )
 
 
 /*#
-    @method layout_index_to_text_index
+    @method layout_index_to_text_index GtkEntry
     @brief Converts from a position in the entry contents (returned by gtk_entry_get_text()) to a position in the entry's PangoLayout (returned by gtk_entry_get_layout(), with text retrieved via pango_layout_get_text()).
     @param layout_index byte index into the entry layout text
     @return byte index into the entry contents
@@ -1172,7 +1178,7 @@ FALCON_FUNC Entry::layout_index_to_text_index( VMARG )
 
 
 /*#
-    @method text_index_to_layout_index
+    @method text_index_to_layout_index GtkEntry
     @brief Converts from a position in the entry's PangoLayout (returned by gtk_entry_get_layout()) to a position in the entry contents (returned by gtk_entry_get_text()).
     @param text_index byte index into the entry contents
     @return byte index into the entry layout text
@@ -1192,7 +1198,7 @@ FALCON_FUNC Entry::text_index_to_layout_index( VMARG )
 
 
 /*#
-    @method get_max_length
+    @method get_max_length GtkEntry
     @brief Retrieves the maximum allowed length of the text in entry.
     @return the maximum allowed number of characters in GtkEntry, or 0 if there is no maximum.
  */
@@ -1206,7 +1212,7 @@ FALCON_FUNC Entry::get_max_length( VMARG )
 
 
 /*#
-    @method get_visibility
+    @method get_visibility GtkEntry
     @brief Retrieves whether the text in entry is visible.
     @return TRUE if the text is currently visible
  */
@@ -1225,7 +1231,7 @@ FALCON_FUNC Entry::get_visibility( VMARG )
 
 
 /*#
-    @method set_cursor_hadjustment
+    @method set_cursor_hadjustment GtkEntry
     @brief Hooks up an adjustment to the cursor position in an entry, so that when the cursor is moved, the adjustment is scrolled to show that position.
     @param adjustment an adjustment which should be adjusted when the cursor is moved, or NULL
 
@@ -1252,7 +1258,7 @@ FALCON_FUNC Entry::set_cursor_hadjustment( VMARG )
 
 
 /*#
-    @method
+    @method get_cursor_hadjustment GtkEntry
     @brief Retrieves the horizontal cursor adjustment for the entry
     @return the horizontal cursor adjustment, or NULL  if none has been set.
  */
@@ -1268,7 +1274,7 @@ FALCON_FUNC Entry::get_cursor_hadjustment( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
-    @method set_progress_fraction
+    @method set_progress_fraction GtkEntry
     @brief Causes the entry's progress indicator to "fill in" the given fraction of the bar.
     @param fraction fraction of the task that's been completed.
 
@@ -1288,7 +1294,7 @@ FALCON_FUNC Entry::set_progress_fraction( VMARG )
 
 
 /*#
-    @method get_progress_fraction
+    @method get_progress_fraction GtkEntry
     @brief Returns the current fraction of the task that's been completed.
     @return a fraction from 0.0 to 1.0
  */
@@ -1302,7 +1308,7 @@ FALCON_FUNC Entry::get_progress_fraction( VMARG )
 
 
 /*#
-    @method set_progress_pulse_step
+    @method set_progress_pulse_step GtkEntry
     @brief Sets the fraction of total entry width to move the progress bouncing block for each call to gtk_entry_progress_pulse().
     @param fraction fraction between 0.0 and 1.0
  */
@@ -1320,7 +1326,7 @@ FALCON_FUNC Entry::set_progress_pulse_step( VMARG )
 
 
 /*#
-    @method get_progress_pulse_step
+    @method get_progress_pulse_step GtkEntry
     @brief Retrieves the pulse step set with gtk_entry_set_progress_pulse_step().
     @return a fraction from 0.0 to 1.0
  */
@@ -1334,7 +1340,7 @@ FALCON_FUNC Entry::get_progress_pulse_step( VMARG )
 
 
 /*#
-    @method progress_pulse
+    @method progress_pulse GtkEntry
     @brief Indicates that some progress is made, but you don't know how much.
 
     Causes the entry's progress indicator to enter "activity mode," where a block
@@ -1360,7 +1366,7 @@ FALCON_FUNC Entry::progress_pulse( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
-    @method set_icon_from_pixbuf
+    @method set_icon_from_pixbuf GtkEntry
     @brief Sets the icon shown in the specified position using a pixbuf.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param pixbuf A GdkPixbuf, or NULL.
@@ -1388,7 +1394,7 @@ FALCON_FUNC Entry::set_icon_from_pixbuf( VMARG )
 
 
 /*#
-    @method set_icon_from_stock
+    @method set_icon_from_stock GtkEntry
     @brief Sets the icon shown in the entry at the specified position from a stock image.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param stock_id The name of the stock item, or NULL.
@@ -1421,7 +1427,7 @@ FALCON_FUNC Entry::set_icon_from_stock( VMARG )
 
 
 /*#
-    @method set_icon_from_icon_name
+    @method set_icon_from_icon_name GtkEntry
     @brief Sets the icon shown in the entry at the specified position from the current icon theme.
     @param icon_pos The position at which to set the icon (GtkEntryIconPosition).
     @param icon_name An icon name, or NULL.
@@ -1459,7 +1465,7 @@ FALCON_FUNC Entry::set_icon_from_icon_name( VMARG )
 
 
 /*#
-    @method get_icon_storage_type
+    @method get_icon_storage_type GtkEntry
     @brief Gets the type of representation being used by the icon to store image data.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return image representation being used
@@ -1481,7 +1487,7 @@ FALCON_FUNC Entry::get_icon_storage_type( VMARG )
 
 
 /*#
-    @method get_icon_pixbuf
+    @method get_icon_pixbuf GtkEntry
     @brief Retrieves the image used for the icon.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return A GdkPixbuf, or NULL if no icon is set for this position.
@@ -1506,7 +1512,7 @@ FALCON_FUNC Entry::get_icon_pixbuf( VMARG )
 
 
 /*#
-    @method get_icon_stock
+    @method get_icon_stock GtkEntry
     @brief Retrieves the stock id used for the icon, or NULL if there is no icon or if the icon was set by some other method (e.g., by pixbuf, icon name or gicon).
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return A stock id, or NULL if no icon is set or if the icon wasn't set from a stock id.
@@ -1530,7 +1536,7 @@ FALCON_FUNC Entry::get_icon_stock( VMARG )
 
 
 /*#
-    @method get_icon_name
+    @method get_icon_name GtkEntry
     @brief Retrieves the icon name used for the icon, or NULL if there is no icon or if the icon was set by some other method (e.g., by pixbuf, stock or gicon).
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return An icon name, or NULL if no icon is set or if the icon wasn't set from an icon name
@@ -1557,7 +1563,7 @@ FALCON_FUNC Entry::get_icon_name( VMARG )
 
 
 /*#
-    @method set_icon_activatable
+    @method set_icon_activatable GtkEntry
     @brief Sets whether the icon is activatable.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param activatable TRUE if the icon should be activatable.
@@ -1580,7 +1586,7 @@ FALCON_FUNC Entry::set_icon_activatable( VMARG )
 
 
 /*#
-    @method get_icon_activatable
+    @method get_icon_activatable GtkEntry
     @brief Returns whether the icon is activatable.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return TRUE if the icon is activatable.
@@ -1600,7 +1606,7 @@ FALCON_FUNC Entry::get_icon_activatable( VMARG )
 
 
 /*#
-    @method set_icon_sensitive
+    @method set_icon_sensitive GtkEntry
     @brief Sets the sensitivity for the specified icon.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param sensitive Specifies whether the icon should appear sensitive or insensitive
@@ -1623,7 +1629,7 @@ FALCON_FUNC Entry::set_icon_sensitive( VMARG )
 
 
 /*#
-    @method get_icon_sensitive
+    @method get_icon_sensitive GtkEntry
     @brief Returns whether the icon appears sensitive or insensitive.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return TRUE if the icon is sensitive.
@@ -1643,7 +1649,7 @@ FALCON_FUNC Entry::get_icon_sensitive( VMARG )
 
 
 /*#
-    @method get_icon_at_pos
+    @method get_icon_at_pos GtkEntry
     @brief Finds the icon at the given position and return its index.
     @param x the x coordinate of the position to find
     @param y the y coordinate of the position to find
@@ -1669,7 +1675,7 @@ FALCON_FUNC Entry::get_icon_at_pos( VMARG )
 
 
 /*#
-    @method set_icon_tooltip_text
+    @method set_icon_tooltip_text GtkEntry
     @brief Sets tooltip as the contents of the tooltip for the icon at the specified position.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param tooltip the contents of the tooltip for the icon, or NULL.
@@ -1702,7 +1708,7 @@ FALCON_FUNC Entry::set_icon_tooltip_text( VMARG )
 
 
 /*#
-    @method get_icon_tooltip_text
+    @method get_icon_tooltip_text GtkEntry
     @brief Gets the contents of the tooltip on the icon at the specified position in entry.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return the tooltip text, or NULL.
@@ -1729,7 +1735,7 @@ FALCON_FUNC Entry::get_icon_tooltip_text( VMARG )
 
 
 /*#
-    @method set_icon_tooltip_markup
+    @method set_icon_tooltip_markup GtkEntry
     @brief Sets tooltip as the contents of the tooltip for the icon at the specified position.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @param tooltip the contents of the tooltip for the icon, or NULL.
@@ -1766,7 +1772,7 @@ FALCON_FUNC Entry::set_icon_tooltip_markup( VMARG )
 
 
 /*#
-    @method get_icon_tooltip_markup
+    @method get_icon_tooltip_markup GtkEntry
     @brief Gets the contents of the tooltip on the icon at the specified position in entry.
     @param icon_pos Icon position (GtkEntryIconPosition).
     @return the tooltip text, or NULL.

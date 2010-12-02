@@ -76,7 +76,7 @@ CurlModule::~CurlModule()
 }
 
 /*#
-   @main curl
+   @module curl cURL Http/Ftp library binding.
 
    This module provides a tight and complete integration with
    the @link "http://curl.haxx.se/libcurl/" libcurl library.

@@ -1,0 +1,650 @@
+/*
+    FALCON - MIME Parser
+
+    FILE: mime.fal
+
+    Multipurpose Internet Mail Extensions parser.
+    -------------------------------------------------------------------
+    Author: Giancarlo Niccolai
+    Begin: Sun, 21 Nov 2010 15:22:29 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
+
+const _bstring = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-./"
+const _default_boundary_length = 32
+const _header_line_size = 4096
+const _block_buffer = 16384
+
+enum Multipart
+   mixed = "mixed"
+   alternative = "alternative"
+   digest = "digest"
+   parallel = "parallel"
+end
+
+/*# Part of a MIME document.
+   @optparam headers The headers of this part.
+   @optparam body The body of this part.
+
+   About the formats of the @b headers and @b body parameters, see respectively
+   the @a Part.headers and @a Part.body properties.
+
+   @prop parts The sequence of sub-parts stored in this part. It's a read-only field,
+         to manipulate it you must use the proper methods.
+*/
+class Part( headers, body )
+   /*# Dictionary of headers.
+
+      This dictionary holds headers in the form
+      - "header" => "value"; or
+      - "header" => [ "parameter" => "value", ...]
+
+      In the second form, the main parameter is always indicated by the "" (empty string) key,
+      while the sub-parameters are expressed as list of strings.
+
+      The parameters will be escaped during output.
+
+   */
+   headers = headers ? headers : [=>]
+
+   /*# Body of the part.
+   
+      The body represents the part payoff. The body should be simply the untranslated
+      content you want to send to the remote part; the carrier will eventually fiddle
+      with the encoding to make it compatible with the final stream.
+   */
+   body = body
+
+   _isMulti = false
+   _boundary = nil
+   _parts = nil
+
+   function __get_boundary(): return self._boundary
+   function __get_parts(): return self._parts
+   
+   /*# Declares that this will be a part holding more parts.
+      @optparam partMode Mode of this multipart (defaults to "mixed")
+      @optparam boundary If there is an already defined boundary for this part.
+      
+      Setting a MIME element as multi-part has important semantic consequences.
+      A mime-part with sub-parts will receive an automatic content-type and boundary,      
+
+      The body, if present, becomes a "preamble", and is to be generally ignored.
+
+      The content type becomes "multipart", with a subtype that
+      declares the semantic mode. The @b partMode parameter is used to declare the
+      subtype, and may be one of the @a Multipart enumeration, or
+      a string (in which case it's used directly).
+   */
+ 
+   function setMultipart( partMode, boundary )
+      if self._isMulti
+         raise CodeError( 10001, "Already declared as multipart or message content-type" )
+      end
+      
+      self._isMulti = true      
+      if not boundary: boundary = self.makeBoundary()
+      self._boundary = boundary
+      self.headers["Content-Type"] = [""=> @"multipart/$partMode", "boundary" => boundary]
+      return self
+   end
+
+   /*# Sets this part to be a Message part
+      @optparam id If given, this is a message/partial part, where the whole message has the given ID.
+      @optparam partNo If the message is "partial", then this indicates the number of the part.
+      @optparam partNo If the message is "partial", then this indicates the count of all the parts.
+      @return self
+
+      If @b id is not given, the part will be considered a "message/RFC822" multipart message.
+
+      When @b id is given, @b partNo is mandatory, while @b partCount is optional (even if it's
+      strongly suggested to add it if possible).
+   */
+   function setMessage( id, partNo, partCount )
+      if self._isMulti
+         raise CodeError( 10001, "Already declared as multipart or message content-type" )
+      end
+
+      self._isMulti = true
+
+      if id
+         header = [""=> "message/partial", "id" => id, "number"=> partNo ]
+         if partCount: header["total"] = partCount
+         self.headers["Content-Type"] = header
+      else
+         self.headers["Content-Type"] = [""=> "message/RFC822"]
+      end
+
+      return self
+   end
+
+   /*# Adds a part to this MIME part.
+      @param part the Part to be added.
+      @return self
+      
+      The part must have been previously set as multipart via @a Part.setMessage or @a Part.setMultipart.
+   */
+   function addPart( part )
+      if not part.derivedFrom( Part )
+         raise ParamError( 501, nil, "'part' is not a mime.Part" )
+      end
+
+      if not self._isMulti
+         raise CodeError( 10002, "Must first declare this part as multipart via setMultipart" )
+      end
+
+      if self._parts
+         self._parts += part
+      else
+         self._parts = [part]
+      end
+      
+      return self
+   end
+
+   /*# Removes a previously added part
+      @param part The part to be removed.
+      @return true If the part was found (and removed), false otherwise
+   */
+   function removePart( part )
+      n = 0
+      parts = self._parts
+      length = parts.len()
+      while n < length         
+         if parts[n] == part
+            arrayRemove( parts, n )
+            return true
+         end
+         ++n
+      end
+      return false
+   end
+            
+
+   /*# Attach a data content to the mail part.
+      @param data A string or memory buffer with the data to be attached.
+      @param type Content/type of the data
+      @parm fname The file name of the part element.
+      @optparm partName Logical name of the part in the Mime document,
+      @return The new part created by this method.
+      
+      This method creates an attachment for this MIME Part suitable to
+      hold binary data.
+      
+      If this part had already a content but wasn't a multi-part element, then
+      the content is moved in a new multipart element that is prepended
+      to the part to be added.
+
+      The part created by this method can be configured afterwards.
+   */
+      
+   function attachData( data, type, fname, partName )
+      if not partName: partName = fname
+
+      part = Part( [
+         "Content-Type" => [ "" => type, "name" => partName ],
+         "Content-Disposition" => ["" => "attachment", "filename" => fname],
+         "Content-Transfer-Encoding" => "base64"] )
+
+      // encoding the content
+      data = Base64.encode( strToMemBuf(data) )
+
+      // Breaking the part into lines
+      length = data.len()
+      dbuffer = strBuffer(length / 76 + 3 ) * 76
+      i = 0
+      for i in [76:length:76]
+         dbuffer += data[i-76:i] + "\r\n"
+      end
+      if length % 76: dbuffer += data[int(length/76)*76:] + "\r\n"
+      part.body = dbuffer
+      
+      self.attachPart( part )
+      return part
+   end
+
+   /*# Attach a given file.
+      @param fullPath the path to the file.
+      @param type the MIME type for the attached file.
+      @optparam partName Logical name of the part in the final document.
+   */
+   function attachFile( fullPath, type, partName )
+      whole = ""
+      try
+         stream = InputStream( fullPath )
+         data = strBuffer(4096)
+         while stream.read( data, 4096 )
+            whole += data
+         end
+         stream.close()
+      catch in e
+         if stream: stream.close()
+         raise e
+      end
+
+      // TODO if type is empty, determine the mime type from the extension
+      uri = URI( fullPath )
+      self.attachData( whole, type, Path(uri.path).filename, partName )
+   end
+
+   /*# Attach a ready-made part content to the mail part.
+      @param part The part to be added.
+      @return self
+
+      This is similar to AddPart, but in case this parent part is not
+      a multipart element, it is turned into a "multipart/mixed" element
+      and its former contents are moved in a separate part, which is
+      prepended to the parameter.
+   */
+
+   function attachPart( part )
+      if not self._isMulti
+         // move away the body
+         if self.body
+            firstPart = Part()
+
+            if "Content-Type" in self.headers
+               firstPart.headers["Content-Type"] = self.headers["Content-Type"]
+            end
+
+            if "Content-Transfer-Encoding" in self.headers
+               firstPart.headers["Content-Transfer-Encoding"] = self.headers["Content-Transfer-Encoding"]
+               self.headers -= "Content-Transfer-Encoding"
+            end
+            
+            firstPart.body = self.body
+         end
+
+         self.setMultipart( Multipart.mixed )
+         self.body = "This is a MIME Multipart document."
+         self._parts = [firstPart]
+      end
+      self._parts += part
+      return self
+   end
+
+   function makeBoundary( count )
+      static
+         _bound_array = strSplit( _bstring )
+      end
+      
+      if not count: count = _default_boundary_length
+      
+      str = " " * count
+      for n in [0:count]
+         str[n] = randomPick( _bound_array )
+      end
+      return str
+   end
+
+   function toString()
+      s = StringStream()
+      self.write(s)
+      return s.closeToString()
+   end
+
+   /*# Writes this mime-part on the given stream. */
+   function write( stream )
+      self._writeHeaders( stream )
+      stream.write( "\r\n" )
+      if self.body
+         stream.write( self.body )
+      end
+      
+      if self._isMulti and self._boundary
+         for part in self._parts
+
+            forfirst
+               stream.write( "\r\n--" )
+               stream.write( self._boundary )
+               stream.write( "\r\n")
+            end
+
+            part.write( stream )
+
+            formiddle
+               stream.write( "\r\n--" )
+               stream.write( self._boundary )
+               stream.write( "\r\n")
+            end
+
+            forlast
+               stream.write( "\r\n--" )
+               stream.write( self._boundary )
+               stream.write( "--\r\n" )
+            end
+         end
+         // a message/xxx mesasge has just 1 part that is stored in the body.
+      end
+   end
+   
+
+   function _writeHeaders( stream )
+      for header, value in self.headers
+         stream.write( header + ": " )
+         if typeOf( value ) == StringType
+            stream.write( value )
+         else
+            // as the main header is "", we can always be sure that it will be the first
+            for key, val in value
+               if key: stream.write( key + "=" )
+               if '"' in val or ';' in val
+                  val = '"' + val.replace( '"', '\"' ) + '"'
+               end
+               stream.write( val )
+               formiddle: stream.write("; ")
+            end
+         end
+
+         stream.write( "\r\n" )
+      end
+   end
+
+
+   function setText( text, ctype, cset )
+      if not ctype: ctype = "text/plain"
+      if not cset: cset = "utf-8"
+      ttext = transcodeTo( text, cset )
+      self.body = self.quote( ttext )
+      self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
+      self.headers[ "Content-Transfer-Encoding" ] = "quoted-printable"
+   end
+
+   
+   function setText8Bit( text, ctype, cset )
+      if not ctype: ctype = "text/plain"
+      if not cset: cset = "utf-8"
+      self.body = transcodeTo( text, cset )
+      self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
+      self.headers[ "Content-Transfer-Encoding" ] = "8-bit"
+   end
+
+   function quote( text )
+      fmt = Format("rp02X")
+      size = text.len()
+      ttgt = strBuffer( size*1.5 )
+      p = 0
+      line = ""
+      line_len = 0
+      while p < size
+         c = text[*p]
+         if c >= 32 and c <= 127 and c != 61
+            line += "\x0"/c
+            if ++line_len == 75
+               ttgt += line + "=\r\n"
+               line = ""
+               line_len = 0
+            end
+         else
+            if line_len + 3 >= 76
+               ttgt += line +"=\r\n"
+               line = "="+fmt.format(c)
+               line_len = 0
+            else
+               line += "="+fmt.format(c)
+               line_len += 3
+            end
+         end
+         ++p
+      end
+      ttgt += line
+      return ttgt
+   end
+   
+end
+
+
+/*# Parses a stream on containing a MIME message.
+   @param Stream the stream holding the incoming data.
+   @return a new @a Part generated reading the stream.
+   @throw ParseError if the stream is not in MIME format.
+
+   @note To parse a string, use @a parseString.
+*/
+function parse( stream )
+   part = Part()
+   _parseHeaders( stream, part )
+   _parseBody( stream, part )
+   return part
+end
+
+
+function parseString( string )
+   return Part.parse( StringStream( string ) )
+end
+
+function _parseHeaders( stream, part )
+   // read headers
+   line = ""
+   while not stream.eof() and stream.readLine( line, _header_line_size ) and line
+      key,value = _parseHeaderLine( line )
+
+      // should we consider some content type ?
+      if key.lower() == "content-type"
+         bound = _checkMultipart( value, part )
+      end
+      
+      part.headers[key] = value
+   end
+
+   return bound
+end
+
+
+function _checkMultipart( value, part )
+   ct = value.typeId() == StringType ? value : value[""]
+   
+   if ct.startsWith( "multipart/", true )
+      if value.typeId() != DictionaryType or not "boundary" in value
+         raise ParseError( 10002, "Invaid MIME format", "boundary not defined in multipart content-type" )
+      end
+
+      bound = value["boundary"]
+      subType = ct[10:]
+      part.setMultipart( subType, bound )
+
+      return bound
+      
+   elif ct.startsWith( "message/", true )
+   
+      subType = ct[8:]
+      if subType == "partial"
+         // we must have id,
+         if value.typeId() != DictionaryType or not "id" in value or not "number" in value
+            raise ParseError( 10002, "Invaid MIME format", "id or value not defined in message/partial content-type" )
+         end
+         id = value["id"]
+         number = value["number"]
+         if "total" in value: total = value["total"]
+         part.setMessage( id, number, total )
+      else
+         part.setMessage()
+      end
+
+   end
+end
+
+
+function _parseHeaderLine( line )
+   pos = line.find( ":" )
+   if pos <= 0
+      raise ParseError( 10003, "Malformed header", line )
+   end
+
+   key, value = line[0:pos].trim(), line[pos+1:]
+   // parse the value
+   state = 0
+   posParam = 0
+   xvalues = nil
+   
+   for n in [0:value.len()]
+      char = value[*n]
+      switch state
+         case 0               // normal
+            if char == 34     // quote
+               state = 1
+            elif char == 59   // ";"
+               // found a parameter
+               if not xvalues: xvalues = [=>]
+               _parseHeaderParam( value[posParam:n], xvalues )
+               posParam = n + 1
+            end
+         case 1
+            if char == 92     // backslash
+               state = 2
+            elif char == 34
+               state = 0
+            end
+         case 2
+            state = 1         // back to string
+      end            
+   end
+   
+   // unclosed quote?
+   if state != 0
+      raise ParseError( 10006, "Malformed header parameter -- unclosed quote", line )
+   end
+
+   
+   if xvalues
+      // parse the last parameter
+      if posParam != value.len()
+         _parseHeaderParam( value[posParam:], xvalues )
+      end
+      return [key, xvalues]
+   else
+      return [key, value.trim()]
+   end
+end
+
+
+function _parseHeaderParam( param, xvalues )
+   eqpos = param.find( "=" )
+   if eqpos < 0
+      // it is acceptable not to have a parameter name if this is the first value.
+      if xvalues
+         raise ParseError( 10005, "Malformed header parameter", param )
+      end
+      key = ""
+      value = param.trim()
+   else
+      key = param[0:eqpos].trim()
+      value = param[eqpos+1:].trim()
+
+      // it is not acceptable to have an empty key here
+      if not key
+         raise ParseError( 10005, "Malformed header parameter", param )
+      end
+   end
+
+   // eventually unquote the value
+   if value and value[0] == '"'
+      // we know value[-1] is a quote or the upstream would have raised.
+      value = value[1:-1].replace( '\"', '"' )
+   end
+   
+   xvalues[key] = value
+end
+
+
+function _parseBody( stream, part )
+   bound = part.boundary
+
+   // read all the stream.
+   if not bound
+      _parseWholeBody( stream, part )
+   else
+      _parseBoundBody( stream, part, bound )      
+   end
+end
+
+
+function _parseWholeBody( stream, part )
+   blocks = []
+   totalSize = 0
+
+   while not stream.eof()
+      block = stream.grab( _block_buffer )
+      blocks += block
+      totalSize += block.len()
+   end
+
+   part.body = strBuffer( totalSize )
+   for block in blocks
+      part.body += block
+   end
+end
+
+
+function _parseBoundBody( stream, part, bound )
+   bound = "\r\n--" + bound
+   boundLen = bound.len()
+
+   // read up to the next boundary
+   block = strBuffer( _block_buffer )
+   bblock = strBuffer( _block_buffer * 2 )
+   data = ""
+   boundPos = -1
+
+   while not stream.eof()
+      stream.read( block, _block_buffer )
+      bblock += block
+      boundPos = bblock.find( bound )
+
+      while boundPos >= 0
+         // save the data
+         data += bblock[0:boundPos]
+
+         // enough data for the last block?
+         // last block?
+         posEnd = boundPos+boundLen+4
+
+         if posEnd > bblock.len()
+            // just get more data and redo
+            // Notice: a stream terminating with a non terminal boundary is malformed,
+            // so we're authorized to only check for "--\r\n" in this constraint.
+            bblock[0:boundPos] = ""
+            break
+         end
+
+
+         if bblock[boundPos+boundLen:posEnd] == "--\r\n"
+            // if this is the last block, we're authrized do trop the rest of the stream as insignificant.
+            bIsLast = true
+         else
+            // try with a normal boundary
+            posEnd = boundPos+boundLen+2
+            if bblock[ boundPos + boundLen : posEnd ] != "\r\n"
+               // malformed entity
+               raise ParseError( 10010, "Malformed body", "boundary constraint not respected" )
+            end
+         end
+
+         // the first part, before the first boundary, is the prologue
+         if part.body == nil
+            part.body = data
+         else
+            // parse the subpart as a whole mime message
+            part.addPart( parse( StringStream( data ) ) )
+         end
+
+         // if this is marked as last block, we have nothing else to do
+         if bIsLast
+            return
+         end
+
+         // empty the data
+         bblock[0:posEnd] = ""
+         if data: data[0:] = ""
+         boundPos = bblock.find( bound )
+      end 
+   end
+
+   if boundPos >= 0
+      raise ParseError( 10010, "Malformed body", "boundary broken at end of stream or no boundary" )
+   end
+end

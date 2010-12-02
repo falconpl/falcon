@@ -1,0 +1,13 @@
+day_maker = function( year, month, day )
+   return @ '<a href="javascript:showDay($(day))">$(day)</a>'
+end
+
+skin_month = function( vars, srv )
+   > @'
+   <a href="javascript:gotoYear(-1);">&lt;&lt;</a>
+   <a href="javascript:gotoMonth(-1);">&lt;</a>
+   $(vars.monthName) $(vars.year)
+   <a href="javascript:gotoMonth(1);">&gt;</a>
+   <a href="javascript:gotoYear(1);">&gt;&gt;</a>
+   '
+end

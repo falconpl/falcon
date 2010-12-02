@@ -7,6 +7,10 @@
 #include <gtk/gtk.h>
 
 
+/*#
+   @beginmodule gtk
+*/
+
 namespace Falcon {
 namespace Gtk {
 

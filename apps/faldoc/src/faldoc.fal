@@ -277,6 +277,12 @@ class Application
          end
       end
    end
+
+   function copyResource( resName, dest )
+      p = Path( vmModulePath() )
+      loc = p.fulloc +"/resources/" + resName
+      fileCopy( loc, dest + "/" + resName )
+   end
    
 end
 

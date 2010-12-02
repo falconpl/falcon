@@ -157,6 +157,15 @@
 #include "gtk_Window.hpp"
 #include "gtk_WindowGroup.hpp"
 
+/*#
+   @module gtk The Falcon GTK Binding module
+
+   This module is a pretty complete binding of the gdk/gtk widgent
+   libraries.
+   
+   @beginmodule gtk
+*/
+
 
 FALCON_MODULE_DECL
 {

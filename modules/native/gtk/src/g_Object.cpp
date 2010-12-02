@@ -54,6 +54,9 @@ Falcon::CoreObject* Object::factory( const Falcon::CoreClass* gen, void* obj, bo
     return new Object( gen, (GObject*) obj );
 }
 
+/*#
+   @beginmodule gtk
+*/
 
 /*#
     @class GObject

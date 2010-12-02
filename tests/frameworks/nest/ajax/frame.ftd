@@ -1,0 +1,13 @@
+<html>
+<head>
+   <title>Nest - AJAX test site</title>
+   <? Nest.headings() ?>
+</head>
+<body>
+   <p>Here starts the frame...</p>
+   <hr/>
+   <? Nest.content() ?>
+   <hr/>
+   <p>Here ends the frame...</p>
+</body>
+</html>

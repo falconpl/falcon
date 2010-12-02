@@ -11,6 +11,9 @@
 #undef MYSELF
 #define MYSELF Gdk::Colormap* self = Falcon::dyncast<Gdk::Colormap*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {
@@ -162,7 +165,7 @@ FALCON_FUNC Colormap::unref( VMARG );
 
 
 /*#
-    @method get_system
+    @method get_system GdkColormap
     @brief Gets the system's default colormap for the default screen.
     @return the default colormap.
  */
@@ -175,7 +178,7 @@ FALCON_FUNC Colormap::get_system( VMARG )
 
 
 /*#
-    @method get_system_size
+    @method get_system_size GdkColormap
     @brief Returns the size of the system's default colormap.
     @return the size of the system's default colormap.
  */
@@ -187,7 +190,7 @@ FALCON_FUNC Colormap::get_system_size( VMARG )
 
 
 /*#
-    @method change
+    @method change GdkColormap
     @brief Changes the value of the first ncolors in a private colormap to match the values in the colors array in the colormap.
     @param ncolors the number of colors to change.
 
@@ -216,7 +219,7 @@ FALCON_FUNC Colormap::query_color( VMARG );
 
 
 /*#
-    @method get_visual
+    @method get_visual GdkColormap
     @brief Returns the visual for which a given colormap was created.
     @return the visual of the colormap.
  */
@@ -229,7 +232,7 @@ FALCON_FUNC Colormap::get_visual( VMARG )
 
 
 /*#
-    @method get_screen
+    @method get_screen GdkColormap
     @brief Gets the screen for which this colormap was created.
     @return the screen for which this colormap was created.
  */

@@ -4,6 +4,9 @@
 
 #include "gdk_Pixbuf.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

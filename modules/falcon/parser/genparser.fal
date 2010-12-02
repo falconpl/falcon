@@ -317,7 +317,9 @@ class Parser()
          col = matchAt + count
 
          // are we done?
-         if col >= linelen
+         if col > linelen
+            break
+         elif col == linelen
             // offer an extra loop for rules matching at end of line
             if atEnd: break
             atEnd = true

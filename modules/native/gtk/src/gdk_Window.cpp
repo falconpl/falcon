@@ -4,6 +4,10 @@
 
 #include "gdk_Window.hpp"
 
+/*#
+   @beginmodule gtk
+*/
+
 
 namespace Falcon {
 namespace Gdk {
