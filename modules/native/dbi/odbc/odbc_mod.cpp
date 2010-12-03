@@ -295,25 +295,48 @@ void DBIStatementODBC::close()
    }
 }
 
+
 /******************************************************************************
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleODBC::DBIHandleODBC():
-   m_bInTrans(false)
+DBIHandleODBC::DBIHandleODBC()
 {
-   m_conn = NULL;
+	m_conn = NULL;
+	m_connTr = NULL;
 }
 
-DBIHandleODBC::DBIHandleODBC( odbc *conn ):
-   m_bInTrans(false)
+DBIHandleODBC::DBIHandleODBC( ODBCConn *conn )
 {
    m_conn = conn;
+   m_connTr = NULL;
 }
 
-DBIHandleODBC::~DBIHandleODBC()
+DBIHandleODBC::~DBIHandleODBC( )
 {
-   close();
+	close( );
+}
+
+int64 DBIHandleODBC::getLastInsertedId()
+{
+   return -1;
+}
+
+int64 DBIHandleODBC::getLastInsertedId( const String& sequenceName )
+{
+   return -1;
+}
+
+dbi_status DBIHandleODBC::close()
+{
+	if( m_conn )
+	{
+		m_conn->Destroy( );
+		memFree( m_conn );
+		m_conn = NULL;
+	}
+	
+	return dbi_ok;
 }
 
 void DBIHandleODBC::options( const String& params )
@@ -339,23 +362,63 @@ const DBISettingParams* DBIHandleODBC::options() const
 
 DBIRecordset *DBIHandleODBC::query( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
-   odbc_stmt* pStmt = int_prepare( sql );
-   int count = odbc_column_count( pStmt );
-   if( count == 0 )
-   {
-      throw new DBIError( ErrorParam(FALCON_DBI_ERROR_QUERY_EMPTY, __LINE__ ) );
-   }
-   affectedRows = -1;
+   AutoCString asQuery( query );
+   ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
 
-   // the bindings must stay with the recordset...
-   return new DBIRecordsetODBC( this, pStmt, params );
+   RETCODE ret = SQLExecDirect( conn->m_hHstmt, ( SQLCHAR* )asQuery.c_str( ), asQuery.length() );
+
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
+      // return
+   }
+
+   SQLINTEGER nRowCount;
+   RETCODE retcode = SQLRowCount( conn->m_hHstmt, &nRowCount );
+
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
+      // return
+   }
+   affectedRows = (int64) nRowCount;
+
+   if( nRowCount != 0 )
+   {
+	   SQLSMALLINT nColCount;
+	   retcode = SQLNumResultCols( conn->m_hHstmt, &nColCount );
+
+      if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+	   {
+  	      throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
+         // return
+	   }
+
+	   return new DBIRecordsetODBC( m_dbh, nRowCount, nColCount );
+   }
+
+   // query without recordset   
+   throw new DBIError( ErrorParam(FALCON_DBI_ERROR_QUERY_EMPTY, __LINE__ ) );
+   
+   // to make the compiler happy
+   return 0;
 }
 
 void DBIHandleODBC::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
 {
    odbc_stmt* pStmt = int_prepare( sql );
    int_execute( pStmt, params );
-   affectedRows = odbc_changes( m_conn );
+
+   SQLINTEGER nRowCount;
+   RETCODE retcode = SQLRowCount( conn->m_hHstmt, &nRowCount );
+
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
+      // return
+   }
+   
+   affectedRows = (int64) nRowCount;
 }
 
 
@@ -436,28 +499,36 @@ void DBIHandleODBC::begin()
 
    if( !m_bInTrans )
    {
-      char* error;
-      int res = odbc_exec( m_conn, "BEGIN TRANSACTION", 0, 0, &error );
-      if( res != 0 )
-         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
-      m_bInTrans = true;
+      SQLRETURN srRet = SQLEndTran( 
+	      SQL_HANDLE_DBC, 
+	      static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
+	      SQL_COMMIT );
+
+      m_inTransaction = false;
+
+      if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+	      return dbi_error;
    }
 }
+
 
 void DBIHandleODBC::commit()
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   // Sqlite doesn't ignore COMMIT out of transaction.
-   // We do; so we must filter them
-   if( m_bInTrans )
+   ODBCConn* conn = static_cast<DBIHandleODBC*>(m_dbh)->getConn();
+
+   SQLRETURN srRet = SQLEndTran( 
+	   SQL_HANDLE_DBC, 
+	   conn->m_hHdbc, 
+	   SQL_COMMIT );
+
+   m_inTransaction = false;
+
+   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
    {
-      char* error;
-      int res = odbc_exec( m_conn, "COMMIT", 0, 0, &error );
-      if( res != 0 )
-         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
-      m_bInTrans = false;
+      throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_STMT, ->m_hHstmt, TRUE );
    }
 }
 
@@ -466,16 +537,19 @@ void DBIHandleODBC::rollback()
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   
+   ODBCConn* conn = static_cast<DBIHandleODBC*>(m_dbh)->getConn();
 
-   // Sqlite doesn't ignore COMMIT out of transaction.
-   // We do; so we must filter them
-   if( m_bInTrans )
+   SQLRETURN srRet = SQLEndTran( 
+	   SQL_HANDLE_DBC, 
+	   conn->m_hHdbc, 
+	   SQL_ROLLBACK );
+
+   m_inTransaction = false;
+	
+   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
    {
-      char* error;
-      int res = odbc_exec( m_conn, "ROLLBACK", 0, 0, &error );
-      if( res != 0 )
-         throwError( FALCON_DBI_ERROR_TRANSACTION, res, error );
-      m_bInTrans = false;
+      throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_STMT, ->m_hHstmt, TRUE );
    }
 }
 
@@ -505,89 +579,6 @@ void DBIHandleODBC::selectLimited( const String& query,
 }
 
 
-void DBIHandleODBC::throwError( int falconError, int sql3Error, char* edesc )
-{
-   String err = String("(").N(sql3Error).A(") ");
-   if( edesc == 0 )
-      err += errorDesc( sql3Error );
-   else
-   {
-      err.A(edesc);
-      err.bufferize();
-      odbc_free( edesc ); // got from odbc_malloc, must be freed
-   }
-
-   throw new DBIError( ErrorParam(falconError, __LINE__ )
-         .extra(err) );
-}
-
-
-String DBIHandleODBC::errorDesc( int error )
-{
-   switch( error & 0xFF )
-   {
-   case SQLITE_OK           : return "Successful result";
-   case SQLITE_ERROR        : return "SQL error or missing database";
-   case SQLITE_INTERNAL     : return "Internal logic error in SQLite";
-   case SQLITE_PERM         : return "Access permission denied";
-   case SQLITE_ABORT        : return "Callback routine requested an abort";
-   case SQLITE_BUSY         : return "The database file is locked";
-   case SQLITE_LOCKED       : return "A table in the database is locked";
-   case SQLITE_NOMEM        : return "A malloc() failed";
-   case SQLITE_READONLY     : return "Attempt to write a readonly database";
-   case SQLITE_INTERRUPT    : return "Operation terminated by odbc_interrupt()";
-   case SQLITE_IOERR        : return "Some kind of disk I/O error occurred";
-   case SQLITE_CORRUPT      : return "The database disk image is malformed";
-   case SQLITE_NOTFOUND     : return "NOT USED. Table or record not found";
-   case SQLITE_FULL         : return "Insertion failed because database is full";
-   case SQLITE_CANTOPEN     : return "Unable to open the database file";
-   case SQLITE_PROTOCOL     : return "NOT USED. Database lock protocol error";
-   case SQLITE_EMPTY        : return "Database is empty";
-   case SQLITE_SCHEMA       : return "The database schema changed";
-   case SQLITE_TOOBIG       : return "String or BLOB exceeds size limit";
-   case SQLITE_CONSTRAINT   : return "Abort due to constraint violation";
-   case SQLITE_MISMATCH     : return "Data type mismatch";
-   case SQLITE_MISUSE       : return "Library used incorrectly";
-   case SQLITE_NOLFS        : return "Uses OS features not supported on host";
-   case SQLITE_AUTH         : return "Authorization denied";
-   case SQLITE_FORMAT       : return "Auxiliary database format error";
-   case SQLITE_RANGE        : return "2nd parameter to odbc_bind out of range";
-   case SQLITE_NOTADB       : return "File opened that is not a database file";
-   case SQLITE_ROW          : return "odbc_step() has another row ready";
-   case SQLITE_DONE         : return "odbc_step() has finished executing";
-   }
-
-   return "Unknown error";
-/*
-   case SQLITE_IOERR_READ              (SQLITE_IOERR | (1<<8))
-   case SQLITE_IOERR_SHORT_READ        (SQLITE_IOERR | (2<<8))
-   case SQLITE_IOERR_WRITE             (SQLITE_IOERR | (3<<8))
-   case SQLITE_IOERR_FSYNC             (SQLITE_IOERR | (4<<8))
-   case SQLITE_IOERR_DIR_FSYNC         (SQLITE_IOERR | (5<<8))
-   case SQLITE_IOERR_TRUNCATE          (SQLITE_IOERR | (6<<8))
-   case SQLITE_IOERR_FSTAT             (SQLITE_IOERR | (7<<8))
-   case SQLITE_IOERR_UNLOCK            (SQLITE_IOERR | (8<<8))
-   case SQLITE_IOERR_RDLOCK            (SQLITE_IOERR | (9<<8))
-   case SQLITE_IOERR_DELETE            (SQLITE_IOERR | (10<<8))
-   case SQLITE_IOERR_BLOCKED           (SQLITE_IOERR | (11<<8))
-   case SQLITE_IOERR_NOMEM             (SQLITE_IOERR | (12<<8))
-   case SQLITE_IOERR_ACCESS            (SQLITE_IOERR | (13<<8))
-   case SQLITE_IOERR_CHECKRESERVEDLOCK (SQLITE_IOERR | (14<<8))
-   case SQLITE_IOERR_LOCK              (SQLITE_IOERR | (15<<8))
-   case SQLITE_IOERR_CLOSE             (SQLITE_IOERR | (16<<8))
-   case SQLITE_IOERR_DIR_CLOSE         (SQLITE_IOERR | (17<<8))
-   case SQLITE_LOCKED_SHAREDCACHE      (SQLITE_LOCKED | (1<<8) )
-*/
-
-}
-
-int64 DBIHandleODBC::getLastInsertedId( const String& )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   return odbc_last_insert_rowid( m_conn );
-}
 
 
 void DBIHandleODBC::close()
@@ -604,6 +595,99 @@ void DBIHandleODBC::close()
       m_conn = NULL;
    }
 }
+
+//=====================================================================
+// Utilities
+//=====================================================================
+
+void DBIHandleODBC::throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd )
+{
+   String err = GetErrorMessage( plm_handle_type, GetErrorMessage, ConnInd );
+   throw new DBIError( ErrorParam(falconError, __LINE__ ).extra(err) );
+}
+
+String DBIHandleODBC::GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd)
+{
+	RETCODE     plm_retcode = SQL_SUCCESS;
+	UCHAR       plm_szSqlState[MAXBUFLEN] = "";
+   UCHAR       plm_szErrorMsg[MAXBUFLEN] = "";
+	SDWORD      plm_pfNativeError = 0L;
+	SWORD       plm_pcbErrorMsg = 0;
+	SQLSMALLINT plm_cRecNmbr = 1;
+	SDWORD      plm_SS_MsgState = 0, plm_SS_Severity = 0;
+	SQLINTEGER  plm_Rownumber = 0;
+	USHORT      plm_SS_Line;
+	SQLSMALLINT plm_cbSS_Procname, plm_cbSS_Srvname;
+	SQLCHAR     plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
+	String sRet = "";
+	char Convert[MAXBUFLEN];
+
+	while (plm_retcode != SQL_NO_DATA_FOUND) {
+		plm_retcode = SQLGetDiagRec(plm_handle_type, plm_handle,
+			plm_cRecNmbr, plm_szSqlState, &plm_pfNativeError,
+			plm_szErrorMsg, MAXBUFLEN - 1, &plm_pcbErrorMsg);
+
+		// Note that if the application has not yet made a
+		// successful connection, the SQLGetDiagField
+		// information has not yet been cached by ODBC
+		// Driver Manager and these calls to SQLGetDiagField
+		// will fail.
+		if (plm_retcode != SQL_NO_DATA_FOUND) {
+			if (ConnInd) {
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_ROW_NUMBER, &plm_Rownumber,
+					SQL_IS_INTEGER,
+					NULL);
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_SS_LINE, &plm_SS_Line,
+					SQL_IS_INTEGER,
+					NULL);
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_SS_MSGSTATE, &plm_SS_MsgState,
+					SQL_IS_INTEGER,
+					NULL);
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_SS_SEVERITY, &plm_SS_Severity,
+					SQL_IS_INTEGER,
+					NULL);
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_SS_PROCNAME, &plm_SS_Procname,
+					sizeof(plm_SS_Procname),
+					&plm_cbSS_Procname);
+				plm_retcode = SQLGetDiagField(
+					plm_handle_type, plm_handle, plm_cRecNmbr,
+					SQL_DIAG_SS_SRVNAME, &plm_SS_Srvname,
+					sizeof(plm_SS_Srvname),
+					&plm_cbSS_Srvname);
+			}
+
+			sRet += "SqlState = " + String( ( char* )plm_szSqlState ) + ";";
+			sRet += "NativeError = " + String( _itoa( plm_pfNativeError, Convert, 10 ) ) + ";";
+			sRet += "ErrorMsg = " + String( ( char* )plm_szErrorMsg ) + ";";
+			sRet += "pcbErrorMsg = " + String( _itoa( plm_pcbErrorMsg, Convert, 10 ) ) + ";";
+
+			if (ConnInd)
+			{
+				sRet += "ODBCRowNumber = " + String( _itoa( plm_Rownumber, Convert, 10 ) ) + ";";
+				sRet += "SSrvrLine = " + String( _itoa( plm_Rownumber, Convert, 10 ) ) + ";";
+				sRet += "SSrvrMsgState = " + String( _itoa( plm_SS_MsgState, Convert, 10 ) ) + ";";
+				sRet += "SSrvrSeverity = " + String( _itoa( plm_SS_Severity, Convert, 10 ) ) + ";";
+				sRet += "SSrvrProcname = " + String( ( char* )plm_SS_Procname ) + ";";
+				sRet += "SSrvrSrvname = " + String( ( char* )plm_SS_Srvname ) + ";";
+			}
+		}
+
+		plm_cRecNmbr++; //Increment to next diagnostic record.
+	}
+
+	return sRet;
+}
+
 
 }
 

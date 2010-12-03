@@ -173,9 +173,13 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   static void throwError( int falconError, int sql3Error, char* edesc=0 );
-   static String errorDesc( int error );
-   sqlite3 *getConn() { return m_conn; }
+   ODBCConn *getConn() { return m_conn; }
+
+   /** Throws a DBI error wsrapping an ODBC error. */
+   static void throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd );
+   
+   /** Utility to get ODBC error description. */
+   static String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd);
 };
 
 
