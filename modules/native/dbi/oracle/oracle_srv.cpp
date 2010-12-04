@@ -26,7 +26,7 @@ namespace Falcon
      *****************************************************************************/
 
     // FIXME
-    DBIRecordsetOracle::DBIRecordsetOracle( DBIHandle *dbh, MYSQL_RES *res )
+    DBIRecordsetOracle::DBIRecordsetOracle( DBIHandle *dbh, ORACLE_RES *res )
         : DBIRecordset( dbh )
     {
         o_res = res;
@@ -109,9 +109,10 @@ namespace Falcon
         return dbi_ok;
     }
 
+    // FIXME
     int DBIRecordsetOracle::getColumnCount()
     {
-        return o_columnCount;
+        return 0;
     }
 
     // FIXME
@@ -148,7 +149,8 @@ namespace Falcon
 
     dbi_status DBIRecordsetOracle::asBlobID( const int columnIndex, String &value )
     {
-        return dbi_not_implemented;
+        status = dbi_not_implemented;
+        return 0;
     }
 
     // FIXME
@@ -322,21 +324,17 @@ namespace Falcon
 
     void DBIRecordsetOracle::close()
     {
-        if ( m_res != NULL ) {
-            mysql_free_result( m_res );
-            m_res = NULL;
-        }
+        status = dbi_not_implemented;
+        return 0;
     }
 
-    // FIXME
-    dbi_status DBIRecordsetMySQL::getLastError( String &description )
+    dbi_status DBIRecordsetOracle::getLastError( String &description )
     {
-        MYSQL *conn = ( (DBIHandleMySQL *) m_dbh )->getConn();
-
+        ORACLE *conn = ( (DBIHandleOracle *) o_dbh )->getConn();
 
             return dbi_invalid_connection;
 
-        const char *errorMessage = mysql_error( conn );
+        const char *errorMessage = getMessage();
 
         if ( errorMessage == NULL )
             return dbi_no_error_message;
@@ -350,19 +348,19 @@ namespace Falcon
      * Transaction class
      *****************************************************************************/
 
-    DBIStatementMySQL::DBITransactionOracle( DBIHandle *dbh )
+    DBIStatementOracle::DBITransactionOracle( DBIHandle *dbh )
         : DBIStatement( dbh )
     {
         o_inTransaction = false;
     }
 
     // FIXME
-    DBIRecordset *DBIStatementMySQL::query( const String &query, int64 &affectedRows, dbi_status &retval )
+    DBIRecordset *DBIStatementOracle::query( const String &query, int64 &affectedRows, dbi_status &retval )
     {
         retval = dbi_ok;
 
         AutoCString asQuery( query );
-        MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
+        ORACLE *conn = ((DBIHandleOracle *) o_dbh)->getConn();
 
         if ( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
         {
@@ -409,7 +407,7 @@ namespace Falcon
         query( "BEGIN", dummy, retval );
 
         if ( retval == dbi_ok )
-            m_inTransaction = true;
+            o_inTransaction = true;
 
         return retval;
     }
@@ -442,15 +440,14 @@ namespace Falcon
         return o_dbh->closeTransaction( this );
     }
 
-    // FIXME 
     dbi_status DBITransactionOracle::getLastError( String &description )
     {
-        MYSQL *conn = static_cast<DBIHandleMySQL *>( m_dbh )->getConn();
+        ORACLE *conn = static_cast<DBIHandleOracle *>( o_dbh )->getConn();
 
         if ( conn == NULL )
             return dbi_invalid_connection;
 
-        const char *errorMessage = mysql_error( conn );
+        const char *errorMessage = getMessage();
 
         if ( errorMessage == NULL )
             return dbi_no_error_message;
@@ -459,7 +456,6 @@ namespace Falcon
 
         return dbi_ok;
     }
-
 
     DBIBlobStream *DBITransactionOracle::openBlob( const String &blobId, dbi_status &status )
     {
@@ -500,13 +496,13 @@ namespace Falcon
         return o_connTr == NULL ? (o_connTr = new DBITransactionOracle( this )): o_connTr;
     }
 
-    DBIHandleMySQL::DBIHandleOracle()
+    DBIHandleOracle::DBIHandleOracle()
     {
         o_conn = NULL;
         o_connTr = NULL;
     }
 
-    DBIHandleMySQL::DBIHandleOracle( Connection *conn )
+    DBIHandleOracle::DBIHandleOracle( Connection *conn )
     {
         o_conn = conn;
         o_connTr = NULL;
@@ -515,16 +511,6 @@ namespace Falcon
     dbi_status DBIHandleOracle::closeTransaction( DBIStatement *tr )
     {
         return dbi_ok;
-    }
-
-    int64 DBIHandleOracle::getLastInsertedId()
-    {
-        return oracle_insert_id( o_conn );
-    }
-
-    int64 DBIHandleOracle::getLastInsertedId( const String& sequenceName )
-    {
-        return oracle_insert_id( o_conn );
     }
 
     dbi_status DBIHandleOracle::getLastError( String &description )
@@ -665,8 +651,8 @@ namespace Falcon
 
     CoreObject *DBIServiceOracle::makeInstance( VMachine *vm, DBIHandle *dbh )
     {
-        Item *cl = vm->findWKI( "Oracle" );
-        if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "Oracle" )
+        Item *cl = vm->findWKI( "oracle" );
+        if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "oracle" )
         {
             throw new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
                     .desc( "Oracle DBI driver was not found" ) );

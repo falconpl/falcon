@@ -5,7 +5,7 @@
  * Oracle driver main module interface
  * -------------------------------------------------------------------
  * Author: Steven Oliver
- * Based on equivlent MySQL drivers by Jeremy Cowgar
+ * Based on equivalent MySQL drivers by Jeremy Cowgar
  * -------------------------------------------------------------------
  * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
  *
