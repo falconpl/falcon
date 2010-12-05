@@ -11,6 +11,9 @@
 #undef MYSELF
 #define MYSELF Gtk::TreeRowReference* self = Falcon::dyncast<Gtk::TreeRowReference*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

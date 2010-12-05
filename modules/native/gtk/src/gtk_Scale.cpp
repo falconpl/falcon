@@ -4,6 +4,9 @@
 
 #include "gtk_Scale.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -131,7 +134,7 @@ gchar* Scale::on_format_value( GtkScale* obj, gdouble value, gpointer _vm )
 
 
 /*#
-    @method set_digits
+    @method set_digits GtkScale
     @brief Sets the number of decimal places that are displayed in the value.
     @param digits the number of decimal places to display, e.g. use 1 to display 1.0, 2 to display 1.00, etc
 
@@ -152,7 +155,7 @@ FALCON_FUNC Scale::set_digits( VMARG )
 
 
 /*#
-    @method set_draw_value
+    @method set_draw_value GtkScale
     @brief Specifies whether the current value is displayed as a string next to the slider.
     @param TRUE to draw the value
  */
@@ -170,7 +173,7 @@ FALCON_FUNC Scale::set_draw_value( VMARG )
 
 
 /*#
-    @method set_value_pos
+    @method set_value_pos GtkScale
     @brief Sets the position in which the current value is displayed.
     @param pos the position in which the current value is displayed (GtkPositionType).
  */
@@ -188,7 +191,7 @@ FALCON_FUNC Scale::set_value_pos( VMARG )
 
 
 /*#
-    @method get_digits
+    @method get_digits GtkScale
     @brief Gets the number of decimal places that are displayed in the value.
     @return the number of decimal places that are displayed
  */
@@ -216,7 +219,7 @@ FALCON_FUNC Scale::get_draw_value( VMARG )
 
 
 /*#
-    @method get_value_pos
+    @method get_value_pos GtkScale
     @brief Gets the position in which the current value is displayed.
     @return the position in which the current value is displayed (GtkPositionType).
  */

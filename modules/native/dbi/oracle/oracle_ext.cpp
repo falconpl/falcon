@@ -30,13 +30,10 @@ namespace Ext
       @brief Direct interface to Oracle database.
       @param connect String containing connection parameters.
 
-*/
-
-
-/*#
-   @init Oracle
-   @brief Connects to a Oracle database.
-
+      The connect string uses the standard connection values:
+      - username
+      - password
+      - database
 */
 
 FALCON_FUNC Oracle_init( VMachine *vm )
@@ -55,7 +52,7 @@ FALCON_FUNC Oracle_init( VMachine *vm )
    const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
 
    DBIHandleOracle *dbh = static_cast<DBIHandleOracle *>(
-      theOracleService.connect( params, false, status, connectErrorMessage ) );
+      theOracleService.connect( params, status, connectErrorMessage ) );
 
    if ( dbh == 0 )
    {

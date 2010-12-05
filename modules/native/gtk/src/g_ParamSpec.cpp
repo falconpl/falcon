@@ -101,6 +101,9 @@ Falcon::CoreObject* ParamSpec::factory( const Falcon::CoreClass* gen, void* spec
     return new ParamSpec( gen, (GParamSpec*) spec );
 }
 
+/*#
+   @beginmodule gtk
+*/
 
 /*#
     @class GParamSpec

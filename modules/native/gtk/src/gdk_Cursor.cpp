@@ -12,6 +12,9 @@
 #undef MYSELF
 #define MYSELF Gdk::Cursor* self = Falcon::dyncast<Gdk::Cursor*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

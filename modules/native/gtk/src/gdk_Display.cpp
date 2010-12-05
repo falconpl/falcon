@@ -7,6 +7,9 @@
 //#include "gdk_Device.hpp"
 #include "gdk_Screen.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {
@@ -123,7 +126,7 @@ FALCON_FUNC Display::open( VMARG )
 
 
 /*#
-    @method signal_closed
+    @method signal_closed GdkDisplay
     @brief The closed signal is emitted when the connection to the windowing system for display is closed.
  */
 FALCON_FUNC Display::signal_closed( VMARG )
@@ -167,7 +170,7 @@ void Display::on_closed( GdkDisplay* obj, gboolean is_error, gpointer _vm )
 
 
 /*#
-    @method signal_opened
+    @method signal_opened GdkDisplay
     @brief The opened signal is emitted when the connection to the windowing system for display is opened.
  */
 FALCON_FUNC Display::signal_opened( VMARG )
@@ -184,7 +187,7 @@ void Display::on_opened( GdkDisplay* obj, gpointer _vm )
 
 
 /*#
-    @method get_default
+    @method get_default GdkDisplay
     @brief Gets the default GdkDisplay.
     @return a GdkDisplay, or NULL if there is no default display.
 
@@ -202,7 +205,7 @@ FALCON_FUNC Display::get_default( VMARG )
 
 
 /*#
-    @method get_name
+    @method get_name GdkDisplay
     @brief Gets the name of the display.
     @return a string representing the display name.
  */
@@ -214,7 +217,7 @@ FALCON_FUNC Display::get_name( VMARG )
 
 
 /*#
-    @method get_n_screens
+    @method get_n_screens GdkDisplay
     @brief Gets the number of screen managed by the display.
     @return number of screens.
  */
@@ -226,7 +229,7 @@ FALCON_FUNC Display::get_n_screens( VMARG )
 
 
 /*#
-    @method get_screen
+    @method get_screen GdkDisplay
     @brief Returns a screen object for one of the screens of the display.
     @param screen_num the screen number
     @return the GdkScreen object
@@ -245,7 +248,7 @@ FALCON_FUNC Display::get_screen( VMARG )
 
 
 /*#
-    @method get_default_screen
+    @method get_default_screen GdkDisplay
     @brief Get the default GdkScreen for display.
     @return the default GdkScreen object for display
  */
@@ -258,7 +261,7 @@ FALCON_FUNC Display::get_default_screen( VMARG )
 
 
 /*#
-    @method pointer_ungrab
+    @method pointer_ungrab GdkDisplay
     @brief Release any pointer grab.
     @param time a timestamp (e.g. GDK_CURRENT_TIME).
 
@@ -278,7 +281,7 @@ FALCON_FUNC Display::pointer_ungrab( VMARG )
 
 
 /*#
-    @method keyboard_ungrab
+    @method keyboard_ungrab GdkDisplay
     @brief Release any keyboard grab
     @param time a timestap (e.g GDK_CURRENT_TIME).
 
@@ -298,7 +301,7 @@ FALCON_FUNC Display::keyboard_ungrab( VMARG )
 
 
 /*#
-    @method pointer_is_grabbed
+    @method pointer_is_grabbed GdkDisplay
     @brief Test if the pointer is grabbed.
     @return TRUE if an active X pointer grab is in effect
 
@@ -314,10 +317,12 @@ FALCON_FUNC Display::pointer_is_grabbed( VMARG )
 
 #if 0 // todo
 /*#
-    @method device_is_grabbed
+    @method device_is_grabbed GdkDisplay
     @brief Returns TRUE if there is an ongoing grab on device for display.
     @param device a GdkDevice
     @return TRUE if there is a grab in effect for device.
+
+    @note This method is currently **NOT** implemented.
  */
 FALCON_FUNC Display::device_is_grabbed( VMARG )
 {
@@ -326,7 +331,7 @@ FALCON_FUNC Display::device_is_grabbed( VMARG )
 #endif
 
 /*#
-    @method beep
+    @method beep GdkDisplay
     @brief Emits a short beep on display
  */
 FALCON_FUNC Display::beep( VMARG )
@@ -337,7 +342,7 @@ FALCON_FUNC Display::beep( VMARG )
 
 
 /*#
-    @method sync
+    @method sync GdkDisplay
     @brief Flushes any requests queued for the windowing system and waits until all requests have been handled.
 
     This is often used for making sure that the display is synchronized with the
@@ -356,7 +361,7 @@ FALCON_FUNC Display::sync( VMARG )
 
 
 /*#
-    @method flush
+    @method flush GdkDisplay
     @brief Flushes any requests queued for the windowing system.
 
     This happens automatically when the main loop blocks waiting for new events,
@@ -376,7 +381,7 @@ FALCON_FUNC Display::flush( VMARG )
 
 
 /*#
-    @method close
+    @method close GdkDisplay
     @brief Closes the connection to the windowing system for the given display, and cleans up associated resources.
  */
 FALCON_FUNC Display::close( VMARG )

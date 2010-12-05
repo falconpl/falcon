@@ -6,6 +6,9 @@
 
 #include "gtk_HBox.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -97,7 +100,7 @@ FALCON_FUNC Statusbar::init( VMARG )
 
 
 /*#
-    @method signal_text_popped
+    @method signal_text_popped GtkScale
     @brief Is emitted whenever a new message is popped off a statusbar's stack.
  */
 FALCON_FUNC Statusbar::signal_text_popped( VMARG )
@@ -143,7 +146,7 @@ void Statusbar::on_text_popped( GtkStatusbar* obj, guint ctxt_id, gchar* text, g
 
 
 /*#
-    @method signal_text_pushed
+    @method signal_text_pushed GtkScale
     @brief Is emitted whenever a new message gets pushed onto a statusbar's stack.
  */
 FALCON_FUNC Statusbar::signal_text_pushed( VMARG )

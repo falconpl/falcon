@@ -9,6 +9,10 @@
 #undef MYSELF
 #define MYSELF Gdk::Visual* self = Falcon::dyncast<Gdk::Visual*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
+
 
 namespace Falcon {
 namespace Gdk {

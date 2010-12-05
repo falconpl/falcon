@@ -205,7 +205,7 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
    memset( m_pMyBind, 0, sizeof( MYSQL_BIND ) * m_columnCount );
    m_pOutBind = new MyDBIOutBind[ m_columnCount ];
 
-   // keep track of blobs: they myst be zeroed before each fetch
+   // keep track of blobs: they must be zeroed before each fetch
    m_pBlobId = new int[m_columnCount];
    m_nBlobCount = 0;
 
@@ -594,7 +594,7 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_BLOB:
    case MYSQL_TYPE_MEDIUM_BLOB:
    case MYSQL_TYPE_LONG_BLOB:      // text?
-      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
+      if( m_fields[nCol].flags & BINARY_FLAG ) // sic -- from manual
       {
          unsigned long* lengths = mysql_fetch_lengths( m_res );
          byte* mem = (byte*) memAlloc( lengths[nCol] );
@@ -1240,5 +1240,5 @@ CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 } /* namespace Falcon */
 
-/* end of mysql_srv.cpp */
+/* end of mysql_mod.cpp */
 

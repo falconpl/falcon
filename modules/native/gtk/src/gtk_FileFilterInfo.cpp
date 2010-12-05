@@ -4,6 +4,9 @@
 
 #include "gtk_FileFilterInfo.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

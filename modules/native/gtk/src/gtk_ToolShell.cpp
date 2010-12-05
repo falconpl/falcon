@@ -4,8 +4,11 @@
 
 #include "gtk_ToolShell.hpp"
 
-
 #if GTK_CHECK_VERSION( 2, 14, 0 )
+
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

@@ -10,6 +10,9 @@
 
 #include "gtk_Widget.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -240,7 +243,7 @@ void Window::on_activate_focus( GtkWindow* obj, gpointer _vm )
 
 
 /*#
-    @method signal_frame_event
+    @method signal_frame_event GtkWindow
     @brief .
  */
 FALCON_FUNC Window::signal_frame_event( VMARG )

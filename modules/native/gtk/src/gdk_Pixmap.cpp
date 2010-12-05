@@ -7,6 +7,9 @@
 #include "gdk_Color.hpp"
 #include "gdk_Drawable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {
@@ -89,7 +92,7 @@ FALCON_FUNC Pixmap::init( VMARG )
 
 
 /*#
-    @method create_from_data
+    @method create_from_data GdkPixmap
     @brief Create a two-color pixmap from data in XBM data.
     @param drawable a GdkDrawable, used to determine default values for the new pixmap. Can be NULL, if the depth is given.
     @param data the character data (string).

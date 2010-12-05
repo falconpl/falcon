@@ -148,6 +148,7 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
    token = re
    re = regex.Regex(re)
    grabs = nil
+   eol = false
    
    function match( text, pos )
       // can't match "^" past the begin of the line
@@ -173,8 +174,22 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
       g = self.grabs
       if self.action: (.[ self.action context ] + g)()
       self.matchLen = g[0].len()
+      // allows eating EOL
+      if self.eol: return self.matchLen + 1
       return self.matchLen
    end
+end
+
+/*#
+   @brief Regular expression enabled ruler matcher -- consuming end of line.
+   @param token the string matching a fixed token
+   @param action the action (function) that should be done when
+          hitting the token.
+
+   The function will be called with the token as last parameter.
+*/
+class ReRuleEOL( re, nextState, action ) from ReRule( re, nextState, action )
+   eol = true
 end
 
 /*#

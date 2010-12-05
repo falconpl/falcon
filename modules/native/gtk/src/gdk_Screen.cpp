@@ -4,6 +4,10 @@
 
 #include "gdk_Screen.hpp"
 
+/*#
+   @beginmodule gtk
+*/
+
 
 namespace Falcon {
 namespace Gdk {
@@ -103,7 +107,7 @@ FALCON_FUNC Screen::signal_size_changed( VMARG );
 
 
 /*#
-    @method get_default
+    @method get_default GdkScreen
     @brief Gets the default screen for the default display.
     @return a GdkScreen, or nil if there is no default display.
  */

@@ -7,6 +7,9 @@
 #undef MYSELF
 #define MYSELF Gdk::Color* self = Falcon::dyncast<Gdk::Color*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

@@ -5,7 +5,7 @@
  * Oracle driver main module interface
  * -------------------------------------------------------------------
  * Author: Steven Oliver
- * Based on equivlent MySQL drivers by Jeremy Cowgar
+ * Based on equivalent MySQL drivers by Jeremy Cowgar
  * -------------------------------------------------------------------
  * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
  *
@@ -15,7 +15,8 @@
 #ifndef DBI_ORACLE_H
 #define DBI_ORACLE_H
 
-#include "../include/dbiservice.h"
+#include <falcon/dbi_common.h>
+#include <falcon/srv/dbi_service.h>
 
 #include <occi.h>
 
@@ -94,12 +95,11 @@ namespace Falcon
 
             Connection *getConn() { return o_conn; }
 
-            virtual DBIStatement *startTransaction();
-            virtual dbi_status closeTransaction( DBIStatement *tr );
+            virtual DBIStatement *createStatement();
+            virtual dbi_status terminateStatement( DBIStatement *st );
             virtual int64 getLastInsertedId();
             virtual int64 getLastInsertedId( const String &value );
             virtual dbi_status getLastError( String &description );
-            virtual dbi_status escapeString( const String &value, String &escaped );
             virtual dbi_status close();
             virtual DBIStatement* getDefaultTransaction();
     };
@@ -110,7 +110,7 @@ namespace Falcon
             DBIServiceOracle() : DBIService( "DBI_oracle" ) {}
 
             virtual dbi_status init();
-            virtual DBIHandle *connect( const String &parameters, bool persistent,
+            virtual DBIHandle *connect( const String &parameters, bool persistent, 
                     dbi_status &retval, String &errorMessage );
             virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
     };

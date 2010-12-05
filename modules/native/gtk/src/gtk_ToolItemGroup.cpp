@@ -10,6 +10,9 @@
 #include "gtk_ToolShell.hpp"
 #include "gtk_Widget.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -85,7 +88,7 @@ FALCON_FUNC ToolItemGroup::init( VMARG )
 
 
 /*#
-    @method get_collapsed
+    @method get_collapsed GtkToolItemGroup
     @brief Gets whether group is collapsed or expanded.
     @return TRUE if group is collapsed, FALSE if it is expanded
  */
@@ -99,7 +102,7 @@ FALCON_FUNC ToolItemGroup::get_collapsed( VMARG )
 
 
 /*#
-    @method get_drop_item
+    @method get_drop_item GtkToolItemGroup
     @brief Gets the tool item at position (x, y).
     @param x the x position
     @param y the y position
@@ -123,7 +126,7 @@ FALCON_FUNC ToolItemGroup::get_drop_item( VMARG )
 
 
 /*#
-    @method get_ellipsize
+    @method get_ellipsize GtkToolItemGroup
     @brief Gets the ellipsization mode of group.
     @return the PangoEllipsizeMode of group
  */
@@ -137,7 +140,7 @@ FALCON_FUNC ToolItemGroup::get_ellipsize( VMARG )
 
 
 /*#
-    @method get_item_position
+    @method get_item_position GtkToolItemGroup
     @brief Gets the position of item in group as index.
     @param item a GtkToolItem
     @return the index of item in group or -1 if item is no child of group
@@ -157,7 +160,7 @@ FALCON_FUNC ToolItemGroup::get_item_position( VMARG )
 
 
 /*#
-    @method get_n_items
+    @method get_n_items GtkToolItemGroup
     @brief Gets the number of tool items in group.
     @return the number of tool items in group
  */
@@ -171,7 +174,7 @@ FALCON_FUNC ToolItemGroup::get_n_items( VMARG )
 
 
 /*#
-    @method get_label
+    @method get_label GtkToolItemGroup
     @brief Gets the label of group.
     @return the label of group.
 
@@ -193,7 +196,7 @@ FALCON_FUNC ToolItemGroup::get_label( VMARG )
 
 
 /*#
-    @method get_label_widget
+    @method get_label_widget GtkToolItemGroup
     @brief Gets the label widget of group.
     @return the label widget of group
  */
@@ -208,7 +211,7 @@ FALCON_FUNC ToolItemGroup::get_label_widget( VMARG )
 
 
 /*#
-    @method get_nth_item
+    @method get_nth_item GtkToolItemGroup
     @brief Gets the tool item at index in group.
     @param index the index
     @return the GtkToolItem at index
@@ -228,7 +231,7 @@ FALCON_FUNC ToolItemGroup::get_nth_item( VMARG )
 
 
 /*#
-    @method get_header_relief
+    @method get_header_relief GtkToolItemGroup
     @brief Gets the relief mode of the header button of group.
     @return the GtkReliefStyle
  */
@@ -242,7 +245,7 @@ FALCON_FUNC ToolItemGroup::get_header_relief( VMARG )
 
 
 /*#
-    @method insert
+    @method insert GtkToolItemGroup
     @brief Inserts item at position in the list of children of group.
     @param item the GtkToolItem to insert into group
     @param position the position of item in group, starting with 0. The position -1 means end of list.
@@ -264,7 +267,7 @@ FALCON_FUNC ToolItemGroup::insert( VMARG )
 
 
 /*#
-    @method set_collapsed
+    @method set_collapsed GtkToolItemGroup
     @brief Sets whether the group should be collapsed or expanded.
     @param collapsed whether the group should be collapsed or expanded
  */
@@ -283,7 +286,7 @@ FALCON_FUNC ToolItemGroup::set_collapsed( VMARG )
 
 
 /*#
-    @method set_ellipsize
+    @method set_ellipsize GtkToolItemGroup
     @brief Sets the ellipsization mode which should be used by labels in group.
     @param ellipsize the PangoEllipsizeMode labels in group should use
  */
@@ -302,7 +305,7 @@ FALCON_FUNC ToolItemGroup::set_ellipsize( VMARG )
 
 
 /*#
-    @method set_item_position
+    @method set_item_position GtkToolItemGroup
     @brief Sets the position of item in the list of children of group.
     @param item the GtkToolItem to move to a new position, should be a child of group.
     @param position the new position of item in group, starting with 0. The position -1 means end of list.
@@ -324,7 +327,7 @@ FALCON_FUNC ToolItemGroup::set_item_position( VMARG )
 
 
 /*#
-    @method set_label
+    @method set_label GtkToolItemGroup
     @brief Sets the label of the tool item group.
     @param label the new human-readable label of of the group
 
@@ -341,7 +344,7 @@ FALCON_FUNC ToolItemGroup::set_label( VMARG )
 
 
 /*#
-    @method set_label_widget
+    @method set_label_widget GtkToolItemGroup
     @brief Sets the label of the tool item group.
     @param label_widget the widget to be displayed in place of the usual label
 
@@ -362,7 +365,7 @@ FALCON_FUNC ToolItemGroup::set_label_widget( VMARG )
 
 
 /*#
-    @method set_header_relief
+    @method set_header_relief GtkToolItemGroup
     @brief Set the button relief of the group header.
     @param style the GtkReliefStyle
  */

@@ -7,6 +7,9 @@
 #undef MYSELF
 #define MYSELF Gdk::EventButton* self = Falcon::dyncast<Gdk::EventButton*>( vm->self().asObjectSafe() )
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gdk {

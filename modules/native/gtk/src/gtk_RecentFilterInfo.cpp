@@ -4,6 +4,9 @@
 
 #include "gtk_RecentFilterInfo.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
