@@ -169,7 +169,19 @@ bb.readString()
 EXPECT(bb.r16(), 0xFDFE, "ByteBuf readPtr 2")
 
 
-// TODO: writing
+// pointers + direct memoty, writing
+ba = ByteBuf()
+ba.w16(0xFFFF).w8(1).w32(0x33445566).w8(0xDD).w16(0xEEEE)
+bb = ByteBuf()
+bb.writePtr(ba.ptr() + 3, 5) // skip first 3 bytes and last 2 byte
+EXPECT(bb.r32(), 0x33445566, "writePtr 1")
+EXPECT(bb.r8(), 0xDD, "writePtr 2")
+EXPECT(bb.readable(), 0, "writePtr bytecount")
+
+bc = ByteBufReverseEndian()
+bc.writePtr(ba.ptr() + 3, 5) // same as above
+EXPECT(bc.r32(), 0x66554433, "writePtr 1 reversed endian")
+EXPECT(bc.r8(), 0xDD, "writePtr 2 reversed endian")
 
 // read to membuf
 mb = MemBuf(5, 4) // 5x int32
@@ -255,6 +267,26 @@ EXPECT(bb.readableBits(), 1, "BitBuf mem region Lshift last bit")
 bb.bitCount(7).writeBits(0)
 bb.readToBuf(t)
 EXPECT(t.r8(), 0, "BitBuf mem region Lshift extra bits")
+
+// toMemBuf tests
+bb = ByteBuf(100).w32(0xFF0000FF)
+for i = 0 to 90: bb.w8(i) // fill up a bit
+mb = bb.toMemBuf() // default behavior: adopt
+EXPECT(mb.ptr(), bb.ptr(), "toMemBuf adopt ptr equality")
+cp = bb.toMemBuf(true) // copy; ptrs must be different
+if cp.ptr() == bb.ptr()
+    success = false
+    > "toMemBuf copy ptr must be different"
+end
+p = bb.ptr()
+bb.write("this enlarges the buffer and forces reallocation")
+// now mb is invalid; it still uses the old pointer prior to re-allocation
+if bb.ptr() == p
+    success = false
+    > "buffer enlarged, but not reallocated"
+end
+EXPECT(mb.ptr(), p, "toMemBuf adopt ptr after reallocation") // must be same old (but now invalid) ptr
+EXPECT(ByteBuf(cp,true).r32(), 0xFF0000FF, "toMemBuf re-adopt read (copy)")
 
 
 > " === DEPENDENCY TEST vs. GC ==="
