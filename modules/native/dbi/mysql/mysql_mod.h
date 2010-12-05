@@ -203,5 +203,5 @@ extern Falcon::DBIServiceMySQL theMySQLService;
 
 #endif /* DBI_MYSQL_H */
 
-/* end of mysql.h */
+/* end of mysql_mod.h */
 
