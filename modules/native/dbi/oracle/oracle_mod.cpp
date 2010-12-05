@@ -1,6 +1,6 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: oracle_srv.cpp
+ * FILE: oracle_mod.cpp
  *
  * Oracle Falcon service/driver
  * -------------------------------------------------------------------
@@ -17,6 +17,7 @@
 #include <errmsg.h>
 
 #include <falcon/engine.h>
+#include <falcon/dbi_error.h>
 #include "oracle_mod.h"
 
 namespace Falcon
@@ -472,7 +473,7 @@ namespace Falcon
         DBIHandleOracle::close();
     }
 
-    DBIStatement *DBIHandleOracle::startTransaction()
+    DBIStatement *DBIHandleOracle::createStatement()
     {
         DBITransactionOracle *t = new DBITransactionOracle( this );
         if ( t->begin() != dbi_ok ) {
@@ -502,8 +503,9 @@ namespace Falcon
         o_connTr = NULL;
     }
 
-    dbi_status DBIHandleOracle::closeTransaction( DBIStatement *tr )
+    dbi_status DBIHandleOracle::terminateStatement( Connection *conn, DBIStatement *st )
     {
+        conn->terminateStatement( st );
         return dbi_ok;
     }
 
@@ -517,31 +519,6 @@ namespace Falcon
             return dbi_no_error_message;
 
         description.bufferize( errorMessage );
-
-        return dbi_ok;
-    }
-
-    dbi_status DBIHandleOracle::escapeString( const String &value, String &escaped )
-    {
-        if ( value.length() == 0 )
-            return dbi_ok;
-
-        AutoCString asValue( value );
-
-        int maxLen = ( value.length() * 2 ) + 1;
-        char *cTo = (char *) memAlloc( sizeof( char ) * maxLen );
-
-        // FIXME
-        size_t convertedSize = mysql_real_escape_string( o_conn, cTo,
-                asValue.c_str(), asValue.length() );
-
-        if ( convertedSize < value.length() ) {
-            memFree( cTo );
-            return dbi_error;
-        }
-
-        escaped.fromUTF8( cTo );
-        memFree( cTo );
 
         return dbi_ok;
     }
@@ -567,12 +544,11 @@ namespace Falcon
         return dbi_ok;
     }
 
-    DBIHandle *DBIServiceOracle::connect( const String &parameters, bool persistent,
-            dbi_status &retval, String &errorMessage )
+    DBIHandle *DBIServiceOracle::connect( const String &parameters, dbi_status &retval, String &errorMessage )
     {
-        char *host, *user, *passwd, *db, *port, *unixSocket, *clientFlags;
+        char *user, *passwd, *db;
         unsigned int iPort, iClientFlag;
-        char** vals[] = { &host, &user, &passwd, &db, &port, &unixSocket, &clientFlags, 0 };
+        char** vals[] = { &user, &passwd, &db, 0 };
 
         Environment *env;
         Connection *conn;
@@ -619,8 +595,8 @@ namespace Falcon
 
         env = Environment::createEnvironment();
 
-        // We'll need a name and password at the very least here.
-        conn = env->createConnection(user, passwd);
+        // We'll need at least a username, password, and db.
+        conn = env->createConnection(user, passwd, connp);
 
         if ( conn == NULL )
         {
@@ -659,5 +635,5 @@ namespace Falcon
     }
 }/* namespace Falcon */
 
-/* end of oracle_srv.cpp */
+/* end of oracle_mod.cpp */
 
