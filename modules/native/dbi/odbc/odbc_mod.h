@@ -152,7 +152,7 @@ protected:
    int32 m_nColumnCount;
    
    ODBCColInfo* m_pColInfo;
-   //bool m_bAsString;
+   bool m_bAsString;
    ODBCConn *m_conn;
 
    void GetColumnInfo();

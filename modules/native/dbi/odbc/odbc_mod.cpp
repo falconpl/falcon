@@ -147,7 +147,9 @@ void ODBCInBind::onItemChanged( int num )
    case DBIBindItem::t_string:
       ValueType = SQL_C_WCHAR;
       ParameterType = SQL_WCHAR;
-      pLenInd = BufferLength = (item.asStringLen()+1)*sizeof(wchar_t);
+      // String::toWideString is granted to ensure space and put extra '\0' at the end.
+      // Use the extra incoming '\0'
+      pLenInd = BufferLength = item.asStringLen()*sizeof(wchar_t);
       ParameterValuePtr = (SQLPOINTER) item.asString();
       ColSize = (SQLSMALLINT) BufferLength;
       break;
@@ -202,6 +204,7 @@ DBIRecordsetODBC::DBIRecordsetODBC( DBIHandleODBC *dbh, int64 nRowCount, int32 n
    dbh->incConnRef();
    m_conn = dbh->getConn();
    h->incref();
+   m_bAsString = dbh->options()->m_bFetchStrings;
 }
 
 
@@ -215,6 +218,7 @@ DBIRecordsetODBC::DBIRecordsetODBC( DBIHandleODBC *dbh, int64 nRowCount, int32 n
 {
    dbh->incConnRef();
    m_conn = dbh->getConn();
+   m_bAsString = dbh->options()->m_bFetchStrings;
 }
 
 
@@ -402,20 +406,24 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
          if( ExpSize == SQL_NULL_DATA )
          {
             value.setNil();
-            return true;
          }
-         if( ExpSize == 0 )
+         else if( ExpSize == 0 )
          {
             value = new CoreString("");
-            return true;
          }
-         wchar_t *cStr = (wchar_t*) memAlloc( ExpSize );  
-         ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, ExpSize, &nSize);
+         else
+         {
+            // we must account for an extra '0' put in by ODBC
+            uint32 alloc = ExpSize+sizeof(wchar_t);
+            wchar_t *cStr = (wchar_t*) memAlloc( alloc );  
+            ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, alloc, &nSize);
 
-         // save the data nevertheless
-         CoreString* cs = new CoreString;
-         cs->adopt( cStr, ExpSize/sizeof(wchar_t), ExpSize );
-         value = cs;
+            // save the data even in case we had an error, or we'll leak
+            CoreString* cs = new CoreString;
+            uint32 size = ExpSize/sizeof(wchar_t);
+            cs->adopt( cStr, size, alloc );
+            value = cs;
+         }
       }
       break;
 
@@ -424,13 +432,29 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
    case SQL_REAL:
    case SQL_FLOAT:
    case SQL_DOUBLE:
-      ret = SQLGetData( hStmt, nCol+1, SQL_C_DOUBLE, &real, sizeof(real), &ExpSize);
-      if( ExpSize == SQL_NULL_DATA )
+      if( m_bAsString )
       {
-         value.setNil();
-         return true;
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
       }
-      value.setNumeric( real );
+      else 
+      {
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_DOUBLE, &real, sizeof(real), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setNumeric( real );
+         }
+      }
       break;
 
    case SQL_INTERVAL_MONTH:	
@@ -451,13 +475,29 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
    case SQL_SMALLINT:
    case SQL_INTEGER:
    case SQL_BIGINT:
-      ret = SQLGetData( hStmt, nCol+1, SQL_C_SBIGINT, &integer, sizeof(integer), &ExpSize);
-      if( ExpSize == SQL_NULL_DATA )
+      if( m_bAsString )
       {
-         value.setNil();
-         return true;
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
       }
-      value.setInteger( integer );
+      else
+      {
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_SBIGINT, &integer, sizeof(integer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setInteger( integer );
+         }
+      }
       break;
    
    case SQL_BIT:
@@ -465,9 +505,18 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
       if( ExpSize == SQL_NULL_DATA )
       {
          value.setNil();
-         return true;
       }
-      value.setBoolean( uchar ? true : false );
+      else
+      {
+         if( m_bAsString )
+         {
+            value.setString( new CoreString( uchar ? "true" : "false" ) );
+         }
+         else
+         {
+            value.setBoolean( uchar ? true : false );
+         }
+      }
       return true;
 
    case SQL_BINARY:
@@ -491,17 +540,28 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
 
    case SQL_TYPE_DATE:
    case SQL_TYPE_TIME:	
-   case SQL_TYPE_TIMESTAMP:	
+   case SQL_TYPE_TIMESTAMP:
+      if( m_bAsString )
+      {
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
+      }
+      else
       {
          TIMESTAMP_STRUCT tstamp;
          ret = SQLGetData( hStmt, nCol+1, SQL_C_TYPE_TIMESTAMP, &tstamp, sizeof(tstamp) , &ExpSize);
          if( ExpSize == SQL_NULL_DATA )
          {
             value.setNil();
-            return true;
          }
-
-         if ( ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO )
+         else if ( ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO )
          {
             TimeStamp* ts = new TimeStamp;
 
@@ -758,19 +818,23 @@ DBIRecordset *DBIHandleODBC::query( const String &sql, ItemArray* params )
    SQLHSTMT hStmt = openStatement( conn->m_hHdbc );
    SQLRETURN ret;
    
+   AutoWString asQuery( sql );
+
    // call the query
    if( params == 0 )
    {
       // -- no params -- easier.
-      AutoWString asQuery( sql );
       ret = SQLExecDirectW( hStmt, ( SQLWCHAR* )asQuery.w_str(), asQuery.length() );
    }
    else 
    {
-      String tgt;
-      sqlExpand( sql, tgt, *params );
-      AutoWString asQuery( tgt );
-      ret = SQLExecDirectW( hStmt, ( SQLWCHAR* )asQuery.w_str(), asQuery.length() );
+      ret = SQLPrepareW( hStmt, (SQLWCHAR*) asQuery.w_str(), asQuery.length() );
+      if ( ret != SQL_ERROR )
+      {
+         ODBCInBind inBind( hStmt, options()->m_bUseBigInt );
+         inBind.bind(*params, DBITimeConverter_ODBC_TIME_impl, DBIStringConverter_WCHAR_impl );
+         ret = SQLExecute( hStmt );
+      }
    }
 
    if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )

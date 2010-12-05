@@ -532,6 +532,49 @@ void Handle_query( VMachine *vm )
    }
 }
 
+/*#
+   @method expand Handle
+   @brief Expands a sql query with provided parameters.
+   @param sql The SQL query
+   @optparam ... Parameters for the query
+   @return A string containing a complete SQL statement.
+   @raise DBIError in case the expansion fails.
+
+   Some underlying database engine may not be consistently working
+   with the Falcon types used as parameters. As such, this utility
+   can be used to create complete query strings that doesn't require
+   driver-side parameter binding and expansion.
+
+*/
+
+void Handle_expand( VMachine *vm )
+{
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S, ..." ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+
+
+   DBIRecordset* res = 0;
+   int32 pCount = vm->paramCount();
+   CoreString* target = new CoreString;
+   
+   ItemArray params( pCount - 1 );      
+   for( int32 i = 1; i < vm->paramCount(); i++)
+   {
+      params.append( *vm->param(i) );
+   }
+      
+   // May throw
+   dbt->sqlExpand( *i_sql->asString(), *target, params );
+   vm->retval( target );
+}
 
 /*#
    @method prepare Handle

@@ -332,7 +332,8 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "begin", &Falcon::Ext::Handle_begin );
    self->addClassMethod( handler_class, "commit", &Falcon::Ext::Handle_commit );
    self->addClassMethod( handler_class, "rollback", &Falcon::Ext::Handle_rollback );
-
+   self->addClassMethod( handler_class, "expand", &Falcon::Ext::Handle_expand ).asSymbol()
+         ->addParam("sql");
    self->addClassMethod( handler_class, "lselect", &Falcon::Ext::Handle_lselect ).asSymbol()
          ->addParam("sql")->addParam("begin")->addParam("count");
 
@@ -388,7 +389,33 @@ FALCON_MODULE_DECL
 
     Inherited class from Error to distinguish from a standard Falcon error. In many
     cases, DBIError.extra will contain the SQL query that caused the problem.
-    */
+
+    Error code is one of the following:
+    - DBIError.COLUMN_RANGE
+    - DBIError.INVALID_DRIVER
+    - DBIError.NOMEM
+    - DBIError.CONNPARAMS
+    - DBIError.CONNECT
+    - DBIError.QUERY
+    - DBIError.QUERY_EMPTY
+    - DBIError.OPTPARAMS
+    - DBIError.NO_SUBTRANS
+    - DBIError.NO_MULTITRANS
+    - DBIError.UNPREP_EXEC
+    - DBIError.BIND_SIZE
+    - DBIError.BIND_MIX
+    - DBIError.EXEC
+    - DBIError.FETCH
+    - DBIError.UNHANDLED_TYPE
+    - DBIError.RESET
+    - DBIError.BIND_INTERNAL
+    - DBIError.TRANSACTION
+    - DBIError.CLOSED_STMT
+    - DBIError.CLOSED_RSET
+    - DBIError.CLOSED_DB
+    - DBIError.DB_NOTFOUND
+    - DBIError.CONNECT_CREATE
+   */
 
    // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external

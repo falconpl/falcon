@@ -54,6 +54,7 @@ void Handle_begin( VMachine *vm );
 void Handle_commit( VMachine *vm );
 void Handle_rollback( VMachine *vm );
 void Handle_lselect( VMachine *vm );
+void Handle_expand( VMachine *vm );
 void Handle_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
 
 //=====================
