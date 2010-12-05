@@ -36,6 +36,29 @@
 
 namespace Falcon { 
     namespace Ext {
+
+// visual studio doesn't have inverse hyperbolic functions
+#ifdef _MSC_VER
+   static double __inverse_call( double value, double (*func)(double) )
+   {      
+      errno = 0;
+      double res = func( value );
+      if ( errno != 0 )
+      {
+          throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+      }
+      if ( res == 0.0 )
+      {
+         throw new( ErrorParam( e_div_by_zero, __LINE__).origin( e_orig_runtime ) );
+      }
+      return 1/res;
+   }
+
+   static double acosh( double value ) { return __inverse_call( value, cosh ); }
+   static double asinh( double value ) { return __inverse_call( value, sinh ); }
+   static double atanh( double value ) { return __inverse_call( value, tanh ); }
+#endif
+
         // Hyperbolic          
         /*#
           @function cosh
