@@ -48,7 +48,7 @@ FALCON_MODULE_DECL
    mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    mysql_class->setWKS( true );
 
-   // we don't have extra functions for the dbhandler of mysql. If whe had,
+   // we don't have extra functions for the dbhandler of mysql. If we had,
    // this would be the right place to store them.
 
    // service publication

@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID:
+* Category: math_extra
+* Subcategory:
+* Short: 
+* Description:
+*    Make sure the functions are returning sane results.
+* [/Description]
+*
+**************************************************************************/
+
+load math_extra
+
+if cosh(1) != 1.54308: failure( "cosh" )
+if sinh(1) != 1.1752: failure( "sinh" )
+if tanh(1) != 0.761594: failure( "tanh" )
+
+if acosh(1) != 0: failure( "acosh" )
+if asinh(1) != 0.881374: failure( "asinh" )
+if atanh(0.5) != 0549306: failure( "atanh" )
+
+if sec(1) != 1.85082: failure( "sec" )
+if csc(1) != 1.1884: failure( "csc" )
+if cotan(1) != 0.642093: failure( "cotan" )
+
+if lambda(2,4) != 256: failure( "lambda" )
+
+success()
+
