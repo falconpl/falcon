@@ -48,3 +48,4 @@ private:
 #endif
 
 /* end of dbi_refcount.h */
+

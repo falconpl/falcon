@@ -79,21 +79,25 @@ void Sqlite3InBind::onItemChanged( int num )
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res )
+DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt *res )
     : DBIRecordset( dbh ),
       m_pStmt( new SQLite3StatementHandler(res) ),
       m_stmt( res )
 {
+   m_pDbh = dbh->getConn();
+   m_pDbh->incref();
    m_bAsString = dbh->options()->m_bFetchStrings;
    m_row = -1; // BOF
    m_columnCount = sqlite3_column_count( res );
 }
 
-DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandle *dbh, SQLite3StatementHandler *res )
+DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler *res )
     : DBIRecordset( dbh ),
       m_stmt( res->handle() )
 {
    res->incref();
+   m_pDbh = dbh->getConn();
+   m_pDbh->incref();
    m_bAsString = dbh->options()->m_bFetchStrings;
    m_row = -1; // BOF
    m_columnCount = sqlite3_column_count( m_stmt );
@@ -174,6 +178,7 @@ void DBIRecordsetSQLite3::close()
 {
    if( m_stmt != 0 )
    {
+      m_pDbh->decref();
       m_pStmt->decref();
       m_pStmt = 0;
       m_stmt = 0;
@@ -249,17 +254,23 @@ DBIStatementSQLite3::DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* s
    DBIStatement( dbh ),
    m_pStmt( new SQLite3StatementHandler( stmt ) ),
    m_statement( stmt ),
-   m_inBind( stmt )
+   m_inBind( stmt ),
+   m_bFirst( false )
 {
+   m_pDbh = dbh->getConn();
+   m_pDbh->incref();
 }
 
 DBIStatementSQLite3::DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt ):
    DBIStatement( dbh ),
    m_pStmt( pStmt ),
    m_statement( pStmt->handle() ),
-   m_inBind( pStmt->handle() )
+   m_inBind( pStmt->handle() ),
+   m_bFirst( false )
 {
    pStmt->incref();
+   m_pDbh = dbh->getConn();
+   m_pDbh->incref();
 }
 
 
@@ -273,16 +284,31 @@ DBIRecordset* DBIStatementSQLite3::execute( ItemArray* params )
    if( m_statement == 0 )
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
-   if( params != 0 )
-      m_inBind.bind(*params);
-
    // clear previous recordset
-   int res = sqlite3_reset( m_statement );
-   if( res != SQLITE_OK )
+   int res;
+
+   if ( m_bFirst )
    {
-      DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_EXEC, res );
+      m_bFirst = false;
+   }
+   else
+   {
+      res = sqlite3_reset( m_statement );
+      if( res != SQLITE_OK )
+      {
+         DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_EXEC, res );
+      }
    }
 
+   if( params != 0 )
+   {
+      m_inBind.bind(*params);
+   }
+   else 
+   {
+      m_inBind.unbind();
+   }
+   
    res = sqlite3_step( m_statement );
    if( res != SQLITE_OK
          && res != SQLITE_DONE
@@ -290,13 +316,14 @@ DBIRecordset* DBIStatementSQLite3::execute( ItemArray* params )
    {
       DBIHandleSQLite3::throwError( FALCON_DBI_ERROR_EXEC, res );
    }
-   
+
+/*   
    if ( sqlite3_column_count( m_statement ) != 0 )
    {
       // we do have a recorset
-      return new DBIRecordsetSQLite3( m_dbh, m_pStmt );
+      return new DBIRecordsetSQLite3( static_cast<DBIHandleSQLite3*>( m_dbh ), m_pStmt );
    }
-
+*/
    return 0;
 }
 
@@ -316,6 +343,7 @@ void DBIStatementSQLite3::close()
 {
    if( m_statement != 0 )
    {
+      m_pDbh->decref();
       m_pStmt->decref();
       m_pStmt = 0;
       m_statement = 0;
@@ -336,7 +364,8 @@ DBIHandleSQLite3::DBIHandleSQLite3( sqlite3 *conn ):
       m_bInTrans(false)
 {
    m_conn = conn;
-   sqlite3_extended_result_codes(conn, 1 );
+   m_connRef = new SQLite3Handler( m_conn );
+   sqlite3_extended_result_codes( conn, 1 );
 }
 
 DBIHandleSQLite3::~DBIHandleSQLite3()
@@ -369,15 +398,37 @@ const DBISettingParams* DBIHandleSQLite3::options() const
 DBIRecordset *DBIHandleSQLite3::query( const String &sql, ItemArray* params )
 {
    sqlite3_stmt* pStmt = int_prepare( sql );
+   
+   int res;
+   if( params != 0 )
+   {
+      Sqlite3InBind binds( pStmt );
+      binds.bind(*params);
+      res = sqlite3_step( pStmt );
+   }
+   else
+   {
+      res = sqlite3_step( pStmt );
+   }
+
+   if( res != SQLITE_OK
+         && res != SQLITE_DONE
+         && res != SQLITE_ROW )
+   {
+      throwError( FALCON_DBI_ERROR_QUERY, res );
+   }
+
+   // do we have a recordset?
    int count = sqlite3_column_count( pStmt );
+   m_nLastAffected = sqlite3_changes( m_conn );
    if( count == 0 )
    {
-      int_execute( pStmt, params );
-      m_nLastAffected = sqlite3_changes( m_conn );
+      sqlite3_finalize( pStmt );
       return 0;
    }
    else
    {
+      sqlite3_reset( pStmt );
       // the bindings must stay with the recordset...
       return new DBIRecordsetSQLite3( this, pStmt );
    }
@@ -407,32 +458,6 @@ sqlite3_stmt* DBIHandleSQLite3::int_prepare( const String &sql ) const
    return pStmt;
 }
 
-void DBIHandleSQLite3::int_execute( sqlite3_stmt* pStmt, ItemArray* params )
-{
-   // int_execute is NEVER called alone
-   fassert( m_conn != 0 );
-
-   int res;
-   if( params != 0 )
-   {
-      Sqlite3InBind binds( pStmt );
-      binds.bind(*params);
-      res = sqlite3_step( pStmt );
-      sqlite3_finalize( pStmt );
-   }
-   else
-   {
-      res = sqlite3_step( pStmt );
-      sqlite3_finalize( pStmt );
-   }
-
-   if( res != SQLITE_OK
-         && res != SQLITE_DONE
-         && res != SQLITE_ROW )
-   {
-      throwError( FALCON_DBI_ERROR_QUERY, res );
-   }
-}
 
 
 void DBIHandleSQLite3::begin()
@@ -602,11 +627,11 @@ void DBIHandleSQLite3::close()
    {
       if( m_bInTrans )
       {
-         sqlite3_exec( m_conn, "ROLLBACK", 0, 0, 0 );
+         sqlite3_exec( m_conn, "COMMIT", 0, 0, 0 );
          m_bInTrans = false;
       }
 
-      sqlite3_close( m_conn );
+      m_connRef->decref();
       m_conn = NULL;
    }
 }

@@ -17,7 +17,7 @@ import from dbi
 
 try
    conn = dbi.connect( "sqlite3:db=testsuite.db" )
-   conn.perform("
+   conn.query("
       insert into TestTable( key, tblob, bblob, number )
       values( 1, 'A textual blob', 'A binary blob', 101.243 )
    ")

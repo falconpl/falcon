@@ -240,6 +240,9 @@ public:
          const DBITimeConverter& tc=DBITimeConverter_ISO_impl,
          const DBIStringConverter& sc=DBIStringConverter_UTF8_impl );
 
+   /*# Bind to 0 parameters */
+   void unbind();
+
    /** Called back when the binding is initialized.
     *
     * @param size The number of the variables that should be allocated.
