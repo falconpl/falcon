@@ -49,7 +49,7 @@ namespace Falcon {
       }
       if ( res == 0.0 )
       {
-         throw new( ErrorParam( e_div_by_zero, __LINE__).origin( e_orig_runtime ) );
+         throw new MathError( ErrorParam( e_div_by_zero, __LINE__).origin( e_orig_runtime ) );
       }
       return 1/res;
    }
