@@ -20,7 +20,7 @@ try
    mb = MemBuf(10)
    for i = 0 to 9: mb[i] = i+65
    
-   conn.perform("
+   conn.query("
       insert into TestTable( key, tblob, bblob, number )
       values( ?, ?, ?, ? )",
       2, "New data for text blob", mb, 24.45 )

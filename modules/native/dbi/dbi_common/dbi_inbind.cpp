@@ -224,6 +224,27 @@ DBIInBind::~DBIInBind()
    delete[] m_ibind;
 }
 
+
+void DBIInBind::unbind()
+{
+   if ( m_size == 0 )
+   {
+      m_size = -1;
+      return;
+   }
+
+   if( m_size != -1 )
+   {
+      // time to explode.
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ )
+            .extra(
+              String("").N( (int64) m_size ).A(" != ").N( (int64) 0 )
+            )
+         );
+   }
+}
+
+
 void DBIInBind::bind( const ItemArray& arr,
       const DBITimeConverter& tc,
       const DBIStringConverter& sc )

@@ -92,28 +92,16 @@ protected:
 };
 
 
-class ODBCStatementHandler {
+class ODBCStatementHandler: public DBIRefCounter<SQLHSTMT> {
 public:
    
    ODBCStatementHandler( SQLHSTMT hStmt ):
-       m_hStmt(hStmt),
-       m_nRefCount(1)
+      DBIRefCounter( hStmt )
    {}
 
    ~ODBCStatementHandler() {
-      SQLFreeStmt( m_hStmt, SQL_CLOSE );
+      SQLFreeStmt( handle(), SQL_CLOSE );
    }
-
-
-   void incref() { m_nRefCount ++; }
-
-   void decref() { if ( --m_nRefCount == 0 ) delete this; }
-
-   SQLHSTMT handle() const { return m_hStmt; }
-
-private:
-   SQLHSTMT m_hStmt;
-   int m_nRefCount;
 };
 
 

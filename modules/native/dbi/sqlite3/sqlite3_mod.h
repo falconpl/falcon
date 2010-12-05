@@ -26,28 +26,33 @@ namespace Falcon
 
 class DBIHandleSQLite3;
 
-class SQLite3StatementHandler {
+
+class SQLite3StatementHandler: public DBIRefCounter<sqlite3_stmt*>
+{
 public:
-   
-   SQLite3StatementHandler( sqlite3_stmt* hStmt ):
-       m_hStmt(hStmt),
-       m_nRefCount(1)
-   {}
-   
-   ~SQLite3StatementHandler() {
-      sqlite3_finalize( m_hStmt );
+   SQLite3StatementHandler( sqlite3_stmt* p ):
+      DBIRefCounter(p)
+      {}
+
+   virtual ~SQLite3StatementHandler() {
+      sqlite3_finalize( handle() );
    }
-
-   void incref() { m_nRefCount ++; }
-
-   void decref() { if ( --m_nRefCount == 0 ) delete this; }
-
-   sqlite3_stmt* handle() const { return m_hStmt; }
-
-private:
-   sqlite3_stmt* m_hStmt;
-   int m_nRefCount;
 };
+
+
+class SQLite3Handler: public DBIRefCounter<sqlite3*>
+{
+public:
+   SQLite3Handler( sqlite3* p ):
+      DBIRefCounter(p)
+      {}
+
+
+   virtual ~SQLite3Handler() {
+      sqlite3_close( handle() );
+   }
+};
+
 
 
 class Sqlite3InBind: public DBIInBind
@@ -70,13 +75,15 @@ class DBIRecordsetSQLite3 : public DBIRecordset
 protected:
    int m_row;
    int m_columnCount;
-   SQLite3StatementHandler *m_pStmt;
+   SQLite3StatementHandler* m_pStmt;
+   SQLite3Handler* m_pDbh;
+   // caching for simpler access
    sqlite3_stmt* m_stmt;
    bool m_bAsString;
 
 public:
-   DBIRecordsetSQLite3( DBIHandle *dbt, SQLite3StatementHandler* pStmt );
-   DBIRecordsetSQLite3( DBIHandle *dbt, sqlite3_stmt* stmt );
+   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, SQLite3StatementHandler* pStmt );
+   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt );
    virtual ~DBIRecordsetSQLite3();
 
    virtual int64 getRowIndex();
@@ -92,11 +99,6 @@ public:
 
 class DBIStatementSQLite3: public DBIStatement
 {
-protected:
-   sqlite3_stmt* m_statement;
-   SQLite3StatementHandler* m_pStmt;
-   Sqlite3InBind m_inBind;
-
 public:
    DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt );
    DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
@@ -107,18 +109,25 @@ public:
    virtual void close();
 
    sqlite3_stmt* sqlite3_statement() const { return m_statement; }
+
+protected:
+   sqlite3_stmt* m_statement;
+   SQLite3StatementHandler* m_pStmt;
+   Sqlite3InBind m_inBind;
+   SQLite3Handler* m_pDbh;
+   bool m_bFirst;
 };
 
 
 class DBIHandleSQLite3 : public DBIHandle
 {
 protected:
-   sqlite3 *m_conn;
+   sqlite3* m_conn;
+   SQLite3Handler* m_connRef;
    DBISettingParams m_settings;
    bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
-   void int_execute( sqlite3_stmt* pStmt, ItemArray* params );
 
 public:
    DBIHandleSQLite3();
@@ -142,7 +151,7 @@ public:
 
    static void throwError( int falconError, int sql3Error, char* edesc=0 );
    static String errorDesc( int error );
-   sqlite3 *getConn() { return m_conn; }
+   SQLite3Handler* getConn() { return m_connRef; }
 };
 
 class DBIServiceSQLite3 : public DBIService
