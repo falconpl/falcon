@@ -205,7 +205,7 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
    memset( m_pMyBind, 0, sizeof( MYSQL_BIND ) * m_columnCount );
    m_pOutBind = new MyDBIOutBind[ m_columnCount ];
 
-   // keep track of blobs: they myst be zeroed before each fetch
+   // keep track of blobs: they must be zeroed before each fetch
    m_pBlobId = new int[m_columnCount];
    m_nBlobCount = 0;
 
@@ -1338,5 +1338,5 @@ CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 } /* namespace Falcon */
 
-/* end of mysql_srv.cpp */
+/* end of mysql_mod.cpp */
 

@@ -2,9 +2,9 @@
  * FALCON - The Falcon Programming Language.
  * FILE: odbc_srv.cpp
  *
- * MySQL Falcon service/driver
+ * ODBC service/driver
  * -------------------------------------------------------------------
- * Author: Tiziano De Rubeis
+ * Author: Giancarlo Niccolai
  * Begin: Wed Oct 13 09:44:00 2008
  *
  * -------------------------------------------------------------------
@@ -27,6 +27,8 @@
 #include <falcon/engine.h>
 #include "odbc_mod.h"
 #include <sqlext.h>
+
+#include <falcon/autocstring.h>
 
 namespace Falcon
 {
@@ -70,45 +72,6 @@ DBIRecordsetODBC::~DBIRecordsetODBC()
 
 	memFree( m_pDataArr );
 }
-
-dbi_type DBIRecordsetODBC::getFalconType( int typ )
-{
-   switch ( typ )
-   {
-   case SQL_TINYINT:
-   case SQL_INTEGER:
-   case SQL_SMALLINT:
-   case SQL_BIT:
-      return dbit_integer;
-
-   case SQL_BIGINT:
-      return dbit_integer64;
-
-   case SQL_DECIMAL:
-   case SQL_NUMERIC:
-   case SQL_FLOAT:
-   case SQL_REAL:
-   case SQL_DOUBLE:
-      return dbit_numeric;
-
-   case SQL_TYPE_DATE:
-      return dbit_date;
-
-   case SQL_TYPE_TIME:
-      return dbit_time;
-
-   case SQL_TYPE_TIMESTAMP:
-      return dbit_datetime;
-
-   case SQL_BINARY:
-   case SQL_VARBINARY:
-   case SQL_LONGVARBINARY:
-	  return dbit_blob;
-
-   // In this version interval data type is not supported
-   default:
-      return dbit_string;
-   }
 }
 
 dbi_status DBIRecordsetODBC::next()
@@ -499,35 +462,7 @@ dbi_status DBITransactionODBC::begin()
    return dbi_ok;
 }
 
-dbi_status DBITransactionODBC::commit()
-{
-   SQLRETURN srRet = SQLEndTran( 
-	   SQL_HANDLE_DBC, 
-	   static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
-	   SQL_COMMIT );
 
-   m_inTransaction = false;
-
-   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
-	   return dbi_error;
-   
-   return dbi_ok;
-}
-
-dbi_status DBITransactionODBC::rollback()
-{
-   SQLRETURN srRet = SQLEndTran( 
-	   SQL_HANDLE_DBC, 
-	   static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
-	   SQL_ROLLBACK );
-
-   m_inTransaction = false;
-	
-   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
-	   return dbi_error;
-   
-   return dbi_ok;
-}
 
 dbi_status DBITransactionODBC::close()
 {
@@ -550,134 +485,18 @@ dbi_status DBITransactionODBC::getLastError( String &description )
 }
 
 
-DBIBlobStream *DBITransactionODBC::openBlob( const String &blobId, dbi_status &status )
-{
-   status = dbi_not_implemented;
-   return 0;
-}
-
-DBIBlobStream *DBITransactionODBC::createBlob( dbi_status &status, const String &params,
-      bool bBinary )
-{
-   status = dbi_not_implemented;
-   return 0;
-}
-
-/******************************************************************************
- * DB Handler class
- *****************************************************************************/
-
-DBIStatement *DBIHandleODBC::startTransaction()
-{
-   DBITransactionODBC *t = new DBITransactionODBC( this );
-   if ( t->begin() != dbi_ok ) {
-      // TODO: filter useful information to the script level
-      delete t;
-      return NULL;
-   }
-
-   return t;
-}
-
-DBIHandleODBC::DBIHandleODBC()
-{
-	m_conn = NULL;
-	m_connTr = NULL;
-}
-
-DBIHandleODBC::DBIHandleODBC( ODBCConn *conn )
-{
-   m_conn = conn;
-   m_connTr = NULL;
-}
-
-DBIHandleODBC::~DBIHandleODBC( )
-{
-	close( );
-}
-
-dbi_status DBIHandleODBC::closeTransaction( DBIStatement *tr )
-{
-	return tr->commit();
-}
-
-
-DBIStatement *DBIHandleODBC::getDefaultTransaction()
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionODBC( this );
-   }
-
-   return m_connTr;
-}
-
-
-int64 DBIHandleODBC::getLastInsertedId()
-{
-   return -1;
-}
-
-int64 DBIHandleODBC::getLastInsertedId( const String& sequenceName )
-{
-   return -1;
-}
-
-
-
-dbi_status DBIHandleODBC::escapeString( const String &value, String &escaped )
-{
-	if ( value.length() == 0 )
-	  return dbi_ok;
-
-	if( m_conn == NULL )
-	   return dbi_invalid_connection;
-
-	AutoCString sConv( value );
-	int maxLen = ( sConv.length() * 2 ) + 1;
-	SQLCHAR* pRet = (SQLCHAR *) malloc( sizeof( SQLCHAR ) * maxLen );
-	SQLINTEGER nBuff, nBuffOut;
-	nBuff = maxLen;
-
-	RETCODE ret = SQLNativeSql( m_conn->m_hHdbc, ( SQLCHAR* )sConv.c_str( ), sConv.length( ), pRet, nBuff, &nBuffOut );
-
-	if( ( ret != SQL_SUCCESS ) && ( ret != SQL_SUCCESS_WITH_INFO ) )
-		return dbi_execute_error;
-
-   escaped = ( char* )pRet;
-   escaped.bufferize();
-
-   free( pRet );
-
-   return dbi_ok;
-}
-
-dbi_status DBIHandleODBC::close()
-{
-	if( m_conn )
-	{
-		m_conn->Destroy( );
-		memFree( m_conn );
-		m_conn = NULL;
-	}
-	
-	return dbi_ok;
-}
 
 /******************************************************************************
  * Main service class
  *****************************************************************************/
 
-dbi_status DBIServiceODBC::init()
+void DBIServiceODBC::init()
 {
-   return dbi_ok;
 }
 
-DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
-                                     dbi_status &retval, String &errorMessage )
+DBIHandle *DBIServiceODBC::connect( const String &parameters )
 {
    AutoCString asConnParams( parameters );
-   char *connParams = (char *) memAlloc( sizeof(char) * (asConnParams.length() + 1) );
-   strcpy( connParams, asConnParams.c_str() );
 
    SQLHDESC hIpd;
    SQLHENV hEnv;
@@ -688,10 +507,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to allocate the ODBC environment";
-	   memFree( connParams );
-	   return NULL;
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to allocate the ODBC environment" ));
    }
 
    retcode = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER );
@@ -699,11 +516,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to notify ODBC that this is an ODBC 3.0 app.";
-	   memFree( connParams );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   return NULL;
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to notify ODBC that this is an ODBC 3.0 app." ));
    }
 
    // Allocate ODBC connection handle and connect.
@@ -712,14 +526,12 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
    {
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   retval = dbi_connect_error;
-	   errorMessage = "Impossible to allocate ODBC connection handle and connect.";
-	   memFree( connParams );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to allocate ODBC connection handle and connect." ));
 	   return NULL;
    }
 
-   int nSec = 30;
+   int nSec = 15;
    SQLSetConnectAttr( hHdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER)(&nSec), 0 );
 
    SQLCHAR OutConnStr[MAXBUFLEN];
@@ -728,9 +540,8 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    retcode = SQLDriverConnect(
 	   hHdbc, 
 	   NULL, 
-//	   (SQLCHAR*)sConn.c_str(),
-	   (SQLCHAR*)connParams,
-	   strlen(connParams),
+	   (SQLCHAR*)asConnParams.c_str(),
+      asConnParams.length(),
 	   OutConnStr,
 	   MAXBUFLEN, 
 	   &OutConnStrLen,
@@ -738,26 +549,28 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
 
    if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
    {
-	   errorMessage = "SQLDriverConnect failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, FALSE );
-	   memFree( connParams );
+	   String errorMessage = 
+            String("SQLDriverConnect failed. Reason: ") + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, FALSE );
 	   SQLDisconnect( hHdbc );
 	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+	   SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( errorMessage ));
 	   return NULL;
    }
 
-   SQLSetConnectAttr( hHdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF, 0 );
-
+   /*
    retcode = SQLAllocHandle( SQL_HANDLE_STMT, hHdbc, &hHstmt );
 
    if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
    {
-	   errorMessage = "SQLAllocHandle failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, TRUE );
-	   memFree( connParams );
-	   SQLDisconnect( hHdbc );
-	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
-	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
-	   return NULL;
+      errorMessage = "SQLAllocHandle failed. Reason: " + GetErrorMessage( SQL_HANDLE_DBC, hHdbc, TRUE );
+      memFree( connParams );
+      SQLDisconnect( hHdbc );
+      SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
+      SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      return NULL;
    }
 
    retcode = SQLGetStmtAttr( hHstmt, SQL_ATTR_IMP_PARAM_DESC, &hIpd, 0, 0 );
@@ -765,22 +578,20 @@ DBIHandle *DBIServiceODBC::connect( const String &parameters, bool persistent,
    if( (retcode != SQL_SUCCESS) && (retcode != SQL_SUCCESS_WITH_INFO) )
    {
 	   errorMessage = "SQLGetStmtAttr failed. Reason: " + GetErrorMessage( SQL_HANDLE_STMT, hHstmt, TRUE );
-	   memFree( connParams );
 	   SQLFreeHandle( SQL_HANDLE_STMT, hHstmt );
 	   SQLDisconnect( hHdbc );
 	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
 	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
 	   return NULL;
    }
+   */
 
-
-   memFree( connParams );
    ODBCConn* conn = ( ODBCConn* )memAlloc( sizeof( ODBCConn ) );
-   conn->Initialize( hEnv, hHdbc, hHstmt, hIpd );
+   conn->Initialize( hEnv, hHdbc, 0, 0 );
 
-   retval = dbi_ok;
    return new DBIHandleODBC( conn );
 }
+
 
 CoreObject *DBIServiceODBC::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
@@ -797,87 +608,6 @@ CoreObject *DBIServiceODBC::makeInstance( VMachine *vm, DBIHandle *dbh )
    return obj;
 }
 
-String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd)
-{
-	RETCODE      plm_retcode = SQL_SUCCESS;
-	UCHAR      plm_szSqlState[MAXBUFLEN] = "",
-		plm_szErrorMsg[MAXBUFLEN] = "";
-	SDWORD      plm_pfNativeError = 0L;
-	SWORD      plm_pcbErrorMsg = 0;
-	SQLSMALLINT   plm_cRecNmbr = 1;
-	SDWORD      plm_SS_MsgState = 0, plm_SS_Severity = 0;
-	SQLINTEGER   plm_Rownumber = 0;
-	USHORT      plm_SS_Line;
-	SQLSMALLINT   plm_cbSS_Procname, plm_cbSS_Srvname;
-	SQLCHAR      plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
-	String sRet = "";
-	char Convert[MAXBUFLEN];
-
-	while (plm_retcode != SQL_NO_DATA_FOUND) {
-		plm_retcode = SQLGetDiagRec(plm_handle_type, plm_handle,
-			plm_cRecNmbr, plm_szSqlState, &plm_pfNativeError,
-			plm_szErrorMsg, MAXBUFLEN - 1, &plm_pcbErrorMsg);
-
-		// Note that if the application has not yet made a
-		// successful connection, the SQLGetDiagField
-		// information has not yet been cached by ODBC
-		// Driver Manager and these calls to SQLGetDiagField
-		// will fail.
-		if (plm_retcode != SQL_NO_DATA_FOUND) {
-			if (ConnInd) {
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_ROW_NUMBER, &plm_Rownumber,
-					SQL_IS_INTEGER,
-					NULL);
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_SS_LINE, &plm_SS_Line,
-					SQL_IS_INTEGER,
-					NULL);
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_SS_MSGSTATE, &plm_SS_MsgState,
-					SQL_IS_INTEGER,
-					NULL);
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_SS_SEVERITY, &plm_SS_Severity,
-					SQL_IS_INTEGER,
-					NULL);
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_SS_PROCNAME, &plm_SS_Procname,
-					sizeof(plm_SS_Procname),
-					&plm_cbSS_Procname);
-				plm_retcode = SQLGetDiagField(
-					plm_handle_type, plm_handle, plm_cRecNmbr,
-					SQL_DIAG_SS_SRVNAME, &plm_SS_Srvname,
-					sizeof(plm_SS_Srvname),
-					&plm_cbSS_Srvname);
-			}
-
-			sRet += "SqlState = " + String( ( char* )plm_szSqlState ) + ";";
-			sRet += "NativeError = " + String( _itoa( plm_pfNativeError, Convert, 10 ) ) + ";";
-			sRet += "ErrorMsg = " + String( ( char* )plm_szErrorMsg ) + ";";
-			sRet += "pcbErrorMsg = " + String( _itoa( plm_pcbErrorMsg, Convert, 10 ) ) + ";";
-
-			if (ConnInd)
-			{
-				sRet += "ODBCRowNumber = " + String( _itoa( plm_Rownumber, Convert, 10 ) ) + ";";
-				sRet += "SSrvrLine = " + String( _itoa( plm_Rownumber, Convert, 10 ) ) + ";";
-				sRet += "SSrvrMsgState = " + String( _itoa( plm_SS_MsgState, Convert, 10 ) ) + ";";
-				sRet += "SSrvrSeverity = " + String( _itoa( plm_SS_Severity, Convert, 10 ) ) + ";";
-				sRet += "SSrvrProcname = " + String( ( char* )plm_SS_Procname ) + ";";
-				sRet += "SSrvrSrvname = " + String( ( char* )plm_SS_Srvname ) + ";";
-			}
-		}
-
-		plm_cRecNmbr++; //Increment to next diagnostic record.
-	}
-
-	return sRet;
-}
 
 } /* namespace Falcon */
 

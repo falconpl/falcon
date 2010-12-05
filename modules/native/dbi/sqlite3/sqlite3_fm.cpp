@@ -43,7 +43,8 @@ FALCON_MODULE_DECL
    // is in the DBI module.
    Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
    dbh_class->imported( true );
-   Falcon::Symbol *sqlite3_class = self->addClass( "SQLite3", Falcon::Ext::SQLite3_init );
+   Falcon::Symbol *sqlite3_class = self->addClass( "SQLite3", Falcon::Ext::SQLite3_init )
+      ->addParam("connect")->addParam("options");
    sqlite3_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    sqlite3_class->setWKS( true );
 
