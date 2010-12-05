@@ -39,6 +39,7 @@
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/falcondata.h>
+#include <falcon/membuf.h>
 #include "bufext_st.h"
 #include "bytebuf.h"
 #include "bitbuf.h"
@@ -69,8 +70,7 @@ public:
     virtual bool deserialize( Stream *stream, bool bLive );
     inline Garbageable *dependant(void) const { return m_dependant; }
     inline void dependant(Garbageable *obj) { m_dependant = obj; }
-    inline Garbageable *dependantData(void) const { return m_depData; }
-    inline void dependantData(Garbageable *obj) { m_depData = obj; }
+
 private:
     Garbageable *m_dependant; // for MemBuf and other objects
     BUFTYPE buf;

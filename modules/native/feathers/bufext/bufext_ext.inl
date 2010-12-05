@@ -68,7 +68,6 @@ template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
     const Item *p1 = vm->param(1);
     Item vmRet;
 
-
     if(p0->isScalar()) // int or numeric
     {
         uint32 ressize = (uint32)p0->forceInteger();
@@ -105,7 +104,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
     if(p0->isObject())
     {
         BufCarrier<BUFTYPE> *carrier = NULL;
-        
+
         if(p0->isOfClass("ByteBuf"))
         {
             // maybe its a specialization
@@ -586,6 +585,10 @@ template <typename BUFTYPE> FALCON_FUNC Buf_rd( ::Falcon::VMachine *vm )
 
 Useful if the inner memory has to be processed as a MemBuf, but data copying is not necessarily required.
 Use with care!
+
+@note When using a MemBuf that is @b not a copy (which is the default behavior),
+be careful that no re-allocation occurs when modifying the ByteBuf,
+otherwise the MemBuf will be invalid and crash the VM!
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMachine *vm )
 {
@@ -987,7 +990,7 @@ template <typename DSTTYPE> struct BufReadToBufHelper_X<BitBuf, DSTTYPE> {
 static inline void docopy(BitBuf& src, DSTTYPE& dst, uint32 bytes)
 {
     while(bytes--)
-        dst.template append<uint8>(src.template read<uint8>());
+        dst.template append<uint8>(src.read<uint8>());
 }
 };
 
@@ -996,7 +999,7 @@ template <typename SRCTYPE> struct BufReadToBufHelper_X<SRCTYPE, BitBuf> {
 static inline void docopy(SRCTYPE& src, BitBuf& dst, uint32 bytes)
 {
     while(bytes--)
-        dst.template append<uint8>(src.template read<uint8>());
+        dst.append<uint8>(src.template read<uint8>());
 }
 };
 
@@ -1005,7 +1008,7 @@ template <> struct BufReadToBufHelper_X<BitBuf, BitBuf> {
 static inline void docopy(BitBuf& src, BitBuf& dst, uint32 bytes)
 {
     while(bytes--)
-        dst.template append<uint8>(src.template read<uint8>());
+        dst.append<uint8>(src.read<uint8>());
 }
 };
 
@@ -1082,14 +1085,14 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
 
             case 2:
                 for(uint32 i = 0; i < count; i++)
-                    mb->set(mb->position() + i, buf.read<uint16>());
+                    mb->set(mb->position() + i, buf.template read<uint16>());
                 mb->position(mb->position() + count);
                 break;
 
             case 3:
             case 4:
                 for(uint32 i = 0; i < count; i++)
-                    mb->set(mb->position() + i, buf.read<uint32>());
+                    mb->set(mb->position() + i, buf.template read<uint32>());
                 mb->position(mb->position() + count);
                 break;
 
