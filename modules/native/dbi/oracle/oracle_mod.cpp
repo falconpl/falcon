@@ -110,12 +110,6 @@ namespace Falcon
     }
 
     // FIXME
-    int DBIRecordsetOracle::getColumnCount()
-    {
-        return 0;
-    }
-
-    // FIXME
     dbi_status DBIRecordsetOracle::getColumnNames( char *names[] )
     {
         for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
@@ -188,7 +182,7 @@ namespace Falcon
         return dbi_ok;
     }
 
-    // Fixme
+    // FIXME
     dbi_status DBIRecordsetOracle::asInteger64( const int columnIndex, int64 &value )
     {
         if ( columnIndex >= m_columnCount )
@@ -626,7 +620,6 @@ namespace Falcon
         env = Environment::createEnvironment();
 
         // We'll need a name and password at the very least here.
-        // TODO Fill in the other parameters
         conn = env->createConnection(user, passwd);
 
         if ( conn == NULL )
