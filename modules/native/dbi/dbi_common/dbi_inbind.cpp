@@ -76,6 +76,36 @@ char* DBIStringConverter_UTF8::convertString( const String& str, char* target, i
 
 DBIStringConverter_UTF8 DBIStringConverter_UTF8_impl;
 
+
+
+char* DBIStringConverter_WCHAR::convertString( const String& str, char* target, int &bufsize ) const
+{
+   wchar_t *ret;
+
+   int maxlen = str.length() * 2;
+   if( maxlen <= bufsize )
+   {
+      // Ok, we can use the buffer
+      ret = (wchar_t*) target;
+   }
+   else
+   {
+      ret = (wchar_t *) memAlloc( maxlen );
+   }
+
+   while( (bufsize = str.toWideString( ret, maxlen )) < 0 )
+   {
+      maxlen *= 2;
+      if ( ret != (wchar_t*) target )
+         memFree(ret);
+      ret = (wchar_t *) memAlloc( maxlen );
+   }
+
+   return (char*) ret;
+}
+
+DBIStringConverter_WCHAR DBIStringConverter_WCHAR_impl;
+
 //=========================================================
 // Single item binding converter
 //=========================================================

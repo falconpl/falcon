@@ -38,6 +38,7 @@ void DBIConnect( VMachine *vm );
 void Statement_execute( VMachine *vm );
 void Statement_reset( VMachine *vm );
 void Statement_close( VMachine *vm );
+void Statement_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
 
 //=====================
 // DBI Handle
@@ -46,15 +47,14 @@ void Statement_close( VMachine *vm );
 void Handle_query( VMachine *vm );
 void Handle_options( VMachine *vm );
 void Handle_prepare( VMachine *vm );
-void Handle_perform( VMachine *vm );
 void Handle_getLastID( VMachine *vm );
 void Handle_close( VMachine *vm );
-void Handle_call( VMachine *vm );
 
 void Handle_begin( VMachine *vm );
 void Handle_commit( VMachine *vm );
 void Handle_rollback( VMachine *vm );
 void Handle_lselect( VMachine *vm );
+void Handle_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
 
 //=====================
 // DBI Recordset

@@ -26,6 +26,30 @@ namespace Falcon
 
 class DBIHandleSQLite3;
 
+class SQLite3StatementHandler {
+public:
+   
+   SQLite3StatementHandler( sqlite3_stmt* hStmt ):
+       m_hStmt(hStmt),
+       m_nRefCount(1)
+   {}
+   
+   ~SQLite3StatementHandler() {
+      sqlite3_finalize( m_hStmt );
+   }
+
+   void incref() { m_nRefCount ++; }
+
+   void decref() { if ( --m_nRefCount == 0 ) delete this; }
+
+   sqlite3_stmt* handle() const { return m_hStmt; }
+
+private:
+   sqlite3_stmt* m_hStmt;
+   int m_nRefCount;
+};
+
+
 class Sqlite3InBind: public DBIInBind
 {
 
@@ -46,12 +70,13 @@ class DBIRecordsetSQLite3 : public DBIRecordset
 protected:
    int m_row;
    int m_columnCount;
-   sqlite3_stmt *m_stmt;
-   Sqlite3InBind m_bind;
+   SQLite3StatementHandler *m_pStmt;
+   sqlite3_stmt* m_stmt;
    bool m_bAsString;
 
 public:
-   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt, const ItemArray& inBind );
+   DBIRecordsetSQLite3( DBIHandle *dbt, SQLite3StatementHandler* pStmt );
+   DBIRecordsetSQLite3( DBIHandle *dbt, sqlite3_stmt* stmt );
    virtual ~DBIRecordsetSQLite3();
 
    virtual int64 getRowIndex();
@@ -69,13 +94,15 @@ class DBIStatementSQLite3: public DBIStatement
 {
 protected:
    sqlite3_stmt* m_statement;
+   SQLite3StatementHandler* m_pStmt;
    Sqlite3InBind m_inBind;
 
 public:
+   DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt );
    DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
    virtual ~DBIStatementSQLite3();
 
-   virtual int64 execute( const ItemArray& params );
+   virtual DBIRecordset* execute( ItemArray* params );
    virtual void reset();
    virtual void close();
 
@@ -91,7 +118,7 @@ protected:
    bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
-   void int_execute( sqlite3_stmt* pStmt, const ItemArray& params );
+   void int_execute( sqlite3_stmt* pStmt, ItemArray* params );
 
 public:
    DBIHandleSQLite3();
@@ -102,9 +129,7 @@ public:
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params=0 );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 

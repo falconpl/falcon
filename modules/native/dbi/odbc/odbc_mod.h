@@ -23,40 +23,34 @@
 namespace Falcon
 {
 const unsigned long MAXBUFLEN = 256;
+class DBIHandleODBC;
 
-String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd);
-
-struct ODBCConn
+class ODBCConn
 {
+public:
 	SQLHENV m_hEnv;
 	SQLHDBC m_hHdbc;
-	SQLHSTMT m_hHstmt;
-	SQLHDESC m_hIpd;
 
-	void Initialize( )
-	{
-		m_hEnv = SQL_NULL_HENV;
+   ODBCConn()
+   {
+      m_hEnv = SQL_NULL_HENV;
 		m_hHdbc = SQL_NULL_HDBC;
-		m_hHstmt = SQL_NULL_HSTMT;
-		m_hIpd = SQL_NULL_HDESC;
-	}
+      m_refCount = 1;
+   }
 
-	void Initialize( const SQLHENV hEnv, const SQLHDBC hHdbc, const SQLHSTMT hHstmt, const SQLHDESC hIpd )
+	ODBCConn( SQLHENV hEnv, SQLHDBC hHdbc )
 	{
 		m_hEnv = hEnv;
 		m_hHdbc = hHdbc;
-		m_hHstmt = hHstmt;
-		m_hIpd = hIpd;
+      m_refCount = 1;
 	}
 
-	void Destroy( )
+   void incref() { m_refCount++; }
+   void decref() { if ( --m_refCount == 0 ) delete this; }
+
+private:
+   ~ODBCConn()
 	{
-		if( m_hIpd != SQL_NULL_HDESC )
-			SQLFreeHandle(SQL_HANDLE_DESC, m_hIpd );
-
-		if( m_hHstmt != SQL_NULL_HSTMT )
-			SQLFreeHandle( SQL_HANDLE_STMT, m_hHstmt );
-
 		if( m_hHdbc != SQL_NULL_HDBC )
 		{
 			SQLDisconnect( m_hHdbc );
@@ -66,37 +60,69 @@ struct ODBCConn
 		if( m_hEnv != SQL_NULL_HENV)
 			SQLFreeHandle(SQL_HANDLE_ENV, m_hEnv );
 	}
+
+   int m_refCount;
+};
+
+
+
+class ODBCInBind: public DBIInBind
+{
+public:
+   ODBCInBind(SQLHSTMT hStmt, bool bBigInt );
+   virtual ~ODBCInBind();
+
+   virtual void onFirstBinding( int size );
+   virtual void onItemChanged( int num );
+
+protected:
+   class ODBCColInfo 
+   {
+   public:
+      SQLSMALLINT    DataType;
+      SQLULEN        ColumnSize;
+      SQLSMALLINT    DecimalDigits;
+      SQLSMALLINT    Nullable;
+   };
+
+   SQLHSTMT m_hStmt;
+   SQLLEN* m_pLenInd;
+   ODBCColInfo *m_pColInfo;
+   bool m_bUseBigInteger;
+};
+
+
+class ODBCStatementHandler {
+public:
+   
+   ODBCStatementHandler( SQLHSTMT hStmt ):
+       m_hStmt(hStmt),
+       m_nRefCount(1)
+   {}
+
+   ~ODBCStatementHandler() {
+      SQLFreeStmt( m_hStmt, SQL_CLOSE );
+   }
+
+
+   void incref() { m_nRefCount ++; }
+
+   void decref() { if ( --m_nRefCount == 0 ) delete this; }
+
+   SQLHSTMT handle() const { return m_hStmt; }
+
+private:
+   SQLHSTMT m_hStmt;
+   int m_nRefCount;
 };
 
 
 class DBIRecordsetODBC : public DBIRecordset
 {
 public:
-	struct SRowData 
-	{
-		void* m_pData;
-		int m_nLen;
-	};
-
-	SRowData* m_pDataArr;
-
-protected:
-   ODBCConn* m_pConn;
-   int m_nRow;
-   int m_nRowCount;
-   int m_nColumnCount;
-   String m_sLastError;
-
-protected:
-   int m_row;
-   int m_columnCount;
-   sqlite3_stmt *m_stmt;
-   Sqlite3InBind m_bind;
-   bool m_bAsString;
-
-public:
-   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt, const ItemArray& inBind );
-   virtual ~DBIRecordsetSQLite3();
+   DBIRecordsetODBC( DBIHandleODBC *dbt, int64 nRowCount, int32 nColCount, ODBCStatementHandler* h );
+   DBIRecordsetODBC( DBIHandleODBC *dbt, int64 nRowCount, int32 nColCount, SQLHSTMT h );
+   virtual ~DBIRecordsetODBC();
 
    virtual int64 getRowIndex();
    virtual int64 getRowCount();
@@ -106,50 +132,82 @@ public:
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
-};
 
-
-class DBIStatementSQLite3: public DBIStatement
-{
+   SQLHSTMT handle() const { return m_pStmt->handle(); }
+   
 protected:
-   sqlite3_stmt* m_statement;
-   Sqlite3InBind m_inBind;
+   class ODBCColInfo 
+   {
+   public:
+      String sName;
+      SQLSMALLINT    DataType;
+      SQLULEN        ColumnSize;
+      SQLSMALLINT    DecimalDigits;
+      SQLSMALLINT    Nullable;
+   };
 
-public:
-   DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
-   virtual ~DBIStatementSQLite3();
+   ODBCStatementHandler* m_pStmt;   
+   int64 m_nRow;
+   int64 m_nRowCount;
+   int32 m_nColumnCount;
+   
+   ODBCColInfo* m_pColInfo;
+   //bool m_bAsString;
+   ODBCConn *m_conn;
 
-   virtual int64 execute( const ItemArray& params );
-   virtual void reset();
-   virtual void close();
+   void GetColumnInfo();
 
-   sqlite3_stmt* sqlite3_statement() const { return m_statement; }
 };
 
 
 class DBIStatementODBC: public DBIStatement
 {
-protected:
-   void* m_statement;
-
 public:
-   DBIStatementODBC( DBIHandleODBC *dbh, void* stmt );
+   DBIStatementODBC( DBIHandleODBC *dbh, SQLHSTMT h );
    virtual ~DBIStatementODBC();
 
-   virtual int64 execute( const ItemArray& params );
+   virtual DBIRecordset* execute( ItemArray* params = 0 );
    virtual void reset();
    virtual void close();
 
-   void* odbc_statement() const { return m_statement; }
+   SQLHSTMT handle() const { return m_pStmt->handle(); }
+protected:
+   ODBCInBind m_inBind;
+   ODBCStatementHandler* m_pStmt;
+   ODBCConn *m_conn;
 };
 
+
+class DBISettingParamsODBC: public DBISettingParams
+{
+private:
+   String m_sUseBigint;
+
+public:
+   DBISettingParamsODBC();
+   DBISettingParamsODBC( const DBISettingParamsODBC & other );
+   virtual ~DBISettingParamsODBC();
+
+   /** Specific parse analizying the options */
+   virtual bool parse( const String& connStr );
+
+   /** True if we can use int64 on the underlying driver. */
+   bool m_bUseBigInt;
+};
 
 class DBIHandleODBC : public DBIHandle
 {
 protected:
 	ODBCConn* m_conn;
-   DBISettingParams m_settings;
+   DBISettingParamsODBC m_settings;
    bool m_bInTrans;
+   /** Checks if the connection is open and throws otherwise */
+   ODBCConn *getConnData();
+
+   SQLHSTMT openStatement(SQLHDBC hdbc);
+   SQLHDESC getStatementDesc( SQLHSTMT hHstmt );
+   
+   
 
 public:
    DBIHandleODBC();
@@ -157,12 +215,10 @@ public:
    virtual ~DBIHandleODBC();
 
    virtual void options( const String& params );
-   virtual const DBISettingParams* options() const;
+   virtual const DBISettingParamsODBC* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
@@ -176,10 +232,13 @@ public:
    ODBCConn *getConn() { return m_conn; }
 
    /** Throws a DBI error wsrapping an ODBC error. */
-   static void throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd );
+   static void throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd, bool free = true );
    
    /** Utility to get ODBC error description. */
    static String GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd);
+
+   void incConnRef() { m_conn->incref(); }
+   void decConnRef() { m_conn->decref(); }
 };
 
 

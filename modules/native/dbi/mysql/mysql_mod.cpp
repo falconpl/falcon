@@ -873,7 +873,7 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
    mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
 
-DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, ItemArray* params )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -882,11 +882,21 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
    if( options()->m_bFetchStrings )
    {
       MYSQL *conn = getConn();
-      String temp;
-      sqlExpand( sql, temp, params );
+      int result;
+      if( params != 0)
+      {
+         String temp;
+         sqlExpand( sql, temp, *params );
+         AutoCString asQuery( temp );
+         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
+      }
+      else
+      {
+         AutoCString asQuery( sql );
+         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
+      }
 
-      AutoCString asQuery( temp );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      if( result != 0 )
       {
          throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
@@ -912,8 +922,7 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
       meta = mysql_stmt_result_metadata( stmt );
       if( meta == 0 )
       {
-         // the query didn't return a recorset
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
+         return 0;
       }
       else
       {
@@ -940,116 +949,8 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
       mysql_stmt_close( stmt );
       throw;
    }
-
-
-   return 0; // to make the compiler happy
 }
 
-
-void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   // if we don't have var params, we can use the standard query, after proper escape.
-   if ( params.length() == 0 )
-   {
-      MYSQL *conn = getConn();
-
-      AutoCString asQuery( sql );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      // discard eventual recordsets
-      // mysql_next_result returns
-      //    0 if there are more results,
-      //    -1 if there aren't any other result
-      //    1 in case of errors
-
-      int res;
-      while ( (res = mysql_next_result( conn )) == 0 )
-      {
-         MYSQL_RES* rec = mysql_use_result( conn );
-         if( rec != 0 )
-         {
-            mysql_free_result(rec);
-         }
-      }
-
-      if( res == 1 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-   }
-   else
-   {
-     MYSQL_STMT* stmt = my_prepare( sql );
-     MyDBIInBind bindings (stmt);
-
-     // prepare and execute
-     try {
-        affectedRows = my_execute(
-              stmt,
-              bindings,
-              params );
-        mysql_stmt_close( stmt );
-     }
-     catch( ... )
-     {
-        mysql_stmt_close( stmt );
-        throw;
-     }
-   }
-}
-
-
-
-DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   MYSQL *conn = getConn();
-   String temp;
-
-   sqlExpand( sql, temp, params );
-   AutoCString asQuery( "call " + temp );
-   if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-   }
-
-
-   if ( mysql_next_result( conn ) == -1 )
-   {
-      return 0;
-   }
-
-   MYSQL_RES* rec;
-
-   if( options()->m_nPrefetch < 0 )
-      rec = mysql_store_result( conn );
-   else
-      rec = mysql_use_result( conn );
-
-   affectedRows = mysql_affected_rows( conn );
-
-   // discard eventual other recordsets
-   while ( mysql_next_result( conn ) != -1 )
-   {
-      MYSQL_RES* rec1 = mysql_use_result( conn );
-      if( rec != 0 )
-      {
-         mysql_free_result(rec1);
-      }
-   }
-
-   return options()->m_bFetchStrings ?
-         new DBIRecordsetMySQL_RES_STR( this, rec ) :
-         new DBIRecordsetMySQL_RES( this, rec );
-}
 
 MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 {
@@ -1089,17 +990,18 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 }
 
 
-int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params )
+int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params )
 {
    fassert( m_conn != 0 );
+   int count = mysql_stmt_param_count( stmt );
 
-   if( params.length() != mysql_stmt_param_count( stmt ) )
+   if( (params == 0 && count != 0) || (params != 0 && params->length() != count) )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
    }
 
    // Do we have some parameter to bind?
-   if( params.length() > 0 )
+   if( params->length() > 0 )
    {
       bindings.bind( params, DBITimeConverter_MYSQL_TIME_impl );
 

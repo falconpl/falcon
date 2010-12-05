@@ -3,6 +3,11 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+
 #include "gzguts.h"
 
 /* Local functions */

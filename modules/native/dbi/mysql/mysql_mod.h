@@ -137,7 +137,7 @@ protected:
    DBISettingParams m_settings;
 
    MYSQL_STMT* my_prepare( const String &query );
-   int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params );
+   int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params );
 
 public:
    DBIHandleMySQL();
@@ -148,9 +148,7 @@ public:
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, ItemArray* params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 

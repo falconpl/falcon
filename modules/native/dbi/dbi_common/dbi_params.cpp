@@ -39,6 +39,25 @@ DBIParams::~DBIParams()
    m_pFirst = 0;
 }
 
+bool DBIParams::checkBoolean( const String& pvalue, bool &boolVar )
+{
+   if( pvalue.compareIgnoreCase("on") == 0 )
+   {
+      boolVar = true;
+   }
+   else if( pvalue.compareIgnoreCase("off") == 0 )
+   {
+      boolVar = false;
+   }
+   else if ( pvalue != "" && pvalue != "\"\"" )
+   {
+      return false;
+   }
+
+   return true;
+}
+
+
 void DBIParams::addParameter( const String& name, String& value )
 {
    Param* p = new Param( name, value );

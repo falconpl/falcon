@@ -63,10 +63,7 @@ extern DBITimeConverter_ISO DBITimeConverter_ISO_impl;
 /** String Convert functor.
     This functor is reimplemented by the drivers to allow
     transforming a Falcon string class into a local
-    string representation.
-
-    The functor may return a newly allocated memory (via memAlloc),
-    in which case
+    string representation. 
 */
 class DBIStringConverter: public BaseAlloc
 {
@@ -76,13 +73,14 @@ public:
       return convertString( str, target, bufsize );
    }
 
-   /** Sublcasses must re-define this to construct a timestamp that can be used in bindings.
+   /** Sublcasses must re-define this to construct a string that can be used in bindings.
 
     */
    virtual char* convertString( const String& str, char* target, int &bufsize ) const = 0;
 };
 
-/** Default string Convert functor
+/** Default string Convert functor for InBind class.
+
    Returns a string converted into a UTF8 string.
 */
 class DBIStringConverter_UTF8: public DBIStringConverter
@@ -92,9 +90,21 @@ public:
 };
 extern DBIStringConverter_UTF8 DBIStringConverter_UTF8_impl;
 
+
+/** Utility string converter functor for InBind class.
+
+   Returns a string converted into a WCHART string.
+*/
+class DBIStringConverter_WCHAR: public DBIStringConverter
+{
+public:
+   virtual char* convertString( const String& str, char* target, int &bufsize ) const;
+};
+extern DBIStringConverter_WCHAR DBIStringConverter_WCHAR_impl;
+
 /** Helper class to bind item into local database value.
 
-    This class is used to turn an item into a C item representation
+    This class is used to turn a Falcon item into a C item representation
     which is used by the vast majority of SQL engines to bind
     input variables.
 
