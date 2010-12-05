@@ -396,7 +396,7 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
    case SQL_WCHAR:
    case SQL_WVARCHAR:
    case SQL_WLONGVARCHAR:
-      ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &uchar, 0, &ExpSize);
+      ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, &uchar, 0, &ExpSize);
       if( ret != SQL_ERROR )
       {
          if( ExpSize == SQL_NULL_DATA )
@@ -409,11 +409,12 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             value = new CoreString("");
             return true;
          }
-         char *cStr = (char*) memAlloc( ExpSize );  
-         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, cStr, ExpSize, &nSize);
+         wchar_t *cStr = (wchar_t*) memAlloc( ExpSize );  
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, ExpSize, &nSize);
+
          // save the data nevertheless
          CoreString* cs = new CoreString;
-         cs->adopt( cStr, nSize, nSize );
+         cs->adopt( cStr, ExpSize/sizeof(wchar_t), ExpSize );
          value = cs;
       }
       break;
@@ -472,7 +473,7 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
    case SQL_BINARY:
    case SQL_VARBINARY:
    case SQL_LONGVARBINARY:
-      ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &uchar, 0, &ExpSize);
+      ret = SQLGetData( hStmt, nCol+1, SQL_C_BINARY, &uchar, 0, &ExpSize);
       if( ret != SQL_ERROR )
       {
          if( ExpSize == SQL_NULL_DATA )
