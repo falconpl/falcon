@@ -267,6 +267,19 @@ public:
      virtual TranscoderCP1252 *clone() const;
 };
 
+class TranscoderIBM850:public TranscoderOEM
+{
+public:
+   TranscoderIBM850( const TranscoderIBM850 &other ):
+     TranscoderOEM( other )
+     {}
+
+     TranscoderIBM850( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "IBM850"; }
+     virtual TranscoderIBM850 *clone() const;
+};
+
+
 /** Latin-1 (ISO8859_1) transcoder. */
 class TranscoderISO8859_1: public TranscoderISO_CP
 {
@@ -1098,6 +1111,8 @@ TranscoderCP1252 *TranscoderCP1252::clone() const
    return new TranscoderCP1252( *this );
 }
 
+
+
 TranscoderISO8859_1::TranscoderISO8859_1( Stream *s, bool bOwn ):
    TranscoderISO_CP( s, bOwn )
 {
@@ -1354,6 +1369,20 @@ TranscoderIBM437 *TranscoderIBM437::clone() const
 }
 
 
+TranscoderIBM850::TranscoderIBM850( Stream *s, bool bOwn ):
+   TranscoderOEM( s, bOwn )
+{
+   m_directTable = s_table_IBM850;
+   m_dirTabSize = sizeof( s_table_IBM850 ) / sizeof( uint16 );
+   m_reverseTable = s_rtable_IBM850;
+   m_revTabSize = sizeof( s_rtable_IBM850 ) / sizeof( CP_ISO_UINT_TABLE );
+}
+
+TranscoderIBM850 *TranscoderIBM850::clone() const
+{
+   return new TranscoderIBM850( *this );
+}
+
 //==================================================================
 // Utilities
 
@@ -1377,6 +1406,9 @@ Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own 
 
    if ( encoding == "cp1252" )
       return new TranscoderCP1252( stream, own );
+
+   if ( encoding == "IBM850" )
+      return new TranscoderIBM850( stream, own );
 
    if ( encoding == "IBM437" )
       return new TranscoderIBM437( stream, own );
@@ -1478,21 +1510,21 @@ bool GetSystemEncodingWin(String &encoding)
    case 709: encoding = "";	return false; 	// Arabic (ASMO-449+, BCON V4)
    case 710: encoding = "";	return false; 	// Arabic - Transparent Arabic
    case 720: encoding = "DOS-720";	return false; 	// Arabic (Transparent ASMO); Arabic (DOS)
-   case 737: encoding = "ibm737";	return false; 	// OEM Greek (formerly 437G); Greek (DOS)
-   case 775: encoding = "ibm775";	return false; 	// OEM Baltic; Baltic (DOS)
-   case 850: encoding = "ibm850";	return false; 	// OEM Multilingual Latin 1; Western European (DOS)
-   case 852: encoding = "ibm852";	return false; 	//	OEM Latin 2; Central European (DOS)
+   case 737: encoding = "IBM737";	return false; 	// OEM Greek (formerly 437G); Greek (DOS)
+   case 775: encoding = "IBM775";	return false; 	// OEM Baltic; Baltic (DOS)
+   case 850: encoding = "IBM850";	return true; 	// OEM Multilingual Latin 1; Western European (DOS)
+   case 852: encoding = "IBM852";	return false; 	//	OEM Latin 2; Central European (DOS)
    case 855: encoding = "IBM855";	return false; 	//	OEM Cyrillic (primarily Russian)
-   case 857: encoding = "ibm857";	return false; 	//	OEM Turkish; Turkish (DOS)
+   case 857: encoding = "IBM857";	return false; 	//	OEM Turkish; Turkish (DOS)
    case 858: encoding = "IBM00858";	return false; 	//	OEM Multilingual Latin 1 + Euro symbol
    case 860: encoding = "IBM860";	return false; 	//	OEM Portuguese; Portuguese (DOS)
-   case 861: encoding = "ibm861";	return false; 	//	OEM Icelandic; Icelandic (DOS)
+   case 861: encoding = "IBM861";	return false; 	//	OEM Icelandic; Icelandic (DOS)
    case 862: encoding = "DOS-862";	return false; 	//	OEM Hebrew; Hebrew (DOS)
    case 863: encoding = "IBM863";	return false; 	//	OEM French Canadian; French Canadian (DOS)
    case 864: encoding = "IBM864";	return false; 	//	OEM Arabic; Arabic (864)
    case 865: encoding = "IBM865";	return false; 	//	OEM Nordic; Nordic (DOS)
    case 866: encoding = "cp866";	return false; 	//	OEM Russian; Cyrillic (DOS)
-   case 869: encoding = "ibm869";	return false; 	//	OEM Modern Greek; Greek, Modern (DOS)
+   case 869: encoding = "IBM869";	return false; 	//	OEM Modern Greek; Greek, Modern (DOS)
    case 870: encoding = "IBM870";	return false; 	//	IBM EBCDIC Multilingual/ROECE (Latin 2); IBM EBCDIC Multilingual Latin 2
    case 874: encoding = "windows-874";	return false; 	//	ANSI/OEM Thai (same as 28605, ISO 8859-15); Thai (Windows)
    case 875: encoding = "cp875";	return false; 	//	IBM EBCDIC Greek Modern
