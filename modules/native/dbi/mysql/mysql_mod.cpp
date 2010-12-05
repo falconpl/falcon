@@ -1338,5 +1338,5 @@ CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 
 } /* namespace Falcon */
 
-/* end of mysql_srv.cpp */
+/* end of mysql_mod.cpp */
 
