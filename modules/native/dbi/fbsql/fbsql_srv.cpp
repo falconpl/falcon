@@ -15,7 +15,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <errmsg.h>
 
 #include <time.h>
 
@@ -30,7 +29,7 @@ namespace Falcon
  * Main service class
  *****************************************************************************/
 
-void DBIServiceFirebird::init()
+void DBIServiceFB::init()
 {
 }
 
@@ -63,24 +62,26 @@ static void checkParamYesOrNo(char *&dpb, const String& value, byte dpb_type, co
         *dpb++ = (byte) 0;
      else
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-                 .extra( option + "=" + sNoRserve )
+                 .extra( option + "=" + value )
               );
    }
 }
 
-static void checkParamString(char *&dpb, int& len, const String& value, char* szValue, byte dpb_type )
+static void checkParamString(char *&dpb, const String& value, const char* szValue, byte dpb_type )
 {
    if ( value.size() )
    {
-      isc_expand_dpb( &dpb, &len,
-            dpb_type, szValue,
-            NULL
-      );
+       *dpb = dpb_type;
+       ++dpb;
+       *dpb = (char) value.size();
+       ++dpb;
+       strcpy( dpb, szValue );
+       dpb += value.size();
    }
 }
 
 
-DBIHandle *DBIServiceFirebird::connect( const String &parameters )
+DBIHandle *DBIServiceFB::connect( const String &parameters )
 {
    isc_db_handle handle = 0L;
 
@@ -96,23 +97,23 @@ DBIHandle *DBIServiceFirebird::connect( const String &parameters )
 
    // add Firebird specific parameters
    // Encrypted password (epwd)
-   String sPwdEnc; char* szPwdEncode;
+   String sPwdEnc; const char* szPwdEncode;
    connParams.addParameter( "epwd", sPwdEnc, &szPwdEncode );
 
    // Role name (role)
-   String sRole; char* szRole;
+   String sRole; const char* szRole;
    connParams.addParameter( "role", sRole, &szRole );
 
    // System database administrator’s user name (sa)
-   String sSAName; char* szSAName;
+   String sSAName; const char* szSAName;
    connParams.addParameter( "sa", sSAName, &szSAName );
 
    // Authorization key for a software license (license)
-   String sLicense; char* szLicense;
+   String sLicense; const char* szLicense;
    connParams.addParameter( "license", sLicense, &szLicense );
 
    // Database encryption key (ekey)
-   String sKey; char* szKey;
+   String sKey; const char* szKey;
    connParams.addParameter( "ekey", sKey, &szKey );
 
    // Number of cache buffers (nbuf)
@@ -153,11 +154,11 @@ DBIHandle *DBIServiceFirebird::connect( const String &parameters )
    connParams.addParameter( "quitlog", sQuitLog );
 
    // Language-specific message file  (lcmsg)
-   String sLcMsg; char* szLcMsg;
+   String sLcMsg; const char* szLcMsg;
    connParams.addParameter( "lcmsg", sLcMsg, &szLcMsg );
 
    // Character set to be utilized (lctype)
-   String sLcType; char* szLcType;
+   String sLcType; const char* szLcType;
    connParams.addParameter( "lctype", sLcType, &szLcType );
 
    // Connection timeout (tout)
@@ -175,7 +176,7 @@ DBIHandle *DBIServiceFirebird::connect( const String &parameters )
    *dpb++ = isc_dpb_version1;
 
    checkParamNumber( dpb, sNBuf, isc_dpb_num_buffers, "nbuf" );
-   checkParamNumber( dpb, sTimeOut, isc_dpb_connect_timeout, "tout" );
+   checkParamNumber( dpb, sTimeout, isc_dpb_connect_timeout, "tout" );
 
    checkParamYesOrNo( dpb, sDBKeyScope, isc_dpb_no_reserve, "kscope" );
    checkParamYesOrNo( dpb, sNoRserve, isc_dpb_no_reserve, "reserve" );
@@ -186,47 +187,32 @@ DBIHandle *DBIServiceFirebird::connect( const String &parameters )
    checkParamYesOrNo( dpb, sBeginLog, isc_dpb_begin_log, "beginlog" );
    checkParamYesOrNo( dpb, sQuitLog, isc_dpb_quit_log, "sQuitLog" );
 
-   dpb_length = dpb - dpb_buffer;
-
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, connParams.m_sUser, connParams.m_szUser, isc_dpb_user_name );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, connParams.m_sPassword, connParams.m_szPassword, isc_dpb_password );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sPwdEnc, szPwdEncode, isc_dpb_password_enc );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sRole, szRole, isc_dpb_sql_role_name );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sLicense, szLicense, isc_dpb_license );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sKey, szKey, isc_dpb_encrypt_key );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sLcMsg, szLcMsg, isc_dpb_lc_messages );
-   dpb = dpb_buffer;
-
+   checkParamString( dpb, connParams.m_sUser, connParams.m_szUser, isc_dpb_user_name );
+   checkParamString( dpb, connParams.m_sPassword, connParams.m_szPassword, isc_dpb_password );
+   checkParamString( dpb, sPwdEnc, szPwdEncode, isc_dpb_password_enc );
+   checkParamString( dpb, sRole, szRole, isc_dpb_sql_role_name );
+   checkParamString( dpb, sLicense, szLicense, isc_dpb_license );
+   checkParamString( dpb, sKey, szKey, isc_dpb_encrypt_key );
+   //checkParamString( dpb, sLcMsg, szLcMsg, isc_dpb_lc_messages );
    // We'll ALWAYS use AutoCString to talk with Firebird, as such we'll ALWAYS use UTF8
-   isc_expand_dpb( &dpb, &dpb_length,
-         isc_dpb_lc_messages, "UTF8",
-               NULL );
+   checkParamString( dpb, "UTF8", "UTF8", isc_dpb_lc_messages );
 
    /* Attach to the database. */
    ISC_STATUS status_vector[20];
 
    isc_attach_database(status_vector, strlen(connParams.m_szDb), connParams.m_szDb, &handle,
-         dpb_length,
-         dbp_buffer);
+         dpb-dpb_buffer,
+         dpb_buffer);
 
    if ( status_vector[0] == 1 && status_vector[1] )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
-                   .extra( "Some error" )
-                );
+      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_CONNECT, status_vector, false );
    }
 
-   return new DBIHandleFirebird( handle );
+   return new DBIHandleFB( handle );
 }
 
-CoreObject *DBIServiceFirebird::makeInstance( VMachine *vm, DBIHandle *dbh )
+CoreObject *DBIServiceFB::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findWKI( "FirebirdSQL" );
    if ( cl == 0 || ! cl->isClass() )

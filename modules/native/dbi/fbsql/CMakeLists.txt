@@ -57,6 +57,7 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
    fbsql.cpp
    fbsql_ext.cpp
    fbsql_mod.cpp
+   fbsql_srv.cpp
 )
 
 # Link

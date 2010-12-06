@@ -21,7 +21,7 @@
 #include "version.h"
 
 // Instantiate the driver service
-Falcon::DBIServiceFirebird theFirebirdService;
+Falcon::DBIServiceFB theFirebirdService;
 
 /*#
    @module mysql MySQL driver module

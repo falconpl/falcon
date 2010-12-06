@@ -1,21 +1,20 @@
 /*
- * FALCON - The Falcon Programming Language.
- * FILE: fbsql_mod.cpp
- *
- * Firebird Falcon service/driver
- * -------------------------------------------------------------------
- * Author: Giancarlo Niccolai
- * Begin: Mon, 20 Sep 2010 21:15:06 +0200
- *
- * -------------------------------------------------------------------
- * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
- *
- * See LICENSE file for licensing details.
- */
+   FALCON - The Falcon Programming Language.
+   FILE: fbsql_mod.cpp
+
+   Firebird Falcon service/driver
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 20 Sep 2010 21:15:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
 
 #include <string.h>
 #include <stdio.h>
-#include <errmsg.h>
 
 #include <time.h>
 
@@ -25,6 +24,8 @@
 
 namespace Falcon
 {
+
+DBIServiceFB theFirebirdService;
 
 /******************************************************************************
  * Private class used to convert timestamp to Firebird format.
@@ -59,1370 +60,603 @@ void DBITimeConverter_Firebird_TIME::convertTime( TimeStamp* ts, void* buffer, i
  * (Input) bindings class
  *****************************************************************************/
 
-FirebirdDBIInBind::FirebirdDBIInBind( MYSQL_STMT* stmt ):
-      m_mybind(0),
-      m_stmt( stmt )
+FBInBind::FBInBind( isc_stmt_handle stmt ):
+      m_stmt(stmt)
 {}
 
-FirebirdDBIInBind::~FirebirdDBIInBind()
+FBInBind::~FBInBind()
 {
-   memFree( m_mybind );
 }
 
 
-void FirebirdDBIInBind::onFirstBinding( int size )
+void FBInBind::onFirstBinding( int size )
 {
-   m_mybind = (MYSQL_BIND*) memAlloc( sizeof(MYSQL_BIND) * size );
-   memset( m_mybind, 0, sizeof(MYSQL_BIND) * size );
 }
 
 
-void FirebirdDBIInBind::onItemChanged( int num )
+void FBInBind::onItemChanged( int num )
 {
    DBIBindItem& item = m_ibind[num];
-   MYSQL_BIND& myitem = m_mybind[num];
-
-   switch( item.type() )
-   {
-   // set to null
-   case DBIBindItem::t_nil:
-      myitem.buffer_type = MYSQL_TYPE_NULL;
-      *((my_bool*) item.data()) = 1;
-      break;
-
-   case DBIBindItem::t_bool:
-      myitem.buffer_type = MYSQL_TYPE_BIT;
-      myitem.buffer = item.asBoolPtr();
-      myitem.buffer_length = 1;
-      break;
-
-   case DBIBindItem::t_int:
-      myitem.buffer_type = MYSQL_TYPE_LONGLONG;
-      myitem.buffer = item.asIntegerPtr();
-      myitem.buffer_length = sizeof( int64 );
-      break;
-
-   case DBIBindItem::t_double:
-      myitem.buffer_type = MYSQL_TYPE_DOUBLE;
-      myitem.buffer = item.asDoublePtr();
-      myitem.buffer_length = sizeof( double );
-      break;
-
-   case DBIBindItem::t_string:
-      myitem.buffer_type = MYSQL_TYPE_STRING;
-      myitem.buffer = (void*) item.asString();
-      myitem.buffer_length = item.asStringLen();
-      break;
-
-   case DBIBindItem::t_buffer:
-      myitem.buffer_type = MYSQL_TYPE_BLOB;
-      // Blobs in prepared statements are treated strangely:
-      // The first push is ok, but the other require either rebind or
-      // send_long_data to be called on the statement.
-      // It seems that stmt_param_bind calls send_long_data on its own to
-      // circumvent a bug -- so, the next time YOU must call it in its place.
-      if ( myitem.buffer != 0 )
-      {
-         mysql_stmt_send_long_data( m_stmt, num, (const char*) item.asBuffer(), item.asStringLen() );
-      }
-      myitem.buffer = item.asBuffer();
-      myitem.buffer_length = item.asStringLen();
-      break;
-
-   case DBIBindItem::t_time:
-      myitem.buffer_type = MYSQL_TYPE_TIMESTAMP;
-      myitem.buffer = item.asBuffer();
-      myitem.buffer_length = sizeof( MYSQL_TIME );
-      break;
-   }
 }
+
 
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetFirebird::DBIRecordsetFirebird( DBIHandleFirebird *dbh, MYSQL_RES *res, bool bCanSeek )
-    : DBIRecordset( dbh ),
-      m_res( res ),
-      m_bCanSeek( bCanSeek )
+DBIRecordsetFB::DBIRecordsetFB( DBIHandleFB *dbt, FBTransRef* tref, isc_stmt_handle stmt, FBSqlData* data ):
+   DBIRecordset( dbt ),
+   m_tref(tref),
+   m_sref( new FBStmtRef(stmt) ),
+   m_data( data )
 {
-   m_row = -1; // BOF
-   m_rowCount = -1; // default -- not known
-   m_columnCount = mysql_num_fields( res );
-   m_fields = mysql_fetch_fields( res );
-}
-
-DBIRecordsetFirebird::~DBIRecordsetFirebird()
-{
-   if ( m_res != 0 )
-      close();
+   tref->incref();
 }
 
 
-int DBIRecordsetFirebird::getColumnCount()
+DBIRecordsetFB::DBIRecordsetFB( DBIHandleFB *dbt, FBTransRef* tref, FBStmtRef* sref, FBSqlData* data ):
+   DBIRecordset( dbt ),
+   m_tref(tref),
+   m_sref( sref ),
+   m_data( data )
 {
-   return m_columnCount;
-}
-
-bool DBIRecordsetFirebird::getColumnName( int nCol, String& name )
-{
-   if( nCol >=0  && nCol < m_columnCount )
-   {
-      name.fromUTF8( m_fields[nCol].name );
-      return true;
-   }
-   return false;
-}
-
-int64 DBIRecordsetFirebird::getRowCount()
-{
-   return m_rowCount;
+   tref->incref();
+   sref->incref();
 }
 
 
-int64 DBIRecordsetFirebird::getRowIndex()
-{
-   return m_row;
-}
-
-void DBIRecordsetFirebird::close()
-{
-   if ( m_res != 0 ) {
-      mysql_free_result( m_res );
-      m_res = 0;
-   }
-}
-
-/******************************************************************************
- * Recordset class --- when using statements.
- *****************************************************************************/
-
-DBIRecordsetFirebird_STMT::DBIRecordsetFirebird_STMT( DBIHandleFirebird *dbh, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek )
-    : DBIRecordsetFirebird( dbh, res, bCanSeek ),
-      m_stmt( stmt )
-{
-   // bind the output values
-   m_pMyBind = (MYSQL_BIND*) memAlloc( sizeof( MYSQL_BIND ) * m_columnCount );
-   memset( m_pMyBind, 0, sizeof( MYSQL_BIND ) * m_columnCount );
-   m_pOutBind = new FirebirdDBIOutBind[ m_columnCount ];
-
-   // keep track of blobs: they myst be zeroed before each fetch
-   m_pBlobId = new int[m_columnCount];
-   m_nBlobCount = 0;
-
-   for ( int c = 0; c < m_columnCount; c++ )
-   {
-      // blob field? -- we need to know its length.
-      MYSQL_FIELD& field = m_fields[c];
-      FirebirdDBIOutBind& ob = m_pOutBind[c];
-      MYSQL_BIND& mb = m_pMyBind[c];
-
-      mb.buffer_type = field.type;
-      // Accept to blob in sizes < 1024
-      if( field.type == MYSQL_TYPE_DATE ||
-          field.type == MYSQL_TYPE_TIME ||
-          field.type == MYSQL_TYPE_DATETIME ||
-          field.type == MYSQL_TYPE_TIMESTAMP ||
-          field.type == MYSQL_TYPE_NEWDATE
-      )
-      {
-         mb.buffer_length = sizeof( MYSQL_TIME );
-         mb.buffer = ob.reserve( mb.buffer_length );
-      }
-      else if( field.length >= 1024 && (
-            field.type == MYSQL_TYPE_TINY_BLOB ||
-            field.type == MYSQL_TYPE_BLOB ||
-            field.type == MYSQL_TYPE_MEDIUM_BLOB ||
-            field.type == MYSQL_TYPE_LONG_BLOB )
-         )
-      {
-         // if we have a large blob, fetch it separately
-         m_pBlobId[m_nBlobCount++] = c;
-      }
-      else
-      {
-         mb.buffer_length = field.length + 1;
-         mb.buffer = ob.reserve( field.length + 1 );
-      }
-
-      mb.length = &ob.nLength;
-      mb.is_null = &ob.bIsNull;
-
-   }
-
-   if( mysql_stmt_bind_result( m_stmt, m_pMyBind ) != 0 )
-   {
-      dbh->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
-   }
-
-   m_rowCount = mysql_stmt_affected_rows( m_stmt );
-}
-
-DBIRecordsetFirebird_STMT::~DBIRecordsetFirebird_STMT()
+DBIRecordsetFB::~DBIRecordsetFB()
 {
    close();
+}
 
-   memFree( m_pMyBind );
-   delete m_pOutBind;
-   delete[] m_pBlobId;
+int DBIRecordsetFB::getColumnCount()
+{
+   return m_nColumnCount;
+}
+
+int64 DBIRecordsetFB::getRowIndex()
+{
+   return m_nRow;
+}
+
+int64 DBIRecordsetFB::getRowCount()
+{
+   return m_nRowCount;
 }
 
 
-bool DBIRecordsetFirebird_STMT::getColumnValue( int nCol, Item& value )
+bool DBIRecordsetFB::getColumnName( int nCol, String& name )
 {
-   if ( m_row == -1 || nCol < 0 || nCol >= m_columnCount )
-   {
-      return false;
-   }
+}
 
-   // if the field is nil, return nil
-   if( *m_pMyBind[nCol].is_null )
-   {
-      value.setNil();
-      return true;
-   }
 
-   unsigned long dlen = *m_pMyBind[nCol].length;
-   FirebirdDBIOutBind& outbind = m_pOutBind[nCol];
-
-   switch( m_fields[nCol].type )
-   {
-   case MYSQL_TYPE_NULL:
-      value.setNil();
-      break;
-
-   case MYSQL_TYPE_TINY:
-     value.setInteger( (*(char*) outbind.memory() ) );
-
-      break;
-
-   case MYSQL_TYPE_YEAR:
-   case MYSQL_TYPE_SHORT:
-      value.setInteger( (*(short*) outbind.memory() ) );
-      break;
-
-   case MYSQL_TYPE_INT24:
-   case MYSQL_TYPE_LONG:
-   case MYSQL_TYPE_ENUM:
-   case MYSQL_TYPE_GEOMETRY:
-      value.setInteger( (*(int32*) outbind.memory() ) );
-      break;
-
-   case MYSQL_TYPE_LONGLONG:
-      value.setInteger( (*(int64*) outbind.memory() ) );
-      break;
-
-   case MYSQL_TYPE_FLOAT:
-      value.setNumeric( (*(float*) outbind.memory() ) );
-      break;
-
-   case MYSQL_TYPE_DOUBLE:
-      value.setNumeric( (*(double*) outbind.memory() ) );
-      break;
-
-   case MYSQL_TYPE_DECIMAL:
-   case MYSQL_TYPE_NEWDECIMAL:
-      {
-         // encoding is utf-8, and values are in range < 127
-         String sv = (char*) outbind.memory();
-         double dv=0.0;
-         sv.parseDouble(dv);
-         value.setNumeric(dv);
-      }
-      break;
-
-   case MYSQL_TYPE_DATE:
-   case MYSQL_TYPE_TIME:
-   case MYSQL_TYPE_DATETIME:
-   case MYSQL_TYPE_TIMESTAMP:
-   case MYSQL_TYPE_NEWDATE:
-      {
-         VMachine* vm = VMachine::getCurrent();
-         if( vm == 0 )
-         {
-            return false;
-         }
-         MYSQL_TIME* mtime = (MYSQL_TIME*) outbind.memory();
-         TimeStamp* ts = new TimeStamp;
-
-         ts->m_year = mtime->year;
-         ts->m_month = mtime->month;
-         ts->m_day = mtime->day;
-         ts->m_hour = mtime->hour;
-         ts->m_minute = mtime->minute;
-         ts->m_second = mtime->second;
-         ts->m_msec = mtime->second_part;
-
-         CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
-         ots->setUserData( ts );
-         value = ots;
-      }
-      break;
-
-   // string types
-   case MYSQL_TYPE_BIT:
-   case MYSQL_TYPE_STRING:
-   case MYSQL_TYPE_VARCHAR:
-   case MYSQL_TYPE_VAR_STRING:
-      // text?
-      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
-      {
-         value = new MemBuf_1( (byte*) outbind.memory(), dlen );
-      }
-      else
-      {
-         ((char*) outbind.memory())[ dlen ] = 0;
-         CoreString* res = new CoreString;
-         res->fromUTF8( (char*) outbind.memory() );
-         value = res;
-      }
-   break;
-
-   case MYSQL_TYPE_TINY_BLOB:
-   case MYSQL_TYPE_BLOB:
-   case MYSQL_TYPE_MEDIUM_BLOB:
-   case MYSQL_TYPE_LONG_BLOB:
-      // read the missing memory -- and be sure to alloc
-      if( dlen != 0 )
-      {
-         outbind.alloc( dlen );
-         m_pMyBind[nCol].buffer_length = dlen;
-         m_pMyBind[nCol].buffer = outbind.memory();
-         if(  mysql_stmt_fetch_column( m_stmt, m_pMyBind + nCol, nCol, 0 ) != 0 )
-         {
-            static_cast< DBIHandleFirebird *>(m_dbh)
-                  ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
-         }
-      }
-
-      // text?
-      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
-      {
-         // give ownership
-         if( dlen == 0 )
-         {
-            value = new MemBuf_1( 0, 0 );
-         }
-         else
-         {
-            value = new MemBuf_1(
-               (byte*) outbind.getMemory(),
-               dlen,
-               memFree );
-         }
-      }
-      else
-      {
-         if( dlen == 0 )
-         {
-            value = new CoreString( "" );
-         }
-         else
-         {
-            ((char*) outbind.memory() )[ dlen ] = 0;
-            CoreString* res = new CoreString;
-            res->fromUTF8( (char*) m_pMyBind[nCol].buffer );
-            value = res;
-         }
-      }
-      break;
-
-   default:
-      static_cast< DBIHandleFirebird *>(m_dbh)
-         ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
-   }
-
+bool DBIRecordsetFB::fetchRow()
+{
+   // more data incoming
+   m_nRow++;
    return true;
 }
 
-bool DBIRecordsetFirebird_STMT::discard( int64 ncount )
-{
-   if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
 
-   // we have all the records. We may seek
-   if( m_bCanSeek )
+bool DBIRecordsetFB::discard( int64 ncount )
+{
+   while ( ncount > 0 )
    {
-      mysql_stmt_data_seek( m_stmt, (uint64) ncount + (m_row == 0 ? 0 : m_row+1) );
-   }
-   else
-   {
-      for ( int64 i = 0; i < ncount; ++i )
+      if( ! fetchRow() )
       {
-         int res = mysql_stmt_fetch( m_stmt );
-         if( res == MYSQL_NO_DATA )
-            return false;
-         if( res == 1 )
-         {
-            static_cast< DBIHandleFirebird *>(m_dbh)
-                                    ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
-         }
+         return false;
       }
-   }
-
-   return true;
-}
-
-bool DBIRecordsetFirebird_STMT::fetchRow()
-{
-   if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
-
-   // first, zero excessively long blobs.
-   for( int i = 0; i < m_nBlobCount; ++i  )
-   {
-      MYSQL_BIND& bind = m_pMyBind[ m_pBlobId[i] ];
-      bind.buffer_length = 0;
-      *bind.length = 0;
-      bind.buffer = 0;
-   }
-
-   // then do the real fetch
-   int res = mysql_stmt_fetch( m_stmt );
-   if( res == 1 )
-   {
-      // there's an error.
-      static_cast< DBIHandleFirebird *>(m_dbh)
-            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
-   }
-   else if ( res == MYSQL_NO_DATA )
-   {
-      return false;
-   }
-
-   // we have the values
-   m_row++;
-   return true;
-}
-
-void DBIRecordsetFirebird_STMT::close()
-{
-   DBIRecordsetFirebird::close();
-
-   if ( m_stmt != 0 ) {
-      mysql_stmt_close( m_stmt );
-      m_stmt = 0;
-   }
-}
-
-/******************************************************************************
- * Recordset class --- when using query.
- *****************************************************************************/
-
-DBIRecordsetFirebird_RES::DBIRecordsetFirebird_RES( DBIHandleFirebird *dbh, MYSQL_RES *res, bool bCanSeek )
-    : DBIRecordsetFirebird( dbh, res, bCanSeek )
-{
-   m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
-}
-
-DBIRecordsetFirebird_RES::~DBIRecordsetFirebird_RES()
-{
-}
-
-
-bool DBIRecordsetFirebird_RES::getColumnValue( int nCol, Item& value )
-{
-   if ( m_row == -1 || nCol < 0 || nCol >= m_columnCount )
-   {
-      return false;
-   }
-
-
-   const char* data = m_rowData[nCol];
-   if( data == 0 )
-   {
-      value.setNil();
-      return true;
-   }
-
-   switch( m_fields[nCol].type )
-   {
-   case MYSQL_TYPE_NULL:
-      value.setNil();
-      break;
-
-   case MYSQL_TYPE_TINY:
-   case MYSQL_TYPE_YEAR:
-   case MYSQL_TYPE_SHORT:
-   case MYSQL_TYPE_INT24:
-   case MYSQL_TYPE_LONG:
-   case MYSQL_TYPE_ENUM:
-   case MYSQL_TYPE_GEOMETRY:
-   case MYSQL_TYPE_LONGLONG:
-      {
-         int64 vn;
-         String sv(data);
-         sv.parseInt(vn);
-         value = vn;
-      }
-      break;
-
-   case MYSQL_TYPE_FLOAT:
-   case MYSQL_TYPE_DOUBLE:
-   case MYSQL_TYPE_DECIMAL:
-   case MYSQL_TYPE_NEWDECIMAL:
-      {
-         double vn;
-         String sv(data);
-         sv.parseDouble(vn);
-         value = vn;
-      }
-      break;
-
-   case MYSQL_TYPE_DATE:
-      value = makeTimestamp( String(data) + " 00:00:00");
-      break;
-
-   case MYSQL_TYPE_TIME:
-      value = makeTimestamp( String( "0000-00-00 " ) + String(data) );
-      break;
-
-   case MYSQL_TYPE_DATETIME:
-   case MYSQL_TYPE_TIMESTAMP:
-   case MYSQL_TYPE_NEWDATE:
-      value = makeTimestamp( String(data) );
-      break;
-
-   // string types
-   case MYSQL_TYPE_BIT:
-   case MYSQL_TYPE_STRING:
-   case MYSQL_TYPE_VARCHAR:
-   case MYSQL_TYPE_VAR_STRING:
-   case MYSQL_TYPE_TINY_BLOB:
-   case MYSQL_TYPE_BLOB:
-   case MYSQL_TYPE_MEDIUM_BLOB:
-   case MYSQL_TYPE_LONG_BLOB:      // text?
-      if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
-      {
-         unsigned long* lengths = mysql_fetch_lengths( m_res );
-         byte* mem = (byte*) memAlloc( lengths[nCol] );
-         memcpy( mem, data, lengths[nCol] );
-         value = new MemBuf_1( mem, lengths[nCol], memFree );
-      }
-      else
-      {
-         CoreString* vs = new CoreString;
-         vs->fromUTF8( data );
-         value = vs;
-      }
-      break;
-
-
-   default:
-      static_cast< DBIHandleFirebird *>(m_dbh)
-         ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+      --ncount;
    }
 
    return true;
 }
 
 
-CoreObject* DBIRecordsetFirebird_RES::makeTimestamp( const String& str )
+void DBIRecordsetFB::close()
 {
-   VMachine* vm = VMachine::getCurrent();
-   if( vm == 0 )
+   if( m_tref != 0 )
    {
-      static_cast< DBIHandleFirebird *>(m_dbh)
-            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+      m_tref->decref();
+      m_tref = 0;
+      m_sref->decref();
+      m_sref = 0;
+      delete m_data;
+      m_data = 0;
    }
-   CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
-   TimeStamp* ts = new TimeStamp;
-
-   int64 ival;
-   str.subString(0,4).parseInt(ival);
-   ts->m_year = ival;
-   str.subString(5,7).parseInt(ival);
-   ts->m_month = ival;
-   str.subString(8,10).parseInt(ival);
-   ts->m_day = ival;
-   str.subString(11,13).parseInt(ival);
-   ts->m_hour = ival;
-   str.subString(14,16).parseInt(ival);
-   ts->m_minute = ival;
-   str.subString(17).parseInt(ival);
-   ts->m_second = ival;
-   ts->m_msec = 0;
-
-   ots->setUserData( ts );
-   return ots;
 }
 
 
-bool DBIRecordsetFirebird_RES::discard( int64 ncount )
+bool DBIRecordsetFB::getColumnValue( int nCol, Item& value )
 {
-   if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
-
-   // we have all the records. We may seek
-   if( m_dbh->options()->m_nPrefetch == -1 )
-   {
-      m_row = ncount + (m_row == 0 ? 0 : m_row+1);
-      mysql_data_seek( m_res, (uint64) m_row );
-
-   }
-   else
-   {
-      for ( int64 i = 0; i < ncount; ++i )
-      {
-         MYSQL_ROW row = mysql_fetch_row( m_res );
-
-         if( row == 0 )
-         {
-            if ( mysql_errno( static_cast<DBIHandleFirebird*>(m_dbh)->getConn() ) != 0 )
-            {
-               static_cast< DBIHandleFirebird *>(m_dbh)
-                   ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
-            }
-            return false;
-         }
-
-         m_row++;
-      }
-   }
-
-   return true;
-}
-
-bool DBIRecordsetFirebird_RES::fetchRow()
-{
-   if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
-
-   m_rowData = mysql_fetch_row( m_res );
-   if ( m_rowData == 0 )
-      return false;
-
-   // we have the values
-   m_row++;
-   return true;
-}
-
-
-/******************************************************************************
- * Recordset class --- when using query + direct string output.
- *****************************************************************************/
-
-DBIRecordsetFirebird_RES_STR::DBIRecordsetFirebird_RES_STR( DBIHandleFirebird *dbh, MYSQL_RES *res, bool bCanSeek )
-    : DBIRecordsetFirebird_RES( dbh, res, bCanSeek )
-{
-}
-
-DBIRecordsetFirebird_RES_STR::~DBIRecordsetFirebird_RES_STR()
-{
-}
-
-
-bool DBIRecordsetFirebird_RES_STR::getColumnValue( int nCol, Item& value )
-{
-   if ( m_row == -1 || nCol < 0 || nCol >= m_columnCount )
-   {
-      return false;
-   }
-
-   const char* data = m_rowData[nCol];
-   if( data == 0 || m_fields[nCol].type == MYSQL_TYPE_NULL )
-   {
-      value.setNil();
-   }
-   else if( m_fields[nCol].charsetnr == 63 && IS_LONGDATA(m_fields[nCol].type ) ) // sic -- from manual
-   {
-      unsigned long* lengths = mysql_fetch_lengths( m_res );
-      byte* mem = (byte*) memAlloc( lengths[nCol] );
-      memcpy( mem, data, lengths[nCol] );
-      value = new MemBuf_1( mem, lengths[nCol], memFree );
-   }
-   else
-   {
-      CoreString* vs = new CoreString;
-      vs->fromUTF8( data );
-      value = vs;
-   }
 
    return true;
 }
 
 
 /******************************************************************************
- * Transaction class
+ * DB Statement class
  *****************************************************************************/
 
-DBIStatementFirebird::DBIStatementFirebird( DBIHandle *dbh, MYSQL_STMT* stmt ):
-      DBIStatement( dbh ),
-      m_statement( stmt ),
-      m_inBind(0)
+DBIStatementFB::DBIStatementFB( DBIHandleFB *dbh, const isc_stmt_handle& stmt ):
+   DBIStatement( dbh ),
+   m_statement(stmt),
+   m_pStmt( new FBStmtRef(stmt) )
 {
+   m_pConn = dbh->connRef();
+   m_pConn->incref();
 }
 
-
-DBIStatementFirebird::~DBIStatementFirebird()
+DBIStatementFB::~DBIStatementFB()
 {
    close();
 }
 
 
-int64 DBIStatementFirebird::execute( const ItemArray& params )
+DBIRecordset* DBIStatementFB::execute( ItemArray* params )
 {
-   if( m_statement == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
-
-   // should we bind with the statement?
-   if ( m_inBind == 0 )
-   {
-      if( params.length() != mysql_stmt_param_count( m_statement ) )
-      {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
-      }
-
-      // Do we have some parameter to bind?
-      if( params.length() > 0 )
-      {
-         // params.lengh() == 0 is possible with totally static selects,
-         // or other statements that will be run usually just once.
-         // Inserts or other repetitive statements will have at least 1, so
-         // this branch won't be repeatedly checked in the fast path.
-         m_inBind = new FirebirdDBIInBind( m_statement );
-         m_inBind->bind( params, DBITimeConverter_Firebird_TIME_impl );
-
-         if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
-         {
-            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
-         }
-      }
-   }
-   else
-   {
-      m_inBind->bind( params, DBITimeConverter_Firebird_TIME_impl );
-   }
-
-   if( mysql_stmt_execute( m_statement ) != 0 )
-   {
-      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_EXEC );
-   }
-
-   // row count?
-   return mysql_stmt_affected_rows( m_statement );
+   return 0;
 }
 
-
-void DBIStatementFirebird::reset()
+void DBIStatementFB::reset()
 {
-   if( m_statement == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+}
 
-   if( mysql_stmt_reset( m_statement ) != 0 )
+void DBIStatementFB::close()
+{
+   if( m_pStmt != 0 )
    {
-      getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_RESET );
+      m_pStmt->decref();
+      m_pStmt = 0;
+      m_pConn->decref();
    }
 }
 
+/******************************************************************************
+ * Reaensaction handler
+ *****************************************************************************/
 
-void DBIStatementFirebird::close()
+
+FBTransRef::~FBTransRef()
 {
-   if ( m_statement != 0 )
-  {
-     mysql_stmt_close( m_statement );
-     m_statement = 0;
-     delete m_inBind;
-     m_inBind = 0;
-  }
+    // force closing if still not closed.
+    if ( ! m_bClosed )
+    {
+       static ISC_STATUS status[20];
+       isc_commit_transaction( status, &handle() );
+    }
 }
 
+
+void FBTransRef::commit()
+{
+    static ISC_STATUS status[20];
+    if( isc_commit_transaction( status, &handle() ) != 0 )
+    {
+       DBIHandleFB::throwError(__LINE__, FALCON_DBI_ERROR_TRANSACTION, status, false );
+    }
+    m_bClosed = true;
+    decref();
+}
+
+void FBTransRef::commitRetaining()
+{
+    static ISC_STATUS status[20];
+    if( isc_commit_retaining( status, &handle() ) != 0 )
+    {
+       DBIHandleFB::throwError(__LINE__, FALCON_DBI_ERROR_TRANSACTION, status, false );
+    }
+}
+
+void FBTransRef::rollback()
+{
+    static ISC_STATUS status[20];
+    if( isc_rollback_transaction( status, &handle() ) != 0 )
+    {
+       DBIHandleFB::throwError(__LINE__, FALCON_DBI_ERROR_TRANSACTION, status, false );
+    }
+    m_bClosed = true;
+    decref();
+}
 
 
 /******************************************************************************
  * DB Handler class
  *****************************************************************************/
-DBIHandleFirebird::~DBIHandleFirebird()
+
+
+FBSqlData::FBSqlData():
+      m_sqlda(0),
+      m_indicators(0),
+      m_bOwnBuffers( false )
 {
-   DBIHandleFirebird::close();
+   m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(5) );
+   m_sqlda->version = SQLDA_VERSION1;
+   m_sqlda->sqln = 5;
 }
 
-void DBIHandleFirebird::options( const String& params )
+FBSqlData::~FBSqlData()
+{
+   release();
+}
+
+void FBSqlData::release()
+{
+   if( m_sqlda != 0 )
+   {
+      if( m_bOwnBuffers )
+      {
+         for( int i = 0; i < varCount(); ++i )
+         {
+            memFree(var(i)->sqldata);
+         }
+
+         memFree( m_indicators );
+      }
+      memFree(m_sqlda);
+      m_sqlda = 0;
+      m_bOwnBuffers = false;
+   }
+}
+
+
+void FBSqlData::describeIn( isc_stmt_handle stmt )
+{
+   ISC_STATUS status[20];
+
+   if( isc_dsql_describe_bind( status, &stmt, 1, m_sqlda ) != 0 )
+   {
+      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_BIND_INTERNAL, status, true );
+   }
+
+   if ( m_sqlda->sqld > m_sqlda->sqln )
+   {
+      int count = m_sqlda->sqld;
+      memFree( m_sqlda );
+      m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(count) );
+      m_sqlda->version = SQLDA_VERSION1;
+      m_sqlda->sqln = count;
+      isc_dsql_describe_bind( status, &stmt, 1, m_sqlda );
+   }
+}
+
+
+void FBSqlData::describeOut( isc_stmt_handle stmt )
+{
+   ISC_STATUS status[20];
+
+   if( isc_dsql_describe( status, &stmt, 1, m_sqlda ) != 0 )
+   {
+      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_BIND_INTERNAL, status, true );
+   }
+
+   if ( m_sqlda->sqld > m_sqlda->sqln )
+   {
+      int count = m_sqlda->sqld;
+      memFree( m_sqlda );
+      m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(count) );
+      m_sqlda->version = SQLDA_VERSION1;
+      m_sqlda->sqln = count;
+      isc_dsql_describe( status, &stmt, 1, m_sqlda );
+   }
+}
+
+void FBSqlData::allocOutput()
+{
+   m_bOwnBuffers = true;
+   m_indicators = (ISC_SHORT*) memAlloc( sizeof(ISC_SHORT) * varCount() );
+
+   for( int i = 0; i < varCount(); ++i )
+   {
+      XSQLVAR* v = var(i);
+      v->sqldata = (ISC_SCHAR*) memAlloc( v->sqllen );
+      v->sqlind = m_indicators + i;
+      *v->sqlind = 0;
+   }
+}
+
+/******************************************************************************
+ * DB Handler class
+ *****************************************************************************/
+
+DBIHandleFB::DBIHandleFB():
+      m_bCommitted( false )
+{
+   m_pConn = 0;
+   m_pTrans = 0;
+
+}
+
+DBIHandleFB::DBIHandleFB( const isc_db_handle &conn ):
+      m_bCommitted( false )
+{
+   m_pConn = new FBConnRef( conn );
+   m_pTrans = 0;
+}
+
+DBIHandleFB::~DBIHandleFB()
+{
+   // don't call close -- close will throw in case of commit error.
+   if( m_pConn != 0 )
+   {
+      if ( m_pTrans != 0 )
+      {
+         //... and don't call commit; decref will commit without error report on destroy
+         m_pTrans->decref();
+         m_pTrans = 0;
+      }
+
+      m_pConn->decref();
+      m_pConn = 0;
+   }
+}
+
+
+isc_db_handle DBIHandleFB::getConnData()
+{
+   if( m_pConn == 0 )
+   {
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   }
+
+   return m_pConn->handle();
+}
+
+
+
+void DBIHandleFB::options( const String& params )
 {
    if( ! m_settings.parse( params ) )
    {
+      // autocommit status is read on query
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
             .extra( params ) );
    }
 }
 
-const DBISettingParams* DBIHandleFirebird::options() const
+const DBISettingParams* DBIHandleFB::options() const
 {
    return &m_settings;
 }
 
 
-DBIHandleFirebird::DBIHandleFirebird()
+DBIRecordset *DBIHandleFB::query( const String &sql, ItemArray* params )
 {
-   m_conn = 0L;
-   m_tr = 0L;
-}
+   ISC_STATUS status[20];
 
-DBIHandleFirebird::DBIHandleFirebird( const isc_db_handle &conn )
-{
-   m_conn = conn;
-}
+   isc_db_handle db1 = getConnData();
 
-DBIRecordset *DBIHandleFirebird::query( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   if( m_tr == 0L )
-      begin();
-
-   // do we want to fetch strings?
-   // if( options()->m_bFetchStrings )
-
-   // prepare and execute -- will create a new m_statement
-   isc_stmt_handle stmt = 0L;
-
-   if ( options()->m_bAutocommit )
+   // Open a transaction if we don't have any.
+   if ( m_pTrans == 0 )
    {
-      commit();
+      begin();
+   }
+   isc_tr_handle tr1 = m_pTrans->handle();
+
+   // Get a new statement handle
+   isc_stmt_handle stmt;
+   stmt = NULL;
+   if ( isc_dsql_allocate_statement(status, &db1, &stmt) != 0 )
+   {
+      throwError( __LINE__, FALCON_DBI_ERROR_NOMEM, status, false );
    }
 
-   return 0; // to make the compiler happy
-}
+   AutoCString asQuery( sql );
 
+   // call the query
+   FBSqlData* out_tab = 0;
 
-void DBIHandleFirebird::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   if( m_tr == 0L )
-      begin();
-
-   // if we don't have var params, we can use the standard query, after proper escape.
-   if ( params.length() == 0 )
+   ISC_STATUS res;
+   try
    {
-      MYSQL *conn = getConn();
-
-      AutoCString asQuery( sql );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      out_tab = new FBSqlData;
+      if( isc_dsql_prepare( status, &tr1, &stmt, asQuery.length(), asQuery.c_str(), 1, out_tab->table() ) )
       {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+         throwError( __LINE__, FALCON_DBI_ERROR_QUERY, status, true );
       }
 
-      // discard eventual recordsets
-      // mysql_next_result returns
-      //    0 if there are more results,
-      //    -1 if there aren't any other result
-      //    1 in case of errors
-
-      int res;
-      while ( (res = mysql_next_result( conn )) == 0 )
+      if( params == 0 )
       {
-         MYSQL_RES* rec = mysql_use_result( conn );
-         if( rec != 0 )
+         res = isc_dsql_execute( status, &tr1, &stmt, 1, 0 ) != 0;
+      }
+      else
+      {
+         FBInBind bindings(stmt);
+         bindings.bind( *params );
+         res = isc_dsql_execute( status, &tr1, &stmt, 1, bindings.table() );
+      }
+
+      if( res != 0 )
+      {
+         throwError( __LINE__, FALCON_DBI_ERROR_QUERY, status, true );
+      }
+
+      out_tab->describeOut( stmt );
+      if( out_tab->varCount() != 0 )
+      {
+         return new DBIRecordsetFB( this, m_pTrans, stmt, out_tab );
+      }
+      else
+      {
+         delete out_tab;
+         if( isc_dsql_free_statement( status, &stmt, DSQL_drop ) != 0 )
          {
-            mysql_free_result(rec);
+            throwError( __LINE__, FALCON_DBI_ERROR_QUERY, status, false );
          }
-      }
 
-      if( res == 1 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+         return 0;
       }
    }
-   else
+   catch( ... )
    {
-     MYSQL_STMT* stmt = my_prepare( sql );
-     FirebirdDBIInBind bindings (stmt);
-
-     // prepare and execute
-     try {
-        affectedRows = my_execute(
-              stmt,
-              bindings,
-              params );
-        mysql_stmt_close( stmt );
-     }
-     catch( ... )
-     {
-        mysql_stmt_close( stmt );
-        throw;
-     }
+      delete out_tab;
+      isc_dsql_free_statement( status, &stmt, DSQL_drop );
+      throw;
    }
 
-   if ( options()->m_bAutocommit )
-   {
-      commit();
-   }
+   //m_nLastAffected = (int64) nRowCount;
 }
 
 
 
-DBIRecordset* DBIHandleFirebird::call( const String &sql, int64 &affectedRows, const ItemArray& params )
+DBIStatement* DBIHandleFB::prepare( const String &query )
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   if( m_tr == 0L )
-      begin();
-
-   MYSQL *conn = getConn();
-   String temp;
-
-   sqlExpand( sql, temp, params );
-   AutoCString asQuery( "call " + temp );
-   if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-   }
-
-
-   if ( mysql_next_result( conn ) == -1 )
-   {
-      return 0;
-   }
-
-   MYSQL_RES* rec;
-
-   if( options()->m_nPrefetch < 0 )
-      rec = mysql_store_result( conn );
-   else
-      rec = mysql_use_result( conn );
-
-   affectedRows = mysql_affected_rows( conn );
-
-   // discard eventual other recordsets
-   while ( mysql_next_result( conn ) != -1 )
-   {
-      MYSQL_RES* rec1 = mysql_use_result( conn );
-      if( rec != 0 )
-      {
-         mysql_free_result(rec1);
-      }
-   }
-
-   if ( options()->m_bAutocommit )
-   {
-      commit();
-   }
-
-   return options()->m_bFetchStrings ?
-         new DBIRecordsetFirebird_RES_STR( this, rec ) :
-         new DBIRecordsetFirebird_RES( this, rec );
-}
-
-MYSQL_STMT* DBIHandleFirebird::my_prepare( const String &query )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   MYSQL_STMT* stmt = mysql_stmt_init( getConn() );
-   if( stmt == 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
-   }
-
-   AutoCString cquery( query );
-   if( mysql_stmt_prepare( stmt, cquery.c_str(), cquery.length() ) != 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-   }
-
-   // prepare the attributes as suggested by our parameters.
-   unsigned long setting = m_settings.m_nCursorThreshold == 0  ?
-         CURSOR_TYPE_READ_ONLY : CURSOR_TYPE_NO_CURSOR;
-
-   mysql_stmt_attr_set( stmt, STMT_ATTR_CURSOR_TYPE, &setting );
-
-   if( m_settings.m_nPrefetch > 0 )
-   {
-      setting = (unsigned long) m_settings.m_nPrefetch;
-      mysql_stmt_attr_set( stmt, STMT_ATTR_PREFETCH_ROWS, &setting );
-   }
-   else if ( m_settings.m_nPrefetch == -1 )
-   {
-      setting = (unsigned long) 0xFFFFFFFF;
-      mysql_stmt_attr_set( stmt, STMT_ATTR_PREFETCH_ROWS, &setting );
-   }
-
-   return stmt;
+   isc_db_handle handle = getConnData();
+   return 0;
+   // TODO
 }
 
 
-int64 DBIHandleFirebird::my_execute( MYSQL_STMT* stmt, FirebirdDBIInBind& bindings, const ItemArray& params )
+int64 DBIHandleFB::getLastInsertedId( const String& sequenceName )
 {
-   fassert( m_conn != 0 );
-
-   if( params.length() != mysql_stmt_param_count( stmt ) )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
-   }
-
-   // Do we have some parameter to bind?
-   if( params.length() > 0 )
-   {
-      bindings.bind( params, DBITimeConverter_Firebird_TIME_impl );
-
-      if( mysql_stmt_bind_param( stmt, bindings.mybindings() ) != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
-      }
-   }
-
-   if( mysql_stmt_execute( stmt ) != 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_EXEC );
-   }
-
-   // row count?
-   return mysql_stmt_affected_rows( stmt );
+   isc_db_handle handle = getConnData();
+   return 0;
+   // TODO
 }
 
 
-DBIStatement* DBIHandleFirebird::prepare( const String &query )
+void DBIHandleFB::begin()
 {
-   MYSQL_STMT* stmt = my_prepare( query );
-   return new DBIStatementFirebird( this, stmt );
-}
-
-
-int64 DBIHandleFirebird::getLastInsertedId( const String& sequenceName )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   return mysql_insert_id( m_conn );
-}
-
-
-void DBIHandleFirebird::begin()
-{
-   if( m_conn == 0L )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
    ISC_STATUS status[20];
 
-   if ( m_tr != 0L )
+   isc_db_handle handle = getConnData();
+
+   // have we an open transaction?
+   if ( m_pTrans != 0 )
    {
-      if( ! isc_rollback_transaction(status, &m_tr) )
-      {
-         // TODO Throw the error
-      }
-      m_tr = 0L;
+      // this closes and decrefs
+      m_pTrans->commit();
    }
 
-   isc_start_transaction( status, &m_tr, 1, NULL );
+   // Try to open new transaction
+   isc_tr_handle htr = 0L;
 
-   if( mysql_query( m_conn, "BEGIN" ) != 0 )
+   // TODO Use options to create different transaction types
+   char isc_tbp[] = {isc_tpb_version3,
+      isc_tpb_write,
+      isc_tpb_concurrency,
+      isc_tpb_wait};
+
+   /* Code for attaching to database here is omitted. */
+   ISC_STATUS res = isc_start_transaction(status,
+      &htr,
+      1,
+      &handle,
+      (unsigned short) sizeof(isc_tbp),
+      isc_tbp);
+
+   if( res != 0 )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
+      throwError( __LINE__, FALCON_DBI_ERROR_TRANSACTION, status, false );
    }
+
+   m_pTrans = new FBTransRef( htr );
 }
 
 
-void DBIHandleFirebird::commit()
+void DBIHandleFB::commit()
 {
-   if( m_conn == 0L )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   ISC_STATUS status[20];
-   if( ! isc_commit_transaction(status, &m_tr) )
-   {
-      // TODO Throw the error
-   }
-
-   m_tr = 0L;
+   getConnData();  // check for db open.
+   m_pTrans->commitRetaining(); // don't really close the transaction.
 }
 
 
-void DBIHandleFirebird::rollback()
+void DBIHandleFB::rollback()
 {
-   if( m_conn == 0L )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   ISC_STATUS status[20];
-   if( ! isc_rollback_transaction(status, &m_tr) )
-   {
-      // TODO Throw the error
-   }
-
-   m_tr = 0L;
+   getConnData();  // check for db open.
+   m_pTrans->rollback(); // this closes and decref the trans.
+   m_pTrans = 0; // say we need a new transaction
 }
 
 
-void DBIHandleFirebird::selectLimited( const String& query,
+void DBIHandleFB::selectLimited( const String& query,
       int64 nBegin, int64 nCount, String& result )
 {
-   String sBegin, sCount;
+   String sSkip, sCount;
 
    if ( nBegin > 0 )
    {
-      sBegin = " OFFSET ";
-      sBegin.N( nBegin );
+      sSkip = " SKIP ";
+      sSkip.N( nBegin );
    }
 
    if( nCount > 0 )
    {
+      sCount = " FIRST ";
       sCount.N( nCount );
    }
 
-   result = "SELECT " + query;
+   result = "SELECT" + sCount + sSkip +" "+ query;
+}
 
-   if( nCount != 0 || nBegin != 0 )
+
+void DBIHandleFB::close()
+{
+   if ( m_pTrans != 0 )
    {
-      result += "LIMIT " + sCount + sBegin;
+      m_pTrans->commit();  // commit decrefs, and eventually throws
+      m_pTrans = 0;
+   }
+
+   if( m_pConn != 0 )
+   {
+      m_pConn->decref();
+      m_pConn = 0;
    }
 }
 
 
-void DBIHandleFirebird::close()
+void DBIHandleFB::throwError( int line, int code, ISC_STATUS* status, bool dsql )
 {
-   if( m_tr != 0 )
-   {
-      m_tr
-   }
-   if ( m_conn != NULL )
-   {
-      mysql_query( m_conn, "ROLLBACK" );
-      mysql_close( m_conn );
-      m_conn = NULL;
-   }
-}
+   String desc;
+   ISC_SCHAR msgBuffer[512];
 
-void DBIHandleFirebird::throwError( const char* file, int line, int code )
-{
-   fassert( m_conn != 0 );
-
-   const char *errorMessage = mysql_error( m_conn );
-
-   if ( errorMessage != NULL )
+   // For ib/fb, dynamic sql errors are different from engine errors.
+   if( dsql )
    {
-      String description;
-      description.N( (int64) mysql_errno( m_conn ) ).A(": ");
-      description.A( errorMessage );
-      throw new DBIError( ErrorParam( code, line )
-            .extra(description)
-            .module( file ) );
+      // first write the error code,
+      ISC_LONG SQLSTATUS = isc_sqlcode( status );
+      desc.N((int64)SQLSTATUS).A(": ");
+
+      // then the description.
+      isc_sql_interprete( SQLSTATUS, msgBuffer, 512 );
+      desc += msgBuffer;
    }
    else
    {
-      throw new DBIError( ErrorParam( code, line )
-                  .module( file ) );
-   }
-}
+      // Get the main error
+      ISC_STATUS* ep;
+      ep = status;
+      isc_interprete( msgBuffer, &ep );
+      desc += msgBuffer;
 
+      // Write the secondary errors as a list of [...; ...; ...] messages
+      bool bDone = false;
+      while( isc_interprete( msgBuffer, &ep ) )
+      {
+         if ( ! bDone )
+         {
+            desc += " [";
+            bDone = true;
+         }
+         else {
+            desc += "; ";
+         }
+         desc += msgBuffer;
+      }
 
-/******************************************************************************
- * Main service class
- *****************************************************************************/
-
-void DBIServiceFirebird::init()
-{
-}
-
-static void checkParamNumber(char *&dpb, const String& value, byte dpb_type, const String &option )
-{
-   if ( value.length() )
-   {
-      int64 res;
-      if( ! value.parseInt(res) )
-         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-                  .extra( option + "=" + value )
-               );
-
-      *dpb++ = dpb_type;
-      *dpb++ = 1;
-      *dpb++ = (byte) res;
-   }
-}
-
-static void checkParamYesOrNo(char *&dpb, const String& value, byte dpb_type, const String &option )
-{
-   if ( value.size() )
-   {
-      *dpb++ = dpb_type;
-      *dpb++ = 1;
-
-     if( value.compareIgnoreCase( "yes" ) == 0 )
-        *dpb++ = (byte) 1;
-     else if( value.compareIgnoreCase( "no" ) == 0 )
-        *dpb++ = (byte) 0;
-     else
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-                 .extra( option + "=" + sNoRserve )
-              );
-   }
-}
-
-static void checkParamString(char *&dpb, int& len, const String& value, char* szValue, byte dpb_type )
-{
-   if ( value.size() )
-   {
-      isc_expand_dpb( &dpb, &len,
-            dpb_type, szValue,
-            NULL
-      );
-   }
-}
-
-
-DBIHandle *DBIServiceFirebird::connect( const String &parameters )
-{
-   isc_db_handle handle = 0L;
-
-   char dpb_buffer[256*10], *dpb, *p;
-   // User name (uid)
-   // Password (pwd)
-
-   dpb = dpb_buffer;
-   int dpb_length;
-
-   // Parse the connection string.
-   DBIConnParams connParams;
-
-   // add Firebird specific parameters
-   // Encrypted password (epwd)
-   String sPwdEnc; char* szPwdEncode;
-   connParams.addParameter( "epwd", sPwdEnc, &szPwdEncode );
-
-   // Role name (role)
-   String sRole; char* szRole;
-   connParams.addParameter( "role", sRole, &szRole );
-
-   // System database administrator’s user name (sa)
-   String sSAName; char* szSAName;
-   connParams.addParameter( "sa", sSAName, &szSAName );
-
-   // Authorization key for a software license (license)
-   String sLicense; char* szLicense;
-   connParams.addParameter( "license", sLicense, &szLicense );
-
-   // Database encryption key (ekey)
-   String sKey; char* szKey;
-   connParams.addParameter( "ekey", sKey, &szKey );
-
-   // Number of cache buffers (nbuf)
-   String sNBuf;
-   connParams.addParameter( "nbuf", sNBuf );
-
-   // dbkey context scope (kscope)
-   String sDBKeyScope;
-   connParams.addParameter( "kscope", sDBKeyScope );
-
-   // Specify whether or not to reserve a small amount of space on each database
-   // --- page for holding backup versions of records when modifications are made (noreserve)
-   String sNoRserve;
-   connParams.addParameter( "reserve", sNoRserve );
-
-   // Specify whether or not the database should be marked as damaged (dmg)
-   String sDmg;
-   connParams.addParameter( "dmg", sDmg );
-
-   // Perform consistency checking of internal structures (verify)
-   String sVerify;
-   connParams.addParameter( "verify", sVerify );
-
-   // Activate the database shadow, an optional, duplicate, in-sync copy of the database (shadow)
-   String sShadow;
-   connParams.addParameter( "shadow", sShadow );
-
-   // Delete the database shadow (delshadow)
-   String sDelShadow;
-   connParams.addParameter( "delshadow", sDelShadow );
-
-   // Activate a replay logging system to keep track of all database calls (beginlog)
-   String sBeginLog;
-   connParams.addParameter( "beginlog", sBeginLog );
-
-   // Deactivate the replay logging system (quitlog)
-   String sQuitLog;
-   connParams.addParameter( "quitlog", sQuitLog );
-
-   // Language-specific message file  (lcmsg)
-   String sLcMsg; char* szLcMsg;
-   connParams.addParameter( "lcmsg", sLcMsg, &szLcMsg );
-
-   // Character set to be utilized (lctype)
-   String sLcType; char* szLcType;
-   connParams.addParameter( "lctype", sLcType, &szLcType );
-
-   // Connection timeout (tout)
-   String sTimeout;
-   connParams.addParameter( "tout", sTimeout );
-
-   if( ! connParams.parse( parameters ) )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-         .extra( parameters )
-      );
+      if( bDone )
+      {
+         desc += "]";
+      }
    }
 
-   // create the dpb; first the numerical values.
-   *dpb++ = isc_dpb_version1;
-
-   checkParamNumber( dpb, sNBuf, isc_dpb_num_buffers, "nbuf" );
-   checkParamNumber( dpb, sTimeOut, isc_dpb_connect_timeout, "tout" );
-
-   checkParamYesOrNo( dpb, sDBKeyScope, isc_dpb_no_reserve, "kscope" );
-   checkParamYesOrNo( dpb, sNoRserve, isc_dpb_no_reserve, "reserve" );
-   checkParamYesOrNo( dpb, sDmg, isc_dpb_damaged, "dmg" );
-   checkParamYesOrNo( dpb, sVerify, isc_dpb_verify, "verify" );
-   checkParamYesOrNo( dpb, sShadow, isc_dpb_activate_shadow, "shadow" );
-   checkParamYesOrNo( dpb, sDelShadow, isc_dpb_delete_shadow, "delshadow" );
-   checkParamYesOrNo( dpb, sBeginLog, isc_dpb_begin_log, "beginlog" );
-   checkParamYesOrNo( dpb, sQuitLog, isc_dpb_quit_log, "sQuitLog" );
-
-   dpb_length = dpb - dpb_buffer;
-
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, connParams.m_sUser, connParams.m_szUser, isc_dpb_user_name );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, connParams.m_sPassword, connParams.m_szPassword, isc_dpb_password );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sPwdEnc, szPwdEncode, isc_dpb_password_enc );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sRole, szRole, isc_dpb_sql_role_name );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sLicense, szLicense, isc_dpb_license );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sKey, szKey, isc_dpb_encrypt_key );
-   dpb = dpb_buffer;
-   checkParamString( dpb, dpb_length, sLcMsg, szLcMsg, isc_dpb_lc_messages );
-   dpb = dpb_buffer;
-
-   // We'll ALWAYS use AutoCString to talk with Firebird, as such we'll ALWAYS use UTF8
-   isc_expand_dpb( &dpb, &dpb_length,
-         isc_dpb_lc_messages, "UTF8",
-               NULL );
-
-   /* Attach to the database. */
-   ISC_STATUS status_vector[20];
-
-   isc_attach_database(status_vector, strlen(connParams.m_szDb), connParams.m_szDb, &handle,
-         dpb_length,
-         dbp_buffer);
-
-   if ( status_vector[0] == 1 && status_vector[1] )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
-                   .extra( "Some error" )
-                );
-   }
-
-   return new DBIHandleFirebird( handle );
+   throw new DBIError( ErrorParam( code, line ).extra(desc) );
 }
 
-CoreObject *DBIServiceFirebird::makeInstance( VMachine *vm, DBIHandle *dbh )
-{
-   Item *cl = vm->findWKI( "FirebirdSQL" );
-   if ( cl == 0 || ! cl->isClass() )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
-   }
-
-   CoreObject *obj = cl->asClass()->createInstance();
-   obj->setUserData( dbh );
-
-   return obj;
-}
 
 } /* namespace Falcon */
 
-/* end of fbsql_srv.cpp */
+/* end of fbsql_mod.cpp */
 

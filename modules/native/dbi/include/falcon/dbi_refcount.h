@@ -24,7 +24,7 @@ template<class _T>
 class DBIRefCounter
 {
 public:
-   DBIRefCounter( _T handler ):
+   DBIRefCounter( const _T& handler ):
        m_Handler(handler),
        m_nRefCount(1)
    {}
@@ -32,7 +32,8 @@ public:
 
    void incref() { m_nRefCount ++; }
    void decref() { if ( --m_nRefCount == 0 ) delete this; }
-   _T handle() const { return m_Handler; }
+   const _T& handle() const { return m_Handler; }
+   _T& handle() { return m_Handler; }
 
 protected:
    virtual ~DBIRefCounter() {

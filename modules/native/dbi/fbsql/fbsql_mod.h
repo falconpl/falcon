@@ -2,7 +2,7 @@
  * FALCON - The Falcon Programming Language.
  * FILE: fbsql_mod.h
  *
- * Firebird driver main module interface
+ * FB driver main module interface
  * -------------------------------------------------------------------
  * Author: Giancarlo Niccolai
  * Begin: Sun, 23 May 2010 16:58:53 +0200
@@ -23,137 +23,165 @@
 #include <ib_util.h>
 #include <iberror.h>
 
+
 namespace Falcon
 {
 
-class FirebirdDBIInBind: public DBIInBind
+/** Class keeping SQLDA structures. */
+class FBSqlData
+{
+public:
+   FBSqlData();
+   ~FBSqlData();
+
+   void describeIn( isc_stmt_handle stmt );
+   void describeOut( isc_stmt_handle stmt );
+
+   /** Free allocated resources. */
+   void release();
+   void allocOutput();
+
+   XSQLDA* table() const { return m_sqlda; }
+   XSQLVAR* var(int n) { return m_sqlda->sqlvar + n; }
+   int varCount() { return m_sqlda->sqld; }
+
+private:
+   XSQLDA* m_sqlda;
+   ISC_SHORT* m_indicators;
+   bool m_bOwnBuffers;
+};
+
+
+class FBConnRef: public DBIRefCounter<isc_db_handle> {
+public:
+
+   FBConnRef( const isc_db_handle& hDb ):
+      DBIRefCounter<isc_db_handle>( hDb )
+   {}
+
+   virtual ~FBConnRef() {
+      ISC_STATUS status[20];
+      isc_detach_database( status, &handle() );
+   }
+};
+
+
+class FBTransRef: public DBIRefCounter<isc_tr_handle> {
+public:
+
+   FBTransRef( const isc_tr_handle& hStmt ):
+      DBIRefCounter<isc_tr_handle>( hStmt ),
+      m_bClosed( false )
+   {}
+
+   virtual ~FBTransRef();
+   void commit();
+   void rollback();
+   void commitRetaining();
+
+   bool isClosed() const { return m_bClosed; }
+
+private:
+   bool m_bClosed;
+};
+
+
+
+class FBStmtRef: public DBIRefCounter<isc_stmt_handle> {
+public:
+
+   FBStmtRef( isc_stmt_handle hStmt ):
+      DBIRefCounter<isc_stmt_handle>( hStmt )
+   {}
+
+   virtual ~FBStmtRef() {
+      ISC_STATUS status[20];
+      isc_dsql_free_statement( status, &handle(), DSQL_drop );
+   }
+};
+
+
+class FBInBind: public DBIInBind
 {
 
 public:
-   FirebirdDBIInBind( isc_stmt_handle* stmt );
-   virtual ~FirebirdDBIInBind();
+   FBInBind( isc_stmt_handle stmt );
+   virtual ~FBInBind();
 
    virtual void onFirstBinding( int size );
    virtual void onItemChanged( int num );
 
-   XSQLDA* fb_bindings() const { return m_fbbind; }
-
+   XSQLDA* table() const { return m_data.table(); }
 private:
-   XSQLDA* m_fbbind;
-   isc_stmt_handle* m_stmt;
+   FBSqlData m_data;
+   isc_stmt_handle m_stmt;
 };
 
 
-class FirebirdDBIOutBind: public DBIOutBind
+
+
+class DBIHandleFB;
+
+class DBIRecordsetFB: public DBIRecordset
 {
 public:
-   FirebirdDBIOutBind():
-      bIsNull( false ),
-      nLength( 0 )
-   {}
-
-   ~FirebirdDBIOutBind() {}
-
-   my_bool bIsNull;
-   unsigned long nLength;
-};
-
-class DBIHandleFirebird;
-
-class DBIRecordsetFirebird: public DBIRecordset
-{
-protected:
-   int m_row;
-   int m_rowCount;
-   int m_columnCount;
-
-   MYSQL_RES *m_res;
-   MYSQL_FIELD* m_fields;
-
-   bool m_bCanSeek;
-public:
-   DBIRecordsetFirebird( DBIHandleFirebird *dbt, MYSQL_RES *res, bool bCanSeek = false );
-   virtual ~DBIRecordsetFirebird();
+   DBIRecordsetFB( DBIHandleFB *dbt, FBTransRef* tref, isc_stmt_handle stmt, FBSqlData* data );
+   DBIRecordsetFB( DBIHandleFB *dbt, FBTransRef* tref, FBStmtRef* sref, FBSqlData* data );
+   virtual ~DBIRecordsetFB();
 
    virtual int64 getRowIndex();
    virtual int64 getRowCount();
    virtual int getColumnCount();
    virtual bool getColumnName( int nCol, String& name );
+
+   virtual bool getColumnValue( int nCol, Item& value );
+   virtual bool fetchRow();
+   virtual bool discard( int64 ncount );
+   virtual void close();
+
+protected:
+   int m_nRow;
+   int m_nRowCount;
+   int m_nColumnCount;
+
+   FBTransRef* m_tref;
+   FBStmtRef* m_sref;
+   FBSqlData* m_data;
+};
+
+
+class DBIStatementFB : public DBIStatement
+{
+protected:
+   isc_stmt_handle m_statement;
+   FBStmtRef* m_pStmt;
+   FBConnRef* m_pConn;
+
+   FBInBind* m_inBind;
+
+public:
+   DBIStatementFB( DBIHandleFB *dbh, const isc_stmt_handle& stmt );
+   virtual ~DBIStatementFB();
+
+   virtual DBIRecordset*  execute( ItemArray* params );
+   virtual void reset();
    virtual void close();
 };
 
-class DBIRecordsetFirebird_STMT: public DBIRecordsetFirebird
+
+class DBIHandleFB : public DBIHandle
 {
-protected:
-   MYSQL_STMT *m_stmt;
-
-   // Binding data
-   MYSQL_BIND* m_pMyBind;
-   FirebirdDBIOutBind* m_pOutBind;
-
-   // used to keep track of blobs that must be zeroed before fetch
-   int* m_pBlobId;
-   int m_nBlobCount;
 
 public:
-   DBIRecordsetFirebird_STMT( DBIHandleFirebird *dbt, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek = false );
-   virtual ~DBIRecordsetFirebird_STMT();
-
-   virtual bool fetchRow();
-   virtual bool getColumnValue( int nCol, Item& value );
-   virtual bool discard( int64 ncount );
-   virtual void close();
-};
-
-
-class DBIRecordsetFirebird_RES : public DBIRecordsetFirebird
-{
-protected:
-   MYSQL_ROW m_rowData;
-   CoreObject* makeTimestamp( const String& str );
-
-public:
-   DBIRecordsetFirebird_RES( DBIHandleFirebird *dbt, MYSQL_RES *res, bool bCanSeek = false );
-   virtual ~DBIRecordsetFirebird_RES();
-
-   virtual bool fetchRow();
-   virtual bool getColumnValue( int nCol, Item& value );
-   virtual bool discard( int64 ncount );
-};
-
-class DBIRecordsetFirebird_RES_STR: public DBIRecordsetFirebird_RES
-{
-public:
-   DBIRecordsetFirebird_RES_STR( DBIHandleFirebird *dbt, MYSQL_RES *res, bool bCanSeek = false );
-   virtual ~DBIRecordsetFirebird_RES_STR();
-
-   virtual bool getColumnValue( int nCol, Item& value );
-};
-
-
-class DBIHandleFirebird : public DBIHandle
-{
-protected:
-   isc_db_handle m_conn;
-   isc_tr_handle m_tr;
-
-   DBISettingParams m_settings;
-
-   isc_stmt_handle* fb_prepare( const String &query );
-   int64 fb_execute( isc_stmt_handle* stmt, FirebirdDBIInBind& bindings, const ItemArray& params );
-
-public:
-   DBIHandleFirebird();
-   DBIHandleFirebird( const isc_db_handle &conn );
-   virtual ~DBIHandleFirebird();
+   DBIHandleFB();
+   DBIHandleFB( const isc_db_handle &conn );
+   virtual ~DBIHandleFB();
 
    virtual void options( const String& params );
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params = 0 );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
@@ -164,52 +192,40 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   isc_db_handle& getConn() { return m_conn; }
-   const isc_db_handle& getConn() const { return m_conn; }
+   // Checks for the db to be open and alive before proceed
+   isc_db_handle getConnData();
 
-   isc_tr_handle& getTr() { return m_tr; }
-   const isc_tr_handle& getTr() const { return m_tr; }
+   FBConnRef* connRef() const { return m_pConn; }
+   FBTransRef* transRef() const { return m_pTrans; }
 
    // Throws a DBI error, using the last error code and description.
-   void throwError( const char* file, int line, int code );
+   static void throwError( int line, int code, ISC_STATUS* status, bool dsql );
+
+private:
+   FBConnRef* m_pConn;
+   FBTransRef* m_pTrans;
+   DBISettingParams m_settings;
+   bool m_bCommitted;
 };
 
 
-class DBIStatementFirebird : public DBIStatement
-{
-protected:
-   isc_stmt_handle m_statement;
-   FirebirdDBIInBind* m_inBind;
-
-public:
-   DBIStatementFirebird( DBIHandle *dbh, const isc_stmt_handle& stmt );
-   virtual ~DBIStatementFirebird();
-
-   virtual int64 execute( const ItemArray& params );
-   virtual void reset();
-   virtual void close();
-
-   DBIHandleFirebird* getMySql() const { return static_cast<DBIHandleFirebird*>( m_dbh ); }
-   const isc_stmt_handle& my_statement() const { return m_statement; }
-   isc_stmt_handle& my_statement() { return m_statement; }
-};
 
 
-class DBIServiceFirebird : public DBIService
+class DBIServiceFB : public DBIService
 {
 public:
-   DBIServiceFirebird() : DBIService( "DBI_fbsql" ) {}
+   DBIServiceFB() : DBIService( "DBI_fbsql" ) {}
 
    virtual void init();
    virtual DBIHandle *connect( const String &parameters );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 
+extern DBIServiceFB theFirebirdService;
+
 }
 
-extern Falcon::DBIServiceFirebird theFirebirdService;
-
-#endif /* FALCON_FIREBIRD_H */
+#endif /* FALCON_FB_H */
 
 /* end of fbsql_mod.h */
 

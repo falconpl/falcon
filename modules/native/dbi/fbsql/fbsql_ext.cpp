@@ -38,8 +38,36 @@ namespace Ext
    - host: host where to connect (defaults to localhost)
    - port: prot where to connect (defaults to mysql standard port)
 
-   Other than that, mysql presents the following driver-specific parameters
-   - socket: UNIX socket name for UNIX-socket based Firebird connections.
+   Following connection options are specific of the Firebird database engine,
+   and require a value to be passed in the form of
+   @code
+      "fbsql:...;key=value;key=value"
+   @endcode
+
+   - epwd: Encrypted password
+   - role: Role
+   - sa: System Administrator user name
+   - license: Authorization key for a software license
+   - ekey: Database encryption key
+   - nbuf: Number of cache buffers
+   - kscope: dbkey context scope
+   - lcmsg: Language-specific message file
+   - lctype: Character set to be utilized
+   - tout: Connection timeout
+
+
+   Following connection options are specific of the Firebird database engine,
+   and require a boolean value that can be either "yes" or "no".
+
+   - reserve: Specify whether or not to reserve a small amount of space on each database
+              page for holding backup versions of records when modifications are made
+   - dmg: Specify whether or not the database should be marked as damaged
+   - verify: Perform consistency checking of internal structures
+   - shadow: Activate the database shadow, an optional, duplicate, in-sync copy of the database
+   - delshadow: Delete the database shadow
+   - beginlog: Activate a replay logging system to keep track of all database calls
+   - quitlog: Deactivate the replay logging system
+
 */
 
 FALCON_FUNC Firebird_init( VMachine *vm )
