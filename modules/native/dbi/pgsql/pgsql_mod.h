@@ -30,6 +30,19 @@ class DBIHandlePgSQL;
 int32 dbi_pgsqlQuestionMarksToDollars( const String& input, String& output );
 
 
+class PgSQLHandlerRef: public DBIRefCounter<PGconn*>
+{
+public:
+   PgSQLHandlerRef( PGconn* conn ):
+      DBIRefCounter<PGconn*>( conn )
+      {}
+
+   ~PgSQLHandlerRef() {
+      PQfinish( handle() );
+   }
+};
+
+
 class DBIRecordsetPgSQL
     :
     public DBIRecordset
@@ -41,6 +54,7 @@ protected:
     int         m_columnCount;
 
     PGresult*   m_res;
+    PgSQLHandlerRef* m_pConn;
 
 public:
 
@@ -67,18 +81,20 @@ protected:
 
     uint32  m_nParams;
     String  m_execString;
+    PgSQLHandlerRef* m_pConn;
 
     void getExecString( uint32 nParams, const String& name );
 
 public:
 
-    DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query,
-                       const String& name="happy_falcon" );
+    DBIStatementPgSQL( DBIHandlePgSQL* dbh );
     virtual ~DBIStatementPgSQL();
 
-    virtual int64 execute( const ItemArray& params );
+    virtual DBIRecordset* execute( ItemArray* params = 0 );
     virtual void reset();
     virtual void close();
+
+    void init( const String& query, const String& name="happy_falcon" );
 };
 
 
@@ -91,6 +107,8 @@ protected:
     PGconn* m_conn;
     bool    m_bInTrans;
     DBISettingParams m_settings;
+
+    PgSQLHandlerRef* m_pConn;
 
 public:
 
@@ -106,9 +124,7 @@ public:
     virtual void commit();
     virtual void rollback();
 
-    virtual DBIRecordset* query( const String &sql, int64 &affectedRows, const ItemArray& params );
-    virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-    virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+    virtual DBIRecordset* query( const String &sql, ItemArray* params = 0 );
     virtual DBIStatement* prepare( const String &query );
     virtual DBIStatement* prepareNamed( const String &name, const String& query );
     virtual int64 getLastInsertedId( const String& name = "" );
@@ -119,6 +135,8 @@ public:
 
     static void throwError( const char* file, int line, PGresult* res );
     PGresult* internal_exec( const String& sql, int64& affectedRows );
+
+    PgSQLHandlerRef* getConnRef() const { return m_pConn; }
 };
 
 
