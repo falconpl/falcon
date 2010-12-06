@@ -31,7 +31,7 @@ class SQLite3StatementHandler: public DBIRefCounter<sqlite3_stmt*>
 {
 public:
    SQLite3StatementHandler( sqlite3_stmt* p ):
-      DBIRefCounter(p)
+      DBIRefCounter<sqlite3_stmt*>(p)
       {}
 
    virtual ~SQLite3StatementHandler() {
@@ -44,7 +44,7 @@ class SQLite3Handler: public DBIRefCounter<sqlite3*>
 {
 public:
    SQLite3Handler( sqlite3* p ):
-      DBIRefCounter(p)
+      DBIRefCounter<sqlite3*>(p)
       {}
 
 

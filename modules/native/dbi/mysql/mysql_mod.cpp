@@ -150,6 +150,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandleMySQL *dbh, MYSQL_RES *res, bool 
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
    m_pConn = dbh->getConn();
+   m_pConn->incref();
 }
 
 DBIRecordsetMySQL::~DBIRecordsetMySQL()
@@ -266,7 +267,7 @@ void DBIRecordsetMySQL_STMT::init()
 
    if( mysql_stmt_bind_result( m_stmt, m_pMyBind ) != 0 )
    {
-      static_cast<DBIHandleMysql*>(m_dbh)->
+      static_cast<DBIHandleMySQL*>(m_dbh)->
                throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
    }
 
@@ -767,7 +768,8 @@ bool DBIRecordsetMySQL_RES_STR::getColumnValue( int nCol, Item& value )
 DBIStatementMySQL::DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt ):
       DBIStatement( dbh ),
       m_statement( stmt ),
-      m_inBind(0)
+      m_inBind(0),
+      m_bBound( false )
 {
    m_pConn = dbh->getConn();
    m_pConn->incref();
@@ -786,22 +788,26 @@ DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
    if( m_statement == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
-   if ( params == 0 && m_inBind != 0 )
+   // should we bind with the statement? -- first time around?
+   if ( ! m_bBound )
    {
-      m_inBind->();
-   }
-
-   // should we bind with the statement?
-   if ( m_inBind == 0 )
-   {
-      if( params.length() != mysql_stmt_param_count( m_statement ) )
-      {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
-      }
+      m_bBound = true;
 
       // Do we have some parameter to bind?
-      if( params != 0 )
+      if( params == 0 )
       {
+         if( mysql_stmt_param_count( m_statement ) != 0 )
+         {
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+         }
+      }
+      else
+      {
+         if( params->length() != mysql_stmt_param_count( m_statement ) )
+         {
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+         }
+
          // params.lengh() == 0 is possible with totally static selects,
          // or other statements that will be run usually just once.
          // Inserts or other repetitive statements will have at least 1, so
@@ -817,9 +823,14 @@ DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
    }
    else
    {
-      if ( params != 0 )
+      if ( params != 0 && m_inBind != 0 )
       {
-         m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
+         m_inBind->bind( *params, DBITimeConverter_MYSQL_TIME_impl );
+      }
+      else if ( m_inBind != 0 )
+      {
+         // we had parameters, but now we have not.
+         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
       }
    }
 
@@ -851,11 +862,11 @@ DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
          if( mysql_stmt_store_result( m_statement ) != 0 )
          {
             mysql_free_result( meta );
-            throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+            mysql->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
          }
       }
 
-      DBIRecordsetMySQL* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
+      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
 
       // -- may throw
       try {
@@ -1034,7 +1045,7 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   MYSQL_STMT* stmt = mysql_stmt_init( getConn() );
+   MYSQL_STMT* stmt = mysql_stmt_init( m_conn );
    if( stmt == 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
@@ -1072,14 +1083,19 @@ int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemA
    fassert( m_conn != 0 );
    int count = mysql_stmt_param_count( stmt );
 
-   if( (params == 0 && count != 0) || (params != 0 && params->length() != count) )
+   if( params == 0 || params->length() == 0 )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      if( count != 0 )
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
    }
-
-   // Do we have some parameter to bind?
-   if( params->length() > 0 )
+   else
    {
+      // Do we have some parameter to bind?
+      if  ( params->length() != count )
+      {
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      }
+
       bindings.bind( *params, DBITimeConverter_MYSQL_TIME_impl );
 
       if( mysql_stmt_bind_param( stmt, bindings.mybindings() ) != 0 )

@@ -206,6 +206,7 @@ protected:
    MYSQLHandle* m_pConn;
    MYSQLStmtHandle *m_pStmt;
    MyDBIInBind* m_inBind;
+   bool m_bBound;
 
 public:
    DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt );
