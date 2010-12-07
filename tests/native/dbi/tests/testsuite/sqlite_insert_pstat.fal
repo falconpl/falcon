@@ -19,7 +19,7 @@ data = []
 for i in [0:10]
    mb = MemBuf(10)
    for j = 0 to 9: mb[j] = (j+i+65)
-   data += [[ i+10, "Text blob " + i, mb, 24589.21345/(i+1)]]
+   data.add([ i+10, "Text blob " + i, mb, 24589.21345/(i+1)])
 end
 
 try
@@ -33,9 +33,6 @@ try
       (.[ stmt.execute ] + elem)()
    end
 
-   stmt.close()
-   conn.commit()
-   conn.close()
    success()
 
 catch dbi.DBIError in error

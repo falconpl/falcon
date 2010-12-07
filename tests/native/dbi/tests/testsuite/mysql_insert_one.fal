@@ -19,7 +19,7 @@ import mysql_conn_str from config
 try
    conn = dbi.connect( config.mysql_conn_str )
 
-   conn.perform("
+   conn.query("
       insert into TestTable( vint, fixchar, vchar, tblob, bblob, number, ts )
       values( 1, 'Fixed char', 'var char', 'A textual blob', 'A binary blob', 101.243, Now() )
    ")

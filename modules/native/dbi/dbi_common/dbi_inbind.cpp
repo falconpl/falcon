@@ -76,6 +76,36 @@ char* DBIStringConverter_UTF8::convertString( const String& str, char* target, i
 
 DBIStringConverter_UTF8 DBIStringConverter_UTF8_impl;
 
+
+
+char* DBIStringConverter_WCHAR::convertString( const String& str, char* target, int &bufsize ) const
+{
+   wchar_t *ret;
+
+   int maxlen = str.length() * 2;
+   if( maxlen <= bufsize )
+   {
+      // Ok, we can use the buffer
+      ret = (wchar_t*) target;
+   }
+   else
+   {
+      ret = (wchar_t *) memAlloc( maxlen );
+   }
+
+   while( (bufsize = str.toWideString( ret, maxlen )) < 0 )
+   {
+      maxlen *= 2;
+      if ( ret != (wchar_t*) target )
+         memFree(ret);
+      ret = (wchar_t *) memAlloc( maxlen );
+   }
+
+   return (char*) ret;
+}
+
+DBIStringConverter_WCHAR DBIStringConverter_WCHAR_impl;
+
 //=========================================================
 // Single item binding converter
 //=========================================================
@@ -194,6 +224,27 @@ DBIInBind::~DBIInBind()
    delete[] m_ibind;
 }
 
+
+void DBIInBind::unbind()
+{
+   if ( m_size == 0 )
+   {
+      m_size = -1;
+      return;
+   }
+
+   if( m_size != -1 )
+   {
+      // time to explode.
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ )
+            .extra(
+              String("").N( (int64) m_size ).A(" != ").N( (int64) 0 )
+            )
+         );
+   }
+}
+
+
 void DBIInBind::bind( const ItemArray& arr,
       const DBITimeConverter& tc,
       const DBIStringConverter& sc )
@@ -227,6 +278,12 @@ void DBIInBind::bind( const ItemArray& arr,
       }
    }
 
+   // force recalculation of the items.
+   if(m_bAlwaysChange )
+   {
+      bFirst = true;
+   }
+
    for( int i = 0; i < nSize; ++i )
    {
       DBIBindItem& bi = m_ibind[i];
@@ -237,7 +294,7 @@ void DBIInBind::bind( const ItemArray& arr,
       bi.set( arr[i], tc, sc );
 
       // first time around, or changed buffer?
-      if( m_bAlwaysChange || bi.type() != type || bFirst || bi.databuffer() != buffer || bi.length() != len )
+      if( bFirst || bi.type() != type || bi.databuffer() != buffer || bi.length() != len )
       {
          // let the engine determine if the type is compatible with the type of column
          onItemChanged( i );

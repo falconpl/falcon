@@ -88,6 +88,9 @@ public:
 
    /** Parse the parameter=value string */
    virtual bool parse( const String& connStr );
+
+   /** Utility to check for boolean values */
+   static bool checkBoolean( const String& pvalue, bool &boolVar );
 };
 
 

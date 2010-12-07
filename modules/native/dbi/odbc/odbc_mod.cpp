@@ -16,61 +16,175 @@
 #include "odbc_mod.h"
 #include <string.h>
 
+#include <sqlucode.h>
+#include <odbcss.h>
+
+#include <stdio.h>
+
+#define ODBC_COLNAME_SIZE 512
+
 namespace Falcon
 {
+
+   
+/******************************************************************************
+ * Private class used to convert timestamp to MySQL format.
+ *****************************************************************************/
+
+class DBITimeConverter_ODBC_TIME: public DBITimeConverter
+{
+public:
+   virtual void convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const;
+} DBITimeConverter_ODBC_TIME_impl;
+
+void DBITimeConverter_ODBC_TIME::convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const
+{
+   fassert( ((unsigned)bufsize) >= sizeof( TIMESTAMP_STRUCT ) );
+
+   TIMESTAMP_STRUCT* mtime = (TIMESTAMP_STRUCT*) buffer;
+   mtime->year = (unsigned) ts->m_year;
+   mtime->month = (unsigned) ts->m_month;
+   mtime->day = (unsigned) ts->m_day;
+   mtime->hour = (unsigned) ts->m_hour;
+   mtime->minute = (unsigned) ts->m_minute;
+   mtime->second = (unsigned) ts->m_second;
+   mtime->fraction = (unsigned) ts->m_msec*100000;
+
+   bufsize = sizeof( TIMESTAMP_STRUCT );
+}
 
 /******************************************************************************
  * (Input) bindings class
  *****************************************************************************/
 
-Sqlite3InBind::Sqlite3InBind( odbc_stmt* stmt ):
-      DBIInBind(true),  // always changes binding
-      m_stmt(stmt)
+ODBCInBind::ODBCInBind( SQLHSTMT stmt, bool bigInt ):
+      m_hStmt( stmt ),
+      m_pLenInd( 0 ),
+      m_pColInfo( 0 ),
+      m_bUseBigInteger( bigInt )
 {}
 
-Sqlite3InBind::~Sqlite3InBind()
+ODBCInBind::~ODBCInBind()
 {
-   // nothing to do: the statement is not ours.
+   // we don't own the handlers
+   if ( m_pLenInd != 0 )
+   {
+      memFree( m_pLenInd );
+   }
+
+   /*if( m_pColInfo != 0 )
+   {
+      delete[] m_pColInfo;
+   }
+   */
 }
 
 
-void Sqlite3InBind::onFirstBinding( int size )
+void ODBCInBind::onFirstBinding( int size )
 {
-   // nothing to allocate here.
+   m_pLenInd = (SQLLEN *) memAlloc( sizeof(SQLINTEGER) * size );
+   memset( m_pLenInd, 0, sizeof(SQLLEN ) * size );
+   //m_pColInfo = new ODBCColInfo[ size ];
 }
 
-void Sqlite3InBind::onItemChanged( int num )
+
+void ODBCInBind::onItemChanged( int num )
 {
    DBIBindItem& item = m_ibind[num];
+   SQLLEN& pLenInd = m_pLenInd[num];
+
+   // fill the call variables with consistent defaults
+   SQLSMALLINT     InputOutputType = SQL_PARAM_INPUT;
+   SQLSMALLINT     ValueType = SQL_C_CHAR;
+   SQLSMALLINT     ParameterType = SQL_CHAR;
+   SQLSMALLINT     ColSize = 0;
+   SQLLEN          BufferLength = 0;
+   SQLPOINTER      ParameterValuePtr;
 
    switch( item.type() )
    {
    // set to null
    case DBIBindItem::t_nil:
-      odbc_bind_null( m_stmt, num+1 );
+      pLenInd = SQL_NULL_DATA;
+      ParameterValuePtr = 0;
+      ColSize = 1;
       break;
 
    case DBIBindItem::t_bool:
+      ValueType = SQL_C_BIT;
+      ParameterType = SQL_BIT;
+      ParameterValuePtr = (SQLPOINTER) item.asBoolPtr();
+      ColSize = 1;
+      break;
+
    case DBIBindItem::t_int:
-      odbc_bind_int64( m_stmt, num+1, item.asInteger() );
+      if( m_bUseBigInteger )
+      {
+         ValueType = SQL_C_SBIGINT;
+         ParameterType = SQL_BIGINT;
+         ParameterValuePtr = (SQLPOINTER) item.asIntegerPtr();
+         ColSize = 19;
+         pLenInd = sizeof(int64);
+      }
+      else
+      {
+         ValueType = SQL_C_LONG;
+         ParameterType = SQL_INTEGER;
+         ParameterValuePtr = (SQLPOINTER) item.asIntegerPtr();
+         ColSize = 10;
+         pLenInd = sizeof(long);
+      }
       break;
 
    case DBIBindItem::t_double:
-      odbc_bind_double( m_stmt, num+1, item.asDouble() );
+      ValueType = SQL_C_DOUBLE;
+      ParameterType = SQL_DOUBLE;
+      ParameterValuePtr = (SQLPOINTER) item.asDoublePtr();
+      ColSize = 15;
+      pLenInd = sizeof(double);
       break;
 
    case DBIBindItem::t_string:
-      odbc_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      ValueType = SQL_C_WCHAR;
+      ParameterType = SQL_WCHAR;
+      // String::toWideString is granted to ensure space and put extra '\0' at the end.
+      // Use the extra incoming '\0'
+      pLenInd = BufferLength = item.asStringLen()*sizeof(wchar_t);
+      ParameterValuePtr = (SQLPOINTER) item.asString();
+      ColSize = (SQLSMALLINT) BufferLength;
       break;
 
    case DBIBindItem::t_buffer:
-      odbc_bind_blob( m_stmt, num+1, item.asBuffer(), item.asStringLen(), SQLITE_STATIC );
+      ValueType = SQL_C_BINARY;
+      ParameterType = SQL_BINARY;
+      pLenInd = BufferLength = item.asStringLen();
+      ParameterValuePtr = (SQLPOINTER) item.asBuffer();
       break;
 
-   // the time has normally been decoded in the buffer
    case DBIBindItem::t_time:
-      odbc_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      ValueType = SQL_C_TIMESTAMP;
+      ParameterType = SQL_TIMESTAMP;
+      pLenInd = BufferLength = item.asStringLen();
+      ParameterValuePtr = (SQLPOINTER) item.asBuffer();
+      ColSize = (SQLSMALLINT) pLenInd;
       break;
+   }
+
+   SQLRETURN ret = SQLBindParameter( 
+      m_hStmt,
+      num+1,
+      InputOutputType,
+      ValueType,
+      ParameterType,
+      ColSize,
+      0,
+      ParameterValuePtr,
+      BufferLength,
+      &pLenInd);
+
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+      DBIHandleODBC::throwError( FALCON_DBI_ERROR_BIND_INTERNAL, SQL_HANDLE_STMT, m_hStmt, TRUE, false );
    }
 }
 
@@ -79,69 +193,149 @@ void Sqlite3InBind::onItemChanged( int num )
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetODBC::DBIRecordsetODBC( DBIHandleODBC *dbh, odbc_stmt *res, const ItemArray& params )
+DBIRecordsetODBC::DBIRecordsetODBC( DBIHandleODBC *dbh, int64 nRowCount, int32 nColCount, ODBCStatementHandler* h )
     : DBIRecordset( dbh ),
-      m_stmt( res ),
-      m_bind( res )
+      m_pStmt( h ),
+      m_nRow( 0 ),
+      m_nRowCount( nRowCount ),
+      m_nColumnCount( nColCount ),
+      m_pColInfo(0)
 {
+   dbh->incConnRef();
+   m_conn = dbh->getConn();
+   h->incref();
    m_bAsString = dbh->options()->m_bFetchStrings;
-   m_bind.bind( params );
-   m_row = -1; // BOF
-   m_columnCount = odbc_column_count( res );
 }
 
-DBIRecordsetODBC::~DBIRecordsetODBC()
+
+DBIRecordsetODBC::DBIRecordsetODBC( DBIHandleODBC *dbh, int64 nRowCount, int32 nColCount, SQLHSTMT hStmt )
+    : DBIRecordset( dbh ),
+      m_pStmt( new ODBCStatementHandler( hStmt) ),
+      m_nRow( 0 ),
+      m_nRowCount( nRowCount ),
+      m_nColumnCount( nColCount ),
+      m_pColInfo(0)
 {
-   if ( m_stmt != NULL )
-      close();
+   dbh->incConnRef();
+   m_conn = dbh->getConn();
+   m_bAsString = dbh->options()->m_bFetchStrings;
+}
+
+
+DBIRecordsetODBC::~DBIRecordsetODBC()
+{   
+   close();
+   delete[] m_pColInfo;
 }
 
 int DBIRecordsetODBC::getColumnCount()
 {
-   return m_columnCount;
+   return m_nColumnCount;
 }
 
 int64 DBIRecordsetODBC::getRowIndex()
 {
-   return m_row;
+   return m_nRow;
 }
 
 int64 DBIRecordsetODBC::getRowCount()
 {
-   return -1; // we don't know
+   return m_nRowCount;
 }
 
 
 bool DBIRecordsetODBC::getColumnName( int nCol, String& name )
 {
-   if( m_stmt == 0 )
+   if( m_pStmt == 0 )
+   {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+   }
 
-   if ( nCol < 0 || nCol >= m_columnCount )
+   // a good moment to fetch the column data
+   if ( m_pColInfo == 0 )
+   {
+      GetColumnInfo();
+   }
+
+   if ( nCol < 0 || nCol >= m_nColumnCount )
    {
       return false;
    }
-
-   name.bufferize( odbc_column_name( m_stmt, nCol ) );
-
+   
+   name = m_pColInfo[nCol].sName;
    return true;
+}
+
+
+void DBIRecordsetODBC::GetColumnInfo()
+{
+   m_pColInfo = new ODBCColInfo[ m_nColumnCount ];
+   
+   wchar_t ColumnName[ODBC_COLNAME_SIZE];
+   SQLSMALLINT    NameLength;
+   SQLHSTMT hStmt = m_pStmt->handle();
+
+   for ( SQLSMALLINT nCol = 0; nCol < m_nColumnCount; ++nCol )
+   {
+      ODBCColInfo& current = m_pColInfo[nCol];
+
+      SQLRETURN ret = SQLDescribeColW( 
+         hStmt, 
+         nCol+1,  
+         ColumnName,
+         ODBC_COLNAME_SIZE,
+         &NameLength,
+         &current.DataType,
+         &current.ColumnSize,
+         &current.DecimalDigits,
+         &current.Nullable
+       );
+
+      if ( NameLength+1 > ODBC_COLNAME_SIZE )
+      {
+         NameLength = ODBC_COLNAME_SIZE - 1;
+      }
+
+      if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+      {
+         // Vital informations are not available; better bail out and close
+         DBIError* dbie = new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ ).
+            extra( DBIHandleODBC::GetErrorMessage( SQL_HANDLE_STMT, hStmt, TRUE ) ) );
+         close();
+
+         throw dbie;
+         // return
+      }
+
+      ColumnName[NameLength] = 0;
+      current.sName = ColumnName;
+      current.sName.bufferize();
+   }
 }
 
 
 bool DBIRecordsetODBC::fetchRow()
 {
-   if( m_stmt == 0 )
+   if( m_pStmt == 0 )
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
 
-   int res = odbc_step( m_stmt );
-
-   if( res == SQLITE_DONE )
+   SQLRETURN ret = SQLFetch( m_pStmt->handle() );
+   if ( ret == SQL_NO_DATA )
+   {
+      // we're done
       return false;
-   else if ( res != SQLITE_ROW )
-      DBIHandleODBC::throwError( FALCON_DBI_ERROR_FETCH, res );
+   }
+
+   // error?
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+      // throw but don't close
+      DBIHandleODBC::throwError( FALCON_DBI_ERROR_FETCH, SQL_HANDLE_STMT, m_pStmt->handle(), TRUE, false );
+      // return
+   }
 
    // more data incoming
-   m_row++;
+   m_nRow++;
    return true;
 }
 
@@ -163,71 +357,239 @@ bool DBIRecordsetODBC::discard( int64 ncount )
 
 void DBIRecordsetODBC::close()
 {
-   if( m_stmt != 0 )
+   if( m_pStmt != 0 )
    {
-      odbc_finalize( m_stmt );
-      m_stmt = 0;
+      m_pStmt->decref();
+      m_conn->decref();
+      m_pStmt = 0;
    }
 }
 
+
 bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
 {
-   if( m_stmt == 0 )
+   if( m_pStmt == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
 
-   if ( nCol < 0 || nCol >= m_columnCount )
+   if ( nCol < 0 || nCol >= m_nColumnCount )
    {
       return false;
    }
-
-   switch ( odbc_column_type(m_stmt, nCol) )
+   
+   // a good moment to fetch the column data
+   if ( m_pColInfo == 0 )
    {
-   case SQLITE_NULL:
-      value.setNil();
-      return true;
-
-   case SQLITE_INTEGER:
-      if( m_bAsString )
-      {
-         value = new CoreString( (const char*)odbc_column_text(m_stmt, nCol), -1 );
-      }
-      else
-      {
-         value.setInteger( odbc_column_int64(m_stmt, nCol) );
-      }
-      return true;
-
-   case SQLITE_FLOAT:
-      if( m_bAsString )
-      {
-         value = new CoreString( (const char*)odbc_column_text( m_stmt, nCol ), -1 );
-      }
-      else
-      {
-         value.setNumeric( odbc_column_double( m_stmt, nCol ) );
-      }
-      return true;
-
-   case SQLITE_BLOB:
-      {
-         int len =  odbc_column_bytes( m_stmt, nCol );
-         MemBuf* mb = new MemBuf_1( len );
-         memcpy( mb->data(), (byte*) odbc_column_blob( m_stmt, nCol ), len );
-         value = mb;
-      }
-      return true;
-
-
-   case SQLITE_TEXT:
-      {
-         CoreString* cs = new CoreString;
-         cs->fromUTF8( (const char*) odbc_column_text( m_stmt, nCol ) );
-         value = cs;
-      }
-      return true;
+      GetColumnInfo();
    }
 
-   return false;
+   SQLHSTMT hStmt = m_pStmt->handle();
+   ODBCColInfo& column = m_pColInfo[ nCol ];
+   
+   SQLRETURN ret;
+   int64 integer;
+   double real;
+   unsigned char uchar;
+   SQLLEN ExpSize = 0, nSize = 0;
+
+   // do a first call to determine null or memory requirements
+   switch ( column.DataType )
+   {
+   case SQL_CHAR:
+   case SQL_VARCHAR:
+   case SQL_LONGVARCHAR:
+   case SQL_WCHAR:
+   case SQL_WVARCHAR:
+   case SQL_WLONGVARCHAR:
+      ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, &uchar, 0, &ExpSize);
+      if( ret != SQL_ERROR )
+      {
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else if( ExpSize == 0 )
+         {
+            value = new CoreString("");
+         }
+         else
+         {
+            // we must account for an extra '0' put in by ODBC
+            uint32 alloc = ExpSize+sizeof(wchar_t);
+            wchar_t *cStr = (wchar_t*) memAlloc( alloc );  
+            ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, alloc, &nSize);
+
+            // save the data even in case we had an error, or we'll leak
+            CoreString* cs = new CoreString;
+            uint32 size = ExpSize/sizeof(wchar_t);
+            cs->adopt( cStr, size, alloc );
+            value = cs;
+         }
+      }
+      break;
+
+   case SQL_DECIMAL:
+   case SQL_NUMERIC:
+   case SQL_REAL:
+   case SQL_FLOAT:
+   case SQL_DOUBLE:
+      if( m_bAsString )
+      {
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
+      }
+      else 
+      {
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_DOUBLE, &real, sizeof(real), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setNumeric( real );
+         }
+      }
+      break;
+
+   case SQL_INTERVAL_MONTH:	
+   case SQL_INTERVAL_YEAR:
+   case SQL_INTERVAL_DAY:
+   case SQL_INTERVAL_YEAR_TO_MONTH:
+   case SQL_INTERVAL_HOUR:
+   case SQL_INTERVAL_MINUTE:
+   case SQL_INTERVAL_SECOND:
+   case SQL_INTERVAL_DAY_TO_HOUR:
+   case SQL_INTERVAL_DAY_TO_MINUTE:
+   case SQL_INTERVAL_DAY_TO_SECOND:
+   case SQL_INTERVAL_HOUR_TO_MINUTE:
+   case SQL_INTERVAL_HOUR_TO_SECOND:
+   case SQL_INTERVAL_MINUTE_TO_SECOND:   
+   case SQL_GUID:
+   case SQL_TINYINT:
+   case SQL_SMALLINT:
+   case SQL_INTEGER:
+   case SQL_BIGINT:
+      if( m_bAsString )
+      {
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
+      }
+      else
+      {
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_SBIGINT, &integer, sizeof(integer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setInteger( integer );
+         }
+      }
+      break;
+   
+   case SQL_BIT:
+      ret = SQLGetData( hStmt, nCol+1, SQL_C_BIT, &uchar, sizeof(uchar), &ExpSize);
+      if( ExpSize == SQL_NULL_DATA )
+      {
+         value.setNil();
+      }
+      else
+      {
+         if( m_bAsString )
+         {
+            value.setString( new CoreString( uchar ? "true" : "false" ) );
+         }
+         else
+         {
+            value.setBoolean( uchar ? true : false );
+         }
+      }
+      return true;
+
+   case SQL_BINARY:
+   case SQL_VARBINARY:
+   case SQL_LONGVARBINARY:
+      ret = SQLGetData( hStmt, nCol+1, SQL_C_BINARY, &uchar, 0, &ExpSize);
+      if( ret != SQL_ERROR )
+      {
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+            return true;
+         }
+
+         MemBuf* mb = new MemBuf_1( ExpSize );  
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_BINARY, mb->data(), ExpSize , &nSize);
+         // save the data nevertheless
+         value = mb;
+      }
+      break;
+
+   case SQL_TYPE_DATE:
+   case SQL_TYPE_TIME:	
+   case SQL_TYPE_TIMESTAMP:
+      if( m_bAsString )
+      {
+         char buffer[32];
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_CHAR, &buffer, sizeof(buffer), &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else {
+            value.setString( &(new CoreString)->bufferize( buffer ) );
+         }
+      }
+      else
+      {
+         TIMESTAMP_STRUCT tstamp;
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_TYPE_TIMESTAMP, &tstamp, sizeof(tstamp) , &ExpSize);
+         if( ExpSize == SQL_NULL_DATA )
+         {
+            value.setNil();
+         }
+         else if ( ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO )
+         {
+            TimeStamp* ts = new TimeStamp;
+
+            ts->m_year = tstamp.year;
+            ts->m_month = tstamp.month;
+            ts->m_day = tstamp.day;
+            ts->m_hour = tstamp.hour;
+            ts->m_minute = tstamp.minute;
+            ts->m_second = tstamp.second;
+            ts->m_msec = (int16) tstamp.fraction/100000;
+
+            CoreObject *ots = VMachine::getCurrent()->findWKI("TimeStamp")->asClass()->createInstance();
+            ots->setUserData( ts );
+            value = ots;
+         }
+      }
+      break;
+
+   default:
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_UNHANDLED_TYPE, __LINE__ ) );
+   }
+
+   if ( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+      DBIHandleODBC::throwError( FALCON_DBI_ERROR_FETCH, SQL_HANDLE_STMT, hStmt, TRUE, false );
+   }
+
+   return true;
 }
 
 
@@ -235,11 +597,13 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
  * DB Statement class
  *****************************************************************************/
 
-DBIStatementODBC::DBIStatementODBC( DBIHandleODBC *dbh, odbc_stmt* stmt ):
+DBIStatementODBC::DBIStatementODBC( DBIHandleODBC *dbh, SQLHSTMT hStmt ):
    DBIStatement( dbh ),
-   m_statement( stmt ),
-   m_inBind( stmt )
+   m_inBind( hStmt, dbh->options()->m_bUseBigInt ),
+   m_pStmt( new ODBCStatementHandler(hStmt) )
 {
+   dbh->incConnRef();
+   m_conn = dbh->getConn();
 }
 
 DBIStatementODBC::~DBIStatementODBC()
@@ -247,51 +611,73 @@ DBIStatementODBC::~DBIStatementODBC()
    close();
 }
 
-int64 DBIStatementODBC::execute( const ItemArray& params )
+
+DBIRecordset* DBIStatementODBC::execute( ItemArray* params )
 {
-   if( m_statement == 0 )
+   if( m_pStmt == 0 )
+   {
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
-
-   m_inBind.bind(params);
-   int res = odbc_step( m_statement );
-   if( res != SQLITE_OK
-         && res != SQLITE_DONE
-         && res != SQLITE_ROW )
-   {
-      DBIHandleODBC::throwError( FALCON_DBI_ERROR_EXEC, res );
    }
 
-   // SQLite doesn't distinguish between fetch and insert statements; we do.
-   // Exec never returns a recordset; instead, it is used to insert and re-issue
-   // repeatedly statemnts. This is accomplished by Sqllite by issuing a reset
-   // after each step.
-   res = odbc_reset( m_statement );
-   if( res != SQLITE_OK )
+   if( params != 0 )
    {
-      DBIHandleODBC::throwError( FALCON_DBI_ERROR_EXEC, res );
+      m_inBind.bind(*params, DBITimeConverter_ODBC_TIME_impl, DBIStringConverter_WCHAR_impl );
    }
 
-   return 0;
+
+   SQLHSTMT hStmt = m_pStmt->handle();
+   SQLRETURN ret = SQLExecute( hStmt );
+
+   if ( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+      DBIHandleODBC::throwError( FALCON_DBI_ERROR_FETCH, SQL_HANDLE_STMT, hStmt, TRUE, false );
+   }
+
+   // Cont the rows
+   SQLINTEGER nRowCount;
+   RETCODE retcode = SQLRowCount( hStmt, &nRowCount );
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {      
+  	   DBIHandleODBC::throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE, false );
+      // return
+   }
+
+   m_nLastAffected = (int64) nRowCount;
+
+   // create the recordset
+   SQLSMALLINT ColCount;
+   retcode = SQLNumResultCols( hStmt, &ColCount);
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {      
+  	   DBIHandleODBC::throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE, false );
+      // return
+   }
+
+   // Do we have a recordset?
+   if ( ColCount > 0 )
+   {
+      // this may throw -- and in that case will close hStmt
+      return new DBIRecordsetODBC( static_cast<DBIHandleODBC*>(m_dbh), nRowCount, ColCount, m_pStmt );
+   }
+   else 
+   {
+      return 0;
+   }	
 }
 
 void DBIStatementODBC::reset()
 {
-   if( m_statement == 0 )
+   if( m_pStmt == 0 )
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
-
-   int res = odbc_reset( m_statement );
-   if( res != SQLITE_OK )
-   {
-      DBIHandleODBC::throwError( FALCON_DBI_ERROR_RESET, res );
-   }
 }
 
 void DBIStatementODBC::close()
 {
-   if( m_statement != 0 )
+   if( m_pStmt != 0 )
    {
-      odbc_finalize( m_statement );
-      m_statement = 0;
+      m_pStmt->decref();
+      m_conn->decref();
+      m_pStmt = 0;
    }
 }
 
@@ -303,13 +689,13 @@ void DBIStatementODBC::close()
 DBIHandleODBC::DBIHandleODBC()
 {
 	m_conn = NULL;
-	m_connTr = NULL;
+   m_bInTrans = false;
 }
 
 DBIHandleODBC::DBIHandleODBC( ODBCConn *conn )
 {
    m_conn = conn;
-   m_connTr = NULL;
+   m_bInTrans = false;
 }
 
 DBIHandleODBC::~DBIHandleODBC( )
@@ -317,36 +703,69 @@ DBIHandleODBC::~DBIHandleODBC( )
 	close( );
 }
 
-int64 DBIHandleODBC::getLastInsertedId()
+
+ODBCConn *DBIHandleODBC::getConnData()
 {
-   return -1;
+   if( m_conn == 0 )
+   {
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   }
+
+   return m_conn;
 }
+
 
 int64 DBIHandleODBC::getLastInsertedId( const String& sequenceName )
 {
-   return -1;
+   ODBCConn *conn = getConnData();
+   
+   // It's a trick, but it should work
+   SQLHSTMT hStmt = openStatement( conn->m_hHdbc );
+   SQLRETURN ret = SQLExecDirectA( hStmt, (SQLCHAR*) "SELECT @@IDENTITY", SQL_NTS );
+
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
+   }
+   
+   // Cont the rows
+   ret = SQLFetch( hStmt );
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
+   }
+
+   int64 value;
+   SQLINTEGER ind;
+   ret = SQLGetData( hStmt, 1, SQL_C_SBIGINT, &value, sizeof(value), &ind );
+   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
+   {
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
+   }
+
+   SQLFreeStmt( hStmt, SQL_CLOSE );
+   return value;
 }
 
-dbi_status DBIHandleODBC::close()
+
+void DBIHandleODBC::close()
 {
 	if( m_conn )
 	{
-		m_conn->Destroy( );
-		memFree( m_conn );
-		m_conn = NULL;
+		m_conn->decref();
+		m_conn = 0;
 	}
-	
-	return dbi_ok;
 }
 
 void DBIHandleODBC::options( const String& params )
 {
+   ODBCConn* conn = getConnData();
+
    if( m_settings.parse( params ) )
    {
       // To turn off the autocommit.
-      SQLSetConnectAttr( m_conn->m_hHdbc, SQL_AUTOCOMMIT, 
-            m_settings.m_bAutocommit ? SQL_AUTOCOMMIT_ON: SQL_AUTOCOMMIT_OFF, 
-            0 );
+      SQLINTEGER commitValue = m_settings.m_bAutocommit ? SQL_AUTOCOMMIT_ON: SQL_AUTOCOMMIT_OFF;
+      SQLSetConnectAttr( conn->m_hHdbc, SQL_AUTOCOMMIT, &commitValue, SQL_IS_INTEGER );
    }
    else
    {
@@ -355,201 +774,174 @@ void DBIHandleODBC::options( const String& params )
    }
 }
 
-const DBISettingParams* DBIHandleODBC::options() const
+const DBISettingParamsODBC* DBIHandleODBC::options() const
 {
    return &m_settings;
 }
 
-DBIRecordset *DBIHandleODBC::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+   
+SQLHSTMT DBIHandleODBC::openStatement(SQLHDBC hHdbc) 
 {
-   AutoCString asQuery( query );
-   ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
+   SQLHSTMT hHstmt;
+   SQLRETURN retcode = SQLAllocHandle( SQL_HANDLE_STMT, hHdbc, &hHstmt );
 
-   RETCODE ret = SQLExecDirect( conn->m_hHstmt, ( SQLCHAR* )asQuery.c_str( ), asQuery.length() );
+   if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
+   {
+      // don't close the db for this
+      throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_DBC, hHdbc, TRUE, false );
+   }
+
+   return hHstmt;
+}
+
+/*
+SQLHDESC DBIHandleODBC::getStatementDesc( SQLHSTMT hHstmt )
+{
+   ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
+   SQLHDESC hIpd;
+
+   retcode = SQLGetStmtAttr( hHstmt, SQL_ATTR_IMP_PARAM_DESC, &hIpd, 0, 0 );
+
+   if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
+   {
+      // will close hHstmt
+      throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_DBC, hHstmt, TRUE, true );
+   }
+
+   return hIpd;
+}
+*/
+
+DBIRecordset *DBIHandleODBC::query( const String &sql, ItemArray* params )
+{
+   ODBCConn *conn = getConnData();
+   SQLHSTMT hStmt = openStatement( conn->m_hHdbc );
+   SQLRETURN ret;
+   
+   AutoWString asQuery( sql );
+
+   // call the query
+   if( params == 0 )
+   {
+      // -- no params -- easier.
+      ret = SQLExecDirectW( hStmt, ( SQLWCHAR* )asQuery.w_str(), asQuery.length() );
+   }
+   else 
+   {
+      ret = SQLPrepareW( hStmt, (SQLWCHAR*) asQuery.w_str(), asQuery.length() );
+      if ( ret != SQL_ERROR )
+      {
+         ODBCInBind inBind( hStmt, options()->m_bUseBigInt );
+         inBind.bind(*params, DBITimeConverter_ODBC_TIME_impl, DBIStringConverter_WCHAR_impl );
+         ret = SQLExecute( hStmt );
+      }
+   }
 
    if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
    {
-  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
-      // return
-   }
-
-   SQLINTEGER nRowCount;
-   RETCODE retcode = SQLRowCount( conn->m_hHstmt, &nRowCount );
-
-   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
-   {
-  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
-      // return
-   }
-   affectedRows = (int64) nRowCount;
-
-   if( nRowCount != 0 )
-   {
-	   SQLSMALLINT nColCount;
-	   retcode = SQLNumResultCols( conn->m_hHstmt, &nColCount );
-
-      if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
-	   {
-  	      throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
-         // return
-	   }
-
-	   return new DBIRecordsetODBC( m_dbh, nRowCount, nColCount );
-   }
-
-   // query without recordset   
-   throw new DBIError( ErrorParam(FALCON_DBI_ERROR_QUERY_EMPTY, __LINE__ ) );
-   
-   // to make the compiler happy
-   return 0;
-}
-
-void DBIHandleODBC::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   odbc_stmt* pStmt = int_prepare( sql );
-   int_execute( pStmt, params );
-
-   SQLINTEGER nRowCount;
-   RETCODE retcode = SQLRowCount( conn->m_hHstmt, &nRowCount );
-
-   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
-   {
-  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, conn->m_hHstmt, TRUE );
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
       // return
    }
    
-   affectedRows = (int64) nRowCount;
-}
+   // Cont the rows
+   SQLINTEGER nRowCount;
+   RETCODE retcode = SQLRowCount( hStmt, &nRowCount );
 
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {      
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
+      // return
+   }
 
-DBIRecordset* DBIHandleODBC::call( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
+   m_nLastAffected = (int64) nRowCount;
 
-   odbc_stmt* pStmt = int_prepare( sql );
-   int count = odbc_column_count( pStmt );
-   if( count == 0 )
+   // create the recordset
+   SQLSMALLINT ColCount;
+   retcode = SQLNumResultCols( hStmt, &ColCount);
+   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+   {      
+  	   throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
+      // return
+   }
+
+   // Do we have a recordset?
+   if ( ColCount > 0 )
    {
-      int_execute( pStmt, params );
-      affectedRows = odbc_changes( m_conn );
+      // this may throw -- and in that case will close hStmt
+      return new DBIRecordsetODBC( this, nRowCount, ColCount, hStmt );
+   }
+   else 
+   {
       return 0;
-   }
-   else
-   {
-      // the bindings must stay with the recordset...
-      return new DBIRecordsetODBC( this, pStmt, params );
-   }
+   }	
 }
+
 
 
 DBIStatement* DBIHandleODBC::prepare( const String &query )
 {
-   odbc_stmt* pStmt = int_prepare( query );
-   return new DBIStatementODBC( this, pStmt );
-}
-
-
-odbc_stmt* DBIHandleODBC::int_prepare( const String &sql ) const
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   AutoCString zSql( sql );
-   odbc_stmt* pStmt = 0;
-   int res = odbc_prepare_v2( m_conn, zSql.c_str(), zSql.length(), &pStmt, 0 );
-   if( res != SQLITE_OK )
+   ODBCConn *conn = getConnData();
+   SQLHSTMT hStmt = openStatement( conn->m_hHdbc );
+   
+   AutoWString wQuery( query );
+   SQLRETURN ret = SQLPrepareW( hStmt, (SQLWCHAR*) wQuery.w_str(), wQuery.length() );
+   if ( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
    {
-      throwError( FALCON_DBI_ERROR_QUERY, res );
+      throwError( FALCON_DBI_ERROR_QUERY, SQL_HANDLE_STMT, hStmt, TRUE );
    }
 
-   return pStmt;
-}
-
-void DBIHandleODBC::int_execute( odbc_stmt* pStmt, const ItemArray& params )
-{
-   // int_execute is NEVER called alone
-   fassert( m_conn != 0 );
-
-   int res;
-   if( params.length() > 0 )
-   {
-      Sqlite3InBind binds( pStmt );
-      binds.bind(params);
-      res = odbc_step( pStmt );
-      odbc_finalize( pStmt );
-   }
-   else
-   {
-      res = odbc_step( pStmt );
-      odbc_finalize( pStmt );
-   }
-
-   if( res != SQLITE_OK
-         && res != SQLITE_DONE
-         && res != SQLITE_ROW )
-   {
-      throwError( FALCON_DBI_ERROR_QUERY, res );
-   }
+   return new DBIStatementODBC( this, hStmt );
 }
 
 
 void DBIHandleODBC::begin()
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   ODBCConn *conn = getConnData();
 
-   if( !m_bInTrans )
+   if( m_bInTrans )
    {
-      SQLRETURN srRet = SQLEndTran( 
-	      SQL_HANDLE_DBC, 
-	      static_cast<DBIHandleODBC*>(m_dbh)->getConn()->m_hHdbc, 
-	      SQL_COMMIT );
-
-      m_inTransaction = false;
-
+      SQLRETURN srRet = SQLEndTran( SQL_HANDLE_DBC, conn->m_hHdbc, SQL_COMMIT );
       if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
-	      return dbi_error;
+      {
+         m_bInTrans = false;
+         throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_DBC, conn->m_hHdbc, TRUE, false );
+      }
    }
+   
+   m_bInTrans = true;
 }
 
 
 void DBIHandleODBC::commit()
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+   ODBCConn *conn = getConnData();
 
-   ODBCConn* conn = static_cast<DBIHandleODBC*>(m_dbh)->getConn();
-
-   SQLRETURN srRet = SQLEndTran( 
-	   SQL_HANDLE_DBC, 
-	   conn->m_hHdbc, 
-	   SQL_COMMIT );
-
-   m_inTransaction = false;
-
-   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+   if( m_bInTrans )
    {
-      throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_STMT, ->m_hHstmt, TRUE );
+      SQLRETURN srRet = SQLEndTran( SQL_HANDLE_DBC, conn->m_hHdbc, SQL_COMMIT );
+      if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+      {
+         m_bInTrans = false;
+         throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_DBC, conn->m_hHdbc, TRUE, false );
+      }
    }
+
+    m_bInTrans = false;
 }
 
 
 void DBIHandleODBC::rollback()
 {
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-   
-   ODBCConn* conn = static_cast<DBIHandleODBC*>(m_dbh)->getConn();
+   ODBCConn *conn = getConnData();
 
-   SQLRETURN srRet = SQLEndTran( 
-	   SQL_HANDLE_DBC, 
-	   conn->m_hHdbc, 
-	   SQL_ROLLBACK );
-
-   m_inTransaction = false;
-	
-   if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+   if( m_bInTrans )
    {
-      throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_STMT, ->m_hHstmt, TRUE );
+      SQLRETURN srRet = SQLEndTran( SQL_HANDLE_DBC, conn->m_hHdbc, SQL_ROLLBACK );
+      m_bInTrans = false;
+      if ( srRet != SQL_SUCCESS && srRet != SQL_SUCCESS_WITH_INFO )
+      {
+         throwError( FALCON_DBI_ERROR_TRANSACTION, SQL_HANDLE_DBC, conn->m_hHdbc, TRUE, false );
+      }
    }
 }
 
@@ -578,31 +970,50 @@ void DBIHandleODBC::selectLimited( const String& query,
    }
 }
 
-
-
-
-void DBIHandleODBC::close()
+//============================================================
+// Settings parameter parser
+//============================================================
+DBISettingParamsODBC::DBISettingParamsODBC():
+      m_bUseBigInt( false )
 {
-   if ( m_conn != NULL )
-   {
-      if( m_bInTrans )
-      {
-         odbc_exec( m_conn, "ROLLBACK", 0, 0, 0 );
-         m_bInTrans = false;
-      }
-
-      odbc_close( m_conn );
-      m_conn = NULL;
-   }
+   addParameter( "bigint", m_sUseBigint );
 }
+
+DBISettingParamsODBC::DBISettingParamsODBC( const DBISettingParamsODBC & other):
+   DBISettingParams(other),
+   m_bUseBigInt( other.m_bUseBigInt )
+{
+   // we don't care about the parameter parsing during the copy.
+}
+
+
+DBISettingParamsODBC::~DBISettingParamsODBC()
+{
+}
+
+
+bool DBISettingParamsODBC::parse( const String& connStr )
+{
+   if( ! DBISettingParams::parse(connStr) )
+   {
+      return false;
+   }
+
+   return checkBoolean( m_sUseBigint, m_bUseBigInt );
+}
+
 
 //=====================================================================
 // Utilities
 //=====================================================================
 
-void DBIHandleODBC::throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd )
+void DBIHandleODBC::throwError( int falconError, SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd, bool free )
 {
-   String err = GetErrorMessage( plm_handle_type, GetErrorMessage, ConnInd );
+   String err = GetErrorMessage( plm_handle_type, plm_handle, ConnInd );
+   if (free)
+   {
+      SQLFreeHandle( plm_handle_type, plm_handle );
+   }
    throw new DBIError( ErrorParam(falconError, __LINE__ ).extra(err) );
 }
 
@@ -618,7 +1029,7 @@ String DBIHandleODBC::GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm
 	SQLINTEGER  plm_Rownumber = 0;
 	USHORT      plm_SS_Line;
 	SQLSMALLINT plm_cbSS_Procname, plm_cbSS_Srvname;
-	SQLCHAR     plm_SS_Procname[MAXNAME] ="", plm_SS_Srvname[MAXNAME] = "";
+	SQLCHAR     plm_SS_Procname[ODBC_COLNAME_SIZE] ="", plm_SS_Srvname[ODBC_COLNAME_SIZE] = "";
 	String sRet = "";
 	char Convert[MAXBUFLEN];
 

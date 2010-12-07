@@ -149,6 +149,8 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandleMySQL *dbh, MYSQL_RES *res, bool 
    m_rowCount = -1; // default -- not known
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
+   m_pConn = dbh->getConn();
+   m_pConn->incref();
 }
 
 DBIRecordsetMySQL::~DBIRecordsetMySQL()
@@ -189,6 +191,7 @@ void DBIRecordsetMySQL::close()
    if ( m_res != 0 ) {
       mysql_free_result( m_res );
       m_res = 0;
+      m_pConn->decref();
    }
 }
 
@@ -196,9 +199,22 @@ void DBIRecordsetMySQL::close()
  * Recordset class --- when using statements.
  *****************************************************************************/
 
+DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *res, MYSQLStmtHandle *pStmt, bool bCanSeek )
+    : DBIRecordsetMySQL( dbh, res, bCanSeek ),
+      m_stmt( pStmt->handle() ),
+      m_pStmt( pStmt )
+{
+   pStmt->incref();
+}
+
 DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek )
     : DBIRecordsetMySQL( dbh, res, bCanSeek ),
-      m_stmt( stmt )
+      m_stmt( stmt ),
+      m_pStmt( new MYSQLStmtHandle(stmt) )
+{
+}
+
+void DBIRecordsetMySQL_STMT::init()
 {
    // bind the output values
    m_pMyBind = (MYSQL_BIND*) memAlloc( sizeof( MYSQL_BIND ) * m_columnCount );
@@ -251,7 +267,8 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
 
    if( mysql_stmt_bind_result( m_stmt, m_pMyBind ) != 0 )
    {
-      dbh->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
+      static_cast<DBIHandleMySQL*>(m_dbh)->
+               throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
    }
 
    m_rowCount = mysql_stmt_affected_rows( m_stmt );
@@ -502,8 +519,8 @@ void DBIRecordsetMySQL_STMT::close()
    DBIRecordsetMySQL::close();
 
    if ( m_stmt != 0 ) {
-      mysql_stmt_close( m_stmt );
       m_stmt = 0;
+      m_pStmt->decref();
    }
 }
 
@@ -670,7 +687,7 @@ bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 
          if( row == 0 )
          {
-            if ( mysql_errno( static_cast<DBIHandleMySQL*>(m_dbh)->getConn() ) != 0 )
+            if ( mysql_errno( m_pConn->handle() ) != 0 )
             {
                static_cast< DBIHandleMySQL *>(m_dbh)
                    ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
@@ -748,11 +765,15 @@ bool DBIRecordsetMySQL_RES_STR::getColumnValue( int nCol, Item& value )
  * Transaction class
  *****************************************************************************/
 
-DBIStatementMySQL::DBIStatementMySQL( DBIHandle *dbh, MYSQL_STMT* stmt ):
+DBIStatementMySQL::DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt ):
       DBIStatement( dbh ),
       m_statement( stmt ),
-      m_inBind(0)
+      m_inBind(0),
+      m_bBound( false )
 {
+   m_pConn = dbh->getConn();
+   m_pConn->incref();
+   m_pStmt = new MYSQLStmtHandle( stmt );
 }
 
 
@@ -762,28 +783,37 @@ DBIStatementMySQL::~DBIStatementMySQL()
 }
 
 
-int64 DBIStatementMySQL::execute( const ItemArray& params )
+DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
 {
    if( m_statement == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
-   // should we bind with the statement?
-   if ( m_inBind == 0 )
+   // should we bind with the statement? -- first time around?
+   if ( ! m_bBound )
    {
-      if( params.length() != mysql_stmt_param_count( m_statement ) )
-      {
-         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
-      }
+      m_bBound = true;
 
       // Do we have some parameter to bind?
-      if( params.length() > 0 )
+      if( params == 0 )
       {
+         if( mysql_stmt_param_count( m_statement ) != 0 )
+         {
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+         }
+      }
+      else
+      {
+         if( params->length() != mysql_stmt_param_count( m_statement ) )
+         {
+            getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+         }
+
          // params.lengh() == 0 is possible with totally static selects,
          // or other statements that will be run usually just once.
          // Inserts or other repetitive statements will have at least 1, so
          // this branch won't be repeatedly checked in the fast path.
          m_inBind = new MyDBIInBind( m_statement );
-         m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
+         m_inBind->bind( *params, DBITimeConverter_MYSQL_TIME_impl );
 
          if( mysql_stmt_bind_param( m_statement, m_inBind->mybindings() ) != 0 )
          {
@@ -793,7 +823,15 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
    }
    else
    {
-      m_inBind->bind( params, DBITimeConverter_MYSQL_TIME_impl );
+      if ( params != 0 && m_inBind != 0 )
+      {
+         m_inBind->bind( *params, DBITimeConverter_MYSQL_TIME_impl );
+      }
+      else if ( m_inBind != 0 )
+      {
+         // we had parameters, but now we have not.
+         getMySql()->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      }
    }
 
    if( mysql_stmt_execute( m_statement ) != 0 )
@@ -802,7 +840,46 @@ int64 DBIStatementMySQL::execute( const ItemArray& params )
    }
 
    // row count?
-   return mysql_stmt_affected_rows( m_statement );
+   m_nLastAffected = mysql_stmt_affected_rows( m_statement );
+
+   // do we have metadata?
+   MYSQL_RES* meta = 0;
+
+   DBIHandleMySQL* mysql = static_cast<DBIHandleMySQL* >(m_dbh);
+
+   // We want a result recordset
+   meta = mysql_stmt_result_metadata( m_statement );
+   if( meta == 0 )
+   {
+      //No, we have nothing to return.
+      return 0;
+   }
+   else
+   {
+      // ok. Do the user wanted all the result back?
+      if( mysql->options()->m_nPrefetch < 0 )
+      {
+         if( mysql_stmt_store_result( m_statement ) != 0 )
+         {
+            mysql_free_result( meta );
+            mysql->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+         }
+      }
+
+      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
+
+      // -- may throw
+      try {
+         recset->init();
+      }
+      catch( ... )
+      {
+         delete recset;
+         throw;
+      }
+
+      return recset;
+   }
 }
 
 
@@ -822,10 +899,11 @@ void DBIStatementMySQL::close()
 {
    if ( m_statement != 0 )
   {
-     mysql_stmt_close( m_statement );
      m_statement = 0;
      delete m_inBind;
      m_inBind = 0;
+     m_pConn->decref();
+     m_pStmt->decref();
   }
 }
 
@@ -866,6 +944,7 @@ DBIHandleMySQL::DBIHandleMySQL()
 DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
 {
    m_conn = conn;
+   m_pConn = new MYSQLHandle( conn );
 
    // we'll be using UTF-8 charset
    mysql_set_character_set( m_conn, "utf8" );
@@ -873,7 +952,7 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
    mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
 
-DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -881,12 +960,22 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
    // do we want to fetch strings?
    if( options()->m_bFetchStrings )
    {
-      MYSQL *conn = getConn();
-      String temp;
-      sqlExpand( sql, temp, params );
+      MYSQL *conn = m_conn;
+      int result;
+      if( params != 0)
+      {
+         String temp;
+         sqlExpand( sql, temp, *params );
+         AutoCString asQuery( temp );
+         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
+      }
+      else
+      {
+         AutoCString asQuery( sql );
+         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
+      }
 
-      AutoCString asQuery( temp );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      if( result != 0 )
       {
          throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
       }
@@ -895,25 +984,25 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
          mysql_store_result( conn ) :
          mysql_use_result( conn );
 
-      affectedRows = mysql_affected_rows( conn );
+      m_nLastAffected = mysql_affected_rows( conn );
       return new DBIRecordsetMySQL_RES_STR( this, rec );
    }
 
    // prepare and execute -- will create a new m_statement
    MYSQL_STMT* stmt = my_prepare( sql );
    MYSQL_RES* meta = 0;
+   DBIRecordsetMySQL_STMT* recset = 0;
 
    try
    {
       MyDBIInBind bindings(stmt);
-      affectedRows = my_execute( stmt, bindings, params );
+      m_nLastAffected = my_execute( stmt, bindings, params );
 
       // We want a result recordset
       meta = mysql_stmt_result_metadata( stmt );
       if( meta == 0 )
       {
-         // the query didn't return a recorset
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY_EMPTY );
+         return 0;
       }
       else
       {
@@ -927,7 +1016,8 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
          }
 
          // -- may throw
-         DBIRecordsetMySQL* recset = new DBIRecordsetMySQL_STMT( this, meta, stmt );
+         recset = new DBIRecordsetMySQL_STMT( this, meta, stmt );
+         recset->init();
          return recset;
       }
 
@@ -937,126 +1027,25 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, int64 &affectedRows, con
       if( meta != 0 )
          mysql_free_result( meta );
 
-      mysql_stmt_close( stmt );
+      if( recset )
+      {
+         delete recset;
+      }
+      else
+      {
+         mysql_stmt_close( stmt );
+      }
       throw;
    }
-
-
-   return 0; // to make the compiler happy
 }
 
-
-void DBIHandleMySQL::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   // if we don't have var params, we can use the standard query, after proper escape.
-   if ( params.length() == 0 )
-   {
-      MYSQL *conn = getConn();
-
-      AutoCString asQuery( sql );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      // discard eventual recordsets
-      // mysql_next_result returns
-      //    0 if there are more results,
-      //    -1 if there aren't any other result
-      //    1 in case of errors
-
-      int res;
-      while ( (res = mysql_next_result( conn )) == 0 )
-      {
-         MYSQL_RES* rec = mysql_use_result( conn );
-         if( rec != 0 )
-         {
-            mysql_free_result(rec);
-         }
-      }
-
-      if( res == 1 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-   }
-   else
-   {
-     MYSQL_STMT* stmt = my_prepare( sql );
-     MyDBIInBind bindings (stmt);
-
-     // prepare and execute
-     try {
-        affectedRows = my_execute(
-              stmt,
-              bindings,
-              params );
-        mysql_stmt_close( stmt );
-     }
-     catch( ... )
-     {
-        mysql_stmt_close( stmt );
-        throw;
-     }
-   }
-}
-
-
-
-DBIRecordset* DBIHandleMySQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-   if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-   MYSQL *conn = getConn();
-   String temp;
-
-   sqlExpand( sql, temp, params );
-   AutoCString asQuery( "call " + temp );
-   if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-   {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-   }
-
-
-   if ( mysql_next_result( conn ) == -1 )
-   {
-      return 0;
-   }
-
-   MYSQL_RES* rec;
-
-   if( options()->m_nPrefetch < 0 )
-      rec = mysql_store_result( conn );
-   else
-      rec = mysql_use_result( conn );
-
-   affectedRows = mysql_affected_rows( conn );
-
-   // discard eventual other recordsets
-   while ( mysql_next_result( conn ) != -1 )
-   {
-      MYSQL_RES* rec1 = mysql_use_result( conn );
-      if( rec != 0 )
-      {
-         mysql_free_result(rec1);
-      }
-   }
-
-   return options()->m_bFetchStrings ?
-         new DBIRecordsetMySQL_RES_STR( this, rec ) :
-         new DBIRecordsetMySQL_RES( this, rec );
-}
 
 MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-   MYSQL_STMT* stmt = mysql_stmt_init( getConn() );
+   MYSQL_STMT* stmt = mysql_stmt_init( m_conn );
    if( stmt == 0 )
    {
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
@@ -1089,19 +1078,25 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
 }
 
 
-int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params )
+int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params )
 {
    fassert( m_conn != 0 );
+   int count = mysql_stmt_param_count( stmt );
 
-   if( params.length() != mysql_stmt_param_count( stmt ) )
+   if( params == 0 || params->length() == 0 )
    {
-      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      if( count != 0 )
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
    }
-
-   // Do we have some parameter to bind?
-   if( params.length() > 0 )
+   else
    {
-      bindings.bind( params, DBITimeConverter_MYSQL_TIME_impl );
+      // Do we have some parameter to bind?
+      if  ( params->length() != count )
+      {
+         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_SIZE );
+      }
+
+      bindings.bind( *params, DBITimeConverter_MYSQL_TIME_impl );
 
       if( mysql_stmt_bind_param( stmt, bindings.mybindings() ) != 0 )
       {
@@ -1200,8 +1195,8 @@ void DBIHandleMySQL::close()
 {
    if ( m_conn != NULL )
    {
-      mysql_query( m_conn, "ROLLBACK" );
-      mysql_close( m_conn );
+      mysql_query( m_conn, "COMMIT" );
+      m_pConn->decref();
       m_conn = NULL;
    }
 }

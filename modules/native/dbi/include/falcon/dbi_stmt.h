@@ -43,16 +43,13 @@ public:
     * @param params the parameters.
     *
    */
-   virtual int64 execute( const ItemArray& params )=0;
+   virtual DBIRecordset* execute( ItemArray* params = 0 ) =0;
 
    virtual void reset()=0;
 
    /** Closes the transaction.
     *
     *  By default, the engine must also close the transaction.
-    *
-    *  After the transaction is closed, the subclasses must make sure
-    *  that the
     */
    virtual void close()=0;
 
@@ -88,9 +85,13 @@ public:
 
    virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
+   
+   /** returns the count of rows affected by the last query() operation */
+   int64 affectedRows() const { return m_nLastAffected; }
 
 protected:
    DBIHandle *m_dbh;
+   int64 m_nLastAffected;
 };
 
 }
