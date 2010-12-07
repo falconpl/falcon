@@ -188,7 +188,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       sql_qm = ("?," * data.len())[0:-1]  // ?,?,?, << kill the last ","
 
       table = entity.name
-      sql_command = .[ self.dbc.perform @"insert into $(table)( $(sql_fields) )\nvalues($sql_qm)" ]
+      sql_command = .[ self.dbc.query @"insert into $(table)( $(sql_fields) )\nvalues($sql_qm)" ]
       if Nest.log_level >= 3: Nest.logd("Executing sql: " + sql_command[1] )
       ( sql_command + data.values() )()
 
@@ -224,7 +224,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       if entity.extra: str += ",\n" + self.extra
       str += "\n);"
       if Nest.log_level >= 3: Nest.logd( "Creating table: " +str )
-      self.dbc.perform( str )
+      self.dbc.query( str )
    end
    
    /*# Updates the required data in the database.
@@ -244,7 +244,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          where = ""
       end
       
-      sql_command = .[ self.dbc.perform
+      sql_command = .[ self.dbc.query
                        @"update $(entity.name)\nset $sql_fields" + where ] +\
                      data.values()
 
@@ -269,7 +269,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
       command = @"delete from $(entity.name)\nwhere " +
                   ("=?,".merge( key_fields.keys() ) + "=?")
       if Nest.log_level >= 3: Nest.logd("Executing sql: " + command )
-      return (.[ self.dbc.perform command] + key_fields.values())()
+      return (.[ self.dbc.query command] + key_fields.values())()
    end
 
 end
