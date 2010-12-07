@@ -302,6 +302,8 @@ FALCON_MODULE_DECL
    Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
    stmt_class->setWKS( true );
    self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
+   self->addClassMethod( stmt_class, "aexec", &Falcon::Ext::Statement_aexec ).asSymbol()->
+         addParam( "params" );
    self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
    self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
    self->addClassProperty( stmt_class, "affected" ).setReflectFunc( &Falcon::Ext::Statement_affected );
@@ -324,6 +326,8 @@ FALCON_MODULE_DECL
       ->addParam("options");
    self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
          addParam("sql");
+   self->addClassMethod( handler_class, "aquery", &Falcon::Ext::Handle_aquery ).asSymbol()->
+         addParam("sql")->addParam("params");
    self->addClassMethod( handler_class, "prepare", &Falcon::Ext::Handle_prepare ).asSymbol()->
          addParam("sql");
    self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );

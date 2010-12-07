@@ -87,7 +87,7 @@ public:
    virtual FalconData* clone() const;
    
    /** returns the count of rows affected by the last query() operation */
-   int64 affectedRows();
+   int64 affectedRows() const { return m_nLastAffected; }
 
 protected:
    DBIHandle *m_dbh;

@@ -183,31 +183,8 @@ bool DBISettingParams::parse( const String& connStr )
       return false;
    }
 
-   if( m_sAutocommit.compareIgnoreCase("on") == 0 )
-   {
-      m_bAutocommit = true;
-   }
-   else if( m_sAutocommit.compareIgnoreCase("off") == 0 )
-   {
-      m_bAutocommit = false;
-   }
-   else if ( m_sAutocommit != "" && m_sAutocommit != "\"\"" )
-   {
-      return false;
-   }
-
-   if( m_sFetchStrings.compareIgnoreCase("on") == 0 )
-   {
-      m_bFetchStrings = true;
-   }
-   else if( m_sFetchStrings.compareIgnoreCase("off") == 0 )
-   {
-      m_bFetchStrings = false;
-   }
-   else if ( m_sFetchStrings != "" && m_sFetchStrings != "\"\"" )
-   {
-      return false;
-   }
+   if ( ! checkBoolean( m_sAutocommit, m_bAutocommit ) ) return false;
+   if ( ! checkBoolean( m_sFetchStrings, m_bFetchStrings ) ) return false;
 
    if( m_sPrefetch.compareIgnoreCase("all") == 0 )
    {

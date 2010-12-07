@@ -278,6 +278,12 @@ void DBIInBind::bind( const ItemArray& arr,
       }
    }
 
+   // force recalculation of the items.
+   if(m_bAlwaysChange )
+   {
+      bFirst = true;
+   }
+
    for( int i = 0; i < nSize; ++i )
    {
       DBIBindItem& bi = m_ibind[i];
@@ -288,7 +294,7 @@ void DBIInBind::bind( const ItemArray& arr,
       bi.set( arr[i], tc, sc );
 
       // first time around, or changed buffer?
-      if( m_bAlwaysChange || bi.type() != type || bFirst || bi.databuffer() != buffer || bi.length() != len )
+      if( bFirst || bi.type() != type || bi.databuffer() != buffer || bi.length() != len )
       {
          // let the engine determine if the type is compatible with the type of column
          onItemChanged( i );

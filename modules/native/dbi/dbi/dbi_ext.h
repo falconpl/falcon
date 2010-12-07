@@ -36,6 +36,7 @@ void DBIConnect( VMachine *vm );
 //=====================
 
 void Statement_execute( VMachine *vm );
+void Statement_aexec( VMachine *vm );
 void Statement_reset( VMachine *vm );
 void Statement_close( VMachine *vm );
 void Statement_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
@@ -45,6 +46,7 @@ void Statement_affected(CoreObject *instance, void *user_data, Item &property, c
 //=====================
 
 void Handle_query( VMachine *vm );
+void Handle_aquery( VMachine *vm );
 void Handle_options( VMachine *vm );
 void Handle_prepare( VMachine *vm );
 void Handle_getLastID( VMachine *vm );

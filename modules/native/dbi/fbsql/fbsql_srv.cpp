@@ -206,11 +206,12 @@ DBIHandle *DBIServiceFB::connect( const String &parameters )
 
    if ( status_vector[0] == 1 && status_vector[1] )
    {
-      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_CONNECT, status_vector, false );
+      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_CONNECT, status_vector );
    }
 
    return new DBIHandleFB( handle );
 }
+
 
 CoreObject *DBIServiceFB::makeInstance( VMachine *vm, DBIHandle *dbh )
 {

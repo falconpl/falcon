@@ -68,6 +68,12 @@ namespace Ext
    - beginlog: Activate a replay logging system to keep track of all database calls
    - quitlog: Deactivate the replay logging system
 
+@section fb_opt Transaction options.
+   Other than the default options provided by @a Handle.options, the Firebird driver
+   provides the following transaction options:
+
+   - getaffected: Reads affected rows after every query/execute operation. Can be 'on' or 'off'
+     (defaults on).
 */
 
 FALCON_FUNC Firebird_init( VMachine *vm )

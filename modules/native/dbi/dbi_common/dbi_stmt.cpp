@@ -40,12 +40,6 @@ void DBIStatement::gcMark( uint32 v )
 {
 }
 
-
-int64 DBIStatement::affectedRows()
-{
-   return m_nLastAffected;
-}
-
 }
 
 /* end of dbi_trans.cpp */

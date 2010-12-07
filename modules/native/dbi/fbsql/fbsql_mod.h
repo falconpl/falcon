@@ -105,16 +105,21 @@ class FBInBind: public DBIInBind
 {
 
 public:
-   FBInBind( isc_stmt_handle stmt );
+   FBInBind( isc_db_handle dbh, isc_tr_handle tr, isc_stmt_handle stmt );
    virtual ~FBInBind();
 
    virtual void onFirstBinding( int size );
    virtual void onItemChanged( int num );
 
    XSQLDA* table() const { return m_data.table(); }
+   ISC_QUAD createBlob( byte* data, int64 size );
 private:
    FBSqlData m_data;
+   isc_db_handle m_dbh;
+   isc_tr_handle m_tr;
    isc_stmt_handle m_stmt;
+   ISC_SHORT* m_sqlInd;
+   ISC_QUAD* m_GIDS;
 };
 
 
@@ -139,14 +144,17 @@ public:
    virtual bool discard( int64 ncount );
    virtual void close();
 
+
 protected:
    int m_nRow;
    int m_nRowCount;
-   int m_nColumnCount;
 
+   FBConnRef* m_dbref;
    FBTransRef* m_tref;
    FBStmtRef* m_sref;
    FBSqlData* m_data;
+
+   MemBuf* fetchBlob( ISC_QUAD *bId );
 };
 
 
@@ -155,12 +163,17 @@ class DBIStatementFB : public DBIStatement
 protected:
    isc_stmt_handle m_statement;
    FBStmtRef* m_pStmt;
+   FBTransRef* m_pTref;
    FBConnRef* m_pConn;
 
+   FBSqlData* m_outData;
    FBInBind* m_inBind;
 
+   bool m_bAutoCommit;
+   bool m_bGetAffected;
+
 public:
-   DBIStatementFB( DBIHandleFB *dbh, const isc_stmt_handle& stmt );
+   DBIStatementFB( DBIHandleFB *dbh, FBTransRef* pTref, const isc_stmt_handle& stmt, FBSqlData* outData );
    virtual ~DBIStatementFB();
 
    virtual DBIRecordset*  execute( ItemArray* params );
@@ -168,6 +181,21 @@ public:
    virtual void close();
 };
 
+
+class DBISettingParamsFB: public DBISettingParams
+{
+public:
+   DBISettingParamsFB();
+   DBISettingParamsFB( const DBISettingParamsFB& other );
+   virtual ~DBISettingParamsFB();
+   virtual bool parse( const String& connStr );
+
+   /** Read affected rows after each query operation ( defaults to true ) */
+   bool m_bGetAffected;
+
+private:
+   String m_sGetAffected;
+};
 
 class DBIHandleFB : public DBIHandle
 {
@@ -178,7 +206,7 @@ public:
    virtual ~DBIHandleFB();
 
    virtual void options( const String& params );
-   virtual const DBISettingParams* options() const;
+   virtual const DBISettingParamsFB* options() const;
    virtual void close();
 
    virtual DBIRecordset *query( const String &sql, ItemArray* params = 0 );
@@ -199,13 +227,17 @@ public:
    FBTransRef* transRef() const { return m_pTrans; }
 
    // Throws a DBI error, using the last error code and description.
-   static void throwError( int line, int code, ISC_STATUS* status, bool dsql );
+   static void throwError( int line, int code, ISC_STATUS* status );
+
+   static int64 getAffected( isc_stmt_handle stmt, int etype = FALCON_DBI_ERROR_QUERY );
 
 private:
    FBConnRef* m_pConn;
    FBTransRef* m_pTrans;
-   DBISettingParams m_settings;
+   DBISettingParamsFB m_settings;
    bool m_bCommitted;
+
+   isc_stmt_handle internal_prepare( const String& query );
 };
 
 
