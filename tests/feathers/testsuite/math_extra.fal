@@ -1,7 +1,7 @@
 /****************************************************************************
 * Falcon test suite
 *
-* ID:
+* ID: 70
 * Category: math_extra
 * Subcategory:
 * Short: 
@@ -19,7 +19,7 @@ if tanh(1) != 0.761594: failure( "tanh" )
 
 if acosh(1) != 0: failure( "acosh" )
 if asinh(1) != 0.881374: failure( "asinh" )
-if atanh(0.5) != 0549306: failure( "atanh" )
+if atanh(0.5) != 0.549306: failure( "atanh" )
 
 if sec(1) != 1.85082: failure( "sec" )
 if csc(1) != 1.1884: failure( "csc" )
