@@ -145,7 +145,7 @@ ENDIF (ORACLE_FOUND)
 ADD_LIBRARY( ${MODULE} MODULE
    oracle.cpp
    oracle_ext.cpp
-   oracle_srv.cpp
+   oracle_mod.cpp
 )
 
 # Link
