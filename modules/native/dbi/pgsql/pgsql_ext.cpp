@@ -88,7 +88,11 @@ FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
     DBIHandlePgSQL* dbh = static_cast<DBIHandlePgSQL*>( vm->self().asObjectSafe()->getUserData() );
     fassert( dbh );
 
-    DBIStatement* trans = dbh->prepareNamed( *i_query->asString(), *i_name->asString() );
+    // names of stored procedures need to be lowercased
+    String name = *i_name->asString();
+    name.lower();
+
+    DBIStatement* trans = dbh->prepareNamed( name, *i_query->asString() );
 
     // snippet taken from dbi_ext.h - should be shared?
     Item *trclass = vm->findWKI( "%Statement" );
