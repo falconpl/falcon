@@ -20,12 +20,11 @@
 namespace Falcon
 {
     class VMachine;
+
     namespace Ext
-{
-
-FALCON_FUNC Oracle_init( VMachine *vm );
-}
-
+    {
+        FALCON_FUNC Oracle_init( VMachine *vm );
+    }
 }
 
 #endif /* ORACLE_EXT_H */

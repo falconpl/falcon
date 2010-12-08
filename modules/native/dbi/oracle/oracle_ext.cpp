@@ -34,37 +34,40 @@ namespace Ext
       - username
       - password
       - database
+
+      Oracle does not use ports in its connection string. That information
+      is generally stored in your TNSNAMES.ora file.
 */
 
 FALCON_FUNC Oracle_init( VMachine *vm )
 {
-   Item *i_connParams = vm->param(0);
-   if ( i_connParams != 0 && ! i_connParams->isString() )
+   Item *paramsI = vm->param(0);
+   Item *i_tropts = vm->param(1);
+   if ( ! paramsI || ! paramsI->isString() || ( i_tropts && ! i_tropts->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                          .extra("[S]") );
-      return;
+                          .extra( "S,[S]" ) );
    }
 
-   CoreObject *self = vm->self().asObject();
-   dbi_status status;
-   String connectErrorMessage;
-   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+   String *params = paramsI->asString();
 
-   DBIHandleOracle *dbh = static_cast<DBIHandleOracle *>(
-      theOracleService.connect( params, status, connectErrorMessage ) );
-
-   if ( dbh == 0 )
+   DBIHandle *hand = 0;
+   try
    {
-      if ( connectErrorMessage.length() == 0 )
-         connectErrorMessage = "An unknown error has occurred during connect";
+       hand = theOracleService.connect( *params );
+       if( i_tropts != 0 )
+       {
+           hand->options( *i_tropts->asString() );
+       }
 
-      throw new DBIError( ErrorParam( status, __LINE__ )
-                                       .desc( connectErrorMessage ) );
-      return ;
+       CoreObject *instance = theOracleService.makeInstance( vm, hand );
+       vm->retval( instance );
    }
-
-   self->setUserData( dbh );
+   catch ()
+   {
+       delete hand;
+       throw error;
+   }
 }
 
 } /* namespace Ext */

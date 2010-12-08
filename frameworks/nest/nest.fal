@@ -1312,7 +1312,7 @@ object Nest
       out = stdOut()
       r = ""
       while not f.eof()
-         f.read( f, 4096 )
+         f.read( r, 4096 )
          out.write( r )
       end
       f.close()

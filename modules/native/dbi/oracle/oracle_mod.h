@@ -22,99 +22,57 @@
 
 namespace Falcon
 {
-    class DBIRecordsetOracle : public DBIRecordset
-    {
-        protected:
-            int o_row;
-            int o_rowCount;
-            int o_columnCount;
-
-            ResultSet *ORACLE_RES;
-
-            unsigned long *o_fieldLengths;
-
-            static dbi_type getFalconType( int typ );
-
+    // FIXME What does ORACLE do here?
+    class ORACLEHandle : public DBIRefCounter<ORACLE*> {
         public:
-            DBIRecordsetOracle( DBIHandle *dbh, ORACLE_RES *res );
-            ~DBIRecordsetOracle();
+            ORACLEHandle( ORACLE* o );
+            DBIRefCounter<ORACLE*>( o )
+            {}
 
-            virtual dbi_status next();
-            virtual int getRowCount();
-            virtual int getRowIndex();
-            virtual int getColumnCount();
-            virtual dbi_status getColumnNames( char *names[] );
-            virtual dbi_status getColumnTypes( dbi_type *types );
-            virtual dbi_status asString( const int columnIndex, String &value );
-            virtual dbi_status asBoolean( const int columnIndex, bool &value );
-            virtual dbi_status asInteger( const int columnIndex, int32 &value );
-            virtual dbi_status asInteger64( const int columnIndex, int64 &value );
-            virtual dbi_status asNumeric( const int columnIndex, numeric &value );
-            virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
-            virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
-            virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
-            virtual dbi_status asBlobID( const int columnIndex, String &value );
-            virtual void close();
-            virtual dbi_status getLastError( String &description );
+        virtual ~ORACLEHandle()
+        {
+            // FIXME ??
+        }
     };
-
-
-    class DBITransactionOracle : public DBIStatement
-    {
-        protected:
-            bool o_inTransaction;
-
-        public:
-            DBITransactionOracle( DBIHandle *dbh );
-
-            virtual DBIRecordset *query( const String &query, int64 &affected_rows, dbi_status &retval );
-            virtual dbi_status begin();
-            virtual dbi_status commit();
-            virtual dbi_status rollback();
-            virtual dbi_status close();
-            virtual dbi_status getLastError( String &description );
-
-            virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
-            virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
-                    bool bBinary = false );
-    };
-
 
     class DBIHandleOracle : public DBIHandle
     {
         protected:
-            Environment *o_env;
             Connection *o_conn;
-
-            DBITransactionORACLE *m_connTr;
+            Environment *o_env;
+            ORACLEHandle *o_pConn;
 
         public:
             DBIHandleOracle();
-            DBIHandleOracle( ORALCE *conn );
+            DBIHandleOracle( Connection *conn );
             virtual ~DBIHandleOracle();
 
-            Connection *getConn() { return o_conn; }
-
-            virtual DBIStatement *createStatement();
-            virtual dbi_status terminateStatement( DBIStatement *st );
-            virtual int64 getLastInsertedId();
-            virtual int64 getLastInsertedId( const String &value );
-            virtual dbi_status getLastError( String &description );
-            virtual dbi_status close();
-            virtual DBIStatement* getDefaultTransaction();
+            virtual void close();
+            virtual void terminateEnv();
+            
+            virtual DBIRecordset *query( const String &sql, ItemArray* params );
+            virtual DBIStatement* prepare( const String &query );
+            virtual int64 getLastInsertedId( const String& name = "" );
+            
+            virtual void commit();
+            virtual void rollback();
+            
+            virtual void selectLimited( const String& query,
+                    int64 nBegin, int64 nCount, String& result );
+            
+            ORACLEHandle *getConn() { return o_pConn; }
+            ORACLEHandle *getEnv() { return o_env; }
     };
 
     class DBIServiceOracle : public DBIService
     {
         public:
             DBIServiceOracle() : DBIService( "DBI_oracle" ) {}
-
-            virtual dbi_status init();
-            virtual DBIHandle *connect( const String &parameters, bool persistent, 
-                    dbi_status &retval, String &errorMessage );
-            virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
+            
+            virtual void init();
+            virtual void DBIHandle *connect( const String &parameters );
+            virtual void CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
     };
-
 }
 
 extern Falcon::DBIServiceOracle theOracleService;
