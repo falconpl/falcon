@@ -99,7 +99,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
          for field in view.fields
             if field.order and field.order != DBOrder.NONE
                order += field.name + " " +
-                        (field.order == DBOrder.ASCENDING ? "" : "DESC" )
+                        (field.order == DBOrder.ASCENDING ? "" : "DESC " )
             end
          end
 
