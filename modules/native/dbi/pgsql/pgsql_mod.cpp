@@ -556,13 +556,7 @@ PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows 
     else
         affectedRows = -1;
 
-    if ( st == PGRES_TUPLES_OK )
-        return res;
-    else
-    {
-        PQclear( res );
-        return NULL;
-    }
+    return res;
 }
 
 
@@ -585,9 +579,7 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
     {
         res = internal_exec( sql, m_nLastAffected );
     }
-
-    if ( res == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+    fassert( res != 0 );
 
     ExecStatusType st = PQresultStatus( res );
 
@@ -596,12 +588,9 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
     {
        return new DBIRecordsetPgSQL( this, res );
     }
-    else if ( st != PGRES_COMMAND_OK )
-    {
-        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
-    }
 
     // no result
+    fassert( st == PGRES_COMMAND_OK );
     PQclear( res );
     return 0;
 }
