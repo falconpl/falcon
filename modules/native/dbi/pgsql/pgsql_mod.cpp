@@ -303,6 +303,7 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh )
 void DBIStatementPgSQL::init( const String& query, const String& name )
 {
     fassert( name.length() );
+    m_name = name;
 
     String temp;
     m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
@@ -388,11 +389,19 @@ void DBIStatementPgSQL::reset()
 
 void DBIStatementPgSQL::close()
 {
-   if( m_pConn != 0 )
-   {
-      m_pConn->decref();
-      m_pConn = 0;
-   }
+    // deallocate the stored procedure
+    String query = "DEALLOCATE ";
+    query += m_name;
+    AutoCString zQuery( query );
+    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
+    if ( res != 0 )
+        PQclear( res );
+
+    if( m_pConn != 0 )
+    {
+        m_pConn->decref();
+        m_pConn = 0;
+    }
 }
 
 
