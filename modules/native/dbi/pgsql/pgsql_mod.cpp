@@ -302,10 +302,12 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh )
 
 void DBIStatementPgSQL::init( const String& query, const String& name )
 {
+    fassert( name.length() );
+
     String temp;
     m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
 
-    AutoCString zQuery( query );
+    AutoCString zQuery( temp );
     AutoCString zName( name );
     PGresult* res = PQprepare( m_pConn->handle(), zName.c_str(), zQuery.c_str(), m_nParams, NULL );
 
