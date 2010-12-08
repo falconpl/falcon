@@ -361,15 +361,16 @@ DBIRecordset* DBIStatementPgSQL::execute( ItemArray* params )
         DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
 
     ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_COMMAND_OK )
-    {
-        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
-    }
 
     // have we a resultset?
     if ( st == PGRES_TUPLES_OK  )
     {
        return new DBIRecordsetPgSQL( static_cast<DBIHandlePgSQL*>(m_dbh), res );
+    }
+    else
+    if ( st != PGRES_COMMAND_OK )
+    {
+        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
     }
 
     // no result
