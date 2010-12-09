@@ -41,22 +41,23 @@ option( FALCON_BUILD_WOPI "Install Web Oriented Programming Interface" OFF  )
 if( FALCON_NATMODS_AUTO )
 
    #### Check DBUS
-   find_path( DBUS_INCLUDE_DIR dbus.h )
-   if (DBUS_INCLUDE_DIRS)
+   find_path( DBUS_INCLUDE_DIR dbus.h HINTS /usr/include/dbus-1.0/dbus )
+   if ( DBUS_INCLUDE_DIR )
       set( _dbus ON )
    endif()
 
-   #### Check LibHARU
-   find_path(LibHaru_INCLUE_DIR hpdf.h)
-   if (LibHaru_INCLUE_DIR)
-      set( _pdf ON)
+   #### Check PDF (LibHARU)
+   find_path( LibHaru_INCLUE_DIR hpdf.h )
+   if ( LibHaru_INCLUE_DIR )
+      set( _pdf ON )
    endif()
 
    #### Check GD2
-   find_path(GD_INCLUDE_DIR gd.h)
-   if (GD_INCLUDE_DIR)
-      set( _gd2 ON)
+   find_path( GD_INCLUDE_DIR gd.h )
+   if ( GD_INCLUDE_DIR )
+      set( _gd2 ON )
    endif()
+
 else()
   set( _dbus OFF )
   set( _pdf OFF )
