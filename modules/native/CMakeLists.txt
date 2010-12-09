@@ -9,14 +9,18 @@
 # Utilities used in this section
 #
 macro( FalconMakeBinding module lib desc )
-   option( FALCON_BUILD_${module} ${desc} OFF )
 
    if( FALCON_NATMODS_AUTO )
-      find_package(${lib})
+      find_package( ${lib} )
       if ( ${lib}_FOUND )
-         option( FALCON_BUILD_${module} "${desc}" ON)
+         option( FALCON_BUILD_${module} "${desc}" ON )
+      else()
+         option( FALCON_BUILD_${module} "${desc}" OFF )
       endif()
+   else()
+      option( FALCON_BUILD_${module} "${desc}" OFF )
    endif()
+
 endmacro()
 
 #########################################################
