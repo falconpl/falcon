@@ -43,7 +43,7 @@ FALCON_FUNC Oracle_init( VMachine *vm )
 {
    Item *paramsI = vm->param(0);
    Item *i_tropts = vm->param(1);
-   if ( paramsI != 0 || ! paramsI->isString() || ( i_tropts != 0 && i_tropts->isString() ) )
+   if ( ! paramsI || ! paramsI->isString() || ( i_tropts && ! i_tropts->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                           .extra( "S,[S]" ) );

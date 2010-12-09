@@ -411,6 +411,9 @@ object Nest
    // dictionary of data managers
    _dms = [=>]
 
+   // Content set later on during the page work
+   _delayedSlices = [=>]
+
    // Rendered content of the page, each being a strtring or a function to be called back.
    _contentSlices = nil
    _contentProvider = nil
@@ -858,6 +861,48 @@ object Nest
       self._contentProvider = nil
    end
 
+   /*# Defers a text or a function.
+      @param id A text ID for a later definition, or a function to be called later on.
+
+      This methods places in the current position of the currently processed page a
+      text that will be determined later on.
+
+      The text to be displayed in this position can be set, either before or after
+      this call, through the @a Nest.dtext method.
+
+      The @b id parameter can be a function; in that case, it will be called
+      during the page render step, and its return value will be placed in the
+      current page position.
+
+      @note If @a Next.dtext is never called to define the value of the required
+      text @b id, then this call is ignored, and nothing is displayed in its place.
+   */
+   function defer( id )
+      // save the rendering up to date
+      self._contentSlices += self._pageStream.closeToString()
+      if id.isCallable()
+         self._contentSlices += id
+      else
+         dl = self._delayedSlices
+         self._contentSlices += {=> if id in dl: return dl[id]; return "" }
+      end
+      // generate a new stream for the rest of the page.
+      self._pageStream = StringStream()
+      stdOut( self._pageStream )
+   end
+
+   /*# Sets a deferred text value.
+      @param id The id of the text.
+      @param text The text that should be rendered on the place where
+                   the @a Nest.defer method is invoked.
+
+      This method specifies what text should be rendered on the place where
+      a placeholder has been left through the @a Nest.defer call.
+   */
+   function dtext( id, text )
+      self._delayedSlices[id] = text
+   end
+
    /*# Compile a class having the same name of the host module.
 
    	This method automatically loads a module and returns a class
@@ -1170,7 +1215,7 @@ object Nest
          if self.frame.isCallable()
             attrs = page.attributes()
             if "nest_frame" in attrs and not attrs["nest_frame"]
-               main()
+              main()
             else
                self._contentProvider = main
                self.frame()
@@ -1327,7 +1372,7 @@ object Nest
          > "<hr/>"
       end
    end
-
+   
 end
 
 // Re-export relevant Nest elements

@@ -81,6 +81,7 @@ protected:
 
     uint32  m_nParams;
     String  m_execString;
+    String  m_name;
     PgSQLHandlerRef* m_pConn;
 
     void getExecString( uint32 nParams, const String& name );
