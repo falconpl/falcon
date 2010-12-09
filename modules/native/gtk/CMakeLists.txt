@@ -5,18 +5,18 @@ project( gtk )
 
 cmake_minimum_required( VERSION 2.6.3 )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 ##
 #   Options
 #
-option( ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
-option( NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
-option( STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
+option( GTK_ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
+option( GTK_NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
+option( GTK_STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
 
-if ( STRICT_PARAMETER_CHECK )
+if ( GTK_STRICT_PARAMETER_CHECK )
     add_definitions( -DSTRICT_PARAMETER_CHECK )
-elseif ( NO_PARAMETER_CHECK )
+elseif ( GTK_NO_PARAMETER_CHECK )
     add_definitions( -DNO_PARAMETER_CHECK )
 endif()
 
@@ -95,7 +95,7 @@ if ( WIN32 )
 
 else() # Linux
 
-    if ( ARM_POKY_LINUX ) # embedded (eReader)
+    if ( GTK_ARM_POKY_LINUX ) # embedded (eReader)
 
         message( STATUS "-- Compiling for ARM-Poky-Linux..." )
 

@@ -7,7 +7,7 @@
  * Author: Steven Oliver
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -22,6 +22,52 @@
 
 namespace Falcon
 {
+/******************************************************************************
+ * Transaction Class
+ *****************************************************************************/
+DBIStatementOracle::DBIStatementOracle( DBIHandleOracle *dbh, Statement* stmt ):
+    DBIStatement( dbh ),
+    o_statement( stmt ),
+    //o_inBind(0), FIXME
+    o_bBound( false )
+    {
+        o_pConn = dbh->getConn();
+        o_pConn->incref();
+        o_pStmt = new ORACLEStmtHandle( stmt );
+    }
+
+
+DBIStatementOracle::~DBIStatementOracle()
+{
+    close();
+}
+
+DBIRecordset* DBIStatementOracle::execute( ItemArray* params )
+{
+   if( o_statement == 0 )
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+
+   /*   
+    * TODO  
+    *
+    */
+
+   return 0;
+
+}
+
+void DBIStatementOracle::close()
+{
+    if ( o_statement != 0 )
+    {
+        o_statement = 0;
+        //delete o_inBind;      FIXME
+        //o_inBind = 0;         FIXME
+        o_pConn->decref();
+        o_pStmt->decref();
+    }
+}
+    
 /******************************************************************************
  * DB Handler Class
  *****************************************************************************/
@@ -73,8 +119,7 @@ void DBIHandleOracle::rollback()
     }
 }
 
-
-ORACLE_STMT* DBIHandleOracle::o_prepare( const String &query )
+Statement* DBIHandleOracle::o_prepare( const String &query )
 {
     if( o_conn == NULL )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );

@@ -5,9 +5,9 @@
  * Oracle driver main module interface
  * -------------------------------------------------------------------
  * Author: Steven Oliver
- * Based on equivalent MySQL drivers by Jeremy Cowgar
+ * 
  * -------------------------------------------------------------------
- * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -22,7 +22,7 @@
 
 namespace Falcon
 {
-    // FIXME What does ORACLE do here?
+    // FIXME Oracle doesn't have an "ORACLE" structure like this...
     class ORACLEHandle : public DBIRefCounter<ORACLE*> {
         public:
             ORACLEHandle( ORACLE* o );
@@ -31,7 +31,7 @@ namespace Falcon
 
         virtual ~ORACLEHandle()
         {
-            // FIXME ??
+            // FIXME 
         }
     };
 
@@ -52,7 +52,7 @@ namespace Falcon
             
             virtual DBIRecordset *query( const String &sql, ItemArray* params );
             virtual DBIStatement* prepare( const String &query );
-            virtual int64 getLastInsertedId( const String& name = "" );
+            //virtual int64 getLastInsertedId( const String& name = "" ); FIXME
             
             virtual void commit();
             virtual void rollback();
@@ -62,6 +62,28 @@ namespace Falcon
             
             ORACLEHandle *getConn() { return o_pConn; }
             ORACLEHandle *getEnv() { return o_env; }
+    };
+
+    class DBIHandleOracle;
+
+    class DBIStatementOracle : public DBIStatement
+    {
+        protected:
+            Statment* o_statement;
+            OracleHandle* o_pConn;
+            //OracleStmtHandle *o_pStmt; FIXME
+            //ODBIInBind* o_inBind;      FIXME
+            bool o_bBound;
+            
+        public:
+            DBIStatementOracle( DBIHandleOracle *dbh, Statement* stmt );
+            virtual ~DBIStatementOracle();
+            
+            virtual DBIRecordset* execute( ItemArray* params );
+            virtual void close();
+            
+            DBIHandleOracle* getOracle() const { return static_cast<DBIHandleOracle*>( o_dbh ); }
+            Statement* o_statement() const { return o_statement; }
     };
 
     class DBIServiceOracle : public DBIService
