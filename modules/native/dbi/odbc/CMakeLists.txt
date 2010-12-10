@@ -68,6 +68,10 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
    odbc.cpp
    odbc_ext.cpp
    odbc_srv.cpp
+   odbc_mod.cpp
+   
+   odbc_ext.h
+   odbc_mod.h
 )
 
 # Link
