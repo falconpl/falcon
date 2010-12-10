@@ -33,6 +33,16 @@
    the Falcon engine.
 */
 
+
+#ifdef _MSC_VER
+   #ifndef _WIN32_WINNT
+      #define _WIN32_WINNT 0x0403 
+   #elif _WIN32_WINNT < 0x0403
+      #undef _WIN32_WINNT
+      #define _WIN32_WINNT 0x0403 
+   #endif
+#endif
+
 #include <curl/curl.h>
 #include <falcon/module.h>
 #include "curl_ext.h"
@@ -40,6 +50,7 @@
 #include "curl_st.h"
 
 #include "version.h"
+
 
 //==================================================
 // Extension of Falcon module
@@ -246,8 +257,10 @@ FALCON_MODULE_DECL
    self->addClassProperty( copt_class, "SSL_VERIFYHOST" ).setInteger(CURLOPT_SSL_VERIFYHOST).setReadOnly(true);
    self->addClassProperty( copt_class, "SSL_SESSIONID_CACHE" ).setInteger(CURLOPT_SSL_SESSIONID_CACHE).setReadOnly(true);
 
+#if CURLOPT_PROTOCOLS
    self->addClassProperty( copt_class, "PROTOCOLS" ).setInteger(CURLOPT_PROTOCOLS).setReadOnly(true);
    self->addClassProperty( copt_class, "REDIR_PROTOCOLS" ).setInteger(CURLOPT_REDIR_PROTOCOLS).setReadOnly(true);
+#endif
    self->addClassProperty( copt_class, "PROXYPORT" ).setInteger(CURLOPT_PROXYPORT).setReadOnly(true);
    self->addClassProperty( copt_class, "PROXYTYPE" ).setInteger(CURLOPT_PROXYTYPE).setReadOnly(true);
 
