@@ -5,18 +5,18 @@ project( gtk )
 
 cmake_minimum_required( VERSION 2.6.3 )
 
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ##
 #   Options
 #
-option( GTK_ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
-option( GTK_NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
-option( GTK_STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
+option( ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
+option( NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
+option( STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
 
-if ( GTK_STRICT_PARAMETER_CHECK )
+if ( STRICT_PARAMETER_CHECK )
     add_definitions( -DSTRICT_PARAMETER_CHECK )
-elseif ( GTK_NO_PARAMETER_CHECK )
+elseif ( NO_PARAMETER_CHECK )
     add_definitions( -DNO_PARAMETER_CHECK )
 endif()
 
@@ -35,7 +35,7 @@ include_directories( ${Falcon_INCLUDE_DIRS} )
 #
 if ( WIN32 )
 
-    set( GTK_DIR c:/gtk ) ## dir of the Gtk bundled stuff
+    set( GTK_DIR "D:/sviluppo/Falcon/3D Party libs/GTK+" ) ## dir of the Gtk bundled stuff
 
     set( GTK2_ATK_INCLUDE_DIR "${GTK_DIR}/include/atk-1.0" )
     set( GTK2_ATK_LIBRARY "${GTK_DIR}/lib/atk-1.0.lib" )
@@ -47,9 +47,7 @@ if ( WIN32 )
     set( GTK2_GDK_INCLUDE_DIR  "${GTK_DIR}/include/gtk-2.0" )
     set( GTK2_GDK_LIBRARY "${GTK_DIR}/lib/gdk-win32-2.0.lib" )
 
-    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
-    # Reminder fix for win64?, thanks to Lucone. Must check that ASAP.
-    #set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0/gdk-pixbuf" )
+    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0" )
     set( GTK2_GDKPIXBUF_LIBRARY "${GTK_DIR}/lib/gdk_pixbuf-2.0.lib" )
 
     set( GTK2_GLIBCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/glib-2.0/include" )
@@ -81,6 +79,7 @@ if ( WIN32 )
         ${GTK2_GOBJECT_INCLUDE_DIR}
         ${GTK2_GTK_INCLUDE_DIR}
         ${GTK2_PANGO_INCLUDE_DIR}
+        "${GTK_DIR}/include/gdk-pixbuf-2.0/gdk-pixbuf"
         )
 
     set( GTK2_LIBRARIES
@@ -97,7 +96,7 @@ if ( WIN32 )
 
 else() # Linux
 
-    if ( GTK_ARM_POKY_LINUX ) # embedded (eReader)
+    if ( ARM_POKY_LINUX ) # embedded (eReader)
 
         message( STATUS "-- Compiling for ARM-Poky-Linux..." )
 
