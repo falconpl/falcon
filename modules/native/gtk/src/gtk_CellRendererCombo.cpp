@@ -6,6 +6,9 @@
 
 #include "gtk_TreeIter.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

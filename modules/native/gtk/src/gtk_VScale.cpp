@@ -4,6 +4,9 @@
 
 #include "gtk_VScale.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

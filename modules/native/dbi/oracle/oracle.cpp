@@ -10,7 +10,7 @@
  * Author: Steven Oliver
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -24,7 +24,7 @@ Falcon::DBIServiceOracle theOracleService;
 
 /*#
    @module oracle Oracle driver module
-   @brief DBI extension supporting Oralce
+   @brief DBI extension supporting Oracle
 */
 
 // the main module
@@ -32,22 +32,19 @@ FALCON_MODULE_DECL
 {
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
-   self->name( "oralce" );
+   self->name( "oracle" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( "dbi" );
+   self->addDepend( "dbi", "dbi", true, false );
 
-   // also, we declare an Oralce class, which derives from DBIHandler which
+   // also, we declare an Oracle class, which derives from DBIHandler which
    // is in the DBI module.
-   Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandle" ); // it's external
-   Falcon::Symbol *mysql_class = self->addClass( "Oracle", Falcon::Ext::Oracle_init );
-   mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
-   mysql_class->setWKS( true );
-
-   // TODO
-   // Do we have extra functions for the dbhandler of Oracle to put here?
+   Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
+   Falcon::Symbol *oracle_class = self->addClass( "Oracle", Falcon::Ext::Oracle_init );
+   oracle_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
+   oracle_class->setWKS( true );
 
    // service publication
    self->publishService( &theOracleService );

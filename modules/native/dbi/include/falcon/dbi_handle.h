@@ -106,30 +106,11 @@ public:
    /** Launches a query (an SQL operation bound to return a recordset).
     *
     * \param sql SQL query to execute
-    * \param affectedRows number of rows affected by the query.
     * \param params An array of items that will be used to expand query variables.
     * \return DBIRecordset if there is an output recordset.
     *     NULL if the query has an error.
     */
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
-
-   /** Launches a SQL operation not bound to return any recordset.
-    *
-    * If the statement actually returns a recordset, it is discarded.
-    *
-    * \param sql SQL statement to execute.
-    * \param affectedRows number of columns affected by the statement.
-    * \param params An array of items that will be used to expand query variables.
-    */
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
-
-   /** Calls a stored procedure.
-    *
-    * \param sql SQL statement to execute.
-    * \param affectedRows number of columns affected by the statement.
-    * \param params An array of items that will be used to expand query variables.
-    */
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params )=0;
+   virtual DBIRecordset *query( const String &sql, ItemArray* params=0 )=0;
 
    /** Prepare/execute step1
     */
@@ -162,6 +143,12 @@ public:
    virtual void sqlExpand( const String& sql, String& tgt, const ItemArray& values );
    virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
+
+   /** returns the count of rows affected by the last query() operation */
+   int64 affectedRows();
+
+protected:
+   int64 m_nLastAffected;
 };
 
 }

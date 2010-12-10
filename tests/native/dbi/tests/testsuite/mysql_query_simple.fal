@@ -53,8 +53,6 @@ try
    if dict['bblob'].typeId() != MemBufType: failure( "Dict - Value of field 3" )
    if dict['number'] != 101.243: failure( "Dict - Value of field 4" )
 
-   rs.close()
-   conn.close()
    success()
    GC.perform(true)
 

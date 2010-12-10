@@ -4,6 +4,9 @@
 
 #include "gtk_RadioToolButton.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -73,7 +76,7 @@ FALCON_FUNC RadioToolButton::init( VMARG )
 
 
 /*#
-    @method new_from_stock
+    @method new_from_stock GtkRadioToolButton
     @brief Creates a new GtkRadioToolButton, adding it to group.
     @param group An existing GtkRadioToolButton, or nil to create a new group of buttons.
     @param stock_id the name of a stock item

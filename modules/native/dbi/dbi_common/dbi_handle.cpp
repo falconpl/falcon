@@ -21,7 +21,8 @@
 namespace Falcon
 {
 
-DBIHandle::DBIHandle()
+DBIHandle::DBIHandle():
+   m_nLastAffected(-1)
 {
 }
 
@@ -53,6 +54,11 @@ void DBIHandle::gcMark( uint32 )
 FalconData* DBIHandle::clone() const
 {
    return 0;
+}
+
+int64 DBIHandle::affectedRows()
+{
+   return m_nLastAffected;
 }
 
 }

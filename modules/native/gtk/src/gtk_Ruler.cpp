@@ -4,6 +4,9 @@
 
 #include "gtk_Ruler.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

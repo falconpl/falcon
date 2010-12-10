@@ -364,7 +364,7 @@ ScriptData *readProperties( const String &name, Stream &script )
                      while ( line.getCharAt( limit ) == ' ' ) limit++;
                      String val = line.subString(limit);
                      if ( prop == "ID" ) {
-                        if ( val.getCharAt( 0 ) != '-' )
+                        if ( val.length() && val.getCharAt( 0 ) != '-' )
                         {
                            data->id( ScriptData::IdCodeToId( val ) );
                         }

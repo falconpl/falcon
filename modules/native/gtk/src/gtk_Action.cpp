@@ -11,6 +11,9 @@
 #include "gtk_ToolItem.hpp"
 #include "gtk_Widget.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -508,7 +511,7 @@ FALCON_FUNC Action::get_always_show_image( VMARG )
 
 
 /*#
-    @method set_always_show_image
+    @method set_always_show_image GtkAction
     @brief Sets whether action's menu item proxies will ignore the "gtk-menu-images" setting and always show their image, if available.
 
     Use this if the menu item would be useless or hard to use without their image.

@@ -22,7 +22,7 @@
 # ORACLE_INCLUDES - where to find oci.h
 # ORACLE_LIBRARIES - the libraries to link against to use Oracle OCI
 
-FALCON_DEFINE_MODULE( MODULE oracle )
+falcon_define_module( FALCON_MODULE oracle )
 
 SET(ORACLE_FOUND "NO")
 SET(ORACLE_HOME $ENV{ORACLE_HOME})
@@ -142,13 +142,13 @@ ELSE (ORACLE_FOUND)
 ENDIF (ORACLE_FOUND)
 
 # Target
-ADD_LIBRARY( ${MODULE} MODULE
+ADD_LIBRARY( ${FALCON_MODULE} MODULE
    oracle.cpp
    oracle_ext.cpp
-   oracle_srv.cpp
+   oracle_mod.cpp
 )
 
 # Link
-TARGET_LINK_LIBRARIES( ${MODULE}  falcon_engine ${ORACLE_LIBRARY})
-FALCON_INSTALL_MODULE2( ${MODULE} dbi )
+TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${ORACLE_LIBRARY})
+falcon_target_module2( ${FALCON_MODULE} dbi )
 

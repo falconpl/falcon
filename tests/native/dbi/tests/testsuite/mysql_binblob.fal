@@ -1,0 +1,45 @@
+/****************************************************************************
+* Falcon test suite -- DBI tests
+*
+*
+* ID: 24a
+* Category: mysql
+* Subcategory:
+* Short: MySQL record insertion with binary data, and checj
+* Description:
+*  Insert one position
+*  -- USES the table created by the first test
+* [/Description]
+*
+****************************************************************************/
+
+import from dbi
+import mysql_conn_str from config
+
+try
+   conn = dbi.connect( config.mysql_conn_str )
+
+   mb = MemBuf(256)
+   for i = 0 to 255: mb[i] = i
+
+   conn.query("
+      insert into TestTable( vint, fixchar, vchar, tblob, bblob, number, ts )
+      values( ?, ?, ?, ?, ?, ?, ? )",
+      100, "fixchar", "varchar", "New data for text blob", mb, 24.45, CurrentTime() )
+
+   conn.commit()
+
+   blob = conn.query( "select bblob from TestTable where vint = 100" ).fetch([])[0];
+
+   if blob.typeId() != MemBufType: failure( "Type -- should be a membuf" )
+   if blob.len() != 256: failure( "Blob length " + blob.len() )
+   for i = 0 to 255
+      if blob[i] != mb[i]: failure( "Different content in blob: " + i )
+   end
+   
+   conn.close()
+   success()
+
+catch dbi.DBIError in error
+   failure( "Received a DBI error: " + error )
+end

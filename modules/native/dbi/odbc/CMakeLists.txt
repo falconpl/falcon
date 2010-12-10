@@ -65,6 +65,8 @@ INCLUDE_DIRECTORIES(../include)
 
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
+   ${dbi_common_files}
+   
    odbc.cpp
    odbc_ext.cpp
    odbc_srv.cpp

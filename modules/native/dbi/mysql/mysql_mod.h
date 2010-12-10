@@ -24,6 +24,31 @@
 namespace Falcon
 {
 
+class MYSQLHandle: public DBIRefCounter<MYSQL*> {
+public:
+   MYSQLHandle( MYSQL* m ):
+      DBIRefCounter<MYSQL*>( m )
+   {}
+
+   virtual ~MYSQLHandle()
+   {
+      mysql_close( handle() );
+   }
+};
+
+
+class MYSQLStmtHandle: public DBIRefCounter<MYSQL_STMT*> {
+public:
+   MYSQLStmtHandle( MYSQL_STMT* m ):
+      DBIRefCounter<MYSQL_STMT*>( m )
+   {}
+
+   virtual ~MYSQLStmtHandle()
+   {
+      mysql_stmt_close( handle() );
+   }
+};
+
 class MyDBIInBind: public DBIInBind
 {
 
@@ -70,6 +95,9 @@ protected:
    MYSQL_FIELD* m_fields;
 
    bool m_bCanSeek;
+
+   MYSQLHandle *m_pConn;
+
 public:
    DBIRecordsetMySQL( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
    virtual ~DBIRecordsetMySQL();
@@ -85,6 +113,7 @@ class DBIRecordsetMySQL_STMT: public DBIRecordsetMySQL
 {
 protected:
    MYSQL_STMT *m_stmt;
+   MYSQLStmtHandle *m_pStmt;
 
    // Binding data
    MYSQL_BIND* m_pMyBind;
@@ -95,8 +124,11 @@ protected:
    int m_nBlobCount;
 
 public:
+   DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQLStmtHandle *pStmt, bool bCanSeek = false );
    DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek = false );
    virtual ~DBIRecordsetMySQL_STMT();
+
+   void init();
 
    virtual bool fetchRow();
    virtual bool getColumnValue( int nCol, Item& value );
@@ -134,10 +166,11 @@ class DBIHandleMySQL : public DBIHandle
 {
 protected:
    MYSQL *m_conn;
+   MYSQLHandle *m_pConn;
    DBISettingParams m_settings;
 
    MYSQL_STMT* my_prepare( const String &query );
-   int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, const ItemArray& params );
+   int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params );
 
 public:
    DBIHandleMySQL();
@@ -148,9 +181,7 @@ public:
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
@@ -161,7 +192,7 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   MYSQL *getConn() { return m_conn; }
+   MYSQLHandle *getConn() { return m_pConn; }
 
    // Throws a DBI error, using the last error code and description.
    void throwError( const char* file, int line, int code );
@@ -172,13 +203,16 @@ class DBIStatementMySQL : public DBIStatement
 {
 protected:
    MYSQL_STMT* m_statement;
+   MYSQLHandle* m_pConn;
+   MYSQLStmtHandle *m_pStmt;
    MyDBIInBind* m_inBind;
+   bool m_bBound;
 
 public:
-   DBIStatementMySQL( DBIHandle *dbh, MYSQL_STMT* stmt );
+   DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt );
    virtual ~DBIStatementMySQL();
 
-   virtual int64 execute( const ItemArray& params );
+   virtual DBIRecordset* execute( ItemArray* params );
    virtual void reset();
    virtual void close();
 
@@ -203,5 +237,5 @@ extern Falcon::DBIServiceMySQL theMySQLService;
 
 #endif /* DBI_MYSQL_H */
 
-/* end of mysql.h */
+/* end of mysql_mod.h */
 

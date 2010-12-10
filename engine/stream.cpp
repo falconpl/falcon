@@ -97,6 +97,9 @@ void Stream::unget( const String &target )
 
 bool Stream::readAhead( uint32 &chr )
 {
+   if( popBuffer( chr ) )
+      return true;
+
    if ( ! get( chr ) )
       return false;
 

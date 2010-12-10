@@ -4,6 +4,9 @@
 
 #include "gtk_SeparatorToolItem.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

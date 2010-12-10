@@ -1346,7 +1346,6 @@ void Compiler::metaCompile( const String &data, int startline )
    // set the same encoding as the source that we're parsing.
    m_serviceVM->stdOut( TranscoderFactory( srcEnc, output, true ) );
 
-
    // set current line in lexer of the meta compiler
    m_metacomp->tempLine( startline );
    try

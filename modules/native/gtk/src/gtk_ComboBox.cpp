@@ -6,6 +6,9 @@
 
 #include "gtk_CellEditable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

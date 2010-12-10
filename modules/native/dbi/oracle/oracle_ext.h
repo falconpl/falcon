@@ -7,7 +7,7 @@
  * Author: Steven Oliver
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
@@ -20,12 +20,11 @@
 namespace Falcon
 {
     class VMachine;
+
     namespace Ext
-{
-
-FALCON_FUNC Oracle_init( VMachine *vm );
-}
-
+    {
+        FALCON_FUNC Oracle_init( VMachine *vm );
+    }
 }
 
 #endif /* ORACLE_EXT_H */

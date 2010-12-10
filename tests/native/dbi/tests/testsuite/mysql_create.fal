@@ -22,7 +22,7 @@ try
 
    // Creating a table with ALL the basic datatypes known by the engine.
    // Interpolated datatypes are not necessary in our tests.
-   conn.perform("
+   conn.query("
       create table TestTable(
          kv           INTEGER PRIMARY KEY AUTO_INCREMENT,
          vint         INTEGER,

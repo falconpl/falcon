@@ -113,29 +113,120 @@ void DBIConnect( VMachine *vm )
    @method execute Statement
    @brief Executes a repeated statement.
    @optparam ... The data to be passed to the repeated statement.
-   @return Number of rows affected by the command.
+   @return An instance of @a Recorset if the query generated a recorset.
    @raise DBIError if the database engine reports an error.
    
    This method executes a statement that has been prepared through
    the @a Handle.prepare method. If the prepared statement
-   could return a recordset, it is discarded (immediately closed
-   server-side before it can reach the script). To receive a recordset
-   use @a Statement.query
+   could return a recordset, it is returned.
    
+   The number of affected rows will be stored also in the @a Statement.affected property.
+
    @see Handle.prepare
 */
 
 void Statement_execute( VMachine *vm )
 {
-   ItemArray params( vm->paramCount() );
-   for( int32 i = 0; i < vm->paramCount(); i++)
+   CoreObject *self = vm->self().asObject();
+   DBIStatement *dbt = static_cast<DBIStatement *>( self->getUserData() );
+   
+   DBIRecordset* res;
+
+   if( vm->paramCount() != 0 )
    {
-      params.append( *vm->param(i) );
+      ItemArray params( vm->paramCount() );
+      for( int32 i = 0; i < vm->paramCount(); i++)
+      {
+         params.append( *vm->param(i) );
+      }
+      res = dbt->execute( &params );
+   }
+   else {
+      res = dbt->execute();
+   }
+
+   if( res != 0 )
+   {
+      Item* rset_item = vm->findWKI( "%Recordset" );
+      fassert( rset_item != 0 );
+      fassert( rset_item->isClass() );
+
+      CoreObject* rset = rset_item->asClass()->createInstance();
+      rset->setUserData( res );
+
+      vm->retval( rset );
+   }
+   else
+   {
+      vm->retnil();
+   }
+}
+
+/*#
+   @method aexec Statement
+   @brief Executes a repeated statement.
+   @optparam params The data to be passed to the repeated statement.
+   @return An instance of @a Recorset if the query generated a recorset.
+   @raise DBIError if the database engine reports an error.
+
+   This method executes a statement that has been prepared through
+   the @a Handle.prepare method. If the prepared statement
+   could return a recordset, it is returned.
+
+   Instead of passing the extra parameters to the underlying
+   query, this method sends the value of a single array paramter.
+
+   The number of affected rows will be stored also in the @a Statement.affected property.
+
+   @see Handle.prepare
+   @see Handle.execute
+*/
+
+void Statement_aexec( VMachine *vm )
+{
+   Item* i_params = vm->param(0);
+   if( i_params == 0 || ! i_params->isArray() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                               .extra( "A" ) );
    }
 
    CoreObject *self = vm->self().asObject();
    DBIStatement *dbt = static_cast<DBIStatement *>( self->getUserData() );
-   vm->retval( dbt->execute( params ) );
+
+   DBIRecordset* res;
+   res = dbt->execute( &i_params->asArray()->items() );
+
+   if( res != 0 )
+   {
+      Item* rset_item = vm->findWKI( "%Recordset" );
+      fassert( rset_item != 0 );
+      fassert( rset_item->isClass() );
+
+      CoreObject* rset = rset_item->asClass()->createInstance();
+      rset->setUserData( res );
+
+      vm->retval( rset );
+   }
+   else
+   {
+      vm->retnil();
+   }
+}
+
+
+/*# @property affected Statement
+   
+   Indicates the amount of rows affected by the last query performed on this
+   statement (through the @a Statement.execute method).
+
+   Will be 0 if none, -1 if unknown, or a positive value if the number of
+   rows can be determined.
+*/
+void Statement_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+    DBIStatement *dbt = static_cast<DBIStatement *>( user_data );
+    property = dbt->affectedRows();
 }
 
 
@@ -375,6 +466,20 @@ void Handle_close( VMachine *vm )
    dbh->close();
 }
 
+/*# @property affected Handle
+   
+   Indicates the amount of rows affected by the last query performed on this
+   connection.
+
+   Will be 0 if none, -1 if unknown, or a positive value if the number of
+   rows can be determined.
+*/
+void Handle_affected(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry )
+{
+   DBIHandle *dbt = static_cast<DBIHandle *>( user_data );
+   property = dbt->affectedRows();
+}
+
 /*#
    @method getLastID Handle
    @brief Get the ID of the last record inserted.
@@ -420,7 +525,21 @@ static void internal_stmt_open( VMachine* vm, DBIStatement* trans )
 }
 
 
-static void internal_query_call( VMachine* vm, int mode )
+/*#
+   @method query Handle
+   @brief Execute a SQL query bound to return a recordset.
+   @param sql The SQL query
+   @optparam ... Parameters for the query
+   @return an instance of @a Recordset, or nil.
+   @raise DBIError if the database engine reports an error.
+
+   On a succesful query, the property @a Handle.affected is 
+   assumes the count of affected rows, or -1 if the driver can't
+   provide this information.
+
+*/
+
+void Handle_query( VMachine *vm )
 {
    Item* i_sql = vm->param(0);
 
@@ -432,35 +551,27 @@ static void internal_query_call( VMachine* vm, int mode )
 
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
-
-   ItemArray params( vm->paramCount() - 1 );
-   for( int32 i = 1; i < vm->paramCount(); i++)
-   {
-      params.append( *vm->param(i) );
-   }
+   
 
    DBIRecordset* res = 0;
-
-   int64 ar = -1;
-   switch (mode)
+   int32 pCount = vm->paramCount();
+   if( pCount > 1 )
    {
-   case 0:  // query
-      res = dbt->query( *i_sql->asString(), ar, params );
-      break;
-
-   case 1: // perform
-      dbt->perform( *i_sql->asString(), ar, params );
-      vm->retval( ar );
-      break;
-
-   case 2:  // call;
-      res = dbt->call( *i_sql->asString(), ar, params );
-      break;
+      ItemArray params( pCount - 1 );      
+      for( int32 i = 1; i < vm->paramCount(); i++)
+      {
+         params.append( *vm->param(i) );
+      }
+      
+      // Query may throw.
+      res = dbt->query( *i_sql->asString(), &params );
+   }
+   else 
+   {
+      res = dbt->query( *i_sql->asString() );
    }
 
-   self->setProperty("affected", ar );
-
-   if( res !=0 )
+   if( res != 0 )
    {
       Item* rset_item = vm->findWKI( "%Recordset" );
       fassert( rset_item != 0 );
@@ -473,37 +584,92 @@ static void internal_query_call( VMachine* vm, int mode )
    }
 }
 
+
 /*#
-   @method query Handle
+   @method aquery Handle
    @brief Execute a SQL query bound to return a recordset.
    @param sql The SQL query
-   @optparam ... Parameters for the query
-   @return an instance of @a Recordset
+   @param params Values to be passed to the query in an array.
+   @return an instance of @a Recordset, or nil.
    @raise DBIError if the database engine reports an error.
+
+   On a succesful query, the property @a Handle.affected is
+   assumes the count of affected rows, or -1 if the driver can't
+   provide this information.
 
 */
 
-void Handle_query( VMachine *vm )
+void Handle_aquery( VMachine *vm )
 {
-   internal_query_call( vm, 0 );
+   Item* i_sql = vm->param(0);
+   Item* i_params = vm->param(1);
+   if ( i_sql == 0 || ! i_sql->isString()
+      || i_params == 0 || ! i_params->isArray() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S,A" ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+
+   DBIRecordset* res = 0;
+   res = dbt->query( *i_sql->asString(), &i_params->asArray()->items() );
+
+   if( res != 0 )
+   {
+      Item* rset_item = vm->findWKI( "%Recordset" );
+      fassert( rset_item != 0 );
+      fassert( rset_item->isClass() );
+
+      CoreObject* rset = rset_item->asClass()->createInstance();
+      rset->setUserData( res );
+      vm->retval( rset );
+   }
 }
 
 /*#
-   @method perform Handle
-   @brief Execute a SQL statement ignoring eventual recordsets.
+   @method expand Handle
+   @brief Expands a sql query with provided parameters.
    @param sql The SQL query
    @optparam ... Parameters for the query
-   @return Number of affected rows, or -1 if the data is not available.
-   @raise DBIError if the database engine reports an error.
+   @return A string containing a complete SQL statement.
+   @raise DBIError in case the expansion fails.
 
-   Call this instead of query() when willing to perform SQL statements
-   that are not supposed to return a recordset, or whose recordset must
-   be ignored even if returned.
+   Some underlying database engine may not be consistently working
+   with the Falcon types used as parameters. As such, this utility
+   can be used to create complete query strings that doesn't require
+   driver-side parameter binding and expansion.
+
 */
 
-void Handle_perform( VMachine *vm )
+void Handle_expand( VMachine *vm )
 {
-   internal_query_call( vm, 1 );
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S, ..." ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+
+
+   DBIRecordset* res = 0;
+   int32 pCount = vm->paramCount();
+   CoreString* target = new CoreString;
+   
+   ItemArray params( pCount - 1 );      
+   for( int32 i = 1; i < vm->paramCount(); i++)
+   {
+      params.append( *vm->param(i) );
+   }
+      
+   // May throw
+   dbt->sqlExpand( *i_sql->asString(), *target, params );
+   vm->retval( target );
 }
 
 /*#
@@ -537,25 +703,7 @@ void Handle_prepare( VMachine *vm )
 }
 
 
-/*#
-   @method call Handle
-   @brief Calls a SQL stored procedure.
-   @param sql The SQL query
-   @optparam ... Parameters for the stored procedure.
-   @raise DBIError if the database engine reports an error.
 
-   Some engines have a special syntax for calling stored procedures which
-   may return a recordset.
-
-   This method asks the underlying driver to call the required stored procedure.
-   If the SP generates a recordset, a @a Recordset object is returned, otherwise
-   the method returns nil.
-*/
-
-void Handle_call( VMachine *vm )
-{
-   internal_query_call( vm, 2 );
-}
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
@@ -879,7 +1027,6 @@ static bool Recordset_do_next( VMachine* vm )
    The @b item may be:
    - An Array.
    - A Dictionary.
-   - A Table.
 
    The @b cb method may return an oob(0) value to interrupt the processing of the
    recordset.

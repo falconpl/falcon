@@ -5,18 +5,18 @@ project( gtk )
 
 cmake_minimum_required( VERSION 2.6.3 )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 ##
 #   Options
 #
-option( ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
-option( NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
-option( STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
+option( GTK_ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
+option( GTK_NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
+option( GTK_STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
 
-if ( STRICT_PARAMETER_CHECK )
+if ( GTK_STRICT_PARAMETER_CHECK )
     add_definitions( -DSTRICT_PARAMETER_CHECK )
-elseif ( NO_PARAMETER_CHECK )
+elseif ( GTK_NO_PARAMETER_CHECK )
     add_definitions( -DNO_PARAMETER_CHECK )
 endif()
 
@@ -48,6 +48,8 @@ if ( WIN32 )
     set( GTK2_GDK_LIBRARY "${GTK_DIR}/lib/gdk-win32-2.0.lib" )
 
     set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
+    # Reminder fix for win64?, thanks to Lucone. Must check that ASAP.
+    #set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0/gdk-pixbuf" )
     set( GTK2_GDKPIXBUF_LIBRARY "${GTK_DIR}/lib/gdk_pixbuf-2.0.lib" )
 
     set( GTK2_GLIBCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/glib-2.0/include" )
@@ -95,7 +97,7 @@ if ( WIN32 )
 
 else() # Linux
 
-    if ( ARM_POKY_LINUX ) # embedded (eReader)
+    if ( GTK_ARM_POKY_LINUX ) # embedded (eReader)
 
         message( STATUS "-- Compiling for ARM-Poky-Linux..." )
 

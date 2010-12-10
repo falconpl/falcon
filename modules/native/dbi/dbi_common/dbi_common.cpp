@@ -51,7 +51,6 @@ bool dbi_itemToSqlValue( const Item &item, String &value )
             //vm->itemToString( value, ??? )
             if ( o->derivedFrom( "TimeStamp" ) ) {
                TimeStamp *ts = (TimeStamp *) o->getUserData();
-               ts->toString( value );
                value.prepend( "'" );
                value.append( "'" );
                return true;

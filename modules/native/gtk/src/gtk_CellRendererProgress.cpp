@@ -4,6 +4,9 @@
 
 #include "gtk_CellRendererProgress.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

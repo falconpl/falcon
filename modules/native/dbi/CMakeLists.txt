@@ -11,12 +11,33 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # The required package
 find_package(Falcon REQUIRED)
 
-# Options
-OPTION(FALCON_DBI_BUILD_SQLITE "Include SQLite3 DBI Module" ON)
+### Options ###
 
-OPTION(FALCON_DBI_BUILD_MYSQL  "Include MySQL DBI Module" OFF)
-OPTION(FALCON_DBI_BUILD_PGSQL  "Include PostgreSQL DBI Module" OFF)
+# SQLite3
+OPTION( FALCON_DBI_BUILD_SQLITE "Include SQLite3 DBI Module" ON )
+
+# MySQL
+FIND_PATH( MYSQL_INCLUDE_DIR mysql.h HINTS /usr/include/mysql )
+IF ( MYSQL_INCLUDE_DIR )
+    set( _mysql ON )
+ELSE()
+    set( _mysql OFF )
+ENDIF()
+OPTION( FALCON_DBI_BUILD_MYSQL "Include MySQL DBI Module" ${_mysql} )
+
+# PostgreSQL
+FIND_PATH( PGSQL_INCLUDE_DIR libpq-fe.h HINTS /usr/include/postgresql /usr/include/pgsql )
+IF ( PGSQL_INCLUDE_DIR )
+    set( _pgsql ON )
+ELSE()
+    set( _pgsql OFF )
+ENDIF()
+OPTION( FALCON_DBI_BUILD_PGSQL "Include PostgreSQL DBI Module" ${_pgsql} )
+
+# Oracle
 OPTION(FALCON_DBI_BUILD_ORACLE "Include Oracle DBI Module" OFF)
+
+# Firebird
 OPTION(FALCON_DBI_BUILD_FIREBIRD "Include Firebird DBI Module" OFF)
 
 #For now, activate ODBC on windows
@@ -25,8 +46,6 @@ IF(MSVC)
 ELSE(MSVC)
    OPTION(FALCON_DBI_BUILD_ODBC "Include ODBC DBI Module" OFF)
 ENDIF(MSVC)
-
-option( FALCON_DBI_BUILD_DOCS "Create documentation" OFF )
 
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
@@ -80,7 +99,3 @@ ENDIF()
 IF(FALCON_DBI_BUILD_FIREBIRD)
   ADD_SUBDIRECTORY(fbsql)
 ENDIF()
-
-if( FALCON_DBI_BUILD_DOCS )
-   add_subdirectory( docs )
-endif()

@@ -6,6 +6,9 @@
 
 #include "gtk_Widget.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -204,7 +207,7 @@ FALCON_FUNC Dialog::add_button( VMARG )
 
 
 /*#
-    @method add_action_widget
+    @method add_action_widget GtkDialog
     @brief Adds an activatable widget to the action area of a GtkDialog, connecting a signal handler that will emit the "response" signal on the dialog when the widget is activated.
     @param child an activatable widget
     @param response_id response ID for child
@@ -231,7 +234,7 @@ FALCON_FUNC Dialog::add_action_widget( VMARG )
 
 
 /*#
-    @method get_has_separator
+    @method get_has_separator GtkDialog
     @brief Accessor for whether the dialog has a separator.
     @return true if the dialog has a separator.
  */
@@ -245,7 +248,7 @@ FALCON_FUNC Dialog::get_has_separator( VMARG )
 
 
 /*#
-    @method set_default_response
+    @method set_default_response GtkDialog
     @brief Sets the last widget in the dialog's action area with the given response_id as the default widget for the dialog.
     @param response_id a response ID
 
@@ -264,7 +267,7 @@ FALCON_FUNC Dialog::set_default_response( VMARG )
 }
 
 /*#
-    @method set_has_separator
+    @method set_has_separator GtkDialog
     @brief Sets whether the dialog has a separator above the buttons. TRUE by default.
     @param setting true to have a separator
  */
@@ -282,7 +285,7 @@ FALCON_FUNC Dialog::set_has_separator( VMARG )
 
 
 /*#
-    @method set_response_sensitive
+    @method set_response_sensitive GtkDialog
     @brief Calls gtk_widget_set_sensitive (widget, setting) for each widget in the dialog's action area with the given response_id.
     @param response_id a response ID
     @param setting true for sensitive
@@ -307,7 +310,7 @@ FALCON_FUNC Dialog::set_response_sensitive( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 8, 0 )
 /*#
-    @method get_response_for_widget
+    @method get_response_for_widget GtkDialog
     @brief Gets the response id of a widget in the action area of a dialog.
     @param widget a widget in the action area of dialog
     @return the response id of widget, or GTK_RESPONSE_NONE if widget doesn't have a response id set.
@@ -330,7 +333,7 @@ FALCON_FUNC Dialog::get_response_for_widget( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 20, 0 )
 /*#
-    @method get_widget_for_response
+    @method get_widget_for_response GtkDialog
     @brief Gets the widget button that uses the given response ID in the action area of a dialog.
     @param response_id the response ID used by the dialog widget
     @return the widget button that uses the given response_id, or nil.
@@ -356,7 +359,7 @@ FALCON_FUNC Dialog::get_widget_for_response( VMARG )
 
 #if GTK_CHECK_VERSION( 2, 14, 0 )
 /*#
-    @method get_action_area
+    @method get_action_area GtkDialog
     @brief Returns the action area of dialog.
     @return the action area.
  */
@@ -371,7 +374,7 @@ FALCON_FUNC Dialog::get_action_area( VMARG )
 
 
 /*#
-    @method get_content_area
+    @method get_content_area GtkDialog
     @brief Returns the content area of dialog.
     @return the content area.
  */

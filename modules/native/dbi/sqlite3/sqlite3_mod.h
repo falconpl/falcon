@@ -26,6 +26,35 @@ namespace Falcon
 
 class DBIHandleSQLite3;
 
+
+class SQLite3StatementHandler: public DBIRefCounter<sqlite3_stmt*>
+{
+public:
+   SQLite3StatementHandler( sqlite3_stmt* p ):
+      DBIRefCounter<sqlite3_stmt*>(p)
+      {}
+
+   virtual ~SQLite3StatementHandler() {
+      sqlite3_finalize( handle() );
+   }
+};
+
+
+class SQLite3Handler: public DBIRefCounter<sqlite3*>
+{
+public:
+   SQLite3Handler( sqlite3* p ):
+      DBIRefCounter<sqlite3*>(p)
+      {}
+
+
+   virtual ~SQLite3Handler() {
+      sqlite3_close( handle() );
+   }
+};
+
+
+
 class Sqlite3InBind: public DBIInBind
 {
 
@@ -46,12 +75,15 @@ class DBIRecordsetSQLite3 : public DBIRecordset
 protected:
    int m_row;
    int m_columnCount;
-   sqlite3_stmt *m_stmt;
-   Sqlite3InBind m_bind;
+   SQLite3StatementHandler* m_pStmt;
+   SQLite3Handler* m_pDbh;
+   // caching for simpler access
+   sqlite3_stmt* m_stmt;
    bool m_bAsString;
 
 public:
-   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt, const ItemArray& inBind );
+   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, SQLite3StatementHandler* pStmt );
+   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt );
    virtual ~DBIRecordsetSQLite3();
 
    virtual int64 getRowIndex();
@@ -67,31 +99,35 @@ public:
 
 class DBIStatementSQLite3: public DBIStatement
 {
-protected:
-   sqlite3_stmt* m_statement;
-   Sqlite3InBind m_inBind;
-
 public:
+   DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt );
    DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
    virtual ~DBIStatementSQLite3();
 
-   virtual int64 execute( const ItemArray& params );
+   virtual DBIRecordset* execute( ItemArray* params );
    virtual void reset();
    virtual void close();
 
    sqlite3_stmt* sqlite3_statement() const { return m_statement; }
+
+protected:
+   sqlite3_stmt* m_statement;
+   SQLite3StatementHandler* m_pStmt;
+   Sqlite3InBind m_inBind;
+   SQLite3Handler* m_pDbh;
+   bool m_bFirst;
 };
 
 
 class DBIHandleSQLite3 : public DBIHandle
 {
 protected:
-   sqlite3 *m_conn;
+   sqlite3* m_conn;
+   SQLite3Handler* m_connRef;
    DBISettingParams m_settings;
    bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
-   void int_execute( sqlite3_stmt* pStmt, const ItemArray& params );
 
 public:
    DBIHandleSQLite3();
@@ -102,9 +138,7 @@ public:
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual void perform( const String &sql, int64 &affectedRows, const ItemArray& params );
-   virtual DBIRecordset* call( const String &sql, int64 &affectedRows, const ItemArray& params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params=0 );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 
@@ -117,7 +151,7 @@ public:
 
    static void throwError( int falconError, int sql3Error, char* edesc=0 );
    static String errorDesc( int error );
-   sqlite3 *getConn() { return m_conn; }
+   SQLite3Handler* getConn() { return m_connRef; }
 };
 
 class DBIServiceSQLite3 : public DBIService

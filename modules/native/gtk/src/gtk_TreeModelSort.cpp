@@ -10,6 +10,9 @@
 #include "gtk_TreePath.hpp"
 #include "gtk_TreeSortable.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

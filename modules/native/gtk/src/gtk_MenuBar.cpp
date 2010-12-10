@@ -4,6 +4,9 @@
 
 #include "gtk_MenuBar.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
@@ -76,7 +79,7 @@ FALCON_FUNC MenuBar::insert( VMARG );
 
 
 /*#
-    @method
+    @method set_pack_direction GtkMenuBar
     @brief Sets how items should be packed inside a menubar.
     @param pack_dir a new GtkPackDirection
  */
@@ -95,7 +98,7 @@ FALCON_FUNC MenuBar::set_pack_direction( VMARG )
 
 
 /*#
-    @method get_pack_direction
+    @method get_pack_direction GtkMenuBar
     @brief Retrieves the current pack direction of the menubar.
     @return the pack direction
  */
@@ -109,7 +112,7 @@ FALCON_FUNC MenuBar::get_pack_direction( VMARG )
 
 
 /*#
-    @method set_child_pack_direction
+    @method set_child_pack_direction GtkMenuBar
     @brief Sets how widgets should be packed inside the children of a menubar.
     @param child_pack_dir a new GtkPackDirection
  */
@@ -128,7 +131,7 @@ FALCON_FUNC MenuBar::set_child_pack_direction( VMARG )
 
 
 /*#
-    @method get_child_pack_direction
+    @method get_child_pack_direction GtkMenuBar
     @brief Retrieves the current child pack direction of the menubar.
     @return the child pack direction
  */

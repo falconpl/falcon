@@ -19,7 +19,7 @@ import SiteHelper from .sitehelper as SiteHelper
 */
 class BaseSiteHelper from SiteHelper
    function code(v, lang)
-      return @"<pre>\n"+v+"</pre>"
+      return "<pre>\n"+v.replace("&","&amp;").replace( "<","&lt;").replace(">", "&gt;" )+"</pre>"
    end
 
    function pageLink( v )

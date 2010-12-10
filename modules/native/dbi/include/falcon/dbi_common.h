@@ -25,6 +25,7 @@
 #include <falcon/dbi_params.h>
 #include <falcon/dbi_recordset.h>
 #include <falcon/dbi_stmt.h>
+#include <falcon/dbi_refcount.h>
 
 namespace Falcon {
 

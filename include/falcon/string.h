@@ -1145,8 +1145,12 @@ public:
       read, and the function return false.
 
       \param utf8 the utf8 string to be loaded
+      \param len Expected length (-1 to scan for '\0' in the input string).
       \return true on success, false if the sequence is invalid.
+
    */
+   bool fromUTF8( const char *utf8, int32 len );
+
    bool fromUTF8( const char *utf8 );
 
    /** Access to a single character.

@@ -19,7 +19,8 @@ namespace Falcon {
 
 
 DBIStatement::DBIStatement( DBIHandle *dbh ):
-      m_dbh( dbh )
+      m_dbh( dbh ),
+      m_nLastAffected(-1)
 {
 }
 
@@ -38,7 +39,6 @@ FalconData *DBIStatement::clone() const
 void DBIStatement::gcMark( uint32 v )
 {
 }
-
 
 }
 

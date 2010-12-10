@@ -99,10 +99,12 @@ DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandlePgSQL* dbh, PGresult* res )
     :
     DBIRecordset( dbh ),
     m_row( -1 ),
-    m_res( res )
+    m_res( res ),
+    m_pConn( dbh->getConnRef() )
 {
     m_rowCount = PQntuples( res );
     m_columnCount = PQnfields( res );
+    m_pConn->incref();
 }
 
 
@@ -281,6 +283,7 @@ void DBIRecordsetPgSQL::close()
     if ( m_res != NULL )
     {
         PQclear( m_res );
+        m_pConn->decref();
         m_res = NULL;
     }
 }
@@ -289,19 +292,31 @@ void DBIRecordsetPgSQL::close()
     DBIStatementPgSQL class
  */
 
-DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query, const String& name )
+DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh )
     :
-    DBIStatement( dbh )
+    DBIStatement( dbh ),
+    m_pConn( dbh->getConnRef() )
 {
+    m_pConn->incref();
+}
+
+void DBIStatementPgSQL::init( const String& query, const String& name )
+{
+    fassert( name.length() );
+    m_name = name;
+
     String temp;
     m_nParams = dbi_pgsqlQuestionMarksToDollars( query, temp );
+
     AutoCString zQuery( temp );
     AutoCString zName( name );
-    PGresult* res = PQprepare( dbh->getConn(), zName.c_str(), zQuery.c_str(), m_nParams, NULL );
+    PGresult* res = PQprepare( m_pConn->handle(), zName.c_str(), zQuery.c_str(), m_nParams, NULL );
 
     if ( res == NULL
         || PQresultStatus( res ) != PGRES_COMMAND_OK )
+    {
         DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
+    }
 
     PQclear( res );
 
@@ -311,6 +326,7 @@ DBIStatementPgSQL::DBIStatementPgSQL( DBIHandlePgSQL* dbh, const String& query, 
 
 DBIStatementPgSQL::~DBIStatementPgSQL()
 {
+    close();
 }
 
 
@@ -331,11 +347,12 @@ void DBIStatementPgSQL::getExecString( uint32 nParams, const String& name )
 }
 
 
-int64 DBIStatementPgSQL::execute( const ItemArray& params )
+DBIRecordset* DBIStatementPgSQL::execute( ItemArray* params )
 {
     String output;
-    if ( params.length() != m_nParams
-        || !dbi_sqlExpand( m_execString, output, params ) )
+    if ( (params == 0 && m_nParams != 0) ||
+          (params != 0 && (params->length() != m_nParams
+        || !dbi_sqlExpand( m_execString, output, *params ) ) ) )
     {
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ ) );
     }
@@ -347,10 +364,19 @@ int64 DBIStatementPgSQL::execute( const ItemArray& params )
         DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
 
     ExecStatusType st = PQresultStatus( res );
-    if ( st != PGRES_COMMAND_OK
-        && st != PGRES_TUPLES_OK )
-        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
 
+    // have we a resultset?
+    if ( st == PGRES_TUPLES_OK  )
+    {
+       return new DBIRecordsetPgSQL( static_cast<DBIHandlePgSQL*>(m_dbh), res );
+    }
+    else
+    if ( st != PGRES_COMMAND_OK )
+    {
+        DBIHandlePgSQL::throwError( __FILE__, __LINE__, res );
+    }
+
+    // no result
     PQclear( res );
     return 0;
 }
@@ -363,6 +389,19 @@ void DBIStatementPgSQL::reset()
 
 void DBIStatementPgSQL::close()
 {
+    // deallocate the stored procedure
+    String query = "DEALLOCATE ";
+    query += m_name;
+    AutoCString zQuery( query );
+    PGresult* res = PQexec( ((DBIHandlePgSQL*)m_dbh)->getConn(), zQuery.c_str() );
+    if ( res != 0 )
+        PQclear( res );
+
+    if( m_pConn != 0 )
+    {
+        m_pConn->decref();
+        m_pConn = 0;
+    }
 }
 
 
@@ -374,7 +413,8 @@ void DBIStatementPgSQL::close()
 DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
     :
     m_conn( conn ),
-    m_bInTrans( false )
+    m_bInTrans( false ),
+    m_pConn( new PgSQLHandlerRef(conn) )
 {}
 
 
@@ -390,15 +430,14 @@ void DBIHandlePgSQL::close()
     {
         if ( m_bInTrans )
         {
-            // force rollback, skipping errors...
-            PGresult* res = PQexec( m_conn, "ROLLBACK" );
+            PGresult* res = PQexec( m_conn, "COMMIT" );
+            m_bInTrans = false;
             if ( res != 0 )
                 PQclear( res );
         }
-        PQfinish( m_conn );
+        m_pConn->decref();
         m_conn = 0;
     }
-    m_bInTrans = false;
 }
 
 
@@ -528,81 +567,43 @@ PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows 
     else
         affectedRows = -1;
 
-    if ( st == PGRES_TUPLES_OK )
-        return res;
-    else
-    {
-        PQclear( res );
-        return NULL;
-    }
+    return res;
 }
 
 
-DBIRecordset* DBIHandlePgSQL::query( const String &sql, int64 &affectedRows, const ItemArray& params )
+DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
 {
     if ( m_conn == 0 )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-    String output;
-    if ( params.length() != 0 )
+    PGresult* res = 0;
+    if ( params != 0 && params->length() != 0 )
     {
-        if ( !dbi_sqlExpand( sql, output, params ) )
+        String output;
+        if ( !dbi_sqlExpand( sql, output, *params ) )
         {
             throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
         }
+        res = internal_exec( output, m_nLastAffected );
     }
     else
-        output = sql;
-
-    PGresult* res = internal_exec( output, affectedRows );
-    if ( res == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
-
-    return new DBIRecordsetPgSQL( this, res );
-}
-
-
-void DBIHandlePgSQL::perform( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-    if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-    String output;
-    if ( params.length() != 0 )
     {
-        if ( !dbi_sqlExpand( sql, output, params ) )
-        {
-            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
-        }
+        res = internal_exec( sql, m_nLastAffected );
     }
-    else
-        output = sql;
+    fassert( res != 0 );
 
-    PGresult* res = internal_exec( output, affectedRows );
-    if ( res )
-        PQclear( res );
-}
+    ExecStatusType st = PQresultStatus( res );
 
-
-DBIRecordset* DBIHandlePgSQL::call( const String &sql, int64 &affectedRows, const ItemArray& params )
-{
-    if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-
-    String output;
-    if ( params.length() != 0 )
+    // have we a resultset?
+    if ( st == PGRES_TUPLES_OK  )
     {
-        if ( !dbi_sqlExpand( sql, output, params ) )
-        {
-            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
-        }
-        output.prepend( "EXECUTE " );
+       return new DBIRecordsetPgSQL( this, res );
     }
-    else
-        output = "EXECUTE " + sql;
 
-    PGresult* res = internal_exec( output, affectedRows );
-    return res != 0 ? new DBIRecordsetPgSQL( this, res ) : NULL;
+    // no result
+    fassert( st == PGRES_COMMAND_OK );
+    PQclear( res );
+    return 0;
 }
 
 
@@ -611,7 +612,18 @@ DBIStatement* DBIHandlePgSQL::prepare( const String &query )
     if ( m_conn == 0 )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-    return new DBIStatementPgSQL( this, query );
+    DBIStatementPgSQL* stmt = new DBIStatementPgSQL( this );
+
+    // the statement may throw
+    try {
+       stmt->init( query );
+       return stmt;
+    }
+    catch( ... )
+    {
+       delete stmt;
+       throw;
+    }
 }
 
 
@@ -620,7 +632,18 @@ DBIStatement* DBIHandlePgSQL::prepareNamed( const String &name, const String& qu
     if ( m_conn == 0 )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
-    return new DBIStatementPgSQL( this, query, name );
+    DBIStatementPgSQL* stmt = new DBIStatementPgSQL( this );
+
+    // the statement may throw
+    try {
+       stmt->init( query, name );
+       return stmt;
+    }
+    catch( ... )
+    {
+       delete stmt;
+       throw;
+    }
 }
 
 

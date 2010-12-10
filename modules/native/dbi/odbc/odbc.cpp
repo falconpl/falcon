@@ -21,8 +21,8 @@
 #include "odbc_ext.h"
 
 /*#
-   @module odbc ODBC driver module
-   @brief DBI extension supporting ODBC connections
+   @module odbc ODBC driver module.
+   @brief DBI extension supporting ODBC connections.
 */
 
 // Instantiate the driver service
@@ -40,17 +40,14 @@ FALCON_MODULE_DECL
    // first of all, we need to declare our dependency from the DBI module.
    self->addDepend( "dbi", "dbi", true, false );
 
-   // also, we declare a MySQL class, which derives from DBIHandler which
+   // also, we declare a ODBC class, which derives from DBIHandler which
    // is in the DBI module.
    Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
+   dbh_class->imported( true );
    Falcon::Symbol *odbc_class = self->addClass( "ODBC", Falcon::Ext::ODBC_init )
       ->addParam("connect")->addParam("options");
-   odbc_class->exported(true);
    odbc_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    odbc_class->setWKS( true );
-
-   // we don't have extra functions for the dbhandler of mysql. If whe had,
-   // this would be the right place to store them.
 
    // service publication
    self->publishService( &theODBCService );

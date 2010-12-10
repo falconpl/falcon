@@ -17,11 +17,11 @@
 import from dbi
 
 try
-   conn = dbi.connect( "sqlite3:db=testsuite.db" )
+   conn = dbi.connect( "sqlite3:db=testsuite.db;create=always" )
 
    // Creating a table with ALL the basic datatypes known by the engine.
    // Interpolated datatypes are not necessary in our tests.
-   conn.perform("
+   conn.query("
       create table TestTable(
          key      INTEGER PRIMARY KEY,
          tblob        TEXT,
@@ -30,7 +30,6 @@ try
       ")
          
    conn.commit()
-   conn.close()
    success()
 catch dbi.DBIError in error
    failure( "Received a DBI error: " + error )

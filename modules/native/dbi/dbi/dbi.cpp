@@ -101,7 +101,7 @@
 
    @section dbi_methods DBI common methods and usage patterns
 
-   As a database layer abstraction, DBI tries to perform perform operations differently handled under
+   As a database layer abstraction, DBI tries to perform operations differently handled under
    different engines in a way that can be considered valid across the widest range of databases possible.
 
    DBI distinguishes between SQL queries (operations meant to return recordsets, as, for example, "select"), 
@@ -110,23 +110,7 @@
    queries as prepared statements, this is internally managed by the DBI engine. 
 
    To perform queries, the user should call the @a Handle.query method, that will return a @a Recordset instance
-   (even if empty), or throw a @a DBIError if the SQL statement doesn't bear a recordset.
-   
-   To launch statements that are not meant to return recorset, or to eventually ignore any possibly returned
-   recordset, the @a Handle.perform statement is provided.
-
-   Finally, the @a Handle.call will invoke stored procedures, eventually adding non-standard grammar tokens
-   that may be required by certain engines. For example, the following code:
-
-   @code
-   import from dbi
-   dbh = dbi.connect( "..." )
-   dbh.call( "my_stored_procedure( 'a value' )" )
-   @endcode
-
-   will invoke the required stored procedure regardless of other requirements that the engine may have; some
-   engine may require the stored procedure to be explicitly invoked in a query or through an SQL "call"
-   command, but that detail will be adressed by the DBI driver.
+   (even if empty), nil if the query didn't return any recordset.
 
    If the stored procedure can produce resultset even when not being invoked from an explicit "select"
    statement (that may be invoked by a falcon), @a Handle.call may return a @a Recordset instance. It will
@@ -138,7 +122,7 @@
 
    @subsection dbi_pos_params Positional parameters
 
-   All the four SQL command methods (query, perform, call and prepare) accept positional parameters as question
+   All the four SQL command methods (query and prepare) accept positional parameters as question
    mark placeholders; the SQL parameters can be then specificed past the first parameter (except in the case of
    the @a Handle.prepare, where the parameters are to be specified in through the returned @a Statement class). 
    If the underlying engine supports positional parameters, then DBI uses the database driver specific functions
@@ -318,8 +302,11 @@ FALCON_MODULE_DECL
    Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
    stmt_class->setWKS( true );
    self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
+   self->addClassMethod( stmt_class, "aexec", &Falcon::Ext::Statement_aexec ).asSymbol()->
+         addParam( "params" );
    self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
    self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
+   self->addClassProperty( stmt_class, "affected" ).setReflectFunc( &Falcon::Ext::Statement_affected );
 
    /*#
     @class Handle
@@ -339,10 +326,8 @@ FALCON_MODULE_DECL
       ->addParam("options");
    self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
          addParam("sql");
-   self->addClassMethod( handler_class, "call", &Falcon::Ext::Handle_call ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( handler_class, "perform", &Falcon::Ext::Handle_perform ).asSymbol()->
-         addParam("sql");
+   self->addClassMethod( handler_class, "aquery", &Falcon::Ext::Handle_aquery ).asSymbol()->
+         addParam("sql")->addParam("params");
    self->addClassMethod( handler_class, "prepare", &Falcon::Ext::Handle_prepare ).asSymbol()->
          addParam("sql");
    self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );
@@ -351,11 +336,13 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "begin", &Falcon::Ext::Handle_begin );
    self->addClassMethod( handler_class, "commit", &Falcon::Ext::Handle_commit );
    self->addClassMethod( handler_class, "rollback", &Falcon::Ext::Handle_rollback );
-
+   self->addClassMethod( handler_class, "expand", &Falcon::Ext::Handle_expand ).asSymbol()
+         ->addParam("sql");
    self->addClassMethod( handler_class, "lselect", &Falcon::Ext::Handle_lselect ).asSymbol()
          ->addParam("sql")->addParam("begin")->addParam("count");
 
-   self->addClassProperty( handler_class, "affected" );
+   self->addClassProperty( handler_class, "affected" ).setReflectFunc( &Falcon::Ext::Handle_affected );
+
    /*#
       @class Recordset
       @brief Data retuned by SQL queries.
@@ -406,7 +393,33 @@ FALCON_MODULE_DECL
 
     Inherited class from Error to distinguish from a standard Falcon error. In many
     cases, DBIError.extra will contain the SQL query that caused the problem.
-    */
+
+    Error code is one of the following:
+    - DBIError.COLUMN_RANGE
+    - DBIError.INVALID_DRIVER
+    - DBIError.NOMEM
+    - DBIError.CONNPARAMS
+    - DBIError.CONNECT
+    - DBIError.QUERY
+    - DBIError.QUERY_EMPTY
+    - DBIError.OPTPARAMS
+    - DBIError.NO_SUBTRANS
+    - DBIError.NO_MULTITRANS
+    - DBIError.UNPREP_EXEC
+    - DBIError.BIND_SIZE
+    - DBIError.BIND_MIX
+    - DBIError.EXEC
+    - DBIError.FETCH
+    - DBIError.UNHANDLED_TYPE
+    - DBIError.RESET
+    - DBIError.BIND_INTERNAL
+    - DBIError.TRANSACTION
+    - DBIError.CLOSED_STMT
+    - DBIError.CLOSED_RSET
+    - DBIError.CLOSED_DB
+    - DBIError.DB_NOTFOUND
+    - DBIError.CONNECT_CREATE
+   */
 
    // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external

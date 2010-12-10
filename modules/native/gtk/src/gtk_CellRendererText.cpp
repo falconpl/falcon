@@ -4,6 +4,9 @@
 
 #include "gtk_CellRendererText.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

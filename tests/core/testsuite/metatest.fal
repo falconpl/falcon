@@ -12,13 +12,13 @@
 ****************************************************************************/
 
 \[
-   function factorial( number )
+   function factorial( number ) 
       if number == 1: return 1
       return factorial( number - 1 ) * number
    end
 
    // print the row.
-   > "var = ", factorial( 5 )
+   > "var = ", factorial( 5 ) 
 \]
 
 if var != (5*4*3*2)

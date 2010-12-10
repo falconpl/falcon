@@ -2,13 +2,14 @@
 * Falcon test suite -- DBI tests
 *
 *
-* ID: 11d
+* ID: --
 * Category: sqlite
 * Subcategory:
-* Short: SQLite query multiple
+* Short: SQLite read table.
 * Description:
 * Creates a table with a signle fetch
 *  -- USES the table created by the first test and the data from test 10d
+*  -- Currently not used (table fetch disabled till next version).
 * [/Description]
 *
 ****************************************************************************/
@@ -43,8 +44,6 @@ try
       failure( "Fetched records " + count )
    end
 
-   rs.close()
-   conn.close()
    success()
 
 catch dbi.DBIError in error

@@ -4,6 +4,9 @@
 
 #include "gtk_CellRendererSpin.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {

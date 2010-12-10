@@ -2,7 +2,7 @@
 * Falcon test suite -- DBI tests
 *
 *
-* ID: 21d
+* ID: --
 * Category: mysql
 * Subcategory:
 * Short: MySQL query table
@@ -50,8 +50,6 @@ try
       failure( "Fetched records " + count )
    end
 
-   rs.close()
-   conn.close()
    success()
 
 catch dbi.DBIError in error

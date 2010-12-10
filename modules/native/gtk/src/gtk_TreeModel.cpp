@@ -8,6 +8,9 @@
 #include "gtk_TreeIter.hpp"
 #include "gtk_TreePath.hpp"
 
+/*#
+   @beginmodule gtk
+*/
 
 namespace Falcon {
 namespace Gtk {
