@@ -1,0 +1,43 @@
+#!/bin/sh
+echo "falconenv.sh -- Settings the environment to run Falcon test install"
+
+if [ -z "$1" ]; then
+   echo "Please, specify a command to run in shell"
+   echo
+   echo "To run falcon or another falcon command: falconenv.sh falcon ..."
+   echo "To run a shell: falconenv.sh /bin/bash  (or another shell)"
+   exit 1
+fi
+
+script_dir=`dirname $0`
+curdir=`pwd`
+cd $script_dir
+script_dir=`pwd`
+cd $curdir
+
+echo "Script detected in $script_dir"
+root_path=`echo $script_dir | sed -e "s/\/[^/]*$//"`
+echo "Falcon root path set to $root_path"
+
+LIBDIR=@FALCON_LIB_DIR@
+MODDIR=@FALCON_MOD_DIR@
+BINDIR=@FALCON_BIN_DIR@
+
+PATH=$root_path/$BINDIR:$PATH
+echo "System path set to $PATH"
+
+LD_LIBRARY_PATH=$root_path/$LIBDIR:$LD_LIBRARY_PATH
+echo "System LD path set to $LD_LIBRARY_PATH"
+
+#complains with MacOSX
+DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH
+
+#And this is for falcon
+FALCON_LOAD_PATH=".;$root_path/$MODDIR"
+export FALCON_LOAD_PATH
+
+echo
+echo "Starting requested command under falcon shell"
+echo
+
+$*
