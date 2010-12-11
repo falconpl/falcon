@@ -989,7 +989,7 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
             timestamp->m_timezone = tz_UTC;
 
             #ifndef FALCON_SYSTEM_WIN
-               struct rtm;
+               struct tm rtm;
                struct tm *ftime = gmtime_r( &trv, &rtm );
 
             #else
