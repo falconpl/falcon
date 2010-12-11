@@ -1,3 +1,17 @@
+/*
+   FALCON - DBI - Samples
+
+   FILE: ndbi.fal
+
+   New DBI smoke test.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+*/
+ 
 import from dbi
 
 dbh = dbi.DBIConnect( "
@@ -6,11 +20,11 @@ dbh = dbi.DBIConnect( "
    db=testdb")
 
 dbh.options("strings=on;prefetch=none")
-dbh.perform("BEGIN")
+dbh.query("BEGIN")
 
-//dbh.perform( " delete from test_table" )
+//dbh.query( " delete from test_table" )
 
-dbh.perform( "
+dbh.query( "
    insert into test_table( f_chr, f_str, f_text, f_blob, f_int, f_double, f_dec )
    values (?,?,?, ?,?,?, ?)",
    "Hello", "World", "here", "Some binary data", 100, 23.4, "123.2" )

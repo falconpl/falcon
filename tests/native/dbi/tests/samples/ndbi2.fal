@@ -1,3 +1,17 @@
+/*
+   FALCON - DBI - Samples
+
+   FILE: ndbi2.fal
+
+   New DBI smoke test.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+*/
+ 
 load dbi
 
 dbh = DBIConnect( "

@@ -1,6 +1,17 @@
-/* DBI/PgSQL test sample
- */
+/*
+   FALCON - DBI - Samples
 
+   FILE: ndbi.fal
+
+   DBI/PgSQL test sample
+   -------------------------------------------------------------------
+   Author: Stanislais Marquis
+   Begin: 
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+*/
+ 
 import from dbi
 
 // Your connection info
@@ -57,6 +68,7 @@ for row in _rows
     stmt.execute( row[0], row[1], row[2] )
 end
 
+// This is a pgsql driver specific function.
 > "-- Prepare a named statement and insert 3 rows..."
 stmt = dbh.prepareNamed( "StoredProc", _insertRowStr )
 for row in _rows_2
