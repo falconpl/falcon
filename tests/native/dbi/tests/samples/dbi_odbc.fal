@@ -1,0 +1,53 @@
+/*
+   FALCON - DBI - Samples
+
+   FILE: dbi_odbc.fal
+
+   New DBI smoke test -- ODBC connection
+   
+   Create a DNS named "falcondbi" prior running this test. Then,
+   it should simply run out of the box :-)
+   
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+*/
+ 
+import from dbi
+db = dbi.connect( "odbc:dsn=falcondbi" )
+
+db.query( "drop table test_table" )
+db.query( "create table test_table( name char(20), intprice integer, price double, descr varchar(60), today timestamp )" )
+db.query( "insert into test_table(name, intprice, price, descr, today) values(?,?,?,?,?)", 
+	'hello world', 100, 12.13, "Ciao!", CurrentTime() )
+
+stmt = db.prepare( "insert into test_table(name, intprice, price, descr, today ) values(?,?,?,?,?)" )
+vals = .[ 
+	.["first" nil nil nil nil ]
+	.[ "second" 150 nil "A nice text -è-!" nil ]
+	.[ "third" 10 1234.41234 "Again a text" nil ]
+	.[ "fourth" 11 123.2 "still a text" CurrentTime() ]
+]
+
+count = 0
+for value in vals
+	(.[stmt.execute ] + value)()
+end
+
+
+db.commit()
+> "Done step 1"
+
+rec = db.query( "select * from test_table" )
+while data = rec.fetch([=>])
+	for k, v in data
+		> k, " = >", v.toString().trim(), "< / ", v.len()
+	end
+	> "==="
+end
+
+
+
