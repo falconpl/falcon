@@ -63,10 +63,10 @@ FALCON_FUNC Oracle_init( VMachine *vm )
        CoreObject *instance = theOracleService.makeInstance( vm, hand );
        vm->retval( instance );
    }
-   catch ()
+   catch (...)
    {
        delete hand;
-       throw error;
+       throw ;
    }
 }
 

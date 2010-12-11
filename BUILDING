@@ -2,7 +2,7 @@
 
                      The Falcon Programming Language
 
-                                0.9.6.6
+                                0.9.6.8
                                 
                           BUILDING INSTRUCTION
 
@@ -199,15 +199,16 @@ edit the commands inputed in the interactive mode.
 
 
 
-RUNNING TEST BUILDS
-===================
+RUNNING TEST BUILDS - POSIX
+===========================
 
-  The script devtools/falconenv.sh (for POSIX systems) to configure the 
-environment so that Falcon is found on a certain location rather than from the 
-standard system installation location.
+  On POSIX systems, the script bin/falconenv.sh  configures the
+environment so that Falcon is found on a temporary install location instead of
+being loaded from the standard system installation location.
 
-  For example, after having installed a Falcon build configured to be installed
-on /usr/local and placed in /tmp/falcon, with the following commands:
+  For example, after having installed a Falcon build configured to be
+installed on /usr/local and placed in /tmp/falcon, through the following
+commands:
 
    $ cmake <path to source> -DCMAKE_INSTALL_PREFIX=/usr/local
    $ DESTDIR=/tmp/falcon make install
@@ -215,7 +216,11 @@ on /usr/local and placed in /tmp/falcon, with the following commands:
 it is possible to launch the following command to run that version of Falcon
 and have it accessing (exclusively) the modules installed with it:
 
-   $ source falconenv.sh /tmp/falcon/usr/local
+   $ falconenv.sh  <command to launch>
+
+  The command may be any binary file in the Falcon /bin installation directory
+or any valid shell (i.e. /bin/bash) that will be run with the variables set
+to start falcon from the temporary test install directory.
 
   The script actually sets the following variables:
 
@@ -223,7 +228,14 @@ and have it accessing (exclusively) the modules installed with it:
     - LD_LIBRARY_PATH (or equivalent) on POSIX to find the engine library.
     - FALCON_LOAD_PATH to the place where falcon modules are installed.
 
-  On MSWindows it's enough to run the following commands:
+* NOTE: The sole purpose of this script is that of being able to test-run
+Falcon during development or before a complete installation. Packagers may
+wish to delete it before finally packing Falcon for distribution.
+
+RUNNING TEST BUILDS - MS-WINDOWS
+================================
+
+  On MS-Windows system, it's enough to run the following commands:
   
     C:\> set FALCON_LOAD_PATH="<path to your falcon.exe>;."
     C:\> set PATH="%FALCON_LOAD_PATH%;%PATH%"
