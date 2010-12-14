@@ -15,6 +15,9 @@
 
 #include "core_module.h"
 
+/*#
+   @beginmodule core
+*/
 
 namespace Falcon {
 namespace core {

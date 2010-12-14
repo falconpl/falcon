@@ -13,9 +13,12 @@
    See LICENSE file for licensing details.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include "core_module.h"
 #include <falcon/tokenizer.h>
-
 
 namespace Falcon {
 namespace core {

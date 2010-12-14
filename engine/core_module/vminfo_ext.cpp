@@ -16,6 +16,10 @@
 #include <falcon/stackframe.h>
 #include <falcon/sys.h>
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 

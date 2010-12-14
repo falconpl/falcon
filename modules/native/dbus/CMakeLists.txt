@@ -21,6 +21,3 @@ MESSAGE( "Found DBUS: ${DBUS_INCLUDE_DIRS}" )
 #process source directory
 ADD_SUBDIRECTORY(src)
 
-#add other subdirectories here.
-
-add_subdirectory(docs)

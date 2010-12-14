@@ -1,5 +1,6 @@
 /*#
    @page front_end_cgi CGI stand-alone front-end
+   @inmodule WOPI
 
    The WOPI CGI front-end, called @b falcgi
    is a stand-alone program (a binary executable for the target platform)

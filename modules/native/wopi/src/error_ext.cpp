@@ -24,6 +24,9 @@
 namespace Falcon {
 namespace WOPI {
 
+/*#
+   @beginmodule WOPI
+*/
 
 /*#
    @class WopiError

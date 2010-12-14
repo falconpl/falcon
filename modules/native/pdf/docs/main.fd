@@ -1,5 +1,5 @@
 /*#
-  @main Binding for libHaru, a pdf creation library.
+  @module hpdf Binding for libHaru, a pdf creation library.
   
   libHaru is a free, cross platform, open source library for generating PDF files. 
   

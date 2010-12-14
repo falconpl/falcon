@@ -17,6 +17,10 @@
    Read a line from the input stream.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/item.h>

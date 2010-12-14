@@ -15,7 +15,6 @@ option( FALCON_WOPI_BUILD_CGI_FM "Build Falcon module for stand-alone CGI script
 option( FALCON_WOPI_BUILD_FFALCGI "Build Falcon FastCGI support" OFF )
 option( FALCON_WOPI_BUILD_FALHTTPD "Build Falcon simple HTTP server" OFF )
 option( FALCON_WOPI_BUILD_MOD_FALCON "Build Falcon module for Apache2" OFF )
-option( FALCON_WOPI_BUILD_DOCS "Create documentation" OFF )
 
 ######################################################################
 # Required elements
@@ -70,11 +69,6 @@ if( FALCON_WOPI_BUILD_FALHTTPD )
    set(FALCON_WOPI_ONE_BUILD TRUE)
 endif()
 
-if ( FALCON_WOPI_BUILD_DOCS )
-   add_subdirectory( docs )
-   set(FALCON_WOPI_ONE_BUILD TRUE)
-endif()
-
 if (NOT FALCON_WOPI_ONE_BUILD)
    Message( FATAL_ERROR "Please, specify one or more of the following:
       -DFALCON_WOPI_BUILD_MOD_FALCON=ON
@@ -82,7 +76,6 @@ if (NOT FALCON_WOPI_ONE_BUILD)
       -DFALCON_WOPI_BUILD_FFALCGI=ON
       -DFALCON_WOPI_BUILD_CGI_FM=ON
       -DFALCON_WOPI_BUILD_FALHTTPD=ON
-      -DFALCON_WOPI_BUILD_DOCS=ON
       ")
 endif()
       

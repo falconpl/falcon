@@ -34,6 +34,10 @@ DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH
 
 #And this is for falcon
 FALCON_LOAD_PATH=".;$root_path/$MODDIR"
+
+export PATH
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
 export FALCON_LOAD_PATH
 
 echo

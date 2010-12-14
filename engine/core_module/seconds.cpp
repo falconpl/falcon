@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/sys.h>

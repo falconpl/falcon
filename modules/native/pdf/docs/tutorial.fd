@@ -1,8 +1,7 @@
-
-
 /*#
   @page hpdf_tutorial Tutorial
-  
+
+  @inmodule hpdf
   @section hpdf_blank_pdf Creating a blank pdf
   
   First of all, we have to tell falcon that we like to use hpdf.  This is
@@ -209,10 +208,6 @@
     @endcode
   @note libharu cannot handle utf8, so the greek letters will be messed
     up :(
-    
-  
-    
-  foo
 */
   
 

@@ -19,6 +19,10 @@
    Interface extension functions
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include "core_module.h"
 
 namespace Falcon {

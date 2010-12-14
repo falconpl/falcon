@@ -1,5 +1,6 @@
 /*#
    @page wopi_model Web Oriented Programming Interface model
+   @inmodule WOPI
 
    The Falcon Web Oriented Programming Interface is a framework abstracting the activity
    of web-based scripts.
@@ -738,6 +739,7 @@
 
 /*#
    @page falcgi_iso Isomorphism of CGI based sites.
+   @inmodule WOPI
 
    WOPI provides a coherent interface across different data providers, including CGI and CGI-based front ends (as, for example,
    FastCGI and the CGI module). However, what WOPI can do is to expose the same interface to access web information and functionalities

@@ -17,6 +17,10 @@
    Mathematical basic function for basic rtl.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include <falcon/module.h>
 #include <falcon/vm.h>
 

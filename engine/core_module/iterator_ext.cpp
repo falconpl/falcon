@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include "core_module.h"
 #include <falcon/sequence.h>
 #include <falcon/falconobject.h>

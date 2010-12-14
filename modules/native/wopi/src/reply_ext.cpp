@@ -21,6 +21,11 @@
 
 #include <ctype.h>
 
+/*#
+   @beginmodule WOPI
+*/
+
+
 namespace Falcon {
 namespace WOPI {
 

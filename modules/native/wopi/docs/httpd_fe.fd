@@ -1,5 +1,6 @@
 /*#
    @page front_end_falhttpd Micro Falcon-based web server
+   @inmodule WOPI
 
    The stand-alone web server is a simple daemon-type application listening on a TCP-IP connection
    and serving a single site with very basic configuration.
