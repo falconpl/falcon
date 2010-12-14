@@ -1,0 +1,39 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 1c
+* Category: unguarded
+* Subcategory: membufs
+* Short: Unguarded membuf operations
+* Description:
+*   Checks for membufs to be correctly passed in unguarded mode.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+load cksum
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "void* checksum(...)" )
+
+   mb = MemBuf( 40 )
+   for i in [0:mb.len()]
+      mb[i] = i*2+20
+   end
+
+   r1 = f( mb, mb.len() )
+   // we didn't set a return type, so we got to use the 32 bit
+   // version of our checksum
+   r2 = checksum_32( mb )
+   // but on 64 bit system, we'll receive a void* integer so...
+   r3 = checksum( mb )
+
+   if r1 != r2 and r1 != r3: failure( "Pass membuf failed" )
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

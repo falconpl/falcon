@@ -1,0 +1,60 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_fontinfo.fal
+
+   Shows loading and displaying of informations about fonts.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 25 Mar 2008 02:43:47 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdlttf
+
+try
+   a = TTF.InitAuto()
+   font = TTF.OpenFont( "Vera.ttf", 16)
+   > "========================================="
+   > "Success - in loading font"
+   > "Font family: ", font.FontFaceFamilyName()
+   > "Font style: ", font.FontFaceStyleName()
+   > "Ascent: ", font.FontAscent()
+   > "Descent: ", font.FontDescent()
+   > "Fixed? -- ", font.FontFaceIsFixedWidth() ? "Yes" : "No"
+   > "Height: ", font.FontHeight()
+   > "Line skip: ", font.FontLineSkip()
+
+   metrics = TTFMetrics()
+   if font.GlyphMetrics( ord("O"), metrics )
+      > "Metrics for 'O':", \
+         " maxx=",metrics.maxx, " maxy=", metrics.maxy,\
+         " minx=",metrics.minx, " miny=", metrics.miny,\
+         " ascent=",metrics.ascent
+   else
+      > "Metrics retrival failed"
+   end
+
+   if font.SizeText( "Hello world!", metrics )
+      > "Size of the string 'Hello World!: ", metrics.w, "x", metrics.h
+   else
+      > "Size retrival failed"
+   end
+   >
+   > "Test complete."
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

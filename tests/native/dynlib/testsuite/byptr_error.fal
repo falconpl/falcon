@@ -1,0 +1,31 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 3c
+* Category: byptr
+* Subcategory:
+* Short: Byptr errors
+* Description:
+*   Checks error detection of data passed by pointer.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // String pointer
+   f = l.get( "void call_pRsz( char** ptr )" )
+   try
+      f(0)
+      failure( "Int" )
+   end
+   
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

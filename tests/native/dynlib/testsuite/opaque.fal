@@ -1,0 +1,37 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 4a
+* Category: opaque
+* Subcategory:
+* Short: Opaque types
+* Description:
+*   Checks for correct usage of opaque types.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   make = l.get( "struct dynlib_s* dynlib_s_make( const char* name )",
+                 "void dynlib_s_free( struct dynlib_s* s )" )
+
+   test = l.get( "const char* dynlib_s_name(struct dynlib_s* item)" )
+
+   data = make( "Myself" )
+   if not data.derivedFrom( DynOpaque )
+      failure( "Data not opaqued" )
+   end
+
+   if test( data ) != "Myself"
+      failure( "Data not correctly used" )
+   end
+   
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end
