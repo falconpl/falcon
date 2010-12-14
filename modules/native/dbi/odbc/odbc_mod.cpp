@@ -634,7 +634,7 @@ DBIRecordset* DBIStatementODBC::execute( ItemArray* params )
    }
 
    // Cont the rows
-   SQLINTEGER nRowCount;
+   SQLLEN nRowCount;
    RETCODE retcode = SQLRowCount( hStmt, &nRowCount );
    if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
    {      
@@ -736,7 +736,7 @@ int64 DBIHandleODBC::getLastInsertedId( const String& sequenceName )
    }
 
    int64 value;
-   SQLINTEGER ind;
+   SQLLEN ind;
    ret = SQLGetData( hStmt, 1, SQL_C_SBIGINT, &value, sizeof(value), &ind );
    if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
    {
@@ -844,7 +844,7 @@ DBIRecordset *DBIHandleODBC::query( const String &sql, ItemArray* params )
    }
    
    // Cont the rows
-   SQLINTEGER nRowCount;
+   SQLLEN nRowCount;
    RETCODE retcode = SQLRowCount( hStmt, &nRowCount );
 
    if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
