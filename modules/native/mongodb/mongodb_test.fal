@@ -1,0 +1,31 @@
+/*
+    Test sample for Falcon MongoDB module
+    Need a running server on localhost:27017
+ */
+
+import from mongo
+
+db = mongo.MongoDB( "olelew00tw00t", 4321 )
+inspect( db )
+
+// Getting host & port
+> "Host = " + db.host()
+> "Port = " + db.port()
+
+// connect failure
+try
+    db.connect()
+catch mongo.MongoDBError
+end
+
+// Setting host & port
+db.host( "127.0.0.1" )
+db.port( 27017 )
+> "Host = " + db.host()
+> "Port = " + db.port()
+
+// connect success
+db.connect()
+
+// disconnect
+db.disconnect()

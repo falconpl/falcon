@@ -31,6 +31,7 @@ OPTION( FALCON_NATMODS_AUTO "Select automatically all the modules that have supp
 # Native modules, usually compiled
 OPTION( FALCON_BUILD_DBI "Install DBI module" ON )
 OPTION( FALCON_BUILD_DYNLIB "Install DYNLIB module" OFF)
+OPTION( FALCON_BUILD_MONGODB "Install MongoDB module" ON )
 
 # Bindings -- native modules requiring external libraries.
 FalconMakeBinding( CURL CURL "Install CURL binding" )
@@ -73,7 +74,6 @@ option( FALCON_BUILD_DBUS "Install DBUS binding"  ${_dbus})
 option( FALCON_BUILD_GD2 "Install GD library binding" ${_gd2})
 option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" ${_pdf})
 
-
 #########################################################
 # Inclusion statements
 #
@@ -102,6 +102,10 @@ if ( FALCON_BUILD_GTK )
     add_subdirectory( gtk )
 endif()
 
+if ( FALCON_BUILD_MONGODB )
+    add_subdirectory( mongodb )
+endif()
+
 if ( FALCON_BUILD_PDF )
     add_subdirectory( pdf )
 endif()
@@ -117,6 +121,3 @@ endif()
 if ( FALCON_BUILD_CONIO )
     add_subdirectory( conio )
 endif()
-
-
-
