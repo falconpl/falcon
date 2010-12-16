@@ -52,6 +52,10 @@ FALCON_FUNC MongoDBConnection_host( VMachine* vm );
 FALCON_FUNC MongoDBConnection_port( VMachine* vm );
 FALCON_FUNC MongoDBConnection_connect( VMachine* vm );
 FALCON_FUNC MongoDBConnection_disconnect( VMachine* vm );
+FALCON_FUNC MongoDBConnection_isConnected( VMachine* vm );
+FALCON_FUNC MongoDBConnection_authenticate( VMachine* vm );
+FALCON_FUNC MongoDBConnection_addUser( VMachine* vm );
+FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm );
 
 
 } // !namespace Ext

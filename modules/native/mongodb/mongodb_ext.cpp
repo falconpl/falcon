@@ -197,5 +197,104 @@ FALCON_FUNC MongoDBConnection_disconnect( VMachine* vm )
 }
 
 
+/*#
+    @method isConnected MongoDB
+    @return true if connected
+ */
+FALCON_FUNC MongoDBConnection_isConnected( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    vm->retval( conn->isConnected() );
+}
+
+
+/*#
+    @method authenticate MongoDB
+    @param db
+    @param user
+    @param pass
+    @return true if authenticated
+ */
+FALCON_FUNC MongoDBConnection_authenticate( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+    Item* i_user = vm->param( 1 );
+    Item* i_pass = vm->param( 2 );
+
+    if ( !i_db || !i_db->isString()
+        || !i_user || !i_user->isString()
+        || !i_pass || !i_pass->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,S,S" ) );
+    }
+
+    AutoCString zDB( *i_db );
+    AutoCString zUser( *i_user );
+    AutoCString zPass( *i_pass );
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    bool b = conn->authenticate( zDB.c_str(), zUser.c_str(), zPass.c_str() );
+    vm->retval( b );
+}
+
+
+/*#
+    @method addUser MongoDB
+    @param db
+    @param user
+    @param pass
+    @return true if user was added
+ */
+FALCON_FUNC MongoDBConnection_addUser( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+    Item* i_user = vm->param( 1 );
+    Item* i_pass = vm->param( 2 );
+
+    if ( !i_db || !i_db->isString()
+        || !i_user || !i_user->isString()
+        || !i_pass || !i_pass->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,S,S" ) );
+    }
+
+    AutoCString zDB( *i_db );
+    AutoCString zUser( *i_user );
+    AutoCString zPass( *i_pass );
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    bool b = conn->addUser( zDB.c_str(), zUser.c_str(), zPass.c_str() );
+    vm->retval( b );
+}
+
+
+/*#
+    @method dropDatabase MongoDB
+    @param db
+    @return true on success
+ */
+FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+
+    if ( !i_db || !i_db->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S" ) );
+    }
+
+    AutoCString zDB( *i_db );
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    bool b = conn->dropDatabase( zDB.c_str() );
+    vm->retval( b );
+}
+
+
 } /* !namespace Ext */
 } /* !namespace Falcon */

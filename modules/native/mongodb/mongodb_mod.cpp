@@ -69,6 +69,15 @@ Connection::hostPort( const char* host, int port )
         mOptions.port = port;
 }
 
+void
+Connection::options( mongo_connection_options* options )
+{
+    if ( !options )
+        return;
+
+    memcpy( &mOptions, options, sizeof( mongo_connection_options ) );
+}
+
 int
 Connection::connect()
 {
@@ -113,6 +122,66 @@ Connection::disconnect()
 
     bson_bool_t b = mongo_disconnect( conn );
     return b ? 1 : 0;
+}
+
+bool
+Connection::isConnected() const
+{
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    return conn->connected ? true : false;
+}
+
+bool
+Connection::authenticate( const char* db,
+                          const char* user,
+                          const char* pass )
+{
+    if ( !db || db[0] == '\0'
+        || !user || user[0] == '\0'
+        || !pass || pass[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    bson_bool_t ret = mongo_cmd_authenticate( conn, db, user, pass );
+    return ret ? true : false;
+}
+
+bool
+Connection::addUser( const char* db,
+                     const char* user,
+                     const char* pass )
+{
+    if ( !db || db[0] == '\0'
+        || !user || user[0] == '\0'
+        || !pass || pass[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    mongo_cmd_add_user( conn, db, user, pass );
+    return true;
+}
+
+bool
+Connection::dropDatabase( const char* db )
+{
+    if ( !db || db[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    bson_bool_t ret = mongo_cmd_drop_db( conn, db );
+    return ret ? true : false;
 }
 
 

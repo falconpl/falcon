@@ -5,6 +5,8 @@
 
 import from mongo
 
+FAILURE = "*** Test failed ***"
+
 db = mongo.MongoDB( "olelew00tw00t", 4321 )
 inspect( db )
 
@@ -16,6 +18,7 @@ inspect( db )
 try
     db.connect()
 catch mongo.MongoDBError
+    > "Caught connection failure!"
 end
 
 // Setting host & port
@@ -26,6 +29,46 @@ db.port( 27017 )
 
 // connect success
 db.connect()
+if db.isConnected()
+    > "Connected!"
+else
+    exit( FAILURE )
+end
+
+// drop database
+if db.dropDatabase( "none" )
+    > "Dropped database!"
+else
+    exit( FAILURE )
+end
+
+// authentication failure
+if not db.authenticate( "none", "shall", "pass" )
+    > "None shall pass!"
+else
+    exit( FAILURE )
+end
+
+// add user
+if db.addUser( "none", "shall", "pass" )
+    > "Added user none!"
+else
+    exit( FAILURE )
+end
+
+// authentication success
+if db.authenticate( "none", "shall", "pass" )
+    > "None can pass!"
+else
+    exit( FAILURE )
+end
 
 // disconnect
 db.disconnect()
+if not db.isConnected()
+    > "Disconnected!"
+else
+    exit( FAILURE )
+end
+
+> "TEST OK"

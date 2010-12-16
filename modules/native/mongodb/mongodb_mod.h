@@ -59,10 +59,21 @@ public:
     void hostPort( const char* host=0, int port=0 );
     const char* host() const { return mOptions.host; }
     int port() const { return mOptions.port; }
+
     mongo_connection_options* options() { return &mOptions; }
+    void options( mongo_connection_options* options );
 
     int connect();
     int disconnect();
+    bool isConnected() const;
+
+    bool authenticate( const char* db,
+                       const char* user,
+                       const char* pass );
+    bool addUser( const char* db,
+                  const char* user,
+                  const char* pass );
+    bool dropDatabase( const char* db );
 
 protected:
 

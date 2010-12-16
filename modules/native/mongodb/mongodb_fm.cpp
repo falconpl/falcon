@@ -40,6 +40,15 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_connect );
     self->addClassMethod( dbconn_cls, "disconnect",
                           Falcon::Ext::MongoDBConnection_disconnect );
+    self->addClassMethod( dbconn_cls, "isConnected",
+                          Falcon::Ext::MongoDBConnection_isConnected );
+    self->addClassMethod( dbconn_cls, "authenticate",
+                          Falcon::Ext::MongoDBConnection_authenticate );
+    self->addClassMethod( dbconn_cls, "addUser",
+                          Falcon::Ext::MongoDBConnection_addUser );
+    self->addClassMethod( dbconn_cls, "dropDatabase",
+                          Falcon::Ext::MongoDBConnection_dropDatabase );
+
 
     // MongoDBError class
     Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
