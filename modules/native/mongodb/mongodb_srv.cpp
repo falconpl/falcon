@@ -37,4 +37,17 @@ MongoDBService::createConnection( const char* host,
     return true;
 }
 
+bool
+MongoDBService::createBSONObj( const int bytesNeeded,
+                               FalconData** bson )
+{
+    if ( !bson )
+        return false;
+    *bson = 0;
+    *bson = new Falcon::MongoDB::BSONObj( bytesNeeded );
+    if ( !*bson )
+        return false;
+    return true;
+}
+
 } // !namespace Falcon

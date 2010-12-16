@@ -6,6 +6,7 @@
 #define MONGODB_MOD_H
 
 #include <falcon/falcondata.h>
+#include <falcon/string.h>
 
 #include "src/mongo.h"
 
@@ -74,6 +75,8 @@ public:
                   const char* user,
                   const char* pass );
     bool dropDatabase( const char* db );
+    bool dropCollection( const char* db,
+                         const char* coll );
 
 protected:
 
@@ -82,6 +85,41 @@ protected:
 
 };
 
+
+class BSONObj
+    :
+    public FalconData
+{
+public:
+
+    BSONObj( const int bytesNeeded=0 );
+    virtual ~BSONObj();
+
+    virtual void gcMark( uint32 );
+    virtual FalconData* clone() const;
+
+    bson_buffer* buffer() { return &mBuf; }
+    bson* finalize();
+
+    void reset( const int bytesNeeded=0 );
+
+    BSONObj* append( const char* nm ); // append a null value
+    BSONObj* append( const char* nm, const int i );
+    BSONObj* append( const char* nm, const int64_t il );
+    BSONObj* append( const char* nm, const double d );
+    BSONObj* append( const char* nm, const char* str );
+    BSONObj* append( const char* nm, const Falcon::String& str );
+    BSONObj* append( const char* nm, const bool b );
+
+
+    static bson* empty(); // helper
+
+protected:
+
+    bson_buffer mBuf;
+    bson        mObj;
+    bool        mFinalized;
+};
 
 } // !namespace MongoDB
 } // !namespace Falcon

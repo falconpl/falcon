@@ -296,5 +296,155 @@ FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm )
 }
 
 
+/*#
+    @method dropCollection MongoDB
+    @param db
+    @param coll
+    @return true on success
+ */
+FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+    Item* i_coll = vm->param( 1 );
+
+    if ( !i_db || !i_db->isString()
+        || !i_coll || !i_coll->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,S" ) );
+    }
+
+    AutoCString zDB( *i_db );
+    AutoCString zColl( *i_coll );
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    bool b = conn->dropCollection( zDB.c_str(), zColl.c_str() );
+    vm->retval( b );
+}
+
+
+/*#
+    @class BSON
+    @brief Create an empty BSON object.
+    @optparam bytes Reserve some space for the internal buffer.
+ */
+FALCON_FUNC MongoBSON_init( VMachine* vm )
+{
+    Item* i_bytes = vm->param( 0 );
+
+    if ( i_bytes && !i_bytes->isInteger() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "I" ) );
+    }
+
+    int bytes = i_bytes ? i_bytes->asInteger() : 0;
+    Falcon::MongoDB::BSONObj* bobj;
+    CoreObject* self = vm->self().asObjectSafe();
+
+    if ( !theMongoDBService.createBSONObj( bytes, (FalconData**)&bobj ) )
+    {
+        throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_CONN, __LINE__ )
+                                .desc( FAL_STR( _err_create_bsonobj ) ) );
+    }
+    self->setUserData( bobj );
+    vm->retval( self );
+}
+
+/*#
+    @method reset BSON
+    @optparam bytes Reserve some space for internal buffer.
+    @brief Clear the BSON object, making it an "empty" one.
+ */
+FALCON_FUNC MongoBSON_reset( VMachine* vm )
+{
+    Item* i_bytes = vm->param( 0 );
+
+    if ( i_bytes && !i_bytes->isInteger() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "I" ) );
+    }
+
+    int bytes = i_bytes ? i_bytes->asInteger() : 0;
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    bobj->reset( bytes );
+}
+
+
+/*#
+    @method append BSON
+    @param pairs a list of key-value pairs
+    @brief Append a list of key-values to the BSON object
+    @return self
+ */
+FALCON_FUNC MongoBSON_append( VMachine* vm )
+{
+    Item* i_lst = vm->param( 0 );
+
+    if ( !i_lst || !i_lst->isArray() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "A" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    CoreArray* arr = i_lst->asArray();
+    const uint32 sz = arr->length();
+    if ( sz == 0 )
+    {
+        vm->retval( self );
+        return;
+    }
+
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    Item* k, *v;
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        // get a pair of items
+        k = &arr->at( i++ );
+        if ( i == sz )
+            v = 0;
+        else
+            v = &arr->at( i );
+        // check key
+        if ( k->type() != FLC_ITEM_STRING )
+        {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                    .extra( "S" ) );
+        }
+        AutoCString key( *k );
+        // check value
+        if ( v == 0 ) // assume null value
+        {
+            bobj->append( key.c_str() );
+            continue;
+        }
+        switch ( v->type() )
+        {
+        case FLC_ITEM_NIL:
+            bobj->append( key.c_str() );
+            continue;
+        case FLC_ITEM_BOOL:
+            bobj->append( key.c_str(), v->asBoolean() );
+            continue;
+        case FLC_ITEM_INT:
+            bobj->append( key.c_str(), (int64_t) v->asInteger() );
+            continue;
+        case FLC_ITEM_NUM:
+            bobj->append( key.c_str(), v->asNumeric() );
+            continue;
+        case FLC_ITEM_STRING:
+            bobj->append( key.c_str(), *v->asString() );
+            continue;
+        default:
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                    .extra( "?" ) );
+        }
+    }
+    vm->retval( self );
+}
+
 } /* !namespace Ext */
 } /* !namespace Falcon */

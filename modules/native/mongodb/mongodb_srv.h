@@ -39,7 +39,8 @@ public:
                                    mongo_connection* mongo_conn,
                                    FalconData** conn );
 
-
+    virtual bool createBSONObj( const int bytesNeeded,
+                                FalconData** bson );
 };
 
 } // !namespace Falcon

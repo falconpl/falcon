@@ -13,6 +13,6 @@ FAL_MODSTR( _err_connect_bad_arg, "Bad arguments" );
 FAL_MODSTR( _err_connect_no_socket, "No socket" );
 FAL_MODSTR( _err_connect_fail, "Connection failed" );
 FAL_MODSTR( _err_connect_not_master, "Not master" );
-
+FAL_MODSTR( _err_create_bsonobj, "Unable to create a BSON object" );
 
 #endif // !MONGODB_ST_H

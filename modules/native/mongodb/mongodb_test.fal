@@ -5,7 +5,17 @@
 
 import from mongo
 
-FAILURE = "*** Test failed ***"
+_n = 0
+
+function Assert( x, msg )
+    ++_n
+    if not x
+        > @"*** TEST FAILURE ($(_n)) ***"
+        exit( _n )
+    else
+        > msg
+    end
+end
 
 db = mongo.MongoDB( "olelew00tw00t", 4321 )
 inspect( db )
@@ -29,46 +39,38 @@ db.port( 27017 )
 
 // connect success
 db.connect()
-if db.isConnected()
-    > "Connected!"
-else
-    exit( FAILURE )
-end
+Assert( db.isConnected(), "Connected!" )
 
 // drop database
-if db.dropDatabase( "none" )
-    > "Dropped database!"
-else
-    exit( FAILURE )
-end
+Assert( db.dropDatabase( "none" ), "Dropped database!" )
 
 // authentication failure
-if not db.authenticate( "none", "shall", "pass" )
-    > "None shall pass!"
-else
-    exit( FAILURE )
-end
+Assert( not db.authenticate( "none", "shall", "pass" ), "None shall pass!" )
 
 // add user
-if db.addUser( "none", "shall", "pass" )
-    > "Added user none!"
-else
-    exit( FAILURE )
-end
+Assert( db.addUser( "none", "shall", "pass" ), "Added user none!" )
 
 // authentication success
-if db.authenticate( "none", "shall", "pass" )
-    > "None can pass!"
-else
-    exit( FAILURE )
-end
+Assert( db.authenticate( "none", "shall", "pass" ), "None can pass!" )
+
+// create an empty bson object
+obj = mongo.BSON()
+inspect( obj )
+
+// append something
+obj.append([
+    "key1", 3,
+    "key2", 1.1,
+    "key3", true,
+    "key4", nil,
+    "key5", "hello"
+    ])
+
+// reset object
+obj.reset()
 
 // disconnect
 db.disconnect()
-if not db.isConnected()
-    > "Disconnected!"
-else
-    exit( FAILURE )
-end
+Assert( not db.isConnected(), "Disconnected!" )
 
 > "TEST OK"

@@ -48,7 +48,17 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_addUser );
     self->addClassMethod( dbconn_cls, "dropDatabase",
                           Falcon::Ext::MongoDBConnection_dropDatabase );
+    self->addClassMethod( dbconn_cls, "dropCollection",
+                          Falcon::Ext::MongoDBConnection_dropCollection );
 
+    // BSON class
+    Falcon::Symbol* bson_cls = self->addClass( "BSON",
+                                               Falcon::Ext::MongoBSON_init );
+    bson_cls->setWKS( true );
+    self->addClassMethod( bson_cls, "reset",
+                          Falcon::Ext::MongoBSON_reset );
+    self->addClassMethod( bson_cls, "append",
+                          Falcon::Ext::MongoBSON_append );
 
     // MongoDBError class
     Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
