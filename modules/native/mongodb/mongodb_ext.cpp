@@ -324,6 +324,38 @@ FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm )
 
 
 /*#
+    @method insert Connection
+    @param ns namespace
+    @param bson BSONObj instance
+    @return true on success
+ */
+FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_bobj = vm->param( 1 );
+
+    if ( !i_ns || !i_ns->isString()
+        || !i_bobj
+        || !( i_bobj->isObject() && i_bobj->asObjectSafe()->derivedFrom( "BSON" ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,BSON" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    CoreObject* obj = i_bobj->asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( obj->getUserData() );
+
+    bool b = conn->insert( *i_ns->asString(), bobj );
+    vm->retval( b );
+}
+
+/*******************************************************************************
+    BSON class
+*******************************************************************************/
+
+/*#
     @class BSON
     @brief Create an empty BSON object.
     @optparam bytes Reserve some space for the internal buffer.
@@ -374,9 +406,42 @@ FALCON_FUNC MongoBSON_reset( VMachine* vm )
 
 
 /*#
+    @method genOID BSON
+    @optparam name Key name (default "_id")
+    @brief Generate and append an OID.
+    @return self
+ */
+FALCON_FUNC MongoBSON_genOID( VMachine* vm )
+{
+    Item* i_nm = vm->param( 0 );
+
+    if ( i_nm && !i_nm->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "[S]" ) );
+    }
+
+    AutoCString zNm;
+    const char* nm;
+    if ( i_nm )
+    {
+        zNm.set( *i_nm );
+        nm = zNm.c_str();
+    }
+    else
+        nm = "_id";
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    bobj->genOID( nm );
+    vm->retval( self );
+}
+
+
+/*#
     @method append BSON
     @param pairs a list of key-value pairs
-    @brief Append a list of key-values to the BSON object
+    @brief Append a list of key-value to the BSON object
     @return self
  */
 FALCON_FUNC MongoBSON_append( VMachine* vm )

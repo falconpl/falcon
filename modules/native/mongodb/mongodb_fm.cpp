@@ -50,6 +50,8 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_dropDatabase );
     self->addClassMethod( dbconn_cls, "dropCollection",
                           Falcon::Ext::MongoDBConnection_dropCollection );
+    self->addClassMethod( dbconn_cls, "insert",
+                          Falcon::Ext::MongoDBConnection_insert );
 
     // BSON class
     Falcon::Symbol* bson_cls = self->addClass( "BSON",
@@ -57,6 +59,8 @@ FALCON_MODULE_DECL
     bson_cls->setWKS( true );
     self->addClassMethod( bson_cls, "reset",
                           Falcon::Ext::MongoBSON_reset );
+    self->addClassMethod( bson_cls, "genOID",
+                          Falcon::Ext::MongoBSON_genOID );
     self->addClassMethod( bson_cls, "append",
                           Falcon::Ext::MongoBSON_append );
 

@@ -73,6 +73,9 @@ Connection::hostPort( const char* host, int port )
 {
     if ( host )
     {
+        if ( !strcmp( host, "localhost" ) )
+            host = "127.0.0.1";
+
         memset( mOptions.host, 0, 255 );
         strncpy( mOptions.host, host, 254 );
     }
@@ -159,6 +162,9 @@ Connection::authenticate( const char* db,
         return false;
 
     mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
     bson_bool_t ret = mongo_cmd_authenticate( conn, db, user, pass );
     return ret ? true : false;
 }
@@ -177,6 +183,9 @@ Connection::addUser( const char* db,
         return false;
 
     mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
     mongo_cmd_add_user( conn, db, user, pass );
     return true;
 }
@@ -191,6 +200,9 @@ Connection::dropDatabase( const char* db )
         return false;
 
     mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
     bson_bool_t ret = mongo_cmd_drop_db( conn, db );
     return ret ? true : false;
 }
@@ -207,8 +219,50 @@ Connection::dropCollection( const char* db,
         return false;
 
     mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
     bson_bool_t ret = mongo_cmd_drop_collection( conn, db, coll, NULL );
     return ret ? true : false;
+}
+
+bool
+Connection::insert( const char* ns,
+                    BSONObj* data )
+{
+    if ( !ns || ns[0] == '\0'
+        || !data )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    mongo_insert( conn, ns, data->finalize() );
+    return true;
+}
+
+bool
+Connection::insert( const String& ns,
+                    BSONObj* data )
+{
+    if ( ns.length() == 0 || !data )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    AutoCString zNs( ns );
+
+    mongo_insert( conn, zNs.c_str(), data->finalize() );
+    return true;
 }
 
 /*******************************************************************************
@@ -259,6 +313,14 @@ BSONObj::empty()
         done = true;
     }
     return &mEmpty;
+}
+
+BSONObj*
+BSONObj::genOID( const char* nm )
+{
+    bson_append_new_oid( &mBuf, nm );
+    if ( mFinalized ) mFinalized = false;
+    return this;
 }
 
 BSONObj*
@@ -345,6 +407,7 @@ BSONObj::reset( const int bytesNeeded )
     bson_destroy( &mObj );
     bson_empty( &mObj );
 }
+
 
 } // !namespace MongoDB
 } // !namespace Falcon

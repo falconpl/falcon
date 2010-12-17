@@ -57,9 +57,11 @@ FALCON_FUNC MongoDBConnection_authenticate( VMachine* vm );
 FALCON_FUNC MongoDBConnection_addUser( VMachine* vm );
 FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm );
 FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm );
+FALCON_FUNC MongoDBConnection_insert( VMachine* vm );
 
 FALCON_FUNC MongoBSON_init( VMachine* vm );
 FALCON_FUNC MongoBSON_reset( VMachine* vm );
+FALCON_FUNC MongoBSON_genOID( VMachine* vm );
 FALCON_FUNC MongoBSON_append( VMachine* vm );
 
 

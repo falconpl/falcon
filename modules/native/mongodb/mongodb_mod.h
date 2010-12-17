@@ -15,6 +15,8 @@ namespace Falcon
 namespace MongoDB
 {
 
+class BSONObj;
+
 
 class ConnRef
 {
@@ -51,11 +53,11 @@ public:
                 mongo_connection* conn=0 );
     virtual ~Connection();
 
-    mongo_connection* conn() const { return mConn ? mConn->conn() : 0; }
-    ConnRef* connRef() const { return mConn; }
-
     virtual void gcMark( uint32 );
     virtual FalconData* clone() const;
+
+    mongo_connection* conn() const { return mConn ? mConn->conn() : 0; }
+    ConnRef* connRef() const { return mConn; }
 
     void hostPort( const char* host=0, int port=0 );
     const char* host() const { return mOptions.host; }
@@ -67,7 +69,6 @@ public:
     int connect();
     int disconnect();
     bool isConnected() const;
-
     bool authenticate( const char* db,
                        const char* user,
                        const char* pass );
@@ -77,6 +78,10 @@ public:
     bool dropDatabase( const char* db );
     bool dropCollection( const char* db,
                          const char* coll );
+    bool insert( const char* ns,
+                 BSONObj* data );
+    bool insert( const String& ns,
+                 BSONObj* data );
 
 protected:
 
@@ -103,6 +108,7 @@ public:
 
     void reset( const int bytesNeeded=0 );
 
+    BSONObj* genOID( const char* nm="_id" );
     BSONObj* append( const char* nm ); // append a null value
     BSONObj* append( const char* nm, const int i );
     BSONObj* append( const char* nm, const int64_t il );

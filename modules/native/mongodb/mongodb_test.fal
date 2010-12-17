@@ -58,7 +58,7 @@ obj = mongo.BSON()
 inspect( obj )
 
 // append something
-obj.append([
+obj.genOID().append([
     "key1", 3,
     "key2", 1.1,
     "key3", true,
