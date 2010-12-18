@@ -76,6 +76,9 @@ ParaCommands =  .[
 
    ReRule( '^\s*@prop\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@ignore\s*$', "#stay",
+           {ctx, d0, p0 => ctx.add(InfoNode("@ignore", ['line' => ctx.row] )) } )
 ]
 
 
@@ -115,6 +118,8 @@ ScopeCommands = .[
          {ctx, d0, p0 => ctx.add(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@begingroup\s+(\w+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@beginignore\s*$', "#stay",
+           {ctx => ctx.add(InfoNode("@beginignore", ['line' => ctx.row])) } )
 
    ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
@@ -129,6 +134,8 @@ ScopeCommands = .[
          {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
    ReRule( '^\s*@endgroup(\s+.*$|$)', "#stay",
          {ctx => ctx.add(InfoNode("@endgroup", ['line' => ctx.row] )) })
+   ReRule( '^\s*@endignore\s*$', "#stay",
+           {ctx => ctx.add(InfoNode("@endignore", ['line' => ctx.row])) } )
 ]
 
 InlineCommands = .[

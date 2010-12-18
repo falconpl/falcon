@@ -38,6 +38,9 @@
 #include "dbus_st.h"
 
 #include <stdio.h>
+/*#
+   @beginmodule dbus
+*/
 
 namespace Falcon {
 namespace Ext {

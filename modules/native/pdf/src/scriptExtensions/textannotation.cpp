@@ -5,6 +5,10 @@
  *      Author: maik
  */
 
+/*#
+   @beginmodule hpdf
+*/
+
 #include <falcon/engine.h>
 #include <hpdf.h>
 #include <scriptExtensions/textannotation.h>

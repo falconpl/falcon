@@ -43,6 +43,8 @@ class FileContext( file, defmod, modName )
    current_group = nil
 
    current_module = nil
+
+   ignore = false
    
    //# Parsing a context into entities.
    function parse( ctx )
@@ -224,6 +226,13 @@ class FileContext( file, defmod, modName )
                faldoc.warn( @i"Beginning new group $name while group $self.current_group is not closed", line)
             end
             self.current_group = name
+            
+         case "@beginignore"
+            if self.ignore
+               faldoc.warn( @i"Beginning an ignore block, but was already ignoring", line)
+            end
+            faldoc.verbose( @i"Beginning ignore" )
+            self.ignore = true
 
          case "@beginset"
             if self.current_set != nil
@@ -260,12 +269,23 @@ class FileContext( file, defmod, modName )
             end
             faldoc.verbose( i"Changing @endmodule" )
             self.current_module = nil
+
+          case "@endignore"
+            if not self.ignore 
+               faldoc.warn( i"Parsing @endignore but wasn't ignoring.", line)
+            end
+            self.ignore = false
       end
 
    end
    
    //# Stores a new entity in the entity database.
    function addEntity( entity )
+      // if ignoring, throw it away
+      if self.ignore or entity.type == "ignore"
+         return
+      end
+      
       if entity.parent
          // nothing else needed
          return
@@ -323,6 +343,11 @@ class FileContext( file, defmod, modName )
 
    //# Configures an entity with non-textual data.
    function apply( node, entity, parentEntity )
+      // if ignoring, throw it away
+      if self.ignore
+         return
+      end
+      
       l1 = node.infos["line"]
    
       if entity.name

@@ -26,6 +26,10 @@
 #include "dynlib_st.h"
 #include "dynlib_sys.h"
 
+/*#
+   @beginmodule dynlib
+*/
+
 namespace Falcon {
 namespace Ext {
 

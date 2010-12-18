@@ -33,6 +33,10 @@
 #include "regex_mod.h"
 #include "regex_st.h"
 
+/*#
+   @beginmodule feathers_regex
+*/
+
 namespace Falcon {
 namespace Ext {
 

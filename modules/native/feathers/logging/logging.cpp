@@ -41,8 +41,9 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 }
 
 /*#
-   @module feather_logging Logging support
+   @module feathers_logging logging
    @brief Multithread enabled logging facility.
+   @inmodule feathers
 
    The @b logging module offers a very advanced facility for logging application
    messages to various device.

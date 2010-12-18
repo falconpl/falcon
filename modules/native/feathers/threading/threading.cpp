@@ -25,7 +25,8 @@
 #include <systhread.h>
 
 /*#
-   @module feathers_threading Threading
+   @module feathers_threading threading
+   @inmodule feathers
    @brief Multithreading Support Module.
 
    This module provides support for real hardware-supported
@@ -50,8 +51,12 @@
 */
 
 /*#
-   @page threading_model Falcon multithreading model.
+   @beginmodule feathers_threading
+*/
 
+/*#
+   @page threading_model Falcon multithreading model.
+   
    @section threading_fore Forewords
 
    This document is by no mean an exhaustive explanation of multithreading
@@ -196,7 +201,7 @@
 
 /*#
    @page threading_warnings Multithreading safety
-
+   @after threading_model
    @section tw_threading_can_break Multithreading can break things
 
    Falcon won't try to recover from multithreading errors done by the scripts. This means that
@@ -301,7 +306,8 @@
 
 /*#
    @page threading_stop Threading module and VM Interruption protocol
-
+   @after threading_warnings
+   
    Interruptible operations will raise an InterruptedError if they receive
    an asynchronous interruption request from another thread while ingaged
    in a lengthy wait.

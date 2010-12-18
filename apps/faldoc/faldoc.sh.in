@@ -1,7 +1,13 @@
 #!/bin/sh
-  
-FALCON_EXE=@CMAKE_INSTALL_PREFIX@/@FALCON_BIN_DIR@/falcon
-FALDOC_FAL=@CMAKE_INSTALL_PREFIX@/@Falcon_APP_DIR@/faldoc/faldoc.fal
+
+if [ -z "$FALCON_ENV_DIR" ]; then
+   FALCON_EXE=@CMAKE_INSTALL_PREFIX@/@FALCON_BIN_DIR@/falcon
+   FALDOC_FAL=@CMAKE_INSTALL_PREFIX@/@Falcon_APP_DIR@/faldoc/faldoc.fal
+else
+   # Use path
+   FALCON_EXE=falcon
+   FALDOC_FAL=$FALCON_ENV_DIR/@Falcon_APP_DIR@/faldoc/faldoc.fal
+fi
 
 $FALCON_EXE $FALDOC_FAL $*
 

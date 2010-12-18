@@ -15,8 +15,9 @@
 
 
 /*#
-   @module feather_json json
+   @module feathers_json json
    @brief JavaScript Object Notation interface.
+   @inmodule feathers
 
    This module exposes functions to dump and load variables
    encoded in JSON format. See @link http://json.org for more details.
@@ -29,9 +30,10 @@
       import from json
       > json.JSONencode( ["a", 1, 1.2] )
    @endcode
+*/
 
-
-   @beginmodule feather_json
+/*#
+   @beginmodule feathers_json
 */
 
 #include <falcon/module.h>

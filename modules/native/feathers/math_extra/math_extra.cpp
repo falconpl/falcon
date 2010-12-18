@@ -36,9 +36,12 @@
 #include "version.h"
 
 /*#
-   @main math_extra
-
-   This entry creates the main page of your module documentation.
+   @module feathers_math_extra math_extra
+   @inmodule feathers
+   @brief Uncommon math functions
+   
+   This module provides some mathematical functions that are not
+   commonly used in scripting languages.
 */
 
 FALCON_MODULE_DECL

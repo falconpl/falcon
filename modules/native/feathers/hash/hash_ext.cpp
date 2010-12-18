@@ -33,7 +33,7 @@ Interface extension functions
 */
 
 /*#
-@beginmodule feather_hash
+@beginmodule feathers_hash
 */
 
 #include <stdio.h>

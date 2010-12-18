@@ -39,6 +39,9 @@
 #include <conio_srv.h>
 
 extern Falcon::Srv::ConsoleSrv *console_service;
+/*#
+   @beginmodule conio
+*/
 
 namespace Falcon {
 namespace Ext {

@@ -25,7 +25,8 @@
 #include "mxml_st.h"
 
 /*#
-   @module feather_mxml MXLM
+   @module feathers_mxml MXLM
+   @inmodule feathers
    @brief Minimal XML support.
 
    This module is a very simple, fast and powerful XML parser
@@ -63,7 +64,7 @@
       load mxml
    @endcode
 
-   @beginmodule feather_mxml
+   @beginmodule feathers_mxml
 */
 
 FALCON_MODULE_DECL

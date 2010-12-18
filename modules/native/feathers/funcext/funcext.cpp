@@ -22,8 +22,9 @@
 */
 
 /*#
-   @module feather_funcext funcext
+   @module feathers_funcext funcext
    @brief Functional extensions
+   @inmodule feathers
 
    This module provides a set of functions which are useful in the context
    of functional evaluation, although not strctly useful.

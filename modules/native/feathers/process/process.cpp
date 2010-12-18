@@ -25,7 +25,8 @@
 #include "version.h"
 
 /*#
-   @module feather_process Process
+   @module feathers_process process
+   @inmodue feathers
    @brief Process enumeration and subprocess control.
 
    The process module provides several functions to manage processes in the system
@@ -63,7 +64,7 @@
       @endcode
 
 
-   @beginmodule feather_process
+   @beginmodule feathers_process
 */
 
 FALCON_MODULE_DECL

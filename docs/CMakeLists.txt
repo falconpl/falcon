@@ -1,5 +1,3 @@
-find_package(faldoc REQUIRED)
-
 # Maybe useful for C++ application and module writers, thus a reusable function
 function(generate_doxygen_documentation _target_name _doxygen_config_file)
   find_package(Doxygen)
@@ -29,16 +27,18 @@ generate_doxygen_documentation(
   engine_docs # make target
   ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 )
+
 #
 install(
    DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
    OPTIONAL # if docs haven't been generated
 )
 
-file(GLOB scriptExtensions_SRCS "../engine/core_module/*.cpp")
-faldoc_module_docs(core
+message(STATUS "Configuring faldoc.fd")
+configure_file(
   faldoc.fd.in # input
-  ${scriptExtensions_SRCS} # additional depenencies
+  ${CMAKE_CURRENT_BINARY_DIR}/faldoc.fd
+  @ONLY
 )
 
 if(WIN32)

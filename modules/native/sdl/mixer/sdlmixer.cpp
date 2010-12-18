@@ -69,7 +69,7 @@ SDLMixerModule::~SDLMixerModule()
 }
 }
 /*#
-   @module sdlmixer SDL Audio Mixer
+   @module sdlmixer sdlmixer
    @brief SDL AUDIO extensions for the Falcon SDL module.
    
    This module encapsulates the sdl_mixer extensions for

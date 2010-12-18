@@ -25,7 +25,8 @@
 #include "version.h"
 
 /*#
-   @module feather_socket Socket
+   @module feathers_socket socket
+   @inmodule feathers
    @brief Low level TCP/IP networking support.
 
    The socket module provides a low level access to network (TCP/IP) socket wise
@@ -46,7 +47,7 @@
       load socket
       @endcode
 
-   @beginmodule feather_socket
+   @beginmodule feathers_socket
 */
 
 FALCON_MODULE_DECL

@@ -153,7 +153,9 @@ class Form( instance ) from nest.Service( instance )
    function startup()
       // preliminary check 
       self._precheck()
+   end
 
+   function run()
       // let's see if we should update something.
       // if we're called "blank", then self._updating will stay false 
       failure = self._checkInputVars()
@@ -208,7 +210,9 @@ class Form( instance ) from nest.Service( instance )
       // finally, grab the EID if available
       if not self.eid
          vname = self.instance ? self.instance + ".eid" : "eid"
-         self.eid = Request.getField( vname, nil )
+         if vname in Nest.inputVars
+            self.eid = Nest.inputVars[vname]
+         end
       end
    end
 

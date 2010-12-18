@@ -31,7 +31,7 @@
 #include "confparser_st.h"
 
 /*#
-   @beginmodule feather_configparser
+   @beginmodule feathers_configparser
 */
 
 namespace Falcon {

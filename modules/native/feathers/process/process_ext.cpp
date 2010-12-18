@@ -33,7 +33,7 @@
 
 
 /*#
-    @beginmodule feather_process
+    @beginmodule feathers_process
 */
 
 // TODO: put this somewhere more suitable

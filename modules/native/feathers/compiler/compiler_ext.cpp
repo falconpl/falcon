@@ -30,7 +30,7 @@
 #include "compiler_st.h"
 
 /*#
-   @beginmodule feather_compiler
+   @beginmodule feathers_compiler
 */
 
 namespace Falcon {

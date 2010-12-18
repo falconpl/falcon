@@ -32,9 +32,10 @@
 
 
 /*#
-   @module feather_regex Regular Expression
+   @module feathers_regex Regular Expression
    @brief Regular expression based string matching and substitution (PCRE binding).
-
+   @inmodule feathers
+   
    Regular expressions are a powerful mean to search for patterns in strings and to
    extract substrings matching a certain criterion.
 
@@ -120,7 +121,7 @@ A minimal example would look like the following:
    Of course, the former is more readable and natural when dealing with regular
    expressions.
 
-   @beginmodule feather_regex
+   @beginmodule feathers_regex
 */
 
 FALCON_MODULE_DECL

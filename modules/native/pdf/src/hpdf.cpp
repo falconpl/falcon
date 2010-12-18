@@ -1,9 +1,15 @@
-
 /**
  * \file
  * This module exports pdf and module loader facility to falcon
  * scripts.
  */
+
+/*#
+   @module hpdf hpdf
+   @brief Haru PDF generator library binding.
+
+   
+*/
 
 #include <falcon/types.h>
 #include <falcon/module.h>

@@ -43,26 +43,19 @@
 Falcon::Srv::ConsoleSrv *console_service;
 
 /*#
-   @main conio
+   @module conio conio
+   @brief Console (terminal) I/O support.
+   @inmodule feathers
 
-   This entry creates the main page of your module documentation.
+   @note Currently this module is under development and not released.
+   
+   This module provides an interface to a generic terminal/character oriented
+   device.
 
-   If your project will generate more modules, you may creaete a
-   multi-module documentation by adding a module entry like the
-   following
-
-   @code
-      \/*#
-         @module module_name Title of the module docs
-         @brief Brief description in module list..
-
-         Some documentation...
-      *\/
-   @endcode
-
-   And use the \@beginmodule <modulename> code at top of the _ext file
-   (or files) where the extensions functions for that modules are
-   documented.
+   Even in an age where GUI is omnipresent, a character-based terminal interface
+   can be useful on some high-end server environments (i.e. text-based ssh/tty
+   network connections), or to setup a minimal user interface for low-level
+   system maintainance utilities.
 */
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )

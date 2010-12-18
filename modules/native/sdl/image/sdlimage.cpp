@@ -27,7 +27,7 @@
 #include "sdlimage_ext.h"
 
 /*#
-   @module sdlimage Image file support
+   @module sdlimage sdlimage
    @brief Image loading extensions for the Falcon SDL module.
 
    This module wraps the image loading extensions for SDL. Namely, this module

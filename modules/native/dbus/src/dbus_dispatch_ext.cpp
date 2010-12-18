@@ -39,9 +39,18 @@
 static Falcon::Mod::DBusDispatcher* s_dispatcher = 0;
 static Falcon::Mutex* s_mtx_dispatcher = 0;
 
+/*#
+   @beginmodule dbus
+*/
+
 namespace Falcon {
 namespace Ext {
-   
+
+/*#
+   @method startDispath DBus
+
+   Launches the message dispatcher for DBus receivers.
+*/
 FALCON_FUNC  DBus_startDispatch( VMachine *vm )
 {
    s_mtx_dispatcher->lock();
@@ -58,6 +67,12 @@ FALCON_FUNC  DBus_startDispatch( VMachine *vm )
    s_dispatcher->start();
    s_mtx_dispatcher->unlock();
 }
+
+/*#
+   @method stopDispatch DBus
+
+   Stops the DBus message dispatcher.
+*/
 
 FALCON_FUNC  DBus_stopDispatch( VMachine *vm )
 {

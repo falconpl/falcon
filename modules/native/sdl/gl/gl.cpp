@@ -28,7 +28,7 @@
 
 
 /*#
-   @module sdlopengl OpenGL
+   @module sdlopengl sdlopengl
    @brief OpenGL extensions for the Falcon SDL module.
 
    This module wraps the OpenGL extensions for SDL. Namely, this module

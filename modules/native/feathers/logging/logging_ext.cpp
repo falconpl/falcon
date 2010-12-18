@@ -32,7 +32,7 @@
 #include "logging_st.h"
 
 /*#
-   @beginmodule feather_logging
+   @beginmodule feathers_logging
 */
 
 namespace Falcon {

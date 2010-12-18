@@ -228,12 +228,12 @@ class Entity( content, file, line )
                node = node.remove()
                hadComplex = true
 
-            case "@begingroup", "@beginset", "@beginmodule"
+            case "@begingroup", "@beginset", "@beginmodule", "@beginignore"
                onGroupingChange( line, node.type, node.infos["name"] )
                node = node.remove()
                hadSimple = true
                
-            case "@endgroup", "@endset", "@endmodule"
+            case "@endgroup", "@endset", "@endmodule", "@endignore"
                onGroupingChange( line, node.type, nil )
                node = node.remove()
                hadSimple = true
@@ -272,6 +272,10 @@ class Entity( content, file, line )
                self.props["title"] = node.infos["title"]
                node = node.remove()
                hadComplex = true
+
+            case "@ignore"
+               self.type = "ignore"
+               hadSimple = true
 
             case "@module"
                name = node.infos["name"]

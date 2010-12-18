@@ -31,7 +31,7 @@
 #include <SDL_opengl.h>
 
 
-/*# @beginmodule sdlopengl */
+/*--# @beginmodule sdlopengl */
 
 namespace Falcon {
 

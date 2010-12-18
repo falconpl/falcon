@@ -28,7 +28,8 @@
 #include "version.h"
 
 /*#
-   @main Dynamic Library Loader.
+   @module dynlib dynlib
+   @brief Dynamic Library Loader.
 
    The Dynamic Library Loader (DynLib) module allows Falcon applications
    to load dynamic link libraries, or shared objects on UNIX systems,
