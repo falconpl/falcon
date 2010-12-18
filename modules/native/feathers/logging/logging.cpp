@@ -166,7 +166,10 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    However, it is legal to extend the LogChannel classes; the overloaded log
    method can be used directly by the script even if it will be ignored by
    LogArea instances.
+*/
 
+/*#
+   @beginmodule feathers_logging
 */
 FALCON_MODULE_DECL
 {

@@ -119,7 +119,7 @@ ScopeCommands = .[
    ReRule( '^\s*@begingroup\s+(\w+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@beginignore\s*$', "#stay",
-           {ctx => ctx.add(InfoNode("@beginignore", ['line' => ctx.row])) } )
+           {ctx => ctx.add(InfoNode("@beginignore", ['line' => ctx.row, 'name'=>""])) } )
 
    ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
