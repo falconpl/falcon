@@ -14,5 +14,6 @@ FAL_MODSTR( _err_connect_no_socket, "No socket" );
 FAL_MODSTR( _err_connect_fail, "Connection failed" );
 FAL_MODSTR( _err_connect_not_master, "Not master" );
 FAL_MODSTR( _err_create_bsonobj, "Unable to create a BSON object" );
+FAL_MODSTR( _err_inv_item, "Item not serializeable" );
 
 #endif // !MONGODB_ST_H

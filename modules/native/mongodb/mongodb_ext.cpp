@@ -474,7 +474,7 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
         else
             v = &arr->at( i );
         // check key
-        if ( k->type() != FLC_ITEM_STRING )
+        if ( !k->isString() )
         {
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                     .extra( "S" ) );
@@ -486,27 +486,9 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
             bobj->append( key.c_str() );
             continue;
         }
-        switch ( v->type() )
-        {
-        case FLC_ITEM_NIL:
-            bobj->append( key.c_str() );
-            continue;
-        case FLC_ITEM_BOOL:
-            bobj->append( key.c_str(), v->asBoolean() );
-            continue;
-        case FLC_ITEM_INT:
-            bobj->append( key.c_str(), (int64_t) v->asInteger() );
-            continue;
-        case FLC_ITEM_NUM:
-            bobj->append( key.c_str(), v->asNumeric() );
-            continue;
-        case FLC_ITEM_STRING:
-            bobj->append( key.c_str(), *v->asString() );
-            continue;
-        default:
+        if ( !bobj->append( key.c_str(), *v ) )
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                    .extra( "?" ) );
-        }
+                    .extra( FAL_STR( _err_inv_item ) ) );
     }
     vm->retval( self );
 }

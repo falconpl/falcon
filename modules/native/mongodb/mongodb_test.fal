@@ -41,32 +41,42 @@ db.port( 27017 )
 db.connect()
 Assert( db.isConnected(), "Connected!" )
 
+// drop collection if it exists
+db.dropCollection( "none", "test" )
+
 // drop database
-Assert( db.dropDatabase( "none" ), "Dropped database!" )
+db.dropDatabase( "none" )
 
 // authentication failure
-Assert( not db.authenticate( "none", "shall", "pass" ), "None shall pass!" )
+Assert( not db.authenticate( "none", "shall", "pass" ), "user shall unknown to none!" )
 
 // add user
-Assert( db.addUser( "none", "shall", "pass" ), "Added user none!" )
+Assert( db.addUser( "none", "shall", "pass" ), "Added user shall to none!" )
 
 // authentication success
-Assert( db.authenticate( "none", "shall", "pass" ), "None can pass!" )
+Assert( db.authenticate( "none", "shall", "pass" ), "shall authenticated!" )
 
 // create an empty bson object
 obj = mongo.BSON()
 inspect( obj )
 
 // append something
+> "Creating bson object!"
 obj.genOID().append([
     "key1", 3,
     "key2", 1.1,
     "key3", true,
     "key4", nil,
-    "key5", "hello"
+    "key5", "hello",
+    "key6", [ 0,1,2 ],
+    "key7", [ "a"=>0, "b"=>1 ]
     ])
 
+// insert object
+Assert( db.insert( "none.test", obj ), "Inserting bson object!" )
+
 // reset object
+> "Resetting bson object!"
 obj.reset()
 
 // disconnect

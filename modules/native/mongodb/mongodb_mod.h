@@ -5,6 +5,7 @@
 #ifndef MONGODB_MOD_H
 #define MONGODB_MOD_H
 
+#include <falcon/carray.h>
 #include <falcon/falcondata.h>
 #include <falcon/string.h>
 
@@ -98,6 +99,7 @@ class BSONObj
 public:
 
     BSONObj( const int bytesNeeded=0 );
+    BSONObj( const bson* bobj ); // bobj is copied not owned
     virtual ~BSONObj();
 
     virtual void gcMark( uint32 );
@@ -109,18 +111,50 @@ public:
     void reset( const int bytesNeeded=0 );
 
     BSONObj* genOID( const char* nm="_id" );
-    BSONObj* append( const char* nm ); // append a null value
-    BSONObj* append( const char* nm, const int i );
-    BSONObj* append( const char* nm, const int64_t il );
-    BSONObj* append( const char* nm, const double d );
-    BSONObj* append( const char* nm, const char* str );
-    BSONObj* append( const char* nm, const Falcon::String& str );
-    BSONObj* append( const char* nm, const bool b );
+    BSONObj* append( const char* nm,
+                     bson_buffer* buf=0 ); // append a null value
+    BSONObj* append( const char* nm,
+                     const int i,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const int64_t il,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const double d,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const char* str,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const Falcon::String& str,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const bool b,
+                     bson_buffer* buf=0 );
 
+    // Return true if item was successfuly appended.
+    bool append( const char* nm,
+                 const Falcon::Item& item,
+                 bson_buffer* buf=0 );
+
+    // Return true if this item can be appended safely.
+    static bool itemIsSupported( const Falcon::Item& item );
+    // Return true if this array content is supported by our driver.
+    static bool arrayIsSupported( const CoreArray& array );
+    // Return true if this dict content is supported by our driver.
+    static bool dictIsSupported( const CoreDict& dict );
 
     static bson* empty(); // helper
 
 protected:
+
+    BSONObj* append( const char* nm,
+                     const CoreArray& array,
+                     bson_buffer* parentBuf=0 );
+
+    BSONObj* append( const char* nm,
+                     const CoreDict& dict,
+                     bson_buffer* parentBuf=0 );
 
     bson_buffer mBuf;
     bson        mObj;

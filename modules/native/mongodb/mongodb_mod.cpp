@@ -7,8 +7,10 @@
 #include <stdio.h>//debug..
 #include <string.h>
 
-#include <falcon/engine.h>
 #include <falcon/autocstring.h>
+#include <falcon/engine.h>
+#include <falcon/iterator.h>
+
 
 namespace Falcon
 {
@@ -284,6 +286,15 @@ BSONObj::BSONObj( const int bytesNeeded )
     mFinalized = true;
 }
 
+BSONObj::BSONObj( const bson* bobj )
+{
+    // prepare a buffer
+    bson_buffer_init( &mBuf );
+    // copy given bson
+    bson_copy( &mObj, bobj );
+    mFinalized = true;
+}
+
 BSONObj::~BSONObj()
 {
     // clear buffer
@@ -324,61 +335,193 @@ BSONObj::genOID( const char* nm )
 }
 
 BSONObj*
-BSONObj::append( const char* nm )
+BSONObj::append( const char* nm,
+                 bson_buffer* buf )
 {
-    bson_append_null( &mBuf, nm );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_null( buf, nm );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 BSONObj*
-BSONObj::append( const char* nm, const int i )
+BSONObj::append( const char* nm,
+                 const int i,
+                 bson_buffer* buf )
 {
-    bson_append_int( &mBuf, nm, i );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_int( buf, nm, i );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 BSONObj*
-BSONObj::append( const char* nm, const int64_t il )
+BSONObj::append( const char* nm,
+                 const int64_t il,
+                 bson_buffer* buf )
 {
-    bson_append_long( &mBuf, nm, il );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_long( buf, nm, il );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 BSONObj*
-BSONObj::append( const char* nm, const double d )
+BSONObj::append( const char* nm,
+                 const double d,
+                 bson_buffer* buf )
 {
-    bson_append_double( &mBuf, nm, d );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_double( buf, nm, d );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 
 BSONObj*
-BSONObj::append( const char* nm, const char* str )
+BSONObj::append( const char* nm,
+                 const char* str,
+                 bson_buffer* buf )
 {
-    bson_append_string( &mBuf, nm, str );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_string( buf, nm, str );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 BSONObj*
-BSONObj::append( const char* nm, const Falcon::String& str )
+BSONObj::append( const char* nm,
+                 const Falcon::String& str,
+                 bson_buffer* buf )
 {
+    if ( !buf )
+        buf = &mBuf;
+
     AutoCString zStr( str );
-    bson_append_string( &mBuf, nm, zStr.c_str() );
+    bson_append_string( buf, nm, zStr.c_str() );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
 
 BSONObj*
-BSONObj::append( const char* nm, const bool b )
+BSONObj::append( const char* nm,
+                 const bool b,
+                 bson_buffer* buf )
 {
-    bson_append_bool( &mBuf, nm, b );
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_bool( buf, nm, b );
     if ( mFinalized ) mFinalized = false;
     return this;
+}
+
+BSONObj*
+BSONObj::append( const char* nm,
+                 const CoreArray& array,
+                 bson_buffer* parentBuf )
+{
+    // we need to check items validity before changing the buffer!
+    // that's why this is not public
+
+    if ( parentBuf == 0 )
+        parentBuf = &mBuf;
+
+    const uint32 sz = array.length();
+    bson_buffer* sub = bson_append_start_array( parentBuf, nm );
+
+    if ( sz == 0 ) // empty array
+    {
+        bson_append_finish_object( sub );
+        if ( mFinalized ) mFinalized = false;
+        return this;
+    }
+
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        Item it = array.at( i );
+        append( "0", it, sub );
+    }
+
+    bson_append_finish_object( sub );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+BSONObj*
+BSONObj::append( const char* nm,
+                 const CoreDict& dict,
+                 bson_buffer* parentBuf )
+{
+    // we need to check items validity before changing the buffer!
+    // that's why this is not public
+
+    if ( parentBuf == 0 )
+        parentBuf = &mBuf;
+
+    bson_buffer* sub = bson_append_start_object( parentBuf, nm );
+
+    if ( dict.length() == 0 ) // empty dict
+    {
+        bson_append_finish_object( sub );
+        if ( mFinalized ) mFinalized = false;
+        return this;
+    }
+
+    Iterator iter( (Sequence*) &dict.items() );
+
+    while ( iter.hasCurrent() )
+    {
+        Item key = iter.getCurrentKey();
+        Item val = iter.getCurrent();
+        AutoCString k( key );
+        append( k.c_str(), val, sub );
+        iter.next();
+    }
+
+    bson_append_finish_object( sub );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+bool
+BSONObj::append( const char* nm,
+                 const Falcon::Item& item,
+                 bson_buffer* buf )
+{
+    switch ( item.type() )
+    {
+    case FLC_ITEM_NIL:
+        return append( nm, buf );
+    case FLC_ITEM_INT:
+        return append( nm, (int64_t) item.asInteger(), buf );
+    case FLC_ITEM_BOOL:
+        return append( nm, item.asBoolean(), buf );
+    case FLC_ITEM_NUM:
+        return append( nm, item.asNumeric(), buf );
+    case FLC_ITEM_STRING:
+        return append( nm, item.asString(), buf );
+    case FLC_ITEM_ARRAY:
+        if ( !arrayIsSupported( *item.asArray() ) )
+            return false;
+        return append( nm, item.asArray(), buf );
+    case FLC_ITEM_DICT:
+        if ( !dictIsSupported( *item.asDict() ) )
+            return false;
+        return append( nm, item.asDict(), buf );
+    default: // unsupported type
+        return false;
+    }
 }
 
 bson*
@@ -408,6 +551,64 @@ BSONObj::reset( const int bytesNeeded )
     bson_empty( &mObj );
 }
 
+bool
+BSONObj::itemIsSupported( const Falcon::Item& item )
+{
+    switch ( item.type() )
+    {
+    case FLC_ITEM_NIL:
+    case FLC_ITEM_INT:
+    case FLC_ITEM_BOOL:
+    case FLC_ITEM_NUM:
+    case FLC_ITEM_STRING:
+        return true;
+    case FLC_ITEM_ARRAY:
+        return arrayIsSupported( *item.asArray() );
+    case FLC_ITEM_DICT:
+        return dictIsSupported( *item.asDict() );
+    default:
+        return false;
+    }
+}
+
+bool
+BSONObj::arrayIsSupported( const CoreArray& array )
+{
+    const uint32 sz = array.length();
+    if ( sz == 0 )
+        return true;
+
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        Item it = array.at( i );
+        if ( !itemIsSupported( it ) )
+            return false;
+    }
+    return true;
+}
+
+bool
+BSONObj::dictIsSupported( const CoreDict& dict )
+{
+    if ( dict.length() == 0 )
+        return true;
+
+    Iterator iter( (Sequence*) &dict.items() );
+
+    while ( iter.hasCurrent() )
+    {
+        Item k = iter.getCurrentKey();
+        if ( !k.isString() )
+            return false;
+
+        Item v = iter.getCurrent();
+        if ( !itemIsSupported( v ) )
+            return false;
+
+        iter.next();
+    }
+    return true;
+}
 
 } // !namespace MongoDB
 } // !namespace Falcon
