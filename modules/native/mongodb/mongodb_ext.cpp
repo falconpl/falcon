@@ -443,9 +443,15 @@ FALCON_FUNC MongoBSON_genOID( VMachine* vm )
 
 /*#
     @method append BSON
-    @param pairs a list of key-value pairs
-    @brief Append a list of key-value to the BSON object
+    @param dict A dict (with keys that must be strings)
+    @brief Append some data to the BSON object
     @return self
+
+    Example:
+    @code
+        import from mongo
+        obj = mongo.BSON().genOID().append( [ "key" => "value" ] )
+    @endcode
  */
 FALCON_FUNC MongoBSON_append( VMachine* vm )
 {
