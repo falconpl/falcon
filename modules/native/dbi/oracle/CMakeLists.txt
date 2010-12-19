@@ -3,9 +3,9 @@
 #
 # CMake configuration file for module Oracle
 ####################################################################
-#if(COMMAND cmake_policy)
-#   cmake_policy(SET CMP0003 NEW)
-#endif(COMMAND cmake_policy)
+if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
 falcon_define_module( FALCON_MODULE oracle )
 
@@ -36,24 +36,35 @@ IF(APPLE)
     FIND_LIBRARY( ORACLE_LIBRARY_OCIEI NAMES libociei ociei ${ORACLE_LIB_SEARCH_PATH} )
 ENDIF(APPLE)
 
-IF ( ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY )
+IF(ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY_OCCI AND ORACLE_LIBRARY_CLNTSH)
     INCLUDE_DIRECTORIES(BEFORE ${ORACLE_INCLUDE_DIR})
-ELSE (ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY)
+ELSE(ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY)
     IF(NOT ORACLE_INCLUDE_DIR)
         MESSAGE(SEND_ERROR "Oracle include path was not found")
         MESSAGE(SEND_ERROR "Looked in: ${ORACLE_INCLUDE_SEARCH_PATH}")
     ENDIF (NOT ORACLE_INCLUDE_DIR)
-    IF (NOT ORACLE_LIBRARY)
-        MESSAGE(SEND_ERROR "Oracle client libraries were not found")
+    IF (NOT ORACLE_LIBRARY_OCCI )
+        MESSAGE(SEND_ERROR "Oracle client library libocci was not found")
         MESSAGE(SEND_ERROR "Looked in: ${ORACLE_LIB_SEARCH_PATH}")
-    ENDIF (NOT ORACLE_LIBRARY)
+    ENDIF (NOT ORACLE_LIBRARY_OCCI)
+    IF (NOT ORACLE_LIBRARY_CLNTSH )
+        MESSAGE(SEND_ERROR "Oracle client library libclntsh was not found")
+        MESSAGE(SEND_ERROR "Looked in: ${ORACLE_LIB_SEARCH_PATH}")
+    ENDIF (NOT ORACLE_LIBRARY_CLNTSH)
+    IF (NOT ORACLE_LIBRARY_OCIEI AND APPLE)
+        MESSAGE(SEND_ERROR "Oracle client library libociei was not found")
+        MESSAGE(SEND_ERROR "Looked in: ${ORACLE_LIB_SEARCH_PATH}")
+    ENDIF (NOT ORACLE_LIBRARY_OCIEI AND APPLE)
     MESSAGE(FATAL_ERROR "Cannot build Oracle DBI module")
-ENDIF (ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY)
+ENDIF(ORACLE_INCLUDE_DIR AND ORACLE_LIBRARY_OCCI AND ORACLE_LIBRARY_CLNTSH)
 
 MESSAGE(STATUS "Found occi.h in ${ORACLE_INCLUDE_DIR}")
 MESSAGE(STATUS "Found library clntsh ${ORACLE_LIBRARY_CLNTSH}")
 MESSAGE(STATUS "Found library occi ${ORACLE_LIBRARY_OCCI}")
-MESSAGE(STATUS "Found library ociei ${ORACLE_LIBRARY_OCIEI}")
+
+IF(APPLE)
+    MESSAGE(STATUS "Found library ociei ${ORACLE_LIBRARY_OCIEI}")
+ENDIF(APPLE)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(${ORACLE_INCLUDE_DIR})
