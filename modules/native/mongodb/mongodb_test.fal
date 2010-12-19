@@ -72,6 +72,13 @@ obj.genOID().append([
     "key7", [ "a"=>0, "b"=>1 ]
     ])
 
+// Iterate over obj
+iter = mongo.BSONIter( obj )
+i = 0
+while iter.next()
+    > toString(++i) + ": " + iter.key() + " => " + iter.value()
+end
+
 // insert object
 Assert( db.insert( "none.test", obj ), "Inserting bson object!" )
 

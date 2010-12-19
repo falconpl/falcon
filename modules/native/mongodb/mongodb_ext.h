@@ -17,7 +17,7 @@
 #define MONGODB_ERR_NOMEM           (FALCON_MONGODB_ERROR_BASE + 0)
 #define MONGODB_ERR_CREATE_CONN     (FALCON_MONGODB_ERROR_BASE + 1)
 #define MONGODB_ERR_CONNECT         (FALCON_MONGODB_ERROR_BASE + 2)
-
+#define MONGODB_ERR_CREATE_BSON     (FALCON_MONGODB_ERROR_BASE + 3)
 
 namespace Falcon
 {
@@ -64,6 +64,11 @@ FALCON_FUNC MongoBSON_reset( VMachine* vm );
 FALCON_FUNC MongoBSON_genOID( VMachine* vm );
 FALCON_FUNC MongoBSON_append( VMachine* vm );
 
+FALCON_FUNC MongoBSONIter_init( VMachine* vm );
+FALCON_FUNC MongoBSONIter_next( VMachine* vm );
+FALCON_FUNC MongoBSONIter_key( VMachine* vm );
+FALCON_FUNC MongoBSONIter_value( VMachine* vm );
+FALCON_FUNC MongoBSONIter_reset( VMachine* vm );
 
 } // !namespace Ext
 } // !namespace Falcon

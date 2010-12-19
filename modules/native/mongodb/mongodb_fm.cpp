@@ -64,6 +64,19 @@ FALCON_MODULE_DECL
     self->addClassMethod( bson_cls, "append",
                           Falcon::Ext::MongoBSON_append );
 
+    // BSONIter class
+    Falcon::Symbol* bsonit_cls = self->addClass( "BSONIter",
+                                                 Falcon::Ext::MongoBSONIter_init );
+    bsonit_cls->setWKS( true );
+    self->addClassMethod( bsonit_cls, "next",
+                          Falcon::Ext::MongoBSONIter_next );
+    self->addClassMethod( bsonit_cls, "key",
+                          Falcon::Ext::MongoBSONIter_key );
+    self->addClassMethod( bsonit_cls, "value",
+                          Falcon::Ext::MongoBSONIter_value );
+    self->addClassMethod( bsonit_cls, "reset",
+                          Falcon::Ext::MongoBSONIter_reset );
+
     // MongoDBError class
     Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
     Falcon::Symbol *err_cls = self->addClass( "MongoDBError", &Falcon::Ext::MongoDBError_init );

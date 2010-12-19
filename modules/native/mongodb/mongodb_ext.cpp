@@ -41,6 +41,9 @@ FALCON_FUNC MongoDBError_init( VMachine* vm )
     ::Falcon::core::Error_init( vm );
 }
 
+/*******************************************************************************
+    MongoDB class
+*******************************************************************************/
 
 /*#
     @class MongoDB
@@ -193,7 +196,7 @@ FALCON_FUNC MongoDBConnection_disconnect( VMachine* vm )
 
     int ret = conn->disconnect();
     // we just ignore errors.
-    if ( ret ) printf( "Disconnection error (%d)\n", ret );
+    //if ( ret ) printf( "Disconnection error (%d)\n", ret );
 }
 
 
@@ -376,7 +379,7 @@ FALCON_FUNC MongoBSON_init( VMachine* vm )
 
     if ( !theMongoDBService.createBSONObj( bytes, (FalconData**)&bobj ) )
     {
-        throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_CONN, __LINE__ )
+        throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_BSON, __LINE__ )
                                 .desc( FAL_STR( _err_create_bsonobj ) ) );
     }
     self->setUserData( bobj );
@@ -395,7 +398,7 @@ FALCON_FUNC MongoBSON_reset( VMachine* vm )
     if ( i_bytes && !i_bytes->isInteger() )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "I" ) );
+                .extra( "[I]" ) );
     }
 
     int bytes = i_bytes ? i_bytes->asInteger() : 0;
@@ -457,40 +460,139 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
     CoreObject* self = vm->self().asObjectSafe();
     CoreArray* arr = i_lst->asArray();
     const uint32 sz = arr->length();
-    if ( sz == 0 )
+    if ( sz == 0 ) // nothing to append
     {
         vm->retval( self );
         return;
     }
 
-    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    // we want to check data before updating bson buffer
     Item* k, *v;
     for ( uint32 i=0; i < sz; ++i )
     {
-        // get a pair of items
         k = &arr->at( i++ );
-        if ( i == sz )
-            v = 0;
-        else
-            v = &arr->at( i );
+        v = i == sz ? 0 : &arr->at( i );
         // check key
         if ( !k->isString() )
-        {
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                     .extra( "S" ) );
-        }
-        AutoCString key( *k );
         // check value
-        if ( v == 0 ) // assume null value
-        {
-            bobj->append( key.c_str() );
-            continue;
-        }
-        if ( !bobj->append( key.c_str(), *v ) )
+        if ( v && !MongoDB::BSONObj::itemIsSupported( *v ) )
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                     .extra( FAL_STR( _err_inv_item ) ) );
     }
+
+    // really appending data
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        k = &arr->at( i++ );
+        v = i == sz ? 0 : &arr->at( i );
+        AutoCString key( *k );
+        if ( v == 0 ) // assume null value
+            bobj->append( key.c_str() );
+        else
+            bobj->append( key.c_str(), *v, 0, false ); // not checking
+    }
+
     vm->retval( self );
+}
+
+/*******************************************************************************
+    BSONIter class
+*******************************************************************************/
+
+/*#
+    @class BSONIter
+    @brief Iterator for BSON objects
+    @param bson A BSON object
+
+    Example:
+    @code
+        iter = BSONIter( bson )
+        while iter.next()
+            doSomething( iter.key(), iter.value() )
+        end
+    @endcode
+ */
+FALCON_FUNC MongoBSONIter_init( VMachine* vm )
+{
+    Item* i_data = vm->param( 0 );
+
+    if ( !i_data
+        || !( i_data->isObject() && i_data->asObjectSafe()->derivedFrom( "BSON" ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "BSON" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    CoreObject* data = i_data->asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( data->getUserData() );
+    MongoDB::BSONIter* iter = new MongoDB::BSONIter( bobj );
+    self->setUserData( iter );
+    vm->retval( self );
+}
+
+
+/*#
+    @method next BSONIter
+    @brief Return true if there is more data to iterate over
+ */
+FALCON_FUNC MongoBSONIter_next( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
+    vm->retval( iter->next() );
+}
+
+
+/*#
+    @method key BSONIter
+    @brief Get the current BSON key string
+ */
+FALCON_FUNC MongoBSONIter_key( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
+    const char* k = iter->currentKey();
+    if ( k )
+    {
+        String s( k );
+        s.bufferize();
+        vm->retval( s );
+    }
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method value BSONIter
+    @brief Get the current BSON value
+ */
+FALCON_FUNC MongoBSONIter_value( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
+    Item* v = iter->currentValue();
+    if ( v )
+        vm->retval( *v );
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method reset BSONIter
+    @brief Reset to start of iterator.
+ */
+FALCON_FUNC MongoBSONIter_reset( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
+    iter->reset();
 }
 
 } /* !namespace Ext */

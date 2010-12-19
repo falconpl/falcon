@@ -39,9 +39,9 @@ ConnRef::decref()
     Connection class
 *******************************************************************************/
 
-BSONObj emptyBSONObj;
-
-Connection::Connection( const char* host, int port, mongo_connection* conn )
+Connection::Connection( const char* host,
+                        int port,
+                        mongo_connection* conn )
     :
     mConn( 0 )
 {
@@ -71,7 +71,8 @@ Connection::clone() const
 }
 
 void
-Connection::hostPort( const char* host, int port )
+Connection::hostPort( const char* host,
+                      int port )
 {
     if ( host )
     {
@@ -497,7 +498,8 @@ BSONObj::append( const char* nm,
 bool
 BSONObj::append( const char* nm,
                  const Falcon::Item& item,
-                 bson_buffer* buf )
+                 bson_buffer* buf,
+                 const bool doCheck )
 {
     switch ( item.type() )
     {
@@ -510,15 +512,15 @@ BSONObj::append( const char* nm,
     case FLC_ITEM_NUM:
         return append( nm, item.asNumeric(), buf );
     case FLC_ITEM_STRING:
-        return append( nm, item.asString(), buf );
+        return append( nm, *item.asString(), buf );
     case FLC_ITEM_ARRAY:
-        if ( !arrayIsSupported( *item.asArray() ) )
+        if ( doCheck && !arrayIsSupported( *item.asArray() ) )
             return false;
-        return append( nm, item.asArray(), buf );
+        return append( nm, *item.asArray(), buf );
     case FLC_ITEM_DICT:
-        if ( !dictIsSupported( *item.asDict() ) )
+        if ( doCheck && !dictIsSupported( *item.asDict() ) )
             return false;
-        return append( nm, item.asDict(), buf );
+        return append( nm, *item.asDict(), buf );
     default: // unsupported type
         return false;
     }
@@ -549,6 +551,7 @@ BSONObj::reset( const int bytesNeeded )
     // reset bson object
     bson_destroy( &mObj );
     bson_empty( &mObj );
+    if ( !mFinalized ) mFinalized = true;
 }
 
 bool
@@ -608,6 +611,135 @@ BSONObj::dictIsSupported( const CoreDict& dict )
         iter.next();
     }
     return true;
+}
+
+/*******************************************************************************
+    BSONIter class
+*******************************************************************************/
+
+BSONIter::BSONIter( BSONObj* data )
+    :
+    mCurrentType( -1 )
+{
+    bson_copy( &mData, data->finalize() );
+    bson_iterator_init( &mIter, mData.data );
+}
+
+BSONIter::BSONIter( const bson* data )
+    :
+    mCurrentType( -1 )
+{
+    bson_copy( &mData, data );
+    bson_iterator_init( &mIter, mData.data );
+}
+
+BSONIter::~BSONIter()
+{
+    bson_destroy( &mData );
+}
+
+void
+BSONIter::gcMark( uint32 )
+{
+}
+
+FalconData*
+BSONIter::clone() const
+{
+    return 0;
+}
+
+void
+BSONIter::reset()
+{
+    bson_iterator_init( &mIter, mData.data );
+    mCurrentType = -1;
+}
+
+bool
+BSONIter::next()
+{
+    mCurrentType = (int) bson_iterator_next( &mIter );
+    return mCurrentType == bson_eoo ? false : true;
+}
+
+const char*
+BSONIter::currentKey()
+{
+    return mCurrentType > 0 ? bson_iterator_key( &mIter ): 0;
+}
+
+Falcon::Item*
+BSONIter::currentValue()
+{
+    if ( mCurrentType <= 0 )
+        return 0;
+
+    Item* it = 0;
+    //printf("tp=%d\n",mCurrentType);
+    switch ( mCurrentType )
+    {
+    case bson_double:
+        it = new Item( bson_iterator_double_raw( &mIter ) );
+        break;
+    case bson_string:
+        it = new Item( bson_iterator_string( &mIter ) );
+        break;
+    case bson_object:
+        // dict...
+        break;
+    case bson_array:
+        // array...
+        break;
+    case bson_bindata:
+        break;
+    case bson_undefined:
+        it = new Item( bson_iterator_value( &mIter ) );
+        break;
+    case bson_oid:
+    {
+        char id[25];
+        bson_oid_to_string( bson_iterator_oid( &mIter ), id );
+        it = new Item( id );
+        break;
+    }
+    case bson_bool:
+        //it = new Item( (bool) bson_iterator_bool_raw( &mIter ) );
+        it = new Item();
+        it->setBoolean( (bool) bson_iterator_bool_raw( &mIter ) );
+        break;
+    case bson_date:
+        //...
+        break;
+    case bson_null:
+        it = new Item();
+        break;
+    case bson_regex:
+        //...
+        break;
+    case bson_dbref: // deprecated
+        //...
+        break;
+    case bson_symbol:
+        it = new Item( bson_iterator_string( &mIter ) );
+        break;
+    case bson_codewscope:
+        it = new Item( bson_iterator_code( &mIter ) );
+        break;
+    case bson_int:
+        it = new Item( bson_iterator_int_raw( &mIter ) );
+        break;
+    case bson_timestamp:
+        //...
+        break;
+    case bson_long:
+        it = new Item( bson_iterator_long_raw( &mIter ) );
+        break;
+    case bson_eoo:
+    default:
+        return it;
+    }
+    return it;
 }
 
 } // !namespace MongoDB

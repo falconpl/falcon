@@ -60,7 +60,8 @@ public:
     mongo_connection* conn() const { return mConn ? mConn->conn() : 0; }
     ConnRef* connRef() const { return mConn; }
 
-    void hostPort( const char* host=0, int port=0 );
+    void hostPort( const char* host=0,
+                   int port=0 );
     const char* host() const { return mOptions.host; }
     int port() const { return mOptions.port; }
 
@@ -135,7 +136,8 @@ public:
     // Return true if item was successfuly appended.
     bool append( const char* nm,
                  const Falcon::Item& item,
-                 bson_buffer* buf=0 );
+                 bson_buffer* buf=0,
+                 const bool doCheck=true ); // unless you know what you're doing
 
     // Return true if this item can be appended safely.
     static bool itemIsSupported( const Falcon::Item& item );
@@ -159,7 +161,37 @@ protected:
     bson_buffer mBuf;
     bson        mObj;
     bool        mFinalized;
+
 };
+
+
+class BSONIter
+    :
+    public FalconData
+{
+public:
+
+    BSONIter( BSONObj* data );
+    BSONIter( const bson* data );
+    virtual ~BSONIter();
+
+    virtual void gcMark( uint32 );
+    virtual FalconData* clone() const;
+
+    void reset();
+
+    bool next();
+    const char* currentKey();
+    Falcon::Item* currentValue();
+
+protected:
+
+    bson            mData;
+    bson_iterator   mIter;
+    int             mCurrentType;
+
+};
+
 
 } // !namespace MongoDB
 } // !namespace Falcon
