@@ -370,7 +370,7 @@ FALCON_FUNC MongoBSON_init( VMachine* vm )
     if ( i_bytes && !i_bytes->isInteger() )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "I" ) );
+                .extra( "[I]" ) );
     }
 
     int bytes = i_bytes ? i_bytes->asInteger() : 0;
