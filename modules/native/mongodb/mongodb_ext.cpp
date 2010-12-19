@@ -327,9 +327,9 @@ FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm )
 
 
 /*#
-    @method insert Connection
+    @method insert MongoDB
     @param ns namespace
-    @param bson BSONObj instance
+    @param bson BSONObj instance, or an array of BSON instances
     @return true on success
  */
 FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
@@ -339,18 +339,28 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
 
     if ( !i_ns || !i_ns->isString()
         || !i_bobj
-        || !( i_bobj->isObject() && i_bobj->asObjectSafe()->derivedFrom( "BSON" ) ) )
+        || !( i_bobj->isArray()
+        || ( i_bobj->isObject() && i_bobj->asObjectSafe()->derivedFrom( "BSON" ) ) ) )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "S,BSON" ) );
+                .extra( "S,BSON|A" ) );
     }
 
     CoreObject* self = vm->self().asObjectSafe();
     MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
-    CoreObject* obj = i_bobj->asObjectSafe();
-    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( obj->getUserData() );
+    bool b;
 
-    bool b = conn->insert( *i_ns->asString(), bobj );
+    if ( i_bobj->isObject() )
+    {
+        CoreObject* obj = i_bobj->asObjectSafe();
+        MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( obj->getUserData() );
+        b = conn->insert( *i_ns->asString(), bobj );
+    }
+    else // is array
+    {
+        AutoCString zNs( *i_ns );
+        b = conn->insert( zNs.c_str(), *i_bobj->asArray() );
+    }
     vm->retval( b );
 }
 

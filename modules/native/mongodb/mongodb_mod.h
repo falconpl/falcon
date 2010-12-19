@@ -84,6 +84,8 @@ public:
                  BSONObj* data );
     bool insert( const String& ns,
                  BSONObj* data );
+    bool insert( const char* ns,
+                 const CoreArray& data );
 
 protected:
 

@@ -268,6 +268,44 @@ Connection::insert( const String& ns,
     return true;
 }
 
+bool
+Connection::insert( const char* ns,
+                    const CoreArray& data )
+{
+    if ( !ns || ns[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    const uint32 sz = data.length();
+    if ( sz == 0 ) // nothing to insert
+        return true;
+
+    // check items are bson objects
+    const Item* it;
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        it = &data.at( i );
+        if ( !it->isObject() || !it->asObjectSafe()->derivedFrom( "BSON" ) )
+            return false;
+    }
+    // insert all
+    BSONObj* bobj;
+    for ( uint32 i=0; i < sz; ++i )
+    {
+        it = &data.at( i );
+        bobj = static_cast<BSONObj*>( it->asObjectSafe()->getUserData() );
+        if ( !insert( ns, bobj ) )
+            return false;
+    }
+    return true;
+}
+
 /*******************************************************************************
     BSONObj class
 *******************************************************************************/
