@@ -21,6 +21,7 @@
 
 /*#
    @module dbi Falcon Database Interface.
+   @after feathers
    @brief Main module for the Falcon DBI module suite.
 
    Falcon Database Interface (DBI) is a common infrastructure that interfaces
@@ -66,14 +67,14 @@
    DRL strings can have driver-specific parameters, but the following parameters are known by
    all the drivers (even if not necessarily used):
 
-   - @b db: The database name or path (depending on the underlying driver model)
-   - @b uid: User ID (user name, account or similar).
-   - @b pwd: Password. To perform a password-less connection, don't provide this parameter. 
+   - **db**: The database name or path (depending on the underlying driver model)
+   - **uid**: User ID (user name, account or similar).
+   - **pwd**: Password. To perform a password-less connection, don't provide this parameter.
              To send an empty password, pass the value as "pwd=;"
-   - @b host: Host where to connect, in case the database engine is network based. When not
+   - **host**: Host where to connect, in case the database engine is network based. When not
               given, it defaults to "nothing", or in other words, the target engine default
               is picked.
-   - @b port: TCP Port where to connect, in case the database engine is network based. It is passed
+   - **port**: TCP Port where to connect, in case the database engine is network based. It is passed
               untraslated to the engine, so it must respect the values that the engine may accept.
               If not given, the default setting for the required engine is used.
 
@@ -314,9 +315,7 @@ FALCON_MODULE_DECL
    
     This is the main database interface connection abstraction,
     which allows to issue SQL statements and inspect
-    the result of SQL queries.
-    
-    @prop affected Count of affected rows in last query, call or perform operation.
+    the result of SQL queries.    
    */
 
    // create the base class DBIHandler for falcon

@@ -21,7 +21,7 @@
 #include "zlib_st.h"
 
 /*#
-   @beginmodule feathers_zlib
+   @beginmodule feathers.zlib
 */
 
 namespace Falcon {

@@ -17,15 +17,16 @@
 #include "oracle_mod.h"
 #include "oracle_ext.h"
 
-/*#
-   @beginmodule oracle
+/*--# << turn on when active
+
+   @beginmodule dbi.oracle
 */
 namespace Falcon
 {
 namespace Ext
 {
 
-/*#
+/*--# << turn on when active
       @class Oracle
       @brief Direct interface to Oracle database.
       @param connect String containing connection parameters.

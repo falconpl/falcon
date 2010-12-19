@@ -31,7 +31,7 @@
 #include "socket_st.h"
 
 /*#
-   @beginmodule feathers_socket
+   @beginmodule feathers.socket
 */
 
 namespace Falcon {

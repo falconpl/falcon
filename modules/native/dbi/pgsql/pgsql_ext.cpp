@@ -19,7 +19,7 @@
 #include "pgsql_mod.h"
 
 /*#
-    @beginmodule pgsql
+    @beginmodule dbi.pgsql
  */
 
 namespace Falcon {

@@ -4,7 +4,7 @@
 # CMake configuration file for module SDL_ttf
 ####################################################################
 
-FALCON_DEFINE_MODULE( SDLGLEXT sdlglext )
+FALCON_DEFINE_MODULE( SDLGLEXT glext )
 
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
@@ -31,4 +31,4 @@ TARGET_LINK_LIBRARIES( ${SDLGLEXT} falcon_engine ${SDL_LIBRARY} ${OPENGL_LIBRARY
 SET_TARGET_PROPERTIES( ${SDLGLEXT}
    PROPERTIES PREFIX "")
 #Install
-FALCON_INSTALL_MODULE( ${SDLGLEXT} )
+FALCON_INSTALL_MODULE2( ${SDLGLEXT} sdl )

@@ -223,7 +223,9 @@ class Entity( content, file, line )
                if self.parent
                   faldoc.error( "Parent already declared for entity \"$name\"", line)
                else
-                  self.parent = faldoc.document.getModule( node.infos["name"] )
+                  inmodule = node.infos["name"]
+                  self.props["inmodule"] = inmodule
+                  //faldoc.verbose( @i"Entity $name has @inmodule $inmodule" )
                end
                node = node.remove()
                hadComplex = true
@@ -290,13 +292,10 @@ class Entity( content, file, line )
                   self.name = "#main"
                   self.type = "main"
                   self.props["title"] = node.infos["title"]
-                  self.parent = module
-                  module.main = self
-                  module.title = node.infos["title"]
+                  self.props["inmodule"] = name
                   // this will turn us in the main for the given module at return.
                end
-
-               self.props["title"] = node.infos["title"]
+               
                node = node.remove()
                hadComplex = true
 
@@ -394,7 +393,7 @@ class Entity( content, file, line )
                preve.declareAs( entity )
             else
                // a real error -- two entities explictly declared with the same name.
-               faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
+               faldoc.error( @i"Entity \"$entity.name\" already declared in \"$self.name\"", entity.firstline )
             end
          end
 

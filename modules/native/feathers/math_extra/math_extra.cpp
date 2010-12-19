@@ -36,11 +36,10 @@
 #include "version.h"
 
 /*#
-   @module feathers_math_extra math_extra
-   @inmodule feathers
+   @module feathers.math_extra Uncommon math functions
    @brief Uncommon math functions
    
-   This module provides some mathematical functions that are not
+   The @b math_extra module provides some mathematical functions that are not
    commonly used in scripting languages.
 */
 

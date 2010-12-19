@@ -147,6 +147,7 @@ class Document from DocModule
       end
       return mods
    end
+
 end
 
 export Document

@@ -31,7 +31,7 @@
   */
 
 /*#
-   @beginmodule feathers_math_extra
+   @beginmodule feathers.math_extra
 */
 
 #include <falcon/engine.h>

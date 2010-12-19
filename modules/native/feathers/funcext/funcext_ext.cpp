@@ -31,7 +31,7 @@
 
 
 /*#
-   @beginmodule feathers_funcext
+   @beginmodule feathers.funcext
 */
 
 namespace Falcon {

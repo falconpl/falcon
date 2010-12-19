@@ -25,11 +25,10 @@
 #include <systhread.h>
 
 /*#
-   @module feathers_threading threading
-   @inmodule feathers
+   @module feathers.threading Multithreading
    @brief Multithreading Support Module.
 
-   This module provides support for real hardware-supported
+   The @b threading provides support for real hardware-supported
    parallel execution of concurrent code under the same
    application hood; this is commonly called "Multithreading".
 
@@ -51,7 +50,7 @@
 */
 
 /*#
-   @beginmodule feathers_threading
+   @beginmodule feathers.threading
 */
 
 /*#
@@ -329,9 +328,6 @@
    interruption request to the target thread.
 */
 
-/*#
-   @beginmodule feathers_threading
-*/
 
 FALCON_MODULE_DECL
 {

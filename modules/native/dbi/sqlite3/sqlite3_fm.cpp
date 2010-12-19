@@ -24,8 +24,11 @@
 Falcon::DBIServiceSQLite3 theSQLite3Service;
 
 /*#
-   @module sqlite3 Sqlite driver module
+   @module dbi.sqlite3 Sqlite driver module
    @brief DBI extension supporting sqlite3 embedded database engine
+
+   Directly importable as @b dbi.sqlite3, it is usually loaded through
+   the @a dbi module.
 */
 
 FALCON_MODULE_DECL

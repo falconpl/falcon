@@ -45,9 +45,8 @@
 #include "hash_ext.inl"
 
 /*#
-    @module feathers_hash hash
+    @module feathers.hash Hashing algorighms
     @brief Various hash and checksum functions
-    @inmodule feathers
 
     This module provides a selection of the most widely used checksum/hash algorithms:
 
@@ -56,7 +55,7 @@
 */
 
 /*#
-    @beginmodule feathers_hash
+    @beginmodule feathers.hash
 */
 
 /*#

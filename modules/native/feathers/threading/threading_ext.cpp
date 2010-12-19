@@ -28,7 +28,7 @@
 #include "threading_st.h"
 
 /*#
-   @beginmodule feathers_threading
+   @beginmodule feathers.threading
 */
 
 namespace Falcon {

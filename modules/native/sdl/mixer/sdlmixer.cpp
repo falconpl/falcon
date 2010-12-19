@@ -69,20 +69,20 @@ SDLMixerModule::~SDLMixerModule()
 }
 }
 /*#
-   @module sdlmixer sdlmixer
+   @module sdl.mixer SDL AUDIO extensions for the Falcon SDL module.
    @brief SDL AUDIO extensions for the Falcon SDL module.
    
    This module encapsulates the sdl_mixer extensions for
    SDL library.
    
-   @beginmodule sdlmixer
+   @beginmodule sdl.mixer
 */
 
 
 FALCON_MODULE_DECL
 {
    Falcon::Module *self = new Falcon::Ext::SDLMixerModule();
-   self->name( "sdlmixer" );
+   self->name( "mixer" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );

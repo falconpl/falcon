@@ -29,11 +29,10 @@
 
 #include "version.h"
 /*#
-   @module feathers_zlib zlib
-   @inmodule feathers
+   @module feathers.zlib ZLib basic binding.
    @brief Compress/uncompress functions (zlib binding).
 
-   This module provides an essential interface to the Zlib compression routines.
+   The @b ZLib module provides an essential interface to the Zlib compression routines.
 
    The greatest part of the functionalites of the module are encapsulated in the
    @a ZLib class, which provided some class-wide methods to compress and uncompress
@@ -55,7 +54,7 @@
    The module declares also a @b ZLibError that is raised in case of
    failure in compression/decompression operations.
 
-   @beginmodule feathers_zlib
+   @beginmodule feathers.zlib
 */
 
 

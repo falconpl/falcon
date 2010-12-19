@@ -41,9 +41,8 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 }
 
 /*#
-   @module feathers_logging logging
+   @module feathers.logging Logging facility
    @brief Multithread enabled logging facility.
-   @inmodule feathers
 
    The @b logging module offers a very advanced facility for logging application
    messages to various device.
@@ -95,6 +94,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    example:
 
    @code
+   load logging
    glog( 2000, "A very low priority level, unlikely to be ever logged" )
    @endcode
 
@@ -106,6 +106,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    language. Creating a complete log message may be an heavy operation by itself;
    for example:
    @code
+      load logging
 
       rendered = ""
       for person in visitors
@@ -133,6 +134,8 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    providing a simple way to prevent logging useless data in runtime:
 
    @code
+      load logging
+      
       // want debug?
       if LOGD <= gminlog()
          // prepare an heavy log...
@@ -169,7 +172,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 */
 
 /*#
-   @beginmodule feathers_logging
+   @beginmodule feathers.logging
 */
 FALCON_MODULE_DECL
 {

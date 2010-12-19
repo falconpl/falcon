@@ -71,7 +71,7 @@ ParaCommands =  .[
                ctx.add(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] ))
                ctx.pushNode(Node("para")) })
 
-   ReRule( '^\s*@module\s+(\w+)\s+(.*)', "para",
+   ReRule( '^\s*@module\s+([\w.]+)\s+(.*)', "para",
            {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@module", ['line' => ctx.row, 'name'=> p0,'title'=> p1 ] )) })
 
    ReRule( '^\s*@prop\s+(\w+)', "para",
@@ -112,7 +112,7 @@ NamingCommands = .[
 ]
 
 ScopeCommands = .[
-   ReRule( '^\s*@beginmodule\s+(\w+).*$', "#stay",
+   ReRule( '^\s*@beginmodule\s+([\w.]+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@beginmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@beginset\s+(\w+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
@@ -121,7 +121,7 @@ ScopeCommands = .[
    ReRule( '^\s*@beginignore\s*$', "#stay",
            {ctx => ctx.add(InfoNode("@beginignore", ['line' => ctx.row, 'name'=>""])) } )
 
-   ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
+   ReRule( '^\s*@inmodule\s+([\w.]+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@inset\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inset", ['line' => ctx.row, 'name'=> p0 ] )) })

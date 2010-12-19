@@ -22,9 +22,8 @@
 */
 
 /*#
-   @module feathers_funcext funcext
+   @module feathers.funcext Functional extensions
    @brief Functional extensions
-   @inmodule feathers
 
    This module provides a set of functions which are useful in the context
    of functional evaluation, although not strctly useful.
@@ -38,7 +37,7 @@
    wilfully accepts to use this set of functions using very short and common
    names, used generally in the functional evaluation context.
 
-   @beginmodule feathers_funcext
+   @beginmodule feathers.funcext
 */
 
 #include <falcon/module.h>

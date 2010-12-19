@@ -19,7 +19,7 @@
 #include "odbc_ext.h"
 
 /*#
-   @beginmodule odbc
+   @beginmodule dbi.odbc
 */
 namespace Falcon
 {

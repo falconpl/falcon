@@ -300,12 +300,14 @@ class FileContext( file, defmod, modName )
 
       if entity.parent
          // nothing else needed
+         faldoc.verbose( i"Entity " + entity.name + i" has parent " + entity.parent.name + ", ignoring." )
          return
       end
 
       // determine the module of the entity.
       if "inmodule" in entity.props
          module = faldoc.document.getModule(entity.props["inmodule"])
+         faldoc.verbose( i"Applying @inmodule " + module.name + i" to entity " + entity.name )
          if not module: return // error already signaled
       elif self.current_module
          module = self.current_module

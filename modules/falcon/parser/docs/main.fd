@@ -1,0 +1,16 @@
+/*#
+   @module parser Generic line-oriented parser and related renderers
+   @brief Generic line-oriented parser and related renderers
+
+   The modules in this tree are providing a common framework
+   to parse line-oriented texts and generate a semantic tree.
+
+   The @a genparser module is the core of this subsystem; other
+   ancillary modules are provided to parse well known formats,
+   as the @l http://www.creole.org creole WIKI text format,
+   or the faldoc text blocks.
+
+   The obtained semantic tree can be used to generate documents
+   in various formats. Some useful generators (i.e. html or docbook)
+   are already provided in this module hierarcy.
+*/

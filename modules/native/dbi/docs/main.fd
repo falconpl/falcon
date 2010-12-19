@@ -8,7 +8,7 @@
    be identical, thus making it possible to change only your connect string
    when a new database server type is to be used.
 
-   @section Setup
+   @section dbi_setup Setup
 
    A minimal setup for this module may be something like the
    following:

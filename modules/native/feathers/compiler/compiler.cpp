@@ -22,9 +22,8 @@
 */
 
 /*#
-   @module feathers_compiler compiler
-   @inmodule feathers
-   @brief Reflexive Compiler Module
+   @module feathers.compiler Reflexive compiler
+   @brief Module implementing a Falcon compiler-in-a-box
    
    Falcon provides a reflexive compiler and module loader that allows scripts to
    load other falcon sources, pre-compiled modules or binary modules.

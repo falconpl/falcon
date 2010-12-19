@@ -19,7 +19,7 @@
 #include "fbsql_ext.h"
 
 /*#
-   @beginmodule fbsql
+   @beginmodule dbi.fbsql
 */
 namespace Falcon
 {

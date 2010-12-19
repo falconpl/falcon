@@ -25,18 +25,13 @@
 #include "mxml_st.h"
 
 /*#
-   @module feathers_mxml MXLM
-   @inmodule feathers
+   @module feathers.mxml  Minimal XML support.
    @brief Minimal XML support.
 
-   This module is a very simple, fast and powerful XML parser
+   The @b mxml module is a very simple, fast and powerful XML parser
    and generator. It's not designed to be DOM compliant;
    W3C DOM compliancy requires some constraints that slows down
-   the implementation and burden the interface. We'll provide
-   a DOM compliant XML parser module in future, but for now
-   we thought that a minimal, efficient and effective interface
-   to handle XML documents was more important (and more helpful
-   for our users) than compliancy with standard interfaces.
+   the implementation and burden the interface.
 
    In this version, the module has one important limitation:
    it is not able to self-detect the encoding of the XML document.
@@ -64,7 +59,7 @@
       load mxml
    @endcode
 
-   @beginmodule feathers_mxml
+   @beginmodule feathers.mxml
 */
 
 FALCON_MODULE_DECL

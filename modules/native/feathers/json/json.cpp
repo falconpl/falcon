@@ -15,9 +15,8 @@
 
 
 /*#
-   @module feathers_json json
+   @module feathers.json JSON support
    @brief JavaScript Object Notation interface.
-   @inmodule feathers
 
    This module exposes functions to dump and load variables
    encoded in JSON format. See @link http://json.org for more details.
@@ -33,7 +32,7 @@
 */
 
 /*#
-   @beginmodule feathers_json
+   @beginmodule feathers.json
 */
 
 #include <falcon/module.h>

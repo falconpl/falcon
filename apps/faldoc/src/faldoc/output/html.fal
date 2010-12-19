@@ -323,10 +323,6 @@ class ModulePage( module ) from IndexPage( module )
    function makeBody( body )
       module = self.content
       body.add( ht.H1().add(ht.Span(module.props["html_toc_id"]).CLASS("toc_number")).add( self.title ) )
-      // add the module definition if we have an explicit module
-      if self.content.title
-         body.add( ht.P().CLASS("moddef").add( i"Module" + " " + module.getID() ) )
-      end
 
       // Submodules may have a description that we shoudl put here.
       if module.main
@@ -380,7 +376,7 @@ class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html
          para = ht.P().CLASS("alpha")
          for name, entity in entlist
             // skip virtual moduls, already detected.
-            if "html_virtual" in entity.props: continue
+            if entity provides isVirtual and entity.isVirtual: continue
             
             para.add( ht.A( _generator.getLinkName( entity ), name) )
             para.add( ", " + @i"$(entity.type)" )
@@ -407,7 +403,7 @@ class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html
    function makeAlpha( module, dict )
       for name, entity in module.members
          // skip virtual moduls, already detected.
-         if "html_virtual" in entity.props: continue
+         if entity provides isVirtual and entity.isVirtual: continue
          if not name: continue
          initial = name[0].upper()
          if initial in dict
@@ -542,25 +538,8 @@ class HTMLGenerator( doctree, conf )
          self.makeTree( ip, self.doc )
 
          // then prepare the tree for the submodules
-         for modname, module in self.doc.getAllModules()
-            // skip virtual modules
-            if not module.main
-               virtual = true
-               for name, elem in module.members
-                  if elem.type != "module"
-                     virtual = false
-                     break
-                  end
-               end
-               faldoc.verbose( "Skipping virtual module " + module.name )
-               module.props["html_virtual"] = true
-               if virtual: continue
-            end
-
-            // do all the rest
-            ip_mod = ModulePage( module )
-            self.makeTree( ip_mod, module )
-            ip.appendChild( ip_mod )
+         for modname, module in self.doc.getModules()
+            self.makeModule( ip, module )
          end
          
          // finally create the appendix pages.
@@ -577,13 +556,40 @@ class HTMLGenerator( doctree, conf )
       faldoc.info( "HTML Generator module ended." )
       faldoc.info( "=" * 60 )
    end
+
+
+   function makeModule( page, module )
+      // skip virtual modules
+      if module.isVirtual
+         faldoc.verbose( @"Skipping virtual module $module.name" )
+         for name, subModule in module.getModules()
+            self.makeModule( page, subModule )
+         end
+         return
+      end
+
+      // Else, create a module page and proceed.
+      faldoc.verbose( @"Making module $module.name" )
+      ip_mod = ModulePage( module )
+      self.makeTree( ip_mod, module )
+      page.appendChild( ip_mod )
+
+      for name, subModule in module.getModules()
+         self.makeModule( ip_mod, subModule )
+      end
+   end
+
    
    function makeTree( topPage, module )
       pages = module.orderPages()
       for page in pages
-         pt = GroupingPage( page )
-         self.makePageTree( pt, page )
-         topPage.appendChild( pt )
+         if page.type == "module"
+            self.makeModule( topPage, page )
+         else
+            pt = GroupingPage( page )
+            self.makePageTree( pt, page )
+            topPage.appendChild( pt )
+         end
       end
 
       entities = module.groupEntities()

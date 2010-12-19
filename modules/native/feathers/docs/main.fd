@@ -1,5 +1,6 @@
 /*#
    @module feathers The Feather Modules
+   @after core
 
    The Falcon Standard Module Suite goes under the name of "feathers".
    

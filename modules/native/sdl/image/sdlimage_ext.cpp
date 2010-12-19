@@ -31,7 +31,7 @@ extern "C" {
    #include <SDL_image.h>
 }
 
-/*# @beginmodule sdlimage */
+/*# @beginmodule sdl.image */
 
 namespace Falcon {
 namespace Ext {

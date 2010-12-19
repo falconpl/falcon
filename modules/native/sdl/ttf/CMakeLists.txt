@@ -4,7 +4,7 @@
 # CMake configuration file for module SDL_ttf
 ####################################################################
 
-FALCON_DEFINE_MODULE( SDLTTF sdlttf )
+FALCON_DEFINE_MODULE( SDLTTF ttf )
 
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
@@ -31,4 +31,4 @@ TARGET_LINK_LIBRARIES( ${SDLTTF} falcon_engine ${SDLTTF_LIBRARY} ${SDL_LIBRARY})
 SET_TARGET_PROPERTIES( ${SDLTTF}
    PROPERTIES PREFIX "")
 #Install
-FALCON_INSTALL_MODULE( ${SDLTTF} )
+FALCON_INSTALL_MODULE2( ${SDLTTF} sdl )

@@ -27,14 +27,15 @@
 #include "sdlimage_ext.h"
 
 /*#
-   @module sdlimage sdlimage
+   @module sdl.image Image loading extensions
+   
    @brief Image loading extensions for the Falcon SDL module.
 
    This module wraps the image loading extensions for SDL. Namely, this module
    is meant to load images from files that can be shown on
    @a SDLSurface objects.
 
-   @beginmodule sdlimage
+   @beginmodule sdl.image
 */
 
 
@@ -42,7 +43,7 @@ FALCON_MODULE_DECL
 {
 
    Falcon::Module *self = new Falcon::Module();
-   self->name ( "sdlimage" );
+   self->name ( "image" );
    self->language( "en_US" );
    self->engineVersion ( FALCON_VERSION_NUM );
    self->version ( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
