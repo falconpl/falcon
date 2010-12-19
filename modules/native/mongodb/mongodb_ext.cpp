@@ -449,53 +449,29 @@ FALCON_FUNC MongoBSON_genOID( VMachine* vm )
  */
 FALCON_FUNC MongoBSON_append( VMachine* vm )
 {
-    Item* i_lst = vm->param( 0 );
+    Item* i_dic = vm->param( 0 );
 
-    if ( !i_lst || !i_lst->isArray() )
+    if ( !i_dic || !i_dic->isDict() )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "A" ) );
+                .extra( "D" ) );
     }
 
+    CoreDict* dic = i_dic->asDict();
     CoreObject* self = vm->self().asObjectSafe();
-    CoreArray* arr = i_lst->asArray();
-    const uint32 sz = arr->length();
-    if ( sz == 0 ) // nothing to append
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    const int ret = bobj->appendMany( *dic );
+    if ( ret == 1 ) // bad key
     {
-        vm->retval( self );
-        return;
-    }
-
-    // we want to check data before updating bson buffer
-    Item* k, *v;
-    for ( uint32 i=0; i < sz; ++i )
-    {
-        k = &arr->at( i++ );
-        v = i == sz ? 0 : &arr->at( i );
-        // check key
-        if ( !k->isString() )
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                     .extra( "S" ) );
-        // check value
-        if ( v && !MongoDB::BSONObj::itemIsSupported( *v ) )
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+    }
+    else
+    if ( ret == 2 ) // bad value
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                     .extra( FAL_STR( _err_inv_item ) ) );
     }
-
-    // really appending data
-    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
-
-    for ( uint32 i=0; i < sz; ++i )
-    {
-        k = &arr->at( i++ );
-        v = i == sz ? 0 : &arr->at( i );
-        AutoCString key( *k );
-        if ( v == 0 ) // assume null value
-            bobj->append( key.c_str() );
-        else
-            bobj->append( key.c_str(), *v, 0, false ); // not checking
-    }
-
     vm->retval( self );
 }
 

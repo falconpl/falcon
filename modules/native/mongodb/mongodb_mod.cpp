@@ -526,6 +526,39 @@ BSONObj::append( const char* nm,
     }
 }
 
+int
+BSONObj::appendMany( const CoreDict& dict )
+{
+    if ( dict.length() == 0 ) // nothing to append
+        return 0;
+
+    // we want to check data before updating bson buffer
+    Iterator iter( (Sequence*) &dict.items() );
+    Item* k, *v;
+
+    while ( iter.hasCurrent() )
+    {
+        k = &iter.getCurrentKey();
+        if ( !k->isString() ) // bad key
+            return 1;
+        v = &iter.getCurrent();
+        if ( !itemIsSupported( *v ) ) // bad value
+            return 2;
+        iter.next();
+    }
+    // really appending data
+    iter.goTop();
+    while ( iter.hasCurrent() )
+    {
+        k = &iter.getCurrentKey();
+        v = &iter.getCurrent();
+        AutoCString key( *k );
+        append( key.c_str(), *v, 0, false ); // not checking
+        iter.next();
+    }
+    return 0;
+}
+
 bson*
 BSONObj::finalize()
 {

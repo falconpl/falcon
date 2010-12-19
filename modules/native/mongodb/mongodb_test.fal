@@ -63,20 +63,19 @@ inspect( obj )
 // append something
 > "Creating bson object!"
 obj.genOID().append([
-    "key1", 3,
-    "key2", 1.1,
-    "key3", true,
-    "key4", nil,
-    "key5", "hello",
-    "key6", [ 0,1,2 ],
-    "key7", [ "a"=>0, "b"=>1 ]
+    "key1" => 3,
+    "key2" => 1.1,
+    "key3" => true,
+    "key4" => nil,
+    "key5" => "hello",
+    "key6" => [ 0,1,2 ],
+    "key7" => [ "a"=>0, "b"=>1 ]
     ])
 
 // Iterate over obj
 iter = mongo.BSONIter( obj )
-i = 0
 while iter.next()
-    > toString(++i) + ": " + iter.key() + " => " + iter.value()
+    > iter.key() + " => " + iter.value()
 end
 
 // insert object

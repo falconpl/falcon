@@ -139,6 +139,8 @@ public:
                  bson_buffer* buf=0,
                  const bool doCheck=true ); // unless you know what you're doing
 
+    int appendMany( const CoreDict& dict );
+
     // Return true if this item can be appended safely.
     static bool itemIsSupported( const Falcon::Item& item );
     // Return true if this array content is supported by our driver.
