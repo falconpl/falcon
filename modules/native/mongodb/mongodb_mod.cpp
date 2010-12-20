@@ -746,38 +746,53 @@ BSONIter::currentValue()
     if ( mCurrentType <= 0 )
         return 0;
 
+    return makeItem( (bson_type) mCurrentType, &mIter );
+}
+
+Falcon::Item*
+BSONIter::makeItem( const bson_type tp,
+                    bson_iterator* iter )
+{
     Item* it = 0;
-    //printf("tp=%d\n",mCurrentType);
-    switch ( mCurrentType )
+
+    switch ( tp )
     {
     case bson_double:
-        it = new Item( bson_iterator_double_raw( &mIter ) );
+        it = new Item( bson_iterator_double_raw( iter ) );
         break;
     case bson_string:
-        it = new Item( bson_iterator_string( &mIter ) );
+        it = new Item( bson_iterator_string( iter ) );
         break;
     case bson_object:
-        // dict...
+    {
+        bson_iterator iter2;
+        bson_iterator_subiterator( iter, &iter2 );
+        it = makeObject( &iter2 );
         break;
+    }
     case bson_array:
-        // array...
+    {
+        bson_iterator iter2;
+        bson_iterator_subiterator( iter, &iter2 );
+        it = makeArray( &iter2 );
         break;
+    }
     case bson_bindata:
+        //...
         break;
     case bson_undefined:
-        it = new Item( bson_iterator_value( &mIter ) );
+        it = new Item( bson_iterator_value( iter ) );
         break;
     case bson_oid:
     {
         char id[25];
-        bson_oid_to_string( bson_iterator_oid( &mIter ), id );
+        bson_oid_to_string( bson_iterator_oid( iter ), id );
         it = new Item( id );
         break;
     }
     case bson_bool:
-        //it = new Item( (bool) bson_iterator_bool_raw( &mIter ) );
         it = new Item();
-        it->setBoolean( (bool) bson_iterator_bool_raw( &mIter ) );
+        it->setBoolean( (bool) bson_iterator_bool_raw( iter ) );
         break;
     case bson_date:
         //...
@@ -792,26 +807,57 @@ BSONIter::currentValue()
         //...
         break;
     case bson_symbol:
-        it = new Item( bson_iterator_string( &mIter ) );
+        it = new Item( bson_iterator_string( iter ) );
         break;
     case bson_codewscope:
-        it = new Item( bson_iterator_code( &mIter ) );
+        it = new Item( bson_iterator_code( iter ) );
         break;
     case bson_int:
-        it = new Item( bson_iterator_int_raw( &mIter ) );
+        it = new Item( bson_iterator_int_raw( iter ) );
         break;
     case bson_timestamp:
         //...
         break;
     case bson_long:
-        it = new Item( bson_iterator_long_raw( &mIter ) );
+        it = new Item( bson_iterator_long_raw( iter ) );
         break;
     case bson_eoo:
     default:
         return it;
     }
+
     return it;
 }
+
+Falcon::Item*
+BSONIter::makeArray( bson_iterator* iter )
+{
+    CoreArray* arr = new CoreArray;
+
+    while ( bson_iterator_next( iter ) != bson_eoo )
+    {
+        Item* v = makeItem( bson_iterator_type( iter ), iter );
+        arr->append( *v );
+    }
+
+    return new Item( arr );
+}
+
+Falcon::Item*
+BSONIter::makeObject( bson_iterator* iter )
+{
+    CoreDict* dict = new CoreDict( new LinearDict );
+
+    while( bson_iterator_next( iter ) != bson_eoo )
+    {
+        Item* k = new Item( bson_iterator_key( iter ) );
+        Item* v = makeItem( bson_iterator_type( iter ), iter );
+        dict->put( *k, *v );
+    }
+
+    return new Item( dict );
+}
+
 
 } // !namespace MongoDB
 } // !namespace Falcon

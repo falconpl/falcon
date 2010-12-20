@@ -370,28 +370,47 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
 
 /*#
     @class BSON
-    @brief Create an empty BSON object.
-    @optparam bytes Reserve some space for the internal buffer.
+    @brief Create a BSON object.
+    @optparam param An integer (reserved space for internal buffer) or a dict to append.
+
+    If no dict is given, an "empty" bson object is created.
  */
 FALCON_FUNC MongoBSON_init( VMachine* vm )
 {
-    Item* i_bytes = vm->param( 0 );
+    Item* i_parm = vm->param( 0 );
 
-    if ( i_bytes && !i_bytes->isInteger() )
+    if ( i_parm && !( i_parm->isInteger() || i_parm->isDict() ) )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "[I]" ) );
+                .extra( "[I|D]" ) );
     }
 
-    int bytes = i_bytes ? i_bytes->asInteger() : 0;
-    Falcon::MongoDB::BSONObj* bobj;
     CoreObject* self = vm->self().asObjectSafe();
+    Falcon::MongoDB::BSONObj* bobj;
+    const int bytes = i_parm && i_parm->isInteger() ? i_parm->asInteger() : 0;
 
     if ( !theMongoDBService.createBSONObj( bytes, (FalconData**)&bobj ) )
     {
         throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_BSON, __LINE__ )
                                 .desc( FAL_STR( _err_create_bsonobj ) ) );
     }
+
+    if ( i_parm && i_parm->isDict() ) // append the data
+    {
+        const int ret = bobj->appendMany( *i_parm->asDict() );
+        if ( ret == 1 ) // bad key
+        {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                        .extra( "S" ) );
+        }
+        else
+        if ( ret == 2 ) // bad value
+        {
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                        .extra( FAL_STR( _err_inv_item ) ) );
+        }
+    }
+
     self->setUserData( bobj );
     vm->retval( self );
 }
@@ -411,7 +430,7 @@ FALCON_FUNC MongoBSON_reset( VMachine* vm )
                 .extra( "[I]" ) );
     }
 
-    int bytes = i_bytes ? i_bytes->asInteger() : 0;
+    const int bytes = i_bytes ? i_bytes->asInteger() : 0;
     CoreObject* self = vm->self().asObjectSafe();
     MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
     bobj->reset( bytes );
@@ -453,7 +472,7 @@ FALCON_FUNC MongoBSON_genOID( VMachine* vm )
 
 /*#
     @method append BSON
-    @param dict A dict (with keys that must be strings)
+    @param dict A dict (with keys that must be strings...)
     @brief Append some data to the BSON object
     @return self
 
@@ -507,6 +526,10 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
             doSomething( iter.key(), iter.value() )
         end
     @endcode
+
+    The iterator copies data from given BSON object, and is completely
+    independant and cannot be changed or updated. (This is of course suboptimal
+    and could be optimized later.)
  */
 FALCON_FUNC MongoBSONIter_init( VMachine* vm )
 {

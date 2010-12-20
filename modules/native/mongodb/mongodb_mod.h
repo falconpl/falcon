@@ -190,6 +190,11 @@ public:
 
 protected:
 
+    static Falcon::Item* makeItem( const bson_type tp,
+                                   bson_iterator* iter );
+    static Falcon::Item* makeArray( bson_iterator* iter );
+    static Falcon::Item* makeObject( bson_iterator* iter );
+
     bson            mData;
     bson_iterator   mIter;
     int             mCurrentType;

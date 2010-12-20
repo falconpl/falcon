@@ -14,6 +14,14 @@
    @brief Client module for the MongoDB database ( http://www.mongodb.org/ )
 */
 
+/*
+    TODO LIST...
+
+    - handling error better
+    - Optimize BSONIter so that they dont copy data (?)
+    - think about what to put in the service
+    - JSON interactions
+ */
 
 Falcon::MongoDBService theMongoDBService;
 
