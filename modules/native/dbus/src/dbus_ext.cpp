@@ -149,12 +149,6 @@ public:
 // The following is a faldoc block for the function
 /*#
    @class DBus
-   @brief Generic interface to the DBUS system.
-
-*/
-
-/*#
-   @init DBus
    @brief Opens the connection to the DBUS system.
    @raise DBusError in case of failure.
 */
@@ -227,13 +221,13 @@ static bool s_extract_return( Item &target, DBusMessage *msg )
       // no parameters
       return false;
    }
-   
+
    CoreArray *arr = new CoreArray;
    Item item;
 
    // read the parameters
    do {
-      
+
       switch( dbus_message_iter_get_arg_type(&args) )
       {
          case DBUS_TYPE_OBJECT_PATH:
@@ -316,7 +310,7 @@ static bool s_extract_return( Item &target, DBusMessage *msg )
       arr->append( item );
 
    } while( dbus_message_iter_next( &args ) );
-   
+
    target = arr;
    return true;
 }
@@ -524,7 +518,7 @@ FALCON_FUNC  DBus_dispatch( VMachine *vm )
       new ParamError( ErrorParam( e_inv_params ).
          extra( "[N]" ) );
    }
-   
+
    int to = ( i_timeout ) ? ( i_timeout->forceNumeric() * 1000.0 ) : 0;
 
    // get the connection
@@ -535,14 +529,19 @@ FALCON_FUNC  DBus_dispatch( VMachine *vm )
 
 /*#
    @method popMessage DBus
+   @brief Gets the next message waiting to be unqueued.
+   @return nil if no message is currently waiting, @a DBusMessage if a message was waiting.
+
+   If existing the message is extracted from the wait queue and encapsulated in a
+   @a DBusMessage entity.
 */
 FALCON_FUNC  DBus_popMessage( VMachine *vm )
 {
    Mod::DBusWrapper *wp = static_cast< Mod::DBusWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg;
-   
+
    msg = dbus_connection_pop_message( wp->conn() );
-   
+
    if ( msg == 0 )
    {
       vm->retnil();
@@ -557,8 +556,8 @@ FALCON_FUNC  DBus_popMessage( VMachine *vm )
       vm->retval( obj );
    }
 }
-   
-   
+
+
 
 /*#
    @method addMatch DBus
@@ -658,27 +657,27 @@ FALCON_FUNC  DBus_requestName( VMachine *vm )
 {
    Item *i_name  = vm->param( 0 );
    Item *i_flags = vm->param( 1 );
-   
+
    if ( i_name  == 0 || ! i_name->isString() ||
         i_flags == 0 || ! i_flags->isInteger() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "[S,N]" ) );
    }
- 
+
    Mod::DBusWrapper *wp = static_cast< Mod::DBusWrapper* >( vm->self().asObject()->getUserData() );
    AutoCString name( i_name->asString() );
    int flags = i_flags->asInteger();
-   
+
    int res = dbus_bus_request_name( wp->conn(), name.c_str(), flags, wp->error() );
-   
+
    if ( dbus_error_is_set( wp->error() ) )
    {
       throw new Mod::f_DBusError( ErrorParam( FALCON_ERROR_DBUS_BASE, __LINE__ )
          .desc( wp->error()->name )
          .extra( wp->error()->message ) );
    }
-   
+
    vm->retval( res );
 }
 
@@ -687,7 +686,7 @@ static DBusHandlerResult s_dbusHandler( DBusConnection *conn, DBusMessage *msg, 
    Mod::DBusHandlerData *data = static_cast< Mod::DBusHandlerData* >( userData );
    AutoCString name( data->name );
    AutoCString interface( data->interface );
-   
+
    if (( data->isSignal && dbus_message_is_signal( msg, interface.c_str(), name.c_str() ) ) ||
          dbus_message_is_method_call( msg, interface.c_str(), name.c_str() ) )
    {
@@ -697,10 +696,10 @@ static DBusHandlerResult s_dbusHandler( DBusConnection *conn, DBusMessage *msg, 
       data->vm->callItem( data->handler, 1 );
       return DBUS_HANDLER_RESULT_HANDLED;
    }
-   
+
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
-   
+
 
 FALCON_FUNC  DBus_addFilter( VMachine *vm )
 {
@@ -708,7 +707,7 @@ FALCON_FUNC  DBus_addFilter( VMachine *vm )
    Item *i_name      = vm->param( 1 );
    Item *i_handler   = vm->param( 2 );
    Item *i_isSignal  = vm->param( 3 );
-   
+
    if ( i_interface == 0 || ! i_interface->isString() ||
         i_name == 0      || ! i_name->isString() ||
         i_handler == 0    || ! i_handler->isFunction() ||
@@ -718,16 +717,16 @@ FALCON_FUNC  DBus_addFilter( VMachine *vm )
          .extra( "[S,S,C,[B]]" )
       );
    }
-   
+
    Mod::DBusWrapper *wp = static_cast< Mod::DBusWrapper* >( vm->self().asObject()->getUserData() );
    Mod::DBusHandlerData *data = static_cast< Mod::DBusHandlerData* >(memAlloc( sizeof(Mod::DBusHandlerData ) ));
-   
+
    data->vm = vm;
    data->interface = i_interface->asString();
    data->name = i_name->asString();
    data->handler = i_handler->asFunction();
    data->isSignal = (i_isSignal) ? i_isSignal->isTrue() : true;
-   
+
    dbus_connection_add_filter( wp->conn(), s_dbusHandler, (void *)data, memFree );
 }
 
@@ -886,7 +885,7 @@ FALCON_FUNC  DBusMessage_getDestination( VMachine *vm )
 {
    Mod::DBusMessageWrapper *msgwp = static_cast< Mod::DBusMessageWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg = msgwp->msg();
-   
+
    const char *destination = dbus_message_get_destination( msg );
    if( destination )
       vm->retval( new CoreString( destination ) );
@@ -896,7 +895,7 @@ FALCON_FUNC  DBusMessage_getSender( VMachine *vm )
 {
    Mod::DBusMessageWrapper *msgwp = static_cast< Mod::DBusMessageWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg = msgwp->msg();
-   
+
    const char *sender = dbus_message_get_sender( msg );
    if( sender )
       vm->retval( new CoreString( sender ) );
@@ -906,7 +905,7 @@ FALCON_FUNC  DBusMessage_getPath( VMachine *vm )
 {
    Mod::DBusMessageWrapper *msgwp = static_cast< Mod::DBusMessageWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg = msgwp->msg();
-   
+
    const char *path = dbus_message_get_path( msg );
    if( path )
       vm->retval( new CoreString( path ) );
@@ -916,7 +915,7 @@ FALCON_FUNC  DBusMessage_getInterface( VMachine *vm )
 {
    Mod::DBusMessageWrapper *msgwp = static_cast< Mod::DBusMessageWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg = msgwp->msg();
-   
+
    const char *interface = dbus_message_get_interface( msg );
    if( interface )
       vm->retval( new CoreString( interface ) );
@@ -926,7 +925,7 @@ FALCON_FUNC  DBusMessage_getMember( VMachine *vm )
 {
    Mod::DBusMessageWrapper *msgwp = static_cast< Mod::DBusMessageWrapper* >( vm->self().asObject()->getUserData() );
    DBusMessage *msg = msgwp->msg();
-   
+
    const char *member = dbus_message_get_member( msg );
    if( member )
       vm->retval( new CoreString( member ) );
@@ -939,7 +938,7 @@ FALCON_FUNC  DBusMessage_getArgs( VMachine *vm )
    if ( s_extract_return( target, msg ) )
       vm->retval( target );
 }
-   
+
 //======================================================
 // DBusError error
 //======================================================
@@ -954,12 +953,6 @@ FALCON_FUNC  DBusMessage_getArgs( VMachine *vm )
    @brief DBus specific error.
 
    Inherited class from Error to distinguish from a standard Falcon error.
-*/
-
-/*#
-   @init DBusError
-   @brief Error raised by DBus functions.
-   See Core Error class description.
 */
 FALCON_FUNC DBusError_init( VMachine *vm )
 {

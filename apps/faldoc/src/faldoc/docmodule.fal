@@ -33,7 +33,7 @@ load .link
    in the documentation, as "web" DocModule elements.
 
    A DocModule may also considered a separate section of the documentation, with its own
-   pages (chapters), functions, groups and funcsets. 
+   pages (chapters), functions, groups and funcsets.
 */
 class DocModule( name ) from Entity
    //# Title of the module
@@ -47,12 +47,12 @@ class DocModule( name ) from Entity
 
    //# is this a "virtual module" -- a module without contents except for other modules?
    isVirtual = true
-   
+
    init
       self.name = name ? name : "Main module"
       self.type = "module"
    end
-   
+
    //# Gets an entity from this module (possibly undefined)
    function getEntity( name, type )
       if name notin self.members
@@ -95,16 +95,42 @@ class DocModule( name ) from Entity
 
       // ok, now see if we must reorder something
       allpages = pages + groups + funsets + modules
-      ppage = 1
+      /*for entity in allpages
+         forfirst: >> "Entities in ", self.name, ": "
+         >> entity.name
+         formiddle:>> ", "
+         forlast: >"."
+      end
+      */
+
+      ppage = 0
       l = allpages.len()
       while ppage < l
          entity = allpages[ppage]
-         // adjust @after main
          after = entity.after
-         if after == "main": after = "#main"
+         // sanitize main
+         if after== "#main": after = "main"
+
+         // adjust @after main
+         if after == "main"
+            // ppage starts from 1, while main a virtual page
+            pp1 = 0
+            // prevent endless loop if more than one after main is found
+            while allpages[pp1].after == "main" and pp1 < ppage
+               ++pp1
+            end
+
+            if pp1 < ppage
+               allpages.remove( ppage )
+               allpages[pp1:pp1] = entity
+            end
+
+            ++ppage
+            continue
+         end
 
          // should we reorder it?
-         if after and allpages[ppage-1].name != after
+         if after and (ppage == 0 or allpages[ppage-1].name != after)
             // get the entity
             if after notin self.members
                faldoc.error( @i"Entity $(entity.name) should be after $(after), but \"$(after)\" is not in module $(self.name)",
@@ -117,7 +143,7 @@ class DocModule( name ) from Entity
             // but where is this entity?
             ptgt = allpages.find( etgt )
             if ptgt < 0
-               faldoc.error( @i"Entity should be after $(entity.after), but that is not a meta-page", entity.firstline )
+               faldoc.error( @i"Entity $(entity.name) should be after $(entity.after), but that is not a meta-page", entity.firstline )
                ppage++
                continue
             end
@@ -155,7 +181,7 @@ class DocModule( name ) from Entity
                   line = 0
                   file = self.file
                end
-               
+
                faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined in $(self.name)", line, file )
             end
          end
@@ -163,7 +189,7 @@ class DocModule( name ) from Entity
    end
 
    /*# Adds a member to this module.
-   
+
        If the member is a main page, it is assigned to the text and
        title of this module.
 
@@ -190,6 +216,22 @@ class DocModule( name ) from Entity
       for name, m in self.members
          if m.type == "module" and (alsoAfter or not m.after)
             mods[ m.getID() ] = m
+         end
+      end
+      return mods
+   end
+
+   //# Recursively gets all the modules stored in the document.
+   function getAllModules()
+      return self._getAllModules( self )
+   end
+
+   function _getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self._getAllModules( m )
          end
       end
       return mods

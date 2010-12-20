@@ -5,7 +5,7 @@
  * ODBC Falcon extension interface
  * -------------------------------------------------------------------
  * Author: Giancarlo Niccolai
- * Begin: 
+ * Begin:
  *
  * -------------------------------------------------------------------
  * (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
@@ -37,25 +37,16 @@ namespace Ext
    to limit the usage of prepared statements, and rely on @b query,
    which performs safer verbatim parameter expansion.
 
-   
+   The @b connect string is directly passed to the ODBC driver
+   for connection, so it must respect ODBC standards and specific
+   extensions of the target database.
+
    Other than the base DBI class options, this class supports
    the following options:
 
    - bigint (on/off): By default, the ODBC drivers can't deal
      with int64 (64 bit integers) data. Setting this on, it is
      possible to send int64 data through prepared statements.
-*/
-
-
-/*#
-   @class ODBC
-   @brief Connects to a ODBC database.
-   @param params ODBC Connection parameters.
-   @optparam options Default statement options for this connection.
-
-   The @b connect string is directly passed to the ODBC driver
-   for connection, so it must respect ODBC standards and specific
-   extensions of the target database.
 */
 
 FALCON_FUNC ODBC_init( VMachine *vm )

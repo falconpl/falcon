@@ -212,9 +212,9 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    @brief Returns the inner data of a string.
    @param string The string to be placed in a foreign structure.
    @return The memory pointer to the string data.
-   
+
    This function returns the inner data of a Falcon string to be used in
-   managed structures. As such, it is quite dangerous, and should be used 
+   managed structures. As such, it is quite dangerous, and should be used
    only when the remote functions is taking this data as read-only.
 */
 
@@ -227,7 +227,7 @@ FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
          .extra( "S" ) );
       return;
    }
-   
+
    vm->retval( (int64) i_str->asString()->getRawStorage() );
 }
 
@@ -236,14 +236,14 @@ FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
    @brief Returns the inner data of a memory buffer.
    @param mb The memory buffer to be placed in the foreign structure.
    @return The memory pointer to the memory buffer data.
-   
+
    This function returns the inner data of a Falcon MemBuf to be used in
    managed structures. It can be passed to any remote function, as long
    as the remote function doesn't relocate the structure, or tries to write
    more bytes than the structure size.
-   
+
    Memory Buffers passed in this way can receive string data placed in deep
-   structures by the remote library and then turned into string via 
+   structures by the remote library and then turned into string via
    @b strFromMemBuf function in the core module. Use @a limitMembuf or
    @a limitMembufW prior to create a string from a memory buffer filled
    in this way.
@@ -257,7 +257,7 @@ FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm )
          .extra( "M" ) );
       return;
    }
-   
+
    vm->retval( (int64) i_str->asMemBuf()->data() );
 }
 
@@ -267,7 +267,7 @@ FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm )
    @param ptr The raw memory pointer.
    @param size The size of the memory buffer.
    @return A memory buffer pointing to the memory data.
-   
+
    This function returns a memory buffer that can be used to access the
    given data area, byte by byte. The memory buffer doesn't dispose
    of the memory when it is destroyed.
@@ -276,13 +276,13 @@ FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm )
 {
    Item* i_ptr = vm->param(0);
    Item* i_size = vm->param(1);
-   
+
    if ( i_ptr == 0 || ! i_ptr->isInteger() ||  i_size == 0 || ! i_size->isInteger() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M,I" ) );
    }
-   
+
    vm->retval( new MemBuf_1( (byte*) i_ptr->asInteger(), (uint32) i_size->asInteger(), 0 )  );
 }
 
@@ -293,7 +293,7 @@ FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm )
    @param offset Offset in bytes of the retreived data.
    @param size Size in bytes of the retreived data.
    @return An integer containing the binary value of the data (in local endianity).
-   
+
    Size can be either 1, 2, 4 or 8.
    If @b struct is a MemBuf, offset must be smaller than the size of the MemBuf.
 */
@@ -302,15 +302,15 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
    Item* i_struct = vm->param(0);
    Item* i_offset = vm->param(1);
    Item* i_size = vm->param(2);
-   
+
    if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
-      || i_offset == 0 || ! i_offset->isInteger() 
+      || i_offset == 0 || ! i_offset->isInteger()
       || i_size == 0 || ! i_size->isInteger() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,I" ) );
    }
-   
+
    byte *data;
    uint32 offset = (uint32) i_offset->asInteger();
 
@@ -323,12 +323,12 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
       if ( offset > i_struct->asMemBuf()->size() ) {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
       }
-      
+
       data = i_struct->asMemBuf()->data();
    }
-   
+
    int64 ret;
-   
+
    switch( i_size->asInteger() )
    {
       case 1: ret = data[offset]; break;
@@ -344,13 +344,13 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
 
 /*#
    @function setStruct
-   
+
    @brief Sets raw data into a structure.
    @param struct Memory buffer or raw pointer pointing to the structure.
    @param offset Offset in bytes of the set data.
    @param size Size in bytes of the set data.
    @param data The data to be set (numeric value)
-   
+
    Size can be either 1, 2, 4 or 8.
    If @b struct is a MemBuf, offset must be smaller than the size of the MemBuf.
    Data must be an integer; it should be always > 0 except when size is 8.
@@ -361,16 +361,16 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
    Item* i_offset = vm->param(1);
    Item* i_size = vm->param(2);
    Item* i_data = vm->param(3);
-   
+
    if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
-      || i_offset == 0 || ! i_offset->isInteger() 
+      || i_offset == 0 || ! i_offset->isInteger()
       || i_size == 0 || ! i_size->isInteger()
       || i_data == 0 || ! i_data->isInteger() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,I,I" ) );
    }
-   
+
    byte *data;
    uint32 offset = (uint32) i_offset->asInteger();
 
@@ -383,12 +383,12 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
       if ( offset > i_struct->asMemBuf()->size() ) {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )  );
       }
-      
+
       data = i_struct->asMemBuf()->data();
    }
-   
+
    int64 ret = i_data->asInteger();
-   
+
    switch( i_size->asInteger() )
    {
       case 1: data[offset] = (byte) ret; break;
@@ -414,18 +414,18 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
 {
    Item* i_struct = vm->param(0);
    Item* i_value = vm->param(1);
-   
+
    if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
       || i_value == 0 || ! i_value->isInteger() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,[I]" ) );
    }
-   
+
    uint32 size;
    byte *data;
-   
-   if ( i_struct->isMemBuf() ) 
+
+   if ( i_struct->isMemBuf() )
    {
       data = i_struct->asMemBuf()->data();
       Item* i_size = vm->param(2);
@@ -436,7 +436,7 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                .extra( "M|I,I,[I]" ) );
          }
-         
+
          size = (uint32) i_size->asInteger();
       }
       else {
@@ -446,17 +446,17 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
    else
    {
       Item* i_size = vm->param(2);
-      
+
       if ( i_size == 0 || ! i_size->isInteger() )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "M|I,I,[I]" ) );
       }
-      
+
       data = (byte*) i_struct->asInteger();
       size = (uint32) i_size->asInteger();
    }
-   
+
    memset( data, (int) i_value->asInteger(), size );
 }
 
@@ -519,20 +519,15 @@ FALCON_FUNC  dynExt( ::Falcon::VMachine *vm )
 
 /*#
    @class DynLib
-   @brief Dynamic Loader support.
-
-   This class allows to load functions from dynamic link library or
-   shared objects.
-*/
-
-/*#
-   @init DynLib
    @brief Creates a reference to a dynamic library.
    @param path The path from which to load the library (local system).
    @raise DynLibError on load failed.
 
+   This class allows to load functions from dynamic link library or
+   shared objects.
+
    On error, a more specific error description is returned in the extra
-   parameter of the raised error.
+   parameter of the raised @a DynLibError instance.
 */
 
 FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
@@ -809,7 +804,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    int32 paramCount = vm->paramCount();
    FunctionDef *fa = dyncast<FunctionDef *>(vm->self().asObject()->getFalconData());
    ParamList& params = fa->params();
-   
+
    if( vm->paramCount() != params.size() )
    {
       if( ! params.isVaradic()
@@ -996,12 +991,6 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
    @brief DynLib specific error.
 
    Inherited class from Error to distinguish from a standard Falcon error.
-*/
-
-/*#
-   @init DynLibError
-   @brief Error generated by dynlib.
-   See Core Error class description.
 */
 FALCON_FUNC DynLibError_init( VMachine *vm )
 {

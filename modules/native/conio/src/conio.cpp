@@ -43,12 +43,11 @@
 Falcon::Srv::ConsoleSrv *console_service;
 
 /*#
-   @module conio conio
+   @module conio Console (terminal) I/O support.
    @brief Console (terminal) I/O support.
-   @inmodule feathers
 
    @note Currently this module is under development and not released.
-   
+
    This module provides an interface to a generic terminal/character oriented
    device.
 

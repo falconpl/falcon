@@ -30,11 +30,6 @@ namespace Ext {
     @brief Direct interface to Postgre SQL database.
     @param connect String containing connection parameters.
     @optparam options String containing options
- */
-
-/*#
-   @init PgSQL
-   @brief Connects to a PgSQL database.
 
    The @b connect string is directly passed to the low level postgre driver.
  */
@@ -73,6 +68,7 @@ FALCON_FUNC PgSQL_init( VMachine* vm )
 
 /*#
     @method prepareNamed PgSQL
+    @brief Prepares a PgSQL specific "named statement".
     @param name Name for the prepared statement
     @param query The query to prepare
  */
@@ -101,7 +97,6 @@ FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
     oth->setUserData( trans );
     vm->retval( oth );
 }
-
 
 } /* namespace Ext */
 } /* namespace Falcon */

@@ -42,7 +42,6 @@
 
 #include <falcon/module.h>
 #include "funcext_ext.h"
-//#include "funcext_st.h"
 
 #include "version.h"
 
@@ -59,7 +58,6 @@ FALCON_MODULE_DECL
 
    //====================================
    // Message setting
-   //#include "funcext_st.h"
 
    self->addExtFunc( "at", Falcon::Ext::fe_at )->
       addParam("item")->addParam("access")->addParam("value");
