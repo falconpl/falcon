@@ -600,7 +600,7 @@ FALCON_FUNC SpinButton::get_numeric( VMARG )
 
 /*#
     @method get_range GtkSpinButton
-    @briefGets the range allowed for spin_button.
+    @brief Gets the range allowed for spin_button.
     @return An array [ min range, max range ]
 
     See gtk_spin_button_set_range().
@@ -665,7 +665,7 @@ FALCON_FUNC SpinButton::get_value( VMARG )
 
 /*#
     @method get_wrap GtkSpinButton
-    @briefReturns whether the spin button's value wraps around to the opposite limit when the upper or lower limit of the range is exceeded. See gtk_spin_button_set_wrap().
+    @brief Returns whether the spin button's value wraps around to the opposite limit when the upper or lower limit of the range is exceeded. See gtk_spin_button_set_wrap().
     @return TRUE if the spin button wraps around
 */
 FALCON_FUNC SpinButton::get_wrap( VMARG )

@@ -271,7 +271,7 @@ class FileContext( file, defmod, modName )
             if self.current_set == nil
                faldoc.warn( i"Parsing @endset at but no set open", line)
             end
-            self.current_group = nil
+            self.current_set = nil
 
          case "@endmodule"
             if self.modName != nil

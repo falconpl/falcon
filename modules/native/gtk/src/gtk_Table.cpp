@@ -127,7 +127,7 @@ FALCON_FUNC Table::init( VMARG )
     @method resize GtkTable
     @brief Resizes the table.
     @param rows The new number of rows.
-    @params columns The new number of columns.
+    @param columns The new number of columns.
 
     If you need to change a table's size after it has been created, this function
     allows you to do so.

@@ -53,7 +53,6 @@ namespace Ext {
    @optparam flags Initialization params.
    @raise ConioError on initialization failed.
 
-   @todo describe flags.
    Initializes the screen.
 */
 
@@ -127,11 +126,6 @@ FALCON_FUNC  closescr( ::Falcon::VMachine *vm )
    @from Error code, description, extra
 
    See the Error class in the core module.
-*/
-
-/*#
-   @init ConioError
-   @brief Initializes the process error.
 */
 FALCON_FUNC  ConioError_init ( ::Falcon::VMachine *vm )
 {
