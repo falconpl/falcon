@@ -597,6 +597,17 @@ BSONObj::appendMany( const CoreDict& dict )
     return 0;
 }
 
+int
+BSONObj::createFromDict( const CoreDict& dict,
+                         BSONObj** bobj )
+{
+    fassert( bobj );
+    *bobj = new BSONObj;
+    if ( !*bobj )
+        return -1;
+    return (*bobj)->appendMany( dict );
+}
+
 bson*
 BSONObj::finalize()
 {
@@ -623,6 +634,26 @@ BSONObj::reset( const int bytesNeeded )
     bson_destroy( &mObj );
     bson_empty( &mObj );
     if ( !mFinalized ) mFinalized = true;
+}
+
+Falcon::CoreDict*
+BSONObj::asDict()
+{
+    bson_iterator iter;
+    bson_iterator_init( &iter, finalize()->data );
+    CoreDict* dict = new CoreDict( new LinearDict );
+    bson_type tp;
+    const char* k;
+    Item* v;
+
+    while ( ( tp = bson_iterator_next( &iter ) ) != bson_eoo )
+    {
+        k = bson_iterator_key( &iter );
+        v = BSONIter::makeItem( tp, &iter );
+        dict->put( String( k ), *v );
+    }
+
+    return dict;
 }
 
 bool
@@ -732,6 +763,13 @@ BSONIter::next()
 {
     mCurrentType = (int) bson_iterator_next( &mIter );
     return mCurrentType == bson_eoo ? false : true;
+}
+
+bool
+BSONIter::find( const char* nm )
+{
+    mCurrentType = bson_find( &mIter, &mData, nm );
+    return mCurrentType != bson_eoo ? true : false;
 }
 
 const char*

@@ -63,12 +63,14 @@ FALCON_FUNC MongoBSON_init( VMachine* vm );
 FALCON_FUNC MongoBSON_reset( VMachine* vm );
 FALCON_FUNC MongoBSON_genOID( VMachine* vm );
 FALCON_FUNC MongoBSON_append( VMachine* vm );
+FALCON_FUNC MongoBSON_asDict( VMachine* vm );
 
 FALCON_FUNC MongoBSONIter_init( VMachine* vm );
 FALCON_FUNC MongoBSONIter_next( VMachine* vm );
 FALCON_FUNC MongoBSONIter_key( VMachine* vm );
 FALCON_FUNC MongoBSONIter_value( VMachine* vm );
 FALCON_FUNC MongoBSONIter_reset( VMachine* vm );
+FALCON_FUNC MongoBSONIter_find( VMachine* vm );
 
 } // !namespace Ext
 } // !namespace Falcon

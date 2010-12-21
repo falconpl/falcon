@@ -510,6 +510,18 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
     vm->retval( self );
 }
 
+
+/*#
+    @method asDict BSON
+    @brief Return a dict representing the BSON object.
+ */
+FALCON_FUNC MongoBSON_asDict( VMachine* vm )
+{
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    vm->retval( bobj->asDict() );
+}
+
 /*******************************************************************************
     BSONIter class
 *******************************************************************************/
@@ -609,6 +621,32 @@ FALCON_FUNC MongoBSONIter_reset( VMachine* vm )
     MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
     iter->reset();
 }
+
+
+/*#
+    @method find BSONIter
+    @param name Key name
+    @brief Return true when (and set iterator position where) name is found in the BSON.
+
+    If false is returned, iterator is at end (and you may have to reset it).
+    This method does a reset before searching.
+ */
+FALCON_FUNC MongoBSONIter_find( VMachine* vm )
+{
+    Item* i_nm = vm->param( 0 );
+
+    if ( !i_nm || !i_nm->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONIter* iter = static_cast<MongoDB::BSONIter*>( self->getUserData() );
+    AutoCString zNm( *i_nm->asString() );
+    vm->retval( iter->find( zNm.c_str() ) );
+}
+
 
 } /* !namespace Ext */
 } /* !namespace Falcon */

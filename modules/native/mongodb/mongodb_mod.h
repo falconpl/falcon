@@ -143,6 +143,11 @@ public:
 
     int appendMany( const CoreDict& dict );
 
+    static int createFromDict( const CoreDict& dict,
+                               BSONObj** bobj );
+
+    Falcon::CoreDict* asDict();
+
     // Return true if this item can be appended safely.
     static bool itemIsSupported( const Falcon::Item& item );
     // Return true if this array content is supported by our driver.
@@ -173,6 +178,9 @@ class BSONIter
     :
     public FalconData
 {
+
+friend class BSONObj;
+
 public:
 
     BSONIter( BSONObj* data );
@@ -183,8 +191,9 @@ public:
     virtual FalconData* clone() const;
 
     void reset();
-
     bool next();
+    bool find( const char* nm );
+
     const char* currentKey();
     Falcon::Item* currentValue();
 

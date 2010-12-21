@@ -72,6 +72,9 @@ obj.genOID().append([
     "key7" => [ "a"=>0, "b"=>1 ]
     ])
 
+// Turn object back to dict
+inspect( obj.asDict() )
+
 // Iterate over obj
 iter = mongo.BSONIter( obj )
 while iter.next()
