@@ -365,6 +365,51 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
 }
 
 /*******************************************************************************
+    ObjectID class
+*******************************************************************************/
+
+/*#
+    @class ObjectID
+    @brief Mongo Object ID
+    @optparam string A string representing an object Id.
+ */
+FALCON_FUNC MongoOID_init( VMachine* vm )
+{
+    Item* i_s = vm->param( 0 );
+
+    if ( i_s && !i_s->isString() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "[S]" ) );
+    }
+
+    const char* s = 0;
+    AutoCString zStr;
+    if ( i_s )
+    {
+        zStr.set( *i_s );
+        s = zStr.c_str();
+    }
+    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
+    if ( s )
+        self->fromString( s );
+    vm->retval( self );
+}
+
+
+/*#
+    @method toString ObjectID
+ */
+FALCON_FUNC MongoOID_toString( VMachine* vm )
+{
+    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
+    String s( self->toString() );
+    s.bufferize();
+    vm->retval( s );
+}
+
+
+/*******************************************************************************
     BSON class
 *******************************************************************************/
 

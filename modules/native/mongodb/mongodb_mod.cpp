@@ -307,6 +307,84 @@ Connection::insert( const char* ns,
 }
 
 /*******************************************************************************
+    ObjectID class
+*******************************************************************************/
+
+ObjectID::ObjectID( const CoreClass* cls )
+    :
+    CoreObject( cls )
+{
+    bson_oid_gen( &mOID );
+}
+
+ObjectID::ObjectID( const CoreClass* cls,
+                    const char* str )
+    :
+    CoreObject( cls )
+{
+    fromString( str );
+}
+
+ObjectID::ObjectID( const CoreClass* cls,
+                    const bson_oid_t* oid )
+    :
+    CoreObject( cls ),
+    mOID( *oid )
+{
+}
+
+ObjectID::ObjectID( const ObjectID& other )
+    :
+    CoreObject( other ),
+    mOID( other.mOID )
+{
+}
+
+ObjectID::~ObjectID()
+{
+}
+
+bool
+ObjectID::getProperty( const String& nm,
+                       Item& it ) const
+{
+    return defaultProperty( nm, it );
+}
+
+bool
+ObjectID::setProperty( const String& nm,
+                       const Item& it )
+{
+    return false;
+}
+
+Falcon::CoreObject*
+ObjectID::clone() const
+{
+    return new ObjectID( *this );
+}
+
+Falcon::CoreObject*
+ObjectID::factory( const CoreClass* cls, void*, bool )
+{
+    return new ObjectID( cls );
+}
+
+void
+ObjectID::fromString( const char* str )
+{
+    fassert( strlen( str ) == 24 );
+    bson_oid_from_string( &mOID, str );
+}
+
+const char*
+ObjectID::toString()
+{
+    bson_oid_to_string( &mOID, mStr );
+    return mStr;
+}
+
+/*******************************************************************************
     BSONObj class
 *******************************************************************************/
 
@@ -369,6 +447,15 @@ BSONObj*
 BSONObj::genOID( const char* nm )
 {
     bson_append_new_oid( &mBuf, nm );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+BSONObj*
+BSONObj::append( const char* nm,
+                 const bson_oid_t* oid )
+{
+    bson_append_oid( &mBuf, nm, oid );
     if ( mFinalized ) mFinalized = false;
     return this;
 }
@@ -559,6 +646,16 @@ BSONObj::append( const char* nm,
         if ( doCheck && !dictIsSupported( *item.asDict() ) )
             return false;
         return append( nm, *item.asDict(), buf );
+    case FLC_ITEM_OBJECT:
+    {
+        CoreObject* obj = item.asObjectSafe();
+        if ( obj->derivedFrom( "ObjectID" ) )
+        {
+            ObjectID* oid = Falcon::dyncast<ObjectID*>( obj );
+            return append( nm, oid->oid() );
+        }
+        return false;
+    }
     default: // unsupported type
         return false;
     }
@@ -671,6 +768,13 @@ BSONObj::itemIsSupported( const Falcon::Item& item )
         return arrayIsSupported( *item.asArray() );
     case FLC_ITEM_DICT:
         return dictIsSupported( *item.asDict() );
+    case FLC_ITEM_OBJECT:
+    {
+        const CoreObject* obj = item.asObjectSafe();
+        if ( obj->derivedFrom( "ObjectID" ) )
+            return true;
+        return false;
+    }
     default:
         return false;
     }
@@ -823,9 +927,10 @@ BSONIter::makeItem( const bson_type tp,
         break;
     case bson_oid:
     {
-        char id[25];
-        bson_oid_to_string( bson_iterator_oid( iter ), id );
-        it = new Item( id );
+        VMachine* vm = VMachine::getCurrent();
+        ObjectID* oid = new ObjectID( vm->findWKI( "ObjectID" )->asClass(),
+                                      bson_iterator_oid( iter ) );
+        it = new Item( oid );
         break;
     }
     case bson_bool:

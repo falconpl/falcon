@@ -61,6 +61,15 @@ FALCON_MODULE_DECL
     self->addClassMethod( dbconn_cls, "insert",
                           Falcon::Ext::MongoDBConnection_insert );
 
+    // ObjectID class
+    Falcon::Symbol *oid_cls = self->addClass( "ObjectID",
+                                              Falcon::Ext::MongoOID_init );
+    oid_cls->setWKS( true );
+    oid_cls->getClassDef()->factory( Falcon::MongoDB::ObjectID::factory );
+
+    self->addClassMethod( oid_cls, "toString",
+                          Falcon::Ext::MongoOID_toString );
+
     // BSON class
     Falcon::Symbol* bson_cls = self->addClass( "BSON",
                                                Falcon::Ext::MongoBSON_init );

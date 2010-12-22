@@ -6,6 +6,7 @@
 #define MONGODB_MOD_H
 
 #include <falcon/carray.h>
+#include <falcon/coreobject.h>
 #include <falcon/falcondata.h>
 #include <falcon/string.h>
 
@@ -95,9 +96,42 @@ protected:
 };
 
 
+class ObjectID
+    :
+    public Falcon::CoreObject
+{
+public:
+
+    ObjectID( const CoreClass* cls );
+    ObjectID( const CoreClass* cls,
+              const char* str );
+    ObjectID( const CoreClass* cls,
+              const bson_oid_t* oid );
+    ObjectID( const ObjectID& other );
+    virtual ~ObjectID();
+
+    virtual bool getProperty( const String&, Item& ) const;
+    virtual bool setProperty( const String&, const Item& );
+    virtual Falcon::CoreObject* clone() const;
+
+    static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
+
+    void fromString( const char* str );
+    const char* toString();
+
+    const bson_oid_t* oid() const { return &mOID; }
+
+protected:
+
+    bson_oid_t  mOID;
+    char        mStr[25];
+
+};
+
+
 class BSONObj
     :
-    public FalconData
+    public Falcon::FalconData
 {
 public:
 
@@ -114,6 +148,8 @@ public:
     void reset( const int bytesNeeded=0 );
 
     BSONObj* genOID( const char* nm="_id" );
+    BSONObj* append( const char* nm,
+                     const bson_oid_t* oid );
     BSONObj* append( const char* nm,
                      bson_buffer* buf=0 ); // append a null value
     BSONObj* append( const char* nm,
@@ -176,7 +212,7 @@ protected:
 
 class BSONIter
     :
-    public FalconData
+    public Falcon::FalconData
 {
 
 friend class BSONObj;
