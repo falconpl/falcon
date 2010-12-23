@@ -9,6 +9,7 @@
 #include <falcon/coreobject.h>
 #include <falcon/falcondata.h>
 #include <falcon/string.h>
+#include <falcon/timestamp.h>
 
 #include "src/mongo.h"
 
@@ -169,6 +170,15 @@ public:
                      bson_buffer* buf=0 );
     BSONObj* append( const char* nm,
                      const bool b,
+                     bson_buffer* buf=0 );
+    BSONObj* appendDate( const char* nm, // overload problem
+                     const bson_date_t date,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const Falcon::TimeStamp& ts,
+                     bson_buffer* buf=0 );
+    BSONObj* append( const char* nm,
+                     const Falcon::MemBuf& mem,
                      bson_buffer* buf=0 );
 
     // Return true if item was successfuly appended.

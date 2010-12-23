@@ -75,14 +75,14 @@ FALCON_FUNC MongoDBConnection_init( VMachine* vm )
 
     int port = i_port ? i_port->asInteger() : 27017;
 
-    Falcon::MongoDB::Connection* conn;
-    CoreObject* self = vm->self().asObjectSafe();
-
-    if ( !theMongoDBService.createConnection( host, port, 0, (FalconData**)&conn ) )
+    MongoDB::Connection* conn = 0;
+    conn = new MongoDB::Connection( host, port, 0 );
+    if ( !conn )
     {
         throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_CONN, __LINE__ )
                                 .desc( FAL_STR( _err_create_conn ) ) );
     }
+    CoreObject* self = vm->self().asObjectSafe();
     self->setUserData( conn );
     vm->retval( self );
 }
@@ -383,16 +383,14 @@ FALCON_FUNC MongoOID_init( VMachine* vm )
                 .extra( "[S]" ) );
     }
 
-    const char* s = 0;
-    AutoCString zStr;
+    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
+
     if ( i_s )
     {
-        zStr.set( *i_s );
-        s = zStr.c_str();
+        AutoCString zStr( *i_s );
+        self->fromString( zStr.c_str() );
     }
-    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
-    if ( s )
-        self->fromString( s );
+
     vm->retval( self );
 }
 
@@ -431,10 +429,11 @@ FALCON_FUNC MongoBSON_init( VMachine* vm )
     }
 
     CoreObject* self = vm->self().asObjectSafe();
-    Falcon::MongoDB::BSONObj* bobj;
     const int bytes = i_parm && i_parm->isInteger() ? i_parm->asInteger() : 0;
+    MongoDB::BSONObj* bobj = 0;
+    bobj = new MongoDB::BSONObj( bytes );
 
-    if ( !theMongoDBService.createBSONObj( bytes, (FalconData**)&bobj ) )
+    if ( !bobj )
     {
         throw new MongoDBError( ErrorParam( MONGODB_ERR_CREATE_BSON, __LINE__ )
                                 .desc( FAL_STR( _err_create_bsonobj ) ) );
@@ -445,12 +444,14 @@ FALCON_FUNC MongoBSON_init( VMachine* vm )
         const int ret = bobj->appendMany( *i_parm->asDict() );
         if ( ret == 1 ) // bad key
         {
+            delete bobj;
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                         .extra( "S" ) );
         }
         else
         if ( ret == 2 ) // bad value
         {
+            delete bobj;
             throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                         .extra( FAL_STR( _err_inv_item ) ) );
         }
@@ -498,19 +499,17 @@ FALCON_FUNC MongoBSON_genOID( VMachine* vm )
                 .extra( "[S]" ) );
     }
 
-    AutoCString zNm;
-    const char* nm;
-    if ( i_nm )
-    {
-        zNm.set( *i_nm );
-        nm = zNm.c_str();
-    }
-    else
-        nm = "_id";
-
     CoreObject* self = vm->self().asObjectSafe();
     MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
-    bobj->genOID( nm );
+
+    if ( i_nm )
+    {
+        AutoCString zNm( *i_nm );
+        bobj->genOID( zNm.c_str() );
+    }
+    else
+        bobj->genOID( "_id" );
+
     vm->retval( self );
 }
 

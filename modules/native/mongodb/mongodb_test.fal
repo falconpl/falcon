@@ -56,12 +56,23 @@ Assert( db.addUser( "none", "shall", "pass" ), "Added user shall to none!" )
 // authentication success
 Assert( db.authenticate( "none", "shall", "pass" ), "shall authenticated!" )
 
+// create an object id
+> "Creating object id!"
+oid = mongo.ObjectID()
+> oid // toString
+inspect( oid )
+
 // create an empty bson object
 obj = mongo.BSON()
 inspect( obj )
 
 // append something
 > "Creating bson object!"
+curtime = TimeStamp()
+curtime.currentTime()
+mem = MemBuf( 3, 1 )
+mem.put( 0x00 ).put( 0x01 ).put( 0x02 )
+
 obj.genOID().append([
     "key1" => 3,
     "key2" => 1.1,
@@ -69,7 +80,9 @@ obj.genOID().append([
     "key4" => nil,
     "key5" => "hello",
     "key6" => [ 0,1,2 ],
-    "key7" => [ "a"=>0, "b"=>1 ]
+    "key7" => [ "a"=>0, "b"=>1 ],
+    "key8" => curtime,
+    "key9" => mem
     ])
 
 // Turn object back to dict

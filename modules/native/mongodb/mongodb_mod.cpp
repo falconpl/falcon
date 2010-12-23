@@ -11,7 +11,6 @@
 #include <falcon/engine.h>
 #include <falcon/iterator.h>
 
-
 namespace Falcon
 {
 namespace MongoDB
@@ -553,6 +552,55 @@ BSONObj::append( const char* nm,
 }
 
 BSONObj*
+BSONObj::appendDate( const char* nm,
+                     const bson_date_t date,
+                     bson_buffer* buf )
+{
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_date( buf, nm, date );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+BSONObj*
+BSONObj::append( const char* nm,
+                 const Falcon::TimeStamp& ts,
+                 bson_buffer* buf )
+{
+    if ( !buf )
+        buf = &mBuf;
+
+    TimeStamp epoch( 1970, 1, 1, 0, 0, 0, 0, tz_UTC );
+    epoch.distance( ts );
+
+    const bson_date_t t =
+        (int64) epoch.m_msec +
+        ( (int64) epoch.m_second * 1000 ) +
+        ( (int64) epoch.m_minute * 60 * 1000 ) +
+        ( (int64) epoch.m_hour * 60 * 60 * 1000 ) +
+        ( (int64) epoch.m_day * 24 * 60 * 60 * 1000 );
+
+    bson_append_date( buf, nm, t );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+BSONObj*
+BSONObj::append( const char* nm,
+                 const Falcon::MemBuf& mem,
+                 bson_buffer* buf )
+{
+    if ( !buf )
+        buf = &mBuf;
+
+    bson_append_binary( buf, nm, mem.wordSize(), (const char*)mem.data(), mem.length() );
+    if ( mFinalized ) mFinalized = false;
+    return this;
+}
+
+BSONObj*
 BSONObj::append( const char* nm,
                  const CoreArray& array,
                  bson_buffer* parentBuf )
@@ -638,6 +686,8 @@ BSONObj::append( const char* nm,
         return append( nm, item.asNumeric(), buf );
     case FLC_ITEM_STRING:
         return append( nm, *item.asString(), buf );
+    case FLC_ITEM_MEMBUF:
+        return append( nm, *item.asMemBuf(), buf );
     case FLC_ITEM_ARRAY:
         if ( doCheck && !arrayIsSupported( *item.asArray() ) )
             return false;
@@ -651,8 +701,14 @@ BSONObj::append( const char* nm,
         CoreObject* obj = item.asObjectSafe();
         if ( obj->derivedFrom( "ObjectID" ) )
         {
-            ObjectID* oid = Falcon::dyncast<ObjectID*>( obj );
+            ObjectID* oid = static_cast<ObjectID*>( obj );
             return append( nm, oid->oid() );
+        }
+        else
+        if ( obj->derivedFrom( "TimeStamp" ) )
+        {
+            TimeStamp* ts = static_cast<TimeStamp*>( obj->getUserData() );
+            return append( nm, *ts );
         }
         return false;
     }
@@ -763,6 +819,7 @@ BSONObj::itemIsSupported( const Falcon::Item& item )
     case FLC_ITEM_BOOL:
     case FLC_ITEM_NUM:
     case FLC_ITEM_STRING:
+    case FLC_ITEM_MEMBUF:
         return true;
     case FLC_ITEM_ARRAY:
         return arrayIsSupported( *item.asArray() );
@@ -772,6 +829,9 @@ BSONObj::itemIsSupported( const Falcon::Item& item )
     {
         const CoreObject* obj = item.asObjectSafe();
         if ( obj->derivedFrom( "ObjectID" ) )
+            return true;
+        else
+        if ( obj->derivedFrom( "TimeStamp" ) )
             return true;
         return false;
     }
@@ -920,8 +980,40 @@ BSONIter::makeItem( const bson_type tp,
         break;
     }
     case bson_bindata:
-        //...
+    {
+        const byte* ptr = (byte*) bson_iterator_bin_data( iter );
+        const uint32 sz = bson_iterator_bin_len( iter );
+        byte* data;
+        MemBuf* mb = 0;
+        switch ( bson_iterator_bin_type( iter ) )
+        {
+        case 4:
+            data = (byte*) memAlloc( sz * 4 );
+            memcpy( data, ptr, sz * 4 );
+            mb = new MemBuf_4( data, sz, memFree );
+            break;
+        case 3:
+            data = (byte*) memAlloc( sz * 3 );
+            memcpy( data, ptr, sz * 3 );
+            mb = new MemBuf_3( data, sz, memFree );
+            break;
+        case 2:
+            data = (byte*) memAlloc( sz * 2 );
+            memcpy( data, ptr, sz * 2 );
+            mb = new MemBuf_2( data, sz, memFree );
+            break;
+        case 1:
+            data = (byte*) memAlloc( sz * 1 );
+            memcpy( data, ptr, sz * 1 );
+            mb = new MemBuf_1( data, sz, memFree );
+            break;
+        default:
+            break;
+        }
+        fassert( mb );
+        it = new Item( mb );
         break;
+    }
     case bson_undefined:
         it = new Item( bson_iterator_value( iter ) );
         break;
@@ -938,8 +1030,31 @@ BSONIter::makeItem( const bson_type tp,
         it->setBoolean( (bool) bson_iterator_bool_raw( iter ) );
         break;
     case bson_date:
-        //...
+    {
+        int64 d, h, m, s, ms;
+        const bson_date_t t = bson_iterator_date( iter );
+        bson_date_t tt = llabs( t );
+
+        d = t / ( 1000*60*60*24 );
+        tt -= llabs( d ) * ( 1000*60*60*24 );
+        h = tt / ( 1000*60*60 );
+        tt -= h * ( 1000*60*60 );
+        m = tt / ( 1000*60 );
+        tt -= m * ( 1000*60 );
+        s = tt / 1000;
+        tt -= s * 1000;
+        ms = tt;
+
+        VMachine* vm = VMachine::getCurrent();
+        Item* wki = vm->findWKI( "TimeStamp" );
+        CoreObject* obj = wki->asClass()->createInstance();
+        TimeStamp tmp( 0, 0, d, h, m, s, ms, tz_UTC );
+        TimeStamp* ts = new TimeStamp( 1970, 1, 1, 0, 0, 0, 0, tz_UTC );
+        ts->add( tmp );
+        obj->setUserData( ts );
+        it = new Item( obj );
         break;
+    }
     case bson_null:
         it = new Item();
         break;
