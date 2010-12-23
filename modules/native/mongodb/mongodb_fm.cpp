@@ -60,6 +60,10 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_dropCollection );
     self->addClassMethod( dbconn_cls, "insert",
                           Falcon::Ext::MongoDBConnection_insert );
+    self->addClassMethod( dbconn_cls, "findOne",
+                          Falcon::Ext::MongoDBConnection_findOne );
+    self->addClassMethod( dbconn_cls, "count",
+                          Falcon::Ext::MongoDBConnection_count );
 
     // ObjectID class
     Falcon::Symbol *oid_cls = self->addClass( "ObjectID",

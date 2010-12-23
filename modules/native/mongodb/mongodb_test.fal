@@ -101,6 +101,15 @@ Assert( db.insert( "none.test", obj ), "Inserting bson object!" )
 > "Resetting bson object!"
 obj.reset()
 
+// find one
+> "Find one object!"
+obj = db.findOne( "none.test" );
+inspect( obj.asDict() )
+
+// count
+> "Count!"
+> db.count( "none", "test" )
+
 // disconnect
 db.disconnect()
 Assert( not db.isConnected(), "Disconnected!" )

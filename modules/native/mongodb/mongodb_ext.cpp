@@ -364,6 +364,93 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
     vm->retval( b );
 }
 
+
+/*#
+    @method findOne MongoDB
+    @param ns namespace
+    @optparam query BSON instance
+    @return BSON result or nil
+ */
+FALCON_FUNC MongoDBConnection_findOne( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_query = vm->param( 1 );
+
+    if ( !i_ns || !i_ns->isString()
+        || ( i_query && !( i_query->isObject() && i_query->asObjectSafe()->derivedFrom( "BSON" ) ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,[BSON]" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+
+    AutoCString zNs( *i_ns );
+    MongoDB::BSONObj* ret = 0;
+    bool b;
+
+    if ( i_query )
+    {
+        MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( i_query->asObjectSafe()->getUserData() );
+        b = conn->findOne( zNs.c_str(), bobj, &ret );
+    }
+    else
+        b = conn->findOne( zNs.c_str(), 0, &ret );
+
+    if ( b )
+    {
+        fassert( ret );
+        Item* wki = vm->findWKI( "BSON" );
+        CoreObject* obj = wki->asClass()->createInstance();
+        fassert( !obj->getUserData() );
+        obj->setUserData( ret );
+        vm->retval( obj );
+    }
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method count MongoDB
+    @param db
+    @param coll
+    @optparam query BSON instance
+    @return Total count or -1 on error
+ */
+FALCON_FUNC MongoDBConnection_count( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+    Item* i_coll = vm->param( 1 );
+    Item* i_query = vm->param( 2 );
+
+    if ( !i_db || !i_db->isString()
+        || !i_coll || !i_coll->isString()
+        || ( i_query && !( i_query->isObject() && i_query->asObjectSafe()->derivedFrom( "BSON" ) ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,S,[BSON]" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+
+    AutoCString db( *i_db );
+    AutoCString coll( *i_coll );
+    int64 n = -1;
+
+    if ( i_query )
+    {
+        MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( i_query->asObjectSafe()->getUserData() );
+        n = conn->count( db.c_str(), coll.c_str(), bobj );
+    }
+    else
+        n = conn->count( db.c_str(), coll.c_str() );
+
+    vm->retval( n );
+}
+
 /*******************************************************************************
     ObjectID class
 *******************************************************************************/

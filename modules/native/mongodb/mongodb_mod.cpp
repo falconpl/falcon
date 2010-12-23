@@ -305,6 +305,56 @@ Connection::insert( const char* ns,
     return true;
 }
 
+bool
+Connection::findOne( const char* ns,
+                     BSONObj* query,
+                     BSONObj** ret )
+{
+     if ( !ns || ns[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    bson res;
+    bson_bool_t b = mongo_find_one( conn, ns,
+                                    query ? query->finalize() : BSONObj::empty(),
+                                    NULL,
+                                    ret ? &res : NULL );
+
+    if ( b && ret )
+    {
+        *ret = new BSONObj( &res );
+        bson_destroy( &res );
+    }
+
+    return b ? true : false;
+}
+
+int64
+Connection::count( const char* db,
+                   const char* coll,
+                   BSONObj* query )
+{
+    if ( !db || db[0] == '\0'
+        || !coll || coll[0] == '\0' )
+        return -1;
+
+    if ( !mConn )
+        return -1;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return -1;
+
+    return mongo_count( conn, db, coll,
+                        query ? query->finalize() : BSONObj::empty() );
+}
+
 /*******************************************************************************
     ObjectID class
 *******************************************************************************/

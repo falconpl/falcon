@@ -89,6 +89,14 @@ public:
     bool insert( const char* ns,
                  const CoreArray& data );
 
+    bool findOne( const char* ns,
+                  BSONObj* query=0,
+                  BSONObj** ret=0 );
+
+    int64 count( const char* db,
+                 const char* coll,
+                 BSONObj* query=0 );
+
 protected:
 
     mongo_connection_options    mOptions;
