@@ -61,6 +61,7 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm );
 FALCON_FUNC MongoDBConnection_update( VMachine* vm );
 FALCON_FUNC MongoDBConnection_remove( VMachine* vm );
 FALCON_FUNC MongoDBConnection_findOne( VMachine* vm );
+FALCON_FUNC MongoDBConnection_find( VMachine* vm );
 FALCON_FUNC MongoDBConnection_count( VMachine* vm );
 
 FALCON_FUNC MongoOID_init( VMachine* vm );

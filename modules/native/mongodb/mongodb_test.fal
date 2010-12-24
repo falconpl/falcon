@@ -124,6 +124,10 @@ Assert( db.findOne( "none.test", mongo.BSON(["key1"=>2]) ) != nil, "Find one upd
 // count
 Assert( db.count( "none", "test" ) == 1, "Count 1!" )
 
+// find
+res = db.find( "none.test" )
+Assert( res.len() == 1, "Find!" )
+
 // remove
 > "Remove!"
 db.remove( "none.test", mongo.BSON(["key1"=>2]) )

@@ -308,7 +308,9 @@ Connection::insert( const char* ns,
 bool
 Connection::update( const char* ns,
                     BSONObj* cond,
-                    BSONObj* op )
+                    BSONObj* op,
+                    const bool upsert,
+                    const bool multiple )
 {
     if ( !ns || ns[0] == '\0' )
         return false;
@@ -320,7 +322,13 @@ Connection::update( const char* ns,
     if ( !conn->connected )
         return false;
 
-    mongo_update( conn, ns, cond->finalize(), op->finalize(), 0 );
+    int flg = 0;
+    if ( upsert )
+        flg |= MONGO_UPDATE_UPSERT;
+    if ( multiple )
+        flg |= MONGO_UPDATE_MULTI;
+
+    mongo_update( conn, ns, cond->finalize(), op->finalize(), flg );
     return true;
 }
 
@@ -370,6 +378,48 @@ Connection::findOne( const char* ns,
     }
 
     return b ? true : false;
+}
+
+bool
+Connection::find( const char* ns,
+                  BSONObj* query,
+                  BSONObj* fields,
+                  const int skip,
+                  const int limit,
+                  CoreArray** res )
+{
+    if ( !ns || ns[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    bson* quer = query ? query->finalize() : BSONObj::empty();
+
+    mongo_cursor* cur = mongo_find( conn, ns,
+                                    quer,
+                                    fields ? fields->finalize() : NULL,
+                                    limit, skip, 0 );
+
+    if ( res )
+    {
+        *res = new CoreArray;
+        Item* wki = VMachine::getCurrent()->findWKI( "BSON" );
+        while ( mongo_cursor_next( cur ) )
+        {
+            CoreObject* obj = wki->asClass()->createInstance();
+            BSONObj* bobj = new BSONObj( &cur->current );
+            obj->setUserData( bobj );
+            (*res)->append( obj );
+        }
+    }
+
+    mongo_cursor_destroy( cur );
+    return true;
 }
 
 int64

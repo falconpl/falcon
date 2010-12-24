@@ -90,12 +90,20 @@ public:
                  const CoreArray& data );
     bool update( const char* ns,
                  BSONObj* cond,
-                 BSONObj* op );
+                 BSONObj* op,
+                 const bool upsert=true,
+                 const bool multiple=true );
     bool remove( const char* ns,
                  BSONObj* cond );
     bool findOne( const char* ns,
                   BSONObj* query=0,
                   BSONObj** ret=0 );
+    bool find( const char* ns,
+               BSONObj* query=0,
+               BSONObj* fields=0,
+               const int skip=0,
+               const int limit=0,
+               CoreArray** res=0 );
     int64 count( const char* db,
                  const char* coll,
                  BSONObj* query=0 );
@@ -237,6 +245,7 @@ class BSONIter
     public Falcon::FalconData
 {
 
+friend class Connection;
 friend class BSONObj;
 
 public:

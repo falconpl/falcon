@@ -369,7 +369,9 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
     @method update MongoDB
     @param ns namespace
     @param cond BSON instance (conditions)
-    @param op BSON instace (operations)
+    @param op BSON instance (operations)
+    @optparam upsert (boolean) default true
+    @optparam multiple (boolean) default true
     @return true on success
  */
 FALCON_FUNC MongoDBConnection_update( VMachine* vm )
@@ -377,10 +379,14 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
     Item* i_ns = vm->param( 0 );
     Item* i_cond = vm->param( 1 );
     Item* i_op = vm->param( 2 );
+    Item* i_upsert = vm->param( 3 );
+    Item* i_multi = vm->param( 4 );
 
     if ( !i_ns || !i_ns->isString()
         || !i_cond || !( i_cond->isObject() && i_cond->asObjectSafe()->derivedFrom( "BSON" ) )
-        || !i_op || !( i_op->isObject() && i_op->asObjectSafe()->derivedFrom( "BSON" ) ) )
+        || !i_op || !( i_op->isObject() && i_op->asObjectSafe()->derivedFrom( "BSON" ) )
+        || ( i_upsert && !i_upsert->isBoolean() )
+        || ( i_multi && !i_multi->isBoolean() ) )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                 .extra( "S,BSON,BSON" ) );
@@ -392,8 +398,10 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
     AutoCString zNs( *i_ns );
     MongoDB::BSONObj* cond = static_cast<MongoDB::BSONObj*>( i_cond->asObjectSafe()->getUserData() );
     MongoDB::BSONObj* op = static_cast<MongoDB::BSONObj*>( i_op->asObjectSafe()->getUserData() );
+    const bool upsert = i_upsert? i_upsert->asBoolean() : true;
+    const bool multi = i_multi ? i_multi->asBoolean() : true;
 
-    vm->retval( conn->update( zNs.c_str(), cond, op ) );
+    vm->retval( conn->update( zNs.c_str(), cond, op, upsert, multi ) );
 }
 
 
@@ -467,6 +475,52 @@ FALCON_FUNC MongoDBConnection_findOne( VMachine* vm )
         obj->setUserData( ret );
         vm->retval( obj );
     }
+    else
+        vm->retnil();
+}
+
+
+/*#
+    @method find MongoDB
+    @optparam query BSON instance
+    @optparam fields BSON instance
+    @optparam skip default 0
+    @optparam limit default 0 (all)
+    @return An array of BSON results or nil
+ */
+FALCON_FUNC MongoDBConnection_find( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_query = vm->param( 1 );
+    Item* i_fields = vm->param( 2 );
+    Item* i_skip = vm->param( 3 );
+    Item* i_limit = vm->param( 4 );
+
+    if ( !i_ns || !i_ns->isString()
+        || ( i_query && !( i_query->isObject() && i_query->asObjectSafe()->derivedFrom( "BSON" ) ) )
+        || ( i_fields && !( i_fields->isObject() && i_fields->asObjectSafe()->derivedFrom( "BSON" ) ) )
+        || ( i_skip && !i_skip->isInteger() )
+        || ( i_limit && !i_limit->isInteger() ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,[BSON,BSON,I,I]" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+
+    AutoCString zNs( *i_ns );
+    MongoDB::BSONObj* query = i_query ?
+        static_cast<MongoDB::BSONObj*>( i_query->asObjectSafe()->getUserData() ) : 0;
+    MongoDB::BSONObj* fields = i_fields ?
+        static_cast<MongoDB::BSONObj*>( i_fields->asObjectSafe()->getUserData() ) : 0;
+    const int skip = i_skip ? i_skip->asInteger() : 0;
+    const int limit = i_limit ? i_limit->asInteger() : 0;
+    CoreArray* res;
+
+    const bool b = conn->find( zNs.c_str(), query, fields, skip, limit, &res );
+    if ( b )
+        vm->retval( res );
     else
         vm->retnil();
 }
