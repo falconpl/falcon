@@ -63,8 +63,13 @@ oid = mongo.ObjectID()
 inspect( oid )
 
 // create an empty bson object
+> "Creating empty bson object!"
 obj = mongo.BSON()
-inspect( obj )
+inspect( obj.asDict() )
+// create non-empty bson object
+> "Creating non-empty bson object!"
+ob = mongo.BSON( [ "key" => "value" ] )
+> inspect( ob.asDict() )
 
 // append something
 > "Creating bson object!"
@@ -105,6 +110,10 @@ obj.reset()
 > "Find one object!"
 obj = db.findOne( "none.test" );
 inspect( obj.asDict() )
+> "Find one with query!"
+ob = db.findOne( "none.test", mongo.BSON(["key1"=>3]) )
+inspect( ob.asDict() )
+Assert( db.findOne( "none.test", mongo.BSON(["key1"=>2]) ) == nil, "Find one nothing!" )
 
 // count
 > "Count!"

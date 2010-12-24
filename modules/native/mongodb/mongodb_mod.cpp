@@ -419,11 +419,13 @@ ObjectID::factory( const CoreClass* cls, void*, bool )
     return new ObjectID( cls );
 }
 
-void
+bool
 ObjectID::fromString( const char* str )
 {
-    fassert( strlen( str ) == 24 );
+    if ( strlen( str ) != 24 )
+        return false;
     bson_oid_from_string( &mOID, str );
+    return true;
 }
 
 const char*
@@ -464,7 +466,8 @@ BSONObj::BSONObj( const bson* bobj )
 BSONObj::~BSONObj()
 {
     // clear buffer
-    bson_buffer_destroy( &mBuf );
+    if ( !mBuf.finished )
+        bson_buffer_destroy( &mBuf );
     // clear bson object
     bson_destroy( &mObj );
 }
@@ -818,7 +821,7 @@ BSONObj::finalize()
         return &mObj;
 
     bson_destroy( &mObj );
-    bson_from_buffer( &mObj, &mBuf );
+    bson_from_buffer( &mObj, &mBuf ); // that 'finishes' the buffer
     mFinalized = true;
     return &mObj;
 }
@@ -827,7 +830,8 @@ void
 BSONObj::reset( const int bytesNeeded )
 {
     // reset buffer
-    bson_buffer_destroy( &mBuf );
+    if ( !mBuf.finished )
+        bson_buffer_destroy( &mBuf );
     bson_buffer_init( &mBuf );
     if ( bytesNeeded > 0 )
     {

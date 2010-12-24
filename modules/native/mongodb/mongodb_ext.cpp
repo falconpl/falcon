@@ -470,7 +470,7 @@ FALCON_FUNC MongoOID_init( VMachine* vm )
                 .extra( "[S]" ) );
     }
 
-    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
+    MongoDB::ObjectID* self = static_cast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
 
     if ( i_s )
     {
@@ -487,7 +487,7 @@ FALCON_FUNC MongoOID_init( VMachine* vm )
  */
 FALCON_FUNC MongoOID_toString( VMachine* vm )
 {
-    MongoDB::ObjectID* self = Falcon::dyncast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
+    MongoDB::ObjectID* self = static_cast<MongoDB::ObjectID*>( vm->self().asObjectSafe() );
     String s( self->toString() );
     s.bufferize();
     vm->retval( s );

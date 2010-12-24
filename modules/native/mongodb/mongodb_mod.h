@@ -125,7 +125,7 @@ public:
 
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
-    void fromString( const char* str );
+    bool fromString( const char* str );
     const char* toString();
 
     const bson_oid_t* oid() const { return &mOID; }
