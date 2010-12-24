@@ -18,126 +18,183 @@
 import from hash
 import from curl
 
+/*#
+   @main Support for OAuth 1 and 2 protocols.
+
+   This modules code to establish OAuth sessions.
+
+   OAuth is a cross-site authentication exchange protocol
+   used in Web2.0 development.
+
+   @note The module depends on Feathers @a hash module and on
+   the optional @a curl module.
+*/
+
+//# @ignore
 const OAUTH_REQ_PREFIX = "OAUTH-REQ-"
 
+//# Enumeration used as OAUTH connection method.
 enum Via
    POST = "POST"
    GET = "GET"
    HEADER = "HEADER"
 end
 
-class OAuth( mode, key, secret )
-   key = key
+/*# Error raised from OAuth in case of protocol breach.
+   @param code Code of the error
+   @param desc Description of the error
+   @param extra Error condition or specific description.
+*/
+class ProtoError( code, desc, extra ) from Error( code, desc, extra )
+end
+
+
+/*# Class representing an OAuth token.
+   @param token OAuth authorization token.
+   @param secret Secret data used to sign the request.
+   
+   Oauth steps
+*/
+class Token( token, secret )
+
+   //# Token ID (empty for initial request-token queries).
+   token = token
+
+   //# Signature key associated with this token
    secret = secret
-   mode = mode
 
-   callback = nil
-   realm = nil
-   nonce = nil
-   http_method = nil
-   signature_method = "HMAC-SHA1"
-   version = "1.0"
-   token = nil
+   //# Validator field returned by the remote server
+   validator = nil
 
-   verifier = nil
+   //# full data returned by the remote server.
+   raw_data = nil
 
-   /*# Callback performed after a succesful request token operation is completed.
+   //# true if the token has been authorized
+   authorized = false
 
-      If it returns false, the token is not saved.
+   //# true if this token has been exchanged.
+   exchanged = false
+
+   /*# Check if this token is a request token.
+      @return true if this is a valid request token.
    */
-   onRequestToken = nil
+   function isRequest(): return self.token and not self.exchanged
+   
+   /*# Check if this token is an access token.
+      @return true if this is a valid access token.
+   */
+   function isAccess(): return self.exchanged
 
-   // modes
+   // Gets extra data returned in the raw data. TODO
+   function getExtraData()
+   end
+   
+end
+
+/*# Interface to remote OAuth authentication process server.
+   @param consumer_key The consumer key identifying the requester on the remote OAuth server.
+   @optparam mode One of the @a Via methods (Defaults to POST).
+   
+   This class acts as an authentication client connecting with a
+   remote server.
+*/
+class Client( cust_id, cust_secret, mode )
+   //# Customer id associated with this client
+   cust_id = cust_id
+
+   //# Secret data used to countersign requests for this client
+   secret = cust_secret
+   
+   //# connection mode (one of the @a Via methods)
+   mode = mode ? mode : Via.POST
+
+   //# Sub-realm of an OAuth service contacted by this client.
+   realm = nil
+
+   //# @ignore
+   signature_method = "HMAC-SHA1"
+   
+   //# OAuth protocol version. Defaults to 1.0
+   version = "1.0"
+
+   //# @ignore
+   http_method = nil
+
    init
       // sets the method as appropriate.
       self.http_method = self.mode == Via.HEADER ? Via.GET : self.mode
    end
 
-   /*# Tries to perform the autorization step.
-
-      Asks for a request token, and on success, performs immediately
-      an authorization token request.
-
-      If the @b onRequestToken property is a callable routine, it is
-      called with the parsed request dictionary.
-
-      On failure may raise a string (the error description that has been
-      remotely sent) or a CURLError on connection problems.
-   */
-   function request( reqAddr, authAddr, redirFunc )
-      // Create an unique token if needed
-      if not self.nonce: self.nonce = self._randomString( 20 )
-
-      if not self.requestToken( reqAddr )
-         return false
-      end
-
-      token = self.token.oauth_token
-      // save this as request token
-      try
-         s = Request.getSession( )
-      catch
-         Request.closeSession()
-         s = Request.getSession( )
-      end
-
-      s["test"] = "s"
-      self._saveSession( s )
-
-      // other thigns we have to remember
-
-      // should we call the authorization address
-      if authAddr
-         authAddr += "?oauth_token=" + token
-         if redirFunc
-            redirFunc( authAddr )
-         else
-            Reply.redirect( authAddr, 0 )
-         end
-      end
-
-      return true
-   end
-
-   function embedPage( address )
-      h = curl.Handle( address )
-      h.setOutStream(stdOut())
-      h.exec()
-   end
 
    /*# Perform a token request.
+      @param address The address of the remote token provider.
+      @optparam callback Address to be called back by authenticator if the caller is of a web application.
+      @optparam token An instance of the Token class to be exchanged token exchange.
+      @return A new @a Token created through this call.
+      @raise ProtoError if the remote side doesn't complain with the OAuth protocol.
+      
+      This method requests a "Request token" or an "Access token" the remote OAuth service.
 
-      This is the first step of the OAuth dance.
-      All the class parameters must be set before calling this function.
-      This blocks until the token is available, or the query fails.
+      Initially, the caller must create a request token by calling this method; on success,
+      a valid (but not yet authorized) request token is returned.
+
+      Once this token is authorized through other means (i.e. redirecting the user to the
+      remote service site), it can be exchanged with an access token calling this method
+      and passing the previously returned token. The request token is discarded and the parameter becomes
+      an access token, that can then be used to access reserved resources (via the @a callApi method).
+
+      For example, a theoretic workflow may be
+
+      @code
+      import from web.oauth in oauth
+      
+      client = oauth.Client( "MyClientID", "MyClientSecret" )
+      req_token = client.getToken( "https://TheRemoteService/get_req_token" )
+
+      //...
+      // authorize the token
+      //...
+
+      access_token = client.getToken( "https://TheRemoteService/login", nil, req_token )
+
+      userData = client.callAPI( access_token,
+                  "https://TheRemoteService/get_user",
+                  ["user_id"=> my_user_id] )
+      
+      @endcode
+
+      @note This method blocks until the remote side replies.
    */
-   function requestToken( address )
+   function getToken( address, callback, token )
       params = self._makeBaseParams()
 
-      // make the base fields that are used in the base string
-      fields = self._makeGet( params )
-
+      if token
+         params[ "oauth_token" ] = token.token
+         tsecret = token.secret
+      end
+      
+      if callback: params[ "oauth_callback" ] = callback
+      
       // Create the base string.
+      fields = self._makeGet( params )
       bstr = self._makeBaseString( self.http_method, address, fields )
 
+      // create the signature key
+      secret = self.makeSecret( self.secret, tsecret )
+      
       // TODO: use self.signature_method
-      secret = self.secret + "&"
-      if self.token: secret += self.token.oauth_token_secret
-      // oauth_signature = Base64.encode(
-      //   self._hmac( hash.SHA1Hash, secret, bstr, true ) )
-
+      // create the request signature
       oauth_signature = Base64.encode(
          hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
 
       // Add the signature to the fields.
       params["oauth_signature"] = oauth_signature
-      query_string = self._makeGet( params )
 
       if self.mode == Via.POST
          cr = curl.Handle( address )
-         cr.postData( query_string )
+         cr.postData(  self._makeGet( params ) )
       elif self.mode == Via.GET
-         cr = curl.Handle( address + "?" + query_string )
+         cr = curl.Handle( address + "?" +  self._makeGet( params ) )
       elif self.mode == Via.HEADER
          cr = curl.Handle( address )
          oe = self._makeAuthHeader( params )
@@ -153,78 +210,82 @@ class OAuth( mode, key, secret )
       try
          dt = self.parseQS( data )
       catch AccessError
-         raise data
+         raise ProtoError( 10001, i"Invalid answer from remote.", dt )
       end
 
       if not "oauth_token" in dt
-         raise i"Response didn't contain an oauth_token"
+         raise ProtoError( 10000, i"OAuth protocol error", i"Response didn't contain an oauth_token" )
       end
 
       if not "oauth_token_secret" in dt
-         raise i"Response didn't contain an oauth_token_secret"
+         raise ProtoError( 10000, i"OAuth protocol error", i"Response didn't contain an oauth_token_secret" )
       end
 
-      if self.onRequestToken.isCallable()
-         if not self.onRequestToken( dt )
-            return false
-         end
-      end
+      token = Token( dt["oauth_token"], dt["oauth_token_secret"] )
+      token.raw_data = dt
 
-      self.token = bless(dt)
-      return true
+      return token
    end
 
 
-   function access( uri )
-      // restore the session
-      s = Request.getSession()
-      self._restoreSession( s )
+   /*# Signature key-string generator.
+      @param cust_secret The customer signature part.
+      @optparam token_secret The part of the secret associated with a token.
+      
+      The OAuth protocol doesn't dictate exactly the way in which
+      authorization strings must be signed, but in cases where counter-signature
+      is required, it mandates that both the customer secret and the token secret
+      must be used.
 
-      // we don't need the callback in access
-      self.callback = nil
+      The most common way to counter-sign the authorization string is to concatenate
+      them through a "&" character, which is what this method does.
 
-      // and save the verifier (both here and in the session)
-      self.verifier = Request.getField( "oauth_verifier" )
-      s["verifier"] = self.verifier
-
-      // now we can send the authorization token request
-      if self.requestToken( uri )
-         self._saveSession(s)
-         return self.getNonOAuth( self.token )
+      In case different OAuth applications requires different conuter-signature
+      strategies, this method can be overridden by subclasses.
+   */
+   function makeSecret( cust_secret, token_secret )
+      if token_secret
+         return cust_secret + "&" + token_secret
+      else
+         return cust_secret + "&"
       end
    end
 
-//==========================================================
-// API utilities
-//==========================================================
-   function callAPI( uri, params, method )
-      if not self.token
-         s = Request.getSession()
-         self._restoreSession( s )
+   //==========================================================
+   // API utilities
+   //==========================================================
+   
+   /*# Call an API protected by OAuth.
+      @param token An instance of @a Token.
+      @param uri The URI of the remote OAuth protected Web API to be called.
+      @optparam params Optional parameters for the call.
+      @return The raw data returned by the remote OAuth procedure.
+      
+      Calls a remote web API and blocks until a result is available.
+   */
+   function callAPI( token, uri, params )
+
+      if params
+         params = self._makeBaseParams() + params
+      else
+         params = self._makeBaseParams()
       end
-
-      if method == nil: method = Via.HEADER
-
-      params = self._makeApiCallParams() + params
+      params["oauth_token"] = token.token
 
       // Create the base string.
-      bstr = self._makeBaseString( method, uri, self._makeGet( params ) )
+      bstr = self._makeBaseString( self.http_method, uri, self._makeGet( params ) )
 
       // TODO: use self.signature_method
-      secret = self.secret + "&" + self.token.oauth_token_secret
-      //oauth_signature = Base64.encode(
-      //   self._hmac( hash.SHA1Hash, secret, bstr, true ) )
-
+      secret = self.makeSecret( self.secret, token.secret )
+      
       oauth_signature = Base64.encode(
          hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
 
       // Add the signature to the fields.
       params["oauth_signature"] = oauth_signature
       query_string = self._makeGet( params )
-
-      inspect( params )
-
-      if method == Via.POST
+      
+      if self.mode  == Via.POST
          cr = curl.Handle( uri )
          cr.postData( query_string )
       elif self.mode == Via.GET
@@ -242,10 +303,10 @@ class OAuth( mode, key, secret )
       return cr.getData()
    end
 
-
-//==========================================================
-// Generic utilities
-//==========================================================
+   
+   //==========================================================
+   // Generic utilities
+   //==========================================================
 
 
    function parseQS( data )
@@ -264,38 +325,24 @@ class OAuth( mode, key, secret )
       return ret
    end
 
+
    function _makeBaseParams()
       params = [
-         "oauth_consumer_key" => self.key,
+         "oauth_consumer_key" => self.cust_id,
          "oauth_signature_method" => self.signature_method,
          "oauth_timestamp" => toString(epoch()),
+         "oauth_nonce" =>  self._randomString(25),
          "oauth_version" => self.version
       ]
 
-      if self.nonce: params["oauth_nonce"] = self.nonce
-      if self.token: params["oauth_token"] = self.token.oauth_token
-      if self.callback: params[ "oauth_callback" ] = self.callback
-      if self.verifier: params[ "oauth_verifier" ] = self.verifier
-      return params
-   end
-
-   function _makeApiCallParams()
-      if not self.token or "oauth_token" notin self.token
-         raise "Api call called but authorization not ready"
+      /*
+      if self.verifier
+         params["oauth_verifier"] = self.verifier
       end
-
-      params = [
-         "oauth_consumer_key" => self.key,
-         "oauth_signature_method" => self.signature_method,
-         "oauth_timestamp" => toString(epoch()),
-         //"oauth_verifier" => self.verifier,
-         "oauth_version" => self.version,
-         "oauth_nonce" =>  self._randomString(25),
-         "oauth_token" => self.token.oauth_token
-      ]
-
+      */
       return params
    end
+   
 
    function _makeBaseString( method, base_uri, fields )
       return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields )
@@ -322,33 +369,13 @@ class OAuth( mode, key, secret )
    end
 
 
-   function _hmac( algo, key, message, raw )
-      message = message.clone()
-
-      algo_size = algo().bytes()
-      size = algo_size <= 64 ? 64 : 128
-
-      if key.len() > size
-         key = strFromMemBuf(algo().update(key).toMemBuf())
-      end
-
-      i_key_pad = "\x36" * size
-      o_key_pad = "\x5C" * size
-      for i in [0:key.len()]
-         n =  key[*i]
-         i_key_pad[i] = n ^^ 0x36
-         o_key_pad[i] = n ^^ 0x5C
-      end
-
-      b = algo().update( o_key_pad, algo().update( i_key_pad, message ).toMemBuf() )
-
-      return raw ? b.toMemBuf() : b.toString()
-   end
-
    function _randomString( size )
       s = " " * size
+      r = random(0,51)
+      rstep = random(1,351234)
       for i in [0:size]
-         r = random(0,51)
+         r = (r + rstep) % 51
+         rstep = (rstep*2) % 349 + 1
          if r >= 26
             s[i] = "a"/ (r-26)
          else
@@ -359,34 +386,4 @@ class OAuth( mode, key, secret )
       return s
    end
 
-
-   function _saveSession( s )
-      s["key"]= self.key
-      s["secret"] = self.secret
-      s["mode"] = self.mode
-
-      s["callback"] = self.callback
-      s["realm"] = self.realm
-      s["nonce"] = self.nonce
-      s["http_method"] = self.http_method
-      s["signature_method"] = self.signature_method
-      s["version"] = self.version
-      s["token"] = self.token
-      s["verifier"] = self.verifier
-   end
-
-   function _restoreSession( s )
-      self.key = s["key"]
-      self.secret = s["secret"]
-      self.mode = s["mode"]
-
-      self.callback = s["callback"]
-      self.realm = s["realm"]
-      self.nonce = s["nonce"]
-      self.http_method = s["http_method"]
-      self.signature_method = s["signature_method"]
-      self.version = s["version"]
-      self.token = s["token"]
-      self.verifier = s["verifier"]
-   end
 end
