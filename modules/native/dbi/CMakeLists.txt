@@ -17,7 +17,7 @@ find_package(Falcon REQUIRED)
 OPTION( FALCON_DBI_BUILD_SQLITE "Include SQLite3 DBI Module" ON )
 
 # MySQL
-FIND_PATH( MYSQL_INCLUDE_DIR mysql.h HINTS /usr/include/mysql )
+FIND_PATH( MYSQL_INCLUDE_DIR mysql.h HINTS /usr/include/mysql /usr/local/include/mysql )
 IF ( MYSQL_INCLUDE_DIR )
     set( _mysql ON )
 ELSE()
@@ -35,12 +35,18 @@ ENDIF()
 OPTION( FALCON_DBI_BUILD_PGSQL "Include PostgreSQL DBI Module" ${_pgsql} )
 
 # Oracle
-OPTION(FALCON_DBI_BUILD_ORACLE "Include Oracle DBI Module" OFF)
+FIND_PATH( ORACLE_INCLUDE_DIR occi.h HINTS /usr/include/oracle /usr/local/include/oracle $ENV{ORACLE_HOME}/sdk/include )
+IF ( ORACLE_INCLUDE_DIR )
+    set ( _oracle ON )
+ELSE()
+    set ( _oracle OFF )
+ENDIF()
+OPTION( FALCON_DBI_BUILD_ORACLE "Include Oracle DBI Module" ${_oracle} )
 
 # Firebird
 OPTION(FALCON_DBI_BUILD_FIREBIRD "Include Firebird DBI Module" OFF)
 
-#For now, activate ODBC on windows
+# For now, activate ODBC on windows
 IF(MSVC)
    OPTION(FALCON_DBI_BUILD_ODBC "Include ODBC DBI Module" ON)
 ELSE(MSVC)
@@ -50,7 +56,7 @@ ENDIF(MSVC)
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
 
-#Common files
+# Common files
 set( dbi_common_files
    ../dbi_common/dbi_common.cpp
    ../dbi_common/dbi_error.cpp
@@ -93,7 +99,7 @@ IF(FALCON_DBI_BUILD_ODBC)
 ENDIF()
 
 IF(FALCON_DBI_BUILD_ORACLE)
-  ADD_SUBDIRECTORY(oracle)
+    ADD_SUBDIRECTORY(oracle)
 ENDIF()
 
 IF(FALCON_DBI_BUILD_FIREBIRD)
