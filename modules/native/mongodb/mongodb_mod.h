@@ -110,6 +110,11 @@ public:
     bool command( const char* db,
                   BSONObj* cmd,
                   BSONObj** res );
+    bool createIndex( const char* ns,
+                      BSONObj* key,
+                      const bool unique=false,
+                      const bool drop_dups=false,
+                      BSONObj** res=0 );
 
 protected:
 

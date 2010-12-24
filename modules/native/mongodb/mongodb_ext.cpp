@@ -602,6 +602,49 @@ FALCON_FUNC MongoDBConnection_command( VMachine* vm )
         vm->retnil();
 }
 
+
+/*#
+    @method createIndex MongoDB
+    @param ns namespace
+    @param key BSON instance
+    @optparam unique (boolean) default false
+    @optparam drop_dups (boolean) default false
+    @return BSON result or nil
+ */
+FALCON_FUNC MongoDBConnection_createIndex( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_key = vm->param( 1 );
+    Item* i_uniq = vm->param( 2 );
+    Item* i_drups = vm->param( 3 );
+
+    if ( !i_ns || !i_ns->isString()
+        || !i_key || !( i_key->isObject() && i_key->asObjectSafe()->derivedFrom( "BSON" ) )
+        || ( i_uniq && !i_uniq->isBoolean() )
+        || ( i_drups && !i_drups->isBoolean() ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,BSON,[B,B]" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    AutoCString zNs( *i_ns );
+    MongoDB::BSONObj* key = static_cast<MongoDB::BSONObj*>( i_key->asObjectSafe()->getUserData() );
+    const bool uniq = i_uniq ? i_uniq->asBoolean() : false;
+    const bool drups = i_drups ? i_drups->asBoolean() : false;
+    MongoDB::BSONObj* res;
+
+    if ( conn->createIndex( zNs.c_str(), key, uniq, drups, &res ) )
+    {
+        CoreObject* obj = vm->findWKI( "BSON" )->asClass()->createInstance();
+        obj->setUserData( res );
+        vm->retval( obj );
+    }
+    else
+        vm->retnil();
+}
+
 /*******************************************************************************
     ObjectID class
 *******************************************************************************/

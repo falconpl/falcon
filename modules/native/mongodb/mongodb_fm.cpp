@@ -22,6 +22,7 @@
     - Optimize BSONIter so that they dont copy data (?)
     - think about what to put in the service
     - JSON interactions
+    - work on pure C driver...
  */
 
 Falcon::MongoDBService theMongoDBService;
@@ -73,6 +74,8 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_count );
     self->addClassMethod( dbconn_cls, "command",
                           Falcon::Ext::MongoDBConnection_command );
+    self->addClassMethod( dbconn_cls, "createIndex",
+                          Falcon::Ext::MongoDBConnection_createIndex );
 
     // ObjectID class
     Falcon::Symbol *oid_cls = self->addClass( "ObjectID",

@@ -458,10 +458,48 @@ Connection::command( const char* db,
         return false;
 
     bson out;
-    bson_bool_t b = mongo_run_command( conn, db, cmd->finalize(), &out );
+    const bson_bool_t b = mongo_run_command( conn, db, cmd->finalize(), &out );
 
     if ( b && res )
+    {
         *res = new BSONObj( &out );
+        bson_destroy( &out );
+    }
+
+    return b ? true : false;
+}
+
+bool
+Connection::createIndex( const char* ns,
+                         BSONObj* key,
+                         const bool unique,
+                         const bool drop_dups,
+                         BSONObj** res )
+{
+    if ( !ns || ns[0] == '\0' || !key )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    int opt = 0;
+    if ( unique )
+        opt |= MONGO_INDEX_UNIQUE;
+    if ( drop_dups )
+        opt |= MONGO_INDEX_DROP_DUPS;
+
+    bson out;
+    const bson_bool_t b = mongo_create_index( conn, ns, key->finalize(), opt, &out );
+
+    if ( b && res )
+    {
+        *res = new BSONObj( &out );
+        bson_destroy( &out );
+    }
 
     return b ? true : false;
 }
