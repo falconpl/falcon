@@ -398,6 +398,34 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
 
 
 /*#
+    @method remove MongoDB
+    @param ns namespace
+    @param cond BSON instance (conditions)
+    @return true on success
+ */
+FALCON_FUNC MongoDBConnection_remove( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_cond = vm->param( 1 );
+
+    if ( !i_ns || !i_ns->isString()
+        || !i_cond || !( i_cond->isObject() && i_cond->asObjectSafe()->derivedFrom( "BSON" ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,BSON" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+
+    AutoCString zNs( *i_ns );
+    MongoDB::BSONObj* cond = static_cast<MongoDB::BSONObj*>( i_cond->asObjectSafe()->getUserData() );
+
+    vm->retval( conn->remove( zNs.c_str(), cond ) );
+}
+
+
+/*#
     @method findOne MongoDB
     @param ns namespace
     @optparam query BSON instance

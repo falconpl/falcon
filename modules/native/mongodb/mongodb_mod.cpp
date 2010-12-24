@@ -325,6 +325,24 @@ Connection::update( const char* ns,
 }
 
 bool
+Connection::remove( const char* ns,
+                    BSONObj* cond )
+{
+    if ( !ns || ns[0] == '\0' )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    mongo_remove( conn, ns, cond->finalize() );
+    return true;
+}
+
+bool
 Connection::findOne( const char* ns,
                      BSONObj* query,
                      BSONObj** ret )

@@ -122,8 +122,12 @@ db.update( "none.test", mongo.BSON(["key1"=>3]),
 Assert( db.findOne( "none.test", mongo.BSON(["key1"=>2]) ) != nil, "Find one updated!" )
 
 // count
-> "Count!"
-> db.count( "none", "test" )
+Assert( db.count( "none", "test" ) == 1, "Count 1!" )
+
+// remove
+> "Remove!"
+db.remove( "none.test", mongo.BSON(["key1"=>2]) )
+Assert( db.count( "none", "test" ) == 0, "Count 0!" )
 
 // disconnect
 db.disconnect()

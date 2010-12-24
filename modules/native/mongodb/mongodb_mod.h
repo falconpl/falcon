@@ -91,6 +91,8 @@ public:
     bool update( const char* ns,
                  BSONObj* cond,
                  BSONObj* op );
+    bool remove( const char* ns,
+                 BSONObj* cond );
     bool findOne( const char* ns,
                   BSONObj* query=0,
                   BSONObj** ret=0 );

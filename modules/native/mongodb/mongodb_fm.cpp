@@ -63,6 +63,8 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_insert );
     self->addClassMethod( dbconn_cls, "update",
                           Falcon::Ext::MongoDBConnection_update );
+    self->addClassMethod( dbconn_cls, "remove",
+                          Falcon::Ext::MongoDBConnection_remove );
     self->addClassMethod( dbconn_cls, "findOne",
                           Falcon::Ext::MongoDBConnection_findOne );
     self->addClassMethod( dbconn_cls, "count",
