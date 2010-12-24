@@ -1,5 +1,6 @@
 /*#
    @page front_end_fcgi FastCGI stand-alone front-end
+   @inmodule WOPI
 
    The WOPI FastCGI front-end, called @b ffalcgi
    is a stand-alone program (a binary executable for the target platform)

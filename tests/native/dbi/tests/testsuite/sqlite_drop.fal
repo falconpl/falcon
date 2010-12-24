@@ -20,7 +20,7 @@ try
    GC.perform(true)
    
    conn = dbi.connect( "sqlite3:db=testsuite.db" )
-   conn.perform("drop table TestTable")
+   conn.query("drop table TestTable")
    conn.commit()
    conn.close()
    success()

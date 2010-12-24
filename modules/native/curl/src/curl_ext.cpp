@@ -32,6 +32,18 @@
    Interface extension functions
 */
 
+#ifndef _MSC_VER
+#include <sys/time.h>
+#else 
+#include <time.h>
+   #ifndef _WIN32_WINNT
+      #define _WIN32_WINNT 0x0403 
+   #elif _WIN32_WINNT < 0x0403
+      #undef _WIN32_WINNT
+      #define _WIN32_WINNT 0x0403 
+   #endif
+#endif
+
 #include <falcon/engine.h>
 #include <curl/curl.h>
 
@@ -39,7 +51,6 @@
 #include "curl_ext.h"
 #include "curl_st.h"
 
-#include <sys/time.h>
 
 /*# @beginmodule curl
 */
@@ -523,8 +534,10 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
       break;
 
 
+#ifdef CURLOPT_PROTOCOLS
     case CURLOPT_PROTOCOLS:
     case CURLOPT_REDIR_PROTOCOLS:
+#endif
     case CURLOPT_PROXYPORT:
     case CURLOPT_PROXYTYPE:
     case CURLOPT_LOCALPORT:
@@ -975,9 +988,9 @@ FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm )
             TimeStamp* timestamp = new TimeStamp;
             timestamp->m_timezone = tz_UTC;
 
-            #ifdef FALCON_SYSTEM_WIN
-               struct rtm;
-               struct tm *ftime = gmtime_r( &trv, &tm );
+            #ifndef FALCON_SYSTEM_WIN
+               struct tm rtm;
+               struct tm *ftime = gmtime_r( &trv, &rtm );
 
             #else
                struct tm *ftime = gmtime( &trv );

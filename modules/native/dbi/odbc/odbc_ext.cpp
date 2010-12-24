@@ -27,9 +27,23 @@ namespace Ext
 {
 
 /*#
-      @class ODBC
-      @brief Direct interface to ODBC connections.
-      @param connect String containing connection parameters.
+   @class ODBC
+   @brief Interface to ODBC connections.
+   @param connect String containing connection parameters.
+   @optparam options Connection and query default options.
+
+   The ODBC drivers have a limited ability to determine
+   the underlying database types; for this reason, it's advisable
+   to limit the usage of prepared statements, and rely on @b query,
+   which performs safer verbatim parameter expansion.
+
+   
+   Other than the base DBI class options, this class supports
+   the following options:
+
+   - bigint (on/off): By default, the ODBC drivers can't deal
+     with int64 (64 bit integers) data. Setting this on, it is
+     possible to send int64 data through prepared statements.
 */
 
 
@@ -47,16 +61,15 @@ namespace Ext
 FALCON_FUNC ODBC_init( VMachine *vm )
 {
    Item *paramsI = vm->param(0);
-   Item *i_tropts = vm->param(1);
+   Item *i_connParams = vm->param(1);
    if (  paramsI == 0 || ! paramsI->isString()
-         || ( i_tropts != 0 && ! i_tropts->isString() ) )
+         || ( i_connParams != 0 && ! i_connParams->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .extra( "S,[S]" ) );
    }
 
    CoreObject *self = vm->self().asObject();
-   dbi_status status;
    String connectErrorMessage;
 
    const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
@@ -65,14 +78,14 @@ FALCON_FUNC ODBC_init( VMachine *vm )
 
    try
    {
-      hand = theSQLite3Service.connect( *params );
-      if( i_tropts != 0 )
+      hand = theODBCService.connect( params );
+      if( i_connParams != 0 )
       {
-         hand->options( *i_tropts->asString() );
+         hand->options( *i_connParams->asString() );
       }
 
       // great, we have the database handler open. Now we must create a falcon object to store it.
-      CoreObject *instance = theSQLite3Service.makeInstance( vm, hand );
+      CoreObject *instance = theODBCService.makeInstance( vm, hand );
       vm->retval( instance );
    }
    catch( DBIError* error )

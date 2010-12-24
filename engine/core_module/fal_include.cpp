@@ -18,6 +18,10 @@
 #include <falcon/module.h>
 #include <falcon/modloader.h>
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 

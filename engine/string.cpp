@@ -2074,7 +2074,14 @@ void String::upper()
    }
 }
 
+
 bool String::fromUTF8( const char *utf8 )
+{
+   return fromUTF8( utf8, -1 );
+}
+
+
+bool String::fromUTF8( const char *utf8, int len )
 {
    // destroy old contents
 
@@ -2086,7 +2093,7 @@ bool String::fromUTF8( const char *utf8 )
    m_size = 0;
 
    // empty string?
-   if ( *utf8 == 0 )
+   if ( len == 0 || *utf8 == 0 )
    {
       m_class = &csh::handler_static;
       return true;
@@ -2094,7 +2101,7 @@ bool String::fromUTF8( const char *utf8 )
 
    // start scanning
 
-   while ( *utf8 != 0 )
+   while ( len != 0 && *utf8 != 0 )
    {
       uint32 chr = 0;
 
@@ -2152,6 +2159,7 @@ bool String::fromUTF8( const char *utf8 )
       this->append( chr );
 
       utf8++;
+      --len;
    }
 
    return true;

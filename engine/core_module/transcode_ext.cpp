@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+/*#
+   @beginmodule core
+*/
+
 /** \file
    Transcoder api for rtl.
 */

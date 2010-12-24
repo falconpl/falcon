@@ -22,6 +22,11 @@
 #include <falcon/wopi/session_manager.h>
 #include <falcon/wopi/utils.h>
 
+/*#
+   @beginmodule WOPI
+*/
+
+
 namespace Falcon {
 namespace WOPI {
 

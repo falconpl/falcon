@@ -18,6 +18,10 @@
 #include <falcon/mempool.h>
 #include <falcon/globals.h>
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 

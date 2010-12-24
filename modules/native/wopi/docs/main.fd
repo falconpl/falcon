@@ -1,5 +1,5 @@
 /*#
-   @main Web Oriented Programming Interface
+   @module WOPI Web Oriented Programming Interface
    
    Falcon Web Oriented Programming Interface (WOPI) is composed
    of a set of modules and stand-alone applications delivering
@@ -43,7 +43,7 @@
    
    @section front_ends Front ends
    
-   WOPI @i front @i ends are the @i means through which scripts
+   WOPI __front ends__ are the @i means through which scripts
    are served on the net. Currently, the WOPI project includes
    the following front ends: 
    
@@ -70,13 +70,13 @@
    that WOPI interface is meant not to change across different front-ends; front-end entries
    are meant to help setting up and configuring the various WOPI providers.
 
-	@section wopi_features Features
-	
-	- HTTP GET & POST Field parsing
-	- Cookie control
-	- Upload control
-	- Simplified output encoding control
-	- Template management
+   @section wopi_features Features
+
+   - HTTP GET & POST Field parsing
+   - Cookie control
+   - Upload control
+   - Simplified output encoding control
+   - Template management
    - Session management
    - Application-wide data support
    

@@ -17,6 +17,11 @@
 
 #include <falcon/wopi/uploaded_ext.h>
 
+/*#
+   @beginmodule WOPI
+*/
+
+
 namespace Falcon {
 namespace WOPI {
 

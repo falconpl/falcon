@@ -13,7 +13,9 @@
    See LICENSE file for licensing details.
 */
 
-
+/*#
+   @beginmodule core
+*/
 
 /** \file
    Path - script interface API

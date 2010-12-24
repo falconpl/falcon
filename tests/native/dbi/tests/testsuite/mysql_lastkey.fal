@@ -22,7 +22,7 @@ try
 
    conn.begin()
 
-   conn.perform( "
+   conn.query( "
       insert into TestTable( tblob, number)
       values( 'The desired value', 10.3 )" )
 

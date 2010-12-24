@@ -1,0 +1,96 @@
+/*
+   FALCON - DBI - Samples
+
+   FILE: ndbi.fal
+
+   DBI/PgSQL test sample
+   -------------------------------------------------------------------
+   Author: Stanislais Marquis
+   Begin: 
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+*/
+ 
+import from dbi
+
+// Your connection info
+_connInfo = "pgsql:dbname=testdb user=testuser password=testpassword"
+
+// Some queries to execute
+
+_dropTableStr = '
+DROP TABLE IF EXISTS FalconTestTable;'
+
+_createTableStr = '
+CREATE TABLE FalconTestTable
+(
+    idx     serial primary key,
+    name    varchar(128) not null,
+    amount  numeric not null default 0,
+    comment text default null
+);'
+
+_insertRowStr = '
+INSERT INTO FalconTestTable ( name, amount, comment )
+VALUES ( ?,?,? );'
+
+_rows = [
+    [ "Someone 1", 123, "Some comment." ],
+    [ "Someone 2", 321, "Another one." ],
+    [ "Someone 3", 111, nil ]
+]
+
+_rows_2 = [
+    [ "Someone 4", 222.22, "Hello postgres!" ],
+    [ "Someone 5", 333.33, "Nice amount" ],
+    [ "Someone 6", 0, "Poor guy" ]
+]
+
+_selectAllStr = 'SELECT * FROM FalconTestTable'
+
+// Let's test
+
+> "-- Connecting..."
+dbh = dbi.connect( _connInfo )
+
+> "-- Drop table..."
+dbh.query( _dropTableStr )
+
+> "-- Create table..."
+dbh.query( _createTableStr )
+
+> "-- Prepare a statement and insert 3 rows..."
+stmt = dbh.prepare( _insertRowStr )
+i = 0
+for row in _rows
+    > i++
+    stmt.execute( row[0], row[1], row[2] )
+end
+
+// This is a pgsql driver specific function.
+> "-- Prepare a named statement and insert 3 rows..."
+stmt = dbh.prepareNamed( "StoredProc", _insertRowStr )
+for row in _rows_2
+    > i++
+    stmt.execute( row[0], row[1], row[2] )
+end
+
+> "-- Select all..."
+res = dbh.query( _selectAllStr )
+i = 0
+while i < res.getRowCount()
+    row = res.fetch()
+    j = 0
+    for colName in res.getColumnNames()
+        >> @"$(colName)= $(row[j]) | "
+        ++j
+    end
+    >> "\n"
+    ++i
+end
+
+
+> "-- Finally drop table..."
+dbh.query( _dropTableStr )
+

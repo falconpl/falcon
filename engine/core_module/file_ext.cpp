@@ -17,6 +17,10 @@
    Falcon file api.
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/item.h>

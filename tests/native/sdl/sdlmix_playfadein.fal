@@ -1,0 +1,44 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MIXER MODULE Samples
+
+   FILE: sdlmix_playfadein.fal
+
+   Test for fade-in.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 09 Oct 2008 23:19:59 +0200
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load sdlmixer
+
+try
+   a = SDL.InitAuto( SDL.INIT_AUDIO )
+   MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
+   MIX.AllocateChannels( 3 )
+   sound = MIX.LoadWAV( "fading.ogg" )
+   sound.Play( 0, -1, time|12, fadeIn|6 )
+
+   > "Success. Press enter to stop"
+   > "Fadein: 6 secs - Notice that the music will stop after 12 seconds"
+   count = 0
+   stdin = stdIn()
+   loop
+      count++
+      >> @"[$(count)]\r"
+      if stdin.readAvailable(0.010): break
+   end
+
+   MIX.CloseAudio()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

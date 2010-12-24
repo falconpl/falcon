@@ -1,5 +1,4 @@
 
-
 mysql_conn_str = "
    mysql:
       host=localhost;

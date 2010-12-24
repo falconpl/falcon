@@ -14,8 +14,11 @@
 */
 
 #include "core_module.h"
-
 #include <string.h>
+
+/*#
+   @beginmodule core
+*/
 
 namespace Falcon {
 namespace core {

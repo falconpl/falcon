@@ -18,6 +18,10 @@
 #include <falcon/falconobject.h>
 #include <falcon/fassert.h>
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 

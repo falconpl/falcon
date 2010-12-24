@@ -63,7 +63,7 @@ public:
        The returned block should never be used outside the scope of the calling
        function (unless You Know What You're Doing).
 
-       After a succesful data read, the block should be passed to setBlockSize,
+       After a succesfull data read, the block should be passed to setBlockSize,
        to indicate the amount of bytes really stored in the block.
 
        After all the blocks have been read, use consolidate() to create a buffer

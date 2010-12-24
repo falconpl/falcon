@@ -16,6 +16,10 @@
 #include "core_module.h"
 #include <falcon/memory.h>
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 

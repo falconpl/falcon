@@ -27,8 +27,7 @@ endforeach()
 #
 
 IF(UNIX)
-   SET(sys_in_spec falcon-conf )
-   SET(sys_inst_spec ${CMAKE_CURRENT_BINARY_DIR}/falcon-conf)
+   SET(sys_in_spec falcon-conf falconenv.sh)
 ENDIF(UNIX)
 
 SET(in_bin_files

@@ -33,6 +33,7 @@ private:
    
    
 protected:
+   uint64 m_lastError;
    uint32 m_pos;
    virtual int64 seek( int64 pos, e_whence whence );
    
@@ -40,6 +41,7 @@ protected:
    void setBuffer( const char* source, int size=-1 );
    bool detachBuffer();
    
+   bool subWriteString( const String &source );
 public:
    StringStream( int32 size=0 );
    StringStream( const String &strbuf );

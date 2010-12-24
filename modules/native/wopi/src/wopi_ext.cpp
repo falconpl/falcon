@@ -31,6 +31,10 @@
 
 #include <falcon/wopi/version.h>
 
+/*#
+   @beginmodule WOPI
+*/
+
 
 namespace Falcon {
 namespace WOPI {
@@ -52,9 +56,6 @@ static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::Strea
    }
 }
 
-//=====================================================================
-// Request
-//
 
 /*#
    @global scriptName

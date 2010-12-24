@@ -1,5 +1,6 @@
 /*#
 	@page wopi_modules Building modular applications
+   @inmodule WOPI
 
    For how simple a web application may be, it will usually be composed of several pages
    meant to work coordinately. Although coordination can happen also through data exchange

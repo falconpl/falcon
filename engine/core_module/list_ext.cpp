@@ -17,6 +17,9 @@
    Implementation of the RTL List Falcon class.
 */
 
+/*#
+   @beginmodule core
+*/
 
 #include <falcon/setup.h>
 #include <falcon/types.h>

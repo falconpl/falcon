@@ -17,13 +17,14 @@ import from dbi
 
 try
    GC.perform(true)
+   
    // enable strings on
    conn = dbi.connect( "sqlite3:db=testsuite.db",
       "autocommit=off" )
 
    conn.begin()
    
-   conn.perform( "
+   conn.query( "
       insert into TestTable( tblob, number)
       values( 'The desired value', 10.3 )" )
 
@@ -32,11 +33,7 @@ try
    if rs.fetch([])[0] != 'The desired value'
       failure( "Fetched another record" )
    end
-   rs.close()
    
-   conn.commit()
-
-   conn.close()
    success()
 
 catch dbi.DBIError in error

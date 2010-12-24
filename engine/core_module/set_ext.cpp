@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+/*#
+   @beginmodule core
+*/
+
 /** \file
    Implementation of the RTL List Falcon class.
 */

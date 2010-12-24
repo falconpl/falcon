@@ -22,7 +22,7 @@ try
    mb = MemBuf(256)
    for i = 0 to 255: mb[i] = i
 
-   conn.perform("
+   conn.query("
       insert into TestTable( vint, fixchar, vchar, tblob, bblob, number, ts )
       values( ?, ?, ?, ?, ?, ?, ? )",
       100, "fixchar", "varchar", "New data for text blob", mb, 24.45, CurrentTime() )

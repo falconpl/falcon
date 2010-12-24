@@ -20,7 +20,7 @@ try
       "autocommit=off" )
 
    conn.begin()
-   conn.perform( "
+   conn.query( "
       insert into TestTable( kv, tblob, number)
       values( 100, 'A rolled back value', 10.3 )" )
    conn.rollback()
@@ -30,8 +30,6 @@ try
       failure( "Some data was returned" )
    end
 
-   rs.close()
-   conn.close()
    success()
 
 catch dbi.DBIError in error

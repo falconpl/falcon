@@ -17,6 +17,10 @@
    The command line parser class
 */
 
+/*#
+   @beginmodule core
+*/
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/item.h>

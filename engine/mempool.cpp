@@ -89,6 +89,8 @@ MemPool::MemPool():
    m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 2.6 );
    m_ramp[RAMP_MODE_SMOOTH_FAST_ID] = new RampSmooth( 6.5 );
 
+   // force initialization in rampMode by setting a different initial value;
+   m_curRampID = DEFAULT_RAMP_MODE+1;
    rampMode( DEFAULT_RAMP_MODE );
 }
 

@@ -1,5 +1,6 @@
 /*#
    @page front_end_cgi_fm CGI falcon module
+   @inmodule WOPI
 
    The WOPI CGI falcon module front-end, called @b cgi_fm
    is a module that can be injected in a script executed through the @b falcon command line interpreter,

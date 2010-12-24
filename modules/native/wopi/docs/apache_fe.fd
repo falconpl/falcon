@@ -1,5 +1,7 @@
 /*#
    @page front_end_mod_apache2 Apache 2 web server module.
+   @inmodule WOPI
+
 
    The @b mod_falcon module for @link "http://www.apache.org" Apache2 web server allows to serve
    falcon scripts with WOPI directly through a first-class, complete and solid web server.

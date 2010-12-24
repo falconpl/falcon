@@ -20,6 +20,7 @@ Falcon (0.9.6.7)
   * fixed: Fixed off-by-one error in ftrim()
   * added: DBI - odbc module.
   * added: Support for encoding IBM850 (code page 850 - western latin).
+  * added: DBI - Firebird (fbsql) module.
 
 Falcon (0.9.6.6)
   * fixed: Default CoreObject clone didn't try to clone the falcon-data even

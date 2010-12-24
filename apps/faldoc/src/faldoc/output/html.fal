@@ -384,16 +384,20 @@ class AlphaIndexPage( doc ) from Page( i"Alphabetical Index", "__alphaindex.html
             
             para.add( ht.A( _generator.getLinkName( entity ), name) )
             para.add( ", " + @i"$(entity.type)" )
-            if "ingroup" in entity.props
-               group = entity.parent.members[entity.props["ingroup"]]
-               para.add( " " + i"in group" + " ")
-               para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
+            try
+               if "ingroup" in entity.props
+                  group = entity.parent.members[entity.props["ingroup"]]
+                  para.add( " " + i"in group" + " ")
+                  para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
+               end
+               if "inset" in entity.props
+                  group = entity.parent.members[entity.props["inset"]]
+                  para.add( " " + i"in set" + " ")
+                  para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
+               end
+            catch AccessError
             end
-            if "inset" in entity.props
-               group = entity.parent.members[entity.props["inset"]]
-               para.add( " " + i"in set" + " ")
-               para.add( ht.A( _generator.getFileName( group ), group.props["title"]) )
-            end
+            
             para.add(ht.BR())
          end
          body.add( para )

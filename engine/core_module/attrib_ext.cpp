@@ -19,6 +19,10 @@
 #include <falcon/corefunc.h>
 #include "core_module.h"
 
+/*#
+   @beginmodule core
+*/
+
 namespace Falcon {
 namespace core {
 
@@ -66,7 +70,7 @@ static CoreDict* interal_make_attrib_dict( Map* attr )
    @function attributes
    @brief Returns a dictionary containing annotation attributes of the current module.
    @return Nil if the current module has no attributes, or a string-indexed dictionary.
-
+   
    @see Function.attributes
    @see Class.attributes
    @see Object.attributes
