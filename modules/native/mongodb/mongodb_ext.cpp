@@ -366,6 +366,38 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
 
 
 /*#
+    @method update MongoDB
+    @param ns namespace
+    @param cond BSON instance (conditions)
+    @param op BSON instace (operations)
+    @return true on success
+ */
+FALCON_FUNC MongoDBConnection_update( VMachine* vm )
+{
+    Item* i_ns = vm->param( 0 );
+    Item* i_cond = vm->param( 1 );
+    Item* i_op = vm->param( 2 );
+
+    if ( !i_ns || !i_ns->isString()
+        || !i_cond || !( i_cond->isObject() && i_cond->asObjectSafe()->derivedFrom( "BSON" ) )
+        || !i_op || !( i_op->isObject() && i_op->asObjectSafe()->derivedFrom( "BSON" ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,BSON,BSON" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+
+    AutoCString zNs( *i_ns );
+    MongoDB::BSONObj* cond = static_cast<MongoDB::BSONObj*>( i_cond->asObjectSafe()->getUserData() );
+    MongoDB::BSONObj* op = static_cast<MongoDB::BSONObj*>( i_op->asObjectSafe()->getUserData() );
+
+    vm->retval( conn->update( zNs.c_str(), cond, op ) );
+}
+
+
+/*#
     @method findOne MongoDB
     @param ns namespace
     @optparam query BSON instance

@@ -88,14 +88,16 @@ public:
                  BSONObj* data );
     bool insert( const char* ns,
                  const CoreArray& data );
-
+    bool update( const char* ns,
+                 BSONObj* cond,
+                 BSONObj* op );
     bool findOne( const char* ns,
                   BSONObj* query=0,
                   BSONObj** ret=0 );
-
     int64 count( const char* db,
                  const char* coll,
                  BSONObj* query=0 );
+
 
 protected:
 

@@ -115,6 +115,12 @@ ob = db.findOne( "none.test", mongo.BSON(["key1"=>3]) )
 inspect( ob.asDict() )
 Assert( db.findOne( "none.test", mongo.BSON(["key1"=>2]) ) == nil, "Find one nothing!" )
 
+// update
+> "Updating!"
+db.update( "none.test", mongo.BSON(["key1"=>3]),
+           mongo.BSON(["$set"=>["key1"=>2],"$inc"=>["key2"=>1.2]]) )
+Assert( db.findOne( "none.test", mongo.BSON(["key1"=>2]) ) != nil, "Find one updated!" )
+
 // count
 > "Count!"
 > db.count( "none", "test" )
