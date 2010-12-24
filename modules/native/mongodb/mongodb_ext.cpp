@@ -565,6 +565,43 @@ FALCON_FUNC MongoDBConnection_count( VMachine* vm )
     vm->retval( n );
 }
 
+
+/*#
+    @method command MongoDB
+    @param db
+    @param cmd BSON instance
+    @brief Run a command on a database
+    @return BSON result or nil
+ */
+FALCON_FUNC MongoDBConnection_command( VMachine* vm )
+{
+    Item* i_db = vm->param( 0 );
+    Item* i_cmd = vm->param( 1 );
+
+    if ( !i_db || !i_db->isString()
+        || !i_cmd || !( i_cmd->isObject() && i_cmd->asObjectSafe()->derivedFrom( "BSON" ) ) )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S,BSON" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::Connection* conn = static_cast<MongoDB::Connection*>( self->getUserData() );
+    AutoCString db( *i_db );
+    MongoDB::BSONObj* cmd = static_cast<MongoDB::BSONObj*>( i_cmd->asObjectSafe()->getUserData() );
+    MongoDB::BSONObj* res;
+
+    if ( conn->command( db.c_str(), cmd, &res ) )
+    {
+        Item* wki = vm->findWKI( "BSON" );
+        CoreObject* obj = wki->asClass()->createInstance();
+        obj->setUserData( res );
+        vm->retval( obj );
+    }
+    else
+        vm->retnil();
+}
+
 /*******************************************************************************
     ObjectID class
 *******************************************************************************/

@@ -107,7 +107,9 @@ public:
     int64 count( const char* db,
                  const char* coll,
                  BSONObj* query=0 );
-
+    bool command( const char* db,
+                  BSONObj* cmd,
+                  BSONObj** res );
 
 protected:
 

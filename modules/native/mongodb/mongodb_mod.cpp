@@ -442,6 +442,30 @@ Connection::count( const char* db,
                         query ? query->finalize() : BSONObj::empty() );
 }
 
+bool
+Connection::command( const char* db,
+                     BSONObj* cmd,
+                     BSONObj** res )
+{
+    if ( !db || db[0] == '\0' || !cmd )
+        return false;
+
+    if ( !mConn )
+        return false;
+
+    mongo_connection* conn = mConn->conn();
+    if ( !conn->connected )
+        return false;
+
+    bson out;
+    bson_bool_t b = mongo_run_command( conn, db, cmd->finalize(), &out );
+
+    if ( b && res )
+        *res = new BSONObj( &out );
+
+    return b ? true : false;
+}
+
 /*******************************************************************************
     ObjectID class
 *******************************************************************************/

@@ -71,6 +71,8 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoDBConnection_find );
     self->addClassMethod( dbconn_cls, "count",
                           Falcon::Ext::MongoDBConnection_count );
+    self->addClassMethod( dbconn_cls, "command",
+                          Falcon::Ext::MongoDBConnection_command );
 
     // ObjectID class
     Falcon::Symbol *oid_cls = self->addClass( "ObjectID",
