@@ -93,6 +93,10 @@ FALCON_MODULE_DECL
                           Falcon::Ext::MongoBSON_append );
     self->addClassMethod( bson_cls, "asDict",
                           Falcon::Ext::MongoBSON_asDict );
+    self->addClassMethod( bson_cls, "hasKey",
+                          Falcon::Ext::MongoBSON_hasKey );
+    self->addClassMethod( bson_cls, "value",
+                          Falcon::Ext::MongoBSON_value );
 
     // BSONIter class
     Falcon::Symbol* bsonit_cls = self->addClass( "BSONIter",

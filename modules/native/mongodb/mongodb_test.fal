@@ -69,7 +69,7 @@ inspect( obj.asDict() )
 // create non-empty bson object
 > "Creating non-empty bson object!"
 ob = mongo.BSON( [ "key" => "value" ] )
-> inspect( ob.asDict() )
+inspect( ob.asDict() )
 
 // append something
 > "Creating bson object!"
@@ -89,6 +89,12 @@ obj.genOID().append([
     "key8" => curtime,
     "key9" => mem
     ])
+
+// hasKey and value
+Assert( obj.hasKey( "key4" ), "Has key4!" )
+Assert( not obj.hasKey( "foo" ), "Has not key foo!" )
+Assert( obj.value( "key4" ) == nil, "Key4 is nil!" )
+Assert( obj.value( "key3" ) == true, "Key3 is true!" )
 
 // Turn object back to dict
 inspect( obj.asDict() )

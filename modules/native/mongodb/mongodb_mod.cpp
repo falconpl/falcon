@@ -930,6 +930,43 @@ BSONObj::reset( const int bytesNeeded )
     if ( !mFinalized ) mFinalized = true;
 }
 
+bool
+BSONObj::hasKey( const char* key )
+{
+    if ( !key || key[0] == '\0' )
+        return false;
+
+    bson_iterator iter;
+    bson_iterator_init( &iter, finalize()->data );
+
+    while ( bson_iterator_next( &iter ) != bson_eoo )
+    {
+        if ( !strcmp( key, bson_iterator_key( &iter ) ) )
+            return true;
+    }
+    return false;
+}
+
+Falcon::Item*
+BSONObj::value( const char* key )
+{
+    if ( !key || key[0] == '\0' )
+        return 0;
+
+    bson_iterator iter;
+    bson_iterator_init( &iter, finalize()->data );
+    bson_type tp;
+
+    while ( ( tp = bson_iterator_next( &iter ) ) != bson_eoo )
+    {
+        if ( !strcmp( key, bson_iterator_key( &iter ) ) )
+        {
+            return BSONIter::makeItem( tp, &iter );
+        }
+    }
+    return 0;
+}
+
 Falcon::CoreDict*
 BSONObj::asDict()
 {

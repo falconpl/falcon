@@ -767,6 +767,54 @@ FALCON_FUNC MongoBSON_asDict( VMachine* vm )
     vm->retval( bobj->asDict() );
 }
 
+
+/*#
+    @method hasKey BSON
+    @param key
+    @return true if BSON has that key
+ */
+FALCON_FUNC MongoBSON_hasKey( VMachine* vm )
+{
+    Item* i_key = vm->param( 0 );
+
+    if ( !i_key || !i_key->isString() )
+    {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    AutoCString key( *i_key );
+    vm->retval( bobj->hasKey( key.c_str() ) );
+}
+
+
+/*#
+    @method value BSON
+    @param key
+    @return value for key given (might be nil), or nil.
+ */
+FALCON_FUNC MongoBSON_value( VMachine* vm )
+{
+    Item* i_key = vm->param( 0 );
+
+    if ( !i_key || !i_key->isString() )
+    {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S" ) );
+    }
+
+    CoreObject* self = vm->self().asObjectSafe();
+    MongoDB::BSONObj* bobj = static_cast<MongoDB::BSONObj*>( self->getUserData() );
+    AutoCString key( *i_key );
+    Item* it = bobj->value( key.c_str() );
+    if ( it )
+        vm->retval( *it );
+    else
+        vm->retnil();
+}
+
 /*******************************************************************************
     BSONIter class
 *******************************************************************************/

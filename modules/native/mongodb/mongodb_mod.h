@@ -168,6 +168,9 @@ public:
 
     void reset( const int bytesNeeded=0 );
 
+    bool hasKey( const char* key );
+    Falcon::Item* value( const char* key );
+
     BSONObj* genOID( const char* nm="_id" );
     BSONObj* append( const char* nm,
                      const bson_oid_t* oid );
