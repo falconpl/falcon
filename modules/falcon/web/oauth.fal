@@ -289,11 +289,8 @@ class Client( cust_id, cust_secret, mode )
 
       // Create the base string.
       base_fields = self._makeGet( params )
-      > base_fields
       bstr = self._makeBaseString( self.http_method, uri, base_fields )
       secret = self.makeSecret( self.secret, token.secret )
-      > secret
-      > bstr
       oauth_signature = Base64.encode(
          hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
 
