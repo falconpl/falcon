@@ -88,6 +88,8 @@ class FileContext( file, defmod, modName )
                // -- may be nil if the entity is just containing document commands.
                entity = self.parseText( cnt, line )
 
+               // module and main entities never refer to any subsequent entity.
+               clear = entity.isStandAlone()
 
             case "inherit"
                self.parseInherit( parentEntity, node.firstChild )
@@ -406,6 +408,11 @@ class FileContext( file, defmod, modName )
       end
 
       return entity
+   end
+
+   //# Return false if this entity can have a subsequent source entity where it should be applied.
+   function isStandAlone()
+      return self.type == "module" or self.type == "main"
    end
 
 end

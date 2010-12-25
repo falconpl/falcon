@@ -235,8 +235,8 @@ class Client( cust_id, cust_secret, mode )
 
       token = Token( dt["oauth_token"], dt["oauth_token_secret"] )
       token.raw_data = dt
-      if "oauth_validator" in dt
-         token.validator = dt["oauth_validator"]
+      if "oauth_verifier" in dt
+         token.validator = dt["oauth_verifier"]
       end
 
       return token
