@@ -64,7 +64,7 @@ class Token( token, secret )
    secret = secret
 
    //# Validator field returned by the remote server
-   validator = nil
+   verifier = nil
 
    //# full data returned by the remote server.
    raw_data = nil
@@ -87,6 +87,13 @@ class Token( token, secret )
 
    // Gets extra data returned in the raw data. TODO
    function getExtraData()
+      ret = [=>]
+      for k,v in self.raw_data
+         if not k.startsWith( "oauth_" )
+            ret[k] = v
+         end
+      end
+      return ret
    end
    
 end
@@ -141,7 +148,7 @@ class Client( cust_id, cust_secret, mode )
       Once this token is authorized through other means (i.e. redirecting the user to the
       remote service site), it can be exchanged with an access token calling this method
       and passing the previously returned token. The request token is discarded and the parameter becomes
-      an access token, that can then be used to access reserved resources (via the @a callApi method).
+      an access token, that can then be used to access reserved resources (via the @a callAPI method).
 
       For example, a theoretic workflow may be
 
@@ -171,6 +178,10 @@ class Client( cust_id, cust_secret, mode )
       if token
          params[ "oauth_token" ] = token.token
          tsecret = token.secret
+      end
+
+      if token.verifier
+         params["oauth_verifier"] = token.verifier
       end
       
       if callback: params[ "oauth_callback" ] = callback
@@ -209,20 +220,24 @@ class Client( cust_id, cust_secret, mode )
 
       try
          dt = self.parseQS( data )
-      catch AccessError
-         raise ProtoError( 10001, i"Invalid answer from remote.", dt )
+      catch ParamError
+         raise ProtoError( 10001, i"Invalid answer from remote.", data )
       end
 
       if not "oauth_token" in dt
-         raise ProtoError( 10000, i"OAuth protocol error", i"Response didn't contain an oauth_token" )
+         raise ProtoError( 10002, i"Response didn't contain an oauth_token", data )
       end
 
       if not "oauth_token_secret" in dt
-         raise ProtoError( 10000, i"OAuth protocol error", i"Response didn't contain an oauth_token_secret" )
+         raise ProtoError( 10003, i"Response didn't contain an oauth_token_secret", data )
       end
+
 
       token = Token( dt["oauth_token"], dt["oauth_token_secret"] )
       token.raw_data = dt
+      if "oauth_validator" in dt
+         token.validator = dt["oauth_validator"]
+      end
 
       return token
    end
@@ -273,11 +288,12 @@ class Client( cust_id, cust_secret, mode )
       params["oauth_token"] = token.token
 
       // Create the base string.
-      bstr = self._makeBaseString( self.http_method, uri, self._makeGet( params ) )
-
-      // TODO: use self.signature_method
+      base_fields = self._makeGet( params )
+      > base_fields
+      bstr = self._makeBaseString( self.http_method, uri, base_fields )
       secret = self.makeSecret( self.secret, token.secret )
-      
+      > secret
+      > bstr
       oauth_signature = Base64.encode(
          hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
 
@@ -288,6 +304,7 @@ class Client( cust_id, cust_secret, mode )
       if self.mode  == Via.POST
          cr = curl.Handle( uri )
          cr.postData( query_string )
+         cr.setOption( curl.OPT.HTTPHEADER, ["Content-type: application/x-www-form-urlencoded"] )
       elif self.mode == Via.GET
          cr = curl.Handle( uri + "?" + query_string )
       elif self.mode == Via.HEADER
@@ -308,21 +325,24 @@ class Client( cust_id, cust_secret, mode )
    // Generic utilities
    //==========================================================
 
+   /*# Static utility to parse a query string into a dictionary of values.
+       @param data A query string
+       @return a dictionary of values.
 
+       Typically, the query string is a pair of "key=value" strings separated
+       by "&" valeus, and encoded as URI encoded values.
+   */
    function parseQS( data )
-      return [=>].comp(
-            map( {e=> map( URI.decode, e.split("="))},
-               data.split("&") ) )
-   end
-
-   function getNonOAuth( params )
-      ret = [=>]
-      for k,v in params
-         if not k.startsWith( "oauth_" )
-            ret[k] = v
+      res = [=>]
+      for item in data.split("&")
+         v = item.split("=",2)
+         if v.len() == 1
+            res[v[0]] =""
+         else
+            res[v[0]] = URI.decode(v[1])
          end
       end
-      return ret
+      return res
    end
 
 
@@ -335,17 +355,12 @@ class Client( cust_id, cust_secret, mode )
          "oauth_version" => self.version
       ]
 
-      /*
-      if self.verifier
-         params["oauth_verifier"] = self.verifier
-      end
-      */
       return params
    end
    
 
    function _makeBaseString( method, base_uri, fields )
-      return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields )
+      return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields.replace("+","%20") )
    end
 
    function _makeAuthHeader( params )
