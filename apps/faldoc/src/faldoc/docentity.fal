@@ -269,6 +269,7 @@ class Entity( content, file, line )
                hadComplex = true
 
             case "@main"
+               faldoc.verbose( "Found @main command" )
                self.name = "#main"
                self.type = "main"
                self.props["title"] = node.infos["title"]
@@ -500,7 +501,10 @@ class Entity( content, file, line )
       return data
    end
 
-   
+   //# Return false if this entity can have a subsequent source entity where it should be applied.
+   function isStandAlone()
+      return self.type == "module" or self.type == "main"
+   end
 end
 
 

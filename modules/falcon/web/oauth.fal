@@ -30,7 +30,7 @@ import from curl
    the optional @a curl module.
 */
 
-//# @ignore
+
 const OAUTH_REQ_PREFIX = "OAUTH-REQ-"
 
 //# Enumeration used as OAUTH connection method.

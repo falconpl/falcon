@@ -89,7 +89,10 @@ class FileContext( file, defmod, modName )
                entity = self.parseText( cnt, line )
 
                // module and main entities never refer to any subsequent entity.
-               clear = entity.isStandAlone()
+               if entity and entity.isStandAlone()
+                  self.checkEntity( entity )
+                  entity = nil
+               end
 
             case "inherit"
                self.parseInherit( parentEntity, node.firstChild )
@@ -280,8 +283,9 @@ class FileContext( file, defmod, modName )
                faldoc.error( i"@endmodule command invalid in source modules", line)
             elif self.current_module == nil
                faldoc.warn( i"Parsing @endmodule at, but no module open", line)
+            else
+               faldoc.verbose( i"Closing module $(self.current_module.name)" )
             end
-            faldoc.verbose( i"Changing @endmodule" )
             self.current_module = nil
 
           case "@endignore"
@@ -408,11 +412,6 @@ class FileContext( file, defmod, modName )
       end
 
       return entity
-   end
-
-   //# Return false if this entity can have a subsequent source entity where it should be applied.
-   function isStandAlone()
-      return self.type == "module" or self.type == "main"
    end
 
 end

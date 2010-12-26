@@ -198,6 +198,7 @@ class DocModule( name ) from Entity
    */
    function addMember( entity )
       if entity.type == "main"
+         faldoc.verbose( "Setting main page for module $(self.name)" )
          self.main = entity
          self.title = entity.props["title"]
          self.after = entity.after

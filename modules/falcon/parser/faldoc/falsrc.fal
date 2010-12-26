@@ -35,9 +35,8 @@ import Parser from parser.genparser
 
 CommentsAndGrabs = .[
    ReRule( '/\*#[\*|#|\s]*+\*/', "#stay" )
-   ReRule( '/\*#[\*|#|\s]+', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
-   TagRule( '//# ', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
-   TagRule( "//#\t", "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   ReRule( '/\*#[*#\s]?', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   ReRule( '//#\s*(?:@)', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
 
    TagRule( "/*", "comment" )
    ReRule( '\s*//.*$', "#stay" )
