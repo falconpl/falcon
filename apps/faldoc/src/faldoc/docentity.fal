@@ -207,6 +207,7 @@ class Entity( content, file, line )
                
                prop.parseContent( onGroupingChange, entityAdder )
                entityAdder( prop )
+               prop.makeAutoBrief()
                node = n1
                hadComplex = true
 
@@ -501,11 +502,42 @@ class Entity( content, file, line )
       return data
    end
 
+   //# Create a brief paragraph generated from the first period of the content.
+   function makeAutoBrief()
+      if not self.pcontent: return
+      
+      brief = _flatten( self.pcontent.topNode )
+      pos = brief.find(".")
+      if pos > 0
+         self.props["brief"] = struct.tree.Node(brief[0:pos+1])
+      else
+         self.props["brief"] = struct.tree.Node(brief)
+      end
+   end
+
    //# Return false if this entity can have a subsequent source entity where it should be applied.
    function isStandAlone()
       return self.type == "module" or self.type == "main"
    end
 end
+
+//# Flattens a textual node
+function _flatten( textNode )
+
+   // Just text ? -- return it
+   if textNode.content: return textNode.content
+
+   // return the node as text
+   str = ""
+   node = textNode.firstChild
+   while node
+      if str: str += " "
+      str += _flatten( node )
+      node = node.next
+   end
+   return str
+end
+   
 
 
 export
