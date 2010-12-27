@@ -28,7 +28,8 @@ add_subdirectory( src )
 if ( MSVC )
     add_definitions( -DMONGO_USE__INT64 )
 else()
-    add_definitions( -DMONGO_HAVE_STDINT )
+    #add_definitions( -DMONGO_HAVE_STDINT )
+    add_definitions( -DMONGO_USE_LONG_LONG_INT )
 endif()
 
 ##

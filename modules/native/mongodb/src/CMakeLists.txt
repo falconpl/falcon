@@ -7,7 +7,8 @@ include_directories( BEFORE . )
 if ( MSVC )
     add_definitions( -DMONGO_USE__INT64 )
 else()
-    add_definitions( --std=c99 )
+    add_definitions( -DMONGO_USE_LONG_LONG_INT )
+    #add_definitions( --std=c99 )
 endif()
 
 set( MONGO_SRCS
