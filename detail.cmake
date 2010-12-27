@@ -8,6 +8,7 @@ option( FALCON_BUILD_APPS "Build Falcon applications" ON )
 option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
 option( FALCON_COMPILE_FAMS "Compile falcon modules when installing them" ON )
 option( FALCON_STRIP_FALS "Remove source modules when installing" ON )
+option( FALCON_BUILD_DOCS "Build automatic documentation" ON )
 
 # NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})

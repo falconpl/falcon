@@ -6,7 +6,7 @@
    The @b mod_falcon module for @link "http://www.apache.org" Apache2 web server allows to serve
    falcon scripts with WOPI directly through a first-class, complete and solid web server.
 
-   The integration is similar to what is achieved through famous @link http://www.php.net Apache-PHP module,
+   The integration is similar to what is achieved through famous @link "http://www.php.net" Apache-PHP module,
    providing a virtual machine which is directly controlled by the web server process.
 
    To activate the mod_falcon module, it is necessary to store it along with the other Apache modules

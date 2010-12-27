@@ -27,8 +27,8 @@
 #include <SDL_opengl.h>
 
 
-/*#
-   @module sdlopengl OpenGL
+/*--#  << activate when distributed
+   @module sdl.opengl sdlopengl
    @brief OpenGL extensions for the Falcon SDL module.
 
    This module wraps the OpenGL extensions for SDL. Namely, this module
@@ -36,14 +36,14 @@
    3D rendering can be performed.
    
 
-   @beginmodule sdlopengl
+   @beginmodule sdl.opengl
 */
 
 
 FALCON_MODULE_DECL
 {
    Falcon::Module *self = new Falcon::Module();
-   self->name( "sdlgl" );
+   self->name( "gl" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
@@ -55,7 +55,7 @@ FALCON_MODULE_DECL
    // Encapsulation SDLOpenGL
    //
 
-   /*#
+   /*--#
       @class OpenGL
       @brief Main SDL OpenGL encapsulation class.
 

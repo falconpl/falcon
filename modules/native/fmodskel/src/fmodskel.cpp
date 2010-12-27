@@ -27,8 +27,9 @@
 
 #include "version.h"
 
-/*#
-   @main @{fmodskel_PROJECT_NAME}@
+/*--# << remove -- to activate
+   @module @{fmodskel_PROJECT_NAME}@ @{fmodskel_PROJECT_NAME}@
+   @brief <brief>
 
    This entry creates the main page of your module documentation.
 

@@ -34,9 +34,9 @@ import Parser from parser.genparser
 
 
 CommentsAndGrabs = .[
-   ReRule( '/\*#[\*|#]*?\*/', "#stay" )
-   ReRule( '/\*#[\*|#]*', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
-   TagRule( '//#', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   ReRule( '/\*#[\*|#|\s]*+\*/', "#stay" )
+   ReRule( '/\*#[*#\s]?', "grab", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
+   ReRule( '//#\s*(?:@)', "grab_eol", {ctx=> ctx.pushNode( InfoNode( "faldoc_txt", ["line"=>ctx.row] )) })
 
    TagRule( "/*", "comment" )
    ReRule( '\s*//.*$', "#stay" )
@@ -73,7 +73,7 @@ BlockStatements = .[
    TokenRule( "forlast", "block_begin" )
 ]
 
-   
+
 class Parser from parser.genparser.Parser
    states = [
       "start" => PState(
@@ -98,7 +98,7 @@ class Parser from parser.genparser.Parser
       "grab" =>PState(.[
             TagRule( "\\*", "#stay", {ctx=> ctx.add("*")} )
             ReRule( '\s*\*+/', "#pop", {ctx=> ctx.popNode()})
-            
+
             // Consumes useless * at begin of comment
             ReRule( '^\s*\*+', "#stay" )
          ],
@@ -130,18 +130,18 @@ class Parser from parser.genparser.Parser
          ],
          "*"  // get all
       ),
-      
+
       //===========================================================
       // class and object
       //===========================================================
-      
+
       "classdecl" => PState(
          CommentsAndGrabs
          +.[
             ReRule( '\s*', "#stay" )
             ReRule( '\(', "params", {ctx => ctx.pushNode( InfoNode("params", ["line"=>ctx.row])) })
             ReRule( 'from', "inherit", {ctx => ctx.pushNode( InfoNode("inherit", ["line"=>ctx.row])) })
-            
+
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRuleEOL( '\\$', "#stay" )
             // and return immmediately without waiting an end
@@ -149,7 +149,7 @@ class Parser from parser.genparser.Parser
 
             // consume "end" after returning from the class.
             TokenRule( 'end', "#pop", {ctx=> ctx.popNode()} )
-            
+
             // enter the function state at eol (and dump errors )
             TagRule( ';', "class" )
             EOLRule( "class" )
@@ -164,7 +164,7 @@ class Parser from parser.genparser.Parser
                   {ctx, d0, cls, d1 =>ctx.pushNode( InfoNode("from", ["line"=>ctx.row, "class"=>cls ]))} )
 
             TokenRuleLA( 'end', "#pop", {ctx=> ctx.popNode()} )
-            
+
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRuleEOL( '\\$', "#stay" )
 
@@ -179,7 +179,7 @@ class Parser from parser.genparser.Parser
             ReRule( '\s*', "#stay" )
             ReRule( '\(', "inherit_expr", {ctx=>ctx.add("(")} )
             ReRule( ',', "#pop", {ctx=>ctx.popNode()} )
-            
+
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRuleEOL( '\\$', "#stay" )
 
@@ -230,11 +230,11 @@ class Parser from parser.genparser.Parser
          ],
          "*"
       ),
-      
+
       //===========================================================
       // Function
       //===========================================================
-      
+
       "funcdecl" => PState(
          CommentsAndGrabs
          + .[
@@ -268,7 +268,7 @@ class Parser from parser.genparser.Parser
             TagRule( ")", "#pop", {ctx=> ctx.popNode()} )
 
             ReRule( '\s+', "#stay" )
-            
+
             // consume multiline tokens, so that the eol rule doesn't fire.
             ReRuleEOL( '\\$', "#stay" )
          ]
@@ -284,7 +284,7 @@ class Parser from parser.genparser.Parser
             ReRuleEOL( '\\$', "#stay" )
          ]
       ),
-      
+
 
       //===========================================================
       // Enums
@@ -294,7 +294,7 @@ class Parser from parser.genparser.Parser
          CommentsAndGrabs
          +.[
             TagRule( "end", "#pop", {ctx => ctx.popNode()} )
-            
+
             ReRule( '\s*((\w|_)+)\s*=(.*)$', "#stay",
                {ctx, d0, cname=> ctx.add( InfoNode( "variable", ["line"=>ctx.row,"name"=> cname] )) })
             ReRule( '\s*((\w|_)+)\s*$', "#stay",
@@ -345,7 +345,7 @@ class Parser from parser.genparser.Parser
          ],
          "*"
       ),
-   
+
       "block_begin" => PState(
          escaping
          +.[
@@ -356,7 +356,7 @@ class Parser from parser.genparser.Parser
             // Avoid confusing ?: with ":"
             TagRule( "?", "question_mark" )
             ReRule( ':.*$', "#pop" )
-            
+
             // Abandon this state either on ";" or on EOL
             TagRule( ";", "block_continue" )
             EOLRule( "block_continue" )

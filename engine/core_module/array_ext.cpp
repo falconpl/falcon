@@ -19,7 +19,7 @@
    @beginset core_array_funcs
 
    @inmodule core
-   
+
    Functions in this set are meant to provide functional
    support to arrays. Some of them replicate opeartor or
    @a Array class methods.

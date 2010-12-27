@@ -35,7 +35,7 @@ import Parser from parser.genparser
 ParaCommands =  .[
    ReRule( '^\s*@after\s+(.*)$', "#stay",
            {ctx,p0,p1 => ctx.add(InfoNode("@after", ['line' => ctx.row, "dest"=>p1 ] )) })
-           
+
    ReRule( '^\s*@brief\s+', "para",
            {ctx => ctx.pushNode(InfoNode("@brief", ['line' => ctx.row ] )) })
 
@@ -47,10 +47,10 @@ ParaCommands =  .[
 
    ReRule( '^\s*@main\s+(.*)$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@main", ['line' => ctx.row, 'title' => p0 ] )) })
-           
+
    ReRule( '^\s*@raise\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@raise", ['line' => ctx.row, 'what'=> p0 ] )) })
-           
+
    ReRule( '^\s*@param\s+(\w+|...)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@param", ['line' => ctx.row, 'name'=> p0 ] )) })
 
@@ -62,27 +62,30 @@ ParaCommands =  .[
 
    ReRule( '^\s*@group\s+(\w+)\s+(.*)$', "para",
            {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@group", ['line' => ctx.row, 'name'=> p0, 'title' => p1 ] )) })
-           
+
    ReRule( '^\s*@funset\s+(\w+)\s+(.*)$', "para",
            {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@funset", ['line' => ctx.row, 'name'=> p0, 'title' => p1 ] )) })
-           
+
    ReRule( '^\s*@page\s+(\w+)\s+(.*)$', "para",
            {ctx, d0, p0, p1 =>
                ctx.add(InfoNode("@page", ['line' => ctx.row, 'name'=> p0, 'title'=>p1 ] ))
                ctx.pushNode(Node("para")) })
 
-   ReRule( '^\s*@module\s+(\w+)\s+(.*)', "para",
+   ReRule( '^\s*@module\s+([\w.]+)\s+(.*)', "para",
            {ctx, d0, p0, p1 => ctx.pushNode(InfoNode("@module", ['line' => ctx.row, 'name'=> p0,'title'=> p1 ] )) })
 
    ReRule( '^\s*@prop\s+(\w+)', "para",
            {ctx, d0, p0 => ctx.pushNode(InfoNode("@prop", ['line' => ctx.row, 'name'=> p0] )) })
+
+   ReRule( '^\s*@ignore\s*$', "#stay",
+           {ctx, d0, p0 => ctx.add(InfoNode("@ignore", ['line' => ctx.row] )) } )
 ]
 
 
 NamingCommands = .[
    ReRule( '^\s*@see\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@see", ['line' => ctx.row, 'what'=> p0 ] )) })
-           
+
    ReRule( '^\s*@class\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@class", ['line' => ctx.row, 'name'=> p0] )) })
 
@@ -109,14 +112,16 @@ NamingCommands = .[
 ]
 
 ScopeCommands = .[
-   ReRule( '^\s*@beginmodule\s+(\w+).*$', "#stay",
+   ReRule( '^\s*@beginmodule\s+([\w.]+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@beginmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@beginset\s+(\w+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@beginset", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@begingroup\s+(\w+).*$', "#stay",
          {ctx, d0, p0 => ctx.add(InfoNode("@begingroup", ['line' => ctx.row, 'name'=> p0 ] )) })
+   ReRule( '^\s*@beginignore\s*$', "#stay",
+           {ctx => ctx.add(InfoNode("@beginignore", ['line' => ctx.row, 'name'=>""])) } )
 
-   ReRule( '^\s*@inmodule\s+(\w+).*$', "#stay",
+   ReRule( '^\s*@inmodule\s+([\w.]+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inmodule", ['line' => ctx.row, 'name'=> p0 ] )) })
    ReRule( '^\s*@inset\s+(\w+).*$', "#stay",
            {ctx, d0, p0 => ctx.add(InfoNode("@inset", ['line' => ctx.row, 'name'=> p0 ] )) })
@@ -129,17 +134,19 @@ ScopeCommands = .[
          {ctx => ctx.add(InfoNode("@endset", ['line' => ctx.row] )) })
    ReRule( '^\s*@endgroup(\s+.*$|$)', "#stay",
          {ctx => ctx.add(InfoNode("@endgroup", ['line' => ctx.row] )) })
+   ReRule( '^\s*@endignore\s*$', "#stay",
+           {ctx => ctx.add(InfoNode("@endignore", ['line' => ctx.row])) } )
 ]
 
 InlineCommands = .[
-   ReRule( '@a\s+("([^"]*)"|((\w|\.|_)+))\.?', "#stay",
+   ReRule( '@a\s+("([^"]*)"|((\w|\.(?:\w)|_)+))', "#stay",
          // add with standout, so that we can transform it without parsing the whole tree
          {ctx, d0, d1, p0, p0b => ctx.add(InfoNode("@a", ['line' => ctx.row, 'dest'=> p0 ? p0:p0b] )) })
    ReRule( '@b\s+("([^"]*)"|([^\s:;]+))', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("b", p0 ? p0:p0b ) ) })
    ReRule( '@i\s+("([^"]*)"|([^\s:;]+))', "#stay",
          {ctx, d0, d1, p0, p0b => ctx.add( Node("i", p0 ? p0:p0b ) ) })
-   ReRule( '@l(ink)?\s+("([^"]*)"|(\w+))\s+("([^"]*)"|(\w+))', "#stay",
+   ReRule( '@l(ink)?\s+("([^"]*)"|([\w/:\?#&%.-]+))\s+("([^"]*)"|(\w+))', "#stay",
                               {ctx, d0, d1, d2, p0, p0b, d3, p1, p1b => ctx.add(InfoNode("link",
                               ['line' => ctx.row, 'name'=> p0 ? p0:p0b, 'text' => p1?p1:p1b, "ext"=>true ] )) })
 ]
@@ -208,7 +215,7 @@ StartRules = \
       // Otherwise, enter the para mode
       ReRuleLA( '[^\s]', "para", { ctx => ctx.pushNode( Node("para") )} )
    ]
-         
+
 class Parser from parser.genparser.Parser
    states = [
       "start"=> PState(.[
@@ -220,7 +227,7 @@ class Parser from parser.genparser.Parser
          + StartRules
       ),
 
-      "section" =>PState(.[           
+      "section" =>PState(.[
             ReRuleLA( '^\s*@section', "#pop", {ctx => ctx.popNode() } )
             ReRule( '^\s*@subsection\s+(\w+)\s+(.*)$', "section",
                {ctx, d0, p0, p1 =>
@@ -293,7 +300,7 @@ class Parser from parser.genparser.Parser
 
       "list" => PState(.[
             EmptyLineRule( "#pop;#pop", { ctx=> ctx.setListDepth( 0 ); ctx.popNode(); })
-                  
+
             ReRule( '^\s*######\s*', "#stay", {ctx=> ctx.setListDepth(6, "ol" ) })
             ReRule( '^\s*#####\s*', "#stay", {ctx=> ctx.setListDepth(5, "ol" ) })
             ReRule( '^\s*####\s*', "#stay", {ctx=> ctx.setListDepth(4, "ol" ) })
@@ -318,7 +325,7 @@ class Parser from parser.genparser.Parser
          {ctx, data=>ctx.add( data )},
          "para_continue"
       ),
-      
+
 
       "escape" =>PState(.[
             CharRule( "#pop", {ctx, c => if c: ctx.add(c) } )

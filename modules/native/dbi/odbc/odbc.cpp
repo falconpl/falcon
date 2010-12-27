@@ -21,8 +21,12 @@
 #include "odbc_ext.h"
 
 /*#
-   @module odbc ODBC driver module.
+   @module dbi.odbc ODBC driver module.
    @brief DBI extension supporting ODBC connections.
+
+
+   Directly importable as @b dbi.odbc, it is usually loaded through
+   the @a dbi module.
 */
 
 // Instantiate the driver service

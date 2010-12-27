@@ -36,11 +36,15 @@
 #include "conbox_ext.h"
 #include "conbox_st.h"
 
+/*--#
+   @beginmodule conbox
+*/
+
 namespace Falcon {
 namespace Ext {
 
 // The following is a faldoc block for the function
-/*#
+/*--#
    @function skeleton
    @brief A basic script function.
    @return Zero.
@@ -53,7 +57,7 @@ FALCON_FUNC  cb_skeleton( ::Falcon::VMachine *vm )
    vm->retval( (int64) 0 );
 }
 
-/*#
+/*--#
    @function skeletonString
    @brief A function returning a string in the string table.
    @return A message that can be internationalized.

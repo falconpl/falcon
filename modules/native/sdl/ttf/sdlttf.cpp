@@ -29,21 +29,21 @@ extern "C"
 #include "sdlttf_mod.h"
 
 /*#
-   @module sdlttf True Type
+   @module sdl.ttf True Type extensions for the Falcon SDL module.
    @brief True Type extensions for the Falcon SDL module.
 
    This module wraps the True Type extensions for SDL. Namely, this module
    is meant to transform text into graphics that can then be shown on
    @a SDLSurface objects.
 
-   @beginmodule sdlttf
+   @beginmodule sdl.ttf
 */
 
 
 FALCON_MODULE_DECL
 {
    Falcon::Module *self = new Falcon::Module();
-   self->name( "sdlttf" );
+   self->name( "ttf" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );

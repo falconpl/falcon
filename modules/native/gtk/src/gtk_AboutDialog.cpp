@@ -103,7 +103,7 @@ Falcon::CoreObject* AboutDialog::factory( const Falcon::CoreClass* gen, void* dl
     this by offering global hooks, which are called when the user clicks on a link
     or email address, see set_email_hook() and set_url_hook(). Email addresses in
     the authors, documenters and artists properties are recognized by looking for
-    <user@host>, URLs are recognized by looking for http://url, with url extending
+    <user\@host>, URLs are recognized by looking for http://url, with url extending
     to the next space, tab or line break.
 
     [...]

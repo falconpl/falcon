@@ -40,26 +40,15 @@
 #include "version.h"
 
 /*#
-   @main conbox
+   @module conio_conbox conbox
+   @brief Extended GUI-like interface for text-based terminals.
+   @inmodule conio
+   
+   @note Currently this module is under development and not released.
 
-   This entry creates the main page of your module documentation.
-
-   If your project will generate more modules, you may creaete a
-   multi-module documentation by adding a module entry like the
-   following
-
-   @code
-      \/*#
-         @module module_name Title of the module docs
-         @brief Brief description in module list..
-
-         Some documentation...
-      *\/
-   @endcode
-
-   And use the \@beginmodule <modulename> code at top of the _ext file
-   (or files) where the extensions functions for that modules are
-   documented.
+   This module accompains the conio module and provides extended
+   text-oriented interface functionalities to create boxes,
+   virtual windows, mouse buttons and so on in text interfaces.
 */
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )

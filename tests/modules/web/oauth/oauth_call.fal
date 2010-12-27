@@ -1,0 +1,81 @@
+/*
+   FALCON - Samples
+
+   FILE: oauth_call.fal
+
+   Third step of OAUTH request.
+
+   Calls a certain remote web API protected through an OAuth access
+   token.
+
+   Prior to use this script, it's necessary to obtain an access token
+   from the remote OAUTH service. 
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Dec 2010 16:32:16 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from web.oauth in oauth
+import from curl
+
+if args.len() < 1 or args.len() > 3
+   > "Usage: oauth_request.fal <address> [<token file>] [post data]"
+   > '
+
+   Calls a certain remote web API protected through an OAuth access
+   token.
+
+   Prior to use this script, it''s necessary to obtain an access token
+   from the remote OAUTH service.
+
+   If not given, the token file name defaults to token.oauth.
+   '
+   return
+end
+
+address = args[0]
+file = args.len() > 1 ? args[1] : "token.oauth"
+post = args.len() > 2 ? oauth.Client.parseQS(args[2]) : ""
+
+> "Opening file ", file
+try
+   fin = InputStream( file )
+   cust_id = fin.grabLine()
+   cust_secret = fin.grabLine()
+   token = fin.grabLine()
+   secret = fin.grabLine()
+   fin.close()
+
+   > "Read access token: ", token
+   client = oauth.Client( cust_id, cust_secret, post ?  oauth.Via.POST : oauth.Via.GET )
+   xtok = oauth.Token(token, secret)
+
+   > "Calling required API"
+   result = client.callAPI( xtok, address, post )
+   if result
+      > "Result: "
+      > "="*70
+      > result
+      > "="*70
+   end
+   
+   > "Done."
+
+catch IoError in err
+   > "I/O Error while reading or writing files."
+   > err
+
+catch curl.CurlError in err
+   > "Network error while contacting the remote server."
+   > err
+
+catch oauth.ProtoError in err
+   > "OAuth protocol error."
+   > err
+end
+

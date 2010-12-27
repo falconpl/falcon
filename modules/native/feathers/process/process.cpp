@@ -25,10 +25,10 @@
 #include "version.h"
 
 /*#
-   @module feather_process Process
+   @module feathers.process External process interface
    @brief Process enumeration and subprocess control.
 
-   The process module provides several functions to manage processes in the system
+   The @b process module provides several functions to manage processes in the system
    and to manage interprocess communication. Child processes can be created and
    managed via the Process class, which provides a set of streams that can be read
    and written synchronously and polled for activity.
@@ -63,7 +63,7 @@
       @endcode
 
 
-   @beginmodule feather_process
+   @beginmodule feathers.process
 */
 
 FALCON_MODULE_DECL

@@ -207,6 +207,7 @@ class Entity( content, file, line )
                
                prop.parseContent( onGroupingChange, entityAdder )
                entityAdder( prop )
+               prop.makeAutoBrief()
                node = n1
                hadComplex = true
 
@@ -223,17 +224,19 @@ class Entity( content, file, line )
                if self.parent
                   faldoc.error( "Parent already declared for entity \"$name\"", line)
                else
-                  self.parent = faldoc.document.getModule( node.infos["name"] )
+                  inmodule = node.infos["name"]
+                  self.props["inmodule"] = inmodule
+                  //faldoc.verbose( @i"Entity $name has @inmodule $inmodule" )
                end
                node = node.remove()
                hadComplex = true
 
-            case "@begingroup", "@beginset", "@beginmodule"
+            case "@begingroup", "@beginset", "@beginmodule", "@beginignore"
                onGroupingChange( line, node.type, node.infos["name"] )
                node = node.remove()
                hadSimple = true
                
-            case "@endgroup", "@endset", "@endmodule"
+            case "@endgroup", "@endset", "@endmodule", "@endignore"
                onGroupingChange( line, node.type, nil )
                node = node.remove()
                hadSimple = true
@@ -267,11 +270,16 @@ class Entity( content, file, line )
                hadComplex = true
 
             case "@main"
+               faldoc.verbose( "Found @main command" )
                self.name = "#main"
                self.type = "main"
                self.props["title"] = node.infos["title"]
                node = node.remove()
                hadComplex = true
+
+            case "@ignore"
+               self.type = "ignore"
+               hadSimple = true
 
             case "@module"
                name = node.infos["name"]
@@ -286,13 +294,10 @@ class Entity( content, file, line )
                   self.name = "#main"
                   self.type = "main"
                   self.props["title"] = node.infos["title"]
-                  self.parent = module
-                  module.main = self
-                  module.title = node.infos["title"]
+                  self.props["inmodule"] = name
                   // this will turn us in the main for the given module at return.
                end
-
-               self.props["title"] = node.infos["title"]
+               
                node = node.remove()
                hadComplex = true
 
@@ -390,7 +395,7 @@ class Entity( content, file, line )
                preve.declareAs( entity )
             else
                // a real error -- two entities explictly declared with the same name.
-               faldoc.error( @i"Entity \"$entity.name\" already declared in module \"$self.name\"", entity.firstline )
+               faldoc.error( @i"Entity \"$entity.name\" already declared in \"$self.name\"", entity.firstline )
             end
          end
 
@@ -497,8 +502,42 @@ class Entity( content, file, line )
       return data
    end
 
-   
+   //# Create a brief paragraph generated from the first period of the content.
+   function makeAutoBrief()
+      if not self.pcontent: return
+      
+      brief = _flatten( self.pcontent.topNode )
+      pos = brief.find(".")
+      if pos > 0
+         self.props["brief"] = struct.tree.Node(brief[0:pos+1])
+      else
+         self.props["brief"] = struct.tree.Node(brief)
+      end
+   end
+
+   //# Return false if this entity can have a subsequent source entity where it should be applied.
+   function isStandAlone()
+      return self.type == "module" or self.type == "main"
+   end
 end
+
+//# Flattens a textual node
+function _flatten( textNode )
+
+   // Just text ? -- return it
+   if textNode.content: return textNode.content
+
+   // return the node as text
+   str = ""
+   node = textNode.firstChild
+   while node
+      if str: str += " "
+      str += _flatten( node )
+      node = node.next
+   end
+   return str
+end
+   
 
 
 export

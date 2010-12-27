@@ -11,7 +11,7 @@
    As soon as the CGI program is ready, it searches for a falcon script bearing its same
    name (but having extension .fal, .ftd or .fam), loading and then executing it.
 
-   Except for the usage of the @link http://www.fastcgi.com FastCGI library, this front end works as the @a front_end_cgi interface.
+   Except for the usage of the @link "http://www.fastcgi.com" FastCGI library, this front end works as the @a front_end_cgi interface.
    Using FastCGI, the program is loaded once and stays resident in the web server application process hierarchy;
    this reduces script load time and allows this front-end to use advanced performance optimization
    techniques, as module caching.

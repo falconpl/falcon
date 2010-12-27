@@ -237,6 +237,7 @@ class DBIDataManager( name, loc ) from DataManager( name, loc )
    function update( entity, key_fields, data )
       Nest.logi( "Updating table " + entity.name )
 
+      if not data: return
       sql_fields = "=?,".merge( data.keys() ) + "=?"
       if key_fields
          where = "\nwhere " + ("=?,".merge( key_fields.keys() ) + "=?")

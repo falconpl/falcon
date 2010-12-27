@@ -17,7 +17,24 @@
 load .docentity
 load .link
 
-/*# Database of all the defined entities. */
+/*# Document module.
+
+   A document module may represent a chapter or a module to be added to the
+   documentation.
+
+   Virtual modules are created out of module hierarcies on filesystem, and are
+   usually flattened in documentation. For example, modules as web.alpha and web.beta
+   belong to the "web" module, but unless there is specific content for the "web" module,
+   it is considered virtual. This means that "web.alpha" and "web.beta" are generated
+   directly under the parent of the "web" module. Conversely, if "web" has a main page
+   and/or a title, or if it has any child which is not a module (i.e. a page, a class,
+   a function etc), then it is considered a real module, and a documentation for "web"
+   is generated. In this latter case, web.alpha and web.beta are placed at a lower level
+   in the documentation, as "web" DocModule elements.
+
+   A DocModule may also considered a separate section of the documentation, with its own
+   pages (chapters), functions, groups and funcsets.
+*/
 class DocModule( name ) from Entity
    //# Title of the module
    title = nil
@@ -28,11 +45,14 @@ class DocModule( name ) from Entity
    //# Main page of the module, if any
    main = nil
 
+   //# is this a "virtual module" -- a module without contents except for other modules?
+   isVirtual = true
+
    init
       self.name = name ? name : "Main module"
       self.type = "module"
    end
-   
+
    //# Gets an entity from this module (possibly undefined)
    function getEntity( name, type )
       if name notin self.members
@@ -55,6 +75,7 @@ class DocModule( name ) from Entity
       pages = []
       groups = []
       funsets = []
+      modules = []
       for name, entity in self.members
          switch entity.type
             case "main"
@@ -65,24 +86,54 @@ class DocModule( name ) from Entity
                groups += entity
             case "funset"
                funsets += entity
+            case "module"
+               if entity.after
+                  modules += entity
+               end
          end
       end
 
       // ok, now see if we must reorder something
-      allpages = pages + groups + funsets
-      ppage = 1
+      allpages = pages + groups + funsets + modules
+      /*for entity in allpages
+         forfirst: >> "Entities in ", self.name, ": "
+         >> entity.name
+         formiddle:>> ", "
+         forlast: >"."
+      end
+      */
+
+      ppage = 0
       l = allpages.len()
       while ppage < l
          entity = allpages[ppage]
-         // adjust @after main
          after = entity.after
-         if after == "main": after = "#main"
+         // sanitize main
+         if after== "#main": after = "main"
+
+         // adjust @after main
+         if after == "main"
+            // ppage starts from 1, while main a virtual page
+            pp1 = 0
+            // prevent endless loop if more than one after main is found
+            while allpages[pp1].after == "main" and pp1 < ppage
+               ++pp1
+            end
+
+            if pp1 < ppage
+               allpages.remove( ppage )
+               allpages[pp1:pp1] = entity
+            end
+
+            ++ppage
+            continue
+         end
 
          // should we reorder it?
-         if entity.after and allpages[ppage-1].name != after
+         if after and (ppage == 0 or allpages[ppage-1].name != after)
             // get the entity
-            if entity.after notin self.members
-               faldoc.error( @i"Entity should be after $(entity.after), but \"$(entity.after)\" is not in module $(self.name)",
+            if after notin self.members
+               faldoc.error( @i"Entity $(entity.name) should be after $(after), but \"$(after)\" is not in module $(self.name)",
                   entity.firstline )
                ppage ++
                continue
@@ -92,7 +143,7 @@ class DocModule( name ) from Entity
             // but where is this entity?
             ptgt = allpages.find( etgt )
             if ptgt < 0
-               faldoc.error( @i"Entity should be after $(entity.after), but that is not a meta-page", entity.firstline )
+               faldoc.error( @i"Entity $(entity.name) should be after $(entity.after), but that is not a meta-page", entity.firstline )
                ppage++
                continue
             end
@@ -130,22 +181,63 @@ class DocModule( name ) from Entity
                   line = 0
                   file = self.file
                end
-               
+
                faldoc.error( @i"Entity \"$(entity.name)\" was indirectly invoked but never defined in $(self.name)", line, file )
             end
          end
       end
    end
 
+   /*# Adds a member to this module.
+
+       If the member is a main page, it is assigned to the text and
+       title of this module.
+
+       In this case, or if the added member is not a module, this module
+       becomes non-virtual, and will generate a new documentation level.
+   */
    function addMember( entity )
       if entity.type == "main"
+         faldoc.verbose( "Setting main page for module $(self.name)" )
          self.main = entity
          self.title = entity.props["title"]
+         self.after = entity.after
+         self.isVirtual = false
       else
          self.Entity.addMember( entity )
+         if entity.type != "module"
+            self.isVirtual = false
+         end
       end
    end
-   
+
+   //# Gets the modules in this element.
+   function getModules( alsoAfter )
+      mods = [=>]
+      for name, m in self.members
+         if m.type == "module" and (alsoAfter or not m.after)
+            mods[ m.getID() ] = m
+         end
+      end
+      return mods
+   end
+
+   //# Recursively gets all the modules stored in the document.
+   function getAllModules()
+      return self._getAllModules( self )
+   end
+
+   function _getAllModules( module )
+      mods = [=>]
+      for name, m in module.members
+         if m.type == "module"
+            mods[ m.getID() ] = m
+            mods += self._getAllModules( m )
+         end
+      end
+      return mods
+   end
+
 end
 
 export

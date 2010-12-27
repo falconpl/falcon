@@ -7,7 +7,7 @@
 #include "gdk_Rectangle.hpp"
 
 #include "gtk_Buildable.hpp"
-//#include "gtk_CellLayout.hpp"
+// #include "gtk_CellLayout.hpp"
 #include "gtk_CellRenderer.hpp"
 #include "gtk_TreeIter.hpp"
 #include "gtk_TreeModel.hpp"
