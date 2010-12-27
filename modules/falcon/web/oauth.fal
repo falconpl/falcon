@@ -178,11 +178,11 @@ class Client( cust_id, cust_secret, mode )
       if token
          params[ "oauth_token" ] = token.token
          tsecret = token.secret
+		 if token.verifier
+		    params["oauth_verifier"] = token.verifier
+		 end
       end
 
-      if token.verifier
-         params["oauth_verifier"] = token.verifier
-      end
       
       if callback: params[ "oauth_callback" ] = callback
       
