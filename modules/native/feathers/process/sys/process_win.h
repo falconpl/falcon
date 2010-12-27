@@ -23,17 +23,32 @@
 #include <windows.h>
 #include <tlhelp32.h>
 
-#include "process_sys.h"
+#include "process.h"
 
-namespace Falcon {
+   //class FileService;
+namespace Falcon { namespace Sys {
 
-class FileService;
-
-namespace Sys {
-
-class WinProcessHandle: public ProcessHandle
+class WinProcess: public Process
 {
-   friend ProcessHandle *openProcess( String **argv, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
+public:
+   WinProcess();
+   ~WinProcess();
+
+   /*
+    * Interface Implementation
+    */
+   Falcon::Stream *inputStream();
+   Falcon::Stream *outputStream();
+   Falcon::Stream *errorStream();
+   //
+   bool close();
+   bool wait( bool block );
+   bool terminate( bool severe = false );
+   
+   DWORD pid() const { return m_procId; }
+   
+private:   
+   friend bool openProcess(Process* ph, String** argList, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );
 
    HANDLE hPipeInRd;
    HANDLE hPipeInWr;
@@ -44,32 +59,16 @@ class WinProcessHandle: public ProcessHandle
 
    HANDLE m_procHandle;
    DWORD m_procId;
-
-public:
-   WinProcessHandle():
-      ProcessHandle()
-   {}
-
-   virtual ~WinProcessHandle();
-
-   DWORD pid() const { return m_procId; }
-
-   virtual ::Falcon::Stream *getInputStream();
-   virtual ::Falcon::Stream *getOutputStream();
-   virtual ::Falcon::Stream *getErrorStream();
-
-   virtual bool close();
-   virtual bool wait( bool block );
-   virtual bool terminate( bool severe = false );
 };
+
 
 typedef struct tag_winProcHandle {
    HANDLE hSnap;
-   PROCESSENTRY32 procent;
+   PROCESSENTRY32 process;
 } WIN_PROC_HANDLE;
 
-}
-}
+
+}} // ns Falcon::Sys
 
 #endif
 

@@ -23,31 +23,55 @@
 #include <falcon/string.h>
 #include <string.h>
 
-#include "process_sys.h"
-#include "process_mod.h"
+#include "../sys/process.h"
+#include "process.h"
 
 
-namespace Falcon {
+namespace Falcon { namespace Mod {
 
-namespace Mod {
 
-const uint32 assing_block = 32;
+/*
+  Mod::Process
+*/
+Process::Process(CoreClass const* cls) :
+   CacheObject(cls),
+   m_process( Sys::Process::factory() )
+{ }
 
-static String **assignString( const String &params, String **args, uint32 &assigned, uint32 &count, uint32 posInit, uint32 pos )
+Process::~Process()
 {
-   if( assigned == count ) {
-      assigned += assing_block;
-      String **temp = (String **) memAlloc( assigned * sizeof( String * ) );
-      if ( assigned > assing_block )
-         memcpy( temp, args, (assigned - assing_block) * sizeof( String * ) );
-      memFree( args );
-      args = temp;
-   }
-   args[ count++ ] = new String( params, posInit, pos );
-   return args;
+   if ( m_process )
+      delete m_process;
 }
 
-String **argvize( const String &params, bool addShell )
+Sys::Process* Process::handle()
+{
+   return m_process;
+}
+
+
+/*
+  Mod::ProcessEnum
+*/
+ProcessEnum::ProcessEnum(CoreClass const* cls) :
+   CacheObject(cls),
+   m_processEnum( new Sys::ProcessEnum )
+{ }
+
+ProcessEnum::~ProcessEnum()
+{
+   if ( m_processEnum )
+      delete m_processEnum;
+}
+
+Sys::ProcessEnum* ProcessEnum::handle()
+{
+   return m_processEnum;
+}
+
+
+
+void argvize(GenericVector& argv, const String &params)
 {
    typedef enum {
       s_none,
@@ -60,20 +84,10 @@ String **argvize( const String &params, bool addShell )
 
    t_state state = s_none;
 
-   uint32 start;
-   if ( addShell )
-      start = 2;
-   else
-      start = 0;
-
    // string lenght
    uint32 len = params.length();
    uint32 pos = 0;
    uint32 posInit = 0;
-   uint32 count = 0;
-   String **args;
-   uint32 assigned = assing_block;
-   args = (String **) memAlloc( assigned * sizeof( String * ) );
 
    if( len > 0 )
    {
@@ -109,19 +123,19 @@ String **argvize( const String &params, bool addShell )
                switch( chr )
                {
                   case ' ': case '\t':
-                     args = assignString( params, args, assigned, count, posInit, pos );
+                     argv.push(new String( params, posInit, pos ));
                      state = s_none;
                   break;
 
                   // In case of " change state but don't change start position
                   case '\"':
-                     args = assignString( params, args, assigned, count, posInit, pos );
+                     argv.push(new String( params, posInit, pos ));
                      posInit = pos + 1;
                      state = s_quote1;
                   break;
 
                   case '\'':
-                     args = assignString( params, args, assigned, count, posInit, pos );
+                     argv.push(new String( params, posInit, pos ));
                      posInit = pos + 1;
                      state = s_quote2;
                   break;
@@ -133,7 +147,7 @@ String **argvize( const String &params, bool addShell )
                   state = s_escape1;
                else if ( chr == '\"' )
                {
-                  args = assignString( params, args, assigned, count, posInit, pos );
+                  argv.push(new String( params, posInit, pos ));
                   state = s_none;
                }
             break;
@@ -147,7 +161,7 @@ String **argvize( const String &params, bool addShell )
                   state = s_escape2;
                else if ( chr == '\'' )
                {
-                  args = assignString( params, args, assigned, count, posInit, pos );
+                  argv.push(new String( params, posInit, pos ));
                   state = s_none;
                }
             break;
@@ -163,79 +177,10 @@ String **argvize( const String &params, bool addShell )
 
    // last
    if( state != s_none && posInit < pos )
-   {
-      args = assignString( params, args, assigned, count, posInit, pos );
-   }
-   args[ count ] = 0;
-   return args;
+      argv.push(new String( params, posInit, pos ));
 }
 
-void freeArgv( String **argv )
-{
-   String **p = argv;
-   while( *p != 0 )
-   {
-      delete *p;
-      ++p;
-   }
-   memFree( argv );
-}
-
-/*
-int parametrize( char *out, const String &params )
-{
-   int count = 0;  // we'll have at least one token
-
-   // removes leading spaces
-   while ( *in && isspace(*in) )
-      in++;
-   if (! *in ) return 0;
-
-   while ( *in ) {
-      if ( *in == '\"' || *in == '\'')
-      {
-         char quote = *in;
-         in++;
-         while ( *in && *in != quote ) {
-            if ( *in == '\\' ) {
-               in++;
-            }
-            if ( *in ) {
-               *out = *in;
-               out ++;
-               in++;
-            }
-         }
-         if (*in) {
-            in++;
-         }
-         if ( *in ) {
-            *out = '\0';
-         }
-         // out++ will be done later; if in is done,
-         // '\0' will be added at loop exit.
-      }
-      else if (! isspace( *in ) ) {
-         *out = *in;
-         in++;
-         out++;
-      }
-      else {
-         *out = '\0';
-         count ++;
-         while (*in && isspace( *in ) )
-            in++;
-         out++;
-      }
-   }
-   *out = '\0';
-   count ++;
-
-   return count;
-}
-*/
-}
-}
+}} // ns Falcon::Mod
 
 
 /* end of process_mod.cpp */
