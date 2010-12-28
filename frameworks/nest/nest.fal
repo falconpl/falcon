@@ -436,15 +436,16 @@ object Nest
    end
 
    /*# Nest entry point.
+      @optparam pid If given, force the entry point skipping the router.
 
       This method routes a web request down into the nest sytem.
    */
 
-   function route()
+   function route( pid )
       self.logi( "Routing started" )
       self._phase = _phase_startup
       // 1. Determine PID
-      pid = self.router.route( self )
+      if not pid: pid = self.router.route( self )
 
       if pid == nil
          // Todo: get the proper error.
