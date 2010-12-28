@@ -234,7 +234,7 @@ For example, service variables can be automatically filled with input from web f
 session data, or they can be shared throughout the sytem. Mainly, they are turned into a dictionary
 and automatically fed into the skin, if the service doesn't provide a personalized rendering strategy.
 
-@sction ov_hooks Hooks
+@section ov_hooks Hooks
 
 Hooks are callback functions that can be overridden by the final application. Instead of placing
 those callbacks directly on a callback point, Nests allows for a name-based invocation mechanism
