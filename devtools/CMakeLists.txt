@@ -28,6 +28,8 @@ endforeach()
 
 IF(UNIX)
    SET(sys_in_spec falcon-conf falconenv.sh)
+ELSE(UNIX)
+   SET(sys_in_spec falconenv.bat)
 ENDIF(UNIX)
 
 SET(in_bin_files

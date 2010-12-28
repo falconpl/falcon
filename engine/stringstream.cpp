@@ -268,7 +268,7 @@ bool StringStream::readString( String &target, uint32 size )
 
    String* src = m_b->m_str;
    int csize = src->manipulator()->charSize();
-   int tglen = src->length();
+   uint32 tglen = src->length();
    uint32 start = (m_pos / csize);
    if ( start >= tglen )
    {
@@ -337,7 +337,7 @@ bool StringStream::subWriteString( const String &source )
    if ( m_b->m_str == 0 ) {
       m_b->m_mtx.unlock();
       m_status = t_error;
-      return -1;
+      return false;
    }
 
    // writing at end?
