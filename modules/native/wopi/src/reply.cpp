@@ -61,7 +61,7 @@ void Reply::clearCookie( const String& cname )
    String sCookie;
 
    Falcon::URI::URLEncode( cname, sCookie );
-   sCookie.append( "=;MaxAge=0" );
+   sCookie.append( "=;Max-Age=0;expires=0" );
    
    m_mCookies[ cname ] = sCookie;
 }

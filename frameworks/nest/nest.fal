@@ -141,6 +141,7 @@ class BasicSessionManager
 
       self._session["_Nest"] = sessionData
    end
+
 end
 
 
@@ -988,6 +989,7 @@ object Nest
    function getVersion()
       return _version
    end
+
    //=============================================================
    // Logging functions
    //=============================================================

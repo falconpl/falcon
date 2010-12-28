@@ -90,7 +90,6 @@ SessionManager::SessionManager():
       m_nLastToken(0),
       m_nSessionTimeout(0)
 {
-   srand( time(0) + Sys::_getpid() );
 }
 
 SessionManager::~SessionManager()
@@ -106,6 +105,14 @@ SessionManager::~SessionManager()
    m_mtx.unlock();
 }
 
+static void _init_srand() {
+  static int done = 0;
+  if (! done )
+  {
+     done = 1;
+     srand( Sys::_getpid() + (time(0)%32000)*32000);     
+  }
+}
 
 SessionData* SessionManager::getSession( const Falcon::String& sSID, uint32 token )
 {
@@ -335,7 +342,9 @@ SessionData* SessionManager::createUniqueId( Falcon::String& sSID )
 {
    static const char* alpha="abcdefghjkilmnopqrstuvwxyzABCDEFGHJKILMNOPQRSTUVWXYZ0123456789";
    SessionData* sd = 0;
-   
+
+   _init_srand();
+ 
    bool found = false;
    while( ! found )
    {
