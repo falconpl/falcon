@@ -35,7 +35,7 @@ include_directories( ${Falcon_INCLUDE_DIRS} )
 #
 if ( WIN32 )
 
-    set( GTK_DIR c:/gtk ) ## dir of the Gtk bundled stuff
+    set( GTK_DIR ${GTK_BUNDLE_DIR} ) ## dir of the Gtk bundled stuff
 
     set( GTK2_ATK_INCLUDE_DIR "${GTK_DIR}/include/atk-1.0" )
     set( GTK2_ATK_LIBRARY "${GTK_DIR}/lib/atk-1.0.lib" )
@@ -47,9 +47,9 @@ if ( WIN32 )
     set( GTK2_GDK_INCLUDE_DIR  "${GTK_DIR}/include/gtk-2.0" )
     set( GTK2_GDK_LIBRARY "${GTK_DIR}/lib/gdk-win32-2.0.lib" )
 
-    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
-    # for win64
-    set( GTK2_GDKPIXBUF_INCLUDE_DIR_2 "${GTK_DIR}/include/gdk-pixbuf-2.0/gdk-pixbuf" )
+    ## gtk 2.20
+    ##set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
+    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0" )
     set( GTK2_GDKPIXBUF_LIBRARY "${GTK_DIR}/lib/gdk_pixbuf-2.0.lib" )
 
     set( GTK2_GLIBCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/glib-2.0/include" )
@@ -76,7 +76,6 @@ if ( WIN32 )
         ${GTK2_GDKCONFIG_INCLUDE_DIR}
         ${GTK2_GDK_INCLUDE_DIR}
         ${GTK2_GDKPIXBUF_INCLUDE_DIR}
-        ${GTK2_GDKPIXBUF_INCLUDE_DIR_2} # win64
         ${GTK2_GLIBCONFIG_INCLUDE_DIR}
         ${GTK2_GLIB_INCLUDE_DIR}
         ${GTK2_GOBJECT_INCLUDE_DIR}

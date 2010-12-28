@@ -284,13 +284,13 @@ class Form( instance ) from nest.Service( instance )
             if Nest.log_level >= 3: Nest.logd( "Inserting data: " + data.describe() )
             dbr = self.entity.value.insert( data )
             self.eid = dbr.eid()
-
-            // then add a field for subseuent posts
-            f = HiddenField( "eid", self.eid )
-            f.srv = self
-            self.fields.value.add( f )
          end
 
+         // then add a field for subseuent posts
+         f = HiddenField( "eid", self.eid )
+         f.srv = self
+         self.fields.value.add( f )
+            
          // all, ok declare we're clear
          self.skin.value = self.skin_performed.value
          self.stored.value = true

@@ -178,11 +178,11 @@ class Client( cust_id, cust_secret, mode )
       if token
          params[ "oauth_token" ] = token.token
          tsecret = token.secret
-		 if token.verifier
-		    params["oauth_verifier"] = token.verifier
-		 end
-      end
 
+         if token.verifier
+            params["oauth_verifier"] = token.verifier
+         end
+      end
       
       if callback: params[ "oauth_callback" ] = callback
       
@@ -304,6 +304,8 @@ class Client( cust_id, cust_secret, mode )
          cr.setOption( curl.OPT.HTTPHEADER, ["Content-type: application/x-www-form-urlencoded"] )
       elif self.mode == Via.GET
          cr = curl.Handle( uri + "?" + query_string )
+         oe = self._makeAuthHeader( params )
+         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
       elif self.mode == Via.HEADER
          cr = curl.Handle( uri + "?" + query_string )
          oe = self._makeAuthHeader( params )

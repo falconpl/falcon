@@ -838,7 +838,7 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm )
       value = i_value->asString();
    }
    else {
-      value = new CoreString;
+      value = new String;
       delValue = true;
       vm->itemToString( *value, i_value );
    }
@@ -898,7 +898,7 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
             value = itm.asString();
          }
          else {
-            value = new CoreString;
+            value = new String;
             delValue = true;
             vm->itemToString( *value, &itm );
          }
@@ -934,7 +934,7 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
       value = i_value->asString();
    }
    else {
-      value = new CoreString;
+      value = new String;
       delValue = true;
       vm->itemToString( *value, i_value );
    }

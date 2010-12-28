@@ -141,6 +141,7 @@ class BasicSessionManager
 
       self._session["_Nest"] = sessionData
    end
+
 end
 
 
@@ -436,8 +437,8 @@ object Nest
    end
 
    /*# Nest entry point.
-	  @optparam pid PageID where to route the application.
-	  
+      @optparam pid If given, force the entry point skipping the router.
+
       This method routes a web request down into the nest sytem.
    */
 
@@ -988,6 +989,7 @@ object Nest
    function getVersion()
       return _version
    end
+
    //=============================================================
    // Logging functions
    //=============================================================

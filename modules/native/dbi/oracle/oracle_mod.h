@@ -23,10 +23,10 @@
 namespace Falcon
 {
     // FIXME Oracle doesn't have an "ORACLE" structure like this...
-    class ORACLEHandle : public DBIRefCounter<ORACLE*> {
+    class ORACLEHandle : public DBIRefCounter<Statement*> {
         public:
-            ORACLEHandle( ORACLE* o );
-            DBIRefCounter<ORACLE*>( o )
+            ORACLEHandle( Statement* o );
+            DBIRefCounter<Statement*>( o )
             {}
 
         virtual ~ORACLEHandle()

@@ -172,6 +172,7 @@ ListStart =  .[
 
 FormatElements = .[
    TagRule( "**",  "bold", {ctx => ctx.pushNode( Node("b"))} )
+   TagRule( "{{",  "teletype", {ctx => ctx.pushNode( Node("tt"))} )
    TagRule( "//",  "italic", {ctx => ctx.pushNode( Node("i"))} )
    TagRule( "__",  "underline", {ctx => ctx.pushNode( Node("u"))} )
    TagRule( "^^",  "superscript", {ctx => ctx.pushNode( Node("sup"))} )
@@ -293,6 +294,7 @@ class Parser from parser.genparser.Parser
 
       // Some inline states
       "bold" => _inlineState( "**" ),
+      "teletype" => _inlineState( "}}" ),
       "italic" => _inlineState( "//" ),
       "superscript" => _inlineState( "^^" ),
       "subscript" => _inlineState( ",," ),

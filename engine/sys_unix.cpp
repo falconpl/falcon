@@ -223,6 +223,10 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
    }
 }
 
+int64 _getpid() {
+   return (int64) getpid();
+}
+
 }
 }
 
