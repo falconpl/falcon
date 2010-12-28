@@ -30,7 +30,7 @@ static Falcon::ConfigFileService s_config_srv;
 
 
 /*#
-   @module feather_configparser Configuration Parser
+   @module feathers.confparser Configuration file parser
    @brief Advanced configuration file parser (with sections and key categorization support).
 
    The ConfParser module is meant as a simple but powerful interface to .INI

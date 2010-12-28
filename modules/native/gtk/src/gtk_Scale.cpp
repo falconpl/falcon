@@ -205,7 +205,7 @@ FALCON_FUNC Scale::get_digits( VMARG )
 
 
 /*#
-    @method get_draw_value
+    @method get_draw_value GtkScale
     @brief Returns whether the current value is displayed as a string next to the slider.
     @return whether the current value is displayed as a string
  */

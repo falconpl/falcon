@@ -22,7 +22,7 @@ import from .docentity
    @param File the file to be parsed
    @param defmod The default module where entities should go if not specified.
    @optparam modName The logical modue name, if any, for this file.
-*/ 
+*/
 class FileContext( file, defmod, modName )
    file = file
    ctx = nil
@@ -43,11 +43,16 @@ class FileContext( file, defmod, modName )
    current_group = nil
 
    current_module = nil
-   
+
+   ignore = false
+
    //# Parsing a context into entities.
    function parse( ctx )
       self.ctx = ctx
       self.parseNode( ctx.topNode )
+
+      // clear the ignore status before exiting
+      self.ignore = false
    end
 
 
@@ -62,8 +67,17 @@ class FileContext( file, defmod, modName )
          // normally, don't destroy currently examined entity
          clear = false
 
+         if self.ignore
+            // -- Parse texts till we get an endignore.
+            if node.type == "faldoc_txt"
+               entity = self.parseText( node.content, node.infos["line"] )
+            end
+            node = node.next
+            continue
+         end
+
          switch node.type
-         
+
             case "faldoc_txt"
                // see if we have a previous pending entity
                self.checkEntity( entity )
@@ -73,18 +87,23 @@ class FileContext( file, defmod, modName )
                // parse the content of this text entity
                // -- may be nil if the entity is just containing document commands.
                entity = self.parseText( cnt, line )
-               
+
+               // module and main entities never refer to any subsequent entity.
+               if entity and entity.isStandAlone()
+                  self.checkEntity( entity )
+                  entity = nil
+               end
 
             case "inherit"
                self.parseInherit( parentEntity, node.firstChild )
                node = node.next
                continue
-               
+
             case "params"
                self.parseParams( parentEntity, node.firstChild )
                node = node.next
                continue
-         
+
             default
                // have we a textual entity we want to post-process?
                if entity
@@ -96,7 +115,7 @@ class FileContext( file, defmod, modName )
                   nodeName = node.infos["name"]
                   if not getundoc or \
                      ( (nodeName.startsWith("_") or "._" in nodeName) and not getprivate)
-                     
+
                      // prevent scanning for sub-nodes
                      node = node.next
                      continue
@@ -113,7 +132,7 @@ class FileContext( file, defmod, modName )
          if node.firstChild: self.parseNode( node, entity )
          // fullfil the promise to clear the entity.
          if clear: entity = nil
-         
+
          node = node.next
       end
 
@@ -128,7 +147,7 @@ class FileContext( file, defmod, modName )
          faldoc.error( @i"Inconsistent inheritance found for entity $entity.name", entity.firstline )
          return
       end
-      
+
       while node != nil
          line = node.infos["line"] + entity.firstline
          if node.type != "from"
@@ -136,14 +155,14 @@ class FileContext( file, defmod, modName )
             return
          end
 
-         l = faldoc.document.addLink( entity, line, node.infos["class"], false )         
+         l = faldoc.document.addLink( entity, line, node.infos["class"], false )
          entity.addParam( "from", l, node, line )
 
          node = node.next
-      end 
+      end
    end
 
-   
+
 
    function parseParams( entity, node )
       // only functions, methods and classes and objects can have parameters
@@ -186,7 +205,7 @@ class FileContext( file, defmod, modName )
          entity = docentity.Entity( cnt, self.file, line)
          entity.pcontent = ectx
          entity.parseContent( self.onGroupingChange, self.addEntity )
-         
+
          // do we have a brief?
          if "title" notin entity.props and "brief" notin entity.props
             // autobrief on?
@@ -225,6 +244,13 @@ class FileContext( file, defmod, modName )
             end
             self.current_group = name
 
+         case "@beginignore"
+            if self.ignore
+               faldoc.warn( @i"Beginning an ignore block, but was already ignoring", line)
+            end
+            faldoc.verbose( @i"Beginning ignore" )
+            self.ignore = true
+
          case "@beginset"
             if self.current_set != nil
                faldoc.warn( @i"Beginning new set $name while group $self.current_set is not closed", line)
@@ -237,7 +263,7 @@ class FileContext( file, defmod, modName )
             elif self.current_module != nil
                faldoc.warn( @i"Beginning new module $name while group $self.current_set is not closed", line)
             end
-            faldoc.verbose( @i"Changing @beginmodule to $(name)" ) 
+            faldoc.verbose( @i"Changing @beginmodule to $(name)" )
             self.current_module = faldoc.document.getModule( name )
 
          case "@endgroup"
@@ -250,37 +276,51 @@ class FileContext( file, defmod, modName )
             if self.current_set == nil
                faldoc.warn( i"Parsing @endset at but no set open", line)
             end
-            self.current_group = nil
+            self.current_set = nil
 
          case "@endmodule"
             if self.modName != nil
                faldoc.error( i"@endmodule command invalid in source modules", line)
             elif self.current_module == nil
                faldoc.warn( i"Parsing @endmodule at, but no module open", line)
+            else
+               faldoc.verbose( i"Closing module $(self.current_module.name)" )
             end
-            faldoc.verbose( i"Changing @endmodule" )
             self.current_module = nil
+
+          case "@endignore"
+            if not self.ignore
+               faldoc.warn( i"Parsing @endignore but wasn't ignoring.", line)
+            end
+            self.ignore = false
       end
 
    end
-   
+
    //# Stores a new entity in the entity database.
    function addEntity( entity )
-      if entity.parent
-         // nothing else needed
+      // if ignoring, throw it away
+      if self.ignore or entity.type == "ignore"
          return
       end
-      
+
+      if entity.parent
+         // nothing else needed
+         faldoc.verbose( i"Entity " + entity.name + i" has parent " + entity.parent.name + ", ignoring." )
+         return
+      end
+
       // determine the module of the entity.
       if "inmodule" in entity.props
          module = faldoc.document.getModule(entity.props["inmodule"])
+         faldoc.verbose( i"Applying @inmodule " + module.name + i" to entity " + entity.name )
          if not module: return // error already signaled
       elif self.current_module
          module = self.current_module
       else
          module = self.defmod
       end
-      
+
       // store in the current module
       if "owner" in entity.props
          // do we have an owner? -- then, it's also a parent.
@@ -292,7 +332,7 @@ class FileContext( file, defmod, modName )
 
       // Finally, add the entity to its rightful parent
       entity.parent.addMember( entity )
-      
+
       // Ok, should we handle grouiping?
       if entity.type != "funset" and entity.type != "page" and entity.type != "group" and entity.type != "main"
          if self.current_group != nil or self.current_set!= nil
@@ -304,7 +344,7 @@ class FileContext( file, defmod, modName )
                end
             end
          end
-         
+
          // manage group ownership
          if "ingroup" in entity.props
             group = module.getEntity( entity.props["ingroup"] )
@@ -323,8 +363,13 @@ class FileContext( file, defmod, modName )
 
    //# Configures an entity with non-textual data.
    function apply( node, entity, parentEntity )
+      // if ignoring, throw it away
+      if self.ignore
+         return
+      end
+
       l1 = node.infos["line"]
-   
+
       if entity.name
          l2 = entity.firstline
          faldoc.warn( @i"Entity defined at $l2 redefined here", l1 )
@@ -347,10 +392,14 @@ class FileContext( file, defmod, modName )
 
    //# Creates an entity out of a non-text definition
    function createEntity( node, parentEntity )
+      if self.ignore
+         return
+      end
+
       entity = docentity.Entity( nil, self.file, node.infos["line"] )
       entity.name = node.infos["name"]
       entity.dline = entity.firstline
-      
+
       // if we have a parent, variables and functions must be added below them.
       if parentEntity and (node.type == "function" or node.type == "variable" )
          // this is valid also for enums

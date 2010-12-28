@@ -17,10 +17,6 @@
    Regex
 */
 
-/*#
-   @beginmodule feather_regex
-*/
-
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/memory.h>
@@ -32,6 +28,10 @@
 #include "regex_ext.h"
 #include "regex_mod.h"
 #include "regex_st.h"
+
+/*#
+   @beginmodule feathers.regex
+*/
 
 namespace Falcon {
 namespace Ext {

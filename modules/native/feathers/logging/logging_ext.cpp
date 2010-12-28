@@ -32,7 +32,7 @@
 #include "logging_st.h"
 
 /*#
-   @beginmodule feather_logging
+   @beginmodule feathers.logging
 */
 
 namespace Falcon {
@@ -534,8 +534,8 @@ static CoreObject* s_getGenLog( VMachine* vm )
    which gets substituted by the padded number. In this case, the main file is
    numbered 0.
 
-   For example, files generated through the path "logs/my_app.%.log" with a @b
-   maxCount of 10 will be numbered as (oldest to newest):
+   For example, files generated through the path "logs/my_app.%.log" with a
+   **maxCount** of 10 will be numbered as (oldest to newest):
    @code
    logs/my_app.10.log
    logs/my_app.09.log

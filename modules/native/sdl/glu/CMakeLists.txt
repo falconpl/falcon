@@ -4,7 +4,7 @@
 # CMake configuration file for module SDL_ttf
 ####################################################################
 
-FALCON_DEFINE_MODULE( SDLGLU sdlglu )
+FALCON_DEFINE_MODULE( SDLGLU glu )
 
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
@@ -31,4 +31,4 @@ TARGET_LINK_LIBRARIES( ${SDLGLU} falcon_engine ${SDL_LIBRARY} ${OPENGL_LIBRARY})
 SET_TARGET_PROPERTIES( ${SDLGLU}
    PROPERTIES PREFIX "")
 #Install
-FALCON_INSTALL_MODULE( ${SDLGLU} )
+FALCON_INSTALL_MODULE2( ${SDLGLU} sdl )

@@ -1,3 +1,18 @@
+/*
+   FALCON - Samples
+
+   FILE: basetest.fal
+
+   Base test for QR code generator.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Dec 2010 16:32:16 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
 import from img.qrcode in qr
 
 if args.len() != 2

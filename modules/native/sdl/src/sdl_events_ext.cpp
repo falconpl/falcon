@@ -34,7 +34,10 @@
 
 #include <SDL.h>
 
-/*# @beginmodule sdl */
+/*#
+   @beginmodule sdl
+*/
+
 
 namespace Falcon {
 namespace Ext {

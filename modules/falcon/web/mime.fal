@@ -52,7 +52,7 @@ class Part( headers, body )
    headers = headers ? headers : [=>]
 
    /*# Body of the part.
-   
+
       The body represents the part payoff. The body should be simply the untranslated
       content you want to send to the remote part; the carrier will eventually fiddle
       with the encoding to make it compatible with the final stream.
@@ -65,13 +65,13 @@ class Part( headers, body )
 
    function __get_boundary(): return self._boundary
    function __get_parts(): return self._parts
-   
+
    /*# Declares that this will be a part holding more parts.
       @optparam partMode Mode of this multipart (defaults to "mixed")
       @optparam boundary If there is an already defined boundary for this part.
-      
+
       Setting a MIME element as multi-part has important semantic consequences.
-      A mime-part with sub-parts will receive an automatic content-type and boundary,      
+      A mime-part with sub-parts will receive an automatic content-type and boundary,
 
       The body, if present, becomes a "preamble", and is to be generally ignored.
 
@@ -80,13 +80,13 @@ class Part( headers, body )
       subtype, and may be one of the @a Multipart enumeration, or
       a string (in which case it's used directly).
    */
- 
+
    function setMultipart( partMode, boundary )
       if self._isMulti
          raise CodeError( 10001, "Already declared as multipart or message content-type" )
       end
-      
-      self._isMulti = true      
+
+      self._isMulti = true
       if not boundary: boundary = self.makeBoundary()
       self._boundary = boundary
       self.headers["Content-Type"] = [""=> @"multipart/$partMode", "boundary" => boundary]
@@ -125,7 +125,7 @@ class Part( headers, body )
    /*# Adds a part to this MIME part.
       @param part the Part to be added.
       @return self
-      
+
       The part must have been previously set as multipart via @a Part.setMessage or @a Part.setMultipart.
    */
    function addPart( part )
@@ -142,7 +142,7 @@ class Part( headers, body )
       else
          self._parts = [part]
       end
-      
+
       return self
    end
 
@@ -154,7 +154,7 @@ class Part( headers, body )
       n = 0
       parts = self._parts
       length = parts.len()
-      while n < length         
+      while n < length
          if parts[n] == part
             arrayRemove( parts, n )
             return true
@@ -163,7 +163,7 @@ class Part( headers, body )
       end
       return false
    end
-            
+
 
    /*# Attach a data content to the mail part.
       @param data A string or memory buffer with the data to be attached.
@@ -171,17 +171,17 @@ class Part( headers, body )
       @parm fname The file name of the part element.
       @optparm partName Logical name of the part in the Mime document,
       @return The new part created by this method.
-      
+
       This method creates an attachment for this MIME Part suitable to
       hold binary data.
-      
+
       If this part had already a content but wasn't a multi-part element, then
       the content is moved in a new multipart element that is prepended
       to the part to be added.
 
       The part created by this method can be configured afterwards.
    */
-      
+
    function attachData( data, type, fname, partName )
       if not partName: partName = fname
 
@@ -202,7 +202,7 @@ class Part( headers, body )
       end
       if length % 76: dbuffer += data[int(length/76)*76:] + "\r\n"
       part.body = dbuffer
-      
+
       self.attachPart( part )
       return part
    end
@@ -255,7 +255,7 @@ class Part( headers, body )
                firstPart.headers["Content-Transfer-Encoding"] = self.headers["Content-Transfer-Encoding"]
                self.headers -= "Content-Transfer-Encoding"
             end
-            
+
             firstPart.body = self.body
          end
 
@@ -271,9 +271,9 @@ class Part( headers, body )
       static
          _bound_array = strSplit( _bstring )
       end
-      
+
       if not count: count = _default_boundary_length
-      
+
       str = " " * count
       for n in [0:count]
          str[n] = randomPick( _bound_array )
@@ -294,7 +294,7 @@ class Part( headers, body )
       if self.body
          stream.write( self.body )
       end
-      
+
       if self._isMulti and self._boundary
          for part in self._parts
 
@@ -321,7 +321,7 @@ class Part( headers, body )
          // a message/xxx mesasge has just 1 part that is stored in the body.
       end
    end
-   
+
 
    function _writeHeaders( stream )
       for header, value in self.headers
@@ -354,7 +354,7 @@ class Part( headers, body )
       self.headers[ "Content-Transfer-Encoding" ] = "quoted-printable"
    end
 
-   
+
    function setText8Bit( text, ctype, cset )
       if not ctype: ctype = "text/plain"
       if not cset: cset = "utf-8"
@@ -394,14 +394,14 @@ class Part( headers, body )
       ttgt += line
       return ttgt
    end
-   
+
 end
 
 
 /*# Parses a stream on containing a MIME message.
    @param Stream the stream holding the incoming data.
    @return a new @a Part generated reading the stream.
-   @throw ParseError if the stream is not in MIME format.
+   @raise ParseError if the stream is not in MIME format.
 
    @note To parse a string, use @a parseString.
 */
@@ -427,7 +427,7 @@ function _parseHeaders( stream, part )
       if key.lower() == "content-type"
          bound = _checkMultipart( value, part )
       end
-      
+
       part.headers[key] = value
    end
 
@@ -437,7 +437,7 @@ end
 
 function _checkMultipart( value, part )
    ct = value.typeId() == StringType ? value : value[""]
-   
+
    if ct.startsWith( "multipart/", true )
       if value.typeId() != DictionaryType or not "boundary" in value
          raise ParseError( 10002, "Invaid MIME format", "boundary not defined in multipart content-type" )
@@ -448,9 +448,9 @@ function _checkMultipart( value, part )
       part.setMultipart( subType, bound )
 
       return bound
-      
+
    elif ct.startsWith( "message/", true )
-   
+
       subType = ct[8:]
       if subType == "partial"
          // we must have id,
@@ -480,7 +480,7 @@ function _parseHeaderLine( line )
    state = 0
    posParam = 0
    xvalues = nil
-   
+
    for n in [0:value.len()]
       char = value[*n]
       switch state
@@ -501,15 +501,15 @@ function _parseHeaderLine( line )
             end
          case 2
             state = 1         // back to string
-      end            
+      end
    end
-   
+
    // unclosed quote?
    if state != 0
       raise ParseError( 10006, "Malformed header parameter -- unclosed quote", line )
    end
 
-   
+
    if xvalues
       // parse the last parameter
       if posParam != value.len()
@@ -546,7 +546,7 @@ function _parseHeaderParam( param, xvalues )
       // we know value[-1] is a quote or the upstream would have raised.
       value = value[1:-1].replace( '\"', '"' )
    end
-   
+
    xvalues[key] = value
 end
 
@@ -558,7 +558,7 @@ function _parseBody( stream, part )
    if not bound
       _parseWholeBody( stream, part )
    else
-      _parseBoundBody( stream, part, bound )      
+      _parseBoundBody( stream, part, bound )
    end
 end
 
@@ -641,7 +641,7 @@ function _parseBoundBody( stream, part, bound )
          bblock[0:posEnd] = ""
          if data: data[0:] = ""
          boundPos = bblock.find( bound )
-      end 
+      end
    end
 
    if boundPos >= 0

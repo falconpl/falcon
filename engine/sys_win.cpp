@@ -350,7 +350,10 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
    #endif
 }
 
+int64 _getpid() {
+   return (int64) GetCurrentProcessId();
 }
+
 }
 
 

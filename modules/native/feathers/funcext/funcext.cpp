@@ -22,7 +22,7 @@
 */
 
 /*#
-   @module feather_funcext funcext
+   @module feathers.funcext Functional extensions
    @brief Functional extensions
 
    This module provides a set of functions which are useful in the context
@@ -37,12 +37,11 @@
    wilfully accepts to use this set of functions using very short and common
    names, used generally in the functional evaluation context.
 
-   @beginmodule feathers_funcext
+   @beginmodule feathers.funcext
 */
 
 #include <falcon/module.h>
 #include "funcext_ext.h"
-//#include "funcext_st.h"
 
 #include "version.h"
 
@@ -59,7 +58,6 @@ FALCON_MODULE_DECL
 
    //====================================
    // Message setting
-   //#include "funcext_st.h"
 
    self->addExtFunc( "at", Falcon::Ext::fe_at )->
       addParam("item")->addParam("access")->addParam("value");

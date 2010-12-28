@@ -41,7 +41,7 @@ namespace Falcon {
 namespace Ext {
 
 // The following is a faldoc block for the function
-/*
+/*--#  << change this to activate.
    @function skeleton
    @brief A basic script function.
    @return Zero.
@@ -101,7 +101,7 @@ FALCON_FUNC  MPZ_init( ::Falcon::VMachine *vm )
 
 }
 
-/*#
+/*--#  << change this to activate.
    @function __add
    @brief Addition of MP Integers.
    @return The sum of the MPZ and the other parameter.
@@ -155,7 +155,7 @@ FALCON_FUNC  MPZ_add( ::Falcon::VMachine *vm )
   vm->retval(result);
 }
 
-/*#
+/*--#  << change this to activate.
    @function __sub
    @brief Subtraction of MP Integers.
    @return The difference between the MPZ and the other parameter.

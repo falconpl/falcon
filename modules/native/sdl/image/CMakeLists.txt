@@ -4,7 +4,7 @@
 # CMake configuration file for module SDL_image
 ####################################################################
 
-FALCON_DEFINE_MODULE( SDLIMAGE sdlimage )
+FALCON_DEFINE_MODULE( SDLIMAGE image )
 
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
@@ -32,4 +32,4 @@ SET_TARGET_PROPERTIES(${SDLIMAGE}
    PROPERTIES PREFIX "")
 
 #Install
-FALCON_INSTALL_MODULE( ${SDLIMAGE} )
+FALCON_INSTALL_MODULE2( ${SDLIMAGE} sdl )

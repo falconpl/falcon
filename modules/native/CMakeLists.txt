@@ -70,6 +70,12 @@ if( FALCON_NATMODS_AUTO )
       set( _dbus ON )
    endif()
 
+   #### Check HPDF (LibHARU)
+   find_path( LibHaru_INCLUE_DIR hpdf.h )
+   if ( LibHaru_INCLUE_DIR )
+      set( _pdf ON )
+   endif()
+
    #### Check GD2
    find_path( GD_INCLUDE_DIR gd.h )
    if ( GD_INCLUDE_DIR )
@@ -78,12 +84,6 @@ if( FALCON_NATMODS_AUTO )
 
    ### Check GTK2
    FalconFindGTK2()
-
-   #### Check PDF (LibHARU)
-   find_path( LibHaru_INCLUE_DIR hpdf.h )
-   if ( LibHaru_INCLUE_DIR )
-      set( _pdf ON )
-   endif()
 
 else()
   set( _dbus OFF )
@@ -96,7 +96,7 @@ endif()
 option( FALCON_BUILD_DBUS "Install DBUS binding"  ${_dbus})
 option( FALCON_BUILD_GD2 "Install GD library binding" ${_gd2})
 option( FALCON_BUILD_GTK "Install GTK2 module" ${_gtk} )
-option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" ${_pdf})
+option( FALCON_BUILD_PDF "Install libharu (hpdf)  binding" ${_pdf})
 
 #########################################################
 # Inclusion statements
@@ -131,7 +131,7 @@ if ( FALCON_BUILD_MONGODB )
 endif()
 
 if ( FALCON_BUILD_PDF )
-    add_subdirectory( pdf )
+    add_subdirectory( hpdf )
 endif()
 
 if ( FALCON_BUILD_SDL )

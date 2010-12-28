@@ -214,7 +214,7 @@ void TreeModel::on_row_deleted( GtkTreeModel* obj, GtkTreePath* path, gpointer _
 
 
 /*#
-    @method row_has_child_toggled GtkTreeModel
+    @method signal_row_has_child_toggled GtkTreeModel
     @brief This signal is emitted when a row has gotten the first child row or lost its last child row.
  */
 FALCON_FUNC TreeModel::signal_row_has_child_toggled( VMARG )

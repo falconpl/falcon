@@ -27,7 +27,7 @@ import from self.lib in qr
    but is released free of charge for everyone to use.
 
    A minimal sample program may be:
-   
+
    @code
    import from img.qrcode in qr
 
@@ -41,13 +41,13 @@ import from self.lib in qr
    The library has support for dumping the image directly to an arbitrary stream
    (and so, for example, generating a live document on a web server).
 
-   The code of this library is heavily based on @link http://fukuchi.org/works/qrencode/index.en.html "Lib QR Encode".
+   The code of this library is heavily based on @link "http://fukuchi.org/works/qrencode/index.en.html" "Lib QR Encode".
 */
 
 // workaround to circumvent error in module loader
 QrMask = qr.QrMask
 
-/*# Error correction level enumeration .
+/*# Error correction level enumeration.
    Sets the trade off between generation complexity and scan readability.
 
    Can be one of:
@@ -66,7 +66,7 @@ ECL = qr.QrErrorCorrectionLevel
    @a Image instances, which are the actual content
    that can be streamed to a target file or to an
    arbitrary stream.
-*/ 
+*/
 class Maker
    /*#
    * Caching directory -- set to nil to disable cache.
@@ -98,43 +98,44 @@ class Maker
    default_mask = 2
 
    /*#
-   * Max awidth (in pixels) allowed for png images.
+   * Max width (in pixels) allowed for png images.
    */
    png_max_size = 1024
 
    /*# Encode a text oriented string.
-      @param text The text to be encoded
-      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
+      @param text The text to be encoded.
+      @optparam ecl The error correction level (defaults to ECL.L).
       @optparam encoding Optional text encoding for the final output.
       @optparam caseSensitive Set to false to create alphanumeric sequences.
 
       @see Maker.ECL
    */
-   function text(text, errorCorrectionLevel, encoding, caseSensitive)
-      input = self._getInput(errorCorrectionLevel)
+   function text(text, ecl, encoding, caseSensitive)
+      input = self._getInput(ecl)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
       if encoding
          text = transcodeTo(text, encoding)
       end
-      
+
       qr.QrSplit.splitStringToInput(text, input, qr.QrMode.eight_bit, caseSensitive)
       return self._encodeInput(input)
    end
 
    /*# Encode raw binary data.
-      @param text The text to be encoded
-      @optparam errorCorrectionLLevel The error correction level (defaults to ECL.L).
+      @param data The text to be encoded.
+      @optparam ecl The error correction level (defaults to ECL.L).
 
       @see Maker.ECL
    */
-   function raw(data, errorCorrectionLevel)
-      input = self._getInput(errorCorrectionLevel)
+   function raw(data, ecl)
+      input = self._getInput(ecl)
       input.append(qr.QrMode.eight_bit, len(data), data)
       return self._encodeInput(input)
    end
 
+   //# @ignore
    function encodeStruct(data, errorCorrectionLevel)
       // TODO
    end
@@ -213,7 +214,7 @@ end
 
    @note This class should not be instanced directly; it should be
          created trhough the @a Maker methods.
-         
+
    This class contains the data that can be rendered to an output image.
 
    @prop version (read only) The version of this QR Image (indicating its
@@ -229,6 +230,8 @@ class Image(version, width, data, maker)
 
    /*# Saves the image on the given file name as a JPG image.
       @param fname The name/uri of the file where to save the image.
+      @optparam size Size of dots, in pixels.
+      @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError i/o on error.
    */
    function saveJpg(fname, size, margin)
@@ -237,6 +240,8 @@ class Image(version, width, data, maker)
 
    /*# Saves the image on the given file name as a PNG image.
       @param fname The name/uri of the file where to save the image.
+      @optparam size Size of dots, in pixels.
+      @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError i/o on error.
    */
    function savePng(fname, size, margin)
@@ -245,6 +250,8 @@ class Image(version, width, data, maker)
 
    /*# Saves the image on the given open stream as a JPG image.
       @param outStream The stream where the image must be saved.
+      @optparam size Size of dots, in pixels.
+      @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError on i/o error.
    */
    function jpg(outStream, size, margin)
@@ -253,6 +260,8 @@ class Image(version, width, data, maker)
 
    /*# Saves the image on the given open stream as a PNG image.
       @param outStream The stream where the image must be saved.
+      @optparam size Size of dots, in pixels.
+      @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError on i/o error.
    */
    function png(outStream, size, margin)

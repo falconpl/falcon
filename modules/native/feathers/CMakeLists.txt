@@ -44,7 +44,3 @@ unset(_project_targets)
 
 # install headers
 add_subdirectory(include)
-
-if(NOT Falcon_IN_CORE_SOURCETREE)
-  add_subdirectory(docs)
-endif()

@@ -1,8 +1,13 @@
 /*#
 @main The Falcon Programming Language Library Reference
 
-This guide contains 
+This guide contains the reference to the standard library
+(@a core module and @a feathers modules), the reference to the standard
+extensions (the other modules) as well as some general advices an
+information about the Falcon language functions, object and classes.
 
+This guide doesn't contain a Language reference nor tutorials related
+to the Falcon language in general.
 */
 
 
@@ -72,12 +77,9 @@ executed, and can be regulated and changed live.
 
 */
 
-/*#
-   @group coroutine_support Support for coroutines
-   @brief All that's useful for coroutines.
-*/
 
 /*#
    @group general_purpose General purpose
+   @inmodule core
    @brief Generic language and type oriented functions.
 */

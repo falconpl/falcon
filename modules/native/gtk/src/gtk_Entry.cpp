@@ -4,7 +4,7 @@
 
 #include "gtk_Entry.hpp"
 
-//#include "gdk_Event.hpp"
+// #include "gdk_Event.hpp"
 #include "gdk_Pixbuf.hpp"
 #include "gtk_Adjustment.hpp"
 #include "gtk_CellEditable.hpp"
@@ -339,7 +339,7 @@ void Entry::on_delete_from_cursor( GtkEntry* obj, GtkDeleteType type, gint count
     while ( iter.hasCurrent() );
 }
 
-#if 0 // todo: missing GdkEvent 
+#if 0 // todo: missing GdkEvent
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 /*#
     @method signal_icon_press GtkEntry

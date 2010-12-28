@@ -16,12 +16,21 @@ script_dir=`pwd`
 cd $curdir
 
 echo "Script detected in $script_dir"
-root_path=`echo $script_dir | sed -e "s/\/[^/]*$//"`
+#discard everything past the install prefix -- retaining what comes before
+root_prefix=@CMAKE_INSTALL_PREFIX@
+# but first escape the path separators so that next sed is not confused.
+root_prefix_escape=`echo $root_prefix | sed -e 's/\\//\\\\\\//g'`
+root_path=`echo $script_dir | sed -e "s/$root_prefix_escape.*/$root_prefix_escape/"`
+
+# We have our root path
 echo "Falcon root path set to $root_path"
 
 LIBDIR=@FALCON_LIB_DIR@
 MODDIR=@FALCON_MOD_DIR@
 BINDIR=@FALCON_BIN_DIR@
+
+# Communicate with falcon that we're in a test environment.
+FALCON_ENV_DIR=$root_path
 
 PATH=$root_path/$BINDIR:$PATH
 echo "System path set to $PATH"
@@ -35,13 +44,14 @@ DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH
 #And this is for falcon
 FALCON_LOAD_PATH=".;$root_path/$MODDIR"
 
+export FALCON_ENV_DIR
 export PATH
 export LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH
 export FALCON_LOAD_PATH
 
 echo
-echo "Starting requested command under falcon shell"
+echo "Starting requested command: $*"
 echo
 
 $*

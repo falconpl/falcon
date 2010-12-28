@@ -90,6 +90,7 @@ SessionManager::SessionManager():
       m_nLastToken(0),
       m_nSessionTimeout(0)
 {
+   srand( time(0) + Sys::_getpid() );
 }
 
 SessionManager::~SessionManager()
@@ -332,13 +333,17 @@ void SessionManager::expireOldSessions()
 
 SessionData* SessionManager::createUniqueId( Falcon::String& sSID )
 {
+   static const char* alpha="abcdefghjkilmnopqrstuvwxyzABCDEFGHJKILMNOPQRSTUVWXYZ0123456789";
    SessionData* sd = 0;
-
+   
    bool found = false;
    while( ! found )
    {
-      // todo: Stronger algo
-      sSID.N( rand() ).N(rand()).N(rand());
+      //sSID.N( rand() ).N(rand()).N(rand());
+      for( int nCount = 0; nCount < 16; nCount++ )
+      {
+         sSID += alpha[ rand() % 62 ];
+      }
       
       m_mtx.lock();
       if ( m_smap.find( sSID ) == m_smap.end() )

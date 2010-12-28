@@ -41,7 +41,8 @@
 #include "version.h"
 
 /*#
-   @main The DBus Falcon Module
+   @module dbus dbus
+   @brief Bindings for dbus IPC system
 
    DBus is an inter-application remote procedure call protocol that was designed
    specifically to write interoperating applications in desktop environments,
@@ -58,6 +59,7 @@
    server able to fulfil requests received from other applications.
 
    @note This version exposes only client-side functions to access DBus server.
+   @beginmodule dbus
 */
 
 FALCON_MODULE_DECL

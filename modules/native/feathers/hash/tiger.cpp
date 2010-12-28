@@ -8,9 +8,9 @@
 /* The following macro denotes that an optimization    */
 /* for Alpha is required. It is used only for          */
 /* optimization of time. Otherwise it does nothing.    */
-//#ifdef __alpha
+// #ifdef __alpha
 #define OPTIMIZE_FOR_ALPHA
-//#endif
+// #endif
 
 /* NOTE that this code is NOT FULLY OPTIMIZED for any  */
 /* machine. Assembly code might be much faster on some */

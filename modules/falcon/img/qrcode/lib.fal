@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+
+/*# @beginignore */
+
 import from gd2
 
 //------------------------------------------------------------------------------

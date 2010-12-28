@@ -22,9 +22,11 @@ Version = @FALCON_VERSION_ID@
 
 Input.basedir=@PROJECT_SOURCE_DIR@
 Input.directory=engine/core_module
+Input.directory=modules/native
 Input.directory=modules/falcon
 
-Input.wildcard=*.cpp    
+Input.wildcard=*.cpp
+Input.wildcard=*.fd
 Input.wildcard=*.fal
 Input.recursive=true
 
@@ -45,7 +47,7 @@ Output.module=docbook
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=@output_dir@/html
+Output.html.directory=@output_dir@/@FALCON_VERSION_ID@-html
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
 

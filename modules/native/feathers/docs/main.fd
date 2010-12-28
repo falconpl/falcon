@@ -1,7 +1,12 @@
 /*#
-   @main The Feather Modules
+   @module feathers The Feather Modules
+   @after core
 
    The Falcon Standard Module Suite goes under the name of "feathers".
+   
    This module set is the one officially distributed together with the
    standrad installation of Falcon.
+
+   So, modules declared as Feathers are granted to be directly available
+   at topmost module load hierarcy in any Falcon standard distribution.
 */

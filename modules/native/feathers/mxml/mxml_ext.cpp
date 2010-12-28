@@ -28,7 +28,7 @@
 #include "mxml.h"
 
 /*#
-   @beginmodule feather_mxml
+   @beginmodule feathers.mxml
 */
 
 namespace MXML {

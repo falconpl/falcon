@@ -24,14 +24,13 @@
 #include <falcon/iterator.h>
 
 #include "funcext_ext.h"
-//#include "compiler_st.h"
 
 #include <math.h>
 #include <errno.h>
 
 
 /*#
-   @beginmodule feather_funcext
+   @beginmodule feathers.funcext
 */
 
 namespace Falcon {
@@ -48,8 +47,8 @@ namespace Ext {
 
    This function emulates all the language-level accessors provided by Falcon.
    Subscript accessors ([]) accepting numbers, ranges and generic items (for
-   dictionaries) and property accessors (.) accepting strings are fully 
-   supported. When two parameters are passed, the function works in 
+   dictionaries) and property accessors (.) accepting strings are fully
+   supported. When two parameters are passed, the function works in
    access semantics, while when the @b value parameter is also given,
    the function will work as an accessor/subscript assignment. In example,
    to change a string the @b at function can be used as a range accessor:
@@ -59,7 +58,7 @@ namespace Ext {
       string[0:1] = "H"          //first letter up
       at( string, [1:], "ELLO" ) // ...all up
       > string
-      > "First letter: ", at( string, 0 ) 
+      > "First letter: ", at( string, 0 )
                           // ^^^ same as string[0]
    @endcode
 
@@ -68,14 +67,14 @@ namespace Ext {
    members of objects and instances and static methods of classes.
    Properties and bindings can be accessed by names as strings. In
    example:
-   
+
    @code
       // making a binding
       // ... equivalent to "array.bind = ..."
       array = []
       at( array, "bind", "binding value" )
       > array.bind
-      
+
       //... accessing a property
       at( CurrentTime(), "toRFC2822" )()
    @endcode
@@ -246,7 +245,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             bool find = dict->find( *i_pos, vm->regA() );
             dict->put( *i_pos, *i_val );
             // assign the value itself if find is not found
-            if (! find) 
+            if (! find)
                vm->retnil();
             return;
          }

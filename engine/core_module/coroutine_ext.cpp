@@ -24,7 +24,8 @@
 namespace Falcon {
 namespace core {
 
-/*@begingroup coro_sup Coroutine support
+/*#
+   @group coro_sup Coroutine support
 
    The functions in this group allows to interact with the coroutine support that is
    provided by the Virtual Machine. Most of them translate in requests to the virtual
@@ -33,6 +34,8 @@ namespace core {
    Also, functions in this group are meant to permeate the embedding applications.
    Requests generate by coroutining are delivered to the application for approval
    and control.
+
+   @begingroup coro_sup
 */
 
 /*#

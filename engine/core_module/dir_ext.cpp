@@ -34,7 +34,7 @@
 #include <string.h>
 
 /*#
-   @begingroup core_syssupport
+   @beginmodule core
 */
 
 /*#
