@@ -6,6 +6,10 @@ TARGET=$2
 current_path=`dirname $0`
 current_path="$current_path/../"
 
+# Enable also for MacOSX
+DYLD_LIBRARY_PATH="$current_path/@FALCON_LIB_DIR@"
+export DYLD_LIBRARY_PATH
+
 LD_LIBRARY_PATH="$current_path/@FALCON_LIB_DIR@"
 export LD_LIBRARY_PATH
 
