@@ -1,0 +1,13 @@
+#!/bin/sh
+
+SOURCE=$1
+TARGET=$2
+
+current_path=`dirname $0`
+current_path="$current_path/../"
+
+LD_LIBRARY_PATH="$current_path/@FALCON_LIB_DIR@"
+export LD_LIBRARY_PATH
+
+mkdir -p `dirname $TARGET`
+$current_path/@FALCON_BIN_DIR@/falcon -o $TARGET -c $SOURCE 

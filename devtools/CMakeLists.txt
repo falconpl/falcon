@@ -26,11 +26,11 @@ endforeach()
 # Configure other binary/executable files
 #
 
-IF(UNIX)
-   SET(sys_in_spec falcon-conf falconenv.sh)
-ELSE(UNIX)
-   SET(sys_in_spec falconenv.bat)
-ENDIF(UNIX)
+IF(WIN)
+   SET(sys_in_spec falconenv.bat icomp.bat)
+ELSE()
+   SET(sys_in_spec falcon-conf falconenv.sh icomp.sh)
+ENDIF()
 
 SET(in_bin_files
   falconeer.fal

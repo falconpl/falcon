@@ -152,6 +152,12 @@ else()
     message( STATUS "Not building documentation" )
 endif()
 
+if( FALCON_INSTALL_TESTS )
+    message( STATUS "Adding (source) tests, samples and demos to the distribution" )
+    add_subdirectory( tests )
+else()
+    message( STATUS "Not installing tests" )
+endif()
 
 # CMake generated information.  Is used by our falcon-config.cmake
 if (NOT FALCON_CMAKE_DIR)
