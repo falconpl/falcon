@@ -19,7 +19,7 @@ import from hash
 import from curl
 
 /*#
-   @main Support for OAuth 1 and 2 protocols.
+   @main Support for OAuth 1.0 protocol.
 
    This modules code to establish OAuth sessions.
 
@@ -35,10 +35,22 @@ const OAUTH_REQ_PREFIX = "OAUTH-REQ-"
 
 //# Enumeration used as OAUTH connection method.
 enum Via
+   //# Use Post method
    POST = "POST"
+   //# Use Get method
    GET = "GET"
-   HEADER = "HEADER"
 end
+
+//# Enumeration used to determine if the Authorization header should be used or not.
+enum UseHeader
+   //# Do not use the Authorization header in request.
+   NONE
+   //# Send the oauth_* parameters in the header and the rest via the standard method.
+   ALTERN
+   //# Send the oauth_* parameters in the header, but send them via the standard request.
+   FULL
+end
+
 
 /*# Error raised from OAuth in case of protocol breach.
    @param code Code of the error
@@ -52,7 +64,7 @@ end
 /*# Class representing an OAuth token.
    @param token OAuth authorization token.
    @param secret Secret data used to sign the request.
-   
+
    Oauth steps
 */
 class Token( token, secret )
@@ -79,7 +91,7 @@ class Token( token, secret )
       @return true if this is a valid request token.
    */
    function isRequest(): return self.token and not self.exchanged
-   
+
    /*# Check if this token is an access token.
       @return true if this is a valid access token.
    */
@@ -95,13 +107,13 @@ class Token( token, secret )
       end
       return ret
    end
-   
+
 end
 
 /*# Interface to remote OAuth authentication process server.
    @param consumer_key The consumer key identifying the requester on the remote OAuth server.
    @optparam mode One of the @a Via methods (Defaults to POST).
-   
+
    This class acts as an authentication client connecting with a
    remote server.
 */
@@ -111,26 +123,29 @@ class Client( cust_id, cust_secret, mode )
 
    //# Secret data used to countersign requests for this client
    secret = cust_secret
-   
+
    //# connection mode (one of the @a Via methods)
    mode = mode ? mode : Via.POST
 
-   //# Sub-realm of an OAuth service contacted by this client.
-   realm = nil
+   /*# Should we use the header field?
+
+      Should be one of the @a UseHeader enumeration values.
+
+      If @b UseHeader.NONE, the Authorization header field is never sent.
+      
+      If @b UseHeader.ALTERN, the OAuth fields are MOVED in the header, and the
+      selected mode ("GET" or "POST") is used @b only to send the non-oauth parameters.
+
+      If @b UseHeader.FULL, the OAuth fields are copied in the Authorization header,
+      but they are sent also via the POST or GET query string.
+   */
+   use_header = UseHeader.NONE
 
    //# @ignore
    signature_method = "HMAC-SHA1"
-   
+
    //# OAuth protocol version. Defaults to 1.0
    version = "1.0"
-
-   //# @ignore
-   http_method = nil
-
-   init
-      // sets the method as appropriate.
-      self.http_method = self.mode == Via.HEADER ? Via.GET : self.mode
-   end
 
 
    /*# Perform a token request.
@@ -139,7 +154,7 @@ class Client( cust_id, cust_secret, mode )
       @optparam token An instance of the Token class to be exchanged token exchange.
       @return A new @a Token created through this call.
       @raise ProtoError if the remote side doesn't complain with the OAuth protocol.
-      
+
       This method requests a "Request token" or an "Access token" the remote OAuth service.
 
       Initially, the caller must create a request token by calling this method; on success,
@@ -154,7 +169,7 @@ class Client( cust_id, cust_secret, mode )
 
       @code
       import from web.oauth in oauth
-      
+
       client = oauth.Client( "MyClientID", "MyClientSecret" )
       req_token = client.getToken( "https://TheRemoteService/get_req_token" )
 
@@ -167,7 +182,7 @@ class Client( cust_id, cust_secret, mode )
       userData = client.callAPI( access_token,
                   "https://TheRemoteService/get_user",
                   ["user_id"=> my_user_id] )
-      
+
       @endcode
 
       @note This method blocks until the remote side replies.
@@ -183,37 +198,10 @@ class Client( cust_id, cust_secret, mode )
             params["oauth_verifier"] = token.verifier
          end
       end
-      
+
       if callback: params[ "oauth_callback" ] = callback
-      
-      // Create the base string.
-      fields = self._makeGet( params )
-      bstr = self._makeBaseString( self.http_method, address, fields )
 
-      // create the signature key
-      secret = self.makeSecret( self.secret, tsecret )
-      
-      // TODO: use self.signature_method
-      // create the request signature
-      oauth_signature = Base64.encode(
-         hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
-
-      // Add the signature to the fields.
-      params["oauth_signature"] = oauth_signature
-
-      if self.mode == Via.POST
-         cr = curl.Handle( address )
-         cr.postData(  self._makeGet( params ) )
-      elif self.mode == Via.GET
-         cr = curl.Handle( address + "?" +  self._makeGet( params ) )
-      elif self.mode == Via.HEADER
-         cr = curl.Handle( address )
-         oe = self._makeAuthHeader( params )
-         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
-      end
-
-      //cr.setOption( curl.OPT.HEADER, true )
-      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
+      cr = self.makeOAuthHandler( address, tsecret, params, nil )
       cr.setOutString()
       cr.exec()
       data = cr.getData()
@@ -246,7 +234,7 @@ class Client( cust_id, cust_secret, mode )
    /*# Signature key-string generator.
       @param cust_secret The customer signature part.
       @optparam token_secret The part of the secret associated with a token.
-      
+
       The OAuth protocol doesn't dictate exactly the way in which
       authorization strings must be signed, but in cases where counter-signature
       is required, it mandates that both the customer secret and the token secret
@@ -269,57 +257,75 @@ class Client( cust_id, cust_secret, mode )
    //==========================================================
    // API utilities
    //==========================================================
-   
+
    /*# Call an API protected by OAuth.
       @param token An instance of @a Token.
       @param uri The URI of the remote OAuth protected Web API to be called.
       @optparam params Optional parameters for the call.
       @return The raw data returned by the remote OAuth procedure.
-      
+
       Calls a remote web API and blocks until a result is available.
    */
    function callAPI( token, uri, params )
 
-      if params
-         params = self._makeBaseParams() + params
-      else
-         params = self._makeBaseParams()
-      end
-      params["oauth_token"] = token.token
+      oauth_params = self._makeBaseParams()
+      oauth_params["oauth_token"] = token.token
 
-      // Create the base string.
-      base_fields = self._makeGet( params )
-      bstr = self._makeBaseString( self.http_method, uri, base_fields )
-      secret = self.makeSecret( self.secret, token.secret )
-      oauth_signature = Base64.encode(
-         hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
+      cr = self.makeOAuthHandler( uri, token.secret, oauth_params, params )
 
-      // Add the signature to the fields.
-      params["oauth_signature"] = oauth_signature
-      query_string = self._makeGet( params )
-      
-      if self.mode  == Via.POST
-         cr = curl.Handle( uri )
-         cr.postData( query_string )
-         cr.setOption( curl.OPT.HTTPHEADER, ["Content-type: application/x-www-form-urlencoded"] )
-      elif self.mode == Via.GET
-         cr = curl.Handle( uri + "?" + query_string )
-         oe = self._makeAuthHeader( params )
-         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
-      elif self.mode == Via.HEADER
-         cr = curl.Handle( uri + "?" + query_string )
-         oe = self._makeAuthHeader( params )
-         cr.setOption( curl.OPT.HTTPHEADER, ["Authorization: " + oe ] )
-      end
-
-      //cr.setOption( curl.OPT.HEADER, true )
-      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
       cr.setOutString()
       cr.exec()
       return cr.getData()
    end
 
-   
+   //# @ignore
+   function makeOAuthHandler( address, tsecret, oauth_params, params )
+      // Create the base string.
+      if params
+         all_params = oauth_params + params
+      else
+         all_params = oauth_params
+      end
+
+      base_fields = self._makeGet( all_params )
+      bstr = self._makeBaseString( self.mode, address, base_fields )
+      secret = self.makeSecret( self.secret, tsecret )
+      oauth_signature = Base64.encode( hash.hmac( true, hash.SHA1Hash, secret, bstr ) )
+
+      // Add the signature to the fields.
+      oauth_params["oauth_signature"] = oauth_signature
+      all_params["oauth_signature"] = oauth_signature
+
+
+      // Prepare the Authorization header.
+      if self.use_header == UseHeader.ALTERN
+         // In use header mode, send OAuth parameters via header.
+         query_string = self._makeGet( params )
+         headers =  ["Authorization: OAuth realm=\"" +address+"\","+ self._makeAuthHeader( oauth_params ) ]
+      elif self.use_header == UseHeader.FULL
+         // In use header mode, send OAuth parameters via header AND via query
+         query_string = self._makeGet( all_params )
+         headers =  ["Authorization: OAuth realm=\"" +address+"\","+ self._makeAuthHeader( oauth_params ) ]      
+      else
+         // Send oauth fields only via query
+         query_string = self._makeGet( all_params )
+         headers = []
+      end
+      
+      if self.mode == Via.POST
+         cr = curl.Handle( address )
+         cr.postData( query_string )
+         headers += ["Content-type: application/x-www-form-urlencoded"]
+      else
+         cr = curl.Handle( address + (query_string ? ("?" + query_string) : "" ))
+      end
+
+      if headers: cr.setOption( curl.OPT.HTTPHEADER, headers )
+      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
+      //cr.setOption( curl.OPT.HEADER, true )
+      return cr
+   end
+
    //==========================================================
    // Generic utilities
    //==========================================================
@@ -356,17 +362,17 @@ class Client( cust_id, cust_secret, mode )
 
       return params
    end
-   
+
 
    function _makeBaseString( method, base_uri, fields )
-      return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields.replace("+","%20") )
+      return method + "&" + URI.encode( base_uri ) + "&" + URI.encode( fields )
    end
 
    function _makeAuthHeader( params )
-      str = "OAuth "
+      str = ""
       for key, val in params
          str += URI.encode( key ) + "=\"" + URI.encode( val ) + "\""
-         formiddle: str += ", "
+         formiddle: str += ","
       end
 
       return str

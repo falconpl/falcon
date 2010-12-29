@@ -48,6 +48,9 @@ try
 
    > "Asking for request token:"
    r = oauth.Client( args[0], args[1] )
+   //r.mode = oauth.Via.GET
+   //r.use_header = oauth.UseHeader.FULL
+   
    tok = r.getToken( args[2] )
 
    outfile_name = args.len() >= 4 ? args[3] : "token.oauth"
