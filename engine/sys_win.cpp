@@ -355,6 +355,6 @@ int64 _getpid() {
 }
 
 }
-
+}
 
 /* end of sys_win.cpp */
