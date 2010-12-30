@@ -152,6 +152,11 @@ else()
     message( STATUS "Not building documentation" )
 endif()
 
+#Generate make distro scripts
+if( FALCON_BUILD_DIST )
+	add_subdirectory( dist )
+endif()
+
 if( FALCON_INSTALL_TESTS )
     message( STATUS "Adding (source) tests, samples and demos to the distribution" )
     add_subdirectory( tests )
