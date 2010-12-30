@@ -16,6 +16,8 @@
 
 
 #include <fastcgi.h>
+//We're not an application program; instead, we're using the FCGI api directly
+#define NO_FCGI_DEFINES
 #include <fcgi_stdio.h>
 
 #include <stdio.h>
