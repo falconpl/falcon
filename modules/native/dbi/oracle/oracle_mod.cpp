@@ -14,7 +14,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <errmsg.h>
 
 #include <falcon/engine.h>
 #include <falcon/dbi_error.h>
@@ -22,199 +21,151 @@
 
 namespace Falcon
 {
-/******************************************************************************
- * Transaction Class
- *****************************************************************************/
-DBIStatementOracle::DBIStatementOracle( DBIHandleOracle *dbh, Statement* stmt ):
-    DBIStatement( dbh ),
-    o_statement( stmt ),
-    //o_inBind(0), FIXME
-    o_bBound( false )
+    /******************************************************************************
+     * Transaction Class
+     *****************************************************************************/
+    DBIStatementOracle::DBIStatementOracle( DBIHandleOracle *dbh, oracle::occi::Statement* stmt ):
+        DBIStatement( dbh ),
+        o_statement( stmt ),
+        o_inBind(0), 
+        o_bBound( false )
     {
-        o_pConn = dbh->getConn();
-        o_pConn->incref();
-        o_pStmt = new ORACLEStmtHandle( stmt );
+        //o_pConn = dbh->getConn();
+        //o_pConn->incref();
+        //o_pStmt = new ORACLEStmtHandle( stmt );
     }
 
 
-DBIStatementOracle::~DBIStatementOracle()
-{
-    close();
-}
-
-DBIRecordset* DBIStatementOracle::execute( ItemArray* params )
-{
-   if( o_statement == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
-
-   /*   
-    * TODO  
-    *
-    */
-
-   return 0;
-
-}
-
-void DBIStatementOracle::close()
-{
-    if ( o_statement != 0 )
+    DBIStatementOracle::~DBIStatementOracle()
     {
-        o_statement = 0;
-        //delete o_inBind;      FIXME
-        //o_inBind = 0;         FIXME
-        o_pConn->decref();
-        o_pStmt->decref();
-    }
-}
-    
-/******************************************************************************
- * DB Handler Class
- *****************************************************************************/
-DBIHandleOracle::~DBIHandleOracle()
-{
-    DBIHandleOracle::close();
-}  
-
-void DBIHandleOracle::close()
-{
-    if ( o_conn != NULL )
-    {
-        o_pConn->decref();
-        // Kill the connection then the environment
-        o_env->terminateConnection( o_conn );
-        terminateEnv( o_env );
-    }
-}
-
-void DBIHandleOracle::terminateEnv()
-{
-    if ( o_env != NULL)
-    {
-        terminateEnivronment( o_env );
-    }
-}
-  
-void DBIHandleOracle::commit()
-{
-    if( o_conn == NULL )
-    {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        close();
     }
 
-    if( oracle_query( o_conn, "COMMIT" ) != 0 )
+    DBIRecordset* DBIStatementOracle::execute( ItemArray* params )
     {
-        throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
-    }
-}
+        if( o_statement == 0 )
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
 
-void DBIHandleOracle::rollback()
-{
-    if( o_conn == NULL )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-    
-    if( oracle_query( o_conn, "ROLLBACK" ) != 0 )
-    {
-        throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_TRANSACTION );
-    }
-}
+        /*   
+         * TODO  
+         *
+         */
 
-Statement* DBIHandleOracle::o_prepare( const String &query )
-{
-    if( o_conn == NULL )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
-    
-    Statement* stmt;
-    Statement::Status* status = stmt->status();
-    
-    if( stmt == 0 || status == 0 )
-    {
-        throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_NOMEM );
-    }
-    
-    AutoCString cquery( query );
-    try
-    {
-        stmt->setSQL( cquery.c_str() );
-    }
-    catch
-    {
-        throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+        return 0;
+
     }
 
-    // TODO There might be more we need to add here.    
-    
-    return stmt;
-}
-
-DBIStatement* DBIHandleOracle::prepare( const String &query )
-{
-    Statement stmt;
-    Statement::Status status = stmt->status();
-
-    return new DBIStatementOracle( this, stmt, status );
-}
-
-/******************************************************************************
- * Main service class
- *****************************************************************************/
-void DBIServiceOracle::init()
-{
-}
-
-DBIHandle *DBIServiceOracle::connect( const String &parameters )
-{
-    ORACLE *conn = oracle_init( NULL );
-    ORACLE *env = oracle_init( NULL );
-
-    if ( conn = NULL )
+    void DBIStatementOracle::close()
     {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+        if ( o_statement != 0 )
+        {
+            o_statement = 0;
+            delete o_inBind;
+            o_inBind = 0;
+            //o_pConn->decref();
+            //o_pStmt->decref();
+        }
     }
 
-    DBIConnParams connParams;
-
-    if( ! connParams.parse( parameters ) )
+    /******************************************************************************
+     * DB Handler Class
+     *****************************************************************************/
+    DBIHandleOracle::~DBIHandleOracle()
     {
-        oracle_close( conn );
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-                .extra( parameters ) );
+        DBIHandleOracle::close();
+    }  
+
+    void DBIHandleOracle::close()
+    {
+        if ( o_conn != NULL )
+        {
+            //o_pConn->decref();
+            // Kill the connection then the environment
+            o_env->terminateConnection( o_conn );
+            //oracle::occi::Environment::terminateEnvironment( o_env );
+        }
     }
 
-    env = Environment::createEnvironment();
-    
-    // We'll need at least a username, password, and db.
-    conn = env->createConnection(connParams.o_szUser, pconnParams.o_szPassword, connParams.o_szConn);
-    
-    if ( conn == NULL )
+    void DBIHandleOracle::commit()
     {
-        String errorMessage = getMessage();
-        errorMessage.bufferize();
-        oracle_close( conn );
+        if( o_conn == NULL )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        }
+    }
+
+    void DBIHandleOracle::rollback()
+    {
+        if( o_conn == NULL )
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+    }
+
+    /******************************************************************************
+     * Main service class
+     *****************************************************************************/
+    void DBIServiceOracle::init()
+    {
+    }
+
+    DBIHandle *DBIServiceOracle::connect( const String &parameters )
+    {
+
+        oracle::occi::Connection *conn;
+        oracle::occi::Environment *env;
+
+        if ( conn = NULL )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+        }
+
+        DBIConnParams connParams;
+
+        if( ! connParams.parse( parameters ) )
+        {
+            //close( conn );
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+                    .extra( parameters ) );
+        }
+
+        /*
+           env = oracle::occi::Environment::createEnvironment();
+
+        // We'll need at least a username, password, and db.    
+        conn = env->createConnection(connParams.o_szUser, connParams.o_szPassword, connParams.o_szConn);
+        */
+        if ( conn == NULL )
+        {
+            String errorMessage = oracle::occi::SQLException::getMessage();
+            errorMessage.bufferize();
+            //close( conn ); 
+            
+            int en = mysql_errno( conn ) == ER_BAD_DB_ERROR ?
+               FALCON_DBI_ERROR_DB_NOTFOUND : FALCON_DBI_ERROR_CONNECT;
+
+            throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
+        }
         
-        throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
-    }
-    
-    
-#if ( OCCI_MAJOR_VERSION > 9 )
-    env->setCacheSortedFlush( true );
-#endif
-    return new DBIHandleOracle( conn );    
-}
 
-CoreObject *DBIServiceOracle::makeInstance( VMachine *vm, DBIHandle *dbh )
-{
-    Item *cl = vm->findWKI( "Oracle" );
-    if ( cl == 0 || ! cl->isClass() )
-    {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
+#if ( OCCI_MAJOR_VERSION > 9 )
+        env->setCacheSortedFlush( true );
+#endif
+        //return new DBIHandleOracle( conn );    
     }
-    
-    CoreObject *obj = cl->asClass()->createInstance();
-    obj->setUserData( dbh );
-    
-    return obj;
-}
+
+
+    CoreObject *DBIServiceOracle::makeInstance( VMachine *vm, DBIHandle *dbh )
+    {
+        Item *cl = vm->findWKI( "Oracle" );
+        if ( cl == 0 || ! cl->isClass() )
+        {
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
+        }
+
+        CoreObject *obj = cl->asClass()->createInstance();
+        obj->setUserData( dbh );
+
+        return obj;
+    }
 
 }/* namespace Falcon */
 
