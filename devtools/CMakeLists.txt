@@ -26,7 +26,7 @@ endforeach()
 # Configure other binary/executable files
 #
 
-IF(WIN)
+IF(WIN32)
    SET(sys_in_spec falconenv.bat icomp.bat)
 ELSE()
    SET(sys_in_spec falcon-conf falconenv.sh icomp.sh)

@@ -41,7 +41,7 @@ function compileFal( fname )
 		> "Making ", fname
 		try
 			famname = fname[0:-4]+".fam"
-			system( @"falcon -o $famname -c $fname")
+			system( @"falcon -o \"$famname\" -c \"$fname\"")
 		catch in e
 			> "Error while compiling ", fname
 			> e

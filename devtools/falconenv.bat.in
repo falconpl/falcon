@@ -11,10 +11,10 @@ echo while having other official builds installed.
 echo
 
 rem On windows, modules and falcon DLLs are in the same directory of this bat.
-echo set FALCON_ENV_DIR=%~dp0 > %TEMP%\falconenv.bat
-echo echo "Falcon temporary directory set to: %%FALCON_ENV_DIR%%" >> %TEMP%\falconenv.bat
-echo set PATH=%%FALCON_ENV_DIR%%;%%PATH%% >> %TEMP%\falconenv.bat
-echo set FALCON_LOAD_PATH=.;%%FALCON_ENV_DIR%% >> %TEMP%\falconenv.bat
+echo set FALCON_ENV_DIR=%~dp0> %TEMP%\falconenv.bat
+echo echo "Falcon temporary directory set to: %%FALCON_ENV_DIR%%">> %TEMP%\falconenv.bat
+echo set PATH=%%FALCON_ENV_DIR%%;%%PATH%%>> %TEMP%\falconenv.bat
+echo set FALCON_LOAD_PATH=.;%%FALCON_ENV_DIR%%>> %TEMP%\falconenv.bat
 
 cmd /K %TEMP%\falconenv.bat
 
