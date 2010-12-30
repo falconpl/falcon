@@ -8,8 +8,14 @@ option( FALCON_BUILD_APPS "Build Falcon applications" ON )
 option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
 option( FALCON_BUILD_DOCS "Build automatic documentation" ON )
 option( FALCON_INSTALL_TESTS "Copy test files in the final installation (under share/)" OFF )
-option( FALCON_COMPILE_SOURCE_MODS "Compile source modules into .fam for faster script startup" ON )
-option( FALCON_STRIP_SOURCE_MODS "Don't install source .fal/ftd modules" OFF)
+
+if (WIN32)
+	set( FALCON_COMPILE_SOURCE_MODS OFF )
+	set( FALCON_STRIP_SOURCE_MODS OFF)
+else()
+	option( FALCON_COMPILE_SOURCE_MODS "Compile source modules into .fam for faster script startup" ON )
+	option( FALCON_STRIP_SOURCE_MODS "Don't install source .fal/ftd modules" OFF)
+endif()
 
 # NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})

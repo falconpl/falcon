@@ -6,7 +6,8 @@
                                    0.8
 
   The tools in this directory are meant to be a support for development of
-third party modules and embedding applications.
+third party modules and embedding applications. Some are also used during the
+distribution and packaging.
 
   Modules and embeddings that are not included in the Falcon Source Project
 are not bound to use Falcon Development Environment. They just require a standard

@@ -1,0 +1,50 @@
+/*
+   FALCON - DevTools
+
+   FILE: compile_tree.fal
+
+   Compiles all the scripts in a tree.
+
+   This script can be called after temporary or complete installation
+   on systems with hand-made distributions to generate .fam modules
+   out of the installed hierarcy of scripts.
+   
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load process
+
+if args.len() != 1
+	> "Usage: compile_tree.fal <path_name>"
+end
+
+try
+	dir = Directory( args[0] )
+	dir.descend( nil, compileFal )
+	dir.close()
+	> "Done."
+	return 0
+catch IoError in e
+	> "Can't open required directory: ", args[0]
+	return 1
+end
+
+function compileFal( fname )
+	if fname.endsWith( ".fal" ) or fname.endsWith( ".ftd" )
+		> "Making ", fname
+		try
+			famname = fname[0:-4]+".fam"
+			system( @"falcon -o $famname -c $fname")
+		catch in e
+			> "Error while compiling ", fname
+			> e
+		end
+	end
+end
