@@ -79,11 +79,15 @@ ADD_EXECUTABLE( ffalcgi
    ${HDR_FILES} # optional but useful, see comment above.
 )
 
+if(WIN32)
+	set( LIBFCGI libfcgi )
+else()
+	set( LIBFCGI fcgi )
+endif()
 
 TARGET_LINK_LIBRARIES( ffalcgi
    falcon_engine
-   fcgi
-   ${SYSLIBS}
+   ${LIBFCGI}
    ) #APR library added in ld flags
 
 INSTALL(TARGETS ffalcgi
