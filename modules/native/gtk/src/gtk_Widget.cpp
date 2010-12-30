@@ -17,7 +17,7 @@
 #include "gdk_Window.hpp"
 
 #include "gtk_CellEditable.hpp"
-//#include "gtk_ExtendedLayout.hpp"
+// #include "gtk_ExtendedLayout.hpp"
 #include "gtk_FileChooser.hpp"
 #include "gtk_Requisition.hpp"
 #include "gtk_ToolShell.hpp"

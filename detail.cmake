@@ -6,8 +6,10 @@ option( FALCON_BUILD_MODULES "Build Falcon modules" ON )
 option( FALCON_BUILD_FWKS "Build Falcon frameworks" ON )
 option( FALCON_BUILD_APPS "Build Falcon applications" ON )
 option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
-option( FALCON_COMPILE_FAMS "Compile falcon modules when installing them" ON )
-option( FALCON_STRIP_FALS "Remove source modules when installing" ON )
+option( FALCON_BUILD_DOCS "Build automatic documentation" ON )
+option( FALCON_INSTALL_TESTS "Copy test files in the final installation (under share/)" OFF )
+option( FALCON_COMPILE_SOURCE_MODS "Compile source modules into .fam for faster script startup" ON )
+option( FALCON_STRIP_SOURCE_MODS "Don't install source .fal/ftd modules" OFF)
 
 # NOTE modules are installed via
 #   install(FILES .. DESTINATION ${FALCON_MOD_INSTALL_DIR})
@@ -214,17 +216,42 @@ endif()
 # Functions
 #
 
+function( add_fam_target source )
+   file( RELATIVE_PATH source_relative "${CMAKE_SOURCE_DIR}" "${source}")
+   
+   get_filename_component( path_of_fal "${source_relative}"  PATH)
+   get_filename_component( name_of_fal "${source_relative}"  NAME_WE)
+
+   # falcon command -- on windows it
+   if(UNIX OR APPLE)
+      set( falcon_command "${CMAKE_BINARY_DIR}/devtools/icomp.sh" )
+   else()
+      set( falcon_command "${CMAKE_BINARY_DIR}/devtools/icomp.bat" )
+   endif()
+
+   set( output_file "${CMAKE_BINARY_DIR}/${path_of_fal}/${name_of_fal}.fam" )
+   set( compile_command ${falcon_command} ${source} ${output_file} )
+
+   add_custom_command(
+      OUTPUT "${output_file}"
+      COMMAND ${compile_command}
+   )
+   
+   string(REPLACE "/" "_" target_name "${source}" )
+         
+   add_custom_target(${target_name} ALL DEPENDS "${output_file}" falcon falcon_engine )
+
+   #install must be relative to current source path_of_fal
+   file( RELATIVE_PATH single_fal_relative "${CMAKE_CURRENT_SOURCE_DIR}" "${single_fal}")
+   get_filename_component( path_of_fal "${single_fal_relative}"  PATH)
+   install(FILES "${output_file}" DESTINATION "${FALCON_MOD_DIR}/${path_of_fal}")
+
+endfunction()
+
 function( falcon_install_moddirs module_dirs )
 
    message( "Installing top modules in ${CMAKE_CURRENT_SOURCE_DIR}" )
-   file( GLOB modules "*.fal" )
-   foreach( single_fal ${modules} )
-      install(
-         FILES ${single_fal}
-         DESTINATION ${FALCON_MOD_DIR}
-      )
-   endforeach()
-
+   
    foreach(item ${module_dirs} )
       message( "Installing falcon modules in ${item}" )
       file( GLOB_RECURSE files "${item}" "*.fal" "*.ftd" )
@@ -233,13 +260,17 @@ function( falcon_install_moddirs module_dirs )
          get_filename_component( path_of_fal "${single_fal_relative}"  PATH)
 
          #Create installation files from in files
-         install(
-            FILES "${single_fal}"
-            DESTINATION "${FALCON_MOD_DIR}/${path_of_fal}"
-         )
+         if(NOT FALCON_STRIP_SOURCE_MODS)
+            install(
+               FILES "${single_fal}"
+               DESTINATION "${FALCON_MOD_DIR}/${path_of_fal}"
+            )
+         endif()
+         
+         if(FALCON_COMPILE_SOURCE_MODS)
+            add_fam_target( ${single_fal} )
+         endif()
       endforeach()
-
-
    endforeach()
-
+   
 endfunction()

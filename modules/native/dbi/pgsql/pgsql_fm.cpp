@@ -18,8 +18,12 @@
 #include "version.h"
 
 /*#
-   @module pgsql Postgre SQL database driver module
+   @module dbi.pgsql Postgre SQL database driver module
    @brief DBI extension supporting Postgre SQL database
+
+   Directly importable as @b dbi.pgsql, it is usually loaded through
+   the @a dbi module.
+
 */
 
 // Instantiate the driver service

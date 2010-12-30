@@ -5,39 +5,40 @@ find_program(Falcon_faldoc_EXECUTABLE faldoc.sh ${Falcon_BINARY_DIR})
 
 function(faldoc_target modulename input_file output_dir)
 
-  if(Falcon_IN_CORE_SOURCETREE)
-    if(WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio.*")
-	  set(_cmd
-	    ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/falcon 
-		  -L ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}/${CMAKE_CFG_INTDIR}
-		  ${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal 
-		  ${input_file}
-		)
-    else()
-	  set(_cmd
-          ${CMAKE_COMMAND}
+   if(Falcon_IN_CORE_SOURCETREE)
+      if(WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio.*")
+      set(_cmd
+         ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/falcon
+         -L ${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}/${CMAKE_CFG_INTDIR}
+         ${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal
+         ${input_file}
+      )
+      else()
+      set(_cmd
+            ${CMAKE_COMMAND}
             -Dexecutable=falcon
             -Dworkdir=${CMAKE_CURRENT_BINARY_DIR}
             -Darguments="${falcon-app-faldoc_SOURCE_DIR}/src/faldoc.fal ${input_file}"
          -P ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
-        )
-    endif()
-  else()
-    set(_cmd ${Falcon_faldoc_EXECUTABLE} "${input_file}")
-  endif()
+         )
+      endif()
+   else()
+      set(_cmd ${Falcon_faldoc_EXECUTABLE} "${input_file}")
+   endif()
 
-  add_custom_command(
-    OUTPUT ${output_dir}/index.html
-    COMMAND ${_cmd}
-    DEPENDS ${input_file} ${ARGN}
-    COMMENT ${output_dir}/index.html
-  )
+   add_custom_command(
+      OUTPUT ${output_dir}/index.html
+      COMMAND ${_cmd}
+      DEPENDS ${input_file} ${ARGN}
+      COMMENT ${output_dir}/index.html
+   )
 
-  add_custom_target(${modulename}_module_docs DEPENDS ${output_dir}/index.html)
-  #
-  if(Falcon_IN_CORE_SOURCETREE)
-    add_dependencies(${modulename}_module_docs faldoc)
-  endif()
+   add_custom_target(${modulename}_module_docs DEPENDS ${output_dir}/index.html)
+   #
+   if(Falcon_IN_CORE_SOURCETREE)
+      add_dependencies(${modulename}_module_docs faldoc)
+   endif()
+   
 endfunction(faldoc_target)
 
 function(faldoc_module_docs modulename input_file_in)

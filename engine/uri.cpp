@@ -638,17 +638,7 @@ void URI::URLEncode( const String &source, String &target )
    {
       unsigned char chr = (unsigned char) *cutf;
 
-      if ( chr == 0x20 )
-      {
-         target.append( '+' );
-      }
-      else if ( chr < 0x20 || chr > 0x7F || isResDelim( chr ) ||
-            chr == '%'
-            || chr == '"' || chr == '\'' || chr == '`'
-            || chr == '\\'
-            || chr == '^' || chr == '~'
-            || chr == '{' || chr == '}'
-            || chr == '<' || chr == '>' )
+      if ( ! isUnreserved( chr ) )
       {
          target.append( '%' );
          target.append( URI::CharToHex( chr >> 4 ) );

@@ -17,18 +17,32 @@
 #include "oracle_mod.h"
 #include "oracle_ext.h"
 
+<<<<<<< HEAD
 /*#
   @beginmodule oracle
   */
+=======
+/*--# << turn on when active
+
+   @beginmodule dbi.oracle
+*/
+>>>>>>> 947a08fce7f55a240fa2b2e46a44d9fe6d529b59
 namespace Falcon
 {
     namespace Ext
     {
 
+<<<<<<< HEAD
         /*#
           @class Oracle
           @brief Direct interface to Oracle database.
           @param connect String containing connection parameters.
+=======
+/*--# << turn on when active
+      @class Oracle
+      @brief Direct interface to Oracle database.
+      @param connect String containing connection parameters.
+>>>>>>> 947a08fce7f55a240fa2b2e46a44d9fe6d529b59
 
           The connect string uses the standard connection values:
           - username

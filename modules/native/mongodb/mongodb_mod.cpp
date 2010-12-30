@@ -11,6 +11,10 @@
 #include <falcon/engine.h>
 #include <falcon/iterator.h>
 
+#if _WIN32
+#define llabs( x )  ( x < 0 ? -x : x )
+#endif
+
 namespace Falcon
 {
 namespace MongoDB

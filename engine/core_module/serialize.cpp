@@ -26,6 +26,9 @@
 #include <falcon/memory.h>
 
 #include <falcon/stream.h>
+/*#
+   @beginmodule core
+*/
 
 /*#
    @funset core_serialization Serialization functions

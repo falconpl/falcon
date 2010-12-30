@@ -30,6 +30,10 @@
   Interface extension functions
   */
 
+/*#
+   @beginmodule feathers.math_extra
+*/
+
 #include <falcon/engine.h>
 #include "math_extra_ext.h"
 #include "math_extra_mod.h"

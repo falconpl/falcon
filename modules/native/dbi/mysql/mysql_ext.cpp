@@ -19,7 +19,7 @@
 #include "mysql_ext.h"
 
 /*#
-   @beginmodule mysql
+   @beginmodule dbi.mysql
 */
 namespace Falcon
 {

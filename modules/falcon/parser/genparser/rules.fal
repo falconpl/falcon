@@ -16,7 +16,10 @@
 
 import Regex from regex 
 
-/*# Base rule */
+/*# Base rule.
+
+   An abstract class.
+*/
 class Rule( nextState, action )
    nextState = nextState
    action = action

@@ -345,12 +345,12 @@ FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
 
 /*#
    @class AccessError
+   @from Error code, description, extra
    @brief Error accessing an indexed item.
    @ingroup errors
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
-   @from Error code, description, extra
 
    This error is generated when an array was accessed beyond its size,
    or a key was not found in a dictionary, or a requested property was

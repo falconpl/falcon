@@ -24,7 +24,7 @@ Options
 /*# General module options. */
 object HTMaker
    /*# Determine if tree inseretions must be checked for DOM consistency.
-   
+
       If this switch is active, every inserted node must respect HTML 4.01
       hierarcy constraints.
 
@@ -48,7 +48,7 @@ class AttribsBase()
 
    /*# render the attributes */
    function toString()
-      
+
       string = ""
       for key, value in self.retrieve()
          key = key.replace("_", "-" ).replace("__", ":" ).lower()
@@ -62,7 +62,7 @@ class AttribsBase()
                   "=\"" + value.replace( '"', '&quot;' ).replace( '&', '&amp;' ) +"\""
          end
       end
-      
+
       return string
    end
 end
@@ -115,7 +115,7 @@ class CoreAttribs from AttribsBase
    dir = nil
 
    /*# Specifies a unique id for an element */
-   id = nil 
+   id = nil
 
    /*# Specifies a language code for the content in an element */
    style = nil
@@ -134,7 +134,7 @@ class DomList( parent )
    items = []
 
    function empty(): return self.children.len() == 0
-   
+
    function add( item )
       if HTMaker.checkTree and item.hname and item.hname != "verbatim"
          if self.parent.childTypeList and item.hname notin self.parent.childTypeList
@@ -144,9 +144,9 @@ class DomList( parent )
                @i"Parenting element of class \"$(cls)\" in a parent of class \"$(pcls)\"" )
          end
       end
-      
+
       self.items += item
-   end   
+   end
 end
 
 
@@ -179,7 +179,7 @@ object ContentModel
    tablecells = .[ 'th' 'td' ]
    head_misc = .[ 'script' 'style' 'meta' 'link' 'object' 'base' ]
    options = .[ 'option' 'optgroup' ]
-   
+
    init
       self.inline = self.inline +  self.fontstyle + self.phrase + self.special + self.formctrl
       self.inline_pre = self.inline - .[ 'img' 'object' 'big' 'small' 'sub' 'sup' ]
@@ -199,7 +199,7 @@ end
 
 /*# Topmost node for XHTML documents.
 
-   In rendering, it creates an XHTML compilant document. 
+   In rendering, it creates an XHTML compilant document.
 */
 class XHTMLFrame( encoding, version )
    encoding = encoding ? encoding : "utf-8"
@@ -224,14 +224,14 @@ end
 */
 class TransitionalFrame
    html = HTML(self)
-   
+
    function render(stream)
       if stream == nil: stream = stdOut()
       stream.writeText( '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
             "http://www.w3.org/TR/html4/loose.dtd">
    ')
-      
+
       self.html.render(stream)
    end
 end
@@ -293,11 +293,11 @@ class BaseDom( hname, childTypeList, attribClass )
    function st_makesep( level )
       return " " * (level * 3)
    end
-   
+
    function render( level, stream )
       if not level: level = 1
       if not stream: stream = stdOut()
-      
+
       sep = self.st_makesep( level )
       stream.writeText( "<" + self.hname )
 
@@ -324,7 +324,7 @@ class BaseDom( hname, childTypeList, attribClass )
             stream.writeText( self.text )
          end
       end
-      
+
       if self.children
          for item in self.children.items
             item.render( level + 1, stream )
@@ -334,7 +334,7 @@ class BaseDom( hname, childTypeList, attribClass )
       stream.writeText( "</" + self.hname + ">" )
       if self._sepAfter: stream.writeText( self._sepAfter + sep )
    end
-   
+
    function add()
       if self.children
          for i in [0:paramCount()]
@@ -358,7 +358,7 @@ class BaseDom( hname, childTypeList, attribClass )
       @param v Either a dictionary used to set the properties or a callable item.
       @raise HTMError if the properties in @b v are not found.
       @return self
-      
+
       If @b v is a dictioanry, then properties in this item matching the dictionary
       kyes are searched and the corresponding values are set.
 
@@ -419,7 +419,7 @@ class BaseDom( hname, childTypeList, attribClass )
       self.eattr.CLASS = value
       return self
    end
-   
+
    /*# Method to set the entity style.
       @param value The value of the style.
       @raise HTMError if this entity doesn't expose a style property.
@@ -445,7 +445,7 @@ class BaseDom( hname, childTypeList, attribClass )
       while p provides parent
          p = p.parent
       end
-      
+
       return p
    end
 end
@@ -464,11 +464,11 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
       if not self.head
          self.head = Head().add( Title("") )
       end
-      
+
       if not self.body
          self.body = Body()
       end
-      
+
       if self.parent and self.parent.derivedFrom( XHTMLFrame )
          stream.writeText(
             @"
@@ -477,10 +477,10 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
       else
          stream.writeText( "<html>\n" )
       end
-                  
+
       self.head.render(1, stream)
       self.body.render(1, stream)
-      
+
       stream.writeText( "</html>\n" )
    end
 
@@ -506,7 +506,7 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
          item.parent = self
       end
    end
-            
+
 end
 
 
@@ -514,10 +514,12 @@ end
 * Head entities
 ******************************************************************/
 
-/*# Attributes used for the @a Head class- */
+/*#
+   Attributes used for the @a Head class.
+*/
 class HeadAttribs from I18nAttribs
    /*# Meta-profiles.
-   
+
    This attribute specifies the location of one or more meta data profiles, separated by
    white space. For future extensions, user agents should consider the value to be a list
    even though this specification only considers the first URI to be significant.
@@ -545,18 +547,18 @@ class Title( text ) from BaseDom( "title", nil, I18nAttribs )
    text = text
 end
 
-  
+
 /*# Attributes used for the @a Meta class */
 class MetaAttribs from I18nAttribs
    /*# HTTP response header name */
    http_equiv = nil
-   
+
    /*#  Metainformation name */
    name = nil
-  
+
    /*#  associated information */
    content = nil
-   
+
    /*#  select form of content */
    scheme = nil
 end
@@ -564,7 +566,7 @@ end
 
 class Meta( name, content, http_equiv, scheme ) \
       from BaseDom( "meta", nil , MetaAttribs )
-   
+
    init
       self.eattr.name = name
       self.eattr.content = content
@@ -585,7 +587,7 @@ class BodyAttribs from AllAttribs
    /*# The onload event occurs when the user agent finishes loading a window or
       all frames within a FRAMESET. This attribute
       may be used with BODY and FRAMESET elements.
-   */   
+   */
    onload = nil
 
    /*# The onunload event occurs when the user agent removes a document from a window or frame.
@@ -621,24 +623,24 @@ class FrameAttribs from CoreAttribs
 
    /*# name of frame for targetting -- deprecated in XHTML*/
    name = nil
-   
+
    /*# source of frame content */
    src = nil
 
    /*# request frame borders? Can be 0 or 1 */
    frameborder = nil
-   
+
    /*# margin widths in pixels */
    marginwidth = nil
 
    /*# margin heights in pixels */
    marginheight = nil
-   
+
    /*# allow users to resize frames? -- boolean value */
    noresize = false
-   
+
    /*# Should we have the scrollbar? -- "yes", "no" or "auto" */
-   scrolling = nil 
+   scrolling = nil
 end
 
 class Frame from \
@@ -673,7 +675,7 @@ class IFrameAttribs from FrameAttribs
 end
 
 class IFrame from \
-      BaseDom( "iframe", ContentModel.flow, IFrameAttribs ) // also div and frameset 
+      BaseDom( "iframe", ContentModel.flow, IFrameAttribs ) // also div and frameset
 end
 
 class ObjectAttribs from AllAttribs
@@ -683,9 +685,9 @@ class ObjectAttribs from AllAttribs
   classid  = nil
   /*#  base URI for classid, data, archive */
   codebase = nil
-  /*# reference to object's data */  
+  /*# reference to object's data */
   data  = nil
-  /*# content type for data */ 
+  /*# content type for data */
   type = nil
   /*# content type for code */
   codetype = nil
@@ -832,7 +834,7 @@ class EscapingData( name, attr ) from \
       stream.writeText( sep + "<" + self.hname )
       sattr = self.eattr.toString()
       if sattr: stream.writeText( sattr )
-      
+
       if not self.text
          // empty element -- closing mark is required by many browsers
          stream.writeText( "></"+ self.hname + ">\n" )
@@ -1002,9 +1004,9 @@ end
 class BDOAttribs from CoreAttribs
    /*# Language code */
    lang = nil
-   
+
    /*# directionality -- can be "ltr" or "rtl" */
-   dir = nil      
+   dir = nil
 end
 
 /*# Class overriding directionality in documents
@@ -1275,7 +1277,7 @@ end
    added below the item.
 */
 class A( href, text ) from \
-         BaseDom( "a", ContentModel.inline_a, AnchorAttribs )   
+         BaseDom( "a", ContentModel.inline_a, AnchorAttribs )
    text = text
    init
       self.eattr.href = href
@@ -1301,7 +1303,7 @@ end
 
 /*# Base class for all the font and phrase control tags.
    @param type The type of node (a valid HTML font/text control inline tag).
-   
+
    @optparam text An optional text to add immediately to this node.
 */
 
@@ -1312,7 +1314,7 @@ end
 
 /*# Class generating Typewriter/Tele Type text.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1323,7 +1325,7 @@ end
 
 /*# Class generating italic text.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1333,7 +1335,7 @@ end
 
 /*# Class generating bold text.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1343,7 +1345,7 @@ end
 
 /*# Class generating big (uppercase/caps) text.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1353,7 +1355,7 @@ end
 
 /*# Class generating small text.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1432,7 +1434,7 @@ end
 
 /*# Class generating a citation phrase.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1442,7 +1444,7 @@ end
 
 /*# Class generating an abbreviation phrase.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1452,7 +1454,7 @@ end
 
 /*# Class indicating an acronym phrase.
    @optparam text An optional text to add immediately to this node.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1481,9 +1483,9 @@ end
 
 /*# Span text.
    @optparam text An optional text to add immediately to this node.
-   
+
    Special flexible flex marker.
-   
+
    If @b text is specified, an automatic single text node is
    added below the item.
 */
@@ -1522,7 +1524,7 @@ end
 class InsDelAttribs from AllAttribs
    /*# info on reason for change */
    cite = nil
-   
+
    /*#  date and time of change */
    datetime = nil
 end
@@ -1647,15 +1649,15 @@ class Form( action, method ) from \
 
    method_get = "get"
    method_post = "post"
-   
+
    init
       self.eattr.action = action
       self.eattr.method = method
    end
-   
+
    /*# Helper method configuring this object for upload.
       @param href The URI that has to be set in the action
-      
+
       This method sets the following attributes of the form tag
       so that the form can send files to Falcon remote server-side
       scripts receiving the data.
@@ -1749,7 +1751,7 @@ class BaseInput( type, at ) from \
          BaseDom( type, nil, at )
 
    /*# Helper method to disable this input.
-   
+
       Return the self object so it's possible to do
       @code
       s = Form("manage.ftd").add(
@@ -1763,7 +1765,7 @@ class BaseInput( type, at ) from \
    end
 
    /*# Helper method to set this field read-only.
-   
+
       Return the self object so it's possible to do
       @code
       s = Form("manage.ftd").add(
@@ -1775,14 +1777,14 @@ class BaseInput( type, at ) from \
       self.eattr.readonly = true
       return self
    end
-   
+
 end
 
 /*# Creates an input, with an optional type.
    @param type The type of the input.
    @param name The name of the input (mandatory).
    @param value The value of the item.
-   
+
    Input @b type should be in the @a InputType enumeration.
    If not specified, the type will be set to 'hidden'.
 */
@@ -1973,7 +1975,7 @@ class OptionAttribs from AllAttribs
    /*# For use in hierarchical menus */
    label = nil
    /*# Value that will be returned in the form if selected.
-   
+
       If nil, it defaults to element content.
    */
    value = nil
@@ -1995,7 +1997,7 @@ class Option( text, value, label, selected, disabled ) from \
 
    text = text
    _sepAfter = "\n"
-   
+
    init
       self.eattr.label = label
       self.eattr.value = value
@@ -2004,7 +2006,7 @@ class Option( text, value, label, selected, disabled ) from \
    end
 
    /*# Helper method to set this option on.
-   
+
       Return the self object so it's possible to do
       @code
       s = Select("the select").add(
@@ -2018,7 +2020,7 @@ class Option( text, value, label, selected, disabled ) from \
    end
 
    /*# Helper method to disable this option.
-   
+
       Return the self object so it's possible to do
       @code
       s = Select("the select").add(
@@ -2097,7 +2099,7 @@ end
    If @b forid is not given, the label should contain
    the target input element.
 
-   The Label item can contain any other text 
+   The Label item can contain any other text
 */
 
 class Label( text, forid ) from  \
@@ -2105,18 +2107,18 @@ class Label( text, forid ) from  \
 
    _sepAfter = "\n"
    text = text
-   
+
    init
       self.eattr.FOR = forid
    end
-      
+
 end
 
 
 /*# Class used to group fields in forms */
 class FieldSet from \
          BaseDom( "fieldset", ContentModel.flow_fieldset, AllAttribs )
-end   
+end
 
 class LegendAttribs from AllAttribs
    /*# accessibility key character */
@@ -2159,7 +2161,7 @@ class Button( name, value, onclick, type, disabled ) from \
    type_button = "button"
    type_submit = "submit"
    type_reset = "reset"
-   
+
    init
       self.eattr.name = name
       self.eattr.value = value
@@ -2251,8 +2253,8 @@ end
    @param fname an URI that can be read by InputStream.
    @optparam encoding The text-encoding for the included file. Defaults to C (none -- read/write verbatim).
 */
-class Include( fname, encoding ) from BaseDom( "" )  
-   init 
+class Include( fname, encoding ) from BaseDom( "" )
+   init
       file = InputStream( fname )
       if encoding: file.setEncoding( encoding )
       data = ""
@@ -2273,7 +2275,7 @@ end
    @param fname an URI that can be passed in Falcon.
    @optparam encoding The text-encoding for the included file. Defaults to C (none -- read/write verbatim).
 */
-class IncludeFalcon( fname, encoding ) from BaseDom( "" ) 
+class IncludeFalcon( fname, encoding ) from BaseDom( "" )
    init
       ss = StringStream()
       out = stdOut( ss )

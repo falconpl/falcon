@@ -20,7 +20,7 @@
 #include "sqlite3_ext.h"
 
 /*#
-   @beginmodule sqlite3
+   @beginmodule dbi.sqlite3
 */
 namespace Falcon
 {

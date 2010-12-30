@@ -1,0 +1,82 @@
+/*
+   FALCON - Samples
+
+   FILE: oauth_request.fal
+
+   First step of OAUTH request.
+
+   This test connects to the required address and asks for a request
+   token. After the token is obtained, it must be fed in some Web-API for
+   authentication (i.e. inputed directly in a browser). Once authenticated,
+   you can use oauth_access.fal to exchange the request token with an
+   access token, that can finally be used to call OAuth APIs via oauth_api.fal.
+
+   This scripts writes an output file called "token.oauth" that is then used
+   by the other scripts as the input file. You can change the name after it''s
+   written, or add it on the command line.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 25 Dec 2010 16:32:16 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from web.oauth in oauth
+import from curl
+
+if args.len() < 3
+   > "Usage oauth_request.fal <Customer id> <Customer secret> <address> [output]"
+   > '
+   
+   This test connects to the required address and asks for a request
+   token. After the token is obtained, it must be fed in some Web-API for
+   authentication (i.e. inputed directly in a browser). Once authenticated,
+   you can use oauth_access.fal to exchange the request token with an
+   access token, that can finally be used to call OAuth APIs via oauth_api.fal.
+
+   This scripts writes an output file called "token.oauth" that is then used
+   by the other scripts as the input file. You can change the name after it''s
+   written, or add it on the command line.
+   '
+   return
+end
+
+try
+
+   > "Asking for request token:"
+   r = oauth.Client( args[0], args[1] )
+   //r.mode = oauth.Via.GET
+   //r.use_header = oauth.UseHeader.FULL
+   
+   tok = r.getToken( args[2] )
+
+   outfile_name = args.len() >= 4 ? args[3] : "token.oauth"
+
+   > "Token received, writing to ", outfile_name
+
+   of = OutputStream( outfile_name )
+   of.writeText( args[0] + "\n" )
+   of.writeText( args[1] + "\n" )
+   of.writeText( tok.token + "\n" )
+   of.writeText( tok.secret + "\n" )
+   of.close()
+
+   > "Success"
+   > "Token: ", tok.token
+   > "Done"
+   
+catch IoError in err
+   > "I/O Error while reading or writing files."
+   > err
+
+catch curl.CurlError in err
+   > "Network error while contacting the remote server."
+   > err
+
+catch oauth.ProtoError in err
+   > "OAuth protocol error."
+   > err
+end

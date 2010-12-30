@@ -107,7 +107,7 @@ FALCON_FUNC  Object_apply( ::Falcon::VMachine *vm )
    else
    {
       ItemArray& arr = i_dict->asArray()->items();
-      for( int i = 0; i < arr.length() ; ++i )
+      for( uint32 i = 0; i < arr.length() ; ++i )
       {
          const Item& item = arr[i];
          if ( item.isFutureBind() )

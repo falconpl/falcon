@@ -31,7 +31,7 @@
 
 
 /*#
-   @beginmodule feather_json
+   @beginmodule feathers.json
 */
 
 namespace Falcon {

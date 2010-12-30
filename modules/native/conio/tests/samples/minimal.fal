@@ -1,6 +1,0 @@
-load conio
-
-initscr()
-> "Init done; press enter to terminate"
-input()
-closescr()

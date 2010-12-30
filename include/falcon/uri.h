@@ -231,6 +231,9 @@ public:
    /** Character is a subdelimiter under RFC4986 */
    inline static bool isSubDelim( uint32 chr );
 
+   /** Unreserved characters under RFC3986 */
+   inline static bool isUnreserved( uint32 chr );
+
    /** Normalzies the URI sequence.
       Transforms ranges of ALPHA
       (%41-%5A and %61-%7A), DIGIT (%30-%39), hyphen (%2D), period (%2E),
@@ -422,27 +425,35 @@ public:
 
 inline bool URI::isResDelim( uint32 chr )
 {
-   return isGenDelim( chr ) | isSubDelim( chr );
+   return isGenDelim( chr ) || isSubDelim( chr );
 }
 
 inline bool URI::isMainDelim( uint32 chr )
 {
-   return (chr == ':') | (chr == '?') | (chr == '#') | (chr == '@');
+   return (chr == ':') || (chr == '?') || (chr == '#') || (chr == '@');
 }
 
 inline bool URI::isGenDelim( uint32 chr )
 {
-   return (chr == ':') | (chr == '/') | (chr == '?') |
-          (chr == '#') | (chr == '[') | (chr == ']') |
+   return (chr == ':') || (chr == '/') || (chr == '?') ||
+          (chr == '#') || (chr == '[') || (chr == ']') ||
           (chr == '@');
 }
 
 inline bool URI::isSubDelim( uint32 chr )
 {
-   return (chr == '!')  | (chr == '$') | (chr == '&') |
-          (chr == '\'') | (chr == '(') | (chr == ')') |
-          (chr == '*')  | (chr == '+') | (chr == ',') |
-          (chr == ';')  | (chr == '=');
+   return (chr == '!')  || (chr == '$') || (chr == '&') ||
+          (chr == '\'') || (chr == '(') || (chr == ')') ||
+          (chr == '*')  || (chr == '+') | (chr == ',') ||
+          (chr == ';')  || (chr == '=');
+}
+
+inline bool URI::isUnreserved( uint32 chr )
+{
+   return (chr == '-')  || (chr == '_') || (chr == '.') || (chr == '~') ||
+          (chr >= 'a' && chr <= 'z') ||
+          (chr >= 'A' && chr <= 'Z') ||
+          (chr >= '0' && chr <= '9');
 }
 
 } // Falcon namespace

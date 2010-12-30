@@ -23,6 +23,26 @@ macro( FalconMakeBinding module lib desc )
 
 endmacro()
 
+macro( FalconFindGTK2 )
+    if ( WIN32 )
+        find_file( GTK_BUNDLE_DIR
+            NAMES gtk gtk2 GTK GTK2
+            HINTS c:/ ENV GTK_BUNDLE_DIR )
+        if ( GTK_BUNDLE_DIR STREQUAL GTK_BUNDLE_DIR-NOTFOUND )
+            set( _gtk OFF )
+        else()
+            set( _gtk ON )
+        endif()
+    else()
+        find_package( GTK2 )
+        if ( GTK2_FOUND )
+            set( _gtk ON )
+        else()
+            set( _gtk OFF )
+        endif()
+    endif()
+endmacro()
+
 #########################################################
 
 
@@ -35,7 +55,6 @@ OPTION( FALCON_BUILD_MONGODB "Install MongoDB module" ON )
 
 # Bindings -- native modules requiring external libraries.
 FalconMakeBinding( CURL CURL "Install CURL binding" )
-FalconMakeBinding( GTK GTK2 "Install GTK binding" )
 FalconMakeBinding( SDL SDL "Install SDL  binding" )
 
 
@@ -51,7 +70,7 @@ if( FALCON_NATMODS_AUTO )
       set( _dbus ON )
    endif()
 
-   #### Check PDF (LibHARU)
+   #### Check HPDF (LibHARU)
    find_path( LibHaru_INCLUE_DIR hpdf.h )
    if ( LibHaru_INCLUE_DIR )
       set( _pdf ON )
@@ -63,16 +82,21 @@ if( FALCON_NATMODS_AUTO )
       set( _gd2 ON )
    endif()
 
+   ### Check GTK2
+   FalconFindGTK2()
+
 else()
   set( _dbus OFF )
-  set( _pdf OFF )
   set( _gd2 OFF )
+  set( _gtk OFF )
+  set( _pdf OFF )
 endif()
 
 # Bindings -- Requiring more sophisticated checks
 option( FALCON_BUILD_DBUS "Install DBUS binding"  ${_dbus})
 option( FALCON_BUILD_GD2 "Install GD library binding" ${_gd2})
-option( FALCON_BUILD_PDF "Install libharu (pdf)  binding" ${_pdf})
+option( FALCON_BUILD_GTK "Install GTK2 module" ${_gtk} )
+option( FALCON_BUILD_PDF "Install libharu (hpdf)  binding" ${_pdf})
 
 #########################################################
 # Inclusion statements
@@ -107,7 +131,7 @@ if ( FALCON_BUILD_MONGODB )
 endif()
 
 if ( FALCON_BUILD_PDF )
-    add_subdirectory( pdf )
+    add_subdirectory( hpdf )
 endif()
 
 if ( FALCON_BUILD_SDL )

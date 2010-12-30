@@ -741,7 +741,7 @@ FALCON_FUNC Window::has_toplevel_focus( VMARG )
 
 /*#
     @method list_toplevels GtkWindow
-    @param Returns a list of all existing toplevel windows.
+    @brief Returns a list of all existing toplevel windows.
     @return An array of GtkWindow
  */
 FALCON_FUNC Window::list_toplevels( VMARG )
@@ -1789,7 +1789,7 @@ FALCON_FUNC Window::get_role( VMARG )
 /*#
     @method get_size GtkWindow
     @brief Obtains the current size of window.
-    @brief an array [ width, height ]
+    @return an array [ width, height ]
 
     If window is not onscreen, it returns the size GTK+ will suggest to the window
     manager for the initial window size (but this is not reliably the same as the size
@@ -2043,7 +2043,7 @@ FALCON_FUNC Window::parse_geometry( VMARG )
 
 /*#
     @method reshow_initial_size GtkWindow
-    @breif Hides window, then reshows it, resetting the default size and position of the window.
+    @brief Hides window, then reshows it, resetting the default size and position of the window.
 
     Used by GUI builders only.
  */

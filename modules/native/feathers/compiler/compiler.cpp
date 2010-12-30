@@ -22,8 +22,9 @@
 */
 
 /*#
-   @module compiler The Reflexive Compiler Module
-
+   @module feathers.compiler Reflexive compiler
+   @brief Module implementing a Falcon compiler-in-a-box
+   
    Falcon provides a reflexive compiler and module loader that allows scripts to
    load other falcon sources, pre-compiled modules or binary modules.
    The reflexive compiler is actually an interface to the internal compilation and
@@ -163,7 +164,6 @@
    Parameter is: Called internally from self.
    @endcode
 
-   @beginmodule feathers_compiler
 */
 
 #include <falcon/module.h>

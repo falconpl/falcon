@@ -29,8 +29,7 @@ s
 #include <netinet/in.h>     /* in_addr structure */
 #include <netdb.h>
 #else
-//#pragma comment(lib, "wininet.lib")
-
+// #pragma comment(lib, "wininet.lib")
 #endif
 
 #include <falcon/wopi/request.h>
@@ -166,9 +165,9 @@ void FalhttpdClient::serveRequest(
    m_log->log( LOGLEVEL_DEBUG, "Remapping file "+ sFile );
    // Time to re-map the file
    if ( ! m_options.remap( sFile ) )
-   {      
+   {
       m_log->log( LOGLEVEL_WARN, "Not found file "+ sFile );
-      replyError( 404 );  
+      replyError( 404 );
    }
    else
    {

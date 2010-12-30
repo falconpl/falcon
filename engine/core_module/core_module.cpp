@@ -18,12 +18,10 @@
 #include <falcon/eng_messages.h>
 #include <falcon/rampmode.h>
 
-/*#
-   @beginmodule core
-*/
 
 /*#
-@module core The core module
+   @module core The core module
+   @after main
 
    The core module interacts with the virtual machine, to the point that, at times,
    the virtual machine itself refers to it. For example, while the exceptions can be of
@@ -55,6 +53,10 @@
    used when operators cannot possibly be employed, or when the limited functionalities
    of the operators are not enough.
 
+*/
+
+/*#
+   @beginmodule core
 */
 
 

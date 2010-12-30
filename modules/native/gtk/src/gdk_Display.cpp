@@ -4,7 +4,7 @@
 
 #include "gdk_Display.hpp"
 
-//#include "gdk_Device.hpp"
+// #include "gdk_Device.hpp"
 #include "gdk_Screen.hpp"
 
 /*#
@@ -95,7 +95,6 @@ Falcon::CoreObject* Display::factory( const Falcon::CoreClass* gen, void* bmap, 
     @class GdkDisplay
     @brief An opaque structure representing an offscreen drawable of depth 1.
     @param display_name the name of the display to open
-    @throw Todo if display could not be openend
 
     GdkDisplay objects purpose are two fold:
 

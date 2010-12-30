@@ -45,15 +45,17 @@
 #include "hash_ext.inl"
 
 /*#
-    @module feather_hash hash
+    @module feathers.hash Hashing algorighms
     @brief Various hash and checksum functions
 
     This module provides a selection of the most widely used checksum/hash algorithms:
 
     CRC32, Adler32, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512, MD2, MD4, MD5, Whirlpool, Tiger,
     RIPEMD128, RIPEMD160, RIPEMD256, RIPEMD320
+*/
 
-    @beginmodule feather_hash
+/*#
+    @beginmodule feathers.hash
 */
 
 /*#

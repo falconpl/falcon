@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 62a
+* Category: process
+* Subcategory:
+* Short: ProcessEnums is tested to list faltest itself
+* Description:
+*
+* [/Description]
+*
+****************************************************************************/
+
+load process
+
+processIterator = ProcessEnum()
+
+found = false
+while processIterator.next()
+  name = processIterator.name
+  pid = processIterator.pid
+  parentPid = processIterator.parentPid
+  cmdLine = processIterator.cmdLine
+
+  if name.startsWith("faltest"): foundName = true
+  if "faltest" in cmdLine: foundCmd = true
+end
+
+if not (foundName and foundCmd): failure("ProcessEnum didn't enlist faltest itself")
+
+success()

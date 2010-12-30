@@ -22,9 +22,16 @@
 // Instantiate the driver service
 Falcon::DBIServiceOracle theOracleService;
 
-/*#
-   @module oracle Oracle driver module
+/*--# << turn on when active
+
+   @module dbi.oracle Oracle driver module
    @brief DBI extension supporting Oracle
+
+
+   Directly importable as @b dbi.oracle, it is usually loaded through
+   the @a dbi module.
+
+
 */
 
 // the main module

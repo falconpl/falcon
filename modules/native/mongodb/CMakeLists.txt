@@ -47,7 +47,11 @@ add_dependencies( ${FALCON_MODULE} mongoc )
 ##
 #   Linking
 #
-target_link_libraries( ${FALCON_MODULE} falcon_engine mongoc )
+if ( WIN32 )
+    target_link_libraries( ${FALCON_MODULE} falcon_engine mongoc wsock32 )
+else()
+    target_link_libraries( ${FALCON_MODULE} falcon_engine mongoc )
+endif()
 
 ##
 #   Install

@@ -85,7 +85,7 @@ class Renderer( frame )
 
       //preprocess standouts
       //self.preprocess( context.standouts )
-      
+
       // and return the content
       content = self.rcont( context.topNode )
 
@@ -188,7 +188,7 @@ class Renderer( frame )
       self.blevel = level
       return prefix + header
    end
-   
+
    function go_to_level( l )
       prefix = ""
       while self.blevel+1 < l
@@ -231,7 +231,7 @@ class Renderer( frame )
 
    function _render_link( node )
       i = bless(node.infos)
-      
+
       link = "<ulink url=\"" + strEscape(i.name) + "\">" +
              Renderer.sgmlEscape(i.text ? i.text : i.name) + "</ulink>"
       return link
@@ -272,7 +272,7 @@ class Renderer( frame )
          gt = ">"[*0]
          qt = "\""[*0]
       end
-      
+
       i = 0
       l = content.len()
       res = strBuffer( l )
@@ -302,7 +302,7 @@ class Renderer( frame )
          end
          ++i
       end
-      
+
       return res + content[olds:]
       */
       return content.replace( "&", "&amp;").replace( "<", "&lt;" ).replace( ">", "&gt;" ).replace("\"", "&quot;" )
@@ -321,7 +321,6 @@ end
    @optparam copyyear Year of copyright
    @optparam copyholder Holder of copyright
 
-   @todo Author fields broken up
 */
 
 class BookFrame( encoding, name, title, author, copyyear, copyholder )
@@ -361,7 +360,7 @@ class BookFrame( encoding, name, title, author, copyyear, copyholder )
 
    function openSection( level, id )
       ids = id ? " id=\"" + strEscape(id) +"\"" : ""
-      if level == 0 
+      if level == 0
          return @"<chapter$(ids)>\n"
       else
          return @"<sect$(level)$(ids)>\n"
@@ -385,8 +384,6 @@ end
    @optparam author The author
    @optparam copyyear Year of copyright
    @optparam copyholder Holder of copyright
-
-   @todo Author fields broken up
 */
 
 class Book5Frame( encoding, name, title, author, copyyear, copyholder )

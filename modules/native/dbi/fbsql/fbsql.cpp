@@ -24,8 +24,12 @@
 Falcon::DBIServiceFB theFirebirdService;
 
 /*#
-   @module mysql MySQL driver module
-   @brief DBI extension supporting MySQL
+   @module dbi.fbsql Firebird Database driver module
+   @brief DBI extension supporting Firebird
+
+
+   Directly importable as @b dbi.fbsql, it is usually loaded through
+   the @a dbi module.
 */
 
 // the main module

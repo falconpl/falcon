@@ -22,69 +22,124 @@
 
 namespace Falcon
 {
-    // FIXME Oracle doesn't have an "ORACLE" structure like this...
-    class ORACLEHandle : public DBIRefCounter<Statement*> {
-        public:
-            ORACLEHandle( Statement* o );
-            DBIRefCounter<Statement*>( o )
-            {}
+    class ORACLEHandle;
 
-        virtual ~ORACLEHandle()
-        {
-            // FIXME 
-        }
+
+    class ORACLEStmtHandle: public DBIRefCounter<oracle::occi::Statement*> {
+        public:
+            ORACLEStmtHandle( oracle::occi::Statement* o ):
+                DBIRefCounter<oracle::occi::Statement*>( o )
+        {}
+            
+            virtual ~ORACLEStmtHandle()
+            {
+                //mysql_stmt_close( handle() ); FIXME
+            }
     };
 
+
+    class ODBIInBind: public DBIInBind
+    {
+        
+        public:
+            ODBIInBind( oracle::occi::Statement * stmt );
+            
+            virtual ~ODBIInBind();
+            
+            virtual void onFirstBinding( int size );
+            virtual void onItemChanged( int num );
+            
+            //MYSQL_BIND* mybindings() const { return m_mybind; } FIXME
+            
+        private:
+            //MYSQL_BIND* m_mybind;
+            oracle::occi::Statement* o_stmt;
+    };
+
+
+    class ODBIOutBind: public DBIOutBind
+    {
+        public:
+            ODBIOutBind():
+                //bIsNull( false ),
+                nLength( 0 ) 
+        {}
+            
+            ~ODBIOutBind() {}
+            
+            //o_bool bIsNull;
+            unsigned long nLength;
+    };
+
+
+    class DBIHandleOracle;
+
+
+    class DBIRecordsetOracle : public DBIRecordset
+    {
+        protected:
+            int o_row;
+            int o_rowCount;
+            int o_columnCount;
+            
+            bool m_bCanSeek;
+            
+            ORACLEHandle *o_pConn;
+            
+        public:
+            virtual ~DBIRecordsetOracle();
+            
+            virtual int64 getRowIndex();
+            virtual int64 getRowCount();
+            virtual int getColumnCount();
+            virtual bool getColumnName( int nCol, String& name );
+            virtual void close();
+    };
+
+    
     class DBIHandleOracle : public DBIHandle
     {
         protected:
-            Connection *o_conn;
-            Environment *o_env;
-            ORACLEHandle *o_pConn;
-
+            oracle::occi::Connection *o_conn;
+            oracle::occi::Environment *o_env;
+            DBISettingParams o_settings;
+            
         public:
             DBIHandleOracle();
-            DBIHandleOracle( Connection *conn );
+            DBIHandleOracle( oracle::occi::Connection *conn );
             virtual ~DBIHandleOracle();
-
-            virtual void close();
-            virtual void terminateEnv();
             
-            virtual DBIRecordset *query( const String &sql, ItemArray* params );
-            virtual DBIStatement* prepare( const String &query );
-            //virtual int64 getLastInsertedId( const String& name = "" ); FIXME
+            //virtual void options( const String& params );     FIXME
+            //virtual const DBISettingParams* options() const;
+            virtual void close();
+            
+            //virtual DBIRecordset *query( const String &sql, ItemArray* params ); FIXME
+            //virtual DBIStatement* prepare( const String &query );
             
             virtual void commit();
             virtual void rollback();
             
-            virtual void selectLimited( const String& query,
-                    int64 nBegin, int64 nCount, String& result );
-            
-            ORACLEHandle *getConn() { return o_pConn; }
-            ORACLEHandle *getEnv() { return o_env; }
+            //virtual void selectLimited( const String& query, int64 nBegin, int64 nCount, String& result ); FIXME
     };
 
-    class DBIHandleOracle;
 
     class DBIStatementOracle : public DBIStatement
     {
         protected:
-            Statment* o_statement;
-            OracleHandle* o_pConn;
-            //OracleStmtHandle *o_pStmt; FIXME
-            //ODBIInBind* o_inBind;      FIXME
+            oracle::occi::Statement* o_statement;
+            ODBIInBind* o_inBind;      
             bool o_bBound;
             
         public:
-            DBIStatementOracle( DBIHandleOracle *dbh, Statement* stmt );
+            DBIStatementOracle( DBIHandleOracle *dbh, oracle::occi::Statement* stmt );
             virtual ~DBIStatementOracle();
             
             virtual DBIRecordset* execute( ItemArray* params );
             virtual void close();
             
-            DBIHandleOracle* getOracle() const { return static_cast<DBIHandleOracle*>( o_dbh ); }
-            Statement* o_statement() const { return o_statement; }
+            oracle::occi::Statement* my_statement() const { return o_statement; }
     };
+
 
     class DBIServiceOracle : public DBIService
     {
@@ -92,8 +147,8 @@ namespace Falcon
             DBIServiceOracle() : DBIService( "DBI_oracle" ) {}
             
             virtual void init();
-            virtual void DBIHandle *connect( const String &parameters );
-            virtual void CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
+            virtual DBIHandle *connect( const String &parameters );
+            virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
     };
 }
 

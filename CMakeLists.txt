@@ -25,6 +25,7 @@
 # FALCON_BUILD_NATMODS      - Turn OFF to skip building other binary native modules.
 # FALCON_BUILD_APPS         - Turn ON to install installing Falcon applications.
 # FALCON_BUILD_FWKS         - Turn OFF to skip installing Falcon frameworks.
+# FALCON_BUILD_DOCS         - Build automatic documentation
 #
 ##  Options For Native Modules
 #
@@ -142,6 +143,20 @@ if( FALCON_BUILD_APPS )
     add_subdirectory( apps )
 else()
     message( STATUS "Not building applications" )
+endif()
+
+if( FALCON_BUILD_DOCS )
+    message( STATUS "Adding documentation to this build" )
+    add_subdirectory( docs )
+else()
+    message( STATUS "Not building documentation" )
+endif()
+
+if( FALCON_INSTALL_TESTS )
+    message( STATUS "Adding (source) tests, samples and demos to the distribution" )
+    add_subdirectory( tests )
+else()
+    message( STATUS "Not installing tests" )
 endif()
 
 # CMake generated information.  Is used by our falcon-config.cmake

@@ -18,17 +18,17 @@
 */
 
 #include <falcon/module.h>
-#include "process_mod.h"
-#include "process_ext.h"
+#include "mod/process.h"
+#include "ext/process.h"
 #include "process_st.h"
 
 #include "version.h"
 
 /*#
-   @module feather_process Process
+   @module feathers.process External process interface
    @brief Process enumeration and subprocess control.
 
-   The process module provides several functions to manage processes in the system
+   The @b process module provides several functions to manage processes in the system
    and to manage interprocess communication. Child processes can be created and
    managed via the Process class, which provides a set of streams that can be read
    and written synchronously and polled for activity.
@@ -63,7 +63,7 @@
       @endcode
 
 
-   @beginmodule feather_process
+   @beginmodule feathers.process
 */
 
 FALCON_MODULE_DECL
@@ -84,48 +84,24 @@ FALCON_MODULE_DECL
    //============================================================
    // Minimal system api
    //
-   self->addExtFunc( "system", Falcon::Ext::falcon_system )->
+   self->addExtFunc( "system", Falcon::Ext::process_system )->
       addParam("command")->addParam("background");
-   self->addExtFunc( "systemCall", Falcon::Ext::falcon_systemCall )->
+   self->addExtFunc( "systemCall", Falcon::Ext::process_systemCall )->
       addParam("command")->addParam("background");
-   self->addExtFunc( "pread", Falcon::Ext::falcon_pread )->
+   self->addExtFunc( "pread", Falcon::Ext::process_pread )->
       addParam("command")->addParam("background");
-   self->addExtFunc( "exec", Falcon::Ext::falcon_exec )->
+   self->addExtFunc( "exec", Falcon::Ext::process_exec )->
       addParam("command");
-   self->addExtFunc( "processId", Falcon::Ext::falcon_processId );
-   self->addExtFunc( "processKill", Falcon::Ext::falcon_processKill )->
+   self->addExtFunc( "processId", Falcon::Ext::process_processId );
+   self->addExtFunc( "processKill", Falcon::Ext::process_processKill )->
       addParam("pid")->addParam("severe");
 
-   //============================================================
-   // Process Enumerator class
-   //
-   Falcon::Symbol *pe_class = self->addClass( "ProcessEnum", Falcon::Ext::ProcessEnum_init );
-   self->addClassProperty( pe_class, "name" );
-   self->addClassProperty( pe_class, "pid" );
-   self->addClassProperty( pe_class, "parentPid" );
-   self->addClassProperty( pe_class, "cmdLine" );
 
-   self->addClassMethod( pe_class, "next", Falcon::Ext::ProcessEnum_next );
-   self->addClassMethod( pe_class, "close", Falcon::Ext::ProcessEnum_close );
+   Falcon::Ext::ProcessEnum::registerExtensions(self);
+   Falcon::Ext::Process::registerExtensions(self);
+   Falcon::Ext::ProcessError::registerExtensions(self);
 
-   //============================================================
-   // Process class
-   Falcon::Symbol *proc_class = self->addClass( "Process", Falcon::Ext::Process_init );
-   self->addClassMethod( proc_class, "wait", Falcon::Ext::Process_wait );
-   self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process_terminate ).asSymbol()->
-      addParam("severe");
-   self->addClassMethod( proc_class, "value", Falcon::Ext::Process_value ).asSymbol()->
-      addParam("wait");
-   self->addClassMethod( proc_class, "getInput", Falcon::Ext::Process_getInput );
-   self->addClassMethod( proc_class, "getOutput", Falcon::Ext::Process_getOutput );
-   self->addClassMethod( proc_class, "getAux", Falcon::Ext::Process_getAux );
 
-   //============================================================
-   // ProcessError class
-   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *procerr_cls = self->addClass( "ProcessError", Falcon::Ext::ProcessError_init );
-   procerr_cls->setWKS( true );
-   procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    //============================================================
    // Add the process attribute constants

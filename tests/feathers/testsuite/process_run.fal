@@ -1,0 +1,136 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60a
+* Category: process
+* Subcategory:
+* Short: Makes a simple directory listing in every possible way.
+* Description:
+*
+* [/Description]
+*
+****************************************************************************/
+
+load process
+
+if vmSystemType() == "WIN"
+  command_str = "cmd /C dir"
+  command_array = ["cmd", "/C", "dir"]
+else // POSIX
+  command_str = "sh --version"
+  command_array = ["sh", "--version"]
+end
+
+
+/* 
+    system
+ */
+try
+  > "system(command_str)"
+  system(command_str)
+catch in e
+  > e
+  failure( "system failed on command string" )
+end
+//
+try
+  > "system(command_str)"
+  system(command_array)
+catch in e
+  > e
+  failure( "system failed on command array" )
+end
+
+
+/* 
+    systemCall
+ */
+try
+  > "systemCall(command_str)"
+  systemCall(command_str)
+catch in e
+  > e
+  failure( "systemCall failed on command string" )
+end
+//
+try
+  systemCall(command_array)
+catch in e
+  > e
+  failure( "systemCall failed on command array" )
+end
+
+/* 
+    pread
+ */
+try
+  > "pread(command_str)"
+  output = pread(command_str)
+  if output == "": raise "not output"
+  > output
+catch in e
+  > e
+  failure( "pread failed on command string" )
+end
+//
+try
+  > "pread(command_array)"
+  output = pread(command_array)
+  > output
+catch in e
+  > e
+  failure( "pread failed on command array" )
+end
+
+/*
+    Process
+    TODO: all combinations of FLAGS
+ */
+try
+  > "Process(command_str)"
+  process = Process(command_str)
+  pout = process.getOutput()
+
+  while ( ret = process.value() )
+    if pout.readAvailable( 0.1 ): > pout.grab(1024)
+  end
+  > "ret=", ret
+  if ret: raise "fail"
+catch in e
+  > e
+  failure( "Process failed on command string" )
+end
+//
+try
+  > "Process(command_array)"
+  process = Process(command_array)
+  pout = process.getOutput()
+
+  while ( ret = process.value() )
+    if pout.readAvailable( 0.1 ): > pout.grab(1024)
+  end
+  > "ret=", ret
+  if ret: raise "fail"
+catch in e
+  > e
+  failure( "Process failed on command string" )
+end
+
+// /* 
+//    exec
+//  */
+// try
+//   exec(command_str, true)
+// catch in e
+//   > e
+//   failure( "exec failed on command string" )
+// end
+
+// try
+//   exec(command_array, true)
+// catch in e
+//   > e
+//   failure( "exec failed on command array" )
+// end
+
+success()

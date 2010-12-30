@@ -96,6 +96,10 @@ typedef void(*EnvStringCallback)( const String& key, const String& value, void* 
 */
 FALCON_DYN_SYM void _enumerateEnvironment( EnvStringCallback cb, void* cbData );
 
+/** Returns process ID of the current process. */
+FALCON_DYN_SYM int64 _getpid();
+
+
 FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 
 #ifdef FALCON_SYSTEM_WIN
