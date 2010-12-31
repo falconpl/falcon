@@ -30,7 +30,10 @@ class Context()
    currentNode = self.topNode
 
    listDepth = 0
-
+	
+   /*# Adds a node in the context stack.
+	  @param lnode Node to be added.
+   */
    function pushNode( lnode )
       self.currentNode.add( lnode )
       self.nodeStack.add( lnode )
@@ -41,6 +44,9 @@ class Context()
       end
    end
 
+   /*# Remove last node in the stack.
+	  @return The topmost stack node.
+   */
    function popNode()
       ns = self.nodeStack
       lnode = ns[-1]
@@ -52,6 +58,11 @@ class Context()
       return lnode
    end
 
+   /*# Adds data to the current node.
+	  @param Data the data to be added.
+	  
+	  The data may be either a string or a full node-headed structure.
+   */
    function add( data )
       self.currentNode.add( data )
       if data provides standout and data.standout
@@ -59,6 +70,13 @@ class Context()
       end
    end
 
+   /*# Creates a list and sets the list depth.
+	  @param lvl Current level of the list.
+	  @param ltype Type of list.
+	  
+	  Can make a list deeper or flatter. Setting level to 0 is the same as closing the list.
+	  The type of the list may be "ol" or "ul".
+   */
    function setListDepth( lvl, ltype )
       if lvl == self.listDepth
          self.popNode()

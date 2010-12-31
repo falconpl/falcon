@@ -202,6 +202,7 @@ FALCON_FUNC MongoDBConnection_disconnect( VMachine* vm )
 
 /*#
     @method isConnected MongoDB
+	@brief Checks if the DB is connected.
     @return true if connected
  */
 FALCON_FUNC MongoDBConnection_isConnected( VMachine* vm )
@@ -214,10 +215,12 @@ FALCON_FUNC MongoDBConnection_isConnected( VMachine* vm )
 
 /*#
     @method authenticate MongoDB
-    @param db
-    @param user
-    @param pass
+	@brief Authenticates a user on the DB.
+	@param db Database
+    @param user User ID
+    @param pass Password
     @return true if authenticated
+	
  */
 FALCON_FUNC MongoDBConnection_authenticate( VMachine* vm )
 {
@@ -246,9 +249,10 @@ FALCON_FUNC MongoDBConnection_authenticate( VMachine* vm )
 
 /*#
     @method addUser MongoDB
-    @param db
-    @param user
-    @param pass
+	@brief Adds a user to the DB.
+    @param db Database
+    @param user User ID to be added
+    @param pass Password for the new user.
     @return true if user was added
  */
 FALCON_FUNC MongoDBConnection_addUser( VMachine* vm )
@@ -278,7 +282,8 @@ FALCON_FUNC MongoDBConnection_addUser( VMachine* vm )
 
 /*#
     @method dropDatabase MongoDB
-    @param db
+	@brief Drops the database.
+    @param db The database to be dropped
     @return true on success
  */
 FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm )
@@ -301,8 +306,9 @@ FALCON_FUNC MongoDBConnection_dropDatabase( VMachine* vm )
 
 /*#
     @method dropCollection MongoDB
-    @param db
-    @param coll
+	@brief Removes a collection from a database.
+    @param db The database
+    @param coll The collection to be dropped
     @return true on success
  */
 FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm )
@@ -328,7 +334,8 @@ FALCON_FUNC MongoDBConnection_dropCollection( VMachine* vm )
 
 /*#
     @method insert MongoDB
-    @param ns namespace
+	@brief Inserts an instance.
+    @param ns namespace 
     @param bson BSONObj instance, or an array of BSON instances
     @return true on success
  */
@@ -367,6 +374,7 @@ FALCON_FUNC MongoDBConnection_insert( VMachine* vm )
 
 /*#
     @method update MongoDB
+	@brief Updates an existing instance.
     @param ns namespace
     @param cond BSON instance (conditions)
     @param op BSON instance (operations)
@@ -407,6 +415,7 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
 
 /*#
     @method remove MongoDB
+	@brief Removes an instance.
     @param ns namespace
     @param cond BSON instance (conditions)
     @return true on success
@@ -435,6 +444,7 @@ FALCON_FUNC MongoDBConnection_remove( VMachine* vm )
 
 /*#
     @method findOne MongoDB
+	@brief Finds an instance.
     @param ns namespace
     @optparam query BSON instance
     @return BSON result or nil
@@ -482,6 +492,7 @@ FALCON_FUNC MongoDBConnection_findOne( VMachine* vm )
 
 /*#
     @method find MongoDB
+	@brief Finds instances corespoding to the given query.
     @optparam query BSON instance
     @optparam fields BSON instance
     @optparam skip default 0
@@ -528,8 +539,9 @@ FALCON_FUNC MongoDBConnection_find( VMachine* vm )
 
 /*#
     @method count MongoDB
-    @param db
-    @param coll
+	@brief Counts the entities in a collection.
+    @param db Database
+    @param coll Collection to be queried.
     @optparam query BSON instance
     @return Total count or -1 on error
  */
@@ -568,9 +580,9 @@ FALCON_FUNC MongoDBConnection_count( VMachine* vm )
 
 /*#
     @method command MongoDB
-    @param db
-    @param cmd BSON instance
     @brief Run a command on a database
+    @param db Database
+    @param cmd BSON instance
     @return BSON result or nil
  */
 FALCON_FUNC MongoDBConnection_command( VMachine* vm )
@@ -605,6 +617,7 @@ FALCON_FUNC MongoDBConnection_command( VMachine* vm )
 
 /*#
     @method createIndex MongoDB
+	@brief Creates an index for the given namespace and key.
     @param ns namespace
     @param key BSON instance
     @optparam unique (boolean) default false
@@ -678,6 +691,8 @@ FALCON_FUNC MongoOID_init( VMachine* vm )
 
 /*#
     @method toString ObjectID
+	@brief Returns a representation of the object as a string.
+	@return A string representing the object.
  */
 FALCON_FUNC MongoOID_toString( VMachine* vm )
 {
@@ -694,7 +709,7 @@ FALCON_FUNC MongoOID_toString( VMachine* vm )
 
 /*#
     @class BSON
-    @brief Create a BSON object.
+    @brief Represents a BSON object.
     @optparam param An integer (reserved space for internal buffer) or a dict to append.
 
     If no dict is given, an "empty" bson object is created.
@@ -744,8 +759,8 @@ FALCON_FUNC MongoBSON_init( VMachine* vm )
 
 /*#
     @method reset BSON
-    @optparam bytes Reserve some space for internal buffer.
     @brief Clear the BSON object, making it an "empty" one.
+    @optparam bytes Reserve some space for internal buffer.
  */
 FALCON_FUNC MongoBSON_reset( VMachine* vm )
 {
@@ -766,8 +781,8 @@ FALCON_FUNC MongoBSON_reset( VMachine* vm )
 
 /*#
     @method genOID BSON
-    @optparam name Key name (default "_id")
     @brief Generate and append an OID.
+    @optparam name Key name (default "_id")
     @return self
  */
 FALCON_FUNC MongoBSON_genOID( VMachine* vm )
@@ -797,8 +812,8 @@ FALCON_FUNC MongoBSON_genOID( VMachine* vm )
 
 /*#
     @method append BSON
-    @param dict A dict (with keys that must be strings...)
     @brief Append some data to the BSON object
+    @param dict A dict (with keys that must be strings...)
     @return self
 
     Example:
@@ -838,7 +853,8 @@ FALCON_FUNC MongoBSON_append( VMachine* vm )
 
 /*#
     @method asDict BSON
-    @brief Return a dict representing the BSON object.
+    @brief Return a dictionary representing the BSON object.
+	@return A dictionary
  */
 FALCON_FUNC MongoBSON_asDict( VMachine* vm )
 {
@@ -850,6 +866,7 @@ FALCON_FUNC MongoBSON_asDict( VMachine* vm )
 
 /*#
     @method hasKey BSON
+	@brief Checks if the collection contains the required key.
     @param key
     @return true if BSON has that key
  */
@@ -872,7 +889,8 @@ FALCON_FUNC MongoBSON_hasKey( VMachine* vm )
 
 /*#
     @method value BSON
-    @param key
+	@brief Changes the value for a given key, or inserts a new key.
+    @param key The key of which the value should be changed or inserted.
     @return value for key given (might be nil), or nil.
  */
 FALCON_FUNC MongoBSON_value( VMachine* vm )
@@ -939,6 +957,7 @@ FALCON_FUNC MongoBSONIter_init( VMachine* vm )
 /*#
     @method next BSONIter
     @brief Return true if there is more data to iterate over
+	@return True if the iterator could advance, false if it was the last element.
  */
 FALCON_FUNC MongoBSONIter_next( VMachine* vm )
 {
@@ -951,6 +970,7 @@ FALCON_FUNC MongoBSONIter_next( VMachine* vm )
 /*#
     @method key BSONIter
     @brief Get the current BSON key string
+	@return The current key.
  */
 FALCON_FUNC MongoBSONIter_key( VMachine* vm )
 {
@@ -971,6 +991,7 @@ FALCON_FUNC MongoBSONIter_key( VMachine* vm )
 /*#
     @method value BSONIter
     @brief Get the current BSON value
+	@return The current value.
  */
 FALCON_FUNC MongoBSONIter_value( VMachine* vm )
 {
@@ -1000,6 +1021,7 @@ FALCON_FUNC MongoBSONIter_reset( VMachine* vm )
     @method find BSONIter
     @param name Key name
     @brief Return true when (and set iterator position where) name is found in the BSON.
+	@return True if the key can be found, false otherwise.
 
     If false is returned, iterator is at end (and you may have to reset it).
     This method does a reset before searching.

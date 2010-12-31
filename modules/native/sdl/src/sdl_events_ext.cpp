@@ -1150,174 +1150,175 @@ FALCON_FUNC _coroutinePoll( VMachine *vm )
    
    Events are generated as broadcast message that can be received via 
    standard subscribe.
-*/
 
-/*#
-   @message sdl_Active
-   @brief Application visibility event handler.
-   @param gain 0 if the event is a loss or 1 if it is a gain.
-   @param state SDL.APPMOUSEFOCUS if mouse focus was gained
+   Here follows the list of generated events.
+  
+   @section sdl_Active Event sdl_Active
+	
+	Application visibility event handler.
+	
+	Parameters of the event:
+   - gain: 0 if the event is a loss or 1 if it is a gain.
+   - state: SDL.APPMOUSEFOCUS if mouse focus was gained
          or lost, SDL.APPINPUTFOCUS if input focus was gained or lost,
          or SDL.APPACTIVE if the application was iconified (gain=0) or
          restored (gain=1).
 
+   
+   
    See SDL_ActiveEvent description in SDL documentation.
 
    Subscribe to this message method to receive ActiveEvent notifications.
-*/
-
-/*#
-   @message sdl_KeyDown
-   @brief Keyboard key down event handler.
-   @param state SDL.PRESSED or SDL.RELEASED
-   @param scancode  Hardware specific scancode
-   @param sym  SDL virtual keysym
-   @param mod  Current key modifiers
-   @param unicode  Translated character
+   
+   @section sdl_KeyDown Event sdl_KeyDown
+   
+   Keyboard key down event handler. Parameters generated:
+   
+   - state: SDL.PRESSED or SDL.RELEASED
+   - scancode:  Hardware specific scancode
+   - sym:  SDL virtual keysym
+   - mod:  Current key modifiers
+   - unicode:  Translated character
 
    See SDL_KeyboardEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_KEYDOWN notifications.
-*/
 
-/*#
-   @message sdl_KeyUp
-   @brief Keyboard key down event handler.
-   @param state SDL.PRESSED or SDL.RELEASED
-   @param scancode  Hardware specific scancode
-   @param sym  SDL virtual keysym
-   @param mod  Current key modifiers
-   @param unicode  Translated character
+   @section sdl_KeyUp Event sdl_KeyUp
+   
+   Keyboard key up event handler. Parameters:
+   
+   - state: SDL.PRESSED or SDL.RELEASED
+   - scancode:  Hardware specific scancode
+   - sym:  SDL virtual keysym
+   - mod:  Current key modifiers
+   - unicode:  Translated character
 
    See SDL_KeyboardEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_KEYUP notifications.
-*/
 
-/*#
-   @message sdl_MouseMotion
-   @brief  Mouse motion event handler
-   @param state The current button state
-   @param x  X coordinate of the mouse
-   @param y  X coordinate of the mouse
-   @param xrel relative movement of mouse on the X axis with respect to last notification.
-   @param yrel relative movement of mouse on the X axis with respect to last notification.
+   @section sdl_MouseMotion Event sdl_MouseMotion
+   Mouse motion event handler. Parameters:
+   
+   - state: The current button state
+   - x:  X coordinate of the mouse
+   - y:  X coordinate of the mouse
+   - xrel: relative movement of mouse on the X axis with respect to last notification.
+   - yrel: relative movement of mouse on the X axis with respect to last notification.
 
    See SDL_MouseMotionEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_MOUSEMOTION notifications.
-*/
 
-/*#
-   @message sdl_MouseButtonDown
-   @brief  Mouse button event handler
-   @param state The current button state
-   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
-   @param x X coordinate of the mouse
-   @param y X coordinate of the mouse
+   @section sdl_MouseButtonDown Event sdl_MouseButtonDown
+   Mouse button event handler. Parameters:
+   - state: The current button state
+   - button: The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
+   - x: X coordinate of the mouse
+   - y: X coordinate of the mouse
 
    See SDL_MouseButtonEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_MOUSEBUTTONDOWN notifications.
-*/
-
-/*#
-   @message sdl_MouseButtonUp
-   @brief  Mouse button event handler
-   @param state The current button state
-   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
-   @param x X coordinate of the mouse
-   @param y X coordinate of the mouse
+   
+   @section sdl_MouseButtonUp Event sdl_MouseButtonUp
+   
+   Mouse button event handler. Generated parameters:
+   
+   - state: The current button state
+   - button: The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
+   - x: X coordinate of the mouse
+   - y: X coordinate of the mouse
 
    See SDL_MouseButtonEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_MOUSEBUTTONUP notifications.
-*/
+   
+   @section sdl_JoyAxisMotion Event sdl_JoyAxisMotion
 
-/*#
-   @message sdl_JoyAxisMotion
-   @brief  Joystick axis motion event handler
-   @param which  Joystick device index
-   @param axis  Joystick axis index
-   @param value  Axis value (range: -32768 to 32767)
+   Joystick axis motion event handler. Parameters:
+   
+   - which: Joystick device index
+   - axis:  Joystick axis index
+   - value:  Axis value (range: -32768 to 32767)
 
    See SDL_JoyAxisEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_JOYAXISMOTION notifications.
-*/
-
-/*#
-   @message sdl_JoyButtonDown
-   @brief  Joystick button event handler
-   @param which  Joystick device index
-   @param button  Joystick button index
-   @param state  SDL_PRESSED or SDL_RELEASED
+   
+   @section sdl_JoyButtonDown Event sdl_JoyButtonDown
+   
+   Joystick button event handler. Parameters
+   
+   - which:  Joystick device index
+   - button:  Joystick button index
+   - state:  SDL_PRESSED or SDL_RELEASED
 
    See SDL_JoyButtonEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_JOYBUTTONDOWN notifications.
-*/
-
-/*#
-   @message sdl_JoyButtonUp
-   @brief  Joystick button event handler
-   @param which  Joystick device index
-   @param button  Joystick button index
-   @param state  SDL_PRESSED or SDL_RELEASED
+   
+   @section sdl_JoyButtonUp Event sdl_JoyButtonUp
+   
+   Joystick button event handler
+   
+   - which:  Joystick device index
+   - button:  Joystick button index
+   - state:  SDL_PRESSED or SDL_RELEASED
 
    See SDL_JoyButtonEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_JOYBUTTONUP notifications.
-*/
 
-/*#
-   @message sdl_JoyHatMotion
-   @brief Joystick hat position change event handler
-   @param which  Joystick device index
-   @param hat  Joystick hat index
-   @param value  hat position.
+   @section sdl_JoyHatMotion Event sdl_JoyHatMotion
+   
+   Joystick hat position change event handler. Parameters:
+   
+   - which:  Joystick device index
+   - hat:  Joystick hat index
+   - value:  hat position.
 
    See SDL_JoyHatEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_JOYHATMOTION notifications.
-*/
 
-/*#
-   @message sdl_JoyBallMotion
-   @brief Joystick trackball motion event handler
-   @param which  Joystick device index
-   @param ball  Joystick trackball index
-   @param xrel  The relative motion in the X direction
-   @param yrel  The relative motion in the Y direction
+   @section sdl_JoyBallMotion Event sdl_JoyBallMotion
+   
+   Joystick trackball motion event handler. Parameters:
+   
+   - which:  Joystick device index
+   - ball:  Joystick trackball index
+   - xrel:  The relative motion in the X direction
+   - yrel:  The relative motion in the Y direction
 
    See SDL_JoyBallEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_JOYBALLMOTION notifications.
-*/
 
-/*#
-   @message sdl_Resize
-   @brief Window resize event handler
-   @param w  New width of the window
-   @param h  New height of the window
+   @section sdl_Resize Event sdl_Resize
+   Window resize event handler. Parameters:
+   
+   - w:  New width of the window
+   - h:  New height of the window
 
    See SDL_ResizeEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_VIDEORESIZE notifications.
-*/
 
-/*#
-   @message sdl_Expose
-   @brief Window exposition (need redraw) notification.
+   @section sdl_Expose Event sdl_Expose
+   
+   Window exposition (need redraw) notification. This event doesn't generate any
+   parameter.
 
    See SDL_ExposeEvent description in SDL documentation.
 
    Subscribe to this message method to receive SDL_VIDEOEXPOSE notifications.
-*/
 
-/*#
-   @message onQuit SDLEventHandler
-   @brief Quit requested event.
+   
+   @section sdl_Quit Event sdl_Quit
+   
+   Quit requested event.
 
    See SDL_Quit description in SDL documentation.
    

@@ -111,7 +111,8 @@ class Token( token, secret )
 end
 
 /*# Interface to remote OAuth authentication process server.
-   @param consumer_key The consumer key identifying the requester on the remote OAuth server.
+   @param cust_id The consumer key identifying the requester on the remote OAuth server.
+   @param cust_secret The consumer secret used to sign OAuth requests.
    @optparam mode One of the @a Via methods (Defaults to POST).
 
    This class acts as an authentication client connecting with a

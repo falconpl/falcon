@@ -959,6 +959,10 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
 /*#
    @class SDLRect
    @brief Storage for rectangular coordinates.
+   @optparam x X cooordinate of this rectangle
+   @optparam y Y cooordinate of this rectangle
+   @optparam w width of this rectangle
+   @optparam h height of this rectangle
 
    This class stores rectangular coordinates.
    Actually, this class is just a "contract" or "interface",
@@ -969,17 +973,6 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
    @prop y the Y coordinate (top position).
    @prop w width of the rectangle.
    @prop h height of the rectangle.
-*/
-
-/*#
-   @init SDLRect
-   @brief Initializes the rectangle.
-   @optparam x X cooordinate of this rectangle
-   @optparam y Y cooordinate of this rectangle
-   @optparam w width of this rectangle
-   @optparam h height of this rectangle
-
-   Fills the rectangle with initial values.
 */
 
 FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
@@ -1013,14 +1006,6 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
 // COLOR class
 //
 
-/*#
-   @init SDLColor
-   @brief Set initial values for this color.
-   @param r Red value
-   @param g Green value
-   @param b Blue value
-
-*/
 FALCON_FUNC SDLColor_init( VMachine *vm )
 {
    Item *i_r, *i_g, *i_b;
@@ -1050,6 +1035,9 @@ FALCON_FUNC SDLColor_init( VMachine *vm )
 
 /*#
    @class SDLError
+   @optparam code Error code
+   @optparam desc Description for the error code
+   @optparam extra Paricular error condition
    @from Error
    @brief Class used to notify SDL exceptions.
 */

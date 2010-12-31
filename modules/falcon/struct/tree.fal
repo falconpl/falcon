@@ -29,7 +29,9 @@ class Node( content )
    //# last child of the children of this node
    lastChild = nil
 
-   //# Exchange this node with another one.
+   /*# Exchange this node with another one.
+	   @pram node The new node.
+   */
    function change( node )
       node.parent = self.parent
       node.next = self.next
@@ -47,7 +49,9 @@ class Node( content )
       end
    end
 
-   //# Inserts the parameter before this node
+   /*# Inserts the parameter before this node
+	   @pram node The node to be inserted.
+   */
    function insertBefore( node )
       if self.prev
          self.prev.next = node
@@ -65,7 +69,9 @@ class Node( content )
       self.prev = node
    end
 
-   //# Inserts the parameter after this node
+   /*# Inserts the parameter after this node
+	   @pram node The node to be inserted.
+   */
    function insertAfter( node )
       if self.next
          self.next.prev = node
@@ -116,7 +122,9 @@ class Node( content )
       return self.next
    end
 
-   //# Adds a child after the already present children.
+   /*# Adds a child after the already present children.
+	  @param The child to be added.
+   */
    function appendChild( child )
       child.prev = self.lastChild
 
@@ -130,7 +138,9 @@ class Node( content )
       child.parent = self
    end
 
-   //# Adds a child in front of the children
+   /*# Adds a child in front of the children
+      @param The child to be added.
+   */
    function prependChild( child )
       child.next = self.firstChild
       if self.firstChild
@@ -148,7 +158,7 @@ class Node( content )
    /*# Recursively traverse the node tree
       @param f A callable that will be called with each node.
 
-      The @f function is called frist on this node, and then
+      The @b f function is called frist on this node, and then
       the traverse method of each children is called. This makes
       the structure descend-first-then-call structure.
    */

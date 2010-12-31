@@ -50,7 +50,8 @@ end
 class Function(dry)
    //# Name of the fucntion -- defaults to the class.
    name = nil
-
+   
+   //# @ignore
    dry = dry
    
    //# Compress the reply
@@ -71,12 +72,28 @@ class Function(dry)
    parameters = nil
    
    /*# Generats a dictionary that can be sent as an error report.
-   
+	 @param id The error ID
+	 @optparam detail Detail to be added to the error description.
+	 
+	 Returns a dictionary containing the following entries:
+	 - error: The @b id passed as parameter.
+	 - edesc: Error descrption, taken from the @a errorMap property, if the @b id
+	          error code is associated to a description. If not, this element is
+			  not inserted in the returned dictionary.
+     - detail: If the @b detail parameter is specified, this key is added to the
+	           dictionary and the @b detail value is added here.
+			   
+     The following errors are added to all the Ajax subclasses, and are always
+	 available:
+	 
+	 - -1 = Uncaught exception
+     - -2 = Missing mandatory parameters
+     - -3 = run() method not reimplmented
    */
-   function error( id, content )
+   function error( id, detail )
       edict = ["error" => id]
-      if content
-         edict += ["detail" => content ]
+      if detail
+         edict += ["detail" => detail ]
       end
       if id in self.errorMap
          edict += ["edesc" => self.errorMap[id] ]
@@ -85,7 +102,7 @@ class Function(dry)
       return edict
    end
 
-
+   //# @ignore
    function setup()
       missing = []
       

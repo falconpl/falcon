@@ -325,6 +325,9 @@ FALCON_MODULE_DECL
    //
    /*#
       @class SDLColor
+	  @param r Red value
+      @param g Green value
+	  @param b Blue value
       @brief Storage for RGB values
 
       @prop r red value
