@@ -1,0 +1,282 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60a
+* Category: bufext
+* Subcategory:
+* Short: Bufext basic functionality
+* Description:
+*    Basic tests for the bufext module and all provided classes,
+*    checking for correct memory access, endianity,
+*    and ensuring correct operation of all methods.
+*    (If some tests fail due to float rounding, try compiler settings
+*    that increase floating point precision)
+* [/Description]
+**************************************************************************/
+
+load bufext
+
+GC.adjust(GC.ADJ_STRICT) // we will produce a lot of garbge
+randomSeed(8736275764) // make results consistent
+
+
+
+function EXPECT(actual, expected, str)
+    if(actual != expected)
+        failure("Expected: '" + expected + "', actual: '" + actual + "' <-- " + str)
+    end
+end
+
+function EXPECTDIFF(actual, expected, diff, str)
+    if(abs(actual - expected) > diff)
+        failure("Expected: '" + expected + "', actual: '" + actual + "' <-- " + str)
+    end
+end
+
+EXPECT(BitBuf.derivedFrom(ByteBuf), true, "BitBuf from ByteBuf")
+EXPECT(ByteBufLittleEndian.derivedFrom(ByteBuf), true, "ByteBufLittleEndian from ByteBuf")
+EXPECT(ByteBufNativeEndian.derivedFrom(ByteBuf), true, "ByteBufNativeEndian from ByteBuf")
+EXPECT(ByteBufBigEndian.derivedFrom(ByteBuf), true, "ByteBufBigEndian from ByteBuf")
+EXPECT(ByteBufReverseEndian.derivedFrom(ByteBuf), true, "ByteBufReverseEndian from ByteBuf")
+
+bb = BitBuf(3) // wrong initial size (internal array type is uint32 or uint64)
+EXPECT(bb.capacity() % 4, 0, "BitBuf capacity alignment")
+
+fa = [1,2,3]
+bb.write(fa)
+for i = 0 to len(fa) - 1
+    EXPECT(bb.r64(), fa[i], "Basic BitBuf 64 bit read/write")
+end
+
+EXPECT(BitBuf.bitsForInt(2), 2, "required bit count")
+EXPECT(BitBuf.bitsForInt(7), 3, "required bit count")
+EXPECT(BitBuf.bitsForInt(8), 4, "required bit count")
+EXPECT(BitBuf.bitsForInt(255), 8, "required bit count")
+EXPECT(BitBuf.bitsForInt(1023), 10, "required bit count")
+EXPECT(BitBuf.bitsForInt(1024), 11, "required bit count")
+EXPECT(BitBuf.bitsForInt(0xFFFFFFFFFFFF), 48, "required bit count")
+
+bb = ByteBuf()
+bb.w8(200, -50).w16(40000, -20000).w32(3000000000, -1000000000)
+EXPECT(bb.r8(), 200, "Unsigned 8 bit read")
+EXPECT(bb.r8(true), -50, "Signed 8 bit read")
+EXPECT(bb.r16(), 40000, "Unsigned 16 bit read")
+EXPECT(bb.r16(true), -20000, "Signed 16 bit read")
+EXPECT(bb.r32(), 3000000000, "Unsigned 32 bit read")
+EXPECT(bb.r32(true), -1000000000, "Signed 32 bit read")
+
+// if errors occur here, this is possibly because of wrong compiler optimization
+d1 = ByteBuf().wd(5.55555).toString()
+d2 = ByteBuf().write(5.55555).toString()
+d3 = BitBuf().wd(5.55555).toString()
+d4 = BitBuf().write(5.55555).toString()
+EXPECT(d2, d1, "ByteBuf numeric wd() equal to write() [GCC 4.5.x -O3 bug?]")
+EXPECT(d3, d4, "BitBuf numeric wd() equal to write() [GCC 4.5.x -O3 bug?]")
+EXPECT(d3, d1, "ByteBuf numeric wd() equal to BitBuf wd() [GCC 4.5.x -O3 bug?]")
+EXPECT(d4, d2, "ByteBuf numeric write() equal to BitBuf write() [GCC 4.5.x -O3 bug?]")
+
+bb = BitBuf()
+fa = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+cmp = { a,b => abs(a-b) < 0.0000001 }
+for f in fa: bb.wf(f)
+
+for i = 0 to len(fa) - 1
+    f = bb.rf()
+    ck = ByteBufNativeEndian(8).wf(fa[i])
+    fc = ck.rf()
+    EXPECTDIFF(f, fc, 0.0000001, "BitBuf vs ByteBuf numeric precision")
+end
+
+
+function bitstr(bb)
+    s = ""
+    bb.rposBits(0)
+    i = 0
+    while i < bb.sizeBits()
+        bit = bb.rb()
+        s += (bit ? "1" : "0")
+        i++
+    end
+    return s
+end
+
+bb = ByteBufLittleEndian()
+bb.w8(8).w16(16).w32(32).w64(64)
+EXPECT(bb.toString(), "081000200000004000000000000000", "ByteBufLittleEndian byte order")
+
+bb = ByteBufBigEndian()
+bb.w8(8).w16(16).w32(32).w64(64)
+EXPECT(bb.toString(), "080010000000200000000000000040", "ByteBufBigEndian byte order")
+
+
+EXPECT(bitstr(BitBuf().wb(1,1,1,0,0,0,0,1)), "11100001", "BitBuf bool 1-bit write")
+
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0)), "000", "BitBuf fixed-bit write (1)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1)), "000100", "BitBuf fixed-bit write (2)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2)), "000100010", "BitBuf fixed-bit write (3)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3)), "000100010110", "BitBuf fixed-bit write (4)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4)), "000100010110001", "BitBuf fixed-bit write (5)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5)), "000100010110001101", "BitBuf fixed-bit write (6)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5,6)), "000100010110001101011", "BitBuf fixed-bit write (7)")
+EXPECT(bitstr(BitBuf().bitCount(3).writeBits(0,1,2,3,4,5,6,7)), "000100010110001101011111", "BitBuf fixed-bit write (8)")
+
+
+bb = ByteBuf().write("abc").writeNoNT("ABC")
+EXPECT(bb.readString(), "abc", "ByteBuf null-terminated string")
+EXPECT(bb.readString(), "ABC", "ByteBuf not null-terminated string at end of buf")
+EXPECT(bb.toString(), "61626300414243", "ByteBuf string, hex")
+
+bb = ByteBuf().writeNoNT("abc", "ABC").write("-")
+EXPECT(bb.readString(), "abcABC-", "ByteBuf not null-terminated string continous read")
+
+bb = ByteBuf(8)
+bb.growable(false)
+bb.w32(1,2)
+try
+    bb.w8(3)
+    failure("Not-growable buffer write error not raised")
+end
+
+mb = MemBuf(16, 1).fill(0xFF)
+bc = ByteBufLittleEndian(mb) // copy
+ba = ByteBufLittleEndian(mb, true) // adapt
+ba[0] = 0x04
+ba[1] = 0x0A
+ba[5] = 0
+EXPECT(mb.get(), 4, "ByteBuf adapt 1")
+EXPECT(bc[0], 0xFF, "ByteBuf copy 1")
+EXPECT(mb.get(), 10, "ByteBuf adapt 2")
+EXPECT(bc[1], 0xFF, "ByteBuf copy 2")
+EXPECT(ba.r16(), 0x0A04, "ByteBuf adapt read 1")
+EXPECT(bc.r16(), 0xFFFF, "ByteBuf copy read 1")
+
+// pointers + direct memory, reading
+bb = ByteBufLittleEndian()
+bb.resize(50)
+ba = ByteBufLittleEndian()
+ba.w32(0x12345678).write("extra space string------------!").w16(0xFDFE)
+ba.readPtr(bb.ptr(), ba.size())
+EXPECT(bb.r32(), 0x12345678, "ByteBuf readPtr 1")
+bb.readString()
+EXPECT(bb.r16(), 0xFDFE, "ByteBuf readPtr 2")
+
+
+// pointers + direct memoty, writing
+ba = ByteBuf()
+ba.w16(0xFFFF).w8(1).w32(0x33445566).w8(0xDD).w16(0xEEEE)
+bb = ByteBuf()
+bb.writePtr(ba.ptr() + 3, 5) // skip first 3 bytes and last 2 byte
+EXPECT(bb.r32(), 0x33445566, "writePtr 1")
+EXPECT(bb.r8(), 0xDD, "writePtr 2")
+EXPECT(bb.readable(), 0, "writePtr bytecount")
+
+bc = ByteBufReverseEndian()
+bc.writePtr(ba.ptr() + 3, 5) // same as above
+EXPECT(bc.r32(), 0x66554433, "writePtr 1 reversed endian")
+EXPECT(bc.r8(), 0xDD, "writePtr 2 reversed endian")
+
+// read to membuf
+mb = MemBuf(5, 4) // 5x int32
+mb[0] = 0x01020304
+mb.position(1)
+bb = ByteBufLittleEndian().w32(5,6,7,8,9)
+v = bb.readToBuf(mb, 100)
+EXPECT(v, 16, "readToBuf(LE, WS 4 MB) limit")
+EXPECT(mb[0], 0x01020304, "readToBuf(LE, WS 4 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(LE, WS 4 MB) end")
+
+mb = MemBuf(5, 4) // 5x int32
+mb[0] = 0x01020304
+mb.position(1)
+bb = ByteBufBigEndian().w32(5,6,7,8,9)
+v = bb.readToBuf(mb, 100)
+EXPECT(v, 16, "readToBuf(BE, WS 4 MB) limit")
+EXPECT(mb[0], 0x01020304, "readToBuf(BE, WS 4 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(BE, WS 4 MB) end")
+
+mb = MemBuf(5, 1) // 5x int8
+mb[0] = 0x22
+mb.position(1)
+bb = ByteBufLittleEndian().w8(5,6,7,8,9)
+v = bb.readToBuf(mb) // no 2nd arg here intentionally
+EXPECT(v, 4, "readToBuf(WS 1 MB) limit")
+EXPECT(mb[0], 0x22, "readToBuf(WS 1 MB) position()")
+EXPECT(mb[4], 8, "readToBuf(WS 1 MB) end")
+
+
+bb = ByteBufLittleEndian().w8(2,3,4,5,6).writeNoNT("abcdefghijklmnopqrs")
+ng = ByteBufLittleEndian().growable(false).resize(15)
+ng.w8(0xFD, 0xFE)
+v = bb.readToBuf(ng, 3) // just 3 bytes
+EXPECT(v, 3, "readToBuf 3 bytes")
+EXPECT(ng[0], 0xFD, "readToBuf to ByteBuf read 3, wrongly overwritten")
+EXPECT(ng[4], 4, "readToBuf to ByteBuf read 3, append")
+
+v = bb.readToBuf(ng) // (ng is 5 bytes now) ... append the rest, up to the limit
+EXPECT(v, 10, "readToBuf up to limit")
+EXPECT(ng[4], 4, "readToBuf limit, unchanged prev val")
+EXPECT(ng[14], ord("h"), "readToBuf limit, at limit")
+
+ng.growable(true)
+v = bb.readToBuf(ng) // (ng is 15 bytes now) ... append the rest, all remaining
+EXPECT(v, 11, "readToBuf up to limit")
+EXPECT(ng[14], ord("h"), "readToBuf fully, unchanged prev val")
+EXPECT(ng[14+11], ord("s"), "readToBuf fully, unchanged prev val")
+
+EXPECT(ng.size(), 2+5+19, "readToBuf mb final size")
+EXPECT(bb.readable(), 0, "readToBuf src buf empty")
+
+
+// memory region shifting test (right by 1 bit)
+bb = BitBuf().w8(1,2,4,6,10,0x20,1)
+//> bitstr(bb); bb.rpos(0) // for clarification, uncomment this line
+EXPECT(bb.rb(), true, "BitBuf mem region Rshift init") // this is the 1, and shifts the frame
+t = ByteBufLittleEndian()
+bb.readToBuf(t)
+EXPECT(t.r8(), 0, "BitBuf mem region Rshift 1")
+EXPECT(t.r8(), 1, "BitBuf mem region Rshift 2")
+EXPECT(t.r8(), 2, "BitBuf mem region Rshift 3")
+EXPECT(t.r8(), 3, "BitBuf mem region Rshift 4")
+EXPECT(t.r8(), 5, "BitBuf mem region Rshift 5")
+EXPECT(t.r8(), 0x10 + 0x80, "BitBuf mem region Rshift 6") // (0x20 >> 1) + (1 shifted to right once, into byte beeing read)
+EXPECT(bb.readableBits(), 7, "BitBuf mem region Rshift 1 bit less")
+bb.wb(true) // 1 extra bit, will be highest
+bb.readToBuf(t)
+EXPECT(t.r8(), 0x80, "BitBuf mem region Rshift extra bit")
+
+// memory region shifting test (left by 1 bit)
+bb = BitBuf().wb(false).w8(1,2,4,6,10,0x20)
+//> bitstr(bb); bb.rposBits(0) // for clarification, uncomment this line
+t = ByteBufLittleEndian()
+bb.readToBuf(t)
+EXPECT(t.r8(), 2, "BitBuf mem region Lshift 1")
+EXPECT(t.r8(), 4, "BitBuf mem region Lshift 2")
+EXPECT(t.r8(), 8, "BitBuf mem region Lshift 3")
+EXPECT(t.r8(), 12, "BitBuf mem region Lshift 4")
+EXPECT(t.r8(), 20, "BitBuf mem region Lshift 5")
+EXPECT(t.r8(), 0x40, "BitBuf mem region Lshift 6")
+EXPECT(bb.readableBits(), 1, "BitBuf mem region Lshift last bit")
+bb.bitCount(7).writeBits(0)
+bb.readToBuf(t)
+EXPECT(t.r8(), 0, "BitBuf mem region Lshift extra bits")
+
+// toMemBuf tests
+bb = ByteBuf(100).w32(0xFF0000FF)
+for i = 0 to 90: bb.w8(i) // fill up a bit
+mb = bb.toMemBuf() // default behavior: adopt
+EXPECT(mb.ptr(), bb.ptr(), "toMemBuf adopt ptr equality")
+cp = bb.toMemBuf(true) // copy; ptrs must be different
+if cp.ptr() == bb.ptr()
+    failure("toMemBuf copy ptr must be different")
+end
+p = bb.ptr()
+bb.write("this enlarges the buffer and forces reallocation")
+if bb.ptr() == p // check if it was really re-allocated
+    failure("buffer enlarged, but not reallocated")
+end
+// now mb is invalid; it still uses the old pointer prior to re-allocation
+EXPECT(mb.ptr(), p, "toMemBuf adopt ptr after reallocation") // must be same old (but now invalid) ptr
+EXPECT(ByteBuf(cp,true).r32(), 0xFF0000FF, "toMemBuf re-adopt read (copy)")
+
+
+success()

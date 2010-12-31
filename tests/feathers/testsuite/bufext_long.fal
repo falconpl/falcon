@@ -1,0 +1,170 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 61a
+* Category: bufext
+* Subcategory:
+* Short: Bufext stress test / random data
+* Description:
+*    Stress test for the buffer classes provided by the bufext module,
+*    filling buffers with random data and verifying that reading afterwards
+*    will return the same data that have been written to them.
+*    (If some tests fail due to float rounding, try compiler settings
+*    that increase floating point precision)
+* [/Description]
+**************************************************************************/
+
+load bufext
+
+GC.adjust(GC.ADJ_STRICT) // we will produce a lot of garbge
+randomSeed(8736275764) // make results consistent
+
+
+function EXPECT(actual, expected, str)
+    if(actual != expected)
+        failure("Expected: '" + expected + "', actual: '" + actual + "' <-- " + str)
+    end
+end
+
+function EXPECTDIFF(actual, expected, diff, str)
+    if(abs(actual - expected) > diff)
+        failure("Expected: '" + expected + "', actual: '" + actual + "' <-- " + str)
+    end
+end
+
+
+function genRString()
+    lim = random(20)
+    s = strBuffer(lim + 1)
+    while lim
+        lim--
+        s %= random(97, 112)
+    end
+    s.charSize(1)
+    return s
+end
+
+typenames = [  "bool"
+              ,"i8  "
+              ,"i16 "
+              ,"i32 "
+              ,"i64 "
+              ,"flt "
+              ,"dbl "
+              ,"str "
+]
+
+writefunc = [ { b,v => b.wb(v) }
+          ,{ b,v => b.w8(v) }
+          ,{ b,v => b.w16(v) }
+          ,{ b,v => b.w32(v) }
+          ,{ b,v => b.w64(v) }
+          ,{ b,v => b.wf(v) }
+          ,{ b,v => b.wd(v) }
+          ,{ b,v => b.write(v) }
+]
+
+readfunc = [ { b => b.rb() }
+          ,{ b => b.r8() }
+          ,{ b => b.r16() }
+          ,{ b => b.r32() }
+          ,{ b => b.r64() }
+          ,{ b => b.rf() }
+          ,{ b => b.rd() }
+          ,{ b => b.readString(1, 50) }
+]
+
+genfunc = [ { => random(1) ? true : false }
+            ,[random, 0, 255]
+            ,[random, 0, 65535]
+            ,[random, 0, 4294967295]
+            ,[random, 0, 1152921504606846976]
+            ,{ => random() * 100}
+            ,{ => random() * 1000}
+            , genRString
+]
+
+cmpfunc = [ { a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => a == b }
+           ,{ a, b => abs(a-b) < 0.00001 } // float precision is never so good
+           ,{ a, b, strict => strict ? (a == b) : (abs(a-b) < 0.000000001) }
+           ,{ a, b => a == b }
+]
+
+function buftest(bb, strict)
+    lim = random(1500) + 1
+    vals = arrayBuffer(lim)
+    ps = arrayBuffer(lim)
+    x = len(writefunc) - 1
+    i = 0
+    while i < lim
+        p = random(x)
+        item = genfunc[p]()
+        vals[i] = item
+        ps[i] = p
+        tn = typenames[p]
+        writefunc[p](bb, item)
+        i++
+    end
+
+    i = 0
+    while i < lim
+        item = vals[i]
+        p = ps[i]
+        r = readfunc[p](bb)
+        tn = typenames[p]
+        if not cmpfunc[p](item,r,strict)
+            failure(@ "[" + bb.className() + "] ERROR! ty: '$tn', i = $i, p = $p, should be: '$item', is: '$r'")
+        end
+        i++
+    end
+
+    if bb.readable()
+        if(bb provides sizeBits) // is BitBuf
+            failure("Readable, should not be: wposBits = " + bb.wposBits() + ", rpos = " + bb.rposBits() + ", sizeBits = " + bb.sizeBits() + ", readableBits = " + bb.readableBits())
+        else
+            failure("Readable, should not be: wpos = " + bb.wpos() + ", rpos = " + bb.rpos() + ", capacity = " + bb.capacity() + ", size = " + bb.size() + ", readable = " + bb.readable())
+        end
+    end
+end
+
+
+normalruns = 500
+bitbufruns = 200
+maxruns = normalruns + (bitbufruns * 64)
+runcount = 0
+
+bufs = [ [BitBuf, false], [ByteBuf, false], [ByteBufNativeEndian, true], [ByteBufLittleEndian, false], [ByteBufBigEndian, false], [ByteBufReverseEndian, false] ]
+for cons, strict in bufs
+    for i = 0 to normalruns
+        alive(runcount / maxruns * 100)
+        buftest(cons(), strict)
+        ++runcount
+    end
+end
+
+for i = 1 to 63 // inclusive - cause all different possibilities for shifted patterns
+
+    // we use the same random seed for each pattern, so the data are always the same, just shifted by different byte amounts
+    randomSeed(873876698769)
+    alive(runcount / maxruns * 100)
+    for j = 0 to bitbufruns
+        
+        bb = BitBuf()
+
+        // this will have the whole buf shifted by i bytes
+        bb.bitCount(i)
+        bb.writeBits(0x0123456789abcdef)
+        junk = bb.readBits()
+
+        buftest(bb, false)
+        
+        ++runcount
+    end
+end
+
+
+success()

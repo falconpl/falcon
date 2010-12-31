@@ -1,0 +1,49 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60b
+* Category: Bufext
+* Subcategory:
+* Short: bufext vs. GC
+* Description:
+*    The GC should not free buffers still in use, including memory adopted
+*    by other buffers.
+*    This test also tests a possible GC stack overflow if the internal
+*    adoption hierarchy is not set up correctly.
+* [/Description]
+**************************************************************************/
+
+load bufext
+
+function EXPECT(actual, expected, str)
+    if(actual != expected)
+        failure("Expected: '" + expected + "', actual: '" + actual + "' <-- " + str)
+    end
+end
+
+
+// ByteBuf dependency smoke test (still required bufs may not be garbaged)
+mb = MemBuf(50000, 4).fill(0xFFFFFFFF) // a large object, interesting for the GC
+mb.put(42)
+b = ByteBufNativeEndian(mb, true)
+mb = nil
+for i = 0 to 500
+    EXPECT(b.r32(), 42, "ByteBuf recursive adapt dependency test")
+    b = ByteBufNativeEndian(b, true).growable(false) // adapt
+end
+GC.perform(true) // if dependencies are not set up correctly, this may cause multi-free of the internal memory, and segfault
+x = b.r32() // if mb was garbaged, this will likely segfault
+EXPECT(x, 42, "ByteBuf recursive adapt dependency test, final") 
+
+b = ByteBufNativeEndian(b, true).growable(false) // adapt
+for i = 0 to 100000
+    EXPECT(b.r32(), 42, "ByteBuf recursive adapt GC stack overflow test")
+    b = ByteBufNativeEndian(b, true).growable(false) // adapt
+end
+GC.perform(true) // if a long dependency chain was built up, this must not cause GC stack overflow
+x = b.r32() // if mb was garbaged, this will likely segfault
+EXPECT(x, 42, "ByteBuf recursive adapt stack overflow test, final") 
+b = nil
+
+
+success()

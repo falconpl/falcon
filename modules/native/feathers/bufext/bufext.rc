@@ -1,0 +1,47 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+// for project wide versioning...
+#include <falcon/config.h>
+#include <falcon/rc_version.h>
+
+// and application versioning
+#include "version.h"
+
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION FALCON_MAKE_VERSION_NUMBER( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+ PRODUCTVERSION FALCON_VERSION_RCINFO_N
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041004b0"
+        BEGIN
+            VALUE "CompanyName", "Falcon Committee"
+            VALUE "FileDescription", "Buffer extension feather module"
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "InternalName", "bufext"
+            VALUE "LegalCopyright", "The Falcon Programming Language License"
+            VALUE "OriginalFilename", "bufext_fm.dll"
+            VALUE "ProductName", "The Falcon Programming Language"
+            VALUE "ProductVersion", FALCON_VERSION_RCINFO
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x410, 1200
+    END
+END
+
+

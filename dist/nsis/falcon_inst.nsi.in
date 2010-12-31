@@ -148,9 +148,10 @@ SectionEnd
 ; Feather modules
 ;
 
-Section "Feather modules"
+Section "Feathers modules"
 
 SetOutPath $INSTDIR\bin
+File "..\bin\bufext_fm.dll"
 File "..\bin\compiler_fm.dll"
 File "..\bin\confparser_fm.dll"
 File "..\bin\funcext_fm.dll"

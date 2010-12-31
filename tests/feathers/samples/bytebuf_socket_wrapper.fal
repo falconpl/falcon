@@ -1,0 +1,64 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: bytebuf_socket_wrapper.fal
+
+   Bufext module example
+   This file provides an example about how to send binary data over
+   a socket easily.
+   For a quick test, use netcat as echo server:
+   'nc -l -p 9909'
+   -------------------------------------------------------------------
+   Author: Maximilian Malek
+   Begin: Thu, 1 Nov 2010
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   
+*/
+
+load bufext
+load socket
+
+host = "localhost"
+port = "9909"
+
+socket = TCPSocket()
+socket.setTimeout(-1)
+> "Waiting for connection..."
+if not socket.connect(host, port)
+    > "Can't connect to ", host, ":", port, ", exiting"
+    exit()
+end
+
+bs = ByteBufSocketWrapper(socket)
+
+// send some random binary data
+bs.write("#1", "Hello", "world!\n", 3.141596)
+bs.w32(0x616263FF).write("\n\n")
+bs.send()
+
+bs.write("#2").w8(1,2,3,4).w16(1234, 9999)
+bs.writeNoNT("test", "end", "#]")
+bs.send()
+
+> "Data sent!"
+
+bs.close()
+
+class ByteBufSocketWrapper(s) from ByteBuf
+    sock = nil
+    init
+        self.sock = s
+    end
+    
+    function send()
+        self.sock.send(self.toMemBuf())
+        self.reset() // set read/write positions and size to 0
+    end
+    
+    function close(): self.sock.close()
+end

@@ -24,6 +24,7 @@ include_directories(
 
 unset(_project_targets)
 #
+add_subdirectory(bufext)
 add_subdirectory(compiler)
 add_subdirectory(confparser)
 add_subdirectory(funcext)
