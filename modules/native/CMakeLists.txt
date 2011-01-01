@@ -43,6 +43,25 @@ macro( FalconFindGTK2 )
     endif()
 endmacro()
 
+macro( FalconFindDataMatrix )
+    if ( WIN32 )
+        # todo
+    else()
+        find_path( DMTX_INCLUDE_PATH dmtx.h
+            HINTS /usr/include /usr/local/include )
+        mark_as_advanced( DMTX_INCLUDE_PATH )
+        find_library( DMTX_LIBRARY dmtx
+            HINTS /usr/lib /usr/local/lib )
+        mark_as_advanced( DMTX_LIBRARY )
+        if ( ( DMTX_INCLUDE_PATH STREQUAL DMTX_INCLUDE_PATH-NOTFOUND )
+            OR ( DMTX_LIBRARY STREQUAL DMTX_LIBRARY-NOTFOUND ) )
+            set( _dmtx OFF )
+        else()
+            set( _dmtx ON )
+        endif()
+    endif()
+endmacro()
+
 #########################################################
 
 
@@ -70,6 +89,9 @@ if( FALCON_NATMODS_AUTO )
       set( _dbus ON )
    endif()
 
+   #### Check DataMatrix
+   FalconFindDataMatrix()
+
    #### Check HPDF (LibHARU)
    find_path( LibHaru_INCLUE_DIR hpdf.h )
    if ( LibHaru_INCLUE_DIR )
@@ -87,6 +109,7 @@ if( FALCON_NATMODS_AUTO )
 
 else()
   set( _dbus OFF )
+  set( _dmtx OFF )
   set( _gd2 OFF )
   set( _gtk OFF )
   set( _pdf OFF )
@@ -94,6 +117,7 @@ endif()
 
 # Bindings -- Requiring more sophisticated checks
 option( FALCON_BUILD_DBUS "Install DBUS binding"  ${_dbus})
+option( FALCON_BUILD_DMTX "Install DataMatrix binding" ${_dmtx} )
 option( FALCON_BUILD_GD2 "Install GD library binding" ${_gd2})
 option( FALCON_BUILD_GTK "Install GTK2 module" ${_gtk} )
 option( FALCON_BUILD_PDF "Install libharu (hpdf)  binding" ${_pdf})
@@ -112,6 +136,10 @@ endif()
 
 if ( FALCON_BUILD_DBUS )
     add_subdirectory( dbus )
+endif()
+
+if ( FALCON_BUILD_DMTX )
+    add_subdirectory( dmtx )
 endif()
 
 if ( FALCON_BUILD_DYNLIB )
