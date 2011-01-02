@@ -49,6 +49,7 @@ FALCON_FUNC DataMatrixError_init( VMachine* vm );
 
 FALCON_FUNC DataMatrix_init( VMachine* vm );
 FALCON_FUNC DataMatrix_encode( VMachine* vm );
+FALCON_FUNC DataMatrix_decode( VMachine* vm );
 
 } // !namespace Ext
 } // !namespace Falcon

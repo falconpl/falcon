@@ -75,5 +75,35 @@ FALCON_FUNC DataMatrix_encode( VMachine* vm )
     vm->retval( self->encode( *i_data, *i_ctxt ) );
 }
 
+
+/*#
+    @method decode DataMatrix
+    @param data A string or membuf
+    @param width Width of scanned image
+    @param height Height of scanned image
+    @return An array of results, or nil on error
+ */
+FALCON_FUNC DataMatrix_decode( VMachine* vm )
+{
+    Item* i_data = vm->param( 0 );
+    Item* i_w = vm->param( 1 );
+    Item* i_h = vm->param( 2 );
+
+    if ( !i_data || !( i_data->isString() || i_data->isMemBuf() )
+        || !i_w || !i_w->isInteger()
+        || !i_h || !i_h->isInteger() )
+    {
+        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                .extra( "S|M,I,I" ) );
+    }
+
+    Dmtx::DataMatrix* self = static_cast<Dmtx::DataMatrix*>( vm->self().asObjectSafe() );
+    CoreArray* res;
+    if ( self->decode( *i_data, i_w->asInteger(), i_h->asInteger(), &res ) )
+        vm->retval( res );
+    else
+        vm->retnil();
+}
+
 } /* !namespace Ext */
 } /* !namespace Falcon */

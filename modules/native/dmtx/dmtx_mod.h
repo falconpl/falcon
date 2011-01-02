@@ -24,6 +24,15 @@ typedef struct
     int     scheme;
     int     shape;
 
+    int     timeout;
+    int     shrink;
+    int     deviation;
+    int     threshold;
+    int     min_edge;
+    int     max_edge;
+    int     corrections;
+    int     max_count;
+
 } DataMatrixOptions;
 
 
@@ -47,15 +56,19 @@ public:
 
     bool encode( const Falcon::Item& data,
                  const Falcon::Item& ctxt );
+    bool decode( const Falcon::Item& data,
+                 int width,
+                 int height,
+                 Falcon::CoreArray** output );
 
     DataMatrixOptions options;
+    void resetOptions();
 
     Falcon::Item* data() const;
     Falcon::Item* context() const;
 
 protected:
 
-    void initOptions();
     bool data( const Falcon::Item& item );
     bool context( const Falcon::Item& item );
 
@@ -64,8 +77,23 @@ protected:
     bool internalEncode( const char* data,
                          const uint32 sz );
 
+    bool decode( const Falcon::String& data,
+                 int width,
+                 int height,
+                 Falcon::CoreArray** output );
+    bool decode( const Falcon::MemBuf& data,
+                 int width,
+                 int height,
+                 Falcon::CoreArray** output );
+    bool internalDecode( const char* data,
+                         const uint32 sz,
+                         int width,
+                         int height,
+                         Falcon::CoreArray** output );
+
     Falcon::GarbageLock*    mData;
     Falcon::GarbageLock*    mContext;
+
 };
 
 

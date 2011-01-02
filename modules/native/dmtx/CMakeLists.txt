@@ -32,7 +32,7 @@ add_library( ${FALCON_MODULE} MODULE
     dmtx_fm.cpp
     dmtx_ext.cpp
     dmtx_mod.cpp
-    #dmtx_srv.cpp
+    dmtx_srv.cpp
     #dmtx_st.cpp
     )
 

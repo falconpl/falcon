@@ -4,7 +4,8 @@
 
 #include "dmtx_ext.h"
 #include "dmtx_mod.h"
-//#include "dmtx_srv.h"
+#include "dmtx_srv.h"
+//#include "dmtx_st.h"
 #include "version.h"
 
 #include <falcon/module.h>
@@ -20,7 +21,7 @@
 
 using namespace Falcon;
 
-//Falcon::DataMatrixService theDataMatrixService;
+Falcon::DataMatrixService theDataMatrixService;
 
 
 FALCON_MODULE_DECL
@@ -90,7 +91,17 @@ FALCON_MODULE_DECL
     self->addClassProperty( dmtx_cls, "scheme" );
     self->addClassProperty( dmtx_cls, "shape" );
 
+    self->addClassProperty( dmtx_cls, "timeout" );
+    self->addClassProperty( dmtx_cls, "shrink" );
+    self->addClassProperty( dmtx_cls, "deviation" );
+    self->addClassProperty( dmtx_cls, "threshold" );
+    self->addClassProperty( dmtx_cls, "min_edge" );
+    self->addClassProperty( dmtx_cls, "max_edge" );
+    self->addClassProperty( dmtx_cls, "corrections" );
+    self->addClassProperty( dmtx_cls, "max_count" );
+
     self->addClassMethod( dmtx_cls, "encode", Falcon::Ext::DataMatrix_encode );
+    self->addClassMethod( dmtx_cls, "decode", Falcon::Ext::DataMatrix_decode );
 
     // DataMatrixError class
     Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
@@ -99,7 +110,7 @@ FALCON_MODULE_DECL
     err_cls->getClassDef()->addInheritance( new Falcon::InheritDef( error_class ) );
 
     // service publication
-    //self->publishService( &theDataMatrixService );
+    self->publishService( &theDataMatrixService );
 
     return self;
 }

@@ -29,7 +29,7 @@ DataMatrix::DataMatrix( const Falcon::CoreClass* cls )
     mContext( 0 )
 {
     // initialize options struct
-    initOptions();
+    resetOptions();
 }
 
 DataMatrix::DataMatrix( const DataMatrix& other )
@@ -75,12 +75,36 @@ DataMatrix::getProperty( const String& nm,
     if ( nm == "shape" )
         it.setInteger( options.shape );
     else
+    if ( nm == "timeout" )
+        it.setInteger( options.timeout );
+    else
+    if ( nm == "shrink" )
+        it.setInteger( options.shrink );
+    else
+    if ( nm == "deviation" )
+        it.setInteger( options.deviation );
+    else
+    if ( nm == "threshold" )
+        it.setInteger( options.threshold );
+    else
+    if ( nm == "min_edge" )
+        it.setInteger( options.min_edge );
+    else
+    if ( nm == "max_edge" )
+        it.setInteger( options.max_edge );
+    else
+    if ( nm == "corrections" )
+        it.setInteger( options.corrections );
+    else
+    if ( nm == "max_count" )
+        it.setInteger( options.max_count );
+    else
         return defaultProperty( nm, it );
 }
 
 bool
 DataMatrix::setProperty( const String& nm,
-                       const Item& it )
+                         const Item& it )
 {
     if ( !it.isInteger() )
         return false;
@@ -100,6 +124,30 @@ DataMatrix::setProperty( const String& nm,
     if ( nm == "shape" )
         options.shape = it.asInteger();
     else
+    if ( nm == "timeout" )
+        options.timeout = it.asInteger();
+    else
+    if ( nm == "shrink" )
+        options.shrink = it.asInteger();
+    else
+    if ( nm == "deviation" )
+        options.deviation = it.asInteger();
+    else
+    if ( nm == "threshold" )
+        options.threshold  = it.asInteger();
+    else
+    if ( nm == "min_edge" )
+        options.min_edge = it.asInteger();
+    else
+    if ( nm == "max_edge" )
+        options.max_edge = it.asInteger();
+    else
+    if ( nm == "corrections" )
+        options.corrections = it.asInteger();
+    else
+    if ( nm == "max_count" )
+        options.max_count = it.asInteger();
+    else
         return false;
     return true;
 }
@@ -117,9 +165,10 @@ DataMatrix::factory( const CoreClass* cls, void*, bool )
 }
 
 void
-DataMatrix::initOptions()
+DataMatrix::resetOptions()
 {
     memset( &options, DmtxUndefined, sizeof( DataMatrixOptions ) );
+    options.shrink = 1;
 }
 
 Falcon::Item*
@@ -233,7 +282,7 @@ DataMatrix::internalEncode( const char* data,
     // call context start( width, height )
     if ( ctxt->getMethod( "start", meth ) )
     {
-        //fassert( meth.isCallable() );
+        fassert( meth.isCallable() );
         vm->pushParam( enc->image->width );
         vm->pushParam( enc->image->height );
         vm->callItem( meth, 2 );
@@ -241,7 +290,7 @@ DataMatrix::internalEncode( const char* data,
 
     // call context plot( row, col, red, green, blue )
     ctxt->getMethod( "plot", meth );
-    //fassert( meth.isCallable() );
+    fassert( meth.isCallable() );
 
     for ( row = 0; row < enc->image->height; ++row )
     {
@@ -262,7 +311,7 @@ DataMatrix::internalEncode( const char* data,
     // call context finish()
     if ( ctxt->getMethod( "finish", meth ) )
     {
-        //fassert( meth.isCallable() );
+        fassert( meth.isCallable() );
         vm->callItem( meth, 0 );
     }
 
@@ -271,6 +320,142 @@ DataMatrix::internalEncode( const char* data,
     return true;
 }
 
+bool
+DataMatrix::decode( const Falcon::Item& dat,
+                    int width,
+                    int height,
+                    Falcon::CoreArray** output )
+{
+    switch ( dat.type() )
+    {
+    case FLC_ITEM_STRING:
+        data( dat );
+        return decode( *dat.asString(), width, height, output );
+    case FLC_ITEM_MEMBUF:
+        data( dat );
+        return decode( *dat.asMemBuf(), width, height, output );
+    default:
+        return false;
+    }
+}
+
+bool
+DataMatrix::decode( const Falcon::String& data,
+                    int width,
+                    int height,
+                    Falcon::CoreArray** output )
+{
+    return internalDecode( (const char*) data.getRawStorage(), data.size(),
+                           width, height, output );
+}
+
+bool DataMatrix::decode( const Falcon::MemBuf& data,
+                         int width,
+                         int height,
+                         Falcon::CoreArray** output )
+{
+    return internalDecode( (const char*) data.data(), data.size(),
+                           width, height, output );
+}
+
+bool
+DataMatrix::internalDecode( const char* data,
+                            const uint32 sz,
+                            int width,
+                            int height,
+                            Falcon::CoreArray** output )
+{
+    DmtxImage*  img;
+    DmtxDecode* dec;
+    DmtxTime dmtx_timeout;
+    DmtxRegion* reg;
+    DmtxMessage* msg;
+    DmtxVector2 p00, p10, p11, p01;
+    int found = 0;
+
+    // reset timeout for each new page
+    if ( options.timeout != DmtxUndefined )
+        dmtx_timeout = dmtxTimeAdd( dmtxTimeNow(), options.timeout );
+
+    img = dmtxImageCreate( (unsigned char*)data, width, height, DmtxPack24bppRGB );
+    if ( !img )
+        return false;
+
+    dec = dmtxDecodeCreate( img, options.shrink );
+    if ( !dec )
+    {
+        dmtxImageDestroy( &img );
+        return false;
+    }
+
+    if ( options.gap_size != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropScanGap, options.gap_size );
+
+    if ( options.shape != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropSymbolSize, options.shape );
+
+    if ( options.deviation != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropSquareDevn, options.deviation );
+
+    if ( options.threshold != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropEdgeThresh, options.threshold );
+
+    if ( options.min_edge != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropEdgeMin, options.min_edge );
+
+    if ( options.max_edge != DmtxUndefined )
+        dmtxDecodeSetProp( dec, DmtxPropEdgeMax, options.max_edge );
+
+    for ( int count=1; ;count++ )
+    {
+        if ( options.timeout == DmtxUndefined )
+            reg = dmtxRegionFindNext( dec, NULL );
+        else
+            reg = dmtxRegionFindNext( dec, &dmtx_timeout );
+
+        // finished file or ran out of time before finding another region
+        if ( !reg )
+            break;
+
+        *output = new Falcon::CoreArray;
+
+        msg = dmtxDecodeMatrixRegion( dec, reg, options.corrections );
+        if ( msg )
+        {
+            p00.X = p00.Y = p10.Y = p01.X = 0.0;
+            p10.X = p01.Y = p11.X = p11.Y = 1.0;
+            dmtxMatrix3VMultiplyBy( &p00, reg->fit2raw );
+            dmtxMatrix3VMultiplyBy( &p10, reg->fit2raw );
+            dmtxMatrix3VMultiplyBy( &p11, reg->fit2raw );
+            dmtxMatrix3VMultiplyBy( &p01, reg->fit2raw );
+
+            CoreArray* res = new Falcon::CoreArray( 9 );
+            res->append( String( (const char*)msg->output ) );
+            res->append( (int)((options.shrink * p00.X) + 0.5) );
+            res->append( height - 1 - (int)((options.shrink * p00.Y) + 0.5) );
+            res->append( (int)((options.shrink * p10.X) + 0.5) );
+            res->append( height - 1 - (int)((options.shrink * p10.Y) + 0.5) );
+            res->append( (int)((options.shrink * p11.X) + 0.5) );
+            res->append( height - 1 - (int)((options.shrink * p11.Y) + 0.5) );
+            res->append( (int)((options.shrink * p01.X) + 0.5) );
+            res->append( height - 1 - (int)((options.shrink * p01.Y) + 0.5) );
+            (*output)->append( res );
+
+            dmtxMessageDestroy( &msg );
+            ++found;
+        }
+        dmtxRegionDestroy( &reg );
+
+        // stop if we've reached maximum count
+        if ( options.max_count != DmtxUndefined )
+            if ( found >= options.max_count )
+                break;
+    }
+
+    dmtxDecodeDestroy( &dec );
+    dmtxImageDestroy( &img );
+    return true;
+}
 
 } // !namespace Dmtx
 } // !namespace Falcon
