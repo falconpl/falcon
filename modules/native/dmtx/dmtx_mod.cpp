@@ -406,6 +406,9 @@ DataMatrix::internalDecode( const char* data,
     if ( options.max_edge != DmtxUndefined )
         dmtxDecodeSetProp( dec, DmtxPropEdgeMax, options.max_edge );
 
+    // initialize output array
+    *output = new Falcon::CoreArray;
+
     for ( int count=1; ;count++ )
     {
         if ( options.timeout == DmtxUndefined )
@@ -416,8 +419,6 @@ DataMatrix::internalDecode( const char* data,
         // finished file or ran out of time before finding another region
         if ( !reg )
             break;
-
-        *output = new Falcon::CoreArray;
 
         msg = dmtxDecodeMatrixRegion( dec, reg, options.corrections );
         if ( msg )
