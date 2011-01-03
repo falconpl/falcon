@@ -45,12 +45,28 @@ FALCON_FUNC DataMatrixError_init( VMachine* vm )
 /*#
     @class DataMatrix
     @brief DataMatrix codec
+
+    @prop module_size
+    @prop margin_size
+    @prop gap_size
+    @prop scheme
+    @prop shape
+    @prop timeout
+    @prop shrink
+    @prop deviation
+    @prop threshold
+    @prop min_edge
+    @prop max_edge
+    @prop corrections
+    @prop max_count
  */
+#if 0
 FALCON_FUNC DataMatrix_init( VMachine* vm )
 {
     Dmtx::DataMatrix* self = static_cast<Dmtx::DataMatrix*>( vm->self().asObjectSafe() );
     vm->retval( self );
 }
+#endif
 
 
 /*#
@@ -103,6 +119,17 @@ FALCON_FUNC DataMatrix_decode( VMachine* vm )
         vm->retval( res );
     else
         vm->retnil();
+}
+
+
+/*#
+    @method resetOptions
+    @brief Reset the options (properties).
+ */
+FALCON_FUNC DataMatrix_resetOptions( VMachine* vm )
+{
+    Dmtx::DataMatrix* self = static_cast<Dmtx::DataMatrix*>( vm->self().asObjectSafe() );
+    self->resetOptions();
 }
 
 } /* !namespace Ext */

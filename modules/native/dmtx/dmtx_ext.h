@@ -14,10 +14,6 @@
 #define FALCON_DATAMATRIX_ERROR_BASE   16100
 #endif
 
-// #define MONGODB_ERR_NOMEM           (FALCON_MONGODB_ERROR_BASE + 0)
-// #define MONGODB_ERR_CREATE_CONN     (FALCON_MONGODB_ERROR_BASE + 1)
-// #define MONGODB_ERR_CONNECT         (FALCON_MONGODB_ERROR_BASE + 2)
-// #define MONGODB_ERR_CREATE_BSON     (FALCON_MONGODB_ERROR_BASE + 3)
 
 namespace Falcon
 {
@@ -47,9 +43,10 @@ public:
 
 FALCON_FUNC DataMatrixError_init( VMachine* vm );
 
-FALCON_FUNC DataMatrix_init( VMachine* vm );
+//FALCON_FUNC DataMatrix_init( VMachine* vm );
 FALCON_FUNC DataMatrix_encode( VMachine* vm );
 FALCON_FUNC DataMatrix_decode( VMachine* vm );
+FALCON_FUNC DataMatrix_resetOptions( VMachine* vm );
 
 } // !namespace Ext
 } // !namespace Falcon
