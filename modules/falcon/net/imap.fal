@@ -7,187 +7,187 @@
 import from socket
 
 enum State
-    logout = -2,
-    nostate = -1,
-    connected = 0,
-    authenticated = 1,
-    selected = 2
+   logout = -2,
+   nostate = -1,
+   connected = 0,
+   authenticated = 1,
+   selected = 2
 end
 
 class IMAP( server, port )
 
-    server = server
-    port = port ? toString( port ) : "143"
-    timeout = 5000
+   server = server
+   port = port ? toString( port ) : "143"
+   timeout = 5000
 
-    trace = {=>}
+   trace = {=>}
 
-    state = State.nostate
-    selected = nil // current selected mailbox
+   state = State.nostate
+   selected = nil // current selected mailbox
 
-    _sock = nil
-    _n = 0
+   _sock = nil
+   _n = 0
 
-    function connect()
-        sock = socket.TCPSocket()
-        sock.setTimeout( self.timeout )
-        if not sock.connect( self.server, self.port )
-            raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
-        end
-        self.trace( "Connected." )
-        self._sock = sock
-        // get the OK or PREAUTH message
-        reply = self._send()
-        if reply[0:9] == "* PREAUTH"
-            self.state = State.authenticated
-        elif reply[0:4] != "* OK"
-            raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
-        else
-            self.state = State.connected
-        end
-    end
+   function connect()
+      sock = socket.TCPSocket()
+      sock.setTimeout( self.timeout )
+      if not sock.connect( self.server, self.port )
+         raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
+      end
+      self.trace( "Connected." )
+      self._sock = sock
+      // get the OK or PREAUTH message
+      reply = self._send()
+      if reply[0:9] == "* PREAUTH"
+         self.state = State.authenticated
+      elif reply[0:4] != "* OK"
+         raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
+      else
+         self.state = State.connected
+      end
+   end
 
-    function login( user, pass )
-        // connect if not done
-        if self._sock == nil
-            self.connect()
-        end
-        if self.state >= State.authenticated: return
-        tag = self._tag()
-        out = @ "$(tag) LOGIN $(user) $(pass)"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Login failed", reply.trim() )
-        end
-        self.state = State.authenticated
-    end
+   function login( user, pass )
+      // connect if not done
+      if self._sock == nil
+         self.connect()
+      end
+      if self.state >= State.authenticated: return
+      tag = self._tag()
+      out = @ "$(tag) LOGIN $(user) $(pass)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Login failed", reply.trim() )
+      end
+      self.state = State.authenticated
+   end
 
-    function logout()
-        if self.state < State.connected: return
-        tag = self._tag()
-        out = @ "$(tag) LOGOUT"
-        reply = self._send( out )
-        if not reply.startsWith( "* BYE" )
-            raise socket.NetError( 10010, "Logout failed", reply.trim() )
-        end
-        self.state = State.logout
-        self.selected = nil
-    end
+   function logout()
+      if self.state < State.connected: return
+      tag = self._tag()
+      out = @ "$(tag) LOGOUT"
+      reply = self._send( out )
+      if not reply.startsWith( "* BYE" )
+         raise socket.NetError( 10010, "Logout failed", reply.trim() )
+      end
+      self.state = State.logout
+      self.selected = nil
+   end
 
-    function sel( mailbox, readonly )
-        if mailbox == nil: mailbox = "INBOX"
-        cmd = readonly ? "EXAMINE" : "SELECT"
-        tag = self._tag()
-        out = @ "$(tag) $(cmd) $(mailbox)"
-        reply = self._send( out )
-        lines = reply.split( "\r\n" )
-        if not lines[-1].startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Select failed", reply.trim() )
-        end
-        self.selected = mailbox
-        self.state = State.selected
-    end
+   function sel( mailbox, readonly )
+      if mailbox == nil: mailbox = "INBOX"
+      cmd = readonly ? "EXAMINE" : "SELECT"
+      tag = self._tag()
+      out = @ "$(tag) $(cmd) $(mailbox)"
+      reply = self._send( out )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Select failed", reply.trim() )
+      end
+      self.selected = mailbox
+      self.state = State.selected
+   end
 
-    function close()
-        if not self.selected: return
-        tag = self._tag()
-        out = @ "$(tag) CLOSE"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Close failed", reply.trim() )
-        end
-        self.selected = nil
-        self.state = State.authenticated
-    end
+   function close()
+      if not self.selected: return
+      tag = self._tag()
+      out = @ "$(tag) CLOSE"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Close failed", reply.trim() )
+      end
+      self.selected = nil
+      self.state = State.authenticated
+   end
 
-    function expunge()
-        if not self.selected: return
-        tag = self._tag()
-        out = @ "$(tag) EXPUNGE"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Expunge failed", reply.trim() )
-        end
-    end
+   function expunge()
+      if not self.selected: return
+      tag = self._tag()
+      out = @ "$(tag) EXPUNGE"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Expunge failed", reply.trim() )
+      end
+   end
 
-    function create( mailbox )
-        tag = self._tag()
-        out = @ "$(tag) CREATE $(mailbox)"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Create failed", reply.trim() )
-        end
-    end
+   function create( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) CREATE $(mailbox)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Create failed", reply.trim() )
+      end
+   end
 
-    function rename( oldbox, newbox )
-        tag = self._tag()
-        out = @ "$(tag) RENAME $(oldbox) $(newbox)"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Rename failed", reply.trim() )
-        end
-    end
+   function rename( oldbox, newbox )
+      tag = self._tag()
+      out = @ "$(tag) RENAME $(oldbox) $(newbox)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Rename failed", reply.trim() )
+      end
+   end
 
-    function delete( mailbox )
-        tag = self._tag()
-        out = @ "$(tag) DELETE $(mailbox)"
-        reply = self._send( out )
-        if not reply.startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Delete failed", reply.trim() )
-        end
-    end
+   function delete( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) DELETE $(mailbox)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Delete failed", reply.trim() )
+      end
+   end
 
-    function search( criterion, charset )
-        tag = self._tag()
-        if not criterion: criterion = "ALL"
-        if not charset
-            charset = ""
-        else
-            charset = " CHARSET " + charset
-        end
-        out = @ "$(tag) SEARCH$(charset) $(criterion)"
-        reply = self._send( out, 4096 )
-        lines = reply.split( "\r\n" )
-        if not lines[-1].startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Search failed", reply.trim() )
-        end
-        return [].comp( lines[0].split(" ")[2:] )
-    end
+   function search( criterion, charset )
+      tag = self._tag()
+      if not criterion: criterion = "ALL"
+      if not charset
+         charset = ""
+      else
+         charset = " CHARSET " + charset
+      end
+      out = @ "$(tag) SEARCH$(charset) $(criterion)"
+      reply = self._send( out, 4096 )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Search failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
 
-    function fetch( msg_set, msg_parts )
-        tag = self._tag()
-        if not msg_parts: msg_parts = "FAST"
-        out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
-        reply = self._send( out, 4096 )
-        lines = reply.split( "\r\n" )
-        if not lines[-1].startsWith( tag + " OK" )
-            raise socket.NetError( 10010, "Fetch failed", reply.trim() )
-        end
-        return lines[:-1]//...
-    end
+   function fetch( msg_set, msg_parts )
+      tag = self._tag()
+      if not msg_parts: msg_parts = "FAST"
+      out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
+      reply = self._send( out, 4096 )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Fetch failed", reply.trim() )
+      end
+      return lines[:-1]//...
+   end
 
-    function _tag()
-        n = self._n++
-        return @ "A$(n:5p0r)"
-    end
+   function _tag()
+      n = self._n++
+      return @ "A$(n:5p0r)"
+   end
 
-    function _send( cmd, bufsz )
-        if cmd
-            self.trace( "--> " + cmd )
-            self._sock.send( cmd + "\r\n" )
-        end
-        reply = ""
-        sz = self._sock.recv( reply, bufsz ? bufsz : 1024 )
-        if sz == bufsz // more?
-            while self._sock.readAvailable() // problem here, it's blocking, docs say it will not?
-                rep = ""
-                self._sock.recv( rep, bufsz ? bufsz : 1024 )
-                reply += rep
-            end
-        end
-        self.trace( "<-- " + reply.trim() )
-        return reply
-    end
+   function _send( cmd, bufsz )
+      if cmd
+         self.trace( "--> " + cmd )
+         self._sock.send( cmd + "\r\n" )
+      end
+      reply = ""
+      sz = self._sock.recv( reply, bufsz ? bufsz : 1024 )
+      if sz == bufsz // more?
+         while self._sock.readAvailable() // problem here, it's blocking, docs say it will not?
+            rep = ""
+            self._sock.recv( rep, bufsz ? bufsz : 1024 )
+            reply += rep
+         end
+      end
+      self.trace( "<-- " + reply.trim() )
+      return reply
+   end
 
 end // class IMAP
 
@@ -209,4 +209,6 @@ im.close()
 
 im.logout()
 */
+
+/* vi: set et ai sw=3 ts=3 sts=3: */
 
