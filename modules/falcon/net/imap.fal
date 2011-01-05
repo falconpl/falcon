@@ -6,19 +6,21 @@
 
 import from socket
 
+export
+
 enum State
    logout = -2,
-   nostate = -1,
+   nostate = -1, // initial state
    connected = 0,
    authenticated = 1,
    selected = 2
 end
 
-class IMAP( server, port )
+class IMAP( server, port, timeout )
 
    server = server
    port = port ? toString( port ) : "143"
-   timeout = 5000
+   timeout = timeout ? timeout : 5000
 
    trace = {=>}
 
@@ -47,14 +49,14 @@ class IMAP( server, port )
       end
    end
 
-   function login( user, pass )
+   function login( user, pasw )
       // connect if not done
       if self._sock == nil
          self.connect()
       end
       if self.state >= State.authenticated: return
       tag = self._tag()
-      out = @ "$(tag) LOGIN $(user) $(pass)"
+      out = @ "$(tag) LOGIN $(user) $(pasw)"
       reply = self._send( out )
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Login failed", reply.trim() )
@@ -72,6 +74,16 @@ class IMAP( server, port )
       end
       self.state = State.logout
       self.selected = nil
+      self._n = 0
+   end
+
+   function startTLS()
+      tag = self._tag()
+      out = @ "$(tag) STARTTLS"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "startTLS failed", reply.trim() )
+      end
    end
 
    function sel( mailbox, readonly )
@@ -137,14 +149,54 @@ class IMAP( server, port )
       end
    end
 
+   function subscribe( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) SUBSCRIBE $(mailbox)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Subscribe failed", reply.trim() )
+      end
+   end
+
+   function unsubscribe( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) UNSUBSCRIBE $(mailbox)"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Unsubscribe failed", reply.trim() )
+      end
+   end
+
+   function lst( dir, pattern )
+      if not dir: dir = '""'
+      if not pattern: pattern = '""'
+      tag = self._tag()
+      out = @ "$(tag) LIST $(dir) $(pattern)"
+      reply = self._send( out )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "List failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
+
+   function lsub( dir, pattern )
+      if not dir: dir '""'
+      if not pattern: pattern = '""'
+      tag = self._tag()
+      out = @ "$(tag) LSUB $(dir) $(pattern)"
+      reply = self._send( out )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Lsub failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
+
    function search( criterion, charset )
       tag = self._tag()
       if not criterion: criterion = "ALL"
-      if not charset
-         charset = ""
-      else
-         charset = " CHARSET " + charset
-      end
+      charset = charset ? " CHARSET " + charset : ""
       out = @ "$(tag) SEARCH$(charset) $(criterion)"
       reply = self._send( out, 4096 )
       lines = reply.split( "\r\n" )
@@ -191,24 +243,6 @@ class IMAP( server, port )
 
 end // class IMAP
 
-
-// TEST
-/*
-im = IMAP( "server" )
-im.trace = printl
-im.login( "user", "pass" )
-
-im.sel()
-
-ids = im.search()
-for msgid in ids
-    stuff = im.fetch( msgid, "FULL" )
-end
-
-im.close()
-
-im.logout()
-*/
 
 /* vi: set et ai sw=3 ts=3 sts=3: */
 
