@@ -1,21 +1,27 @@
 /*
-    IMAP module
+   IMAP module.
 
-    See http://tools.ietf.org/html/rfc3501
+   See http://tools.ietf.org/html/rfc3501
  */
 
 import from socket
 
 export
 
-enum State
-   logout = -2,
-   nostate = -1, // initial state
-   connected = 0,
-   authenticated = 1,
-   selected = 2
+enum IMAPState
+   logout         = -2,
+   nostate        = -1, // initial state
+   connected      = 0,
+   authenticated  = 1,
+   selected       = 2
 end
 
+/*#
+   @brief IMAP class.
+   @param server Server address.
+   @optparam port Port number.
+   @optparam timeout Socket timeout (default 5000).
+ */
 class IMAP( server, port, timeout )
 
    server = server
@@ -24,12 +30,15 @@ class IMAP( server, port, timeout )
 
    trace = {=>}
 
-   state = State.nostate
+   state = IMAPState.nostate
    selected = nil // current selected mailbox
 
    _sock = nil
    _n = 0
 
+   /*#
+      @brief Connect to IMAP server.
+    */
    function connect()
       sock = socket.TCPSocket()
       sock.setTimeout( self.timeout )
@@ -41,51 +50,68 @@ class IMAP( server, port, timeout )
       // get the OK or PREAUTH message
       reply = self._send()
       if reply[0:9] == "* PREAUTH"
-         self.state = State.authenticated
+         self.state = IMAPState.authenticated
       elif reply[0:4] != "* OK"
          raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
       else
-         self.state = State.connected
+         self.state = IMAPState.connected
       end
    end
 
+   /*#
+      @brief Login procedure.
+      @param user username.
+      @param pasw password.
+
+      Connection attempt will be performed if not already done.
+    */
    function login( user, pasw )
       // connect if not done
       if self._sock == nil
          self.connect()
       end
-      if self.state >= State.authenticated: return
+      if self.state >= IMAPState.authenticated: return
       tag = self._tag()
       out = @ "$(tag) LOGIN $(user) $(pasw)"
       reply = self._send( out )
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Login failed", reply.trim() )
       end
-      self.state = State.authenticated
+      self.state = IMAPState.authenticated
    end
 
+   /*#
+      @brief Logout procedure.
+    */
    function logout()
-      if self.state < State.connected: return
+      if self.state < IMAPState.connected: return
       tag = self._tag()
       out = @ "$(tag) LOGOUT"
       reply = self._send( out )
       if not reply.startsWith( "* BYE" )
          raise socket.NetError( 10010, "Logout failed", reply.trim() )
       end
-      self.state = State.logout
+      self.state = IMAPState.logout
       self.selected = nil
       self._n = 0
    end
 
+   /*
+      @brief Start TLS procedure.
    function startTLS()
       tag = self._tag()
       out = @ "$(tag) STARTTLS"
       reply = self._send( out )
       if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "startTLS failed", reply.trim() )
+         raise socket.NetError( 10010, "Start TLS failed", reply.trim() )
       end
-   end
+   end*/
 
+   /*#
+      @brief Select a mailbox.
+      @optparam mailbox The mailbox to select (default INBOX).
+      @optparam readonly (boolean) Default false.
+    */
    function sel( mailbox, readonly )
       if mailbox == nil: mailbox = "INBOX"
       cmd = readonly ? "EXAMINE" : "SELECT"
@@ -97,9 +123,12 @@ class IMAP( server, port, timeout )
          raise socket.NetError( 10010, "Select failed", reply.trim() )
       end
       self.selected = mailbox
-      self.state = State.selected
+      self.state = IMAPState.selected
    end
 
+   /*#
+      @brief Close selected mailbox.
+    */
    function close()
       if not self.selected: return
       tag = self._tag()
@@ -109,9 +138,12 @@ class IMAP( server, port, timeout )
          raise socket.NetError( 10010, "Close failed", reply.trim() )
       end
       self.selected = nil
-      self.state = State.authenticated
+      self.state = IMAPState.authenticated
    end
 
+   /*#
+      @brief Expunge a mailbox.
+    */
    function expunge()
       if not self.selected: return
       tag = self._tag()
@@ -122,6 +154,10 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief Create a mailbox.
+      @param mailbox The mailbox to create.
+    */
    function create( mailbox )
       tag = self._tag()
       out = @ "$(tag) CREATE $(mailbox)"
@@ -131,6 +167,11 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief Rename a mailbox.
+      @param oldbox The actual mailbox to rename.
+      @param newbox The desired mailbox name.
+    */
    function rename( oldbox, newbox )
       tag = self._tag()
       out = @ "$(tag) RENAME $(oldbox) $(newbox)"
@@ -140,6 +181,10 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief Delete a mailbox.
+      @param mailbox The mailbox to delete.
+    */
    function delete( mailbox )
       tag = self._tag()
       out = @ "$(tag) DELETE $(mailbox)"
@@ -149,6 +194,10 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief Subscribe to a mailbox.
+      @param mailbox The mailbox to subscribe to.
+    */
    function subscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) SUBSCRIBE $(mailbox)"
@@ -158,6 +207,10 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief Unsubscribe to a mailbox.
+      @param mailbox The mailbox to unsubscribe to.
+    */
    function unsubscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) UNSUBSCRIBE $(mailbox)"
@@ -167,6 +220,12 @@ class IMAP( server, port, timeout )
       end
    end
 
+   /*#
+      @brief List mailboxes.
+      @optparam dir Reference directory (default "").
+      @optparam pattern Search pattern (default "").
+      @return A list of mailboxes names.
+    */
    function lst( dir, pattern )
       if not dir: dir = '""'
       if not pattern: pattern = '""'
@@ -180,8 +239,14 @@ class IMAP( server, port, timeout )
       return [].comp( lines[0].split(" ")[2:] )
    end
 
+   /*#
+      @brief List subscribed mailboxes.
+      @optparam dir Reference directory (default "").
+      @optparam pattern Search pattern (default "").
+      @return A list of subscribed mailboxes names.
+    */
    function lsub( dir, pattern )
-      if not dir: dir '""'
+      if not dir: dir = '""'
       if not pattern: pattern = '""'
       tag = self._tag()
       out = @ "$(tag) LSUB $(dir) $(pattern)"
@@ -193,6 +258,12 @@ class IMAP( server, port, timeout )
       return [].comp( lines[0].split(" ")[2:] )
    end
 
+   /*#
+      @brief Search for messages.
+      @optparam criterion Search criteria (default ALL).
+      @optparam charset Optional charset specification.
+      @return A list of message ids matching the criteria.
+    */
    function search( criterion, charset )
       tag = self._tag()
       if not criterion: criterion = "ALL"
@@ -206,6 +277,13 @@ class IMAP( server, port, timeout )
       return [].comp( lines[0].split(" ")[2:] )
    end
 
+   /*#
+      @brief Fetch data associated with a message.
+      @param msg_set Message id or a sequence of message ids.
+      @optparam msg_parts message data item names or macro (default FAST).
+      @return A Dictionary whose keys are the message ids, and values the raw data. 
+      @see http://tools.ietf.org/html/rfc3501#section-6.4.5
+    */
    function fetch( msg_set, msg_parts )
       tag = self._tag()
       if not msg_parts: msg_parts = "FAST"
@@ -215,7 +293,12 @@ class IMAP( server, port, timeout )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Fetch failed", reply.trim() )
       end
-      return lines[:-1]//...
+      ret = [=>]
+      for line in lines[:-1]
+         fpos = line.find( 'FETCH' ) -1
+         ret[ line[line.find(' ')+1:fpos] ] = line[fpos+7:]
+      end
+      return ret
    end
 
    function _tag()
@@ -231,7 +314,7 @@ class IMAP( server, port, timeout )
       reply = ""
       sz = self._sock.recv( reply, bufsz ? bufsz : 1024 )
       if sz == bufsz // more?
-         while self._sock.readAvailable() // problem here, it's blocking, docs say it will not?
+         while self._sock.readAvailable( 0 )
             rep = ""
             self._sock.recv( rep, bufsz ? bufsz : 1024 )
             reply += rep
@@ -243,6 +326,5 @@ class IMAP( server, port, timeout )
 
 end // class IMAP
 
-
-/* vi: set et ai sw=3 ts=3 sts=3: */
+/* vi: set et ai sw=3 ts=3 sts=0: */
 
