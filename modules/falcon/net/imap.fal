@@ -19,14 +19,14 @@ end
 /*#
    @brief IMAP class.
    @param server Server address.
-   @optparam port Port number.
-   @optparam timeout Socket timeout (default 5000).
+   @optparam port Port number (default 143).
+   @optparam timeout Socket timeout (default 1000).
  */
 class IMAP( server, port, timeout )
 
    server = server
    port = port ? toString( port ) : "143"
-   timeout = timeout ? timeout : 5000
+   timeout = timeout ? timeout : 1000
 
    trace = {=>}
 
@@ -45,10 +45,11 @@ class IMAP( server, port, timeout )
       if not sock.connect( self.server, self.port )
          raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
       end
-      self.trace( "Connected." )
+      sock.setTimeout( 0 )
+      self.trace( "-- Connected." )
       self._sock = sock
       // get the OK or PREAUTH message
-      reply = self._send()
+      reply = self._recv()
       if reply[0:9] == "* PREAUTH"
          self.state = IMAPState.authenticated
       elif reply[0:4] != "* OK"
@@ -73,7 +74,8 @@ class IMAP( server, port, timeout )
       if self.state >= IMAPState.authenticated: return
       tag = self._tag()
       out = @ "$(tag) LOGIN $(user) $(pasw)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Login failed", reply.trim() )
       end
@@ -87,7 +89,8 @@ class IMAP( server, port, timeout )
       if self.state < IMAPState.connected: return
       tag = self._tag()
       out = @ "$(tag) LOGOUT"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( "* BYE" )
          raise socket.NetError( 10010, "Logout failed", reply.trim() )
       end
@@ -117,7 +120,8 @@ class IMAP( server, port, timeout )
       cmd = readonly ? "EXAMINE" : "SELECT"
       tag = self._tag()
       out = @ "$(tag) $(cmd) $(mailbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       lines = reply.split( "\r\n" )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Select failed", reply.trim() )
@@ -133,7 +137,8 @@ class IMAP( server, port, timeout )
       if not self.selected: return
       tag = self._tag()
       out = @ "$(tag) CLOSE"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Close failed", reply.trim() )
       end
@@ -148,7 +153,8 @@ class IMAP( server, port, timeout )
       if not self.selected: return
       tag = self._tag()
       out = @ "$(tag) EXPUNGE"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Expunge failed", reply.trim() )
       end
@@ -161,7 +167,8 @@ class IMAP( server, port, timeout )
    function create( mailbox )
       tag = self._tag()
       out = @ "$(tag) CREATE $(mailbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Create failed", reply.trim() )
       end
@@ -175,7 +182,8 @@ class IMAP( server, port, timeout )
    function rename( oldbox, newbox )
       tag = self._tag()
       out = @ "$(tag) RENAME $(oldbox) $(newbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Rename failed", reply.trim() )
       end
@@ -188,7 +196,8 @@ class IMAP( server, port, timeout )
    function delete( mailbox )
       tag = self._tag()
       out = @ "$(tag) DELETE $(mailbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Delete failed", reply.trim() )
       end
@@ -201,7 +210,8 @@ class IMAP( server, port, timeout )
    function subscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) SUBSCRIBE $(mailbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Subscribe failed", reply.trim() )
       end
@@ -214,7 +224,8 @@ class IMAP( server, port, timeout )
    function unsubscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) UNSUBSCRIBE $(mailbox)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       if not reply.startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Unsubscribe failed", reply.trim() )
       end
@@ -231,7 +242,8 @@ class IMAP( server, port, timeout )
       if not pattern: pattern = '""'
       tag = self._tag()
       out = @ "$(tag) LIST $(dir) $(pattern)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       lines = reply.split( "\r\n" )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "List failed", reply.trim() )
@@ -250,7 +262,8 @@ class IMAP( server, port, timeout )
       if not pattern: pattern = '""'
       tag = self._tag()
       out = @ "$(tag) LSUB $(dir) $(pattern)"
-      reply = self._send( out )
+      self._send( out )
+      reply = self._recv()
       lines = reply.split( "\r\n" )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Lsub failed", reply.trim() )
@@ -269,7 +282,8 @@ class IMAP( server, port, timeout )
       if not criterion: criterion = "ALL"
       charset = charset ? " CHARSET " + charset : ""
       out = @ "$(tag) SEARCH$(charset) $(criterion)"
-      reply = self._send( out, 4096 )
+      self._send( out )
+      reply = self._recv( 4096 )
       lines = reply.split( "\r\n" )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Search failed", reply.trim() )
@@ -281,24 +295,21 @@ class IMAP( server, port, timeout )
       @brief Fetch data associated with a message.
       @param msg_set Message id or a sequence of message ids.
       @optparam msg_parts message data item names or macro (default FAST).
-      @return A Dictionary whose keys are the message ids, and values the raw data. 
+      @return the raw data. 
       @see http://tools.ietf.org/html/rfc3501#section-6.4.5
     */
    function fetch( msg_set, msg_parts )
       tag = self._tag()
       if not msg_parts: msg_parts = "FAST"
       out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
-      reply = self._send( out, 4096 )
-      lines = reply.split( "\r\n" )
-      if not lines[-1].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Fetch failed", reply.trim() )
+      self._send( out )
+      reply = self._recv()
+      // reply can be lengthy
+      rnpos = reply.rfind( tag )
+      if rnpos == -1 or not reply[rnpos:].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Fetch failed", reply )
       end
-      ret = [=>]
-      for line in lines[:-1]
-         fpos = line.find( 'FETCH' ) -1
-         ret[ line[line.find(' ')+1:fpos] ] = line[fpos+7:]
-      end
-      return ret
+      return reply
    end
 
    function _tag()
@@ -306,19 +317,25 @@ class IMAP( server, port, timeout )
       return @ "A$(n:5p0r)"
    end
 
-   function _send( cmd, bufsz )
-      if cmd
-         self.trace( "--> " + cmd )
+   function _send( cmd )
+      self.trace( "--> " + cmd )
+      if self._sock.writeAvailable( self.timeout/1000.0 )
          self._sock.send( cmd + "\r\n" )
+      else
+         raise socket.NetError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
       end
+   end
+
+   function _recv( bufsz )
+      if bufsz == nil: bufsz = 1024
       reply = ""
-      sz = self._sock.recv( reply, bufsz ? bufsz : 1024 )
-      if sz == bufsz // more?
-         while self._sock.readAvailable( 0 )
-            rep = ""
-            self._sock.recv( rep, bufsz ? bufsz : 1024 )
+      rep = strBuffer( bufsz )
+      if self._sock.readAvailable( self.timeout/1000.0 )
+         self._sock.setTimeout( 50 )
+         while self._sock.recv( rep ) > 0
             reply += rep
          end
+         self._sock.setTimeout( 0 )
       end
       self.trace( "<-- " + reply.trim() )
       return reply
