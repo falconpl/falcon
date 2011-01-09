@@ -1321,7 +1321,7 @@ BSONIter::makeItem( const bson_type tp,
         //...
         break;
     case bson_long:
-        it = new Item( bson_iterator_long_raw( iter ) );
+        it = new Item( (int64) bson_iterator_long_raw( iter ) );
         break;
     case bson_eoo:
     default:
