@@ -19,6 +19,39 @@
 namespace Falcon
 {
 
+
+StmtAutoexpr::StmtAutoexpr( Expression* expr ):
+      m_expr( expr )
+{}
+
+StmtAutoexpr::~StmtAutoexpr()
+{
+   delete m_expr;
+}
+
+void StmtAutoexpr::toString( String& tgt ) const
+{
+   m_expr->toString( tgt );
+}
+
+
+void StmtAutoexpr::perform( VMachine* vm ) const
+{
+   vm->pushCode( this );
+   m_expr->perform();
+}
+
+void StmtAutoexpr::apply( VMachine* vm ) const
+{
+   // remove ourself and the data left by the expression.
+   vm->popCode();
+   vm->popData();
+}
+
+private:
+   Expression* m_expr;
+};
+
 StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
    Statement( while_t ),
    m_check(check),

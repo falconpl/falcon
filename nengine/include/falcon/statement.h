@@ -34,6 +34,7 @@ class Statement: public PStep
 
 public:
    typedef enum {
+      autoexpr_t,
       if_t,
       while_t
    } statement_t ;
@@ -46,6 +47,29 @@ public:
 
 private:
    statement_t m_type;
+};
+
+/** Autoexpression.
+ *
+ * This statement is needed to wrap an expression so that its
+ * result is removed from the stack.
+ *
+ * The obvious un-necessity of this class advises for the usage of
+ * registers where expressions place their results; but reasons
+ * against are equally valid.
+ */
+class StmtAutoexpr: public Statement
+{
+public:
+   StmtAutoexpr( Expression* expr );
+   virtual ~StmtAutoexpr();
+
+   void toString( String& tgt ) const;
+   virtual void perform( VMachine* vm ) const;
+   virtual void apply( VMachine* vm ) const;
+
+private:
+   Expression* m_expr;
 };
 
 
