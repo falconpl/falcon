@@ -45,20 +45,27 @@ endmacro()
 
 macro( FalconFindDataMatrix )
     if ( WIN32 )
-        # todo
+        find_path( DMTX_INCLUDE_PATH dmtx.h
+            HINTS c:/dmtx c:/libdmtx-0.7.2 )
+        find_library( DMTX_LIBRARY libdmtx
+            HINTS c:/dmtx c:/libdmtx-0.7.2
+            c:/dmtx/project/visualc9/Release
+            c:/dmtx/project/visualc9/Debug
+            c:/libdmtx-0.7.2/project/visualc9/Release
+            c:/libdmtx-0.7.2/project/visualc9/Debug )
     else()
         find_path( DMTX_INCLUDE_PATH dmtx.h
             HINTS /usr/include /usr/local/include )
-        mark_as_advanced( DMTX_INCLUDE_PATH )
         find_library( DMTX_LIBRARY dmtx
             HINTS /usr/lib /usr/local/lib )
-        mark_as_advanced( DMTX_LIBRARY )
-        if ( ( DMTX_INCLUDE_PATH STREQUAL DMTX_INCLUDE_PATH-NOTFOUND )
-            OR ( DMTX_LIBRARY STREQUAL DMTX_LIBRARY-NOTFOUND ) )
-            set( _dmtx OFF )
-        else()
-            set( _dmtx ON )
-        endif()
+    endif()
+    mark_as_advanced( DMTX_INCLUDE_PATH )
+    mark_as_advanced( DMTX_LIBRARY )
+    if ( ( DMTX_INCLUDE_PATH STREQUAL DMTX_INCLUDE_PATH-NOTFOUND )
+           OR ( DMTX_LIBRARY STREQUAL DMTX_LIBRARY-NOTFOUND ) )
+        set( _dmtx OFF )
+    else()
+        set( _dmtx ON )
     endif()
 endmacro()
 

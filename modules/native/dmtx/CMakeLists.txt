@@ -39,11 +39,7 @@ add_library( ${FALCON_MODULE} MODULE
 ##
 #   Linking
 #
-if ( WIN32 )
-    #target_link_libraries( ${FALCON_MODULE} falcon_engine )
-else()
-    target_link_libraries( ${FALCON_MODULE} falcon_engine ${DMTX_LIBRARY} )
-endif()
+target_link_libraries( ${FALCON_MODULE} falcon_engine ${DMTX_LIBRARY} )
 
 ##
 #   Install
