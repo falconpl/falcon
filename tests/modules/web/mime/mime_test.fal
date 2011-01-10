@@ -1,0 +1,53 @@
+import from web.mime in mime
+
+msg = '
+Return-Path: <stnsls@gmail.com>
+Delivered-To: testing@chaosorigin.com
+Received: from spool.mail.gandi.net (mspool1-d.mgt.gandi.net [10.0.21.131])
+    by nmboxes15-d.mgt.gandi.net (Postfix) with ESMTP id C2818FD9BB
+    for <testing@chaosorigin.com>; Tue, 14 Dec 2010 18:58:35 +0100 (CET)
+Received: from mfilter8-d.gandi.net (mfilter8-d.gandi.net [217.70.178.34])
+    by spool.mail.gandi.net (Postfix) with ESMTP id BE95D25D31C
+    for <testing@chaosorigin.com>; Tue, 14 Dec 2010 18:58:35 +0100 (CET)
+X-Virus-Scanned: Debian amavisd-new at mfilter8-d.mgt.gandi.net
+Received: from spool.mail.gandi.net ([10.0.21.131])
+    by mfilter8-d.gandi.net (mfilter8-d.gandi.net [217.70.178.34]) (amavisd-new, port 10024)
+    with ESMTP id 7z7rghrLDhbp for <testing@chaosorigin.com>;
+    Tue, 14 Dec 2010 18:58:34 +0100 (CET)
+Received: from mail-iw0-f176.google.com (mail-iw0-f176.google.com [209.85.214.176])
+    by spool.mail.gandi.net (Postfix) with ESMTP id 3BC5B25D31D
+    for <testing@chaosorigin.com>; Tue, 14 Dec 2010 18:58:31 +0100 (CET)
+Received: by iwn2 with SMTP id 2so1086087iwn.21
+        for <testing@chaosorigin.com>; Tue, 14 Dec 2010 09:58:30 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:received:received:date:message-id
+         :subject:from:to:content-type;
+        bh=kGHp7R0RtvHHDG+ecNgiIiKPXcWejy2HEAyqm1ZSxQI=;
+        b=AES1/nTiXrsw8UQPV4FRMoqSllXHDxunrAMon43yI1kBU+yjEkTIcj9PJV6MmF5b7r
+         ayATvrVjrFuj4hO2MlaVbi2s0KUpO5zEJQwkRnlhUCTZ6pZkV0+KOHBgnCu6nHH5ArVQ
+         BLn9/9JQ9QglUBJ9srjyqB0b9yCRsB8PBRDeo=
+DomainKey-Signature: a=rsa-sha1; c=nofws;
+        d=gmail.com; s=gamma;
+        h=mime-version:date:message-id:subject:from:to:content-type;
+        b=Y/mqYj5HQJei76uxuN+qsHdavAeA/6VHrVwd0GXpXnutBnM8EcRnWUoWvNgqg1RURW
+         ABbB814PpbzLKTUewRgopNCqN9e+AYTvvdDMbjW77U+hrpLmtjbJgSpfXC6fdQZFWZAt
+         Xb6m8vnUh6c9DndDT3L1qErb6pQxMfrItOjWA=
+MIME-Version: 1.0
+Received: by 10.231.35.8 with SMTP id n8mr3644588ibd.123.1292349510212; Tue,
+ 14 Dec 2010 09:58:30 -0800 (PST)
+Received: by 10.231.153.7 with HTTP; Tue, 14 Dec 2010 09:58:30 -0800 (PST)
+Date: Tue, 14 Dec 2010 18:58:30 +0100
+Message-ID: <AANLkTinyxsRbH1D3fLXdf1BnZY_MjjLN0M8iMm1UBr8G@mail.gmail.com>
+Subject: Test IMAP
+From: Stanislas Marquis <stnsls@gmail.com>
+To: testing@chaosorigin.com
+Content-Type: text/plain; charset=ISO-8859-1
+
+Hello test imap.'
+
+part = mime.parseString( msg )
+inspect( part )
+
+/* vi: set ai et sts=3 sw=3: */
+
