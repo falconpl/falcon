@@ -1,0 +1,360 @@
+/*
+   IMAP module.
+
+   See http://tools.ietf.org/html/rfc3501
+ */
+
+import from socket
+import from web.mime
+
+export
+
+enum IMAPState
+   logout         = -2,
+   nostate        = -1, // initial state
+   connected      = 0,
+   authenticated  = 1,
+   selected       = 2
+end
+
+/*#
+   @brief IMAP class.
+   @param server Server address.
+   @optparam port Port number (default 143).
+   @optparam timeout Socket timeout (default 1000).
+ */
+class IMAP( server, port, timeout )
+
+   server = server
+   port = port ? toString( port ) : "143"
+   timeout = timeout ? timeout : 1000
+
+   trace = {=>}
+
+   state = IMAPState.nostate
+   selected = nil // current selected mailbox
+
+   _sock = nil
+   _n = 0
+
+   /*#
+      @brief Connect to IMAP server.
+    */
+   function connect()
+      sock = socket.TCPSocket()
+      sock.setTimeout( self.timeout )
+      if not sock.connect( self.server, self.port )
+         raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
+      end
+      sock.setTimeout( 0 )
+      self.trace( "-- Connected." )
+      self._sock = sock
+      // get the OK or PREAUTH message
+      reply = self._recv()
+      if reply[0:9] == "* PREAUTH"
+         self.state = IMAPState.authenticated
+      elif reply[0:4] != "* OK"
+         raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
+      else
+         self.state = IMAPState.connected
+      end
+   end
+
+   /*#
+      @brief Login procedure.
+      @param user username.
+      @param pasw password.
+
+      Connection attempt will be performed if not already done.
+    */
+   function login( user, pasw )
+      // connect if not done
+      if self._sock == nil
+         self.connect()
+      end
+      if self.state >= IMAPState.authenticated: return
+      tag = self._tag()
+      out = @ "$(tag) LOGIN $(user) $(pasw)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Login failed", reply.trim() )
+      end
+      self.state = IMAPState.authenticated
+   end
+
+   /*#
+      @brief Logout procedure.
+    */
+   function logout()
+      if self.state < IMAPState.connected: return
+      tag = self._tag()
+      out = @ "$(tag) LOGOUT"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( "* BYE" )
+         raise socket.NetError( 10010, "Logout failed", reply.trim() )
+      end
+      self.state = IMAPState.logout
+      self.selected = nil
+      self._n = 0
+   end
+
+   /*
+      @brief Start TLS procedure.
+   function startTLS()
+      tag = self._tag()
+      out = @ "$(tag) STARTTLS"
+      reply = self._send( out )
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Start TLS failed", reply.trim() )
+      end
+   end*/
+
+   /*#
+      @brief Select a mailbox.
+      @optparam mailbox The mailbox to select (default INBOX).
+      @optparam readonly (boolean) Default false.
+    */
+   function sel( mailbox, readonly )
+      if mailbox == nil: mailbox = "INBOX"
+      cmd = readonly ? "EXAMINE" : "SELECT"
+      tag = self._tag()
+      out = @ "$(tag) $(cmd) $(mailbox)"
+      self._send( out )
+      reply = self._recv()
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Select failed", reply.trim() )
+      end
+      self.selected = mailbox
+      self.state = IMAPState.selected
+   end
+
+   /*#
+      @brief Close selected mailbox.
+    */
+   function close()
+      if not self.selected: return
+      tag = self._tag()
+      out = @ "$(tag) CLOSE"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Close failed", reply.trim() )
+      end
+      self.selected = nil
+      self.state = IMAPState.authenticated
+   end
+
+   /*#
+      @brief Expunge a mailbox.
+    */
+   function expunge()
+      if not self.selected: return
+      tag = self._tag()
+      out = @ "$(tag) EXPUNGE"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Expunge failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief Create a mailbox.
+      @param mailbox The mailbox to create.
+    */
+   function create( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) CREATE $(mailbox)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Create failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief Rename a mailbox.
+      @param oldbox The actual mailbox to rename.
+      @param newbox The desired mailbox name.
+    */
+   function rename( oldbox, newbox )
+      tag = self._tag()
+      out = @ "$(tag) RENAME $(oldbox) $(newbox)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Rename failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief Delete a mailbox.
+      @param mailbox The mailbox to delete.
+    */
+   function delete( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) DELETE $(mailbox)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Delete failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief Subscribe to a mailbox.
+      @param mailbox The mailbox to subscribe to.
+    */
+   function subscribe( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) SUBSCRIBE $(mailbox)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Subscribe failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief Unsubscribe to a mailbox.
+      @param mailbox The mailbox to unsubscribe to.
+    */
+   function unsubscribe( mailbox )
+      tag = self._tag()
+      out = @ "$(tag) UNSUBSCRIBE $(mailbox)"
+      self._send( out )
+      reply = self._recv()
+      if not reply.startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Unsubscribe failed", reply.trim() )
+      end
+   end
+
+   /*#
+      @brief List mailboxes.
+      @optparam dir Reference directory (default "").
+      @optparam pattern Search pattern (default "").
+      @return A list of mailboxes names.
+    */
+   function lst( dir, pattern )
+      if not dir: dir = '""'
+      if not pattern: pattern = '""'
+      tag = self._tag()
+      out = @ "$(tag) LIST $(dir) $(pattern)"
+      self._send( out )
+      reply = self._recv()
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "List failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
+
+   /*#
+      @brief List subscribed mailboxes.
+      @optparam dir Reference directory (default "").
+      @optparam pattern Search pattern (default "").
+      @return A list of subscribed mailboxes names.
+    */
+   function lsub( dir, pattern )
+      if not dir: dir = '""'
+      if not pattern: pattern = '""'
+      tag = self._tag()
+      out = @ "$(tag) LSUB $(dir) $(pattern)"
+      self._send( out )
+      reply = self._recv()
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Lsub failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
+
+   /*#
+      @brief Search for messages.
+      @optparam criterion Search criteria (default ALL).
+      @optparam charset Optional charset specification.
+      @return A list of message ids matching the criteria.
+    */
+   function search( criterion, charset )
+      tag = self._tag()
+      if not criterion: criterion = "ALL"
+      charset = charset ? " CHARSET " + charset : ""
+      out = @ "$(tag) SEARCH$(charset) $(criterion)"
+      self._send( out )
+      reply = self._recv( 4096 )
+      lines = reply.split( "\r\n" )
+      if not lines[-1].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Search failed", reply.trim() )
+      end
+      return [].comp( lines[0].split(" ")[2:] )
+   end
+
+   /*#
+      @brief Fetch data associated with a message.
+      @param msg_set Message id or a sequence of message ids.
+      @optparam msg_parts message data item names or macro (default FAST).
+      @return the raw data. 
+      @see http://tools.ietf.org/html/rfc3501#section-6.4.5
+    */
+   function fetch( msg_set, msg_parts )
+      tag = self._tag()
+      if not msg_parts: msg_parts = "FAST"
+      out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
+      self._send( out )
+      reply = self._recv()
+      // reply can be lengthy
+      rnpos = reply.rfind( tag )
+      if rnpos == -1 or not reply[rnpos:].startsWith( tag + " OK" )
+         raise socket.NetError( 10010, "Fetch failed", reply )
+      end
+      return reply
+   end
+
+   /*#
+      @brief Get a message.
+      @param msg_id The message id.
+      @return The message as a mime.Part
+    */
+   function get( msg_id )
+      raw = self.fetch( msg_id, "BODY[]" )
+      apos = raw.find( "\r\n" ) + 2
+      zpos = raw.rfind( ")" )
+      return web.mime.parseString( raw[apos:zpos] )
+   end
+
+   function _tag()
+      n = self._n++
+      return @ "A$(n:5p0r)"
+   end
+
+   function _send( cmd )
+      self.trace( "--> " + cmd )
+      if self._sock.writeAvailable( self.timeout/1000.0 )
+         self._sock.send( cmd + "\r\n" )
+      else
+         raise socket.NetError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
+      end
+   end
+
+   function _recv( bufsz )
+      if bufsz == nil: bufsz = 1024
+      reply = ""
+      rep = strBuffer( bufsz )
+      if self._sock.readAvailable( self.timeout/1000.0 )
+         self._sock.setTimeout( 50 )
+         while self._sock.recv( rep ) > 0
+            reply += rep
+         end
+         self._sock.setTimeout( 0 )
+      end
+      self.trace( "<-- " + reply.trim() )
+      return reply
+   end
+
+end // class IMAP
+
+/* vi: set et ai sw=3 ts=3 sts=0: */
+
