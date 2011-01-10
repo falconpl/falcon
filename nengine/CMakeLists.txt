@@ -23,17 +23,20 @@ add_library(falcon_engine SHARED
   ../engine/autowstring.cpp
   ../engine/base64.cpp
   ../engine/basealloc.cpp
-  compiler.cpp
-  coreclass.cpp
-  coreobject.cpp
+  
   ../engine/fassert.cpp
   ../engine/filestat.cpp
   ../engine/format.cpp
+  
+  closedsymbol.cpp
+  dynsymbol.cpp
+  expression.cpp
+  exprvalue.cpp
+  globalsymbol.cpp
   item.cpp
-  symtab.cpp
-  syntree.cpp
-  src_lexer.cpp  
-  vm.cpp
+  localsymbol.cpp
+  sourceref.cpp
+  symbol.cpp
 )
 
 set_target_properties(falcon_engine PROPERTIES

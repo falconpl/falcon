@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
@@ -48,6 +49,22 @@ public:
 
    /* Called by the virtual machine when it encounters a step on its code stack. */
    virtual void apply( VMachine* vm ) const = 0;
+
+   /** Convert into a string */
+   inline const String toString() const
+   {
+      String temp;
+      toString( temp );
+      return temp;
+   }
+
+   /** Convert into a string.
+    *
+    * The default base class function does nothing. This is useful for
+    * pstep that are not part of the syntactic tree, but just of the
+    * VM code.
+    * */
+   inline virtual void toString( String& ) const {};
 };
 
 }

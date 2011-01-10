@@ -58,9 +58,14 @@ UnaryExpression::UnaryExpression( const UnaryExpression &other ):
 UnaryExpression::~UnaryExpression()
 {
    delete m_first;
-   delete m_second;
-   delete m_third;
 }
+
+void UnaryExpression::perform( VMachine* vm ) const
+{
+   vm->pushCode( this );
+   m_first->perform();
+}
+
 
 void UnaryExpression::serialize( Stream* s ) const
 {
@@ -92,6 +97,14 @@ BinaryExpression::~BinaryExpression()
 {
    delete m_first;
    delete m_second;
+}
+
+
+void BinaryExpression::perform( VMachine* vm ) const
+{
+   vm->pushCode( this );
+   m_first->perform();
+   m_second->perform();
 }
 
 void BinaryExpression::serialize( Stream* s ) const
@@ -129,6 +142,16 @@ TernaryExpression::~TernaryExpression()
    delete m_third;
 }
 
+
+void TernaryExpression::perform( VMachine* vm ) const
+{
+   // actually, ternary expressions doesn't require this fallback.
+   vm->pushCode( this );
+   m_first->perform();
+   m_second->perform();
+   m_third->perform();
+}
+
 void TernaryExpression::serialize( Stream* s ) const
 {
    Expression::serialize( s );
@@ -150,120 +173,43 @@ bool TernaryExpression::isStatic() const
    return m_first->isStatic() && m_second->isStatic() && third->isStatic();
 }
 
-//=============================================================
-
-Expression* ExprFactory::make( Expression::operator_t type )
-{
-   switch( type )
-   {
-   case t_value: return new ExprValue;
-   case t_neg: return new ExprNeg;
-   case t_not: return new ExprNot;
-
-   case t_and: return new ExprAnd;
-   case t_gate_and: return 0; // cannot be serialized
-   case t_or: return new ExprOr;
-   case t_gate_or: return 0; // cannot be serialized
-
-   case t_plus: return new ExprPlus;
-   case t_minus: return new ExprMinus;
-   case t_times: return new ExprTimes;
-   case t_divide: return new ExprDiv;
-   case t_modulo: return new ExprMod;
-   case t_power: return new ExprPow;
-
-   case t_pre_inc: return new ExprPreInc;
-   case t_post_inc: return new ExprPostInc;
-   case t_pre_dec: return new ExprPreDec;
-   case t_post_dec: return new ExprPostDec;
-
-   case t_gt: return new ExprGT;
-   case t_ge: return new ExprGE;
-   case t_lt: return new ExprLT;
-   case t_le: return new ExprLE;
-   case t_eq: return new ExprEQ;
-   case t_exeq: return new ExprEEQ;
-   case t_neq: return new ExprNE;
-
-   case t_in: return new ExprIn;
-   case t_notin: return new ExprNotIn;
-   case t_provides: return new ExprProvides;
-
-   case t_iif: return new ExprIIF;
-
-   case t_obj_access: return new ExprDot;
-   case t_funcall: return new ExprCall;
-   case t_array_access: return new ExprIndex;
-   case t_array_byte_access: return new ExprStarIndex;
-   case t_strexpand: return new ExprStrExpand;
-   case t_indirect: return new ExprIndirect;
-
-   case t_assign: return new ExprAssign;
-   case t_fbind: return new ExprFbind;
-
-   case t_aadd: return new ExprAutoAdd;
-   case t_asub: return new ExprAutoSub;
-   case t_amul: return new ExprAutoMul;
-   case t_adiv: return new ExprAutoDiv;
-   case t_amod: return new ExprAutoMod;
-   case t_apow: return new ExprAutoPow;
-
-   case t_eval: return new ExprEval;
-   case t_oob: return new ExprOob;
-   case t_deoob: return new ExprDeoob;
-   case t_xoroob: return new ExprXorOob;
-   case t_isoob: return new ExprIsOob;
-   }
-   return 0;
-}
-
-
-Expression* ExprFactory::deserialize( Stream* s )
-{
-   byte b;
-   s->read( &b, 1 );
-   operator_t type = reinterpret_cast<operator_t>( b );
-
-   Expression* expr = make( type );
-   if ( expr == 0 )
-   {
-      throw new IoError(ErrorParam( e_deser, __LINE__ ).extra( "Expression.deserialize"));
-   }
-
-   try {
-      expr->deserialize( s );
-      return expr;
-   }
-   catch( ... )
-   {
-      delete expr;
-      throw;
-   }
-}
 
 //==================================================================
 // Expressions
 //
 
-
-void ExprNeg::evaluate( VMachine* vm, Item& value ) const
+void ExprNeg::simplify( Item& value ) const
 {
-   if ( m_first->isDirect() )
+   if( m_first->simplify( item ) )
    {
-      Item operand;
-      m_first->evaluate( vm, operand );
-      Engine::getMetaClass( operand.type() )->neg( value, operand );
+      switch( item.type() )
+      {
+      case FLC_ITEM_INT: item.setInteger( -item.getInteger() ); return true;
+      case FLC_ITEM_NUM: item.setNumeric( -item.getNumeric() ); return true;
+      // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
+      default: return false;
+      }
    }
-   else {
-      vm->pushCode( this );
-      vm->pushCode( m_first );
-   }
+
+   return false;
 }
 
 void ExprNeg::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
-   Engine::getMetaClass( operand.type() )->neg( operand, operand );
+   Item& item = vm->topData();
+   // remove ourselves
+   vm->popCode();
+
+   switch( item.type() )
+   {
+      case FLC_ITEM_INT: item.setInteger( -item.getInteger() ); break;
+      case FLC_ITEM_NUM: item.setNumeric( -item.getNumeric() ); break;
+      // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
+      case FLC_ITEM_NIL: case FLC_ITEM_BOOL: break;
+      default:
+         CoreObject* obj = item.asObject();
+         obj->getClass()->__neg(item);
+   }
 }
 
 void ExprNeg::toString( String& str ) const
@@ -272,26 +218,25 @@ void ExprNeg::toString( String& str ) const
    str += m_operand->toString();
 }
 
-
 // ===================== logic not.
 
-void ExprNot::evaluate( VMachine* vm, Item& value ) const
+void ExprNot::simplify( Item& value ) const
 {
-   if ( m_first->isDirect() )
+   if( m_first->simplify( item ) )
    {
-      Item operand;
-      m_first->evaluate( vm, operand );
-      value.setBoolean( ! operand.isTrue() );
+      item.setBoolean( ! item.isTrue() );
+      return true;
    }
-   else {
-      vm->pushCode( this );
-      vm->pushCode( m_first );
-   }
+   return false;
 }
 
 void ExprNot::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
+   Item& operand = vm->topData();
+
+   // remove ourselves
+   vm->popCode();
+
    operand.setBoolean( ! operand.isTrue() );
 }
 
@@ -303,33 +248,35 @@ void ExprNot::toString( String& str ) const
 
 //=========================================================
 
-void ExprAnd::evaluate( VMachine* vm, Item& value ) const
+void ExprAnd::simplify( Item& value ) const
 {
-   if ( m_first->isDirect() && m_second->isDirect() )
+   Item fi, si;
+
+   if( m_first->simplify( fi ) && m_second->simplify( si ) )
    {
-      Item operand;
-      m_first->evaluate( vm, operand );
-      if( operand.isTrue() )
-      {
-         m_second->evaluate( vm, operand );
-         value.setBoolean( operand.isTrue() );
-      }
-      else {
-         value.setBoolean( false );
-      }
+      item.setBoolean( fi.isTrue() && si.isTrue() );
+      return true;
    }
-   else {
-      vm->pushCode( this );
-      vm->pushCode( m_second );
-      vm->pushCode( &this->m_gate );
-      vm->pushCode( m_first );
-   }
+   return false;
+}
+
+void ExprAnd::perform( VMachine* vm ) const
+{
+   vm->pushCode( this );
+   // add a gate...
+   vm->pushCode( &m_gate );
+   // check the first expression...
+   m_first->perform();
 }
 
 void ExprAnd::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
+   // use the space left from us by the previous expression
+   Item& operand = vm->topData();
+   // Booleanize it
    operand.setBoolean( operand.isTrue() );
+   // and remove ourselves
+   vm->popCode();
 }
 
 void ExprAnd::toString( String& str ) const
@@ -339,46 +286,59 @@ void ExprAnd::toString( String& str ) const
 
 void ExprAnd::Gate::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
+   Item& operand = vm->topData();
    if( operand.isFalse() )
    {
       operand.setBoolean( false );
-      // we have already been popped; pop also m_first and the original and
+      // Pop ourselves and the calling expression.
       vm->popCode(2);
    }
-   // otherwise just proceed.
+   else {
+      // just pop ourselves
+      vm->popCode();
+      // remove the data, which will be pushed by the other expression.
+      vm->popData();
+
+      // and proceed checking the other data.
+      m_second->perform();
+   }
+
 }
 
 
 //=========================================================
 
-void ExprOr::evaluate( VMachine* vm, Item& value ) const
+void ExprAnd::simplify( Item& value ) const
 {
-   if ( m_first->isDirect() && m_second->isDirect() )
+   Item fi, si;
+
+   if( m_first->simplify( fi ) && m_second->simplify( si ) )
    {
-      Item operand;
-      m_first->evaluate( vm, operand );
-      if( operand.isFalse() )
-      {
-         m_second->evaluate( vm, operand );
-         value.setBoolean( operand.isTrue() );
-      }
-      else {
-         value.setBoolean( true );
-      }
+      item.setBoolean( fi.isTrue() || si.isTrue() );
+      return true;
    }
-   else {
-      vm->pushCode( this );
-      vm->pushCode( m_second );
-      vm->pushCode( &this->m_gate );
-      vm->pushCode( m_first );
-   }
+   return false;
 }
+
+
+void ExprOr::perform( VMachine* vm ) const
+{
+   vm->pushCode( this );
+   // add a gate...
+   vm->pushCode( &m_gate );
+
+   // check the first expression
+   m_first->perform();
+}
+
 
 void ExprOr::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
+   // reuse the operand left by the other expression
+   Item& operand = vm->topData();
    operand.setBoolean( operand.isTrue() );
+   // remove ourselves
+   vm->popCode();
 }
 
 void ExprOr::toString( String& str ) const
@@ -388,45 +348,55 @@ void ExprOr::toString( String& str ) const
 
 void ExprOr::Gate::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
+   // read and recycle the topmost data.
+   Item& operand = vm->topData();
    if( operand.isTrue() )
    {
       operand.setBoolean( true );
-      // we have already been popped; pop also m_first and the original and
+      // pop ourselves and the calling code
       vm->popCode(2);
    }
-   // otherwise just proceed.
+   else {
+      // pop ourselves
+      vm->popCode();
+      // as other expression is bound to push data, remove ours
+      vm->popData();
+
+      // and proceed checking the other expression.
+      m_second->perform();
+   }
 }
 
 
 //=========================================================
 
-void ExprAssign::evaluate( VMachine* vm, Item& value ) const
+void ExprAssign::perform( VMachine* vm) const
 {
-   if ( m_first->isDirect() && m_second->isDirect() )
-   {
-      Item operand;
-      m_second->evaluate( vm, operand );
-      m_first->leval( vm, operand, value );
-   }
-   else {
-      vm->pushCode( this );
-      vm->pushCode( m_first );
-      vm->pushCode( m_second );
-   }
+   vm->pushCode( this );
+   // First generate second assignand.
+   // if that throws, there isn't any need to check for the assignment.
+   m_second->perform();
 }
 
 void ExprAssign::apply( VMachine* vm ) const
 {
-   Item& operand = vm->data(0);
-   m_first->leval( vm, operand, operand );
+   // delete ourselves
+   vm->popCode();
+   int size = vm->codeSize();
+
+   // prepare the code for the assignee
+   m_first->perform();
+
+   // Note: one-level operands, as plain symbols, are just pushed in the code.
+   // -- Deep assignments are left-to-right, meaning that the assignee l-value
+   // -- is in the topmost expression. The topmost expression is the one that
+   // -- is placed right where we stood (at 'size' position).
 }
 
 void ExprAssign::toString( String& str ) const
 {
    str = m_first->toString() + " = " + m_second->toString();
 }
-
 
 }
 

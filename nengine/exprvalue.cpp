@@ -68,16 +68,22 @@ void ExprValue::item( const Item& i )
    }
 }
 
-void ExprValue::evaluate( VMachine* vm, Item& value ) const
+void ExprValue::perform( VMachine* vm ) const
 {
-   // symbols evaluate to their value.
-   value = m_item;
+   vm->pushCode( this );
 }
 
 
-void ExprValue::leval( VMachine* vm, const Item& assignand, Item& value )
+void ExprValue::apply( VMachine* vm ) const
 {
+   vm->pushData( m_item );
+}
 
+
+bool ExprValue::simplify( Item& item ) const
+{
+   item = m_item;
+   return true;
 }
 
 virtual ExprValue* ExprValue::clone() const
@@ -93,7 +99,7 @@ virtual void ExprValue::serialize( Stream* s ) const
 
 virtual bool ExprValue::isStatic() const
 {
-   return ! m_item.isDeep() || m_item.isString();
+   return true;
 }
 
 virtual const String ExprValue::toString() const

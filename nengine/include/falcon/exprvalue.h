@@ -26,6 +26,11 @@ class Stream;
 class GarbageLock;
 class VMachine;
 
+/** Expression holding a constant value.
+ *
+ * This is a value-expression, or an expression that evaluates
+ * into a single, constant atomic value.
+ */
 class FALCON_DYN_CLASS ExprValue: public Expression
 {
 public:
@@ -34,6 +39,12 @@ public:
    ExprValue( const ExprValue& other );
 
    virtual ~ExprValue();
+
+
+   virtual bool simplify( Item& result ) const;
+
+   virtual void perform( VMachine* vm ) const;
+   virtual void apply( VMachine* vm ) const;
 
    /** Returns a const version of the stored item.
     * The stored item cannot be changed directly; to change it,
@@ -44,9 +55,6 @@ public:
    /** Changes the stored item.
     */
    void item( const Item& i );
-
-   virtual void evaluate( VMachine* vm, Item& value ) const;
-   virtual void leval( VMachine* vm, const Item& assignand, Item& value );
 
    virtual ExprValue* clone() const;
    virtual void serialize( Stream* s ) const;

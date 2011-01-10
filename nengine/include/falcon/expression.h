@@ -24,6 +24,7 @@ namespace Falcon
 {
 
 class Stream;
+class class ExprFactory;
 
 /** Pure abstract class representing a Falcon expression.
  *
@@ -34,6 +35,10 @@ class FALCON_DYN_CLASS Expression: public PStep
 public:
    typedef enum {
       t_value,
+      t_local_symbol,
+      t_global_symbol,
+      t_closed_symbol,
+      t_dyn_symbol,
       t_neg,
       t_not,
 
@@ -99,6 +104,13 @@ public:
    Expression( const Expression &other );
    virtual ~Expression();
 
+   /** Returns the type of this expression. */
+   operator_t type() const { return m_operator; }
+   /** Returns the position in the source where the expression was generated. */
+   const SourceRef& sourceRef() const { return m_sourceRef; }
+   /** Returns the position in the source where the expression was generated. */
+   SourceRef& sourceRef() { return m_sourceRef; }
+
    /** Serialize the expression on a stream. */
    virtual void serialize( Stream* s ) const;
 
@@ -108,25 +120,22 @@ public:
    /** True for binary expressions */
    virtual bool isBinaryOperator() const = 0;
 
-   /** Renders the value of this expression on an item.
-    * Returns
-    * Note: evaluating extends to items in values, and especially to symbols.
+   /** Sets the given expression as a target of an assignment.
     *
-    * In static expressions, the vm parameter can be 0 as it won't be used.
-    * This is generally useful during expressions optimization step.
-    * */
-   virtual void evaluate( VMachine* vm, Item& value ) const = 0;
-
-   /** Evaluate as an L-value.
-    * Normally, resolves in evaluate(), discarding the assignand.
-   */
-   inline virtual void leval( VMachine* vm, const Item& assignand, Item& value ) const {
-      evaluate( vm, value );
+    * The base class implementation throws an error (assignment to non-lvalue).
+    * Only assignable expressions (symbols and accessors) can be set as lvalue.
+    *
+    * This is automatically done when adding the expression as first member of
+    * an assignment.
+    */
+   inline virtual void setLValue() {
+      //TODO Throw proper exception
    }
 
-   operator_t type() const { return m_operator; }
-   const SourceRef& sourceRef() const { return m_sourceRef; }
-   SourceRef& sourceRef() { return m_sourceRef; }
+   /** Tells if this expression is subject to l-value.
+    * @return true if this expression is the left part of an assignment, false otherwise.
+    */
+   inline virtual bool isLValue() const { return false; }
 
    /** Returns true if the expression is composed of just constants.
     * When this method returns true, the expression can be simplified at compile time.
@@ -137,28 +146,14 @@ public:
     */
    virtual Expression* clone() const = 0;
 
-   /** Convert into a string */
-   inline const String toString() const
-   {
-      String temp;
-      toString( temp );
-      return temp;
-   }
-
-   /** Convert into a string */
-   virtual void toString( String& ) const = 0;
-
-   /** Returns true if it can be evaluated without posting a PStep to the VM.
+   /** Evaluates the expression when all its components are static.
+    * @Return true if the expression can be simplified, false if it's not statitc
     *
-    * Mainly, indirect expressions are those involving a function call or macro
-    * expansions that may require the VM to return in control for the calculation
-    * to be completed.
-    *
-    * A direct expression can be calculated immediately through cascading evaluate() calls,
-    * while an indirect expression will require posting of all its components to the
-    * code stack for later evaluation.
+    * Used during compilation to simplify static expressions, that is,
+    * reducing expressions at compile time.
     */
-   virtual bool isDirect() const = 0;
+   virtual bool simplify( Item& result ) const = 0;
+
 
    /** Performs the expression.
     *
@@ -188,15 +183,6 @@ private:
    SourceRef m_sourceRef;
 };
 
-/** Expression factory.
- *  Used during de-serialization to create the proper type of expression to be deserialized.
- */
-class ExprFactory {
-public:
-   static Expression* make( Expression::operator_t type );
-   static Expression* deserialize( Stream* s );
-};
-
 
 /** Pure abstract Base unary expression. */
 class FALCON_DYN_CLASS UnaryExpression: public Expression
@@ -218,6 +204,8 @@ public:
 
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
+
+   virtual void perform( VMachine* vm ) const;
 
 protected:
    Expression* m_first;
@@ -257,6 +245,8 @@ public:
    void second( Expression *s ) { delete m_second; m_second = s; }
 
    virtual bool isStatic() const;
+
+   virtual void perform( VMachine* vm ) const;
 
 protected:
    Expression* m_first;
@@ -301,6 +291,8 @@ public:
    Expression *third() const { return m_third; }
    void third( Expression *t ) { delete m_third; m_third = t; }
 
+   virtual void perform( VMachine* vm ) const;
+
 protected:
    Expression* m_first;
    Expression* m_second;
@@ -326,23 +318,23 @@ protected:
    inline class_name( Expression* op1 ): UnaryExpression( op, op1 ) {} \
    inline class_name( const class_name& other ): UnaryExpression( other ) {} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
-   virtual void evaluate( Item& value ) const; \
+   virtual bool simplify( Item& value ) const; \
    virtual void apply( VMachine* vm ) const; \
    virtual void toString( String& ) const;\
    protected:\
-   inline class_name(): Expression( op ) {}\
+   inline class_name(): UnaryExpression( op ) {}\
    friend class ExprFactory;\
    public:
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1 ) {} \
+   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) {} \
    inline class_name( const class_name& other ): BinaryExpression( other ) {} \
-   inline virtual class_name* clone() const { class_name new name( *this ); } \
-   virtual void evaluate( Item& value ) const; \
+   inline virtual class_name* clone() const { return new class_name( *this ); } \
+   virtual bool simplify( Item& value ) const; \
    virtual void apply( VMachine* vm ) const; \
    virtual void toString( String& ) const;\
    protected:\
-   inline class_name(): Expression( op ) {}\
+   inline class_name(): BinaryExpression( op ) {}\
    friend class ExprFactory;\
    public:
 
@@ -350,11 +342,11 @@ protected:
    inline class_name( Expression* op1, Expression* op2, Expression* op3 ): TernaryExpression( op, op1, op2, op3 ) {} \
    inline class_name( const class_name& other ): TernaryExpression( other ) {} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
-   virtual void evaluate( Item& value ) const; \
+   virtual bool simplify( Item& value ) const; \
    virtual void apply( VMachine* vm ) const; \
    virtual void toString( String& ) const;\
    protected:\
-   inline class_name(): Expression( op ) {}\
+   inline class_name(): TernaryExpression( op ) {}\
    friend class ExprFactory;\
    public:
 
@@ -379,9 +371,15 @@ public:
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
+   /** Redefine perform.
+    * This operator inserts a gate in perform.
+    */
+   virtual void perform( VMachine* vm ) const;
+
 private:
    class Gate: public PStep {
-      inline virtual void perform( VMachine* vm ) const {};
+   public:
+      inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
    } m_gate;
 };
@@ -399,9 +397,15 @@ public:
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
+   /** Redefine perform.
+    * This operator inserts a gate in perform.
+    */
+   virtual void perform( VMachine* vm ) const;
+
 private:
    class Gate: public PStep {
-      inline virtual void perform( VMachine* vm ) const {};
+   public:
+      inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
    } m_gate;
 };
@@ -410,8 +414,34 @@ private:
 class FALCON_DYN_CLASS ExprAssign: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAssign, t_assign );
+   inline ExprAssign( Expression* op1, Expression* op2 ):
+      BinaryExpression( t_assign, op1, op2 )
+   {
+      op1->setLValue();
+   }
+
+   inline ExprAssign( const ExprAssign& other ):
+      BinaryExpression( other )
+   {
+   }
+
+   inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
+
+   virtual bool simplify( Item& value ) const;
+   virtual void apply( VMachine* vm ) const;
+   virtual void toString( String& ) const;
+
    inline virtual bool isStandAlone() const { return true; }
+   /** Redefine perform.
+    * This operator sets the lvalue bit.
+    */
+   virtual void perform( VMachine* vm ) const;
+
+protected:
+   inline ExprAssign():
+      BinaryExpression( op ) {}
+
+   friend class ExprFactory;
 };
 
 #ifdef 0
