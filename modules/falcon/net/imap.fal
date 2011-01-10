@@ -9,6 +9,7 @@ import from web.mime
 
 export
 
+/*# IMAP states. */
 enum IMAPState
    logout         = -2,
    nostate        = -1, // initial state
@@ -21,24 +22,29 @@ end
    @brief IMAP class.
    @param server Server address.
    @optparam port Port number (default 143).
-   @optparam timeout Socket timeout (default 1000).
+   @optparam timeout Socket timeout in milliseconds (default 1000).
  */
 class IMAP( server, port, timeout )
 
+   /*# Server address. */
    server = server
+   /*# Port number. */
    port = port ? toString( port ) : "143"
+   /*# Timeout (in milliseconds) waiting for server contact. */
    timeout = timeout ? timeout : 1000
-
+   /*# Function used to show communication between client and server. */
    trace = {=>}
-
+   /*# Current state (see @a IMAPState). */
    state = IMAPState.nostate
-   selected = nil // current selected mailbox
+   /*# Current selected mailbox. */
+   selected = nil
 
    _sock = nil
    _n = 0
 
    /*#
       @brief Connect to IMAP server.
+      @throw socket.NetError Unable to connect.
     */
    function connect()
       sock = socket.TCPSocket()
@@ -47,7 +53,6 @@ class IMAP( server, port, timeout )
          raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
       end
       sock.setTimeout( 0 )
-      self.trace( "-- Connected." )
       self._sock = sock
       // get the OK or PREAUTH message
       reply = self._recv()
@@ -64,6 +69,7 @@ class IMAP( server, port, timeout )
       @brief Login procedure.
       @param user username.
       @param pasw password.
+      @throw socket.NetError Login failure.
 
       Connection attempt will be performed if not already done.
     */
@@ -85,6 +91,7 @@ class IMAP( server, port, timeout )
 
    /*#
       @brief Logout procedure.
+      @throw socket.NetError Logout failure.
     */
    function logout()
       if self.state < IMAPState.connected: return
@@ -97,7 +104,7 @@ class IMAP( server, port, timeout )
       end
       self.state = IMAPState.logout
       self.selected = nil
-      self._n = 0
+      self._n = 0 // reset internal counter
    end
 
    /*
@@ -115,6 +122,7 @@ class IMAP( server, port, timeout )
       @brief Select a mailbox.
       @optparam mailbox The mailbox to select (default INBOX).
       @optparam readonly (boolean) Default false.
+      @throw socket.NetError Select failure.
     */
    function sel( mailbox, readonly )
       if mailbox == nil: mailbox = "INBOX"
@@ -133,6 +141,7 @@ class IMAP( server, port, timeout )
 
    /*#
       @brief Close selected mailbox.
+      @throw socket.NetError Close failure.
     */
    function close()
       if not self.selected: return
@@ -149,6 +158,7 @@ class IMAP( server, port, timeout )
 
    /*#
       @brief Expunge a mailbox.
+      @throw socket.NetError Expunge failure.
     */
    function expunge()
       if not self.selected: return
@@ -164,6 +174,7 @@ class IMAP( server, port, timeout )
    /*#
       @brief Create a mailbox.
       @param mailbox The mailbox to create.
+      @throw socket.NetError Create failure.
     */
    function create( mailbox )
       tag = self._tag()
@@ -179,6 +190,7 @@ class IMAP( server, port, timeout )
       @brief Rename a mailbox.
       @param oldbox The actual mailbox to rename.
       @param newbox The desired mailbox name.
+      @throw socket.NetError Rename failure.
     */
    function rename( oldbox, newbox )
       tag = self._tag()
@@ -193,6 +205,7 @@ class IMAP( server, port, timeout )
    /*#
       @brief Delete a mailbox.
       @param mailbox The mailbox to delete.
+      @throw socket.NetError Delete failure.
     */
    function delete( mailbox )
       tag = self._tag()
@@ -207,6 +220,7 @@ class IMAP( server, port, timeout )
    /*#
       @brief Subscribe to a mailbox.
       @param mailbox The mailbox to subscribe to.
+      @throw socket.NetError Subscribe failure.
     */
    function subscribe( mailbox )
       tag = self._tag()
@@ -221,6 +235,7 @@ class IMAP( server, port, timeout )
    /*#
       @brief Unsubscribe to a mailbox.
       @param mailbox The mailbox to unsubscribe to.
+      @throw socket.NetError Unsubscribe failure.
     */
    function unsubscribe( mailbox )
       tag = self._tag()
@@ -237,6 +252,7 @@ class IMAP( server, port, timeout )
       @optparam dir Reference directory (default "").
       @optparam pattern Search pattern (default "").
       @return A list of mailboxes names.
+      @throw socket.NetError List failure.
     */
    function lst( dir, pattern )
       if not dir: dir = '""'
@@ -257,6 +273,7 @@ class IMAP( server, port, timeout )
       @optparam dir Reference directory (default "").
       @optparam pattern Search pattern (default "").
       @return A list of subscribed mailboxes names.
+      @throw socket.NetError Lsub failure.
     */
    function lsub( dir, pattern )
       if not dir: dir = '""'
@@ -277,6 +294,7 @@ class IMAP( server, port, timeout )
       @optparam criterion Search criteria (default ALL).
       @optparam charset Optional charset specification.
       @return A list of message ids matching the criteria.
+      @throw socket.NetError Search failure.
     */
    function search( criterion, charset )
       tag = self._tag()
@@ -297,10 +315,15 @@ class IMAP( server, port, timeout )
       @param msg_set Message id or a sequence of message ids.
       @optparam msg_parts message data item names or macro (default FAST).
       @return the raw data. 
+      @throw socket.NetError Fetch failure.
       @see http://tools.ietf.org/html/rfc3501#section-6.4.5
+
+      That is a raw, 'low-level' function returning the untreated answer got
+      from the server. More appropriate functions are the IMAP.get* functions.
     */
    function fetch( msg_set, msg_parts )
       tag = self._tag()
+      msg_set = toString( msg_set )
       if not msg_parts: msg_parts = "FAST"
       out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
       self._send( out )
@@ -314,19 +337,75 @@ class IMAP( server, port, timeout )
    end
 
    /*#
-      @brief Get a message.
+      @brief Get a whole message.
       @param msg_id The message id.
-      @return The message as a mime.Part
+      @optparam as_mime_part (boolean) return a web.mime.Part object, default false.
+      @return The whole message.
+      @throw socket.NetError Fetch failed.
     */
-   function get( msg_id )
+   function getBody( msg_id, as_mime_part )
+      if as_mime_part == nil: as_mime_part = false
       raw = self.fetch( msg_id, "BODY[]" )
       apos = raw.find( "\r\n" ) + 2
       zpos = raw.rfind( ")" )
-      return web.mime.parseString( raw[apos:zpos] )
+      return as_mime_part ? web.mime.parseString( raw[apos:zpos] ) : raw[apos:zpos]
+   end
+
+   /*#
+      @brief Get a section of a message.
+      @param msg_id The message id.
+      @param section The desired section.
+      @throw socket.NetError Fetch failed.
+
+      Examples:
+      @code
+         imap.getBodySection( 'HEADER' ) # get header
+         imap.getBodySection( '1.HEADER' ) # get header of first part
+         imap.getBodySection( '3' ) # get third part...
+      @endcode
+    */
+   function getBodySection( msg_id, section )
+      raw = self.fetch( msg_id, "BODY[" + toString( section ) + "]" )
+      apos = raw.find("\r\n") + 2
+      zpos = raw.rfind(")")
+      return raw[apos:zpos]
+   end
+
+   /*#
+      @brief Get the flags associated with a message.
+      @param msg_id The message id.
+      @return A list of flags.
+      @throw socket.NetError Fetch failed.
+    */
+   function getFlags( msg_id )
+      raw = self.fetch( msg_id, "FLAGS" )
+      lines = raw.split( "\r\n" )
+      apos = lines[0].find("(FLAGS ") + 7
+      zpos = lines[0].rfind(")")
+      return lines[0][apos:zpos].split(" ")
+   end
+
+   /*#
+      @brief Get the RFC822 size of a message.
+      @param msg_id The message id.
+      @return The message size.
+      @throw socket.NetError Fetch failed.
+    */
+   function getSize( msg_id )
+      raw = self.fetch( msg_id, "RFC822.SIZE" )
+      lines = raw.split( "\r\n" )
+      apos = lines[0].rfind(" ") + 1
+      zpos = lines[0].rfind(")")
+      return int( lines[0][apos:zpos] )
    end
 
    function _tag()
       n = self._n++
+      return @ "A$(n:5p0r)"
+   end
+
+   function _lastTag()
+      n = self._n - 1
       return @ "A$(n:5p0r)"
    end
 
