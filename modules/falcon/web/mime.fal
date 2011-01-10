@@ -412,16 +412,49 @@ function parse( stream )
    return part
 end
 
-
+/*# Parse a string containing a MIME message.
+   @param string the string to parse.
+   @return a new @a Part.
+   @throw ParseError if the string is not in MIME format.
+*/
 function parseString( string )
-   return Part.parse( StringStream( string ) )
+   ss = StringStream( string )
+   part = Part()
+   _parseHeaders( ss, part )
+   _parseBody( ss, part )
+   return part
 end
 
 function _parseHeaders( stream, part )
    // read headers
-   line = ""
+   line = strBuffer( 1024 )
+   buf = strBuffer( 4096 )
+   hdr = strBuffer( 4096 )
+
    while not stream.eof() and stream.readLine( line, _header_line_size ) and line
-      key,value = _parseHeaderLine( line )
+
+      if line.startsWith("\t") or line.startsWith(" ")
+         // we must be in a multiple-lines header
+         if buf == "": raise ParseError( 10003, "Malformed header", line )
+         buf += line
+         line = ""
+         continue
+      else
+         // new header coming
+         if buf != ""
+            // parse the previous header
+            hdr = buf
+            buf = line
+            line = ""
+         else
+            buf = line
+            line = ""
+            continue
+         end
+      end
+
+      key,value = _parseHeaderLine( hdr )
+      hdr = ""
 
       // should we consider some content type ?
       if key.lower() == "content-type"
@@ -488,7 +521,7 @@ function _parseHeaderLine( line )
             if char == 34     // quote
                state = 1
             elif char == 59   // ";"
-               // found a parameter
+               // maybe found a parameter
                if not xvalues: xvalues = [=>]
                _parseHeaderParam( value[posParam:n], xvalues )
                posParam = n + 1
@@ -515,7 +548,12 @@ function _parseHeaderLine( line )
       if posParam != value.len()
          _parseHeaderParam( value[posParam:], xvalues )
       end
-      return [key, xvalues]
+      // if the only key is "", we return the only value
+      if xvalues.len() == 1 and xvalues.get("") != nil
+         return [key, xvalues[""].trim()]
+      else
+         return [key, xvalues]
+      end
    else
       return [key, value.trim()]
    end
@@ -526,9 +564,9 @@ function _parseHeaderParam( param, xvalues )
    eqpos = param.find( "=" )
    if eqpos < 0
       // it is acceptable not to have a parameter name if this is the first value.
-      if xvalues
-         raise ParseError( 10005, "Malformed header parameter", param )
-      end
+      //if xvalues
+      //   raise ParseError( 10005, "Malformed header parameter", param )
+      //end
       key = ""
       value = param.trim()
    else
@@ -547,7 +585,11 @@ function _parseHeaderParam( param, xvalues )
       value = value[1:-1].replace( '\"', '"' )
    end
    
-   xvalues[key] = value
+   if key == "" and xvalues.get("") != nil
+      xvalues[key] += value
+   else
+      xvalues[key] = value
+   end
 end
 
 
@@ -648,3 +690,6 @@ function _parseBoundBody( stream, part, bound )
       raise ParseError( 10010, "Malformed body", "boundary broken at end of stream or no boundary" )
    end
 end
+
+/* vi: set ai et sts=3 sw=3: */
+

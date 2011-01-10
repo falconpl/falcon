@@ -5,6 +5,7 @@
  */
 
 import from socket
+import from web.mime
 
 export
 
@@ -310,6 +311,18 @@ class IMAP( server, port, timeout )
          raise socket.NetError( 10010, "Fetch failed", reply )
       end
       return reply
+   end
+
+   /*#
+      @brief Get a message.
+      @param msg_id The message id.
+      @return The message as a mime.Part
+    */
+   function get( msg_id )
+      raw = self.fetch( msg_id, "BODY[]" )
+      apos = raw.find( "\r\n" ) + 2
+      zpos = raw.rfind( ")" )
+      return web.mime.parseString( raw[apos:zpos] )
    end
 
    function _tag()
