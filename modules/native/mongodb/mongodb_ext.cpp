@@ -397,7 +397,7 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
         || ( i_multi && !i_multi->isBoolean() ) )
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "S,BSON,BSON" ) );
+                .extra( "S,BSON,BSON,[B,B]" ) );
     }
 
     CoreObject* self = vm->self().asObjectSafe();
@@ -406,7 +406,7 @@ FALCON_FUNC MongoDBConnection_update( VMachine* vm )
     AutoCString zNs( *i_ns );
     MongoDB::BSONObj* cond = static_cast<MongoDB::BSONObj*>( i_cond->asObjectSafe()->getUserData() );
     MongoDB::BSONObj* op = static_cast<MongoDB::BSONObj*>( i_op->asObjectSafe()->getUserData() );
-    const bool upsert = i_upsert? i_upsert->asBoolean() : true;
+    const bool upsert = i_upsert ? i_upsert->asBoolean() : true;
     const bool multi = i_multi ? i_multi->asBoolean() : true;
 
     vm->retval( conn->update( zNs.c_str(), cond, op, upsert, multi ) );
@@ -492,7 +492,8 @@ FALCON_FUNC MongoDBConnection_findOne( VMachine* vm )
 
 /*#
     @method find MongoDB
-	@brief Finds instances corespoding to the given query.
+    @brief Finds instances corresponding to the given query.
+    @param ns Namespace
     @optparam query BSON instance
     @optparam fields BSON instance
     @optparam skip default 0
@@ -691,8 +692,8 @@ FALCON_FUNC MongoOID_init( VMachine* vm )
 
 /*#
     @method toString ObjectID
-	@brief Returns a representation of the object as a string.
-	@return A string representing the object.
+    @brief Returns a representation of the object id as a string.
+    @return A string representing the object id.
  */
 FALCON_FUNC MongoOID_toString( VMachine* vm )
 {
@@ -889,9 +890,9 @@ FALCON_FUNC MongoBSON_hasKey( VMachine* vm )
 
 /*#
     @method value BSON
-	@brief Changes the value for a given key, or inserts a new key.
-    @param key The key of which the value should be changed or inserted.
-    @return value for key given (might be nil), or nil.
+    @brief Get the value for a given key.
+    @param key The researched key.
+    @return value for key given (might be nil!), or nil if not found.
  */
 FALCON_FUNC MongoBSON_value( VMachine* vm )
 {
@@ -991,7 +992,7 @@ FALCON_FUNC MongoBSONIter_key( VMachine* vm )
 /*#
     @method value BSONIter
     @brief Get the current BSON value
-	@return The current value.
+    @return The current value.
  */
 FALCON_FUNC MongoBSONIter_value( VMachine* vm )
 {
