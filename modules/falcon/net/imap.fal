@@ -5,7 +5,6 @@
  */
 
 import from socket
-import from web.mime
 
 export
 
@@ -314,6 +313,7 @@ class IMAP( server, port, timeout )
       @brief Fetch data associated with a message.
       @param msg_set Message id or a sequence of message ids.
       @optparam msg_parts message data item names or macro (default FAST).
+      @optparam sz Total size of data, if known in advance.
       @return the raw data. 
       @throw socket.NetError Fetch failure.
       @see http://tools.ietf.org/html/rfc3501#section-6.4.5
@@ -321,13 +321,13 @@ class IMAP( server, port, timeout )
       That is a raw, 'low-level' function returning the untreated answer got
       from the server. More appropriate functions are the IMAP.get* functions.
     */
-   function fetch( msg_set, msg_parts )
+   function fetch( msg_set, msg_parts, sz )
       tag = self._tag()
       msg_set = toString( msg_set )
       if not msg_parts: msg_parts = "FAST"
       out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
       self._send( out )
-      reply = self._recv()
+      reply = self._recv( sz )
       // reply can be lengthy
       rnpos = reply.rfind( tag )
       if rnpos == -1 or not reply[rnpos:].startsWith( tag + " OK" )
@@ -339,16 +339,14 @@ class IMAP( server, port, timeout )
    /*#
       @brief Get a whole message.
       @param msg_id The message id.
-      @optparam as_mime_part (boolean) return a web.mime.Part object, default false.
       @return The whole message.
       @throw socket.NetError Fetch failed.
     */
-   function getBody( msg_id, as_mime_part )
-      if as_mime_part == nil: as_mime_part = false
-      raw = self.fetch( msg_id, "BODY[]" )
+   function getBody( msg_id )
+      raw = self.fetch( msg_id, "BODY[]", self.getSize( msg_id ) + 128 )
       apos = raw.find( "\r\n" ) + 2
       zpos = raw.rfind( ")" )
-      return as_mime_part ? web.mime.parseString( raw[apos:zpos] ) : raw[apos:zpos]
+      return raw[apos:zpos]
    end
 
    /*#
@@ -359,9 +357,9 @@ class IMAP( server, port, timeout )
 
       Examples:
       @code
-         imap.getBodySection( 'HEADER' ) # get header
-         imap.getBodySection( '1.HEADER' ) # get header of first part
-         imap.getBodySection( '3' ) # get third part...
+         imap.getBodySection( 1, 'HEADER' ) # get header
+         imap.getBodySection( 3, '1.HEADER' ) # get header of first part
+         imap.getBodySection( 5, 3 ) # get third part...
       @endcode
     */
    function getBodySection( msg_id, section )
@@ -418,14 +416,15 @@ class IMAP( server, port, timeout )
       end
    end
 
-   function _recv( bufsz )
+   function _recv( totalsz, bufsz )
+      if totalsz == nil: totalsz = 1024
       if bufsz == nil: bufsz = 1024
-      reply = ""
-      rep = strBuffer( bufsz )
+      reply = strBuffer( totalsz )
+      buf = strBuffer( bufsz )
       if self._sock.readAvailable( self.timeout/1000.0 )
          self._sock.setTimeout( 50 )
-         while self._sock.recv( rep ) > 0
-            reply += rep
+         while self._sock.recv( buf ) > 0
+            reply += buf
          end
          self._sock.setTimeout( 0 )
       end
