@@ -15,6 +15,7 @@
 
 #include <falcon/closedsymbol.h>
 #include <falcon/stream.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -26,26 +27,31 @@ ClosedSymbol::ClosedSymbol( const ClosedSymbol& other ):
 ClosedSymbol::~ClosedSymbol()
 {}
 
-void ClosedSymbol::evaluate( VMachine* vm, Item& value ) const
+void ClosedSymbol::apply( VMachine* vm ) const
 {
-   value = m_item;
+   // l-value (assignment)?
+   if( m_lvalue )
+   {
+      m_item = vm->topData();
+      // topData is already the value of the l-value evaluation.
+      // so we leave it alone.
+   }
+   else
+   {
+      vm->pushData( m_item );
+   }
 }
 
-void ClosedSymbol::leval( VMachine* vm, const Item& assignand, Item& value )
-{
-   m_item = assignand;
-   value = assignand;
-}
 
 void ClosedSymbol::serialize( Stream* s ) const
 {
-   Stream::serialize(s);
+   Symbol::serialize(s);
    //TODO
 }
 
-virtual void ClosedSymbol::deserialize( Stream* s )
+void ClosedSymbol::deserialize( Stream* s )
 {
-   Stream::deserialize(s);
+   Symbol::deserialize(s);
    //TODO
 }
 

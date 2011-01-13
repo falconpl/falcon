@@ -32,7 +32,7 @@ SynTree::~SynTree()
 }
 
 
-void toString( String& tgt ) const
+void SynTree::toString( String& tgt ) const
 {
    for( int i = 0; i < m_steps.size(); ++i )
    {
@@ -51,7 +51,7 @@ void SynTree::perform( VMachine* vm ) const
 void SynTree::apply( VMachine* vm ) const
 {
    // get the current step.
-   CodeFrame& cf = currentCode();
+   CodeFrame& cf = vm->currentCode();
    if (cf.m_seqId >= m_steps.size() )
    {
       // we're done.
@@ -60,10 +60,9 @@ void SynTree::apply( VMachine* vm ) const
    }
 
    PStep* step = m_steps[ cf.m_seqId++ ];
-   pstep->perform();
+   step->perform(vm);
 
    //TODO: continue to perform if not in debug and pstep was simple.
-   return;
 }
 
 }

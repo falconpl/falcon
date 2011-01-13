@@ -14,6 +14,7 @@
 */
 
 #include <falcon/statement.h>
+#include <falcon/expression.h>
 #include <falcon/vm.h>
 
 namespace Falcon
@@ -21,8 +22,11 @@ namespace Falcon
 
 
 StmtAutoexpr::StmtAutoexpr( Expression* expr ):
+      Statement(autoexpr_t),
       m_expr( expr )
-{}
+{
+   m_expr->precompile(&m_pcExpr);
+}
 
 StmtAutoexpr::~StmtAutoexpr()
 {
@@ -38,7 +42,10 @@ void StmtAutoexpr::toString( String& tgt ) const
 void StmtAutoexpr::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
-   m_expr->perform();
+   // TODO: use the pre-compiled version.
+   // I am using perform here to check perform works as well as precompile
+   //m_expr->perform( vm );
+   m_pcExpr.perform(vm);
 }
 
 void StmtAutoexpr::apply( VMachine* vm ) const
@@ -48,15 +55,16 @@ void StmtAutoexpr::apply( VMachine* vm ) const
    vm->popData();
 }
 
-private:
-   Expression* m_expr;
-};
+//====================================================================
+//
 
 StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
    Statement( while_t ),
    m_check(check),
    m_stmts( stmts )
-{}
+{
+   check->precompile(&m_pcCheck);
+}
 
 StmtWhile::~StmtWhile()
 {
@@ -67,7 +75,7 @@ StmtWhile::~StmtWhile()
 void StmtWhile::toString( String& tgt ) const
 {
    tgt = "while " + m_check->toString() + "\n" +
-           m_stmts->toString() + "\n" +
+           m_stmts->toString() +
          "end\n";
 }
 
@@ -77,16 +85,17 @@ void StmtWhile::perform( VMachine* vm ) const
    // call me back...
    vm->pushCode( this );
    // after evaluating the expression.
-   m_check->perform();
+   m_pcCheck.perform(vm);
 }
 
 
 void StmtWhile::apply( VMachine* vm ) const
 {
-   if ( vm->topData()->isTrue() )
+   if ( vm->topData().isTrue() )
    {
       // redo.
-      m_check->perform();
+      //m_check->perform(vm);
+      m_pcCheck.perform(vm);
       vm->pushCode( m_stmts );
    }
    else {
@@ -100,62 +109,113 @@ void StmtWhile::apply( VMachine* vm ) const
 
 
 
-StmtIf::StmtIf( Expression* check, SynTree ifTrue, SynTree ifFalse ):
-      Statement( if_t ),
-      m_check( check ),
-      m_ifTrue( ifTrue ),
-      m_ifFalse( ifFalse )
-{
-}
+//====================================================================
+//
 
+StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
+   Statement( if_t )
+{
+   m_ifFalse = ifFalse;
+   addElif( check, ifTrue );
+}
 
 StmtIf::~StmtIf()
 {
-   delete m_check;
-   delete m_ifTrue;
    delete m_ifFalse;
+   // elif branches will take care of themselves.
 }
 
+StmtIf& StmtIf::addElif( Expression *check, SynTree* ifTrue )
+{
+   m_elifs.push_back( ElifBranch(check, ifTrue) );
+   // Why not compiling it in the constructor?
+   // -- because STL vector does a copy constructor here, and that would result
+   // -- in filling the PCode twice.
+   m_elifs.back().compile();
+
+   return *this;
+}
+
+StmtIf& StmtIf::setElse( SynTree* ifFalse )
+{
+   delete m_ifFalse; // in case it was there.
+   m_ifFalse = ifFalse;
+   return *this;
+}
 
 void StmtIf::toString( String& tgt ) const
 {
-   tgt = "if "+ m_check->toString() + "\n" + m_ifTrue->toString();
+   tgt = "if "+ m_elifs[0].m_check->toString() + "\n"
+              + m_elifs[0].m_ifTrue->toString();
+
+   for ( int i = 1; i < m_elifs.size(); ++i )
+   {
+      tgt += "elif " + m_elifs[i].m_check->toString() + "\n"
+                     + m_elifs[i].m_ifTrue->toString();
+   }
 
    if( m_ifFalse != 0  ) {
       tgt += "else\n" + m_ifFalse->toString();
    }
+
    tgt += "end\n";
 }
 
 
-virtual void StmtIf::perform( VMachine* vm ) const
+void StmtIf::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
-   m_check->perform();
+
+   // we have more than 0 elifs.
+   m_elifs[0].m_pcCheck.perform( vm );
 }
 
 
-virtual void StmtIf::apply( VMachine* vm ) const
+void StmtIf::apply( VMachine* vm ) const
 {
+   int sid = vm->currentCode().m_seqId;
    if ( vm->topData().isTrue() )
    {
       // we're gone -- but we may use our frame.
-      vm->currentCode()->m_pstep = m_ifTrue;
+      vm->resetCode( m_elifs[sid].m_ifTrue );
    }
-   else {
-      //we're gone -- but can we use our frame?
-      if( m_ifFalse != 0 )
+   else
+   {
+      // try next else-if
+      if( ++sid < m_elifs.size() )
       {
-         vm->currentCode()->m_pstep = m_ifFalse;
+         vm->currentCode().m_seqId = sid;
+         m_elifs[sid].m_pcCheck.perform( vm );
       }
       else
       {
-         vm->popCode();
+         // we're out of elifs.
+         if( m_ifFalse != 0 )
+         {
+            vm->resetCode(m_ifFalse);
+         }
+         else
+         {
+            // just pop
+            vm->popCode();
+         }
       }
    }
 
-  // either way, the evaluated value isn't needed.
+  // In any way, the evaluated data is to be discarded
   vm->popData();
+}
+
+
+StmtIf::ElifBranch::~ElifBranch()
+{
+   delete m_check;
+   delete m_ifTrue;
+}
+
+void StmtIf::ElifBranch::compile()
+{
+   m_check->precompile( &m_pcCheck );
 }
 
 }

@@ -18,6 +18,7 @@
 
 #include <falcon/pstep.h>
 #include <falcon/syntree.h>
+#include <falcon/pcode.h>
 
 namespace Falcon
 {
@@ -40,7 +41,7 @@ public:
    } statement_t ;
 
    Statement( statement_t type ):
-      m_type(t)
+      m_type(type)
    {}
 
    inline virtual ~Statement() {}
@@ -70,6 +71,7 @@ public:
 
 private:
    Expression* m_expr;
+   PCode m_pcExpr;
 };
 
 
@@ -85,6 +87,7 @@ public:
 
 private:
    Expression* m_check;
+   PCode m_pcCheck;
    SynTree* m_stmts;
 };
 
@@ -92,17 +95,40 @@ private:
 class StmtIf: public Statement
 {
 public:
-   StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse );
-   vitual ~StmtIf();
+   StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0 );
+   virtual ~StmtIf();
 
    void toString( String& tgt ) const;
    virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
+   /** Adds an else-if branch to the if statement */
+   StmtIf& addElif( Expression *check, SynTree* ifTrue );
+
+   /** Sets the else branch for this if statement. */
+   StmtIf& setElse( SynTree* ifFalse );
+
 private:
-   Expression* m_check;
-   SynTree* m_ifTrue;
    SynTree* m_ifFalse;
+
+   class ElifBranch
+   {
+   public:
+      Expression* m_check;
+      PCode m_pcCheck;
+      SynTree* m_ifTrue;
+
+      ElifBranch( Expression *check, SynTree* ifTrue ):
+         m_check( check ),
+         m_ifTrue( ifTrue )
+      {}
+
+      ~ElifBranch();
+
+      void compile();
+   };
+
+   std::vector<ElifBranch> m_elifs;
 };
 
 }

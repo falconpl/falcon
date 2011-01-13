@@ -14,8 +14,14 @@
 */
 
 #include <falcon/expression.h>
-#include <falcon/symbol.h>
+#include <falcon/exprvalue.h>
+#include <falcon/closedsymbol.h>
+#include <falcon/globalsymbol.h>
+#include <falcon/localsymbol.h>
+#include <falcon/dynsymbol.h>
+
 #include <falcon/exprfactory.h>
+#include <falcon/stream.h>
 
 namespace Falcon {
 
@@ -23,6 +29,7 @@ Expression* ExprFactory::make( Expression::operator_t type )
 {
    switch( type )
    {
+
    case Expression::t_value: return new ExprValue;
    case Expression::t_neg: return new ExprNeg;
    case Expression::t_not: return new ExprNot;
@@ -31,6 +38,9 @@ Expression* ExprFactory::make( Expression::operator_t type )
    case Expression::t_or: return new ExprOr;
 
    case Expression::t_plus: return new ExprPlus;
+
+   /*
+       * TODO
    case Expression::t_minus: return new ExprMinus;
    case Expression::t_times: return new ExprTimes;
    case Expression::t_divide: return new ExprDiv;
@@ -78,6 +88,7 @@ Expression* ExprFactory::make( Expression::operator_t type )
    case Expression::t_deoob: return new ExprDeoob;
    case Expression::t_xoroob: return new ExprXorOob;
    case Expression::t_isoob: return new ExprIsOob;
+   */
    }
    return 0;
 }
@@ -87,12 +98,12 @@ Expression* ExprFactory::deserialize( Stream* s )
 {
    byte b;
    s->read( &b, 1 );
-   operator_t type = reinterpret_cast<operator_t>( b );
+   Expression::operator_t type = (Expression::operator_t)( b );
 
    Expression* expr = make( type );
    if ( expr == 0 )
    {
-      throw new IoError(ErrorParam( e_deser, __LINE__ ).extra( "Expression.deserialize"));
+      //throw new IoError(ErrorParam( e_deser, __LINE__ ).extra( "Expression.deserialize"));
    }
 
    try {

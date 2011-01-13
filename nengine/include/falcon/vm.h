@@ -31,6 +31,8 @@ namespace Falcon {
 */
 class FALCON_DYN_CLASS VMachine: public BaseAlloc
 {
+
+public:
    VMachine();
    virtual ~VMachine();
 
@@ -43,20 +45,25 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
    const Item& localVar( int id ) const
    {
       const CallFrame& cs = m_callStack.back();
-      return m_dataStack[ n + cs.m_stackBase ];
+      return m_dataStack[ id + cs.m_stackBase ];
    }
 
    Item& localVar( int id )
    {
       const CallFrame& cs = m_callStack.back();
-      return m_dataStack[ n + cs.m_stackBase ];
+      return m_dataStack[ id + cs.m_stackBase ];
    }
 
    /** Return the nth parameter in the local context.
     *
     *TODO return 0 on parameter out of range.
     */
-   inline Item* param( int n ) const {
+   inline const Item* param( int n ) const {
+      const CallFrame& cs = m_callStack.back();
+      return &m_dataStack[ n + cs.m_stackBase ];
+   }
+
+   inline  Item* param( int n )  {
       const CallFrame& cs = m_callStack.back();
       return &m_dataStack[ n + cs.m_stackBase ];
    }
@@ -65,10 +72,15 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
     *
     *TODO use the local stack.
     */
-   inline Item* local( int n ) const {
+   inline const Item* local( int n ) const {
       const CallFrame& cs = m_callStack.back();
       return &m_dataStack[ n + cs.m_paramCount + cs.m_stackBase ];
    }
+
+   inline Item* local( int n ) {
+         const CallFrame& cs = m_callStack.back();
+         return &m_dataStack[ n + cs.m_paramCount + cs.m_stackBase ];
+      }
 
    /** Returns the self item in the local context.
     *
@@ -86,7 +98,7 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
     *
     * The step parameter is owned by the caller.
     */
-   inline void pushCode( PStep* step ) {
+   inline void pushCode( const PStep* step ) {
       m_codeStack.push_back( CodeFrame( step ) );
    }
 
@@ -109,8 +121,12 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
     */
    bool run();
 
-   inline void call( Function* );
-   void call( Function* function, const Item& self );
+   inline void call( Function* f, int np )
+   {
+      call( f, np, Item() );
+   }
+
+   virtual void call( Function* function, int np, const Item& self );
 
    /** Returns the step that is going to be executed next, or null if none */
    PStep* nextStep() const;
@@ -134,16 +150,27 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
     */
    //void raiseError( Error* theError );
 
-   const CallFrame& currentFrame() const { return m_callStack[m_callStack().size()-1]; }
-   CallFrame& currentFrame() { return m_callStack[m_callStack().size()-1]; }
+   const CallFrame& currentFrame() const { return m_callStack[m_callStack.size()-1]; }
+   CallFrame& currentFrame() { return m_callStack[m_callStack.size()-1]; }
 
-   const CodeFrame& currentCode() const { return m_codeStack[m_codeStack().size()-1]; }
-   CodeFrame& currentCode() { return m_codeStack[m_codeStack().size()-1]; }
+   const CodeFrame& currentCode() const { return m_codeStack[m_codeStack.size()-1]; }
+   CodeFrame& currentCode() { return m_codeStack[m_codeStack.size()-1]; }
 
-   const Item& popData() const { return m_dataStack.pop_back(); }
+   void popData() { m_dataStack.pop_back(); }
 
    inline void popCode() {
       popCode(1);
+   }
+
+   /** Changes the currently running pstep.
+    *
+    *  Other than changing the top step, this method resets the sequence ID.
+    *  Be careful: this won't work for PCode (they need the seq ID to be set to their size).
+    */
+   inline void resetCode( PStep* step ) {
+      CodeFrame& frame = currentCode();
+      frame.m_step = step;
+      frame.m_seqId = 0;
    }
 
    void popCode( int size ) {
@@ -180,6 +207,13 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
     */
    Item* findLocalItem( const String& name );
 
+   /** Returns the current code stack size.
+    *
+    * During processing of SynTree and CompExpr, the change of the stack size
+    * implies the request of a child item for the control to be returned to the VM.
+    *
+    */
+   int codeDepth() const { return m_codeStack.size(); }
 protected:
 
    Stream *m_stdIn;

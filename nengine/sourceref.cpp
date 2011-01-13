@@ -15,10 +15,11 @@
 
 #include <falcon/sourceref.h>
 #include <falcon/stream.h>
+#include <falcon/common.h>
 
 namespace Falcon {
 
-void SourceRef::serialize( Stream *s )
+void SourceRef::serialize( Stream *s ) const
 {
    int32 line;
 

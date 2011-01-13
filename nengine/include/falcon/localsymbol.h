@@ -25,14 +25,13 @@ class FALCON_DYN_CLASS LocalSymbol: public Symbol
 {
 public:
    LocalSymbol( const String& name, int id ):
-      Symbol( name, t_local_symbol ),
+      Symbol( t_local_symbol, name ),
       m_id( id )
    {}
 
    LocalSymbol( const LocalSymbol& other );
    virtual ~LocalSymbol();
 
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
    virtual void serialize( Stream* s ) const;

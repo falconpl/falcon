@@ -32,13 +32,19 @@ namespace Falcon {
 class FALCON_DYN_CLASS CodeFrame: public BaseAlloc
 {
 public:
+   // used by resize at compile time, but not really employed
+   inline CodeFrame():
+         m_step(0),
+         m_seqId(0)
+   {}
+
    /** The pstep to be executed now. */
-   PStep* m_step;
+   const PStep* m_step;
 
    /** Sequence ID (internal step in the sequence)  */
    int m_seqId;
 
-   inline CodeFrame( PStep* ps ):
+   inline CodeFrame( const PStep* ps ):
          m_step(ps),
          m_seqId(0)
    {}
@@ -47,6 +53,7 @@ public:
       m_step(other.m_step),
       m_seqId(other.m_seqId)
    {}
+
 
 };
 

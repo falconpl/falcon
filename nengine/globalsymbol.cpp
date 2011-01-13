@@ -14,7 +14,7 @@
 */
 
 #include <falcon/globalsymbol.h>
-#include <falcon/stream.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -30,11 +30,6 @@ GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
 
 GlobalSymbol::~GlobalSymbol()
 {}
-
-void GlobalSymbol::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-}
 
 void GlobalSymbol::apply( VMachine* vm ) const
 {

@@ -49,23 +49,36 @@ public:
 
    int size() const { return m_steps.size(); }
 
-   PStep* first() { return m_steps.first(); }
-   PStep* last()  { return m_steps.last(); }
+   PStep* first() { return m_steps.front(); }
+   PStep* last()  { return m_steps.back(); }
    PStep* at( int pos ) const { return m_steps[pos]; }
    void set( int pos, PStep* p )  { delete m_steps[pos]; m_steps[pos] = p; }
 
-   void insert( int pos, const PStep* step ) { m_steps.insert( m_steps.begin()+pos, step ); }
+   void insert( int pos, PStep* step ) {
+      m_steps.insert( m_steps.begin()+pos, step );
+   }
+
    void remove( int pos ) {
-      PStep* p = m_steps[ m_steps.begin()+pos ];
-      m_steps.remove( m_steps.begin()+pos );
+      PStep* p = m_steps[ pos ];
+      m_steps.erase( m_steps.begin()+pos );
       delete p;
    }
 
-   void append( const PStep* step ) { m_steps.append( step ); }
+   SynTree& append( PStep* step ) {
+      m_steps.push_back( step );
+      return *this;
+   }
 
    virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
-   void toString( String& tgt ) const;
+   virtual void toString( String& tgt ) const;
+
+   inline const String toString() const
+   {
+      String temp;
+      toString( temp );
+      return temp;
+   }
 
 private:
 

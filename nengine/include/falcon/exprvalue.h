@@ -26,6 +26,8 @@ class Stream;
 class GarbageLock;
 class VMachine;
 
+class ExprFactory;
+
 /** Expression holding a constant value.
  *
  * This is a value-expression, or an expression that evaluates
@@ -59,15 +61,17 @@ public:
    virtual ExprValue* clone() const;
    virtual void serialize( Stream* s ) const;
    virtual bool isStatic() const;
-   virtual const String toString() const;
+   virtual bool isBinaryOperator() const;
+   virtual void toString( String& ) const;
 
 protected:
    virtual void deserialize( Stream* s );
-   inline ExprValue( const Item& item ):
+   inline ExprValue():
       Expression( t_value ),
       m_lock(0)
    {}
 
+   friend class ExprFactory;
 private:
    Item m_item;
    GarbageLock* m_lock;

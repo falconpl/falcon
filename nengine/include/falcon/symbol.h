@@ -64,16 +64,19 @@ public:
    inline virtual bool simplify( Item& result ) const { return false; }
 
    virtual void serialize( Stream* s ) const;
-   virtual const String toString() const;
+   virtual void toString(String & str) const;
    const String& name() const { return m_name; }
 
    inline virtual void setLValue() { m_lvalue = true; }
    inline virtual bool isLValue() const { return m_lvalue; }
 
+   inline virtual bool isBinaryOperator() const { return false; }
+   inline virtual bool isStatic() const { return false; }
+
 protected:
-   Symbol( const String& name, t_operator type );
+   Symbol( operator_t type, const String& name );
    virtual void deserialize( Stream* s );
-   inline Symbol( t_operator type ):
+   inline Symbol( operator_t type ):
       Expression( type )
    {}
 

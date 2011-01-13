@@ -15,8 +15,10 @@
 
 #include <falcon/expression.h>
 #include <falcon/stream.h>
-#include <falcon/error.h>
 #include <falcon/item.h>
+#include <falcon/vm.h>
+#include <falcon/pcode.h>
+#include <falcon/exprfactory.h>
 
 namespace Falcon {
 
@@ -28,10 +30,10 @@ Expression::Expression( const Expression &other ):
 Expression::~Expression()
 {}
 
-void Expression::serialize( Stream* s )
+void Expression::serialize( Stream* s ) const
 {
    byte type = (byte) m_operator;
-   s->write( &b, 1 );
+   s->write( &type, 1 );
    m_sourceRef.serialize( s );
 }
 
@@ -42,10 +44,13 @@ void Expression::deserialize( Stream* s )
 
 void Expression::perform( VMachine* vm ) const
 {
-   Item dummy;
-   evaluate( vm, dummy );
+   vm->pushCode(this);
 }
 
+void Expression::precompile( PCode* pcode ) const
+{
+   pcode->pushStep( this );
+}
 
 //=============================================================
 
@@ -63,9 +68,14 @@ UnaryExpression::~UnaryExpression()
 void UnaryExpression::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
-   m_first->perform();
+   m_first->perform( vm );
 }
 
+void UnaryExpression::precompile( PCode* pcode ) const
+{
+   pcode->pushStep( this );
+   m_first->precompile( pcode );
+}
 
 void UnaryExpression::serialize( Stream* s ) const
 {
@@ -103,8 +113,16 @@ BinaryExpression::~BinaryExpression()
 void BinaryExpression::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
-   m_first->perform();
-   m_second->perform();
+   m_second->perform(vm);
+   m_first->perform(vm);
+}
+
+
+void BinaryExpression::precompile( PCode* pcode ) const
+{
+   pcode->pushStep( this );
+   m_second->precompile( pcode );
+   m_first->precompile( pcode );
 }
 
 void BinaryExpression::serialize( Stream* s ) const
@@ -147,17 +165,27 @@ void TernaryExpression::perform( VMachine* vm ) const
 {
    // actually, ternary expressions doesn't require this fallback.
    vm->pushCode( this );
-   m_first->perform();
-   m_second->perform();
-   m_third->perform();
+   m_first->perform(vm);
+   m_second->perform(vm);
+   m_third->perform(vm);
 }
+
+
+void TernaryExpression::precompile( PCode* pcode ) const
+{
+   pcode->pushStep( this );
+   m_third->precompile( pcode );
+   m_second->precompile( pcode );
+   m_first->precompile( pcode );
+}
+
 
 void TernaryExpression::serialize( Stream* s ) const
 {
    Expression::serialize( s );
-   m_first->serialize( s );
-   m_second->serialize( s );
    m_third->serialize( s );
+   m_second->serialize( s );
+   m_first->serialize( s );
 }
 
 void TernaryExpression::deserialize( Stream* s )
@@ -170,7 +198,7 @@ void TernaryExpression::deserialize( Stream* s )
 
 bool TernaryExpression::isStatic() const
 {
-   return m_first->isStatic() && m_second->isStatic() && third->isStatic();
+   return m_first->isStatic() && m_second->isStatic() && m_third->isStatic();
 }
 
 
@@ -178,14 +206,14 @@ bool TernaryExpression::isStatic() const
 // Expressions
 //
 
-void ExprNeg::simplify( Item& value ) const
+bool ExprNeg::simplify( Item& value ) const
 {
-   if( m_first->simplify( item ) )
+   if( m_first->simplify( value ) )
    {
-      switch( item.type() )
+      switch( value.type() )
       {
-      case FLC_ITEM_INT: item.setInteger( -item.getInteger() ); return true;
-      case FLC_ITEM_NUM: item.setNumeric( -item.getNumeric() ); return true;
+      case FLC_ITEM_INT: value.setInteger( -value.asInteger() ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( -value.asNumeric() ); return true;
       // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
       default: return false;
       }
@@ -202,29 +230,33 @@ void ExprNeg::apply( VMachine* vm ) const
 
    switch( item.type() )
    {
-      case FLC_ITEM_INT: item.setInteger( -item.getInteger() ); break;
-      case FLC_ITEM_NUM: item.setNumeric( -item.getNumeric() ); break;
+      case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
+      case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
       // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
       case FLC_ITEM_NIL: case FLC_ITEM_BOOL: break;
+      /*
       default:
+         // TODO
+
          CoreObject* obj = item.asObject();
          obj->getClass()->__neg(item);
+         */
    }
 }
 
 void ExprNeg::toString( String& str ) const
 {
    str = "-";
-   str += m_operand->toString();
+   str += m_first->toString();
 }
 
 // ===================== logic not.
 
-void ExprNot::simplify( Item& value ) const
+bool ExprNot::simplify( Item& value ) const
 {
-   if( m_first->simplify( item ) )
+   if( m_first->simplify( value ) )
    {
-      item.setBoolean( ! item.isTrue() );
+      value.setBoolean( ! value.isTrue() );
       return true;
    }
    return false;
@@ -243,18 +275,18 @@ void ExprNot::apply( VMachine* vm ) const
 void ExprNot::toString( String& str ) const
 {
    str = "not ";
-   str += m_operand->toString();
+   str += m_first->toString();
 }
 
 //=========================================================
 
-void ExprAnd::simplify( Item& value ) const
+bool ExprAnd::simplify( Item& value ) const
 {
    Item fi, si;
 
    if( m_first->simplify( fi ) && m_second->simplify( si ) )
    {
-      item.setBoolean( fi.isTrue() && si.isTrue() );
+      value.setBoolean( fi.isTrue() && si.isTrue() );
       return true;
    }
    return false;
@@ -264,9 +296,24 @@ void ExprAnd::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
    // add a gate...
+   m_gate.owner = this;
    vm->pushCode( &m_gate );
    // check the first expression...
-   m_first->perform();
+   m_first->perform( vm );
+}
+
+void ExprAnd::precompile( PCode* pcode ) const
+{
+   int shortCircuitSize = pcode->size();
+
+   pcode->pushStep( this );
+   // and then the second expr last
+   m_second->precompile( pcode );
+   // add a gate to jump checks on short circuits
+   m_pcgate.m_shortCircuitSeqId = shortCircuitSize;
+   pcode->pushStep( &m_pcgate );
+   // check the first expression for first...
+   m_first->precompile( pcode );
 }
 
 void ExprAnd::apply( VMachine* vm ) const
@@ -287,7 +334,7 @@ void ExprAnd::toString( String& str ) const
 void ExprAnd::Gate::apply( VMachine* vm ) const
 {
    Item& operand = vm->topData();
-   if( operand.isFalse() )
+   if( ! operand.isTrue() )
    {
       operand.setBoolean( false );
       // Pop ourselves and the calling expression.
@@ -300,21 +347,36 @@ void ExprAnd::Gate::apply( VMachine* vm ) const
       vm->popData();
 
       // and proceed checking the other data.
-      m_second->perform();
+      owner->m_second->perform( vm );
    }
-
 }
 
 
+void ExprAnd::PCGate::apply( VMachine* vm ) const
+{
+   // read and recycle the topmost data.
+   Item& operand = vm->topData();
+   if( ! operand.isTrue() )
+   {
+      operand.setBoolean( false );
+      // pop ourselves and the calling code
+      vm->currentCode().m_seqId = m_shortCircuitSeqId;
+   }
+   else {
+      // the other expression is bound to push data, remove ours
+      vm->popData();
+   }
+}
+
 //=========================================================
 
-void ExprAnd::simplify( Item& value ) const
+bool ExprOr::simplify( Item& value ) const
 {
    Item fi, si;
 
    if( m_first->simplify( fi ) && m_second->simplify( si ) )
    {
-      item.setBoolean( fi.isTrue() || si.isTrue() );
+      value.setBoolean( fi.isTrue() || si.isTrue() );
       return true;
    }
    return false;
@@ -325,10 +387,25 @@ void ExprOr::perform( VMachine* vm ) const
 {
    vm->pushCode( this );
    // add a gate...
+   m_gate.owner = this;
    vm->pushCode( &m_gate );
-
    // check the first expression
-   m_first->perform();
+   m_first->perform( vm );
+}
+
+
+void ExprOr::precompile( PCode* pcode ) const
+{
+   int shortCircuitSize = pcode->size();
+
+   pcode->pushStep( this );
+   // and then the second expr last
+   m_second->precompile( pcode );
+   // add a gate to jump checks on short circuits
+   m_pcgate.m_shortCircuitSeqId = shortCircuitSize;
+   pcode->pushStep( &m_pcgate );
+   // check the first expression for first...
+   m_first->precompile( pcode );
 }
 
 
@@ -363,40 +440,203 @@ void ExprOr::Gate::apply( VMachine* vm ) const
       vm->popData();
 
       // and proceed checking the other expression.
-      m_second->perform();
+      owner->m_second->perform(vm);
    }
 }
 
 
+void ExprOr::PCGate::apply( VMachine* vm ) const
+{
+   // read and recycle the topmost data.
+   Item& operand = vm->topData();
+   if( operand.isTrue() )
+   {
+      operand.setBoolean( true );
+      // pop ourselves and the calling code
+      vm->currentCode().m_seqId = m_shortCircuitSeqId;
+   }
+   else {
+      // the other expression is bound to push data, remove ours
+      vm->popData();
+   }
+}
+
 //=========================================================
+//
 
 void ExprAssign::perform( VMachine* vm) const
 {
-   vm->pushCode( this );
-   // First generate second assignand.
-   // if that throws, there isn't any need to check for the assignment.
-   m_second->perform();
+   // just, evaluate the second, then evaluate the first,
+   // but the first knows it's a lvalue.
+   m_first->perform( vm );
+   m_second->perform( vm );
+}
+
+void ExprAssign::precompile( PCode* pcode ) const
+{
+   // just, evaluate the second, then evaluate the first,
+   // but the first knows it's a lvalue.
+   m_first->precompile(pcode);
+   m_second->precompile(pcode);
 }
 
 void ExprAssign::apply( VMachine* vm ) const
 {
-   // delete ourselves
-   vm->popCode();
-   int size = vm->codeSize();
+   // The apply is never called for expr asssing.
+}
 
-   // prepare the code for the assignee
-   m_first->perform();
 
-   // Note: one-level operands, as plain symbols, are just pushed in the code.
-   // -- Deep assignments are left-to-right, meaning that the assignee l-value
-   // -- is in the topmost expression. The topmost expression is the one that
-   // -- is placed right where we stood (at 'size' position).
+bool ExprAssign::simplify( Item& value ) const
+{
+   // TODO Simplify for closed symbols
+   return false;
 }
 
 void ExprAssign::toString( String& str ) const
 {
    str = m_first->toString() + " = " + m_second->toString();
 }
+
+//=========================================================
+//
+
+bool ExprPlus::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setInteger( d1.asInteger() + d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asInteger() + d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setNumeric( d1.asNumeric() + d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asNumeric() + d2.asNumeric() );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprPlus::apply( VMachine* vm ) const
+{
+   // copy the second
+   Item d2 = vm->topData();
+   vm->popData();
+   // apply on the first
+   Item& d1 = vm->topData();
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setInteger( d1.asInteger() + d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asInteger() + d2.asNumeric() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setNumeric( d1.asNumeric() + d2.asInteger() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asNumeric() + d2.asNumeric() );
+      break;
+   }
+}
+
+
+void ExprPlus::toString( String& ret ) const
+{
+   ret = m_first->toString() + " + " + m_second->toString();
+}
+
+
+//=========================================================
+//
+
+
+bool ExprLT::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() < d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() < d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() < d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric()< d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() < d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprLT::apply( VMachine* vm ) const
+{
+   // copy the second
+   Item d2 = vm->topData();
+   vm->popData();
+   // apply on the first
+   Item& d1 = vm->topData();
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() < d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() < d2.asNumeric() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() < d2.asInteger() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric()< d2.asNumeric() );
+      break;
+   default:
+      if ( d1.type() < d2.type() )
+      {
+         d1.setBoolean( true );
+      }
+      else
+      {
+         d1.setBoolean( false );
+      }
+   }
+}
+
+
+void ExprLT::toString( String& ret ) const
+{
+   ret = m_first->toString() + " < " + m_second->toString();
+}
+
 
 }
 

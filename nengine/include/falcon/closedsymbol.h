@@ -31,18 +31,16 @@ namespace Falcon {
 class FALCON_DYN_CLASS ClosedSymbol: public Symbol
 {
 public:
-   ClosedSymbol( const String& name, const item& closed ):
-      Symbol( name, t_closed_symbol ),
+   ClosedSymbol( const String& name, const Item& closed ):
+      Symbol( t_closed_symbol, name ),
       m_item( closed )
    {}
 
    ClosedSymbol( const ClosedSymbol& other );
    virtual ~ClosedSymbol();
-
-   virtual void evaluate( VMachine* vm, Item& value ) const;
-   virtual void leval( VMachine* vm, const Item& assignand, Item& value );
-
    virtual void serialize( Stream* s ) const;
+
+   void apply( VMachine* vm ) const;
 
    ClosedSymbol* clone() const { return new ClosedSymbol(*this); }
 
@@ -54,7 +52,7 @@ protected:
       Symbol( t_closed_symbol )
    {}
 
-   Item m_item;
+   mutable Item m_item;
    friend class ExprFactory;
 };
 

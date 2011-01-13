@@ -24,7 +24,8 @@ namespace Falcon
 {
 
 class Stream;
-class class ExprFactory;
+class ExprFactory;
+class PCode;
 
 /** Pure abstract class representing a Falcon expression.
  *
@@ -166,6 +167,20 @@ public:
     */
    virtual void perform( VMachine* vm ) const;
 
+   /** Pre-compiles the expression on a PCode.
+    *
+    * The vast majority of expressions in Falcon programs can be
+    * precompiled to PCode stack stubs, and then sent into the VM
+    * through their precompiled PCode form.
+    *
+    * \note Important: the calling code should make sure that the
+    * expression is precompiled at most ONCE, or in other words, that
+    * the PCode on which is precompiled is actually used just once
+    * in the target program. In fact, gate expressions uses a private
+    * member in their structure to determine the jump branch position,
+    * and that member can be used just once.
+    */
+   virtual void precompile( PCode* pcd ) const;
 
 protected:
 
@@ -176,7 +191,9 @@ protected:
    /** Deserialize the expression from a stream.
     * The expression type id must have been already read.
     */
-   virtual void* deserialize( Stream* s );
+   virtual void deserialize( Stream* s );
+
+   friend class ExprFactory;
 
 private:
    operator_t m_operator;
@@ -206,6 +223,7 @@ public:
    void first( Expression *f ) { delete m_first; m_first= f; }
 
    virtual void perform( VMachine* vm ) const;
+   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -247,6 +265,7 @@ public:
    virtual bool isStatic() const;
 
    virtual void perform( VMachine* vm ) const;
+   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -292,6 +311,7 @@ public:
    void third( Expression *t ) { delete m_third; m_third = t; }
 
    virtual void perform( VMachine* vm ) const;
+   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -376,12 +396,23 @@ public:
     */
    virtual void perform( VMachine* vm ) const;
 
+   void precompile( PCode* pcode ) const;
+
 private:
    class Gate: public PStep {
    public:
       inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
+
+      mutable const ExprAnd* owner;
    } m_gate;
+
+   class PCGate: public PStep {
+   public:
+      inline virtual void perform( VMachine* vm ) const {}
+      virtual void apply( VMachine* vm ) const;
+      mutable int m_shortCircuitSeqId;
+   } m_pcgate;
 };
 
 
@@ -402,12 +433,23 @@ public:
     */
    virtual void perform( VMachine* vm ) const;
 
+   virtual void precompile( PCode* pcode ) const;
+
 private:
    class Gate: public PStep {
    public:
       inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
+
+      mutable const ExprOr* owner;
    } m_gate;
+
+   class PCGate: public PStep {
+   public:
+      inline virtual void perform( VMachine* vm ) const {}
+      virtual void apply( VMachine* vm ) const;
+      mutable int m_shortCircuitSeqId;
+   } m_pcgate;
 };
 
 /** Assignment operation. */
@@ -436,15 +478,14 @@ public:
     * This operator sets the lvalue bit.
     */
    virtual void perform( VMachine* vm ) const;
+   virtual void precompile( PCode* pcode ) const;
 
 protected:
    inline ExprAssign():
-      BinaryExpression( op ) {}
+      BinaryExpression( t_assign ) {}
 
    friend class ExprFactory;
 };
-
-#ifdef 0
 
 /** Unary negative. */
 class FALCON_DYN_CLASS ExprNeg: public UnaryExpression
@@ -454,12 +495,26 @@ public:
 };
 
 
+
 /** Math sum. */
 class FALCON_DYN_CLASS ExprPlus: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprPlus, t_plus );
 };
+
+/** Less than operator. */
+class FALCON_DYN_CLASS ExprLT: public BinaryExpression
+{
+public:
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLT, t_lt );
+};
+
+
+#if 0
+
+
+
 
 
 /** Math subtraction. */
@@ -513,12 +568,6 @@ public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprGE, t_ge );
 };
 
-/** Less than operator. */
-class FALCON_DYN_CLASS ExprLT: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLT, t_lt );
-};
 
 /** Less than or equal to operator. */
 class FALCON_DYN_CLASS ExprLE: public BinaryExpression

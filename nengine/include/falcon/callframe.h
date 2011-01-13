@@ -58,6 +58,18 @@ public:
 
    /** Image of "self" in this frame. */
    Item m_self;
+
+   // Actually never used, just used at compile time by vector.
+   CallFrame()
+   {}
+
+   CallFrame( Function* f, int pc, int sb, int cb, const Item& self ):
+      m_function(f),
+      m_paramCount( pc ),
+      m_stackBase( sb ),
+      m_codeBase( cb ),
+      m_self(self)
+   {}
 };
 
 }

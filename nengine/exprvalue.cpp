@@ -16,8 +16,8 @@
 #include <falcon/exprvalue.h>
 #include <falcon/stream.h>
 #include <falcon/garbagelock.h>
-#include <falcon/error.h>
 #include <falcon/item.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -86,31 +86,36 @@ bool ExprValue::simplify( Item& item ) const
    return true;
 }
 
-virtual ExprValue* ExprValue::clone() const
+ExprValue* ExprValue::clone() const
 {
    return new ExprValue( *this );
 }
 
-virtual void ExprValue::serialize( Stream* s ) const
+void ExprValue::serialize( Stream* s ) const
 {
    Expression::serialize( s );
-   m_item.serialize(s);
+   //m_item.serialize(s);
 }
 
-virtual bool ExprValue::isStatic() const
+bool ExprValue::isStatic() const
 {
    return true;
 }
 
-virtual const String ExprValue::toString() const
+bool ExprValue::isBinaryOperator() const
 {
-   return m_item.toString();
+   return false;
+}
+
+void ExprValue::toString( String & str ) const
+{
+   m_item.toString(str);
 }
 
 void ExprValue::deserialize( Stream* s )
 {
    Expression::deserialize(s);
-   m_item.deserialize();
+   //m_item.deserialize();
    if ( m_item.isDeep() )
    {
      m_lock = new GarbageLock(m_item);

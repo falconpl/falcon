@@ -19,7 +19,8 @@
 namespace Falcon {
 
 
-Symbol::Symbol( const String& name ):
+Symbol::Symbol( operator_t type, const String& name ):
+      Expression( type ),
       m_name( name ),
       m_lvalue( false )
 {}
@@ -39,12 +40,13 @@ void Symbol::serialize( Stream* s ) const
 {
    // TODO
 }
-const String Symbol::toString() const
+
+void Symbol::toString( String& val ) const
 {
-   return "&" + m_name;
+   val = "&" + m_name;
 }
 
-void deserialize( Stream* s )
+void Symbol::deserialize( Stream* s )
 {
    // TODO
 }

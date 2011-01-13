@@ -15,6 +15,7 @@
 
 #include <falcon/localsymbol.h>
 #include <falcon/stream.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -25,12 +26,6 @@ LocalSymbol::LocalSymbol( const LocalSymbol& other ):
 
 LocalSymbol::~LocalSymbol()
 {
-}
-
-
-void LocalSymbol::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
 }
 
 void LocalSymbol::apply( VMachine* vm ) const
@@ -44,21 +39,22 @@ void LocalSymbol::apply( VMachine* vm ) const
    }
    else
    {
-      vm->pushData( vm->localVar( m_id ) );
+      Item i = vm->localVar( m_id );
+      vm->pushData( i );
    }
 }
 
 
 void LocalSymbol::serialize( Stream* s ) const
 {
-   Stream::serialize( s );
+   Symbol::serialize( s );
    //TODO
 }
 
 
-virtual void LocalSymbol::deserialize( Stream* s )
+void LocalSymbol::deserialize( Stream* s )
 {
-   Stream::deserialize( s );
+   Symbol::deserialize( s );
    //TODO
 }
 

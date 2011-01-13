@@ -37,11 +37,10 @@ public:
    GlobalSymbol( const GlobalSymbol& other );
    virtual ~GlobalSymbol();
 
-   virtual void evaluate( VMachine* vm, Item& value ) const;
-   virtual void leval( VMachine* vm, const Item& assignand, Item& value );
-
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
    virtual void serialize( Stream* s ) const;
+
+   virtual void apply( VMachine* vm ) const;
 
 protected:
    virtual void deserialize( Stream* s );

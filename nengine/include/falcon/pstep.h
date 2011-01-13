@@ -40,7 +40,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS PStep: public BaseAlloc
 {
 public:
-   PStep();
+   inline PStep() {};
 
    inline virtual ~PStep() {}
 

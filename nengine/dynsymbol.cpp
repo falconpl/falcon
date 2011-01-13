@@ -14,20 +14,17 @@
 */
 
 #include <falcon/dynsymbol.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
-DynSymbol::DynSymbol( const DynSymbol& other )
+DynSymbol::DynSymbol( const DynSymbol& other ):
+      Symbol( other )
 {
 }
 
 DynSymbol::~DynSymbol()
 {
-}
-
-void DynSymbol::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
 }
 
 void DynSymbol::apply( VMachine* vm ) const

@@ -18,26 +18,38 @@ message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
 #################
 add_library(falcon_engine SHARED
-  ../engine/autocstring.cpp
-  ../engine/autoucsstring.cpp
-  ../engine/autowstring.cpp
-  ../engine/base64.cpp
-  ../engine/basealloc.cpp
-  
+  ../engine/basealloc.cpp  
   ../engine/fassert.cpp
-  ../engine/filestat.cpp
-  ../engine/format.cpp
+  ../engine/string.cpp
+  ../engine/stream.cpp
+  ../engine/memory.cpp
+  ../engine/falcondata.cpp
+  ../engine/gcalloc.cpp
+
+  
   
   closedsymbol.cpp
   dynsymbol.cpp
   expression.cpp
+  exprfactory.cpp
   exprvalue.cpp
+  garbagelock.cpp
   globalsymbol.cpp
   item.cpp
   localsymbol.cpp
+  pcode.cpp
   sourceref.cpp
+  statement.cpp
   symbol.cpp
+  syntree.cpp
+  vm.cpp
 )
+
+add_executable( test
+	main.cpp )
+	
+target_link_libraries( test
+	falcon_engine m )
 
 set_target_properties(falcon_engine PROPERTIES
   VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"

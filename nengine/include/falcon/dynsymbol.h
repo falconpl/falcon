@@ -26,16 +26,14 @@ namespace Falcon {
 class FALCON_DYN_CLASS DynSymbol: public Symbol
 {
 public:
-   DynSymbol( const String& name, const item& closed ):
-      Symbol( name, t_dyn_symbol )
+   DynSymbol( const String& name ):
+      Symbol( t_dyn_symbol, name )
    {}
 
    DynSymbol( const DynSymbol& other );
    virtual ~DynSymbol();
 
-   virtual void evaluate( VMachine* vm, Item& value ) const;
-   virtual void leval( VMachine* vm, const Item& assignand, Item& value );
-
+   virtual void apply( VMachine* vm ) const;
    virtual void serialize( Stream* s ) const;
 
    DynSymbol* clone() const { return new DynSymbol(*this); }
@@ -43,7 +41,7 @@ public:
 protected:
    virtual void deserialize( Stream* s );
    inline DynSymbol():
-      DynSymbol( t_closed_symbol )
+      Symbol( t_dyn_symbol )
    {}
 
    friend class ExprFactory;

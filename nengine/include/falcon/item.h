@@ -25,7 +25,6 @@
 #include <falcon/garbageable.h>
 #include <falcon/basealloc.h>
 #include <falcon/string.h>
-#include <falcon/corerange.h>
 
 namespace Falcon {
 
@@ -33,6 +32,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS Item: public BaseAlloc
 {
 public:
+   typedef void* CallPoint;
 
   union {
       struct {
@@ -134,30 +134,6 @@ public:
    inline void setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
       all.ctx.data.number = val;
-   }
-
-   /** Creates a symbol.
-    * The symbol points to nothing, or to an item that is stored in the global,
-    * local or parameter table.
-    *
-    * When a symbol is not assigned, evaluation tries to resolve it in the
-    * local and global tables. If not found, the symbol assumes the value
-    * of a nil.
-    *
-    * Once found, the symbol stays bound with the item * it has previously
-    * fetched.
-    */
-   inline void setSymbol( const String* name, Item* value )
-   {
-      setType( FLC_ITEM_SYMBOL );
-      all.ctx.data.ptr.voidp = value;
-      all.ctx.data.ptr.extra = name;
-   }
-
-
-   Item( const String* name, Item* value )
-   {
-      setSymbol( name, value );
    }
 
    /** Defines this item as a out of band data.
@@ -263,7 +239,6 @@ public:
 
    String* asSymbolName() const { return (String*) all.ctx.data.ptr.extra; }
    Item* asSymbolValue() const { return (Item*) all.ctx.data.ptr.voidp; }
-   void setSymbolValue( Item* value) {  all.ctx.data.ptr.voidp = value; }
 
    bool isNil() const { return type() == FLC_ITEM_NIL; }
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
@@ -276,14 +251,17 @@ public:
 
    bool isTrue() const;
 
+   virtual void toString( String& target ) const;
+
    Item &operator=( const Item &other ) { copy( other ); return *this; }
+   /*
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
    bool operator<(const Item &other) const { return compare( other ) < 0; }
    bool operator<=(const Item &other) const { return compare( other ) <= 0; }
    bool operator>(const Item &other) const { return compare( other ) > 0; }
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
-
+    */
    bool exactlyEqual( const Item &other ) const;
 
    /** Turns this item in a method of the given object.

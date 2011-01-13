@@ -19,22 +19,6 @@
 */
 
 #include <falcon/item.h>
-#include <falcon/memory.h>
-#include <falcon/mempool.h>
-#include <falcon/common.h>
-#include <falcon/symbol.h>
-#include <falcon/coreobject.h>
-#include <falcon/corefunc.h>
-#include <falcon/carray.h>
-#include <falcon/garbagepointer.h>
-#include <falcon/coredict.h>
-#include <falcon/cclass.h>
-#include <falcon/membuf.h>
-#include <falcon/vmmaps.h>
-#include <falcon/error.h>
-#include <cstdlib>
-#include <cstring>
-
 
 namespace Falcon
 {
@@ -44,7 +28,7 @@ namespace Falcon
 
 bool Item::isTrue() const
 {
-   switch( dereference()->type() )
+   switch( type() )
    {
    case FLC_ITEM_NIL:
       return false;
@@ -88,7 +72,7 @@ int64 Item::forceIntegerEx() const
          return (int64) asNumeric();
 
    }
-   throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
+   //throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
 
    // to make some dumb compiler happy
    return 0;
@@ -105,6 +89,37 @@ numeric Item::forceNumeric() const
          return asNumeric();
    }
    return 0.0;
+}
+
+
+void Item::toString( String &target ) const
+{
+   target.size(0);
+
+   switch( this->type() )
+   {
+      case FLC_ITEM_NIL:
+         target = "Nil";
+      break;
+
+      case FLC_ITEM_BOOL:
+         target = asBoolean() ? "true" : "false";
+      break;
+
+
+      case FLC_ITEM_INT:
+         target.writeNumber( this->asInteger() );
+      break;
+
+      case FLC_ITEM_NUM:
+      {
+         target.writeNumber( this->asNumeric(), "%.16g" );
+      }
+      break;
+
+      default:
+         target = "<?>";
+   }
 }
 
 }
