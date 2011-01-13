@@ -44,9 +44,6 @@ public:
 
    inline virtual ~PStep() {}
 
-   /* Called by the virtual machine when it encounters a statement or expression in a sequence. */
-   virtual void perform( VMachine* vm ) const = 0;
-
    /* Called by the virtual machine when it encounters a step on its code stack. */
    virtual void apply( VMachine* vm ) const = 0;
 

@@ -91,20 +91,23 @@ public:
    /** Top data in the stack
     *
     */
-   inline const Item& topData() const { return m_dataStack.back(); }
-   inline Item& topData() { return m_dataStack.back(); }
+   inline const Item& topData() const { return *m_topData; }
+   inline Item& topData() { return *m_topData; }
 
    /** Push some code to be run in the execution stack.
     *
     * The step parameter is owned by the caller.
     */
    inline void pushCode( const PStep* step ) {
-      m_codeStack.push_back( CodeFrame( step ) );
+      ++m_topCode;
+      m_topCode->m_step = step;
+      m_topCode->m_seqId = 0;
    }
 
    /** Push data on top of the stack */
    inline void pushData( const Item& data ) {
-      m_dataStack.push_back( data );
+      ++m_topData;
+      *m_topData = data;
    }
 
    /** Runs a prepared code, or continues running.
@@ -153,10 +156,10 @@ public:
    const CallFrame& currentFrame() const { return m_callStack[m_callStack.size()-1]; }
    CallFrame& currentFrame() { return m_callStack[m_callStack.size()-1]; }
 
-   const CodeFrame& currentCode() const { return m_codeStack[m_codeStack.size()-1]; }
-   CodeFrame& currentCode() { return m_codeStack[m_codeStack.size()-1]; }
+   const CodeFrame& currentCode() const { return *m_topCode; }
+   CodeFrame& currentCode() { return *m_topCode; }
 
-   void popData() { m_dataStack.pop_back(); }
+   void popData() { m_topData--; }
 
    inline void popCode() {
       popCode(1);
@@ -174,11 +177,11 @@ public:
    }
 
    void popCode( int size ) {
-      m_codeStack.resize( m_codeStack.size() - size );
+      m_topCode -= size;
    }
 
    void unrollCode( int size ) {
-      m_codeStack.resize( size );
+      m_topCode = m_codeStack + size - 1;
    }
 
    void returnFrame();
@@ -194,9 +197,8 @@ public:
     *
     */
    Item& addDataSlot() {
-      int size = m_dataStack.size();
-      m_dataStack.resize(size+1);
-      return m_dataStack[size];
+      ++m_topData;
+      return *m_topData;
    }
 
    /** Finds the variable coresponding to a symbol name in the current context.
@@ -213,7 +215,9 @@ public:
     * implies the request of a child item for the control to be returned to the VM.
     *
     */
-   int codeDepth() const { return m_codeStack.size(); }
+   int codeDepth() const { return (m_topCode - m_codeStack) + 1; }
+
+   int dataSize() const { return (m_topData - m_dataStack) + 1; }
 protected:
 
    Stream *m_stdIn;
@@ -225,13 +229,18 @@ protected:
 
 private:
 
-   typedef std::vector<CodeFrame> CodeStack;
+   //typedef std::vector<CodeFrame> CodeStack;
    typedef std::vector<CallFrame> CallStack;
-   typedef std::vector<Item> DataStack;
+   //typedef std::vector<Item> DataStack;
 
-   CodeStack m_codeStack;
+   //CodeStack m_codeStack;
+   CodeFrame* m_codeStack;
+   CodeFrame* m_topCode;
+
    CallStack m_callStack;
-   DataStack m_dataStack;
+   //DataStack m_dataStack;
+   Item* m_dataStack;
+   Item* m_topData;
 
    // True when an event is set.
    enum {

@@ -17,14 +17,14 @@
 #define FALCON_STATEMENT_H
 
 #include <falcon/pstep.h>
-#include <falcon/syntree.h>
 #include <falcon/pcode.h>
+#include <falcon/vm.h>
 
 namespace Falcon
 {
 
-class VMachine;
 class Expression;
+class SynTree;
 
 /** Statement.
  * Statements are PStep that may require other sub-sequences to be evaluated.
@@ -46,6 +46,20 @@ public:
 
    inline virtual ~Statement() {}
 
+protected:
+   /** Steps being prepared by the statement */
+   std::vector<PStep*> m_steps;
+
+   inline void prepare( VMachine* vm ) const
+   {
+      std::vector<PStep*>::const_iterator b = m_steps.begin();
+      while( b != m_steps.end() ){
+         vm->pushCode(*b);
+         ++b;
+      }
+   }
+
+   friend class SynTree;
 private:
    statement_t m_type;
 };
@@ -66,7 +80,6 @@ public:
    virtual ~StmtAutoexpr();
 
    void toString( String& tgt ) const;
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
 private:
@@ -82,7 +95,6 @@ public:
    virtual ~StmtWhile();
 
    void toString( String& tgt ) const;
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
 private:
@@ -99,7 +111,6 @@ public:
    virtual ~StmtIf();
 
    void toString( String& tgt ) const;
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
    /** Adds an else-if branch to the if statement */

@@ -156,17 +156,6 @@ public:
    virtual bool simplify( Item& result ) const = 0;
 
 
-   /** Performs the expression.
-    *
-    * A VM Performing expressions means that they are at top-level in sequences;
-    * this happens to stand-alone expressions. Direct expressions can be performed
-    * on the spot, while the other will push their sub-expressions as code stack items
-    * and will rely on a delayed apply() call.
-    *
-    * By default, the Expression base class perform just calls evaluate.
-    */
-   virtual void perform( VMachine* vm ) const;
-
    /** Pre-compiles the expression on a PCode.
     *
     * The vast majority of expressions in Falcon programs can be
@@ -222,7 +211,6 @@ public:
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
 
-   virtual void perform( VMachine* vm ) const;
    virtual void precompile( PCode* pcd ) const;
 
 protected:
@@ -264,7 +252,6 @@ public:
 
    virtual bool isStatic() const;
 
-   virtual void perform( VMachine* vm ) const;
    virtual void precompile( PCode* pcd ) const;
 
 protected:
@@ -310,7 +297,6 @@ public:
    Expression *third() const { return m_third; }
    void third( Expression *t ) { delete m_third; m_third = t; }
 
-   virtual void perform( VMachine* vm ) const;
    virtual void precompile( PCode* pcd ) const;
 
 protected:
@@ -391,28 +377,14 @@ public:
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
-   /** Redefine perform.
-    * This operator inserts a gate in perform.
-    */
-   virtual void perform( VMachine* vm ) const;
-
    void precompile( PCode* pcode ) const;
 
 private:
    class Gate: public PStep {
    public:
-      inline virtual void perform( VMachine* vm ) const {}
-      virtual void apply( VMachine* vm ) const;
-
-      mutable const ExprAnd* owner;
-   } m_gate;
-
-   class PCGate: public PStep {
-   public:
-      inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
       mutable int m_shortCircuitSeqId;
-   } m_pcgate;
+   } m_gate;
 };
 
 
@@ -428,28 +400,15 @@ public:
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
-   /** Redefine perform.
-    * This operator inserts a gate in perform.
-    */
-   virtual void perform( VMachine* vm ) const;
-
    virtual void precompile( PCode* pcode ) const;
 
 private:
+
    class Gate: public PStep {
    public:
-      inline virtual void perform( VMachine* vm ) const {}
-      virtual void apply( VMachine* vm ) const;
-
-      mutable const ExprOr* owner;
-   } m_gate;
-
-   class PCGate: public PStep {
-   public:
-      inline virtual void perform( VMachine* vm ) const {}
       virtual void apply( VMachine* vm ) const;
       mutable int m_shortCircuitSeqId;
-   } m_pcgate;
+   } m_gate;
 };
 
 /** Assignment operation. */
@@ -474,10 +433,6 @@ public:
    virtual void toString( String& ) const;
 
    inline virtual bool isStandAlone() const { return true; }
-   /** Redefine perform.
-    * This operator sets the lvalue bit.
-    */
-   virtual void perform( VMachine* vm ) const;
    virtual void precompile( PCode* pcode ) const;
 
 protected:

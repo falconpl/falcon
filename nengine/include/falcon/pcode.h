@@ -57,7 +57,6 @@ namespace Falcon {
 class FALCON_DYN_CLASS PCode: public PStep
 {
 public:
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
 
    inline int size() const { return m_steps.size(); }

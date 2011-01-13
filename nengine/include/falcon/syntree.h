@@ -19,11 +19,12 @@
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
 #include <falcon/pstep.h>
-
 #include <vector>
 
 namespace Falcon
 {
+
+class Statement;
 
 /** Syntactic tree.
  *
@@ -49,27 +50,22 @@ public:
 
    int size() const { return m_steps.size(); }
 
-   PStep* first() { return m_steps.front(); }
-   PStep* last()  { return m_steps.back(); }
-   PStep* at( int pos ) const { return m_steps[pos]; }
-   void set( int pos, PStep* p )  { delete m_steps[pos]; m_steps[pos] = p; }
+   Statement* first() { return m_steps.front(); }
+   Statement* last()  { return m_steps.back(); }
+   Statement* at( int pos ) const { return m_steps[pos]; }
+   void set( int pos, Statement* p );
 
-   void insert( int pos, PStep* step ) {
+   void insert( int pos, Statement* step ) {
       m_steps.insert( m_steps.begin()+pos, step );
    }
 
-   void remove( int pos ) {
-      PStep* p = m_steps[ pos ];
-      m_steps.erase( m_steps.begin()+pos );
-      delete p;
-   }
+   void remove( int pos );
 
-   SynTree& append( PStep* step ) {
+   SynTree& append( Statement* step ) {
       m_steps.push_back( step );
       return *this;
    }
 
-   virtual void perform( VMachine* vm ) const;
    virtual void apply( VMachine* vm ) const;
    virtual void toString( String& tgt ) const;
 
@@ -82,7 +78,7 @@ public:
 
 private:
 
-   std::vector<PStep*> m_steps;
+   std::vector<Statement*> m_steps;
 };
 
 }

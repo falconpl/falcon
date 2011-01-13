@@ -24,9 +24,7 @@ add_library(falcon_engine SHARED
   ../engine/stream.cpp
   ../engine/memory.cpp
   ../engine/falcondata.cpp
-  ../engine/gcalloc.cpp
-
-  
+  ../engine/gcalloc.cpp  
   
   closedsymbol.cpp
   dynsymbol.cpp

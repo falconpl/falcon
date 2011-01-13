@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
    (*program)
       .append( new Falcon::StmtAutoexpr(new Falcon::ExprAssign( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(0) ) ) )
       .append( new Falcon::StmtWhile(
-                     new Falcon::ExprLT( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(10000000) ),
+                     new Falcon::ExprLT( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(50000000) ),
                      assign ) );
 
 

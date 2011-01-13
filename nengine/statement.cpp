@@ -15,6 +15,7 @@
 
 #include <falcon/statement.h>
 #include <falcon/expression.h>
+#include <falcon/syntree.h>
 #include <falcon/vm.h>
 
 namespace Falcon
@@ -26,6 +27,10 @@ StmtAutoexpr::StmtAutoexpr( Expression* expr ):
       m_expr( expr )
 {
    m_expr->precompile(&m_pcExpr);
+
+   // push ourselves and the expression in the steps
+   m_steps.push_back( this );
+   m_steps.push_back( &m_pcExpr );
 }
 
 StmtAutoexpr::~StmtAutoexpr()
@@ -38,15 +43,6 @@ void StmtAutoexpr::toString( String& tgt ) const
    m_expr->toString( tgt );
 }
 
-
-void StmtAutoexpr::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-   // TODO: use the pre-compiled version.
-   // I am using perform here to check perform works as well as precompile
-   //m_expr->perform( vm );
-   m_pcExpr.perform(vm);
-}
 
 void StmtAutoexpr::apply( VMachine* vm ) const
 {
@@ -64,6 +60,10 @@ StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
    m_stmts( stmts )
 {
    check->precompile(&m_pcCheck);
+
+   // push ourselves and the expression in the steps
+   m_steps.push_back( this );
+   m_steps.push_back( &m_pcCheck );
 }
 
 StmtWhile::~StmtWhile()
@@ -79,23 +79,12 @@ void StmtWhile::toString( String& tgt ) const
          "end\n";
 }
 
-
-void StmtWhile::perform( VMachine* vm ) const
-{
-   // call me back...
-   vm->pushCode( this );
-   // after evaluating the expression.
-   m_pcCheck.perform(vm);
-}
-
-
 void StmtWhile::apply( VMachine* vm ) const
 {
    if ( vm->topData().isTrue() )
    {
       // redo.
-      //m_check->perform(vm);
-      m_pcCheck.perform(vm);
+      vm->pushCode( &m_pcCheck );
       vm->pushCode( m_stmts );
    }
    else {
@@ -117,6 +106,9 @@ StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
 {
    m_ifFalse = ifFalse;
    addElif( check, ifTrue );
+   // push ourselves and the expression in the steps
+   m_steps.push_back( this );
+   m_steps.push_back( &m_elifs[0].m_pcCheck );
 }
 
 StmtIf::~StmtIf()
@@ -162,15 +154,6 @@ void StmtIf::toString( String& tgt ) const
 }
 
 
-void StmtIf::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-
-   // we have more than 0 elifs.
-   m_elifs[0].m_pcCheck.perform( vm );
-}
-
-
 void StmtIf::apply( VMachine* vm ) const
 {
    int sid = vm->currentCode().m_seqId;
@@ -185,7 +168,7 @@ void StmtIf::apply( VMachine* vm ) const
       if( ++sid < m_elifs.size() )
       {
          vm->currentCode().m_seqId = sid;
-         m_elifs[sid].m_pcCheck.perform( vm );
+         vm->pushCode( &m_elifs[sid].m_pcCheck );
       }
       else
       {

@@ -42,11 +42,6 @@ void Expression::deserialize( Stream* s )
    m_sourceRef.deserialize( s );
 }
 
-void Expression::perform( VMachine* vm ) const
-{
-   vm->pushCode(this);
-}
-
 void Expression::precompile( PCode* pcode ) const
 {
    pcode->pushStep( this );
@@ -65,11 +60,6 @@ UnaryExpression::~UnaryExpression()
    delete m_first;
 }
 
-void UnaryExpression::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-   m_first->perform( vm );
-}
 
 void UnaryExpression::precompile( PCode* pcode ) const
 {
@@ -107,14 +97,6 @@ BinaryExpression::~BinaryExpression()
 {
    delete m_first;
    delete m_second;
-}
-
-
-void BinaryExpression::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-   m_second->perform(vm);
-   m_first->perform(vm);
 }
 
 
@@ -159,17 +141,6 @@ TernaryExpression::~TernaryExpression()
    delete m_second;
    delete m_third;
 }
-
-
-void TernaryExpression::perform( VMachine* vm ) const
-{
-   // actually, ternary expressions doesn't require this fallback.
-   vm->pushCode( this );
-   m_first->perform(vm);
-   m_second->perform(vm);
-   m_third->perform(vm);
-}
-
 
 void TernaryExpression::precompile( PCode* pcode ) const
 {
@@ -292,16 +263,6 @@ bool ExprAnd::simplify( Item& value ) const
    return false;
 }
 
-void ExprAnd::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-   // add a gate...
-   m_gate.owner = this;
-   vm->pushCode( &m_gate );
-   // check the first expression...
-   m_first->perform( vm );
-}
-
 void ExprAnd::precompile( PCode* pcode ) const
 {
    int shortCircuitSize = pcode->size();
@@ -310,8 +271,8 @@ void ExprAnd::precompile( PCode* pcode ) const
    // and then the second expr last
    m_second->precompile( pcode );
    // add a gate to jump checks on short circuits
-   m_pcgate.m_shortCircuitSeqId = shortCircuitSize;
-   pcode->pushStep( &m_pcgate );
+   m_gate.m_shortCircuitSeqId = shortCircuitSize;
+   pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
 }
@@ -331,28 +292,8 @@ void ExprAnd::toString( String& str ) const
    str = "(" + m_first->toString() + " and " + m_second->toString() + ")";
 }
 
+
 void ExprAnd::Gate::apply( VMachine* vm ) const
-{
-   Item& operand = vm->topData();
-   if( ! operand.isTrue() )
-   {
-      operand.setBoolean( false );
-      // Pop ourselves and the calling expression.
-      vm->popCode(2);
-   }
-   else {
-      // just pop ourselves
-      vm->popCode();
-      // remove the data, which will be pushed by the other expression.
-      vm->popData();
-
-      // and proceed checking the other data.
-      owner->m_second->perform( vm );
-   }
-}
-
-
-void ExprAnd::PCGate::apply( VMachine* vm ) const
 {
    // read and recycle the topmost data.
    Item& operand = vm->topData();
@@ -383,17 +324,6 @@ bool ExprOr::simplify( Item& value ) const
 }
 
 
-void ExprOr::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-   // add a gate...
-   m_gate.owner = this;
-   vm->pushCode( &m_gate );
-   // check the first expression
-   m_first->perform( vm );
-}
-
-
 void ExprOr::precompile( PCode* pcode ) const
 {
    int shortCircuitSize = pcode->size();
@@ -402,8 +332,8 @@ void ExprOr::precompile( PCode* pcode ) const
    // and then the second expr last
    m_second->precompile( pcode );
    // add a gate to jump checks on short circuits
-   m_pcgate.m_shortCircuitSeqId = shortCircuitSize;
-   pcode->pushStep( &m_pcgate );
+   m_gate.m_shortCircuitSeqId = shortCircuitSize;
+   pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
 }
@@ -431,28 +361,6 @@ void ExprOr::Gate::apply( VMachine* vm ) const
    {
       operand.setBoolean( true );
       // pop ourselves and the calling code
-      vm->popCode(2);
-   }
-   else {
-      // pop ourselves
-      vm->popCode();
-      // as other expression is bound to push data, remove ours
-      vm->popData();
-
-      // and proceed checking the other expression.
-      owner->m_second->perform(vm);
-   }
-}
-
-
-void ExprOr::PCGate::apply( VMachine* vm ) const
-{
-   // read and recycle the topmost data.
-   Item& operand = vm->topData();
-   if( operand.isTrue() )
-   {
-      operand.setBoolean( true );
-      // pop ourselves and the calling code
       vm->currentCode().m_seqId = m_shortCircuitSeqId;
    }
    else {
@@ -463,14 +371,6 @@ void ExprOr::PCGate::apply( VMachine* vm ) const
 
 //=========================================================
 //
-
-void ExprAssign::perform( VMachine* vm) const
-{
-   // just, evaluate the second, then evaluate the first,
-   // but the first knows it's a lvalue.
-   m_first->perform( vm );
-   m_second->perform( vm );
-}
 
 void ExprAssign::precompile( PCode* pcode ) const
 {

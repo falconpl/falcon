@@ -16,6 +16,7 @@
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
 #include <falcon/codeframe.h>
+#include <falcon/statement.h>
 
 namespace Falcon
 {
@@ -40,14 +41,6 @@ void SynTree::toString( String& tgt ) const
    }
 }
 
-
-void SynTree::perform( VMachine* vm ) const
-{
-   // perform action is to register ourselves as sequence to be parsed.
-   vm->pushCode( this );
-}
-
-
 void SynTree::apply( VMachine* vm ) const
 {
    // get the current step.
@@ -59,12 +52,22 @@ void SynTree::apply( VMachine* vm ) const
       return;
    }
 
-   PStep* step = m_steps[ cf.m_seqId++ ];
-   step->perform(vm);
-
-   //TODO: continue to perform if not in debug and pstep was simple.
+   Statement* step = m_steps[ cf.m_seqId++ ];
+   step->prepare(vm);
 }
 
+
+void SynTree::set( int pos, Statement* p )  {
+   delete m_steps[pos];
+   m_steps[pos] = p;
+}
+
+void SynTree::remove( int pos )
+{
+     Statement* p = m_steps[ pos ];
+     m_steps.erase( m_steps.begin()+pos );
+     delete p;
+}
 }
 
 /* end of syntree.cpp */

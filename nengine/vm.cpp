@@ -23,21 +23,26 @@ namespace Falcon
 
 VMachine::VMachine()
 {
-   m_codeStack.reserve( 1024 );
-   m_dataStack.reserve( 1024 );
+   //m_codeStack.reserve( 1024 );
+   m_codeStack = new CodeFrame[1024];
+   m_topCode = m_codeStack-1;
+   m_dataStack = new Item[1024];
+   m_topData = m_dataStack - 1;
    m_callStack.reserve( 1024 );
 }
 
 VMachine::~VMachine()
 {
+   delete[] m_codeStack;
+   delete[] m_dataStack;
 }
 
 
 bool VMachine::run()
 {
-   while( m_codeStack.size() >  0 )
+   while( m_topCode >= m_codeStack )
    {
-      m_codeStack.back().m_step->apply( this );
+      m_topCode->m_step->apply( this );
    }
 }
 
@@ -50,18 +55,18 @@ PStep* VMachine::nextStep() const
 void VMachine::call( Function* function, int nparams, const Item& self )
 {
    m_callStack.push_back(
-         CallFrame(function, nparams, m_dataStack.size(), m_codeStack.size(), self ) );
+         CallFrame(function, nparams, dataSize(), codeDepth(), self ) );
 }
 
 
 bool VMachine::step()
 {
-   if (  m_codeStack.size() == 0 )
+   if ( m_topCode < m_codeStack )
    {
       return false;
    }
 
-   const PStep* ps = m_codeStack.back().m_step;
+   const PStep* ps = m_topCode->m_step;
    ps->apply( this );
 }
 
