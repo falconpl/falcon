@@ -242,6 +242,7 @@ function( add_fam_target source )
    add_custom_command(
       OUTPUT "${output_file}"
       COMMAND ${compile_command}
+      DEPENDS ${source}
    )
    
    string(REPLACE "/" "_" target_name "${source}" )
@@ -281,3 +282,6 @@ function( falcon_install_moddirs module_dirs )
    endforeach()
    
 endfunction()
+
+# vi: set ai et sw=3 sts=3:
+
