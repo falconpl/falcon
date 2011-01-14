@@ -28,9 +28,8 @@ StmtAutoexpr::StmtAutoexpr( Expression* expr ):
 {
    m_expr->precompile(&m_pcExpr);
 
-   // push ourselves and the expression in the steps
-   m_steps.push_back( this );
-   m_steps.push_back( &m_pcExpr );
+   // No need to push ourselves. Just push the expression
+   m_step0 = &m_pcExpr;
 }
 
 StmtAutoexpr::~StmtAutoexpr()
@@ -46,9 +45,7 @@ void StmtAutoexpr::toString( String& tgt ) const
 
 void StmtAutoexpr::apply( VMachine* vm ) const
 {
-   // remove ourself and the data left by the expression.
-   vm->popCode();
-   vm->popData();
+   // never called
 }
 
 //====================================================================
@@ -62,8 +59,8 @@ StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
    check->precompile(&m_pcCheck);
 
    // push ourselves and the expression in the steps
-   m_steps.push_back( this );
-   m_steps.push_back( &m_pcCheck );
+   m_step0 = this;
+   m_step1 = &m_pcCheck;
 }
 
 StmtWhile::~StmtWhile()
@@ -81,7 +78,7 @@ void StmtWhile::toString( String& tgt ) const
 
 void StmtWhile::apply( VMachine* vm ) const
 {
-   if ( vm->topData().isTrue() )
+   if ( vm->regA().isTrue() )
    {
       // redo.
       vm->pushCode( &m_pcCheck );
@@ -91,9 +88,6 @@ void StmtWhile::apply( VMachine* vm ) const
       //we're done
       vm->popCode();
    }
-
-   // either way, the evaluated value isn't needed.
-   vm->popData();
 }
 
 
@@ -107,8 +101,8 @@ StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
    m_ifFalse = ifFalse;
    addElif( check, ifTrue );
    // push ourselves and the expression in the steps
-   m_steps.push_back( this );
-   m_steps.push_back( &m_elifs[0].m_pcCheck );
+   m_step0 = this;
+   m_step1 = &m_elifs[0].m_pcCheck;
 }
 
 StmtIf::~StmtIf()
@@ -157,7 +151,7 @@ void StmtIf::toString( String& tgt ) const
 void StmtIf::apply( VMachine* vm ) const
 {
    int sid = vm->currentCode().m_seqId;
-   if ( vm->topData().isTrue() )
+   if ( vm->regA().isTrue() )
    {
       // we're gone -- but we may use our frame.
       vm->resetCode( m_elifs[sid].m_ifTrue );
@@ -184,9 +178,6 @@ void StmtIf::apply( VMachine* vm ) const
          }
       }
    }
-
-  // In any way, the evaluated data is to be discarded
-  vm->popData();
 }
 
 

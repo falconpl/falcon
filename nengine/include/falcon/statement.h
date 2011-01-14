@@ -41,21 +41,37 @@ public:
    } statement_t ;
 
    Statement( statement_t type ):
-      m_type(type)
+      m_type(type),
+      m_step0(0), m_step1(0), m_step2(0), m_step3(0)
    {}
 
    inline virtual ~Statement() {}
 
 protected:
    /** Steps being prepared by the statement */
-   std::vector<PStep*> m_steps;
+   PStep* m_step0;
+   PStep* m_step1;
+   PStep* m_step2;
+   PStep* m_step3;
+
 
    inline void prepare( VMachine* vm ) const
    {
-      std::vector<PStep*>::const_iterator b = m_steps.begin();
-      while( b != m_steps.end() ){
-         vm->pushCode(*b);
-         ++b;
+      if ( m_step0 )
+      {
+         vm->pushCode(m_step0);
+         if ( m_step1 )
+         {
+            vm->pushCode(m_step1);
+            if ( m_step2 )
+            {
+               vm->pushCode(m_step2);
+               if ( m_step3 )
+               {
+                  vm->pushCode(m_step3);
+               }
+            }
+         }
       }
    }
 

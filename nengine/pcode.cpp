@@ -35,6 +35,9 @@ void PCode::apply( VMachine* vm ) const
 	if( pos == 0 )
 	{
 	   vm->popCode();
+	   // save the result in the A register
+	   vm->regA() = vm->topData();
+	   vm->popData();
 	}
 	else
 	{

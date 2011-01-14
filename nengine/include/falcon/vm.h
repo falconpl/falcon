@@ -215,9 +215,13 @@ public:
     * implies the request of a child item for the control to be returned to the VM.
     *
     */
-   int codeDepth() const { return (m_topCode - m_codeStack) + 1; }
+   inline int codeDepth() const { return (m_topCode - m_codeStack) + 1; }
 
-   int dataSize() const { return (m_topData - m_dataStack) + 1; }
+   inline int dataSize() const { return (m_topData - m_dataStack) + 1; }
+
+   inline const Item& regA() const { return m_regA; }
+   inline Item& regA() { return m_regA; }
+
 protected:
 
    Stream *m_stdIn;
@@ -241,6 +245,8 @@ private:
    //DataStack m_dataStack;
    Item* m_dataStack;
    Item* m_topData;
+
+   Item m_regA;
 
    // True when an event is set.
    enum {

@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
    vm.pushCode( program );
    vm.run();
 
-   vm.topData().toString( res );
+   vm.regA().toString( res );
    res.c_ize();
    std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
 
