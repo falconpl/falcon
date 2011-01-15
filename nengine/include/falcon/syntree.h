@@ -66,7 +66,7 @@ public:
       return *this;
    }
 
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep* ps, VMachine* vm );
    virtual void toString( String& tgt ) const;
 
    inline const String toString() const

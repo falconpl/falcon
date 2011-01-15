@@ -20,8 +20,8 @@
 #include <falcon/item.h>
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
+#include <falcon/vmcontext.h>
 
-#include <vector>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
@@ -29,86 +29,24 @@ namespace Falcon {
 
 /** The Falcon virtual machine.
 */
-class FALCON_DYN_CLASS VMachine: public BaseAlloc
+class FALCON_DYN_CLASS VMachine: public VMContext, public BaseAlloc
 {
 
 public:
    VMachine();
    virtual ~VMachine();
 
-   /** Return the nth variable in the local context.
-    * Consider that:
-    * - 0 is self.
-    * - 1...N are the parameters
-    * - N+1... are local variables.
-    */
-   const Item& localVar( int id ) const
-   {
-      const CallFrame& cs = m_callStack.back();
-      return m_dataStack[ id + cs.m_stackBase ];
-   }
+   //=========================================================
+   // Context management
+   //=========================================================
 
-   Item& localVar( int id )
-   {
-      const CallFrame& cs = m_callStack.back();
-      return m_dataStack[ id + cs.m_stackBase ];
-   }
+   inline VMContext* currentContext() const { return m_context; }
+   void loadContext( VMContext* vm );
+   void saveContext( VMContext* vm );
 
-   /** Return the nth parameter in the local context.
-    *
-    *TODO return 0 on parameter out of range.
-    */
-   inline const Item* param( int n ) const {
-      const CallFrame& cs = m_callStack.back();
-      return &m_dataStack[ n + cs.m_stackBase ];
-   }
-
-   inline  Item* param( int n )  {
-      const CallFrame& cs = m_callStack.back();
-      return &m_dataStack[ n + cs.m_stackBase ];
-   }
-
-   /** Return the nth parameter in the local context.
-    *
-    *TODO use the local stack.
-    */
-   inline const Item* local( int n ) const {
-      const CallFrame& cs = m_callStack.back();
-      return &m_dataStack[ n + cs.m_paramCount + cs.m_stackBase ];
-   }
-
-   inline Item* local( int n ) {
-         const CallFrame& cs = m_callStack.back();
-         return &m_dataStack[ n + cs.m_paramCount + cs.m_stackBase ];
-      }
-
-   /** Returns the self item in the local context.
-    *
-    */
-   inline const Item& self() const { return m_callStack.back().m_self; }
-   inline Item& self() { return m_callStack.back().m_self; }
-
-   /** Top data in the stack
-    *
-    */
-   inline const Item& topData() const { return *m_topData; }
-   inline Item& topData() { return *m_topData; }
-
-   /** Push some code to be run in the execution stack.
-    *
-    * The step parameter is owned by the caller.
-    */
-   inline void pushCode( const PStep* step ) {
-      ++m_topCode;
-      m_topCode->m_step = step;
-      m_topCode->m_seqId = 0;
-   }
-
-   /** Push data on top of the stack */
-   inline void pushData( const Item& data ) {
-      ++m_topData;
-      *m_topData = data;
-   }
+   //=========================================================
+   // Execution management.
+   //=========================================================
 
    /** Runs a prepared code, or continues running.
     * @return True if all the code was executed, false if a breakpoint forced to stop.
@@ -131,6 +69,8 @@ public:
 
    virtual void call( Function* function, int np, const Item& self );
 
+   void returnFrame();
+
    /** Returns the step that is going to be executed next, or null if none */
    PStep* nextStep() const;
 
@@ -139,6 +79,7 @@ public:
     * false if this was the last (i.e. if the VM is terminated).
     */
    bool step();
+
 
    /** Raises a VM error.
     *
@@ -149,75 +90,19 @@ public:
     *
     * \note Falcon exceptions are thrown by pointer. This is because the error entity
     * can be stored in several places, and in several threads, by the time it
-    * surfaces to user code. This calls for referecne management.
+    * surfaces to user code. This calls for reference management.
     */
    //void raiseError( Error* theError );
 
-   const CallFrame& currentFrame() const { return m_callStack[m_callStack.size()-1]; }
-   CallFrame& currentFrame() { return m_callStack[m_callStack.size()-1]; }
 
-   const CodeFrame& currentCode() const { return *m_topCode; }
-   CodeFrame& currentCode() { return *m_topCode; }
-
-   void popData() { m_topData--; }
-
-   inline void popCode() {
-      popCode(1);
-   }
-
-   /** Changes the currently running pstep.
-    *
-    *  Other than changing the top step, this method resets the sequence ID.
-    *  Be careful: this won't work for PCode (they need the seq ID to be set to their size).
-    */
-   inline void resetCode( PStep* step ) {
-      CodeFrame& frame = currentCode();
-      frame.m_step = step;
-      frame.m_seqId = 0;
-   }
-
-   void popCode( int size ) {
-      m_topCode -= size;
-   }
-
-   void unrollCode( int size ) {
-      m_topCode = m_codeStack + size - 1;
-   }
-
-   void returnFrame();
-
-   /** Adds a data in the stack and returns a reference to it.
-    *
-    * Useful in case the caller is going to push some data in the stack,
-    * but it is still not having the final item ready.
-    *
-    * Using this method and then changing the returned item is more
-    * efficient than creating an item in the caller stack
-    * and then pushing it in the VM.
-    *
-    */
-   Item& addDataSlot() {
-      ++m_topData;
-      return *m_topData;
-   }
-
-   /** Finds the variable coresponding to a symbol name in the current context.
+   /** Finds the variable corresponding to a symbol name in the current context.
     * @return A pointer to the item if found, 0 if not found.
     *
     * The search will be extended to global and imported symbols if the search
-    * int he local symbol tables fails.
+    * in the local symbol tables fails.
     */
    Item* findLocalItem( const String& name );
 
-   /** Returns the current code stack size.
-    *
-    * During processing of SynTree and CompExpr, the change of the stack size
-    * implies the request of a child item for the control to be returned to the VM.
-    *
-    */
-   inline int codeDepth() const { return (m_topCode - m_codeStack) + 1; }
-
-   inline int dataSize() const { return (m_topData - m_dataStack) + 1; }
 
    inline const Item& regA() const { return m_regA; }
    inline Item& regA() { return m_regA; }
@@ -233,18 +118,8 @@ protected:
 
 private:
 
-   //typedef std::vector<CodeFrame> CodeStack;
-   typedef std::vector<CallFrame> CallStack;
-   //typedef std::vector<Item> DataStack;
-
-   //CodeStack m_codeStack;
-   CodeFrame* m_codeStack;
-   CodeFrame* m_topCode;
-
-   CallStack m_callStack;
-   //DataStack m_dataStack;
-   Item* m_dataStack;
-   Item* m_topData;
+   // current context
+   VMContext* m_context;
 
    Item m_regA;
 

@@ -41,6 +41,7 @@ add_library(falcon_engine SHARED
   symbol.cpp
   syntree.cpp
   vm.cpp
+  vmcontext.cpp
 )
 
 add_executable( test

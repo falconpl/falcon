@@ -193,7 +193,7 @@ bool ExprNeg::simplify( Item& value ) const
    return false;
 }
 
-void ExprNeg::apply( VMachine* vm ) const
+void ExprNeg::apply_( const PStep*, VMachine* vm )
 {
    Item& item = vm->topData();
    // remove ourselves
@@ -233,7 +233,7 @@ bool ExprNot::simplify( Item& value ) const
    return false;
 }
 
-void ExprNot::apply( VMachine* vm ) const
+void ExprNot::apply_( const PStep*, VMachine* vm )
 {
    Item& operand = vm->topData();
 
@@ -277,7 +277,7 @@ void ExprAnd::precompile( PCode* pcode ) const
    m_first->precompile( pcode );
 }
 
-void ExprAnd::apply( VMachine* vm ) const
+void ExprAnd::apply_( const PStep*, VMachine* vm )
 {
    // use the space left from us by the previous expression
    Item& operand = vm->topData();
@@ -293,7 +293,12 @@ void ExprAnd::toString( String& str ) const
 }
 
 
-void ExprAnd::Gate::apply( VMachine* vm ) const
+ExprAnd::Gate::Gate() {
+   apply = apply_;
+}
+
+
+void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
 {
    // read and recycle the topmost data.
    Item& operand = vm->topData();
@@ -301,7 +306,7 @@ void ExprAnd::Gate::apply( VMachine* vm ) const
    {
       operand.setBoolean( false );
       // pop ourselves and the calling code
-      vm->currentCode().m_seqId = m_shortCircuitSeqId;
+      vm->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
@@ -339,7 +344,7 @@ void ExprOr::precompile( PCode* pcode ) const
 }
 
 
-void ExprOr::apply( VMachine* vm ) const
+void ExprOr::apply_( const PStep*, VMachine* vm )
 {
    // reuse the operand left by the other expression
    Item& operand = vm->topData();
@@ -353,7 +358,11 @@ void ExprOr::toString( String& str ) const
    str = "(" + m_first->toString() + " or " + m_second->toString() + ")";
 }
 
-void ExprOr::Gate::apply( VMachine* vm ) const
+ExprOr::Gate::Gate() {
+   apply = apply_;
+}
+
+void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 {
    // read and recycle the topmost data.
    Item& operand = vm->topData();
@@ -361,7 +370,7 @@ void ExprOr::Gate::apply( VMachine* vm ) const
    {
       operand.setBoolean( true );
       // pop ourselves and the calling code
-      vm->currentCode().m_seqId = m_shortCircuitSeqId;
+      vm->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
@@ -378,11 +387,6 @@ void ExprAssign::precompile( PCode* pcode ) const
    // but the first knows it's a lvalue.
    m_first->precompile(pcode);
    m_second->precompile(pcode);
-}
-
-void ExprAssign::apply( VMachine* vm ) const
-{
-   // The apply is never called for expr asssing.
 }
 
 
@@ -426,7 +430,7 @@ bool ExprPlus::simplify( Item& value ) const
 }
 
 
-void ExprPlus::apply( VMachine* vm ) const
+void ExprPlus::apply_( const PStep*, VMachine* vm )
 {
    // copy the second
    Item d2 = vm->topData();
@@ -497,7 +501,7 @@ bool ExprLT::simplify( Item& value ) const
 }
 
 
-void ExprLT::apply( VMachine* vm ) const
+void ExprLT::apply_( const PStep*, VMachine* vm )
 {
    // copy the second
    Item d2 = vm->topData();

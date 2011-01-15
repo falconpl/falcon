@@ -96,7 +96,6 @@ public:
    virtual ~StmtAutoexpr();
 
    void toString( String& tgt ) const;
-   virtual void apply( VMachine* vm ) const;
 
 private:
    Expression* m_expr;
@@ -111,7 +110,7 @@ public:
    virtual ~StmtWhile();
 
    void toString( String& tgt ) const;
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep*, VMachine* vm );
 
 private:
    Expression* m_check;
@@ -127,7 +126,7 @@ public:
    virtual ~StmtIf();
 
    void toString( String& tgt ) const;
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep*, VMachine* vm );
 
    /** Adds an else-if branch to the if statement */
    StmtIf& addElif( Expression *check, SynTree* ifTrue );

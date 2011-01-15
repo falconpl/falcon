@@ -19,16 +19,23 @@
 
 namespace Falcon {
 
-void PCode::apply( VMachine* vm ) const
+PCode::PCode()
 {
+   apply = apply_;
+}
+
+void PCode::apply_( const PStep* self, VMachine* vm )
+{
+   const StepList& steps = static_cast<const PCode*>(self)->m_steps;
 	CodeFrame& cf = vm->currentCode();
+
 	// TODO Check if all this loops are really performance wise
 	register int depth = vm->codeDepth();
-	register int pos = m_steps.size() - cf.m_seqId;
+	register int pos = steps.size() - cf.m_seqId;
 	while ( pos > 0 && vm->codeDepth() == depth )
 	{
-		const PStep* pstep = m_steps[ --pos ];
-		pstep->apply(vm);
+		const PStep* pstep = steps[ --pos ];
+		pstep->apply(pstep,vm);
 	}
 
 	// we're done?
@@ -41,7 +48,7 @@ void PCode::apply( VMachine* vm ) const
 	}
 	else
 	{
-	   cf.m_seqId = m_steps.size() - pos;
+	   cf.m_seqId = steps.size() - pos;
 	}
 }
 

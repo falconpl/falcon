@@ -21,28 +21,56 @@
 namespace Falcon
 {
 
-VMachine::VMachine()
+VMachine::VMachine():
+      VMContext( false )
 {
-   //m_codeStack.reserve( 1024 );
-   m_codeStack = new CodeFrame[1024];
-   m_topCode = m_codeStack-1;
-   m_dataStack = new Item[1024];
-   m_topData = m_dataStack - 1;
-   m_callStack.reserve( 1024 );
+   // create the first context
+   loadContext( new VMContext );
 }
 
 VMachine::~VMachine()
 {
-   delete[] m_codeStack;
-   delete[] m_dataStack;
+}
+
+
+void VMachine::loadContext( VMContext* vmc )
+{
+   m_context = vmc;
+
+   m_regA = vmc->m_regA;
+
+   m_codeStack = vmc->m_codeStack;
+   m_topCode = vmc->m_topCode;
+
+   m_callStack = vmc->m_callStack;
+   m_topCall = vmc->m_topCall;
+
+   m_dataStack = vmc->m_dataStack;
+   m_topData = vmc->m_topData;
+}
+
+
+
+void VMachine::saveContext( VMContext* vmc )
+{
+   vmc->m_regA = vmc->m_regA;
+   vmc->m_codeStack = m_codeStack;
+   vmc->m_topCode = m_topCode;
+
+   vmc->m_codeStack = m_codeStack;
+   vmc->m_topCall = m_topCall;
+
+   vmc->m_dataStack = m_dataStack;
+   vmc->m_topData = m_topData;
 }
 
 
 bool VMachine::run()
 {
-   while( m_topCode >= m_codeStack )
+   while( ! codeEmpty() )
    {
-      m_topCode->m_step->apply( this );
+      const PStep* ps = currentCode().m_step;
+      ps->apply( ps, this );
    }
 }
 
@@ -54,20 +82,18 @@ PStep* VMachine::nextStep() const
 
 void VMachine::call( Function* function, int nparams, const Item& self )
 {
-   m_callStack.push_back(
-         CallFrame(function, nparams, dataSize(), codeDepth(), self ) );
 }
 
 
 bool VMachine::step()
 {
-   if ( m_topCode < m_codeStack )
+   if ( codeEmpty() )
    {
       return false;
    }
 
-   const PStep* ps = m_topCode->m_step;
-   ps->apply( this );
+   const PStep* ps = currentCode().m_step;
+   ps->apply( ps, this );
 }
 
 

@@ -42,12 +42,6 @@ void StmtAutoexpr::toString( String& tgt ) const
    m_expr->toString( tgt );
 }
 
-
-void StmtAutoexpr::apply( VMachine* vm ) const
-{
-   // never called
-}
-
 //====================================================================
 //
 
@@ -56,6 +50,8 @@ StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
    m_check(check),
    m_stmts( stmts )
 {
+   apply = apply_;
+
    check->precompile(&m_pcCheck);
 
    // push ourselves and the expression in the steps
@@ -76,13 +72,15 @@ void StmtWhile::toString( String& tgt ) const
          "end\n";
 }
 
-void StmtWhile::apply( VMachine* vm ) const
+void StmtWhile::apply_( const PStep* s1, VMachine* vm )
 {
+   const StmtWhile* self = static_cast<const StmtWhile*>(s1);
+
    if ( vm->regA().isTrue() )
    {
       // redo.
-      vm->pushCode( &m_pcCheck );
-      vm->pushCode( m_stmts );
+      vm->pushCode( &self->m_pcCheck );
+      vm->pushCode( self->m_stmts );
    }
    else {
       //we're done
@@ -98,6 +96,8 @@ void StmtWhile::apply( VMachine* vm ) const
 StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
    Statement( if_t )
 {
+   apply = apply_;
+
    m_ifFalse = ifFalse;
    addElif( check, ifTrue );
    // push ourselves and the expression in the steps
@@ -148,28 +148,30 @@ void StmtIf::toString( String& tgt ) const
 }
 
 
-void StmtIf::apply( VMachine* vm ) const
+void StmtIf::apply_( const PStep* s1,VMachine* vm )
 {
+   const StmtIf* self = static_cast<const StmtIf*>(s1);
+
    int sid = vm->currentCode().m_seqId;
    if ( vm->regA().isTrue() )
    {
       // we're gone -- but we may use our frame.
-      vm->resetCode( m_elifs[sid].m_ifTrue );
+      vm->resetCode( self->m_elifs[sid].m_ifTrue );
    }
    else
    {
       // try next else-if
-      if( ++sid < m_elifs.size() )
+      if( ++sid < self->m_elifs.size() )
       {
          vm->currentCode().m_seqId = sid;
-         vm->pushCode( &m_elifs[sid].m_pcCheck );
+         vm->pushCode( &self->m_elifs[sid].m_pcCheck );
       }
       else
       {
          // we're out of elifs.
-         if( m_ifFalse != 0 )
+         if( self->m_ifFalse != 0 )
          {
-            vm->resetCode(m_ifFalse);
+            vm->resetCode(self->m_ifFalse);
          }
          else
          {

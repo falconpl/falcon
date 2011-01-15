@@ -22,7 +22,9 @@ namespace Falcon
 {
 
 SynTree::SynTree()
-{}
+{
+   apply = apply_;
+}
 
 SynTree::~SynTree()
 {
@@ -41,18 +43,20 @@ void SynTree::toString( String& tgt ) const
    }
 }
 
-void SynTree::apply( VMachine* vm ) const
+void SynTree::apply_( const PStep* ps, VMachine* vm )
 {
+   const SynTree* self = static_cast<const SynTree*>(ps);
+
    // get the current step.
    CodeFrame& cf = vm->currentCode();
-   if (cf.m_seqId >= m_steps.size() )
+   if (cf.m_seqId >= self->m_steps.size() )
    {
       // we're done.
       vm->popCode();
       return;
    }
 
-   Statement* step = m_steps[ cf.m_seqId++ ];
+   Statement* step = self->m_steps[ cf.m_seqId++ ];
    step->prepare(vm);
 }
 

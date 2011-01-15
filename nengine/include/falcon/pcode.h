@@ -57,14 +57,18 @@ namespace Falcon {
 class FALCON_DYN_CLASS PCode: public PStep
 {
 public:
-   virtual void apply( VMachine* vm ) const;
+
+   PCode();
 
    inline int size() const { return m_steps.size(); }
    /** Pushes a new step in the pcode. */
    inline void pushStep( const PStep* ps ) { m_steps.push_back( ps ); }
 
 private:
-   std::vector<const PStep*> m_steps;
+   typedef std::vector<const PStep*> StepList;
+   StepList m_steps;
+
+   static void apply_( const PStep* ps, VMachine* vm );
 };
 
 }

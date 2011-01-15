@@ -22,24 +22,27 @@ namespace Falcon {
 LocalSymbol::LocalSymbol( const LocalSymbol& other ):
    Symbol( other ),
    m_id( other.m_id )
-{}
+{
+   apply = apply_;
+}
 
 LocalSymbol::~LocalSymbol()
 {
 }
 
-void LocalSymbol::apply( VMachine* vm ) const
+void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
 {
+   const LocalSymbol* self = static_cast<const LocalSymbol *>(s1);
    // l-value (assignment)?
-   if( m_lvalue )
+   if( self->m_lvalue )
    {
-      vm->localVar( m_id ) = vm->topData();
+      vm->localVar( self->m_id ) = vm->topData();
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      Item i = vm->localVar( m_id );
+      Item i = vm->localVar( self->m_id );
       vm->pushData( i );
    }
 }

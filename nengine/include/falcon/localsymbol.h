@@ -27,12 +27,14 @@ public:
    LocalSymbol( const String& name, int id ):
       Symbol( t_local_symbol, name ),
       m_id( id )
-   {}
+   {
+      apply = apply_;
+   }
 
    LocalSymbol( const LocalSymbol& other );
    virtual ~LocalSymbol();
 
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep* s1, VMachine* vm );
 
    virtual void serialize( Stream* s ) const;
    LocalSymbol* clone() const { return new LocalSymbol(*this); }

@@ -321,11 +321,11 @@ protected:
 //
 
 #define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1 ): UnaryExpression( op, op1 ) {} \
-   inline class_name( const class_name& other ): UnaryExpression( other ) {} \
+   inline class_name( Expression* op1 ): UnaryExpression( op, op1 ) {apply = apply_;} \
+   inline class_name( const class_name& other ): UnaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   virtual void apply( VMachine* vm ) const; \
+   static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
    protected:\
    inline class_name(): UnaryExpression( op ) {}\
@@ -333,11 +333,11 @@ protected:
    public:
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) {} \
-   inline class_name( const class_name& other ): BinaryExpression( other ) {} \
+   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) { apply = apply_; } \
+   inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   virtual void apply( VMachine* vm ) const; \
+   static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
    protected:\
    inline class_name(): BinaryExpression( op ) {}\
@@ -345,11 +345,11 @@ protected:
    public:
 
 #define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1, Expression* op2, Expression* op3 ): TernaryExpression( op, op1, op2, op3 ) {} \
-   inline class_name( const class_name& other ): TernaryExpression( other ) {} \
+   inline class_name( Expression* op1, Expression* op2, Expression* op3 ): TernaryExpression( op, op1, op2, op3 ) {apply = apply_;} \
+   inline class_name( const class_name& other ): TernaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   virtual void apply( VMachine* vm ) const; \
+   static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
@@ -382,7 +382,8 @@ public:
 private:
    class Gate: public PStep {
    public:
-      virtual void apply( VMachine* vm ) const;
+      Gate();
+      static void apply_( const PStep*, VMachine* vm );
       mutable int m_shortCircuitSeqId;
    } m_gate;
 };
@@ -406,7 +407,8 @@ private:
 
    class Gate: public PStep {
    public:
-      virtual void apply( VMachine* vm ) const;
+      Gate();
+      static void apply_( const PStep*, VMachine* vm );
       mutable int m_shortCircuitSeqId;
    } m_gate;
 };
@@ -429,7 +431,6 @@ public:
    inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
 
    virtual bool simplify( Item& value ) const;
-   virtual void apply( VMachine* vm ) const;
    virtual void toString( String& ) const;
 
    inline virtual bool isStandAlone() const { return true; }

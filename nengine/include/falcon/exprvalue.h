@@ -45,8 +45,7 @@ public:
 
    virtual bool simplify( Item& result ) const;
 
-   virtual void perform( VMachine* vm ) const;
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep* s1, VMachine* vm );
 
    /** Returns a const version of the stored item.
     * The stored item cannot be changed directly; to change it,

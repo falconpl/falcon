@@ -40,12 +40,10 @@ namespace Falcon {
 class FALCON_DYN_CLASS PStep: public BaseAlloc
 {
 public:
+   // TODO: in debug add a default failing apply
    inline PStep() {};
 
    inline virtual ~PStep() {}
-
-   /* Called by the virtual machine when it encounters a step on its code stack. */
-   virtual void apply( VMachine* vm ) const = 0;
 
    /** Convert into a string */
    inline const String toString() const
@@ -62,6 +60,10 @@ public:
     * VM code.
     * */
    inline virtual void toString( String& ) const {};
+
+   typedef void (*apply_func)(const PStep* self, VMachine* vm);
+   apply_func apply;
+
 };
 
 }

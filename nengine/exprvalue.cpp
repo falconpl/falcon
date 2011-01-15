@@ -25,6 +25,8 @@ ExprValue::ExprValue( const Item& item ):
       Expression( t_value ),
       m_item(item)
 {
+   apply = apply_;
+
    if ( item.isDeep() )
    {
       m_lock = new GarbageLock(item);
@@ -68,15 +70,12 @@ void ExprValue::item( const Item& i )
    }
 }
 
-void ExprValue::perform( VMachine* vm ) const
-{
-   vm->pushCode( this );
-}
 
-
-void ExprValue::apply( VMachine* vm ) const
+void ExprValue::apply_( const PStep *ps, VMachine* vm )
 {
-   vm->pushData( m_item );
+   const ExprValue* self = static_cast<const ExprValue*>(ps);
+
+   vm->pushData( self->m_item );
 }
 
 
