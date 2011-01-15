@@ -16,43 +16,49 @@
 #include <falcon/closedsymbol.h>
 #include <falcon/stream.h>
 #include <falcon/vm.h>
+#include <falcon/exprsym.h>
 
 namespace Falcon {
+
+ClosedSymbol::ClosedSymbol( const String& name, const Item& closed ):
+   Symbol( t_closed_symbol, name ),
+   m_item( closed )
+{
+}
 
 ClosedSymbol::ClosedSymbol( const ClosedSymbol& other ):
       Symbol(other),
       m_item( other.m_item )
-{}
+{
+}
 
 ClosedSymbol::~ClosedSymbol()
 {}
 
-void ClosedSymbol::apply( VMachine* vm ) const
+void ClosedSymbol::apply_( const PStep* ps, VMachine* vm )
 {
+   const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
+   ClosedSymbol* sym = static_cast<ClosedSymbol*>(self->symbol());
+
    // l-value (assignment)?
-   if( m_lvalue )
+   if( self->m_lvalue )
    {
-      m_item = vm->topData();
+      sym->m_item = vm->topData();
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      vm->pushData( m_item );
+      vm->pushData( sym->m_item );
    }
 }
 
 
-void ClosedSymbol::serialize( Stream* s ) const
+Expression* ClosedSymbol::makeExpression()
 {
-   Symbol::serialize(s);
-   //TODO
-}
-
-void ClosedSymbol::deserialize( Stream* s )
-{
-   Symbol::deserialize(s);
-   //TODO
+   ExprSymbol* sym = new ExprSymbol(this);
+   sym->setApply( apply_ );
+   return sym;
 }
 
 }

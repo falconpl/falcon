@@ -26,21 +26,20 @@ int main( int argc, char* argv[] )
    //   count = count + 1
    // end
 
-   // TODO -- symbols are not expressions.
    Falcon::Symbol* count = new Falcon::LocalSymbol("count",0);
    Falcon::SynTree* assign = new Falcon::SynTree;
    assign->append(
          new Falcon::StmtAutoexpr(
-               new Falcon::ExprAssign( new Falcon::LocalSymbol("count",0),
-                     new Falcon::ExprPlus( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(1) )
+               new Falcon::ExprAssign( count->makeExpression(),
+                     new Falcon::ExprPlus( count->makeExpression(), new Falcon::ExprValue(1) )
          )));
 
 
    Falcon::SynTree* program = new Falcon::SynTree;
    (*program)
-      .append( new Falcon::StmtAutoexpr(new Falcon::ExprAssign( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(0) ) ) )
+      .append( new Falcon::StmtAutoexpr(new Falcon::ExprAssign( count->makeExpression(), new Falcon::ExprValue(0) ) ) )
       .append( new Falcon::StmtWhile(
-                     new Falcon::ExprLT( new Falcon::LocalSymbol("count",0), new Falcon::ExprValue(50000000) ),
+                     new Falcon::ExprLT( count->makeExpression(), new Falcon::ExprValue(50000000) ),
                      assign ) );
 
 

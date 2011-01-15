@@ -36,10 +36,7 @@ class FALCON_DYN_CLASS Expression: public PStep
 public:
    typedef enum {
       t_value,
-      t_local_symbol,
-      t_global_symbol,
-      t_closed_symbol,
-      t_dyn_symbol,
+      t_symbol,
       t_neg,
       t_not,
 

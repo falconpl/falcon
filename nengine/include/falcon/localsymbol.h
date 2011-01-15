@@ -21,32 +21,23 @@
 
 namespace Falcon {
 
+class PStep;
+
 class FALCON_DYN_CLASS LocalSymbol: public Symbol
 {
 public:
-   LocalSymbol( const String& name, int id ):
-      Symbol( t_local_symbol, name ),
-      m_id( id )
-   {
-      apply = apply_;
-   }
-
+   LocalSymbol(const String& name, int id );
    LocalSymbol( const LocalSymbol& other );
    virtual ~LocalSymbol();
 
-   static void apply_( const PStep* s1, VMachine* vm );
-
-   virtual void serialize( Stream* s ) const;
    LocalSymbol* clone() const { return new LocalSymbol(*this); }
 
-protected:
-   virtual void deserialize( Stream* s );
-   inline LocalSymbol():
-      Symbol( t_local_symbol )
-   {}
+   static void apply_( const PStep* s1, VMachine* vm );
 
+   virtual Expression* makeExpression();
+
+protected:
    int m_id;
-   friend class ExprFactory;
 };
 
 }

@@ -20,6 +20,8 @@
 
 namespace Falcon {
 
+class PStep;
+
 /** Global symbol class.
  *
  * This class references a value in the module symbol table.
@@ -38,17 +40,15 @@ public:
    virtual ~GlobalSymbol();
 
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
-   virtual void serialize( Stream* s ) const;
 
-   virtual void apply( VMachine* vm ) const;
+   static void apply_( const PStep* self, VMachine* vm );
+   virtual Expression* makeExpression();
 
 protected:
-   virtual void deserialize( Stream* s );
-   inline GlobalSymbol():
-      Symbol( t_global_symbol )
-   {}
+   GlobalSymbol();
 
    Item* m_itemPtr;
+
    friend class ExprFactory;
 };
 

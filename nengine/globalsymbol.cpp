@@ -14,6 +14,7 @@
 */
 
 #include <falcon/globalsymbol.h>
+#include <falcon/exprsym.h>
 #include <falcon/vm.h>
 
 namespace Falcon {
@@ -21,41 +22,44 @@ namespace Falcon {
 GlobalSymbol::GlobalSymbol( const String& name, Item* itemPtr ):
       Symbol( t_global_symbol, name ),
       m_itemPtr( itemPtr )
-{}
+{
+}
+
 
 GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
       Symbol( other ),
       m_itemPtr( other.m_itemPtr )
-{}
+{
+}
+
 
 GlobalSymbol::~GlobalSymbol()
 {}
 
-void GlobalSymbol::apply( VMachine* vm ) const
+
+void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
 {
+   const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
+   GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
+
    // l-value (assignment)?
-   if( m_lvalue )
+   if( self->m_lvalue )
    {
-      *m_itemPtr = vm->topData();
+      *sym->m_itemPtr = vm->topData();
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      vm->pushData( *m_itemPtr );
+      vm->pushData( *sym->m_itemPtr );
    }
 }
 
-void GlobalSymbol::serialize( Stream* s ) const
+Expression* GlobalSymbol::makeExpression()
 {
-   Symbol::serialize( s );
-   //TODO
-}
-
-void GlobalSymbol::deserialize( Stream* s )
-{
-   Symbol::deserialize( s );
-   //TODO
+   ExprSymbol* sym = new ExprSymbol(this);
+   sym->setApply( apply_ );
+   return sym;
 }
 
 }

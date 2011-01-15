@@ -21,28 +21,24 @@
 
 namespace Falcon {
 
+class PStep;
+
 /** Symbols that must be resolved at runtime.
  */
 class FALCON_DYN_CLASS DynSymbol: public Symbol
 {
 public:
-   DynSymbol( const String& name ):
-      Symbol( t_dyn_symbol, name )
-   {}
-
+   DynSymbol( const String& name );
    DynSymbol( const DynSymbol& other );
    virtual ~DynSymbol();
 
-   virtual void apply( VMachine* vm ) const;
-   virtual void serialize( Stream* s ) const;
-
    DynSymbol* clone() const { return new DynSymbol(*this); }
 
+   static void apply_( const PStep* self, VMachine* vm );
+   virtual Expression* makeExpression();
+
 protected:
-   virtual void deserialize( Stream* s );
-   inline DynSymbol():
-      Symbol( t_dyn_symbol )
-   {}
+   DynSymbol();
 
    friend class ExprFactory;
 };

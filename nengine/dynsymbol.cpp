@@ -14,26 +14,36 @@
 */
 
 #include <falcon/dynsymbol.h>
+#include <falcon/exprsym.h>
 #include <falcon/vm.h>
 
 namespace Falcon {
+
+DynSymbol::DynSymbol( const String& name ):
+      Symbol( t_dyn_symbol, name )
+{
+}
 
 DynSymbol::DynSymbol( const DynSymbol& other ):
       Symbol( other )
 {
 }
 
+
 DynSymbol::~DynSymbol()
 {
 }
 
-void DynSymbol::apply( VMachine* vm ) const
+void DynSymbol::apply_( const PStep* ps, VMachine* vm )
 {
-   Item* fval = vm->findLocalItem( m_name );
+   const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
+   DynSymbol* sym = static_cast<DynSymbol*>(self->symbol());
+
+   Item* fval = vm->findLocalItem( sym->name() );
    if ( fval )
    {
       // l-value (assignment)?
-      if( m_lvalue )
+      if( self->m_lvalue )
       {
          *fval = vm->topData();
          // topData is already the value of the l-value evaluation.
@@ -50,16 +60,11 @@ void DynSymbol::apply( VMachine* vm ) const
 }
 
 
-void DynSymbol::serialize( Stream* s ) const
+Expression* DynSymbol::makeExpression()
 {
-   Symbol::serialize( s );
-   // TODO
-}
-
-void DynSymbol::deserialize( Stream* s )
-{
-   Symbol::deserialize( s );
-   // TODO
+   ExprSymbol* sym = new ExprSymbol(this);
+   sym->setApply( apply_ );
+   return sym;
 }
 
 }

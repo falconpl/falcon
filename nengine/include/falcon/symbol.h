@@ -19,14 +19,14 @@
 #define FALCON_SYMBOL_H
 
 #include <falcon/setup.h>
-#include <falcon/expression.h>
+#include <falcon/basealloc.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
 class Stream;
-class GarbageLock;
-class VMachine;
 class Item;
+class Expression;
 
 /** Base symbol class.
  * A Falcon Symbol is a name indicating a value, possibly (usually) bound
@@ -53,36 +53,36 @@ class Item;
  *
  * As evaluation rules change depending on the symbol type, this is actually
  * an abstract class.
+ *
+ * TODO Serialization
  */
-class FALCON_DYN_CLASS Symbol: public Expression
+class FALCON_DYN_CLASS Symbol: public BaseAlloc
 {
 public:
+   typedef enum {
+      t_local_symbol,
+      t_global_symbol,
+      t_closed_symbol,
+      t_dyn_symbol
+   } type_t;
+
    Symbol( const Symbol& other );
    virtual ~Symbol();
 
-   /** Symbols cannot be simplified. */
-   inline virtual bool simplify( Item& result ) const { return false; }
-
-   virtual void serialize( Stream* s ) const;
-   virtual void toString(String & str) const;
    const String& name() const { return m_name; }
 
-   inline virtual void setLValue() { m_lvalue = true; }
-   inline virtual bool isLValue() const { return m_lvalue; }
+   /** Generates an expression for this symbol.
+    * @return a new Expression to be set in a SynTree.
+    */
+   virtual Expression* makeExpression() = 0;
 
-   inline virtual bool isBinaryOperator() const { return false; }
-   inline virtual bool isStatic() const { return false; }
+   type_t type() const { return m_type; }
 
 protected:
-   Symbol( operator_t type, const String& name );
-   virtual void deserialize( Stream* s );
-   inline Symbol( operator_t type ):
-      Expression( type )
-   {}
+   Symbol( type_t t, const String& name );
 
+   type_t m_type;
    String m_name;
-   bool m_lvalue;
-   friend class ExprFactory;
 };
 
 }

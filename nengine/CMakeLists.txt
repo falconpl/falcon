@@ -30,6 +30,7 @@ add_library(falcon_engine SHARED
   dynsymbol.cpp
   expression.cpp
   exprfactory.cpp
+  exprsym.cpp
   exprvalue.cpp
   garbagelock.cpp
   globalsymbol.cpp

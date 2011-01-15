@@ -16,14 +16,20 @@
 #include <falcon/localsymbol.h>
 #include <falcon/stream.h>
 #include <falcon/vm.h>
+#include <falcon/exprsym.h>
 
 namespace Falcon {
+
+LocalSymbol::LocalSymbol( const String& name, int id ):
+   Symbol( t_local_symbol, name ),
+   m_id( id )
+{
+}
 
 LocalSymbol::LocalSymbol( const LocalSymbol& other ):
    Symbol( other ),
    m_id( other.m_id )
 {
-   apply = apply_;
 }
 
 LocalSymbol::~LocalSymbol()
@@ -32,33 +38,29 @@ LocalSymbol::~LocalSymbol()
 
 void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
 {
-   const LocalSymbol* self = static_cast<const LocalSymbol *>(s1);
+   const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);
+   LocalSymbol* sym = static_cast<LocalSymbol*>(self->symbol());
+
    // l-value (assignment)?
    if( self->m_lvalue )
    {
-      vm->localVar( self->m_id ) = vm->topData();
+      vm->localVar( sym->m_id ) = vm->topData();
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      Item i = vm->localVar( self->m_id );
+      // try to load by reference.
+      Item &i = vm->localVar( sym->m_id );
       vm->pushData( i );
    }
 }
 
-
-void LocalSymbol::serialize( Stream* s ) const
+Expression* LocalSymbol::makeExpression()
 {
-   Symbol::serialize( s );
-   //TODO
-}
-
-
-void LocalSymbol::deserialize( Stream* s )
-{
-   Symbol::deserialize( s );
-   //TODO
+   ExprSymbol* sym = new ExprSymbol(this);
+   sym->setApply( apply_ );
+   return sym;
 }
 
 }

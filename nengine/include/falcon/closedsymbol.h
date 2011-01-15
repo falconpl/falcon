@@ -18,8 +18,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/symbol.h>
+#include <falcon/item.h>
 
 namespace Falcon {
+
+class PStep;
 
 /** Sybmols enclosing specific items in closures.
  *
@@ -31,28 +34,20 @@ namespace Falcon {
 class FALCON_DYN_CLASS ClosedSymbol: public Symbol
 {
 public:
-   ClosedSymbol( const String& name, const Item& closed ):
-      Symbol( t_closed_symbol, name ),
-      m_item( closed )
-   {}
-
+   ClosedSymbol( const String& name, const Item& closed );
    ClosedSymbol( const ClosedSymbol& other );
    virtual ~ClosedSymbol();
-   virtual void serialize( Stream* s ) const;
 
-   void apply( VMachine* vm ) const;
-
+   static void apply_( const PStep*, VMachine* vm );
    ClosedSymbol* clone() const { return new ClosedSymbol(*this); }
+
+   virtual Expression* makeExpression();
 
    const Item& value() const { return m_item; }
    Item& value() { return m_item; }
-protected:
-   virtual void deserialize( Stream* s );
-   inline ClosedSymbol():
-      Symbol( t_closed_symbol )
-   {}
 
-   mutable Item m_item;
+protected:
+   Item m_item;
    friend class ExprFactory;
 };
 
