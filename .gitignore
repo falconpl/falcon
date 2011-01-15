@@ -6,6 +6,7 @@
 
 # vi
 *.swp
+*~
 
 # Build directories
 build
