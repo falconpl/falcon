@@ -8,6 +8,10 @@ falcon_define_module( FALCON_MODULE mongo )
 
 message( STATUS "Adding mongodb module" )
 
+if ( NOT MSVC )
+    option( MONGO_HAVE_STDINT "MongoDB problem with int64_t?" OFF )
+endif()
+
 ##
 #   Find Falcon
 #
@@ -28,8 +32,11 @@ add_subdirectory( src )
 if ( MSVC )
     add_definitions( -DMONGO_USE__INT64 )
 else()
-    #add_definitions( -DMONGO_HAVE_STDINT )
-    add_definitions( -DMONGO_USE_LONG_LONG_INT )
+    if ( MONGO_HAVE_STDINT )
+        add_definitions( -DMONGO_HAVE_STDINT )
+    else()
+        add_definitions( -DMONGO_USE_LONG_LONG_INT )
+    endif()
 endif()
 
 ##

@@ -1,0 +1,194 @@
+/*
+   FALCON - The Falcon Programming Language.
+   OAuth2 authentication scheme support - main file
+
+   FILE: oauth2.fal
+
+   Main module file
+   -------------------------------------------------------------------
+   Author: Greta Carenzo
+   Begin: Mon, 21 Jun 2010 13:38:47 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from hash
+import from curl
+import from json
+import from web.oauth
+
+// repeat common enums
+import UseHeader from web.oauth as UseHeader
+import Via from web.oauth as Via
+export UseHeader, Via
+
+/*#
+   @main Support for OAuth 2.0 protocol.
+
+   This modules code to establish OAuth sessions under the 2.0 protocol.
+
+   OAuth is a cross-site authentication exchange protocol
+   used in Web2.0 development.
+
+   @note The module depends on Feathers @a hash module and on
+   the optional @a curl module. This module also depends from
+   @a web.oauth
+*/
+
+
+
+/*# Interface to remote OAuth2 authentication process server.
+   @param consumer_key The consumer key identifying the requester on the remote OAuth2 server.
+   @optparam mode One of the @a Via methods (Defaults to POST).
+
+   This class acts as an authentication client connecting with a
+   remote server.
+*/
+class Client( cust_id, cust_secret, mode ) from web.oauth.Client( cust_id, cust_secret, mode )
+
+   //# OAuth protocol is 2.0 here.
+   version = "2.0"
+
+   /*# Perform a token request.
+      @param address The address of the remote token provider.
+      @param callback Address to be called back by authenticator if the caller is of a web application.
+      @param code A code received calling the authorize uri.
+      @return A new @a Token created through this call.
+      @raise ProtoError if the remote side doesn't complain with the OAuth protocol.
+
+      This method requests an "Access token" the remote OAuth service.
+
+      For example, a theoretic workflow may be
+
+      @code
+      import from web.oauth in oauth
+
+      code = Reply.redirect("https://TheRemoteService/oauth/authorize",0)
+
+      //the GET parameters that must be passed are: client_id and redirect_uri.
+
+      //An important thing is that the redirect_uri and the callback parameter passed in the getToken function must be the same!
+
+      client = oauth.Client( "MyClientID", "MyClientSecret" )
+      access_token = client.getToken( "https://TheRemoteService/oauth/access_token", callback,code )
+
+      userData = client.callAPI( access_token,
+                  "https://TheRemoteService/get_user",
+                  ["user_id"=> my_user_id] )
+
+      @endcode
+
+      @note This method blocks until the remote side replies.
+   */
+   function getToken( address, callback, code)
+
+
+      paramsB = self._makeBaseParams()
+
+      paramsB["grant_type"] = "authorization_code"
+      paramsB["code"] = code
+
+      if callback: paramsB[ "redirect_uri" ] = callback
+
+      cr = self.makeOAuthHandler( address, paramsB, nil )
+      cr.setOutString()
+      cr.exec()
+      data = cr.getData()
+
+      try
+         dt = self.parseQS( data )
+      catch ParamError
+         raise web.oauth.ProtoError( 10001, i"Invalid answer from remote.", data )
+      end
+
+      if not "access_token" in dt
+         raise web.oauth.ProtoError( 10002, i"Response didn't contain an oauth_token", data )
+      end
+
+      token = web.oauth.Token( dt["access_token"] )
+
+      return token
+   end
+
+
+   //==========================================================
+   // API utilities
+   //==========================================================
+
+   /*# Call an API protected by OAuth.
+      @param token An instance of @a Token.
+      @param uri The URI of the remote OAuth protected Web API to be called.
+      @optparam params Optional parameters for the call.
+      @return The raw data returned by the remote OAuth procedure.
+
+      Calls a remote web API and blocks until a result is available.
+   */
+   function callAPI( token, uri, params )
+
+      oauth_params = self._makeBaseParams()
+      oauth_params["access_token"] = token
+
+      cr = self.makeOAuthHandler( uri, oauth_params, params )
+
+      cr.setOutString()
+      cr.exec()
+      return cr.getData()
+   end
+
+   //# @ignore
+   function makeOAuthHandler( address, oauth_params, params )
+      // Create the base string.
+      if params
+         all_params = oauth_params + params
+      else
+         all_params = oauth_params
+      end
+
+      base_fields = self._makeGet( all_params )
+      bstr = self._makeBaseString( self.mode, address, base_fields )
+
+      // Prepare the Authorization header.
+      if self.use_header == UseHeader.ALTERN
+         // In use header mode, send OAuth parameters via header.
+         query_string = self._makeGet( params )
+         headers =  ["Authorization: OAuth realm=\"" +address+"\","+ self._makeAuthHeader( oauth_params ) ]
+      elif self.use_header == UseHeader.FULL
+         // In use header mode, send OAuth parameters via header AND via query
+         query_string = self._makeGet( all_params )
+         headers =  ["Authorization: OAuth realm=\"" +address+"\","+ self._makeAuthHeader( oauth_params ) ]
+      else
+         // Send oauth fields only via query
+         query_string = self._makeGet( all_params )
+         headers = []
+      end
+
+      if self.mode == Via.POST
+         cr = curl.Handle( address )
+         cr.postData( query_string )
+         headers += ["Content-type: application/x-www-form-urlencoded"]
+      else
+         cr = curl.Handle( address + (query_string ? ("?" + query_string) : "" ))
+      end
+
+      if headers: cr.setOption( curl.OPT.HTTPHEADER, headers )
+      cr.setOption( curl.OPT.SSL_VERIFYPEER, false )
+      return cr
+   end
+
+   //==========================================================
+   // Generic utilities
+   //==========================================================
+
+   function _makeBaseParams()
+      params = [
+         "client_id" => self.cust_id ,
+         "client_secret" => self.secret
+      ]
+
+      return params
+   end
+
+end

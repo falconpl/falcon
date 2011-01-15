@@ -1,0 +1,18 @@
+import from dmtx
+
+codec = dmtx.DataMatrix()
+inspect( codec )
+
+object Drawer
+    function start( width, height )
+        > @"Started! ( w=$width h=$height )"
+    end
+    function plot( row, col, red, green, blue )
+        > @"Plot! ( row=$row col=$col r=$red g=$green b=$blue )"
+    end
+    function finish()
+        > "Finished!"
+    end
+end
+
+codec.encode( "Hello World", Drawer )
