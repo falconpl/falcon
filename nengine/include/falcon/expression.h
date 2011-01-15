@@ -380,7 +380,7 @@ public:
    void precompile( PCode* pcode ) const;
 
 private:
-   class Gate: public PStep {
+   class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
       static void apply_( const PStep*, VMachine* vm );
@@ -405,7 +405,7 @@ public:
 
 private:
 
-   class Gate: public PStep {
+   class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
       static void apply_( const PStep*, VMachine* vm );
