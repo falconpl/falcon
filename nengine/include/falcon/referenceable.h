@@ -37,7 +37,7 @@ namespace Falcon
  * entity that may transcend the GC lifetime, then it is necessary to cross
  * reference it.
  */
-class Referenceable
+class FALCON_DYN_CLASS Referenceable
 {
 public:
    Referenceable():

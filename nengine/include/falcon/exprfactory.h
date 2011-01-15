@@ -23,7 +23,7 @@ namespace Falcon {
 /** Expression factory.
  *  Used during de-serialization to create the proper type of expression to be deserialized.
  */
-class ExprFactory {
+class FALCON_DYN_CLASS ExprFactory {
 public:
    static Expression* make( Expression::operator_t type );
    static Expression* deserialize( Stream* s );

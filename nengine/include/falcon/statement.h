@@ -30,7 +30,7 @@ class SynTree;
  * Statements are PStep that may require other sub-sequences to be evaluated.
  * In other words, they are
  */
-class Statement: public PStep
+class FALCON_DYN_CLASS Statement: public PStep
 {
 
 public:
@@ -89,7 +89,7 @@ private:
  * registers where expressions place their results; but reasons
  * against are equally valid.
  */
-class StmtAutoexpr: public Statement
+class FALCON_DYN_CLASS StmtAutoexpr: public Statement
 {
 public:
    StmtAutoexpr( Expression* expr );
@@ -103,7 +103,7 @@ private:
 };
 
 
-class StmtWhile: public Statement
+class FALCON_DYN_CLASS StmtWhile: public Statement
 {
 public:
    StmtWhile( Expression* check, SynTree* stmts );
@@ -119,7 +119,7 @@ private:
 };
 
 
-class StmtIf: public Statement
+class FALCON_DYN_CLASS StmtIf: public Statement
 {
 public:
    StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0 );

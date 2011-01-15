@@ -41,7 +41,7 @@ class Statement;
  * \note None of the methods in this class is guarded. Accessing any invalid
  * item outside 0..size() will cause crash.
  */
-class SynTree: public PStep
+class FALCON_DYN_CLASS SynTree: public PStep
 {
 
 public:

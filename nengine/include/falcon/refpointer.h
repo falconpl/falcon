@@ -33,7 +33,7 @@ namespace Falcon {
  */
 
 template<class __T>
-class ref_ptr {
+class FALCON_DYN_CLASS ref_ptr {
    ref_ptr() {
       data = 0;
    }
