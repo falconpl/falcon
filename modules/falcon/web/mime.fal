@@ -637,7 +637,7 @@ function _parseWholeBody( stream, part )
       totalSize += block.len()
    end
 
-   part.body = strBuffer( totalSize )
+   part.body = totalSize != 0 ? strBuffer( totalSize ) : ''
    for block in blocks
       part.body += block
    end
