@@ -56,7 +56,7 @@ class Expression;
  *
  * TODO Serialization
  */
-class FALCON_DYN_CLASS Symbol: public BaseAlloc
+class FALCON_DYN_CLASS Symbol
 {
 public:
    typedef enum {

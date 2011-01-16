@@ -37,7 +37,8 @@ public:
    typedef enum {
       autoexpr_t,
       if_t,
-      while_t
+      while_t,
+      return_t
    } statement_t ;
 
    Statement( statement_t type ):
@@ -46,6 +47,8 @@ public:
    {}
 
    inline virtual ~Statement() {}
+
+   inline statement_t type() { return m_type; }
 
 protected:
    /** Steps being prepared by the statement */
@@ -103,6 +106,26 @@ private:
 };
 
 
+/** Return statement.
+ *
+ * Exits the current functions.
+ */
+class FALCON_DYN_CLASS StmtReturn: public Statement
+{
+public:
+   /** Returns a value */
+   StmtReturn( Expression* expr = 0 );
+   virtual ~StmtReturn();
+
+   void toString( String& tgt ) const;
+   static void apply_( const PStep*, VMachine* vm );
+
+private:
+   Expression* m_expr;
+   PCode m_pcExpr;
+};
+
+
 class FALCON_DYN_CLASS StmtWhile: public Statement
 {
 public:
@@ -147,14 +170,23 @@ private:
       ElifBranch( Expression *check, SynTree* ifTrue ):
          m_check( check ),
          m_ifTrue( ifTrue )
-      {}
+      {
+         compile();
+      }
+
+      ElifBranch( const ElifBranch& other ):
+         m_check( other.m_check ),
+         m_ifTrue( other.m_ifTrue )
+      {
+         compile();
+      }
 
       ~ElifBranch();
 
       void compile();
    };
 
-   std::vector<ElifBranch> m_elifs;
+   std::vector<ElifBranch* > m_elifs;
 };
 
 }

@@ -32,10 +32,16 @@ void PCode::apply_( const PStep* self, VMachine* vm )
 	// TODO Check if all this loops are really performance wise
 	register int depth = vm->codeDepth();
 	register int pos = steps.size() - cf.m_seqId;
-	while ( pos > 0 && vm->codeDepth() == depth )
+	while ( pos > 0 )
 	{
 		const PStep* pstep = steps[ --pos ];
 		pstep->apply(pstep,vm);
+
+		if( vm->codeDepth() != depth )
+		{
+		   cf.m_seqId = steps.size() - pos;
+		   return;
+		}
 	}
 
 	// we're done?

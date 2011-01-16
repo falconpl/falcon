@@ -25,7 +25,7 @@ namespace Falcon
 
 class Stream;
 
-class FALCON_DYN_CLASS SourceRef: public BaseAlloc
+class FALCON_DYN_CLASS SourceRef
 {
 public:
    inline SourceRef( int line=0, int chr=0 ):

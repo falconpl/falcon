@@ -28,6 +28,8 @@
 
 namespace Falcon {
 
+class Function;
+
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
 {
@@ -92,6 +94,11 @@ public:
       type( FLC_ITEM_NIL );
    }
 
+   inline void setNil()
+   {
+      type( FLC_ITEM_NIL );
+   }
+
    inline Item( const Item &other ) {
       copy( other );
    }
@@ -134,6 +141,17 @@ public:
    inline void setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
       all.ctx.data.number = val;
+   }
+
+   inline Item( Function* f )
+   {
+      setFunction(f);
+   }
+
+   inline void setFunction( Function* f )
+   {
+      type( FLC_ITEM_FUNC );
+      all.ctx.data.ptr.voidp = f;
    }
 
    /** Defines this item as a out of band data.
@@ -248,6 +266,8 @@ public:
 
    bool isObject() const { return type() == FLC_ITEM_OBJECT; }
    bool isSymbol() const { return type() == FLC_ITEM_SYMBOL; }
+   bool isFunction() const { return type() == FLC_ITEM_FUNC; }
+   Function* asFunction() const { return (Function*) all.ctx.data.ptr.voidp; }
 
    bool isTrue() const;
 

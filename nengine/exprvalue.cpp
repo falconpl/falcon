@@ -18,6 +18,7 @@
 #include <falcon/garbagelock.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
+#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -41,6 +42,8 @@ ExprValue::ExprValue( const ExprValue& other ):
    Expression( t_value ),
    m_item( other.m_item )
 {
+   apply = apply_;
+
    if ( m_item.isDeep() )
    {
      m_lock = new GarbageLock(m_item);
@@ -78,6 +81,10 @@ void ExprValue::apply_( const PStep *ps, VMachine* vm )
    vm->pushData( self->m_item );
 }
 
+void ExprValue::precompile( PCode* pc )  const
+{
+   pc->pushStep( this );
+}
 
 bool ExprValue::simplify( Item& item ) const
 {

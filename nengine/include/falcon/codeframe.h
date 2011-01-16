@@ -29,7 +29,7 @@ namespace Falcon {
  * which is kept in this class.
  *
 */
-class FALCON_DYN_CLASS CodeFrame: public BaseAlloc
+class FALCON_DYN_CLASS CodeFrame
 {
 public:
    // used by resize at compile time, but not really employed

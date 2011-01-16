@@ -29,7 +29,7 @@ namespace Falcon {
 
 /** The Falcon virtual machine.
 */
-class FALCON_DYN_CLASS VMachine: public VMContext, public BaseAlloc
+class FALCON_DYN_CLASS VMachine: public VMContext
 {
 
 public:
@@ -70,6 +70,8 @@ public:
    virtual void call( Function* function, int np, const Item& self );
 
    void returnFrame();
+
+   void report( String &data );
 
    /** Returns the step that is going to be executed next, or null if none */
    PStep* nextStep() const;

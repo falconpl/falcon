@@ -37,7 +37,7 @@ namespace Falcon {
  *
  * Expressions can be also processed by statements that can call their eval() member directly.
  */
-class FALCON_DYN_CLASS PStep: public BaseAlloc
+class FALCON_DYN_CLASS PStep
 {
 public:
    // TODO: in debug add a default failing apply

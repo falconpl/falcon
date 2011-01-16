@@ -250,6 +250,8 @@ void ExprNot::toString( String& str ) const
 }
 
 //=========================================================
+//
+
 
 bool ExprAnd::simplify( Item& value ) const
 {
@@ -539,6 +541,80 @@ void ExprLT::apply_( const PStep*, VMachine* vm )
 void ExprLT::toString( String& ret ) const
 {
    ret = m_first->toString() + " < " + m_second->toString();
+}
+
+
+//=========================================================
+// Call
+
+
+ExprCall::~ExprCall()
+{
+   // and generate all the expressions, in inverse order.
+   for( unsigned int i = 0; i < m_params.size(); ++i )
+   {
+      delete m_params[i];
+   }
+}
+
+
+/** Function call. */
+void ExprCall::precompile( PCode* pcode ) const
+{
+   // set our callback
+   pcode->pushStep( this );
+   m_first->precompile( pcode );
+
+   // and generate all the expressions, in inverse order.
+   for( int i = (int) m_params.size()-1; i >= 0; --i )
+   {
+      m_params[i]->precompile( pcode );
+   }
+}
+
+
+bool ExprCall::simplify( Item& value ) const
+{
+   return false;
+}
+
+void ExprCall::apply_( const PStep* v, VMachine* vm )
+{
+   const ExprCall* self = static_cast<const ExprCall*>(v);
+
+   Function* f = vm->topData().asFunction();
+   vm->popData();
+   vm->call( f, self->paramCount() );
+}
+
+
+ExprCall& ExprCall::addParameter( Expression* p )
+{
+   m_params.push_back( p );
+   return *this;
+}
+
+
+Expression* ExprCall::getParam( int n ) const
+{
+   return m_params[ n ];
+}
+
+
+void ExprCall::toString( String& ret ) const
+{
+   String params;
+   // and generate all the expressions, in inverse order.
+   for( unsigned int i = 0; i < m_params.size(); ++i )
+   {
+      if ( params.size() )
+      {
+         params += ", ";
+      }
+      params += m_params[i]->toString();
+   }
+
+   ret = m_first->toString() + "(" + params +  ")";
 }
 
 

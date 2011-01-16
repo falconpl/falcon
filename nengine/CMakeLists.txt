@@ -32,6 +32,7 @@ add_library(falcon_engine SHARED
   exprfactory.cpp
   exprsym.cpp
   exprvalue.cpp
+  function.cpp
   garbagelock.cpp
   globalsymbol.cpp
   item.cpp
@@ -45,10 +46,16 @@ add_library(falcon_engine SHARED
   vmcontext.cpp
 )
 
-add_executable( test
-	main.cpp )
+add_executable( looptest
+	looptest.cpp )
 	
-target_link_libraries( test
+add_executable( fib
+	fib.cpp )
+	
+target_link_libraries( looptest
+	falcon_engine m )
+
+target_link_libraries( fib
 	falcon_engine m )
 
 set_target_properties(falcon_engine PROPERTIES

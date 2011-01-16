@@ -189,6 +189,8 @@ public:
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
+   inline int callDepth() const { return (m_topCall - m_callStack) + 1; }
+
 protected:
 
    // Inner constructor to create subclasses

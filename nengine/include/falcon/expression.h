@@ -20,6 +20,8 @@
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
 
+#include <vector>
+
 namespace Falcon
 {
 
@@ -464,6 +466,27 @@ public:
 };
 
 
+/** Function call. */
+class FALCON_DYN_CLASS ExprCall: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprCall, t_funcall );
+   virtual ~ExprCall();
+
+   ExprCall& addParameter( Expression* );
+
+   int paramCount() const { return m_params.size(); }
+   Expression* getParam( int n ) const;
+
+   inline virtual bool isStandAlone() const { return true; }
+
+   void precompile( PCode* pcode ) const;
+
+private:
+   std::vector<Expression*> m_params;
+};
+
+
 #if 0
 
 
@@ -629,12 +652,7 @@ public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprIIF, t_obj_access );
 };
 
-/** Function call. */
-class FALCON_DYN_CLASS ExprCall: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprCall, t_funcall );
-};
+
 
 /** Index accessor. */
 class FALCON_DYN_CLASS ExprIndex: public BinaryExpression

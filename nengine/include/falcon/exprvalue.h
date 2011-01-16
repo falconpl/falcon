@@ -37,7 +37,6 @@ class FALCON_DYN_CLASS ExprValue: public Expression
 {
 public:
    ExprValue( const Item& item );
-
    ExprValue( const ExprValue& other );
 
    virtual ~ExprValue();
@@ -62,6 +61,7 @@ public:
    virtual bool isStatic() const;
    virtual bool isBinaryOperator() const;
    virtual void toString( String& ) const;
+   virtual void precompile( PCode* pc )  const;
 
 protected:
    virtual void deserialize( Stream* s );

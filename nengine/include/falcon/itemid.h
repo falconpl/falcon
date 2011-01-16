@@ -33,7 +33,10 @@
 #define FLC_ITEM_METHOD       6
 #define FLC_ITEM_CLSMETHOD    7
 
-#define FLC_ITEM_COUNT        8
+ // it's just a test.
+#define FLC_ITEM_FUNC         8
+
+#define FLC_ITEM_COUNT        9
 #define FLC_ITEM_INVALID      99
 
 #endif

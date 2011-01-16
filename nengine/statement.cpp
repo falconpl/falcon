@@ -102,23 +102,19 @@ StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
    addElif( check, ifTrue );
    // push ourselves and the expression in the steps
    m_step0 = this;
-   m_step1 = &m_elifs[0].m_pcCheck;
+   m_step1 = &m_elifs[0]->m_pcCheck;
 }
 
 StmtIf::~StmtIf()
 {
    delete m_ifFalse;
-   // elif branches will take care of themselves.
+   for( int i = 0; i < m_elifs.size(); ++i )
+      delete m_elifs[i];
 }
 
 StmtIf& StmtIf::addElif( Expression *check, SynTree* ifTrue )
 {
-   m_elifs.push_back( ElifBranch(check, ifTrue) );
-   // Why not compiling it in the constructor?
-   // -- because STL vector does a copy constructor here, and that would result
-   // -- in filling the PCode twice.
-   m_elifs.back().compile();
-
+   m_elifs.push_back( new ElifBranch(check, ifTrue) );
    return *this;
 }
 
@@ -131,13 +127,13 @@ StmtIf& StmtIf::setElse( SynTree* ifFalse )
 
 void StmtIf::toString( String& tgt ) const
 {
-   tgt = "if "+ m_elifs[0].m_check->toString() + "\n"
-              + m_elifs[0].m_ifTrue->toString();
+   tgt = "if "+ m_elifs[0]->m_check->toString() + "\n"
+              + m_elifs[0]->m_ifTrue->toString();
 
    for ( int i = 1; i < m_elifs.size(); ++i )
    {
-      tgt += "elif " + m_elifs[i].m_check->toString() + "\n"
-                     + m_elifs[i].m_ifTrue->toString();
+      tgt += "elif " + m_elifs[i]->m_check->toString() + "\n"
+                     + m_elifs[i]->m_ifTrue->toString();
    }
 
    if( m_ifFalse != 0  ) {
@@ -156,7 +152,7 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
    if ( vm->regA().isTrue() )
    {
       // we're gone -- but we may use our frame.
-      vm->resetCode( self->m_elifs[sid].m_ifTrue );
+      vm->resetCode( self->m_elifs[sid]->m_ifTrue );
    }
    else
    {
@@ -164,7 +160,7 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
       if( ++sid < self->m_elifs.size() )
       {
          vm->currentCode().m_seqId = sid;
-         vm->pushCode( &self->m_elifs[sid].m_pcCheck );
+         vm->pushCode( &self->m_elifs[sid]->m_pcCheck );
       }
       else
       {
@@ -193,6 +189,58 @@ void StmtIf::ElifBranch::compile()
 {
    m_check->precompile( &m_pcCheck );
 }
+
+//============================================================
+// Return
+//
+StmtReturn::StmtReturn( Expression* expr ):
+      Statement(return_t),
+      m_expr( expr )
+{
+   apply = apply_;
+
+   m_step0 = this;
+
+   if ( expr )
+   {
+      m_expr = expr;
+      expr->precompile( &m_pcExpr );
+      m_step1 = &m_pcExpr;
+   }
+}
+
+StmtReturn::~StmtReturn()
+{
+   delete m_expr;
+}
+
+void StmtReturn::toString( String& tgt ) const
+{
+   if( m_expr != 0 )
+   {
+      tgt = "return " + m_expr->toString() +"\n";
+   }
+   else
+   {
+      tgt = "return\n";
+   }
+}
+
+
+void StmtReturn::apply_( const PStep*ps, VMachine* vm )
+{
+   const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
+
+   // clear A if there wasn't any expression
+   if ( stmt->m_expr == 0 )
+   {
+      vm->regA().setNil();
+   }
+
+   vm->returnFrame();
+   // Todo throw if we didn't have any frame
+}
+
 
 }
 

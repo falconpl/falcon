@@ -33,7 +33,7 @@ class Function;
  * marked by the GC at VM scan.
  *
 */
-class FALCON_DYN_CLASS CallFrame: public BaseAlloc
+class FALCON_DYN_CLASS CallFrame
 {
 public:
    /** Function calling this frame. */
