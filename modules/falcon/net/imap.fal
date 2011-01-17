@@ -250,7 +250,7 @@ class IMAP( server, port, timeout )
       @brief List mailboxes.
       @optparam dir Reference directory (default "").
       @optparam pattern Search pattern (default "").
-      @return A list of mailboxes names.
+      @return A list of mailboxes information.
       @throw socket.NetError List failure.
     */
    function lst( dir, pattern )
@@ -264,7 +264,13 @@ class IMAP( server, port, timeout )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "List failed", reply.trim() )
       end
-      return [].comp( lines[0].split(" ")[2:] )
+      if lines.len() == 1: return []
+      ret = arrayBuffer( lines.len() - 1 )
+      i = 0
+      for line in lines[:-1]
+         ret[i++] = [].comp( line.split(" ")[2:], { v => v[1:-1] } )
+      end
+      return ret
    end
 
    /*#
@@ -395,6 +401,16 @@ class IMAP( server, port, timeout )
       apos = lines[0].rfind(" ") + 1
       zpos = lines[0].rfind(")")
       return int( lines[0][apos:zpos] )
+   end
+
+   /*#
+      @brief Get the hierarchy delimiter.
+      @optparam ref The reference (default "").
+      @return The character used as hierarchy delimiter.
+    */
+   function getHierarchyDelimiter( ref )
+      res = self.lst( ref, "" )
+      return res[0][1]
    end
 
    function _tag()
