@@ -74,7 +74,7 @@ version  = ".".merge(vmVersionInfo())
 
 @endcode
 
-Or even, you may chose to use a very structured approach through the htmaker
+Or even, you may chose to use a __very__ structured approach through the htmaker
 module.
 
 @code

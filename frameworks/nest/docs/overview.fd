@@ -127,7 +127,7 @@ page ID **home**. This is configurable as well.
 @section ov_framing Framing
 
 Sites, and especially web applications, are usually providing a common code that is
-consistent througout all the areas, which sourrounds the web site.
+consistent throughout all the areas, which sourrounds the web site.
 
 This is called __framing__. Nest doesn't force the users to use a particular framing
 scheme. For example, they may use the standard falcon {{include()}} function to include
@@ -136,12 +136,12 @@ function which include framing facilities. We'll illustrate some of this mechani
 on in this document,
 
 However, Nest provides a ready-to-use framing mechanism that fits most of the common needs
-of web applicaitons, and this is covered by this quickstart.
+of web applications, and this is covered by this quickstart.
 
 When the @a Nest.frame property is set to a function,
 then Nest will load the page that the routing system
 required and render it separately. The output of the
-rendered page can be retreived through the @a Nest.content
+rendered page can be retrieved through the @a Nest.content
 method.
 
 A frame function can also be used to load services that are common through all the pages
@@ -177,7 +177,7 @@ Nest.frame = .[include "frame.ftd"]
 Nest.route()
 @endcode
 
-Then, {{frame.ftd}} would beside index.fal, and would look like the following:
+Then, {{frame.ftd}} would be beside index.fal, and would look like the following:
 @code
 <!-- This is frame.ftd -->
 <html>
@@ -207,20 +207,21 @@ nest_frame: false
 
 @note Unframing .fal and .ftd files is useful to build simple AJAX based sites.
 
-@sction ov_services Services
+@section ov_services Services
 
 Nest modular web application composition is based on the concept of __services__, that are
-modules preforming specific tasks and then, optionally, being rendered on the final page.
+modules performing specific tasks and then, optionally, being rendered on the page 
+shown by the browser.
 
 For the details, please refer to the "@a service" chapter. In this quickstart guide, we see
-how to setup a minimal service in a page, and their basic working principles.
+how to setup a minimal service in a page, and the basic working principles.
 
 Services are invoked through the @a Nest.service method, which returns a @a Service class
 instance. The instance can be configured on the fly during the @a Nest.service call, or it
 may be configured separately, after the instance is obtained.
 
 Services are executed in different phases; part of them is run as they are first invoked,
-other parts of them are run after all the page has been composed. They can also register
+others are run after the whole page has been composed. They can also register
 themselves to listen for other services activity, so they can effectively be invoked several
 time per page.
 
@@ -228,16 +229,15 @@ If a service is meant to output some data on the final page, the last action it 
 is the __render__ step. The default is that of passing a set of data to a simple script
 that must organize this data as an HTML output; this specialized script is called __skin__.
 
-Services communicate with the rest of the Nest world through special entities called __service variables__.
-
+Services communicate with the rest of the Nest world through special entities called __service variables__: 
 Those special variables are declared by the service at startup, and Nest can treat them in very special ways.
-For example, service variables can be automatically filled with input from web forms or queries, or from
-session data, or they can be shared throughout the sytem. Mainly, they are turned into a dictionary
+For example, service variables can be automatically filled with input from web forms or queries, from
+session data or they can be shared throughout the sytem. Mainly, they are turned into a dictionary
 and automatically fed into the skin, if the service doesn't provide a personalized rendering strategy.
 
 @section ov_hooks Hooks
 
-Hooks are callback functions that can be overridden by the final application. Instead of placing
+__Hooks__ are callback functions that can be overridden by the final application. Instead of placing
 those callbacks directly on a callback point, Nests allows for a name-based invocation mechanism
 that allows for multiple services or multiple pages to invoke the same function by name.
 
