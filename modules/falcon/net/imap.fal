@@ -448,11 +448,19 @@ class IMAP( server, port, timeout )
    end
 
    function _recvAll( totalsz )
+
+      // if we have already more than enough buffer...
+      if self.oldReply.len() > totalsz
+         reply = self.oldReply[0:totalsz]
+         self.oldReply = self.oldReply[totalsz:]
+         return reply
+      end
+
       // read each block separately
       reply = strBuffer( totalsz )
       buf = strBuffer( 1501 )
-      
       recCount = self.oldReply.len()
+      
       while recCount < totalsz
 
          // timeout? -- the remote server hung.
@@ -462,13 +470,20 @@ class IMAP( server, port, timeout )
                "(" + reply.len() + "/" + totalsz + ")" )
          end
 
+         toRead = totalsz - recCount
+         if toRead > 1500: toRead = 1500
+         
          // receive more data.
-         recCount += self._sock.recv( buf, totalsz - recCount )
+         recCount += self._sock.recv( buf, toRead )
          reply += buf
       end
 
-      reply = self.oldReply + reply
-      self.oldReply = ""
+      // if we have extra data to put at beginning...
+      if self.oldReply
+         reply = self.oldReply + reply
+         self.oldReply = ""
+      end
+      
       self.trace( "<-- " + reply.trim() )
       return reply
    end
