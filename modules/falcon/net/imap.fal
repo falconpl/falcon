@@ -1,12 +1,26 @@
 /*
-   IMAP module.
+    FALCON - IMAP client module
 
-   See http://tools.ietf.org/html/rfc3501
- */
+    FILE: imap.fal
+
+    Interface for IMAP remote services
+    -------------------------------------------------------------------
+    Author: Stanislais Marquis
+    Begin: Sun, 21 Nov 2010 19:38:39 +0100
+
+    See http://tools.ietf.org/html/rfc3501
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
 
 import from socket
 
 export
+
+class IMAPError( code, desc, extra ) from Error( code, desc, extra )
+end
 
 /*# IMAP states. */
 enum IMAPState
@@ -43,22 +57,22 @@ class IMAP( server, port, timeout )
 
    /*#
       @brief Connect to IMAP server.
-      @throw socket.NetError Unable to connect.
+      @raise IMAPError Unable to connect.
     */
    function connect()
       sock = socket.TCPSocket()
       sock.setTimeout( self.timeout )
       if not sock.connect( self.server, self.port )
-         raise socket.NetError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
+         raise IMAPError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
       end
       sock.setTimeout( 0 )
       self._sock = sock
       // get the OK or PREAUTH message
-      reply = self._recv()
+      reply = self._recvLine()
       if reply[0:9] == "* PREAUTH"
          self.state = IMAPState.authenticated
       elif reply[0:4] != "* OK"
-         raise socket.NetError( 10002, "Remote server not ready", reply.trim() )
+         raise IMAPError( 10002, "Remote server not ready", reply.trim() )
       else
          self.state = IMAPState.connected
       end
@@ -68,7 +82,7 @@ class IMAP( server, port, timeout )
       @brief Login procedure.
       @param user username.
       @param pasw password.
-      @throw socket.NetError Login failure.
+      @raise IMAPError Login failure.
 
       Connection attempt will be performed if not already done.
     */
@@ -81,25 +95,23 @@ class IMAP( server, port, timeout )
       tag = self._tag()
       out = @ "$(tag) LOGIN $(user) $(pasw)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Login failed", reply.trim() )
-      end
+      self._getTagResponse( "LOGIN", tag )
+      // error is thrown by getTagResponse in case of failure.
       self.state = IMAPState.authenticated
    end
 
    /*#
       @brief Logout procedure.
-      @throw socket.NetError Logout failure.
+      @raise IMAPError Logout failure.
     */
    function logout()
       if self.state < IMAPState.connected: return
       tag = self._tag()
       out = @ "$(tag) LOGOUT"
       self._send( out )
-      reply = self._recv()
+      reply = self._recvLine()
       if not reply.startsWith( "* BYE" )
-         raise socket.NetError( 10010, "Logout failed", reply.trim() )
+         raise IMAPError( 10010, "Logout failed", reply.trim() )
       end
       self.state = IMAPState.logout
       self.selected = nil
@@ -113,7 +125,7 @@ class IMAP( server, port, timeout )
       out = @ "$(tag) STARTTLS"
       reply = self._send( out )
       if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Start TLS failed", reply.trim() )
+         raise IMAPError( 10010, "Start TLS failed", reply.trim() )
       end
    end*/
 
@@ -121,7 +133,7 @@ class IMAP( server, port, timeout )
       @brief Select a mailbox.
       @optparam mailbox The mailbox to select (default INBOX).
       @optparam readonly (boolean) Default false.
-      @throw socket.NetError Select failure.
+      @raise IMAPError Select failure.
     */
    function sel( mailbox, readonly )
       if mailbox == nil: mailbox = "INBOX"
@@ -129,121 +141,103 @@ class IMAP( server, port, timeout )
       tag = self._tag()
       out = @ "$(tag) $(cmd) $(mailbox)"
       self._send( out )
-      reply = self._recv()
-      lines = reply.split( "\r\n" )
-      if not lines[-1].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Select failed", reply.trim() )
-      end
+      reply = self._getTagResponse( cmd, tag )
+      // error is thrown by getTagResponse in case of failure.
       self.selected = mailbox
       self.state = IMAPState.selected
    end
 
    /*#
       @brief Close selected mailbox.
-      @throw socket.NetError Close failure.
+      @raise IMAPError Close failure.
     */
    function close()
       if not self.selected: return
       tag = self._tag()
       out = @ "$(tag) CLOSE"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Close failed", reply.trim() )
-      end
+      self._getTagResponse( "CLOSE", tag )
+      // error is thrown by getTagResponse in case of failure.
       self.selected = nil
       self.state = IMAPState.authenticated
    end
 
    /*#
       @brief Expunge a mailbox.
-      @throw socket.NetError Expunge failure.
+      @raise IMAPError Expunge failure.
     */
    function expunge()
       if not self.selected: return
       tag = self._tag()
       out = @ "$(tag) EXPUNGE"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Expunge failed", reply.trim() )
-      end
+      self._getTagResponse( "EXPUNGE", tag )
+      // error is thrown by getTagResponse in case of failure.
    end
 
    /*#
       @brief Create a mailbox.
       @param mailbox The mailbox to create.
-      @throw socket.NetError Create failure.
+      @raise IMAPError Create failure.
     */
    function create( mailbox )
       tag = self._tag()
       out = @ "$(tag) CREATE $(mailbox)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Create failed", reply.trim() )
-      end
+      self._getTagResponse( "CREATE", tag )
    end
 
    /*#
       @brief Rename a mailbox.
       @param oldbox The actual mailbox to rename.
       @param newbox The desired mailbox name.
-      @throw socket.NetError Rename failure.
+      @raise IMAPError Rename failure.
     */
    function rename( oldbox, newbox )
       tag = self._tag()
       out = @ "$(tag) RENAME $(oldbox) $(newbox)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Rename failed", reply.trim() )
-      end
+      self._getTagResponse( "RENAME", tag )
+      // error is thrown by getTagResponse in case of failure.
    end
 
    /*#
       @brief Delete a mailbox.
       @param mailbox The mailbox to delete.
-      @throw socket.NetError Delete failure.
+      @raise IMAPError Delete failure.
     */
    function delete( mailbox )
       tag = self._tag()
       out = @ "$(tag) DELETE $(mailbox)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Delete failed", reply.trim() )
-      end
+      self._getTagResponse( "DELETE", tag )
+      // error is thrown by getTagResponse in case of failure.
    end
 
    /*#
       @brief Subscribe to a mailbox.
       @param mailbox The mailbox to subscribe to.
-      @throw socket.NetError Subscribe failure.
+      @raise IMAPError Subscribe failure.
     */
    function subscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) SUBSCRIBE $(mailbox)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Subscribe failed", reply.trim() )
-      end
+      self._getTagResponse( "SUBSCRIBE", tag )
+      // error is thrown by getTagResponse in case of failure.
    end
 
    /*#
       @brief Unsubscribe to a mailbox.
       @param mailbox The mailbox to unsubscribe to.
-      @throw socket.NetError Unsubscribe failure.
+      @raise IMAPError Unsubscribe failure.
     */
    function unsubscribe( mailbox )
       tag = self._tag()
       out = @ "$(tag) UNSUBSCRIBE $(mailbox)"
       self._send( out )
-      reply = self._recv()
-      if not reply.startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Unsubscribe failed", reply.trim() )
-      end
+      self._getTagResponse( "UNSUBSCRIBE", tag )
+      // error is thrown by getTagResponse in case of failure.
    end
 
    /*#
@@ -251,7 +245,7 @@ class IMAP( server, port, timeout )
       @optparam dir Reference directory (default "").
       @optparam pattern Search pattern (default "").
       @return A list of mailboxes information.
-      @throw socket.NetError List failure.
+      @raise IMAPError List failure.
     */
    function lst( dir, pattern )
       if not dir: dir = '""'
@@ -259,15 +253,13 @@ class IMAP( server, port, timeout )
       tag = self._tag()
       out = @ "$(tag) LIST $(dir) $(pattern)"
       self._send( out )
-      reply = self._recv()
+      reply = self._getTagResponse( "LIST", tag )
+      // error is thrown by getTagResponse in case of failure.
+
       lines = reply.split( "\r\n" )
-      if not lines[-1].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "List failed", reply.trim() )
-      end
-      if lines.len() == 1: return []
-      ret = arrayBuffer( lines.len() - 1 )
+      ret = arrayBuffer( lines.len() )
       i = 0
-      for line in lines[:-1]
+      for line in lines
          ret[i++] = [].comp( line.split(" ")[2:], { v => v[1:-1] } )
       end
       return ret
@@ -278,7 +270,7 @@ class IMAP( server, port, timeout )
       @optparam dir Reference directory (default "").
       @optparam pattern Search pattern (default "").
       @return A list of subscribed mailboxes names.
-      @throw socket.NetError Lsub failure.
+      @raise IMAPError Lsub failure.
     */
    function lsub( dir, pattern )
       if not dir: dir = '""'
@@ -286,11 +278,8 @@ class IMAP( server, port, timeout )
       tag = self._tag()
       out = @ "$(tag) LSUB $(dir) $(pattern)"
       self._send( out )
-      reply = self._recv()
+      reply = self._getTagResponse( "LSUB", tag )
       lines = reply.split( "\r\n" )
-      if not lines[-1].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Lsub failed", reply.trim() )
-      end
       return [].comp( lines[0].split(" ")[2:] )
    end
 
@@ -299,7 +288,7 @@ class IMAP( server, port, timeout )
       @optparam criterion Search criteria (default ALL).
       @optparam charset Optional charset specification.
       @return A list of message ids matching the criteria.
-      @throw socket.NetError Search failure.
+      @raise IMAPError Search failure.
     */
    function search( criterion, charset )
       tag = self._tag()
@@ -307,13 +296,10 @@ class IMAP( server, port, timeout )
       charset = charset ? " CHARSET " + charset : ""
       out = @ "$(tag) SEARCH$(charset) $(criterion)"
       self._send( out )
-      reply = self._recv()
-      lines = reply.split( "\r\n" )
-      if not lines[-1].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Search failed", reply.trim() )
-      end
-      ids = lines[0].split(" ")
-      if ids.len() == 2: return []
+      data = self._getTagResponse( "SEARCH", tag )
+      ids = data.split(" ")
+      // skip * SELECT in return
+      if ids.len() <= 2: return []
       return ids[2:]
    end
 
@@ -321,37 +307,61 @@ class IMAP( server, port, timeout )
       @brief Fetch data associated with a message.
       @param msg_set Message id or a sequence of message ids.
       @optparam msg_parts message data item names or macro (default FAST).
-      @optparam sz Total size of data, if known in advance.
-      @return the raw data. 
-      @throw socket.NetError Fetch failure.
+      @return the raw data.
+      @raise IMAPError Fetch failure.
       @see http://tools.ietf.org/html/rfc3501#section-6.4.5
 
       That is a raw, 'low-level' function returning the untreated answer got
       from the server. More appropriate functions are the IMAP.get* functions.
     */
-   function fetch( msg_set, msg_parts, sz )
+   function fetch( msg_set, msg_parts )
       tag = self._tag()
       msg_set = toString( msg_set )
       if not msg_parts: msg_parts = "FAST"
       out = @ "$(tag) FETCH $(msg_set) $(msg_parts)"
       self._send( out )
-      reply = self._recv( sz )
-      // reply can be lengthy
-      rnpos = reply.rfind( tag )
-      if rnpos == -1 or not reply[rnpos:].startsWith( tag + " OK" )
-         raise socket.NetError( 10010, "Fetch failed", reply )
+
+      // in fetch, the first line may contain a total size of the incoming data,
+      // if the incoming data is not internally generated by the fetch command
+
+      // In this case, the fetch reply starts with * and has {size} bytes that
+      // must be read.
+
+      reply = []
+      while fetchStatus = self._recvLine()
+
+         // A long reply?
+         posStart = fetchStatus.find( "{" )
+         posEnd = fetchStatus.find( "}", posStart )
+         if posStart >= 0 and posEnd >= posStart
+            // in this case, read all what's next
+            size = int( fetchStatus[posStart+1:posEnd] )
+            reply += self._recvAll( size )
+         else
+            reply += fetchStatus
+         end
+
+         // are we done?
+         if fetchStatus.startsWith( tag )
+            // fetchStatus starts with tag, but it's ok or fail?
+            if not fetchStatus.startsWith( tag + " OK" )
+               raise IMAPError( 10010, "FETCH failed", fetchStatus )
+            end
+            break
+         end
       end
-      return reply
+
+      return "".merge(reply)
    end
 
    /*#
       @brief Get a whole message.
       @param msg_id The message id.
       @return The whole message.
-      @throw socket.NetError Fetch failed.
+      @raise IMAPError Fetch failed.
     */
    function getBody( msg_id )
-      raw = self.fetch( msg_id, "BODY[]", self.getSize( msg_id ) + 128 )
+      raw = self.fetch( msg_id, "BODY[]" )
       apos = raw.find( "\r\n" ) + 2
       zpos = raw.rfind( ")" )
       return raw[apos:zpos]
@@ -361,7 +371,7 @@ class IMAP( server, port, timeout )
       @brief Get a section of a message.
       @param msg_id The message id.
       @param section The desired section.
-      @throw socket.NetError Fetch failed.
+      @raise IMAPError Fetch failed.
 
       Examples:
       @code
@@ -381,7 +391,7 @@ class IMAP( server, port, timeout )
       @brief Get the flags associated with a message.
       @param msg_id The message id.
       @return A list of flags.
-      @throw socket.NetError Fetch failed.
+      @raise IMAPError Fetch failed.
     */
    function getFlags( msg_id )
       raw = self.fetch( msg_id, "FLAGS" )
@@ -395,7 +405,7 @@ class IMAP( server, port, timeout )
       @brief Get the RFC822 size of a message.
       @param msg_id The message id.
       @return The message size.
-      @throw socket.NetError Fetch failed.
+      @raise IMAPError Fetch failed.
     */
    function getSize( msg_id )
       raw = self.fetch( msg_id, "RFC822.SIZE" )
@@ -430,24 +440,77 @@ class IMAP( server, port, timeout )
       if self._sock.writeAvailable( self.timeout/1000.0 )
          self._sock.send( cmd + "\r\n" )
       else
-         raise socket.NetError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
+         raise IMAPError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
       end
    end
 
-   function _recv( totalsz, bufsz )
-      if totalsz == nil: totalsz = 1024
-      if bufsz == nil: bufsz = 1024
+   function _recvAll( totalsz )
       reply = strBuffer( totalsz )
-      buf = strBuffer( bufsz )
-      if self._sock.readAvailable( self.timeout/1000.0 )
-         self._sock.setTimeout( 100 )
-         while self._sock.recv( buf ) > 0
-            reply += buf
+      buf = strBuffer( 1024 )
+      while reply.len() < totalsz
+
+         // timeout? -- the remote server hung.
+         if not self._sock.readAvailable( self.timeout/1000.0 )
+            // Indicate a network problem, and how much data we got in the meanwhile
+            raise socket.NetError( 10020, "Timeout in waiting for full size reply.",
+               "(" + reply.len() + "/" + totalsz + ")" )
          end
-         self._sock.setTimeout( 0 )
+
+         // receive more data.
+         self._sock.recv( buf, totalsz - reply.len() )
+         reply += buf
       end
       self.trace( "<-- " + reply.trim() )
       return reply
+   end
+
+   function _recvLine( maxsz )
+      static
+         // save multiple lines, if we receive them.
+         oldReply = ""
+         buf = strBuffer( 1024 )
+      end
+      
+      if maxsz == nil: maxsz = 1024
+      reply = oldReply + strBuffer( maxsz )
+      
+      while (pos = reply.find( "\r\n" )) < 0 and reply.len() < maxsz
+
+         // timeout? -- the remote server hung.
+         if not self._sock.readAvailable( self.timeout/1000.0 )
+            raise socket.NetError( 10021, "Timeout in reading next line from reply." )
+         end
+
+         // receive more data.
+         self._sock.recv( buf )
+         reply += buf
+      end
+      // send the first line and save the rest for later.
+      oldReply = reply[pos+2:]
+      reply = reply[0:pos+2]  // include \r\n in this reply
+      self.trace( "<-- " + reply.trim() )
+      return reply
+   end
+
+   function _getTagResponse( command, tag )
+      data = ""
+      while line = self._recvLine()
+         // last line?
+         if line.startsWith( tag )
+            if not line.startsWith( tag + " OK" )
+               raise IMAPError( 10010,
+                     @"$(command) failed after receiving " + data.len() + " bytes",
+                     line.trim() )
+            end
+            // we're done.
+            break
+         end
+         
+         data += line
+      end
+
+      // remove trailing space.
+      return data.trim()
    end
 
 end // class IMAP

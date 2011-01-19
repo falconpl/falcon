@@ -1,0 +1,67 @@
+/*
+    FALCON - Samples
+
+    FILE: read_a_box.fal
+
+    Read a mail from an imap folder
+
+    Usage - imap_server_adders user pass folder [msgid]
+    -------------------------------------------------------------------
+    Author: Giancarlo Niccolai
+    Begin: Wed, 19 Jan 2011 14:22:39 +0100
+
+    -------------------------------------------------------------------
+    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+*/
+
+load net.imap
+
+if args.len() < 4
+   > "Usage: read_a_box.fal  <server[:port]> <user> <pass> <folder> [msgid]"
+   exit(0)
+end
+
+server = args[0]
+user = args[1]
+pass = args[2]
+folder = args[3]
+msgid = args.len() > 4 ? args[4] : nil
+
+if ":" in server
+   port = server[:server.find(":") +1]
+else
+   port = "143"
+end
+
+
+// have 5 secs timeout
+remote = IMAP( server, port, 5000 )
+remote.trace = printl
+
+> ":: CONNECTING"
+remote.connect()
+
+> ":: Logging in as ", user
+remote.login( user, pass )
+
+> ":: Selecting folder ", folder
+remote.sel( folder, true )
+
+if msgid
+   msg = remote.getBody( msgid )
+   > "=" *77
+   > msg
+   > "="*77
+   
+else
+   > ":: Getting the list of messages"
+   > remote.search().describe()
+end
+
+> ":: Quitting"
+remote.logout()
+
+> "::Done"
+
