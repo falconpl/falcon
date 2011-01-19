@@ -5,7 +5,7 @@
 
     Interface for IMAP remote services
     -------------------------------------------------------------------
-    Author: Stanislais Marquis
+    Author: Stanislas Marquis
     Begin: Sun, 21 Nov 2010 19:38:39 +0100
 
     See http://tools.ietf.org/html/rfc3501
@@ -255,8 +255,8 @@ class IMAP( server, port, timeout )
       self._send( out )
       reply = self._getTagResponse( "LIST", tag )
       // error is thrown by getTagResponse in case of failure.
-
       lines = reply.split( "\r\n" )
+      if lines.len() == 0: return []
       ret = arrayBuffer( lines.len() )
       i = 0
       for line in lines
@@ -515,5 +515,5 @@ class IMAP( server, port, timeout )
 
 end // class IMAP
 
-/* vi: set et ai sw=3 ts=3 sts=0: */
+/* vi: set et ai sw=3 sts=3: */
 
