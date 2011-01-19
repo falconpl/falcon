@@ -55,6 +55,9 @@ class IMAP( server, port, timeout )
    _sock = nil
    _n = 0
 
+   // save multiple lines, if we receive them.
+   oldReply = ""
+
    /*#
       @brief Connect to IMAP server.
       @raise IMAPError Unable to connect.
@@ -445,9 +448,12 @@ class IMAP( server, port, timeout )
    end
 
    function _recvAll( totalsz )
+      // read each block separately
       reply = strBuffer( totalsz )
-      buf = strBuffer( 1024 )
-      while reply.len() < totalsz
+      buf = strBuffer( 1501 )
+      
+      recCount = self.oldReply.len()
+      while recCount < totalsz
 
          // timeout? -- the remote server hung.
          if not self._sock.readAvailable( self.timeout/1000.0 )
@@ -457,22 +463,23 @@ class IMAP( server, port, timeout )
          end
 
          // receive more data.
-         self._sock.recv( buf, totalsz - reply.len() )
+         recCount += self._sock.recv( buf, totalsz - recCount )
          reply += buf
       end
+
+      reply = self.oldReply + reply
+      self.oldReply = ""
       self.trace( "<-- " + reply.trim() )
       return reply
    end
 
    function _recvLine( maxsz )
       static
-         // save multiple lines, if we receive them.
-         oldReply = ""
          buf = strBuffer( 1024 )
       end
       
       if maxsz == nil: maxsz = 1024
-      reply = oldReply + strBuffer( maxsz )
+      reply = self.oldReply + strBuffer( maxsz )
       
       while (pos = reply.find( "\r\n" )) < 0 and reply.len() < maxsz
 
@@ -486,7 +493,7 @@ class IMAP( server, port, timeout )
          reply += buf
       end
       // send the first line and save the rest for later.
-      oldReply = reply[pos+2:]
+      self.oldReply = reply[pos+2:]
       reply = reply[0:pos+2]  // include \r\n in this reply
       self.trace( "<-- " + reply.trim() )
       return reply
