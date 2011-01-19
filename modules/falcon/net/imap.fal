@@ -332,7 +332,7 @@ class IMAP( server, port, timeout )
 
       reply = []
       while fetchStatus = self._recvLine()
-
+         reply += fetchStatus
          // A long reply?
          posStart = fetchStatus.find( "{" )
          posEnd = fetchStatus.find( "}", posStart )
@@ -340,8 +340,6 @@ class IMAP( server, port, timeout )
             // in this case, read all what's next
             size = int( fetchStatus[posStart+1:posEnd] )
             reply += self._recvAll( size )
-         else
-            reply += fetchStatus
          end
 
          // are we done?
@@ -448,11 +446,16 @@ class IMAP( server, port, timeout )
    end
 
    function _recvAll( totalsz )
-
       // if we have already more than enough buffer...
-      if self.oldReply.len() > totalsz
-         reply = self.oldReply[0:totalsz]
-         self.oldReply = self.oldReply[totalsz:]
+      if self.oldReply.len() >= totalsz
+         if self.oldReply.len() == totalsz
+            reply = self.oldReply
+            self.oldReply = ""
+         else
+            reply = self.oldReply[:totalsz]
+            self.oldReply = self.oldReply[totalsz:]
+         end
+         self.trace( "<-- " + reply.trim() )
          return reply
       end
 
