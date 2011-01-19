@@ -312,7 +312,9 @@ class IMAP( server, port, timeout )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Search failed", reply.trim() )
       end
-      return [].comp( lines[0].split(" ")[2:] )
+      ids = lines[0].split(" ")
+      if ids.len() == 2: return []
+      return ids[2:]
    end
 
    /*#
