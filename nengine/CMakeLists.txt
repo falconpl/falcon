@@ -8,10 +8,13 @@ add_definitions(-DFALCON_ENGINE_EXPORTS)
 
 include_directories(
   include
-  ${PROJECT_BINARY_DIR}/include
-  ${PROJECT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/core_module  
+  ../include
+  ${CMAKE_CURRENT_BINARY_DIR}/include
+)
+
+configure_file(
+  ../include/falcon/config.h.in  ${CMAKE_CURRENT_BINARY_DIR}/include/falcon/config.h
+  @ONLY
 )
 
 message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
