@@ -438,7 +438,7 @@ class IMAP( server, port, timeout )
       reply = strBuffer( totalsz )
       buf = strBuffer( bufsz )
       if self._sock.readAvailable( self.timeout/1000.0 )
-         self._sock.setTimeout( 50 )
+         self._sock.setTimeout( 100 )
          while self._sock.recv( buf ) > 0
             reply += buf
          end
