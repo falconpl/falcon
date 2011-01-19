@@ -77,6 +77,8 @@ bool VMachine::run()
       const PStep* ps = currentCode().m_step;
       ps->apply( ps, this );
    }
+
+   return true;
 }
 
 
@@ -164,6 +166,7 @@ bool VMachine::step()
 
    const PStep* ps = currentCode().m_step;
    ps->apply( ps, this );
+   return true;
 }
 
 

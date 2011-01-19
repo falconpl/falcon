@@ -5,13 +5,6 @@
  *      Author: gian
  */
 
-/*
- * main.cpp
- *
- *  Created on: 12/gen/2011
- *      Author: gian
- */
-
 #include <cstdio>
 #include <iostream>
 
