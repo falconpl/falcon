@@ -307,7 +307,7 @@ class IMAP( server, port, timeout )
       charset = charset ? " CHARSET " + charset : ""
       out = @ "$(tag) SEARCH$(charset) $(criterion)"
       self._send( out )
-      reply = self._recv( 4096 )
+      reply = self._recv()
       lines = reply.split( "\r\n" )
       if not lines[-1].startsWith( tag + " OK" )
          raise socket.NetError( 10010, "Search failed", reply.trim() )
