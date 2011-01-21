@@ -833,14 +833,13 @@ template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteHelper( ::Falcon
                     for(uint32 i = mb->position(); i < mb->limit(); i++)
                         buf << uint32(mb->get(i));
                     break;
-                    break;
 
                 default:
                     throw new Falcon::TypeError(
                         Falcon::ErrorParam( Falcon::e_param_type, __LINE__ )
                         .extra( "Unsupported MemBuf word length" ) );
-
             }
+            return;
         }
 
         case FLC_ITEM_OBJECT:
