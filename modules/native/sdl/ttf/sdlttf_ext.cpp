@@ -23,6 +23,7 @@
 #include <falcon/lineardict.h>
 #include <falcon/autocstring.h>
 #include <falcon/membuf.h>
+#include <falcon/path.h>
 
 #include "sdlttf_ext.h"
 #include "sdlttf_mod.h"
@@ -223,9 +224,19 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
    }
 
    long index = i_index != 0 ? ((long)i_index->forceInteger()) : 0;
-   AutoCString file( *i_filename->asString() );
+   String* file = i_filename->asString();
 
-   ::TTF_Font *fnt = ::TTF_OpenFontIndex( file.c_str(),
+      // Get the right path on the current system
+   Path filePath( *file );
+#ifdef FALCON_SYSTEM_WIN
+   file->size( 0 );
+   ilePath.getWinFormat( *file );
+#else
+   file->copy( filePath.get() );
+#endif
+   AutoCString filename( *file );
+   
+   ::TTF_Font *fnt = ::TTF_OpenFontIndex( filename.c_str(),
          (int) i_ptsize->forceInteger(), index );
 
    if( fnt == 0 )
