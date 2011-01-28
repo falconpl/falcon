@@ -230,7 +230,7 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
    Path filePath( *file );
 #ifdef FALCON_SYSTEM_WIN
    file->size( 0 );
-   ilePath.getWinFormat( *file );
+   filePath.getWinFormat( *file );
 #else
    file->copy( filePath.get() );
 #endif
