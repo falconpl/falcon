@@ -8,8 +8,18 @@ falcon_define_module( FALCON_MODULE mongo )
 
 message( STATUS "Adding mongodb module" )
 
+##
+#   Check for stdint.h
+#
 if ( NOT MSVC )
-    option( MONGO_HAVE_STDINT "MongoDB problem with int64_t?" OFF )
+    find_file( STDINT_H stdint.h HINTS /usr/include )
+    if ( STDINT_H STREQUAL STDINT_H-NOTFOUND )
+        option( MONGO_HAVE_STDINT "MongoDB should use stdint.h" OFF )
+    else()
+        option( MONGO_HAVE_STDINT "MongoDB should use stdint.h" ON )
+    endif()
+    mark_as_advanced( STDINT_H )
+    mark_as_advanced( MONGO_HAVE_STDINT )
 endif()
 
 ##
