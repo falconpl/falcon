@@ -22,6 +22,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/autocstring.h>
+#include <falcon/path.h>
 
 #include <sdl_service.h>
 
@@ -102,8 +103,19 @@ FALCON_FUNC img_Load ( VMachine *vm )
    ::SDL_Surface *surf;
    if( i_file->isString() )
    {
+      String* file = i_file->asString();
+
+      // Get the right path on the current system
+      Path filePath( *file );
+#ifdef FALCON_SYSTEM_WIN
+      file->size( 0 );
+      filePath.getWinFormat( *file );
+#else
+      file->copy( filePath.get() );
+#endif
+
       // Convert filename to a C string
-      AutoCString fname( *i_file->asString() );
+      AutoCString fname( *file );
 
       surf = ::IMG_Load( fname.c_str() );
       if ( surf == NULL )

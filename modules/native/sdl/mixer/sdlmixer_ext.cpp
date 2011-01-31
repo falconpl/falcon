@@ -23,6 +23,7 @@
 #include <falcon/lineardict.h>
 #include <falcon/autocstring.h>
 #include <falcon/membuf.h>
+#include <falcon/path.h>
 
 #include "sdlmixer_ext.h"
 #include "sdlmixer_mod.h"
@@ -228,7 +229,17 @@ FALCON_FUNC mix_LoadWAV( VMachine *vm )
 
    if( i_filename->isString() )
    {
-      AutoCString filename( *i_filename->asString() );
+      String* file = i_filename->asString();
+
+      // Get the right path on the current system
+      Path filePath( *file );
+#ifdef FALCON_SYSTEM_WIN
+      file->size( 0 );
+      filePath.getWinFormat( *file );
+#else
+      file->copy( filePath.get() );
+#endif
+      AutoCString filename( *file );
       chunk = ::Mix_LoadWAV( filename.c_str() );
    }
    else {
@@ -622,7 +633,17 @@ FALCON_FUNC mix_LoadMUS( VMachine *vm )
 
    if( i_filename->isString() )
    {
-      AutoCString filename( *i_filename->asString() );
+      String* file = i_filename->asString();
+
+      // Get the right path on the current system
+      Path filePath( *file );
+#ifdef FALCON_SYSTEM_WIN
+      file->size( 0 );
+      filePath.getWinFormat( *file );
+#else
+      file->copy( filePath.get() );
+#endif
+      AutoCString filename( *file );
       music = ::Mix_LoadMUS( filename.c_str() );
    }
    else {
