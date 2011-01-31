@@ -1294,7 +1294,8 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
                    .extra( clssym->name() ) );
 
          // we create the item anew instead of relying on the already linked item.
-         if ( ! linkSubClass( lmod, parent, props, states, &subFactory ) )
+         LiveModule *parmod = findModule( parent->module()->name() );
+         if ( ! linkSubClass( parmod, parent, props, states, &subFactory ) )
             return false;
       }
       else if ( parent->isUndefined() )
