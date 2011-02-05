@@ -13,80 +13,20 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   String table used for the engine and the core module messages.
-*/
 
-#undef FAL_ENGMSG
 #undef FAL_ERRORDECL
 
 #ifdef FLC_DECLARE_ERROR_TABLE
-   // when creating the error enumeration
-   #define FAL_ENGMSG( x, y )
    #define FAL_ERRORDECL( errid, code, x )         const int errid = code;
 #else
 
-   #ifdef FLC_DECLARE_ENGINE_MSG
-      // when globally declaring the stings
-      #define FAL_ENGMSG( msg, x )                 int msg;
-      #define FAL_ERRORDECL( errid, code, x )      int msg_##errid;
+   #ifdef FLC_MAKE_ERROR_MESSAGE_SELECTOR
+      #define FAL_ERRORDECL( errid, code, str )       case code: return str;
    #else
-      #ifdef FLC_REALIZE_ENGINE_MSG
-         // when creating the string ids.
-         #undef FAL_ENGMSG
-         #undef FAL_ERRORDECL
-         #define FAL_ENGMSG( msg, str )                  {String *s = new String( str ); s->exported(true); msg = engineStrings->add( s ); }
-         #define FAL_ERRORDECL( errid, code, str )       {String *s = new String( str ); s->exported(true); msg_##errid = engineStrings->add( s ); }
-
-      #else
-         #ifdef FLC_MAKE_ERROR_MESSAGE_SELECTOR
-            #define FAL_ENGMSG( msg, str )
-            #define FAL_ERRORDECL( errid, code, str )       case errid: return Falcon::Engine::getMessage( msg_##errid );
-         #else
-
-            // The normal case
-            #define FAL_ENGMSG( msg, x )                 extern int msg;
-            #define FAL_ERRORDECL( errid, code, x )      extern int msg_##errid;
-         #endif
-      #endif
+      #define FAL_ERRORDECL( errid, code, str )
    #endif
 
 #endif
-
-
-//================================================================
-// Generic engine messages
-//
-
-FAL_ENGMSG( msg_banner, "The Falcon Programming Language" );
-FAL_ENGMSG( msg_unknown_error, "Unrecognized error code" );
-FAL_ENGMSG( msg_io_curdir, "I/O Error in reading current directory" );
-
-//================================================================
-// RTL/ Core module MESSAGES
-//
-FAL_ENGMSG( rtl_start_outrange, "start position out of range" );
-FAL_ENGMSG( rtl_array_missing, "required an array, a start and an end position" );
-FAL_ENGMSG( rtl_inv_startend, "invalid start/end positions" );
-FAL_ENGMSG( rtl_cmdp_0, "parameter array contains non string elements" );
-FAL_ENGMSG( rtl_emptyarr, "parameter array is empty" );
-FAL_ENGMSG( rtl_iterator_not_found, "\"Iterator\" class not found in VM" );
-FAL_ENGMSG( rtl_invalid_iter, "Given item is not a valid iterator for the collection" );
-FAL_ENGMSG( rtl_marshall_not_cb, "Marshalled event name must be a string as first element in the given array" );
-FAL_ENGMSG( rtl_invalid_path, "Invalid path" );
-FAL_ENGMSG( rtl_invalid_uri, "Invalid URI" );
-FAL_ENGMSG( rtl_no_tabhead, "First row of the table must be a header" );
-FAL_ENGMSG( rtl_invalid_tabhead, "Table header must be composed of strings or future bindings" );
-FAL_ENGMSG( rtl_invalid_order, "Table order must be greater than zero" );
-FAL_ENGMSG( rtl_invalid_tabrow, "Row inserted in table has different order" );
-FAL_ENGMSG( rtl_broken_table, "The table changed during a const operation" );
-FAL_ENGMSG( rtl_uncallable_col, "Given column contains some uncallable items" );
-FAL_ENGMSG( rtl_no_page, "Page ID not present in table" );
-FAL_ENGMSG( rtl_tabhead_given, "Table heading already given" );
-FAL_ENGMSG( rtl_string_empty, "Refill string cannot be empty" );
-FAL_ENGMSG( rtl_row_out_of_bounds, "Row larger than current page size" );
-FAL_ENGMSG( rtl_buffer_full, "Given memory buffer is full" );
-FAL_ENGMSG( rtl_zero_size, "Given size less or equal to zero" );
 
 //================================================================
 // Error messages.

@@ -122,6 +122,34 @@ void Item::toString( String &target ) const
    }
 }
 
+
+bool Item::clone( Item& target ) const
+{
+   void* data;
+
+   switch ( type() )
+   {
+   case FLC_ITEM_DEEP:
+     data = asDeepClass()->clone( asDeepInst() );
+     if ( data == 0 )
+        return false;
+     target.setDeep( content.data.pToken->collector()->store(asDeepClass(), data) );
+     break;
+
+   case FLC_ITEM_USER:
+     data = asUserClass()->clone( asUserInst() );
+     if ( data == 0 )
+        return false;
+     target.setUser( asUserClass(), data );
+     break;
+
+   default:
+     target.copy( target );
+   }
+
+   return true;
+}
+
 }
 
 /* end of item.cpp */

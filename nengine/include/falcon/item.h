@@ -21,6 +21,8 @@
 #include <falcon/itemid.h>
 #include <falcon/string.h>
 #include <falcon/class.h>
+#include <falcon/gctoken.h>
+#include <falcon/collector.h>
 
 namespace Falcon {
 
@@ -39,14 +41,16 @@ public:
 
         struct {
            void *pInst;
-           CoreClass *pClass;
+           Class *pClass;
         } ptr;
+
+        GCToken* pToken;
 
      } data;
 
      union {
         Function *function;
-        CoreClass *base;
+        Class *base;
      } mth;
 
      union {
@@ -144,15 +148,21 @@ public:
       content.data.ptr.pInst = f;
    }
 
-   inline Item( void* inst, CoreClass* cls ) {
-       setDeep( inst, cls );
+   inline Item( Class* cls, void* inst ) {
+       setUser( cls, inst );
    }
 
-   inline void setDeep( void* inst, CoreClass* cls )
+   inline void setUser( Class* cls, void* inst )
    {
-       type( FLC_ITEM_DEEP );
+       type( FLC_ITEM_USER );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = cls;
+   }
+
+   inline void setDeep( GCToken* token )
+   {
+       type( FLC_ITEM_DEEP );
+       content.data.pToken = token;
    }
 
    inline void methodize( Function* mthFunc )
@@ -162,7 +172,7 @@ public:
        content.base.bits.type = FLC_ITEM_METHOD;
    }
 
-   inline void methodize( CoreClass* mthClass )
+   inline void methodize( Class* mthClass )
    {
        content.mth.base = mthClass;
        content.base.bits.oldType = content.base.bits.type;
@@ -244,20 +254,52 @@ public:
    }
 
    /** Assign an item to this item.
+
     Normally, assign is an item copy, but there are quasi flat items that act
     as if they were flat, but are actually deep. These itmes need to be notified
     about assignments, because they may need to create copies of themselves
     when assigned, or otherwise manipulate their assignments.
+
     */
    void assign( const Item& other )
    {
-       if ( other.type() < FLC_ITEM_DEEP )
+       switch ( other.type() )
        {
-           copy( other );
+       case FLC_ITEM_DEEP:
+       {
+          register GCToken* gt = other.content.data.pToken;
+          if( gt->cls()->isFlat() )
+          {
+             register void* value = gt->cls()->assign( gt->data() );
+             if ( value == gt->data() )
+             {
+                setDeep( gt );
+             }
+             else
+             {
+                setDeep( gt->collector()->store( gt->cls(), value ) );
+             }
+          }
+          else
+          {
+             setDeep( gt );
+          }
        }
-       else
-       {
-           other.asDeepClass()->assign( other.content.data.ptr.pInst, *this );
+      break;
+
+      case FLC_ITEM_USER:
+         if( other.content.data.pToken->cls()->isFlat() )
+         {
+            setUser( other.asUserClass(), other.asUserClass()->assign( other.asUserInst() ) );
+         }
+         else
+         {
+            setUser( other.asUserClass(), other.asUserInst() );
+         }
+         break;
+
+       default:
+           copy( other );
        }
    }
 
@@ -267,10 +309,13 @@ public:
    Function* asFunction() const { return static_cast<Function*>(content.data.ptr.pInst); }
 
    Function* asMethodFunction() const { return content.mth.function; }
-   CoreClass* asMethodClass() const { return content.mth.base; }
+   Class* asMethodClass() const { return content.mth.base; }
 
-   void* asDeepInst() const { return content.data.ptr.pInst; }
-   CoreClass* asDeepClass() const { return content.data.ptr.pClass; }
+   void* asUserInst() const { return content.data.ptr.pInst; }
+   Class* asUserClass() const { return content.data.ptr.pClass; }
+
+   void* asDeepInst() const { return content.data.pToken->data(); }
+   Class* asDeepClass() const { return content.data.pToken->cls(); }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and CoreStrings.
@@ -339,18 +384,8 @@ public:
       \param target the item where to stored the cloned instance of this item.
       \return true if the clone operation is possible
    */
-   bool clone( Item &target ) const
-   {
-       if ( type() < FLC_ITEM_DEEP )
-       {
-           target.copy( this );
-           return true;
-       }
-       else
-       {
-           target.setDeep( asDeepClass()->clone( asDeepInst() ), asDeepClass() );
-       }
-   }
+   bool clone( Item &target ) const;
+   
 };
 
 }

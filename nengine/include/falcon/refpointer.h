@@ -16,47 +16,103 @@
 #ifndef FALCON_REFPOINTER_H_
 #define FALCON_REFPOINTER_H_
 
+#include <falcon/mt.h>
 
 namespace Falcon {
 
 /** Automatically manages reference-count oriented datatype.
- *
- * The template class must be applied to classes exposing
- * an incref() and decref() method.
- *
- * A Referenceable derived class has this ability, but the
- * template doesn't check if the class is derived from Referenceable;
- * just, it must expose the public methods incref and decref.
- *
- * @note: The initial reference count of a class subject to ref_ptr
- *        should be zero, as ref_ptr will call incref() upon receival.
- */
+*/
 
 template<class __T>
-class FALCON_DYN_CLASS ref_ptr {
-   ref_ptr() {
-      data = 0;
-   }
+class FALCON_DYN_CLASS ref_ptr
+{
 
-   ref_ptr( __T* data )
+public:
+   ref_ptr():
+   m_data(0),
+   m_rc(0)
+   {}
+
+   ref_ptr( __T* data ):
+      m_data(data),
+      m_rc( new Refcount )
    {
-      data->incref();
-      m_data = data;
    }
 
-   ref_ptr( const ref_ptr& other ) {
-      m_data = other.m_data;
-      m_data->incref();
+   ref_ptr(const ref_ptr<__T>& rp):
+      m_data( rp.m_data ),
+      m_rc( rp.m_rc )
+   {
+      if( m_rc ) m_rc->incref();
    }
 
    ~ref_ptr() {
-      if( m_data != 0 ) m_data->decref();
+      if( m_rc != 0 ) {
+         if ( m_rc->decref() == 0 )
+         {
+            delete m_rc;
+            delete m_data;
+         }
+      }
    }
 
+   __T& operator*() { return *m_data; }
    __T* operator->() { return m_data; }
 
+  ref_ptr<__T>& operator = (const ref_ptr<__T>& rp)
+  {
+      if (this != &rp) // Avoid self assignment
+      {
+         if ( m_rc != 0 )
+         {
+            if ( m_rc->decref() == 0 )
+            {
+               delete m_rc;
+               delete m_data;
+            }
+         }
+
+         m_data = rp.m_data;
+         m_rc = rp.m_rc;
+         if (m_rc) m_rc->incref();
+     }
+  }
+  
+  ref_ptr<__T>& operator = ( __T* data )
+  {
+      if ( m_rc != 0 )
+      {
+         if ( m_rc->decref() == 0 )
+         {
+            delete m_rc;
+            delete m_data;
+         }
+      }
+
+      m_data = data;
+      m_rc = new Refcount;
+  }
+
+
 private:
+
+   class Refcount
+   {
+      int32 m_count;
+
+   public:
+      Refcount():
+         m_count(1)
+      {}
+
+      ~Refcount() {}
+
+      void incref() { atomicInc(m_count); }
+      int32 decref() { return atomicDec(m_count); }
+   };
+
    __T* m_data;
+   Refcount* m_rc;
 };
 
 }

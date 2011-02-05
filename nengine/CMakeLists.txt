@@ -29,16 +29,21 @@ add_library(falcon_engine SHARED
   ../engine/mt_posix.cpp
   ../engine/gcalloc.cpp
 
-  collector.cpp
+  class.cpp
   closedsymbol.cpp
+  codeerror.cpp
+  collector.cpp
   dynsymbol.cpp
   engine.cpp
   error.cpp
+  errorclass.cpp
   expression.cpp
   exprfactory.cpp
   exprsym.cpp
   exprvalue.cpp
   function.cpp
+  genericerror.cpp
+  globalsvector.cpp
   globalsymbol.cpp
   item.cpp
   localsymbol.cpp

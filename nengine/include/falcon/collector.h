@@ -25,7 +25,7 @@ namespace Falcon {
 class GCToken;
 class GCLock;
 class Item;
-class CoreClass;
+class Class;
 class VMachine;
 
 /** Falcon Garbage collector.
@@ -183,7 +183,7 @@ protected:
    void removeGarbageLock( GCLock* lock );
 
    // Gets a new or pre-allocated token
-   GCToken* getToken( CoreClass* cls, void* data );
+   GCToken* getToken( Class* cls, void* data );
 
    // Marks the newly created items.
    void markNew();
@@ -284,16 +284,17 @@ public:
     * since the first scan loop that comes next.
     *
     * The data must be delivered to the garbage collection system with the
-    * class that describes it. The collector will call CoreClass::gcmark to
+    * class that describes it. The collector will call Class::gcmark to
     * indicate that the item holding this object is alive. When the item
-    * is found dead, the collector will call CoreClass::dispose to inform
+    * is found dead, the collector will call Class::dispose to inform
     * the class that the item is not needed by Falcon anymore.
     *
     *
     * @param cls The class that manages the data.
     * @param data An arbitrary data to be passed to the garbage collector.
+    * @return the token associated with this storage.
     */
-   void store( CoreClass* cls, void* data );
+   GCToken* store( Class* cls, void* data );
 
 
    /**
@@ -305,14 +306,14 @@ public:
     *
     * This is useful when the object is known to be needed by an external entity
     * that may be destroyed separately from Falcon activity. A locked entity
-    * gets marked via CoreClass::gcmark even if not referenced in any virtual machine,
+    * gets marked via Class::gcmark even if not referenced in any virtual machine,
     * and gets disposed only if found unreferenced after the garbage lock is
     * removed.
     *
     * @param cls The class that manages the data.
     * @param data An arbitrary data to be passed to the garbage collector.
     */
-   GCLock* storeLocked( CoreClass* cls, void* data );
+   GCLock* storeLocked( Class* cls, void* data );
 
 
    /** Locks an item.

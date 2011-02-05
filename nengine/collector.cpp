@@ -51,12 +51,12 @@ Collector::Collector():
    m_bRequestSweep( false )
 {
    // use a ring for garbage items.
-   m_garbageRoot = new GCToken(0,0);
+   m_garbageRoot = new GCToken(this, 0,0);
    m_garbageRoot->m_next = m_garbageRoot;
    m_garbageRoot->m_prev = m_garbageRoot;
 
    // separate the newly allocated items to allow allocations during sweeps.
-   m_newRoot = new GCToken(0,0);
+   m_newRoot = new GCToken(this, 0,0);
    m_newRoot->m_next = m_newRoot;
    m_newRoot->m_prev = m_newRoot;
 
@@ -308,7 +308,7 @@ void Collector::clearRing( GCToken *ringRoot )
 }
 
 
-GCToken* Collector::getToken( CoreClass* cls, void* data )
+GCToken* Collector::getToken( Class* cls, void* data )
 {
    m_mtx_recycle_tokens.lock();
    // do we have a free token?
@@ -327,7 +327,7 @@ GCToken* Collector::getToken( CoreClass* cls, void* data )
    }
    m_mtx_recycle_tokens.unlock();
 
-   return new GCToken( cls, data );
+   return new GCToken( this, cls, data );
 }
 
 
@@ -349,7 +349,7 @@ void Collector::disposeToken(GCToken* token)
 }
 
 
-void Collector::store( CoreClass* cls, void *data )
+GCToken* Collector::store( Class* cls, void *data )
 {
    // do we have spare elements we could take?
    GCToken* token = getToken( cls, data );
@@ -362,10 +362,12 @@ void Collector::store( CoreClass* cls, void *data )
    m_newRoot->m_prev->m_next =  token;
    m_newRoot->m_prev =  token;
    m_mtx_newitem.unlock();
+
+   return token;
 }
 
 
-GCLock* Collector::storeLocked( CoreClass* cls, void *data )
+GCLock* Collector::storeLocked( Class* cls, void *data )
 {
    // do we have spare elements we could take?
    GCToken* token = getToken( cls, data );

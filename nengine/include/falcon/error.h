@@ -29,12 +29,9 @@
 namespace Falcon {
 
 class Error;
-class CoreClass;
+class Class;
 
-// Declare the messaages...
-#include <falcon/error_messages.h>
-
-// and set the error IDS.
+// Declare the error IDS
 #define FLC_DECLARE_ERROR_TABLE
 #include <falcon/error_messages.h>
 #undef FLC_DECLARE_ERROR_TABLE
@@ -231,7 +228,7 @@ public:
    */
    void scriptize( Item& tgt );
 
-   CoreClass* handler() const { return m_handler; }
+   Class* handler() const { return m_handler; }
 
    /** Adds a trace step to this error.
     This method adds a tracestep that lead to the place where the error
@@ -255,7 +252,7 @@ public:
    /** Return the name of this error class.
     Set in the constructcor.
     */
-   const String &className() const { return m_handler->name(); }
+   const String &className() const;
    
    /** Gets the first sub-error.
     Some errors are used to wrap a single lower level error. For example,
@@ -288,7 +285,7 @@ protected:
       If the description is not filled, the toString() method will use the default description
       for the given error code.
    */
-   Error( CoreClass* handler, const ErrorParam &params );
+   Error( Class* handler, const ErrorParam &params );
 
    mutable int32 m_refCount;
 
@@ -298,7 +295,7 @@ protected:
    String m_symbol;
    String m_module;
    String m_className;
-   CoreClass* m_handler;
+   Class* m_handler;
 
    uint32 m_line;
    uint32 m_sysError;
@@ -310,13 +307,12 @@ protected:
    std::deque<TraceStep> m_steps;
    std::deque<Error*> m_subErrors;
 
-private:
+protected:
    /** Private destructor.
       Can be destroyed only via decref.
    */
    virtual ~Error();
 };
-
 
 }
 

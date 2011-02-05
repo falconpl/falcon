@@ -19,6 +19,9 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/syntree.h>
+#include <falcon/globalsvector.h>
+#include <falcon/refpointer.h>
+
 
 #include <map>
 #include <vector>
@@ -28,12 +31,47 @@ namespace Falcon
 
 class Item;
 class Symbol;
+class GlobalSymbol;
+class Collector;
+
+/**
+ Falcon function.
+
+ This class represents the minimal execution unit in Falcon. It's a set of
+ code (to be excuted), symbols (parameters, local variables and reference to
+ global variables in the module) and possibly closed values.
+
+ Functions can be directly executed by the virtual machine.
+
+ They usually reside in a module, of which they are able to access the global
+ variable vector (and of which they keep a reference).
+
+ To achieve higher performance, functions are not treated as
+ normal garbageable items (the vast majority of them is never really
+ destroyed). They become garbageable when their module is explicitly
+ unloaded while linked, or when they are created dynamically as closures,
+ or when constructed directly by the code.
+
+ Functions can be created by modules or directly from the code. In this case,
+ they aren't owned by any module and are immediately stored for garbage collection.
+
+*/
 
 class FALCON_DYN_CLASS Function
 {
 public:
-   Function( const String& name );
+   Function( const String& name, Module* owner = 0 );
    virtual ~Function();
+   
+   /** Sets the module of this function.
+    Mainly, this information is used for debugging (i.e. to know where a function
+    is declared).
+    */
+   void module( Module* owner );
+
+   /** Return the module where this function is allocated.
+   */
+   Module* module() const { return m_module; }
 
    const String& name() const { return m_name; }
 
@@ -74,10 +112,30 @@ public:
    const SynTree& syntree() const { return m_syntree; }
    SynTree& syntree() { return m_syntree; }
 
+   /** Mark this function for garbage collecting. */
+   void gcMark( int32 mark );
+
+   /** Store in a garbage collector. 
+    
+    When this method is called, the function become subject to garbage
+    collection.
+   
+    */
+   void garbage( Collector* c );
+
+   /** Gets the global vector associated with this function, if any.
+      
+       Only functions having a module can access a global vector.
+    */
+   GlobalsVector* globals();
+
 protected:
    SynTree m_syntree;
    String m_name;
    int32 m_paramCount;
+
+   GCToken* m_gcToken;   
+   Module* m_module;
 
    //TODO: Use our old property table?
    // Anyhow, should be optimized a bit.
@@ -86,6 +144,8 @@ protected:
 
    typedef std::vector<Symbol*> SymbolVector;
    SymbolVector m_locals;
+
+   ref_ptr<GlobalsVector> m_globals;
 };
 
 }

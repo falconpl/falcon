@@ -17,11 +17,10 @@
    Core Class definition
 */
 
-#ifndef FLC_CLASS_H
-#define FLC_CLASS_H
+#ifndef FALCON_CLASS_H
+#define FALCON_CLASS_H
 
 #include <falcon/setup.h>
-#include <falcon/item.h>
 #include <falcon/string.h>
 
 #define OVERRIDE_OP_NEG       "__neg"
@@ -60,7 +59,7 @@
 namespace Falcon {
 
 class VMachine;
-class Property;
+class Item;
 
 /** Representation of classes, that is item types.
 
@@ -78,7 +77,7 @@ class Property;
  *
 */
 
-class FALCON_DYN_CLASS CoreClass
+class FALCON_DYN_CLASS Class
 {
 public:
 
@@ -95,16 +94,18 @@ public:
     *  Falcon system uses this number in quasi-type classes, as arrays or dictionaries,
     * but the ID is available also for user application, starting from the baseUserID number.
     */
-   CoreClass( const String& name );
+   Class( const String& name );
    
    /** Creates a class defining a type ID*/
-   CoreClass( const String& name, int64 tid );
+   Class( const String& name, int64 tid );
    
-   ~CoreClass();
+   virtual ~Class();
 
-   enum {
-       baseUserID = 100
-   };
+   const static int64 baseUserID = 100;
+
+   const int64 typeID() const { return m_typeID; }
+   const String& name() const { return m_name; }
+   bool isFlat() const { return m_quasiFlat; }
 
    //=========================================
    // Instance management
@@ -114,31 +115,30 @@ public:
     *   @return The instance pointer.
     * The returned instance must be ready to be put in the target object.
     */
-   virtual void* create(void* creationParams ) const;
-
-   /** Marks an instance. */
-   virtual void gcMark( void* self, uint32 mark ) const;
+   virtual void* create(void* creationParams=0 ) const = 0;
 
    /** Disposes an instance */
-   virtual void dispose( void* self ) const;
+   virtual void dispose( void* self ) const = 0;
 
    /** Clones an instance */
-   virtual void* clone( void* source ) const;
+   virtual void* clone( void* source ) const = 0;
 
    /** Serializes an instance */
-   virtual void serialize( Stream* stream, void* self ) const;
+   virtual void serialize( Stream* stream, void* self ) const = 0;
 
    /** Deserializes an instance.
       The new instance must be initialized and ready to be "selfed".
    */
-   virtual void* deserialize( Stream* stream ) const;
-
-   const int64 typeID() const { return m_typeID; }
-   const String& name() const { return m_name; }
-
+   virtual void* deserialize( Stream* stream ) const = 0;
+   
    //=========================================================
    // Class management
    //
+
+   /** Marks an instance.
+    The base version does nothing.
+    */
+   virtual void gcMark( void* self, uint32 mark ) const;
 
    /** Callback receiving all the properties in this class. */
    typedef void (*pcallback)(const String&, bool);
@@ -158,7 +158,7 @@ public:
       for an item with the given name, and if that item exists and it's a class
       item, then this method returns true.
    */
-   bool derivedFrom( CoreClass* other ) const;
+   bool derivedFrom( Class* other ) const;
 
    /** Return true if the class provides the given property.
     */
@@ -172,12 +172,21 @@ public:
     */
    virtual void description( void* instance, String& target ) const;
 
-   virtual void assign( void* instance, Item& target ) const;
+   /** Notify about an assignemnt.
+    @param instance The instance being assigned.
+    @return the same instance, or a new instance if the assignment must be considered flat.
+
+    Whenever the engine assigns an instance to a new item via a "=" expression,
+    this method is called back. This gives the class the chance to alter the item,
+    i.e. "colouring" it, or to return a new copy of the object if this is
+    consistent with the assignment model.
+    
+    */
+   virtual void* assign( void* instance ) const;
    //=========================================================
    // Operators.
    //
 
-   /**/
    virtual void neg( VMachine *vm ) const;
 
    virtual void add( VMachine *vm ) const;
@@ -217,7 +226,7 @@ public:
 protected:
    String m_name;
    int64 m_typeID;
-
+   bool m_quasiFlat;
 };
 
 }

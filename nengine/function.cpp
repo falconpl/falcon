@@ -17,15 +17,19 @@
 #include <falcon/localsymbol.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/item.h>
+#include <falcon/collector.h>
+
+#include <falcon/corefunction.h>
 
 namespace Falcon
 {
 
-Function::Function( const String& name ):
+Function::Function( const String& name, Module* module ):
    m_name( name ),
-   m_paramCount(0)
+   m_paramCount(0),
+   m_gcToken( 0 ),
+   m_module( 0 )
 {
-
 }
 
 Function::~Function()
@@ -74,6 +78,21 @@ Symbol* Function::getSymbol( int32 id ) const
    }
 
    return m_locals[id];
+}
+
+
+void Function::gcMark(int32 mark)
+{
+   if (m_gcToken != 0 )
+   {
+      m_gcToken->mark(mark);
+   }
+}
+
+
+void Function::garbage( Collector* c )
+{
+   m_gcToken = c->store( &CoreFunction_handler, this );
 }
 
 }

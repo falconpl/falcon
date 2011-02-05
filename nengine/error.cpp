@@ -17,16 +17,15 @@
 #include <falcon/error.h>
 #include <falcon/item.h>
 #include <falcon/tracestep.h>
-#include <falcon/globals.h>
 #include <falcon/mt.h>
 #include <falcon/sys.h>
-
+#include <falcon/class.h>
 
 #include <falcon/error_messages.h>
 
 namespace Falcon {
 
-static const String &errorDesc( int code )
+static const String errorDesc( int code )
 {
    static String unk("Unknown error");
 
@@ -43,7 +42,7 @@ static const String &errorDesc( int code )
 // Error
 //==================================================
 
-Error::Error( CoreClass* handler, const ErrorParam &params ):
+Error::Error( Class* handler, const ErrorParam &params ):
    m_refCount( 1 ),
    m_errorCode ( params.m_errorCode ),
    m_description( params.m_description ),
@@ -202,7 +201,7 @@ void Error::appendSubError( Error *error )
 
 void Error::scriptize( Item& tgt )
 {
-   tgt.setDeep( this, m_handler );
+   tgt.setUser( m_handler, this );
 }
 
 void Error::enumerateSteps( Error::StepEnumerator &rator ) const
@@ -237,6 +236,13 @@ Error* Error::getBoxedError() const
    return m_subErrors.front();
 }
 
+/** Return the name of this error class.
+ Set in the constructcor.
+ */
+const String& Error::className() const
+{
+   return m_handler->name();
+}
 
 bool Error::hasTraceback() const
 {

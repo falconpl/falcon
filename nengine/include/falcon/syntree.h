@@ -77,8 +77,8 @@ public:
    }
 
 private:
-
-   std::vector<Statement*> m_steps;
+   typedef std::vector<Statement*> Steps;
+   Steps m_steps;
 };
 
 }
