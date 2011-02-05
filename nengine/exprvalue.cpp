@@ -78,7 +78,7 @@ void ExprValue::apply_( const PStep *ps, VMachine* vm )
 {
    const ExprValue* self = static_cast<const ExprValue*>(ps);
 
-   vm->pushData( self->m_item );
+   vm->currentContext()->pushData( self->m_item );
 }
 
 void ExprValue::precompile( PCode* pc )  const

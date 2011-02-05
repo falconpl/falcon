@@ -21,7 +21,7 @@
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
 #include <falcon/vmcontext.h>
-
+#include <falcon/string.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
@@ -29,7 +29,7 @@ namespace Falcon {
 
 /** The Falcon virtual machine.
 */
-class FALCON_DYN_CLASS VMachine: public VMContext
+class FALCON_DYN_CLASS VMachine
 {
 
 public:
@@ -41,8 +41,6 @@ public:
    //=========================================================
 
    inline VMContext* currentContext() const { return m_context; }
-   void loadContext( VMContext* vm );
-   void saveContext( VMContext* vm );
 
    //=========================================================
    // Execution management.
@@ -105,10 +103,13 @@ public:
     */
    Item* findLocalItem( const String& name );
 
+   /** Returns true if the current has not any code.
 
-   inline const Item& regA() const { return m_regA; }
-   inline Item& regA() { return m_regA; }
+    */
+   inline bool codeEmpty() const { return m_context->codeEmpty(); }
 
+   const Item& regA() const { return m_context->regA(); }
+   Item& regA() { return m_context->regA(); }
 protected:
 
    Stream *m_stdIn;
@@ -122,8 +123,6 @@ private:
 
    // current context
    VMContext* m_context;
-
-   Item m_regA;
 
    // True when an event is set.
    enum {

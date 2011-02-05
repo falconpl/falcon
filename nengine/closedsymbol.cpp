@@ -39,17 +39,18 @@ void ClosedSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    ClosedSymbol* sym = static_cast<ClosedSymbol*>(self->symbol());
+   register VMContext* ctx = vm->currentContext();
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
-      sym->m_item = vm->topData();
+      sym->m_item.assign(  ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      vm->pushData( sym->m_item );
+      ctx->pushData( sym->m_item );
    }
 }
 

@@ -195,9 +195,10 @@ bool ExprNeg::simplify( Item& value ) const
 
 void ExprNeg::apply_( const PStep*, VMachine* vm )
 {
-   Item& item = vm->topData();
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
    // remove ourselves
-   vm->popCode();
+   ctx->popCode();
 
    switch( item.type() )
    {
@@ -235,10 +236,11 @@ bool ExprNot::simplify( Item& value ) const
 
 void ExprNot::apply_( const PStep*, VMachine* vm )
 {
-   Item& operand = vm->topData();
+   register VMContext* ctx = vm->currentContext();
+   Item& operand = ctx->topData();
 
    // remove ourselves
-   vm->popCode();
+   ctx->popCode();
 
    operand.setBoolean( ! operand.isTrue() );
 }
@@ -281,12 +283,14 @@ void ExprAnd::precompile( PCode* pcode ) const
 
 void ExprAnd::apply_( const PStep*, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // use the space left from us by the previous expression
-   Item& operand = vm->topData();
+   Item& operand = ctx->topData();
    // Booleanize it
    operand.setBoolean( operand.isTrue() );
    // and remove ourselves
-   vm->popCode();
+   ctx->popCode();
 }
 
 void ExprAnd::toString( String& str ) const
@@ -302,17 +306,19 @@ ExprAnd::Gate::Gate() {
 
 void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // read and recycle the topmost data.
-   Item& operand = vm->topData();
+   Item& operand = ctx->topData();
    if( ! operand.isTrue() )
    {
       operand.setBoolean( false );
       // pop ourselves and the calling code
-      vm->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
-      vm->popData();
+      ctx->popData();
    }
 }
 
@@ -348,11 +354,13 @@ void ExprOr::precompile( PCode* pcode ) const
 
 void ExprOr::apply_( const PStep*, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // reuse the operand left by the other expression
-   Item& operand = vm->topData();
+   Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
    // remove ourselves
-   vm->popCode();
+   ctx->popCode();
 }
 
 void ExprOr::toString( String& str ) const
@@ -366,17 +374,19 @@ ExprOr::Gate::Gate() {
 
 void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // read and recycle the topmost data.
-   Item& operand = vm->topData();
+   Item& operand = ctx->topData();
    if( operand.isTrue() )
    {
       operand.setBoolean( true );
       // pop ourselves and the calling code
-      vm->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
-      vm->popData();
+      ctx->popData();
    }
 }
 
@@ -434,11 +444,13 @@ bool ExprPlus::simplify( Item& value ) const
 
 void ExprPlus::apply_( const PStep*, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // copy the second
-   Item d2 = vm->topData();
-   vm->popData();
+   Item d2 = ctx->topData();
+   ctx->popData();
    // apply on the first
-   Item& d1 = vm->topData();
+   Item& d1 = ctx->topData();
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -505,11 +517,13 @@ bool ExprLT::simplify( Item& value ) const
 
 void ExprLT::apply_( const PStep*, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    // copy the second
-   Item d2 = vm->topData();
-   vm->popData();
+   Item d2 = ctx->topData();
+   ctx->popData();
    // apply on the first
-   Item& d1 = vm->topData();
+   Item& d1 = ctx->topData();
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -581,9 +595,10 @@ bool ExprCall::simplify( Item& value ) const
 void ExprCall::apply_( const PStep* v, VMachine* vm )
 {
    const ExprCall* self = static_cast<const ExprCall*>(v);
+   register VMContext* ctx = vm->currentContext();
 
-   Function* f = vm->topData().asFunction();
-   vm->popData();
+   Function* f = ctx->topData().asFunction();
+   ctx->popData();
    vm->call( f, self->paramCount() );
 }
 

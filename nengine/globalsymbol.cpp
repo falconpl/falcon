@@ -41,17 +41,18 @@ void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
+   register VMContext* ctx = vm->currentContext();
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
-      *sym->m_itemPtr = vm->topData();
+      sym->m_itemPtr->assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
-      vm->pushData( *sym->m_itemPtr );
+      ctx->pushData( *sym->m_itemPtr );
    }
 }
 

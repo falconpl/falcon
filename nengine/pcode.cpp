@@ -26,18 +26,20 @@ PCode::PCode()
 
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
+
    const StepList& steps = static_cast<const PCode*>(self)->m_steps;
-	CodeFrame& cf = vm->currentCode();
+	CodeFrame& cf = ctx->currentCode();
 
 	// TODO Check if all this loops are really performance wise
-	register int depth = vm->codeDepth();
+	register int depth = ctx->codeDepth();
 	register int pos = steps.size() - cf.m_seqId;
 	while ( pos > 0 )
 	{
 		const PStep* pstep = steps[ --pos ];
 		pstep->apply(pstep,vm);
 
-		if( vm->codeDepth() != depth )
+		if( ctx->codeDepth() != depth )
 		{
 		   cf.m_seqId = steps.size() - pos;
 		   return;
@@ -47,10 +49,10 @@ void PCode::apply_( const PStep* self, VMachine* vm )
 	// we're done?
 	if( pos == 0 )
 	{
-	   vm->popCode();
+	   ctx->popCode();
 	   // save the result in the A register
-	   vm->regA() = vm->topData();
-	   vm->popData();
+	   ctx->regA() = ctx->topData();
+	   ctx->popData();
 	}
 	else
 	{

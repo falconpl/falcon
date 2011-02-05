@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_item.h
+   FILE: item.h
 
    Basic Item API.
    -------------------------------------------------------------------
@@ -13,63 +13,53 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Basic Item API
-*/
 
 #ifndef FLC_ITEM_H
 #define FLC_ITEM_H
 
 #include <falcon/types.h>
 #include <falcon/itemid.h>
-#include <falcon/garbageable.h>
-#include <falcon/basealloc.h>
 #include <falcon/string.h>
+#include <falcon/class.h>
 
 namespace Falcon {
 
 class Function;
 
 /** Basic item abstraction.*/
-class FALCON_DYN_CLASS Item: public BaseAlloc
+class FALCON_DYN_CLASS Item
 {
 public:
-   typedef void* CallPoint;
 
-  union {
-      struct {
-         union {
-            int32 val32;
-            int64 val64;
-            numeric number;
-            Garbageable *content;
+  struct {
+     union {
+        int32 val32;
+        int64 val64;
+        numeric number;
 
-            struct {
-               void *voidp;
-               void *extra;
-            } ptr;
+        struct {
+           void *pInst;
+           CoreClass *pClass;
+        } ptr;
 
-         } data;
+     } data;
 
-         CallPoint *method;
+     union {
+        Function *function;
+        CoreClass *base;
+     } mth;
 
-         union {
-            struct {
-               byte type;
-               byte flags;
-               byte oldType;
-               byte reserved;
-            } bits;
-            uint16 half;
-            uint32 whole;
-         } base;
-      } ctx;
-
-      struct {
-         uint64 low;
-         uint64 high;
-      } parts;
-   } all;
+     union {
+        struct {
+           byte type;
+           byte flags;
+           byte oldType;
+           byte reserved;
+        } bits;
+        uint16 half;
+        uint32 whole;
+     } base;
+  } content;
 
 
 #ifdef _MSC_VER
@@ -112,7 +102,7 @@ public:
    inline void setBoolean( bool tof )
    {
       type( FLC_ITEM_BOOL );
-      all.ctx.data.val32 = tof? 1: 0;
+      content.data.val32 = tof? 1: 0;
    }
 
    /** Creates an integer item */
@@ -129,7 +119,7 @@ public:
 
    inline void setInteger( int64 val ) {
       type(FLC_ITEM_INT);
-      all.ctx.data.val64 = val;
+      content.data.val64 = val;
    }
 
    /** Creates a numeric item */
@@ -140,7 +130,7 @@ public:
 
    inline void setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
-      all.ctx.data.number = val;
+      content.data.number = val;
    }
 
    inline Item( Function* f )
@@ -151,7 +141,45 @@ public:
    inline void setFunction( Function* f )
    {
       type( FLC_ITEM_FUNC );
-      all.ctx.data.ptr.voidp = f;
+      content.data.ptr.pInst = f;
+   }
+
+   inline Item( void* inst, CoreClass* cls ) {
+       setDeep( inst, cls );
+   }
+
+   inline void setDeep( void* inst, CoreClass* cls )
+   {
+       type( FLC_ITEM_DEEP );
+       content.data.ptr.pInst = inst;
+       content.data.ptr.pClass = cls;
+   }
+
+   inline void methodize( Function* mthFunc )
+   {
+       content.mth.function = mthFunc;
+       content.base.bits.oldType = content.base.bits.type;
+       content.base.bits.type = FLC_ITEM_METHOD;
+   }
+
+   inline void methodize( CoreClass* mthClass )
+   {
+       content.mth.base = mthClass;
+       content.base.bits.oldType = content.base.bits.type;
+       content.base.bits.type = FLC_ITEM_BASEMETHOD;
+   }
+
+   inline void unmethodize()
+   {
+       content.base.bits.type = content.base.bits.oldType;
+   }
+
+   inline void getMethodItem( Item& tgt )
+   {
+      tgt.content.base.bits.type = content.base.bits.oldType;
+      tgt.content.base.bits.flags = 0;
+      tgt.content.data.ptr.pInst = content.data.ptr.pInst;
+      tgt.content.data.ptr.pClass = content.data.ptr.pClass;
    }
 
    /** Defines this item as a out of band data.
@@ -164,12 +192,12 @@ public:
       In example, returning an out of band NIL value from an xmap mapping
       function will cause xmap to discard the data.
    */
-   void setOob() { all.ctx.base.bits.flags |= flagIsOob; }
+   void setOob() { content.base.bits.flags |= flagIsOob; }
 
    /** Clear out of band status of this item.
       \see setOob()
    */
-   void resetOob() { all.ctx.base.bits.flags &= ~flagIsOob; }
+   void resetOob() { content.base.bits.flags &= ~flagIsOob; }
 
    /** Sets or clears the out of band status status of this item.
       \param oob true to make this item out of band.
@@ -177,9 +205,9 @@ public:
    */
    void setOob( bool oob ) {
       if ( oob )
-         all.ctx.base.bits.flags |= flagIsOob;
+         content.base.bits.flags |= flagIsOob;
       else
-         all.ctx.base.bits.flags &= ~flagIsOob;
+         content.base.bits.flags &= ~flagIsOob;
    }
 
 
@@ -187,24 +215,17 @@ public:
       \return true if out of band.
       \see oob()
    */
-   bool isOob() const { return (all.ctx.base.bits.flags & flagIsOob )== flagIsOob; }
+   bool isOob() const { return (content.base.bits.flags & flagIsOob )== flagIsOob; }
 
    /** Returns the item type*/
-   byte type() const { return all.ctx.base.bits.type; }
+   byte type() const { return content.base.bits.type; }
    
    /** Changes the item type.
    
       Flags are also reset. For example, if this item was OOB before,
       the OOB flag is cleared.
    */
-   void type( byte nt ) { all.ctx.base.bits.flags = 0; all.ctx.base.bits.type = nt; }
-
-   /** Returns the content of the item */
-   Garbageable *content() const { return all.ctx.data.content; }
-
-   void content( Garbageable *dt ) {
-      all.ctx.data.content = dt;
-   }
+   void type( byte nt ) { content.base.bits.flags = 0; content.base.bits.type = nt; }
 
    void copy( const Item &other )
    {
@@ -218,22 +239,38 @@ public:
       pthis[3]= pother[3];
 
       #else
-         all = other.all;
+         content = other.content;
       #endif
    }
 
-
-   bool isOrdinal() const {
-      return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
-   }
-
-   bool asBoolean() const
+   /** Assign an item to this item.
+    Normally, assign is an item copy, but there are quasi flat items that act
+    as if they were flat, but are actually deep. These itmes need to be notified
+    about assignments, because they may need to create copies of themselves
+    when assigned, or otherwise manipulate their assignments.
+    */
+   void assign( const Item& other )
    {
-      return all.ctx.data.val32 != 0;
+       if ( other.type() < FLC_ITEM_DEEP )
+       {
+           copy( other );
+       }
+       else
+       {
+           other.asDeepClass()->assign( other.content.data.ptr.pInst, *this );
+       }
    }
 
-   int64 asInteger() const { return all.ctx.data.val64; }
-   numeric asNumeric() const { return all.ctx.data.number; }
+   bool asBoolean() const { return content.data.val32 != 0; }
+   int64 asInteger() const { return content.data.val64; }
+   numeric asNumeric() const { return content.data.number; }
+   Function* asFunction() const { return static_cast<Function*>(content.data.ptr.pInst); }
+
+   Function* asMethodFunction() const { return content.mth.function; }
+   CoreClass* asMethodClass() const { return content.mth.base; }
+
+   void* asDeepInst() const { return content.data.ptr.pInst; }
+   CoreClass* asDeepClass() const { return content.data.ptr.pClass; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and CoreStrings.
@@ -255,72 +292,36 @@ public:
    */
    numeric forceNumeric() const ;
 
-   String* asSymbolName() const { return (String*) all.ctx.data.ptr.extra; }
-   Item* asSymbolValue() const { return (Item*) all.ctx.data.ptr.voidp; }
-
    bool isNil() const { return type() == FLC_ITEM_NIL; }
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
-   bool isScalar() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
-
-   bool isObject() const { return type() == FLC_ITEM_OBJECT; }
-   bool isSymbol() const { return type() == FLC_ITEM_SYMBOL; }
    bool isFunction() const { return type() == FLC_ITEM_FUNC; }
-   Function* asFunction() const { return (Function*) all.ctx.data.ptr.voidp; }
+   bool isMethod() const { return type() == FLC_ITEM_METHOD; }
+   bool isBaseMethod() const { return type() == FLC_ITEM_BASEMETHOD; }
+   bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
+   bool isDeep() const { return type() == FLC_ITEM_DEEP; }
 
    bool isTrue() const;
 
-   virtual void toString( String& target ) const;
+   void toString( String& target ) const;
 
    Item &operator=( const Item &other ) { copy( other ); return *this; }
-   /*
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
    bool operator<(const Item &other) const { return compare( other ) < 0; }
    bool operator<=(const Item &other) const { return compare( other ) <= 0; }
    bool operator>(const Item &other) const { return compare( other ) > 0; }
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
-    */
+
    bool exactlyEqual( const Item &other ) const;
-
-   /** Turns this item in a method of the given object.
-      This is meant to be used by external functions when accessing object properties.
-      VM always creates a method when accessor is used; in example, myObject.someFunc()
-      will create a method myObject.someFunc if there is some callable inside the given
-      property, and then will call it. In this way, a function may be assigned to that
-      property, and the VM will take care to create an item that will turn the function
-      in a method.
-
-      But when a non-vm program accesses an object "method", the calling program may
-      have assigned something different to it in the meanwhile, and what its returned
-      in CoreObject::getProperty() won't be a callable method, but just the assigned
-      object.
-
-      Methodize will turn such an item in a callable method of the object given as
-      parameter, if this is possible, else it will return false.
-      \note External methods (that is, methods calling external functions) won't be
-      methodized, as they often rely in external values carried inside their CoreObject
-      owners. However, the function will return true, as the object can be called, and
-      very probably it will do what expected by the user (as the external method would
-      have never used anything other than the VM generated self anyhow).
-      \note CoreObject::getMethod() is a shortcut to this function.
-
-      \param self the object that will be set as "self" for the method
-      \return true if the item can be called properly, false if it's not a callable.
-   */
-   //bool methodize( const Item& self );
-   /*bool methodize( const CoreObject *co )
-   {
-      return methodize( Item(const_cast<CoreObject *>(co)) );
-   }*/
-
+   int compare( const Item& other ) const;
 
    /** Flags, used for internal vm needs. */
-   byte flags() const { return all.ctx.base.bits.flags; }
-   void flags( byte b ) { all.ctx.base.bits.flags = b; }
-   void flagsOn( byte b ) { all.ctx.base.bits.flags |= b; }
-   void flagsOff( byte b ) { all.ctx.base.bits.flags &= ~b; }
+   byte flags() const { return content.base.bits.flags; }
+   void flags( byte b ) { content.base.bits.flags = b; }
+   void flagsOn( byte b ) { content.base.bits.flags |= b; }
+   void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
 
 
    /** Clone the item (with the help of a VM).
@@ -338,13 +339,18 @@ public:
       \param target the item where to stored the cloned instance of this item.
       \return true if the clone operation is possible
    */
-   bool clone( Item &target ) const;
-
-   /** Return true if the item deep.
-      Deep items are the ones that are subject to garbage collecting.
-      \return true if the item is deep.
-   */
-   bool isDeep() const { return type() >= FLC_ITEM_FIRST_DEEP; }
+   bool clone( Item &target ) const
+   {
+       if ( type() < FLC_ITEM_DEEP )
+       {
+           target.copy( this );
+           return true;
+       }
+       else
+       {
+           target.setDeep( asDeepClass()->clone( asDeepInst() ), asDeepClass() );
+       }
+   }
 };
 
 }

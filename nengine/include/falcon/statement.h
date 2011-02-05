@@ -60,18 +60,20 @@ protected:
 
    inline void prepare( VMachine* vm ) const
    {
+      register VMContext* ctx = vm->currentContext();
+
       if ( m_step0 )
       {
-         vm->pushCode(m_step0);
+         ctx->pushCode(m_step0);
          if ( m_step1 )
          {
-            vm->pushCode(m_step1);
+            ctx->pushCode(m_step1);
             if ( m_step2 )
             {
-               vm->pushCode(m_step2);
+               ctx->pushCode(m_step2);
                if ( m_step3 )
                {
-                  vm->pushCode(m_step3);
+                  ctx->pushCode(m_step3);
                }
             }
          }

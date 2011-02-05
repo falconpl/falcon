@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_itemid.h
+   FILE: itemid.h
 
    List of item ids
    -------------------------------------------------------------------
@@ -13,12 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   List if item ids.
-*/
-
-#ifndef flc_flc_itemid_H
-#define flc_flc_itemid_H
+#ifndef FALCON_ITEMID_H
+#define FALCON_ITEMID_H
 
 
 #define FLC_ITEM_NIL          0
@@ -26,19 +22,24 @@
 #define FLC_ITEM_INT          2
 #define FLC_ITEM_NUM          3
 
-/** From this point on, we have possibly deep items */
-#define FLC_ITEM_FIRST_DEEP   4
-#define FLC_ITEM_SYMBOL       4
-#define FLC_ITEM_OBJECT       5
-#define FLC_ITEM_METHOD       6
-#define FLC_ITEM_CLSMETHOD    7
+#define FLC_ITEM_FLAT         3
 
- // it's just a test.
-#define FLC_ITEM_FUNC         8
+/*
+ Theese are hybrid flat-deep items.
+ They are flat with regards to the item system, that is, they are
+ copied flat, while they are deep with regards to the GC, that is,
+ they require ad-hoc marking.
+*/
+#define FLC_ITEM_FUNC         4
+#define FLC_ITEM_METHOD       5
+#define FLC_ITEM_BASEMETHOD   6
 
-#define FLC_ITEM_COUNT        9
+/** From this point on, we have deep items */
+#define FLC_ITEM_DEEP         7
+
+#define FLC_ITEM_COUNT        8
 #define FLC_ITEM_INVALID      99
 
 #endif
 
-/* end of flc_itemid.h */
+/* end of itemid.h */

@@ -26,17 +26,19 @@ add_library(falcon_engine SHARED
   ../engine/string.cpp
   ../engine/stream.cpp
   ../engine/memory.cpp
-  ../engine/falcondata.cpp
-  ../engine/gcalloc.cpp  
-  
+  ../engine/mt_posix.cpp
+  ../engine/gcalloc.cpp
+
+  collector.cpp
   closedsymbol.cpp
   dynsymbol.cpp
+  engine.cpp
+  error.cpp
   expression.cpp
   exprfactory.cpp
   exprsym.cpp
   exprvalue.cpp
   function.cpp
-  garbagelock.cpp
   globalsymbol.cpp
   item.cpp
   localsymbol.cpp
@@ -45,6 +47,7 @@ add_library(falcon_engine SHARED
   statement.cpp
   symbol.cpp
   syntree.cpp
+  tracestep.cpp
   vm.cpp
   vmcontext.cpp
 )

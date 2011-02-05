@@ -15,11 +15,14 @@
 #include <falcon/exprvalue.h>
 #include <falcon/statement.h>
 
+#include "falcon/function.h"
+
 // This is just a test.
 int main( int argc, char* argv[] )
 {
    std::cout << "Hello world" << std::endl;
 
+   Falcon::Function fmain( "__main__" );
    // create a program:
    // count = 0
    // while count < 5
@@ -35,7 +38,7 @@ int main( int argc, char* argv[] )
          )));
 
 
-   Falcon::SynTree* program = new Falcon::SynTree;
+   Falcon::SynTree* program = &fmain.syntree();
    (*program)
       .append( new Falcon::StmtAutoexpr(new Falcon::ExprAssign( count->makeExpression(), new Falcon::ExprValue(0) ) ) )
       .append( new Falcon::StmtWhile(
@@ -49,9 +52,8 @@ int main( int argc, char* argv[] )
 
    // And now, run the code.
    Falcon::VMachine vm;
-   vm.call(0,0);
-   vm.pushData(Falcon::Item());  // create an item -- local 0
-   vm.pushCode( program );
+   vm.call(&fmain,0);
+   vm.currentContext()->pushData(Falcon::Item());  // create an item -- local 0
    vm.run();
 
    vm.regA().toString( res );

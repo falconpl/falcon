@@ -74,17 +74,18 @@ void StmtWhile::toString( String& tgt ) const
 
 void StmtWhile::apply_( const PStep* s1, VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
 
-   if ( vm->regA().isTrue() )
+   if ( ctx->regA().isTrue() )
    {
       // redo.
-      vm->pushCode( &self->m_pcCheck );
-      vm->pushCode( self->m_stmts );
+      ctx->pushCode( &self->m_pcCheck );
+      ctx->pushCode( self->m_stmts );
    }
    else {
       //we're done
-      vm->popCode();
+      ctx->popCode();
    }
 }
 
@@ -146,33 +147,34 @@ void StmtIf::toString( String& tgt ) const
 
 void StmtIf::apply_( const PStep* s1,VMachine* vm )
 {
+   register VMContext* ctx = vm->currentContext();
    const StmtIf* self = static_cast<const StmtIf*>(s1);
 
-   int sid = vm->currentCode().m_seqId;
-   if ( vm->regA().isTrue() )
+   int sid = ctx->currentCode().m_seqId;
+   if ( ctx->regA().isTrue() )
    {
       // we're gone -- but we may use our frame.
-      vm->resetCode( self->m_elifs[sid]->m_ifTrue );
+      ctx->resetCode( self->m_elifs[sid]->m_ifTrue );
    }
    else
    {
       // try next else-if
       if( ++sid < self->m_elifs.size() )
       {
-         vm->currentCode().m_seqId = sid;
-         vm->pushCode( &self->m_elifs[sid]->m_pcCheck );
+         ctx->currentCode().m_seqId = sid;
+         ctx->pushCode( &self->m_elifs[sid]->m_pcCheck );
       }
       else
       {
          // we're out of elifs.
          if( self->m_ifFalse != 0 )
          {
-            vm->resetCode(self->m_ifFalse);
+            ctx->resetCode(self->m_ifFalse);
          }
          else
          {
             // just pop
-            vm->popCode();
+            ctx->popCode();
          }
       }
    }

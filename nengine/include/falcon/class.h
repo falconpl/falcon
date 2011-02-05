@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: cclass.h
+   FILE: class.h
 
-   Core Class definition
+   Class definition of a Falcon Class
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 06 Jan 2011 15:01:08 +0100
@@ -17,11 +17,12 @@
    Core Class definition
 */
 
-#ifndef FLC_CORECLASS_H
-#define FLC_CORECLASS_H
+#ifndef FLC_CLASS_H
+#define FLC_CLASS_H
 
 #include <falcon/setup.h>
 #include <falcon/item.h>
+#include <falcon/string.h>
 
 #define OVERRIDE_OP_NEG       "__neg"
 
@@ -59,8 +60,6 @@
 namespace Falcon {
 
 class VMachine;
-class ItemDict;
-
 class Property;
 
 /** Representation of classes, that is item types.
@@ -73,15 +72,10 @@ class Property;
  * must create a class that instructs the VM about how the items
  * of that type must be handled.
  *
- * In particular, a CoreClass takes care of the following aspects:
- * - Creating new instances.
- * - Cloning existing instances.
- * - Marking instances that are subject to garbage collecting.
- * - Collecting gargbaged instances.
- * - Accessing properties and elements of the instances.
- * - Applying operators on the instances.
- *
+ * CoreClasses take care of the creation of objects, of their serialization
+ * and of their dispsal. It is also responsible to check for properties
 
+ *
 */
 
 class FALCON_DYN_CLASS CoreClass
@@ -93,9 +87,24 @@ public:
       virtual machine, other than the symbol that generated this item.
       The module id is useful as this object often refers to its module in the VM. Having the ID
       recorded here prevents the need to search for the live ID in the VM at critical times.
-   */
-   CoreClass();
+
+       By default the TypeID of a class is -1, meaning undefined. Untyped class instances
+       require direct management through the owning core class, while typed class instances
+       can use their type ID to make some reasoning about their class.
+    *
+    *  Falcon system uses this number in quasi-type classes, as arrays or dictionaries,
+    * but the ID is available also for user application, starting from the baseUserID number.
+    */
+   CoreClass( const String& name );
+   
+   /** Creates a class defining a type ID*/
+   CoreClass( const String& name, int64 tid );
+   
    ~CoreClass();
+
+   enum {
+       baseUserID = 100
+   };
 
    //=========================================
    // Instance management
@@ -103,42 +112,48 @@ public:
    /** Creates an instance.
         @param creationParams A void* to data that can be used by the subclasses to initialize the instances.
     *   @return The instance pointer.
+    * The returned instance must be ready to be put in the target object.
     */
-   virtual void create( Item& self, void* creationParams ) const;
+   virtual void* create(void* creationParams ) const;
 
    /** Marks an instance. */
-   virtual void gcMark( Item& self, uint32 mark ) const;
+   virtual void gcMark( void* self, uint32 mark ) const;
 
    /** Disposes an instance */
-   virtual void dispose( Item& self ) const;
+   virtual void dispose( void* self ) const;
 
    /** Clones an instance */
-   virtual void clone( const Item& self, Item& target ) const;
+   virtual void* clone( void* source ) const;
 
    /** Serializes an instance */
-   virtual void serialize( Stream* stream, const Item& self ) const;
-   
-   /** Deserializes an instance */
-   virtual void deserialize( Stream* stream, Item& self ) const;
+   virtual void serialize( Stream* stream, void* self ) const;
+
+   /** Deserializes an instance.
+      The new instance must be initialized and ready to be "selfed".
+   */
+   virtual void* deserialize( Stream* stream ) const;
+
+   const int64 typeID() const { return m_typeID; }
+   const String& name() const { return m_name; }
 
    //=========================================================
    // Class management
    //
 
    /** Callback receiving all the properties in this class. */
-   typedef void (*pcallback)(Property*);
+   typedef void (*pcallback)(const String&, bool);
 
    /** List the properties in this class.
     * @param cb A callback function receiving one property at a time.
     *
     */
-   virtual void enumerateProperties( pcallback cb );
+   virtual void enumerateProperties( pcallback cb ) const;
 
 
    /** Returns true if the class is derived from the given class
       \param className the name of a possibly parent class
       \return true if the class is derived from a class having the given name
-    
+
       This function scans the property table of the class (template properties)
       for an item with the given name, and if that item exists and it's a class
       item, then this method returns true.
@@ -147,48 +162,61 @@ public:
 
    /** Return true if the class provides the given property.
     */
-   virtual bool hasProperty( const String& prop );
+   virtual bool hasProperty( const String& prop ) const;
 
-   
+   /** Return a summary or description of an instance.
+    Differently from toString, this method ignores string rendering
+    * that may involve the virtual machine (i.e. toString() overloads).
+    *
+    * To be considered a debug device.
+    */
+   virtual void description( void* instance, String& target ) const;
+
+   virtual void assign( void* instance, Item& target ) const;
    //=========================================================
    // Operators.
    //
 
-   virtual void __neg( VMachine *vm, const Item& self ) const;
+   /**/
+   virtual void neg( VMachine *vm ) const;
 
-   virtual void __add( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
-   virtual void __sub( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
-   virtual void __mul( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
-   virtual void __div( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
-   virtual void __mod( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
-   virtual void __pow( VMachine *vm, const Item& self, const Item& operand, Item& result ) const;
+   virtual void add( VMachine *vm ) const;
+   virtual void sub( VMachine *vm ) const;
+   virtual void mul( VMachine *vm ) const;
+   virtual void div( VMachine *vm ) const;
+   virtual void mod( VMachine *vm ) const;
+   virtual void pow( VMachine *vm ) const;
 
-   virtual void __aadd( VMachine *vm, Item& self, const Item& operand ) const;
-   virtual void __asub( VMachine *vm, Item& self, const Item& operand ) const;
-   virtual void __amul( VMachine *vm, Item& self, const Item& operand ) const;
-   virtual void __adiv( VMachine *vm, Item& self, const Item& operand ) const;
-   virtual void __amod( VMachine *vm, Item& self, const Item& operand ) const;
-   virtual void __apow( VMachine *vm, Item& self, const Item& operand ) const;
+   virtual void aadd( VMachine *vm ) const;
+   virtual void asub( VMachine *vm ) const;
+   virtual void amul( VMachine *vm ) const;
+   virtual void adiv( VMachine *vm ) const;
+   virtual void amod( VMachine *vm ) const;
+   virtual void apow( VMachine *vm ) const;
 
-   virtual void __inc(VMachine *vm, Item& self) const;
-   virtual void __dec(VMachine *vm, Item& self) const;
-   virtual void __incpost(VMachine *vm, Item& self) const;
-   virtual void __decpost(VMachine *vm, Item& self) const;
+   virtual void inc(VMachine *vm ) const;
+   virtual void dec(VMachine *vm ) const;
+   virtual void incpost(VMachine *vm ) const;
+   virtual void decpost(VMachine *vm ) const;
 
-   virtual void __call( VMachine *vm, Item& self, int32 paramCount ) const;
+   virtual void call( VMachine *vm, int32 paramCount ) const;
 
-   virtual bool __getIndex(VMachine *vm, const Item& self, const Item& index, Item& value ) const;
-   virtual bool __setIndex(VMachine *vm, Item& self, const Item& index, const Item& value ) const;
+   virtual bool getIndex(VMachine *vm ) const;
+   virtual bool setIndex(VMachine *vm ) const;
 
-   virtual bool __getProperty( VMachine *vm, Item& self, const String& prop, Item& value ) const;
-   virtual void __setProperty( VMachine *vm, Item& self, const String& prop, const Item& value ) const;
+   virtual bool getProperty( VMachine *vm ) const;
+   virtual void setProperty( VMachine *vm ) const;
 
-   virtual int __compare( VMachine *vm, const Item& self, const Item& value )const;
-   virtual bool __isTrue( VMachine *vm, const Item& self ) const;
-   virtual bool __in( VMachine *vm, const Item& self, const Item& element ) const;
-   virtual bool __provides( VMachine *vm, const Item& self, const String& prop ) const;
+   virtual int compare( VMachine *vm )const;
+   virtual bool isTrue( VMachine *vm ) const;
+   virtual bool in( VMachine *vm ) const;
+   virtual bool provides( VMachine *vm ) const;
 
-   virtual bool __toString( VMachine *vm, const Item& self, String& target ) const;
+   virtual bool toString( VMachine *vm ) const;
+
+protected:
+   String m_name;
+   int64 m_typeID;
 
 };
 
@@ -196,4 +224,4 @@ public:
 
 #endif
 
-/* end of flc_cclass.h */
+/* end of class.h */

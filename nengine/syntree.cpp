@@ -46,13 +46,14 @@ void SynTree::toString( String& tgt ) const
 void SynTree::apply_( const PStep* ps, VMachine* vm )
 {
    const SynTree* self = static_cast<const SynTree*>(ps);
+   register VMContext* ctx = vm->currentContext();
 
    // get the current step.
-   CodeFrame& cf = vm->currentCode();
+   CodeFrame& cf = ctx->currentCode();
    if (cf.m_seqId >= self->m_steps.size() )
    {
       // we're done.
-      vm->popCode();
+      ctx->popCode();
       return;
    }
 

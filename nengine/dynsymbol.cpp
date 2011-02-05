@@ -38,6 +38,7 @@ void DynSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    DynSymbol* sym = static_cast<DynSymbol*>(self->symbol());
+   register VMContext* ctx = vm->currentContext();
 
    Item* fval = vm->findLocalItem( sym->name() );
    if ( fval )
@@ -45,13 +46,13 @@ void DynSymbol::apply_( const PStep* ps, VMachine* vm )
       // l-value (assignment)?
       if( self->m_lvalue )
       {
-         *fval = vm->topData();
+         fval->assign( ctx->topData() );
          // topData is already the value of the l-value evaluation.
          // so we leave it alone.
       }
       else
       {
-         vm->pushData( *fval );
+         ctx->pushData( *fval );
       }
    }
 

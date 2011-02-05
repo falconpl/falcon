@@ -40,19 +40,20 @@ void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);
    LocalSymbol* sym = static_cast<LocalSymbol*>(self->symbol());
+   register VMContext* ctx = vm->currentContext();
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
-      vm->localVar( sym->m_id ) = vm->topData();
+      ctx->localVar( sym->m_id ).assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
       // try to load by reference.
-      Item &i = vm->localVar( sym->m_id );
-      vm->pushData( i );
+      Item &i = ctx->localVar( sym->m_id );
+      ctx->pushData( i );
    }
 }
 
