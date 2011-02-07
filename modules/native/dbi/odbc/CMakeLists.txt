@@ -18,6 +18,7 @@ SET(ODBC_INCLUDE_SEARCH_PATH
   ${ODBC_INCLUDE_DIR}
   "$ENV{ProgramFiles}/Microsoft Visual Studio 8/VC/PlatformSDK/include"
   "$ENV{ProgramFiles}/Microsoft Visual Studio 9/VC/PlatformSDK/include"
+  "$ENV{ProgramFiles}/Microsoft SDKs/Windows/v7.0A/Include"
   "$ENV{ProgramFiles}/Microsoft Platform SDK/Include"
 )
 FIND_PATH(ODBC_REAL_INCLUDE_DIR odbcss.h ${ODBC_INCLUDE_SEARCH_PATH})
@@ -27,6 +28,7 @@ SET(ODBC_LIB_SEARCH_PATH
    ${ODBC_LIB_DIR}
    "$ENV{ProgramFiles}/Microsoft Visual Studio 8/VC/PlatformSDK/lib"
    "$ENV{ProgramFiles}/Microsoft Visual Studio 9/VC/PlatformSDK/lib"
+   "$ENV{ProgramFiles}/Microsoft SDKs/Windows/v7.0A/Lib"
    "$ENV{ProgramFiles}/Microsoft Platform SDK/Lib"
   )
 
@@ -66,12 +68,12 @@ INCLUDE_DIRECTORIES(../include)
 # Target
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
    ${dbi_common_files}
-   
+
    odbc.cpp
    odbc_ext.cpp
    odbc_srv.cpp
    odbc_mod.cpp
-   
+
    odbc_ext.h
    odbc_mod.h
 )
