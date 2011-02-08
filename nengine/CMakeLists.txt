@@ -19,6 +19,17 @@ configure_file(
 
 message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
+if(UNIX OR APPLE)
+  set(SYS_SPECIFIC
+    ../engine/mt_posix.cpp
+  )
+elseif(WIN32)
+
+  set(SYS_SPECIFIC
+    ../engine/mt_win.cpp
+  )
+endif()
+
 #################
 add_library(falcon_engine SHARED
   ../engine/basealloc.cpp  
@@ -26,8 +37,8 @@ add_library(falcon_engine SHARED
   ../engine/string.cpp
   ../engine/stream.cpp
   ../engine/memory.cpp
-  ../engine/mt_posix.cpp
   ../engine/gcalloc.cpp
+  ${SYS_SPECIFIC}
 
   class.cpp
   closedsymbol.cpp

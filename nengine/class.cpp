@@ -51,6 +51,7 @@ void Class::gcMark( void* self, uint32 mark ) const
 bool Class::derivedFrom( Class* other ) const
 {
    // todo
+   return false
 }
 
 
@@ -176,18 +177,21 @@ void Class::call( VMachine *vm, int32 paramCount ) const
 bool Class::getIndex(VMachine *vm ) const
 {
    //TODO
+   return false;
 }
 
 
 bool Class::setIndex(VMachine *vm ) const
 {
    //TODO
+   return false;
 }
 
 
 bool Class::getProperty( VMachine *vm ) const
 {
    //TODO
+   return false;
 }
 
 

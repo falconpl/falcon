@@ -53,6 +53,7 @@ bool VMachine::run()
 
 PStep* VMachine::nextStep() const
 {
+   return NULL;
 }
 
 

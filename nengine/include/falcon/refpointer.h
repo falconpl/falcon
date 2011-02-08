@@ -76,6 +76,7 @@ public:
          m_rc = rp.m_rc;
          if (m_rc) m_rc->incref();
      }
+     return *this;
   }
   
   ref_ptr<__T>& operator = ( __T* data )
@@ -91,6 +92,7 @@ public:
 
       m_data = data;
       m_rc = new Refcount;
+      return *this;
   }
 
 
