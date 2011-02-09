@@ -43,13 +43,13 @@ if ( WIN32 )
     set( GTK2_CAIRO_INCLUDE_DIR "${GTK_DIR}/include/cairo" )
     set( GTK2_CAIRO_LIBRARY "${GTK_DIR}/lib/cairo.lib" )
 
+    set( GTK2_FONTCONFIG_INCLUDE_DIR "${GTK_DIR}/include/fontconfig" )
+
     set( GTK2_GDKCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/gtk-2.0/include" )
     set( GTK2_GDK_INCLUDE_DIR  "${GTK_DIR}/include/gtk-2.0" )
     set( GTK2_GDK_LIBRARY "${GTK_DIR}/lib/gdk-win32-2.0.lib" )
 
-    ## gtk 2.20
-    ##set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gtk-2.0/gdk-pixbuf" )
-    set( GTK2_GDKPIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0" )
+    set( GTK2_GDK_PIXBUF_INCLUDE_DIR "${GTK_DIR}/include/gdk-pixbuf-2.0" )
     set( GTK2_GDKPIXBUF_LIBRARY "${GTK_DIR}/lib/gdk_pixbuf-2.0.lib" )
 
     set( GTK2_GLIBCONFIG_INCLUDE_DIR "${GTK_DIR}/lib/glib-2.0/include" )
@@ -73,9 +73,10 @@ if ( WIN32 )
     include_directories(
         ${GTK2_ATK_INCLUDE_DIR}
         ${GTK2_CAIRO_INCLUDE_DIR}
+        ${GTK2_FONTCONFIG_INCLUDE_DIR}
         ${GTK2_GDKCONFIG_INCLUDE_DIR}
         ${GTK2_GDK_INCLUDE_DIR}
-        ${GTK2_GDKPIXBUF_INCLUDE_DIR}
+        ${GTK2_GDK_PIXBUF_INCLUDE_DIR}
         ${GTK2_GLIBCONFIG_INCLUDE_DIR}
         ${GTK2_GLIB_INCLUDE_DIR}
         ${GTK2_GOBJECT_INCLUDE_DIR}
