@@ -135,7 +135,13 @@ class Client( cust_id, cust_secret, mode ) from web.oauth.Client( cust_id, cust_
 
       cr.setOutString()
       cr.exec()
-      return cr.getData()
+      data = json.JSONdecode(cr.getData())
+
+      if "error" in data
+      	   raise web.oauth.ProtoError(10004,data["error"]["message"],nil)
+      end
+
+      return data
    end
 
    //# @ignore
