@@ -15,8 +15,8 @@
 
 #include <falcon/exprvalue.h>
 #include <falcon/stream.h>
-#include <falcon/garbagelock.h>
 #include <falcon/item.h>
+#include <falcon/gclock.h>
 #include <falcon/vm.h>
 #include <falcon/pcode.h>
 
@@ -30,7 +30,7 @@ ExprValue::ExprValue( const Item& item ):
 
    if ( item.isDeep() )
    {
-      m_lock = new GarbageLock(item);
+      m_lock = m_item.asDeep()->collector()->lock(m_item);
    }
    else
    {
@@ -46,7 +46,7 @@ ExprValue::ExprValue( const ExprValue& other ):
 
    if ( m_item.isDeep() )
    {
-     m_lock = new GarbageLock(m_item);
+     m_lock = m_item.asDeep()->collector()->lock(m_item);
    }
    else
    {
@@ -56,16 +56,16 @@ ExprValue::ExprValue( const ExprValue& other ):
 
 ExprValue::~ExprValue()
 {
-   delete m_lock;
+   if (m_lock) m_lock->dispose();
 }
 
 void ExprValue::item( const Item& i )
 {
    m_item  = i;
-   delete m_lock;
+   if (m_lock) m_lock->dispose();
    if ( m_item.isDeep() )
    {
-     m_lock = new GarbageLock(m_item);
+     m_lock = m_item.asDeep()->collector()->lock(m_item);
    }
    else
    {
@@ -124,7 +124,7 @@ void ExprValue::deserialize( Stream* s )
    //m_item.deserialize();
    if ( m_item.isDeep() )
    {
-     m_lock = new GarbageLock(m_item);
+     m_lock = m_item.asDeep()->collector()->lock(m_item);
    }
    else
    {

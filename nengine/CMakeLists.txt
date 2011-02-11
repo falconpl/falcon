@@ -21,33 +21,33 @@ message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
 if(UNIX OR APPLE)
   set(SYS_SPECIFIC
-    ../engine/mt_posix.cpp
+    mt_posix.cpp
+    sys_posix.cpp
   )
 elseif(WIN32)
 
   set(SYS_SPECIFIC
-    ../engine/mt_win.cpp
+    sys_win.cpp
+    mt_win.cpp
   )
 endif()
 
 #################
 add_library(falcon_engine SHARED
-  ../engine/basealloc.cpp  
-  ../engine/fassert.cpp
-  ../engine/string.cpp
-  ../engine/stream.cpp
-  ../engine/memory.cpp
-  ../engine/gcalloc.cpp
   ${SYS_SPECIFIC}
+
+  memory.cpp
 
   class.cpp
   closedsymbol.cpp
   codeerror.cpp
   collector.cpp
+  corefunction.cpp
   dynsymbol.cpp
   engine.cpp
   error.cpp
   errorclass.cpp
+  fassert.cpp
   expression.cpp
   exprfactory.cpp
   exprsym.cpp
@@ -59,10 +59,14 @@ add_library(falcon_engine SHARED
   item.cpp
   localsymbol.cpp
   pcode.cpp
+  rampmode.cpp
   sourceref.cpp
   statement.cpp
+  string.cpp
+  stream.cpp
   symbol.cpp
   syntree.cpp
+  trace.cpp
   tracestep.cpp
   vm.cpp
   vmcontext.cpp

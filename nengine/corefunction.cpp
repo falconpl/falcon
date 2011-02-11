@@ -14,10 +14,12 @@
 */
 
 #include <falcon/corefunction.h>
-
+#include <falcon/function.h>
 #include "falcon/itemid.h"
 
 namespace Falcon {
+
+CoreFunction CoreFunction_handler;
 
 CoreFunction::CoreFunction():
    Class("Function", FLC_CLASS_ID_FUNCTION )
@@ -65,7 +67,4 @@ void* CoreFunction::deserialize( Stream* stream ) const
 
 }
 
-#endif /* FUNCTION_H_ */
-
 /* end of corefunction.cpp */
-

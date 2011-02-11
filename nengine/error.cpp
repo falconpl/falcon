@@ -44,7 +44,7 @@ static const String errorDesc( int code )
 
 Error::Error( Class* handler, const ErrorParam &params ):
    m_refCount( 1 ),
-   m_errorCode ( params.m_errorCode ),
+   m_errorCode( params.m_errorCode ),
    m_description( params.m_description ),
    m_extra( params.m_extra ),
    m_symbol( params.m_symbol ),

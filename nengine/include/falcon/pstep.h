@@ -17,7 +17,6 @@
 #define FALCON_PSTEP_H
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/string.h>
 
 namespace Falcon {

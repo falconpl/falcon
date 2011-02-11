@@ -17,7 +17,6 @@
 #define FALCON_SOURCEREF_H
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/item.h>
 
 namespace Falcon

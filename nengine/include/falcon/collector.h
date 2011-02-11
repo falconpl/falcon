@@ -216,7 +216,7 @@ public:
    void unregisterVM( VMachine *vm );
 
 
-   /** Returns the number of elements managed by this mempool. */
+   /** Returns the number of elements managed by this collector. */
    int32 allocatedItems() const;
 
    /** Returns the current generation. */

@@ -135,6 +135,7 @@ void VMachine::report( String& data )
    data += ctx->m_topCode->m_step->toString()+"\n";
 }
 
+
 bool VMachine::step()
 {
    if ( codeEmpty() )

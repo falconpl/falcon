@@ -17,7 +17,6 @@
 #define FALCON_VMCONTEXT_H_
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/item.h>
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>

@@ -19,7 +19,6 @@
 #define FALCON_SYMBOL_H
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/string.h>
 
 namespace Falcon {

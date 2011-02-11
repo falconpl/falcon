@@ -868,6 +868,23 @@ void Collector::advanceGeneration( VMachine* vm, uint32 oldGeneration )
 }
 
 
+void Collector::remark( uint32 curgen )
+{
+   GCToken *ring = m_garbageRoot->m_next;
+
+   // live modules must be killed after all their data. For this reason, we must put them aside.
+   while( ring != m_garbageRoot )
+   {
+      // Don't mark objects that are still unassigned.
+      if( ring->m_mark != MAX_GENERATION )
+         ring->m_mark = curgen;
+
+      ring = ring->m_next;
+   }
+
+}
+
+
 // WARNING: Rollover is to be called with m_mtx_vms locked.
 void Collector::rollover()
 {

@@ -47,11 +47,21 @@ void Class::gcMark( void* self, uint32 mark ) const
 }
 
 
+void Class::describe( void* instance, String& target ) const
+{
+
+}
+
+void Class::enumerateProperties( Class::PropertyEnumerator& ) const
+{
+   // normally does nothing
+}
+
 
 bool Class::derivedFrom( Class* other ) const
 {
    // todo
-   return false
+   return false;
 }
 
 
@@ -219,6 +229,18 @@ bool Class::in( VMachine *vm ) const
    throw new CodeError( ErrorParam(__LINE__, e_invop ).extra("in") );
 }
 
+
+bool Class::provides( VMachine *vm ) const
+{
+   // Note: it's right to return false here.
+   return false;
+}
+
+bool Class::toString( VMachine *vm ) const
+{
+   // Note: it's right to return false here.
+   return false;
+}
 
 }
 

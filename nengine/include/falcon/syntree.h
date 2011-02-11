@@ -17,7 +17,6 @@
 #define FALCON_SYNTREE_H
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/pstep.h>
 #include <vector>
 

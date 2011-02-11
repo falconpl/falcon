@@ -23,7 +23,6 @@
 namespace Falcon {
 
 class Stream;
-class GarbageLock;
 class VMachine;
 
 class ExprFactory;
@@ -73,7 +72,7 @@ protected:
    friend class ExprFactory;
 private:
    Item m_item;
-   GarbageLock* m_lock;
+   GCLock* m_lock;
 };
 
 }

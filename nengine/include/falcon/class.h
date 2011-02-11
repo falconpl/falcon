@@ -22,6 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/enumerator.h>
 
 #define OVERRIDE_OP_NEG       "__neg"
 
@@ -141,13 +142,14 @@ public:
    virtual void gcMark( void* self, uint32 mark ) const;
 
    /** Callback receiving all the properties in this class. */
-   typedef void (*pcallback)(const String&, bool);
+   typedef Enumerator<String> PropertyEnumerator;
 
    /** List the properties in this class.
     * @param cb A callback function receiving one property at a time.
     *
+    * @note This base class implementation does nothing.
     */
-   virtual void enumerateProperties( pcallback cb ) const;
+   virtual void enumerateProperties( PropertyEnumerator& cb ) const;
 
 
    /** Returns true if the class is derived from the given class
@@ -170,7 +172,7 @@ public:
     *
     * To be considered a debug device.
     */
-   virtual void description( void* instance, String& target ) const;
+   virtual void describe( void* instance, String& target ) const;
 
    /** Notify about an assignemnt.
     @param instance The instance being assigned.

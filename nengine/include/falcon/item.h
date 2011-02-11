@@ -316,6 +316,7 @@ public:
 
    void* asDeepInst() const { return content.data.pToken->data(); }
    Class* asDeepClass() const { return content.data.pToken->cls(); }
+   GCToken* asDeep() const { return content.data.pToken; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and CoreStrings.
