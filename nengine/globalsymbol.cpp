@@ -17,6 +17,8 @@
 #include <falcon/exprsym.h>
 #include <falcon/vm.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 GlobalSymbol::GlobalSymbol( const String& name, Item* itemPtr ):
@@ -42,16 +44,21 @@ void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
    register VMContext* ctx = vm->currentContext();
+#ifndef NDEBUG
+   String name = sym->name();
+#endif
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
+      TRACE2( "LValue apply to global '%s'", name.c_ize() );
       sym->m_itemPtr->assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
+      TRACE2( "Apply global '%s'", name.c_ize() );
       ctx->pushData( *sym->m_itemPtr );
    }
 }

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: module.h
+   FILE: module.cpp
 
    Falcon code unit
    -------------------------------------------------------------------
@@ -13,31 +13,21 @@
    See LICENSE file for licensing details.
 */
 
-
-#ifndef FALCON_MODULE_H
-#define	FALCON_MODULE_H
-
-#include <falcon/setup.h>
-#include <falcon/string.h>
+#include <falcon/module.h>
 
 namespace Falcon {
 
-class Module {
-public:
-   Module( const String& name );
-   Module( const String& name, const String& uri );
+Module::Module( const String& name ):
+      m_name( name )
+{}
 
-   const String& name() const { return m_name; }
-   const String& uri() const {return m_uri;}
 
-public:
-   String m_name;
-   String m_uri;
-
-};
+Module::Module( const String& name, const String& uri ):
+      m_name( name ),
+      m_uri(uri)
+{}
 
 }
 
-#endif	/* MODULE_H */
+/* end of module.cpp */
 
-/* end of module.h */

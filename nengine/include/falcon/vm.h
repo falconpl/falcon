@@ -65,11 +65,20 @@ public:
       call( f, np, Item() );
    }
 
+   /** Prepares the VM to execute a function (actually, a method).
+
+    The VM gets readied to execute the function from the next step,
+    which may be invoked via step(), run() or by returning from the caller
+    of this function in case the caller has been invoked by the VM itself.
+    @param function The function to be invoked.
+    @param np Number of parameters that must be already in the stack.
+    @param self The item on which this method is invoked. Pure functions are
+                considered methods of "nil".
+    */
    virtual void call( Function* function, int np, const Item& self );
 
+   /** Returns from the current frame */
    void returnFrame();
-
-   void report( String &data );
 
    /** Returns the step that is going to be executed next, or null if none */
    PStep* nextStep() const;

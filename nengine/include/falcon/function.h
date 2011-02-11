@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/sourceref.h>
 #include <falcon/syntree.h>
 #include <falcon/globalsvector.h>
 #include <falcon/refpointer.h>
@@ -60,7 +61,7 @@ class Collector;
 class FALCON_DYN_CLASS Function
 {
 public:
-   Function( const String& name, Module* owner = 0 );
+   Function( const String& name, Module* owner = 0, int32 line = 0 );
    virtual ~Function();
    
    /** Sets the module of this function.
@@ -73,7 +74,23 @@ public:
    */
    Module* module() const { return m_module; }
 
+   /** Returns the name of this function. */
    const String& name() const { return m_name; }
+
+   /** Returns the source line where this function was declared.
+    To be used in conjunction with module() to pinpoint the location of a function.
+    */
+   int32 declaredAt() const { return m_line; }
+
+   /** Returns the complete identifier for this function.
+
+    The format is:
+         name(line) source/path.fal
+
+    Where a source path is not available, the module full qualified name is used.
+   
+   */
+   String locate() const;
 
    Symbol* addVariable( const String& name );
 
@@ -146,6 +163,8 @@ protected:
    SymbolVector m_locals;
 
    ref_ptr<GlobalsVector> m_globals;
+
+   int32 m_line;
 };
 
 }

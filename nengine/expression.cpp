@@ -20,6 +20,8 @@
 #include <falcon/pcode.h>
 #include <falcon/exprfactory.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 Expression::Expression( const Expression &other ):
@@ -63,6 +65,7 @@ UnaryExpression::~UnaryExpression()
 
 void UnaryExpression::precompile( PCode* pcode ) const
 {
+   TRACE3( "Precompiling un-exp: %p (%s)", pcode, toString().c_ize() );
    pcode->pushStep( this );
    m_first->precompile( pcode );
 }
@@ -102,6 +105,7 @@ BinaryExpression::~BinaryExpression()
 
 void BinaryExpression::precompile( PCode* pcode ) const
 {
+   TRACE3( "Precompiling bin-exp: %p (%s)", pcode, toString().c_ize() );
    pcode->pushStep( this );
    m_second->precompile( pcode );
    m_first->precompile( pcode );
@@ -144,6 +148,8 @@ TernaryExpression::~TernaryExpression()
 
 void TernaryExpression::precompile( PCode* pcode ) const
 {
+   TRACE3( "Precompiling tri-exp: %p (%s)", pcode, toString().c_ize() );
+   
    pcode->pushStep( this );
    m_third->precompile( pcode );
    m_second->precompile( pcode );
@@ -214,6 +220,8 @@ void ExprNeg::apply_( const PStep*, VMachine* vm )
          obj->getClass()->__neg(item);
          */
    }
+   
+   TRACE2( "Apply NEG %d", (int) item.asInteger() );
 }
 
 void ExprNeg::toString( String& str ) const
@@ -243,6 +251,7 @@ void ExprNot::apply_( const PStep*, VMachine* vm )
    ctx->popCode();
 
    operand.setBoolean( ! operand.isTrue() );
+   TRACE2( "Apply NOT %s", operand.isTrue() ? "true" : "false" );
 }
 
 void ExprNot::toString( String& str ) const
@@ -265,11 +274,14 @@ bool ExprAnd::simplify( Item& value ) const
       return true;
    }
    return false;
+
 }
 
 void ExprAnd::precompile( PCode* pcode ) const
 {
    int shortCircuitSize = pcode->size();
+
+   TRACE3( "Precompiling and: %p (%s)", pcode, toString().c_ize() );
 
    pcode->pushStep( this );
    // and then the second expr last
@@ -291,6 +303,8 @@ void ExprAnd::apply_( const PStep*, VMachine* vm )
    operand.setBoolean( operand.isTrue() );
    // and remove ourselves
    ctx->popCode();
+
+   TRACE2( "Apply AND %s", operand.isTrue() ? "true" : "false" );
 }
 
 void ExprAnd::toString( String& str ) const
@@ -320,6 +334,8 @@ void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
       // the other expression is bound to push data, remove ours
       ctx->popData();
    }
+
+   TRACE2( "Apply AND::GATE %s", operand.isTrue() ? "true" : "false" );
 }
 
 //=========================================================
@@ -341,6 +357,8 @@ void ExprOr::precompile( PCode* pcode ) const
 {
    int shortCircuitSize = pcode->size();
 
+   TRACE3( "Precompiling or: %p (%s)", pcode, toString().c_ize() );
+   
    pcode->pushStep( this );
    // and then the second expr last
    m_second->precompile( pcode );
@@ -361,6 +379,8 @@ void ExprOr::apply_( const PStep*, VMachine* vm )
    operand.setBoolean( operand.isTrue() );
    // remove ourselves
    ctx->popCode();
+
+   TRACE2( "Apply OR %s", operand.isTrue() ? "true" : "false" );
 }
 
 void ExprOr::toString( String& str ) const
@@ -388,6 +408,8 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
       // the other expression is bound to push data, remove ours
       ctx->popData();
    }
+
+   TRACE2( "Apply OR::GATE %s", operand.isTrue() ? "true" : "false" );
 }
 
 //=========================================================
@@ -395,6 +417,8 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 
 void ExprAssign::precompile( PCode* pcode ) const
 {
+   TRACE3( "Precompiling Assign: %p (%s)", pcode, toString().c_ize() );
+
    // just, evaluate the second, then evaluate the first,
    // but the first knows it's a lvalue.
    m_first->precompile(pcode);
@@ -452,6 +476,8 @@ void ExprPlus::apply_( const PStep*, VMachine* vm )
    // apply on the first
    Item& d1 = ctx->topData();
 
+   TRACE2( "Apply PLUS", 1 );
+
    switch ( d1.type() << 8 | d2.type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
@@ -467,6 +493,7 @@ void ExprPlus::apply_( const PStep*, VMachine* vm )
       d1.setNumeric( d1.asNumeric() + d2.asNumeric() );
       break;
    }
+
 }
 
 
@@ -518,6 +545,8 @@ bool ExprLT::simplify( Item& value ) const
 void ExprLT::apply_( const PStep*, VMachine* vm )
 {
    register VMContext* ctx = vm->currentContext();
+
+   TRACE2( "Apply LT", 1 );
 
    // copy the second
    Item d2 = ctx->topData();
@@ -575,6 +604,8 @@ ExprCall::~ExprCall()
 /** Function call. */
 void ExprCall::precompile( PCode* pcode ) const
 {
+   TRACE3( "Precompiling call: %p (%s)", pcode, toString().c_ize() );
+
    // set our callback
    pcode->pushStep( this );
    m_first->precompile( pcode );
@@ -594,6 +625,8 @@ bool ExprCall::simplify( Item& value ) const
 
 void ExprCall::apply_( const PStep* v, VMachine* vm )
 {
+   TRACE2( "Apply CALL", 1 );
+   
    const ExprCall* self = static_cast<const ExprCall*>(v);
    register VMContext* ctx = vm->currentContext();
 

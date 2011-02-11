@@ -17,6 +17,8 @@
 #include <falcon/exprsym.h>
 #include <falcon/vm.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 DynSymbol::DynSymbol( const String& name ):
@@ -46,12 +48,14 @@ void DynSymbol::apply_( const PStep* ps, VMachine* vm )
       // l-value (assignment)?
       if( self->m_lvalue )
       {
+         TRACE2( "LValue apply to dynsymbol '%s'", sym->m_name.c_ize() );
          fval->assign( ctx->topData() );
          // topData is already the value of the l-value evaluation.
          // so we leave it alone.
       }
       else
       {
+         TRACE2( "Apply dynsymbol '%s'", sym->m_name.c_ize() );
          ctx->pushData( *fval );
       }
    }

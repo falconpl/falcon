@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/sourceref.h>
 
 namespace Falcon {
 
@@ -39,13 +40,16 @@ namespace Falcon {
 class FALCON_DYN_CLASS PStep
 {
 public:
-   // TODO: in debug add a default failing apply
    inline PStep() {};
+   inline PStep( int line, int chr ):
+      m_sr(line, chr)
+   {};
+
 
    inline virtual ~PStep() {}
 
    /** Convert into a string */
-   inline const String toString() const
+   inline String toString() const
    {
       String temp;
       toString( temp );
@@ -58,11 +62,11 @@ public:
     * pstep that are not part of the syntactic tree, but just of the
     * VM code.
     * */
-   inline virtual void toString( String& ) const {};
+   virtual void toString( String& ) const {};
 
    typedef void (*apply_func)(const PStep* self, VMachine* vm);
    apply_func apply;
-
+   SourceRef m_sr;
 };
 
 }

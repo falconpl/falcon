@@ -18,6 +18,8 @@
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon
 {
 
@@ -76,14 +78,17 @@ void StmtWhile::apply_( const PStep* s1, VMachine* vm )
 {
    register VMContext* ctx = vm->currentContext();
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
-
+   
    if ( ctx->regA().isTrue() )
    {
+      TRACE1( "Apply 'while' at line %d -- redo ", self->m_sr.line() );
       // redo.
       ctx->pushCode( &self->m_pcCheck );
       ctx->pushCode( self->m_stmts );
    }
    else {
+      TRACE1( "Apply 'while' at line %d -- leave ", self->m_sr.line() );
+      
       //we're done
       ctx->popCode();
    }
@@ -150,9 +155,12 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
    register VMContext* ctx = vm->currentContext();
    const StmtIf* self = static_cast<const StmtIf*>(s1);
 
+   TRACE1( "Apply 'if' at line %d ", self->m_sr.line() );
+
    int sid = ctx->currentCode().m_seqId;
    if ( ctx->regA().isTrue() )
    {
+      TRACE1( "--Entering elif %d", sid );
       // we're gone -- but we may use our frame.
       ctx->resetCode( self->m_elifs[sid]->m_ifTrue );
    }
@@ -161,6 +169,7 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
       // try next else-if
       if( ++sid < self->m_elifs.size() )
       {
+         TRACE2( "--Trying branch %d", sid );
          ctx->currentCode().m_seqId = sid;
          ctx->pushCode( &self->m_elifs[sid]->m_pcCheck );
       }
@@ -169,11 +178,13 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
          // we're out of elifs.
          if( self->m_ifFalse != 0 )
          {
+            TRACE1( "--Entering else", 0 );
             ctx->resetCode(self->m_ifFalse);
          }
          else
          {
             // just pop
+            TRACE1( "--Failed", 0 );
             ctx->popCode();
          }
       }
@@ -232,6 +243,7 @@ void StmtReturn::toString( String& tgt ) const
 void StmtReturn::apply_( const PStep*ps, VMachine* vm )
 {
    const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
+   TRACE1( "Apply 'return' at line %d ", stmt->m_sr.line() );
 
    // clear A if there wasn't any expression
    if ( stmt->m_expr == 0 )

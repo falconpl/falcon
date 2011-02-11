@@ -67,14 +67,7 @@ public:
 
    static void apply_( const PStep* ps, VMachine* vm );
    virtual void toString( String& tgt ) const;
-
-   inline const String toString() const
-   {
-      String temp;
-      toString( temp );
-      return temp;
-   }
-
+   inline String toString() const { return PStep::toString(); }
 private:
    typedef std::vector<Statement*> Steps;
    Steps m_steps;

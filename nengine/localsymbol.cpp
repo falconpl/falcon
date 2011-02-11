@@ -18,6 +18,8 @@
 #include <falcon/vm.h>
 #include <falcon/exprsym.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 LocalSymbol::LocalSymbol( const String& name, int id ):
@@ -41,10 +43,14 @@ void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
    const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);
    LocalSymbol* sym = static_cast<LocalSymbol*>(self->symbol());
    register VMContext* ctx = vm->currentContext();
+#ifndef NDEBUG
+   String name = sym->name();
+#endif
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
+      TRACE2( "LValue apply to local '%s'", name.c_ize() );
       ctx->localVar( sym->m_id ).assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
@@ -52,6 +58,7 @@ void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
    else
    {
       // try to load by reference.
+      TRACE2( "Apply local '%s'", name.c_ize() );
       Item &i = ctx->localVar( sym->m_id );
       ctx->pushData( i );
    }

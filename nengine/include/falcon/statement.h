@@ -135,6 +135,8 @@ public:
    virtual ~StmtWhile();
 
    void toString( String& tgt ) const;
+   inline String toString() const { return PStep::toString(); }
+
    static void apply_( const PStep*, VMachine* vm );
 
 private:
@@ -150,7 +152,9 @@ public:
    StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0 );
    virtual ~StmtIf();
 
-   void toString( String& tgt ) const;
+   virtual void toString( String& tgt ) const;
+   inline String toString() const { return PStep::toString(); }
+
    static void apply_( const PStep*, VMachine* vm );
 
    /** Adds an else-if branch to the if statement */

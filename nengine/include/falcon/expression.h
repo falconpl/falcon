@@ -377,6 +377,7 @@ public:
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
    void precompile( PCode* pcode ) const;
+   inline String toString() const { return PStep::toString(); }
 
 private:
    class FALCON_DYN_CLASS Gate: public PStep {
@@ -401,6 +402,7 @@ public:
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
    virtual void precompile( PCode* pcode ) const;
+   inline String toString() const { return PStep::toString(); }
 
 private:
 
@@ -434,6 +436,7 @@ public:
 
    inline virtual bool isStandAlone() const { return true; }
    virtual void precompile( PCode* pcode ) const;
+   inline String toString() const { return PStep::toString(); }
 
 protected:
    inline ExprAssign():
@@ -481,6 +484,8 @@ public:
    inline virtual bool isStandAlone() const { return true; }
 
    void precompile( PCode* pcode ) const;
+   inline String toString() const { return PStep::toString(); }
+
 
 private:
    std::vector<Expression*> m_params;

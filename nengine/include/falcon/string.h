@@ -1166,13 +1166,14 @@ public:
    void exported( bool e ) { m_bExported = e; }
 
    /** Adds an extra '\0' terminator past the end of the string.
+
       This makes the string data (available through getRawStorage()) suitable
       to be sent to C functions compatible with the character size of this
       string.
 
       Eventually, it should be preceded by a call to setCharSize().
    */
-   void c_ize();
+   const char* c_ize();
 
    /** Compares a string with the beginning of this string.
       If \b str is empty, returns true, if it's larger than

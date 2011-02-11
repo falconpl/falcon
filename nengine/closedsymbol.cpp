@@ -18,6 +18,8 @@
 #include <falcon/vm.h>
 #include <falcon/exprsym.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 ClosedSymbol::ClosedSymbol( const String& name, const Item& closed ):
@@ -44,12 +46,14 @@ void ClosedSymbol::apply_( const PStep* ps, VMachine* vm )
    // l-value (assignment)?
    if( self->m_lvalue )
    {
+      TRACE2( "LValue apply to closed '%s'", sym->m_name .c_ize() );
       sym->m_item.assign(  ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
+      TRACE2( "Apply closed '%s'", sym->m_name.c_ize() );
       ctx->pushData( sym->m_item );
    }
 }

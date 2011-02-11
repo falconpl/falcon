@@ -58,6 +58,7 @@ add_library(falcon_engine SHARED
   globalsymbol.cpp
   item.cpp
   localsymbol.cpp
+  module.cpp
   pcode.cpp
   rampmode.cpp
   sourceref.cpp

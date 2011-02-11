@@ -17,6 +17,8 @@
 #include <falcon/statement.h>
 #include <falcon/function.h>
 
+#include <falcon/trace.h>
+
 using namespace Falcon;
 
 // This is just a test.
@@ -35,6 +37,8 @@ int main( int argc, char* argv[] )
    //
    // return fib(30)
    //
+
+   TRACE_ON();
 
    Function fib( "fib" );
    Symbol* count = fib.addVariable("n");

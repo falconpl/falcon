@@ -17,6 +17,7 @@
 #include <falcon/pcode.h>
 #include <falcon/vm.h>
 
+#include <falcon/trace.h>
 namespace Falcon {
 
 PCode::PCode()
@@ -24,9 +25,12 @@ PCode::PCode()
    apply = apply_;
 }
 
+
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
    register VMContext* ctx = vm->currentContext();
+
+   TRACE3( "PCode apply: %p (%s)", self, self->toString().c_ize() );
 
    const StepList& steps = static_cast<const PCode*>(self)->m_steps;
 	CodeFrame& cf = ctx->currentCode();

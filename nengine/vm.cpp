@@ -21,6 +21,8 @@
 #include <falcon/item.h>
 #include <falcon/function.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon
 {
 
@@ -29,15 +31,19 @@ static StmtReturn s_a_return;
 VMachine::VMachine()
 {
    // create the first context
+   TRACE( "Virtual machine created at %p", this );
    m_context = new VMContext;
 }
 
 VMachine::~VMachine()
 {
+   TRACE( "Virtual machine destroyed at %p", this );
 }
 
 bool VMachine::run()
 {
+   TRACE( "Run called", 0 );
+
    //Use the stack, don't use register in this loop
    VMContext* ctx = currentContext();
 
@@ -47,19 +53,24 @@ bool VMachine::run()
       ps->apply( ps, this );
    }
 
+   TRACE( "Run terminated", 0 );
    return true;
 }
 
 
 PStep* VMachine::nextStep() const
 {
+   TRACE( "Next step", 0 );
    return NULL;
 }
 
 
 void VMachine::call( Function* function, int nparams, const Item& self )
 {
+   TRACE( "Entering function: %s", function->locate().c_ize() );
+   
    register VMContext* ctx = m_context;
+   TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
    // prepare the call frame.
    CallFrame* topCall = ++ctx->m_topCall;
@@ -68,9 +79,12 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    topCall->m_stackBase = ctx->dataSize()-nparams;
    topCall->m_paramCount = nparams;
    topCall->m_self = self;
+   TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
+         topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
+
 
    // fill the parameters
-
+   TRACE1( "-- filing parameters: %d/%d", nparams, function->paramCount() );
    while( nparams < function->paramCount() )
    {
       (++ctx->m_topData)->setNil();
@@ -79,6 +93,7 @@ void VMachine::call( Function* function, int nparams, const Item& self )
 
    // fill the locals
    int locals = function->varCount() - function->paramCount();
+   TRACE1( "-- filing locals: %d", locals );
    while( locals > 0 )
    {
       (++ctx->m_topData)->setNil();
@@ -89,7 +104,8 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    // must we add a return?
    if( function->syntree().last()->type() != Statement::return_t )
    {
-       ctx->pushCode( &s_a_return );
+      TRACE1( "-- Pushing extra return", 0 );
+      ctx->pushCode( &s_a_return );
    }
 
    ctx->pushCode( &function->syntree() );
@@ -111,18 +127,22 @@ void VMachine::returnFrame()
    // Return.
    --ctx->m_topCall;
 
+   TRACE( "Return frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
+
    // if the call was performed by a call expression, our
    // result shall go in the stack.
    if( ctx->m_topCode > ctx->m_codeStack )
    {
+      TRACE1( "-- Adding A register to stack", 1 );
       ctx->pushData(ctx->m_regA);
    }
 }
 
-
-void VMachine::report( String& data )
+/*
+void VMachine::report( Report& data )
 {
    register VMContext* ctx = m_context;
+
 
    data = "Function: " + ctx->m_topCall->m_function->name() + "\n";
    data += String("Depth: ").N( ctx->callDepth() )
@@ -134,12 +154,14 @@ void VMachine::report( String& data )
    data += tmp + "\n";
    data += ctx->m_topCode->m_step->toString()+"\n";
 }
-
+*/
 
 bool VMachine::step()
 {
+   TRACE( "Step", 0 );
    if ( codeEmpty() )
    {
+      TRACE( "Step terminated", 0 );
       return false;
    }
 
