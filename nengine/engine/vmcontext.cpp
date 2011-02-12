@@ -16,8 +16,6 @@
 #include <falcon/vmcontext.h>
 #include <falcon/memory.h>
 
-#include "falcon/stackframe.h"
-
 namespace Falcon {
 
 VMContext::VMContext()

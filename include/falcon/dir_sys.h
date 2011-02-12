@@ -23,7 +23,7 @@
 #define flc_dir_sys_H
 
 #include <falcon/filestat.h>
-#include <falcon/falcondata.h>
+//#include <falcon/falcondata.h>
 #include <falcon/string.h>
 
 namespace Falcon {
@@ -35,7 +35,7 @@ namespace Falcon {
 
    It has methods to read the next entry and to close the search.
 */
-class DirEntry: public FalconData
+class DirEntry
 {
 
 protected:

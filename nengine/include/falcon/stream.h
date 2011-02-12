@@ -25,7 +25,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/falcondata.h>
 #include <falcon/string.h>
 #include <falcon/vm_sys.h>
 
