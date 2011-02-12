@@ -75,6 +75,7 @@ bool VMachine::run()
 {
    TRACE( "Run called", 0 );
    m_event = eventNone;
+   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
    while( ! codeEmpty() )
    {
@@ -133,6 +134,8 @@ const PStep* VMachine::nextStep() const
    {
       return 0;
    }
+   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
+
 
    CodeFrame& cframe = currentContext()->currentCode();
    const PStep* ps = cframe.m_step;
@@ -203,10 +206,13 @@ void VMachine::returnFrame()
 
    // reset code and data
    ctx->m_topCode = ctx->m_codeStack + topCall->m_codeBase-1;
+   PARANOID( "Code stack underflow at return", (ctx->m_topCode >= ctx->m_codeStack-1) );
    ctx->m_topData = ctx->m_dataStack + topCall->m_stackBase-1;
+   PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
    // Return.
    --ctx->m_topCall;
+   PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
 
    TRACE( "Return frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
@@ -326,6 +332,7 @@ bool VMachine::step()
       TRACE( "Step terminated", 0 );
       return false;
    }
+   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
    // NOTE: This code must be manually coordinated with vm::run()
    // other solutions, as inline() or macros are either unsafe or

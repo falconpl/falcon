@@ -21,6 +21,8 @@
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
 
+#include <falcon/paranoid.h>
+
 namespace Falcon {
 
 class VMachine;
@@ -109,6 +111,7 @@ public:
    /** Removes the last element from the stack */
    void popData() {
       m_topData--;
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
    }
 
    inline long dataSize() const {
@@ -141,15 +144,18 @@ public:
    CodeFrame& currentCode() { return *m_topCode; }
 
    inline void popCode() {
-      popCode(1);
+      m_topCode--;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
    }
 
    void popCode( int size ) {
       m_topCode -= size;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
    }
 
    void unrollCode( int size ) {
       m_topCode = m_codeStack + size - 1;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
    }
 
    /** Changes the currently running pstep.

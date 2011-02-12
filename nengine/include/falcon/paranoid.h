@@ -17,14 +17,20 @@
 #define	_FALCON_PARANOID_H
 
 #ifdef NDEBUG
+#ifndef FALCON_PARANOID
+#define _FALCON_NO_PARANOID_CHECK_
+#endif
+#endif
+
+#ifdef _FALCON_NO_PARANOID_CHECK_
    #define PARANOID(...)
 #else
    #include <falcon/codeerror.h>
-   #define PARANOID( err, x ) \
+   #define PARANOID( errdesc, x ) \
          { if( !(x) ) { \
             throw new CodeError( ErrorParam(e_paranoid, __LINE__) \
                .module(__FILE__) \
-               .extra(err) ); \
+               .extra(errdesc) ); \
          }}
 #endif
 
