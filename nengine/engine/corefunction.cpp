@@ -63,6 +63,7 @@ void CoreFunction::serialize( Stream* stream, void* self ) const
 void* CoreFunction::deserialize( Stream* stream ) const
 {
    // TODO
+   return 0;
 }
 
 }

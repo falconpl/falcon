@@ -150,6 +150,11 @@ bool Item::clone( Item& target ) const
    return true;
 }
 
+int Item::compare( const Item& other ) const
+{
+   return 0;
+}
+
 }
 
 /* end of item.cpp */
