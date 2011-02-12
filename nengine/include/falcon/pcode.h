@@ -64,6 +64,9 @@ public:
    /** Pushes a new step in the pcode. */
    inline void pushStep( const PStep* ps ) { m_steps.push_back( ps ); }
 
+   virtual void toString( String& res ) const;
+   virtual String toString() const {return PStep::toString(); }
+   
 private:
    typedef std::vector<const PStep*> StepList;
    StepList m_steps;

@@ -23,8 +23,8 @@
 namespace Falcon
 {
 
-Breakpoint::Breakpoint():
-   Statement(breakpoint_t)
+Breakpoint::Breakpoint( int32 line, int32 chr ):
+   Statement(breakpoint_t, line, chr )
 {
    apply = apply_;
 }
@@ -47,8 +47,8 @@ void Breakpoint::apply_( const PStep*, VMachine* vm )
 //
 
 
-StmtAutoexpr::StmtAutoexpr( Expression* expr ):
-      Statement(autoexpr_t),
+StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
+      Statement(autoexpr_t, line, chr ),
       m_expr( expr )
 {
    m_expr->precompile(&m_pcExpr);
@@ -64,14 +64,23 @@ StmtAutoexpr::~StmtAutoexpr()
 
 void StmtAutoexpr::toString( String& tgt ) const
 {
-   m_expr->toString( tgt );
+   for( int32 i = 1; i < chr(); i++ ) {
+      tgt.append(' ');
+   }
+   
+   tgt += m_expr->toString();
+}
+
+void StmtAutoexpr::oneLiner( String& tgt ) const
+{
+   tgt += m_expr->toString();
 }
 
 //====================================================================
 //
 
-StmtWhile::StmtWhile( Expression* check, SynTree* stmts ):
-   Statement( while_t ),
+StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr ):
+   Statement( while_t, line, chr ),
    m_check(check),
    m_stmts( stmts )
 {
@@ -90,9 +99,19 @@ StmtWhile::~StmtWhile()
    delete m_stmts;
 }
 
+void StmtWhile::oneLiner( String& tgt ) const
+{
+   tgt = "while " + m_check->toString();
+}
+
+
 void StmtWhile::toString( String& tgt ) const
 {
-   tgt = "while " + m_check->toString() + "\n" +
+   for( int32 i = 1; i < chr(); i++ ) {
+      tgt.append(' ');
+   }
+   
+   tgt += "while " + m_check->toString() + "\n" +
            m_stmts->toString() +
          "end\n";
 }
@@ -122,8 +141,8 @@ void StmtWhile::apply_( const PStep* s1, VMachine* vm )
 //====================================================================
 //
 
-StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse ):
-   Statement( if_t )
+StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
+   Statement( if_t, line, chr )
 {
    apply = apply_;
 
@@ -141,9 +160,9 @@ StmtIf::~StmtIf()
       delete m_elifs[i];
 }
 
-StmtIf& StmtIf::addElif( Expression *check, SynTree* ifTrue )
+StmtIf& StmtIf::addElif( Expression *check, SynTree* ifTrue, int32 line, int32 chr  )
 {
-   m_elifs.push_back( new ElifBranch(check, ifTrue) );
+   m_elifs.push_back( new ElifBranch(check, ifTrue, line, chr ) );
    return *this;
 }
 
@@ -154,18 +173,35 @@ StmtIf& StmtIf::setElse( SynTree* ifFalse )
    return *this;
 }
 
+
+void StmtIf::oneLiner( String& tgt ) const
+{
+   tgt = "if "+ m_elifs[0]->m_check->toString();
+}
+
 void StmtIf::toString( String& tgt ) const
 {
-   tgt = "if "+ m_elifs[0]->m_check->toString() + "\n"
+   for( int32 i = 1; i < chr(); i++ ) {
+      tgt.append(' ');
+   }
+
+   tgt += "if "+ m_elifs[0]->m_check->toString() + "\n"
               + m_elifs[0]->m_ifTrue->toString();
 
    for ( int i = 1; i < m_elifs.size(); ++i )
    {
+      for( int32 j = 1; j < m_elifs[i]->m_sr.chr(); i++ ) {
+         tgt.append(' ');
+      }
+      
       tgt += "elif " + m_elifs[i]->m_check->toString() + "\n"
                      + m_elifs[i]->m_ifTrue->toString();
    }
 
    if( m_ifFalse != 0  ) {
+      for( int32 i = 1; i < chr(); i++ ) {
+         tgt.append(' ');
+      }
       tgt += "else\n" + m_ifFalse->toString();
    }
 
@@ -229,8 +265,8 @@ void StmtIf::ElifBranch::compile()
 //============================================================
 // Return
 //
-StmtReturn::StmtReturn( Expression* expr ):
-      Statement(return_t),
+StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
+      Statement(return_t, line, chr ),
       m_expr( expr )
 {
    apply = apply_;
@@ -252,6 +288,10 @@ StmtReturn::~StmtReturn()
 
 void StmtReturn::toString( String& tgt ) const
 {
+   for( int32 i = 1; i < chr(); i++ ) {
+      tgt.append(' ');
+   }
+
    if( m_expr != 0 )
    {
       tgt = "return " + m_expr->toString() +"\n";

@@ -326,6 +326,9 @@ protected:
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
+   virtual void oneLiner( String& s ) const { toString( s ); }\
+   inline String toString() const { return PStep::toString(); }\
+   inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): UnaryExpression( op ) {}\
    friend class ExprFactory;\
@@ -338,6 +341,9 @@ protected:
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
+   virtual void oneLiner( String& s ) const { toString( s ); }\
+   inline String toString() const { return PStep::toString(); }\
+   inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): BinaryExpression( op ) {}\
    friend class ExprFactory;\
@@ -350,6 +356,9 @@ protected:
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
    virtual void toString( String& ) const;\
+   virtual void oneLiner( String& s ) const { toString( s ); }\
+   inline String toString() const { return PStep::toString(); }\
+   inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
    friend class ExprFactory;\
@@ -375,9 +384,7 @@ public:
     * An "and" expression can stand alone if it has a standalone second operator.
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
-
    void precompile( PCode* pcode ) const;
-   inline String toString() const { return PStep::toString(); }
 
 private:
    class FALCON_DYN_CLASS Gate: public PStep {
@@ -402,7 +409,6 @@ public:
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
    virtual void precompile( PCode* pcode ) const;
-   inline String toString() const { return PStep::toString(); }
 
 private:
 
@@ -433,10 +439,12 @@ public:
 
    virtual bool simplify( Item& value ) const;
    virtual void toString( String& ) const;
+   inline virtual void oneLiner( String& s ) const { toString(s); }
 
    inline virtual bool isStandAlone() const { return true; }
    virtual void precompile( PCode* pcode ) const;
    inline String toString() const { return PStep::toString(); }
+   inline String oneLiner() const { return PStep::oneLiner(); }
 
 protected:
    inline ExprAssign():
@@ -484,8 +492,6 @@ public:
    inline virtual bool isStandAlone() const { return true; }
 
    void precompile( PCode* pcode ) const;
-   inline String toString() const { return PStep::toString(); }
-
 
 private:
    std::vector<Expression*> m_params;

@@ -225,23 +225,28 @@ void VMachine::returnFrame()
    }
 }
 
-/*
-void VMachine::report( Report& data )
+String VMachine::report()
 {
    register VMContext* ctx = m_context;
 
+   String data = String("Call: ").N( (int32) ctx->callDepth() )
+         .A("; Code: ").N((int32)ctx->codeDepth()).A("/").N(ctx->m_topCode->m_seqId)
+         .A("; Data: ").N((int32)ctx->dataSize());
 
-   data = "Function: " + ctx->m_topCall->m_function->name() + "\n";
-   data += String("Depth: ").N( ctx->callDepth() )
-         .A("; Code: ").N(ctx->codeDepth()).A("/").N(ctx->m_topCode->m_seqId)
-         .A("; Stack: ").N(ctx->dataSize())
-         .A("; A: ");
    String tmp;
+
+   if( ctx->dataSize() > 0 )
+   {
+      ctx->topData().toString(tmp);
+      data += " (" + tmp + ")";
+   }
+
+   data.A("; A: ");
    ctx->m_regA.toString(tmp);
-   data += tmp + "\n";
-   data += ctx->m_topCode->m_step->toString()+"\n";
+   data += tmp;
+
+   return data;
 }
-*/
 
 String VMachine::location() const
 {
@@ -261,7 +266,7 @@ String VMachine::location() const
       temp = infos.m_moduleName != "" ? infos.m_moduleName : "<no module>";
    }
 
-   temp += ":" + infos.m_function == "" ? "<no func>" : infos.m_function;
+   temp += ":" + (infos.m_function == "" ? "<no func>" : infos.m_function);
    if( infos.m_line )
    {
       temp.A(" (").N(infos.m_line);
@@ -330,8 +335,9 @@ bool VMachine::step()
    if ( codeEmpty() )
    {
       TRACE( "Step terminated", 0 );
-      return false;
+      return true;
    }
+
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
    // NOTE: This code must be manually coordinated with vm::run()
@@ -382,7 +388,7 @@ bool VMachine::step()
    }
    // END OF STEP
 
-   return true;
+   return codeEmpty();  // more data waiting ?
 }
 
 

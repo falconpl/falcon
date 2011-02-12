@@ -38,7 +38,7 @@ int main( int argc, char* argv[] )
    // return fib(30)
    //
 
-   TRACE_ON();
+   //TRACE_ON();
 
    Function fib( "fib" );
    Symbol* count = fib.addVariable("n");

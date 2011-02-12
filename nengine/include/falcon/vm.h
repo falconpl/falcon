@@ -200,6 +200,14 @@ public:
    */
    String location() const;
 
+   /** Outlines VM status in a string.
+    @return A string with a textual description of the VM status.
+
+    This is a debug function used to indicate what's the current status of the
+    virtual machine.
+   */
+   String report();
+
    /** Gives a description of the location of the next step being executed.
     @param infos An instance of LocationInfo receiving the debug information about
            the location in the source files of the next step.

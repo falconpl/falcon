@@ -41,6 +41,11 @@ Function::~Function()
    }
 }
 
+void Function::module( Module* owner )
+{
+   //TODO Proper referencing
+   m_module = owner;
+}
 
 String Function::locate() const
 {
