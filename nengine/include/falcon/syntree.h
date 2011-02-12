@@ -47,6 +47,9 @@ public:
    SynTree();
    virtual ~SynTree();
 
+   /** Mark this as a composed class.*/
+   virtual bool isComposed() const { return true; }
+
    int size() const { return m_steps.size(); }
 
    Statement* first() { return m_steps.front(); }

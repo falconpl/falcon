@@ -34,6 +34,9 @@ class VMachine;
 FALCON_DYN_CLASS class VMContext
 {
 public:
+   static const int INITIAL_STACK_ALLOC = 256;
+   static const int INCREMENT_STACK_ALLOC = 64;
+
    VMContext();
    ~VMContext();
 
@@ -85,6 +88,10 @@ public:
    /** Push data on top of the stack */
    inline void pushData( const Item& data ) {
       ++m_topData;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+      }
       *m_topData = data;
    }
 
@@ -104,7 +111,7 @@ public:
       m_topData--;
    }
 
-   inline int dataSize() const {
+   inline long dataSize() const {
       return (m_topData - m_dataStack) + 1;
    }
 
@@ -124,6 +131,8 @@ public:
    }
 
    inline bool dataEmpty() const { return m_topData < m_dataStack; }
+
+   void moreData();
    //=========================================================
    // Code frame management
    //=========================================================
@@ -160,7 +169,7 @@ public:
     * implies the request of a child item for the control to be returned to the VM.
     *
     */
-   inline int codeDepth() const { return (m_topCode - m_codeStack) + 1; }
+   inline long codeDepth() const { return (m_topCode - m_codeStack) + 1; }
 
    /** Push some code to be run in the execution stack.
     *
@@ -168,9 +177,19 @@ public:
     */
    inline void pushCode( const PStep* step ) {
       ++m_topCode;
+      if( m_topCode >= m_maxCode )
+      {
+         moreCode();
+      }
       m_topCode->m_step = step;
       m_topCode->m_seqId = 0;
    }
+
+   void moreCode();
+
+   //=========================================================
+   // Stack resizing
+   //=========================================================
 
    inline bool codeEmpty() const { return m_topCode < m_codeStack; }
    //=========================================================
@@ -188,7 +207,18 @@ public:
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
-   inline int callDepth() const { return (m_topCall - m_callStack) + 1; }
+   inline long callDepth() const { return (m_topCall - m_callStack) + 1; }
+
+   inline CallFrame* addCallFrame()  {
+      ++m_topCall;
+      if ( m_topCall >= m_maxCall )
+      {
+         moreCall();
+      }
+      return m_topCall;
+   }
+
+   void moreCall();
 
 protected:
 
@@ -197,12 +227,15 @@ protected:
 
    CodeFrame* m_codeStack;
    CodeFrame* m_topCode;
+   CodeFrame* m_maxCode;
 
    CallFrame* m_callStack;
    CallFrame* m_topCall;
+   CallFrame* m_maxCall;
 
    Item* m_dataStack;
    Item* m_topData;
+   Item* m_maxData;
 
    Item m_regA;
 

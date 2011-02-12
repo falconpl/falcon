@@ -23,12 +23,18 @@
 
 #include <falcon/trace.h>
 
+#include <falcon/genericerror.h>
+
+#include "falcon/locationinfo.h"
+#include "falcon/module.h"
+
 namespace Falcon
 {
 
 static StmtReturn s_a_return;
 
-VMachine::VMachine()
+VMachine::VMachine():
+   m_event(eventNone)
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
@@ -40,28 +46,103 @@ VMachine::~VMachine()
    TRACE( "Virtual machine destroyed at %p", this );
 }
 
+void VMachine::onError( Error* e )
+{
+   // for now, just raise.
+   throw e;
+}
+
+void VMachine::onRaise( const Item& item )
+{
+   // for now, just wrap and raise.
+
+   //TODO: extract the error if the item is an instance of error.
+   Error* e = new GenericError( ErrorParam(e_uncaught,__LINE__)
+         .module("VM") );
+   e->raised( item );
+   throw e;
+}
+
+
+void VMachine::raiseItem( const Item& item )
+{
+   regA() = item;
+   m_event = eventRaise;
+}
+
+
 bool VMachine::run()
 {
    TRACE( "Run called", 0 );
-
-   //Use the stack, don't use register in this loop
-   VMContext* ctx = currentContext();
+   m_event = eventNone;
 
    while( ! codeEmpty() )
    {
-      const PStep* ps = ctx->currentCode().m_step;
-      ps->apply( ps, this );
+      // BEGIN STEP
+      const PStep* ps = currentContext()->currentCode().m_step;
+
+      try
+      {
+         ps->apply( ps, this );
+      }
+      catch( Error* e )
+      {
+         onError( e );
+         continue;
+      }
+
+      switch( m_event )
+      {
+         case eventNone: break;
+
+         case eventBreak:
+            TRACE( "Hit breakpoint before %s ", location().c_ize() );
+            return false;
+
+         case eventComplete:
+            TRACE( "Run terminated because lower-level complete detected", 0 );
+            return true;
+
+         case eventTerminate:
+            TRACE( "Terminating on explicit termination request", 0 );
+            return true;
+
+         case eventReturn:
+            TRACE( "Retnring on setReturn request", 0 );
+            m_event = eventNone;
+            return false;
+
+         case eventRaise:
+            onRaise( regA() );
+            // if we're still alive it means the event was correctly handled
+            break;
+      }
+      // END STEP
    }
 
-   TRACE( "Run terminated", 0 );
+   TRACE( "Run terminated because of code exaustion", 0 );
+   m_event = eventComplete;
    return true;
 }
 
 
-PStep* VMachine::nextStep() const
+const PStep* VMachine::nextStep() const
 {
    TRACE( "Next step", 0 );
-   return NULL;
+   if( codeEmpty() )
+   {
+      return 0;
+   }
+
+   CodeFrame& cframe = currentContext()->currentCode();
+   const PStep* ps = cframe.m_step;
+
+   if( ps->isComposed() )
+   {
+      const SynTree* st = static_cast<const SynTree*>(ps);
+      return st->at(cframe.m_seqId);
+   }
+   return ps;
 }
 
 
@@ -73,7 +154,7 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
    // prepare the call frame.
-   CallFrame* topCall = ++ctx->m_topCall;
+   CallFrame* topCall = ctx->addCallFrame();
    topCall->m_function = function;
    topCall->m_codeBase = ctx->codeDepth();
    topCall->m_stackBase = ctx->dataSize()-nparams;
@@ -156,17 +237,144 @@ void VMachine::report( Report& data )
 }
 */
 
+String VMachine::location() const
+{
+   LocationInfo infos;
+   if ( ! location(infos) )
+   {
+      return "terminated";
+   }
+
+   String temp;
+   if( infos.m_moduleUri != "" )
+   {
+      temp = infos.m_moduleUri;
+   }
+   else
+   {
+      temp = infos.m_moduleName != "" ? infos.m_moduleName : "<no module>";
+   }
+
+   temp += ":" + infos.m_function == "" ? "<no func>" : infos.m_function;
+   if( infos.m_line )
+   {
+      temp.A(" (").N(infos.m_line);
+      if ( infos.m_char )
+      {
+         temp.A(":").N(infos.m_char);
+      }
+      temp.A(")");
+   }
+
+   return temp;
+}
+
+
+bool VMachine::location( LocationInfo& infos ) const
+{
+   // location is given by current function and its module plus current source line.
+   if( codeEmpty() )
+   {
+      return false;
+   }
+
+   VMContext* vmc = currentContext();
+
+   if( vmc->callDepth() > 0 && vmc->currentFrame().m_function != 0 )
+   {
+      Function* f = vmc->currentFrame().m_function;
+      if ( f->module() != 0 )
+      {
+         infos.m_moduleName = f->module()->name();
+         infos.m_moduleUri = f->module()->uri();
+      }
+      else
+      {
+         infos.m_moduleName = "";
+         infos.m_moduleUri = "";
+      }
+
+      infos.m_function = f->name();
+   }
+   else 
+   {
+      infos.m_moduleName = "";
+      infos.m_moduleUri = "";
+      infos.m_function = "";
+   }
+
+   
+   const PStep* ps = nextStep();
+   if( ps != 0 )
+   {
+      infos.m_line = ps->line();
+      infos.m_char = ps->chr();
+   }
+   else
+   {
+      infos.m_line = 0;
+      infos.m_char = 0;
+   }
+
+   return true;
+}
+
 bool VMachine::step()
 {
-   TRACE( "Step", 0 );
    if ( codeEmpty() )
    {
       TRACE( "Step terminated", 0 );
       return false;
    }
 
-   const PStep* ps = m_context->currentCode().m_step;
-   ps->apply( ps, this );
+   // NOTE: This code must be manually coordinated with vm::run()
+   // other solutions, as inline() or macros are either unsafe or
+   // clumsy.
+   
+   // In short, each time vm::run is touched, copy here everything between
+   // BEGIN OF STEP - END OF STEP
+
+   // BEGIN OF STEP
+   const PStep* ps = currentContext()->currentCode().m_step;
+   TRACE( "Step at %s", location().c_ize() );  // this is not in VM::Run
+   try
+   {
+      ps->apply( ps, this );
+   }
+   catch( Error* e )
+   {
+      onError( e );
+      return true;
+   }
+
+   switch( m_event )
+   {
+      case eventNone: break;
+
+      case eventBreak:
+         TRACE( "Hit breakpoint before line %s ", location().c_ize() );
+         return false;
+
+      case eventComplete:
+         TRACE( "Run terminated because lower-level complete detected", 0 );
+         return true;
+
+      case eventTerminate:
+         TRACE( "Terminating on explicit termination request", 0 );
+         return true;
+
+      case eventReturn:
+         TRACE( "Retnring on setReturn request", 0 );
+         m_event = eventNone;
+         return false;
+
+      case eventRaise:
+         onRaise( regA() );
+         // if we're still alive it means the event was correctly handled
+         break;
+   }
+   // END OF STEP
+
    return true;
 }
 

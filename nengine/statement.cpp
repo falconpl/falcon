@@ -23,6 +23,29 @@
 namespace Falcon
 {
 
+Breakpoint::Breakpoint():
+   Statement(breakpoint_t)
+{
+   apply = apply_;
+}
+
+Breakpoint::~Breakpoint()
+{
+}
+
+void Breakpoint::toString( String& tgt ) const
+{
+   tgt = "(*)";
+}
+
+void Breakpoint::apply_( const PStep*, VMachine* vm )
+{
+   vm->breakpoint();
+}
+
+//====================================================================
+//
+
 
 StmtAutoexpr::StmtAutoexpr( Expression* expr ):
       Statement(autoexpr_t),
@@ -81,13 +104,13 @@ void StmtWhile::apply_( const PStep* s1, VMachine* vm )
    
    if ( ctx->regA().isTrue() )
    {
-      TRACE1( "Apply 'while' at line %d -- redo ", self->m_sr.line() );
+      TRACE1( "Apply 'while' at line %d -- redo ", self->line() );
       // redo.
       ctx->pushCode( &self->m_pcCheck );
       ctx->pushCode( self->m_stmts );
    }
    else {
-      TRACE1( "Apply 'while' at line %d -- leave ", self->m_sr.line() );
+      TRACE1( "Apply 'while' at line %d -- leave ", self->line() );
       
       //we're done
       ctx->popCode();
@@ -155,7 +178,7 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
    register VMContext* ctx = vm->currentContext();
    const StmtIf* self = static_cast<const StmtIf*>(s1);
 
-   TRACE1( "Apply 'if' at line %d ", self->m_sr.line() );
+   TRACE1( "Apply 'if' at line %d ", self->line() );
 
    int sid = ctx->currentCode().m_seqId;
    if ( ctx->regA().isTrue() )
@@ -243,7 +266,7 @@ void StmtReturn::toString( String& tgt ) const
 void StmtReturn::apply_( const PStep*ps, VMachine* vm )
 {
    const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
-   TRACE1( "Apply 'return' at line %d ", stmt->m_sr.line() );
+   TRACE1( "Apply 'return' at line %d ", stmt->line() );
 
    // clear A if there wasn't any expression
    if ( stmt->m_expr == 0 )

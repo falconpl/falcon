@@ -41,8 +41,12 @@ public:
    inline int32 line() const { return m_line; }
    inline int32 chr() const { return m_char; }
 
+   inline void line( int32 l ) { m_line = l; }
+   inline void chr( int32 c ) { m_char = c; }
+
    void serialize( Stream* s ) const;
    void deserialize( Stream* s );
+
 
 private:
    int32 m_line;

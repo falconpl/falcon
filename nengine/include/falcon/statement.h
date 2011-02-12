@@ -35,6 +35,7 @@ class FALCON_DYN_CLASS Statement: public PStep
 
 public:
    typedef enum {
+      breakpoint_t,
       autoexpr_t,
       if_t,
       while_t,
@@ -47,7 +48,6 @@ public:
    {}
 
    inline virtual ~Statement() {}
-
    inline statement_t type() { return m_type; }
 
 protected:
@@ -84,6 +84,23 @@ protected:
 private:
    statement_t m_type;
 };
+
+/** Statement causing the VM to return.
+
+ This is a debug feature that causes the VM to return from its main
+ loop when it meets this statement.
+ */
+class FALCON_DYN_CLASS Breakpoint: public Statement
+{
+public:
+   Breakpoint();
+   virtual ~Breakpoint();
+
+   void toString( String& tgt ) const;
+
+   static void apply_( const PStep*, VMachine* vm );
+};
+
 
 /** Autoexpression.
  *
