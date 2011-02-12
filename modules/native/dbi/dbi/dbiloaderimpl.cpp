@@ -43,7 +43,7 @@ DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName 
       // ok, let's try to load the service
       try {
          mod = loader->loadName( "dbi."+ provName );
-         vm->link( mod );
+         vm->link( mod, false );
       }
       catch( Error * )
       {
