@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: codeerror.cpp
+   FILE: application.cpp
 
-   Error class.
+   Utility to create embedding applications.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 04 Feb 2011 18:39:36 +0100
+   Begin: Sun, 13 Feb 2011 13:14:07 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,22 +13,31 @@
    See LICENSE file for licensing details.
 */
 
-
-#include <falcon/codeerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/application.h>
 #include <falcon/engine.h>
+#include <stdlib.h>
 
 namespace Falcon {
 
-CodeError::CodeError( const ErrorParam &params ):
-   Error( Engine::instance()->codeErrorClass(), params )
+bool Application::m_bUnique = false;
+
+Application::Application()
 {
+   if (m_bUnique)
+   {
+      abort();
+   }
+
+   m_bUnique = true;
+   Engine::init();
 }
 
-CodeError::~CodeError()
+Application::~Application()
 {
+   Engine::shutdown();
 }
 
 }
 
-/* end of codeerror.cpp */
+/* end of application.cpp */
+

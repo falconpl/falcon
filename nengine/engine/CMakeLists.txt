@@ -16,8 +16,8 @@ if(UNIX OR APPLE)
 elseif(WIN32)
 
   set(SYS_SPECIFIC
-    sys_win.cpp
     mt_win.cpp
+    sys_win.cpp
   )
 endif()
 
@@ -26,7 +26,7 @@ add_library(falcon_engine SHARED
   ${SYS_SPECIFIC}
 
   memory.cpp
-
+  application.cpp
   class.cpp
   closedsymbol.cpp
   codeerror.cpp
