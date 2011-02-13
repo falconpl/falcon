@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 
+#include <falcon/trace.h>
 //--- object headers ---
 
 #include <falcon/collector.h>
@@ -60,6 +61,7 @@ Engine* Engine::m_instance = 0;
 
 Engine::Engine()
 {
+   TRACE("Engine creation started", 0 )
    #ifdef FALCON_SYSTEM_WIN
    m_bWindowsNamesConversion = true;
    #else
@@ -70,17 +72,21 @@ Engine::Engine()
    m_collector = new Collector;
 
    m_codeErrorClass = new CodeErrorClass;
+   TRACE("Engine creation complete", 0 )
 }
 
 Engine::~Engine()
 {
+   TRACE("Engine destruction started", 0 )
    delete m_mtx;
    delete m_collector;
    delete m_codeErrorClass;
+   TRACE("Engine destroyed", 0 )
 }
 
 void Engine::init()
 {
+   TRACE("Engine init()", 0 )
    fassert( m_instance == 0 );
    if( m_instance == 0 )
    {
@@ -93,6 +99,7 @@ void Engine::init()
 
 void Engine::shutdown()
 {
+   TRACE("Engine shutdown started", 0 )
    fassert( m_instance != 0 );
    if( m_instance != 0 )
    {
@@ -101,6 +108,7 @@ void Engine::shutdown()
 
       delete m_instance;
       m_instance = 0;
+      TRACE("Engine shutdown complete", 0 )
    }
 }
 

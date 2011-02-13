@@ -18,16 +18,19 @@
 
 #include <falcon/function.h>
 #include <falcon/module.h>
+#include <falcon/application.h>
 
-// This is just a test.
-int main( int argc, char* argv[] )
+
+class DebugTestApp: public Falcon::Application
 {
-   std::cout << "Hello world" << std::endl;
 
+public:
+void go()
+{
    Falcon::Module module("debugtest", "./debugtest.cpp");
    Falcon::Function fmain( "__main__" );
    fmain.module(&module);
-   
+
    // create a program:
    // count = 0
    // while count < 5
@@ -66,10 +69,10 @@ int main( int argc, char* argv[] )
       std::string choice;
 
       Falcon::String status = vm.location();
-      std::cout << status.c_ize() << " - " << vm.nextStep()->oneLiner().c_ize() 
+      std::cout << status.c_ize() << " - " << vm.nextStep()->oneLiner().c_ize()
             << "..."<< std::endl;
       std::cout << vm.report().c_ize() << std::endl;
-      
+
       std::cin >> choice;
 
       if ( choice == "quit" )
@@ -89,6 +92,15 @@ int main( int argc, char* argv[] )
    vm.regA().toString( res );
    res.c_ize();
    std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+   }
+};
 
+// This is just a test.
+int main( int argc, char* argv[] )
+{
+   std::cout << "Debug test" << std::endl;
+
+   DebugTestApp gotest;
+   gotest.go();
    return 0;
 }

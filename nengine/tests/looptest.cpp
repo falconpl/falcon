@@ -15,13 +15,15 @@
 #include <falcon/exprvalue.h>
 #include <falcon/statement.h>
 
-#include "falcon/function.h"
+#include <falcon/function.h>
+#include <falcon/application.h>
 
-// This is just a test.
-int main( int argc, char* argv[] )
+class LoopApp: public Falcon::Application
 {
-   std::cout << "Hello world" << std::endl;
 
+public:
+void go()
+{
    Falcon::Function fmain( "__main__" );
    // create a program:
    // count = 0
@@ -59,6 +61,16 @@ int main( int argc, char* argv[] )
    vm.regA().toString( res );
    res.c_ize();
    std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+}
 
+};
+
+// This is just a test.
+int main( int argc, char* argv[] )
+{
+   std::cout << "Hello world" << std::endl;
+
+   LoopApp loop;
+   loop.go();
    return 0;
 }

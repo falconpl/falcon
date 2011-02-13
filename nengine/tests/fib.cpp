@@ -18,15 +18,17 @@
 #include <falcon/function.h>
 
 #include <falcon/trace.h>
+#include <falcon/application.h>
 
 using namespace Falcon;
 
-// This is just a test.
-int main( int argc, char* argv[] )
+class FibApp: public Falcon::Application
 {
-   std::cout << "Fib test!" << std::endl;
 
-   // create a program:
+public:
+void go( int fibSize )
+{
+// create a program:
    // function fib( n )
    //    if n < 2
    //       return n
@@ -37,8 +39,6 @@ int main( int argc, char* argv[] )
    //
    // return fib(30)
    //
-
-   //TRACE_ON();
 
    Function fib( "fib" );
    Symbol* count = fib.addVariable("n");
@@ -64,7 +64,7 @@ int main( int argc, char* argv[] )
 
    // and now the main function
    ExprCall* call_fib = new ExprCall( new ExprValue(&fib) );
-   call_fib->addParameter( new ExprValue(33) );
+   call_fib->addParameter( new ExprValue(fibSize) );
 
    Function fmain( "__main__" );
    fmain.syntree().append(
@@ -91,6 +91,19 @@ int main( int argc, char* argv[] )
    vm.regA().toString( res );
    res.c_ize();
    std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+}
+
+};
+
+// This is just a test.
+int main( int argc, char* argv[] )
+{
+   std::cout << "Fib test!" << std::endl;
+
+   //TRACE_ON();
+   
+   FibApp app;
+   app.go(33);
 
    return 0;
 }
