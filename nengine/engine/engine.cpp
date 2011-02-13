@@ -125,7 +125,7 @@ Engine* Engine::instance()
 bool Engine::isWindows() const
 {
    fassert( m_instance != 0 );
-   m_instance->m_bWindowsNamesConversion;
+   return m_instance->m_bWindowsNamesConversion;
 }
 
  
