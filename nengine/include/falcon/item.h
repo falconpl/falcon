@@ -97,8 +97,12 @@ public:
       copy( other );
    }
 
+   Item( const char* str );
+   Item( const wchar_t* str );
+   Item( String& str );
+
    /** Creates a boolean item. */
-   inline Item( bool b ) {
+   explicit inline Item( bool b ) {
       setBoolean( b );
    }
 
@@ -159,6 +163,11 @@ public:
        content.data.ptr.pClass = cls;
    }
 
+   inline Item( GCToken* token )
+   {
+      setDeep( token );
+   }
+   
    inline void setDeep( GCToken* token )
    {
        type( FLC_ITEM_DEEP );
@@ -350,7 +359,15 @@ public:
 
    bool isTrue() const;
 
-   void toString( String& target ) const;
+   /** Turns the item into a string.
+    This method turns the item into a string for a minimal external representation.
+
+    In case the item is deep, it will use the Class::describe() member to obtain
+    a representation.
+    */
+   void describe( String& target ) const;
+
+   String describe() const { String t; describe(t); return t; }
 
    Item &operator=( const Item &other ) { copy( other ); return *this; }
    bool operator==( const Item &other ) const { return compare(other) == 0; }

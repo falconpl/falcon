@@ -43,7 +43,7 @@ public:
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
-   virtual void toString(String & str) const;
+   virtual void describe(String & str) const;
 
    inline virtual ExprSymbol* clone() const { return new ExprSymbol(*this); }
 

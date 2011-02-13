@@ -26,3 +26,8 @@ message("Adding fib")
 add_executable( fib fib.cpp )
 target_link_libraries( fib falcon_engine )
 
+###############################################
+message("Adding stringtest")
+add_executable( stringtest stringtest.cpp )
+target_link_libraries( stringtest falcon_engine )
+

@@ -48,9 +48,7 @@ void go()
                      assign ) );
 
 
-   Falcon::String res = program->toString();
-   res.c_ize();
-   std::cout << (char*)res.getRawStorage() << std::endl;
+   std::cout << program->describe().c_ize() << std::endl;
 
    // And now, run the code.
    Falcon::VMachine vm;
@@ -58,9 +56,7 @@ void go()
    vm.currentContext()->pushData(Falcon::Item());  // create an item -- local 0
    vm.run();
 
-   vm.regA().toString( res );
-   res.c_ize();
-   std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+   std::cout << "Top: " << vm.regA().describe().c_ize() << std::endl;
 }
 
 };

@@ -113,9 +113,9 @@ bool ExprValue::isBinaryOperator() const
    return false;
 }
 
-void ExprValue::toString( String & str ) const
+void ExprValue::describe( String & str ) const
 {
-   m_item.toString(str);
+   m_item.describe(str);
 }
 
 void ExprValue::deserialize( Stream* s )

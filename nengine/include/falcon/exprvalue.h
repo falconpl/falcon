@@ -59,7 +59,7 @@ public:
    virtual void serialize( Stream* s ) const;
    virtual bool isStatic() const;
    virtual bool isBinaryOperator() const;
-   virtual void toString( String& ) const;
+   virtual void describe( String& ) const;
    virtual void precompile( PCode* pc )  const;
 
 protected:

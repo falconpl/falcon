@@ -65,7 +65,7 @@ Collector::Collector():
    m_recycleTokensCount = 0;
 
    // Use a ring also for the garbageLock system.
-   m_lockRoot = new GCLock( this );
+   m_lockRoot = new GCLock();
    m_lockRoot->m_next = m_lockRoot;
    m_lockRoot->m_prev = m_lockRoot;
 
@@ -312,12 +312,11 @@ GCToken* Collector::getToken( Class* cls, void* data )
 {
    m_mtx_recycle_tokens.lock();
    // do we have a free token?
-   if( m_recycleTokens->m_next != m_recycleTokens->m_prev )
+   if( m_recycleTokens != 0 )
    {
-      GCToken* token = m_recycleTokens->m_next;
-      m_recycleTokens->m_next = token->m_next;
-      token->m_next->m_prev = token->m_prev;
-      m_recycleLockCount--;
+      GCToken* token = m_recycleTokens;
+      m_recycleTokens = token->m_next;
+      m_recycleTokensCount--;
       m_mtx_recycle_tokens.unlock();
 
       token->m_cls = cls;
@@ -1003,11 +1002,10 @@ GCLock* Collector::lock( const Item& item )
    
    m_mtx_recycle_locks.lock();
    // do we have a free token?
-   if( m_recycleLock->m_next != m_recycleLock->m_prev )
+   if( m_recycleLock != 0 )
    {
-      GCLock* l = m_recycleLock->m_next;
-      m_recycleLock->m_next = l->m_next;
-      l->m_next->m_prev = l->m_prev;
+      GCLock* l = m_recycleLock;
+      m_recycleLock = l->m_next;
       m_recycleLockCount--;
       m_mtx_recycle_locks.unlock();
 

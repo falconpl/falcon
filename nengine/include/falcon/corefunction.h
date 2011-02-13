@@ -53,6 +53,7 @@ public:
    virtual void serialize( Stream* stream, void* self ) const;
    virtual void* deserialize( Stream* stream ) const;
 
+   virtual void describe( void* instance, String& target ) const;
 };
 
 }

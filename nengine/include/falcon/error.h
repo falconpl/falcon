@@ -193,11 +193,13 @@ public:
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
 
-   String toString() const { String temp; toString( temp ); return temp; }
+    /** Renders the error to a string.
+    */
+   String describe() const { String temp; describe( temp ); return temp; }
 
    /** Renders the error to a string.
     */
-   virtual void toString( String &target ) const;
+   virtual void describe( String &target ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.

@@ -44,7 +44,7 @@ ExprSymbol::~ExprSymbol()
    // nothig to do
 }
 
-void ExprSymbol::toString( String& val ) const
+void ExprSymbol::describe( String& val ) const
 {
    val = "&" + m_symbol->name();
 }

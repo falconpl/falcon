@@ -33,7 +33,7 @@ Breakpoint::~Breakpoint()
 {
 }
 
-void Breakpoint::toString( String& tgt ) const
+void Breakpoint::describe( String& tgt ) const
 {
    tgt = "(*)";
 }
@@ -62,18 +62,18 @@ StmtAutoexpr::~StmtAutoexpr()
    delete m_expr;
 }
 
-void StmtAutoexpr::toString( String& tgt ) const
+void StmtAutoexpr::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
    }
    
-   tgt += m_expr->toString();
+   tgt += m_expr->describe();
 }
 
 void StmtAutoexpr::oneLiner( String& tgt ) const
 {
-   tgt += m_expr->toString();
+   tgt += m_expr->describe();
 }
 
 //====================================================================
@@ -101,18 +101,18 @@ StmtWhile::~StmtWhile()
 
 void StmtWhile::oneLiner( String& tgt ) const
 {
-   tgt = "while " + m_check->toString();
+   tgt = "while " + m_check->describe();
 }
 
 
-void StmtWhile::toString( String& tgt ) const
+void StmtWhile::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
    }
    
-   tgt += "while " + m_check->toString() + "\n" +
-           m_stmts->toString() +
+   tgt += "while " + m_check->describe() + "\n" +
+           m_stmts->describe() +
          "end\n";
 }
 
@@ -176,17 +176,17 @@ StmtIf& StmtIf::setElse( SynTree* ifFalse )
 
 void StmtIf::oneLiner( String& tgt ) const
 {
-   tgt = "if "+ m_elifs[0]->m_check->toString();
+   tgt = "if "+ m_elifs[0]->m_check->describe();
 }
 
-void StmtIf::toString( String& tgt ) const
+void StmtIf::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
    }
 
-   tgt += "if "+ m_elifs[0]->m_check->toString() + "\n"
-              + m_elifs[0]->m_ifTrue->toString();
+   tgt += "if "+ m_elifs[0]->m_check->describe() + "\n"
+              + m_elifs[0]->m_ifTrue->describe();
 
    for ( int i = 1; i < m_elifs.size(); ++i )
    {
@@ -194,15 +194,15 @@ void StmtIf::toString( String& tgt ) const
          tgt.append(' ');
       }
       
-      tgt += "elif " + m_elifs[i]->m_check->toString() + "\n"
-                     + m_elifs[i]->m_ifTrue->toString();
+      tgt += "elif " + m_elifs[i]->m_check->describe() + "\n"
+                     + m_elifs[i]->m_ifTrue->describe();
    }
 
    if( m_ifFalse != 0  ) {
       for( int32 i = 1; i < chr(); i++ ) {
          tgt.append(' ');
       }
-      tgt += "else\n" + m_ifFalse->toString();
+      tgt += "else\n" + m_ifFalse->describe();
    }
 
    tgt += "end\n";
@@ -286,7 +286,7 @@ StmtReturn::~StmtReturn()
    delete m_expr;
 }
 
-void StmtReturn::toString( String& tgt ) const
+void StmtReturn::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
@@ -294,7 +294,7 @@ void StmtReturn::toString( String& tgt ) const
 
    if( m_expr != 0 )
    {
-      tgt = "return " + m_expr->toString() +"\n";
+      tgt = "return " + m_expr->describe() +"\n";
    }
    else
    {

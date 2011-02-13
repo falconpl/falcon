@@ -21,6 +21,8 @@
 #include <falcon/sys.h>
 #include <falcon/class.h>
 
+#include <falcon/engine.h>
+
 #include <falcon/error_messages.h>
 
 namespace Falcon {
@@ -79,7 +81,7 @@ void Error::decref()
    }
 }
 
-void Error::toString( String &target ) const
+void Error::describe( String &target ) const
 {
    heading( target );
    target += "\n";
@@ -105,7 +107,7 @@ void Error::toString( String &target ) const
       std::deque<Error*>::const_iterator iter = m_subErrors.begin();
       while( iter != m_subErrors.end() )
       {
-         (*iter)->toString( target );
+         (*iter)->describe( target );
          ++iter;
       }
    }
@@ -178,7 +180,7 @@ String &Error::heading( String &target ) const
    if ( ! m_raised.isNil() )
    {
       String temp;
-      m_raised.toString( temp );
+      m_raised.describe( temp );
       target += "\n"+ temp;
    }
 
@@ -201,7 +203,8 @@ void Error::appendSubError( Error *error )
 
 void Error::scriptize( Item& tgt )
 {
-   tgt.setUser( m_handler, this );
+   incref();
+   tgt.setDeep( Engine::instance()->collector()->store( m_handler, this ) );
 }
 
 void Error::enumerateSteps( Error::StepEnumerator &rator ) const

@@ -20,6 +20,7 @@
 #include <falcon/class.h>
 #include <falcon/string.h>
 
+#include <falcon/pstep.h>
 namespace Falcon
 {
 
@@ -51,6 +52,19 @@ public:
    virtual void serialize( Stream* stream, void* self ) const;
    virtual void* deserialize( Stream* stream ) const;
 
+   virtual void describe( void* instance, String& target ) const;
+
+   //=============================================================
+
+   virtual void op_add( VMachine *vm, void* self, Item& op2, Item& target ) const;
+
+private:
+
+   class FALCON_DYN_CLASS NextOp: public PStep {
+   public:
+      NextOp();
+      static void apply_( const PStep*, VMachine* vm );
+   } m_nextOp;
 };
 
 }

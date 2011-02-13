@@ -64,6 +64,12 @@ void* CoreFunction::deserialize( Stream* stream ) const
    return 0;
 }
 
+void CoreFunction::describe( void* instance, String& target ) const
+{
+   Function* func = static_cast<Function*>(instance);
+   target = func->name() + "()";
+}
+
 }
 
 /* end of corefunction.cpp */

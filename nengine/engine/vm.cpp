@@ -25,14 +25,16 @@
 
 #include <falcon/genericerror.h>
 
-#include "falcon/locationinfo.h"
-#include "falcon/module.h"
+#include <falcon/locationinfo.h>
+#include <falcon/module.h>
+
 
 namespace Falcon
 {
 
 VMachine::VMachine():
-   m_event(eventNone)
+   m_event(eventNone),
+   m_deepStep( 0 )
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
@@ -43,6 +45,31 @@ VMachine::~VMachine()
 {
    TRACE( "Virtual machine destroyed at %p", this );
 }
+
+
+void VMachine::ifDeep( const PStep* postcall )
+{
+   fassert(m_deepStep == 0 );
+   m_deepStep = postcall;
+}
+
+void VMachine::goingDeep()
+{
+   if( m_deepStep )
+   {
+      currentContext()->pushCode( m_deepStep );
+      m_deepStep = 0;
+   }
+}
+
+
+bool VMachine::wentDeep()
+{
+   bool bWent = m_deepStep == 0;
+   m_deepStep = 0;
+   return bWent;
+}
+
 
 void VMachine::onError( Error* e )
 {
@@ -68,6 +95,11 @@ void VMachine::raiseItem( const Item& item )
    m_event = eventRaise;
 }
 
+void VMachine::raiseError( Error* e )
+{
+   e->scriptize(regA());
+   m_event = eventRaise;
+}
 
 bool VMachine::run()
 {
@@ -238,12 +270,12 @@ String VMachine::report()
 
    if( ctx->dataSize() > 0 )
    {
-      ctx->topData().toString(tmp);
+      ctx->topData().describe(tmp);
       data += " (" + tmp + ")";
    }
 
    data.A("; A: ");
-   ctx->m_regA.toString(tmp);
+   ctx->m_regA.describe(tmp);
    data += tmp;
 
    return data;

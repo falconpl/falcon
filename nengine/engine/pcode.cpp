@@ -25,14 +25,14 @@ PCode::PCode()
    apply = apply_;
 }
 
-void PCode::toString( String& res ) const
+void PCode::describe( String& res ) const
 {
    if( m_steps.empty() )
    {
       res = "(<empty>)";
    }
    else {
-      res = "(" + m_steps[0]->toString() + ")";
+      res = "(" + m_steps[0]->describe() + ")";
    }
 }
 
@@ -40,7 +40,7 @@ void PCode::apply_( const PStep* self, VMachine* vm )
 {
    register VMContext* ctx = vm->currentContext();
 
-   TRACE3( "PCode apply: %p (%s)", self, self->toString().c_ize() );
+   TRACE3( "PCode apply: %p (%s)", self, self->describe().c_ize() );
 
    const StepList& steps = static_cast<const PCode*>(self)->m_steps;
    CodeFrame& cf = ctx->currentCode();

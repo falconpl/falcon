@@ -97,7 +97,7 @@ public:
    Breakpoint(int32 line=0, int32 chr = 0);
    virtual ~Breakpoint();
 
-   void toString( String& tgt ) const;
+   void describe( String& tgt ) const;
 
    static void apply_( const PStep*, VMachine* vm );
 };
@@ -118,8 +118,8 @@ public:
    StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
    virtual ~StmtAutoexpr();
 
-   void toString( String& tgt ) const;
-   inline String toString() const { return PStep::toString(); }
+   void describe( String& tgt ) const;
+   inline String describe() const { return PStep::describe(); }
 
    void oneLiner( String& tgt ) const;
    inline String oneLiner() const { return PStep::oneLiner(); }
@@ -140,8 +140,8 @@ public:
    StmtReturn( Expression* expr = 0, int32 line=0, int32 chr = 0 );
    virtual ~StmtReturn();
 
-   void toString( String& tgt ) const;
-   inline String toString() const { return PStep::toString(); }
+   void describe( String& tgt ) const;
+   inline String describe() const { return PStep::describe(); }
    static void apply_( const PStep*, VMachine* vm );
 
 private:
@@ -156,8 +156,8 @@ public:
    StmtWhile( Expression* check, SynTree* stmts, int32 line=0, int32 chr = 0 );
    virtual ~StmtWhile();
 
-   void toString( String& tgt ) const;
-   inline String toString() const { return PStep::toString(); }
+   void describe( String& tgt ) const;
+   inline String describe() const { return PStep::describe(); }
    void oneLiner( String& tgt ) const;
    static void apply_( const PStep*, VMachine* vm );
 
@@ -174,8 +174,8 @@ public:
    StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0, int32 line=0, int32 chr = 0 );
    virtual ~StmtIf();
 
-   virtual void toString( String& tgt ) const;
-   inline String toString() const { return PStep::toString(); }
+   virtual void describe( String& tgt ) const;
+   inline String describe() const { return PStep::describe(); }
    void oneLiner( String& tgt ) const;
    inline String oneLiner() const { return PStep::oneLiner(); }
 

@@ -325,9 +325,9 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
-   virtual void toString( String& ) const;\
-   virtual void oneLiner( String& s ) const { toString( s ); }\
-   inline String toString() const { return PStep::toString(); }\
+   virtual void describe( String& ) const;\
+   virtual void oneLiner( String& s ) const { describe( s ); }\
+   inline String describe() const { return PStep::describe(); }\
    inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): UnaryExpression( op ) {}\
@@ -340,9 +340,9 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
-   virtual void toString( String& ) const;\
-   virtual void oneLiner( String& s ) const { toString( s ); }\
-   inline String toString() const { return PStep::toString(); }\
+   virtual void describe( String& ) const;\
+   virtual void oneLiner( String& s ) const { describe( s ); }\
+   inline String describe() const { return PStep::describe(); }\
    inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): BinaryExpression( op ) {}\
@@ -355,9 +355,9 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
-   virtual void toString( String& ) const;\
-   virtual void oneLiner( String& s ) const { toString( s ); }\
-   inline String toString() const { return PStep::toString(); }\
+   virtual void describe( String& ) const;\
+   virtual void oneLiner( String& s ) const { describe( s ); }\
+   inline String describe() const { return PStep::describe(); }\
    inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
@@ -438,12 +438,12 @@ public:
    inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
 
    virtual bool simplify( Item& value ) const;
-   virtual void toString( String& ) const;
-   inline virtual void oneLiner( String& s ) const { toString(s); }
+   virtual void describe( String& ) const;
+   inline virtual void oneLiner( String& s ) const { describe(s); }
 
    inline virtual bool isStandAlone() const { return true; }
    virtual void precompile( PCode* pcode ) const;
-   inline String toString() const { return PStep::toString(); }
+   inline String describe() const { return PStep::describe(); }
    inline String oneLiner() const { return PStep::oneLiner(); }
 
 protected:

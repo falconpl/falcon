@@ -33,6 +33,7 @@
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
+#include <falcon/operanderror.h>
 
 
 namespace Falcon
@@ -64,6 +65,19 @@ public:
    virtual void* create(void* creationParams ) const
    {
       return new GenericError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
+class OperandErrorClass: public ErrorClass
+{
+public:
+   OperandErrorClass():
+      ErrorClass( "OperandError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new OperandError( *static_cast<ErrorParam*>(creationParams) );
    }
 };
 
@@ -101,7 +115,8 @@ Engine::Engine()
    //
    m_codeErrorClass = new CodeErrorClass;
    m_genericErrorClass = new GenericErrorClass;
-
+   m_operandErrorClass = new OperandErrorClass;
+   
    TRACE("Engine creation complete", 0 )
 }
 
@@ -201,6 +216,12 @@ Class* Engine::genericErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_genericErrorClass;
+}
+
+Class* Engine::operandErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_operandErrorClass;
 }
 
 }

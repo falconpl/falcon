@@ -35,11 +35,11 @@ SynTree::~SynTree()
 }
 
 
-void SynTree::toString( String& tgt ) const
+void SynTree::describe( String& tgt ) const
 {
    for( int i = 0; i < m_steps.size(); ++i )
    {
-      tgt += m_steps[i]->toString() + "\n";
+      tgt += m_steps[i]->describe() + "\n";
    }
 }
 

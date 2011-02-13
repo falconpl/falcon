@@ -19,8 +19,10 @@
 #include <falcon/vm.h>
 #include <falcon/pcode.h>
 #include <falcon/exprfactory.h>
+#include <falcon/operanderror.h>
 
 #include <falcon/trace.h>
+
 
 namespace Falcon {
 
@@ -65,7 +67,7 @@ UnaryExpression::~UnaryExpression()
 
 void UnaryExpression::precompile( PCode* pcode ) const
 {
-   TRACE3( "Precompiling un-exp: %p (%s)", pcode, toString().c_ize() );
+   TRACE3( "Precompiling un-exp: %p (%s)", pcode, describe().c_ize() );
    pcode->pushStep( this );
    m_first->precompile( pcode );
 }
@@ -105,7 +107,7 @@ BinaryExpression::~BinaryExpression()
 
 void BinaryExpression::precompile( PCode* pcode ) const
 {
-   TRACE3( "Precompiling bin-exp: %p (%s)", pcode, toString().c_ize() );
+   TRACE3( "Precompiling bin-exp: %p (%s)", pcode, describe().c_ize() );
    pcode->pushStep( this );
    m_second->precompile( pcode );
    m_first->precompile( pcode );
@@ -148,7 +150,7 @@ TernaryExpression::~TernaryExpression()
 
 void TernaryExpression::precompile( PCode* pcode ) const
 {
-   TRACE3( "Precompiling tri-exp: %p (%s)", pcode, toString().c_ize() );
+   TRACE3( "Precompiling tri-exp: %p (%s)", pcode, describe().c_ize() );
    
    pcode->pushStep( this );
    m_third->precompile( pcode );
@@ -191,16 +193,16 @@ bool ExprNeg::simplify( Item& value ) const
       {
       case FLC_ITEM_INT: value.setInteger( -value.asInteger() ); return true;
       case FLC_ITEM_NUM: value.setNumeric( -value.asNumeric() ); return true;
-      // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
-      default: return false;
       }
    }
 
    return false;
 }
 
-void ExprNeg::apply_( const PStep*, VMachine* vm )
-{
+void ExprNeg::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
+   
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
    // remove ourselves
@@ -210,24 +212,25 @@ void ExprNeg::apply_( const PStep*, VMachine* vm )
    {
       case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
       case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
-      // TODO throw an exception, even if we shouldn't be here thanks to the compiler.
-      case FLC_ITEM_NIL: case FLC_ITEM_BOOL: break;
-      /*
-      default:
-         // TODO
+      case FLC_ITEM_DEEP:
+         item.asDeepClass()->op_neg( vm, item.asDeepInst(), item );
+         break;
 
-         CoreObject* obj = item.asObject();
-         obj->getClass()->__neg(item);
-         */
+      case FLC_ITEM_USER:
+         item.asUserClass()->op_neg( vm, item.asUserInst(), item );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") ) );
    }
-   
-   TRACE2( "Apply NEG %d", (int) item.asInteger() );
 }
 
-void ExprNeg::toString( String& str ) const
+void ExprNeg::describe( String& str ) const
 {
    str = "-";
-   str += m_first->toString();
+   str += m_first->describe();
 }
 
 // ===================== logic not.
@@ -242,22 +245,24 @@ bool ExprNot::simplify( Item& value ) const
    return false;
 }
 
-void ExprNot::apply_( const PStep*, VMachine* vm )
+void ExprNot::apply_( const PStep* self, VMachine* vm )
 {
+   TRACE2( "Apply \"%s\"", ((ExprNot*)self)->describe().c_ize() );
+
    register VMContext* ctx = vm->currentContext();
    Item& operand = ctx->topData();
 
    // remove ourselves
    ctx->popCode();
 
+   //TODO: overload not
    operand.setBoolean( ! operand.isTrue() );
-   TRACE2( "Apply NOT %s", operand.isTrue() ? "true" : "false" );
 }
 
-void ExprNot::toString( String& str ) const
+void ExprNot::describe( String& str ) const
 {
    str = "not ";
-   str += m_first->toString();
+   str += m_first->describe();
 }
 
 //=========================================================
@@ -279,9 +284,8 @@ bool ExprAnd::simplify( Item& value ) const
 
 void ExprAnd::precompile( PCode* pcode ) const
 {
+   TRACE2( "Precompile \"%s\"", describe().c_ize() );
    int shortCircuitSize = pcode->size();
-
-   TRACE3( "Precompiling and: %p (%s)", pcode, toString().c_ize() );
 
    pcode->pushStep( this );
    // and then the second expr last
@@ -293,23 +297,24 @@ void ExprAnd::precompile( PCode* pcode ) const
    m_first->precompile( pcode );
 }
 
-void ExprAnd::apply_( const PStep*, VMachine* vm )
+void ExprAnd::apply_( const PStep* self, VMachine* vm )
 {
+   TRACE2( "Apply \"%s\"", ((ExprAnd*)self)->describe().c_ize() );
    register VMContext* ctx = vm->currentContext();
 
    // use the space left from us by the previous expression
    Item& operand = ctx->topData();
+
    // Booleanize it
    operand.setBoolean( operand.isTrue() );
    // and remove ourselves
    ctx->popCode();
 
-   TRACE2( "Apply AND %s", operand.isTrue() ? "true" : "false" );
 }
 
-void ExprAnd::toString( String& str ) const
+void ExprAnd::describe( String& str ) const
 {
-   str = "(" + m_first->toString() + " and " + m_second->toString() + ")";
+   str = "(" + m_first->describe() + " and " + m_second->describe() + ")";
 }
 
 
@@ -320,10 +325,13 @@ ExprAnd::Gate::Gate() {
 
 void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
 {
+   TRACE2( "Apply GATE \"%s\"", ((ExprAnd::Gate*)ps)->describe().c_ize() );
+
    register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
    Item& operand = ctx->topData();
+
    if( ! operand.isTrue() )
    {
       operand.setBoolean( false );
@@ -333,9 +341,7 @@ void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
    else {
       // the other expression is bound to push data, remove ours
       ctx->popData();
-   }
-
-   TRACE2( "Apply AND::GATE %s", operand.isTrue() ? "true" : "false" );
+   }   
 }
 
 //=========================================================
@@ -355,10 +361,10 @@ bool ExprOr::simplify( Item& value ) const
 
 void ExprOr::precompile( PCode* pcode ) const
 {
+   TRACE2( "Precompile \"%s\"", describe().c_ize() );
+
    int shortCircuitSize = pcode->size();
 
-   TRACE3( "Precompiling or: %p (%s)", pcode, toString().c_ize() );
-   
    pcode->pushStep( this );
    // and then the second expr last
    m_second->precompile( pcode );
@@ -370,22 +376,24 @@ void ExprOr::precompile( PCode* pcode ) const
 }
 
 
-void ExprOr::apply_( const PStep*, VMachine* vm )
+void ExprOr::apply_( const PStep* self, VMachine* vm )
 {
-   register VMContext* ctx = vm->currentContext();
+   TRACE2( "Apply \"%s\"", ((ExprOr*)self)->describe().c_ize() );
 
+   register VMContext* ctx = vm->currentContext();
+   
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
    // remove ourselves
    ctx->popCode();
 
-   TRACE2( "Apply OR %s", operand.isTrue() ? "true" : "false" );
+   
 }
 
-void ExprOr::toString( String& str ) const
+void ExprOr::describe( String& str ) const
 {
-   str = "(" + m_first->toString() + " or " + m_second->toString() + ")";
+   str = "(" + m_first->describe() + " or " + m_second->describe() + ")";
 }
 
 ExprOr::Gate::Gate() {
@@ -394,6 +402,8 @@ ExprOr::Gate::Gate() {
 
 void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 {
+   TRACE2( "Apply GATE \"%s\"", ((ExprOr::Gate*)ps)->describe().c_ize() );
+
    register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
@@ -408,8 +418,6 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
       // the other expression is bound to push data, remove ours
       ctx->popData();
    }
-
-   TRACE2( "Apply OR::GATE %s", operand.isTrue() ? "true" : "false" );
 }
 
 //=========================================================
@@ -417,7 +425,7 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 
 void ExprAssign::precompile( PCode* pcode ) const
 {
-   TRACE3( "Precompiling Assign: %p (%s)", pcode, toString().c_ize() );
+   TRACE3( "Precompiling Assign: %p (%s)", pcode, describe().c_ize() );
 
    // just, evaluate the second, then evaluate the first,
    // but the first knows it's a lvalue.
@@ -432,13 +440,34 @@ bool ExprAssign::simplify( Item& value ) const
    return false;
 }
 
-void ExprAssign::toString( String& str ) const
+void ExprAssign::describe( String& str ) const
 {
-   str = m_first->toString() + " = " + m_second->toString();
+   str = m_first->describe() + " = " + m_second->describe();
 }
 
 //=========================================================
 //
+#define caseDeep \
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_INT:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_NUM:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_METHOD:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_FUNC:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:\
+      case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER
+
+#define caseUser \
+      case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_INT:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:\
+      case FLC_ITEM_USER << 8 | FLC_ITEM_USER
 
 bool ExprPlus::simplify( Item& value ) const
 {
@@ -466,17 +495,17 @@ bool ExprPlus::simplify( Item& value ) const
 }
 
 
-void ExprPlus::apply_( const PStep*, VMachine* vm )
+void ExprPlus::apply_( const PStep* ps, VMachine* vm )
 {
+   TRACE2( "Apply \"%s\"", ((ExprPlus*)ps)->describe().c_ize() );
+   
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
    ctx->popData();
    // apply on the first
    Item& d1 = ctx->topData();
-
-   TRACE2( "Apply PLUS", 1 );
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -492,14 +521,28 @@ void ExprPlus::apply_( const PStep*, VMachine* vm )
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
       d1.setNumeric( d1.asNumeric() + d2.asNumeric() );
       break;
+
+   caseDeep:
+      d1.asDeepClass()->op_add( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_add( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("+") ) );
    }
+
 
 }
 
 
-void ExprPlus::toString( String& ret ) const
+void ExprPlus::describe( String& ret ) const
 {
-   ret = m_first->toString() + " + " + m_second->toString();
+   ret = "(" + m_first->describe() + " + " + m_second->describe() + ")";
 }
 
 
@@ -542,11 +585,11 @@ bool ExprLT::simplify( Item& value ) const
 }
 
 
-void ExprLT::apply_( const PStep*, VMachine* vm )
+void ExprLT::apply_( const PStep* ps, VMachine* vm )
 {
-   register VMContext* ctx = vm->currentContext();
+   TRACE2( "Apply \"%s\"", ((ExprLT*)ps)->describe().c_ize() );
 
-   TRACE2( "Apply LT", 1 );
+   register VMContext* ctx = vm->currentContext();
 
    // copy the second
    Item d2 = ctx->topData();
@@ -554,36 +597,46 @@ void ExprLT::apply_( const PStep*, VMachine* vm )
    // apply on the first
    Item& d1 = ctx->topData();
 
+   Class* pClass;
+   void* pData;
+
    switch ( d1.type() << 8 | d2.type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
       d1.setBoolean( d1.asInteger() < d2.asInteger() );
       break;
+
    case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
       d1.setBoolean( d1.asInteger() < d2.asNumeric() );
       break;
+
    case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
       d1.setBoolean( d1.asNumeric() < d2.asInteger() );
       break;
+
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
       d1.setBoolean( d1.asNumeric()< d2.asNumeric() );
       break;
+
+   caseDeep:
+      d1.asDeepClass()->op_lt( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_lt( vm, d1.asUserInst(), d2, d1 );
+      break;
+
    default:
-      if ( d1.type() < d2.type() )
-      {
-         d1.setBoolean( true );
-      }
-      else
-      {
-         d1.setBoolean( false );
-      }
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("<") ) );
    }
 }
 
 
-void ExprLT::toString( String& ret ) const
+void ExprLT::describe( String& ret ) const
 {
-   ret = m_first->toString() + " < " + m_second->toString();
+   ret = "(" + m_first->describe() + " < " + m_second->describe() + ")";
 }
 
 
@@ -604,7 +657,7 @@ ExprCall::~ExprCall()
 /** Function call. */
 void ExprCall::precompile( PCode* pcode ) const
 {
-   TRACE3( "Precompiling call: %p (%s)", pcode, toString().c_ize() );
+   TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
 
    // set our callback
    pcode->pushStep( this );
@@ -649,7 +702,7 @@ Expression* ExprCall::getParam( int n ) const
 }
 
 
-void ExprCall::toString( String& ret ) const
+void ExprCall::describe( String& ret ) const
 {
    String params;
    // and generate all the expressions, in inverse order.
@@ -659,10 +712,10 @@ void ExprCall::toString( String& ret ) const
       {
          params += ", ";
       }
-      params += m_params[i]->toString();
+      params += m_params[i]->describe();
    }
 
-   ret = m_first->toString() + "(" + params +  ")";
+   ret = m_first->describe() + "(" + params +  ")";
 }
 
 

@@ -158,6 +158,21 @@ public:
     */
    void raiseItem( const Item& item );
 
+   /** Raises an error, throwing a soft-exception.
+
+    Throwing a C++ exception can be time consuming, and shouldn't be done lightly.
+    In case of langauge generated exceptions, it is better to rasie an item thorugh
+    a soft-signal, so that the VM can handle the raised exeption without the need for
+    a full stack unroll and CPU level longjump management.
+
+    This operation boxes the error by wrapping it in a falcon object instance
+    (using the handler class that the error provides; namely, Error::scriptize()
+    is called). This also increfs the error.
+    
+    If the VM can't handle the raised error, it will be unboxed and rethrown as-is.
+    */
+   void raiseError( Error* error );
+
    /** Asks for a light termination of the VM.
     The VM immediately returns to the caller. The event is sticky; this means
     that intermediate callers will see this event set and propagate it upwards.
@@ -217,6 +232,60 @@ public:
     */
    bool location( LocationInfo& infos ) const;
 
+   /** Deep calls operand protocol -- part 1.
+
+    The deep call protocol is used by falcon Function instances or other
+    PStep* operands that are called by the virtual machine, and that may then
+    call the virtual machine again.
+
+    Some functions called by the virtual machine then need to call other functions that
+    may or may not need the VM to perform other calculations.
+
+    If a calculation that involves the Virtual Machine terminates immediately,
+    the result is usually found in VMachine::topData(), and the caller can
+    progress immediately.
+
+    Otherwise, the caller needs to set a callback in the virtual machine so that
+    it will be called back by it after the frame added by the called is
+    entity is complete. Then, the result will be available in regA().
+
+    But, the step should be on top of the code stack before the underluing called
+    element has a chance to prepare its call frame. This means that normally a
+    caller calling an operand that may or may not request a call frame should
+    push its own callback on the code stack blindly, then eventually pop it if
+    the called entity didn't push a new call frame.
+
+    To avoid this on the most common situations where this may be required, a
+    set of three metods are used by the operand implementations and a set of
+    well defined functions known by the engine in the virtual machine.
+
+    The caller sets a (non-destructible) PStep through the ifDeep() method.
+    If the callee wants to add a frame, it calls goingDeep(), which does nothing
+    if the caller didn't need to have a result from the called, but will store the
+    PStep in the code stack otherwise.
+
+    Then, the caller must check if the result is ready in topData() or if the
+    processing must be delayed by calling wentDeep(); that method will also clear
+    the readied PStep.
+
+    To avoid this mechanism to be broken, ifDeep() raises an error if called
+    while another PStep was readied.
+
+    Of course, this mechanism cannot be used across context switches, but its
+    meant for tightly coupled functions.
+    */
+   void ifDeep( const PStep* postcall );
+
+   /** Called by a callee in a possibly deep call pair.
+    @see ifDeep.
+   */
+   void goingDeep();
+
+   /** Called by a calling method to know if the called sub-methdod required a deep operation.
+    \return true if the sub-method needed to go deep.
+    */
+   bool wentDeep();
+
 protected:
 
    Stream *m_stdIn;
@@ -237,6 +306,9 @@ private:
    VMContext* m_context;
    // last raised event.
    t_event m_event;
+
+   // used by ifDeep - goingDeep() - wentDeep() triplet
+   const PStep* m_deepStep;
 };
 
 }

@@ -54,10 +54,7 @@ void go()
                      new Falcon::ExprLT( count->makeExpression(), new Falcon::ExprValue(5) ),
                      assign, 2,1 ) );
 
-
-   Falcon::String res = program->toString();
-   res.c_ize();
-   std::cout << (char*)res.getRawStorage() << std::endl;
+   std::cout << program->describe().c_ize() << std::endl;
 
    // And now, run the code.
    Falcon::VMachine vm;
@@ -88,10 +85,8 @@ void go()
          vm.run();
       }
    }
-
-   vm.regA().toString( res );
-   res.c_ize();
-   std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+   
+   std::cout << "Top: " << vm.regA().describe().c_ize() << std::endl;
    }
 };
 

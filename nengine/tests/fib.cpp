@@ -88,7 +88,7 @@ void go( int fibSize )
    */
 
    String res;
-   vm.regA().toString( res );
+   vm.regA().describe( res );
    res.c_ize();
    std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
 }
@@ -100,7 +100,7 @@ int main( int argc, char* argv[] )
 {
    std::cout << "Fib test!" << std::endl;
 
-   //TRACE_ON();
+   TRACE_ON();
    
    FibApp app;
    app.go(33);

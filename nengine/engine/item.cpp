@@ -19,9 +19,26 @@
 */
 
 #include <falcon/item.h>
+#include <falcon/itemid.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
+
+Item::Item( const char* str )
+{
+   setDeep( (new String(str))->garbage() );
+}
+
+Item::Item( const wchar_t* str )
+{
+   setDeep( (new String(str))->garbage() );
+}
+
+Item::Item( String& str )
+{
+   setUser( Engine::instance()->stringClass(), &str );
+}
 
 //===========================================================================
 // Generic item manipulators
@@ -92,7 +109,7 @@ numeric Item::forceNumeric() const
 }
 
 
-void Item::toString( String &target ) const
+void Item::describe( String &target ) const
 {
    target.size(0);
 
@@ -114,6 +131,24 @@ void Item::toString( String &target ) const
       case FLC_ITEM_NUM:
       {
          target.writeNumber( this->asNumeric(), "%.16g" );
+      }
+      break;
+
+      case FLC_ITEM_FUNC:
+      {
+         Engine::instance()->functionClass()->describe( asFunction(), target );
+      }
+      break;
+
+      case FLC_ITEM_DEEP:
+      {
+         asDeepClass()->describe( asDeepInst(), target );
+      }
+      break;
+
+      case FLC_ITEM_USER:
+      {
+         asUserClass()->describe( asUserInst(), target );
       }
       break;
 

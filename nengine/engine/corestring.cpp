@@ -15,6 +15,7 @@
 
 #include <falcon/corestring.h>
 #include <falcon/itemid.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -75,6 +76,66 @@ void* CoreString::deserialize( Stream* stream ) const
    }
 
    return s;
+}
+
+void CoreString::describe( void* instance, String& target ) const
+{
+ target = *static_cast<String*>(instance);
+}
+
+//=======================================================================
+//
+
+void CoreString::op_add( VMachine *vm, void* self, Item& op2, Item& target ) const
+{
+   String* str = static_cast<String*>(self);
+
+   Class* cls;
+   void* inst;
+   switch( op2.type() )
+   {
+      case FLC_ITEM_DEEP:
+         cls = op2.asDeepClass();
+         inst = op2.asDeepInst();
+         break;
+      case FLC_ITEM_USER:
+         cls = op2.asUserClass();
+         inst = op2.asUserInst();
+         break;
+
+      default:
+      {
+         String* copy = new String(*str);
+         copy->append(op2.describe());
+         target = copy->garbage();
+      }
+   }
+
+   vm->ifDeep( &m_nextOp );
+   cls->op_toString( vm, inst, target );
+   if( ! vm->wentDeep() )
+   {
+       String* deep = (String*)(target.type() == FLC_ITEM_DEEP ? target.asDeepInst() : target.asUserInst());
+       deep->prepend( *str );
+       //target = copy.garbage();
+   }
+}
+
+
+CoreString::NextOp::NextOp()
+{
+   apply = apply_;
+}
+
+void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
+{
+   const Item& regA = vm->regA();
+   Item& topItem = vm->currentContext()->topData();
+   String* deep = (String*)(regA.type() == FLC_ITEM_DEEP ? regA.asDeepInst() : regA.asUserInst());
+   String* self = (String*)(topItem.type() == FLC_ITEM_DEEP ? topItem.asDeepInst() : topItem.asUserInst());
+   String* copy = new String(*self);
+   copy->append( *deep );
+   topItem = copy->garbage();
 }
 
 }

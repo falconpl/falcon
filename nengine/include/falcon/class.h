@@ -131,7 +131,7 @@ public:
       The new instance must be initialized and ready to be "selfed".
    */
    virtual void* deserialize( Stream* stream ) const = 0;
-   
+
    //=========================================================
    // Class management
    //
@@ -145,11 +145,14 @@ public:
    typedef Enumerator<String> PropertyEnumerator;
 
    /** List the properties in this class.
-    * @param cb A callback function receiving one property at a time.
-    *
-    * @note This base class implementation does nothing.
+     @param self The object for which the properties have been requested.
+     @param cb A callback function receiving one property at a time.
+
+    The method may be called with a "self" 0 if this class has invariant
+    instances.
+     @note This base class implementation does nothing.
     */
-   virtual void enumerateProperties( PropertyEnumerator& cb ) const;
+   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
 
 
    /** Returns true if the class is derived from the given class
@@ -163,8 +166,12 @@ public:
    bool derivedFrom( Class* other ) const;
 
    /** Return true if the class provides the given property.
+      @param self The object for which the properties have been requested.
+
+      The method may be called with a "self" 0 if this class has invariant
+      instances.
     */
-   virtual bool hasProperty( const String& prop ) const;
+   virtual bool hasProperty( void* self, const String& prop ) const;
 
    /** Return a summary or description of an instance.
     Differently from toString, this method ignores string rendering
@@ -173,6 +180,14 @@ public:
     * To be considered a debug device.
     */
    virtual void describe( void* instance, String& target ) const;
+
+   virtual bool getProperty( void* self, const String& property, Item& value ) const;
+   virtual bool setProperty( void* self, const String& property, const Item& value ) const;
+
+   virtual bool getIndex( void* self, const Item& index, Item& value ) const;
+   virtual bool setIndex( void* self, const Item& index, const Item& value ) const;
+
+   virtual int compare( void* self, const Item& value ) const;
 
    /** Notify about an assignemnt.
     @param instance The instance being assigned.
@@ -189,41 +204,58 @@ public:
    // Operators.
    //
 
-   virtual void neg( VMachine *vm ) const;
+   virtual void op_neg( VMachine *vm, void* self, Item& target ) const;
 
-   virtual void add( VMachine *vm ) const;
-   virtual void sub( VMachine *vm ) const;
-   virtual void mul( VMachine *vm ) const;
-   virtual void div( VMachine *vm ) const;
-   virtual void mod( VMachine *vm ) const;
-   virtual void pow( VMachine *vm ) const;
+   virtual void op_add( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_sub( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_mul( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_div( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_mod( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_pow( VMachine *vm, void* self, Item& op2, Item& target ) const;
 
-   virtual void aadd( VMachine *vm ) const;
-   virtual void asub( VMachine *vm ) const;
-   virtual void amul( VMachine *vm ) const;
-   virtual void adiv( VMachine *vm ) const;
-   virtual void amod( VMachine *vm ) const;
-   virtual void apow( VMachine *vm ) const;
+   virtual void op_aadd( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_asub( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_amul( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_adiv( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_amod( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_apow( VMachine *vm, void* self, Item& op2, Item& target ) const;
 
-   virtual void inc(VMachine *vm ) const;
-   virtual void dec(VMachine *vm ) const;
-   virtual void incpost(VMachine *vm ) const;
-   virtual void decpost(VMachine *vm ) const;
+   virtual void op_inc(VMachine *vm, void* self, Item& target ) const;
+   virtual void op_dec(VMachine *vm, void* self, Item& target ) const;
+   virtual void op_incpost(VMachine *vm, void* self, Item& target ) const;
+   virtual void op_decpost(VMachine *vm, void* self, Item& target ) const;
 
-   virtual void call( VMachine *vm, int32 paramCount ) const;
+   virtual void op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const;
 
-   virtual bool getIndex(VMachine *vm ) const;
-   virtual bool setIndex(VMachine *vm ) const;
+   virtual void op_getIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_setIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
 
-   virtual bool getProperty( VMachine *vm ) const;
-   virtual void setProperty( VMachine *vm ) const;
+   virtual void op_getProperty( VMachine *vm, void* self, const String& pname, Item& target ) const;
+   virtual void op_setProperty( VMachine *vm, void* self, const String& pname, Item& target ) const;
 
-   virtual int compare( VMachine *vm )const;
-   virtual bool isTrue( VMachine *vm ) const;
-   virtual bool in( VMachine *vm ) const;
-   virtual bool provides( VMachine *vm ) const;
+   virtual void op_lt( VMachine *vm, void* self, Item& op2, Item& target )const;
+   virtual void op_le( VMachine *vm, void* self, Item& op2, Item& target )const;
+   virtual void op_gt( VMachine *vm, void* self, Item& op2, Item& target )const;
+   virtual void op_ge( VMachine *vm, void* self, Item& op2, Item& target )const;
+   virtual void op_eq( VMachine *vm, void* self, Item& op2, Item& target )const;
+   virtual void op_ne( VMachine *vm, void* self, Item& op2, Item& target )const;
 
-   virtual bool toString( VMachine *vm ) const;
+   virtual void op_isTrue( VMachine *vm, void* self, Item& target ) const;
+   virtual void op_in( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   virtual void op_provides( VMachine *vm, void* self, const String& pname, Item& target ) const;
+
+   /** Implents textification operator for the Virtual Macine.
+    @param vm the virtual machine that will receive the result.
+
+    This method obtains immediately a textual value for the instance
+    to be stored in the virtual machine, or prepares the call for the proper
+    string geneartor code.
+
+    The base class behavior is that of calling Class::describe() on the
+    instance passed as self in the virtual machine, and then store it in
+    VMachine::regA() as a garbageable string.
+    */
+   virtual void op_toString( VMachine *vm, void* self, Item& target ) const;
 
 protected:
    String m_name;

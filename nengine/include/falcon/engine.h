@@ -128,6 +128,15 @@ public:
     */
    Class* genericErrorClass() const;
 
+   /** Returns the global instance of the OperandError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* operandErrorClass() const;
 
 protected:
    Engine();
@@ -153,6 +162,7 @@ protected:
    //
    Class* m_codeErrorClass;
    Class* m_genericErrorClass;
+   Class* m_operandErrorClass;
 };
 
 }

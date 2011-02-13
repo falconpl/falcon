@@ -60,6 +60,10 @@ protected:
         m_bDisposed( false )
     {}
 
+    GCLock():
+        m_bDisposed( false )
+    {}
+
     ~GCLock() {}
     
 private:

@@ -49,10 +49,10 @@ public:
    inline virtual ~PStep() {}
 
    /** Convert into a string */
-   inline String toString() const
+   inline String describe() const
    {
       String temp;
-      toString( temp );
+      describe( temp );
       return temp;
    }
 
@@ -62,12 +62,12 @@ public:
     * pstep that are not part of the syntactic tree, but just of the
     * VM code.
     * */
-   inline virtual void toString( String& ) const {};
+   inline virtual void describe( String& ) const {};
 
    /** Convert into a string -- short version.
     To be used by diag functions.
     */
-   inline virtual void oneLiner( String& s ) const { toString(s); }
+   inline virtual void oneLiner( String& s ) const { describe(s); }
 
    /** Convert into a string -- short version. */
    inline String oneLiner() const
