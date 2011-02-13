@@ -14,21 +14,22 @@
 */
 
 #include <falcon/vmcontext.h>
-#include <falcon/memory.h>
+#include <falcon/trace.h>
+#include <stdlib.h>
 
 namespace Falcon {
 
 VMContext::VMContext()
 {
-   m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC);
+   m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC*sizeof(CodeFrame));
    m_topCode = m_codeStack-1;
-   m_maxCode = m_codeStack + INITIAL_STACK_ALLOC;
+   m_maxCode = m_codeStack + INITIAL_STACK_ALLOC-1;
 
-   m_callStack = (CallFrame*)  malloc(INITIAL_STACK_ALLOC);
+   m_callStack = (CallFrame*)  malloc(INITIAL_STACK_ALLOC*sizeof(CallFrame));
    m_topCall = m_callStack-1;
    m_maxCall = m_callStack + INITIAL_STACK_ALLOC;
 
-   m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC);
+   m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item*));
    m_topData = m_dataStack-1;
    m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
 }
@@ -50,10 +51,11 @@ void VMContext::moreData()
 {
    long distance = dataSize();
    long newSize = m_maxData - m_dataStack + INCREMENT_STACK_ALLOC;
+   TRACE("Reallocating %p: %d -> %ld", m_dataStack, m_maxData - m_dataStack, newSize );
 
-   m_dataStack = (Item*) realloc( m_dataStack, newSize );
+   m_dataStack = (Item*) realloc( m_dataStack, newSize * sizeof(Item) );
    m_topData = m_dataStack + distance;
-   m_maxData = m_dataStack + newSize;
+   m_maxData = m_dataStack + newSize-1;
 }
 
 
@@ -61,22 +63,23 @@ void VMContext::moreCode()
 {
    long distance = codeDepth();
    long newSize = m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC;
+   TRACE("Reallocating %p: %d -> %ld", m_codeStack, m_maxCode - m_codeStack, newSize );
 
-   m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize );
+   m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize * sizeof(CodeFrame) );
    m_topCode = m_codeStack + distance;
-   m_maxCode = m_codeStack + newSize;
+   m_maxCode = m_codeStack + newSize-1;
 }
 
 
 void VMContext::moreCall()
 {
-
    long distance = m_topCall - m_callStack;
-   long newSize = m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC;
+   long newSize = m_maxCall - m_callStack + INCREMENT_STACK_ALLOC;
+   TRACE("Reallocating %p: %d -> %ld", m_callStack, m_maxCall - m_callStack, newSize );
 
-   m_callStack = (CallFrame*) realloc( m_callStack, newSize );
+   m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
    m_topCall = m_callStack + distance;
-   m_maxCall = m_callStack + newSize;
+   m_maxCall = m_callStack + newSize-1;
 }
 
 }
