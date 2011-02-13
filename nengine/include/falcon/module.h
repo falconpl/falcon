@@ -22,7 +22,7 @@
 
 namespace Falcon {
 
-class Module {
+class FALCON_DYN_CLASS Module {
 public:
    Module( const String& name );
    Module( const String& name, const String& uri );

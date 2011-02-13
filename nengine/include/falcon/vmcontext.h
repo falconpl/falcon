@@ -33,7 +33,7 @@ class VMachine;
  * Note, VMContext is better not to have virtual members.
  *
  */
-FALCON_DYN_CLASS class VMContext
+class FALCON_DYN_CLASS VMContext
 {
 public:
    static const int INITIAL_STACK_ALLOC = 256;
