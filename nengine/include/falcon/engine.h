@@ -16,6 +16,8 @@
 #ifndef _FALCON_ENGINE_H_
 #define	_FALCON_ENGINE_H_
 
+#include <falcon/setup.h>
+
 namespace Falcon
 {
 class Class;
@@ -40,7 +42,7 @@ class Mutex;
  in a single-thread context.
  
  */
-class Engine
+class FALCON_DYN_SYM Engine
 {
 public:
 
@@ -78,7 +80,7 @@ public:
     */
    Collector* collector() const;
 
-   /** Returns the global instance of error class.
+   /** Returns the global instance of the CodeError class.
 
     Method init() must have been called before.
 
@@ -87,6 +89,16 @@ public:
     return a null pointer.
     */
    Class* codeErrorClass() const;
+
+    /** Returns the global instance of the Function class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* functionClass() const;
 
 
 protected:
@@ -106,6 +118,7 @@ protected:
    // Global object handlers
    //
    Class* m_codeErrorClass;
+   Class* m_functionClass;
 };
 
 }

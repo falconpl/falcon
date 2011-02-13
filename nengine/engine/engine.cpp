@@ -29,6 +29,8 @@
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 
+#include <falcon/corefunction.h>
+
 namespace Falcon
 {
 //=======================================================
@@ -72,6 +74,8 @@ Engine::Engine()
    m_collector = new Collector;
 
    m_codeErrorClass = new CodeErrorClass;
+   m_functionClass = new CoreFunction;
+   
    TRACE("Engine creation complete", 0 )
 }
 
@@ -137,6 +141,11 @@ Class* Engine::codeErrorClass() const
    return m_instance->m_codeErrorClass;
 }
 
+Class* Engine::functionClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_functionClass;
+}
 
 }
 

@@ -55,8 +55,6 @@ public:
 
 };
 
-extern CoreFunction CoreFunction_handler;
-
 }
 
 #endif /* FUNCTION_H_ */

@@ -34,7 +34,7 @@ namespace Falcon {
  This class checks if it has been intantiated just once; if not, it terminates
  the program with an exit(1).
  */
-class Application
+class FALCON_DYN_CLASS Application
 {
 public:
    Application();

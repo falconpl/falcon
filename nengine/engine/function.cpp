@@ -21,6 +21,8 @@
 #include <falcon/corefunction.h>
 #include <falcon/module.h>
 
+#include <falcon/engine.h>
+
 namespace Falcon
 {
 
@@ -122,7 +124,13 @@ void Function::gcMark(int32 mark)
 
 void Function::garbage( Collector* c )
 {
-   m_gcToken = c->store( &CoreFunction_handler, this );
+   m_gcToken = c->store( Engine::instance()->functionClass(), this );
+}
+
+void Function::garbage()
+{
+   register Engine* inst = Engine::instance();
+   m_gcToken = inst->collector()->store( inst->functionClass(), this );
 }
 
 }

@@ -140,6 +140,9 @@ public:
     */
    void garbage( Collector* c );
 
+   /** Garbage this function on the standard collector. */
+   void garbage();
+
    /** Gets the global vector associated with this function, if any.
       
        Only functions having a module can access a global vector.

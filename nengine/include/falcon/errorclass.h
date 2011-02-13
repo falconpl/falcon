@@ -17,6 +17,7 @@
 #ifndef FALCON_ERRORCLASS_H
 #define	FALCON_ERRORCLASS_H
 
+#include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/class.h>
 
@@ -29,7 +30,7 @@ class Stream;
  creationParameter for the create() method.
  
  */
-class ErrorClass: public Class
+class FALCON_DYN_SYM ErrorClass: public Class
 {
 public:
    virtual void dispose( void* self ) const;
