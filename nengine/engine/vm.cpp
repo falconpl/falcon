@@ -31,8 +31,6 @@
 namespace Falcon
 {
 
-static StmtReturn s_a_return;
-
 VMachine::VMachine():
    m_event(eventNone)
 {
@@ -151,6 +149,9 @@ const PStep* VMachine::nextStep() const
 
 void VMachine::call( Function* function, int nparams, const Item& self )
 {
+   // Used by the VM to insert this opcode if needed to exit functions.
+   static StmtReturn s_a_return;
+
    TRACE( "Entering function: %s", function->locate().c_ize() );
    
    register VMContext* ctx = m_context;

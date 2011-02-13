@@ -17,9 +17,10 @@
    Core falcon string representation
 */
 
-#ifndef flc_string_H
-#define flc_string_H
+#ifndef _FALCON_STRING_H_
+#define _FALCON_STRING_H_
 
+#include <falcon/setup.h>
 #include <falcon/types.h>
 #include <stdlib.h>
 
@@ -28,8 +29,7 @@
 namespace Falcon {
 
 class Stream;
-class VMachine;
-class LiveModule;
+class GCToken;
 
 /** Core falcon string representation.
    This is a string as seen by the VM and its fellows (module loader, module and so on).
@@ -1229,7 +1229,18 @@ public:
    */
    bool setCharSize( uint32 nsize, uint32 subst=0xFFFFFFFF );
 
-   static bool isWhiteSpace( uint32 chr )
+   /** Stores this string in the standard garbage collector.
+
+    After this call is issued, the string is delivered to the standard
+    garbage collector, and it cannot be destroyed anymore by the calling
+    program.
+
+    The returned token can be stored in an item to create a deep string.
+    */
+   GCToken* garbage();
+
+   /** Returns true if the given character is a whitespace. */
+   inline static bool isWhiteSpace( uint32 chr )
    {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';
    }

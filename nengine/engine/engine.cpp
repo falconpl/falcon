@@ -28,6 +28,7 @@
 //--- utility headers ---
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
+#include <falcon/genericerror.h>
 
 #include <falcon/corefunction.h>
 
@@ -50,6 +51,18 @@ public:
    }
 };
 
+class GenericErrorClass: public ErrorClass
+{
+public:
+   GenericErrorClass():
+      ErrorClass( "GenericError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new GenericError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
 
 //=======================================================
 // Engine static declarations
@@ -73,9 +86,18 @@ Engine::Engine()
    m_mtx = new Mutex;
    m_collector = new Collector;
 
-   m_codeErrorClass = new CodeErrorClass;
+
+   //=====================================
+   // Initialization of standard deep types.
+   //
    m_functionClass = new CoreFunction;
-   
+
+   //=====================================
+   // Initialization of standard errors.
+   //
+   m_codeErrorClass = new CodeErrorClass;
+   m_genericErrorClass = new GenericErrorClass;
+
    TRACE("Engine creation complete", 0 )
 }
 
@@ -116,17 +138,26 @@ void Engine::shutdown()
    }
 }
 
-Engine* Engine::instance()
-{
-   fassert( m_instance != 0 );
-   return m_instance;
-}
+//=====================================================
+// Global settings
+//
 
 bool Engine::isWindows() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_bWindowsNamesConversion;
 }
+
+//=====================================================
+// Global objects
+//
+
+Engine* Engine::instance()
+{
+   fassert( m_instance != 0 );
+   return m_instance;
+}
+
 
  
 Collector* Engine::collector() const
@@ -135,16 +166,31 @@ Collector* Engine::collector() const
    return m_instance->m_collector;
 }
 
+//=====================================================
+// Type handlers
+//
+
+Class* Engine::functionClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_functionClass;
+}
+
+
+//=====================================================
+// Error handlers
+//
+
 Class* Engine::codeErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_codeErrorClass;
 }
 
-Class* Engine::functionClass() const
+Class* Engine::genericErrorClass() const
 {
    fassert( m_instance != 0 );
-   return m_instance->m_functionClass;
+   return m_instance->m_genericErrorClass;
 }
 
 }

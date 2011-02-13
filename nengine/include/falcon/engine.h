@@ -80,15 +80,9 @@ public:
     */
    Collector* collector() const;
 
-   /** Returns the global instance of the CodeError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* codeErrorClass() const;
+   //==========================================================================
+   // Type handlers
+   //
 
     /** Returns the global instance of the Function class.
 
@@ -99,6 +93,30 @@ public:
     return a null pointer.
     */
    Class* functionClass() const;
+
+   //==========================================================================
+   // Error handlers
+   //
+
+   /** Returns the global instance of the CodeError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* codeErrorClass() const;
+
+   /** Returns the global instance of the GenericError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* genericErrorClass() const;
 
 
 protected:
@@ -115,10 +133,15 @@ protected:
    bool m_bWindowsNamesConversion;
 
    //===============================================
-   // Global object handlers
+   // Global type handlers
+   //
+   Class* m_functionClass;
+
+   //===============================================
+   // Standard error handlers
    //
    Class* m_codeErrorClass;
-   Class* m_functionClass;
+   Class* m_genericErrorClass;
 };
 
 }

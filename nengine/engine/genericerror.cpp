@@ -13,28 +13,14 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/engine.h>
 #include <falcon/genericerror.h>
 #include <falcon/errorclass.h>
 
 namespace Falcon {
 
-class GenericErrorClass: public ErrorClass
-{
-public:
-   GenericErrorClass():
-      ErrorClass( "GenericError" )
-      {}
-   
-   virtual void* create(void* creationParams ) const
-   {
-      return new GenericError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-static GenericErrorClass s_ec;
-
 GenericError::GenericError( const ErrorParam &params ):
-   Error( &s_ec, params )
+   Error( Engine::instance()->genericErrorClass(), params )
 {
 }
 

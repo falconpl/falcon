@@ -19,8 +19,6 @@
 
 namespace Falcon {
 
-CoreFunction CoreFunction_handler;
-
 CoreFunction::CoreFunction():
    Class("Function", FLC_CLASS_ID_FUNCTION )
 {
