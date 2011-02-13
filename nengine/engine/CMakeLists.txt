@@ -32,6 +32,7 @@ add_library(falcon_engine SHARED
   codeerror.cpp
   collector.cpp
   corefunction.cpp
+  corestring.cpp
   dynsymbol.cpp
   engine.cpp
   error.cpp

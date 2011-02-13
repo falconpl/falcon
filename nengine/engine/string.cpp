@@ -2,13 +2,13 @@
    FALCON - The Falcon Programming Language.
    FILE: string.cpp
 
-   Implementation of Core Strings.
+   Implementation of Falcon Strings.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: mer nov 24 2004
+   Begin: Sun, 13 Feb 2011 15:02:40 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -18,15 +18,19 @@
    \todo Add support for international strings.
 */
 
-#include <falcon/memory.h>
+#include <stdlib.h>
 #include <falcon/string.h>
 #include <falcon/stream.h>
 #include <falcon/common.h>
-#include <falcon/vm.h>
+#include <falcon/collector.h>
+#include <falcon/engine.h>
+
+
 #include <string.h>
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>
+
 
 namespace Falcon {
 
@@ -191,7 +195,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
    if ( end < start ) {
       uint32 len = start - end + 1;
       if ( tgt->allocated() < len * cs ) {
-         storage = (byte *) memAlloc( len * cs );
+         storage = (byte *) malloc( len * cs );
       }
       else
          storage = tgt->getRawStorage();
@@ -233,7 +237,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
          
       uint32 len = (end - start)*cs;
       if ( tgt->allocated() < len ) {
-         storage = (byte *) memAlloc( len );
+         storage = (byte *) malloc( len );
       }
       else
          storage = tgt->getRawStorage();
@@ -375,7 +379,7 @@ void Byte::remove( String *str, uint32 pos, uint32 len ) const
       len = sl - pos;
 
    uint32 newLen = (sl - len) *cs;
-   byte *mem = (byte *) memAlloc( newLen );
+   byte *mem = (byte *) malloc( newLen );
    if ( pos > 0 )
       memcpy( mem, str->getRawStorage(), pos * cs );
    if ( pos + len < sl )
@@ -384,7 +388,7 @@ void Byte::remove( String *str, uint32 pos, uint32 len ) const
    // for non-static strings...
    if ( str->allocated() != 0 )
    {
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
    }
    str->setRawStorage( mem, newLen );
 
@@ -402,12 +406,12 @@ void Byte::bufferize( String *str ) const
    if ( size != 0 ) {
       uint32 oldSize = str->allocated();
 
-      byte *mem = (byte *) memAlloc( size );
+      byte *mem = (byte *) malloc( size );
       memcpy( mem, str->getRawStorage(), size );
 
       if( oldSize != 0 )
       {
-         memFree( str->getRawStorage() );
+         free( str->getRawStorage() );
       }
 
       str->setRawStorage( mem, size );
@@ -419,7 +423,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
 {
    // copy the other string contents.
    if ( str->m_allocated != 0 )
-      memFree( str->m_storage );
+      free( str->m_storage );
 
    uint32 size = strOrig->m_size;
    if ( size == 0 ) {
@@ -427,7 +431,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
       str->setRawStorage( 0, 0 );
    }
    else {
-      byte *mem = (byte *) memAlloc( size );
+      byte *mem = (byte *) malloc( size );
       memcpy( mem, strOrig->getRawStorage(), size );
       str->setRawStorage( mem, size );
       str->m_class = strOrig->m_class->bufferedManipulator();
@@ -456,14 +460,14 @@ void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
    // the required size may be already allocated
    if ( nextAlloc > str->allocated() )
    {
-      byte *mem = (byte *) memAlloc( nextAlloc );
+      byte *mem = (byte *) malloc( nextAlloc );
       uint32 size = str->m_size;
       if ( str->m_size > 0 )
          memcpy( mem, str->m_storage, str->m_size );
 
       // we can now destroy the old string.
       if ( str->allocated() != 0 )
-         memFree( str->m_storage );
+         free( str->m_storage );
 
       str->m_storage = mem;
       str->m_size = size;
@@ -522,14 +526,14 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
    if( chr <= 0xFF )
    {
-      buffer = (byte *) memAlloc( size );
+      buffer = (byte *) malloc( size );
       memcpy( buffer, str->getRawStorage(), size );
       buffer[ pos ] = (byte) chr;
       str->manipulator( &handler_buffer );
    }
    else if ( chr <= 0xFFFF )
    {
-      uint16 *buf16 =  (uint16 *) memAlloc( size * 2 );
+      uint16 *buf16 =  (uint16 *) malloc( size * 2 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf16[ i ] = (uint16) buffer[ i ];
@@ -541,7 +545,7 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
    else
    {
-      uint32 *buf32 =  (uint32 *) memAlloc( size * 4 );
+      uint32 *buf32 =  (uint32 *) malloc( size * 4 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buffer[ i ];
@@ -554,7 +558,7 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
    uint32 oldSize = str->allocated();
    if( oldSize != 0 )
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
    str->setRawStorage( buffer, size );
 }
 
@@ -567,7 +571,7 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
    if ( chr <= 0xFFFF )
    {
-      uint16 *buf16 =  (uint16 *) memAlloc( size );
+      uint16 *buf16 =  (uint16 *) malloc( size );
       memcpy( buf16, str->getRawStorage(), size );
       buf16[ pos ] = (uint16) chr;
       buffer = (byte *) buf16;
@@ -575,7 +579,7 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
    else
    {
-      uint32 *buf32 =  (uint32 *) memAlloc( size * 2 );
+      uint32 *buf32 =  (uint32 *) malloc( size * 2 );
       uint16 *buf16 = (uint16 *) str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buf16[ i ];
@@ -589,7 +593,7 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
 }
 
 void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
@@ -597,7 +601,7 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
    byte *buffer;
    int32 size = str->size();
 
-   uint32 *buf32 =  (uint32 *) memAlloc( size );
+   uint32 *buf32 =  (uint32 *) malloc( size );
    memcpy( buf32, str->getRawStorage(), size );
 
    buf32[ pos ] = chr;
@@ -606,7 +610,7 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
 }
 
 void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
@@ -620,7 +624,7 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
    else if ( chr <= 0xFFFF )
    {
-      uint16 *buf16 =  (uint16 *) memAlloc( size * 2 );
+      uint16 *buf16 =  (uint16 *) malloc( size * 2 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf16[ i ] = (uint16) buffer[ i ];
@@ -629,12 +633,12 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
       size *= 2;
       str->manipulator( &handler_buffer16 );
       if( str->allocated() > 0 )
-         memFree( buffer );
+         free( buffer );
       str->setRawStorage( (byte *) buf16, size );
    }
    else
    {
-      uint32 *buf32 =  (uint32 *) memAlloc( size * 4 );
+      uint32 *buf32 =  (uint32 *) malloc( size * 4 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buffer[ i ];
@@ -643,7 +647,7 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
       size *= 4;
       str->manipulator( &handler_buffer32 );
       if( str->allocated() > 0 )
-         memFree( buffer );
+         free( buffer );
       str->setRawStorage( (byte *) buf32, size );
    }
 }
@@ -659,7 +663,7 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
    else
    {
       int32 size = str->size();
-      uint32 *buf32 =  (uint32 *) memAlloc( size * 2 );
+      uint32 *buf32 =  (uint32 *) malloc( size * 2 );
       uint16 *buf16 = (uint16 *) str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buf16[ i ];
@@ -668,7 +672,7 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
       size *= 2;
       str->manipulator( &handler_buffer32 );
       if( str->allocated() > 0 )
-         memFree( buf16 );
+         free( buf16 );
       str->setRawStorage( (byte *) buf32, size );
    }
 
@@ -700,7 +704,7 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
       FALCON_STRING_ALLOCATION_BLOCK;
 
    // we know we have to relocate, so just do the relocation step
-   byte *mem = (byte*) memAlloc( finalAlloc );
+   byte *mem = (byte*) malloc( finalAlloc );
    if ( pos > 0 )
       adaptBuffer( str->getRawStorage(), 0, strCharSize, mem, 0, destCharSize, pos );
 
@@ -721,7 +725,7 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
 
    if ( oldSize > 0 )
    {
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
    }
    str->setRawStorage( mem );
 }
@@ -752,7 +756,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
          FALCON_STRING_ALLOCATION_BLOCK;
 
       // we know we have to relocate, so just do the relocation step
-      byte *mem = (byte*) memAlloc( finalAlloc );
+      byte *mem = (byte*) malloc( finalAlloc );
       if ( pos > 0 )
          adaptBuffer( str->getRawStorage(), 0, strCharSize,
                       mem, 0, destCharSize, pos );
@@ -767,7 +771,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
                       strLen - pos - len );
 
       if ( str->allocated() != 0 )
-         memFree( str->getRawStorage() );
+         free( str->getRawStorage() );
 
       str->allocated( finalAlloc );
       str->setRawStorage( mem );
@@ -837,7 +841,7 @@ void Static32::remove( String *str, uint32 pos, uint32 len ) const
 void Static::destroy( String *str ) const
 {
    if ( str->allocated() > 0 ) {
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
    }
@@ -853,7 +857,7 @@ void Buffer::shrink( String *str ) const
          destroy( str );
       }
       else {
-         byte *mem = (byte *) memRealloc( str->getRawStorage(), str->size() );
+         byte *mem = (byte *) realloc( str->getRawStorage(), str->size() );
          if ( mem != str->getRawStorage() )
          {
             memcpy( mem, str->getRawStorage(), str->size() );
@@ -874,7 +878,7 @@ void Buffer::reserve( String *str, uint32 size, bool relative, bool block ) cons
 void Buffer::destroy( String *str ) const
 {
    if ( str->allocated() > 0 ) {
-      memFree( str->getRawStorage() );
+      free( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
    }
@@ -892,7 +896,7 @@ String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
    m_bExported( false )
 {
-   m_storage = (byte *) memAlloc( size );
+   m_storage = (byte *) malloc( size );
    m_allocated = size;
    m_size = 0;
 }
@@ -912,7 +916,7 @@ String::String( const char *data, int32 len ):
 {
    m_size = len >= 0 ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
-   m_storage = (byte *) memAlloc( m_allocated );
+   m_storage = (byte *) malloc( m_allocated );
    memcpy( m_storage, data, m_size );
 }
 
@@ -957,7 +961,7 @@ String::String( const wchar_t *data, int32 len ):
    }
 
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
-   m_storage = (byte *) memAlloc( m_allocated );
+   m_storage = (byte *) malloc( m_allocated );
    memcpy( m_storage, data, m_size );
 }
 
@@ -1007,7 +1011,7 @@ void String::copy( const String &other )
    m_size = other.m_size;
    m_allocated = other.m_allocated;
    if ( m_allocated > 0 ) {
-      m_storage = (byte *) memAlloc( m_allocated );
+      m_storage = (byte *) malloc( m_allocated );
       if ( m_size > 0 )
          memcpy( m_storage, other.m_storage, m_size );
    }
@@ -1543,7 +1547,7 @@ bool String::deserialize( Stream *in, bool bStatic )
       // if we had something allocated, we got to free it.
       if ( m_allocated > 0 )
       {
-         memFree( m_storage );
+         free( m_storage );
          m_storage = 0;
          m_allocated = 0;
       }
@@ -1586,9 +1590,9 @@ bool String::deserialize( Stream *in, bool bStatic )
 
          m_allocated = m_size = size;
          if ( m_storage != 0 )
-            memFree( m_storage );
+            free( m_storage );
 
-         m_storage = (byte *) memAlloc( m_allocated );
+         m_storage = (byte *) malloc( m_allocated );
          if( m_storage == 0 )
             return false;
       }
@@ -1665,7 +1669,7 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
    uint32 oldcs = m_class->charSize();
    uint32 nalloc = (allocated()/oldcs) * nsize;
    uint32 oldsize = size();
-   byte *nmem = (byte*) memAlloc( nalloc );
+   byte *nmem = (byte*) malloc( nalloc );
    csh::Base* manipulator = csh::adaptBuffer( mem, 0, oldcs, nmem, 0, nsize, length() );
    m_class->destroy( this );
    allocated( nalloc );
@@ -2382,13 +2386,12 @@ void String::unescapeQuotes()
    }
 }
 
-
-//============================================================
-void string_deletor( void *data )
+GCToken* String::garbage()
 {
-   delete (String *) data;
+   register Engine* eng = Engine::instance();
+   return eng->collector()->store( eng->stringClass(), this );
 }
 
 }
 
-/* end of cstring.cpp */
+/* end of string.cpp */

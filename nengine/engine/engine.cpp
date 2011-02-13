@@ -25,12 +25,15 @@
 
 #include <falcon/collector.h>
 
-//--- utility headers ---
+//--- type headers ---
+#include <falcon/corefunction.h>
+#include <falcon/corestring.h>
+
+//--- error headers ---
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
 
-#include <falcon/corefunction.h>
 
 namespace Falcon
 {
@@ -91,6 +94,7 @@ Engine::Engine()
    // Initialization of standard deep types.
    //
    m_functionClass = new CoreFunction;
+   m_stringClass = new CoreString;
 
    //=====================================
    // Initialization of standard errors.
@@ -176,6 +180,12 @@ Class* Engine::functionClass() const
    return m_instance->m_functionClass;
 }
 
+
+Class* Engine::stringClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_stringClass;
+}
 
 //=====================================================
 // Error handlers

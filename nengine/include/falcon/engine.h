@@ -94,6 +94,16 @@ public:
     */
    Class* functionClass() const;
 
+   /** Returns the global instance of the String class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* stringClass() const;
+
    //==========================================================================
    // Error handlers
    //
@@ -136,6 +146,7 @@ protected:
    // Global type handlers
    //
    Class* m_functionClass;
+   Class* m_stringClass;
 
    //===============================================
    // Standard error handlers
