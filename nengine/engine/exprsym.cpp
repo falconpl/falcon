@@ -22,7 +22,8 @@ namespace Falcon {
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
       Expression( other ),
-      m_symbol(other.m_symbol)
+      m_symbol(other.m_symbol),
+      m_lvalue(false)
 {
    // apply is created by symbols
    // TODO raise error in debug if apply is not present.
@@ -30,7 +31,8 @@ ExprSymbol::ExprSymbol( const ExprSymbol& other ):
 
 ExprSymbol::ExprSymbol( Symbol* target ):
    Expression( t_symbol ),
-   m_symbol( target )
+   m_symbol( target ),
+   m_lvalue(false)
 {
    // apply is created by symbols
    // TODO raise error in debug if apply is not present.
