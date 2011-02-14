@@ -5,6 +5,8 @@
 # Native modules
 #
 
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
+
 #########################################################
 # Utilities used in this section
 #
@@ -23,54 +25,7 @@ macro( FalconMakeBinding module lib desc )
 
 endmacro()
 
-macro( FalconFindGTK2 )
-    if ( WIN32 )
-        find_file( GTK_BUNDLE_DIR
-            NAMES gtk gtk2 GTK GTK2
-            HINTS c:/ ENV GTK_BUNDLE_DIR )
-        if ( GTK_BUNDLE_DIR STREQUAL GTK_BUNDLE_DIR-NOTFOUND )
-            set( _gtk OFF )
-        else()
-            set( _gtk ON )
-        endif()
-    else()
-        find_package( GTK2 )
-        if ( GTK2_FOUND )
-            set( _gtk ON )
-        else()
-            set( _gtk OFF )
-        endif()
-    endif()
-endmacro()
-
-macro( FalconFindDataMatrix )
-    if ( WIN32 )
-        find_path( DMTX_INCLUDE_PATH dmtx.h
-            HINTS c:/dmtx c:/libdmtx-0.7.2 )
-        find_library( DMTX_LIBRARY libdmtx
-            HINTS c:/dmtx c:/libdmtx-0.7.2
-            c:/dmtx/project/visualc9/Release
-            c:/dmtx/project/visualc9/Debug
-            c:/libdmtx-0.7.2/project/visualc9/Release
-            c:/libdmtx-0.7.2/project/visualc9/Debug )
-    else()
-        find_path( DMTX_INCLUDE_PATH dmtx.h
-            HINTS /usr/include /usr/local/include )
-        find_library( DMTX_LIBRARY dmtx
-            HINTS /usr/lib /usr/local/lib )
-    endif()
-    mark_as_advanced( DMTX_INCLUDE_PATH )
-    mark_as_advanced( DMTX_LIBRARY )
-    if ( ( DMTX_INCLUDE_PATH STREQUAL DMTX_INCLUDE_PATH-NOTFOUND )
-           OR ( DMTX_LIBRARY STREQUAL DMTX_LIBRARY-NOTFOUND ) )
-        set( _dmtx OFF )
-    else()
-        set( _dmtx ON )
-    endif()
-endmacro()
-
 #########################################################
-
 
 OPTION( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" ON )
 
@@ -97,7 +52,7 @@ if( FALCON_NATMODS_AUTO )
    endif()
 
    #### Check DataMatrix
-   FalconFindDataMatrix()
+   include( FalconFindDataMatrix )
 
    #### Check HPDF (LibHARU)
    find_path( LibHaru_INCLUE_DIR hpdf.h )
@@ -111,8 +66,8 @@ if( FALCON_NATMODS_AUTO )
       set( _gd2 ON )
    endif()
 
-   ### Check GTK2
-   FalconFindGTK2()
+   #### Check GTK2
+   include( FalconFindGTK2 )
 
 else()
   set( _dbus OFF )
