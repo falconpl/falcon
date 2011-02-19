@@ -67,6 +67,8 @@ public:
          }
 
          std::cout << std::endl;
+         // we're out of the function.
+         vm->returnFrame();
       }
    } m_nextStep;
 
