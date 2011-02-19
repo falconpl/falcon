@@ -281,7 +281,10 @@ void MemBuf::readProperty( const String &prop, Item &item )
       }
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( prop );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 void MemBuf::writeProperty( const String &prop, const Item &item )

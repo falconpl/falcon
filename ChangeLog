@@ -1,6 +1,8 @@
 Falcon (0.9.6.9)
   * fixed: dbiloader doesn't make the specific driver the vm's main module 
   * added: typeName method for Falcon::Item
+  * added: AccessError now reports the type of an item for which 
+           an invalid property was requested
 
 Falcon (0.9.6.7)
   * fixed: pow() din't reset the numeric error on startup.

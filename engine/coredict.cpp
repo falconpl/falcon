@@ -64,7 +64,9 @@ void CoreDict::readProperty( const String &prop, Item &item )
       uint32 id;
       if ( cc == 0 || ! cc->properties().findKey( prop, id ) )
       {
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+         String extra( "Dictionary." );
+         extra.A( prop );
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
       }
       item = *cc->properties().getValue( id );
       item.methodize( this );
@@ -83,10 +85,11 @@ void CoreDict::writeProperty( const String &prop, const Item &item )
          *method = *item.dereference();
          return;
       }
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+   String extra( "Dictionary." );
+   extra.A( prop );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 

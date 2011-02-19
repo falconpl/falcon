@@ -140,8 +140,18 @@ void CoreObject::readOnlyError( const String &key ) const
 
    register uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
-   throw new AccessError( ErrorParam( pt.findKey( key, pos ) ? e_prop_ro : e_prop_acc, __LINE__ )
+   if( pt.findKey( key, pos ) )
+   {
+      throw new AccessError( ErrorParam( e_prop_ro, __LINE__ )
          .extra( key ) );
+   }
+   else
+   {
+      String extra( generator()->symbol()->name() );
+	   extra.A( '.' ).A( key );
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         .extra( extra ) );
+   }
 }
 
 bool CoreObject::deserialize( Stream *stream, bool bLive )
@@ -194,9 +204,11 @@ bool CoreObject::apply( const ItemDict& dict, bool bRaiseOnError )
          {
             if( bRaiseOnError )
             {
+               String extra( generator()->symbol()->name() );
+               extra.A( '.' ).A( *key.asString() );
                throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
                      .origin( e_orig_runtime )
-                     .extra( *key.asString() ) );
+                     .extra( extra ) );
             }
             else
                bRes = false;
@@ -248,9 +260,11 @@ bool CoreObject::retrieve( ItemDict& dict, bool bRaiseOnError, bool bFillDict, b
             {
                if( bRaiseOnError )
                {
+                  String extra( generator()->symbol()->name() );
+                  extra.A( '.' ).A( *key.asString() );
                   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
                         .origin( e_orig_runtime )
-                        .extra( *key.asString() ) );
+                        .extra( extra ) );
                }
                else
                   bRes = false;
@@ -324,7 +338,9 @@ void CoreObject::readProperty( const String &prop, Item &target )
       uint32 id;
       if ( cc == 0 || ! cc->properties().findKey( prop, id ) )
       {
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+         String extra( generator()->symbol()->name() );
+         extra.A( '.' ).A( prop );
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
       }
 
       p = cc->properties().getValue( id );
@@ -351,7 +367,9 @@ void CoreObject::writeProperty( const String &prop, const Item &target )
 {
    if ( ! setProperty( prop, target ) )
    {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+      String extra( generator()->symbol()->name() );
+      extra.A( '.' ).A( prop );
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
    }
 }
 
