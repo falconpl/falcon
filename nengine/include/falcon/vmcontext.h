@@ -26,6 +26,7 @@
 namespace Falcon {
 
 class VMachine;
+class SynFunc;
 
 /**
  * Structure needed to store VM data.
@@ -72,7 +73,7 @@ public:
    }
 
    inline Item* param( int n )  {
-      return const_cast<VMContext*>(this)->param( n );
+      return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
    /** Return the nth parameter in the local context.
@@ -246,6 +247,7 @@ protected:
    Item m_regA;
 
    friend class VMachine;
+   friend class SynFunc;
 };
 
 }

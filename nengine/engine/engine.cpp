@@ -27,6 +27,8 @@
 
 //--- type headers ---
 #include <falcon/corefunction.h>
+#include <falcon/corenil.h>
+#include <falcon/coreint.h>
 #include <falcon/corestring.h>
 
 //--- error headers ---
@@ -35,6 +37,7 @@
 #include <falcon/genericerror.h>
 #include <falcon/operanderror.h>
 
+#include <falcon/paranoid.h>
 
 namespace Falcon
 {
@@ -110,13 +113,23 @@ Engine::Engine()
    m_functionClass = new CoreFunction;
    m_stringClass = new CoreString;
 
+   // Initialization of the class vector.
+   m_classes[FLC_ITEM_NIL] = new CoreNil;
+   m_classes[FLC_ITEM_BOOL] = new CoreNil;
+   m_classes[FLC_ITEM_INT] = new CoreInt;
+   m_classes[FLC_ITEM_NUM] = new CoreNil;
+   m_classes[FLC_ITEM_USER] = 0;
+   m_classes[FLC_ITEM_FUNC] = new CoreFunction;
+   m_classes[FLC_ITEM_METHOD] = new CoreNil;
+   m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
+   m_classes[FLC_ITEM_DEEP] = 0;
    //=====================================
    // Initialization of standard errors.
    //
    m_codeErrorClass = new CodeErrorClass;
    m_genericErrorClass = new GenericErrorClass;
    m_operandErrorClass = new OperandErrorClass;
-   
+
    TRACE("Engine creation complete", 0 )
 }
 
@@ -126,6 +139,11 @@ Engine::~Engine()
    delete m_mtx;
    delete m_collector;
    delete m_codeErrorClass;
+
+   for ( int count = 0; count < FLC_ITEM_COUNT; ++count )
+   {
+      delete m_classes[count];
+   }
    TRACE("Engine destroyed", 0 )
 }
 
@@ -188,6 +206,12 @@ Collector* Engine::collector() const
 //=====================================================
 // Type handlers
 //
+
+Class* Engine::getTypeClass( int type )
+{
+   PARANOID("type out of range", (type < FLC_ITEM_DEEP && type != FLC_ITEM_USER) );
+   return m_classes[type];
+}
 
 Class* Engine::functionClass() const
 {

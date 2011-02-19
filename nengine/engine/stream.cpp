@@ -219,7 +219,7 @@ bool Stream::truncate( int64 )
 }
 
 
-int32 Stream::readAvailable( int32, const Sys::SystemData *sysData )
+/*int32 Stream::readAvailable( int32, const Sys::SystemData *sysData )
 {
    status( t_unsupported );
    return -1;
@@ -231,7 +231,7 @@ int32 Stream::writeAvailable( int32, const Sys::SystemData *sysData )
    status( t_unsupported );
    return -1;
 }
-
+*/
 bool Stream::put( uint32 chr )
 {
    status( t_unsupported );

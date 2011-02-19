@@ -22,6 +22,7 @@ namespace Falcon {
 CoreString::CoreString():
    Class("String", FLC_CLASS_ID_STRING )
 {
+   m_quasiFlat = true;
 }
 
 
@@ -78,9 +79,14 @@ void* CoreString::deserialize( Stream* stream ) const
    return s;
 }
 
+void* CoreString::assign( void* instance ) const
+{
+   return new String( *static_cast<String*>(instance) );
+}
+
 void CoreString::describe( void* instance, String& target ) const
 {
- target = *static_cast<String*>(instance);
+   target = *static_cast<String*>(instance);
 }
 
 //=======================================================================
@@ -92,32 +98,30 @@ void CoreString::op_add( VMachine *vm, void* self, Item& op2, Item& target ) con
 
    Class* cls;
    void* inst;
-   switch( op2.type() )
+   if( ! op2.asClassInst( cls, inst ) )
    {
-      case FLC_ITEM_DEEP:
-         cls = op2.asDeepClass();
-         inst = op2.asDeepInst();
-         break;
-      case FLC_ITEM_USER:
-         cls = op2.asUserClass();
-         inst = op2.asUserInst();
-         break;
-
-      default:
-      {
-         String* copy = new String(*str);
-         copy->append(op2.describe());
-         target = copy->garbage();
-      }
+      String* copy = new String(*str);
+      copy->append(op2.describe());
+      target = copy->garbage();
+      return;
    }
 
+   if ( cls->typeID() == typeID() )
+   {
+      // it's a string!
+      String *copy = new String(*str);
+      copy->append( *static_cast<String*>(inst) );
+      target = copy->garbage();
+      return;
+   }
+
+   // else we surrender, and we let the virtual system to find a way.
    vm->ifDeep( &m_nextOp );
    cls->op_toString( vm, inst, target );
    if( ! vm->wentDeep() )
    {
        String* deep = (String*)(target.type() == FLC_ITEM_DEEP ? target.asDeepInst() : target.asUserInst());
        deep->prepend( *str );
-       //target = copy.garbage();
    }
 }
 

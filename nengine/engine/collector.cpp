@@ -273,7 +273,7 @@ void Collector::electOlderVM()
 
 void Collector::clearRing( GCToken *ringRoot )
 {
-   TRACE( "Entering sweep %ld, allocated %ld", (long)gcMemAllocated(), (long)m_allocatedItems );
+   //TRACE( "Entering sweep %ld, allocated %ld", (long)gcMemAllocated(), (long)m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
    GCToken *ring = m_garbageRoot->m_next;
@@ -297,7 +297,7 @@ void Collector::clearRing( GCToken *ringRoot )
       }
    }
 
-   TRACE( "Sweeping step 1 complete %ld", (long)gcMemAllocated() );
+   //TRACE( "Sweeping step 1 complete %ld", (long)gcMemAllocated() );
 
    m_mtx_newitem.lock();
    fassert( killed <= m_allocatedItems );
@@ -445,7 +445,7 @@ bool Collector::markVM( VMachine *vm )
 void Collector::gcSweep()
 {
 
-   TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
+   //TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
 
    m_mtx_ramp.lock();
    // ramp mode may change while we do the lock...
@@ -829,7 +829,7 @@ void* Collector::run()
       }
    }
 
-   TRACE( "Stopping %ld", (long)gcMemAllocated() );
+   //TRACE( "Stopping %ld", (long)gcMemAllocated() );
    return 0;
 }
 

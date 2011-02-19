@@ -32,11 +32,14 @@ add_library(falcon_engine SHARED
   codeerror.cpp
   collector.cpp
   corefunction.cpp
+  corenil.cpp
+  coreint.cpp
   corestring.cpp
   dynsymbol.cpp
   engine.cpp
   error.cpp
   errorclass.cpp
+  extfunc.cpp
   fassert.cpp
   expression.cpp
   exprfactory.cpp
@@ -57,6 +60,7 @@ add_library(falcon_engine SHARED
   string.cpp
   stream.cpp
   symbol.cpp
+  synfunc.cpp
   syntree.cpp
   trace.cpp
   tracestep.cpp

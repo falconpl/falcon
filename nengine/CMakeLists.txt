@@ -8,12 +8,11 @@ project(Falcon)
 
 include_directories(
   include
-  ../include
   ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
 configure_file(
-  ../include/falcon/config.h.in  ${CMAKE_CURRENT_BINARY_DIR}/include/falcon/config.h
+  include/falcon/config.h.in  ${CMAKE_CURRENT_BINARY_DIR}/include/falcon/config.h
   @ONLY
 )
 

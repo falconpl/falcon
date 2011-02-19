@@ -37,10 +37,6 @@ Function::Function( const String& name, Module* module, int32 line ):
 
 Function::~Function()
 {
-   for ( int i = 0; i < m_locals.size(); ++i )
-   {
-      delete m_locals[i];
-   }
 }
 
 void Function::module( Module* owner )
@@ -73,46 +69,6 @@ String Function::locate() const
 }
 
 
-Symbol* Function::addVariable( const String& name )
-{
-   Symbol* sym = new LocalSymbol( name, m_locals.size() );
-   m_locals.push_back( sym );
-   m_symtabTable[name] = sym;
-   return sym;
-}
-
-
-Symbol* Function::addClosedSymbol( const String& name, const Item& value )
-{
-   Symbol* sym = new ClosedSymbol( name, value );
-   m_locals.push_back( sym );
-   m_symtabTable[name] = sym;
-   return sym;
-}
-
-
-Symbol* Function::findSymbol( const String& name ) const
-{
-   SymbolTable::const_iterator pos = m_symtabTable.find( name );
-   if( pos == m_symtabTable.end() )
-   {
-      return 0;
-   }
-
-   return pos->second;
-}
-
-Symbol* Function::getSymbol( int32 id ) const
-{
-   if ( id < 0 || id > m_locals.size() )
-   {
-      return 0;
-   }
-
-   return m_locals[id];
-}
-
-
 void Function::gcMark(int32 mark)
 {
    if (m_gcToken != 0 )
@@ -122,15 +78,17 @@ void Function::gcMark(int32 mark)
 }
 
 
-void Function::garbage( Collector* c )
+GCToken* Function::garbage( Collector* c )
 {
    m_gcToken = c->store( Engine::instance()->functionClass(), this );
+   return m_gcToken;
 }
 
-void Function::garbage()
+GCToken* Function::garbage()
 {
    register Engine* inst = Engine::instance();
    m_gcToken = inst->collector()->store( inst->functionClass(), this );
+   return m_gcToken;
 }
 
 }

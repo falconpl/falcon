@@ -15,7 +15,7 @@
 #include <falcon/exprvalue.h>
 #include <falcon/statement.h>
 
-#include <falcon/function.h>
+#include <falcon/synfunc.h>
 #include <falcon/application.h>
 
 class LoopApp: public Falcon::Application
@@ -24,7 +24,7 @@ class LoopApp: public Falcon::Application
 public:
 void go()
 {
-   Falcon::Function fmain( "__main__" );
+   Falcon::SynFunc fmain( "__main__" );
    // create a program:
    // count = 0
    // while count < 5

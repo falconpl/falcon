@@ -14,7 +14,7 @@
 */
 
 #include <falcon/corefunction.h>
-#include <falcon/function.h>
+#include <falcon/synfunc.h>
 #include "falcon/itemid.h"
 
 namespace Falcon {
@@ -33,7 +33,7 @@ CoreFunction::~CoreFunction()
 void* CoreFunction::create(void* creationParams ) const
 {
    cpars* cp = static_cast<cpars*>(creationParams);
-   return new Function( cp->m_name, cp->m_module );
+   return new SynFunc( cp->m_name, cp->m_module );
 }
 
 

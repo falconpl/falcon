@@ -172,21 +172,10 @@ void gcMemShutdown()
 //============================================================
 // Global function pointers.
 //
-void * (*gcAlloc) ( size_t ) = DflAccountMemAlloc;
-void (*gcFree) ( void * ) = DflAccountMemFree;
-void * (*gcRealloc) ( void *,  size_t ) = DflAccountMemRealloc;
 
-/*
 void * (*memAlloc) ( size_t ) = DflMemAlloc;
 void (*memFree) ( void * ) = DflMemFree;
 void * (*memRealloc) ( void *,  size_t ) = DflMemRealloc;
-*/
-/*
-   In phase 1, we're accounting everything to verify the basic solidity of our GC system.
-*/
-void * (*memAlloc) ( size_t ) = DflAccountMemAlloc;
-void (*memFree) ( void * ) = DflAccountMemFree;
-void * (*memRealloc) ( void *,  size_t ) = DflAccountMemRealloc;
 
 }
 

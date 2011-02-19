@@ -285,7 +285,7 @@ public:
     \return true if the sub-method needed to go deep.
     */
    bool wentDeep();
-
+   
 protected:
 
    Stream *m_stdIn;
@@ -302,6 +302,7 @@ protected:
    void onRaise( const Item& item );
 
 private:
+   class
    // current context
    VMContext* m_context;
    // last raised event.

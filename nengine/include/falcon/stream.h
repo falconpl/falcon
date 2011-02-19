@@ -26,7 +26,6 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/string.h>
-#include <falcon/vm_sys.h>
 
 #define FALCON_READAHEAD_BUFFER_BLOCK  32
 
@@ -176,12 +175,12 @@ public:
    /** Determines if the stream can be read, possibly with a given timeout.
       If sysData is not zero, it will be used to honor concurrent interrupt requests.
    */
-   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
+   //virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
 
    /** Determines if the stream can be written, possibly with a given timeout.
       If sysData is not zero, it will be used to honor concurrent interrupt requests.
    */
-   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
+   //virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
 
    int64 seekBegin( int64 pos ) {
       return seek( pos, ew_begin );

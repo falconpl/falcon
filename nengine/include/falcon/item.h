@@ -23,6 +23,7 @@
 #include <falcon/class.h>
 #include <falcon/gctoken.h>
 #include <falcon/collector.h>
+#include <falcon/engine.h>
 
 namespace Falcon {
 
@@ -403,7 +404,108 @@ public:
       \return true if the clone operation is possible
    */
    bool clone( Item &target ) const;
+
+
+   /** Gets the class and the instance from a deep item.
+    \param cls The class of this deep or user item.
+    \param udata The user data associated with this item.
+    \return false if the item is not deep or user.
+
+    This method simplifies the detection of deep items and the
+    extraction of their vital elements (user data and handling class).
+
+    This method fails if the object is flat. A more generic function is
+    forceClassInst() that will return the handler class also for simple items;
+    however forceClassInst() is slower.
+    */
+   bool asClassInst( Class*& cls, void*& udata )
+   {
+      switch( type() )
+      {
+      case FLC_ITEM_DEEP:
+         cls = asDeepClass();
+         udata = asDeepInst();
+         return true;
+
+      case FLC_ITEM_USER:
+         cls = asUserClass();
+         udata = asUserInst();
+         return true;
+      }
+      return false;
+   }
+
+
    
+   /** Gets the class and instance from any item.
+     \param cls The class of this deep or user item.
+     \param udata The user data associated with this item.
+
+    In case of flat items, a slower call is made to identify the
+    base handler class, and that is returned. In that case, the udata*
+    is set to "this" pointer (items always start with the data, then
+    an optional method pointer, and finally the type and description portion,
+    so this is consistent even when the handler class is expecting a something
+    that's not necessarily an Item*).
+   */
+   void forceClassInst( Class*& cls, void*& udata )
+   {
+      switch( type() )
+      {
+      case FLC_ITEM_DEEP:
+         cls = asDeepClass();
+         udata = asDeepInst();
+         break;
+
+      case FLC_ITEM_USER:
+         cls = asUserClass();
+         udata = asUserInst();
+         break;
+
+      default:
+         cls = Engine::instance()->getTypeClass(type());
+         udata = this;
+      }
+   }
+
+   //===================================================================
+   // Is string?
+   //
+
+   bool isString()
+   {
+      Class* cls;
+      void* udata;
+      if ( asClassInst( cls, udata ) )
+      {
+         return cls->typeID() == FLC_CLASS_ID_STRING;
+      }
+      return false;
+   }
+   
+   bool isString( String*& str )
+   {
+      Class* cls;
+      if ( asClassInst( cls, (void*&)str ) )
+      {
+         return cls->typeID() == FLC_CLASS_ID_STRING;
+      }
+      return false;
+   }
+
+   String* asString()
+   {
+      Class* cls;
+      void* udata;
+      if ( asClassInst( cls, udata ) )
+      {
+         if( cls->typeID() == FLC_CLASS_ID_STRING )
+            return static_cast<String*>(udata);
+      }
+
+      return 0;
+   }
+
 };
 
 }

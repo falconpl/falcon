@@ -18,22 +18,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/sourceref.h>
-#include <falcon/syntree.h>
-#include <falcon/globalsvector.h>
-#include <falcon/refpointer.h>
-
-
-#include <map>
-#include <vector>
 
 namespace Falcon
 {
 
-class Item;
-class Symbol;
-class GlobalSymbol;
 class Collector;
+class VMachine;
 
 /**
  Falcon function.
@@ -55,7 +45,6 @@ class Collector;
 
  Functions can be created by modules or directly from the code. In this case,
  they aren't owned by any module and are immediately stored for garbage collection.
-
 */
 
 class FALCON_DYN_CLASS Function
@@ -90,20 +79,7 @@ public:
     Where a source path is not available, the module full qualified name is used.
    
    */
-   String locate() const;
-
-   Symbol* addVariable( const String& name );
-
-   /** Adds a variable to with a value being provided from the outside.
-    *
-    * If the incoming value needs a deep copy, it should be performed
-    * before passing it to this function.
-    */
-   Symbol* addClosedSymbol( const String& name, const Item& value );
-
-   /** Gets the count of parameters in this function.
-    * @return a number between 0..varCount()
-    */
+   String locate() const;   
 
    int32 paramCount() const { return m_paramCount; }
 
@@ -114,21 +90,6 @@ public:
     */
    void paramCount( int32 pc ) { m_paramCount = pc; }
 
-   /** Number of local variables in this function.
-    * @return count of symbols declared in this function (including parameters).
-    */
-   int32 varCount() const { return m_locals.size(); }
-
-   /** Finds a symbol by name. */
-   Symbol* findSymbol( const String& name ) const;
-
-   /** Gets a symbol by ID. */
-   Symbol* getSymbol( int32 id ) const;
-
-   /** Returns the statements of this function */
-   const SynTree& syntree() const { return m_syntree; }
-   SynTree& syntree() { return m_syntree; }
-
    /** Mark this function for garbage collecting. */
    void gcMark( int32 mark );
 
@@ -138,34 +99,31 @@ public:
     collection.
    
     */
-   void garbage( Collector* c );
+   GCToken* garbage( Collector* c );
 
    /** Garbage this function on the standard collector. */
-   void garbage();
+   GCToken* garbage();
 
-   /** Gets the global vector associated with this function, if any.
-      
-       Only functions having a module can access a global vector.
+   /** Executes the call.
+
+    The call execution may be either immediate or deferred; for example,
+    the call may just leaves PSteps to be executed by the virtual machine.
+
+    In case of deferred calls, apply must also push proper return PStep codes.
+    In case of immediate calls, apply() must also perform the return frame
+    code in the virtual machine by calling VMachine::returnFrame().
     */
-   GlobalsVector* globals();
+   virtual void apply( VMachine* vm, int32 pCount = 0 ) = 0;
+
+   /** Just candy grammar for this->apply(vm); */
+   void operator()( VMachine* vm ) { apply(vm); }
 
 protected:
-   SynTree m_syntree;
    String m_name;
    int32 m_paramCount;
 
    GCToken* m_gcToken;   
    Module* m_module;
-
-   //TODO: Use our old property table?
-   // Anyhow, should be optimized a bit.
-   typedef std::map<String, Symbol*> SymbolTable;
-   SymbolTable m_symtabTable;
-
-   typedef std::vector<Symbol*> SymbolVector;
-   SymbolVector m_locals;
-
-   ref_ptr<GlobalsVector> m_globals;
 
    int32 m_line;
 };

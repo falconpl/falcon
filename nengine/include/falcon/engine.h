@@ -17,6 +17,7 @@
 #define	_FALCON_ENGINE_H_
 
 #include <falcon/setup.h>
+#include <falcon/itemid.h>
 
 namespace Falcon
 {
@@ -65,6 +66,8 @@ public:
    //==========================================================================
    // Global Settings
    //
+
+   Class* getTypeClass( int type );
 
    /** True when running on windows system.
     
@@ -145,6 +148,7 @@ protected:
    static Engine* m_instance;
    Mutex* m_mtx;
    Collector* m_collector;
+   Class* m_classes[FLC_ITEM_COUNT];
 
    //===============================================
    // Global settings

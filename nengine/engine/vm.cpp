@@ -181,9 +181,6 @@ const PStep* VMachine::nextStep() const
 
 void VMachine::call( Function* function, int nparams, const Item& self )
 {
-   // Used by the VM to insert this opcode if needed to exit functions.
-   static StmtReturn s_a_return;
-
    TRACE( "Entering function: %s", function->locate().c_ize() );
    
    register VMContext* ctx = m_context;
@@ -199,36 +196,11 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
          topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
 
-
-   // fill the parameters
-   TRACE1( "-- filing parameters: %d/%d", nparams, function->paramCount() );
-   while( nparams < function->paramCount() )
-   {
-      (++ctx->m_topData)->setNil();
-      ++nparams;
-   }
-
-   // fill the locals
-   int locals = function->varCount() - function->paramCount();
-   TRACE1( "-- filing locals: %d", locals );
-   while( locals > 0 )
-   {
-      (++ctx->m_topData)->setNil();
-      --locals;
-   }
-
-   // Generate the code
-   // must we add a return?
-   if( function->syntree().last()->type() != Statement::return_t )
-   {
-      TRACE1( "-- Pushing extra return", 0 );
-      ctx->pushCode( &s_a_return );
-   }
-
-   ctx->pushCode( &function->syntree() );
-
    // prepare for a return that won't touch regA
    ctx->m_regA.setNil();
+   
+   // do the call
+   function->apply( this, nparams );
 }
 
 

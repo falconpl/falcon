@@ -40,7 +40,7 @@ extern "C"
 #include <falcon/memory.h>
 #include <falcon/sys.h>
 #include <falcon/string.h>
-#include <falcon/transcoding.h>
+//#include <falcon/transcoding.h>
 
 namespace Falcon {
 namespace Sys {

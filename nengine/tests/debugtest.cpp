@@ -16,7 +16,7 @@
 #include <falcon/exprvalue.h>
 #include <falcon/statement.h>
 
-#include <falcon/function.h>
+#include <falcon/synfunc.h>
 #include <falcon/module.h>
 #include <falcon/application.h>
 
@@ -28,7 +28,7 @@ public:
 void go()
 {
    Falcon::Module module("debugtest", "./debugtest.cpp");
-   Falcon::Function fmain( "__main__" );
+   Falcon::SynFunc fmain( "__main__" );
    fmain.module(&module);
 
    // create a program:

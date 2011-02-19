@@ -51,6 +51,7 @@ public:
    virtual bool isComposed() const { return true; }
 
    int size() const { return m_steps.size(); }
+   bool empty() const { return m_steps.empty(); }
 
    Statement* first() { return m_steps.front(); }
    Statement* last()  { return m_steps.back(); }
@@ -71,6 +72,7 @@ public:
    static void apply_( const PStep* ps, VMachine* vm );
    virtual void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
+
 private:
    typedef std::vector<Statement*> Steps;
    Steps m_steps;

@@ -15,7 +15,7 @@
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
 #include <falcon/statement.h>
-#include <falcon/function.h>
+#include <falcon/synfunc.h>
 
 #include <falcon/trace.h>
 #include <falcon/application.h>
@@ -40,7 +40,7 @@ void go( int fibSize )
    // return fib(30)
    //
 
-   Function fib( "fib" );
+   SynFunc fib( "fib" );
    Symbol* count = fib.addVariable("n");
    fib.paramCount(1);
 
@@ -66,7 +66,7 @@ void go( int fibSize )
    ExprCall* call_fib = new ExprCall( new ExprValue(&fib) );
    call_fib->addParameter( new ExprValue(fibSize) );
 
-   Function fmain( "__main__" );
+   SynFunc fmain( "__main__" );
    fmain.syntree().append(
          new StmtReturn( call_fib )
    );
