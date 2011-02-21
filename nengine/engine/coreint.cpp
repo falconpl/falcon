@@ -62,6 +62,7 @@ void CoreInt::serialize( Stream* stream, void* self ) const
 void* CoreInt::deserialize( Stream* stream ) const
 {
    //TODO
+   return 0;
 }
 
 void CoreInt::describe( void* instance, String& target ) const
