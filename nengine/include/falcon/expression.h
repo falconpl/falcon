@@ -650,6 +650,8 @@ public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprProvides, t_provides );
 };
 
+#endif
+
 /** Fast if -- ternary conditional operator. */
 class FALCON_DYN_CLASS ExprIIF: public TernaryExpression
 {
@@ -670,6 +672,8 @@ class FALCON_DYN_CLASS ExprDot: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprDot, t_obj_access );
+   
+private:
 };
 
 
@@ -687,6 +691,8 @@ class FALCON_DYN_CLASS ExprStarIndex: public BinaryExpression
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprStarIndex, t_array_byte_access );
 };
+
+#if 0
 
 /** String expansion expression */
 class FALCON_DYN_CLASS ExprStrExpand: public UnaryExpression

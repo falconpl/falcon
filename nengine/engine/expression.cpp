@@ -1899,6 +1899,46 @@ void ExprCall::describe( String& ret ) const
 }
 
 //=========================================================
+//Accessors
+
+bool ExprDot::simplify( Item& value ) const
+{
+   return false;
+}
+
+
+void ExprDot::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the prop name
+   Item prop = ctx->topData();
+   ctx->popData();
+   Class* cls;
+   void* self;
+   //acquire the class
+   ctx->topData().forceClassInst(cls, self);
+   if ( isLValue() )
+   {
+      ctx->popData();
+      Item target = ctx->topData();
+      cls->op_setProperty(vm, self, *prop.asString(), target);
+   }
+   else
+   {
+      cls->op_getProperty(vm, self, *prop.asString(), ctx->topData());
+   }
+}
+
+
+void ExprDot::describe( String& ret ) const
+{
+   ret = "(" m_first->describe() + "." + m_second->describe() + ")";
+}
+
+//=========================================================
 //Oob Manipulators
 
 bool ExprOob::simplify( Item& value ) const
