@@ -66,6 +66,7 @@ void Handle_affected(CoreObject *instance, void *user_data, Item &property, cons
 void Recordset_discard( VMachine *vm );
 void Recordset_fetch( VMachine *vm );
 void Recordset_do( VMachine *vm );
+void Recordset_next( VMachine *vm );
 
 void Recordset_getCurrentRow( VMachine *vm );
 void Recordset_getRowCount( VMachine *vm );

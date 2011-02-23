@@ -1,5 +1,7 @@
 Falcon (0.9.6.9)
   * fixed: dbiloader doesn't make the specific driver the vm's main module 
+  * fixed: dbi-mysql now manages non-prepareable queries.
+  * fixed: dbi-mysql now manages stored-procedure recordsets.
 
 Falcon (0.9.6.7)
   * fixed: pow() din't reset the numeric error on startup.

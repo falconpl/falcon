@@ -380,6 +380,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
             addParam( "cb" )->addParam( "item" );
 
+   self->addClassMethod( rs_class, "next", &Falcon::Ext::Recordset_next );
    self->addClassMethod( rs_class, "getCurrentRow", &Falcon::Ext::Recordset_getCurrentRow );
    self->addClassMethod( rs_class, "getRowCount", &Falcon::Ext::Recordset_getRowCount );
    self->addClassMethod( rs_class, "getColumnCount", &Falcon::Ext::Recordset_getColumnCount );

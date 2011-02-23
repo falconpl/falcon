@@ -1053,6 +1053,62 @@ void Recordset_do( VMachine *vm )
    vm->returnHandler( Recordset_do_next );
 }
 
+/*#
+   @method next Recordset
+   @brief Gets the next recordset in queries returning multiple recordsets.
+   @return Another recordset on success, nil if this query didn't generate any more
+           recordset.
+   @raise DBIError if the database engine reports an error.
+
+   Some engines may cause multiple recordsets to be generated after a single query.
+   In that case, this method may be used to retrieve the secondary recordest after the
+   first one has been completed.
+
+   When there aren't any more recordset to be fetched, this method returns nil.
+
+   The rules to access sub-recorsets may vary depending on the final engine, but
+   usually this can be considered safe:
+
+   @code
+   rs = dbi.query( "..." )
+
+   // process the query result as usual
+   data = [=>]
+   while rs.fetch(data)
+      // do things
+   end
+
+   // process the sub-queries.
+   while (sub_rs = rs.next() )
+      data = [=>]
+      while sub_rs.fetch(data)
+         // do more things things
+      end
+   end
+
+   rs.close()
+   @endcode
+*/
+
+void Recordset_next( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   DBIRecordset *res = dbr->getNext();
+   if( res != 0 )
+   {
+      Item* rset_item = vm->findWKI( "%Recordset" );
+      fassert( rset_item != 0 );
+      fassert( rset_item->isClass() );
+
+      CoreObject* rset = rset_item->asClass()->createInstance();
+      rset->setUserData( res );
+
+      vm->retval( rset );
+   }
+   // else return nothing
+}
 
 
 //======================================================

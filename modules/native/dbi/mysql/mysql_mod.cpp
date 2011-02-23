@@ -519,9 +519,57 @@ void DBIRecordsetMySQL_STMT::close()
    DBIRecordsetMySQL::close();
 
    if ( m_stmt != 0 ) {
+      while( mysql_next_result( m_pConn->handle() ) == 0 )
+      {
+         mysql_free_result( mysql_use_result( m_pConn->handle() ) );
+      }
+
       m_stmt = 0;
       m_pStmt->decref();
    }
+}
+
+DBIRecordset* DBIRecordsetMySQL_STMT::getNext()
+{
+   DBIHandleMySQL* mysql = static_cast<DBIHandleMySQL*>(m_dbh);
+
+   if ( mysql_next_result( m_pConn->handle() ) == 0 )
+   {
+      // We want a result recordset
+      MYSQL_RES * meta = mysql_stmt_result_metadata( m_pStmt->handle() );
+      if( meta == 0 )
+      {
+         //No, we have nothing to return.
+         mysql->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+      }
+
+      // ok. Do the user wanted all the result back?
+      if( m_dbh->options()->m_nPrefetch < 0 )
+      {
+         if( mysql_stmt_store_result( m_pStmt->handle() ) != 0
+             && mysql_errno( m_pConn->handle() ) != 0 )
+         {
+            mysql_free_result( meta );
+            mysql->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+         }
+      }
+
+      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
+
+      // -- may throw
+      try {
+         recset->init();
+      }
+      catch( ... )
+      {
+         delete recset;
+         throw;
+      }
+
+      return recset;
+   }
+
+   return 0;
 }
 
 /******************************************************************************
@@ -907,7 +955,10 @@ void DBIStatementMySQL::close()
   }
 }
 
-
+MYSQLStmtHandle::~MYSQLStmtHandle()
+{
+   mysql_stmt_close( handle() );
+}
 
 /******************************************************************************
  * DB Handler class
@@ -958,89 +1009,99 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
 
    // do we want to fetch strings?
-   if( options()->m_bFetchStrings )
+   if( ! options()->m_bFetchStrings )
    {
-      MYSQL *conn = m_conn;
-      int result;
-      if( params != 0)
+      // if not, try to prepare and execute.
+      // prepare and execute -- will create a new m_statement
+      MYSQL_STMT* stmt = my_prepare( sql, true );
+
+      // If 0, it means that mysql doesn't support prepare for this query.
+      if ( stmt != 0 )
       {
-         String temp;
-         sqlExpand( sql, temp, *params );
-         AutoCString asQuery( temp );
-         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
-      }
-      else
-      {
-         AutoCString asQuery( sql );
-         result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
-      }
+         MYSQL_RES* meta = 0;
+         DBIRecordsetMySQL_STMT* recset = 0;
 
-      if( result != 0 )
-      {
-         throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
-      }
-
-      MYSQL_RES* rec =  options()->m_nPrefetch < 0 ?
-         mysql_store_result( conn ) :
-         mysql_use_result( conn );
-
-      m_nLastAffected = mysql_affected_rows( conn );
-      return new DBIRecordsetMySQL_RES_STR( this, rec );
-   }
-
-   // prepare and execute -- will create a new m_statement
-   MYSQL_STMT* stmt = my_prepare( sql );
-   MYSQL_RES* meta = 0;
-   DBIRecordsetMySQL_STMT* recset = 0;
-
-   try
-   {
-      MyDBIInBind bindings(stmt);
-      m_nLastAffected = my_execute( stmt, bindings, params );
-
-      // We want a result recordset
-      meta = mysql_stmt_result_metadata( stmt );
-      if( meta == 0 )
-      {
-         return 0;
-      }
-      else
-      {
-         // ok. Do the user wanted all the result back?
-         if( m_settings.m_nPrefetch < 0 )
+         try
          {
-            if( mysql_stmt_store_result( stmt ) != 0 )
+            MyDBIInBind bindings(stmt);
+            m_nLastAffected = my_execute( stmt, bindings, params );
+
+            // We want a result recordset
+            meta = mysql_stmt_result_metadata( stmt );
+            if( meta == 0 )
             {
-               throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+               return 0;
             }
+
+            // ok. Do the user wanted all the result back?
+            if( m_settings.m_nPrefetch < 0 )
+            {
+               if( mysql_stmt_store_result( stmt ) != 0 )
+               {
+                  throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
+               }
+            }
+
+            // -- may throw
+            recset = new DBIRecordsetMySQL_STMT( this, meta, stmt );
+            recset->init();
+            return recset;
          }
+         catch( ... )
+         {
+            if( meta != 0 )
+               mysql_free_result( meta );
 
-         // -- may throw
-         recset = new DBIRecordsetMySQL_STMT( this, meta, stmt );
-         recset->init();
-         return recset;
+            if( recset )
+            {
+               delete recset;
+            }
+            else
+            {
+               mysql_stmt_close( stmt );
+            }
+            throw;
+         }
       }
-
    }
-   catch( ... )
+
+   // either we WANT to fetch strings, or we're FORCED by mysql
+   // -- which may not support prepare/execute for this query.
+   MYSQL *conn = m_conn;
+   int result;
+   if( params != 0)
    {
-      if( meta != 0 )
-         mysql_free_result( meta );
-
-      if( recset )
-      {
-         delete recset;
-      }
-      else
-      {
-         mysql_stmt_close( stmt );
-      }
-      throw;
+      String temp;
+      sqlExpand( sql, temp, *params );
+      AutoCString asQuery( temp );
+      result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
    }
+   else
+   {
+      AutoCString asQuery( sql );
+      result =  mysql_real_query( conn, asQuery.c_str(), asQuery.length() );
+   }
+
+   if( result != 0 )
+   {
+      throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
+   }
+
+   MYSQL_RES* rec =  options()->m_nPrefetch < 0 ?
+      mysql_store_result( conn ) :
+      mysql_use_result( conn );
+
+   m_nLastAffected = mysql_affected_rows( conn );
+   if( rec ==  0 )
+   {
+      return 0;
+   }
+
+   return new DBIRecordsetMySQL_RES_STR( this, rec );
 }
 
 
-MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
+MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query, bool bCanFallback )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -1052,8 +1113,16 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query )
    }
 
    AutoCString cquery( query );
+
    if( mysql_stmt_prepare( stmt, cquery.c_str(), cquery.length() ) != 0 )
    {
+      int result = mysql_errno( m_conn );
+      if ( result == 1295 && bCanFallback )
+      {
+         // unsupported as prepared query
+         return 0;
+      }
+
       throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_QUERY );
    }
 

@@ -20,6 +20,7 @@ try
    GC.perform(true)
    conn = dbi.connect( config.mysql_conn_str )
    conn.query("drop table TestTable")
+   conn.query("drop procedure getData")
    
    conn.commit()
    conn.close()

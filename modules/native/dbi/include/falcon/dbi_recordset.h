@@ -97,6 +97,13 @@ public:
     */
    virtual void close()=0;
 
+   /**
+    * Get the next recordset -- if any.
+    *
+    * Normally returns 0. Only certain engines support this feature.
+    */
+   virtual DBIRecordset* getNext();
+
    //=========================================================
    // Manage base class control.
    //

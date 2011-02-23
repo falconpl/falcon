@@ -32,7 +32,14 @@ try
          bblob        BLOB,
          number       REAL,
          ts           TimeStamp
-         ) ENGINE=InnoDB
+         ) ENGINE=InnoDB" )
+
+   conn.query("
+      create procedure getData( IN v_first integer, IN v_last integer )
+      BEGIN
+         select kv, vint, fixchar, vchar, tblob, bblob, number, ts
+            from TestTable where vint >= v_first and vint < v_last;
+      END
       ")
 
    conn.commit()

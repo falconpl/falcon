@@ -2,12 +2,12 @@
 * Falcon test suite -- DBI tests
 *
 *
-* ID: 21c
+* ID: 21d
 * Category: mysql
 * Subcategory:
-* Short: MySQL query multiple
+* Short: MySQL query on procedure
 * Description:
-* Performs a simple query that should return 10 records
+* Queries the recordset of a stored procedure. 
 *  -- USES the table created by the first test and the data from test 20d
 * [/Description]
 *
@@ -29,10 +29,7 @@ end
 
 try
    conn = dbi.connect( config.mysql_conn_str )
-   rs = conn.query( "
-      select kv, vint, fixchar, vchar, tblob, bblob, number, ts
-      from TestTable where vint >= ? and vint < ?",
-      10, 20 )
+   rs = conn.query( "call getData(?, ?)", 10, 20 )
 
    if rs.getColumnCount() != 8
       failure( "Can't get columns: " + rs.getColumnCount() )
@@ -46,6 +43,7 @@ try
    arr = []
    count = 0
    while rs.fetch( arr )
+      
       if arr[1] != data[count][1] or arr[2] != data[count][2] or \
             arr[3] != data[count][3] or arr[6] != data[count][6] or \
             arr[7].year != data[count][7].year
@@ -57,14 +55,14 @@ try
    if count != 10
       failure( "Fetched records " + count )
    end
-   
+
    rs.close()
    // try to query again
    rs = conn.query( "select * from TestTable" )
    if rs.getColumnCount() == 0
       failure( "Can't re-seek the table" )
    end
-
+   
    // fetch all
    count = 0
    while rs.fetch( arr )
@@ -72,10 +70,9 @@ try
    end
 
    if count != rs.getRowCount()
-      failure( "Problems fetching after select" )
+      failure( "Problems fetching after call" )
    end
-
-   rs.close()
+   
    conn.close()
    success()
 

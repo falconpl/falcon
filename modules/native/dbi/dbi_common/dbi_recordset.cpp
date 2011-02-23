@@ -29,6 +29,11 @@ FalconData *DBIRecordset::clone() const
    return 0;
 }
 
+DBIRecordset *DBIRecordset::getNext()
+{
+   return 0;
+}
+
 
 void DBIRecordset::gcMark( uint32 v )
 {

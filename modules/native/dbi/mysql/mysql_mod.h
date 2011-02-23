@@ -43,10 +43,7 @@ public:
       DBIRefCounter<MYSQL_STMT*>( m )
    {}
 
-   virtual ~MYSQLStmtHandle()
-   {
-      mysql_stmt_close( handle() );
-   }
+   virtual ~MYSQLStmtHandle();
 };
 
 class MyDBIInBind: public DBIInBind
@@ -134,6 +131,9 @@ public:
    virtual bool getColumnValue( int nCol, Item& value );
    virtual bool discard( int64 ncount );
    virtual void close();
+
+   /** This cind of recordsets can generate a next recordset. */
+   virtual DBIRecordset* getNext();
 };
 
 
@@ -169,7 +169,7 @@ protected:
    MYSQLHandle *m_pConn;
    DBISettingParams m_settings;
 
-   MYSQL_STMT* my_prepare( const String &query );
+   MYSQL_STMT* my_prepare( const String &query, bool bCanFallback = false );
    int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params );
 
 public:
