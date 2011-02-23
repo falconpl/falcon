@@ -404,7 +404,7 @@ public:
 
    /** Check if the and expression can stand alone.
     *
-    * An "or" expression can stand alone if it has a standalone second operator.
+    * An "or" expression can stand alone if it has a standalone second operand.
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
@@ -453,6 +453,8 @@ protected:
    friend class ExprFactory;
 };
 
+
+
 /** Unary negative. */
 class FALCON_DYN_CLASS ExprNeg: public UnaryExpression
 {
@@ -460,7 +462,57 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNeg, t_neg );
 };
 
+/** Math unary increment prefix. */
+class FALCON_DYN_CLASS ExprPreInc: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, t_pre_inc );
+   inline virtual bool isStandAlone() const { return true; }
+};
 
+/** Math unary increment postfix. */
+class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, t_post_inc );
+   inline virtual bool isStandAlone() const { return true; }
+
+   virtual void precompile( PCode* pcode ) const;
+
+private:
+
+   class FALCON_DYN_CLASS Gate: public PStep {
+   public:
+      Gate();
+      static void apply_( const PStep*, VMachine* vm );
+   } m_gate;
+};
+
+/** Math unary decrement prefix. */
+class FALCON_DYN_CLASS ExprPreDec: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, t_pre_dec );
+   inline virtual bool isStandAlone() const { return true; }
+};
+
+/** Math unary decrement postfix. */
+class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, t_post_dec );
+   inline virtual bool isStandAlone() const { return true; }
+
+   virtual void precompile( PCode* pcode ) const;
+
+private:
+
+   class FALCON_DYN_CLASS Gate: public PStep {
+   public:
+      Gate();
+      static void apply_( const PStep*, VMachine* vm );
+   } m_gate;
+};
 
 /** Math sum. */
 class FALCON_DYN_CLASS ExprPlus: public BinaryExpression
@@ -469,48 +521,12 @@ public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprPlus, t_plus );
 };
 
-/** Less than operator. */
-class FALCON_DYN_CLASS ExprLT: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLT, t_lt );
-};
-
-
-/** Function call. */
-class FALCON_DYN_CLASS ExprCall: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprCall, t_funcall );
-   virtual ~ExprCall();
-
-   ExprCall& addParameter( Expression* );
-
-   int paramCount() const { return m_params.size(); }
-   Expression* getParam( int n ) const;
-
-   inline virtual bool isStandAlone() const { return true; }
-
-   void precompile( PCode* pcode ) const;
-
-private:
-   std::vector<Expression*> m_params;
-};
-
-
-#if 0
-
-
-
-
-
 /** Math subtraction. */
 class FALCON_DYN_CLASS ExprMinus: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprMinus, t_minus );
 };
-
 
 /** Math multiply. */
 class FALCON_DYN_CLASS ExprTimes: public BinaryExpression
@@ -541,6 +557,13 @@ public:
 };
 
 
+/** Less than operator. */
+class FALCON_DYN_CLASS ExprLT: public BinaryExpression
+{
+public:
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLT, t_lt );
+};
+
 /** Greater than operator. */
 class FALCON_DYN_CLASS ExprGT: public BinaryExpression
 {
@@ -554,7 +577,6 @@ class FALCON_DYN_CLASS ExprGE: public BinaryExpression
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprGE, t_ge );
 };
-
 
 /** Less than or equal to operator. */
 class FALCON_DYN_CLASS ExprLE: public BinaryExpression
@@ -585,40 +607,27 @@ public:
 };
 
 
-
-To be dealt with later
-
-/** Math unary increment prefix. */
-class FALCON_DYN_CLASS ExprPreInc: public UnaryExpression
+/** Function call. */
+class FALCON_DYN_CLASS ExprCall: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, t_pre_inc );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprCall, t_funcall );
+   virtual ~ExprCall();
+
+   ExprCall& addParameter( Expression* );
+
+   int paramCount() const { return m_params.size(); }
+   Expression* getParam( int n ) const;
+
    inline virtual bool isStandAlone() const { return true; }
+
+   void precompile( PCode* pcode ) const;
+
+private:
+   std::vector<Expression*> m_params;
 };
 
-/** Math unary increment prefix. */
-class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, t_post_inc );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Math unary decrement prefix. */
-class FALCON_DYN_CLASS ExprPreDec: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, t_pre_dec );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Math unary decrement postfix. */
-class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, t_post_dec );
-   inline virtual bool isStandAlone() const { return true; }
-};
+#if 0
 
 /** "In" collection operator. */
 class FALCON_DYN_CLASS ExprIn: public BinaryExpression
@@ -660,7 +669,7 @@ public:
 class FALCON_DYN_CLASS ExprDot: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprIIF, t_obj_access );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprDot, t_obj_access );
 };
 
 
@@ -676,7 +685,7 @@ public:
 class FALCON_DYN_CLASS ExprStarIndex: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprIndex, t_array_byte_access );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprStarIndex, t_array_byte_access );
 };
 
 /** String expansion expression */
@@ -734,7 +743,7 @@ public:
    inline virtual bool isStandAlone() const { return true; }
 };
 
-/** Auto-module operation. */
+/** Auto-modulo operation. */
 class FALCON_DYN_CLASS ExprAutoMod: public BinaryExpression
 {
 public:
@@ -758,6 +767,8 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEval, t_eval );
    inline virtual bool isStandAlone() const { return true; }
 };
+
+#endif
 
 
 /** Set Out-of-band expression. */
@@ -788,7 +799,7 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprIsOob, t_isoob );
 };
 
-#endif
+
 }
 
 #endif

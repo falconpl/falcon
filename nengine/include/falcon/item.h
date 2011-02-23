@@ -219,6 +219,11 @@ public:
    */
    void resetOob() { content.base.bits.flags &= ~flagIsOob; }
 
+   /** Toggle out of band status of this item.
+      \see setOob() resetOob()
+   */
+   void xorOob() { content.base.bits.flags ^= flagIsOob; }
+
    /** Sets or clears the out of band status status of this item.
       \param oob true to make this item out of band.
       \see setOob()
@@ -229,7 +234,6 @@ public:
       else
          content.base.bits.flags &= ~flagIsOob;
    }
-
 
    /** Tells wether this item is out of band.
       \return true if out of band.

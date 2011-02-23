@@ -20,6 +20,8 @@
 #include <falcon/pcode.h>
 #include <falcon/exprfactory.h>
 #include <falcon/operanderror.h>
+#include <falcon/codeerror.h>
+#include <math.h>
 
 #include <falcon/trace.h>
 
@@ -185,54 +187,6 @@ bool TernaryExpression::isStatic() const
 // Expressions
 //
 
-bool ExprNeg::simplify( Item& value ) const
-{
-   if( m_first->simplify( value ) )
-   {
-      switch( value.type() )
-      {
-      case FLC_ITEM_INT: value.setInteger( -value.asInteger() ); return true;
-      case FLC_ITEM_NUM: value.setNumeric( -value.asNumeric() ); return true;
-      }
-   }
-
-   return false;
-}
-
-void ExprNeg::apply_( const PStep* self, VMachine* vm )
-{  
-   TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
-   
-   register VMContext* ctx = vm->currentContext();
-   Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
-
-   switch( item.type() )
-   {
-      case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
-      case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
-      case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_neg( vm, item.asDeepInst(), item );
-         break;
-
-      case FLC_ITEM_USER:
-         item.asUserClass()->op_neg( vm, item.asUserInst(), item );
-         break;
-
-      default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") ) );
-   }
-}
-
-void ExprNeg::describe( String& str ) const
-{
-   str = "-";
-   str += m_first->describe();
-}
-
 // ===================== logic not.
 
 bool ExprNot::simplify( Item& value ) const
@@ -266,7 +220,7 @@ void ExprNot::describe( String& str ) const
 }
 
 //=========================================================
-//
+//Logic And
 
 
 bool ExprAnd::simplify( Item& value ) const
@@ -345,6 +299,7 @@ void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
 }
 
 //=========================================================
+//Logic Or
 
 bool ExprOr::simplify( Item& value ) const
 {
@@ -421,7 +376,7 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 }
 
 //=========================================================
-//
+//Assignment
 
 void ExprAssign::precompile( PCode* pcode ) const
 {
@@ -446,7 +401,315 @@ void ExprAssign::describe( String& str ) const
 }
 
 //=========================================================
-//
+//Math
+
+//=========================================================
+//Unary
+
+bool ExprNeg::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( -value.asInteger() ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( -value.asNumeric() ); return true;
+      }
+   }
+
+   return false;
+}
+
+void ExprNeg::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   switch( item.type() )
+   {
+      case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
+      case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
+      case FLC_ITEM_DEEP:
+         item.asDeepClass()->op_neg( vm, item.asDeepInst(), item );
+         break;
+
+      case FLC_ITEM_USER:
+         item.asUserClass()->op_neg( vm, item.asUserInst(), item );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") ) );
+   }
+}
+
+void ExprNeg::describe( String& str ) const
+{
+   str = "-";
+   str += m_first->describe();
+}
+
+
+
+bool ExprPreInc::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( value.asInteger()+1 ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( value.asNumeric()+1 ); return true;
+      }
+   }
+
+   return false;
+}
+
+void ExprPreInc::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprPreInc*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   switch( item.type() )
+   {
+      case FLC_ITEM_INT: item.setInteger( item.asInteger()+1 ); break;
+      case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()+1 ); break;
+      case FLC_ITEM_DEEP:
+         item.asDeepClass()->op_inc( vm, item.asDeepInst(), item );
+         break;
+
+      case FLC_ITEM_USER:
+         item.asUserClass()->op_inc( vm, item.asUserInst(), item );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("preinc") ) );
+   }
+}
+
+void ExprPreInc::describe( String& str ) const
+{
+   str = "++";
+   str += m_first->describe();
+}
+
+
+bool ExprPostInc::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( value.asInteger()+1 ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( value.asNumeric()+1 ); return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprPostInc::precompile( PCode* pcode ) const
+{
+   TRACE2( "Precompile \"%s\"", describe().c_ize() );
+
+   pcode->pushStep( this );
+   pcode->pushStep( &m_gate );
+   m_first->precompile( pcode );
+}
+
+void ExprPostInc::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprPostInc*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   
+}
+
+void ExprPostInc::describe( String& str ) const
+{
+   str = m_first->describe();
+   str += "++";
+}
+
+ExprPostInc::Gate::Gate() {
+   apply = apply_;
+}
+
+void ExprPostInc::Gate::apply_( const PStep* ps,  VMachine* vm )
+{
+   TRACE2( "Apply GATE \"%s\"", ((ExprPostInc::Gate*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // read and recycle the topmost data.
+   Item& operand = ctx->topData();
+
+   switch( operand.type() )
+   {
+      case FLC_ITEM_INT: operand.setInteger( operand.asInteger()+1 ); break;
+      case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()+1 ); break;
+      case FLC_ITEM_DEEP:
+         operand.asDeepClass()->op_incpost( vm, operand.asDeepInst(), operand );
+         break;
+
+      case FLC_ITEM_USER:
+         operand.asUserClass()->op_incpost( vm, operand.asUserInst(), operand );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postinc") ) );
+   }
+   
+}
+
+
+
+bool ExprPreDec::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( value.asInteger()-1 ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( value.asNumeric()-1 ); return true;
+      }
+   }
+
+   return false;
+}
+
+void ExprPreDec::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprPreDec*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   switch( item.type() )
+   {
+      case FLC_ITEM_INT: item.setInteger( item.asInteger()-1 ); break;
+      case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()-1 ); break;
+      case FLC_ITEM_DEEP:
+         item.asDeepClass()->op_dec( vm, item.asDeepInst(), item );
+         break;
+
+      case FLC_ITEM_USER:
+         item.asUserClass()->op_dec( vm, item.asUserInst(), item );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("predec") ) );
+   }
+}
+
+void ExprPreDec::describe( String& str ) const
+{
+   str = "--";
+   str += m_first->describe();
+}
+
+
+
+bool ExprPostDec::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( value.asInteger()-1 ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( value.asNumeric()-1 ); return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprPostDec::precompile( PCode* pcode ) const
+{
+   TRACE2( "Precompile \"%s\"", describe().c_ize() );
+
+   pcode->pushStep( this );
+   pcode->pushStep( &m_gate );
+   m_first->precompile( pcode );
+}
+
+void ExprPostDec::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprPostDec*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   
+}
+
+void ExprPostDec::describe( String& str ) const
+{
+   str = m_first->describe();
+   str += "--";
+}
+
+ExprPostDec::Gate::Gate() {
+   apply = apply_;
+}
+
+void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
+{
+   TRACE2( "Apply GATE \"%s\"", ((ExprPostDec::Gate*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // read and recycle the topmost data.
+   Item& operand = ctx->topData();
+
+   switch( operand.type() )
+   {
+      case FLC_ITEM_INT: operand.setInteger( operand.asInteger()-1 ); break;
+      case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()-1 ); break;
+      case FLC_ITEM_DEEP:
+         operand.asDeepClass()->op_decpost( vm, operand.asDeepInst(), operand );
+         break;
+
+      case FLC_ITEM_USER:
+         operand.asUserClass()->op_decpost( vm, operand.asUserInst(), operand );
+         break;
+
+      default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postdec") ) );
+   }
+   
+}
+
+//=========================================================
+//Binary
+
 #define caseDeep \
       case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:\
       case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:\
@@ -546,14 +809,408 @@ void ExprPlus::describe( String& ret ) const
 }
 
 
+bool ExprMinus::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setInteger( d1.asInteger() - d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asInteger() - d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setNumeric( d1.asNumeric() - d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asNumeric() - d2.asNumeric() );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprMinus::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprMinus*)ps)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setInteger( d1.asInteger() - d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asInteger() - d2.asNumeric() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setNumeric( d1.asNumeric() - d2.asInteger() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asNumeric() - d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_sub( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_sub( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("-") ) );
+   }
+
+
+}
+
+
+void ExprMinus::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " - " + m_second->describe() + ")";
+}
+
+
+
+bool ExprTimes::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setInteger( d1.asInteger() * d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asInteger() * d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setNumeric( d1.asNumeric() * d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asNumeric() * d2.asNumeric() );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprTimes::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprTimes*)ps)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setInteger( d1.asInteger() * d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asInteger() * d2.asNumeric() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setNumeric( d1.asNumeric() * d2.asInteger() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asNumeric() * d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_mul( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_mul( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("*") ) );
+   }
+
+
+}
+
+
+void ExprTimes::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " * " + m_second->describe() + ")";
+}
+
+
+
+bool ExprDiv::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      if ( d2.isOrdinal() && d2.forceInteger() == 0 )
+      {
+         throw new CodeError( ErrorParam(e_div_by_zero, __LINE__).origin(ErrorParam::e_orig_compiler) );
+      }
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setInteger( d1.asInteger() / d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asInteger() / d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setNumeric( d1.asNumeric() / d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( d1.asNumeric() / d2.asNumeric() );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprDiv::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprDiv*)ps)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+   if ( d2.isOrdinal() && d2.forceInteger() == 0 )
+   {
+      throw new CodeError( ErrorParam(e_div_by_zero, __LINE__).origin(ErrorParam::e_orig_vm) );
+   }
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setInteger( d1.asInteger() / d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asInteger() / d2.asNumeric() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setNumeric( d1.asNumeric() / d2.asInteger() );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( d1.asNumeric() / d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_div( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_div( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("/") ) );
+   }
+
+
+}
+
+
+void ExprDiv::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " / " + m_second->describe() + ")";
+}
+
+
+
+bool ExprMod::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      if ( d2.isOrdinal() && d2.forceInteger() == 0 )
+      {
+         throw new CodeError( ErrorParam(e_mod_by_zero, __LINE__).origin(ErrorParam::e_orig_compiler) );
+      }
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setInteger( d1.asInteger() % d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setNumeric( fmod( d1.asInteger(), d2.asNumeric() ) );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setNumeric( fmod( d1.asNumeric(), d2.asInteger() ) );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( fmod( d1.asNumeric(), d2.asNumeric() ) );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprMod::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprMod*)ps)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+   if ( d2.isOrdinal() && d2.forceInteger() == 0 )
+   {
+      throw new CodeError( ErrorParam(e_mod_by_zero, __LINE__).origin(ErrorParam::e_orig_vm) );
+   }
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setInteger( d1.asInteger() % d2.asInteger() );
+      break;
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( fmod( d1.asInteger(), d2.asNumeric() ) );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setNumeric( fmod( d1.asNumeric(), d2.asInteger() ) );
+      break;
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setNumeric( fmod( d1.asNumeric(), d2.asNumeric() ) );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_mod( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_mod( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("%") ) );
+   }
+
+
+}
+
+
+void ExprMod::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " % " + m_second->describe() + ")";
+}
+
+
+
+bool ExprPow::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setNumeric( pow( d1.forceNumeric(), d2.forceNumeric() ) );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+void ExprPow::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprPow*)ps)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+
+   // No need to copy the second, we're not packing the stack now.
+   Item& d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         d1.setNumeric( pow( d1.forceNumeric(), d2.forceNumeric() ) );
+         break;
+
+   caseDeep:
+      d1.asDeepClass()->op_pow( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_pow( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("**") ) );
+   }
+
+
+}
+
+
+void ExprPow::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " ** " + m_second->describe() + ")";
+}
+
 //=========================================================
-//
+//Comparisons
 
 
 bool ExprLT::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
       switch ( d1.type() << 8 | d2.type() )
       {
@@ -567,7 +1224,7 @@ bool ExprLT::simplify( Item& value ) const
          value.setBoolean( d1.asNumeric() < d2.asInteger() );
          return true;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric()< d2.asNumeric() );
+         value.setBoolean( d1.asNumeric() < d2.asNumeric() );
          return true;
       default:
          if ( d1.type() < d2.type() )
@@ -597,8 +1254,6 @@ void ExprLT::apply_( const PStep* ps, VMachine* vm )
    // apply on the first
    Item& d1 = ctx->topData();
 
-   Class* pClass;
-   void* pData;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -615,7 +1270,7 @@ void ExprLT::apply_( const PStep* ps, VMachine* vm )
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric()< d2.asNumeric() );
+      d1.setBoolean( d1.asNumeric() < d2.asNumeric() );
       break;
 
    caseDeep:
@@ -637,6 +1292,531 @@ void ExprLT::apply_( const PStep* ps, VMachine* vm )
 void ExprLT::describe( String& ret ) const
 {
    ret = "(" + m_first->describe() + " < " + m_second->describe() + ")";
+}
+
+
+
+bool ExprLE::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() <= d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() <= d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() <= d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() <= d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() <= d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprLE::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprLE*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() <= d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() <= d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() <= d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() <= d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_le( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_le( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("<=") ) );
+   }
+}
+
+
+void ExprLE::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " <= " + m_second->describe() + ")";
+}
+
+
+
+bool ExprGT::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() > d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() > d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() > d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() > d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() > d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprGT::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprGT*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() > d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() > d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() > d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() > d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_gt( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_gt( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(">") ) );
+   }
+}
+
+
+void ExprGT::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " > " + m_second->describe() + ")";
+}
+
+
+
+bool ExprGE::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() >= d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() >= d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() >= d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() >= d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() >= d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprGE::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprGE*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() >= d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() >= d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() >= d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() >= d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_ge( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_ge( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(">=") ) );
+   }
+}
+
+
+void ExprGE::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " >= " + m_second->describe() + ")";
+}
+
+
+
+
+bool ExprEQ::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() == d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() == d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() == d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() == d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() == d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprEQ::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprEQ*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() == d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() == d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() == d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() == d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_eq( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_eq( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("==") ) );
+   }
+}
+
+
+void ExprEQ::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " == " + m_second->describe() + ")";
+}
+
+
+
+bool ExprEEQ::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() == d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() == d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() == d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() == d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() == d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprEEQ*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() == d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() == d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
+      d1.setBoolean( d1.asDeepInst() == d2.asDeepInst() );
+      break;
+
+   case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
+      d1.setBoolean( d1.asUserInst() == d2.asUserInst() );
+      break;
+
+   default:
+      d1.setBoolean(false);
+   }
+}
+
+
+void ExprEEQ::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " === " + m_second->describe() + ")";
+}
+
+
+
+bool ExprNE::simplify( Item& value ) const
+{
+   Item d1, d2;
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   {
+      switch ( d1.type() << 8 | d2.type() )
+      {
+      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asInteger() != d2.asInteger() );
+         return true;
+      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asInteger() != d2.asNumeric() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+         value.setBoolean( d1.asNumeric() != d2.asInteger() );
+         return true;
+      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+         value.setBoolean( d1.asNumeric() != d2.asNumeric() );
+         return true;
+      default:
+         if ( d1.type() != d2.type() )
+         {
+            value.setBoolean( true );
+         }
+         else
+         {
+            value.setBoolean( false );
+         }
+      }
+   }
+
+   return false;
+}
+
+
+void ExprNE::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprNE*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   // copy the second
+   Item d2 = ctx->topData();
+   ctx->popData();
+   // apply on the first
+   Item& d1 = ctx->topData();
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() != d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() != d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() != d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() != d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_ne( vm, d1.asDeepInst(), d2, d1 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_ne( vm, d1.asUserInst(), d2, d1 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("!=") ) );
+   }
+}
+
+
+void ExprNE::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " != " + m_second->describe() + ")";
 }
 
 
@@ -716,6 +1896,125 @@ void ExprCall::describe( String& ret ) const
    }
 
    ret = m_first->describe() + "(" + params +  ")";
+}
+
+//=========================================================
+//Oob Manipulators
+
+bool ExprOob::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      value.setOob();
+      return true;
+   }
+
+   return false;
+}
+
+void ExprOob::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprOob*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   ctx->topData().setOob();
+   // remove ourselves
+   ctx->popCode();
+}
+
+void ExprOob::describe( String& str ) const
+{
+   str = "^+";
+   str += m_first->describe();
+}
+
+
+
+bool ExprDeoob::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      value.resetOob();
+      return true;
+   }
+
+   return false;
+}
+
+void ExprDeoob::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprDeoob*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   ctx->topData().resetOob();
+   // remove ourselves
+   ctx->popCode();
+}
+
+void ExprDeoob::describe( String& str ) const
+{
+   str = "^-";
+   str += m_first->describe();
+}
+
+
+
+bool ExprXorOob::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      value.xorOob();
+      return true;
+   }
+
+   return false;
+}
+
+void ExprXorOob::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   ctx->topData().xorOob();
+   // remove ourselves
+   ctx->popCode();
+}
+
+void ExprXorOob::describe( String& str ) const
+{
+   str = "^%";
+   str += m_first->describe();
+}
+
+
+
+bool ExprIsOob::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      value.setBoolean(value.isOob());
+      return true;
+   }
+
+   return false;
+}
+
+void ExprIsOob::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   Item& item = ctx->topData();
+   // remove ourselves
+   ctx->popCode();
+
+   item.setBoolean(item.isOob());
+}
+
+void ExprIsOob::describe( String& str ) const
+{
+   str = "^?";
+   str += m_first->describe();
 }
 
 
