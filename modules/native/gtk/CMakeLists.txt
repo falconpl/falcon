@@ -10,15 +10,22 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 ##
 #   Options
 #
-option( GTK_ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
 option( GTK_NO_PARAMETER_CHECK "Disable all parameters checks" OFF )
 option( GTK_STRICT_PARAMETER_CHECK "Enable strictest parameters checks" OFF )
+mark_as_advanced( GTK_NO_PARAMETER_CHECK )
+mark_as_advanced( GTK_STRICT_PARAMETER_CHECK )
 
 if ( GTK_STRICT_PARAMETER_CHECK )
     add_definitions( -DSTRICT_PARAMETER_CHECK )
 elseif ( GTK_NO_PARAMETER_CHECK )
     add_definitions( -DNO_PARAMETER_CHECK )
 endif()
+
+##
+#   Obsolete options
+#
+option( GTK_ARM_POKY_LINUX "Compile for ARM-Poky-Linux (eReader)" OFF )
+mark_as_advanced( GTK_ARM_POKY_LINUX )
 
 ##
 #   Find Falcon
@@ -99,28 +106,7 @@ if ( WIN32 )
 else() # Linux
 
     if ( GTK_ARM_POKY_LINUX ) # embedded (eReader)
-
-        message( STATUS "-- Compiling for ARM-Poky-Linux..." )
-
-        set( POKY_ROOT /usr/local/poky/eabi-glibc/arm/arm-poky-linux-gnueabi )
-
-        include_directories( BEFORE
-            ${POKY_ROOT}/usr/include/gtk-2.0
-            ${POKY_ROOT}/usr/lib/gtk-2.0/include
-            ${POKY_ROOT}/usr/include/glib-2.0
-            ${POKY_ROOT}/usr/lib/glib-2.0/include
-            ${POKY_ROOT}/usr/include/pango-1.0
-            ${POKY_ROOT}/usr/include/cairo
-            ${POKY_ROOT}/usr/include/atk-1.0 )
-
-        set( GTK2_LIBRARIES
-            ${POKY_ROOT}/usr/lib/libglib-2.0.so
-            ${POKY_ROOT}/usr/lib/libgobject-2.0.so
-            ${POKY_ROOT}/usr/lib/libgdk-x11-2.0.so
-            ${POKY_ROOT}/usr/lib/libgtk-x11-2.0.so
-            ${POKY_ROOT}/usr/lib/libcairo.so
-            ${POKY_ROOT}/usr/lib/libpango-1.0.so
-            ${POKY_ROOT}/usr/lib/libatk-1.0.so )
+        include( FalconGTK-ARMPokyLinux )
 
     else() # normal linux
 

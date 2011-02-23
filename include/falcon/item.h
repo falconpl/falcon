@@ -483,6 +483,9 @@ public:
 
    /** Returns the item type*/
    byte type() const { return all.ctx.base.bits.type; }
+
+   /** Returns the item type as string*/
+   void typeName( String &target ) const;
    
    /** Changes the item type.
    

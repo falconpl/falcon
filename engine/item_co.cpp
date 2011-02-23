@@ -1870,7 +1870,10 @@ void co_generic_getproperty( const Item &item, const String &prop, Item &result 
       }
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( prop );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 void co_string_getproperty( const Item &item, const String &prop, Item &result )
@@ -1906,7 +1909,10 @@ void co_method_getproperty( const Item &item, const String &prop, Item &result )
       }
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( prop );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 void co_classmeth_getproperty( const Item &item, const String &idx, Item &target )
@@ -1956,7 +1962,10 @@ void co_classmeth_getproperty( const Item &item, const String &idx, Item &target
       }
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( idx ) );
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( idx );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 
@@ -2012,7 +2021,10 @@ void co_class_getproperty( const Item &item, const String &idx, Item &result )
       return;
    }
 
-   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( idx ) );
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( idx );
+   throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
 }
 
 //=============================================================
@@ -2056,9 +2068,12 @@ void co_class_setproperty( Item &item, const String &idx, const Item &result )
       }
    }
 
+   String extra;
+   item.typeName( extra );
+   extra.A( '.' ).A( idx );
    throw
       new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).
-         extra( idx ) );
+         extra( extra ) );
 }
 
 //=============================================================

@@ -171,7 +171,9 @@ void CoreArray::readProperty( const String &prop, Item &item )
       uint32 id;
       if ( cc == 0 || ! cc->properties().findKey( prop, id ) )
       {
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+         String extra( "Array." );
+         extra.A( prop );
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( extra ) );
       }
 
       p = cc->properties().getValue( id );

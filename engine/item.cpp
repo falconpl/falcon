@@ -557,6 +557,86 @@ void Item::toString( String &target ) const
    }
 }
 
+void Item::typeName( String &target ) const
+{
+   target.size(0);
+
+   switch( this->type() )
+   {
+      case FLC_ITEM_NIL:
+         target = "Nil";
+      break;
+
+      case FLC_ITEM_UNB:
+         target = "Unbound";
+      break;
+
+      case FLC_ITEM_BOOL:
+         target = "Bool";
+      break;
+
+
+      case FLC_ITEM_INT:
+         target = "Int";
+      break;
+
+      case FLC_ITEM_RANGE:
+         target = "Range";
+      break;
+
+      case FLC_ITEM_NUM:
+         target = "Numeric";
+      break;
+
+      case FLC_ITEM_MEMBUF:
+         target = "MemBuf";
+      break;
+
+      case FLC_ITEM_STRING:
+         target = "String";
+      break;
+
+      case FLC_ITEM_LBIND:
+         target = "LBind";
+      break;
+
+      case FLC_ITEM_REFERENCE:
+         target = "Reference";
+      break;
+
+      case FLC_ITEM_OBJECT:
+         target = asObjectSafe()->generator()->symbol()->name();
+      break;
+
+      case FLC_ITEM_ARRAY:
+         target = "Array";
+      break;
+
+      case FLC_ITEM_DICT:
+         target = "Dictionary";
+      break;
+
+      case FLC_ITEM_FUNC:
+         target = "Function";
+      break;
+
+      case FLC_ITEM_CLASS:
+         target = this->asClass()->symbol()->name();
+      break;
+
+      case FLC_ITEM_METHOD:
+         target = "Method";
+      break;
+
+      case FLC_ITEM_CLSMETHOD:
+         target = "ClsMethod";
+      break;
+
+      default:
+         target = "<?>";
+   }
+}
+
 bool Item::methodize( const Item &self )
 {
    Item *data = dereference();

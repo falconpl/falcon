@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 2.6.2)
 project(falcon-app-faldoc)
 
-set(FALDOC_DIR "${Falcon_APP_DIR}/faldoc" )
+set(FALDOC_DIR "${FALCON_APP_DIR}/faldoc" )
 
 #install startup bat
 
@@ -18,7 +18,7 @@ if(UNIX)
    @ONLY
    )
 
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc DESTINATION ${Falcon_BIN_DIR}
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc.sh DESTINATION ${FALCON_BIN_DIR}/faldoc
    PERMISSIONS
       OWNER_READ OWNER_WRITE OWNER_EXECUTE
       GROUP_READ GROUP_EXECUTE
@@ -31,7 +31,7 @@ else()
    @ONLY
    )
 
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc.bat DESTINATION ${Falcon_BIN_DIR} )
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc.bat DESTINATION ${FALCON_BIN_DIR} )
 endif()
 
 install(FILES src/faldoc.fal DESTINATION ${FALDOC_DIR})

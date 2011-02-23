@@ -344,17 +344,9 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
 
 
     private:
+
+        template<typename T> inline void EndianConvertHelper(T& val) const;
         
-        template<typename T> inline void EndianConvertHelper(T& val) const
-        {
-            switch(_endian)
-            {
-                case ENDIANMODE_LITTLE:  ToLittleEndian<T>(val); break;
-                case ENDIANMODE_BIG:     ToBigEndian<T>(val);    break;
-                case ENDIANMODE_REVERSE: ToOtherEndian<T>(val);  break;
-                // ENDIANMODE_NATIVE and ENDIANMODE_MANUAL do nothing
-            }
-        }
 
         // this code compiles with MSVC, but not with GCC - it is not required to have this class working, just a small optimization
 #ifdef _MSC_VER
@@ -365,9 +357,22 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
 
 // endian specializations below
 template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_NATIVE>::EndianConvertHelper(T& val) const {}
-template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_LITTLE>::EndianConvertHelper(T& val) const { ToLittleEndian<T>(val); }
-template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_BIG>::EndianConvertHelper(T& val) const { ToBigEndian<T>(val); }
-template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_REVERSE>::EndianConvertHelper(T& val) const { ToOtherEndian<T>(val); }
+template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_LITTLE>::EndianConvertHelper(T& val) const { ToLittleEndian(val); }
+template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_BIG>::EndianConvertHelper(T& val) const { ToBigEndian(val); }
+template <> template <typename T> inline void ByteBufTemplate<ENDIANMODE_REVERSE>::EndianConvertHelper(T& val) const { ToOtherEndian(val); }
+
+template<ByteBufEndianMode ENDIANMODE>
+template<typename T> inline void ByteBufTemplate<ENDIANMODE>::EndianConvertHelper(T& val) const
+{
+    switch(_endian)
+    {
+        case ENDIANMODE_LITTLE:  ToLittleEndian(val); break;
+        case ENDIANMODE_BIG:     ToBigEndian(val);    break;
+        case ENDIANMODE_REVERSE: ToOtherEndian(val);  break;
+        // ENDIANMODE_NATIVE and ENDIANMODE_MANUAL do nothing
+    }
+}
+
 
 template <> inline void ByteBufTemplate<ENDIANMODE_NATIVE>::setEndian(ByteBufEndianMode en) {}
 template <> inline void ByteBufTemplate<ENDIANMODE_LITTLE>::setEndian(ByteBufEndianMode en) {}
