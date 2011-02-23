@@ -29,6 +29,9 @@ public:
    Compiler();
    virtual ~Compiler();
 
+   Module* compile( Stream* in );
+
+   
 private:
    VMachine m_vm;
 
