@@ -286,7 +286,9 @@ void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
    {
       operand.setBoolean( false );
       // pop ourselves and the calling code
-      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      CodeFrame& cf = ctx->currentCode();
+      cf.m_seqId = static_cast<const PCode*>(cf.m_step)->size() -
+            static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
@@ -360,7 +362,10 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
    {
       operand.setBoolean( true );
       // pop ourselves and the calling code
-      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      //ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      CodeFrame& cf = ctx->currentCode();
+      cf.m_seqId = static_cast<const PCode*>(cf.m_step)->size() -
+            static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours

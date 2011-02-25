@@ -18,6 +18,11 @@
 #include <falcon/vm.h>
 
 #include <falcon/trace.h>
+
+#include <algorithm>
+#include <functional>
+
+
 namespace Falcon {
 
 PCode::PCode()
@@ -36,6 +41,13 @@ void PCode::describe( String& res ) const
    }
 }
 
+
+void PCode::closeCompile()
+{
+   std::reverse( m_steps.begin(), m_steps.end() );
+}
+
+
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
    VMContext* ctx = vm->currentContext();
@@ -47,15 +59,11 @@ void PCode::apply_( const PStep* self, VMachine* vm )
 
    // TODO Check if all this loops are really performance wise
    int depth = ctx->codeDepth();
-   if( cf.m_seqId == 0 )
-   {
-      cf.m_seqId = steps.size();
-      fassert( cf.m_seqId != 0 );
-   }
+   int size = steps.size();
 
-   while ( cf.m_seqId > 0 )
+   while ( cf.m_seqId < size )
    {
-      const PStep* pstep = steps[ --cf.m_seqId ];
+      const PStep* pstep = steps[ cf.m_seqId++ ];
       pstep->apply(pstep,vm);
 
       if( ctx->codeDepth() != depth )
@@ -64,12 +72,15 @@ void PCode::apply_( const PStep* self, VMachine* vm )
       }
    }
 
+   cf.m_seqId = 0;
+
    // when we're done...
    ctx->popCode();
    // save the result in the A register
    ctx->regA() = ctx->topData();
    ctx->popData();
 }
+
 
 }
 

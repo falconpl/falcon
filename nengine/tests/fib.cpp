@@ -62,6 +62,8 @@ void go( int fibSize )
          )
    );
 
+   std::cout << fib.syntree().describe().c_ize() << std::endl;
+
    // and now the main function
    ExprCall* call_fib = new ExprCall( new ExprValue(&fib) );
    call_fib->addParameter( new ExprValue(fibSize) );
@@ -100,10 +102,13 @@ int main( int argc, char* argv[] )
 {
    std::cout << "Fib test!" << std::endl;
 
-   TRACE_ON();
+   if ( argc > 2 )
+   {
+      TRACE_ON();
+   }
    
    FibApp app;
-   app.go(33);
+   app.go(argc > 1 ? atoi( argv[1] ) : 33 );
 
    return 0;
 }

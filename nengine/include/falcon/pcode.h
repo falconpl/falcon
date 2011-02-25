@@ -59,13 +59,15 @@ class FALCON_DYN_CLASS PCode: public PStep
 public:
 
    PCode();
-
    inline int size() const { return m_steps.size(); }
+
    /** Pushes a new step in the pcode. */
    inline void pushStep( const PStep* ps ) { m_steps.push_back( ps ); }
 
    virtual void describe( String& res ) const;
    virtual String describe() const {return PStep::describe(); }
+
+   void closeCompile();
    
 private:
    typedef std::vector<const PStep*> StepList;
