@@ -260,9 +260,6 @@ void ExprAnd::apply_( const PStep* self, VMachine* vm )
 
    // Booleanize it
    operand.setBoolean( operand.isTrue() );
-   // and remove ourselves
-   ctx->popCode();
-
 }
 
 void ExprAnd::describe( String& str ) const
@@ -337,8 +334,6 @@ void ExprOr::apply_( const PStep* self, VMachine* vm )
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
-   // remove ourselves
-   ctx->popCode();   
 }
 
 
@@ -1918,7 +1913,7 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
    void* self;
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
-   if ( isLValue() )
+   if ( ((ExprDot*)ps)->isLValue() )
    {
       ctx->popData();
       Item target = ctx->topData();
@@ -1933,7 +1928,7 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
 
 void ExprDot::describe( String& ret ) const
 {
-   ret = "(" m_first->describe() + "." + m_second->describe() + ")";
+   ret = "(" + m_first->describe() + "." + m_second->describe() + ")";
 }
 
 //=========================================================

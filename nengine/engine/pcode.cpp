@@ -50,7 +50,7 @@ void PCode::apply_( const PStep* self, VMachine* vm )
    if( cf.m_seqId == 0 )
    {
       cf.m_seqId = steps.size();
-      PARANOID( cf.m_seqId != 0, "Sequence ID should be != 0 here" );
+      fassert( cf.m_seqId != 0 );
    }
 
    while ( cf.m_seqId > 0 )

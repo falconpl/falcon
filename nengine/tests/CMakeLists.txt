@@ -31,3 +31,7 @@ message("Adding stringtest")
 add_executable( stringtest stringtest.cpp )
 target_link_libraries( stringtest falcon_engine )
 
+###############################################
+message("Adding and_test")
+add_executable( and_test and_test.cpp )
+target_link_libraries( and_test falcon_engine )
