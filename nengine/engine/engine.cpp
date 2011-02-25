@@ -119,7 +119,7 @@ Engine::Engine()
    m_classes[FLC_ITEM_INT] = new CoreInt;
    m_classes[FLC_ITEM_NUM] = new CoreNil;
    m_classes[FLC_ITEM_USER] = 0;
-   m_classes[FLC_ITEM_FUNC] = new CoreFunction;
+   m_classes[FLC_ITEM_FUNC] = m_functionClass;
    m_classes[FLC_ITEM_METHOD] = new CoreNil;
    m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
    m_classes[FLC_ITEM_DEEP] = 0;
@@ -139,6 +139,7 @@ Engine::~Engine()
    delete m_mtx;
    delete m_collector;
    delete m_codeErrorClass;
+   delete m_stringClass;
 
    for ( int count = 0; count < FLC_ITEM_COUNT; ++count )
    {

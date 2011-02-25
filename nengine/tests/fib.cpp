@@ -49,8 +49,8 @@ void go( int fibSize )
 
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprPlus(
-         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprPlus( count->makeExpression(), new ExprValue(-1))),
-         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprPlus( count->makeExpression(), new ExprValue(-2)))
+         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprMinus( count->makeExpression(), new ExprValue(1))),
+         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprMinus( count->makeExpression(), new ExprValue(2)))
          ))
    );
 

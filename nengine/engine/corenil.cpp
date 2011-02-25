@@ -54,6 +54,7 @@ void CoreNil::serialize( Stream* stream, void* self ) const
 
 void* CoreNil::deserialize( Stream* stream ) const
 {
+   return 0;
 }
 
 void CoreNil::describe( void* instance, String& target ) const
