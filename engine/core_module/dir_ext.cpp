@@ -38,7 +38,7 @@
 */
 
 /*#
-   @funset core_dir_funcs Directory functions
+   @group core_dir_funcs Directory functions
    @brief Directory and file names functions.
 
    Directory functions are currently under development. The general principle is
@@ -49,7 +49,7 @@
    this section is subject to sudden change, as the contribution of the community
    (even if just in form of suggestion) is vital.
 
-   @beginset core_dir_funcs
+   @begingroup core_dir_funcs
 */
 
 
