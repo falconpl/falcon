@@ -285,13 +285,12 @@ bool ExprAnd::simplify( Item& value ) const
 void ExprAnd::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
-   int shortCircuitSize = pcode->size();
+   m_gate.m_shortCircuitSeqId = pcode->size();
 
    pcode->pushStep( this );
    // and then the second expr last
    m_second->precompile( pcode );
    // add a gate to jump checks on short circuits
-   m_gate.m_shortCircuitSeqId = shortCircuitSize;
    pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
@@ -362,14 +361,12 @@ bool ExprOr::simplify( Item& value ) const
 void ExprOr::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
-
-   int shortCircuitSize = pcode->size();
+   m_gate.m_shortCircuitSeqId = pcode->size();
 
    pcode->pushStep( this );
    // and then the second expr last
    m_second->precompile( pcode );
    // add a gate to jump checks on short circuits
-   m_gate.m_shortCircuitSeqId = shortCircuitSize;
    pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
@@ -386,19 +383,20 @@ void ExprOr::apply_( const PStep* self, VMachine* vm )
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
    // remove ourselves
-   ctx->popCode();
-
-   
+   ctx->popCode();   
 }
+
 
 void ExprOr::describe( String& str ) const
 {
    str = "(" + m_first->describe() + " or " + m_second->describe() + ")";
 }
 
+
 ExprOr::Gate::Gate() {
    apply = apply_;
 }
+
 
 void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
 {

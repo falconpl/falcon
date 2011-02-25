@@ -38,7 +38,7 @@ void PCode::describe( String& res ) const
 
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
-   register VMContext* ctx = vm->currentContext();
+   VMContext* ctx = vm->currentContext();
 
    TRACE3( "PCode apply: %p (%s)", self, self->describe().c_ize() );
 
@@ -46,32 +46,29 @@ void PCode::apply_( const PStep* self, VMachine* vm )
    CodeFrame& cf = ctx->currentCode();
 
    // TODO Check if all this loops are really performance wise
-   register int depth = ctx->codeDepth();
-   register int pos = steps.size() - cf.m_seqId;
-   while ( pos > 0 )
+   int depth = ctx->codeDepth();
+   if( cf.m_seqId == 0 )
    {
-      const PStep* pstep = steps[ --pos ];
+      cf.m_seqId = steps.size();
+      PARANOID( cf.m_seqId != 0, "Sequence ID should be != 0 here" );
+   }
+
+   while ( cf.m_seqId > 0 )
+   {
+      const PStep* pstep = steps[ --cf.m_seqId ];
       pstep->apply(pstep,vm);
 
       if( ctx->codeDepth() != depth )
       {
-         cf.m_seqId = steps.size() - pos;
          return;
       }
    }
 
-   // we're done?
-   if( pos == 0 )
-   {
-      ctx->popCode();
-      // save the result in the A register
-      ctx->regA() = ctx->topData();
-      ctx->popData();
-   }
-   else
-   {
-      cf.m_seqId = steps.size() - pos;
-   }
+   // when we're done...
+   ctx->popCode();
+   // save the result in the A register
+   ctx->regA() = ctx->topData();
+   ctx->popData();
 }
 
 }
