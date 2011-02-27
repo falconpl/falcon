@@ -665,15 +665,40 @@ public:
    inline virtual bool isStandAlone() const {
       return m_second->isStandAlone() && m_third->isStandAlone();
    }
+
+   void precompile( PCode* pcode ) const;
+private:
+   mutable int m_falseSeqId;
+   class FALCON_DYN_CLASS Gate: public PStep {
+public:
+      Gate();
+      static void apply_( const PStep*, VMachine* vm );
+      mutable int m_endSeqId;
+   } m_gate;
+
 };
 
 /** Dot accessor. */
-class FALCON_DYN_CLASS ExprDot: public BinaryExpression
+class FALCON_DYN_CLASS ExprDot: public UnaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprDot, t_obj_access );
-   
-private:
+   inline ExprDot( const String& prop, Expression* op1 ): UnaryExpression( t_obj_access, op1 ), m_prop(prop) {apply = apply_;} 
+   inline ExprDot( const ExprDot& other ): UnaryExpression( other ), m_prop(other.m_prop) {apply = apply_;} 
+   inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
+   inline virtual void setLValue() { m_lvalue = true; }
+   inline virtual bool isLValue() const { return m_lvalue; }
+   virtual bool simplify( Item& value ) const; 
+   static void apply_( const PStep*, VMachine* vm ); 
+   virtual void describe( String& ) const;
+   virtual void oneLiner( String& s ) const { describe( s ); }
+   inline String describe() const { return PStep::describe(); }
+   inline String oneLiner() const { return PStep::oneLiner(); }
+protected:
+   inline ExprDot(): UnaryExpression( t_obj_access ), m_prop("") {}
+   bool m_lvalue;
+   const String& m_prop;
+   friend class ExprFactory; 
+public:
 };
 
 

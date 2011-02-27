@@ -206,8 +206,6 @@ void ExprNot::apply_( const PStep* self, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
    Item& operand = ctx->topData();
 
-   // remove ourselves
-   ctx->popCode();
 
    //TODO: overload not
    operand.setBoolean( ! operand.isTrue() );
@@ -239,6 +237,7 @@ bool ExprAnd::simplify( Item& value ) const
 void ExprAnd::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
+
    m_gate.m_shortCircuitSeqId = pcode->size();
 
    pcode->pushStep( this );
@@ -424,8 +423,6 @@ void ExprNeg::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    switch( item.type() )
    {
@@ -474,8 +471,6 @@ void ExprPreInc::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    switch( item.type() )
    {
@@ -533,8 +528,6 @@ void ExprPostInc::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    
 }
@@ -600,8 +593,6 @@ void ExprPreDec::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    switch( item.type() )
    {
@@ -660,8 +651,6 @@ void ExprPostDec::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    
 }
@@ -1897,10 +1886,93 @@ void ExprCall::describe( String& ret ) const
 }
 
 //=========================================================
+//Fast if (ternary conditional operator)
+
+bool ExprIIF::simplify( Item& value ) const
+{
+   Item temp;
+   if( m_first->simplify( temp ) )
+   {
+      if (temp.isTrue())
+      {
+         return m_second->simplify( value );
+      }
+      else
+      {
+         return m_third->simplify( value );
+      }
+   }
+
+   return false;
+}
+
+
+void ExprIIF::precompile( PCode* pcode ) const
+{
+   TRACE2( "Precompile \"%s\"", describe().c_ize() );
+   
+   //acquire the position at the end of the expr to jump over the false expr.
+   m_gate.m_endSeqId = pcode->size();
+   //precompile false expr.
+   m_third->precompile( pcode );
+   //acuire the position of the start of the false expr to jump to.
+   m_falseSeqId = pcode->size();
+   //push gate to allow exit after true expr.
+   pcode->pushStep( &m_gate );
+   //precompile true expr.
+   m_second->precompile( pcode );
+   //push ourselves to determine where to branch to.
+   pcode->pushStep( this );
+   //precompile condition executed first.
+   m_first->precompile( pcode );
+
+   
+}
+
+void ExprIIF::apply_( const PStep* self, VMachine* vm )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprIIF*)self)->describe().c_ize() );
+   
+   register VMContext* ctx = vm->currentContext();
+   
+   //get the value of the condition and pop it.
+   Item cond = ctx->topData();
+   ctx->popData();
+
+   if ( !cond.isTrue() )
+   {
+      ctx->currentCode().m_seqId = ((ExprIIF*)self)->m_falseSeqId;
+   }
+
+   
+}
+
+void ExprIIF::describe( String& str ) const
+{
+   str = "( " + m_first->describe() + " ? " + m_second->describe() + " : " + m_third->describe() + " )";
+}
+
+ExprIIF::Gate::Gate() {
+   apply = apply_;
+}
+
+void ExprIIF::Gate::apply_( const PStep* ps,  VMachine* vm )
+{
+   TRACE2( "Apply GATE \"%s\"", ((ExprIIF::Gate*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   ctx->currentCode().m_seqId = ((ExprIIF::Gate*)ps)->m_endSeqId;
+
+}
+
+
+//=========================================================
 //Accessors
 
 bool ExprDot::simplify( Item& value ) const
 {
+   //ToDo add simplification for known members at compiletime.
    return false;
 }
 
@@ -1911,29 +1983,103 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the prop name
-   Item prop = ctx->topData();
-   ctx->popData();
    Class* cls;
    void* self;
+   // get prop name
+   const String& prop = ((ExprDot*)ps)->m_prop;
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
    if ( ((ExprDot*)ps)->isLValue() )
    {
       ctx->popData();
       Item target = ctx->topData();
-      cls->op_setProperty(vm, self, *prop.asString(), target);
+      cls->op_setProperty(vm, self, prop, target);
    }
    else
    {
-      cls->op_getProperty(vm, self, *prop.asString(), ctx->topData());
+      cls->op_getProperty(vm, self, prop, ctx->topData());
    }
 }
 
 
 void ExprDot::describe( String& ret ) const
 {
-   ret = "(" + m_first->describe() + "." + m_second->describe() + ")";
+   ret = "(" + m_first->describe() + "." + m_prop + ")";
+}
+
+bool ExprIndex::simplify( Item& value ) const
+{
+   //ToDo possibly add simplification for indexing.
+   return false;
+}
+
+
+void ExprIndex::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   Item obj = ctx->topData();
+   ctx->popData();
+   Class* cls;
+   void* self;
+   //acquire the class
+   ctx->topData().forceClassInst(cls, self);
+   if ( ((ExprIndex*)ps)->isLValue() )
+   {
+      Item index = ctx->topData();
+      ctx->popData();
+      Item target = ctx->topData();
+      cls->op_setIndex(vm, self, index, target);
+   }
+   else
+   {
+      Item& index = ctx->topData();
+      cls->op_getIndex(vm, self, index, index);
+   }
+}
+
+
+void ExprIndex::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + "[" + m_second->describe() + "])";
+}
+
+bool ExprStarIndex::simplify( Item& value ) const
+{
+   //ToDo add simplification for static string star indexing.
+   return false;
+}
+
+
+void ExprStarIndex::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprStarIndex*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   Item str = ctx->topData();
+   ctx->popData();
+   Item& index = ctx->topData();
+
+   if ( str.isString() && index.isOrdinal() )
+   {
+      index.setInteger( str.asString()->getCharAt(index.forceInteger()) );
+   }
+   else
+   {
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("[*]") ) );
+   }
+  
+}
+
+
+void ExprStarIndex::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + "[*" + m_second->describe() + "])";
 }
 
 //=========================================================
@@ -1956,8 +2102,6 @@ void ExprOob::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    ctx->topData().setOob();
-   // remove ourselves
-   ctx->popCode();
 }
 
 void ExprOob::describe( String& str ) const
@@ -1985,8 +2129,6 @@ void ExprDeoob::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    ctx->topData().resetOob();
-   // remove ourselves
-   ctx->popCode();
 }
 
 void ExprDeoob::describe( String& str ) const
@@ -2014,8 +2156,6 @@ void ExprXorOob::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    ctx->topData().xorOob();
-   // remove ourselves
-   ctx->popCode();
 }
 
 void ExprXorOob::describe( String& str ) const
@@ -2043,8 +2183,6 @@ void ExprIsOob::apply_( const PStep* self, VMachine* vm )
    
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-   // remove ourselves
-   ctx->popCode();
 
    item.setBoolean(item.isOob());
 }
