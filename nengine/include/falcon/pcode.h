@@ -66,8 +66,6 @@ public:
 
    virtual void describe( String& res ) const;
    virtual String describe() const {return PStep::describe(); }
-
-   void closeCompile();
    
 private:
    typedef std::vector<const PStep*> StepList;

@@ -52,7 +52,6 @@ StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
       m_expr( expr )
 {
    m_expr->precompile(&m_pcExpr);
-   m_pcExpr.closeCompile();
 
    // No need to push ourselves. Just push the expression
    m_step0 = &m_pcExpr;
@@ -88,7 +87,6 @@ StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr )
    apply = apply_;
 
    check->precompile(&m_pcCheck);
-   m_pcCheck.closeCompile();
 
    // push ourselves and the expression in the steps
    m_step0 = this;
@@ -262,7 +260,6 @@ StmtIf::ElifBranch::~ElifBranch()
 void StmtIf::ElifBranch::compile()
 {
    m_check->precompile( &m_pcCheck );
-   m_pcCheck.closeCompile();
 }
 
 //============================================================
@@ -280,7 +277,6 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    {
       m_expr = expr;
       expr->precompile( &m_pcExpr );
-      m_pcExpr.closeCompile();
       m_step1 = &m_pcExpr;
    }
 }

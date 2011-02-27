@@ -42,12 +42,6 @@ void PCode::describe( String& res ) const
 }
 
 
-void PCode::closeCompile()
-{
-   std::reverse( m_steps.begin(), m_steps.end() );
-}
-
-
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
    VMContext* ctx = vm->currentContext();

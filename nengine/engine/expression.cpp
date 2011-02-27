@@ -70,8 +70,8 @@ UnaryExpression::~UnaryExpression()
 void UnaryExpression::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling un-exp: %p (%s)", pcode, describe().c_ize() );
-   pcode->pushStep( this );
    m_first->precompile( pcode );
+   pcode->pushStep( this );
 }
 
 void UnaryExpression::serialize( Stream* s ) const
@@ -110,9 +110,9 @@ BinaryExpression::~BinaryExpression()
 void BinaryExpression::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling bin-exp: %p (%s)", pcode, describe().c_ize() );
-   pcode->pushStep( this );
-   m_second->precompile( pcode );
    m_first->precompile( pcode );
+   m_second->precompile( pcode );
+   pcode->pushStep( this );
 }
 
 void BinaryExpression::serialize( Stream* s ) const
@@ -154,10 +154,10 @@ void TernaryExpression::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling tri-exp: %p (%s)", pcode, describe().c_ize() );
    
-   pcode->pushStep( this );
-   m_third->precompile( pcode );
-   m_second->precompile( pcode );
    m_first->precompile( pcode );
+   m_second->precompile( pcode );
+   m_third->precompile( pcode );
+   pcode->pushStep( this );
 }
 
 
@@ -238,15 +238,17 @@ void ExprAnd::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
 
-   m_gate.m_shortCircuitSeqId = pcode->size();
-
-   pcode->pushStep( this );
-   // and then the second expr last
-   m_second->precompile( pcode );
-   // add a gate to jump checks on short circuits
-   pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
+    // add a gate to jump checks on short circuits
+   pcode->pushStep( &m_gate );
+   // and then the second expr last
+   m_second->precompile( pcode );
+   pcode->pushStep( this );
+   //set shortcircuit jump location to end of expr.
+   m_gate.m_shortCircuitSeqId = pcode->size();
+  
+   
 }
 
 void ExprAnd::apply_( const PStep* self, VMachine* vm )
@@ -285,9 +287,7 @@ void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
    {
       operand.setBoolean( false );
       // pop ourselves and the calling code
-      CodeFrame& cf = ctx->currentCode();
-      cf.m_seqId = static_cast<const PCode*>(cf.m_step)->size() -
-            static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
@@ -314,15 +314,16 @@ bool ExprOr::simplify( Item& value ) const
 void ExprOr::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
-   m_gate.m_shortCircuitSeqId = pcode->size();
 
-   pcode->pushStep( this );
-   // and then the second expr last
-   m_second->precompile( pcode );
-   // add a gate to jump checks on short circuits
-   pcode->pushStep( &m_gate );
    // check the first expression for first...
    m_first->precompile( pcode );
+   // add a gate to jump checks on short circuits
+   pcode->pushStep( &m_gate );
+   // and then the second expr last
+   m_second->precompile( pcode );
+   pcode->pushStep( this );
+   //set shortcircuit jump location to end of expr.
+   m_gate.m_shortCircuitSeqId = pcode->size();
 }
 
 
@@ -361,10 +362,7 @@ void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
    {
       operand.setBoolean( true );
       // pop ourselves and the calling code
-      //ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
-      CodeFrame& cf = ctx->currentCode();
-      cf.m_seqId = static_cast<const PCode*>(cf.m_step)->size() -
-            static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
+      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
    }
    else {
       // the other expression is bound to push data, remove ours
@@ -381,8 +379,8 @@ void ExprAssign::precompile( PCode* pcode ) const
 
    // just, evaluate the second, then evaluate the first,
    // but the first knows it's a lvalue.
-   m_first->precompile(pcode);
    m_second->precompile(pcode);
+   m_first->precompile(pcode);
 }
 
 
@@ -517,9 +515,10 @@ void ExprPostInc::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
 
+   m_first->precompile( pcode );
    pcode->pushStep( this );
    pcode->pushStep( &m_gate );
-   m_first->precompile( pcode );
+   
 }
 
 void ExprPostInc::apply_( const PStep* self, VMachine* vm )
@@ -640,9 +639,9 @@ void ExprPostDec::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
 
+   m_first->precompile( pcode );
    pcode->pushStep( this );
    pcode->pushStep( &m_gate );
-   m_first->precompile( pcode );
 }
 
 void ExprPostDec::apply_( const PStep* self, VMachine* vm )
@@ -1826,15 +1825,18 @@ void ExprCall::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
 
-   // set our callback
-   pcode->pushStep( this );
-   m_first->precompile( pcode );
-
-   // and generate all the expressions, in inverse order.
-   for( int i = (int) m_params.size()-1; i >= 0; --i )
+   // precompile all parameters in order.
+   for( int i = 0; i < m_params.size(); ++i )
    {
       m_params[i]->precompile( pcode );
    }
+
+   // then precompile the called object,
+   m_first->precompile( pcode );
+   // and finally push the step to do the call.
+   pcode->pushStep( this );
+
+   
 }
 
 
@@ -1911,21 +1913,20 @@ void ExprIIF::precompile( PCode* pcode ) const
 {
    TRACE2( "Precompile \"%s\"", describe().c_ize() );
    
-   //acquire the position at the end of the expr to jump over the false expr.
-   m_gate.m_endSeqId = pcode->size();
-   //precompile false expr.
-   m_third->precompile( pcode );
-   //acuire the position of the start of the false expr to jump to.
-   m_falseSeqId = pcode->size();
-   //push gate to allow exit after true expr.
-   pcode->pushStep( &m_gate );
-   //precompile true expr.
-   m_second->precompile( pcode );
-   //push ourselves to determine where to branch to.
-   pcode->pushStep( this );
    //precompile condition executed first.
    m_first->precompile( pcode );
-
+   //push ourselves to determine where to branch to.
+   pcode->pushStep( this );
+   //precompile true expr.
+   m_second->precompile( pcode );
+   //push gate to allow exit after true expr.
+   pcode->pushStep( &m_gate );
+   //acuire the position of the start of the false expr to jump to.
+   m_falseSeqId = pcode->size();
+   //precompile false expr.
+   m_third->precompile( pcode );
+   //acquire the position at the end of the expr to jump over the false expr.
+   m_gate.m_endSeqId = pcode->size();
    
 }
 
