@@ -37,8 +37,8 @@ class SynFunc;
 class FALCON_DYN_CLASS VMContext
 {
 public:
-   static const int INITIAL_STACK_ALLOC = 256;
-   static const int INCREMENT_STACK_ALLOC = 64;
+   static const int INITIAL_STACK_ALLOC = 8;
+   static const int INCREMENT_STACK_ALLOC = 8;
 
    VMContext();
    ~VMContext();
@@ -69,10 +69,12 @@ public:
     *TODO return 0 on parameter out of range.
     */
    inline const Item* param( int n ) const {
+	  fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
    inline Item* param( int n )  {
+      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
@@ -81,10 +83,12 @@ public:
     *TODO use the local stack.
     */
    inline const Item* local( int n ) const {
+	  fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
       return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
    }
 
    inline Item* local( int n ) {
+	  fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
       return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
    }
 
@@ -102,11 +106,13 @@ public:
     *
     */
    inline const Item& topData() const {
+	  fassert( m_topData >= m_dataStack && m_topData < m_maxData );
       return *m_topData;
    }
 
    inline Item& topData() {
-      return *m_topData;
+	  fassert( m_topData >= m_dataStack && m_topData < m_maxData);
+	  return *m_topData;
    }
 
    /** Removes the last element from the stack */
