@@ -27,6 +27,11 @@ add_executable( fib fib.cpp )
 target_link_libraries( fib falcon_engine )
 
 ###############################################
+message("Adding fact")
+add_executable( fact fact.cpp )
+target_link_libraries( fact falcon_engine )
+
+###############################################
 message("Adding stringtest")
 add_executable( stringtest stringtest.cpp )
 target_link_libraries( stringtest falcon_engine )
