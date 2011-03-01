@@ -29,7 +29,7 @@ VMContext::VMContext()
    m_topCall = m_callStack-1;
    m_maxCall = m_callStack + INITIAL_STACK_ALLOC;
 
-   m_dataStack = (Item*) malloc((INITIAL_STACK_ALLOC+23)*sizeof(Item*));
+   m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item));
    m_topData = m_dataStack-1;
    m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
 }

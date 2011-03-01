@@ -37,8 +37,8 @@ class SynFunc;
 class FALCON_DYN_CLASS VMContext
 {
 public:
-   static const int INITIAL_STACK_ALLOC = 8;
-   static const int INCREMENT_STACK_ALLOC = 8;
+   static const int INITIAL_STACK_ALLOC = 512;
+   static const int INCREMENT_STACK_ALLOC = 256;
 
    VMContext();
    ~VMContext();
