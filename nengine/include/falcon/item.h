@@ -476,11 +476,11 @@ public:
    // Is string?
    //
 
-   bool isString()
+   bool isString() const
    {
       Class* cls;
       void* udata;
-      if ( asClassInst( cls, udata ) )
+      if ( const_cast<Item*>(this)->asClassInst( cls, udata ) )
       {
          return cls->typeID() == FLC_CLASS_ID_STRING;
       }

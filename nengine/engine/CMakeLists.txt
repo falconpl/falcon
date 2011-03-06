@@ -10,13 +10,17 @@ message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
 if(UNIX OR APPLE)
   set(SYS_SPECIFIC
+	 fstream_sys_unix.cpp
     mt_posix.cpp
+	 stdstreams_unix.cpp
     sys_posix.cpp
   )
 elseif(WIN32)
 
   set(SYS_SPECIFIC
+    fstream_sys_win.cpp
     mt_win.cpp
+	 stdstreams_win.cpp
     sys_win.cpp
   )
 endif()
@@ -27,6 +31,7 @@ add_library(falcon_engine SHARED
 
   memory.cpp
   application.cpp
+  autocstring.cpp
   class.cpp
   closedsymbol.cpp
   codeerror.cpp
@@ -53,17 +58,21 @@ add_library(falcon_engine SHARED
   localsymbol.cpp
   module.cpp
   operanderror.cpp
+  path.cpp
   pcode.cpp
   rampmode.cpp
   sourceref.cpp
   statement.cpp
   string.cpp
+  stringstream.cpp
   stream.cpp
   symbol.cpp
   synfunc.cpp
   syntree.cpp
   trace.cpp
   tracestep.cpp
+  transcoding.cpp
+  uri.cpp
   vm.cpp
   vmcontext.cpp
 )
