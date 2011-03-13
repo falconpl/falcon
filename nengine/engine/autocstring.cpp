@@ -29,40 +29,12 @@ AutoCString::AutoCString():
    m_pData = m_buffer;
    m_buffer[3] = '\0';
 }
-
-AutoCString::AutoCString( const Item &itm ):
-   m_pData(0)
-{
-   set(itm);
-}
-
-
 AutoCString::AutoCString( const String &str ):
    m_pData(0)
 {
    set(str);
 }
 
-#if 0
-void AutoCString::init_vm_and_format( VMachine *vm, const Item &itm, const String &fmt )
-{
-   String *str;
-   String tempStr;
-
-   str = &tempStr;
-   vm->itemToString( tempStr, &itm, fmt );
-   
-   if ( (m_len = str->toCString( m_buffer+3, AutoCString_BUF_SPACE-3 ) ) != String::npos )
-   {
-      m_pData = m_buffer;
-      return;
-   }
-
-   Falcon::uint32 len = str->length() * 4 + 4;
-   m_pData = (char *) malloc( len+3 );
-   m_len = str->toCString( m_pData+3, len );
-}
-#endif
 
 const char* AutoCString::bom_str()
 {
@@ -96,56 +68,6 @@ void AutoCString::set( const Falcon::String &str )
    m_len = str.toCString( m_pData+3, len );
 }
 
-#if 0
-void AutoCString::set( const Falcon::Item &itm )
-{
-   // remove m_pData
-   if( m_pData != 0 && m_pData != m_buffer )
-      free( m_pData );
-
-   String *str;
-   String tempStr;
-
-   if ( itm.isString() )
-   {
-      str = const_cast<Item>(itm).asString();
-   }
-   else {
-      str = &tempStr;
-      itm.toString( tempStr );
-   }
-
-   //if the size is large, we already know we can't try the conversion
-   if ( (m_len = str->toCString( m_buffer+3, AutoCString_BUF_SPACE ) ) != String::npos )
-   {
-      m_pData = m_buffer;
-      return;
-   }
-
-   Falcon::uint32 len = str->length() * 4 + 4;
-   m_pData = (char *) malloc( len+3 );
-   m_len = str->toCString( m_pData+3, len );
-}
-
-
-void AutoCString::set( Falcon::VMachine *vm, const Falcon::Item &itm )
-{
-   // remove m_pData
-   if( m_pData != 0 && m_pData != m_buffer )
-      free( m_pData );
-
-   init_vm_and_format( vm, itm, "" );
-}
-
-void AutoCString::set( Falcon::VMachine *vm, const Falcon::Item &itm, const Falcon::String &fmt )
-{
-   // remove m_pData
-   if( m_pData != 0 && m_pData != m_buffer )
-      free( m_pData );
-
-   init_vm_and_format( vm, itm, fmt );
-}
-#endif
 }
 
 

@@ -142,9 +142,6 @@ public:
    ~AutoCString();
 
    void set( const Falcon::String &str );
-   void set( const Falcon::Item &itm );
-   void set( Falcon::VMachine *vm, const Falcon::Item &itm );
-   void set( Falcon::VMachine *vm, const Falcon::Item &itm, const Falcon::String &fmt );
 
    const char *c_str() const { return m_pData+3; }
    const char *bom_str();

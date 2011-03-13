@@ -52,10 +52,9 @@ private:
    }
 };
 
+
 StringStream::StringStream( int32 size ):
-   Stream( t_membuf ),
    m_b( new Buffer ),
-   m_lastError(0),
    m_pos(0)
 {
    m_pos = 0;
@@ -65,10 +64,9 @@ StringStream::StringStream( int32 size ):
    m_b->m_str->reserve(size);
 }
 
+
 StringStream::StringStream( const String &strbuf ):
-   Stream( t_membuf ),
    m_b( new Buffer ),
-   m_lastError(0),
    m_pos(0)
 {
    *m_b->m_str = strbuf;

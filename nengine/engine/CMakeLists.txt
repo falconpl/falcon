@@ -10,17 +10,19 @@ message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
 if(UNIX OR APPLE)
   set(SYS_SPECIFIC
-	 fstream_sys_unix.cpp
+    fstream_posix.cpp
+    interrupt_posix.cpp
     mt_posix.cpp
-	 stdstreams_unix.cpp
+    stdstreams_posix.cpp
     sys_posix.cpp
   )
 elseif(WIN32)
 
   set(SYS_SPECIFIC
-    fstream_sys_win.cpp
+    fstream_win.cpp
+    interrupt_win.cpp
     mt_win.cpp
-	 stdstreams_win.cpp
+    stdstreams_win.cpp
     sys_win.cpp
   )
 endif()
@@ -46,6 +48,8 @@ add_library(falcon_engine SHARED
   errorclass.cpp
   extfunc.cpp
   fassert.cpp
+  fatal.cpp
+  fstream.cpp
   expression.cpp
   exprfactory.cpp
   exprsym.cpp
@@ -55,6 +59,8 @@ add_library(falcon_engine SHARED
   globalsvector.cpp
   globalsymbol.cpp
   item.cpp
+  interruptederror.cpp
+  ioerror.cpp
   localsymbol.cpp
   module.cpp
   operanderror.cpp
@@ -64,14 +70,13 @@ add_library(falcon_engine SHARED
   sourceref.cpp
   statement.cpp
   string.cpp
-  stringstream.cpp
   stream.cpp
   symbol.cpp
   synfunc.cpp
   syntree.cpp
   trace.cpp
   tracestep.cpp
-  transcoding.cpp
+  unsupportederror.cpp
   uri.cpp
   vm.cpp
   vmcontext.cpp

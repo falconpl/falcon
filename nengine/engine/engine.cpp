@@ -35,7 +35,10 @@
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
+#include <falcon/interruptederror.h>
+#include <falcon/ioerror.h>
 #include <falcon/operanderror.h>
+#include <falcon/unsupportederror.h>
 
 #include <falcon/paranoid.h>
 
@@ -71,6 +74,34 @@ public:
    }
 };
 
+class InterruptedErrorClass: public ErrorClass
+{
+public:
+   InterruptedErrorClass():
+      ErrorClass( "InterruptedError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new InterruptedError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
+
+class IOErrorClass: public ErrorClass
+{
+public:
+   IOErrorClass():
+      ErrorClass( "IOError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new IOError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
+
 class OperandErrorClass: public ErrorClass
 {
 public:
@@ -81,6 +112,20 @@ public:
    virtual void* create(void* creationParams ) const
    {
       return new OperandError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
+
+class UnsupportedErrorClass: public ErrorClass
+{
+public:
+   UnsupportedErrorClass():
+      ErrorClass( "UnsupportedError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new UnsupportedError( *static_cast<ErrorParam*>(creationParams) );
    }
 };
 
@@ -128,7 +173,10 @@ Engine::Engine()
    //
    m_codeErrorClass = new CodeErrorClass;
    m_genericErrorClass = new GenericErrorClass;
+   m_interruptedErrorClass = new InterruptedErrorClass;
+   m_ioErrorClass = new IOErrorClass;
    m_operandErrorClass = new OperandErrorClass;
+   m_unsupportedErrorClass = new UnsupportedErrorClass;
 
    TRACE("Engine creation complete", 0 )
 }
@@ -138,8 +186,15 @@ Engine::~Engine()
    TRACE("Engine destruction started", 0 )
    delete m_mtx;
    delete m_collector;
-   delete m_codeErrorClass;
    delete m_stringClass;
+
+   delete m_codeErrorClass;
+   delete m_genericErrorClass;
+   delete m_ioErrorClass;
+   delete m_interruptedErrorClass;
+   delete m_operandErrorClass;
+   delete m_unsupportedErrorClass;
+
 
    for ( int count = 0; count < FLC_ITEM_COUNT; ++count )
    {
@@ -243,10 +298,28 @@ Class* Engine::genericErrorClass() const
    return m_instance->m_genericErrorClass;
 }
 
+Class* Engine::ioErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_ioErrorClass;
+}
+
+Class* Engine::interruptedErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_interruptedErrorClass;
+}
+
 Class* Engine::operandErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_operandErrorClass;
+}
+
+Class* Engine::unsupportedErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_unsupportedErrorClass;
 }
 
 }

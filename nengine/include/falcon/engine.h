@@ -141,6 +141,36 @@ public:
     */
    Class* operandErrorClass() const;
 
+   /** Returns the global instance of the UnsupportedError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* unsupportedErrorClass() const;
+
+   /** Returns the global instance of the IOError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* ioErrorClass() const;
+
+   /** Returns the global instance of the InterruptedError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* interruptedErrorClass() const;
+
 protected:
    Engine();
    ~Engine();
@@ -167,6 +197,10 @@ protected:
    Class* m_codeErrorClass;
    Class* m_genericErrorClass;
    Class* m_operandErrorClass;
+   Class* m_unsupportedErrorClass;
+   Class* m_ioErrorClass;
+   Class* m_interruptedErrorClass;
+
 };
 
 }

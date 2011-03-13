@@ -181,18 +181,32 @@ FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
 FAL_ERRORDECL( e_invop_unb, 174, "Unbound value used in arbitrary operation" );
 
 
-FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
-FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );
-FAL_ERRORDECL( e_nofile, 202, "File not found" );
-FAL_ERRORDECL( e_invformat, 203, "Invalid or damaged Falcon VM file" );
-FAL_ERRORDECL( e_loader_unsupported, 204, "Operation not supported by the module loader" );
-FAL_ERRORDECL( e_io_error, 205, "Generic I/O Error" );
-FAL_ERRORDECL( e_unknown_encoding, 206, "Unknown encoding name" );
-FAL_ERRORDECL( e_unrec_file_type, 207, "Unrecognized file type" );
-FAL_ERRORDECL( e_io_unsup, 208, "Unrecognized file type" );
-FAL_ERRORDECL( e_io_invalid, 209, "Unrecognized file type" );
-FAL_ERRORDECL( e_deser_eof, 210, "Hit EOF while deserializing" );
-FAL_ERRORDECL( e_search_eof, 211, "Search operation failed or item not found" );
+FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
+FAL_ERRORDECL( e_io_open, 201, "I/O error: Can't open required resource" );
+FAL_ERRORDECL( e_io_creat, 202, "I/O error: Can't create required resource" );
+FAL_ERRORDECL( e_io_close, 203, "I/O error: failure during close request" );
+FAL_ERRORDECL( e_io_read, 204, "I/O error during read" );
+FAL_ERRORDECL( e_io_write, 205, "I/O error during write" );
+FAL_ERRORDECL( e_io_seek, 206, "I/O error during seek" );
+FAL_ERRORDECL( e_io_ravail, 207, "I/O error during read availability check" );
+FAL_ERRORDECL( e_io_wavail, 208, "I/O error during write availability check" );
+FAL_ERRORDECL( e_io_invalid, 209, "Stream has been invalidated" );
+FAL_ERRORDECL( e_io_unsup, 210, "Unsupported I/O operation on this stream" );
+FAL_ERRORDECL( e_io_dup, 211, "Cannot duplicate the source file descriptor" );
+
+FAL_ERRORDECL( e_deser, 220, "Deserialization failed" );
+FAL_ERRORDECL( e_deser_eof, 221, "Hit EOF while deserializing" );
+
+FAL_ERRORDECL( e_nofile, 250, "File not found" );
+FAL_ERRORDECL( e_loaderror, 251, "Error in loading a module" );
+FAL_ERRORDECL( e_invformat, 252, "Invalid or damaged Falcon VM file" );
+FAL_ERRORDECL( e_loader_unsupported, 253, "Operation not supported by the module loader" );
+FAL_ERRORDECL( e_unrec_file_type, 254, "Unrecognized file type" );
+
+FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
+FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
+FAL_ERRORDECL( e_dec_fail, 302, "Decode failed or input data not in required format" );
+
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );
