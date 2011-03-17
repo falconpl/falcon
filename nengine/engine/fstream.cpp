@@ -36,17 +36,17 @@ FStream *FStream::clone() const
 //
 
 /** File stream with output functions filtered out. */
-int32 InputOnlyFStream::writeAvailable( int32, Interrupt* )
+size_t InputOnlyFStream::writeAvailable( int32 )
 {
    throwUnsupported();
 }
 
-int32 InputOnlyFStream::write( const void *buffer, int32 size )
+size_t InputOnlyFStream::write( const void*, size_t )
 {
    throwUnsupported();
 }
 
-bool InputOnlyFStream::truncate(int64 pos)
+bool InputOnlyFStream::truncate(off_t pos)
 {
    throwUnsupported();
 }
@@ -61,13 +61,13 @@ InputOnlyFStream* InputOnlyFStream::clone() const
 //
 
 
-int32 OutputOnlyFStream::readAvailable( int32, Interrupt* )
+size_t OutputOnlyFStream::readAvailable( int32 )
 {
    throwUnsupported();
 }
 
 
-int32 OutputOnlyFStream::read( const void *buffer, int32 size )
+size_t OutputOnlyFStream::read( void *, size_t size )
 {
    throwUnsupported();
 }
@@ -83,13 +83,13 @@ OutputOnlyFStream* OutputOnlyFStream::clone() const
 // Read only FStream
 //
 
-int64 ReadOnlyFStream::seek( int64 pos, Stream::e_whence whence )
+off_t ReadOnlyFStream::seek( off_t pos, Stream::e_whence whence )
 {
    throwUnsupported();
 }
 
 
-int64 ReadOnlyFStream::tell()
+off_t ReadOnlyFStream::tell()
 {
    throwUnsupported();
 }
@@ -105,17 +105,17 @@ ReadOnlyFStream* ReadOnlyFStream::clone() const
 //
 
 
-int64 WriteOnlyFStream::seek( int64 pos, Stream::e_whence whence )
+off_t WriteOnlyFStream::seek( off_t pos, Stream::e_whence whence )
 {
    throwUnsupported();
 }
 
-int64 WriteOnlyFStream::tell()
+off_t WriteOnlyFStream::tell()
 {
    throwUnsupported();
 }
 
-bool WriteOnlyFStream::truncate(int64 pos )
+bool WriteOnlyFStream::truncate(off_t pos )
 {
    throwUnsupported();
 }

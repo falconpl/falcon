@@ -26,9 +26,11 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 
+#include <falcon/refpointer.h>
+#include <falcon/interrupt.h>
+
 namespace Falcon {
 
-class Interrupt;
 
 /** Base class for file and filelike services.
 
@@ -136,14 +138,14 @@ public:
       \param size the amount of bytes to read.
       \return Count of read data; 0 on stream end, -1 on error.
    */
-   virtual int32 read( void *buffer, int32 size )=0;
+   virtual size_t read( void *buffer, size_t size )=0;
 
    /** Write to the target stream.
 
      \param buffer the buffer where the output data is stored.
      \param size the maximum amount of bytes to write.
     */
-   virtual int32 write( const void *buffer, int32 size )=0;
+   virtual size_t write( const void *buffer, size_t size )=0;
 
    /** Close target stream. */
    virtual bool close() = 0;
@@ -152,7 +154,7 @@ public:
    virtual int64 tell() = 0;
 
    /** Truncates the stream at a given position, or at current position if pos < 0 */
-   virtual bool truncate( int64 pos=-1 ) = 0;
+   virtual bool truncate( off_t pos=-1 ) = 0;
 
    /** Determines if the stream can be read, possibly with a given timeout.
 
@@ -161,7 +163,7 @@ public:
     \return 0 if no data is available, -1 on error, a positive value (possibly an hint of how
     much data can be read) on success.
    */
-   virtual int32 readAvailable( int32 msecs_timeout=0, Interrupt* intr=0 ) = 0;
+   virtual size_t readAvailable( int32 msecs_timeout=0 ) = 0;
 
    /** Determines if the stream can be written, possibly with a given timeout.
 
@@ -170,22 +172,22 @@ public:
     \return 0 if no data can be written, -1 on error, a positive value (possibly an hint of how
     much data can be written) on success.
     */
-   virtual int32 writeAvailable( int32 msecs_timeout=0, Interrupt* intr=0 ) = 0;
+   virtual size_t writeAvailable( int32 msecs_timeout=0 ) = 0;
 
    /** Seks from the beginning of a file. */
-   inline int64 seekBegin( int64 pos ) { return seek( pos, ew_begin ); }
+   inline off_t seekBegin( off_t pos ) { return seek( pos, ew_begin ); }
 
    /** Seks from the curent position of a file. */
-   inline int64 seekCurrent( int64 pos ) { return seek( pos, ew_cur ); }
+   inline off_t seekCurrent( off_t pos ) { return seek( pos, ew_cur ); }
 
    /** Seks from the end of a file. */
-   inline int64 seekEnd( int64 pos ) { return seek( pos, ew_end ); }
+   inline off_t seekEnd( off_t pos ) { return seek( pos, ew_end ); }
 
    /** Seks from a given position in a file. */
-   virtual int64 seek( int64 pos, e_whence w ) = 0;
+   virtual off_t seek( off_t pos, e_whence w ) = 0;
 
    /** Returns the system error ID from the last I/O operation. */
-   virtual int64 lastError() const { return m_lastError; }
+   virtual size_t lastError() const { return m_lastError; }
 
    /** Clones the stream.
     The clone semantic is the same as the unix dup() operation; it should create
@@ -204,10 +206,17 @@ public:
    /** Utility to throw an unsupported error when an operation is unsupported. */
    void throwUnsupported();
 
+   inline void setInterrupter( const ref_ptr<Interrupt> &ptr )
+   {
+      m_ptrIntr = ptr;
+   }
+
 protected:
    t_status m_status;
-   int64 m_lastError;
+   size_t m_lastError;
    bool m_bShouldThrow;
+
+   ref_ptr<Interrupt> m_ptrIntr;
 
    /** Initializes the base stream class. */
    Stream();

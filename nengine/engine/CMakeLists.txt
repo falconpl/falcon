@@ -42,6 +42,7 @@ add_library(falcon_engine SHARED
   corenil.cpp
   coreint.cpp
   corestring.cpp
+  datareader.cpp
   dynsymbol.cpp
   engine.cpp
   error.cpp
@@ -67,6 +68,7 @@ add_library(falcon_engine SHARED
   path.cpp
   pcode.cpp
   rampmode.cpp
+  reader.cpp
   sourceref.cpp
   statement.cpp
   string.cpp

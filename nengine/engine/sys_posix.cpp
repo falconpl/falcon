@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: sys_unix.cpp
+   FILE: sys_posix.cpp
 
    System specific (unix) support for VM.
    -------------------------------------------------------------------
@@ -250,7 +250,16 @@ int64 _getpid() {
    return (int64) getpid();
 }
 
+long _getPageSize()
+{
+   #ifdef _SC_PAGESIZE
+   return sysconf( _SC_PAGESIZE );
+   #else
+   return (long) getpagesize();
+   #endif
+}
+
 }
 }
 
-/* end of sys_unix.cpp */
+/* end of sys_posix.cpp */

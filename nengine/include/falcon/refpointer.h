@@ -56,6 +56,8 @@ public:
       }
    }
 
+   bool assigned() const { return m_data != 0; }
+
    __T& operator*() { return *m_data; }
    __T* operator->() { return m_data; }
 

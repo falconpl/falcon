@@ -120,63 +120,63 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
    return 0;
 }
 
-uint32 Byte::length( const String *str ) const
+length_t Byte::length( const String *str ) const
 {
    return str->size() / charSize();
 }
 
 
-uint32 Byte::getCharAt( const String *str, uint32 pos ) const
+char_t Byte::getCharAt( const String *str, length_t pos ) const
 {
-   return (uint32) str->getRawStorage()[pos];
+   return (char_t) str->getRawStorage()[pos];
 }
 
-uint32 Static16::length( const String *str ) const
+length_t Static16::length( const String *str ) const
 {
    return str->size() >> 1;
 }
 
-uint32 Static32::length( const String *str ) const
+length_t Static32::length( const String *str ) const
 {
    return str->size() >> 2;
 }
 
-uint32 Buffer16::length( const String *str ) const
+length_t Buffer16::length( const String *str ) const
 {
    return str->size() >> 1;
 }
 
-uint32 Buffer32::length( const String *str ) const
+length_t Buffer32::length( const String *str ) const
 {
    return str->size() >> 2;
 }
 
 
-uint32 Static16::getCharAt( const String *str, uint32 pos ) const
+char_t Static16::getCharAt( const String *str, length_t pos ) const
 {
-   return (uint32)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
+   return (char_t)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
 }
 
-uint32 Buffer16::getCharAt( const String *str, uint32 pos ) const
+char_t Buffer16::getCharAt( const String *str, length_t pos ) const
 {
-   return (uint32)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
+   return (char_t)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
 }
 
-uint32 Static32::getCharAt( const String *str, uint32 pos ) const
+char_t Static32::getCharAt( const String *str, length_t pos ) const
 {
-   return reinterpret_cast< uint32 *>(str->getRawStorage())[ pos ];
+   return reinterpret_cast< char_t *>(str->getRawStorage())[ pos ];
 }
 
-uint32 Buffer32::getCharAt( const String *str, uint32 pos ) const
+char_t Buffer32::getCharAt( const String *str, length_t pos ) const
 {
-   return reinterpret_cast< uint32 *>(str->getRawStorage())[ pos ];
+   return reinterpret_cast< char_t *>(str->getRawStorage())[ pos ];
 }
 
 
 
 void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) const
 {
-   uint32 nlen = str->length();
+   length_t nlen = str->length();
    
    if( start < 0 )
       start = int(nlen) + start;
@@ -189,11 +189,11 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
 
 
    byte *storage, *source;
-   int16 cs = charSize();
+   uint16 cs = charSize();
    source = str->getRawStorage();
 
    if ( end < start ) {
-      uint32 len = start - end + 1;
+      length_t len = start - end + 1;
       if ( tgt->allocated() < len * cs ) {
          storage = (byte *) malloc( len * cs );
       }
@@ -204,7 +204,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
       {
          case 1:
          {
-            for( uint32 i = 0; i < len ; i ++ )
+            for( length_t i = 0; i < len ; i ++ )
                storage[i] = source[start-i];
             tgt->size( len );
          }
@@ -214,7 +214,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
          {
             uint16 *storage16 = (uint16 *) storage;
             uint16 *source16 = (uint16 *) source;
-            for( uint32 i = 0; i < len ; i ++ )
+            for( length_t i = 0; i < len ; i ++ )
                storage16[i] = source16[start-i];
             tgt->size( len * 2 );
          }
@@ -224,7 +224,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
          {
             uint32 *storage32 = (uint32 *) storage;
             uint32 *source32 = (uint32 *) source;
-            for( uint32 i = 0; i < len ; i ++ )
+            for( length_t i = 0; i < len ; i ++ )
                storage32[i] = source32[start-i];
             tgt->size( len * 4 );
          }
@@ -235,7 +235,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
       if ( end > (int)nlen ) 
          end = nlen;
          
-      uint32 len = (end - start)*cs;
+      length_t len = (end - start)*cs;
       if ( tgt->allocated() < len ) {
          storage = (byte *) malloc( len );
       }
@@ -265,9 +265,9 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
 }
 
 
-bool Byte::change( String *str, uint32 start, uint32 end, const String *source ) const
+bool Byte::change( String *str, length_t start, length_t end, const String *source ) const
 {
-   uint32 strLen = str->length();
+   length_t strLen = str->length();
 
    if ( start >= strLen )
       return false;
@@ -277,7 +277,7 @@ bool Byte::change( String *str, uint32 start, uint32 end, const String *source )
 
 
    if ( end < start ) {
-      uint32 temp = end;
+      length_t temp = end;
       end = start+1;
       start = temp;
    }
@@ -292,7 +292,7 @@ String *Byte::clone( const String *str ) const
    return new String( *str );
 }
 
-uint32 Byte::find( const String *str, const String *element, uint32 start, uint32 end ) const
+length_t Byte::find( const String *str, const String *element, length_t start, length_t end ) const
 {
    if ( str->size() == 0 || element->size() == 0 )
       return npos;
@@ -301,19 +301,20 @@ uint32 Byte::find( const String *str, const String *element, uint32 start, uint3
       end = str->length();
 
    if ( end < start ) {
-      uint32 temp = end;
+      register length_t temp = end;
       end = start;
       start = temp;
    }
 
-   uint32 pos = start;
-   uint32 keyStart = element->getCharAt( 0 );
-   uint32 elemLen = element->length();
+   length_t pos = start;
+   char_t keyStart = element->getCharAt( 0 );
+   length_t elemLen = element->length();
 
-   while( pos + elemLen <= end ) {
+   while( pos + elemLen <= end )
+   {
       if ( str->getCharAt( pos ) == keyStart )
       {
-         uint32 len = 1;
+         length_t len = 1;
          while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
             len++;
          if ( len == elemLen )
@@ -327,7 +328,7 @@ uint32 Byte::find( const String *str, const String *element, uint32 start, uint3
 }
 
 
-uint32 Byte::rfind( const String *str, const String *element, uint32 start, uint32 end ) const
+length_t Byte::rfind( const String *str, const String *element, length_t start, length_t end ) const
 {
    if ( str->size() == 0 || element->size() == 0 )
       return npos;
@@ -336,24 +337,25 @@ uint32 Byte::rfind( const String *str, const String *element, uint32 start, uint
       end = str->length();
 
    if ( end < start ) {
-      uint32 temp = end;
+      length_t temp = end;
       end = start;
       start = temp;
    }
 
-   uint32 keyStart = element->getCharAt( 0 );
-   uint32 elemLen = element->length();
+   char_t keyStart = element->getCharAt( 0 );
+   length_t elemLen = element->length();
    if ( elemLen > (end - start) )
    {
       // can't possibly be found
       return npos;
    }
 
-   uint32 pos = end - elemLen;
+   length_t pos = end - elemLen;
 
-   while( pos >= start  ) {
+   while( pos >= start  )
+   {
       if ( str->getCharAt( pos ) == keyStart ) {
-         uint32 len = 1;
+         length_t len = 1;
          while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
             len++;
          if ( len == elemLen )
@@ -368,17 +370,17 @@ uint32 Byte::rfind( const String *str, const String *element, uint32 start, uint
 }
 
 
-void Byte::remove( String *str, uint32 pos, uint32 len ) const
+void Byte::remove( String *str, length_t pos, length_t len ) const
 {
-   uint32 sl = str->length();
+   length_t sl = str->length();
    if ( len == 0 || pos > sl )
       return;
 
-   uint32 cs = charSize();
+   uint16 cs = charSize();
    if ( pos + len > sl )
       len = sl - pos;
 
-   uint32 newLen = (sl - len) *cs;
+   length_t newLen = (sl - len) *cs;
    byte *mem = (byte *) malloc( newLen );
    if ( pos > 0 )
       memcpy( mem, str->getRawStorage(), pos * cs );
@@ -402,9 +404,10 @@ void Byte::bufferize( String *str ) const
    if ( ! str->isStatic() )
       return;
 
-   uint32 size = str->m_size;
-   if ( size != 0 ) {
-      uint32 oldSize = str->allocated();
+   length_t size = str->m_size;
+   if ( size != 0 )
+   {
+      length_t oldSize = str->allocated();
 
       byte *mem = (byte *) malloc( size );
       memcpy( mem, str->getRawStorage(), size );
@@ -425,7 +428,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
    if ( str->m_allocated != 0 )
       free( str->m_storage );
 
-   uint32 size = strOrig->m_size;
+   length_t size = strOrig->m_size;
    if ( size == 0 ) {
       str->m_class = &handler_static;
       str->setRawStorage( 0, 0 );
@@ -439,12 +442,12 @@ void Byte::bufferize( String *str, const String *strOrig ) const
 
 }
 
-void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
+void Byte::reserve( String *str, length_t size, bool relative, bool block ) const
 {
    if ( relative )
       size += str->m_allocated;
 
-   register int32 chs = charSize();
+   register uint16 chs = charSize();
    if ( block )
    {
       if ( size % FALCON_STRING_ALLOCATION_BLOCK != 0 )
@@ -455,13 +458,13 @@ void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
       }
    }
 
-   uint32 nextAlloc = size * chs;
+   length_t nextAlloc = size * chs;
 
    // the required size may be already allocated
    if ( nextAlloc > str->allocated() )
    {
       byte *mem = (byte *) malloc( nextAlloc );
-      uint32 size = str->m_size;
+      length_t size = str->m_size;
       if ( str->m_size > 0 )
          memcpy( mem, str->m_storage, str->m_size );
 
@@ -485,7 +488,7 @@ void Static::shrink( String *str ) const
 // do nothing
 }
 
-void Static::reserve( String *str, uint32 size, bool relative, bool block ) const
+void Static::reserve( String *str, length_t size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
    str->m_class = &handler_buffer;
@@ -496,7 +499,7 @@ const Base *Static::bufferedManipulator() const
    return  &handler_buffer;
 }
 
-void Static16::reserve( String *str, uint32 size, bool relative, bool block ) const
+void Static16::reserve( String *str, length_t size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
    str->m_class = &handler_buffer16;
@@ -507,7 +510,7 @@ const Base *Static16::bufferedManipulator() const
    return  &handler_buffer16;
 }
 
-void Static32::reserve( String *str, uint32 size, bool relative, bool block ) const
+void Static32::reserve( String *str, length_t size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
    str->m_class = &handler_buffer32;
@@ -518,11 +521,11 @@ const Base *Static32::bufferedManipulator() const
    return  &handler_buffer32;
 }
 
-void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Static::setCharAt( String *str, length_t pos, char_t chr ) const
 {
 
    byte *buffer;
-   int32 size = str->size();
+   length_t size = str->size();
 
    if( chr <= 0xFF )
    {
@@ -563,11 +566,11 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
 }
 
 
-void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Static16::setCharAt( String *str, length_t pos, char_t chr ) const
 {
 
    byte *buffer;
-   int32 size = str->size();
+   length_t size = str->size();
 
    if ( chr <= 0xFFFF )
    {
@@ -596,10 +599,10 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
       free( str->getRawStorage() );
 }
 
-void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Static32::setCharAt( String *str, length_t pos, char_t chr ) const
 {
    byte *buffer;
-   int32 size = str->size();
+   length_t size = str->size();
 
    uint32 *buf32 =  (uint32 *) malloc( size );
    memcpy( buf32, str->getRawStorage(), size );
@@ -613,10 +616,10 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
       free( str->getRawStorage() );
 }
 
-void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
 {
    byte *buffer;
-   int32 size = str->size();
+   length_t size = str->size();
 
    if( chr <= 0xFF )
    {
@@ -653,7 +656,7 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
 }
 
 
-void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Buffer16::setCharAt( String *str, length_t pos, char_t chr ) const
 {
    if ( chr <= 0xFFFF )
    {
@@ -678,7 +681,7 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
 }
 
-void Buffer32::setCharAt( String *str, uint32 pos, uint32 chr ) const
+void Buffer32::setCharAt( String *str, length_t pos, char_t chr ) const
 {
    uint32 *buf32 = (uint32 *) str->getRawStorage();
    buf32[ pos ] = chr;
@@ -731,28 +734,28 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
 }
 
 
-void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+void Buffer::insert( String *str, length_t pos, length_t len, const String *source ) const
 {
-   uint32 sourceLen = source->length();
+   length_t sourceLen = source->length();
 
-   uint32 strLen = str->length();
+   length_t strLen = str->length();
    if ( pos + len > str->size() )
       len = str->size() - pos;
 
-   uint32 strCharSize = str->manipulator()->charSize();
-   uint32 posBytes = pos *strCharSize;
-   uint32 lenBytes = len *strCharSize;
+   uint16 strCharSize = str->manipulator()->charSize();
+   length_t posBytes = pos *strCharSize;
+   length_t lenBytes = len *strCharSize;
 
-   uint32 destCharSize = source->manipulator()->charSize() > strCharSize ?
+   uint16 destCharSize = source->manipulator()->charSize() > strCharSize ?
       source->manipulator()->charSize() : strCharSize; // can be 1 or larger
 
-   uint32 finalSize = destCharSize * (strLen - len + sourceLen );
+   length_t finalSize = destCharSize * (strLen - len + sourceLen );
 
    // should we re-allocate?
    if( finalSize > str->allocated() || destCharSize > strCharSize )
    {
 
-      uint32 finalAlloc = ((finalSize / FALCON_STRING_ALLOCATION_BLOCK) + 1) *
+      length_t finalAlloc = ((finalSize / FALCON_STRING_ALLOCATION_BLOCK) + 1) *
          FALCON_STRING_ALLOCATION_BLOCK;
 
       // we know we have to relocate, so just do the relocation step
@@ -784,7 +787,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
          // can we maintain our char size?
          if( destCharSize == strCharSize )
          {
-            uint32 sourceLenBytes = sourceLen * destCharSize;
+            length_t sourceLenBytes = sourceLen * destCharSize;
             // then just move the postfix away
             memmove( str->getRawStorage() + posBytes + sourceLenBytes,
                      str->getRawStorage() + posBytes + lenBytes,
@@ -816,21 +819,21 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
 }
 
 
-void Static::remove( String *str, uint32 pos, uint32 len ) const
+void Static::remove( String *str, length_t pos, length_t len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
    str->manipulator( &handler_buffer );
 }
 
-void Static16::remove( String *str, uint32 pos, uint32 len ) const
+void Static16::remove( String *str, length_t pos, length_t len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
    str->manipulator( &handler_buffer16 );
 }
 
-void Static32::remove( String *str, uint32 pos, uint32 len ) const
+void Static32::remove( String *str, length_t pos, length_t len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
@@ -868,7 +871,7 @@ void Buffer::shrink( String *str ) const
    }
 }
 
-void Buffer::reserve( String *str, uint32 size, bool relative, bool block ) const
+void Buffer::reserve( String *str, length_t size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
    // manipulator is ok
@@ -892,7 +895,7 @@ void Buffer::destroy( String *str ) const
 //=================================================================
 
 
-String::String( uint32 size ):
+String::String( length_t size ):
    m_class( &csh::handler_buffer ),
    m_bExported( false )
 {
@@ -910,7 +913,7 @@ String::String( const char *data ):
    m_size = strlen( data );
 }
 
-String::String( const char *data, int32 len ):
+String::String( const char *data, length_t len ):
    m_class( &csh::handler_buffer ),
    m_bExported( false )
 {
@@ -931,14 +934,14 @@ String::String( const wchar_t *data ):
    else
       m_class = &csh::handler_static32;
 
-   uint32 s = 0;
+   length_t s = 0;
    while( data[s] != 0 )
       ++s;
    m_size = s * sizeof( wchar_t );
 }
 
 
-String::String( const wchar_t *data, int32 len ):
+String::String( const wchar_t *data, length_t len ):
    m_allocated( 0 ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
    m_bExported( false )
@@ -954,7 +957,7 @@ String::String( const wchar_t *data, int32 len ):
    }
    else
    {
-      uint32 s = 0;
+      length_t s = 0;
       while( data[s] != 0 )
          ++s;
       m_size = s * sizeof( wchar_t );
@@ -966,7 +969,7 @@ String::String( const wchar_t *data, int32 len ):
 }
 
 
-String::String( const String &other, uint32 begin, uint32 end ):
+String::String( const String &other, length_t begin, length_t end ):
    m_allocated( 0 ),
    m_size( 0 ),
    m_storage( 0 ),
@@ -1020,7 +1023,7 @@ void String::copy( const String &other )
 }
 
 
-String &String::adopt( char *buffer, uint32 size, uint32 allocated )
+String &String::adopt( char *buffer, length_t size, length_t allocated )
 {
    if ( m_allocated != 0 )
       m_class->destroy( this );
@@ -1034,7 +1037,7 @@ String &String::adopt( char *buffer, uint32 size, uint32 allocated )
    return *this;
 }
 
-String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
+String &String::adopt( wchar_t *buffer, length_t size, length_t allocated )
 {
    if ( m_allocated != 0 )
       m_class->destroy( this );
@@ -1053,16 +1056,16 @@ String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
 
 int String::compare( const char *other ) const
 {
-   uint32 pos = 0;
-   uint32 len = length();
+   length_t pos = 0;
+   length_t len = length();
 
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      if ( c1 < (uint32) *other )
+      char_t c1 = getCharAt( pos );
+      if ( c1 < (char_t) *other )
          return -1;
       // return greater also if other is ended; we are NOT ended...
-      else if ( c1 > (uint32) *other || (uint32) *other == 0 )
+      else if ( c1 > (char_t) *other || (char_t) *other == 0 )
          return 1;
 
       other ++;
@@ -1079,13 +1082,13 @@ int String::compare( const char *other ) const
 
 int String::compareIgnoreCase( const char *other ) const
 {
-   uint32 pos = 0;
-   uint32 len = length();
+   length_t pos = 0;
+   length_t len = length();
 
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      uint32 cmpval = (uint32) *other;
+      char_t c1 = getCharAt( pos );
+      char_t cmpval = (char_t) *other;
       if ( c1 >=0x41 && c1 <= 0x5A )
          c1 += 0x20;
 
@@ -1112,16 +1115,16 @@ int String::compareIgnoreCase( const char *other ) const
 
 int String::compare( const wchar_t *other ) const
 {
-   uint32 pos = 0;
-   uint32 len = length();
+   length_t pos = 0;
+   length_t len = length();
 
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      if ( c1 < (uint32) *other )
+      char_t c1 = getCharAt( pos );
+      if ( c1 < (char_t) *other )
          return -1;
       // return greater also if other is ended; we are NOT ended...
-      else if ( c1 > (uint32) *other || (uint32) *other == 0 )
+      else if ( c1 > (char_t) *other || (char_t) *other == 0 )
          return 1;
 
       other ++;
@@ -1138,13 +1141,13 @@ int String::compare( const wchar_t *other ) const
 
 int String::compareIgnoreCase( const wchar_t *other ) const
 {
-   uint32 pos = 0;
-   uint32 len = length();
+   length_t pos = 0;
+   length_t len = length();
 
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      uint32 cmpval = (uint32) *other;
+      char_t c1 = getCharAt( pos );
+      char_t cmpval = (char_t) *other;
       if ( c1 >=0x41 && c1 <= 0x5A )
          c1 += 0x20;
 
@@ -1171,15 +1174,15 @@ int String::compareIgnoreCase( const wchar_t *other ) const
 
 int String::compare( const String &other ) const
 {
-   uint32 len1 = length();
-   uint32 len2 = other.length();
-   uint32 len = len1 > len2 ? len2 : len1;
+   length_t len1 = length();
+   length_t len2 = other.length();
+   length_t len = len1 > len2 ? len2 : len1;
 
-   uint32 pos = 0;
+   length_t pos = 0;
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      uint32 c2 = other.getCharAt( pos );
+      char_t c1 = getCharAt( pos );
+      char_t c2 = other.getCharAt( pos );
 
       if ( c1 < c2 )
          return -1;
@@ -1204,15 +1207,15 @@ int String::compare( const String &other ) const
 
 int String::compareIgnoreCase( const String &other ) const
 {
-   uint32 len1 = length();
-   uint32 len2 = other.length();
-   uint32 len = len1 > len2 ? len2 : len1;
+   length_t len1 = length();
+   length_t len2 = other.length();
+   length_t len = len1 > len2 ? len2 : len1;
 
-   uint32 pos = 0;
+   length_t pos = 0;
    while( pos < len )
    {
-      uint32 c1 = getCharAt( pos );
-      uint32 c2 = other.getCharAt( pos );
+      char_t c1 = getCharAt( pos );
+      char_t c2 = other.getCharAt( pos );
 
       if ( c1 >=0x41 && c1 <= 0x5A )
          c1 += 0x20;
@@ -1241,20 +1244,20 @@ int String::compareIgnoreCase( const String &other ) const
    return 0;
 }
 
-uint32 String::toCString( char *target, uint32 bufsize ) const
+length_t String::toCString( char *target, uint32 bufsize ) const
 {
-   uint32 len = length();
+   length_t len = length();
 
    // we already know that the buffer is too small?
     if ( bufsize <= len )
       return npos;
 
-   uint32 pos = 0;
-   uint32 done = 0;
+   length_t pos = 0;
+   length_t done = 0;
 
    while( done < len && pos < bufsize )
    {
-      uint32 chr = getCharAt( done );
+      char_t chr = getCharAt( done );
 
       if ( chr < 0x80 )
       {
@@ -1298,16 +1301,16 @@ uint32 String::toCString( char *target, uint32 bufsize ) const
    return pos;
 }
 
-uint32 String::toWideString( wchar_t *target, uint32 bufsize ) const
+length_t String::toWideString( wchar_t *target, length_t bufsize ) const
 {
-   uint32 len = length();
+   length_t len = length();
    if ( bufsize <= len * sizeof( wchar_t ) )
       return npos;
 
    if ( sizeof( wchar_t ) == 2 ) {
-      for( uint32 i = 0; i < len; i ++ )
+      for( length_t i = 0; i < len; i ++ )
       {
-         uint32 chr = getCharAt( i );
+         char_t chr = getCharAt( i );
          if ( chr > 0xFFFF )
             target[ i ] = L'?';
          else
@@ -1315,14 +1318,14 @@ uint32 String::toWideString( wchar_t *target, uint32 bufsize ) const
       }
    }
    else {
-      for( uint32 i = 0; i < len; i ++ )
+      for( length_t i = 0; i < len; i ++ )
       {
          target[ i ] = getCharAt( i );
       }
    }
 	target[len] = 0;
 
-   return (int32) len;
+   return len;
 }
 
 void String::append( const String &str )
@@ -1332,7 +1335,7 @@ void String::append( const String &str )
    m_class->insert( this, length(), 0, &str );
 }
 
-void String::append( uint32 chr )
+void String::append( char_t chr )
 {
    if ( size() >= allocated() )
    {
@@ -1348,7 +1351,7 @@ void String::append( uint32 chr )
    // empty char that we added above.
 }
 
-void String::prepend( uint32 chr )
+void String::prepend( char_t chr )
 {
    if ( size() >= allocated() )
    {
@@ -1377,8 +1380,8 @@ void String::escapeFull( String &strout ) const
 
 void String::internal_escape( String &strout, bool full ) const
 {
-   int len = length();
-   int pos = 0;
+   length_t len = length();
+   length_t pos = 0;
    strout.m_class->reserve( &strout, len ); // prepare for at least len chars
    strout.size( 0 ); // clear target string
 
@@ -1409,21 +1412,21 @@ void String::internal_escape( String &strout, bool full ) const
 
 void String::unescape()
 {
-   uint32 len = length();
-   uint32 pos = 0;
+   length_t len = length();
+   length_t pos = 0;
 
    while( pos < len )
    {
-      uint32 chat = getCharAt( pos );
-      if ( chat == (uint32) '\\' )
+      char_t chat = getCharAt( pos );
+      if ( chat == (char_t) '\\' )
       {
          // an escape must take place
-         uint32 endSub = pos + 1;
+         length_t endSub = pos + 1;
          if( endSub == len - 1 )
             return;
 
-         uint32 chnext = getCharAt( endSub );
-         uint32 chsub=0;
+         char_t chnext = getCharAt( endSub );
+         char_t chsub=0;
 
          switch( chnext )
          {
@@ -1489,7 +1492,7 @@ void String::unescape()
 
 void String::serialize( Stream *out ) const
 {
-   uint32 size = m_bExported ? m_size | 0x80000000 : m_size;
+   length_t size = m_bExported ? m_size | 0x80000000 : m_size;
    size = endianInt32( size );
 
    out->write( (byte *) &size, sizeof(size) );
@@ -1509,7 +1512,7 @@ void String::serialize( Stream *out ) const
       {
          for( int i = 0; i < m_size/2; i ++ )
          {
-            uint16 chr = (uint32) endianInt16((uint16) getCharAt( i ) );
+            uint16 chr = (uint16) endianInt16((uint16) getCharAt( i ) );
             out->write( (byte *) &chr, 2 );
             if (! out->good() )
                return;
@@ -1532,7 +1535,7 @@ void String::serialize( Stream *out ) const
 
 bool String::deserialize( Stream *in, bool bStatic )
 {
-   uint32 size;
+   length_t size;
 
    in->read( (byte *) &size, sizeof( size ) );
    size = endianInt32(size);
@@ -1640,7 +1643,7 @@ const char* String::c_ize()
    return (const char*) getRawStorage();
 }
 
-bool String::setCharSize( uint32 nsize, uint32 subst )
+bool String::setCharSize( uint16 nsize, char_t subst )
 {
    // same size?
    if ( nsize == m_class->charSize() )
@@ -1666,9 +1669,9 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
    // full change.
    // use allocated to decide re-allocation under new char size.
    byte *mem = getRawStorage();
-   uint32 oldcs = m_class->charSize();
-   uint32 nalloc = (allocated()/oldcs) * nsize;
-   uint32 oldsize = size();
+   uint16 oldcs = m_class->charSize();
+   length_t nalloc = (allocated()/oldcs) * nsize;
+   length_t oldsize = size();
    byte *nmem = (byte*) malloc( nalloc );
    csh::Base* manipulator = csh::adaptBuffer( mem, 0, oldcs, nmem, 0, nsize, length() );
    m_class->destroy( this );
@@ -1681,9 +1684,9 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
 }
 
 
-bool String::parseInt( int64 &target, uint32 pos ) const
+bool String::parseInt( int64 &target, length_t pos ) const
 {
-   uint32 len = length();
+   length_t len = length();
    if ( pos >= len )
       return false;
 
@@ -1691,8 +1694,8 @@ bool String::parseInt( int64 &target, uint32 pos ) const
 
    bool neg = false;
 
-   uint32 chnext = getCharAt( pos );
-   if ( chnext == (uint32) '-' )
+   char_t chnext = getCharAt( pos );
+   if ( chnext == (char_t) '-' )
    {
       neg = true;
       pos ++;
@@ -1726,12 +1729,12 @@ bool String::parseInt( int64 &target, uint32 pos ) const
    return true;
 }
 
-bool String::parseDouble( double &target, uint32 pos ) const
+bool String::parseDouble( double &target, length_t pos ) const
 {
    char buffer[64];
-   uint32 maxlen = 63;
+   length_t maxlen = 63;
 
-   uint32 len = length();
+   length_t len = length();
    if ( pos >= len )
       return false;
 
@@ -1746,11 +1749,11 @@ bool String::parseDouble( double &target, uint32 pos ) const
    else {
 
       // else convert to C string
-      uint32 bufpos = 0;
+      length_t bufpos = 0;
       while ( bufpos < maxlen && pos < len )
       {
-         uint32 chr = getCharAt( pos );
-         if( chr != (uint32) '-' && chr != (uint32) 'e' && chr != (uint32) 'E' &&
+         char_t chr = getCharAt( pos );
+         if( chr != (char_t) '-' && chr != (char_t) 'e' && chr != (char_t) 'E' &&
                   chr < 0x30 && chr > 0x39 )
             return false;
          buffer[ bufpos ] = (char) chr;
@@ -1766,19 +1769,19 @@ bool String::parseDouble( double &target, uint32 pos ) const
 }
 
 
-bool String::parseBin( uint64 &target, uint32 pos ) const
+bool String::parseBin( uint64 &target, length_t pos ) const
 {
-   uint32 len = length();
+   length_t len = length();
    if ( pos >= len )
       return false;
    // parse octal number
    target = 0;
-   uint32 endSub = pos;
+   length_t endSub = pos;
 
    // max length of binary = 64 chars, + 2 for stubs
    while( endSub < len && (endSub - pos < 64) )
    {
-      uint32 chnext = getCharAt( endSub );
+      char_t chnext = getCharAt( endSub );
       if ( chnext < 0x30 || chnext > 0x31 )
          break;
       target <<= 1; //*2
@@ -1792,19 +1795,19 @@ bool String::parseBin( uint64 &target, uint32 pos ) const
 }
 
 
-bool String::parseOctal( uint64 &target, uint32 pos ) const
+bool String::parseOctal( uint64 &target, length_t pos ) const
 {
-   uint32 len = length();
+   length_t len = length();
    if ( pos >= len )
       return false;
    // parse octal number
    target = 0;
-   uint32 endSub = pos;
+   length_t endSub = pos;
 
    // max length of octals = 11 chars, + 2 for stubs
    while( endSub < len && (endSub - pos < 26) )
    {
-      uint32 chnext = getCharAt( endSub );
+      char_t chnext = getCharAt( endSub );
       if ( chnext < 0x30 || chnext > 0x37 )
          break;
       target <<= 3; //*8
@@ -1817,18 +1820,18 @@ bool String::parseOctal( uint64 &target, uint32 pos ) const
    return false;
 }
 
-bool String::parseHex( uint64 &target, uint32 pos ) const
+bool String::parseHex( uint64 &target, length_t pos ) const
 {
-   uint32 len = length();
+   length_t len = length();
    if ( pos >= len )
       return false;
    // parse octal number
    target = 0;
-   uint32 endSub = pos;
+   length_t endSub = pos;
 
    while( endSub < len && (endSub - pos < 16) )
    {
-      uint32 chnext = getCharAt( endSub );
+      char_t chnext = getCharAt( endSub );
       if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
       {
          target <<= 4; //*16
@@ -1858,7 +1861,7 @@ void String::writeNumber( int64 number )
    // prepare the buffer
    bool neg;
    char buffer[21];
-   uint32 pos = 19;
+   length_t pos = 19;
    buffer[20] = '\0';
 
 
@@ -1899,7 +1902,7 @@ void String::writeNumberHex( uint64 number, bool uppercase, int ciphers  )
 {
    // prepare the buffer
    char buffer[18];
-   uint32 pos = 16;
+   length_t pos = 16;
    buffer[17] = '\0';
 
    byte base = uppercase ? 0x41 : 0x61;
@@ -1940,7 +1943,7 @@ void String::writeNumberOctal( uint64 number )
 {
    // prepare the buffer
    char buffer[32];
-   uint32 pos = 30;
+   length_t pos = 30;
    buffer[31] = '\0';
 
    if ( number == 0 )
@@ -2000,8 +2003,8 @@ String &String::bufferize()
 
 void String::trim( int mode )
 {
-   uint32 front = 0;
-   uint32 len = length();
+   length_t front = 0;
+   length_t len = length();
 
    // modes: 0 = all, 1 = front, 2 = back
 
@@ -2009,7 +2012,7 @@ void String::trim( int mode )
    if ( mode == 0 || mode == 2 ) {
       while( len > 0 )
       {
-         uint32 chr = getCharAt( len - 1 );
+         char_t chr = getCharAt( len - 1 );
          if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
          {
             break;
@@ -2030,7 +2033,7 @@ void String::trim( int mode )
    if ( mode == 0 || mode == 1 ) {
       while( front < len )
       {
-         uint32 chr = getCharAt( front );
+         char_t chr = getCharAt( front );
          if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
          {
             break;
@@ -2052,10 +2055,10 @@ void String::trim( int mode )
 
 void String::lower()
 {
-   uint32 len = length();
-   for( uint32 i = 0; i < len; i++ )
+   length_t len = length();
+   for( length_t i = 0; i < len; i++ )
    {
-      uint32 chr = getCharAt( i );
+      char_t chr = getCharAt( i );
       if ( chr >= 'A' && chr <= 'Z' ) {
          setCharAt( i, chr | 0x20 );
       }
@@ -2064,10 +2067,10 @@ void String::lower()
 
 void String::upper()
 {
-   uint32 len = length();
-   for( uint32 i = 0; i < len; i++ )
+   length_t len = length();
+   for( length_t i = 0; i < len; i++ )
    {
-      uint32 chr = getCharAt( i );
+      char_t chr = getCharAt( i );
       if ( chr >= 'a' && chr <= 'z' ) {
          setCharAt( i, chr & ~0x20 );
       }
@@ -2081,7 +2084,7 @@ bool String::fromUTF8( const char *utf8 )
 }
 
 
-bool String::fromUTF8( const char *utf8, int len )
+bool String::fromUTF8( const char *utf8, length_t len )
 {
    // destroy old contents
 
@@ -2103,7 +2106,7 @@ bool String::fromUTF8( const char *utf8, int len )
 
    while ( len != 0 && *utf8 != 0 )
    {
-      uint32 chr = 0;
+      char_t chr = 0;
 
       byte in = (byte) *utf8;
 
@@ -2128,7 +2131,7 @@ bool String::fromUTF8( const char *utf8, int len )
       }
       else if( in < 0x80 )
       {
-         chr = (uint32) in;
+         chr = (char_t) in;
          count = 0;
       }
       // invalid pattern
@@ -2167,14 +2170,14 @@ bool String::fromUTF8( const char *utf8, int len )
 
 bool String::startsWith( const String &str, bool icase ) const
 {
-   uint32 len = str.length();
+   length_t len = str.length();
    if ( len > length() ) return false;
 
    if ( icase )
    {
-      for ( uint32 i = 0; i < len; i ++ )
+      for ( length_t i = 0; i < len; i ++ )
       {
-         uint32 chr1, chr2;
+         char_t chr1, chr2;
          if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i)) )
          {
             if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != (chr2|0x20) )
@@ -2195,17 +2198,17 @@ bool String::startsWith( const String &str, bool icase ) const
 
 bool String::endsWith( const String &str, bool icase ) const
 {
-   uint32 len = str.length();
-   uint32 mlen = length();
-   uint32 start = mlen-len;
+   length_t len = str.length();
+   length_t mlen = length();
+   length_t start = mlen-len;
 
    if ( len > mlen ) return false;
 
    if ( icase )
    {
-      for ( uint32 i = 0; i < len; ++i )
+      for ( length_t i = 0; i < len; ++i )
       {
-         uint32 chr1, chr2;
+         char_t chr1, chr2;
          if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i+start)) )
          {
             if ( ((chr1 >= 'A' && chr1 <= 'Z') || (chr1 >= 'a' && chr1 <= 'z') ) 
@@ -2220,7 +2223,7 @@ bool String::endsWith( const String &str, bool icase ) const
    }
    else
    {
-      for ( uint32 i = 0; i < len; ++i )
+      for ( length_t i = 0; i < len; ++i )
          if ( str.getCharAt(i) != getCharAt(i+start) )
             return false;
    }
@@ -2233,10 +2236,10 @@ bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
    const String* wcard = &wildcard;
    const String* cfr = this;
 
-   uint32 wpos = 0, wlen = wcard->length();
-   uint32 cpos = 0, clen = cfr->length();
+   length_t wpos = 0, wlen = wcard->length();
+   length_t cpos = 0, clen = cfr->length();
 
-   uint32 wstarpos = 0xFFFFFFFF;
+   length_t wstarpos = 0xFFFFFFFF;
 
    while ( cpos < clen )
    {
@@ -2255,8 +2258,8 @@ bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
          }
       }
 
-      uint32 wchr = wcard->getCharAt( wpos );
-      uint32 cchr = cfr->getCharAt( cpos );
+      char_t wchr = wcard->getCharAt( wpos );
+      char_t cchr = cfr->getCharAt( cpos );
 
       switch( wchr )
       {
@@ -2335,12 +2338,12 @@ bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
 
 void String::escapeQuotes()
 {
-   uint32 len = length();
-   uint32 i = 0;
+   length_t len = length();
+   length_t i = 0;
 
    while( i < len )
    {
-      register uint32 chr =  getCharAt(i);
+      register char_t chr =  getCharAt(i);
       switch( chr )
       {
       case '\'': case '\"':
@@ -2357,13 +2360,13 @@ void String::escapeQuotes()
 
 void String::unescapeQuotes()
 {
-   uint32 len = length();
-   uint32 i = 0;
+   length_t len = length();
+   length_t i = 0;
    bool state = false;
 
    while( i < len )
    {
-      register uint32 chr =  getCharAt(i);
+      register length_t chr =  getCharAt(i);
       switch( chr )
       {
       case '\'': case '\"':

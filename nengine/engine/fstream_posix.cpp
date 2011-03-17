@@ -66,7 +66,7 @@ bool FStream::close()
 
    if ( m_status & Stream::t_open ) {
       if( ::close( fd ) < 0 ) {
-         m_lastError = (int64) errno;
+         m_lastError = (size_t) errno;
          m_status = m_status | t_error;
 
          if( m_bShouldThrow )
@@ -84,13 +84,13 @@ bool FStream::close()
 }
 
 
-int32 FStream::read( void *buffer, int32 size )
+size_t FStream::read( void *buffer, size_t size )
 {
    int fd = *(int*) m_fsData;
 
-   int32 result = ::read( fd, buffer, size );
+   size_t result = ::read( fd, buffer, size );
    if ( result < 0 ) {
-      m_lastError = (int64) errno;
+      m_lastError = (size_t) errno;
       m_status = m_status | t_error;
 
       if( m_bShouldThrow )
@@ -109,13 +109,13 @@ int32 FStream::read( void *buffer, int32 size )
    return result;
 }
 
-int32 FStream::write( const void *buffer, int32 size )
+size_t FStream::write( const void *buffer, size_t size )
 {
    int fd = *(int*) m_fsData;
 
-   int32 result = ::write( fd, buffer, size );
+   size_t result = ::write( fd, buffer, size );
    if ( result < 0 ) {
-      m_lastError = (int64) errno;
+      m_lastError = (size_t) errno;
       m_status = m_status | t_error;
 
       if( m_bShouldThrow )
@@ -130,7 +130,7 @@ int32 FStream::write( const void *buffer, int32 size )
    return result;
 }
 
-int64 FStream::seek( int64 pos, e_whence whence )
+off_t FStream::seek( off_t pos, e_whence whence )
 {
    int fd = *(int*) m_fsData;
 
@@ -143,7 +143,7 @@ int64 FStream::seek( int64 pos, e_whence whence )
          from = SEEK_SET;
    }
 
-   pos = (int64) ::lseek( fd, pos, from );
+   pos = (off_t) ::lseek( fd, pos, from );
    if( pos < 0 ) {
       m_lastError = errno;
       m_status = m_status | t_error;
@@ -163,14 +163,14 @@ int64 FStream::seek( int64 pos, e_whence whence )
 }
 
 
-int64 FStream::tell()
+off_t FStream::tell()
 {
    int fd = *(int*) m_fsData;
 
-   int64 pos = (int64) ::lseek( fd, 0, SEEK_CUR );
+   off_t pos = (off_t) ::lseek( fd, 0, SEEK_CUR );
 
    if( pos < 0 ) {
-      m_lastError = (int64) errno;
+      m_lastError = (size_t) errno;
       m_status = m_status | t_error;
 
       if( m_bShouldThrow )
@@ -186,7 +186,7 @@ int64 FStream::tell()
 }
 
 
-bool FStream::truncate( int64 pos )
+bool FStream::truncate( off_t pos )
 {
    int fd = *(int*) m_fsData;
 
@@ -198,7 +198,7 @@ bool FStream::truncate( int64 pos )
 
    int32 res = ::ftruncate( fd, pos );
    if( res < 0 ) {
-      m_lastError = (int64) errno;
+      m_lastError = (size_t) errno;
       m_status = m_status | t_error;
 
       if( m_bShouldThrow )
@@ -213,7 +213,7 @@ bool FStream::truncate( int64 pos )
    return true;
 }
 
-int32 FStream::readAvailable( int32 msec, Interrupt* intr )
+size_t FStream::readAvailable( int32 msec )
 {   
    /* Temporarily turned off because a darwin flaw
 
@@ -245,9 +245,9 @@ int32 FStream::readAvailable( int32 msec, Interrupt* intr )
 
    FD_ZERO( &set );
    FD_SET( fd, &set );
-   if( intr != 0 )
+   if( m_ptrIntr.assigned() )
    {
-      int* pipe_fds = (int*) intr->sysData();
+      int* pipe_fds = (int*) m_ptrIntr->sysData();
       last = pipe_fds[0];
 
       FD_SET( last, &set );
@@ -269,10 +269,10 @@ int32 FStream::readAvailable( int32 msec, Interrupt* intr )
    {
       case 1:
       case 2:
-         if ( intr != 0 && FD_ISSET( ((int*) intr->sysData())[0], &set ) )
+         if ( m_ptrIntr.assigned() && FD_ISSET( ((int*) m_ptrIntr->sysData())[0], &set ) )
          {
             m_status = m_status | t_interrupted;
-            intr->reset();
+            m_ptrIntr->reset();
             if( m_bShouldThrow )
             {
                throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
@@ -289,7 +289,7 @@ int32 FStream::readAvailable( int32 msec, Interrupt* intr )
             return 0;
          }
 
-         m_lastError = (int64) errno;
+         m_lastError = (size_t) errno;
          if( m_bShouldThrow )
          {
             throw new IOError( ErrorParam( e_io_ravail, __LINE__, __FILE__ ).sysError( errno ) );
@@ -301,7 +301,7 @@ int32 FStream::readAvailable( int32 msec, Interrupt* intr )
    return 0;
 }
 
-int32 FStream::writeAvailable( int32 msec, Interrupt* intr )
+size_t FStream::writeAvailable( int32 msec )
 {
    int fd = *(int*) m_fsData;
 
@@ -311,9 +311,9 @@ int32 FStream::writeAvailable( int32 msec, Interrupt* intr )
    poller[0].fd = fd;
    poller[0].events = POLLOUT;
 
-   if ( intr != 0 )
+   if ( m_ptrIntr.assigned() )
    {
-      int* poll_fds = (int*) intr->sysData();
+      int* poll_fds = (int*) m_ptrIntr->sysData();
 
       fds = 2;
       poller[1].fd = poll_fds[0];
@@ -329,9 +329,9 @@ int32 FStream::writeAvailable( int32 msec, Interrupt* intr )
    if ( res == 0 )
    {
       m_lastError = 0;
-      if( intr != 0  && (poller[1].revents & POLLIN) != 0 )
+      if( m_ptrIntr.assigned()  && (poller[1].revents & POLLIN) != 0 )
       {
-         intr->reset();
+         m_ptrIntr->reset();
          m_status = m_status | t_interrupted;
          if( m_bShouldThrow )
          {
@@ -345,7 +345,7 @@ int32 FStream::writeAvailable( int32 msec, Interrupt* intr )
          return 1;
    }
    else {
-      m_lastError = (int64) errno;
+      m_lastError = (size_t) errno;
       if( m_bShouldThrow )
       {
          throw new IOError( ErrorParam( e_io_wavail, __LINE__, __FILE__ ).sysError( errno ) );

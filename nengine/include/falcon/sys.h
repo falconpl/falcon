@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_sys.h
+   FILE: sys.h
 
    System related services.
    -------------------------------------------------------------------
@@ -101,6 +101,10 @@ FALCON_DYN_SYM int64 _getpid();
 
 FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 
+/** Get the system page size. */
+FALCON_DYN_SYM long _getPageSize();
+
+
 #ifdef FALCON_SYSTEM_WIN
 }
 }
@@ -116,4 +120,4 @@ namespace Sys {
 
 #endif
 
-/* end of flc_sys.h */
+/* end of sys.h */

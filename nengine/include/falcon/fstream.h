@@ -43,15 +43,15 @@ public:
    FStream( const FStream &other );
    virtual ~FStream();
 
-   virtual int32 read( void *buffer, int32 size );
-   virtual int32 write( const void *buffer, int32 size );
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
 
-   virtual int64 seek( int64 pos, Stream::e_whence whence );
-   virtual int64 tell();
-   virtual bool truncate(int64 pos = - 1);
+   virtual off_t seek( off_t pos, Stream::e_whence whence );
+   virtual off_t tell();
+   virtual bool truncate(off_t pos = - 1);
 
-   virtual int32 readAvailable( int32 msecs_timeout=0, Interrupt* intr=0 );
-   virtual int32 writeAvailable( int32 msecs_timeout=0, Interrupt* intr=0 );
+   virtual size_t readAvailable( int32 msecs_timeout=0 );
+   virtual size_t writeAvailable( int32 msecs_timeout=0 );
 
    virtual bool close();
 
@@ -78,8 +78,8 @@ public:
 
    virtual ~InputOnlyFStream() {}
 
-   virtual int32 writeAvailable( int32 msecs_timeout=0, Interrupt* intr=0 );
-   virtual int32 write( const void *buffer, int32 size );
+   virtual size_t writeAvailable( int32 msecs_timeout=0 );
+   virtual size_t write( const void *buffer, size_t size );
    virtual bool truncate(int64 pos = - 1);
 
    virtual InputOnlyFStream* clone() const;
@@ -100,8 +100,8 @@ public:
 
    virtual ~OutputOnlyFStream() {}
 
-   virtual int32 readAvailable( int32 msecs_timeout=0, Interrupt* intr=0 );
-   virtual int32 read( const void *buffer, int32 size );
+   virtual size_t readAvailable( int32 msecs_timeout=0 );
+   virtual size_t read( void *buffer, size_t size );
 
    virtual OutputOnlyFStream* clone() const;
 };
@@ -121,8 +121,8 @@ public:
 
    virtual ~ReadOnlyFStream() {}
 
-   virtual int64 seek( int64 pos, Stream::e_whence whence );
-   virtual int64 tell();
+   virtual off_t seek( off_t pos, Stream::e_whence whence );
+   virtual off_t tell();
 
    virtual ReadOnlyFStream* clone() const;
 };
@@ -143,9 +143,9 @@ public:
 
    virtual ~WriteOnlyFStream() {}
 
-   virtual int64 seek( int64 pos, Stream::e_whence whence );
-   virtual int64 tell();
-   virtual bool truncate(int64 pos = - 1);
+   virtual off_t seek( off_t pos, Stream::e_whence whence );
+   virtual off_t tell();
+   virtual bool truncate(off_t pos = - 1);
 
    virtual WriteOnlyFStream* clone() const;
 };
