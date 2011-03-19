@@ -68,34 +68,186 @@ class TextDecoder;
 
  @endcode
 
+ \note TextReader methods never enlarge the character size of the string, which
+   is automatically enlarged when the first character that would not fit in the
+   current character size is met. Is performance is to be preferred to space constraint,
+   it is wiser to provide a String whose character size has been enlarged to the maximum
+   size that the desired text encoding may support.
  */
+
 class FALCON_DYN_CLASS TextReader: public Reader
 {
 public:
-   TextReader( Stream* stream, const String& encoding, bool bOwn = false );
+   /** Creates the text decoder using a standard "C" text decoder.
+    \param stream The stream to be accessed.
+    \param bOwn If true, the stream is closed and destroyed at reader destruction.
+    */
+   TextReader( Stream* stream, bool bOwn = false );
+
+   /** Creates the text decoder using determined text decoder.
+    \param stream The stream to be accessed.
+    \param decoder A text decoder obtained through Engine::getTextDecoder.
+    \param bOwn If true, the stream is closed and destroyed at reader destruction.
+   */
+   TextReader( Stream* stream, TextDecoder* decoder, bool bOwn = false );
+
    virtual ~TextReader();
 
-   void setEncoding( const String& encoding );
+   /** Change the text decoder used by this reader.
+    \param decoder the new decoder that should be used instead of the current one.
 
+    This method allows to change the text decoder runtime.
+    */
+   void setEncoding( TextDecoder* decoder );
+
+   /** Reads a text from the stream.
+    \param str A target string where to put the data.
+    \param count The count of characters that must be read from the stream.
+    \param start Start position where to put the decoded content in the target string.
+    \return True if a string could be read.
+    \throw EncodingError if the input stream has encoding errors.
+
+    This method reads at maximum count characters (the actual count of read bytes
+    may differ depending on the encoding, and stores them in the target Falcon string.
+
+    If the string is not large enough to read count character, it is resized accordingly.
+    If less than count characters can be read from the stream, the resulting string
+    will be smaller, but the memory wont be automatically trimmed down to its size.
+    */
    bool read( String& str, length_t count, length_t start = 0 );
+
+
+   /** Reads a text from the stream.
+    \param str A target string where to put the data.
+    \return True if a string could be read.
+    \throw EncodingError if the input stream has encoding errors.
+
+    This method fills the string to it's full pre-allocated size (if enough
+    characters can be read from the stream).
+    */
    bool read( String& str );
 
-   bool readline( String& target, length_t maxCount, length_t start = 0 );
-   bool readRecord( String& target, const String& separator, length_t maxCount, length_t start = 0 );
-   bool readToken( String& target, const String* tokens, int32 tokenCount, length_t maxCount, length_t start = 0 );
+   /** Reads all the remaining tesxt from the stream.
+    \param str A target string where to put the data.
+    \return True if a string could be read.
+    \throw EncodingError if the input stream has encoding errors.
 
+    This method fills a string with all the contents of a text file.
+
+    The algorithm stores the target text in smaller pre-allocated strings,
+    merging them after the full size and character width of the final string
+    is known. This makes relatively efficient to read very large text files, but
+    it requires an extra amount of temporary memory to perform the operation.
+    */
+   bool readEof( String& str );
+
+   /** Reads the next text line from a stream.
+    \param str A target string where to put the data.
+    \param maxCount The maximum count of characters to read before giving off.
+    \param start Start from a determined position in the string.
+    \return True if a line could be read, false if EOF was hit or maxCount
+            characters had been read before hitting and end-of-line.
+    \throw EncodingError if the input stream has encoding errors.
+
+    This method scans a stream in search for a LF, CRLF or LFCR sequence
+    (whichever comes first). If maxCount characters are read before finding
+    such a sequence, the method returns false, but the read contents are stored
+    in the target string.
+
+    The string is re-allocated and resized as needed.
+
+    The end-of-line sequence is NOT returned in the target string.
+
+    To loop on all the lines of the lines in a file, the following strategy
+    can be adopted:
+
+    \code
+    String tgt;
+    Reader reader( ... );
+
+    while( true ) {
+      if ( ! reader.readLine( tgt, 1024 ) )
+      {
+         // either we're eof, or the line was longer than 1024 characters.
+         if ( tgt.size() == 0 ) {
+            break; // we're eof
+         }
+
+         // manage unterminated line, possibly raise an error
+      }
+      else
+      {
+
+         // manage a line
+      }
+    }
+    \endcode    
+    */
+   bool readLine( String& target, length_t maxCount, length_t start = 0 );
+
+   /** Reads a text file up to a certain separator.
+    \param str A target string where to put the data.
+    \param separator A separator used to terminate the record.
+    \param maxCount The maximum count of characters to read before giving off.
+    \param start Start from a determined position in the string.
+    \return True if a record could be read, false if EOF was hit or maxCount
+            characters had been read before hitting the separator.
+    \throw EncodingError if the input stream has encoding errors.
+    \see readLine
+
+    This method is similar to readLine, but it is possible indicate a string that
+    will be used as field separator.
+    */
+   bool readRecord( String& target, const String& separator, length_t maxCount, length_t start = 0 );
+   
+   /** Reads a text from a text file, using multiple separators as terminators.
+    \param str A target string where to put the data.
+    \param tokens An array of Falcon strings.
+    \param tokenCount Number of tokens in the array.
+    \param maxCount The maximum count of characters to read before giving off.
+    \param start Start from a determined position in the string.
+    \return The number of the token hit, or -1 if EOF was hit or maxCount
+            characters had been read before hitting one of the separators.
+    \throw EncodingError if the input stream has encoding errors.
+    \see readLine
+    
+    This method is similar to readLine, but it is possible indicate a multiple
+    strings that could be considere the limit of the read
+    */
+   int readToken( String& target, const String* tokens, int32 tokenCount, length_t maxCount, length_t start = 0 );
+
+   /** Reads exactly one character.
+    \return -1 if hit EOF.
+    \throw EncodingError if the input stream has encoding errors.
+
+    Returns a single character read from the stream and decoded by the transcoder.
+
+    Notice that using this method to parse text streams may be extremely
+    unefficient.
+    */
    int32 getChar();
+
+
+   /** Puts a single character back on the reader.
+    \param chr The character to be pushed back.
+    \throw EncodingError if the input stream has encoding errors.
+
+    This method puts back a single character that will be read back when
+    the next read method is called. The character will be appended to the
+    target before starting the decoding of the data coming to the stream,
+    or will be returned by getChar() if that is called first.
+
+    However, the pushed back character won't be taken into consideration when
+    scanning for a token in the stream.
+
+    Calling this method multiple times changes the previously pushed character;
+    in other words, it's not possible to unget mor than one character at a time.
+    */
    void ungetChar( int32 chr );
 
-private:
+protected:
    int32 m_pushedChr;
-   bool m_bOwnStream;
-
-   Stream* m_stream;
    TextDecoder* m_decoder;
-
-   String m_recordBuffer;
-   length_t m_nRecordPos;
 };
 
 }
