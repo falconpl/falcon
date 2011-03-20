@@ -244,7 +244,7 @@ bool DataReader::read( String& tgt )
             }
             else if( nCharCount == 4 )
             {
-               REArray_32Bit( tgt.getRawStorage(), size/2 );
+               REArray_32Bit( tgt.getRawStorage(), size/4 );
             }
          }
       }

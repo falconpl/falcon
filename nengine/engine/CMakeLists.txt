@@ -87,6 +87,7 @@ add_library(falcon_engine SHARED
   uri.cpp
   vm.cpp
   vmcontext.cpp
+  writer.cpp
 )
 
 set_target_properties(falcon_engine PROPERTIES

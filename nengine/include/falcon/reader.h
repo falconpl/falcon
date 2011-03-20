@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: reader.h
 
-   Implementation of Falcon Strings.
+   Base abstract class for file writers
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 17 Mar 2011 11:36:18 +0100

@@ -16,10 +16,11 @@
 #include <falcon/reader.h>
 #include <falcon/sys.h>
 #include <falcon/stream.h>
+#include <falcon/ioerror.h>
+
 #include <stdio.h>
 #include <string.h>
 
-#include "falcon/ioerror.h"
 
 namespace Falcon {
 
@@ -127,7 +128,7 @@ bool Reader::refill()
       }
    }
 
-   int nSize = m_stream->read(m_buffer + m_bufLength, m_readSize );
+   size_t nSize = m_stream->read(m_buffer + m_bufLength, m_readSize );
    if ( nSize < 0 )
    {
       // if the stream wanted to throw, we wouldn't be here.
