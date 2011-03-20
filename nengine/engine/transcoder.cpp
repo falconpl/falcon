@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: genericerror.cpp
+   FILE: textdecoder.cpp
 
-   Generic Error class.
+   Transcoder for text encodings
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 04 Feb 2011 18:39:36 +0100
+   Begin: Sun, 20 Mar 2011 13:04:14 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,21 +13,19 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/engine.h>
-#include <falcon/genericerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/transcoder.h>
 
 namespace Falcon {
 
-GenericError::GenericError( const ErrorParam &params ):
-   Error( Engine::instance()->genericErrorClass(), params )
+Transcoder::Transcoder( const String &name ):
+   m_name( name )
 {
 }
 
-GenericError::~GenericError()
+Transcoder::~Transcoder()
 {
 }
 
 }
 
-/* end of genericerror.cpp */
+/* textdecoder.cpp */

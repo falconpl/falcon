@@ -119,6 +119,32 @@ protected:
    /** Refills the read buffer with new data. */
    virtual bool refill();
 
+   /** Chech the read buffer and eventually refills it with new data.
+    \param suggestedSize try to read this size (or possibly more) from the
+    next read.
+    \throw IOError in case of read error.
+    \return true If the required bytes are available, false if the stream is at eof.
+
+    Fetch will return true while there is still unread data in the buffer, and if
+    possible, it will try to get in the buffer at least suggestedSize bytes from
+    the stream (in one single read).
+
+    This method is similar to ensure(), but it doesn't force the required size to
+    be read before returning. Operations performed by fetch are the following:
+    
+    - If the buffer has still more than suggestedSize to be read, return immediately true.
+    - If the stream is at EOF, return true if there is still something to read.
+    - If the read size is smaller than the suggested size, resize the buffer to
+      accomodate suggestedSize bytes.
+    - refill the buffer and return true.
+
+    This method is useful when variable length data is to be read from the stream,
+    its size isn't know in advance, and reading a smaller amount of data
+    can't be considered an error without checking other conditions.
+    
+   */
+   virtual bool fetch( length_t suggestedSize );
+
    /** Makes sure that there is some data to be read.
     \param size the size of bytes that shall be available from the stream.
     \throw IOError in case of read error.

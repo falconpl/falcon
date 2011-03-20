@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: textreader.cpp
+   FILE: textreader.h
 
    Text-oriented stream reader.
    -------------------------------------------------------------------
@@ -25,7 +25,7 @@
 namespace Falcon {
 
 class Stream;
-class TextDecoder;
+class Transcoder;
 
 /** Class providing the ability to read data from a text oriented stream.
  
@@ -89,7 +89,7 @@ public:
     \param decoder A text decoder obtained through Engine::getTextDecoder.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
    */
-   TextReader( Stream* stream, TextDecoder* decoder, bool bOwn = false );
+   TextReader( Stream* stream, Transcoder* decoder, bool bOwn = false );
 
    virtual ~TextReader();
 
@@ -98,7 +98,7 @@ public:
 
     This method allows to change the text decoder runtime.
     */
-   void setEncoding( TextDecoder* decoder );
+   void setEncoding( Transcoder* decoder );
 
    /** Reads a text from the stream.
     \param str A target string where to put the data.
@@ -183,7 +183,7 @@ public:
     }
     \endcode    
     */
-   bool readLine( String& target, length_t maxCount, length_t start = 0 );
+   bool readLine( String& target, length_t maxCount );
 
    /** Reads a text file up to a certain separator.
     \param str A target string where to put the data.
@@ -198,7 +198,7 @@ public:
     This method is similar to readLine, but it is possible indicate a string that
     will be used as field separator.
     */
-   bool readRecord( String& target, const String& separator, length_t maxCount, length_t start = 0 );
+   bool readRecord( String& target, const String& separator, length_t maxCount );
    
    /** Reads a text from a text file, using multiple separators as terminators.
     \param str A target string where to put the data.
@@ -214,7 +214,7 @@ public:
     This method is similar to readLine, but it is possible indicate a multiple
     strings that could be considere the limit of the read
     */
-   int readToken( String& target, const String* tokens, int32 tokenCount, length_t maxCount, length_t start = 0 );
+   int readToken( String& target, const String* tokens, int32 tokenCount, length_t maxCount );
 
    /** Reads exactly one character.
     \return -1 if hit EOF.
@@ -225,7 +225,7 @@ public:
     Notice that using this method to parse text streams may be extremely
     unefficient.
     */
-   int32 getChar();
+   char_t getChar();
 
 
    /** Puts a single character back on the reader.
@@ -243,11 +243,36 @@ public:
     Calling this method multiple times changes the previously pushed character;
     in other words, it's not possible to unget mor than one character at a time.
     */
-   void ungetChar( int32 chr );
+   void ungetChar( char_t chr );
 
 protected:
-   int32 m_pushedChr;
-   TextDecoder* m_decoder;
+   char_t m_pushedChr;
+   Transcoder* m_decoder;
+
+   /** Structure holding the standard new-line tokens */
+   struct std_token {
+      byte data[12];
+      length_t size;
+   };
+   
+   struct std_token m_nl[3];
+
+   struct token {
+      byte* data;
+      length_t size;
+   };
+
+   struct token* m_cTokens;
+   int m_cTSize;
+
+   int readTokenInternal( String& target, struct token* tokens, int32 tokenCount, length_t maxCount );
+   
+   /** Finds the first token available in the buffer. */
+   int findFirstToken( struct token* toks, int tcount, length_t& pos );
+
+   void clearTokens();
+
+   void makeDefaultSeps();
 };
 
 }

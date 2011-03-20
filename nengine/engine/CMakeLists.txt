@@ -44,6 +44,7 @@ add_library(falcon_engine SHARED
   corestring.cpp
   datareader.cpp
   dynsymbol.cpp
+  encodingerror.cpp
   engine.cpp
   error.cpp
   errorclass.cpp
@@ -76,6 +77,10 @@ add_library(falcon_engine SHARED
   symbol.cpp
   synfunc.cpp
   syntree.cpp
+  textreader.cpp
+  transcoder.cpp
+  transcoderc.cpp
+  transcoderutf8.cpp
   trace.cpp
   tracestep.cpp
   unsupportederror.cpp

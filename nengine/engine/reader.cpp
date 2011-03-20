@@ -139,6 +139,34 @@ bool Reader::refill()
 }
 
 
+bool Reader::fetch( length_t suggestedSize )
+{
+   // fast path -- do we have enough data?
+   if( m_bufPos + suggestedSize <= m_bufLength )
+   {
+      return true;
+   }
+
+   if ( m_stream->eof() )
+   {
+      // Is there still something to read?
+      return m_bufPos < m_bufLength;
+   }
+
+   // no, we don't have enough data. Is our buffer large enough?
+   if( m_readSize < suggestedSize )
+   {
+      long pageSize = Sys::_getPageSize();
+      // change the read size to a suitable size.
+      length_t nLen = ((suggestedSize/pageSize)+1)*pageSize;
+      setBufferSize( nLen );
+   }
+
+   // refill just once
+   return refill();
+}
+
+
 bool Reader::ensure( length_t size )
 {
    // fast path -- do we have enough data?

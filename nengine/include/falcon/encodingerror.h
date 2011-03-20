@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: genericerror.h
+   FILE: encodingerror.h
 
    Generic Error class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 04 Feb 2011 18:39:36 +0100
+   Begin: Sun, 20 Mar 2011 13:04:14 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,24 +14,25 @@
 */
 
 
-#ifndef FALCON_GENERICERROR_H
-#define	FALCON_GENERICERROR_H
+#ifndef FALCON_ENCODINGERROR_H
+#define	FALCON_ENCODINGERROR_H
 
 #include <falcon/error.h>
 
 namespace Falcon {
 
-class FALCON_DYN_CLASS GenericError: public Error
+/** Class being raised when detecting an error in text encodings.*/
+class FALCON_DYN_CLASS EncodingError: public Error
 {
 public:
-   GenericError( const ErrorParam &params );
+   EncodingError( const ErrorParam &params );
 
 protected:
-   virtual ~GenericError();
+   virtual ~EncodingError();
 };
 
 }
 
-#endif	/* FALCON_GENERICERROR_H */
+#endif	/* FALCON_ENCODINGERROR_H */
 
-/* end of genericerror.h */
+/* end of encodingerror.h */

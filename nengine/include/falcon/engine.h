@@ -18,12 +18,16 @@
 
 #include <falcon/setup.h>
 #include <falcon/itemid.h>
+#include <falcon/string.h>
+
+#include <map>
 
 namespace Falcon
 {
 class Class;
 class Collector;
 class Mutex;
+class Transcoder;
 
 /** Falcon application global data.
 
@@ -171,6 +175,41 @@ public:
     */
    Class* interruptedErrorClass() const;
 
+   /** Returns the global instance of the EncodingError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* encodingErrorClass() const;
+
+   /** Adds a transcoder to the engine.
+    \param A new transcoder to be registered in the engine.
+    \return true if the transcoder can be added, false if it was already registered.
+
+    The owenrship of the transcoder is passed to the engine. The transcoder will
+    be destroyed at engine destruction.
+   */
+
+   bool addTranscoder( Transcoder* enc );
+
+   /** Gets a transcoder.
+    \param name The ANSI encoding name of the encoding served by the desired transcoder.
+    \return A valid transcoder pointer or 0 if the encoding is unknown.
+    */
+   Transcoder* getTranscoder( const String& name );
+
+   /* Get a transcoder that will serve the current system text encoding.
+    \param bDefault if true, a "C" default transcoder will be returned incase the
+           system encoding cannot be found
+    \return A valid transcoder pointer or 0 if the encoding is unknown.
+
+    TODO
+    */
+   //Transcoder* getSystemTranscoder( bool bDefault = false );
+
 protected:
    Engine();
    ~Engine();
@@ -200,7 +239,14 @@ protected:
    Class* m_unsupportedErrorClass;
    Class* m_ioErrorClass;
    Class* m_interruptedErrorClass;
+   Class* m_encodingErrorClass;
 
+
+   //===============================================
+   // Transcoders
+   //
+   typedef std::map<String, Transcoder*> TranscoderMap;
+   TranscoderMap m_tcoders;
 };
 
 }

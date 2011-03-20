@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/trace.h>
+
 #include <falcon/engine.h>
 
 #include <falcon/setup.h>
@@ -20,7 +22,11 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 
-#include <falcon/trace.h>
+//--- standard transcoder headers ---
+
+#include <falcon/transcoderc.h>
+#include <falcon/transcoderutf8.h>
+
 //--- object headers ---
 
 #include <falcon/collector.h>
@@ -41,6 +47,9 @@
 #include <falcon/unsupportederror.h>
 
 #include <falcon/paranoid.h>
+#include <map>
+
+#include "falcon/encodingerror.h"
 
 namespace Falcon
 {
@@ -129,6 +138,20 @@ public:
    }
 };
 
+
+class EncodingErrorClass: public ErrorClass
+{
+public:
+   EncodingErrorClass():
+      ErrorClass( "EncodingError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new EncodingError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
 //=======================================================
 // Engine static declarations
 //
@@ -168,6 +191,7 @@ Engine::Engine()
    m_classes[FLC_ITEM_METHOD] = new CoreNil;
    m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
    m_classes[FLC_ITEM_DEEP] = 0;
+
    //=====================================
    // Initialization of standard errors.
    //
@@ -177,29 +201,59 @@ Engine::Engine()
    m_ioErrorClass = new IOErrorClass;
    m_operandErrorClass = new OperandErrorClass;
    m_unsupportedErrorClass = new UnsupportedErrorClass;
+   m_encodingErrorClass = new EncodingErrorClass;
+
+   //=====================================
+   // Adding standard transcoders.
+   //
+
+   addTranscoder( new TranscoderC );
+   addTranscoder( new TranscoderUTF8 );
 
    TRACE("Engine creation complete", 0 )
 }
 
+
 Engine::~Engine()
 {
    TRACE("Engine destruction started", 0 )
+
    delete m_mtx;
    delete m_collector;
    delete m_stringClass;
 
+   // ===============================
+   // Delete standard error classes
+   //
    delete m_codeErrorClass;
    delete m_genericErrorClass;
    delete m_ioErrorClass;
    delete m_interruptedErrorClass;
    delete m_operandErrorClass;
    delete m_unsupportedErrorClass;
+   delete m_encodingErrorClass;
 
-
+   // ===============================
+   // Delete standard item classes
+   //
    for ( int count = 0; count < FLC_ITEM_COUNT; ++count )
    {
       delete m_classes[count];
    }
+
+   // ===============================
+   // delete registered transcoders
+   //
+
+   {
+      TranscoderMap::iterator iter = m_tcoders.begin();
+      while( iter != m_tcoders.end() )
+      {
+         delete iter->second;
+         ++iter;
+      }
+   }
+
    TRACE("Engine destroyed", 0 )
 }
 
@@ -239,6 +293,42 @@ bool Engine::isWindows() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_bWindowsNamesConversion;
+}
+
+
+//=====================================================
+// Transcoding
+//
+
+bool Engine::addTranscoder( Transcoder* ts )
+{
+   m_mtx->lock();
+   TranscoderMap::iterator iter = m_tcoders.find(ts->name());
+   if ( iter != m_tcoders.end() )
+   {
+      m_mtx->unlock();
+      return false;
+   }
+
+   m_tcoders[ts->name()] = ts;
+   m_mtx->unlock();
+   return true;
+}
+
+
+Transcoder* Engine::getTranscoder( const String& name )
+{
+   m_mtx->lock();
+   TranscoderMap::iterator iter = m_tcoders.find(name);
+   if ( iter != m_tcoders.end() )
+   {
+      m_mtx->unlock();
+      return 0;
+   }
+
+   Transcoder* ret = iter->second;
+   m_mtx->unlock();
+   return ret;
 }
 
 //=====================================================
@@ -308,6 +398,12 @@ Class* Engine::interruptedErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_interruptedErrorClass;
+}
+
+Class* Engine::encodingErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_encodingErrorClass;
 }
 
 Class* Engine::operandErrorClass() const
