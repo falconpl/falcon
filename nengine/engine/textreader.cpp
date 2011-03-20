@@ -48,6 +48,7 @@ TextReader::TextReader( Stream* stream, Transcoder* decoder, bool bOwn ):
 
 TextReader::~TextReader()
 {
+   clearTokens();
 }
 
 void TextReader::clearTokens()

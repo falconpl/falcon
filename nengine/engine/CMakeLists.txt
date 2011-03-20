@@ -43,6 +43,7 @@ add_library(falcon_engine SHARED
   coreint.cpp
   corestring.cpp
   datareader.cpp
+  datawriter.cpp
   dynsymbol.cpp
   encodingerror.cpp
   engine.cpp
@@ -78,6 +79,7 @@ add_library(falcon_engine SHARED
   synfunc.cpp
   syntree.cpp
   textreader.cpp
+  textwriter.cpp
   transcoder.cpp
   transcoderc.cpp
   transcoderutf8.cpp
