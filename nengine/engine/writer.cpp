@@ -110,6 +110,13 @@ bool Writer::flush()
    return true;
 }
 
+void Writer::ensure( size_t size )
+{
+   if ( size + m_bufPos > m_bufSize )
+   {
+      setBufferSize( size + m_bufPos );
+   }
+}
 
 bool Writer::write( byte* data, size_t size )
 {

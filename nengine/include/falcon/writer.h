@@ -80,6 +80,11 @@ protected:
    /** Create for immediate delegation. */
    Writer();
 
+   /** Grant that there is enough space in the currentBuffer(). */
+   void ensure( size_t size );
+
+   byte* currentBuffer() const { return m_buffer + m_bufPos; }
+
    byte* m_buffer;
    length_t m_bufPos;
    length_t m_bufSize;

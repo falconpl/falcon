@@ -28,13 +28,14 @@ class Stream;
 
 /** Class providing the ability to write data to a binary oriented stream.
 
-    This class is meant to read arbitrary data from a stream. The class
- has support for reading various kind of C/C++ native data, and has an internal
+    This class is meant to write arbitrary data to a stream. The class
+ has support for writing various kind of C/C++ native data, and has an internal
  management of data endianity.
 
  DataReader and DataWriter classes are used for serialization. As such, they have
  also limited support to read and write basic Falcon data structure (as i.e. strings).
 
+ \see DataReader
  */
 class FALCON_DYN_CLASS DataWriter: public Writer
 {

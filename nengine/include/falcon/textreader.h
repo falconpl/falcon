@@ -78,7 +78,7 @@ class Transcoder;
 class FALCON_DYN_CLASS TextReader: public Reader
 {
 public:
-   /** Creates the text decoder using a standard "C" text decoder.
+   /** Creates the text decoder using a standard "C" transcoder.
     \param stream The stream to be accessed.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
     */
@@ -86,7 +86,7 @@ public:
 
    /** Creates the text decoder using determined text decoder.
     \param stream The stream to be accessed.
-    \param decoder A text decoder obtained through Engine::getTextDecoder.
+    \param decoder A transcoder obtained through Engine::getTranscoder.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
    */
    TextReader( Stream* stream, Transcoder* decoder, bool bOwn = false );
