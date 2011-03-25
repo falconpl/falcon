@@ -39,12 +39,12 @@ void* ErrorClass::clone( void* source ) const
    return false;
 }
 
-void ErrorClass::serialize( Stream* stream, void* self ) const
+void ErrorClass::serialize( DataWriter* stream, void* self ) const
 {
    // TODO
 }
 
-void* ErrorClass::deserialize( Stream* stream ) const
+void* ErrorClass::deserialize( DataReader* stream ) const
 {
    //TODO
    return 0;

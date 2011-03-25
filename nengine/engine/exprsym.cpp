@@ -50,13 +50,13 @@ void ExprSymbol::describe( String& val ) const
 }
 
 
-void ExprSymbol::serialize( Stream* s ) const
+void ExprSymbol::serialize( DataWriter* s ) const
 {
    // TODO
 }
 
 
-void ExprSymbol::deserialize( Stream* s )
+void ExprSymbol::deserialize( DataReader* s )
 {
    // TODO
 }

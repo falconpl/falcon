@@ -56,14 +56,14 @@ public:
    void item( const Item& i );
 
    virtual ExprValue* clone() const;
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
    virtual bool isBinaryOperator() const;
    virtual void describe( String& ) const;
    virtual void precompile( PCode* pc )  const;
 
 protected:
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
    inline ExprValue():
       Expression( t_value ),
       m_lock(0)

@@ -44,8 +44,8 @@ public:
    inline void line( int32 l ) { m_line = l; }
    inline void chr( int32 c ) { m_char = c; }
 
-   void serialize( Stream* s ) const;
-   void deserialize( Stream* s );
+   void serialize( DataWriter* s ) const;
+   void deserialize( DataReader* s );
 
 
 private:

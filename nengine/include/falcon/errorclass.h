@@ -35,8 +35,8 @@ class FALCON_DYN_SYM ErrorClass: public Class
 public:
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( Stream* stream, void* self ) const;
-   virtual void* deserialize( Stream* stream ) const;
+   virtual void serialize( DataWriter* stream, void* self ) const;
+   virtual void* deserialize( DataReader* stream ) const;
 
    // todo: overload properties.
 

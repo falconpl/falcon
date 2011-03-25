@@ -14,7 +14,8 @@
 */
 
 #include <falcon/expression.h>
-#include <falcon/stream.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/pcode.h>
@@ -36,14 +37,14 @@ Expression::Expression( const Expression &other ):
 Expression::~Expression()
 {}
 
-void Expression::serialize( Stream* s ) const
+void Expression::serialize( DataWriter* s ) const
 {
    byte type = (byte) m_operator;
-   s->write( &type, 1 );
+   s->write( type );
    m_sourceRef.serialize( s );
 }
 
-void Expression::deserialize( Stream* s )
+void Expression::deserialize( DataReader* s )
 {
    m_sourceRef.deserialize( s );
 }
@@ -74,13 +75,13 @@ void UnaryExpression::precompile( PCode* pcode ) const
    pcode->pushStep( this );
 }
 
-void UnaryExpression::serialize( Stream* s ) const
+void UnaryExpression::serialize( DataWriter* s ) const
 {
    Expression::serialize( s );
    m_first->serialize( s );
 }
 
-void UnaryExpression::deserialize( Stream* s )
+void UnaryExpression::deserialize( DataReader* s )
 {
    Expression::deserialize(s);
    m_first = ExprFactory::deserialize( s );
@@ -115,14 +116,14 @@ void BinaryExpression::precompile( PCode* pcode ) const
    pcode->pushStep( this );
 }
 
-void BinaryExpression::serialize( Stream* s ) const
+void BinaryExpression::serialize( DataWriter* s ) const
 {
    Expression::serialize( s );
    m_first->serialize( s );
    m_second->serialize( s );
 }
 
-void BinaryExpression::deserialize( Stream* s )
+void BinaryExpression::deserialize( DataReader* s )
 {
    Expression::deserialize(s);
    m_first = ExprFactory::deserialize( s );
@@ -161,7 +162,7 @@ void TernaryExpression::precompile( PCode* pcode ) const
 }
 
 
-void TernaryExpression::serialize( Stream* s ) const
+void TernaryExpression::serialize( DataWriter* s ) const
 {
    Expression::serialize( s );
    m_third->serialize( s );
@@ -169,7 +170,7 @@ void TernaryExpression::serialize( Stream* s ) const
    m_first->serialize( s );
 }
 
-void TernaryExpression::deserialize( Stream* s )
+void TernaryExpression::deserialize( DataReader* s )
 {
    Expression::deserialize(s);
    m_first = ExprFactory::deserialize( s );

@@ -26,7 +26,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS ExprFactory {
 public:
    static Expression* make( Expression::operator_t type );
-   static Expression* deserialize( Stream* s );
+   static Expression* deserialize( DataReader* s );
 };
 
 

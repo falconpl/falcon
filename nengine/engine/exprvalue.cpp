@@ -97,7 +97,7 @@ ExprValue* ExprValue::clone() const
    return new ExprValue( *this );
 }
 
-void ExprValue::serialize( Stream* s ) const
+void ExprValue::serialize( DataWriter* s ) const
 {
    Expression::serialize( s );
    //m_item.serialize(s);
@@ -118,7 +118,7 @@ void ExprValue::describe( String & str ) const
    m_item.describe(str);
 }
 
-void ExprValue::deserialize( Stream* s )
+void ExprValue::deserialize( DataReader* s )
 {
    Expression::deserialize(s);
    //m_item.deserialize();

@@ -28,7 +28,8 @@
 
 namespace Falcon {
 
-class Stream;
+class DataWriter;
+class DataReader;
 class GCToken;
 
 /** Core falcon string representation.
@@ -795,7 +796,7 @@ public:
       stream are turned on.
       \param out the stream on which to save the string.
    */
-   void serialize( Stream *out ) const;
+   void serialize( DataWriter *out ) const;
 
    /** Load the string from a stream.
       The string is deserialized from the stream and allocated in memory.
@@ -810,10 +811,9 @@ public:
       A failure usually means a stream corruption or an incompatible format.
 
       \param in the input stream where the string must be read from
-      \param bStatic true to create a self-destroryable static string
       \return true on success, false on failure.
    */
-   bool deserialize( Stream *in, bool bStatic=false );
+   bool deserialize( DataReader *in );
 
    /** Escapes a string for external representation.
       Convert special control characters to "\" prefixed characters,

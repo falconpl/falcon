@@ -61,6 +61,8 @@ namespace Falcon {
 
 class VMachine;
 class Item;
+class DataReader;
+class DataWriter;
 
 /** Representation of classes, that is item types.
 
@@ -125,12 +127,12 @@ public:
    virtual void* clone( void* source ) const = 0;
 
    /** Serializes an instance */
-   virtual void serialize( Stream* stream, void* self ) const = 0;
+   virtual void serialize( DataWriter* stream, void* self ) const = 0;
 
    /** Deserializes an instance.
       The new instance must be initialized and ready to be "selfed".
    */
-   virtual void* deserialize( Stream* stream ) const = 0;
+   virtual void* deserialize( DataReader* stream ) const = 0;
 
    //=========================================================
    // Class management

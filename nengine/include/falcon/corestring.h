@@ -49,8 +49,8 @@ public:
    virtual void* create( void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( Stream* stream, void* self ) const;
-   virtual void* deserialize( Stream* stream ) const;
+   virtual void serialize( DataWriter* stream, void* self ) const;
+   virtual void* deserialize( DataReader* stream ) const;
    virtual void* assign( void* instance ) const;
 
    virtual void describe( void* instance, String& target ) const;

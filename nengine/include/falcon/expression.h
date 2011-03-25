@@ -25,7 +25,8 @@
 namespace Falcon
 {
 
-class Stream;
+class DataReader;
+class DataWriter;
 class ExprFactory;
 class PCode;
 
@@ -112,7 +113,7 @@ public:
    SourceRef& sourceRef() { return m_sourceRef; }
 
    /** Serialize the expression on a stream. */
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
 
    /** Returns true if the expression can be found alone in a statement. */
    inline virtual bool isStandAlone() const { return false; }
@@ -179,7 +180,7 @@ protected:
    /** Deserialize the expression from a stream.
     * The expression type id must have been already read.
     */
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
 
    friend class ExprFactory;
 
@@ -202,7 +203,7 @@ public:
 
    virtual ~UnaryExpression();
 
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
 
    inline virtual bool isBinaryOperator() const { return false; }
@@ -220,7 +221,7 @@ protected:
          m_first(0)
       {}
 
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
 
    friend class ExprFactory;
 };
@@ -240,7 +241,7 @@ public:
 
    virtual ~BinaryExpression();
 
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
    inline virtual bool isBinaryOperator() const { return true; }
 
    Expression *first() const { return m_first; }
@@ -263,7 +264,7 @@ protected:
          m_second(0)
       {}
 
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
 
    friend class ExprFactory;
 };
@@ -283,7 +284,7 @@ public:
    TernaryExpression( const TernaryExpression& other );
 
    virtual ~TernaryExpression();
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
    inline virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const;
 
@@ -310,7 +311,7 @@ protected:
       m_third(0)
    {}
 
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
 
    friend class ExprFactory;
 };

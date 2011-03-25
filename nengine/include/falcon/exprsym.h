@@ -56,7 +56,7 @@ public:
    inline virtual bool isBinaryOperator() const { return false; }
    inline virtual bool isStatic() const { return false; }
 
-   virtual void serialize( Stream* s ) const;
+   virtual void serialize( DataWriter* s ) const;
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
@@ -65,7 +65,7 @@ public:
 protected:
    ExprSymbol( Symbol* target );
 
-   virtual void deserialize( Stream* s );
+   virtual void deserialize( DataReader* s );
    inline ExprSymbol( operator_t type ):
       Expression( type )
    {}

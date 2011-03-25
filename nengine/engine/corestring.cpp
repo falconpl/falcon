@@ -57,18 +57,18 @@ void* CoreString::clone( void* source ) const
 }
 
 
-void CoreString::serialize( Stream* stream, void* self ) const
+void CoreString::serialize( DataWriter* stream, void* self ) const
 {
    String* s = static_cast<String*>(self);
    s->serialize(stream);
 }
 
 
-void* CoreString::deserialize( Stream* stream ) const
+void* CoreString::deserialize( DataReader* stream ) const
 {
    String* s = new String;
    try {
-      s->deserialize( stream, false );
+      s->deserialize( stream );
    }
    catch( ... )
    {

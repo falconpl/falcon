@@ -52,13 +52,13 @@ void* CoreFunction::clone( void* source ) const
 }
 
 
-void CoreFunction::serialize( Stream* stream, void* self ) const
+void CoreFunction::serialize( DataWriter* stream, void* self ) const
 {
    // TODO
 }
 
 
-void* CoreFunction::deserialize( Stream* stream ) const
+void* CoreFunction::deserialize( DataReader* stream ) const
 {
    // TODO
    return 0;

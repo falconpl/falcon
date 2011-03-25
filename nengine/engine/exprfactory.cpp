@@ -21,7 +21,7 @@
 #include <falcon/dynsymbol.h>
 
 #include <falcon/exprfactory.h>
-#include <falcon/stream.h>
+#include <falcon/datareader.h>
 
 namespace Falcon {
 
@@ -94,10 +94,10 @@ Expression* ExprFactory::make( Expression::operator_t type )
 }
 
 
-Expression* ExprFactory::deserialize( Stream* s )
+Expression* ExprFactory::deserialize( DataReader* s )
 {
    byte b;
-   s->read( &b, 1 );
+   s->read( b );
    Expression::operator_t type = (Expression::operator_t)( b );
 
    Expression* expr = make( type );

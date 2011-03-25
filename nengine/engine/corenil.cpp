@@ -47,12 +47,12 @@ void* CoreNil::clone( void* source ) const
 }
 
 
-void CoreNil::serialize( Stream* stream, void* self ) const
+void CoreNil::serialize( DataWriter* stream, void* self ) const
 {
 }
 
 
-void* CoreNil::deserialize( Stream* stream ) const
+void* CoreNil::deserialize( DataReader* stream ) const
 {
    return 0;
 }

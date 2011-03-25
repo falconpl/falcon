@@ -14,30 +14,22 @@
 */
 
 #include <falcon/sourceref.h>
-#include <falcon/stream.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 #include <falcon/common.h>
 
 namespace Falcon {
 
-void SourceRef::serialize( Stream *s ) const
+void SourceRef::serialize( DataWriter *s ) const
 {
-   int32 line;
-
-   line = endianInt32(m_line);
-   s->write( &line, sizeof(line) );
-
-   line = endianInt32(m_char);
-   s->write( &line, sizeof(line) );
+   s->write( m_line );
+   s->write( m_char );
 }
 
-void SourceRef::deserialize( Stream *s )
+void SourceRef::deserialize( DataReader *s )
 {
-   int32 line;
-   s->read(&line, 4 );
-   m_line = endianInt32(line);
-
-   s->read(&line, 4 );
-   m_char = endianInt32(line);
+   s->read( m_line );
+   s->read( m_char );
 }
 
 }

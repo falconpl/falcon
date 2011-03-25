@@ -20,7 +20,8 @@
 
 #include <stdlib.h>
 #include <falcon/string.h>
-#include <falcon/stream.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 #include <falcon/common.h>
 #include <falcon/collector.h>
 #include <falcon/engine.h>
@@ -30,6 +31,8 @@
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "falcon/datareader.h"
 
 
 namespace Falcon {
@@ -1490,144 +1493,15 @@ void String::unescape()
 }
 
 
-void String::serialize( Stream *out ) const
+void String::serialize( DataWriter *out ) const
 {
-   length_t size = m_bExported ? m_size | 0x80000000 : m_size;
-   size = endianInt32( size );
-
-   out->write( (byte *) &size, sizeof(size) );
-   if ( m_size != 0 && out->good() )
-   {
-      byte chars = m_class->charSize();
-      out->write( &chars, 1 );
-      #ifdef FALCON_LITTLE_ENDIAN
-      out->write( m_storage, m_size );
-      #else
-      // in big endian environ, we have to reverse the code.
-      if( chars == 1 )
-      {
-         out->write( m_storage, m_size );
-      }
-      else if ( chars == 2 )
-      {
-         for( int i = 0; i < m_size/2; i ++ )
-         {
-            uint16 chr = (uint16) endianInt16((uint16) getCharAt( i ) );
-            out->write( (byte *) &chr, 2 );
-            if (! out->good() )
-               return;
-         }
-      }
-      else if ( chars == 4 )
-      {
-         for( int i = 0; i < m_size/4; i ++ )
-         {
-            uint32 chr = (uint32) endianInt32( getCharAt( i ) );
-            out->write( (byte *) &chr, 4 );
-            if (! out->good() )
-               return;
-         }
-      }
-      #endif
-   }
+   out->write( *this );
 }
 
 
-bool String::deserialize( Stream *in, bool bStatic )
+bool String::deserialize( DataReader *in )
 {
-   length_t size;
-
-   in->read( (byte *) &size, sizeof( size ) );
-   size = endianInt32(size);
-   m_bExported = (size & 0x80000000) == 0x80000000;
-   size = size & 0x7FFFFFFF;
-
-   // if the size of the deserialized string is 0, we have an empty string.
-   if ( size == 0 )
-   {
-      m_size = 0;
-
-      // if we had something allocated, we got to free it.
-      if ( m_allocated > 0 )
-      {
-         free( m_storage );
-         m_storage = 0;
-         m_allocated = 0;
-      }
-
-      // anyhow, set the handler to static and return.
-      manipulator(&csh::handler_static);
-      return true;
-   }
-
-   if ( in->good() )
-   {
-      byte chars;
-      in->read( &chars, 1 );
-
-      // determine the needed manipulator
-      if ( bStatic )
-      {
-         if( m_size < size )
-         {
-            return false;
-         }
-
-         m_size = size;
-         switch( chars )
-         {
-            case 1: manipulator( &csh::handler_static ); break;
-            case 2: manipulator( &csh::handler_static16 ); break;
-            case 4: manipulator( &csh::handler_static32 ); break;
-            default: return false;
-         }
-      }
-      else {
-         switch( chars )
-         {
-            case 1: manipulator( &csh::handler_buffer ); break;
-            case 2: manipulator( &csh::handler_buffer16 ); break;
-            case 4: manipulator( &csh::handler_buffer32 ); break;
-            default: return false;
-         }
-
-         m_allocated = m_size = size;
-         if ( m_storage != 0 )
-            free( m_storage );
-
-         m_storage = (byte *) malloc( m_allocated );
-         if( m_storage == 0 )
-            return false;
-      }
-
-
-      #ifdef FALCON_LITTLE_ENDIAN
-      in->read( m_storage, m_size );
-      #else
-      // in big endian environ, we have to reverse the code.
-      in->read( m_storage, m_size );
-      if ( ! in->good() )
-         return;
-
-      if ( chars == 2 )
-      {
-         uint16* storage16 = (uint16*) m_storage;
-         for( int i = 0; i < m_size/2; i ++ )
-         {
-            storage16[i] = (uint16) endianInt16( storage16[i] );
-         }
-      }
-      else if ( chars == 4 )
-      {
-         uint32* storage32 = (uint32*) m_storage;
-         for( int i = 0; i < m_size/4; i ++ )
-         {
-            storage32[i] = (uint32) endianInt32( storage32[i] );
-         }
-      }
-      #endif
-   }
-
+   in->read( *this );
    return true;
 }
 
