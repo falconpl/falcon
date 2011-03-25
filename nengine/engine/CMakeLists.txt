@@ -15,6 +15,7 @@ if(UNIX OR APPLE)
     mt_posix.cpp
     stdstreams_posix.cpp
     sys_posix.cpp
+    timestamp_posix.cpp
   )
 elseif(WIN32)
 
@@ -24,6 +25,7 @@ elseif(WIN32)
     mt_win.cpp
     stdstreams_win.cpp
     sys_win.cpp
+    timestamp_win.cpp
   )
 endif()
 
@@ -57,6 +59,7 @@ add_library(falcon_engine SHARED
   exprfactory.cpp
   exprsym.cpp
   exprvalue.cpp
+  filestat.cpp
   function.cpp
   genericerror.cpp
   globalsvector.cpp
@@ -80,6 +83,7 @@ add_library(falcon_engine SHARED
   syntree.cpp
   textreader.cpp
   textwriter.cpp
+  timestamp.cpp
   transcoder.cpp
   transcoderc.cpp
   transcoderutf8.cpp

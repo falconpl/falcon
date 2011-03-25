@@ -58,7 +58,9 @@ public:
 
    bool assigned() const { return m_data != 0; }
 
+   const __T& operator*() const { return *m_data; }
    __T& operator*() { return *m_data; }
+   const __T* operator->() const { return m_data; }
    __T* operator->() { return m_data; }
 
   ref_ptr<__T>& operator = (const ref_ptr<__T>& rp)
