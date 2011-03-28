@@ -94,6 +94,7 @@ add_library(falcon_engine SHARED
   tracestep.cpp
   unsupportederror.cpp
   uri.cpp
+  vfsiface.cpp
   vfsprovider.cpp
   vm.cpp
   vmcontext.cpp

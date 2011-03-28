@@ -130,7 +130,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
 }
 
 
-Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
+Stream *VFSFile::create( const URI& uri, const CParams &p )
 {
    int omode = paramsToMode( p );
 
@@ -143,8 +143,8 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
 
    int handle = ::open( cfilename.c_str(), O_CREAT | omode, DEFAULT_CREATE_MODE );
 
-   if ( handle >= 0 ) {
-      bSuccess = true;
+   if ( handle >= 0 )
+   {
       if ( ! p.isNoStream() )
       {
          FStream* fs = new FStream( &handle );
@@ -152,13 +152,12 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
       }
       else
       {
-         throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .sysError(errno));
+         return 0;
       }
    }
 
-   bSuccess = false;
-   return 0;
+   throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
 }
 
 

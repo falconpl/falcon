@@ -162,20 +162,10 @@ public:
    virtual Stream* open( const URI &uri, const OParams &p )=0;
 
    inline Stream* create( const URI &uri ) {
-      bool dummy;
-      return create( uri, CParams(), dummy );
+      return create( uri, CParams() );
    }
-
-   inline Stream* create( const URI& uri, bool &bSuccess ) {
-      return create( uri, CParams(), bSuccess );
-   }
-
-   inline Stream* create( const URI& uri, const CParams &p ) {
-      bool dummy;
-      return create( uri, p, dummy );
-   }
-
-   virtual Stream *create( const URI &uri, const CParams &p, bool &bSuccess )=0;
+   
+   virtual Stream *create( const URI &uri, const CParams &p )=0;
    virtual Directory* openDir( const URI &uri )=0;
 
    virtual void mkdir( const URI &uri, bool bWithParents = true )=0;
@@ -191,6 +181,7 @@ public:
    /** Checks if a file exists, and in that case, returns the type of the file. */
    virtual FileStat::t_fileType fileType( const URI& uri )=0;
 
+   virtual void move( const URI &suri, const URI &duri ) = 0;
 protected:
    VFSProvider( const String &name ):
       m_servedProto( name )

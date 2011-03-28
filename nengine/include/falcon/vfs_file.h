@@ -37,12 +37,12 @@ public:
    virtual ~VFSFile();
 
    virtual Stream* open( const URI &uri, const OParams &p );
-   virtual Stream* create( const URI &uri, const CParams &p, bool &bSuccess );
+   virtual Stream* create( const URI &uri, const CParams &p );
    virtual Directory* openDir( const URI &uri );
    virtual bool readStats( const URI &uri, FileStat &s );
    FileStat::t_fileType fileType( const URI& uri );
 
-   virtual void mkdir( const URI &uri, bool bCreateParent=false );
+   virtual void mkdir( const URI &uri, bool bCreateParent=true );
    virtual void erase( const URI &uri );
    virtual void move( const URI &suri, const URI &duri );
 

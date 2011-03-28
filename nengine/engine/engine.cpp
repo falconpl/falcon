@@ -22,6 +22,9 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 
+//--- Virtual file systems ---
+#include <falcon/vfs_file.h>
+
 //--- standard transcoder headers ---
 
 #include <falcon/transcoderc.h>
@@ -50,6 +53,7 @@
 #include <map>
 
 #include "falcon/encodingerror.h"
+#include "falcon/vfs_file.h"
 
 namespace Falcon
 {
@@ -173,6 +177,13 @@ Engine::Engine()
 
    m_mtx = new Mutex;
    m_collector = new Collector;
+
+
+   //=====================================
+   // Standard file systems.
+   //
+   m_vfs.addVFS("", new VFSFile );
+   m_vfs.addVFS("file", new VFSFile );
 
 
    //=====================================

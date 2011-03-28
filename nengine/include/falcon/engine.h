@@ -19,10 +19,12 @@
 #include <falcon/setup.h>
 #include <falcon/itemid.h>
 #include <falcon/string.h>
+#include <falcon/vfsiface.h>
 
 #include <map>
 
 #include "vfsprovider.h"
+#include "vfsiface.h"
 
 namespace Falcon
 {
@@ -212,6 +214,9 @@ public:
     */
    //Transcoder* getSystemTranscoder( bool bDefault = false );
 
+   VFSIface& vsf() { return m_vfs; }
+   const VFSIface& vsf() const { return m_vfs; }
+
 protected:
    Engine();
    ~Engine();
@@ -221,6 +226,7 @@ protected:
    Collector* m_collector;
    Class* m_classes[FLC_ITEM_COUNT];
 
+   VFSIface m_vfs;
    //===============================================
    // Global settings
    //
