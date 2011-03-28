@@ -29,6 +29,7 @@
 namespace Falcon {
 
 class Error;
+class Stream;
 
 /** Base class for Falcon Virtual File System Providers.
    VFS providers are singletons containing virtual
@@ -43,15 +44,8 @@ class Error;
    uri and finds an appropriate VFS provider for that
    kind of resource.
 */
-class FALCON_DYN_CLASS VFSProvider:
+class FALCON_DYN_CLASS VFSProvider
 {
-   String m_servedProto;
-
-protected:
-   VFSProvider( const String &name ):
-      m_servedProto( name )
-   {}
-
 public:
    virtual ~VFSProvider();
 
@@ -128,13 +122,11 @@ public:
    class CParams: public OParams
    {
       uint32 m_cflags;
-      uint32 m_cmode;
       friend class VFSProvider;
 
    public:
       CParams():
-         m_cflags(0),
-         m_cmode( 0644 )
+         m_cflags(0)
       {}
 
       /** Fail if the file exists.
@@ -155,9 +147,6 @@ public:
       */
       CParams& noStream() { m_cflags |= 0x2; return *this; }
       bool isNoStream() const { return (m_cflags & 0x2) == 0x2; }
-
-      CParams& createMode( uint32 cm ) { m_cmode = cm; return *this; }
-      uint32 createMode() const { return m_cmode; }
    };
 
    inline const String& protocol() const { return m_servedProto; }
@@ -186,38 +175,30 @@ public:
       return create( uri, p, dummy );
    }
 
-   virtual bool link( const URI &uri1, const URI &uri2, bool bSymbolic )=0;
-   virtual bool unlink( const URI &uri )=0;
-
    virtual Stream *create( const URI &uri, const CParams &p, bool &bSuccess )=0;
+   virtual Directory* openDir( const URI &uri )=0;
 
-   virtual DirEntry* openDir( const URI &uri )=0;
-
-   virtual bool mkdir( const URI &uri, uint32 mode )=0;
-   virtual bool rmdir( const URI &uri )=0;
-   virtual bool move( const URI &suri, const URI &duri )=0;
-
+   virtual void mkdir( const URI &uri, bool bWithParents = true )=0;
+   virtual void erase( const URI &uri )=0;
+   /** Gets the stats of a given file.
+      \param uri the file of which to get thes stats.
+      \param s The stats where to store the stats.
+      \return true if the file is found, false if it doesn't exists.
+      \throw IOError if the the stats of an existing file cannot be read.
+    */
    virtual bool readStats( const URI &uri, FileStat &s )=0;
-   virtual bool writeStats( const URI &uri, const FileStat &s )=0;
 
-   virtual bool chown( const URI &uri, int uid, int gid )=0;
-   virtual bool chmod( const URI &uri, int mode )=0;
+   /** Checks if a file exists, and in that case, returns the type of the file. */
+   virtual FileStat::t_fileType fileType( const URI& uri )=0;
 
-   /** Get an integer representing the last file system specific error.
-      The semantic of this number may be different on different VFS,
-      but in all the VFS a return value of 0 is granted to indicate that
-      the last operation performed was succesful.
+protected:
+   VFSProvider( const String &name ):
+      m_servedProto( name )
+   {}
 
-      Also, the returned error code must be made thread specific or otherwise
-      reentrant/interlocked.
-   */
-   virtual int64 getLastFsError()=0;
+private:
+   String m_servedProto;
 
-   /** Wraps the last system error into a suitable Falcon Error.
-      If getLastFsError() returns 0, then this method will return
-      0 too.
-   */
-   virtual Error *getLastError()=0;
 };
 }
 

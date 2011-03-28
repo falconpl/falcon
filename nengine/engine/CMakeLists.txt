@@ -16,6 +16,7 @@ if(UNIX OR APPLE)
     stdstreams_posix.cpp
     sys_posix.cpp
     timestamp_posix.cpp
+    vfs_file_posix.cpp
   )
 elseif(WIN32)
 
@@ -26,6 +27,7 @@ elseif(WIN32)
     stdstreams_win.cpp
     sys_win.cpp
     timestamp_win.cpp
+    vfs_file_win.cpp
   )
 endif()
 
@@ -46,6 +48,7 @@ add_library(falcon_engine SHARED
   corestring.cpp
   datareader.cpp
   datawriter.cpp
+  directory.cpp
   dynsymbol.cpp
   encodingerror.cpp
   engine.cpp
@@ -91,6 +94,7 @@ add_library(falcon_engine SHARED
   tracestep.cpp
   unsupportederror.cpp
   uri.cpp
+  vfsprovider.cpp
   vm.cpp
   vmcontext.cpp
   writer.cpp

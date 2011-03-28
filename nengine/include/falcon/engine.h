@@ -22,6 +22,8 @@
 
 #include <map>
 
+#include "vfsprovider.h"
+
 namespace Falcon
 {
 class Class;

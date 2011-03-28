@@ -17,10 +17,10 @@
 #include <falcon/error.h>
 #include <falcon/sys.h>
 #include <falcon/autocstring.h>
-#include <falcon/streambuffer.h>
 #include <falcon/fstream.h>
 #include <falcon/ioerror.h>
 #include <falcon/filestat.h>
+#include <falcon/directory.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -32,16 +32,19 @@
 #include <fcntl.h>
 
 
+#define DEFAULT_CREATE_MODE 0640
+
 namespace Falcon {
 
 class FALCON_DYN_CLASS Directory_file: public Directory
 {
 public:
-   Directory_file( const URI* location ):
-      Directory(location)
+   Directory_file( const URI& location, DIR* md ):
+      Directory(location),
+      m_dir(md)
    {
-         AutoCString loc(location.get());
-         m_dir = ::opendir( loc.c_str() );
+      AutoCString loc(location.get());
+      m_dir = ::opendir( loc.c_str() );
    }
 
    virtual ~Directory_file();
@@ -138,8 +141,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
    AutoCString cfilename( uri.path() );
    errno=0;
 
-   umask( 0000 );
-   int handle = ::open( cfilename.c_str(), O_CREAT | omode, p.createMode() );
+   int handle = ::open( cfilename.c_str(), O_CREAT | omode, DEFAULT_CREATE_MODE );
 
    if ( handle >= 0 ) {
       bSuccess = true;
@@ -149,7 +151,10 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
          return fs;
       }
       else
-         return 0;
+      {
+         throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
+      }
    }
 
    bSuccess = false;
@@ -163,12 +168,44 @@ Directory* VFSFile::openDir( const URI& uri )
 
    DIR *dir = ::opendir( filename.c_str() );
    if ( dir == 0 ) {
-      return 0;
+      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
    }
 
    return new Directory_file( uri.path(), dir );
 }
 
+
+FileStat::t_fileType VFSFile::fileType( const URI& uri )
+{
+   AutoCString filename( uri.get() );
+   struct stat fs;
+   if ( lstat( filename.c_str(), &fs ) != 0 )
+   {
+      if( errno == ENOENT )
+      {
+         return FileStat::_notFound;
+      }
+
+      throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+   }
+
+   if( S_ISREG( fs.st_mode ) )
+      return FileStat::_normal;
+   else if( S_ISDIR( fs.st_mode ) )
+      return FileStat::_dir;
+   else if( S_ISFIFO( fs.st_mode ) )
+      return FileStat::_pipe;
+   else if( S_ISLNK( fs.st_mode ) )
+      return FileStat::_link;
+   else if( S_ISBLK( fs.st_mode ) || S_ISCHR( fs.st_mode ) )
+      return FileStat::_device;
+   else if( S_ISSOCK( fs.st_mode ) )
+      return FileStat::_socket;
+
+
+   return FileStat::_unknown;
+}
 
 bool VFSFile::readStats( const URI& uri, FileStat &sts )
 {
@@ -178,7 +215,13 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts )
 
    if ( lstat( filename.c_str(), &fs ) != 0 )
    {
-      return false;
+      if( errno == ENOENT )
+      {
+         return false;
+      }
+
+      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
    }
 
    sts.size(fs.st_size);
@@ -212,77 +255,76 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts )
    return true;
 }
 
-
-bool VFSFile::writeStats( const URI& uri, const FileStat &s )
-{
-   // TODO: write contents
-   return false;
-}
-
-bool VFSFile::chown( const URI &uri, int uid, int gid )
+void VFSFile::erase( const URI &uri )
 {
    AutoCString filename( uri.path() );
-   return ::chown( filename.c_str(), uid, gid ) == 0;
+   if( ::unlink( filename.c_str() ) != 0 )
+   {
+      // try with rmdir
+      if( ::rmdir( filename.c_str() ) != 0 )
+      {
+         throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
+      }
+   }
 }
 
-
-bool VFSFile::chmod( const URI &uri, int mode )
-{
-   AutoCString filename( uri.path() );
-   return ::chmod( filename.c_str(), mode ) == 0;
-}
-
-bool VFSFile::link( const URI &uri1, const URI &uri2, bool bSymbolic )
-{
-   // TODO
-   return false;
-}
-
-
-bool VFSFile::unlink( const URI &uri )
-{
-   AutoCString filename( uri.path() );
-   return ::unlink( filename.c_str() ) == 0;
-}
-
-bool VFSFile::move( const URI &suri, const URI &duri )
+void VFSFile::move( const URI &suri, const URI &duri )
 {
    AutoCString filename( suri.path() );
    AutoCString dest( duri.path() );
-   return ::rename( filename.c_str(), dest.c_str() ) == 0;
-}
-
-
-bool VFSFile::mkdir( const URI &uri, uint32 mode )
-{
-   AutoCString filename( uri.path() );
-   return ::mkdir( filename.c_str(), mode ) == 0;
-}
-
-
-bool VFSFile::rmdir( const URI &uri )
-{
-   AutoCString filename( uri.path() );
-   return ::rmdir( filename.c_str() ) == 0;
-}
-
-
-int64 VFSFile::getLastFsError()
-{
-   return (int64) errno;
-}
-
-
-Error *VFSFile::getLastError()
-{
-   if( errno != 0 )
+   if( ::rename( filename.c_str(), dest.c_str() ) != 0 )
    {
-      IoError *e = new IoError( e_io_error );
-      e->systemError( errno );
-      return e;
+      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .sysError(errno));
    }
+}
 
-   return 0;
+
+void VFSFile::mkdir( const URI &uri, bool descend )
+{
+   String strName = uri.path();
+
+   if ( descend )
+   {
+      // find /.. sequences
+      uint32 pos = strName.find( "/" );
+      if(pos == 0) pos = strName.find( "/", 1 ); // an absolute path
+      while( true )
+      {
+         String strPath( strName, 0, pos );
+
+         // stat the file
+         FileStat fstats;
+
+         // if the file exists...
+         if ( fileType( strPath ) != FileStat::_dir )
+         {
+            // if it's not a directory, try to create the directory.
+            AutoCString filename( strPath );
+            if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
+            {
+               throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+            }
+         }
+
+         // last loop?
+         if ( pos == String::npos )
+            break;
+
+         pos = strName.find( "/", pos + 1 );
+       }
+
+   }
+   else
+   {
+      // Just one try; succeed or fail
+      AutoCString filename( strName );
+      if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
+      {
+         throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+      }
+   }
 }
 
 

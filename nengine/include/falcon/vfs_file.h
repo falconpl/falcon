@@ -31,9 +31,23 @@ namespace Falcon {
 */
 class FALCON_DYN_CLASS VFSFile: public VFSProvider
 {
+public:
+
+   VFSFile();
+   virtual ~VFSFile();
+
+   virtual Stream* open( const URI &uri, const OParams &p );
+   virtual Stream* create( const URI &uri, const CParams &p, bool &bSuccess );
+   virtual Directory* openDir( const URI &uri );
+   virtual bool readStats( const URI &uri, FileStat &s );
+   FileStat::t_fileType fileType( const URI& uri );
+
+   virtual void mkdir( const URI &uri, bool bCreateParent=false );
+   virtual void erase( const URI &uri );
+   virtual void move( const URI &suri, const URI &duri );
+
 protected:
    void *m_fsdata;
-
 
    inline int paramsToMode( const OParams &p )
    {
@@ -54,29 +68,6 @@ protected:
 
       return omode;
    }
-
-public:
-   VFSFile();
-   virtual ~VFSFile();
-
-   virtual Stream* open( const URI &uri, const OParams &p );
-   virtual Stream* create( const URI &uri, const CParams &p, bool &bSuccess );
-   virtual DirEntry* openDir( const URI &uri );
-   virtual bool readStats( const URI &uri, FileStat &s );
-   virtual bool writeStats( const URI &uri, const FileStat &s );
-
-   virtual bool chown( const URI &uri, int uid, int gid );
-   virtual bool chmod( const URI &uri, int mode );
-
-   virtual bool link( const URI &uri1, const URI &uri2, bool bSymbolic );
-   virtual bool unlink( const URI &uri );
-
-   virtual bool mkdir( const URI &uri, uint32 mode );
-   virtual bool rmdir( const URI &uri );
-   virtual bool move( const URI &suri, const URI &duri );
-
-   virtual int64 getLastFsError();
-   virtual Error *getLastError();
 };
 
 }

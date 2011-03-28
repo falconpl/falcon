@@ -40,6 +40,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS FStream: public Stream
 {
 public:
+   FStream( void *fsdata );
    FStream( const FStream &other );
    virtual ~FStream();
 
@@ -58,8 +59,6 @@ public:
    virtual FStream* clone() const;
 
 protected:
-   FStream( void *fsdata );
-
    void *m_fsData;
 };
 

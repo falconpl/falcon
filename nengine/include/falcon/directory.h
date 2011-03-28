@@ -62,7 +62,7 @@ public:
 protected:
    /** Creates a directory entry referring to a certain URI. */
    Directory( const URI& uri ):
-      m_uri( path )
+      m_uri( uri )
    {}
 
    URI m_uri;
