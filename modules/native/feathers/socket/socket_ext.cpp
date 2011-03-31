@@ -549,15 +549,18 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    Item *i_server = vm->param(0);
    Item *i_service = vm->param(1);
    if ( i_server == 0 || i_service == 0 || ! i_server->isString() ||
-         ! i_service->isString() )
+         ! ( i_service->isString() || i_service->isInteger() ) )
    {
       throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S" ) );
+         extra( "S, S|I" ) );
    }
+
+   String s_service;
+   i_service->toString( s_service );
 
    // try to resolve them.
    Sys::Address addr;
-   addr.set( *i_server->asString(), *i_service->asString() );
+   addr.set( *i_server->asString(), s_service );
 
    //in case of failed resolution, raise an error.
    if ( ! addr.resolve() ) {
