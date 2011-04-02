@@ -19,10 +19,11 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/path.h>
-#include <map>
+#include <falcon/enumerator.h>
 
 namespace Falcon
 {
+class QueryMap;
 
 /** RFC 3986 - Uniform Resource Identifier.
 
@@ -77,11 +78,7 @@ class FALCON_DYN_CLASS URI
       and may be a per-application format, even if the key=value& list is
       a quite eshtablished standard.
    */
-   typedef std::map<String,String> QueryMap;
    QueryMap *m_queryMap;
-
-   /** Iterator used for opaque traversal of query objects */
-   QueryMap::iterator m_queryIter;
 
    /** Fragment. */
    String m_fragment;
@@ -325,28 +322,23 @@ public:
    /** Removes a query field. */
    bool removeField( const String &key );
 
+   class KeyValue
+   {
+   public:
+      const String& key;
+      const String& value;
+
+      KeyValue( const String& k, const String& v ):
+         key(k), value(v)
+         {}
+   };
+
+   typedef Enumerator<KeyValue> FieldEnumerator;
+
    /** Enumerates the query fields - gets the first field.
-      Returns true if there is a first field in the query.
-      \note The query element must have been previously parsed, or fields must have
-      been explicitly inserted.
-      \param key a string where the key of the first field will be placed
-      \param value a string where the value of the first field will be placed
-         (can be an empty string).
-
-      \return true if there is a first field.
+      Calls back the given enumerator filling it with the required data.
    */
-   bool firstField( String &key, String &value );
-
-   /** Enumerates the query fields - gets the next field.
-      Returns true if there is a next field.
-      \note The query element must have been previously parsed, or fields must have
-      been explicitly inserted.
-
-      \param key a string where the key of the first field will be placed
-      \param value a string where the value of the first field will be placed
-         (can be an empty string).
-   */
-   bool nextField( String &key, String &value );
+   void enumerateFields( FieldEnumerator etor ); 
 
    /** Enumerates the query fields - counts the fields.
       If the query has fields, or if fields have been explicitly set throug

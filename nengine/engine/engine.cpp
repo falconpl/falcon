@@ -13,8 +13,9 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/trace.h>
+#include <map>
 
+#include <falcon/trace.h>
 #include <falcon/engine.h>
 
 #include <falcon/setup.h>
@@ -57,6 +58,16 @@
 
 namespace Falcon
 {
+
+
+//=======================================================
+// Private classes known by the engine -- Utils
+//
+
+class TranscoderMap: public std::map<String, Transcoder*>
+{
+};
+
 //=======================================================
 // Private classes known by the engine
 //
@@ -218,6 +229,7 @@ Engine::Engine()
    // Adding standard transcoders.
    //
 
+   m_tcoders = new TranscoderMap;
    addTranscoder( new TranscoderC );
    addTranscoder( new TranscoderUTF8 );
 
@@ -257,14 +269,15 @@ Engine::~Engine()
    //
 
    {
-      TranscoderMap::iterator iter = m_tcoders.begin();
-      while( iter != m_tcoders.end() )
+      TranscoderMap::iterator iter = m_tcoders->begin();
+      while( iter != m_tcoders->end() )
       {
          delete iter->second;
          ++iter;
       }
    }
 
+   delete m_tcoders;
    TRACE("Engine destroyed", 0 )
 }
 
@@ -314,14 +327,14 @@ bool Engine::isWindows() const
 bool Engine::addTranscoder( Transcoder* ts )
 {
    m_mtx->lock();
-   TranscoderMap::iterator iter = m_tcoders.find(ts->name());
-   if ( iter != m_tcoders.end() )
+   TranscoderMap::iterator iter = m_tcoders->find(ts->name());
+   if ( iter != m_tcoders->end() )
    {
       m_mtx->unlock();
       return false;
    }
 
-   m_tcoders[ts->name()] = ts;
+   (*m_tcoders)[ts->name()] = ts;
    m_mtx->unlock();
    return true;
 }
@@ -330,8 +343,8 @@ bool Engine::addTranscoder( Transcoder* ts )
 Transcoder* Engine::getTranscoder( const String& name )
 {
    m_mtx->lock();
-   TranscoderMap::iterator iter = m_tcoders.find(name);
-   if ( iter != m_tcoders.end() )
+   TranscoderMap::iterator iter = m_tcoders->find(name);
+   if ( iter != m_tcoders->end() )
    {
       m_mtx->unlock();
       return 0;

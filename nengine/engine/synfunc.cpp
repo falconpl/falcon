@@ -31,7 +31,7 @@ SynFunc::SynFunc( const String& name, Module* owner, int32 line ):
 
 SynFunc::~SynFunc()
 {
-   for ( int i = 0; i < m_locals.size(); ++i )
+   for ( size_t i = 0; i < m_locals.size(); ++i )
    {
       delete m_locals[i];
    }
@@ -68,7 +68,7 @@ Symbol* SynFunc::findSymbol( const String& name ) const
 
 Symbol* SynFunc::getSymbol( int32 id ) const
 {
-   if ( id < 0 || id > m_locals.size() )
+   if ( id < 0 || id > (int) m_locals.size() )
    {
       return 0;
    }

@@ -26,6 +26,8 @@
 
 namespace Falcon {
 
+class VFSIface_p;
+
 /** Interface to the Virtual File Systems.
 
  This class interpreets the requests of the querier selecting the appropriate
@@ -58,9 +60,7 @@ public:
    VFSProvider* getVFS( const String& str );
 
 private:
-   typedef  std::map<String, VFSProvider* > VFSMap;
-
-   VFSMap m_vfsmap;
+   VFSIface_p* _p;
 };
 
 }

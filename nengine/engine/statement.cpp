@@ -156,7 +156,7 @@ StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse, int32 line
 StmtIf::~StmtIf()
 {
    delete m_ifFalse;
-   for( int i = 0; i < m_elifs.size(); ++i )
+   for( unsigned i = 0; i < m_elifs.size(); ++i )
       delete m_elifs[i];
 }
 
@@ -188,7 +188,7 @@ void StmtIf::describe( String& tgt ) const
    tgt += "if "+ m_elifs[0]->m_check->describe() + "\n"
               + m_elifs[0]->m_ifTrue->describe();
 
-   for ( int i = 1; i < m_elifs.size(); ++i )
+   for ( size_t i = 1; i < m_elifs.size(); ++i )
    {
       for( int32 j = 1; j < m_elifs[i]->m_sr.chr(); i++ ) {
          tgt.append(' ');
@@ -226,7 +226,7 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
    else
    {
       // try next else-if
-      if( ++sid < self->m_elifs.size() )
+      if( ++sid < (int) self->m_elifs.size() )
       {
          TRACE2( "--Trying branch %d", sid );
          ctx->currentCode().m_seqId = sid;

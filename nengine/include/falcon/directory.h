@@ -38,7 +38,7 @@ namespace Falcon {
  feature.
 
 */
-class Directory
+class FALCON_DYN_CLASS Directory
 {
 public:
    /** The base destructor calls close(). */

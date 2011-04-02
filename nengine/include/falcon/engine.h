@@ -21,8 +21,6 @@
 #include <falcon/string.h>
 #include <falcon/vfsiface.h>
 
-#include <map>
-
 #include "vfsprovider.h"
 #include "vfsiface.h"
 
@@ -32,6 +30,7 @@ class Class;
 class Collector;
 class Mutex;
 class Transcoder;
+class TranscoderMap;
 
 /** Falcon application global data.
 
@@ -253,8 +252,7 @@ protected:
    //===============================================
    // Transcoders
    //
-   typedef std::map<String, Transcoder*> TranscoderMap;
-   TranscoderMap m_tcoders;
+   TranscoderMap* m_tcoders;
 };
 
 }

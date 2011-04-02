@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: sys_posix.cpp
+   FILE: timestamp_posix.cpp
 
    System specific (unix) support for VM.
    -------------------------------------------------------------------

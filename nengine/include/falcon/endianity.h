@@ -149,7 +149,7 @@ inline float getFloat32( register byte* buf )
 inline float getFloat32Reverse( register byte* buf )
 {
    union t_data {
-      uint32 ui32;
+      float f32;
       byte b[4];
    } data;
 
@@ -159,11 +159,11 @@ inline float getFloat32Reverse( register byte* buf )
    *dtb = *buf; --dtb; ++buf;
    *dtb = *buf;
 
-   return data.ui32;
+   return data.f32;
 }
 
 /** Converts an unaligned buffer in a 64 bit float */
-inline float getFloat64( register byte* buf )
+inline double getFloat64( register byte* buf )
 {
    union t_data {
       double f64;

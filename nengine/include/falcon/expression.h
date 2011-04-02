@@ -697,7 +697,7 @@ public:
 protected:
    inline ExprDot(): UnaryExpression( t_obj_access ), m_prop("") {}
    bool m_lvalue;
-   const String& m_prop;
+   const String m_prop;
    friend class ExprFactory; 
 public:
 };

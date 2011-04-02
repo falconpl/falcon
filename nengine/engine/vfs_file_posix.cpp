@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vfs_file_posix.cpp
+   FILE: vfs_file_win.cpp
 
-   VSF provider for physical file system on the host system (POSIX).
+   VSF provider for physical file system on the host system (POSIX)
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 12 Sep 2008 21:47:10 +0200
@@ -329,4 +329,4 @@ void VFSFile::mkdir( const URI &uri, bool descend )
 
 }
 
-/* end of vsf_file.cpp */
+/* end of vsf_file_posix.cpp */

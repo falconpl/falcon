@@ -18,25 +18,36 @@
 
 namespace Falcon {
 
+class VFSIface_p 
+{
+public:
+   typedef std::map<String, VFSProvider* > VFSMap;
+   VFSMap m_vfsmap;
+};
+
+
 VFSIface::VFSIface():
    VFSProvider("")
 {
+   _p = new VFSIface_p;
 }
 
 VFSIface::~VFSIface()
 {
-   VFSMap::iterator iter = m_vfsmap.begin();
-   while( iter != m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.begin();
+   while( iter != _p->m_vfsmap.end() )
    {
       delete iter->second;
       ++iter;
    }
+
+   delete _p;
 }
 
 Stream* VFSIface::open( const URI &uri, const OParams &p )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -47,8 +58,8 @@ Stream* VFSIface::open( const URI &uri, const OParams &p )
 
 Stream* VFSIface::create( const URI &uri, const CParams &p )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -59,8 +70,8 @@ Stream* VFSIface::create( const URI &uri, const CParams &p )
 
 Directory* VFSIface::openDir( const URI &uri )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -72,8 +83,8 @@ Directory* VFSIface::openDir( const URI &uri )
 
 bool VFSIface::readStats( const URI &uri, FileStat &s )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -85,8 +96,8 @@ bool VFSIface::readStats( const URI &uri, FileStat &s )
 
 FileStat::t_fileType VFSIface::fileType( const URI& uri )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -98,8 +109,8 @@ FileStat::t_fileType VFSIface::fileType( const URI& uri )
 
 void VFSIface::mkdir( const URI &uri, bool bCreateParent )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -110,8 +121,8 @@ void VFSIface::mkdir( const URI &uri, bool bCreateParent )
 
 void VFSIface::erase( const URI &uri )
 {
-   VFSMap::iterator iter = m_vfsmap.find( uri.scheme() );
-   if( iter == m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + uri.scheme()) );
@@ -123,9 +134,9 @@ void VFSIface::erase( const URI &uri )
 
 void VFSIface::move( const URI &suri, const URI &duri )
 {
-   VFSMap::iterator iter = m_vfsmap.find( suri.scheme() );
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( suri.scheme() );
 
-   if( iter == m_vfsmap.end() )
+   if( iter == _p->m_vfsmap.end() )
    {
       throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
               .extra("scheme " + suri.scheme()) );
@@ -137,19 +148,19 @@ void VFSIface::move( const URI &suri, const URI &duri )
 
 void VFSIface::addVFS( const String& str, VFSProvider* vfs )
 {
-   VFSMap::iterator iter = m_vfsmap.find( str );
-   if( iter != m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( str );
+   if( iter != _p->m_vfsmap.end() )
    {
       delete iter->second;
    }
-   m_vfsmap[str] = vfs;
+   _p->m_vfsmap[str] = vfs;
 }
 
 
 VFSProvider* VFSIface::getVFS( const String& str )
 {
-   VFSMap::iterator iter = m_vfsmap.find( str );
-   if( iter != m_vfsmap.end() )
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( str );
+   if( iter != _p->m_vfsmap.end() )
    {
       return iter->second;
    }

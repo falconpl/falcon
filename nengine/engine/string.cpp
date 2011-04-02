@@ -541,7 +541,7 @@ void Static::setCharAt( String *str, length_t pos, char_t chr ) const
    {
       uint16 *buf16 =  (uint16 *) malloc( size * 2 );
       buffer = str->getRawStorage();
-      for ( int i = 0; i < size; i ++ )
+      for ( length_t i = 0; i < size; i ++ )
          buf16[ i ] = (uint16) buffer[ i ];
 
       buf16[ pos ] = (uint16) chr;
@@ -553,7 +553,7 @@ void Static::setCharAt( String *str, length_t pos, char_t chr ) const
    {
       uint32 *buf32 =  (uint32 *) malloc( size * 4 );
       buffer = str->getRawStorage();
-      for ( int i = 0; i < size; i ++ )
+      for ( length_t i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buffer[ i ];
 
       buf32[ pos ] = chr;
@@ -587,7 +587,7 @@ void Static16::setCharAt( String *str, length_t pos, char_t chr ) const
    {
       uint32 *buf32 =  (uint32 *) malloc( size * 2 );
       uint16 *buf16 = (uint16 *) str->getRawStorage();
-      for ( int i = 0; i < size; i ++ )
+      for ( length_t i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buf16[ i ];
 
       buf32[ pos ] = chr;
@@ -632,7 +632,7 @@ void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
    {
       uint16 *buf16 =  (uint16 *) malloc( size * 2 );
       buffer = str->getRawStorage();
-      for ( int i = 0; i < size; i ++ )
+      for ( length_t i = 0; i < size; i ++ )
          buf16[ i ] = (uint16) buffer[ i ];
 
       buf16[ pos ] = (uint16) chr;
@@ -646,7 +646,7 @@ void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
    {
       uint32 *buf32 =  (uint32 *) malloc( size * 4 );
       buffer = str->getRawStorage();
-      for ( int i = 0; i < size; i ++ )
+      for ( length_t i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buffer[ i ];
 
       buf32[ pos ] = chr;

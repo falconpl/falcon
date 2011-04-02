@@ -20,10 +20,10 @@
 #include <falcon/mt.h>
 #include <falcon/sys.h>
 #include <falcon/class.h>
-
 #include <falcon/engine.h>
-
 #include <falcon/error_messages.h>
+
+#include <deque>
 
 namespace Falcon {
 
@@ -44,6 +44,14 @@ static const String errorDesc( int code )
 // Error
 //==================================================
 
+class Error_p
+{
+public:
+   std::deque<TraceStep> m_steps;
+   std::deque<Error*> m_subErrors;
+};
+
+
 Error::Error( Class* handler, const ErrorParam &params ):
    m_refCount( 1 ),
    m_errorCode( params.m_errorCode ),
@@ -56,16 +64,21 @@ Error::Error( Class* handler, const ErrorParam &params ):
    m_origin( params.m_origin ),
    m_catchable( params.m_catchable ),
    m_handler( handler )
-{}
+{
+   _p = new Error_p;   
+}
+
 
 Error::~Error()
 {
-   std::deque<Error*>::const_iterator iter = m_subErrors.begin();
-   while( iter != m_subErrors.end() )
+   std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+   while( iter != _p->m_subErrors.end() )
    {
       (*iter)->decref();
       ++iter;
    }
+
+   delete _p;
 }
 
 void Error::incref() const
@@ -86,12 +99,12 @@ void Error::describe( String &target ) const
    heading( target );
    target += "\n";
 
-   if ( ! m_steps.empty() )
+   if ( ! _p->m_steps.empty() )
    {
       target += "  Traceback:\n";
 
-      std::deque<TraceStep>::const_iterator iter = m_steps.begin();
-      while( iter != m_steps.end() )
+      std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
+      while( iter != _p->m_steps.end() )
       {
           target += "   ";
           const TraceStep& step = *iter;
@@ -101,11 +114,11 @@ void Error::describe( String &target ) const
       }
    }
 
-   if (! m_subErrors.empty() )
+   if (! _p->m_subErrors.empty() )
    {
       target += "  Because of:\n";
-      std::deque<Error*>::const_iterator iter = m_subErrors.begin();
-      while( iter != m_subErrors.end() )
+      std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+      while( iter != _p->m_subErrors.end() )
       {
          (*iter)->describe( target );
          ++iter;
@@ -189,14 +202,14 @@ String &Error::heading( String &target ) const
 
 void Error::addTrace( const TraceStep& tb )
 {
-   m_steps.push_back( tb );
+   _p->m_steps.push_back( tb );
 }
 
 
 void Error::appendSubError( Error *error )
 {
    error->incref();
-   m_subErrors.push_back( error );
+   _p->m_subErrors.push_back( error );
 }
 
 
@@ -209,24 +222,24 @@ void Error::scriptize( Item& tgt )
 
 void Error::enumerateSteps( Error::StepEnumerator &rator ) const
 {
-   std::deque<TraceStep>::const_iterator iter = m_steps.begin();
-   while( iter != m_steps.end() )
+   std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
+   while( iter != _p->m_steps.end() )
    {
       const TraceStep& ts = *iter;
       ++iter;
-      bool last = iter == m_steps.end();
+      bool last = iter == _p->m_steps.end();
       if( ! rator( ts, last ) ) break;
    }
 }
 
 void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
 {
-   std::deque<Error*>::const_iterator iter = m_subErrors.begin();
-   while( iter != m_subErrors.end() )
+   std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+   while( iter != _p->m_subErrors.end() )
    {
       Error* error = *iter;
       ++iter;
-      bool last = iter == m_subErrors.end();
+      bool last = iter == _p->m_subErrors.end();
       if( ! rator( error, last ) ) break;
    }
 }
@@ -234,9 +247,9 @@ void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
 
 Error* Error::getBoxedError() const
 {
-   if( m_subErrors.empty() )
+   if( _p->m_subErrors.empty() )
       return 0;
-   return m_subErrors.front();
+   return _p->m_subErrors.front();
 }
 
 /** Return the name of this error class.
@@ -249,7 +262,7 @@ const String& Error::className() const
 
 bool Error::hasTraceback() const
 {
-   return ! m_steps.empty();
+   return ! _p->m_steps.empty();
 }
 
 

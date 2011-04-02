@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: interrupt.cpp
+   FILE: interrupt_posix.cpp
 
    Implements VM interruption protocol.
    -------------------------------------------------------------------
@@ -105,4 +105,4 @@ void Interrupt::reset()
 
 }
 
-/* end of interrupt.h */
+/* end of interrupt_posix.cpp */

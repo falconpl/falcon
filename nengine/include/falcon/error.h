@@ -24,12 +24,11 @@
 #include <falcon/enumerator.h>
 #include <falcon/tracestep.h>
 
-#include <deque>
-
 namespace Falcon {
 
 class Error;
 class Class;
+class Error_p;
 
 // Declare the error IDS
 #define FLC_DECLARE_ERROR_TABLE
@@ -306,14 +305,14 @@ protected:
    bool m_catchable;
    Item m_raised;
 
-   std::deque<TraceStep> m_steps;
-   std::deque<Error*> m_subErrors;
-
 protected:
    /** Private destructor.
       Can be destroyed only via decref.
    */
    virtual ~Error();
+
+private:
+   Error_p* _p;
 };
 
 }

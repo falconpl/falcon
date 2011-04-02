@@ -18,8 +18,15 @@
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
 
+#include <map>
+
 namespace Falcon
 {
+
+class QueryMap: public std::map<String,String> 
+{
+};
+
 
 URI::URI():
    m_bValid( true ),
@@ -508,34 +515,17 @@ bool URI::removeField( const String &key )
    return true;
 }
 
-
-bool URI::firstField( String &key, String &value )
+void URI::enumerateFields( FieldEnumerator etor )
 {
    if ( m_queryMap != 0 && m_queryMap->size() > 0 )
    {
-      m_queryIter = m_queryMap->begin();
-      key = (*m_queryIter).first;
-      value = (*m_queryIter).second;
-      return true;
+      QueryMap::iterator iter = m_queryMap->begin();
+      while( iter != m_queryMap->end() )
+      {
+         etor( KeyValue( iter->first, iter->second), ++iter == m_queryMap->end() );
+      }
    }
-
-   return false;
 }
-
-
-bool URI::nextField( String &key, String &value )
-{
-   if ( m_queryMap != 0 && m_queryMap->size() > 0 && m_queryIter != m_queryMap->end() )
-   {
-      m_queryIter++;
-      key = (*m_queryIter).first;
-      value = (*m_queryIter).second;
-      return true;
-   }
-
-   return false;
-}
-
 
 uint32 URI::fieldCount()
 {

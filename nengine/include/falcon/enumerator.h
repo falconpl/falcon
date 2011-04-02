@@ -16,6 +16,7 @@
 #ifndef FALCON_ENUMERATOR_H
 #define FALCON_ENUMERATOR_H
 
+namespace Falcon {
 
 /** Base class for enumerator callbacks.
 
@@ -41,6 +42,7 @@ public:
    virtual bool operator()( const _T& data, bool bLast ) = 0;
 };
 
+}
 
 #endif	/* FALCON_ENUMERATOR_H */
 

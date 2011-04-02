@@ -28,7 +28,7 @@ SynTree::SynTree()
 
 SynTree::~SynTree()
 {
-   for( int i = 0; i < m_steps.size(); ++i )
+   for( size_t i = 0; i < m_steps.size(); ++i )
    {
       delete m_steps[i];
    }
@@ -37,7 +37,7 @@ SynTree::~SynTree()
 
 void SynTree::describe( String& tgt ) const
 {
-   for( int i = 0; i < m_steps.size(); ++i )
+   for( size_t i = 0; i < m_steps.size(); ++i )
    {
       tgt += m_steps[i]->describe() + "\n";
    }
@@ -50,7 +50,7 @@ void SynTree::apply_( const PStep* ps, VMachine* vm )
 
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
-   if (cf.m_seqId >= self->m_steps.size() )
+   if (cf.m_seqId >= (int) self->m_steps.size() )
    {
       // we're done.
       ctx->popCode();
