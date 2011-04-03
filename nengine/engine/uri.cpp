@@ -515,7 +515,7 @@ bool URI::removeField( const String &key )
    return true;
 }
 
-void URI::enumerateFields( FieldEnumerator etor )
+void URI::enumerateFields( FieldEnumerator& etor )
 {
    if ( m_queryMap != 0 && m_queryMap->size() > 0 )
    {

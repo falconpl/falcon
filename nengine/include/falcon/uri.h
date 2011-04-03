@@ -338,7 +338,7 @@ public:
    /** Enumerates the query fields - gets the first field.
       Calls back the given enumerator filling it with the required data.
    */
-   void enumerateFields( FieldEnumerator etor ); 
+   void enumerateFields( FieldEnumerator& etor ); 
 
    /** Enumerates the query fields - counts the fields.
       If the query has fields, or if fields have been explicitly set throug
