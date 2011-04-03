@@ -40,7 +40,9 @@ TextReader::TextReader( Stream* stream, bool bOwn ):
 TextReader::TextReader( Stream* stream, Transcoder* decoder, bool bOwn ):
    Reader( stream, bOwn ),
    m_pushedChr(-1),
-   m_decoder( decoder )
+   m_decoder( decoder ),
+   m_cTokens( 0 ),
+   m_cTSize( 0 )
 {
    makeDefaultSeps();
 }

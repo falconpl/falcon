@@ -209,6 +209,7 @@ Engine::Engine()
    m_classes[FLC_ITEM_INT] = new CoreInt;
    m_classes[FLC_ITEM_NUM] = new CoreNil;
    m_classes[FLC_ITEM_USER] = 0;
+   m_classes[FLC_ITEM_FRAMING] = 0;
    m_classes[FLC_ITEM_FUNC] = m_functionClass;
    m_classes[FLC_ITEM_METHOD] = new CoreNil;
    m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
