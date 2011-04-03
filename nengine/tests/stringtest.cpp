@@ -16,6 +16,8 @@
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
 #include <falcon/statement.h>
+#include <falcon/stmtrule.h>
+#include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
 

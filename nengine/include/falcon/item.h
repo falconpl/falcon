@@ -52,6 +52,7 @@ public:
      union {
         Function *function;
         Class *base;
+        int32 ruleTop;
      } mth;
 
      union {

@@ -22,6 +22,8 @@
 
 namespace Falcon {
 
+class StmtAutoexpr;
+
 /** Pre-Compiled code for the Falcon virtual machine.
  *
  * Precompiled code is a LIFO structure of pre-compiled code.
@@ -66,7 +68,9 @@ public:
 
    virtual void describe( String& res ) const;
    virtual String describe() const {return PStep::describe(); }
-   
+
+   friend class StmtAutoexpr;
+
 private:
    typedef std::vector<const PStep*> StepList;
    StepList m_steps;

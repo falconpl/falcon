@@ -38,8 +38,8 @@ void RuleSynTree::apply_( const PStep* ps, VMachine* vm )
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
 
-   // are we discarding our result?
-   if( vm->regA().isBoolean() && vm->regA()->asBoolean() == false )
+   // Have the rule failed?
+   if( vm->regA().isBoolean() && vm->regA().asBoolean() == false )
    {
       // have a we a traceback point?
       register uint32 tbpoint = ctx->unrollRuleFrame();
@@ -58,10 +58,14 @@ void RuleSynTree::apply_( const PStep* ps, VMachine* vm )
       // We have processed the rule up to the end -- SUCCESS
       
       // Commit the rule hypotesis
-      ctx->commitRule();
-      
+      ctx->commitRule();      
       ctx->popCode();
       return;
+   }
+   else if( ctx->checkNDContext() )
+   {
+      // we have a non-determ context at step - 1
+      ctx->addRuleNDFrame( cf.m_seqId - 1);
    }
 
    // just proceed with next step

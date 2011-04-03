@@ -125,6 +125,10 @@ public:
       return (m_topData - m_dataStack) + 1;
    }
 
+   inline long localVarCount() const {
+      return ((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
+   }
+
    /** Adds a data in the stack and returns a reference to it.
     *
     * Useful in case the caller is going to push some data in the stack,
@@ -142,7 +146,127 @@ public:
 
    inline bool dataEmpty() const { return m_topData < m_dataStack; }
 
+   /** Enlarge the data stack.*/
    void moreData();
+
+
+   /** Begins a new rule frame.
+    
+    This is called when a new rule is encountered to begin the rule framing.
+    */
+   void startRuleFrame();
+
+   /** Adds a new local rule frame with a non-deterministic traceback point.
+    \param tbPoint a traceback point or 0xFFFFFFFF if there isn't any
+            traceback point (topmost rule frame in a rule).
+
+    This creates a copy of the parameters and local variables of the
+    current call context, and shifts the stackbase forward.
+    */
+   void addRuleNDFrame( uint32 tbPoint );
+
+   /** Retract the current rule status and resets the rule frame to its previous state.
+    */
+   inline uint32 unrollRuleFrame()
+   {
+      CallFrame& callf = currentFrame();
+
+      // assert if we're not in a rule frame.
+      fassert( callf.m_stackBase > callf.m_initBase );
+
+      // our frame informations are at param -1
+      int64 vals = param(-1)->asInteger();
+
+      // roll back to previous state stack state.
+      m_topData = m_dataStack + callf.m_stackBase - 2;
+      callf.m_stackBase = (int32) (vals >> 32);
+
+      // return the traceback part
+      return (uint32)(vals & 0xFFFFFFFF);
+   }
+
+   /** Retract all the ND branches and get back
+    */
+   inline void unrollRuleBranches()
+   {
+      CallFrame& callf = currentFrame();
+
+      // assert if we're not in a rule frame.
+      fassert( callf.m_stackBase > callf.m_initBase );
+
+      // our frame informations are at param -1
+      int64 vals = param(-1)->asInteger();
+      while( (vals & 0xFFFFFFFF) != 0xFFFFFF )
+      {
+         m_topData = m_dataStack + callf.m_stackBase - 2;
+
+         // roll back to previous state stack state.
+         callf.m_stackBase = (int32) (vals >> 32);
+
+         int64 vals = param(-1)->asInteger();
+         // assert if we're not in a rule frame anymore!
+         fassert( callf.m_stackBase > callf.m_initBase );
+      }
+   }
+
+   /** Retract a whole rule, thus closing it.
+    */
+   inline void unrollRule()
+   {
+      CallFrame& cf = currentFrame();
+      // assert if we're not in a rule frame.
+      fassert( cf.m_stackBase > cf.m_initBase );
+
+      long localCount = localVarCount();
+      int32 baseRuleTop = param(-1)->content.mth.ruleTop;
+      // move forward the stack base.
+      cf.m_stackBase = baseRuleTop;
+      m_topData = m_dataStack + baseRuleTop + localCount - 1;
+
+   }
+
+   /** Commits a whole rule, thus closing it.
+    */
+   void commitRule();
+
+   /** Specicfy that the current context is ND. 
+    When inside a rule, activating this bit will cause the upper rule to
+    consider the current operation as non-deterministic, and will cause a new
+    non-deterministic frame to be generated as the statement invoking this
+    method returns.
+
+    The method has no effect when not called from a non-rule context
+    */
+   void SetNDContext()
+   {
+      register CallFrame& cf = currentFrame();
+      // are we in a rule frame?
+      if( cf.m_initBase < cf.m_stackBase )
+      {
+         param(-1)->setOob();
+      }
+   }
+
+   /** Checks (and clear) non-deterministic contexts.
+
+    A rule will check if a statement has performed some non-deterministic operation
+    calling this method, that will also clear the determinism status so no further
+    operation needs to be called by the checking rule.
+
+    */
+   bool checkNDContext()
+   {
+      register CallFrame& cf = currentFrame();
+      if( cf.m_initBase < cf.m_stackBase )
+      {
+         register Item& itm = *param(-1);
+         register bool mode = itm.isOob();
+         itm.resetOob();
+         return mode;
+      }
+      return false;
+   }
+
    //=========================================================
    // Code frame management
    //=========================================================

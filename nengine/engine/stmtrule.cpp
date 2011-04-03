@@ -21,7 +21,8 @@
 namespace Falcon
 {
 
-StmtRule::StmtRule( int32 line, int32 chr )
+StmtRule::StmtRule( int32 line, int32 chr ):
+   Statement( rule_t, line, chr )
 {
    apply = apply_;
 
@@ -56,7 +57,7 @@ void StmtRule::describe( String& tgt ) const
 {
    tgt += "rule\n";
    bool bFirst = true;
-   AltTrees::iterator iter = m_altTrees.begin();
+   AltTrees::const_iterator iter = m_altTrees.begin();
    while( iter != m_altTrees.end() )
    {
       if( ! bFirst )
@@ -104,11 +105,43 @@ void StmtRule::apply_( const PStep*s1 , VMachine* vm )
       else
       {
          // we have some more alternative to try
-         ctx->pushCode( self->m_altTrees[cf.m_seqId++] );
          TRACE1( "Apply 'rule' at line %d -- applying next branch %d",
                self->line(), cf.m_seqId );
+
+         // clear ND status
+         ctx->checkNDContext();
+
+         // create the initial rule alternative context
+         ctx->startRuleFrame();
+
+         // push the next alternative and pricess it
+         ctx->pushCode( &self->m_altTrees[cf.m_seqId++] );
       }
    }
+}
+
+//================================================================
+// Statement cut
+
+StmtCut::StmtCut( int32 line, int32 chr ):
+   Statement( cut_t,  line, chr )
+{
+   apply = apply_;
+}
+
+StmtCut::~StmtCut()
+{
+
+}
+
+void StmtCut::describe( String& tgt ) const
+{
+   tgt += "!";
+}
+
+void StmtCut::apply_( const PStep*, VMachine* vm )
+{
+   vm->currentContext()->unrollRuleBranches();
 }
 
 }

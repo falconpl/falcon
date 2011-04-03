@@ -28,6 +28,8 @@
 #include <falcon/locationinfo.h>
 #include <falcon/module.h>
 
+#include "falcon/autocstring.h"
+
 
 namespace Falcon
 {
@@ -190,7 +192,8 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    CallFrame* topCall = ctx->addCallFrame();
    topCall->m_function = function;
    topCall->m_codeBase = ctx->codeDepth();
-   topCall->m_stackBase = ctx->dataSize()-nparams;
+   // initialize also initBase, as stackBase may move
+   topCall->m_initBase = topCall->m_stackBase = ctx->dataSize()-nparams;
    topCall->m_paramCount = nparams;
    topCall->m_self = self;
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
@@ -209,10 +212,19 @@ void VMachine::returnFrame()
    register VMContext* ctx = m_context;
    CallFrame* topCall = ctx->m_topCall;
 
+   TRACE1( "Return frame from function %s", AutoCString(topCall->m_function->name()).c_str() );
+   
+   // set determinism context
+   if( ! topCall->m_function->isDeterm() )
+   {
+      ctx->SetNDContext();
+   }
+
    // reset code and data
    ctx->m_topCode = ctx->m_codeStack + topCall->m_codeBase-1;
    PARANOID( "Code stack underflow at return", (ctx->m_topCode >= ctx->m_codeStack-1) );
-   ctx->m_topData = ctx->m_dataStack + topCall->m_stackBase-1;
+   // Use initBase as stackBase may have been moved
+   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase-1;
    PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
    // Return.
@@ -229,6 +241,7 @@ void VMachine::returnFrame()
       ctx->pushData(ctx->m_regA);
    }
 }
+
 
 String VMachine::report()
 {
@@ -252,6 +265,7 @@ String VMachine::report()
 
    return data;
 }
+
 
 String VMachine::location() const
 {
@@ -335,6 +349,7 @@ bool VMachine::location( LocationInfo& infos ) const
    return true;
 }
 
+
 bool VMachine::step()
 {
    if ( codeEmpty() )
@@ -399,6 +414,7 @@ bool VMachine::step()
 
 Item* VMachine::findLocalItem( const String& name )
 {
+   //TODO
    return 0;
 }
 
