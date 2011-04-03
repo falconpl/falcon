@@ -114,6 +114,8 @@ bool TextWriter::write( String& str, length_t start, length_t count )
       pos1 = posNext;
 
    } while( pos1 < end && pos1 != String::npos );
+
+   return true;
 }
 
 
@@ -140,6 +142,8 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
       encSize = m_encoder->encode( str, m_twBuffer, m_twBufSize, '?', start, count );
       return Writer::write( m_twBuffer, encSize );
    }
+
+   return true;
 }
 
 
