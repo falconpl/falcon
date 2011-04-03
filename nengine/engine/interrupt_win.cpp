@@ -24,29 +24,32 @@ namespace Falcon {
 Interrupt::Interrupt():
    m_sysdata( 0 )
 {
-
+   m_sysdata = ::CreateEvent( NULL, TRUE, FALSE, NULL );
 }
 
 
 Interrupt::~Interrupt()
 {
-
+   ::CloseHandle( (HANDLE) m_sysdata );
 }
 
 
 void Interrupt::interrupt()
 {
-   
+   HANDLE hEvent = (HANDLE) m_sysdata;
+   ::SetEvent( hEvent );
 }
 
 bool Interrupt::interrupted() const
 {
-   return false;
+   HANDLE hEvent = (HANDLE) m_sysdata;
+   return ::WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0;
 }
 
 void Interrupt::reset()
 {
-   
+   HANDLE hEvent = (HANDLE) m_sysdata;
+   ::ResetEvent( hEvent );
 }
 
 }

@@ -38,6 +38,7 @@ add_library(falcon_engine SHARED
   memory.cpp
   application.cpp
   autocstring.cpp
+  autowstring.cpp
   class.cpp
   closedsymbol.cpp
   codeerror.cpp

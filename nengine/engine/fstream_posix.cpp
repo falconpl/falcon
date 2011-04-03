@@ -45,7 +45,7 @@ FStream::FStream( const FStream &other ):
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
    {
-      throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ) );
+      throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError(errno) );
    }
 
    m_fsData = new int[1];

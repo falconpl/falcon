@@ -354,6 +354,15 @@ int64 _getpid() {
    return (int64) GetCurrentProcessId();
 }
 
+long _getPageSize()
+{
+   SYSTEM_INFO si;
+   GetSystemInfo( &si );
+
+   return (long) si.dwPageSize;
+}
+
+
 }
 }
 

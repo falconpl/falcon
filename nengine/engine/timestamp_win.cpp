@@ -59,6 +59,8 @@ bool TimeStamp::relativeWait( const TimeStamp &ts )
 
 void TimeStamp::fromSystemTime( void* sys_ts )
 {
+   SYSTEMTIME* st = (SYSTEMTIME*) sys_ts;
+
 }
 
 }

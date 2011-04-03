@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
-   FILE: stdstreams_unix.cpp
+   FILE: stdstreams_posix.cpp
 
    Unix specific standard streams factories.
    -------------------------------------------------------------------
@@ -20,7 +20,7 @@
 #include <falcon/stdstreams.h>
 #include <unistd.h>
 
-#include "falcon/ioerror.h"
+#include <falcon/ioerror.h>
 
 namespace Falcon {
 
@@ -33,7 +33,7 @@ inline int make_fd( int origfd, bool bDup )
       fd = ::dup( origfd );
       if( fd < 0 )
       {
-         throw new IOError( ErrorParam(e_io_dup, __LINE__, __FILE__) );
+         throw new IOError( ErrorParam(e_io_dup, __LINE__, __FILE__).sysError(errno) );
       }
 
    }
@@ -61,4 +61,4 @@ StdErrStream::StdErrStream( bool bDup ):
 }
 
 
-/* end of stdstreams_unix.cpp */
+/* end of stdstreams_posix.cpp */
