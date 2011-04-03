@@ -109,6 +109,20 @@ public:
     */
    virtual void setBufferSize( length_t bs );
 
+   /** Changes the underlying stream.
+    \param s The new stream that this reader should read from.
+    \param bOwn if true, the stream is owned by this Reader (and destroyed at Reader destruction).
+    \param bDiscard Discard the buffered data still unread coming from the old stream.
+
+    Pending reads on the previous stream are maitanied (the read buffer is not emptuy),
+    so it may take several reads before the contents of the new streams are actually
+    fetched. This behavior can be overridden by setting bDiscard to true; in this case
+    any data fetched from the old stream but still unread is discarded.
+
+    If it was owned, the previous stream is destroyed.
+    */
+   virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
+   
 protected:
    /** Create for normal operations. */
    Reader( Stream* stream, bool bOwn = false );
@@ -117,7 +131,7 @@ protected:
    Reader();
    
    /** Refills the read buffer with new data. */
-   virtual bool refill();
+   virtual bool refill();   
 
    /** Chech the read buffer and eventually refills it with new data.
     \param suggestedSize try to read this size (or possibly more) from the

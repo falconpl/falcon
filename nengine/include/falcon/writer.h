@@ -69,9 +69,22 @@ public:
    virtual bool flush();
 
    /** Writes to the internal buffer and eventually store what's written to a file.
-      It is suggested to use directly m_buffer when possible.
+
    */
    virtual bool write( byte* data, size_t dataSize );
+
+   /** Changes the underlying stream.
+    \param s The new stream that this reader should read from.
+    \param bOwn if true, the stream is owned by this Reader (and destroyed at Reader destruction).
+    \param bDiscard Discard the buffered data still unread coming from the old stream.
+    \throw IOError if the flush write fails.
+    
+    Pending write operations on the previous stream are flushed. This behavior can be overridden by setting
+    bDiscard to true; in this case any data still unwritten is silently discarded.
+
+    If it was owned, the previous stream is destroyed.
+    */
+   virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
 
 protected:
    /** Create for normal operations. */

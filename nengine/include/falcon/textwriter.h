@@ -132,7 +132,7 @@ public:
     If lineFlush() is set, then the underlying buffer is also flushed each time
     a LF character is met.
     */
-   bool write( String& str, length_t start = 0, length_t count = 0 );
+   bool write( const String& str, length_t start = 0, length_t count = String::npos );
 
    /** Writes a text to a stream.
     \param str The string to be encoded on the stream.
@@ -153,7 +153,7 @@ public:
     depending on the setCRLF setting) is written, and if lineFlush() is set then
     the writer is flushed prior return.
     */
-   bool writeLine( String& str, length_t start = 0, length_t count = 0 );
+   bool writeLine( const String& str, length_t start = 0, length_t count = String::npos );
 
    /** Writes a single character (UNICODE value) to a stream.
       \param chr The character to be written.

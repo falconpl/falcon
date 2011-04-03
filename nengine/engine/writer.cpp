@@ -157,6 +157,27 @@ bool Writer::write( byte* data, size_t size )
    return true;
 }
 
+
+ void Writer::changeStream( Stream* s, bool bOwn, bool bDiscard )
+ {
+    if( bDiscard )
+    {
+       m_bufPos = 0;
+    }
+    else
+    {
+       flush();
+    }
+    
+    if ( m_bOwnStream )
+    {
+       delete s;
+    }
+
+    m_bOwnStream = bOwn;
+    m_stream = s;
+ }
+
 }
 
 /* end of writer.cpp */

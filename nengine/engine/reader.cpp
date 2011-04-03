@@ -101,6 +101,23 @@ void Reader::setBufferSize( length_t bs )
    m_buffer = nBuf;
 }
 
+void Reader::changeStream( Stream* s, bool bOwn, bool bDiscard )
+{
+   if( m_bOwnStream )
+   {
+      delete m_stream;
+   }
+   
+   m_stream = s;
+   m_bOwnStream = bOwn;
+
+   if ( bDiscard )
+   {
+      m_bufPos = 0;
+      m_bufLength = 0;
+   }
+}
+
 
 bool Reader::refill()
 {

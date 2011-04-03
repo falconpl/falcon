@@ -21,6 +21,11 @@
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
 
+#include <falcon/stdstreams.h>
+#include <falcon/textwriter.h>
+
+
+
 #include <falcon/trace.h>
 #include <falcon/application.h>
 
@@ -40,7 +45,7 @@ public:
       static void apply_( const PStep* ps, VMachine* vm )
       {
          const NextStep* nstep = static_cast<const NextStep*>(ps);
-         std::cout << *vm->regA().asString()->c_ize();
+         vm->textOut()->write( *vm->regA().asString() );
          VMContext* ctx = vm->currentContext();
          nstep->printNext( vm, ctx->currentCode().m_seqId );
       }
@@ -66,10 +71,11 @@ public:
                ctx->currentCode().m_seqId = count;
                return;
             }
-            std::cout << temp.asString()->c_ize();
+            
+            vm->textOut()->write( *temp.asString() );
          }
 
-         std::cout << std::endl;
+         vm->textOut()->write( "\n" );
          // we're out of the function.
          vm->returnFrame();
       }

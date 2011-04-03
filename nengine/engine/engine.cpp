@@ -344,7 +344,7 @@ Transcoder* Engine::getTranscoder( const String& name )
 {
    m_mtx->lock();
    TranscoderMap::iterator iter = m_tcoders->find(name);
-   if ( iter != m_tcoders->end() )
+   if ( iter == m_tcoders->end() )
    {
       m_mtx->unlock();
       return 0;

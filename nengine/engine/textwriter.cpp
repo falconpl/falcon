@@ -54,6 +54,7 @@ TextWriter::TextWriter( Stream* stream, Transcoder* decoder, bool bOwn ):
 
 TextWriter::~TextWriter()
 {
+   flush();
    delete[] m_twBuffer;
 }
 
@@ -63,7 +64,7 @@ void TextWriter::setEncoding( Transcoder* decoder )
 }
 
 
-bool TextWriter::write( String& str, length_t start, length_t count )
+bool TextWriter::write( const String& str, length_t start, length_t count )
 {
    fassert( start <= str.length() )
    if ( count == String::npos )
@@ -80,30 +81,34 @@ bool TextWriter::write( String& str, length_t start, length_t count )
    length_t end = start + count;
    length_t pos1 = start;
 
-   do
+   while(true)
    {
-      length_t posNext = str.find( "\n", start );
+      length_t posNext = str.find( "\n", pos1 );
       // ok also when not found.
-      if( posNext > end )
+      if( posNext >= end )
       {
-         posNext = end;
-      }
-
-      // ok also when not found -- again
-      if( ! rawWrite( str, pos1, posNext ) )
-      {
-         return false;
+         // we're done -- no more \n (so we can't flush).
+         return rawWrite( str, pos1, end - pos1 );
       }
       
-      if( m_bCRLF && posNext > 0 && str.getCharAt(posNext-1) != '\r' )
+      if( m_bCRLF && (posNext == 0 || str.getCharAt(posNext-1) != '\r') )
       {
+         // write separately the \r\n sequence
+         if( posNext > 0 && ! rawWrite( str, pos1, posNext-pos1 ) )
+         {
+            return false;
+         }
+
          ensure(m_encoder->encodingSize(2));
-         m_encoder->encode("\r\n", currentBuffer(), m_bufSize - m_bufPos );
+         m_bufPos += m_encoder->encode("\r\n", currentBuffer(), m_bufSize - m_bufPos );
       }
       else
       {
-         ensure( 1 );
-         m_encoder->encode("\n", currentBuffer(), m_bufSize - m_bufPos );
+         // just write everything, \n included.
+         if( ! rawWrite( str, pos1, posNext-pos1 +1 ) )
+         {
+            return false;
+         }
       }
 
       if ( m_bLineFlush )
@@ -111,9 +116,9 @@ bool TextWriter::write( String& str, length_t start, length_t count )
          if( ! flush() ) return false;
       }
 
-      pos1 = posNext;
+      pos1 = posNext+1; // we know we're in the string, or we would have been exited.
 
-   } while( pos1 < end && pos1 != String::npos );
+   }
 
    return true;
 }
@@ -147,7 +152,7 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
 }
 
 
-bool TextWriter::writeLine( String& str, length_t start, length_t count )
+bool TextWriter::writeLine( const String& str, length_t start, length_t count )
 {
    if( ! rawWrite( str, start, count ) ) return false;
    return putChar( '\n' );
