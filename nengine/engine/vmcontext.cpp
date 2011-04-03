@@ -15,7 +15,9 @@
 
 #include <falcon/vmcontext.h>
 #include <falcon/trace.h>
+#include <falcon/itemid.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace Falcon {
 
@@ -81,6 +83,75 @@ void VMContext::moreCall()
    m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
    m_topCall = m_callStack + distance;
    m_maxCall = m_callStack + newSize;
+}
+
+
+void VMContext::startRuleFrame()
+{
+   CallFrame& cf = currentFrame();
+   int32 stackBase = cf.m_stackBase;
+   long localCount = ((m_topData+1) - m_dataStack) - stackBase;
+   while ( m_maxData - m_topData < localCount + 1 )
+   {
+      moreData();
+   }
+
+   Item& ruleFrame = addDataSlot();
+   ruleFrame.type( FLC_ITEM_FRAMING );
+   ruleFrame.content.data.val64 = stackBase;
+   ruleFrame.content.data.val64 <<= 32;
+   ruleFrame.content.data.val64 |= 0xFFFFFFFF;
+   ruleFrame.content.mth.ruleTop = stackBase;
+
+   // copy the local variables.
+   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = dataSize();
+   m_topData = m_dataStack + cf.m_stackBase + localCount-1;
+}
+
+
+void VMContext::addRuleNDFrame( uint32 tbPoint )
+{
+   CallFrame& cf = currentFrame();
+   int32 stackBase = cf.m_stackBase;
+   int32 oldRuleTop = param(-1)->content.mth.ruleTop;
+
+   long localCount = ((m_topData+1) - m_dataStack) - stackBase;
+   while ( m_maxData - m_topData < localCount + 1 )
+   {
+      moreData();
+   }
+
+   Item& ruleFrame = addDataSlot();
+   ruleFrame.type( FLC_ITEM_FRAMING );
+   ruleFrame.content.data.val64 = stackBase;
+   ruleFrame.content.data.val64 <<= 32;
+   ruleFrame.content.data.val64 |= tbPoint;
+   ruleFrame.content.mth.ruleTop = oldRuleTop;
+
+   // copy the local variables.
+   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = dataSize();
+   m_topData = m_dataStack + cf.m_stackBase + localCount-1;
+}
+
+
+void VMContext::commitRule()
+{
+   CallFrame& cf = currentFrame();
+   long localCount = localVarCount();
+   int32 baseRuleTop = param(-1)->content.mth.ruleTop;
+
+   // copy the local variables.
+   memcpy( m_dataStack + baseRuleTop, m_dataStack + cf.m_stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = baseRuleTop;
+   m_topData = m_dataStack + baseRuleTop + localCount - 1;
 }
 
 }

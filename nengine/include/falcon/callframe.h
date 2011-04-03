@@ -45,6 +45,12 @@ public:
    /** Stack base for this frame; item at this point is parameter 0 */
    int m_stackBase;
 
+   /** Stack base for this frame when the function is invoked.
+    Rules can temporarily change the stack base. This stackbase is granted
+    to be the initial stack base of the function.
+    */
+   int m_initBase;
+
    /** Codebase for this frame.
     *
     * Code from this function is placed in this position; resizing the
@@ -67,6 +73,7 @@ public:
       m_function(f),
       m_paramCount( pc ),
       m_stackBase( sb ),
+      m_initBase( sb ),
       m_codeBase( cb ),
       m_self(self)
    {}

@@ -179,7 +179,7 @@ FAL_ERRORDECL( e_state_adef, 171, "State already defined" );
 FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
 FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
 FAL_ERRORDECL( e_invop_unb, 174, "Unbound value used in arbitrary operation" );
-
+FAL_ERRORDECL( e_determ_decl, 175, "Determinism status already specified" );
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
 FAL_ERRORDECL( e_io_open, 201, "I/O error: Can't open required resource" );

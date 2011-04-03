@@ -44,7 +44,7 @@ void PCode::describe( String& res ) const
 
 void PCode::apply_( const PStep* self, VMachine* vm )
 {
-   VMContext* ctx = vm->currentContext();
+   register VMContext* ctx = vm->currentContext();
 
    TRACE3( "PCode apply: %p (%s)", self, self->describe().c_ize() );
 
@@ -65,8 +65,6 @@ void PCode::apply_( const PStep* self, VMachine* vm )
          return;
       }
    }
-
-   cf.m_seqId = 0;
 
    // when we're done...
    ctx->popCode();

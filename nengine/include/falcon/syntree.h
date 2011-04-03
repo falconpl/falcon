@@ -73,7 +73,7 @@ public:
    virtual void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 
-private:
+protected:
    typedef std::vector<Statement*> Steps;
    Steps m_steps;
 };

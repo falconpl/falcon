@@ -39,7 +39,9 @@ public:
       autoexpr_t,
       if_t,
       while_t,
-      return_t
+      return_t,
+      rule_t,
+      cut_t
    } statement_t ;
 
    Statement( statement_t type, int32 line=0, int32 chr=0 ):
@@ -82,6 +84,7 @@ protected:
    }
 
    friend class SynTree;
+   friend class RuleSynTree;
 private:
    statement_t m_type;
 };
@@ -123,15 +126,46 @@ public:
 
    void oneLiner( String& tgt ) const;
    inline String oneLiner() const { return PStep::oneLiner(); }
+
+   /** Check explicit non-determinism set. 
+    If true, then an explicit "?" is specified for this statement.
+   */
+   bool nd() const { return m_nd; }
+   
+   /** Sets explicit non-determinism status.
+    \parm mode If this statement must be forced to be non-deterministic.
+    \throw CodeError if determ() is already set.
+    In rules, the "?" prefix indicates a rule statement that may fail.
+   */
+   void nd( bool mode );
+
+   /** Check if explicit determinism is set.
+    If true, then an explicit "*" is specified for this statement.
+   */
+   bool determ() const { return m_determ; }
+
+   /** Sets explicit determinism status.
+    \parm mode If this statement must be forced to be deterministic.
+    \throw CodeError if nd() is already set.
+    In rules, the "?" prefix indicates a rule statement that may fail.
+   */
+   void determ( bool mode );
+   
 private:
+   // apply is the same as PCODE, but it also checks ND requests.
+   static void apply_( const PStep* self, VMachine* vm );
+   
    Expression* m_expr;
    PCode m_pcExpr;
+
+   bool m_nd;
+   bool m_determ;
 };
 
 
 /** Return statement.
  *
- * Exits the current functions.
+ * Exits the current function.
  */
 class FALCON_DYN_CLASS StmtReturn: public Statement
 {
@@ -150,6 +184,10 @@ private:
 };
 
 
+/** While statement.
+ *
+ * Loops in a set of statements (syntree) while the given expression evaluates as true.
+ */
 class FALCON_DYN_CLASS StmtWhile: public Statement
 {
 public:
@@ -168,6 +206,10 @@ private:
 };
 
 
+/** If statement.
+ *
+ * Main logic branch control.
+ */
 class FALCON_DYN_CLASS StmtIf: public Statement
 {
 public:
@@ -227,4 +269,3 @@ private:
 #endif
 
 /* end of statement.h */
-

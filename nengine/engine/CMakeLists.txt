@@ -77,8 +77,10 @@ add_library(falcon_engine SHARED
   pcode.cpp
   rampmode.cpp
   reader.cpp
+  rulesyntree.cpp
   sourceref.cpp
   statement.cpp
+  stmtrule.cpp
   string.cpp
   stream.cpp
   symbol.cpp

@@ -118,6 +118,12 @@ public:
    /** Just candy grammar for this->apply(vm); */
    void operator()( VMachine* vm ) { apply(vm); }
 
+   /** Return true if this function is deterministic. */
+   bool isDeterm() const { return m_bDeterm; }
+   
+   /** Set the determinism status of this function. */
+   void setDeterm( bool mode ) { m_bDeterm = mode; }
+
 protected:
    String m_name;
    int32 m_paramCount;
@@ -126,6 +132,8 @@ protected:
    Module* m_module;
 
    int32 m_line;
+
+   bool m_bDeterm;
 };
 
 }
