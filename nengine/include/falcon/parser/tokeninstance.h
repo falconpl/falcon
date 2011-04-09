@@ -57,9 +57,11 @@ public:
    typedef void(*deletor)(void*);
 
    /** Creates a new token instance.
+    \param line The line where the token was detected by the parser.
+    \param chr The character where the token was detected by the parser.
     \param tok A static reference to the token of which this entity is an instance.
     */
-   TokenInstance( const Token& tok );
+   TokenInstance( int line, int chr, const Token& tok );
    ~TokenInstance();
 
    /** Detach a value associated with this token instance.
@@ -136,6 +138,8 @@ public:
    const Token& token() const { return m_token; }
 
 private:
+   int m_line;
+   int m_chr;
    typedef union {
       bool v_bool;
       int64 v_int;

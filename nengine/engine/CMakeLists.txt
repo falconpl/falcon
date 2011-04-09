@@ -40,6 +40,7 @@ add_library(falcon_engine SHARED
   parser/nonterminal.cpp
   parser/parser.cpp
   parser/predef.cpp
+  parser/rule.cpp
   parser/token.cpp
   parser/tokeninstance.cpp
 

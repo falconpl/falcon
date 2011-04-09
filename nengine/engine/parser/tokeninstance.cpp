@@ -20,8 +20,9 @@
 namespace Falcon {
 namespace Parser {
 
-/** Creates a new token instance.*/
-TokenInstance::TokenInstance( const Token& tok  ):
+TokenInstance::TokenInstance( int line, int chr, const Token& tok  ):
+   m_line( line ),
+   m_chr( chr ),
    m_token( tok ),
    m_deletor(0)
 {
@@ -96,6 +97,3 @@ void* TokenInstance::detachValue()
 }
 
 /* end of parser/tokeninstance.cpp */
-
-
-

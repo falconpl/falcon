@@ -21,7 +21,9 @@ namespace Parser {
 
 
 Lexer::Lexer( TextReader* reader ):
-   m_reader( reader )
+   m_reader( reader ),
+   m_line(0),
+   m_chr(0)
 {}
 
 Lexer::~Lexer()

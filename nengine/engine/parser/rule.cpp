@@ -16,37 +16,69 @@
 #include <falcon/parser/rule.h>
 #include <falcon/string.h>
 
+#include <vector>
+
 namespace Falcon {
 namespace Parser {
 
-Rule::Maker& Rule::Maker::t( const Token& t )
+class Rule::Private
 {
+private:
+   friend class Rule;
+   friend class Rule::Maker;
+
+   typedef std::vector<Token*> TokenVector;
+   TokenVector m_vTokens;
+   
+};
+
+Rule::Maker::Maker( const String& name, Apply app ):
+   m_name(name),
+   m_apply(app)
+{
+   _p = new Rule::Private;
 }
+
+Rule::Maker::~Maker()
+{
+   delete _p;
+}
+
+Rule::Maker& Rule::Maker::t( Token& t )
+{
+   _p->m_vTokens.push_back( &t );
+}
+
 
 Rule::Rule( const String& name, Apply app )
 {
-}
- 
-Rule::Rule( const Maker& m )
-{
+   _p = new Rule::Private;
 }
 
 
-Rule( const Rule& m )
+Rule::Rule( const Maker& m ):
+   m_name( m.m_name ),
+   m_apply( m.m_apply )
 {
-}
-
-virtual ~Rule()
-{
-}
-
-Rule& t( const Token& t )
-{
+   _p = m._p;
+   m._p = 0;
 }
 
 
-Rule::t_matchType match( const Parser& p )
+Rule::~Rule()
 {
+   delete _p;
+}
+
+Rule& Rule::t( Token& t )
+{
+   _p->m_vTokens.push_back( &t );
+}
+
+
+Rule::t_matchType Rule::match( const Parser& p )
+{
+   return t_tooShort;
 }
 
 

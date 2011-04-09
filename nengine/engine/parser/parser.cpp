@@ -56,16 +56,7 @@ class Parser::Private
    ~Private()
    {
       delete m_nextToken;
-
-      {
-         TokenStack::iterator iter = m_lTokens.begin();
-         while( iter != m_lTokens.end() )
-         {
-            delete *iter;
-            ++iter;
-         }
-      }
-
+      clearTokens();
       {
          LexerStack::iterator iter = m_lLexers.begin();
          while( iter != m_lLexers.end() )
@@ -76,6 +67,16 @@ class Parser::Private
       }
    }
 
+   void clearTokens()
+   {
+      TokenStack::iterator iter = m_lTokens.begin();
+      while( iter != m_lTokens.end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+      m_lTokens.clear();
+   }
 };
 
 //========================================================
@@ -144,15 +145,16 @@ bool Parser::parse( const String& mainState )
       throw new CodeError( ErrorParam( e_state, __LINE__, __FILE__ ).extra(mainState) );
    }
 
-   // Ok, we can start.
-   Lexer* lexer = _p->m_lLexers.back();
-
-   //....
+   //==========================================
+   // Ok, we can start -- initialize the parser
+   //
+   _p->m_lErrors.clear();
+   _p->clearTokens();
+   parserCycle();
 
    // If we have no error we succeeded.
    return _p->m_lErrors.empty();
 }
-
 
 void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
 {
@@ -186,6 +188,28 @@ void Parser::popLexer()
    delete _p->m_lLexers.back();
    _p->m_lLexers.pop_back();
 }
+
+
+void Parser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
+{
+   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx, extra));
+}
+
+
+void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
+{
+   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
+}
+
+//==========================================
+// Main parser algorithm.
+//
+
+void Parser::parserCycle()
+{
+   Lexer* lexer = _p->m_lLexers.back();
+}
+
  
 }
 }

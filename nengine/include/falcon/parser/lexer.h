@@ -48,8 +48,21 @@ public:
 
     */
    virtual TokenInstance* nextToken() = 0;
+
+   /** Return current lexer line.
+      \return current line reached by the lexer.
+   */
+   int line() const { return m_line; }
+
+   /** Return current lexer character.
+      \return current line reached by the lexer.
+   */
+   int character() const { return m_chr; }
    
 protected:
+   int m_line;
+   int m_chr;
+   
    TextReader* m_reader;
 };
 

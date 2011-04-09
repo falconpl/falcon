@@ -59,14 +59,14 @@ public:
 
     @see TokenInstance
     */
-   TokenInstance* makeInstance( void* data, deletor d );
+   TokenInstance* makeInstance( int line, int chr, void* data, deletor d );
 
-   TokenInstance* makeInstance( int32 v );
-   TokenInstance* makeInstance( uint32 v );
-   TokenInstance* makeInstance( int64 v );
-   TokenInstance* makeInstance( numeric v );
-   TokenInstance* makeInstance( bool v );
-   TokenInstance* makeInstance( const String& v );
+   TokenInstance* makeInstance( int line, int chr, int32 v );
+   TokenInstance* makeInstance( int line, int chr, uint32 v );
+   TokenInstance* makeInstance( int line, int chr, int64 v );
+   TokenInstance* makeInstance( int line, int chr, numeric v );
+   TokenInstance* makeInstance( int line, int chr, bool v );
+   TokenInstance* makeInstance( int line, int chr, const String& v );
 
 protected:
    Token(uint32 nID, const String& name );

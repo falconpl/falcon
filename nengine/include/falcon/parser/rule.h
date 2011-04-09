@@ -17,6 +17,7 @@
 #define	_FALCON_PARSER_RULE_H_
 
 #include <falcon/setup.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 namespace Parser {
@@ -77,17 +78,18 @@ public:
    {
       friend class Rule;
 
-      inline Maker( const String& name, Apply app );
+      Maker( const String& name, Apply app );
+      ~Maker();
 
       /** Adds a term or rule to this rule. */
-      Maker& t( const Token& t );
+      Maker& t( Token& t );
 
    private:
 
       const String& m_name;
       Apply m_apply;
       // inner tokens.
-      Rule::Private* _p;
+      mutable Rule::Private* _p;
    };
 
    /** Direct constructor.
@@ -113,18 +115,11 @@ public:
     @endcode
     */
    Rule( const Maker& m );
-
-   /** Copy constructor.
-
-    Actually, rules should not be copied, as they should have unique names.
-    However, if you need a temporary rule copy, this might be useful.
-    */
-   Rule( const Rule& m );
    
    virtual ~Rule();
 
    /** Adds a term to this rule. */
-   Rule& t( const Token& t );
+   Rule& t( Token& t );
 
    /** Equality operator used for variable parameter idiom.
 
@@ -141,11 +136,11 @@ public:
    /** Enumeration representing the match status of a rule. */
    typedef enum {
       /** Up to date, matching, but still not able to decide. */
-      e_tooShort,
+      t_tooShort,
       /** Match failed. */
-      e_nomatch,
+      t_nomatch,
       /** Match success. */
-      e_match
+      t_match
    } t_matchType;
 
    /** Checks if the rule is currently matching. */
@@ -157,15 +152,15 @@ public:
     This method is used by the non-terminal class when this rule
     is assigned to it.
     */
-   void parent( NonTerminal& nt ) { m_parent = nt; }
-   const NonTerminal& parent() const { return m_parent; }
-   NonTerminal& parent() { return m_parent; }
+   void parent( NonTerminal& nt ) { m_parent = &nt; }
+   const NonTerminal& parent() const { return *m_parent; }
+   NonTerminal& parent() { return *m_parent; }
 
    
 private:
    String m_name;
    Apply m_apply;
-   NonTerminal& m_parent;
+   NonTerminal* m_parent;
    
    // Inner tokens
    Private* _p;

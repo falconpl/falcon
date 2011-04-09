@@ -84,6 +84,9 @@ public:
       \throw CodeError if the main state is not found, or if a lexer is not ready.
 
     Call this method after having called addState() and pushLexer().
+
+    This method can be called multiple times, provided that all the lexers that
+    might have been previously pushed are popped. 
     */
    bool parse( const String& mainState );
 
@@ -107,20 +110,24 @@ public:
       int nOpenContext;
       /** Extra information (error description is inferred through nCode). */
       String sExtra;
+      /** Uri of the source stream. */
+      String sUri;
 
-      ErrorDef( int code, int l, int c, int ctx, const String& extra ):
+      ErrorDef( int code, const String& uri, int l, int c, int ctx, const String& extra ):
          nLine(l),
          nChar(c),
          nCode(code),
          nOpenContext(ctx),
-         sExtra( extra )
+         sExtra( extra ),
+         sUri( uri )
       {}
 
-      ErrorDef( int code, int l, int c, int ctx=0  ):
+      ErrorDef( int code, const String& uri, int l, int c, int ctx=0  ):
          nLine(l),
          nChar(c),
          nCode(code),
-         nOpenContext( ctx )
+         nOpenContext( ctx ),
+         sUri( uri )
       {}
 
    };
@@ -171,9 +178,35 @@ public:
     */
    void popLexer();
 
+   /** Adds an error for the parser.
+      \param code The error code (as a falcon error code number).
+      \param uri The URI of the stream or file where the error was detected.
+      \param l The line where the error happened (1 based; 0 if the error was not detected on a specific line).
+      \param c The character where the error happened (1 based; 0 if the error was not detected on a specific character).
+      \param ctx The line where an error due to a remote line was first originated.
+      \param extra Extra error description (beside the textual explanation of code).
+
+      Once called, this method marks the current parsing as faulty, and parse() will return false.
+    */
+   void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
+
+   /** Adds an error for the parser.
+
+      \param code The error code (as a falcon error code number).
+      \param uri The URI of the stream or file where the error was detected.
+      \param l The line where the error happened (1 based; 0 if the error was not detected on a specific line).
+      \param c The character where the error happened (1 based; 0 if the error was not detected on a specific character).
+      \param ctx The line where an error due to a remote line was first originated.
+
+    Once called, this method marks the current parsing as faulty, and parse() will return false.
+    */
+   void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
+
 protected:
    void* m_ctx;
-
+   void parserCycle();
+   
+private:
    class Private;
 
    // Data that requires local instantation
