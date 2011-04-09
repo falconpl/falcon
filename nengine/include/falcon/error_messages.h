@@ -207,6 +207,9 @@ FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
 FAL_ERRORDECL( e_dec_fail, 302, "Decode failed or input data not in required format" );
 
+FAL_ERRORDECL( e_state, 400, "Unknown state in state-oriented operation" );
+FAL_ERRORDECL( e_underflow, 401, "Generic underflow in code flow" );
+FAL_ERRORDECL( e_setup, 402, "Required prerequisite steps were not performed" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );

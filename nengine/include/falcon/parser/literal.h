@@ -32,8 +32,19 @@ namespace Parser {
  Literal TPlus( "+" );
  Literal TMinus( "-" );
 
- Rule RAdd = MakeRule("Add", AddEffector ).r(Number).r(TPlus).r(Number);
- Rule RSub = MakeRule("Sub", SubEffector ).r(Number).r(TMinus).r(Number);
+
+ void addApply( Parser& p, NonTerminal& parent, Rule& r )
+ {
+ // do something
+ }
+
+ void subApply( Parser& p, NonTerminal& parent, Rule& r )
+ {
+ // do something
+ }
+
+ Rule RAdd = MakeRule("Add", addApply ).r(Number).r(TPlus).r(Number);
+ Rule RSub = MakeRule("Sub", subApply ).r(Number).r(TMinus).r(Number);
  ...
  @endcode
  */

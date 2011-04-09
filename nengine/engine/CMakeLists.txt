@@ -35,6 +35,14 @@ endif()
 add_library(falcon_engine SHARED
   ${SYS_SPECIFIC}
 
+  parser/lexer.cpp
+  parser/literal.cpp
+  parser/nonterminal.cpp
+  parser/parser.cpp
+  parser/predef.cpp
+  parser/token.cpp
+  parser/tokeninstance.cpp
+
   memory.cpp
   application.cpp
   autocstring.cpp
@@ -102,6 +110,8 @@ add_library(falcon_engine SHARED
   vm.cpp
   vmcontext.cpp
   writer.cpp
+
+  parser/token.cpp
 )
 
 set_target_properties(falcon_engine PROPERTIES
