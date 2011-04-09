@@ -61,6 +61,14 @@ NonTerminal::NonTerminal(const Maker& maker ):
 {
    _p = maker._p;
    maker._p = 0;
+
+   std::vector<Rule*>::iterator iter = _p->m_rules.begin();
+   while( iter != _p->m_rules.end() )
+   {
+      (*iter)->parent(*this);
+      ++iter;
+   }
+
 }
 
 NonTerminal::~NonTerminal()
@@ -71,6 +79,7 @@ NonTerminal::~NonTerminal()
 NonTerminal& NonTerminal::r(Rule& rule)
 {
    _p->m_rules.push_back( &rule );
+   rule.parent(*this);
    return *this;
 }
 
