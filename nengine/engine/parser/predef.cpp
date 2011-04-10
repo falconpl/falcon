@@ -18,6 +18,7 @@
 #include <falcon/parser/tstring.h>
 #include <falcon/parser/tname.h>
 #include <falcon/parser/teol.h>
+#include <falcon/parser/teof.h>
 
 namespace Falcon {
 namespace Parser {
@@ -27,6 +28,7 @@ TFloat t_float;
 TString t_string;
 TName t_name;
 TEol t_eol;
+TEof t_eof;
 
 }
 }

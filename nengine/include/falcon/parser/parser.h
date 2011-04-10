@@ -204,7 +204,7 @@ public:
 
 protected:
    void* m_ctx;
-   void parserCycle();
+   void parserLoop();
    
 private:
    class Private;

@@ -54,7 +54,7 @@ public:
       const String& m_name;
 
       // inner tokens.
-      mutable Private* _p;
+      mutable State::Private* _p;
    };
 
    State( const String& name );

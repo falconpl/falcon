@@ -17,6 +17,7 @@
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/parser/state.h>
+#include <falcon/parser/teof.h>
 #include <falcon/codeerror.h>
 
 #include <deque>
@@ -150,7 +151,7 @@ bool Parser::parse( const String& mainState )
    //
    _p->m_lErrors.clear();
    _p->clearTokens();
-   parserCycle();
+   parserLoop();
 
    // If we have no error we succeeded.
    return _p->m_lErrors.empty();
@@ -205,9 +206,22 @@ void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
 // Main parser algorithm.
 //
 
-void Parser::parserCycle()
+void Parser::parserLoop()
 {
    Lexer* lexer = _p->m_lLexers.back();
+   while( true )
+   {
+      TokenInstance* ti = lexer->nextToken();
+      if( ti == 0 )
+      {
+         _p->m_nextToken = new TokenInstance( lexer->line(), lexer->character(), t_eof );
+         popLexer();
+      }
+
+      /*State* curState = _p->m_lStates->back();
+      curState->process( this );
+         */
+   }
 }
 
  
