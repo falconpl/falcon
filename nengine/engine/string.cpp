@@ -1506,12 +1506,12 @@ bool String::deserialize( DataReader *in )
 }
 
 
-const char* String::c_ize()
+const char* String::c_ize() const
 {
    if ( allocated() <= size() || getCharAt( length() ) != 0 )
    {
-      append( 0 );
-      size( size() - m_class->charSize() );
+      const_cast<String*>(this)->append( 0 );
+      const_cast<String*>(this)->size( size() - m_class->charSize() );
    }
 
    return (const char*) getRawStorage();

@@ -15,10 +15,17 @@
 
 #include <falcon/parser/nonterminal.h>
 #include <falcon/parser/rule.h>
-#include <vector>
+#include <falcon/trace.h>
+
+#include <deque>
+
 
 namespace Falcon {
 namespace Parser {
+
+//==========================================================
+// Helper classes
+//
 
 class NonTerminal::Private
 {
@@ -27,7 +34,8 @@ class NonTerminal::Private
    Private() {}
    ~Private() {}
 
-   std::vector<Rule*> m_rules;
+   typedef std::deque<Rule*> RuleList;
+   RuleList m_rules;
 };
 
 
@@ -50,25 +58,31 @@ NonTerminal::Maker& NonTerminal::Maker::r(Rule& rule)
 }
 
 
+//=======================================================
+// Main nonterminal class
+//
+
 NonTerminal::NonTerminal(const String& name):
    Token(name)
 {
+   m_bNonTerminal = true;
    _p = new Private;
 }
 
 NonTerminal::NonTerminal(const Maker& maker ):
    Token(maker.m_name)
 {
+   m_bNonTerminal = true;
+
    _p = maker._p;
    maker._p = 0;
 
-   std::vector<Rule*>::iterator iter = _p->m_rules.begin();
+   Private::RuleList::iterator iter = _p->m_rules.begin();
    while( iter != _p->m_rules.end() )
    {
       (*iter)->parent(*this);
       ++iter;
    }
-
 }
 
 NonTerminal::~NonTerminal()
@@ -81,6 +95,53 @@ NonTerminal& NonTerminal::r(Rule& rule)
    _p->m_rules.push_back( &rule );
    rule.parent(*this);
    return *this;
+}
+
+
+t_matchType NonTerminal::match( Parser& parser )
+{
+   TRACE( "NonTerminal::match %s -- scanning", name().c_ize() );
+
+   // loop through our rules.
+   Private::RuleList::iterator iter = _p->m_rules.begin();
+   Private::RuleList::iterator end = _p->m_rules.end();
+   Rule* winner = 0;
+
+   while( iter != end )
+   {
+      Rule* rule = *iter;
+      t_matchType ruleMatch = rule->match( parser );
+      if( ruleMatch == t_match )
+      {
+         // wow, we have a winner.
+         if (winner == 0 )
+         {
+            TRACE1( "NonTerminal::match %s -- electing winner %s",
+                  name().c_ize(), winner->name().c_ize() );
+            winner = rule;
+         }
+      }
+      else if( ruleMatch == t_tooShort )
+      {
+         // the rule cannot be decided.
+         TRACE( "NonTerminal::match %s -- return because non-decidible ", name().c_ize() );
+         return t_tooShort;
+      }
+
+      // If it doesn't match, we don't care.
+      ++iter;
+   }
+
+   // ok, do we have a winner?
+   if( winner != 0 )
+   {
+      TRACE1( "NonTerminal::match %s -- Applying winner ", name().c_ize(), winner->name().c_ize() );
+      winner->apply( parser );
+      return t_match;
+   }
+
+   TRACE( "NonTerminal::match %s -- return with no match", name().c_ize() );
+   return t_nomatch;
 }
 
 }

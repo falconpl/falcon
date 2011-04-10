@@ -15,6 +15,7 @@
 
 #include <falcon/parser/state.h>
 #include <falcon/parser/nonterminal.h>
+#include <falcon/trace.h>
 #include <vector>
 
 namespace Falcon {
@@ -27,7 +28,8 @@ class State::Private
    Private() {}
    ~Private() {}
 
-   std::vector<NonTerminal*> m_nt;
+   typedef std::vector<NonTerminal*> NTList;
+   NTList m_nt;
 };
 
 
@@ -72,6 +74,36 @@ State& State::n(NonTerminal& nt)
 {
    _p->m_nt.push_back( &nt );
    return *this;
+}
+
+
+void State::process( Parser& parser )
+{
+   TRACE("State::process -- enter %s", name().c_ize() );
+
+   // Process all the rules in a state
+   Private::NTList::iterator iter = _p->m_nt.begin();
+
+   while( iter != _p->m_nt.end() )
+   {
+      NonTerminal* nt = *iter;
+
+      TRACE1("State::process -- checking %s", nt->name().c_ize() );
+      
+      bool bMatch = nt->match( parser );
+
+      TRACE1("State::process -- nt-token %s %smatch",
+               nt->name().c_ize(), bMatch ? "": "doesn't " );
+
+      if ( bMatch )
+      {
+         return;
+      }
+      
+      ++iter;
+   }
+
+   TRACE("State::process -- exit without match %s", name().c_ize() );
 }
 
 }

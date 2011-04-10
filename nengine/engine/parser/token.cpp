@@ -22,11 +22,13 @@ namespace Parser {
 #define HASH_SEED 0xF3DE3EA3
 
 Token::Token(uint32 nID, const String& name ):
+   m_bNonTerminal(false),
    m_name( name ),
    m_nID(nID)
 {}
 
 Token::Token(const String& name):
+   m_bNonTerminal(false),
    m_name(name)
 {
    m_nID = simpleHash( name );

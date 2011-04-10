@@ -18,11 +18,13 @@
 
 #include <falcon/setup.h>
 #include <falcon/parser/token.h>
+#include <falcon/parser/matchtype.h>
 
 namespace Falcon {
 namespace Parser {
 
 class Rule;
+class Parser;
 
 /** NonTerminal parser symbols.
 
@@ -69,11 +71,15 @@ public:
 
    virtual ~NonTerminal();
 
-
    /** Adds a rule to this non-terminal symbol.
     \return this symbol.
     */
    NonTerminal& r(Rule& rule);
+
+   /** Return true if a match is confirmed.
+    \param p The parser on which the matches are checked.
+    \return true if any of the rules in the  NonTerminal is matched. */
+   t_matchType match( Parser& parser );
 
 private:
    Private* _p;

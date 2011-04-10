@@ -41,11 +41,17 @@ class FALCON_DYN_CLASS Token
 {
 public:
    typedef void(*deletor)(void*);
-   
    virtual ~Token();
 
    uint32 id() const { return m_nID; }
    const String& name() const { return m_name; }
+
+   /** Checks if this token is nonterminal.
+    \return true if the token is nonterminal.
+    
+    If the token is nonterminal it can be safely cast to NonTerminal.
+    */
+   bool isNT() const { return m_bNonTerminal; }
 
    /** Creates a "match instance" of this token.
     \param v An actual value that this token has assumed during parsing.
@@ -69,6 +75,8 @@ public:
    TokenInstance* makeInstance( int line, int chr, const String& v );
 
 protected:
+   bool m_bNonTerminal;
+   
    Token(uint32 nID, const String& name );
    Token(const String& name);
 

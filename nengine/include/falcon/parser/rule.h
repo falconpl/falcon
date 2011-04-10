@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/parser/matchtype.h>
 
 namespace Falcon {
 namespace Parser {
@@ -68,7 +69,7 @@ public:
    class Private;
 
    /** Functor invoked when a rule is matched. */
-   typedef void(*Apply)( Parser& p, NonTerminal& parent, Rule& r );
+   typedef void(*Apply)( const Rule& r, Parser& p );
 
    /** Support for variable parameter constructor idiom.
     To create a rule:
@@ -131,20 +132,10 @@ public:
 
    /** Accessor for rule name.
     */
-   const String& name() const { return m_name; }
-
-   /** Enumeration representing the match status of a rule. */
-   typedef enum {
-      /** Up to date, matching, but still not able to decide. */
-      t_tooShort,
-      /** Match failed. */
-      t_nomatch,
-      /** Match success. */
-      t_match
-   } t_matchType;
+   const String& name() const { return m_name; }   
 
    /** Checks if the rule is currently matching. */
-   t_matchType match( const Parser& p );
+   t_matchType match( Parser& p ) const;
 
    /** Sets the non-terminal in which this rule is stored.
     \param nt The non-terminal symbol using this rule.
@@ -156,8 +147,16 @@ public:
    const NonTerminal& parent() const { return *m_parent; }
    NonTerminal& parent() { return *m_parent; }
 
+   /** Apply the rule.
+    \param parser The parser that is currently applying this rule.
+    
+    This method cause a valid rule to be applied on the parser.
+    */
+   void apply( Parser& parser ) const;
    
 private:
+   friend class Parser;
+   
    String m_name;
    Apply m_apply;
    NonTerminal* m_parent;

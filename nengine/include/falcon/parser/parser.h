@@ -20,11 +20,14 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 
+#include "tokeninstance.h"
+
 namespace Falcon {
 namespace Parser {
 
 class Lexer;
 class State;
+class Rule;
 
 /** Generic Falcon Parser class.
 
@@ -202,11 +205,99 @@ public:
     */
    void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
 
+   /** Returns true if the parser should terminate asap.
+      \return true on termination requested.
+    */
+   bool done() const { m_bIsDone; }
+
+   /** Ask the parser to terminate.
+      A rule apply may invoke this routine to terminate the parsing process.
+      The parser main loop returns as soon as it gets back in control.
+
+    \note This call has not effect if called from code not invoked by rule
+          application.
+    */
+   void terminate() { m_bIsDone = true; }
+
+
+   /** Gets the number of tokens currently laying in the stack.
+    \return Number of total tokens read in the stack.
+    \note This is not an inline. Call sparcely.
+    */
+   int32 tokenCount();
+
+   /** Gets the number of tokens in the current stack context
+    \return Number of in the stack available to the current rule.
+    \note This is not an inline. Call sparcely.
+    */
+   int32 availTokens();
+
+   /** Gets the next token that is available for this rule.
+    \return Next token instance stored in the stack.
+
+    This method gets the token in the stack seen by the current rule
+    one at a time.
+
+    Token ownership stays on the Parser.
+
+    Calls to simplify() or resetNextToken() will put the token index
+    back to the top.
+
+    \note It is granted that the  token index is reset before any rule apply
+    function is called.
+    
+    \note If called more than availTokens() times, it will return 0.
+    \see simplify
+    */
+   TokenInstance* getNextToken();
+
+   /** Reposition the token index for getNextToken at top.
+    \see getNextToken
+    */
+   void resetNextToken();
+
+   /** Simplify 1 or more tokens in the stack with a new token instance.
+    \param tcount Number of token to be simplified.
+    \param newtoken substitute for the previously existing tokens, or 0 for nothing.
+    \throw CodeError if tcount is out of range.
+    
+    This method destroys a certain number of tokens in the stack (possibly, one or more,
+    but it's possible to use 0 as well to insert new tokens).
+
+    If a newtoken parameter is given, the removed tokens are substituted by the
+    new token given there. Otherwise, the tokens are simply removed.
+
+    The semantic
+
+    @code
+    parser->simplify( tokenCount() );
+    @endcode
+
+    can be used to remove all the contents of the token stack, for example, after a toplevel
+    rule match which is supposed to leave the parser in an initial state.
+
+    The following semantic is also useful:
+    @code
+    parser->simplify( availTokens(), myToken );
+    @endcode
+
+    to clear everything that's left in the stack and change it with something
+    a rule wants to store.
+
+    \note After this call, any token read through getNextToken() should be
+    considered invalid (as some or all of them may be destroyed).
+
+    */
+   void simplify( int32 tcount, TokenInstance* newtoken = 0 );
+
+
 protected:
    void* m_ctx;
+   bool m_bIsDone;
    void parserLoop();
    
 private:
+   friend class Rule;
    class Private;
 
    // Data that requires local instantation

@@ -19,71 +19,58 @@
 #include <falcon/parser/state.h>
 #include <falcon/parser/teof.h>
 #include <falcon/codeerror.h>
+#include <falcon/trace.h>
 
-#include <deque>
-#include <map>
-
+#include "./parser_private.h"
 
 namespace Falcon {
 namespace Parser {
 
-class Parser::Private
+Parser::Private::Private():
+   m_stackPos(0),
+   m_nextTokenPos(0),
+   m_nextToken(0)
 {
-   friend class Parser;
+}
 
-   typedef std::deque<Lexer*> LexerStack;
-   typedef std::deque<State*> StateStack;
-   typedef std::deque<TokenInstance*> TokenStack;
-
-   typedef std::deque<Parser::ErrorDef> ErrorList;
-
-   typedef std::map<String, State*> StateMap;
-
-
-   StateStack m_lStates;
-   TokenStack m_lTokens;
-   LexerStack m_lLexers;
-
-   ErrorList m_lErrors;
-
-   TokenInstance* m_nextToken;
-   StateMap m_states;
-
-   Private():
-      m_nextToken(0)
+Parser::Private::~Private()
+{
+   delete m_nextToken;
+   clearTokens();
    {
-   }
-
-   ~Private()
-   {
-      delete m_nextToken;
-      clearTokens();
-      {
-         LexerStack::iterator iter = m_lLexers.begin();
-         while( iter != m_lLexers.end() )
-         {
-            delete *iter;
-            ++iter;
-         }
-      }
-   }
-
-   void clearTokens()
-   {
-      TokenStack::iterator iter = m_lTokens.begin();
-      while( iter != m_lTokens.end() )
+      LexerStack::iterator iter = m_lLexers.begin();
+      while( iter != m_lLexers.end() )
       {
          delete *iter;
          ++iter;
       }
-      m_lTokens.clear();
    }
-};
+}
+
+
+void Parser::Private::clearTokens()
+{
+   TokenStack::iterator iter = m_vTokens.begin();
+   while( iter != m_vTokens.end() )
+   {
+      delete *iter;
+      ++iter;
+   }
+   m_vTokens.clear();
+}
+
+
+/** Resets the temporary values set in  top-level match. */
+void Parser::Private::resetMatch()
+{
+   m_stackPos = 0;
+}
 
 //========================================================
 
 Parser::Parser():
-   m_ctx(0)
+   m_ctx(0),
+   m_bIsDone(false)
 {
    _p = new Private;
 }
@@ -97,12 +84,15 @@ Parser::~Parser()
 
 void Parser::addState( State& state )
 {
+   TRACE( "Parser::addState -- adding state '%s'", state.name().c_ize() );
    _p->m_states[state.name()] = &state;
 }
 
 
 void Parser::pushState( const String& name )
 {
+   TRACE( "Parser::pushState -- pushing state '%s'", name.c_ize() );
+   
    Private::StateMap::const_iterator iter = _p->m_states.find( name );
    if( iter != _p->m_states.end() )
    {
@@ -117,17 +107,21 @@ void Parser::pushState( const String& name )
 
 void Parser::popState()
 {
+   TRACE( "Parser::popState -- popping state", 0 );
    if ( _p->m_lStates.empty() )
    {
       throw new CodeError( ErrorParam( e_underflow, __LINE__, __FILE__ ).extra("Parser::popState") );
    }
 
    _p->m_lStates.pop_back();
+   TRACE1( "Parser::popState -- now topmost state is '%s'", _p->m_lStates.back()->name().c_ize() );
 }
 
 
 bool Parser::parse( const String& mainState )
 {
+   TRACE( "Parser::parse -- invoked with '%s'", mainState.c_ize() );
+
    // Preliminary checks. We need a lexer and we need to have the required state.
    if( _p->m_lLexers.empty() )
    {
@@ -202,26 +196,101 @@ void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
    _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
 }
 
+
+int32 Parser::tokenCount()
+{
+   return _p->m_vTokens.size();
+}
+
+int32 Parser::availTokens()
+{
+   return _p->m_vTokens.size() - _p->m_nextTokenPos;
+}
+
+TokenInstance* Parser::getNextToken()
+{
+   if( _p->m_nextTokenPos >= _p->m_vTokens.size() )
+   {
+      return 0;
+   }
+
+   return _p->m_vTokens[_p->m_nextTokenPos++];
+}
+
+void Parser::resetNextToken()
+{
+   _p->m_nextTokenPos = _p->m_stackPos;
+}
+
+void Parser::simplify( int32 tcount, TokenInstance* newtoken )
+{
+   TRACE( "Parser::simplify -- %d tokens -> %s",
+         tcount, newtoken ? newtoken->token().name().c_ize() : "<nothing>" );
+
+   if( tcount < 0 || tcount + _p->m_stackPos > _p->m_vTokens.size() )
+   {
+      throw new CodeError(ErrorParam(e_underflow, __LINE__, __FILE__ )
+            .extra("Parser::simplify - tcount out of range"));
+   }
+
+   if( tcount != 0 )
+   {
+      size_t end = _p->m_stackPos + tcount;
+      for( size_t pos = _p->m_stackPos; pos < end; ++pos )
+      {
+         delete _p->m_vTokens[pos];
+      }
+
+      _p->m_vTokens.erase( _p->m_vTokens.begin() + _p->m_stackPos, _p->m_vTokens.begin() + end );
+   }
+   
+   if( newtoken != 0 )
+   {
+      _p->m_vTokens.insert( _p->m_vTokens.begin() + _p->m_stackPos, newtoken );
+   }
+}
+
 //==========================================
 // Main parser algorithm.
 //
 
 void Parser::parserLoop()
 {
+   TRACE( "Parser::parserLoop -- starting", 0 );
+
+   m_bIsDone = false;
+
    Lexer* lexer = _p->m_lLexers.back();
-   while( true )
+   while( ! m_bIsDone )
    {
       TokenInstance* ti = lexer->nextToken();
       if( ti == 0 )
       {
-         _p->m_nextToken = new TokenInstance( lexer->line(), lexer->character(), t_eof );
          popLexer();
+         
+         // we're done
+         if( _p->m_lLexers.empty() )
+         {
+            TRACE( "Parser::parserLoop -- done on lexer pop", 0 );
+            return;
+         }
+
+         _p->m_nextToken = new TokenInstance( lexer->line(), lexer->character(), t_eof );
+      }
+      else
+      {
+         _p->m_nextToken = ti;
       }
 
-      /*State* curState = _p->m_lStates->back();
-      curState->process( this );
-         */
+      TRACE( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
+
+      State* curState = _p->m_lStates.back();
+      curState->process( *this );
+      _p->m_vTokens.push_back( _p->m_nextToken );
+      _p->m_nextToken = 0;
    }
+
+   TRACE( "Parser::parserLoop -- done on request", 0 );
 }
 
  

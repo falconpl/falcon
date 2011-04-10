@@ -23,6 +23,7 @@ namespace Falcon {
 namespace Parser {
 
 class NonTerminal;
+class Parser;
 
 /** Grammar state.
 
@@ -66,8 +67,9 @@ public:
 
    State& n( NonTerminal& e );
 
+   void process( Parser& parser );
+   
 private:
-   class Private;
    Private* _p;
    String m_name;
 };

@@ -1175,7 +1175,7 @@ public:
 
       Eventually, it should be preceded by a call to setCharSize().
    */
-   const char* c_ize();
+   const char* c_ize() const;
 
    /** Compares a string with the beginning of this string.
       If \b str is empty, returns true, if it's larger than
