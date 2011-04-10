@@ -74,6 +74,8 @@ public:
    TokenInstance* makeInstance( int line, int chr, bool v );
    TokenInstance* makeInstance( int line, int chr, const String& v );
 
+   TokenInstance* makeInstance( int line, int chr );
+
 protected:
    bool m_bNonTerminal;
    

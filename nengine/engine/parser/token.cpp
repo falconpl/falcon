@@ -62,6 +62,12 @@ Token::~Token()
 {
 }
 
+TokenInstance* Token::makeInstance( int line, int chr )
+{
+   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   return ti;
+}
+
 TokenInstance* Token::makeInstance( int line, int chr, void* data, deletor d )
 {
    TokenInstance* ti = new TokenInstance( line, chr, *this);
@@ -115,4 +121,3 @@ TokenInstance* Token::makeInstance( int line, int chr, const String& v )
 }
 
 /* end of parser/token.cpp */
-

@@ -89,7 +89,9 @@ add_library(falcon_engine SHARED
   rampmode.cpp
   reader.cpp
   rulesyntree.cpp
+  sourcelexer.cpp
   sourceref.cpp
+  sourcetokens.cpp
   statement.cpp
   stmtrule.cpp
   string.cpp

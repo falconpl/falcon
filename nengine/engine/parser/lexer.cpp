@@ -14,13 +14,16 @@
 */
 
 #include <falcon/parser/lexer.h>
+#include <falcon/parser/parser.h>
 #include <falcon/textreader.h>
 
 namespace Falcon {
 namespace Parser {
 
 
-Lexer::Lexer( TextReader* reader ):
+Lexer::Lexer( const String& uri, Parser* p, TextReader* reader ):
+   m_uri( uri ),
+   m_parser(p),
    m_reader( reader ),
    m_line(0),
    m_chr(0)
@@ -29,6 +32,17 @@ Lexer::Lexer( TextReader* reader ):
 Lexer::~Lexer()
 {
    delete m_reader;
+}
+
+void Lexer::addError( int code, const String& extra )
+{
+    m_parser->addError( code, m_uri, m_line, m_chr, 0, extra );
+}
+
+
+void Lexer::addError( int code )
+{
+    m_parser->addError( code, m_uri, m_line, m_chr );
 }
 
 }

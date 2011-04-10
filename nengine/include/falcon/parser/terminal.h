@@ -32,12 +32,12 @@ namespace Parser {
 class FALCON_DYN_CLASS Terminal: public Token
 {
 public:
-   inline virtual ~Terminal() {}
-
-protected:
    inline Terminal(const String& name):
       Token( name )
       {}
+      
+   inline virtual ~Terminal() {}
+
 };
 
 }

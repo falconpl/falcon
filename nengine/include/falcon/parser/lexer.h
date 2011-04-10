@@ -18,6 +18,14 @@
 
 #include <falcon/setup.h>
 
+#include <falcon/parser/tint.h>
+#include <falcon/parser/tfloat.h>
+#include <falcon/parser/tstring.h>
+#include <falcon/parser/tname.h>
+#include <falcon/parser/teol.h>
+#include <falcon/parser/teof.h>
+
+
 namespace Falcon {
 
 class TextReader;
@@ -25,6 +33,7 @@ class TextReader;
 namespace Parser {
 
 class TokenInstance;
+class Parser;
 
 /** Class providing a stream of tokens to be processed one at a time by the parser.
 
@@ -39,7 +48,7 @@ class FALCON_DYN_CLASS Lexer
 {
 public:
    
-   Lexer( TextReader* reader );
+   Lexer( const String& uri, Parser* p, TextReader* reader );
    virtual ~Lexer();
 
    /** Return the next token.
@@ -58,13 +67,20 @@ public:
       \return current line reached by the lexer.
    */
    int character() const { return m_chr; }
-   
+
+   /** Shortcut to add an error at current line and character. */
+   void addError( int code, const String& extra );
+   /** Shortcut to add an error at current line and character. */
+   void addError( int code );
+
 protected:
-   int m_line;
-   int m_chr;
-   
+   String m_uri;
+   Parser* m_parser;
    TextReader* m_reader;
-};
+
+   int32 m_line;
+   int32 m_chr;
+ };
 
 }
 }
