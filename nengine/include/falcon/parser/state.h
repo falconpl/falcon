@@ -20,7 +20,7 @@
 #include <falcon/string.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class NonTerminal;
 class Parser;
@@ -43,9 +43,10 @@ public:
     */
    class Maker
    {
+   public:
       friend class State;
 
-      inline Maker( const String& name );
+      Maker( const String& name );
       ~Maker();
 
       /** Adds a term or rule to this rule. */

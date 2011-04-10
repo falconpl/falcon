@@ -21,7 +21,7 @@
 #include <falcon/parser/matchtype.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class Parser;
 class NonTerminal;
@@ -77,6 +77,7 @@ public:
     */
    class Maker
    {
+   public:
       friend class Rule;
 
       Maker( const String& name, Apply app );

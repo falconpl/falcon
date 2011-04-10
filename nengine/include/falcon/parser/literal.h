@@ -20,7 +20,7 @@
 #include <falcon/parser/terminal.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 /** Literal grammar terminal symbol.
  This token matches exaclty one instance of a text string in input.

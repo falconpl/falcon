@@ -17,32 +17,32 @@
 
 namespace Falcon {
 
-Parser::Terminal t_dot("DOT");
+Parsing::Terminal t_dot("DOT");
 
-Parser::Terminal t_openpar("(");
-Parser::Terminal t_closepar(")");
-Parser::Terminal t_opensquare("[");
-Parser::Terminal t_closesquare("]");
-Parser::Terminal t_opengraph("{");
-Parser::Terminal t_closegraph("}");
+Parsing::Terminal t_openpar("(");
+Parsing::Terminal t_closepar(")");
+Parsing::Terminal t_opensquare("[");
+Parsing::Terminal t_closesquare("]");
+Parsing::Terminal t_opengraph("{");
+Parsing::Terminal t_closegraph("}");
 
-Parser::Terminal t_plus("+");
-Parser::Terminal t_minus("-");
-Parser::Terminal t_times("*");
-Parser::Terminal t_divide("/");
-Parser::Terminal t_modulo("%");
-Parser::Terminal t_pow("**");
+Parsing::Terminal t_plus("+");
+Parsing::Terminal t_minus("-");
+Parsing::Terminal t_times("*");
+Parsing::Terminal t_divide("/");
+Parsing::Terminal t_modulo("%");
+Parsing::Terminal t_pow("**");
 
-Parser::Terminal t_token_as("as");
-Parser::Terminal t_token_eq("eq");
-Parser::Terminal t_token_if("if");
-Parser::Terminal t_token_in("in");
-Parser::Terminal t_token_or("or");
-Parser::Terminal t_token_to("to");
+Parsing::Terminal t_token_as("as");
+Parsing::Terminal t_token_eq("eq");
+Parsing::Terminal t_token_if("if");
+Parsing::Terminal t_token_in("in");
+Parsing::Terminal t_token_or("or");
+Parsing::Terminal t_token_to("to");
 
-Parser::Terminal t_token_not("not");
-Parser::Terminal t_token_end("end");
-Parser::Terminal t_token_nil("nil");
+Parsing::Terminal t_token_not("not");
+Parsing::Terminal t_token_end("end");
+Parsing::Terminal t_token_nil("nil");
 
 }
 

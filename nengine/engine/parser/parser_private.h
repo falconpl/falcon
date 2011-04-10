@@ -22,7 +22,7 @@
 #include <map>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class Rule;
 

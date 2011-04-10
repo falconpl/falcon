@@ -90,6 +90,7 @@ add_library(falcon_engine SHARED
   reader.cpp
   rulesyntree.cpp
   sourcelexer.cpp
+  sourceparser.cpp
   sourceref.cpp
   sourcetokens.cpp
   statement.cpp

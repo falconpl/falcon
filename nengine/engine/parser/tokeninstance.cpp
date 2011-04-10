@@ -18,7 +18,7 @@
 #include <falcon/string.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 TokenInstance::TokenInstance( int line, int chr, const Token& tok  ):
    m_line( line ),

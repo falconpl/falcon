@@ -23,7 +23,7 @@
 #include "tokeninstance.h"
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class Lexer;
 class State;

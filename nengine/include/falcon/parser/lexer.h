@@ -30,7 +30,7 @@ namespace Falcon {
 
 class TextReader;
 
-namespace Parser {
+namespace Parsing {
 
 class TokenInstance;
 class Parser;

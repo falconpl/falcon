@@ -18,7 +18,7 @@
 #include <falcon/textreader.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 
 Lexer::Lexer( const String& uri, Parser* p, TextReader* reader ):

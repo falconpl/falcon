@@ -24,7 +24,7 @@
 #include "./parser_private.h"
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 Parser::Private::Private():
    m_stackPos(0),

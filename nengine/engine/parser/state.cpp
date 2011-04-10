@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class State::Private
 {

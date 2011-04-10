@@ -20,7 +20,7 @@
 #include <falcon/parser/token.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 /** Terminal symbols.
  Terminal symbols represent an instance of definition that cannot be furtherly

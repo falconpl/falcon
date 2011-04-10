@@ -27,7 +27,7 @@
 
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class Rule::Private
 {

@@ -17,7 +17,7 @@
 #define	_FALCON_PARSER_MATCHTYPE_H
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 /** Enumeration representing the match status of a rule. */
 typedef enum {

@@ -22,7 +22,7 @@ namespace Falcon {
 
 class String;
 
-namespace Parser {
+namespace Parsing {
 
 class Token;
 
@@ -137,6 +137,9 @@ public:
    /** Gets the parser token associated with this instance. */
    const Token& token() const { return m_token; }
 
+   int line() const { return m_line; }
+   int chr() const { return m_chr; }
+   
 private:
    int m_line;
    int m_chr;

@@ -21,7 +21,7 @@
 #include <falcon/parser/teof.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 TInt t_int;
 TFloat t_float;

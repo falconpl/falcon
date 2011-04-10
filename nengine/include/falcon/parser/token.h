@@ -20,7 +20,7 @@
 #include <falcon/string.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 class TokenInstance;
 

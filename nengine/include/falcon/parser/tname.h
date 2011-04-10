@@ -20,7 +20,7 @@
 #include <falcon/parser/terminal.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 /** Terminal token: name.
 

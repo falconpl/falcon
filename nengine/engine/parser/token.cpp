@@ -17,7 +17,7 @@
 #include <falcon/parser/tokeninstance.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 #define HASH_SEED 0xF3DE3EA3
 

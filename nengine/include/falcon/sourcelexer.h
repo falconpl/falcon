@@ -24,13 +24,13 @@
 
 namespace Falcon {
 
-class SourceLexer: public Parser::Lexer
+class SourceLexer: public Parsing::Lexer
 {
 public:
-   SourceLexer( const String& uri, Parser::Parser* p, TextReader* reader );
+   SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader );
    virtual ~SourceLexer();
    
-   virtual Parser::TokenInstance* nextToken();
+   virtual Parsing::TokenInstance* nextToken();
 
 private:
    int32 m_sline;
@@ -75,7 +75,7 @@ private:
    t_state m_state;
 
    String m_text;
-   Parser::TokenInstance* m_nextToken;
+   Parsing::TokenInstance* m_nextToken;
 
    inline bool isTokenLimit(char_t chr)
    {
@@ -105,8 +105,8 @@ private:
       m_reader->ungetChar(chr);
    }
 
-   Parser::TokenInstance* checkOperator();
-   Parser::TokenInstance* checkWord();
+   Parsing::TokenInstance* checkOperator();
+   Parsing::TokenInstance* checkWord();
 };
 
 }

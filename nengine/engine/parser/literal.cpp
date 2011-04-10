@@ -16,7 +16,7 @@
 #include <falcon/parser/literal.h>
 
 namespace Falcon {
-namespace Parser {
+namespace Parsing {
 
 Literal::~Literal()
 {

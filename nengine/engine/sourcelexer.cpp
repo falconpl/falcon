@@ -31,8 +31,8 @@
 
 namespace Falcon {
 
-SourceLexer::SourceLexer( const String& uri, Parser::Parser* p, TextReader* reader ):
-   Parser::Lexer( uri, p, reader ),
+SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader ):
+   Parsing::Lexer( uri, p, reader ),
    m_sline( 0 ),
    m_schr( 0 ),
    m_state( state_none ),
@@ -45,14 +45,14 @@ SourceLexer::~SourceLexer()
    delete m_nextToken;
 }
 
-Parser::TokenInstance* SourceLexer::nextToken()
+Parsing::TokenInstance* SourceLexer::nextToken()
 {
    String tempString;
    char_t chr;
 
    if ( m_nextToken != 0 )
    {
-      Parser::TokenInstance* inst = m_nextToken;
+      Parsing::TokenInstance* inst = m_nextToken;
       m_nextToken = 0;
       return inst;
    }
@@ -115,10 +115,10 @@ Parser::TokenInstance* SourceLexer::nextToken()
                   m_chr = 1;
                   // After a real new-line, enter in none-state
                   m_state = state_none;
-                  return Parser::t_eol.makeInstance(l, c);
+                  return Parsing::t_eol.makeInstance(l, c);
                   }
 
-               case ';': return Parser::t_eol.makeInstance(m_line, m_chr++);
+               case ';': return Parsing::t_eol.makeInstance(m_line, m_chr++);
                case '"': m_state = state_double_string; break;
                case '\'': m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
@@ -153,7 +153,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                int32 c = m_chr;
                m_line++;
                m_chr = 1;
-               return Parser::t_eol.makeInstance(l, c);
+               return Parsing::t_eol.makeInstance(l, c);
             }
             break;
 
@@ -189,7 +189,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
 
          case state_double_string:
             switch( chr ) {
-               case '\"': return Parser::t_string.makeInstance( m_sline, m_schr, m_text );
+               case '\"': return Parsing::t_string.makeInstance( m_sline, m_schr, m_text );
                case '\\': m_state = state_double_string_esc; break;
                case '\n': m_state = state_double_string_nl; break;
                default:
@@ -302,7 +302,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                   {
                      m_reader->ungetChar(chr1);
                      m_state = state_line;
-                     return Parser::t_string.makeInstance( m_sline, m_schr, m_text );
+                     return Parsing::t_string.makeInstance( m_sline, m_schr, m_text );
                   }
                }
                // on read failure, will break at next loop
@@ -336,7 +336,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                      if ( isTokenLimit(chr) )
                      {
                         unget( chr );
-                        return Parser::t_int.makeInstance(m_sline, m_schr, 0);
+                        return Parsing::t_int.makeInstance(m_sline, m_schr, 0);
                      }
                      addError(e_inv_num_format);
                   }
@@ -356,7 +356,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseOctal( retval ) )
                   addError( e_inv_num_format );
                
-               return Parser::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -373,7 +373,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseBin( retval ) )
                   addError( e_inv_num_format );
 
-               return Parser::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -393,7 +393,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseHex( retval ) )
                   addError( e_inv_num_format );
 
-               return Parser::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -415,7 +415,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseInt( retval ) )
                   addError( e_inv_num_format );
 
-               return Parser::t_int.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_int.makeInstance(m_sline, m_schr, retval);
             }
          break;
 
@@ -436,12 +436,12 @@ Parser::TokenInstance* SourceLexer::nextToken()
                   addError( e_inv_num_format );
 
                m_nextToken = t_dot.makeInstance(m_sline, m_schr);
-               return Parser::t_int.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_int.makeInstance(m_sline, m_schr, retval);
             }
             else if ( chr != '_' )
             {
               addError( e_inv_num_format );
-              return Parser::t_int.makeInstance(m_sline, m_schr, 1);
+              return Parsing::t_int.makeInstance(m_sline, m_schr, 1);
             }
             break;
 
@@ -464,7 +464,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
-               return Parser::t_float.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_float.makeInstance(m_sline, m_schr, retval);
             }
             break;
 
@@ -482,7 +482,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
-               return Parser::t_float.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_float.makeInstance(m_sline, m_schr, retval);
             }
             break;
 
@@ -524,7 +524,7 @@ Parser::TokenInstance* SourceLexer::nextToken()
 }
 
 
-Parser::TokenInstance* SourceLexer::checkWord()
+Parsing::TokenInstance* SourceLexer::checkWord()
 {
    switch(m_text.length())
    {
@@ -681,11 +681,11 @@ Parser::TokenInstance* SourceLexer::checkWord()
    }
 
    // As a fallback, create a "name" word
-   return Parser::t_name.makeInstance( m_sline, m_schr, m_text );
+   return Parsing::t_name.makeInstance( m_sline, m_schr, m_text );
 }
 
 
-Parser::TokenInstance* SourceLexer::checkOperator()
+Parsing::TokenInstance* SourceLexer::checkOperator()
 {
    switch(m_text.length())
    {
