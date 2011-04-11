@@ -58,7 +58,7 @@ static void apply_expr0_times( const Rule& r, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), expr0);
    ti->setValue( new ExprTimes(
          static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v1->detachValue())
+         static_cast<Expression*>(v2->detachValue())
       ), expr_deletor );
    p.simplify(3,ti);
 }
@@ -113,7 +113,7 @@ static void apply_expr_plus( const Rule& r, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), expr);
    ti->setValue( new ExprPlus(
          static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v1->detachValue())
+         static_cast<Expression*>(v2->detachValue())
       ), expr_deletor );
 
    p.simplify(3,ti);
@@ -128,7 +128,7 @@ static void apply_expr_minus( const Rule& r, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), expr);
    ti->setValue( new ExprMinus(
          static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v1->detachValue())
+         static_cast<Expression*>(v2->detachValue())
       ), expr_deletor );
 
    p.simplify(3,ti);

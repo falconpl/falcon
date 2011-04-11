@@ -95,7 +95,7 @@ void Rule::apply( Parser& parser ) const
 
 t_matchType Rule::match( Parser& parser ) const
 {
-   TRACE( "Rule::match: %s", m_name.c_ize() );
+   TRACE( "Rule::match(%s)", m_name.c_ize() );
 
    Parser::Private* pp = parser._p;
    size_t ppos = pp->m_stackPos;
@@ -104,46 +104,57 @@ t_matchType Rule::match( Parser& parser ) const
    Private::TokenVector::iterator riter = _p->m_vTokens.begin();
    Private::TokenVector::iterator riter_end = _p->m_vTokens.end();
 
+   t_matchType checkStatus = t_nomatch;
+
    // check if there is a match by scanning the current token stack in the parser
    // -- and matching it against our tokens.
    while ( riter != riter_end && ppos < ppos_end )
    {
       Token* curTok = *riter;
-      if (curTok->id() != pp->m_vTokens[ppos]->token().id() )
+      // is this a non-terminal token that we may simplify?
+      if( curTok->isNT() && ( ppos > pp->m_stackPos || curTok->id() != m_parent->id() ) )
       {
-         // is this a non-terminal token that we may simplify?
-         if( curTok->isNT() && curTok->id() != m_parent->id() )
+         TRACE1( "Rule::match(%s) -- at stack %d descending into %s",
+            m_name.c_ize(), ppos, curTok->name().c_ize() );
+
+         // push a new stack base for our checks.
+         size_t piter_old = pp->m_stackPos;
+         pp->m_stackPos = ppos;
+         // perform a new check
+         t_matchType mt = static_cast<NonTerminal*>(curTok)->match(parser);
+         // restore old stack base
+         pp->m_stackPos = piter_old;
+
+         if( mt == t_match )
          {
-            TRACE1( "Rule::match: %s -- at stack %d descending into %s",
-               m_name.c_ize(), ppos, curTok->name().c_ize() );
-
-            // push a new stack base for our checks.
-            size_t piter_old = pp->m_stackPos;
-            pp->m_stackPos = ppos;
-            // perform a new check
-            t_matchType mt = static_cast<NonTerminal*>(curTok)->match(parser);
-            // restore old stack base
-            pp->m_stackPos = piter_old;
-
-            if( mt != t_match )
-            {
-               TRACE( "Rule::match: %s at step %d -- return on nonterminal '%s' %s",
-                     m_name.c_ize(), ppos, curTok->name().c_ize(), mt == t_nomatch ? "failed" : "needs more tokens" );
-
-               // the nonterminal token didn't match -- we can't proceed
-               return mt;
-            }
+            TRACE( "Rule::match(%s) at step %d -- matched sub-rule '%s'",
+                  m_name.c_ize(), ppos, curTok->name().c_ize() );
             
-            // otherwise the token stack has been reduced to what we expected,
-            // so we can continue.
+            // Try again with the same position till this rule matches.
             ppos_end = pp->m_vTokens.size();  // update token stack size.
+            checkStatus = t_match;
+            continue;
          }
-         else
+         else if( mt == t_tooShort )
          {
-            TRACE( "Rule::match: %s at step %d -- failed", m_name.c_ize(), ppos );
-            // terminal token mismatch -- we failed
-            return t_nomatch;
+            // Too short is returned only if the rule arrives to check the next token.
+            // this means we're too short as well.
+             TRACE( "Rule::match: %s at step %d -- return too short sub-rule '%s'",
+                  m_name.c_ize(), ppos, curTok->name().c_ize() );
+            return t_tooShort;
          }
+         // Otherwise the rule failed or was considered incompete.
+         // In either case, we must proceed.
+      }
+
+      TRACE1( "Rule::match(%s) -- at stack %d matching %s with %s", m_name.c_ize(), ppos,
+            curTok->name().c_ize(), pp->m_vTokens[ppos]->token().name().c_ize() );
+
+      if (curTok->id() != pp->m_vTokens[ppos]->token().id() )
+      {         
+         TRACE( "Rule::match(%s) at stack %d -- failed", m_name.c_ize(), ppos );
+         // terminal token mismatch -- we failed
+         return t_nomatch;
       }
 
       ++ppos;
@@ -153,23 +164,22 @@ t_matchType Rule::match( Parser& parser ) const
    // do we have a perfect match?
    if( riter == riter_end )
    {
-      TRACE( "Rule::match: %s -- success", m_name.c_ize(), ppos );
+      TRACE( "Rule::match(%s) -- success", m_name.c_ize(), ppos );
       return t_match;
    }
-   else
+   
+   // check the look-ahead token
+   if( pp->m_nextToken->token().id() == (*riter)->id() )
    {
-      // check the look-ahead token
-      if( pp->m_nextToken->token().id() == (*riter)->id() )
-      {
-         TRACE( "Rule::match: %s -- too short", m_name.c_ize(), ppos );
-         // if it matches, then we're too short
-         return t_tooShort;
-      }
+      TRACE( "Rule::match(%s) -- read-ahead match next token", m_name.c_ize(), ppos );
+      // if it matches, then we're too short
+      return t_tooShort;
    }
-
-   TRACE( "Rule::match: %s -- final failure", m_name.c_ize(), ppos );
+   
+   TRACE( "Rule::match(%s) -- exausted rule at %d with %s", m_name.c_ize(), ppos,
+      checkStatus == t_match ? "match" : "failure");
    // if any match fails...
-   return t_nomatch;
+   return checkStatus;
 }
 
 

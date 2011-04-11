@@ -28,7 +28,7 @@ class FALCON_DYN_CLASS TEof: public Terminal
 {
 public:
    inline TEof():
-      Terminal("Float")
+      Terminal("EOF")
    {
    }
 

@@ -263,25 +263,36 @@ void Parser::parserLoop()
    Lexer* lexer = _p->m_lLexers.back();
    while( ! m_bIsDone )
    {
-      TokenInstance* ti = lexer->nextToken();
-      if( ti == 0 )
+      // we're done ?
+      if( lexer == 0 )
       {
+         TRACE( "Parser::parserLoop -- done on lexer pop", 0 );
+         return;
+      }
+
+      TokenInstance* ti = lexer->nextToken();
+      while( ti == 0 )
+      {        
          popLexer();
-         
-         // we're done
          if( _p->m_lLexers.empty() )
          {
-            TRACE( "Parser::parserLoop -- done on lexer pop", 0 );
-            return;
+            lexer = 0;
+            break;
          }
-
-         _p->m_nextToken = new TokenInstance( lexer->line(), lexer->character(), t_eof );
+         else
+         {
+            lexer = _p->m_lLexers.back();
+            TokenInstance* ti = lexer->nextToken();
+         }         
       }
-      else
+
+      if( ti == 0 )
       {
-         _p->m_nextToken = ti;
+         TRACE( "Parser::parserLoop -- Last loop with EOF as next", 0 );
+         ti = new TokenInstance(0, 0, t_eof );
       }
 
+      _p->m_nextToken = ti;
       TRACE( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
 
       State* curState = _p->m_lStates.back();
