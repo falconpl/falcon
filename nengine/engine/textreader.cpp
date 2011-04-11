@@ -392,15 +392,29 @@ char_t TextReader::getChar()
    }
 
    String str;
-   if( ! fetch(4) )
+   length_t decoded = 0;
+   // do we have enough space?
+   if( m_bufPos < m_bufLength )
    {
-      return (char_t)-1;
+      decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos, str, 1, true );
    }
 
-   length_t decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos, str, 1, true );
+   // not enough lenght or decode failed?
    if( decoded == 0 )
    {
-      return (char_t)-1;
+      // try again refetching -- if the failure may be a close call.
+      if( m_bufPos + 4 >= m_bufLength )
+      {
+         if( fetch(4) )
+         {
+            decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos, str, 1, true );
+         }
+      }
+
+      if( decoded == 0 )
+      {
+         return (char_t)-1;
+      }
    }
 
    m_bufPos += decoded;

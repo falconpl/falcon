@@ -45,3 +45,8 @@ target_link_libraries( and_test falcon_engine )
 message("Adding ruletest")
 add_executable( ruletest ruletest.cpp )
 target_link_libraries( ruletest falcon_engine )
+
+###############################################
+message("Adding testparser")
+add_executable( testparser testparser.cpp )
+target_link_libraries( testparser falcon_engine )

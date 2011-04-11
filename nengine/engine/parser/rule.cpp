@@ -55,6 +55,7 @@ Rule::Maker::~Maker()
 Rule::Maker& Rule::Maker::t( Token& t )
 {
    _p->m_vTokens.push_back( &t );
+   return *this;
 }
 
 
@@ -81,6 +82,7 @@ Rule::~Rule()
 Rule& Rule::t( Token& t )
 {
    _p->m_vTokens.push_back( &t );
+   return *this;
 }
 
 
@@ -110,9 +112,10 @@ t_matchType Rule::match( Parser& parser ) const
       if (curTok->id() != pp->m_vTokens[ppos]->token().id() )
       {
          // is this a non-terminal token that we may simplify?
-         if( curTok->isNT() )
+         if( curTok->isNT() && curTok->id() != m_parent->id() )
          {
-            TRACE1( "Rule::match: %s -- descending into ", curTok->name().c_ize() );
+            TRACE1( "Rule::match: %s -- at stack %d descending into %s",
+               m_name.c_ize(), ppos, curTok->name().c_ize() );
 
             // push a new stack base for our checks.
             size_t piter_old = pp->m_stackPos;

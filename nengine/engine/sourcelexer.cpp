@@ -503,6 +503,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             if( String::isWhiteSpace( chr ) || !isTokenLimit( chr ) )
             {
                unget(chr);
+               m_state = state_line;
                return checkOperator();
             }
             break;

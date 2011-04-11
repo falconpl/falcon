@@ -90,12 +90,12 @@ void State::process( Parser& parser )
 
       TRACE1("State::process -- checking %s", nt->name().c_ize() );
       
-      bool bMatch = nt->match( parser );
+      t_matchType mt = nt->match( parser );
 
       TRACE1("State::process -- nt-token %s %smatch",
-               nt->name().c_ize(), bMatch ? "": "doesn't " );
+               nt->name().c_ize(), mt == t_match ? "": "doesn't " );
 
-      if ( bMatch )
+      if ( mt == t_match )
       {
          return;
       }

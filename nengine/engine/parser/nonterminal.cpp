@@ -116,9 +116,9 @@ t_matchType NonTerminal::match( Parser& parser )
          // wow, we have a winner.
          if (winner == 0 )
          {
+            winner = rule;
             TRACE1( "NonTerminal::match %s -- electing winner %s",
                   name().c_ize(), winner->name().c_ize() );
-            winner = rule;
          }
       }
       else if( ruleMatch == t_tooShort )
@@ -135,7 +135,7 @@ t_matchType NonTerminal::match( Parser& parser )
    // ok, do we have a winner?
    if( winner != 0 )
    {
-      TRACE1( "NonTerminal::match %s -- Applying winner ", name().c_ize(), winner->name().c_ize() );
+      TRACE1( "NonTerminal::match %s -- Applying winner %s", name().c_ize(), winner->name().c_ize() );
       winner->apply( parser );
       return t_match;
    }

@@ -39,11 +39,14 @@ static void expr_deletor(void* data)
    delete expr;
 }
 
+   NonTerminal expr0( "Expr0" );
+   NonTerminal expr( "Expr" );
+
+
 //==========================================================
 // NonTerminal - Expr0
 //==========================================================
 
-NonTerminal expr0( "Expr0" );
 
 //typedef void(*Apply)( const Rule& r, Parser& p );
 static void apply_expr0_times( const Rule& r, Parser& p )
@@ -59,7 +62,6 @@ static void apply_expr0_times( const Rule& r, Parser& p )
       ), expr_deletor );
    p.simplify(3,ti);
 }
-Rule r_expr0_0 = Rule::Maker( "Expr0_times", apply_expr0_times ).t(expr0).t(t_times).t(expr0);
 
 static void apply_expr0_div( const Rule& r, Parser& p )
 {
@@ -74,7 +76,6 @@ static void apply_expr0_div( const Rule& r, Parser& p )
       ), expr_deletor );
    p.simplify(3,ti);
 }
-Rule r_expr0_1 = Rule::Maker( "Expr0_div", apply_expr0_div ).t(expr0).t(t_times).t(expr0);
 
 static void apply_expr0_neg( const Rule& r, Parser& p )
 {
@@ -86,7 +87,6 @@ static void apply_expr0_neg( const Rule& r, Parser& p )
 
    p.simplify(2,ti2);
 }
-Rule r_expr0_2 = Rule::Maker( "Expr0_neg", apply_expr0_neg ).t(t_minus).t(expr0);
 
 static void apply_expr0_int( const Rule& r, Parser& p )
 {
@@ -97,13 +97,11 @@ static void apply_expr0_int( const Rule& r, Parser& p )
    p.simplify(1,ti2);
 }
 
-Rule r_expr0_3 = Rule::Maker( "Expr0_number", apply_expr0_int ).t(t_int);
 
 //==========================================================
 // NonTerminal - Expr1
 //==========================================================
 
-NonTerminal expr( "Expr" );
 
 //typedef void(*Apply)( const Rule& r, Parser& p );
 static void apply_expr_plus( const Rule& r, Parser& p )
@@ -120,7 +118,6 @@ static void apply_expr_plus( const Rule& r, Parser& p )
 
    p.simplify(3,ti);
 }
-Rule r_expr_0 = Rule::Maker( "Expr_plus", apply_expr_plus ).t(expr).t(t_plus).t(expr);
 
 static void apply_expr_minus( const Rule& r, Parser& p )
 {
@@ -136,7 +133,6 @@ static void apply_expr_minus( const Rule& r, Parser& p )
 
    p.simplify(3,ti);
 }
-Rule r_expr_1 = Rule::Maker( "Expr_minus", apply_expr_minus ).t(expr).t(t_minus).t(expr);
 
 static void apply_expr_pars( const Rule& r, Parser& p )
 {
@@ -148,7 +144,6 @@ static void apply_expr_pars( const Rule& r, Parser& p )
    ti2->setValue( ti->detachValue(), expr_deletor );
    p.simplify(3,ti2);
 }
-Rule r_expr_2 = Rule::Maker( "Expr_pars", apply_expr_pars ).t(t_openpar).t(expr).t(t_closepar);
 
 static void apply_expr_expr0( const Rule& r, Parser& p )
 {
@@ -158,7 +153,6 @@ static void apply_expr_expr0( const Rule& r, Parser& p )
    ti2->setValue( ti->detachValue(), expr_deletor );
    p.simplify(1,ti2);
 }
-Rule r_expr_3 = Rule::Maker( "Expr_from_expr0", apply_expr_expr0 ).t(expr0);
 
 //==========================================================
 // A line
@@ -177,16 +171,10 @@ static void apply_line_expr( const Rule& r, Parser& p )
    // clear the stack
    p.simplify(2);
 }
-Rule r_line_expr = Rule::Maker( "line_expr", apply_line_expr ).t(expr).t(t_eol);
-NonTerminal nt_line = NonTerminal::Maker( "LINE" ).r(r_line_expr);
-
-Rule r_line_eof = Rule::Maker( "line_expr", apply_line_expr ).t(expr).t(t_eof);
-NonTerminal nt_eof = NonTerminal::Maker( "LINE_EOF" ).r(r_line_eof);
 
 //==========================================================
 // States
 //==========================================================
-State sMain = State::Maker("main").n(nt_line).n(nt_eof);
 
 //==========================================================
 // SourceParser
@@ -197,18 +185,36 @@ SourceParser::SourceParser( SynTree* st ):
    m_syntree(st)
 {
    m_ctx = st;
-   
-   // prepare expr0
-   expr0.r(r_expr0_0).r(r_expr0_1).r(r_expr0_2).r(r_expr0_3);
-   
-   // prepare expr1
-   expr.r(r_expr_0).r(r_expr_1).r(r_expr_2).r(r_expr_3);
-
-   addState(sMain);
 }
 
 bool SourceParser::parse()
 {
+   Rule r_expr0_0 = Rule::Maker( "Expr0_times", apply_expr0_times ).t(expr0).t(t_times).t(expr0);
+   Rule r_expr0_1 = Rule::Maker( "Expr0_div", apply_expr0_div ).t(expr0).t(t_times).t(expr0);
+   Rule r_expr0_2 = Rule::Maker( "Expr0_neg", apply_expr0_neg ).t(t_minus).t(expr0);
+   Rule r_expr0_3 = Rule::Maker( "Expr0_number", apply_expr0_int ).t(t_int);
+
+   Rule r_expr_0 = Rule::Maker( "Expr_plus", apply_expr_plus ).t(expr).t(t_plus).t(expr);
+   Rule r_expr_1 = Rule::Maker( "Expr_minus", apply_expr_minus ).t(expr).t(t_minus).t(expr);
+   Rule r_expr_2 = Rule::Maker( "Expr_pars", apply_expr_pars ).t(t_openpar).t(expr).t(t_closepar);
+   Rule r_expr_3 = Rule::Maker( "Expr_from_expr0", apply_expr_expr0 ).t(expr0);
+
+   Rule r_line_expr = Rule::Maker( "line_expr", apply_line_expr ).t(expr).t(t_eol);
+   NonTerminal nt_line = NonTerminal::Maker( "LINE" ).r(r_line_expr);
+
+   Rule r_line_eof = Rule::Maker( "line_expr", apply_line_expr ).t(expr).t(t_eof);
+   NonTerminal nt_eof = NonTerminal::Maker( "LINE_EOF" ).r(r_line_eof);
+
+   // prepare expr0
+   expr0.r(r_expr0_0).r(r_expr0_1).r(r_expr0_2).r(r_expr0_3);
+
+   // prepare expr1
+   expr.r(r_expr_0).r(r_expr_1).r(r_expr_2).r(r_expr_3);
+
+   State sMain = State::Maker("main").n(nt_line).n(nt_eof);
+
+   addState(sMain);
+   
    return Parser::parse("main");
 }
 
