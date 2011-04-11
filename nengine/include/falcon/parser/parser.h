@@ -208,7 +208,7 @@ public:
    /** Returns true if the parser should terminate asap.
       \return true on termination requested.
     */
-   bool done() const { m_bIsDone; }
+   bool done() const { return m_bIsDone; }
 
    /** Ask the parser to terminate.
       A rule apply may invoke this routine to terminate the parsing process.

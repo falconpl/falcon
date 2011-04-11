@@ -24,7 +24,7 @@
 
 namespace Falcon {
 
-class SourceLexer: public Parsing::Lexer
+class FALCON_DYN_CLASS SourceLexer: public Parsing::Lexer
 {
 public:
    SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader );
