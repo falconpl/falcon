@@ -23,12 +23,36 @@
 namespace Falcon {
 namespace Parsing {
 
-TInt t_int;
-TFloat t_float;
-TString t_string;
-TName t_name;
-TEol t_eol;
-TEof t_eof;
+TInt& t_int()
+{
+  static TInt value;
+  return value;
+}
+TFloat& t_float()
+{
+  static TFloat value;
+  return value;
+}
+TString& t_string()
+{
+  static TString value;
+  return value;
+}
+TName& t_name()
+{
+  static TName value;
+  return value;
+}
+TEol& t_eol()
+{
+  static TEol value;
+  return value;
+}
+TEof& t_eof()
+{
+  static TEof value;
+  return value;
+}
 
 }
 }

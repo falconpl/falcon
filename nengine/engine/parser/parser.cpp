@@ -92,7 +92,7 @@ void Parser::addState( State& state )
 void Parser::pushState( const String& name )
 {
    TRACE( "Parser::pushState -- pushing state '%s'", name.c_ize() );
-   
+
    Private::StateMap::const_iterator iter = _p->m_states.find( name );
    if( iter != _p->m_states.end() )
    {
@@ -243,7 +243,7 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
 
       _p->m_vTokens.erase( _p->m_vTokens.begin() + _p->m_stackPos, _p->m_vTokens.begin() + end );
    }
-   
+
    if( newtoken != 0 )
    {
       _p->m_vTokens.insert( _p->m_vTokens.begin() + _p->m_stackPos, newtoken );
@@ -272,7 +272,7 @@ void Parser::parserLoop()
 
       TokenInstance* ti = lexer->nextToken();
       while( ti == 0 )
-      {        
+      {
          popLexer();
          if( _p->m_lLexers.empty() )
          {
@@ -283,13 +283,13 @@ void Parser::parserLoop()
          {
             lexer = _p->m_lLexers.back();
             TokenInstance* ti = lexer->nextToken();
-         }         
+         }
       }
 
       if( ti == 0 )
       {
          TRACE( "Parser::parserLoop -- Last loop with EOF as next", 0 );
-         ti = new TokenInstance(0, 0, t_eof );
+         ti = new TokenInstance(0, 0, t_eof() );
       }
 
       _p->m_nextToken = ti;
@@ -304,7 +304,7 @@ void Parser::parserLoop()
    TRACE( "Parser::parserLoop -- done on request", 0 );
 }
 
- 
+
 }
 }
 

@@ -38,7 +38,7 @@ public:
 };
 
 /** Predefined string token instance. */
-extern FALCON_DYN_SYM TName t_name;
+extern FALCON_DYN_SYM TName& t_name();
 
 }
 }

@@ -58,7 +58,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    }
 
    while( (chr = m_reader->getChar()) != (char_t)-1 )
-   {  
+   {
       // start the char-line count
       if( m_chr == 0 )
       {
@@ -83,7 +83,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             break;
 
-         case state_shebang2: 
+         case state_shebang2:
             if( chr == '\n' ) m_state = state_line;
             break;
 
@@ -115,10 +115,10 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_chr = 1;
                   // After a real new-line, enter in none-state
                   m_state = state_none;
-                  return Parsing::t_eol.makeInstance(l, c);
+                  return Parsing::t_eol().makeInstance(l, c);
                   }
 
-               case ';': return Parsing::t_eol.makeInstance(m_line, m_chr++);
+               case ';': return Parsing::t_eol().makeInstance(m_line, m_chr++);
                case '"': m_state = state_double_string; break;
                case '\'': m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
@@ -145,7 +145,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          //----------------------------------------------
          // Comment context
 
-         case state_eolComment: 
+         case state_eolComment:
             if ( chr == '\n' )
             {
                m_state = state_line;
@@ -153,7 +153,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                int32 c = m_chr;
                m_line++;
                m_chr = 1;
-               return Parsing::t_eol.makeInstance(l, c);
+               return Parsing::t_eol().makeInstance(l, c);
             }
             break;
 
@@ -183,13 +183,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                default: ; break;
             }
             break;
-            
+
          //---------------------------------------
          //---- string context
 
          case state_double_string:
             switch( chr ) {
-               case '\"': return Parsing::t_string.makeInstance( m_sline, m_schr, m_text );
+               case '\"': return Parsing::t_string().makeInstance( m_sline, m_schr, m_text );
                case '\\': m_state = state_double_string_esc; break;
                case '\n': m_state = state_double_string_nl; break;
                default:
@@ -286,7 +286,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
          break;
 
-            
+
          case state_single_string:
             if( chr == '\'')
             {
@@ -302,12 +302,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   {
                      m_reader->ungetChar(chr1);
                      m_state = state_line;
-                     return Parsing::t_string.makeInstance( m_sline, m_schr, m_text );
+                     return Parsing::t_string().makeInstance( m_sline, m_schr, m_text );
                   }
                }
                // on read failure, will break at next loop
             }
-            else 
+            else
             {
                m_text.append(chr);
             }
@@ -332,11 +332,11 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   else
                   {
                      m_state = state_line;
-                     
+
                      if ( isTokenLimit(chr) )
                      {
                         unget( chr );
-                        return Parsing::t_int.makeInstance(m_sline, m_schr, 0);
+                        return Parsing::t_int().makeInstance(m_sline, m_schr, 0);
                      }
                      addError(e_inv_num_format);
                   }
@@ -355,8 +355,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                uint64 retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseOctal( retval ) )
                   addError( e_inv_num_format );
-               
-               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+
+               return Parsing::t_int().makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -373,7 +373,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseBin( retval ) )
                   addError( e_inv_num_format );
 
-               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+               return Parsing::t_int().makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -393,7 +393,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseHex( retval ) )
                   addError( e_inv_num_format );
 
-               return Parsing::t_int.makeInstance(m_sline, m_schr, (int64) retval);
+               return Parsing::t_int().makeInstance(m_sline, m_schr, (int64) retval);
             }
          break;
 
@@ -415,7 +415,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseInt( retval ) )
                   addError( e_inv_num_format );
 
-               return Parsing::t_int.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_int().makeInstance(m_sline, m_schr, retval);
             }
          break;
 
@@ -435,13 +435,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseInt( retval ) )
                   addError( e_inv_num_format );
 
-               m_nextToken = t_dot.makeInstance(m_sline, m_schr);
-               return Parsing::t_int.makeInstance(m_sline, m_schr, retval);
+               m_nextToken = t_dot().makeInstance(m_sline, m_schr);
+               return Parsing::t_int().makeInstance(m_sline, m_schr, retval);
             }
             else if ( chr != '_' )
             {
               addError( e_inv_num_format );
-              return Parsing::t_int.makeInstance(m_sline, m_schr, 1);
+              return Parsing::t_int().makeInstance(m_sline, m_schr, 1);
             }
             break;
 
@@ -464,7 +464,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
-               return Parsing::t_float.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_float().makeInstance(m_sline, m_schr, retval);
             }
             break;
 
@@ -482,7 +482,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
-               return Parsing::t_float.makeInstance(m_sline, m_schr, retval);
+               return Parsing::t_float().makeInstance(m_sline, m_schr, retval);
             }
             break;
 
@@ -534,18 +534,18 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 2:
-         if ( m_text == "as" ) return t_token_as.makeInstance(m_sline, m_schr);
-         if ( m_text == "eq" ) return t_token_eq.makeInstance(m_sline, m_schr);
-         if ( m_text == "in" ) return t_token_in.makeInstance(m_sline, m_schr);
-         if ( m_text == "if" ) return t_token_if.makeInstance(m_sline, m_schr);
-         if ( m_text == "or" ) return t_token_or.makeInstance(m_sline, m_schr);
-         if ( m_text == "to" ) return t_token_to.makeInstance(m_sline, m_schr);
+         if ( m_text == "as" ) return t_token_as().makeInstance(m_sline, m_schr);
+         if ( m_text == "eq" ) return t_token_eq().makeInstance(m_sline, m_schr);
+         if ( m_text == "in" ) return t_token_in().makeInstance(m_sline, m_schr);
+         if ( m_text == "if" ) return t_token_if().makeInstance(m_sline, m_schr);
+         if ( m_text == "or" ) return t_token_or().makeInstance(m_sline, m_schr);
+         if ( m_text == "to" ) return t_token_to().makeInstance(m_sline, m_schr);
       break;
 
       case 3:
-         if ( m_text == "not" ) return t_token_not.makeInstance(m_sline, m_schr);
-         if ( m_text == "end" ) return t_token_end.makeInstance(m_sline, m_schr);
-         if ( m_text == "nil" ) return t_token_nil.makeInstance(m_sline, m_schr);
+         if ( m_text == "not" ) return t_token_not().makeInstance(m_sline, m_schr);
+         if ( m_text == "end" ) return t_token_end().makeInstance(m_sline, m_schr);
+         if ( m_text == "nil" ) return t_token_nil().makeInstance(m_sline, m_schr);
          /*else if ( m_text == "try" )
          else if ( m_text == "for" )
          else if ( m_text == "and" )
@@ -682,7 +682,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
    }
 
    // As a fallback, create a "name" word
-   return Parsing::t_name.makeInstance( m_sline, m_schr, m_text );
+   return Parsing::t_name().makeInstance( m_sline, m_schr, m_text );
 }
 
 
@@ -691,21 +691,21 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
    switch(m_text.length())
    {
       case 1:
-         if( m_text == "+" ) return t_plus.makeInstance(m_sline, m_schr);
-         else if( m_text == "-" ) return t_minus.makeInstance(m_sline, m_schr);
-         else if( m_text == "*" ) return t_times.makeInstance(m_sline, m_schr);
-         else if( m_text == "/" ) return t_divide.makeInstance(m_sline, m_schr);
-         else if( m_text == "%" ) return t_modulo.makeInstance(m_sline, m_schr);
+         if( m_text == "+" ) return t_plus().makeInstance(m_sline, m_schr);
+         else if( m_text == "-" ) return t_minus().makeInstance(m_sline, m_schr);
+         else if( m_text == "*" ) return t_times().makeInstance(m_sline, m_schr);
+         else if( m_text == "/" ) return t_divide().makeInstance(m_sline, m_schr);
+         else if( m_text == "%" ) return t_modulo().makeInstance(m_sline, m_schr);
          break;
 
       case 2:
-         if( m_text == "**" ) return t_pow.makeInstance(m_sline, m_schr);
+         if( m_text == "**" ) return t_pow().makeInstance(m_sline, m_schr);
          break;
    }
    // in case of error
    addError( e_inv_token );
    // Create an unary operator -- pretty almost always ok.
-   return t_token_not.makeInstance(m_sline, m_schr);
+   return t_token_not().makeInstance(m_sline, m_schr);
 }
 
 }
