@@ -920,7 +920,7 @@ String::String( const char *data, length_t len ):
    m_class( &csh::handler_buffer ),
    m_bExported( false )
 {
-   m_size = len >= 0 ? len : strlen( data );
+   m_size = len != String::npos ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
    m_storage = (byte *) malloc( m_allocated );
    memcpy( m_storage, data, m_size );
@@ -954,7 +954,7 @@ String::String( const wchar_t *data, length_t len ):
    else
       m_class = &csh::handler_buffer32;
 
-   if ( len >= 0 )
+   if ( len != String::npos )
    {
       m_size = len * sizeof( wchar_t );
    }
