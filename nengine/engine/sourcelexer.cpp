@@ -122,6 +122,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '"': m_state = state_double_string; break;
                case '\'': m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
+               case '(': m_chr++; return t_openpar().makeInstance(m_line,m_chr); break;
+               case ')': m_chr++; return t_closepar().makeInstance(m_line,m_chr); break;
+               case '[': m_chr++; return t_opensquare().makeInstance(m_line,m_chr); break;
+               case ']': m_chr++; return t_closesquare().makeInstance(m_line,m_chr); break;
+               case '{': m_chr++; return t_opengraph().makeInstance(m_line,m_chr); break;
+               case '}': m_chr++; return t_closegraph().makeInstance(m_line,m_chr); break;
 
                default:
                   if ( isCipher(chr) )
@@ -500,12 +506,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             break;
 
          case state_operator:
-            if( String::isWhiteSpace( chr ) || !isTokenLimit( chr ) )
+            if( String::isWhiteSpace( chr ) || isParenthesis(chr) || !isTokenLimit( chr ) )
             {
                unget(chr);
                m_state = state_line;
                return checkOperator();
             }
+            m_text.append( chr );
             break;
       }
 

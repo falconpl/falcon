@@ -85,6 +85,13 @@ private:
                 (chr > 'z' && chr < 128 ) );
    }
 
+   inline bool isParenthesis(char_t chr)
+   {
+      return chr == '(' || chr == ')' ||
+             chr == '[' || chr == ']' ||
+             chr == '{' || chr == '}';
+   }
+
    inline bool isCipher(char_t chr)
    {
       return chr >= '0' && chr <= '9';

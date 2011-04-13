@@ -294,7 +294,21 @@ void Parser::parserLoop()
 
       _p->m_nextToken = ti;
       TRACE( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
-
+#ifndef NDEBUG
+      {
+      String sTokens;
+      for( int nTokenLoop = 0; nTokenLoop < _p->m_vTokens.size(); ++nTokenLoop )
+      {
+         if ( sTokens.size() > 0 )
+         {
+            sTokens += ", ";
+         }
+         sTokens += _p->m_vTokens[nTokenLoop]->token().name();
+      }
+      sTokens += " -- next: " + _p->m_nextToken->token().name();
+      TRACE( "Parser::parserLoop -- stack now: %s ", sTokens.c_ize());
+      }
+#endif
       State* curState = _p->m_lStates.back();
       curState->process( *this );
       _p->m_vTokens.push_back( _p->m_nextToken );
