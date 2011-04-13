@@ -190,7 +190,7 @@ SourceParser::SourceParser( SynTree* st ):
 bool SourceParser::parse()
 {
    Rule r_expr0_0 = Rule::Maker( "Expr0_times", apply_expr0_times ).t(expr0).t(t_times).t(expr0);
-   Rule r_expr0_1 = Rule::Maker( "Expr0_div", apply_expr0_div ).t(expr0).t(t_times).t(expr0);
+   Rule r_expr0_1 = Rule::Maker( "Expr0_div", apply_expr0_div ).t(expr0).t(t_divide).t(expr0);
    Rule r_expr0_2 = Rule::Maker( "Expr0_neg", apply_expr0_neg ).t(t_minus).t(expr0);
    Rule r_expr0_3 = Rule::Maker( "Expr0_number", apply_expr0_int ).t(t_int);
 

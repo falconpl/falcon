@@ -161,8 +161,14 @@ t_matchType Rule::match( Parser& parser ) const
       ++riter;
    }
 
+   if( ppos < ppos_end )
+   {
+      TRACE( "Rule::match(%s) -- failure -- stack not completely matched (%d vs %d)", m_name.c_ize(),
+         ppos, ppos_end );
+      return t_nomatch;
+   }
    // do we have a perfect match?
-   if( riter == riter_end )
+   if( riter == riter_end  )
    {
       TRACE( "Rule::match(%s) -- success", m_name.c_ize(), ppos );
       return t_match;
