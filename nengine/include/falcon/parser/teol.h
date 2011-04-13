@@ -38,7 +38,7 @@ public:
 };
 
 /** Predefined end of line token instance. */
-extern FALCON_DYN_SYM TEol t_eol;
+extern FALCON_DYN_SYM TEol& t_eol();
 
 }
 }

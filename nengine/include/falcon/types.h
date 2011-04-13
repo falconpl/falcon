@@ -61,9 +61,10 @@ typedef void * voidp;
 typedef uint32 length_t;
 typedef uint32 char_t;
 
-#ifndef off_t
-#define off_t int64
-#endif
+//#if !defined(off_t) && !defined(_OFF_T)
+//#define off_t int64
+//#endif
+typedef int64 off_t;
 
 
 typedef void ( CDECL *ext_func_t) ( VMachine *);

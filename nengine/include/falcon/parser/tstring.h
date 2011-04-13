@@ -34,12 +34,12 @@ public:
       Terminal("String")
    {
    }
-      
+
    inline virtual ~TString() {}
 };
 
 /** Predefined string token instance. */
-extern FALCON_DYN_SYM TString t_string;
+extern FALCON_DYN_SYM TString& t_string();
 
 }
 }

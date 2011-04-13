@@ -17,32 +17,118 @@
 
 namespace Falcon {
 
-Parsing::Terminal t_dot("DOT");
+Parsing::Terminal& t_dot()
+{
+  static Parsing::Terminal value("DOT");
+  return value;
+}
 
-Parsing::Terminal t_openpar("(");
-Parsing::Terminal t_closepar(")");
-Parsing::Terminal t_opensquare("[");
-Parsing::Terminal t_closesquare("]");
-Parsing::Terminal t_opengraph("{");
-Parsing::Terminal t_closegraph("}");
+Parsing::Terminal& t_openpar()
+{
+  static Parsing::Terminal value("(");
+  return value;
+}
+Parsing::Terminal& t_closepar()
+{
+  static Parsing::Terminal value(")");
+  return value;
+}
+Parsing::Terminal& t_opensquare()
+{
+  static Parsing::Terminal value("[");
+  return value;
+}
+Parsing::Terminal& t_closesquare()
+{
+  static Parsing::Terminal value("]");
+  return value;
+}
+Parsing::Terminal& t_opengraph()
+{
+  static Parsing::Terminal value("{");
+  return value;
+}
+Parsing::Terminal& t_closegraph()
+{
+  static Parsing::Terminal value("}");
+  return value;
+}
 
-Parsing::Terminal t_plus("+");
-Parsing::Terminal t_minus("-");
-Parsing::Terminal t_times("*");
-Parsing::Terminal t_divide("/");
-Parsing::Terminal t_modulo("%");
-Parsing::Terminal t_pow("**");
-
-Parsing::Terminal t_token_as("as");
-Parsing::Terminal t_token_eq("eq");
-Parsing::Terminal t_token_if("if");
-Parsing::Terminal t_token_in("in");
-Parsing::Terminal t_token_or("or");
-Parsing::Terminal t_token_to("to");
-
-Parsing::Terminal t_token_not("not");
-Parsing::Terminal t_token_end("end");
-Parsing::Terminal t_token_nil("nil");
+Parsing::Terminal& t_plus()
+{
+  static Parsing::Terminal value("+");
+  return value;
+}
+Parsing::Terminal& t_minus()
+{
+  static Parsing::Terminal value("-");
+  return value;
+}
+Parsing::Terminal& t_times()
+{
+  static Parsing::Terminal value("*");
+  return value;
+}
+Parsing::Terminal& t_divide()
+{
+  static Parsing::Terminal value("/");
+  return value;
+}
+Parsing::Terminal& t_modulo()
+{
+  static Parsing::Terminal value("%");
+  return value;
+}
+Parsing::Terminal& t_pow()
+{
+  static Parsing::Terminal value("**");
+  return value;
+}
+Parsing::Terminal& t_token_as()
+{
+  static Parsing::Terminal value("as");
+  return value;
+}
+Parsing::Terminal& t_token_eq()
+{
+  static Parsing::Terminal value("eq");
+  return value;
+}
+Parsing::Terminal& t_token_if()
+{
+  static Parsing::Terminal value("if");
+  return value;
+}
+Parsing::Terminal& t_token_in()
+{
+  static Parsing::Terminal value("in");
+  return value;
+}
+Parsing::Terminal& t_token_or()
+{
+  static Parsing::Terminal value("or");
+  return value;
+}
+Parsing::Terminal& t_token_to()
+{
+  static Parsing::Terminal value("to");
+  return value;
+}
+Parsing::Terminal& t_token_not()
+{
+  static Parsing::Terminal value("not");
+  return value;
+}
+Parsing::Terminal& t_token_end()
+{
+  static Parsing::Terminal value("end");
+  return value;
+}
+Parsing::Terminal& t_token_nil()
+{
+  static Parsing::Terminal value("nil");
+  return value;
+}
 
 }
 

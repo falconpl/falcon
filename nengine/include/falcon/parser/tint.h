@@ -36,7 +36,7 @@ public:
 };
 
 /** Predefined integer token instance. */
-extern FALCON_DYN_SYM TInt t_int;
+extern FALCON_DYN_SYM TInt& t_int();
 
 }
 }

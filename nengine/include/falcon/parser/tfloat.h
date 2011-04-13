@@ -36,7 +36,7 @@ public:
 };
 
 /** Predefined string token instance. */
-extern FALCON_DYN_SYM TFloat t_float;
+extern FALCON_DYN_SYM TFloat& t_float();
 
 }
 }
