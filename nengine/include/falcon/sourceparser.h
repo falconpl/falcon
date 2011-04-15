@@ -35,8 +35,61 @@ class FALCON_DYN_CLASS SourceParser: public Parsing::Parser
 public:
    SourceParser( SynTree* st );
    bool parse();
+
+   //===============================================
+   // Terminal tokens
+   //
+   Parsing::Terminal T_Plus;
+   Parsing::Terminal T_Times;
+   Parsing::Terminal T_Divide;
+   Parsing::Terminal T_Minus;
+   Parsing::Terminal T_Modulo;
+   Parsing::Terminal T_Power;
+
+   Parsing::Terminal T_Openpar;
+   Parsing::Terminal T_Closepar;
+   Parsing::Terminal T_OpenSquare;
+   Parsing::Terminal T_CloseSquare;
+   Parsing::Terminal T_OpenGraph;
+   Parsing::Terminal T_CloseGraph;
+
+   Parsing::Terminal T_Dot;
+
+   Parsing::Terminal T_as;
+   Parsing::Terminal T_and;
+   Parsing::Terminal T_end;
+   Parsing::Terminal T_eq;
+   Parsing::Terminal T_if;
+   Parsing::Terminal T_in;
+   Parsing::Terminal T_not;
+   Parsing::Terminal T_nil;
+   Parsing::Terminal T_or;
+   Parsing::Terminal T_to;
    
-private:
+   //================================================
+   // Expression (higher priority)
+   //
+   
+   Parsing::NonTerminal Expr0;
+   Parsing::Rule r_Expr0_times;
+   Parsing::Rule r_Expr0_div;
+   Parsing::Rule r_Expr0_neg;
+   Parsing::Rule r_Expr0_number;
+
+   // Expression
+   Parsing::NonTerminal Expr;
+   Parsing::Rule r_Expr_plus;
+   Parsing::Rule r_Expr_minus;
+   Parsing::Rule r_Expr_pars;
+   Parsing::Rule r_Expr_from_expr0;
+
+   // Line
+   Parsing::NonTerminal Line;
+   Parsing::Rule r_line_autoexpr;
+
+   Parsing::State s_Main;
+
+private:   
    SynTree* m_syntree;
 };
 

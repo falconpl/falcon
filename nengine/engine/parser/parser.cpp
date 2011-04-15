@@ -17,7 +17,6 @@
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/parser/state.h>
-#include <falcon/parser/teof.h>
 #include <falcon/codeerror.h>
 #include <falcon/trace.h>
 
@@ -69,6 +68,12 @@ void Parser::Private::resetMatch()
 //========================================================
 
 Parser::Parser():
+   T_EOF("EOF"),
+   T_EOL("EOL"),
+   T_Float("Float"),
+   T_Int("Int"),
+   T_Name("Name"),
+   T_String("String"),
    m_ctx(0),
    m_bIsDone(false)
 {
@@ -156,7 +161,7 @@ bool Parser::parse( const String& mainState )
 
    // at the end of the parser loop, the stack should be empty, or we missed something
    // -- exception: the ID token may or may not be parsed.
-   if( ! _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != t_eof().id() )
+   if( ! _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != T_EOF.id() )
    {
       syntaxError();
    }
@@ -305,7 +310,7 @@ void Parser::parserLoop()
       if( ti == 0 )
       {
          TRACE( "Parser::parserLoop -- Last loop with EOF as next", 0 );
-         ti = new TokenInstance(0, 0, t_eof() );
+         ti = new TokenInstance(0, 0, T_EOF );
       }
 
       _p->m_nextToken = ti;

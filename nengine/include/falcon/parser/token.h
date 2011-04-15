@@ -89,8 +89,10 @@ protected:
    
    Token(uint32 nID, const String& name );
    Token(const String& name);
+   Token();
    static uint32 simpleHash( const String& v );
 
+   void name( const String& n );
 private:
    uint32 m_nID;
    String m_name;

@@ -33,46 +33,26 @@ class Rule::Private
 {
 private:
    friend class Rule;
-   friend class Rule::Maker;
 
    typedef std::vector<Token*> TokenVector;
    TokenVector m_vTokens;
    
 };
 
-Rule::Maker::Maker( const String& name, Apply app ):
+//=================================================================
+//
+
+Rule::Rule()
+{
+   _p = new Rule::Private;
+}
+
+Rule::Rule( const String& name, Apply app ):
    m_name(name),
    m_apply(app)
 {
    _p = new Rule::Private;
 }
-
-Rule::Maker::~Maker()
-{
-   delete _p;
-}
-
-Rule::Maker& Rule::Maker::t( Token& t )
-{
-   _p->m_vTokens.push_back( &t );
-   return *this;
-}
-
-
-Rule::Rule( const String& name, Apply app )
-{
-   _p = new Rule::Private;
-}
-
-
-Rule::Rule( const Maker& m ):
-   m_name( m.m_name ),
-   m_apply( m.m_apply )
-{
-   _p = m._p;
-   m._p = 0;
-}
-
 
 Rule::~Rule()
 {

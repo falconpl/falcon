@@ -26,7 +26,6 @@ namespace Parsing {
 class State::Private
 {
    friend class State;
-   friend class State::Maker;
    Private() {}
    ~Private() {}
 
@@ -34,37 +33,16 @@ class State::Private
    NTList m_nt;
 };
 
-
-State::Maker::Maker(const String& name):
-   m_name(name)
+State::State():
+   m_name("Unnamed State")
 {
-   _p = new State::Private;
+   _p = new Private;
 }
-
-
-State::Maker::~Maker()
-{
-   delete _p;
-}
-
-State::Maker& State::Maker::n(NonTerminal& nt)
-{
-   _p->m_nt.push_back(&nt);
-   return *this;
-}
-
 
 State::State(const String& name):
    m_name(name)
 {
    _p = new Private;
-}
-
-State::State(const State::Maker& maker ):
-   m_name(maker.m_name)
-{
-   _p = maker._p;
-   maker._p = 0;
 }
 
 State::~State()

@@ -31,44 +31,24 @@ class Parser;
  NonTerminal symbols are symbol built up from simpler Terminal or NonTerminal
  symbols through one or more rules.
 
+ To create a NonTerminal:
+    @code
+    NonTerminal SomeEntity;
+    SomeEntity \<\< "name" \<\< terminal1 << terminal2 ... << terminalN;
+
+    // or
+    NonTerminal SomeEntity( "Name" );
+    SomeEntity \<\< terminal1 << terminal2 ... << terminalN;
+    @endcode
+
  */
 class FALCON_DYN_CLASS NonTerminal: public Token
 {
-private:
-    class Private;
-
 public:
-   /** Support for variable parameter constructor idiom.
-    To create a NonTerminal:
-    Rule r1 = Rule::Maker("name", R_Apply ).t( terminal1 ).t( NonTerminal2 ).t( t_EOL ) )....;
-
-    NonTerminal t = NonTerminal::Maker( "Subname" ).r( r1 ).r(...)...;
-
-    */
-   class Maker
-   {
-   public:
-      friend class NonTerminal;
-      Maker( const String& name );
-      ~Maker();
-
-      /** Adds a rule to this nonterminal.
-       \return an instance of this item.
-       */
-      Maker& r( Rule& t );
-
-   private:
-      const String& m_name;
-
-      // inner tokens.
-      mutable NonTerminal::Private* _p;
-   };
+   NonTerminal();
 
    /** Normal constructor. */
    NonTerminal(const String& name);
-
-   /** Constructor using the Maker assignment. */
-   NonTerminal(const Maker& name);
 
    virtual ~NonTerminal();
 
@@ -82,7 +62,14 @@ public:
     \return true if any of the rules in the  NonTerminal is matched. */
    t_matchType match( Parser& parser );
 
+   inline NonTerminal& operator <<( Rule& rule ) { return r(rule); }
+   inline NonTerminal& operator <<( const String& n ) {
+      name(n);
+      return *this; 
+   }
+
 private:
+   class Private;
    Private* _p;
 };
 

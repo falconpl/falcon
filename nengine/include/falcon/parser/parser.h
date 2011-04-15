@@ -19,15 +19,19 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
+#include <falcon/enumerator.h>
 
-#include "tokeninstance.h"
+// Include all to simplify child subclasses.
+#include <falcon/parser/tokeninstance.h>
+#include <falcon/parser/terminal.h>
+#include <falcon/parser/nonterminal.h>
+#include <falcon/parser/rule.h>
+#include <falcon/parser/state.h>
 
 namespace Falcon {
 namespace Parsing {
 
 class Lexer;
-class State;
-class Rule;
 
 /** Generic Falcon Parser class.
 
@@ -314,7 +318,19 @@ public:
 
     */
    void syntaxError();
-   
+
+   /** Add a state to this parser. */
+   inline Parser& operator <<( State& s ) { addState(s); return *this; }
+
+   //=================================================================
+   // Common terminals
+   Terminal T_EOF;
+   Terminal T_EOL;
+   Terminal T_Float;
+   Terminal T_Int;
+   Terminal T_Name;
+   Terminal T_String;
+
 protected:
    void* m_ctx;
    bool m_bIsDone;

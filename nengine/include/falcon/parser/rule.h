@@ -66,33 +66,8 @@ class Token;
 class FALCON_DYN_CLASS Rule
 {
 public:
-   class Private;
-
    /** Functor invoked when a rule is matched. */
    typedef void(*Apply)( const Rule& r, Parser& p );
-
-   /** Support for variable parameter constructor idiom.
-    To create a rule:
-    Rule r = Rule::Maker("name", R_Apply ).t( terminal1 ).t( NonTerminal2 ).t( t_EOL ) )....;
-    */
-   class Maker
-   {
-   public:
-      friend class Rule;
-
-      Maker( const String& name, Apply app );
-      ~Maker();
-
-      /** Adds a term or rule to this rule. */
-      Maker& t( Token& t );
-
-   private:
-
-      const String& m_name;
-      Apply m_apply;
-      // inner tokens.
-      mutable Rule::Private* _p;
-   };
 
    /** Direct constructor.
     \param name A symbolic name for this rule (useful in debug).
@@ -102,21 +77,7 @@ public:
     */
    Rule( const String& name, Apply app );
 
-   /** Initializer for variable parameter idiom. 
-   \param m A Maker instance used to fill this rule.
-
-    Fast way to create a rule:
-
-    @code
-    static void R_Apply( Parser& p, NonTerminal& parent, Rule& r )
-    {
-       Do something...
-    }
-    Rule r( Rule::Maker("name", R_Apply ).r( terminal1 ).r( NonTerminal2 ).r( t_EOL ) )....);
-
-    @endcode
-    */
-   Rule( const Maker& m );
+   Rule();
    
    virtual ~Rule();
 
@@ -154,8 +115,13 @@ public:
     This method cause a valid rule to be applied on the parser.
     */
    void apply( Parser& parser ) const;
-   
+
+   Rule& operator <<( Token& tok ) { return t(tok); }
+   Rule& operator <<( const String& n ) { m_name = n; return *this; }
+   Rule& operator <<( Apply func ) { m_apply = func; return *this; }
+
 private:
+   class Private;
    friend class Parser;
    
    String m_name;

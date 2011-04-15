@@ -19,6 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 
+#include "nonterminal.h"
+
 namespace Falcon {
 namespace Parsing {
 
@@ -37,30 +39,8 @@ private:
    class Private;
 
 public:
-   /** Support for variable parameter constructor idiom.
-    To create a rule:
-    State s = State::Maker("name").n( NonTerminal1 ).n( NonTerminal2 ).n( t_EOL ) )....;
-    */
-   class Maker
-   {
-   public:
-      friend class State;
-
-      Maker( const String& name );
-      ~Maker();
-
-      /** Adds a term or rule to this rule. */
-      Maker& n( NonTerminal& t );
-
-   private:
-      const String& m_name;
-
-      // inner tokens.
-      mutable State::Private* _p;
-   };
-
+   State();
    State( const String& name );
-   State( const Maker& maker );
    
    virtual ~State();
 
@@ -69,6 +49,11 @@ public:
    State& n( NonTerminal& e );
 
    void process( Parser& parser );
+
+   /** Adds a top-level rule to this state. */
+   inline State& operator<<( NonTerminal &nt ) { return n(nt); }
+   /** Sets the name of this state. */
+   inline State& operator<<( const String &name ) { m_name = name; return *this; }
    
 private:
    Private* _p;

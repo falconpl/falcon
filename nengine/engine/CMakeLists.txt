@@ -39,7 +39,6 @@ add_library(falcon_engine SHARED
   parser/literal.cpp
   parser/nonterminal.cpp
   parser/parser.cpp
-  parser/predef.cpp
   parser/rule.cpp
   parser/state.cpp
   parser/token.cpp
@@ -92,7 +91,6 @@ add_library(falcon_engine SHARED
   sourcelexer.cpp
   sourceparser.cpp
   sourceref.cpp
-  sourcetokens.cpp
   statement.cpp
   stmtrule.cpp
   string.cpp

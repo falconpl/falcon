@@ -36,6 +36,17 @@ Token::Token(const String& name):
    m_nID = simpleHash( name );
 }
 
+Token::Token()
+{
+   m_nID = 0;
+}
+
+void Token::name( const String& n )
+{
+    m_nID = simpleHash( n );
+    m_name = n;
+}
+
 uint32 Token::simpleHash( const String& v )
 {
    uint32 h = HASH_SEED;

@@ -17,14 +17,7 @@
 #define	_FALCON_PARSER_LEXER_H_
 
 #include <falcon/setup.h>
-
-#include <falcon/parser/tint.h>
-#include <falcon/parser/tfloat.h>
-#include <falcon/parser/tstring.h>
-#include <falcon/parser/tname.h>
-#include <falcon/parser/teol.h>
-#include <falcon/parser/teof.h>
-
+#include <falcon/string.h>
 
 namespace Falcon {
 

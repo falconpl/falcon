@@ -30,33 +30,12 @@ namespace Parsing {
 class NonTerminal::Private
 {
    friend class NonTerminal;
-   friend class NonTerminal::Maker;
    Private() {}
    ~Private() {}
 
    typedef std::deque<Rule*> RuleList;
    RuleList m_rules;
 };
-
-
-NonTerminal::Maker::Maker(const String& name):
-   m_name(name)
-{
-   _p = new NonTerminal::Private;
-}
-
-
-NonTerminal::Maker::~Maker()
-{
-   delete _p;
-}
-
-NonTerminal::Maker& NonTerminal::Maker::r(Rule& rule)
-{
-   _p->m_rules.push_back(&rule);
-   return *this;
-}
-
 
 //=======================================================
 // Main nonterminal class
@@ -69,21 +48,13 @@ NonTerminal::NonTerminal(const String& name):
    _p = new Private;
 }
 
-NonTerminal::NonTerminal(const Maker& maker ):
-   Token(maker.m_name)
+NonTerminal::NonTerminal():
+   Token("Unnamed NT")
 {
    m_bNonTerminal = true;
-
-   _p = maker._p;
-   maker._p = 0;
-
-   Private::RuleList::iterator iter = _p->m_rules.begin();
-   while( iter != _p->m_rules.end() )
-   {
-      (*iter)->parent(*this);
-      ++iter;
-   }
+   _p = new Private;
 }
+
 
 NonTerminal::~NonTerminal()
 {
