@@ -43,6 +43,8 @@ private:
       state_shebang1,
       state_shebang2,
 
+
+      state_enterComment,
       state_eolComment,
       state_blockComment,
       state_blockCommentAsterisk,

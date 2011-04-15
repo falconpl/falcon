@@ -28,6 +28,8 @@
 #include <falcon/parser/teol.h>
 #include <falcon/parser/teof.h>
 
+#include "falcon/parser/parser.h"
+
 
 namespace Falcon {
 
@@ -49,6 +51,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 {
    String tempString;
    char_t chr;
+   t_state previousState = state_none;
 
    if ( m_nextToken != 0 )
    {
@@ -93,6 +96,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             // Ignore '\n' when in state none.
             switch( chr ) {
                case ' ': case '\t': case '\r': case '\n': /* do nothng */ break;
+               case '/': previousState = m_state; m_state = state_enterComment; break;
                default:
                   unget(chr);
                   m_state = state_line;
@@ -129,6 +133,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '{': m_chr++; return t_opengraph().makeInstance(m_line,m_chr); break;
                case '}': m_chr++; return t_closegraph().makeInstance(m_line,m_chr); break;
 
+               case '/': previousState = m_state; m_state = state_enterComment; break;
+
                default:
                   if ( isCipher(chr) )
                   {
@@ -151,15 +157,31 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          //----------------------------------------------
          // Comment context
 
+         case state_enterComment:
+            switch( chr )
+            {
+               case '/': m_state = state_eolComment; break;
+               case '*': m_state = state_blockComment; break;
+               default:
+                  // it was a simple '/'
+                  m_text.size(0); m_text.append('/');
+                  unget(chr);
+                  // sline might be ok, but not if we're here from state none.
+                  // neutralize next character
+                  m_chr--; chr = ' ';
+                  m_sline = m_line;
+                  m_schr = chr; // where '/' was opened.
+                  // the state is operator (probably a division).
+                  m_state = state_operator;
+            }
+
          case state_eolComment:
             if ( chr == '\n' )
             {
-               m_state = state_line;
-               int32 l = m_line;
-               int32 c = m_chr;
-               m_line++;
-               m_chr = 1;
-               return Parsing::t_eol().makeInstance(l, c);
+               unget(chr);
+               m_state = previousState;
+               // to allow correct processing of next loop -- \n will fix line/chr
+               chr = ' '; 
             }
             break;
 
@@ -175,7 +197,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             switch( chr )
             {
                case '*': /* do nothing */; break;
-               case '/': m_state = state_blockCommentEscape; break;
+               case '/': m_state = previousState; break;
                default: m_state = state_blockComment; break;
             }
             break;
@@ -526,6 +548,18 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          m_chr = 0;
       }
       m_chr++;
+   }
+
+   if ( m_state == state_line )
+   {
+      // generate an extra EOL if we had an open line.
+      return Parsing::t_eol().makeInstance(m_line, m_chr);
+   }
+   else if ( m_state != state_none )
+   {
+      // if state is none, we don't need to generate an extra EOL, but if
+      // state is anything else, then we have an open context error.
+      m_parser->addError( e_syntax, m_uri, m_line, m_chr, m_sline );
    }
 
    return 0;

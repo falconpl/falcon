@@ -53,6 +53,13 @@ public:
     */
    bool isNT() const { return m_bNonTerminal; }
 
+   /** Checks if this token is nonterminal.
+    \return true if the token is nonterminal.
+
+    If the token is nonterminal it can be safely cast to NonTerminal.
+    */
+   bool isRightAssoc() const { return m_bRightAssoc; }
+
    /** Creates a "match instance" of this token.
     \param v An actual value that this token has assumed during parsing.
     \return a newly created token instance.
@@ -78,10 +85,10 @@ public:
 
 protected:
    bool m_bNonTerminal;
+   bool m_bRightAssoc;
    
    Token(uint32 nID, const String& name );
    Token(const String& name);
-
    static uint32 simpleHash( const String& v );
 
 private:

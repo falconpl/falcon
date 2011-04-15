@@ -129,9 +129,27 @@ void go()
    SourceLexer* lexer = new SourceLexer("stdin", &parser, input);
 
    parser.pushLexer(lexer);
-   parser.parse();
+   ;
 
-   std::cout << "Parsed code: "<< std::endl << MySynTree.describe().c_ize() << std::endl;
+   if( parser.parse() )
+   {
+      std::cout << "Parsed code: "<< std::endl << MySynTree.describe().c_ize() << std::endl;
+   }
+   else
+   {
+      // errors:
+      class MyEE: public Parsing::Parser::errorEnumerator {
+      public:
+         virtual bool operator()( const Parsing::Parser::ErrorDef& ed, bool blast )
+         {
+            std::cout << ed.nLine << ":" << ed.nChar << " - " << ed.nCode << " " << ed.sExtra.c_ize() << std::endl;
+            return true;
+         }
+      } ee;
+
+      std::cout << "ERRORS:"<< std::endl;
+      parser.enumerateErrors( ee );
+   }
 }
 
 };

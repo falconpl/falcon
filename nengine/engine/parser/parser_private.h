@@ -33,7 +33,7 @@ class Parser::Private
 
    typedef std::deque<Lexer*> LexerStack;
    typedef std::deque<State*> StateStack;
-   typedef std::deque<Parser::ErrorDef> ErrorList;
+   typedef std::deque<Parser::ErrorDef*> ErrorList;
    typedef std::map<String, State*> StateMap;
 
    typedef std::vector<TokenInstance*> TokenStack;

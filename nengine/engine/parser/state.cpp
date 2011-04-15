@@ -18,6 +18,8 @@
 #include <falcon/trace.h>
 #include <vector>
 
+#include "falcon/parser/parser.h"
+
 namespace Falcon {
 namespace Parsing {
 
@@ -84,6 +86,8 @@ void State::process( Parser& parser )
    // Process all the rules in a state
    Private::NTList::iterator iter = _p->m_nt.begin();
 
+   bool bTryAgain;
+
    while( iter != _p->m_nt.end() )
    {
       NonTerminal* nt = *iter;
@@ -99,11 +103,21 @@ void State::process( Parser& parser )
       {
          return;
       }
+
+      if( mt == t_tooShort )
+      {
+         bTryAgain = true;
+      }
       
       ++iter;
    }
 
-   TRACE("State::process -- exit without match %s", name().c_ize() );
+   TRACE1("State::process -- exit without match %s", name().c_ize() );
+
+   if( ! bTryAgain && parser.availTokens() > 2 )
+   {
+      parser.syntaxError();
+   }
 }
 
 }

@@ -95,6 +95,8 @@ void Rule::apply( Parser& parser ) const
 
 t_matchType Rule::match( Parser& parser ) const
 {
+
+try_again:
    TRACE( "Rule::match(%s)", m_name.c_ize() );
 
    Parser::Private* pp = parser._p;
@@ -106,12 +108,19 @@ t_matchType Rule::match( Parser& parser ) const
 
    t_matchType checkStatus = t_nomatch;
 
+   size_t leftmost_right_assoc = (size_t)-1;
+
+
    // check if there is a match by scanning the current token stack in the parser
    // -- and matching it against our tokens.
    while ( riter != riter_end && ppos < ppos_end )
    {
       Token* curTok = *riter;
+      const Token* stackToken = &pp->m_vTokens[ppos]->token();
+      
       // is this a non-terminal token that we may simplify?
+      // TODO: we can know if we have to descend AGAIN if the previous loop was too short.
+      // ---- but atm we're discardign this information.
       if( curTok->isNT() && ( ppos > pp->m_stackPos || curTok->id() != m_parent->id() ) )
       {
          TRACE1( "Rule::match(%s) -- at stack %d descending into %s",
@@ -129,6 +138,7 @@ t_matchType Rule::match( Parser& parser ) const
          {
             TRACE( "Rule::match(%s) at step %d -- matched sub-rule '%s'",
                   m_name.c_ize(), ppos, curTok->name().c_ize() );
+            TRACE1( "  -- stack now: %s ", parser.dumpStack().c_ize() );
             
             // Try again with the same position till this rule matches.
             ppos_end = pp->m_vTokens.size();  // update token stack size.
@@ -138,10 +148,19 @@ t_matchType Rule::match( Parser& parser ) const
          else if( mt == t_tooShort )
          {
             // Too short is returned only if the rule arrives to check the next token.
-            // this means we're too short as well.
-             TRACE( "Rule::match: %s at step %d -- return too short sub-rule '%s'",
+            if( curTok->id() != m_parent->id() || pp->m_nextToken->token().isRightAssoc() )
+            {
+               // we're too short as well, because either we have a sub-rule that is not matching,
+               // or we're a right-associativity rule.
+               TRACE( "Rule::match: %s at step %d -- return too short sub-rule '%s'",
                   m_name.c_ize(), ppos, curTok->name().c_ize() );
-            return t_tooShort;
+
+               return t_tooShort;
+            }
+
+            // curtok is parent; that is, we're checking a recursive rule, which
+            // has been deemed too-short. 
+            
          }
          // Otherwise the rule failed or was considered incompete.
          // In either case, we must proceed.
@@ -150,40 +169,104 @@ t_matchType Rule::match( Parser& parser ) const
       TRACE1( "Rule::match(%s) -- at stack %d matching %s with %s", m_name.c_ize(), ppos,
             curTok->name().c_ize(), pp->m_vTokens[ppos]->token().name().c_ize() );
 
-      if (curTok->id() != pp->m_vTokens[ppos]->token().id() )
+      if (curTok->id() != stackToken->id() )
       {         
-         TRACE( "Rule::match(%s) at stack %d -- failed", m_name.c_ize(), ppos );
+         TRACE( "Rule::match(%s) at stack %d -- failed( %s vs %s )", 
+               m_name.c_ize(), ppos, curTok->name().c_ize(), stackToken->name().c_ize() );
          // terminal token mismatch -- we failed
          return t_nomatch;
+      }
+
+      // Prepare in case of right associativity
+      if (curTok->id() == pp->m_nextToken->token().id() )
+      {
+         leftmost_right_assoc = ppos;
       }
 
       ++ppos;
       ++riter;
    }
 
+   // there's more stack than tokens in the rule?
    if( ppos < ppos_end )
    {
+      // but... is the next token right-associative and found in the rule?
+      if( leftmost_right_assoc != (size_t)-1 && pp->m_vTokens[ppos]->token().isRightAssoc() )
+      {
+         // then descend in ourselves, and see if the rule is incomplete.
+         TRACE( "Rule::match(%s) -- too short, descending %d on right assoc %s",
+            m_name.c_ize(), leftmost_right_assoc, pp->m_nextToken->token().name().c_ize() );
+
+         // push a new stack base for our checks.
+         size_t piter_old = pp->m_stackPos;
+         pp->m_stackPos = leftmost_right_assoc+1;
+         // perform a new check on ourselves.
+         t_matchType mt = match( parser );
+         // on match, apply and try ourselves again
+         if( mt == t_match )
+         {
+            TRACE( "Rule::match(%s) -- Right associativity matched on short rule. Simplifying and trying again",
+               m_name.c_ize() );
+            apply(parser);
+            pp->m_stackPos = piter_old;
+            goto try_again;
+         }
+         // restore old stack base
+         pp->m_stackPos = piter_old;
+
+         // if the rule didn't match, we're ok to fail
+      }
+
       TRACE( "Rule::match(%s) -- failure -- stack not completely matched (%d vs %d)", m_name.c_ize(),
          ppos, ppos_end );
+
       return t_nomatch;
    }
+
    // do we have a perfect match?
    if( riter == riter_end  )
    {
+      // but... is the next token right-associative and found in the rule?
+      if( leftmost_right_assoc != (size_t)-1 && pp->m_nextToken->token().isRightAssoc() )
+      {
+         // then descend in ourselves, and see if the rule is incomplete.
+         TRACE( "Rule::match(%s) -- descending at %d to check for right associativity on token %s",
+            m_name.c_ize(), leftmost_right_assoc, pp->m_nextToken->token().name().c_ize() );
+
+         // push a new stack base for our checks.
+         size_t piter_old = pp->m_stackPos;
+         pp->m_stackPos = leftmost_right_assoc+1;
+         // perform a new check on ourselves.
+         t_matchType mt = match( parser );
+         // on match, apply and try ourselves again
+         if( mt == t_match )
+         {
+            TRACE( "Rule::match(%s) -- Right associativity matched. Simplifying and trying again",
+               m_name.c_ize() );
+            apply(parser);
+            pp->m_stackPos = piter_old;
+            goto try_again;
+         }
+         // restore old stack base
+         pp->m_stackPos = piter_old;
+
+         // if the rule was too short, then we're too short.
+         if( mt == t_tooShort )
+         {
+            return t_tooShort;
+         }
+
+         // if the rule didn't match, we're ok to match.
+      }
+
       TRACE( "Rule::match(%s) -- success", m_name.c_ize(), ppos );
       return t_match;
    }
+
+   checkStatus = (*riter)->id() == pp->m_nextToken->token().id() ? t_tooShort : t_nomatch;
    
-   // check the look-ahead token
-   if( pp->m_nextToken->token().id() == (*riter)->id() )
-   {
-      TRACE( "Rule::match(%s) -- read-ahead match next token", m_name.c_ize(), ppos );
-      // if it matches, then we're too short
-      return t_tooShort;
-   }
-   
-   TRACE( "Rule::match(%s) -- exausted rule at %d with %s", m_name.c_ize(), ppos,
-      checkStatus == t_match ? "match" : "failure");
+   TRACE( "Rule::match(%s) -- exausted rule at %d (%s)", m_name.c_ize(), ppos,
+      checkStatus == t_tooShort ? "too short" : "no match" );
    // if any match fails...
    return checkStatus;
 }

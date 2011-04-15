@@ -78,6 +78,13 @@ Parser::Parser():
 
 Parser::~Parser()
 {
+   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
+   while( iter != _p->m_lErrors.end() )
+   {
+      delete *iter;
+      ++iter;
+   }
+
    delete _p;
 }
 
@@ -147,16 +154,25 @@ bool Parser::parse( const String& mainState )
    _p->clearTokens();
    parserLoop();
 
+   // at the end of the parser loop, the stack should be empty, or we missed something
+   // -- exception: the ID token may or may not be parsed.
+   if( ! _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != t_eof().id() )
+   {
+      syntaxError();
+   }
    // If we have no error we succeeded.
    return _p->m_lErrors.empty();
 }
 
 void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
 {
-   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
+   Private::ErrorList::const_iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
-      enumerator( *iter, ++iter == _p->m_lErrors.end() );
+      const ErrorDef& def = **iter;
+      
+      if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
+         break;
    }
 }
 
@@ -187,13 +203,13 @@ void Parser::popLexer()
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
 {
-   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx, extra));
+   _p->m_lErrors.push_back(new ErrorDef(code, uri, l, c, ctx, extra));
 }
 
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
 {
-   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
+   _p->m_lErrors.push_back(new ErrorDef(code, uri, l, c, ctx));
 }
 
 
@@ -293,22 +309,10 @@ void Parser::parserLoop()
       }
 
       _p->m_nextToken = ti;
-      TRACE( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
-#ifndef NDEBUG
-      {
-      String sTokens;
-      for( int nTokenLoop = 0; nTokenLoop < _p->m_vTokens.size(); ++nTokenLoop )
-      {
-         if ( sTokens.size() > 0 )
-         {
-            sTokens += ", ";
-         }
-         sTokens += _p->m_vTokens[nTokenLoop]->token().name();
-      }
-      sTokens += " -- next: " + _p->m_nextToken->token().name();
-      TRACE( "Parser::parserLoop -- stack now: %s ", sTokens.c_ize());
-      }
-#endif
+      
+      TRACE1( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
+      TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
+
       State* curState = _p->m_lStates.back();
       curState->process( *this );
       _p->m_vTokens.push_back( _p->m_nextToken );
@@ -316,6 +320,60 @@ void Parser::parserLoop()
    }
 
    TRACE( "Parser::parserLoop -- done on request", 0 );
+}
+
+
+void Parser::syntaxError()
+{
+   TRACE( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
+
+   String uri;
+   int line = 0;
+   int chr = 0;
+
+   if( ! _p->m_lLexers.empty() )
+   {
+      uri = _p->m_lLexers.back()->uri();
+   }
+
+   if( ! _p->m_vTokens.empty() )
+   {
+      line = _p->m_vTokens.front()->line();
+      chr = _p->m_vTokens.front()->chr();
+   }
+
+   addError( e_syntax, uri, line, chr );
+
+   _p->m_nextTokenPos = _p->m_stackPos = 0;
+   simplify( availTokens(), 0 );
+}
+
+
+String Parser::dumpStack() const
+{
+   String sTokens;
+
+   for( int nTokenLoop = 0; nTokenLoop < _p->m_vTokens.size(); ++nTokenLoop )
+   {
+      if ( sTokens.size() > 0 )
+      {
+         sTokens += ", ";
+      }
+
+      if( nTokenLoop == _p->m_stackPos )
+      {
+         sTokens += ">> ";
+      }
+
+      sTokens += _p->m_vTokens[nTokenLoop]->token().name();
+   }
+
+   if( _p->m_nextToken != 0 )
+   {
+      sTokens += " -- next: " + _p->m_nextToken->token().name();
+   }
+   
+   return sTokens;
 }
 
 

@@ -23,12 +23,14 @@ namespace Parsing {
 
 Token::Token(uint32 nID, const String& name ):
    m_bNonTerminal(false),
+   m_bRightAssoc( false ),
    m_name( name ),
    m_nID(nID)
 {}
 
 Token::Token(const String& name):
    m_bNonTerminal(false),
+   m_bRightAssoc( false ),
    m_name(name)
 {
    m_nID = simpleHash( name );

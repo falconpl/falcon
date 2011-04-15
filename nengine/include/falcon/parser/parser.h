@@ -290,7 +290,31 @@ public:
     */
    void simplify( int32 tcount, TokenInstance* newtoken = 0 );
 
+   
+   /** Returns a string representation of the tokens in the stak. 
+      \return A list of toekns in the stack as a String representation.
+    
+    This method can be used for debugging purpose to inspect the current status of the
+    parser stack.
 
+    The returned stack is in format:
+    @code
+    TokenName, TokenName, >> TokenName, ..., TokenName -- next: TokenName
+    @endcode
+
+    where ">>" indicates the point in the stack where the rule currently being
+    parsed is starting to match the tokens, and next: is the read-ahead token.
+    */
+   String dumpStack()  const;
+
+   /** Generate a syntax error at current stack position.
+
+    This generates a generic syntax error which is marked at the position of
+    the first token in the stack, and then clear the stack contents.
+
+    */
+   void syntaxError();
+   
 protected:
    void* m_ctx;
    bool m_bIsDone;

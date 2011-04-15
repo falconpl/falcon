@@ -73,6 +73,8 @@ public:
    /** Shortcut to add an error at current line and character. */
    void addError( int code );
 
+   const String& uri() const { return m_uri; }
+   
 protected:
    String m_uri;
    Parser* m_parser;
