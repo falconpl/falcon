@@ -41,9 +41,10 @@ class NonTerminal::Private
 // Main nonterminal class
 //
 
-NonTerminal::NonTerminal(const String& name):
+NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
    Token(name)
 {
+   m_bRightAssoc = bRightAssoc;
    m_bNonTerminal = true;
    _p = new Private;
 }

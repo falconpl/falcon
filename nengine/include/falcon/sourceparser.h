@@ -45,6 +45,9 @@ public:
    Parsing::Terminal T_Minus;
    Parsing::Terminal T_Modulo;
    Parsing::Terminal T_Power;
+   Parsing::Terminal T_EqSign;
+   Parsing::Terminal T_DblEq;
+   Parsing::Terminal T_NotEq;
 
    Parsing::Terminal T_Openpar;
    Parsing::Terminal T_Closepar;
@@ -56,36 +59,49 @@ public:
    Parsing::Terminal T_Dot;
 
    Parsing::Terminal T_as;
-   Parsing::Terminal T_and;
-   Parsing::Terminal T_end;
    Parsing::Terminal T_eq;
    Parsing::Terminal T_if;
    Parsing::Terminal T_in;
-   Parsing::Terminal T_not;
-   Parsing::Terminal T_nil;
    Parsing::Terminal T_or;
    Parsing::Terminal T_to;
+   
+   Parsing::Terminal T_and;
+   Parsing::Terminal T_def;
+   Parsing::Terminal T_end;
+   Parsing::Terminal T_for;
+   Parsing::Terminal T_not;
+   Parsing::Terminal T_nil;
+   Parsing::Terminal T_try;
    
    //================================================
    // Expression (higher priority)
    //
-   
-   Parsing::NonTerminal Expr0;
-   Parsing::Rule r_Expr0_times;
-   Parsing::Rule r_Expr0_div;
-   Parsing::Rule r_Expr0_neg;
-   Parsing::Rule r_Expr0_number;
-
-   // Expression
-   Parsing::NonTerminal Expr;
-   Parsing::Rule r_Expr_plus;
-   Parsing::Rule r_Expr_minus;
-   Parsing::Rule r_Expr_pars;
-   Parsing::Rule r_Expr_from_expr0;
 
    // Line
    Parsing::NonTerminal Line;
    Parsing::Rule r_line_autoexpr;
+
+   // Expression
+   Parsing::NonTerminal Expr;
+   Parsing::Rule r_Expr_assign;
+   Parsing::Rule r_Expr_index;
+   Parsing::Rule r_Expr_star_index;
+   Parsing::Rule r_Expr_dot;
+   Parsing::Rule r_Expr_plus;
+   Parsing::Rule r_Expr_minus;
+   Parsing::Rule r_Expr_pars;
+   Parsing::Rule r_Expr_from_expr0;
+   Parsing::Rule r_Expr_times;
+   Parsing::Rule r_Expr_div;
+   Parsing::Rule r_Expr_neg;
+   Parsing::Rule r_Expr_Atom;
+
+   Parsing::NonTerminal Atom;
+   Parsing::Rule r_Atom_Int;
+   Parsing::Rule r_Atom_Float;
+   Parsing::Rule r_Atom_Name;
+   Parsing::Rule r_Atom_String;
+   Parsing::Rule r_Atom_Nil;
 
    Parsing::State s_Main;
 

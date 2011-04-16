@@ -89,7 +89,7 @@ try_again:
    t_matchType checkStatus = t_nomatch;
 
    size_t leftmost_right_assoc = (size_t)-1;
-
+   int highPrio = 0;
 
    // check if there is a match by scanning the current token stack in the parser
    // -- and matching it against our tokens.
@@ -162,7 +162,11 @@ try_again:
       {
          leftmost_right_assoc = ppos;
       }
-
+      else if ( curTok->prio() != 0 &&  (curTok->prio() < highPrio || highPrio == 0) )
+      {
+         highPrio = curTok->prio();
+      }
+      
       ++ppos;
       ++riter;
    }
@@ -170,6 +174,13 @@ try_again:
    // there's more stack than tokens in the rule?
    if( ppos < ppos_end )
    {
+      // if the next token has higher priority...
+      if (pp->m_nextToken->token().prio() != 0 && highPrio > pp->m_nextToken->token().prio())
+      {
+         //... let the rule to try again.
+         return t_tooShort;
+      }
+
       // but... is the next token right-associative and found in the rule?
       if( leftmost_right_assoc != (size_t)-1 && pp->m_vTokens[ppos]->token().isRightAssoc() )
       {
@@ -206,6 +217,13 @@ try_again:
    // do we have a perfect match?
    if( riter == riter_end  )
    {
+      // if the next token has higher priority...
+      if (pp->m_nextToken->token().prio() != 0 && highPrio > pp->m_nextToken->token().prio())
+      {
+         //... let the rule to try again.
+         return t_tooShort;
+      }
+
       // but... is the next token right-associative and found in the rule?
       if( leftmost_right_assoc != (size_t)-1 && pp->m_nextToken->token().isRightAssoc() )
       {

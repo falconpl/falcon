@@ -99,9 +99,101 @@ public:
       copy( other );
    }
 
-   Item( const char* str );
-   Item( const wchar_t* str );
-   Item( String& str );
+   /** Creates a String item.
+    \param str A C string that is taken as-is and converted to a Falcon String.
+    
+    A Falcon String is created as static (the input \b str is considered to stay
+    valid throut the lifetime of the program), and then the String is sent to
+    the garbage collector.
+
+    In case the input data is transient, use the Item( const String& ) constructor
+    instead, throught the following idiom:
+
+    @code
+      char *cptr = ret_transient();
+      Item item( String( cptr, -1 ) );
+    @endcode
+
+    \note The operation is Encoding neuter.
+    */
+   Item( const char* str )
+   {
+      setString(str);
+   }
+
+   /** Creates a String item.
+    \param str A wchar_t string that is taken as-is and converted to a Falcon String.
+
+     A Falcon String is created as static (the input \b str is considered to stay
+    valid throut the lifetime of the program), and then the String is sent to
+    the garbage collector.
+
+    In case the input data is transient, use the Item( const String& ) constructor
+    instead, throught the following idiom:
+
+    @code
+      wchar_t *cptr = ret_transient();
+      Item item( String( cptr, -1 ) );
+    @endcode
+
+    \note The operation is Encoding neuter (the input is considered UDF).
+    */
+   Item( const wchar_t* str )
+   {
+      setString(str);
+   }
+
+   /** Creates a String item.
+    \param str A Falcon string that will be copied.
+
+    The deep contents of the string are copied only if the string is
+    buffered; static strings (strings created out of static char* or wchar_t*
+    data) are not deep-copied.
+
+    The created string is subject to garbage collecting.
+    */
+   Item( const String& str )
+   {
+      setString(str);
+   }
+
+   /** Creates a String item, adopting an existing string.
+    \param str A pointer to a Falcon String that must be adopted.
+
+    The string is taken as-is and stored for garbage in the Falcon engine.
+    This constructor is useful when a String* has been created for another reason,
+    and then must be sent to the engine as a Falcon item. In this way, the
+    copy (and eventual deep-copy) of the already created string is avoided.
+    
+    */
+   Item( String* str )
+   {
+      setString(str);
+   }
+
+   /** Sets this item to a String item.
+    \param str A C string that is taken as-is and converted to a Falcon String.
+    \see Item( char* )
+    */
+   void setString( const char* str );
+
+   /** Sets this item to a String item.
+    \param str A wchar_t string that is taken as-is and converted to a Falcon String.
+    \see Item( wchar_t* )
+    */
+   void setString( const wchar_t* str );
+
+   /** Sets this item to a String item.
+    \param str A Falcon string that will be copied.
+    \see Item( const String& )
+    */
+   void setString( const String& str );
+
+   /** Sets this item to a String item.
+    \param str A pointer to a Falcon String that must be adopted.
+    \see Item( String* )
+    */
+   void setString( String* str );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {

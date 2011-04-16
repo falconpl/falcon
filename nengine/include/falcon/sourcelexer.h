@@ -83,6 +83,7 @@ private:
    {
       return chr != '_' &&
              (  chr < '0' ||
+                (chr > '9' && chr < 'A' ) ||
                 (chr > 'Z' && chr < 'a' ) ||
                 (chr > 'z' && chr < 128 ) );
    }

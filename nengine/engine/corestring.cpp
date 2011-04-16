@@ -86,7 +86,9 @@ void* CoreString::assign( void* instance ) const
 
 void CoreString::describe( void* instance, String& target ) const
 {
-   target = *static_cast<String*>(instance);
+   target.append('"');
+   target += *static_cast<String*>(instance);
+   target.append('"');
 }
 
 //=======================================================================

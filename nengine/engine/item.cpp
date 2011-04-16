@@ -25,19 +25,24 @@
 namespace Falcon
 {
 
-Item::Item( const char* str )
+void Item::setString( const char* str )
 {
    setDeep( (new String(str))->garbage() );
 }
 
-Item::Item( const wchar_t* str )
+void Item::setString( const wchar_t* str )
 {
    setDeep( (new String(str))->garbage() );
 }
 
-Item::Item( String& str )
+void Item::setString( const String& str )
 {
-   setUser( Engine::instance()->stringClass(), &str );
+   setDeep( (new String(str))->garbage() );
+}
+
+void Item::setString( String* str )
+{
+   setDeep( str->garbage() );
 }
 
 //===========================================================================

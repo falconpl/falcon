@@ -21,16 +21,18 @@ namespace Parsing {
 
 #define HASH_SEED 0xF3DE3EA3
 
-Token::Token(uint32 nID, const String& name ):
-   m_bNonTerminal(false),
-   m_bRightAssoc( false ),
+Token::Token(uint32 nID, const String& name, int prio, bool bRightAssoc ):
+   m_bNonTerminal( false ),
+   m_bRightAssoc( bRightAssoc ),
+   m_prio(prio),
    m_name( name ),
-   m_nID(nID)
+   m_nID( nID )
 {}
 
-Token::Token(const String& name):
+Token::Token(const String& name, int prio, bool bRightAssoc):
    m_bNonTerminal(false),
-   m_bRightAssoc( false ),
+   m_bRightAssoc( bRightAssoc ),
+   m_prio(prio),
    m_name(name)
 {
    m_nID = simpleHash( name );

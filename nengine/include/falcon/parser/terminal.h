@@ -32,8 +32,8 @@ namespace Parsing {
 class FALCON_DYN_CLASS Terminal: public Token
 {
 public:
-   inline Terminal(const String& name):
-      Token( name )
+   inline Terminal(const String& name, int prio = 0, bool bRightAssoc = false):
+      Token( name, prio, bRightAssoc )
       {}
       
    inline virtual ~Terminal() {}

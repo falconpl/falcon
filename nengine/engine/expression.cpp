@@ -393,7 +393,7 @@ bool ExprAssign::simplify( Item& value ) const
 
 void ExprAssign::describe( String& str ) const
 {
-   str = m_first->describe() + " = " + m_second->describe();
+   str = "(" + m_first->describe() + " = " + m_second->describe() + ")";
 }
 
 //=========================================================

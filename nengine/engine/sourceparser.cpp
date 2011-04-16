@@ -19,11 +19,15 @@
 #include <falcon/parser/nonterminal.h>
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
+#include <falcon/parser/state.h>
 
 #include <falcon/syntree.h>
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
-#include <falcon/parser/state.h>
+#include <falcon/exprsym.h>
+
+#include <falcon/globalsymbol.h>
+#include <falcon/localsymbol.h>
 
 namespace Falcon {
 using namespace Parsing;
@@ -35,74 +39,95 @@ static void expr_deletor(void* data)
 }
 
 //==========================================================
-// NonTerminal - Expr0
+// NonTerminal - Expr
 //==========================================================
 
 
 //typedef void(*Apply)( const Rule& r, Parser& p );
-static void apply_expr0_times( const Rule& r, Parser& p )
+
+static void apply_expr_assign( const Rule& r, Parser& p )
 {
+   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);
-   
+
    TokenInstance* v1 = p.getNextToken();
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr0);
-   ti->setValue( new ExprTimes(
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprAssign(
          static_cast<Expression*>(v1->detachValue()),
          static_cast<Expression*>(v2->detachValue())
       ), expr_deletor );
+
    p.simplify(3,ti);
 }
 
-static void apply_expr0_div( const Rule& r, Parser& p )
+static void apply_expr_index( const Rule& r, Parser& p )
 {
+   // << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
-   
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+   p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprIndex(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+
+   p.simplify(4,ti);
+}
+
+static void apply_expr_star_index( const Rule& r, Parser& p )
+{
+   // << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+   p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprStarIndex(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+
+   p.simplify(5,ti);
+}
+
+
+
+static void apply_expr_dot( const Rule& r, Parser& p )
+{
+   // << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
    TokenInstance* v1 = p.getNextToken();
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr0 );
-   ti->setValue( new ExprDiv(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprDot(
+         *v2->asString(),
+         static_cast<Expression*>(v1->detachValue())
       ), expr_deletor );
+
    p.simplify(3,ti);
 }
 
-static void apply_expr0_neg( const Rule& r, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* minus = p.getNextToken();
-   TokenInstance* value = p.getNextToken();
-
-   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr0 );
-   ti2->setValue( new ExprNeg(static_cast<Expression*>(value->detachValue())), expr_deletor );
-
-   p.simplify(2,ti2);
-}
-
-static void apply_expr0_int( const Rule& r, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* ti = p.getNextToken();
-
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr0 );
-   ti2->setValue( new ExprValue(ti->asInteger()), expr_deletor );
-   p.simplify(1,ti2);
-}
 
 
-//==========================================================
-// NonTerminal - Expr1
-//==========================================================
-
-
-//typedef void(*Apply)( const Rule& r, Parser& p );
 static void apply_expr_plus( const Rule& r, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -153,11 +178,140 @@ static void apply_expr_pars( const Rule& r, Parser& p )
 static void apply_expr_expr0( const Rule& r, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
-   
+
    TokenInstance* ti = p.getNextToken();
 
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr);
    ti2->setValue( ti->detachValue(), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+
+
+//typedef void(*Apply)( const Rule& r, Parser& p );
+static void apply_expr_times( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprTimes(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+   p.simplify(3,ti);
+}
+
+static void apply_expr_div( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr );
+   ti->setValue( new ExprDiv(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+   p.simplify(3,ti);
+}
+
+static void apply_expr_neg( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* minus = p.getNextToken();
+   TokenInstance* value = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   ti2->setValue( new ExprNeg(static_cast<Expression*>(value->detachValue())), expr_deletor );
+
+   p.simplify(2,ti2);
+}
+
+static void apply_expr_atom( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr );
+   ti2->setValue( ti->detachValue(), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+//==========================================================
+// NonTerminal - Atom
+//==========================================================
+
+static void apply_Atom_Int ( const Rule& r, Parser& p )
+{
+   // << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(ti->asInteger()), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+static void apply_Atom_Float ( const Rule& r, Parser& p )
+{
+   // << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(ti->asNumeric()), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+static void apply_Atom_Name ( const Rule& r, Parser& p )
+{
+   // << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+
+   // TODO: Store in the module
+   Symbol* sym = new LocalSymbol(*ti->asString(), 0); // temporary leak
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( sym->makeExpression(), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+static void apply_Atom_String ( const Rule& r, Parser& p )
+{
+   // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(ti->detachString()), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+static void apply_Atom_Nil ( const Rule& r, Parser& p )
+{
+   // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(Item()), expr_deletor );
    p.simplify(1,ti2);
 }
 
@@ -185,59 +339,87 @@ static void apply_line_expr( const Rule& r, Parser& p )
 //==========================================================
 
 
-SourceParser::SourceParser( SynTree* st ):
-   T_Plus("+"),
-   T_Times("*"),
-   T_Divide("/"),
-   T_Minus("-"),
-   T_Modulo("%"),
-   T_Power("**"),
 
-   T_Openpar("("),
+SourceParser::SourceParser( SynTree* st ):
+   T_Openpar("(",10),
    T_Closepar(")"),
-   T_OpenSquare("["),
+   T_OpenSquare("[",10),
    T_CloseSquare("]"),
-   T_OpenGraph("{"),
+   T_OpenGraph("{",10),
    T_CloseGraph("}"),
 
-   T_Dot("."),
+   T_Dot(".", 20, true),
+
+   T_Power("**", 25),
+
+   T_Times("*",30),
+   T_Divide("/",30),
+   T_Modulo("%",30),
+
+   T_Plus("+",50),
+   T_Minus("-",50),
+
+   T_DblEq("==", 70),
+   T_NotEq("!=", 70),
+
 
    T_as("as"),
-   T_and("and"),
-   T_end("end"),
-   T_eq("eq"),
+   T_eq("eq", 70 ),
    T_if("if"),
-   T_in("in"),
-   T_not("not"),
-   T_nil("nil"),
-   T_or("or"),
-   T_to("to"),
+   T_in("in", 20),
+   T_or("or", 130),
+   T_to("to", 70),
    
+   T_and("and", 120),
+   T_def("def"),
+   T_end("end"),
+   T_for("for"),
+   T_not("not", 50),
+   T_nil("nil"),
+   T_try("try"),
+
+   T_EqSign("=", 200, true),
+
    m_syntree(st)
 {
    m_ctx = st;
 
-   // Style 1 --- all in one
-   Expr0 << "Expr0"
-      << (r_Expr0_times << "Expr0_times" << apply_expr0_times << Expr0 << T_Times << Expr0)
-      << (r_Expr0_div   << "Expr0_div"   << apply_expr0_div   << Expr0 << T_Divide << Expr0 )
-      << (r_Expr0_neg   << "Expr0_neg"   << apply_expr0_neg << T_Minus << Expr0 )
-      << (r_Expr0_number<< "Expr0_number"<< apply_expr0_int << T_Int);
+   Line << "Line"
+      << (r_line_autoexpr << "Line_Autoexpr" << apply_line_expr << Expr << T_EOL)
+         ;
 
-   // Style 2 -- bottom-top
-   r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr;
-   r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr;
-   r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar;
-   r_Expr_from_expr0 << "Expr_from_expr0" << apply_expr_expr0 << Expr0;
+   //==========================================================================
+   // Expression
+   //
+   Expr << "Expr"
+      << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
+      << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
+      << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
+      << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
+      << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
+      << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
+      << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)      
+      << (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr)
+      << (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr )
+      << (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr )
+      << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
+      ;
 
-   Expr << "Expr" << r_Expr_plus << r_Expr_minus <<  r_Expr_pars << r_Expr_from_expr0;
 
-   // Style 3 -- top-down
-   Line << "Line" << r_line_autoexpr;
-   r_line_autoexpr << "Line_Autoexpr" << apply_line_expr << Expr << T_EOL;
+      ;
 
+   Atom << "Atom"
+      << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
+      << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
+      << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
+      << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
+      << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
 
+      ;
+
+   //==========================================================================
    //State declarations
+   //
    s_Main << "Main"
             << Line;
 

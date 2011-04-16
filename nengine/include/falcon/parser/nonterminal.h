@@ -48,7 +48,7 @@ public:
    NonTerminal();
 
    /** Normal constructor. */
-   NonTerminal(const String& name);
+   NonTerminal(const String& name, bool bRightAssoc = false );
 
    virtual ~NonTerminal();
 

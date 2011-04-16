@@ -46,6 +46,8 @@ public:
    uint32 id() const { return m_nID; }
    const String& name() const { return m_name; }
 
+   int prio() const { return m_prio; }
+
    /** Checks if this token is nonterminal.
     \return true if the token is nonterminal.
     
@@ -86,9 +88,10 @@ public:
 protected:
    bool m_bNonTerminal;
    bool m_bRightAssoc;
+   int m_prio;
    
-   Token(uint32 nID, const String& name );
-   Token(const String& name);
+   Token(uint32 nID, const String& name, int prio = 0,  bool bRightAssoc = false);
+   Token(const String& name, int prio = 0, bool bRightAssoc = false );
    Token();
    static uint32 simpleHash( const String& v );
 
