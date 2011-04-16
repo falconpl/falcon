@@ -62,7 +62,8 @@ public:
       t_local_symbol,
       t_global_symbol,
       t_closed_symbol,
-      t_dyn_symbol
+      t_dyn_symbol,
+      t_unknown_symbol
    } type_t;
 
    Symbol( const Symbol& other );

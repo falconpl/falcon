@@ -57,6 +57,7 @@ public:
    Parsing::Terminal T_CloseGraph;
 
    Parsing::Terminal T_Dot;
+   Parsing::Terminal T_Colon;
 
    Parsing::Terminal T_as;
    Parsing::Terminal T_eq;
@@ -72,18 +73,38 @@ public:
    Parsing::Terminal T_not;
    Parsing::Terminal T_nil;
    Parsing::Terminal T_try;
-   
+
+   Parsing::Terminal T_elif;
+
+
    //================================================
-   // Expression (higher priority)
+   // Statements
    //
 
-   // Line
-   Parsing::NonTerminal Line;
+   Parsing::NonTerminal S_Autoexpr;
    Parsing::Rule r_line_autoexpr;
 
+   Parsing::NonTerminal S_If;
+   Parsing::Rule r_if;
+   Parsing::Rule r_if_short;
+
+   Parsing::NonTerminal S_Elif;
+   Parsing::Rule r_elif;
+
+   Parsing::NonTerminal S_End;
+   Parsing::Rule r_end;
+   Parsing::Rule r_end_rich;
+   
+   //================================================
    // Expression
+   //
    Parsing::NonTerminal Expr;
+
    Parsing::Rule r_Expr_assign;
+   Parsing::Rule r_Expr_equal;
+   Parsing::Rule r_Expr_diff;
+   Parsing::Rule r_Expr_eeq;
+
    Parsing::Rule r_Expr_index;
    Parsing::Rule r_Expr_star_index;
    Parsing::Rule r_Expr_dot;
@@ -96,6 +117,9 @@ public:
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_Atom;
 
+   //================================================
+   // Atom
+   //
    Parsing::NonTerminal Atom;
    Parsing::Rule r_Atom_Int;
    Parsing::Rule r_Atom_Float;

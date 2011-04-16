@@ -42,9 +42,7 @@ static void expr_deletor(void* data)
 // NonTerminal - Expr
 //==========================================================
 
-
 //typedef void(*Apply)( const Rule& r, Parser& p );
-
 static void apply_expr_assign( const Rule& r, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
@@ -63,6 +61,66 @@ static void apply_expr_assign( const Rule& r, Parser& p )
 
    p.simplify(3,ti);
 }
+
+
+static void apply_expr_equal( const Rule& r, Parser& p )
+{
+   // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprEQ(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+
+   p.simplify(3,ti);
+}
+
+static void apply_expr_diff( const Rule& r, Parser& p )
+{
+   // << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprNE(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+
+   p.simplify(3,ti);
+}
+
+
+static void apply_expr_eeq( const Rule& r, Parser& p )
+{
+   // << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprEEQ(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+
+   p.simplify(3,ti);
+}
+
 
 static void apply_expr_index( const Rule& r, Parser& p )
 {
@@ -316,7 +374,7 @@ static void apply_Atom_Nil ( const Rule& r, Parser& p )
 }
 
 //==========================================================
-// A line
+// Statements
 //==========================================================
 
 
@@ -333,6 +391,50 @@ static void apply_line_expr( const Rule& r, Parser& p )
    p.simplify(2);
 }
 
+
+static void apply_if_short( const Rule& r, Parser& p )
+{
+   // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << S_Autoexpr << T_EOL )
+
+   TokenInstance* tif = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tstatement = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   Expression* sa = static_cast<Expression*>(tstatement->detachValue());
+   SynTree* st = static_cast<SynTree*>(p.context());
+
+   SynTree* ifTrue = new SynTree;
+   ifTrue->append( new StmtAutoexpr(sa) );
+
+   StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+   st->append( stmt_if );
+
+   // clear the stack
+   p.simplify(5);
+}
+
+static void apply_if( const Rule& r, Parser& p )
+{
+   // << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
+
+}
+
+static void apply_elif( const Rule& r, Parser& p )
+{
+   // << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
+}
+
+static void apply_end( const Rule& r, Parser& p )
+{
+   // << (r_end << "end" << apply_end << T_end << T_EOL )
+}
+
+static void apply_end_rich( const Rule& r, Parser& p )
+{
+   // << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr T_EOL )
+}
 
 //==========================================================
 // SourceParser
@@ -361,6 +463,8 @@ SourceParser::SourceParser( SynTree* st ):
 
    T_DblEq("==", 70),
    T_NotEq("!=", 70),
+   T_Colon( ":" ),
+   T_EqSign("=", 200, true),
 
 
    T_as("as"),
@@ -378,21 +482,40 @@ SourceParser::SourceParser( SynTree* st ):
    T_nil("nil"),
    T_try("try"),
 
-   T_EqSign("=", 200, true),
-
+   T_elif("elif"),
+   
    m_syntree(st)
 {
    m_ctx = st;
 
-   Line << "Line"
-      << (r_line_autoexpr << "Line_Autoexpr" << apply_line_expr << Expr << T_EOL)
-         ;
+   S_Autoexpr << "Autoexpr"
+      << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
+      ;
+
+   S_If << "IF"
+      << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL )
+      << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
+      ;
+
+   S_Elif << "ELIF"
+      << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
+      ;
+
+   S_End << "END"
+      << (r_end << "end" << apply_end << T_end << T_EOL )
+      << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
+      ;
 
    //==========================================================================
    // Expression
    //
    Expr << "Expr"
       << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
+
+      << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
+      << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
+      << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
+
       << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
       << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
@@ -405,25 +528,26 @@ SourceParser::SourceParser( SynTree* st ):
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
       ;
 
-
-      ;
-
    Atom << "Atom"
       << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
       << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
       << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
-
       ;
 
    //==========================================================================
    //State declarations
    //
    s_Main << "Main"
-            << Line;
+      << S_Autoexpr
+      << S_If
+      << S_Elif
+      << S_End
+      ;
 
    addState( s_Main );
+   
 }
 
 bool SourceParser::parse()

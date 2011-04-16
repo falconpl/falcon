@@ -47,7 +47,6 @@ public:
 
    inline virtual ExprSymbol* clone() const { return new ExprSymbol(*this); }
 
-
    inline virtual void setLValue() { m_lvalue = true; }
    inline virtual bool isLValue() const { return m_lvalue; }
 
@@ -60,6 +59,7 @@ public:
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
+   void symbol(Symbol* sym) { m_symbol = sym; }
 
 
 protected:
@@ -81,6 +81,7 @@ protected:
    friend class GlobalSymbol;
    friend class LocalSymbol;
    friend class ClosedSymbol;
+   friend class UnknownSymbol;
 };
 
 }

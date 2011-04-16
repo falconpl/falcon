@@ -51,7 +51,7 @@ public:
    {}
 
    inline virtual ~Statement() {}
-   inline statement_t type() { return m_type; }
+   inline statement_t type() const { return m_type; }
 
 protected:
    /** Steps being prepared by the statement */

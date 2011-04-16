@@ -596,6 +596,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 4:
+         if( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
          /*
          if ( m_text == "load" )  // directive
          {
@@ -741,6 +742,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "%" ) return parser->T_Modulo.makeInstance(m_sline, m_schr);
          if( m_text == "=" ) return parser->T_EqSign.makeInstance(m_sline, m_schr);
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
+         if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          break;
 
       case 2:

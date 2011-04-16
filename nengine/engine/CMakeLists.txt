@@ -83,6 +83,7 @@ add_library(falcon_engine SHARED
   localsymbol.cpp
   module.cpp
   operanderror.cpp
+  parsercontext.cpp
   path.cpp
   pcode.cpp
   rampmode.cpp
@@ -106,6 +107,7 @@ add_library(falcon_engine SHARED
   transcoderutf8.cpp
   trace.cpp
   tracestep.cpp
+  unknownsymbol.cpp
   unsupportederror.cpp
   uri.cpp
   vfsiface.cpp

@@ -46,7 +46,9 @@ ExprSymbol::~ExprSymbol()
 
 void ExprSymbol::describe( String& val ) const
 {
-   val = "&" + m_symbol->name();
+   val = m_symbol->type() == Symbol::t_unknown_symbol ? 
+      "/* unknown */" + m_symbol->name() :
+      m_symbol->name();
 }
 
 
