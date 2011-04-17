@@ -173,7 +173,7 @@ bool Parser::parse( const String& mainState )
 
 bool Parser::isComplete() const
 {
-   return _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != T_EOF.id();
+   return _p->m_vTokens.empty() || _p->m_vTokens.front()->token().id() == T_EOF.id();
 }
 
 

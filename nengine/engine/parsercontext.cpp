@@ -50,13 +50,15 @@ class ParserContext::CCFrame
       t_class_type,
       t_object_type,
       t_func_type,
-      t_stmt_type
+      t_stmt_type,
+      t_base_type
    } t_type;
 
    CCFrame();
    CCFrame( Class* cls, bool bIsObject );
    CCFrame( SynFunc* func );
    CCFrame( Statement* stmt, SynTree* st );
+   CCFrame( SynTree* st );
 
 public:
    friend class ParserContext;
@@ -106,6 +108,13 @@ ParserContext::CCFrame::CCFrame( Statement* stmt, SynTree* st ):
    m_elem.stmt = stmt;
 }
 
+ParserContext::CCFrame::CCFrame( SynTree* st ):
+   m_type( t_base_type ),
+   m_branch( st ),
+   m_bStatePushed( false )
+{
+   m_elem.raw = 0;
+}
 //==================================================================
 // Stack frame class
 //
@@ -168,6 +177,7 @@ ParserContext::ParserContext( SourceParser *sp ):
    m_cfunc(0),
    m_cclass(0)
 {
+   sp->setContext(this);
    _p = new Private;
 }
 
@@ -176,6 +186,11 @@ ParserContext::~ParserContext()
    delete _p;
 }
 
+void ParserContext::openMain( SynTree*st )
+{
+   _p->m_frames.push_back( CCFrame( st ) );
+   m_st = st;
+}
 
 void ParserContext::onStatePushed()
 {
@@ -231,7 +246,7 @@ void ParserContext::defineSymbol( Symbol* uks )
          if( _p->m_symtabs.empty() )
          {
             // we're in the global context.
-            nuks = onGlobalDefined( nuks->name() );
+            nuks = onGlobalDefined( uks->name() );
          }
          else
          {
@@ -371,8 +386,8 @@ void ParserContext::addStatement( Statement* stmt )
    fassert( m_st != 0 );
 
    m_st->append(stmt);
-// TODO: make the unknown symbols something known!
-   _p->m_unknown.clear();
+
+   checkSymbols();
    onNewStatement( stmt );
 }
 
@@ -382,6 +397,8 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch )
    m_cstatement = parent;
    m_st = branch;
    _p->m_frames.push_back( CCFrame(parent, branch) );
+
+   checkSymbols();
 }
 
 void ParserContext::changeBranch(SynTree* branch)
@@ -389,6 +406,8 @@ void ParserContext::changeBranch(SynTree* branch)
    TRACE("ParserContext::changeBranch", 0 );
    m_st = branch;
    _p->m_frames.back().m_branch = branch;
+
+   checkSymbols();
 }
 
 void ParserContext::openFunc( SynFunc *func )
@@ -441,6 +460,9 @@ void ParserContext::closeContext()
    switch( bframe.m_type )
    {
       case CCFrame::t_none_type: fassert(0); break;
+
+      // if it's a base, there's nothing to do (but it's also strange...)
+      case CCFrame::t_base_type: break;
 
       // if it's a class...
       case CCFrame::t_object_type:

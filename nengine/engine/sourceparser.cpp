@@ -29,6 +29,8 @@
 #include <falcon/globalsymbol.h>
 #include <falcon/localsymbol.h>
 
+#include "falcon/parsercontext.h"
+
 namespace Falcon {
 using namespace Parsing;
 
@@ -47,13 +49,15 @@ static void apply_expr_assign( const Rule& r, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    TokenInstance* v1 = p.getNextToken();
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
-   // Todo: set lvalues and define symbols in the module
+   ctx->defineSymbols(firstPart);
+   
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprAssign(
          firstPart,
@@ -324,11 +328,9 @@ static void apply_Atom_Int ( const Rule& r, Parser& p )
 static void apply_Atom_Float ( const Rule& r, Parser& p )
 {
    // << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
-
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue(ti->asNumeric()), expr_deletor );
    p.simplify(1,ti2);
@@ -337,13 +339,11 @@ static void apply_Atom_Float ( const Rule& r, Parser& p )
 static void apply_Atom_Name ( const Rule& r, Parser& p )
 {
    // << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
-
    SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    TokenInstance* ti = p.getNextToken();
-
-   // TODO: Store in the module
-   Symbol* sym = new LocalSymbol(*ti->asString(), 0); // temporary leak
+   Symbol* sym = ctx->addVariable(*ti->asString());
 
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( sym->makeExpression(), expr_deletor );
@@ -353,9 +353,7 @@ static void apply_Atom_Name ( const Rule& r, Parser& p )
 static void apply_Atom_String ( const Rule& r, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
-
    SourceParser& sp = static_cast<SourceParser&>(p);
-
    TokenInstance* ti = p.getNextToken();
 
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
@@ -383,10 +381,10 @@ static void apply_line_expr( const Rule& r, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
    Expression* expr = static_cast<Expression*>(ti->detachValue());
-   SynTree* st = static_cast<SynTree*>(p.context());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
 
    Statement* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
-   st->append( line );
+   st->addStatement( line );
 
    // clear the stack
    p.simplify(2);
@@ -404,13 +402,13 @@ static void apply_if_short( const Rule& r, Parser& p )
 
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
    Expression* sa = static_cast<Expression*>(tstatement->detachValue());
-   SynTree* st = static_cast<SynTree*>(p.context());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
 
    SynTree* ifTrue = new SynTree;
    ifTrue->append( new StmtAutoexpr(sa) );
 
    StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
-   st->append( stmt_if );
+   st->addStatement( stmt_if );
 
    // clear the stack
    p.simplify(5);
@@ -443,7 +441,7 @@ static void apply_end_rich( const Rule& r, Parser& p )
 
 
 
-SourceParser::SourceParser( SynTree* st ):
+SourceParser::SourceParser():
    T_Openpar("(",10),
    T_Closepar(")"),
    T_OpenSquare("[",10),
@@ -483,12 +481,8 @@ SourceParser::SourceParser( SynTree* st ):
    T_nil("nil"),
    T_try("try"),
 
-   T_elif("elif"),
-   
-   m_syntree(st)
+   T_elif("elif")
 {
-   m_ctx = st;
-
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
       ;
@@ -552,7 +546,13 @@ SourceParser::SourceParser( SynTree* st ):
 }
 
 bool SourceParser::parse()
-{   
+{
+   // we need a context (and better to be a SourceContext
+   if ( m_ctx == 0 )
+   {
+      throw new CodeError( ErrorParam( e_setup, __LINE__, __FILE__ ).extra("SourceParser::parse - setContext") );
+   }
+
    return Parser::parse("Main");
 }
 

@@ -52,12 +52,14 @@ class Class;
  later review (i.e. extern symbols in modules), or interrupt the parser to
  prompt the user for new data (the interactive compiler).
 
+ \note Before any operation, call openMain
  */
 class ParserContext {
 public:
 
    /** Creates the compiler context.
     \param sp Pointer to the source parser that is using this context.
+    \note Before any operation, call openMain
    */
    ParserContext( SourceParser *sp );
    virtual ~ParserContext();
@@ -246,6 +248,18 @@ public:
 
     */
    virtual void onUnknownSymbol( UnknownSymbol* sym ) = 0;
+
+   /** Opens the main context frame.
+    This context frame (main or base context frame) refers to the topmost
+    context frame in the source, which doesn't refer to a specfic function.
+
+    The compiler or the compiler owner should call this method before starting
+    any parsing to set the place where new statements will be added.
+    
+    \note Alternately, you could push the main() function context
+    frame where appropriate by calling openFunc.
+    */
+   void openMain(SynTree* main);
 
    /** Creates a new variable in the current context.
     \param variable A Variable or symbol name to be created.

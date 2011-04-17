@@ -33,7 +33,7 @@ class SynTree;
 class FALCON_DYN_CLASS SourceParser: public Parsing::Parser
 {
 public:
-   SourceParser( SynTree* st );
+   SourceParser();
    bool parse();
 
    //===============================================
@@ -128,9 +128,6 @@ public:
    Parsing::Rule r_Atom_Nil;
 
    Parsing::State s_Main;
-
-private:   
-   SynTree* m_syntree;
 };
 
 }

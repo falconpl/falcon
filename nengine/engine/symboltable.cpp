@@ -93,6 +93,8 @@ Symbol* SymbolTable::addLocal( const String& name )
    LocalSymbol* ls = new LocalSymbol( name, _p->m_locals.size() );
    _p->m_locals.push_back( ls );
    _p->m_symtab[name] = ls;
+   
+   return ls;
 }
 
   

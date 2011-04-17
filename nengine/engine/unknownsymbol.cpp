@@ -96,6 +96,10 @@ void UnknownSymbol::define( Symbol* def )
       case t_global_symbol: af = GlobalSymbol::apply_; break;
       case t_local_symbol: af = LocalSymbol::apply_; break;
       case t_unknown_symbol: af = UnknownSymbol::apply_; break;
+
+      default:
+         fassert(0);
+         af = 0;
    }
 
    for( size_t i = 0; i < _p->m_owners.size(); ++i )

@@ -24,81 +24,156 @@
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
 
-
-
 #include <falcon/trace.h>
 #include <falcon/application.h>
 
 #include <falcon/sourceparser.h>
 #include <falcon/textreader.h>
 
-#include "falcon/sourcelexer.h"
+#include <falcon/sourcelexer.h>
+#include <falcon/parsercontext.h>
+#include <falcon/globalsymbol.h>
+#include <falcon/genericerror.h>
+#include <falcon/unknownsymbol.h>
 
 using namespace Falcon;
 
-class FuncPrintl: public Function
+//==============================================================
+// The compiler context
+//
+class Context: public ParserContext
 {
 public:
-   class NextStep: public PStep
-   {
-   public:
-      NextStep()
-      {
-         apply = apply_;
-      }
+   Context(SourceParser* parser);
+   ~Context();
+   void display();
 
-      static void apply_( const PStep* ps, VMachine* vm )
-      {
-         const NextStep* nstep = static_cast<const NextStep*>(ps);
-         vm->textOut()->write( *vm->regA().asString() );
-         VMContext* ctx = vm->currentContext();
-         nstep->printNext( vm, ctx->currentCode().m_seqId );
-      }
+   virtual void onInputOver();
+   virtual void onNewFunc( Function* function );
+   virtual void onNewClass( Class* cls, bool bIsObj );
+   virtual void onNewStatement( Statement* stmt );
+   virtual void onLoad( const String& path, bool isFsPath );
+   virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
+         const String& asName, const String &inName );
+   virtual void onImport(const String& symName );
+   virtual void onExport(const String& symName);
+   virtual void onDirective(const String& name, const String& value);
+   virtual void onGlobal( const String& name );
+   virtual Symbol* onUndefinedSymbol( const String& name );
+   virtual Symbol* onGlobalDefined( const String& name );
+   virtual void onUnknownSymbol( UnknownSymbol* sym );
 
-      void printNext( VMachine* vm, int count ) const
-      {
-         VMContext* ctx = vm->currentContext();
-         int nParams = ctx->currentFrame().m_paramCount;
+private:
+   SynFunc m_main;
+   StdInStream m_stdin;
+   TextReader* m_input;
 
-         while( count < nParams )
-         {
-            Item temp;
-            Class* cls;
-            void* data;
+};
 
-            ctx->param(count)->forceClassInst( cls, data );
-            ++count;
+Context::Context(SourceParser* parser):
+   ParserContext( parser ),
+   m_main("__main__"),
+   m_stdin(false)
 
-            vm->ifDeep(this);
-            cls->op_toString( vm, data, temp );
-            if( vm->wentDeep() )
-            {
-               ctx->currentCode().m_seqId = count;
-               return;
-            }
+{
+   m_input = new TextReader(&m_stdin);
+   SourceLexer* lexer = new SourceLexer("stdin", parser, m_input);
+   parser->pushLexer(lexer); // the parser will dispose of the lexer when needed
+   openMain( &m_main.syntree() ); 
+}
 
-            vm->textOut()->write( *temp.asString() );
-         }
+Context::~Context()
+{
+   // nothing to do
+}
 
-         vm->textOut()->write( "\n" );
-         // we're out of the function.
-         vm->returnFrame();
-      }
-   } m_nextStep;
+void Context::display()
+{
+   std::cout << "Parsed code: "<<
+      std::endl << m_main.syntree().describe().c_ize() << std::endl;
+}
 
-   FuncPrintl():
-      Function("printl")
-   {}
+void Context::onInputOver()
+{
+   std::cout<< "CALLBACK: Input over"<<std::endl;
+}
 
-   virtual ~FuncPrintl() {}
-
-   virtual void apply( VMachine* vm, int32 nParams )
-   {
-      m_nextStep.printNext( vm, 0 );
-   }
-} printl;
+void Context::onNewFunc( Function* function )
+{
+   std::cout<< "CALLBACK: NEW FUNCTION "<< function->name().c_ize() << std::endl;
+}
 
 
+void Context::onNewClass( Class* cls, bool bIsObj )
+{
+   std::cout<< "CALLBACK: New class "<< cls->name().c_ize()
+      << (bIsObj ? " (object)":"") << std::endl;
+}
+
+void Context::onNewStatement( Statement* stmt )
+{
+   std::cout<< "CALLBACK: New statement "<< stmt->oneLiner().c_ize() << std::endl;
+}
+
+void Context::onLoad( const String& path, bool isFsPath )
+{
+   std::cout<< "CALLBACK: Load "<< path.c_ize() << (isFsPath ? " (path)" : "") << std::endl;
+}
+
+void Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
+         const String& asName, const String &inName )
+{
+   std::cout << "CALLBACK: import " << symName.c_ize() << " from "
+      << path.c_ize() << (isFsPath ? " (path) " : " ")
+      << (asName.size() ? (String(" as ")+asName).c_ize() : "")
+      << (inName.size() ? (String(" in ")+inName).c_ize() : "")
+      << std::endl;
+}
+
+void Context::onImport(const String& symName )
+{
+   std::cout << "CALLBACK: import " << symName.c_ize() << std::endl;
+}
+
+
+void Context::onExport(const String& symName)
+{
+   std::cout << "CALLBACK: export " << symName.c_ize() << std::endl;
+}
+
+void Context::onDirective(const String& name, const String& value)
+{
+   std::cout << "CALLBACK: directive " << name.c_ize() << " = " << value.c_ize() << std::endl;
+}
+
+
+void Context::onGlobal( const String& name )
+{
+   std::cout << "CALLBACK: global " << name.c_ize() << std::endl;
+}
+
+
+Symbol* Context::onUndefinedSymbol( const String& name )
+{
+   std::cout << "CALLBACK: undefined " << name.c_ize() << std::endl;
+   return m_main.symbols().addLocal(name);
+}
+
+Symbol* Context::onGlobalDefined( const String& name )
+{
+   std::cout << "CALLBACK: new global defined: " << name.c_ize() << std::endl;
+   return m_main.symbols().addLocal(name);
+}
+
+void Context::onUnknownSymbol( UnknownSymbol* sym )
+{
+   std::cout << "CALLBACK: unknwon symbol -- pretty impossible: " <<
+         sym->name().c_ize() << std::endl;
+}
+
+//==============================================================
+// The application
+//
 
 class ParserApp: public Falcon::Application
 {
@@ -118,37 +193,17 @@ public:
 
 void go()
 {
-   // And now, run the code.
-   Stream* my_stdin = new StdInStream(false);
 
-   // the main
-   SynTree MySynTree;
-   TextReader* input = new TextReader(my_stdin);
-   SourceParser parser(&MySynTree);
-
-   SourceLexer* lexer = new SourceLexer("stdin", &parser, input);
-
-   parser.pushLexer(lexer);
-   ;
+   SourceParser parser;
+   Context myContext(&parser);
 
    if( parser.parse() )
    {
-      std::cout << "Parsed code: "<< std::endl << MySynTree.describe().c_ize() << std::endl;
+      myContext.display();
    }
    else
    {
-      // errors:
-      class MyEE: public Parsing::Parser::errorEnumerator {
-      public:
-         virtual bool operator()( const Parsing::Parser::ErrorDef& ed, bool blast )
-         {
-            std::cout << ed.nLine << ":" << ed.nChar << " - " << ed.nCode << " " << ed.sExtra.c_ize() << std::endl;
-            return true;
-         }
-      } ee;
-
-      std::cout << "ERRORS:"<< std::endl;
-      parser.enumerateErrors( ee );
+      throw parser.makeError();
    }
 }
 

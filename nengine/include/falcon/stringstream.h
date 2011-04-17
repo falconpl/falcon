@@ -1,21 +1,18 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: file_string.h
+   FILE: stringstream.h
 
-   Management of membuffer strings; directly included by file_base.h
+   Straem for stream-like I/O to memory.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab nov 13 2004
+   Begin: Sun, 17 Apr 2011 21:57:04 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Management of membuffer strings; directly included by file_base.h.
-*/
 
 #ifndef _FALCON_STRINGSTREAM_H
 #define _FALCON_STRINGSTREAM_H
@@ -126,4 +123,4 @@ private:
 
 #endif
 
-/* end of file_string.h */
+/* end of stringstream.h */
