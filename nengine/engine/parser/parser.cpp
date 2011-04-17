@@ -177,11 +177,11 @@ bool Parser::isComplete() const
 }
 
 
-
 bool Parser::hasErrors() const
 {
    return ! _p->m_lErrors.empty();
 }
+
 
 GenericError* Parser::makeError() const
 {

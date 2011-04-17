@@ -250,27 +250,16 @@ void StmtIf::oneLiner( String& tgt ) const
 
 void StmtIf::describe( String& tgt ) const
 {
-   for( int32 i = 1; i < chr(); i++ ) {
-      tgt.append(' ');
-   }
-
    tgt += "if "+ m_elifs[0]->m_check->describe() + "\n"
               + m_elifs[0]->m_ifTrue->describe();
 
    for ( size_t i = 1; i < m_elifs.size(); ++i )
-   {
-      for( int32 j = 1; j < m_elifs[i]->m_sr.chr(); i++ ) {
-         tgt.append(' ');
-      }
-      
+   {      
       tgt += "elif " + m_elifs[i]->m_check->describe() + "\n"
                      + m_elifs[i]->m_ifTrue->describe();
    }
 
    if( m_ifFalse != 0  ) {
-      for( int32 i = 1; i < chr(); i++ ) {
-         tgt.append(' ');
-      }
       tgt += "else\n" + m_ifFalse->describe();
    }
 

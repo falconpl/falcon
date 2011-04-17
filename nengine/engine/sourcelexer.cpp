@@ -597,6 +597,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 4:
          if( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
+         if( m_text == "else" ) return parser->T_else.makeInstance(m_sline, m_schr);
          /*
          if ( m_text == "load" )  // directive
          {

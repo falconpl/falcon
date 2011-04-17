@@ -75,6 +75,7 @@ public:
    Parsing::Terminal T_try;
 
    Parsing::Terminal T_elif;
+   Parsing::Terminal T_else;
 
 
    //================================================
@@ -90,6 +91,8 @@ public:
 
    Parsing::NonTerminal S_Elif;
    Parsing::Rule r_elif;
+   Parsing::NonTerminal S_Else;
+   Parsing::Rule r_else;
 
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;

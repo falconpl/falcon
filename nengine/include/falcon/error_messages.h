@@ -153,17 +153,7 @@ FAL_ERRORDECL( e_syn_import, 146, "Syntax error in import statement" );
 FAL_ERRORDECL( e_syn_macro, 147, "Syntax error in macro definition" );
 FAL_ERRORDECL( e_syn_macro_call, 148, "Syntax error in macro call" );
 FAL_ERRORDECL( e_syn_loop, 149, "Syntax error in loop statement" );
-
-FAL_ERRORDECL( e_catch_clash, 150, "Duplicate type identifier in catch selector" );
-FAL_ERRORDECL( e_catch_adef, 151, "Default catch block already defined" );
-FAL_ERRORDECL( e_already_forfirst, 152, "Block 'forfirst' already declared" );
-FAL_ERRORDECL( e_already_forlast, 153, "Block 'forlast' already declared" );
-FAL_ERRORDECL( e_already_formiddle, 154, "Block 'formiddle' already declared" );
-FAL_ERRORDECL( e_fordot_outside, 155, "Statement '.=' must be inside a for/in loop" );
-FAL_ERRORDECL( e_par_unbal, 156, "Unbalanced parenthesis at end of file" );
-FAL_ERRORDECL( e_square_unbal, 157, "Unbalanced square parenthesis at end of file" );
-FAL_ERRORDECL( e_unclosed_string, 158, "Unclosed string at end of file" );
-FAL_ERRORDECL( e_graph_unbal, 159, "Unbalanced bracket parenthesis at end of file" );
+FAL_ERRORDECL( e_syn_end, 150, "Misplaced 'end' keyword" );
 
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );
@@ -180,6 +170,17 @@ FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
 FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
 FAL_ERRORDECL( e_invop_unb, 174, "Unbound value used in arbitrary operation" );
 FAL_ERRORDECL( e_determ_decl, 175, "Determinism status already specified" );
+
+FAL_ERRORDECL( e_catch_clash, 180, "Duplicate type identifier in catch selector" );
+FAL_ERRORDECL( e_catch_adef, 181, "Default catch block already defined" );
+FAL_ERRORDECL( e_already_forfirst, 182, "Block 'forfirst' already declared" );
+FAL_ERRORDECL( e_already_forlast, 183, "Block 'forlast' already declared" );
+FAL_ERRORDECL( e_already_formiddle, 184, "Block 'formiddle' already declared" );
+FAL_ERRORDECL( e_fordot_outside, 185, "Statement '.=' must be inside a for/in loop" );
+FAL_ERRORDECL( e_par_unbal, 186, "Unbalanced parenthesis at end of file" );
+FAL_ERRORDECL( e_square_unbal, 187, "Unbalanced square parenthesis at end of file" );
+FAL_ERRORDECL( e_unclosed_string, 188, "Unclosed string at end of file" );
+FAL_ERRORDECL( e_graph_unbal, 189, "Unbalanced bracket parenthesis at end of file" );
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
 FAL_ERRORDECL( e_io_open, 201, "I/O error: Can't open required resource" );

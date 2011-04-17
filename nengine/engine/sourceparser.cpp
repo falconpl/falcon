@@ -417,22 +417,120 @@ static void apply_if_short( const Rule& r, Parser& p )
 static void apply_if( const Rule& r, Parser& p )
 {
    // << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
+   TokenInstance* tif = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
 
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   SynTree* ifTrue = new SynTree;
+   StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+   st->openBlock( stmt_if, ifTrue );
+
+   // clear the stack
+   p.simplify(3);
 }
 
 static void apply_elif( const Rule& r, Parser& p )
 {
    // << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
+   TokenInstance* tif = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   Statement* current = st->currentStmt();
+   if( current == 0 || current->type() != Statement::if_t )
+   {
+      p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
+      delete expr;
+   }
+   else
+   {
+      StmtIf* stmt_if = static_cast<StmtIf*>(current);
+      SynTree* ifElse = new SynTree;
+      stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
+      st->changeBranch( ifElse );
+   }
+
+   // clear the stack
+   p.simplify(3);
+}
+
+static void apply_else( const Rule& r, Parser& p )
+{
+   // << (r_else << "else" << apply_else << T_else << T_EOL )
+   TokenInstance* telse = p.getNextToken();
+   p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   Statement* current = st->currentStmt();
+   if( current == 0 || current->type() != Statement::if_t )
+   {
+      p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );
+   }
+   else
+   {
+      StmtIf* stmt_if = static_cast<StmtIf*>(current);
+      SynTree* ifElse = new SynTree;
+      stmt_if->setElse( ifElse );
+      st->changeBranch( ifElse );
+   }
+
+   // clear the stack
+   p.simplify(2);
 }
 
 static void apply_end( const Rule& r, Parser& p )
 {
    // << (r_end << "end" << apply_end << T_end << T_EOL )
+   TokenInstance* tend = p.getNextToken();
+   p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   Statement* current = st->currentStmt();
+   if( current == 0 )
+   {
+      p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+   }
+   else
+   {
+      st->closeContext();
+   }
+
+   // clear the stack
+   p.simplify(2);
 }
 
 static void apply_end_rich( const Rule& r, Parser& p )
 {
-   // << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr T_EOL )
+   // << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
+   TokenInstance* tend = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   Statement* current = st->currentStmt();
+   // TODO: Actually, it's used for the Loop statement.
+   if( current == 0 )
+   {
+      p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+   }
+   else
+   {
+      delete expr; // todo; actually put in loop
+      st->closeContext();
+   }
+
+   // clear the stack
+   p.simplify(3);
 }
 
 //==========================================================
@@ -481,7 +579,8 @@ SourceParser::SourceParser():
    T_nil("nil"),
    T_try("try"),
 
-   T_elif("elif")
+   T_elif("elif"),
+   T_else("else")
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -494,6 +593,10 @@ SourceParser::SourceParser():
 
    S_Elif << "ELIF"
       << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
+      ;
+
+   S_Else << "ELSE"
+      << (r_else << "else" << apply_else << T_else << T_EOL )
       ;
 
    S_End << "END"
@@ -538,6 +641,7 @@ SourceParser::SourceParser():
       << S_Autoexpr
       << S_If
       << S_Elif
+      << S_Else
       << S_End
       ;
 

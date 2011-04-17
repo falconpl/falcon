@@ -534,7 +534,7 @@ void ParserContext::closeContext()
                ++riter;
             }
          }
-         onNewStatement( bframe.m_elem.stmt );
+         addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
          break;
    }
 }
