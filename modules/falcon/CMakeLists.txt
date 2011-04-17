@@ -7,6 +7,7 @@ set( module_dirs
    net
    web
    qrcode
+   img
 )
 
 falcon_install_moddirs( ${module_dirs} )

@@ -91,9 +91,9 @@ File "..\bin\@FALCON_ENGINE_DLL@"
 !endif
 
 !if "@CMAKE_GENERATOR@" == "Visual Studio 10 Win64"
-	SetOutPath $INSTDIR\bin\
-	File "..\MicrosoftVS10\msvcp100.dll"
-	File "..\MicrosoftVS10\msvcr100.dll"
+	SetOutPath $INSTDIR\bin
+	File "..\bin\MicrosoftVS10\msvcp100.dll"
+	File "..\bin\MicrosoftVS10\msvcr100.dll"
 !endif
 
 SetOutPath $INSTDIR\share\icons
