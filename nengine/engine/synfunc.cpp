@@ -31,51 +31,7 @@ SynFunc::SynFunc( const String& name, Module* owner, int32 line ):
 
 SynFunc::~SynFunc()
 {
-   for ( size_t i = 0; i < m_locals.size(); ++i )
-   {
-      delete m_locals[i];
-   }
 }
-
-Symbol* SynFunc::addVariable( const String& name )
-{
-   Symbol* sym = new LocalSymbol( name, m_locals.size() );
-   m_locals.push_back( sym );
-   m_symtabTable[name] = sym;
-   return sym;
-}
-
-
-Symbol* SynFunc::addClosedSymbol( const String& name, const Item& value )
-{
-   Symbol* sym = new ClosedSymbol( name, value );
-   m_locals.push_back( sym );
-   m_symtabTable[name] = sym;
-   return sym;
-}
-
-
-Symbol* SynFunc::findSymbol( const String& name ) const
-{
-   SymbolTable::const_iterator pos = m_symtabTable.find( name );
-   if( pos == m_symtabTable.end() )
-   {
-      return 0;
-   }
-
-   return pos->second;
-}
-
-Symbol* SynFunc::getSymbol( int32 id ) const
-{
-   if ( id < 0 || id > (int) m_locals.size() )
-   {
-      return 0;
-   }
-
-   return m_locals[id];
-}
-
 
 void SynFunc::apply( VMachine* vm, int32 nparams )
 {
@@ -101,7 +57,7 @@ void SynFunc::apply( VMachine* vm, int32 nparams )
    }
 
    // fill the locals
-   int locals = this->varCount() - this->paramCount();
+   int locals = this->symbols().localCount() - this->paramCount();
    TRACE1( "-- filing locals: %d", locals );
    while( locals > 0 )
    {

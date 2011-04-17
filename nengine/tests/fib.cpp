@@ -41,7 +41,7 @@ void go( int fibSize )
    //
 
    SynFunc fib( "fib" );
-   Symbol* count = fib.addVariable("n");
+   Symbol* count = fib.symbols().addLocal("n");
    fib.paramCount(1);
 
    SynTree* ifTrue = new SynTree();

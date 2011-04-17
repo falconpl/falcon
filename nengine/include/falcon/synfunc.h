@@ -18,22 +18,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/sourceref.h>
+#include <falcon/function.h>
 #include <falcon/syntree.h>
-#include <falcon/globalsvector.h>
-#include <falcon/refpointer.h>
-
-#include <falcon/extfunc.h>
-#include <map>
-#include <vector>
 
 namespace Falcon
 {
-
-class Item;
-class Symbol;
-class GlobalSymbol;
-class Collector;
 
 /**
  Falcon function.
@@ -55,62 +44,22 @@ class Collector;
 
  Functions can be created by modules or directly from the code. In this case,
  they aren't owned by any module and are immediately stored for garbage collection.
-
- Todo -- separate/virtualize external functions
 */
 
 class FALCON_DYN_CLASS SynFunc: public Function
 {
 public:
    SynFunc( const String& name, Module* owner = 0, int32 line = 0 );
-   virtual ~SynFunc();
-     
-   Symbol* addVariable( const String& name );
-
-   /** Adds a variable to with a value being provided from the outside.
-    *
-    * If the incoming value needs a deep copy, it should be performed
-    * before passing it to this function.
-    */
-   Symbol* addClosedSymbol( const String& name, const Item& value );
-
+   virtual ~SynFunc();    
    
-   /** Number of local variables in this function.
-    * @return count of symbols declared in this function (including parameters).
-    */
-   int32 varCount() const { return m_locals.size(); }
-
-   /** Finds a symbol by name. */
-   Symbol* findSymbol( const String& name ) const;
-
-   /** Gets a symbol by ID. */
-   Symbol* getSymbol( int32 id ) const;
-
    /** Returns the statements of this function */
    const SynTree& syntree() const { return m_syntree; }
    SynTree& syntree() { return m_syntree; }
-
-
-   /** Gets the global vector associated with this function, if any.
-      
-       Only functions having a module can access a global vector.
-    */
-   GlobalsVector* globals();
 
    virtual void apply( VMachine* vm, int32 pCount = 0 );
    
 protected:
    SynTree m_syntree;
-
-   //TODO: Use our old property table?
-   // Anyhow, should be optimized a bit.
-   typedef std::map<String, Symbol*> SymbolTable;
-   SymbolTable m_symtabTable;
-
-   typedef std::vector<Symbol*> SymbolVector;
-   SymbolVector m_locals;
-
-   ref_ptr<GlobalsVector> m_globals;
 };
 
 }

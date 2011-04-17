@@ -26,6 +26,8 @@ namespace Falcon {
 class String;
 class Symbol;
 class GlobalSymbol;
+class UnknownSymbol;
+
 class SourceParser;
 class SynFunc;
 class Expression;
@@ -54,45 +56,6 @@ class Class;
 class ParserContext {
 public:
 
-   /** A frame of the parser context. */
-   class CCFrame
-   {
-      typedef union tag_elem {
-         Class* cls;
-         SynFunc* func;
-         Statement* stmt;
-      } t_elem;
-
-      typedef enum tag_type {
-         t_none_type,
-         t_class_type,
-         t_object_type,
-         t_func_type,
-         t_stmt_type
-      } t_type;
-
-      CCFrame();
-      CCFrame( Class* cls, bool bIsObject );
-      CCFrame( SynFunc* func );
-      CCFrame( Statement* stmt, SynTree* st );
-
-   public:
-      friend class ParserContext;
-      
-      /** Syntree element topping this frame. */
-      t_elem m_elem;
-
-      /** Type of frame */
-      t_type m_type;
-
-      /** Syntree where to add the incoming children */
-      SynTree* m_branch;
-
-      /** True if a parser state was pushed at this frame */
-      bool m_bStatePushed;
-
-   };
-
    /** Creates the compiler context.
     \param sp Pointer to the source parser that is using this context.
    */
@@ -107,21 +70,13 @@ public:
     */
    virtual void onInputOver() = 0;
 
-   /** Called back when creating a new variable.
-      \param variable The variable that is being created.
-
-    This method is called back when a new global variable is being
-    created. Local symbols are managed internally by the context.
-    */
-   virtual void onNewGlobal( GlobalSymbol* variable ) = 0;
-
    /** Called back when creating a new function.
       \param function The function that is being created.
 
     This method is called back when a new fuction is being
     created.
 
-    If the function has also a global name, then onNewGlobal will be called
+    If the function has also a global name, then onGlobalDefined will be called
     \b after onNewFunc; subclasses may cache the function name to understand
     that the new global is referring to this function object.
     */
@@ -134,8 +89,8 @@ public:
     This method is called back when a new class is being
     created.
 
-    If the function has also a global name, then onNewGlobal will be called
-    \b after onNewFunc; subclasses may cache the function name to understand
+    If the class has also a global name, then onGlobalDefined will be called
+    \b after onNewClass; subclasses may cache the function name to understand
     that the new global is referring to this function object.
     */
    virtual void onNewClass( Class* cls, bool bIsObj ) = 0;
@@ -233,6 +188,64 @@ public:
     */
    virtual void onDirective(const String& name, const String& value) = 0;
 
+   /** Called back when parsing a "global name" directive.
+      \param name The symbol that is being imported in the local context.
+    */
+   virtual void onGlobal( const String& name ) = 0;
+
+   /** Notifies the creation of an external or undefined symbol.
+    \param The name of the symbol that is currently undefined.
+    \return A new symbol that can be used to form the sequence.
+    
+    This method is called back when the parser finds an unreferenced symbol
+    name. The subclass has here the chance to create a symbol that will need
+    to be implicitly imported, and return the instance of the symbol created
+    this way, or return a pre-defined symbol that it knows about.
+    
+    It can also return 0; in that case, the parser will raise an undefined
+    symbol error at current location, and onUnkownSymbol is called.
+
+    */
+   virtual Symbol* onUndefinedSymbol( const String& name ) = 0;
+
+   /** Notifies the creation request for a global symbol.
+    \param The name of the symbol that is defined.
+    \return A new symbol that can be used to form the sequence.
+
+    This method is called back when the parser sees a symbol being defined,
+    but doesn't have a local symbol table where to create it as a local symbol.
+
+    The parser owner has then the ability to create a global symbol that shall
+    be inserted in its own symbol table, or return an already existing symbol
+    from its table.
+
+    If the owner returns zero, onUnknownSymbol is called.
+    */
+   virtual Symbol* onGlobalDefined( const String& name ) = 0;
+
+   /** Called back when any try to define a symbol fail.
+    \param sym A symbol to be disposed of.
+
+    Unknown symbols are symbols that cannot be placed in any symbol table,
+    because the resolution tries (joint effort of the SourceParser, this class,
+    its subclasses and eventually some other entity hold by the subclasses) have
+    falied.
+
+    The sym parameter should be stored somewhere to be later disposed, when the
+    syntree holding the symbol is not needed anymore. Normally, this is done
+    through symbol tables, but this can't be done with unknown symbols as they
+    cannot be placed in them.
+
+    The call of this method is always preceded by the queueing of an error
+    condition in the parser.
+    If the callee is sure that the structure being created won't be ispected
+    at a later step, (i.e. because the error result in the parser prevents it),
+    then it can destory the symbol immediately, otherwise it should store it
+    together with the syntree root, and destroy all them after the syntree
+    has gone out of scope.
+
+    */
+   virtual void onUnknownSymbol( UnknownSymbol* sym ) = 0;
 
    /** Creates a new variable in the current context.
     \param variable A Variable or symbol name to be created.
@@ -245,14 +258,60 @@ public:
     */
    Symbol* addVariable( const String& variable );
 
+   /** Defines the symbols that are declared in expressions as locally defined.
+    \param expr The branch of the expressions where symbols are defined.
+    \see checkSymbols()
+    \see defineSymbol()
+    */
+   void defineSymbols( Expression* expr );
+
+   /** Define a single symbol (if unknown).
+    \param uks A symbol that, if unknown, shall be defined as created in the local context.
+    */
+   void defineSymbol( Symbol* uks );
+
+   /** Checks the symbols that have been declared up to date.
+
+    Falcon defines symbols by assignment, or trhough particular expressions
+    which explicitly declare some symbols. Unknown symbols are implicitly declared
+    as extern.
+
+    As symbols are created by the parser, they are temporarily stored in this
+    parser context. Some of them may be marked as locally defined through
+    defineSymbols(). What's left undefined at the end of a statement is either
+    turned into an external reference (undefined symbol) or linked to an already
+    locally or globally define symbol.
+
+    The methods openBlock(), addStatement() and changeBranch() are considered
+    "complete statement points" and cause all the symbols created in the meanwhile
+    that didn't pass through defineSymbols() as undefined or otherwise defined
+    elsewhere.
+    
+    For example, in parsing the following code, the noted operations are taken:
+
+    @code
+    a = 0           // defineSymbols( a ); addStatement( a = 0 );
+    while a \< 5    // openBlock( while a \< 5 );
+       a++          // addStatement( a++ );
+       if (v=a) > 2 // defineSymbols(v); openBlock( if (v=a) > 2 );
+         doThis()   // addStatement(doThis(v));
+       elif a < 1   // changeBranch(elif a \< 1);
+         doThat()   // addStatement(doThat());
+       end          // closeContext(); addStatement(if);
+    end             // closeContext(); addStatement(while);
+    */
+   void checkSymbols();
+
    /** Adds a statement to the current context.
     \param stmt The statement to be added.
+    \see checkSymbols();
     */
    void addStatement( Statement* stmt );
 
    /** Opens a new block-statement context.
     \param Statement parent The parent that is opening this context.
     \param branch The SynTree under which to add new
+    \see checkSymbols();
     */
    void openBlock( Statement* parent, SynTree* branch );
 
@@ -262,8 +321,11 @@ public:
     This is useful when switching branch in swithces or if/else multiple
     block statements without disrupting the block structure.
 
+    \note The parent statement of this block stays the originally pushed statement,
+      but bstmt is used to check for undefined symbols, as the
+    \see checkSymbols();
     */
-   void changeBranch(SynTree* branch);
+   void changeBranch( SynTree* branch);
 
    /** Opens a new Function statement context.
     \param func The function being created.
@@ -313,7 +375,26 @@ public:
     */
    void onStatePushed();
 
+   /** Finds a symbol in one of the existing symbol table.
+      \param name The name of a symbol to be searched.
+      \return A symbol that can be inserted in existing expressions, or
+            0 if not found.
+    The returned symbol is either a local symbol of the topmost symbol table,
+    a closed symbol of intermediate symbol tables or a global symbol in the
+    lowest symbol table.
+
+    More precisely, if the symbol is found in the topmost table, it is returned
+    as-is, while if it's found in an underlying table, it is returned as-is unless
+    it's a LocalSymbol. In that case, a new ClosedSymbol is created and added
+    to the topmost table before being returned.
+    
+    */
+   Symbol* findSymbol( const String& name );
+
 private:
+   class CCFrame; // forward decl for Context Frames.
+   class STFrame; // forward decl fro Symbol table frames.
+   
    SourceParser* m_parser;
    
    // Pre-cached syntree for performance.

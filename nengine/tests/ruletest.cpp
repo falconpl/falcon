@@ -126,7 +126,7 @@ void go()
 
    // the main
    SynFunc fmain( "__main__" );
-   Falcon::Symbol* var_a = fmain.addVariable("a");
+   Falcon::Symbol* var_a = fmain.symbols().addLocal("a");
 
    StmtAutoexpr* assign_expr = new StmtAutoexpr(
                new ExprAssign( var_a->makeExpression(),

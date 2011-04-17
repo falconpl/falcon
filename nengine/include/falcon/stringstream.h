@@ -34,10 +34,10 @@ public:
    virtual ~StringStream();
 
    virtual bool close();
-   virtual int32 read( void *buffer, int32 size );
-   virtual int32 write( const void *buffer, int32 size );
-   virtual int32 readAvailable( int32 msecs = 0, Interrupt* intr = 0 );
-   virtual int32 writeAvailable( int32 msecs = 0, Interrupt* intr = 0 );
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
+   virtual size_t readAvailable( int32 msecs_timeout=0 );
+   virtual size_t writeAvailable( int32 msecs_timeout=0 );
 
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
@@ -108,7 +108,6 @@ public:
    virtual StringStream *clone() const;
   
 protected:
-   uint64 m_lastError;
    uint32 m_pos;
    virtual int64 seek( int64 pos, e_whence whence );
 

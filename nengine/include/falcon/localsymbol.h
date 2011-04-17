@@ -22,6 +22,7 @@
 namespace Falcon {
 
 class PStep;
+class SymbolTable;
 
 class FALCON_DYN_CLASS LocalSymbol: public Symbol
 {
@@ -36,7 +37,10 @@ public:
 
    virtual Expression* makeExpression();
 
+   int id() const { return m_id; }
+
 protected:
+   friend class SymbolTable;
    int m_id;
 };
 

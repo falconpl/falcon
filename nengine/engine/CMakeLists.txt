@@ -95,9 +95,12 @@ add_library(falcon_engine SHARED
   statement.cpp
   stmtrule.cpp
   string.cpp
+  stringstream.cpp
   stream.cpp
   symbol.cpp
+  symboltable.cpp
   synfunc.cpp
+  syntaxerror.cpp
   syntree.cpp
   textreader.cpp
   textwriter.cpp

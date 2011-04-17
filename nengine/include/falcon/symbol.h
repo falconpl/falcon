@@ -78,11 +78,24 @@ public:
 
    type_t type() const { return m_type; }
 
+   /** Source line at which the symbol was declared.
+    \return Source line in the file where this symbol was created, or 0 if not
+    available or meaningless.
+    */
+   int32 declaredAt() const { return m_declaredAt; }
+   /** Change the source line at which the symbol is created.
+    \param l Source line in the file where this symbol was created, or 0 if not
+    available or meaningless.
+    */
+   void declaredAt( int32 l ) { m_declaredAt = l; }
+
 protected:
    Symbol( type_t t, const String& name );
 
    type_t m_type;
    String m_name;
+   // source line at which they were declared
+   int32 m_declaredAt;
 };
 
 }

@@ -113,7 +113,7 @@ void go()
    // printl( str )
 
    SynFunc string_add( "string_add" );
-   Symbol* param = string_add.addVariable("param");
+   Symbol* param = string_add.symbols().addLocal("param");
    string_add.paramCount(1);
 
    string_add.syntree().append(

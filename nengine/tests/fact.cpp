@@ -41,7 +41,7 @@ void go( int factSize )
    //
 
    SynFunc fact( "fact" );
-   Symbol* count = fact.addVariable("n");
+   Symbol* count = fact.symbols().addLocal("n");
    fact.paramCount(1);
 
    SynTree* ifTrue = new SynTree();

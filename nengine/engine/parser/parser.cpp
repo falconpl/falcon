@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#include "falcon/syntaxerror.h"
+
+
 #include <falcon/parser/parser.h>
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
@@ -20,7 +23,10 @@
 #include <falcon/codeerror.h>
 #include <falcon/trace.h>
 
+#include <falcon/error.h>
+
 #include "./parser_private.h"
+#include "falcon/genericerror.h"
 
 namespace Falcon {
 namespace Parsing {
@@ -75,7 +81,8 @@ Parser::Parser():
    T_Name("Name"),
    T_String("String"),
    m_ctx(0),
-   m_bIsDone(false)
+   m_bIsDone(false),
+   m_bInteractive(0)
 {
    _p = new Private;
 }
@@ -83,13 +90,7 @@ Parser::Parser():
 
 Parser::~Parser()
 {
-   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
-   while( iter != _p->m_lErrors.end() )
-   {
-      delete *iter;
-      ++iter;
-   }
-
+   clearErrors();
    delete _p;
 }
 
@@ -160,14 +161,77 @@ bool Parser::parse( const String& mainState )
    parserLoop();
 
    // at the end of the parser loop, the stack should be empty, or we missed something
-   // -- exception: the ID token may or may not be parsed.
-   if( ! _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != T_EOF.id() )
+   // -- exception: the EOF token may or may not be parsed.
+   if( ! isComplete() )
    {
       syntaxError();
    }
    // If we have no error we succeeded.
    return _p->m_lErrors.empty();
 }
+
+
+bool Parser::isComplete() const
+{
+   return _p->m_vTokens.empty() && _p->m_vTokens.front()->token().id() != T_EOF.id();
+}
+
+
+
+bool Parser::hasErrors() const
+{
+   return ! _p->m_lErrors.empty();
+}
+
+GenericError* Parser::makeError() const
+{
+   if( _p->m_lErrors.empty() )
+   {
+      return 0;
+   }
+
+   GenericError* cerr = new GenericError(ErrorParam(e_syntax));
+   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
+   while( iter != _p->m_lErrors.end() )
+   {
+      ErrorDef* def = *iter;
+
+      String sExtra = def->sExtra;
+      if( def->nOpenContext != 0 )
+      {
+         if( sExtra.size() != 0 )
+            sExtra += " -- ";
+         sExtra += "from line ";
+         sExtra.N(def->nOpenContext);
+      }
+      
+      SyntaxError* err = new SyntaxError( ErrorParam( def->nCode, def->nLine )
+            .module(def->sUri)
+            .extra(sExtra));
+      cerr->appendSubError(err);
+      ++iter;
+   }
+   
+   return cerr;
+}
+
+
+void Parser::clearErrors()
+{
+   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
+   while( iter != _p->m_lErrors.end() )
+   {
+      delete *iter;
+      ++iter;
+   }
+}
+
+
+void Parser::clearTokens()
+{
+   _p->m_vTokens.clear();
+}
+
 
 void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
 {
@@ -181,6 +245,11 @@ void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
    }
 }
 
+
+const String& Parser::currentSource() const
+{
+   return _p->m_lLexers.back()->uri();
+}
 
 void Parser::setContext( void* ctx )
 {
@@ -271,6 +340,32 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
    }
 }
 
+bool Parser::step()
+{
+   TRACE( "Parser::step", 0 );
+
+   // Preliminary checks. We need a lexer and we need to have the required state.
+   if( _p->m_lLexers.empty() )
+   {
+      throw new CodeError( ErrorParam( e_setup, __LINE__, __FILE__ ).extra("Parser::step - pushLexer") );
+   }
+
+   // Check if we have a lexer
+   if( _p->m_lStates.empty() )
+   {
+      throw new CodeError( ErrorParam( e_setup, __LINE__, __FILE__ ).extra("Parser::step - pushState") );
+   }
+
+   TRACE( "Parser::step -- on state \"%s\" -- %s ",
+         _p->m_lStates.back()->name().c_ize(), dumpStack().c_ize() );
+   
+   clearErrors();
+
+   parserLoop();
+
+   return ! hasErrors();
+}
+
 //==========================================
 // Main parser algorithm.
 //
@@ -294,6 +389,13 @@ void Parser::parserLoop()
       TokenInstance* ti = lexer->nextToken();
       while( ti == 0 )
       {
+         if( m_bInteractive )
+         {
+            _p->m_nextToken = 0;
+            TRACE( "Parser::parserLoop -- done on interactive lexer token shortage", 0 );
+            return;
+         }
+
          popLexer();
          if( _p->m_lLexers.empty() )
          {
@@ -315,7 +417,6 @@ void Parser::parserLoop()
 
       _p->m_nextToken = ti;
       
-      TRACE1( "Parser::parserLoop -- read token '%s'", _p->m_nextToken->token().name().c_ize() );
       TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 
       State* curState = _p->m_lStates.back();

@@ -21,12 +21,14 @@ namespace Falcon {
 
 Symbol::Symbol( type_t t, const String& name ):
       m_type(t),
-      m_name( name )
+      m_name( name ),
+   m_declaredAt(0)
 {}
 
 Symbol::Symbol( const Symbol& other ):
    m_type( other.m_type ),
-   m_name( other.m_name )
+   m_name( other.m_name ),
+   m_declaredAt(0)
 {}
 
 

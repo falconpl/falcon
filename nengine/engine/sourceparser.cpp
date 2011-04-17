@@ -52,10 +52,11 @@ static void apply_expr_assign( const Rule& r, Parser& p )
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
+   Expression* firstPart = static_cast<Expression*>(v1->detachValue());
    // Todo: set lvalues and define symbols in the module
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprAssign(
-         static_cast<Expression*>(v1->detachValue()),
+         firstPart,
          static_cast<Expression*>(v2->detachValue())
       ), expr_deletor );
 

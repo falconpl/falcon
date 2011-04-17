@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/symboltable.h>
 
 namespace Falcon
 {
@@ -94,10 +95,10 @@ public:
    void gcMark( int32 mark );
 
    /** Store in a garbage collector. 
+    \param c A collector where to store this function.
     
     When this method is called, the function become subject to garbage
     collection.
-   
     */
    GCToken* garbage( Collector* c );
 
@@ -124,6 +125,15 @@ public:
    /** Set the determinism status of this function. */
    void setDeterm( bool mode ) { m_bDeterm = mode; }
 
+
+   /** Returns the symbol table of this function.
+    */
+   const SymbolTable& symbols() const { return m_symtab; }
+
+   /** Returns the symbol table of this function.
+    */
+   SymbolTable& symbols() { return m_symtab; }
+
 protected:
    String m_name;
    int32 m_paramCount;
@@ -134,6 +144,8 @@ protected:
    int32 m_line;
 
    bool m_bDeterm;
+
+   SymbolTable m_symtab;
 };
 
 }

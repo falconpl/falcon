@@ -66,18 +66,18 @@ class DataWriter;
 
 /** Representation of classes, that is item types.
 
- * In falcon, each item has a type, which refers to a class.
- * The CoreClass represents the operations that can be preformed
- * on a certain instance.
- *
- * To publish an item to the Virtual Machine, the calling program
- * must create a class that instructs the VM about how the items
- * of that type must be handled.
- *
- * CoreClasses take care of the creation of objects, of their serialization
- * and of their dispsal. It is also responsible to check for properties
+ In falcon, each item has a type, which refers to a class.
 
- *
+ The Class represents the operations that can be preformed
+ on a certain instance.
+ 
+ To publish an item to the Virtual Machine, the calling program
+ must create a class that instructs the VM about how the items
+ of that type must be handled.
+ 
+ Falcon::Class instances take care of the creation of objects, of their serialization
+ and of their disposal. It is also responsible to check for properties
+
 */
 
 class FALCON_DYN_CLASS Class

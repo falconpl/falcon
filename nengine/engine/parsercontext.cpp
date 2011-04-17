@@ -23,12 +23,57 @@
 #include <vector>
 #include <map>
 
+#include "falcon/globalsymbol.h"
+#include "falcon/compiler.h"
+#include "falcon/closedsymbol.h"
+#include "falcon/expression.h"
+#include "falcon/exprsym.h"
+
 
 namespace Falcon {
 
 //==================================================================
 // Frame class
 //
+
+class ParserContext::CCFrame
+{
+   typedef union tag_elem {
+      Class* cls;
+      SynFunc* func;
+      Statement* stmt;
+      void* raw;
+   } t_elem;
+
+   typedef enum tag_type {
+      t_none_type,
+      t_class_type,
+      t_object_type,
+      t_func_type,
+      t_stmt_type
+   } t_type;
+
+   CCFrame();
+   CCFrame( Class* cls, bool bIsObject );
+   CCFrame( SynFunc* func );
+   CCFrame( Statement* stmt, SynTree* st );
+
+public:
+   friend class ParserContext;
+
+   /** Syntree element topping this frame. */
+   t_elem m_elem;
+
+   /** Type of frame */
+   t_type m_type;
+
+   /** Syntree where to add the incoming children */
+   SynTree* m_branch;
+
+   /** True if a parser state was pushed at this frame */
+   bool m_bStatePushed;
+
+};
 
 ParserContext::CCFrame::CCFrame():
    m_type( t_none_type )
@@ -61,7 +106,39 @@ ParserContext::CCFrame::CCFrame( Statement* stmt, SynTree* st ):
    m_elem.stmt = stmt;
 }
 
-//=============================================================
+//==================================================================
+// Stack frame class
+//
+
+class ParserContext::STFrame {
+public:
+   SymbolTable* m_st;
+   void *m_owner; // used in pops to see if it's time to pop this
+   bool m_bIsClass;  // class symtabs have special meanings.
+
+   STFrame():
+      m_st(0),
+      m_owner(0),
+      m_bIsClass(0)
+   {}
+
+   STFrame( SymbolTable* st, void* owner, bool isClass ):
+      m_st( st ),
+      m_owner( owner ),
+      m_bIsClass( isClass )
+   {}
+
+   STFrame( const STFrame& other ):
+      m_st( other.m_st ),
+      m_owner( other.m_owner ),
+      m_bIsClass( other.m_bIsClass )
+   {}
+};
+
+
+//==================================================================
+// Main parser context class
+//
 
 class ParserContext::Private
 {
@@ -75,6 +152,9 @@ private:
 
    typedef std::vector<ParserContext::CCFrame> FrameVector;
    FrameVector m_frames;
+
+   typedef std::vector<ParserContext::STFrame> STVector;
+   STVector m_symtabs;
 
    Private() {}
    ~Private() {}
@@ -124,16 +204,175 @@ Symbol* ParserContext::addVariable( const String& variable )
 }
 
 
+void ParserContext::defineSymbols( Expression* expr )
+{
+   TRACE("ParserContext::defineSymbols on (: %s :)", expr->describe().c_ize() );
+   
+   if( expr->type() == Expression::t_symbol )
+   {
+      Symbol* uks = static_cast<ExprSymbol*>(expr)->symbol();
+      defineSymbol( uks );
+   }
+
+   //TODO: Else, to the same for each symbol in case of symbol lists.
+   //TODO: Else, raise error for values or list of values.
+}
+
+void ParserContext::defineSymbol( Symbol* uks )
+{
+   if( uks->type() == Symbol::t_unknown_symbol )
+   {
+      TRACE1("ParserContext::defineSymbol trying to define symbol \"%s\"", uks->name().c_ize() );
+      Symbol* nuks = findSymbol(uks->name());
+      // Found?
+      if( nuks == 0 )
+      {
+         // --no ? create it
+         if( _p->m_symtabs.empty() )
+         {
+            // we're in the global context.
+            nuks = onGlobalDefined( nuks->name() );
+         }
+         else
+         {
+            // add it in the current symbol table.
+            nuks = _p->m_symtabs.back().m_st->addLocal( uks->name() );
+         }
+      }
+
+      // created?
+      if( nuks != 0 )
+      {
+         TRACE("ParserContext::defineSymbol defined \"%s\" as %d",
+               nuks->name().c_ize(), nuks->type() );
+         // remove from the unknowns
+         _p->m_unknown.erase( uks->name() );
+         static_cast<UnknownSymbol*>(uks)->define(nuks);
+         delete uks;
+      }
+      else
+      {
+         //TODO: Use a more fitting error code for this?
+         m_parser->addError(e_undef_sym, m_parser->currentSource(), uks->declaredAt(),0, 0, uks->name() );
+         
+         TRACE("ParserContext::defineSymbol cannot define \"%s\"",
+               uks->name().c_ize() );
+         // we cannot create it; delegate to subclasses
+         onUnknownSymbol( static_cast<UnknownSymbol*>(uks) );
+      }
+   }
+   else
+   {
+      // else, the symbol is already ok.
+      TRACE2("ParserContext::defineSymbol \"%s\" already of type %d",
+               uks->name().c_ize(), uks->type() );
+   }
+}
+
+
+void ParserContext::checkSymbols()
+{
+   Private::SymbolMap& unknown = _p->m_unknown;
+
+   TRACE("ParserContext::checkSymbols on %d syms", (int) unknown.size() );
+   Private::SymbolMap::iterator iter = unknown.begin();
+   while( iter != unknown.end() )
+   {
+      UnknownSymbol* sym = iter->second;
+      Symbol* new_sym = findSymbol( sym->name() );
+
+      if ( new_sym == 0 )
+      {
+         TRACE1("ParserContext::checkSymbols \"%s\" is undefined, up-notifying", sym->name().c_ize() );
+         new_sym = onUndefinedSymbol( sym->name() );
+
+         // still undefined
+         if ( new_sym == 0 )
+         {
+            TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", sym->name().c_ize() );
+         }
+      }
+
+      if( new_sym != 0 )
+      {
+         TRACE1("ParserContext::checkSymbols \"%s\" is now of type %d", sym->name().c_ize(), new_sym->type() );
+         sym->define(new_sym);
+         delete sym;
+      }
+      else
+      {
+         m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
+
+         TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
+                  sym->name().c_ize() );
+         onUnknownSymbol( sym );
+      }
+      ++iter;
+   }
+
+   unknown.clear();
+}
+
+
+Symbol* ParserContext::findSymbol( const String& name )
+{
+   TRACE1("ParserContext::findSymbol \"%s\"", name.c_ize() );
+   Private::STVector& sts = _p->m_symtabs;
+
+   if( sts.empty() )
+   {
+      return 0;
+   }
+
+   // found at first shot?
+   Private::STVector::const_reverse_iterator iter = sts.rend();
+   Symbol* sym = iter->m_st->findSymbol( name );
+
+   if( sym !=  0 )
+   {
+      TRACE1("ParserContext::findSymbol \"%s\" found locally", sym->name().c_ize() );
+      return sym;
+   }
+
+   ++iter;
+   while( iter != sts.rbegin() )
+   {
+      // skip symbol table of classes, they can't be referenced by inner stuff.
+      if( iter->m_bIsClass )
+      {
+         ++iter;
+         continue;
+      }
+
+      sym = iter->m_st->findSymbol( name );
+      if( sym !=  0 )
+      {
+         if( sym->type() == Symbol::t_local_symbol )
+         {
+            TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", sym->name().c_ize() );
+            //TODO: Properly close symbols. -- this won't work
+            ClosedSymbol* closym = new ClosedSymbol(name, Item());
+            sts.back().m_st->addSymbol(closym);
+            return closym;
+         }
+
+         TRACE1("ParserContext::findSymbol \"%s\" found of type %d", sym->name().c_ize(), sym->type() );
+         return sym;
+      }
+      ++iter;
+   }
+
+}
+
+
 void ParserContext::addStatement( Statement* stmt )
 {
    TRACE("ParserContext::addStatement type %d", (int) stmt->type() );
    fassert( m_st != 0 );
 
    m_st->append(stmt);
-
-   // TODO: make the unknown symbols something known!
+// TODO: make the unknown symbols something known!
    _p->m_unknown.clear();
-
    onNewStatement( stmt );
 }
 
@@ -158,6 +397,7 @@ void ParserContext::openFunc( SynFunc *func )
    m_cfunc = func;
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(func));
+   _p->m_symtabs.push_back( STFrame( &func->symbols(), func, false ) );
 }
 
 void ParserContext::openClass( Class *cls, bool bIsObject )
@@ -167,6 +407,7 @@ void ParserContext::openClass( Class *cls, bool bIsObject )
    m_cclass = cls;
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(cls, bIsObject));
+   //_p->m_symtabs.push_back( STFrame( &cls->symbols(), cls, true ) );
 }
 
 void ParserContext::closeContext()
@@ -190,6 +431,12 @@ void ParserContext::closeContext()
       m_st = _p->m_frames.back().m_branch;
    }
 
+   // updating the symbol table
+   if( !_p->m_symtabs.empty() && _p->m_symtabs.back().m_owner == bframe.m_elem.raw )
+   {
+      _p->m_symtabs.pop_back();
+   }
+   
    // notify the new item.
    switch( bframe.m_type )
    {

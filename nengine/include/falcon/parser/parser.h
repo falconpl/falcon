@@ -29,9 +29,13 @@
 #include <falcon/parser/state.h>
 
 namespace Falcon {
+
+class GenericError;
+
 namespace Parsing {
 
 class Lexer;
+
 
 /** Generic Falcon Parser class.
 
@@ -139,6 +143,51 @@ public:
 
    };
 
+   /** Returns true if the parser has exausted all the tokens.
+      \return true If all the tokens are consumed.
+    
+    When a parse is not complete, then some tokens are left in the stack.
+    
+    It might be an error or it may just be a sign that some more input is
+    needed to complete a parse, depending on the context. 
+    */
+   bool isComplete() const;
+
+   /** Checks if some errors are active.
+      \return True if there is some error still accounted in the compiler.
+      \see clearErrors
+    */
+   bool hasErrors() const;
+
+   /** Create an Error instance that can be propagated in the system.
+    \return A new Error instance or 0 if no errors are in the parser.
+
+    \note After this call the errors are still accounted; call clearErrors()
+    to clear them.
+    */
+   GenericError* makeError() const;
+
+   /** Clear errors previously accounted in the engine.
+    
+    This method is automatically called by parse() and step().
+    */
+   void clearErrors();
+
+   /** Clear token temporarily left in the parser stack on incomplete parse.
+    */
+   void clearTokens();
+
+   /** Perform a single-step compilation.
+      \return true on success, false if there is an error.
+
+    Ask to generate a compilation keeping the current context and the current
+    tokens previously parsed by the lexer.
+
+    Prior calling step() the first time, pushLexer() and pushState() should have
+    been called once to initialize the parser.
+    */
+   bool step();
+
    /** Callback functor receiving errors.
     */
    typedef Enumerator<ErrorDef> errorEnumerator;
@@ -212,7 +261,7 @@ public:
    /** Returns true if the parser should terminate asap.
       \return true on termination requested.
     */
-   bool done() const { return m_bIsDone; }
+   bool isDone() const { return m_bIsDone; }
 
    /** Ask the parser to terminate.
       A rule apply may invoke this routine to terminate the parsing process.
@@ -322,6 +371,29 @@ public:
    /** Add a state to this parser. */
    inline Parser& operator <<( State& s ) { addState(s); return *this; }
 
+   /** URI of the currently lexed source.
+    \return A string representing the current source currently under parsing.
+    */
+   const String& currentSource() const;
+
+   /** Returns the interactive mode status.
+    \return true if the parser is in interactive mode.
+    */
+   bool interactive() const { return m_bInteractive; }
+
+   /** Sets the interactive mode.
+    \param mode If true, the parser is in interactive mode.
+
+    In interactive mode, the parser won't complain for partial unresolved
+    code at the end of input. Instead, it will return normally, and the caller
+    will need to feed in more data in the stream that's controlled by the lexer,
+    and then call step() again to continue from the previous position.
+
+    Also, in interactive mode, lexers are not automatically popped when they reach
+    the end of their input, so it is possible to feed new data back in them
+    without having to recreate them.
+    */
+   void interactive( bool mode ) { m_bInteractive = mode; }
    //=================================================================
    // Common terminals
    Terminal T_EOF;
@@ -334,6 +406,8 @@ public:
 protected:
    void* m_ctx;
    bool m_bIsDone;
+   bool m_bInteractive;
+
    void parserLoop();
    
 private:

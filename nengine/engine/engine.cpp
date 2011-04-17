@@ -49,6 +49,7 @@
 #include <falcon/ioerror.h>
 #include <falcon/operanderror.h>
 #include <falcon/unsupportederror.h>
+#include <falcon/syntaxerror.h>
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -167,6 +168,19 @@ public:
    }
 };
 
+class SyntaxErrorClass: public ErrorClass
+{
+public:
+   SyntaxErrorClass():
+      ErrorClass( "SyntaxError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new SyntaxError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
 //=======================================================
 // Engine static declarations
 //
@@ -225,6 +239,7 @@ Engine::Engine()
    m_operandErrorClass = new OperandErrorClass;
    m_unsupportedErrorClass = new UnsupportedErrorClass;
    m_encodingErrorClass = new EncodingErrorClass;
+   m_syntaxErrorClass = new SyntaxErrorClass;
 
    //=====================================
    // Adding standard transcoders.
@@ -430,6 +445,13 @@ Class* Engine::encodingErrorClass() const
    fassert( m_instance != 0 );
    return m_instance->m_encodingErrorClass;
 }
+
+Class* Engine::syntaxErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_syntaxErrorClass;
+}
+
 
 Class* Engine::operandErrorClass() const
 {

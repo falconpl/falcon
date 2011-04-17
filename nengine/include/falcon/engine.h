@@ -188,6 +188,16 @@ public:
     */
    Class* encodingErrorClass() const;
 
+   /** Returns the global instance of the SyntaxError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* syntaxErrorClass() const;
+
    /** Adds a transcoder to the engine.
     \param A new transcoder to be registered in the engine.
     \return true if the transcoder can be added, false if it was already registered.
@@ -247,6 +257,7 @@ protected:
    Class* m_ioErrorClass;
    Class* m_interruptedErrorClass;
    Class* m_encodingErrorClass;
+   Class* m_syntaxErrorClass;
 
 
    //===============================================
