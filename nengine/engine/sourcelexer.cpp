@@ -746,6 +746,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "=" ) return parser->T_EqSign.makeInstance(m_sline, m_schr);
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
+         if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
          break;
 
       case 2:

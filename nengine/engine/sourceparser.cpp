@@ -31,12 +31,28 @@
 
 #include "falcon/parsercontext.h"
 
+#include <deque>
+
 namespace Falcon {
 using namespace Parsing;
+
+typedef std::deque<Expression*> List;
 
 static void expr_deletor(void* data)
 {
    Expression* expr = static_cast<Expression*>(data);
+   delete expr;
+}
+
+static void list_deletor(void* data)
+{
+   List* expr = static_cast<List*>(data);
+   List::iterator iter = expr->begin();
+   while( iter != expr->end() )
+   {
+      delete *iter;
+      ++iter;
+   }
    delete expr;
 }
 
@@ -129,7 +145,7 @@ static void apply_expr_eeq( const Rule& r, Parser& p )
 
 static void apply_expr_call( const Rule& r, Parser& p )
 {
-   // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << Expr << T_Closepar
+   // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* v1 = p.getNextToken();
@@ -139,12 +155,19 @@ static void apply_expr_call( const Rule& r, Parser& p )
 
    // TODO: read the expressions in the pars
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprCall(
-         static_cast<Expression*>(v1->detachValue())
-      ), expr_deletor );
+   ExprCall* call = new ExprCall( static_cast<Expression*>(v1->detachValue()) );
 
-   // static_cast<Expression*>(v2->detachValue())
+   List* list = static_cast<List*>(v2->detachValue());
+   List::iterator iter = list->begin();
+   while( iter != list->end() )
+   {
+      call->addParameter( *iter );
+      ++iter;
+   }
+   // free the expressions in the list
+   list->clear();
 
+   ti->setValue( call, expr_deletor );
    p.simplify(4,ti);
 }
 
@@ -200,7 +223,6 @@ static void apply_expr_dot( const Rule& r, Parser& p )
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
-   // Todo: set lvalues and define symbols in the module
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprDot(
          *v2->asString(),
@@ -612,6 +634,62 @@ static void apply_end_rich( const Rule& r, Parser& p )
 }
 
 //==========================================================
+// Lists
+//==========================================================
+
+static void apply_ListExpr_next( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   List* list = static_cast<List*>(tlist->detachValue());
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ListExpr );
+   ti_list->setValue( list, list_deletor );
+   p.simplify(3,ti_list);
+
+}
+
+static void apply_ListExpr_first( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+   
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
+
+   List* list = new List;
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(texpr->line(), texpr->chr(), sp.ListExpr );
+   ti_list->setValue( list, list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 1, ti_list );
+}
+
+static void apply_ListExpr_empty( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* ti_list = new TokenInstance(0, 0, sp.ListExpr );
+
+   List* list = new List;
+   ti_list->setValue( list, list_deletor );
+
+   // Nothing to delete, just insert.
+   p.simplify( 0, ti_list );
+}
+
+//==========================================================
 // SourceParser
 //==========================================================
 
@@ -626,6 +704,7 @@ SourceParser::SourceParser():
    T_CloseGraph("}"),
 
    T_Dot(".", 20, true),
+   T_Comma( "," , 180 ),
 
    T_Power("**", 25),
 
@@ -699,7 +778,7 @@ SourceParser::SourceParser():
       << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
       << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
 
-      << (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << Expr << T_Closepar )
+      << (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar )
       << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
       << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
@@ -719,6 +798,13 @@ SourceParser::SourceParser():
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
       ;
+
+   ListExpr << "ListExpr"
+      << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
+      << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
+      << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
+      ;
+
 
    //==========================================================================
    //State declarations

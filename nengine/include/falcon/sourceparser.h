@@ -57,6 +57,7 @@ public:
    Parsing::Terminal T_CloseGraph;
 
    Parsing::Terminal T_Dot;
+   Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
 
    Parsing::Terminal T_as;
@@ -136,6 +137,14 @@ public:
    Parsing::Rule r_Atom_Name;
    Parsing::Rule r_Atom_String;
    Parsing::Rule r_Atom_Nil;
+
+   //================================================
+   // Expression lists
+   //
+   Parsing::NonTerminal ListExpr;
+   Parsing::Rule r_ListExpr_next;
+   Parsing::Rule r_ListExpr_first;
+   Parsing::Rule r_ListExpr_empty;
 
    Parsing::State s_Main;
 };

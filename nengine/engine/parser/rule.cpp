@@ -75,9 +75,9 @@ void Rule::apply( Parser& parser ) const
 
 t_matchType Rule::match( Parser& parser ) const
 {
-
-try_again:
    TRACE( "Rule::match(%s)", m_name.c_ize() );
+   
+try_again:
 
    Parser::Private* pp = parser._p;
    size_t ppos = pp->m_stackPos;
@@ -90,6 +90,21 @@ try_again:
 
    size_t leftmost_right_assoc = (size_t)-1;
    int highPrio = 0;
+
+   if( _p->m_vTokens.empty() )
+   {
+      if (ppos == ppos_end)
+      {
+         TRACE( "Rule::match(%s) -- always matching -- but stack empty", m_name.c_ize() );
+         return t_tooShort;
+      }
+      
+      if( pp->m_vTokens[ppos]->token().id() != m_parent->id() )
+      {
+         TRACE( "Rule::match(%s) -- always matching", m_name.c_ize() );
+         return t_match;
+      }
+   }   
 
    // check if there is a match by scanning the current token stack in the parser
    // -- and matching it against our tokens.
