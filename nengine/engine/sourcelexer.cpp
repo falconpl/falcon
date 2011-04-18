@@ -626,6 +626,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 5:
+          if ( m_text == "while" ) return parser->T_while.makeInstance(m_sline, m_schr);
+          
          /*
          if ( m_text == "catch" )
             return CATCH;

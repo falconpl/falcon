@@ -485,6 +485,50 @@ static void apply_else( const Rule& r, Parser& p )
    p.simplify(2);
 }
 
+
+static void apply_while_short( const Rule& r, Parser& p )
+{
+   // << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
+
+   TokenInstance* twhile = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tstatement = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   Expression* sa = static_cast<Expression*>(tstatement->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   SynTree* whsyn = new SynTree;
+   whsyn->append( new StmtAutoexpr(sa) );
+
+   StmtWhile* stmt_wh = new StmtWhile(expr, whsyn);
+   stmt_wh->decl( twhile->line(), twhile->chr() );
+   st->addStatement( stmt_wh );
+
+   // clear the stack
+   p.simplify(5);
+}
+
+static void apply_while( const Rule& r, Parser& p )
+{
+   // << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
+   TokenInstance* twhile = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+   p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   SynTree* whsyn = new SynTree;
+   StmtWhile* stmt_while = new StmtWhile(expr, whsyn );
+   stmt_while->decl( twhile->line(), twhile->chr() );
+   st->openBlock( stmt_while, whsyn );
+
+   // clear the stack
+   p.simplify(3);
+}
+
 static void apply_end( const Rule& r, Parser& p )
 {
    // << (r_end << "end" << apply_end << T_end << T_EOL )
@@ -580,7 +624,9 @@ SourceParser::SourceParser():
    T_try("try"),
 
    T_elif("elif"),
-   T_else("else")
+   T_else("else"),
+
+   T_while("while")
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -597,6 +643,11 @@ SourceParser::SourceParser():
 
    S_Else << "ELSE"
       << (r_else << "else" << apply_else << T_else << T_EOL )
+      ;
+
+   S_While << "WHILE"
+      << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
+      << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
       ;
 
    S_End << "END"
@@ -642,6 +693,7 @@ SourceParser::SourceParser():
       << S_If
       << S_Elif
       << S_Else
+      << S_While
       << S_End
       ;
 

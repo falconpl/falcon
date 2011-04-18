@@ -77,6 +77,8 @@ public:
    Parsing::Terminal T_elif;
    Parsing::Terminal T_else;
 
+   Parsing::Terminal T_while;
+
 
    //================================================
    // Statements
@@ -93,6 +95,10 @@ public:
    Parsing::Rule r_elif;
    Parsing::NonTerminal S_Else;
    Parsing::Rule r_else;
+
+   Parsing::NonTerminal S_While;
+   Parsing::Rule r_while;
+   Parsing::Rule r_while_short;
 
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;
