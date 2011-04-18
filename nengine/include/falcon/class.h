@@ -177,9 +177,9 @@ public:
 
    /** Return a summary or description of an instance.
     Differently from toString, this method ignores string rendering
-    * that may involve the virtual machine (i.e. toString() overloads).
-    *
-    * To be considered a debug device.
+    that may involve the virtual machine (i.e. toString() overloads).
+ 
+    \note To be considered a debug device.
     */
    virtual void describe( void* instance, String& target ) const;
 

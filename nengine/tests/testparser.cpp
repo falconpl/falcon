@@ -62,6 +62,7 @@ public:
    virtual Symbol* onUndefinedSymbol( const String& name );
    virtual Symbol* onGlobalDefined( const String& name );
    virtual void onUnknownSymbol( UnknownSymbol* sym );
+   virtual void onStaticData( Class* cls, void* data );
 
 private:
    SynFunc m_main;
@@ -170,6 +171,16 @@ void Context::onUnknownSymbol( UnknownSymbol* sym )
    std::cout << "CALLBACK: unknwon symbol -- pretty impossible: " <<
          sym->name().c_ize() << std::endl;
 }
+
+ void Context::onStaticData( Class* cls, void* data )
+ {
+    String temp;
+    cls->describe( data, temp );
+
+    std::cout << "CALLBACK: static data : " <<
+         temp.c_ize() << std::endl;
+    // for now, we'll let it leak.
+ }
 
 //==============================================================
 // The application

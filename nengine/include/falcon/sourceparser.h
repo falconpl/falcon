@@ -114,6 +114,7 @@ public:
    Parsing::Rule r_Expr_diff;
    Parsing::Rule r_Expr_eeq;
 
+   Parsing::Rule r_Expr_call;
    Parsing::Rule r_Expr_index;
    Parsing::Rule r_Expr_star_index;
    Parsing::Rule r_Expr_dot;

@@ -127,6 +127,28 @@ static void apply_expr_eeq( const Rule& r, Parser& p )
 }
 
 
+static void apply_expr_call( const Rule& r, Parser& p )
+{
+   // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << Expr << T_Closepar
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+   p.getNextToken();
+
+   // TODO: read the expressions in the pars
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( new ExprCall(
+         static_cast<Expression*>(v1->detachValue())
+      ), expr_deletor );
+
+   // static_cast<Expression*>(v2->detachValue())
+
+   p.simplify(4,ti);
+}
+
+
 static void apply_expr_index( const Rule& r, Parser& p )
 {
    // << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
@@ -137,7 +159,6 @@ static void apply_expr_index( const Rule& r, Parser& p )
    TokenInstance* v2 = p.getNextToken();
    p.getNextToken();
 
-   // Todo: set lvalues and define symbols in the module
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
@@ -354,10 +375,23 @@ static void apply_Atom_String ( const Rule& r, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* ti = p.getNextToken();
 
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue(ti->detachString()), expr_deletor );
+
+   // get the string and it's class, to generate a static UserValue
+   String* s = ti->detachString();
+   Class* stringClass = Engine::instance()->stringClass();
+   // tell the context that we have a new string around.
+   ctx->onStaticData( stringClass, s );
+
+   // set it in the expression
+   Item itm;
+   itm.setUser( stringClass, s );
+   ti2->setValue( new ExprValue(itm), expr_deletor );
+
+   // remove the token in the stack.
    p.simplify(1,ti2);
 }
 
@@ -665,6 +699,7 @@ SourceParser::SourceParser():
       << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
       << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
 
+      << (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << Expr << T_Closepar )
       << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
       << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
