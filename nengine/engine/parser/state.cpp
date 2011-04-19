@@ -69,7 +69,6 @@ void State::process( Parser& parser )
    while( iter != _p->m_nt.end() )
    {
       NonTerminal* nt = *iter;
-
       TRACE1("State::process -- checking %s", nt->name().c_ize() );
       
       t_matchType mt = nt->match( parser );
@@ -82,20 +81,10 @@ void State::process( Parser& parser )
          return;
       }
 
-      if( mt == t_tooShort )
-      {
-         bTryAgain = true;
-      }
-      
       ++iter;
    }
 
    TRACE1("State::process -- exit without match %s", name().c_ize() );
-
-   if( ! bTryAgain && parser.availTokens() > 2 )
-   {
-      parser.syntaxError();
-   }
 }
 
 }

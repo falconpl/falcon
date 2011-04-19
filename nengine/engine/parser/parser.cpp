@@ -22,11 +22,11 @@
 #include <falcon/parser/state.h>
 #include <falcon/codeerror.h>
 #include <falcon/trace.h>
+#include <falcon/genericerror.h>
 
 #include <falcon/error.h>
 
 #include "./parser_private.h"
-#include "falcon/genericerror.h"
 
 namespace Falcon {
 namespace Parsing {
@@ -36,6 +36,8 @@ Parser::Private::Private():
    m_nextTokenPos(0),
    m_nextToken(0)
 {
+   m_pCurPath = 0;
+   m_curPathIter = m_paths.end();
 }
 
 Parser::Private::~Private()
@@ -50,6 +52,8 @@ Parser::Private::~Private()
          ++iter;
       }
    }
+
+   clearPaths();
 }
 
 
@@ -69,6 +73,29 @@ void Parser::Private::clearTokens()
 void Parser::Private::resetMatch()
 {
    m_stackPos = 0;
+}
+
+void Parser::Private::clearPaths()
+{
+   if ( m_curPathIter == m_paths.end() )
+   {
+      delete m_pCurPath;
+   }
+   else
+   {
+      // the current path will be destroyed with the others
+      m_curPathIter = m_paths.end();
+   }
+
+   // Null current path
+   m_pCurPath = 0;
+
+   PathSet::iterator iter = m_paths.begin();
+   while( iter != m_paths.end() )
+   {
+      delete *iter;
+      ++iter;
+   }
 }
 
 //========================================================
@@ -230,6 +257,87 @@ void Parser::clearErrors()
 void Parser::clearTokens()
 {
    _p->m_vTokens.clear();
+}
+
+void Parser::clearPaths()
+{
+   _p->clearPaths();
+}
+
+
+void Parser::descendInto( NonTerminal* nt )
+{
+   if( _p->m_pCurPath == 0 )
+   {
+      _p->m_pCurPath = new Private::Path;
+   }
+   _p->m_pCurPath->push_back(nt);
+}
+
+void Parser::subscribePath()
+{
+   if ( _p->m_curPathIter == _p->m_paths.end() )
+   {
+      _p->m_paths.push_back(_p->m_pCurPath);
+   }
+}
+
+
+void Parser::pathFailed()
+{
+   // reset the current path iterator.
+   if( _p->m_curPathIter != _p->m_paths.end() )
+   {
+      _p->m_paths.erase(_p->m_curPathIter);
+      _p->m_curPathIter = _p->m_paths.end();
+   }
+
+   // is this our only hope?
+   if( _p->m_paths.empty() )
+   {
+      // search for a grammar error handler.
+      Private::Path::const_reverse_iterator riter = _p->m_pCurPath->rbegin();
+      while( riter != _p->m_pCurPath->rend() )
+      {
+         NonTerminal* nt = *riter;
+         if( nt->errorHandler() != 0 )
+         {
+            nt->errorHandler()(nt, this);
+            delete _p->m_pCurPath;
+            _p->m_pCurPath = 0;
+            return;
+         }
+
+         ++riter;
+      }
+      
+      // if we're here, then we found no valid grammar error parser.
+      //TODO: Use a callback in the context instead?
+      syntaxError();
+   }
+
+   // else, there are other options around.
+
+   delete _p->m_pCurPath;
+   _p->m_pCurPath = 0;
+}
+
+
+bool Parser::hasPaths()
+{
+   return !_p->m_paths.empty();
+}
+
+
+void Parser::emergeFrom()
+{
+   _p->m_pCurPath->pop_back();
+   // Not really necessay; just a precaution
+   if( _p->m_pCurPath->empty() )
+   {
+      delete _p->m_pCurPath;
+      _p->m_pCurPath = 0;
+   }
 }
 
 
@@ -419,8 +527,27 @@ void Parser::parserLoop()
       
       TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 
-      State* curState = _p->m_lStates.back();
-      curState->process( *this );
+      // When  having already an idea of what can match...
+      if( hasPaths() )
+      {
+         // go for it.
+         followPaths();
+         // Failure is managed by follow paths.
+      }
+      else
+      {
+         //... let the current state to find a path for us.
+         State* curState = _p->m_lStates.back();
+         curState->process( *this );
+
+         // Total failure?
+         if( (! hasPaths() ) && availTokens() > 2 )
+         {
+            // this clears the stack.
+            syntaxError();
+         }
+      }
+
       _p->m_vTokens.push_back( _p->m_nextToken );
       _p->m_nextToken = 0;
    }
@@ -428,6 +555,11 @@ void Parser::parserLoop()
    TRACE( "Parser::parserLoop -- done on request", 0 );
 }
 
+
+void Parser::followPaths()
+{
+   TRACE( "Parser::followPaths -- entering with %d paths", _p->m_paths.size() );
+}
 
 void Parser::syntaxError()
 {

@@ -57,6 +57,7 @@ public:
     */
    NonTerminal& r(Rule& rule);
 
+   
    /** Return true if a match is confirmed.
     \param p The parser on which the matches are checked.
     \return true if any of the rules in the  NonTerminal is matched. */
@@ -68,7 +69,44 @@ public:
       return *this; 
    }
 
+   /** Callback for parsing error routine.
+    \see setErrorHandler
+    */
+   typedef void (*ErrorHandler)(NonTerminal* nt, Parser* p);
+
+   /** Sets the error handler for this routine.
+   \param hr An handler routine that is invoked on syntax error.
+
+    Once a route has invariabily pinpointed a non-terminal token as the
+    only possible one, in case the none of its rule can be matched as the
+    analisys proceeds, an error in the parsing structure is detected.
+
+    Tokens are then back-tracked so that the most specific error-handler that
+    has been set the most downwards in the rule hierarcy is found, and that
+    is invoked. If the process can't find any error handler up to the state root,
+    the gobal parser error handler is invoked.
+
+    A error handler should set an error in the parser through Parser::addError,
+    clear the current stack through Parser::simplify and eventually discard
+    more incoming tokens up to a simple match point via Parser::resynch. Alternately,
+    the current expression may be kept in the stack so that further error detection
+    can be performed on the rest of the input.
+    
+    \see Parser::resynch
+    */
+   inline NonTerminal& setErrorHandler( ErrorHandler hr ) {
+      m_eh = hr;
+      return *this;
+   }
+
+   inline ErrorHandler errorHandler() const { return m_eh; }
+   
+   /** Proxy to setErrorHandler. */
+   inline NonTerminal& operator << ( ErrorHandler hr ) { return setErrorHandler(hr); }
+   
 private:
+   ErrorHandler m_eh;
+   
    class Private;
    Private* _p;
 };

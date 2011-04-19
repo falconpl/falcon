@@ -394,6 +394,57 @@ public:
     without having to recreate them.
     */
    void interactive( bool mode ) { m_bInteractive = mode; }
+
+
+   /** Subscribes a new non-terminal for parsing.
+    \param nt The nonterminal in which the parser is descending.
+
+    When a non-terminal is processed, it is subscribed. Each non-termina.
+    subscribes itself, specifying the path that was reached and helping into
+    reducing subsequent sub-checks.
+
+    */
+   void descendInto( NonTerminal* nt );
+
+   /** Clears the paths after a failed or complete check.
+    After ta
+    */
+   void clearPaths();
+
+   /** Subscribes the current path for further checking.
+
+    The current path (sequence of descendInto()) is considered a possible match
+    for further parsing.
+
+    It will be re-activated later on when new tokens are read.
+    */
+   void subscribePath();
+
+   /** Marks the current path as failed.
+
+    The current path is considered failed; it is removed from the universe of
+    possible paths, and if this is the last path the error reporting sequence
+    is fired.
+
+    Error reporting is performing by popping the nonterminal tokens in the
+    path and firing the error handler of the topmost non-terminal, if any.
+    If none of the non-terminals in the path exposes an error handler, a generic
+    syntax error is generated.
+    */
+   void pathFailed();
+
+   /** Checks if the parser has some possible path to follow.
+    \return true If some Nonterminal previously returned "incomplete".
+    */
+   bool hasPaths();
+
+
+   /** Reverse the descend-into operation.
+
+    This pops the last non-terminal symbol that was checked by the parser.
+    */
+   void emergeFrom();
+
    //=================================================================
    // Common terminals
    Terminal T_EOF;
@@ -409,6 +460,7 @@ protected:
    bool m_bInteractive;
 
    void parserLoop();
+   void followPaths();
    
 private:
    friend class Rule;

@@ -44,6 +44,7 @@ class NonTerminal::Private
 NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
    Token(name)
 {
+   m_eh = 0;
    m_bRightAssoc = bRightAssoc;
    m_bNonTerminal = true;
    _p = new Private;
@@ -53,6 +54,7 @@ NonTerminal::NonTerminal():
    Token("Unnamed NT")
 {
    m_bNonTerminal = true;
+   m_eh = 0;
    _p = new Private;
 }
 

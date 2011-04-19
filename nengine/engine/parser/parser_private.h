@@ -37,6 +37,8 @@ class Parser::Private
    typedef std::map<String, State*> StateMap;
 
    typedef std::vector<TokenInstance*> TokenStack;
+   typedef std::vector<NonTerminal*> Path;
+   typedef std::vector<Path*> PathSet;
 
    StateStack m_lStates;
    TokenStack m_vTokens;
@@ -50,10 +52,15 @@ class Parser::Private
    size_t m_stackPos;
    size_t m_nextTokenPos;
 
+   Path* m_pCurPath;
+   PathSet m_paths;
+   PathSet::iterator m_curPathIter;
+   
    Private();
    ~Private();
    
    void clearTokens();
+   void clearPaths();
 
    /** Resets the temporary values set in  top-level match. */
    void resetMatch();
