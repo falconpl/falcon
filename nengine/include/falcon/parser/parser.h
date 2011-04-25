@@ -396,54 +396,32 @@ public:
    void interactive( bool mode ) { m_bInteractive = mode; }
 
 
-   /** Subscribes a new non-terminal for parsing.
-    \param nt The nonterminal in which the parser is descending.
+   //=======================================
+   // To be documented
+   typedef void* Path;
 
-    When a non-terminal is processed, it is subscribed. Each non-termina.
-    subscribes itself, specifying the path that was reached and helping into
-    reducing subsequent sub-checks.
+   Path createPath() const;
+   Path copyPath( Path p ) const;
+   void discardPath( Path p ) const;
+   void confirmPath( Path p ) const;
+   void addRuleToPath( Path p, Rule* r ) const;
 
-    */
-   void descendInto( NonTerminal* nt );
+     // -----
 
-   /** Clears the paths after a failed or complete check.
-    After ta
-    */
-   void clearPaths();
+   void addRuleToPath( const Rule* r ) const;
+   void addParseFrame( NonTerminal* token, int pos = -1);
 
-   /** Subscribes the current path for further checking.
+   size_t rulesDepth() const;
+   size_t frameDepth() const;
+   void unroll( size_t fd, size_t rd );
 
-    The current path (sequence of descendInto()) is considered a possible match
-    for further parsing.
+   bool findPaths( bool bIncremental );
+   void applyPaths();
+   void parseError();
+   void setFramePriority( const Token& token );
 
-    It will be re-activated later on when new tokens are read.
-    */
-   void subscribePath();
-
-   /** Marks the current path as failed.
-
-    The current path is considered failed; it is removed from the universe of
-    possible paths, and if this is the last path the error reporting sequence
-    is fired.
-
-    Error reporting is performing by popping the nonterminal tokens in the
-    path and firing the error handler of the topmost non-terminal, if any.
-    If none of the non-terminals in the path exposes an error handler, a generic
-    syntax error is generated.
-    */
-   void pathFailed();
-
-   /** Checks if the parser has some possible path to follow.
-    \return true If some Nonterminal previously returned "incomplete".
-    */
-   bool hasPaths();
-
-
-   /** Reverse the descend-into operation.
-
-    This pops the last non-terminal symbol that was checked by the parser.
-    */
-   void emergeFrom();
+   
+   TokenInstance* getCurrentToken( int& pos ) const;
 
    //=================================================================
    // Common terminals
@@ -461,6 +439,12 @@ protected:
 
    void parserLoop();
    void followPaths();
+   
+   // Checks performed after a new token arrived.
+   void onNewToken();
+
+   // simplifies the topmost rule.
+   void applyCurrentRule();
    
 private:
    friend class Rule;

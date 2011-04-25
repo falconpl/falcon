@@ -97,7 +97,7 @@ public:
    const String& name() const { return m_name; }   
 
    /** Checks if the rule is currently matching. */
-   t_matchType match( Parser& p ) const;
+   bool match( Parser& p, bool bIncremental ) const;
 
    /** Sets the non-terminal in which this rule is stored.
     \param nt The non-terminal symbol using this rule.
@@ -119,6 +119,12 @@ public:
    Rule& operator <<( Token& tok ) { return t(tok); }
    Rule& operator <<( const String& n ) { m_name = n; return *this; }
    Rule& operator <<( Apply func ) { m_apply = func; return *this; }
+
+   /** Count of tokens in the rule.
+    \return The number of tokens that are needed for this rule to match.
+    */
+   int arity() const;
+   Token* getTokenAt( int pos ) const;
 
 private:
    class Private;

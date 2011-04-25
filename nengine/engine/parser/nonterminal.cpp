@@ -14,7 +14,7 @@
 */
 
 #include <falcon/parser/nonterminal.h>
-#include <falcon/parser/rule.h>
+#include <falcon/parser/parser.h>
 #include <falcon/trace.h>
 
 #include <deque>
@@ -72,51 +72,39 @@ NonTerminal& NonTerminal::r(Rule& rule)
 }
 
 
-t_matchType NonTerminal::match( Parser& parser )
+bool NonTerminal::findPaths( Parser& p ) const
 {
-   TRACE( "NonTerminal::match %s -- scanning", name().c_ize() );
+   TRACE( "NonTerminal::findPaths %s -- scanning", name().c_ize() );
+
+   // initialize frame status
+   int nBaseFrames = p.frameDepth();
+   int nBaseRules = p.rulesDepth();
 
    // loop through our rules.
    Private::RuleList::iterator iter = _p->m_rules.begin();
    Private::RuleList::iterator end = _p->m_rules.end();
-   Rule* winner = 0;
 
    while( iter != end )
    {
-      Rule* rule = *iter;
-      t_matchType ruleMatch = rule->match( parser );
-      if( ruleMatch == t_match )
-      {
-         // wow, we have a winner.
-         if (winner == 0 )
-         {
-            winner = rule;
-            TRACE1( "NonTerminal::match %s -- electing winner %s",
-                  name().c_ize(), winner->name().c_ize() );
-         }
-      }
-      else if( ruleMatch == t_tooShort )
-      {
-         // the rule cannot be decided.
-         TRACE( "NonTerminal::match %s -- return because non-decidible ", name().c_ize() );
-         return t_tooShort;
-      }
+      const Rule* rule = *iter;
 
+      p.addRuleToPath(rule);
+      if( rule->match( p, false ) )
+      {
+         TRACE( "NonTerminal::findPaths(%s) -- match '%s'", name().c_ize(), rule->name().c_ize() );
+         return true;
+      }
+      
+      p.unroll( nBaseFrames, nBaseRules ); // discard also the old winning rule
+   
       // If it doesn't match, we don't care.
       ++iter;
    }
 
-   // ok, do we have a winner?
-   if( winner != 0 )
-   {
-      TRACE1( "NonTerminal::match %s -- Applying winner %s", name().c_ize(), winner->name().c_ize() );
-      winner->apply( parser );
-      return t_match;
-   }
-
-   TRACE( "NonTerminal::match %s -- return with no match", name().c_ize() );
-   return t_nomatch;
+   TRACE( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
+   return false;
 }
+
 
 }
 }

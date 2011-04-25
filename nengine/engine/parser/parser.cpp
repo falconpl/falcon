@@ -32,18 +32,15 @@ namespace Falcon {
 namespace Parsing {
 
 Parser::Private::Private():
-   m_stackPos(0),
-   m_nextTokenPos(0),
-   m_nextToken(0)
+   m_nextTokenPos(0)
 {
-   m_pCurPath = 0;
-   m_curPathIter = m_paths.end();
 }
 
 Parser::Private::~Private()
 {
-   delete m_nextToken;
    clearTokens();
+   
+   // clear the lexers
    {
       LexerStack::iterator iter = m_lLexers.begin();
       while( iter != m_lLexers.end() )
@@ -52,50 +49,33 @@ Parser::Private::~Private()
          ++iter;
       }
    }
-
-   clearPaths();
 }
 
 
 void Parser::Private::clearTokens()
 {
-   TokenStack::iterator iter = m_vTokens.begin();
-   while( iter != m_vTokens.end() )
+   TokenStack::iterator iter = m_tokenStack.begin();
+   while( iter != m_tokenStack.end() )
    {
       delete *iter;
       ++iter;
    }
-   m_vTokens.clear();
+   m_tokenStack.clear();
 }
 
 
-/** Resets the temporary values set in  top-level match. */
-void Parser::Private::resetMatch()
+Parser::Private::ParseFrame::~ParseFrame()
 {
-   m_stackPos = 0;
-}
+   TRACE2("Destroying ParseFrame at %p", this );
+   /*Alternatives::iterator iter = m_candidates.begin();
 
-void Parser::Private::clearPaths()
-{
-   if ( m_curPathIter == m_paths.end() )
-   {
-      delete m_pCurPath;
-   }
-   else
-   {
-      // the current path will be destroyed with the others
-      m_curPathIter = m_paths.end();
-   }
-
-   // Null current path
-   m_pCurPath = 0;
-
-   PathSet::iterator iter = m_paths.begin();
-   while( iter != m_paths.end() )
+   while( iter != m_candidates.end() )
    {
       delete *iter;
       ++iter;
    }
+*/
+   //m_candidates.clear();
 }
 
 //========================================================
@@ -200,7 +180,7 @@ bool Parser::parse( const String& mainState )
 
 bool Parser::isComplete() const
 {
-   return _p->m_vTokens.empty() || _p->m_vTokens.front()->token().id() == T_EOF.id();
+   return _p->m_tokenStack.empty() || _p->m_tokenStack.front()->token().id() == T_EOF.id();
 }
 
 
@@ -221,19 +201,19 @@ GenericError* Parser::makeError() const
    Private::ErrorList::iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
-      ErrorDef* def = *iter;
+      ErrorDef& def = *iter;
 
-      String sExtra = def->sExtra;
-      if( def->nOpenContext != 0 )
+      String sExtra = def.sExtra;
+      if( def.nOpenContext != 0 )
       {
          if( sExtra.size() != 0 )
             sExtra += " -- ";
          sExtra += "from line ";
-         sExtra.N(def->nOpenContext);
+         sExtra.N(def.nOpenContext);
       }
       
-      SyntaxError* err = new SyntaxError( ErrorParam( def->nCode, def->nLine )
-            .module(def->sUri)
+      SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
+            .module(def.sUri)
             .extra(sExtra));
       cerr->appendSubError(err);
       ++iter;
@@ -245,99 +225,41 @@ GenericError* Parser::makeError() const
 
 void Parser::clearErrors()
 {
-   Private::ErrorList::iterator iter = _p->m_lErrors.begin();
-   while( iter != _p->m_lErrors.end() )
-   {
-      delete *iter;
-      ++iter;
-   }
+   _p->m_lErrors.clear();
 }
 
 
 void Parser::clearTokens()
 {
-   _p->m_vTokens.clear();
+   if( _p->m_tokenStack.size() > 0 )
+      simplify(_p->m_tokenStack.size(), 0);
 }
 
-void Parser::clearPaths()
+int32 Parser::tokenCount()
 {
-   _p->clearPaths();
+   int nDepth = _p->m_pframes.empty() ? 0 : _p->m_pframes.back().m_nStackDepth;
+   return _p->m_tokenStack.size() - nDepth;
 }
 
-
-void Parser::descendInto( NonTerminal* nt )
+int32 Parser::availTokens()
 {
-   if( _p->m_pCurPath == 0 )
+   return _p->m_tokenStack.size() - _p->m_nextTokenPos;
+}
+
+TokenInstance* Parser::getNextToken()
+{
+   if( _p->m_nextTokenPos >= _p->m_tokenStack.size() )
    {
-      _p->m_pCurPath = new Private::Path;
-   }
-   _p->m_pCurPath->push_back(nt);
-}
-
-void Parser::subscribePath()
-{
-   if ( _p->m_curPathIter == _p->m_paths.end() )
-   {
-      _p->m_paths.push_back(_p->m_pCurPath);
-   }
-}
-
-
-void Parser::pathFailed()
-{
-   // reset the current path iterator.
-   if( _p->m_curPathIter != _p->m_paths.end() )
-   {
-      _p->m_paths.erase(_p->m_curPathIter);
-      _p->m_curPathIter = _p->m_paths.end();
+      return 0;
    }
 
-   // is this our only hope?
-   if( _p->m_paths.empty() )
-   {
-      // search for a grammar error handler.
-      Private::Path::const_reverse_iterator riter = _p->m_pCurPath->rbegin();
-      while( riter != _p->m_pCurPath->rend() )
-      {
-         NonTerminal* nt = *riter;
-         if( nt->errorHandler() != 0 )
-         {
-            nt->errorHandler()(nt, this);
-            delete _p->m_pCurPath;
-            _p->m_pCurPath = 0;
-            return;
-         }
-
-         ++riter;
-      }
-      
-      // if we're here, then we found no valid grammar error parser.
-      //TODO: Use a callback in the context instead?
-      syntaxError();
-   }
-
-   // else, there are other options around.
-
-   delete _p->m_pCurPath;
-   _p->m_pCurPath = 0;
+   return _p->m_tokenStack[_p->m_nextTokenPos++];
 }
 
-
-bool Parser::hasPaths()
+void Parser::resetNextToken()
 {
-   return !_p->m_paths.empty();
-}
-
-
-void Parser::emergeFrom()
-{
-   _p->m_pCurPath->pop_back();
-   // Not really necessay; just a precaution
-   if( _p->m_pCurPath->empty() )
-   {
-      delete _p->m_pCurPath;
-      _p->m_pCurPath = 0;
-   }
+   int nDepth = _p->m_pframes.empty() ? 0 : _p->m_pframes.back().m_nStackDepth;
+   _p->m_nextTokenPos = nDepth;
 }
 
 
@@ -346,7 +268,7 @@ void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
    Private::ErrorList::const_iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
-      const ErrorDef& def = **iter;
+      const ErrorDef& def = *iter;
       
       if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
          break;
@@ -385,66 +307,44 @@ void Parser::popLexer()
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
 {
-   _p->m_lErrors.push_back(new ErrorDef(code, uri, l, c, ctx, extra));
+   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx, extra));
 }
 
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
 {
-   _p->m_lErrors.push_back(new ErrorDef(code, uri, l, c, ctx));
+   _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
 }
 
-
-int32 Parser::tokenCount()
-{
-   return _p->m_vTokens.size();
-}
-
-int32 Parser::availTokens()
-{
-   return _p->m_vTokens.size() - _p->m_nextTokenPos;
-}
-
-TokenInstance* Parser::getNextToken()
-{
-   if( _p->m_nextTokenPos >= _p->m_vTokens.size() )
-   {
-      return 0;
-   }
-
-   return _p->m_vTokens[_p->m_nextTokenPos++];
-}
-
-void Parser::resetNextToken()
-{
-   _p->m_nextTokenPos = _p->m_stackPos;
-}
 
 void Parser::simplify( int32 tcount, TokenInstance* newtoken )
 {
    TRACE( "Parser::simplify -- %d tokens -> %s",
          tcount, newtoken ? newtoken->token().name().c_ize() : "<nothing>" );
 
-   if( tcount < 0 || tcount + _p->m_stackPos > _p->m_vTokens.size() )
+   int nDepth = _p->m_pframes.empty() ? 0 : _p->m_pframes.back().m_nStackDepth;
+
+   if( tcount < 0 || tcount + nDepth > _p->m_tokenStack.size() )
    {
       throw new CodeError(ErrorParam(e_underflow, __LINE__, __FILE__ )
             .extra("Parser::simplify - tcount out of range"));
    }
 
+
    if( tcount != 0 )
    {
-      size_t end = _p->m_stackPos + tcount;
-      for( size_t pos = _p->m_stackPos; pos < end; ++pos )
+      size_t end = nDepth + tcount;
+      for( size_t pos = nDepth; pos < end; ++pos )
       {
-         delete _p->m_vTokens[pos];
+         delete _p->m_tokenStack[pos];
       }
 
-      _p->m_vTokens.erase( _p->m_vTokens.begin() + _p->m_stackPos, _p->m_vTokens.begin() + end );
+      _p->m_tokenStack.erase( _p->m_tokenStack.begin() + nDepth, _p->m_tokenStack.begin() + end );
    }
 
    if( newtoken != 0 )
    {
-      _p->m_vTokens.insert( _p->m_vTokens.begin() + _p->m_stackPos, newtoken );
+      _p->m_tokenStack.insert( _p->m_tokenStack.begin() + nDepth, newtoken );
    }
 }
 
@@ -474,6 +374,144 @@ bool Parser::step()
    return ! hasErrors();
 }
 
+
+
+void Parser::syntaxError()
+{
+   TRACE( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
+
+   String uri;
+   int line = 0;
+   int chr = 0;
+
+   if( ! _p->m_lLexers.empty() )
+   {
+      uri = _p->m_lLexers.back()->uri();
+   }
+
+   if( ! _p->m_tokenStack.empty() )
+   {
+      line = _p->m_tokenStack.front()->line();
+      chr = _p->m_tokenStack.front()->chr();
+   }
+
+   addError( e_syntax, uri, line, chr );
+
+   _p->m_pframes.clear();
+   size_t tc = tokenCount();
+   if( tc > 0 )
+   {
+      simplify( tc, 0 );
+   }
+}
+
+
+Parser::Path Parser::createPath() const
+{
+   return new Private::RulePath;
+}
+
+
+Parser::Path Parser::copyPath( Path p ) const
+{
+   return new Private::RulePath( *(Private::RulePath*) p );
+}
+
+
+void Parser::discardPath( Parser::Path p ) const
+{
+   delete (Private::RulePath*) p;
+}
+
+
+void Parser::confirmPath( Parser::Path p ) const
+{
+   //_p->m_pframes.back().m_candidates.push_back( (Private::RulePath*) p );
+}
+
+
+void Parser::addRuleToPath( Parser::Path p, Rule* r ) const
+{
+   Private::RulePath* path = ((Private::RulePath*) p);
+   //path->push_front(r);
+}
+
+
+void Parser::addRuleToPath( const Rule* r ) const
+{
+   _p->m_pframes.back().m_path.push_back( r );
+}
+
+String Parser::dumpStack() const
+{
+   String sTokens;
+
+   int nDepth = _p->m_pframes.empty() ? 0 : _p->m_pframes.back().m_nStackDepth;
+
+   for( int nTokenLoop = 0; nTokenLoop < _p->m_tokenStack.size(); ++nTokenLoop )
+   {
+      if ( sTokens.size() > 0 )
+      {
+         sTokens += ", ";
+      }
+
+      if( nTokenLoop == nDepth )
+      {
+         sTokens += ">> ";
+      }
+
+      sTokens += _p->m_tokenStack[nTokenLoop]->token().name();
+   }
+
+   return sTokens;
+}
+
+
+void Parser::addParseFrame( NonTerminal* token, int pos )
+{
+   if( pos < 0 )
+   {
+      pos = _p->m_tokenStack.size()-1;
+   }
+   
+   _p->m_pframes.push_back(Private::ParseFrame(token,pos));
+   resetNextToken();
+}
+
+size_t Parser::rulesDepth() const
+{
+   Private::ParseFrame& frame = _p->m_pframes.back();
+   return frame.m_path.size();
+}
+
+size_t Parser::frameDepth() const
+{
+   return _p->m_pframes.size();
+}
+
+void Parser::unroll( size_t fd, size_t rd )
+{
+   _p->m_pframes.resize(fd);
+   if( fd > 0 )
+   {
+      _p->m_pframes.back().m_path.resize(rd);
+   }
+}
+
+
+void Parser::setFramePriority( const Token& t )
+{
+   Private::ParseFrame& frame = _p->m_pframes.back();
+   if ( t.prio() != 0 && (frame.m_nPriority == 0 || t.prio() < frame.m_nPriority ) )
+   {
+      frame.m_nPriority = t.prio();
+      // use the right-associativity of the strongest operator.
+      frame.m_bIsRightAssoc = t.isRightAssoc();
+      frame.m_prioFrame = _p->m_tokenStack.size();
+   }
+}
+
+
 //==========================================
 // Main parser algorithm.
 //
@@ -499,7 +537,6 @@ void Parser::parserLoop()
       {
          if( m_bInteractive )
          {
-            _p->m_nextToken = 0;
             TRACE( "Parser::parserLoop -- done on interactive lexer token shortage", 0 );
             return;
          }
@@ -513,107 +550,296 @@ void Parser::parserLoop()
          else
          {
             lexer = _p->m_lLexers.back();
-            TokenInstance* ti = lexer->nextToken();
+            ti = lexer->nextToken();
          }
       }
 
       if( ti == 0 )
       {
          TRACE( "Parser::parserLoop -- Last loop with EOF as next", 0 );
+         return;
          ti = new TokenInstance(0, 0, T_EOF );
       }
 
-      _p->m_nextToken = ti;
-      
+      _p->m_tokenStack.push_back(ti);
+
       TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
-
-      // When  having already an idea of what can match...
-      if( hasPaths() )
-      {
-         // go for it.
-         followPaths();
-         // Failure is managed by follow paths.
-      }
-      else
-      {
-         //... let the current state to find a path for us.
-         State* curState = _p->m_lStates.back();
-         curState->process( *this );
-
-         // Total failure?
-         if( (! hasPaths() ) && availTokens() > 2 )
-         {
-            // this clears the stack.
-            syntaxError();
-         }
-      }
-
-      _p->m_vTokens.push_back( _p->m_nextToken );
-      _p->m_nextToken = 0;
+      
+      onNewToken();
    }
 
    TRACE( "Parser::parserLoop -- done on request", 0 );
 }
 
 
-void Parser::followPaths()
+void Parser::onNewToken()
 {
-   TRACE( "Parser::followPaths -- entering with %d paths", _p->m_paths.size() );
-}
-
-void Parser::syntaxError()
-{
-   TRACE( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
-
-   String uri;
-   int line = 0;
-   int chr = 0;
-
-   if( ! _p->m_lLexers.empty() )
+   // If we don't have parsing frames, try to build new ones from the current state.
+   if( _p->m_pframes.empty() )
    {
-      uri = _p->m_lLexers.back()->uri();
-   }
+      TRACE("Parser::onNewToken -- starting new path finding", 0 );
+      
+      //... let the current state to find a path for us.
+      State* curState = _p->m_lStates.back();
 
-   if( ! _p->m_vTokens.empty() )
-   {
-      line = _p->m_vTokens.front()->line();
-      chr = _p->m_vTokens.front()->chr();
-   }
-
-   addError( e_syntax, uri, line, chr );
-
-   _p->m_nextTokenPos = _p->m_stackPos = 0;
-   simplify( availTokens(), 0 );
-}
-
-
-String Parser::dumpStack() const
-{
-   String sTokens;
-
-   for( int nTokenLoop = 0; nTokenLoop < _p->m_vTokens.size(); ++nTokenLoop )
-   {
-      if ( sTokens.size() > 0 )
+      // still empty?
+      if( curState->findPaths( *this ) )
       {
-         sTokens += ", ";
+         TRACE("Parser::onNewToken -- path found in current state.", 0 );
+      }
+      else
+      {
+         TRACE("Parser::onNewToken -- path NOT found.", 0 );
+         // then, we have a syntax error
+         syntaxError();
+         return;
+      }
+   }
+   else
+   {
+      // process existing frames.      
+      if (! findPaths( true ) )
+      {
+         // may fail if incremental, try again in full mode.
+         if ( ! findPaths( false ) )
+         {
+            TRACE("Parser::onNewToken -- raising because failed in full mode.", 0 );
+            parseError();
+            return;
+         }
+      }
+   }
+
+   // try to simplify the stack, if possible.
+   applyPaths();
+}
+
+
+TokenInstance* Parser::getCurrentToken( int& pos ) const
+{
+   if ( _p->m_pframes.empty() || _p->m_tokenStack.empty() )
+   {
+      TRACE("Parser::getCurrentToken -- stack empty", 0 );
+      return 0;
+   }
+
+   Private::ParseFrame& frame = _p->m_pframes.back();
+   pos = _p->m_tokenStack.size();
+   fassert( pos > 0 );
+   pos--;
+
+   TokenInstance* ret = _p->m_tokenStack[pos];
+   pos -= frame.m_nStackDepth;
+   fassert( pos >= 0 );
+   TRACE("Parser::getCurrentToken -- current token is at %d: %s", 
+         pos, ret->token().name().c_ize() );
+
+   return ret;
+}
+
+bool Parser::findPaths( bool bIncremental )
+{
+   Private::RulePath& path = _p->m_pframes.back().m_path;
+
+   if( !path.empty() )
+   {
+      TRACE("Parser::findPaths -- continuing on existing path '%s'", path.back()->name().c_ize() );
+      int nBaseFrames = frameDepth();
+      int nBaseRules = rulesDepth();
+
+      if( path.back()->match( *this, bIncremental ) )
+      {
+         return true;
       }
 
-      if( nTokenLoop == _p->m_stackPos )
+      unroll( nBaseFrames, nBaseRules );
+
+      if ( ! bIncremental )
       {
-         sTokens += ">> ";
+         TRACE("Parser::findPaths -- existing path failed, trying with full on %s",
+               _p->m_pframes.back().m_owningToken->name().c_ize() );
+
+         path.clear();
+         return _p->m_pframes.back().m_owningToken->findPaths(*this);
       }
-
-      sTokens += _p->m_vTokens[nTokenLoop]->token().name();
+      return false;
    }
-
-   if( _p->m_nextToken != 0 )
+   else
    {
-      sTokens += " -- next: " + _p->m_nextToken->token().name();
+      TRACE("Parser::findPaths -- no existing path, trying with full", 0 );
+      return _p->m_pframes.back().m_owningToken->findPaths(*this);
    }
-   
-   return sTokens;
 }
 
+
+void Parser::parseError()
+{
+   TRACE("Parser::parseError -- raising now", 0 );
+   // find an error handler in the current rule frame.
+   // if not present, unroll the frame and try again
+   // -- fall back to syntax error.
+   while( ! _p->m_pframes.empty() )
+   {
+      Private::ParseFrame& frame = _p->m_pframes.back();
+
+      // unroll the tokens in the stack.
+      simplify( _p->m_tokenStack.size() - frame.m_nStackDepth, 0 );
+
+      Private::RulePath::reverse_iterator iter = frame.m_path.rbegin();
+
+      while( iter != frame.m_path.rend() )
+      {
+         const Rule* rule = *iter;
+         if( rule->parent().errorHandler() != 0 )
+         {
+            _p->m_pframes.pop_back();
+            TRACE("Parser::parseError -- applying error handler for %s",
+                  rule->parent().name().c_ize() );
+            
+            rule->parent().errorHandler()( &rule->parent(), this );
+            // we're done.
+            return;
+         }
+         ++iter;
+      }
+
+      if( frame.m_owningToken->errorHandler() != 0 )
+      {
+         _p->m_pframes.pop_back();
+         TRACE("Parser::parseError -- applying error handler for frame master '%s'",
+                  frame.m_owningToken->name().c_ize() );
+
+         frame.m_owningToken->errorHandler()( frame.m_owningToken, this );
+         // we're done.
+         return;
+      }
+
+      TRACE1("Parser::parseError -- error handler not found in current frame", 0);
+      _p->m_pframes.pop_back();
+   }
+
+   TRACE1("Parser::parseError -- error handler not found", 0);
+   syntaxError();
+}
+
+
+void Parser::applyPaths()
+{
+   TRACE("Parser::applyPaths -- begin", 0 );
+
+   while( ! _p->m_pframes.empty() )
+   {
+      // get the deepest rule in the deepest frame.
+      Private::ParseFrame& frame = _p->m_pframes.back();
+      if( frame.m_path.empty() )
+      {
+         TRACE("Parser::applyPaths -- current frame path is empty, need more tokens.", 0 );
+         return;
+      }
+      
+      const Rule* currentRule = frame.m_path.back();
+      int tcount = _p->m_tokenStack.size() - frame.m_nStackDepth;
+      int rsize = currentRule->arity();
+
+      // When arity is the same as tokens, we can simplify if we don't have
+      // prioritized tokens.
+      if (tcount == rsize)
+      {
+         if( (! frame.m_bIsRightAssoc) && frame.m_nPriority == 0 )
+         {
+            applyCurrentRule();
+            TRACE("Parser::applyPaths -- Applied on same arity, stack: %s",
+               dumpStack().c_ize() );
+         }
+         else
+         {
+            // else, we must wait for more tokens.
+            TRACE("Parser::applyPaths -- Need more tokens (same arity), returning.", 0);
+            return;
+         }
+      }
+
+      // When we have more tokens than arity, then it means we have some priority
+      // -- token in the stack
+      else if( tcount > rsize )
+      {
+         // In this case, we must check for the associativity/prio of topmost token.
+         const Token& next = _p->m_tokenStack.back()->token();
+         if( next.prio() == 0 || next.prio() > frame.m_nPriority
+            || ( next.prio() == frame.m_nPriority && ! frame.m_bIsRightAssoc ) )
+         {
+            // we can simplify.
+            applyCurrentRule();
+            TRACE("Parser::applyPaths -- Applied on small arity, stack: %s",
+               dumpStack().c_ize() );
+         }
+         else
+         {
+            TRACE("Parser::applyPaths -- small arity but considering prio/assoc", 0 );
+
+            int frameDepth = frame.m_prioFrame; // better to cache it now
+            int frameTokenPos = frameDepth - frame.m_nStackDepth;
+            // now, we're interested in the non-terminal that was following the
+            // operator.
+            Token* tok = currentRule->getTokenAt(frameTokenPos);
+            if( tok == 0 )
+            {
+               // then rule ended right after the prio token.
+               applyCurrentRule();
+               TRACE("Parser::applyPaths -- applying; prio operator was last in rule. Stack: %s",
+                  dumpStack().c_ize());
+            }
+            else if ( tok->isNT() )
+            {
+               TRACE("Parser::applyPaths -- small arity, descending into next token: %s",
+                  tok->name().c_ize());
+
+               NonTerminal* nt = static_cast<NonTerminal*>(tok);
+               addParseFrame(nt, frameDepth);
+            }
+         }
+      }
+      else 
+      {
+         // we simply don't have enough tokens.
+         TRACE("Parser::applyPaths -- Need more tokens (larger arity %d > %d), returning.", rsize, tcount);
+         return;
+      }
+
+      // if we're here, it means we applied at least one rule.
+      TRACE("Parser::applyPaths -- Rule applied or added, looping again", 0);
+
+      // now we must check if the effect of the reduction matches with the new
+      // current rule, else we must either descend a find a matching rule or
+      // declare failure.
+      if( ! _p->m_pframes.empty() && ! findPaths(false) )
+      {
+         // match will descend
+         parseError();
+         return;
+      }
+
+   }
+
+   TRACE("Parser::applyPaths -- frames completelty exausted", 0 );
+}
+
+void Parser::applyCurrentRule()
+{
+   Private::ParseFrame& frame = _p->m_pframes.back();
+   fassert( ! frame.m_path.empty() );
+   const Rule* currentRule = frame.m_path.back();
+
+   resetNextToken();
+   currentRule->apply(*this);
+
+   frame.m_path.pop_back();
+   // eventually, pop the frame.
+   if( frame.m_path.empty() )
+   {
+      _p->m_pframes.pop_back();
+   }
+}
 
 }
 }

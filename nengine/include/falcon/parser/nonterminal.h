@@ -57,12 +57,6 @@ public:
     */
    NonTerminal& r(Rule& rule);
 
-   
-   /** Return true if a match is confirmed.
-    \param p The parser on which the matches are checked.
-    \return true if any of the rules in the  NonTerminal is matched. */
-   t_matchType match( Parser& parser );
-
    inline NonTerminal& operator <<( Rule& rule ) { return r(rule); }
    inline NonTerminal& operator <<( const String& n ) {
       name(n);
@@ -72,7 +66,7 @@ public:
    /** Callback for parsing error routine.
     \see setErrorHandler
     */
-   typedef void (*ErrorHandler)(NonTerminal* nt, Parser* p);
+   typedef void (*ErrorHandler)(const NonTerminal* nt, Parser* p);
 
    /** Sets the error handler for this routine.
    \param hr An handler routine that is invoked on syntax error.
@@ -103,7 +97,8 @@ public:
    
    /** Proxy to setErrorHandler. */
    inline NonTerminal& operator << ( ErrorHandler hr ) { return setErrorHandler(hr); }
-   
+
+   bool findPaths( Parser& p ) const;
 private:
    ErrorHandler m_eh;
    

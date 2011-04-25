@@ -57,34 +57,34 @@ State& State::n(NonTerminal& nt)
 }
 
 
-void State::process( Parser& parser )
+bool State::findPaths( Parser& parser )
 {
-   TRACE("State::process -- enter %s", name().c_ize() );
+   TRACE("State::findPaths -- enter %s", name().c_ize() );
 
-   // Process all the rules in a state
+   // Process all the non terminals in this state
    Private::NTList::iterator iter = _p->m_nt.begin();
-
-   bool bTryAgain;
-
    while( iter != _p->m_nt.end() )
    {
       NonTerminal* nt = *iter;
-      TRACE1("State::process -- checking %s", nt->name().c_ize() );
-      
-      t_matchType mt = nt->match( parser );
+      TRACE1("State::findPaths -- checking %s", nt->name().c_ize() );
 
-      TRACE1("State::process -- nt-token %s %smatch",
-               nt->name().c_ize(), mt == t_match ? "": "doesn't " );
+      parser.addParseFrame(nt);
 
-      if ( mt == t_match )
+      // don't allow ambiguity
+      if ( nt->findPaths( parser ) )
       {
-         return;
+         TRACE("State::findPaths -- nt-token %s match",
+               nt->name().c_ize() );
+         return true;
       }
-
+      
+      parser.unroll(0,0);
+      
       ++iter;
    }
 
-   TRACE1("State::process -- exit without match %s", name().c_ize() );
+   TRACE("State::findPaths -- exit without match %s", name().c_ize() );
+   return false;
 }
 
 }

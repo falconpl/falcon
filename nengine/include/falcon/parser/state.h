@@ -48,7 +48,7 @@ public:
 
    State& n( NonTerminal& e );
 
-   void process( Parser& parser );
+   bool findPaths( Parser& parser );
 
    /** Adds a top-level rule to this state. */
    inline State& operator<<( NonTerminal &nt ) { return n(nt); }
