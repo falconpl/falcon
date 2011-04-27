@@ -43,6 +43,7 @@ public:
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
    Parsing::Terminal T_Minus;
+   Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Modulo;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_EqSign;
@@ -125,7 +126,9 @@ public:
    Parsing::Rule r_Expr_from_expr0;
    Parsing::Rule r_Expr_times;
    Parsing::Rule r_Expr_div;
+   Parsing::Rule r_Expr_pow;
    Parsing::Rule r_Expr_neg;
+   Parsing::Rule r_Expr_neg2;
    Parsing::Rule r_Expr_Atom;
 
    //================================================

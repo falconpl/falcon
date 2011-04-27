@@ -31,6 +31,7 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    Parsing::Lexer( uri, p, reader ),
    m_sline( 0 ),
    m_schr( 0 ),
+   m_hadOperator( 0 ),
    m_state( state_none ),
    m_nextToken(0)
 {
@@ -76,13 +77,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                m_state = state_shebang2;
             else
             {
-               m_state = state_line;
+               resetState();
                m_text = "#";
             }
             break;
 
          case state_shebang2:
-            if( chr == '\n' ) m_state = state_line;
+            if( chr == '\n' ) resetState();
             break;
 
          //-------------------------------------------
@@ -94,7 +95,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '/': previousState = m_state; m_state = state_enterComment; break;
                default:
                   unget(chr);
-                  m_state = state_line;
+                  resetState();
             }
             break;
 
@@ -212,7 +213,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
          case state_double_string:
             switch( chr ) {
-               case '"': m_chr++; m_state = state_line; return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               case '"': m_chr++; resetState(); return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
                case '\\': m_state = state_double_string_esc; break;
                case '\n': m_state = state_double_string_nl; break;
                default:
@@ -324,7 +325,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   else
                   {
                      m_reader->ungetChar(chr1);
-                     m_state = state_line;
+                     resetState();
                      return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
                   }
                }
@@ -354,7 +355,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   }
                   else
                   {
-                     m_state = state_line;
+                     resetState();
 
                      if ( isTokenLimit(chr) )
                      {
@@ -373,7 +374,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                uint64 retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseOctal( retval ) )
@@ -390,7 +391,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                uint64 retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseBin( retval ) )
@@ -410,7 +411,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                uint64 retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseHex( retval ) )
@@ -432,7 +433,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                int64 retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseInt( retval ) )
@@ -451,7 +452,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( isSymStart(chr) )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                int64 retval = 1; // to avoid stupid division by zero in case of errors
                m_text.remove(m_text.length()-1,1);
@@ -465,7 +466,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             {
               addError( e_inv_num_format );
               m_chr++;
-              m_state = state_line;
+              resetState();
               return m_parser->T_Int.makeInstance(m_sline, m_schr, 1);
             }
             break;
@@ -483,7 +484,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                double retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseDouble( retval ) )
@@ -501,7 +502,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else if ( chr != '_' )
             {
-               m_state = state_line;
+               resetState();
                unget( chr );
                double retval = 1; // to avoid stupid division by zero in case of errors
                if ( ! m_text.parseDouble( retval ) )
@@ -518,7 +519,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             if (isTokenLimit(chr))
             {
                unget(chr);
-               m_state = state_line;
+               resetState();
                return checkWord();
             }
             m_text.append( chr );
@@ -530,7 +531,11 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                !isTokenLimit( chr ) )
             {
                unget(chr);
-               m_state = state_line;
+               // reset the state, but don't ignore previous had-operator
+               bool b = m_hadOperator;
+               resetState();
+               m_hadOperator = b;
+               
                return checkOperator();
             }
             m_text.append( chr );
@@ -565,6 +570,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    return 0;
 }
 
+
+void SourceLexer::resetState()
+{
+   m_state = state_line;
+   m_hadOperator = false; // checkOperator will set it back as needed.
+}
 
 Parsing::TokenInstance* SourceLexer::checkWord()
 {
@@ -735,11 +746,12 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
 {
    SourceParser* parser = static_cast<SourceParser*>(m_parser);
 
+   bool bOp = m_hadOperator;
+   m_hadOperator = true;
    switch(m_text.length())
    {
       case 1:
-         if( m_text == "+" ) return parser->T_Plus.makeInstance(m_sline, m_schr);
-         if( m_text == "-" ) return parser->T_Minus.makeInstance(m_sline, m_schr);
+         if( m_text == "+" ) return parser->T_Plus.makeInstance(m_sline, m_schr);         
          if( m_text == "*" ) return parser->T_Times.makeInstance(m_sline, m_schr);
          if( m_text == "/" ) return parser->T_Divide.makeInstance(m_sline, m_schr);
          if( m_text == "%" ) return parser->T_Modulo.makeInstance(m_sline, m_schr);
@@ -747,6 +759,11 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
+
+         if( m_text == "-" )
+            return bOp ?
+               parser->T_UnaryMinus.makeInstance( m_sline, m_schr):
+               parser->T_Minus.makeInstance(m_sline, m_schr);
          break;
 
       case 2:
@@ -755,6 +772,8 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "!=" ) return parser->T_NotEq.makeInstance(m_sline, m_schr);
          break;
    }
+
+   m_hadOperator = false;
    // in case of error
    addError( e_inv_token );
    // Create an unary operator -- pretty almost always ok.

@@ -327,6 +327,23 @@ static void apply_expr_div( const Rule& r, Parser& p )
    p.simplify(3,ti);
 }
 
+
+static void apply_expr_pow( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr );
+   ti->setValue( new ExprPow(
+         static_cast<Expression*>(v1->detachValue()),
+         static_cast<Expression*>(v2->detachValue())
+      ), expr_deletor );
+   p.simplify(3,ti);
+}
+
 static void apply_expr_neg( const Rule& r, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -706,6 +723,7 @@ SourceParser::SourceParser():
    T_Dot(".", 20, true),
    T_Comma( "," , 180 ),
 
+   T_UnaryMinus("(neg)",23),
    T_Power("**", 25),
 
    T_Times("*",30),
@@ -787,7 +805,11 @@ SourceParser::SourceParser():
       << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)      
       << (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr)
       << (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr )
+      << (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr )
+      // the lexer may find a non-unary minus when parsing it not after an operator...
       << (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr )
+      // ... or find an unary minus when getting it after another operator.
+      << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
       ;
 

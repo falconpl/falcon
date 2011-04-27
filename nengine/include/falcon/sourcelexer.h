@@ -35,6 +35,8 @@ public:
 private:
    int32 m_sline;
    int32 m_schr;
+   // Used to decide if minus is unary or not.
+   bool m_hadOperator;
 
    typedef enum
    {
@@ -117,6 +119,7 @@ private:
 
    Parsing::TokenInstance* checkOperator();
    Parsing::TokenInstance* checkWord();
+   void resetState();
 };
 
 }
