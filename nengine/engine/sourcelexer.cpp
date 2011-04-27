@@ -32,6 +32,8 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    m_sline( 0 ),
    m_schr( 0 ),
    m_hadOperator( 0 ),
+   m_stringStart( false ),
+   m_stringML( false ),
    m_state( state_none ),
    m_nextToken(0)
 {
@@ -108,19 +110,24 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             switch(chr) {
                case ' ': case '\t': case '\r': /* do nothng */ break;
                case '\n':
-                  {
+               {
                   int32 l = m_line;
                   int32 c = m_chr;
                   m_line++;
                   m_chr = 1;
                   // After a real new-line, enter in none-state
                   m_state = state_none;
-                  return m_parser->T_EOL.makeInstance(l, c);
+                  // return only if not an operator at end of line.
+                  if( ! m_hadOperator )
+                  {
+                     return m_parser->T_EOL.makeInstance(l, c);
                   }
+                  break;
+               }
 
                case ';': return m_parser->T_EOL.makeInstance(m_line, m_chr++);
-               case '"': m_state = state_double_string; break;
-               case '\'': m_state = state_single_string; break;
+               case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
+               case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
                case '(': m_chr++; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
                case ')': m_chr++; return parser->T_Closepar.makeInstance(m_line,m_chr); break;
@@ -215,10 +222,30 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             switch( chr ) {
                case '"': m_chr++; resetState(); return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
                case '\\': m_state = state_double_string_esc; break;
-               case '\n': m_state = state_double_string_nl; break;
+
+               case '\n':
+                  if( m_stringStart )
+                  {
+                     m_stringML = true;
+                  }
+                  else
+                  {
+                     if ( m_stringML )
+                     {
+                        m_text.append(' ');
+                     }
+                     else
+                     {
+                        addError(e_nl_in_lit);
+                        m_stringML = true; // to avoid multiple error reports.
+                     }
+                  }
+                  m_state = state_double_string_nl; break;
+
                default:
                   m_text.append(chr);
             }
+            m_stringStart = false;
             break;
 
 
@@ -227,6 +254,11 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             {
                case ' ': case '\n': case '\r': case '\t': /* do nothing */ break;
                case '\\': m_state = state_double_string_esc; break;
+               case '"': 
+                  m_chr++;
+                  resetState();
+                  return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+                  
                default:
                   m_text.append(chr);
                   m_state = state_double_string;
@@ -333,8 +365,31 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
             else
             {
-               m_text.append(chr);
+               if ( chr == '\n' )
+               {
+                  // at string start? -- allow it, but don't record it.
+                  if ( m_stringStart )
+                  {
+                     m_stringML = true;
+                  }
+                  else if( m_stringML )
+                  {
+                     m_text.append('\n');
+                  }
+                  else
+                  {
+                     addError(e_nl_in_lit);
+                     // however, add it.
+                     m_text.append('\n');
+                     m_stringML = true; // to avoid multiple error reports.
+                  }
+               }
+               else {
+                  m_text.append(chr);
+               }               
             }
+            // never at start after first char.
+            m_stringStart = false;
             break;
 
          //---------------------------------------

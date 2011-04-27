@@ -35,8 +35,15 @@ public:
 private:
    int32 m_sline;
    int32 m_schr;
+
    // Used to decide if minus is unary or not.
    bool m_hadOperator;
+
+   // Used when starting strings
+   bool m_stringStart;
+
+   // true if we allow the string to be multiline.
+   bool m_stringML;
 
    typedef enum
    {
