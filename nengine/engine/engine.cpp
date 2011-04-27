@@ -40,6 +40,7 @@
 #include <falcon/corenil.h>
 #include <falcon/coreint.h>
 #include <falcon/corestring.h>
+#include <falcon/corearray.h>
 
 //--- error headers ---
 #include <falcon/errorclass.h>
@@ -216,6 +217,7 @@ Engine::Engine()
    //
    m_functionClass = new CoreFunction;
    m_stringClass = new CoreString;
+   m_arrayClass = new CoreArray;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new CoreNil;
@@ -260,6 +262,7 @@ Engine::~Engine()
    delete m_mtx;
    delete m_collector;
    delete m_stringClass;
+   delete m_arrayClass;
 
    // ===============================
    // Delete standard error classes
@@ -410,6 +413,12 @@ Class* Engine::stringClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_stringClass;
+}
+
+Class* Engine::arrayClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_arrayClass;
 }
 
 //=====================================================

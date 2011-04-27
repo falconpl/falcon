@@ -515,7 +515,7 @@ public:
     forceClassInst() that will return the handler class also for simple items;
     however forceClassInst() is slower.
     */
-   bool asClassInst( Class*& cls, void*& udata )
+   bool asClassInst( Class*& cls, void*& udata ) const
    {
       switch( type() )
       {
@@ -530,6 +530,21 @@ public:
          return true;
       }
       return false;
+   }
+
+   /** Gets the only the instance from a deep item.
+    \return The deep or user instance of an item.
+    */
+   void* asInst() const
+   {
+      switch( type() )
+      {
+      case FLC_ITEM_DEEP:
+         return asDeepInst();
+      case FLC_ITEM_USER:
+         return asUserInst();
+      }
+      return 0;
    }
 
 

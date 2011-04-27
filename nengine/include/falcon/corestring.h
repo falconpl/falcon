@@ -58,7 +58,6 @@ public:
    //=============================================================
 
    virtual void op_add( VMachine *vm, void* self, Item& op2, Item& target ) const;
-
 private:
 
    class FALCON_DYN_CLASS NextOp: public PStep {

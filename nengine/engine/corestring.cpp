@@ -135,13 +135,16 @@ CoreString::NextOp::NextOp()
 
 void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
 {
-   const Item& regA = vm->regA();
+   Item& regA = vm->regA();
    Item& topItem = vm->currentContext()->topData();
-   String* deep = (String*)(regA.type() == FLC_ITEM_DEEP ? regA.asDeepInst() : regA.asUserInst());
-   String* self = (String*)(topItem.type() == FLC_ITEM_DEEP ? topItem.asDeepInst() : topItem.asUserInst());
+
+   String* deep = regA.asString();
+   String* self = topItem.asString();
+
    String* copy = new String(*self);
    copy->append( *deep );
-   topItem = copy->garbage();
+
+   regA = copy->garbage();
 }
 
 }

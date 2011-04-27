@@ -94,7 +94,8 @@ public:
    // Type handlers
    //
 
-    /** Returns the global instance of the Function class.
+   /** Returns the global instance of the Function class.
+   \return the Engine instance of the Function Class (handler).
 
     Method init() must have been called before.
 
@@ -105,6 +106,7 @@ public:
    Class* functionClass() const;
 
    /** Returns the global instance of the String class.
+   \return the Engine instance of the String Class (handler).
 
     Method init() must have been called before.
 
@@ -113,6 +115,17 @@ public:
     return a null pointer.
     */
    Class* stringClass() const;
+
+   /** Returns the global instance of the Array class.
+   \return the Engine instance of the Array Class (handler).
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* arrayClass() const;
 
    //==========================================================================
    // Error handlers
@@ -246,6 +259,7 @@ protected:
    //
    Class* m_functionClass;
    Class* m_stringClass;
+   Class* m_arrayClass;
 
    //===============================================
    // Standard error handlers

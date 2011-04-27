@@ -52,6 +52,7 @@ add_library(falcon_engine SHARED
   closedsymbol.cpp
   codeerror.cpp
   collector.cpp
+  corearray.cpp
   corefunction.cpp
   corenil.cpp
   coreint.cpp
@@ -78,6 +79,7 @@ add_library(falcon_engine SHARED
   globalsvector.cpp
   globalsymbol.cpp
   item.cpp
+  itemarray.cpp
   interruptederror.cpp
   ioerror.cpp
   localsymbol.cpp

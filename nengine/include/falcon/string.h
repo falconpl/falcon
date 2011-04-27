@@ -983,6 +983,17 @@ public:
       * This method can be used to concatenate strings and number such as for
       * String s = String( "You got ").N( msg_count ).A( " messages " );
       */
+    inline String& N( uint32 number )
+    {
+       writeNumber( (int64) number );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
     inline String& N( int64 number, const String& format )
     {
        writeNumber( (int64) number, format );
