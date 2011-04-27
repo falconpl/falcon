@@ -66,6 +66,7 @@ public:
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
+   Parsing::Terminal T_Cut;
 
    Parsing::Terminal T_as;
    Parsing::Terminal T_eq;
@@ -86,7 +87,7 @@ public:
    Parsing::Terminal T_else;
 
    Parsing::Terminal T_while;
-
+   Parsing::Terminal T_rule;
 
    //================================================
    // Statements
@@ -107,6 +108,12 @@ public:
    Parsing::NonTerminal S_While;
    Parsing::Rule r_while;
    Parsing::Rule r_while_short;
+
+   Parsing::NonTerminal S_Rule;
+   Parsing::Rule r_rule;
+   
+   Parsing::NonTerminal S_Cut;
+   Parsing::Rule r_cut;
 
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;

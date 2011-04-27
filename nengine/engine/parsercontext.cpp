@@ -525,7 +525,7 @@ void ParserContext::closeContext()
                   break;
                }
 
-               if ( riter->m_type == CCFrame::t_func_type  )
+               if ( riter->m_type != CCFrame::t_func_type  )
                {
                   m_cstatement = riter->m_elem.stmt;
                   break;

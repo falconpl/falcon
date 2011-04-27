@@ -35,6 +35,8 @@
 
 #include <deque>
 
+#include "falcon/stmtrule.h"
+
 namespace Falcon {
 using namespace Parsing;
 
@@ -612,6 +614,45 @@ static void apply_while( const Rule& r, Parser& p )
    p.simplify(3);
 }
 
+
+static void apply_rule( const Rule& r, Parser& p )
+{
+   // << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
+   TokenInstance* trule = p.getNextToken();
+   p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   StmtRule* stmt_rule = new StmtRule( trule->line(), trule->chr() );
+   st->openBlock( stmt_rule, &stmt_rule->currentTree() );
+
+   // clear the stack
+   p.simplify(2);
+}
+
+static void apply_cut( const Rule& r, Parser& p )
+{
+   // << (r_cut << "cut" << apply_cut << T_cut << T_EOL )
+   TokenInstance* trule = p.getNextToken();
+   p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::rule_t )
+   {
+      p.addError( e_syn_cut, p.currentSource(), trule->line(), trule->chr() );
+   }
+   else
+   {
+      StmtCut* stmt_cut = new StmtCut( trule->line(), trule->chr() );
+      static_cast<StmtRule*>(st->currentStmt())->addStatement(stmt_cut);
+   }
+
+   // clear the stack
+   p.simplify(2);
+}
+
+
 static void apply_end( const Rule& r, Parser& p )
 {
    // << (r_end << "end" << apply_end << T_end << T_EOL )
@@ -1048,6 +1089,7 @@ SourceParser::SourceParser():
    T_Dot(".", 20, true),
    T_Arrow("=>", 170 ),
    T_Comma( "," , 180 ),
+   T_Cut("!"),
 
    T_UnaryMinus("(neg)",23),
    T_Power("**", 25),
@@ -1087,6 +1129,7 @@ SourceParser::SourceParser():
 
    T_elif("elif"),
    T_else("else"),
+   T_rule("rule"),
 
    T_while("while")
 {
@@ -1110,6 +1153,14 @@ SourceParser::SourceParser():
    S_While << "WHILE"
       << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
       << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
+      ;
+
+   S_Rule << "RULE"
+      << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
+      ;
+   
+   S_Cut << "CUT"
+      << (r_cut << "cut" << apply_cut << T_Cut << T_EOL )
       ;
 
    S_End << "END"
@@ -1198,6 +1249,8 @@ SourceParser::SourceParser():
       << S_Elif
       << S_Else
       << S_While
+      << S_Rule
+      << S_Cut
       << S_End
       ;
 

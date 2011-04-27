@@ -672,6 +672,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       case 4:
          if( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
          if( m_text == "else" ) return parser->T_else.makeInstance(m_sline, m_schr);
+         if( m_text == "rule" ) return parser->T_rule.makeInstance(m_sline, m_schr);
          /*
          if ( m_text == "load" )  // directive
          {
@@ -824,6 +825,8 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
+         // the cut operator is a statement.
+         if( m_text == "!" ) m_hadOperator = false; return parser->T_Cut.makeInstance(m_sline, m_schr);
 
          if( m_text == "-" )
             return bOp ?

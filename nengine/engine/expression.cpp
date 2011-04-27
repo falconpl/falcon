@@ -22,9 +22,9 @@
 #include <falcon/exprfactory.h>
 #include <falcon/operanderror.h>
 #include <falcon/codeerror.h>
-#include <math.h>
-
 #include <falcon/trace.h>
+
+#include <math.h>
 
 
 namespace Falcon {

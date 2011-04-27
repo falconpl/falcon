@@ -182,6 +182,8 @@ FAL_ERRORDECL( e_square_unbal, 187, "Unbalanced square parenthesis at end of fil
 FAL_ERRORDECL( e_unclosed_string, 188, "Unclosed string at end of file" );
 FAL_ERRORDECL( e_graph_unbal, 189, "Unbalanced bracket parenthesis at end of file" );
 
+FAL_ERRORDECL( e_syn_cut, 190, "Rule cut '!' not under rule" );
+
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
 FAL_ERRORDECL( e_io_open, 201, "I/O error: Can't open required resource" );
 FAL_ERRORDECL( e_io_creat, 202, "I/O error: Can't create required resource" );

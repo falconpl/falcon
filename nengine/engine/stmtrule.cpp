@@ -21,13 +21,20 @@
 namespace Falcon
 {
 
+
+class StmtRule::Private {
+public:
+   typedef std::vector<RuleSynTree> AltTrees;
+   AltTrees m_altTrees;
+};
+
 StmtRule::StmtRule( int32 line, int32 chr ):
    Statement( rule_t, line, chr )
 {
    apply = apply_;
-
+   _p = new Private;
    // create a base rule syntree
-   m_altTrees.push_back( RuleSynTree() );
+   _p->m_altTrees.push_back( RuleSynTree() );
 
    // push ourselves when prepare is invoked
    m_step0 = this;
@@ -36,19 +43,28 @@ StmtRule::StmtRule( int32 line, int32 chr ):
 
 StmtRule::~StmtRule()
 {
+   delete _p;
 }
 
 
 StmtRule& StmtRule::addStatement( Statement* stmt )
 {
-   m_altTrees.back().append( stmt );
+   _p->m_altTrees.back().append( stmt );
    return *this;
 }
 
+SynTree& StmtRule::currentTree()
+{
+   return _p->m_altTrees.back();
+}
 
+const SynTree& StmtRule::currentTree() const
+{
+   return _p->m_altTrees.back();
+}
 StmtRule& StmtRule::addAlternative()
 {
-   m_altTrees.push_back( RuleSynTree() );
+   _p->m_altTrees.push_back( RuleSynTree() );
    return *this;
 }
 
@@ -57,8 +73,8 @@ void StmtRule::describe( String& tgt ) const
 {
    tgt += "rule\n";
    bool bFirst = true;
-   AltTrees::const_iterator iter = m_altTrees.begin();
-   while( iter != m_altTrees.end() )
+   Private::AltTrees::const_iterator iter = _p->m_altTrees.begin();
+   while( iter != _p->m_altTrees.end() )
    {
       if( ! bFirst )
       {
@@ -91,7 +107,7 @@ void StmtRule::apply_( const PStep*s1 , VMachine* vm )
    {
       // on first alternative -- or if previous alternative failed...
 
-      if( cf.m_seqId >= self->m_altTrees.size() )
+      if( cf.m_seqId >= self->_p->m_altTrees.size() )
       {
          // we failed, and we have no more alternatives.
          TRACE1( "Apply 'rule' at line %d -- rule failed", self->line() );
@@ -115,7 +131,7 @@ void StmtRule::apply_( const PStep*s1 , VMachine* vm )
          ctx->startRuleFrame();
 
          // push the next alternative and pricess it
-         ctx->pushCode( &self->m_altTrees[cf.m_seqId++] );
+         ctx->pushCode( &self->_p->m_altTrees[cf.m_seqId++] );
       }
    }
 }

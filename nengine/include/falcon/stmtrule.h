@@ -40,9 +40,12 @@ public:
 
    static void apply_( const PStep*, VMachine* vm );
 
+   SynTree& currentTree();
+   const SynTree& currentTree() const;
+
 protected:
-   typedef std::vector<RuleSynTree> AltTrees;
-   AltTrees m_altTrees;
+   class Private;
+   Private* _p;
 };
 
 /** Cut statement.
