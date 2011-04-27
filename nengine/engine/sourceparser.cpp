@@ -83,66 +83,6 @@ static void apply_expr_assign( const Rule& r, Parser& p )
    p.simplify(3,ti);
 }
 
-
-static void apply_expr_equal( const Rule& r, Parser& p )
-{
-   // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprEQ(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-
-   p.simplify(3,ti);
-}
-
-static void apply_expr_diff( const Rule& r, Parser& p )
-{
-   // << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprNE(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-
-   p.simplify(3,ti);
-}
-
-
-static void apply_expr_eeq( const Rule& r, Parser& p )
-{
-   // << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprEEQ(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-
-   p.simplify(3,ti);
-}
-
-
 static void apply_expr_call( const Rule& r, Parser& p )
 {
    // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
@@ -212,7 +152,18 @@ static void apply_expr_star_index( const Rule& r, Parser& p )
    p.simplify(5,ti);
 }
 
+static void apply_expr_pars( const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
 
+   p.getNextToken();
+   TokenInstance* ti = p.getNextToken();
+   p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr);
+   ti2->setValue( ti->detachValue(), expr_deletor );
+   p.simplify(3,ti2);
+}
 
 static void apply_expr_dot( const Rule& r, Parser& p )
 {
@@ -232,116 +183,92 @@ static void apply_expr_dot( const Rule& r, Parser& p )
    p.simplify(3,ti);
 }
 
+//=======================================================
+// Standard binary expressions
+//
+
+static void apply_expr_binary( const Rule& r, Parser& p, BinaryExpression* bexpr )
+{
+   // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* v2 = p.getNextToken();
+
+   // Todo: set lvalues and define symbols in the module
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   bexpr->first(static_cast<Expression*>(v1->detachValue()));
+   bexpr->second(static_cast<Expression*>(v2->detachValue()));
+   ti->setValue( bexpr, expr_deletor );
+
+   p.simplify(3,ti);
+}
+
+static void apply_expr_equal( const Rule& r, Parser& p )
+{
+   // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
+   apply_expr_binary(r, p, new ExprEQ );
+}
+
+static void apply_expr_diff( const Rule& r, Parser& p )
+{
+   // << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
+   apply_expr_binary(r, p, new ExprNE );
+}
+
+static void apply_expr_less( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprLT );
+}
+
+static void apply_expr_greater( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprGT );
+}
+
+static void apply_expr_le( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprLE );
+}
+
+static void apply_expr_ge( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprGE );
+}
+
+
+static void apply_expr_eeq( const Rule& r, Parser& p )
+{
+  // << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
+  apply_expr_binary(r, p, new ExprEEQ );
+}
 
 
 static void apply_expr_plus( const Rule& r, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprPlus(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-
-   p.simplify(3,ti);
+   apply_expr_binary(r, p, new ExprPlus );
 }
 
 static void apply_expr_minus( const Rule& r, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprMinus(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-
-   p.simplify(3,ti);
+   apply_expr_binary(r, p, new ExprMinus );
 }
 
-static void apply_expr_pars( const Rule& r, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   p.getNextToken();
-   TokenInstance* ti = p.getNextToken();
-   p.getNextToken();
-
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr);
-   ti2->setValue( ti->detachValue(), expr_deletor );
-   p.simplify(3,ti2);
-}
-
-static void apply_expr_expr0( const Rule& r, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* ti = p.getNextToken();
-
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr);
-   ti2->setValue( ti->detachValue(), expr_deletor );
-   p.simplify(1,ti2);
-}
-
-
-
-//typedef void(*Apply)( const Rule& r, Parser& p );
 static void apply_expr_times( const Rule& r, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
-   
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprTimes(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-   p.simplify(3,ti);
+   apply_expr_binary(r, p, new ExprTimes );
 }
 
 static void apply_expr_div( const Rule& r, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
-   
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr );
-   ti->setValue( new ExprDiv(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-   p.simplify(3,ti);
+   apply_expr_binary(r, p, new ExprDiv );
 }
 
 
 static void apply_expr_pow( const Rule& r, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* v2 = p.getNextToken();
-
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr );
-   ti->setValue( new ExprPow(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
-   p.simplify(3,ti);
+   apply_expr_binary(r, p, new ExprPow );
 }
 
 static void apply_expr_neg( const Rule& r, Parser& p )
@@ -735,8 +662,14 @@ SourceParser::SourceParser():
 
    T_DblEq("==", 70),
    T_NotEq("!=", 70),
+   T_Less("<", 70),
+   T_Greater(">", 70),
+   T_LE("<=", 70),
+   T_GE(">=", 70),
    T_Colon( ":" ),
    T_EqSign("=", 200, true),
+   T_Arrow("=>", 210 ),
+
 
 
    T_as("as"),
@@ -794,6 +727,10 @@ SourceParser::SourceParser():
 
       << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
       << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
+      << (r_Expr_less << "Expr_less" << apply_expr_less << Expr << T_Less << Expr)
+      << (r_Expr_greater << "Expr_greater" << apply_expr_greater << Expr << T_Greater << Expr)
+      << (r_Expr_le << "Expr_le" << apply_expr_le << Expr << T_LE << Expr)
+      << (r_Expr_ge << "Expr_ge" << apply_expr_ge << Expr << T_GE << Expr)
       << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
 
       << (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar )

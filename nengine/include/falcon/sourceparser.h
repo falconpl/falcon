@@ -47,8 +47,13 @@ public:
    Parsing::Terminal T_Modulo;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_EqSign;
+   Parsing::Terminal T_Arrow;
    Parsing::Terminal T_DblEq;
    Parsing::Terminal T_NotEq;
+   Parsing::Terminal T_Less;
+   Parsing::Terminal T_Greater;
+   Parsing::Terminal T_LE;
+   Parsing::Terminal T_GE;
 
    Parsing::Terminal T_Openpar;
    Parsing::Terminal T_Closepar;
@@ -114,6 +119,10 @@ public:
    Parsing::Rule r_Expr_assign;
    Parsing::Rule r_Expr_equal;
    Parsing::Rule r_Expr_diff;
+   Parsing::Rule r_Expr_less;
+   Parsing::Rule r_Expr_greater;
+   Parsing::Rule r_Expr_le;
+   Parsing::Rule r_Expr_ge;
    Parsing::Rule r_Expr_eeq;
 
    Parsing::Rule r_Expr_call;

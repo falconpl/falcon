@@ -811,6 +811,8 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "/" ) return parser->T_Divide.makeInstance(m_sline, m_schr);
          if( m_text == "%" ) return parser->T_Modulo.makeInstance(m_sline, m_schr);
          if( m_text == "=" ) return parser->T_EqSign.makeInstance(m_sline, m_schr);
+         if( m_text == "<" ) return parser->T_Less.makeInstance(m_sline, m_schr);
+         if( m_text == ">" ) return parser->T_Greater.makeInstance(m_sline, m_schr);
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
@@ -825,6 +827,9 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "==" ) return parser->T_DblEq.makeInstance(m_sline, m_schr);
          if( m_text == "!=" ) return parser->T_NotEq.makeInstance(m_sline, m_schr);
+         if( m_text == "<=" ) return parser->T_LE.makeInstance(m_sline, m_schr);
+         if( m_text == ">=" ) return parser->T_GE.makeInstance(m_sline, m_schr);
+         if( m_text == "=>" ) return parser->T_Arrow.makeInstance(m_sline, m_schr);
          break;
    }
 

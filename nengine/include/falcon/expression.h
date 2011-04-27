@@ -336,6 +336,7 @@ protected:
    public:
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
+   inline class_name(): BinaryExpression( op ) {}\
    inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) { apply = apply_; } \
    inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
@@ -346,7 +347,6 @@ protected:
    inline String describe() const { return PStep::describe(); }\
    inline String oneLiner() const { return PStep::oneLiner(); }\
    protected:\
-   inline class_name(): BinaryExpression( op ) {}\
    friend class ExprFactory;\
    public:
 
