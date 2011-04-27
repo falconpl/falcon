@@ -784,12 +784,29 @@ void Parser::applyPaths()
             Token* tok = currentRule->getTokenAt(frameTokenPos);
             if( tok == 0 )
             {
-               // then rule ended right after the prio token.
-               applyCurrentRule();
-               TRACE("Parser::applyPaths -- applying; prio operator was last in rule. Stack: %s",
-                  dumpStack().c_ize());
+               // rule exausted, but at lower priority
+               // find the topmost nonterminal.
+               while( frameDepth > frame.m_nStackDepth &&
+                     !_p->m_tokenStack[frameDepth]->token().isNT() )
+               {
+                  frameDepth --;
+               }
+               if( frameDepth == frame.m_nStackDepth ||
+                     !_p->m_tokenStack[frameDepth]->token().isNT() )
+               {
+                  TRACE("Parser::applyPaths -- rule exausted at a lower priority, but no alternative around.", 0);
+                  applyCurrentRule();
+                  TRACE("Parser::applyPaths -- stack now:", dumpStack().c_ize());
+               }
+               else
+               {
+                  TRACE("Parser::applyPaths -- rule exausted at a lower priority, putting frames forward.", 0);
+                  const NonTerminal* nt = static_cast<const NonTerminal*>(&_p->m_tokenStack[frameDepth]->token());
+                  addParseFrame(const_cast<NonTerminal*>(nt), frameDepth);
+                  TRACE("Parser::applyPaths -- stack now:", dumpStack().c_ize());
+               }
             }
-            else if ( tok->isNT() )
+            else if ( tok != 0 && tok->isNT() )
             {
                TRACE("Parser::applyPaths -- small arity, descending into next token: %s",
                   tok->name().c_ize());
@@ -797,6 +814,7 @@ void Parser::applyPaths()
                NonTerminal* nt = static_cast<NonTerminal*>(tok);
                addParseFrame(nt, frameDepth);
             }
+            // else proceed matching paths
          }
       }
       else 

@@ -130,11 +130,11 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
                case '(': m_chr++; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
-               case ')': m_chr++; return parser->T_Closepar.makeInstance(m_line,m_chr); break;
+               case ')': m_chr++; resetState(); return parser->T_Closepar.makeInstance(m_line,m_chr); break;
                case '[': m_chr++; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
-               case ']': m_chr++; return parser->T_CloseSquare.makeInstance(m_line,m_chr); break;
+               case ']': m_chr++; resetState(); return parser->T_CloseSquare.makeInstance(m_line,m_chr); break;
                case '{': m_chr++; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
-               case '}': m_chr++; return parser->T_CloseGraph.makeInstance(m_line,m_chr); break;
+               case '}': m_chr++; resetState(); return parser->T_CloseGraph.makeInstance(m_line,m_chr); break;
 
                case '/': previousState = m_state; m_state = state_enterComment; break;
 
@@ -585,6 +585,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                isParenthesis(chr) || chr == '\'' || chr == '"' ||
                !isTokenLimit( chr ) )
             {
+               // special case -- dot/square
+               if( chr == '[' && m_text == ".")
+               {
+                  m_chr++;
+                  resetState();
+                  return parser->T_DotSquare.makeInstance(m_sline, m_schr );
+               }
+               
                unget(chr);
                // reset the state, but don't ignore previous had-operator
                bool b = m_hadOperator;

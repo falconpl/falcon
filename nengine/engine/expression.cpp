@@ -1810,14 +1810,39 @@ void ExprNE::describe( String& ret ) const
 //=========================================================
 // Call
 
+class ExprCall::Private {
+public:
+   std::vector<Expression*> m_params;
+};
+
+ExprCall::ExprCall( Expression* op1 ):
+   UnaryExpression(t_funcall, op1)
+{
+   _p = new Private;
+}
+
+ExprCall::ExprCall( const ExprCall& other ):
+   UnaryExpression( other )
+{
+   _p = new Private;
+   _p->m_params.reserve( other._p->m_params.size() );
+   std::vector<Expression*>::const_iterator iter = other._p->m_params.begin();
+   while(iter != other._p->m_params.end())
+   {
+      _p->m_params.push_back((*iter)->clone());
+      ++iter;
+   }
+}
 
 ExprCall::~ExprCall()
 {
    // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < m_params.size(); ++i )
+   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
    {
-      delete m_params[i];
+      delete _p->m_params[i];
    }
+
+   delete _p;
 }
 
 
@@ -1827,17 +1852,15 @@ void ExprCall::precompile( PCode* pcode ) const
    TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
 
    // precompile all parameters in order.
-   for( int i = 0; i < m_params.size(); ++i )
+   for( int i = 0; i < _p->m_params.size(); ++i )
    {
-      m_params[i]->precompile( pcode );
+      _p->m_params[i]->precompile( pcode );
    }
 
    // then precompile the called object,
    m_first->precompile( pcode );
    // and finally push the step to do the call.
-   pcode->pushStep( this );
-
-   
+   pcode->pushStep( this );   
 }
 
 
@@ -1861,28 +1884,32 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
 
 ExprCall& ExprCall::addParameter( Expression* p )
 {
-   m_params.push_back( p );
+   _p->m_params.push_back( p );
    return *this;
 }
 
 
 Expression* ExprCall::getParam( int n ) const
 {
-   return m_params[ n ];
+   return _p->m_params[ n ];
 }
 
+int ExprCall::paramCount() const
+{
+   return _p->m_params.size();
+}
 
 void ExprCall::describe( String& ret ) const
 {
    String params;
    // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < m_params.size(); ++i )
+   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
    {
       if ( params.size() )
       {
          params += ", ";
       }
-      params += m_params[i]->describe();
+      params += _p->m_params[i]->describe();
    }
 
    ret = m_first->describe() + "(" + params +  ")";

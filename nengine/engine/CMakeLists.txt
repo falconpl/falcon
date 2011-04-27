@@ -53,6 +53,7 @@ add_library(falcon_engine SHARED
   codeerror.cpp
   collector.cpp
   corearray.cpp
+  coredict.cpp
   corefunction.cpp
   corenil.cpp
   coreint.cpp
@@ -65,6 +66,8 @@ add_library(falcon_engine SHARED
   engine.cpp
   error.cpp
   errorclass.cpp
+  exprarray.cpp
+  exprdict.cpp
   extfunc.cpp
   fassert.cpp
   fatal.cpp

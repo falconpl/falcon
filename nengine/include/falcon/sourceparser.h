@@ -63,6 +63,7 @@ public:
    Parsing::Terminal T_CloseGraph;
 
    Parsing::Terminal T_Dot;
+   Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
 
@@ -128,6 +129,10 @@ public:
    Parsing::Rule r_Expr_call;
    Parsing::Rule r_Expr_index;
    Parsing::Rule r_Expr_star_index;
+   Parsing::Rule r_Expr_empty_dict;
+   Parsing::Rule r_Expr_array_decl;
+   Parsing::Rule r_Expr_empty_dict2;
+   Parsing::Rule r_Expr_array_decl2;
    Parsing::Rule r_Expr_dot;
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_minus;
@@ -157,6 +162,22 @@ public:
    Parsing::Rule r_ListExpr_next;
    Parsing::Rule r_ListExpr_first;
    Parsing::Rule r_ListExpr_empty;
+
+   Parsing::NonTerminal ListExprOrPairs;
+   Parsing::Rule r_ListExprOrPairs_next_pair;
+   Parsing::Rule r_ListExprOrPairs_next;
+   Parsing::Rule r_ListExprOrPairs_first_pair;
+   Parsing::Rule r_ListExprOrPairs_first;
+   Parsing::Rule r_ListExprOrPairs_empty;
+
+   Parsing::NonTerminal SeqExprOrPairs;
+   Parsing::Rule r_SeqExprOrPairs_next_pair_cm;
+   Parsing::Rule r_SeqExprOrPairs_next_pair;
+   Parsing::Rule r_SeqExprOrPairs_next_cm;
+   Parsing::Rule r_SeqExprOrPairs_next;
+   Parsing::Rule r_SeqExprOrPairs_first_pair;
+   Parsing::Rule r_SeqExprOrPairs_first;
+   Parsing::Rule r_SeqExprOrPairs_empty;
 
    Parsing::State s_Main;
 };

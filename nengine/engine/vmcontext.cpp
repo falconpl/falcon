@@ -61,6 +61,24 @@ void VMContext::moreData()
 }
 
 
+void VMContext::copyData( Item* target, size_t count, size_t start)
+{
+   size_t depth = dataSize();
+
+   if ( start == (size_t)-1)
+   {
+      start = depth < count ? 0 : depth - count;
+   }
+
+   if ( count + start > depth )
+   {
+      count = depth - start;
+   }
+
+   memcpy( target, m_dataStack + start, sizeof(Item) * count );
+}
+
+
 void VMContext::moreCode()
 {
    long distance = m_topCode - m_codeStack; // we don't want the size of the code,

@@ -47,6 +47,7 @@ public:
    const String& name() const { return m_name; }
 
    int prio() const { return m_prio; }
+   void prio( int p ) { m_prio = p; }
 
    /** Checks if this token is nonterminal.
     \return true if the token is nonterminal.
@@ -61,6 +62,8 @@ public:
     If the token is nonterminal it can be safely cast to NonTerminal.
     */
    bool isRightAssoc() const { return m_bRightAssoc; }
+
+   void setRightAssoc( bool bMode ) { m_bRightAssoc = bMode; }
 
    /** Creates a "match instance" of this token.
     \param v An actual value that this token has assumed during parsing.

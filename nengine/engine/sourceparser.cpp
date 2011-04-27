@@ -25,11 +25,13 @@
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
+#include <falcon/exprarray.h>
+#include <falcon/exprdict.h>
 
 #include <falcon/globalsymbol.h>
 #include <falcon/localsymbol.h>
 
-#include "falcon/parsercontext.h"
+#include <falcon/parsercontext.h>
 
 #include <deque>
 
@@ -37,13 +39,6 @@ namespace Falcon {
 using namespace Parsing;
 
 typedef std::deque<Expression*> List;
-
-static void expr_deletor(void* data)
-{
-   Expression* expr = static_cast<Expression*>(data);
-   delete expr;
-}
-
 static void list_deletor(void* data)
 {
    List* expr = static_cast<List*>(data);
@@ -51,6 +46,36 @@ static void list_deletor(void* data)
    while( iter != expr->end() )
    {
       delete *iter;
+      ++iter;
+   }
+   delete expr;
+}
+
+static void expr_deletor(void* data)
+{
+   Expression* expr = static_cast<Expression*>(data);
+   delete expr;
+}
+
+
+class PairList: public std::deque< std::pair<Expression*,Expression*> >
+{
+public:
+   PairList():
+      m_bHasPairs(false)
+   {}
+
+   bool m_bHasPairs;
+};
+
+static void pair_list_deletor(void* data)
+{
+   PairList* expr = static_cast<PairList*>(data);
+   PairList::iterator iter = expr->begin();
+   while( iter != expr->end() )
+   {
+      delete iter->first;
+      delete iter->second;
       ++iter;
    }
    delete expr;
@@ -151,6 +176,64 @@ static void apply_expr_star_index( const Rule& r, Parser& p )
 
    p.simplify(5,ti);
 }
+
+
+static void apply_expr_array_decl( const Rule& r, Parser& p )
+{
+   // << (r_Expr_index << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tSquare = p.getNextToken();
+   TokenInstance* v1 = p.getNextToken();
+   p.getNextToken();
+
+   TokenInstance* ti = new TokenInstance(tSquare->line(), tSquare->chr(), sp.Expr);
+
+   PairList* list = static_cast<PairList*>(v1->detachValue());
+   if( list->m_bHasPairs )
+   {
+      ExprDict* dict = new ExprDict;
+      PairList::iterator iter = list->begin();
+      while( iter != list->end() )
+      {
+         // Todo -- make the array expression
+         dict->add(iter->first, iter->second);
+         ++iter;
+      }
+      ti->setValue( dict, expr_deletor );
+   }
+   else
+   {
+      ExprArray* array = new ExprArray;
+      // it's a dictionary declaration
+      PairList::iterator iter = list->begin();
+      while( iter != list->end() )
+      {
+         // Todo -- make the array expression
+         array->add(iter->first);
+         ++iter;
+      }
+      ti->setValue( array, expr_deletor );
+   }
+
+   // free the expressions in the list
+   list->clear();
+
+   p.simplify(3,ti);
+}
+
+static void apply_expr_empty_dict( const Rule& r, Parser& p )
+{
+   // << T_OpenSquare << T_Arrow << T_CloseSquare )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tSquare = p.getNextToken();
+   TokenInstance* ti = new TokenInstance(tSquare->line(), tSquare->chr(), sp.Expr);
+   ExprDict* dict = new ExprDict;
+   ti->setValue( dict, expr_deletor );
+   p.simplify(3,ti);
+}
+
 
 static void apply_expr_pars( const Rule& r, Parser& p )
 {
@@ -633,6 +716,320 @@ static void apply_ListExpr_empty( const Rule& r, Parser& p )
    p.simplify( 0, ti_list );
 }
 
+
+//==========================================================
+// PairLists
+//==========================================================
+
+static void apply_ListExprOrPairs_next_pair( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair
+   //  << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr2 = p.getNextToken();
+
+   Expression* expr1 = static_cast<Expression*>(texpr1->detachValue());
+   Expression* expr2 = static_cast<Expression*>(texpr2->detachValue());
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+   list->push_back(std::make_pair(expr1,expr2));
+
+   // if we didn't have a list of pairs, declare error in dict decl
+   if( ! list->m_bHasPairs )
+   {
+      p.addError(e_syn_arraydecl, p.currentSource(),
+            texpr1->line(), texpr1->chr(),
+            tlist->line(), "not a pair");
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ListExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(5,ti_list);
+
+}
+
+
+static void apply_ListExprOrPairs_next( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+
+   // if we add a list of pairs, declare error in dict decl
+   if( list->m_bHasPairs )
+   {
+      p.addError(e_syn_dictdecl, p.currentSource(),
+            texpr->line(), texpr->chr(),
+            tlist->line(), "not a pair of values");
+   }
+   else
+   {
+      // detach and asssign only if the list can accept 0 as the second value
+      // Otherwise, we'll have problems during dictionary creation.
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      list->push_back(std::make_pair<Expression*,Expression*>(expr,0));
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ListExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(3,ti_list);
+
+}
+
+static void apply_ListExprOrPairs_first_pair( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr2 = p.getNextToken();
+
+   Expression* expr1 = static_cast<Expression*>(texpr1->detachValue());
+   Expression* expr2 = static_cast<Expression*>(texpr2->detachValue());
+
+   PairList* list = new PairList;
+   list->push_back(std::make_pair(expr1,expr2));
+   list->m_bHasPairs = true;
+
+   TokenInstance* ti_list = new TokenInstance(texpr1->line(), texpr1->chr(), sp.ListExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 3, ti_list );
+}
+
+
+static void apply_ListExprOrPairs_first( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+
+   PairList* list = new PairList;
+   list->push_back(std::make_pair<Expression*,Expression*>(expr,0));
+
+   TokenInstance* ti_list = new TokenInstance(texpr->line(), texpr->chr(), sp.ListExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 1, ti_list );
+}
+
+static void apply_ListExprOrPairs_empty( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* ti_list = new TokenInstance(0, 0, sp.ListExprOrPairs );
+
+   PairList* list = new PairList;
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Nothing to delete, just insert.
+   p.simplify( 0, ti_list );
+}
+
+
+//==========================================================
+// SeqPairList
+//==========================================================
+
+static void apply_SeqExprOrPairs_next_pair_cm( const Rule& r, Parser& p )
+{
+   // << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr2 = p.getNextToken();
+
+   Expression* expr1 = static_cast<Expression*>(texpr1->detachValue());
+   Expression* expr2 = static_cast<Expression*>(texpr2->detachValue());
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+   list->push_back(std::make_pair(expr1,expr2));
+
+   // if we didn't have a list of pairs, declare error in dict decl
+   if( ! list->m_bHasPairs )
+   {
+      p.addError(e_syn_arraydecl, p.currentSource(),
+            texpr1->line(), texpr1->chr(),
+            tlist->line(), "not a pair");
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(5,ti_list);
+
+}
+
+static void apply_SeqExprOrPairs_next_pair( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair
+   //  << ListExprOrPairs << Expr << T_Arrow << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr2 = p.getNextToken();
+
+   Expression* expr1 = static_cast<Expression*>(texpr1->detachValue());
+   Expression* expr2 = static_cast<Expression*>(texpr2->detachValue());
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+   list->push_back(std::make_pair(expr1,expr2));
+
+   // if we didn't have a list of pairs, declare error in dict decl
+   if( ! list->m_bHasPairs )
+   {
+      p.addError(e_syn_arraydecl, p.currentSource(),
+            texpr1->line(), texpr1->chr(),
+            tlist->line(), "not a pair");
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(4,ti_list);
+
+}
+
+
+static void apply_SeqExprOrPairs_next( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+
+   // if we add a list of pairs, declare error in dict decl
+   if( list->m_bHasPairs )
+   {
+      p.addError(e_syn_dictdecl, p.currentSource(),
+            texpr->line(), texpr->chr(),
+            tlist->line(), "not a pair of values");
+   }
+   else
+   {
+      // detach and asssign only if the list can accept 0 as the second value
+      // Otherwise, we'll have problems during dictionary creation.
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      list->push_back(std::make_pair<Expression*,Expression*>(expr,0));
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(2,ti_list);
+
+}
+
+static void apply_SeqExprOrPairs_next_cm( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << SeqExprOrPairs << T_COMMA<< Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   PairList* list = static_cast<PairList*>(tlist->detachValue());
+
+   // if we add a list of pairs, declare error in dict decl
+   if( list->m_bHasPairs )
+   {
+      p.addError(e_syn_dictdecl, p.currentSource(),
+            texpr->line(), texpr->chr(),
+            tlist->line(), "not a pair of values");
+   }
+   else
+   {
+      // detach and asssign only if the list can accept 0 as the second value
+      // Otherwise, we'll have problems during dictionary creation.
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      list->push_back(std::make_pair<Expression*,Expression*>(expr,0));
+   }
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+   p.simplify(3,ti_list);
+
+}
+
+// Differs from apply_ListExprOrPairs_first_pair just for sp.SeqExprOrPairs as simplify type
+static void apply_SeqExprOrPairs_first_pair( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr2 = p.getNextToken();
+
+   Expression* expr1 = static_cast<Expression*>(texpr1->detachValue());
+   Expression* expr2 = static_cast<Expression*>(texpr2->detachValue());
+
+   PairList* list = new PairList;
+   list->push_back(std::make_pair(expr1,expr2));
+   list->m_bHasPairs = true;
+
+   TokenInstance* ti_list = new TokenInstance(texpr1->line(), texpr1->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 3, ti_list );
+}
+
+// Differs from apply_ListExprOrPairs_first just for sp.SeqExprOrPairs as simplify type
+static void apply_SeqExprOrPairs_first( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+
+   PairList* list = new PairList;
+   list->push_back(std::make_pair<Expression*,Expression*>(expr,0));
+
+   TokenInstance* ti_list = new TokenInstance(texpr->line(), texpr->chr(), sp.SeqExprOrPairs );
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 1, ti_list );
+}
+
+// Differs from apply_ListExprOrPairs_empty just for sp.SeqExprOrPairs as simplify type
+static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
+{
+   // << (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* ti_list = new TokenInstance(0, 0, sp.SeqExprOrPairs );
+
+   PairList* list = new PairList;
+   ti_list->setValue( list, pair_list_deletor );
+
+   // Nothing to delete, just insert.
+   p.simplify( 0, ti_list );
+}
+
 //==========================================================
 // SourceParser
 //==========================================================
@@ -643,11 +1040,13 @@ SourceParser::SourceParser():
    T_Openpar("(",10),
    T_Closepar(")"),
    T_OpenSquare("[",10),
+   T_DotSquare(".[",10),
    T_CloseSquare("]"),
    T_OpenGraph("{",10),
    T_CloseGraph("}"),
 
    T_Dot(".", 20, true),
+   T_Arrow("=>", 170 ),
    T_Comma( "," , 180 ),
 
    T_UnaryMinus("(neg)",23),
@@ -668,7 +1067,6 @@ SourceParser::SourceParser():
    T_GE(">=", 70),
    T_Colon( ":" ),
    T_EqSign("=", 200, true),
-   T_Arrow("=>", 210 ),
 
 
 
@@ -736,6 +1134,10 @@ SourceParser::SourceParser():
       << (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar )
       << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
       << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
+      << (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare )
+      << (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare )
+      << (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare )
+      << (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare )
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
       << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
       << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
@@ -763,6 +1165,28 @@ SourceParser::SourceParser():
       << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
+
+   ListExprOrPairs << "ListExprOrPairs"
+      << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
+      << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
+      << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
+      << (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr )
+      << (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty )
+      ;
+
+   SeqExprOrPairs << "SeqExprOrPairs"
+      << (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
+            << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
+      << (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
+            << SeqExprOrPairs << Expr << T_Arrow << Expr )
+      << (r_SeqExprOrPairs_next << "SeqExprOrPairs_next" << apply_SeqExprOrPairs_next << SeqExprOrPairs << Expr )
+      << (r_SeqExprOrPairs_next_cm << "SeqExprOrPairs_next_cm" << apply_SeqExprOrPairs_next_cm << SeqExprOrPairs << T_Comma << Expr )
+      << (r_SeqExprOrPairs_first_pair << "SeqExprOrPairs_first_pair" << apply_SeqExprOrPairs_first_pair << Expr << T_Arrow << Expr )
+      << (r_SeqExprOrPairs_first << "SeqExprOrPairs_first" << apply_SeqExprOrPairs_first << Expr )
+      << (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty )
+      ;
+
+      SeqExprOrPairs.prio(175);
 
 
    //==========================================================================

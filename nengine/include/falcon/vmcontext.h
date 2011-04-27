@@ -111,13 +111,19 @@ public:
    }
 
    inline Item& topData() {
-	  fassert( m_topData >= m_dataStack && m_topData < m_maxData);
-	  return *m_topData;
+       fassert( m_topData >= m_dataStack && m_topData < m_maxData);
+       return *m_topData;
    }
 
    /** Removes the last element from the stack */
    void popData() {
       m_topData--;
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
+   }
+
+   /** Removes the last n elements from the stack */
+   void popData( size_t size ) {
+      m_topData-= size;
       PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
    }
 
@@ -128,6 +134,9 @@ public:
    inline long localVarCount() const {
       return ((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
    }
+
+   /** Copy multiple values in a target. */
+   void copyData( Item* target, size_t count, size_t start = (size_t)-1);
 
    /** Adds a data in the stack and returns a reference to it.
     *

@@ -20,8 +20,6 @@
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
 
-#include <vector>
-
 namespace Falcon
 {
 
@@ -98,8 +96,10 @@ public:
       t_oob,
       t_deoob,
       t_xoroob,
-      t_isoob
+      t_isoob,
 
+      t_arrayDecl,
+      t_dictDecl
    } operator_t;
 
    Expression( const Expression &other );
@@ -612,20 +612,33 @@ public:
 class FALCON_DYN_CLASS ExprCall: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprCall, t_funcall );
+   ExprCall( Expression* op1 );
+   ExprCall( const ExprCall& other );
    virtual ~ExprCall();
 
-   ExprCall& addParameter( Expression* );
+   inline virtual ExprCall* clone() const { return new ExprCall( *this ); }
+   virtual bool simplify( Item& value ) const;
+   static void apply_( const PStep*, VMachine* vm );
+   virtual void describe( String& ) const;
+   virtual void oneLiner( String& s ) const { describe( s ); }
+   inline String describe() const { return PStep::describe(); }
+   inline String oneLiner() const { return PStep::oneLiner(); }
 
-   int paramCount() const { return m_params.size(); }
+   int paramCount() const;
    Expression* getParam( int n ) const;
 
    inline virtual bool isStandAlone() const { return true; }
-
    void precompile( PCode* pcode ) const;
 
+   ExprCall& addParameter( Expression* );
+
+protected:
+   inline ExprCall();
+   friend class ExprFactory;
+
 private:
-   std::vector<Expression*> m_params;
+   class Private;
+   Private* _p;
 };
 
 #if 0
@@ -830,7 +843,6 @@ class FALCON_DYN_CLASS ExprIsOob: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprIsOob, t_isoob );
 };
-
 
 }
 

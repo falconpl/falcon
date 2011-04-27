@@ -89,23 +89,38 @@ Token* Rule::getTokenAt( int pos ) const
 
 bool Rule::match( Parser& parser, bool bIncremental ) const
 {
-   if( _p->m_vTokens.empty() )
-   {
-      TRACE( "Rule::match(%s) -- always matching", m_name.c_ize() );
-      return true;
-   }
-
    TRACE( "Rule::match(%s) -- %s", m_name.c_ize(),
             bIncremental ? "incremental" : "full" );
-
+   
    Parser::Private* pp = parser._p;
    size_t begin = pp->m_pframes.back().m_nStackDepth;
    size_t ppos = bIncremental ? pp->m_tokenStack.size() - 1 : pp->m_pframes.back().m_nStackDepth;
    size_t ppos_end = pp->m_tokenStack.size();
 
+   if( _p->m_vTokens.empty() )
+   {
+      if( ppos + 1 >= pp->m_tokenStack.size() )
+      {
+         TRACE( "Rule::match(%s) -- always matching when at end", m_name.c_ize() );
+         return true;
+      }
+      else
+      {
+         TRACE( "Rule::match(%s) -- always failing when in the middle", m_name.c_ize() );
+         return false;
+      }
+   }
+
+
    Private::TokenVector::iterator riter = _p->m_vTokens.begin();
    if( bIncremental )
    {
+      // we can't possibly match on this one.
+      if( ppos - begin >  _p->m_vTokens.size() )
+      {
+         return false;
+      }
+
       riter += ppos - begin;
    }
    Private::TokenVector::iterator riter_end = _p->m_vTokens.end();
@@ -130,7 +145,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
             dpos = ppos;
             descendable = static_cast<NonTerminal*>(curTok);
          }
-      }      
+      }     
 
       TRACE1( "Rule::match(%s) -- checking '%s' <-> '%s'",
                m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize()  );
