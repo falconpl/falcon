@@ -184,7 +184,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                unget(chr);
                m_state = previousState;
                // to allow correct processing of next loop -- \n will fix line/chr
-               chr = ' '; 
+               chr = ' ';
             }
             break;
 
@@ -254,11 +254,11 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             {
                case ' ': case '\n': case '\r': case '\t': /* do nothing */ break;
                case '\\': m_state = state_double_string_esc; break;
-               case '"': 
+               case '"':
                   m_chr++;
                   resetState();
                   return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
-                  
+
                default:
                   m_text.append(chr);
                   m_state = state_double_string;
@@ -386,7 +386,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
                else {
                   m_text.append(chr);
-               }               
+               }
             }
             // never at start after first char.
             m_stringStart = false;
@@ -581,7 +581,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             break;
 
          case state_operator:
-            if( String::isWhiteSpace( chr ) || 
+            if( String::isWhiteSpace( chr ) ||
                isParenthesis(chr) || chr == '\'' || chr == '"' ||
                !isTokenLimit( chr ) )
             {
@@ -592,13 +592,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   resetState();
                   return parser->T_DotSquare.makeInstance(m_sline, m_schr );
                }
-               
+
                unget(chr);
                // reset the state, but don't ignore previous had-operator
                bool b = m_hadOperator;
                resetState();
                m_hadOperator = b;
-               
+
                return checkOperator();
             }
             m_text.append( chr );
@@ -702,7 +702,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 5:
           if ( m_text == "while" ) return parser->T_while.makeInstance(m_sline, m_schr);
-          
+
          /*
          if ( m_text == "catch" )
             return CATCH;
@@ -815,7 +815,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
    switch(m_text.length())
    {
       case 1:
-         if( m_text == "+" ) return parser->T_Plus.makeInstance(m_sline, m_schr);         
+         if( m_text == "+" ) return parser->T_Plus.makeInstance(m_sline, m_schr);
          if( m_text == "*" ) return parser->T_Times.makeInstance(m_sline, m_schr);
          if( m_text == "/" ) return parser->T_Divide.makeInstance(m_sline, m_schr);
          if( m_text == "%" ) return parser->T_Modulo.makeInstance(m_sline, m_schr);
@@ -826,7 +826,11 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
          // the cut operator is a statement.
-         if( m_text == "!" ) m_hadOperator = false; return parser->T_Cut.makeInstance(m_sline, m_schr);
+         if( m_text == "!" )
+         {
+            m_hadOperator = false;
+            return parser->T_Cut.makeInstance(m_sline, m_schr);
+         }
 
          if( m_text == "-" )
             return bOp ?
