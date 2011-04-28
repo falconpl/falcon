@@ -586,11 +586,20 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                !isTokenLimit( chr ) )
             {
                // special case -- dot/square
-               if( chr == '[' && m_text == ".")
+               if( m_text == ".")
                {
-                  m_chr++;
-                  resetState();
-                  return parser->T_DotSquare.makeInstance(m_sline, m_schr );
+                  if( chr == '[' )
+                  {
+                     m_chr++;
+                     resetState();
+                     return parser->T_DotSquare.makeInstance(m_sline, m_schr );
+                  }
+                  else if ( chr == '(' )
+                  {
+                     m_chr++;
+                     resetState();
+                     return parser->T_DotPar.makeInstance(m_sline, m_schr );
+                  }
                }
                
                unget(chr);

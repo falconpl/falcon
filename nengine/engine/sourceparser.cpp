@@ -1081,6 +1081,7 @@ SourceParser::SourceParser():
    T_Openpar("("),
    T_Closepar(")"),
    T_OpenSquare("["),
+   T_DotPar(".("),
    T_DotSquare(".["),
    T_CloseSquare("]"),
    T_OpenGraph("{"),
@@ -1193,6 +1194,7 @@ SourceParser::SourceParser():
       << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
       << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
       << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)      
+      << (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar)
       << (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr)
       << (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr )
       << (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr )

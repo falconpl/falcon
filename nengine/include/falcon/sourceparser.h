@@ -63,6 +63,7 @@ public:
    Parsing::Terminal T_CloseGraph;
 
    Parsing::Terminal T_Dot;
+   Parsing::Terminal T_DotPar;
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
@@ -144,7 +145,7 @@ public:
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_minus;
    Parsing::Rule r_Expr_pars;
-   Parsing::Rule r_Expr_from_expr0;
+   Parsing::Rule r_Expr_pars2;
    Parsing::Rule r_Expr_times;
    Parsing::Rule r_Expr_div;
    Parsing::Rule r_Expr_pow;
