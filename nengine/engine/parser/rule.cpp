@@ -43,14 +43,18 @@ private:
 //=================================================================
 //
 
-Rule::Rule()
+Rule::Rule():
+   m_bGreedy( false ),
+   m_bRecursive( false )
 {
    _p = new Rule::Private;
 }
 
 Rule::Rule( const String& name, Apply app ):
    m_name(name),
-   m_apply(app)
+   m_apply(app),
+   m_bGreedy( false ),
+   m_bRecursive( false )
 {
    _p = new Rule::Private;
 }
@@ -63,7 +67,47 @@ Rule::~Rule()
 Rule& Rule::t( Token& t )
 {
    _p->m_vTokens.push_back( &t );
+   if( t.isNT() )
+   {
+      
+      NonTerminal& nt = *static_cast<NonTerminal*>(&t);
+      // check for greedness: the rule is greedy if it has ends with a recursive token.
+      if( nt.isRecursive() )
+      {
+         m_bGreedy = true;
+      }
+      else
+      {
+         m_bGreedy = false;
+      }
+   }
+   else
+   {
+      // rules terminating with a non-terminal can never bee greedy
+      m_bGreedy = false;
+   }
+
    return *this;
+}
+
+
+void Rule::parent( NonTerminal& nt )
+{
+   m_parent = &nt;
+   
+   m_bRecursive = false;
+   Private::TokenVector::iterator riter = _p->m_vTokens.begin();
+   Private::TokenVector::iterator riter_end = _p->m_vTokens.end();
+   while( riter != riter_end )
+   {
+      if ( nt.id() ==  (*riter)->id() )
+      {
+         m_bRecursive = true;
+         return;
+      }
+      ++riter;
+   }
+
 }
 
 int Rule::arity() const

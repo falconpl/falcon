@@ -99,8 +99,16 @@ public:
    inline NonTerminal& operator << ( ErrorHandler hr ) { return setErrorHandler(hr); }
 
    bool findPaths( Parser& p ) const;
+   
+   int maxArity() const { return m_maxArity; }
+   bool isGreedy() const { return m_bGreedy; }
+   bool isRecursive() const { return m_bRecursive; }
+
 private:
    ErrorHandler m_eh;
+   int m_maxArity;
+   bool m_bRecursive;
+   bool m_bGreedy;
    
    class Private;
    Private* _p;

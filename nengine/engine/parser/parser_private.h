@@ -87,6 +87,7 @@ class Parser::Private
 
    typedef std::vector<ParseFrame> FrameStack;
    FrameStack m_pframes;
+   FrameStack m_pErrorFrames;
 
    Private();
    ~Private();

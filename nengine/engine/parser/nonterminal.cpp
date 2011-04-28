@@ -42,7 +42,10 @@ class NonTerminal::Private
 //
 
 NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
-   Token(name)
+   Token(name),
+   m_maxArity(0),
+   m_bGreedy(false),
+   m_bRecursive(false)
 {
    m_eh = 0;
    m_bRightAssoc = bRightAssoc;
@@ -51,7 +54,10 @@ NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
 }
 
 NonTerminal::NonTerminal():
-   Token("Unnamed NT")
+   Token("Unnamed NT"),
+   m_maxArity(0),
+   m_bGreedy(false),
+   m_bRecursive(false)
 {
    m_bNonTerminal = true;
    m_eh = 0;
@@ -67,7 +73,19 @@ NonTerminal::~NonTerminal()
 NonTerminal& NonTerminal::r(Rule& rule)
 {
    _p->m_rules.push_back( &rule );
+
+   // after setting parentship, we'll know if the rule is recursive.
    rule.parent(*this);
+   if( rule.isRecursive() )
+   {
+      m_bRecursive = true;
+   }
+
+   if ( m_maxArity < rule.arity() )
+   {
+      m_maxArity = rule.arity();
+   }
+
    return *this;
 }
 

@@ -104,8 +104,10 @@ public:
 
     This method is used by the non-terminal class when this rule
     is assigned to it.
+
+    Setting this also checks for recursiveness of the rule.
     */
-   void parent( NonTerminal& nt ) { m_parent = &nt; }
+   void parent( NonTerminal& nt );
    const NonTerminal& parent() const { return *m_parent; }
    NonTerminal& parent() { return *m_parent; }
 
@@ -126,6 +128,9 @@ public:
    int arity() const;
    Token* getTokenAt( int pos ) const;
 
+   bool isGreedy() const { return m_bGreedy; }
+   bool isRecursive() const { return m_bRecursive; }
+
 private:
    class Private;
    friend class Parser;
@@ -133,6 +138,9 @@ private:
    String m_name;
    Apply m_apply;
    NonTerminal* m_parent;
+
+   bool m_bGreedy;
+   bool m_bRecursive;
    
    // Inner tokens
    Private* _p;

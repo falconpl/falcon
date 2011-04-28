@@ -443,6 +443,8 @@ protected:
    // Checks performed after a new token arrived.
    void onNewToken();
 
+   void explorePaths();
+
    // simplifies the topmost rule.
    void applyCurrentRule();
    

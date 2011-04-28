@@ -1078,15 +1078,15 @@ static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
 
 
 SourceParser::SourceParser():
-   T_Openpar("(",10),
+   T_Openpar("("),
    T_Closepar(")"),
-   T_OpenSquare("[",10),
-   T_DotSquare(".[",10),
+   T_OpenSquare("["),
+   T_DotSquare(".["),
    T_CloseSquare("]"),
-   T_OpenGraph("{",10),
+   T_OpenGraph("{"),
    T_CloseGraph("}"),
 
-   T_Dot(".", 20, true),
+   T_Dot("."),
    T_Arrow("=>", 170 ),
    T_Comma( "," , 180 ),
    T_Cut("!"),
@@ -1216,7 +1216,7 @@ SourceParser::SourceParser():
       << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
-
+      
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
       << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
@@ -1237,9 +1237,8 @@ SourceParser::SourceParser():
       << (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty )
       ;
 
-      SeqExprOrPairs.prio(175);
-
-
+   SeqExprOrPairs.prio(175);
+   
    //==========================================================================
    //State declarations
    //
