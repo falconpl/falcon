@@ -36,6 +36,8 @@
 #include <deque>
 
 #include "falcon/stmtrule.h"
+#include "falcon/error.h"
+#include "falcon/codeerror.h"
 
 namespace Falcon {
 using namespace Parsing;
