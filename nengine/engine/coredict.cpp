@@ -80,7 +80,7 @@ void* CoreDict::deserialize( DataReader* stream ) const
 void CoreDict::describe( void* instance, String& target ) const
 {
    ItemDictionary* arr = static_cast<ItemDictionary*>(instance);
-   target = String("[Dict of ").N(arr->size()).A(" elements]");
+   target = String("[Dict of ").N((int64)arr->size()).A(" elements]");
 }
 
 

@@ -36,6 +36,9 @@
 #include <deque>
 
 #include "falcon/stmtrule.h"
+#include "falcon/error.h"
+#include "falcon/codeerror.h"
+
 
 namespace Falcon {
 using namespace Parsing;
@@ -100,7 +103,7 @@ static void apply_expr_assign( const Rule& r, Parser& p )
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
    ctx->defineSymbols(firstPart);
-   
+
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprAssign(
          firstPart,
@@ -709,7 +712,7 @@ static void apply_ListExpr_next( const Rule& r, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
-   
+
    TokenInstance* tlist = p.getNextToken();
    p.getNextToken();
    TokenInstance* texpr = p.getNextToken();
@@ -730,7 +733,7 @@ static void apply_ListExpr_first( const Rule& r, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
    //TODO: Get current lexer char/line
    TokenInstance* texpr = p.getNextToken();
-   
+
    Expression* expr = static_cast<Expression*>(texpr->detachValue());;
 
    List* list = new List;
@@ -830,7 +833,7 @@ static void apply_ListExprOrPairs_first_pair( const Rule& r, Parser& p )
 {
    // << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
-   
+
    TokenInstance* texpr1 = p.getNextToken();
    p.getNextToken();
    TokenInstance* texpr2 = p.getNextToken();
@@ -1119,7 +1122,7 @@ SourceParser::SourceParser():
    T_in("in", 20),
    T_or("or", 130),
    T_to("to", 70),
-   
+
    T_and("and", 120),
    T_def("def"),
    T_end("end"),
@@ -1159,7 +1162,7 @@ SourceParser::SourceParser():
    S_Rule << "RULE"
       << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
       ;
-   
+
    S_Cut << "CUT"
       << (r_cut << "cut" << apply_cut << T_Cut << T_EOL )
       ;
@@ -1256,7 +1259,7 @@ SourceParser::SourceParser():
       ;
 
    addState( s_Main );
-   
+
 }
 
 bool SourceParser::parse()

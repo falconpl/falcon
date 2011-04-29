@@ -28,6 +28,7 @@
 #include "falcon/closedsymbol.h"
 #include "falcon/expression.h"
 #include "falcon/exprsym.h"
+#include "falcon/error.h"
 
 
 namespace Falcon {
