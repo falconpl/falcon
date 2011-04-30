@@ -44,6 +44,9 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
+  core_module/print.cpp
+  core_module/coremodule.cpp
+
   memory.cpp
   application.cpp
   autocstring.cpp

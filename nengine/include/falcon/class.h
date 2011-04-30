@@ -227,8 +227,6 @@ public:
    virtual void op_incpost(VMachine *vm, void* self, Item& target ) const;
    virtual void op_decpost(VMachine *vm, void* self, Item& target ) const;
 
-   virtual void op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const;
-
    virtual void op_getIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
    virtual void op_setIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
 
@@ -245,6 +243,23 @@ public:
    virtual void op_isTrue( VMachine *vm, void* self, Item& target ) const;
    virtual void op_in( VMachine *vm, void* self, Item& op2, Item& target ) const;
    virtual void op_provides( VMachine *vm, void* self, const String& pname, Item& target ) const;
+
+   /** Call the instance.
+    \param vm A virutal machine where the call is performed.
+    \param self An instance of this class
+    \param pcount the number of parameters in the call.
+    \param target The return value of the call.
+
+    In case calling the given instance can be immediately done and is granted to
+    be flat, this method can put the return value associated with this call in
+    the \b target parameter (which is usually the top of the stack in this
+    context.
+
+    \note The default operation associated with the base class is that to raise
+    a non-callable exception.
+    */
+    virtual void op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const;
+
 
    /** Implents textification operator for the Virtual Macine.
     @param vm the virtual machine that will receive the result.

@@ -1819,6 +1819,7 @@ ExprCall::ExprCall( Expression* op1 ):
    UnaryExpression(t_funcall, op1)
 {
    _p = new Private;
+   apply = apply_;
 }
 
 ExprCall::ExprCall( const ExprCall& other ):
@@ -1851,14 +1852,15 @@ void ExprCall::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
 
+   // then precompile the called object,
+   m_first->precompile( pcode );
+   
    // precompile all parameters in order.
    for( int i = 0; i < _p->m_params.size(); ++i )
    {
       _p->m_params[i]->precompile( pcode );
    }
-
-   // then precompile the called object,
-   m_first->precompile( pcode );
+   
    // and finally push the step to do the call.
    pcode->pushStep( this );   
 }
@@ -1871,14 +1873,59 @@ bool ExprCall::simplify( Item& value ) const
 
 void ExprCall::apply_( const PStep* v, VMachine* vm )
 {
-   TRACE2( "Apply CALL", 1 );
-   
+   static Engine* eng = Engine::instance();
    const ExprCall* self = static_cast<const ExprCall*>(v);
+   TRACE2( "Apply CALL %s", self->describe().c_ize() );
+   
    register VMContext* ctx = vm->currentContext();
+   int pcount = self->_p->m_params.size();
+   register Item& top = *(&ctx->topData()-pcount);
+   
+   switch(top.type())
+   {
+      case FLC_ITEM_FUNC:
+         {
+            Function* f = top.asFunction();
+            vm->call( f, pcount );
+            ctx->currentFrame().m_isExpr = true;
+         }
+         break;
 
-   Function* f = ctx->topData().asFunction();
-   ctx->popData();
-   vm->call( f, self->paramCount() );
+      case FLC_ITEM_METHOD:
+         {
+            Item old = top;
+            Function* f = top.asMethodFunction();
+            old.unmethodize();
+            vm->call( f, pcount, old );
+            ctx->currentFrame().m_isExpr = true;
+         }
+         break;
+
+      // TODO: Class Method
+
+      case FLC_ITEM_USER:
+         {
+            Class* cls = top.asUserClass();
+            void* inst = top.asUserInst();
+            cls->op_call( vm, self->paramCount(), inst, top );
+         }
+         break;
+
+      case FLC_ITEM_DEEP:
+         {
+            Class* cls = top.asDeepClass();
+            void* inst = top.asDeepInst();
+            cls->op_call( vm, pcount, inst, top );
+         }
+         break;
+
+      default:
+         {
+            Class* cls = eng->getTypeClass( top.type() );
+            cls->op_call( vm, pcount, &top, top );
+         }
+   }
+   
 }
 
 

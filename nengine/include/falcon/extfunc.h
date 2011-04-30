@@ -24,16 +24,24 @@ namespace Falcon
 /** External function type */
 typedef void (*ext_func_t)(VMachine*);
 
+/** Marker that can be used to declare a Falcon extension function. */
+#ifndef FALCON_FUNC
+#define FALCON_FUNC void
+#endif
+
 /**
    External function helper.
 
    This helper is a function just calling an immediate external function.
 
-   The called function must not re-enter the virtual machine, or if it does,
-   it must push a proper static PStep and then return.
+   The called function must not re-enter the virtual machine (i.e. call another
+ Falcon script function via the VMachine::call method). The apply() method
+ of this class automatically calls the VMachine::returnFrame() as soon as the
+ extension function exits. This means that the extension function is considered
+ terminated as soon as it returns.
 
- A function pushing itself this way should also be pushed in the stack for
- proper garbage collecting prevention.
+ In case calls to other VM Functions are needed, it's adviasble to re-extend
+ Function for a finer control of the execution process.
 */
 
 class FALCON_DYN_CLASS ExtFunc: public Function
