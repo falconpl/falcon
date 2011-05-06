@@ -1135,7 +1135,9 @@ SourceParser::SourceParser():
    T_else("else"),
    T_rule("rule"),
 
-   T_while("while")
+   T_while("while"),
+
+   T_function("function")
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -1206,6 +1208,12 @@ SourceParser::SourceParser():
       // ... or find an unary minus when getting it after another operator.
       << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
+      << Function
+      ;
+
+   Function << "Function"
+      << (r_Expr_function << "Expr_function" << apply_expr_function << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+      << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
       ;
 
    Atom << "Atom"
@@ -1243,6 +1251,12 @@ SourceParser::SourceParser():
       ;
 
    SeqExprOrPairs.prio(175);
+
+   ListSymbol << "ListSymbol"
+      << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
+      << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
+      << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
+      ;
    
    //==========================================================================
    //State declarations

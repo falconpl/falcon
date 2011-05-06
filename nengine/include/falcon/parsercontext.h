@@ -54,7 +54,7 @@ class Class;
 
  \note Before any operation, call openMain
  */
-class ParserContext {
+class FALCON_DYN_CLASS ParserContext {
 public:
 
    /** Creates the compiler context.

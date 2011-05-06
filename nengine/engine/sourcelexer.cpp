@@ -783,8 +783,10 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          /*
          if ( m_text == "provides" )
             return PROVIDES;
+           */
          if ( m_text == "function" )
-            return FUNCDECL;
+            return parser->T_function.makeInstance(m_sline, m_schr);
+         /*
          if ( m_text == "continue" )
             return CONTINUE;
          if ( m_text == "dropping" )

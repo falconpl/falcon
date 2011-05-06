@@ -95,6 +95,7 @@ bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
 ExprDict& ExprDict::add( Expression* k, Expression* v )
 {
    _p->m_exprs.push_back( std::make_pair(k,v) );
+   return *this;
 }
 
 //=====================================================

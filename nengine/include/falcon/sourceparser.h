@@ -90,6 +90,8 @@ public:
    Parsing::Terminal T_while;
    Parsing::Terminal T_rule;
 
+   Parsing::Terminal T_function;
+
    //================================================
    // Statements
    //
@@ -153,6 +155,12 @@ public:
    Parsing::Rule r_Expr_neg2;
    Parsing::Rule r_Expr_Atom;
 
+   Parsing::NonTerminal Function;
+   Parsing::Rule r_Expr_function;
+   Parsing::Rule r_Expr_lambda;
+
+
+
    //================================================
    // Atom
    //
@@ -186,6 +194,15 @@ public:
    Parsing::Rule r_SeqExprOrPairs_first_pair;
    Parsing::Rule r_SeqExprOrPairs_first;
    Parsing::Rule r_SeqExprOrPairs_empty;
+
+   //================================================
+   // Symbol list
+   //
+
+   Parsing::NonTerminal ListSymbol;
+   Parsing::Rule r_ListSymbol_next;
+   Parsing::Rule r_ListSymbol_first;
+   Parsing::Rule r_ListSymbol_empty;
 
    Parsing::State s_Main;
 };

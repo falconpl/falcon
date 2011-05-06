@@ -144,7 +144,7 @@ bool VMachine::setStdEncoding( const String& name )
    Transcoder* tc = Engine::instance()->getTranscoder(name);
    if( tc == 0 )
    {
-      return 0;
+      return false;
    }
    m_stdCoder = tc;
    m_bOwnCoder = false;
@@ -152,6 +152,7 @@ bool VMachine::setStdEncoding( const String& name )
    m_textIn->setEncoding( tc );
    m_textOut->setEncoding( tc );
    m_textErr->setEncoding( tc );
+   return true;
 }
 
 

@@ -377,7 +377,7 @@ Symbol* ParserContext::findSymbol( const String& name )
       }
       ++iter;
    }
-
+   return 0;
 }
 
 

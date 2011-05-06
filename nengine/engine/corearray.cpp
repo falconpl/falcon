@@ -72,6 +72,7 @@ void CoreArray::serialize( DataWriter* stream, void* self ) const
 void* CoreArray::deserialize( DataReader* stream ) const
 {
    //todo
+   return 0;
 }
 
 void CoreArray::describe( void* instance, String& target ) const
