@@ -586,11 +586,20 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                !isTokenLimit( chr ) )
             {
                // special case -- dot/square
-               if( chr == '[' && m_text == ".")
+               if( m_text == ".")
                {
-                  m_chr++;
-                  resetState();
-                  return parser->T_DotSquare.makeInstance(m_sline, m_schr );
+                  if( chr == '[' )
+                  {
+                     m_chr++;
+                     resetState();
+                     return parser->T_DotSquare.makeInstance(m_sline, m_schr );
+                  }
+                  else if ( chr == '(' )
+                  {
+                     m_chr++;
+                     resetState();
+                     return parser->T_DotPar.makeInstance(m_sline, m_schr );
+                  }
                }
 
                unget(chr);
@@ -774,8 +783,10 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          /*
          if ( m_text == "provides" )
             return PROVIDES;
+           */
          if ( m_text == "function" )
-            return FUNCDECL;
+            return parser->T_function.makeInstance(m_sline, m_schr);
+         /*
          if ( m_text == "continue" )
             return CONTINUE;
          if ( m_text == "dropping" )

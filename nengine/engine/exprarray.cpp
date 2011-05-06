@@ -96,6 +96,7 @@ Expression* ExprArray::get( size_t n ) const
 ExprArray& ExprArray::add( Expression* e )
 {
    _p->m_exprs.push_back(e);
+   return *this;
 }
 
 //=====================================================

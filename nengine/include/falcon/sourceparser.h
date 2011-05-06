@@ -63,6 +63,7 @@ public:
    Parsing::Terminal T_CloseGraph;
 
    Parsing::Terminal T_Dot;
+   Parsing::Terminal T_DotPar;
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
@@ -88,6 +89,8 @@ public:
 
    Parsing::Terminal T_while;
    Parsing::Terminal T_rule;
+
+   Parsing::Terminal T_function;
 
    //================================================
    // Statements
@@ -144,13 +147,19 @@ public:
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_minus;
    Parsing::Rule r_Expr_pars;
-   Parsing::Rule r_Expr_from_expr0;
+   Parsing::Rule r_Expr_pars2;
    Parsing::Rule r_Expr_times;
    Parsing::Rule r_Expr_div;
    Parsing::Rule r_Expr_pow;
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;
    Parsing::Rule r_Expr_Atom;
+
+   Parsing::NonTerminal Function;
+   Parsing::Rule r_Expr_function;
+   Parsing::Rule r_Expr_lambda;
+
+
 
    //================================================
    // Atom
@@ -185,6 +194,15 @@ public:
    Parsing::Rule r_SeqExprOrPairs_first_pair;
    Parsing::Rule r_SeqExprOrPairs_first;
    Parsing::Rule r_SeqExprOrPairs_empty;
+
+   //================================================
+   // Symbol list
+   //
+
+   Parsing::NonTerminal ListSymbol;
+   Parsing::Rule r_ListSymbol_next;
+   Parsing::Rule r_ListSymbol_first;
+   Parsing::Rule r_ListSymbol_empty;
 
    Parsing::State s_Main;
 };

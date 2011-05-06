@@ -37,6 +37,11 @@ Function::Function( const String& name, Module* module, int32 line ):
 
 Function::~Function()
 {
+   if ( m_module != 0 )
+   {
+      //TODO: Properly decreference the module.
+      //m_module->decref();
+   }
 }
 
 void Function::module( Module* owner )
@@ -80,7 +85,8 @@ void Function::gcMark(int32 mark)
 
 GCToken* Function::garbage( Collector* c )
 {
-   m_gcToken = c->store( Engine::instance()->functionClass(), this );
+   static Class* fclass = Engine::instance()->functionClass();
+   m_gcToken = c->store( fclass, this );
    return m_gcToken;
 }
 

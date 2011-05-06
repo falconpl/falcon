@@ -45,7 +45,8 @@ class VMachine;
  or when constructed directly by the code.
 
  Functions can be created by modules or directly from the code. In this case,
- they aren't owned by any module and are immediately stored for garbage collection.
+ they aren't owned by any module and never considered as collectible.
+ 
 */
 
 class FALCON_DYN_CLASS Function
@@ -119,10 +120,14 @@ public:
    /** Just candy grammar for this->apply(vm); */
    void operator()( VMachine* vm ) { apply(vm); }
 
-   /** Return true if this function is deterministic. */
+   /** Return true if this function is deterministic.
+    \return true if the function is deterministic.
+    */
    bool isDeterm() const { return m_bDeterm; }
    
-   /** Set the determinism status of this function. */
+   /** Set the determinism status of this function.
+    \param mode true to set this function as deterministic
+    */
    void setDeterm( bool mode ) { m_bDeterm = mode; }
 
 
@@ -134,6 +139,29 @@ public:
     */
    SymbolTable& symbols() { return m_symtab; }
 
+   /** Candy grammar to declare parameters.
+    In this way, it's possible to declare parameter of a function simply doing
+    @code
+    Function f;
+    f << "po" << "p1" << "p2";
+    @endcode
+
+    To declare dynamic function in modules:
+
+    @code
+    Module *mod = new Module(...);
+    (*mod)
+       << &(*(new Func0) << "p0" << "p1" ... )
+       << &(*(new Func1) << "p0" << "p1" ... );
+    @endcode
+    */
+   Function& operator <<( const String& param )
+   {
+      m_symtab.addLocal( param );
+      m_paramCount = m_symtab.localCount();
+      return *this;
+   }
+   
 protected:
    String m_name;
    int32 m_paramCount;

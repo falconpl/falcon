@@ -241,7 +241,7 @@ void Class::op_decpost(VMachine *vm, void* self, Item& target ) const
 
 void Class::op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("()") ) );
+   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_non_callable ) ) );
 }
 
 

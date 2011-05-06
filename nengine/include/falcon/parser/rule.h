@@ -29,7 +29,7 @@ class Token;
 
 /** Non-terminal parser rule.
  
- Rules identify a sequence of tokens that, if mached, cause them to be
+ Rules identify a sequence of tokens that, if matched, cause them to be
  "applied".
 
  The rule application has the role to create part of the output, if this rule is a
@@ -41,7 +41,7 @@ class Token;
  Although this may seem less structured than requesting the rules to conform
  to a pre-determined protocol, the Parser system offer a common interface to
  the rules, which makes easy to interact with it in a consistent way, with the
- same typing, or actually less, than you'd espect in a pure call-parameters-return-value
+ same typing, or actually less, than you'd expect in a pure call-parameters-return-value
  parser-to-rule interaction.
 
  OTOH, you gain flexibility and control that is not usually available in more
@@ -104,8 +104,10 @@ public:
 
     This method is used by the non-terminal class when this rule
     is assigned to it.
+
+    Setting this also checks for recursiveness of the rule.
     */
-   void parent( NonTerminal& nt ) { m_parent = &nt; }
+   void parent( NonTerminal& nt );
    const NonTerminal& parent() const { return *m_parent; }
    NonTerminal& parent() { return *m_parent; }
 
@@ -126,6 +128,9 @@ public:
    int arity() const;
    Token* getTokenAt( int pos ) const;
 
+   bool isGreedy() const { return m_bGreedy; }
+   bool isRecursive() const { return m_bRecursive; }
+
 private:
    class Private;
    friend class Parser;
@@ -133,6 +138,9 @@ private:
    String m_name;
    Apply m_apply;
    NonTerminal* m_parent;
+
+   bool m_bGreedy;
+   bool m_bRecursive;
    
    // Inner tokens
    Private* _p;

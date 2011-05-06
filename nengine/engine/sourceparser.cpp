@@ -1081,12 +1081,13 @@ static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
 
 
 SourceParser::SourceParser():
-   T_Openpar("(",10),
+   T_Openpar("("),
    T_Closepar(")"),
-   T_OpenSquare("[",10),
-   T_DotSquare(".[",10),
+   T_OpenSquare("["),
+   T_DotPar(".("),
+   T_DotSquare(".["),
    T_CloseSquare("]"),
-   T_OpenGraph("{",10),
+   T_OpenGraph("{"),
    T_CloseGraph("}"),
 
    T_Dot("."),
@@ -1134,7 +1135,9 @@ SourceParser::SourceParser():
    T_else("else"),
    T_rule("rule"),
 
-   T_while("while")
+   T_while("while"),
+
+   T_function("function")
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -1195,7 +1198,8 @@ SourceParser::SourceParser():
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
       << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
       << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
-      << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)
+      << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)      
+      << (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar)
       << (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr)
       << (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr )
       << (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr )
@@ -1204,6 +1208,12 @@ SourceParser::SourceParser():
       // ... or find an unary minus when getting it after another operator.
       << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
+      << Function
+      ;
+
+   Function << "Function"
+      << (r_Expr_function << "Expr_function" << apply_expr_function << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+      << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
       ;
 
    Atom << "Atom"
@@ -1219,7 +1229,7 @@ SourceParser::SourceParser():
       << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
-
+      
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
       << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
@@ -1240,9 +1250,14 @@ SourceParser::SourceParser():
       << (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty )
       ;
 
-      SeqExprOrPairs.prio(175);
+   SeqExprOrPairs.prio(175);
 
-
+   ListSymbol << "ListSymbol"
+      << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
+      << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
+      << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
+      ;
+   
    //==========================================================================
    //State declarations
    //

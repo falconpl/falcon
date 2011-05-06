@@ -600,13 +600,16 @@ void Parser::onNewToken()
       // process existing frames.      
       if (! findPaths( true ) )
       {
+          TRACE("Parser::onNewToken -- failed in incremental mode, exploring.", 0 );
          // may fail if incremental, try again in full mode.
-         if ( ! findPaths( false ) )
+         explorePaths();
+         /*if ( ! findPaths( false ) )
          {
-            TRACE("Parser::onNewToken -- raising because failed in full mode.", 0 );
+           
             parseError();
             return;
          }
+          */
       }
    }
 
@@ -675,6 +678,15 @@ bool Parser::findPaths( bool bIncremental )
 void Parser::parseError()
 {
    TRACE("Parser::parseError -- raising now", 0 );
+
+   // reverse the error frames, in case this error was detected
+   // after a reverse-unroll loop
+   while( !_p->m_pErrorFrames.empty() )
+   {
+      _p->m_pframes.push_back(_p->m_pErrorFrames.back());
+      _p->m_pErrorFrames.pop_back();
+   }
+   
    // find an error handler in the current rule frame.
    // if not present, unroll the frame and try again
    // -- fall back to syntax error.
@@ -743,9 +755,19 @@ void Parser::applyPaths()
 
       // When arity is the same as tokens, we can simplify if we don't have
       // prioritized tokens.
-      if (tcount == rsize)
+      if (tcount == rsize )
       {
-         if( (! frame.m_bIsRightAssoc) && frame.m_nPriority == 0 )
+         if( currentRule->isGreedy() )
+         {
+            const NonTerminal* nt = static_cast<const NonTerminal*>(&_p->m_tokenStack.back()->token());
+            addParseFrame(const_cast<NonTerminal*>(nt), _p->m_tokenStack.size()-1);
+            
+            // greedy rules always end with non-terminals
+            TRACE("Parser::applyPaths -- same arity, descending on greedy rule '%s' in '%s' ",
+                  currentRule->name().c_ize(), nt->name().c_ize());
+            return;
+         }
+         else if( (! frame.m_bIsRightAssoc) && frame.m_nPriority == 0 )
          {
             applyCurrentRule();
             TRACE("Parser::applyPaths -- Applied on same arity, stack: %s",
@@ -765,8 +787,11 @@ void Parser::applyPaths()
       {
          // In this case, we must check for the associativity/prio of topmost token.
          const Token& next = _p->m_tokenStack.back()->token();
-         if( next.prio() == 0 || next.prio() > frame.m_nPriority
-            || ( next.prio() == frame.m_nPriority && ! frame.m_bIsRightAssoc ) )
+         //int tokenPrio = currentRule->isGreedy() ? 1 :
+         int tokenPrio = next.prio();
+         if( tokenPrio == 0 || tokenPrio > frame.m_nPriority
+            || ( tokenPrio == frame.m_nPriority && ! frame.m_bIsRightAssoc )
+            )
          {
             // we can simplify.
             applyCurrentRule();
@@ -803,7 +828,7 @@ void Parser::applyPaths()
                   TRACE("Parser::applyPaths -- rule exausted at a lower priority, putting frames forward.", 0);
                   const NonTerminal* nt = static_cast<const NonTerminal*>(&_p->m_tokenStack[frameDepth]->token());
                   addParseFrame(const_cast<NonTerminal*>(nt), frameDepth);
-                  TRACE("Parser::applyPaths -- stack now:", dumpStack().c_ize());
+                  TRACE("Parser::applyPaths -- stack now: %s", dumpStack().c_ize());
                }
             }
             else if ( tok != 0 && tok->isNT() )
@@ -830,16 +855,31 @@ void Parser::applyPaths()
       // now we must check if the effect of the reduction matches with the new
       // current rule, else we must either descend a find a matching rule or
       // declare failure.
-      if( ! _p->m_pframes.empty() && ! findPaths(false) )
+      if( ! _p->m_pframes.empty() )
       {
-         // match will descend
-         parseError();
-         return;
+         explorePaths();
       }
-
    }
 
    TRACE("Parser::applyPaths -- frames completelty exausted", 0 );
+}
+
+
+void Parser::explorePaths()
+{
+   while( ! _p->m_pframes.empty() && ! findPaths(false) )
+   {
+      _p->m_pErrorFrames.push_back(_p->m_pframes.back());
+      _p->m_pframes.pop_back();
+   }
+
+   if ( _p->m_pframes.empty() )
+   {
+      parseError();
+      return;
+   }
+   
+   _p->m_pErrorFrames.clear();
 }
 
 void Parser::applyCurrentRule()

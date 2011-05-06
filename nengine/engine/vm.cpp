@@ -144,7 +144,7 @@ bool VMachine::setStdEncoding( const String& name )
    Transcoder* tc = Engine::instance()->getTranscoder(name);
    if( tc == 0 )
    {
-      return 0;
+      return false;
    }
    m_stdCoder = tc;
    m_bOwnCoder = false;
@@ -152,6 +152,7 @@ bool VMachine::setStdEncoding( const String& name )
    m_textIn->setEncoding( tc );
    m_textOut->setEncoding( tc );
    m_textErr->setEncoding( tc );
+   return true;
 }
 
 
@@ -306,7 +307,7 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
    // prepare the call frame.
-   CallFrame* topCall = ctx->addCallFrame();
+   register CallFrame* topCall = ctx->addCallFrame();
    topCall->m_function = function;
    topCall->m_codeBase = ctx->codeDepth();
    // initialize also initBase, as stackBase may move
@@ -327,7 +328,7 @@ void VMachine::call( Function* function, int nparams, const Item& self )
 void VMachine::returnFrame()
 {
    register VMContext* ctx = m_context;
-   CallFrame* topCall = ctx->m_topCall;
+   register CallFrame* topCall = ctx->m_topCall;
 
    TRACE1( "Return frame from function %s", AutoCString(topCall->m_function->name()).c_str() );
    
@@ -344,19 +345,19 @@ void VMachine::returnFrame()
    ctx->m_topData = ctx->m_dataStack + topCall->m_initBase-1;
    PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
+   // if the call was performed by a call expression, our
+   // result shall go in the stack.   
+   if( topCall->m_isExpr )
+   {
+      TRACE1( "-- Adding A register to stack", 1 );
+      *ctx->m_topData = ctx->m_regA;
+   }
+
    // Return.
    --ctx->m_topCall;
    PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
 
    TRACE( "Return frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
-
-   // if the call was performed by a call expression, our
-   // result shall go in the stack.
-   if( ctx->m_topCode > ctx->m_codeStack )
-   {
-      TRACE1( "-- Adding A register to stack", 1 );
-      ctx->pushData(ctx->m_regA);
-   }
 }
 
 
