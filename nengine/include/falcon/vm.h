@@ -259,6 +259,14 @@ public:
    /** Access the current context accumulator. */
    Item& regA() { return m_context->regA(); }
 
+   /** Returns the parameter array in the current frame.
+    \return An array of items pointing to the top of the local frame data stack.
+
+    This method returns the values in the current topmost data frame.
+    This usually points to the first parameter of the currently executed function.
+    */
+   inline Item* params() { return currentContext()->params(); }
+
    //=========================================================
    // Deep call protocol
    //=========================================================

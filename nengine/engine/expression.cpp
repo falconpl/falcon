@@ -23,6 +23,7 @@
 #include <falcon/operanderror.h>
 #include <falcon/codeerror.h>
 #include <falcon/trace.h>
+#include <falcon/pseudofunc.h>
 
 #include <math.h>
 
@@ -1816,15 +1817,31 @@ public:
 };
 
 ExprCall::ExprCall( Expression* op1 ):
-   UnaryExpression(t_funcall, op1)
+   Expression( t_funcall ),
+   m_func(0),
+   m_callExpr(op1)
 {
    _p = new Private;
    apply = apply_;
 }
 
-ExprCall::ExprCall( const ExprCall& other ):
-   UnaryExpression( other )
+
+ExprCall::ExprCall( PseudoFunction* f ):
+   Expression( t_funcall ),
+   m_func(f),
+   m_callExpr(0)
 {
+   _p = new Private;
+   apply = apply_dummy_;
+}
+
+ExprCall::ExprCall( const ExprCall& other ):
+   Expression( other )
+{
+   apply = other.apply;
+   m_func = other.m_func;
+   m_callExpr = other.m_callExpr;
+   
    _p = new Private;
    _p->m_params.reserve( other._p->m_params.size() );
    std::vector<Expression*>::const_iterator iter = other._p->m_params.begin();
@@ -1852,9 +1869,12 @@ void ExprCall::precompile( PCode* pcode ) const
 {
    TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
 
-   // then precompile the called object,
-   m_first->precompile( pcode );
-   
+   // first, precompile the called object, if any,
+   if( m_callExpr != 0 )
+   {
+      m_callExpr->precompile( pcode );
+   }
+
    // precompile all parameters in order.
    for( int i = 0; i < _p->m_params.size(); ++i )
    {
@@ -1862,7 +1882,14 @@ void ExprCall::precompile( PCode* pcode ) const
    }
    
    // and finally push the step to do the call.
-   pcode->pushStep( this );   
+   if( m_callExpr != 0 )
+   {
+      pcode->pushStep( this );
+   }
+   else
+   {
+      pcode->pushStep( m_func->pstep() );
+   }
 }
 
 
@@ -1870,6 +1897,14 @@ bool ExprCall::simplify( Item& value ) const
 {
    return false;
 }
+
+void ExprCall::apply_dummy_( const PStep* v, VMachine* )
+{
+   const ExprCall* self = static_cast<const ExprCall*>(v);
+   TRACE2( "Apply CALL -- dummy! %s", self->describe().c_ize() );
+   // we should never be called
+}
+
 
 void ExprCall::apply_( const PStep* v, VMachine* vm )
 {
@@ -1929,7 +1964,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
 }
 
 
-ExprCall& ExprCall::addParameter( Expression* p )
+ExprCall& ExprCall::addParam( Expression* p )
 {
    _p->m_params.push_back( p );
    return *this;
@@ -1959,7 +1994,14 @@ void ExprCall::describe( String& ret ) const
       params += _p->m_params[i]->describe();
    }
 
-   ret = m_first->describe() + "(" + params +  ")";
+   if( m_callExpr != 0 )
+   {
+      ret = m_callExpr->describe() + "(" + params +  ")";
+   }
+   else
+   {
+      ret = m_func->name() + "(" + params +  ")";
+   }
 }
 
 //=========================================================

@@ -89,6 +89,15 @@ public:
       m_catchable( true )
       {}
 
+   ErrorParam( int code, uint32 line, const String& file ):
+      m_errorCode( code ),
+      m_line( line ),
+      m_module( file ),    // force buffering
+      m_sysError( 0 ),
+      m_origin( e_orig_mod ),
+      m_catchable( true )
+      {}
+
    ErrorParam &code( int code ) { m_errorCode = code; return *this; }
    ErrorParam &desc( const String &d ) { m_description = d; return *this; }
    ErrorParam &extra( const String &e ) { m_extra.bufferize(e); return *this; }

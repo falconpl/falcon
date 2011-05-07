@@ -31,6 +31,8 @@ class Collector;
 class Mutex;
 class Transcoder;
 class TranscoderMap;
+class PseudoFunction;
+class PseudoFunctionMap;
 
 /** Falcon application global data.
 
@@ -222,6 +224,16 @@ public:
     */
    Class* syntaxErrorClass() const;
 
+   /** Returns the global instance of the ParamError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* paramErrorClass() const;
+
    /** Adds a transcoder to the engine.
     \param A new transcoder to be registered in the engine.
     \return true if the transcoder can be added, false if it was already registered.
@@ -249,6 +261,31 @@ public:
 
    VFSIface& vsf() { return m_vfs; }
    const VFSIface& vsf() const { return m_vfs; }
+
+   /** Adds a pseudofunction to the engine.
+    \param pf The Pseudo function to be added.
+    \return False if another pseudofunction with the same name was already added.
+
+    Pseudo-functions act as built-in with respect to the Falcon source compiler;
+    if found in a call-expression they are substituted with a virtual machine
+    operation on the spot. If accessed in any other way, they behave as
+    normal functions.
+
+    Notice that pseudofunction appare as global symbols in the global context;
+    however, it is possible to create namespaced pseudofunctions setting a
+    name prefix in their name.
+
+    \note the ownership of the pseudofunction is passed to the engine.
+    */
+   bool addPseudoFunction( PseudoFunction* pf );
+
+   /** Returns a previously added pseudo function.
+    \param name The name of the pseudofunction to be searched.
+    \return The pseudofunction coresponding with that name, or 0 if not found.
+    
+    \see addPseudoFunction
+    */
+   PseudoFunction* getPseudoFunction( const String& name );
 
 protected:
    Engine();
@@ -284,12 +321,15 @@ protected:
    Class* m_interruptedErrorClass;
    Class* m_encodingErrorClass;
    Class* m_syntaxErrorClass;
+   Class* m_paramErrorClass;
 
 
    //===============================================
    // Transcoders
    //
    TranscoderMap* m_tcoders;
+
+   PseudoFunctionMap* m_tpfuncs;
 };
 
 }

@@ -192,7 +192,31 @@ bool Item::clone( Item& target ) const
 
 int Item::compare( const Item& other ) const
 {
-   return 0;
+   int typeDiff = type() - other.type();
+   if( typeDiff == 0 )
+   {
+      switch( typeDiff ) {
+      case FLC_ITEM_NIL: return 0;
+      case FLC_ITEM_INT: return (int) (asInteger() - other.asInteger());
+      case FLC_ITEM_NUM: return (int) (asNumeric() - other.asNumeric());
+      case FLC_ITEM_BOOL:
+         if( isTrue() )
+         {
+            if ( other.isTrue() ) return 0;
+            return 1;
+         }
+         else
+         {
+            if( other.isTrue() ) return -1;
+            return 0;
+         }
+
+      default:
+         return (int64) (this - &other);
+      }
+   }
+
+   return typeDiff;
 }
 
 }
