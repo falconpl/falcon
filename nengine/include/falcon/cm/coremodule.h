@@ -35,7 +35,7 @@ namespace Falcon {
  standard and should always be present as pre-defined.
  
  */
-class CoreModule: public Module
+class FALCON_DYN_CLASS CoreModule: public Module
 {
 public:
    CoreModule();
