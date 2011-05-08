@@ -12,6 +12,13 @@
 build
 build_*
 bld
+bin
 
 # OS X
 .DS_Store
+
+# CMake-generated Makefiles
+Makefile
+*.cmake
+CMakeFiles
+CMakeCache.txt
