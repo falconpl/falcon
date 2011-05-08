@@ -27,6 +27,7 @@ class DataReader;
 class DataWriter;
 class ExprFactory;
 class PCode;
+class PseudoFunction;
 
 /** Pure abstract class representing a Falcon expression.
  *
@@ -121,6 +122,11 @@ public:
    /** True for binary expressions */
    virtual bool isBinaryOperator() const = 0;
 
+   /** Returns true if the expression is composed of just constants.
+    * When this method returns true, the expression can be simplified at compile time.
+    */
+   virtual bool isStatic() const = 0;
+
    /** Sets the given expression as a target of an assignment.
     *
     * The base class implementation throws an error (assignment to non-lvalue).
@@ -137,11 +143,6 @@ public:
     * @return true if this expression is the left part of an assignment, false otherwise.
     */
    inline virtual bool isLValue() const { return false; }
-
-   /** Returns true if the expression is composed of just constants.
-    * When this method returns true, the expression can be simplified at compile time.
-    */
-   virtual bool isStatic() const = 0;
 
    /** Clone this expression.
     */
@@ -609,16 +610,22 @@ public:
 
 
 /** Function call. */
-class FALCON_DYN_CLASS ExprCall: public UnaryExpression
+class FALCON_DYN_CLASS ExprCall: public Expression
 {
 public:
    ExprCall( Expression* op1 );
+
+   /** Create a call-through-pseudo function.
+    Calls through pseudofunctions are performed by pushing the
+    pseudofunction PStep instead of using this expression psteps.
+    */
+   ExprCall( PseudoFunction* func );
+   
    ExprCall( const ExprCall& other );
    virtual ~ExprCall();
 
    inline virtual ExprCall* clone() const { return new ExprCall( *this ); }
-   virtual bool simplify( Item& value ) const;
-   static void apply_( const PStep*, VMachine* vm );
+   virtual bool simplify( Item& value ) const;   
    virtual void describe( String& ) const;
    virtual void oneLiner( String& s ) const { describe( s ); }
    inline String describe() const { return PStep::describe(); }
@@ -626,19 +633,37 @@ public:
 
    int paramCount() const;
    Expression* getParam( int n ) const;
+   ExprCall& addParam( Expression* );
 
-   inline virtual bool isStandAlone() const { return true; }
+   inline virtual bool isStandAlone() const { return false; }
    void precompile( PCode* pcode ) const;
 
-   ExprCall& addParameter( Expression* );
+   virtual bool isBinaryOperator() const { return false; }
+
+   virtual bool isStatic() const { return false; }
+
+
+   /** Returns the pseudofunction associated with this call.
+    \return Pseudofunction associated with this expression, or 0 if none.
+    
+    If this expression call is actually calling a pseudofunction,
+    this will return a non-zero pointer to a PseudoFunction stored
+    in the Engine.
+    */
+   PseudoFunction* pseudo() const { return m_func; }
 
 protected:
    inline ExprCall();
    friend class ExprFactory;
+   PseudoFunction* m_func;
+   Expression* m_callExpr;
 
 private:
    class Private;
    Private* _p;
+
+   static void apply_( const PStep*, VMachine* vm );
+   static void apply_dummy_( const PStep*, VMachine* vm );
 };
 
 #if 0

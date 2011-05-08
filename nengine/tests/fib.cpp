@@ -49,8 +49,8 @@ void go( int fibSize )
 
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprPlus(
-         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprMinus( count->makeExpression(), new ExprValue(1))),
-         &(new ExprCall( new ExprValue(&fib) ))->addParameter( new ExprMinus( count->makeExpression(), new ExprValue(2)))
+         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(1))),
+         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(2)))
          ))
    );
 
@@ -66,7 +66,7 @@ void go( int fibSize )
 
    // and now the main function
    ExprCall* call_fib = new ExprCall( new ExprValue(&fib) );
-   call_fib->addParameter( new ExprValue(fibSize) );
+   call_fib->addParam( new ExprValue(fibSize) );
 
    SynFunc fmain( "__main__" );
    fmain.syntree().append(

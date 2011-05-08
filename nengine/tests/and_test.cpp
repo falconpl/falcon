@@ -108,12 +108,12 @@ void go( int arg, bool bUseOr )
 
    SynTree* iftrue = new SynTree;
       iftrue->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParameter(new ExprValue("TRUE:")).addParameter(count->makeExpression()))
+            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("TRUE:")).addParam(count->makeExpression()))
              );
 
    SynTree* iffalse = new SynTree;
       iffalse->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParameter(new ExprValue("FALSE:")).addParameter(count->makeExpression()))
+            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("FALSE:")).addParam(count->makeExpression()))
              );
 
    Expression* check = bUseOr ?

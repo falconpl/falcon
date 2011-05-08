@@ -91,7 +91,9 @@ add_library(falcon_engine SHARED
   localsymbol.cpp
   module.cpp
   operanderror.cpp
+  paramerror.cpp
   parsercontext.cpp
+  pseudofunc.cpp
   path.cpp
   pcode.cpp
   rampmode.cpp

@@ -52,7 +52,7 @@ namespace Ext {
 */
 
 
-class FuncPrintBase: public Function
+class FALCON_DYN_CLASS FuncPrintBase: public Function
 {
 public:   
    FuncPrintBase(const String& name, bool ispl );
@@ -90,7 +90,7 @@ private:
 /**
  Class implementing the standard printl function.
  */
-class FuncPrintl: public FuncPrintBase
+class FALCON_DYN_CLASS FuncPrintl: public FuncPrintBase
 {
 public:
    FuncPrintl():
@@ -103,7 +103,7 @@ public:
 /**
  Class implementing the standard printl function.
  */
-class FuncPrint: public FuncPrintBase
+class FALCON_DYN_CLASS FuncPrint: public FuncPrintBase
 {
 public:
    FuncPrint():

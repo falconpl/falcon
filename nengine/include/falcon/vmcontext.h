@@ -78,6 +78,10 @@ public:
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
+   inline Item* params() {
+      return &m_dataStack[ m_topCall->m_stackBase ];
+   }
+
    /** Return the nth parameter in the local context.
     *
     *TODO use the local stack.

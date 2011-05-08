@@ -66,7 +66,7 @@ void go()
 
    // and now the main function
    ExprCall* call_func = new ExprCall( new ExprValue(&string_add) );
-   call_func->addParameter( new ExprValue("A string") );
+   call_func->addParam( new ExprValue("A string") );
 
    Symbol* printl = cm.findGlobal("printl");
 
@@ -78,7 +78,7 @@ void go()
       .append( new StmtAutoexpr(
                new ExprAssign( strsym->makeExpression(), call_func ) ))
       .append( new StmtAutoexpr(&(new ExprCall( printl->makeExpression() ))
-            ->addParameter(strsym->makeExpression()).addParameter(new ExprValue(1))) )
+            ->addParam(strsym->makeExpression()).addParam(new ExprValue(1))) )
       .append( new StmtReturn( strsym->makeExpression() ));
 
    std::cout << "Will run: " << fmain.syntree().describe().c_ize() << std::endl;

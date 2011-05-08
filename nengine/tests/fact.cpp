@@ -50,7 +50,7 @@ void go( int factSize )
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprTimes(
          count->makeExpression(),
-         &(new ExprCall( new ExprValue(&fact) ))->addParameter( new ExprMinus( count->makeExpression(), new ExprValue(1)))
+         &(new ExprCall( new ExprValue(&fact) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(1)))
          ))
    );
 
@@ -66,7 +66,7 @@ void go( int factSize )
 
    // and now the main function
    ExprCall* call_fact = new ExprCall( new ExprValue(&fact) );
-   call_fact->addParameter( new ExprValue(factSize) );
+   call_fact->addParam( new ExprValue(factSize) );
 
    SynFunc fmain( "__main__" );
    fmain.syntree().append(

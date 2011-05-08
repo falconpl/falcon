@@ -38,6 +38,7 @@
 #include "falcon/stmtrule.h"
 #include "falcon/error.h"
 #include "falcon/codeerror.h"
+#include "falcon/pseudofunc.h"
 
 
 namespace Falcon {
@@ -115,6 +116,8 @@ static void apply_expr_assign( const Rule& r, Parser& p )
 
 static void apply_expr_call( const Rule& r, Parser& p )
 {
+   static Engine* einst = Engine::instance();
+   
    // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -123,15 +126,37 @@ static void apply_expr_call( const Rule& r, Parser& p )
    TokenInstance* v2 = p.getNextToken();
    p.getNextToken();
 
-   // TODO: read the expressions in the pars
+   // Our call expression
+   ExprCall* call;
+
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ExprCall* call = new ExprCall( static_cast<Expression*>(v1->detachValue()) );
+   Expression* callee = static_cast<Expression*>(v1->detachValue());
+   if( callee->type() == Expression::t_symbol )
+   {
+      // check if the symbol is a pseudofunction
+      Symbol* funsym = static_cast<ExprSymbol*>(callee)->symbol();
+      PseudoFunction* pf = einst->getPseudoFunction( funsym->name() );
+
+      // if it is, we don't need the callee expression anymore.
+      if( pf != 0 )
+      {
+         call = new ExprCall(pf);
+         delete callee;
+      }
+      else
+      {
+         call = new ExprCall( callee );
+      }
+   }
+   else {
+      call = new ExprCall( callee );
+   }
 
    List* list = static_cast<List*>(v2->detachValue());
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
-      call->addParameter( *iter );
+      call->addParam( *iter );
       ++iter;
    }
    // free the expressions in the list
@@ -1208,14 +1233,14 @@ SourceParser::SourceParser():
       // ... or find an unary minus when getting it after another operator.
       << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
-      << Function
+      //<< Function
       ;
-
+/*
    Function << "Function"
       << (r_Expr_function << "Expr_function" << apply_expr_function << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
       ;
-
+*/
    Atom << "Atom"
       << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
       << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
@@ -1251,12 +1276,13 @@ SourceParser::SourceParser():
       ;
 
    SeqExprOrPairs.prio(175);
-
+/*
    ListSymbol << "ListSymbol"
       << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
       << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
       << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
       ;
+*/
    
    //==========================================================================
    //State declarations

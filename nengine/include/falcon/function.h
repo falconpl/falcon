@@ -25,6 +25,7 @@ namespace Falcon
 
 class Collector;
 class VMachine;
+class Error;
 
 /**
  Falcon function.
@@ -68,6 +69,16 @@ public:
    /** Returns the name of this function. */
    const String& name() const { return m_name; }
 
+   /** Sets the signature of the function.
+    \param sign A string with the expected parameters of the function.
+    */
+   void signature( const String& sign ) { m_signature = sign; }
+
+   /** Gets the signature of the function.
+    \return A string representing the expected parameters of the function.
+    */
+   const String& signature() const { return m_signature; }
+
    /** Returns the source line where this function was declared.
     To be used in conjunction with module() to pinpoint the location of a function.
     */
@@ -103,6 +114,8 @@ public:
     */
    GCToken* garbage( Collector* c );
 
+   Error* paramError( int line = 0, const char* modName = 0 ) const;
+
    /** Garbage this function on the standard collector. */
    GCToken* garbage();
 
@@ -130,6 +143,20 @@ public:
     */
    void setDeterm( bool mode ) { m_bDeterm = mode; }
 
+   /** Return true if this function is ETA.
+    \return true if the function is an ETA function.
+
+    Eta functions are "functional constructs", that is, during functional
+    evaluation, eta functions interrupt the normal sigma-reduction flow and
+    are invoked to sigma-reduce their own parameters.
+    */
+   bool isEta() const { return m_bEta; }
+
+   /** Set the determinism status of this function.
+    \param mode true to set this function as deterministic
+    */
+   void setEta( bool mode ) { m_bEta = mode; }
+
 
    /** Returns the symbol table of this function.
     */
@@ -138,6 +165,16 @@ public:
    /** Returns the symbol table of this function.
     */
    SymbolTable& symbols() { return m_symtab; }
+
+   /** Adds a parameter to this function.
+    \param param The parameter to be added.
+    \note call this before accessing symbols() in this function.
+    */
+   inline void addParam( const String& param )
+   {
+      m_symtab.addLocal( param );
+      m_paramCount = m_symtab.localCount();
+   }
 
    /** Candy grammar to declare parameters.
     In this way, it's possible to declare parameter of a function simply doing
@@ -152,18 +189,69 @@ public:
     Module *mod = new Module(...);
     (*mod)
        << &(*(new Func0) << "p0" << "p1" ... )
-       << &(*(new Func1) << "p0" << "p1" ... );
+       << &(*(new Func1) << "p0" << "p1" ... << Function::determ );
     @endcode
     */
-   Function& operator <<( const String& param )
+   inline Function& operator <<( const String& param )
    {
       m_symtab.addLocal( param );
       m_paramCount = m_symtab.localCount();
       return *this;
    }
-   
+
+   /** Setter for ETA function.
+    \see setEta
+    */
+   class EtaSetter {
+   };
+
+   /** Setter for ETA function.
+
+    Use this object to set the function as ETA in a compressed function declaration:
+    @code
+    Function f;
+    f << "Param0" << "Param1" << Function::eta;
+    @endcode
+    */
+   static EtaSetter eta;
+
+   /** Deterministic setter.
+    \see setDeterm
+    */
+   class DetermSetter {
+   };
+
+   /** Deterministic setter.
+    Use this object to set the function as deterministic:
+    @code
+    Function f;
+    f << "Param0" << "Param1" << Function::determ;
+    @endcode
+    */
+   static DetermSetter determ;
+
+   /** Candy grammar to set this function as eta.
+    \see setEta
+    */
+   inline Function& operator <<( const EtaSetter& )
+   {
+      setEta(true);
+      return *this;
+   }
+
+   /** Candy grammar to set this function as deterministic.
+    \see setDeterm
+    */
+   inline Function& operator <<( const DetermSetter& )
+   {
+      setDeterm(true);
+      return *this;
+   }
+
 protected:
    String m_name;
+   String m_signature;
+   
    int32 m_paramCount;
 
    GCToken* m_gcToken;   
@@ -172,6 +260,7 @@ protected:
    int32 m_line;
 
    bool m_bDeterm;
+   bool m_bEta;
 
    SymbolTable m_symtab;
 };

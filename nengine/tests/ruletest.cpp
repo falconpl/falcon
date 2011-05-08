@@ -139,14 +139,14 @@ void go()
                new ExprAssign( var_a->makeExpression(), new ExprValue(0) ) ) )
          .addStatement( assign_expr )
          .addStatement( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParameter(new ExprValue("A: ")).addParameter(var_a->makeExpression())) )
+            ->addParam(new ExprValue("A: ")).addParam(var_a->makeExpression())) )
          .addStatement( new StmtAutoexpr(
                new ExprGE( var_a->makeExpression(), new ExprValue(10) ) ) );
 
    fmain.syntree()
       .append( rule )
       .append( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParameter(new ExprValue("A was ")).addParameter(var_a->makeExpression())) );
+            ->addParam(new ExprValue("A was ")).addParam(var_a->makeExpression())) );
       
 
    std::cout << "Will run: "<< std::endl << fmain.syntree().describe().c_ize() << std::endl;

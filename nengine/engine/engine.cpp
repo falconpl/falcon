@@ -32,7 +32,7 @@
 #include <falcon/transcoderutf8.h>
 
 //--- object headers ---
-
+#include <falcon/pseudofunc.h>
 #include <falcon/collector.h>
 
 //--- type headers ---
@@ -58,6 +58,7 @@
 
 #include "falcon/encodingerror.h"
 #include "falcon/vfs_file.h"
+#include "falcon/pseudofunc.h"
 
 namespace Falcon
 {
@@ -68,6 +69,10 @@ namespace Falcon
 //
 
 class TranscoderMap: public std::map<String, Transcoder*>
+{
+};
+
+class PseudoFunctionMap: public std::map<String, PseudoFunction*>
 {
 };
 
@@ -183,6 +188,19 @@ public:
    }
 };
 
+class ParamErrorClass: public ErrorClass
+{
+public:
+   ParamErrorClass():
+      ErrorClass( "ParamError" )
+      {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new SyntaxError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
 //=======================================================
 // Engine static declarations
 //
@@ -244,6 +262,7 @@ Engine::Engine()
    m_unsupportedErrorClass = new UnsupportedErrorClass;
    m_encodingErrorClass = new EncodingErrorClass;
    m_syntaxErrorClass = new SyntaxErrorClass;
+   m_paramErrorClass = new ParamErrorClass;
 
    //=====================================
    // Adding standard transcoders.
@@ -252,6 +271,14 @@ Engine::Engine()
    m_tcoders = new TranscoderMap;
    addTranscoder( new TranscoderC );
    addTranscoder( new TranscoderUTF8 );
+
+   //=====================================
+   // Adding standard pseudo functions.
+   //
+
+   m_tpfuncs = new PseudoFunctionMap;
+   addPseudoFunction(new PFunc::Min);
+   addPseudoFunction(new PFunc::Max);
 
    TRACE("Engine creation complete", 0 )
 }
@@ -277,6 +304,7 @@ Engine::~Engine()
    delete m_operandErrorClass;
    delete m_unsupportedErrorClass;
    delete m_encodingErrorClass;
+   delete m_paramErrorClass;
 
    // ===============================
    // Delete standard item classes
@@ -378,6 +406,40 @@ Transcoder* Engine::getTranscoder( const String& name )
 }
 
 //=====================================================
+// Pseudofunctions
+//
+
+bool Engine::addPseudoFunction( PseudoFunction* pf )
+{
+   m_mtx->lock();
+   PseudoFunctionMap::iterator iter = m_tpfuncs->find(pf->name());
+   if ( iter != m_tpfuncs->end() )
+   {
+      m_mtx->unlock();
+      return false;
+   }
+
+   (*m_tpfuncs)[pf->name()] = pf;
+   m_mtx->unlock();
+   return true;
+}
+
+PseudoFunction* Engine::getPseudoFunction( const String& name )
+{
+   m_mtx->lock();
+   PseudoFunctionMap::iterator iter = m_tpfuncs->find(name);
+   if ( iter == m_tpfuncs->end() )
+   {
+      m_mtx->unlock();
+      return 0;
+   }
+
+   PseudoFunction* ret = iter->second;
+   m_mtx->unlock();
+   return ret;
+}
+
+//=====================================================
 // Global objects
 //
 
@@ -469,6 +531,12 @@ Class* Engine::syntaxErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_syntaxErrorClass;
+}
+
+Class* Engine::paramErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_paramErrorClass;
 }
 
 
