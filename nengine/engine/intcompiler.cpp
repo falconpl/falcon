@@ -24,9 +24,16 @@
 #include <falcon/stringstream.h>
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
+#include <falcon/statement.h>
 
+#include <falcon/parser/parser.h>
 #include <falcon/sourcelexer.h>
 #include <falcon/genericerror.h>
+#include <falcon/syntaxerror.h>
+#include <falcon/codeerror.h>
+#include <falcon/error_messages.h>
+
+#include <falcon/expression.h>
 
 namespace Falcon {
 
@@ -133,8 +140,7 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name )
 
 void IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 {
-   // if we're called here, the symbol is dead and so it's our statement.
-   delete sym;
+   // there's nothing useful we may want to do here (at least for now)
 }
 
 
@@ -209,20 +215,32 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value )
    // if there is a compilation error, throw it
    if( ! m_sp.step() )
    {
-      GenericError* error = m_sp.makeError();
-      m_sp.reset();
-      delete m_currentTree;
-      m_currentTree = 0;
-      throw error;
+      throwCompileErrors();
    }
 
-   if( m_sp.isComplete() )
+   if( isComplete() )
    {
+      compile_status ret = ok_t;
       if( ! m_currentTree->empty() )
       {
          VMContext* ctx = m_vm->currentContext();
          m_vm->pushReturn();
          ctx->pushCode(m_currentTree);
+         if ( m_currentTree->at(0)->type() == Statement::autoexpr_t )
+         {
+            // this requires evaluation; but is this a direct call?
+            StmtAutoexpr* stmt = static_cast<StmtAutoexpr*>(m_currentTree->at(0));
+            Expression* expr = stmt->expr();
+            if( expr != 0 && expr->type() == Expression::t_funcall )
+            {
+               ret = eval_direct_t;
+            }
+            else
+            {
+               ret = eval_t;
+            }
+         }
+         // else ret can stay ok
 
          try {
             m_vm->run();
@@ -237,18 +255,65 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value )
 
          delete m_currentTree;
          m_currentTree = 0;
-     }
+      }
 
-      return t_ok;
+      return ret;
    }
 
-   return t_incomplete;
+   return incomplete_t;
 }
 
+
+void IntCompiler::throwCompileErrors() const
+{
+   class MyEnumerator: public Parsing::Parser::errorEnumerator
+   {
+   public:
+      MyEnumerator() {
+         myError = new CodeError( e_compile );
+      }
+
+      virtual bool operator()( const Parsing::Parser::ErrorDef& def, bool bLast ){
+
+         String sExtra = def.sExtra;
+         if( def.nOpenContext != 0 )
+         {
+            if( sExtra.size() != 0 )
+               sExtra += " -- ";
+            sExtra += "from line ";
+            sExtra.N(def.nOpenContext);
+         }
+
+         SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
+               .module(def.sUri)
+               .extra(sExtra));
+         
+         myError->appendSubError(err);
+
+         if( bLast )
+         {
+            throw myError;
+         }
+
+         return true;
+      }
+      
+   private:
+      Error* myError;
+   
+   } rator;
+
+   m_sp.enumerateErrors( rator );
+}
 
 void IntCompiler::resetTree()
 {
    m_sp.reset();
+}
+
+bool IntCompiler::isComplete() const
+{
+   return m_sp.isComplete() && m_ctx->isCompleteStatement();
 }
 
 }

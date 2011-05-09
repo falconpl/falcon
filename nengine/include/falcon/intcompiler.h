@@ -51,10 +51,10 @@ public:
    virtual ~IntCompiler();
 
    typedef enum compile_status_t {
-      t_ok,
-      t_incomplete,
-      t_comp_error,
-      t_exec_error
+      ok_t,
+      incomplete_t,
+      eval_t,
+      eval_direct_t
    } compile_status;
 
    compile_status compileNext( const String& value );
@@ -66,6 +66,12 @@ public:
     */
    void resetTree();
 
+   /** Tell wether the current code is self-consistent or needs more data.
+    \return true if the curent compiler is in a clean state, false if it's
+    waiting for more data before processing the input.
+    */
+   bool isComplete() const;
+   
 private:
 
    /** Class used to notify the intcompiler about relevant facts in parsing. */
@@ -93,6 +99,9 @@ private:
    private:
       IntCompiler* m_owner;
    };
+
+   // helper to generate Interactive Compiler errors.
+   void throwCompileErrors() const;
 
    SourceParser m_sp;
    VMachine* m_vm;

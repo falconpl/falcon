@@ -263,7 +263,7 @@ void Parser::resetNextToken()
 }
 
 
-void Parser::enumerateErrors( Parser::errorEnumerator& enumerator )
+void Parser::enumerateErrors( Parser::errorEnumerator& enumerator ) const
 {
    Private::ErrorList::const_iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )

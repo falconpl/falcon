@@ -167,7 +167,7 @@ public:
    /** Enumerator for sub-errors.
     @see enumerateSuberrors
     */
-   typedef Enumerator<Error*> ErrorEnumerator;
+   typedef Enumerator<Error> ErrorEnumerator;
 
    /** Sets the error code.
     \param ecode an error ID.

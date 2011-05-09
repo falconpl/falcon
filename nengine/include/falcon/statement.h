@@ -150,6 +150,11 @@ public:
     In rules, the "?" prefix indicates a rule statement that may fail.
    */
    void determ( bool mode );
+
+   /** Returns the expression held by this expression-statement.
+    \return The held expression, or 0 if it was not set.
+    */
+   Expression* expr() const { return m_expr; }
    
 private:
    // apply is the same as PCODE, but it also checks ND requests.

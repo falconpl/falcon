@@ -443,12 +443,16 @@ public:
    Symbol* findSymbol( const String& name );
 
    /** Return true if the current statements are at syntactic top-level.
+   \return true if the current statements are "main code" of the current syntax
+         context.
 
     This is true if no class, function or other syntactic bounding construct
     have been opened.
 
     */
    bool isTopLevel() const { return m_symtab == 0; }
+
+   bool isCompleteStatement() const { return isTopLevel() && m_cstatement == 0; }
 
    /** Clear the current parser context. */
    virtual void reset();

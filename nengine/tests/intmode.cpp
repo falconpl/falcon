@@ -86,23 +86,56 @@ void go()
          {
             IntCompiler::compile_status status = intComp.compileNext(tgt + "\n");
             // is the compilation complete? -- display a result.
-            if( status == IntCompiler::t_ok )
+            switch( status )
             {
-               vm.textOut()->write(vm.regA().describe()+"\n");
-               prompt = ">>> ";
-            }
-            else
-            {
-               // we're waiting for more
-               prompt = "... ";
+               // in this case, always display the value of a.
+               case IntCompiler::eval_t:
+                  vm.textOut()->write(vm.regA().describe()+"\n");
+                  break;
+
+               // in this case we want to ignore nil
+               case IntCompiler::eval_direct_t:
+                  if( ! vm.regA().isNil() )
+                     vm.textOut()->write(vm.regA().describe()+"\n");
+                  break;
+
+               // we're waiting for more...
+               case IntCompiler::incomplete_t: break;
+               //... or we have nothing to do
+               case IntCompiler::ok_t: break;
             }
          }
          catch( Error* e )
          {
             // display the error and continue
-            vm.textOut()->write(e->describe()+"\n");
+            if( e->errorCode() == e_compile )
+            {
+               // in case of a compilation, discard the encapsulator.
+               class MyEnumerator: public Error::ErrorEnumerator {
+               public:
+                  MyEnumerator( TextWriter* wr ):
+                     m_wr(wr)
+                  {}
+
+                  virtual bool operator()( const Error& e, bool bLast ){
+                     m_wr->write(e.describe()+"\n");
+                     return true;
+                  }
+               private:
+                  TextWriter* m_wr;
+               } rator(vm.textOut());
+               
+               e->enumerateErrors( rator );
+            }
+            else {
+               vm.textOut()->write(e->describe()+"\n");
+            }
+            
             e->decref();
          }
+
+         // resets the prompt
+         prompt = intComp.isComplete() ? ">>> " : "... ";
       }
       // else, it's ok to leave the prompt as it is.
    }

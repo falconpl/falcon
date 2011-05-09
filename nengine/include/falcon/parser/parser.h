@@ -197,7 +197,7 @@ public:
     error description for all the errors that have been found.
       \see Enumerator
     */
-   void enumerateErrors( errorEnumerator& e );
+   void enumerateErrors( errorEnumerator& e ) const;
 
    /** Sets a context data.
     \param ctx User specific context data.

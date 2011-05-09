@@ -240,7 +240,7 @@ void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
       Error* error = *iter;
       ++iter;
       bool last = iter == _p->m_subErrors.end();
-      if( ! rator( error, last ) ) break;
+      if( ! rator( *error, last ) ) break;
    }
 }
 
