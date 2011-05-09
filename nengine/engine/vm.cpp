@@ -27,16 +27,13 @@
 #include <falcon/textwriter.h>
 #include <falcon/transcoder.h>
 
-#include <falcon/trace.h>
 
 #include <falcon/genericerror.h>
-
 #include <falcon/locationinfo.h>
 #include <falcon/module.h>
 
-#include "falcon/autocstring.h"
-#include "falcon/textreader.h"
-
+#include <falcon/trace.h>
+#include <falcon/autocstring.h>
 
 namespace Falcon
 {
@@ -227,8 +224,12 @@ bool VMachine::run()
    m_event = eventNone;
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
-   while( ! codeEmpty() )
+   while( true )
    {
+      // the code should never be empty.
+      // to stop the VM the caller should push a terminator, at least.
+      fassert( ! codeEmpty() );
+
       // BEGIN STEP
       const PStep* ps = currentContext()->currentCode().m_step;
 
@@ -306,17 +307,14 @@ void VMachine::call( Function* function, int nparams, const Item& self )
    register VMContext* ctx = m_context;
    TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
-   // prepare the call frame.
-   register CallFrame* topCall = ctx->addCallFrame();
-   topCall->m_function = function;
-   topCall->m_codeBase = ctx->codeDepth();
-   // initialize also initBase, as stackBase may move
-   topCall->m_initBase = topCall->m_stackBase = ctx->dataSize()-nparams;
-   topCall->m_paramCount = nparams;
-   topCall->m_self = self;
+#ifdef NDEBUG
+   ctx->makeCallFrame( function, nparams, self );
+#else
+   CallFrame* topCall = ctx->makeCallFrame( function, nparams, self );
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
          topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
-
+#endif
+   
    // prepare for a return that won't touch regA
    ctx->m_regA.setNil();
    
@@ -354,9 +352,14 @@ void VMachine::returnFrame()
    }
 
    // Return.
-   --ctx->m_topCall;
-   PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
+   if( ctx->m_topCall-- ==  ctx->m_callStack )
+   {
+      // was this the topmost frame?
+      m_event = eventComplete;
+      TRACE( "Returned from last frame -- declaring complete.", 0 );
+   }
 
+   PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
    TRACE( "Return frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 }
 
@@ -534,6 +537,64 @@ Item* VMachine::findLocalItem( const String& name )
 {
    //TODO
    return 0;
+}
+
+void VMachine::pushQuit()
+{
+   class QuitStep: public PStep {
+   public:
+      QuitStep() { apply = apply_; }
+      virtual ~QuitStep() {}
+
+   private:
+      static void apply_( const PStep* ps, VMachine *vm )
+      {
+         vm->currentContext()->popCode();
+         vm->quit();
+      }
+   };
+
+   static QuitStep qs;
+   currentContext()->pushCode( &qs );
+}
+
+
+void VMachine::pushReturn()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+   private:
+      static void apply_( const PStep* ps, VMachine *vm )
+      {
+         vm->currentContext()->popCode();
+         vm->setReturn();
+      }
+   };
+
+   static Step qs;
+   currentContext()->pushCode( &qs );
+}
+
+void VMachine::pushBreak()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+   private:
+      static void apply_( const PStep* ps, VMachine *vm )
+      {
+         vm->currentContext()->popCode();
+         vm->breakpoint();
+      }
+   };
+
+   static Step qs;
+   currentContext()->pushCode( &qs );
 }
 
 }

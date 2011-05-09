@@ -98,17 +98,18 @@ private:
    VMachine* m_vm;
    SynTree* m_currentTree;
 
-
    StringStream* m_stream;
-   TextReader* m_reader;
    TextWriter* m_writer;
 
    /** Used to keep non-transient data. */
    Module* m_module;
+   Function* m_main;
    
    // better for the context to be a pointer, so we can control it's init order.
    Context* m_ctx;
    friend class Context;
+
+   
 };
 
 }

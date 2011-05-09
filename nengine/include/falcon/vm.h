@@ -167,6 +167,10 @@ public:
 
     This is meant to be used internally by the engine and shouldn't be
     tackled by modules or external code.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
     */
    inline void setReturn() { m_event = eventReturn; }
 
@@ -194,6 +198,12 @@ public:
       Breaks the current run loop. This is usually done by specific
       breakpoint opcodes that are inserted at certain points in the code
       to cause interruption for debug and inspection.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
+
+    The StmtBreakpoint can be inserted in source flows for this purpose.
    */
    inline void breakpoint() { m_event = eventBreak; }
 
@@ -222,6 +232,21 @@ public:
     returned by location().
     */
    bool location( LocationInfo& infos ) const;
+
+     /** Pushes a quit step at current position in the code stack.
+    This method should always be pushed in a VM before it is invoked
+    from unsafe code.
+    */
+   void pushQuit();
+
+   /** Pushes a breakpoint at current postition in the code stack.
+    */
+   void pushBreak();
+
+   /** Pushes a VM clear suspension request in the code stack.
+    @see setReturn
+    */
+   void pushReturn();
 
    //=========================================================
    // General information.
@@ -418,7 +443,6 @@ public:
     to change this setup, act directly on the TextWriters.
     */
    inline TextWriter* textErr() const { return m_textOut; }
-
 
 protected:
 

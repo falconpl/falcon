@@ -129,6 +129,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 
    // finally add to the function vecotr so that we can account it.
    _p->m_functions.push_back(f);
+   f->module(this);
 
    return sym;
 }

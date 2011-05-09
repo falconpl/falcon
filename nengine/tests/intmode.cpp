@@ -69,8 +69,44 @@ void go()
    VMachine vm;
    IntCompiler intComp(&vm);
 
-   intComp.compileNext("\"Hello world\"");
-   vm.textOut()->write(vm.regA().describe());
+   String tgt;
+   String prompt = ">>> ";
+   
+   while( ! vm.stdIn()->eof() )
+   {
+      vm.textOut()->write( prompt );
+      vm.textOut()->flush();
+      vm.textIn()->readLine(tgt, 4096);
+      TRACE("GO -- Read: \"%s\"", tgt.c_ize() );
+
+      // ignore empty lines.
+      if( tgt.size() != 0 )
+      {
+         try
+         {
+            IntCompiler::compile_status status = intComp.compileNext(tgt + "\n");
+            // is the compilation complete? -- display a result.
+            if( status == IntCompiler::t_ok )
+            {
+               vm.textOut()->write(vm.regA().describe()+"\n");
+               prompt = ">>> ";
+            }
+            else
+            {
+               // we're waiting for more
+               prompt = "... ";
+            }
+         }
+         catch( Error* e )
+         {
+            // display the error and continue
+            vm.textOut()->write(e->describe()+"\n");
+            e->decref();
+         }
+      }
+      // else, it's ok to leave the prompt as it is.
+   }
+      
 }
 
 };

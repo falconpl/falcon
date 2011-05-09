@@ -307,12 +307,14 @@ void Parser::popLexer()
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
 {
+   TRACE( "Parser::addError -- with current stack: %s ", dumpStack().c_ize() );
    _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx, extra));
 }
 
 
 void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
 {
+   TRACE( "Parser::addError -- with current stack: %s ", dumpStack().c_ize() );
    _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
 }
 
@@ -904,7 +906,7 @@ void Parser::reset()
 {
    resetNextToken();
    _p->clearTokens();
-   _p->m_states.clear();
+   _p->m_lStates.clear();
 }
 
 }

@@ -368,6 +368,20 @@ public:
       return m_topCall;
    }
 
+   /** Prepares a new call frame. */
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
+   {
+      register CallFrame* topCall = addCallFrame();
+      topCall->m_function = function;
+      topCall->m_codeBase = codeDepth();
+      // initialize also initBase, as stackBase may move
+      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_paramCount = nparams;
+      topCall->m_self = self;
+
+      return topCall;
+   }
+   
    void moreCall();
 
 protected:

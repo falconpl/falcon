@@ -364,11 +364,11 @@ int TextReader::findFirstToken( struct token* toks, int tcount, length_t& pos )
       for( int i = 0; i < tcount; ++i )
       {
          struct token& tok = toks[i];
-         if( buf + tok.size < maxbuf && tok.data[0] == *buf )
+         if( buf + tok.size <= maxbuf && tok.data[0] == *buf )
          {
             if ( tok.size == 1 || memcmp(tok.data, buf, tok.size ) == 0 )
             {
-               pos = (length_t)(buf - base);
+               pos = (length_t)(buf - base)+m_bufPos;
                return i;
             }
          }

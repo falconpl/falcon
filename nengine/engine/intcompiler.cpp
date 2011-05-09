@@ -26,7 +26,7 @@
 #include <falcon/textwriter.h>
 
 #include <falcon/sourcelexer.h>
-
+#include <falcon/genericerror.h>
 
 namespace Falcon {
 
@@ -64,10 +64,7 @@ void IntCompiler::Context::onNewClass( Class* cls, bool bIsObj )
 
 void IntCompiler::Context::onNewStatement( Statement* stmt )
 {
-   if (currentFunc() == 0)
-   {
-      m_owner->m_vm->textOut()->write("NEW STATEMENT " + stmt->describe());
-   }
+   // actually nothing to do
 }
 
 
@@ -150,26 +147,34 @@ void IntCompiler::Context::onStaticData( Class* cls, void* data )
 // Main class
 //
 
-IntCompiler::IntCompiler( VMachine* vm )
+IntCompiler::IntCompiler( VMachine* vm ):
+   m_currentTree(0)
 {
+   // prepare the virtual machine.
    m_vm = vm;
-
    // Used to keep non-transient data.
    m_module = new Module( "Interactive", false );
+   m_main = new SynFunc("__main__" );
+   // as the module is dynamic, m_main will be destroyed by m_module
+   m_module->addFunction(m_main, false);
 
-   // better for the context to be a pointer, so we can control it's init order.
-   Context* m_ctx = new Context( this );
+   // we'll never abandon the main frame in the virtual machine
+   m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
+
+   // Link the module so that the VM knows about it (and protects its global).
+   //TODO: vm->link( m_module );
+
+   // Prepare the compiler and the context.
+   m_ctx = new Context( this );
    m_sp.setContext(m_ctx);
    m_sp.interactive(true);
 
-   //TODO: vm->link( m_module );
 
    // create the streams we're using internally
    m_stream = new StringStream;
-   m_reader = new TextReader( m_stream );
    m_writer = new TextWriter( m_stream );
 
-   m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, m_reader ) );
+   m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, new TextReader( m_stream ) ) );   
 }
 
 IntCompiler::~IntCompiler()
@@ -178,18 +183,66 @@ IntCompiler::~IntCompiler()
    delete m_module; // the vm being deleted will kill the module.
 
    delete m_stream;
-   delete m_reader;
    delete m_writer;
    delete m_ctx;
+
+   delete m_currentTree;
 }
 
 
 IntCompiler::compile_status IntCompiler::compileNext( const String& value )
 {
+   // write the new data on the stream.
+   int64 current = m_stream->seekCurrent(0);
    m_writer->write(value);
    m_writer->flush();
-   
-   return t_ok;
+   m_stream->seekBegin(current);
+
+   // create a new syntree if it was emptied
+   if( m_currentTree == 0 )
+   {
+      m_currentTree = new SynTree;
+      m_ctx->openMain( m_currentTree );
+      m_sp.pushState( "Main" );
+   }
+
+   // if there is a compilation error, throw it
+   if( ! m_sp.step() )
+   {
+      GenericError* error = m_sp.makeError();
+      m_sp.reset();
+      delete m_currentTree;
+      m_currentTree = 0;
+      throw error;
+   }
+
+   if( m_sp.isComplete() )
+   {
+      if( ! m_currentTree->empty() )
+      {
+         VMContext* ctx = m_vm->currentContext();
+         m_vm->pushReturn();
+         ctx->pushCode(m_currentTree);
+
+         try {
+            m_vm->run();
+         }
+         catch(...)
+         {
+            m_sp.reset();
+            delete m_currentTree;
+            m_currentTree = 0;
+            throw;
+         }
+
+         delete m_currentTree;
+         m_currentTree = 0;
+     }
+
+      return t_ok;
+   }
+
+   return t_incomplete;
 }
 
 
