@@ -341,7 +341,7 @@ Symbol* ParserContext::findSymbol( const String& name )
    }
 
    // found at first shot?
-   Private::STVector::const_reverse_iterator iter = sts.rend();
+   Private::STVector::const_reverse_iterator iter = sts.rbegin();
    Symbol* sym = iter->m_st->findSymbol( name );
 
    if( sym !=  0 )
@@ -351,7 +351,7 @@ Symbol* ParserContext::findSymbol( const String& name )
    }
 
    ++iter;
-   while( iter != sts.rbegin() )
+   while( iter != sts.rend() )
    {
       // skip symbol table of classes, they can't be referenced by inner stuff.
       if( iter->m_bIsClass )
@@ -415,6 +415,7 @@ void ParserContext::openFunc( SynFunc *func )
 {
    TRACE("ParserContext::openFunc -- %s", func->name().c_ize() );
    m_cfunc = func;
+   m_st = &func->syntree();
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(func));
    _p->m_symtabs.push_back( STFrame( &func->symbols(), func, false ) );

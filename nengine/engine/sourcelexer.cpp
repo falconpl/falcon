@@ -752,8 +752,10 @@ Parsing::TokenInstance* SourceLexer::checkWord()
             return LAUNCH;
          if ( m_text == "object" )
             return OBJECT;
+            */
          if ( m_text == "return" )
-            return RETURN;
+            return parser->T_return.makeInstance(m_sline, m_schr);
+         /*
          if ( m_text == "export" ) // directive
          {
             m_bIsDirectiveLine = true;

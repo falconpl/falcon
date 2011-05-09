@@ -91,6 +91,7 @@ public:
    Parsing::Terminal T_rule;
 
    Parsing::Terminal T_function;
+   Parsing::Terminal T_return;
 
    //================================================
    // Statements
@@ -155,10 +156,17 @@ public:
    Parsing::Rule r_Expr_neg2;
    Parsing::Rule r_Expr_Atom;
 
-   Parsing::NonTerminal Function;
    Parsing::Rule r_Expr_function;
-   Parsing::Rule r_Expr_lambda;
 
+   //================================================
+   // Function
+   //
+
+   Parsing::NonTerminal S_Function;
+   Parsing::Rule r_function;
+
+   Parsing::NonTerminal S_Return;
+   Parsing::Rule r_return;
 
 
    //================================================
@@ -203,6 +211,10 @@ public:
    Parsing::Rule r_ListSymbol_next;
    Parsing::Rule r_ListSymbol_first;
    Parsing::Rule r_ListSymbol_empty;
+
+   //================================================
+   // States
+   //
 
    Parsing::State s_Main;
 };

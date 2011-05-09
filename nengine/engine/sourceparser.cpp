@@ -87,6 +87,13 @@ static void pair_list_deletor(void* data)
    delete expr;
 }
 
+typedef std::deque<String> NameList;
+
+static void name_list_deletor(void* data)
+{
+   delete static_cast<NameList*>(data);
+}
+
 //==========================================================
 // NonTerminal - Expr
 //==========================================================
@@ -688,19 +695,42 @@ static void apply_end( const Rule& r, Parser& p )
    p.getNextToken();
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
-
-   Statement* current = st->currentStmt();
-   if( current == 0 )
+   //Statement* current = st->currentStmt();
+   if( !st->currentStmt() && !st->currentFunc() && !st->currentClass())
    {
       p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+      return;
    }
-   else
+
+   bool anonymFunc=false;
+
+   Function* func=st->currentFunc();
+
+   if(func)
    {
-      st->closeContext();
+      if(func->name()=="")
+      {
+         anonymFunc=true;
+      }
    }
+
+   st->closeContext();
 
    // clear the stack
    p.simplify(2);
+
+   if(anonymFunc)
+   {
+      SourceParser& sp=static_cast<SourceParser&>(p);
+      p.popState();
+      Item fitem;
+      fitem.setFunction(func);
+      ExprValue* expr=new ExprValue(fitem);
+      //todo source location
+      TokenInstance* ti=new TokenInstance(0,0,sp.Expr);
+      ti->setValue(expr,expr_deletor);
+      p.simplify(0,ti);
+   }
 }
 
 static void apply_end_rich( const Rule& r, Parser& p )
@@ -1099,6 +1129,121 @@ static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
    p.simplify( 0, ti_list );
 }
 
+static void apply_ListSymbol_first(const Rule& r,Parser& p)
+{
+   // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tname = p.getNextToken();
+
+   TokenInstance* ti_list = new TokenInstance(tname->line(), tname->chr(), sp.ListSymbol);
+
+   NameList* list = new NameList;
+   list->push_back(*tname->asString());
+   ti_list->setValue( list, name_list_deletor );
+
+   p.simplify( 1, ti_list );
+}
+
+static void apply_ListSymbol_next(const Rule& r,Parser& p)
+{
+   // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tname = p.getNextToken();
+
+   NameList* list=static_cast<NameList*>(tlist->detachValue());
+   list->push_back(*tname->asString());
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ListSymbol );
+   ti_list->setValue( list, name_list_deletor );
+
+   p.simplify( 3, ti_list );
+}
+
+static void apply_ListSymbol_empty(const Rule& r,Parser& p)
+{
+   // << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* ti_list = new TokenInstance(0, 0, sp.ListSymbol);
+
+   NameList* list=new NameList;
+   ti_list->setValue( list, name_list_deletor );
+
+   // Nothing to delete, just insert.
+   p.simplify( 0, ti_list );
+}
+
+
+static void apply_function(const Rule& r,Parser& p)
+{
+   //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   sp.getNextToken();//T_function
+   TokenInstance* tname=sp.getNextToken();
+   sp.getNextToken();// '('
+   TokenInstance* targs=sp.getNextToken();
+   sp.getNextToken();// ')'
+   sp.getNextToken();// '\n'
+
+   SynFunc* func=new SynFunc(*tname->asString(),0,tname->line());
+
+   NameList* list=static_cast<NameList*>(targs->asData());
+
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      func->addParam(*it);
+   }
+
+   ctx->openFunc(func);
+
+   p.simplify(6);
+}
+
+static void apply_return(const Rule& r,Parser& p)
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   sp.getNextToken();//T_function
+   TokenInstance* texpr=sp.getNextToken();
+   sp.getNextToken();//T_EOL
+
+   ctx->addStatement(new StmtReturn(static_cast<Expression*>(texpr->detachValue())));
+
+   p.simplify(3);
+}
+
+static void apply_expr_func(const Rule& r,Parser& p)
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   TokenInstance* tf=sp.getNextToken();//T_function
+   sp.getNextToken();// '('
+   TokenInstance* targs=sp.getNextToken();
+   sp.getNextToken();// ')'
+   sp.getNextToken();// '\n'
+
+   SynFunc* func=new SynFunc("",0,tf->line());
+
+   NameList* list=static_cast<NameList*>(targs->asData());
+
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      func->addParam(*it);
+   }
+
+   ctx->openFunc(func);
+
+   p.simplify(5);
+
+   p.pushState("Main");
+}
+
 //==========================================================
 // SourceParser
 //==========================================================
@@ -1162,7 +1307,8 @@ SourceParser::SourceParser():
 
    T_while("while"),
 
-   T_function("function")
+   T_function("function"),
+   T_return("return")
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -1233,14 +1379,18 @@ SourceParser::SourceParser():
       // ... or find an unary minus when getting it after another operator.
       << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
-      //<< Function
+      << (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL)
+      //<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
       ;
-/*
-   Function << "Function"
-      << (r_Expr_function << "Expr_function" << apply_expr_function << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL )
-      << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
+
+   S_Function << "Function"
+      << (r_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
-*/
+
+   S_Return << "Return"
+      << (r_return << "return" << apply_return << T_return << Expr << T_EOL)
+      ;
+
    Atom << "Atom"
       << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
       << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
@@ -1276,13 +1426,12 @@ SourceParser::SourceParser():
       ;
 
    SeqExprOrPairs.prio(175);
-/*
+
    ListSymbol << "ListSymbol"
       << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
       << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
       << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
       ;
-*/
    
    //==========================================================================
    //State declarations
@@ -1296,10 +1445,12 @@ SourceParser::SourceParser():
       << S_Rule
       << S_Cut
       << S_End
+      << S_Function
+      << S_Return
       ;
 
-   addState( s_Main );
 
+   addState( s_Main );
 }
 
 bool SourceParser::parse()
