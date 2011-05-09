@@ -84,6 +84,7 @@ add_library(falcon_engine SHARED
   genericerror.cpp
   globalsvector.cpp
   globalsymbol.cpp
+  intcompiler.cpp
   item.cpp
   itemarray.cpp
   interruptederror.cpp

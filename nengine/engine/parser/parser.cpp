@@ -899,6 +899,14 @@ void Parser::applyCurrentRule()
    }
 }
 
+
+void Parser::reset()
+{
+   resetNextToken();
+   _p->clearTokens();
+   _p->m_states.clear();
+}
+
 }
 }
 

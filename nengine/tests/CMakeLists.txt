@@ -50,3 +50,8 @@ target_link_libraries( ruletest falcon_engine )
 message("Adding testparser")
 add_executable( testparser testparser.cpp )
 target_link_libraries( testparser falcon_engine )
+
+###############################################
+message("Adding interactive mode")
+add_executable( intmode intmode.cpp )
+target_link_libraries( intmode falcon_engine )

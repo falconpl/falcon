@@ -1,5 +1,5 @@
 /*
- * ruletest.cpp
+ * testparser.cpp
  *
  *  Created on: 15/gen/2011
  *      Author: gian

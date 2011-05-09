@@ -116,34 +116,6 @@ ParserContext::CCFrame::CCFrame( SynTree* st ):
 {
    m_elem.raw = 0;
 }
-//==================================================================
-// Stack frame class
-//
-
-class ParserContext::STFrame {
-public:
-   SymbolTable* m_st;
-   void *m_owner; // used in pops to see if it's time to pop this
-   bool m_bIsClass;  // class symtabs have special meanings.
-
-   STFrame():
-      m_st(0),
-      m_owner(0),
-      m_bIsClass(0)
-   {}
-
-   STFrame( SymbolTable* st, void* owner, bool isClass ):
-      m_st( st ),
-      m_owner( owner ),
-      m_bIsClass( isClass )
-   {}
-
-   STFrame( const STFrame& other ):
-      m_st( other.m_st ),
-      m_owner( other.m_owner ),
-      m_bIsClass( other.m_bIsClass )
-   {}
-};
 
 
 //==================================================================
@@ -163,20 +135,18 @@ private:
    typedef std::vector<ParserContext::CCFrame> FrameVector;
    FrameVector m_frames;
 
-   typedef std::vector<ParserContext::STFrame> STVector;
-   STVector m_symtabs;
-
    Private() {}
    ~Private() {}
 };
 
 
-ParserContext::ParserContext( SourceParser *sp ):
+ParserContext::ParserContext( SourceParser* sp ):
    m_parser(sp),
    m_st(0),
    m_cstatement(0),
    m_cfunc(0),
-   m_cclass(0)
+   m_cclass(0),
+   m_symtab(0)
 {
    sp->setContext(this);
    _p = new Private;
@@ -187,7 +157,7 @@ ParserContext::~ParserContext()
    delete _p;
 }
 
-void ParserContext::openMain( SynTree*st )
+void ParserContext::openMain( SynTree* st )
 {
    _p->m_frames.push_back( CCFrame( st ) );
    m_st = st;
@@ -244,7 +214,7 @@ void ParserContext::defineSymbol( Symbol* uks )
       if( nuks == 0 )
       {
          // --no ? create it
-         if( _p->m_symtabs.empty() )
+         if( m_symtab == 0 )
          {
             // we're in the global context.
             nuks = onGlobalDefined( uks->name() );
@@ -252,7 +222,7 @@ void ParserContext::defineSymbol( Symbol* uks )
          else
          {
             // add it in the current symbol table.
-            nuks = _p->m_symtabs.back().m_st->addLocal( uks->name() );
+            nuks = m_symtab->addLocal( uks->name() );
          }
       }
 
@@ -286,10 +256,12 @@ void ParserContext::defineSymbol( Symbol* uks )
 }
 
 
-void ParserContext::checkSymbols()
+bool ParserContext::checkSymbols()
 {
+   bool isOk = true;
    Private::SymbolMap& unknown = _p->m_unknown;
 
+   // try with all the undefined symbols.
    TRACE("ParserContext::checkSymbols on %d syms", (int) unknown.size() );
    Private::SymbolMap::iterator iter = unknown.begin();
    while( iter != unknown.end() )
@@ -299,10 +271,11 @@ void ParserContext::checkSymbols()
 
       if ( new_sym == 0 )
       {
+         // see if it's a global or extern for our sub-class...
          TRACE1("ParserContext::checkSymbols \"%s\" is undefined, up-notifying", sym->name().c_ize() );
          new_sym = onUndefinedSymbol( sym->name() );
 
-         // still undefined
+         // still undefined? -- we surrender, and hope that the subclass has properly raised
          if ( new_sym == 0 )
          {
             TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", sym->name().c_ize() );
@@ -317,50 +290,59 @@ void ParserContext::checkSymbols()
       }
       else
       {
+         // we know that the symbol is lost
          m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
-
+         isOk = false;
+         
+         // -- see if the callee wants to do something about that
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
                   sym->name().c_ize() );
          onUnknownSymbol( sym );
+
+         // if this parser is interactive, the calling item is discarded,
+         // as such the symbol is dead.
+         if( m_parser->interactive() )
+         {
+            delete sym;
+         }
       }
       ++iter;
    }
 
    unknown.clear();
+   return isOk;
 }
 
 
 Symbol* ParserContext::findSymbol( const String& name )
 {
    TRACE1("ParserContext::findSymbol \"%s\"", name.c_ize() );
-   Private::STVector& sts = _p->m_symtabs;
-
-   if( sts.empty() )
+   if( m_symtab == 0 )
    {
       return 0;
    }
 
    // found at first shot?
-   Private::STVector::const_reverse_iterator iter = sts.rbegin();
-   Symbol* sym = iter->m_st->findSymbol( name );
-
+   Symbol* sym = m_symtab->findSymbol( name );
    if( sym !=  0 )
    {
       TRACE1("ParserContext::findSymbol \"%s\" found locally", sym->name().c_ize() );
       return sym;
    }
 
-   ++iter;
-   while( iter != sts.rend() )
+   Private::FrameVector::const_reverse_iterator iter = _p->m_frames.rbegin();
+   while( iter != _p->m_frames.rend() )
    {
+      const CCFrame& frame = *iter;
+      
       // skip symbol table of classes, they can't be referenced by inner stuff.
-      if( iter->m_bIsClass )
+      if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->symbols() == m_symtab )
       {
          ++iter;
          continue;
       }
 
-      sym = iter->m_st->findSymbol( name );
+      sym = frame.m_elem.func->symbols().findSymbol( name );
       if( sym !=  0 )
       {
          if( sym->type() == Symbol::t_local_symbol )
@@ -368,7 +350,7 @@ Symbol* ParserContext::findSymbol( const String& name )
             TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", sym->name().c_ize() );
             //TODO: Properly close symbols. -- this won't work
             ClosedSymbol* closym = new ClosedSymbol(name, Item());
-            sts.back().m_st->addSymbol(closym);
+            m_symtab->addSymbol(closym);
             return closym;
          }
 
@@ -377,6 +359,7 @@ Symbol* ParserContext::findSymbol( const String& name )
       }
       ++iter;
    }
+   
    return 0;
 }
 
@@ -386,30 +369,63 @@ void ParserContext::addStatement( Statement* stmt )
    TRACE("ParserContext::addStatement type %d", (int) stmt->type() );
    fassert( m_st != 0 );
 
-   m_st->append(stmt);
+   bool result = checkSymbols();
 
-   checkSymbols();
-   onNewStatement( stmt );
+   // if the pareser is not interactive, append the statement even after undefined errors.
+   if( result || ! m_parser->interactive() )
+   {
+      m_st->append(stmt);
+      onNewStatement( stmt );
+   }
+   else
+   {
+      // when interactive, we don't want to have useless statements.
+      delete stmt;
+   }
 }
+
 
 void ParserContext::openBlock( Statement* parent, SynTree* branch )
 {
    TRACE("ParserContext::openBlock type %d", (int) parent->type() );
-   m_cstatement = parent;
-   m_st = branch;
-   _p->m_frames.push_back( CCFrame(parent, branch) );
 
-   checkSymbols();
+   bool result = checkSymbols();
+
+   // if the pareser is not interactive, append the statement even after undefined errors.
+   if( result || ! m_parser->interactive() )
+   {
+      m_cstatement = parent;
+      m_st = branch;
+      _p->m_frames.push_back( CCFrame(parent, branch) );
+   }
+   else
+   {
+      // when interactive, we don't want to have useless statements.
+      delete parent;
+   }
 }
 
-void ParserContext::changeBranch(SynTree* branch)
+
+SynTree* ParserContext::changeBranch()
 {
    TRACE("ParserContext::changeBranch", 0 );
-   m_st = branch;
-   _p->m_frames.back().m_branch = branch;
 
-   checkSymbols();
+   bool result = checkSymbols();
+
+   // if the pareser is not interactive, append the statement even after undefined errors.
+   if( result || ! m_parser->interactive() )
+   {
+      m_st = new SynTree;
+      _p->m_frames.back().m_branch = m_st;
+      return m_st;
+   }
+   else
+   {
+      // when interactive, we don't want to have useless statements.
+      return 0;
+   }
 }
+
 
 void ParserContext::openFunc( SynFunc *func )
 {
@@ -418,8 +434,11 @@ void ParserContext::openFunc( SynFunc *func )
    m_st = &func->syntree();
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(func));
-   _p->m_symtabs.push_back( STFrame( &func->symbols(), func, false ) );
+
+   // get the symbol table.
+   m_symtab = &func->symbols();
 }
+
 
 void ParserContext::openClass( Class *cls, bool bIsObject )
 {
@@ -428,8 +447,9 @@ void ParserContext::openClass( Class *cls, bool bIsObject )
    m_cclass = cls;
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(cls, bIsObject));
-   //_p->m_symtabs.push_back( STFrame( &cls->symbols(), cls, true ) );
+   // TODO: get the symbol table.
 }
+
 
 void ParserContext::closeContext()
 {
@@ -450,13 +470,30 @@ void ParserContext::closeContext()
    if( !_p->m_frames.empty() )
    {
       m_st = _p->m_frames.back().m_branch;
-   }
+      CCFrame& curFrame = _p->m_frames.back();
+      switch( curFrame.m_type  )
+      {
+         case CCFrame::t_object_type:
+         case CCFrame::t_class_type:
+            // todo
+            //m_symtab = curFrame.m_elem.cls;
+            break;
 
-   // updating the symbol table
-   if( !_p->m_symtabs.empty() && _p->m_symtabs.back().m_owner == bframe.m_elem.raw )
-   {
-      _p->m_symtabs.pop_back();
+         case CCFrame::t_func_type:
+            m_symtab = &curFrame.m_elem.func->symbols();
+            break;
+
+         default:
+            // keep the current symtab.
+            m_symtab = m_symtab; // to make compilers happy
+      }
    }
+   else 
+   {
+      // if we don't have frames, we don't have symtabs.
+      m_symtab = 0;
+   }
+   
    
    // notify the new item.
    switch( bframe.m_type )
@@ -539,6 +576,18 @@ void ParserContext::closeContext()
          addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
          break;
    }
+}
+
+void ParserContext::reset()
+{
+   _p->m_frames.clear();
+   _p->m_unknown.clear();
+
+   m_st = 0;
+   m_cstatement = 0;
+   m_cfunc = 0;
+   m_cclass = 0;
+   m_symtab = 0;
 }
 
 }

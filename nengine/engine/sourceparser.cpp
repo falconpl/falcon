@@ -30,15 +30,14 @@
 
 #include <falcon/globalsymbol.h>
 #include <falcon/localsymbol.h>
-
 #include <falcon/parsercontext.h>
+#include <falcon/stmtrule.h>
+#include <falcon/error.h>
+#include <falcon/codeerror.h>
+#include <falcon/pseudofunc.h>
 
 #include <deque>
 
-#include "falcon/stmtrule.h"
-#include "falcon/error.h"
-#include "falcon/codeerror.h"
-#include "falcon/pseudofunc.h"
 
 
 namespace Falcon {
@@ -571,9 +570,11 @@ static void apply_elif( const Rule& r, Parser& p )
    else
    {
       StmtIf* stmt_if = static_cast<StmtIf*>(current);
-      SynTree* ifElse = new SynTree;
-      stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
-      st->changeBranch( ifElse );
+      // can we really change branch now?
+      SynTree* ifElse = st->changeBranch();
+      if ( ifElse != 0 ) {
+         stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
+      }
    }
 
    // clear the stack
@@ -596,9 +597,12 @@ static void apply_else( const Rule& r, Parser& p )
    else
    {
       StmtIf* stmt_if = static_cast<StmtIf*>(current);
-      SynTree* ifElse = new SynTree;
-      stmt_if->setElse( ifElse );
-      st->changeBranch( ifElse );
+
+      // can we really change branch?
+      SynTree* ifElse = st->changeBranch();
+      if( ifElse != 0 ) {
+         stmt_if->setElse( ifElse );
+      }
    }
 
    // clear the stack
@@ -629,6 +633,7 @@ static void apply_while_short( const Rule& r, Parser& p )
    // clear the stack
    p.simplify(5);
 }
+
 
 static void apply_while( const Rule& r, Parser& p )
 {
@@ -732,6 +737,7 @@ static void apply_end( const Rule& r, Parser& p )
       p.simplify(0,ti);
    }
 }
+
 
 static void apply_end_rich( const Rule& r, Parser& p )
 {
@@ -1464,6 +1470,14 @@ bool SourceParser::parse()
    return Parser::parse("Main");
 }
 
+void SourceParser::reset()
+{
+   Parser::reset();
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   fassert( pc != 0 );
+   pc->reset();
+   pushState("Main");
+}
 
 
 }

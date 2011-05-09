@@ -36,6 +36,9 @@ public:
    SourceParser();
    bool parse();
 
+   /** Clears the source parser status. */
+   virtual void reset();
+   
    //===============================================
    // Terminal tokens
    //

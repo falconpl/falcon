@@ -240,11 +240,12 @@ public:
 
     The call of this method is always preceded by the queueing of an error
     condition in the parser.
-    If the callee is sure that the structure being created won't be ispected
-    at a later step, (i.e. because the error result in the parser prevents it),
-    then it can destory the symbol immediately, otherwise it should store it
-    together with the syntree root, and destroy all them after the syntree
-    has gone out of scope.
+
+    If the underlying parser is interactive the symbol will be immediately
+    destroyed after this method returns, and involved statements won't be
+    added to the forming structure. Otherwise, the callee should store
+    this symbol somewhere (i.e. in a global symbol table) so that the
+    created structure can still be inspected at a later stage.
 
     */
    virtual void onUnknownSymbol( UnknownSymbol* sym ) = 0;
@@ -313,6 +314,7 @@ public:
    void defineSymbol( Symbol* uks );
 
    /** Checks the symbols that have been declared up to date.
+    \return false if there is some unresolved symbol at the current checkpoint
 
     Falcon defines symbols by assignment, or trhough particular expressions
     which explicitly declare some symbols. Unknown symbols are implicitly declared
@@ -328,8 +330,8 @@ public:
     "complete statement points" and cause all the symbols created in the meanwhile
     that didn't pass through defineSymbols() as undefined or otherwise defined
     elsewhere.
-    
-    For example, in parsing the following code, the noted operations are taken:
+
+    For example, in parsing the following code, the noted operations are performed:
 
     @code
     a = 0           // defineSymbols( a ); addStatement( a = 0 );
@@ -338,11 +340,13 @@ public:
        if (v=a) > 2 // defineSymbols(v); openBlock( if (v=a) > 2 );
          doThis()   // addStatement(doThis(v));
        elif a < 1   // changeBranch(elif a \< 1);
-         doThat()   // addStatement(doThat());
+         doThat()   // onStatementParsed(doThat());
        end          // closeContext(); addStatement(if);
     end             // closeContext(); addStatement(while);
+    @endcode
     */
-   void checkSymbols();
+   
+   bool checkSymbols();
 
    /** Adds a statement to the current context.
     \param stmt The statement to be added.
@@ -358,16 +362,21 @@ public:
    void openBlock( Statement* parent, SynTree* branch );
 
    /** Changes the branch of a block statement context without closing it.
-    \param branch The new branch of the topmost statement.
+    \return A new SynTree if it's possible to open a branch now, 0 otherwise.
 
     This is useful when switching branch in swithces or if/else multiple
     block statements without disrupting the block structure.
+
+    In case of errors in the current branch opening (i.e. because of undefined
+    symbols) the method will return null, otherwise it will return a new
+    SynTree that can be used to be stored in the opened branch of the
+    current statement.
 
     \note The parent statement of this block stays the originally pushed statement,
       but bstmt is used to check for undefined symbols, as the
     \see checkSymbols();
     */
-   void changeBranch( SynTree* branch);
+   SynTree* changeBranch();
 
    /** Opens a new Function statement context.
     \param func The function being created.
@@ -433,9 +442,19 @@ public:
     */
    Symbol* findSymbol( const String& name );
 
+   /** Return true if the current statements are at syntactic top-level.
+
+    This is true if no class, function or other syntactic bounding construct
+    have been opened.
+
+    */
+   bool isTopLevel() const { return m_symtab == 0; }
+
+   /** Clear the current parser context. */
+   virtual void reset();
+
 private:
    class CCFrame; // forward decl for Context Frames.
-   class STFrame; // forward decl fro Symbol table frames.
    
    SourceParser* m_parser;
    
@@ -451,6 +470,9 @@ private:
    // Current class, precached for performance.
    Class * m_cclass;
 
+   // Current symbol table, precached for performance.
+   SymbolTable* m_symtab;
+   
    class Private;
    Private* _p;
 };

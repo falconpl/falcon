@@ -423,6 +423,18 @@ public:
    
    TokenInstance* getCurrentToken( int& pos ) const;
 
+   /** Clears the current parser status.
+    
+    This completely resets the parser, clearing the stack of received tokens
+    and allowing subclasses to clear their own state.
+
+    The State vector is cleared as well, so it's necessary to add a
+    state before proceeding in parsing.
+    
+    \note Lexers are left untouched in their current state.
+    */
+   virtual void reset();
+
    //=================================================================
    // Common terminals
    Terminal T_EOF;

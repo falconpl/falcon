@@ -17,8 +17,17 @@
 #define	FALCON_INTCOMPILER_H
 
 #include <falcon/setup.h>
+#include <falcon/sourceparser.h>
+#include <falcon/parsercontext.h>
+#include <falcon/syntree.h>
 
 namespace Falcon {
+
+class Module;
+class VMachine;
+class StringStream;
+class TextReader;
+class TextWriter;
 
 /** Class encapsulating an interactive compiler.
 
@@ -27,10 +36,79 @@ it as a Falcon program as it's being completed. It's meant to support the
 interactive mode, where programs are tested or modules are used from the
 command prompt.
 
+ The interactive compiler takes a Virtual Machine that is then use to execute
+ the code that is getting completed in the meanwhile. It never creates a module
+ out of the code it's compiling, and usually discards it after it's executed.
+
+ Functions and classes declared in the process are stored directly in the
+ compiler itself.
  */
-class FALCON_DYN_CLASS IntCompiler {
+class FALCON_DYN_CLASS IntCompiler
+{
+
+public:
+   IntCompiler( VMachine *vm );
+   virtual ~IntCompiler();
+
+   typedef enum compile_status_t {
+      t_ok,
+      t_incomplete,
+      t_comp_error,
+      t_exec_error
+   } compile_status;
+
+   compile_status compileNext( const String& value );
+   
+   /** Clear the currently compiled items.
+
+    In case of incomplete parsing, calling this method clears the tree read up
+    to date.
+    */
+   void resetTree();
+
+private:
+
+   /** Class used to notify the intcompiler about relevant facts in parsing. */
+   class Context: public ParserContext {
+   public:
+      Context( IntCompiler* owner );
+      virtual ~Context();
+      
+      virtual void onInputOver();
+      virtual void onNewFunc( Function* function );
+      virtual void onNewClass( Class* cls, bool bIsObj );
+      virtual void onNewStatement( Statement* stmt );
+      virtual void onLoad( const String& path, bool isFsPath );
+      virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
+            const String& asName, const String &inName );
+      virtual void onImport(const String& symName );
+      virtual void onExport(const String& symName);
+      virtual void onDirective(const String& name, const String& value);
+      virtual void onGlobal( const String& name );
+      virtual Symbol* onUndefinedSymbol( const String& name );
+      virtual Symbol* onGlobalDefined( const String& name );
+      virtual void onUnknownSymbol( UnknownSymbol* sym );
+      virtual void onStaticData( Class* cls, void* data );
+
+   private:
+      IntCompiler* m_owner;
+   };
+
+   SourceParser m_sp;
+   VMachine* m_vm;
+   SynTree* m_currentTree;
 
 
+   StringStream* m_stream;
+   TextReader* m_reader;
+   TextWriter* m_writer;
+
+   /** Used to keep non-transient data. */
+   Module* m_module;
+   
+   // better for the context to be a pointer, so we can control it's init order.
+   Context* m_ctx;
+   friend class Context;
 };
 
 }
