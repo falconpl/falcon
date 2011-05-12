@@ -50,6 +50,7 @@ public:
 ExprArray::ExprArray():
    Expression( t_arrayDecl )
 {
+   apply = apply_;
    _p = new Private;
 }
 
