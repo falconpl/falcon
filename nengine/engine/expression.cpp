@@ -2146,7 +2146,7 @@ void ExprIndex::apply_( const PStep* ps, VMachine* vm )
    ctx->topData().forceClassInst(cls, self);
    if ( ((ExprIndex*)ps)->isLValue() )
    {
-      Item index = ctx->topData();
+      //pop the array as we already have our class instance
       ctx->popData();
       Item target = ctx->topData();
       cls->op_setIndex(vm, self, index, target);

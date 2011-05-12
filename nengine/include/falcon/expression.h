@@ -337,9 +337,12 @@ protected:
    public:
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name(): BinaryExpression( op ) {apply = apply_;}\
-   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) { apply = apply_; } \
-   inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_;} \
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, )
+
+#define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, extended_constructor ) \
+   inline class_name(): BinaryExpression( op ) {apply = apply_; extended_constructor}\
+   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) { apply = apply_; extended_constructor } \
+   inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_; extended_constructor} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMachine* vm ); \
@@ -746,7 +749,13 @@ public:
 class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprIndex, t_array_access );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, m_IsLValue = false; );
+
+   inline virtual void setLValue() { m_IsLValue = true; }
+   inline virtual bool isLValue() const { return m_IsLValue; }
+
+private:
+   bool m_IsLValue;
 };
 
 /** Special string Index accessor. */
