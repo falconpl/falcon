@@ -189,7 +189,7 @@ void GC_th_normal_rto(CoreObject *instance, void *user_data, Item &property, con
          origin( e_orig_runtime ).extra( "N" ) );
    }
 
-   memPool->thresholdActive( (size_t) property.forceInteger() );
+   memPool->thresholdNormal( (size_t) property.forceInteger() );
 }
 
 
