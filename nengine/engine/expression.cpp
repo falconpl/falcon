@@ -2138,7 +2138,7 @@ void ExprIndex::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   Item obj = ctx->topData();
+   Item index = ctx->topData();
    ctx->popData();
    Class* cls;
    void* self;
@@ -2153,8 +2153,8 @@ void ExprIndex::apply_( const PStep* ps, VMachine* vm )
    }
    else
    {
-      Item& index = ctx->topData();
-      cls->op_getIndex(vm, self, index, index);
+      Item& obj = ctx->topData();
+      cls->op_getIndex(vm, self, index, obj);
    }
 }
 
