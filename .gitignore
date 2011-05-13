@@ -13,6 +13,7 @@ build
 build_*
 bld
 bin
+lib
 
 # OS X
 .DS_Store
