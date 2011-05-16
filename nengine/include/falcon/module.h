@@ -92,6 +92,14 @@ public:
     */
    GlobalSymbol* addFunction( Function* f, bool bExport = true );
 
+   /** Storing it on an already defined symbol.
+    \param sym The global symbol that is already stored on this module.
+    \param f The function to be added
+
+    
+    */
+   void addFunction( GlobalSymbol* sym, Function* f );
+
    /** Adds a global function, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.

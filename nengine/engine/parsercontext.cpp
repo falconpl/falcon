@@ -56,8 +56,8 @@ class ParserContext::CCFrame
    } t_type;
 
    CCFrame();
-   CCFrame( Class* cls, bool bIsObject );
-   CCFrame( SynFunc* func );
+   CCFrame( Class* cls, bool bIsObject, GlobalSymbol* gs );
+   CCFrame( SynFunc* func, GlobalSymbol* gs );
    CCFrame( Statement* stmt, SynTree* st );
    CCFrame( SynTree* st );
 
@@ -76,6 +76,7 @@ public:
    /** True if a parser state was pushed at this frame */
    bool m_bStatePushed;
 
+   GlobalSymbol* m_sym;
 };
 
 ParserContext::CCFrame::CCFrame():
@@ -84,18 +85,20 @@ ParserContext::CCFrame::CCFrame():
 
 }
 
-ParserContext::CCFrame::CCFrame( Class* cls, bool bIsObject ):
+ParserContext::CCFrame::CCFrame( Class* cls, bool bIsObject, GlobalSymbol* gs ):
    m_type( bIsObject ? t_object_type : t_class_type ),
    m_branch( 0 ),
-   m_bStatePushed( false )
+   m_bStatePushed( false ),
+   m_sym(gs)
 {
    m_elem.cls = cls;
 }
 
-ParserContext::CCFrame::CCFrame( SynFunc* func ):
+ParserContext::CCFrame::CCFrame( SynFunc* func, GlobalSymbol* gs ):
    m_type( t_func_type ),
    m_branch( &func->syntree() ),
-   m_bStatePushed( false )
+   m_bStatePushed( false ),
+   m_sym(gs)
 {
    m_elem.func = func;
 }
@@ -217,7 +220,8 @@ void ParserContext::defineSymbol( Symbol* uks )
          if( m_symtab == 0 )
          {
             // we're in the global context.
-            nuks = onGlobalDefined( uks->name() );
+            bool bAlready;
+            nuks = onGlobalDefined( uks->name(), bAlready );
          }
          else
          {
@@ -427,26 +431,26 @@ SynTree* ParserContext::changeBranch()
 }
 
 
-void ParserContext::openFunc( SynFunc *func )
+void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
 {
    TRACE("ParserContext::openFunc -- %s", func->name().c_ize() );
    m_cfunc = func;
    m_st = &func->syntree();
    m_cstatement = 0;
-   _p->m_frames.push_back(CCFrame(func));
+   _p->m_frames.push_back(CCFrame(func, gs));
 
    // get the symbol table.
    m_symtab = &func->symbols();
 }
 
 
-void ParserContext::openClass( Class *cls, bool bIsObject )
+void ParserContext::openClass( Class *cls, bool bIsObject, GlobalSymbol *gs )
 {
    TRACE("ParserContext::openClass -- depth %d %s%s", _p->m_frames.size() + 1,
             cls->name().c_ize(), bIsObject ? "":" (object)" );
    m_cclass = cls;
    m_cstatement = 0;
-   _p->m_frames.push_back(CCFrame(cls, bIsObject));
+   _p->m_frames.push_back(CCFrame(cls, bIsObject, gs));
    // TODO: get the symbol table.
 }
 
@@ -461,39 +465,40 @@ void ParserContext::closeContext()
 
    // as we're removing the frame.
    _p->m_frames.pop_back();
+   // we can never close the main context
+   fassert( ! _p->m_frames.empty() );
    if( bframe.m_bStatePushed )
    {
       m_parser->popState();
    }
 
+   m_st = _p->m_frames.back().m_branch;
    // updating the syntactic tree
-   if( !_p->m_frames.empty() )
+   Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
+   m_symtab = 0; // if we don't find a parent context, the symtab is 0
+   while( riter != _p->m_frames.rbegin() )
    {
-      m_st = _p->m_frames.back().m_branch;
-      CCFrame& curFrame = _p->m_frames.back();
-      switch( curFrame.m_type  )
+      const CCFrame& curFrame = *riter;
+      switch( curFrame.m_type )
       {
          case CCFrame::t_object_type:
          case CCFrame::t_class_type:
             // todo
             //m_symtab = curFrame.m_elem.cls;
+            riter = _p->m_frames.rbegin(); // we're done, froce break;
             break;
 
          case CCFrame::t_func_type:
             m_symtab = &curFrame.m_elem.func->symbols();
+            riter = _p->m_frames.rbegin(); // we're done, froce break;
             break;
 
          default:
             // keep the current symtab.
             m_symtab = m_symtab; // to make compilers happy
+            // continue the loop
       }
    }
-   else 
-   {
-      // if we don't have frames, we don't have symtabs.
-      m_symtab = 0;
-   }
-   
    
    // notify the new item.
    switch( bframe.m_type )
@@ -521,7 +526,7 @@ void ParserContext::closeContext()
                ++riter;
             }
          }
-         onNewClass( bframe.m_elem.cls, bframe.m_type == CCFrame::t_object_type );
+         onNewClass( bframe.m_elem.cls, bframe.m_type == CCFrame::t_object_type, bframe.m_sym );
          break;
 
       case CCFrame::t_func_type:
@@ -546,7 +551,7 @@ void ParserContext::closeContext()
                ++riter;
             }
          }
-         onNewFunc( bframe.m_elem.func );
+         onNewFunc( bframe.m_elem.func, bframe.m_sym );
          break;
 
       case CCFrame::t_stmt_type:

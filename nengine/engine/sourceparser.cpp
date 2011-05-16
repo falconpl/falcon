@@ -707,35 +707,10 @@ static void apply_end( const Rule& r, Parser& p )
       return;
    }
 
-   bool anonymFunc=false;
-
-   Function* func=st->currentFunc();
-
-   if(func)
-   {
-      if(func->name()=="")
-      {
-         anonymFunc=true;
-      }
-   }
-
    st->closeContext();
 
    // clear the stack
    p.simplify(2);
-
-   if(anonymFunc)
-   {
-      SourceParser& sp=static_cast<SourceParser&>(p);
-      p.popState();
-      Item fitem;
-      fitem.setFunction(func);
-      ExprValue* expr=new ExprValue(fitem);
-      //todo source location
-      TokenInstance* ti=new TokenInstance(0,0,sp.Expr);
-      ti->setValue(expr,expr_deletor);
-      p.simplify(0,ti);
-   }
 }
 
 
@@ -1183,7 +1158,7 @@ static void apply_ListSymbol_empty(const Rule& r,Parser& p)
 }
 
 
-static void apply_function(const Rule& r,Parser& p)
+static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1194,10 +1169,38 @@ static void apply_function(const Rule& r,Parser& p)
    sp.getNextToken();// '('
    TokenInstance* targs=sp.getNextToken();
    sp.getNextToken();// ')'
-   sp.getNextToken();// '\n'
+   sp.getNextToken();// '\n' or ':'
 
+   TokenInstance* tstatement = 0;
+   int tcount = bHasExpr ? 8 : 6;
+   
+   if( bHasExpr )
+   {
+      tstatement = p.getNextToken();
+   }
+   
+   // Are we already in a function?
+   if( ctx->currentFunc() != 0 )
+   {
+      p.addError( e_toplevel_func,  p.currentSource(), tname->line(), tname->chr() );
+      p.simplify(tcount);
+      return 0;
+   }
+
+   // check if the symbol is free -- defining an unique symbol
+   bool alreadyDef;
+   GlobalSymbol* symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+   if( alreadyDef )
+   {
+      // not free!
+      p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+         String("at line ").N(symfunc->declaredAt()) );
+      p.simplify(tcount);
+      return 0;
+   }
+
+   // Ok, we took the symbol.
    SynFunc* func=new SynFunc(*tname->asString(),0,tname->line());
-
    NameList* list=static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -1205,9 +1208,28 @@ static void apply_function(const Rule& r,Parser& p)
       func->addParam(*it);
    }
 
-   ctx->openFunc(func);
+   if ( bHasExpr )
+   {
+      Expression* sa = static_cast<Expression*>(tstatement->detachValue());
+      func->syntree().append(new StmtReturn(sa));
+   }
+   else
+   {
+      ctx->openFunc(func, symfunc);
+   }
 
-   p.simplify(6);
+   p.simplify(tcount);
+}
+
+static void apply_function(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, false );
+}
+
+
+static void apply_function_short(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, true );
 }
 
 static void apply_return(const Rule& r,Parser& p)
@@ -1234,8 +1256,8 @@ static void apply_expr_func(const Rule& r,Parser& p)
    sp.getNextToken();// ')'
    sp.getNextToken();// '\n'
 
-   SynFunc* func=new SynFunc("",0,tf->line());
-
+   // todo: generate an anonymous name
+   SynFunc* func=new SynFunc("anonymous",0,tf->line());
    NameList* list=static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -1244,10 +1266,7 @@ static void apply_expr_func(const Rule& r,Parser& p)
    }
 
    ctx->openFunc(func);
-
    p.simplify(5);
-
-   p.pushState("Main");
 }
 
 //==========================================================
@@ -1386,11 +1405,15 @@ SourceParser::SourceParser():
       << (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr )
       << (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom)
       << (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL)
-      //<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow << T_CloseGraph )
+      //<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow  )
       ;
 
    S_Function << "Function"
-      << (r_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+      /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
+            << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar <<  T_Colon << Expr << T_EOL )
+       */
+      << (r_function << "Function decl" << apply_function
+            << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
 
    S_Return << "Return"
@@ -1438,11 +1461,12 @@ SourceParser::SourceParser():
       << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
       << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
       ;
-   
+
    //==========================================================================
    //State declarations
    //
    s_Main << "Main"
+      << S_Function
       << S_Autoexpr
       << S_If
       << S_Elif
@@ -1451,7 +1475,6 @@ SourceParser::SourceParser():
       << S_Rule
       << S_Cut
       << S_End
-      << S_Function
       << S_Return
       ;
 

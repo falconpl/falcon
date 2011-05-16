@@ -100,6 +100,8 @@ public:
    // Statements
    //
 
+   Parsing::NonTerminal S_Statement;
+
    Parsing::NonTerminal S_Autoexpr;
    Parsing::Rule r_line_autoexpr;
 
@@ -166,6 +168,7 @@ public:
    //
 
    Parsing::NonTerminal S_Function;
+   Parsing::Rule r_function_short;
    Parsing::Rule r_function;
 
    Parsing::NonTerminal S_Return;

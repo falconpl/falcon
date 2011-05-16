@@ -135,6 +135,24 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 }
 
 
+void Module::addFunction( GlobalSymbol* gsym, Function* f )
+{
+   static Engine* eng = Engine::instance();
+
+   // If the module is not static, garbage-ize the function
+   if( ! m_bIsStatic && f->garbage() == 0 )
+   {
+      f->garbage( eng->collector() );
+   }
+
+   // finally add to the function vecotr so that we can account it.
+   _p->m_functions.push_back(f);
+   f->module(this);
+
+   *gsym->itemPtr() = f;
+}
+
+
 GlobalSymbol* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 {
    // check if the name is free.

@@ -44,6 +44,7 @@ public:
    static void apply_( const PStep* self, VMachine* vm );
    virtual Expression* makeExpression();
 
+   Item* itemPtr() const { return m_itemPtr; }
 protected:
    GlobalSymbol();
 

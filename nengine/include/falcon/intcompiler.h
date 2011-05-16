@@ -81,8 +81,8 @@ private:
       virtual ~Context();
       
       virtual void onInputOver();
-      virtual void onNewFunc( Function* function );
-      virtual void onNewClass( Class* cls, bool bIsObj );
+      virtual void onNewFunc( Function* function, GlobalSymbol* gs=0 );
+      virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs=0 );
       virtual void onNewStatement( Statement* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
       virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
@@ -92,7 +92,7 @@ private:
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
       virtual Symbol* onUndefinedSymbol( const String& name );
-      virtual Symbol* onGlobalDefined( const String& name );
+      virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
       virtual void onUnknownSymbol( UnknownSymbol* sym );
       virtual void onStaticData( Class* cls, void* data );
 

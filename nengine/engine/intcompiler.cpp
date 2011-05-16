@@ -57,13 +57,13 @@ void IntCompiler::Context::onInputOver()
    //std::cout<< "CALLBACK: Input over"<<std::endl;
 }
 
-void IntCompiler::Context::onNewFunc( Function* function )
+void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 {
-   //std::cout<< "CALLBACK: NEW FUNCTION "<< function->name().c_ize() << std::endl;
+   m_owner->m_module->addFunction( gs, function );
 }
 
 
-void IntCompiler::Context::onNewClass( Class* cls, bool bIsObj )
+void IntCompiler::Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
 {
    //TODO
 }
@@ -127,13 +127,15 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 }
 
 
-Symbol* IntCompiler::Context::onGlobalDefined( const String& name )
+GlobalSymbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 {
-   Symbol* sym = m_owner->m_module->findGlobal(name);
+   GlobalSymbol* sym = m_owner->m_module->findGlobal(name);
    if( sym == 0 )
    {
+      adef = false;
       return m_owner->m_module->addVariable( name );
    }
+   adef = true;
    return sym;
 }
 
@@ -182,6 +184,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
 
    m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, new TextReader( m_stream ) ) );   
 }
+
 
 IntCompiler::~IntCompiler()
 {

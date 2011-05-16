@@ -49,8 +49,8 @@ public:
    void display();
 
    virtual void onInputOver();
-   virtual void onNewFunc( Function* function );
-   virtual void onNewClass( Class* cls, bool bIsObj );
+   virtual void onNewFunc( Function* function, GlobalSymbol* gs = 0 );
+   virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs = 0 );
    virtual void onNewStatement( Statement* stmt );
    virtual void onLoad( const String& path, bool isFsPath );
    virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
@@ -60,7 +60,7 @@ public:
    virtual void onDirective(const String& name, const String& value);
    virtual void onGlobal( const String& name );
    virtual Symbol* onUndefinedSymbol( const String& name );
-   virtual Symbol* onGlobalDefined( const String& name );
+   virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
    virtual void onUnknownSymbol( UnknownSymbol* sym );
    virtual void onStaticData( Class* cls, void* data );
 
@@ -99,13 +99,13 @@ void Context::onInputOver()
    std::cout<< "CALLBACK: Input over"<<std::endl;
 }
 
-void Context::onNewFunc( Function* function )
+void Context::onNewFunc( Function* function, GlobalSymbol*)
 {
    std::cout<< "CALLBACK: NEW FUNCTION "<< function->name().c_ize() << std::endl;
 }
 
 
-void Context::onNewClass( Class* cls, bool bIsObj )
+void Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
 {
    std::cout<< "CALLBACK: New class "<< cls->name().c_ize()
       << (bIsObj ? " (object)":"") << std::endl;
@@ -160,10 +160,12 @@ Symbol* Context::onUndefinedSymbol( const String& name )
    return m_main.symbols().addLocal(name);
 }
 
-Symbol* Context::onGlobalDefined( const String& name )
+GlobalSymbol* Context::onGlobalDefined( const String& name, bool& bAdef )
 {
    std::cout << "CALLBACK: new global defined: " << name.c_ize() << std::endl;
-   return m_main.symbols().addLocal(name);
+   GlobalSymbol* sym = new GlobalSymbol(name,0);
+   m_main.symbols().addSymbol(sym);
+   return sym;
 }
 
 void Context::onUnknownSymbol( UnknownSymbol* sym )

@@ -74,6 +74,7 @@ public:
 
    /** Called back when creating a new function.
       \param function The function that is being created.
+    \param gs A global symbol associated with non-anonymous functions.
 
     This method is called back when a new fuction is being
     created.
@@ -82,11 +83,12 @@ public:
     \b after onNewFunc; subclasses may cache the function name to understand
     that the new global is referring to this function object.
     */
-   virtual void onNewFunc( Function* function ) = 0;
+   virtual void onNewFunc( Function* function, GlobalSymbol* gs = 0 ) = 0;
 
    /** Called back when creating a new class.
       \param cls The variable that is being created.
       \param bIsObj True if the class has been defined as a singleton object
+    \param gs A global symbol associated with non-anonymous classes.
 
     This method is called back when a new class is being
     created.
@@ -95,7 +97,7 @@ public:
     \b after onNewClass; subclasses may cache the function name to understand
     that the new global is referring to this function object.
     */
-   virtual void onNewClass( Class* cls, bool bIsObj ) = 0;
+   virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs = 0 ) = 0;
 
    /** Called back when creating a new class.
       \param stmt The statement being created.
@@ -212,6 +214,7 @@ public:
 
    /** Notifies the creation request for a global symbol.
     \param The name of the symbol that is defined.
+    \param alreadyDef Set to true if the symbol was already defined.
     \return A new symbol that can be used to form the sequence.
 
     This method is called back when the parser sees a symbol being defined,
@@ -223,7 +226,7 @@ public:
 
     If the owner returns zero, onUnknownSymbol is called.
     */
-   virtual Symbol* onGlobalDefined( const String& name ) = 0;
+   virtual GlobalSymbol* onGlobalDefined( const String& name, bool &alreadyDef ) = 0;
 
    /** Called back when any try to define a symbol fail.
     \param sym A symbol to be disposed of.
@@ -380,14 +383,30 @@ public:
 
    /** Opens a new Function statement context.
     \param func The function being created.
+    \param gs An optional global symbol associated with the function.
+
+    Anonymous function have a name, but they are not associated with a symbol;
+    global functions are associated with a global symbol, that must have been
+    already declared somewhere.
+
+    The symbol, if provided, is given back to onNewFunction callback
+    in the compiler context when the function is closed.
     */
-   void openFunc( SynFunc *func );
+   void openFunc( SynFunc *func, GlobalSymbol* gs = 0 );
    
    /** Opens a new Class statement context.
     \param cls The class being created.
+    \param gs An optional global symbol associated with the function.
     \param bIsObject True if this class is declared as singleton object.
+
+    Anonymous classe have a name, but they are not associated with a symbol;
+    global classes are associated with a global symbol, that must have been
+    already declared somewhere.
+
+    The symbol, if provided, is given back to onNewClass callback
+    in the compiler context when the function is closed.
     */
-   void openClass( Class *cls, bool bIsObject );
+   void openClass( Class *cls, bool bIsObject, GlobalSymbol* gs = 0 );
 
    /** Pops the current context.
     When a context is completed, it's onNew*() method is called by this method.
