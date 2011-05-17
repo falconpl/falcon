@@ -20,6 +20,7 @@
 #include <deque>
 #include <vector>
 #include <map>
+#include <list>
 
 namespace Falcon {
 namespace Parsing {
@@ -40,25 +41,15 @@ class Parser::Private
    typedef std::deque<Lexer*> LexerStack;
    LexerStack m_lLexers;
 
-   // stack of read tokens.
-   typedef std::vector<TokenInstance*> TokenStack;
-   TokenStack m_tokenStack;
-
    // position of the next takeable token for getNextToken
    int m_nextTokenPos;
-
-
-   // Currently active parsing states.
-   typedef std::deque<State*> StateStack;
-   StateStack m_lStates;
 
    // Map of existing parsing states.
    typedef std::map<String, State*> StateMap;
    StateMap m_states;
 
-
    typedef std::vector<const Rule*> RulePath;
-
+   
    class ParseFrame {
    public:
       NonTerminal* m_owningToken;
@@ -85,9 +76,37 @@ class Parser::Private
       ~ParseFrame();
    };
 
-   typedef std::vector<ParseFrame> FrameStack;
-   FrameStack m_pframes;
-   FrameStack m_pErrorFrames;
+    // stack of read tokens.
+   typedef std::vector<TokenInstance*> TokenStack;
+   TokenStack* m_tokenStack;
+
+   typedef std::list<ParseFrame> FrameStack;
+   FrameStack* m_pframes;
+   FrameStack* m_pErrorFrames;
+
+   class StateFrame {
+   public:
+      State* m_state;
+      TokenStack m_tokenStack;
+
+      FrameStack m_pframes;
+      FrameStack m_pErrorFrames;
+
+      Parser::StateFrameFunc m_cbfunc;
+      void* m_cbdata;
+      
+      StateFrame( State* s ):
+         m_state( s ),
+         m_cbfunc( 0 ),
+         m_cbdata( 0 )
+      {
+      }
+   };
+   
+   // Currently active parsing states.
+   typedef std::list<StateFrame> StateStack;
+   StateStack m_lStates;
+
 
    Private();
    ~Private();

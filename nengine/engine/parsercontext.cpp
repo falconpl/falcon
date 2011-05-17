@@ -19,7 +19,6 @@
 #include <falcon/synfunc.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/sourceparser.h>
-
 #include <vector>
 #include <map>
 

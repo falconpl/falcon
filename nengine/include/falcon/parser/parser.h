@@ -85,6 +85,12 @@ public:
     */
    void pushState( const String& name );
 
+   typedef void (*StateFrameFunc)(void*);
+   
+   /** Pusing a state, adding a callback function for the frame.
+    */
+   void pushState( const String& name, Parser::StateFrameFunc cf, void* data=0 );
+
    /** Re-enables previous state.
    */
    void popState();
@@ -433,8 +439,8 @@ public:
     
     \note Lexers are left untouched in their current state.
     */
-   virtual void reset();
-
+   virtual void reset();   
+   
    //=================================================================
    // Common terminals
    Terminal T_EOF;

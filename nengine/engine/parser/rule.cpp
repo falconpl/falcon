@@ -137,13 +137,13 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
             bIncremental ? "incremental" : "full" );
    
    Parser::Private* pp = parser._p;
-   size_t begin = pp->m_pframes.back().m_nStackDepth;
-   size_t ppos = bIncremental ? pp->m_tokenStack.size() - 1 : pp->m_pframes.back().m_nStackDepth;
-   size_t ppos_end = pp->m_tokenStack.size();
+   size_t begin = pp->m_pframes->back().m_nStackDepth;
+   size_t ppos = bIncremental ? pp->m_tokenStack->size() - 1 : pp->m_pframes->back().m_nStackDepth;
+   size_t ppos_end = pp->m_tokenStack->size();
 
    if( _p->m_vTokens.empty() )
    {
-      if( ppos + 1 >= pp->m_tokenStack.size() )
+      if( ppos + 1 >= pp->m_tokenStack->size() )
       {
          TRACE( "Rule::match(%s) -- always matching when at end", m_name.c_ize() );
          return true;
@@ -178,7 +178,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
    while ( riter != riter_end && ppos < ppos_end )
    {
       Token* curTok = *riter;
-      const Token* stackToken = &pp->m_tokenStack[ppos]->token();
+      const Token* stackToken = &(*pp->m_tokenStack)[ppos]->token();
       
       if( curTok->isNT() )
       {

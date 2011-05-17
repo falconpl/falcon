@@ -38,7 +38,7 @@
 
 #include <deque>
 
-
+#include <stdio.h>
 
 namespace Falcon {
 using namespace Parsing;
@@ -703,7 +703,10 @@ static void apply_end( const Rule& r, Parser& p )
    //Statement* current = st->currentStmt();
    if( !st->currentStmt() && !st->currentFunc() && !st->currentClass())
    {
-      p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+      // can we close a state?
+      p.popState();
+
+      //p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
       return;
    }
 
@@ -1245,6 +1248,12 @@ static void apply_return(const Rule& r,Parser& p)
    p.simplify(3);
 }
 
+
+static void on_close_function( void * thing )
+{
+   printf( "Function closed\n" );
+}
+
 static void apply_expr_func(const Rule& r,Parser& p)
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1265,8 +1274,12 @@ static void apply_expr_func(const Rule& r,Parser& p)
       func->addParam(*it);
    }
 
-   ctx->openFunc(func);
+   // remove this stuff from the stack
    p.simplify(5);
+
+   // open a new main state for the function
+   ctx->openFunc(func);
+   p.pushState( "Main", on_close_function, &p );
 }
 
 //==========================================================
