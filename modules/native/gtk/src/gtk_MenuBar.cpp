@@ -16,7 +16,7 @@ namespace Gtk {
  */
 void MenuBar::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_MenuBar = mod->addClass( "GtkMenuBar", &Gtk::abstract_init );
+    Falcon::Symbol* c_MenuBar = mod->addClass( "GtkMenuBar", &Gtk::MenuBar::init );
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMenuShell" ) );
     c_MenuBar->getClassDef()->addInheritance( in );
