@@ -123,7 +123,7 @@ static void apply_expr_assign( const Rule& r, Parser& p )
 static void apply_expr_call( const Rule& r, Parser& p )
 {
    static Engine* einst = Engine::instance();
-   
+
    // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -710,10 +710,9 @@ static void apply_end( const Rule& r, Parser& p )
       return;
    }
 
-   st->closeContext();
-
    // clear the stack
    p.simplify(2);
+   st->closeContext();
 }
 
 
@@ -1176,12 +1175,12 @@ static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
 
    TokenInstance* tstatement = 0;
    int tcount = bHasExpr ? 8 : 6;
-   
+
    if( bHasExpr )
    {
       tstatement = p.getNextToken();
    }
-   
+
    // Are we already in a function?
    if( ctx->currentFunc() != 0 )
    {
@@ -1251,7 +1250,17 @@ static void apply_return(const Rule& r,Parser& p)
 
 static void on_close_function( void * thing )
 {
-   printf( "Function closed\n" );
+   SourceParser& sp = *static_cast<SourceParser*>(thing);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
+   //printf( "Function closed\n" );
+   /*
+   SynFunc* func=ctx->currentFunc();
+   TokenInstance* ti=new TokenInstance(0,0,sp.Expr);
+   ti->setValue(func,func_deletor);
+
+   //sp.simplify(0,ti);
+   sp.addToStack(ti);
+   */
 }
 
 static void apply_expr_func(const Rule& r,Parser& p)
@@ -1274,12 +1283,16 @@ static void apply_expr_func(const Rule& r,Parser& p)
       func->addParam(*it);
    }
 
+   TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(),sp.Expr);
+   Expression* expr=new ExprValue(Item(func));
+   ti->setValue(expr,expr_deletor);
+
    // remove this stuff from the stack
-   p.simplify(5);
+   p.simplify(5,ti);
 
    // open a new main state for the function
    ctx->openFunc(func);
-   p.pushState( "Main", on_close_function, &p );
+   p.pushState( "Main", on_close_function , &p );
 }
 
 //==========================================================
@@ -1407,7 +1420,7 @@ SourceParser::SourceParser():
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
       << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
       << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
-      << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)      
+      << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)
       << (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar)
       << (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr)
       << (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr )
@@ -1446,7 +1459,7 @@ SourceParser::SourceParser():
       << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
-      
+
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
       << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
@@ -1493,6 +1506,12 @@ SourceParser::SourceParser():
 
 
    addState( s_Main );
+}
+
+void SourceParser::onPushState()
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   pc->onStatePushed();
 }
 
 bool SourceParser::parse()

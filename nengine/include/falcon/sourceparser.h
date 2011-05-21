@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   sourceparser.h
  * Author: gian
  *
@@ -36,9 +36,11 @@ public:
    SourceParser();
    bool parse();
 
+   void onPushState();
+
    /** Clears the source parser status. */
    virtual void reset();
-   
+
    //===============================================
    // Terminal tokens
    //
@@ -78,7 +80,7 @@ public:
    Parsing::Terminal T_in;
    Parsing::Terminal T_or;
    Parsing::Terminal T_to;
-   
+
    Parsing::Terminal T_and;
    Parsing::Terminal T_def;
    Parsing::Terminal T_end;
@@ -120,14 +122,14 @@ public:
 
    Parsing::NonTerminal S_Rule;
    Parsing::Rule r_rule;
-   
+
    Parsing::NonTerminal S_Cut;
    Parsing::Rule r_cut;
 
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;
    Parsing::Rule r_end_rich;
-   
+
    //================================================
    // Expression
    //

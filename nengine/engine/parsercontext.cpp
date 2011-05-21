@@ -21,6 +21,7 @@
 #include <falcon/sourceparser.h>
 #include <vector>
 #include <map>
+#include <list>
 
 #include "falcon/globalsymbol.h"
 #include "falcon/compiler.h"
@@ -130,9 +131,10 @@ private:
    friend class ParserContext;
 
    typedef std::map< String, UnknownSymbol* > SymbolMap;
+   typedef std::list< SymbolMap > UnknownsStack;
 
    /** Map of unknown symbols created during the current statement parsing. */
-   SymbolMap m_unknown;
+   UnknownsStack m_unknown;
 
    typedef std::vector<ParserContext::CCFrame> FrameVector;
    FrameVector m_frames;
@@ -169,6 +171,7 @@ void ParserContext::onStatePushed()
 {
    fassert( ! _p->m_frames.empty() );
    _p->m_frames.back().m_bStatePushed = true;
+   _p->m_unknown.push_back(Private::SymbolMap());
 }
 
 
@@ -176,12 +179,17 @@ Symbol* ParserContext::addVariable( const String& variable )
 {
    TRACE("ParserContext::addVariable %s", variable.c_ize() );
 
+   if( _p->m_unknown.empty() )
+   {
+      //todo error!
+   }
+
    UnknownSymbol* us;
-   Private::SymbolMap::const_iterator iter = _p->m_unknown.find(variable);
-   if( iter == _p->m_unknown.end() )
+   Private::SymbolMap::const_iterator iter = _p->m_unknown.back().find(variable);
+   if( iter == _p->m_unknown.back().end() )
    {
       us = new UnknownSymbol(variable);
-      _p->m_unknown[variable] = us;
+      _p->m_unknown.back()[variable] = us;
    }
    else
    {
@@ -195,7 +203,7 @@ Symbol* ParserContext::addVariable( const String& variable )
 void ParserContext::defineSymbols( Expression* expr )
 {
    TRACE("ParserContext::defineSymbols on (: %s :)", expr->describe().c_ize() );
-   
+
    if( expr->type() == Expression::t_symbol )
    {
       Symbol* uks = static_cast<ExprSymbol*>(expr)->symbol();
@@ -235,7 +243,7 @@ void ParserContext::defineSymbol( Symbol* uks )
          TRACE("ParserContext::defineSymbol defined \"%s\" as %d",
                nuks->name().c_ize(), nuks->type() );
          // remove from the unknowns
-         _p->m_unknown.erase( uks->name() );
+         _p->m_unknown.back().erase( uks->name() );
          static_cast<UnknownSymbol*>(uks)->define(nuks);
          delete uks;
       }
@@ -243,7 +251,7 @@ void ParserContext::defineSymbol( Symbol* uks )
       {
          //TODO: Use a more fitting error code for this?
          m_parser->addError(e_undef_sym, m_parser->currentSource(), uks->declaredAt(),0, 0, uks->name() );
-         
+
          TRACE("ParserContext::defineSymbol cannot define \"%s\"",
                uks->name().c_ize() );
          // we cannot create it; delegate to subclasses
@@ -262,7 +270,7 @@ void ParserContext::defineSymbol( Symbol* uks )
 bool ParserContext::checkSymbols()
 {
    bool isOk = true;
-   Private::SymbolMap& unknown = _p->m_unknown;
+   Private::SymbolMap& unknown = _p->m_unknown.back();
 
    // try with all the undefined symbols.
    TRACE("ParserContext::checkSymbols on %d syms", (int) unknown.size() );
@@ -296,7 +304,7 @@ bool ParserContext::checkSymbols()
          // we know that the symbol is lost
          m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
          isOk = false;
-         
+
          // -- see if the callee wants to do something about that
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
                   sym->name().c_ize() );
@@ -337,7 +345,7 @@ Symbol* ParserContext::findSymbol( const String& name )
    while( iter != _p->m_frames.rend() )
    {
       const CCFrame& frame = *iter;
-      
+
       // skip symbol table of classes, they can't be referenced by inner stuff.
       if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->symbols() == m_symtab )
       {
@@ -362,7 +370,7 @@ Symbol* ParserContext::findSymbol( const String& name )
       }
       ++iter;
    }
-   
+
    return 0;
 }
 
@@ -458,12 +466,14 @@ void ParserContext::closeContext()
 {
    TRACE("ParserContext::closeContext -- closing context on depth %d", _p->m_frames.size() );
    fassert( !_p->m_frames.empty() );
-   
+
    // copy by value
    CCFrame bframe = _p->m_frames.back();
 
    // as we're removing the frame.
    _p->m_frames.pop_back();
+   fassert( _p->m_unknown.back().empty() );
+   _p->m_unknown.pop_back();
    // we can never close the main context
    fassert( ! _p->m_frames.empty() );
    if( bframe.m_bStatePushed )
@@ -498,7 +508,7 @@ void ParserContext::closeContext()
             // continue the loop
       }
    }
-   
+
    // notify the new item.
    switch( bframe.m_type )
    {
@@ -509,7 +519,7 @@ void ParserContext::closeContext()
 
       // if it's a class...
       case CCFrame::t_object_type:
-      case CCFrame::t_class_type: 
+      case CCFrame::t_class_type:
          {
             Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
             // find the new topmost class
@@ -560,7 +570,7 @@ void ParserContext::closeContext()
             m_cstatement = 0;
             while( riter != _p->m_frames.rend() )
             {
-               if( riter->m_type == CCFrame::t_class_type || 
+               if( riter->m_type == CCFrame::t_class_type ||
                    riter->m_type == CCFrame::t_object_type ||
                    riter->m_type == CCFrame::t_func_type )
                {
