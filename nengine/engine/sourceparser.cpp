@@ -617,7 +617,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          ++iterRight;
       }
 
-      // todo -- make expression expand
+      // don't clear the right side list, we got the symbols -- let the expr to die
       ctx->addStatement( new StmtAutoexpr( unpack ) );
    }
    else
@@ -658,11 +658,11 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          ++iterRight;
          ++iterLeft;
       }
+      listRight->clear();
       fassert( iterLeft == listLeft->end() );
    }
 
    // clear the list, so killing them won't destroy the expressions.
-   listRight->clear();
    listLeft->clear();
 
    p.simplify(3, ti); // actually it has no value
