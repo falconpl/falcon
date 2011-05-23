@@ -61,7 +61,7 @@ namespace Falcon {
  \note subclasses must implement the pstep() method, returning the PStep
  instance that this class wants to publish to the compiler.
  */
-class PseudoFunction: public Function
+class FALCON_DYN_CLASS PseudoFunction: public Function
 {
 public:
    PseudoFunction( const String& name );
@@ -78,7 +78,7 @@ public:
 
 namespace PFunc {
 
-class MinOrMax: public PseudoFunction
+class FALCON_DYN_CLASS MinOrMax: public PseudoFunction
 {
 public:
    MinOrMax( const String& name, bool bIsMax );
@@ -148,7 +148,7 @@ private:
 */
 
 /** Max pseudofunction. */
-class Max: public MinOrMax
+class FALCON_DYN_CLASS Max: public MinOrMax
 {
 public:
    Max();
@@ -171,7 +171,7 @@ public:
  If the first operand is an object with the __compare method overloaded,
  that will be invoked to determine the comparation order.
 */
-class Min: public MinOrMax
+class FALCON_DYN_CLASS Min: public MinOrMax
 {
 public:
    Min();

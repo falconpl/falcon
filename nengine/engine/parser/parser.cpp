@@ -39,7 +39,7 @@ Parser::Private::Private():
 Parser::Private::~Private()
 {
    clearTokens();
-   
+
    // clear the lexers
    {
       LexerStack::iterator iter = m_lLexers.begin();
@@ -116,6 +116,10 @@ void Parser::pushState( const String& name )
    Private::StateMap::const_iterator iter = _p->m_states.find( name );
    if( iter != _p->m_states.end() )
    {
+      if(!_p->m_lStates.empty())
+      {
+         TRACE("Parser::pushState -- pframes.size()=%d",_p->m_pframes->size());
+      }
       _p->m_lStates.push_back( iter->second );
 
       // set new proxy pointers
@@ -123,6 +127,7 @@ void Parser::pushState( const String& name )
       _p->m_tokenStack = &bf.m_tokenStack;
       _p->m_pframes = &bf.m_pframes;
       _p->m_pErrorFrames = &bf.m_pErrorFrames;
+      onPushState();
 
    }
    else
@@ -160,6 +165,7 @@ void Parser::popState()
    _p->m_tokenStack = &bf.m_tokenStack;
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
+   TRACE("Parser::popState -- pframes.size()=%d",_p->m_pframes->size());
 
    // execute the callback (?)
    if( func != 0 )
@@ -242,14 +248,14 @@ GenericError* Parser::makeError() const
          sExtra += "from line ";
          sExtra.N(def.nOpenContext);
       }
-      
+
       SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
             .module(def.sUri)
             .extra(sExtra));
       cerr->appendSubError(err);
       ++iter;
    }
-   
+
    return cerr;
 }
 
@@ -300,7 +306,7 @@ void Parser::enumerateErrors( Parser::errorEnumerator& enumerator ) const
    while( iter != _p->m_lErrors.end() )
    {
       const ErrorDef& def = *iter;
-      
+
       if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
          break;
    }
@@ -381,6 +387,7 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
    }
 }
 
+
 bool Parser::step()
 {
    TRACE( "Parser::step", 0 );
@@ -399,7 +406,7 @@ bool Parser::step()
 
    TRACE( "Parser::step -- on state \"%s\" -- %s ",
          _p->m_lStates.back().m_state->name().c_ize(), dumpStack().c_ize() );
-   
+
    clearErrors();
 
    parserLoop();
@@ -502,11 +509,12 @@ String Parser::dumpStack() const
 
 void Parser::addParseFrame( NonTerminal* token, int pos )
 {
+   TRACE("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
    if( pos < 0 )
    {
       pos = _p->m_tokenStack->size()-1;
    }
-   
+
    _p->m_pframes->push_back(Private::ParseFrame(token,pos));
    resetNextToken();
 }
@@ -597,7 +605,7 @@ void Parser::parserLoop()
       _p->m_tokenStack->push_back(ti);
 
       TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
-      
+
       onNewToken();
    }
 
@@ -611,7 +619,7 @@ void Parser::onNewToken()
    if( _p->m_pframes->empty() )
    {
       TRACE("Parser::onNewToken -- starting new path finding", 0 );
-      
+
       //... let the current state to find a path for us.
       State* curState = _p->m_lStates.back().m_state;
 
@@ -630,7 +638,7 @@ void Parser::onNewToken()
    }
    else
    {
-      // process existing frames.      
+      // process existing frames.
       if (! findPaths( true ) )
       {
           TRACE("Parser::onNewToken -- failed in incremental mode, exploring.", 0 );
@@ -638,7 +646,7 @@ void Parser::onNewToken()
          explorePaths();
          /*if ( ! findPaths( false ) )
          {
-           
+
             parseError();
             return;
          }
@@ -667,7 +675,7 @@ TokenInstance* Parser::getCurrentToken( int& pos ) const
    TokenInstance* ret = (*_p->m_tokenStack)[pos];
    pos -= frame.m_nStackDepth;
    fassert( pos >= 0 );
-   TRACE("Parser::getCurrentToken -- current token is at %d: %s", 
+   TRACE("Parser::getCurrentToken -- current token is at %d: %s",
          pos, ret->token().name().c_ize() );
 
    return ret;
@@ -719,7 +727,7 @@ void Parser::parseError()
       _p->m_pframes->push_back(_p->m_pErrorFrames->back());
       _p->m_pErrorFrames->pop_back();
    }
-   
+
    // find an error handler in the current rule frame.
    // if not present, unroll the frame and try again
    // -- fall back to syntax error.
@@ -740,7 +748,7 @@ void Parser::parseError()
             _p->m_pframes->pop_back();
             TRACE("Parser::parseError -- applying error handler for %s",
                   rule->parent().name().c_ize() );
-            
+
             rule->parent().errorHandler()( &rule->parent(), this );
             // we're done.
             return;
@@ -781,7 +789,7 @@ void Parser::applyPaths()
          TRACE("Parser::applyPaths -- current frame path is empty, need more tokens.", 0 );
          return;
       }
-      
+
       const Rule* currentRule = frame.m_path.back();
       int tcount = _p->m_tokenStack->size() - frame.m_nStackDepth;
       int rsize = currentRule->arity();
@@ -794,7 +802,7 @@ void Parser::applyPaths()
          {
             const NonTerminal* nt = static_cast<const NonTerminal*>(&_p->m_tokenStack->back()->token());
             addParseFrame(const_cast<NonTerminal*>(nt), _p->m_tokenStack->size()-1);
-            
+
             // greedy rules always end with non-terminals
             TRACE("Parser::applyPaths -- same arity, descending on greedy rule '%s' in '%s' ",
                   currentRule->name().c_ize(), nt->name().c_ize());
@@ -877,7 +885,7 @@ void Parser::applyPaths()
             // else proceed matching paths
          }
       }
-      else 
+      else
       {
          // we simply don't have enough tokens.
          TRACE("Parser::applyPaths -- Need more tokens (larger arity %d > %d), returning.", rsize, tcount);
@@ -913,7 +921,7 @@ void Parser::explorePaths()
       parseError();
       return;
    }
-   
+
    _p->m_pErrorFrames->clear();
 }
 
@@ -923,9 +931,14 @@ void Parser::applyCurrentRule()
    Private::ParseFrame& frame = stack->back();
    fassert( ! frame.m_path.empty() );
    const Rule* currentRule = frame.m_path.back();
+   size_t statesDepth=_p->m_lStates.size();
 
    resetNextToken();
    currentRule->apply(*this);
+   if(_p->m_lStates.size()<statesDepth)
+   {
+      return;
+   }
 
    frame.m_path.pop_back();
    // eventually, pop the frame.

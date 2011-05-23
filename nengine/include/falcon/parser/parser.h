@@ -86,10 +86,15 @@ public:
    void pushState( const String& name );
 
    typedef void (*StateFrameFunc)(void*);
-   
+
    /** Pusing a state, adding a callback function for the frame.
     */
    void pushState( const String& name, Parser::StateFrameFunc cf, void* data=0 );
+
+   /** Method to be called from pushState. Must be overriden in a child class.
+    */
+
+   virtual void onPushState()=0;
 
    /** Re-enables previous state.
    */
@@ -103,7 +108,7 @@ public:
     Call this method after having called addState() and pushLexer().
 
     This method can be called multiple times, provided that all the lexers that
-    might have been previously pushed are popped. 
+    might have been previously pushed are popped.
     */
    bool parse( const String& mainState );
 
@@ -151,11 +156,11 @@ public:
 
    /** Returns true if the parser has exausted all the tokens.
       \return true If all the tokens are consumed.
-    
+
     When a parse is not complete, then some tokens are left in the stack.
-    
+
     It might be an error or it may just be a sign that some more input is
-    needed to complete a parse, depending on the context. 
+    needed to complete a parse, depending on the context.
     */
    bool isComplete() const;
 
@@ -174,7 +179,7 @@ public:
    GenericError* makeError() const;
 
    /** Clear errors previously accounted in the engine.
-    
+
     This method is automatically called by parse() and step().
     */
    void clearErrors();
@@ -304,7 +309,7 @@ public:
 
     \note It is granted that the  token index is reset before any rule apply
     function is called.
-    
+
     \note If called more than availTokens() times, it will return 0.
     \see simplify
     */
@@ -319,7 +324,7 @@ public:
     \param tcount Number of token to be simplified.
     \param newtoken substitute for the previously existing tokens, or 0 for nothing.
     \throw CodeError if tcount is out of range.
-    
+
     This method destroys a certain number of tokens in the stack (possibly, one or more,
     but it's possible to use 0 as well to insert new tokens).
 
@@ -349,10 +354,9 @@ public:
     */
    void simplify( int32 tcount, TokenInstance* newtoken = 0 );
 
-   
-   /** Returns a string representation of the tokens in the stak. 
+   /** Returns a string representation of the tokens in the stak.
       \return A list of toekns in the stack as a String representation.
-    
+
     This method can be used for debugging purpose to inspect the current status of the
     parser stack.
 
@@ -426,21 +430,21 @@ public:
    void parseError();
    void setFramePriority( const Token& token );
 
-   
+
    TokenInstance* getCurrentToken( int& pos ) const;
 
    /** Clears the current parser status.
-    
+
     This completely resets the parser, clearing the stack of received tokens
     and allowing subclasses to clear their own state.
 
     The State vector is cleared as well, so it's necessary to add a
     state before proceeding in parsing.
-    
+
     \note Lexers are left untouched in their current state.
     */
-   virtual void reset();   
-   
+   virtual void reset();
+
    //=================================================================
    // Common terminals
    Terminal T_EOF;
@@ -457,7 +461,7 @@ protected:
 
    void parserLoop();
    void followPaths();
-   
+
    // Checks performed after a new token arrived.
    void onNewToken();
 
@@ -465,7 +469,7 @@ protected:
 
    // simplifies the topmost rule.
    void applyCurrentRule();
-   
+
 private:
    friend class Rule;
    class Private;

@@ -51,7 +51,7 @@ class Token;
  case the token instance is destroyed, together with its contents.
 
  */
-class TokenInstance
+class FALCON_DYN_CLASS TokenInstance
 {
 public:
    typedef void(*deletor)(void*);

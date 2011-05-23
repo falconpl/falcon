@@ -38,7 +38,7 @@ public:
 
    ItemArray m_globals;
    bool m_bIsStatic;
-   
+
    Private( bool bIsStatic ):
       m_bIsStatic( bIsStatic )
    {}
@@ -99,7 +99,7 @@ Module::~Module()
 GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 {
    static Engine* eng = Engine::instance();
-   
+
    Private::GlobalsMap& syms = _p->m_gSyms;
    if( syms.find(f->name()) != syms.end() )
    {
@@ -116,7 +116,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
    _p->m_globals.append( f );
 
    // add the symbol to the symbol table.
-   GlobalSymbol* sym = new GlobalSymbol( f->name(), 
+   GlobalSymbol* sym = new GlobalSymbol( f->name(),
          &_p->m_globals.at(_p->m_globals.length()-1) );
    syms[f->name()] = sym;
 
@@ -149,7 +149,10 @@ void Module::addFunction( GlobalSymbol* gsym, Function* f )
    _p->m_functions.push_back(f);
    f->module(this);
 
-   *gsym->itemPtr() = f;
+   if(gsym)
+   {
+      *gsym->itemPtr() = f;
+   }
 }
 
 
