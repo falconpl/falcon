@@ -100,7 +100,7 @@ static void name_list_deletor(void* data)
 //typedef void(*Apply)( const Rule& r, Parser& p );
 static void apply_expr_assign( const Rule& r, Parser& p )
 {
-   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
+   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr)
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
@@ -112,12 +112,65 @@ static void apply_expr_assign( const Rule& r, Parser& p )
    ctx->defineSymbols(firstPart);
 
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprAssign(
-         firstPart,
-         static_cast<Expression*>(v2->detachValue())
-      ), expr_deletor );
+
+   // do not detach, we don't care about the list
+   List* list = static_cast<List*>(v2->asData());
+   fassert( ! list->empty() );
+   if( list->size() == 1 )
+   {
+       ti->setValue( 
+         new ExprAssign( firstPart, list->front() ), 
+         expr_deletor );
+   }
+   else
+   {
+      // a list assignment.
+
+      ExprArray* array = new ExprArray;
+      List::iterator iter = list->begin();
+      while( iter != list->end() )
+      {
+         // Todo -- make the array expression
+         array->add(*iter);
+         ++iter;
+      }
+
+      ti->setValue(
+         new ExprAssign( firstPart, array ),
+         expr_deletor );
+   }
+   // clear, so we keep the expr even if destroyed
+   list->clear();
 
    p.simplify(3,ti);
+}
+
+
+static void apply_expr_list( const Rule& r, Parser& p )
+{
+   //<< (r_Expr_list << "Expr_list" << apply_expr_list << ListExpr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* v1 = p.getNextToken();
+
+   List* list = static_cast<List*>(v1->detachValue());
+
+   ExprArray* array = new ExprArray;
+   // it's a dictionary declaration
+   List::iterator iter = list->begin();
+   while( iter != list->end() )
+   {
+      // Todo -- make the array expression
+      array->add(*iter);
+      ++iter;
+   }
+   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   ti->setValue( array, expr_deletor );
+
+   // free the expressions in the list
+   list->clear();
+
+   p.simplify(1,ti);
 }
 
 static void apply_expr_call( const Rule& r, Parser& p )
@@ -509,6 +562,95 @@ static void apply_line_expr( const Rule& r, Parser& p )
    p.simplify(2);
 }
 
+static void apply_autoexpr_list( const Rule& r, Parser& p )
+{
+   
+   // clear the stack
+   p.simplify(2);
+}
+
+
+
+static void apply_stmt_assign_list( const Rule& r, Parser& p )
+{
+   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << NeListExpr << T_EqSign << NeListExpr)
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   // get the tokens
+   TokenInstance* v2 = p.getNextToken();
+   p.getNextToken();
+   //TokenInstance* v1 = p.getNextToken();
+   //p.getNextToken();
+   TokenInstance* v3 = p.getNextToken();
+
+   // do not detach, we're discarding the list.
+   List* listRight = static_cast<List*>(v2->asData());
+   List* listLeft = static_cast<List*>(v3->asData());
+
+   fassert( ! listLeft->empty() );
+   fassert( ! listRight->empty() );
+
+   TokenInstance *ti = new TokenInstance( v3->line(), v3->chr(), sp.S_MultiAssign );
+
+   // simplify the code down by considering the first token an element of the list
+   //listRight->push_back(static_cast<Expression*>( v1->detachValue() ) );
+   // do we have just one assignee?
+   if( listLeft->size() == 1 )
+   {
+      ExprUnpack* unpack = new ExprUnpack( listLeft->front() );
+      List::iterator iterRight = listRight->begin();
+      while( iterRight != listRight->end() )
+      {
+         ctx->defineSymbols(*iterRight);
+         unpack->addAssignand(*iterRight);
+         ++iterRight;
+      }
+
+      ctx->addStatement( new StmtAutoexpr( unpack ) );
+   }
+   else
+   {
+      // multiple assignment
+      if( listRight->size() != listLeft->size() )
+      {
+         // Use second token position to signal the error
+         // notice that ti value is now in listRight, so it will be destroyed
+         p.addError( e_unpack_size, p.currentSource(), v2->line(), v2->chr() );
+         p.simplify(3);
+         return;
+      }
+
+      // Note: TODO -- it's right to create an array here, as
+      // v = (a,b,c = 1,2,3) creates an array of [1,2,3]
+      // but it's better to let the StmtAutoexpr to prevent this array to be
+      // generated (and then discared) for nothing.
+      List::iterator iterRight = listRight->begin();
+      List::iterator iterLeft = listLeft->begin();
+      while( iterRight != listRight->end() )
+      {
+         fassert( iterLeft != listLeft->end() );
+
+         ctx->defineSymbols(*iterRight);
+         ctx->addStatement(
+            new StmtAutoexpr( new ExprAssign( *iterRight, *iterLeft ),
+                  v3->line(), v3->chr() )
+         );
+
+         ++iterRight;
+         ++iterLeft;
+      }
+      fassert( iterLeft == listLeft->end() );
+   }
+
+   // clear the list, so killing them won't destroy the expressions.
+   listRight->clear();
+   listLeft->clear();
+
+   p.simplify(3, ti); // actually it has no value
+}
+
+
 
 static void apply_if_short( const Rule& r, Parser& p )
 {
@@ -785,6 +927,44 @@ static void apply_ListExpr_first( const Rule& r, Parser& p )
    p.simplify( 1, ti_list );
 }
 
+static void apply_NeListExpr_next( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   List* list = static_cast<List*>(tlist->detachValue());
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.NeListExpr );
+   ti_list->setValue( list, list_deletor );
+   p.simplify(3,ti_list);
+
+}
+
+static void apply_NeListExpr_first( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
+
+   List* list = new List;
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(texpr->line(), texpr->chr(), sp.NeListExpr );
+   ti_list->setValue( list, list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 1, ti_list );
+}
+
 static void apply_ListExpr_empty( const Rule& r, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next )
@@ -799,6 +979,44 @@ static void apply_ListExpr_empty( const Rule& r, Parser& p )
    p.simplify( 0, ti_list );
 }
 
+
+static void apply_NeListExpr_ungreed_next( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   List* list = static_cast<List*>(tlist->detachValue());
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.NeListExpr_ungreed );
+   ti_list->setValue( list, list_deletor );
+   p.simplify(3,ti_list);
+
+}
+
+static void apply_NeListExpr_ungreed_first( const Rule& r, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
+
+   List* list = new List;
+   list->push_back(expr);
+
+   TokenInstance* ti_list = new TokenInstance(texpr->line(), texpr->chr(), sp.NeListExpr_ungreed );
+   ti_list->setValue( list, list_deletor );
+
+   // Change the expression in a list
+   p.simplify( 1, ti_list );
+}
 
 //==========================================================
 // PairLists
@@ -1160,6 +1378,37 @@ static void apply_ListSymbol_empty(const Rule& r,Parser& p)
    p.simplify( 0, ti_list );
 }
 
+static void apply_NeListSymbol_first(const Rule& r,Parser& p)
+{
+   // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tname = p.getNextToken();
+
+   TokenInstance* ti_list = new TokenInstance(tname->line(), tname->chr(), sp.NeListSymbol);
+
+   NameList* list = new NameList;
+   list->push_back(*tname->asString());
+   ti_list->setValue( list, name_list_deletor );
+
+   p.simplify( 1, ti_list );
+}
+
+static void apply_NeListSymbol_next(const Rule& r,Parser& p)
+{
+   // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tname = p.getNextToken();
+
+   NameList* list=static_cast<NameList*>(tlist->detachValue());
+   list->push_back(*tname->asString());
+
+   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.NeListSymbol );
+   ti_list->setValue( list, name_list_deletor );
+
+   p.simplify( 3, ti_list );
+}
 
 static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
 {
@@ -1320,7 +1569,8 @@ SourceParser::SourceParser():
    T_LE("<=", 70),
    T_GE(">=", 70),
    T_Colon( ":" ),
-   T_EqSign("=", 200, true),
+   T_EqSign("=", 200, false),
+   T_EqSign2("=", 200 ),
 
 
 
@@ -1350,6 +1600,7 @@ SourceParser::SourceParser():
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
+      << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign << T_EOL )
       ;
 
    S_If << "IF"
@@ -1383,11 +1634,15 @@ SourceParser::SourceParser():
       << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
       ;
 
+   S_MultiAssign << "MultiAssign"
+      << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
+      ;
+
    //==========================================================================
    // Expression
    //
    Expr << "Expr"
-      << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
+      << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr )
 
       << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
       << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
@@ -1446,6 +1701,18 @@ SourceParser::SourceParser():
       << (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr )
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
+
+   NeListExpr << "NeListExpr"
+      << (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr )
+      << (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr )
+      ;
+
+
+   NeListExpr_ungreed << "NeListExpr_ungreed"
+      << (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr )
+      << (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr )
+      ;
+      r_NeListExpr_ungreed_next.setGreedy(false);
       
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
@@ -1473,6 +1740,11 @@ SourceParser::SourceParser():
       << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
       << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
       << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
+      ;
+
+   NeListSymbol << "NeListSymbol"
+      << (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name )
+      << (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name )
       ;
 
    //==========================================================================

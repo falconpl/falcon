@@ -50,6 +50,7 @@ public:
    Parsing::Terminal T_Modulo;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_EqSign;
+   Parsing::Terminal T_EqSign2;
    Parsing::Terminal T_Arrow;
    Parsing::Terminal T_DblEq;
    Parsing::Terminal T_NotEq;
@@ -104,6 +105,7 @@ public:
 
    Parsing::NonTerminal S_Autoexpr;
    Parsing::Rule r_line_autoexpr;
+   Parsing::Rule r_assign_list;
 
    Parsing::NonTerminal S_If;
    Parsing::Rule r_if;
@@ -127,6 +129,9 @@ public:
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;
    Parsing::Rule r_end_rich;
+
+   Parsing::NonTerminal S_MultiAssign;
+   Parsing::Rule r_Stmt_assign_list;
    
    //================================================
    // Expression
@@ -134,6 +139,8 @@ public:
    Parsing::NonTerminal Expr;
 
    Parsing::Rule r_Expr_assign;
+   Parsing::Rule r_Expr_list;
+
    Parsing::Rule r_Expr_equal;
    Parsing::Rule r_Expr_diff;
    Parsing::Rule r_Expr_less;
@@ -193,6 +200,14 @@ public:
    Parsing::Rule r_ListExpr_first;
    Parsing::Rule r_ListExpr_empty;
 
+   Parsing::NonTerminal NeListExpr;
+   Parsing::Rule r_NeListExpr_next;
+   Parsing::Rule r_NeListExpr_first;
+
+   Parsing::NonTerminal NeListExpr_ungreed;
+   Parsing::Rule r_NeListExpr_ungreed_next;
+   Parsing::Rule r_NeListExpr_ungreed_first;
+
    Parsing::NonTerminal ListExprOrPairs;
    Parsing::Rule r_ListExprOrPairs_next_pair;
    Parsing::Rule r_ListExprOrPairs_next;
@@ -217,6 +232,10 @@ public:
    Parsing::Rule r_ListSymbol_next;
    Parsing::Rule r_ListSymbol_first;
    Parsing::Rule r_ListSymbol_empty;
+
+   Parsing::NonTerminal NeListSymbol;
+   Parsing::Rule r_NeListSymbol_next;
+   Parsing::Rule r_NeListSymbol_first;
 
    //================================================
    // States

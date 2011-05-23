@@ -201,9 +201,6 @@ void ParserContext::defineSymbols( Expression* expr )
       Symbol* uks = static_cast<ExprSymbol*>(expr)->symbol();
       defineSymbol( uks );
    }
-
-   //TODO: Else, to the same for each symbol in case of symbol lists.
-   //TODO: Else, raise error for values or list of values.
 }
 
 void ParserContext::defineSymbol( Symbol* uks )

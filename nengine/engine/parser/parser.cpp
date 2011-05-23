@@ -800,7 +800,8 @@ void Parser::applyPaths()
                   currentRule->name().c_ize(), nt->name().c_ize());
             return;
          }
-         else if( (! frame.m_bIsRightAssoc) && frame.m_nPriority == 0 )
+         else if( ((! frame.m_bIsRightAssoc) && frame.m_nPriority == 0)
+            || !currentRule->getTokenAt(currentRule->arity()-1)->isNT() )
          {
             applyCurrentRule();
             TRACE("Parser::applyPaths -- Applied on same arity, stack: %s",
@@ -849,6 +850,7 @@ void Parser::applyPaths()
                {
                   frameDepth --;
                }
+               
                if( frameDepth == frame.m_nStackDepth ||
                      !(*_p->m_tokenStack)[frameDepth]->token().isNT() )
                {

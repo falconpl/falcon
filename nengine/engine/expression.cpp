@@ -2005,6 +2005,109 @@ void ExprCall::describe( String& ret ) const
 }
 
 //=========================================================
+// Unpack
+class ExprUnpack::Private {
+public:
+   std::vector<Expression*> m_params;
+};
+
+ExprUnpack::ExprUnpack( Expression* op1 ):
+   Expression(t_unpack),
+   m_expander(op1),
+   _p( new Private )
+{
+   apply = apply_;
+}
+
+ExprUnpack::ExprUnpack( const ExprUnpack& other ):
+         Expression(other)
+{
+   _p = new Private;
+   m_expander = other.m_expander->clone();
+   std::vector<Expression*>::const_iterator iter = other._p->m_params.begin();
+   while( iter != other._p->m_params.end() )
+   {
+      _p->m_params.push_back( (*iter)->clone() );
+      ++iter;
+   }
+}
+
+ExprUnpack::~ExprUnpack()
+{
+   std::vector<Expression*>::const_iterator iter = _p->m_params.begin();
+   while( iter != _p->m_params.end() )
+   {
+      delete *iter;
+      ++iter;
+   }
+   delete m_expander;
+}
+
+bool ExprUnpack::simplify( Item& value ) const
+{
+   return false;
+}
+
+void ExprUnpack::describe( String& ret ) const
+{
+   String params;
+   // and generate all the expressions, in inverse order.
+   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
+   {
+      if ( params.size() )
+      {
+         params += ", ";
+      }
+      params += _p->m_params[i]->describe();
+   }
+
+   ret = params + " = " + m_expander->describe();
+}
+
+
+int ExprUnpack::targetCount() const
+{
+   return _p->m_params.size();
+}
+
+Expression* ExprUnpack::getAssignand( int i) const
+{
+   return _p->m_params[i];
+}
+
+ExprUnpack& ExprUnpack::addAssignand(Expression* e)
+{
+   _p->m_params.push_back(e);
+   return *this;
+}
+
+
+void ExprUnpack::precompile( PCode* pcode ) const
+{
+   TRACE3( "Precompiling unpack: %p (%s)", pcode, describe().c_ize() );
+
+   // first, precompile the called object, if any,
+   if( m_expander != 0 )
+   {
+      m_expander->precompile( pcode );
+   }
+
+   // precompile all parameters in order.
+   for( int i = 0; i < _p->m_params.size(); ++i )
+   {
+      _p->m_params[i]->precompile( pcode );
+   }
+
+   pcode->pushStep( this );
+}
+
+
+void ExprUnpack::apply_( const PStep*, VMachine* vm )
+{
+   //TODO
+}
+
+//=========================================================
 //Fast if (ternary conditional operator)
 
 bool ExprIIF::simplify( Item& value ) const

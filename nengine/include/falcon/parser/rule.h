@@ -131,6 +131,7 @@ public:
    bool isGreedy() const { return m_bGreedy; }
    bool isRecursive() const { return m_bRecursive; }
 
+   void setGreedy( bool mode ) { m_bGreedy = mode; } 
 private:
    class Private;
    friend class Parser;

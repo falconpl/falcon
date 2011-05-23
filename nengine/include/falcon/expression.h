@@ -100,7 +100,8 @@ public:
       t_isoob,
 
       t_arrayDecl,
-      t_dictDecl
+      t_dictDecl,
+      t_unpack
    } operator_t;
 
    Expression( const Expression &other );
@@ -667,6 +668,45 @@ private:
 
    static void apply_( const PStep*, VMachine* vm );
    static void apply_dummy_( const PStep*, VMachine* vm );
+};
+
+
+/** Array expansion. */
+class FALCON_DYN_CLASS ExprUnpack: public Expression
+{
+public:
+   ExprUnpack( Expression* op1 );
+   ExprUnpack( const ExprUnpack& other );
+   virtual ~ExprUnpack();
+
+   inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
+   virtual bool simplify( Item& value ) const;
+   virtual void describe( String& ) const;
+   virtual void oneLiner( String& s ) const { describe( s ); }
+   inline String describe() const { return PStep::describe(); }
+   inline String oneLiner() const { return PStep::oneLiner(); }
+
+   int targetCount() const;
+   Expression* getAssignand( int n ) const;
+   ExprUnpack& addAssignand( Expression* );
+
+   inline virtual bool isStandAlone() const { return false; }
+   void precompile( PCode* pcode ) const;
+
+   virtual bool isBinaryOperator() const { return false; }
+
+   virtual bool isStatic() const { return false; }
+
+protected:
+   ExprUnpack();
+   friend class ExprFactory;
+   Expression* m_expander;
+
+private:
+   class Private;
+   Private* _p;
+
+   static void apply_( const PStep*, VMachine* vm );
 };
 
 #if 0
