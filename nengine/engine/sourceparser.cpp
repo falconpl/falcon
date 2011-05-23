@@ -1733,7 +1733,6 @@ SourceParser::SourceParser():
       << (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty )
       ;
 
-<<<<<<< HEAD
    NeListExpr << "NeListExpr"
       << (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr )
       << (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr )
@@ -1746,8 +1745,7 @@ SourceParser::SourceParser():
       ;
       r_NeListExpr_ungreed_next.setGreedy(false);
       
-=======
->>>>>>> f91cdb2188f893f74259189392abb9e019cfce76
+
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
       << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
