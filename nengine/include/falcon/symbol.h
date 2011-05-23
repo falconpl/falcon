@@ -89,6 +89,14 @@ public:
     */
    void declaredAt( int32 l ) { m_declaredAt = l; }
 
+   /** Assign a value to this symbol.
+    \param value The value to be stored.
+    This stores the value in the underlying item.
+    Symbols not yet "living" in a virtual machine or in a readied module
+    are not assignable; an exception would be raised in that case.
+    */
+   virtual void assign( VMachine* vm, const Item& value ) const = 0;
+
 protected:
    Symbol( type_t t, const String& name );
 

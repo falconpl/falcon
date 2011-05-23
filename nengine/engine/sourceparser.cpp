@@ -40,6 +40,8 @@
 
 #include <stdio.h>
 
+#include "falcon/compiler.h"
+
 namespace Falcon {
 using namespace Parsing;
 
@@ -602,11 +604,20 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
       List::iterator iterRight = listRight->begin();
       while( iterRight != listRight->end() )
       {
-         ctx->defineSymbols(*iterRight);
-         unpack->addAssignand(*iterRight);
+         Expression* expr = *iterRight;
+         if( expr->type() != Expression::t_symbol )
+         {
+            p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
+            p.simplify(3, ti);
+            return;
+         }
+
+         ctx->defineSymbols(expr);
+         unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
          ++iterRight;
       }
 
+      // todo -- make expression expand
       ctx->addStatement( new StmtAutoexpr( unpack ) );
    }
    else
@@ -617,15 +628,22 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          // Use second token position to signal the error
          // notice that ti value is now in listRight, so it will be destroyed
          p.addError( e_unpack_size, p.currentSource(), v2->line(), v2->chr() );
-         p.simplify(3);
+         p.simplify(3, ti);
          return;
       }
 
       // Note: TODO -- it's right to create an array here, as
-      // v = (a,b,c = 1,2,3) creates an array of [1,2,3]
+      // v = (a,b,c = 1,2,3) creates an array of [1,2,3ss]
       // but it's better to let the StmtAutoexpr to prevent this array to be
       // generated (and then discared) for nothing.
       List::iterator iterRight = listRight->begin();
+      while( iterRight != listRight->end() )
+      {
+         ctx->defineSymbols(*iterRight);
+         ++iterRight;
+      }
+
+      iterRight = listRight->begin();
       List::iterator iterLeft = listLeft->begin();
       while( iterRight != listRight->end() )
       {

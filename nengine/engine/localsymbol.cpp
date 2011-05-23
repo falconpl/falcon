@@ -38,6 +38,13 @@ LocalSymbol::~LocalSymbol()
 {
 }
 
+
+void LocalSymbol::assign( VMachine* vm, const Item& value ) const
+{
+   vm->currentContext()->localVar( m_id ).assign( value );
+}
+
+
 void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);

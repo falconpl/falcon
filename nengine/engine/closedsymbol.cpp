@@ -37,6 +37,11 @@ ClosedSymbol::ClosedSymbol( const ClosedSymbol& other ):
 ClosedSymbol::~ClosedSymbol()
 {}
 
+void ClosedSymbol::assign( VMachine*, const Item& value ) const
+{
+   const_cast<ClosedSymbol*>(this)->m_item.assign( value );
+}
+
 void ClosedSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);

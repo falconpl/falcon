@@ -41,6 +41,8 @@ public:
    static void apply_( const PStep*, VMachine* vm );
    ClosedSymbol* clone() const { return new ClosedSymbol(*this); }
 
+   void assign( VMachine* vm, const Item& value ) const;
+
    virtual Expression* makeExpression();
 
    const Item& value() const { return m_item; }

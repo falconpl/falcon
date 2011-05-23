@@ -38,6 +38,17 @@ GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
 GlobalSymbol::~GlobalSymbol()
 {}
 
+void GlobalSymbol::assign( VMachine*, const Item& value ) const
+{
+   if( m_itemPtr != 0 )
+   {
+      m_itemPtr->assign( value );
+   }
+   else
+   {
+      throw new CodeError( ErrorParam(e_assign_sym, __LINE__, __FILE__ ) );
+   }
+}
 
 void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
 {

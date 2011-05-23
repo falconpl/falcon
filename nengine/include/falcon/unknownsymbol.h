@@ -54,6 +54,9 @@ public:
 
    virtual UnknownSymbol* clone() const { return new UnknownSymbol(*this); }
 
+   void assign( VMachine* vm, const Item& value ) const;
+
+
    static void apply_( const PStep* self, VMachine* vm );
    virtual Expression* makeExpression();
 

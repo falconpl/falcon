@@ -36,6 +36,19 @@ DynSymbol::~DynSymbol()
 {
 }
 
+
+void DynSymbol::assign( VMachine* vm, const Item& value ) const
+{
+   Item* fval = vm->findLocalItem( name() );
+   if( fval == 0 )
+   {
+      throw new CodeError( ErrorParam( e_undef_sym, __LINE__, __FILE__).extra("Dyn:" + name()));
+   }
+
+   fval->assign( value );
+}
+
+
 void DynSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);

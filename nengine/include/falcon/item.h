@@ -455,6 +455,24 @@ public:
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isDeep() const { return type() == FLC_ITEM_DEEP; }
 
+   bool isString() const {
+      return
+        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_STRING)
+        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_STRING);
+   }
+
+   bool isArray() const {
+      return
+        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_ARRAY)
+        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_ARRAY);
+   }
+
+   bool isDict() const {
+      return
+        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_DICT)
+        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_DICT);
+   }
+
    bool isTrue() const;
 
    /** Turns the item into a string.
@@ -583,17 +601,6 @@ public:
    //===================================================================
    // Is string?
    //
-
-   bool isString() const
-   {
-      Class* cls;
-      void* udata;
-      if ( const_cast<Item*>(this)->asClassInst( cls, udata ) )
-      {
-         return cls->typeID() == FLC_CLASS_ID_STRING;
-      }
-      return false;
-   }
    
    bool isString( String*& str )
    {

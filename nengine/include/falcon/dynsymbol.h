@@ -34,6 +34,8 @@ public:
 
    DynSymbol* clone() const { return new DynSymbol(*this); }
 
+   void assign( VMachine*, const Item& value ) const;
+   
    static void apply_( const PStep* self, VMachine* vm );
    virtual Expression* makeExpression();
 

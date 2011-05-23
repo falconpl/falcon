@@ -33,6 +33,7 @@ public:
 
    LocalSymbol* clone() const { return new LocalSymbol(*this); }
 
+   void assign( VMachine* vm, const Item& item ) const;
    static void apply_( const PStep* s1, VMachine* vm );
 
    virtual Expression* makeExpression();

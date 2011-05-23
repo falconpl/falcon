@@ -28,6 +28,7 @@ class DataWriter;
 class ExprFactory;
 class PCode;
 class PseudoFunction;
+class Symbol;
 
 /** Pure abstract class representing a Falcon expression.
  *
@@ -687,8 +688,8 @@ public:
    inline String oneLiner() const { return PStep::oneLiner(); }
 
    int targetCount() const;
-   Expression* getAssignand( int n ) const;
-   ExprUnpack& addAssignand( Expression* );
+   Symbol* getAssignand( int n ) const;
+   ExprUnpack& addAssignand( Symbol* );
 
    inline virtual bool isStandAlone() const { return false; }
    void precompile( PCode* pcode ) const;

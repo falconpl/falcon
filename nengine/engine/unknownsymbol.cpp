@@ -52,6 +52,12 @@ UnknownSymbol::~UnknownSymbol()
    // nothing to do
 }
 
+void UnknownSymbol::assign( VMachine*, const Item&  ) const
+{
+   throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
+}
+
+
 void UnknownSymbol::apply_( const PStep* s, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
