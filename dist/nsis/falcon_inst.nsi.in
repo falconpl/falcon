@@ -294,6 +294,7 @@ Section "DBI - Database interface"
 SetOutPath $INSTDIR\bin
 File "..\bin\dbi_fm.dll"
 File "..\bin\libmysql.dll"
+SetOutPath $INSTDIR\bin\dbi
 File /r "..\bin\dbi\*.*"
 SectionEnd
 
