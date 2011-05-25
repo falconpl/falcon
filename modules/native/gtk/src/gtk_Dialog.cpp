@@ -32,7 +32,7 @@ void Dialog::modInit( Falcon::Module* mod )
     { "run",                    &Dialog::run },
     { "response",               &Dialog::response },
     { "add_button",             &Dialog::add_button },
-    //{ "add_buttons",            &Dialog::add_buttons },
+    { "add_buttons",            &Dialog::add_buttons },
     { "add_action_widget",      &Dialog::add_action_widget },
     { "get_has_separator",      &Dialog::get_has_separator },
     { "set_default_response",   &Dialog::set_default_response },
@@ -199,11 +199,37 @@ FALCON_FUNC Dialog::add_button( VMARG )
     MYSELF;
     GET_OBJ( self );
     GtkWidget* wdt = gtk_dialog_add_button( (GtkDialog*)_obj, txt, id );
-    vm->retval( new Gtk::Widget( vm->findWKI( "Button" )->asClass(), wdt ) );
+    vm->retval( new Gtk::Widget( vm->findWKI( "GtkButton" )->asClass(), wdt ) );
 }
 
+/*#
+    @method add_buttons GtkDialog
+    @brief Adds more buttons, same as calling gtk_dialog_add_button() repeatedly. The variable argument list should be NULL-terminated as with gtk_dialog_new_with_buttons(). Each button must have both text and response ID.
+    @param ... pairs of text/stock ID and response ID to be added
+ */
+FALCON_FUNC Dialog::add_buttons( VMARG )
+{
+    // the parameters must be pairs
+    if( vm->paramCount() % 2 != 0 )
+    {
+        throw_inv_params( "[S,I, ...]" );
+    }
 
-//FALCON_FUNC Dialog::add_buttons( VMARG );
+    MYSELF;
+    GET_OBJ( self );
+
+    Gtk::ArgCheck2 args( vm, "[S,I, ...]" );
+
+    for( uint32 paramId = 0; paramId < vm->paramCount(); paramId += 2 )
+    {
+        // extract the text-id pair
+        char* text = args.getCString( paramId );
+        int   id   = args.getInteger( paramId+1 );
+
+        // add the button
+        gtk_dialog_add_button( (GtkDialog*) _obj, text, id );
+    }
+}
 
 
 /*#
