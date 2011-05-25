@@ -32,7 +32,7 @@ public:
 
     static FALCON_FUNC add_button( VMARG );
 
-    //static FALCON_FUNC add_buttons( VMARG );
+    static FALCON_FUNC add_buttons( VMARG );
 
     static FALCON_FUNC add_action_widget( VMARG );
 
