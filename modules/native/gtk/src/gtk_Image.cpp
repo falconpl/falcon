@@ -209,7 +209,7 @@ FALCON_FUNC Image::set_from_file( VMARG )
             // get the "raw" path
             String* filename = i_fnam->asString();
 
-            Path path( *name );
+            Path path( *filename );
 #ifdef FALCON_SYSTEM_WIN
             // if we are on windows, clear the path...
             filename->size( 0 );
@@ -220,7 +220,7 @@ FALCON_FUNC Image::set_from_file( VMARG )
             filename->copy( path.get() );
 #endif
 
-            AutoCString s( name );
+            AutoCString s( filename );
             gtk_image_set_from_file( (GtkImage*)_obj, s.c_str() );
             return;
         }
