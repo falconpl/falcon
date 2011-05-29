@@ -6,6 +6,8 @@
 
 #include <gtk/gtk.h>
 
+#include <falcon/path.h>
+
 /*#
    @beginmodule gtk
 */
@@ -204,7 +206,21 @@ FALCON_FUNC Image::set_from_file( VMARG )
 #endif
         if ( i_fnam->isString() )
         {
-            AutoCString s( i_fnam->asString() );
+            // get the "raw" path
+            String* filename = i_fnam->asString();
+
+            Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+            // if we are on windows, clear the path...
+            filename->size( 0 );
+            // and copy the winpath in it
+            path.getWinFormat( *filename );
+#else
+            // otherwise, we copy the path returned via get()
+            filename->copy( path.get() );
+#endif
+
+            AutoCString s( filename );
             gtk_image_set_from_file( (GtkImage*)_obj, s.c_str() );
             return;
         }
