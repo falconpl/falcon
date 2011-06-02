@@ -45,11 +45,11 @@ public:
 
     static FALCON_FUNC get_height( VMARG );
 
-    static FALCON_FUNC pixbuf_new_from_file( VMARG );
+    static FALCON_FUNC new_from_file( VMARG );
 
-    static FALCON_FUNC pixbuf_new_from_file_at_size( VMARG );
+    static FALCON_FUNC new_from_file_at_size( VMARG );
 
-    static FALCON_FUNC pixbuf_new_from_file_at_scale( VMARG );
+    static FALCON_FUNC new_from_file_at_scale( VMARG );
 
     static FALCON_FUNC flip( VMARG );
 
