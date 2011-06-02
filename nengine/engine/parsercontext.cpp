@@ -200,6 +200,18 @@ Symbol* ParserContext::addVariable( const String& variable )
 }
 
 
+void ParserContext::undoVariable( const String& variable )
+{
+   TRACE("ParserContext::undoVariable %s", variable.c_ize() );
+
+   if( _p->m_unknown.empty() )
+   {
+      //todo error!
+   }
+
+   _p->m_unknown.back().erase(variable);
+}
+
 void ParserContext::defineSymbols( Expression* expr )
 {
    TRACE("ParserContext::defineSymbols on (: %s :)", expr->describe().c_ize() );

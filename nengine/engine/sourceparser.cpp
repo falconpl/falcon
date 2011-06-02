@@ -202,6 +202,8 @@ static void apply_expr_call( const Rule& r, Parser& p )
       if( pf != 0 )
       {
          call = new ExprCall(pf);
+         ParserContext* ctx = static_cast<ParserContext*>(p.context());
+         ctx->undoVariable( funsym->name() );
          delete callee;
       }
       else

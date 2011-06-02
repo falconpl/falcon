@@ -304,6 +304,16 @@ public:
     */
    Symbol* addVariable( const String& variable );
 
+   /** Remove a previusly referenced variable in the current statement.
+    \param variable
+
+    This method removes an unknown variable that is to be searched at statement
+    termination. This allows to retract a name that was first possibly considered
+    a symbol name, but that was then resolved through direct means (macros,
+    predefs, pseudo functions etc.)
+    */
+   void undoVariable( const String& variable );
+
    /** Defines the symbols that are declared in expressions as locally defined.
     \param expr The branch of the expressions where symbols are defined.
     \see checkSymbols()

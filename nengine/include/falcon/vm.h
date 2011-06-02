@@ -299,7 +299,7 @@ public:
     This can be used to retrieve the parameters of pseudo functions.
     */
    inline Item* pseudoParams( int32 count ) const { 
-      return &currentContext()->topData() - count;
+      return &currentContext()->topData() - count + 1;
    }
 
    //=========================================================

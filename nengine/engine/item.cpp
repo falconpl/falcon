@@ -207,7 +207,7 @@ int Item::compare( const Item& other ) const
    int typeDiff = type() - other.type();
    if( typeDiff == 0 )
    {
-      switch( typeDiff ) {
+      switch( type() ) {
       case FLC_ITEM_NIL: return 0;
       case FLC_ITEM_INT: return (int) (asInteger() - other.asInteger());
       case FLC_ITEM_NUM: return (int) (asNumeric() - other.asNumeric());
