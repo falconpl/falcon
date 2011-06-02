@@ -45,3 +45,6 @@ public:
 } // Falcon
 
 #endif // !GTK_OPTIONMENU_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -78,3 +78,6 @@ FALCON_FUNC Bitmap::create_from_data( VMARG )
 
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

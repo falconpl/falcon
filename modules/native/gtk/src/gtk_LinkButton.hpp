@@ -52,3 +52,6 @@ void link_button_uri_hook_func( GtkLinkButton*, const gchar*, gpointer );
 } // Falcon
 
 #endif // !GTK_LINKBUTTON_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

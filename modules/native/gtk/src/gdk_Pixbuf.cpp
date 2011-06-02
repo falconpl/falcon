@@ -58,15 +58,15 @@ Falcon::CoreObject* Pixbuf::factory( const Falcon::CoreClass* gen, void* buf, bo
 {
     return new Pixbuf( gen, (GdkPixbuf*) buf );
 }
-  
+
 /*#
   @class GdkPixbuf
-  @brief 
-  @param 
-  @param 
-  @param 
-  @param 
-  
+  @brief
+  @param
+  @param
+  @param
+  @param
+
   Some description here
 */
 
@@ -93,7 +93,7 @@ FALCON_FUNC Pixbuf::init( VMARG )
 					      i_width->asInteger(),
 					      i_height->asInteger() ) );
 }
-  
+
 
 
 /*#
@@ -206,9 +206,9 @@ FALCON_FUNC Pixbuf::new_from_file( VMARG )
 #endif
 
   String* filename = i_filename->asString();
-  
+
   Path path( *filename );
-      
+
   // Following is taken from GtkImage
 #ifdef FALCON_SYSTEM_WIN
   filename->size( 0 );
@@ -217,13 +217,13 @@ FALCON_FUNC Pixbuf::new_from_file( VMARG )
   filename->copy( path.get() );
 #endif
   //
-      
+
   AutoCString s( filename );
 
   GError* err = NULL;
 
   GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file( s.c_str(), &err );
-  
+
   if ( err != NULL )
     {
       g_print( err->message );
@@ -273,7 +273,7 @@ FALCON_FUNC Pixbuf::new_from_file_at_size( VMARG )
       g_print( err->message );
       g_error_free( err  );
     }
-  
+
   vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(), (GdkPixbuf*) pixbuf ) );
 }
 
@@ -297,9 +297,9 @@ FALCON_FUNC Pixbuf::new_from_file_at_scale( VMARG )
 #endif
 
   String* filename = i_filename->asString();
-      
+
   Path path( *filename );
-      
+
   // Following is taken from GtkImage
 #ifdef FALCON_SYSTEM_WIN
   filename->size( 0 );
@@ -308,19 +308,19 @@ FALCON_FUNC Pixbuf::new_from_file_at_scale( VMARG )
   filename->copy( path.get() );
 #endif
   //
-      
+
   AutoCString s( filename );
 
   GError* err = NULL;
-  
+
   GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file_at_scale( s.c_str(), i_width->asInteger(), i_height->asInteger(), (gboolean) i_preserve_aspect_ratio->isTrue(), &err );
-  
+
   if ( err != NULL )
     {
       g_print( err->message );
       g_error_free( err  );
     }
-  
+
   vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(), (GdkPixbuf*) pixbuf ) );
 }
 
@@ -334,7 +334,7 @@ FALCON_FUNC Pixbuf::flip( VMARG )
 
   MYSELF;
   GET_OBJ( self );
-  
+
 #ifndef NO_PARAMETER_CHECK
   if ( !(i_horizontal || i_horizontal->isTrue() ) )
     throw_inv_params( "[B]" );
@@ -356,7 +356,7 @@ FALCON_FUNC Pixbuf::rotate_simple( VMARG )
 
   MYSELF;
   GET_OBJ( self );
-  
+
 #ifndef NO_PARAMETER_CHECK
   if ( !( i_angle || i_angle->isInteger() ) )
     throw_inv_params( "[I]" );
@@ -398,3 +398,6 @@ FALCON_FUNC Pixbuf::scale_simple( VMARG )
 
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

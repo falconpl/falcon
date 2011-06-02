@@ -36,3 +36,6 @@ FALCON_FUNC set_use_action_appearance( VMARG );
 #endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 #endif // !GTK_ACTIVATABLE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

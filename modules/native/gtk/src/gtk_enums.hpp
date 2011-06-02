@@ -19,3 +19,6 @@ void modInit( Falcon::Module* );
 } // Falcon
 
 #endif // !GTK_ENUMS_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

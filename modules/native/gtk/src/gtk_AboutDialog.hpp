@@ -120,3 +120,6 @@ void about_dialog_url_hook_func( GtkAboutDialog*, const gchar*, gpointer );
 #endif // GTK_CHECK_VERSION( 2, 6, 0 )
 
 #endif // !GTK_ABOUTDIALOG_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

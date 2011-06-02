@@ -145,3 +145,6 @@ FALCON_FUNC CellRendererText::set_fixed_height_from_font( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

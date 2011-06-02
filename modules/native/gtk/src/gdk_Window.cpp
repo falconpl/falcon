@@ -65,3 +65,6 @@ Falcon::CoreObject* Window::factory( const Falcon::CoreClass* gen, void* win, bo
 
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

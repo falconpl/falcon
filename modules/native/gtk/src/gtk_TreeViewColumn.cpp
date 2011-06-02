@@ -1152,3 +1152,6 @@ FALCON_FUNC TreeViewColumn::get_tree_view( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;
