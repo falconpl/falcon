@@ -383,17 +383,17 @@ FALCON_FUNC Pixbuf::scale_simple( VMARG )
 #ifndef NO_PARAMETER_CHECK
     if ( !i_dest_width || !i_dest_width->isInteger()
 		|| !i_dest_height || !i_dest_height->isInteger() 
-		|| !i_interp_type || !i_interp_type->isInteger() 
-	   )
+		|| !i_interp_type || !i_interp_type->isInteger() )
 		throw_inv_params( "[I,I,I]" );
 #endif
 	MYSELF;
 
-	self->setObject( (GObject*) gdk_pixbuf_scale_simple( GET_PIXBUF( vm->self() ), 
-															 i_dest_width->asInteger(),
-															 i_dest_height->asInteger(), 
-															 (GdkInterpType) i_interp_type->asInteger() ) );
-					
+	vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),
+						gdk_pixbuf_scale_simple( GET_PIXBUF( vm->self() ), 
+										i_dest_width->asInteger(),
+										i_dest_height->asInteger(), 
+										(GdkInterpType) i_interp_type->asInteger() ) ));
+
 }
 
 } // Gdk
