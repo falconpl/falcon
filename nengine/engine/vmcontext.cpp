@@ -34,6 +34,8 @@ VMContext::VMContext()
    m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item));
    m_topData = m_dataStack-1;
    m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
+
+   m_deepStep = 0;
 }
 
 

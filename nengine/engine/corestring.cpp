@@ -79,11 +79,6 @@ void* CoreString::deserialize( DataReader* stream ) const
    return s;
 }
 
-void* CoreString::assign( void* instance ) const
-{
-   return new String( *static_cast<String*>(instance) );
-}
-
 void CoreString::describe( void* instance, String& target ) const
 {
    target.append('"');
@@ -94,17 +89,19 @@ void CoreString::describe( void* instance, String& target ) const
 //=======================================================================
 //
 
-void CoreString::op_add( VMachine *vm, void* self, Item& op2, Item& target ) const
+void CoreString::op_add( VMachine *vm, void* self ) const
 {
    String* str = static_cast<String*>(self);
+   Item* op1, *op2;
+   vm->operands(op1, op2);
 
    Class* cls;
    void* inst;
-   if( ! op2.asClassInst( cls, inst ) )
+   if( ! op2->asClassInst( cls, inst ) )
    {
       String* copy = new String(*str);
-      copy->append(op2.describe());
-      target = copy->garbage();
+      copy->append(op2->describe());
+      vm->stackResult(2, copy->garbage() );
       return;
    }
 
@@ -113,38 +110,109 @@ void CoreString::op_add( VMachine *vm, void* self, Item& op2, Item& target ) con
       // it's a string!
       String *copy = new String(*str);
       copy->append( *static_cast<String*>(inst) );
-      target = copy->garbage();
+      vm->stackResult(2, copy->garbage() );
       return;
    }
 
    // else we surrender, and we let the virtual system to find a way.
    vm->ifDeep( &m_nextOp );
-   cls->op_toString( vm, inst, target );
+   // use a new slot to get the result
+   VMContext* ctx = vm->currentContext();
+
+   // this will transform op2 slot into its string representation.
+   cls->op_toString( vm, inst );
+   
    if( ! vm->wentDeep() )
    {
-       String* deep = (String*)(target.type() == FLC_ITEM_DEEP ? target.asDeepInst() : target.asUserInst());
-       deep->prepend( *str );
+      // op2 has been transformed
+      String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
+      deep->prepend( *str );
    }
 }
 
+
+void CoreString::op_aadd( VMachine *vm, void* self ) const
+{
+   String* str = static_cast<String*>(self);
+   Item* op1, *op2;
+   vm->operands(op1, op2);
+
+   Class* cls;
+   void* inst;
+   if( ! op2->asClassInst( cls, inst ) )
+   {
+      if( op1->copied() )
+      {
+         String* copy = new String(*str);
+         copy->append(op2->describe());
+         vm->stackResult(2, copy->garbage() );
+      }
+      else
+      {
+         op1->asString()->append(op2->describe());
+      }
+
+      return;
+   }
+
+   if ( cls->typeID() == typeID() )
+   {
+      // it's a string!
+      if( op1->copied() )
+      {
+         String *copy = new String(*str);
+         copy->append( *static_cast<String*>(inst) );
+         vm->stackResult(2, copy->garbage() );
+      }
+      else
+      {
+         op1->asString()->append( *static_cast<String*>(inst) );
+      }
+      return;
+   }
+
+   // else we surrender, and we let the virtual system to find a way.
+   vm->ifDeep( &m_nextOp );
+   // use a new slot to get the result
+   VMContext* ctx = vm->currentContext();
+
+   // this will transform op2 slot into its string representation.
+   cls->op_toString( vm, inst );
+
+   if( ! vm->wentDeep() )
+   {
+      // op2 has been transformed
+      String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
+      deep->prepend( *str );
+   }
+}
 
 CoreString::NextOp::NextOp()
 {
    apply = apply_;
 }
 
+
 void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
 {
-   Item& regA = vm->regA();
-   Item& topItem = vm->currentContext()->topData();
+   // The result of a deep call is in A
+   Item* op1, *op2;
+   vm->operands(op1, op2); // we'll discard op2
 
-   String* deep = regA.asString();
-   String* self = topItem.asString();
+   String* deep = vm->regA().asString();
+   String* self = op1->asString();
 
-   String* copy = new String(*self);
-   copy->append( *deep );
-
-   regA = copy->garbage();
+   if( op1->copied() )
+   {
+      String* copy = new String(*self);
+      copy->append( *deep );
+      vm->stackResult( 2, copy->garbage() );
+   }
+   else
+   {
+      vm->currentContext()->popData();
+      self->append(*deep);
+   }
 }
 
 }

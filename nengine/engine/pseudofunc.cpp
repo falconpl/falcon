@@ -22,8 +22,9 @@
 
 namespace Falcon {
 
-PseudoFunction::PseudoFunction( const String& name ):
-   Function( name )
+PseudoFunction::PseudoFunction( const String& name, PStep* direct ):
+   Function( name ),
+   m_step(direct)
 {
 }
 
@@ -38,7 +39,7 @@ PseudoFunction::~PseudoFunction()
 namespace PFunc {
 
 MinOrMax::MinOrMax( const String& name, bool bIsMax ):
-   PseudoFunction(name),
+   PseudoFunction(name, &m_invoke),
    m_bIsMax(bIsMax),
    m_invoke(bIsMax),
    m_compareNext(bIsMax)
@@ -53,6 +54,7 @@ MinOrMax::MinOrMax( const String& name, bool bIsMax ):
 MinOrMax::~MinOrMax()
 {}
 
+// Direct function call.
 void MinOrMax::apply( VMachine* vm, int32 pCount )
 {
    if( pCount != 2 )
@@ -66,24 +68,31 @@ void MinOrMax::apply( VMachine* vm, int32 pCount )
    Item& first = params[0];
    Item& second = params[1];
 
+   int comp;
    if( first.asClassInst( cls, udata ) )
    {
       // ... but at worst, we must be called back.
       vm->ifDeep( &m_compareNext );
-      cls->compare(udata, second );
+      cls->op_compare( vm, udata );
       if( vm->wentDeep() )
       {
          return;
       }
 
-      int comp = vm->regA().forceInteger();
-      if( m_bIsMax ) comp = -comp;
-      vm->regA() = *(comp <= 0 ? &first : &second);
+      fassert( vm->currentContext()->topData().isInteger() );
+      comp = vm->currentContext()->topData().forceInteger();
    }
    else
    {
-      int comp = first.compare(second);
-      if( m_bIsMax ) comp = -comp;
+      comp = first.compare(second);
+   }
+
+   if( m_bIsMax )
+   {
+      vm->regA() = *(comp > 0 ? &first : &second);
+   }
+   else
+   {
       vm->regA() = *(comp <= 0 ? &first : &second);
    }
 
@@ -91,10 +100,29 @@ void MinOrMax::apply( VMachine* vm, int32 pCount )
 }
 
 
-const PStep* MinOrMax::pstep() const
+// Next step when called as a function
+MinOrMax::CompareNextStep::CompareNextStep( bool isMax ):
+   m_bIsMax(isMax)
 {
-   return &m_invoke;
+   apply = apply_;
 }
+
+// Next step when called as a function
+void MinOrMax::CompareNextStep::apply_( const PStep* ps, VMachine* vm )
+{
+   register VMContext* ctx = vm->currentContext();
+   MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
+
+   int comp = vm->regA().forceInteger();
+   if( self->m_bIsMax ) comp = -comp;
+   vm->regA() = *(comp <= 0 ? ctx->param(0) : ctx->param(1) );
+
+   vm->returnFrame();
+}
+
+
+//==========================================================
+//
 
 MinOrMax::InvokeStep::InvokeStep( bool isMax ):
    m_bIsMax(isMax),
@@ -103,6 +131,7 @@ MinOrMax::InvokeStep::InvokeStep( bool isMax ):
    apply = apply_;
 }
 
+// Apply when invoked as a pseudofunction
 void MinOrMax::InvokeStep::apply_( const PStep* ps, VMachine* vm )
 {
    Class* cls;
@@ -110,31 +139,37 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMachine* vm )
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
    
    register VMContext* ctx = vm->currentContext();
-   Item& second = ctx->topData();
-   Item& first = *((&ctx->topData())-1);
+   register Item* params = vm->pseudoParams(2);
+   Item& first = params[0];
+   Item& second = params[1];
 
-
+   int comp;
+   
    if( first.asClassInst( cls, udata ) )
    {
       // ... but at worst, we must be called back.
       vm->ifDeep( &self->m_compare );
-      cls->compare(udata, second );
+      cls->op_compare( vm, udata );
       if( vm->wentDeep() )
       {
          return;
       }
 
-      int comp = vm->regA().forceInteger();
-      // here we're inverting the check if it's max to avoid if ! max...
-      if( self->m_bIsMax ) comp = -comp;
-      // ... then reversing the meaning of < with respect to max.
-      vm->regA() = *(comp <= 0 ? &first : &second);
+      fassert( vm->currentContext()->topData().isInteger() );
+      comp = vm->currentContext()->topData().forceInteger();
    }
    else
    {
-      int comp = first.compare(second);
-      if( self->m_bIsMax ) comp = -comp;
-      vm->regA() = *(comp <= 0 ? &first : &second);
+      comp = first.compare(second);
+   }
+
+   if( self->m_bIsMax )
+   {
+      vm->stackResult(2, *(comp > 0 ? &first : &second) );
+   }
+   else
+   {
+      vm->stackResult(2, *(comp <= 0 ? &first : &second) );
    }
 }
 
@@ -144,6 +179,7 @@ MinOrMax::InvokeStep::CompareStep::CompareStep( bool isMax ):
    apply = apply_;
 }
 
+// Next step invoked as a pseudofunction
 void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMachine* vm )
 {
    register VMContext* ctx = vm->currentContext();
@@ -167,25 +203,8 @@ void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMachine* vm )
    }
 }
 
-
-MinOrMax::CompareNextStep::CompareNextStep( bool isMax ):
-   m_bIsMax(isMax)
-{
-   apply = apply_;
-}
-
-void MinOrMax::CompareNextStep::apply_( const PStep* ps, VMachine* vm )
-{
-   register VMContext* ctx = vm->currentContext();
-   MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
-   
-   int comp = vm->regA().forceInteger();
-   if( self->m_bIsMax ) comp = -comp;
-   vm->regA() = *(comp <= 0 ? ctx->param(0) : ctx->param(1) );
-
-   vm->returnFrame();
-}
-
+//==================================================
+// Min and max function declaration
 
 Max::Max():
    MinOrMax( "max", true )

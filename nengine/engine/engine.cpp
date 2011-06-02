@@ -44,6 +44,7 @@
 #include <falcon/coredict.h>
 
 //--- error headers ---
+#include <falcon/accesserror.h>
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
@@ -79,6 +80,18 @@ class PseudoFunctionMap: public std::map<String, PseudoFunction*>
 //=======================================================
 // Private classes known by the engine
 //
+class AccessErrorClass: public ErrorClass
+{
+public:
+   AccessErrorClass():
+      ErrorClass("AccessError")
+   {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new AccessError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
 
 class CodeErrorClass: public ErrorClass
 {
@@ -254,6 +267,7 @@ Engine::Engine()
    //=====================================
    // Initialization of standard errors.
    //
+   m_accessErrorClass = new AccessErrorClass;
    m_codeErrorClass = new CodeErrorClass;
    m_genericErrorClass = new GenericErrorClass;
    m_interruptedErrorClass = new InterruptedErrorClass;
@@ -297,6 +311,7 @@ Engine::~Engine()
    // ===============================
    // Delete standard error classes
    //
+   delete m_accessErrorClass;
    delete m_codeErrorClass;
    delete m_genericErrorClass;
    delete m_ioErrorClass;
@@ -525,6 +540,12 @@ Class* Engine::encodingErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_encodingErrorClass;
+}
+
+Class* Engine::accessErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_accessErrorClass;
 }
 
 Class* Engine::syntaxErrorClass() const

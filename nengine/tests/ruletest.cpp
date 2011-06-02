@@ -57,22 +57,23 @@ public:
 
          while( count < nParams )
          {
-            Item temp;
             Class* cls;
             void* data;
 
             ctx->param(count)->forceClassInst( cls, data );
             ++count;
 
+            ctx->pushData(*ctx->param(count));
             vm->ifDeep(this);
-            cls->op_toString( vm, data, temp );
+            cls->op_toString( vm, data );
             if( vm->wentDeep() )
             {
                ctx->currentCode().m_seqId = count;
                return;
             }
             
-            vm->textOut()->write( *temp.asString() );
+            vm->textOut()->write( *ctx->topData().asString() );
+            ctx->popData();
          }
 
          vm->textOut()->write( "\n" );

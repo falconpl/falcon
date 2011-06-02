@@ -48,6 +48,7 @@ add_library(falcon_engine SHARED
   core_module/coremodule.cpp
 
   memory.cpp
+  accesserror.cpp
   application.cpp
   autocstring.cpp
   autowstring.cpp

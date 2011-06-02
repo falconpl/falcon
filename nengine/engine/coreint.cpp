@@ -17,6 +17,8 @@
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 
+#include "falcon/vm.h"
+
 namespace Falcon {
 
 CoreInt::CoreInt():
@@ -73,10 +75,13 @@ void CoreInt::describe( void* instance, String& target ) const
 //=======================================================================
 //
 
-void CoreInt::op_isTrue( VMachine *vm, void* self, Item& target ) const
+void CoreInt::op_isTrue( VMachine *vm, void* self ) const
 {
-   target.setBoolean( ((int64)self) != 0 );
+   Item* iself;
+   vm->operands(iself);
+   vm->stackResult( 1, iself->asInteger() != 0 );
 }
+
 }
 
 /* end of coreint.cpp */

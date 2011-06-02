@@ -405,6 +405,9 @@ protected:
 
    friend class VMachine;
    friend class SynFunc;
+
+   // used by ifDeep - goingDeep() - wentDeep() triplet
+   const PStep* m_deepStep;
 };
 
 }

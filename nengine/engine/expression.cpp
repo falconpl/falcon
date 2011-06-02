@@ -429,11 +429,11 @@ void ExprNeg::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
       case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_neg( vm, item.asDeepInst(), item );
+         item.asDeepClass()->op_neg( vm, item.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_neg( vm, item.asUserInst(), item );
+         item.asUserClass()->op_neg( vm, item.asUserInst() );
          break;
 
       default:
@@ -477,11 +477,11 @@ void ExprPreInc::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( item.asInteger()+1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()+1 ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_inc( vm, item.asDeepInst(), item );
+         item.asDeepClass()->op_inc( vm, item.asDeepInst());
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_inc( vm, item.asUserInst(), item );
+         item.asUserClass()->op_inc( vm, item.asUserInst() );
          break;
 
       default:
@@ -557,11 +557,11 @@ void ExprPostInc::Gate::apply_( const PStep* ps,  VMachine* vm )
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()+1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()+1 ); break;
       case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_incpost( vm, operand.asDeepInst(), operand );
+         operand.asDeepClass()->op_incpost( vm, operand.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_incpost( vm, operand.asUserInst(), operand );
+         operand.asUserClass()->op_incpost( vm, operand.asUserInst() );
          break;
 
       default:
@@ -600,11 +600,11 @@ void ExprPreDec::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( item.asInteger()-1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()-1 ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_dec( vm, item.asDeepInst(), item );
+         item.asDeepClass()->op_dec( vm, item.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_dec( vm, item.asUserInst(), item );
+         item.asUserClass()->op_dec( vm, item.asUserInst() );
          break;
 
       default:
@@ -680,11 +680,11 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()-1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()-1 ); break;
       case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_decpost( vm, operand.asDeepInst(), operand );
+         operand.asDeepClass()->op_decpost( vm, operand.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_decpost( vm, operand.asUserInst(), operand );
+         operand.asUserClass()->op_decpost( vm, operand.asUserInst() );
          break;
 
       default:
@@ -753,10 +753,10 @@ void ExprPlus::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -774,11 +774,11 @@ void ExprPlus::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_add( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_add( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_add( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_add( vm, d1.asUserInst() );
       break;
 
    default:
@@ -800,7 +800,7 @@ void ExprPlus::describe( String& ret ) const
 bool ExprMinus::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
       switch ( d1.type() << 8 | d2.type() )
       {
@@ -830,10 +830,10 @@ void ExprMinus::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -851,11 +851,11 @@ void ExprMinus::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_sub( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_sub( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_sub( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_sub( vm, d1.asUserInst() );
       break;
 
    default:
@@ -878,7 +878,7 @@ void ExprMinus::describe( String& ret ) const
 bool ExprTimes::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
       switch ( d1.type() << 8 | d2.type() )
       {
@@ -908,10 +908,10 @@ void ExprTimes::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -929,11 +929,11 @@ void ExprTimes::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_mul( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_mul( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_mul( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_mul( vm, d1.asUserInst() );
       break;
 
    default:
@@ -956,7 +956,7 @@ void ExprTimes::describe( String& ret ) const
 bool ExprDiv::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
       if ( d2.isOrdinal() && d2.forceInteger() == 0 )
       {
@@ -990,10 +990,10 @@ void ExprDiv::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    if ( d2.isOrdinal() && d2.forceInteger() == 0 )
    {
@@ -1016,11 +1016,11 @@ void ExprDiv::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_div( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_div( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_div( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_div( vm, d1.asUserInst() );
       break;
 
    default:
@@ -1043,7 +1043,7 @@ void ExprDiv::describe( String& ret ) const
 bool ExprMod::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_first->simplify(d2) )
+   if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
       if ( d2.isOrdinal() && d2.forceInteger() == 0 )
       {
@@ -1077,10 +1077,10 @@ void ExprMod::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    if ( d2.isOrdinal() && d2.forceInteger() == 0 )
    {
@@ -1103,11 +1103,11 @@ void ExprMod::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_mod( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_mod( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_mod( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_mod( vm, d1.asUserInst() );
       break;
 
    default:
@@ -1154,10 +1154,10 @@ void ExprPow::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // No need to copy the second, we're not packing the stack now.
-   Item& d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1169,11 +1169,11 @@ void ExprPow::apply_( const PStep* ps, VMachine* vm )
          break;
 
    caseDeep:
-      d1.asDeepClass()->op_pow( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_pow( vm, d1.asDeepInst() );
       break;
 
    caseUser:
-      d1.asUserClass()->op_pow( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_pow( vm, d1.asUserInst() );
       break;
 
    default:
@@ -1237,11 +1237,10 @@ void ExprLT::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
 
    // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1262,11 +1261,19 @@ void ExprLT::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_lt( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() < 0 );
       break;
 
    caseUser:
-      d1.asUserClass()->op_lt( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() < 0 );
       break;
 
    default:
@@ -1325,12 +1332,10 @@ void ExprLE::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1351,11 +1356,19 @@ void ExprLE::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_le( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() <= 0 );
       break;
 
    caseUser:
-      d1.asUserClass()->op_le( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() <= 0 );
       break;
 
    default:
@@ -1414,12 +1427,10 @@ void ExprGT::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1440,11 +1451,19 @@ void ExprGT::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_gt( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() > 0 );
       break;
 
    caseUser:
-      d1.asUserClass()->op_gt( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() > 0 );
       break;
 
    default:
@@ -1503,11 +1522,10 @@ void ExprGE::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
 
    switch ( d1.type() << 8 | d2.type() )
@@ -1529,11 +1547,19 @@ void ExprGE::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_ge( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() >= 0 );
       break;
 
    caseUser:
-      d1.asUserClass()->op_ge( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() >= 0 );
       break;
 
    default:
@@ -1548,8 +1574,6 @@ void ExprGE::describe( String& ret ) const
 {
    ret = "(" + m_first->describe() + " >= " + m_second->describe() + ")";
 }
-
-
 
 
 bool ExprEQ::simplify( Item& value ) const
@@ -1593,12 +1617,10 @@ void ExprEQ::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1619,11 +1641,19 @@ void ExprEQ::apply_( const PStep* ps, VMachine* vm )
       break;
 
    caseDeep:
-      d1.asDeepClass()->op_eq( vm, d1.asDeepInst(), d2, d1 );
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() == 0 );
       break;
 
    caseUser:
-      d1.asUserClass()->op_eq( vm, d1.asUserInst(), d2, d1 );
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() == 0 );
       break;
 
    default:
@@ -1675,6 +1705,68 @@ bool ExprEEQ::simplify( Item& value ) const
    return false;
 }
 
+void ExprNE::apply_( const PStep* ps, VMachine* vm )
+{
+   TRACE2( "Apply \"%s\"", ((ExprNE*)ps)->describe().c_ize() );
+
+   register VMContext* ctx = vm->currentContext();
+
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
+
+
+   switch ( d1.type() << 8 | d2.type() )
+   {
+   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asInteger() != d2.asInteger() );
+      break;
+
+   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asInteger() != d2.asNumeric() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+      d1.setBoolean( d1.asNumeric() != d2.asInteger() );
+      break;
+
+   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+      d1.setBoolean( d1.asNumeric() != d2.asNumeric() );
+      break;
+
+   caseDeep:
+      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() > 0 );
+      break;
+
+   caseUser:
+      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
+      // refetch, we may have gone deep
+      op1 = &ctx->topData();
+      fassert( op1->isInteger() );
+      op1->setBoolean( op1->asInteger() > 0 );
+      break;
+
+   default:
+      // no need to throw, we're going to get back in the VM.
+      vm->raiseError(
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("!=") ) );
+   }
+}
+
+
+void ExprNE::describe( String& ret ) const
+{
+   ret = "(" + m_first->describe() + " != " + m_second->describe() + ")";
+}
+
+
+
+
 
 void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
 {
@@ -1682,12 +1774,10 @@ void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
 
    register VMContext* ctx = vm->currentContext();
 
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   Item& d2 = *op2;
+   Item& d1 = *op1;
 
    switch ( d1.type() << 8 | d2.type() )
    {
@@ -1755,57 +1845,6 @@ bool ExprNE::simplify( Item& value ) const
 }
 
 
-void ExprNE::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprNE*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   // copy the second
-   Item d2 = ctx->topData();
-   ctx->popData();
-   // apply on the first
-   Item& d1 = ctx->topData();
-
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() != d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() != d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() != d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() != d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_ne( vm, d1.asDeepInst(), d2, d1 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_ne( vm, d1.asUserInst(), d2, d1 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("!=") ) );
-   }
-}
-
-
-void ExprNE::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " != " + m_second->describe() + ")";
-}
 
 
 //=========================================================
@@ -1888,6 +1927,7 @@ void ExprCall::precompile( PCode* pcode ) const
    }
    else
    {
+      // pseudofunctions can be pushed directly.
       pcode->pushStep( m_func->pstep() );
    }
 }
@@ -1942,7 +1982,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
          {
             Class* cls = top.asUserClass();
             void* inst = top.asUserInst();
-            cls->op_call( vm, self->paramCount(), inst, top );
+            cls->op_call( vm, pcount, inst );
          }
          break;
 
@@ -1950,14 +1990,14 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
          {
             Class* cls = top.asDeepClass();
             void* inst = top.asDeepInst();
-            cls->op_call( vm, pcount, inst, top );
+            cls->op_call( vm, pcount, inst );
          }
          break;
 
       default:
          {
             Class* cls = eng->getTypeClass( top.type() );
-            cls->op_call( vm, pcount, &top, top );
+            cls->op_call( vm, pcount, 0 );
          }
    }
    
@@ -2106,16 +2146,14 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
    // get prop name
    const String& prop = ((ExprDot*)ps)->m_prop;
    //acquire the class
-   ctx->topData().forceClassInst(cls, self);
+   (&ctx->topData()-1)->forceClassInst(cls, self);
    if ( ((ExprDot*)ps)->isLValue() )
    {
-      ctx->popData();
-      Item target = ctx->topData();
-      cls->op_setProperty(vm, self, prop, target);
+      cls->op_setProperty(vm, self, prop );
    }
    else
    {
-      cls->op_getProperty(vm, self, prop, ctx->topData());
+      cls->op_getProperty(vm, self, prop );
    }
 }
 
@@ -2137,24 +2175,18 @@ void ExprIndex::apply_( const PStep* ps, VMachine* vm )
    TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
 
    register VMContext* ctx = vm->currentContext();
-
-   Item index = ctx->topData();
-   ctx->popData();
    Class* cls;
    void* self;
+   
    //acquire the class
-   ctx->topData().forceClassInst(cls, self);
+   (&ctx->topData()-1)->forceClassInst(cls, self);
    if ( ((ExprIndex*)ps)->isLValue() )
    {
-      //pop the array as we already have our class instance
-      ctx->popData();
-      Item target = ctx->topData();
-      cls->op_setIndex(vm, self, index, target);
+      cls->op_setIndex(vm, self );
    }
    else
    {
-      Item& obj = ctx->topData();
-      cls->op_getIndex(vm, self, index, obj);
+      cls->op_getIndex(vm, self );
    }
 }
 

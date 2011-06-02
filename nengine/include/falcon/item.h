@@ -61,7 +61,7 @@ public:
            byte type;
            byte flags;
            byte oldType;
-           byte reserved;
+           byte copied;
         } bits;
         uint16 half;
         uint32 whole;
@@ -89,14 +89,18 @@ public:
    inline Item()
    {
       type( FLC_ITEM_NIL );
+      copied( false );
    }
 
    inline void setNil()
    {
       type( FLC_ITEM_NIL );
+      copied( false );
    }
 
-   inline Item( const Item &other ) {
+   inline Item( const Item &other )
+   {
+      other.copied(true);
       copy( other );
    }
 
@@ -364,9 +368,43 @@ public:
    
       Flags are also reset. For example, if this item was OOB before,
       the OOB flag is cleared.
-   */
-   void type( byte nt ) { content.base.bits.flags = 0; content.base.bits.type = nt; }
 
+      The copy marker is cleared as well.
+   */
+   void type( byte nt ) { 
+      content.base.bits.copied = false;
+      content.base.bits.flags = 0;
+      content.base.bits.type = nt;
+   }
+
+   /** Returns true if this item has the copy-marker.
+    \return true if copied.
+    */
+   bool copied() const { return content.base.bits.copied; }
+
+   /** Sets the copy mode.
+      \note the method is marked "const" because it operates on
+      a "virtually mutable" copied marker.
+    */
+   void copied( bool bMode ) const {
+      const_cast<Item*>(this)->content.base.bits.copied = bMode;
+   }
+
+   /** Copies the full contents of another item.
+      \param other The copied item.
+
+    This performs a full flat copy of the original item.
+
+    \note This doesn't set the copy marker; the copy marker is meant to determine
+    if the VM has copied an item a script level while basic copy operations
+    may not have this semantic at lower level. For example, one may make a
+    temporary flat copy of a stack item without willing to notify that to the
+    VM.
+
+    The copy mark is actually copied as any other flag or value in the original
+    item. To explicitly declare the original item copied, use the assign()
+    method or used the explicit copied(bool) method.
+    */
    void copy( const Item &other )
    {
       #ifdef _SPARC32_ITEM_HACK
@@ -383,54 +421,14 @@ public:
       #endif
    }
 
-   /** Assign an item to this item.
-
-    Normally, assign is an item copy, but there are quasi flat items that act
-    as if they were flat, but are actually deep. These itmes need to be notified
-    about assignments, because they may need to create copies of themselves
-    when assigned, or otherwise manipulate their assignments.
-
+   /** Assign an item to this item.    
+    This operation resolves into marking the source item as copied, and then
+    applying the copy item.
     */
    void assign( const Item& other )
    {
-       switch ( other.type() )
-       {
-       case FLC_ITEM_DEEP:
-       {
-          register GCToken* gt = other.content.data.pToken;
-          if( gt->cls()->isFlat() )
-          {
-             register void* value = gt->cls()->assign( gt->data() );
-             if ( value == gt->data() )
-             {
-                setDeep( gt );
-             }
-             else
-             {
-                setDeep( gt->collector()->store( gt->cls(), value ) );
-             }
-          }
-          else
-          {
-             setDeep( gt );
-          }
-       }
-      break;
-
-      case FLC_ITEM_USER:
-         if( other.content.data.pToken->cls()->isFlat() )
-         {
-            setUser( other.asUserClass(), other.asUserClass()->assign( other.asUserInst() ) );
-         }
-         else
-         {
-            setUser( other.asUserClass(), other.asUserInst() );
-         }
-         break;
-
-       default:
-           copy( other );
-       }
+      other.copied(true);
+      copy(other);
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }
@@ -508,6 +506,9 @@ public:
 
    String describe() const { String t; describe(t); return t; }
 
+   /** Operator version of copy.
+    \note This doesn't set the copy marker. Use assign() for that.
+    */
    Item &operator=( const Item &other ) { copy( other ); return *this; }
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
@@ -526,7 +527,7 @@ public:
    void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
 
 
-   /** Clone the item (with the help of a VM).
+   /** Clone the item.
       If the item is not cloneable, the method returns false. Is up to the caller to
       raise an appropriate error if that's the case.
       The VM parameter may be zero; in that case, returned items will not be stored in
@@ -537,7 +538,6 @@ public:
 
       Also, in that case, the returned item will be free of reference.
 
-      \param vm the virtual machine used for cloning.
       \param target the item where to stored the cloned instance of this item.
       \return true if the clone operation is possible
    */

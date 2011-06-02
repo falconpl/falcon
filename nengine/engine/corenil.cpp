@@ -17,6 +17,8 @@
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 
+#include "falcon/vm.h"
+
 namespace Falcon {
 
 CoreNil::CoreNil():
@@ -65,9 +67,9 @@ void CoreNil::describe( void* instance, String& target ) const
 //=======================================================================
 //
 
-void CoreNil::op_isTrue( VMachine *vm, void* self, Item& target ) const
+void CoreNil::op_isTrue( VMachine *vm, void* ) const
 {
-   target.setBoolean(false);
+   vm->stackResult( 1, false );
 }
 }
 

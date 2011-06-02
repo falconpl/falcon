@@ -64,22 +64,19 @@ public:
    virtual void* deserialize( DataReader* stream ) const;
    virtual void describe( void* instance, String& target ) const;
 
-   virtual bool hasProperty( void* self, const String& prop ) const;
-   virtual bool getProperty( void* self, const String& property, Item& value ) const;
-
-   virtual bool getIndex( void* self, const Item& index, Item& value ) const;
-   virtual bool setIndex( void* self, const Item& index, const Item& value ) const;
-
    virtual void gcMark( void* self, uint32 mark ) const;
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
 
-   //virtual int compare( void* self, const Item& value ) const;
-
    //=============================================================
 
-   virtual void op_add( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_isTrue( VMachine *vm, void* self, Item& target ) const;
-   virtual void op_toString( VMachine *vm, void* self, Item& target ) const;
+   virtual void op_add( VMachine *vm, void* self ) const;
+   virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_toString( VMachine *vm, void* self ) const;
+
+   virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
+   virtual void op_getIndex( VMachine *vm, void* self ) const;
+   virtual void op_setIndex( VMachine *vm, void* self ) const;
+
 private:
 
    class FALCON_DYN_CLASS ToStringNextOp: public PStep {

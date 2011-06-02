@@ -16,8 +16,9 @@
 #include <falcon/corearray.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
+#include <falcon/accesserror.h>
 
-#include "falcon/itemarray.h"
+#include <falcon/itemarray.h>
 
 namespace Falcon {
 
@@ -82,51 +83,61 @@ void CoreArray::describe( void* instance, String& target ) const
 }
 
 
-bool CoreArray::hasProperty( void* self, const String& prop ) const
-{
-   if( prop == "len" ) return true;
-   return false;
-}
-
-bool CoreArray::getProperty( void* self, const String& property, Item& value ) const
+void CoreArray::op_getProperty( VMachine* vm, void* self, const String& property ) const
 {
    if( property == "len" )
    {
-      value.setInteger(static_cast<ItemArray*>(self)->length());
-      return true;
+      vm->stackResult(1, (int64) static_cast<ItemArray*>(self)->length() );
    }
-
-   return false;
+   else
+   {
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra(property) );
+   }
 }
 
-bool CoreArray::getIndex( void* self, const Item& index, Item& value ) const
+void CoreArray::op_getIndex( VMachine* vm, void* self ) const
 {
-   ItemArray& array = *static_cast<ItemArray*>(self);
-   if (index.isOrdinal())
-   {
-      int64 v = index.forceInteger();
-      if( v < 0 ) v = array.length() + v;
-      if( v >= array.length() ) return false;
-      value = array[v];
-      return true;
-   }
+   Item *index, *arritem;
+   vm->operands( index, arritem );
 
-   return false;
+   ItemArray& array = *static_cast<ItemArray*>(self);
+   if (index->isOrdinal())
+   {
+      int64 v = index->forceInteger();
+      if( v < 0 ) v = array.length() + v;
+      if( v >= array.length() )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+      }
+      vm->stackResult(2, array[v]);
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("N") );
+   }
 }
 
-bool CoreArray::setIndex( void* self, const Item& index, const Item& value ) const
+void CoreArray::op_setIndex( VMachine* vm, void* self ) const
 {
-   ItemArray& array = *static_cast<ItemArray*>(self);
-   if (index.isOrdinal())
-   {
-      int64 v = index.forceInteger();
-      if( v < 0 ) v = array.length() + v;
-      if( v >= array.length() ) return false;
-      array[v] = value;
-      return true;
-   }
+   Item* value, *index, *arritem;
+   vm->operands( value, index, arritem );
 
-   return false;
+   ItemArray& array = *static_cast<ItemArray*>(self);
+   if (index->isOrdinal())
+   {
+      int64 v = index->forceInteger();
+      if( v < 0 ) v = array.length() + v;
+      if( v >= array.length() )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+      }
+      array[v] = *value;
+      vm->stackResult(3, *value);
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
+   }
 }
 
 
@@ -152,16 +163,18 @@ void CoreArray::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 //=======================================================================
 //
 
-void CoreArray::op_add( VMachine *vm, void* self, Item& op2, Item& target ) const
+void CoreArray::op_add( VMachine *vm, void* self ) const
 {
    ItemArray* array = static_cast<ItemArray*>(self);
+   Item* op1, *op2;
+   vm->operands( op1, op2 );
 
    Class* cls;
    void* inst;
    // a basic type?
-   if( ! op2.asClassInst( cls, inst ) || cls->typeID() != typeID() )
+   if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
-      array->append(op2);
+      array->append(*op2);
       return;
    }
 
@@ -170,19 +183,19 @@ void CoreArray::op_add( VMachine *vm, void* self, Item& op2, Item& target ) cons
    array->change( *other, array->length(), 0 );
 }
 
-void CoreArray::op_isTrue( VMachine *vm, void* self, Item& target ) const
+void CoreArray::op_isTrue( VMachine *vm, void* self) const
 {
-   target.setBoolean( static_cast<ItemArray*>(self)->length() != 0 );
+   vm->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
 }
 
-void CoreArray::op_toString( VMachine *vm, void* self, Item& target ) const
+void CoreArray::op_toString( VMachine *vm, void* self ) const
 {
    // If we're long 0, surrender.
    ItemArray* array = static_cast<ItemArray*>(self);
 
    if( array->length() == 0 )
    {
-      target.setString("[]");
+      vm->stackResult(1, "[]");
       return;
    }
    VMContext* ctx = vm->currentContext();
@@ -190,6 +203,10 @@ void CoreArray::op_toString( VMachine *vm, void* self, Item& target ) const
    // initialize the deep loop
    ctx->addDataSlot() = 0;  // local 0 -- counter
    ctx->addDataSlot().setString("[ ");  // local 1 -- currently elaborated string.
+
+   // add an item for op_toString
+   ctx->pushData(Item());
+
    m_toStringNextOp.apply(&m_toStringNextOp, vm);
 }
 
@@ -199,7 +216,7 @@ CoreArray::ToStringNextOp::ToStringNextOp()
    apply = apply_;
 }
 
-void CoreArray::ToStringNextOp::apply_( const PStep*step, VMachine* vm )
+void CoreArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 {
    VMContext* ctx = vm->currentContext();
    
@@ -216,10 +233,10 @@ void CoreArray::ToStringNextOp::apply_( const PStep*step, VMachine* vm )
    // have we been called from deep?
    if( i > 0 )
    {
-      // in this case, get A and add it to our string.
-      fassert( vm->regA().asString() )
-      myStr->append(*vm->regA().asString());
-   }
+      // in this case, get the top data -- now converted by the deep call.
+      fassert( ctx->topData().asString() )
+      myStr->append(*ctx->topData().asString());
+   }   
 
    // continue with the stringification loop
    for( ; i < array->length(); ++i )
@@ -242,19 +259,22 @@ void CoreArray::ToStringNextOp::apply_( const PStep*step, VMachine* vm )
       {
          // Not simple; we may be deep -- so prepare
          ctx->local(0)->setInteger(i+1);
+         ctx->topData() = item;
+         
          vm->ifDeep( step );
-         cls->op_toString( vm, inst, vm->regA() );
+         cls->op_toString( vm, inst );
          if( vm->wentDeep() ) return;
 
          // pfew, not deep! just go on as usual
-         fassert(vm->regA().isString());
-         myStr->append( *vm->regA().asString() );
+         fassert(ctx->topData().isString());
+         myStr->append( *ctx->topData().asString() );
       }
    }
 
    // we're done, put our string in A.
    myStr->append(" ]");
-   vm->regA() = myStr;
+   ctx->popData();
+   ctx->topData() = myStr->garbage();
 }
 
 }

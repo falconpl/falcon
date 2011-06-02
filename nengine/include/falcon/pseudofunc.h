@@ -31,7 +31,7 @@ namespace Falcon {
  expect one.
 
  PseudoFunction instances are derived from Function; this means that they
- can be considered functions under any aspect; for example, they can be
+ can be considered functions under many aspects; for example, they can be
  referenced as function items and be normally called, for example, when
  being processed in a functional sequence or when assigned to a variable and
  then called at a later moment. However, they offer also the ability to be
@@ -64,7 +64,8 @@ namespace Falcon {
 class FALCON_DYN_CLASS PseudoFunction: public Function
 {
 public:
-   PseudoFunction( const String& name );
+   PseudoFunction( const String& name, PStep* invoke_step );
+   
    virtual ~PseudoFunction();
    
    /** Returns the PStep invoked that invokes this function from within an expression.
@@ -73,7 +74,10 @@ public:
     The ownership of the returned pointer stays on this function; this means that
     this method should return an object in this class.
     */
-   virtual const PStep* pstep() const = 0;
+   const PStep* pstep() const { return m_step; }
+
+private:
+   PStep* m_step;
 };
 
 namespace PFunc {
@@ -84,7 +88,6 @@ public:
    MinOrMax( const String& name, bool bIsMax );
    virtual ~MinOrMax();
    virtual void apply( VMachine* vm, int32 pCount = 0 );
-   virtual const PStep* pstep() const;
 
 private:
    bool m_bIsMax;

@@ -54,7 +54,6 @@ public:
 
          while( count < nParams )
          {
-            Item temp;
             Class* cls;
             void* data;
 
@@ -62,13 +61,15 @@ public:
             ++count;
 
             vm->ifDeep(this);
-            cls->op_toString( vm, data, temp );
+            ctx->pushData(*ctx->param(count));
+            cls->op_toString( vm, data );
             if( vm->wentDeep() )
             {
                ctx->currentCode().m_seqId = count;
                return;
             }
-            std::cout << temp.asString()->c_ize();
+            std::cout << ctx->topData().asString()->c_ize();
+            ctx->popData();
          }
 
          std::cout << std::endl;

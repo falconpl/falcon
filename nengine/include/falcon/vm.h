@@ -290,7 +290,17 @@ public:
     This method returns the values in the current topmost data frame.
     This usually points to the first parameter of the currently executed function.
     */
-   inline Item* params() { return currentContext()->params(); }
+   inline Item* params() const { return currentContext()->params(); }
+
+   /** Returns pseudo-parameters.
+    \param count Number of pseudo parameters.
+    \return An array of items pointing to the pseudo parameters.
+
+    This can be used to retrieve the parameters of pseudo functions.
+    */
+   inline Item* pseudoParams( int32 count ) const { 
+      return &currentContext()->topData() - count;
+   }
 
    //=========================================================
    // Deep call protocol
@@ -444,6 +454,29 @@ public:
     */
    inline TextWriter* textErr() const { return m_textOut; }
 
+   inline void operands( Item*& op1 ) const
+   {
+      op1 = &m_context->topData();
+   }
+   inline void operands( Item*& op1, Item*& op2 ) const
+   {
+      op1 = &m_context->topData();
+      op2 = op1+1;
+   }
+
+   inline void operands( Item*& op1, Item*& op2, Item*& op3 ) const
+   {
+      op1 = &m_context->topData();
+      op2 = op1+1;
+      op3 = op2+1;
+   }
+
+   inline void stackResult( int count, const Item& result )
+   {
+      if( count > 1 ) m_context->popData( count-1 );
+      m_context->topData() = result;
+   }
+
 protected:
 
    Stream *m_stdIn;
@@ -473,10 +506,7 @@ private:
    VMContext* m_context;
 
    // last raised event.
-   t_event m_event;
-
-   // used by ifDeep - goingDeep() - wentDeep() triplet
-   const PStep* m_deepStep;
+   t_event m_event;   
 };
 
 }

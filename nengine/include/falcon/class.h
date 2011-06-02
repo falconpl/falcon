@@ -183,66 +183,271 @@ public:
     */
    virtual void describe( void* instance, String& target ) const;
 
-   virtual bool getProperty( void* self, const String& property, Item& value ) const;
-   virtual bool setProperty( void* self, const String& property, const Item& value ) const;
-
-   virtual bool getIndex( void* self, const Item& index, Item& value ) const;
-   virtual bool setIndex( void* self, const Item& index, const Item& value ) const;
-
-   virtual int compare( void* self, const Item& value ) const;
-
-   /** Notify about an assignemnt.
-    @param instance The instance being assigned.
-    @return the same instance, or a new instance if the assignment must be considered flat.
-
-    Whenever the engine assigns an instance to a new item via a "=" expression,
-    this method is called back. This gives the class the chance to alter the item,
-    i.e. "colouring" it, or to return a new copy of the object if this is
-    consistent with the assignment model.
-    
-    */
-   virtual void* assign( void* instance ) const;
    //=========================================================
    // Operators.
    //
 
-   virtual void op_neg( VMachine *vm, void* self, Item& target ) const;
+   /** Called back when the VM wants to negate an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original operand (where the instasnce was stored).
+     \param target where to place the result of the operation.
 
-   virtual void op_add( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_sub( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_mul( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_div( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_mod( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_pow( VMachine *vm, void* self, Item& op2, Item& target ) const;
+    */
+   virtual void op_neg( VMachine *vm, void* self ) const;
 
-   virtual void op_aadd( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_asub( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_amul( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_adiv( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_amod( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_apow( VMachine *vm, void* self, Item& op2, Item& target ) const;
+   /** Called back when the VM wants to add something.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
 
-   virtual void op_inc(VMachine *vm, void* self, Item& target ) const;
-   virtual void op_dec(VMachine *vm, void* self, Item& target ) const;
-   virtual void op_incpost(VMachine *vm, void* self, Item& target ) const;
-   virtual void op_decpost(VMachine *vm, void* self, Item& target ) const;
+    */
+   virtual void op_add( VMachine *vm, void* self ) const;
 
-   virtual void op_getIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_setIndex(VMachine *vm, void* self, Item& op2, Item& target ) const;
+   /** Called back when the VM wants to subtract something.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
 
-   virtual void op_getProperty( VMachine *vm, void* self, const String& pname, Item& target ) const;
-   virtual void op_setProperty( VMachine *vm, void* self, const String& pname, Item& target ) const;
+    */
+   virtual void op_sub( VMachine *vm, void* self ) const;
 
-   virtual void op_lt( VMachine *vm, void* self, Item& op2, Item& target )const;
-   virtual void op_le( VMachine *vm, void* self, Item& op2, Item& target )const;
-   virtual void op_gt( VMachine *vm, void* self, Item& op2, Item& target )const;
-   virtual void op_ge( VMachine *vm, void* self, Item& op2, Item& target )const;
-   virtual void op_eq( VMachine *vm, void* self, Item& op2, Item& target )const;
-   virtual void op_ne( VMachine *vm, void* self, Item& op2, Item& target )const;
+   /** Called back when the VM wants to multiply something.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
 
-   virtual void op_isTrue( VMachine *vm, void* self, Item& target ) const;
-   virtual void op_in( VMachine *vm, void* self, Item& op2, Item& target ) const;
-   virtual void op_provides( VMachine *vm, void* self, const String& pname, Item& target ) const;
+    */
+   virtual void op_mul( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to divide something.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
+
+    */
+   virtual void op_div( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to apply the modulo operator.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
+
+    */
+   virtual void op_mod( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to apply the power operator on.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The original second operand.
+     \param target where to place the result of the operation.
+
+    */
+   virtual void op_pow( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to add something to an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+    */
+   virtual void op_aadd( VMachine *vm, void* self) const;
+
+   /** Called back when the VM wants to subtract something to an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+    */
+   virtual void op_asub( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to multiply something to an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+    */
+   virtual void op_amul( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to divide something to an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+    */
+   virtual void op_adiv( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to apply the modulo something to an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+    */
+   virtual void op_amod( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to apply get the power of an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+     \param op2 The original second operand.
+   */
+   virtual void op_apow( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to increment (prefix) an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param operand The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+   */
+   virtual void op_inc(VMachine *vm, void* self ) const;
+
+   /* Called back when the VM wants to decrement (prefix) an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param operand The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+   */
+   virtual void op_dec(VMachine *vm, void* self) const;
+
+   /** Called back when the VM wants to increment (postfix) an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param operand The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+   */
+   virtual void op_incpost(VMachine *vm, void* self ) const;
+   
+   /** Called back when the VM wants to decrement (postfix) an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param operand The original first operand (where the instasnce was stored),
+      that is also the place where to store the result.
+   */
+   virtual void op_decpost(VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to get an index out of an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 Index that must be accessed in op1.
+     \param target where to store the result of the operation.
+   */
+   virtual void op_getIndex(VMachine *vm, void* self ) const;
+   
+   /** Called back when the VM wants to get an index out of an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 Index that must be accessed in op1.
+     \param target where to store the result of the operation.
+    
+     \note normally, the result of a setindex operation is the same value that
+    was set (op2).
+   */
+   virtual void op_setIndex(VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to get the value of a property of an item
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 Index that must be accessed in op1.
+     \param target where to store the result of the operation.
+
+     \note normally, the result of a setindex operation is the same value that
+    was set (op2).
+   */
+   virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
+
+   /** Called back when the VM wants to set a value of a property in an item.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 Index that must be accessed in op1.
+     \param target where to store the result of the operation.
+
+     \note normally, the result of a property operation is the same value that
+    was set (op2).
+   */
+   virtual void op_setProperty( VMachine *vm, void* self, const String& prop ) const;
+
+   /** Called back when the VM wants to compare an item to this instance. 
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param op2 The compare paragon.
+     \param target The place where to store the result.
+
+
+    This method is called back on any comparison operation, including the six
+    basic comparison operators (<, >, <=, >=, == and !=) but also in other
+    ordering operations thar involve the virtual machine.
+
+    The result placed in target should be
+    0 if the two items are considered identical, < 0 if op1 is smaller
+      than op2, > 0 if op1 is greater than op2.
+
+    All the subclasses should call the base class op_compare as a residual
+    criterion.
+    */
+   virtual void op_compare( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to know if an item is true.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The original first operand (where the instasnce was stored).
+     \param target Where to store the result.
+
+    This method is called back when the VM wants to know if an item can be
+    considered true.
+
+    The result placed in target should be a boolean true or false value.
+    */
+   virtual void op_isTrue( VMachine *vm, void* self ) const;
+
+   /** Called back when the VM wants to know if an item is true.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The container (where the instasnce was stored).
+     \param op2 The the item that must be searched.
+     \param target Where to store the result.
+
+    This method is called back when the VM wants to know if an item can be
+    considered true.
+
+    The result placed in target should be a boolean true or false value.
+    */
+   virtual void op_in( VMachine *vm, void* self ) const;
+   
+   /** Called back when the vm wants to know if a certain item provides a certain property.
+     \param vm the virtual machine that will receive the result.
+     \param self the instance in op1 (or 0 on flat items)
+     \param op1 The container (where the instasnce was stored).
+     \param op2 The the item that must be searched.
+     \param target Where to store the result.
+
+    This method is called back when the VM wants to know if an item can be
+    considered true.
+
+    The result placed in target should be a boolean true or false value.
+    */
+   virtual void op_provides( VMachine *vm, void* self ) const;
 
    /** Call the instance.
     \param vm A virutal machine where the call is performed.
@@ -257,12 +462,17 @@ public:
 
     \note The default operation associated with the base class is that to raise
     a non-callable exception.
+    \note The vm->self() item will always be the item where the self instance
+    is stored.
     */
-    virtual void op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const;
+    virtual void op_call( VMachine *vm, int32 paramCount, void* self ) const;
 
 
    /** Implents textification operator for the Virtual Macine.
-    @param vm the virtual machine that will receive the result.
+    \param vm the virtual machine that will receive the result.
+    \param self the instance (or 0 on flat items)
+    \param op1 The original item (where the instasnce was stored).
+    \param target where to place the result of the operation.
 
     This method obtains immediately a textual value for the instance
     to be stored in the virtual machine, or prepares the call for the proper
@@ -272,7 +482,7 @@ public:
     instance passed as self in the virtual machine, and then store it in
     VMachine::regA() as a garbageable string.
     */
-   virtual void op_toString( VMachine *vm, void* self, Item& target ) const;
+   virtual void op_toString( VMachine *vm, void* self ) const;
 
 protected:
    String m_name;

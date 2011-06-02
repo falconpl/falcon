@@ -39,8 +39,7 @@ namespace Falcon
 {
 
 VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
-   m_event(eventNone),
-   m_deepStep( 0 )
+   m_event(eventNone)
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
@@ -166,24 +165,24 @@ void VMachine::setStdEncoding( Transcoder* ts, bool bOwn )
 
 void VMachine::ifDeep( const PStep* postcall )
 {
-   fassert(m_deepStep == 0 );
-   m_deepStep = postcall;
+   fassert( m_context->m_deepStep == 0 );
+   m_context->m_deepStep = postcall;
 }
 
 void VMachine::goingDeep()
 {
-   if( m_deepStep )
+   if( m_context->m_deepStep )
    {
-      currentContext()->pushCode( m_deepStep );
-      m_deepStep = 0;
+      currentContext()->pushCode( currentContext()->m_deepStep );
+      m_context->m_deepStep = 0;
    }
 }
 
 
 bool VMachine::wentDeep()
 {
-   bool bWent = m_deepStep == 0;
-   m_deepStep = 0;
+   bool bWent = m_context->m_deepStep == 0;
+   m_context->m_deepStep = 0;
    return bWent;
 }
 
@@ -339,17 +338,14 @@ void VMachine::returnFrame()
    // reset code and data
    ctx->m_topCode = ctx->m_codeStack + topCall->m_codeBase-1;
    PARANOID( "Code stack underflow at return", (ctx->m_topCode >= ctx->m_codeStack-1) );
-   // Use initBase as stackBase may have been moved
-   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase-1;
+   // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
+   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase;
    PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
-   // if the call was performed by a call expression, our
-   // result shall go in the stack.   
-   if( topCall->m_isExpr )
-   {
-      TRACE1( "-- Adding A register to stack", 1 );
-      *ctx->m_topData = ctx->m_regA;
-   }
+   // ... so that we can fill the stack with the function result.
+   // -- we always have at least 1 element, that is the function item.
+   TRACE1( "-- Adding A register to stack", 1 );
+   *ctx->m_topData = ctx->m_regA;
 
    // Return.
    if( ctx->m_topCall-- ==  ctx->m_callStack )

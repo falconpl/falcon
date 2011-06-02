@@ -43,7 +43,7 @@ public:
 
    //=============================================================
 
-   virtual void op_isTrue( VMachine *vm, void* self, Item& target ) const;
+   virtual void op_isTrue( VMachine *vm, void* self ) const;
 };
 
 }

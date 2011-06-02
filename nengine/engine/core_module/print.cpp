@@ -35,6 +35,8 @@ FuncPrintBase::~FuncPrintBase() {}
 void FuncPrintBase::apply( VMachine* vm, int32 nParams )
 {
    TRACE1("Function print%s -- apply", m_nextStep.m_isPrintl ? "l" : "" );
+   // [A]: create the space for op_toString
+   vm->currentContext()->pushData(Item());
    m_nextStep.printNext( vm, 0 );
 }
 
@@ -46,10 +48,14 @@ void FuncPrintBase::NextStep::apply_( const PStep* ps, VMachine* vm )
 {
    fassert( vm->regA().isString() );
 
+   // this is the return of a to-string deep call.
    const NextStep* nstep = static_cast<const NextStep*>(ps);
    TextWriter* out = vm->textOut();
+   // write the result of the call.
    out->write( *vm->regA().asString() );
    VMContext* ctx = vm->currentContext();
+
+   // go on.
    nstep->printNext( vm, ctx->currentCode().m_seqId );
 }
 
@@ -65,17 +71,21 @@ void FuncPrintBase::NextStep::printNext( VMachine* vm, int count ) const
    TextWriter* out = vm->textOut();
    int nParams = ctx->currentFrame().m_paramCount;
 
+   // we inherit an extra topData() space from our caller (see [A])
+
    while( count < nParams )
    {
-      Item temp;
+      Item* item = ctx->param(count);
       Class* cls;
       void* data;
 
-      ctx->param(count)->forceClassInst( cls, data );
+      item->forceClassInst( cls, data );
+      // put the input data for toString
+      ctx->topData() = *item;
       ++count;
 
       vm->ifDeep(this);
-      cls->op_toString( vm, data, temp );
+      cls->op_toString( vm, data );
       if( vm->wentDeep() )
       {
          ctx->currentCode().m_seqId = count;
@@ -83,7 +93,7 @@ void FuncPrintBase::NextStep::printNext( VMachine* vm, int count ) const
       }
 
       TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
-      out->write(*temp.asString());
+      out->write(*ctx->topData().asString());
    }
 
    if (m_isPrintl)

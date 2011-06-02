@@ -51,25 +51,6 @@ void Class::describe( void* instance, String& target ) const
    target = "<*?>";
 }
 
-bool Class::getProperty( void* self, const String& property, Item& value ) const
-{
-   return false;
-}
-
-bool Class::setProperty( void* self, const String& property, const Item& value ) const
-{
-   return false;
-}
-
-bool Class::getIndex( void* self, const Item& index, Item& value ) const
-{
-   return false;
-}
-
-bool Class::setIndex( void* self, const Item& index, const Item& value ) const
-{
-   return false;
-}
 
 void Class::enumerateProperties( void* self, Class::PropertyEnumerator& ) const
 {
@@ -90,253 +71,208 @@ bool Class::hasProperty( void* self, const String& prop ) const
 }
 
 
-int Class::compare( void* self, const Item& value ) const
+void Class::op_compare( VMachine *vm, void* self ) const
 {
-   Class* tgt;
    void* inst;
-   switch( value.type() )
+   Item *op1, *op2;
+   vm->operands( op1, op2 );
+   
+   switch( op2->type() )
    {
       case FLC_ITEM_DEEP:
-         if( (inst = value.asDeepInst()) == self )
+         if( (inst = op2->asDeepInst()) == self )
          {
-            return 0; // the same.
+            vm->stackResult(2, (int64)0 );
+            return;
          }
 
-         tgt = value.asDeepClass();
+         if( typeID() > 0 )
+         {
+            vm->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
+            return;
+         }
          break;
+
       case FLC_ITEM_USER:
-         if( (inst = value.asUserInst()) == self )
+         if( (inst = op2->asUserInst()) == self )
          {
-            return 0; // the same.
+            vm->stackResult(2, 0 );
+            return;
          }
 
-         tgt = value.asUserClass(); break;
+         if( typeID() > 0 )
+         {
+            vm->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
+            return;
+         }
          break;
-         
-      default:
-         // it's an ID < than us, that's for sure
-         return 1;
    }
 
-   // see the class signature.
-   if ( typeID() != tgt->typeID() )
-      return typeID() - tgt->typeID();
-
-   // see the pointer
-   if( self < inst ) return -1;
-   // they can't be the same, we already checked it.
-   return 1;
+   // we have no information about what an item might be here, but we can
+   // order the items by type
+   vm->stackResult(2, (int64) op1->type() - op2->type() );
 }
 
-
-void* Class::assign( void* instance ) const
-{
-   // normally does nothing
-   return instance;
-}
 
 //=====================================================================
 // VM Operator override.
 //
 
-void Class::op_neg( VMachine *vm, void* self, Item& target ) const
+void Class::op_neg( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("neg") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("neg") );
 }
 
-void Class::op_add( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_add( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("add") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("add") );
 }
 
-void Class::op_sub( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_sub( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("sub") ) );
-}
-
-
-void Class::op_mul( VMachine *vm, void* self, Item& op2, Item& target ) const
-{
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("mul") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("sub") );
 }
 
 
-void Class::op_div( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_mul( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("div") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mul") );
 }
 
 
-void Class::op_mod( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_div( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("mod") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("div") );
 }
 
 
-void Class::op_pow( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_mod( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("pow") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mod") );
 }
 
 
-void Class::op_aadd( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_pow( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("aadd") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("pow") );
 }
 
 
-void Class::op_asub( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_aadd( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("asub") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("aadd") );
 }
 
 
-void Class::op_amul( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_asub( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("amul") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("asub") );
 }
 
 
-void Class::op_adiv( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_amul( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("/=") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("amul") );
 }
 
 
-void Class::op_amod( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_adiv( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("%=") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("/=") );
 }
 
 
-void Class::op_apow( VMachine *vm, void* self, Item& op2, Item& target ) const
+void Class::op_amod( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("**=") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("%=") );
 }
 
 
-void Class::op_inc(VMachine *vm, void* self, Item& target ) const
+void Class::op_apow( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("++x") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("**=") );
 }
 
 
-void Class::op_dec(VMachine *vm, void* self, Item& target ) const
+void Class::op_inc( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("--x") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("++x") );
 }
 
 
-void Class::op_incpost(VMachine *vm, void* self, Item& target ) const
+void Class::op_dec( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("x++") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("--x") );
 }
 
 
-void Class::op_decpost(VMachine *vm, void* self, Item& target ) const
+void Class::op_incpost( VMachine *, void*) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("x--") ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x++") );
 }
 
 
-void Class::op_call( VMachine *vm, int32 paramCount, void* self, Item& target ) const
+void Class::op_decpost( VMachine *, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_non_callable ) ) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x--") );
 }
 
 
-void Class::op_getIndex(VMachine *vm, void* self, Item& idx, Item& target ) const
+void Class::op_call( VMachine *, int32, void* self ) const
 {
-   if( ! getIndex(self, idx, target ) )
-   {
-      // TODO: IS it worth to add more infos about self in the error?
-      vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]") ) );
-   }
+   throw new OperandError( ErrorParam(__LINE__, e_non_callable ) );
 }
 
 
-void Class::op_setIndex(VMachine *vm, void* self, Item& idx, Item& target ) const
+void Class::op_getIndex(VMachine *, void* ) const
 {
-   if( ! setIndex( self, idx, target ) )
-   {
-      // TODO: IS it worth to add more infos about self in the error?
-      vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]=") ) );
-   }
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]") );
 }
 
 
-void Class::op_getProperty( VMachine *vm, void* self, const String& pname, Item& target ) const
+void Class::op_setIndex(VMachine *, void* ) const
 {
-   if( ! getProperty( self, pname, target ) )
-   {
-      // TODO: IS it worth to add more infos about self in the error?
-      vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra(".") ) );
-   }
+   // TODO: IS it worth to add more infos about self in the error?
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]=") );
 }
 
 
-void Class::op_setProperty( VMachine *vm, void* self, const String& pname, Item& target ) const
+void Class::op_getProperty( VMachine*, void*, const String& ) const
 {
-   if( ! setProperty( self, pname, target ) )
-   {
-      // TODO: IS it worth to add more infos about self in the error?
-      vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra(".=") ) );
-   }
+   // TODO: IS it worth to add more infos about self in the error?
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(".") );
 }
 
 
-void Class::op_lt( VMachine *vm, void* self, Item& op2, Item& target )const
+void Class::op_setProperty( VMachine *, void*, const String& ) const
 {
-   target.setBoolean( compare(self, op2) < 0 );
-}
-
-void Class::op_le( VMachine *vm, void* self, Item& op2, Item& target )const
-{
-   target.setBoolean( compare(self, op2) <= 0 );
-}
-
-void Class::op_gt( VMachine *vm, void* self, Item& op2, Item& target )const
-{
-   target.setBoolean( compare(self, op2) > 0 );
-}
-
-void Class::op_ge( VMachine *vm, void* self, Item& op2, Item& target )const
-{
-   target.setBoolean( compare(self, op2) >= 0 );
-}
-
-void Class::op_eq( VMachine *vm, void* self, Item& op2, Item& target )const
-{
-   target.setBoolean( compare(self, op2) == 0 );
-}
-
-void Class::op_ne( VMachine *vm, void* self, Item& op2, Item& target )const
-{
-   target.setBoolean( compare(self, op2) != 0 );
-}
-
-void Class::op_isTrue( VMachine *vm, void* self, Item& target ) const
-{
-   target.setBoolean(true);
+   // TODO: IS it worth to add more infos about self in the error?
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(".=") );
 }
 
 
-void Class::op_in( VMachine *vm, void* self, Item& item, Item& target ) const
+void Class::op_isTrue( VMachine *vm, void* ) const
 {
-   vm->raiseError( new OperandError( ErrorParam(__LINE__, e_invop ).extra("in") ) );
+   vm->stackResult(1, true);
 }
 
 
-void Class::op_provides( VMachine *vm, void* self, const String &pname, Item& target ) const
+void Class::op_in( VMachine *, void*) const
 {
-   target.setBoolean( hasProperty(self, pname) );
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("in") );
 }
 
-void Class::op_toString( VMachine *vm, void* self, Item& target ) const
+
+void Class::op_provides( VMachine *vm, void* self ) const
+{
+   vm->stackResult(1, false);
+}
+
+void Class::op_toString( VMachine *vm, void *self ) const
 {
    String *descr = new String();
    describe( self, *descr );
-   target = descr->garbage();
+   vm->stackResult(1, descr->garbage());
 }
 
 }

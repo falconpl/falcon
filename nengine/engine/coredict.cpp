@@ -19,6 +19,8 @@
 
 #include <map>
 
+#include "falcon/accesserror.h"
+
 namespace Falcon {
 
 typedef std::map<Item, Item> ItemDictionary;
@@ -84,43 +86,6 @@ void CoreDict::describe( void* instance, String& target ) const
 }
 
 
-bool CoreDict::hasProperty( void* self, const String& prop ) const
-{
-   if( prop == "len" ) return true;
-   return false;
-}
-
-bool CoreDict::getProperty( void* self, const String& property, Item& value ) const
-{
-   if( property == "len" )
-   {
-      value.setInteger(static_cast<ItemDictionary*>(self)->size());
-      return true;
-   }
-
-   return false;
-}
-
-bool CoreDict::getIndex( void* self, const Item& index, Item& value ) const
-{
-   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
-   ItemDictionary::iterator pos = dict.find(index);
-   if( pos != dict.end() )
-   {
-      value = pos->second;
-      return true;
-   }
-   
-   return false;
-}
-
-bool CoreDict::setIndex( void* self, const Item& index, const Item& value ) const
-{
-   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
-   dict[index] = value;
-   return true;
-}
-
 
 void CoreDict::gcMark( void* self, uint32 mark ) const
 {
@@ -156,19 +121,60 @@ void CoreDict::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 //=======================================================================
 //
 
-void CoreDict::op_add( VMachine *vm, void* self, Item& op2, Item& target ) const
+void CoreDict::op_add( VMachine *vm, void* self ) const
 {
    //TODO
 }
 
-void CoreDict::op_isTrue( VMachine *vm, void* self, Item& target ) const
+void CoreDict::op_isTrue( VMachine *vm, void* self ) const
 {
-   target.setBoolean( static_cast<ItemDictionary*>(self)->size() != 0 );
+   vm->stackResult( 1, static_cast<ItemDictionary*>(self)->size() != 0 );
 }
 
-void CoreDict::op_toString( VMachine *vm, void* self, Item& target ) const
+void CoreDict::op_toString( VMachine *vm, void* self ) const
 {
    // todo
+}
+
+
+void CoreDict::op_getProperty( VMachine *vm, void* self, const String& property ) const
+{
+   if( property == "len" )
+   {
+      vm->stackResult( 1, (int64) static_cast<ItemDictionary*>(self)->size() );
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra(property) );
+   }
+}
+
+void CoreDict::op_getIndex( VMachine* vm, void* self ) const
+{
+   Item *index, *dict_item;
+   vm->operands( index, dict_item );
+
+   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
+   ItemDictionary::iterator pos = dict.find(*index);
+   
+   if( pos != dict.end() )
+   {
+      vm->stackResult( 2, pos->second );
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__, __FILE__ ) );
+   }
+}
+
+void CoreDict::op_setIndex( VMachine* vm, void* self ) const
+{
+   Item *value, *index, *dict_item;
+   vm->operands( value, index, dict_item );
+
+   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
+   dict[*index] = *value;
+   vm->stackResult(3, *value);
 }
 
 
