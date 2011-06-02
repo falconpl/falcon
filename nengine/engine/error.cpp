@@ -64,7 +64,7 @@ Error::Error( Class* handler, const ErrorParam &params ):
    m_origin( params.m_origin ),
    m_catchable( params.m_catchable ),
    m_handler( handler ),
-   m_bHasRaised( true )
+   m_bHasRaised( false )
 {
    _p = new Error_p;   
 }
@@ -128,7 +128,7 @@ void Error::describe( String &target ) const
 
    if ( m_bHasRaised )
    {
-      target += "\n   Raised item: " + m_raised.describe();
+      target += "   Raised item: " + m_raised.describe();
    }
 }
 
