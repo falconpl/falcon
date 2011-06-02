@@ -34,9 +34,9 @@ void Pixbuf::modInit( Falcon::Module* mod )
     { "get_pixels",     &Pixbuf::get_pixels },
     { "get_width",     &Pixbuf::get_width },
     { "get_height",     &Pixbuf::get_height },
-    { "pixbuf_new_from_file",     &Pixbuf::pixbuf_new_from_file },
-    { "pixbuf_new_from_file_at_size",     &Pixbuf::pixbuf_new_from_file_at_size },
-    { "pixbuf_new_from_file_at_scale",     &Pixbuf::pixbuf_new_from_file_at_scale },
+    { "new_from_file",     &Pixbuf::new_from_file },
+    { "new_from_file_at_size",     &Pixbuf::new_from_file_at_size },
+    { "new_from_file_at_scale",     &Pixbuf::new_from_file_at_scale },
     { "flip",     &Pixbuf::flip },
     { "rotate_simple", &Pixbuf::rotate_simple },
     { NULL, NULL }
@@ -195,7 +195,7 @@ FALCON_FUNC Pixbuf::get_height( VMARG )
 /*#
 
 */
-FALCON_FUNC Pixbuf::pixbuf_new_from_file( VMARG )
+FALCON_FUNC Pixbuf::new_from_file( VMARG )
 {
   Item* i_filename = vm->param( 0 );
 
@@ -236,7 +236,7 @@ FALCON_FUNC Pixbuf::pixbuf_new_from_file( VMARG )
 /*#
 
 */
-FALCON_FUNC Pixbuf::pixbuf_new_from_file_at_size( VMARG )
+FALCON_FUNC Pixbuf::new_from_file_at_size( VMARG )
 {
   Item* i_filename = vm->param( 0 );
   Item* i_width = vm->param( 1 );
@@ -279,7 +279,7 @@ FALCON_FUNC Pixbuf::pixbuf_new_from_file_at_size( VMARG )
 /*#
 
 */
-FALCON_FUNC Pixbuf::pixbuf_new_from_file_at_scale( VMARG )
+FALCON_FUNC Pixbuf::new_from_file_at_scale( VMARG )
 {
   Item* i_filename = vm->param( 0 );
   Item* i_width = vm->param( 1 );
