@@ -71,6 +71,7 @@ add_library(falcon_engine SHARED
   errorclass.cpp
   exprarray.cpp
   exprdict.cpp
+  exprunpack.cpp
   extfunc.cpp
   fassert.cpp
   fatal.cpp

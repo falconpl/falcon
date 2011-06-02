@@ -63,7 +63,8 @@ Error::Error( Class* handler, const ErrorParam &params ):
    m_sysError( params.m_sysError ),
    m_origin( params.m_origin ),
    m_catchable( params.m_catchable ),
-   m_handler( handler )
+   m_handler( handler ),
+   m_bHasRaised( true )
 {
    _p = new Error_p;   
 }
@@ -101,7 +102,7 @@ void Error::describe( String &target ) const
 
    if ( ! _p->m_steps.empty() )
    {
-      target += "  Traceback:\n";
+      target += "   Traceback:\n";
 
       std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
       while( iter != _p->m_steps.end() )
@@ -116,13 +117,18 @@ void Error::describe( String &target ) const
 
    if (! _p->m_subErrors.empty() )
    {
-      target += "  Because of:\n";
+      target += "   Because of:\n";
       std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
       while( iter != _p->m_subErrors.end() )
       {
          (*iter)->describe( target );
          ++iter;
       }
+   }
+
+   if ( m_bHasRaised )
+   {
+      target += "\n   Raised item: " + m_raised.describe();
    }
 }
 

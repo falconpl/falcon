@@ -152,7 +152,8 @@ private:
 
    Scripts may raise any item, which may not necessary be Error instances.
    The item is then copied in the m_item member and passed to the error
-   handler.
+   handler. In this case, hasRaised() will return true, and the raised item
+ can be retrieved via the raised() method.
 */
 
 class FALCON_DYN_CLASS Error
@@ -188,7 +189,7 @@ public:
    void line( uint32 line ) { m_line = line; }
    void origin( ErrorParam::t_origin o ) { m_origin = o; }
    void catchable( bool c ) { m_catchable = c; }
-   void raised( const Item &itm ) { m_raised = itm; }
+   void raised( const Item &itm ) { m_raised = itm; m_bHasRaised = true; }
 
    int errorCode() const { return m_errorCode; }
    uint32 systemError() const { return m_sysError; }
@@ -200,6 +201,7 @@ public:
    ErrorParam::t_origin origin() const { return m_origin; }
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
+   bool hasRaised() const { return m_bHasRaised; }
 
     /** Renders the error to a string.
     */
@@ -313,6 +315,7 @@ protected:
    ErrorParam::t_origin m_origin;
    bool m_catchable;
    Item m_raised;
+   bool m_bHasRaised;
 
 protected:
    /** Private destructor.

@@ -1822,7 +1822,6 @@ void SourceParser::reset()
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
    pc->reset();
-   pushState("Main");
 }
 
 

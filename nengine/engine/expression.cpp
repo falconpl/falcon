@@ -28,9 +28,6 @@
 #include <falcon/itemarray.h>
 #include <math.h>
 
-#include "falcon/symbol.h"
-
-
 namespace Falcon {
 
 Expression::Expression( const Expression &other ):
@@ -2005,123 +2002,6 @@ void ExprCall::describe( String& ret ) const
    {
       ret = m_func->name() + "(" + params +  ")";
    }
-}
-
-//=========================================================
-// Unpack
-class ExprUnpack::Private {
-public:
-   std::vector<Symbol*> m_params;
-};
-
-ExprUnpack::ExprUnpack( Expression* op1 ):
-   Expression(t_unpack),
-   m_expander(op1),
-   _p( new Private )
-{
-   apply = apply_;
-}
-
-ExprUnpack::ExprUnpack( const ExprUnpack& other ):
-         Expression(other)
-{
-   _p = new Private;
-   m_expander = other.m_expander->clone();
-   std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
-   while( iter != other._p->m_params.end() )
-   {
-      _p->m_params.push_back( *iter );
-      ++iter;
-   }
-}
-
-ExprUnpack::~ExprUnpack()
-{
-   delete m_expander;
-}
-
-bool ExprUnpack::simplify( Item& value ) const
-{
-   return false;
-}
-
-void ExprUnpack::describe( String& ret ) const
-{
-   String params;
-   // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
-   {
-      if ( params.size() )
-      {
-         params += ", ";
-      }
-      params += _p->m_params[i]->name();
-   }
-
-   ret = params + " = " + m_expander->describe();
-}
-
-
-int ExprUnpack::targetCount() const
-{
-   return _p->m_params.size();
-}
-
-Symbol* ExprUnpack::getAssignand( int i) const
-{
-   return _p->m_params[i];
-}
-
-ExprUnpack& ExprUnpack::addAssignand(Symbol* e)
-{
-   _p->m_params.push_back(e);
-   return *this;
-}
-
-
-void ExprUnpack::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling unpack: %p (%s)", pcode, describe().c_ize() );
-
-   // first, precompile the
-   m_expander->precompile( pcode );
-
-   pcode->pushStep( this );
-}
-
-
-void ExprUnpack::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE3( "Apply unpack: %p (%s)", ps, ps->describe().c_ize() );
-
-   ExprUnpack* self = (ExprUnpack*) ps;
-   std::vector<Symbol*> &syms = self->_p->m_params;
-   size_t pcount = syms.size();
-   VMContext* ctx = vm->currentContext();
-   register Item& expander = ctx->topData();
-
-   if ( ! expander.isArray() )
-   {
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Not an array") ) );
-      return;
-   }
-   ItemArray& array = *(ItemArray*) expander.asInst();
-
-   if( pcount != array.length() )
-   {
-      vm->raiseError(
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Different size") ) );
-   }
-  
-
-   for( size_t i = 0; i < pcount; ++i )
-   {
-      syms[i]->assign( vm, array[i] );
-   }
-
-   // leave the expander in the stack.
 }
 
 //=========================================================
