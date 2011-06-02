@@ -48,7 +48,7 @@ public:
 
     //static FALCON_FUNC new_from_image( VMARG );
 
-    //static FALCON_FUNC new_from_pixbuf( VMARG );
+    static FALCON_FUNC new_from_pixbuf( VMARG );
 
     //static FALCON_FUNC new_from_pixmap( VMARG );
 
@@ -66,7 +66,7 @@ public:
 
     //static FALCON_FUNC set_from_image( VMARG );
 
-    //static FALCON_FUNC set_from_pixbuf( VMARG );
+    static FALCON_FUNC set_from_pixbuf( VMARG );
 
     //static FALCON_FUNC set_from_pixmap( VMARG );
 
