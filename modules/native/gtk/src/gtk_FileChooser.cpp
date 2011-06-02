@@ -562,7 +562,7 @@ FALCON_FUNC FileChooser::get_filename( VMARG )
     char* nm = gtk_file_chooser_get_filename( (GtkFileChooser*)_obj );
     if ( nm )
     {
-        vm->retval( new String( nm ) );
+        vm->retval( new String( nm, -1 ) );
         g_free( nm );
     }
     else
@@ -719,7 +719,7 @@ FALCON_FUNC FileChooser::get_current_folder( VMARG )
     char* folder = gtk_file_chooser_get_current_folder( (GtkFileChooser*)_obj );
     if ( folder )
     {
-        vm->retval( new String( folder ) );
+        vm->retval( new String( folder, -1 ) );
         g_free( folder );
     }
     else
@@ -744,7 +744,7 @@ FALCON_FUNC FileChooser::get_uri( VMARG )
     char* uri = gtk_file_chooser_get_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ));
         g_free( uri );
     }
     else
@@ -827,7 +827,11 @@ FALCON_FUNC FileChooser::get_uris( VMARG )
     GSList* sl = gtk_file_chooser_get_uris( (GtkFileChooser*)_obj );
     CoreArray* arr = new CoreArray( g_slist_length( sl ) );
     for( GSList* el = sl; el; el = el->next )
-        arr->append( new String( (char*) el->data ) );
+    {
+        arr->append( new String( (char*) el->data, -1 ) );
+        g_free( el->data );
+    }
+    g_slist_free( sl );
     vm->retval( arr );
 }
 
@@ -872,7 +876,7 @@ FALCON_FUNC FileChooser::get_current_folder_uri( VMARG )
     char* uri = gtk_file_chooser_get_current_folder_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ) );
         g_free( uri );
     }
     else
@@ -1014,7 +1018,7 @@ FALCON_FUNC FileChooser::get_preview_filename( VMARG )
     char* nm = gtk_file_chooser_get_preview_filename( (GtkFileChooser*)_obj );
     if ( nm )
     {
-        vm->retval( new String( nm ) );
+        vm->retval( new String( nm, -1 ) );
         g_free( nm );
     }
     else
@@ -1035,7 +1039,7 @@ FALCON_FUNC FileChooser::get_preview_uri( VMARG )
     char* uri = gtk_file_chooser_get_preview_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ) );
         g_free( uri );
     }
     else
