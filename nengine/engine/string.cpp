@@ -899,8 +899,7 @@ void Buffer::destroy( String *str ) const
 
 
 String::String( length_t size ):
-   m_class( &csh::handler_buffer ),
-   m_bExported( false )
+   m_class( &csh::handler_buffer )
 {
    m_storage = (byte *) malloc( size );
    m_allocated = size;
@@ -910,15 +909,13 @@ String::String( length_t size ):
 String::String( const char *data ):
    m_class( &csh::handler_static ),
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< char *>(data) ),
-   m_bExported( false )
+   m_storage( (byte*) const_cast< char *>(data) )
 {
    m_size = strlen( data );
 }
 
 String::String( const char *data, length_t len ):
-   m_class( &csh::handler_buffer ),
-   m_bExported( false )
+   m_class( &csh::handler_buffer )
 {
    m_size = len != String::npos ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
@@ -929,8 +926,7 @@ String::String( const char *data, length_t len ):
 
 String::String( const wchar_t *data ):
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< wchar_t *>(data) ),
-   m_bExported( false )
+   m_storage( (byte*) const_cast< wchar_t *>(data) )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
@@ -946,8 +942,7 @@ String::String( const wchar_t *data ):
 
 String::String( const wchar_t *data, length_t len ):
    m_allocated( 0 ),
-   m_storage( (byte *) const_cast< wchar_t *>( data ) ),
-   m_bExported( false )
+   m_storage( (byte *) const_cast< wchar_t *>( data ) )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
@@ -975,8 +970,7 @@ String::String( const wchar_t *data, length_t len ):
 String::String( const String &other, length_t begin, length_t end ):
    m_allocated( 0 ),
    m_size( 0 ),
-   m_storage( 0 ),
-   m_bExported( false )
+   m_storage( 0 )
 {
    // by default, copy manipulator
    m_class = other.m_class;

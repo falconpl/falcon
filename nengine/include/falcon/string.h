@@ -294,16 +294,7 @@ protected:
    const csh::Base *m_class;
    length_t m_allocated;
    length_t m_size;
-
    byte *m_storage;
-
-   /**
-    * True if this string is exportable - importable in GC context.
-    */
-   bool m_bExported;
-
-   // Reserved for future usage.
-   byte m_bFlags;
 
    /**sym
     * Creates the core string.
@@ -333,8 +324,7 @@ public:
       m_class( &csh::handler_static ),
       m_allocated( 0 ),
       m_size( 0 ),
-      m_storage( 0 ),
-      m_bExported( false )
+      m_storage( 0 )
    {
    }
 
@@ -441,8 +431,7 @@ public:
       Use bufferize() on this string to ensure that it is deep-copied.
    */
    String( const String &other ):
-      m_allocated( 0 ),
-      m_bExported( false )
+      m_allocated( 0 )
    {
       copy( other );
    }
@@ -1169,14 +1158,6 @@ public:
       This operator is provided as a candy grammar for getCharAt().
    */
    const char_t operator []( length_t pos ) const { return getCharAt( pos ); }
-
-   /** Return wether this exact string instance should be internationalized.
-      \note exported() attribute is not copied across string copies.
-   */
-   bool exported() const { return m_bExported; }
-   /** Sets wether this string should be exported in international context or not.
-   */
-   void exported( bool e ) { m_bExported = e; }
 
    /** Adds an extra '\0' terminator past the end of the string.
 
