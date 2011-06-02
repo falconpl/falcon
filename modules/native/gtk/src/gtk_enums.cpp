@@ -1004,6 +1004,15 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_GRAVITY_SOUTH_EAST", GDK_GRAVITY_SOUTH_EAST },
     { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
 
+	/*
+	 * GdkInterpType
+	 */
+
+	{ "GDK_INTERP_NEAREST",		GDK_INTERP_NEAREST},
+	{ "GDK_INTERP_TILES",		GDK_INTERP_TILES},
+	{ "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR},
+	{ "GDK_INTERP_HYPER",		GDK_INTERP_HYPER},
+
     /*
      *  GdkJoinStyle
      */
