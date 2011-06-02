@@ -52,3 +52,6 @@ private:
 } // Falcon
 
 #endif // !GDK_COLOR_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

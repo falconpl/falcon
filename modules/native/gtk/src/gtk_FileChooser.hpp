@@ -160,3 +160,6 @@ FALCON_FUNC unselect_file( VMARG );
 } // Falcon
 
 #endif // !GTK_FILECHOOSER_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -314,3 +314,6 @@ FALCON_FUNC Cursor::destroy( VMARG );
 
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

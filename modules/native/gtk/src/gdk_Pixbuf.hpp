@@ -54,7 +54,7 @@ public:
     static FALCON_FUNC flip( VMARG );
 
     static FALCON_FUNC rotate_simple( VMARG );
-  
+
 };
 
 
@@ -62,3 +62,6 @@ public:
 } // Falcon
 
 #endif // !GDK_PIXBUF_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

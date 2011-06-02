@@ -44,3 +44,6 @@ FALCON_FUNC get_internal_child( VMARG );
 #endif // GTK_CHECK_VERSION( 2, 12, 0 )
 
 #endif // !GTK_BUILDABLE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

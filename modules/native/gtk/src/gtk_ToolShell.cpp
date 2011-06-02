@@ -204,3 +204,6 @@ FALCON_FUNC ToolShell::rebuild_menu( VMARG )
 } // Falcon
 
 #endif // GTK_CHECK_VERSION( 2, 14, 0 )
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -116,3 +116,6 @@ FALCON_FUNC Buildable::get_internal_child( VMARG );
 } // Falcon
 
 #endif // GTK_CHECK_VERSION( 2, 12, 0 )
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

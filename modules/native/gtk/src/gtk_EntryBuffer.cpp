@@ -216,3 +216,6 @@ FALCON_FUNC EntryBuffer::set_max_length( VMARG )
 } // Falcon
 
 #endif // GTK_CHECK_VERSION( 2, 18, 0 )
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

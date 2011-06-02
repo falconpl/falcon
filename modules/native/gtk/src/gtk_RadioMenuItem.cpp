@@ -164,3 +164,6 @@ FALCON_FUNC RadioMenuItem::get_group( VMARG );
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

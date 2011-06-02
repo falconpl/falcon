@@ -80,3 +80,6 @@ public:
 #endif // GTK_CHECK_VERSION( 2, 20, 0 )
 
 #endif // !GTK_TOOLPALETTE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -419,3 +419,6 @@ FALCON_FUNC Display::supports_composite( VMARG );
 #endif
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

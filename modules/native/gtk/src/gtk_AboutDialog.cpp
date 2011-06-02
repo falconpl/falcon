@@ -785,3 +785,6 @@ void about_dialog_url_hook_func( GtkAboutDialog* dlg, const gchar* link, gpointe
 } // Falcon
 
 #endif // GTK_CHECK_VERSION( 2, 6, 0 )
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

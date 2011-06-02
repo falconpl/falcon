@@ -26,3 +26,6 @@ FALCON_FUNC run( VMARG );
 } // Falcon
 
 #endif // !GTK_MAIN_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

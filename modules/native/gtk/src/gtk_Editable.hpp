@@ -46,3 +46,6 @@ FALCON_FUNC get_editable( VMARG );
 } // Falcon
 
 #endif // !GTK_EDITABLE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;
