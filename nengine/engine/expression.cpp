@@ -5,7 +5,7 @@
    Syntactic tree item definitions -- expression elements.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Mon, 03 Jan 2011 12:23:30 +0100
+   Bgin: Mon, 03 Jan 2011 12:23:30 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -438,8 +438,8 @@ void ExprNeg::apply_( const PStep* self, VMachine* vm )
 
       default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") );
    }
 }
 
@@ -486,8 +486,8 @@ void ExprPreInc::apply_( const PStep* self, VMachine* vm )
 
       default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("preinc") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("preinc") );
    }
 }
 
@@ -566,8 +566,8 @@ void ExprPostInc::Gate::apply_( const PStep* ps,  VMachine* vm )
 
       default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postinc") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postinc") );
    }
    
 }
@@ -608,9 +608,9 @@ void ExprPreDec::apply_( const PStep* self, VMachine* vm )
          break;
 
       default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("predec") ) );
+         // no need to throw, we're going to get back in the VM.
+         throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("predec") );
    }
 }
 
@@ -689,8 +689,8 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
 
       default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postdec") ) );
+         throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("postdec") );
    }
    
 }
@@ -783,8 +783,8 @@ void ExprPlus::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("+") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("+") );
    }
 
 
@@ -860,8 +860,8 @@ void ExprMinus::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("-") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("-") );
    }
 
 
@@ -938,8 +938,8 @@ void ExprTimes::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("*") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("*") );
    }
 
 
@@ -1025,8 +1025,8 @@ void ExprDiv::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("/") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("/") );
    }
 
 
@@ -1112,8 +1112,8 @@ void ExprMod::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("%") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("%") );
    }
 
 
@@ -1178,11 +1178,9 @@ void ExprPow::apply_( const PStep* ps, VMachine* vm )
 
    default:
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("**") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("**") );
    }
-
-
 }
 
 
@@ -1193,580 +1191,6 @@ void ExprPow::describe( String& ret ) const
 
 //=========================================================
 //Comparisons
-
-
-bool ExprLT::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() < d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() < d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() < d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() < d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() < d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-
-void ExprLT::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprLT*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   // copy the second
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() < d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() < d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() < d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() < d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() < 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() < 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("<") ) );
-   }
-}
-
-
-void ExprLT::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " < " + m_second->describe() + ")";
-}
-
-
-
-bool ExprLE::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() <= d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() <= d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() <= d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() <= d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() <= d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-
-void ExprLE::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprLE*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() <= d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() <= d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() <= d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() <= d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() <= 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() <= 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("<=") ) );
-   }
-}
-
-
-void ExprLE::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " <= " + m_second->describe() + ")";
-}
-
-
-
-bool ExprGT::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() > d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() > d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() > d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() > d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() > d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-
-void ExprGT::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprGT*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() > d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() > d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() > d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() > d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() > 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() > 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(">") ) );
-   }
-}
-
-
-void ExprGT::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " > " + m_second->describe() + ")";
-}
-
-
-
-bool ExprGE::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() >= d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() >= d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() >= d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() >= d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() >= d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-
-void ExprGE::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprGE*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() >= d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() >= d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() >= d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() >= d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() >= 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() >= 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(">=") ) );
-   }
-}
-
-
-void ExprGE::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " >= " + m_second->describe() + ")";
-}
-
-
-bool ExprEQ::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() == d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() == d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() == d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() == d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() == d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-
-void ExprEQ::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprEQ*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() == d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() == d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() == d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() == d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() == 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() == 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("==") ) );
-   }
-}
-
-
-void ExprEQ::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " == " + m_second->describe() + ")";
-}
-
-
-
-bool ExprEEQ::simplify( Item& value ) const
-{
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() == d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() == d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() == d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() == d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() == d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
-   }
-
-   return false;
-}
-
-void ExprNE::apply_( const PStep* ps, VMachine* vm )
-{
-   TRACE2( "Apply \"%s\"", ((ExprNE*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
-
-   Item *op1, *op2;
-   vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
-
-
-   switch ( d1.type() << 8 | d2.type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() != d2.asInteger() );
-      break;
-
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asInteger() != d2.asNumeric() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asNumeric() != d2.asInteger() );
-      break;
-
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() != d2.asNumeric() );
-      break;
-
-   caseDeep:
-      d1.asDeepClass()->op_compare( vm, d1.asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() > 0 );
-      break;
-
-   caseUser:
-      d1.asUserClass()->op_compare( vm, d1.asUserInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( op1->asInteger() > 0 );
-      break;
-
-   default:
-      // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("!=") ) );
-   }
-}
-
-
-void ExprNE::describe( String& ret ) const
-{
-   ret = "(" + m_first->describe() + " != " + m_second->describe() + ")";
-}
-
-
-
-
 
 void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
 {
@@ -1808,44 +1232,14 @@ void ExprEEQ::describe( String& ret ) const
    ret = "(" + m_first->describe() + " === " + m_second->describe() + ")";
 }
 
-
-
-bool ExprNE::simplify( Item& value ) const
+bool ExprEEQ::simplify( Item& value ) const
 {
    Item d1, d2;
    if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
-      switch ( d1.type() << 8 | d2.type() )
-      {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asInteger() != d2.asInteger() );
-         return true;
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asInteger() != d2.asNumeric() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( d1.asNumeric() != d2.asInteger() );
-         return true;
-      case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( d1.asNumeric() != d2.asNumeric() );
-         return true;
-      default:
-         if ( d1.type() != d2.type() )
-         {
-            value.setBoolean( true );
-         }
-         else
-         {
-            value.setBoolean( false );
-         }
-      }
+      return d1.compare(d2) == 0;
    }
-
-   return false;
 }
-
-
-
 
 //=========================================================
 // Call
@@ -2220,8 +1614,8 @@ void ExprStarIndex::apply_( const PStep* ps, VMachine* vm )
    else
    {
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("[*]") ) );
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("[*]") );
    }
   
 }

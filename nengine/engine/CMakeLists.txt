@@ -71,6 +71,7 @@ add_library(falcon_engine SHARED
   error.cpp
   errorclass.cpp
   exprarray.cpp
+  exprcompare.cpp
   exprdict.cpp
   exprunpack.cpp
   exprmultiunpack.cpp

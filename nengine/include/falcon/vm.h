@@ -460,13 +460,13 @@ public:
    }
    inline void operands( Item*& op1, Item*& op2 ) const
    {
-      op1 = &m_context->topData();
+      op1 = &m_context->topData()-1;
       op2 = op1+1;
    }
 
    inline void operands( Item*& op1, Item*& op2, Item*& op3 ) const
    {
-      op1 = &m_context->topData();
+      op1 = &m_context->topData()-2;
       op2 = op1+1;
       op3 = op2+1;
    }

@@ -27,6 +27,7 @@
 #include <falcon/exprsym.h>
 #include <falcon/exprarray.h>
 #include <falcon/exprdict.h>
+#include <falcon/exprcompare.h>
 
 #include <falcon/globalsymbol.h>
 #include <falcon/localsymbol.h>

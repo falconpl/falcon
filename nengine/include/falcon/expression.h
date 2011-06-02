@@ -565,53 +565,11 @@ public:
 };
 
 
-/** Less than operator. */
-class FALCON_DYN_CLASS ExprLT: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLT, t_lt );
-};
-
-/** Greater than operator. */
-class FALCON_DYN_CLASS ExprGT: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprGT, t_gt );
-};
-
-/** Greater than or equal to operator. */
-class FALCON_DYN_CLASS ExprGE: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprGE, t_ge );
-};
-
-/** Less than or equal to operator. */
-class FALCON_DYN_CLASS ExprLE: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprLE, t_le );
-};
-
-/** Equal to operator. */
-class FALCON_DYN_CLASS ExprEQ: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprEQ, t_eq );
-};
-
 /** Exactly equal to operator. */
 class FALCON_DYN_CLASS ExprEEQ: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprEEQ, t_exeq );
-};
-
-/** Not equal to operator. */
-class FALCON_DYN_CLASS ExprNE: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprNE, t_neq );
 };
 
 
