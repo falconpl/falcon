@@ -27,6 +27,10 @@ public:
 
     GdkScreen* getObject() const { return (GdkScreen*) m_obj; }
 
+	static FALCON_FUNC get_width( VMARG );
+
+    static FALCON_FUNC get_height( VMARG );
+
 #if 0
     static FALCON_FUNC signal_composited_changed( VMARG );
 
@@ -60,9 +64,7 @@ public:
 
     static FALCON_FUNC get_number( VMARG );
 
-    static FALCON_FUNC get_width( VMARG );
 
-    static FALCON_FUNC get_height( VMARG );
 
     static FALCON_FUNC get_width_mm( VMARG );
 
