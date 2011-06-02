@@ -54,6 +54,8 @@ public:
     static FALCON_FUNC flip( VMARG );
 
     static FALCON_FUNC rotate_simple( VMARG );
+
+	static FALCON_FUNC scale_simple( VMARG );
   
 };
 

@@ -27,18 +27,19 @@ void Pixbuf::modInit( Falcon::Module* mod )
 
     Gtk::MethodTab methods[] =
     {
-    { "version",            &Pixbuf::version },
-    { "get_n_channels",     &Pixbuf::get_n_channels },
-    { "get_has_alpha",     &Pixbuf::get_has_alpha },
-    { "get_bits_per_sample",     &Pixbuf::get_bits_per_sample },
-    { "get_pixels",     &Pixbuf::get_pixels },
-    { "get_width",     &Pixbuf::get_width },
-    { "get_height",     &Pixbuf::get_height },
-    { "new_from_file",     &Pixbuf::new_from_file },
-    { "new_from_file_at_size",     &Pixbuf::new_from_file_at_size },
-    { "new_from_file_at_scale",     &Pixbuf::new_from_file_at_scale },
-    { "flip",     &Pixbuf::flip },
-    { "rotate_simple", &Pixbuf::rotate_simple },
+    { "version",				&Pixbuf::version },
+    { "get_n_channels",			&Pixbuf::get_n_channels },
+    { "get_has_alpha",			&Pixbuf::get_has_alpha },
+    { "get_bits_per_sample",    &Pixbuf::get_bits_per_sample },
+    { "get_pixels",				&Pixbuf::get_pixels },
+    { "get_width",				&Pixbuf::get_width },
+    { "get_height",				&Pixbuf::get_height },
+    { "new_from_file",			&Pixbuf::new_from_file },
+    { "new_from_file_at_size",  &Pixbuf::new_from_file_at_size },
+    { "new_from_file_at_scale", &Pixbuf::new_from_file_at_scale },
+    { "flip",					&Pixbuf::flip },
+    { "rotate_simple",			&Pixbuf::rotate_simple },
+	{ "scale_simple",			&Pixbuf::scale_simple },
     { NULL, NULL }
     };
 
@@ -366,6 +367,34 @@ FALCON_FUNC Pixbuf::rotate_simple( VMARG )
 							 (GdkPixbufRotation) i_angle->asInteger() ) ) );
 }
 
+/*#
+    @method version scale_simple
+    @brief a static function returning the GdkPixbuf version.
+    @return the full version of the gdk-pixbuf library as a string.
+
+    This is the version currently in use by a running program.
+ */
+FALCON_FUNC Pixbuf::scale_simple( VMARG )
+{
+  Item* i_dest_width  = vm->param( 0 );
+  Item* i_dest_height = vm->param( 1 );
+  Item* i_interp_type = vm->param( 2 );
+
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_dest_width || !i_dest_width->isInteger()
+		|| !i_dest_height || !i_dest_height->isInteger() 
+		|| !i_interp_type || !i_interp_type->isInteger() 
+	   )
+		throw_inv_params( "[I,I,I]" );
+#endif
+	MYSELF;
+
+	self->setObject( (GObject*) gdk_pixbuf_scale_simple( GET_PIXBUF( vm->self() ), 
+															 i_dest_width->asInteger(),
+															 i_dest_height->asInteger(), 
+															 (GdkInterpType) i_interp_type->asInteger() ) );
+					
+}
 
 } // Gdk
 } // Falcon
