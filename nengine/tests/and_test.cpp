@@ -15,6 +15,7 @@
 #include <falcon/error.h>
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
+#include <falcon/exprmath.h>
 #include <falcon/exprsym.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>

@@ -34,7 +34,7 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
          value.setBoolean( __CPR::pass( d1.asInteger(), d2.asInteger() ) );
          break;
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( __CPR::passn( d1.forceNumeric(), d2.asNumeric() ) );
+         value.setBoolean( __CPR::passn( d1.asInteger(), d2.asNumeric() ) );
          break;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
          value.setBoolean( __CPR::passn( d1.asNumeric(), d2.asInteger() ) ) ;

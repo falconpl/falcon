@@ -522,49 +522,6 @@ private:
    } m_gate;
 };
 
-/** Math sum. */
-class FALCON_DYN_CLASS ExprPlus: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprPlus, t_plus );
-};
-
-/** Math subtraction. */
-class FALCON_DYN_CLASS ExprMinus: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprMinus, t_minus );
-};
-
-/** Math multiply. */
-class FALCON_DYN_CLASS ExprTimes: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprTimes, t_times );
-};
-
-/** Math divide. */
-class FALCON_DYN_CLASS ExprDiv: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprDiv, t_divide );
-};
-
-/** Math modulo. */
-class FALCON_DYN_CLASS ExprMod: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprMod, t_modulo );
-};
-
-/** Math power. */
-class FALCON_DYN_CLASS ExprPow: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprPow, t_power );
-};
-
-
 /** Exactly equal to operator. */
 class FALCON_DYN_CLASS ExprEEQ: public BinaryExpression
 {

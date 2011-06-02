@@ -14,6 +14,7 @@
 */
 
 #include <falcon/expression.h>
+#include <falcon/exprmath.h>
 #include <falcon/exprvalue.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/globalsymbol.h>

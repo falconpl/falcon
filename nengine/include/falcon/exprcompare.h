@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: expression.h
+   FILE: exprcompare.h
 
    Expression elements -- comaparisons (very similar and tedouis code
    -------------------------------------------------------------------
@@ -109,7 +109,7 @@ class FALCON_DYN_CLASS ExprGT: public ExprCompare
 public:
    ExprGT( Expression* op1=0, Expression* op2=0 );
 
-   ExprGT( const ExprLT& other ):
+   ExprGT( const ExprGT& other ):
       ExprCompare(other)
    {}
 
@@ -138,7 +138,7 @@ class FALCON_DYN_CLASS ExprGE: public ExprCompare
 public:
    ExprGE( Expression* op1=0, Expression* op2=0 );
    
-   ExprGE( const ExprLT& other ):
+   ExprGE( const ExprGE& other ):
       ExprCompare(other)
    {}
 
@@ -166,7 +166,7 @@ class FALCON_DYN_CLASS ExprEQ: public ExprCompare
 public:
    ExprEQ( Expression* op1=0, Expression* op2=0 );
 
-   ExprEQ( const ExprLT& other ):
+   ExprEQ( const ExprEQ& other ):
       ExprCompare(other)
    {}
 
@@ -194,7 +194,7 @@ class FALCON_DYN_CLASS ExprNE: public ExprCompare
 public:
    ExprNE( Expression* op1=0, Expression* op2=0 );
    
-   ExprNE( const ExprLT& other ):
+   ExprNE( const ExprNE& other ):
       ExprCompare(other)
    {}
 

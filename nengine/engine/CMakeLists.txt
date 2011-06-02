@@ -81,6 +81,7 @@ add_library(falcon_engine SHARED
   fstream.cpp
   expression.cpp
   exprfactory.cpp
+  exprmath.cpp
   exprsym.cpp
   exprvalue.cpp
   filestat.cpp
