@@ -45,6 +45,18 @@ void Item::setString( String* str )
    setDeep( str->garbage() );
 }
 
+void Item::setArray( ItemArray* array )
+{
+   Engine* eng = Engine::instance();
+   setDeep( eng->collector()->store(eng->arrayClass(), array) );
+}
+
+/*
+void Item::setDict( ItemDictionary* dict )
+{
+   setDeep( dict, Engine::instance()->dictClass() );
+}
+*/
 //===========================================================================
 // Generic item manipulators
 

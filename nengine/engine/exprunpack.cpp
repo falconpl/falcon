@@ -34,9 +34,10 @@ public:
 //=========================================================
 // Unpack
 
-ExprUnpack::ExprUnpack( Expression* op1 ):
+ExprUnpack::ExprUnpack( Expression* op1, bool isTop ):
    Expression(t_unpack),
    m_expander(op1),
+   m_bIsTop( isTop ),
    _p( new Private )
 {
    apply = apply_;
@@ -46,7 +47,10 @@ ExprUnpack::ExprUnpack( const ExprUnpack& other ):
          Expression(other)
 {
    _p = new Private;
+   
    m_expander = other.m_expander->clone();
+
+   _p->m_params.reserve(other._p->m_params.size());
    std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
    while( iter != other._p->m_params.end() )
    {
@@ -123,20 +127,20 @@ void ExprUnpack::apply_( const PStep* ps, VMachine* vm )
    if ( ! expander.isArray() )
    {
       // no need to throw, we're going to get back in the VM.
-      vm->raiseError(
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Not an array") ) );
-      return;
+      throw
+         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Not an array") );
    }
    ItemArray& array = *(ItemArray*) expander.asInst();
 
    if( pcount != array.length() )
    {
-      vm->raiseError(
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Different size") ) );
+      throw
+         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Different size") );
    }
 
+   size_t i;
 
-   for( size_t i = 0; i < pcount; ++i )
+   for( i = 0; i < pcount; ++i )
    {
       syms[i]->assign( vm, array[i] );
    }

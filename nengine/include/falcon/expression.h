@@ -102,7 +102,8 @@ public:
 
       t_arrayDecl,
       t_dictDecl,
-      t_unpack
+      t_unpack,
+      t_multiunpack
    } operator_t;
 
    Expression( const Expression &other );
@@ -676,7 +677,7 @@ private:
 class FALCON_DYN_CLASS ExprUnpack: public Expression
 {
 public:
-   ExprUnpack( Expression* op1 );
+   ExprUnpack( Expression* op1, bool bIsTop );
    ExprUnpack( const ExprUnpack& other );
    virtual ~ExprUnpack();
 
@@ -697,11 +698,51 @@ public:
    virtual bool isBinaryOperator() const { return false; }
 
    virtual bool isStatic() const { return false; }
+   bool isTop() const { m_bIsTop; }
 
 protected:
    ExprUnpack();
    friend class ExprFactory;
    Expression* m_expander;
+   bool m_bIsTop;
+   
+private:
+   class Private;
+   Private* _p;
+
+   static void apply_( const PStep*, VMachine* vm );
+};
+
+
+class FALCON_DYN_CLASS ExprMultiUnpack: public Expression
+{
+public:
+   ExprMultiUnpack( bool bIsTop );
+   ExprMultiUnpack( const ExprMultiUnpack& other );
+   virtual ~ExprMultiUnpack();
+
+   inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
+   virtual bool simplify( Item& value ) const;
+   virtual void describe( String& ) const;
+   virtual void oneLiner( String& s ) const { describe( s ); }
+   inline String describe() const { return PStep::describe(); }
+   inline String oneLiner() const { return PStep::oneLiner(); }
+
+   int targetCount() const;
+   Symbol* getAssignand( int n ) const;
+   Expression* getAssignee( int n ) const;
+   ExprMultiUnpack& addAssignment( Symbol* tgt, Expression* src );
+
+   inline virtual bool isStandAlone() const { return false; }
+   void precompile( PCode* pcode ) const;
+   virtual bool isBinaryOperator() const { return false; }
+   virtual bool isStatic() const { return false; }
+
+   bool isTop() const { m_bIsTop; }
+protected:
+   ExprMultiUnpack();
+   friend class ExprFactory;
+   bool m_bIsTop;
 
 private:
    class Private;

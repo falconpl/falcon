@@ -600,7 +600,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
    // do we have just one assignee?
    if( listLeft->size() == 1 )
    {
-      ExprUnpack* unpack = new ExprUnpack( listLeft->front() );
+      ExprUnpack* unpack = new ExprUnpack( listLeft->front(), true );
       List::iterator iterRight = listRight->begin();
       while( iterRight != listRight->end() )
       {
@@ -609,6 +609,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          {
             p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
             p.simplify(3, ti);
+            delete unpack;
             return;
          }
 
@@ -632,34 +633,30 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          return;
       }
 
-      // Note: TODO -- it's right to create an array here, as
-      // v = (a,b,c = 1,2,3) creates an array of [1,2,3ss]
-      // but it's better to let the StmtAutoexpr to prevent this array to be
-      // generated (and then discared) for nothing.
+      ExprMultiUnpack* unpack = new ExprMultiUnpack( true );
       List::iterator iterRight = listRight->begin();
-      while( iterRight != listRight->end() )
-      {
-         ctx->defineSymbols(*iterRight);
-         ++iterRight;
-      }
-
-      iterRight = listRight->begin();
       List::iterator iterLeft = listLeft->begin();
       while( iterRight != listRight->end() )
       {
-         fassert( iterLeft != listLeft->end() );
+         Expression* expr = *iterRight;
+         if( expr->type() != Expression::t_symbol )
+         {
+            p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
+            p.simplify(3, ti);
+            delete unpack;
+            return;
+         }
 
-         ctx->defineSymbols(*iterRight);
-         ctx->addStatement(
-            new StmtAutoexpr( new ExprAssign( *iterRight, *iterLeft ),
-                  v3->line(), v3->chr() )
-         );
-
+         ctx->defineSymbols(expr);
+         unpack->addAssignment(
+            static_cast<ExprSymbol*>(expr)->symbol(), *iterLeft );
          ++iterRight;
          ++iterLeft;
       }
-      listRight->clear();
       fassert( iterLeft == listLeft->end() );
+
+      // let the simplify to kill the symbol expressions
+      ctx->addStatement( new StmtAutoexpr( unpack ) );
    }
 
    // clear the list, so killing them won't destroy the expressions.

@@ -28,6 +28,7 @@
 namespace Falcon {
 
 class Function;
+class ItemArray;
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item
@@ -294,6 +295,28 @@ public:
       tgt.content.data.ptr.pInst = content.data.ptr.pInst;
       tgt.content.data.ptr.pClass = content.data.ptr.pClass;
    }
+
+   /** Turn this item in to an array (deep).
+    \param array The array handled to the vm.
+    
+    This method turns the item into an array with deep semantics (i.e.
+    controlled by the garbage collector.
+
+    For user-semantic (i.e. user-controlled) you must use directly the
+    setUser() method.
+    */
+   void setArray( ItemArray* array );
+
+   /** Turn this item in to a dictionary (deep).
+    \param dict The dictionary handled to the vm
+    
+    This method turns the item into an dictionary with deep semantics (i.e.
+    controlled by the garbage collector.
+
+    For user-semantic (i.e. user-controlled) you must use directly the
+    setUser() method.
+    */
+   //void setDict( ItemDictionary* dict );
 
    /** Defines this item as a out of band data.
       Out of band data allow out-of-order sequencing in functional programming.
