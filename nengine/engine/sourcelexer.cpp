@@ -608,7 +608,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                resetState();
                m_hadOperator = b;
 
-               return checkOperator();
+               Parsing::TokenInstance* ti = checkOperator();
+               if( ti != 0 )
+               {
+                  return ti;
+               }
+               // else we had an error; try to go on.
             }
             m_text.append( chr );
             break;
@@ -864,8 +869,8 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
    m_hadOperator = false;
    // in case of error
    addError( e_inv_token );
-   // Create an unary operator -- pretty almost always ok.
-   return parser->T_not.makeInstance(m_sline, m_schr);
+   
+   return 0;
 }
 
 }
