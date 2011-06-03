@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: expression.cpp
+   FILE: exprcompare.cpp
 
-   Expression elements -- comaparisons (very similar and tedouis code
+   Expression elements -- Comparisons
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 02 Jun 2011 23:35:04 +0200
@@ -265,4 +265,3 @@ bool ExprNE::simplify( Item& value ) const
 }
 
 /* end of exprcompare.cpp */
-
