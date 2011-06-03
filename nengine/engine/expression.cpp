@@ -730,30 +730,38 @@ void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
 
    Item *op1, *op2;
    vm->operands( op1, op2 );
-   Item& d2 = *op2;
-   Item& d1 = *op1;
 
-   switch ( d1.type() << 8 | d2.type() )
+   switch ( op1->type() << 8 | op2->type() )
    {
+   case FLC_ITEM_NIL << 8 | FLC_ITEM_NIL:
+      op1->setBoolean( true );
+      break;
+
+   case FLC_ITEM_BOOL << 8 | FLC_ITEM_BOOL:
+      op1->setBoolean( op1->asBoolean() == op2->asBoolean() );
+      break;
+
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      d1.setBoolean( d1.asInteger() == d2.asInteger() );
+      op1->setBoolean( op1->asInteger() == op2->asInteger() );
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      d1.setBoolean( d1.asNumeric() == d2.asNumeric() );
+      op1->setBoolean( op1->asNumeric() == op2->asNumeric() );
       break;
 
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
-      d1.setBoolean( d1.asDeepInst() == d2.asDeepInst() );
+      op1->setBoolean( op1->asDeepInst() == op2->asDeepInst() );
       break;
 
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      d1.setBoolean( d1.asUserInst() == d2.asUserInst() );
+      op1->setBoolean( op1->asUserInst() == op2->asUserInst() );
       break;
 
    default:
-      d1.setBoolean(false);
+      op1->setBoolean(false);
    }
+   
+   ctx->popData();
 }
 
 
