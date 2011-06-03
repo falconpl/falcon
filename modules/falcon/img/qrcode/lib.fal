@@ -392,7 +392,23 @@ class QrInput(version, errorCorrectionLevel)
    function getByteStream()
       bitBuf = self._mergeBitBuffer()
       self._appendPaddingBits(bitBuf)
-      return MemBufFromPtr(bitBuf.ptr(), bitBuf.size(), 1);
+
+      size = bitBuf.size()
+      if size == 0: return []
+      data = arrayBuffer(size , 0)
+
+      // save reading position
+      rpos = bitBuf.rpos()
+      bitBuf.rpos(0)
+
+      i = 0; while bitBuf.readableBits() > 0
+         data[i++] = bitBuf.r8()
+      end
+
+      // restore reading position
+      bitBuf.rpos(rpos)
+
+      return data
    end
 
    /* Private part */
