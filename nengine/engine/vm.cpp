@@ -339,7 +339,7 @@ void VMachine::returnFrame()
    ctx->m_topCode = ctx->m_codeStack + topCall->m_codeBase-1;
    PARANOID( "Code stack underflow at return", (ctx->m_topCode >= ctx->m_codeStack-1) );
    // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
-   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase;
+   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase-1;
    PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
    // ... so that we can fill the stack with the function result.
