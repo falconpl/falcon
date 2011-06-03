@@ -313,9 +313,9 @@ FALCON_FUNC Pixbuf::scale_simple( VMARG )
     Item* i_interp_type = vm->param( 2 );
 #ifndef NO_PARAMETER_CHECK
     if ( !i_dest_width || !i_dest_width->isInteger()
-		|| !i_dest_height || !i_dest_height->isInteger()
-		|| !i_interp_type || !i_interp_type->isInteger() )
-		throw_inv_params( "[I,I,I]" );
+        || !i_dest_height || !i_dest_height->isInteger()
+        || !i_interp_type || !i_interp_type->isInteger() )
+        throw_inv_params( "[I,I,I]" );
 #endif
 	MYSELF;
 	vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),
