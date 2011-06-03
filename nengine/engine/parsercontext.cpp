@@ -181,7 +181,7 @@ Symbol* ParserContext::addVariable( const String& variable )
 
    if( _p->m_unknown.empty() )
    {
-      //todo error!
+      fassert( false );
    }
 
    UnknownSymbol* us;
@@ -481,13 +481,13 @@ void ParserContext::closeContext()
 
    // as we're removing the frame.
    _p->m_frames.pop_back();
-   fassert( _p->m_unknown.back().empty() );
-   _p->m_unknown.pop_back();
+
    // we can never close the main context
    fassert( ! _p->m_frames.empty() );
    if( bframe.m_bStatePushed )
    {
       m_parser->popState();
+      _p->m_unknown.pop_back();
    }
 
    m_st = _p->m_frames.back().m_branch;

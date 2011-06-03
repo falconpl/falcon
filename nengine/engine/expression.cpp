@@ -894,7 +894,6 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
          {
             Function* f = top.asFunction();
             vm->call( f, pcount );
-            ctx->currentFrame().m_isExpr = true;
          }
          break;
 
@@ -904,7 +903,6 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
             Function* f = top.asMethodFunction();
             old.unmethodize();
             vm->call( f, pcount, old );
-            ctx->currentFrame().m_isExpr = true;
          }
          break;
 

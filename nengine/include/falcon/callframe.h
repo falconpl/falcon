@@ -62,18 +62,6 @@ public:
     */
    int m_codeBase;
 
-   /** Expression frame.
-      This boolean is set to true when the call was invoked inside an expression.
-    When this happens the A register (return value of the call) must be set
-    as the value of the topmost element in the stack (which is formerly,
-    up to this moment, the same item that has just been called).
-
-    In other words,
-    returning in an expression must substitute the called item with its result
-    in the expression evaluation flow.
-    */
-   bool m_isExpr;
-
    /** Image of "self" in this frame. */
    Item m_self;
 
@@ -87,7 +75,6 @@ public:
       m_stackBase( sb ),
       m_initBase( sb ),
       m_codeBase( cb ),
-      m_isExpr(false),
       m_self(self)
    {}
 };
