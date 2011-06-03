@@ -143,11 +143,27 @@ void generic_apply_( const PStep* ps, VMachine* vm )
       ctx->popData();
       break;
 
-   caseDeep:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_INT:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NUM:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_METHOD:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_FUNC:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
+   case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER:
       __CPR::operate( vm, op1->asDeepClass(), op1->asDeepInst() );
       break;
 
-   caseUser:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:
+   case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
       __CPR::operate( vm, op1->asUserClass(), op1->asUserInst() );
       break;
 

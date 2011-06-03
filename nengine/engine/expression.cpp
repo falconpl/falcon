@@ -694,30 +694,6 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
    
 }
 
-//=========================================================
-//Binary
-
-#define caseDeep \
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_INT:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_NUM:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_METHOD:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_FUNC:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:\
-      case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER
-
-#define caseUser \
-      case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_INT:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:\
-      case FLC_ITEM_USER << 8 | FLC_ITEM_USER
 
 //=========================================================
 //Comparisons
