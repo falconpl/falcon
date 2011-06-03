@@ -4,6 +4,8 @@
 
 #include "modgtk.hpp"
 
+#include <falcon/path.h>
+
 #include "g_Object.hpp"
 #include "g_ParamSpec.hpp"
 
@@ -705,6 +707,20 @@ getGCharArray( const Falcon::CoreArray* arr,
     }
 
     return num;
+}
+
+
+Falcon::String*
+formatPath( Falcon::String* filepath )
+{
+    Falcon::Path path( *filepath );
+#ifdef FALCON_SYSTEM_WIN
+    filepath->size( 0 );
+    path.getWinFormat( *filepath );
+#else
+    filepath->copy( path.get() );
+#endif
+    return filepath;
 }
 
 

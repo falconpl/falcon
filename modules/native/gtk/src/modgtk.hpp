@@ -610,6 +610,15 @@ getGCharArray( const Falcon::CoreArray* arr,
         Falcon::AutoCString** temp );
 
 
+/**
+ *  \brief Format a file path given from string.
+ *  \param filepath A string representing a filepath.
+ *  \return The modified string passed as argument.
+ */
+Falcon::String*
+formatPath( Falcon::String* filepath );
+
+
 } // Gtk
 } // Falcon
 

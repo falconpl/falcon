@@ -39,7 +39,7 @@ public:
 
     static FALCON_FUNC get_bits_per_sample( VMARG );
 
-    static FALCON_FUNC get_pixels( VMARG );
+    //static FALCON_FUNC get_pixels( VMARG );
 
     static FALCON_FUNC get_width( VMARG );
 
@@ -55,8 +55,8 @@ public:
 
     static FALCON_FUNC rotate_simple( VMARG );
 
-	static FALCON_FUNC scale_simple( VMARG );
-  
+    static FALCON_FUNC scale_simple( VMARG );
+
 };
 
 
