@@ -1007,11 +1007,10 @@ void Enums::modInit( Falcon::Module* mod )
 	/*
 	 * GdkInterpType
 	 */
-
-	{ "GDK_INTERP_NEAREST",		GDK_INTERP_NEAREST},
-	{ "GDK_INTERP_TILES",		GDK_INTERP_TILES},
-	{ "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR},
-	{ "GDK_INTERP_HYPER",		GDK_INTERP_HYPER},
+    { "GDK_INTERP_NEAREST",     GDK_INTERP_NEAREST },
+    { "GDK_INTERP_TILES",       GDK_INTERP_TILES },
+    { "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR },
+    { "GDK_INTERP_HYPER",       GDK_INTERP_HYPER },
 
     /*
      *  GdkJoinStyle
