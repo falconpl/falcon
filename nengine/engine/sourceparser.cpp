@@ -856,7 +856,7 @@ static void apply_cut( const Rule& r, Parser& p )
 
 static void apply_end( const Rule& r, Parser& p )
 {
-   // << (r_end << "end" << apply_end << T_end << T_EOL )
+   // << (r_end << "end" << apply_end << T_end  << T_EOL )
    TokenInstance* tend = p.getNextToken();
    p.getNextToken();
 
@@ -873,6 +873,28 @@ static void apply_end( const Rule& r, Parser& p )
 
    // clear the stack
    p.simplify(2);
+   st->closeContext();
+}
+
+static void apply_end_small( const Rule& r, Parser& p )
+{
+   // << (r_end << "end" << apply_end << T_end  )
+   TokenInstance* tend = p.getNextToken();
+   p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+   //Statement* current = st->currentStmt();
+   if( !st->currentStmt() && !st->currentFunc() && !st->currentClass())
+   {
+      // can we close a state?
+      p.popState();
+
+      //p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+      return;
+   }
+
+   // clear the stack
+   p.simplify(1);
    st->closeContext();
 }
 
@@ -901,6 +923,11 @@ static void apply_end_rich( const Rule& r, Parser& p )
 
    // clear the stack
    p.simplify(3);
+}
+
+static void apply_dummy( const Rule& r, Parser& p )
+{
+   p.simplify(1);
 }
 
 //==========================================================
@@ -1520,15 +1547,9 @@ static void on_close_function( void * thing )
 {
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
-   //printf( "Function closed\n" );
-   /*
-   SynFunc* func=ctx->currentFunc();
-   TokenInstance* ti=new TokenInstance(0,0,sp.Expr);
-   ti->setValue(func,func_deletor);
 
-   //sp.simplify(0,ti);
-   sp.addToStack(ti);
-   */
+   // TODO: name the function
+   SynFunc* func=ctx->currentFunc();
 }
 
 static void apply_expr_func(const Rule& r,Parser& p)
@@ -1560,7 +1581,7 @@ static void apply_expr_func(const Rule& r,Parser& p)
 
    // open a new main state for the function
    ctx->openFunc(func);
-   p.pushState( "Main", on_close_function , &p );
+   p.pushState( "InlineFunc", on_close_function , &p );
 }
 
 //==========================================================
@@ -1662,8 +1683,16 @@ SourceParser::SourceParser():
       ;
 
    S_End << "END"
-      << (r_end << "end" << apply_end << T_end << T_EOL )
       << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
+      << (r_end << "end" << apply_end << T_end << T_EOL)
+      ;
+
+   S_SmallEnd << "END"
+      << (r_end_small << "end_small" << apply_end_small << T_end )
+      ;
+
+   S_EmptyLine << "EMPTY"
+      << (r_empty << "Empty line" << apply_dummy << T_EOL )
       ;
 
    S_MultiAssign << "MultiAssign"
@@ -1794,10 +1823,26 @@ SourceParser::SourceParser():
       << S_Cut
       << S_End
       << S_Return
+      << S_EmptyLine
+      ;
+
+   s_InlineFunc << "InlineFunc"
+      << S_Function
+      << S_Autoexpr
+      << S_If
+      << S_Elif
+      << S_Else
+      << S_While
+      << S_Rule
+      << S_Cut
+      << S_SmallEnd
+      << S_Return
+      << S_EmptyLine
       ;
 
 
    addState( s_Main );
+   addState( s_InlineFunc );
 }
 
 void SourceParser::onPushState()

@@ -426,7 +426,7 @@ public:
    void unroll( size_t fd, size_t rd );
 
    bool findPaths( bool bIncremental );
-   void applyPaths();
+   bool applyPaths();
    void parseError();
    void setFramePriority( const Token& token );
 

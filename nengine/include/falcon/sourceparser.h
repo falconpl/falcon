@@ -132,6 +132,12 @@ public:
    Parsing::Rule r_end;
    Parsing::Rule r_end_rich;
 
+   Parsing::NonTerminal S_SmallEnd;
+   Parsing::Rule r_end_small;
+
+   Parsing::NonTerminal S_EmptyLine;
+   Parsing::Rule r_empty;
+
    Parsing::NonTerminal S_MultiAssign;
    Parsing::Rule r_Stmt_assign_list;
    
@@ -244,6 +250,7 @@ public:
    //
 
    Parsing::State s_Main;
+   Parsing::State s_InlineFunc;
 };
 
 }

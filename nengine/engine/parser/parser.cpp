@@ -157,6 +157,8 @@ void Parser::popState()
    StateFrameFunc func = _p->m_lStates.back().m_cbfunc;
    void *cbdata = _p->m_lStates.back().m_cbdata;
 
+   // copy the residual tokens
+   Private::TokenStack ts = _p->m_lStates.back().m_tokenStack;
    _p->m_lStates.pop_back();
    TRACE1( "Parser::popState -- now topmost state is '%s'", _p->m_lStates.back().m_state->name().c_ize() );
 
@@ -166,6 +168,13 @@ void Parser::popState()
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
    TRACE("Parser::popState -- pframes.size()=%d",_p->m_pframes->size());
+
+   Private::TokenStack::iterator tsiter = ts.begin();
+   while( tsiter != ts.end() )
+   {
+      _p->m_tokenStack->push_back( *tsiter );
+      ++tsiter;
+   }
 
    // execute the callback (?)
    if( func != 0 )
@@ -644,16 +653,9 @@ void Parser::onNewToken()
           TRACE("Parser::onNewToken -- failed in incremental mode, exploring.", 0 );
          // may fail if incremental, try again in full mode.
          explorePaths();
-         /*if ( ! findPaths( false ) )
-         {
-
-            parseError();
-            return;
-         }
-          */
       }
    }
-
+   
    // try to simplify the stack, if possible.
    applyPaths();
 }
@@ -776,18 +778,22 @@ void Parser::parseError()
 }
 
 
-void Parser::applyPaths()
+bool Parser::applyPaths()
 {
    TRACE("Parser::applyPaths -- begin", 0 );
 
+   bool bLooped = false;
+
    while( ! _p->m_pframes->empty() )
    {
+      bLooped = true;
+      
       // get the deepest rule in the deepest frame.
       Private::ParseFrame& frame = _p->m_pframes->back();
       if( frame.m_path.empty() )
       {
          TRACE("Parser::applyPaths -- current frame path is empty, need more tokens.", 0 );
-         return;
+         return false;
       }
 
       const Rule* currentRule = frame.m_path.back();
@@ -806,7 +812,7 @@ void Parser::applyPaths()
             // greedy rules always end with non-terminals
             TRACE("Parser::applyPaths -- same arity, descending on greedy rule '%s' in '%s' ",
                   currentRule->name().c_ize(), nt->name().c_ize());
-            return;
+            return false;
          }
          else if( ((! frame.m_bIsRightAssoc) && frame.m_nPriority == 0)
             || !currentRule->getTokenAt(currentRule->arity()-1)->isNT() )
@@ -819,7 +825,7 @@ void Parser::applyPaths()
          {
             // else, we must wait for more tokens.
             TRACE("Parser::applyPaths -- Need more tokens (same arity), returning.", 0);
-            return;
+            return false;
          }
       }
 
@@ -889,7 +895,7 @@ void Parser::applyPaths()
       {
          // we simply don't have enough tokens.
          TRACE("Parser::applyPaths -- Need more tokens (larger arity %d > %d), returning.", rsize, tcount);
-         return;
+         return false;
       }
 
       // if we're here, it means we applied at least one rule.
@@ -904,7 +910,9 @@ void Parser::applyPaths()
       }
    }
 
-   TRACE("Parser::applyPaths -- frames completelty exausted", 0 );
+   TRACE("Parser::applyPaths -- frames completelty exausted (%s)",
+         bLooped ? "Having worked" : "Did nothing" );
+   return bLooped;
 }
 
 
