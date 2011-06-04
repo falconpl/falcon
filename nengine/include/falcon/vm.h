@@ -99,10 +99,7 @@ public:
     */
    bool run();
 
-   inline void call( Function* f, int np )
-   {
-      call( f, np, Item() );
-   }
+   void call( Function* f, int np, bool bExpr = false );
 
    /** Prepares the VM to execute a function (actually, a method).
 
@@ -114,7 +111,7 @@ public:
     @param self The item on which this method is invoked. Pure functions are
                 considered methods of "nil".
     */
-   virtual void call( Function* function, int np, const Item& self );
+   virtual void call( Function* function, int np, const Item& self, bool bExpr = false );
 
    /** Returns from the current frame */
    void returnFrame();
@@ -279,10 +276,24 @@ public:
     */
    inline bool codeEmpty() const { return m_context->codeEmpty(); }
 
+   /** Sets a value as return value for the current function.
+    \param v The return value.
+
+    This method is a proxy to VMContext::retval() applied to the current
+    context.
+    */
+   void retval( const Item& v ) { currentContext()->retval(v); }
+
+
    /** Access the current context accumulator. */
    const Item& regA() const { return m_context->regA(); }
    /** Access the current context accumulator. */
    Item& regA() { return m_context->regA(); }
+
+   /** Access the current "self" item. */
+   const Item& self() const { return m_context->self(); }
+   /** Access the current context "self" item. */
+   Item& self() { return m_context->self(); }
 
    /** Returns the parameter array in the current frame.
     \return An array of items pointing to the top of the local frame data stack.

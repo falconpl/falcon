@@ -592,7 +592,7 @@ public:
    
    /** Gets the class and instance from any item.
      \param cls The class of this deep or user item.
-     \param udata The user data associated with this item.
+     \param udata The user data associated with this item or 0 if this item is flat.
 
     In case of flat items, a slower call is made to identify the
     base handler class, and that is returned. In that case, the udata*
@@ -615,9 +615,14 @@ public:
          udata = asUserInst();
          break;
 
+      case FLC_ITEM_FUNC:
+         cls = Engine::instance()->getTypeClass(type());
+         udata = asFunction();
+         break;
+
       default:
          cls = Engine::instance()->getTypeClass(type());
-         udata = this;
+         udata = 0;
       }
    }
 
@@ -647,6 +652,12 @@ public:
 
       return 0;
    }
+
+   //======================================================
+   // Utilities
+   //
+
+   int64 len() const;
 
 };
 

@@ -142,6 +142,14 @@ public:
     */
    GlobalSymbol* findGlobal( const String& name ) const;
 
+   /** Finds a function.
+    \param name The function name to be searched.
+    \return A global function or 0 if not found.
+
+    If the given name is present as a global function in the current module.
+    */
+   Function* findFunction( const String& name ) const;
+
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<GlobalSymbol*> SymbolEnumerator;
 

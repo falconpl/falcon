@@ -357,6 +357,10 @@ public:
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
+   /** Sets a value as return value for the current function.
+    */
+   void retval( const Item& v ) { m_regA = v; }
+
    inline long callDepth() const { return (m_topCall - m_callStack) + 1; }
 
    inline CallFrame* addCallFrame()  {
@@ -368,8 +372,8 @@ public:
       return m_topCall;
    }
 
-   /** Prepares a new call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
+   /** Prepares a new methodic call frame. */
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self, bool isExpr )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -378,9 +382,29 @@ public:
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
+      topCall->m_bMethodic = false;
+      topCall->m_bExpression = isExpr;
 
       return topCall;
    }
+
+   /** Prepares a new non-methodic call frame. */
+   inline CallFrame* makeCallFrame( Function* function, int nparams, bool isExpr )
+   {
+      register CallFrame* topCall = addCallFrame();
+      topCall->m_function = function;
+      topCall->m_codeBase = codeDepth();
+      // initialize also initBase, as stackBase may move
+      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_paramCount = nparams;
+      topCall->m_self.setNil();
+      topCall->m_bMethodic = false;
+      topCall->m_bExpression = isExpr;
+
+      return topCall;
+   }
+
+   bool isMethodic() const { return m_topCall->m_bMethodic; }
    
    void moreCall();
 

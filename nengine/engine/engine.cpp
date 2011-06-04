@@ -23,6 +23,7 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 
+
 //--- Virtual file systems ---
 #include <falcon/vfs_file.h>
 
@@ -30,6 +31,15 @@
 
 #include <falcon/transcoderc.h>
 #include <falcon/transcoderutf8.h>
+
+//--- core function headers ---
+#include <falcon/cm/coremodule.h>
+#include <falcon/cm/compare.h>
+#include <falcon/cm/len.h>
+#include <falcon/cm/minmax.h>
+#include <falcon/cm/typeid.h>
+
+#include <falcon/bom.h>
 
 //--- object headers ---
 #include <falcon/pseudofunc.h>
@@ -53,13 +63,10 @@
 #include <falcon/operanderror.h>
 #include <falcon/unsupportederror.h>
 #include <falcon/syntaxerror.h>
+#include <falcon/encodingerror.h>
 
 #include <falcon/paranoid.h>
 #include <map>
-
-#include "falcon/encodingerror.h"
-#include "falcon/vfs_file.h"
-#include "falcon/pseudofunc.h"
 
 namespace Falcon
 {
@@ -236,7 +243,6 @@ Engine::Engine()
    m_mtx = new Mutex;
    m_collector = new Collector;
 
-
    //=====================================
    // Standard file systems.
    //
@@ -279,6 +285,13 @@ Engine::Engine()
    m_paramErrorClass = new ParamErrorClass;
 
    //=====================================
+   // The Core Module
+   //
+   m_core  = 0;
+   //m_core = new CoreModule;
+   m_bom = new BOM;
+
+   //=====================================
    // Adding standard transcoders.
    //
 
@@ -291,8 +304,11 @@ Engine::Engine()
    //
 
    m_tpfuncs = new PseudoFunctionMap;
-   addPseudoFunction(new PFunc::Min);
-   addPseudoFunction(new PFunc::Max);
+   addPseudoFunction(new Ext::Compare);
+   addPseudoFunction(new Ext::Len);
+   addPseudoFunction(new Ext::Max);
+   addPseudoFunction(new Ext::Min);
+   addPseudoFunction(new Ext::TypeId);
 
    TRACE("Engine creation complete", 0 )
 }
@@ -343,6 +359,13 @@ Engine::~Engine()
    }
 
    delete m_tcoders;
+
+   //============================================
+   // Delete singletons
+   //
+   delete m_core;
+   delete m_bom;
+   
    TRACE("Engine destroyed", 0 )
 }
 
@@ -439,7 +462,7 @@ bool Engine::addPseudoFunction( PseudoFunction* pf )
    return true;
 }
 
-PseudoFunction* Engine::getPseudoFunction( const String& name )
+PseudoFunction* Engine::getPseudoFunction( const String& name ) const
 {
    m_mtx->lock();
    PseudoFunctionMap::iterator iter = m_tpfuncs->find(name);

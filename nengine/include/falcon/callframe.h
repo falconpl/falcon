@@ -40,16 +40,16 @@ public:
    Function* m_function;
 
    /** Number of parameters used for the effective call. */
-   int m_paramCount;
+   int32 m_paramCount;
 
    /** Stack base for this frame; item at this point is parameter 0 */
-   int m_stackBase;
+   int32 m_stackBase;
 
    /** Stack base for this frame when the function is invoked.
     Rules can temporarily change the stack base. This stackbase is granted
     to be the initial stack base of the function.
     */
-   int m_initBase;
+   int32 m_initBase;
 
    /** Codebase for this frame.
     *
@@ -60,10 +60,16 @@ public:
     * only in case of explicit return so that it is not necessary to
     * scan the code stack to unroll the function call.
     */
-   int m_codeBase;
+   int32 m_codeBase;
 
    /** Image of "self" in this frame. */
    Item m_self;
+
+   /** True if self has been passed. */
+   bool m_bMethodic;
+
+   /** True if the call frame is invoked by an expression. */
+   bool m_bExpression;
 
    // Actually never used, just used at compile time by vector.
    CallFrame()
@@ -75,7 +81,19 @@ public:
       m_stackBase( sb ),
       m_initBase( sb ),
       m_codeBase( cb ),
-      m_self(self)
+      m_self(self),
+      m_bMethodic( true ),
+      m_bExpression( false )
+   {}
+
+   CallFrame( Function* f, int pc, int sb, int cb):
+      m_function(f),
+      m_paramCount( pc ),
+      m_stackBase( sb ),
+      m_initBase( sb ),
+      m_codeBase( cb ),
+      m_bMethodic( false ),
+      m_bExpression( false )
    {}
 };
 

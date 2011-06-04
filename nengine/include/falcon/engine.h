@@ -33,6 +33,8 @@ class Transcoder;
 class TranscoderMap;
 class PseudoFunction;
 class PseudoFunctionMap;
+class Module;
+class BOM;
 
 /** Falcon application global data.
 
@@ -295,7 +297,20 @@ public:
     
     \see addPseudoFunction
     */
-   PseudoFunction* getPseudoFunction( const String& name );
+   PseudoFunction* getPseudoFunction( const String& name ) const;
+
+   /** Returns an instance of the core module that is used as read-only.
+    \return A singleton instance of the core module.
+    
+    This instance is never linked in any VM and is used as a resource for
+    undisposeable function (as i.e. the BOM methods).
+    */
+   Module* getCore() const { return m_core; }
+
+   /** Returns the Basic Object Model method collection.
+    \return A singleton instance of the core BOM handler collection.
+   */
+   BOM* getBom() const { return m_bom; }
 
 protected:
    Engine();
@@ -339,6 +354,12 @@ protected:
    // Transcoders
    //
    TranscoderMap* m_tcoders;
+
+   //===============================================
+   // The core module.
+   //
+   Module* m_core;
+   BOM* m_bom;
 
    PseudoFunctionMap* m_tpfuncs;
 };

@@ -20,18 +20,20 @@
 #include <falcon/operanderror.h>
 #include <falcon/error_messages.h>
 
+#include <falcon/bom.h>
+
 namespace Falcon {
 
 Class::Class( const String& name ):
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
-   m_quasiFlat( false )
+   m_falconClass( false )
 {}
 
 Class::Class( const String& name, int64 tid ):
    m_name( name ),
    m_typeID( tid ),
-   m_quasiFlat( false )
+   m_falconClass( false )
 {}
 
 
@@ -75,6 +77,7 @@ void Class::op_compare( VMachine *vm, void* self ) const
 {
    void* inst;
    Item *op1, *op2;
+   
    vm->operands( op1, op2 );
    
    switch( op2->type() )
@@ -237,10 +240,20 @@ void Class::op_setIndex(VMachine *, void* ) const
 }
 
 
-void Class::op_getProperty( VMachine*, void*, const String& ) const
+void Class::op_getProperty( VMachine* vm, void* data, const String& property ) const
 {
-   // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(".") );
+   static BOM* bom = Engine::instance()->getBom();
+
+   // try to find a valid BOM propery.
+   BOM::handler handler = bom->get( property );
+   if ( handler != 0  )
+   {
+      handler( vm, this, data );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam(__LINE__, e_prop_acc ).extra(property) );
+   }
 }
 
 

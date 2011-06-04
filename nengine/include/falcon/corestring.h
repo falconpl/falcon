@@ -58,6 +58,8 @@ public:
 
    virtual void op_add( VMachine *vm, void* self ) const;
    virtual void op_aadd( VMachine *vm, void* self ) const;
+   
+   virtual void op_compare( VMachine *vm, void* self ) const;
 
 private:
 

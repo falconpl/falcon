@@ -17,12 +17,13 @@
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 
+#include "falcon/optoken.h"
+
 namespace Falcon {
 
 CoreString::CoreString():
    Class("String", FLC_CLASS_ID_STRING )
 {
-   m_quasiFlat = true;
 }
 
 
@@ -87,7 +88,7 @@ void CoreString::describe( void* instance, String& target ) const
 }
 
 //=======================================================================
-//
+// Addition
 
 void CoreString::op_add( VMachine *vm, void* self ) const
 {
@@ -130,6 +131,9 @@ void CoreString::op_add( VMachine *vm, void* self ) const
    }
 }
 
+//=======================================================================
+// Auto Addition
+//
 
 void CoreString::op_aadd( VMachine *vm, void* self ) const
 {
@@ -212,6 +216,36 @@ void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
    {
       vm->currentContext()->popData();
       self->append(*deep);
+   }
+}
+
+//=======================================================================
+// Comparation
+//
+
+void CoreString::op_compare( VMachine *vm, void* self ) const
+{
+   Item* op1, *op2;
+   OpToken token( vm, op1, op2 );
+   String* string = static_cast<String*>(self);
+
+   Class* otherClass;
+   void* otherData;
+
+   if( op2->asClassInst( otherClass, otherData ) )
+   {
+      if( otherClass->typeID() == typeID() )
+      {
+         token.exit( string->compare(*static_cast<String*>(otherData) ) );
+      }
+      else
+      {
+         token.exit( typeID() - otherClass->typeID() );
+      }
+   }
+   else
+   {
+      token.exit( typeID() - op2->type() );
    }
 }
 

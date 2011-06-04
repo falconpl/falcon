@@ -21,7 +21,6 @@
 #include <falcon/item.h>
 
 #include <map>
-#include <vector>
 
 
 namespace Falcon {
@@ -33,8 +32,8 @@ public:
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
 
-   typedef std::vector<Function*> FunctionVector;
-   FunctionVector m_functions;
+   typedef std::map<String, Function*> FunctionMap;
+   FunctionMap m_functions;
 
    ItemArray m_globals;
    bool m_bIsStatic;
@@ -57,13 +56,13 @@ public:
       //     functions are destroyed.
       if( m_bIsStatic )
       {
-         FunctionVector::iterator vi = m_functions.begin();
+         FunctionMap::iterator vi = m_functions.begin();
          while( vi != m_functions.end() )
          {
             // set the module to 0, so that we're not dec-reffed.
-            (*vi)->module(0);
+            vi->second->module(0);
             // then delete the function.
-            delete *vi;
+            delete vi->second;
             ++vi;
          }
       }
@@ -128,7 +127,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
    }
 
    // finally add to the function vecotr so that we can account it.
-   _p->m_functions.push_back(f);
+   _p->m_functions[f->name()] = f;
    f->module(this);
 
    return sym;
@@ -146,7 +145,7 @@ void Module::addFunction( GlobalSymbol* gsym, Function* f )
    }
 
    // finally add to the function vecotr so that we can account it.
-   _p->m_functions.push_back(f);
+   _p->m_functions[f->name()] = f;
    f->module(this);
 
    if(gsym)
@@ -211,6 +210,21 @@ GlobalSymbol* Module::findGlobal( const String& name ) const
 
    return iter->second;
 }
+
+
+Function* Module::findFunction( const String& name ) const
+{
+   const Private::FunctionMap& funcs = _p->m_functions;
+   Private::FunctionMap::const_iterator iter = funcs.find( name );
+
+   if( iter == funcs.end() )
+   {
+      return 0;
+   }
+
+   return iter->second;
+}
+
 
 void Module::enumerateGlobals( SymbolEnumerator& rator ) const
 {

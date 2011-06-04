@@ -78,7 +78,7 @@ void CoreInt::describe( void* instance, String& target ) const
 void CoreInt::op_isTrue( VMachine *vm, void* self ) const
 {
    Item* iself;
-   OpToken token( vm, iself);
+   OpToken token( vm, iself );
    token.exit( iself->asInteger() != 0 );
 }
 

@@ -15,15 +15,25 @@
 
 #include <falcon/cm/coremodule.h>
 #include <falcon/cm/print.h>
+#include <falcon/cm/len.h>
+#include <falcon/cm/compare.h>
+#include <falcon/cm/typeid.h>
+#include <falcon/cm/minmax.h>
 
 namespace Falcon {
 
 CoreModule::CoreModule():
    Module("core", true)
 {
-   *this 
+   *this
+      << new Ext::Compare
+      << new Ext::Min
+      << new Ext::Max
+      << new Ext::Len
       << new Ext::FuncPrintl
-      << new Ext::FuncPrint;
+      << new Ext::FuncPrint
+      << new Ext::TypeId
+      ;
 }
 
 }

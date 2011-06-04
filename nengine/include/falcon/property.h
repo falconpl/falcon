@@ -33,14 +33,16 @@ public:
    const String& name() const { return m_name; }
 
    /** Set the value of this property.
+    \param Class
       The default method in the bases class raises a read-only property error.
    */
-   virtual void set( void* data, Item& target );
+   virtual void set( void* data, const Item& value );
 
    /** Reads the value of this property.
       The default method in the bases class raises a write-only property error.
    */
-   virtual void get( void* data, Item& target );
+   virtual void get( void* data, Item& value );
+
 
 private:
    String m_name;

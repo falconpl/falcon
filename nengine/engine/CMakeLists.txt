@@ -44,7 +44,11 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
+  core_module/compare.cpp
+  core_module/len.cpp
+  core_module/minmax.cpp
   core_module/print.cpp
+  core_module/typeid.cpp
   core_module/coremodule.cpp
 
   memory.cpp
@@ -52,6 +56,7 @@ add_library(falcon_engine SHARED
   application.cpp
   autocstring.cpp
   autowstring.cpp
+  bom.cpp
   class.cpp
   closedsymbol.cpp
   codeerror.cpp
@@ -91,6 +96,7 @@ add_library(falcon_engine SHARED
   globalsymbol.cpp
   intcompiler.cpp
   item.cpp
+  item_util.cpp
   itemarray.cpp
   interruptederror.cpp
   ioerror.cpp

@@ -869,7 +869,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
       case FLC_ITEM_FUNC:
          {
             Function* f = top.asFunction();
-            vm->call( f, pcount );
+            vm->call( f, pcount, true );
          }
          break;
 
@@ -878,7 +878,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
             Item old = top;
             Function* f = top.asMethodFunction();
             old.unmethodize();
-            vm->call( f, pcount, old );
+            vm->call( f, pcount, old, true );
          }
          break;
 

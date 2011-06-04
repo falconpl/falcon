@@ -299,24 +299,40 @@ const PStep* VMachine::nextStep() const
 }
 
 
-void VMachine::call( Function* function, int nparams, const Item& self )
+void VMachine::call( Function* function, int nparams, const Item& self, bool isExpr )
 {
    TRACE( "Entering function: %s", function->locate().c_ize() );
    
    register VMContext* ctx = m_context;
    TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
 
-#ifdef NDEBUG
-   ctx->makeCallFrame( function, nparams, self );
-#else
-   CallFrame* topCall = ctx->makeCallFrame( function, nparams, self );
+   CallFrame* topCall = ctx->makeCallFrame( function, nparams, self, isExpr );
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
          topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
-#endif
-   
+
+   topCall->m_bExpression = isExpr;
    // prepare for a return that won't touch regA
    ctx->m_regA.setNil();
    
+   // do the call
+   function->apply( this, nparams );
+}
+
+
+void VMachine::call( Function* function, int nparams, bool isExpr )
+{
+   TRACE( "Entering function: %s", function->locate().c_ize() );
+
+   VMContext* ctx = currentContext();
+   TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
+
+   CallFrame* topCall = ctx->makeCallFrame( function, nparams, isExpr );
+   TRACE1( "-- codebase:%d, stackBase:%d ", \
+         topCall->m_codeBase, topCall->m_stackBase );
+
+   // prepare for a return that won't touch regA
+   ctx->m_regA.setNil();
+
    // do the call
    function->apply( this, nparams );
 }
@@ -343,10 +359,12 @@ void VMachine::returnFrame()
    PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
 
    // ... so that we can fill the stack with the function result.
-   // -- we always have at least 1 element, that is the function item.
-   TRACE1( "-- Adding A register to stack", 1 );
-   *ctx->m_topData = ctx->m_regA;
-
+   // -- in expressions we always have at least 1 element, that is the function item.
+   if( topCall->m_bExpression )
+   {
+      TRACE1( "-- Adding A register to stack", 1 );
+      *ctx->m_topData = ctx->m_regA;
+   }
    // Return.
    if( ctx->m_topCall-- ==  ctx->m_callStack )
    {
